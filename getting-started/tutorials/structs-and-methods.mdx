@@ -2,9 +2,37 @@
 sidebar_position: 4
 ---
 
-# Tutorial: Structs and Methods
+# Tutorial: Structs, Enums, and Methods
 
-Metel uses structs for data and `impl` blocks for behaviour.
+This tutorial shows how to define your own types in Metel. Structs hold named data; enums represent a fixed set of alternatives; `impl` blocks attach methods to either.
+
+## Structs
+
+A struct is a named collection of typed fields:
+
+```metel
+struct Point {
+    x: Float,
+    y: Float,
+}
+```
+
+Create an instance by naming every field:
+
+```metel
+fun main() {
+    let origin = Point { x: 0.0, y: 0.0 };
+    let p = Point { x: 3.0, y: 4.0 };
+
+    println("x = ${p.x}, y = ${p.y}");
+}
+```
+
+Fields are accessed with `.field_name`. They are read-only through immutable bindings.
+
+## Adding methods with `impl`
+
+Methods live in an `impl` block for the type. The first parameter `self` is the receiver:
 
 ```metel
 struct Point {
@@ -13,24 +41,296 @@ struct Point {
 }
 
 impl Point {
-    fun magnitude(self) -> Float {
-        return (self.x * self.x) + (self.y * self.y);
+    fun distance_from_origin(self) -> Float {
+        let x2 = self.x * self.x;
+        let y2 = self.y * self.y;
+        // Metel has no sqrt builtin yet — return the squared distance
+        return x2 + y2;
+    }
+
+    fun to_string(self) -> String {
+        return "(${self.x}, ${self.y})";
     }
 }
 
 fun main() {
-    let point = Point { x: 3.0, y: 4.0 };
-    println(point.magnitude());
+    let p = Point { x: 3.0, y: 4.0 };
+    println(p.to_string());              // (3, 4)
+    println(p.distance_from_origin());   // 25
 }
 ```
 
-## What to notice
+Methods are called with `.method_name(args)`. `self` is passed implicitly.
 
-- Struct fields are declared with explicit types.
-- `impl Point` groups methods for the `Point` type.
-- `self` is the receiver for the method.
-- `let` creates an immutable binding.
+## The `Self` type
 
-## Next step
+Inside an `impl` block, `Self` is an alias for the type being implemented. This is useful for methods that return a modified copy:
 
-Try changing the point coordinates and rerun the program. The method body stays the same; only the data changes.
+```metel
+struct Point {
+    x: Float,
+    y: Float,
+}
+
+impl Point {
+    fun translate(self, dx: Float, dy: Float) -> Self {
+        return Point { x: self.x + dx, y: self.y + dy };
+    }
+
+    fun scale(self, factor: Float) -> Self {
+        return Point { x: self.x * factor, y: self.y * factor };
+    }
+}
+
+fun main() {
+    let p = Point { x: 1.0, y: 2.0 };
+    let moved = p.translate(3.0, 4.0);
+    println("${moved.x}, ${moved.y}");   // 4, 6
+
+    let big = moved.scale(2.0);
+    println("${big.x}, ${big.y}");       // 8, 12
+}
+```
+
+`Self` is equivalent to writing the type name explicitly, but stays correct if the type is renamed.
+
+## Enums
+
+An enum defines a type with a fixed set of named variants. Variants can carry data:
+
+```metel
+enum Direction {
+    North,
+    South,
+    East,
+    West,
+}
+
+enum Shape {
+    Circle { radius: Float },
+    Rectangle { width: Float, height: Float },
+}
+```
+
+Unit variants (like `North`) carry no data. Struct variants (like `Circle`) carry named fields.
+
+Create enum values with `::`:
+
+```metel
+fun main() {
+    let dir = Direction::North;
+    let s = Shape::Circle { radius: 5.0 };
+    let r = Shape::Rectangle { width: 3.0, height: 4.0 };
+}
+```
+
+## Pattern matching with `match`
+
+`match` is how you inspect an enum value. Every variant must be handled:
+
+```metel
+enum Direction {
+    North,
+    South,
+    East,
+    West,
+}
+
+fun describe(d: Direction) -> String {
+    match d {
+        Direction::North => "heading north",
+        Direction::South => "heading south",
+        Direction::East  => "heading east",
+        Direction::West  => "heading west",
+    }
+}
+
+fun main() {
+    println(describe(Direction::North));   // heading north
+    println(describe(Direction::West));    // heading west
+}
+```
+
+For variants with fields, destructure them in the pattern:
+
+```metel
+enum Shape {
+    Circle { radius: Float },
+    Rectangle { width: Float, height: Float },
+}
+
+fun area(s: Shape) -> Float {
+    match s {
+        Shape::Circle { radius } => 3.14159 * radius * radius,
+        Shape::Rectangle { width, height } => width * height,
+    }
+}
+
+fun main() {
+    let c = Shape::Circle { radius: 5.0 };
+    let r = Shape::Rectangle { width: 3.0, height: 4.0 };
+
+    println("circle area: ${area(c)}");      // circle area: 78.53975
+    println("rectangle area: ${area(r)}");   // rectangle area: 12
+}
+```
+
+The field names in a pattern bind to local variables — `radius`, `width`, and `height` are available in the arm body.
+
+## Methods on enums
+
+`impl` works the same way on enums:
+
+```metel
+enum Shape {
+    Circle { radius: Float },
+    Rectangle { width: Float, height: Float },
+}
+
+impl Shape {
+    fun area(self) -> Float {
+        match self {
+            Shape::Circle { radius } => 3.14159 * radius * radius,
+            Shape::Rectangle { width, height } => width * height,
+        }
+    }
+
+    fun describe(self) -> String {
+        match self {
+            Shape::Circle { radius } => "circle with radius ${radius}",
+            Shape::Rectangle { width, height } => "rectangle ${width}×${height}",
+        }
+    }
+}
+
+fun main() {
+    let shapes = [
+        Shape::Circle { radius: 2.0 },
+        Shape::Rectangle { width: 5.0, height: 3.0 },
+        Shape::Circle { radius: 1.0 },
+    ];
+
+    mut total_area = 0.0;
+    for (let s in shapes) {
+        println("${s.describe()} — area ${s.area()}");
+        total_area += s.area();
+    }
+    println("total area: ${total_area}");
+}
+```
+
+Output:
+```
+circle with radius 2 — area 12.56636
+rectangle 5×3 — area 15
+circle with radius 1 — area 3.14159
+total area: 30.70795
+```
+
+## A complete example: a card game hand
+
+Here is a longer program that combines structs and enums to represent a simple card game:
+
+```metel
+enum Suit {
+    Clubs,
+    Diamonds,
+    Hearts,
+    Spades,
+}
+
+enum Rank {
+    Number { value: Int },
+    Jack,
+    Queen,
+    King,
+    Ace,
+}
+
+struct Card {
+    suit: Suit,
+    rank: Rank,
+}
+
+impl Suit {
+    fun to_string(self) -> String {
+        match self {
+            Suit::Clubs    => "Clubs",
+            Suit::Diamonds => "Diamonds",
+            Suit::Hearts   => "Hearts",
+            Suit::Spades   => "Spades",
+        }
+    }
+}
+
+impl Rank {
+    fun to_string(self) -> String {
+        match self {
+            Rank::Number { value } => value.to_string(),
+            Rank::Jack  => "Jack",
+            Rank::Queen => "Queen",
+            Rank::King  => "King",
+            Rank::Ace   => "Ace",
+        }
+    }
+
+    fun point_value(self) -> Int {
+        match self {
+            Rank::Number { value } => value,
+            Rank::Jack  => 10,
+            Rank::Queen => 10,
+            Rank::King  => 10,
+            Rank::Ace   => 11,
+        }
+    }
+}
+
+impl Card {
+    fun to_string(self) -> String {
+        return "${self.rank.to_string()} of ${self.suit.to_string()}";
+    }
+
+    fun value(self) -> Int {
+        return self.rank.point_value();
+    }
+}
+
+fun hand_value(hand: Card[]) -> Int {
+    mut total = 0;
+    for (let card in hand) {
+        total += card.value();
+    }
+    return total;
+}
+
+fun main() {
+    let hand = [
+        Card { suit: Suit::Hearts,   rank: Rank::Ace },
+        Card { suit: Suit::Spades,   rank: Rank::King },
+        Card { suit: Suit::Diamonds, rank: Rank::Number { value: 7 } },
+    ];
+
+    for (let card in hand) {
+        println("  ${card.to_string()} (${card.value()} pts)");
+    }
+    println("Hand total: ${hand_value(hand)}");
+}
+```
+
+Output:
+```
+  Ace of Hearts (11 pts)
+  King of Spades (10 pts)
+  7 of Diamonds (7 pts)
+Hand total: 28
+```
+
+## What you learned
+
+- `struct` defines a named record with typed fields; `impl` attaches methods to it.
+- `self` is the receiver; `Self` is an alias for the implementing type.
+- `enum` defines a type with named variants, each optionally carrying data.
+- `match` exhaustively handles every variant and destructures field data into local variables.
+- Both structs and enums support `impl` blocks in the same way.
+
+Next: [Control Flow and Errors](control-flow-and-errors) — loops, optional values, and error handling.
