@@ -1,5 +1,4 @@
 ---
-id: reference/spec
 title: "Metel Language Specification"
 type: spec
 version: v0.6.4
