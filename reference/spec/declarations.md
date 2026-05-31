@@ -355,17 +355,69 @@ fun main() {
 }
 ```
 
+### Default Methods
+
+> *Since v0.7.0.*
+
+An aspect method may supply a default body. An `impl` block may omit any method that has a default; the aspect's implementation is inherited automatically.
+
+```metel
+aspect Greet {
+    fun name(self) -> String;
+
+    fun greet(self) -> String {
+        return "Hello, " + self.name();
+    }
+}
+
+struct Person {
+    name: String,
+}
+
+impl Greet for Person {
+    fun name(self) -> String {
+        return self.name;
+    }
+    // greet() is inherited from the aspect default
+}
+
+fun main() {
+    let p = Person { name: "Ada" };
+    println(p.greet());   // Hello, Ada
+}
+```
+
+A method without a default body must be provided by every `impl` block; omitting it is a compile-time error.
+
 ### The Self Type
 
-`Self` inside a aspect definition refers to the concrete implementing type:
+`Self` inside an aspect or an `impl` block refers to the concrete implementing type.
+
+In an aspect definition, `Self` is the implementing type at the call site:
 
 ```metel
 aspect Comparable {
     fun compare(self, other: Self) -> Int;
 }
+```
 
-fun main() -> Int {
-    return 0;
+In a struct or enum `impl` block, `Self` is an alias for the type being implemented:
+
+> *Since v0.7.0.*
+
+```metel
+struct Point {
+    x: Int,
+}
+
+impl Point {
+    fun clone(self) -> Self {
+        self
+    }
+
+    fun same_as(self, other: Self) -> Bool {
+        self.x == other.x
+    }
 }
 ```
 
