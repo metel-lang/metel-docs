@@ -2,9 +2,13 @@
 sidebar_position: 3
 ---
 
-# Tutorial: Hello World
+# Tutorial: Variables, Types, and Strings
 
-This is the smallest program you can run.
+This tutorial starts from the smallest possible program and builds up to the core ideas you will use in every Metel program: variables, type annotations, mutability, and strings.
+
+## The entry point
+
+Every Metel program starts in `main`:
 
 ```metel
 fun main() {
@@ -12,20 +16,164 @@ fun main() {
 }
 ```
 
-The important part is the `main` function. The interpreter looks for it as the entry point.
-
-## Try it
-
-Save the program as `hello.mln`, then run it with:
+`fun` declares a function. `main` is the only name the interpreter looks for. `println` is a built-in that prints its argument followed by a newline. Save this as `hello.mtl` and run it:
 
 ```bash
-cargo run -- path/to/hello.mln
+cargo run -- hello.mtl
 ```
 
-## Why this matters
+Output:
+```
+hello, Metel
+```
 
-- `fun` defines a function.
-- `main` is the entry point.
-- `println` is one of the built-in functions available from the runtime.
+## Variables
 
-Once this works, move on to the next tutorial to add types and data.
+`let` creates a binding. The type is inferred from the right-hand side:
+
+```metel
+fun main() {
+    let x = 42;
+    let greeting = "hello";
+    let ratio = 1.5;
+    let flag = true;
+
+    println(x);
+    println(greeting);
+    println(ratio);
+    println(flag);
+}
+```
+
+`println` accepts any type that can be displayed — integers, floats, booleans, and strings all work directly.
+
+## Type annotations
+
+Annotations are optional but you can write them after the binding name with `:`:
+
+```metel
+fun main() {
+    let x: Int = 42;
+    let greeting: String = "hello";
+    let ratio: Float = 1.5;
+}
+```
+
+Write annotations when they make the intent clearer, or when you want the compiler to catch an unexpected type mismatch early.
+
+## Mutable variables
+
+`let` bindings are immutable by default. To rebind a variable, use `mut`:
+
+```metel
+fun main() {
+    mut count = 0;
+    count = count + 1;
+    count = count + 1;
+    println(count);   // 2
+}
+```
+
+`let` and `mut` are not types — they describe whether the binding can be reassigned. Compound assignment operators work on `mut` variables too:
+
+```metel
+fun main() {
+    mut total = 10;
+    total += 5;
+    total -= 2;
+    total *= 3;
+    println(total);   // 39
+}
+```
+
+## Strings
+
+Strings are double-quoted UTF-8 values. You can concatenate them with `+`:
+
+```metel
+fun main() {
+    let first = "hello";
+    let second = "world";
+    let combined = first + ", " + second + "!";
+    println(combined);   // hello, world!
+}
+```
+
+### String interpolation
+
+Instead of manually concatenating, you can embed expressions directly inside a string with `${…}`:
+
+```metel
+fun main() {
+    let name = "Ada";
+    let score = 98;
+    let message = "Player ${name} scored ${score} points.";
+    println(message);   // Player Ada scored 98 points.
+}
+```
+
+Anything inside `${…}` must be a type that has a `.to_string()` method — all built-in types (`Int`, `Float`, `Bool`, `String`) satisfy this. You can also use full expressions:
+
+```metel
+fun main() {
+    let a = 6;
+    let b = 7;
+    println("${a} × ${b} = ${a * b}");   // 6 × 7 = 42
+}
+```
+
+### Converting values to strings explicitly
+
+Every built-in type has a `.to_string()` method:
+
+```metel
+fun main() {
+    let n: Int = 42;
+    let f: Float = 3.14;
+    let b: Bool = true;
+
+    let s = n.to_string() + " / " + f.to_string() + " / " + b.to_string();
+    println(s);   // 42 / 3.14 / true
+}
+```
+
+You will need `.to_string()` when building strings in contexts where the interpolation syntax is not available, such as inside a function that returns `String`.
+
+## A complete example
+
+Here is a short program that puts variables, arithmetic, and strings together:
+
+```metel
+fun main() {
+    let name = "Metel";
+    let major = 0;
+    let minor = 7;
+    let patch = 0;
+
+    let version = "${major}.${minor}.${patch}";
+    let banner = "Welcome to ${name} v${version}";
+    println(banner);
+
+    mut items = 0;
+    items += 3;
+    items += 2;
+    let summary = "Processed ${items} items in this run.";
+    println(summary);
+}
+```
+
+Output:
+```
+Welcome to Metel v0.7.0
+Processed 5 items in this run.
+```
+
+## What you learned
+
+- `fun main()` is the program entry point.
+- `let` creates an immutable binding; `mut` allows reassignment.
+- Types are inferred — annotations are optional but always accepted.
+- `println` prints any built-in type directly.
+- `+` concatenates strings; `${expr}` embeds expressions inside string literals.
+
+Next: [Structs and Methods](structs-and-methods) — define your own types and attach behaviour to them.

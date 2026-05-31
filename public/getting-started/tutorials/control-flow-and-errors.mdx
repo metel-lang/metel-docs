@@ -2,34 +2,420 @@
 sidebar_position: 5
 ---
 
-# Tutorial: Control Flow and Errors
+# Tutorial: Control Flow and Error Handling
 
-This tutorial shows pattern matching and error propagation together.
+This tutorial covers loops, conditional expressions, optional values (`Perhaps<T>`), and error propagation (`Result<T, E>`). These are the tools you will reach for whenever a program needs to make decisions, repeat work, or handle failure.
+
+## If / else
+
+`if` can be used as a statement or as an expression. As a statement:
 
 ```metel
-fun parse_and_double(input: String) -> Result<Int, String> {
-    let value = parse_int(input)?;
-    match value {
-        value => Result::Ok { value: value * 2 },
-    }
-}
-
-fun describe(value: Perhaps<Int>) -> String {
-    match value {
-        Perhaps::Some { value } => "value: " + value.to_string(),
-        Perhaps::None => "no value",
+fun main() {
+    let score = 72;
+    if (score >= 90) {
+        println("A");
+    } else if (score >= 80) {
+        println("B");
+    } else if (score >= 70) {
+        println("C");
+    } else {
+        println("F");
     }
 }
 ```
 
-## What to notice
+As an expression, both branches must produce the same type:
 
-- `?` propagates an error result when the call fails.
-- `match` lets you handle the successful value explicitly.
-- `Perhaps<T>` is the standard way to represent optional values.
+```metel
+fun main() {
+    let x = 15;
+    let label = if (x % 2 == 0) { "even" } else { "odd" };
+    println("${x} is ${label}");   // 15 is odd
+}
+```
 
-## Try it
+Braceless bodies are allowed for single expressions:
 
-Replace the input with different strings and see how the return value changes.
+```metel
+fun clamp(value: Int, lo: Int, hi: Int) -> Int {
+    if (value < lo) lo else if (value > hi) hi else value
+}
 
-When you are ready, read the language reference sections on `Result`, `Perhaps`, `match`, and functions.
+fun main() {
+    println(clamp(3, 5, 10));    // 5
+    println(clamp(7, 5, 10));    // 7
+    println(clamp(15, 5, 10));   // 10
+}
+```
+
+## While
+
+`while` repeats a block as long as a condition is true:
+
+```metel
+fun main() {
+    mut n = 1;
+    mut product = 1;
+    while (n <= 5) {
+        product *= n;
+        n += 1;
+    }
+    println("5! = ${product}");   // 5! = 120
+}
+```
+
+## For-in
+
+`for-in` iterates over any collection. Arrays and integer ranges both work:
+
+```metel
+fun main() {
+    let words = ["apple", "banana", "cherry"];
+    for (let word in words) {
+        println(word);
+    }
+
+    mut sum = 0;
+    for (let i in 1..=10) {
+        sum += i;
+    }
+    println("1 + 2 + … + 10 = ${sum}");   // 55
+}
+```
+
+`..` produces an exclusive range (`0..5` yields 0, 1, 2, 3, 4). `..=` is inclusive (`0..=5` yields 0 through 5).
+
+## Loop with break
+
+`loop` runs indefinitely. `break expr` exits the loop and produces a value:
+
+```metel
+fun first_over(threshold: Int, values: Int[]) -> Perhaps<Int> {
+    mut i = 0;
+    loop {
+        if (i >= array_len(values)) {
+            break Perhaps::None;
+        }
+        if (values[i] > threshold) {
+            break Perhaps::Some { value: values[i] };
+        }
+        i += 1;
+    }
+}
+
+fun main() {
+    let data = [3, 1, 7, 2, 9, 4];
+    let result = first_over(6, data);
+    match result {
+        Perhaps::Some { value } => println("first over 6: ${value}"),   // 7
+        Perhaps::None => println("none found"),
+    }
+}
+```
+
+## Perhaps\<T\>: optional values
+
+`Perhaps<T>` represents a value that may or may not be present. It has two variants:
+
+- `Perhaps::Some { value: T }` — holds a value
+- `Perhaps::None` — holds nothing
+
+Use it whenever a function can legitimately return nothing (a search that finds no result, a field that is not set):
+
+```metel
+fun find(haystack: String[], needle: String) -> Perhaps<Int> {
+    mut i = 0;
+    for (let s in haystack) {
+        if (s == needle) {
+            return Perhaps::Some { value: i };
+        }
+        i += 1;
+    }
+    return Perhaps::None;
+}
+
+fun main() {
+    let fruits = ["apple", "banana", "cherry"];
+
+    match find(fruits, "banana") {
+        Perhaps::Some { value: idx } => println("found at index ${idx}"),   // 1
+        Perhaps::None => println("not found"),
+    }
+
+    match find(fruits, "mango") {
+        Perhaps::Some { value: idx } => println("found at index ${idx}"),
+        Perhaps::None => println("not found"),                               // not found
+    }
+}
+```
+
+`.yolo()` unwraps a `Perhaps::Some` and panics on `Perhaps::None` — use it only when you are certain the value is present:
+
+```metel
+fun main() {
+    let result = Perhaps::Some { value: 42 };
+    let n = result.yolo();    // panics if None
+    println(n);               // 42
+}
+```
+
+## Result\<T, E\>: recoverable errors
+
+`Result<T, E>` represents either a successful value or an error:
+
+- `Result::Ok { value: T }` — success
+- `Result::Err { error: E }` — failure
+
+Define your error type and return `Result` from any function that can fail:
+
+```metel
+struct ParseError {
+    message: String,
+}
+
+fun parse_positive(s: String) -> Result<Int, ParseError> {
+    if (s == "") {
+        return Result::Err { error: ParseError { message: "input is empty" } };
+    }
+    // In a real program, you'd parse the string here.
+    // For this example, accept only "42".
+    if (s == "42") {
+        return Result::Ok { value: 42 };
+    }
+    return Result::Err { error: ParseError { message: "not a valid positive integer: ${s}" } };
+}
+
+fun main() {
+    let inputs = ["42", "", "hello", "42"];
+
+    for (let input in inputs) {
+        match parse_positive(input) {
+            Result::Ok { value } => println("ok: ${value}"),
+            Result::Err { error } => println("error: ${error.message}"),
+        }
+    }
+}
+```
+
+Output:
+```
+ok: 42
+error: input is empty
+error: not a valid positive integer: hello
+ok: 42
+```
+
+## The ? operator
+
+Writing `match` on every result is verbose. `?` propagates an error automatically: if the result is `Err`, it returns the error from the current function immediately; if it is `Ok`, it unwraps the value and continues.
+
+```metel
+struct ParseError {
+    message: String,
+}
+
+fun parse_positive(s: String) -> Result<Int, ParseError> {
+    if (s == "") {
+        return Result::Err { error: ParseError { message: "empty input" } };
+    }
+    if (s == "42") { return Result::Ok { value: 42 }; }
+    if (s == "7")  { return Result::Ok { value: 7 };  }
+    return Result::Err { error: ParseError { message: "unrecognised: ${s}" } };
+}
+
+fun double_parse(s: String) -> Result<Int, ParseError> {
+    let n = parse_positive(s)?;   // returns Err immediately if parse fails
+    return Result::Ok { value: n * 2 };
+}
+
+fun main() {
+    match double_parse("42") {
+        Result::Ok { value } => println("doubled: ${value}"),   // 84
+        Result::Err { error } => println("failed: ${error.message}"),
+    }
+    match double_parse("nope") {
+        Result::Ok { value } => println("doubled: ${value}"),
+        Result::Err { error } => println("failed: ${error.message}"),   // unrecognised: nope
+    }
+}
+```
+
+`?` can only be used inside a function whose return type is `Result<_, E>`. If the error types differ, the inner error type must implement `From<InnerError>` for the outer error type — see the next section.
+
+## Error coercion with From
+
+When a function calls multiple fallible helpers that return different error types, you can unify them using the `From` aspect:
+
+```metel
+struct IoError    { msg: String }
+struct ParseError { msg: String }
+
+struct AppError { msg: String }
+
+aspect From<T> {
+    fun from(value: T) -> Self;
+}
+
+impl From<IoError> for AppError {
+    fun from(value: IoError) -> AppError {
+        AppError { msg: "io: ${value.msg}" }
+    }
+}
+
+impl From<ParseError> for AppError {
+    fun from(value: ParseError) -> AppError {
+        AppError { msg: "parse: ${value.msg}" }
+    }
+}
+
+fun read_data(path: String) -> Result<String, IoError> {
+    if (path == "data.txt") { Result::Ok  { value: "42" } }
+    else { Result::Err { error: IoError { msg: "file not found: ${path}" } } }
+}
+
+fun parse_number(s: String) -> Result<Int, ParseError> {
+    if (s == "42") { Result::Ok  { value: 42 } }
+    else { Result::Err { error: ParseError { msg: "not a number: ${s}" } } }
+}
+
+// Both ? calls coerce their error type to AppError via From
+fun load_and_parse(path: String) -> Result<Int, AppError> {
+    let raw = read_data(path)?;
+    let n   = parse_number(raw)?;
+    Result::Ok { value: n }
+}
+
+fun main() {
+    match load_and_parse("data.txt") {
+        Result::Ok { value } => println("loaded: ${value}"),   // loaded: 42
+        Result::Err { error } => println("failed: ${error.msg}"),
+    }
+    match load_and_parse("missing.txt") {
+        Result::Ok { value } => println("loaded: ${value}"),
+        Result::Err { error } => println("failed: ${error.msg}"),   // failed: io: file not found: missing.txt
+    }
+}
+```
+
+The `?` on `read_data(path)?` automatically calls `AppError::from(io_error)` because `IoError` and `AppError` differ, and `impl From<IoError> for AppError` exists. No explicit conversion needed.
+
+## Match with guards
+
+A `match` arm can have a guard — a condition that must also be true for the arm to fire:
+
+```metel
+fun classify(n: Int) -> String {
+    match n {
+        0                => "zero",
+        n if n < 0       => "negative",
+        n if n % 2 == 0  => "positive even",
+        _                => "positive odd",
+    }
+}
+
+fun main() {
+    for (let n in [-3, 0, 4, 7]) {
+        println("${n}: ${classify(n)}");
+    }
+}
+```
+
+Output:
+```
+-3: negative
+0: zero
+4: positive even
+7: positive odd
+```
+
+## A complete example: input validation pipeline
+
+The following program chains several fallible steps and collects results into a summary:
+
+```metel
+struct ValidationError { field: String, reason: String }
+
+fun validate_name(name: String) -> Result<String, ValidationError> {
+    if (name.len() == 0) {
+        return Result::Err { error: ValidationError {
+            field: "name",
+            reason: "must not be empty",
+        }};
+    }
+    if (name.len() > 32) {
+        return Result::Err { error: ValidationError {
+            field: "name",
+            reason: "must be 32 characters or fewer",
+        }};
+    }
+    Result::Ok { value: name }
+}
+
+fun validate_age(raw: String) -> Result<Int, ValidationError> {
+    // Simplified: only accept a handful of values for this example.
+    match raw {
+        "17" => Result::Err { error: ValidationError {
+            field: "age",
+            reason: "must be 18 or older",
+        }},
+        "25" => Result::Ok { value: 25 },
+        "30" => Result::Ok { value: 30 },
+        _    => Result::Err { error: ValidationError {
+            field: "age",
+            reason: "unrecognised value",
+        }},
+    }
+}
+
+struct User {
+    name: String,
+    age:  Int,
+}
+
+fun validate_user(name: String, age_str: String) -> Result<User, ValidationError> {
+    let valid_name = validate_name(name)?;
+    let valid_age  = validate_age(age_str)?;
+    Result::Ok { value: User { name: valid_name, age: valid_age } }
+}
+
+fun main() {
+    let attempts = [
+        ("Ada",  "25"),
+        ("",     "30"),
+        ("Alan", "17"),
+        ("Ada",  "30"),
+    ];
+
+    for (let attempt in attempts) {
+        let name = attempt.0;
+        let age  = attempt.1;
+        match validate_user(name, age) {
+            Result::Ok { value: user } =>
+                println("ok: ${user.name}, age ${user.age}"),
+            Result::Err { error: e } =>
+                println("invalid ${e.field}: ${e.reason}"),
+        }
+    }
+}
+```
+
+Output:
+```
+ok: Ada, age 25
+invalid name: must not be empty
+invalid age: must be 18 or older
+ok: Ada, age 30
+```
+
+## What you learned
+
+- `if`/`else` works as a statement and as an expression.
+- `while` repeats while a condition holds; `for-in` iterates over arrays and ranges.
+- `loop { break value; }` produces a value when the right moment is found.
+- `Perhaps<T>` represents an optional value; always handle both `Some` and `None`.
+- `Result<T, E>` represents a recoverable error; `?` propagates errors automatically.
+- `From<E>` lets `?` coerce between error types without explicit conversions.
+- `match` guards (`if cond`) add extra conditions to individual arms.
+
+From here, explore the [language reference](../../reference/spec.md) for the full detail on any of these features, or read the [error catalog](../../reference/error-codes.md) for the complete list of compile-time errors.
