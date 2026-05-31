@@ -1,8 +1,9 @@
 # Technical Debt Audit
 
 **Date:** 2026-05-31  
+**Last updated:** 2026-06-01  
 **Scope:** Metel interpreter architecture, typechecker, module pipeline, evaluator, and compiler-readiness  
-**Status:** Audit report with one first-pass fix applied
+**Status:** Audit report with one first-pass fix applied and follow-up audit findings added
 
 ## Executive Summary
 
@@ -10,7 +11,12 @@ Metel has a coherent high-level pipeline: module loading, name resolution, path 
 
 The highest immediate correctness risk found in this pass was builtin precedence. `std::core` is specified as a lowest-priority auto-glob, but builtin schemes were inserted in ways that could override local or imported names during inference, construction, and export filtering. That has been fixed in this run.
 
-The highest future-scaling risks are the incomplete public value export model, eager glob conflict detection, the amount of semantic re-derivation in Pass 2, and the evaluator's current `Rc<RefCell<Value>>` environment model. These are not all bugs today, but they are likely blockers for compiler-oriented architecture and for linear/reference semantics.
+The 2026-06-01 follow-up audit confirmed two additional implementation bugs:
+
+- Index assignment accepts arbitrary index expressions in the parser and typechecker, but the evaluator only supports literal or identifier indexes in assignment lvalues and fails with an internal error for expressions such as `arr[i + 1] = value`.
+- Same-tier glob conflicts are still reported eagerly even when the duplicated name is never referenced, contrary to the spec and ADR-0026.
+
+The highest future-scaling risks are the incomplete public value export model, eager glob conflict detection, the amount of semantic re-derivation in Pass 2, and the evaluator's current `Rc<RefCell<Value>>` environment model. These are not all bugs today, but they are likely blockers for compiler-oriented architecture and for linear/reference semantics. Public docs are also drifting from the implementation: the current public spec still mentions `.mln` source files and `v0.6.4`, while the interpreter and tests use `.mtl` and the crate is `v0.7.0`.
 
 ## Findings
 
@@ -34,9 +40,11 @@ This matters later because compiler symbol resolution must have a single, durabl
 
 **Severity:** High  
 **Category:** Spec mismatch, public API model, module semantics  
-**Affected files:** `docs/public/spec/modules.md`, `metel-interpreter/src/grammar.pest`, `metel-interpreter/src/ast/mod.rs`, `metel-interpreter/src/name_resolver.rs`, `metel-interpreter/src/typechecker/mod.rs`, `metel-interpreter/src/evaluator/mod.rs`
+**Affected files:** `docs/public/reference/spec/modules.md`, `docs/public/reference/spec/declarations.md`, `docs/public/reference/spec/grammar.md`, `metel-interpreter/src/grammar.pest`, `metel-interpreter/src/ast/mod.rs`, `metel-interpreter/src/name_resolver.rs`, `metel-interpreter/src/typechecker/mod.rs`, `metel-interpreter/src/evaluator/mod.rs`
 
-The spec says `pub` is valid on top-level `let` and `mut` bindings. The AST does not carry visibility for `LetDecl` or `MutDecl`, the grammar does not parse `pub let` or `pub mut`, and the public export pipeline is function-scheme oriented.
+The spec is internally inconsistent. The modules and grammar sections say `pub` is valid on top-level `let` and `mut` bindings. The declarations section only lists `fun`, `struct`, `enum`, and `aspect`. The implementation follows the narrower model: the AST does not carry visibility for `LetDecl` or `MutDecl`, the grammar does not parse `pub let` or `pub mut`, and the public export pipeline is function-scheme oriented.
+
+The 2026-06-01 follow-up audit verified this with a temporary program: `pub let answer = 42;` fails with P0001 at parse time.
 
 This matters now because user-facing documentation promises a capability that the implementation cannot accept. It also means module API tests can miss a whole category of public values.
 
@@ -52,7 +60,9 @@ This matters later because compiler-facing module ABI cannot be function-only. C
 **Category:** Module semantics, diagnostic accuracy  
 **Affected files:** `metel-interpreter/src/typechecker/mod.rs`, `metel-interpreter/src/name_resolver.rs`
 
-The spec says two user globs exporting the same name are a T0011 conflict only if that name is actually referenced. The current `build_import_schemes` path reports same-tier glob conflicts while building imports, even if the conflicting name is unused.
+The spec and ADR-0026 say two user globs exporting the same name are a T0011 conflict only if that name is actually referenced. The current `build_import_schemes` path reports same-tier glob conflicts while building imports, even if the conflicting name is unused.
+
+The 2026-06-01 follow-up audit verified this with a temporary program: `import a::*; import b::*; fun main() -> Int { return 0; }` still reports T0011 for an unused duplicated `foo`.
 
 This matters now because unused imports can reject otherwise valid modules. It also makes diagnostics less precise because the error is tied to a synthetic file-level span rather than the actual use site.
 
@@ -62,7 +72,36 @@ This matters later because scalable module resolution needs to carry ambiguity a
 
 **Safe to fix now:** Fix soon, but it is larger than a local patch.
 
-### 4. Pass 2 Re-Derives Too Much Semantic Information
+### 4. Index Assignment Re-enters Untyped Lvalue Evaluation
+
+**Severity:** High  
+**Category:** Correctness, stage boundary, compiler-readiness  
+**Affected files:** `metel-interpreter/src/typechecker/inference.rs`, `metel-interpreter/src/typechecker/construction.rs`, `metel-interpreter/src/typed_ast/mod.rs`, `metel-interpreter/src/evaluator/mod.rs`, `metel-interpreter/src/evaluator/lvalue.rs`
+
+The grammar and typechecker allow assignment to indexed lvalues where the index is an arbitrary expression. Inference checks the object and index expression normally. Construction then stores the original untyped `AssignTarget` inside `TypedExpr::Assign`. The evaluator handles typed assignment by calling `eval_untyped_index` and `eval_untyped_lvalue_value`, which only support literal or identifier index expressions and a small subset of receiver forms.
+
+The 2026-06-01 follow-up audit verified this with a temporary program:
+
+```metel
+fun main() {
+    mut arr: Int[] = [1, 2, 3];
+    mut i = 0;
+    arr[i + 1] = 9;
+    assert(arr[1] == 9);
+}
+```
+
+The program reaches evaluation and fails with `[I0001] internal error: index expression too complex; assign the index to a variable first`.
+
+This matters now because a program accepted by earlier stages fails as an internal runtime error instead of executing or being rejected with a proper diagnostic.
+
+This matters later because assignment targets are exactly where linear types, borrows, moves, and write permissions need precise place semantics. Keeping raw AST assignment targets inside typed AST will be a liability for compiler lowering and ownership/alias analysis.
+
+**Recommended action:** Add a typed lvalue/place representation, for example `TypedAssignTarget` or `Place`, whose index and receiver components are typed expressions. Evaluate typed places in the evaluator and use the same representation later for compiler lowering. Add regression tests for `arr[i + 1] = v`, compound assignment with computed indexes, and chained field/index assignment.
+
+**Safe to fix now:** Yes, if scoped to typed lvalue construction/evaluation and regression tests. It should not require a spec decision because current grammar and typechecker already accept the behavior.
+
+### 5. Pass 2 Re-Derives Too Much Semantic Information
 
 **Severity:** Medium  
 **Category:** Typechecker architecture, compiler-readiness  
@@ -78,23 +117,25 @@ This matters later because a compiler backend needs a stable, lowerable represen
 
 **Safe to fix now:** Defer until compiler/IR planning. Do not redesign this opportunistically inside feature work.
 
-### 5. Evaluator Environment Semantics Are Intentionally Temporary
+### 6. Closure Capture Semantics Are Now Spec/Architecture Inconsistent
 
 **Severity:** Medium  
-**Category:** Runtime architecture, future memory model  
-**Affected files:** `metel-interpreter/src/evaluator/mod.rs`, `metel-interpreter/src/evaluator/call.rs`
+**Category:** Runtime architecture, spec consistency, future memory model  
+**Affected files:** `docs/public/reference/spec/functions.md`, `metel-interpreter/docs/evaluator.md`, `metel-interpreter/src/evaluator/mod.rs`, `metel-interpreter/src/evaluator/call.rs`
 
-The evaluator stores bindings as `Rc<RefCell<Value>>`. This conveniently supports mutation and recursive closure knot-tying, but closure capture semantics currently share mutable state through cloned environments. The evaluator docs correctly describe this as PoC behavior.
+The evaluator stores bindings as `Rc<RefCell<Value>>`. This conveniently supports mutation and recursive closure knot-tying, but closure capture semantics currently share mutable state through cloned environments.
+
+The public spec now says captured `mut` variables are shared and mutations are visible in the outer scope. The evaluator documentation still says this behavior is an unintentional consequence of the PoC design and that RFC-0006 will establish the intended semantics.
 
 This matters now because tests or features that depend on this behavior can lock in semantics that RFC-0006 and the memory/reference model may later reject.
 
 This matters later because linear types, move capture, `@T` read references, `*T` pointers, and region allocation need ownership and aliasing behavior that cannot be represented as unconstrained `Rc<RefCell<Value>>` sharing.
 
-**Recommended action:** Keep evaluator changes small until closure capture and memory model decisions are resolved. When those decisions land, redesign the runtime environment around explicit capture modes and value ownership rather than incidental shared cells.
+**Recommended action:** Make a spec/ADR decision. If shared captures are now accepted language behavior, update evaluator docs and ADR references to remove the "unintentional" warning and explicitly call out the implications for future linear/reference semantics. If shared captures are not accepted, revert or qualify the public spec text and keep tests from depending on this behavior.
 
-**Safe to fix now:** No. Defer until memory-model and closure-capture decisions land.
+**Safe to fix now:** Documentation can be fixed now after a decision. Runtime redesign should wait for closure-capture and memory-model decisions.
 
-### 6. Type and Value Export Data Are Too Function-Centric
+### 7. Type and Value Export Data Are Too Function-Centric
 
 **Severity:** Medium  
 **Category:** Module ABI, compiler-readiness  
@@ -110,7 +151,7 @@ This matters later because compiler module interfaces should distinguish exporte
 
 **Safe to fix now:** Fix soon as part of module API cleanup, not as a drive-by refactor.
 
-### 7. Import and Path Normalization Still Depend on Name Strings
+### 8. Import and Path Normalization Still Depend on Name Strings
 
 **Severity:** Medium  
 **Category:** Stage boundary, compiler-readiness  
@@ -125,6 +166,38 @@ This matters later because a compiler should lower from stable symbol IDs, not s
 **Recommended action:** Add symbol IDs or a resolved-name handle to normalized/typed nodes. Keep source spelling separately for diagnostics.
 
 **Safe to fix now:** Defer until the module interface or HIR work begins.
+
+### 9. Public Spec Version, Extension, and CLI Version Drift
+
+**Severity:** Medium  
+**Category:** Spec accuracy, tooling, release hygiene  
+**Affected files:** `docs/public/reference/spec.md`, `docs/public/reference/spec/modules.md`, `docs/public/release-notes/changelog.md`, `metel-interpreter/Cargo.toml`, `metel-interpreter/src/main.rs`, `metel-interpreter/src/module_loader.rs`
+
+The public spec frontmatter still says `version: v0.6.4`, while the changelog and crate version are `v0.7.0`. The public spec says source files use the `.mln` extension and the modules section uses `.mln` throughout. The implementation and tests use `.mtl`, and the module loader resolves imports by appending `.mtl`. The CLI also hardcodes `#[command(version = "0.1.0")]` rather than deriving from `Cargo.toml`.
+
+This matters now because the public reference does not describe the actual tool users run.
+
+This matters later because the docs release workflow depends on the public spec being authoritative. Extension/version drift undermines spec discipline and makes future compiler/tooling conventions ambiguous.
+
+**Recommended action:** Decide whether `.mtl` or `.mln` is the canonical source extension. Then update either the public docs or implementation consistently. Also change the CLI version to derive from `CARGO_PKG_VERSION` and keep the public spec frontmatter aligned with the changelog.
+
+**Safe to fix now:** Yes for version derivation and docs alignment after confirming the intended extension.
+
+### 10. `std::core` Public Surface Is Split Across Resolver and Typechecker
+
+**Severity:** Medium  
+**Category:** Module architecture, spec consistency  
+**Affected files:** `docs/public/reference/spec/modules.md`, `docs/public/reference/spec/runtime.md`, `metel-interpreter/src/name_resolver.rs`, `metel-interpreter/src/typechecker/mod.rs`, `metel-interpreter/src/typechecker/registry.rs`, `metel-interpreter/src/evaluator/builtins.rs`
+
+The spec says `std::core` contains builtin functions, core types, and builtin aspects. The typechecker seeds builtin function schemes into `GlobalExports` for `std::core`, while the name resolver injects only a small virtual public surface for `Perhaps`, `Result`, `Display`, `Iterable`, and `From`. This split currently works for common imports because different stages compensate for each other, but there is no single authoritative representation of the virtual module's public API.
+
+This matters now for re-export and enumeration-like behavior. A facade that attempts to re-export `std::core::*` depends on the resolver's `pub_surface`, which does not include builtin functions.
+
+This matters later because a compiler module interface cannot be assembled from stage-local special cases. The standard prelude should look like a normal module interface to resolution, typechecking, lowering, and documentation generation.
+
+**Recommended action:** Introduce one `StdCoreSurface` or `StdPreludeInterface` provider that exposes builtin values, types, aspects, and methods to resolver, typechecker, evaluator parity tests, and docs generation.
+
+**Safe to fix now:** Fix soon as module-interface cleanup.
 
 ## First-Pass Fix Applied
 
@@ -146,17 +219,20 @@ Result: all tests pass.
 
 ## Suggested Follow-Up Issues
 
-1. **Implement public top-level value exports.** Add grammar and AST visibility for `pub let` / `pub mut`, export their schemes, seed evaluator imports, and add module semantics tests.
+1. **Fix typed assignment places.** Add a typed lvalue/place representation, stop storing raw AST assignment targets inside `TypedExpr::Assign`, and add regression tests for computed index assignment.
 
 2. **Defer same-tier glob conflicts until use site.** Carry ambiguous glob bindings through import resolution and emit T0011 only when the ambiguous name is referenced.
 
-3. **Introduce a structured module interface.** Replace function-only `GlobalExports` with a representation for exported values, types, aspects, impl metadata, and re-exports.
+3. **Resolve the public top-level value export decision.** Either remove `pub let` / `pub mut` from the public spec for now or implement grammar, AST visibility, export schemes, evaluator seeding, and tests.
 
-4. **Design a compiler-facing HIR boundary.** Define a typed, lowerable representation with resolved symbol IDs, import sources, method targets, and generic instantiations.
+4. **Align public spec metadata and source extension.** Update version/frontmatter, examples, module docs, and either the implementation or docs so `.mtl` / `.mln` has one canonical answer.
 
-5. **Add symbol identity to resolved paths.** Stop relying on final path segments as semantic identity across normalization, typechecking, and evaluation.
+5. **Decide closure capture semantics before linear-type work.** Update the public spec, evaluator docs, and ADRs so shared captured mutation is either accepted behavior or explicitly deferred/unstable.
 
-6. **Plan evaluator closure-environment redesign with RFC-0006 and RFC-0028.** Avoid stabilizing current `Rc<RefCell<Value>>` capture behavior before closure and memory-model decisions are incorporated.
+6. **Introduce a structured module interface.** Replace function-only `GlobalExports` with a representation for exported values, types, aspects, impl metadata, standard-library surface, and re-exports.
 
-7. **Audit inference/construction duplication.** Identify cases where Pass 2 mirrors Pass 1 logic and either extract shared helpers or move the information into typed/HIR nodes.
+7. **Design a compiler-facing HIR boundary.** Define a typed, lowerable representation with resolved symbol IDs, import sources, method targets, generic instantiations, and eventually ownership/place metadata.
 
+8. **Add symbol identity to resolved paths.** Stop relying on final path segments as semantic identity across normalization, typechecking, and evaluation.
+
+9. **Audit inference/construction duplication.** Identify cases where Pass 2 mirrors Pass 1 logic and either extract shared helpers or move the information into typed/HIR nodes.
