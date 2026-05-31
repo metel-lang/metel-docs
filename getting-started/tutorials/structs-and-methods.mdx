@@ -1,0 +1,36 @@
+---
+sidebar_position: 4
+---
+
+# Tutorial: Structs and Methods
+
+Metel uses structs for data and `impl` blocks for behaviour.
+
+```metel
+struct Point {
+    x: Float,
+    y: Float,
+}
+
+impl Point {
+    fun magnitude(self) -> Float {
+        return (self.x * self.x) + (self.y * self.y);
+    }
+}
+
+fun main() {
+    let point = Point { x: 3.0, y: 4.0 };
+    println(point.magnitude());
+}
+```
+
+## What to notice
+
+- Struct fields are declared with explicit types.
+- `impl Point` groups methods for the `Point` type.
+- `self` is the receiver for the method.
+- `let` creates an immutable binding.
+
+## Next step
+
+Try changing the point coordinates and rerun the program. The method body stays the same; only the data changes.

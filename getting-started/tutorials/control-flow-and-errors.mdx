@@ -1,0 +1,35 @@
+---
+sidebar_position: 5
+---
+
+# Tutorial: Control Flow and Errors
+
+This tutorial shows pattern matching and error propagation together.
+
+```metel
+fun parse_and_double(input: String) -> Result<Int, String> {
+    let value = parse_int(input)?;
+    match value {
+        value => Result::Ok { value: value * 2 },
+    }
+}
+
+fun describe(value: Perhaps<Int>) -> String {
+    match value {
+        Perhaps::Some { value } => "value: " + value.to_string(),
+        Perhaps::None => "no value",
+    }
+}
+```
+
+## What to notice
+
+- `?` propagates an error result when the call fails.
+- `match` lets you handle the successful value explicitly.
+- `Perhaps<T>` is the standard way to represent optional values.
+
+## Try it
+
+Replace the input with different strings and see how the return value changes.
+
+When you are ready, read the language reference sections on `Result`, `Perhaps`, `match`, and functions.
