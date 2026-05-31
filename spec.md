@@ -42,4 +42,4 @@ The language's core design principles are:
 | [Runtime](spec/runtime.md) | Panics, built-in functions |
 | [Grammar](spec/grammar.md) | Formal grammar |
 
-See [Changelog](../changelog.md) for version history.
+See [Changelog](changelog.md) for version history.

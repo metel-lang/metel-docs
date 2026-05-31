@@ -257,7 +257,7 @@ The interpreter reached an impossible state. This is a bug in the interpreter â€
 [I0001] internal error: binop: unsupported operand types (typechecker should have caught this)
 ```
 
-**What to do:** please file a bug report at <https://codeberg.org/metel-lang/metel/issues> with the source program that triggered this error.
+**What to do:** please file a bug report at [the Metel issue tracker](https://codeberg.org/metel-lang/metel/issues) with the source program that triggered this error.
 
 ### I0002 â€” Not implemented
 
