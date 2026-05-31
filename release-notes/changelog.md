@@ -202,15 +202,15 @@ Initial language version. Implemented by the tree-walk interpreter.
 - Structs: literals, field access, methods (`impl`), `mut self`, associated functions
 - Enums: unit and struct-like variants, `impl` blocks
 - Built-in generic types: `Perhaps<T>`, `Result<T, E>`, `Array<T>` / `T[]` (as special cases; user-defined generics are v0.3.0)
-- Exhaustive pattern matching: all pattern kinds (see [Pattern Kinds](spec/expressions.md#pattern-kinds))
+- Exhaustive pattern matching: all pattern kinds (see [Pattern Kinds](../reference/spec/expressions.md#pattern-kinds))
 - Control flow: `if`/`else`, `while`, `for`, `for-in` (arrays and ranges only), `loop`, `break`/`continue`, `return`
 - Type casting: `as` for `Int ↔ Float`
 - Never type (`!`)
 - Tuples
-- Built-in functions (see [Built-in Functions](spec/runtime.md#built-in-functions))
+- Built-in functions (see [Built-in Functions](../reference/spec/runtime.md#built-in-functions))
 
 **Not included (v0.3.0+):**
-- User-defined generic functions and types (see [Generics](spec/types.md#generics))
-- User-defined aspects and `impl Aspect for Type` (see [Aspects](spec/declarations.md#aspects))
-- `From`-based `?` coercion across different error types (see [The ? Operator](spec/functions.md#the--operator))
-- User-defined `Iterable<T>` implementations (see [For-In](spec/expressions.md#for-in))
+- User-defined generic functions and types (see [Generics](../reference/spec/types.md#generics))
+- User-defined aspects and `impl Aspect for Type` (see [Aspects](../reference/spec/declarations.md#aspects))
+- `From`-based `?` coercion across different error types (see [The ? Operator](../reference/spec/functions.md#the--operator))
+- User-defined `Iterable<T>` implementations (see [For-In](../reference/spec/expressions.md#for-in))
