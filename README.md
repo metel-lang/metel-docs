@@ -7,18 +7,13 @@ This repository is intended to be used as a submodule in:
 - `metel`
 - `metel-website`
 
-Layout:
+Authoritative layout:
 
-- `public/`: external language documentation consumed by the website
+- `public/`: external language documentation published by the website
 - `internal/`: implementation-facing internal docs and RFCs
 - `reports/`: design reports and longer-form research notes
 
-Initial merge source:
-
-- `metel/docs/public`, `metel/docs/internal`, `metel/docs/reports`
-- website-only public docs from `metel-wiki/docs`
-
-For this initial snapshot, overlapping public files were taken from `metel` and website-only pages were added from `metel-wiki`.
+The top-level docs that used to mirror `public/` have been removed so there is a single source of truth for the public docs tree.
 
 Migration safety:
 
