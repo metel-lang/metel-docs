@@ -1,0 +1,42 @@
+---
+sidebar_position: 2
+---
+
+# Quickstart
+
+This page gives you the shortest path from a blank file to a running Metel program.
+
+## 1. Build the interpreter
+
+From the `metel` repository, build the interpreter first:
+
+```bash
+cd metel-interpreter
+cargo build --release
+```
+
+## 2. Write a program
+
+Create a file such as `hello.mln`:
+
+```metel
+fun main() {
+    println("hello, Metel");
+}
+```
+
+## 3. Run it
+
+Use the interpreter on the file path:
+
+```bash
+cargo run -- path/to/hello.mln
+```
+
+If you are just testing changes, `cargo run --` is enough. If you want the fastest repeated run, keep the release build from step 1 and point the interpreter at the file you want to execute.
+
+## What next
+
+- Read the [first tutorial](tutorials/hello-world) for a slower, guided introduction.
+- Skim the [language reference](../reference/spec.md) once you know the basic execution flow.
+- Check the [error catalog](../reference/error-codes.md) when you want the public failure modes.

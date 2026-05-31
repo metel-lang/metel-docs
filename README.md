@@ -9,7 +9,7 @@ This repository is intended to be used as a submodule in:
 
 Authoritative layout:
 
-- `public/getting-started/`: entry points and example-driven introductory docs
+- `public/getting-started/`: intro, quickstart, and guided tutorials
 - `public/reference/`: the language reference, error codes, and spec sub-sections
 - `public/release-notes/`: versioned change logs and release history
 - `internal/`: implementation-facing internal docs and RFCs
