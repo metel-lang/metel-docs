@@ -19,3 +19,7 @@ Initial merge source:
 - website-only public docs from `metel-wiki/docs`
 
 For this initial snapshot, overlapping public files were taken from `metel` and website-only pages were added from `metel-wiki`.
+
+Migration safety:
+
+- `migration/website-pre-submodule/` preserves the pre-submodule `metel-wiki/docs` working tree snapshot so no in-flight website docs edits are lost during the split.
