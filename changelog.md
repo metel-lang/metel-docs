@@ -4,6 +4,24 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.7.0
+
+Language quality and expression power. Shipped from METEL-75–82 (unsprinted hotfix batch).
+
+**New language features:**
+- **String interpolation** (`${expr}`) — string literals may contain `${…}` placeholders; each hole desugars to `.to_string()` concatenated with surrounding fragments via `+`; nested string literals inside holes are supported (RFC-0010, METEL-81, METEL-82)
+- **String concatenation** — `String + String -> String` is now a valid expression; the `+` operator on strings is the primitive underlying interpolation (METEL-78)
+- **Aspect default methods** — an aspect method may provide a default body; `impl` blocks may omit defaulted methods and inherit them automatically; required methods without a default still produce a compile-time error if omitted (METEL-77)
+- **`Self` in impl signatures** — `Self` may be used as a parameter or return type in struct and enum `impl` method signatures, as an alias for the implementing type (METEL-79)
+- **Match arm blocks** — match arm bodies may be a block (`{ stmts* expr? }`) in addition to a bare expression, consistent with all other block-bodied constructs (RFC-0018, METEL-78)
+
+**Bug fixes:**
+- `?` (error propagation) — routed through `From`-based coercion; when no `From` impl exists for the error types the typechecker now emits T0007 (invalid cast) instead of a misleading type mismatch (METEL-80)
+- Generic functions returning an ascribed `None : Perhaps<T>` now correctly constrain the inferred return type `T` through the annotation (METEL-76)
+
+**Tooling / internal:**
+- `mod` and `use` removed from the reserved keyword list; they had no grammar productions and blocked their use as ordinary identifiers (METEL-75)
+
 ## v0.6.4
 
 Module system technical debt. Shipped by Sprint 15 (`sprint/15`).

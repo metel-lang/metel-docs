@@ -59,6 +59,31 @@ Integer and float are distinct types and do not implicitly coerce.
 | `\"`     | Double quote    |
 | `\r`     | Carriage return |
 
+**String interpolation.** A string literal may contain one or more `${expr}` placeholders:
+
+```metel
+let name = "world";
+let msg = "hello, ${name}!";       // "hello, world!"
+let n = 42;
+let s  = "n=${n}";                 // "n=42"
+```
+
+> *Since v0.7.0.*
+
+The expression inside `${…}` may be any expression whose type implements the `Display` aspect (i.e. has a `.to_string()` method). The placeholder desugars to `.to_string()` concatenated with the surrounding literal fragments using `+`. String literals may appear inside `${…}`:
+
+```metel
+let x = "${if (true) { "yes" } else { "no" }}";
+```
+
+**String concatenation.** Two `String` values may be joined with `+`:
+
+```metel
+let full = "hello" + ", " + "world";   // "hello, world"
+```
+
+> *Since v0.7.0.*
+
 **Booleans:** `true`, `false`
 
 **Absence literal:** `None`
