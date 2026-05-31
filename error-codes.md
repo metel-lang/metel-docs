@@ -267,4 +267,4 @@ The program uses a language feature that is not yet supported in this version of
 [I0002] internal error: generic functions are not supported in v0.1
 ```
 
-**What to do:** check the [changelog](changelog.md) for the current supported feature set and the [versioning guide](../internal/versioning.md) for the planned implementation milestone.
+**What to do:** check the [changelog](changelog.md) for the current supported feature set and the release plan for the planned implementation milestone.
