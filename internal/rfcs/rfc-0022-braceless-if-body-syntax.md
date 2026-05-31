@@ -64,7 +64,7 @@ Target v0.3. This is a pure syntax extension with no type system or evaluator im
 
 ## References
 
-- Language spec: `docs/public/spec.md`
-- `docs/public/spec/expressions.md` — `if` expression section
+- Language spec: `docs/public/reference/spec.md`
+- `docs/public/reference/spec/expressions.md` — `if` expression section
 - `metel-interpreter/src/grammar.pest` line 151 — current `if_expr` rule
 - `metel-interpreter/src/parser/mod.rs` line 513 — `parse_if_expr`

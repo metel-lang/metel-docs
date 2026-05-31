@@ -71,7 +71,7 @@ A bare `expr` arm is sugar for a block with no statements and the expression as 
 
 ### Spec
 
-The match expression section in `docs/public/spec/expressions.md` is updated to show block bodies in examples and to document that both forms are valid:
+The match expression section in `docs/public/reference/spec/expressions.md` is updated to show block bodies in examples and to document that both forms are valid:
 
 ```metel
 match value {
@@ -102,7 +102,7 @@ Small, self-contained change. No design risk. Implement alongside other v0.2 gra
 
 ## References
 
-- Language spec: `docs/public/spec/expressions.md`
+- Language spec: `docs/public/reference/spec/expressions.md`
 - Grammar: `metel-interpreter/src/grammar.pest`
 
 ## Decision

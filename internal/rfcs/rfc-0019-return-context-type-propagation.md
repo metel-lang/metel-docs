@@ -121,7 +121,7 @@ Small, isolated fix with no design risk. No new language surface. Implement befo
 
 ## References
 
-- Language spec: `docs/public/spec/types.md` (§ `Perhaps<T>`, § `Result<T, E>`)
+- Language spec: `docs/public/reference/spec/types.md` (§ `Perhaps<T>`, § `Result<T, E>`)
 - `metel-interpreter/src/typechecker/construction.rs`
 - `metel-interpreter/src/typechecker/inference.rs` — `InferContext::current_return_type` for reference
 

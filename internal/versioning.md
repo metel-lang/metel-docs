@@ -35,7 +35,7 @@ Versions v0.1 through v0.4 were tagged with two-digit identifiers (`v0.3`, `v0.4
 
 ## The Spec as a Living Document
 
-`docs/public/spec.md` is the entry point for the language specification. It links to focused sub-files in `docs/public/spec/`. The spec describes the full language including features planned for future versions. Version snapshots are captured as **git tags**, not separate document files.
+`docs/public/reference/spec.md` is the entry point for the language specification. It links to focused sub-files in `docs/public/reference/spec/`. The public docs are split into `getting-started/`, `reference/`, and `release-notes/` so the published site can stay navigable without flattening everything into one directory. The spec describes the full language including features planned for future versions. Version snapshots are captured as **git tags**, not separate document files.
 
 ### Version tags
 
@@ -89,7 +89,7 @@ spec_status: pending   # pending | done — tracks whether the relevant spec/doc
 
 `spec_status` is required for all `accepted` RFCs. It is independent of `status`:
 - `pending` — RFC is accepted but the relevant spec or architecture docs have not yet been updated to reflect its decisions. **Implementation is blocked until this is `done`.**
-- `done` — The spec (for language-visible RFCs: `docs/public/spec/`) or internal architecture docs (for implementation RFCs: `metel-interpreter/docs/`) have been updated. Implementation may proceed.
+- `done` — The spec (for language-visible RFCs: `docs/public/reference/spec/`) or internal architecture docs (for implementation RFCs: `metel-interpreter/docs/`) have been updated. Implementation may proceed.
 
 The target version is **not** stored in the RFC frontmatter. It lives in exactly one place: the project milestone. The `## Decision` section records it in prose (`**Target:** vX.Y.0`) as a human-readable audit trail, but the milestone is the authoritative field.
 
@@ -132,7 +132,7 @@ Implementation issues are assigned to the **version milestone** they target. Use
 
 ## Changelog
 
-Version entries live in `docs/public/changelog.md`. Each entry lists RFCs incorporated, features added, breaking changes (if any), and whether it includes spec changes.
+Version entries live in `docs/public/release-notes/changelog.md`. Each entry lists RFCs incorporated, features added, breaking changes (if any), and whether it includes spec changes.
 
 Patch releases (`vX.Y.Z` with Z > 0) get a short entry listing only the interpreter changes — no spec section needed.
 
@@ -141,5 +141,5 @@ Patch releases (`vX.Y.Z` with Z > 0) get a short entry listing only the interpre
 ## References
 
 - Project vision and dual-mode commitment: `docs/internal/vision.md`
-- Language spec: `docs/public/spec.md`
-- Changelog: `docs/public/changelog.md`
+- Language spec: `docs/public/reference/spec.md`
+- Changelog: `docs/public/release-notes/changelog.md`

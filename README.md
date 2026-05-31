@@ -9,11 +9,13 @@ This repository is intended to be used as a submodule in:
 
 Authoritative layout:
 
-- `public/`: external language documentation published by the website
+- `public/getting-started/`: entry points and example-driven introductory docs
+- `public/reference/`: the language reference, error codes, and spec sub-sections
+- `public/release-notes/`: versioned change logs and release history
 - `internal/`: implementation-facing internal docs and RFCs
 - `reports/`: design reports and longer-form research notes
 
-The top-level docs that used to mirror `public/` have been removed so there is a single source of truth for the public docs tree.
+The old flat public-docs layout has been split into these buckets so the website can keep the public surface readable without duplicating content.
 
 Migration safety:
 
