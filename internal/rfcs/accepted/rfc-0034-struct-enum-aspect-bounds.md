@@ -156,17 +156,56 @@ generic_param  = { ident ~ (":" ~ bound_list)? }
 bound_list     = { type_expr ~ ("+" ~ type_expr)* }
 ```
 
-The addition on struct/enum declarations is `where_clause?`. The `where_clause` and `WhereConstraint` productions are defined in RFC-0002 and unchanged.
+The addition on struct/enum declarations is `where_clause?`. The `where_clause` and `where_constraint` productions from RFC-0002 must also be updated to use `bound_list`, since `where T: Display + Clone` is now valid:
+
+```pest
+where_clause     = { "where" ~ where_constraint ~ ("," ~ where_constraint)* }
+where_constraint = { ident ~ ":" ~ bound_list }
+```
+
+This supersedes the RFC-0002 grammar for `where_constraint` (which used a single `type_expr`).
 
 ### AST Extension
 
-Add `where_clause` to `StructDecl` and `EnumDecl` in `src/ast/mod.rs`:
+The `TypeParam` struct must change from a single optional bound to a list of bounds to support inline `+`:
+
+```rust
+// Before (RFC-0002):
+pub struct TypeParam {
+    pub name: String,
+    pub bound: Option<TypeExpr>,   // single bound only
+}
+
+// After (this RFC):
+pub struct TypeParam {
+    pub name: String,
+    pub bounds: Vec<TypeExpr>,     // empty = unconstrained; multiple = all must be satisfied
+}
+```
+
+Similarly, `WhereClause` must store a list of bounds per constraint:
+
+```rust
+// Before (RFC-0002):
+pub struct WhereClause {
+    pub constraints: Vec<(String, TypeExpr)>,
+}
+
+// After (this RFC):
+pub struct WhereClause {
+    pub constraints: Vec<(String, Vec<TypeExpr>)>,  // (param_name, [bound, ...])
+}
+```
+
+The typechecker normalises both sources into the same `(param_name, [bounds])` map before enforcement — inline `+` bounds and `where` clause bounds for the same parameter are merged.
+
+Add `where_clause` to `StructDecl` and `EnumDecl`:
 
 ```rust
 pub struct StructDecl {
     pub name: String,
     pub generic_params: Vec<TypeParam>,
-    pub where_clause: Option<WhereClause>,  // new; WhereClause defined by RFC-0002
+    pub where_clause: Option<WhereClause>,  // new
     pub fields: Vec<FieldDecl>,
     pub span: Span,
 }

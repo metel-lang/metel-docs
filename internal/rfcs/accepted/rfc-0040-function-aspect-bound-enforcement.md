@@ -138,15 +138,29 @@ impl SortedList<T> {
 
 ## Implementation Notes
 
-The implementation should follow the same path as RFC-0034's struct enforcement:
+### AST prerequisite (RFC-0034)
+
+RFC-0034 changes `TypeParam.bound: Option<TypeExpr>` → `TypeParam.bounds: Vec<TypeExpr>` and `WhereClause.constraints: Vec<(String, TypeExpr)>` → `Vec<(String, Vec<TypeExpr>)>`. All function-level enforcement in this RFC depends on that AST change landing first (METEL-60).
+
+### Normalisation
+
+Before enforcement, the typechecker must merge inline bounds and `where` clause bounds for the same parameter into a single list. Given:
+
+```metel
+fun foo<T: Display + Clone>(x: T) where T: Comparable { ... }
+```
+
+The effective bound list for `T` is `[Display, Clone, Comparable]`. Duplicates are ignored.
+
+### Enforcement algorithm
 
 1. After type inference, walk all function call expressions.
 2. For each generic function call, resolve the concrete type arguments (explicit or inferred).
-3. Look up the function's declared bounds.
-4. For each bound, check whether the concrete type argument has an `impl` for the required aspect in the current scope.
-5. If not, emit T0012.
+3. Merge inline `TypeParam.bounds` and matching `where_clause` entries into a single bound list per type parameter.
+4. For each bound in the list, check whether the concrete type argument has a registered `impl AspectName for T` in `impl_aspect_env`.
+5. If not, emit T0012 with span on the call-site argument.
 
-The bound-availability pass for function bodies (decision 3) can piggyback on the existing `impl_aspect_env` lookup introduced by RFC-0034.
+The bound-availability pass for function bodies (decision 3) seeds the type environment with the merged bound list so all aspect methods are in scope inside the function.
 
 ---
 
