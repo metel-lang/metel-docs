@@ -9,7 +9,7 @@ date: '2026-05-23'
 Introduce `:` as a type ascription operator in expression position, and preserve `as` for explicit runtime conversions. `:` reads as "this expression has type T" and guides type inference without any runtime cost. `as` means "convert this value to type T" and is a safe, explicit, runtime operation.
 
 ---
-
+:
 ## Motivation
 
 The current grammar has:
@@ -112,7 +112,7 @@ Expr::Ascribe(inner, ann, span) => {
 The ascribed type becomes `expected_ty` for the inner expression. This is the key change that makes `[] : String[]` work: `expected_ty = Some(Type::Array(String))` flows into the empty array branch.
 
 ---
-
+:
 ## Preserved and extended: `as` for explicit conversions
 
 `as` is kept as the explicit runtime conversion operator. It is **not** unsafe — in Rust, `as` requires no `unsafe` block; in Swift, `as` is safe for upcasts and checked downcasts. The word signals "I am deliberately converting this value," which is exactly the right mental model.
@@ -142,7 +142,7 @@ The `Expr::Cast` variant can be renamed to `Expr::Ascribe` or left as-is with up
 No new grammar rule is strictly required — `cast_expr` can be renamed `asc_expr` in the grammar for clarity, but the AST variant and internal name can evolve separately.
 
 ---
-
+:
 ## Open Questions
 
 1. **Chained ascription — `x : A : B`?** The grammar allows `(":" ~ type_expr)?` (single) or could allow `*` (multiple). Multiple ascriptions are redundant but not harmful. Proposed: allow at most one (the `?` form) — a second `:` is a parse error, steering users toward `x : A` or rewriting.

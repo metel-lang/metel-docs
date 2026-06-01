@@ -9,7 +9,7 @@ date: '2026-05-22'
 Allow match arm bodies to be either a single expression or a block (`{ stmts* expr? }`), consistent with every other construct in the language that has a body (`if`, `loop`, `fun`, closures).
 
 ---
-
+:
 ## Motivation
 
 The current grammar restricts match arm bodies to a single expression:
@@ -81,7 +81,7 @@ match value {
 ```
 
 ---
-
+:
 ## Alternatives Considered
 
 **Add `block` to `primary_expr` (bare block expressions everywhere).** This would also fix match arms, since `block` would become a valid `expr`. Rejected in favour of the targeted fix: bare block expressions are not motivated by any other use case today, and adding them globally could interact unexpectedly with struct literal syntax (`{` as first token). This can be revisited independently.
@@ -93,7 +93,7 @@ match value {
 None — design is fully specified above.
 
 ---
-
+:
 ## Timing Recommendation
 
 Small, self-contained change. No design risk. Implement alongside other v0.2 grammar and parser work.

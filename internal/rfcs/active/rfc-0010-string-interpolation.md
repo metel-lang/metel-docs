@@ -1,4 +1,5 @@
 ---
+status: active
 id: rfc-0010
 title: "String Interpolation"
 date: '2026-05-31'
@@ -9,7 +10,7 @@ date: '2026-05-31'
 Add string interpolation to string literals using `${expr}` placeholders, with semantics defined entirely in terms of string concatenation and `.to_string()`. This RFC depends on `+` being defined for `String + String -> String`; interpolation is just syntax sugar over that operator.
 
 ---
-
+:
 # RFC-0010: String Interpolation
 
 ## Motivation

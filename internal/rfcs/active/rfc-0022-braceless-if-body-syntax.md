@@ -9,7 +9,7 @@ date: '2026-05-23'
 Allow `if` expressions to accept a single expression as the body without requiring braces, e.g. `if (condition) expr;`.
 
 ---
-
+:
 ## Motivation
 
 Currently, every `if` body must be a block (`{ ... }`), even for trivial single-expression branches. This is unnecessarily verbose for simple cases like `if (debug) print_state();`. Many Rust-inspired languages (C, Swift, Kotlin) permit braceless single-expression bodies as a convenience form.
@@ -37,7 +37,7 @@ if (condition) { expr; }
 **Parser normalization:** The parser wraps the bare expression in a synthetic `Block` (same technique used today for `else if`), so no changes are required downstream in the type checker or evaluator.
 
 ---
-
+:
 ## Alternatives Considered
 
 **Reject braceless bodies entirely.** Braces are explicit and eliminate ambiguity. This is Metel's current behavior. Rejected because it is overly strict for trivial single-expression branches.
@@ -55,7 +55,7 @@ if (condition) { expr; }
 3. **Mixing braced and braceless arms: not allowed.** Both the `then` and `else` arms must use the same style — either both braced (`block`) or both braceless (`expr`). A parse error is emitted for mismatched styles.
 
 ---
-
+:
 ## Timing Recommendation
 
 Target v0.3. This is a pure syntax extension with no type system or evaluator impact. The three-file change (grammar, parser, spec) is self-contained and low risk.

@@ -1,4 +1,5 @@
 ---
+status: accepted
 id: rfc-0034
 title: "Aspect Bounds on Struct and Enum Generic Parameters"
 date: '2026-06-01'
@@ -13,7 +14,7 @@ Define the syntax, enforcement model, and method-dispatch rules for aspect bound
 **Target:** v0.7.0
 
 ---
-
+:
 ## Motivation
 
 RFC-0002 shipped single-bound enforcement for function type parameters (`fun foo<T: Comparable>(x: T)`) and left struct/enum bounds explicitly out of scope. Without struct-level bounds it is impossible to write a generic data structure that guarantees its element type supports a required operation:
@@ -30,6 +31,7 @@ Two concrete problems result:
 2. Every function that receives a `SortedList<T>` and wants to sort it must re-declare `T: Comparable` itself, duplicating the constraint everywhere.
 
 ---
+status: accepted
 
 ## Goals
 
@@ -46,7 +48,7 @@ Two concrete problems result:
 - Multiple bounds on a single type parameter in struct/enum position — handled by RFC-0002's `where` clause rules applied uniformly.
 
 ---
-
+:
 ## Design
 
 ### Syntax
@@ -157,6 +159,7 @@ pub struct EnumDecl {
 ```
 
 ---
+status: accepted
 
 ## Out of Scope
 
@@ -167,7 +170,7 @@ pub struct EnumDecl {
 | Higher-kinded bounds | Future RFC |
 
 ---
-
+:
 ## Resolved Questions
 
 1. **Syntax:** Both inline and `where` clause forms, mirroring RFC-0002 function syntax. Inline for single bounds; `where` clause for multiple bounds on the same parameter.
@@ -183,6 +186,7 @@ pub struct EnumDecl {
 6. **Conditional impls:** Deferred to RFC-0036. This RFC covers unconditional declaration-level bounds only. Conditional impls require coherence and overlap checking beyond this scope.
 
 ---
+status: accepted
 
 ## Decision
 

@@ -9,7 +9,7 @@ date: '2026-05-23'
 Rename a set of language keywords and builtin identifiers to align with the Metel wind theme. This is a **breaking change** targeting v0.2 — no edition gating. Three changes are accepted: `nope` → `None`, `aspect` → `aspect`, and `mod` → `harness` (reserved for the future module system). One item is deferred: the `.yolo()` builtin rename, pending the stdlib migration of `Result` and `Perhaps`.
 
 ---
-
+:
 ## Motivation
 
 The language is named **Metel**. The current keyword set is a mix of Rust-influenced names (`aspect`) and prototype-era playful names (`nope`) from an earlier development phase. A coherent naming strategy signals the language's identity and removes misleading familiarity: `aspect` in Metel does not carry Rust's semantics (no orphan rules, no lifetime bounds, no `dyn` dispatch by default), so using the same word invites incorrect assumptions.
@@ -33,7 +33,7 @@ let x: Perhaps<Int> = None;
 **Rationale:** `None` is the near-universal spelling for an absent optional value (Python, Swift, Kotlin, ML family). `nope` is memorable but teaches the wrong habit and surprises every developer familiar with typed languages.
 
 ---
-
+:
 ### 2. `aspect` → `aspect`
 
 Behaviour contracts are declared with `aspect` instead of `aspect`.
@@ -76,7 +76,7 @@ use math::sqrt;
 **Rationale:** A harness holds and channels multiple components — fitting for a module boundary. It is consistent with the language name and meaningfully different from `mod` (which carries Rust baggage about visibility and file layout). Reserving the keyword now avoids a parse-level breaking change when the module system lands.
 
 ---
-
+:
 ## Deferred: `.yolo()` Method Rename
 
 The `.yolo()` builtin (if it exists as a method) is deferred. `Result` and `Perhaps` are planned for migration into the standard library; the rename will be decided as part of that work, when the full method surface of both types is known.
@@ -98,7 +98,7 @@ Candidates noted for that future RFC:
 All other keywords remain as-is: `fun`, `let`, `mut`, `struct`, `enum`, `type`, `match`, `for`, `while`, `return`, `break`, `continue`, `if`, `else`, `use`, `pub`, `impl`, `where`, `in`, `as`. The language is not undergoing a wholesale retheme — only the three items above are changed.
 
 ---
-
+:
 ## Impact Summary
 
 | Item | Change | When |
@@ -118,7 +118,7 @@ All other keywords remain as-is: `fun`, `let`, `mut`, `struct`, `enum`, `type`, 
 2. **`impl Aspect for Type` phrasing** — `impl` is unchanged. The full syntax reads `impl Comparable for Point`, which remains clear. No action needed.
 
 ---
-
+:
 ## Decision
 
 **Outcome:** Accepted  

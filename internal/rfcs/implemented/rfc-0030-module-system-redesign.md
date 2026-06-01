@@ -12,7 +12,7 @@ Replaces RFC-0009 and RFC-0029 with a revised module system that addresses the e
 **Target:** v0.5.0
 
 ---
-
+:
 ## Motivation
 
 The RFC-0009 design required two separate declarations to use a module:
@@ -174,7 +174,7 @@ Unchanged from RFC-0029: `std::core` is auto-imported into every file as if `imp
 A `.mln` file with no `import` or `export` declarations is a complete program. Fully preserved.
 
 ---
-
+:
 ## Grammar changes
 
 ```
@@ -217,7 +217,7 @@ pub-ann      ::= 'pub'   -- unchanged; valid on struct, enum, fun, let, mut, lin
 | Single-file compatibility | unchanged |
 
 ---
-
+:
 ## Open Questions
 
 None — all questions from RFC-0009 and RFC-0029 are either resolved by this RFC or unchanged.

@@ -9,7 +9,7 @@ date: '2026-05-28'
 Replace the flat-merge typechecker (ADR-0019) with a topological multi-pass typechecker that processes each module against its own declared scope. This is an internal architecture RFC — no language-visible syntax changes.
 
 ---
-
+:
 # RFC-0031: Topological Per-Module Typechecking
 
 ## Motivation
@@ -68,7 +68,7 @@ A `SchemeRegistry` accumulates every module's exported `SchemeEnv` entry as it i
 **Recommended for:** straightforward correctness, incremental migration possible.
 
 ---
-
+:
 ### Option B — Pre-phase name resolution wired into the inference context
 
 **Structure:**
@@ -119,7 +119,7 @@ fn get_export(ctx: &mut GlobalCtx, path: &[String], name: &str) -> Option<Scheme
 **Not recommended** for v0.6.0; revisit if the graph grows large enough that eager topological order becomes a bottleneck.
 
 ---
-
+:
 ## Recommended Approach
 
 **Option A** is the recommended approach for v0.6.0.
