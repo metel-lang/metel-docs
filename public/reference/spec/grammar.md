@@ -40,9 +40,10 @@ StructField        → IDENTIFIER ":" Type
 EnumVariants       → EnumVariant ( "," EnumVariant )* ","?
 EnumVariant        → IDENTIFIER ( "{" StructFields "}" )?
 GenericParams      → "<" GenericParam ( "," GenericParam )* ">"
-GenericParam       → IDENTIFIER ( ":" Type )?
+GenericParam       → IDENTIFIER ( ":" BoundList )?                      // since v0.7.0; RFC-0034
+BoundList          → Type ( "+" Type )*                                 // since v0.7.0; RFC-0034
 WhereClause        → "where" WhereConstraint ( "," WhereConstraint )*   // since v0.7.0; RFC-0002
-WhereConstraint    → IDENTIFIER ":" Type
+WhereConstraint    → IDENTIFIER ":" BoundList                           // BoundList since v0.7.0; RFC-0034
 
 Statement          → ExpressionStatement
                    | Block
