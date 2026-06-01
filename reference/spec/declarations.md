@@ -421,6 +421,88 @@ impl Point {
 }
 ```
 
+### Aspect Bounds on Function Type Parameters
+
+> *Since v0.7.0. Specified by RFC-0002 and RFC-0035.*
+
+A generic function type parameter may declare an aspect bound using `:` syntax. The bound requires that any concrete type substituted for the parameter implements the named aspect. Passing a type that does not satisfy the bound is error `T0012`.
+
+```metel
+fun print_pair<T: Printable>(a: T, b: T) {
+    a.print();
+    b.print();
+}
+```
+
+Inside the function body the typechecker treats `T` as having all methods declared by `Printable` in scope. Calling a method not declared by the bound aspect on a bounded type parameter is a type error.
+
+**`where` clause — multiple bounds.** When a type parameter requires more than one bound, use a `where` clause after the return type:
+
+```metel
+fun process<T, U>(x: T, y: U) -> Bool
+    where T: Comparable, T: Printable, U: Printable {
+    // T has Comparable and Printable; U has Printable
+}
+```
+
+**`impl Aspect` shorthand.** For type parameters used only once in a signature and not referenced elsewhere, the anonymous shorthand `impl Aspect` may be used directly in parameter position:
+
+```metel
+fun print_all(items: impl Printable[]) { ... }
+// equivalent to:
+fun print_all<_T: Printable>(items: _T[]) { ... }
+```
+
+Each `impl Aspect` occurrence in a signature is a **fresh, independent** type variable. To constrain two parameters to the same type, use a named type parameter.
+
+> **Not yet implemented (deferred):**
+> - `impl Aspect` in return position (`fun foo() -> impl Display`) — RFC-0037
+> - `impl Aspect` in struct fields (`dyn Aspect`) — RFC-0038
+> - `aspect` alias syntax (`aspect Sortable = Comparable + Display + Clone`) — RFC-0039
+> - Conditional impls (`impl Aspect for S<T> where T: OtherAspect`) — RFC-0036
+
+---
+
+### Aspect Bounds on Struct and Enum Type Parameters
+
+> *Since v0.7.0. Specified by RFC-0034.*
+
+A struct or enum generic type parameter may declare an aspect bound. The bound is enforced at **construction time**: instantiating the type with a concrete type argument that does not implement the bound is error `T0012`, with the span on the offending type argument at the construction call site.
+
+```metel
+struct SortedList<T: Comparable> {
+    items: T[],
+}
+
+// error[T0012]: Int does not implement Comparable
+let list = SortedList<NonComparable> { items: [] }
+```
+
+The same `where` clause syntax applies to struct and enum declarations:
+
+```metel
+struct Cache<K: Hashable, V> where K: Comparable {
+    entries: Pair<K, V>[],
+}
+```
+
+**Bound propagation.** A struct's bounds are automatically available — without re-declaration — in:
+
+- `impl` blocks on the same struct: `impl SortedList<T>` has `T: Comparable` in scope
+- `impl AspectName for Struct<T>` blocks: the struct's bounds are inherited
+- Match arm bodies when matching a value of the bounded struct or enum type
+
+The bound is an invariant of the type, not of the binding site. It propagates wherever a value of that type is used.
+
+> **Not yet implemented (deferred):**
+> - Conditional impls (`impl Aspect for S<T> where T: OtherAspect`) — RFC-0036
+
+---
+
 ### Static Dispatch Only
+
+All aspect dispatch in Metel is **static** (monomorphised at compile time). There are no vtables, no heap allocation, and no runtime type erasure for aspects.
+
+`dyn Aspect` (runtime-dispatched existential types with vtable-based dispatch) is **not part of the language** in this version. Dynamic dispatch is specified by RFC-0038 and will be introduced in a future release. Until then, all polymorphism must go through generic type parameters with aspect bounds.
 
 Aspect objects (`dyn Aspect`) are not part of the language. All polymorphism is via generics (static dispatch).
