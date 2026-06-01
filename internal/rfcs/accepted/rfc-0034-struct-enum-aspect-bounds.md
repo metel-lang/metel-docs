@@ -10,11 +10,11 @@ supersedes: rfc-0002 (partial)
 
 Define the syntax, enforcement model, and method-dispatch rules for aspect bounds on struct and enum generic type parameters. RFC-0002 deferred this topic; this RFC resolves it.
 
-**Supersedes:** RFC-0002 (partial — the function-level bound decisions in RFC-0002 stand; this RFC covers the struct/enum-specific deferred questions)  
+**Supersedes:** RFC-0002 (partial — this RFC covers struct/enum-specific questions deferred by RFC-0002, and also supersedes RFC-0002 Q2: inline multi-bound is now permitted with `+`, making inline and `where` clause equivalent)  
 **Target:** v0.7.0
 
 ---
-:
+
 ## Motivation
 
 RFC-0002 shipped single-bound enforcement for function type parameters (`fun foo<T: Comparable>(x: T)`) and left struct/enum bounds explicitly out of scope. Without struct-level bounds it is impossible to write a generic data structure that guarantees its element type supports a required operation:
@@ -31,7 +31,6 @@ Two concrete problems result:
 2. Every function that receives a `SortedList<T>` and wants to sort it must re-declare `T: Comparable` itself, duplicating the constraint everywhere.
 
 ---
-status: accepted
 
 ## Goals
 
@@ -45,23 +44,37 @@ status: accepted
 - Conditional `impl` blocks (`impl Aspect for S<T> where T: OtherAspect`) — deferred to RFC-0036.
 - Bounds on type aliases — future RFC.
 - Higher-kinded bounds — future RFC.
-- Multiple bounds on a single type parameter in struct/enum position — handled by RFC-0002's `where` clause rules applied uniformly.
+- Conditional `impl` blocks — deferred to RFC-0036.
 
 ---
-:
+
 ## Design
 
 ### Syntax
 
-Both inline and `where` clause forms are allowed, mirroring the function syntax established in RFC-0002. Inline for single bounds; `where` clause for additional bounds on the same parameter.
+Inline bounds and `where` clause bounds are fully equivalent. Either form may be used for any number of bounds. Multiple bounds on a single type parameter may be expressed inline using `+`, or in a `where` clause, or a mix of both — the typechecker normalises all forms to the same internal representation.
+
+**This supersedes RFC-0002 Q2**, which restricted inline bounds to a single bound and required multiple bounds to use the `where` clause. That restriction is lifted: `+` is now the inline conjunction operator for multiple bounds, and inline and `where` are interchangeable.
 
 ```metel
+// Single bound — inline
 struct SortedList<T: Comparable> {
     items: T[],
 }
 
-struct Cache<K: Hashable, V> where K: Comparable {
+// Multiple bounds — inline with +
+struct Window<T: Comparable + Display> {
+    items: T[],
+}
+
+// Multiple bounds — where clause (equivalent to inline +)
+struct Cache<K, V> where K: Hashable + Comparable {
     entries: Pair<K, V>[],
+}
+
+// Mixed — inline single bound plus additional bound in where clause (also valid)
+struct Buffer<T: Comparable> where T: Display {
+    items: T[],
 }
 
 enum Result<T: Printable, E: Printable> {
@@ -69,6 +82,8 @@ enum Result<T: Printable, E: Printable> {
     Err(E),
 }
 ```
+
+All four forms above are semantically identical where applicable. The recommended style is inline `+` for short bound lists and `where` clause for longer or multi-parameter constraints, but both are always valid.
 
 ### Enforcement
 
@@ -134,7 +149,14 @@ struct_decl = { pub_kw? ~ "struct" ~ ident ~ generic_params? ~ where_clause? ~ "
 enum_decl   = { pub_kw? ~ "enum"   ~ ident ~ generic_params? ~ where_clause? ~ "{" ~ variant_list? ~ "}" }
 ```
 
-`generic_params` already supports inline bounds from RFC-0002 (`generic_param = { ident ~ (":" ~ type_expr)? }`). The addition is `where_clause?` on struct/enum declarations.
+`generic_param` must be extended to support `+`-separated multiple bounds inline:
+
+```pest
+generic_param  = { ident ~ (":" ~ bound_list)? }
+bound_list     = { type_expr ~ ("+" ~ type_expr)* }
+```
+
+The addition on struct/enum declarations is `where_clause?`. The `where_clause` and `WhereConstraint` productions are defined in RFC-0002 and unchanged.
 
 ### AST Extension
 
@@ -159,7 +181,6 @@ pub struct EnumDecl {
 ```
 
 ---
-status: accepted
 
 ## Out of Scope
 
@@ -170,10 +191,10 @@ status: accepted
 | Higher-kinded bounds | Future RFC |
 
 ---
-:
+
 ## Resolved Questions
 
-1. **Syntax:** Both inline and `where` clause forms, mirroring RFC-0002 function syntax. Inline for single bounds; `where` clause for multiple bounds on the same parameter.
+1. **Syntax:** Inline and `where` clause are fully equivalent. Multiple bounds inline use `+` (`<T: A + B>`). `where` clause form also valid. **Supersedes RFC-0002 Q2** (which restricted inline to a single bound). The `+` inline form is now canonical for multiple bounds.
 
 2. **Enforcement point:** At construction time only (plus body-level method access). A value of a bounded type can never be constructed without satisfying the bound. Error code `T0012`, span on the offending type argument at the construction call site.
 
@@ -186,7 +207,6 @@ status: accepted
 6. **Conditional impls:** Deferred to RFC-0036. This RFC covers unconditional declaration-level bounds only. Conditional impls require coherence and overlap checking beyond this scope.
 
 ---
-status: accepted
 
 ## Decision
 

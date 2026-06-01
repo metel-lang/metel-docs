@@ -17,19 +17,22 @@ Define the typechecker enforcement of aspect bounds on function generic type par
 
 ## Background
 
-RFC-0002 accepted the following syntax decisions, which are already parsed correctly:
+RFC-0002 accepted the following syntax decisions. RFC-0034 additionally superseded RFC-0002 Q2 by allowing inline `+` for multiple bounds, making inline and `where` clause equivalent. Both forms are already parsed:
 
 ```metel
 // Single bound — inline
 fun largest<T: Comparable>(a: T, b: T) -> T { ... }
 
-// Multiple bounds — where clause
+// Multiple bounds — inline with + (supersedes RFC-0002 Q2)
+fun print_and_sort<T: Display + Comparable>(items: T[]) { ... }
+
+// Multiple bounds — where clause (equivalent to inline +)
 fun foo<T, U>(x: T, y: U) -> T
-    where T: Display, T: Clone,
+    where T: Display + Clone,
           U: Iterable<T>
 ```
 
-The parser accepts this syntax. What was never implemented:
+The parser accepts all these forms. What was never implemented:
 1. The typechecker does not verify that type arguments at call sites satisfy the declared bounds.
 2. Bound methods are not made available inside the function body.
 3. No error is produced when a bound is violated.
@@ -82,17 +85,22 @@ fun print_all<T: Display>(items: T[]) {
 
 If a function calls an aspect method on a type parameter that does not have the corresponding bound declared, the typechecker produces **T0013** ("Method not found on unconstrained type parameter").
 
-### 4 — where clause: same enforcement, different syntax
+### 4 — Inline `+` and `where` clause are fully equivalent
 
-Bounds declared in a `where` clause are enforced identically to inline bounds. The typechecker normalises both forms to the same internal representation (a map from type parameter name to a list of required aspects) before enforcement.
+Bounds declared inline with `+` and bounds declared in a `where` clause are enforced identically. The typechecker normalises all forms to the same internal representation (a map from type parameter name to a list of required aspects) before enforcement. This applies equally to all combinations:
 
 ```metel
+// All three of these are identical at the typechecker level:
+fun foo<T: Display + Clone, U: Iterable<T>>(x: T, y: U) -> T { ... }
+
 fun foo<T, U>(x: T, y: U) -> T
-    where T: Display, T: Clone,
-          U: Iterable<T>
-// Identical enforcement to:
-fun foo<T: Display, U: Iterable<T>>(x: T, y: U) -> T where T: Clone
+    where T: Display + Clone, U: Iterable<T> { ... }
+
+fun foo<T: Display, U: Iterable<T>>(x: T, y: U) -> T
+    where T: Clone { ... }
 ```
+
+This is consistent with RFC-0034's syntax decision, which superseded RFC-0002 Q2 (the old restriction that inline bounds were limited to a single bound and multiple bounds required a `where` clause).
 
 ### 5 — Multiple bounds: all must be satisfied
 

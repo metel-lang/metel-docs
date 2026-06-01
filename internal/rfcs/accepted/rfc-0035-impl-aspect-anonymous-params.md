@@ -9,11 +9,10 @@ supersedes: rfc-0002 (partial)
 
 Define the syntax, desugaring rules, and restrictions for `impl Aspect` as an anonymous bounded type parameter in function parameter position. RFC-0002 Q3 proposed this feature; this RFC resolves the design details before implementation begins.
 
-**Supersedes:** RFC-0002 (partial — the named type parameter and `where` clause decisions in RFC-0002 stand; this RFC specifies the `impl Aspect` shorthand form)  
+**Supersedes:** RFC-0002 (partial — this RFC specifies the `impl Aspect` shorthand form; note that RFC-0034 superseded RFC-0002 Q2, so inline `+` multi-bound is now valid for named type parameters)  
 **Target:** v0.7.0
 
 ---
-:
 ## Motivation
 
 Named type parameters are verbose when a type variable is used only once and is never cross-referenced within the signature:
@@ -44,7 +43,6 @@ Every single-use bounded parameter currently forces an explicit type variable na
 - `impl Aspect` in struct fields or as a type alias — existential types (RFC-0038) and aspect aliases (RFC-0039) cover those cases respectively.
 
 ---
-:
 ## Design
 
 ### `impl Aspect` is Pure Syntactic Sugar
@@ -156,7 +154,6 @@ The lowering pass eliminates all `ImplAspect` nodes before the typechecker runs,
 | Conditional impls | RFC-0036 |
 
 ---
-:
 ## Resolved Questions
 
 1. **Sugar vs distinct form:** Pure syntactic sugar. `impl Aspect` desugars to a fresh anonymous `TypeParam` in a pre-typechecking lowering pass. The typechecker sees only named type parameters.
