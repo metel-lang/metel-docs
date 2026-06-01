@@ -15,6 +15,15 @@ Language quality and expression power. Shipped from METEL-75–82 (unsprinted ho
 - **`Self` in impl signatures** — `Self` may be used as a parameter or return type in struct and enum `impl` method signatures, as an alias for the implementing type (METEL-79)
 - **Match arm blocks** — match arm bodies may be a block (`{ stmts* expr? }`) in addition to a bare expression, consistent with all other block-bodied constructs (RFC-0018, METEL-78)
 
+- **Aspect bounds on generic type parameters** — functions, structs, and enums may now declare aspect bounds on their type parameters; bounds are enforced by the typechecker and violation is error `T0012` (RFC-0002, RFC-0034, RFC-0040, METEL-57, METEL-60):
+  - Inline single bound: `fun foo<T: Comparable>(x: T)`, `struct SortedList<T: Comparable>`
+  - Inline multi-bound with `+`: `fun foo<T: Comparable + Printable>(x: T)` (RFC-0034)
+  - `where` clause (equivalent to inline): `fun foo<T>(x: T) where T: Comparable + Printable`
+  - Inline and `where` forms are fully interchangeable and merged before enforcement
+  - Aspect methods declared by a bound are available on the type parameter inside the function body
+  - `T0012` is emitted at the call/construction site with span on the offending argument
+- **`impl Aspect` anonymous parameters** — `fun foo(x: impl Display)` is syntactic sugar for a fresh anonymous bounded type parameter; each occurrence is an independent type variable (RFC-0035, METEL-57)
+
 **Bug fixes:**
 - `?` (error propagation) — routed through `From`-based coercion; when no `From` impl exists for the error types the typechecker now emits T0007 (invalid cast) instead of a misleading type mismatch (METEL-80)
 - Generic functions returning an ascribed `None : Perhaps<T>` now correctly constrain the inferred return type `T` through the annotation (METEL-76)

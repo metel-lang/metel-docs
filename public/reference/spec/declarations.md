@@ -423,9 +423,9 @@ impl Point {
 
 ### Aspect Bounds on Function Type Parameters
 
-> *Since v0.7.0. Specified by RFC-0002 and RFC-0035.*
+> *Since v0.7.0. Specified by RFC-0002, RFC-0034, RFC-0035, and RFC-0040.*
 
-A generic function type parameter may declare an aspect bound using `:` syntax. The bound requires that any concrete type substituted for the parameter implements the named aspect. Passing a type that does not satisfy the bound is error `T0012`.
+A generic function type parameter may declare an aspect bound using `:` syntax. The bound requires that any concrete type substituted for the parameter implements the named aspect. Passing a type that does not satisfy the bound is error `T0012`, with the span on the offending call-site argument.
 
 ```metel
 fun print_pair<T: Printable>(a: T, b: T) {
@@ -434,16 +434,22 @@ fun print_pair<T: Printable>(a: T, b: T) {
 }
 ```
 
-Inside the function body the typechecker treats `T` as having all methods declared by `Printable` in scope. Calling a method not declared by the bound aspect on a bounded type parameter is a type error.
+Inside the function body the typechecker treats `T` as having all methods declared by its bound aspects in scope. Calling a method not declared by any bound aspect on a bounded type parameter is a type error.
 
-**`where` clause — multiple bounds.** When a type parameter requires more than one bound, use a `where` clause after the return type:
+**Multiple bounds — inline `+` or `where` clause (equivalent).** Multiple bounds on a single type parameter may be expressed inline using `+`, or via a `where` clause, or a mix of both. The typechecker merges all declared bounds before enforcement — a type argument must satisfy every bound.
 
 ```metel
-fun process<T, U>(x: T, y: U) -> Bool
-    where T: Comparable, T: Printable, U: Printable {
-    // T has Comparable and Printable; U has Printable
-}
+// Inline + (since v0.7.0; RFC-0034)
+fun process<T: Comparable + Printable>(x: T) { ... }
+
+// where clause (equivalent)
+fun process<T>(x: T) where T: Comparable + Printable { ... }
+
+// Mix — inline single bound plus additional where clause bound (also valid)
+fun process<T: Comparable>(x: T) where T: Printable { ... }
 ```
+
+All three forms above have identical semantics. The recommended style is inline `+` for short bound lists and `where` clause for longer or multi-parameter constraints.
 
 **`impl Aspect` shorthand.** For type parameters used only once in a signature and not referenced elsewhere, the anonymous shorthand `impl Aspect` may be used directly in parameter position:
 
@@ -474,16 +480,18 @@ struct SortedList<T: Comparable> {
     items: T[],
 }
 
-// error[T0012]: Int does not implement Comparable
+// error[T0012]: NonComparable does not implement Comparable
 let list = SortedList<NonComparable> { items: [] }
 ```
 
-The same `where` clause syntax applies to struct and enum declarations:
+The same inline `+` and `where` clause forms apply, with identical semantics:
 
 ```metel
-struct Cache<K: Hashable, V> where K: Comparable {
-    entries: Pair<K, V>[],
-}
+// Multiple inline bounds
+struct Window<T: Comparable + Printable> { items: T[] }
+
+// where clause (equivalent)
+struct Cache<K, V> where K: Hashable + Comparable { entries: Pair<K, V>[] }
 ```
 
 **Bound propagation.** A struct's bounds are automatically available — without re-declaration — in:
