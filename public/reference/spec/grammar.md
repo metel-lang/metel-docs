@@ -26,9 +26,9 @@ Declaration        → LetDeclaration
 
 LetDeclaration     → "pub"? "let" IDENTIFIER ( ":" Type )? "=" Expression ";"
 MutDeclaration     → "pub"? "mut" IDENTIFIER ( ":" Type )? "=" Expression ";"
-FunDeclaration     → "pub"? "fun" IDENTIFIER GenericParams? "(" Params? ")" ( "->" Type )? Block
-StructDeclaration  → "pub"? "struct" IDENTIFIER GenericParams? "{" StructFields "}"
-EnumDeclaration    → "pub"? "enum" IDENTIFIER GenericParams? "{" EnumVariants "}"
+FunDeclaration     → "pub"? "fun" IDENTIFIER GenericParams? "(" Params? ")" ( "->" Type )? WhereClause? Block
+StructDeclaration  → "pub"? "struct" IDENTIFIER GenericParams? WhereClause? "{" StructFields "}"
+EnumDeclaration    → "pub"? "enum" IDENTIFIER GenericParams? WhereClause? "{" EnumVariants "}"
 ImplBlock          → "impl" ( Type "for" )? Type "{" FunDeclaration* "}"
 TraitDeclaration   → "pub"? "aspect" IDENTIFIER "{" TraitMethod* "}"
 TraitMethod        → "fun" IDENTIFIER "(" Params? ")" ( "->" Type )? ( Block | ";" )
@@ -41,6 +41,8 @@ EnumVariants       → EnumVariant ( "," EnumVariant )* ","?
 EnumVariant        → IDENTIFIER ( "{" StructFields "}" )?
 GenericParams      → "<" GenericParam ( "," GenericParam )* ">"
 GenericParam       → IDENTIFIER ( ":" Type )?
+WhereClause        → "where" WhereConstraint ( "," WhereConstraint )*   // since v0.7.0; RFC-0002
+WhereConstraint    → IDENTIFIER ":" Type
 
 Statement          → ExpressionStatement
                    | Block
@@ -114,6 +116,8 @@ Type               → IDENTIFIER ( "<" TypeArgs ">" )?
                    | "(" Type ( "," Type )+ ")"                // tuple type
                    | Type "[]"                                  // array shorthand
                    | "fun" "(" TypeList? ")" ( "->" Type )?    // function type
+                   | "impl" Type                               // anonymous bounded param; parameter position only (since v0.7.0; RFC-0035)
+                                                               // NOT valid in return position, struct fields, or type aliases — see RFC-0037, RFC-0038
 TypeArgs           → Type ( "," Type )*
 TypeList           → Type ( "," Type )*
 ```
