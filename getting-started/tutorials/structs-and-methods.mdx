@@ -30,6 +30,12 @@ fun main() {
 
 Fields are accessed with `.field_name`. They are read-only through immutable bindings.
 
+:::note
+Struct Literals Are Explicit
+
+When you construct a struct, you name every field unless shorthand field init applies. There is no positional constructor syntax here.
+:::
+
 ## Adding methods with `impl`
 
 Methods live in an `impl` block for the type. The first parameter `self` is the receiver:
@@ -61,6 +67,12 @@ fun main() {
 ```
 
 Methods are called with `.method_name(args)`. `self` is passed implicitly.
+
+:::tip
+Think “Function Namespaced Under The Type”
+
+An `impl` method is still just a function. Dot syntax is the ergonomic call form, but the main extra idea is the implicit `self`.
+:::
 
 ## The `Self` type
 
@@ -177,6 +189,12 @@ fun main() {
 
 The field names in a pattern bind to local variables — `radius`, `width`, and `height` are available in the arm body.
 
+:::caution
+`match` Must Stay Exhaustive
+
+When you add a new enum variant later, every `match` over that enum must be updated unless you already use a wildcard arm.
+:::
+
 ## Methods on enums
 
 `impl` works the same way on enums:
@@ -210,7 +228,7 @@ fun main() {
         Shape::Circle { radius: 1.0 },
     ];
 
-    mut total_area = 0.0;
+    let mut total_area = 0.0;
     for (let s in shapes) {
         println("${s.describe()} — area ${s.area()}");
         total_area += s.area();
@@ -296,7 +314,7 @@ impl Card {
 }
 
 fun hand_value(hand: Card[]) -> Int {
-    mut total = 0;
+    let mut total = 0;
     for (let card in hand) {
         total += card.value();
     }
@@ -325,6 +343,12 @@ Output:
 Hand total: 28
 ```
 
+:::note
+This Is The Main Payoff Of ADTs
+
+Structs and enums become more useful together: structs model stable records, enums model alternatives, and `match` ties them into explicit control flow.
+:::
+
 ## What you learned
 
 - `struct` defines a named record with typed fields; `impl` attaches methods to it.
@@ -333,4 +357,4 @@ Hand total: 28
 - `match` exhaustively handles every variant and destructures field data into local variables.
 - Both structs and enums support `impl` blocks in the same way.
 
-Next: [Control Flow and Errors](control-flow-and-errors) — loops, optional values, and error handling.
+Next: [Pointers](pointers) — address-of, dereference, and shared mutable state.

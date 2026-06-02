@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 7
 ---
 
 # Tutorial: Control Flow and Error Handling
@@ -31,9 +31,15 @@ As an expression, both branches must produce the same type:
 fun main() {
     let x = 15;
     let label = if (x % 2 == 0) { "even" } else { "odd" };
-    println("${x} is ${label}");   // 15 is odd
+println("${x} is ${label}");   // 15 is odd
 }
 ```
+
+:::note
+Expression-Oriented Control Flow
+
+`if` is not only a statement. You can use it directly to compute a value, as long as every branch agrees on the type.
+:::
 
 Braceless bodies are allowed for single expressions:
 
@@ -55,8 +61,8 @@ fun main() {
 
 ```metel
 fun main() {
-    mut n = 1;
-    mut product = 1;
+    let mut n = 1;
+    let mut product = 1;
     while (n <= 5) {
         product *= n;
         n += 1;
@@ -76,7 +82,7 @@ fun main() {
         println(word);
     }
 
-    mut sum = 0;
+    let mut sum = 0;
     for (let i in 1..=10) {
         sum += i;
     }
@@ -86,13 +92,19 @@ fun main() {
 
 `..` produces an exclusive range (`0..5` yields 0, 1, 2, 3, 4). `..=` is inclusive (`0..=5` yields 0 through 5).
 
+:::tip
+Check The Range Boundary First
+
+If a loop is off by one, confirm whether you wanted `..` or `..=` before looking for a deeper bug.
+:::
+
 ## Loop with break
 
 `loop` runs indefinitely. `break expr` exits the loop and produces a value:
 
 ```metel
 fun first_over(threshold: Int, values: Int[]) -> Perhaps<Int> {
-    mut i = 0;
+    let mut i = 0;
     loop {
         if (i >= array_len(values)) {
             break Perhaps::None;
@@ -125,7 +137,7 @@ Use it whenever a function can legitimately return nothing (a search that finds 
 
 ```metel
 fun find(haystack: String[], needle: String) -> Perhaps<Int> {
-    mut i = 0;
+    let mut i = 0;
     for (let s in haystack) {
         if (s == needle) {
             return Perhaps::Some { value: i };
@@ -156,9 +168,15 @@ fun main() {
 fun main() {
     let result = Perhaps::Some { value: 42 };
     let n = result.yolo();    // panics if None
-    println(n);               // 42
+println(n);               // 42
 }
 ```
+
+:::caution
+`.yolo()` Is For Proven Cases
+
+If absence is a normal outcome, keep the `match`. `yolo()` is the “this must exist” escape hatch, not the default style.
+:::
 
 ## Result\<T, E\>: recoverable errors
 
@@ -242,6 +260,12 @@ fun main() {
 ```
 
 `?` can only be used inside a function whose return type is `Result<_, E>`. If the error types differ, the inner error type must implement `From<InnerError>` for the outer error type — see the next section.
+
+:::tip
+Reach For `?` After The Result Shape Is Stable
+
+Start with an explicit `match` if the flow is still confusing. Once the success/error path is clear, replace the boilerplate with `?`.
+:::
 
 ## Error coercion with From
 

@@ -1,0 +1,160 @@
+---
+sidebar_position: 5
+---
+
+# Tutorial: Pointers
+
+This tutorial introduces Metel's regular pointer model. The core idea is simple:
+
+- `&x` takes the address of a value and produces `*T`
+- `&mut x` takes a mutable address and produces `*mut T`
+- pointers are storable and cloneable handles
+
+## Taking an address
+
+The syntax uses `&` as address-of:
+
+```metel
+fun main() {
+    let mut value = 42;
+
+    let read_ptr: *Int = &value;
+    let write_ptr: *mut Int = &mut value;
+}
+```
+
+`*Int` is a pointer to `Int`. `*mut Int` is a mutable pointer to `Int`.
+
+:::tip
+Read This As Two Choices
+
+Choose pointer mutability at the address-taking site:
+
+- `&x` for `*T`
+- `&mut x` for `*mut T`
+:::
+
+## Why pointers exist
+
+Pointers are mainly about shared state and indirection. They let multiple places talk about the same value instead of copying it around.
+
+That matters in patterns like:
+
+- graph nodes with back-links
+- mutable shared state between closures
+- data structures where values point at each other
+
+## Shared mutable state
+
+Pointers are useful when multiple parts of a program need to talk about the same value explicitly. That includes shared mutable state between closures:
+
+```metel
+fun main() {
+    let mut total = 0;
+    let cell: *mut Int = &mut total;
+
+    let add_one = () -> {
+        *cell += 1;
+    };
+
+    let add_ten = () -> {
+        *cell += 10;
+    };
+
+    add_one();
+    add_ten();
+
+    println(total);   // 11
+}
+```
+
+Both closures mutate the same underlying `Int` through the same pointer.
+
+Ordinary closure capture is by value. The pointer is what makes the sharing explicit: both closures talk to the same storage location, not independent copies.
+
+## Dereferencing
+
+Use `*p` to read through a pointer, and `*p = value` to write through a mutable pointer:
+
+```metel
+fun main() {
+    let mut n = 1;
+    let p: *mut Int = &mut n;
+
+    *p = 4;
+    println(*p);   // 4
+}
+```
+
+`*T` is read-only. `*mut T` is readable and writable.
+
+:::note
+Explicit Where It Matters
+
+Metel keeps pointer reads and writes explicit. You can spot aliasing-sensitive operations by looking for `&`, `&mut`, or `*`.
+:::
+
+## Auto-deref for fields and methods
+
+Field access and method calls automatically dereference one pointer layer:
+
+```metel
+struct Counter {
+    value: Int,
+}
+
+impl Counter {
+    fun increment(&mut self) {
+        self.value += 1;
+    }
+}
+
+fun main() {
+    let mut counter = Counter { value: 0 };
+    let p: *mut Counter = &mut counter;
+
+    p.increment();
+    println(p.value);   // 1
+}
+```
+
+This is shorthand for `(*p).increment()` and `(*p).value`.
+
+Auto-deref is only for field access, method calls, and function-pointer calls. Plain reads, writes, and argument passing still use explicit `*p`.
+
+## Function pointers
+
+Pointers to closures or functions can be called directly:
+
+```metel
+fun main() {
+    let f = () -> Int { return 42; };
+    let ptr: *() -> Int = &f;
+    println(ptr());   // 42
+}
+```
+
+## Pointer types and linear values
+
+Regular pointers provide explicit aliasing for non-linear values:
+
+- `*T` and `*mut T` are for non-linear, shared values
+- linear values are not meant to be addressed with `&x`
+
+This keeps pointer aliasing and linear ownership from fighting each other.
+
+:::caution
+Boundary Rule
+
+Regular pointers are for explicit aliasing of non-linear values. If a feature depends on exactly-once ownership, regular `*T` / `*mut T` are the wrong tool.
+:::
+
+## What you learned
+
+- `&x` yields `*T`.
+- `&mut x` yields `*mut T`.
+- `*p` reads and `*p = value` writes through a pointer.
+- Fields, methods, and function-pointer calls auto-dereference one pointer layer.
+- Pointers are for explicit aliasing of non-linear values.
+
+Next: [Closures and Capturing](closures-and-capturing) — first-class functions, captured values, and shared mutation.
