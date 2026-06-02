@@ -2,7 +2,7 @@
 id: rfc-0043
 title: "Regular Pointers and Mutable Pointers"
 date: '2026-06-02'
-status: implemented
+status: incorporated
 spec_status: done
 ---
 

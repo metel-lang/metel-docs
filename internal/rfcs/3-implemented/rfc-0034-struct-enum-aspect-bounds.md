@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: incorporated
 id: rfc-0034
 title: "Aspect Bounds on Struct and Enum Generic Parameters"
 date: '2026-06-01'

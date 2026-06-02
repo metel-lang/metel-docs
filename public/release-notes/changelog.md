@@ -6,40 +6,46 @@ title: "Metel Language Changelog"
 
 ## Unreleased
 
+## v0.7.0
+
+Language quality, pointer semantics, closure stabilisation, and aspect bounds. Shipped from sprint/17 and METEL-75–82 (hotfix batch).
+
 **Breaking changes:**
 - Anonymous closure expressions now use `(...) -> ... { ... }`; `fun(...)` is no longer accepted in expression position, and function types are written as `(T) -> U` (RFC-0041)
 - Struct fields are module-private by default; cross-module field access and construction now require `pub` on each exposed field (RFC-0032)
 - Mutable bindings now use `let mut`; standalone `mut x = value;` is no longer accepted, and `for` / `for-in` bindings use the same `let mut` form (RFC-0042)
 
-**Spec clarifications:**
-- `pub` is not valid on top-level `let` or `mut` bindings; the grammar and modules spec previously listed them as `pub`-able but the feature was never implemented (METEL-99)
-
-## v0.7.0
-
-Language quality and expression power. Shipped from METEL-75–82 (unsprinted hotfix batch).
-
 **New language features:**
-- **String interpolation** (`${expr}`) — string literals may contain `${…}` placeholders; each hole desugars to `.to_string()` concatenated with surrounding fragments via `+`; nested string literals inside holes are supported (RFC-0010, METEL-81, METEL-82)
-- **String concatenation** — `String + String -> String` is now a valid expression; the `+` operator on strings is the primitive underlying interpolation (METEL-78)
-- **Aspect default methods** — an aspect method may provide a default body; `impl` blocks may omit defaulted methods and inherit them automatically; required methods without a default still produce a compile-time error if omitted (METEL-77)
-- **`Self` in impl signatures** — `Self` may be used as a parameter or return type in struct and enum `impl` method signatures, as an alias for the implementing type (METEL-79)
-- **Match arm blocks** — match arm bodies may be a block (`{ stmts* expr? }`) in addition to a bare expression, consistent with all other block-bodied constructs (RFC-0018, METEL-78)
-
-- **Aspect bounds on generic type parameters** — functions, structs, and enums may now declare aspect bounds on their type parameters; bounds are enforced by the typechecker and violation is error `T0012` (RFC-0002, RFC-0034, RFC-0040, METEL-57, METEL-60):
+- **Explicit receiver semantics** — methods may declare `&self` (shared read) or `&mut self` (shared mutable) receivers; `&mut self` mutations are visible to the caller without a writeback convention (RFC-0044, METEL-112)
+- **Regular and mutable pointer types** — `&expr` and `&mut expr` produce `Pointer<T>` and `MutPointer<T>` values; assignment through `*ptr` and function-pointer auto-deref are supported (RFC-0043, METEL-111)
+- **Aspect bounds on generic type parameters** — functions, structs, and enums may now declare aspect bounds on their type parameters; bounds are enforced by the typechecker and violation is error `T0012` (RFC-0002, RFC-0034, RFC-0035, RFC-0040, METEL-57, METEL-60, METEL-67, METEL-84–93):
   - Inline single bound: `fun foo<T: Comparable>(x: T)`, `struct SortedList<T: Comparable>`
   - Inline multi-bound with `+`: `fun foo<T: Comparable + Printable>(x: T)` (RFC-0034)
-  - `where` clause (equivalent to inline): `fun foo<T>(x: T) where T: Comparable + Printable`
-  - Inline and `where` forms are fully interchangeable and merged before enforcement
+  - `where` clause: `fun foo<T>(x: T) where T: Comparable + Printable`
+  - `impl Aspect` anonymous parameters: `fun foo(x: impl Display)` (RFC-0035)
   - Aspect methods declared by a bound are available on the type parameter inside the function body
   - `T0012` is emitted at the call/construction site with span on the offending argument
-- **`impl Aspect` anonymous parameters** — `fun foo(x: impl Display)` is syntactic sugar for a fresh anonymous bounded type parameter; each occurrence is an independent type variable (RFC-0035, METEL-57)
+- **String interpolation** (`${expr}`) — string literals may contain `${…}` placeholders; each hole desugars to `.to_string()` concatenated with surrounding fragments via `+` (RFC-0010, METEL-81, METEL-82)
+- **String concatenation** — `String + String -> String` (METEL-78)
+- **Aspect default methods** — an aspect method may provide a default body; `impl` blocks may omit defaulted methods and inherit them automatically (METEL-77)
+- **`Self` in impl signatures** — `Self` may be used as a parameter or return type in `impl` method signatures (METEL-79)
+- **Match arm blocks** — match arm bodies may be a block in addition to a bare expression (RFC-0018, METEL-78)
 
 **Bug fixes:**
-- `?` (error propagation) — routed through `From`-based coercion; when no `From` impl exists for the error types the typechecker now emits T0007 (invalid cast) instead of a misleading type mismatch (METEL-80)
-- Generic functions returning an ascribed `None : Perhaps<T>` now correctly constrain the inferred return type `T` through the annotation (METEL-76)
+- Computed index assignment (`arr[i + 1] = v`, `s.data[offset * 2] = v`) now works correctly; previously any computed index expression caused an internal error (METEL-106)
+- `&mut self` methods on nested struct fields now mutate in place (METEL-112)
+- `impl` methods with `T`-typed parameters on generic structs now resolve correctly in Pass 2 (METEL-92)
+- Bounded type parameter method dispatch correctly enforces arity and argument types (METEL-93)
+- `?` (error propagation) — routed through `From`-based coercion; typechecker emits T0007 when no `From` impl exists (METEL-80)
+- Generic functions returning an ascribed `None : Perhaps<T>` now correctly constrain the inferred return type (METEL-76)
 
-**Tooling / internal:**
-- `mod` and `use` removed from the reserved keyword list; they had no grammar productions and blocked their use as ordinary identifiers (METEL-75)
+**Tooling:**
+- CLI version is derived from `CARGO_PKG_VERSION` rather than a hardcoded string (METEL-100)
+- Source file extension corrected to `.mtl` throughout public docs (METEL-100)
+- `mod` and `use` removed from the reserved keyword list (METEL-75)
+
+**Spec clarifications:**
+- `pub` is not valid on top-level `let` or `mut` bindings (METEL-99)
 
 ## v0.6.4
 

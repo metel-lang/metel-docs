@@ -2,6 +2,7 @@
 id: rfc-0035
 title: "impl Aspect Anonymous Type Parameters"
 date: '2026-06-01'
+status: incorporated
 supersedes: rfc-0002 (partial)
 ---
 

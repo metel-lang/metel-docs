@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: incorporated
 spec_status: done
 id: rfc-0041
 title: "Lambda Syntax for Anonymous Functions"
