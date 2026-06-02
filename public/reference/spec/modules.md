@@ -207,7 +207,7 @@ fun main() -> Int {
 }
 ```
 
-`pub` is valid on `struct`, `enum`, `fun`, `aspect`, and top-level `let`/`mut` bindings.
+`pub` is valid on `struct`, `enum`, `fun`, and `aspect` declarations. Top-level `let` and `mut` bindings are always module-private; public value exports are not supported in the current version.
 
 Struct field visibility is independent from the struct's own visibility. Fields are module-private by default; add `pub` on each field that should be accessible outside the declaring module.
 
