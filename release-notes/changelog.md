@@ -126,7 +126,7 @@ Module semantics. Shipped by Sprint 11 (`sprint/11`).
 Module system. Shipped by Sprint 9 (`sprint/9`).
 
 **New language features:**
-- Multi-file programs: each `.mln` file is a module; the module graph is built from `import` declarations
+- Multi-file programs: each `.mtl` file is a module; the module graph is built from `import` declarations
 - `import path::Name;` both loads the referenced file and brings `Name` into scope
 - Import forms: single name, alias (`as`), group (`{A, B}`), glob (`*`), module handle
 - `export path::Name;` re-exports a name from a submodule into the current module's public API
@@ -134,7 +134,7 @@ Module system. Shipped by Sprint 9 (`sprint/9`).
 - Absolute and relative path roots: `root::`, `std::`, `self::`, `super::`
 - Fully-qualified paths valid in type and expression position without a preceding `import`
 - Circular imports detected at load time with a full chain in the error message
-- Facade modules: `parser.mln` alongside `parser/` directory — no special `mod.mln` file
+- Facade modules: `parser.mtl` alongside `parser/` directory — no special `mod.mtl` file
 - File-to-module mapping via `::` → `/` with no special cases
 
 **Shipped in v0.6.1:**
