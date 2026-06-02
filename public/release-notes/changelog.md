@@ -4,8 +4,6 @@ title: "Metel Language Changelog"
 
 # Changelog
 
-## Unreleased
-
 ## v0.7.0
 
 Language quality, pointer semantics, closure stabilisation, and aspect bounds. Shipped from sprint/17 and METEL-75–82 (hotfix batch).
