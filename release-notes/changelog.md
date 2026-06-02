@@ -11,6 +11,9 @@ title: "Metel Language Changelog"
 - Struct fields are module-private by default; cross-module field access and construction now require `pub` on each exposed field (RFC-0032)
 - Mutable bindings now use `let mut`; standalone `mut x = value;` is no longer accepted, and `for` / `for-in` bindings use the same `let mut` form (RFC-0042)
 
+**Spec clarifications:**
+- `pub` is not valid on top-level `let` or `mut` bindings; the grammar and modules spec previously listed them as `pub`-able but the feature was never implemented (METEL-99)
+
 ## v0.7.0
 
 Language quality and expression power. Shipped from METEL-75–82 (unsprinted hotfix batch).
