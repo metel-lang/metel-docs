@@ -66,7 +66,7 @@ RFCs are the mechanism for proposing language changes. An RFC must be accepted a
 
 ### States
 
-The main representation of an RFC's lifecycle state is the directory containing the RFC file. The RFC frontmatter and the Plane RFC item must mirror that directory exactly.
+The main representation of an RFC's lifecycle state is the directory containing the RFC file. The RFC frontmatter and the Plane `RFC Status` custom property must mirror that directory exactly. Plane RFC tracking items must use the custom `RFC` work item type.
 
 | Directory | State | Meaning |
 |---|---|---|
@@ -98,17 +98,17 @@ The target version is **not** stored in the RFC frontmatter. It lives in exactly
 ### Acceptance process
 
 1. Author moves the RFC to `1-under-review/` and sets `status: under-review` when the RFC is ready for evaluation.
-2. Discussion happens in the linked Plane RFC item.
+2. Discussion happens in the linked Plane item with work item type `RFC`.
 3. The project owner records the outcome in a `## Decision` section at the bottom of the RFC file.
 4. **If accepted**:
    - Move the RFC to `2-accepted/`, set `status: accepted`, and set `spec_status: pending`.
-   - Assign the Plane RFC item to the target version milestone and set its state to `accepted`.
+   - Assign the Plane `RFC` work item to the target version milestone and set its `RFC Status` custom property to `accepted`.
    - Record `**Target:** vX.Y.0` in `## Decision`.
    - **Immediately** update the relevant spec or docs to reflect the RFC's decisions and set `spec_status: done`. This may be a single commit. Implementation items must not be created or started until `spec_status: done`.
-5. **If refused**: move the RFC to `5-refused/`, set `status: refused`, set the Plane RFC item to `refused`, and record the reason in `## Decision`.
-6. **If superseded**: move the RFC to `4-superseded/`, set `status: superseded`, set the Plane RFC item to `superseded`, and record the successor in frontmatter or `## Decision`.
+5. **If refused**: move the RFC to `5-refused/`, set `status: refused`, set the Plane `RFC Status` custom property to `refused`, and record the reason in `## Decision`.
+6. **If superseded**: move the RFC to `4-superseded/`, set `status: superseded`, set the Plane `RFC Status` custom property to `superseded`, and record the successor in frontmatter or `## Decision`.
 
-Once the RFC's target version ships (git tag applied), move it to `3-implemented/`, set `status: implemented`, and set the Plane RFC item to `implemented`. This is a required step of the release process — every accepted RFC whose target version matches the tag must be updated before the tag is pushed. The sprint-end quality gate enforces this with a full RFC staleness sweep.
+Once the RFC's target version ships (git tag applied), move it to `3-implemented/`, set `status: implemented`, and set the Plane `RFC Status` custom property to `implemented`. This is a required step of the release process — every accepted RFC whose target version matches the tag must be updated before the tag is pushed. The sprint-end quality gate enforces this with a full RFC staleness sweep.
 
 ### Decision section format
 
@@ -129,7 +129,7 @@ Brief rationale — why this design was chosen (or not), what alternatives were 
 |---|---|---|
 | **Version** | `v0.4.0`, `v0.5.0`, `v1.0.0` | Release planning — what ships in which version |
 
-Implementation work items are assigned to the **version milestone** they target. Plane RFC work items must use the exact lifecycle state represented by their RFC directory: `draft`, `under-review`, `accepted`, `implemented`, `superseded`, or `refused`.
+Implementation work items are assigned to the **version milestone** they target. Plane RFC tracking items must use the custom `RFC` work item type. Their `RFC Status` custom property must use the exact lifecycle state represented by their RFC directory: `draft`, `under-review`, `accepted`, `implemented`, `superseded`, or `refused`.
 
 ---
 

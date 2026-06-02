@@ -2,8 +2,8 @@
 id: rfc-0032
 title: "Field-Level Visibility"
 date: '2026-05-30'
-status: draft
-target:
+status: accepted
+spec_status: pending
 ---
 
 ## Summary
@@ -77,7 +77,7 @@ A `pub` annotation on a field of a non-`pub` struct is syntactically valid but h
 
 ### Construction
 
-Constructing a `pub struct` with any private field from outside the module is a compile error (T0xxx — new error code, see Open Questions):
+Constructing a `pub struct` with any private field from outside the module is a compile error (T0xxx — new error code in the private-field-access family):
 
 ```metel
 // outside token.mln
@@ -123,7 +123,7 @@ The same rules apply to `linear struct`. Linear types are still constructable fr
 
 ### Enum struct variants
 
-Struct-variant fields in an enum follow the same rules. Tuple-variant fields are positional and cannot be individually annotated — they are all public if the enum is `pub`. (See Open Questions for whether to support per-field `pub` on tuple variants.)
+Struct-variant fields in an enum follow the same rules. Tuple-variant fields are positional and cannot be individually annotated; if the enum is `pub`, those tuple-variant fields are public as part of the public variant shape.
 
 ```metel
 pub enum Shape {
@@ -213,45 +213,26 @@ pub(in parser) span: Span,   // visible within parser module subtree
 
 ---
 
-## Open Questions
+## Resolved Decisions
 
-### OQ-1 — New error code for private field access
+### D1 — Private-field access uses one error code family
 
-Two new error conditions need codes:
-- Constructing a struct and naming a private field (from outside the module).
-- Pattern-matching a struct and naming a private field (from outside the module).
+Constructing a struct with a private field from outside the declaring module and pattern-matching a private field from outside the declaring module are treated as the same language error category: private field access across a module boundary. The diagnostic text may distinguish construction from pattern matching, but the spec and error-code table should treat them as one error family.
 
-Should these share one error code or be distinct? Recommendation: one code (e.g. T0013) covering "private field accessed from outside declaring module," with the diagnostic message distinguishing construction from pattern-match context.
+### D2 — No per-field visibility on tuple variants
 
-### OQ-2 — Tuple-variant field visibility
+This RFC does not introduce per-position visibility syntax for tuple variants. If an enum is `pub`, its tuple-variant fields are public as part of that public variant shape. Struct-variant fields continue to use named-field visibility annotations.
 
-Struct-variant fields can be individually annotated (see Proposal). Tuple-variant fields are positional and harder to annotate:
+### D3 — Inert `pub` on a field of a non-`pub` struct should warn
 
-```metel
-pub enum Tree {
-    Leaf(Int),            // can we restrict this Int?
-    Node(Box<Tree>, Box<Tree>),
-}
-```
+When a field is marked `pub` but the enclosing struct is not public, the compiler should emit a warning rather than silently accepting the inert annotation. This is a developer-intent issue, not a language error.
 
-Options:
-- **No per-field visibility on tuple variants** (simplest; Rust's model for enums).
-- **All-or-nothing**: a `pub` annotation on the variant makes all its fields public; no annotation makes all private.
-- **Positional annotation**: `Leaf(pub Int)` — unusual syntax.
+### D4 — Spec changes are part of acceptance work
 
-Recommendation: **No per-field visibility on tuple variants** for this RFC. Tuple variant fields are all public if the enum is `pub`. Struct-variant fields follow the field annotation rules above. This matches Rust.
-
-### OQ-3 — `pub` field on non-`pub` struct: warning or silent?
-
-If a developer writes `pub field: T` on a struct without `pub`, the annotation is inert. Should the compiler:
-- Silently accept it (current proposal text).
-- Emit a warning: "field is annotated `pub` but the enclosing struct is not `pub` — annotation has no effect."
-
-Recommendation: warning, not error. It's a common oversight and the developer's intent is clear.
-
-### OQ-4 — Spec update scope
-
-The visibility section of `docs/public/spec/modules.md` currently states "Fields of a `pub struct` are public." Accepting this RFC requires updating that statement and adding the construction-with-private-fields rule. The pattern-matching rule also needs a dedicated section. This should be treated as a spec update in the same commit as RFC acceptance.
+Accepting this RFC requires a same-change spec update in `docs/public/reference/spec/modules.md`, including:
+- replacing the blanket "fields of a `pub struct` are public" rule
+- documenting construction restrictions for private fields
+- documenting pattern-matching restrictions for private fields
 
 ---
 
@@ -271,3 +252,12 @@ The earliest sensible target is the sprint that first adds library types with pr
 - Rust reference: [Visibility and Privacy](https://doc.rust-lang.org/reference/visibility-and-privacy.html)
 - Swift: [Access Control](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/accesscontrol/)
 - OCaml: [Private Types](https://ocaml.org/manual/5.1/privatetypes.html)
+
+---
+
+## Decision
+
+**Outcome:** Accepted
+**Target:** *(pending milestone assignment)*
+
+The field-visibility design and its remaining language-shape questions are resolved. Follow-up work is spec alignment and later implementation planning.
