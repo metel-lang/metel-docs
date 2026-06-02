@@ -1,0 +1,165 @@
+---
+sidebar_position: 6
+---
+
+# Tutorial: Closures and Capturing
+
+Closures are anonymous functions that can be stored in variables, passed to other functions, and returned from functions. They are a natural fit for small bits of behaviour that need to travel with data.
+
+## A basic closure
+
+Closures use the `(...) -> ... { ... }` form:
+
+```metel
+fun main() {
+    let double = (x: Int) -> Int { return x * 2; };
+    println(double(21));   // 42
+}
+```
+
+The closure has the function type `(Int) -> Int`.
+
+:::tip
+Useful Rule
+
+If a parameter expects `(Int) -> Int`, you can pass either a named function or a closure with that shape.
+:::
+
+## Passing closures around
+
+Closures and named functions can be used through the same function type:
+
+```metel
+fun apply_twice(f: (Int) -> Int, x: Int) -> Int {
+    return f(f(x));
+}
+
+fun main() {
+    let bump = (x: Int) -> Int { return x + 1; };
+    println(apply_twice(bump, 10));   // 12
+}
+```
+
+This is the basic pattern behind callbacks and small reusable transforms.
+
+A useful mental model is: a closure is a function value that may carry some captured context with it.
+
+## Capturing values from the outside
+
+A closure can use bindings from the surrounding scope:
+
+```metel
+fun main() {
+    let suffix = "!";
+    let excite = (word: String) -> String {
+        return word + suffix;
+    };
+
+    println(excite("Metel"));   // Metel!
+}
+```
+
+The closure body refers to `suffix` even though `suffix` is not a parameter. That is a capture.
+
+:::note
+Capture Means “Use an Outer Binding”
+
+If the closure body mentions a binding declared outside the closure, that binding becomes part of the closure's environment.
+:::
+
+## Shared mutable state uses pointers
+
+Closures capture by value. If you want shared mutable state across closures, make that sharing explicit with a pointer:
+
+```metel
+fun main() {
+    let mut count = 0;
+    let p: *mut Int = &mut count;
+
+    let inc = () -> () {
+        *p += 1;
+    };
+
+    let get = () -> Int {
+        *p
+    };
+
+    inc();
+    inc();
+    println(get());   // 2
+}
+```
+
+This keeps shared mutation explicit. The closures do not magically share `count`; they share the pointer `p`.
+
+:::caution
+Shared Mutation Must Be Explicit
+
+If multiple closures need to mutate the same value, introduce a pointer on purpose. Ordinary closure capture is not the mechanism for implicit shared mutable state.
+:::
+
+## Returning a closure
+
+Closures can be returned like any other value:
+
+```metel
+fun make_adder(base: Int) -> (Int) -> Int {
+    return (x: Int) -> Int {
+        return x + base;
+    };
+}
+
+fun main() {
+    let add_five = make_adder(5);
+    println(add_five(9));   // 14
+}
+```
+
+The returned closure keeps access to `base`, so the behaviour stays tied to the value captured when it was created.
+
+Returning a closure lets you build small configurable behaviours without introducing a named struct or enum just to hold one captured value.
+
+## A practical example
+
+Here a closure tracks how many items matched a filter:
+
+```metel
+fun main() {
+    let values = [1, 2, 3, 4, 5, 6];
+    let mut matched = 0;
+    let matched_ptr: *mut Int = &mut matched;
+
+    let is_even = (x: Int) -> Bool {
+        if (x % 2 == 0) {
+            *matched_ptr += 1;
+            return true;
+        }
+        return false;
+    };
+
+    for (let value in values) {
+        if (is_even(value)) {
+            println("${value} is even");
+        }
+    }
+
+    println("matched ${*matched_ptr} values");
+}
+```
+
+The closure both computes an answer and updates shared state, but the shared state is explicit because it flows through `matched_ptr`.
+
+For the public language today, the main rules to remember are:
+
+- closures use `(...) -> ... { ... }`
+- they can capture outer bindings
+- shared mutable state across closures should be explicit and pointer-based
+
+## What you learned
+
+- Closures are anonymous functions with ordinary function types.
+- They can be passed, stored, and returned.
+- A closure captures bindings from the surrounding scope automatically.
+- Shared mutable closure state is explicit: use pointers when multiple closures must mutate the same value.
+
+Next: [Control Flow and Errors](control-flow-and-errors) — loops, optional values, and error handling.

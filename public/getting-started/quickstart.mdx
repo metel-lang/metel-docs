@@ -15,6 +15,12 @@ cd metel-interpreter
 cargo build --release
 ```
 
+:::tip
+One-Time Setup
+
+You only need to rebuild after changing the interpreter itself. For ordinary language experiments, reuse the existing build.
+:::
+
 ## 2. Write a program
 
 Create a file such as `hello.mln`:
@@ -32,6 +38,12 @@ Use the interpreter on the file path:
 ```bash
 cargo run -- path/to/hello.mln
 ```
+
+:::note
+Fast Iteration
+
+Use `cargo run -- ...` while you are iterating quickly. Keep the release build from step 1 when you want the fastest repeated runs.
+:::
 
 If you are just testing changes, `cargo run --` is enough. If you want the fastest repeated run, keep the release build from step 1 and point the interpreter at the file you want to execute.
 

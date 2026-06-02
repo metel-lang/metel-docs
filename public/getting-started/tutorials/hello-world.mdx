@@ -27,6 +27,12 @@ Output:
 hello, Metel
 ```
 
+:::tip
+Start Small
+
+If a program does not run, reduce it back to a tiny `main` like this first. It gives you a known-good baseline before adding more syntax.
+:::
+
 ## Variables
 
 `let` creates a binding. The type is inferred from the right-hand side:
@@ -47,6 +53,12 @@ fun main() {
 
 `println` accepts any type that can be displayed — integers, floats, booleans, and strings all work directly.
 
+:::note
+Inference First
+
+Metel will usually infer the type you expect from the right-hand side. Add an annotation when it improves clarity, not by default.
+:::
+
 ## Type annotations
 
 Annotations are optional but you can write them after the binding name with `:`:
@@ -63,28 +75,34 @@ Write annotations when they make the intent clearer, or when you want the compil
 
 ## Mutable variables
 
-`let` bindings are immutable by default. To rebind a variable, use `mut`:
+`let` bindings are immutable by default. To rebind a variable, use `let mut`:
 
 ```metel
 fun main() {
-    mut count = 0;
+    let mut count = 0;
     count = count + 1;
     count = count + 1;
     println(count);   // 2
 }
 ```
 
-`let` and `mut` are not types — they describe whether the binding can be reassigned. Compound assignment operators work on `mut` variables too:
+`let` and `mut` are not types — together they describe a mutable binding. Compound assignment operators work on `let mut` variables too:
 
 ```metel
 fun main() {
-    mut total = 10;
+    let mut total = 10;
     total += 5;
     total -= 2;
     total *= 3;
-    println(total);   // 39
+println(total);   // 39
 }
 ```
+
+:::caution
+Mutability Lives On The Binding
+
+`mut` changes whether the variable can be reassigned. It does not mean “mutable type” in the Rust sense.
+:::
 
 ## Strings
 
@@ -154,7 +172,7 @@ fun main() {
     let banner = "Welcome to ${name} v${version}";
     println(banner);
 
-    mut items = 0;
+    let mut items = 0;
     items += 3;
     items += 2;
     let summary = "Processed ${items} items in this run.";
