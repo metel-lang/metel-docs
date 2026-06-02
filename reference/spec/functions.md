@@ -43,26 +43,26 @@ fun add(a: Int, b: Int) -> Int {
     return a + b;
 }
 
-fun apply(f: fun(Int) -> Int, x: Int) -> Int {
+fun apply(f: (Int) -> Int, x: Int) -> Int {
     return f(x);
 }
 
 fun main() -> Int {
     let f = add;
-    let inc = fun(x: Int) -> Int { return x + 1; };
+    let inc = (x: Int) -> Int { return x + 1; };
     return f(1, 2) + apply(inc, 4);
 }
 ```
 
-The type of a function or closure is written as `fun(ParamTypes) -> ReturnType`.
+The type of a function or closure is written as `(ParamTypes) -> ReturnType`.
 
 ## Closures
 
-Anonymous functions are written with `fun` in expression position:
+Anonymous functions are written with the `(...) -> ... { ... }` form:
 
 ```metel
 fun main() -> Int {
-    let double = fun(x: Int) -> Int { return x * 2; };
+    let double = (x: Int) -> Int { return x * 2; };
     return double(5);
 }
 ```
@@ -72,7 +72,7 @@ Closures capture variables from their enclosing scope. Captured `mut` variables 
 ```metel
 fun main() -> Int {
     mut count = 0;
-    let inc = fun() { count += 1; };
+    let inc = () -> { count += 1; };
     inc();
     inc();
     return count;
