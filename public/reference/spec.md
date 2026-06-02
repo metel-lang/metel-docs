@@ -1,14 +1,14 @@
 ---
 title: "Metel Language Specification"
 type: spec
-version: v0.6.4
+version: v0.7.0
 created_date: '2026-05-16'
 ---
 
 > **Status:** Active. This document is the single source of truth for the Metel language.
 > Features not described here are not part of the language.
 
-Source files use the \`.mln\` extension.
+Source files use the `.mtl` extension.
 
 ---
 

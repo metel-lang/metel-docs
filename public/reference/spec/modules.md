@@ -4,15 +4,15 @@
 
 > **Availability:** Since v0.5.0.
 
-Every `.mln` source file is a module. There is no `mod` declaration — the module graph is built entirely from `import` declarations.
+Every `.mtl` source file is a module. There is no `mod` declaration — the module graph is built entirely from `import` declarations.
 
 The root file passed to the toolchain is the root module:
 
 ```bash
-metel src/main.mln
+metel src/main.mtl
 ```
 
-In that example, `root::` refers to `src/main.mln`.
+In that example, `root::` refers to `src/main.mtl`.
 
 ## File-to-Module Mapping
 
@@ -20,22 +20,22 @@ In that example, `root::` refers to `src/main.mln`.
 
 | Import | File resolved |
 |---|---|
-| `import parser::Ast;` | `parser.mln` |
-| `import parser::ast::Ast;` | `parser/ast.mln` |
-| `import root::a::b::c::T;` | `a/b/c.mln` relative to the root file |
+| `import parser::Ast;` | `parser.mtl` |
+| `import parser::ast::Ast;` | `parser/ast.mtl` |
+| `import root::a::b::c::T;` | `a/b/c.mtl` relative to the root file |
 
-A directory module with a public facade is expressed by placing `name.mln` alongside the `name/` directory. The two coexist without ambiguity — they are different paths:
+A directory module with a public facade is expressed by placing `name.mtl` alongside the `name/` directory. The two coexist without ambiguity — they are different paths:
 
 ```
 src/
-  main.mln            ← import parser::Ast; import parser::lexer::Token;
-  parser.mln          ← export ast::Ast; export lexer::Token;
+  main.mtl            ← import parser::Ast; import parser::lexer::Token;
+  parser.mtl          ← export ast::Ast; export lexer::Token;
   parser/
-    ast.mln           ← pub struct Ast { ... }
-    lexer.mln         ← pub struct Token { ... }
+    ast.mtl           ← pub struct Ast { ... }
+    lexer.mtl         ← pub struct Token { ... }
 ```
 
-`parser.mln` is the facade. Files in `parser/` form the namespace. There is no `name/mod.mln` convention.
+`parser.mtl` is the facade. Files in `parser/` form the namespace. There is no `name/mod.mtl` convention.
 
 ## File Header Ordering
 
@@ -64,7 +64,7 @@ Path roots are:
 Fully-qualified paths are valid anywhere a name is expected:
 
 ```metel
-// src/main.mln
+// src/main.mtl
 import root::parser::Token;
 
 fun main() -> Int {
@@ -72,7 +72,7 @@ fun main() -> Int {
     return token.value;
 }
 
-// src/parser.mln
+// src/parser.mtl
 pub struct Token {
     value: Int,
 }
@@ -83,7 +83,7 @@ pub struct Token {
 `import` loads the referenced module file and declares which names from it are in scope for the current module:
 
 ```metel
-// src/main.mln
+// src/main.mtl
 import parser::{Ast, Token};
 import root::lexer::Token as Tok;
 import parser::*;
@@ -95,17 +95,17 @@ fun main() -> Int {
     return ast.token.value + tok.value + parse(ast.token);
 }
 
-// src/parser.mln
+// src/parser.mtl
 export ast::Ast;
 export ast::parse;
 export lexer::Token;
 
-// src/parser/ast.mln
+// src/parser/ast.mtl
 import super::lexer::Token;
 pub struct Ast { token: Token }
 pub fun parse(token: Token) -> Int { token.value }
 
-// src/lexer.mln
+// src/lexer.mtl
 pub struct Token { value: Int }
 ```
 
@@ -125,7 +125,7 @@ Import forms:
 `export` re-exports names from submodules into the current module's public API:
 
 ```metel
-// parser.mln — facade module for the parser namespace
+// parser.mtl — facade module for the parser namespace
 export ast::Ast;
 export lexer::{Token, Span};
 export ast::ParseError as Error;
@@ -169,7 +169,7 @@ fun main() -> Int {
 
 You can still write `import std::core::Perhaps;` or `import std::core::*;` explicitly — the result is the same. If a local declaration or explicit import shadows a `std::core` name, the local binding wins silently.
 
-`std::core` is a **virtual module** — it has no physical `.mln` file and cannot be listed or enumerated. Its contents are seeded by the runtime.
+`std::core` is a **virtual module** — it has no physical `.mtl` file and cannot be listed or enumerated. Its contents are seeded by the runtime.
 
 ## Import Conflicts
 
@@ -241,4 +241,4 @@ The module graph is built from `import` declarations:
 
 ## Single-File Compatibility
 
-A `.mln` file with no `import` or `export` declarations is a complete program. Existing single-file programs remain valid without modification.
+A `.mtl` file with no `import` or `export` declarations is a complete program. Existing single-file programs remain valid without modification.
