@@ -35,7 +35,7 @@ The following aspects are pre-implemented for built-in types:
 
 ```metel
 aspect Display {
-    fun to_string(self) -> String;
+    fun to_string(&self) -> String;
 }
 ```
 
@@ -45,7 +45,7 @@ aspect Display {
 
 ```metel
 aspect Iterable<T> {
-    fun next(mut self) -> Perhaps<T>;
+    fun next(&mut self) -> Perhaps<T>;
 }
 ```
 

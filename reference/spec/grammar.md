@@ -78,7 +78,7 @@ TermExpression          → FactorExpression ( ( "+" | "-" ) FactorExpression )*
 FactorExpression        → CastExpression ( ( "*" | "/" | "%" ) CastExpression )*
 CastExpression          → AscribeExpression ( "as" Type )*
 AscribeExpression       → UnaryExpression ( ":" Type )?
-UnaryExpression         → ( "!" | "-" ) UnaryExpression | PostfixExpression
+UnaryExpression         → ( "!" | "-" | "*" | "&" | "&mut" ) UnaryExpression | PostfixExpression
 PostfixExpression       → PrimaryExpression ( "(" Arguments? ")" | "." IDENTIFIER | "[" Expression "]" | "?" )*
 Arguments               → Expression ( "," Expression )* ","?
 
@@ -102,7 +102,7 @@ MatchExpression    → "match" Expression "{" MatchArm ( "," MatchArm )* ","? "}
 MatchArm           → Pattern ( "if" Expression )? "=>" Expression
 IfExpression       → "if" "(" Expression ")" Block "else" Block
 LoopExpression     → "loop" Block
-ClosureExpression  → "fun" "(" Params? ")" ( "->" Type )? Block
+ClosureExpression  → "(" Params? ")" ( "->" Type )? Block
 
 Pattern            → "_"
                    | "None"
@@ -113,10 +113,11 @@ Pattern            → "_"
 PatternFields      → IDENTIFIER ( "," IDENTIFIER )*
 
 Type               → IDENTIFIER ( "<" TypeArgs ">" )?
+                   | "*" "mut"? Type                           // regular pointer types
                    | "()"
                    | "(" Type ( "," Type )+ ")"                // tuple type
                    | Type "[]"                                  // array shorthand
-                   | "fun" "(" TypeList? ")" ( "->" Type )?    // function type
+                   | "(" TypeList? ")" "->" Type               // function / closure type
                    | "impl" Type                               // anonymous bounded param; parameter position only (since v0.7.0; RFC-0035)
                                                                // NOT valid in return position, struct fields, or type aliases — see RFC-0037, RFC-0038
 TypeArgs           → Type ( "," Type )*

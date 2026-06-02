@@ -97,6 +97,32 @@ fun main() -> Int {
 
 Arrays are usable in `for-in` loops.
 
+## Pointers
+
+Regular pointer types provide explicit aliasing for non-linear values.
+
+```metel
+fun main() -> Int {
+    let mut value = 1;
+    let p: *Int = &value;
+    let q: *mut Int = &mut value;
+    *q = *p + 1;
+    return *q;
+}
+```
+
+Metel has two regular pointer types:
+
+- `*T` — readable pointer to `T`
+- `*mut T` — readable and writable pointer to `T`
+
+`*mut T` coerces to `*T`. The reverse coercion does not exist.
+
+Regular pointers are first-class values, but they are distinct from the pointee type.
+There is no implicit dereference for ordinary reads or writes.
+
+Regular pointers are only for non-linear aliasing. They cannot target linear values.
+
 ## Type Ascription
 
 > **Availability:** Since v0.2.0.
