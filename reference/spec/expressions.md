@@ -188,8 +188,8 @@ The braceless form desugars to a single-expression block. Three restrictions app
 
 ```metel
 fun main() -> Int {
-    mut n = 3;
-    mut total = 0;
+    let mut n = 3;
+    let mut total = 0;
     while (n > 0) {
         total += n;
         n -= 1;
@@ -202,8 +202,8 @@ fun main() -> Int {
 
 ```metel
 fun main() -> Int {
-    mut total = 0;
-    for (mut i = 0; i < 4; i += 1) {
+    let mut total = 0;
+    for (let mut i = 0; i < 4; i += 1) {
         total += i;
     }
     return total;
@@ -219,7 +219,8 @@ fun main() -> Int {
 `for-in` works on any type implementing the `Iterable<T>` aspect. The loop variable
 receives type `T`. `T[]` (array) and `Range` (produced by `..` and `..=`) implement
 `Iterable<T>` by default. User-defined types can be made iterable by implementing
-`Iterable<T>`:
+`Iterable<T>`. The loop binding is immutable by default and may be made loop-locally
+mutable with `let mut`:
 
 ```metel
 aspect Iterable<T> {
@@ -234,8 +235,12 @@ fun main() -> Int {
 ```metel
 fun main() -> Int {
     let collection = [1, 2, 3];
-    mut total = 0;
+    let mut total = 0;
     for (let item in collection) { total += item; }
+    for (let mut item in collection) {
+        item += 1;
+        total += item;
+    }
     for (let i in 0..10) { total += i; }
     for (let i in 0..=10) { total += i; }
     return total;

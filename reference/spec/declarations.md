@@ -21,20 +21,20 @@ fun main() -> Int {
 
 ```metel
 fun main() -> Int {
-    mut counter = 0;
+    let mut counter = 0;
     counter = counter + 1;
     counter += 1;
     return counter;
 }
 ```
 
-`mut` bindings can be reassigned and also must be initialized at declaration. Compound assignment operators `+=`, `-=`, `*=`, `/=`, `%=` are supported.
+`let mut` bindings can be reassigned and also must be initialized at declaration. Compound assignment operators `+=`, `-=`, `*=`, `/=`, `%=` are supported.
 
 ### Scoping and Shadowing
 
 Variables are lexically scoped. Each block `{ }` introduces a new scope. Inner scopes can shadow outer variables.
 
-`let` and `mut` declarations are sequential — a binding is visible only from its declaration point to the end of its containing block.
+`let` and `let mut` declarations are sequential — a binding is visible only from its declaration point to the end of its containing block.
 
 `fun` declarations are hoisted to the top of their containing block. All `fun` declarations in a block are mutually visible to each other and to all other statements in that block, regardless of declaration order. This enables forward references and mutual recursion at any nesting level.
 
