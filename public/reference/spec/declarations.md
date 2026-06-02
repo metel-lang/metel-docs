@@ -193,14 +193,30 @@ fun main() -> Int {
 
 `self` refers to the receiver. Methods are called with dot syntax.
 
-### Mutable Receiver
+### Receiver Forms
 
-> **Availability:** Since v0.1.0.
+Methods may declare one of three receiver forms:
 
-Methods that mutate the receiver declare `mut self`.
+- `self` — value receiver
+- `&self` — shared reference receiver
+- `&mut self` — mutable reference receiver
 
-`mut self` gives the method a mutable local receiver value, but method calls do not
-update the caller's binding in place.
+Value receivers follow ordinary Metel value semantics. Shared and mutable reference
+receivers operate on the original receiver storage and are the right forms for
+observers and in-place mutation.
+
+```metel
+struct Point {
+    x: Float,
+    y: Float,
+}
+
+impl Point {
+    fun length(&self) -> Float {
+        self.x * self.x + self.y * self.y
+    }
+}
+```
 
 ```metel
 struct Counter {
@@ -208,13 +224,29 @@ struct Counter {
 }
 
 impl Counter {
-    fun increment(mut self) {
+    fun increment(&mut self) {
+        self.value += 1;
+    }
+}
+```
+
+Calls requiring `&mut self` need a mutable addressable receiver or a `*mut T`
+pointer. Calls requiring `&self` may use an addressable receiver or a `*T` / `*mut T`
+pointer.
+
+```metel
+struct Counter {
+    value: Int,
+}
+
+impl Counter {
+    fun increment(&mut self) {
         self.value += 1;
     }
 }
 
 fun main() -> Int {
-    let c = Counter { value: 1 };
+    let mut c = Counter { value: 1 };
     c.increment();
     return c.value;
 }

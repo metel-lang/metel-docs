@@ -67,7 +67,7 @@ fun main() -> Int {
 }
 ```
 
-Closures capture variables from their enclosing scope. Captured `mut` variables are shared — mutations are visible in the outer scope:
+Closures capture variables from their enclosing scope by value. A captured variable is cloned into the closure environment when the closure is created:
 
 ```metel
 fun main() -> Int {
@@ -75,7 +75,20 @@ fun main() -> Int {
     let inc = () -> { count += 1; };
     inc();
     inc();
-    return count;
+    return count;   // still 0
+}
+```
+
+Shared mutable closure state is explicit. If multiple closures must observe and update the same non-linear storage, the program must capture a regular pointer:
+
+```metel
+fun main() -> Int {
+    let mut count = 0;
+    let p: *mut Int = &mut count;
+    let inc = () -> { *p += 1; };
+    inc();
+    inc();
+    return *p;
 }
 ```
 

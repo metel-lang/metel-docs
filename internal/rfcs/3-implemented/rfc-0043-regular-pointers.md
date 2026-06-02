@@ -2,7 +2,8 @@
 id: rfc-0043
 title: "Regular Pointers and Mutable Pointers"
 date: '2026-06-02'
-status: under-review
+status: implemented
+spec_status: done
 ---
 
 ## Summary
@@ -171,9 +172,9 @@ Non-addressable expressions are rejected:
 
 This keeps pointer identity tied to stable storage locations rather than temporary expression results.
 
-### 6. Auto-Deref at Field and Method Access
+### 6. Auto-Deref at Field Access, Method Calls, and Function Pointer Calls
 
-Metel auto-dereferences one pointer layer for field access and method calls.
+Metel auto-dereferences one pointer layer for field access, method calls, and function pointer calls.
 
 ```metel
 let p: *Point = &point;
@@ -181,14 +182,21 @@ let x = p.x;
 let d = p.distance(other);
 ```
 
-This is an acceptable tradeoff between explicitness and ergonomics. Regular pointers are already explicit at their creation sites (`&x`, `&mut x`) and in type position (`*T`, `*mut T`). Requiring `(*p).field` and `(*p).method(...)` everywhere adds repetition without improving the aliasing story.
+```metel
+let f = () -> { return 42; };
+let ptr: *() -> Int = &f;
+let result = ptr();   // auto-deref: equivalent to (*ptr)()
+```
+
+This is an acceptable tradeoff between explicitness and ergonomics. Regular pointers are already explicit at their creation sites (`&x`, `&mut x`) and in type position (`*T`, `*mut T`). Requiring `(*p).field`, `(*p).method(...)`, and `(*fp)()` everywhere adds repetition without improving the aliasing story.
 
 This yields a simple rule:
 
 - field access may auto-dereference one pointer layer to access fields on the pointee type
 - method dispatch may auto-dereference one pointer layer to find methods on the pointee type
+- a call expression whose callee resolves to `*(() -> T)` or `*mut (() -> T)` auto-dereferences one pointer layer before dispatching the call
 
-Auto-deref for field and method access does not imply any general implicit dereference elsewhere. Reads, writes, and argument passing still require the ordinary pointer rules.
+Auto-deref applies exclusively to these three syntactic positions. Reads, writes, and argument passing still require the ordinary pointer rules.
 
 ### 7. No Pointer Arithmetic
 
@@ -257,8 +265,8 @@ Closures capture by value. Shared closure state is explicit:
 let mut counter = 0;
 let p: *mut Int = &mut counter;
 
-let inc = fun() -> () { *p += 1; };
-let get = fun() -> Int { *p };
+let inc = () -> () { *p += 1; };
+let get = () -> Int { *p };
 ```
 
 This aligns RFC-0006 with the pointer model:
@@ -351,18 +359,19 @@ This RFC does not supersede RFC-0028. It extracts and settles the regular-pointe
 
 Pointer types may appear in public signatures immediately. This RFC treats them as part of the language surface, not as an internal-only escape hatch.
 
-### D2 - Field and method access auto-deref
+### D2 - Field access, method dispatch, and function pointer calls auto-deref
 
-Field access and method dispatch auto-deref one regular-pointer layer. This is the accepted ergonomic rule for ordinary pointer use.
+Field access, method dispatch, and call expressions whose callee is a function pointer all auto-deref one regular-pointer layer. This is the accepted ergonomic rule for ordinary pointer use.
 
-### D3 - Indexing remains explicit
+### D3 - Indexing and argument passing remain explicit
 
-Array or slice indexing through a pointer still requires explicit dereference. Auto-deref stays narrowly scoped to field access and method dispatch and does not become a general implicit-dereference rule.
+Array or slice indexing through a pointer, passing pointers as arguments, and reading pointer values all still require explicit dereference. Auto-deref is scoped to field access, method dispatch, and function pointer calls — it does not become a general implicit-dereference rule.
 
 ---
 
 ## Decision
 
-**Outcome:** Under review
+**Outcome:** Accepted
+**Target:** *(pending milestone assignment)*
 
-If accepted, this RFC becomes the source of truth for Metel's regular pointer model. RFC-0006 and RFC-0028 must then be updated to reference it and remove duplicated or superseded regular-pointer text, and future concurrency work must define the transfer or escape rules that apply to these pointers.
+This RFC is the source of truth for Metel's regular pointer model. RFC-0006 and RFC-0028 should reference it for regular-pointer semantics, and future concurrency work must define the transfer or escape rules that apply to these pointers.

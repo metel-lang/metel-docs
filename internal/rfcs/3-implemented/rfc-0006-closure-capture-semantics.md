@@ -2,7 +2,8 @@
 id: rfc-0006
 title: "Closure Capture Semantics and Cross-Closure Reference Sharing"
 date: '2026-05-21'
-status: draft
+status: implemented
+spec_status: done
 ---
 
 ## Summary
@@ -19,17 +20,17 @@ The PoC evaluator captures all free variables by cloning them at closure definit
 ```metel
 // Intended: inc and get both operate on the same counter.
 // Under clone capture: each holds its own copy — inc's mutations are invisible to get.
-mut counter = 0;
-let inc = fun() -> () { counter += 1; };
-let get = fun() -> Int { counter };
+let mut counter = 0;
+let inc = () -> () { counter += 1; };
+let get = () -> Int { counter };
 ```
 
 **Mutation visible to the enclosing scope:**
 ```metel
 // Intended: calling double() updates the original.
 // Under clone capture: double works on a copy.
-mut x = 5;
-let double = fun() -> () { x *= 2; };
+let mut x = 5;
+let double = () -> () { x *= 2; };
 double();
 // x is still 5 here
 ```
@@ -57,9 +58,9 @@ Two axes define the problem:
 
 **Explicit pointer capture (RFC-0043 model):** value capture by default; reference capture requires the programmer to explicitly take a pointer before closing:
 ```metel
-mut counter = 0;
+let mut counter = 0;
 let p = &mut counter;
-let inc = fun() -> () { *p += 1; };
+let inc = () -> () { *p += 1; };
 ```
 Aliasing is visible at the capture site. The loop variable problem cannot occur silently.
 
@@ -86,10 +87,10 @@ Rationale:
 To share mutable state between two closures, the programmer takes an explicit pointer before closing over it:
 
 ```metel
-mut counter = 0;
+let mut counter = 0;
 let p: *mut Int = &mut counter;
-let inc = fun() -> () { *p += 1; };
-let get = fun() -> Int { *p };
+let inc = () -> () { *p += 1; };
+let get = () -> Int { *p };
 inc();
 inc();
 let n = get();  // n == 2; counter == 2
@@ -120,7 +121,7 @@ Example:
 
 ```metel
 fun make_counter() -> () -> Int {
-    mut n = 0;
+    let mut n = 0;
     let p = &mut n;
     return () -> Int {
         *p += 1;
@@ -319,7 +320,7 @@ Shared mutable state is always wrapped in `Rc<RefCell<T>>` directly. No pointer 
 
 | RFC | Dependency |
 |---|---|
-| RFC-0043 (Regular Pointers) | This RFC depends on `*T`/`*mut T` for the explicit-sharing proposal. RFC-0043 must be accepted before this RFC can be closed. |
+| RFC-0043 (Regular Pointers) | This RFC depends on `*T`/`*mut T` for the explicit-sharing proposal and treats RFC-0043 as the source of truth for regular-pointer semantics. |
 | Future concurrency / lifetime RFCs | Those RFCs must define how closure captures interact with escaping scope and concurrent use. This RFC intentionally leaves that undecided. |
 
 ---
@@ -355,8 +356,8 @@ The blocking dependency is RFC-0043 (regular pointers). Resolve RFC-0043 before 
 ## References
 
 - Language spec: [`spec/functions.md#closures`](../../public/spec/functions.md#closures), [`spec/runtime.md#panics`](../../public/spec/runtime.md#panics)
-- RFC-0043: `docs/internal/rfcs/1-under-review/rfc-0043-regular-pointers.md` — `*T`/`*mut T`, regular pointer semantics, and closure-sharing support
-- RFC-0044: `docs/internal/rfcs/1-under-review/rfc-0044-explicit-receiver-semantics.md` — explicit receiver forms, including `&mut self` for iterator-style mutation
+- RFC-0043: `docs/internal/rfcs/2-accepted/rfc-0043-regular-pointers.md` — `*T`/`*mut T`, regular pointer semantics, and closure-sharing support
+- RFC-0044: `docs/internal/rfcs/2-accepted/rfc-0044-explicit-receiver-semantics.md` — explicit receiver forms, including `&mut self` for iterator-style mutation
 - RFC-0024: `docs/internal/rfcs/rfc-0024-linear-types.md` — linear values cannot be clone-captured; move capture (`move fun`) is required; linear values can be passed as explicit closure parameters
 - RFC-0025: `docs/internal/rfcs/rfc-0025-region-allocation.md` — `Region` handles are linear; move capture or explicit parameter passing required
 - RFC-0026: `docs/internal/rfcs/rfc-0026-unsafe-blocks.md` — inside an `unsafe fun` closure, the linear capture restriction is relaxed
@@ -366,7 +367,7 @@ The blocking dependency is RFC-0043 (regular pointers). Resolve RFC-0043 before 
 
 ## Decision
 
-**Outcome:** Under review  
-**Target:** *(blank until accepted)*
+**Outcome:** Accepted  
+**Target:** *(pending milestone assignment)*
 
-*(Decision rationale goes here when the RFC is evaluated.)*
+Metel adopts clone-by-value closure capture as the default model. Shared mutable closure state is explicit and pointer-based, escaping closures extend the lifetime of reachable non-linear captured storage, and open/closed upvalues are the preferred long-term implementation strategy.

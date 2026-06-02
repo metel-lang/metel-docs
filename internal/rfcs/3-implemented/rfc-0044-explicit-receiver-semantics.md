@@ -2,7 +2,8 @@
 id: rfc-0044
 title: "Explicit Receiver Semantics"
 date: '2026-06-02'
-status: under-review
+status: implemented
+spec_status: done
 ---
 
 ## Summary
@@ -44,7 +45,7 @@ The current spec says:
 That is workable for plain value-style APIs, but it breaks down for stateful protocols such as iterators. `Iterable<T>::next` is currently written as:
 
 ```metel
-fun next(mut self) -> Perhaps<T>;
+fun next(&mut self) -> Perhaps<T>;
 ```
 
 but a real iterator needs mutation of the underlying receiver state across calls. A local mutable copy is not enough.
@@ -325,11 +326,7 @@ Methods that take `self` by value on large non-linear structs may justify a lint
 
 ## Decision
 
-**Outcome:** Under review
+**Outcome:** Accepted
+**Target:** *(pending milestone assignment)*
 
-If accepted, this RFC becomes the source of truth for ordinary receiver semantics. The spec and affected RFCs should then be updated, especially:
-
-- method receiver rules in the declarations chapter
-- `Iterable<T>::next`
-- RFC-0006 closure semantics where receiver mutation and pointer-based sharing meet
-- RFC-0043 references to method dispatch semantics
+This RFC is the source of truth for ordinary receiver semantics. The spec and related RFCs should follow it for method receiver rules, `Iterable<T>::next`, closure-related receiver mutation, and the method-dispatch interaction with RFC-0043 pointers.
