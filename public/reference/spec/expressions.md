@@ -224,7 +224,7 @@ mutable with `let mut`:
 
 ```metel
 aspect Iterable<T> {
-    fun next(mut self) -> Perhaps<T>;
+    fun next(&mut self) -> Perhaps<T>;
 }
 
 fun main() -> Int {
@@ -246,6 +246,69 @@ fun main() -> Int {
     return total;
 }
 ```
+
+### Pointers
+
+Regular pointers provide explicit aliasing for non-linear values.
+
+```metel
+fun main() -> Int {
+    let mut n = 1;
+    let p: *mut Int = &mut n;
+    *p = 4;
+    return *p;
+}
+```
+
+Rules:
+
+- `&x` creates a read-only pointer `*T`
+- `&mut x` creates a mutable pointer `*mut T`
+- `*p` reads through a pointer
+- `*p = value` writes through a `*mut T`
+
+Field access, method calls, and function pointer calls auto-dereference one pointer layer:
+
+```metel
+struct Counter {
+    value: Int,
+}
+
+impl Counter {
+    fun increment(&mut self) {
+        self.value += 1;
+    }
+}
+
+fun main() -> Int {
+    let mut counter = Counter { value: 0 };
+    let p: *mut Counter = &mut counter;
+    p.increment();    // auto-deref: equivalent to (*p).increment()
+    return p.value;   // auto-deref: equivalent to (*p).value
+}
+```
+
+Function pointers (`*() -> T` and `*mut () -> T`) are callable directly without explicit dereference:
+
+```metel
+fun main() -> Int {
+    let f = () -> { return 42; };
+    let ptr: *() -> Int = &f;
+    return ptr();     // auto-deref: equivalent to (*ptr)()
+}
+```
+
+This applies uniformly: a closure or named function stored behind a pointer can be called as if it were the function value itself. A common use is passing arrays of function pointers:
+
+```metel
+fun apply_all(fns: Array<*() -> ()>) {
+    for (let f in fns) {
+        f();          // auto-deref each element
+    }
+}
+```
+
+Indexing, plain reads, argument passing, and assignment remain explicit pointer operations.
 
 ### Loop
 
