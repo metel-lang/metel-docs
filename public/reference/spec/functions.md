@@ -71,7 +71,7 @@ Closures capture variables from their enclosing scope. Captured `mut` variables 
 
 ```metel
 fun main() -> Int {
-    mut count = 0;
+    let mut count = 0;
     let inc = () -> { count += 1; };
     inc();
     inc();

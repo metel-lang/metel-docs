@@ -2,8 +2,8 @@
 id: rfc-0042
 title: "let mut for Mutable Bindings"
 date: '2026-06-02'
-status: draft
-spec_status: pending
+status: accepted
+spec_status: done
 ---
 
 ## Summary
@@ -170,17 +170,11 @@ The migration is mechanical:
 | `pub mut x = value;` | `pub let mut x = value;` |
 | `for (mut i = 0; cond; step)` | `for (let mut i = 0; cond; step)` |
 
-Open migration question:
-
-- Should the old standalone `mut` declaration remain accepted for one release as a compatibility alias, or become a parse error immediately?
-
----
-
 ## Resolved Decisions
 
-### D1 - One-version compatibility window
+### D1 - Standalone `mut` is dropped immediately
 
-`mut x = value;` remains accepted as a compatibility alias for `let mut x = value;` for one minor-version transition window. After that window, the old form should become a hard error.
+`mut x = value;` becomes a parse error as soon as this RFC is implemented. The language keeps only one binding introducer, `let`, and does not carry a transition alias.
 
 ### D2 - Mutable for-in bindings are included
 
@@ -194,6 +188,7 @@ The parser may lower `let mut` into the existing mutable-declaration node shape 
 
 ## Decision
 
-**Outcome:** Under review
+**Outcome:** Accepted
+**Target:** *(pending milestone assignment)*
 
 The user-visible syntax and migration behavior are resolved here. Remaining work is implementation and follow-through in examples, tests, and the spec.

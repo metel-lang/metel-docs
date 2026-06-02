@@ -9,6 +9,7 @@ title: "Metel Language Changelog"
 **Breaking changes:**
 - Anonymous closure expressions now use `(...) -> ... { ... }`; `fun(...)` is no longer accepted in expression position, and function types are written as `(T) -> U` (RFC-0041)
 - Struct fields are module-private by default; cross-module field access and construction now require `pub` on each exposed field (RFC-0032)
+- Mutable bindings now use `let mut`; standalone `mut x = value;` is no longer accepted, and `for` / `for-in` bindings use the same `let mut` form (RFC-0042)
 
 ## v0.7.0
 

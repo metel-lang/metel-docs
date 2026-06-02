@@ -110,6 +110,187 @@ The only requirement imposed here is compatibility:
 - the closure capture model chosen here must admit a future rule that restricts escaping or concurrent use of captured aliasing state
 - explicit pointer capture must remain visible in the closure surface so later concurrency rules can reason about it
 
+### Escaping closures extend the lifetime of reachable non-linear storage
+
+If a closure leaves the lexical scope of a non-linear local that it captured by value, the closure simply owns its captured copy and no further rule is needed.
+
+If a closure leaves the lexical scope of a non-linear local that it can still reach through an explicit regular pointer capture, the storage reachable through that pointer must remain alive for as long as the closure can still reach it.
+
+Example:
+
+```metel
+fun make_counter() -> () -> Int {
+    mut n = 0;
+    let p = &mut n;
+    return () -> Int {
+        *p += 1;
+        return *p;
+    };
+}
+```
+
+This is valid only if the runtime representation promotes or otherwise preserves the storage for `n` when the closure escapes. The user-visible rule is simple: an escaping closure may extend the lifetime of captured non-linear storage it can still reach. The end of the original lexical scope does not invalidate that capture.
+
+This is a language guarantee. The implementation strategy is deliberately left open.
+
+## Implementation Strategies
+
+The language semantics above do **not** require the evaluator or future runtime to represent every variable as `Rc<RefCell<T>>`. Only bindings that are captured, aliased, or allowed to outlive their defining frame need indirection.
+
+Ordinary locals may remain plain frame slots. The runtime only needs a distinct representation for captured storage.
+
+### Option A — Eager heap boxing for captured bindings
+
+As soon as the implementation determines that a local binding is captured by a closure, it places that binding in a heap-allocated capture cell. Uncaptured locals remain ordinary frame slots.
+
+Conceptually:
+
+```text
+ordinary local      -> plain frame slot
+captured local      -> heap cell
+closure free var    -> handle to heap cell
+```
+
+Under this model:
+
+- clone-by-value closure capture copies ordinary values directly into the closure environment
+- explicit pointer capture stores a handle to the same capture cell
+- if the closure escapes, no further promotion step is needed because the captured storage is already heap-backed
+
+Advantages:
+
+- simple implementation model
+- easy to reason about escaping closures
+- no special closing step when a frame exits
+
+Costs:
+
+- every captured binding pays heap allocation cost immediately
+- non-escaping captures are boxed even when they never need promotion
+
+This is the simplest replacement for the current PoC-wide `Rc<RefCell<T>>` approach. It narrows indirection to captured bindings only.
+
+### Option B — Open/closed upvalues
+
+This model keeps a captured binding tied to its live frame slot while the defining frame is still active, then promotes it only when the frame exits and an escaping closure still needs it.
+
+Conceptually:
+
+```text
+open upvalue   -> points at live frame slot
+closed upvalue -> owns promoted heap value
+closure free var -> handle to upvalue
+```
+
+While the defining frame is active, closures read and write through the open upvalue into the frame slot. When the frame is about to exit, any still-live open upvalues are "closed": their current value is copied into heap-owned storage, and the upvalue handle is rewritten to point there instead of into the dead frame.
+
+Advantages:
+
+- avoids heap allocation for many short-lived captures
+- matches established VM practice (Lua-style upvalues)
+- keeps ordinary locals and non-escaping captures cheap
+
+Costs:
+
+- more complex runtime bookkeeping
+- requires a precise frame-exit closing step
+- implementation is harder to validate than eager boxing
+
+This model is a strong long-term candidate if the evaluator is replaced by a lower-level runtime or VM.
+
+### Common requirement for both options
+
+Both implementation strategies must preserve the same language contract:
+
+- uncaptured locals do not require reference counting or heap allocation
+- captured-by-value locals behave like ordinary cloned values
+- explicit pointer captures may alias shared storage
+- escaping closures keep reachable non-linear captured storage alive
+
+The RFC therefore chooses the **language semantics** now while leaving the runtime free to adopt either eager capture boxing or open/closed upvalues later.
+
+## Fit with Linear Types and the Compiler
+
+The implementation strategies above are intended for **non-linear captured storage**. They are not, by themselves, a complete model for linear closure capture.
+
+### Boundary with linear types
+
+Linear values impose a stronger constraint than ordinary closure lifetime management:
+
+- a linear binding cannot be silently duplicated
+- a linear binding cannot be turned into shared aliasing state by ordinary capture machinery
+- an escaping closure over linear state requires an ownership-transfer rule, not merely a storage-promotion rule
+
+Therefore this RFC should be read as establishing the permanent closure model for **non-linear values**:
+
+- non-linear values may be clone-captured by default
+- non-linear values may be shared explicitly through regular pointer capture
+- escaping closures may extend the lifetime of reachable non-linear captured storage
+
+Linear values remain future work. A later RFC may permit some form of explicit move capture or ownership capture for linear bindings, but that must be expressed as a distinct rule. The non-linear capture machinery described here must not be treated as automatically applicable to linear values.
+
+### Why this matters for the compiler
+
+A production compiler will want to distinguish at least three cases:
+
+1. uncaptured locals
+2. captured locals that do not escape
+3. captured locals that escape their defining frame
+
+That classification is useful for both performance and ownership reasoning.
+
+For non-linear values, either implementation strategy from this RFC can support that pipeline:
+
+- **eager heap boxing** is simpler and can be used as a transitional implementation
+- **open/closed upvalues** are a better long-term fit for a compiler or VM because they separate frame-local storage from promoted escaping storage
+
+### Eager heap boxing as a transitional implementation
+
+Eager heap boxing works well as a first compiler implementation because it is easy to make correct:
+
+- captured locals are identified during capture analysis
+- captured locals are placed in heap cells immediately
+- closures store handles to those cells
+- escaping closures need no additional promotion step
+
+This is a reasonable early compiler strategy because it keeps the closure conversion story simple and avoids tying correctness to a more complex frame-exit algorithm.
+
+Its main limitation is that it over-allocates. Captured locals that never truly need heap promotion still pay the cost. That is acceptable in an early compiler, but it is unlikely to be the final performance model.
+
+### Open/closed upvalues as the long-term compiler direction
+
+Open/closed upvalues fit the longer-term compiler story more naturally:
+
+- uncaptured locals remain ordinary frame slots
+- captured non-escaping locals can remain frame-backed while the frame is alive
+- only escaping captured locals are promoted into owned storage when needed
+
+This aligns well with:
+
+- closure conversion
+- escape analysis
+- stack allocation of ordinary locals
+- later optimization passes that reduce heap pressure
+
+It also provides a cleaner separation between:
+
+- lifetime extension for non-linear captures
+- future ownership-transfer rules for linear captures
+
+That separation matters. The compiler should not encode non-linear aliasing and lifetime extension in a way that later forces linear captures into the same machinery.
+
+This RFC chooses **open/closed upvalues as the preferred long-term implementation strategy** for the compiler and runtime rewrite. Eager heap boxing remains a valid transitional implementation, but it is not the intended end state.
+
+### Long-term direction
+
+The intended long-term picture is:
+
+- RFC-0006 defines closure semantics for non-linear values
+- a later linear-types RFC defines whether linear values may be closure-captured at all, and if so, under what explicit ownership rule
+- the compiler lowers closures into explicit environment objects or upvalue handles rather than treating the whole frame as universally reference-counted state
+
+In that model, eager boxing is an acceptable step on the path to a compiler, but open/closed upvalues — or an equivalent closure-environment representation with selective promotion — are the better fit for the final implementation architecture.
+
 ---
 
 ## Alternatives Considered
