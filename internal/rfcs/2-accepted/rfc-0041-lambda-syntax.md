@@ -1,6 +1,6 @@
 ---
 status: accepted
-spec_status: pending
+spec_status: done
 id: rfc-0041
 title: "Lambda Syntax for Anonymous Functions"
 date: '2026-06-01'

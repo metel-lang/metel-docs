@@ -193,7 +193,7 @@ Conflict rules:
 Declarations are module-private by default. A declaration is accessible from outside its module only if it is annotated with `pub`.
 
 ```metel
-pub struct Token { kind: Int, span: Int }
+pub struct Token { pub kind: Int, span: Int }
 struct InternalState { count: Int }
 
 pub fun parse(tokens: Token[]) -> Int { return array_len(tokens); }
@@ -209,7 +209,16 @@ fun main() -> Int {
 
 `pub` is valid on `struct`, `enum`, `fun`, `aspect`, and top-level `let`/`mut` bindings.
 
-Fields of a `pub struct` are public. Fields of a private struct are private because the struct itself is not externally nameable.
+Struct field visibility is independent from the struct's own visibility. Fields are module-private by default; add `pub` on each field that should be accessible outside the declaring module.
+
+```metel
+pub struct Token {
+    pub kind: Int,
+    span: Int,
+}
+```
+
+From outside the declaring module, `Token` is nameable, `token.kind` is accessible, and `token.span` is a visibility error. Constructing `Token` directly also requires visibility to every named field, so private fields force construction through module-local helpers or constructors.
 
 Within a module, all names defined in that module are accessible without qualification, including private names.
 

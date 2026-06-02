@@ -3,7 +3,7 @@ id: rfc-0032
 title: "Field-Level Visibility"
 date: '2026-05-30'
 status: accepted
-spec_status: pending
+spec_status: done
 ---
 
 ## Summary
