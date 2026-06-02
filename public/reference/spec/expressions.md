@@ -262,10 +262,14 @@ fun main() -> Int {
 
 Rules:
 
-- `&x` creates a read-only pointer `*T`
-- `&mut x` creates a mutable pointer `*mut T`
+- `&expr` creates a read-only pointer `*T` where `expr` is an addressable lvalue
+- `&mut x` creates a mutable pointer `*mut T` where `x` is a named binding
 - `*p` reads through a pointer
 - `*p = value` writes through a `*mut T`
+
+Addressable lvalues for `&` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), and chains thereof (`nested.outer.field`, `t.1.0`). Non-addressable expressions (call results, arithmetic) are rejected at runtime.
+
+`&mut` is currently restricted to named bindings only. `&struct.field` captures a snapshot of the field value at the time of the address-of operation; subsequent mutations to the original binding are not visible through the pointer.
 
 Field access, method calls, and function pointer calls auto-dereference one pointer layer:
 

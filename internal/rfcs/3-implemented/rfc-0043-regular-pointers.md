@@ -157,20 +157,28 @@ let n = read(p);   // ok: *mut Int -> *Int
 
 Only addressable lvalues may appear after `&` or `&mut`.
 
-Initially, the language guarantees addressability for:
+The language guarantees addressability for:
 
-- named bindings
-- fields of addressable values
-- indexed elements of addressable arrays
+- named bindings: `&x`, `&mut x`
+- struct fields of addressable values: `&point.x`
+- tuple elements of addressable values: `&pair.0`
+- indexed elements of addressable arrays: `&arr[i]`
+- chains of the above: `&nested.outer.field`, `&t.1.0`
 
 Non-addressable expressions are rejected:
 
 ```metel
-// &(x + 1)      // error
-// &make_point() // error
+// &(x + 1)      // error: temporary
+// &make_point() // error: call result is not an lvalue
 ```
 
 This keeps pointer identity tied to stable storage locations rather than temporary expression results.
+
+**Semantics of field/element address-of:** `&expr` where `expr` is a field, tuple element, or array index evaluates `expr` to its current value and wraps it in a fresh read-only pointer. The pointer captures a snapshot of the value at address-of time. Subsequent mutations to the original binding are not reflected through the pointer, and reading through the pointer reflects the value at the time `&` was applied.
+
+This snapshot behaviour is correct and safe for `*T` (read-only pointer) because `*T` cannot be written through. The primary use case is passing field values or closure elements as function pointer arguments.
+
+`&mut` remains restricted to named bindings (`&mut x`). Mutable address-of on field or element paths is not yet supported; taking `&mut` of a non-identifier lvalue is a runtime error.
 
 ### 6. Auto-Deref at Field Access, Method Calls, and Function Pointer Calls
 
