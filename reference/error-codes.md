@@ -99,13 +99,17 @@ A binary operator is applied to types it does not support.
 
 ### T0006 — Assignment to immutable binding
 
-A `let` binding is assigned after initial definition.
+A write operation targets a `let` binding. This covers three forms:
+
+- Direct reassignment: `x = newValue`
+- Field assignment through an immutable binding: `point.x = 1`
+- Taking a mutable pointer to an immutable binding: `&mut x`
 
 ```
 [T0006] type error in main.mtl at 3..12: `x` is immutable; use `mut x` to allow reassignment
 ```
 
-**Fix:** change the binding declaration to `mut`.
+**Fix:** change the binding declaration to `let mut`.
 
 ### T0007 — Invalid cast
 

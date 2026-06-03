@@ -15,7 +15,13 @@ fun main() -> Int {
 }
 ```
 
-`let` bindings cannot be reassigned and must always be initialized.
+`let` bindings cannot be reassigned and must always be initialized. Mutability lives entirely on the binding — a `let` binding is immutable regardless of what value it holds. This means:
+
+- `x = newValue` is rejected (reassignment)
+- `x.field = value` is rejected (field assignment through an immutable binding)
+- `&mut x` is rejected (taking a mutable pointer to an immutable binding)
+
+All three forms require `let mut`.
 
 ### Mutable Bindings
 

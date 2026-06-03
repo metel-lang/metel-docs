@@ -263,15 +263,15 @@ fun main() -> Int {
 Rules:
 
 - `&expr` creates a read-only pointer `*T` where `expr` is an addressable lvalue
-- `&mut x` creates a mutable pointer `*mut T` where `x` is a named binding
+- `&mut x` creates a mutable pointer `*mut T` where `x` is a `let mut` named binding
 - `*p` reads through a pointer
 - `*p = value` writes through a `*mut T`
 
 Addressable lvalues for `&` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), and chains thereof (`nested.outer.field`, `t.1.0`). Non-addressable expressions (call results, arithmetic) are rejected at runtime.
 
-`&mut` is currently restricted to named bindings only. `&struct.field` captures a snapshot of the field value at the time of the address-of operation; subsequent mutations to the original binding are not visible through the pointer.
+`&mut` requires the operand to be a `let mut` binding — applying it to a plain `let` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)). `&mut` is additionally restricted to named bindings only; `&struct.field` captures a snapshot of the field value at the time of the address-of operation, with subsequent mutations to the original binding not visible through the pointer.
 
-Field access, method calls, and function pointer calls auto-dereference one pointer layer:
+Field access, field assignment, method calls, and function pointer calls auto-dereference one pointer layer:
 
 ```metel
 struct Counter {
@@ -288,6 +288,7 @@ fun main() -> Int {
     let mut counter = Counter { value: 0 };
     let p: *mut Counter = &mut counter;
     p.increment();    // auto-deref: equivalent to (*p).increment()
+    p.value = 1;      // auto-deref field assign; the pointer binding need not be mut
     return p.value;   // auto-deref: equivalent to (*p).value
 }
 ```
