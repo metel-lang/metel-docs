@@ -57,17 +57,21 @@ region {
 
 `Region::alloc(value: T) -> *T` is available as an explicit form when the allocation intent should be visible in the source, but it is not required.
 
+### Region growth
+
+When the region's backing block is exhausted, it automatically grows by allocating a new block and chaining it to the previous one. The region is a linked list of fixed-size blocks; allocation continues transparently from the new block. This is more ergonomic than panicking or returning `Perhaps::None` — the programmer declares a scope boundary, not a capacity limit. The initial block size is a hint; growth is automatic.
+
 ### The `RegionFree` exit constraint
 
 The block's return type must satisfy `RegionFree` — "contains no region-internal pointers." The compiler enforces this at the block boundary.
 
-`RegionFree` is a marker aspect auto-derived for types that contain no `*'r T` fields:
+`RegionFree` is a distinct marker aspect, separate from `Send`. It is auto-derived for types that contain no `*'r T` fields:
 
 ```metel
 // RegionFree — can escape the block:
 //   Int, Float, Bool, String — primitive value types
 //   Arc<T> — reference-counted, not region-internal
-//   unique *T allocated outside the block — owning handle, not tagged 'r
+//   @T (owning pointer) allocated outside the block — not tagged 'r
 //   *T allocated outside the block — non-region pointer, not tagged 'r
 //   structs and enums whose fields are all RegionFree
 
@@ -76,7 +80,7 @@ The block's return type must satisfy `RegionFree` — "contains no region-intern
 //   any struct that contains such a pointer
 ```
 
-For now, `RegionFree` is approximated by the existing `Send` bound: since `*T` and `*mut T` are not `Send`, region-internal pointers cannot escape the block. This is conservative — some safe values are rejected. When region lifetimes (`*'r T`) are introduced, `RegionFree<'r>` replaces `Send` as the exit constraint and becomes precise: only pointers tagged with the current region's `'r` are rejected; `unique *T` handles and non-region `*T` pointers may escape freely.
+`RegionFree` is defined now as a standalone marker rather than approximated by `Send`. This is more precise: `@T` handles and non-region `*T` pointers are `RegionFree` even though `*T` is not `Send`. When region lifetimes (`*'r T`) are fully introduced, `RegionFree<'r>` gains a lifetime parameter and becomes precise: only pointers tagged with the current region's `'r` are rejected.
 
 ### Named region lifetime
 
@@ -93,7 +97,20 @@ region 'r {
 
 Named region lifetimes are the exception, not the rule. Most `region { }` blocks never need a name — the anonymous lifetime is sufficient and the compiler infers it. The name surfaces only when a struct or function signature needs to carry the lifetime explicitly.
 
+The `region 'r { }` syntax is parsed and accepted now. Until region lifetimes are fully introduced, the `'r` label is a no-op — it is recorded but not yet enforced as a distinct lifetime type. This allows code to be written with named region lifetimes today and become precise as the lifetime system lands, without a syntax change.
+
 This is the bridge to the full lifetime system: once abstract lifetime variables are introduced on function signatures, `'r` in `region 'r { }` becomes a concrete named lifetime that participates in the general constraint system.
+
+### Named region types
+
+A programmer may define a named region type for documentation and API clarity:
+
+```metel
+linear struct FrameArena: Region { }
+linear struct RequestArena: Region { }
+```
+
+A named region type is a `linear struct` that implements the `Region` aspect. It behaves identically to an anonymous `region { }` block but carries a distinct type name that documents intent and allows APIs to be scoped to a specific arena. The `region { }` block desugars to an anonymous `Region`; a named type is the explicit alternative when the arena identity matters at API boundaries.
 
 ### `region { }` is an expression
 
@@ -119,15 +136,15 @@ Nested `region { }` blocks each introduce a distinct lifetime. A pointer from an
 
 ```metel
 region 'outer {
-    let big = Region::alloc(BigStruct { ... });   // *'outer BigStruct
+    let big: *BigStruct = Region::alloc(BigStruct { ... });   // *'outer BigStruct
 
     let result = region 'inner {
-        let scratch = Region::alloc(Scratch { ... });   // *'inner Scratch
-        compute(@big, @scratch)   // @big borrows 'outer — valid; @scratch borrows 'inner
+        let scratch: *Scratch = Region::alloc(Scratch { ... });   // *'inner Scratch
+        compute(big, scratch)   // big is *'outer — valid inside inner; scratch is *'inner
         // scratch freed here; big is still live
     };
 
-    finish(@big, result)
+    finish(big, result)
 }
 // big freed here
 ```
@@ -201,17 +218,17 @@ A garbage collector eliminates manual memory management entirely but introduces 
 
 ---
 
-## Open Questions
+## Resolved Questions
 
-1. **`RegionFree` vs `Send` as interim exit constraint.** The `Send` bound is conservative — values containing `unique *T` from outside the region are rejected even though they are safe to return. Introducing `RegionFree` as a distinct marker earlier (before full region lifetime tagging) would be more precise. Is the conservatism acceptable until region lifetimes arrive, or should `RegionFree` be defined now as a separate marker that `Send` implies but does not equal?
+1. **`RegionFree` vs `Send` as exit constraint ✓ Resolved** — `RegionFree` is defined as a distinct marker aspect now, separate from `Send`. More precise: `@T` handles and non-region `*T` pointers are `RegionFree` even though `*T` is not `Send`. Gains a lifetime parameter (`RegionFree<'r>`) when region lifetimes are introduced.
 
-2. **Implicit vs explicit allocation.** Should allocation inside `region { }` be fully implicit (all heap allocations redirect to the bump allocator), or should only `Region::alloc(value)` calls allocate from the region? Fully implicit is more ergonomic but requires the compiler to identify all allocation sites. Explicit `Region::alloc` is less magical but more verbose.
+2. **Implicit vs explicit allocation ✓ Resolved** — Fully implicit. All heap allocations inside `region { }` redirect to the bump allocator automatically. `Region::alloc(value)` remains available as an explicit form for clarity, but is not required.
 
-3. **Region growth.** If the region's backing block is exhausted, does `Region::alloc` panic, return `Perhaps::None`, or automatically grow by allocating a new block? A growable region (linked list of blocks) is more ergonomic; a fixed-size region is simpler and predictable.
+3. **Region growth ✓ Resolved** — Auto-grow. When the backing block is exhausted, the region allocates a new block and chains it. The programmer declares a scope boundary, not a capacity limit. Growth is transparent.
 
-4. **Named region types.** Should a programmer be able to define a typed region (`struct FrameArena: Region`) for documentation and API clarity? Or is `Region` always anonymous and the named lifetime in `region 'r { }` sufficient?
+4. **Named region types ✓ Resolved** — Supported. A `linear struct` may implement the `Region` aspect to define a named region type (`struct FrameArena: Region`). Useful for documentation and API scoping.
 
-5. **`region 'r { }` syntax timing.** The named lifetime form requires the lifetime system to be at least partially in place. Is `region 'r { }` introduced with this RFC (as syntax that is parsed but whose `'r` is a no-op until lifetimes land), or deferred to the region-lifetime extension RFC?
+5. **`region 'r { }` syntax timing ✓ Resolved** — Parsed now. The `'r` label is accepted syntactically in this RFC. Until region lifetimes are fully introduced, the label is recorded but not enforced as a distinct lifetime type. No syntax change required when lifetimes land.
 
 ---
 
