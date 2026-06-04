@@ -3,143 +3,224 @@ id: rfc-0025
 title: "Region Allocation"
 date: '2026-05-24'
 status: draft
-target:
 ---
 
 ## Summary
 
-Introduce `Region` as a built-in linear type that provides bump-allocation from a contiguous heap block. Values allocated from a region share the region's lifetime — they are all freed together when the region is consumed. No per-object tracking, no reference counting overhead. The region handle is linear (must be explicitly consumed). Access to region-allocated values is scoped via a callback to prevent dangling references without requiring lifetime annotations.
+Introduce `region { }` as a block expression that provides bump-allocation from a contiguous heap block. All allocations inside the block go to the region's backing allocator and share a single lifetime `'r` — they are freed atomically when the block exits. No per-object tracking, no reference counting overhead for region-internal values. The block form is the primary interface: it is an expression, handles the region's linearity automatically, and introduces a named lifetime that the compiler can use for inference. `region { }` is the first step of Metel's lifetime system: it is the mechanism by which the programmer declares a lifetime scope without writing a lifetime annotation.
 
 ---
 
 ## Motivation
 
-Linear types (RFC-0024) give the programmer per-object control over allocation and deallocation. This is the right model for resources with independent lifetimes (file handles, sockets, individually managed buffers). It is a poor fit for workloads that allocate many short-lived objects that all become irrelevant at the same point in time:
+Linear types (RFC-0028) give per-object control over allocation and deallocation — the right model for resources with independent lifetimes. It is a poor fit for workloads that allocate many short-lived objects that all become irrelevant at the same point:
 
 - Parsing: an AST built for one source file, discarded once lowered
-- Game frame: all per-frame allocations freed at end of frame
 - Request handling: all per-request state freed when the response is sent
-- Scratch space: temporary buffers for a computation, freed when done
+- Graph analysis: scratch nodes and edge lists freed after the algorithm completes
+- Game frame: all per-frame allocations freed at frame end
 
-For these patterns, per-object `free()` is not just redundant — it is slower than freeing the entire backing block at once. Region allocation (also called arena allocation or bump allocation) is the standard solution: allocate from the front of a contiguous block, free the whole block in one operation.
+For these patterns, per-object `free()` is not just redundant — it is slower than freeing the entire backing block at once. Region allocation (arena / bump allocation) is the standard solution.
 
-The key design constraint for Metel: without lifetime annotations, a region-allocated pointer cannot be statically verified to not outlive the region. This RFC presents two options for handling that constraint and leaves the choice as an open decision.
+The deeper motivation: regions are also the lowest-cost entry point into Metel's planned lifetime system. A `region { }` block is a visible scope boundary. The compiler infers that everything allocated inside has lifetime `'r` — the programmer declares the scope, the compiler derives the lifetimes. This delivers most of the safety benefit of a lifetime system (no dangling region-internal pointers) with near-zero annotation burden.
 
 ---
 
-## Proposal
+## Proposed Design
 
-### `Region` as a linear type
+### The `region { }` block
 
-`Region` is a built-in linear type. It must be consumed — either by calling `region.free()` or by passing it to a consuming function. It cannot be cloned or stored behind `Rc`/`Arc` (all pointer-to-linear restrictions from RFC-0024 and RFC-0001 apply).
-
-```metel
-let region = Region::new(4096);   // allocate a 4096-byte backing block
-// ... use the region ...
-region.free();                     // consumed; backing block is freed
-```
-
-### Option A — Scope/callback access (safe, restrictive)
-
-Region-allocated values are accessible only inside a callback passed to `region.scope(...)`. The callback receives a reference to the region and can allocate from it. The scope returns a value that must not contain region-internal references — enforced by restricting the return type to types that are `Send` (and therefore contain no raw pointers or region-internal borrows).
+`region { }` is a block expression. Its last expression is its value, which must satisfy `RegionFree` — it must not contain any pointers into the region's backing storage.
 
 ```metel
-let region = Region::new(65536);
-
-let result: ParseTree = region.scope(fun(r) {
-    let tokens = r.create(tokenise(source));
-    let tree   = r.create(parse(tokens));
-    lower(tree)           // lower() returns a ParseTree that owns its data
-                          // tokens and tree are freed with the region
-});
-
-region.free();
+let summary = region {
+    let graph = build_graph(edges);   // region-allocated
+    compute_summary(@graph)           // returns a plain value — RegionFree
+};
+// graph and all region-internal allocations freed atomically here
 ```
 
-`r.create(value: T) -> T` allocates `T` in the region's backing block. The `T` is usable inside the scope. Any attempt to return a value that contains a region-internal reference from the scope is a type error (because such a value would not be `Send`).
+`region { expr }` desugars to `Region::scope(fun() { expr })`. The `Region` value is never visible to the programmer — the block scope handles its linearity automatically. There is no `Region::new`, no `region.free()`, no explicit handle to manage.
 
-**Pros:** statically safe without lifetime annotations. **Cons:** the `Send` restriction is overly conservative — many safe values (e.g. containing `*T` from RFC-0001) cannot be returned even when they don't actually reference the region. The scope callback model is also more verbose than direct allocation.
+### Implicit allocation
 
-### Option B — Programmer-responsibility access (flexible, requires discipline)
-
-The region provides direct allocation. Region-allocated values are regular Metel values. The programmer is responsible for not using them after `region.free()` is called. This is not statically verified — it is a performance primitive that accepts the risk of use-after-free in exchange for flexibility.
+Inside a `region { }` block, heap allocations go to the region's bump allocator rather than the RC heap. The programmer writes the same code; the compiler redirects pointer-producing operations (`&x`, `&mut x`, struct construction stored via pointer) to the region's backing block.
 
 ```metel
-let region = Region::new(65536);
-let tokens = region.create(tokenise(source));
-let tree   = region.create(parse(tokens));
-let result = lower(tree);
-region.free();
-// tokens and tree are now invalid — programmer's responsibility not to use them
+region {
+    let node = Node { id: 0, edges: [] };   // bump-allocated
+    let p: *Node = &node;                   // *'r Node — region-internal pointer
+    process(@p)
+}
+// node, p freed atomically
 ```
 
-Under this option, `region.create(value: T) -> T` works outside any callback. `T` is a regular value. The region is a performance tool, not a safety guarantee.
+`Region::alloc(value: T) -> *T` is available as an explicit form when the allocation intent should be visible in the source, but it is not required.
 
-**Pros:** ergonomic, no callback wrapping, no `Send` restriction. **Cons:** use-after-free is possible and undetected. This option requires unsafe context (see RFC-0026) to make the risk explicit.
+### The `RegionFree` exit constraint
 
-### Recommended design direction
+The block's return type must satisfy `RegionFree` — "contains no region-internal pointers." The compiler enforces this at the block boundary.
 
-Option A (scope/callback) as the safe default; Option B available inside `unsafe { }` blocks (RFC-0026) for cases where the callback overhead or `Send` restriction is unacceptable. This creates a clear spectrum:
+`RegionFree` is a marker aspect auto-derived for types that contain no `*'r T` fields:
 
-| Mechanism | Safety | Overhead |
-|---|---|---|
-| Linear types (RFC-0024) | Statically verified | None |
-| `Region::scope` (Option A) | Statically verified (via Send bound) | Callback wrap |
-| `Region::create` in `unsafe` (Option B) | Programmer responsibility | None |
+```metel
+// RegionFree — can escape the block:
+//   Int, Float, Bool, String — primitive value types
+//   Arc<T> — reference-counted, not region-internal
+//   unique *T allocated outside the block — not tagged 'r
+//   structs and enums whose fields are all RegionFree
+
+// NOT RegionFree — type error to return:
+//   *Node allocated inside the block — tagged *'r Node
+//   any struct that contains such a pointer
+```
+
+For now, `RegionFree` is approximated by the existing `Send` bound: since `*T` and `*mut T` are not `Send`, region-internal pointers cannot escape the block. This is conservative — some safe values are rejected. When region lifetimes (`*'r T`) are introduced, `RegionFree<'r>` replaces `Send` as the exit constraint and becomes precise: only pointers tagged with the current region's `'r` are rejected; heap-backed `unique *T` and other non-region pointers may escape freely.
+
+### Named region lifetime
+
+A `region { }` block introduces an anonymous lifetime `'_` for the region scope. When the lifetime needs to be named — for annotating a struct or function signature that borrows from the region — the block accepts an explicit lifetime label:
+
+```metel
+region 'r {
+    let p: *'r Node = Region::alloc(Node { ... });
+    let view = NodeView { node: p };   // struct parameterised by 'r
+    process(@view)
+    // process returns a RegionFree value; view and p freed here
+}
+```
+
+Named region lifetimes are the exception, not the rule. Most `region { }` blocks never need a name — the anonymous lifetime is sufficient and the compiler infers it. The name surfaces only when a struct or function signature needs to carry the lifetime explicitly.
+
+This is the bridge to the full lifetime system: once abstract lifetime variables are introduced on function signatures, `'r` in `region 'r { }` becomes a concrete named lifetime that participates in the general constraint system.
+
+### `region { }` is an expression
+
+The block produces a value. It composes naturally with let-bindings, function arguments, and control flow:
+
+```metel
+// Let-binding
+let tokens = region { tokenise(source) };
+
+// Directly in a function argument
+process(region { build_graph(edges) });
+
+// As one arm of a match
+let result = match mode {
+    Mode::Fast => region { fast_parse(src) },
+    Mode::Full => region { full_parse(src) },
+};
+```
+
+### Nested regions
+
+Nested `region { }` blocks each introduce a distinct lifetime. A pointer from an outer region (`*'r1 T`) is valid inside the inner block and may be passed out of it — the outer region outlives the inner. A pointer from the inner region (`*'r2 T`) cannot escape the inner block.
+
+```metel
+region 'outer {
+    let big = Region::alloc(BigStruct { ... });   // *'outer BigStruct
+
+    let result = region 'inner {
+        let scratch = Region::alloc(Scratch { ... });   // *'inner Scratch
+        compute(@big, @scratch)   // @big borrows 'outer — valid; @scratch borrows 'inner
+        // scratch freed here; big is still live
+    };
+
+    finish(@big, result)
+}
+// big freed here
+```
+
+### Option B — direct allocation in `unsafe`
+
+Inside `unsafe { }` blocks (RFC-0026), a `Region` value may be created and used directly without the block scope:
+
+```metel
+unsafe {
+    let region = Region::new(65536);
+    let tokens = region.alloc(tokenise(source));
+    let tree   = region.alloc(parse(tokens));
+    let result = lower(tree);
+    region.free();
+    // tokens and tree are now invalid — programmer's responsibility
+    result
+}
+```
+
+This is a performance escape hatch. No `RegionFree` enforcement, no lifetime tagging. Use-after-free is possible and undetected. Requires explicit `unsafe` to make the absence of guarantees visible.
 
 ### `Region` is not `Send`
 
-The backing block is not thread-safe. `Region` does not implement `Send`. It cannot be passed through a channel or captured by a `spawn { }` block (RFC-0003). Region allocation is a single-fiber primitive.
+The backing block is single-fiber. `Region` does not implement `Send` and cannot cross fiber boundaries or be captured by `spawn { }`. Region allocation is a single-fiber primitive. For multi-fiber scratch work, each fiber creates its own `region { }` block.
 
-### Interaction with `move fun` closures (RFC-0006)
+### Interaction with closures (RFC-0006)
 
-A `Region` handle is linear and therefore cannot be clone-captured by a closure. It can be move-captured (`move fun`) or passed as a parameter. Move-capturing a region into a closure consumes it in the outer scope — the closure then owns the region and is responsible for freeing it.
+A `region { }` block may contain closures. A closure inside the block captures values as normal. If the closure captures a region-internal pointer, it is itself not `RegionFree` and cannot escape the block — the same constraint applies.
+
+Move-capture of a region-internal value into a closure that escapes the block is a type error.
+
+---
+
+## Desugaring reference
+
+| Surface syntax | Desugars to |
+|---|---|
+| `region { expr }` | `Region::scope(fun() { expr })` |
+| `region 'r { expr }` | `Region::scope_named::<'r>(fun() { expr })` |
+| `Region::alloc(v)` inside block | bump-allocates `v` in current region's backing block |
+| `&x` inside block | takes address of `x` in region memory → `*'r T` |
+
+---
+
+## Relationship to the lifetime system
+
+`region { }` is the first concrete step of Metel's staged lifetime system:
+
+- **This RFC**: `region { }` block introduces lifetime `'r`; `RegionFree` (approximated by `Send`) enforces scope exit. Programmer writes zero lifetime annotations for the common case.
+- **Region lifetime extension**: `*'r T` becomes a distinct type; `RegionFree<'r>` replaces `Send` as the exit constraint; `@'r T` (storable read references tagged with `'r`) are introduced. Struct and function signatures may carry `'r` when needed.
+- **Full lifetime system**: abstract lifetime variables on function signatures for cross-region and cross-function borrow relationships. `'r` from `region 'r { }` participates in the general constraint system.
+
+Each step is additive. Nothing in this RFC forecloses the later layers.
 
 ---
 
 ## Alternatives Considered
 
-### Per-object linear allocation (RFC-0024 only)
+### Explicit `Region::scope` callback only
 
-Linear types handle the case where objects have independent lifetimes. For batch-lifetime workloads, per-object `free()` is correct but suboptimal. Regions are a complementary mechanism, not a replacement.
+The previous design used `Region::scope(fun(r) { r.create(value) })`. The `region { }` block is strictly more ergonomic: no callback syntax, no explicit region handle, no `r.create()`, no `move fun` required for closure interaction. The block desugars to the same thing internally.
 
-### `Vec<T>` as a manual arena
+### Per-object linear allocation only
 
-A programmer could approximate an arena with a `Vec<u8>` and unsafe casting. This is error-prone and requires unsafe already. A first-class `Region` type gives the same performance with better ergonomics and a clear safety story.
+Linear types handle objects with independent lifetimes. For batch-lifetime workloads, per-object `free()` is correct but slower than bulk deallocation. Regions are complementary, not a replacement.
 
-### Compile-time stack allocation
+### GC / tracing collector
 
-For small fixed-size scratch space, stack allocation is already what the runtime does. Regions target larger, runtime-sized allocations where heap is required.
+A garbage collector eliminates manual memory management entirely but introduces pause times and runtime overhead. Regions are a zero-overhead alternative for bounded-lifetime workloads.
 
 ---
 
 ## Open Questions
 
-1. **Option A vs B decision.** Is the scope/callback model (Option A) acceptable as the primary interface, or is the `Send` restriction too limiting? Should Option B be available only via `unsafe` or also via some explicit `Region::alloc_unchecked` method?
+1. **`RegionFree` vs `Send` as interim exit constraint.** The `Send` bound is conservative — values containing `unique *T` from outside the region are rejected even though they are safe to return. Introducing `RegionFree` as a distinct marker earlier (before full region lifetime tagging) would be more precise. Is the conservatism acceptable until region lifetimes arrive, or should `RegionFree` be defined now as a separate marker that `Send` implies but does not equal?
 
-2. **`r.create(value)` semantics.** Does `create` take ownership of `value` and copy it into the region's block? Or does it allocate uninitialized memory and the value is constructed in-place? The latter is more efficient but requires a constructor callback or placement-new equivalent.
+2. **Implicit vs explicit allocation.** Should allocation inside `region { }` be fully implicit (all heap allocations redirect to the bump allocator), or should only `Region::alloc(value)` calls allocate from the region? Fully implicit is more ergonomic but requires the compiler to identify all allocation sites. Explicit `Region::alloc` is less magical but more verbose.
 
-3. **Region growth.** If the region's backing block is exhausted, does `create` panic, return `Perhaps::None`, or automatically allocate a new block? A growable region (linked list of blocks) is more ergonomic; a fixed-size region is simpler and predictable.
+3. **Region growth.** If the region's backing block is exhausted, does `Region::alloc` panic, return `Perhaps::None`, or automatically grow by allocating a new block? A growable region (linked list of blocks) is more ergonomic; a fixed-size region is simpler and predictable.
 
-4. **Interaction with `&T` (RFC-0024).** Inside a `scope` callback, can you take a `&T` read reference to a region-allocated value and pass it out of the scope? Under the `Send` bound this would be caught (non-Send). Under Option B this is unchecked. A specific rule may be needed.
+4. **Named region types.** Should a programmer be able to define a typed region (`struct FrameArena: Region`) for documentation and API clarity? Or is `Region` always anonymous and the named lifetime in `region 'r { }` sufficient?
 
-5. **Named region types.** Should the programmer be able to define a typed region (`struct FrameArena: Region`) for documentation purposes, or is `Region` always anonymous?
-
----
-
-## Timing Recommendation
-
-Depends on RFC-0024 (linear types must be accepted first, since `Region` is a linear type). Also benefits from RFC-0026 (unsafe blocks) being at least drafted, since Option B (direct allocation) is only sound inside `unsafe`. Target **v0.4** alongside or after the concurrency work, since single-fiber regions are most valuable once multi-fiber programs exist and frame/request patterns emerge.
+5. **`region 'r { }` syntax timing.** The named lifetime form requires the lifetime system to be at least partially in place. Is `region 'r { }` introduced with this RFC (as syntax that is parsed but whose `'r` is a no-op until lifetimes land), or deferred to the region-lifetime extension RFC?
 
 ---
 
 ## References
 
-- Language spec: `docs/public/spec.md`
-- RFC-0024: `docs/internal/rfcs/rfc-0024-linear-types.md` — `Region` is a linear type; all linear-type rules apply
-- RFC-0001: `docs/internal/rfcs/rfc-0001-pointer-syntax.md` — pointer-into-region lifetime problem; `&x` restriction on linear values
-- RFC-0003: `docs/internal/rfcs/rfc-0003-concurrency-model.md` — `Region` is not `Send`
-- RFC-0006: `docs/internal/rfcs/rfc-0006-closure-capture-semantics.md` — move capture of region handles
-- RFC-0026: `docs/internal/rfcs/rfc-0026-unsafe-blocks.md` — Option B (direct allocation) requires unsafe context
-- Cluster report: `docs/internal/rfc-cluster-memory-model.md`
-- Prior art: Cyclone regions, Rust arenas (`bumpalo` crate), Zig's `std.mem.Allocator`
+- RFC-0028: memory and reference model — `Region` is a linear type; linear checker applies inside the block
+- RFC-0043: regular pointers (incorporated) — `&x` inside a region block produces a region-internal pointer
+- RFC-0003: concurrency model (resolved) — `Region` is not `Send`; single-fiber primitive
+- RFC-0006: closure capture semantics — closures inside `region { }` blocks; move capture of region handles
+- RFC-0026: unsafe blocks — Option B (direct `Region::new`/`free`) requires unsafe context
+- Lifetime proposal: `docs/reports/memory-model/lifetime-system-proposal.md` — §4.1 and §6.1 for the region-lifetime integration design
+- Cluster report: `docs/reports/memory-model/rfc-cluster-memory-model.md`
+- Prior art: Cyclone regions, Rust `bumpalo` crate, Zig `std.mem.Allocator`
