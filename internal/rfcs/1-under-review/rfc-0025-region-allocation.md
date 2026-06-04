@@ -2,7 +2,7 @@
 id: rfc-0025
 title: "Region Allocation"
 date: '2026-05-24'
-status: draft
+status: under-review
 ---
 
 ## Summary

@@ -2,7 +2,7 @@
 id: rfc-0023
 title: "Type Ascription vs Turbofish — Call-Site Type Annotation Review"
 date: '2026-05-23'
-target: 
+status: accepted
 ---
 
 ## Summary
@@ -130,7 +130,9 @@ The cost of deferral: ascription remains in the language until this RFC resolves
 
 ## Decision
 
-*(pending — revisit after v0.2 generics and v0.3 are in use)*
+**Outcome:** Accepted — Option A: ascription and turbofish coexist.
+
+Both operators are retained. Ascription (`expr : T`) handles result-type annotation and single-expression disambiguation. Turbofish (`f::<T>(args)`) handles multi-parameter generic call sites. The two operators address overlapping but distinct problems and the surface area cost is justified by their complementary coverage.
 
 ---
 

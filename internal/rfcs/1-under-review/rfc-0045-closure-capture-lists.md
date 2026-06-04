@@ -2,7 +2,7 @@
 id: rfc-0045
 title: "Closure Capture Lists"
 date: '2026-06-03'
-status: draft
+status: under-review
 ---
 
 ## Summary

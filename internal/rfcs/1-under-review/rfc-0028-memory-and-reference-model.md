@@ -2,7 +2,7 @@
 id: rfc-0028
 title: "Memory and Reference Model"
 date: '2026-05-24'
-status: draft
+status: under-review
 supersedes:
   - rfc-0001
   - rfc-0024
