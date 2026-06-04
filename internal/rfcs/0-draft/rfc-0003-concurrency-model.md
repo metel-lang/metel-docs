@@ -7,7 +7,7 @@ status: draft
 
 ## Summary
 
-Define Metel's concurrency model: language-native fibers, typed channels as the primary communication primitive, a `select` expression for multiplexing, and a single `Send` marker aspect to prevent data races at the type level without ownership semantics. The design follows Go's philosophy — concurrency is transparent syntactically, managed by the runtime, and idiomatic code communicates through channels rather than shared memory.
+Define Metel's concurrency model: fiber handles with linear ownership, typed channels as the primary communication primitive, a `select` expression for multiplexing, and a `Send` marker aspect to prevent data races. Concurrency syntax (`spawn`, `<-`, `->`, `select`) desugars to aspect implementations on standard library types, consistent with Metel's general philosophy that syntax sugar maps to aspect method calls. Fibers are first-class values with linear handles — fire-and-forget is possible but must be explicit via `.detach()`.
 
 ---
 
@@ -21,53 +21,87 @@ The three problems concurrency must address:
 2. **I/O multiplexing** — waiting on multiple sources without blocking an OS thread per source
 3. **Coordination** — communicating results and signalling termination between concurrent tasks
 
-The chosen model determines how complex each of these is to express and how easy it is to accidentally introduce data races or deadlocks.
-
 ---
 
 ## Design Philosophy
 
-Go's concurrency model provides the clearest reference point for Metel's stated goals:
+### Syntax desugars to aspect implementations
 
-> *"Don't communicate by sharing memory; share memory by communicating."*
-> — Rob Pike
+Metel's existing surface syntax desugars to aspect method calls: `?` desugars to `From`/`Into`, `+` to `Add::add`, `for x in iter` to `Iterator::next`. Concurrency operators follow the same pattern:
 
-The concrete implications for Metel:
+| Syntax | Desugars to |
+|--------|-------------|
+| `spawn { expr }` | `Spawnable::spawn(|| expr) -> Fiber<T>` |
+| `ch <- value` | `Sendable::send(&ch, value)` |
+| `<- ch` | `Receivable::recv(&ch) -> Perhaps<T>` |
+| `select { ... }` | `Selectable::select(...)` |
 
-- **No function colouring** — launching a fiber does not require functions to be declared differently (`async fn` in Rust/JavaScript). Blocking inside a fiber is fine; the runtime schedules around it. This avoids the "what colour is my function?" problem entirely.
-- **Channels are the primary primitive** — values are *transferred* between fibers through typed channels, not *shared*. Fibers own their data; ownership moves when a value is sent.
-- **The runtime manages scheduling** — fibers are lightweight (green threads, M:N scheduled). The programmer launches a fiber and forgets about threads, cores, and scheduling.
-- **Shared mutable state is possible but opt-in** — `Mutex<T>` and `Atomic<T>` in the standard library cover the cases where shared state is genuinely necessary. These are library types, not language features.
-- **One type-level rule prevents the worst races** — `*mut T` is not `Send`. This single constraint, enforced at compile time, blocks the most dangerous class of data races (shared mutable pointer across fiber boundaries) without requiring a full ownership system.
+Any type implementing the relevant aspect participates in the syntax. This means user-defined channels, mock channels in tests, and alternative spawning strategies are all first-class without special-casing in the compiler.
+
+### No function colouring
+
+Launching a fiber does not require functions to be declared differently. There is no `async fn` — a function that blocks inside a fiber does not need a different signature. The runtime schedules around blocking transparently.
+
+### Communicate by transferring ownership
+
+Values are *moved* into channels, not shared. Fibers own their data; ownership transfers when a value is sent. The `Send` marker aspect enforces this at compile time — only `Send` types can cross fiber boundaries.
 
 ---
 
 ## Proposed Design
 
-### Fibers
+### Aspects
 
-A fiber is a lightweight concurrent task launched with the `spawn` keyword:
-
-```metel
-spawn { heavy_computation(data) }
-```
-
-`spawn { ... }` is a statement. The block runs concurrently. The launching fiber continues immediately.
-
-Any expression is valid inside `spawn { ... }`. The return value of the block is discarded unless the fiber communicates through a channel.
+Four aspects govern concurrency syntax:
 
 ```metel
-let ch: Chan<Int> = Chan::new();
-spawn {
-    let result = compute();
-    ch <- result;
+aspect Spawnable {
+    type Output;
+    fun spawn(f: fun() -> Self::Output) -> Fiber<Self::Output>;
 }
-let answer = <- ch;
+
+aspect Sendable<T> {
+    fun send(self: &Self, value: T);
+}
+
+aspect Receivable<T> {
+    fun recv(self: &Self) -> Perhaps<T>;       // blocking: waits until a value is available or channel closes
+    fun try_recv(self: &Self) -> Perhaps<T>;   // non-blocking: returns nope immediately if no value is ready
+}
+
+aspect Selectable {
+    fun register(self: &Self, selector: &Selector);
+}
 ```
 
-There is no handle to a fiber — fibers are fire-and-forget at the language level. Coordination happens through channels. A fiber that panics terminates the program (same as Go).
+The standard library types `Fiber<T>`, `Chan<T>`, `SendChan<T>`, `RecvChan<T>` implement these aspects. User-defined types may also implement them to participate in concurrency syntax.
 
-**No `async fn`/`await`:** functions are not coloured. A function that blocks inside a fiber does not need to be declared differently. The runtime detects blocking and parks the fiber until it can proceed.
+---
+
+### Fiber handles and linearity
+
+`spawn { expr }` returns a `Fiber<T>` handle. `Fiber<T>` is a **linear type** — it must be explicitly consumed. This makes accidental fire-and-forget of a meaningful fiber a compile error:
+
+```metel
+let f: Fiber<Int> = spawn { compute() };
+let result = f.join();   // blocks until done, consumes handle
+```
+
+**Explicit fire-and-forget** is allowed via `.detach()`, which consumes the handle and releases the linearity constraint:
+
+```metel
+spawn { log_event(data) }.detach();   // explicit discard
+```
+
+A bare `spawn { }` statement (without binding) implicitly calls `.detach()`:
+
+```metel
+spawn { log_event(data) };   // sugar for .detach() — intentional, not accidental
+```
+
+The two uses are distinct at the type level. Holding a `Fiber<T>` and never joining or detaching it is a compile error, caught by the linearity checker (RFC-0028).
+
+**Panic isolation:** Because fibers have handles, a fiber's panic does not terminate the program. The panic is captured as an error value in the handle's result. `f.join()` returns `Result<T, Panic>` rather than `T`. A detached fiber that panics has no handle — its panic terminates the program (Go model), since there is no owner to report to. This gives a clean semantic distinction: owned fibers are isolated; detached fibers are program-terminating on panic.
 
 ---
 
@@ -76,24 +110,19 @@ There is no handle to a fiber — fibers are fire-and-forget at the language lev
 `Chan<T>` is a typed, bidirectional, first-class channel. Both unbuffered and buffered variants exist:
 
 ```metel
-// Unbuffered — sender blocks until receiver is ready
-let ch: Chan<Int> = Chan::new();
-
-// Buffered — sender blocks only when the buffer is full
-let ch: Chan<Int> = Chan::buffered(16);
+let ch: Chan<Int> = Chan::new();          // unbuffered
+let ch: Chan<Int> = Chan::buffered(16);   // buffered
 ```
 
-`Chan<T>` is `Send` for any `T: Send` — channels are designed to be passed across fiber boundaries.
-
-**Directional subtypes** (for documentation and API clarity, not enforced at the implementation level in the PoC):
+**Directional subtypes** fall out naturally from the aspect model: `SendChan<T>` implements `Sendable<T>` only; `RecvChan<T>` implements `Receivable<T>` only; `Chan<T>` implements both. The typechecker enforces directionality through aspect resolution — no special language syntax required.
 
 ```metel
-Chan<T>      // bidirectional (default)
-SendChan<T>  // write-only view
-RecvChan<T>  // read-only view
+Chan<T>       // Sendable<T> + Receivable<T>
+SendChan<T>   // Sendable<T> only
+RecvChan<T>   // Receivable<T> only
 ```
 
-`Chan<T>` coerces to `SendChan<T>` or `RecvChan<T>` where the directional type is expected. This mirrors Go's `chan<- T` and `<-chan T` but uses named types instead of directional syntax, which is more readable and consistent with Metel's type conventions.
+`Chan<T>` coerces to `SendChan<T>` or `RecvChan<T>` where the narrower type is expected.
 
 ---
 
@@ -102,267 +131,323 @@ RecvChan<T>  // read-only view
 **Send** — `ch <- value`:
 
 ```metel
-ch <- 42;           // blocks if ch is unbuffered and no receiver is ready
+ch <- 42;   // desugars to Sendable::send(&ch, 42)
+            // blocks if unbuffered and no receiver is ready
 ```
 
-Send is a statement. It moves `value` into the channel; `value` is no longer accessible in the sending fiber after this point (value semantics — the value is copied into the channel buffer, consistent with Metel's existing copy semantics for structs).
+Send moves `value` into the channel. `value` is no longer accessible in the sending fiber after this point.
 
 **Receive** — `<- ch`:
 
 ```metel
-let x = <- ch;      // blocks until a value is available
+let x = <- ch;   // desugars to Receivable::recv(&ch) -> Perhaps<Int>
+                 // blocks until a value is available or channel closes
 ```
 
-`<- ch` is an expression of type `Perhaps<T>`. It evaluates to:
+`<- ch` returns `Perhaps<T>`:
 - `Perhaps::Some { value }` — a value was received
 - `nope` — the channel is closed and drained
-
-This models channel exhaustion without introducing a new primitive — `Perhaps<T>` already exists, and the close-signals-completion pattern maps cleanly onto it.
 
 ```metel
 while let Perhaps::Some { value: x } = <- ch {
     process(x);
 }
-// loop exits when channel is closed and drained
 ```
 
-**Close** — `ch.close()`:
+**Non-blocking receive** — `ch.try_recv()`:
 
-Marks the channel as closed. Further sends are a runtime panic. Receivers drain any buffered values, then receive `nope`.
+```metel
+let x = ch.try_recv();   // desugars to Receivable::try_recv(&ch) -> Perhaps<Int>
+                         // returns nope immediately if no value is ready
+```
+
+Use `try_recv()` inside `select` arms or polling loops where blocking is not acceptable. `<- ch` is always blocking; `try_recv()` is always non-blocking.
+
+**Close** — `ch.close()`: marks the channel closed. Further sends panic. Receivers drain buffered values, then receive `nope`.
 
 ---
 
 ### The `select` expression
 
-`select` waits on multiple channel operations simultaneously, executing the first one that is ready. It is an expression — every arm produces a value of the same type.
+`select` waits on multiple channel operations simultaneously, executing the first ready arm. It is an expression — every arm produces a value of the same type. Under the hood it desugars to `Selectable::register` calls on each arm's operand, with the runtime resolving which arm fires.
 
 ```metel
 let result = select {
     v <- ch1       => process(v),
     ch2 <- payload => "sent",
-    else           => "would block",   // optional: makes select non-blocking
+    else           => "would block",   // optional: non-blocking
 }
 ```
 
-`else` is optional. Without it, `select` blocks until one arm is ready. With `else`, `select` returns the `else` value immediately if no arm is ready (non-blocking poll).
+`else` is optional. Without it, `select` blocks until one arm is ready. With `else`, it returns immediately if no arm is ready.
 
-**Receive arm**: `v <- ch` — evaluates to the received value, bound as `v` in the arm body. Arm is ready when a value is available. If the channel is closed, the arm receives `nope` and the binding has type `Perhaps<T>`.
-
-**Send arm**: `ch <- value` — evaluates when the send completes. The arm body has no binding but produces the arm's expression value.
-
-Semantics: if multiple arms are ready simultaneously, one is chosen at random (same as Go). This prevents starvation but means `select` with multiple ready arms is non-deterministic.
+**Timeout** — a timer type implements `Selectable`, making timeout a natural `select` arm rather than a special language construct:
 
 ```metel
-// Fan-in: merge two channels into one result
-fun merge<T: Send>(a: RecvChan<T>, b: RecvChan<T>) -> Perhaps<T> {
-    select {
-        v <- a => Perhaps::Some { value: v },
-        v <- b => Perhaps::Some { value: v },
-        else   => nope,
-    }
+let result = select {
+    v <- data_ch             => Perhaps::Some { value: v },
+    _ <- Chan::timeout(5_s)  => nope,
 }
 ```
+
+`Chan::timeout(duration) -> RecvChan<Unit>` returns a channel that receives a single `Unit` value after the duration elapses. No special timeout syntax is needed.
+
+If multiple arms are ready simultaneously, one is chosen at random. This prevents starvation but means `select` with multiple ready arms is non-deterministic.
+
+---
+
+### Joining fibers
+
+`Fiber<T>` provides:
+
+```metel
+fun join(self: Fiber<T>) -> Result<T, Panic>   // blocks, consumes handle
+fun detach(self: Fiber<T>)                      // fire-and-forget, consumes handle
+```
+
+Joining a collection of fibers:
+
+```metel
+let results = [f1, f2, f3].map(Fiber::join);
+```
+
+`WaitGroup` is not a language primitive — it is a library pattern built on top of fiber handles and channels for cases where the number of fibers is dynamic.
 
 ---
 
 ### The `Send` marker aspect
 
-`Send` is a marker aspect — no methods, no implementations to write. A type that is `Send` can be moved across fiber boundaries (passed through a channel or captured by a `spawn { }` block).
+`Send` is a marker aspect — no methods. A type that is `Send` can be moved across fiber boundaries.
 
 ```metel
 aspect Send {}
 ```
 
-**Default implementations:**
-
 | Type | `Send`? | Reason |
-|---|---|---|
-| `Int`, `Float`, `Bool`, `Str` | yes | primitives — copied |
+|------|---------|--------|
+| `Int`, `Float`, `Bool`, `String` | yes | primitives — copied |
 | Structs with all-`Send` fields | yes | automatic |
 | Enums with all-`Send` variants | yes | automatic |
 | `Perhaps<T>` where `T: Send` | yes | automatic |
-| `Result<T, E>` where `T, E: Send` | yes | automatic |
-| `Chan<T>` where `T: Send` | yes | channels are designed to cross fiber boundaries |
-| `*T` (read-only pointer) | **no** | aliased read could race with a concurrent write |
-| `*mut T` (mutable pointer) | **no** | shared mutable access — data race |
-| `Mutex<T>` where `T: Send` | yes | the mutex is the synchronisation mechanism |
+| `Chan<T>` where `T: Send` | yes | channels cross fiber boundaries by design |
+| `Fiber<T>` where `T: Send` | yes | handles are `Send` |
+| `*T` | **no** | aliased read could race with concurrent write |
+| `*mut T` | **no** | shared mutable access — data race |
+| `Mutex<T>` where `T: Send` | yes | mutex is the synchronisation mechanism |
+| Linear types where all fields are `Send` | yes | linear values move, never alias |
 
-The rule for `*T`/`*mut T` being non-`Send` is the single constraint that prevents the most dangerous concurrency bugs. Sending a `*mut T` across a fiber boundary without a mutex means two fibers can read and write the same memory concurrently — the canonical data race. By making all pointer types non-`Send` by default, the type system makes this a compile-time error rather than a runtime race.
+Deriving `Send` is automatic for most types — the programmer does not annotate it. Only types containing `*T` or `*mut T` are not `Send` by default.
 
-**Using `*T` with concurrency:**
+---
 
-If shared read-only access is genuinely needed, wrap in a `Mutex<T>` or use `Arc<T>` (a reference-counted, `Send`-safe shared pointer — a standard library type, not a language primitive):
+### The `Sync` marker aspect
+
+`Sync` is a marker aspect — no methods. A type that is `Sync` can be accessed concurrently from multiple fibers via a shared reference without a data race.
 
 ```metel
-// Wrong: *mut T is not Send
-let p: *mut Int = &mut x;
-ch <- p;   // type error: *mut Int does not implement Send
-
-// Right: Mutex<T> is Send
-let m: Mutex<Int> = Mutex::new(x);
-ch <- m;   // ok
+aspect Sync {}
 ```
 
-**Deriving `Send` is automatic** for most types — the programmer does not annotate `Send` on their own structs. The compiler checks field types. Only types containing `*T` or `*mut T` are not `Send` by default.
+The precise relationship: `T: Sync` means that holding multiple read pointers (`*T`) to the same value simultaneously across fibers is race-free. This is a stronger property than `Send` (which governs ownership transfer) — `Sync` governs concurrent access.
+
+| Type | `Sync`? | Reason |
+|------|---------|--------|
+| `Int`, `Float`, `Bool`, `String` | yes | immutable value semantics — concurrent reads are safe |
+| Structs with all-`Sync` fields | yes | automatic |
+| Enums with all-`Sync` variants | yes | automatic |
+| `*T` | **no** | no lifetime guarantee — pointee may be dropped or mutated through another alias |
+| `*mut T` | **no** | concurrent writes through different aliases = data race |
+| `Mutex<T>` where `T: Send` | yes | access is serialized by the lock |
+| `RwLock<T>` where `T: Send + Sync` | yes | multiple readers serialized by the lock |
+| `Atomic<Int>`, `Atomic<Bool>` | yes | atomics are safe for concurrent access by design |
+| `Chan<T>` where `T: Send` | yes | channels have internal synchronisation |
+| `Arc<T>` where `T: Send + Sync` | yes | reference-counted; no interior mutability |
+| Linear types where all fields are `Sync` | yes | linear values move and never alias |
+
+`Sync` is not usually written explicitly. It is derived automatically when all fields are `Sync`, and violated only when a type contains `*T`, `*mut T`, or interior-mutability primitives without synchronisation.
 
 ---
 
-### Standard library concurrency primitives
+### `Arc<T>` — shared ownership across fibers
 
-These are library types, not language features. They use pointer internals but expose a safe `Send` API:
+`Arc<T>` is a reference-counted shared pointer. It is the standard mechanism for sharing a large immutable value (lookup table, config object, compiled structure) across multiple fibers without cloning it into each one.
+
+```metel
+let config = Arc::new(load_config());
+let c1 = Arc::clone(&config);
+let c2 = Arc::clone(&config);
+
+spawn { use_config(c1) };
+spawn { use_config(c2) };
+```
+
+**Properties:**
+
+- `Arc<T>` is not linear — it can be cloned freely to produce additional handles to the same allocation.
+- `Arc<T>: Send` when `T: Send + Sync`. The `Send` bound ensures the value was safe to move into the `Arc`; the `Sync` bound ensures concurrent reads through multiple `Arc` handles are race-free.
+- `Arc<T>: Sync` when `T: Send + Sync`.
+- `Arc<T>` provides read-only access to the inner value. There is no `Arc::get_mut` in the general case — interior mutability requires `Arc<Mutex<T>>` or `Arc<RwLock<T>>`.
+
+**Shared mutation pattern:**
+
+```metel
+let shared = Arc::new(Mutex::new(Counter::new()));
+let s1 = Arc::clone(&shared);
+let s2 = Arc::clone(&shared);
+
+spawn { s1.lock().increment() };
+spawn { s2.lock().increment() };
+```
+
+**Prohibition on linear types:**
+
+`Arc<LinearT>` is a type error. A linear value must be owned by exactly one party — reference-counting it would allow multiple owners and defeat the linearity guarantee.
+
+**Lifetime:** when the last `Arc<T>` handle is dropped, the inner value is freed. Reference counting is atomic — `Arc<T>` handles may be dropped from different fibers.
+
+---
+
+## Runtime and primitive layers
+
+The concurrency model rests on a layered implementation stack. Only the top two layers are visible to user code:
+
+```
+spawn { } / <- / -> / select      ← syntax, desugars to aspect calls
+───────────────────────────────────
+Fiber<T>, Chan<T>, Mutex<T>        ← safe stdlib types (implement aspects)
+───────────────────────────────────
+Thread<T>, Atomic<T>               ← low-level stdlib primitives
+───────────────────────────────────
+OS primitives (futex, pthread_t)   ← inside unsafe only, stdlib-internal
+───────────────────────────────────
+M:N runtime scheduler              ← invisible to user code
+```
+
+### M:N scheduler
+
+Fibers are lightweight (green threads), M:N scheduled by the language runtime. The programmer launches fibers and forgets about OS threads, cores, and scheduling. The scheduler is an implementation detail of the runtime — it is never exposed to user code.
+
+### `Atomic<T>`
+
+Lock-free atomic operations. Required internally by `Chan<T>`, `Mutex<T>`, and the scheduler itself. Exposed publicly in the stdlib as a safe API for `Atomic<Int>` and `Atomic<Bool>`, since the operations are well-defined and carry no memory unsafety beyond the ordering contract. Memory ordering annotations (acquire, release, sequentially consistent) are explicit parameters.
+
+### `Thread<T>`
+
+A 1:1 OS thread that implements `Spawnable`. Heavier than `Fiber<T>` but has no runtime scheduler dependency — useful for CPU-bound work that must bypass the M:N scheduler, for FFI with thread-local storage requirements, or for embedding Metel in environments without a runtime.
+
+Because `Thread<T>` implements `Spawnable`, `spawn { }` syntax works with it when the declared type is `Thread<T>`. The aspect model makes the two spawning strategies syntactically uniform:
+
+```metel
+let f: Fiber<Int>  = spawn { compute() };   // M:N fiber
+let t: Thread<Int> = spawn { compute() };   // OS thread
+let result = f.join();
+let result = t.join();
+```
+
+`Thread<T>` is a low-level type. It is available without `unsafe` but is clearly documented as a systems-level escape hatch.
+
+### OS primitives
+
+Futexes, semaphores, `pthread_t`, and similar OS-level constructs are used inside the stdlib to implement `Thread<T>`, `Mutex<T>`, and `Atomic<T>`. They are not exposed outside `unsafe` blocks and are not part of the public API surface.
+
+---
+
+### Standard library concurrency types
 
 | Type | Purpose |
-|---|---|
-| `Mutex<T>` | Exclusive mutable access. `.lock()` returns a guard; guard released on drop. |
-| `RwLock<T>` | Shared read / exclusive write. |
-| `Atomic<Int>`, `Atomic<Bool>` | Lock-free integer and boolean operations. |
-| `WaitGroup` | Coordinate completion of a set of fibers (`add`, `done`, `wait`). |
-| `Once` | Execute an initialiser exactly once across all fibers. |
+|------|---------|
+| `Fiber<T>` | Lightweight M:N-scheduled fiber handle (linear) |
+| `Thread<T>` | 1:1 OS thread handle (linear) |
+| `Chan<T>` | Typed bidirectional channel |
+| `SendChan<T>` | Write-only channel view |
+| `RecvChan<T>` | Read-only channel view |
+| `Mutex<T>` | Exclusive mutable access. `.lock()` returns a guard; released on drop |
+| `RwLock<T>` | Shared read / exclusive write |
+| `Atomic<Int>`, `Atomic<Bool>` | Lock-free integer and boolean operations |
+| `Arc<T>` | Reference-counted shared ownership. `Send + Sync` when `T: Send + Sync` |
 
-`Mutex<T>` and `RwLock<T>` are `Send` because they wrap the synchronisation mechanism around the value. Internally they use `*mut T`, but the safe API prevents unsound access.
-
----
-
-### Fiber lifecycle and structured alternatives
-
-Go's goroutines are unstructured — a goroutine outlives its spawning scope, and the runtime only terminates when `main` returns or the program panics. There is no built-in "wait for all goroutines" primitive other than `WaitGroup` and explicit channel signalling.
-
-**Structured concurrency** (Swift's `async let`, Kotlin's `launch { }` within a scope) ties fiber lifetime to a lexical scope. This prevents fiber leaks but requires a scope object and changes the programming model.
-
-For Metel's first concurrency implementation, **unstructured fibers** (`spawn { }`) are proposed, matching Go's model. Structured concurrency can be layered on top as a library pattern using `WaitGroup` and channels. If experience shows that fiber leaks are a common source of bugs, a structured API (`scope { |s| s.spawn { ... } }`) can be added without changing the core primitives.
+`Mutex<T>` and `RwLock<T>` are `Send` because they wrap the synchronisation mechanism around the value. Internally they use `*mut T` inside `unsafe`, but the public API is safe.
 
 ---
 
-## Interaction with RFC-0001 (Pointers)
+## Interaction with RFC-0043 (Regular Pointers)
 
-The `Send` marker aspect resolves RFC-0001's remaining ambiguity about pointer semantics in a concurrent world:
+RFC-0043 is implemented. The pointer surface (`*T`, `*mut T`, `&x`, `&mut x`, `*p`) is settled. RFC-0043 explicitly deferred the question of whether pointers are `Send` to the concurrency RFC. This RFC now resolves that:
 
-1. **`*T` and `*mut T` are not `Send`** — pointers are local-fiber tools. Self-referential structs, tree nodes, and in-place mutation within a single fiber are the intended use cases. Cross-fiber sharing goes through channels (moving values) or `Mutex<T>` (protecting shared state).
+1. **`*T` and `*mut T` are not `Send`** — pointers are local-fiber tools. `*T` introduces aliasing to non-linear storage; allowing it to cross fiber boundaries without synchronisation would create data races. `*mut T` additionally allows writes — sharing it is the canonical data race.
+2. **`Perhaps<*T>` is not `Send`** — wrapping a non-`Send` type in `Perhaps` does not make it `Send`.
+3. **`*mut T` coerces to `*T`** (RFC-0043 §4) — this coercion is unaffected by concurrency rules. Neither end of the coercion is `Send`.
+4. **Auto-deref** (RFC-0043 §6) applies to field access, method dispatch, and function pointer calls — unaffected by `Send`.
+5. **Pointer equality** (RFC-0043, equality section) is identity equality — unaffected by `Send`.
 
-2. **`Perhaps<*T>` is not `Send`** either — wrapping a non-`Send` type in `Perhaps` does not make it `Send`. `Perhaps<Mutex<T>>` is `Send` if `T: Send`.
+The `Send`-non-`Send` boundary for pointer types is now fully settled by this RFC. RFC-0043's compatibility constraint ("future concurrency or lifetime model must account for that aliasing explicitly") is satisfied by the `Send` marker aspect defined here.
 
-3. **Auto-deref (RFC-0001 open question 2)**: The concurrency model has no bearing on this question. It remains deferred.
+### Known future tension: scoped concurrency
 
-4. **Pointer equality (RFC-0001 open question 4)**: Also unaffected; defer.
+The `*T: !Send` rule is unconditional. This forecloses one specific future pattern: **scoped fibers** — fibers whose lifetime is bounded by a lexical scope, making it provably safe to send references into the enclosing stack frame without copying. Rust achieves this via `std::thread::scope`, where `&'a T` borrows are tied to the scope's lifetime and become sendable within it.
 
-The recommended sequencing remains RFC-0001's Option B: resolve RFC-0001 (pointer syntax) after the PoC evaluator is complete, incorporating the `Send` constraint specified here. RFC-0003 is the upstream dependency that RFC-0001 needs before being closed.
+If Metel later wants scoped fibers that borrow from the enclosing scope, the unconditional `*T: !Send` rule would block naively sending `*T` into them. The clean resolution — consistent with Metel's direction of separate reference types (`@T` for linear read references, future `&'a T` for lifetime-tracked references) — is a dedicated `ScopedFiber<'scope, T>` handle type whose lifetime the borrow checker can reason about, rather than making `*T` conditionally `Send`. This keeps `*T` semantics simple and stable.
+
+This is not a current concern but should be considered when designing the lifetime system (RFC-0028) and when `Fiber<T>` is formalised.
 
 ---
 
-## Interaction with RFC-0002 (Aspect Bounds)
+## Interaction with RFC-0028 (Memory and Linear Types)
 
-`Send` is the first marker aspect in the language. Its introduction has two implications for RFC-0002:
-
-1. **Marker aspects need a representation in the AST and type system.** A aspect with no methods is valid under the current spec — it is simply a aspect with an empty body. No new language feature is required.
-
-2. **Fiber closure capture bounds:** A `spawn { }` block that captures a variable from the enclosing scope requires that variable's type to be `Send`. This is a use-site constraint, not a function signature bound — it is checked at the `spawn { }` site, not at the function declaration. The aspect bound syntax RFC (RFC-0002) does not need to cover this case; it is a compiler rule, not a programmer-written bound.
+- `Fiber<T>` and `Thread<T>` are linear types. The linearity checker (RFC-0028) enforces that handles must be joined or detached.
+- Linear types are `Send` if all their fields are `Send` — channel send is a natural consumption point for linear values.
+- `Mutex<LinearT>` and `Arc<LinearT>` are forbidden — a linear value cannot be shared.
 
 ---
 
 ## Alternatives Considered
 
-### `async`/`await` (Rust, JavaScript, TypeScript, Python)
+### `async`/`await`
 
-Functions are coloured: async functions must be called with `await`; non-async callers cannot. This solves structured concurrency naturally (tasks have explicit handles and lifetimes) but introduces the "what colour is my function?" problem. Every blocking operation requires an `async` propagation through the entire call stack. This complexity is inconsistent with Metel's goal of concurrency that is "easy to use and largely managed by the runtime."
+Functions are coloured: async functions must be called with `await`. Solves structured concurrency naturally but introduces the "what colour is my function?" problem. Rejected — function colouring conflicts with Metel's goal of concurrency that is transparent syntactically.
 
-**Verdict:** rejected. The function colouring problem is a significant ergonomic cost that conflicts with the stated design goal.
+### Actor model
 
----
+Isolated processes communicating only via message passing. Eliminates data races entirely but requires supervision trees and is heavier than fibers. The channel model captures the message-passing philosophy in a lighter-weight, more composable form.
 
-### Actor model (Erlang, Elixir, Akka)
+### Fire-and-forget only (original Go model)
 
-Actors are isolated processes (no shared state at all) that communicate only via message passing. Each actor has a mailbox; messages are pattern-matched.
-
-This model eliminates data races entirely — there is no shared memory to race on. It also maps well onto distributed systems (actor locations are transparent).
-
-**Downsides for Metel:**
-- Higher abstraction overhead than fibers — every concurrent unit is a named actor
-- Requires a process supervisor tree for fault tolerance (desirable for Erlang; heavy for a general-purpose language)
-- Struct values would still need copying on send (same as channels), but the model is less composable with functions and iterators
-
-**Verdict:** the channel model is a subset of the actor model's message-passing philosophy (no shared state, communicate to coordinate) but is lighter-weight and more composable with existing language features. Channels are preferred.
+No fiber handles. Simple but makes accidental resource leaks undetectable at compile time. Rejected in favour of linear handles, which make intentional fire-and-forget explicit (`.detach()`) and accidental omission a compile error.
 
 ---
 
-### Rust's `Send`/`Sync` system
+## Resolved Questions
 
-Rust has two marker aspects:
-- `Send` — type can be moved to another thread
-- `Sync` — type can be shared (via `&T`) across threads (`T: Sync` iff `&T: Send`)
-
-The `Sync` aspect is what makes `Arc<T>` safe: `Arc<T>` is `Send` only if `T: Sync`.
-
-For Metel, `Sync` would be needed if `*T` (read-only shared pointer) could be made `Send` when `T: Sync`. This mirrors Rust's treatment of `Arc<T>`.
-
-**Decision:** defer `Sync` to a follow-up RFC. Introducing it now requires reasoning about `Arc<T>` (a standard library type not yet designed) and adds significant type-system complexity before the evaluator PoC even exists. The conservative position — all pointer types are non-`Send` — is sound and can be relaxed later. The converse (allowing `*T: Send` and discovering a soundness hole) would require a breaking spec change.
-
----
-
-### CSP (Communicating Sequential Processes) with explicit process IDs
-
-Go's channels are anonymous — you hold a reference to the channel, not to the goroutine on the other end. An alternative (Erlang, Akka) is to address messages to named processes or PIDs.
-
-Named-process addressing enables supervision, restart, and distributed messaging. Anonymous channels enable simpler local coordination without a runtime registry.
-
-**Verdict:** anonymous channels (Go model) are simpler for the use cases Metel targets. Named processes are a future extension point if distribution is ever a goal.
-
----
-
-## Open Questions
-
-1. **Fiber panic isolation**
-   Go terminates the whole program when any goroutine panics (unless `recover()` is used). Should Metel fiber panics be isolated (actor model — one fiber dies, others continue) or program-terminating (Go model — simple but unforgiving)?
-   
-   The `Result<T, E>` type suggests Metel favours explicit error handling. A fiber could return a `Result<T, E>` through a channel rather than panicking. Whether panics inside fibers are always program-terminating or can be caught is unresolved.
-
-2. **`Chan<T>` close semantics and `Perhaps<T>` receive**
-   The proposal makes `<- ch` return `Perhaps<T>`. Go's closed-channel receive returns the zero value with a second `ok bool` (two-return-value idiom). `Perhaps<T>` is cleaner but means receive always allocates a `Perhaps` wrapper.
-   
-   An alternative: separate `chan.try_recv() -> Perhaps<T>` (non-blocking) from `<- ch` returning `T` (blocking, panics if channel closed without value). This avoids the allocation but makes the closed-channel case a runtime panic rather than a type-level signal.
-
-3. **Directional channel types: language or library?**
-   `SendChan<T>` and `RecvChan<T>` are proposed as stdlib types that `Chan<T>` coerces to. An alternative is language-level directional syntax (`chan<- T`, `<-chan T` as in Go). Language-level directional types would allow the typechecker to prevent sends on a receive-only channel at compile time. Proposed as library types for the initial design — promote to language-level if experience shows the coercion model is insufficient.
-
-4. **`select` with timeout**
-   Go's `select` with a timeout uses a `time.After(d)` channel. Should Metel provide a `Chan::timeout(duration) -> RecvChan<Unit>` stdlib function with the same pattern, or is a first-class `select` timeout arm needed?
-
-5. **Fiber names and observability**
-   Go's goroutines are anonymous at the language level but have stack traces in panics and the runtime debugger. Should Metel allow optional fiber names for debugging? (`spawn "worker" { ... }` or via a stdlib API.) Defer to tooling.
-
-6. **`WaitGroup` ergonomics**
-   `WaitGroup` is the standard Go pattern for "wait for N goroutines to finish." An alternative is a first-class `join` expression that waits for a set of fibers and collects their channel results. This would be more ergonomic than explicit `WaitGroup.add` / `WaitGroup.done` / `WaitGroup.wait` calls but requires fibers to have a first-class handle — which conflicts with the fire-and-forget model. Deferred.
-
-7. **`Arc<T>` and `Sync`**
-   If read-only shared pointers across fibers are needed (e.g. a large read-only data structure accessed from many fibers), neither `*T` (non-`Send`) nor channels (copy semantics) are efficient. `Arc<T>` (atomic reference count, `Send` when `T: Sync`) is the standard solution. Introducing `Arc<T>` requires the `Sync` marker aspect. Defer to a follow-up RFC after the evaluator PoC, consistent with RFC-0001's timing recommendation.
+| # | Question | Decision |
+|---|----------|----------|
+| Q1 | Blocking vs. try-receive | `Receivable` defines both: `recv` (blocking) and `try_recv` (non-blocking). `<- ch` desugars to `recv`; `try_recv` is called explicitly. |
+| Q2 | Fiber names and observability | Deferred to a tooling RFC. No syntax change. |
+| Q3 | `Arc<T>` and `Sync` | Both defined. `Sync` is a marker aspect for concurrent-read safety. `Arc<T>: Send + Sync` when `T: Send + Sync`. `Arc<LinearT>` is forbidden. |
+| Q4 | Detached fiber panic policy | Detached fibers terminate the program on panic (no handle to report to). Owned fibers capture panics in `Result<T, Panic>` from `.join()`. |
 
 ---
 
 ## Timing Recommendation
 
-Do not implement concurrency primitives in the current PoC evaluator (v0.1). The reasons:
+Do not implement concurrency primitives in the current PoC evaluator. The evaluator uses `Rc<RefCell<Value>>` — single-threaded. Fibers require `Arc<Mutex<Value>>` or a redesigned runtime. The PoC's purpose is to validate the core language.
 
-1. The PoC evaluator uses `Rc<RefCell<Value>>` — single-threaded. Fibers require `Arc<Mutex<Value>>`. Retrofitting the evaluator mid-epic is out of scope.
-2. The open questions (panic isolation, `Chan<T>` close semantics, directional channels) should be resolved through spec discussion before any implementation begins.
-3. The PoC's purpose is to validate the core language (expressions, control flow, functions, closures). Concurrency is a separate capability layer.
+**Minimum action from this RFC:** update the spec overview to name concurrency as a first-class design principle, note that language-native fibers and channels are planned, and record the aspect-desugaring model so that implementation choices in the PoC do not conflict with it.
 
-**Minimum action from this RFC:** update the spec overview ([`spec.md`](../../public/spec.md#overview)) to name concurrency as a first-class design principle and note that language-native fibers and channels are planned. This sets expectations and prevents spec-inconsistent implementation choices in the PoC.
-
-**Implementation target:** v0.4 (Concurrency), to be scoped after v0.1–v0.3 complete. Prior to that version, open a follow-up RFC for `Arc<T>` and `Sync` (depends on the pointer and aspect implementations from v0.3–v0.4 to reason about concretely).
+**Implementation target:** v0.4 (Concurrency), scoped after v0.1–v0.3 complete. Prior to that, open a follow-up RFC for `Arc<T>` and `Sync`.
 
 ---
 
 ## References
 
-- Language spec: [`spec.md`](../../public/spec.md#overview) (overview and design principles)
-- RFC-0001: `docs/internal/rfcs/rfc-0001-pointer-syntax.md` — `*T`/`*mut T` as non-`Send`; timing interaction
-- RFC-0002: `docs/internal/rfcs/rfc-0002-aspect-bound-syntax.md` — `Send` as marker aspect; fiber capture bounds
-- v0.1: #1–#4 (Evaluator — PoC must complete before concurrency implementation begins)
-- RFC-0024: `docs/internal/rfcs/rfc-0024-linear-types.md` — linear types are `Send` if all fields are `Send`; channel send is a natural consumption point for linear values; `Arc<LinearT>` and `Mutex<LinearT>` are forbidden
-- RFC-0025: `docs/internal/rfcs/rfc-0025-region-allocation.md` — `Region` is not `Send`; region allocation is a single-fiber primitive
-- RFC-0026: `docs/internal/rfcs/rfc-0026-unsafe-blocks.md` — `unsafe_send` built-in bypasses `Send` constraint inside `unsafe` blocks for lock-free data structure implementation
-- Cluster report: `docs/internal/rfc-cluster-memory-model.md`
-- Go specification: https://go.dev/ref/spec#Go_statements, https://go.dev/ref/spec#Select_statements
-- Go memory model: https://go.dev/ref/mem
+- Language spec: `docs/public/spec.md`
+- RFC-0043: regular pointers (implemented) — `*T`/`*mut T` syntax settled; `Send` status resolved by this RFC
+- RFC-0044: explicit receiver semantics (implemented)
+- RFC-0002: aspect bound syntax — `Send` as marker aspect; fiber capture bounds
+- RFC-0028: memory and linear types — `Fiber<T>` linearity; linear types and `Send`
+- RFC-0025: region allocation — `Region` is not `Send`
+- RFC-0026: unsafe blocks — `unsafe_send` bypasses `Send` for lock-free stdlib internals
+- Go specification: goroutines and select statements
+- Go memory model
 
 ---
 
