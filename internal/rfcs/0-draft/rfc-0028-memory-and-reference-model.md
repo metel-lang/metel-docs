@@ -3,7 +3,6 @@ id: rfc-0028
 title: "Memory and Reference Model"
 date: '2026-05-24'
 status: draft
-target: v0.3
 supersedes:
   - rfc-0001
   - rfc-0024
@@ -20,6 +19,20 @@ Define Metel's unified memory and reference model. The model has three interlock
 The three parts are inseparable: linear types require read references to be usable, unique pointers are the bridge that allows linear values to be heap-allocated and passed indirectly, and regular pointers are restricted to non-linear types to preserve the aliasing model. They must be designed and implemented together.
 
 This RFC supersedes RFC-0001 (Pointer Syntax and Semantics) and RFC-0024 (Linear Types), incorporating all resolved decisions from both and carrying forward their open questions in unified form.
+
+---
+
+## Staged Design Approach
+
+This RFC defines the **foundation layer** of Metel's memory model — linear types, expression-scoped read references, and unique pointers. It is intentionally conservative in some areas, particularly the placement rules for `@T`. These restrictions are not permanent language decisions; they are the safe, zero-annotation baseline from which later layers build.
+
+The planned extension layers are:
+
+- **This RFC**: linear types + expression-scoped `@T` + unique pointers. The linear checker and basic pointer surface.
+- **Regions (RFC-0025)**: `Region::scope` introduces named region lifetimes (`'r`). Allocations inside become lifetime-tagged (`*'r T`). `@T` gains a region lifetime form (`@'r T`) that can be stored and returned within the scope. `RegionFree<'r>` replaces the `Send` scope-exit constraint. This is the first step of lifetime inference — the programmer writes a scope boundary; the compiler infers lifetimes from it.
+- **Full lifetime system**: abstract lifetime variables on function signatures (`'a`) for cross-region and cross-function borrow tracking. Explicit annotations required only where inference from region boundaries is insufficient.
+
+Each layer is additive. Nothing in this RFC forecloses the later layers; the `@T` restrictions here are the subset that requires zero annotations and can be checked without a lifetime or region system.
 
 ---
 
@@ -173,9 +186,11 @@ buf.free();
 
 Because `@T` cannot be stored, it cannot outlive the expression it appears in. No lifetime annotations are needed.
 
+**Note — intentionally conservative:** these restrictions define the zero-annotation baseline. They will be relaxed when region lifetimes are introduced: `@'r T` will be storable in structs and returnable from functions, provided the struct or return type is parameterized by `'r` and the value does not outlive the region scope. The expression-scoped form here is the subset that requires no annotations and no region or lifetime system.
+
 #### 2.3 No mutable read references
 
-`@mut T` is not introduced by this RFC. Mutation is handled by consume-and-return (§1.4). If in-place mutation without consumption becomes a demonstrated need, a future RFC may revisit it — but it would require borrow-checker-adjacent exclusivity tracking and is deliberately deferred.
+`@mut T` is not introduced by this RFC. Mutation is handled by consume-and-return (§1.4). This is a deliberate stage-gate: `@mut T` requires an exclusivity checker (at most one `@mut T` at a time, no `@T` concurrent with it) — effectively a borrow checker. That machinery belongs to the full lifetime system layer, not this foundation. If in-place mutation through a reference becomes a demonstrated need, it will be designed as an extension of the lifetime system.
 
 #### 2.4 Relationship to `&`
 
@@ -242,6 +257,18 @@ linear struct Node {
 ```
 
 **Open questions:** unique pointer syntax, allocation, and reading through a unique pointer. See OQ-2 and OQ-3.
+
+#### 3.3 Pointer validity — staged safety model
+
+Pointer validity (guaranteeing that a `*T` or `*mut T` does not outlive its referent) is provided by a layered set of mechanisms:
+
+| Layer | Mechanism | Scope |
+|---|---|---|
+| Evaluator (current) | `*T` and `*mut T` are backed by `Rc<RefCell<Value>>` — the pointer keeps the value alive | Implementation detail, not a language contract |
+| Region scope (RFC-0025) | Pointers inside a `Region::scope` get lifetime `'r`; `RegionFree<'r>` enforces no `*'r T` escapes the scope | Region-allocated pointers |
+| Full lifetime system | Abstract lifetime variables on function signatures; borrow checker enforces no reference outlives its referent | All pointers and references |
+
+This RFC does not commit `*T` to a specific runtime representation. The RC backing in the evaluator is a sound interim implementation. As region lifetimes and then full lifetimes are introduced, the compile-time guarantees progressively replace the runtime cost. The language-level contract for `*T` — shared-location semantics, aliasing observable across all handles — is stable across all three layers.
 
 ---
 
@@ -337,8 +364,10 @@ Can a generic parameter be constrained to linear: `fun<T: Linear>(val: T)`? Requ
 - Language spec: `docs/public/spec.md`, `docs/public/spec/types.md`
 - Typechecker notes: `metel-interpreter/docs/typechecker.md`
 - Superseded: RFC-0001 (`rfc-0001-pointer-syntax.md`), RFC-0024 (`rfc-0024-linear-types.md`)
-- Cluster report: `docs/internal/rfc-cluster-memory-model.md`
+- RFC-0043: regular pointers (incorporated) — `*T`/`*mut T` syntax, addressability, auto-deref, pointer equality settled
+- Cluster report: `docs/reports/memory-model/rfc-cluster-memory-model.md`
+- Lifetime system design: `docs/reports/memory-model/lifetime-system-proposal.md`
 - RFC-0006: closure capture — `move fun` syntax depends on this RFC (linear capture semantics)
-- RFC-0025: region allocation — `Region` is a linear type; depends on this RFC
+- RFC-0025: region allocation — `Region` is a linear type; RFC-0025 is also the first step of the lifetime system (region scope introduces named lifetime `'r`, enabling `@'r T` and `RegionFree<'r>`)
 - RFC-0026: unsafe blocks — linearity checker relaxed inside `unsafe`; depends on this RFC
-- Prior art: Linear Haskell (Bernardy et al. 2018), Rust `Box<T>` and ownership model, Cyclone regions
+- Prior art: Linear Haskell (Bernardy et al. 2018), Rust `Box<T>` and ownership model, Cyclone regions and lifetime system

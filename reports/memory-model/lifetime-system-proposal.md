@@ -1,9 +1,14 @@
 # Lifetime System Proposal — Design Exploration
 
-**Date:** 2026-05-27
-**Status:** Exploratory — not normative
-**Related reports:** `docs/reports/memory-model-programs.md`
-**Related RFCs:** RFC-0028, RFC-0025, RFC-0024 (superseded), RFC-0003, RFC-0006
+**Date:** 2026-05-27  
+**Last updated:** 2026-06-04  
+**Status:** Exploratory — not normative  
+**Related reports:** `docs/reports/memory-model-programs.md`  
+**Related RFCs:** RFC-0028, RFC-0025, RFC-0024 (superseded), RFC-0003 (resolved), RFC-0006, RFC-0043 (incorporated)
+
+**Resolved since writing:**
+- RFC-0043 (incorporated): `*T`/`*mut T` syntax, addressability, auto-deref, and pointer equality are settled. Pointers are **not** defined as RC-backed — they provide shared-location semantics with no commitment to a runtime representation. RC is a possible implementation detail, not a language guarantee.
+- RFC-0003 (resolved): `*T: !Send`, `*mut T: !Send`. `Arc<T>` is now the defined reference-counted shared ownership type. `Arc<T>: Send + Sync` when `T: Send + Sync`.
 
 ---
 
@@ -30,11 +35,16 @@ A lifetime names a *live range* — the span of code during which a borrowed ref
 
 | Memory system | Value validity governed by |
 |---|---|
-| RC heap (`*T`, `*mut T`) | Reference count — valid while any `*T` handle exists |
+| Pointers (`*T`, `*mut T`) | `Rc<RefCell<Value>>` in the current evaluator; not committed to RC in a compiler. Spec contract: shared-location semantics for the duration of the handle. |
+| `Arc<T>` | Reference count — valid while any `Arc<T>` handle exists |
 | Region scope (`~T`) | Scope boundary — valid until `Region::scope` returns |
 | Linear bindings (`!T`) | Linear checker — valid until consumed exactly once |
 
-Lifetime annotations apply to **borrowed read references (`@T`)** and **region-internal pointers (`~T`)**. They do not apply to RC pointers (`*T`) or unique pointers (`unique *T`) — those types already have their own validity guarantees through reference counting and linearity respectively. This is a deliberate narrowing of scope relative to Rust, and its implications are explored in Part 3.
+`*T` and `*mut T` are currently RC-backed in the PoC evaluator (`Rc<RefCell<Value>>`), meaning a pointer keeps its referent alive as long as the handle exists — no dangling pointers in the evaluator. RFC-0043 does not commit the language to this representation; a future compiler may use raw addresses, at which point a `*T` could outlive its referent and lifetime tracking would become essential.
+
+`Arc<T>` (RFC-0003) is the explicitly reference-counted shared ownership type — the type where the RC semantics are part of the language contract, not an implementation detail.
+
+Lifetime annotations apply to **borrowed read references (`@T`)** and **region-internal pointers (`~T`)**. They do not apply to `Arc<T>` (validity is reference-counted), unique pointers (`unique *T`, validity is linear), or regular pointers in the general case — though as noted above, lifetimes would provide the missing safety guarantee for `*T` borrowing. This is a deliberate narrowing of scope relative to Rust, and its implications are explored in Part 3.
 
 ### 1.2 Syntax
 
@@ -212,10 +222,10 @@ The lifetime `'a` on `ArrayIter<'a, T>` ensures the iterator cannot outlive the 
 **With lifetimes.** The region scope introduces a named lifetime `'r` for the scope boundary. Region-internal pointers have type `*'r T` — a pointer tied to lifetime `'r`. The scope exit constraint becomes `RegionFree<'r>` — "contains no `*'r T` for the current `'r`" — rather than the broader "contains no `*T` at all."
 
 ```metel
-// After the change: unique *T from the RC heap is allowed to escape
+// After the change: unique *T from outside the region is allowed to escape
 
 fun alloc_node() -> unique *Node {
-    Box::alloc(Node { id: 0, label: "root", edges: [] })   // RC heap — not region-internal
+    Box::alloc(Node { id: 0, label: "root", edges: [] })   // heap-allocated — not region-internal
 }
 
 let result: unique *Node = Region::scope(fun() {
@@ -289,15 +299,19 @@ For non-linear values, lifetimes are the only mechanism. For linear values, both
 
 The result is expressive but additive in complexity. A programmer working with a linear value that is also borrowed must reason about two independent invariants. The interaction between the two is defined in §4.2.
 
-### 3.3 RC heap and lifetimes: a constrained relationship
+### 3.3 Pointers and lifetimes: a constrained relationship
 
 In Rust, references always borrow from a stack-owned value with a definite scope. The borrowed value has a fixed stack frame that determines when it is freed.
 
-In Metel, the default allocation is the RC heap. An RC value has no fixed stack frame — it lives as long as any `*T` handle exists. A lifetime attached to a `@T` borrow from an RC value expresses "this borrow is valid for `'a`", but the *underlying* condition is that the `*T` handle used to produce the borrow is live for `'a`. If a different `*T` clone to the same value drops during `'a`, the RC value is still live — the reference count ensures it. But if the `*T` handle used to produce the borrow is itself dropped, the borrow expires.
+In Metel, `*T` is not reference-counted — it is an alias to stable storage with no runtime validity tracking. A `*T` is valid as long as the storage it points to is live, but the language provides no automatic guarantee of this. A lifetime attached to a `@T` borrow from a `*T` expresses "this borrow is valid for `'a`", but the *underlying* condition is that the storage the pointer aliases remains live for `'a`. The compiler cannot currently enforce this — it is the programmer's responsibility.
 
-This creates an asymmetry: with RC-heap values, the lifetime of a borrow is bounded by the scope of the specific handle used to produce it, not by any "owner" in the Rust sense. This is sound but weaker than Rust's model — it is harder to express "this reference is valid as long as anyone holds the value" because "anyone" is not a single named scope.
+This is a meaningful difference from Rust: Rust borrows from a named owner whose lifetime is tracked. Metel's `*T` has no tracked owner — it is an alias, and aliases can outlive or be outlived by the original binding in ways the type system does not see. This makes `*T` borrows inherently weaker than Rust borrows even with a lifetime system; it is closer to C's pointer-to-local semantics.
 
-Furthermore, `*mut T` allows aliased mutation. A `@'a T` borrow produced from `*T` can be invalidated by a concurrent write through a `*mut T` alias to the same object. Without `@mut T` (§3.1), the lifetime system cannot enforce exclusivity over RC values. The safe rule is: `@'a T` can only be formed from `*T` (immutable pointer), never from `*mut T`. The programmer must downgrade `*mut T` to `*T` before borrowing, and ensure no `*mut T` write occurs during `'a`.
+The practical rule for a lifetime system: a `@'a T` borrow from `*T` is valid only as long as the *binding* from which the pointer was originally created is live. The programmer must ensure no write through a `*mut T` alias occurs during `'a`.
+
+`Arc<T>` (RFC-0003) is the type with RC-managed validity — an `Arc<T>` handle keeps the inner value alive. Borrowing from `Arc<T>` is sounder: as long as any `Arc<T>` handle is live, the value exists. A `@'a T` borrow from `Arc<T>` is valid for the scope of the `Arc<T>` handle used to produce it; as long as that handle is live, the refcount is at least 1. This is still anchored to a specific handle scope, not to "anyone holds it," but the failure mode is more predictable: only when that specific handle is dropped does the borrow become invalid.
+
+`*mut T` allows aliased mutation. A `@'a T` borrow produced from `*T` can be invalidated by a write through any `*mut T` alias to the same storage during `'a`. The safe rule: `@'a T` can only be formed from `*T` (immutable pointer), never from `*mut T`. The programmer must downgrade `*mut T` to `*T` before borrowing, and ensure no `*mut T` write occurs during `'a`. Without `@mut T` (§3.1), the lifetime system cannot enforce this exclusivity statically.
 
 ### 3.4 Variance rules
 
@@ -332,7 +346,7 @@ The scope exit constraint changes from `Send` (contains no `*T`) to `RegionFree<
 ```metel
 // Auto-derived: T: RegionFree<'r> if all fields are RegionFree<'r>
 // Explicit negative: *'r T is never RegionFree<'r>
-// Explicit positive: Int, String, Bool, *T (heap-backed) are always RegionFree<'r>
+// Explicit positive: Int, String, Bool, *T (untagged, non-region pointer), Arc<T> are always RegionFree<'r>
 ```
 
 **Named regions.** In simple programs, one region scope is active at a time, so `'r` is unambiguous. For nested scopes, each `Region::scope` call introduces a distinct lifetime:
@@ -425,40 +439,56 @@ consume(conn);               // move — conn transitions to Consumed
 
 ---
 
-### 4.3 Lifetimes × RC Heap
+### 4.3 Lifetimes × Pointers (`*T`, `*mut T`, `Arc<T>`)
 
-**The fundamental difference.** In Rust, borrowed references always borrow from a stack-owned value with a definite scope. The "owner" is a named binding, and the borrow expires when the owner's scope ends. In Metel, RC-heap values have no single owner — they are valid as long as any `*T` handle exists, which may be many handles across many scopes.
+**`*T` and `*mut T` — RC-backed today, not guaranteed in a compiler.**
 
-This makes RC values and lifetimes an awkward combination: there is no "owner scope" to use as the lifetime anchor. The proposal below defines how the two interact in a way that is sound, if more restricted than Rust.
+RFC-0043 provides shared-location semantics for `*T` and `*mut T` without committing to a specific runtime representation. The current PoC evaluator implements them as `Rc<RefCell<Value>>` — a `*T` keeps the pointed-to value alive for as long as any pointer handle exists. In the evaluator, a `*T` therefore cannot dangle.
 
-**Proposal: lifetime of a borrow from `*T` is the scope of the handle used to produce it.**
+In a future compiler targeting native code, this RC backing is not guaranteed: pointers may be represented as raw addresses, and a `*T` could outlive the storage it was taken from if the original binding is freed. Lifetime tracking becomes essential at that point — the compiler needs a static guarantee that no borrow outlives the storage it was produced from.
 
-Dereferencing `ptr: *T` to produce `@'a T` is valid for `'a = lifetime_of(ptr)` — the scope in which `ptr` is live as a binding. This is always sound: the RC value is valid as long as any handle exists, and `ptr` is one such handle. As long as `ptr` is in scope, the refcount is at least 1, so the value is not freed.
+The proposed rule for a lifetime system: a `@'a T` borrow from `ptr: *T` is valid for `'a = scope_of(ptr)`. In the current evaluator this is conservatively sound — the RC ensures the value is live as long as `ptr` is. In a compiled backend, this becomes the primary safety boundary.
 
 ```metel
-let ptr: *Node = get_node_from_somewhere();
+let ptr: *Node = &node;
 let name: @'scope String = @(*ptr).name;   // valid for 'scope: the scope of ptr
 println(name);
-// ptr goes out of scope here; RC decrements; name is already expired — sound
+// ptr goes out of scope; name is already expired — locally sound
 ```
 
-**`@T` from `*mut T` is forbidden.** `*mut T` allows aliased mutation through any clone. A `@'a T` borrow from `*mut T` could be invalidated by a write through another `*mut T` handle during `'a`. Without `@mut T` and an exclusivity checker, this cannot be prevented statically. The rule:
+**`@T` from `*mut T` is forbidden.** `*mut T` allows aliased mutation. A `@'a T` borrow from `*mut T` can be invalidated by a write through any other `*mut T` alias to the same storage. Without `@mut T` and an exclusivity checker, this cannot be prevented statically:
 
 ```metel
 let mptr: *mut Node = &mut node;
 let name = @(*mptr).name;   // TYPE ERROR: cannot form @T from *mut T
-                             // downgrade to *T first, or use @mut T (not yet available)
 
 // Correct: downgrade first
-let rptr: *T = mptr;
+let rptr: *Node = mptr;     // *mut T coerces to *T implicitly (RFC-0043)
 let name: @'scope String = @(*rptr).name;
-// WARNING: mptr still exists — a write through mptr during 'scope invalidates name
+// mptr still exists — a write through mptr during 'scope invalidates name
 // The compiler cannot prevent this without exclusivity tracking
 ```
 
-The warning above points to the residual unsoundness: downgrading `*mut T` to `*T` before borrowing prevents the type error but does not prevent aliased writes through the original `*mut T`. This gap cannot be closed without `@mut T` or a mechanism that suspends all `*mut T` aliases for the duration of the borrow. This is noted as an open question (§5.3).
+The residual unsoundness — downgrade prevents the type error but not aliased writes — cannot be closed without `@mut T` or a mechanism that suspends all `*mut T` aliases for the duration of the borrow. See open question Q3 (§5.3).
 
-**Implication: RC borrows are expression-scoped in practice.** Because the lifetime of a borrow from `*T` is bounded by the scope of the handle, and because RC handles are frequently short-lived (created for a lookup, not held long-term), most RC borrows in practice will be expression-scoped — equivalent to the current `@T` semantics. The lifetime system gives them a name, but does not change their reach. The primary value of the lifetime system is for linear values (§4.2) and region-internal pointers (§4.1), not for RC-heap values.
+**`Arc<T>` — reference-counted borrows.**
+
+`Arc<T>` (RFC-0003) is the type with RC-managed validity. Borrowing from `Arc<T>` is sounder than borrowing from `*T`: the reference count guarantees the inner value is live as long as any `Arc<T>` handle exists. A `@'a T` borrow from `arc: Arc<T>` is valid for `'a = scope_of(arc)`. As long as `arc` is in scope, the refcount is at least 1.
+
+```metel
+let arc: Arc<Node> = Arc::new(node);
+let name: @'scope String = @(*arc).name;   // valid for 'scope: arc is live
+println(name);
+// arc goes out of scope; refcount drops to 0; node is freed; name is expired — sound
+```
+
+This is still anchored to a specific handle's scope, not to "anyone holds it," but the failure mode is more predictable than `*T`: the only way the value is freed is when *this* handle drops, not through any external rebind.
+
+`Arc<T>: !Send` does not apply — `Arc<T>: Send + Sync` when `T: Send + Sync` (RFC-0003). Unlike `*T` and `*mut T`, `Arc<T>` handles are designed to cross fiber boundaries.
+
+**Implication: pointer borrows are expression-scoped in practice.**
+
+Because borrowing from `*T` is bounded by the handle's scope, and most `*T` handles are short-lived, pointer borrows in practice are usually expression-scoped — equivalent to today's `@T` semantics. The primary value of the lifetime system for pointers is making this scope explicit and enforceable, catching cases where a `@T` borrow escapes its handle's scope. The bigger wins from lifetimes remain in linear values (§4.2) and region-internal pointers (§4.1).
 
 ---
 
@@ -478,9 +508,9 @@ RFC-0024's loop constraint forbids consuming a linear value created outside a lo
 
 Can a linear value transition from `Borrowed` to `Unconsumed` inside a loop — i.e. can a borrow be created and expire within each loop iteration? If the borrow is created from a binding outside the loop, the borrow's lifetime would span multiple iterations, conflicting with the loop constraint in a novel way. This needs explicit rules.
 
-### Q3 — Aliased mutation through `*mut T` during an RC borrow
+### Q3 — Aliased mutation through `*mut T` during a pointer borrow
 
-As noted in §4.3: downgrading `*mut T` to `*T` before borrowing is type-safe but does not prevent a concurrent write through the original `*mut T`. This is a soundness gap for RC values specifically. Options:
+As noted in §4.3: downgrading `*mut T` to `*T` before borrowing is type-safe but does not prevent a write through the original `*mut T` alias during the borrow. This is a soundness gap for pointer borrows. Options:
 
 - **Forbid `@T` from any value accessible through a live `*mut T` alias** — overly conservative; hard to check.
 - **Introduce an exclusivity discipline on `*mut T`:** consuming a `*mut T` into `*T` suspends aliased mutation for the duration of a borrow. This is closer to Rust's `RefCell::borrow()` / `borrow_mut()` pattern — runtime-checked or statically tracked.
@@ -504,6 +534,7 @@ Callbacks and function types that accept borrowed arguments require universally 
 - RFC-0028: Memory and Reference Model — `docs/internal/rfcs/rfc-0028-memory-and-reference-model.md`
 - RFC-0025: Region Allocation — `docs/internal/rfcs/rfc-0025-region-allocation.md`
 - RFC-0024: Linear Types (superseded) — `docs/internal/rfcs/rfc-0024-linear-types.md`
-- RFC-0003: Concurrency Model — `docs/internal/rfcs/rfc-0003-concurrency-model.md`
-- RFC cluster: Memory Model — `docs/internal/rfc-cluster-memory-model.md`
+- RFC-0003: Concurrency Model (resolved) — `docs/internal/rfcs/rfc-0003-concurrency-model.md`
+- RFC-0043: Regular Pointers and Mutable Pointers (incorporated) — `docs/internal/rfcs/3-implemented/rfc-0043-regular-pointers.md`
+- RFC cluster: Memory Model — `docs/reports/memory-model/rfc-cluster-memory-model.md`
 - Prior art: Rust reference and lifetime system; Cyclone region-based memory management; Linear Haskell (Bernardy et al. 2018)

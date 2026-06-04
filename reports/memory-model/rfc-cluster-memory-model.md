@@ -2,7 +2,8 @@
 
 **Status:** Under resolution  
 **Tracking issue:** #118  
-**RFCs in scope:** RFC-0028, RFC-0003, RFC-0006, RFC-0025, RFC-0026
+**RFCs in scope:** RFC-0028, RFC-0003, RFC-0006, RFC-0025, RFC-0026  
+**Last updated:** 2026-06-04
 
 ---
 
@@ -15,11 +16,12 @@ The four RFCs:
 | RFC | Title | Status | Current target |
 |---|---|---|---|
 | RFC-0028 | Memory and Reference Model | Draft | v0.3 |
-| RFC-0003 | Concurrency Model | Draft | v0.4 |
+| RFC-0003 | Concurrency Model | **Resolved** | v0.4 |
 | RFC-0006 | Closure Capture Semantics | Draft | — |
 | RFC-0025 | Region Allocation | Draft | v0.4 |
 | RFC-0026 | Unsafe Blocks | Draft | v0.4 |
-| ~~RFC-0001~~ | ~~Pointer Syntax and Semantics~~ | Superseded by RFC-0028 | — |
+| RFC-0043 | Regular Pointers and Mutable Pointers | **Incorporated** | v0.3 |
+| ~~RFC-0001~~ | ~~Pointer Syntax and Semantics~~ | Superseded by RFC-0028/RFC-0043 | — |
 | ~~RFC-0024~~ | ~~Linear Types~~ | Superseded by RFC-0028 | — |
 
 ---
@@ -52,7 +54,7 @@ RFC-0006 explicitly lists RFC-0001 and RFC-0003 as blocking dependencies. RFC-00
 
 ## Conflict Analysis
 
-### Conflict 1 — The `&` syntax collision (RFC-0001 vs RFC-0024)
+### Conflict 1 — The `&` syntax collision (RFC-0001 vs RFC-0024) ✓ Resolved
 
 RFC-0001 proposes `&x` as the address-of operator, producing a storable, RC-backed `*T` pointer:
 
@@ -81,7 +83,7 @@ The same sigil means different things with incompatible semantics. This is not a
 
 ---
 
-### Conflict 2 — Aliasing vs linearity (RFC-0001 vs RFC-0024)
+### Conflict 2 — Aliasing vs linearity (RFC-0001 vs RFC-0024) ✓ Resolved
 
 RFC-0001's mechanism for sharing state between closures is: take a pointer, then clone the pointer. Cloning `*mut T` produces a second mutable alias to the same RC cell. This is the entire point of pointers in RFC-0001's model.
 
@@ -89,11 +91,11 @@ Linear types require the opposite: a linear value has exactly one owner. A secon
 
 **Consequence:** `*T` and `*mut T` cannot point to linear values. Attempting to take `&x` where `x` is linear must be a type error under RFC-0001's semantics. This is not a small restriction — it means the two features operate in completely separate worlds: pointers for non-linear (RC-managed) values, and RFC-0024's `@T` read reference for linear values.
 
-**Decision required:** whether this hard separation is acceptable or whether a unified mechanism (e.g. "tracked unique pointer" — a `*T` that the type system knows is the only alias) is needed. A tracked unique pointer would be a significant addition; the hard separation is simpler but means linear types cannot use any of RFC-0001's infrastructure.
+**Decision:** The hard separation is adopted. `*T` and `*mut T` are exclusively for non-linear types. `unique *T` (RFC-0028 OQ-2) is the linear-compatible heap indirection — a pointer whose handle is itself linear and cannot be cloned. This is the tracked unique pointer form; it is in scope for RFC-0028.
 
 ---
 
-### Conflict 3 — Clone capture vs linear values (RFC-0006 vs RFC-0024)
+### Conflict 3 — Clone capture vs linear values (RFC-0006 vs RFC-0024) — Open
 
 RFC-0006 proposes that closures capture all free variables by cloning at definition time. A linear value cannot be cloned — there is by definition only one copy of it. Implicit clone capture of a linear value is therefore a type error.
 
@@ -113,7 +115,7 @@ The explicit opt-in (`move fun(...) { ... }`) is the most consistent with Metel'
 
 ---
 
-### Conflict 4 — Shared ownership types vs linearity (RFC-0003 vs RFC-0024)
+### Conflict 4 — Shared ownership types vs linearity (RFC-0003 vs RFC-0024) ✓ Resolved
 
 RFC-0003 introduces `Arc<T>` as the mechanism for sharing values across fiber boundaries. `Arc<T>` works by cloning the Arc handle, producing multiple co-owners of the inner value — the reference count determines when the value is freed.
 
@@ -121,11 +123,9 @@ For a linear `T`, this is unsound: `Arc<LinearT>` would allow the same linear va
 
 `Rc<LinearT>` is the same problem within a single fiber.
 
-**Consequence:** `Arc<LinearT>` and `Rc<LinearT>` must be forbidden. The type system should reject them.
+**Decision (RFC-0003):** `Arc<LinearT>` and `Rc<LinearT>` are forbidden — the type system rejects them. `Mutex<LinearT>` is also forbidden: the Mutex model (permanent shared ownership of a fixed inner value) is incompatible with linear types (transient unique ownership with mandatory transfer), even though access is exclusive at any instant.
 
-`Mutex<LinearT>` is a more nuanced case. A `Mutex` grants exclusive access to its inner value — at any point in time, only one lock holder can access the value. This is structurally compatible with linearity in intent (single accessor at a time), but the `Mutex` itself has shared ownership across its handles. The inner `T` never moves; it is accessed through a guard and then released. This is not consumption in the linear sense. **Ruling:** `Mutex<LinearT>` is forbidden — the Mutex model (permanent shared ownership of a fixed inner value) is incompatible with linear types (transient unique ownership with mandatory transfer).
-
-**Channel send is compatible.** `ch <- value` transfers the value into the channel — this is consumption. A linear value sent through a channel satisfies the exactly-once rule: the sender no longer holds it, the receiver receives it once. Channels are the natural cross-fiber transport for linear values.
+**Channel send is compatible.** `ch <- value` transfers the value into the channel — this is consumption. A linear value sent through a channel satisfies the exactly-once rule: the sender no longer holds it, the receiver receives it once. Channels are the natural cross-fiber transport for linear values. This is settled and documented in RFC-0003.
 
 ---
 
@@ -141,52 +141,45 @@ This was the foundational decision. All other conflicts depend on knowing what `
 
 **Output:** RFC-0001 and RFC-0024 superseded by RFC-0028, which incorporates all resolved decisions and carries forward all open questions in unified form.
 
-### Step 2 — Establish the linear/pointer boundary (RFC-0001 amendment)
+### Step 2 — Establish the linear/pointer boundary ✓ Done
 
-With the syntax conflict resolved, add an explicit rule to RFC-0001: `&x` and `&mut x` are type errors when `x` is linear. Linear values are not addressable via `*T`. The only interaction between linear values and references is via RFC-0024's non-storable `&T`.
+RFC-0043 (implemented) establishes `&x`/`&mut x` as address-of for non-linear types only. RFC-0028 carries the explicit rule: `&x` where `x` is linear is a type error. Linear values are not addressable via `*T` or `*mut T`.
 
-Document whether "tracked unique pointers" (a `*T` known to be the sole alias) are in or out of scope for v0.3.
+Tracked unique pointers (`unique *T`) are in scope for RFC-0028 as the linear-compatible heap indirection mechanism. The handle is itself linear (cannot be cloned), satisfying the exactly-once invariant.
 
-**Output:** RFC-0001 amendment closing its open question about linear type interaction.
+**Output:** RFC-0043 (incorporated), RFC-0028 OQ-2 (unique pointer syntax — still open).
 
-### Step 3 — Add move capture to RFC-0006
+### Step 3 — Add move capture to RFC-0006 — Open
 
-With the pointer boundary established, RFC-0006 can be amended with a move capture form. The recommended approach is an explicit `move` qualifier on closures:
+Move capture for linear values is not yet resolved. The recommended form remains `move fun` as an explicit qualifier. RFC-0006 must be amended before RFC-0028 can be fully implemented. See D3 below.
 
-```metel
-let buf = Buffer::alloc(1024);
-let process = move fun() { buf.write(data); buf.free(); };
-// buf is consumed here — it has moved into the closure
-process();
-```
+**Output:** pending RFC-0006 amendment.
 
-Non-linear values inside a `move fun` are still clone-captured. Linear values are move-captured (consumed). The `move` qualifier is required whenever the closure body references a linear binding from the outer scope — the compiler errors if you omit it, since neither clone nor pointer capture is valid.
+### Step 4 — Close RFC-0003 restrictions on linear types ✓ Done
 
-**Output:** RFC-0006 amendment adding `move fun` syntax and specifying linear-value move-capture semantics.
+RFC-0003 (resolved 2026-06-04) now contains:
 
-### Step 4 — Close RFC-0003 restrictions on linear types
+- `Arc<LinearT>` and `Rc<LinearT>` forbidden — type error.
+- `Mutex<LinearT>` forbidden — incompatible ownership model.
+- Linear `Send` derivation rule: a linear type is `Send` if all fields are `Send` (same as non-linear).
+- Channels as the idiomatic linear-value cross-fiber transport — documented in RFC-0003.
 
-With linear types defined and the pointer boundary established, RFC-0003 needs explicit additions:
-
-- `Arc<T>` and `Rc<T>` require `T: !Linear` (T must not be linear).
-- `Mutex<T>` requires `T: !Linear`.
-- Linear types that are `Send` can be transferred via channels — document this as the idiomatic pattern.
-- Add to the `Send` derivation table: a linear type is `Send` if all its fields are `Send` (same rule as non-linear types — linearity does not affect Send-ness, only aliasing).
-
-**Output:** RFC-0003 amendment adding the `Arc`/`Mutex` restrictions and documenting channels as the linear-value concurrency primitive.
+**Output:** RFC-0003 resolved.
 
 ### Step 5 — Final acceptance
 
-All four RFCs can then be formally accepted. Their targets:
+Remaining RFCs to resolve before the memory cluster is closed:
 
-| RFC | Revised target |
-|---|---|
-| RFC-0001 | v0.3 |
-| RFC-0024 | v0.3 (alongside RFC-0001) |
-| RFC-0006 | v0.3 (closure rewrite is pre-requisite for pointer and linear type implementation) |
-| RFC-0003 | v0.4 (unchanged — concurrency is post-generics) |
-| RFC-0025 | v0.4 (depends on RFC-0024; pairs naturally with concurrency where region patterns emerge) |
-| RFC-0026 | v0.4 (`unsafe fun` syntax locked in at v0.3 alongside RFC-0001; block implementation deferred) |
+| RFC | Status | Target | Blocking |
+|---|---|---|---|
+| RFC-0043 | **Incorporated** | v0.3 | — |
+| RFC-0003 | **Resolved** | v0.4 | — |
+| RFC-0028 | Draft — open questions remain | v0.3 | D3 (move capture), OQ-1 (linearity sigil), OQ-2/3 (unique ptr) |
+| RFC-0006 | Draft — move capture not yet defined | v0.3 | RFC-0028 OQ-1 |
+| RFC-0025 | Draft | v0.4 | RFC-0028 (Region is a linear struct) |
+| RFC-0026 | Draft | v0.4 | RFC-0028 (linearity checker relaxed in unsafe) |
+| ~~RFC-0001~~ | Superseded by RFC-0043 + RFC-0028 | — | — |
+| ~~RFC-0024~~ | Superseded by RFC-0028 | — | — |
 
 ---
 
@@ -194,13 +187,16 @@ All four RFCs can then be formally accepted. Their targets:
 
 | # | Decision | Status |
 |---|---|---|
-| D1 | `&` syntax: unify under one sigil or differentiate | **Resolved** — Option A: `&x` always address-of (`*T`); RFC-0024 read reference uses `@x` / `@T` |
-| D2 | Tracked unique pointers: in or out of scope for v0.3 | **Open** |
-| D3 | Move capture: linear-only automatic, or explicit `move` qualifier | **Open** |
-| D4 | `Mutex<LinearT>`: forbidden or permitted with restrictions | **Proposed forbidden** — pending review |
-| D5 | Linear `Send` derivation rule | **Proposed** — same as non-linear (field-based) |
-| D6 | Region access: scope/callback (Option A) vs direct in `unsafe` (Option B) vs both | **Open** |
-| D7 | `unsafe fun` syntax: lock in at v0.3 with RFC-0001 or defer to v0.4 | **Open** |
+| D1 | `&` syntax: unify under one sigil or differentiate | **Resolved** — `&x` always address-of (`*T`); RFC-0024 read reference uses `@x` / `@T` |
+| D2 | Tracked unique pointers: in or out of scope for v0.3 | **Resolved** — `unique *T` is in scope for RFC-0028; handle is linear, cannot be cloned |
+| D3 | Move capture: linear-only automatic, or explicit `move` qualifier | **Open** — RFC-0006 amendment pending |
+| D4 | `Mutex<LinearT>`: forbidden or permitted with restrictions | **Resolved** — forbidden (RFC-0003). `Arc<LinearT>` and `Rc<LinearT>` also forbidden. |
+| D5 | Linear `Send` derivation rule | **Resolved** — same field-based rule as non-linear types (RFC-0003) |
+| D6 | Region access: scope/callback (Option A) vs direct in `unsafe` (Option B) vs both | **Open** — RFC-0025 pending |
+| D7 | `unsafe fun` syntax: lock in at v0.3 with RFC-0001 or defer to v0.4 | **Open** — RFC-0026 pending |
+| D8 | Auto-deref at field access, method calls, function pointer calls | **Resolved** — RFC-0043: one pointer layer auto-dereffed at those three positions only |
+| D9 | Addressability rules | **Resolved** — RFC-0043: named bindings, field/element chains addressable; temporaries not |
+| D10 | Pointer equality | **Resolved** — RFC-0043: identity equality; value equality requires explicit `*p == *q` |
 
 ---
 
