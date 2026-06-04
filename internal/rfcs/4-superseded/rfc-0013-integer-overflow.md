@@ -2,7 +2,8 @@
 id: rfc-0013
 title: "Integer Overflow Behaviour"
 date: '2026-05-21'
-status: draft
+status: superseded
+superseded_by: rfc-0007
 ---
 
 ## Summary
@@ -35,7 +36,6 @@ The current interpreter uses Rust's `i64` arithmetic which wraps on overflow in 
 
 ## Decision
 
-**Outcome:** *(pending)*  
-**Target:** *(blank until accepted)*
+**Outcome:** Superseded by RFC-0007 (D3)
 
-*(Decision rationale goes here when the RFC is evaluated.)*
+RFC-0007 resolved overflow semantics for all integer types: panic in debug builds, wrapping in release builds. The `UInt` alignment question is moot — RFC-0007 establishes a unified type system with consistent overflow behaviour across all integer types. Explicit `wrapping_add` / `checked_add` variants are deferred to the standard library RFC.
