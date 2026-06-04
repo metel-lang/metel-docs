@@ -178,7 +178,7 @@ Move-capture of a region-internal value into a closure that escapes the block is
 `region { }` is the first concrete step of Metel's staged lifetime system:
 
 - **This RFC**: `region { }` block introduces lifetime `'r`; `RegionFree` (approximated by `Send`) enforces scope exit. Programmer writes zero lifetime annotations for the common case.
-- **Region lifetime extension**: `*'r T` becomes a distinct type; `RegionFree<'r>` replaces `Send` as the exit constraint; `@'r T` (storable read references tagged with `'r`) are introduced. Struct and function signatures may carry `'r` when needed.
+- **Region lifetime extension**: `*'r T` becomes a distinct type; `RegionFree<'r>` replaces `Send` as the exit constraint. Struct and function signatures may carry `'r` when needed. This is also when safe borrowing of linear values via `*T` becomes possible.
 - **Full lifetime system**: abstract lifetime variables on function signatures for cross-region and cross-function borrow relationships. `'r` from `region 'r { }` participates in the general constraint system.
 
 Each step is additive. Nothing in this RFC forecloses the later layers.

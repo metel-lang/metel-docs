@@ -12,27 +12,25 @@ supersedes:
 
 Define Metel's unified memory and reference model. The model has three interlocking parts:
 
-- **Linear types** — opt-in, statically checked exactly-once ownership for resources that require deterministic release
-- **Read references** (`@T`) — expression-scoped, non-storable views of a linear value that do not consume it
-- **Pointers** — raw `*T` for non-owning aliased access; unique `unique *T` as the owning heap indirection for any `T`; `Arc<T>` (RFC-0003) for explicitly reference-counted shared ownership
+- **Linear types** — opt-in, statically checked exactly-once ownership for resources that require deterministic release. Linearity is declared on the type; no use-site annotation is required.
+- **Pointers** — raw `*T` for non-owning aliased access to non-linear values; `@T` as the owning heap pointer for any `T` with a linear handle.
+- **Shared ownership** — `Arc<T>` (RFC-0003) for explicitly reference-counted shared ownership across fiber boundaries.
 
-The three parts are inseparable: linear types require read references to be usable, unique pointers are the bridge that allows linear values to be heap-allocated and passed indirectly, and regular pointers are restricted to non-linear types to preserve the aliasing model. They must be designed and implemented together.
-
-This RFC supersedes RFC-0001 (Pointer Syntax and Semantics) and RFC-0024 (Linear Types), incorporating all resolved decisions from both and carrying forward their open questions in unified form.
+This RFC supersedes RFC-0001 (Pointer Syntax and Semantics) and RFC-0024 (Linear Types), incorporating all resolved decisions from both and carrying forward open questions in unified form.
 
 ---
 
 ## Staged Design Approach
 
-This RFC defines the **foundation layer** of Metel's memory model — linear types, expression-scoped read references, and unique pointers. It is intentionally conservative in some areas, particularly the placement rules for `@T`. These restrictions are not permanent language decisions; they are the safe, zero-annotation baseline from which later layers build.
+This RFC defines the **foundation layer** of Metel's memory model — linear types, owning pointers, and raw pointers. It is intentionally conservative in some areas. These restrictions are not permanent language decisions; they are the safe, zero-annotation baseline from which later layers build.
 
 The planned extension layers are:
 
-- **This RFC**: linear types + expression-scoped `@T` + unique pointers. The linear checker and basic pointer surface.
-- **Regions (RFC-0025)**: `Region::scope` introduces named region lifetimes (`'r`). Allocations inside become lifetime-tagged (`*'r T`). `@T` gains a region lifetime form (`@'r T`) that can be stored and returned within the scope. `RegionFree<'r>` replaces the `Send` scope-exit constraint. This is the first step of lifetime inference — the programmer writes a scope boundary; the compiler infers lifetimes from it.
-- **Full lifetime system**: abstract lifetime variables on function signatures (`'a`) for cross-region and cross-function borrow tracking. Explicit annotations required only where inference from region boundaries is insufficient.
+- **This RFC**: linear types + `@T` owning pointer + `*T` raw pointer. The linear checker and basic pointer surface. Read-only access to linear values is through consume-and-return (no borrow mechanism without lifetimes).
+- **Regions (RFC-0025)**: `region { }` introduces named region lifetimes (`'r`). `*T` inside a region is tagged `*'r T`. `RegionFree<'r>` enforces scope exit. This is the first step of lifetime inference.
+- **Full lifetime system**: abstract lifetime variables on function signatures (`'a`). `*T` gains safe borrow semantics for linear values. Read-only access without consume-and-return becomes possible.
 
-Each layer is additive. Nothing in this RFC forecloses the later layers; the `@T` restrictions here are the subset that requires zero annotations and can be checked without a lifetime or region system.
+Each layer is additive. Nothing in this RFC forecloses the later layers.
 
 ---
 
@@ -46,7 +44,7 @@ Metel's default memory model uses `Arc<T>` for shared ownership and `region { }`
 - Single-owner heap allocation without reference-counting overhead
 - Building self-referential or recursive data structures
 
-Linear types address the first two groups. `unique *T` is the single-owner heap allocation mechanism for any `T` — including linear types. Raw `*T` pointers are non-owning aliases whose validity is enforced by the region and lifetime systems.
+Linear types address the first two groups. `@T` is the single-owner heap allocation mechanism for any `T` — including linear types. Raw `*T` pointers are non-owning aliases restricted to non-linear values until the lifetime system enables safe borrowing of linear values.
 
 ---
 
@@ -70,7 +68,7 @@ linear enum Connection {
 }
 ```
 
-A struct or enum that contains a `linear` field is itself treated as linear automatically, but the outer type **must** carry an explicit `linear` annotation. Omitting it when a field is linear is a compile warning that becomes an error — implicit silent propagation is rejected to keep linearity visible at every declaration site:
+A struct or enum that contains a `linear` field must itself carry an explicit `linear` annotation. Omitting it when a field is linear is a compile error — implicit silent propagation is rejected to keep linearity visible at every declaration site:
 
 ```metel
 linear struct Request {   // explicit annotation required
@@ -79,16 +77,14 @@ linear struct Request {   // explicit annotation required
 }
 ```
 
-#### 1.2 Linearity sigil at use sites
+#### 1.2 Linearity at use sites
 
-Linearity must be visible at every use site — in variable declarations, function parameters, and return types. The form `Buffer` alone is a type error if `Buffer` is declared linear; the marked form `!Buffer` is required everywhere.
-
-`!` is the linearity sigil. It is unambiguous in type position (`!` is logical NOT only in expression position). It is concise and visually distinct from `&` (address-of) and `@` (read reference):
+Linearity is tracked by the type declaration alone. No use-site annotation or sigil is required — `Buffer` in a binding or function signature is sufficient; the type system knows from the declaration that `Buffer` is linear and enforces exactly-once consumption accordingly.
 
 ```metel
-let buf: !Buffer = Buffer::alloc(1024);
+let buf: Buffer = Buffer::alloc(1024);
 
-fun write(buf: !Buffer, data: Bytes) -> !Buffer { ... }
+fun write(buf: Buffer, data: Bytes) -> Buffer { ... }
 ```
 
 #### 1.3 Consumption
@@ -99,8 +95,9 @@ A linear value is **consumed** by any of:
 - Returning it from a function or block
 - Rebinding it to a new name via `let` (the original binding becomes dead)
 - Destructuring it in `match` or a `let` destructure
+- Boxing it with `@` (moves the value into heap allocation)
 
-Consuming an already-consumed linear binding is a compile error. A linear binding that reaches the end of its scope without being consumed is a compile error.
+Consuming an already-consumed linear binding is a compile error. A linear binding that reaches the end of its scope without being consumed is a compile error (unless the type implements `Drop` — see §1.8).
 
 ```metel
 let f = FileHandle::open("data.txt");
@@ -119,7 +116,7 @@ f3.close();  // ERROR: f3 already consumed
 There are no mutable references for linear types. Mutation is expressed by consuming the value and returning a new one. Methods on linear types take `self` and return `Self`:
 
 ```metel
-fun write(buf: !Buffer, data: Bytes) -> !Buffer { ... }
+fun write(buf: Buffer, data: Bytes) -> Buffer { ... }
 
 let buf = write(buf, data);   // buf consumed; new buf bound
 ```
@@ -130,7 +127,22 @@ Method chaining is the idiomatic form for sequential operations:
 buf.write(header).write(body).flush().free();
 ```
 
-#### 1.5 Branching
+#### 1.5 Read-only access
+
+Without a lifetime system, read-only access to a linear value that does not transfer ownership uses consume-and-return:
+
+```metel
+fun buf_len(buf: Buffer) -> (Buffer, Int) {
+    let len = buf.len;
+    (buf, len)   // buf returned — caller still owns it
+}
+
+let (buf, len) = buf_len(buf);
+```
+
+When the full lifetime system arrives, `*Buffer` (raw pointer to a linear value) will be the borrow mechanism, making this pattern unnecessary. Until then, consume-and-return is the safe zero-annotation option.
+
+#### 1.6 Branching
 
 Every branch of an `if` or `match` must leave all in-scope linear bindings in the same consumption state at the merge point:
 
@@ -144,11 +156,11 @@ if condition {
 }
 ```
 
-#### 1.6 Loops
+#### 1.7 Loops
 
 A linear value created outside a loop body may not be consumed inside it — the consumption count would be unpredictable. A linear value created inside a loop body is fine; it is created and consumed once per iteration.
 
-#### 1.7 `drop` — explicit discard
+#### 1.8 `drop` — explicit discard
 
 ```metel
 drop(buf);   // consumed; satisfies the linearity checker
@@ -156,7 +168,7 @@ drop(buf);   // consumed; satisfies the linearity checker
 
 `drop` has the signature `fun<T: Linear>(val: T)`. It does not call a destructor method — the programmer must call the destructor explicitly before dropping if needed.
 
-#### 1.8 `Drop` aspect — implicit destructor
+#### 1.9 `Drop` aspect — implicit destructor
 
 A linear type may implement the `Drop` aspect:
 
@@ -168,68 +180,80 @@ aspect Drop {
 
 If a linear value implements `Drop` and reaches the end of its scope unconsumed, the compiler calls `drop` automatically rather than emitting a compile error. Types that do not implement `Drop` still produce a compile error on unconsumed scope exit. Implementing `Drop` is the opt-in — there is no separate `#[auto_drop]` attribute.
 
-The programmer is still responsible for calling any external cleanup (closing file handles, etc.) inside `drop`. `Drop::drop` is the last line of defence, not a substitute for explicit consumption in the happy path.
+The programmer is still responsible for calling any external cleanup inside `drop`. `Drop::drop` is the last line of defence, not a substitute for explicit consumption in the happy path.
 
-#### 1.9 Destructuring
+#### 1.10 Destructuring
 
 Destructuring a linear value consumes the outer binding and introduces each field as a new binding. Each extracted linear field must itself be consumed. Ignoring a linear field with `_` or `..` is a type error.
 
 ---
 
-### Part 2 — Read References (`@T`)
+### Part 2 — Owning Pointers (`@T`)
 
 #### 2.1 Overview
 
-`@T` is a non-owning, expression-scoped view of a linear value. It allows inspection without consumption, making it possible to call read-only functions without transferring ownership.
+`@T` is the unique owning heap pointer. It has exactly one live handle; the handle is always linear — it cannot be cloned and must be consumed exactly once. When the handle is consumed, the allocation is released. `@T` is valid for any `T`, linear or non-linear.
 
-`@T` is formed with the `@` prefix operator:
+The `@` prefix operator boxes a value — it moves the value into a heap allocation and returns the owning handle:
 
 ```metel
-linear struct Buffer { ptr: Int, len: Int }
+let x: Int = 42;
+let p: @Int = @x;      // x moved into heap; p owns it — must be consumed
 
-fun buf_len(b: @Buffer) -> Int { b.len }
-
-let buf = Buffer::alloc(1024);
-let len = buf_len(@buf);   // buf is not consumed
-buf.free();
+let buf: Buffer = Buffer::alloc(1024);
+let owned: @Buffer = @buf;   // buf moved into heap; owned must be consumed
 ```
 
-#### 2.2 Placement rules
+#### 2.2 Dereferencing
 
-- `@T` may only appear in **expression position** — it cannot be bound to a `let`, stored in a struct field, or appear in a function return type
-- `@T` is not itself linear — it may be used any number of times within its expression scope
-- A function accepting `@T` may read from the value but cannot consume it
+`*p` reads through the owning pointer. One pointer layer is auto-dereffed at field access and method calls:
 
-Because `@T` cannot be stored, it cannot outlive the expression it appears in. No lifetime annotations are needed.
+```metel
+let p: @Buffer = @Buffer::alloc(1024);
+let len = p.len;       // auto-deref: equivalent to (*p).len
+p.write(data);         // method dispatch auto-derefs
+```
 
-**Note — intentionally conservative:** these restrictions define the zero-annotation baseline. They will be relaxed when region lifetimes are introduced: `@'r T` will be storable in structs and returnable from functions, provided the struct or return type is parameterized by `'r` and the value does not outlive the region scope. The expression-scoped form here is the subset that requires no annotations and no region or lifetime system.
+Reading through `@T` does not consume the handle. Consuming the handle (passing `p` to a function, returning it, or dropping it) releases the allocation.
 
-#### 2.3 No mutable read references
+#### 2.3 Freeing
 
-`@mut T` is not introduced by this RFC. Mutation is handled by consume-and-return (§1.4). This is a deliberate stage-gate: `@mut T` requires an exclusivity checker (at most one `@mut T` at a time, no `@T` concurrent with it) — effectively a borrow checker. That machinery belongs to the full lifetime system layer, not this foundation. If in-place mutation through a reference becomes a demonstrated need, it will be designed as an extension of the lifetime system.
+To explicitly free an owning pointer, pass it to `free` or any consuming function. If the inner type is linear, its `Drop::drop` is called before the allocation is released (if implemented).
 
-#### 2.4 Relationship to `&`
+#### 2.4 Recursive structures
 
-`@x` and `&x` are distinct operators with no overlap:
+`@T` enables recursive data structures for both linear and non-linear types:
 
-| Operator | Result type | Storable | Runtime cost | Valid on |
+```metel
+linear struct Node {
+    value: Int,
+    next: Perhaps<@Node>,
+}
+
+struct Tree {
+    value: Int,
+    left: Perhaps<@Tree>,
+    right: Perhaps<@Tree>,
+}
+```
+
+#### 2.5 Relationship to `*T` and `Arc<T>`
+
+| Type | Ownership | Handle linear | T may be linear | Validity |
 |---|---|---|---|---|
-| `&x` | `*T` | yes | none (raw pointer) | non-linear `x` only |
-| `@x` | `@T` | no | none | linear `x` only |
+| `*T` | non-owning alias | no | no — lifetime system needed | region / lifetime |
+| `@T` | owning | yes — always | yes | linear handle is the lifetime |
+| `Arc<T>` | shared RC | no | no | reference count |
 
-`&x` where `x` is linear is a type error. `@x` where `x` is non-linear is a type error.
-
-**Note — potential convergence with the lifetime system.** The distinction between `@T` and `*T` is narrower than it appears: both are non-owning, non-allocating references. The key difference today is that `@T` is expression-scoped and therefore safe without lifetime annotations — it cannot outlive the linear value it borrows. `*T` lacks that scope guarantee and requires the lifetime system to be safe.
-
-When `@'r T` (storable read reference tagged with a region lifetime) is introduced, it and `*'r T` (raw pointer with a region lifetime) become structurally very similar. At that point they may converge into a single unified reference type, with expression-scoped `@T` as the `'_`-lifetime special case. Whether `@` and `*` unify or remain distinct operators is an open question for the full lifetime system RFC.
+`&x` → `*T` (address-of, non-owning). `@x` → `@T` (box, owning, consuming).
 
 ---
 
-### Part 3 — Pointers
+### Part 3 — Raw Pointers (`*T`, `*mut T`)
 
-#### 3.1 Regular pointers (`*T`, `*mut T`)
+#### 3.1 Overview
 
-`*T` is a raw non-owning pointer to a value of type `T`. It is an alias — it does not own the value it points to and carries no runtime reference count. Validity is not tracked at runtime; it is enforced by the region lifetime system (RFC-0025) and, eventually, the full lifetime system.
+`*T` is a raw non-owning pointer. It is an alias — it does not own the value it points to and carries no runtime reference count. Validity is enforced by the region lifetime system (RFC-0025) and, eventually, the full lifetime system.
 
 ```metel
 mut x: Int = 42;
@@ -237,60 +261,35 @@ let p: *Int = &x;
 let q: *mut Int = &mut x;
 ```
 
-`*T` and `*mut T` cannot point to linear values. `&x` where `x` is linear is a type error — taking a raw alias to a linear binding would produce a second path to the value, violating the exactly-once guarantee.
+`*T` and `*mut T` are currently restricted to non-linear values. `&x` where `x` is a linear type is a type error — taking a raw alias to a linear binding would produce a second path to the value, violating the exactly-once guarantee without lifetime enforcement. This restriction will be lifted when the full lifetime system enables safe borrowing of linear values via `*T`.
 
 **Address-of operators:**
 
 | Expression | Result type | Condition |
 |---|---|---|
-| `&x` | `*T` | always — `x` may be `let` or `mut` |
-| `&mut x` | `*mut T` | type error if `x` is a `let` binding |
+| `&x` | `*T` | `x` must be non-linear |
+| `&mut x` | `*mut T` | `x` must be non-linear and a `mut` binding |
 
 **Dereference:** `*p` reads the value. `*p = v` writes through (only valid for `*mut T`).
 
 **Mutability subtyping:** `*mut T` coerces to `*T` implicitly (downgrade safe; upgrade never allowed).
 
-**Auto-deref:** one pointer layer is auto-dereffed at field access, method calls, and function pointer calls — `p.field` and `(*p).field` are equivalent for a single indirection (RFC-0043).
+**Auto-deref:** one pointer layer is auto-dereffed at field access, method calls, and function pointer calls (RFC-0043).
 
 **No pointer arithmetic.** `*Int + 1` is a type error.
 
 **Null safety:** absent pointers use `Perhaps<*T>`. There is no implicit null.
 
-#### 3.2 Unique pointers
-
-A unique pointer `unique *T` is the owning heap allocation mechanism. It has exactly one live handle; the handle is linear — it cannot be cloned and must be consumed exactly once. When the handle is consumed (freed or transferred), the allocation is released.
-
-`unique *T` is valid for any `T` — linear or non-linear:
-
-| Type | Ownership | T linear | Handle linear |
-|---|---|---|---|
-| `*T` | non-owning alias | no — type error | no |
-| `unique *T` | owning | yes or no | yes — always |
-| `Arc<T>` | shared RC | no — type error | no |
-
-Recursive linear data structures become possible:
-
-```metel
-linear struct Node {
-    value: Int,
-    next: Perhaps<unique *!Node>,
-}
-```
-
-**Open questions:** unique pointer allocation syntax and reading through a unique pointer. See OQ-2 and OQ-3.
-
-#### 3.3 Pointer validity — staged safety model
-
-`*T` is a raw non-owning pointer with no runtime validity tracking. Validity is guaranteed progressively by compile-time mechanisms:
+#### 3.2 Pointer validity — staged safety model
 
 | Layer | Mechanism | Scope |
 |---|---|---|
 | Region scope (RFC-0025) | `*T` inside `region { }` gets lifetime `'r`; `RegionFree<'r>` enforces no `*'r T` escapes the block | Region-allocated pointers |
-| Full lifetime system | Abstract lifetime variables on function signatures; borrow checker enforces no pointer outlives its referent | All pointers |
+| Full lifetime system | Abstract lifetime variables on function signatures; borrow checker enforces no pointer outlives its referent | All pointers, including linear value borrows |
 
-`unique *T` manages its own validity: the allocation lives exactly as long as the handle. No lifetime annotation needed for unique pointers — the linear handle is the lifetime.
+`@T` manages its own validity: the allocation lives exactly as long as the handle. No lifetime annotation needed — the linear handle is the lifetime.
 
-`Arc<T>` (RFC-0003) uses reference counting for validity. It is the explicitly RC type; `*T` is not.
+`Arc<T>` (RFC-0003) uses reference counting for validity. It is the explicitly RC type.
 
 ---
 
@@ -304,33 +303,26 @@ A **linearity environment** (`LinearEnv`) runs as a pass after type inference, o
 |---|---|
 | `let x = <linear expr>` | Add `x → Unconsumed` |
 | Use of linear `x` | If `Unconsumed`: mark `Consumed`. If `Consumed`: error |
-| `@x` | Do not mark consumed; verify `x` is `Unconsumed` |
-| Scope exit | Error if any linear binding is still `Unconsumed` |
+| `@x` (box linear `x`) | Mark `x` as `Consumed`; result is owning `@T` (itself linear) |
+| Scope exit | Error if any linear binding is still `Unconsumed` (unless `Drop` implemented) |
 | `if`/`match` merge | Verify `LinearEnv` state is identical across all branches |
 | Loop body entry | Snapshot outer linear bindings; forbid consuming any inside body |
 
 #### 4.2 Pointer type additions
 
-- `InferType::Pointer(Box<InferType>, /*mutable*/ bool)` — new variant; `unify` gains pointer cases
-- `Type::Pointer(Box<Type>, bool)` — new resolved type variant
-- `UnaryOp::AddressOf`, `UnaryOp::AddressOfMut`, `UnaryOp::Deref` — new AST variants
-- All `match` on `TypeExpr`, `InferType`, `Type`, and `UnaryOp` gain new arms (exhaustiveness-checked by the compiler)
+- `InferType::Pointer(Box<InferType>, /*mutable*/ bool)` — raw pointer variant
+- `InferType::Owned(Box<InferType>)` — owning pointer variant (`@T`)
+- `Type::Pointer(Box<Type>, bool)` and `Type::Owned(Box<Type>)` — resolved type variants
+- `UnaryOp::AddressOf`, `UnaryOp::AddressOfMut`, `UnaryOp::Deref`, `UnaryOp::Box` — AST variants
+- All `match` on `TypeExpr`, `InferType`, `Type`, and `UnaryOp` gain new arms
 
 ---
 
 ## Open Questions
 
-### OQ-2 — Unique pointer syntax and allocation
-
-The working syntax is `unique *T`. Alternatives:
-- A sigil form that composes with the linearity sigil from OQ-1
-- A keyword other than `unique`
-
-Allocation syntax is also open. Candidate: `Box::alloc(value) -> unique *T` as a standard-library constructor.
-
 ### OQ-10 — Linear type parameters
 
-Can a generic parameter be constrained to linear: `fun<T: Linear>(val: T)`? Required for `drop`. The interaction with v0.2 generics needs design.
+Can a generic parameter be constrained to linear: `fun<T: Linear>(val: T)`? Required for `drop`. The interaction with generics needs design.
 
 ---
 
@@ -338,19 +330,27 @@ Can a generic parameter be constrained to linear: `fun<T: Linear>(val: T)`? Requ
 
 ### OQ-1 — Linearity sigil at use sites ✓ Resolved
 
-**Decision:** `!T` — the `!` prefix is the linearity sigil at every use site. Unambiguous in type position (`!` is logical NOT only in expression position); concise; visually distinct from `&` (address-of) and `@` (read reference). Every occurrence of a linear type in a variable declaration, function parameter, or return type must carry the `!` prefix. The bare type name without `!` is a type error if the type is declared linear.
+**Decision:** No use-site sigil. Linearity is tracked by the type declaration alone — `linear struct Buffer` is sufficient; the type system infers linearity at every binding and parameter site from the declaration. A use-site annotation was considered (`!T`) but dropped: it complicates pointer type composition (e.g. `*Buffer` for a future linear borrow) and adds annotation burden without proportionate readability gain since the type name itself carries the information.
+
+### OQ-2 — Owning pointer syntax and allocation ✓ Resolved
+
+**Decision:** `@T` is the owning heap pointer type. `@x` is the boxing operator — it moves `x` into a heap allocation and returns the owning handle. This replaces `unique *T` from earlier drafts. The `@` sigil is unambiguous (distinct from `&` address-of and `*` raw pointer), composes cleanly in type position, and reads consistently: `@T` always means "I own a T on the heap."
+
+### OQ-3 — Reading through an owning pointer ✓ Resolved
+
+**Decision:** `*p` dereferences an owning pointer. One layer of auto-deref applies at field access and method calls, consistent with RFC-0043. The handle `p` is not consumed by a read — only by a consuming operation (passing to a function, returning, or explicit `free`).
 
 ### OQ-4 — Transitivity warnings ✓ Resolved
 
-**Decision:** When a struct becomes implicitly linear because a field is linear, the compiler emits a warning and requires an explicit `linear` annotation on the outer type. Silent propagation is rejected. This keeps linearity visible and intentional at every declaration site.
+**Decision:** When a struct contains a linear field, the outer type must carry an explicit `linear` annotation. Omitting it is a compile error. Silent propagation is rejected.
 
 ### OQ-5 — Destructor protocol ✓ Resolved
 
-**Decision:** The language defines a `Drop` aspect with a `drop(self)` method. If a linear value implements `Drop`, the compiler calls `drop` automatically when the value would otherwise go out of scope unconsumed — converting what would be a compile error into an implicit destructor call. Types that do not implement `Drop` still produce a compile error on unconsumed scope exit. `#[auto_drop]` is not needed as a separate annotation; implementing `Drop` is the opt-in.
+**Decision:** The `Drop` aspect provides an implicit destructor. If a linear value implements `Drop`, the compiler calls `drop` automatically on unconsumed scope exit. Types without `Drop` still error on unconsumed exit.
 
 ### OQ-6 — Auto-deref for field access ✓ Resolved (RFC-0043)
 
-**Decision:** One pointer layer is auto-dereffed at field access, method calls, and function pointer calls. `(*p).field` and `p.field` are equivalent for a single pointer indirection. `->` is not introduced.
+**Decision:** One pointer layer auto-dereffed at field access, method calls, and function pointer calls. `->` not introduced.
 
 ### OQ-7 — Addressability rules ✓ Resolved (RFC-0043)
 
@@ -360,13 +360,9 @@ Can a generic parameter be constrained to linear: `fun<T: Linear>(val: T)`? Requ
 
 **Decision:** `p == q` compares addresses (identity). Value equality requires explicit `*p == *q`.
 
-### OQ-3 — Reading through a unique pointer ✓ Resolved
-
-**Decision:** `@p` where `p: unique *!T` auto-dereferences through the pointer, producing `@T`. Consistent with the one-layer auto-deref rule (RFC-0043). The handle `p` is not consumed; the `@T` view is expression-scoped as usual.
-
 ### OQ-9 — Linear vs affine types ✓ Resolved
 
-**Decision:** Linear types only (exactly once). Affine types (at most once — silent drop permitted) are not introduced. Every linear value must be explicitly consumed; silent discard is always a compile error. This gives the strongest guarantee and makes resource management always visible. Affine may be revisited as a future extension if a clear use case emerges.
+**Decision:** Linear types only (exactly once). Affine types are not introduced.
 
 ---
 
@@ -378,7 +374,7 @@ Can a generic parameter be constrained to linear: `fun<T: Linear>(val: T)`? Requ
 - RFC-0043: regular pointers (incorporated) — `*T`/`*mut T` syntax, addressability, auto-deref, pointer equality settled
 - Cluster report: `docs/reports/memory-model/rfc-cluster-memory-model.md`
 - Lifetime system design: `docs/reports/memory-model/lifetime-system-proposal.md`
-- RFC-0006: closure capture — `move fun` syntax depends on this RFC (linear capture semantics)
-- RFC-0025: region allocation — `Region` is a linear type; RFC-0025 is also the first step of the lifetime system (region scope introduces named lifetime `'r`, enabling `@'r T` and `RegionFree<'r>`)
+- RFC-0006: closure capture — move capture depends on this RFC (linear capture semantics)
+- RFC-0025: region allocation — `Region` is a linear type; first step of the lifetime system
 - RFC-0026: unsafe blocks — linearity checker relaxed inside `unsafe`; depends on this RFC
 - Prior art: Linear Haskell (Bernardy et al. 2018), Rust `Box<T>` and ownership model, Cyclone regions and lifetime system
