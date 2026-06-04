@@ -44,7 +44,7 @@ let summary = region {
 
 ### Implicit allocation
 
-Inside a `region { }` block, heap allocations go to the region's bump allocator rather than the RC heap. The programmer writes the same code; the compiler redirects pointer-producing operations (`&x`, `&mut x`, struct construction stored via pointer) to the region's backing block.
+Inside a `region { }` block, heap allocations go to the region's bump allocator rather than the general heap. The programmer writes the same code; the compiler redirects pointer-producing operations (`&x`, `&mut x`, struct construction stored via pointer) to the region's backing block.
 
 ```metel
 region {
@@ -67,7 +67,8 @@ The block's return type must satisfy `RegionFree` — "contains no region-intern
 // RegionFree — can escape the block:
 //   Int, Float, Bool, String — primitive value types
 //   Arc<T> — reference-counted, not region-internal
-//   unique *T allocated outside the block — not tagged 'r
+//   unique *T allocated outside the block — owning handle, not tagged 'r
+//   *T allocated outside the block — non-region pointer, not tagged 'r
 //   structs and enums whose fields are all RegionFree
 
 // NOT RegionFree — type error to return:
@@ -75,7 +76,7 @@ The block's return type must satisfy `RegionFree` — "contains no region-intern
 //   any struct that contains such a pointer
 ```
 
-For now, `RegionFree` is approximated by the existing `Send` bound: since `*T` and `*mut T` are not `Send`, region-internal pointers cannot escape the block. This is conservative — some safe values are rejected. When region lifetimes (`*'r T`) are introduced, `RegionFree<'r>` replaces `Send` as the exit constraint and becomes precise: only pointers tagged with the current region's `'r` are rejected; heap-backed `unique *T` and other non-region pointers may escape freely.
+For now, `RegionFree` is approximated by the existing `Send` bound: since `*T` and `*mut T` are not `Send`, region-internal pointers cannot escape the block. This is conservative — some safe values are rejected. When region lifetimes (`*'r T`) are introduced, `RegionFree<'r>` replaces `Send` as the exit constraint and becomes precise: only pointers tagged with the current region's `'r` are rejected; `unique *T` handles and non-region `*T` pointers may escape freely.
 
 ### Named region lifetime
 
