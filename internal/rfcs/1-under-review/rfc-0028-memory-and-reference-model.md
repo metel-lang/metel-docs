@@ -166,7 +166,7 @@ A linear value created outside a loop body may not be consumed inside it — the
 drop(buf);   // consumed; satisfies the linearity checker
 ```
 
-`drop` has the signature `fun<T: Linear>(val: T)`. It does not call a destructor method — the programmer must call the destructor explicitly before dropping if needed.
+`drop` has the signature `fun<linear T>(val: T)`. It does not call a destructor method — the programmer must call the destructor explicitly before dropping if needed.
 
 #### 1.9 `Drop` aspect — implicit destructor
 
@@ -318,14 +318,6 @@ A **linearity environment** (`LinearEnv`) runs as a pass after type inference, o
 
 ---
 
-## Open Questions
-
-### OQ-10 — Linear type parameters
-
-Can a generic parameter be constrained to linear: `fun<T: Linear>(val: T)`? Required for `drop`. The interaction with generics needs design.
-
----
-
 ## Resolved Questions
 
 ### OQ-1 — Linearity sigil at use sites ✓ Resolved
@@ -363,6 +355,10 @@ Can a generic parameter be constrained to linear: `fun<T: Linear>(val: T)`? Requ
 ### OQ-9 — Linear vs affine types ✓ Resolved
 
 **Decision:** Linear types only (exactly once). Affine types are not introduced.
+
+### OQ-10 — Linear type parameters ✓ Resolved
+
+**Decision:** The `linear` keyword is used as a type parameter constraint: `fun<linear T>(val: T)`. This is consistent with `linear struct` at the declaration site — `linear` means "this type must satisfy exactly-once consumption" wherever it appears. The `drop` function signature is `fun<linear T>(val: T)`. The linearity checker applies to `T` within the function body: the parameter must be consumed exactly once.
 
 ---
 
