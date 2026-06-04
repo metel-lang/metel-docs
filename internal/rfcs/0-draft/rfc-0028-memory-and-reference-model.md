@@ -214,10 +214,14 @@ Because `@T` cannot be stored, it cannot outlive the expression it appears in. N
 
 | Operator | Result type | Storable | Runtime cost | Valid on |
 |---|---|---|---|---|
-| `&x` | `*T` | yes | RC increment | non-linear `x` only |
+| `&x` | `*T` | yes | none (raw pointer) | non-linear `x` only |
 | `@x` | `@T` | no | none | linear `x` only |
 
 `&x` where `x` is linear is a type error. `@x` where `x` is non-linear is a type error.
+
+**Note — potential convergence with the lifetime system.** The distinction between `@T` and `*T` is narrower than it appears: both are non-owning, non-allocating references. The key difference today is that `@T` is expression-scoped and therefore safe without lifetime annotations — it cannot outlive the linear value it borrows. `*T` lacks that scope guarantee and requires the lifetime system to be safe.
+
+When `@'r T` (storable read reference tagged with a region lifetime) is introduced, it and `*'r T` (raw pointer with a region lifetime) become structurally very similar. At that point they may converge into a single unified reference type, with expression-scoped `@T` as the `'_`-lifetime special case. Whether `@` and `*` unify or remain distinct operators is an open question for the full lifetime system RFC.
 
 ---
 
