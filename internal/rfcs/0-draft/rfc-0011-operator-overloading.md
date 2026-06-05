@@ -29,6 +29,7 @@ Requires: the aspect system (v0.2).
 - **`Display` / `ToString`**: does string interpolation (RFC-0010) depend on a `Display` aspect here? If so, they need to be designed together.
 - **Compound assignment** (`+=`, `-=`, etc.): separate `AddAssign` aspects or derived from `Add`?
 - **Negation** (`-x`, `!x`): `Neg` and `Not` aspects?
+- **Index operator** (`collection[i]`): an `Index` aspect with a method `fn index(self: *Self, i: I) -> T`? Should it panic on out-of-bounds or return `Perhaps<T>`? This is the mechanism needed for `List<T>[i]` (RFC-0054) and future map/set types. If panicking, a separate `IndexChecked` aspect returning `Perhaps<T>` may be warranted alongside it.
 
 ---
 
