@@ -2,9 +2,10 @@
 id: rfc-0026
 title: "Unsafe Blocks"
 date: '2026-05-24'
-status: draft
-target:
+status: deferred
 ---
+
+> **Deferred.** This RFC depends on a stable memory safety model. RFC-0028 (Memory and Reference Model) is still under review; RFC-0046 (Linear Closure Capture) is unresolved. The semantics of what the unsafe escape hatch relaxes — the linearity checker, region scope enforcement, pointer validity rules — cannot be locked down until those foundations are settled. Revisit once RFC-0028 is accepted.
 
 ## Summary
 

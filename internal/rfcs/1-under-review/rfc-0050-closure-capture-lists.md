@@ -1,13 +1,12 @@
 ---
-id: rfc-0045
+id: rfc-0050
 title: "Closure Capture Lists"
 date: '2026-06-03'
-status: under-review
 ---
 
 ## Summary
 
-Add an optional capture list syntax to closure expressions that allows individual outer bindings to be captured by mutable reference. This enables a closure to mutate outer-scope state without requiring a separate `*mut` pointer binding in the outer scope, while keeping the mutation intent explicit at the closure definition site.
+Add an optional capture list syntax to closure expressions. The capture list supports two specifiers: `&mut ident` captures a non-linear binding by mutable reference, enabling a closure to mutate outer-scope state without a separate `*mut` binding; `move ident` transfers ownership of a linear binding into the closure (RFC-0046). Both specifiers may appear in the same list. All captures are explicit at the closure definition site.
 
 ---
 
@@ -42,10 +41,12 @@ Extend the closure expression syntax with an optional capture list placed before
 ```
 closure_expr  = capture_list? "(" params ")" "->" return_type block
 capture_list  = "[" capture_item ("," capture_item)* "]"
-capture_item  = "&mut" ident
+capture_item  = "&mut" ident | "move" ident
 ```
 
-Bindings named in the capture list are captured by mutable reference rather than by value. Inside the closure body they are used with ordinary read and assignment syntax — no pointer dereference required:
+`&mut ident` captures a non-linear binding by mutable reference. `move ident` transfers ownership of a linear binding into the closure (see RFC-0046). Both specifiers may appear in the same list: `[&mut count, move buf]`.
+
+Bindings named with `&mut` in the capture list are captured by mutable reference rather than by value. Inside the closure body they are used with ordinary read and assignment syntax — no pointer dereference required:
 
 ```metel
 fun main() {
@@ -65,10 +66,19 @@ Bindings not listed in the capture list continue to be captured by value (deep c
 
 ### Semantics
 
-- At closure creation time, each `&mut ident` capture takes the address of the named binding (equivalent to the existing `&mut ident` address-of operation) and stores the resulting `*mut T` in the closure's captured environment.
-- Inside the closure body, reads and writes of a by-reference-captured binding are automatically routed through the stored pointer. The programmer never sees the pointer explicitly.
+**`&mut` captures:**
+- At closure creation time, each `&mut ident` capture takes the address of the named binding (equivalent to `&mut ident`) and stores the resulting `*mut T` in the closure's captured environment.
+- Inside the closure body, reads and writes of the binding are automatically routed through the stored pointer. The programmer never sees the pointer explicitly.
 - The outer binding must be declared `let mut`. Attempting to capture a non-mutable binding via `&mut` is a compile error.
+
+**`move` captures:**
+- At closure creation time, each `move ident` capture transfers ownership of the named linear binding into the closure's environment. The outer binding is consumed at closure creation — using it after is a compile error.
+- A closure with any `move` capture has type `linear fun(...) -> T`: it must be called exactly once (see RFC-0046).
+- Linear bindings referenced in the closure body that are not listed with `move` are a type error — linear values cannot be clone-captured.
+
+**Both:**
 - A binding may not appear in both the capture list and the value-captured portion of the same closure's environment (no dual capture of the same name).
+- Unlisted non-linear bindings continue to be clone-captured (RFC-0006 default).
 
 ### Read-only reference captures
 
@@ -96,15 +106,15 @@ Require every captured binding to appear in the list, with `&mut` or by-value ma
 
 ---
 
-## Open Questions
+## Resolved Questions
 
-1. **Lifetime of the mutable reference.** With the current interpreter the outer binding's storage lives as long as its `Rc` cell, so there is no unsoundness. Under a future compiler with stack allocation, a closure holding a `&mut` to a stack binding must not outlive that binding. This RFC does not resolve the lifetime story; it defers to the linear types / borrow checker RFC.
+1. **Lifetime of the mutable reference. ✓ Resolved** — In the interpreter, the outer binding's storage is heap-backed so there is no unsoundness. Under a future compiler, a closure holding `&mut` to a stack binding must not outlive that binding. Precise enforcement defers to the borrow checker. No interpreter-level restriction is imposed now.
 
-2. **Interaction with concurrency.** A closure holding a mutable reference to an outer binding must not be sent to another thread without synchronisation. The capture list makes this visible (the closure type could be marked non-`Send`), but the mechanism is not specified here.
+2. **Interaction with concurrency. ✓ Resolved** — `*mut T` is not `Send` (RFC-0028, RFC-0003). A closure is `Send` only if all its captured values are `Send`. Any `[&mut x]` closure is therefore automatically non-`Send` — no new rule needed; falls out of the existing model.
 
-3. **Multiple closures capturing the same binding.** Two closures with `[&mut x]` in the same scope both hold a mutable pointer to `x`. This is safe in the single-threaded interpreter (sequential calls) but is aliased mutation. Under linear types or a borrow checker this would require further restrictions. Deferred.
+3. **Multiple closures capturing the same binding. ✓ Resolved** — Two closures with `[&mut x]` both hold a mutable pointer to `x`. This is safe in the single-threaded interpreter (sequential calls; aliased mutation is not concurrent). Under the borrow checker, at most one live mutable reference at a time will be enforced. Document now; restrict later.
 
-4. **Syntax alternatives.** `[&mut x]` reuses existing syntax and reads naturally given RFC-0043. Alternatives such as `mut(x)` or a `capture` keyword have been considered but are not preferred.
+4. **Syntax. ✓ Resolved** — `[&mut x]` is confirmed. Resolved jointly with RFC-0046: the same capture list accepts both `&mut` items and `move` items in a unified syntax. `[&mut count, move buf]` is valid.
 
 ---
 
@@ -114,7 +124,7 @@ This RFC should not be implemented before at least a prototype design exists for
 
 **Prerequisite:** RFC-0043 (Regular Pointers and Mutable Pointers) — already implemented.
 
-**Suggested order:** linear types RFC accepted → this RFC implemented in interpreter → compiler picks up native reference semantics.
+**Suggested order:** RFC-0028 accepted → RFC-0046 accepted → this RFC implemented in interpreter → compiler picks up native reference semantics.
 
 ---
 
@@ -124,6 +134,7 @@ This RFC should not be implemented before at least a prototype design exists for
 - RFC-0041: Lambda Syntax for Anonymous Functions
 - RFC-0043: Regular Pointers and Mutable Pointers
 - Closure capture tests: `tests/evaluator/sources/closures/72_closure_internal_ptr_no_outer_effect.mtl`, `73_closure_direct_assign_no_outer_effect.mtl`, `74_closure_external_ptr_affects_outer.mtl`
+- RFC-0046: Linear Closure Capture — `move` specifier in capture lists; `linear fun` type; resolved jointly with this RFC
 - C++ lambda capture lists — prior art for syntax and semantics
 
 ---

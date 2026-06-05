@@ -2,7 +2,6 @@
 id: rfc-0025
 title: "Region Allocation"
 date: '2026-05-24'
-status: under-review
 ---
 
 ## Summary
@@ -61,26 +60,22 @@ region {
 
 When the region's backing block is exhausted, it automatically grows by allocating a new block and chaining it to the previous one. The region is a linked list of fixed-size blocks; allocation continues transparently from the new block. This is more ergonomic than panicking or returning `Perhaps::None` — the programmer declares a scope boundary, not a capacity limit. The initial block size is a hint; growth is automatic.
 
-### The `RegionFree` exit constraint
+### The exit constraint
 
-The block's return type must satisfy `RegionFree` — "contains no region-internal pointers." The compiler enforces this at the block boundary.
-
-`RegionFree` is a distinct marker aspect, separate from `Send`. It is auto-derived for types that contain no `*'r T` fields:
+The block's return type must be `Send` — the interim approximation for "contains no region-internal pointers." The compiler enforces this at the block boundary using the existing `Send` marker.
 
 ```metel
-// RegionFree — can escape the block:
+// Send — can escape the block:
 //   Int, Float, Bool, String — primitive value types
-//   Arc<T> — reference-counted, not region-internal
-//   @T (owning pointer) allocated outside the block — not tagged 'r
-//   *T allocated outside the block — non-region pointer, not tagged 'r
-//   structs and enums whose fields are all RegionFree
+//   Arc<T> where T: Send — reference-counted, Send if inner is
+//   structs and enums whose fields are all Send
 
-// NOT RegionFree — type error to return:
-//   *Node allocated inside the block — tagged *'r Node
-//   any struct that contains such a pointer
+// NOT Send — type error to return:
+//   *T, *mut T — raw pointers are never Send
+//   any struct containing a raw pointer
 ```
 
-`RegionFree` is defined now as a standalone marker rather than approximated by `Send`. This is more precise: `@T` handles and non-region `*T` pointers are `RegionFree` even though `*T` is not `Send`. When region lifetimes (`*'r T`) are fully introduced, `RegionFree<'r>` gains a lifetime parameter and becomes precise: only pointers tagged with the current region's `'r` are rejected.
+`Send` is a conservative approximation. It rejects some valid programs: a `*T` pointing to data allocated entirely outside the region is safe to return, but is not `Send`. This over-rejection is acceptable for the interpreter stage. The full `RegionFree<'r>` marker (RFC-0051) will be more precise: only pointers tagged with the current region's `'r` are rejected, while non-region raw pointers and `@T` handles are allowed to escape. Until RFC-0051 lands, `Send` is the enforced constraint.
 
 ### Named region lifetime
 
@@ -220,7 +215,7 @@ A garbage collector eliminates manual memory management entirely but introduces 
 
 ## Resolved Questions
 
-1. **`RegionFree` vs `Send` as exit constraint ✓ Resolved** — `RegionFree` is defined as a distinct marker aspect now, separate from `Send`. More precise: `@T` handles and non-region `*T` pointers are `RegionFree` even though `*T` is not `Send`. Gains a lifetime parameter (`RegionFree<'r>`) when region lifetimes are introduced.
+1. **Exit constraint ✓ Resolved** — `Send` is used as the interim exit constraint. Conservative: raw `*T` pointers are never `Send` so they cannot escape even if non-region-internal. The precise `RegionFree<'r>` marker is deferred to RFC-0051 and lands with region lifetimes.
 
 2. **Implicit vs explicit allocation ✓ Resolved** — Fully implicit. All heap allocations inside `region { }` redirect to the bump allocator automatically. `Region::alloc(value)` remains available as an explicit form for clarity, but is not required.
 
@@ -239,6 +234,7 @@ A garbage collector eliminates manual memory management entirely but introduces 
 - RFC-0003: concurrency model (resolved) — `Region` is not `Send`; single-fiber primitive
 - RFC-0006: closure capture semantics — closures inside `region { }` blocks; move capture of region handles
 - RFC-0026: unsafe blocks — Option B (direct `Region::new`/`free`) requires unsafe context
+- RFC-0051: RegionFree exit constraint — full `RegionFree<'r>` marker replacing `Send`; lands with region lifetimes
 - Lifetime proposal: `docs/reports/memory-model/lifetime-system-proposal.md` — §4.1 and §6.1 for the region-lifetime integration design
 - Cluster report: `docs/reports/memory-model/rfc-cluster-memory-model.md`
 - Prior art: Cyclone regions, Rust `bumpalo` crate, Zig `std.mem.Allocator`

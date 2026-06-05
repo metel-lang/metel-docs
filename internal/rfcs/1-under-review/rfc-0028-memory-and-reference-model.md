@@ -2,7 +2,6 @@
 id: rfc-0028
 title: "Memory and Reference Model"
 date: '2026-05-24'
-status: under-review
 supersedes:
   - rfc-0001
   - rfc-0024
@@ -160,13 +159,15 @@ if condition {
 
 A linear value created outside a loop body may not be consumed inside it — the consumption count would be unpredictable. A linear value created inside a loop body is fine; it is created and consumed once per iteration.
 
+This applies to all linear values including `linear fun` closures (RFC-0046). Calling a `linear fun` consumes it; calling it inside a loop where it was created outside is a compile error.
+
 #### 1.8 `drop` — explicit discard
 
 ```metel
 drop(buf);   // consumed; satisfies the linearity checker
 ```
 
-`drop` has the signature `fun<linear T>(val: T)`. It does not call a destructor method — the programmer must call the destructor explicitly before dropping if needed.
+`drop` has the signature `fun<linear T>(val: T)`. It does **not** call `Drop::drop` — it is a pure linearity-satisfying discard. If the type requires external cleanup, the programmer must invoke that cleanup explicitly before calling `drop`. `drop` and `Drop::drop` are distinct operations that happen to share the word "drop": the former is the discard function (always available, no side effects), the latter is the destructor method (opt-in, defined per type).
 
 #### 1.9 `Drop` aspect — implicit destructor
 
@@ -178,9 +179,9 @@ aspect Drop {
 }
 ```
 
-If a linear value implements `Drop` and reaches the end of its scope unconsumed, the compiler calls `drop` automatically rather than emitting a compile error. Types that do not implement `Drop` still produce a compile error on unconsumed scope exit. Implementing `Drop` is the opt-in — there is no separate `#[auto_drop]` attribute.
+If a linear value implements `Drop` and reaches the end of its scope unconsumed, the compiler inserts a call to `Drop::drop` automatically rather than emitting a compile error. Types that do not implement `Drop` still produce a compile error on unconsumed scope exit. Implementing `Drop` is the opt-in — there is no separate `#[auto_drop]` attribute.
 
-The programmer is still responsible for calling any external cleanup inside `drop`. `Drop::drop` is the last line of defence, not a substitute for explicit consumption in the happy path.
+The programmer is still responsible for calling any external cleanup inside `Drop::drop`. The auto-insert is the last line of defence, not a substitute for explicit consumption in the happy path.
 
 #### 1.10 Destructuring
 
