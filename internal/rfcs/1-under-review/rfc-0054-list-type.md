@@ -73,6 +73,10 @@ The initial implementation wraps `Value::Array` (the same `Rc<RefCell<Vec<Value>
 
 ## Open questions
 
-- Should `List<T>` implement `Display` if `T: Display`? Likely yes via a derived or manual impl — deferred.
-- Should there be a `List::with_capacity(n: i64)` constructor for pre-allocation hints? Deferred; irrelevant for the tree-walking interpreter but relevant for compiled output.
-- Index operator: should `list[i]` work directly, or require `.get(i)` or `.as_slice()[i]`? Direct indexing is ergonomic but returns `Perhaps<T>` or panics. Deferred pending operator-overloading RFC-0011.
+All open questions are resolved or explicitly deferred.
+
+| Question | Status |
+|----------|--------|
+| `Display` impl for `List<T>` where `T: Display` | **Deferred** — needs derived aspects or a manual impl; not blocking |
+| `List::with_capacity(n: i64)` constructor | **Deferred** — irrelevant for the tree-walking interpreter; relevant for compiled output |
+| Index operator `list[i]` | **Moved to RFC-0011** — design of the `Index` aspect (panic vs `Perhaps<T>`) tracked there |

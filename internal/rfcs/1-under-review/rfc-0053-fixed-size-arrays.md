@@ -125,4 +125,8 @@ sum(v);   // T = i64, v coerces to i64[]
 
 ## Open questions
 
-- Should there be an indexing operation that returns a compile-time-checked result (no bounds check needed)? Deferred until const generics exist; the case is too narrow to justify the complexity beforehand.
+All open questions are resolved or explicitly deferred.
+
+| Question | Status |
+|----------|--------|
+| Compile-time-checked indexing (no bounds check when index is a literal in `[0, N)`) | **Deferred** — requires const generics; too narrow to justify before that RFC lands |
