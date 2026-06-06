@@ -23,8 +23,8 @@ These are available in every module without any `import` declaration (provided b
 | `array_push`      | `(arr: T[], value: T)`               | Append a value (mutates the array)      |
 | `array_len`       | `(arr: T[]) -> Int`                  | Number of elements in an array          |
 | `clock`           | `() -> Int`                          | Unix timestamp in milliseconds          |
-| `assert`          | `(cond: Bool)`                       | Panic with `"assertion failed"` if `cond` is `false` |
-| `assert_msg`      | `(cond: Bool, msg: String)`          | Panic with `msg` if `cond` is `false`   |
+| `assert`          | `(cond: boolean)`                       | Panic with `"assertion failed"` if `cond` is `false` |
+| `assert_msg`      | `(cond: boolean, msg: String)`          | Panic with `msg` if `cond` is `false`   |
 | `dbg`             | `<T>(v: T) -> T`                     | Print `[dbg] <value>` to stderr and return the value unchanged |
 
 ## Built-in Aspects
@@ -39,7 +39,7 @@ aspect Display {
 }
 ```
 
-`Int`, `Float`, `Bool`, and `String` implement `Display`. `.to_string()` returns the canonical string representation. `print` and `println` accept any `Display` type.
+`Int`, `Float`, `boolean`, and `String` implement `Display`. `.to_string()` returns the canonical string representation. `print` and `println` accept any `Display` type.
 
 ### Iterable\<T\>
 

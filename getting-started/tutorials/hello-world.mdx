@@ -130,7 +130,7 @@ fun main() {
 }
 ```
 
-Anything inside `${…}` must be a type that has a `.to_string()` method — all built-in types (`Int`, `Float`, `Bool`, `String`) satisfy this. You can also use full expressions:
+Anything inside `${…}` must be a type that has a `.to_string()` method — all built-in types (`Int`, `Float`, `boolean`, `String`) satisfy this. You can also use full expressions:
 
 ```metel
 fun main() {
@@ -148,7 +148,7 @@ Every built-in type has a `.to_string()` method:
 fun main() {
     let n: Int = 42;
     let f: Float = 3.14;
-    let b: Bool = true;
+    let b: boolean = true;
 
     let s = n.to_string() + " / " + f.to_string() + " / " + b.to_string();
     println(s);   // 42 / 3.14 / true

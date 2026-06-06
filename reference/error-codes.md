@@ -52,7 +52,7 @@ A float literal cannot be represented as an `f64`.
 Two types that must be equal are not.
 
 ```
-[T0001] type error in main.mtl at 10..20: expected Int, got Bool
+[T0001] type error in main.mtl at 10..20: expected Int, got boolean
 ```
 
 **Fix:** ensure the expression produces the expected type. Add an explicit cast if widening (e.g. `x as Float`).
@@ -92,7 +92,7 @@ A function is called with the wrong number of arguments.
 A binary operator is applied to types it does not support.
 
 ```
-[T0005] type error in main.mtl at 6..13: operator `+` cannot be applied to Bool and Int
+[T0005] type error in main.mtl at 6..13: operator `+` cannot be applied to boolean and Int
 ```
 
 **Fix:** use compatible types, or cast one operand.
@@ -116,7 +116,7 @@ A write operation targets a `let` binding. This covers three forms:
 A `as` cast between incompatible types.
 
 ```
-[T0007] type error in main.mtl at 5..15: cannot cast Bool to Int
+[T0007] type error in main.mtl at 5..15: cannot cast boolean to Int
 ```
 
 **Fix:** only cast between numeric types (`Int as Float`). Use an explicit conversion function for other types.

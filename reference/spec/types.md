@@ -8,7 +8,7 @@ Metel is statically and strongly typed. Types are checked at compile time. There
 |----------|---------------------------|-----------|
 | `Int`    | 64-bit signed integer     | `42`      |
 | `Float`  | 64-bit floating point     | `3.14`    |
-| `Bool`   | Boolean                   | `true`    |
+| `boolean`   | Boolean                   | `true`    |
 | `String` | UTF-8 string              | `"hello"` |
 | `()`     | Unit — represents no value | `()`     |
 
@@ -42,7 +42,7 @@ Tuples are lightweight anonymous product types.
 ```metel
 fun main() -> Int {
     let coord: (Int, Int) = (10, 20);
-    let triple: (String, Int, Bool) = ("yes", 42, true);
+    let triple: (String, Int, boolean) = ("yes", 42, true);
     return coord.0 + triple.1;
 }
 ```
@@ -192,7 +192,7 @@ fun zip_lengths(a: Int[], b: String[]) -> Int {
     return array_len(a) + array_len(b);
 }
 
-fun make_row(use_default: Bool, fallback: Int[]) -> Int[] {
+fun make_row(use_default: boolean, fallback: Int[]) -> Int[] {
     return match use_default {
         true  => [],
         false => fallback,
