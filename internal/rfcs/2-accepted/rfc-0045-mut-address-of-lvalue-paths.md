@@ -2,8 +2,6 @@
 id: rfc-0045
 title: "Mutable Address-Of for Lvalue Paths"
 date: '2026-06-02'
-status: draft
-target:
 ---
 
 ## Summary
@@ -115,11 +113,11 @@ The `MutFieldPointer` variant should be invisible at the language level — it i
 
 ## Resolved Decisions
 
-None yet.
+**Implementation approach — Option A (fat pointer).** Introduce `Value::MutFieldPointer { root: Rc<RefCell<Value>>, path: Vec<PathSegment> }`. Struct and tuple storage remain flat. Option B (per-field `Rc<RefCell<Value>>`) was rejected: it would deepen interpreter reliance on `Rc`-backed storage that the technical debt audit already identifies as a compiler-readiness blocker, and all that restructuring would be discarded when a typed lvalue/place IR lands. The fat pointer's `(root, path)` shape is semantically adjacent to a `Place` projection and eases that future transition. `MutFieldPointer` is an interpreter implementation detail invisible at the language level.
 
 ---
 
 ## Decision
 
-**Outcome:** Pending  
+**Outcome:** Accepted — Option A (fat pointer)  
 **Target:** *(unscheduled)*
