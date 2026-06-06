@@ -70,7 +70,7 @@ The following types are valid in `extern "C"` signatures. They have a defined C 
 |---|---|---|
 | `Int` | `int64_t` | Always 64-bit |
 | `Float` | `double` | 64-bit |
-| `Bool` | `uint8_t` | 0 or 1 |
+| `boolean` | `uint8_t` | 0 or 1 |
 | `OpaquePtr` | `void*` | Untyped pointer; value is opaque to Metel |
 | `MetelStr` | `struct { char* ptr; size_t len; }` | Non-owning view; see §3.1 |
 | `()` | `void` | Return type only |

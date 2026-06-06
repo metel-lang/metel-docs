@@ -215,7 +215,7 @@ Both declarations are legal if they bind different local names (`collections`, `
 
 ### OQ-8 — `std::core`: what it contains, how it is imported, and shadowing
 
-RFC-0009 states that `Perhaps`, `Result`, `Bool`, `Int`, `Float`, and `String` "remain globally available in all programs regardless of module structure." Issue #150 proposes moving `Perhaps` and `Result` to a language core module. These two goals conflict: if the types are module-defined, they are no longer compiler built-ins in the traditional sense.
+RFC-0009 states that `Perhaps`, `Result`, `boolean`, `Int`, `Float`, and `String` "remain globally available in all programs regardless of module structure." Issue #150 proposes moving `Perhaps` and `Result` to a language core module. These two goals conflict: if the types are module-defined, they are no longer compiler built-ins in the traditional sense.
 
 **What actually gets special treatment in the interpreter.**
 
@@ -232,7 +232,7 @@ A survey of the evaluator and typechecker reveals the full set of types and aspe
 | `From` | aspect | `?` coercion and numeric conversion dispatch through `From::from` |
 | `Int` | primitive | Dedicated `Value::Int` variant; arithmetic operators hardcoded |
 | `Float` | primitive | Dedicated `Value::Float` variant; arithmetic operators hardcoded |
-| `Bool` | primitive | Dedicated `Value::Bool` variant; `if`/`while` conditions require it |
+| `boolean` | primitive | Dedicated `Value::boolean` variant; `if`/`while` conditions require it |
 | `String` | primitive | Dedicated `Value::String` variant; string literals, `+` concatenation hardcoded |
 
 **Operator overloading and its impact on `std::core`.**
@@ -268,7 +268,7 @@ The planned operator aspects (drawing from RFC-0011 and issue #149):
 
 If `Add::add`, `Eq::eq` etc. live in `std::core`, then `impl Add for Int` must live somewhere with access to both `Add` and `Int`. Keeping `Int` as a compiler built-in with no module path creates a split: the aspect definition is in `std::core`, but the implementation for the most common type has no co-location. Every future numeric type (`Int64`, `Float32`, etc.) would face the same inconsistency.
 
-The cleaner model: `Int`, `Float`, `Bool`, and `String` are declared in `std::core` with their full set of aspect implementations. They remain primitives in the compiler's internal representation — dedicated `Value` variants, special inference rules, `Bool` required by control flow — but they gain a module path. "Has a module path" and "has special compiler treatment" are orthogonal.
+The cleaner model: `Int`, `Float`, `boolean`, and `String` are declared in `std::core` with their full set of aspect implementations. They remain primitives in the compiler's internal representation — dedicated `Value` variants, special inference rules, `boolean` required by control flow — but they gain a module path. "Has a module path" and "has special compiler treatment" are orthogonal.
 
 **Decision: `std::core` is auto-imported in every file.**
 
@@ -280,7 +280,7 @@ The cleaner model: `Int`, `Float`, `Bool`, and `String` are declared in `std::co
 // Primitive types (compiler-special internally, but module-defined)
 pub primitive type Int
 pub primitive type Float
-pub primitive type Bool
+pub primitive type boolean
 pub primitive type String
 
 // Sum types with compiler-special pattern matching
@@ -315,13 +315,13 @@ pub aspect Div<Rhs> { fun div(self: Self, rhs: Rhs) -> Self }
 pub aspect Rem<Rhs> { fun rem(self: Self, rhs: Rhs) -> Self }
 pub aspect Neg      { fun neg(self: Self) -> Self }           // -a → T::Neg::neg(a)
 pub aspect Not      { fun not(self: Self) -> Self }           // !a → T::Not::not(a)
-pub aspect Eq       { fun eq(self: @Self, other: @Self) -> Bool }   // a == b → T::Eq::eq(a, b)
+pub aspect Eq       { fun eq(self: @Self, other: @Self) -> boolean }   // a == b → T::Eq::eq(a, b)
 pub aspect Ord: Eq  { fun compare(self: @Self, other: @Self) -> Ordering }  // T::Ord::compare
 
 // Primitive impls — all co-located with the types
 impl Display for Int    { ... }
 impl Display for Float  { ... }
-impl Display for Bool   { ... }
+impl Display for boolean   { ... }
 impl Display for String { ... }
 
 impl From<Float> for Int   { ... }
@@ -338,14 +338,14 @@ impl Add<Float> for Float { ... }
 
 impl Eq  for Int    { ... }
 impl Eq  for Float  { ... }
-impl Eq  for Bool   { ... }
+impl Eq  for boolean   { ... }
 impl Eq  for String { ... }
 impl Ord for Int    { ... }
 impl Ord for Float  { ... }
 impl Ord for String { ... }
 
 impl Add<String> for String { ... }   // string concatenation
-impl Not         for Bool   { ... }   // boolean negation
+impl Not         for boolean   { ... }   // boolean negation
 ```
 
 The `pub primitive type` declaration is a new grammar form — a hint to the compiler that this type has a dedicated internal representation. The compiler still generates dedicated `Value::Int` etc. variants; the declaration just gives the type a module path and a location for its impls.
@@ -362,7 +362,7 @@ This creates a clear two-tier model: you get `Int` and `Float` for free; you opt
 
 ```metel
 enum Perhaps<T> { Some(T), Empty }   // shadows std::core::Perhaps in this file only
-fun check(x: Perhaps<Int>) -> Bool { ... }   // refers to the local Perhaps
+fun check(x: Perhaps<Int>) -> boolean { ... }   // refers to the local Perhaps
 ```
 
 An explicit `use std::core::Perhaps;` in the same file as a local definition of `Perhaps` is a name conflict (OQ-3) and is an error.

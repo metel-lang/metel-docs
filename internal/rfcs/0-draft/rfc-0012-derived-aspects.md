@@ -16,7 +16,7 @@ Define the language's meta-feature layer: attributes, metadata annotations, and 
 
 ### Derived aspect implementations
 
-Writing `impl Eq for Point { fun eq(self, other: Point) -> Bool { self.x == other.x && self.y == other.y } }` by hand for every struct is tedious and error-prone. A derive mechanism generates these implementations structurally — field-by-field for structs, variant-by-variant for enums. The primary use cases are `Eq`, `Ord`/`Comparable`, `Display`, `Clone`, `Hash`, and `Linear` (for types that are linear by structure rather than explicit declaration).
+Writing `impl Eq for Point { fun eq(self, other: Point) -> boolean { self.x == other.x && self.y == other.y } }` by hand for every struct is tedious and error-prone. A derive mechanism generates these implementations structurally — field-by-field for structs, variant-by-variant for enums. The primary use cases are `Eq`, `Ord`/`Comparable`, `Display`, `Clone`, `Hash`, and `Linear` (for types that are linear by structure rather than explicit declaration).
 
 ### Attributes and metadata
 

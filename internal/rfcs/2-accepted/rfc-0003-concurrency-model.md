@@ -225,7 +225,7 @@ aspect Send {}
 
 | Type | `Send`? | Reason |
 |------|---------|--------|
-| `Int`, `Float`, `Bool`, `String` | yes | primitives — copied |
+| `Int`, `Float`, `boolean`, `String` | yes | primitives — copied |
 | Structs with all-`Send` fields | yes | automatic |
 | Enums with all-`Send` variants | yes | automatic |
 | `Perhaps<T>` where `T: Send` | yes | automatic |
@@ -252,14 +252,14 @@ The precise relationship: `T: Sync` means that holding multiple read pointers (`
 
 | Type | `Sync`? | Reason |
 |------|---------|--------|
-| `Int`, `Float`, `Bool`, `String` | yes | immutable value semantics — concurrent reads are safe |
+| `Int`, `Float`, `boolean`, `String` | yes | immutable value semantics — concurrent reads are safe |
 | Structs with all-`Sync` fields | yes | automatic |
 | Enums with all-`Sync` variants | yes | automatic |
 | `*T` | **no** | no lifetime guarantee — pointee may be dropped or mutated through another alias |
 | `*mut T` | **no** | concurrent writes through different aliases = data race |
 | `Mutex<T>` where `T: Send` | yes | access is serialized by the lock |
 | `RwLock<T>` where `T: Send + Sync` | yes | multiple readers serialized by the lock |
-| `Atomic<Int>`, `Atomic<Bool>` | yes | atomics are safe for concurrent access by design |
+| `Atomic<Int>`, `Atomic<boolean>` | yes | atomics are safe for concurrent access by design |
 | `Chan<T>` where `T: Send` | yes | channels have internal synchronisation |
 | `Arc<T>` where `T: Send + Sync` | yes | reference-counted; no interior mutability |
 | Linear types where all fields are `Sync` | yes | linear values move and never alias |
@@ -329,7 +329,7 @@ Fibers are lightweight (green threads), M:N scheduled by the language runtime. T
 
 ### `Atomic<T>`
 
-Lock-free atomic operations. Required internally by `Chan<T>`, `Mutex<T>`, and the scheduler itself. Exposed publicly in the stdlib as a safe API for `Atomic<Int>` and `Atomic<Bool>`, since the operations are well-defined and carry no memory unsafety beyond the ordering contract. Memory ordering annotations (acquire, release, sequentially consistent) are explicit parameters.
+Lock-free atomic operations. Required internally by `Chan<T>`, `Mutex<T>`, and the scheduler itself. Exposed publicly in the stdlib as a safe API for `Atomic<Int>` and `Atomic<boolean>`, since the operations are well-defined and carry no memory unsafety beyond the ordering contract. Memory ordering annotations (acquire, release, sequentially consistent) are explicit parameters.
 
 ### `Thread<T>`
 
@@ -363,7 +363,7 @@ Futexes, semaphores, `pthread_t`, and similar OS-level constructs are used insid
 | `RecvChan<T>` | Read-only channel view |
 | `Mutex<T>` | Exclusive mutable access. `.lock()` returns a guard; released on drop |
 | `RwLock<T>` | Shared read / exclusive write |
-| `Atomic<Int>`, `Atomic<Bool>` | Lock-free integer and boolean operations |
+| `Atomic<Int>`, `Atomic<boolean>` | Lock-free integer and boolean operations |
 | `Arc<T>` | Reference-counted shared ownership. `Send + Sync` when `T: Send + Sync` |
 
 `Mutex<T>` and `RwLock<T>` are `Send` because they wrap the synchronisation mechanism around the value. Internally they use `*mut T` inside `unsafe`, but the public API is safe.

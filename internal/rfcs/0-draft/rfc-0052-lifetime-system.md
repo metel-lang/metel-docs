@@ -196,7 +196,7 @@ The `region 'r { }` label (currently a no-op, RFC-0025) becomes a concrete bindi
 
 **Mutable references (`*mut 'a T`)** — a mutable borrow type with exclusivity guarantee. Not introduced here. See OQ-1.
 
-**Higher-ranked lifetimes.** `for<'a> fun(*'a T) -> Bool` — universally quantified lifetimes for callbacks and higher-order functions. Deferred (see OQ-5).
+**Higher-ranked lifetimes.** `for<'a> fun(*'a T) -> boolean` — universally quantified lifetimes for callbacks and higher-order functions. Deferred (see OQ-5).
 
 **Variance rules.** Covariance / contravariance / invariance for lifetime-parameterised types. Required for soundness of lifetime subtyping; the rules are mechanical but need explicit specification.
 
@@ -235,7 +235,7 @@ Open sub-question: should struct definitions with lifetime parameters require ex
 
 ### OQ-5 — Higher-ranked lifetimes
 
-Passing a callback `fun(*T) -> Bool` to a higher-order function that operates on a borrowed collection requires the callback to work for *any* lifetime — `for<'a> fun(*'a T) -> Bool`. Without this, many iterator and predicate patterns are not expressible in the general case. Defer until the base lifetime system is in use and concrete demand is observed.
+Passing a callback `fun(*T) -> boolean` to a higher-order function that operates on a borrowed collection requires the callback to work for *any* lifetime — `for<'a> fun(*'a T) -> boolean`. Without this, many iterator and predicate patterns are not expressible in the general case. Defer until the base lifetime system is in use and concrete demand is observed.
 
 ---
 

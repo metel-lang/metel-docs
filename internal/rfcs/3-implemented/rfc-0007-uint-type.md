@@ -15,7 +15,7 @@ This RFC is motivated by the System F elaboration work (METEL-123), which requir
 
 ## Motivation
 
-The current primitive types (`Int`, `Float`, `Bool`, `String`) are semantically adequate for the interpreter but unsuitable as a compiler IR foundation:
+The current primitive types (`Int`, `Float`, `boolean`, `String`) are semantically adequate for the interpreter but unsuitable as a compiler IR foundation:
 
 - `Int` and `Float` have no declared bit width. The elaborator cannot emit typed literals (`42i64` vs `42i32`) or insert explicit coercion nodes without knowing the width at every point.
 - There is no unsigned integer type, making array indexing, bit manipulation, and low-level operations awkward or impossible without workarounds.

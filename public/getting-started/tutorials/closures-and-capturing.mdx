@@ -129,7 +129,7 @@ fun main() {
     let mut matched = 0;
     let matched_ptr: *mut Int = &mut matched;
 
-    let is_even = (x: Int) -> Bool {
+    let is_even = (x: Int) -> boolean {
         if (x % 2 == 0) {
             *matched_ptr += 1;
             return true;

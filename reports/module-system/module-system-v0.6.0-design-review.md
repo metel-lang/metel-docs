@@ -105,13 +105,13 @@ This mirrors the "local always shadows import" rule in RFC-0030. Added to #173 a
 
 ### Problem
 
-`#188` says `StdPrelude::default()` covers "at minimum: `std::core::{Int, Float, Bool, String}`." However `Perhaps<T>`, `Result<T, E>`, and the built-in collection types (`Array`, `Tuple`) are currently handled by special-cased logic in `construction.rs` and `conversions.rs`, not as externally resolved names. If a user writes `import std::core::Perhaps`, it is not clear whether `StdPrelude::default()` covers it or whether it remains intrinsic.
+`#188` says `StdPrelude::default()` covers "at minimum: `std::core::{Int, Float, boolean, String}`." However `Perhaps<T>`, `Result<T, E>`, and the built-in collection types (`Array`, `Tuple`) are currently handled by special-cased logic in `construction.rs` and `conversions.rs`, not as externally resolved names. If a user writes `import std::core::Perhaps`, it is not clear whether `StdPrelude::default()` covers it or whether it remains intrinsic.
 
 ### Resolution
 
 Draw an explicit boundary in #188:
 
-- **`StdPrelude::default()` covers:** all names that a user might write in an `import std::core::*` statement and expect to resolve — `Int`, `Float`, `Bool`, `String`, `Perhaps`, `Result`.
+- **`StdPrelude::default()` covers:** all names that a user might write in an `import std::core::*` statement and expect to resolve — `Int`, `Float`, `boolean`, `String`, `Perhaps`, `Result`.
 - **Intrinsics remain intrinsic:** `Array<T>`, tuples, and `Never` are not importable by name in v0.6.0; they are produced by the parser and type system directly and do not need a `StdPrelude` entry.
 
 The boundary must be documented in #188 so it is not rediscovered during implementation.

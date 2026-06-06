@@ -412,7 +412,7 @@ In `src/types/mod.rs`:
 
 ```rust
 pub enum Type {
-    Int, Float, Bool, Str, Unit, Never,
+    Int, Float, boolean, Str, Unit, Never,
     Tuple(Vec<Type>),
     Array(Box<Type>),
     Fun(Vec<Type>, Box<Type>),
@@ -440,7 +440,7 @@ All struct fields are implicitly public. There is no syntax or enforcement for p
 
 ### 7.5 Primitives have no `std::core` paths (#150, partial)
 
-`Int`, `Float`, `Bool`, `String` exist as `Type::Int`, `Type::Float`, `Type::Bool`, `Type::Str` in the type system — dedicated enum variants, not `Type::Named("Int", [])`. They are registered into the scheme environment by short name only. `std::core::Int` does not resolve. The #150 acceptance criteria about "core primitive names resolve through `std::core` paths" is unmet and is a larger project than the Perhaps/Result alias removal.
+`Int`, `Float`, `boolean`, `String` exist as `Type::Int`, `Type::Float`, `Type::boolean`, `Type::Str` in the type system — dedicated enum variants, not `Type::Named("Int", [])`. They are registered into the scheme environment by short name only. `std::core::Int` does not resolve. The #150 acceptance criteria about "core primitive names resolve through `std::core` paths" is unmet and is a larger project than the Perhaps/Result alias removal.
 
 ### 7.6 Single-file pipeline may bypass the normalizer
 

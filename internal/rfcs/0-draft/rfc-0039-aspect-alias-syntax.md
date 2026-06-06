@@ -19,13 +19,13 @@ Compound bounds that appear in many signatures should be nameable. The alternati
 ```metel
 // Without aspect aliases: repeated compound bound
 fun sort<T: Comparable + Display + Clone>(items: T[]) -> T[] { ... }
-fun filter<T: Comparable + Display + Clone>(items: T[], pred: fun(T) -> Bool) -> T[] { ... }
+fun filter<T: Comparable + Display + Clone>(items: T[], pred: fun(T) -> boolean) -> T[] { ... }
 
 // With aspect alias:
 aspect Sortable = Comparable + Display + Clone
 
 fun sort<T: Sortable>(items: T[]) -> T[] { ... }
-fun filter<T: Sortable>(items: T[], pred: fun(T) -> Bool) -> T[] { ... }
+fun filter<T: Sortable>(items: T[], pred: fun(T) -> boolean) -> T[] { ... }
 ```
 
 ---

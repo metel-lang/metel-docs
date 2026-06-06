@@ -36,7 +36,7 @@ All v0.1 programs are single-file with no stdlib beyond the [built-in functions]
 |---|---|
 | `split` | `(s: String, sep: String) -> String[]` |
 | `trim` | `(s: String) -> String` |
-| `contains` | `(s: String, sub: String) -> Bool` |
+| `contains` | `(s: String, sub: String) -> boolean` |
 | `to_upper`, `to_lower` | `(s: String) -> String` |
 
 ### `std::io`

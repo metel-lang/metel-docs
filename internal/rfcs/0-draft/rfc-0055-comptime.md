@@ -69,7 +69,7 @@ A function parameter marked `comptime` is erased at the call site — the compil
 fun typed_zero(comptime T: Type) -> T {
     comptime if (T == i64) { 0 }
     else if (T == f64)     { 0.0 }
-    else if (T == Bool)    { false }
+    else if (T == boolean)    { false }
     else { comptime_error("typed_zero: unsupported type") }
 }
 
@@ -84,7 +84,7 @@ let z_float = typed_zero(f64);  // 0.0
 Conditionals whose condition is a comptime expression are evaluated at compile time — the untaken branch is never type-checked or emitted. This enables platform-specific code without dead-code overhead.
 
 ```metel
-comptime let IS_64BIT: Bool = target_pointer_width() == 64;
+comptime let IS_64BIT: boolean = target_pointer_width() == 64;
 
 fun word_size() -> i64 {
     comptime if (IS_64BIT) { 8 } else { 4 }

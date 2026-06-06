@@ -52,7 +52,7 @@ Auto-derivation rules:
 
 ```
 // RegionFree<'r> — can escape the block with lifetime 'r:
-//   primitive value types (Int, Float, Bool, String)
+//   primitive value types (Int, Float, boolean, String)
 //   *T where T is not tagged 'r  (non-region raw pointer)
 //   *mut T where T is not tagged 'r
 //   @T (owning pointer) — always RegionFree<'r> for any 'r

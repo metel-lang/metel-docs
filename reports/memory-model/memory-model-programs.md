@@ -85,7 +85,7 @@ Three fibers: reader produces linear `Frame` values from a connection, processor
 
 linear struct Frame { data: String, seq: Int }
 
-fun is_keepalive(f: @Frame) -> Bool { f.data == "PING" }
+fun is_keepalive(f: @Frame) -> boolean { f.data == "PING" }
 fun byte_count(f: @Frame) -> Int    { string_len(f.data) }
 
 // Recursion handles consume-and-return across "iterations".
@@ -159,7 +159,7 @@ fun link(a: *mut Node, b: *mut Node) {
 }
 
 fun bfs(start: *Node, n: Int, out: Chan<String>) {
-    mut visited: Bool[] = [];
+    mut visited: boolean[] = [];
     for (mut i = 0; i < n; i += 1) { array_push(visited, false); }
 
     let q: Chan<*Node> = Chan::buffered(n);
@@ -348,7 +348,7 @@ struct Summary { components: Int, largest: Int }
 
 // ── Region: scratch graph with free pointer cycles ────────────────────────────
 
-struct GraphNode { id: Int, visited: Bool, edges: (*mut GraphNode)[] }
+struct GraphNode { id: Int, visited: boolean, edges: (*mut GraphNode)[] }
 
 fun build_graph(n: Int, edges: Edge[]) -> (*mut GraphNode)[] {
     mut nodes: (*mut GraphNode)[] = [];
@@ -425,7 +425,7 @@ Because the scope is single-fiber and its lifetime is bounded by the callback, t
 
 Since `*T` and `*mut T` are not `Send`, any type that directly or transitively contains a pointer to region memory cannot be returned. The compiler rejects the scope if the return type would allow a dangling pointer to escape.
 
-Pure value types — structs with only `Int`, `Float`, `Bool`, `String`, and array fields — are automatically `Send` and can be returned freely. The region deep-copies them to the RC heap on scope exit.
+Pure value types — structs with only `Int`, `Float`, `boolean`, `String`, and array fields — are automatically `Send` and can be returned freely. The region deep-copies them to the RC heap on scope exit.
 
 This is the only rule the programmer needs to reason about. There are no lifetime annotations, no borrow checker, no explicit `unsafe`. The region scope is the boundary; `Send` is the exit condition.
 

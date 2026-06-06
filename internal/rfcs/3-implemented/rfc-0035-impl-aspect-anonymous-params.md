@@ -67,9 +67,9 @@ The lowering pass is a dedicated phase between parsing and typechecking. It walk
 Each `impl Aspect` occurrence in a signature generates a **fresh, independent** type variable. Two parameters typed `impl Comparable` are not required to have the same concrete type:
 
 ```metel
-fun compare(a: impl Comparable, b: impl Comparable) -> Bool { ... }
+fun compare(a: impl Comparable, b: impl Comparable) -> boolean { ... }
 // desugars to:
-fun compare<_T0: Comparable, _T1: Comparable>(a: _T0, b: _T1) -> Bool { ... }
+fun compare<_T0: Comparable, _T1: Comparable>(a: _T0, b: _T1) -> boolean { ... }
 ```
 
 `compare(1, "hello")` is valid as long as both `Int` and `String` implement `Comparable`. To constrain two parameters to the same type, use a named type parameter: `fun compare<T: Comparable>(a: T, b: T)`.

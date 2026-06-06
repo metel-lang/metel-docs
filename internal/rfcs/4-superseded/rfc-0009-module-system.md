@@ -84,7 +84,7 @@ pub struct Token { kind: TokenKind, span: Span }   // exported
 struct InternalState { ... }                        // module-private
 
 pub fun parse(tokens: Token[]) -> Ast { ... }      // exported
-fun helper(t: Token) -> Bool { ... }               // module-private
+fun helper(t: Token) -> boolean { ... }               // module-private
 ```
 
 `pub` is valid on: `mod`, `struct`, `enum`, `fun`, `linear struct`, `linear enum`, `aspect`, and top-level `let`/`mut` bindings.
@@ -134,7 +134,7 @@ Existing single-file programs are **fully valid** without modification. A `.mln`
 
 In a single-file program, the implicit module is the file itself. All top-level names are in scope without import.
 
-Core types and aspects live in `std::core`, which is auto-imported into every file as if `use std::core::*;` appeared implicitly. This includes compiler-special core names such as `Perhaps`, `Result`, `Bool`, `Int`, `Float`, `String`, range types, and core aspects such as `Display`, `Iterable`, and `From`. User declarations may shadow auto-imported `std::core` names locally. Explicit imports also beat the auto-import.
+Core types and aspects live in `std::core`, which is auto-imported into every file as if `use std::core::*;` appeared implicitly. This includes compiler-special core names such as `Perhaps`, `Result`, `boolean`, `Int`, `Float`, `String`, range types, and core aspects such as `Display`, `Iterable`, and `From`. User declarations may shadow auto-imported `std::core` names locally. Explicit imports also beat the auto-import.
 
 ---
 

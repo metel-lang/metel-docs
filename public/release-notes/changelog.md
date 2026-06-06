@@ -179,7 +179,7 @@ Aspects and upgraded builtins. Shipped by Sprint 6 (`sprint/6`).
 - `impl Aspect for Type` blocks with method dispatch via `.method()` syntax
 - `Iterable<T>` aspect — user-defined types usable in `for-in` loops
 - `From<S>` aspect — `as` cast desugars to `T::from(value)`; user-defined casts for any type pair
-- `Display` aspect — `.to_string()` on `Int`, `Float`, `Bool`, `String`; `print`/`println` polymorphic via Display
+- `Display` aspect — `.to_string()` on `Int`, `Float`, `boolean`, `String`; `print`/`println` polymorphic via Display
 - `?` operator now supports cross-type error coercion: if the function's error type `E2` implements `From<E1>`, `?` calls `E2::from(e)` automatically
 
 **Builtin changes:**
@@ -199,7 +199,7 @@ Generics and type-inference improvements. Shipped by Sprint 5 (`sprint/5`).
 - User-defined generic functions — `fun id<T>(x: T) -> T` — monomorphised at each call site
 - User-defined generic structs — `struct Box<T> { value: T }`, `struct Pair<A, B> { ... }`
 - User-defined generic enums — `enum Maybe<T> { Some { value: T }, None {} }`
-- Let-polymorphism — unannotated `let`-bound closures are generalised to polymorphic schemes (`let id = fun(x) { x }` works at `Int`, `Bool`, and `String` in the same scope)
+- Let-polymorphism — unannotated `let`-bound closures are generalised to polymorphic schemes (`let id = fun(x) { x }` works at `Int`, `boolean`, and `String` in the same scope)
 - Braceless `if` body — `if (c) expr` and `if (c) a else b` (RFC-0022)
 - `struct` and `enum` declarations are allowed inside function bodies
 
@@ -218,8 +218,8 @@ Evaluator improvements, DX features, and language quality fixes. Shipped by Spri
 - Trailing commas allowed in function parameter lists and argument lists
 
 **New built-in functions:**
-- `assert(cond: Bool)` — panics with `"assertion failed"` if `cond` is `false`
-- `assert_msg(cond: Bool, msg: String)` — panics with `msg` if `cond` is `false`
+- `assert(cond: boolean)` — panics with `"assertion failed"` if `cond` is `false`
+- `assert_msg(cond: boolean, msg: String)` — panics with `msg` if `cond` is `false`
 - `dbg<T>(v: T) -> T` — prints `[dbg] <value>` to stderr and returns the value unchanged
 - `print_int(n: Int)`, `println_int(n: Int)` — print an `Int` without/with newline
 - `print_float(f: Float)`, `println_float(f: Float)` — print a `Float` without/with newline
@@ -237,7 +237,7 @@ Evaluator improvements, DX features, and language quality fixes. Shipped by Spri
 Initial language version. Implemented by the tree-walk interpreter.
 
 **Features included:**
-- Primitive types: `Int`, `Float`, `Bool`, `String`, `()`
+- Primitive types: `Int`, `Float`, `boolean`, `String`, `()`
 - Variables: `let` (immutable), `mut` (mutable), lexical scoping, `fun`/type hoisting
 - Functions: first-class values, closures with mutable capture, `?` operator (exact error type match only)
 - Structs: literals, field access, methods (`impl`), `mut self`, associated functions

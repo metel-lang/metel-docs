@@ -47,12 +47,12 @@ Variables are lexically scoped. Each block `{ }` introduces a new scope. Inner s
 Hoisting is block-local: a `fun` declared in an inner block is not visible in the outer block. Normal lexical scoping applies across block boundaries — inner blocks see outer declarations, outer blocks do not see inner declarations.
 
 ```metel
-fun is_even(n: Int) -> Bool {
+fun is_even(n: Int) -> boolean {
     if (n == 0) { return true; }
     return is_odd(n - 1);
 }
 
-fun is_odd(n: Int) -> Bool {
+fun is_odd(n: Int) -> boolean {
     if (n == 0) { return false; }
     return is_even(n - 1);
 }
@@ -453,7 +453,7 @@ impl Point {
         self
     }
 
-    fun same_as(self, other: Self) -> Bool {
+    fun same_as(self, other: Self) -> boolean {
         self.x == other.x
     }
 }

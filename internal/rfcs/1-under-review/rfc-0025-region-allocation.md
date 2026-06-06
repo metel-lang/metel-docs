@@ -66,7 +66,7 @@ The block's return type must be `Send` — the interim approximation for "contai
 
 ```metel
 // Send — can escape the block:
-//   Int, Float, Bool, String — primitive value types
+//   Int, Float, boolean, String — primitive value types
 //   Arc<T> where T: Send — reference-counted, Send if inner is
 //   structs and enums whose fields are all Send
 

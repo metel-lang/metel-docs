@@ -197,7 +197,7 @@ pub struct Token { pub kind: Int, span: Int }
 struct InternalState { count: Int }
 
 pub fun parse(tokens: Token[]) -> Int { return array_len(tokens); }
-fun helper(token: Token) -> Bool { return token.kind == 0; }
+fun helper(token: Token) -> boolean { return token.kind == 0; }
 
 fun main() -> Int {
     let token = Token { kind: 0, span: 1 };

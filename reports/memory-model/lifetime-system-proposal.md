@@ -346,7 +346,7 @@ The scope exit constraint changes from `Send` (contains no `*T`) to `RegionFree<
 ```metel
 // Auto-derived: T: RegionFree<'r> if all fields are RegionFree<'r>
 // Explicit negative: *'r T is never RegionFree<'r>
-// Explicit positive: Int, String, Bool, *T (untagged, non-region pointer), Arc<T> are always RegionFree<'r>
+// Explicit positive: Int, String, boolean, *T (untagged, non-region pointer), Arc<T> are always RegionFree<'r>
 ```
 
 **Named regions.** In simple programs, one region scope is active at a time, so `'r` is unambiguous. For nested scopes, each `Region::scope` call introduces a distinct lifetime:
@@ -524,7 +524,7 @@ Whether this cost is acceptable depends on whether lifetime-parameterized code i
 
 ### Q5 — Higher-ranked lifetimes
 
-Callbacks and function types that accept borrowed arguments require universally quantified lifetimes: "this function works for any lifetime `'a`." Without HRTBs, passing a `fun(@T) -> Bool` as a predicate to a higher-order function over a borrowed collection is not expressible in the general case. The scope of this problem depends on how common higher-order functions over borrowed data turn out to be in Metel idioms. It can be deferred until the base lifetime system is in use and concrete demand emerges.
+Callbacks and function types that accept borrowed arguments require universally quantified lifetimes: "this function works for any lifetime `'a`." Without HRTBs, passing a `fun(@T) -> boolean` as a predicate to a higher-order function over a borrowed collection is not expressible in the general case. The scope of this problem depends on how common higher-order functions over borrowed data turn out to be in Metel idioms. It can be deferred until the base lifetime system is in use and concrete demand emerges.
 
 ---
 
