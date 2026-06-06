@@ -48,16 +48,33 @@ This is the prerequisite for all subsequent phases. It needs a grammar change, A
 node, parser update, typechecker handling (signature only, no body inference), and
 evaluator dispatch.
 
-### 2. Native dispatch table
+### 2. Native dispatch table and linking
 
-`builtins.rs` becomes a thin table: qualified name → Rust function pointer. All type
-information moves to the source module. The table is consulted only at evaluation
-time when a `native fun` call is executed.
+When the evaluator processes a `native fun` declaration while evaluating `std::core`,
+it looks up the function's fully-qualified name in a static dispatch table. If the
+entry exists, the evaluator stores a `Value::Callable(Intrinsic { label, fun })` in
+the module's env — exactly the same `Value` variant used today. From that point on,
+calls to `println` take the normal closure dispatch path with no special casing at
+call time.
 
+If a `native fun` declaration has no dispatch table entry, the module fails to load
+at interpreter startup, not at call time. This replaces the `free_function_names`
+parity test with a structural guarantee.
+
+The dispatch table is built in `builtins.rs` using a registration macro that
+co-locates the qualified key and the Rust implementation:
+
+```rust
+native!("std::core::println",   |args, span| { ... });
+native!("std::core::List::push", |args, span| { ... });
 ```
-"std::core::println" → rust_println
-"std::core::List::push" → rust_list_push
-```
+
+Keys are always fully qualified (`module::name`) so that `std::fs` and later modules
+can share the same table without collisions. Bare names are not used as keys.
+
+`builtins.rs` after the refactor contains only: the `native!` macro definition, the
+dispatch table, and a `runtime_registry()` constructor that sets up `RuntimeRegistry`
+for the evaluator. All type information is gone.
 
 ### 3. Module source embedding
 
@@ -103,8 +120,10 @@ or aspect registration calls.
 
 Add `native fun` as a declaration form. The typechecker checks the signature and
 registers the scheme exactly as it would for a regular function, but skips body
-inference. The evaluator, when it executes a `native fun` call, looks up the
-qualified name in the native dispatch table and calls the Rust function.
+inference. The evaluator, when loading the module that contains the `native fun`
+declaration, looks up the fully-qualified name in the dispatch table and stores the
+resulting `Value::Callable(Intrinsic { ... })` in the module's env. No special casing
+is needed at call time.
 
 Grammar change:
 
@@ -116,7 +135,8 @@ The block is `None` for native functions; the typechecker enforces that body is
 absent iff `native` is present.
 
 **Acceptance:** a single-file test can declare `native fun add(a: i64, b: i64) -> i64`,
-register a Rust implementation in the dispatch table, and call it from `main`.
+register a Rust implementation in the dispatch table under `"test::add"`, and call it
+from `main`.
 
 ---
 
