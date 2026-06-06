@@ -97,6 +97,37 @@ fun main() -> Int {
 
 Arrays are usable in `for-in` loops.
 
+## Fixed-size arrays
+
+`[T; N]` is an array type whose length `N` is a non-negative integer literal known at compile time.
+`[T; N]` coerces to `T[]` (not the reverse). `N` must be a non-negative integer literal; variables are not permitted.
+
+```metel
+fun main() {
+    // Repeat construction: every element is the same value.
+    let zeros: [i64; 3] = [0; 3];
+
+    // Literal construction with an explicit sized type.
+    let ones: [i64; 3] = [1, 2, 3];
+
+    // Coerces to T[] when a T[] is expected.
+    fun first(xs: i64[]) -> i64 { xs[0] }
+    let v = first(ones);          // [i64; 3] → i64[]
+}
+```
+
+Indexing and `for-in` work identically to `T[]`. Array patterns match sized arrays:
+
+```metel
+fun sum(xs: [i64; 3]) -> i64 {
+    match xs {
+        [a, b, c] => a + b + c,   // exact-count pattern on [T; 3]
+    }
+}
+```
+
+> Fixed-size array type `[T; N]`: since v0.19.0 (RFC-0053).
+
 ## Pointers
 
 Regular pointer types provide explicit aliasing for non-linear values.

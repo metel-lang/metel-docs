@@ -86,6 +86,7 @@ PrimaryExpression  → INT | FLOAT | STRING | "true" | "false" | "None" | "()"
                    | "(" Expression ( "," Expression )+ ")"   // tuple
                    | "(" Expression ")"
                    | "[" ( Expression ( "," Expression )* ","? )? "]"  // array literal
+                   | "[" Expression ";" INT "]"                         // repeat construction [expr; N]
                    | Path
                    | StructLiteral
                    | MatchExpression
@@ -117,6 +118,7 @@ Type               → IDENTIFIER ( "<" TypeArgs ">" )?
                    | "()"
                    | "(" Type ( "," Type )+ ")"                // tuple type
                    | Type "[]"                                  // array shorthand
+                   | "[" Type ";" INT "]"                       // fixed-size array type (since v0.19.0; RFC-0053)
                    | "(" TypeList? ")" "->" Type               // function / closure type
                    | "impl" Type                               // anonymous bounded param; parameter position only (since v0.7.0; RFC-0035)
                                                                // NOT valid in return position, struct fields, or type aliases — see RFC-0037, RFC-0038
