@@ -6,13 +6,63 @@ Metel is statically and strongly typed. Types are checked at compile time. There
 
 | Type     | Description               | Example   |
 |----------|---------------------------|-----------|
-| `Int`    | 64-bit signed integer     | `42`      |
-| `Float`  | 64-bit floating point     | `3.14`    |
-| `boolean`   | Boolean                   | `true`    |
+| `Int`    | 64-bit signed integer (`i64` alias) | `42` |
+| `Float`  | 64-bit floating point (`f64` alias) | `3.14` |
+| `boolean`| Boolean                   | `true`    |
 | `String` | UTF-8 string              | `"hello"` |
+| `Char`   | Unicode scalar value      | `'a'`     |
 | `()`     | Unit — represents no value | `()`     |
 
 The unit type `()` is only written explicitly when needed as a type parameter (e.g. `Result<(), Error>`). Functions that return nothing omit the `->` annotation entirely.
+
+## Sized Numeric Types
+
+> **Availability:** Since v0.8.0 (RFC-0007).
+
+Metel provides exact-width numeric types for low-level and systems programming. `Int` and `Float` are permanent ergonomic aliases for `i64` and `f64` — they are not deprecated.
+
+**Signed integers:**
+
+| Type  | Width  |
+|-------|--------|
+| `i8`  | 8-bit  |
+| `i16` | 16-bit |
+| `i32` | 32-bit |
+| `i64` | 64-bit (`Int`) |
+
+**Unsigned integers:**
+
+| Type  | Width  |
+|-------|--------|
+| `u8`  | 8-bit  |
+| `u16` | 16-bit |
+| `u32` | 32-bit |
+| `u64` | 64-bit |
+
+**Floats:**
+
+| Type  | Width  |
+|-------|--------|
+| `f32` | 32-bit IEEE 754 |
+| `f64` | 64-bit IEEE 754 (`Float`) |
+
+Sized literals use a suffix: `42i32`, `3.14f32`, `255u8`. All casts between sized numeric types are explicit (`as`). Array indices must be `u64`; indexing with `Int` (`i64`) requires an explicit `as u64` cast.
+
+## Char
+
+> **Availability:** Since v0.8.0 (RFC-0007).
+
+`Char` represents a single Unicode scalar value. Character literals use single quotes: `'a'`, `'\n'`, `'\u{1F600}'`.
+
+```metel
+fun main() {
+    let c: Char = 'a';
+    let code: u32 = c.to_u32();
+    let back: Perhaps<Char> = Char::from_u32(code);
+}
+```
+
+`Char` is not `u32` and not a string — no implicit coercions exist. Use `c.to_u32()` to get the Unicode scalar value and `Char::from_u32(n)` (returns `Perhaps<Char>`) to construct from a code point.
 
 ## Type Inference
 
@@ -126,7 +176,7 @@ fun sum(xs: [i64; 3]) -> i64 {
 }
 ```
 
-> Fixed-size array type `[T; N]`: since v0.19.0 (RFC-0053).
+> Fixed-size array type `[T; N]`: since v0.8.0 (RFC-0053).
 
 ## Pointers
 
@@ -153,6 +203,57 @@ Regular pointers are first-class values, but they are distinct from the pointee 
 There is no implicit dereference for ordinary reads or writes.
 
 Regular pointers are only for non-linear aliasing. They cannot target linear values.
+
+`&mut` accepts arbitrary addressable lvalue paths — struct fields, tuple elements, array elements, and chains thereof. Writes through the resulting `*mut T` propagate back to the original storage location:
+
+```metel
+struct Counter { value: Int }
+
+fun main() -> Int {
+    let mut c = Counter { value: 0 };
+    let p: *mut Int = &mut c.value;
+    *p = 42;
+    return c.value;   // 42
+}
+```
+
+> `&mut` for lvalue paths: since v0.8.0 (RFC-0045).
+
+## List\<T\>
+
+> **Availability:** Since v0.8.0 (RFC-0054).
+
+`List<T>` is the standard growable-sequence type. Use it when you need to append, pop, or otherwise mutate a sequence. Use `T[]` when the sequence is fixed after construction.
+
+```metel
+fun main() {
+    let mut xs: List<i64> = List::new();
+    xs.push(1);
+    xs.push(2);
+    xs.push(3);
+    println(xs.len().to_string());   // 3
+    let last = xs.pop();             // Perhaps::Some { value: 3 }
+}
+```
+
+**Construction:**
+
+| Form | Description |
+|------|-------------|
+| `List::new()` | Empty list |
+| `List::from(arr)` | Construct from a `T[]` — copies elements |
+
+**Methods:**
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `push` | `(&mut self, value: T)` | Append an element |
+| `pop` | `(&mut self) -> Perhaps<T>` | Remove and return the last element, or `None` |
+| `len` | `(&self) -> i64` | Number of elements |
+| `get` | `(&self, index: i64) -> Perhaps<T>` | Bounds-checked access |
+| `as_slice` | `(&self) -> T[]` | View as an immutable array (no copy) |
+
+`List<T>` does not implicitly coerce to `T[]`. Call `.as_slice()` to get a read-only view.
 
 ## Type Ascription
 

@@ -4,6 +4,25 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.8.0
+
+Sized numeric types, Char, List\<T\>, fixed-size arrays, turbofish, and fat-pointer `&mut`. Shipped from sprint/19.
+
+**New language features:**
+- **Sized numeric types** — `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64`; `Int` and `Float` are permanent aliases for `i64` and `f64` (RFC-0007, METEL-124). Sized literal suffixes: `42i32`, `3.14f32`, `255u8`. All casts between sized types are explicit (`as`). Array indices must be `u64`.
+- **`Char` type** — Unicode scalar value; single-quoted literals (`'a'`, `'\u{1F600}'`); `.to_u32()` and `Char::from_u32(n)` conversions; implements `Display` (RFC-0007)
+- **`List<T>`** — standard growable-sequence type in `std::core`; replaces ad-hoc `array_push` usage; methods: `new`, `from`, `push`, `pop`, `len`, `get`, `as_slice` (RFC-0054)
+- **Fixed-size array type `[T; N]`** — compile-time-known length; repeat construction `[v; N]`; coerces to `T[]`; `.len()` method; array patterns on `[T; N]` (RFC-0053, METEL-135)
+- **Turbofish** — explicit type arguments at call sites: `f::<T>(args)`, `zip::<A, B>(as, bs)` (METEL-124)
+- **`&mut` for lvalue paths** — `&mut obj.field`, `&mut arr[i]`, and chains thereof produce a `*mut T` that writes back to the original storage location (RFC-0045, METEL-134)
+
+**Bug fixes:**
+- Generic functions with multiple independent type parameters (e.g. `fold_left<T, A>`) no longer have their type parameters collapsed when a module-level constraint solve follows a single-parameter generic function (METEL-137)
+- Same-tier glob import conflicts (`import a::*` and `import b::*` both exporting the same name) no longer raise an error at import resolution; the error fires at the first use site of the ambiguous name (METEL-98)
+
+**Breaking changes:**
+- `array_push` and `array_len` are removed as top-level built-in functions; use `List<T>` for mutation and `.len()` on arrays and lists
+
 ## v0.7.0
 
 Language quality, pointer semantics, closure stabilisation, and aspect bounds. Shipped from sprint/17 and METEL-75–82 (hotfix batch).

@@ -92,6 +92,37 @@ fun main() -> Int {
 }
 ```
 
+## Turbofish
+
+> **Availability:** Since v0.8.0.
+
+When a generic function's type parameters cannot be inferred from the arguments, they can be specified explicitly with turbofish syntax: `name::<T, U>(args)`.
+
+```metel
+fun identity<T>(x: T) -> T { x }
+
+fun main() -> Int {
+    let x = identity::<Int>(42);
+    return x;
+}
+```
+
+Turbofish is most useful when two or more independent type parameters must be pinned at the call site — for example, a `zip` function that pairs elements from arrays of different types:
+
+```metel
+fun zip<A, B>(a: A[], b: B[]) -> (A, B)[] { /* ... */ }
+
+fun main() {
+    let pairs = zip::<Int, String>([1, 2], ["a", "b"]);
+}
+```
+
+Type ascription (`: T`) remains available for annotating the result type. Turbofish and ascription can be used together:
+
+```metel
+let result = parse::<Int>("42") : Perhaps<Int>;
+```
+
 ## The ? Operator
 
 > **Availability:**

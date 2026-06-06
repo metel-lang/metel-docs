@@ -41,13 +41,49 @@ while
 1_000_000
 ```
 
+A suffix pins the literal to a specific sized type:
+
+```metel
+42i32       // i32
+255u8       // u8
+1_000i64    // i64
+```
+
+An unsuffixed integer literal defaults to `i64` (`Int`).
+
 **Floats:**
 ```metel
 3.14
 2.0
 ```
 
+A suffix pins the literal to a specific sized float type:
+
+```metel
+3.14f32     // f32
+2.0f64      // f64 (same as Float)
+```
+
+An unsuffixed float literal defaults to `f64` (`Float`).
+
 Integer and float are distinct types and do not implicitly coerce.
+
+> Sized literal suffixes: since v0.8.0 (RFC-0007).
+
+**Characters** — single-quoted Unicode scalar values:
+
+```metel
+'a'
+'\n'
+'\t'
+'\\'
+'\''
+'\u{1F600}'
+```
+
+The type of a character literal is `Char`.
+
+> `Char` type: since v0.8.0 (RFC-0007).
 
 **Strings** — double-quoted UTF-8:
 
