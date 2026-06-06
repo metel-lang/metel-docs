@@ -20,11 +20,9 @@ These are available in every module without any `import` declaration (provided b
 | `println`         | `<T>(v: T)`                          | Print to stdout with newline             |
 | `string_len`      | `(s: String) -> Int`                 | Number of characters in a string        |
 | `string_concat`   | `(a: String, b: String) -> String`   | Concatenate two strings                 |
-| `array_push`      | `(arr: T[], value: T)`               | Append a value (mutates the array)      |
-| `array_len`       | `(arr: T[]) -> Int`                  | Number of elements in an array          |
 | `clock`           | `() -> Int`                          | Unix timestamp in milliseconds          |
-| `assert`          | `(cond: boolean)`                       | Panic with `"assertion failed"` if `cond` is `false` |
-| `assert_msg`      | `(cond: boolean, msg: String)`          | Panic with `msg` if `cond` is `false`   |
+| `assert`          | `(cond: boolean)`                    | Panic with `"assertion failed"` if `cond` is `false` |
+| `assert_msg`      | `(cond: boolean, msg: String)`       | Panic with `msg` if `cond` is `false`   |
 | `dbg`             | `<T>(v: T) -> T`                     | Print `[dbg] <value>` to stderr and return the value unchanged |
 
 ## Built-in Aspects
@@ -39,7 +37,7 @@ aspect Display {
 }
 ```
 
-`Int`, `Float`, `boolean`, and `String` implement `Display`. `.to_string()` returns the canonical string representation. `print` and `println` accept any `Display` type.
+`Int`, `Float`, `boolean`, `String`, and `Char` implement `Display`. `.to_string()` returns the canonical string representation. `print` and `println` accept any `Display` type.
 
 ### Iterable\<T\>
 
@@ -67,3 +65,21 @@ aspect From<S> {
 |---------------|-------------------|------------------------------------|
 | `.len()`      | `() -> Int`       | Number of characters in the string |
 | `.to_string()`| `() -> String`    | Returns the string itself          |
+
+## Array Methods
+
+`T[]` and `[T; N]` both expose:
+
+| Method    | Signature       | Description                        |
+|-----------|-----------------|------------------------------------|
+| `.len()`  | `() -> i64`     | Number of elements                 |
+
+## Char Methods
+
+> Since v0.8.0.
+
+| Method / Function         | Signature                        | Description                                  |
+|---------------------------|----------------------------------|----------------------------------------------|
+| `.to_u32()`               | `() -> u32`                      | Unicode scalar value as a `u32`              |
+| `Char::from_u32(n)`       | `(u32) -> Perhaps<Char>`         | Construct from a code point; `None` if invalid |
+| `.to_string()`            | `() -> String`                   | Single-character string                      |
