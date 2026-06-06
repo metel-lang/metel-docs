@@ -73,6 +73,18 @@ fun main() {
 
 Write annotations when they make the intent clearer, or when you want the compiler to catch an unexpected type mismatch early.
 
+`Int` and `Float` are ergonomic aliases for `i64` and `f64`. Metel also provides exact-width numeric types — `i8`, `i16`, `i32`, `u8`, `u16`, `u32`, `u64`, `f32` — for cases where the bit width matters. Unsuffixed literals like `42` or `3.14` automatically adopt the type the annotation demands:
+
+```metel
+fun main() {
+    let pixels: u8  = 255;   // 255 is u8
+    let count:  i32 = 1000;  // 1000 is i32
+    let ratio:  f32 = 1.5;   // 1.5 is f32
+}
+```
+
+See [Sized Numeric Types](../../reference/spec/types#sized-numeric-types) for the full list.
+
 ## Mutable variables
 
 `let` bindings are immutable by default. To rebind a variable, use `let mut`:

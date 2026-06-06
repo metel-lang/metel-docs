@@ -48,6 +48,27 @@ Metel provides exact-width numeric types for low-level and systems programming. 
 
 Sized literals use a suffix: `42i32`, `3.14f32`, `255u8`. All casts between sized numeric types are explicit (`as`). Array indices must be `u64`; indexing with `Int` (`i64`) requires an explicit `as u64` cast.
 
+**Unsuffixed literals are polymorphic.** When the expected type is known from context (annotation, function parameter, struct field, return type, or the other operand in arithmetic/comparison), an unsuffixed numeric literal adopts that type automatically. When no context is available, the literal defaults to `i64` (integer) or `f64` (float).
+
+```metel
+let a: i32 = 10;          // 10 is i32
+let b: u8  = 255;         // 255 is u8
+let c: f32 = 1.5;         // 1.5 is f32
+
+fun scale(x: f32, factor: f32) -> f32 { x * factor }
+let r = scale(2.0, 3.0);  // both literals are f32
+
+let x: i32 = 10i32;
+let y = x + 5;            // 5 adopts i32 from x; y is i32
+```
+
+This also applies to `mut` reassignment — the right-hand side of `m = expr` adopts `m`'s declared type:
+
+```metel
+let mut count: i32 = 0;
+count = 99;               // 99 is i32
+```
+
 ## Char
 
 > **Availability:** Since v0.8.0 (RFC-0007).
@@ -339,19 +360,33 @@ fun main() -> Int {
 
 ## Type Casting
 
-The `as` operator casts between numeric primitive types. It desugars to a call to the `From` aspect and is infallible — the result is the target type directly.
+The `as` operator casts between any two numeric primitive types. It desugars to a call to the `From` aspect and is infallible — the result is the target type directly.
 
 ```metel
-fun main() -> Int {
-    let x: Int = 42;
-    let f: Float = x as Float;
-    let f2: Float = 3.99;
-    let i: Int = f2 as Int;
-    return i + (f as Int);
+fun main() {
+    let x: i32 = 1000i32;
+    let b: i8  = x as i8;    // wraps: 1000 mod 256 → -24
+    let f: f32 = x as f32;   // 1000.0f32
+    let u: u64 = x as u64;   // 1000u64
+
+    let pi: f64 = 3.14;
+    let n: i32  = pi as i32; // truncates toward zero → 3
 }
 ```
 
-Allowed primitive casts: `Int` ↔ `Float`.
+All pairwise casts among `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` are supported. Narrowing integer casts wrap (two's-complement truncation). Float-to-integer casts truncate toward zero.
+
+**Fallible cast (`as?`).** When a float-to-integer conversion may not be representable, use `as?`, which returns `Perhaps<T>`:
+
+```metel
+fun main() {
+    let exact: Perhaps<i32> = 3.0f64 as? i32;  // Perhaps::Some { value: 3 }
+    let frac:  Perhaps<i32> = 3.5f64 as? i32;  // None — fractional part
+    let big:   Perhaps<i8>  = 300.0  as? i8;   // None — out of range
+}
+```
+
+`as?` succeeds only when the float value has no fractional part and fits in the target integer type.
 
 Because `as` desugars to `From`, user-defined types become castable by implementing `From<SourceType>` for the target type.
 
