@@ -49,7 +49,7 @@ A suffix pins the literal to a specific sized type:
 1_000i64    // i64
 ```
 
-An unsuffixed integer literal defaults to `i64` (`Int`).
+An unsuffixed integer literal defaults to `i64` (`Int`) when no context constrains its type.
 
 **Floats:**
 ```metel
@@ -64,11 +64,34 @@ A suffix pins the literal to a specific sized float type:
 2.0f64      // f64 (same as Float)
 ```
 
-An unsuffixed float literal defaults to `f64` (`Float`).
+An unsuffixed float literal defaults to `f64` (`Float`) when no context constrains its type.
 
 Integer and float are distinct types and do not implicitly coerce.
 
+**Polymorphic literal coercion.** When the surrounding context provides a numeric type — a `let` annotation, a function parameter type, a struct field type, or a return type — an unsuffixed literal adopts that type automatically:
+
+```metel
+let x: i32  = 10;       // 10 is i32
+let y: u8   = 255;      // 255 is u8
+let z: f32  = 3.14;     // 3.14 is f32
+
+fun add(a: i32, b: i32) -> i32 { a + b }
+let r = add(1, 2);      // 1 and 2 are i32
+
+struct Pixel { r: u8, g: u8, b: u8 }
+let p = Pixel { r: 255, g: 128, b: 0 };  // fields are u8
+```
+
+Arithmetic and comparison operators propagate the type from a sized operand to an unsuffixed sibling:
+
+```metel
+let x: i32 = 10i32;
+let y = x + 5;          // 5 adopts i32; y is i32
+assert(x > 5);          // 5 adopts i32
+```
+
 > Sized literal suffixes: since v0.8.0 (RFC-0007).
+> Polymorphic literal coercion: since v0.8.0.
 
 **Characters** — single-quoted Unicode scalar values:
 
