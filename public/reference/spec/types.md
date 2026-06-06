@@ -376,18 +376,6 @@ fun main() {
 
 All pairwise casts among `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` are supported. Narrowing integer casts wrap (two's-complement truncation). Float-to-integer casts truncate toward zero.
 
-**Fallible cast (`as?`).** When a float-to-integer conversion may not be representable, use `as?`, which returns `Perhaps<T>`:
-
-```metel
-fun main() {
-    let exact: Perhaps<i32> = 3.0f64 as? i32;  // Perhaps::Some { value: 3 }
-    let frac:  Perhaps<i32> = 3.5f64 as? i32;  // None — fractional part
-    let big:   Perhaps<i8>  = 300.0  as? i8;   // None — out of range
-}
-```
-
-`as?` succeeds only when the float value has no fractional part and fits in the target integer type.
-
 Because `as` desugars to `From`, user-defined types become castable by implementing `From<SourceType>` for the target type.
 
 ## Generics
