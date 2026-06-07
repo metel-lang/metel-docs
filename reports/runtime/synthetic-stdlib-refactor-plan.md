@@ -3,7 +3,7 @@
 **Date:** 2026-06-06
 **Scope:** Replace all hand-coded builtin registration logic with synthetic standard library
 modules that pass through the full compiler pipeline like regular user modules.
-**Status:** Planning
+**Status:** Deferred — scheduled for a follow-up sprint alongside the initial stdlib implementation
 
 ## Goal
 
@@ -206,18 +206,25 @@ Phase 5 is the cleanup after Phase 4.
 
 ## Open Questions
 
-1. **`native struct` for primitives** — Do we introduce `native struct i64` etc. in
-   `std/core.mtl`, or keep primitive type names as compiler-known special cases that
-   `impl` blocks can target without a declaration?
+1. **`native struct` for primitives** — No new keyword needed. `impl i64 { ... }` already
+   parses. The fix required before Phase 3 is in `infer_impl_method`: build `self_ty` via
+   `type_expr_to_infer(TypeExpr::Named(target_name, []))` instead of constructing `Named`
+   directly, so `"i64"` resolves to `Concrete(Type::I64)` and unification with call sites
+   works. ~3 lines.
 
-2. **Generic native impls** — `impl From<T> for i64` generates 9 impls (one per
-   numeric source type). In Metel source this would be written once generically.
-   Does the typechecker already handle generic aspect impls on primitive types, or
-   does this require new inference work?
+2. **Generic native impls** — `impl<T> From<T> for i64` cannot be written generically:
+   `register_aspect_impl` drops TypeVar args via `filter_map`, so the registration would
+   be empty. Resolution: keep `register_builtin_aspect_impls` for the 90-entry numeric
+   From cross-product in Phase 3 as explicit technical debt; revisit when parameterized
+   aspects are properly designed.
 
-3. **Error type** — `Result<T, E>` and propagation (`?`) — is `std::core` the right
+3. **`native fun` in `impl` blocks** — Phase 2 must cover this case. Dispatch key format:
+   `"std::core::i64::to_string"`. `infer_impl_method` and the construction pass must skip
+   body checking when the `native` flag is set.
+
+4. **Error type** — `Result<T, E>` and propagation (`?`) — is `std::core` the right
    home, or does it go in a separate `std::result`?
 
-4. **Module load order** — `std::core` must be fully checked before user modules.
+5. **Module load order** — `std::core` must be fully checked before user modules.
    The module loader already processes modules in dependency order; `std::core` just
    needs to be treated as an implicit dependency of every user module.

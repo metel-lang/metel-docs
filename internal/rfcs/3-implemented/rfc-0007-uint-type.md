@@ -167,3 +167,4 @@ let x = arr[i];        // ok
 | D6 | Array model | `[T]` slices and `[T; N]` fixed arrays. `Array[T]` desugars to `[T]`. No heap allocation in the type. |
 | D7 | Array indexing type | `u64`. Direct indexing is intentionally low-level; higher-level collections provide ergonomic access. |
 | D8 | `Byte` vs `u8` | Same type, two names. `Byte` signals intent; no coercion needed. |
+| D9 | Unsuffixed integer literal type | Polymorphic: the literal `42` takes on any integer type demanded by its context. Falls back to `i64` when context leaves the type unconstrained. Suffixed forms (`42i32`, `42u8`) are always exactly typed. Same rule for float literals: `3.14` is polymorphic over float types, defaulting to `f64`. |
