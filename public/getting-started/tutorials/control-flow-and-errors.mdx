@@ -1,5 +1,5 @@
 ---
-sidebar_position: 7
+sidebar_position: 8
 ---
 
 # Tutorial: Control Flow and Error Handling
@@ -104,9 +104,9 @@ If a loop is off by one, confirm whether you wanted `..` or `..=` before looking
 
 ```metel
 fun first_over(threshold: Int, values: Int[]) -> Perhaps<Int> {
-    let mut i = 0;
+    let mut i: u64 = 0;
     loop {
-        if (i >= array_len(values)) {
+        if ((i as i64) >= values.len()) {
             break Perhaps::None;
         }
         if (values[i] > threshold) {

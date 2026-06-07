@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 # Tutorial: Pointers
@@ -8,6 +8,7 @@ This tutorial introduces Metel's regular pointer model. The core idea is simple:
 
 - `&x` takes the address of a value and produces `*T`
 - `&mut x` takes a mutable address and produces `*mut T`
+- `&mut` also works on addressable fields, elements, and nested lvalue paths
 - pointers are storable and cloneable handles
 
 ## Taking an address
@@ -71,6 +72,26 @@ fun main() {
 Both closures mutate the same underlying `Int` through the same pointer.
 
 Ordinary closure capture is by value. The pointer is what makes the sharing explicit: both closures talk to the same storage location, not independent copies.
+
+## Taking mutable addresses of fields and elements
+
+In v0.8.0, `&mut` is not limited to a plain variable. It also works on addressable paths such as struct fields, tuple elements, and array elements:
+
+```metel
+struct Counter {
+    value: Int,
+}
+
+fun main() {
+    let mut counter = Counter { value: 10 };
+    let field_ptr: *mut Int = &mut counter.value;
+
+    *field_ptr += 5;
+    println(counter.value);   // 15
+}
+```
+
+That same rule applies to nested paths. The write goes back to the original storage location, not a temporary copy.
 
 ## Dereferencing
 
@@ -152,7 +173,7 @@ Regular pointers are for explicit aliasing of non-linear values. If a feature de
 ## What you learned
 
 - `&x` yields `*T`.
-- `&mut x` yields `*mut T`.
+- `&mut x` yields `*mut T`, and `&mut` also works on addressable lvalue paths.
 - `*p` reads and `*p = value` writes through a pointer.
 - Fields, methods, and function-pointer calls auto-dereference one pointer layer.
 - Pointers are for explicit aliasing of non-linear values.
