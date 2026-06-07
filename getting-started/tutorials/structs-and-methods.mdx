@@ -12,8 +12,8 @@ A struct is a named collection of typed fields:
 
 ```metel
 struct Point {
-    x: Float,
-    y: Float,
+    x: f64,
+    y: f64,
 }
 ```
 
@@ -42,12 +42,12 @@ Methods live in an `impl` block for the type. The first parameter `self` is the 
 
 ```metel
 struct Point {
-    x: Float,
-    y: Float,
+    x: f64,
+    y: f64,
 }
 
 impl Point {
-    fun distance_from_origin(self) -> Float {
+    fun distance_from_origin(self) -> f64 {
         let x2 = self.x * self.x;
         let y2 = self.y * self.y;
         // Metel has no sqrt builtin yet — return the squared distance
@@ -80,16 +80,16 @@ Inside an `impl` block, `Self` is an alias for the type being implemented. This 
 
 ```metel
 struct Point {
-    x: Float,
-    y: Float,
+    x: f64,
+    y: f64,
 }
 
 impl Point {
-    fun translate(self, dx: Float, dy: Float) -> Self {
+    fun translate(self, dx: f64, dy: f64) -> Self {
         return Point { x: self.x + dx, y: self.y + dy };
     }
 
-    fun scale(self, factor: Float) -> Self {
+    fun scale(self, factor: f64) -> Self {
         return Point { x: self.x * factor, y: self.y * factor };
     }
 }
@@ -119,8 +119,8 @@ enum Direction {
 }
 
 enum Shape {
-    Circle { radius: Float },
-    Rectangle { width: Float, height: Float },
+    Circle { radius: f64 },
+    Rectangle { width: f64, height: f64 },
 }
 ```
 
@@ -167,11 +167,11 @@ For variants with fields, destructure them in the pattern:
 
 ```metel
 enum Shape {
-    Circle { radius: Float },
-    Rectangle { width: Float, height: Float },
+    Circle { radius: f64 },
+    Rectangle { width: f64, height: f64 },
 }
 
-fun area(s: Shape) -> Float {
+fun area(s: Shape) -> f64 {
     match s {
         Shape::Circle { radius } => 3.14159 * radius * radius,
         Shape::Rectangle { width, height } => width * height,
@@ -201,12 +201,12 @@ When you add a new enum variant later, every `match` over that enum must be upda
 
 ```metel
 enum Shape {
-    Circle { radius: Float },
-    Rectangle { width: Float, height: Float },
+    Circle { radius: f64 },
+    Rectangle { width: f64, height: f64 },
 }
 
 impl Shape {
-    fun area(self) -> Float {
+    fun area(self) -> f64 {
         match self {
             Shape::Circle { radius } => 3.14159 * radius * radius,
             Shape::Rectangle { width, height } => width * height,
@@ -258,7 +258,7 @@ enum Suit {
 }
 
 enum Rank {
-    Number { value: Int },
+    Number { value: i64 },
     Jack,
     Queen,
     King,
@@ -292,7 +292,7 @@ impl Rank {
         }
     }
 
-    fun point_value(self) -> Int {
+    fun point_value(self) -> i64 {
         match self {
             Rank::Number { value } => value,
             Rank::Jack  => 10,
@@ -308,12 +308,12 @@ impl Card {
         return "${self.rank.to_string()} of ${self.suit.to_string()}";
     }
 
-    fun value(self) -> Int {
+    fun value(self) -> i64 {
         return self.rank.point_value();
     }
 }
 
-fun hand_value(hand: Card[]) -> Int {
+fun hand_value(hand: Card[]) -> i64 {
     let mut total = 0;
     for (let card in hand) {
         total += card.value();

@@ -83,14 +83,14 @@ Fully-qualified paths are valid anywhere a name is expected:
 // src/main.mtl
 import root::parser::Token;
 
-fun main() -> Int {
+fun main() -> i64 {
     let token: root::parser::Token = root::parser::Token { value: 42 };
     return token.value;
 }
 
 // src/parser.mtl
 pub struct Token {
-    value: Int,
+    value: i64,
 }
 ```
 
@@ -105,7 +105,7 @@ import root::lexer::Token as Tok;
 import parser::*;
 import std::core;
 
-fun main() -> Int {
+fun main() -> i64 {
     let ast = Ast { token: Token { value: 1 } };
     let tok: Tok = core::dbg(Token { value: 2 });
     return ast.token.value + tok.value + parse(ast.token);
@@ -119,10 +119,10 @@ export lexer::Token;
 // src/parser/ast.mtl
 import super::lexer::Token;
 pub struct Ast { token: Token }
-pub fun parse(token: Token) -> Int { token.value }
+pub fun parse(token: Token) -> i64 { token.value }
 
 // src/lexer.mtl
-pub struct Token { value: Int }
+pub struct Token { value: i64 }
 ```
 
 Import forms:
@@ -146,7 +146,7 @@ export ast::Ast;
 export lexer::{Token, Span};
 export ast::ParseError as Error;
 
-fun main() -> Int {
+fun main() -> i64 {
     return 0;
 }
 ```
@@ -170,12 +170,12 @@ Every module automatically has `std::core` glob-imported at the lowest priority 
 
 ```metel
 // No import needed — Perhaps and Result are always in scope
-fun maybe_parse(s: String) -> Perhaps<Int> {
+fun maybe_parse(s: String) -> Perhaps<i64> {
     if (s == "1") { return Perhaps::Some { value: 1 }; }
     return None;
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     match maybe_parse("1") {
         Perhaps::Some { value } => value,
         Perhaps::None => 0,
@@ -209,13 +209,13 @@ Conflict rules:
 Declarations are module-private by default. A declaration is accessible from outside its module only if it is annotated with `pub`.
 
 ```metel
-pub struct Token { pub kind: Int, span: Int }
-struct InternalState { count: Int }
+pub struct Token { pub kind: i64, span: i64 }
+struct InternalState { count: i64 }
 
-pub fun parse(tokens: Token[]) -> Int { return array_len(tokens); }
+pub fun parse(tokens: Token[]) -> i64 { return array_len(tokens); }
 fun helper(token: Token) -> boolean { return token.kind == 0; }
 
-fun main() -> Int {
+fun main() -> i64 {
     let token = Token { kind: 0, span: 1 };
     let state = InternalState { count: 2 };
     if (helper(token)) { return parse([token]) + state.count; }
@@ -229,8 +229,8 @@ Struct field visibility is independent from the struct's own visibility. Fields 
 
 ```metel
 pub struct Token {
-    pub kind: Int,
-    span: Int,
+    pub kind: i64,
+    span: i64,
 }
 ```
 

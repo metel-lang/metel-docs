@@ -8,13 +8,11 @@ This tutorial covers several features added or expanded in Metel v0.8.0: exact-w
 
 ## Exact-width numeric types
 
-`Int` and `Float` are still the default ergonomic numeric types, but Metel also provides exact-width types when size matters:
+Metel uses explicit numeric types. The most common defaults are `i64` for integers and `f64` for floating-point values, and exact-width types are available when size matters:
 
 - signed integers: `i8`, `i16`, `i32`, `i64`
 - unsigned integers: `u8`, `u16`, `u32`, `u64`
 - floats: `f32`, `f64`
-
-`Int` is an alias for `i64`. `Float` is an alias for `f64`.
 
 ```metel
 fun main() {
@@ -221,7 +219,7 @@ This is most useful when inference would otherwise be ambiguous, or when you wan
 
 ## What you learned
 
-- Metel v0.8.0 adds exact-width numeric types without removing `Int` and `Float`.
+- Metel v0.8.0 adds exact-width numeric types and makes `i64` and `f64` the default numeric forms in source examples.
 - Numeric conversions are explicit with `as`.
 - `Char` is a first-class scalar type, separate from `String`.
 - `[T; N]` represents fixed-size arrays and can match by shape.

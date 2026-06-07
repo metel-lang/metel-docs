@@ -18,7 +18,9 @@ These are available in every module without any `import` declaration (provided b
 |-------------------|--------------------------------------|------------------------------------------|
 | `print`           | `<T>(v: T)`                          | Print to stdout, no newline              |
 | `println`         | `<T>(v: T)`                          | Print to stdout with newline             |
-| `clock`           | `() -> Int`                          | Unix timestamp in milliseconds          |
+| `string_len`      | `(s: String) -> i64`                 | Number of characters in a string        |
+| `string_concat`   | `(a: String, b: String) -> String`   | Concatenate two strings                 |
+| `clock`           | `() -> i64`                          | Unix timestamp in milliseconds          |
 | `assert`          | `(cond: boolean)`                    | Panic with `"assertion failed"` if `cond` is `false` |
 | `assert`          | `(cond: boolean, msg: String)`       | Overload: panic with `msg` if `cond` is `false` |
 | `dbg`             | `<T>(v: T) -> T`                     | Print `[dbg] <value>` to stderr and return the value unchanged |
@@ -45,7 +47,7 @@ aspect Display {
 }
 ```
 
-`Int`, `Float`, `boolean`, `String`, and `Char` implement `Display`. `.to_string()` returns the canonical string representation. `print` and `println` accept any `Display` type.
+`i64`, `f64`, `boolean`, `String`, and `Char` implement `Display`. `.to_string()` returns the canonical string representation. `print` and `println` accept any `Display` type.
 
 ### Iterable\<T\>
 
@@ -65,10 +67,9 @@ aspect From<S> {
 }
 ```
 
-`Int` implements `From<Float>` (truncating cast) and `Float` implements `From<Int>`. The `as` operator desugars to `T::from(value)`. User-defined types may implement `From<S>` to enable `as` casts and `?` error coercion.
+`i64` implements `From<f64>` (truncating cast) and `f64` implements `From<i64>`. The `as` operator desugars to `T::from(value)`. User-defined types may implement `From<S>` to enable `as` casts and `?` error coercion.
 
 ## String Methods
-
 > Utilities since v0.9.0. All index-based operations count **Unicode scalar
 > values** (matching `.len()`), and are total — out-of-range indices clamp or
 > return `None` rather than panicking.
@@ -99,6 +100,7 @@ aspect From<S> {
 | `String::join(parts, sep)`| `(String[], String) -> String`    | Concatenate `parts` with `sep` between each       |
 
 Strings are concatenated with the `+` operator.
+
 
 ## Array Methods
 

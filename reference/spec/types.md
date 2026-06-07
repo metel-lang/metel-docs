@@ -6,8 +6,8 @@ Metel is statically and strongly typed. Types are checked at compile time. There
 
 | Type     | Description               | Example   |
 |----------|---------------------------|-----------|
-| `Int`    | 64-bit signed integer (`i64` alias) | `42` |
-| `Float`  | 64-bit floating point (`f64` alias) | `3.14` |
+| `i64`    | 64-bit signed integer | `42` |
+| `f64`    | 64-bit floating point | `3.14` |
 | `boolean`| Boolean                   | `true`    |
 | `String` | UTF-8 string              | `"hello"` |
 | `Char`   | Unicode scalar value      | `'a'`     |
@@ -19,7 +19,7 @@ The unit type `()` is only written explicitly when needed as a type parameter (e
 
 > **Availability:** Since v0.8.0 (RFC-0007).
 
-Metel provides exact-width numeric types for low-level and systems programming. `Int` and `Float` are permanent ergonomic aliases for `i64` and `f64` — they are not deprecated.
+Metel provides exact-width numeric types for low-level and systems programming. `i64` and `f64` are the default integer and floating-point types in ordinary code.
 
 **Signed integers:**
 
@@ -28,7 +28,7 @@ Metel provides exact-width numeric types for low-level and systems programming. 
 | `i8`  | 8-bit  |
 | `i16` | 16-bit |
 | `i32` | 32-bit |
-| `i64` | 64-bit (`Int`) |
+| `i64` | 64-bit |
 
 **Unsigned integers:**
 
@@ -44,9 +44,9 @@ Metel provides exact-width numeric types for low-level and systems programming. 
 | Type  | Width  |
 |-------|--------|
 | `f32` | 32-bit IEEE 754 |
-| `f64` | 64-bit IEEE 754 (`Float`) |
+| `f64` | 64-bit IEEE 754 |
 
-Sized literals use a suffix: `42i32`, `3.14f32`, `255u8`. All casts between sized numeric types are explicit (`as`). Array indices must be `u64`; indexing with `Int` (`i64`) requires an explicit `as u64` cast.
+Sized literals use a suffix: `42i32`, `3.14f32`, `255u8`. All casts between sized numeric types are explicit (`as`). Array indices must be `u64`; indexing with an `i64` requires an explicit `as u64` cast.
 
 **Unsuffixed literals are polymorphic.** When the expected type is known from context (annotation, function parameter, struct field, return type, or the other operand in arithmetic/comparison), an unsuffixed numeric literal adopts that type automatically. When no context is available, the literal defaults to `i64` (integer) or `f64` (float).
 
@@ -94,15 +94,15 @@ Annotations are required only where there is no expression to infer from:
 - Aspect method signatures
 
 ```metel
-fun add_annotated(a: Int, b: Int) -> Int { a + b }
+fun add_annotated(a: i64, b: i64) -> i64 { a + b }
 fun add_inferred(a, b) { a + b }
 
-fun main() -> Int {
-    let x = 42;           // inferred: Int
+fun main() -> i64 {
+    let x = 42;           // inferred: i64
     let name = "Vlad";    // inferred: String
-    let y: Float = 3.14;  // explicit annotation (optional here)
+    let y: f64 = 3.14;  // explicit annotation (optional here)
     let total = add_annotated(x, 1) + add_inferred(2, 3);
-    if (name == "Vlad") { total + (y as Int) } else { 0 }
+    if (name == "Vlad") { total + (y as i64) } else { 0 }
 }
 ```
 
@@ -111,9 +111,9 @@ fun main() -> Int {
 Tuples are lightweight anonymous product types.
 
 ```metel
-fun main() -> Int {
-    let coord: (Int, Int) = (10, 20);
-    let triple: (String, Int, boolean) = ("yes", 42, true);
+fun main() -> i64 {
+    let coord: (i64, i64) = (10, 20);
+    let triple: (String, i64, boolean) = ("yes", 42, true);
     return coord.0 + triple.1;
 }
 ```
@@ -121,8 +121,8 @@ fun main() -> Int {
 Positional field access uses `.0`, `.1`, etc.:
 
 ```metel
-fun main() -> Int {
-    let coord: (Int, Int) = (10, 20);
+fun main() -> i64 {
+    let coord: (i64, i64) = (10, 20);
     let x = coord.0;
     let y = coord.1;
     return x + y;
@@ -134,8 +134,8 @@ fun main() -> Int {
 Tuples can be destructured in `match`:
 
 ```metel
-fun main() -> Int {
-    let coord: (Int, Int) = (10, 0);
+fun main() -> i64 {
+    let coord: (i64, i64) = (10, 0);
     match coord {
         (0, y) => y,
         (x, 0) => x,
@@ -149,18 +149,18 @@ fun main() -> Int {
 `Array<T>` is the built-in ordered sequence type. The shorthand `T[]` is preferred.
 
 ```metel
-fun main() -> Int {
-    let nums: Int[] = [1, 2, 3];
+fun main() -> i64 {
+    let nums: i64[] = [1, 2, 3];
     let names: Array<String> = ["alice", "bob"];
     if (array_len(names) == 2) { nums[0] } else { 0 }
 }
 ```
 
-Index access uses `[]` with an `Int` index. Out-of-bounds access causes a panic.
+Index access uses `[]` with an `i64` index. Out-of-bounds access causes a panic.
 
 ```metel
-fun main() -> Int {
-    let nums: Int[] = [1, 2, 3];
+fun main() -> i64 {
+    let nums: i64[] = [1, 2, 3];
     let first = nums[0];
     return first;
 }
@@ -204,10 +204,10 @@ fun sum(xs: [i64; 3]) -> i64 {
 Regular pointer types provide explicit aliasing for non-linear values.
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let mut value = 1;
-    let p: *Int = &value;
-    let q: *mut Int = &mut value;
+    let p: *i64 = &value;
+    let q: *mut i64 = &mut value;
     *q = *p + 1;
     return *q;
 }
@@ -228,11 +228,11 @@ Regular pointers are only for non-linear aliasing. They cannot target linear val
 `&mut` accepts arbitrary addressable lvalue paths — struct fields, tuple elements, array elements, and chains thereof. Writes through the resulting `*mut T` propagate back to the original storage location:
 
 ```metel
-struct Counter { value: Int }
+struct Counter { value: i64 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let mut c = Counter { value: 0 };
-    let p: *mut Int = &mut c.value;
+    let p: *mut i64 = &mut c.value;
     *p = 42;
     return c.value;   // 42
 }
@@ -287,9 +287,9 @@ its surrounding context alone; `:` is for the cases where spelling out the inten
 type inline is clearer than introducing a separate annotated binding.
 
 ```metel
-fun main() -> Int {
-    let xs = [] : Int[];
-    let x  = 1 : Int;
+fun main() -> i64 {
+    let xs = [] : i64[];
+    let x  = 1 : i64;
     if (array_len(xs) == 0) { x } else { 0 }
 }
 ```
@@ -297,7 +297,7 @@ fun main() -> Int {
 Ascription fails at compile time if the inferred type of the sub-expression cannot be unified with the ascribed type. For example, `1 : String` is invalid. Use `as` to convert between types; use `:` only when the value already has the target type.
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let y = 1 : String;
     return 0;
 }
@@ -310,25 +310,25 @@ Type inference uses surrounding expected types. That expected type can come from
 Because of that, ambiguous literals like `[]` and `None` often type-check without explicit ascription when the context already determines their type:
 
 ```metel
-fun zip_lengths(a: Int[], b: String[]) -> Int {
+fun zip_lengths(a: i64[], b: String[]) -> i64 {
     return array_len(a) + array_len(b);
 }
 
-fun make_row(use_default: boolean, fallback: Int[]) -> Int[] {
+fun make_row(use_default: boolean, fallback: i64[]) -> i64[] {
     return match use_default {
         true  => [],
         false => fallback,
     };
 }
 
-fun first_or_default(items: Int[], fallback: Perhaps<Int>) -> Int {
+fun first_or_default(items: i64[], fallback: Perhaps<i64>) -> i64 {
     return match fallback {
         Perhaps::Some { value } => value,
         None => if (array_len(items) > 0) { items[0] } else { 0 },
     };
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let total = zip_lengths([], ["a", "b"]);
     let row = make_row(true, [1, 2, 3]);
     let first = first_or_default([1, 2, 3], None);
@@ -339,9 +339,9 @@ fun main() -> Int {
 Ascription is still useful when no surrounding context fixes the type:
 
 ```metel
-fun main() -> Int {
-    let arr = [] : Int[];
-    let value = None : Perhaps<Int>;
+fun main() -> i64 {
+    let arr = [] : i64[];
+    let value = None : Perhaps<i64>;
     match value {
         Perhaps::Some { value } => value + array_len(arr),
         Perhaps::None => array_len(arr),
@@ -352,7 +352,7 @@ fun main() -> Int {
 Without such context, ambiguous literals remain a type error. For example, `let x = None;` does not provide enough information to infer the element type.
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let x = None;
     return 0;
 }
@@ -374,7 +374,7 @@ fun main() {
 }
 ```
 
-All pairwise casts among `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` are supported. Narrowing integer casts wrap (two's-complement truncation). Float-to-integer casts truncate toward zero.
+All pairwise casts among `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` are supported. Narrowing integer casts wrap (two's-complement truncation). f64-to-integer casts truncate toward zero.
 
 Because `as` desugars to `From`, user-defined types become castable by implementing `From<SourceType>` for the target type.
 
@@ -398,7 +398,7 @@ fun first<T>(arr: T[]) -> Perhaps<T> {
     return Perhaps::Some { value: arr[0] };
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let stack = Stack { items: [1, 2, 3] };
     match first(stack.items) {
         Perhaps::Some { value } => value,
@@ -412,8 +412,8 @@ fun main() -> Int {
 `!` (Never) is the bottom type — the type of an expression that never produces a value because it diverges (runs forever, panics, or exits). A `loop` with no reachable `break` has type `!`:
 
 ```metel
-fun main() -> Int {
-    let result: Int = loop { break 42; };
+fun main() -> i64 {
+    let result: i64 = loop { break 42; };
     return result;
 }
 ```
@@ -427,8 +427,8 @@ fun main() -> Int {
 The type of `None` is `Perhaps<T>` for some `T` that must be determinable from context. If no context constrains `T` — for example, a bare `let x = None` with no annotation and no subsequent use that pins the element type — the program is a type error. An explicit annotation is required in that case:
 
 ```metel
-fun main() -> Int {
-    let x: Perhaps<Int> = None;
+fun main() -> i64 {
+    let x: Perhaps<i64> = None;
     match x {
         Perhaps::Some { value } => value,
         Perhaps::None => 0,
@@ -437,9 +437,9 @@ fun main() -> Int {
 ```
 
 ```metel
-fun main() -> Int {
-    let result: Perhaps<Int> = None;
-    let value: Perhaps<Int> = 42;
+fun main() -> i64 {
+    let result: Perhaps<i64> = None;
+    let value: Perhaps<i64> = 42;
     match value {
         Perhaps::Some { value } => value,
         Perhaps::None => match result {
@@ -454,17 +454,17 @@ Use `match` to unwrap safely:
 
 ```metel
 struct User {
-    id: Int,
+    id: i64,
 }
 
-fun find_user(id: Int) -> Perhaps<User> {
+fun find_user(id: i64) -> Perhaps<User> {
     if (id == 1) {
         return Perhaps::Some { value: User { id: 1 } };
     }
     return None;
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     match find_user(1) {
         Perhaps::Some { value } => value.id,
         Perhaps::None => 0,
@@ -476,17 +476,17 @@ fun main() -> Int {
 
 ```metel
 struct User {
-    id: Int,
+    id: i64,
 }
 
-fun find_user(id: Int) -> Perhaps<User> {
+fun find_user(id: i64) -> Perhaps<User> {
     if (id == 1) {
         return Perhaps::Some { value: User { id: 1 } };
     }
     return None;
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let user = find_user(1).yolo();
     return user.id;
 }
@@ -497,16 +497,16 @@ fun main() -> Int {
 `Result<T, E>` represents the outcome of a fallible operation:
 
 ```metel
-fun divide(a: Float, b: Float) -> Result<Float, String> {
+fun divide(a: f64, b: f64) -> Result<f64, String> {
     if (b == 0.0) {
         return Result::Err { error: "division by zero" };
     }
     return Result::Ok { value: a / b };
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     match divide(8.0, 2.0) {
-        Result::Ok { value } => value as Int,
+        Result::Ok { value } => value as i64,
         Result::Err { error } => 0,
     }
 }

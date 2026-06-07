@@ -12,17 +12,17 @@ Closures use the `(...) -> ... { ... }` form:
 
 ```metel
 fun main() {
-    let double = (x: Int) -> Int { return x * 2; };
+    let double = (x: i64) -> i64 { return x * 2; };
     println(double(21));   // 42
 }
 ```
 
-The closure has the function type `(Int) -> Int`.
+The closure has the function type `(i64) -> i64`.
 
 :::tip
 Useful Rule
 
-If a parameter expects `(Int) -> Int`, you can pass either a named function or a closure with that shape.
+If a parameter expects `(i64) -> i64`, you can pass either a named function or a closure with that shape.
 :::
 
 ## Passing closures around
@@ -30,12 +30,12 @@ If a parameter expects `(Int) -> Int`, you can pass either a named function or a
 Closures and named functions can be used through the same function type:
 
 ```metel
-fun apply_twice(f: (Int) -> Int, x: Int) -> Int {
+fun apply_twice(f: (i64) -> i64, x: i64) -> i64 {
     return f(f(x));
 }
 
 fun main() {
-    let bump = (x: Int) -> Int { return x + 1; };
+    let bump = (x: i64) -> i64 { return x + 1; };
     println(apply_twice(bump, 10));   // 12
 }
 ```
@@ -74,13 +74,13 @@ Closures capture by value. If you want shared mutable state across closures, mak
 ```metel
 fun main() {
     let mut count = 0;
-    let p: *mut Int = &mut count;
+    let p: *mut i64 = &mut count;
 
     let inc = () -> () {
         *p += 1;
     };
 
-    let get = () -> Int {
+    let get = () -> i64 {
         *p
     };
 
@@ -103,8 +103,8 @@ If multiple closures need to mutate the same value, introduce a pointer on purpo
 Closures can be returned like any other value:
 
 ```metel
-fun make_adder(base: Int) -> (Int) -> Int {
-    return (x: Int) -> Int {
+fun make_adder(base: i64) -> (i64) -> i64 {
+    return (x: i64) -> i64 {
         return x + base;
     };
 }
@@ -127,9 +127,9 @@ Here a closure tracks how many items matched a filter:
 fun main() {
     let values = [1, 2, 3, 4, 5, 6];
     let mut matched = 0;
-    let matched_ptr: *mut Int = &mut matched;
+    let matched_ptr: *mut i64 = &mut matched;
 
-    let is_even = (x: Int) -> boolean {
+    let is_even = (x: i64) -> boolean {
         if (x % 2 == 0) {
             *matched_ptr += 1;
             return true;

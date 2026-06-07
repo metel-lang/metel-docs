@@ -49,7 +49,7 @@ A suffix pins the literal to a specific sized type:
 1_000i64    // i64
 ```
 
-An unsuffixed integer literal defaults to `i64` (`Int`) when no context constrains its type.
+An unsuffixed integer literal defaults to `i64` when no context constrains its type.
 
 **Floats:**
 ```metel
@@ -61,10 +61,10 @@ A suffix pins the literal to a specific sized float type:
 
 ```metel
 3.14f32     // f32
-2.0f64      // f64 (same as Float)
+2.0f64      // f64
 ```
 
-An unsuffixed float literal defaults to `f64` (`Float`) when no context constrains its type.
+An unsuffixed float literal defaults to `f64` when no context constrains its type.
 
 Integer and float are distinct types and do not implicitly coerce.
 

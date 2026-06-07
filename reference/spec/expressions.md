@@ -5,7 +5,7 @@
 `match` performs exhaustive pattern matching. All cases must be covered.
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let value = 1;
     match value {
         1 => 10,
@@ -18,7 +18,7 @@ Each arm body can be an expression, a `return`/`break` statement, or a block:
 
 ```metel
 // Match arm body forms start here.
-fun classify(value: Int) -> Int {
+fun classify(value: i64) -> i64 {
     loop {
         break match value {
             0 => 0,
@@ -28,7 +28,7 @@ fun classify(value: Int) -> Int {
     }
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     return classify(0);
 }
 ```
@@ -36,7 +36,7 @@ fun main() -> Int {
 `match` is an expression — all arms must produce the same type:
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let x = 1;
     let label = match x {
         0 => "zero",
@@ -51,16 +51,16 @@ Arms with blocks follow the same rules as function bodies: the block's tail expr
 
 ```metel
 enum Shape {
-    Circle { radius: Float },
-    Rectangle { width: Float, height: Float },
+    Circle { radius: f64 },
+    Rectangle { width: f64, height: f64 },
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let shape = Shape::Circle { radius: 3.0 };
     let desc: String = match shape {
         Shape::Circle { radius } => {
             let area = radius * radius;
-            (area as Int).to_string()
+            (area as i64).to_string()
         },
         Shape::Rectangle { width, height } => "rectangle",
     };
@@ -85,18 +85,18 @@ fun main() -> Int {
 ```metel
 // Pattern examples start here.
 enum Shape {
-    Circle { radius: Float },
-    Rectangle { width: Float, height: Float },
+    Circle { radius: f64 },
+    Rectangle { width: f64, height: f64 },
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let shape = Shape::Rectangle { width: 4.0, height: 2.0 };
     let x = -3;
-    let point: (Int, Int) = (0, 7);
+    let point: (i64, i64) = (0, 7);
 
     let a = match shape {
-        Shape::Circle { radius } => radius as Int,
-        Shape::Rectangle { width, height } => width as Int,
+        Shape::Circle { radius } => radius as i64,
+        Shape::Rectangle { width, height } => width as i64,
     };
 
     let b = match x {
@@ -123,7 +123,7 @@ fun main() -> Int {
 ### If / Else
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let condition = false;
     let other = true;
     if (condition) {
@@ -139,7 +139,7 @@ fun main() -> Int {
 `if` is also an expression (both branches must produce the same type):
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let x = 1;
     let label = if (x > 0) { "positive" } else { "non-positive" };
     return label.len();
@@ -151,7 +151,7 @@ fun main() -> Int {
 ```metel
 fun print_state() { }
 
-fun main() -> Int {
+fun main() -> i64 {
     let debug = true;
     let flag = false;
     let value_a = 10;
@@ -167,7 +167,7 @@ The braceless form desugars to a single-expression block. Three restrictions app
 1. **Arm style must be consistent.** Both the `then` and `else` arms must use the same style — either both braced or both braceless. Mixing is a parse error.
 2. **Dangling-else is forbidden.** If the outer body is braceless, the body expression must not itself be an `if–else`. Use braces on the outer body to resolve the ambiguity.
    ```metel
-   fun main() -> Int {
+   fun main() -> i64 {
        let a = true;
        let b = false;
        if (a) if (b) { return 1; }
@@ -187,7 +187,7 @@ The braceless form desugars to a single-expression block. Three restrictions app
 ### While
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let mut n = 3;
     let mut total = 0;
     while (n > 0) {
@@ -201,7 +201,7 @@ fun main() -> Int {
 ### For
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let mut total = 0;
     for (let mut i = 0; i < 4; i += 1) {
         total += i;
@@ -227,13 +227,13 @@ aspect Iterable<T> {
     fun next(&mut self) -> Perhaps<T>;
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     return 0;
 }
 ```
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let collection = [1, 2, 3];
     let mut total = 0;
     for (let item in collection) { total += item; }
@@ -252,9 +252,9 @@ fun main() -> Int {
 Regular pointers provide explicit aliasing for non-linear values.
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let mut n = 1;
-    let p: *mut Int = &mut n;
+    let p: *mut i64 = &mut n;
     *p = 4;
     return *p;
 }
@@ -275,7 +275,7 @@ Field access, field assignment, method calls, and function pointer calls auto-de
 
 ```metel
 struct Counter {
-    value: Int,
+    value: i64,
 }
 
 impl Counter {
@@ -284,7 +284,7 @@ impl Counter {
     }
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let mut counter = Counter { value: 0 };
     let p: *mut Counter = &mut counter;
     p.increment();    // auto-deref: equivalent to (*p).increment()
@@ -296,9 +296,9 @@ fun main() -> Int {
 Function pointers (`*() -> T` and `*mut () -> T`) are callable directly without explicit dereference:
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let f = () -> { return 42; };
-    let ptr: *() -> Int = &f;
+    let ptr: *() -> i64 = &f;
     return ptr();     // auto-deref: equivalent to (*ptr)()
 }
 ```
@@ -320,7 +320,7 @@ Indexing, plain reads, argument passing, and assignment remain explicit pointer 
 `loop` creates an infinite loop. It is the only loop form that can produce a value:
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let result = loop {
         break 42;
     };
@@ -346,11 +346,11 @@ fun returns_unit() {
     return;
 }
 
-fun returns_value() -> Int {
+fun returns_value() -> i64 {
     return 42;
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     returns_unit();
     return returns_value();
 }
