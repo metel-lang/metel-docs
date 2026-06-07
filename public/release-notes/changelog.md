@@ -95,9 +95,9 @@ Post-inference elaboration pipeline. No new language surface. Shipped from sprin
 Sized numeric types, Char, List\<T\>, fixed-size arrays, turbofish, and fat-pointer `&mut`. Shipped from sprint/19.
 
 **New language features:**
-- **Sized numeric types** — `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64`; `Int` and `Float` are permanent aliases for `i64` and `f64` (RFC-0007, METEL-124). Sized literal suffixes: `42i32`, `3.14f32`, `255u8`. All casts between sized types are explicit (`as`). Array indices must be `u64`.
+- **Sized numeric types** — `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` (RFC-0007, METEL-124). Sized literal suffixes: `42i32`, `3.14f32`, `255u8`. All casts between sized types are explicit (`as`). Array indices must be `u64`.
 - **Polymorphic numeric literals** — unsuffixed integer and float literals unify with whatever numeric type the context demands (let annotation, function parameter, struct field, return type, or the other operand in a binary expression). Without context they default to `i64` / `f64`. `mut` reassignment (`m = 99` where `m: i32`) also propagates the declared type to the literal. Negative minimum literals (`-128i8`, `-32768i16`, `-2147483648i32`) are accepted at the lexer level.
-- **Cross-sized numeric `From` impls** — all 90 pairwise casts among the 10 numeric types are supported via `as` (`i8 as u32`, `f32 as i64`, etc.). Previously only `Int ↔ Float` was supported.
+- **Cross-sized numeric `From` impls** — all 90 pairwise casts among the 10 numeric types are supported via `as` (`i8 as u32`, `f32 as i64`, etc.). Previously only `i64 ↔ f64` was supported.
 - **`Char` type** — Unicode scalar value; single-quoted literals (`'a'`, `'\u{1F600}'`); `.to_u32()` and `Char::from_u32(n)` conversions; implements `Display` (RFC-0007)
 - **`List<T>`** — standard growable-sequence type in `std::core`; replaces ad-hoc `array_push` usage; methods: `new`, `from`, `push`, `pop`, `len`, `get`, `as_slice` (RFC-0054)
 - **Fixed-size array type `[T; N]`** — compile-time-known length; repeat construction `[v; N]`; coerces to `T[]`; `.len()` method; array patterns on `[T; N]` (RFC-0053, METEL-135)
@@ -271,7 +271,7 @@ Technical debt, bug fixes, and internal cleanup. Shipped by Sprint 7 (`sprint/7`
 **Bug fixes:**
 - `TypeErrorCode::T0005` ("Invalid operand types") is now emitted for arithmetic operators (`+`, `-`, `*`, `/`, `%`) applied to non-numeric types (e.g. `true + false` is now a type error)
 - Unary negation (`-`) on non-numeric types is now a type error
-- Ordering comparisons (`<`, `<=`, `>`, `>=`) on non-comparable types (non-Int, non-Float, non-String) are now type errors
+- Ordering comparisons (`<`, `<=`, `>`, `>=`) on non-comparable types (non-numeric, non-String) are now type errors
 - `Pattern::Nope` latent bug eliminated — `nope` values are now exclusively `Value::Perhaps(None)`, so the pattern can no longer silently miss the `Value::Enum { name: "Perhaps", variant: "Nope" }` form
 
 **Internal improvements:**
@@ -289,12 +289,12 @@ Aspects and upgraded builtins. Shipped by Sprint 6 (`sprint/6`).
 - `impl Aspect for Type` blocks with method dispatch via `.method()` syntax
 - `Iterable<T>` aspect — user-defined types usable in `for-in` loops
 - `From<S>` aspect — `as` cast desugars to `T::from(value)`; user-defined casts for any type pair
-- `Display` aspect — `.to_string()` on `Int`, `Float`, `boolean`, `String`; `print`/`println` polymorphic via Display
+- `Display` aspect — `.to_string()` on `i64`, `f64`, `boolean`, `String`; `print`/`println` polymorphic via Display
 - `?` operator now supports cross-type error coercion: if the function's error type `E2` implements `From<E1>`, `?` calls `E2::from(e)` automatically
 
 **Builtin changes:**
 - `print(v)` and `println(v)` are now polymorphic (`<T: Display>`) — accept any Display type
-- `Int::from(f: Float)` and `Float::from(n: Int)` built-in From impls replace the hardcoded `as` special case
+- `i64::from(f: f64)` and `f64::from(n: i64)` built-in From impls replace the hardcoded `as` special case
 - Deprecated: `print_int`, `println_int`, `print_float`, `println_float`, `int_to_string`, `float_to_string`, `bool_to_string` (use `.to_string()` and polymorphic `print`/`println`)
 
 **Bug fixes:**
@@ -309,7 +309,7 @@ Generics and type-inference improvements. Shipped by Sprint 5 (`sprint/5`).
 - User-defined generic functions — `fun id<T>(x: T) -> T` — monomorphised at each call site
 - User-defined generic structs — `struct Box<T> { value: T }`, `struct Pair<A, B> { ... }`
 - User-defined generic enums — `enum Maybe<T> { Some { value: T }, None {} }`
-- Let-polymorphism — unannotated `let`-bound closures are generalised to polymorphic schemes (`let id = fun(x) { x }` works at `Int`, `boolean`, and `String` in the same scope)
+- Let-polymorphism — unannotated `let`-bound closures are generalised to polymorphic schemes (`let id = fun(x) { x }` works at `i64`, `boolean`, and `String` in the same scope)
 - Braceless `if` body — `if (c) expr` and `if (c) a else b` (RFC-0022)
 - `struct` and `enum` declarations are allowed inside function bodies
 
@@ -323,7 +323,7 @@ Generics and type-inference improvements. Shipped by Sprint 5 (`sprint/5`).
 Evaluator improvements, DX features, and language quality fixes. Shipped by Sprint 3 (`sprint/3`).
 
 **New language features:**
-- Type ascription operator `:` — `[] : Int[]` guides type inference without runtime cost (RFC-0021)
+- Type ascription operator `:` — `[] : i64[]` guides type inference without runtime cost (RFC-0021)
 - Shorthand struct field initialisation — `Point { x, y }` desugars to `Point { x: x, y: y }`
 - Trailing commas allowed in function parameter lists and argument lists
 
@@ -331,8 +331,8 @@ Evaluator improvements, DX features, and language quality fixes. Shipped by Spri
 - `assert(cond: boolean)` — panics with `"assertion failed"` if `cond` is `false`
 - `assert_msg(cond: boolean, msg: String)` — panics with `msg` if `cond` is `false`
 - `dbg<T>(v: T) -> T` — prints `[dbg] <value>` to stderr and returns the value unchanged
-- `print_int(n: Int)`, `println_int(n: Int)` — print an `Int` without/with newline
-- `print_float(f: Float)`, `println_float(f: Float)` — print a `Float` without/with newline
+- `print_int(n: i64)`, `println_int(n: i64)` — print an `i64` without/with newline
+- `print_float(f: f64)`, `println_float(f: f64)` — print a `f64` without/with newline
 
 **Bug fixes:**
 - Arrays now have value semantics — binding an array to a new variable produces an independent copy
@@ -347,7 +347,7 @@ Evaluator improvements, DX features, and language quality fixes. Shipped by Spri
 Initial language version. Implemented by the tree-walk interpreter.
 
 **Features included:**
-- Primitive types: `Int`, `Float`, `boolean`, `String`, `()`
+- Primitive types: `i64`, `f64`, `boolean`, `String`, `()`
 - Variables: `let` (immutable), `mut` (mutable), lexical scoping, `fun`/type hoisting
 - Functions: first-class values, closures with mutable capture, `?` operator (exact error type match only)
 - Structs: literals, field access, methods (`impl`), `mut self`, associated functions
@@ -355,7 +355,7 @@ Initial language version. Implemented by the tree-walk interpreter.
 - Built-in generic types: `Perhaps<T>`, `Result<T, E>`, `Array<T>` / `T[]` (as special cases; user-defined generics are v0.3.0)
 - Exhaustive pattern matching: all pattern kinds (see [Pattern Kinds](../reference/spec/expressions.md#pattern-kinds))
 - Control flow: `if`/`else`, `while`, `for`, `for-in` (arrays and ranges only), `loop`, `break`/`continue`, `return`
-- Type casting: `as` for `Int ↔ Float`
+- Type casting: `as` for `i64 ↔ f64`
 - Never type (`!`)
 - Tuples
 - Built-in functions (see [Built-in Functions](../reference/spec/runtime.md#built-in-functions))

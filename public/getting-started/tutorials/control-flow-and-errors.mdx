@@ -44,7 +44,7 @@ Expression-Oriented Control Flow
 Braceless bodies are allowed for single expressions:
 
 ```metel
-fun clamp(value: Int, lo: Int, hi: Int) -> Int {
+fun clamp(value: i64, lo: i64, hi: i64) -> i64 {
     if (value < lo) lo else if (value > hi) hi else value
 }
 
@@ -103,7 +103,7 @@ If a loop is off by one, confirm whether you wanted `..` or `..=` before looking
 `loop` runs indefinitely. `break expr` exits the loop and produces a value:
 
 ```metel
-fun first_over(threshold: Int, values: Int[]) -> Perhaps<Int> {
+fun first_over(threshold: i64, values: i64[]) -> Perhaps<i64> {
     let mut i: u64 = 0;
     loop {
         if ((i as i64) >= values.len()) {
@@ -136,7 +136,7 @@ fun main() {
 Use it whenever a function can legitimately return nothing (a search that finds no result, a field that is not set):
 
 ```metel
-fun find(haystack: String[], needle: String) -> Perhaps<Int> {
+fun find(haystack: String[], needle: String) -> Perhaps<i64> {
     let mut i = 0;
     for (let s in haystack) {
         if (s == needle) {
@@ -192,7 +192,7 @@ struct ParseError {
     message: String,
 }
 
-fun parse_positive(s: String) -> Result<Int, ParseError> {
+fun parse_positive(s: String) -> Result<i64, ParseError> {
     if (s == "") {
         return Result::Err { error: ParseError { message: "input is empty" } };
     }
@@ -233,7 +233,7 @@ struct ParseError {
     message: String,
 }
 
-fun parse_positive(s: String) -> Result<Int, ParseError> {
+fun parse_positive(s: String) -> Result<i64, ParseError> {
     if (s == "") {
         return Result::Err { error: ParseError { message: "empty input" } };
     }
@@ -242,7 +242,7 @@ fun parse_positive(s: String) -> Result<Int, ParseError> {
     return Result::Err { error: ParseError { message: "unrecognised: ${s}" } };
 }
 
-fun double_parse(s: String) -> Result<Int, ParseError> {
+fun double_parse(s: String) -> Result<i64, ParseError> {
     let n = parse_positive(s)?;   // returns Err immediately if parse fails
     return Result::Ok { value: n * 2 };
 }
@@ -298,13 +298,13 @@ fun read_data(path: String) -> Result<String, IoError> {
     else { Result::Err { error: IoError { msg: "file not found: ${path}" } } }
 }
 
-fun parse_number(s: String) -> Result<Int, ParseError> {
+fun parse_number(s: String) -> Result<i64, ParseError> {
     if (s == "42") { Result::Ok  { value: 42 } }
     else { Result::Err { error: ParseError { msg: "not a number: ${s}" } } }
 }
 
 // Both ? calls coerce their error type to AppError via From
-fun load_and_parse(path: String) -> Result<Int, AppError> {
+fun load_and_parse(path: String) -> Result<i64, AppError> {
     let raw = read_data(path)?;
     let n   = parse_number(raw)?;
     Result::Ok { value: n }
@@ -329,7 +329,7 @@ The `?` on `read_data(path)?` automatically calls `AppError::from(io_error)` bec
 A `match` arm can have a guard — a condition that must also be true for the arm to fire:
 
 ```metel
-fun classify(n: Int) -> String {
+fun classify(n: i64) -> String {
     match n {
         0                => "zero",
         n if n < 0       => "negative",
@@ -376,7 +376,7 @@ fun validate_name(name: String) -> Result<String, ValidationError> {
     Result::Ok { value: name }
 }
 
-fun validate_age(raw: String) -> Result<Int, ValidationError> {
+fun validate_age(raw: String) -> Result<i64, ValidationError> {
     // Simplified: only accept a handful of values for this example.
     match raw {
         "17" => Result::Err { error: ValidationError {
@@ -394,7 +394,7 @@ fun validate_age(raw: String) -> Result<Int, ValidationError> {
 
 struct User {
     name: String,
-    age:  Int,
+    age:  i64,
 }
 
 fun validate_user(name: String, age_str: String) -> Result<User, ValidationError> {

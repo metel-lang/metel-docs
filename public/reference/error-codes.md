@@ -52,10 +52,10 @@ A float literal cannot be represented as an `f64`.
 Two types that must be equal are not.
 
 ```
-[T0001] type error in main.mtl at 10..20: expected Int, got boolean
+[T0001] type error in main.mtl at 10..20: expected i64, got boolean
 ```
 
-**Fix:** ensure the expression produces the expected type. Add an explicit cast if widening (e.g. `x as Float`).
+**Fix:** ensure the expression produces the expected type. Add an explicit cast if widening (e.g. `x as f64`).
 
 ### T0002 — Annotation required
 
@@ -65,7 +65,7 @@ The type checker cannot infer a type without an explicit annotation.
 [T0002] type error in main.mtl at 5..10: cannot infer type of `x`; add a type annotation
 ```
 
-**Fix:** annotate the binding: `let x: Int = ...`.
+**Fix:** annotate the binding: `let x: i64 = ...`.
 
 ### T0003 — Undefined name
 
@@ -92,7 +92,7 @@ A function is called with the wrong number of arguments.
 A binary operator is applied to types it does not support.
 
 ```
-[T0005] type error in main.mtl at 6..13: operator `+` cannot be applied to boolean and Int
+[T0005] type error in main.mtl at 6..13: operator `+` cannot be applied to boolean and i64
 ```
 
 **Fix:** use compatible types, or cast one operand.
@@ -116,10 +116,10 @@ A write operation targets a `let` binding. This covers three forms:
 A `as` cast between incompatible types.
 
 ```
-[T0007] type error in main.mtl at 5..15: cannot cast boolean to Int
+[T0007] type error in main.mtl at 5..15: cannot cast boolean to i64
 ```
 
-**Fix:** only cast between numeric types (`Int as Float`). Use an explicit conversion function for other types.
+**Fix:** only cast between numeric types (`i64 as f64`). Use an explicit conversion function for other types.
 
 ### T0008 — Non-exhaustive match
 

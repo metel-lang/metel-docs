@@ -10,7 +10,6 @@ created_date: '2026-05-16'
 
 Source files use the `.mtl` extension.
 
----
 
 ## Overview
 
@@ -26,7 +25,6 @@ The language's core design principles are:
 - **Explicit error handling** — errors are values, represented as `Result<T, E>`
 - **Safe memory by default** — reference counting, no ownership semantics required
 
----
 
 ## Contents
 

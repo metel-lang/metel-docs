@@ -7,7 +7,7 @@
 ### Immutable Bindings
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let x = 42;
     let name: String = "Vlad";
     if (name == "Vlad") { return x; }
@@ -26,7 +26,7 @@ All three forms require `let mut`.
 ### Mutable Bindings
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let mut counter = 0;
     counter = counter + 1;
     counter += 1;
@@ -47,17 +47,17 @@ Variables are lexically scoped. Each block `{ }` introduces a new scope. Inner s
 Hoisting is block-local: a `fun` declared in an inner block is not visible in the outer block. Normal lexical scoping applies across block boundaries — inner blocks see outer declarations, outer blocks do not see inner declarations.
 
 ```metel
-fun is_even(n: Int) -> boolean {
+fun is_even(n: i64) -> boolean {
     if (n == 0) { return true; }
     return is_odd(n - 1);
 }
 
-fun is_odd(n: Int) -> boolean {
+fun is_odd(n: i64) -> boolean {
     if (n == 0) { return false; }
     return is_even(n - 1);
 }
 
-fun outer() -> Int {
+fun outer() -> i64 {
     inner();
 
     fun inner() {
@@ -68,7 +68,7 @@ fun outer() -> Int {
     return 1;
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     if (is_odd(3)) { return outer(); }
     return 0;
 }
@@ -103,22 +103,22 @@ fun make_point() -> Point {
 }
 
 struct Point {
-    x: Float,
-    y: Float,
+    x: f64,
+    y: f64,
 }
 
 fun inner() {
     struct LocalPoint {
-        x: Float,
-        y: Float,
+        x: f64,
+        y: f64,
     }
     let p = LocalPoint { x: 1.0, y: 2.0 };
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     inner();
     let p = make_point();
-    return p.x as Int;
+    return p.x as i64;
 }
 ```
 
@@ -130,13 +130,13 @@ Top-level `impl` blocks follow the same declaration-order rule as the types they
 
 ```metel
 struct Point {
-    x: Float,
-    y: Float,
+    x: f64,
+    y: f64,
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let p = Point { x: 1.0, y: 2.0 };
-    return p.y as Int;
+    return p.y as i64;
 }
 ```
 
@@ -144,14 +144,14 @@ fun main() -> Int {
 
 ```metel
 struct Point {
-    x: Float,
-    y: Float,
+    x: f64,
+    y: f64,
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let p = Point { x: 1.0, y: 2.0 };
     let x = p.x;
-    return x as Int;
+    return x as i64;
 }
 ```
 
@@ -159,15 +159,15 @@ When a local variable has the same name as a field, the `: value` part can be om
 
 ```metel
 struct Point {
-    x: Float,
-    y: Float,
+    x: f64,
+    y: f64,
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let x = 1.0;
     let y = 2.0;
     let p = Point { x, y };
-    return p.x as Int;
+    return p.x as i64;
 }
 ```
 
@@ -177,23 +177,23 @@ Shorthand and explicit fields may be mixed freely within one literal.
 
 ```metel
 struct Point {
-    x: Float,
-    y: Float,
+    x: f64,
+    y: f64,
 }
 
 impl Point {
-    fun distance(self, other: Point) -> Float {
+    fun distance(self, other: Point) -> f64 {
         let dx = self.x - other.x;
         let dy = self.y - other.y;
         return dx * dx + dy * dy;   // squared distance
     }
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let p = Point { x: 1.0, y: 2.0 };
     let q = Point { x: 4.0, y: 6.0 };
     let d = p.distance(q);
-    return d as Int;
+    return d as i64;
 }
 ```
 
@@ -213,12 +213,12 @@ observers and in-place mutation.
 
 ```metel
 struct Point {
-    x: Float,
-    y: Float,
+    x: f64,
+    y: f64,
 }
 
 impl Point {
-    fun length(&self) -> Float {
+    fun length(&self) -> f64 {
         self.x * self.x + self.y * self.y
     }
 }
@@ -226,7 +226,7 @@ impl Point {
 
 ```metel
 struct Counter {
-    value: Int,
+    value: i64,
 }
 
 impl Counter {
@@ -242,7 +242,7 @@ pointer.
 
 ```metel
 struct Counter {
-    value: Int,
+    value: i64,
 }
 
 impl Counter {
@@ -251,7 +251,7 @@ impl Counter {
     }
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let mut c = Counter { value: 1 };
     c.increment();
     return c.value;
@@ -266,7 +266,7 @@ struct Pair<A, B> {
     second: B,
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let p = Pair { first: 1, second: true };
     return p.first;
 }
@@ -280,15 +280,15 @@ fun main() -> Int {
 enum Direction { North, South, East, West }
 
 enum Shape {
-    Circle { radius: Float },
-    Rectangle { width: Float, height: Float },
+    Circle { radius: f64 },
+    Rectangle { width: f64, height: f64 },
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let dir = Direction::North;
     let s = Shape::Circle { radius: 5.0 };
     match dir {
-        Direction::North => s.radius as Int,
+        Direction::North => s.radius as i64,
         Direction::South => 0,
         Direction::East => 0,
         Direction::West => 0,
@@ -304,15 +304,15 @@ Variants may be unit (no data) or struct-like (named fields).
 enum Direction { North, South, East, West }
 
 enum Shape {
-    Circle { radius: Float },
-    Rectangle { width: Float, height: Float },
+    Circle { radius: f64 },
+    Rectangle { width: f64, height: f64 },
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let dir = Direction::North;
     let s = Shape::Circle { radius: 5.0 };
     match dir {
-        Direction::North => s.radius as Int,
+        Direction::North => s.radius as i64,
         Direction::South => 0,
         Direction::East => 0,
         Direction::West => 0,
@@ -326,12 +326,12 @@ fun main() -> Int {
 
 ```metel
 enum Shape {
-    Circle { radius: Float },
-    Rectangle { width: Float, height: Float },
+    Circle { radius: f64 },
+    Rectangle { width: f64, height: f64 },
 }
 
 impl Shape {
-    fun area(self) -> Float {
+    fun area(self) -> f64 {
         match self {
             Shape::Circle { radius } => 3.14159 * radius * radius,
             Shape::Rectangle { width, height } => width * height,
@@ -339,9 +339,9 @@ impl Shape {
     }
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let s = Shape::Circle { radius: 5.0 };
-    return s.area() as Int;
+    return s.area() as i64;
 }
 ```
 
@@ -357,10 +357,10 @@ aspect Printable {
 }
 
 aspect Comparable {
-    fun compare(self, other: Self) -> Int;
+    fun compare(self, other: Self) -> i64;
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     return 0;
 }
 ```
@@ -369,8 +369,8 @@ fun main() -> Int {
 
 ```metel
 struct Point {
-    x: Float,
-    y: Float,
+    x: f64,
+    y: f64,
 }
 
 aspect Printable {
@@ -435,7 +435,7 @@ In an aspect definition, `Self` is the implementing type at the call site:
 
 ```metel
 aspect Comparable {
-    fun compare(self, other: Self) -> Int;
+    fun compare(self, other: Self) -> i64;
 }
 ```
 
@@ -445,7 +445,7 @@ In a struct or enum `impl` block, `Self` is an alias for the type being implemen
 
 ```metel
 struct Point {
-    x: Int,
+    x: i64,
 }
 
 impl Point {

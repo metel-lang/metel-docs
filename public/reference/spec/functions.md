@@ -1,11 +1,11 @@
 # Functions
 
 ```metel
-fun add(a: Int, b: Int) -> Int {
+fun add(a: i64, b: i64) -> i64 {
     return a + b;
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     return add(2, 3);
 }
 ```
@@ -18,19 +18,19 @@ Parameter type annotations are optional when types can be inferred from context.
 
 ```metel
 struct Point {
-    x: Float,
-    y: Float,
+    x: f64,
+    y: f64,
 }
 
 impl Point {
-    fun new(x: Float, y: Float) -> Point {
+    fun new(x: f64, y: f64) -> Point {
         return Point { x: x, y: y };
     }
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let p = Point::new(1.0, 2.0);
-    return p.x as Int;
+    return p.x as i64;
 }
 ```
 
@@ -39,17 +39,17 @@ fun main() -> Int {
 Functions are first-class values and can be assigned, passed, and returned:
 
 ```metel
-fun add(a: Int, b: Int) -> Int {
+fun add(a: i64, b: i64) -> i64 {
     return a + b;
 }
 
-fun apply(f: (Int) -> Int, x: Int) -> Int {
+fun apply(f: (i64) -> i64, x: i64) -> i64 {
     return f(x);
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     let f = add;
-    let inc = (x: Int) -> Int { return x + 1; };
+    let inc = (x: i64) -> i64 { return x + 1; };
     return f(1, 2) + apply(inc, 4);
 }
 ```
@@ -61,8 +61,8 @@ The type of a function or closure is written as `(ParamTypes) -> ReturnType`.
 Anonymous functions are written with the `(...) -> ... { ... }` form:
 
 ```metel
-fun main() -> Int {
-    let double = (x: Int) -> Int { return x * 2; };
+fun main() -> i64 {
+    let double = (x: i64) -> i64 { return x * 2; };
     return double(5);
 }
 ```
@@ -70,7 +70,7 @@ fun main() -> Int {
 Closures capture variables from their enclosing scope by value. A captured variable is cloned into the closure environment when the closure is created:
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let mut count = 0;
     let inc = () -> { count += 1; };
     inc();
@@ -82,9 +82,9 @@ fun main() -> Int {
 Shared mutable closure state is explicit. If multiple closures must observe and update the same non-linear storage, the program must capture a regular pointer:
 
 ```metel
-fun main() -> Int {
+fun main() -> i64 {
     let mut count = 0;
-    let p: *mut Int = &mut count;
+    let p: *mut i64 = &mut count;
     let inc = () -> { *p += 1; };
     inc();
     inc();
@@ -101,8 +101,8 @@ When a generic function's type parameters cannot be inferred from the arguments,
 ```metel
 fun identity<T>(x: T) -> T { x }
 
-fun main() -> Int {
-    let x = identity::<Int>(42);
+fun main() -> i64 {
+    let x = identity::<i64>(42);
     return x;
 }
 ```
@@ -113,14 +113,14 @@ Turbofish is most useful when two or more independent type parameters must be pi
 fun zip<A, B>(a: A[], b: B[]) -> (A, B)[] { /* ... */ }
 
 fun main() {
-    let pairs = zip::<Int, String>([1, 2], ["a", "b"]);
+    let pairs = zip::<i64, String>([1, 2], ["a", "b"]);
 }
 ```
 
 Type ascription (`: T`) remains available for annotating the result type. Turbofish and ascription can be used together:
 
 ```metel
-let result = parse::<Int>("42") : Perhaps<Int>;
+let result = parse::<i64>("42") : Perhaps<i64>;
 ```
 
 ## The ? Operator
@@ -132,19 +132,19 @@ let result = parse::<Int>("42") : Perhaps<Int>;
 Inside a function returning `Result<T, E>`, `?` propagates errors early:
 
 ```metel
-fun parse_int(s: String) -> Result<Int, String> {
+fun parse_int(s: String) -> Result<i64, String> {
     if (s == "21") {
         return Result::Ok { value: 21 };
     }
     return Result::Err { error: "not a number" };
 }
 
-fun parse_and_double(s: String) -> Result<Int, String> {
+fun parse_and_double(s: String) -> Result<i64, String> {
     let n = parse_int(s)?;   // returns Err early if parse_int fails
     return Result::Ok { value: n * 2 };
 }
 
-fun main() -> Int {
+fun main() -> i64 {
     match parse_and_double("21") {
         Result::Ok { value } => value,
         Result::Err { error } => 0,
