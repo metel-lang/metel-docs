@@ -21,9 +21,12 @@ Sized numeric types, Char, List\<T\>, fixed-size arrays, turbofish, and fat-poin
 **Bug fixes:**
 - Generic functions with multiple independent type parameters (e.g. `fold_left<T, A>`) no longer have their type parameters collapsed when a module-level constraint solve follows a single-parameter generic function (METEL-137)
 - Same-tier glob import conflicts (`import a::*` and `import b::*` both exporting the same name) no longer raise an error at import resolution; the error fires at the first use site of the ambiguous name (METEL-98)
+- `&mut x` on a non-`let mut` binding is now a type error (T0006); previously accepted silently, allowing immutable bindings to be mutated through a pointer (METEL-118)
+- Field assignment (`p.field = v`) on a non-`let mut` binding is now a type error (T0006); previously the field mutability check was missing, allowing struct fields to be mutated through an immutable binding (METEL-119)
 
 **Breaking changes:**
 - `array_push` and `array_len` are removed as top-level built-in functions; use `List<T>` for mutation and `.len()` on arrays and lists
+- Code that previously relied on `&mut x` or `p.field = v` with a non-`let mut` binding will now fail typechecking
 
 ## v0.7.0
 
