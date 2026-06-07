@@ -30,10 +30,12 @@ The System F IR requires typed literals and explicit coercions at every node. Th
 
 ## Type System Design
 
-This RFC establishes a two-tier primitive type system:
+This RFC establishes the exact-width primitive type system that shipped in the interpreter:
 
-- **Uppercase types** (`Int`, `Float`, `Byte`, `Char`): ergonomic, generic-use types. Under the hood they map to a specific sized type, but the programmer does not need to manage bit widths when using them. Suitable for most application code.
-- **Lowercase types** (`i8`, `i32`, `u64`, `f32`, etc.): exact bit-width types for low-level code, systems programming, and IR. All casts between lowercase types are explicit in both directions.
+- **Lowercase numeric types** (`i8`, `i32`, `u64`, `f32`, etc.): exact bit-width types for low-level code, systems programming, and IR.
+- **`Char`** as a distinct primitive scalar value type.
+
+Ergonomic aliases (`Int`, `Float`, `Byte`) were part of the original design discussion but were deferred from the implemented scope.
 
 ---
 
@@ -52,7 +54,7 @@ This RFC establishes a two-tier primitive type system:
 | `u32` | 32-bit | no     |
 | `u64` | 64-bit | no     |
 
-`Int` is a permanent ergonomic alias for `i64`. It is not deprecated. Code that does not care about bit widths uses `Int`; code that does uses `i64` directly.
+The originally proposed ergonomic alias `Int` for `i64` was deferred and is not part of the implemented surface of this RFC.
 
 ### Sized float types
 
@@ -61,11 +63,11 @@ This RFC establishes a two-tier primitive type system:
 | `f32` | 32-bit IEEE 754      |
 | `f64` | 64-bit IEEE 754      |
 
-`Float` is a permanent ergonomic alias for `f64`.
+The originally proposed ergonomic alias `Float` for `f64` was deferred and is not part of the implemented surface of this RFC.
 
 ### Byte
 
-`Byte` is a semantic alias for `u8`. They are the same type — no coercion is needed between them. The distinction is intent: `Byte` reads as "raw memory byte or I/O unit"; `u8` reads as "8-bit unsigned integer". Both names are valid in all positions.
+The originally proposed semantic alias `Byte` for `u8` was deferred and is not part of the implemented surface of this RFC.
 
 ### Char
 
@@ -92,7 +94,7 @@ Two concrete forms:
 
 ### `as` — explicit cast
 
-The `as` keyword is the casting operator. It desugars to the `From` aspect implementation. Both widening and narrowing casts between numeric types require an explicit `as`:
+The `as` keyword was already part of the language before this RFC. Within the implemented scope of RFC-0007, `as` continues to be the explicit cast operator for cross-sized numeric conversions:
 
 ```metel
 let x: i32 = 42;
@@ -100,26 +102,24 @@ let y: i64 = x as i64;   // widening: explicit
 let z: i32 = y as i32;   // narrowing: explicit, may lose information
 ```
 
-`Int` and `Float` (as aliases for `i64` and `f64`) participate in the same cast rules as their underlying types.
-
 `*mut T` coerces to `*T` implicitly (per RFC-0043). All other coercions between numeric types are explicit.
 
 ### `as?` — fallible narrowing cast
 
-`as?` is a fallible cast that desugars to `TryFrom`. It returns `Option[T]` (or `Result[T, CastError]` — exact return type TBD). Use when the value may not fit in the target type:
+`as?` was discussed during this RFC but deferred from the implemented scope. The intended design was a fallible cast desugaring to `TryFrom`, returning `Option[T]` (or `Result[T, CastError]`):
 
 ```metel
 let big: i64 = 300;
 let small: Option[i8] = big as? i8;   // nope if out of range
 ```
 
-`as?` is valid for any `as` cast — the compiler may warn when `as?` is used for casts that cannot fail (e.g., widening).
+This operator did not ship as part of RFC-0007's implementation.
 
 ---
 
 ## Overflow Semantics
 
-**In debug builds**: integer overflow panics. This applies to all integer types — both uppercase (`Int`) and lowercase (`i8`, `u64`, etc.).
+**In debug builds**: integer overflow panics. This applies to all implemented integer types (`i8` through `i64`, `u8` through `u64`).
 
 **In release builds**: integer overflow wraps (two's complement wrapping for signed, modular arithmetic for unsigned).
 
@@ -134,13 +134,13 @@ Float overflow follows IEEE 754 semantics (infinity / NaN) in both build modes �
 The direct index type for `[T]` and `[T; N]` is `u64`. Negative values are statically rejected at the index site.
 
 ```metel
-let arr: [Int; 4] = [1, 2, 3, 4];
+let arr: [i64; 4] = [1, 2, 3, 4];
 let i: u64 = 2;
 let x = arr[i];        // ok
 // let y = arr[-1];    // type error: negative literal is not u64
 ```
 
-`Int` (i.e., `i64`) does not implicitly coerce to `u64`. Indexing with an `Int` variable requires an explicit `as u64` cast, which is an intentional friction point: direct array indexing is a low-level operation. Higher-level collection types (e.g., `List[T]`) will provide ergonomic iteration and access patterns that avoid raw index arithmetic.
+`i64` does not implicitly coerce to `u64`. Indexing with an `i64` variable requires an explicit `as u64` cast, which is an intentional friction point: direct array indexing is a low-level operation. Higher-level collection types (e.g., `List[T]`) will provide ergonomic iteration and access patterns that avoid raw index arithmetic.
 
 ---
 
@@ -159,12 +159,12 @@ let x = arr[i];        // ok
 
 | # | Question | Decision |
 |---|----------|----------|
-| D1 | Naming convention | Two-tier: uppercase (`Int`, `Float`, `Byte`, `Char`) for ergonomic use; lowercase (`i8`–`i64`, `u8`–`u64`, `f32`, `f64`) for exact bit-width. |
-| D2 | `Int` and `Float` retention | Permanent aliases for `i64` and `f64`. Not deprecated. |
+| D1 | Naming convention | Exact-width lowercase numeric types (`i8`–`i64`, `u8`–`u64`, `f32`, `f64`) shipped. `Char` shipped as a distinct primitive type. The proposed ergonomic aliases `Int`, `Float`, and `Byte` were deferred. |
+| D2 | `Int` and `Float` retention | Deferred. The implemented surface uses `i64` and `f64` directly. |
 | D3 | Overflow semantics | Panic in debug, wrapping in release. Applies to all integer types. Float follows IEEE 754. |
-| D4 | Casting operator | `as` for explicit casts (widening and narrowing), desugars to `From`. |
-| D5 | Fallible narrowing | `as?` operator, desugars to `TryFrom`, returns `Option[T]`. |
+| D4 | Casting operator | `as` remained the language's explicit cast operator. RFC-0007 extended its use to the shipped exact-width numeric conversions; it did not introduce `as`. |
+| D5 | Fallible narrowing | Deferred. `as?` was discussed but did not ship in the implemented surface of this RFC. |
 | D6 | Array model | `[T]` slices and `[T; N]` fixed arrays. `Array[T]` desugars to `[T]`. No heap allocation in the type. |
 | D7 | Array indexing type | `u64`. Direct indexing is intentionally low-level; higher-level collections provide ergonomic access. |
-| D8 | `Byte` vs `u8` | Same type, two names. `Byte` signals intent; no coercion needed. |
+| D8 | `Byte` vs `u8` | Deferred. Only `u8` shipped in the implemented surface of this RFC. |
 | D9 | Unsuffixed integer literal type | Polymorphic: the literal `42` takes on any integer type demanded by its context. Falls back to `i64` when context leaves the type unconstrained. Suffixed forms (`42i32`, `42u8`) are always exactly typed. Same rule for float literals: `3.14` is polymorphic over float types, defaulting to `f64`. |
