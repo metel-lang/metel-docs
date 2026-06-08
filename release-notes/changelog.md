@@ -4,6 +4,18 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.8.1
+
+Post-inference elaboration pipeline. No new language surface. Shipped from sprint/20.
+
+**Internal (interpreter architecture):**
+- **Elaboration pass** — a dedicated `elaborator` stage runs between the typechecker and evaluator and resolves every `MethodDispatch` call site to `Inherent` or `Aspect { aspect_id }` before evaluation begins. The evaluator now accepts `ElaboratedModuleGraph` (a newtype proof that elaboration has run) instead of `TypedModuleGraph` directly (METEL-151, ADR-0037).
+- **SymbolId infrastructure** — every top-level declaration is assigned a stable `SymbolId` by the name resolver at declaration site, and every import binding carries the same `SymbolId`. Builtin types and aspects have reserved IDs (1–99); user-defined symbols start at 1000 (METEL-172, METEL-104).
+- **SymbolId-keyed aspect dispatch** — `RuntimeAspectImpl` carries `aspect_id: Option<SymbolId>` alongside its string name. `RuntimeRegistry::get_aspect_method_by_id` matches on `aspect_id` first, eliminating cross-module name collisions where two unrelated aspects share a method name (METEL-152).
+- **Environment documentation** — `TypeDefinitionRegistry` is annotated with its elaboration interface; `ElaboratedModuleGraph` carries a responsibilities table; `architecture.md`, `typechecker.md`, and `evaluator.md` are updated to reflect the new stage (METEL-154, METEL-156).
+- **ADR-0037** — records the elaboration boundary decision, the dispatch-map keying rationale, and the long-term constraint that `ElaboratedModuleGraph` is a viable future compiler IR intake point (METEL-157).
+- **Regression suite** — four new full-pipeline fixtures cover: polymorphic calls across modules, cross-module aspect dispatch, two aspects with the same method name on different receiver types, and inherent/aspect method coexistence (METEL-155).
+
 ## v0.8.0
 
 Sized numeric types, Char, List\<T\>, fixed-size arrays, turbofish, and fat-pointer `&mut`. Shipped from sprint/19.
