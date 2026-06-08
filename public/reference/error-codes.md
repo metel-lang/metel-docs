@@ -131,6 +131,18 @@ A `match` expression does not cover all possible values of the scrutinee type.
 
 **Fix:** add the missing arms, or add a wildcard arm `_ => ...`.
 
+### T0013 — Ambiguous aspect method resolution
+
+Two different aspects define the same method name on the same receiver type, so a
+call like `value.method()` does not have a unique static target.
+
+```
+[T0013] type error in main.mtl at 12..20: ambiguous aspect method `label` on type `S`: both `A` and `B` provide this method
+```
+
+**Fix:** rename one of the methods, remove one of the conflicting impls, or change the
+design so the receiver type does not expose two indistinguishable aspect methods.
+
 ---
 
 ## Runtime errors (R)
