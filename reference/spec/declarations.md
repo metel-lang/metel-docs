@@ -549,6 +549,10 @@ The bound is an invariant of the type, not of the binding site. It propagates wh
 
 All aspect dispatch in Metel is **static** (monomorphised at compile time). There are no vtables, no heap allocation, and no runtime type erasure for aspects.
 
+Method resolution must also be **unambiguous** at compile time. If the same receiver
+type implements two different aspects that both define the same method name, a call
+like `value.method()` is rejected with `T0013` rather than resolved by declaration order.
+
 `dyn Aspect` (runtime-dispatched existential types with vtable-based dispatch) is **not part of the language** in this version. Dynamic dispatch is specified by RFC-0038 and will be introduced in a future release. Until then, all polymorphism must go through generic type parameters with aspect bounds.
 
 Aspect objects (`dyn Aspect`) are not part of the language. All polymorphism is via generics (static dispatch).
