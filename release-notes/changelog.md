@@ -4,6 +4,30 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.8.2
+
+Generic function recursion and forward-reference fix. Shipped from sprint/21.
+
+**Bug fixes:**
+- Generic self-recursion now type-checks correctly; a generic function can refer to itself inside its own body without triggering `T0003 undefined name`
+- Generic forward references now work the same way as monomorphic forward references; a generic function can call a later generic function declared in the same scope
+- Mutual recursion across generic functions now type-checks and evaluates correctly; the pre-inference hoist pass now registers generic function schemes before any body is inferred
+
+**Performance improvements:**
+- **Incremental constraint solving** — `InferContext::solve()` now caches the solved substitution for the append-only prefix of the constraint list instead of re-solving the full set on every eager partial solve. This removes the dominant `0.8.2` baseline bottleneck in generic-heavy programs
+- **Typechecker sub-phase profiling** — the benchmark harness now reports registry, inference, solve, scheme-environment, construction, and finalize timings so optimization work can target the real hot paths rather than evaluator guesses
+- **Benchmark/profiling workflow** — `metel-bench` now benchmarks evaluator integration fixtures through the same parse → typecheck → evaluate path used by the test suite and emits machine-readable summaries plus call-graph artifacts
+- **Measured impact on the release benchmark suite** — representative total runtime improvements from the original `0.8.2` baseline:
+  - `int_04_generic_algorithms.mtl`: `1662.887 ms` → `160.724 ms`
+  - `int_01_statistics.mtl`: `675.241 ms` → `87.376 ms`
+  - `int_03_generic_option_chain.mtl`: `431.502 ms` → `76.467 ms`
+  - `int_05_generic_data_pipeline.mtl`: `357.644 ms` → `66.298 ms`
+  - `int_11_generic_sized.mtl`: `157.804 ms` → `27.107 ms`
+
+**Internal improvements:**
+- `hoist_fun_decls` now pre-registers generic function schemes and their aspect bounds, so generic visibility follows the same pre-pass architecture as monomorphic recursion instead of relying on per-function provisional bindings
+- Regression coverage added for generic self-recursion and generic mutual recursion in both the typechecking and evaluator integration suites
+
 ## v0.8.1
 
 Post-inference elaboration pipeline. No new language surface. Shipped from sprint/20.
