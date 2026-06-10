@@ -61,6 +61,22 @@ Path roots are:
 | `super::` | The parent module; invalid from the root module |
 | imported module handle | A module brought into scope by `import path::module;` |
 
+### Reserved namespaces
+
+The `std` top-level namespace is reserved for the standard library. User module
+paths may not begin with `std` — a module file at `std.mtl` or anywhere under
+`std/` in the project tree is a compile error:
+
+```
+error: module path `std::…` is reserved for the standard library
+```
+
+`std` is also a reserved keyword and cannot appear as an identifier. Both
+restrictions are consistent: `std` is not a valid name for user code at any
+level.
+
+No other top-level names are currently reserved.
+
 Fully-qualified paths are valid anywhere a name is expected:
 
 ```metel

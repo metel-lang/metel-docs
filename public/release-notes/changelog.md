@@ -4,6 +4,20 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.8.3
+
+Standard library expansion and module system clarifications. Shipped from sprint/22.
+
+**New language features:**
+- `native` declaration syntax for stdlib-only host-backed implementations — free functions, methods, and aspect methods can be marked `native` with an explicit binding key
+
+**Module system:**
+- Using `std` as a top-level module name is now a compile error. A file at `std.mtl` or anywhere under `std/` in the project tree produces: `error: module path std::… is reserved for the standard library`. The `std` keyword was already reserved in the language syntax; the interpreter now enforces the same reservation at the module path level.
+
+**Internal improvements:**
+- Symbol definition index — every declared symbol now has a stable definition site recorded during name resolution; used by diagnostics and future tooling
+- Error span accessor — all error variants that carry source location now expose it through a uniform interface
+
 ## v0.8.2
 
 Generic function recursion and forward-reference fix. Shipped from sprint/21.

@@ -47,6 +47,36 @@ Use `cargo run -- ...` while you are iterating quickly. Keep the release build f
 
 If you are just testing changes, `cargo run --` is enough. If you want the fastest repeated run, keep the release build from step 1 and point the interpreter at the file you want to execute.
 
+## Multi-file programs
+
+Split your program across files using `import`. Each file is a module; the `::` separator maps directly to `/` on the filesystem:
+
+```
+src/
+  main.mtl
+  utils.mtl
+```
+
+```metel
+// src/main.mtl
+import utils::greet;
+
+fun main() {
+    greet("world");
+}
+```
+
+```metel
+// src/utils.mtl
+pub fun greet(name: String) {
+    println("hello, " + name);
+}
+```
+
+**One naming rule to know:** the top-level name `std` is reserved for the standard library. Do not name your own modules `std` — a file called `std.mtl` at the project root will cause a compile error. Any other name is fine.
+
+See the [Modules reference](../reference/spec/modules.md) for the full path syntax.
+
 ## What next
 
 - Read the [first tutorial](tutorials/hello-world) for a slower, guided introduction.
