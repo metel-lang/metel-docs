@@ -315,7 +315,16 @@ independent commits.
 
 ## 7. Resolved decisions
 
-1. **`CalleeId` keeps three variants.** Dynamic aspects make `AspectMethod`
+> **As-built status (sprint 22).** Stages A (METEL-180), B (METEL-182),
+> C.1 (METEL-183), and METEL-184 shipped. METEL-181 (std::core unification +
+> the `SymbolId`/`CalleeId` dispatch rekeying) is deferred to a dedicated
+> session. **METEL-180 shipped with name-mangling as an intermediate dispatch
+> mechanism, not `CalleeId`** — see decision 8. Decisions 1–2 below therefore
+> describe the *intended* `CalleeId` design that lands with METEL-181, not the
+> current 180 implementation.
+
+1. **`CalleeId` keeps three variants.** *(Design for METEL-181; 180 shipped with
+   mangling instead — see decision 8.)* Dynamic aspects make `AspectMethod`
    necessarily distinct from `Method`: static method dispatch has a known
    concrete receiver `SymbolId`; aspect dispatch resolves via a vtable for
    `dyn Aspect` receivers. Same `CalleeId` variant, two backends — but a
@@ -331,14 +340,48 @@ independent commits.
 4. **No rollback feature flag.** A flag re-creates the `StdPrelude` /
    `register_builtins` duplication the sprint exists to delete. Stage A → B
    → C as separate commits on `sprint/22`, tree green at each step.
-5. **`SourceProvider` keyed by `&[String]`, not `&Path`.** The loader already
-   works in logical path segments; keeping the key in that form avoids
-   materialising filesystem paths for embedded stdlib and makes
-   `EmbeddedStdlibProvider` a plain map lookup.
+5. **`SourceProvider` receives both the module path and the resolved file path.**
+   As-built: `fn read(&self, module_path: &[String], file_path: &Path)`. The
+   loader discovers files by multi-candidate probing (`parser.mtl` vs
+   `parser/ast.mtl`, longest prefix wins), which a pure segment→path join
+   cannot reproduce — so the resolved `file_path` is passed alongside the
+   logical `module_path`. `FsSourceProvider` reads the file path;
+   `EmbeddedStdlibProvider` (METEL-181) will key on the module path and fall
+   through to the file path. *(Supersedes the earlier "keyed by `&[String]`
+   only" plan in RFC-0058.)*
 6. **Goto-definition on re-exports resolves to the original definition.**
    Natural consequence of `SymbolTable::intern` keying on `(source_module,
    source_name)` — two imports of the same re-exported symbol share a
    `SymbolId`. No extra tracking needed.
-7. **`definitions` stores name token spans only.** Hover uses the typed AST
-   directly; the definitions map is for navigation and diagnostics, both of
-   which want the name identifier, not the full declaration block.
+7. **`definitions` stores declaration spans.** Populated for every top-level
+   declaration during name resolution. Method-level coverage arrives with the
+   METEL-181 method-`SymbolId` allocation. Hover uses the typed AST directly;
+   the definitions map is for navigation and diagnostics.
+
+### Decisions made during implementation (sprint 22)
+
+8. **Overload dispatch via name-mangling (intermediate), not `CalleeId`.**
+   METEL-180 gives each overloaded definition a unique mangled runtime name
+   (`print$i32`, `print$i64`) and rewrites the declaration and every call site
+   to it in construction, so the runtime needs no overload-specific logic.
+   Single-definition functions are never mangled. This is a stepping stone:
+   the overload *selection* logic (`overload::build_overload_table`, `select`)
+   is permanent, but the string `mangle`/`type_mangle` machinery is deleted in
+   METEL-181 when each overload gains a `SymbolId` and dispatch goes through
+   `CalleeId`.
+9. **Overload ranking is exact-match only.** A candidate matches only when the
+   argument types equal its parameter types exactly; no implicit numeric `From`
+   coercion participates in selection. Chosen because coercion would make
+   multiple candidates viable (`1i32` matches `i32` exactly *and* `i64` via
+   coercion), forcing specificity ranking. Coercion still applies to
+   non-overloaded calls.
+10. **`SymbolId` dispatch scope is callables only.** METEL-181 rekeys functions,
+    methods, and aspect methods to `SymbolId` dispatch after name resolution.
+    The struct/type/enum registries (`TypeDefinitionRegistry`,
+    `RuntimeRegistry.types`) stay name-keyed; rekeying them is a separate
+    follow-up tracked in **METEL-185**.
+11. **`Display`/`to_string` covers all numeric primitives.** A latent gap
+    registered Display/`to_string` only for `i64`/`f64`; the fix (single
+    `primitive_type_name` source of truth + a registration loop across all
+    sized integers and `f32`) was required by the METEL-180 acceptance test,
+    whose body displays an `i32`. Landed as its own commit.

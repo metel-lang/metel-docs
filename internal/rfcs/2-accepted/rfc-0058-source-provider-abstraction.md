@@ -40,6 +40,17 @@ step and supply an alternative source string for a given path.
 
 ### Trait definition
 
+> **As-built note (METEL-183).** The shipped trait also receives the resolved
+> filesystem path:
+> `fn read(&self, module_path: &[String], file_path: &Path) -> Result<String, MetelError>`.
+> The loader discovers files by multi-candidate probing (`parser.mtl` vs
+> `parser/ast.mtl`, longest matching prefix wins), which a pure segment→path
+> join cannot reproduce — so it passes the already-resolved `file_path`
+> alongside the logical `module_path`. `FsSourceProvider` reads `file_path`;
+> `EmbeddedStdlibProvider` keys on `module_path` and falls through to
+> `file_path`. The "logical path only" design below is the original proposal;
+> the extra parameter is the only deviation.
+
 ```rust
 pub trait SourceProvider {
     fn read(&self, module_path: &[String]) -> Result<String, MetelError>;
