@@ -163,8 +163,8 @@ implementation provided by the host interpreter instead of a Metel body:
 
 ```metel
 // from std::core — not writable in user code
-native(@std.core.println)    pub fun println<T>(x: T);
-native(@std.core.string_len) pub fun string_len(s: String) -> i64;
+native(@std.core.println) pub fun println<T>(x: T);
+native(@std.core.clock)   pub fun clock() -> i64;
 ```
 
 A native declaration has no body — it ends with `;` instead of a block. The
