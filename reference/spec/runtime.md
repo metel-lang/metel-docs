@@ -25,6 +25,10 @@ These are available in every module without any `import` declaration (provided b
 
 `assert` is overloaded — the two-argument form carries the panic message.
 
+`print` and `println` require their argument to implement `Display`
+(`print<T: Display>`): passing a struct or enum with no `Display`
+implementation is a compile-time error.
+
 String length is a method, not a free function: `"hello".len()` returns the
 number of characters (Unicode scalar values). Strings are concatenated with
 the `+` operator.
