@@ -26,7 +26,8 @@ Declaration        → LetDeclaration
 
 LetDeclaration     → "let" IDENTIFIER ( ":" Type )? "=" Expression ";"
 MutDeclaration     → "mut" IDENTIFIER ( ":" Type )? "=" Expression ";"
-FunDeclaration     → "pub"? "fun" IDENTIFIER GenericParams? "(" Params? ")" ( "->" Type )? WhereClause? Block
+FunDeclaration     → NativeBinding? "pub"? "fun" IDENTIFIER GenericParams? "(" Params? ")" ( "->" Type )? WhereClause? ( Block | ";" )
+NativeBinding      → "native" "(" "@" IDENTIFIER ( "." IDENTIFIER )* ")"  // standard library only
 StructDeclaration  → "pub"? "struct" IDENTIFIER GenericParams? WhereClause? "{" StructFields "}"
 EnumDeclaration    → "pub"? "enum" IDENTIFIER GenericParams? WhereClause? "{" EnumVariants "}"
 ImplBlock          → "impl" ( Type "for" )? Type "{" FunDeclaration* "}"
