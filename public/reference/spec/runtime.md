@@ -8,7 +8,7 @@ Panics are triggered by:
 - `.yolo()` on `None` or a `Result::Err`
 - Out-of-bounds array access
 - Integer division by zero
-- `assert(false)` or `assert_msg(false, msg)`
+- `assert(false)` or `assert(false, msg)`
 
 ## Built-in Functions
 
@@ -18,12 +18,16 @@ These are available in every module without any `import` declaration (provided b
 |-------------------|--------------------------------------|------------------------------------------|
 | `print`           | `<T>(v: T)`                          | Print to stdout, no newline              |
 | `println`         | `<T>(v: T)`                          | Print to stdout with newline             |
-| `string_len`      | `(s: String) -> Int`                 | Number of characters in a string        |
-| `string_concat`   | `(a: String, b: String) -> String`   | Concatenate two strings                 |
 | `clock`           | `() -> Int`                          | Unix timestamp in milliseconds          |
 | `assert`          | `(cond: boolean)`                    | Panic with `"assertion failed"` if `cond` is `false` |
-| `assert_msg`      | `(cond: boolean, msg: String)`       | Panic with `msg` if `cond` is `false`   |
+| `assert`          | `(cond: boolean, msg: String)`       | Overload: panic with `msg` if `cond` is `false` |
 | `dbg`             | `<T>(v: T) -> T`                     | Print `[dbg] <value>` to stderr and return the value unchanged |
+
+`assert` is overloaded — the two-argument form carries the panic message.
+
+String length is a method, not a free function: `"hello".len()` returns the
+number of characters (Unicode scalar values). Strings are concatenated with
+the `+` operator.
 
 ## Built-in Aspects
 

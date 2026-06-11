@@ -9,9 +9,14 @@ title: "Metel Language Changelog"
 Standard library expansion and module system clarifications. Shipped from sprint/22.
 
 **New language features:**
-- Function overloading — a module may declare multiple free functions with the same name, distinguished by parameter types. Resolution is exact-match only: argument types must equal a candidate's parameter types exactly, with no implicit numeric coercion participating in selection. Overloaded functions must be non-generic with every parameter annotated; calls with no matching candidate list all available signatures in the error
+- Function overloading — a module may declare multiple free functions with the same name, distinguished by parameter types. Resolution is exact-match only: argument types must equal a candidate's parameter types exactly, with no implicit numeric coercion participating in selection (bare numeric literals default before selection, so `f(42)` picks an `i64` overload). Overloaded functions must be non-generic with every parameter annotated; calls with no matching candidate list all available signatures in the error
 - Aspects can now be implemented for primitive types — `impl Display for i64 { … }` and the like typecheck and run; the standard library's `Display` and `From` implementations for the primitives are declared this way
 - `native` declaration syntax for stdlib-only host-backed implementations — free functions, methods, and aspect methods can be marked `native` with an explicit binding key. Reserved for the standard library; using it in user code is a compile error
+
+**Standard library (breaking):**
+- `assert` is now overloaded: `assert(cond)` and `assert(cond, msg)`. The separate `assert_msg` function is removed — replace `assert_msg(c, m)` with `assert(c, m)`
+- `string_len(s)` is removed in favour of a `len` method on `String`: use `s.len()`
+- `string_concat(a, b)` is removed — use the `+` operator: `a + b`
 
 **Module system:**
 - Using `std` as a top-level module name is now a compile error. A file at `std.mtl` or anywhere under `std/` in the project tree produces: `error: module path std::… is reserved for the standard library`. The `std` keyword was already reserved in the language syntax; the interpreter now enforces the same reservation at the module path level.
