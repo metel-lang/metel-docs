@@ -14,6 +14,8 @@ Standard library expansion and module system clarifications. Shipped from sprint
 - `native` declaration syntax for stdlib-only host-backed implementations — free functions, methods, and aspect methods can be marked `native` with an explicit binding key. Reserved for the standard library; using it in user code is a compile error
 
 **Standard library (breaking):**
+- `print`/`println` now require `Display` at compile time — passing a type with no `Display` implementation is a type error (`T0012`) instead of a runtime panic
+- A module's function overloads extend, rather than replace, a same-named standard-library function: if no overload matches exactly, the call falls back to the outer binding (e.g. overloading `print` for specific types keeps the generic `print` reachable for everything else)
 - `assert` is now overloaded: `assert(cond)` and `assert(cond, msg)`. The separate `assert_msg` function is removed — replace `assert_msg(c, m)` with `assert(c, m)`
 - `string_len(s)` is removed in favour of a `len` method on `String`: use `s.len()`
 - `string_concat(a, b)` is removed — use the `+` operator: `a + b`
