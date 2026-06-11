@@ -12,9 +12,11 @@ Define the first standard-library boundary for Metel.
 `std::core` is the small, language-adjacent prelude. It keeps the core sum
 types, the core aspects, and `List<T>` — and, with this revision, it also owns
 the collection and iteration ergonomics (`map`, `filter`, `fold`, `contains`,
-`find`, …) as methods on `List<T>` rather than splitting them into separate
-`std::collections` / `std::iter` modules. The only ordinary (non-prelude,
-non-host) library module in the first cut is `std::math`.
+`find`, …) as methods on `List<T>`, plus the string utility surface (`trim`,
+`split`, `to_upper`, `contains`, `chars`, …) as methods on `String`, rather than
+splitting these into separate `std::collections` / `std::iter` / `std::str`
+modules. The only ordinary (non-prelude, non-host) library module in the first
+cut is `std::math`.
 
 This RFC introduces host-backed library modules under `std::` for operating-
 system interaction: environment variables (`std::env`), file operations
@@ -66,6 +68,8 @@ The following items belong in `std::core`:
 - `Result<T, E>`
 - `List<T>` (core collection type, with its ergonomic method surface — see
   Decision 3)
+- the `String` utility surface (methods on the primitive `String` — see
+  Decision 4)
 - `Display`
 - `From<S>`
 - `Iterable<T>`
@@ -115,9 +119,36 @@ Whether each helper is an inherent method on `List<T>` or eventually rides an
 usefulness over a final iterator architecture; a lazy iterator design remains
 deferred to a follow-up RFC. There is **no** `std::collections`, `std::iter`,
 or `std::cmp` module in the first cut — comparison helpers (`min`/`max`/`clamp`)
-are covered by `std::math` (Decision 4).
+are covered by `std::math` (Decision 5).
 
-### 4. `std::math` is the one ordinary library module
+### 4. String utilities live on `String` in `std::core`
+
+`String` is a primitive, language-adjacent type — `String::len` already lives in
+`std::core` as a native method — so its utility surface belongs there too, as
+methods on `String`, not in a separate `std::str` / `std::string` module. They
+are host-backed (native), computed by the runtime string value.
+
+Indexing is by **Unicode scalar value**, consistent with `String::len` (which
+counts scalars, not bytes); byte-level and grapheme-level APIs are deferred.
+Operations are total — out-of-range indices clamp or yield `Perhaps::None`
+rather than panicking.
+
+Initial API direction (methods on `String`):
+
+- **Case & trim:** `to_upper`, `to_lower`, `trim`, `trim_start`, `trim_end`,
+  `is_empty` (the last derivable as `self.len() == 0`).
+- **Search & test:** `contains(needle)`, `starts_with(prefix)`,
+  `ends_with(suffix)`, `index_of(needle) -> Perhaps<i64>`.
+- **Split, join, replace:** `split(sep) -> String[]`, `replace(from, to)`,
+  `repeat(n)`, and the associated `String::join(parts: String[], sep: String) ->
+  String`.
+- **Chars & slicing:** `chars() -> Char[]`, `char_at(i) -> Perhaps<Char>`,
+  `substring(start, end) -> String` (scalar-indexed, clamped).
+
+Regex, formatting/interpolation, Unicode normalization, and encoding conversions
+are out of scope for the first cut.
+
+### 5. `std::math` is the one ordinary library module
 
 `std::math` is the single non-prelude, non-host module in the first cut. It is
 an ordinary library namespace — not auto-imported; programs import it
@@ -133,7 +164,7 @@ Initial API direction:
 Additional numeric functionality should be added only when it clearly supports
 real programs. This RFC does not attempt to define a large numerical library.
 
-### 5. Host-backed APIs live in explicit modules under `std::`
+### 6. Host-backed APIs live in explicit modules under `std::`
 
 Operating-system interaction is not part of the implicit prelude. It must be
 placed in explicit modules under `std::`.
@@ -148,7 +179,7 @@ These modules are ordinary library namespaces from the language user's
 perspective, even though their implementation is host-backed (native). They are
 not auto-imported. Programs must import them explicitly.
 
-### 6. Initial scope of `std::env`
+### 7. Initial scope of `std::env`
 
 `std::env` is the boundary for host process environment inspection.
 
@@ -160,7 +191,7 @@ Initial API direction:
 Read-only APIs are in scope for the first release. Mutating the host process
 environment, such as `set_var` or `remove_var`, is deferred.
 
-### 7. Initial scope of `std::process`
+### 8. Initial scope of `std::process`
 
 `std::process` covers command-line arguments and subprocess execution.
 
@@ -191,7 +222,7 @@ This keeps quoting, shell expansion, and platform-specific command parsing out
 of the first stdlib cut. Users can still invoke a shell explicitly if they want
 one.
 
-### 8. Initial scope of `std::fs`
+### 9. Initial scope of `std::fs`
 
 `std::fs` covers simple file operations.
 
@@ -217,7 +248,7 @@ stdlib cut. It returns directory entry names rather than a metadata-rich entry
 type. More specialized helpers such as file-only filtering are deferred until
 Metel has a clearer metadata model.
 
-### 9. A dedicated error type is preferred over `Result<T, String>`
+### 10. A dedicated error type is preferred over `Result<T, String>`
 
 Host-backed APIs should not standardize on raw `String` errors.
 
@@ -230,7 +261,7 @@ a breaking redesign of every filesystem and process API.
 The exact representation of `OsError` is deferred. It may begin as an opaque
 runtime-backed type.
 
-### 10. Networking is deferred
+### 11. Networking is deferred
 
 Networking is not part of the first standard-library milestone.
 
@@ -262,8 +293,9 @@ The standard library follows this rule:
 
 Examples:
 
-- `Perhaps`, `Result`, `Display`, `From`, `Iterable`, and `List<T>` (with its
-  collection/iteration methods) belong in `std::core`
+- `Perhaps`, `Result`, `Display`, `From`, `Iterable`, `List<T>` (with its
+  collection/iteration methods), and the `String` utility methods belong in
+  `std::core`
 - numeric helpers (`abs`/`min`/`max`/`clamp`) belong in `std::math`
 - environment variables, files, subprocesses, and networking do not belong in
   `std::core`
@@ -281,13 +313,14 @@ Recommended implementation order:
 
 1. `Perhaps` / `Result` utility methods in `std::core`
 2. `List<T>` collection + iteration ergonomics in `std::core`
-3. `std::math`
+3. `String` utility methods in `std::core`
 4. `OsError` host error type
 5. `std::env`
 6. `std::fs`
 7. `std::process`
-8. Public spec / reference updates and tutorial refresh
-9. Design networking in a dedicated follow-up RFC
+8. `std::math` (after the `Ord` aspect, RFC-0062)
+9. Public spec / reference updates and tutorial refresh
+10. Design networking in a dedicated follow-up RFC
 
 ---
 
@@ -297,6 +330,8 @@ Recommended implementation order:
 - Finalizing whether every collection helper is an inherent method or an
   `Iterable`-based abstraction
 - Designing a lazy iterator architecture in the first stdlib cut
+- String regex, formatting/interpolation, Unicode normalization, byte/grapheme
+  indexing, or encoding conversions (the first cut is scalar-indexed utilities)
 - Designing async I/O, futures, or an event loop
 - Designing sockets, TLS, or general networking APIs
 - Finalizing the representation of `OsError`
