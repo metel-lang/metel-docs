@@ -9,12 +9,16 @@ title: "Metel Language Changelog"
 Standard library expansion and module system clarifications. Shipped from sprint/22.
 
 **New language features:**
-- `native` declaration syntax for stdlib-only host-backed implementations — free functions, methods, and aspect methods can be marked `native` with an explicit binding key
+- Function overloading — a module may declare multiple free functions with the same name, distinguished by parameter types. Resolution is exact-match only: argument types must equal a candidate's parameter types exactly, with no implicit numeric coercion participating in selection. Overloaded functions must be non-generic with every parameter annotated; calls with no matching candidate list all available signatures in the error
+- Aspects can now be implemented for primitive types — `impl Display for i64 { … }` and the like typecheck and run; the standard library's `Display` and `From` implementations for the primitives are declared this way
+- `native` declaration syntax for stdlib-only host-backed implementations — free functions, methods, and aspect methods can be marked `native` with an explicit binding key. Reserved for the standard library; using it in user code is a compile error
 
 **Module system:**
 - Using `std` as a top-level module name is now a compile error. A file at `std.mtl` or anywhere under `std/` in the project tree produces: `error: module path std::… is reserved for the standard library`. The `std` keyword was already reserved in the language syntax; the interpreter now enforces the same reservation at the module path level.
 
 **Internal improvements:**
+- `std::core` is now a real module compiled into the interpreter binary and checked through the normal module pipeline, rather than a set of hand-registered builtins — the entire core surface (`Perhaps`, `Result`, `Display`/`From`/`Iterable`, `List<T>`, `print`/`println`/`assert`/…) is declared in standard library source. No user-visible behaviour change; `import std::core::…` works as before
+- Overloaded calls dispatch by stable symbol identity rather than by name throughout the pipeline
 - Symbol definition index — every declared symbol now has a stable definition site recorded during name resolution; used by diagnostics and future tooling
 - Error span accessor — all error variants that carry source location now expose it through a uniform interface
 
