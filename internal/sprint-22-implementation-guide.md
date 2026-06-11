@@ -39,13 +39,13 @@ at sprint close from `sprint/22` to `main` per the standard sprint workflow in
 to the next.
 
 **Documentation commitments** (sprint-close gate):
-- ADR in `metel-interpreter/docs/decisions/` covering the `CalleeId` /
-  overload-resolution architecture (Stage A) and the `native` binding model
-  (Stage B). One ADR or two — split if either grows past ~300 lines.
-- Spec section in `docs/public/reference/spec/` for the `native(@…)` form,
-  including the stdlib-only restriction and the `NativeKey` rationale.
-- Changelog entry in `docs/public/release-notes/changelog.md` for 0.8.3
-  (already drafted).
+- ✅ ADRs in `metel-interpreter/docs/decisions/`: `adr-0038` (overload
+  resolution + SymbolId dispatch, Stage A) and `adr-0039` (native binding
+  model + embedded std::core, Stages B/C; supersedes ADR-0027).
+- ✅ Spec: `native(@…)` section in `docs/public/reference/spec/functions.md`
+  (stdlib-only restriction, bodiless form, caller-side transparency) and the
+  `NativeBinding` production in `grammar.md`.
+- ✅ Changelog entry in `docs/public/release-notes/changelog.md` for 0.8.3.
 - No RFC for `native` — treated as an internal compiler form, not a public
   language feature (decision recorded above).
 
@@ -315,13 +315,23 @@ independent commits.
 
 ## 7. Resolved decisions
 
-> **As-built status (sprint 22).** Stages A (METEL-180), B (METEL-182),
-> C.1 (METEL-183), and METEL-184 shipped. METEL-181 (std::core unification +
-> the `SymbolId`/`CalleeId` dispatch rekeying) is deferred to a dedicated
-> session. **METEL-180 shipped with name-mangling as an intermediate dispatch
-> mechanism, not `CalleeId`** — see decision 8. Decisions 1–2 below therefore
-> describe the *intended* `CalleeId` design that lands with METEL-181, not the
-> current 180 implementation.
+> **As-built status (sprint 22, final).** All five issues shipped:
+> Stages A (METEL-180 + METEL-184), B (METEL-182), C.1 (METEL-183), and
+> C.2 (METEL-181) are complete on `sprint/22` (worktree branch
+> `sprint/22-stdcore` developed the C.2 cutover and was fast-forward merged).
+> The full core surface — Perhaps/Result, the core aspects, List<T>, the
+> primitive Display impls, the numeric From cross-product, Char ↔ u32 — is
+> declared in the embedded `stdlib/core.mtl`; the resolver injection, the
+> GlobalExports seed, and the name-mangling intermediate are all deleted.
+> See `metel-interpreter/docs/METEL-181-handoff.md` for the landed state and
+> ADR-0038/ADR-0039 for the architecture.
+>
+> Deviations from the plan as written: the three-variant `CalleeId` enum was
+> never introduced (decision 12); `StdPrelude` was renamed and retained as the
+> derived `CorePrelude` rather than deleted (decision 13); §A.3's "full"
+> overload ranking was superseded by exact-match-only (decision 9). Residual
+> string lookups are tracked in METEL-185 (type registries + method-level ids
+> + aspect string fallback) and METEL-187 (lexical-env function lookup).
 
 1. **`CalleeId` keeps three variants.** *(Design for METEL-181; 180 shipped with
    mangling instead — see decision 8.)* Dynamic aspects make `AspectMethod`
@@ -366,9 +376,9 @@ independent commits.
    to it in construction, so the runtime needs no overload-specific logic.
    Single-definition functions are never mangled. This is a stepping stone:
    the overload *selection* logic (`overload::build_overload_table`, `select`)
-   is permanent, but the string `mangle`/`type_mangle` machinery is deleted in
-   METEL-181 when each overload gains a `SymbolId` and dispatch goes through
-   `CalleeId`.
+   is permanent, but the string `mangle`/`type_mangle` machinery was deleted
+   later in the same sprint when each overload gained a `SymbolId` and call
+   sites began carrying `callee_id` (see decision 12 and ADR-0038).
 9. **Overload ranking is exact-match only.** A candidate matches only when the
    argument types equal its parameter types exactly; no implicit numeric `From`
    coercion participates in selection. Chosen because coercion would make
@@ -384,4 +394,45 @@ independent commits.
     registered Display/`to_string` only for `i64`/`f64`; the fix (single
     `primitive_type_name` source of truth + a registration loop across all
     sized integers and `f32`) was required by the METEL-180 acceptance test,
-    whose body displays an `i32`. Landed as its own commit.
+    whose body displays an `i32`. Landed as its own commit. (Later subsumed:
+    the impls now live in `stdlib/core.mtl` as real declarations.)
+
+12. **No `CalleeId` enum; `Option<SymbolId>` on `Call` instead.** Only free
+    functions can be overloaded, so the typed AST carries
+    `TypedExpr::Call::callee_id: Option<SymbolId>` and
+    `TypedFunDecl::symbol_id: Option<SymbolId>`; the evaluator dispatches
+    `Some(id)` calls through a SymbolId-keyed registry
+    (`RuntimeRegistry::symbol_values`). Overload SymbolIds come from a
+    process-global allocator in a dedicated range
+    (`symbols::OVERLOAD_SYM_START = 0x4000_0000`), not from the name
+    resolver's `SymbolTable` — the §A.2 multi-id interning design was never
+    needed. The three-variant enum can arrive with METEL-185's method
+    rekeying. Overloads never enter the name-keyed scheme env or the export
+    surface. (ADR-0038.)
+
+13. **`CorePrelude` retained (renamed from `StdPrelude`), not deleted.** The
+    single-program pipeline (`check`/`evaluate_with_ctx`) performs no module
+    loading, so it still needs per-context seeding — but the prelude is now a
+    pure *derivation* of the embedded `stdlib/core.mtl`
+    (`populate_schemes_from_embedded_core`), not a hand-maintained list.
+    Likewise `register_builtins` survives as a thin shell: the embedded-core
+    derivation call plus the String/array `len` pattern methods and the
+    Range/RangeInclusive Iterable impls, none of which are expressible as
+    named-type declarations. The §C.2 "delete StdPrelude / register_builtins"
+    bullets are superseded in this form. (ADR-0039.)
+
+14. **Value-driven native keys.** One `@std.core.to_string` key serves all 13
+    primitive Display impls (the host formats by runtime value); the numeric
+    `From` cross-product uses one key per *target* type (the source type
+    travels in the value; `u32`'s host also accepts `Char`). 27 keys total
+    cover the full core surface.
+
+15. **Follow-ups filed from the post-sprint string-dispatch audit.**
+    METEL-185 (expanded): type-registry rekeying + method-level SymbolIds in
+    `MethodCall`/`MethodDispatch` + deletion of the evaluator's aspect
+    string fallback (root cause: single-program embedded-core seeding
+    registers aspect methods with `aspect_id: None`). METEL-187 (new):
+    symbol-keyed resolution for ordinary function values in the lexical
+    environment — an architectural question about first-class values, kept
+    out of METEL-185. METEL-186 (new): RFC-0060 aspect impl coherence /
+    orphan rule.

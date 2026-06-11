@@ -155,3 +155,36 @@ fun main() -> Int {
 `?` desugars to: if the expression is `Err(e)`, return `Err(E2::from(e))` immediately (where `E2` is the enclosing function's error type); otherwise unwrap to the `Ok` value.
 
 The inner expression's error type `E1` and the function's return error type `E2` must satisfy `E2: From<E1>`. When `E1 == E2` no conversion is performed. When they differ, `From::from` is called automatically on the error value before re-wrapping in `Err`.
+
+## Native Functions (Standard Library Only)
+
+Standard library declarations may be marked `native`, binding them to an
+implementation provided by the host interpreter instead of a Metel body:
+
+```metel
+// from std::core — not writable in user code
+native(@std.core.println)    pub fun println<T>(x: T);
+native(@std.core.string_len) pub fun string_len(s: String) -> i64;
+```
+
+A native declaration has no body — it ends with `;` instead of a block. The
+`@`-path inside the parentheses is the binding key that selects the host
+implementation. The form is also valid on methods inside `impl` blocks; for
+example, the primitive `Display` implementations in `std::core` are declared
+this way:
+
+```metel
+impl Display for i64 {
+    native(@std.core.to_string) fun to_string(&self) -> String;
+}
+```
+
+**`native` is reserved for the standard library.** Using it in any module
+outside the `std` namespace is a compile error, and user projects cannot place
+modules under `std::` (see [Modules](modules.md)). From the caller's side,
+native functions are indistinguishable from ordinary functions: they are
+imported, typechecked, and called exactly like any other declaration — the
+binding key is an implementation detail of the standard library's source.
+
+Native declarations must annotate every parameter type; an omitted return
+type means the function returns `()`.
