@@ -4,6 +4,30 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.9.0
+
+The first presentable standard library. Shipped from sprint/23.
+
+**Language:**
+- Methods on generic types now work end-to-end. Generic structs *and* generic enums can carry methods with their own type parameters (`fun map<U>(self, f: (T) -> U) -> Box<U>`), closures, and `match self`, and they dispatch correctly across module boundaries. This unblocks the standard library's methods on `Perhaps`, `Result`, and `List`
+
+**Standard library — `std::core` (auto-imported):**
+- `Perhaps<T>` combinators: `is_some`, `is_none`, `map`, `and_then`, `unwrap_or`, `unwrap_or_else`
+- `Result<T, E>` combinators: `is_ok`, `is_err`, `map`, `and_then`, `unwrap_or`, `unwrap_or_else`
+- `List<T>` ergonomics: `map`, `filter`, `fold`, `find`, `concat` (in addition to `new`/`from`/`push`/`pop`/`len`/`get`/`as_slice`)
+- `String` utilities: `is_empty`, `to_upper`, `to_lower`, `trim`, `trim_start`, `trim_end`, `contains`, `starts_with`, `ends_with`, `index_of`, `split`, `replace`, `repeat`, `chars`, `char_at`, `substring`, and the associated `String::join`. Index-based operations count Unicode scalars and are total (out-of-range clamps or returns `None`)
+- `OsError` — the error type for the host modules, with a `Display` implementation and a `message()` accessor
+
+**Standard library — host modules (explicit import):**
+- `std::env` — `var(name) -> Perhaps<String>`, `vars() -> EnvVar[]` (read-only)
+- `std::fs` — text-oriented file operations (`read_to_string`, `write_string`, `append_string`, `exists`, `read_dir`, `create_dir`, `create_dir_all`, `remove_file`, `remove_dir`, `remove_dir_all`), all returning `Result<_, OsError>`
+- `std::process` — `args()` and shell-free synchronous `run(command, args) -> Result<ProcessOutput, OsError>`
+
+**Known gaps (tracked):**
+- `print`/`println` only format primitives; a type with a `Display` implementation must be printed via `.to_string()` for now
+- A tuple type does not accept an array suffix (`(T, U)[]`); name the element type instead
+- `std::math` and the comparison-dependent `List` methods (`sort`, `contains`) await a forthcoming `Ord`/`Eq` aspect
+
 ## v0.8.3
 
 Standard library expansion and module system clarifications. Shipped from sprint/22.

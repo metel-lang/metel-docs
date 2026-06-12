@@ -1,0 +1,155 @@
+---
+sidebar_position: 9
+---
+
+# Tutorial: The Standard Library
+
+Metel ships a small standard library. The core types and their methods are
+always available; a handful of host modules (files, environment, processes) are
+imported explicitly. This tutorial tours the surface you will reach for most
+often.
+
+## Lists
+
+`List<T>` is the growable collection. Build one from an array and transform it
+with `map`, `filter`, and `fold`:
+
+```metel
+fun main() {
+    let nums = List::from([1, 2, 3, 4, 5]);
+
+    let doubled = nums.map((x: i64) -> i64 { x * 2 });
+    let evens   = nums.filter((x: i64) -> boolean { x % 2 == 0 });
+    let sum     = nums.fold(0i64, (acc: i64, x: i64) -> i64 { acc + x });
+
+    println(sum);            // 15
+    println(evens.len());    // 2
+    println(doubled.get(0).unwrap_or(0)); // 2
+}
+```
+
+`map` may change the element type, and the transforms chain:
+
+```metel
+let total = List::from([1, 2, 3, 4])
+    .filter((x: i64) -> boolean { x % 2 == 1 })
+    .map((x: i64) -> i64 { x * 10 })
+    .fold(0i64, (a: i64, x: i64) -> i64 { a + x });   // 40
+```
+
+`find` returns the first matching element as a `Perhaps`, and `concat` joins two
+lists. `push`, `pop`, `get`, and `len` round out the collection.
+
+## Perhaps and Result
+
+`Perhaps<T>` (a value or nothing) and `Result<T, E>` (a success or an error) are
+the core optional and fallible types. Rather than always reaching for `match`,
+use their combinators:
+
+```metel
+fun main() {
+    let maybe = Perhaps::Some { value: 21 };
+
+    // Transform inside the Perhaps, then supply a fallback.
+    let doubled = maybe.map((x: i64) -> i64 { x * 2 }).unwrap_or(0); // 42
+
+    let nothing: Perhaps<i64> = Perhaps::None;
+    println(nothing.is_none());            // true
+    println(nothing.unwrap_or(7));         // 7
+}
+```
+
+`Result` works the same way, with `is_ok`/`is_err` and `map`/`and_then` carrying
+the `Err` through untouched:
+
+```metel
+let r: Result<i64, String> = Result::Ok { value: 10 };
+let n = r.map((x: i64) -> i64 { x + 5 }).unwrap_or(0);  // 15
+```
+
+## Strings
+
+Strings carry a full method surface. Every index counts **Unicode scalar
+values** (just like `len`), and the operations are total — an out-of-range index
+clamps or returns `None` instead of panicking:
+
+```metel
+fun main() {
+    let line = "  Hello, World  ";
+
+    println(line.trim());                  // "Hello, World"
+    println("abc".to_upper());             // "ABC"
+    println("hello".contains("ell"));      // true
+    println("a,b,c".split(",").len());     // 3
+    println("ab".repeat(3));               // "ababab"
+    println(String::join(["a", "b", "c"], "-")); // "a-b-c"
+
+    match "hello".index_of("l") {
+        Perhaps::Some { value } => println(value),  // 2
+        _ => println("not found"),
+    }
+}
+```
+
+## Files
+
+`std::fs` provides text-oriented file operations. They return
+`Result<_, OsError>`, so handle the error case explicitly:
+
+```metel
+import std::fs::{write_string, read_to_string};
+
+fun main() {
+    match write_string("/tmp/greeting.txt", "hello") {
+        Result::Ok { value } => {},
+        Result::Err { error } => println(error.to_string()),
+    }
+
+    let contents = read_to_string("/tmp/greeting.txt").unwrap_or("");
+    println(contents);   // hello
+}
+```
+
+`OsError` implements `Display`, so `error.to_string()` (or `error.message()`)
+gives a readable description. Alongside reading and writing, `std::fs` offers
+`append_string`, `exists`, `read_dir`, and the `create_dir*` / `remove_*`
+family.
+
+## Environment and processes
+
+`std::env` reads the process environment:
+
+```metel
+import std::env::var;
+
+fun main() {
+    match var("HOME") {
+        Perhaps::Some { value } => println(value),
+        _ => println("HOME is not set"),
+    }
+}
+```
+
+`std::process` runs other programs. The API is shell-free — you pass the command
+and its arguments separately, so quoting and shell expansion never apply:
+
+```metel
+import std::process::run;
+
+fun main() {
+    match run("echo", ["hello", "world"]) {
+        Result::Ok { value } => println(value.stdout),
+        Result::Err { error } => println(error.to_string()),
+    }
+}
+```
+
+A non-zero exit status is a normal `Ok` result (inspect `value.status`); only a
+failure to launch the command is an `Err`.
+
+## Where things live
+
+Everything under "Lists", "Perhaps and Result", and "Strings" is in `std::core`
+and needs no import. The host modules — `std::env`, `std::fs`, `std::process` —
+must be imported explicitly. See the [Runtime reference](../../reference/spec/runtime.md)
+for the complete signatures.
