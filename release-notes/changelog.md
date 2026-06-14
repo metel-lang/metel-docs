@@ -4,6 +4,14 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.9.1
+
+Bug fixes. Shipped from sprint/24.
+
+**Fixes:**
+- `print` and `println` now print any value whose type implements `Display`, dispatching the user's `to_string` — previously a struct or enum with a `Display` implementation typechecked but panicked at runtime, and had to be printed via an explicit `.to_string()`
+- A tuple type now accepts an array suffix: `(T, U)[]` parses in return, parameter, and annotation positions (and a tuple is accepted as a generic type argument, e.g. `List<(String, String)>`)
+
 ## v0.9.0
 
 The first presentable standard library. Shipped from sprint/23.
@@ -24,9 +32,9 @@ The first presentable standard library. Shipped from sprint/23.
 - `std::process` — `args()` and shell-free synchronous `run(command, args) -> Result<ProcessOutput, OsError>`
 
 **Known gaps (tracked):**
-- `print`/`println` only format primitives; a type with a `Display` implementation must be printed via `.to_string()` for now
-- A tuple type does not accept an array suffix (`(T, U)[]`); name the element type instead
 - `std::math` and the comparison-dependent `List` methods (`sort`, `contains`) await a forthcoming `Ord`/`Eq` aspect
+
+(The `print`/`println` Display limitation and the tuple array-suffix parse gap noted here at release were fixed in v0.9.1.)
 
 ## v0.8.3
 

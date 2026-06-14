@@ -29,7 +29,9 @@ These are available in every module without any `import` declaration (provided b
 
 `print` and `println` require their argument to implement `Display`
 (`print<T: Display>`): passing a struct or enum with no `Display`
-implementation is a compile-time error.
+implementation is a compile-time error. A value whose type implements `Display`
+is printed through that implementation's `to_string` — user structs and enums,
+not only the built-in primitives.
 
 String length is a method, not a free function: `"hello".len()` returns the
 number of characters (Unicode scalar values). Strings are concatenated with
