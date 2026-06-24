@@ -2,10 +2,6 @@
 
 *Design exploration — June 2026*
 
-*Note: this file lives in `metel-interpreter/docs/reports/` because the `docs/`
-submodule was unavailable at time of writing. It belongs in `docs/reports/` once the
-submodule is accessible.*
-
 This report follows on from the substructural and separation types report and the
 per-field multiplicities report. Those reports established a reference capability
 vocabulary (`*iso`, `*val`, `*mut`, `*T`, `*tag`) and a scoped arena API of the form:

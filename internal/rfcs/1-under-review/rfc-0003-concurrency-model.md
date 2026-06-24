@@ -2,7 +2,6 @@
 id: rfc-0003
 title: "Concurrency Model"
 date: '2026-05-20'
-status: accepted
 ---
 
 ## Summary

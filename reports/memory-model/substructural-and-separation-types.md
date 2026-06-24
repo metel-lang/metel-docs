@@ -2,10 +2,6 @@
 
 *Design exploration — June 2026*
 
-*Note: this file lives in `metel-interpreter/docs/reports/` because the `docs/`
-submodule was unavailable at time of writing. It belongs in `docs/reports/` once the
-submodule is accessible.*
-
 This report surveys ideas from substructural type theory, uniqueness types, the Capture
 Separation Calculus, and reference capabilities, and examines how each could be
 incorporated into metel's type system and planned concurrency model.
