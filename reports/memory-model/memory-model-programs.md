@@ -1,8 +1,12 @@
 # Memory Model Programs — Design Exploration
 
-**Date:** 2026-05-26  
+**Date:** 2026-05-26 · **Updated:** 2026-06-13  
 **Status:** Exploratory — not normative  
-**Related RFCs:** RFC-0028, RFC-0025, RFC-0003  
+**Related RFCs:** RFC-0028, RFC-0025, RFC-0056, RFC-0052, RFC-0051, RFC-0003  
+
+> **⏸ Paused branch (2026-06-13).** Part 7's region/lifetime direction is **on hold** pending a memory-strategy reconsideration — the region model proved largely equivalent to `bumpalo` with softened Rust lifetimes. Part 7 is retained as the record of that evaluated branch; the linear/pointer foundation (RFC-0028) is unaffected. Current direction: `memory-strategy-research-directions.md`.
+
+> **Read this first (2026-06-13).** Parts 1–6 are the original exploration and use notation that has since been superseded: `@T` here means a *read reference* and `!T` a use-site linearity sigil. Under the **current** model (RFC-0028) `@T` is the **owning heap pointer**, linearity is declared with the `linear` keyword (no use-site sigil), and `Box::alloc`/`unique *T` are replaced by `@`-boxing. More importantly, Parts 1–5 assume *lifetimes are absent* and `Send` is the only safety bound. The settled direction is the opposite: **lifetimes are fully implemented under the hood; only the annotations are optional.** That direction is recorded in **[Part 7](#part-7--inferred-lifetimes-optional-annotations-2026-06-13)**, which supersedes the framing of Parts 1–5 and sharpens the extensions in Part 6 (especially §6.3–§6.4). The older parts are retained as historical design context.
 
 ---
 
@@ -894,9 +898,117 @@ A second step that closes most of the expressiveness gaps: ship §6.3 (output li
 
 ---
 
+## Part 7 — Inferred Lifetimes, Optional Annotations (2026-06-13)
+
+This part records the design direction settled in discussion on 2026-06-13. It supersedes the "lifetimes are absent, `Send` is the only bound" framing of Parts 1–5 and recasts the §6.3/§6.4 extensions as the *default* model rather than opt-in additions.
+
+The one-line statement of intent:
+
+> **Lifetimes are absolutely implemented under the hood and enforced. The *annotations* are what's optional — by default the programmer never writes one.**
+
+### 7.1 The thesis — the region handle carries the lifetime
+
+The design is an ergonomic fusion of two systems that each get half the picture:
+
+| | What it passes | What it gets |
+|---|---|---|
+| **Zig** | the allocator, as a runtime value | zero static safety |
+| **Rust** | the lifetime, as a compile-time phantom attached to no value | full static safety, heavy annotation |
+| **Metel** | the **region handle** — *both at once* | static safety **and** the lifetime rides on a value you already pass |
+
+A `Region<'r>` handle (RFC-0056) is simultaneously a Zig-style allocator *and* the carrier of the compile-time lifetime `'r`. Because the handle is a value you were already going to pass (Zig discipline), **"pass the allocator" and "annotate the lifetime" collapse into a single act.** This is the core idea everything else protects:
+
+```metel
+// 'r rides on the handle's type — the callee is lifetime-agnostic,
+// the caller controls where returned data lives. No '<'a>' written anywhere.
+fun build_items(reg: impl Region<'_>) -> *'_ Items {
+    reg.alloc(Items { ... })
+}
+```
+
+### 7.2 The question is "can elision be total?"
+
+Since the lifetime system is real and enforced, the only open question is whether the **annotations** can always be elided. This is Rust's lifetime-elision question taken to its limit: Rust elides annotations in common cases and *forces* them where the signature is ambiguous (e.g. `fun longest(a: *str, b: *str) -> *str` — borrows from `a`? `b`? the signature doesn't say). The answer for Metel is **yes, elision can be made total**, via a sound-but-conservative default (§7.3).
+
+### 7.3 Annotations serve *precision*, not *soundness* (the inversion)
+
+Total elision works by giving every ambiguous boundary a conservative default that is *always sound*:
+
+- An output borrow is assumed to be constrained by **all** inputs it could come from: `output lifetime = min(all input lifetimes)`. The output then cannot outlive anything it might borrow from — never dangling. It will sometimes **over-reject** (the body actually borrowed only from the longer-lived input), but it never accepts an unsound program.
+
+This inverts the role of the annotation relative to Rust, and it is the headline design property:
+
+> In **Rust**, lifetime annotations are **mandatory** and serve **soundness** — without them the code does not compile.
+> In **Metel**, lifetime annotations are **optional** and serve **precision** — without them you get a conservative-but-correct default; *with* them you unlock programs the default over-rejects.
+
+The programmer never writes `'r` to satisfy the checker. They write it only to be *more permissive* than the safe default — and most never do.
+
+### 7.4 Modular-conservative, not whole-program
+
+Two ways to deliver total elision:
+
+- **A — modular conservative (chosen).** Boundary defaults are computed from the *signature shape alone* (`min`-of-inputs), independent of the body. The signature stays a stable contract; editing a body never breaks a caller. Over-rejects, so the optional annotation exists as a precision escape hatch.
+- **B — whole-program exact (rejected).** Infer the true relationship from each body; never over-reject. But the contract now depends on the implementation — editing a body can silently change a function's inferred lifetime signature and break callers at a distance, with non-local errors. This is the Tofte–Talpin / ML Kit world (full region inference, 1994): feasible, shipped, but abandoned for diagnosability, not feasibility.
+
+The historical lineage is exactly this design axis — **Tofte–Talpin (full inference, unpredictable) → Cyclone (explicit, predictable) → Rust (explicit-but-elided)** — and Metel deliberately swings back toward inference, using two levers ML Kit lacked: **lexical regions** (the scope is visible, so inference is local and predictable) and **RFC-0056 handle-passing** (which makes the allocation case *unambiguous by construction* — the `longest`-style guess only survives for pure pointer-shuffling functions that don't allocate).
+
+### 7.5 The load-bearing invariant — annotations affect *acceptance*, never *freeing*
+
+Lifetimes decide *when memory is freed*. If inference were allowed to **extend** a region's extent to make something typecheck, then adding or removing an annotation could silently change when memory is freed — the ML Kit "lifetime leak" failure mode. The hard rule that prevents this:
+
+> **Inference (and annotations) may change whether a program is *accepted*. They may never change *when memory is freed*.** A `region 'r { }` block's storage is released at its closing brace, full stop; inference may *reject* a program but may never *stretch* a region's extent to satisfy a constraint.
+
+**Lexical regions guarantee this for free** — the block bounds the lifetime, so inference physically cannot stretch it. This is why lexical-region discipline is non-negotiable: it makes freeing behavior annotation-independent, which is what turns "optional annotations" from a footgun into a safe convenience.
+
+A corollary on the handle: because a value can escape a scope but a lifetime cannot, the `Region<'r>` handle must itself be a **linear, non-`Send`, scope-bound capability** (RFC-0028 linear + RFC-0025 "`Region` is not `Send`"). The handle may be passed *down* into callees but never escape *up* or *out*. Every other guarantee inherits from the handle's escape analysis being airtight — it is the first invariant to stress-test in implementation.
+
+### 7.6 The safety gradient
+
+"Fully optional" is realized as a gradient — you only ever *meet* a lifetime when you deliberately climb:
+
+| Level | What the programmer writes | Safety mechanism | Cost |
+|---|---|---|---|
+| 0 — default values | nothing | `Arc` / refcount | runtime overhead |
+| 1 — `region { }` | nothing (lexical, inferred) | lexical region inference | conservative rejection |
+| 2 — `Region<'r>` handles | *optionally* `'r` | inferred default + named at boundaries | you opt into reasoning about it |
+| 3 — `unsafe { Region::new/free }` | manual | none | your problem |
+
+Optional-to-**have**: Level 0 never touches a lifetime; code that never says `region`/`*T`/`linear` is safe by refcount and pays nothing — gradual typing for memory. The one place soundness can leak is the **boundary** between the checked-region world and the refcounted-default world: a `*'r T` must never flow into a refcounted value that outlives `'r`.
+
+Optional-to-**write**: you only encounter `'r` at Level 2, and only to beat the conservative default. Levels 0–1 are annotation-free.
+
+### 7.7 How the four risky features land under this model
+
+- **Returning borrows / raw pointers across functions** — `min`-of-inputs default, or unambiguous when a `Region<'r>` handle is passed. Annotation-free; write `'r` only for precision. Fully checkable.
+- **Storing borrows in structs** — the struct's `'r` parameter exists under the hood; its lifetime defaults to the transitive `min` of its region-pointer fields, inferred from field types. `NodeView<'r>` is never written unless the programmer wants precision. (This is §6.4's "region-parameterized types" — now the *default reality*, with the parameter elided rather than authored.)
+- **Self-referential / cyclic structures** — pushed to **arena + region**: the whole graph lives in one region, nodes referenced by `*'r Node` or by index, and the region lifetime makes the entire graph safe to free atomically. Regions make cyclic structures **region-safe, not edge-safe** — which is the granularity you actually want for graphs. This is the *easiest* case for elision: everything shares one `'r`, so there is nothing to relate or annotate.
+- **Aliased `*mut`** — a **separate axis** from lifetimes. Dangling-freedom comes from lifetimes; aliasing-freedom would require Rust's XOR-mutability borrow checker (the machinery being avoided). **Interpreter-first resolves it:** aliased `*mut` in the interpreter cannot cause memory corruption (the value representation is safe underneath), so Metel can *allow aliased `*mut` unchecked, guaranteeing no-corruption but not no-aliasing.* No annotation is involved because no aliasing analysis runs. The future compiler reopens this; it is deferrable.
+
+### 7.8 Open decision — annotation syntax in v1, or held?
+
+One decision remains, and it is purely about *when* the optional syntax ships:
+
+1. **Pure elision, no syntax in v1.** Ship the conservative-default checker with *no* way to write `'r` at all. Maximally clean; prove the elision covers real programs; introduce `'r` later, purely additively, only if over-rejection actually hurts. (RFC-0025 already reserves the `region 'r` label syntax for exactly this.)
+2. **Elision + annotation from day one.** Ship both, so the escape hatch exists before anyone hits the wall.
+
+**Leaning:** option 1, consistent with the strategic report's "coherence over breadth" — ship the conservative-default checker with no lifetime syntax, battle-test the inference, and add `'r` only when a real program is over-rejected. This keeps v1 honest about what it guarantees and avoids committing syntax before the inference is proven.
+
+### 7.9 Relationship to Parts 5 and 6
+
+- Part 5 ("Limitations Relative to Lifetime-Annotated Systems") is largely **resolved** by this direction: the expressiveness gaps (§5.1–§5.3, §5.5) stemmed from `@T` being a non-storable ephemeral alias with no lifetime. Under the inferred-lifetime model those become ordinary region-parameterized borrows with the parameter elided.
+- §6.3 (output lifetime elision) and §6.4 (region-parameterized types) are **promoted from optional extensions to the default model** — with the crucial change that the lifetime parameter is *inferred and conservative by default* rather than authored.
+- §6.1 (`RegionFree` replacing `Send`) remains the precise exit constraint and is tracked by **RFC-0051**.
+- The `*mut` disjointness work (§6.5) stays deferred — it is on the orthogonal aliasing axis (§7.7) and is not needed for the no-corruption guarantee.
+
+---
+
 ## References
 
-- RFC-0028: Memory and Reference Model — `docs/internal/rfcs/rfc-0028-memory-and-reference-model.md`
-- RFC-0025: Region Allocation — `docs/internal/rfcs/rfc-0025-region-allocation.md`
-- RFC-0003: Concurrency Model — `docs/internal/rfcs/rfc-0003-concurrency-model.md`
-- RFC cluster: Memory Model — `docs/internal/rfc-cluster-memory-model.md`
+- RFC-0028: Memory and Reference Model — `docs/internal/rfcs/1-under-review/rfc-0028-memory-and-reference-model.md`
+- RFC-0025: Region Allocation — `docs/internal/rfcs/1-under-review/rfc-0025-region-allocation.md`
+- RFC-0056: Explicit Region Parameters — `docs/internal/rfcs/0-draft/rfc-0056-explicit-region-parameters.md`
+- RFC-0052: Lifetime System — `docs/internal/rfcs/0-draft/rfc-0052-lifetime-system.md`
+- RFC-0051: RegionFree Exit Constraint — `docs/internal/rfcs/1-under-review/rfc-0051-regionfree-exit-constraint.md`
+- RFC-0003: Concurrency Model — `docs/internal/rfcs/2-accepted/rfc-0003-concurrency-model.md`
+- RFC cluster: Memory Model — `docs/reports/memory-model/rfc-cluster-memory-model.md`
+- Prior art: Tofte & Talpin region inference / ML Kit (1994); Cyclone regions (2002); Rust lifetimes + NLL; Zig `std.mem.Allocator`

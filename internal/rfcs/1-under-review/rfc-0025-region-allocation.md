@@ -4,6 +4,8 @@ title: "Region Allocation"
 date: '2026-05-24'
 ---
 
+> **⏸ On hold (2026-06-13) — memory-strategy reconsideration.** The region/lifetime approach is paused pending a survey of non-lifetime safety mechanisms (mutable value semantics, generational references, Perceus reference counting). On review, this model's runtime mechanism is essentially `bumpalo`, and its only non-library differentiator (invisible lifetimes) is a softened reimplementation of Rust's model. Do **not** implement. The design is retained as the evaluated "Rust-shaped" branch. See `docs/reports/memory-model/memory-strategy-research-directions.md`.
+
 ## Summary
 
 Introduce `region { }` as a block expression that provides bump-allocation from a contiguous heap block. All allocations inside the block go to the region's backing allocator and share a single lifetime `'r` — they are freed atomically when the block exits. No per-object tracking, no reference counting overhead for region-internal values. The block form is the primary interface: it is an expression, handles the region's linearity automatically, and introduces a named lifetime that the compiler can use for inference. `region { }` is the first step of Metel's lifetime system: it is the mechanism by which the programmer declares a lifetime scope without writing a lifetime annotation.
@@ -39,7 +41,7 @@ let summary = region {
 // graph and all region-internal allocations freed atomically here
 ```
 
-`region { expr }` desugars to `Region::scope(fun() { expr })`. The `Region` value is never visible to the programmer — the block scope handles its linearity automatically. There is no `Region::new`, no `region.free()`, no explicit handle to manage.
+`region { expr }` desugars to a call to the `Regionable::run` aspect method — `Regionable::run((_reg) -> { expr })` — exactly as `spawn { expr }` desugars to `Spawnable::spawn` (RFC-0003). The backing strategy defaults to `BumpRegion`. In the bare form no handle is visible: the block scope manages the region's linearity automatically, with no `region.free()` to call. An explicit handle may be bound in the header (`region reg { expr }`) and the strategy chosen (`region reg: DebugRegion { expr }`); the `Regionable` opener aspect, the `Region<'r>` allocator aspect, and handle binding are defined in RFC-0056.
 
 ### Implicit allocation
 
@@ -98,14 +100,22 @@ This is the bridge to the full lifetime system: once abstract lifetime variables
 
 ### Named region types
 
-A programmer may define a named region type for documentation and API clarity:
+A programmer may define a named region **strategy** for documentation and API clarity — the region analogue of defining a custom `Spawnable` type (RFC-0003):
 
 ```metel
-linear struct FrameArena: Region { }
-linear struct RequestArena: Region { }
+linear struct FrameArena: Regionable { /* wraps BumpRegion */ }
+linear struct RequestArena: Regionable { /* wraps BumpRegion */ }
 ```
 
-A named region type is a `linear struct` that implements the `Region` aspect. It behaves identically to an anonymous `region { }` block but carries a distinct type name that documents intent and allows APIs to be scoped to a specific arena. The `region { }` block desugars to an anonymous `Region`; a named type is the explicit alternative when the arena identity matters at API boundaries.
+A named region type is a `linear struct` that implements `Regionable` (and provides a `Region<'r>` handle to the scope body), exactly like the built-in `BumpRegion`/`DebugRegion` strategies defined in RFC-0056 — typically by wrapping `BumpRegion` for its backing. It participates in the `region { }` syntax by being named in the header, just as a custom `Spawnable` type plugs into `spawn { }`:
+
+```metel
+fun render(reg: impl Region<'_>) -> Frame { ... }   // any arena
+
+region reg: FrameArena { render(reg) }               // this arena, by name
+```
+
+It behaves identically to a bare `region { }` block (which uses the default `BumpRegion`) but carries a distinct type name that documents intent and lets APIs be scoped to a specific arena. The bare block uses `BumpRegion`; a named type is the explicit alternative when the arena identity matters at API boundaries. No compiler change is needed to add one — implementing the aspect is enough.
 
 ### `region { }` is an expression
 
@@ -176,11 +186,15 @@ Move-capture of a region-internal value into a closure that escapes the block is
 
 ## Desugaring reference
 
+The `region` block is sugar over the `Regionable::run` aspect method (RFC-0056), mirroring how `spawn { }` is sugar over `Spawnable::spawn` (RFC-0003). Region strategies (`BumpRegion`, `DebugRegion`, `FixedRegion<N>`) are the `Regionable` implementations; a bare block uses `BumpRegion`, and the closure receives the `Region<'r>` handle (`_reg` when the header binds no name).
+
 | Surface syntax | Desugars to |
 |---|---|
-| `region { expr }` | `Region::scope(fun() { expr })` |
-| `region 'r { expr }` | `Region::scope_named::<'r>(fun() { expr })` |
-| `Region::alloc(v)` inside block | bump-allocates `v` in current region's backing block |
+| `region { expr }` | `Regionable::run((_reg) -> { expr })` — strategy `BumpRegion` |
+| `region 'r { expr }` | `Regionable::run((_reg) -> { expr })`, lifetime `'r` named for annotations |
+| `region reg { expr }` | `Regionable::run((reg) -> { expr })` — handle bound (RFC-0056) |
+| `region reg: S { expr }` | `S::run((reg) -> { expr })` — strategy `S` selected (RFC-0056) |
+| `reg.alloc(v)` inside block | bump-allocates `v` in `reg`'s backing block → `*'r T` |
 | `&x` inside block | takes address of `x` in region memory → `*'r T` |
 
 ---
@@ -201,7 +215,9 @@ Each step is additive. Nothing in this RFC forecloses the later layers.
 
 ### Explicit `Region::scope` callback only
 
-The previous design used `Region::scope(fun(r) { r.create(value) })`. The `region { }` block is strictly more ergonomic: no callback syntax, no explicit region handle, no `r.create()`, no `move fun` required for closure interaction. The block desugars to the same thing internally.
+The previous design used `Region::scope(fun(r) { r.create(value) })`. The `region { }` block is strictly more ergonomic: no callback syntax, no explicit region handle, no `r.create()`, no `move fun` required for closure interaction. The block desugars to the same thing internally — now `Regionable::run` (RFC-0056).
+
+This rejected *callback-only* as the design. RFC-0056 reintroduces the callback as an explicit **secondary** form (`Regionable::run((reg) -> { ... })`) for cases where the scope must be a value — passed to a combinator, selected at runtime, or built by a library. The block remains the default and the canonical desugaring target; the callback is opt-in, not mandatory.
 
 ### Per-object linear allocation only
 

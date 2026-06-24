@@ -5,11 +5,15 @@ date: '2026-06-05'
 status: draft
 ---
 
+> **⏸ On hold (2026-06-13) — memory-strategy reconsideration.** This RFC extends the region/lifetime model, which is paused pending a survey of non-lifetime safety mechanisms. The aspect/handle design here (OQ-1 resolved, `Regionable` sugar) is sound but inherits the region model's derivative-vs-Rust problem. Do **not** implement. Retained as part of the evaluated "Rust-shaped" branch. See `docs/reports/memory-model/memory-strategy-research-directions.md`.
+
 ## Summary
 
 Extend RFC-0025's `region { }` block with explicit region handles. A `Region<'r>` value can be passed as a function parameter, allowing callees to allocate into the caller's region without making the allocation implicit or invisible. This completes the region model: the `region { }` block form handles the common case (the compiler routes allocations implicitly); the explicit handle form handles API boundaries where the caller needs to declare where returned data lives.
 
 The design is directly inspired by Zig's allocator model, where every allocating function takes an explicit `Allocator` parameter. Metel's regions and Zig's allocators are the same concept at different levels of abstraction — both are scoped allocation pools that free all contents atomically. Zig's practice of passing allocators explicitly provides strong evidence that the same discipline works at scale.
+
+Structurally, regions follow the **same philosophy as the concurrency model** (RFC-0003): the `region` block is *language sugar over aspect method calls*, and region strategies (`BumpRegion`, `DebugRegion`, `FixedRegion`) are *aspect implementations selectable by type* — exactly as `spawn { }` is sugar for `Spawnable::spawn` and works over both `Fiber` and `Thread`. The `region` block is to `Regionable` what the `spawn` block is to `Spawnable`.
 
 ---
 
@@ -42,9 +46,11 @@ let result = region {
 
 ## Proposal
 
-### The `Region` aspect
+### Aspects and desugaring
 
-`Region<'r>` is an aspect that any region implementation must satisfy:
+Following RFC-0003's model — *syntax desugars to aspect method calls, and any type implementing the aspect participates in the syntax* — the `region` block rests on two aspects. This makes regions structurally identical to `spawn`: a scoped block that desugars to an aspect method taking a closure, with multiple backing implementations selectable by type.
+
+**The allocator aspect** — the capability passed *into* the scope; it carries the lifetime `'r`:
 
 ```metel
 aspect Region<'r> {
@@ -53,21 +59,70 @@ aspect Region<'r> {
 }
 ```
 
-The lifetime `'r` is the region's scope lifetime (introduced by the enclosing `region { }` block or by a `region 'r { }` labelled block). The aspect is the mechanism by which different region implementations are interchangeable.
+The lifetime `'r` is the region's scope lifetime. This aspect is the mechanism by which different region implementations are interchangeable as *allocators*.
+
+**The opener aspect** — mirrors `Spawnable`; implemented by each region strategy. Its method opens a scope, hands the closure a `Region<'r>` handle, runs it, tears the arena down, and returns the `RegionFree` result:
+
+```metel
+aspect Regionable {
+    fun run<'r, R: RegionFree>(f: fun(Region<'r>) -> R) -> R;
+}
+```
+
+**Desugaring** (parallel to RFC-0003's `spawn` table):
+
+| Syntax | Desugars to |
+|---|---|
+| `region { BODY }` | `Regionable::run((_reg) -> { BODY })` — default strategy `BumpRegion` |
+| `region reg { BODY }` | `Regionable::run((reg) -> { BODY })` |
+| `region 'r reg { BODY }` | `Regionable::run((reg) -> { BODY })` with `'r` named for annotations |
+| `region reg: DebugRegion { BODY }` | `DebugRegion::run((reg) -> { BODY })` — strategy selected |
+
+**Strategy selection mirrors `Fiber` vs `Thread`.** In RFC-0003, `spawn { }` produces a `Fiber<T>` or a `Thread<T>` depending on the declared type, because both implement `Spawnable`. Here, `region { }` runs on `BumpRegion`, `DebugRegion`, or `FixedRegion<N>` depending on the strategy named in the header, because all implement `Regionable`:
+
+```metel
+let f: Fiber<Int>  = spawn { compute() };        // M:N fiber        (RFC-0003)
+let t: Thread<Int> = spawn { compute() };        // OS thread        (RFC-0003)
+
+region reg { ... }                    // BumpRegion — the default
+region reg: DebugRegion { ... }       // use-after-free detection
+region reg: FixedRegion<4096> { ... } // stack-backed (needs RFC-0055)
+```
+
+**One structural difference from `spawn`.** `spawn`'s closure takes no argument and the handle (`Fiber<T>`) comes *out* — it escapes and is joined later. A region's closure takes the `Region<'r>` handle *in*, and only a `RegionFree` value comes *out* — the handle is a scoped, linear, non-`Send` capability that must not escape. This is the difference between "the handle escapes and is the result" (fibers) and "the handle is scoped and the result escapes past it" (regions), and it is exactly why the region closure is `(reg) -> R` rather than `() -> T`.
 
 ### Obtaining an explicit handle
 
-Inside a `region 'r { }` block, `Region::handle()` produces a `Region<'r>` value:
+The handle is bound **in the block header** — there is no magic free function. Both the lifetime name `'r` and the handle name are optional and independent: name `'r` only when a type annotation needs to mention it, name the handle only when you allocate explicitly or pass it to a callee (see OQ-1, resolved).
 
 ```metel
-let result = region 'r {
-    let reg = Region::handle();       // Region<'r>
-    let items = build_items(reg);     // items: *'r Items
+region { ... }                 // nothing named: implicit allocation only (common case)
+region reg { ... }             // handle bound as reg: Region<'_>; lifetime anonymous
+region 'r { ... }              // lifetime named (for *'r T annotations); no handle
+region 'r reg { ... }          // both: reg: Region<'r>
+region reg: DebugRegion { ... }// handle bound, backing strategy chosen
+```
+
+```metel
+let result = region 'r reg {      // reg: Region<'r>, bound in the header
+    let items = build_items(reg);  // items: *'r Items
     summarise(items)
 };
 ```
 
 The handle is a lightweight token — it carries no data beyond the capability to allocate into `'r`. It can be passed to any function that accepts `Region<'r>` or `impl Region<'r>`.
+
+**Callback form.** The same scope is also available as a higher-order call — this *is* the opener aspect method `Regionable::run` (see "Aspects and desugaring"). The handle arrives as an explicit closure parameter. Use it when the scope is itself a value (passed to a combinator, selected at runtime, or constructed by a library):
+
+```metel
+let result = Region::run((reg) -> {            // reg: Region<'r>; defaults to BumpRegion
+    summarise(build_items(reg))                // RegionFree result escapes
+});
+
+let report = DebugRegion::run((reg) -> { ... });   // strategy selected via the aspect impl
+```
+
+The block is sugar over this call: `region 'r reg { BODY }` desugars to `Regionable::run((reg) -> { BODY })`. `Region::run` is the convenience entry that defaults to `BumpRegion`; calling `Strategy::run` on a concrete strategy selects it, exactly as `spawn` selects `Fiber` vs `Thread`. Both the block and callback forms are supported; the block is the default for ordinary lexical scopes.
 
 ### Passing a region to callees
 
@@ -84,8 +139,7 @@ fun build_items(reg: impl Region<'_>) -> *'_ Items {
 The anonymous lifetime `'_` means "some region I was given by the caller." The returned pointer lives in whichever region was passed. At the call site:
 
 ```metel
-region 'r {
-    let reg = Region::handle();
+region 'r reg {
     let items = build_items(reg);    // items: *'r Items
     summarise(items)
 }
@@ -95,7 +149,7 @@ The caller controls the lifetime. The callee is lifetime-agnostic.
 
 ### Built-in region implementations
 
-Three implementations ship in `std::alloc`:
+Three strategies ship in `std::alloc`. Each implements `Regionable` (so it participates in the `region { }` syntax, like `Fiber`/`Thread` with `spawn`) and provides a `Region<'r>` handle to the scope body:
 
 | Type | Backing | Use case |
 |---|---|---|
@@ -103,19 +157,17 @@ Three implementations ship in `std::alloc`:
 | `FixedRegion<N>` | Stack-allocated `[u8; N]` | Small, bounded allocations; no heap touch |
 | `DebugRegion` | Heap blocks with use-after-free detection | Test and debug builds |
 
-All implement `Region<'r>`. The production default is `BumpRegion`; tests should use `DebugRegion`.
+All implement `Regionable` + `Region<'r>`. The production default — selected by a bare `region { }` — is `BumpRegion`; tests should use `region reg: DebugRegion { }`. New strategies are added simply by implementing the two aspects; no compiler change is needed, exactly as a new `Spawnable` type plugs into `spawn`.
 
 ### Region nesting and composition
 
 A region may allocate from another region's backing storage — a child region whose lifetime is strictly shorter than the parent:
 
 ```metel
-region 'outer {
-    let outer_reg = Region::handle();
+region 'outer outer_reg {
     let permanent = outer_reg.alloc(PermanentData { ... });
 
-    region 'inner {
-        let inner_reg = Region::handle();
+    region 'inner inner_reg {
         let scratch = inner_reg.alloc(ScratchData { ... });
         // scratch freed when 'inner exits
     }
@@ -158,12 +210,15 @@ The two forms are unified: implicit allocations inside a `region 'r { }` block a
 
 ## Open Questions
 
-### OQ-1 — Handle syntax
+### OQ-1 — Handle syntax ✓ Resolved
 
-`Region::handle()` as a free call inside a `region` block is convenient but not obviously connected to the enclosing block's lifetime. Alternatives:
-- `region 'r` as a let binding: `let reg = region 'r { ... }` — no good because `region { }` is already an expression.
-- Compiler magic: `Region::current()` — always refers to the nearest enclosing region. Simpler syntax but less explicit.
-- Explicit scope syntax: `region 'r reg { ... }` — the handle name is declared in the block header. Less familiar but maximally explicit.
+**Decision:** The handle is bound in the **block header**, not produced by a magic free function. `Region::handle()` / `Region::current()` are dropped. The header carries an optional lifetime name and an optional handle name, independently: `region { }`, `region reg { }`, `region 'r { }`, `region 'r reg { }`. The backing strategy may be ascribed: `region reg: DebugRegion { }`.
+
+A **callback form** is also supported — `Region::run((reg) -> { ... })`, or `Strategy::run((reg) -> { ... })` to pick a backing — where the handle is an explicit closure parameter. This callback is the opener aspect method `Regionable::run` (see "Aspects and desugaring"); the block is sugar over it: `region 'r reg { BODY }` ≡ `Regionable::run((reg) -> { BODY })`. The block is the default for lexical scopes; the callback is for when the scope is itself a value.
+
+**Rationale:** binding the handle in the header makes its provenance explicit (it is a normal binding, not a reach-into-context call) and keeps the lifetime name and handle name optional so the common case stays annotation- and handle-free. Supporting both forms resolves the block-vs-callback tension from RFC-0025 (which rejected a callback-*only* design) without losing the higher-order use cases.
+
+**Rejected alternatives:** `Region::handle()` free call (provenance unclear, not connected to the enclosing lifetime); `Region::current()` compiler magic (even less explicit); `let reg = region 'r { ... }` binding form (`region { }` is already a value-producing expression, so this is ambiguous).
 
 ### OQ-2 — `impl Region` vs `Region<'r>` in function signatures
 

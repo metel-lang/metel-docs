@@ -7,6 +7,8 @@ supersedes:
   - rfc-0024
 ---
 
+> **Note (2026-06-13) — partial hold.** The **foundation layer of this RFC stands and may be implemented**: linear types, the `@T` owning pointer, and `*T`/`*mut T` raw pointers are independently valuable and survive the memory-strategy reconsideration. The **region/lifetime extension layers** referenced below (RFC-0025, RFC-0051, RFC-0052) are **on hold** pending a survey of non-lifetime safety mechanisms — see `docs/reports/memory-model/memory-strategy-research-directions.md`. Treat anything in this RFC that depends on regions or lifetimes as provisional; the linear/pointer foundation does not.
+
 ## Summary
 
 Define Metel's unified memory and reference model. The model has three interlocking parts:

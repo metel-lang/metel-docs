@@ -4,6 +4,8 @@ title: "Lifetime System"
 date: '2026-06-05'
 ---
 
+> **⏸ On hold (2026-06-13) — memory-strategy reconsideration.** A full lifetime system is the most expensive, most Rust-derivative layer of the region model, and the reconsideration is specifically evaluating whether to avoid lifetimes entirely (mutable value semantics, generational references, Perceus). Do **not** implement pending that decision. See `docs/reports/memory-model/memory-strategy-research-directions.md`.
+
 ## Summary
 
 Introduce lifetime annotations to Metel's type system. Lifetimes name the live range during which a borrowed pointer (`*'a T`) is guaranteed to remain valid. This is the third and final layer of the memory safety stack:

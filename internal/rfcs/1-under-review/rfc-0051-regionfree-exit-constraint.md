@@ -4,6 +4,8 @@ title: "RegionFree Exit Constraint"
 date: '2026-06-04'
 ---
 
+> **⏸ On hold (2026-06-13) — memory-strategy reconsideration.** `RegionFree<'r>` only has meaning if region lifetimes are adopted; it is paused with the rest of the region/lifetime model pending the mechanism survey. See `docs/reports/memory-model/memory-strategy-research-directions.md`.
+
 ## Summary
 
 Define the `RegionFree<'r>` marker aspect that gates the return type of `region { }` blocks, replacing the interim `Send` approximation used in RFC-0025. `RegionFree<'r>` is precise: it rejects only values that contain pointers tagged with the current region's lifetime `'r`, while allowing non-region raw pointers, `@T` handles, and other non-Send-but-safe values to escape the block. This RFC lands with the region lifetime layer — the point at which `*'r T` becomes a distinct type tracked by the type system.
