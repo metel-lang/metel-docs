@@ -10,7 +10,10 @@ Bug fixes. Shipped from sprint/24.
 
 **Fixes:**
 - `print` and `println` now print any value whose type implements `Display`, dispatching the user's `to_string` — previously a struct or enum with a `Display` implementation typechecked but panicked at runtime, and had to be printed via an explicit `.to_string()`
-- A tuple type now accepts an array suffix: `(T, U)[]` parses in return, parameter, and annotation positions (and a tuple is accepted as a generic type argument, e.g. `List<(String, String)>`)
+- A tuple type now accepts an array suffix: `(T, U)[]` parses and typechecks in return, parameter, local-annotation, and struct-field positions (and a tuple is accepted as a generic type argument, e.g. `List<(String, String)>`)
+
+**Testing and tooling:**
+- The integration harness now runs evaluator and typechecking fixtures through the same full module pipeline as the shipped binary, eliminating the old single-program shortcut that drifted from real `std::core` behavior
 
 ## v0.9.0
 
