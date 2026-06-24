@@ -1,15 +1,15 @@
-# Reference Capabilities + Arena Handles: A Merged Memory Model
+# Reference Capabilities + Region Handles: A Merged Memory Model
 
 *Design synthesis — June 2026*
 
 This report merges the two June-2026 explorations — **reference capabilities / separation
-types** (`substructural-and-separation-types.md`) and **arena handles as lifetime
+types** (`substructural-and-separation-types.md`) and **region handles as lifetime
 annotations** (`arena-handles-as-lifetime-annotations.md`) — into one coherent proposal,
 refines the capability set down to a minimal core, and assesses the result against the
 concerns that paused the earlier region/lifetime branch
 (`memory-strategy-research-directions.md`, `regions-by-example.md`).
 
-The two reports were written as separate surveys. They are not independent: the arena
+The two reports were written as separate surveys. They are not independent: the region
 report is built *on top of* the capability vocabulary the substructural report
 introduces. Merging them is mostly a matter of stating the single system they jointly
 describe and resolving the one apparent contradiction between them.
@@ -17,7 +17,7 @@ describe and resolving the one apparent contradiction between them.
 > **Vocabulary note.** This report writes the unique-owner capability as `*own` (the
 > substructural and arena reports call it `*iso`). The two names denote the same
 > capability — unique, mutable, sendable — and `*own` is preferred here because it reads
-> as "the owning pointer" and avoids confusion with the `iso T` *value* qualifier.
+> as "the owning pointer".
 
 ---
 
@@ -25,19 +25,19 @@ describe and resolving the one apparent contradiction between them.
 
 The substructural report opens with:
 
-> *Linear arenas as the primary memory-management mechanism have been set aside.*
+> *Linear regions as the primary memory-management mechanism have been set aside.*
 
-The arena report puts arenas back at the centre. These are reconciled by a change of
+The region report puts regions back at the centre. These are reconciled by a change of
 *role*, not a reversal:
 
-- **Old (paused) role:** the region/`bumpalo` arena was *the* memory mechanism, and a
+- **Old (paused) role:** the region/`bumpalo` region was *the* memory mechanism, and a
   Rust-style lifetime `'r` — inferred whole-program — was the safety device. Memory
   safety *was* lifetime inference.
-- **New role:** the **reference capability** is the safety device. The arena is one
+- **New role:** the **reference capability** is the safety device. The region is one
   *allocation strategy* among several, and its handle is reused as a **lifetime tag on a
   capability**, not as a free-standing inferred lifetime variable.
 
-So arenas are not "primary" in the merged system — capabilities are. The arena handle is
+So regions are not "primary" in the merged system — capabilities are. The region handle is
 demoted from "the mechanism" to "a tag that one of the capabilities can carry." That is
 the reconciliation, and it is what makes the merge coherent rather than a return to the
 paused branch.
@@ -51,18 +51,18 @@ The merged model is six layers, least to most invasive, each from one of the two
 | Layer | Mechanism | Source | Guarantee |
 |---|---|---|---|
 | 0 | Affine structs (move semantics, `Copy` opt-in) | substructural §2 | no silent duplication |
-| 1 | Reference capabilities `*own *mut *` (+ `Arc`/`Weak`, `Sync` marker — see §4) | substructural §3,5 + arena §6 | who may read / write / send |
-| 2 | Arena-handle region tags `[r]` on `*own` (and `Arc`) | arena §1–4 | scope / lifetime, named after a real object |
+| 1 | Reference capabilities `*own *mut *` (+ `Arc`/`Weak`, `Sync` marker — see §4) | substructural §3,5 + region §6 | who may read / write / send |
+| 2 | Region-handle region tags `[r]` on `*own` (and `Arc`) | region §1–4 | scope / lifetime, named after a real object |
 | 3 | Linear capability tokens (`linear struct`) + typestate | substructural §4,6 | must-consume protocols |
 | 4 | Structured fork-join (`\|\|`, `fork{}`) over disjoint state | substructural §7,8, refined §6 | data-race-free parallelism without ownership transfer |
-| 5 | Stdlib (`Box`/`Arc`/`Rc`/`Weak`, interior-mutability cells, `Heap`/`LocalHeap`, `Arena` aspect) | arena §7,10,11 | ergonomic surface; allocator polymorphism |
+| 5 | Stdlib (`Box`/`Arc`/`Rc`/`Weak`, interior-mutability cells, `Heap`/`LocalHeap`, `Region` aspect) | region §7,10,11 | ergonomic surface; allocator polymorphism |
 
 The whole point of the merge is that **layers 1, 2 and 4 share one carrier**. A single
 annotation does triple duty:
 
 - **the capability** (`*own`, `*mut`, …) says *who may touch it and whether it sends* —
   layer 1;
-- **the region tag** (`[r]`) says *how long it lives*, named after a visible arena
+- **the region tag** (`[r]`) says *how long it lives*, named after a visible region
   handle — layer 2;
 - **the region tag, again**, gives structured parallelism a *static disjointness proof* —
   two values with different tags provably cannot alias, so fork-join over them is race-free
@@ -142,7 +142,7 @@ nor `*own` from `*mut` (owning indirection vs a loan). Keep all three.
 - **sendability** is a `Sync`/`Send` *marker* on `Arc`.
 
 A sharper point: a bare, tag-free `*val` has **no reclamation story** — "freely copyable,
-sendable, not tied to any arena" leaks unless it is region-bounded or refcounted, and
+sendable, not tied to any region" leaks unless it is region-bounded or refcounted, and
 adding the refcount *is* rebuilding `Arc`. So `*val` as a primitive is underspecified, and
 the fix collapses it into `Arc`. `freeze` becomes the honest "unique → refcounted shared"
 conversion (`Arc::from_own`) with an explicit free point.
@@ -165,7 +165,7 @@ This is really a choice the two reports left straddled:
 - **Rust-style** — a minimal cap core plus *library* smart pointers whose sendability
   rides on `Send`/`Sync` markers.
 
-The reports borrow Pony's *vocabulary* (`iso`/`val`/`tag`) but Rust's *stdlib* (arena §7:
+The reports borrow Pony's *vocabulary* (`iso`/`val`/`tag`) but Rust's *stdlib* (region §7:
 "Box/Arc/Rc are ordinary stdlib structs… no compiler magic"). Those cannot both hold: if
 `Arc`/`Box` are plain library structs, then `*val`/`*tag` — which exist only to back
 `Arc`/`Weak` — belong library-side too. Metel already has the ingredients to pick
@@ -207,7 +207,7 @@ static rules forbid what they provide).
 In Rust the trusted root is `UnsafeCell`, and `RefCell`/`Mutex` are built on it in library
 code using `unsafe`. Without an `unsafe` keyword, Metel instead provides
 `Cell`/`RefCell`/`Mutex`/`RwLock` as **sealed runtime intrinsics** — types implemented by
-the runtime, exactly as `Arc`'s refcount, the arena allocator, and channels already are.
+the runtime, exactly as `Arc`'s refcount, the region allocator, and channels already are.
 The trust boundary becomes *"this type is provided by the implementation,"* not *"this
 block is unsafe"* — and no user-facing unsafe primitive needs to exist at all.
 
@@ -298,18 +298,18 @@ the operator remains.
 If safety no longer needs `||`, why keep it at all — why not just `spawn`? Because of a
 property the region model forces (§8): a `spawn`'d fiber may capture only **sendable** values
 (`*own T`, `Arc<T>`, `Copy`, channel endpoints), and region-bound values are non-sendable
-**by construction** (`*own[arena] T` is rejected at send). A fiber may outlive the region, so
+**by construction** (`*own[region] T` is rejected at send). A fiber may outlive the region, so
 it can never hold a borrow into one.
 
 That makes region-allocated data single-threaded under `spawn` alone: to parallelise over it
-you would first have to copy it to the `Heap` or wrap it in `Arc` — defeating the arena.
+you would first have to copy it to the `Heap` or wrap it in `Arc` — defeating the region.
 **Structured fork-join is the one construct that escapes this**, precisely because it is
 structured: `||` guarantees both sides complete before the expression returns, *inside* the
 region's scope, so handing each side an `*[r]`/`*mut[r]` borrow is sound — the borrow cannot
 escape the join, hence cannot outlive the region.
 
 ```metel
-Arena::scoped(fun(a: &mut Arena) {
+Region::scoped(fun(a: &mut Region) {
     let t = build(a, ...);                 // *own[a] Node — non-sendable; spawn cannot take it
     let (ls, rs) = sum(&t.left) || sum(&t.right);   // borrows into a, in parallel — sound
 });                                        // both halves provably finished before a drops
@@ -317,7 +317,7 @@ Arena::scoped(fun(a: &mut Arena) {
 
 So the operator's justification is no longer "it checks separation" but "**it is the only
 parallelism primitive compatible with the region layer's non-sendable borrows**." Nothing
-else in the system provides this; without it, arenas and parallelism can never be used
+else in the system provides this; without it, regions and parallelism can never be used
 together.
 
 ### 6.3 Use cases, and the division of labour with fibers
@@ -386,10 +386,10 @@ type is inferred from a constructor.
 fun main() {
     let b = Box::new(Counter { value: 0 });   // Box<Counter>[Heap] — no annotation
     let a = Arc::new(Config { workers: 4 });  // Arc<Config>[Heap]
-    Arena::scoped(fun(arena: &mut Arena) {
-        let n = arena.alloc(Node { val: 1 }); // *own[arena] Node — tag inferred
+    Region::scoped(fun(region: &mut Region) {
+        let n = region.alloc(Node { val: 1 }); // *own[region] Node — tag inferred
         process(n) || work_elsewhere();        // disjoint tags → parallel for free
-    });                                         // arena drops; n freed in O(1)
+    });                                         // region drops; n freed in O(1)
 }
 ```
 
@@ -422,7 +422,7 @@ fork { … }      :  n-ary fan-out; pairwise-disjoint branches, joined at the br
 ```
 
 The region tag makes the send check trivial: a value is sendable iff its capability is
-sendable **and** its tag is static (or absent). `*own[arena] T` fails the send check by
+sendable **and** its tag is static (or absent). `*own[region] T` fails the send check by
 construction — the precise property the paused branch needed `RegionFree`/`Send`
 approximations to express. And because region-bound values fail that check, **fork-join —
 not `spawn` — is the only way to process them in parallel**: its structured join keeps the
@@ -453,34 +453,34 @@ The region/lifetime branch was paused for five concerns
 
 **Partially — and the split is instructive.** The paused branch's runtime model *was*
 `bumpalo`, and its only additive part — invisible lifetimes — was judged "Rust's mental
-model, softened." The arena-handle layer **on its own does not escape that verdict**:
-`*own[arena] T` tied to the `arena` handle is, mechanically, still `bumpalo`'s `&'bump T`
+model, softened." The region-handle layer **on its own does not escape that verdict**:
+`*own[region] T` tied to the `region` handle is, mechanically, still `bumpalo`'s `&'bump T`
 tied to its `bump` handle. Naming the lifetime after the handle is the same "softened
 Rust" the earlier report already weighed.
 
-What changes the identity is **not** the arena layer but the layers around it: reference
+What changes the identity is **not** the region layer but the layers around it: reference
 capabilities (top-down, Pony-shaped, the report's own recommended non-derivative
 direction) and — decisively — the **dual use of the region tag as a fork-join disjointness
 witness**, which is genuinely novel. §6 makes this *cheaper without weakening it*: the
 novelty survives the removal of the CSC capture-set calculus, because the tag itself is the
 disjointness proof. The merged system has a defensible identity; but that identity lives in
-layers 1 and 4, and the arena layer is carried by them rather than standing on its own. This is a real improvement over the paused branch, where the region
+layers 1 and 4, and the region layer is carried by them rather than standing on its own. This is a real improvement over the paused branch, where the region
 *was* the whole story and had nothing non-derivative to lean on.
 
 It is also worth recording that the strategic-vision report does **not** reject explicit
 allocation control — it nominates "caller-controlled allocation, API-level memory
-visibility, library-friendly" as a likely identity centre. The `Arena`-as-aspect /
-`InfallibleArena` design (arena §11) is squarely that Zig-flavoured story, not the
-Rust-flavoured one. So the arena layer is derivative *as a safety mechanism* but aligned
+visibility, library-friendly" as a likely identity centre. The `Region`-as-aspect /
+`InfallibleRegion` design (region §11) is squarely that Zig-flavoured story, not the
+Rust-flavoured one. So the region layer is derivative *as a safety mechanism* but aligned
 with the stated identity *as an allocation-control mechanism*. The merge is strongest when
-the arena is presented as the latter.
+the region is presented as the latter.
 
 ### Concern 2 — Risk concentrated in cross-module lifetime inference and diagnostics
 
 **Addressed for the common case; reappears for the hard case.** The genuine win
-(arena §5): region checking for single-region code reduces to *liveness of a named
-variable* — "is `arena` still in scope here?" — which the compiler already computes, and
-errors name the actual arena (`*own[arena] value escapes the scope of arena`) instead of an
+(region §5): region checking for single-region code reduces to *liveness of a named
+variable* — "is `region` still in scope here?" — which the compiler already computes, and
+errors name the actual region (`*own[region] value escapes the scope of region`) instead of an
 abstract `'a`. That directly dissolves the §3.8 "explain a lifetime the programmer never
 wrote" diagnostic problem the earlier branch was most afraid of.
 
@@ -499,19 +499,19 @@ hard path is unchanged.
 reconsideration was: *interpreter-first wants a runtime-assisted safety mechanism
 (generational references, refcount+reuse), not a compile-time borrow-checker-lite, which is
 "the most expensive possible artifact in a setting where it buys the least."* The
-arena-handle layer is precisely a compile-time escape analysis. It re-commits to the static
+region-handle layer is precisely a compile-time escape analysis. It re-commits to the static
 direction the report argued against for the interpreter.
 
 There are mitigations, and §5–6 sharpen them: the interior-mutability cells, the fork-join
 combinator (now a runtime construct on the scheduler rather than a static capture-set check,
-§6), and arena drop are all runtime mechanisms the interpreter performs natively — and
+§6), and region drop are all runtime mechanisms the interpreter performs natively — and
 dropping the CSC calculus removes one static pass outright. The capability layer *could* be
 backed by Vale-style generational tokens (the
 research report explicitly notes caps and generational refs are "two views of the same
-question") — but the arena report does not take that route for the *region tag*; it leans
+question") — but the region report does not take that route for the *region tag*; it leans
 on static escape analysis there. If interpreter-first fit is a hard requirement, the merge
 still needs an explicit answer for layer 2: either the region tag is enforced by a runtime
-arena-generation check (interpreter) that the future compiler elides where escape analysis
+region-generation check (interpreter) that the future compiler elides where escape analysis
 proves it safe, or the static analysis is accepted as a compiler-era feature that the
 interpreter approximates conservatively.
 
@@ -540,7 +540,7 @@ Concern 3 forces for layer 2 — *that* is the thing that must be elidable.
 
 | Concern | Addressed? | Where it stands |
 |---|---|---|
-| 1 — Derivative identity | **Partially** | Identity now lives in caps + tag-as-disjointness-witness (intact without the CSC calculus, §6); arena layer alone is still softened Rust |
+| 1 — Derivative identity | **Partially** | Identity now lives in caps + tag-as-disjointness-witness (intact without the CSC calculus, §6); region layer alone is still softened Rust |
 | 2 — Inference / diagnostics risk | **Common case yes** | Single-region = named-variable liveness; multi-region = old `Outlives` machinery returns |
 | 3 — Interpreter-first / runtime-assist | **No (layer 2)** | Cells and fork-join are runtime, and §6 removes the static CSC pass; but the region tag still re-commits to static escape analysis |
 | 4 — Effort vs incumbent | **Mixed** | Reduced cap set helps; differentiated layers don't fight Rust |
@@ -555,7 +555,7 @@ separation layer from a capture-set calculus down to a fork-join combinator whos
 is to make the region layer's non-sendable borrows usable in parallel. What the merge still
 does **not** resolve is the concern the reconsideration treated as decisive —
 *interpreter-first wants runtime assistance, not a static borrow-checker-lite* — and on that
-axis the arena-handle layer (layer 2) reintroduces exactly what was set aside. The cleanest
+axis the region-handle layer (layer 2) reintroduces exactly what was set aside. The cleanest
 path forward is to keep layers 0/1/3/4/5 (the reduced capabilities, linearity, typestate,
 the structured fork-join of §6, the Zig-style allocator surface) as the spine, and to make
 the region tag of layer 2 **runtime-enforced in the interpreter with compile-time elision** —
@@ -566,7 +566,7 @@ generational references could form.
 
 ## References
 
-See `arena-handles-as-lifetime-annotations.md`, `substructural-and-separation-types.md`,
+See `region-handles-as-lifetime-annotations.md`, `substructural-and-separation-types.md`,
 and `memory-strategy-research-directions.md` for the full citation sets. The decisive
 framing for this assessment is the research-directions report's "interpreter-first
 argument" and "candidate synthesis — capabilities over lifetimes."
