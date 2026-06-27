@@ -224,9 +224,13 @@ A function (or struct, or closure) has up to three parameter channels, in this o
 fun name <type params> [region params] (value params) -> ReturnType
 ```
 
-A region parameter is a **plain name** in `[...]`. It is implicitly a `&mut Region`
-handle — available as a runtime value to call `.alloc` on, and used as a type-level tag on
-pointer types. No type annotation is written:
+A region parameter is a **name**, optionally followed by a type annotation, in `[...]`. The
+name serves all three roles at once: binder, runtime handle, and result tag.
+
+**Default (no annotation).** A bare name defaults to a **non-fallible** region — `r.alloc()`
+returns `T` directly and panics on OOM rather than returning `Result<T, _>`. The concrete
+type is inferred from context (§4.2); the call site determines whether it resolves to a
+scoped `Region`, `Heap`, or `LocalHeap` handle:
 
 ```metel
 fun build_node[region](val: i64) -> @[region] Node {
@@ -234,7 +238,18 @@ fun build_node[region](val: i64) -> @[region] Node {
 }
 ```
 
-The name serves all three roles at once: binder, runtime handle, and result tag.
+**Explicit type annotation.** To constrain a parameter to a specific allocator, annotate
+with `:` — the same form as type parameter bounds:
+
+```metel
+fun build_on_heap[r: Heap](val: i64) -> @[r] Node {
+    r.alloc(Node { val, next: null })
+}
+```
+
+The annotation is a concrete region type (`Heap`, `LocalHeap`, `Region`) or any type that
+implements the non-fallible allocator interface. Fallible allocators require an explicit
+annotation; a bare parameter never silently introduces a fallible allocation path.
 
 Functions that only need to *name* a region — to relate input and output tags without
 allocating — use the same form; they simply never call `.alloc`:
@@ -255,15 +270,17 @@ struct Parser[region] {
 
 ### 3.2 Multiple regions and `Outlives`
 
-Bounds go inline on the parameter, analogous to type parameter bounds (`<T: Eq>`):
+Bounds go inline on the parameter, using `<>` for consistency with type parameter bounds
+(`<T: Eq>`):
 
 ```metel
-fun transfer<T>[src, dst: Outlives[src]](val: @[src] T) -> @[dst] T {
+fun transfer<T>[src, dst: Outlives<src>](val: @[src] T) -> @[dst] T {
     dst.alloc(*val)
 }
 ```
 
-`Outlives[src]` names a region in brackets, keeping the notation uniform.
+`Outlives<src>` reads as "`dst` outlives `src`" and uses angle brackets so the bound form
+is uniform across both channels: `<T: Trait>` and `[r: Outlives<other>]`.
 
 ---
 
@@ -442,7 +459,7 @@ fun build_node[region](val: i64) -> @[region] Node {
 let n = build_node[r](42);     // n : @[r] Node
 
 // 2. two-region transfer — naming mandatory
-fun transfer<T>[src, dst: Outlives[src]](val: @[src] T) -> @[dst] T {
+fun transfer<T>[src, dst: Outlives<src>](val: @[src] T) -> @[dst] T {
     dst.alloc(*val)
 }
 let moved = transfer[a, b](node);
