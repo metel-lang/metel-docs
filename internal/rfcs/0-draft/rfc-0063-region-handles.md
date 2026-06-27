@@ -275,8 +275,8 @@ not own:
 
 ```metel
 struct Parser[region] {
-    input: @[region] str,
-    pos:   usize,
+    input: @[region] String,
+    pos:   u64,
 }
 ```
 
@@ -366,8 +366,8 @@ fun transfer<T>[src, dst: Outlives<src>](val: @[src] T) -> @[dst] T {
 let moved = transfer[a, b](node);
 
 // 3. struct holding a region pointer
-struct Parser[region] { input: @[region] str, pos: usize }
-fun parse[region](src: @[region] str) -> @[region] Parser {
+struct Parser[region] { input: @[region] String, pos: u64 }
+fun parse[region](src: @[region] String) -> @[region] Parser {
     region.alloc(Parser { input: src, pos: 0 })
 }
 
@@ -376,10 +376,10 @@ enum List<T>[r] {
     Cons { head: T, tail: @[r] List<T> },
     Nil {},
 }
-fun build_list[region](vals: Slice<i64>) -> @[region] List<i64> {
+fun build_list[region](vals: i64[]) -> @[region] List<i64> {
     let mut acc = region.alloc(List::Nil {});
-    for v in vals.rev() {
-        acc = region.alloc(List::Cons { head: v, tail: acc });
+    for (let i in 0..array_len(vals)) {
+        acc = region.alloc(List::Cons { head: vals[i], tail: acc });
     }
     acc
 }

@@ -13,10 +13,10 @@ date: '2026-06-27'
 
 RFC-0063 establishes the core region system — `@[r] T`, the bracket parameter channel, and
 sendability — in fully explicit form: every region argument is written out. This RFC adds
-two rules that make the common single-region case annotation-free:
+three rules that make the common single-region case annotation-free:
 
-1. **return-position elision** — bare `@` in a return type resolves to the unique in-scope
-   region;
+1. **all-position elision** — bare `@` (or `&`/`&mut` on a region-parameterised type)
+   anywhere in a type resolves to the unique in-scope region;
 2. **call-site deep-threading inference** — omitting the bracket argument at a call site
    auto-fills from the unique region handle in lexical scope.
 
@@ -25,20 +25,67 @@ two or more forces an explicit name.**
 
 ---
 
-## 1. Return-position elision
+## 1. All-position elision
 
-If exactly one region is in the bracket channel, a bare `@` in the return type binds to it:
+If exactly one region is in the bracket channel, the explicit tag `[r]` may be dropped in
+**any type position** — return types, parameter types, struct/enum field types, and local
+variable annotations. The two surface forms that elide are:
+
+| Sugar | Expands to | When legal |
+| `@T` | `@[r] T` | Always — `@` always implies a region pointer |
+| `&T` / `&mut T` | `&[r] T` / `&mut [r] T` | Only when `T` itself requires a region parameter |
+
+### 1.1 `@` positions
+
+Bare `@` always elides the single region tag:
 
 ```metel
+// return type
 fun build_node[region](val: i64) -> @Node { … }
 //                                  ^^^^^ == @[region] Node
+
+// parameter
+fun concat[region](left: @Rope, right: @Rope) -> @Rope { … }
+//                       ^^^^^                   ^^^^^  == @[region] Rope
+
+// struct / enum field
+enum Rope[r] {
+    Leaf { bytes: @String },           // == @[r] String
+    Node { left: @Rope, right: @Rope, len: u64 },  // == @[r] Rope
+}
 ```
 
-With two or more regions in scope the bare form is illegal; every result tag must be named
-(`@[dst] T`). This is the same discipline as Rust's lifetime-elision ambiguity rule.
+### 1.2 `&` / `&mut` positions
 
-`@[region] Node` (named) is the **idiomatic** form; bare `@Node` is sugar legal only under
-single-region elision. Tools may always render the inferred tag.
+Bare `&T` or `&mut T` elide the region tag **only when `T` is a region-parameterised
+type** (i.e., `T` itself has a `[r]` bracket parameter). For primitive or region-free
+types the bare `&` remains a plain borrow:
+
+```metel
+fun rope_len[r](rope: &Rope) -> u64 { … }
+//                    ^^^^^  == &[r] Rope — Rope[r] requires a region ✓
+
+fun validate[r](req: &Request, cfg: &Config) -> boolean { … }
+//                   ^^^^^^^^     ^^^^^^^^
+//                   &[r] Request (Request[r] ✓)   &Config — Config has no region param ✓
+```
+
+This disambiguates without extra syntax: the type itself tells the compiler whether `&T`
+carries a region.
+
+### 1.3 Two-or-more regions
+
+With two or more regions in scope the bare forms are illegal; every tag must be named.
+This is the same discipline as Rust's lifetime-elision ambiguity rule:
+
+```metel
+fun copy_list<[src, dst: Outlives<src>]>(v: &[src] List<u32>) -> @[dst] List<u32> { … }
+//  ^^^^^^^^^                                ^^^^^^^^^^^^^^^^^    ^^^^^^^^^^^^^^^^^
+//  two regions → all tags explicit
+```
+
+`@[region] Node` (named) is always the full explicit form; `@Node` is sugar legal only
+under single-region elision. Tools may always render the inferred tag.
 
 ---
 
@@ -48,10 +95,10 @@ At a call to a function that declares a region parameter, an omitted bracket arg
 auto-fills from the **unique region handle in lexical scope** at the call site:
 
 ```metel
-fun build_list[region](vals: Slice<i64>) -> @[region] Node {
+fun build_list[region](vals: i64[]) -> @[region] Node {
     let mut head = region.alloc(Node { val: vals[0], next: null });
-    for v in vals[1..] {
-        head = build_node(v);            // [region] inferred: sole handle in scope
+    for (let i in 1..array_len(vals)) {
+        head = build_node(vals[i]);      // [region] inferred: sole handle in scope
     }
     head
 }
@@ -100,27 +147,40 @@ means the value escapes the arena, which is worth a moment's thought.
 
 ## 3. What the programmer actually writes
 
-With both rules active, most code sees no region annotations beyond the allocation call
-itself:
+With both rules active, the region annotation surface is minimal. Below is a full
+single-region API written without elision on the left and with elision on the right:
 
-```metel
-fun main() {
-    let b = Heap.alloc(Counter { value: 0 });  // @[Heap] Counter
-    let a = Arc::new(Config { workers: 4 });   // infers [Heap] → @[Heap] Config
-    Region::scoped([region]() -> {
-        let n = region.alloc(Node { val: 1 }); // @[region] Node
-    });                                        // region drops; n freed in O(1)
-}
+```
+── without elision (RFC-0063 explicit) ──────────────────────────┐
+                                                                  │
+struct Header[r] {                  struct Header[r] {            │
+    name:  @[r] String,                 name:  @String,           │
+    value: @[r] String,                 value: @String,           │
+}                                   }                             │
+                                                                  │
+fun parse_header[region](           fun parse_header[region](     │
+    line: String,                       line: String,             │
+) -> Perhaps<@[region] Header>      ) -> Perhaps<@Header>         │
+                                                                  │
+fun find_header[r](                 fun find_header[r](           │
+    req:  &[r] Request,                 req:  &Request,           │
+    name: String,                       name: String,             │
+) -> Perhaps<@[r] String>           ) -> Perhaps<@String>         │
 ```
 
-Region tags surface explicitly only in three places:
+The `[r]` bracket channel is still written on the function and struct — that is the
+declaration that a region exists. Only the **uses** of that region inside field and
+parameter types are elided. `String` parameters and `&Config` borrows carry no region tag
+because `String` is a plain value type and `Config` has no region parameter.
 
-1. **functions that allocate into a caller-supplied region** — `[region]` in the bracket
-   channel (RFC-0063 §3);
-2. **region-polymorphic / multi-region library code** — multiple names with inline
-   `Outlives` bounds (RFC-0063 §3.2);
-3. **types holding a pointer into a region they do not own** — `struct Parser[region] { … }`
-   (RFC-0063 §3), including all recursive types.
+Static handles (`[Heap]`, `[LocalHeap]`) are always written explicitly; they are not
+bracket parameters and are never subject to elision.
+
+Region tags surface in written code in exactly three places:
+
+1. **function and type declarations** — `[region]` in the bracket channel;
+2. **multi-region code** — all tags named, `Outlives` bounds written;
+3. **static handle annotations** — `@[Heap] T`, `&[Heap] T`.
 
 ---
 

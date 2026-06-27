@@ -20,14 +20,14 @@ escape target, call-site inference (RFC-0065 §2).
 
 ```metel
 enum Rope[r] {
-    Leaf { bytes: @[r] str },
-    Node { left: @[r] Rope, right: @[r] Rope, len: usize },
+    Leaf { bytes: @[r] String },
+    Node { left: @[r] Rope, right: @[r] Rope, len: u64 },
 }
 
 // ── Construction ──────────────────────────────────────────────────────────────
 
-fun leaf[region](text: &str) -> @[region] Rope {
-    region.alloc(Rope::Leaf { bytes: region.alloc(str_copy(text)) })
+fun leaf[region](text: String) -> @[region] Rope {
+    region.alloc(Rope::Leaf { bytes: region.alloc(string_copy(text)) })
 }
 
 fun concat[region](left: @[region] Rope, right: @[region] Rope) -> @[region] Rope {
@@ -37,36 +37,36 @@ fun concat[region](left: @[region] Rope, right: @[region] Rope) -> @[region] Rop
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 
-fun rope_len[r](rope: &[r] Rope) -> usize {
+fun rope_len[r](rope: &[r] Rope) -> u64 {
     match rope {
-        Rope::Leaf { bytes }    => str_len(bytes),
+        Rope::Leaf { bytes }    => string_len(bytes),
         Rope::Node { len, .. }  => len,
     }
 }
 
-fun rope_char_at[r](rope: &[r] Rope, idx: usize) -> char {
+fun rope_char_at[r](rope: &[r] Rope, idx: u64) -> Char {
     match rope {
-        Rope::Leaf { bytes } => str_char_at(bytes, idx),
+        Rope::Leaf { bytes } => string_char_at(bytes, idx),
         Rope::Node { left, right, .. } => {
             let ll = rope_len(left);
-            if idx < ll { rope_char_at(left, idx) }
-            else        { rope_char_at(right, idx - ll) }
+            if (idx < ll) { rope_char_at(left, idx) }
+            else          { rope_char_at(right, idx - ll) }
         }
     }
 }
 
 // ── Slicing: allocates new nodes into the same region ────────────────────────
 
-fun rope_slice[region](rope: &[region] Rope, from: usize, to: usize) -> @[region] Rope {
-    if from == 0 && to == rope_len(rope) { return *rope; }
+fun rope_slice[region](rope: &[region] Rope, from: u64, to: u64) -> @[region] Rope {
+    if (from == 0 && to == rope_len(rope)) { return *rope; }
     match rope {
         Rope::Leaf { bytes } =>
-            leaf(str_slice(bytes, from, to)),   // [region] inferred (RFC-0065)
+            leaf(string_slice(bytes, from, to)),   // [region] inferred (RFC-0065)
         Rope::Node { left, right, .. } => {
             let ll = rope_len(left);
-            if to <= ll {
+            if (to <= ll) {
                 rope_slice(left, from, to)
-            } else if from >= ll {
+            } else if (from >= ll) {
                 rope_slice(right, from - ll, to - ll)
             } else {
                 // [region] inferred on both calls
@@ -96,11 +96,11 @@ fun rope_to_string[r](rope: &[r] Rope) -> @[Heap] String {
 
 fun main() {
     let result: @[Heap] String = Region::scoped([region]() -> {
-        let words = ["the ", "quick ", "brown ", "fox ", "jumps"];
+        let words: String[] = ["the ", "quick ", "brown ", "fox ", "jumps"];
 
         let mut rope = leaf(words[0]);
-        for w in words[1..] {
-            rope = concat(rope, leaf(w));    // [region] inferred throughout
+        for (let i in 1..array_len(words)) {
+            rope = concat(rope, leaf(words[i]));  // [region] inferred throughout
         }
 
         let sub = rope_slice(&rope, 4, 9);  // "quick"
@@ -117,53 +117,53 @@ fun main() {
 
 ### Post RFC-0065 — Rope
 
-Return types use bare `@`; call sites need no bracket argument; local allocations drop their
-type annotations. The `@[Heap]` return on `rope_to_string` stays explicit because `Heap` is
-not declared in the bracket channel — it is a static handle, not a region parameter, so
-elision does not apply.
+Bare `@` and bare `&`/`&mut` on region-parameterised types elide throughout — in struct
+fields, parameter types, and return types. `String` parameters stay untagged (plain values,
+not region pointers). `@[Heap]` stays explicit: `Heap` is a static handle, not a bracket
+parameter.
 
 ```metel
 enum Rope[r] {
-    Leaf { bytes: @[r] str },
-    Node { left: @[r] Rope, right: @[r] Rope, len: usize },
+    Leaf { bytes: @String },
+    Node { left: @Rope, right: @Rope, len: u64 },
 }
 
-fun leaf[region](text: &str) -> @Rope {
-    region.alloc(Rope::Leaf { bytes: region.alloc(str_copy(text)) })
+fun leaf[region](text: String) -> @Rope {
+    region.alloc(Rope::Leaf { bytes: region.alloc(string_copy(text)) })
 }
 
-fun concat[region](left: @[region] Rope, right: @[region] Rope) -> @Rope {
+fun concat[region](left: @Rope, right: @Rope) -> @Rope {
     let len = rope_len(&left) + rope_len(&right);
     region.alloc(Rope::Node { left, right, len })
 }
 
-fun rope_len[r](rope: &[r] Rope) -> usize {
+fun rope_len[r](rope: &Rope) -> u64 {
     match rope {
-        Rope::Leaf { bytes }    => str_len(bytes),
+        Rope::Leaf { bytes }    => string_len(bytes),
         Rope::Node { len, .. }  => len,
     }
 }
 
-fun rope_char_at[r](rope: &[r] Rope, idx: usize) -> char {
+fun rope_char_at[r](rope: &Rope, idx: u64) -> Char {
     match rope {
-        Rope::Leaf { bytes } => str_char_at(bytes, idx),
+        Rope::Leaf { bytes } => string_char_at(bytes, idx),
         Rope::Node { left, right, .. } => {
             let ll = rope_len(left);
-            if idx < ll { rope_char_at(left, idx) }
-            else        { rope_char_at(right, idx - ll) }
+            if (idx < ll) { rope_char_at(left, idx) }
+            else          { rope_char_at(right, idx - ll) }
         }
     }
 }
 
-fun rope_slice[region](rope: &[region] Rope, from: usize, to: usize) -> @Rope {
-    if from == 0 && to == rope_len(rope) { return *rope; }
+fun rope_slice[region](rope: &Rope, from: u64, to: u64) -> @Rope {
+    if (from == 0 && to == rope_len(rope)) { return *rope; }
     match rope {
-        Rope::Leaf { bytes } => leaf(str_slice(bytes, from, to)),
+        Rope::Leaf { bytes } => leaf(string_slice(bytes, from, to)),
         Rope::Node { left, right, .. } => {
             let ll = rope_len(left);
-            if to <= ll {
+            if (to <= ll) {
                 rope_slice(left, from, to)
-            } else if from >= ll {
+            } else if (from >= ll) {
                 rope_slice(right, from - ll, to - ll)
             } else {
                 concat(rope_slice(left, from, ll), rope_slice(right, 0, to - ll))
@@ -172,14 +172,14 @@ fun rope_slice[region](rope: &[region] Rope, from: usize, to: usize) -> @Rope {
     }
 }
 
-fun rope_write[r](rope: &[r] Rope, out: &mut [Heap] String) {
+fun rope_write[r](rope: &Rope, out: &mut [Heap] String) {
     match rope {
         Rope::Leaf { bytes }           => string_push(out, bytes),
         Rope::Node { left, right, .. } => { rope_write(left, out); rope_write(right, out); }
     }
 }
 
-fun rope_to_string[r](rope: &[r] Rope) -> @[Heap] String {
+fun rope_to_string[r](rope: &Rope) -> @[Heap] String {
     let mut s = Heap.alloc(String::with_capacity(rope_len(rope)));
     rope_write(rope, &mut s);
     s
@@ -187,9 +187,11 @@ fun rope_to_string[r](rope: &[r] Rope) -> @[Heap] String {
 
 fun main() {
     let result: @[Heap] String = Region::scoped([region]() -> {
-        let words = ["the ", "quick ", "brown ", "fox ", "jumps"];
+        let words: String[] = ["the ", "quick ", "brown ", "fox ", "jumps"];
         let mut rope = leaf(words[0]);
-        for w in words[1..] { rope = concat(rope, leaf(w)); }
+        for (let i in 1..array_len(words)) {
+            rope = concat(rope, leaf(words[i]));
+        }
 
         let sub = rope_slice(&rope, 4, 9);
         assert(rope_char_at(&sub, 0) == 'q');
@@ -214,100 +216,101 @@ consuming it, and the pattern of "process in arena, extract plain-value result."
 
 ```metel
 struct Config {
-    max_headers:    usize,
-    max_body_bytes: usize,
+    max_headers:    u64,
+    max_body_bytes: u64,
 }
 
 struct Header[r] {
-    name:  @[r] str,
-    value: @[r] str,
+    name:  @[r] String,
+    value: @[r] String,
 }
 
 struct Request[r] {
-    method:  @[r] str,
-    path:    @[r] str,
-    headers: @[r] Vec<@[r] Header>,
-    body:    @[r] [u8],
+    method:  @[r] String,
+    path:    @[r] String,
+    headers: @[r] List<@[r] Header>,
+    body:    @[r] u8[],
 }
 
 // Plain values only — escapes the arena without carrying any region pointer.
 struct Summary {
     status:       u16,
-    content_type: @[Heap] str,
-    body_bytes:   usize,
+    content_type: @[Heap] String,
+    body_bytes:   u64,
 }
 
 // ── Parsing into the request arena ───────────────────────────────────────────
 
-fun parse_header[region](line: &str) -> Perhaps<@[region] Header> {
-    match str_find(line, ':') {
+fun parse_header[region](line: String) -> Perhaps<@[region] Header> {
+    match string_find(line, ':') {
         Perhaps::None {}           => Perhaps::None {},
         Perhaps::Some { value: i } => {
-            let name  = region.alloc(str_trim(str_slice(line, 0, i)));
-            let value = region.alloc(str_trim(str_slice(line, i + 1, str_len(line))));
+            let name  = region.alloc(string_trim(string_slice(line, 0, i)));
+            let value = region.alloc(string_trim(string_slice(line, i + 1, string_len(line))));
             Perhaps::Some { value: region.alloc(Header { name, value }) }
         }
     }
 }
 
-fun parse_request[region](raw: &str) -> Perhaps<@[region] Request> {
-    let lines = str_lines(raw);
-    if vec_len(&lines) == 0 { return Perhaps::None {}; }
+fun parse_request[region](raw: String) -> Perhaps<@[region] Request> {
+    let lines = string_lines(raw);
+    if (list_len(lines) == 0) { return Perhaps::None {}; }
 
-    let parts = str_split(vec_get(&lines, 0), ' ');
-    if vec_len(&parts) < 2 { return Perhaps::None {}; }
+    let parts = string_split(lines[0], ' ');
+    if (list_len(parts) < 2) { return Perhaps::None {}; }
 
-    let method = region.alloc(str_copy(vec_get(&parts, 0)));
-    let path   = region.alloc(str_copy(vec_get(&parts, 1)));
-    let mut headers: @[region] Vec<@[region] Header> = region.alloc(Vec::new());
+    let method = region.alloc(string_copy(parts[0]));
+    let path   = region.alloc(string_copy(parts[1]));
+    let mut headers: @[region] List<@[region] Header> = region.alloc(List::new());
 
     let mut i = 1;
-    while i < vec_len(&lines) {
-        let line = vec_get(&lines, i);
-        if str_is_empty(line) { i += 1; break; }
-        if let Perhaps::Some { value: h } = parse_header(line) {  // [region] inferred
-            vec_push(&mut headers, h);
+    while (i < list_len(lines)) {
+        let line = lines[i];
+        if (string_is_empty(line)) { i += 1; break; }
+        match parse_header(line) {                                  // [region] inferred
+            Perhaps::Some { value: h } => list_push(&mut headers, h),
+            Perhaps::None {}           => {},
         }
         i += 1;
     }
 
-    let body = region.alloc(str_to_bytes(str_from_offset(raw, i)));
+    let body = region.alloc(string_to_bytes(string_from_offset(raw, i)));
     Perhaps::Some { value: region.alloc(Request { method, path, headers, body }) }
 }
 
 // ── Processing while the arena is live ───────────────────────────────────────
 
-fun find_header[r](req: &[r] Request, name: &str) -> Perhaps<@[r] str> {
-    for h in req.headers {
-        if str_eq_ignore_case(h.name, name) { return Perhaps::Some { value: h.value }; }
+fun find_header[r](req: &[r] Request, name: String) -> Perhaps<@[r] String> {
+    for (let h in req.headers) {
+        if (string_eq_ignore_case(h.name, name)) { return Perhaps::Some { value: h.value }; }
     }
     Perhaps::None {}
 }
 
-fun validate[r](req: &[r] Request, cfg: &Config) -> bool {
-    vec_len(&req.headers) <= cfg.max_headers
-        && vec_len(&req.body) <= cfg.max_body_bytes
+fun validate[r](req: &[r] Request, cfg: &Config) -> boolean {
+    list_len(req.headers) <= cfg.max_headers
+        && list_len(req.body) <= cfg.max_body_bytes
 }
 
 fun build_summary[r](req: &[r] Request) -> Summary {
     // content_type is copied to the heap — it must outlive the arena.
     let ct = match find_header(req, "content-type") {
-        Perhaps::Some { value: v } => Heap.alloc(str_copy(v)),
-        Perhaps::None {}           => Heap.alloc(str_copy("application/octet-stream")),
+        Perhaps::Some { value: v } => Heap.alloc(string_copy(v)),
+        Perhaps::None {}           => Heap.alloc(string_copy("application/octet-stream")),
     };
-    Summary { status: 200, content_type: ct, body_bytes: vec_len(&req.body) }
+    Summary { status: 200, content_type: ct, body_bytes: list_len(req.body) }
 }
 
 // ── Entry point: one arena per request ───────────────────────────────────────
 
-fun handle_request(raw: &str, cfg: &Config) -> Perhaps<Summary> {
+fun handle_request(raw: String, cfg: &Config) -> Perhaps<Summary> {
     Region::scoped([region]() -> {
         match parse_request(raw) {   // [region] inferred
             Perhaps::None {}             => Perhaps::None {},
             Perhaps::Some { value: req } =>
-                if validate(&req, cfg) {
+                if (validate(&req, cfg)) {
                     Perhaps::Some { value: build_summary(&req) }
-                    // req, headers, all str copies freed here in O(1)
+                    // req, headers, all String copies freed here in O(1)
                 } else {
                     Perhaps::None {}
                 }
@@ -322,105 +325,105 @@ fun main() {
     match handle_request(raw, &cfg) {
         Perhaps::None {}           => println("400 Bad Request"),
         Perhaps::Some { value: s } =>
-            println(u16_to_string(s.status) + " body=" + usize_to_string(s.body_bytes)),
+            println(u16_to_string(s.status) + " body=" + u64_to_string(s.body_bytes)),
     }
 }
 ```
 
 ### Post RFC-0065 — HTTP parser
 
-Return types use bare `@` where a single region is in scope. Local allocations drop their
-type annotations entirely — `let mut headers = region.alloc(Vec::new())` is inferred as
-`@[region] Vec<@[region] Header>` once the push calls provide the element type. The
-`@[Heap] str` in `Summary` and in `build_summary` stays explicit: `Heap` is a static
-handle, not a bracket parameter.
+Bare `@` elides the region tag in struct fields, parameter types, and return types wherever
+one region is in scope. Local allocations drop their type annotations entirely. Plain-value
+parameters (`String`, `&Config`) carry no region tag. `@[Heap] String` in
+`Summary` stays explicit: `Heap` is a static handle, not a bracket parameter.
 
 ```metel
 struct Config {
-    max_headers:    usize,
-    max_body_bytes: usize,
+    max_headers:    u64,
+    max_body_bytes: u64,
 }
 
 struct Header[r] {
-    name:  @[r] str,
-    value: @[r] str,
+    name:  @String,
+    value: @String,
 }
 
 struct Request[r] {
-    method:  @[r] str,
-    path:    @[r] str,
-    headers: @[r] Vec<@[r] Header>,
-    body:    @[r] [u8],
+    method:  @String,
+    path:    @String,
+    headers: @List<@Header>,
+    body:    @u8[],
 }
 
 struct Summary {
     status:       u16,
-    content_type: @[Heap] str,
-    body_bytes:   usize,
+    content_type: @[Heap] String,
+    body_bytes:   u64,
 }
 
-fun parse_header[region](line: &str) -> Perhaps<@Header> {
-    match str_find(line, ':') {
+fun parse_header[region](line: String) -> Perhaps<@Header> {
+    match string_find(line, ':') {
         Perhaps::None {}           => Perhaps::None {},
         Perhaps::Some { value: i } => {
-            let name  = region.alloc(str_trim(str_slice(line, 0, i)));
-            let value = region.alloc(str_trim(str_slice(line, i + 1, str_len(line))));
+            let name  = region.alloc(string_trim(string_slice(line, 0, i)));
+            let value = region.alloc(string_trim(string_slice(line, i + 1, string_len(line))));
             Perhaps::Some { value: region.alloc(Header { name, value }) }
         }
     }
 }
 
-fun parse_request[region](raw: &str) -> Perhaps<@Request> {
-    let lines = str_lines(raw);
-    if vec_len(&lines) == 0 { return Perhaps::None {}; }
+fun parse_request[region](raw: String) -> Perhaps<@Request> {
+    let lines = string_lines(raw);
+    if (list_len(lines) == 0) { return Perhaps::None {}; }
 
-    let parts = str_split(vec_get(&lines, 0), ' ');
-    if vec_len(&parts) < 2 { return Perhaps::None {}; }
+    let parts  = string_split(lines[0], ' ');
+    if (list_len(parts) < 2) { return Perhaps::None {}; }
 
-    let method  = region.alloc(str_copy(vec_get(&parts, 0)));
-    let path    = region.alloc(str_copy(vec_get(&parts, 1)));
-    let mut headers = region.alloc(Vec::new());
+    let method  = region.alloc(string_copy(parts[0]));
+    let path    = region.alloc(string_copy(parts[1]));
+    let mut headers = region.alloc(List::new());
 
     let mut i = 1;
-    while i < vec_len(&lines) {
-        let line = vec_get(&lines, i);
-        if str_is_empty(line) { i += 1; break; }
-        if let Perhaps::Some { value: h } = parse_header(line) {
-            vec_push(&mut headers, h);
+    while (i < list_len(lines)) {
+        let line = lines[i];
+        if (string_is_empty(line)) { i += 1; break; }
+        match parse_header(line) {
+            Perhaps::Some { value: h } => list_push(&mut headers, h),
+            Perhaps::None {}           => {},
         }
         i += 1;
     }
 
-    let body = region.alloc(str_to_bytes(str_from_offset(raw, i)));
+    let body = region.alloc(string_to_bytes(string_from_offset(raw, i)));
     Perhaps::Some { value: region.alloc(Request { method, path, headers, body }) }
 }
 
-fun find_header[r](req: &[r] Request, name: &str) -> Perhaps<@[r] str> {
-    for h in req.headers {
-        if str_eq_ignore_case(h.name, name) { return Perhaps::Some { value: h.value }; }
+fun find_header[r](req: &Request, name: String) -> Perhaps<@String> {
+    for (let h in req.headers) {
+        if (string_eq_ignore_case(h.name, name)) { return Perhaps::Some { value: h.value }; }
     }
     Perhaps::None {}
 }
 
-fun validate[r](req: &[r] Request, cfg: &Config) -> bool {
-    vec_len(&req.headers) <= cfg.max_headers
-        && vec_len(&req.body) <= cfg.max_body_bytes
+fun validate[r](req: &Request, cfg: &Config) -> boolean {
+    list_len(req.headers) <= cfg.max_headers
+        && list_len(req.body) <= cfg.max_body_bytes
 }
 
-fun build_summary[r](req: &[r] Request) -> Summary {
+fun build_summary[r](req: &Request) -> Summary {
     let ct = match find_header(req, "content-type") {
-        Perhaps::Some { value: v } => Heap.alloc(str_copy(v)),
-        Perhaps::None {}           => Heap.alloc(str_copy("application/octet-stream")),
+        Perhaps::Some { value: v } => Heap.alloc(string_copy(v)),
+        Perhaps::None {}           => Heap.alloc(string_copy("application/octet-stream")),
     };
-    Summary { status: 200, content_type: ct, body_bytes: vec_len(&req.body) }
+    Summary { status: 200, content_type: ct, body_bytes: list_len(req.body) }
 }
 
-fun handle_request(raw: &str, cfg: &Config) -> Perhaps<Summary> {
+fun handle_request(raw: String, cfg: &Config) -> Perhaps<Summary> {
     Region::scoped([region]() -> {
         match parse_request(raw) {
             Perhaps::None {}             => Perhaps::None {},
             Perhaps::Some { value: req } =>
-                if validate(&req, cfg) {
+                if (validate(&req, cfg)) {
                     Perhaps::Some { value: build_summary(&req) }
                 } else {
                     Perhaps::None {}
@@ -436,7 +439,7 @@ fun main() {
     match handle_request(raw, &cfg) {
         Perhaps::None {}           => println("400 Bad Request"),
         Perhaps::Some { value: s } =>
-            println(u16_to_string(s.status) + " body=" + usize_to_string(s.body_bytes)),
+            println(u16_to_string(s.status) + " body=" + u64_to_string(s.body_bytes)),
     }
 }
 ```
@@ -448,7 +451,7 @@ fun main() {
 A shortest-path finder over a heap-resident graph. Each BFS call allocates a fresh scratch
 arena for the queue and visited array, then frees it in O(1) when the call returns. The
 reconstructed path is written into a second, longer-lived result region via a two-region
-`copy_vec` function that uses an `Outlives` bound.
+`copy_list` function that uses an `Outlives` bound.
 
 Shows: `@[Heap]` for persistent data, per-call scratch regions, the `Outlives<src>` bound
 for copying between two region lifetimes, and the pattern of accumulating results into a
@@ -457,42 +460,42 @@ result region across multiple scratch scopes.
 ```metel
 struct Node {
     id:        u32,
-    label:     @[Heap] str,
-    neighbors: @[Heap] Vec<u32>,
+    label:     @[Heap] String,
+    neighbors: @[Heap] List<u32>,
 }
 
 struct Graph {
-    nodes: @[Heap] Vec<@[Heap] Node>,
+    nodes: @[Heap] List<@[Heap] Node>,
 }
 
 // ── Graph construction ────────────────────────────────────────────────────────
 
 fun graph_new() -> @[Heap] Graph {
-    Heap.alloc(Graph { nodes: Heap.alloc(Vec::new()) })
+    Heap.alloc(Graph { nodes: Heap.alloc(List::new()) })
 }
 
-fun add_node(g: &mut [Heap] Graph, label: &str) -> u32 {
-    let id = vec_len(&g.nodes) as u32;
-    vec_push(&mut g.nodes, Heap.alloc(Node {
+fun add_node(g: &mut [Heap] Graph, label: String) -> u32 {
+    let id = list_len(g.nodes) as u32;
+    list_push(&mut g.nodes, Heap.alloc(Node {
         id,
-        label:     Heap.alloc(str_copy(label)),
-        neighbors: Heap.alloc(Vec::new()),
+        label:     Heap.alloc(string_copy(label)),
+        neighbors: Heap.alloc(List::new()),
     }));
     id
 }
 
 fun add_edge(g: &mut [Heap] Graph, from: u32, to: u32) {
-    vec_push(&mut g.nodes[from as usize].neighbors, to);
+    list_push(&mut g.nodes[from as u64].neighbors, to);
 }
 
 // ── Two-region transfer ───────────────────────────────────────────────────────
-// Copies a Vec<u32> from a short-lived source region into a longer-lived
+// Copies a List<u32> from a short-lived source region into a longer-lived
 // destination region. The Outlives<src> bound is the static proof that dst
 // will still be alive when the copy is read — the compiler enforces it.
 
-fun copy_vec<[src, dst: Outlives<src>]>(v: &[src] Vec<u32>) -> @[dst] Vec<u32> {
-    let out = dst.alloc(Vec::with_capacity(vec_len(v)));
-    for &x in v { vec_push(&mut out, x); }
+fun copy_list<[src, dst: Outlives<src>]>(v: &[src] List<u32>) -> @[dst] List<u32> {
+    let out = dst.alloc(List::with_capacity(list_len(v)));
+    for (let x in v) { list_push(&mut out, x); }
     out
 }
 
@@ -502,59 +505,59 @@ fun bfs_into[scratch, result: Outlives<scratch>](
     graph:  &[Heap] Graph,
     start:  u32,
     target: u32,
-) -> Perhaps<@[result] Vec<u32>> {
-    let n = vec_len(&graph.nodes);
+) -> Perhaps<@[result] List<u32>> {
+    let n = list_len(graph.nodes);
 
     // All BFS state lives in the scratch arena.
-    let visited: @[scratch] Vec<bool>  = scratch.alloc(vec_repeat(false, n));
-    let parent:  @[scratch] Vec<i64>   = scratch.alloc(vec_repeat(-1_i64, n));
-    let queue:   @[scratch] Queue<u32> = scratch.alloc(Queue::new());
+    let visited: @[scratch] List<boolean>  = scratch.alloc(list_repeat(false, n));
+    let parent:  @[scratch] List<i64>      = scratch.alloc(list_repeat(-1_i64, n));
+    let queue:   @[scratch] Queue<u32>     = scratch.alloc(Queue::new());
 
-    visited[start as usize] = true;
+    visited[start as u64] = true;
     queue_push(&mut queue, start);
 
     let mut found = false;
-    while !queue_is_empty(&queue) {
+    while (!queue_is_empty(&queue)) {
         let cur = queue_pop(&mut queue);
-        if cur == target { found = true; break; }
-        for &nb in graph.nodes[cur as usize].neighbors {
-            if !visited[nb as usize] {
-                visited[nb as usize] = true;
-                parent[nb as usize]  = cur as i64;
+        if (cur == target) { found = true; break; }
+        for (let nb in graph.nodes[cur as u64].neighbors) {
+            if (!visited[nb as u64]) {
+                visited[nb as u64] = true;
+                parent[nb as u64]  = cur as i64;
                 queue_push(&mut queue, nb);
             }
         }
     }
 
-    if !found { return Perhaps::None {}; }
+    if (!found) { return Perhaps::None {}; }
 
     // Reconstruct path into scratch, then copy it into the result region.
-    let mut path: @[scratch] Vec<u32> = scratch.alloc(Vec::new());
+    let mut path: @[scratch] List<u32> = scratch.alloc(List::new());
     let mut cur = target;
     loop {
-        vec_push(&mut path, cur);
-        if cur == start { break; }
-        cur = parent[cur as usize] as u32;
+        list_push(&mut path, cur);
+        if (cur == start) { break; }
+        cur = parent[cur as u64] as u32;
     }
-    vec_reverse(&mut path);
+    list_reverse(&mut path);
 
-    // copy_vec[scratch, result] transfers ownership across the region boundary.
-    Perhaps::Some { value: copy_vec[scratch, result](&path) }
+    // copy_list[scratch, result] transfers ownership across the region boundary.
+    Perhaps::Some { value: copy_list[scratch, result](&path) }
 }
 
 // ── Batch queries: each BFS gets its own scratch region ──────────────────────
 
 fun shortest_paths[result](
     graph:   &[Heap] Graph,
-    queries: &[(u32, u32)],
-) -> @[result] Vec<Perhaps<@[result] Vec<u32>>> {
-    let results: @[result] Vec<Perhaps<@[result] Vec<u32>>> = result.alloc(Vec::new());
-    for &(start, target) in queries {
+    queries: &(u32, u32)[],
+) -> @[result] List<Perhaps<@[result] List<u32>>> {
+    let results: @[result] List<Perhaps<@[result] List<u32>>> = result.alloc(List::new());
+    for (let (start, target) in queries) {
         // scratch is nested inside result, so result Outlives scratch — bound satisfied.
         let path = Region::scoped([scratch]() -> {
             bfs_into[scratch, result](&graph, start, target)
         });
-        vec_push(&mut results, path);
+        list_push(&mut results, path);
     }
     results
 }
@@ -575,22 +578,22 @@ fun main() {
     add_edge(&mut g, d, c);
     add_edge(&mut g, c, e);
 
-    let queries: [(u32, u32)] = [(a, e), (b, d), (d, b)];
+    let queries: (u32, u32)[] = [(a, e), (b, d), (d, b)];
 
-    // Both the path vectors and the results vec live in the outer region.
+    // Both the path lists and the results list live in the outer region.
     // Each BFS call uses a nested scratch region that is freed on return.
     Region::scoped([result]() -> {
         let paths = shortest_paths[result](&g, &queries);
 
-        for (i, path_opt) in vec_enumerate(&paths) {
+        for (let (i, path_opt) in list_enumerate(paths)) {
             let (s, t) = queries[i];
             match path_opt {
                 Perhaps::None {}           =>
                     println(u32_to_string(s) + " → " + u32_to_string(t) + ": no path"),
                 Perhaps::Some { value: p } => {
-                    let labels: @[result] Vec<@[Heap] str> =
-                        vec_map(&p, (id) -> { g.nodes[id as usize].label });
-                    println(vec_join(&labels, " → "));
+                    let labels: @[result] List<@[Heap] String> =
+                        list_map[result](p, (id) -> { g.nodes[id as u64].label });
+                    println(string_join(labels, " → "));
                 }
             }
         }
@@ -600,44 +603,45 @@ fun main() {
 
 ### Post RFC-0065 — BFS
 
-`shortest_paths` gains return-position elision on both `@[result]` occurrences in its return
-type. Inside `bfs_into`, local allocations drop their type annotations; the variables are
-typed by the alloc calls. The two-region calls `bfs_into[scratch, result]` and
-`copy_vec[scratch, result]` stay explicit — two region handles are in scope at those points
-so inference would be ambiguous.
+`shortest_paths` gains all-position elision on both `@[result]` occurrences in its return
+type and the `results` local. Inside `bfs_into`, local allocations drop their type
+annotations. The two-region calls `bfs_into[scratch, result]` and
+`copy_list[scratch, result]` stay explicit — two region handles are in scope at those
+points so inference would be ambiguous. `&[Heap] Graph` and `@[Heap]` fields always stay
+explicit: `Heap` is a static handle, not a bracket parameter.
 
 ```metel
 struct Node {
     id:        u32,
-    label:     @[Heap] str,
-    neighbors: @[Heap] Vec<u32>,
+    label:     @[Heap] String,
+    neighbors: @[Heap] List<u32>,
 }
 
 struct Graph {
-    nodes: @[Heap] Vec<@[Heap] Node>,
+    nodes: @[Heap] List<@[Heap] Node>,
 }
 
 fun graph_new() -> @[Heap] Graph {
-    Heap.alloc(Graph { nodes: Heap.alloc(Vec::new()) })
+    Heap.alloc(Graph { nodes: Heap.alloc(List::new()) })
 }
 
-fun add_node(g: &mut [Heap] Graph, label: &str) -> u32 {
-    let id = vec_len(&g.nodes) as u32;
-    vec_push(&mut g.nodes, Heap.alloc(Node {
+fun add_node(g: &mut [Heap] Graph, label: String) -> u32 {
+    let id = list_len(g.nodes) as u32;
+    list_push(&mut g.nodes, Heap.alloc(Node {
         id,
-        label:     Heap.alloc(str_copy(label)),
-        neighbors: Heap.alloc(Vec::new()),
+        label:     Heap.alloc(string_copy(label)),
+        neighbors: Heap.alloc(List::new()),
     }));
     id
 }
 
 fun add_edge(g: &mut [Heap] Graph, from: u32, to: u32) {
-    vec_push(&mut g.nodes[from as usize].neighbors, to);
+    list_push(&mut g.nodes[from as u64].neighbors, to);
 }
 
-fun copy_vec<[src, dst: Outlives<src>]>(v: &[src] Vec<u32>) -> @[dst] Vec<u32> {
-    let out = dst.alloc(Vec::with_capacity(vec_len(v)));
-    for &x in v { vec_push(&mut out, x); }
+fun copy_list<[src, dst: Outlives<src>]>(v: &[src] List<u32>) -> @[dst] List<u32> {
+    let out = dst.alloc(List::with_capacity(list_len(v)));
+    for (let x in v) { list_push(&mut out, x); }
     out
 }
 
@@ -645,52 +649,52 @@ fun bfs_into[scratch, result: Outlives<scratch>](
     graph:  &[Heap] Graph,
     start:  u32,
     target: u32,
-) -> Perhaps<@[result] Vec<u32>> {
-    let n       = vec_len(&graph.nodes);
-    let visited = scratch.alloc(vec_repeat(false, n));
-    let parent  = scratch.alloc(vec_repeat(-1_i64, n));
+) -> Perhaps<@[result] List<u32>> {
+    let n       = list_len(graph.nodes);
+    let visited = scratch.alloc(list_repeat(false, n));
+    let parent  = scratch.alloc(list_repeat(-1_i64, n));
     let queue   = scratch.alloc(Queue::new());
 
-    visited[start as usize] = true;
+    visited[start as u64] = true;
     queue_push(&mut queue, start);
 
     let mut found = false;
-    while !queue_is_empty(&queue) {
+    while (!queue_is_empty(&queue)) {
         let cur = queue_pop(&mut queue);
-        if cur == target { found = true; break; }
-        for &nb in graph.nodes[cur as usize].neighbors {
-            if !visited[nb as usize] {
-                visited[nb as usize] = true;
-                parent[nb as usize]  = cur as i64;
+        if (cur == target) { found = true; break; }
+        for (let nb in graph.nodes[cur as u64].neighbors) {
+            if (!visited[nb as u64]) {
+                visited[nb as u64] = true;
+                parent[nb as u64]  = cur as i64;
                 queue_push(&mut queue, nb);
             }
         }
     }
 
-    if !found { return Perhaps::None {}; }
+    if (!found) { return Perhaps::None {}; }
 
-    let mut path = scratch.alloc(Vec::new());
+    let mut path = scratch.alloc(List::new());
     let mut cur  = target;
     loop {
-        vec_push(&mut path, cur);
-        if cur == start { break; }
-        cur = parent[cur as usize] as u32;
+        list_push(&mut path, cur);
+        if (cur == start) { break; }
+        cur = parent[cur as u64] as u32;
     }
-    vec_reverse(&mut path);
+    list_reverse(&mut path);
 
-    Perhaps::Some { value: copy_vec[scratch, result](&path) }
+    Perhaps::Some { value: copy_list[scratch, result](&path) }
 }
 
 fun shortest_paths[result](
     graph:   &[Heap] Graph,
-    queries: &[(u32, u32)],
-) -> @Vec<Perhaps<@Vec<u32>>> {
-    let results = result.alloc(Vec::new());
-    for &(start, target) in queries {
+    queries: &(u32, u32)[],
+) -> @List<Perhaps<@List<u32>>> {
+    let results = result.alloc(List::new());
+    for (let (start, target) in queries) {
         let path = Region::scoped([scratch]() -> {
             bfs_into[scratch, result](&graph, start, target)
         });
-        vec_push(&mut results, path);
+        list_push(&mut results, path);
     }
     results
 }
@@ -709,19 +713,19 @@ fun main() {
     add_edge(&mut g, d, c);
     add_edge(&mut g, c, e);
 
-    let queries: [(u32, u32)] = [(a, e), (b, d), (d, b)];
+    let queries: (u32, u32)[] = [(a, e), (b, d), (d, b)];
 
     Region::scoped([result]() -> {
         let paths = shortest_paths(&g, &queries);
 
-        for (i, path_opt) in vec_enumerate(&paths) {
+        for (let (i, path_opt) in list_enumerate(paths)) {
             let (s, t) = queries[i];
             match path_opt {
                 Perhaps::None {}           =>
                     println(u32_to_string(s) + " → " + u32_to_string(t) + ": no path"),
                 Perhaps::Some { value: p } => {
-                    let labels = vec_map(&p, (id) -> { g.nodes[id as usize].label });
-                    println(vec_join(&labels, " → "));
+                    let labels = list_map(p, (id) -> { g.nodes[id as u64].label });
+                    println(string_join(labels, " → "));
                 }
             }
         }
@@ -743,7 +747,8 @@ fun main() {
 | Abstract region param (`[r]` read-only) | ✓ | ✓ | |
 | `Outlives<src>` two-region bound | | | ✓ |
 | `Region::scoped` | ✓ | ✓ | ✓ |
-| Return-position elision `@T` (RFC-0065 §1) | ✓ | ✓ | ✓ |
+| All-position elision `@T` / `&T` (RFC-0065 §1) | ✓ | ✓ | ✓ |
+| Field & parameter elision (RFC-0065 §1.1–§1.2) | ✓ | ✓ | |
 | Call-site inference (RFC-0065 §2) | ✓ | ✓ | |
 | Explicit bracket required (two regions) | | | ✓ |
 | Nested scratch within outer region | | | ✓ |
