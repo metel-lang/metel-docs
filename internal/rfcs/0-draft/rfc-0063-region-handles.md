@@ -166,8 +166,19 @@ the backing memory. The tag:
 - serves as a **disjointness witness**: distinct tags → cannot alias (RFC-0064 builds
   structured fork-join on top of this property).
 
-Borrow types (`&mut T`, `&T`) do not carry a region tag: they are already non-sendable and
-non-escaping by construction, so the tag would be redundant.
+Borrow types (`&mut T`, `&T`) do not carry a region tag for sendability or disjointness
+purposes — they are already non-sendable and non-escaping by construction. However, when
+borrowing a region pointer in a function signature the double-sigil `&@[r] T` is
+unnecessarily noisy. As a notation convenience, `[r]` may appear directly after `&` or
+`&mut` as shorthand:
+
+| Sugar | Expands to | Meaning |
+|---|---|---|
+| `&[r] T` | `&@[r] T` | shared borrow of a region-`r` value |
+| `&mut [r] T` | `&mut @[r] T` | exclusive borrow of a region-`r` value |
+
+The `@` vs `&`/`&mut` prefix still carries the ownership distinction — `@[r] T` is an
+affine owned pointer, `&[r] T` is a temporary loan of one.
 
 > **Note on bracket syntax.** Whether the type-level tag stays `[r]` or moves to another
 > delimiter (it currently reads close to array indexing) is parked — see the region-syntax

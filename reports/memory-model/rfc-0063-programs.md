@@ -37,14 +37,14 @@ fun concat[region](left: @[region] Rope, right: @[region] Rope) -> @[region] Rop
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 
-fun rope_len[r](rope: &@[r] Rope) -> usize {
+fun rope_len[r](rope: &[r] Rope) -> usize {
     match rope {
         Rope::Leaf { bytes }    => str_len(bytes),
         Rope::Node { len, .. }  => len,
     }
 }
 
-fun rope_char_at[r](rope: &@[r] Rope, idx: usize) -> char {
+fun rope_char_at[r](rope: &[r] Rope, idx: usize) -> char {
     match rope {
         Rope::Leaf { bytes } => str_char_at(bytes, idx),
         Rope::Node { left, right, .. } => {
@@ -57,7 +57,7 @@ fun rope_char_at[r](rope: &@[r] Rope, idx: usize) -> char {
 
 // ── Slicing: allocates new nodes into the same region ────────────────────────
 
-fun rope_slice[region](rope: &@[region] Rope, from: usize, to: usize) -> @[region] Rope {
+fun rope_slice[region](rope: &[region] Rope, from: usize, to: usize) -> @[region] Rope {
     if from == 0 && to == rope_len(rope) { return *rope; }
     match rope {
         Rope::Leaf { bytes } =>
@@ -79,14 +79,14 @@ fun rope_slice[region](rope: &@[region] Rope, from: usize, to: usize) -> @[regio
 // ── Materialisation: write into a heap-allocated String ───────────────────────
 // [r] is abstract — works for any rope regardless of which region it lives in.
 
-fun rope_write[r](rope: &@[r] Rope, out: &mut @[Heap] String) {
+fun rope_write[r](rope: &[r] Rope, out: &mut [Heap] String) {
     match rope {
         Rope::Leaf { bytes }           => string_push(out, bytes),
         Rope::Node { left, right, .. } => { rope_write(left, out); rope_write(right, out); }
     }
 }
 
-fun rope_to_string[r](rope: &@[r] Rope) -> @[Heap] String {
+fun rope_to_string[r](rope: &[r] Rope) -> @[Heap] String {
     let mut s = Heap.alloc(String::with_capacity(rope_len(rope)));
     rope_write(rope, &mut s);
     s
@@ -191,19 +191,19 @@ fun parse_request[region](raw: &str) -> Perhaps<@[region] Request> {
 
 // ── Processing while the arena is live ───────────────────────────────────────
 
-fun find_header[r](req: &@[r] Request, name: &str) -> Perhaps<@[r] str> {
+fun find_header[r](req: &[r] Request, name: &str) -> Perhaps<@[r] str> {
     for h in req.headers {
         if str_eq_ignore_case(h.name, name) { return Perhaps::Some { value: h.value }; }
     }
     Perhaps::None {}
 }
 
-fun validate[r](req: &@[r] Request, cfg: &Config) -> bool {
+fun validate[r](req: &[r] Request, cfg: &Config) -> bool {
     vec_len(&req.headers) <= cfg.max_headers
         && vec_len(&req.body) <= cfg.max_body_bytes
 }
 
-fun build_summary[r](req: &@[r] Request) -> Summary {
+fun build_summary[r](req: &[r] Request) -> Summary {
     // content_type is copied to the heap — it must outlive the arena.
     let ct = match find_header(req, "content-type") {
         Perhaps::Some { value: v } => Heap.alloc(str_copy(v)),
@@ -271,7 +271,7 @@ fun graph_new() -> @[Heap] Graph {
     Heap.alloc(Graph { nodes: Heap.alloc(Vec::new()) })
 }
 
-fun add_node(g: &mut @[Heap] Graph, label: &str) -> u32 {
+fun add_node(g: &mut [Heap] Graph, label: &str) -> u32 {
     let id = vec_len(&g.nodes) as u32;
     vec_push(&mut g.nodes, Heap.alloc(Node {
         id,
@@ -281,7 +281,7 @@ fun add_node(g: &mut @[Heap] Graph, label: &str) -> u32 {
     id
 }
 
-fun add_edge(g: &mut @[Heap] Graph, from: u32, to: u32) {
+fun add_edge(g: &mut [Heap] Graph, from: u32, to: u32) {
     vec_push(&mut g.nodes[from as usize].neighbors, to);
 }
 
@@ -290,7 +290,7 @@ fun add_edge(g: &mut @[Heap] Graph, from: u32, to: u32) {
 // destination region. The Outlives<src> bound is the static proof that dst
 // will still be alive when the copy is read — the compiler enforces it.
 
-fun copy_vec<[src, dst: Outlives<src>]>(v: &@[src] Vec<u32>) -> @[dst] Vec<u32> {
+fun copy_vec<[src, dst: Outlives<src>]>(v: &[src] Vec<u32>) -> @[dst] Vec<u32> {
     let out = dst.alloc(Vec::with_capacity(vec_len(v)));
     for &x in v { vec_push(&mut out, x); }
     out
@@ -299,7 +299,7 @@ fun copy_vec<[src, dst: Outlives<src>]>(v: &@[src] Vec<u32>) -> @[dst] Vec<u32> 
 // ── BFS in a scratch arena ────────────────────────────────────────────────────
 
 fun bfs_into[scratch, result: Outlives<scratch>](
-    graph:  &@[Heap] Graph,
+    graph:  &[Heap] Graph,
     start:  u32,
     target: u32,
 ) -> Perhaps<@[result] Vec<u32>> {
@@ -345,7 +345,7 @@ fun bfs_into[scratch, result: Outlives<scratch>](
 // ── Batch queries: each BFS gets its own scratch region ──────────────────────
 
 fun shortest_paths[result](
-    graph:   &@[Heap] Graph,
+    graph:   &[Heap] Graph,
     queries: &[(u32, u32)],
 ) -> @[result] Vec<Perhaps<@[result] Vec<u32>>> {
     let results: @[result] Vec<Perhaps<@[result] Vec<u32>>> = result.alloc(Vec::new());
@@ -415,4 +415,4 @@ fun main() {
 | Call-site inference (RFC-0065 §2) | ✓ | ✓ | |
 | Nested scratch within outer region | | | ✓ |
 | Plain-value escape from arena | ✓ | ✓ | |
-| Borrow (`&@[r] T`) without consuming | ✓ | ✓ | ✓ |
+| Borrow (`&[r] T`) without consuming | ✓ | ✓ | ✓ |
