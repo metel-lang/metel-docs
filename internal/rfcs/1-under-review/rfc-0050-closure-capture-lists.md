@@ -86,6 +86,133 @@ This RFC covers only `&mut` captures. Read-only reference capture (`&ident`) is 
 
 ---
 
+## Conflict with Region Syntax (RFC-0063)
+
+RFC-0063 and RFC-0065 introduce region parameters on closures using the same bracket
+position this RFC uses for capture lists:
+
+```metel
+// RFC-0050 — capture list
+let inc = [&mut count]() -> () { count += 1; };
+
+// RFC-0063/0065 — region parameter
+Region::scoped([region]() -> { process(region) });
+```
+
+Both forms place `[…]` immediately before `(`. A closure that needs *both* — a
+region-parameterised callback that also captures mutable outer state — has no defined
+form under either RFC.
+
+Content-based disambiguation partially rescues the single-bracket case:
+
+- Items beginning with `&mut` or `move` are unambiguously capture specifiers.
+- A bare identifier is unambiguously a region parameter.
+
+This works for the two common solo cases. It fails for the combined case, and it creates
+a latent parsing ambiguity if future capture specifiers are added that do not begin with a
+keyword.
+
+Three solutions are proposed below; the syntax resolved question is re-opened pending a
+decision.
+
+### Solution A — Sequential brackets
+
+Assign a fixed order: region parameters always come first, capture list always comes
+second. Each bracket retains its existing syntax unchanged.
+
+```
+closure_expr = region_params? capture_list? "(" params ")" "->" type block
+region_params = "[" ident ("," ident)* "]"
+capture_list  = "[" capture_item ("," capture_item)* "]"
+capture_item  = "&mut" ident | "move" ident
+```
+
+The parser distinguishes the two brackets by content: if the first token after `[` is
+`&mut` or `move`, the bracket is a capture list; if it is a bare identifier, it is a
+region parameter list. Two consecutive brackets give one of each in order.
+
+```metel
+// region only
+[region]() -> { ... }
+
+// captures only
+[&mut count]() -> { ... }
+
+// both — region first, captures second
+[region][&mut count]() -> { ... }
+```
+
+**Advantages:** both existing syntaxes are preserved exactly; the combined form is
+unambiguous and systematic.
+
+**Disadvantages:** `[region][&mut count]` is visually heavy and double-bracket syntax
+is unusual; content-based disambiguation relies on the rule that region parameters are
+always bare identifiers, which must be maintained by all future extensions to both RFCs.
+
+### Solution B — Unified bracket
+
+Merge both concerns into a single `[…]` list. Items are distinguished by form: bare
+identifiers are region parameters; prefixed items are captures. Both may appear in the
+same list.
+
+```
+bracket_list = "[" bracket_item ("," bracket_item)* "]"
+bracket_item = ident              // region parameter
+             | "&mut" ident       // mutable capture
+             | "move" ident       // move capture
+```
+
+```metel
+// region only
+[region]() -> { ... }
+
+// captures only
+[&mut count]() -> { ... }
+
+// both — order within the bracket is unconstrained
+[region, &mut count]() -> { ... }
+```
+
+**Advantages:** one bracket, fewer tokens; the solo cases parse identically to today.
+
+**Disadvantages:** the single bracket now carries two independent semantic roles; the
+ordering of region parameters relative to capture items is unconstrained, which may make
+reading closures harder; a future capture specifier that is also a bare identifier (e.g.
+a by-name value capture `ident`) would reintroduce ambiguity.
+
+### Solution C — Keyword-prefixed captures, brackets reserved for regions
+
+Repurpose the `[…]` position exclusively for region parameters (consistent with RFC-0063)
+and introduce a new keyword form for captures, placed after the region bracket and before
+the parameter list.
+
+```
+closure_expr = region_params? ("capture" "(" capture_item ("," capture_item)* ")")?
+               "(" params ")" "->" type block
+capture_item = "&mut" ident | "move" ident
+```
+
+```metel
+// region only
+[region]() -> { ... }
+
+// captures only — brackets gone; capture keyword used
+capture(&mut count)() -> { ... }
+
+// both
+[region] capture(&mut count)() -> { ... }
+```
+
+**Advantages:** `[…]` is unambiguously region syntax everywhere in the language;
+captures are visually distinct from region parameters; no content-based disambiguation
+needed.
+
+**Disadvantages:** breaks the capture-list syntax established by this RFC; the `capture`
+keyword adds verbosity and a new reserved word; existing documentation and test code
+using `[&mut x]` closures must be updated.
+
+---
+
 ## Alternatives Considered
 
 ### Keep requiring an outer `*mut` pointer (status quo)
@@ -114,7 +241,12 @@ Require every captured binding to appear in the list, with `&mut` or by-value ma
 
 3. **Multiple closures capturing the same binding. ✓ Resolved** — Two closures with `[&mut x]` both hold a mutable pointer to `x`. This is safe in the single-threaded interpreter (sequential calls; aliased mutation is not concurrent). Under the borrow checker, at most one live mutable reference at a time will be enforced. Document now; restrict later.
 
-4. **Syntax. ✓ Resolved** — `[&mut x]` is confirmed. Resolved jointly with RFC-0046: the same capture list accepts both `&mut` items and `move` items in a unified syntax. `[&mut count, move buf]` is valid.
+4. **Syntax. ✗ Re-opened** — `[&mut x]` was confirmed jointly with RFC-0046. RFC-0063
+   subsequently introduced `[region]` in the same syntactic position for region parameters,
+   creating a conflict for closures that need both. Solutions A, B, and C above are the
+   live candidates; a decision is required before this RFC can be implemented. The choice
+   also determines whether the capture-list grammar in this RFC must be revised, and
+   whether existing interpreter code using `[&mut x]` closures needs updating.
 
 ---
 
@@ -135,6 +267,8 @@ This RFC should not be implemented before at least a prototype design exists for
 - RFC-0043: Regular Pointers and Mutable Pointers
 - Closure capture tests: `tests/evaluator/sources/closures/72_closure_internal_ptr_no_outer_effect.mtl`, `73_closure_direct_assign_no_outer_effect.mtl`, `74_closure_external_ptr_affects_outer.mtl`
 - RFC-0046: Linear Closure Capture — `move` specifier in capture lists; `linear fun` type; resolved jointly with this RFC
+- RFC-0063: Region Handles — introduces `[region]` in the same bracket position; source of the syntax conflict analysed above
+- RFC-0065: Region Ergonomics — uses `[region]() -> {}` closure form throughout; affected by whichever solution is chosen
 - C++ lambda capture lists — prior art for syntax and semantics
 
 ---
