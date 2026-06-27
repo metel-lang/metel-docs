@@ -8,7 +8,8 @@ date: '2026-06-24'
 > `docs/reports/memory-model/capability-region-synthesis.md` into a single normative
 > proposal and adopts the **bracket parameter channel** syntax (region handles declared in
 > `[...]`, value parameters in `(...)`). It depends on the reference-capability core
-> (`&mut`/`&`, RFC TBD) and inherits the open interpreter-first question recorded in §11.
+> (`&mut`/`&`, RFC TBD) and inherits the open interpreter-first question recorded in §10.
+> Annotation-reduction ergonomics (elision, call-site inference) are deferred to RFC-0065.
 > Do **not** implement pending resolution of that question and of the capability-core RFC.
 
 > **Vocabulary note.** This RFC uses `@[r] T` as the notation for a region-allocated
@@ -35,10 +36,11 @@ This RFC specifies:
 2. region tags on pointer types (`@[r] T`) and their effect on sendability;
 3. the **bracket parameter channel** — region handles and abstract region tags declared in
    `[...]`, distinct from value parameters in `(...)`;
-4. two **elision/inference rules** — return-position elision and call-site **deep-threading
-   inference** — that keep the common single-region case annotation-free;
-5. the sendability consequences of the tag;
-6. the static-vs-runtime enforcement question that remains open.
+4. the sendability consequences of the tag;
+5. the static-vs-runtime enforcement question that remains open.
+
+Annotation-reduction ergonomics (return-position elision, call-site deep-threading
+inference) are specified separately in RFC-0065 and are not required to implement this core.
 
 ---
 
@@ -58,9 +60,8 @@ in scope**, so:
   parallelism over region data is free of any separate separation calculus.
 
 The cost the earlier exploration kept hitting was *verbosity*: a region threaded through a
-signature was named three times (binder, handle type, result tag). This RFC removes that by
-merging all three into a single bare name in the bracket channel and adding inference so
-deep threading needs no ceremony.
+signature was named three times (binder, handle type, result tag). The bracket parameter
+channel removes that by merging all three into a single bare name.
 
 ---
 
@@ -77,8 +78,8 @@ The three allocation regions the stdlib provides:
 - **`LocalHeap`** — thread-local heap; not sendable across fibers.
 
 `Arc<T>` is the one stdlib wrapper that adds semantics beyond the region tag: shared
-ownership via refcount. It is region-polymorphic — `Arc::new` infers the region from
-context (§4.2) — and its sendability follows from the tag:
+ownership via refcount. It is region-polymorphic — the region is supplied at the call site —
+and its sendability follows from the tag:
 
 - `Arc<T>[Heap]` — atomic refcount, sendable across fibers.
 - `Arc<T>[LocalHeap]` — non-atomic refcount, not sendable; the tag already guarantees
@@ -229,8 +230,8 @@ name serves all three roles at once: binder, runtime handle, and result tag.
 
 **Default (no annotation).** A bare name defaults to a **non-fallible** region — `r.alloc()`
 returns `T` directly and panics on OOM rather than returning `Result<T, _>`. The concrete
-type is inferred from context (§4.2); the call site determines whether it resolves to a
-scoped `Region`, `Heap`, or `LocalHeap` handle:
+type is determined by the call site — whether it resolves to a scoped `Region`, `Heap`, or
+`LocalHeap` handle:
 
 ```metel
 fun build_node[region](val: i64) -> @[region] Node {
@@ -284,118 +285,7 @@ is uniform across both channels: `<T: Trait>` and `[r: Outlives<other>]`.
 
 ---
 
-## 4. Elision and inference
-
-Two rules keep the common case annotation-free. Both share one principle: **a region may be
-omitted only when exactly one region is in scope to fill it; two or more is a hard error
-that forces an explicit name.**
-
-### 4.1 Return-position elision
-
-If exactly one region is in the bracket channel, a bare `@` in the return type binds to it:
-
-```metel
-fun build_node[region](val: i64) -> @Node { … }
-//                                  ^^^^^ == @[region] Node
-```
-
-With two or more regions in scope, the bare form is illegal and every result tag must be
-named (`@[dst] T` in §3.3). This is the same discipline as Rust's lifetime-elision
-ambiguity rule.
-
-`@[region] Node` (named) remains the **idiomatic** form for readability; bare `@Node` is
-sugar legal only under single-region elision. Tools may always render the inferred tag.
-
-### 4.2 Call-site deep-threading inference
-
-At a call to a function that declares a region parameter, an omitted bracket argument
-auto-fills from the **unique region handle in lexical scope** at the call site:
-
-```metel
-fun build_list[region](vals: Slice<i64>) -> @[region] Node {
-    let mut head = region.alloc(Node { val: vals[0], next: null });
-    for v in vals[1..] {
-        head = build_node(v);   // [region] inferred: sole handle in scope
-    }
-    head
-}
-
-Region::scoped(fun[region]() {
-    let list = build_list(data);             // [region] inferred
-    let list = build_list[region](data);     // explicit — always available
-});
-```
-
-Rules:
-
-1. **One** region handle in scope → omitted `[…]` resolves to it. `f(args)` ≡
-   `f[that_handle](args)`.
-2. **Two or more** handles in scope → bracket is required: `f[which](args)`. Omitting it is
-   an error naming the candidates.
-3. **None** in scope but the callee needs one → the usual "no region available" error;
-   establish a `Region::scoped` or pass `Heap` explicitly.
-
-The resolution is always a single named handle the compiler can surface in diagnostics and
-hovers. The explicit `f[region](args)` form is preferred wherever more than one region is
-nearby or where making the allocation context visible aids the reader.
-
-**Ambient static handles.** `Heap` and `LocalHeap` are prelude-resident static region
-handles that are always in the inference candidate set, as if implicitly in scope at every
-call site. This gives `Box::new` — a plain region-polymorphic function — the right default
-behaviour without any special-casing:
-
-```metel
-// outside any Region::scoped — Heap is the only candidate
-let a = Arc::new(Config { workers: 4 }); // infers [Heap] → @[Heap] Config ✓
-
-// any region-polymorphic function shows the same behaviour
-fun make_node[region](val: i64) -> @[region] Node { … }
-
-// inside a scoped region — Heap and region are both candidates → must be explicit
-Region::scoped(fun[region]() {
-    let n = make_node(1);           // error: ambiguous — Heap or region?
-    let n = make_node[region](1);   // @[region] Node — stays in scope
-    let n = make_node[Heap](1);     // @[Heap] Node — escapes the scope
-});
-```
-
-The ambiguity error inside a scoped region is intentional: allocating onto `Heap` there
-means the value escapes the arena, which is worth a moment's thought. No default-parameter
-mechanism is needed; the inference rules are the policy.
-
-> **Scope of inference.** Deep-threading inference fills *region* arguments only — the
-> region analogue of type-argument inference. Generalising `[…]` to arbitrary context
-> parameters is explicitly out of scope for this RFC.
-
----
-
-## 5. What the programmer actually writes
-
-Most code sees no region annotations. The tag is inferred from the allocation site
-(`r.alloc(..)` → `@[r] T`), exactly as a type is inferred from a constructor:
-
-```metel
-fun main() {
-    let b = Heap.alloc(Counter { value: 0 });  // @[Heap] Counter
-    let a = Arc::new(Config { workers: 4 });   // infers [Heap] → @[Heap] Config
-    Region::scoped(fun[region]() {
-        let n = region.alloc(Node { val: 1 }); // @[region] Node
-    });                                        // region drops; n freed in O(1)
-}
-```
-
-Region tags surface explicitly only in three places:
-
-1. **functions that allocate into a caller-supplied region** — `[region]` in the bracket
-   channel (§3);
-2. **region-polymorphic / multi-region library code** — multiple names with inline
-   `Outlives` bounds (§3.2);
-3. **types holding a pointer into a region they do not own** — `struct Parser[region] { … }`
-   (§3), including all recursive types.
-
----
-
-## 6. Sendability and concurrency
+## 4. Sendability and concurrency
 
 The region tag decides what crosses a fiber boundary:
 
@@ -416,7 +306,7 @@ region tag is the only distinction — no separate `Rc` type is needed.
 
 ---
 
-## 7. Diagnostics
+## 5. Diagnostics
 
 Single-region checking reduces to liveness of a named variable. Errors name the real region:
 
@@ -431,12 +321,12 @@ diagnostic problem the paused branch most feared, for the common case.
 
 The hard case is unchanged: when regions arrive from outside (`transfer`, `Outlives`,
 multi-region structs), the constraint machinery is the old `<'a, 'b: 'a>` story under a new
-spelling — escape analysis is escape analysis. The *frequency* of hitting that path drops
-significantly; its *difficulty* does not.
+spelling — escape analysis is escape analysis. The frequency of hitting that path drops
+significantly with RFC-0065's inference; its difficulty does not.
 
 ---
 
-## 8. The one-sentence identity
+## 6. The one-sentence identity
 
 > *A memory model where every lifetime annotation is the name of a real allocator object you
 > can see in scope, the same annotation that bounds a pointer's lifetime also proves it
@@ -449,10 +339,10 @@ carrying a *static* lifetime (Zig has the allocators but no static safety).
 
 ---
 
-## 9. Worked signatures (reference)
+## 7. Worked signatures (reference)
 
 ```metel
-// 1. single-region allocator — return tag written explicitly
+// 1. single-region allocator
 fun build_node[region](val: i64) -> @[region] Node {
     region.alloc(Node { val, next: null })
 }
@@ -482,21 +372,11 @@ fun build_list[region](vals: Slice<i64>) -> @[region] List<i64> {
     }
     acc
 }
-
-// 5. deep threading — inference fills the in-scope handle
-fun build_node[region](val: i64) -> @[region] Node {
-    region.alloc(Node { val, next: null })
-}
-fun build_chain[region](vals: Slice<i64>) -> @[region] Node {
-    let mut head = region.alloc(Node { val: vals[0], next: null });
-    for v in vals[1..] { head = build_node(v); }  // [region] inferred
-    head
-}
 ```
 
 ---
 
-## 10. Unresolved questions
+## 8. Unresolved questions
 
 1. **Static vs runtime enforcement of the tag (the decisive open item).** The region tag is
    a compile-time escape analysis, which re-commits to the static direction the
@@ -508,20 +388,7 @@ fun build_chain[region](vals: Slice<i64>) -> @[region] Node {
 
 2. **Bracket delimiter for type-level tags.** `@[r] T` reads close to array indexing.
    Parked; tracked in the region-syntax discussion. Does not affect the parameter-channel
-   design of §3–4.
-
-3. **Static handle priority in inference.** When a local region handle and an ambient
-   static handle (`Heap`, `LocalHeap`) are both in scope, the current rule treats them as
-   equal candidates and forces an explicit bracket. An alternative is to give local handles
-   priority, so that a single local `region` shadows `Heap` and a call like
-   `make_node(v)` inside a scoped block silently allocates into the arena. This restores
-   a "defaults to arena" convenience but removes the forced acknowledgement that a `Heap`
-   allocation escapes the scope. Decision deferred; both readings are compatible with the
-   rule structure of §4.2.
-
-4. **Closures and `fun[region]()`.** The `Region::scoped` callback uses the bracket channel
-   on a closure literal; the exact grammar for region parameters on closure types and values
-   is left to the closure RFC (RFC-0050).
+   design of §3.
 
 ---
 
@@ -532,6 +399,7 @@ fun build_chain[region](vals: Slice<i64>) -> @[region] Node {
   full, including the original `[R]` clause this RFC supersedes.
 - `docs/reports/memory-model/substructural-and-separation-types.md` — the capability core.
 - RFC-0052 (Lifetime System, on hold) — the phantom-lifetime approach this supersedes.
-- RFC-0050 (Closure Capture Lists), RFC-0049 (Linear `fun` Type System) — adjacent.
 - RFC-0064 (Structured Fork-Join Parallelism) — builds the `||` combinator on the
   disjointness witness property of region tags.
+- RFC-0065 (Region Ergonomics) — return-position elision and call-site inference on top of
+  this core.
