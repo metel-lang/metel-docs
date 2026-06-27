@@ -389,52 +389,10 @@ fun build_list[region](vals: i64[]) -> @[region] List<i64> {
 
 ## 8. Unresolved questions
 
-1. **Extracting a value from a region pointer.** Methods and functions that predate the
-   region system take plain `T` or `&T` parameters. How `@[r] T` interacts with those
-   call sites is unspecified. The risks of a blanket deref coercion are:
-
-   - **Call-site ambiguity.** `method(&my_list)` could mean "borrow the region pointer"
-     (`&[r] List<T>`) or "deref through it" (`&List<T>`). Any tie-breaking rule will
-     surprise one of the two readings; the explicit `&*my_list` form is unambiguous.
-   - **Silent interior-pointer escape.** A `T` moved out of `@[r] T` carries no region
-     tag. If `T` contains `@[r] U` fields pointing back into the same region, those
-     interior pointers become dangling. The compiler cannot catch this without inspecting
-     the type's fields.
-   - **Sendability hole.** A scoped `@[r] T` is non-sendable. A `T` extracted by
-     coercion carries no tag and appears sendable, silently violating the guarantee if `T`
-     embeds region pointers internally.
-   - **Destructor-tracking cost for arenas.** Bump arenas free all memory in O(1). If
-     values can be moved out of slots, the arena must track which slots are still live to
-     skip their destructors on drop — undermining the arena's core guarantee.
-   - **Conflict with RFC-0065 elision.** RFC-0065 §1.2 rewrites bare `&T` to `&[r] T`
-     when `T` is region-parameterised. Deref coercion rewrites `&my_list` to `&List<T>`
-     (stripping the tag). The two rules can conflict on the same expression.
-
-   The proposed resolution is to **differentiate by region kind**, consistent with the
-   existing sendability split:
-
-   - **`@[Heap] T`** supports deref-move (`*ptr` → `T`) and borrow-deref (`&*ptr` →
-     `&T`). The heap slot is freed individually on drop, exactly like `Box<T>`, so no
-     per-slot tracking is needed.
-   - **Scoped `@[r] T`** supports borrow-only deref (`&*ptr` → `&T`, or auto-deref for
-     borrows). Moving a value out of a scoped arena is not supported — the arena frees all
-     slots at once and cannot skip destructors for moved-out values.
-
-   Extracting a value from a scoped arena is handled by two existing patterns:
-
-   - **`Copy` types** — reading a field or the whole value through a borrow copies it out
-     automatically; the slot remains valid and the arena is unaffected.
-   - **`Clone` types** — `ptr.clone_into[dst]()` clones the value into a target region.
-     The two-step form `dst.alloc(value_copy(*ptr))` already appears throughout the
-     showcase programs (e.g. `Heap.alloc(string_copy(v))` in `build_summary`) and
-     represents the intended idiom; a stdlib method is a naming question only.
-
-   | Value kind | Scoped `@[r] T` | `@[Heap] T` |
-   |---|---|---|
-   | `Copy` field / value | read through borrow | same |
-   | `Clone` | `clone_into[dst]()` — explicit target region | same, or deref-move |
-   | Move out | not supported | deref-move (`*ptr`) |
-   | Borrow | `&[r] T` / `&mut [r] T` | same |
+1. **Extracting a value from a region pointer.** How `@[r] T` interacts with call sites
+   that expect plain `T` or `&T` is unspecified. The full analysis — covering borrow-deref,
+   move-out, `Copy` and `Clone` extraction, bump-arena destructor semantics, and the risks
+   of auto-deref coercion — is in RFC-0066 (Region Pointer Extraction).
 
 2. **Static vs runtime enforcement of the tag (the decisive open item).** The region tag is
    a compile-time escape analysis, which re-commits to the static direction the
@@ -461,3 +419,4 @@ fun build_list[region](vals: i64[]) -> @[region] List<i64> {
   disjointness witness property of region tags.
 - RFC-0065 (Region Ergonomics) — return-position elision and call-site inference on top of
   this core.
+- RFC-0066 (Region Pointer Extraction) — how to obtain `T` or `&T` from `@[r] T`.
