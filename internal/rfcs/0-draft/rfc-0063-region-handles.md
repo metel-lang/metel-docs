@@ -173,6 +173,47 @@ non-escaping by construction, so the tag would be redundant.
 > discussion. The two are grammatically disjoint: a tag follows a pointer sigil (type
 > context); array indexing follows a value (expression context).
 
+### Comparison with `Box<T, A>`
+
+`@[r] T` is structurally similar to Rust's `Box<T, A>` (unstable allocator API): both are
+affine owned pointers that carry the allocator so the correct `free` is invoked on drop, and
+both are distinct from `&T` / `&mut T` borrows. The difference is that Rust's `A` is a
+**type** — two boxes from two different arena instances share the type `Box<T, BumpArena>`.
+The tag in `@[r] T` names a specific **instance**. Three concrete consequences follow.
+
+**Lifetime safety without a second annotation.** To get static lifetime safety from a scoped
+arena in Rust, you must borrow the allocator and thread a phantom lifetime through every
+containing type:
+
+```rust
+struct Parser<'a> {
+    input: Box<str, &'a BumpArena>,
+    pos: usize,
+}
+```
+
+`'a` is a phantom parameter with no correspondent in scope. In Metel, the region handle is
+the lifetime source — when `region` drops, all `@[region] T` values are statically invalid,
+and errors name the real variable rather than an abstract `'a`.
+
+**Static disjointness between allocator instances.** `Box<T, BumpArena>` is the same type
+regardless of which arena instance allocated the value; the compiler cannot prove two boxes
+don't alias. `@[r1] T` and `@[r2] T` are distinct types, and that distinction is a
+compile-time proof of non-aliasing. RFC-0064's fork-join parallelism is built on this
+property: data from two different regions can be handed to two fibers with no locks and no
+runtime checks.
+
+**Sendability encoded in the tag.** With `Box<T, A>`, sendability depends on `T: Send + A:
+Send` — a scoped arena could accidentally implement `Send`. With `@[r] T` the rule is
+structural: `[Heap]` → sendable, `[LocalHeap]` → thread-local only, scoped `[region]` →
+never sendable. The same rule unifies `Arc` and `Rc`: `Arc<T>[Heap]` uses atomic refcounting
+and is sendable; `Arc<T>[LocalHeap]` uses non-atomic refcounting and is not — one type, two
+behaviors, no separate `Rc`.
+
+`@[r] T` is therefore not sugar around `Box<T, A>`. It could lower to a structure shaped
+like `Box<T, A>` at the IR level, but the tag operates at the instance level rather than the
+type level, which is what makes the three properties above expressible.
+
 ---
 
 ## 3. The bracket parameter channel
