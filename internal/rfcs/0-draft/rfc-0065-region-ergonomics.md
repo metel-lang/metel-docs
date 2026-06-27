@@ -56,7 +56,7 @@ fun build_list[region](vals: Slice<i64>) -> @[region] Node {
     head
 }
 
-Region::scoped(fun[region]() {
+Region::scoped([region]() -> {
     let list = build_list(data);         // [region] inferred
     let list = build_list[region](data); // explicit — always available
 });
@@ -82,7 +82,7 @@ inference candidate set:
 let a = Arc::new(Config { workers: 4 }); // infers [Heap] → @[Heap] Config ✓
 
 // inside a scoped region — Heap and region are both candidates → must be explicit
-Region::scoped(fun[region]() {
+Region::scoped([region]() -> {
     let n = make_node(1);           // error: ambiguous — Heap or region?
     let n = make_node[region](1);   // @[region] Node — stays in scope
     let n = make_node[Heap](1);     // @[Heap] Node — escapes the scope
@@ -107,7 +107,7 @@ itself:
 fun main() {
     let b = Heap.alloc(Counter { value: 0 });  // @[Heap] Counter
     let a = Arc::new(Config { workers: 4 });   // infers [Heap] → @[Heap] Config
-    Region::scoped(fun[region]() {
+    Region::scoped([region]() -> {
         let n = region.alloc(Node { val: 1 }); // @[region] Node
     });                                        // region drops; n freed in O(1)
 }
@@ -134,13 +134,13 @@ Region tags surface explicitly only in three places:
    convenience but removes the forced acknowledgement that a `Heap` allocation escapes the
    scope. Decision deferred; both readings are compatible with the rule structure of §2.
 
-2. **Closures and `fun[region]()`.** The `Region::scoped` callback uses the bracket channel
-   on a closure literal; the exact grammar for region parameters on closure types and values
-   is left to the closure RFC (RFC-0050).
+2. **Closures and `[region]() -> {}`.** The `Region::scoped` callback uses the bracket
+   channel on a closure literal; the exact grammar for region parameters on closure types and
+   values is left to the closure RFC (RFC-0050).
 
 ---
 
 ## References
 
 - RFC-0063 (Region Handles) — core system this RFC builds on.
-- RFC-0050 (Closure Capture Lists) — closure grammar for `fun[region]()`.
+- RFC-0050 (Closure Capture Lists) — closure grammar for `[region]() -> {}`.
