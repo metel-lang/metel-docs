@@ -7,7 +7,7 @@ date: '2026-06-27'
 > **Status — draft, design-only.** Depends on RFC-0063 (Region Handles). Specifies the
 > annotation-reduction layer on top of the core region system: elision rules and call-site
 > inference that eliminate bracket ceremony in the common single-region case. Do **not**
-> implement before RFC-0063 is resolved and §4.1 of this RFC is settled.
+> implement before RFC-0063 is resolved.
 
 ## Summary
 
@@ -118,29 +118,47 @@ Rules:
 2. **Two or more** handles in scope → bracket required: `f[which](args)`. Omitting it is an
    error naming the candidates.
 3. **None** in scope but the callee needs one → the usual "no region available" error;
-   establish a `Region::scoped` or pass `Heap` explicitly.
+   establish a `Region::scoped`, import `Heap`, or pass the region explicitly.
 
 The resolution is always a single named handle the compiler can surface in diagnostics and
 hovers. The explicit form `f[region](args)` is preferred wherever more than one region is
 nearby or where the allocation context is worth making visible.
 
-**Ambient static handles.** `Heap` and `LocalHeap` are prelude-resident and always in the
-inference candidate set:
+**Static handles and the inference candidate set.** `Heap` and `LocalHeap` are always
+accessible by name — `@[Heap] T`, `@[LocalHeap] T`, and explicit bracket arguments like
+`make_node[Heap](v)` work anywhere without any import. However, they enter the inference
+candidate set **only when explicitly imported**:
 
 ```metel
-// outside any Region::scoped — Heap is the only candidate
+use Heap;
+```
+
+This gives three clean scenarios:
+
+```metel
+// 1. Heap imported, no scoped region — Heap is the sole candidate
+use Heap;
 let a = Arc::new(Config { workers: 4 }); // infers [Heap] → @[Heap] Config ✓
 
-// inside a scoped region — Heap and region are both candidates → must be explicit
+// 2. No Heap import, inside a scoped region — [region] is the sole candidate
+Region::scoped([region]() -> {
+    let n = make_node(1);  // infers [region] ✓
+});
+
+// 3. Heap imported, inside a scoped region — two candidates → explicit required
+use Heap;
 Region::scoped([region]() -> {
     let n = make_node(1);           // error: ambiguous — Heap or region?
-    let n = make_node[region](1);   // @[region] Node — stays in scope
-    let n = make_node[Heap](1);     // @[Heap] Node — escapes the scope
+    let n = make_node[region](1);   // @[region] Node ✓
+    let n = make_node[Heap](1);     // @[Heap] Node ✓ — visible escape from the arena
 });
 ```
 
-The ambiguity error inside a scoped region is intentional: allocating onto `Heap` there
-means the value escapes the arena, which is worth a moment's thought.
+Scenario 2 is the key improvement over a prelude-resident model: arena-heavy code that
+does not import `Heap` gets clean single-candidate inference inside scoped blocks with no
+ambiguity errors. Scenario 3 preserves the forced acknowledgement that a `Heap` allocation
+escapes the arena — but only when the programmer has explicitly opted `Heap` into the
+candidate set.
 
 > **Scope of inference.** These rules fill *region* arguments only — the region analogue of
 > type-argument inference. Generalising `[…]` to arbitrary context parameters is out of
@@ -178,8 +196,8 @@ declaration that a region exists. Elision applies only to `@`-bearing positions 
 field and parameter types. Region-tagged borrows (`&[r] T`) are written explicitly in all
 positions; a bare `&T` always means a plain borrow with no region information.
 
-Static handles (`[Heap]`, `[LocalHeap]`) are always written explicitly; they are not
-bracket parameters and are never subject to elision.
+Static handles (`[Heap]`, `[LocalHeap]`) are always accessible by name and are never
+subject to elision. They participate in inference only when explicitly imported (§2).
 
 Region tags surface in written code in exactly three places:
 
@@ -192,15 +210,7 @@ Region tags surface in written code in exactly three places:
 
 ## 4. Unresolved questions
 
-1. **Static handle priority in inference.** When a local region handle and an ambient static
-   handle (`Heap`, `LocalHeap`) are both in scope, the current rule treats them as equal
-   candidates and forces an explicit bracket. An alternative is to give local handles
-   priority, so that a single local `region` shadows `Heap` and `make_node(v)` inside a
-   scoped block silently allocates into the arena. This restores a "defaults to arena"
-   convenience but removes the forced acknowledgement that a `Heap` allocation escapes the
-   scope. Decision deferred; both readings are compatible with the rule structure of §2.
-
-2. **Closures and `[region]() -> {}`.** The `Region::scoped` callback uses the bracket
+1. **Closures and `[region]() -> {}`.** The `Region::scoped` callback uses the bracket
    channel on a closure literal; the exact grammar for region parameters on closure types and
    values is left to the closure RFC (RFC-0050).
 
