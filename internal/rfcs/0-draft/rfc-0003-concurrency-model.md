@@ -8,6 +8,8 @@ date: '2026-05-20'
 
 Define Metel's concurrency model: fiber handles with linear ownership, typed channels as the primary communication primitive, a `select` expression for multiplexing, and a `Send` marker aspect to prevent data races. Concurrency syntax (`spawn`, `<-`, `->`, `select`) desugars to aspect implementations on standard library types, consistent with Metel's general philosophy that syntax sugar maps to aspect method calls. Fibers are first-class values with linear handles — fire-and-forget is possible but must be explicit via `.detach()`.
 
+The stdlib ships a default M:N green-thread runtime. Third-party runtimes can replace it by providing their own types that implement the same four concurrency aspects. No syntax changes are required in user code — `spawn { }`, `ch <- v`, `<- ch`, and `select { }` all continue to work unchanged regardless of which runtime is active.
+
 ---
 
 ## Motivation
@@ -36,6 +38,20 @@ Metel's existing surface syntax desugars to aspect method calls: `?` desugars to
 | `select { ... }` | `Selectable::select(...)` |
 
 Any type implementing the relevant aspect participates in the syntax. This means user-defined channels, mock channels in tests, and alternative spawning strategies are all first-class without special-casing in the compiler.
+
+### Runtime is pluggable; syntax is not
+
+The aspect-based desugaring cleanly separates concurrency *syntax* from concurrency *implementation*. The four aspects — `Spawnable`, `Sendable`, `Receivable`, `Selectable` — form a stable interface between the language and any backing scheduler. The stdlib ships a default implementation (`Fiber<T>`, `Chan<T>`) backed by an M:N green-thread scheduler, but nothing about `spawn { }`, `ch <- v`, `<- ch`, or `select { }` is tied to that specific runtime.
+
+A third-party runtime can ship its own fiber and channel types that implement the same aspects. User code then uses identical syntax — the only thing that changes is which concrete type fills in the fiber or channel slot, which is typically handled by a single type alias at the crate root:
+
+```metel
+// crate root — switch the whole codebase to a different runtime
+use myruntime::Fiber;
+use myruntime::Chan;
+```
+
+All spawn sites and channel operations throughout the code resolve to the third-party runtime through normal type inference, without touching body-level syntax. Projects that never switch runtimes see no API seam at all.
 
 ### No function colouring
 
@@ -322,9 +338,44 @@ OS primitives (futex, pthread_t)   ← inside unsafe only, stdlib-internal
 M:N runtime scheduler              ← invisible to user code
 ```
 
-### M:N scheduler
+### Default runtime (stdlib)
 
-Fibers are lightweight (green threads), M:N scheduled by the language runtime. The programmer launches fibers and forgets about OS threads, cores, and scheduling. The scheduler is an implementation detail of the runtime — it is never exposed to user code.
+The stdlib provides `Fiber<T>`, `Chan<T>`, `SendChan<T>`, `RecvChan<T>`, and `Mutex<T>` backed by an M:N green-thread scheduler. This is the runtime a project gets without any explicit configuration — `Fiber<T>` resolves to the stdlib type unless overridden. The scheduler itself is not exposed to user code and is never part of the public API.
+
+### Custom runtime implementations
+
+A third-party crate can supply a complete alternative runtime by implementing the four concurrency aspects on its own types. The minimum contract is:
+
+| Aspect | Needed for |
+|--------|-----------|
+| `Spawnable` | `spawn { }` syntax |
+| `Sendable<T>` | `ch <- value` syntax |
+| `Receivable<T>` | `<- ch` syntax |
+| `Selectable` | `select { }` syntax |
+
+A runtime does not need to implement all four — a crate that only replaces the scheduler but keeps stdlib channels only needs to implement `Spawnable` on its own fiber type.
+
+**Switching at the crate level.** Because `spawn { }` resolves via type inference, pointing a crate at a different runtime is a one-line change per type at the crate root:
+
+```metel
+use myruntime::Fiber;    // replaces stdlib Fiber<T>
+use myruntime::Chan;     // replaces stdlib Chan<T>
+```
+
+All `spawn { }` expressions whose inferred return type flows to `Fiber<T>` now resolve to `myruntime::Fiber<T>`. No call-site changes are needed.
+
+**What a runtime is free to decide.** The aspects define the *interface*, not the implementation. A custom runtime can use:
+- A different scheduling strategy (work-stealing, cooperative-only, single-threaded event loop)
+- Different internal channel representations (lock-free, io_uring-backed, virtual)
+- Platform-specific I/O integration (io_uring, kqueue, IOCP, WASI)
+
+None of these choices affect the syntax a user writes.
+
+**What a runtime cannot change.** The aspects fix the observable semantics: `recv` blocks until a value is available or the channel closes; `send` moves the value; `Fiber<T>.join()` returns `Result<T, Panic>`; `Fiber<T>.detach()` consumes the handle. A runtime that violates these contracts is non-conformant.
+
+### M:N scheduler (default runtime detail)
+
+Fibers in the stdlib runtime are lightweight (green threads), M:N scheduled by the language runtime. The programmer launches fibers and forgets about OS threads, cores, and scheduling. The scheduler is an implementation detail — it is never exposed to user code.
 
 ### `Atomic<T>`
 
@@ -423,6 +474,7 @@ No fiber handles. Simple but makes accidental resource leaks undetectable at com
 | Q2 | Fiber names and observability | Deferred to a tooling RFC. No syntax change. |
 | Q3 | `Arc<T>` and `Sync` | Both defined. `Sync` is a marker aspect for concurrent-read safety. `Arc<T>: Send + Sync` when `T: Send + Sync`. `Arc<LinearT>` is forbidden. |
 | Q4 | Detached fiber panic policy | Detached fibers terminate the program on panic (no handle to report to). Owned fibers capture panics in `Result<T, Panic>` from `.join()`. |
+| Q5 | Custom runtime support | Third-party runtimes are supported by implementing `Spawnable`, `Sendable`, `Receivable`, and `Selectable` on their own types. Users switch runtimes via a type alias at the crate root; no syntax changes are needed anywhere else. The stdlib runtime is the default but is not privileged. |
 
 ---
 
