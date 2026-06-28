@@ -13,27 +13,29 @@ date: '2026-06-27'
 
 RFC-0063 establishes the core region system — `@[r] T`, the bracket parameter channel, and
 sendability — in fully explicit form: every region argument is written out. This RFC adds
-three rules that make the common single-region case annotation-free:
+two rules that make the common single-region case annotation-free:
 
-1. **all-position elision** — bare `@` (or `&`/`&mut` on a region-parameterised type)
-   anywhere in a type resolves to the unique in-scope region;
+1. **`@`-position elision** — bare `@` anywhere in a type or expression resolves to the
+   unique in-scope region;
 2. **call-site deep-threading inference** — omitting the bracket argument at a call site
    auto-fills from the unique region handle in lexical scope.
 
 Both rules share one invariant: **elision is legal only when exactly one region is in scope;
 two or more forces an explicit name.**
 
+Region-tagged borrows (`&[r] T`, `&mut [r] T`) are **never elided** in signatures. A bare
+`&T` in a signature always means a plain borrow with no region tag; if the region matters,
+`&[r] T` must be written explicitly.
+
 ---
 
 ## 1. All-position elision
 
 If exactly one region is in the bracket channel, the explicit tag `[r]` may be dropped in
-**any type position** — return types, parameter types, struct/enum field types, and local
-variable annotations. The two surface forms that elide are:
+`@`-bearing type and expression positions:
 
 | Sugar | Expands to | When legal |
 | `@T` | `@[r] T` | Always — `@` always implies a region pointer |
-| `&T` / `&mut T` | `&[r] T` / `&mut [r] T` | Only when `T` itself requires a region parameter |
 
 ### 1.1 `@` positions
 
@@ -64,27 +66,9 @@ let list = @List::Cons { head: 1, tail: @List::Cons { head: 2, tail: @List::Nil 
 ```
 
 Expression-position elision follows the same single-region invariant as type-position
-elision: illegal with two or more regions in scope (§1.3).
+elision: illegal with two or more regions in scope (§1.2).
 
-### 1.2 `&` / `&mut` positions
-
-Bare `&T` or `&mut T` elide the region tag **only when `T` is a region-parameterised
-type** (i.e., `T` itself has a `[r]` bracket parameter). For primitive or region-free
-types the bare `&` remains a plain borrow:
-
-```metel
-fun rope_len[r](rope: &Rope) -> u64 { … }
-//                    ^^^^^  == &[r] Rope — Rope[r] requires a region ✓
-
-fun validate[r](req: &Request, cfg: &Config) -> boolean { … }
-//                   ^^^^^^^^     ^^^^^^^^
-//                   &[r] Request (Request[r] ✓)   &Config — Config has no region param ✓
-```
-
-This disambiguates without extra syntax: the type itself tells the compiler whether `&T`
-carries a region.
-
-### 1.3 Two-or-more regions
+### 1.2 Two-or-more regions
 
 With two or more regions in scope the bare forms are illegal; every tag must be named.
 This is the same discipline as Rust's lifetime-elision ambiguity rule:
@@ -184,15 +168,15 @@ fun parse_header[region](                                         │  fun parse
 }                                                                 │  }                                                            │
                                                                   │                                                               │
 fun find_header[r](                                               │  fun find_header[r](                                          │
-    req:  &[r] Request,                                           │      req:  &Request,                                          │
+    req:  &[r] Request,                                           │      req:  &[r] Request,                                      │
     name: String,                                                 │      name: String,                                            │
 ) -> Perhaps<@[r] String>                                         │  ) -> Perhaps<@String>                                        │
 ```
 
 The `[r]` bracket channel is still written on the function and struct — that is the
-declaration that a region exists. Only the **uses** of that region inside field and
-parameter types are elided. `String` parameters and `&Config` borrows carry no region tag
-because `String` is a plain value type and `Config` has no region parameter.
+declaration that a region exists. Elision applies only to `@`-bearing positions inside
+field and parameter types. Region-tagged borrows (`&[r] T`) are written explicitly in all
+positions; a bare `&T` always means a plain borrow with no region information.
 
 Static handles (`[Heap]`, `[LocalHeap]`) are always written explicitly; they are not
 bracket parameters and are never subject to elision.
@@ -201,7 +185,8 @@ Region tags surface in written code in exactly three places:
 
 1. **function and type declarations** — `[region]` in the bracket channel;
 2. **multi-region code** — all tags named, `Outlives` bounds written;
-3. **static handle annotations** — `@[Heap] T`, `&[Heap] T`.
+3. **static handle annotations and explicit region borrows** — `@[Heap] T`, `&[r] T`,
+   `&[Heap] T`.
 
 ---
 
