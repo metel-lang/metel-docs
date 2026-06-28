@@ -221,12 +221,17 @@ lifetime guarantees sound:
 
 ## 9. Unresolved questions
 
-1. **`Copy` declaration syntax.** Whether `Copy` is declared via `impl Copy for T {}`, a
-   struct-level keyword, or a derive-like annotation is left to the syntax RFC.
+1. **`Copy` declaration syntax — resolved.** `Copy` is declared via `impl Copy for T {}`.
+   This is consistent with how other aspects are implemented in Metel. A derive-like
+   shorthand (e.g. `derive(Copy)`) will be considered when the derived aspects system
+   (RFC-0012) is designed; until then, the explicit impl is the only supported form.
 
-2. **Partial moves and pattern matching.** Whether a pattern match can destructure a value
-   and simultaneously move out of multiple fields (rather than accessing them one at a time)
-   needs to be specified. The restriction on partial moves of `Drop` types applies equally.
+2. **Partial moves and pattern matching — resolved.** Pattern destructuring may
+   simultaneously move out of multiple fields, subject to the same rules as sequential
+   partial moves: the compiler tracks moved fields at field granularity, `Drop` types may
+   not be partially destructured, and a partially destructured value may not be used as a
+   whole. Whether individual pattern bindings may borrow rather than move a field (a `ref`
+   binding modifier or equivalent) is deferred to the pattern syntax RFC.
 
 ---
 
