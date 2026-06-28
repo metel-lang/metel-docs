@@ -77,6 +77,30 @@ The three allocation regions the stdlib provides:
 - **`Heap`** — the static global heap; values freed individually when the last owner drops.
 - **`LocalHeap`** — thread-local heap; not sendable across fibers.
 
+**Creating a scoped region.** A `Region` can be brought into scope in two ways:
+
+1. **Closure-scoped** — `Region::scoped([r]() -> { … })` passes the region handle to a
+   closure via the bracket channel; the arena is freed when the closure returns. Nothing
+   carrying the tag `r` may escape the closure.
+
+2. **Variable-scoped** — `let r = Region::new()` binds the region to `r`. The binding name
+   `r` becomes the type-level tag — the same name that appears in `@[r] T`, `&[r] T`, and
+   bracket parameters throughout the code. The arena is freed when `r` is dropped: either
+   explicitly via `drop(r)`, or implicitly when `r` goes out of lexical scope. The borrow
+   checker rejects any live `@[r] T` or `&[r] T` at the point of drop.
+
+`Region::scoped` is equivalent to a block with an implicit drop at the end:
+
+```metel
+Region::scoped([r]() -> { body });
+// ≡
+{ let r = Region::new(); body }  // r dropped at end of block
+```
+
+The closure form creates a visible syntactic boundary signalling the block is arena-managed.
+The `let` form is more flexible: the region can span multiple function calls, be passed as a
+bracket argument, or be dropped early. Both forms use the same underlying arena type.
+
 `Arc<T>` is the one stdlib wrapper that adds semantics beyond the region tag: shared
 ownership via refcount. It is region-polymorphic — the region is supplied at the call site —
 and its sendability follows from the tag:

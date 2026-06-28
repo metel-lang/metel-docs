@@ -118,7 +118,8 @@ Rules:
 2. **Two or more** handles in scope → bracket required: `f[which](args)`. Omitting it is an
    error naming the candidates.
 3. **None** in scope but the callee needs one → the usual "no region available" error;
-   establish a `Region::scoped`, import `Heap`, or pass the region explicitly.
+   establish a region via `Region::scoped` or `let r = Region::new()`, import `Heap`, or
+   pass the region explicitly.
 
 The resolution is always a single named handle the compiler can surface in diagnostics and
 hovers. The explicit form `f[region](args)` is preferred wherever more than one region is
