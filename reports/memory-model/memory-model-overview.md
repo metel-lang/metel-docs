@@ -1,7 +1,7 @@
 ---
 title: "Metel Memory Model — Overview"
 date: '2026-06-28'
-rfcs: [0063, 0064, 0065, 0066, 0067, 0068, 0069]
+rfcs: [0063, 0064, 0065, 0066, 0067, 0068, 0069, 0071]
 ---
 
 > **Status — current.** This report describes the memory model as specified by the
@@ -125,6 +125,11 @@ Metel has three pointer/reference types with distinct roles:
 `@[r] T` is the result of allocating `T` into region `r`. It is affine (non-`Copy` by
 default), so moving it leaves no duplicate behind. The tag `[r]` names the arena and
 determines sendability and disjointness.
+
+Affine ownership is specified in RFC-0071: values move by default; `Copy` is opt-in and
+mutually exclusive with `Drop`; exactly one live owner exists at all times. Region pointers
+are non-`Copy` by construction — this is what makes region lifetime and disjointness
+guarantees sound.
 
 References (`&T`, `&mut T`) are orthogonal to allocation: they are temporary loans of an
 already-allocated value, not owners of memory.
@@ -482,3 +487,4 @@ Key points visible in the example:
 | RFC-0067 | Reference Types | draft |
 | RFC-0068 | Struct-Owned Regions | under review |
 | RFC-0069 | Sub-Region Typing | draft |
+| RFC-0071 | Ownership and Move Semantics | under review |
