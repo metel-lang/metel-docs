@@ -4,7 +4,7 @@ title: "Region Pointer Extraction"
 date: '2026-06-27'
 ---
 
-> **Status — draft, design-only.** Depends on RFC-0063 (Region Handles) and RFC-0065
+> **Status — accepted.** Depends on RFC-0063 (Region Handles) and RFC-0065
 > (Region Ergonomics). Addresses the gap identified in RFC-0063 §8.1: how a caller obtains
 > a plain `T` or `&T` from an `@[r] T` region pointer, and what the destructor semantics
 > are in each case.

@@ -4,7 +4,7 @@ title: "Struct-Owned Regions"
 date: '2026-06-28'
 ---
 
-> **Status — draft, design-only.** Depends on RFC-0063 (Region Handles), RFC-0065 (Region
+> **Status — accepted.** Depends on RFC-0063 (Region Handles), RFC-0065 (Region
 > Ergonomics), and RFC-0067 (Reference Types). Introduces owned region declarations on
 > structs, giving the struct's arena the same lifetime as the struct itself and making that
 > lifetime available as a type-level tag in method signatures.

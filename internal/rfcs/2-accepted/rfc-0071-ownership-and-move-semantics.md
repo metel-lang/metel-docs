@@ -4,7 +4,7 @@ title: "Ownership and Move Semantics"
 date: '2026-06-28'
 ---
 
-> **Status — draft, design-only.** Establishes the foundational ownership model for Metel
+> **Status — accepted.** Establishes the foundational ownership model for Metel
 > values. Required by RFC-0063 (Region Handles) and all downstream region RFCs, which
 > depend on affine ownership as a given.
 

@@ -4,7 +4,7 @@ title: "Reference Types"
 date: '2026-06-28'
 ---
 
-> **Status — draft, design-only.** Supersedes RFC-0043 (Regular Pointers). Amends
+> **Status — accepted.** Supersedes RFC-0043 (Regular Pointers). Amends
 > RFC-0044 (Explicit Receiver Semantics), RFC-0063 (Region Handles), RFC-0065 (Region
 > Ergonomics), and RFC-0066 (Region Pointer Extraction).
 

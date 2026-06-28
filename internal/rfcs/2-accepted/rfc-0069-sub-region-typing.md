@@ -4,7 +4,7 @@ title: "Sub-Region Typing"
 date: '2026-06-28'
 ---
 
-> **Status — draft, design-only.** Depends on RFC-0063 (Region Handles) and RFC-0068
+> **Status — accepted.** Depends on RFC-0063 (Region Handles) and RFC-0068
 > (Struct-Owned Regions). Introduces `SubRegion<R>` as a stdlib region type that
 > automatically encodes the `Outlives` relationship when a struct with an owned region is
 > allocated into an existing region.

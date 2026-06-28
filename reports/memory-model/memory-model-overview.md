@@ -5,9 +5,9 @@ rfcs: [0063, 0064, 0065, 0066, 0067, 0068, 0069, 0071]
 ---
 
 > **Status — current.** This report describes the memory model as specified by the
-> RFC-006x cluster (all under review). It supersedes all prior memory-model exploration
-> documents. Refer to the individual RFCs for normative detail; this report gives the
-> unified narrative and worked examples.
+> RFC-006x cluster and RFC-0071 (all accepted). It supersedes all prior memory-model
+> exploration documents. Refer to the individual RFCs for normative detail; this report
+> gives the unified narrative and worked examples.
 
 ## Design philosophy
 
@@ -482,11 +482,11 @@ Key points visible in the example:
 
 | RFC | Title | Status |
 |---|---|---|
-| RFC-0063 | Region Handles | under review |
+| RFC-0063 | Region Handles | accepted |
 | RFC-0064 | Structured Fork-Join Parallelism | deferred |
-| RFC-0065 | Region Ergonomics | under review |
-| RFC-0066 | Region Pointer Extraction | under review |
-| RFC-0067 | Reference Types | draft |
-| RFC-0068 | Struct-Owned Regions | under review |
-| RFC-0069 | Sub-Region Typing | draft |
-| RFC-0071 | Ownership and Move Semantics | under review |
+| RFC-0065 | Region Ergonomics | accepted |
+| RFC-0066 | Region Pointer Extraction | accepted |
+| RFC-0067 | Reference Types | accepted |
+| RFC-0068 | Struct-Owned Regions | accepted |
+| RFC-0069 | Sub-Region Typing | accepted |
+| RFC-0071 | Ownership and Move Semantics | accepted |

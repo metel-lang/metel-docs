@@ -4,7 +4,7 @@ title: "Region Handles"
 date: '2026-06-24'
 ---
 
-> **Status — draft, design-only.** This RFC consolidates the region-related half of
+> **Status — accepted.** This RFC consolidates the region-related half of
 > `docs/reports/memory-model/capability-region-synthesis.md` into a single normative
 > proposal and adopts the **bracket parameter channel** syntax (region handles declared in
 > `[...]`, value parameters in `(...)`). It depends on RFC-0071 (Ownership and Move
