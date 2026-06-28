@@ -123,13 +123,13 @@ The RFC was deferred pending stabilisation of the core region model. That stabil
 
 Accepting the region cluster closes the design phase for the core model. Several concrete gaps remain.
 
-### 5.1 Error handling and OOM
+### 5.1 Error handling and OOM — in progress
 
-The region interface specifies allocation but not allocation failure. What happens when a region runs out of memory? Options include: propagating a `Perhaps` to the caller, panicking, or a per-region configurable policy. This interaction between allocation and error handling has no RFC and is the most significant unaddressed design question in the current model.
+The `Region` aspect now carries a `type AllocationError` associated type. Infallible regions (all three stdlib regions — `Region`, `Heap`, `LocalHeap`) assign `!`, so OOM panics and `@[r] expr` retains its existing `@[r] T` type at those sites. Fallible custom allocators assign a concrete error type; `@[r] expr` returns `Perhaps<@[r] T, E>` and callers propagate with `?`. The design is specified in RFC-0063 §1.1 and §2.
 
-### 5.2 Negative bounds
+### 5.2 Negative bounds — in progress
 
-`T: !Drop` (used in RFC-0066 and RFC-0071) requires negative bounds on aspects — the ability to assert that a type does not implement a given aspect. No RFC exists for negative bounds as a general language feature. This is a small, well-scoped design task.
+RFC-0072 (under review) specifies `T: !Aspect` as a bound satisfied by the absence of a positive impl. `T: !Drop` is automatically satisfied for types with no `Drop` implementation; `T: Copy` implies `T: !Drop` by the mutual exclusion rule. Negative bounds require no opt-out declaration at the type definition site.
 
 ### 5.3 Fork-join parallelism (RFC-0064)
 
@@ -157,13 +157,13 @@ The design is complete. The most valuable next move is making it real: implement
 
 The interpreter model is simple: a single uniform allocator handles all regions; the borrow checker enforces that region-tagged values do not escape their allocator's scope. No special allocator machinery is needed in the interpreter itself.
 
-### Priority 2 — Specify error handling and OOM
+### Priority 2 — Finalise error handling and OOM (in progress)
 
-This is the largest remaining design gap. It touches every allocation site and every region kind. It should be specified before the interpreter implementation reaches production use, since the error model will affect how allocation expressions desugar.
+The `AllocationError` associated type design is specified in RFC-0063. What remains is validating the design against real use cases — particularly how fallible allocators interact with error propagation at call sites — and accepting the extension.
 
-### Priority 3 — Negative bounds RFC
+### Priority 3 — Accept negative bounds RFC (in progress)
 
-This is a small, high-leverage design task. `T: !Drop` is already relied upon by two accepted RFCs. The RFC formalizing negative bounds should be written before the interpreter implements `T: !Drop` checking.
+RFC-0072 is under review. It is a small, self-contained RFC with no open questions. Acceptance unblocks the interpreter's `T: !Drop` checking.
 
 ### Priority 4 — Resume RFC-0064 (Fork-Join Parallelism)
 
