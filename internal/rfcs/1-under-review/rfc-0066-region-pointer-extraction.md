@@ -4,221 +4,218 @@ title: "Region Pointer Extraction"
 date: '2026-06-27'
 ---
 
-> **Status — draft, design-only.** Depends on RFC-0063 (Region Handles) and the
-> arena-handles report (`docs/reports/memory-model/arena-handles-as-lifetime-annotations.md`).
-> Addresses the gap identified in RFC-0063 §8.1: how a caller obtains a plain `T` or `&T`
-> from an `@[r] T` region pointer, and what the destructor semantics are in each case.
+> **Status — draft, design-only.** Depends on RFC-0063 (Region Handles) and RFC-0065
+> (Region Ergonomics). Addresses the gap identified in RFC-0063 §8.1: how a caller obtains
+> a plain `T` or `&T` from an `@[r] T` region pointer, and what the destructor semantics
+> are in each case.
 
 ## Summary
 
-RFC-0063 specifies how values are allocated *into* regions (`r.alloc(v) -> @[r] T`) and
-how they are borrowed (`&[r] T`, `&mut [r] T`). It does not specify how a value is
-extracted *out of* a region pointer — either by move or by borrow-deref — to satisfy a
-call site that expects a plain `T` or `&T`. This RFC analyses the design space, identifies
-where the arena-handles report already resolves the question, and surfaces what remains
-open.
+`@[r] expr` allocates `T` into region `r`; extraction is the inverse. Given `ptr: @[r] T`,
+two families of operations are available:
+
+- **Borrow-deref** — obtain `&T` or `&mut T` without consuming `ptr`; works for any region
+  kind and any `T`.
+- **Move-out** — obtain `T` by consuming `ptr`; always safe for `@[Heap] T`, constrained
+  by `T`'s Drop status for scoped `@[r] T`.
+
+The asymmetry between region kinds follows directly from their Drop semantics: heap regions
+free slots individually; scoped bump arenas reclaim memory in bulk, which creates a
+double-drop hazard when a slot has been vacated by move-out.
 
 ---
 
 ## Motivation
 
-Existing functions and methods in the stdlib — and in user code written before regions
-were introduced — take plain `T` or `&T` parameters. A caller holding `@[r] List<T>`
-cannot pass it to such a function without extracting the value. Two extraction forms are
-needed:
-
-- **Borrow-deref** — obtain `&T` (or `&mut T`) from `@[r] T` without consuming the
-  pointer; used for read-only or mutation calls.
-- **Move-out** — obtain `T` from `@[r] T`, consuming the pointer; used when the callee
-  takes ownership.
-
-The analysis differs between `@[Heap] T` and scoped `@[r] T` because the two region
-kinds have fundamentally different Drop semantics.
+Functions and methods take plain `T` or `&T`. A caller holding `@[r] List<T>` cannot pass
+it to such a call site without extracting the value first. The extraction forms this RFC
+specifies are the complement to the `@[r] expr` allocation form: together they define the
+full lifecycle of a region-allocated value.
 
 ---
 
-## 1. Extraction from `@[Heap] T`
+## 1. Borrow-deref
 
-`@[Heap] T` is structurally equivalent to the `Box<T>[Heap]` type defined in the
-arena-handles report (§7.2). That report already specifies both extraction forms:
-
-**Borrow-deref.** `&*ptr` produces `&T` by borrowing through the region pointer.
-Auto-deref may be added so that `&ptr` or a method call on `ptr` transparently produces
-the borrow, but this is a separate ergonomics question (see §4).
-
-**Move-out.** `Box::into_inner` is defined as:
+Borrow-deref obtains a temporary loan of the value without consuming the region pointer.
+It is unconditional — no restriction on region kind or `T`:
 
 ```metel
-fun into_inner(self) -> T { *self.ptr }
+let ptr = @[r] Node { val: 1, next: null };
+
+let v: &Node     = &*ptr;     // shared borrow
+let v: &mut Node = &mut *ptr; // exclusive borrow
+// ptr is still live after the borrows expire
 ```
 
-This consumes the `Box<T>[Heap]` (and therefore the underlying `@[Heap] T`), moves `T`
-out, and frees the heap slot. The Drop impl for `Box<T>[Heap]` calls `T::drop` if T
-requires it and then calls `Heap.free(ptr)` to reclaim the allocation. Because the heap
-tracks each allocation individually, this is safe and complete — no orphaned memory, no
-missed destructor.
+The borrow checker enforces that no borrow outlives `ptr`, and that a `&mut` borrow is
+exclusive. No new rules are needed beyond the existing borrow semantics.
 
-For raw `@[Heap] T` not wrapped in `Box`, the same semantics apply: `*ptr` moves the
-value out and the heap slot is freed. `@[Heap] T` is therefore fully symmetric with
-`Box<T>` at the value-extraction level.
+Whether `@[r] T` auto-derefs to `&T` for method dispatch is an open question (§5).
+Explicit `&*ptr` is the required form until that question is settled.
 
 ---
 
-## 2. Extraction from scoped `@[r] T`
+## 2. Move-out
 
-Scoped arenas have a fundamentally different Drop model. The arena-handles report §11.3
-defines bump arena `free` as a no-op:
+Move-out consumes `ptr` and returns `T`. Safety depends on the region kind.
+
+### 2.1 `@[Heap] T` — always safe
+
+The heap tracks allocations individually. When `ptr` is consumed by move-out, the heap
+slot is freed without calling `T::drop` again — `T` is now owned elsewhere and will be
+dropped by its new owner. This is exactly symmetric with `@[Heap] expr` allocation:
 
 ```metel
-fun free<T>(&mut self, _ptr: *iso[R] T) {}  // bump arenas don't free individually
+let ptr = @[Heap] String { … };
+let s: String = *ptr;  // moves String out; heap slot freed; ptr consumed
+// s is dropped normally when it goes out of scope
 ```
 
-And the `Box<T>[R]` Drop comment for scoped arenas reads:
+Move-out from `@[Heap] T` is safe for all `T`, including `T: Drop`.
 
-> scoped bump arena: no-op — the arena drop reclaims all memory at once
+### 2.2 Scoped `@[r] T` — constrained by `T`'s Drop status
 
-This is the standard bump-arena trade-off: O(1) bulk deallocation in exchange for the
-inability to free individual slots during the arena's lifetime. The consequence for value
-extraction depends on whether `T` has a destructor.
+Scoped bump arenas use bulk deallocation: when the arena drops, it reclaims all arena
+memory in one O(1) operation. This creates a constraint for move-out: a slot vacated by
+move-out is *orphaned* — the arena cannot distinguish it from a live slot. If `T` has a
+`Drop` impl, the arena would call `T::drop` on the orphaned slot at bulk-drop time, but
+`T::drop` has already been called by the new owner — undefined behaviour.
 
-### 2.1 Types without a destructor (`NoDrop`)
+#### 2.2.1 `T: Copy`
 
-If `T` carries no external resources — no file handles, no heap sub-allocations, no
-`Drop` impl — move-out is safe. The slot becomes orphaned (logically empty but still
-occupying arena memory), and when the arena drops it reclaims the raw memory without
-needing to call any destructor. Nothing leaks; nothing is called twice.
+A `Copy` type is extracted by copy, not move. The slot is not vacated; `ptr` remains
+valid:
 
 ```metel
-let n: @[r] Point = r.alloc(Point { x: 1, y: 2 });
-let p: Point = *n;   // move out — safe, Point has no Drop
-// n consumed; slot is orphaned but arena still frees the memory on drop
+let ptr = @[r] Point { x: 1, y: 2 };
+let p: Point = *ptr;   // copies Point out — ptr still valid, slot intact
 ```
 
-### 2.2 Types with a destructor
+Copy extraction works for any region kind and imposes no Drop-related constraint.
 
-If `T` has a `Drop` impl, move-out creates a double-drop hazard. The value's destructor
-runs when the moved-out `T` is eventually dropped by its new owner. If the arena also
-attempts to call `T::drop` for the orphaned slot when it drops, the destructor runs
-twice — undefined behaviour.
+#### 2.2.2 `T: NoDrop` (non-Copy, no Drop impl)
 
-The bump arena's Drop currently has no mechanism to distinguish live slots from orphaned
-ones. Three approaches resolve this:
-
-**Option A — restrict move-out to `NoDrop` types.** The type system enforces that `*ptr`
-on a scoped `@[r] T` is only legal when `T: NoDrop` (a new compiler-understood bound
-meaning "no Drop impl"). Attempting to move out a `T: Drop` from a scoped arena is a
-compile error. This is the most conservative option and requires no runtime bookkeeping.
-
-**Option B — drop list in the arena.** The arena maintains a list of (slot, destructor)
-pairs for every allocation that has a `Drop` impl. Move-out removes the entry; the
-arena's own Drop only runs destructors for entries still in the list. This preserves full
-safety for all types but adds per-allocation overhead for `Drop` types and makes the
-bump arena no longer purely O(1) on drop (it is O(live Drop-types) instead of O(1)).
-
-**Option C — caller-driven destructor.** Move-out from a scoped arena requires the
-caller to explicitly run `T::drop` before calling `r.move_out(ptr)`. This is the
-`unsafe` model — the type system cannot enforce it, but it is what Zig-style manual
-memory management expects. Inconsistent with Metel's safe-by-default posture.
-
-Option A is the recommended starting point. It is zero-cost, statically enforced, and
-consistent with how bump arenas are used in practice — allocation-heavy workloads
-typically deal in plain data types, not resource-holding ones. Types with `Drop` should
-use `@[Heap] T`.
-
-### 2.3 Copy extraction
-
-`T: Copy` is always safe regardless of arena kind. Reading through a borrow copies the
-value without consuming the pointer or orphaning the slot:
+If `T` carries no external resources — no `Drop` impl — move-out is safe. The slot is
+orphaned, but when the arena drops it reclaims raw memory without needing to call any
+destructor. Nothing leaks; nothing runs twice:
 
 ```metel
-let n: @[r] Point = r.alloc(Point { x: 1, y: 2 });
-let p: Point = *(&n);   // copy through borrow — n still valid, slot intact
+let ptr = @[r] Pair { a: 1, b: 2 };  // Pair has no Drop impl
+let p: Pair = *ptr;                    // moves out — safe; slot orphaned
+// arena frees the raw memory on drop, no destructor to call
 ```
 
-This does not require any new language machinery: it follows from the existing borrow
-and copy rules. It is the right answer for small plain-data types.
+#### 2.2.3 `T: Drop`
 
-### 2.4 Clone extraction
+Move-out creates a double-drop hazard. Three options resolve this:
 
-For types that are neither `Copy` nor `NoDrop` and must be extracted from a scoped
-arena, `Clone` is the safe path. The value is cloned *into* a target region rather than
-moved out of the source:
+**Option A — restrict move-out to `NoDrop` types (recommended).** `*ptr` on scoped
+`@[r] T` is a compile error when `T: Drop`. The type system enforces the restriction
+statically; no runtime bookkeeping. Types that hold external resources should use
+`@[Heap] T`, which supports move-out for all `T`.
+
+**Option B — drop list in the arena.** The arena maintains a `(slot, destructor)` list
+for every Drop-typed allocation. Move-out removes the entry; the arena's own Drop only
+calls destructors for entries still in the list. Fully safe for all `T`; adds
+per-allocation overhead for `Drop` types; arena drop becomes O(live Drop-slots) rather
+than O(1).
+
+**Option C — caller-driven.** Move-out requires the caller to explicitly run `T::drop`
+before vacating the slot. Unsafe; inconsistent with Metel's safe-by-default posture.
+
+Option A is the recommended starting point. Bump-arena workloads typically deal in plain
+data types, not resource-holding ones. The restriction is zero-cost, statically visible at
+the call site, and the escape valve — use `@[Heap] T` — is idiomatic.
+
+---
+
+## 3. Type-directed move-out
+
+Symmetric with type-directed allocation (RFC-0063 §2): when a `let` binding declares
+type `T` and the right-hand side is `@[r] T`, move-out is implicit from the type
+annotation. The same constraints as explicit `*ptr` apply.
 
 ```metel
-// explicit two-step form — already idiomatic in the showcase programs
-let copy: @[Heap] Config = Heap.alloc((*(&src)).clone());
+let ptr = @[r] Node { val: 1, next: null };
 
-// possible stdlib convenience
+// explicit move-out
+let node: Node = *ptr;
+
+// type-directed move-out — equivalent, ptr consumed
+let node: Node = ptr;
+```
+
+For `@[Heap] T` this is unconditionally legal. For scoped `@[r] T`, the `NoDrop`
+restriction (Option A) applies: the declared binding type `T` must satisfy `NoDrop`, or
+the compiler rejects the binding.
+
+---
+
+## 4. Clone extraction
+
+When `T: Clone` and move-out from a scoped arena is unavailable (Option A: `T: Drop`),
+the safe path is to clone the value into a target region:
+
+```metel
+// type-directed allocation drives the clone into Heap
+let copy: @[Heap] Config = (*(&src)).clone();
+
+// stdlib convenience (naming open — see §5)
 let copy: @[Heap] Config = src.clone_into[Heap]();
 ```
 
 The source pointer and its arena slot remain valid. The clone is independently owned in
-the target region. This pattern appears throughout the showcase programs as
-`dst.alloc(string_copy(v))` and is already the intended idiom; `clone_into[dst]()` is a
-naming question only.
-
----
-
-## 3. Borrow-deref and call-site forms
-
-Both region kinds support borrow-deref — obtaining `&T` from `@[r] T` — through
-explicit `&*ptr`. The question is whether auto-deref should make this implicit.
-
-RFC-0063 §8.1 identifies several risks of blanket auto-deref coercion (call-site
-ambiguity with `&[r] T`, conflict with RFC-0065 §1.2 elision rules, sendability holes).
-Those risks apply to borrow-deref as much as to move-out.
-
-The proposed resolution for borrow-deref is consistent with §8.1: explicit `&*ptr` is
-required. A future ergonomics RFC may introduce limited auto-deref once the interaction
-with elision is understood.
-
----
-
-## 4. Summary table
-
-| Extraction form | `@[Heap] T` | Scoped `@[r] T`, `T: Copy` | Scoped `@[r] T`, `T: NoDrop` | Scoped `@[r] T`, `T: Drop` |
-|---|---|---|---|---|
-| Borrow `&T` | `&*ptr` | `&*ptr` | `&*ptr` | `&*ptr` |
-| Borrow `&mut T` | `&mut *ptr` | `&mut *ptr` | `&mut *ptr` | `&mut *ptr` |
-| Copy out | `*ptr` (Copy) | `*ptr` | — | — |
-| Move out | `*ptr` / `into_inner` | — | `*ptr` (Option A) | not supported (Option A) |
-| Clone out | `clone_into[dst]()` | — | — | `clone_into[dst]()` |
+the target region. The target does not have to be `Heap`; any region whose lifetime
+encompasses the clone's use is valid.
 
 ---
 
 ## 5. Unresolved questions
 
-1. **`NoDrop` as a first-class bound.** Option A requires the compiler to know whether
-   `T` has a `Drop` impl at the type level. Whether this is expressed as a `NoDrop`
-   bound, a negative bound (`T: !Drop`), or an auto-trait is unspecified. Negative bounds
-   have precedent in Rust's `auto trait` system but are a significant addition to the type
-   system.
+1. **`NoDrop` as a first-class bound.** Option A requires the compiler to enforce at the
+   type level that `T` has no `Drop` impl. Whether this is expressed as a `NoDrop` bound,
+   a negative bound (`T: !Drop`), or a compiler-understood auto-trait is unspecified.
+   Negative bounds have precedent in Rust's `auto trait` system but are a significant
+   addition to the type system.
 
-2. **Drop list overhead acceptability (Option B).** If the use cases for move-out of
-   `Drop` types from scoped arenas are compelling, the drop-list approach becomes worth
-   its overhead. The right decision depends on observed allocation patterns. This should
-   remain open until realistic workloads are profiled.
+2. **Drop list overhead acceptability (Option B).** If move-out of `Drop` types from
+   scoped arenas proves necessary in practice, the drop-list approach becomes worth its
+   overhead. The right decision depends on observed allocation patterns in realistic
+   workloads. Remain on Option A until profiling data is available.
 
-3. **Auto-deref for borrows only.** A narrow form of auto-deref — `@[r] T` transparently
-   coerces to `&T` for method dispatch and borrow contexts, but never for move — avoids
-   most of the risks in §8.1. Whether this narrower form is safe with respect to RFC-0065
-   elision requires a dedicated analysis.
+3. **Auto-deref for borrows.** A narrow form of auto-deref — `@[r] T` coerces to `&T`
+   for method dispatch and borrow contexts, but never for move — avoids most call-site
+   ambiguity. Whether this interacts safely with RFC-0065's elision rules requires
+   dedicated analysis. Deferred to a future ergonomics RFC.
 
-4. **`into_inner` naming and placement.** For `@[Heap] T` move-out: is `*ptr` sufficient
-   at the syntax level, or is an explicit `into_inner` method on a wrapper type (`Box`)
-   the right surface? The arena-handles report defines it on `Box<T>[R]`; whether raw
-   `@[r] T` should also support `*` dereference-move directly is open.
+4. **`clone_into` naming and placement.** The stdlib convenience in §4 needs a name and
+   a home (free function vs method, generic over region kind). Naming is deferred until
+   the clone API is designed holistically.
 
-5. **Interaction with `freeze`.** The arena-handles report defines `freeze(ptr)` which
-   consumes `@[r] T` and returns a sendable immutable pointer (`*val T`). This is a
-   third extraction form not covered above. Its interaction with the move-out rules for
-   scoped arenas (particularly for `Drop` types) should be addressed alongside this RFC.
+5. **Interaction with `freeze`.** The arena-handles report defines `freeze(ptr)`, which
+   consumes `@[r] T` and returns a sendable immutable pointer (`*val T`). This is a third
+   consuming extraction form distinct from move-out. Its interaction with the `NoDrop`
+   restriction and scoped arena semantics should be addressed when `freeze` is specified.
+
+---
+
+## 6. Summary table
+
+| Extraction form | `@[Heap] T` | Scoped `@[r] T`, `T: Copy` | Scoped `@[r] T`, `T: NoDrop` | Scoped `@[r] T`, `T: Drop` |
+|---|---|---|---|---|
+| Borrow `&T` | `&*ptr` | `&*ptr` | `&*ptr` | `&*ptr` |
+| Borrow `&mut T` | `&mut *ptr` | `&mut *ptr` | `&mut *ptr` | `&mut *ptr` |
+| Copy out | `*ptr` | `*ptr` | — | — |
+| Move out | `*ptr` | — | `*ptr` (Option A) | not supported (Option A) |
+| Type-directed move | `let x: T = ptr` | — | `let x: T = ptr` (Option A) | not supported (Option A) |
+| Clone out | `clone_into[dst]()` | — | — | `clone_into[dst]()` |
 
 ---
 
 ## References
 
-- RFC-0063 (Region Handles) §8.1 — the extraction gap this RFC addresses.
-- `docs/reports/memory-model/arena-handles-as-lifetime-annotations.md` §7.2 — `Box<T>[R]`
-  and `into_inner`; §8.1 — bump arena Drop semantics; §11.2 — `Arena` aspect with `free`.
-- RFC-0065 (Region Ergonomics) §1.2 — elision rules that interact with auto-deref.
+- RFC-0063 (Region Handles) §8.1 — the extraction gap this RFC addresses; §2 —
+  type-directed allocation, the symmetric counterpart to §3 of this RFC.
+- RFC-0065 (Region Ergonomics) §1 — elision rules that interact with auto-deref (§5.3).
+- `docs/reports/memory-model/arena-handles-as-lifetime-annotations.md` §8 — bump arena
+  Drop semantics; §11 — `freeze`.

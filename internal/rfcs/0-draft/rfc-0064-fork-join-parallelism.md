@@ -72,7 +72,13 @@ region is an independent bump arena, and the tag names the arena. Distinct tags 
 distinct arenas, which means distinct memory.
 
 Combined with the exclusivity of `&mut`, two parallel branches are safe iff each branch
-independently type-checks against the ordinary borrow rules:
+independently type-checks against the ordinary borrow rules.
+
+> **Allocation and `||`.** `@[r] expr` (RFC-0063 §1) lowers to `r.alloc(expr)`, which
+> requires `&mut` access to the arena. Two `||` branches cannot both allocate into the same
+> region simultaneously — the borrow checker rejects any attempt to give `&mut r` to both
+> branches. `||` parallelises *processing* of existing region data; parallel allocation into
+> distinct regions (each branch holding a different region tag) is sound and natural.
 
 ```metel
 Region::scoped(fun[region: &mut Region]() {

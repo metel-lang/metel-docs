@@ -13,7 +13,7 @@ date: '2026-06-24'
 > Do **not** implement pending resolution of that question and of the capability-core RFC.
 
 > **Vocabulary note.** This RFC uses `@[r] T` as the notation for a region-allocated
-> pointer (the type returned by `r.alloc()`). This is **not** a capability; see §2. The
+> pointer (the result of `@[r] expr`). This is **not** a capability; see §2. The
 > arena/substructural reports call the same type `*iso`; substitute freely.
 
 ## Summary
@@ -88,7 +88,13 @@ and its sendability follows from the tag:
 The second form subsumes `Rc<T>` from the Rust model: the non-sendability that justified
 a separate `Rc` type is already encoded in `[LocalHeap]`, so no additional type is needed.
 `Box<T>` is **retired** — `@[Heap] T` is self-documenting and direct heap allocation is
-written `Heap.alloc(v)` with no sugar needed.
+written `@[Heap] expr`.
+
+Allocation is a **language expression**: `@[r] expr` allocates `expr` into region `r` and
+produces a value of type `@[r] T`. This desugars to `r.alloc(expr)`; the bracket channel
+still carries the runtime handle, so other region operations (`free`, `reset`, and any
+future methods) remain callable as `r.method(…)`. The allocation expression is the common
+case and deserves first-class syntax; other uses of the handle are available when needed.
 
 ---
 
@@ -98,13 +104,13 @@ Metel has three pointer types. Only two are **capabilities**:
 
 | type | role | sendable |
 |---|---|---|
-| `@[r] T` | **region pointer** — plain affine result of `r.alloc()`; *not a capability* | yes if `[Heap]`/`[LocalHeap]`; no if `[r]` scoped |
+| `@[r] T` | **region pointer** — affine result of `@[r] expr`; *not a capability* | yes if `[Heap]`/`[LocalHeap]`; no if `[r]` scoped |
 | `&mut T` | **capability** — exclusive mutable borrow | no (always local) |
 | `&T` | **capability** — shared read borrow | no (always local) |
 
 ### Region pointers are not a capability
 
-`@[r] T` is the type returned by `r.alloc()`. Its "owned" nature — the guarantee that
+`@[r] T` is the type produced by `@[r] expr`. Its "owned" nature — the guarantee that
 exactly one live reference to this allocation exists — comes from **affine move semantics**,
 not from a named capability: the pointer is non-`Copy`, so moving it leaves no duplicate
 behind. This is the same position Rust takes: owned values are the *default* state of any
@@ -118,7 +124,7 @@ may touch a value and for how long; they say nothing about allocation or memory 
 A region pointer can be **temporarily borrowed** for the duration of a call or block:
 
 ```metel
-let n: @[r] Node = r.alloc(Node { val: 1, next: null });
+let n = @[r] Node { val: 1, next: null };
 
 let v: i64 = n.val;           // shared borrow &Node — many readers, concurrent-safe
 n.val = 2;                    // exclusive borrow &mut Node — one writer
@@ -142,19 +148,18 @@ enum List<T>[r] {
 }
 
 // allocation — every node goes in the same region
-let list = r.alloc(List::Cons {
+let list = @[r] List::Cons {
     head: 1,
-    tail: r.alloc(List::Cons {
+    tail: @[r] List::Cons {
         head: 2,
-        tail: r.alloc(List::Nil {}),
-    }),
-});
+        tail: @[r] List::Nil {},
+    },
+};
 // list : @[r] List<i64>
 ```
 
-There is no `own expr` allocation shorthand. The region parameter on `List` is not optional
-— it is the honest statement that the list's nodes live somewhere, and the caller decides
-where.
+The region parameter on `List` is not optional — it is the honest statement that the list's
+nodes live somewhere, and the caller decides where.
 
 ### The region tag
 
@@ -179,6 +184,32 @@ unnecessarily noisy. As a notation convenience, `[r]` may appear directly after 
 
 The `@` vs `&`/`&mut` prefix still carries the ownership distinction — `@[r] T` is an
 affine owned pointer, `&[r] T` is a temporary loan of one.
+
+### Allocation expressions and type-directed binding
+
+`@[r] expr` is the allocation expression. The `@[r]` prefix is a language construct, not a
+method call; the compiler lowers it to `r.alloc(expr)` using the runtime handle from the
+bracket channel.
+
+When a `let` binding carries an explicit type annotation of `@[r] T`, the right-hand side
+may be a bare `T` expression — the declared type drives allocation, eliminating the need to
+repeat `@[r]` on the right:
+
+```metel
+// inferred — @[r] on the right-hand side
+let node = @[r] Node { val: 1, next: null };
+
+// type-directed — @[r] T in the annotation, bare T on the right
+let node: @[r] Node = Node { val: 1, next: null };
+
+// both forms are equivalent; the inferred form is idiomatic for local bindings,
+// the type-directed form is preferred when the type annotation is already present
+// for documentation purposes
+```
+
+Type-directed allocation applies at the binding level. Nested fields still require explicit
+`@[r]` in expression position — the rule does not recurse through struct literals
+automatically (see §8, unresolved question 3).
 
 > **Note on bracket syntax.** Whether the type-level tag stays `[r]` or moves to another
 > delimiter (it currently reads close to array indexing) is parked — see the region-syntax
@@ -239,23 +270,26 @@ fun name <type params> [region params] (value params) -> ReturnType
 A region parameter is a **name**, optionally followed by a type annotation, in `[...]`. The
 name serves all three roles at once: binder, runtime handle, and result tag.
 
-**Default (no annotation).** A bare name defaults to a **non-fallible** region — `r.alloc()`
-returns `T` directly and panics on OOM rather than returning `Result<T, _>`. The concrete
-type is determined by the call site — whether it resolves to a scoped `Region`, `Heap`, or
-`LocalHeap` handle:
+**Default (no annotation).** A bare name defaults to a **non-fallible** region — allocation
+panics on OOM rather than returning `Result<T, _>`. The concrete type is determined by the
+call site — whether it resolves to a scoped `Region`, `Heap`, or `LocalHeap` handle:
 
 ```metel
 fun build_node[region](val: i64) -> @[region] Node {
-    region.alloc(Node { val, next: null })
+    @[region] Node { val, next: null }
 }
 ```
+
+The name `region` is used directly in the allocation expression. The runtime handle is also
+available by name for other operations — `region.free(ptr)`, `region.reset()`, etc. — but
+allocation is written as `@[region] expr`, not `region.alloc(expr)`.
 
 **Explicit type annotation.** To constrain a parameter to a specific allocator, annotate
 with `:` — the same form as type parameter bounds:
 
 ```metel
 fun build_on_heap[r: Heap](val: i64) -> @[r] Node {
-    r.alloc(Node { val, next: null })
+    @[r] Node { val, next: null }
 }
 ```
 
@@ -264,7 +298,7 @@ implements the non-fallible allocator interface. Fallible allocators require an 
 annotation; a bare parameter never silently introduces a fallible allocation path.
 
 Functions that only need to *name* a region — to relate input and output tags without
-allocating — use the same form; they simply never call `.alloc`:
+allocating — use the same form; they simply never use `@[region] expr`:
 
 ```metel
 fun summarise[region](n: @[region] Node) -> i64 { n.val }
@@ -287,7 +321,7 @@ Bounds go inline on the parameter, using `<>` for consistency with type paramete
 
 ```metel
 fun transfer<T>[src, dst: Outlives<src>](val: @[src] T) -> @[dst] T {
-    dst.alloc(*val)
+    @[dst] *val
 }
 ```
 
@@ -355,20 +389,20 @@ carrying a *static* lifetime (Zig has the allocators but no static safety).
 ```metel
 // 1. single-region allocator
 fun build_node[region](val: i64) -> @[region] Node {
-    region.alloc(Node { val, next: null })
+    @[region] Node { val, next: null }
 }
 let n = build_node[r](42);     // n : @[r] Node
 
 // 2. two-region transfer — naming mandatory
 fun transfer<T>[src, dst: Outlives<src>](val: @[src] T) -> @[dst] T {
-    dst.alloc(*val)
+    @[dst] *val
 }
 let moved = transfer[a, b](node);
 
 // 3. struct holding a region pointer
 struct Parser[region] { input: @[region] String, pos: u64 }
 fun parse[region](src: @[region] String) -> @[region] Parser {
-    region.alloc(Parser { input: src, pos: 0 })
+    @[region] Parser { input: src, pos: 0 }
 }
 
 // 4. recursive type — region parameter required
@@ -377,12 +411,15 @@ enum List<T>[r] {
     Nil {},
 }
 fun build_list[region](vals: i64[]) -> @[region] List<i64> {
-    let mut acc = region.alloc(List::Nil {});
+    let mut acc = @[region] List::Nil {};
     for (let i in 0..array_len(vals)) {
-        acc = region.alloc(List::Cons { head: vals[i], tail: acc });
+        acc = @[region] List::Cons { head: vals[i], tail: acc };
     }
     acc
 }
+
+// 5. type-directed binding — annotation drives allocation, no @[r] on the right
+let node: @[r] Node = Node { val: 42, next: null };
 ```
 
 ---
@@ -399,10 +436,19 @@ fun build_list[region](vals: i64[]) -> @[region] List<i64> {
    interpreter-first reconsideration argued against. The intended resolution is to make the
    tag **runtime-enforced in the interpreter** (a region-generation check) that a future
    compiler **elides** where escape analysis proves it safe — turning the one re-incurred
-   concern into the capabilities↔generational-references bridge. This must be settled before
-   implementation.
+   concern into the capabilities↔generational-references bridge. Note that `@[r] expr` as a
+   language construct lowers to a call through the runtime handle, so the interpreter can
+   instrument it with a generation check without any change to the surface syntax. This must
+   be settled before implementation.
 
-2. **Bracket delimiter for type-level tags.** `@[r] T` reads close to array indexing.
+3. **Type-directed allocation scope.** §2 specifies type-directed allocation for `let`
+   bindings: a bare `T` on the right-hand side is allocated when the declared type is
+   `@[r] T`. Whether this rule extends recursively to struct field positions (so that nested
+   struct literals are also allocated without explicit `@[r]`) is unresolved. The recursive
+   form is more ergonomic for deeply nested data but requires the compiler to thread expected
+   types through struct literal elaboration.
+
+4. **Bracket delimiter for type-level tags.** `@[r] T` reads close to array indexing.
    Parked; tracked in the region-syntax discussion. Does not affect the parameter-channel
    design of §3.
 

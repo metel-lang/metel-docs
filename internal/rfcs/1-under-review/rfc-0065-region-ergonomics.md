@@ -37,7 +37,8 @@ variable annotations. The two surface forms that elide are:
 
 ### 1.1 `@` positions
 
-Bare `@` always elides the single region tag:
+Bare `@` always elides the single region tag. The same rule applies in both **type position**
+and **expression position**:
 
 ```metel
 // return type
@@ -53,7 +54,17 @@ enum Rope[r] {
     Leaf { bytes: @String },           // == @[r] String
     Node { left: @Rope, right: @Rope, len: u64 },  // == @[r] Rope
 }
+
+// expression position — @expr allocates into the sole in-scope region
+let node = @Node { val: 1, next: null };
+//         ^^^^^^^^^^^^^^^^^^^^^^ == @[region] Node { val: 1, next: null }
+
+let list = @List::Cons { head: 1, tail: @List::Cons { head: 2, tail: @List::Nil {} } };
+//         all @-prefixed sub-expressions allocate into [region]
 ```
+
+Expression-position elision follows the same single-region invariant as type-position
+elision: illegal with two or more regions in scope (§1.3).
 
 ### 1.2 `&` / `&mut` positions
 
@@ -96,7 +107,7 @@ auto-fills from the **unique region handle in lexical scope** at the call site:
 
 ```metel
 fun build_list[region](vals: i64[]) -> @[region] Node {
-    let mut head = region.alloc(Node { val: vals[0], next: null });
+    let mut head = @[region] Node { val: vals[0], next: null };
     for (let i in 1..array_len(vals)) {
         head = build_node(vals[i]);      // [region] inferred: sole handle in scope
     }
@@ -108,6 +119,14 @@ Region::scoped([region]() -> {
     let list = build_list[region](data); // explicit — always available
 });
 ```
+
+> **Interaction with `@[r] expr`.** The allocation expression `@[r] expr` (RFC-0063 §1)
+> addresses the value-threading problem for allocation: functions that allocate via
+> `@[region] expr` do not need the caller to thread the runtime handle as a value argument.
+> Call-site bracket inference (this section) handles the remaining case — functions that
+> declare `[region]` in their bracket channel for reasons other than allocation (naming the
+> region tag in return types, `Outlives` bounds, etc.) still benefit from omitting the
+> bracket argument at call sites.
 
 Rules:
 
@@ -151,21 +170,23 @@ With both rules active, the region annotation surface is minimal. Below is a ful
 single-region API written without elision on the left and with elision on the right:
 
 ```
-── without elision (RFC-0063 explicit) ──────────────────────────┐
-                                                                  │
-struct Header[r] {                  struct Header[r] {            │
-    name:  @[r] String,                 name:  @String,           │
-    value: @[r] String,                 value: @String,           │
-}                                   }                             │
-                                                                  │
-fun parse_header[region](           fun parse_header[region](     │
-    line: String,                       line: String,             │
-) -> Perhaps<@[region] Header>      ) -> Perhaps<@Header>         │
-                                                                  │
-fun find_header[r](                 fun find_header[r](           │
-    req:  &[r] Request,                 req:  &Request,           │
-    name: String,                       name: String,             │
-) -> Perhaps<@[r] String>           ) -> Perhaps<@String>         │
+── without elision (RFC-0063 explicit) ──────────────────────────┐  ── with elision ──────────────────────────────────────────────┐
+                                                                  │                                                               │
+struct Header[r] {                                                │  struct Header[r] {                                           │
+    name:  @[r] String,                                           │      name:  @String,                                         │
+    value: @[r] String,                                           │      value: @String,                                         │
+}                                                                 │  }                                                            │
+                                                                  │                                                               │
+fun parse_header[region](                                         │  fun parse_header[region](                                    │
+    line: String,                                                 │      line: String,                                            │
+) -> Perhaps<@[region] Header> {                                  │  ) -> Perhaps<@Header> {                                      │
+    @[region] Header { name: …, value: … }                        │      @Header { name: …, value: … }                           │
+}                                                                 │  }                                                            │
+                                                                  │                                                               │
+fun find_header[r](                                               │  fun find_header[r](                                          │
+    req:  &[r] Request,                                           │      req:  &Request,                                          │
+    name: String,                                                 │      name: String,                                            │
+) -> Perhaps<@[r] String>                                         │  ) -> Perhaps<@String>                                        │
 ```
 
 The `[r]` bracket channel is still written on the function and struct — that is the
