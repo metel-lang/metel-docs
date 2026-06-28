@@ -83,6 +83,35 @@ The three regions the stdlib provides as defaults:
 - **`Heap`** — the static global heap; values freed individually when the last owner drops.
 - **`LocalHeap`** — thread-local heap; not sendable across fibers.
 
+### 1.1 The region allocator interface
+
+The region interface is an aspect with one required associated type:
+
+```metel
+aspect Region {
+    type AllocationError;
+    // allocation and deallocation methods
+}
+```
+
+`AllocationError` is the error type an allocation may produce. Assigning `!` (the never
+type) declares the region infallible — no allocation error can ever be returned, so the
+runtime panics on OOM instead. The compiler treats `Perhaps<@[r] T, !>` as equivalent to
+`@[r] T`, collapsing the error wrapper away entirely at infallible allocation sites.
+
+The three stdlib regions are all infallible:
+
+| Region | `AllocationError` | OOM behaviour |
+|---|---|---|
+| `Region` | `!` | panics |
+| `Heap` | `!` | panics |
+| `LocalHeap` | `!` | panics |
+
+Custom allocators assign their own type. A bounded arena or pool allocator with a fixed
+capacity assigns a concrete error type — typically `AllocationFailed`, a unit-struct in the
+stdlib — and callers of that region propagate or handle the error at each allocation site.
+Infallible custom allocators assign `!` and require no error handling.
+
 **Creating a scoped region.** A `Region` can be brought into scope in two ways:
 
 1. **Closure-scoped** — `Region::scoped([r]() -> { … })` passes the region handle to a
@@ -218,7 +247,25 @@ affine owned pointer, `&[r] T` is a temporary loan of one.
 
 `@[r] expr` is the allocation expression. The `@[r]` prefix is a language construct, not a
 method call; the compiler lowers it to `r.alloc(expr)` using the runtime handle from the
-bracket channel.
+bracket channel. The return type depends on the region's `AllocationError`:
+
+- **Infallible region** (`r::AllocationError = !`): `@[r] expr` has type `@[r] T`. No error
+  handling is required; OOM panics. All three stdlib regions fall into this category.
+- **Fallible region** (`r::AllocationError = E`): `@[r] expr` has type
+  `Perhaps<@[r] T, E>`. The caller propagates with `?` or handles the error explicitly.
+
+```metel
+// infallible — AllocationError = !; type is @[r] Node
+let node = @[r] Node { val: 1, next: null };
+
+// fallible — AllocationError = AllocationFailed; type is Perhaps<@[pool] Node, AllocationFailed>
+let node = @[pool] Node { val: 1, next: null }?;
+```
+
+Mixing infallible and fallible allocations in the same function is valid; only the fallible
+sites require `?`. A bare region parameter (no explicit type annotation) is always infallible
+— fallible allocators require an explicit annotation so the fallible path is never introduced
+silently (see §3).
 
 When a `let` binding carries an explicit type annotation of `@[r] T`, the right-hand side
 may be a bare `T` expression — the declared type drives allocation, eliminating the need to
@@ -299,9 +346,10 @@ fun name <type params> [region params] (value params) -> ReturnType
 A region parameter is a **name**, optionally followed by a type annotation, in `[...]`. The
 name serves all three roles at once: binder, runtime handle, and result tag.
 
-**Default (no annotation).** A bare name defaults to a **non-fallible** region — allocation
-panics on OOM rather than returning `Result<T, _>`. The concrete type is determined by the
-call site — whether it resolves to a scoped `Region`, `Heap`, or `LocalHeap` handle:
+**Default (no annotation).** A bare name accepts any region whose `AllocationError = !`
+(infallible). The concrete type is determined by the call site — whether it resolves to a
+scoped `Region`, `Heap`, or `LocalHeap` handle. Fallible allocators require an explicit
+type annotation; a bare parameter never silently introduces a fallible allocation path:
 
 ```metel
 fun build_node[region](val: i64) -> @[region] Node {
@@ -323,8 +371,7 @@ fun build_on_heap[r: Heap](val: i64) -> @[r] Node {
 ```
 
 The annotation is any type that implements the region allocator interface — `Heap`,
-`LocalHeap`, `Region`, or a custom allocator type. Fallible allocators require an explicit
-annotation; a bare parameter never silently introduces a fallible allocation path.
+`LocalHeap`, `Region`, or a custom allocator type, including fallible ones.
 
 Functions that only need to *name* a region — to relate input and output tags without
 allocating — use the same form; they simply never use `@[region] expr`:

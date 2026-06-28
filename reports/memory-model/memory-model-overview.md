@@ -32,8 +32,12 @@ Three properties follow from this choice and no incumbent language offers all th
 
 All memory allocation goes through a region. There is no allocation expression outside of
 one. A region is any value implementing the region allocator interface — an ordinary runtime
-contract for allocation and drop. The system is open: pool allocators, slab allocators, stack
-arenas, and other custom types all qualify. The three stdlib regions cover the common cases:
+contract for allocation and drop. The interface requires one associated type: `AllocationError`,
+the error type an allocation may produce. Assigning `!` declares the region infallible (OOM
+panics; no error handling required). Fallible regions assign a concrete error type and
+allocation expressions at those sites return `Perhaps<@[r] T, AllocationError>`. The system
+is open: pool allocators, slab allocators, stack arenas, and other custom types all qualify.
+The three stdlib regions cover the common cases and are all infallible (`AllocationError = !`):
 
 ### 1.1 Heap
 
@@ -161,11 +165,21 @@ silently expands to `&[r] T`.
 
 `@[r] expr` is the allocation expression. It is a language primitive — not a method call —
 that the compiler lowers to a call through the runtime handle. The bracket `[r]` names both
-the compile-time tag and the runtime arena:
+the compile-time tag and the runtime arena.
+
+The return type depends on the region's `AllocationError` associated type:
+
+- **Infallible** (`r::AllocationError = !`): type is `@[r] T`. OOM panics; no error handling
+  required. All three stdlib regions are infallible.
+- **Fallible** (`r::AllocationError = E`): type is `Perhaps<@[r] T, E>`. Callers propagate
+  with `?` or handle explicitly.
 
 ```metel
+// infallible (Region, Heap, LocalHeap) — type is @[r] Node
 let node = @[r] Node { val: 1, next: null };
-// node : @[r] Node
+
+// fallible custom arena — type is Perhaps<@[pool] Node, AllocationFailed>
+let node = @[pool] Node { val: 1, next: null }?;
 ```
 
 ### 3.2 Type-directed allocation

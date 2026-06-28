@@ -80,6 +80,11 @@ The arena is allocated as part of the `Parser` value. Semantically, `[own r]` de
 `Region::new()` in the constructor and a drop of the region in the struct's destructor
 (RFC-0063 §1). The compiler synthesises both; no user-written Drop impl is required.
 
+Because `[own r]` always desugars to `Region`, and `Region::AllocationError = !`
+(RFC-0063 §1.1), all `@[r] expr` allocations inside impl blocks are infallible — their
+type is `@[r] T`, not `Perhaps<@[r] T, _>`. Specifying a custom allocator type for an
+owned region is deferred to a future RFC.
+
 When `parser` is dropped — either by going out of scope or by an explicit `drop` — the
 arena is freed. If any `&[r] T` borrows are outstanding at drop time, the borrow checker
 rejects the program.
