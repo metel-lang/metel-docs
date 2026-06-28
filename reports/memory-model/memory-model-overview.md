@@ -301,10 +301,12 @@ Move-out consumes `ptr` and returns `T`. Safety depends on the region kind.
 **`@[Heap] T`** — always safe. The heap tracks allocations individually; the slot is freed
 without calling `T::drop` again.
 
-**Scoped `@[r] T`** — constrained by `T`'s Drop status. Bump arenas use bulk deallocation;
-a vacated slot is orphaned and the arena cannot skip its destructor call at bulk-drop time.
+**Non-heap `@[r] T`** — constrained by `T`'s Drop status when the allocator uses bulk
+deallocation. Bulk-deallocating allocators (e.g. `Region`) reclaim all slots at once when
+the region drops; a vacated slot is orphaned and the allocator cannot skip destructor calls
+it does not individually track.
 
-| T | Scoped move-out |
+| T | Non-heap move-out |
 |---|---|
 | `T: Copy` | copies out; slot intact; `ptr` remains valid |
 | `T: !Drop` | moves out; slot orphaned; safe (no destructor to double-call) |
