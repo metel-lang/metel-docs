@@ -153,18 +153,18 @@ let p: Point = ptr;   // copy: Point is Copy, ptr still valid
 The same rules from RFC-0066 apply: move-out from `@[Heap] T` is always safe; move-out
 from scoped `@[r] T` requires `T: NoDrop` (Option A) or drop-list support (Option B).
 
-### 5.2 Explicit move-out via `std::mem`
+### 5.2 Type ascription move-out
 
-For explicit move-out — in positions without a declared target type, or for
-documentation purposes — `mem::move_out` is a free function in `std::mem`:
+For explicit move-out in any expression position, the type ascription operator drives
+consumption the same way a declared binding type does:
 
 ```metel
-let node: Node = mem::move_out(ptr);
+let node = ptr: Node;     // ascription in let — ptr consumed
+process(ptr: Node);       // ascription at call site — ptr consumed
 ```
 
-It consumes `ptr` and returns `T` with the same region-kind and Drop constraints as
-type-directed move-out. Placing the operation in `std::mem` keeps `@[r] T` behaviorally
-identical to `T` itself — the pointer type carries no special consuming method.
+This keeps `@[r] T` behaviorally identical to `T` itself — the pointer type carries no
+special consuming method, and no stdlib import is required.
 
 ---
 
@@ -193,8 +193,8 @@ RFC-0066's extraction forms update as follows:
 |---|---|---|
 | Borrow `&[r] T` (→ `&T`) | `&*ptr` | `&ptr` |
 | Borrow `&mut [r] T` (→ `&mut T`) | `&mut *ptr` | `&mut ptr` |
-| Copy out (T: Copy) | `*ptr` | `let x: T = ptr` or `mem::move_out(ptr)` |
-| Move out | `*ptr` | `let x: T = ptr` or `mem::move_out(ptr)` |
+| Copy out (T: Copy) | `*ptr` | `let x: T = ptr` or `ptr: T` |
+| Move out | `*ptr` | `let x: T = ptr` or `ptr: T` |
 | Clone out | `(*(&src)).clone()` | `src.clone()` |
 
 RFC-0066 §5.3 (auto-deref for borrows, open question) is resolved by this RFC: `src.clone()` on `@[r] T` dispatches to `T::clone` through auto-deref. The unresolved question is closed.

@@ -65,7 +65,7 @@ dropped by its new owner. This is exactly symmetric with `@[Heap] expr` allocati
 
 ```metel
 let ptr = @[Heap] String { … };
-let s: String = mem::move_out(ptr);  // moves String out; heap slot freed; ptr consumed
+let s = ptr: String;  // type ascription drives move-out; heap slot freed; ptr consumed
 // s is dropped normally when it goes out of scope
 ```
 
@@ -86,7 +86,7 @@ valid:
 
 ```metel
 let ptr = @[r] Point { x: 1, y: 2 };
-let p: Point = mem::move_out(ptr);   // copies Point out — ptr still valid, slot intact
+let p = ptr: Point;   // type ascription copies Point out — ptr still valid, slot intact
 ```
 
 Copy extraction works for any region kind and imposes no Drop-related constraint.
@@ -99,7 +99,7 @@ destructor. Nothing leaks; nothing runs twice:
 
 ```metel
 let ptr = @[r] Pair { a: 1, b: 2 };  // Pair has no Drop impl
-let p: Pair = mem::move_out(ptr);      // moves out — safe; slot orphaned
+let p = ptr: Pair;                     // type ascription moves out — safe; slot orphaned
 // arena frees the raw memory on drop, no destructor to call
 ```
 
@@ -107,10 +107,10 @@ let p: Pair = mem::move_out(ptr);      // moves out — safe; slot orphaned
 
 Move-out creates a double-drop hazard. Three options resolve this:
 
-**Option A — restrict move-out to `NoDrop` types (recommended).** `mem::move_out` on
-scoped `@[r] T` is a compile error when `T: Drop`. The type system enforces the
-restriction statically; no runtime bookkeeping. Types that hold external resources should
-use `@[Heap] T`, which supports move-out for all `T`.
+**Option A — restrict move-out to `NoDrop` types (recommended).** Move-out from scoped
+`@[r] T` is a compile error when `T: Drop`. The type system enforces the restriction
+statically; no runtime bookkeeping. Types that hold external resources should use
+`@[Heap] T`, which supports move-out for all `T`.
 
 **Option B — drop list in the arena.** The arena maintains a `(slot, destructor)` list
 for every Drop-typed allocation. Move-out removes the entry; the arena's own Drop only
@@ -129,19 +129,26 @@ the call site, and the escape valve — use `@[Heap] T` — is idiomatic.
 
 ## 3. Type-directed move-out
 
-Symmetric with type-directed allocation (RFC-0063 §2): when a `let` binding declares
-type `T` and the right-hand side is `@[r] T`, move-out is implicit from the type
-annotation. The same constraints as `mem::move_out` apply.
+Move-out is expressed in two equivalent forms:
+
+**Type-directed binding** — when a `let` binding declares type `T` and the right-hand
+side is `@[r] T`, move-out is implicit:
+
+```metel
+let node: Node = ptr;   // declared type drives move-out; ptr consumed
+```
+
+**Type ascription** — the ascription operator drives move-out in any expression position,
+including call sites and return expressions:
 
 ```metel
 let ptr = @[r] Node { val: 1, next: null };
-
-// explicit move-out via std::mem
-let node: Node = mem::move_out(ptr);
-
-// type-directed move-out — equivalent, ptr consumed
-let node: Node = ptr;
+let node = ptr: Node;         // ascription in expression position
+process(ptr: Node);           // move-out at call site
 ```
+
+Both forms obey the same constraints: unconditionally legal for `@[Heap] T`; requires
+`T: NoDrop` for scoped `@[r] T` (Option A).
 
 For `@[Heap] T` this is unconditionally legal. For scoped `@[r] T`, the `NoDrop`
 restriction (Option A) applies: the declared binding type `T` must satisfy `NoDrop`, or
@@ -193,8 +200,8 @@ encompasses the clone's use is valid.
 |---|---|---|---|---|
 | Borrow `&T` | `&ptr` | `&ptr` | `&ptr` | `&ptr` |
 | Borrow `&mut T` | `&mut ptr` | `&mut ptr` | `&mut ptr` | `&mut ptr` |
-| Copy out | `mem::move_out(ptr)` | `mem::move_out(ptr)` | — | — |
-| Move out | `mem::move_out(ptr)` | — | `mem::move_out(ptr)` (Option A) | not supported (Option A) |
+| Copy out | `ptr: T` | `ptr: T` | — | — |
+| Move out | `ptr: T` | — | `ptr: T` (Option A) | not supported (Option A) |
 | Type-directed move | `let x: T = ptr` | — | `let x: T = ptr` (Option A) | not supported (Option A) |
 | Clone out | `clone_into[dst]()` | — | — | `clone_into[dst]()` |
 
