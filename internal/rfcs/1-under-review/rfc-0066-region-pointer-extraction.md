@@ -71,13 +71,25 @@ let s = ptr: String;  // type ascription drives move-out; heap slot freed; ptr c
 
 Move-out from `@[Heap] T` is safe for all `T`, including `T: Drop`.
 
-### 2.2 Scoped `@[r] T` — constrained by `T`'s Drop status
+### 2.2 Non-heap `@[r] T` — constrained by allocator drop strategy
 
-Scoped bump arenas use bulk deallocation: when the arena drops, it reclaims all arena
-memory in one O(1) operation. This creates a constraint for move-out: a slot vacated by
-move-out is *orphaned* — the arena cannot distinguish it from a live slot. If `T` has a
-`Drop` impl, the arena would call `T::drop` on the orphaned slot at bulk-drop time, but
-`T::drop` has already been called by the new owner — undefined behaviour.
+Move-out safety for non-heap regions depends on how the allocator handles drops, not on
+whether the region is scoped. Two strategies are possible:
+
+**Bulk-deallocating allocators** reclaim all backing memory in one operation when the region
+drops, without calling individual destructors per slot. A slot vacated by move-out is
+*orphaned* — the allocator cannot distinguish it from a live slot. If `T` has a `Drop` impl,
+the allocator would invoke `T::drop` on the orphaned slot at drop time, but `T::drop` has
+already been called by the new owner — undefined behaviour. The stdlib `Region` (bump arena)
+is a bulk-deallocating allocator.
+
+**Individually-tracking allocators** maintain a record of live allocations and their
+destructor status. Move-out removes the entry; the allocator's own drop calls destructors
+only for entries still in the list. Such an allocator supports move-out for all `T`,
+including `T: Drop`, at the cost of per-allocation bookkeeping.
+
+The constraints in §2.2.1–2.2.3 apply to bulk-deallocating allocators. A custom region type
+that implements individual tracking does not impose the `T: !Drop` restriction on its callers.
 
 #### 2.2.1 `T: Copy`
 
@@ -91,10 +103,10 @@ let p = ptr: Point;   // type ascription copies Point out — ptr still valid, s
 
 Copy extraction works for any region kind and imposes no Drop-related constraint.
 
-#### 2.2.2 `T: NoDrop` (non-Copy, no Drop impl)
+#### 2.2.2 `T: !Drop` (non-Copy, no Drop impl)
 
-If `T` carries no external resources — no `Drop` impl — move-out is safe. The slot is
-orphaned, but when the arena drops it reclaims raw memory without needing to call any
+If `T` has no `Drop` impl — expressed as the negative bound `T: !Drop` — move-out is safe.
+The slot is orphaned, but when the arena drops it reclaims raw memory without calling any
 destructor. Nothing leaks; nothing runs twice:
 
 ```metel
@@ -107,23 +119,24 @@ let p = ptr: Pair;                     // type ascription moves out — safe; sl
 
 Move-out creates a double-drop hazard. Three options resolve this:
 
-**Option A — restrict move-out to `NoDrop` types (recommended).** Move-out from scoped
-`@[r] T` is a compile error when `T: Drop`. The type system enforces the restriction
-statically; no runtime bookkeeping. Types that hold external resources should use
-`@[Heap] T`, which supports move-out for all `T`.
+**Option A — restrict move-out to `T: !Drop` (recommended for bulk-deallocating
+allocators).** Move-out from `@[r] T` is a compile error when `T: Drop`. The type system
+enforces the restriction statically via the negative bound; no runtime bookkeeping. Types
+that hold external resources should use `@[Heap] T`, which supports move-out for all `T`.
 
-**Option B — drop list in the arena.** The arena maintains a `(slot, destructor)` list
-for every Drop-typed allocation. Move-out removes the entry; the arena's own Drop only
-calls destructors for entries still in the list. Fully safe for all `T`; adds
-per-allocation overhead for `Drop` types; arena drop becomes O(live Drop-slots) rather
-than O(1).
+**Option B — allocator-tracked destruction.** The allocator maintains a live-allocation
+list with destructor entries. Move-out removes the entry; the allocator's own drop only
+calls destructors for entries still in the list. Fully safe for all `T`; the allocator
+opts into this by implementing the tracking. A custom region type may implement Option B
+natively without language changes, making it transparent to callers.
 
 **Option C — caller-driven.** Move-out requires the caller to explicitly run `T::drop`
 before vacating the slot. Unsafe; inconsistent with Metel's safe-by-default posture.
 
-Option A is the recommended starting point. Bump-arena workloads typically deal in plain
-data types, not resource-holding ones. The restriction is zero-cost, statically visible at
-the call site, and the escape valve — use `@[Heap] T` — is idiomatic.
+Option A is the recommended starting point for the stdlib `Region` (bump arena). Arena
+workloads typically deal in plain data types, not resource-holding ones. The restriction is
+zero-cost, statically visible at the call site, and the escape valve — use `@[Heap] T` — is
+idiomatic. Custom allocators with specific requirements may implement Option B instead.
 
 ---
 
@@ -148,11 +161,8 @@ process(ptr: Node);           // move-out at call site
 ```
 
 Both forms obey the same constraints: unconditionally legal for `@[Heap] T`; requires
-`T: NoDrop` for scoped `@[r] T` (Option A).
-
-For `@[Heap] T` this is unconditionally legal. For scoped `@[r] T`, the `NoDrop`
-restriction (Option A) applies: the declared binding type `T` must satisfy `NoDrop`, or
-the compiler rejects the binding.
+`T: !Drop` for bulk-deallocating `@[r] T` (Option A). The compiler enforces this via the
+negative bound — if `T` has a `Drop` impl the binding is rejected at the call site.
 
 ---
 
@@ -162,8 +172,8 @@ When `T: Clone` and move-out from a scoped arena is unavailable (Option A: `T: D
 the safe path is to clone the value into a target region:
 
 ```metel
-// type-directed allocation drives the clone into Heap
-let copy: @[Heap] Config = (*(&src)).clone();
+// auto-deref dispatches clone() through the region pointer
+let copy: @[Heap] Config = src.clone();
 
 // stdlib convenience (naming open — see §5)
 let copy: @[Heap] Config = src.clone_into[Heap]();
@@ -177,32 +187,25 @@ encompasses the clone's use is valid.
 
 ## 5. Unresolved questions
 
-1. **`NoDrop` as a first-class bound.** Option A requires the compiler to enforce at the
-   type level that `T` has no `Drop` impl. Whether this is expressed as a `NoDrop` bound,
-   a negative bound (`T: !Drop`), or a compiler-understood auto-trait is unspecified.
-   Negative bounds have precedent in Rust's `auto trait` system but are a significant
-   addition to the type system.
+1. **Drop list overhead acceptability (Option B) — deferred.** If move-out of `Drop` types
+   from scoped arenas proves necessary in practice, the drop-list approach becomes worth its
+   overhead. Deferred until profiling data from realistic workloads is available.
 
-2. **Drop list overhead acceptability (Option B).** If move-out of `Drop` types from
-   scoped arenas proves necessary in practice, the drop-list approach becomes worth its
-   overhead. The right decision depends on observed allocation patterns in realistic
-   workloads. Remain on Option A until profiling data is available.
-
-3. **`clone_into` naming and placement.** The stdlib convenience in §4 needs a name and
-   a home (free function vs method, generic over region kind). Naming is deferred until
-   the clone API is designed holistically.
+2. **`clone_into` naming and placement — deferred.** The stdlib convenience in §4 needs a
+   name and a home (free function vs method, generic over region kind). Deferred to the
+   clone API RFC.
 
 ---
 
 ## 6. Summary table
 
-| Extraction form | `@[Heap] T` | Scoped `@[r] T`, `T: Copy` | Scoped `@[r] T`, `T: NoDrop` | Scoped `@[r] T`, `T: Drop` |
+| Extraction form | `@[Heap] T` | `T: Copy` | `T: !Drop` | `T: Drop` |
 |---|---|---|---|---|
 | Borrow `&T` | `&ptr` | `&ptr` | `&ptr` | `&ptr` |
 | Borrow `&mut T` | `&mut ptr` | `&mut ptr` | `&mut ptr` | `&mut ptr` |
 | Copy out | `ptr: T` | `ptr: T` | — | — |
-| Move out | `ptr: T` | — | `ptr: T` (Option A) | not supported (Option A) |
-| Type-directed move | `let x: T = ptr` | — | `let x: T = ptr` (Option A) | not supported (Option A) |
+| Move out | `ptr: T` | — | `ptr: T` | not supported |
+| Type-directed move | `let x: T = ptr` | — | `let x: T = ptr` | not supported |
 | Clone out | `clone_into[dst]()` | — | — | `clone_into[dst]()` |
 
 ---

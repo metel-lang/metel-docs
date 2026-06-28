@@ -62,7 +62,9 @@ struct Parser[own r] {
 `Parser`'s external type — from the call site, the type is just `Parser`, not `Parser[r]`.
 The owned region is an implementation detail of the struct.
 
-A struct may declare at most one owned region (see §7 for the multi-region question).
+The owned region is strictly private: no code outside the struct's `impl` blocks may obtain
+or name the region handle. A struct may declare at most one owned region (see §8 for the
+multi-region question).
 
 ---
 
@@ -169,9 +171,10 @@ When a method has only one region in scope — the implicit `r` and no explicit 
 lifetime — the elision rule from RFC-0065 applies: bare `@T` elides to `@[r] T`, and
 omitted bracket arguments at call sites resolve to `r`.
 
-When both `r` and a borrow-duration tag `s` are in scope, two regions are present and
-elision does not apply; all tags must be named. This is the standard two-or-more rule from
-RFC-0065 §1.2.
+When both `r` and a borrow-duration tag `s` are in scope and `s` appears in the return
+type, two regions are present and `@`-elision does not apply; all tags must be named. When
+`s` appears only on the receiver and not in any return type, `s` may be elided entirely
+from the bracket channel and receiver annotation (see §8.3).
 
 ```metel
 impl Parser {
@@ -205,24 +208,25 @@ region `s`. `r` is implicit in impl blocks; `s` is an external bracket parameter
 
 ## 8. Unresolved questions
 
-1. **External access to the owned region.** Can code outside `impl Parser` obtain the owned
-   region handle — e.g., to allocate additional values into it? One option is a method that
-   returns `&mut [s] Region` from `&mut [s] Parser`, projecting the arena out. Another is
-   to keep the region strictly private. The tradeoff is expressiveness vs encapsulation.
+1. **Multiple owned regions — deferred.** Whether `[own r, own s]` should be permitted is
+   deferred until a concrete use case is established. The straightforward reading — two
+   arenas, both freed on drop — is coherent, but the added complexity is not justified
+   without evidence of need.
 
-2. **Multiple owned regions.** Whether `[own r, own s]` should be permitted is left open.
-   The straightforward reading — two arenas, both freed on drop — is coherent, but the
-   added complexity may not be worth it until a concrete use case is established.
+2. **`Outlives` bounds between owned and borrowed regions — resolved.** When
+   `struct Foo[own r, s]` holds a field of type `&[s] T`, the borrow checker derives
+   `s: Outlives<r>` automatically from the field type — the borrow must be valid for the
+   entire lifetime of the struct, which is `r`. No explicit annotation is required. The
+   explicit form `[own r, s: Outlives<r>]` is permitted for documentation purposes.
+   This follows the same inference rule Rust applies to struct lifetime bounds.
 
-3. **`Outlives` bounds between owned and borrowed regions.** When `struct Foo[own r, s]`
-   has both an owned and a borrowed region, an `Outlives` bound between them (`s:
-   Outlives<r>`) would mean the external region outlives the struct's arena. Whether this
-   needs explicit annotation or can be inferred is unspecified.
-
-4. **Elision of the borrow-duration tag.** In many methods the borrow lifetime `s` appears
-   only on `self` and never in the return type. RFC-0065's elision mechanism could suppress
-   `[s]` and the `&[s] self` annotation in these cases, leaving only `r` visible. Whether
-   this is desirable or creates confusion with the single-region elision rule is open.
+3. **Elision of the borrow-duration tag — resolved.** When `[s]` appears only on the
+   receiver and not in any return type, the bracket parameter and the `[s]` tag on `self`
+   may both be omitted. The receiver is written as `self: &Foo` or `self: &mut Foo`; the
+   compiler infers a fresh anonymous borrow duration. The explicit form is always valid.
+   This follows Rust's self-receiver lifetime elision rule. It does not conflict with
+   RFC-0065's rule that bare `&T` never expands to `&[r] T` — the elided tag here is a
+   borrow duration, not an allocation region.
 
 ---
 

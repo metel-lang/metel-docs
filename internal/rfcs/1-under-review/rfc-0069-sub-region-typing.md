@@ -122,15 +122,18 @@ pointer `@[Heap] Parser` is alive.
 ### 3.3 Nesting
 
 Nesting composes naturally. If Parser's arena `r: SubRegion<outer>` itself contains an
-`@[r] SubParser` where `SubParser[own s]`, then `s: SubRegion<r>`. The transitive chain:
+`@[r] SubParser` where `SubParser[own s]`, then `s: SubRegion<r>`. The full chain:
 
 ```
-outer: Outlives<r>    (r : SubRegion<outer>)
-r:     Outlives<s>    (s : SubRegion<r>)
-∴ outer: Outlives<s>  (by Outlives transitivity — RFC-0063 §3)
+r : SubRegion<outer>  →  outer: Outlives<r>
+s : SubRegion<r>      →  r:     Outlives<s>
+                      ∴  outer: Outlives<s>  (by Outlives transitivity — RFC-0063 §3)
 ```
 
-The borrow checker derives the full chain without any explicit annotation.
+Each level is a distinct type: `SubRegion<outer>` and `SubRegion<r>` are not collapsed.
+This preserves every intermediate `Outlives` relationship — in particular `r: Outlives<s>`,
+which is required to prove that borrows into `s` are valid within the scope of `r`. The
+borrow checker derives the full chain without any explicit annotation.
 
 ---
 
@@ -169,20 +172,24 @@ determined and an explicit bound is still required.
 
 ## 6. Unresolved questions
 
-1. **Naming `SubRegion<R>` in source.** The compiler assigns `SubRegion<R>` internally;
-   can the programmer write it explicitly in type annotations? If so, the full form `[r:
-   SubRegion<outer>]` would allow manual annotation where the compiler cannot infer the
-   allocation context. Whether this is needed or creates confusion is open.
+1. **Naming `SubRegion<R>` in source — resolved.** The programmer may write `SubRegion<R>`
+   explicitly in type annotations and bracket channel bounds. The full form
+   `[r: SubRegion<outer>]` is valid where the compiler cannot infer the allocation context
+   automatically. `SubRegion<R>` is a stdlib type like any other; restricting its use to
+   compiler-internal assignment only would create an unnecessary asymmetry.
 
-2. **`SubRegion` of `SubRegion`.** §3.3 describes `SubRegion<SubRegion<R>>` arising from
-   nesting. Whether this is represented as a distinct type or normalised to a flat
-   `SubRegion<R>` (erasing intermediate levels) affects diagnostic readability. The
-   transitive `Outlives` bound is the same either way; the question is presentation only.
+2. **`SubRegion` of `SubRegion` — resolved.** `SubRegion<SubRegion<R>>` is kept as a
+   distinct type — no normalisation. Each nesting level carries a real `Outlives`
+   relationship: `r: SubRegion<outer>` gives `outer: Outlives<r>`, and
+   `s: SubRegion<r>` gives `r: Outlives<s>`. Erasing intermediate levels would lose
+   these relationships and break borrow checking across nesting boundaries.
 
-3. **`SubRegion` and sendability.** `SubRegion<Heap>` is bounded by a heap-allocated
-   struct. If the heap struct is sendable (`@[Heap] T: Send`), does `SubRegion<Heap>` also
-   become sendable? The arena it represents is tied to the heap pointer, not to a thread,
-   so sendability may be sound. Requires analysis.
+3. **`SubRegion` and sendability — resolved.** `SubRegion<R>` is sendable iff `R` is
+   sendable. When `R = Heap`, the arena is tied to the heap allocation, not to a thread;
+   if the heap struct is sent to another fiber the arena moves with it. No aliasing hazard
+   arises because the owned region is private to the struct's impl blocks (RFC-0068 §1) —
+   no external code holds the arena handle independently, so concurrent allocation through
+   it is impossible.
 
 ---
 

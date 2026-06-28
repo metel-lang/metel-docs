@@ -151,7 +151,8 @@ let p: Point = ptr;   // copy: Point is Copy, ptr still valid
 ```
 
 The same rules from RFC-0066 apply: move-out from `@[Heap] T` is always safe; move-out
-from scoped `@[r] T` requires `T: NoDrop` (Option A) or drop-list support (Option B).
+from bulk-deallocating `@[r] T` requires `T: !Drop` (Option A) or allocator-tracked
+destruction (Option B).
 
 ### 5.2 Type ascription move-out
 
@@ -224,14 +225,17 @@ unchanged, with the type renamed to `Perhaps<&T>`.
 
 ## 9. Unresolved questions
 
-1. **`&[r] T` coercion depth.** §4 states that `&node` where `node: @[r] T` gives
-   `&[r] T`, which coerces to `&T`. The question is whether this coercion is always
-   implicit (i.e., `&[r] T` is interchangeable with `&T` in all non-region-aware
-   positions) or whether some call sites require an explicit coercion annotation.
+None.
 
-2. **Auto-deref chain depth.** The depth of auto-deref chains (e.g., `& &T`,
-   `& @[r] @[s] T`) should be bounded. The exact bound and the rules for resolving
-   ambiguous chains need to be specified.
+**Closed — `&[r] T` coercion depth.** `&[r] T` coerces to `&T` implicitly at coercion
+sites — function arguments, return expressions, and `let` bindings with an explicit type
+annotation. No coercion is inserted in unannotated expression positions where no expected
+type is known. This matches Rust's deref-coercion rules for `&Box<T>` → `&T`.
+
+**Closed — Auto-deref chain depth.** The compiler follows the deref chain until it reaches
+the expected type, with no explicit numeric depth limit. The chain is bounded by the type
+structure (no infinite deref cycles are possible). Ambiguous chains are resolved by the
+expected type at the coercion site. This also matches Rust's approach.
 
 ---
 

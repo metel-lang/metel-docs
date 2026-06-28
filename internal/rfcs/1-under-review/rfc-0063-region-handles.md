@@ -7,10 +7,12 @@ date: '2026-06-24'
 > **Status — draft, design-only.** This RFC consolidates the region-related half of
 > `docs/reports/memory-model/capability-region-synthesis.md` into a single normative
 > proposal and adopts the **bracket parameter channel** syntax (region handles declared in
-> `[...]`, value parameters in `(...)`). It depends on the reference-capability core
-> (`&mut`/`&`, RFC TBD) and inherits the open interpreter-first question recorded in §10.
+> `[...]`, value parameters in `(...)`). It depends on RFC-0071 (Ownership and Move
+> Semantics) for the affine ownership model that makes region lifetime guarantees sound.
 > Annotation-reduction ergonomics (elision, call-site inference) are deferred to RFC-0065.
-> Do **not** implement pending resolution of that question and of the capability-core RFC.
+> The region system is purely compile-time: the interpreter uses a single uniform allocator
+> for all regions regardless of region type, and enforces region lifetime constraints via
+> the borrow checker rather than at runtime.
 
 > **Vocabulary note.** This RFC uses `@[r] T` as the notation for a region-allocated
 > pointer (the result of `@[r] expr`). This is **not** a capability; see §2. The
@@ -35,8 +37,7 @@ This RFC specifies:
 2. region tags on pointer types (`@[r] T`) and their effect on sendability;
 3. the **bracket parameter channel** — region handles and abstract region tags declared in
    `[...]`, distinct from value parameters in `(...)`;
-4. the sendability consequences of the tag;
-5. the static-vs-runtime enforcement question that remains open.
+4. the sendability consequences of the tag.
 
 Annotation-reduction ergonomics (return-position elision, call-site deep-threading
 inference) are specified separately in RFC-0065 and are not required to implement this core.
@@ -70,7 +71,13 @@ All memory allocation goes through region handles. There is no allocation expres
 operates outside of a region — no `new expr`, no implicit heap allocation. Every pointer
 to heap-allocated data carries a region tag naming the allocator it came from.
 
-The three allocation regions the stdlib provides:
+A region is any value that implements the **region allocator interface** — an ordinary runtime
+contract for allocation, deallocation, and drop. The region system is open: any type
+satisfying the interface may be used as a region handle in the bracket channel. Pool
+allocators, slab allocators, stack arenas, and domain-specific stores all fit without
+language changes.
+
+The three regions the stdlib provides as defaults:
 
 - **`Region`** — scoped bump arena; values freed in O(1) when the region drops.
 - **`Heap`** — the static global heap; values freed individually when the last owner drops.
@@ -229,14 +236,15 @@ let node: @[r] Node = Node { val: 1, next: null };
 // for documentation purposes
 ```
 
-Type-directed allocation applies at the binding level. Nested fields still require explicit
-`@[r]` in expression position — the rule does not recurse through struct literals
-automatically (see §8, unresolved question 3).
+Type-directed allocation applies at the binding level only. Nested fields and sub-expressions
+require an explicit `@` (or `@[r]` when elision does not apply) — the rule does not recurse
+through struct literals. This keeps every allocation site visible with a consistent single
+sigil; RFC-0065 elision already reduces the annotation cost in the single-region case to a
+bare `@`.
 
-> **Note on bracket syntax.** Whether the type-level tag stays `[r]` or moves to another
-> delimiter (it currently reads close to array indexing) is parked — see the region-syntax
-> discussion. The two are grammatically disjoint: a tag follows a pointer sigil (type
-> context); array indexing follows a value (expression context).
+> **Note on bracket syntax.** `@[r] T` is unambiguous: `[r]` follows the `@` sigil in type
+> or expression position, whereas array indexing follows a value. The two contexts are
+> grammatically disjoint; no delimiter change is needed.
 
 ### Comparison with `Box<T, A>`
 
@@ -314,8 +322,8 @@ fun build_on_heap[r: Heap](val: i64) -> @[r] Node {
 }
 ```
 
-The annotation is a concrete region type (`Heap`, `LocalHeap`, `Region`) or any type that
-implements the non-fallible allocator interface. Fallible allocators require an explicit
+The annotation is any type that implements the region allocator interface — `Heap`,
+`LocalHeap`, `Region`, or a custom allocator type. Fallible allocators require an explicit
 annotation; a bare parameter never silently introduces a fallible allocation path.
 
 Functions that only need to *name* a region — to relate input and output tags without
@@ -447,37 +455,12 @@ let node: @[r] Node = Node { val: 42, next: null };
 
 ## 8. Unresolved questions
 
-1. **Extracting a value from a region pointer.** How `@[r] T` interacts with call sites
-   that expect plain `T` or `&T` is unspecified. The full analysis — covering borrow-deref,
-   move-out, `Copy` and `Clone` extraction, bump-arena destructor semantics, and the risks
-   of auto-deref coercion — is in RFC-0066 (Region Pointer Extraction).
-
-2. **Static vs runtime enforcement of the tag (the decisive open item).** The region tag is
-   a compile-time escape analysis, which re-commits to the static direction the
-   interpreter-first reconsideration argued against. The intended resolution is to make the
-   tag **runtime-enforced in the interpreter** (a region-generation check) that a future
-   compiler **elides** where escape analysis proves it safe — turning the one re-incurred
-   concern into the capabilities↔generational-references bridge. Note that `@[r] expr` as a
-   language construct lowers to a call through the runtime handle, so the interpreter can
-   instrument it with a generation check without any change to the surface syntax. This must
-   be settled before implementation.
-
-3. **Type-directed allocation scope.** §2 specifies type-directed allocation for `let`
-   bindings: a bare `T` on the right-hand side is allocated when the declared type is
-   `@[r] T`. Whether this rule extends recursively to struct field positions (so that nested
-   struct literals are also allocated without explicit `@[r]`) is unresolved. The recursive
-   form is more ergonomic for deeply nested data but requires the compiler to thread expected
-   types through struct literal elaboration.
-
-4. **Bracket delimiter for type-level tags.** `@[r] T` reads close to array indexing.
-   Parked; tracked in the region-syntax discussion. Does not affect the parameter-channel
-   design of §3.
+None.
 
 ---
 
 ## References
 
-- `docs/reports/memory-model/capability-region-synthesis.md` — source synthesis (§1–10).
 - `docs/reports/memory-model/memory-model-overview.md` — narrative overview of the full
   region system built on this RFC.
 - RFC-0052 (Lifetime System, on hold) — the phantom-lifetime approach this supersedes.

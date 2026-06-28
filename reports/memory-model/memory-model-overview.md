@@ -31,7 +31,9 @@ Three properties follow from this choice and no incumbent language offers all th
 ## 1. Region kinds
 
 All memory allocation goes through a region. There is no allocation expression outside of
-one. Three region kinds cover the full range of lifetime needs:
+one. A region is any value implementing the region allocator interface — an ordinary runtime
+contract for allocation and drop. The system is open: pool allocators, slab allocators, stack
+arenas, and other custom types all qualify. The three stdlib regions cover the common cases:
 
 ### 1.1 Heap
 
@@ -59,11 +61,16 @@ use LocalHeap;
 let cache = @[LocalHeap] HashMap::new();  // thread-local, not sendable
 ```
 
-### 1.3 Scoped bump arenas
+### 1.3 Scoped regions — `Region` and custom allocators
 
-`Region` is a bump arena: allocation is O(1), deallocation is O(1) bulk-free when the
-region drops. Pointers tagged with a scoped region are **not sendable** — a fiber may
-outlive the arena.
+`Region` is the stdlib scoped allocator: a bump arena with O(1) allocation and O(1)
+bulk-free when the region drops. Pointers tagged with a scoped region are **not sendable**
+— a fiber may outlive the region.
+
+`Region` is one implementation of the region interface. A custom scoped allocator — a pool,
+a slab, a stack arena — may be used in the same bracket channel position and carries the
+same lifetime and sendability rules: the tag is non-sendable, and the allocator's own drop
+governs when memory is reclaimed.
 
 A scoped region can be created in two ways:
 
@@ -295,7 +302,7 @@ a vacated slot is orphaned and the arena cannot skip its destructor call at bulk
 | T | Scoped move-out |
 |---|---|
 | `T: Copy` | copies out; slot intact; `ptr` remains valid |
-| `T: NoDrop` | moves out; slot orphaned; safe (no destructor to double-call) |
+| `T: !Drop` | moves out; slot orphaned; safe (no destructor to double-call) |
 | `T: Drop` | compile error (Option A, recommended); avoids double-drop hazard |
 
 **Type-directed move-out** — when a `let` binding declares type `T` and the source is
