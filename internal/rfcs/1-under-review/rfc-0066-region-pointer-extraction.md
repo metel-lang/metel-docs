@@ -42,16 +42,14 @@ It is unconditional — no restriction on region kind or `T`:
 ```metel
 let ptr = @[r] Node { val: 1, next: null };
 
-let v: &Node     = &*ptr;     // shared borrow
-let v: &mut Node = &mut *ptr; // exclusive borrow
+let v: &Node     = &ptr;     // shared borrow — &[r] Node, coerces to &Node
+let v: &mut Node = &mut ptr; // exclusive borrow
 // ptr is still live after the borrows expire
 ```
 
 The borrow checker enforces that no borrow outlives `ptr`, and that a `&mut` borrow is
-exclusive. No new rules are needed beyond the existing borrow semantics.
-
-Whether `@[r] T` auto-derefs to `&T` for method dispatch is an open question (§5).
-Explicit `&*ptr` is the required form until that question is settled.
+exclusive. No new rules are needed beyond the existing borrow semantics. Auto-deref handles
+field access and method dispatch through region pointers (RFC-0067 §3–4).
 
 ---
 
@@ -67,7 +65,7 @@ dropped by its new owner. This is exactly symmetric with `@[Heap] expr` allocati
 
 ```metel
 let ptr = @[Heap] String { … };
-let s: String = *ptr;  // moves String out; heap slot freed; ptr consumed
+let s: String = mem::move_out(ptr);  // moves String out; heap slot freed; ptr consumed
 // s is dropped normally when it goes out of scope
 ```
 
@@ -88,7 +86,7 @@ valid:
 
 ```metel
 let ptr = @[r] Point { x: 1, y: 2 };
-let p: Point = *ptr;   // copies Point out — ptr still valid, slot intact
+let p: Point = mem::move_out(ptr);   // copies Point out — ptr still valid, slot intact
 ```
 
 Copy extraction works for any region kind and imposes no Drop-related constraint.
@@ -101,7 +99,7 @@ destructor. Nothing leaks; nothing runs twice:
 
 ```metel
 let ptr = @[r] Pair { a: 1, b: 2 };  // Pair has no Drop impl
-let p: Pair = *ptr;                    // moves out — safe; slot orphaned
+let p: Pair = mem::move_out(ptr);      // moves out — safe; slot orphaned
 // arena frees the raw memory on drop, no destructor to call
 ```
 
@@ -109,10 +107,10 @@ let p: Pair = *ptr;                    // moves out — safe; slot orphaned
 
 Move-out creates a double-drop hazard. Three options resolve this:
 
-**Option A — restrict move-out to `NoDrop` types (recommended).** `*ptr` on scoped
-`@[r] T` is a compile error when `T: Drop`. The type system enforces the restriction
-statically; no runtime bookkeeping. Types that hold external resources should use
-`@[Heap] T`, which supports move-out for all `T`.
+**Option A — restrict move-out to `NoDrop` types (recommended).** `mem::move_out` on
+scoped `@[r] T` is a compile error when `T: Drop`. The type system enforces the
+restriction statically; no runtime bookkeeping. Types that hold external resources should
+use `@[Heap] T`, which supports move-out for all `T`.
 
 **Option B — drop list in the arena.** The arena maintains a `(slot, destructor)` list
 for every Drop-typed allocation. Move-out removes the entry; the arena's own Drop only
@@ -133,13 +131,13 @@ the call site, and the escape valve — use `@[Heap] T` — is idiomatic.
 
 Symmetric with type-directed allocation (RFC-0063 §2): when a `let` binding declares
 type `T` and the right-hand side is `@[r] T`, move-out is implicit from the type
-annotation. The same constraints as explicit `*ptr` apply.
+annotation. The same constraints as `mem::move_out` apply.
 
 ```metel
 let ptr = @[r] Node { val: 1, next: null };
 
-// explicit move-out
-let node: Node = *ptr;
+// explicit move-out via std::mem
+let node: Node = mem::move_out(ptr);
 
 // type-directed move-out — equivalent, ptr consumed
 let node: Node = ptr;
@@ -183,12 +181,7 @@ encompasses the clone's use is valid.
    overhead. The right decision depends on observed allocation patterns in realistic
    workloads. Remain on Option A until profiling data is available.
 
-3. **Auto-deref for borrows.** A narrow form of auto-deref — `@[r] T` coerces to `&T`
-   for method dispatch and borrow contexts, but never for move — avoids most call-site
-   ambiguity. Whether this interacts safely with RFC-0065's elision rules requires
-   dedicated analysis. Deferred to a future ergonomics RFC.
-
-4. **`clone_into` naming and placement.** The stdlib convenience in §4 needs a name and
+3. **`clone_into` naming and placement.** The stdlib convenience in §4 needs a name and
    a home (free function vs method, generic over region kind). Naming is deferred until
    the clone API is designed holistically.
 
@@ -198,10 +191,10 @@ encompasses the clone's use is valid.
 
 | Extraction form | `@[Heap] T` | Scoped `@[r] T`, `T: Copy` | Scoped `@[r] T`, `T: NoDrop` | Scoped `@[r] T`, `T: Drop` |
 |---|---|---|---|---|
-| Borrow `&T` | `&*ptr` | `&*ptr` | `&*ptr` | `&*ptr` |
-| Borrow `&mut T` | `&mut *ptr` | `&mut *ptr` | `&mut *ptr` | `&mut *ptr` |
-| Copy out | `*ptr` | `*ptr` | — | — |
-| Move out | `*ptr` | — | `*ptr` (Option A) | not supported (Option A) |
+| Borrow `&T` | `&ptr` | `&ptr` | `&ptr` | `&ptr` |
+| Borrow `&mut T` | `&mut ptr` | `&mut ptr` | `&mut ptr` | `&mut ptr` |
+| Copy out | `mem::move_out(ptr)` | `mem::move_out(ptr)` | — | — |
+| Move out | `mem::move_out(ptr)` | — | `mem::move_out(ptr)` (Option A) | not supported (Option A) |
 | Type-directed move | `let x: T = ptr` | — | `let x: T = ptr` (Option A) | not supported (Option A) |
 | Clone out | `clone_into[dst]()` | — | — | `clone_into[dst]()` |
 

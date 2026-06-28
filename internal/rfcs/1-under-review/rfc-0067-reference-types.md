@@ -153,17 +153,18 @@ let p: Point = ptr;   // copy: Point is Copy, ptr still valid
 The same rules from RFC-0066 apply: move-out from `@[Heap] T` is always safe; move-out
 from scoped `@[r] T` requires `T: NoDrop` (Option A) or drop-list support (Option B).
 
-### 5.2 Consuming method
+### 5.2 Explicit move-out via `std::mem`
 
 For explicit move-out — in positions without a declared target type, or for
-documentation purposes — a consuming method is available on `@[r] T`:
+documentation purposes — `mem::move_out` is a free function in `std::mem`:
 
 ```metel
-let node: Node = ptr.take();
+let node: Node = mem::move_out(ptr);
 ```
 
-The method name is an unresolved question (§7). It consumes `ptr` and returns `T` with
-the same region-kind and Drop constraints as type-directed move-out.
+It consumes `ptr` and returns `T` with the same region-kind and Drop constraints as
+type-directed move-out. Placing the operation in `std::mem` keeps `@[r] T` behaviorally
+identical to `T` itself — the pointer type carries no special consuming method.
 
 ---
 
@@ -192,8 +193,8 @@ RFC-0066's extraction forms update as follows:
 |---|---|---|
 | Borrow `&[r] T` (→ `&T`) | `&*ptr` | `&ptr` |
 | Borrow `&mut [r] T` (→ `&mut T`) | `&mut *ptr` | `&mut ptr` |
-| Copy out (T: Copy) | `*ptr` | `let x: T = ptr` or implicit via auto-deref |
-| Move out | `*ptr` | `let x: T = ptr` or `ptr.take()` |
+| Copy out (T: Copy) | `*ptr` | `let x: T = ptr` or `mem::move_out(ptr)` |
+| Move out | `*ptr` | `let x: T = ptr` or `mem::move_out(ptr)` |
 | Clone out | `(*(&src)).clone()` | `src.clone()` |
 
 RFC-0066 §5.3 (auto-deref for borrows, open question) is resolved by this RFC: `src.clone()` on `@[r] T` dispatches to `T::clone` through auto-deref. The unresolved question is closed.
@@ -223,16 +224,12 @@ unchanged, with the type renamed to `Perhaps<&T>`.
 
 ## 9. Unresolved questions
 
-1. **Consuming method name.** `ptr.take()`, `ptr.own()`, `ptr.into_inner()`,
-   `ptr.into_value()` are all candidates. The name should be consistent with any
-   consuming method conventions established elsewhere in the stdlib.
-
-2. **`&[r] T` coercion depth.** §4 states that `&node` where `node: @[r] T` gives
+1. **`&[r] T` coercion depth.** §4 states that `&node` where `node: @[r] T` gives
    `&[r] T`, which coerces to `&T`. The question is whether this coercion is always
    implicit (i.e., `&[r] T` is interchangeable with `&T` in all non-region-aware
    positions) or whether some call sites require an explicit coercion annotation.
 
-3. **Auto-deref chain depth.** The depth of auto-deref chains (e.g., `& &T`,
+2. **Auto-deref chain depth.** The depth of auto-deref chains (e.g., `& &T`,
    `& @[r] @[s] T`) should be bounded. The exact bound and the rules for resolving
    ambiguous chains need to be specified.
 

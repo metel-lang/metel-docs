@@ -307,10 +307,11 @@ let ptr = @[r] Node { val: 1, next: null };
 let node: Node = ptr;   // move-out; same constraints as explicit form
 ```
 
-**Consuming method** — for explicit move-out without a declared target type:
+**Free-function extraction** — for explicit move-out without a declared target type,
+`mem::move_out` in `std::mem`:
 
 ```metel
-let node: Node = ptr.take();   // name TBD — see RFC-0067 §9
+let node: Node = mem::move_out(ptr);
 ```
 
 ### 5.3 Clone extraction
