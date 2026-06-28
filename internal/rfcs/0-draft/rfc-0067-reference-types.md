@@ -115,16 +115,16 @@ node.val = 2;               // auto-deref: @[r] Node → Node, write field
 node.method(args);          // auto-deref: dispatches on Node
 ```
 
-**Explicit borrows** through a region pointer produce a reference to the inner value:
+**Explicit borrows** through a region pointer produce a region-tagged reference:
 
 ```metel
-let r:  &Node     = &node;      // shared borrow of the Node inside @[r] Node
-let m:  &mut Node = &mut node;  // exclusive borrow
+let r: &[r] Node     = &node;      // shared borrow — &[r] Node, coerces to &Node
+let m: &mut [r] Node = &mut node;  // exclusive borrow — &mut [r] Node, coerces to &mut Node
 ```
 
-`&node` where `node: @[r] T` gives `&T` directly (not `& @[r] T`). Taking the address
-of a region pointer as a region pointer — `& @[r] T` — is possible but unusual and
-requires an explicit type annotation to distinguish it from a plain `&T`.
+`&node` where `node: @[r] T` gives `&[r] T` — the region-tagged borrow established in
+RFC-0063 §2 as the shorthand for `& @[r] T`. `&[r] T` coerces to `&T` in positions
+where the region tag is not needed (e.g., calls to functions that take plain `&T`).
 
 ---
 
@@ -176,11 +176,11 @@ RFC-0063 §2 defines borrow shorthand:
 | `&[r] T` | `&@[r] T` | shared borrow of a region-`r` value |
 | `&mut [r] T` | `&mut @[r] T` | exclusive borrow of a region-`r` value |
 
-Under this RFC, `&node` where `node: @[r] T` gives `&T` directly (§4). The `&[r] T`
-form in **signatures** remains valid and useful — it names the region for lifetime
-tracking and elision — but in expression position `&node` gives `&T`, not `& @[r] T`.
-The expansion `&@[r] T` is the type-level form; `&T` is the expression-level result.
-These are the same borrow, described from different vantage points.
+Under this RFC, `&node` where `node: @[r] T` gives `&[r] T` (§4) — the RFC-0063
+shorthand for `& @[r] T`. `&[r] T` coerces to plain `&T` where the region tag is not
+required. The `&[r] T` form in signatures names the region for lifetime tracking and
+elision; `&T` is what callers that don't care about the region observe after coercion.
+These describe the same borrow from different vantage points.
 
 ---
 
@@ -190,8 +190,8 @@ RFC-0066's extraction forms update as follows:
 
 | Extraction form | Old syntax | New syntax |
 |---|---|---|
-| Borrow `&T` | `&*ptr` | `&ptr` |
-| Borrow `&mut T` | `&mut *ptr` | `&mut ptr` |
+| Borrow `&[r] T` (→ `&T`) | `&*ptr` | `&ptr` |
+| Borrow `&mut [r] T` (→ `&mut T`) | `&mut *ptr` | `&mut ptr` |
 | Copy out (T: Copy) | `*ptr` | `let x: T = ptr` or implicit via auto-deref |
 | Move out | `*ptr` | `let x: T = ptr` or `ptr.take()` |
 | Clone out | `(*(&src)).clone()` | `src.clone()` |
@@ -239,10 +239,10 @@ unchanged, with the type renamed to `Perhaps<&T>`.
    (currently `*val T`) needs a name that does not use the retired `*` sigil. `Frozen<T>`
    is the working name; alternatives include `Val<T>`, `Shared<T>`, `SendRef<T>`.
 
-3. **`& @[r] T` vs `&T` in expression position.** §4 states that `&node` where
-   `node: @[r] T` gives `&T`. The question is whether `& @[r] T` is ever producible in
-   expression position without an explicit type annotation, and whether any use case
-   requires it.
+3. **`&[r] T` coercion depth.** §4 states that `&node` where `node: @[r] T` gives
+   `&[r] T`, which coerces to `&T`. The question is whether this coercion is always
+   implicit (i.e., `&[r] T` is interchangeable with `&T` in all non-region-aware
+   positions) or whether some call sites require an explicit coercion annotation.
 
 4. **Auto-deref chain depth.** The depth of auto-deref chains (e.g., `& &T`,
    `& @[r] @[s] T`) should be bounded. The exact bound and the rules for resolving
