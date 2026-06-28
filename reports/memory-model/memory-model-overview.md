@@ -21,8 +21,7 @@ Three properties follow from this choice and no incumbent language offers all th
 1. **Lifetime tags are real objects.** Errors name them; diagnostics point at them; the
    programmer can call methods on them.
 2. **The same tag that bounds a pointer's lifetime proves it cannot race.** Two pointers
-   with distinct region tags provably cannot alias — no separation calculus needed. Fork-join
-   parallelism over region data is a direct consequence (RFC-0064).
+   with distinct region tags provably cannot alias — no separation calculus needed.
 3. **Allocators are swappable library values.** The region behind any `@[r] T` is an
    ordinary value implementing a runtime interface. Different arenas (bump, pool, GC stub)
    plug into the same type system position.
@@ -404,34 +403,16 @@ type, two behaviors, no separate `Rc`.
 
 ---
 
-## 9. Fork-join parallelism
+## 9. Disjointness and parallelism
 
-Scoped region pointers are not sendable, but structured fork-join via the `||` combinator
-safely parallelises over region data (RFC-0064):
+Two pointers with distinct region tags name distinct arenas and therefore cannot alias.
+This is a compile-time fact, not a runtime check. It is the foundation on which structured
+parallelism over region data can be built: a parallel combinator that keeps both branches
+inside the region's scope would be race-free purely from the borrow checker's ordinary
+`&mut` exclusivity rule, with no separation calculus required.
 
-```metel
-Region::scoped([r]() -> {
-    let tree = build(…);                             // @[r] Node
-    let (ls, rs) = sum(&tree.left) || sum(&tree.right);
-    // both branches finish before || returns; borrows cannot escape
-});
-```
-
-Safety rests on two properties already present before RFC-0064 adds anything:
-
-1. **Scope containment** — `||` is always inside the region's scope; the join is the sync
-   point.
-2. **Disjoint memory** — two pointers with distinct region tags cannot alias (distinct tags
-   = distinct arenas).
-
-`||` enforces that two branches cannot simultaneously hold `&mut` to the same value. Shared
-`&T` borrows may coexist freely — racing reads are sound. The borrow checker enforces both
-at compile time; no locks or runtime checks are needed.
-
-Allocation inside `||` branches: `@[r] expr` requires `&mut` access to the arena. Two
-branches cannot both allocate into the same region simultaneously; the borrow checker
-rejects any attempt. `||` parallelises processing of existing data; parallel allocation is
-sound only when each branch holds a distinct region.
+The `||` structured fork-join combinator that exploits this property is specified in
+RFC-0064, which is **deferred** until the core region cluster stabilises.
 
 ---
 
@@ -488,7 +469,7 @@ Key points visible in the example:
 | RFC | Title | Status |
 |---|---|---|
 | RFC-0063 | Region Handles | under review |
-| RFC-0064 | Structured Fork-Join Parallelism | draft |
+| RFC-0064 | Structured Fork-Join Parallelism | deferred |
 | RFC-0065 | Region Ergonomics | under review |
 | RFC-0066 | Region Pointer Extraction | under review |
 | RFC-0067 | Reference Types | draft |

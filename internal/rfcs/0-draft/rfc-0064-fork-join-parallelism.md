@@ -4,9 +4,10 @@ title: "Structured Fork-Join Parallelism"
 date: '2026-06-25'
 ---
 
-> **Status — draft, design-only.** This RFC specifies the `||` structured fork-join
-> combinator and its interaction with region pointers. It depends on RFC-0063 (Region
-> Handles) for the region tag and sendability rules.
+> **Status — deferred.** This RFC specifies the `||` structured fork-join combinator and
+> its interaction with region pointers. It depends on RFC-0063 (Region Handles) for the
+> region tag and sendability rules. Deferred until the core region RFC cluster (0063,
+> 0065–0069) reaches a stable state.
 
 ## Summary
 

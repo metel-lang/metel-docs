@@ -21,8 +21,7 @@ date: '2026-06-24'
 A **region** is an allocation arena with a scope. Its **handle** — an ordinary runtime value
 of type `&mut Region` you can call `.alloc` on — does double duty: its *name* becomes a
 **lifetime tag** carried on a pointer (`@[region] T`), and that same tag serves as a
-**static disjointness witness** (two pointers with different tags provably cannot alias —
-see RFC-0064 for the fork-join application).
+**static disjointness witness** (two pointers with different tags provably cannot alias).
 
 Regions are the **exclusive allocation mechanism**. The two reference **capabilities** —
 `&mut T` (exclusive mutable borrow) and `&T` (shared read borrow) — are orthogonal to
@@ -192,8 +191,7 @@ of the capability** — it is a component of the pointer *type*, naming the scop
 the backing memory. The tag:
 
 - determines **sendability**: scoped `[r]` → not sendable; static `[Heap]` → sendable (§6);
-- serves as a **disjointness witness**: distinct tags → cannot alias (RFC-0064 builds
-  structured fork-join on top of this property).
+- serves as a **disjointness witness**: distinct tags → cannot alias.
 
 Borrow types (`&mut T`, `&T`) do not carry a region tag for sendability or disjointness
 purposes — they are already non-sendable and non-escaping by construction. However, when
@@ -266,9 +264,8 @@ and errors name the real variable rather than an abstract `'a`.
 **Static disjointness between allocator instances.** `Box<T, BumpArena>` is the same type
 regardless of which arena instance allocated the value; the compiler cannot prove two boxes
 don't alias. `@[r1] T` and `@[r2] T` are distinct types, and that distinction is a
-compile-time proof of non-aliasing. RFC-0064's fork-join parallelism is built on this
-property: data from two different regions can be handed to two fibers with no locks and no
-runtime checks.
+compile-time proof of non-aliasing: data from two different regions provably cannot
+alias, with no locks and no runtime checks required.
 
 **Sendability encoded in the tag.** With `Box<T, A>`, sendability depends on `T: Send + A:
 Send` — a scoped arena could accidentally implement `Send`. With `@[r] T` the rule is
@@ -402,9 +399,9 @@ significantly with RFC-0065's inference; its difficulty does not.
 > cannot race, and the allocator behind it is an ordinary, swappable library value.*
 
 Three things no incumbent offers together: lifetime tags that are real objects (not Rust's
-phantom `'a`), tags that double as disjointness witnesses enabling fork-join parallelism
-(RFC-0064; neither Rust nor Pony nor Vale offers this), and Zig-style swappable allocators
-carrying a *static* lifetime (Zig has the allocators but no static safety).
+phantom `'a`), tags that double as disjointness witnesses (distinct region tags prove
+non-aliasing — a foundation for structured parallelism), and Zig-style swappable
+allocators carrying a *static* lifetime (Zig has the allocators but no static safety).
 
 ---
 
@@ -481,12 +478,11 @@ let node: @[r] Node = Node { val: 42, next: null };
 ## References
 
 - `docs/reports/memory-model/capability-region-synthesis.md` — source synthesis (§1–10).
-- `docs/reports/memory-model/arena-handles-as-lifetime-annotations.md` — the region layer in
-  full, including the original `[R]` clause this RFC supersedes.
-- `docs/reports/memory-model/substructural-and-separation-types.md` — the capability core.
+- `docs/reports/memory-model/memory-model-overview.md` — narrative overview of the full
+  region system built on this RFC.
 - RFC-0052 (Lifetime System, on hold) — the phantom-lifetime approach this supersedes.
-- RFC-0064 (Structured Fork-Join Parallelism) — builds the `||` combinator on the
-  disjointness witness property of region tags.
+- RFC-0064 (Structured Fork-Join Parallelism, deferred) — builds the `||` combinator on
+  the disjointness witness property of region tags.
 - RFC-0065 (Region Ergonomics) — return-position elision and call-site inference on top of
   this core.
 - RFC-0066 (Region Pointer Extraction) — how to obtain `T` or `&T` from `@[r] T`.
