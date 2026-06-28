@@ -224,11 +224,6 @@ region `s`. `r` is implicit in impl blocks; `s` is an external bracket parameter
    `[s]` and the `&[s] self` annotation in these cases, leaving only `r` visible. Whether
    this is desirable or creates confusion with the single-region elision rule is open.
 
-5. **Interaction with `freeze`.** RFC-0063 §8 mentions `freeze(ptr)` as a consuming
-   extraction that produces a sendable immutable pointer. Whether an owned region supports
-   `freeze` — and what it means for the struct's lifetime if the frozen pointer outlives the
-   struct — is deferred.
-
 ---
 
 ## References

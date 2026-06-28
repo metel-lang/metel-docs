@@ -192,11 +192,6 @@ encompasses the clone's use is valid.
    a home (free function vs method, generic over region kind). Naming is deferred until
    the clone API is designed holistically.
 
-5. **Interaction with `freeze`.** The arena-handles report defines `freeze(ptr)`, which
-   consumes `@[r] T` and returns a sendable immutable pointer (`*val T`). This is a third
-   consuming extraction form distinct from move-out. Its interaction with the `NoDrop`
-   restriction and scoped arena semantics should be addressed when `freeze` is specified.
-
 ---
 
 ## 6. Summary table
@@ -218,4 +213,4 @@ encompasses the clone's use is valid.
   type-directed allocation, the symmetric counterpart to §3 of this RFC.
 - RFC-0065 (Region Ergonomics) §1 — elision rules that interact with auto-deref (§5.3).
 - `docs/reports/memory-model/arena-handles-as-lifetime-annotations.md` §8 — bump arena
-  Drop semantics; §11 — `freeze`.
+  Drop semantics.

@@ -200,15 +200,7 @@ RFC-0066 §5.3 (auto-deref for borrows, open question) is resolved by this RFC: 
 
 ---
 
-## 8. `*val T` rename
-
-RFC-0066 §5.5 references `*val T` — the type returned by `freeze`, a sendable immutable
-pointer. The `*` type sigil is no longer used in Metel after this RFC. `*val T` must be
-renamed; `Frozen<T>` is the working name (unresolved — see §9).
-
----
-
-## 9. Supersession of RFC-0043
+## 8. Supersession of RFC-0043
 
 This RFC supersedes RFC-0043. The correspondence is:
 
@@ -229,22 +221,18 @@ unchanged, with the type renamed to `Perhaps<&T>`.
 
 ---
 
-## 10. Unresolved questions
+## 9. Unresolved questions
 
 1. **Consuming method name.** `ptr.take()`, `ptr.own()`, `ptr.into_inner()`,
    `ptr.into_value()` are all candidates. The name should be consistent with any
    consuming method conventions established elsewhere in the stdlib.
 
-2. **`Frozen<T>` naming.** The sendable immutable pointer type produced by `freeze`
-   (currently `*val T`) needs a name that does not use the retired `*` sigil. `Frozen<T>`
-   is the working name; alternatives include `Val<T>`, `Shared<T>`, `SendRef<T>`.
-
-3. **`&[r] T` coercion depth.** §4 states that `&node` where `node: @[r] T` gives
+2. **`&[r] T` coercion depth.** §4 states that `&node` where `node: @[r] T` gives
    `&[r] T`, which coerces to `&T`. The question is whether this coercion is always
    implicit (i.e., `&[r] T` is interchangeable with `&T` in all non-region-aware
    positions) or whether some call sites require an explicit coercion annotation.
 
-4. **Auto-deref chain depth.** The depth of auto-deref chains (e.g., `& &T`,
+3. **Auto-deref chain depth.** The depth of auto-deref chains (e.g., `& &T`,
    `& @[r] @[s] T`) should be bounded. The exact bound and the rules for resolving
    ambiguous chains need to be specified.
 

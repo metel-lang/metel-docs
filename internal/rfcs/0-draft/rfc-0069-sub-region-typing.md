@@ -184,12 +184,6 @@ determined and an explicit bound is still required.
    become sendable? The arena it represents is tied to the heap pointer, not to a thread,
    so sendability may be sound. Requires analysis.
 
-4. **Interaction with `freeze`.** RFC-0063 §8 describes `freeze(ptr)` as a consuming
-   extraction that produces a sendable immutable pointer, potentially outliving the source
-   region. If `ptr: @[r] T` and `r: SubRegion<outer>`, freezing `ptr` must not let the
-   result escape `outer`. Whether `SubRegion` constraints participate in the `freeze`
-   soundness argument is unspecified.
-
 ---
 
 ## References
