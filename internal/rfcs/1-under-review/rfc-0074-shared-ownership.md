@@ -33,7 +33,7 @@ extensions to the existing system are required:
 
 1. **`SharedRegion`** — a supertrait of `Region` for type-level region tags that carry
    reference-counted lifetime semantics. Any tag implementing `SharedRegion` gets
-   `Clone`, `Drop`, and the `uniq` protocol automatically. The mechanism is available to
+   `Clone`, `Drop`, and the `unique` method automatically. The mechanism is available to
    user-defined regions, not only to stdlib types.
 
 2. **`NotCapturing<T>`** — a general closure-type bound that asserts a closure does not
@@ -72,16 +72,16 @@ destroys the field while the reference derived from `a` is still live — a use-
 
 In Rust, `Rc<RefCell<T>>` defends against this with a runtime borrow check that panics
 on violation. The panic cannot be statically prevented. This RFC eliminates the hazard
-at compile time using the `uniq` method, which uses the `NotCapturing<T>` bound to prove
+at compile time using the `unique` method, which uses the `NotCapturing<T>` bound to prove
 statically that no other owning pointer is accessible during the mutation.
 
 ### Why not introduce Rc/Arc as exceptions
 
 Introducing `Rc` and `Arc` as region types with special language rules — a non-cloneable
-region handle that suddenly becomes cloneable, a new `uniq` syntax, a new alias-analysis
+region handle that suddenly becomes cloneable, a new `unique` syntax, a new alias-analysis
 pass — would be treating symptoms rather than extending the system. The two mechanisms
 introduced here (`SharedRegion` and `NotCapturing<T>`) are general: any user-defined
-region can implement `SharedRegion` and receive `uniq` for free; any higher-order
+region can implement `SharedRegion` and receive `unique` for free; any higher-order
 function can express "this closure must not close over type T" using `NotCapturing<T>`
 independently of regions altogether.
 
@@ -92,12 +92,22 @@ independently of regions altogether.
 ```metel
 aspect SharedRegion: Region {
     type AllocationError = !;
+
+    fun unique<T, U, F>(self: @[Self] T, f: F) -> U
+        where F: fun(&mut T) -> U,
+              F: NotCapturing<@[Self] T>;
 }
 ```
 
 `SharedRegion` is a supertrait of `Region`. Types implementing it are **type-level region
 tags** (like `Heap` and `LocalHeap`, as opposed to binding-level tags like the `r` in a
 `BumpRegion::scoped` scope) whose pointers carry reference-counted lifetimes.
+
+The aspect uses `@[Self] T` as the receiver type of `unique`, where `Self` is the
+implementing tag (e.g., `Rc` or `Arc`). This requires the aspect system to support
+arbitrary self types — receivers that are not `Self` directly but are a type parameterised
+by `Self`. Metel's region pointer `@[R] T` is the natural vehicle for this: the method
+belongs on the pointer type, not on the bare tag.
 
 Implementing `SharedRegion` on a tag type `R` declares three things:
 
@@ -108,12 +118,16 @@ Implementing `SharedRegion` on a tag type `R` declares three things:
 2. **`Drop`**: `@[R] T` implements `Drop`. Dropping a pointer decrements the reference
    count. If the count reaches zero, `T::drop` is called and the backing memory is freed.
 
-3. **`uniq`**: `@[R] T` gains the `uniq` method (§2), which provides exclusive mutable
-   access under a `NotCapturing` bound.
+3. **`unique`**: `@[R] T` gains the `unique` method (§2), declared in the aspect and
+   provided by the implementing tag. The method gives exclusive mutable access under a
+   `NotCapturing` bound.
 
-These three properties are derived automatically by the compiler for any `R: SharedRegion`;
-no `impl Clone for @[R] T` or `impl Drop for @[R] T` is written by hand. They are the
-semantic meaning of `SharedRegion`.
+`Clone` and `Drop` are derived automatically by the compiler for any `R: SharedRegion`;
+no `impl Clone for @[R] T` or `impl Drop for @[R] T` is written by hand. `unique` is
+declared in the aspect body; the compiler provides the canonical implementation for all
+`R: SharedRegion` since the behaviour is determined entirely by the RC semantics and the
+`NotCapturing` bound. An implementor may provide their own `unique` if the RC strategy
+differs (e.g., a pool-managed region with a distinct control block).
 
 ### 1.1 Allocation
 
@@ -147,20 +161,20 @@ is the sole determinant. `SharedRegion` introduces no new sendability rules.
 
 ---
 
-## 2. The `uniq` method
+## 2. The `unique` method
 
-`SharedRegion` provides a default method `uniq` on all `@[R] T`:
+`unique` is declared in the `SharedRegion` aspect and available on all `@[R] T` where
+`R: SharedRegion`:
 
 ```metel
-// Provided by SharedRegion for all @[R] T where R: SharedRegion
-fun uniq<T, U, F>(self: @[R] T, f: F) -> U
+fun unique<T, U, F>(self: @[Self] T, f: F) -> U
     where F: fun(&mut T) -> U,
-          F: NotCapturing<@[R] T>
+          F: NotCapturing<@[Self] T>
 ```
 
-`uniq` takes a closure that receives an exclusive mutable borrow of the allocation and
+`unique` takes a closure that receives an exclusive mutable borrow of the allocation and
 returns a result. Within the closure, `self` is accessible as `&mut T`. The
-`NotCapturing<@[R] T>` bound (§3) ensures that no other pointer of type `@[R] T` is
+`NotCapturing<@[Self] T>` bound (§3) ensures that no other pointer of type `@[R] T` is
 closed over by the closure — the proof that no other owning reference is accessible in
 the current scope.
 
@@ -169,12 +183,12 @@ let a: @[Rc] Spaceship = @[Rc] Spaceship {
     engine: Engine::StringTheory { core: Core::new() },
 };
 
-a.uniq(fun(ship: &mut Spaceship) -> () {
+a.unique(fun(ship: &mut Spaceship) -> () {
     ship.engine = Engine::Impulse { fuel: 100 };
 });
 ```
 
-`uniq` does not assert or check that the reference count equals one at runtime. It does
+`unique` does not assert or check that the reference count equals one at runtime. It does
 not need to: the `NotCapturing` bound guarantees that no other `@[Rc] Spaceship` pointer
 is reachable from the closure, which is the property that makes the mutation safe. Other
 `@[Rc] Spaceship` owners may exist in memory that is unreachable from the closure's
@@ -302,7 +316,7 @@ and `T: Send + Sync`. Since `Arc: Send`, `@[Arc] T` is sendable when `T: Send + 
 | Per-clone cost | One integer increment | One atomic increment |
 | Use case | Single-fiber shared ownership | Cross-fiber shared ownership |
 
-`uniq` is available on both `@[Rc] T` and `@[Arc] T`. Its `NotCapturing` bound is
+`unique` is available on both `@[Rc] T` and `@[Arc] T`. Its `NotCapturing` bound is
 `NotCapturing<@[Rc] T>` and `NotCapturing<@[Arc] T>` respectively — the two tags are
 distinct and do not interfere with each other's alias analysis.
 
@@ -340,14 +354,14 @@ fun make_tree() -> @[Rc] Node {
 
 Each node is freed when its last `@[Rc] Node` owner drops.
 
-### 7.2 Safe variant replacement via `uniq`
+### 7.2 Safe variant replacement via `unique`
 
 ```metel
 enum Engine { StringTheory { core: @[Heap] Core }, Impulse { fuel: I32 } }
 
 let ship: @[Rc] Spaceship = @[Rc] Spaceship { engine: Engine::StringTheory { ... } };
 
-ship.uniq(fun(s: &mut Spaceship) -> () {
+ship.unique(fun(s: &mut Spaceship) -> () {
     // Safe: the NotCapturing<@[Rc] Spaceship> bound on this closure has been verified.
     // The old StringTheory variant (and its core) drops before the new variant is set.
     s.engine = Engine::Impulse { fuel: 100 };
@@ -361,19 +375,19 @@ let counter: @[Arc] Counter = @[Arc] Counter::new(0);
 let c2 = counter.clone();   // atomic RC increment
 
 spawn(fun() -> () {
-    c2.uniq(fun(c: &mut Counter) -> () { c.increment() });
+    c2.unique(fun(c: &mut Counter) -> () { c.increment() });
 });
 
-counter.uniq(fun(c: &mut Counter) -> () { c.increment() });
+counter.unique(fun(c: &mut Counter) -> () { c.increment() });
 ```
 
-`@[Arc] Counter: Send` because `Arc: Send` and `Counter: Send + Sync`. The two `uniq`
+`@[Arc] Counter: Send` because `Arc: Send` and `Counter: Send + Sync`. The two `unique`
 calls may not overlap — the `NotCapturing` bound prevents each closure from capturing
 the other's handle, and the borrow checker prevents simultaneous `&mut` borrows of the
-same allocation through separate `uniq` calls (each `uniq` call takes exclusive mutable
+same allocation through separate `unique` calls (each `unique` call takes exclusive mutable
 access for its duration).
 
-### 7.4 `uniq` with a called function
+### 7.4 `unique` with a called function
 
 ```metel
 fun upgrade_engine(ship: &mut Spaceship, fuel: I32) {
@@ -382,7 +396,7 @@ fun upgrade_engine(ship: &mut Spaceship, fuel: I32) {
 
 let ship: @[Rc] Spaceship = @[Rc] Spaceship { ... };
 
-ship.uniq(fun(s: &mut Spaceship) -> () {
+ship.unique(fun(s: &mut Spaceship) -> () {
     upgrade_engine(s, 100);
     // OK: upgrade_engine takes &mut Spaceship, not @[Rc] Spaceship.
     // The closure captures nothing of type @[Rc] Spaceship.
@@ -417,14 +431,14 @@ run_scored(&board, fun(b: &Board) -> I32 {
 ### Rc/Arc as exceptions to the region system
 
 Introducing `clone()` on region handles as a one-off feature of `Rc` and `Arc`, and
-`uniq` as new dedicated syntax, would work but would not generalise. The approach taken
+`unique` as new dedicated syntax, would work but would not generalise. The approach taken
 here — `SharedRegion` as a supertrait, `NotCapturing<T>` as a general bound — means any
 user-defined RC-style region (pool-managed RC, arena-backed RC with a shared control
 block) gets the full protocol for free.
 
-### Runtime alias check for `uniq`
+### Runtime alias check for `unique`
 
-`uniq` could check `RC == 1` at runtime and panic if not. This is Rust's `Rc::get_mut`
+`unique` could check `RC == 1` at runtime and panic if not. This is Rust's `Rc::get_mut`
 approach. It works but cannot be statically prevented from panicking. The
 `NotCapturing<T>` approach makes the check static: the compiler rejects the program at
 the point where a potential alias would be captured. No runtime overhead; no possible
@@ -456,7 +470,7 @@ approach is strictly more powerful.
    allocation-site identity would reduce false rejections at the cost of implementation
    complexity. Deferred.
 
-3. **`uniq` across fiber boundaries for `Arc`.** The example in §7.3 shows two `uniq`
+3. **`unique` across fiber boundaries for `Arc`.** The example in §7.3 shows two `unique`
    calls on distinct clones in distinct fibers. The soundness argument relies on the
    borrow checker preventing simultaneous `&mut` borrows through separate handles; the
    details of how the borrow checker reasons across fiber spawn points (RFC-0003/RFC-0064)
@@ -467,9 +481,10 @@ approach is strictly more powerful.
    conservatively assume it might. Whether this conservatism is acceptable in practice, or
    whether a visibility-aware analysis is needed, is deferred to the implementation RFC.
 
-5. **`uniq` nesting.** Whether a `uniq` closure may call `uniq` on a different `@[Rc] U`
-   (for `U ≠ T`) is unspecified. The naive rule — each `uniq` closure independently
-   satisfies its own `NotCapturing` bound — appears sound; formal verification deferred.
+5. **`unique` nesting.** Whether a `unique` closure may call `unique` on a different
+   `@[Rc] U` (for `U ≠ T`) is unspecified. The naive rule — each `unique` closure
+   independently satisfies its own `NotCapturing` bound — appears sound; formal
+   verification deferred.
 
 ---
 
@@ -489,4 +504,4 @@ approach is strictly more powerful.
   `@[Arc] T` implement both; `Copy`/`Drop` mutual exclusion means neither is `Copy`.
 - RFC-0072 (Negative Bounds) — `T: !Drop`; not required for `@[Rc] T` or `@[Arc] T`.
 - Ante programming language — the `uniq` compile-time alias exclusion concept, adapted
-  here as `NotCapturing<T>` applied to the `uniq` method provided by `SharedRegion`.
+  here as `NotCapturing<T>` applied to the `unique` method declared in `SharedRegion`.
