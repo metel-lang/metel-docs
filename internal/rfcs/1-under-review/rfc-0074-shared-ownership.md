@@ -109,16 +109,7 @@ tags** (like `Heap` and `LocalHeap`, as opposed to binding-level tags like the `
 Rc::unique(a, fun(s: &mut Spaceship) -> () { ... });
 ```
 
-As a convenience, the compiler also accepts method-call syntax on the pointer:
-
-```metel
-a.unique(fun(s: &mut Spaceship) -> () { ... });
-```
-
-This desugars to `Rc::unique(a, ...)` because the tag `Rc` is statically known from the
-type `@[Rc] Spaceship` of `a`. The sugar applies to any static aspect method whose first
-parameter is `@[Self] T` — it is not specific to `unique` or to `SharedRegion`. The
-underlying call is always the static form; the method-call form is notation only.
+Three syntactic sugar forms are defined on top of this canonical form (§2).
 
 Implementing `SharedRegion` on a tag type `R` declares three things:
 
@@ -170,7 +161,7 @@ is the sole determinant. `SharedRegion` introduces no new sendability rules.
 
 ---
 
-## 2. The `unique` method
+## 2. The `unique` method and sugar forms
 
 `unique` is a static method declared in the `SharedRegion` aspect:
 
@@ -185,7 +176,15 @@ allocation and returns a result. The `NotCapturing<@[Self] T>` bound (§3) ensur
 other pointer of type `@[R] T` is closed over by the closure — the static proof that no
 other owning reference is reachable during the mutation.
 
-The canonical call form names the tag explicitly:
+`unique` does not assert or check that the reference count equals one at runtime. It does
+not need to: the `NotCapturing` bound guarantees that no other `@[Rc] Spaceship` pointer
+is reachable from the closure, which is the property that makes the mutation safe. Other
+`@[Rc] Spaceship` owners may exist in memory that is unreachable from the closure's
+capture set; they cannot be accessed and therefore pose no hazard.
+
+### 2.1 Canonical form
+
+The canonical call names the tag and passes the closure explicitly:
 
 ```metel
 let a: @[Rc] Spaceship = @[Rc] Spaceship {
@@ -197,19 +196,45 @@ Rc::unique(a, fun(ship: &mut Spaceship) -> () {
 });
 ```
 
-The method-call sugar (§1) allows the pointer as the receiver, desugaring to the above:
+### 2.2 Sugar form A — explicit block with explicit binding
 
 ```metel
-a.unique(fun(ship: &mut Spaceship) -> () {
+unique a as ship {
     ship.engine = Engine::Impulse { fuel: 100 };
-});
+}
 ```
 
-`unique` does not assert or check that the reference count equals one at runtime. It does
-not need to: the `NotCapturing` bound guarantees that no other `@[Rc] Spaceship` pointer
-is reachable from the closure, which is the property that makes the mutation safe. Other
-`@[Rc] Spaceship` owners may exist in memory that is unreachable from the closure's
-capture set; they cannot be accessed and therefore pose no hazard.
+Desugars to `Rc::unique(a, fun(ship: &mut Spaceship) -> () { ... })`. The tag is resolved
+from the static type of `a`; the `as` clause names the `&mut T` binding inside the block.
+The `NotCapturing` check applies to the block as if it were the closure body.
+
+### 2.3 Sugar form B — explicit block with implicit rebinding
+
+```metel
+unique a {
+    a.engine = Engine::Impulse { fuel: 100 };
+}
+```
+
+Desugars to form A with the binding name equal to `a`. Inside the block, `a` is rebound
+as `&mut Spaceship` — its type changes from `@[Rc] Spaceship` to `&mut Spaceship` for the
+duration of the block. Equivalent to `unique a as a { ... }`.
+
+### 2.4 Sugar form C — binding without explicit block *(deferred)*
+
+```metel
+let ship = unique a;
+ship.engine = Engine::Impulse { fuel: 100 };
+```
+
+`unique a` produces a `&mut T` whose borrow lifetime is determined by the borrow checker.
+The exclusive-access scope extends to the end of `ship`'s live range; the compiler
+synthesises the closure at that point.
+
+This form requires the compiler to capture the continuation of the `let` binding as the
+closure body — the same mechanism as `async`/`await` lowering. The design and
+implementation of continuation capture in this context are deferred to a follow-up RFC.
+Forms A and B cover the common cases without it.
 
 ---
 
@@ -378,9 +403,20 @@ enum Engine { StringTheory { core: @[Heap] Core }, Impulse { fuel: i32 } }
 
 let ship: @[Rc] Spaceship = @[Rc] Spaceship { engine: Engine::StringTheory { ... } };
 
-ship.unique(fun(s: &mut Spaceship) -> () {
-    // Safe: the NotCapturing<@[Rc] Spaceship> bound on this closure has been verified.
+// Sugar form A — explicit block, renamed binding
+unique ship as s {
+    // NotCapturing<@[Rc] Spaceship> verified on this block.
     // The old StringTheory variant (and its core) drops before the new variant is set.
+    s.engine = Engine::Impulse { fuel: 100 };
+}
+
+// Equivalent sugar form B — explicit block, implicit rebinding
+unique ship {
+    ship.engine = Engine::Impulse { fuel: 100 };
+}
+
+// Equivalent canonical form
+Rc::unique(ship, fun(s: &mut Spaceship) -> () {
     s.engine = Engine::Impulse { fuel: 100 };
 });
 ```
@@ -392,10 +428,10 @@ let counter: @[Arc] Counter = @[Arc] Counter::new(0);
 let c2 = counter.clone();   // atomic RC increment
 
 spawn(fun() -> () {
-    c2.unique(fun(c: &mut Counter) -> () { c.increment() });
+    unique c2 { c2.increment() }
 });
 
-counter.unique(fun(c: &mut Counter) -> () { c.increment() });
+unique counter { counter.increment() }
 ```
 
 `@[Arc] Counter: Send` because `Arc: Send` and `Counter: Send + Sync`. The two `unique`
@@ -413,11 +449,11 @@ fun upgrade_engine(ship: &mut Spaceship, fuel: i32) {
 
 let ship: @[Rc] Spaceship = @[Rc] Spaceship { ... };
 
-ship.unique(fun(s: &mut Spaceship) -> () {
+unique ship as s {
     upgrade_engine(s, 100);
     // OK: upgrade_engine takes &mut Spaceship, not @[Rc] Spaceship.
-    // The closure captures nothing of type @[Rc] Spaceship.
-});
+    // The block captures nothing of type @[Rc] Spaceship.
+}
 ```
 
 ### 7.5 `NotCapturing<T>` outside shared ownership
