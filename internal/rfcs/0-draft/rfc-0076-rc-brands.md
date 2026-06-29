@@ -262,6 +262,139 @@ The token `GhostToken<'b>` is unique (not `Clone`). Holding `&mut GhostToken<'b>
 proves no one else has access — the borrow checker enforces this. No runtime check
 needed.
 
+### Typestate
+
+Plain typestate uses phantom type parameters to track which state an object is in:
+
+```metel
+struct File<State> { fd: I32 }
+struct Open {}
+struct Closed {}
+
+fun read(f: &File<Open>) -> Bytes { ... }
+fun close(f: File<Open>) -> File<Closed> { ... }
+```
+
+This answers "what state is this object in?" but not "which object is this?" — two
+open files have identical type `File<Open>` and are interchangeable where the type
+system is concerned.
+
+Brands answer the identity question. Adding a brand parameter gives each instance a
+unique type that persists through state transitions:
+
+```metel
+struct File<brand 'b, State> { fd: I32, _brand: PhantomBrand<'b> }
+
+fun open<brand 'b>(path: &String) -> File<'b, Open>
+fun read<brand 'b>(f: &File<'b, Open>) -> Bytes
+fun close<brand 'b>(f: File<'b, Open>) -> File<'b, Closed>
+//                                               ^^
+//                       same brand — provably the same file in a new state
+```
+
+Two open files are now `File<'f1, Open>` and `File<'f2, Open>` — different types.
+A cursor, lock guard, or read buffer that was opened against a specific file can carry
+that file's brand, making it a type error to use it with a different file even in the
+same state. Typestate expresses *what*; brands express *which*.
+
+#### Brand-indexed state machines
+
+Brands compose naturally with state transition functions that involve multiple objects.
+A mutex and its guard can share a brand, proving at compile time that the guard belongs
+to the mutex that issued it:
+
+```metel
+struct Mutex<brand 'b, T> { ... }
+struct MutexGuard<brand 'b, T> { ... }   // same brand as the Mutex it locked
+
+impl<brand 'b, T> Mutex<'b, T> {
+    fun lock(self: &'b Mutex<'b, T>) -> MutexGuard<'b, T> { ... }
+}
+
+// MutexGuard<'m1, T> cannot be used to unlock Mutex<'m2, T>
+```
+
+No runtime ID comparison needed — the type system enforces guard–mutex pairing.
+
+### Algebraic effects
+
+Brands address two distinct problems in algebraic effect systems.
+
+#### Handler identity
+
+When effect handlers are nested, the runtime must determine which handler handles each
+effect operation. In the evidence-passing model (RFC report: `algebraic-effects-and-memory-model.md`),
+each handler is threaded as a hidden parameter — the brand on a handler instance makes
+each nesting level a distinct type, so dispatch is resolved at the type level rather
+than by lexical search at runtime:
+
+```metel
+brand 'h1 {
+    handle<Fail<'h1>> {               // outer handler — brand 'h1
+        brand 'h2 {
+            handle<Fail<'h2>> {       // inner handler — brand 'h2
+                perform Fail<'h2>::throw("inner");   // type directs to 'h2
+                perform Fail<'h1>::throw("outer");   // type directs to 'h1
+            }
+        }
+    }
+}
+```
+
+Without brands, two nested handlers of the same effect type are structurally identical
+and the runtime must inspect the handler stack to find the right one. With brands, the
+type of the `perform` expression encodes which handler to use — O(1) dispatch with no
+stack search.
+
+#### Capability-based effects
+
+The two main approaches to effect tracking in Metel's design space — effect marker
+aspects (`^IO`) and capability objects (an `IO` struct passed explicitly) — converge
+when the capability carries a brand.
+
+A branded capability is an unforgeable, instance-specific effect permission. It cannot
+be fabricated inside a sandbox (brands are not constructible without a brand block);
+it cannot be confused with a capability for a different effect context; and it can be
+threaded implicitly using the `given`/`using` mechanism from the capability-objects
+report:
+
+```metel
+struct IO<brand 'io> { _brand: PhantomBrand<'io> }
+
+fun println<brand 'io>(given cap: IO<'io>, s: String) { ... }
+
+// A sandboxed function receives no IO<'_> in its scope — cannot perform IO
+// A function in the normal context receives IO<'main> implicitly
+```
+
+The brand `'io` identifies the specific IO context. Two separate IO contexts — a test
+harness that captures output and the real standard output — have different brands and
+are type-incompatible even though both are `IO<_>`. The effect annotation `^IO` is
+replaced by the presence or absence of an `IO<'io>` in scope; the brand makes that
+presence context-specific and unforgeable.
+
+#### The unifying pattern
+
+Typestate, algebraic effects, and brands all address the same underlying need: the type
+system must distinguish values that are structurally identical but semantically distinct
+— the same file in different states, the same effect type in different handler scopes,
+the same capability type in different permission contexts. Brands provide the identity
+dimension that the other two mechanisms lack on their own:
+
+| Mechanism | Tracks *what* | Tracks *which* |
+|---|---|---|
+| Typestate (phantom state) | Yes | No |
+| Effect annotations (`^IO`) | Yes | No |
+| Capability objects | Partial | No |
+| Brands alone | No | Yes |
+| Brands + typestate | Yes | Yes |
+| Brands + capabilities | Yes | Yes |
+
+The combination of brands with typestate gives linear state machines where identity
+is preserved across transitions. The combination of brands with capability objects
+gives effect systems where each handler instance is type-distinct. Neither combination
+requires new language primitives beyond what this RFC introduces.
+
 ---
 
 ## Alternatives considered
@@ -332,10 +465,14 @@ naturally with the lifetime/borrow system.
   alias relationship visible in the type.
 - RFC-0072 (Negative Bounds) — `NotCapturing<T>`; with brands, this bound becomes a
   precise alias exclusion for `@[Rc<'b>] T`.
-- RFC-0074 (Shared Ownership) — `Rc`, `Arc`, `unique`; the primary application of
-  brands in the current RFC cluster.
+- RFC-0074 (Shared Ownership) — `Rc`, `Arc`, `unique`; the RC alias analysis
+  application of brands.
+- Report: `algebraic-effects-and-memory-model.md` — evidence-passing model for
+  algebraic effects; brands on handler instances enable O(1) type-directed dispatch.
+- Report: `capability-objects.md` — capability-based effect model; branded capabilities
+  make effect contexts type-distinct and unforgeable.
 - GhostCell (Yanovski et al., 2021) — demonstrates that phantom brand types enable
-  safe interior mutability without runtime cost; the GhostCell application in §Applications
-  is directly inspired by this work.
-- Haskell `ST` monad — the original formulation of rank-2 brand introduction (`runST`)
-  that ensures brands cannot escape their introduction scope.
+  safe interior mutability without runtime cost; directly inspires the GhostCell
+  application in §Applications.
+- Haskell `ST` monad — the original rank-2 brand introduction (`runST`) that ensures
+  brands cannot escape their introduction scope.
