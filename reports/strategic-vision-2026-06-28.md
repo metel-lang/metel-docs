@@ -29,7 +29,7 @@ In GC-managed languages, both concerns disappear from the programmer's view enti
 Metel occupies a position none of these hold: **the allocator object and the lifetime tag are the same thing.** When a programmer writes:
 
 ```metel
-let r = Region::new();
+let r = AutoRegion::new();
 let node = @[r] Node { val: 1 };
 ```
 
@@ -51,7 +51,7 @@ The region RFC cluster translated this identity into a complete, accepted design
 
 **The bracket channel** (`[r]`) is the uniform syntactic position for allocator/lifetime parameters — in function signatures, struct declarations, and allocation expressions. The same name serves as runtime handle and compile-time tag simultaneously.
 
-**The region interface is open.** `Region` (bump arena), `Heap`, and `LocalHeap` are stdlib defaults, not an exhaustive set. Pool allocators, slab allocators, stack arenas, and any custom type implementing the region interface plug into the same bracket channel position and receive the same static guarantees.
+**The region interface is open.** `BumpRegion` (bump arena), `AutoRegion` (default scoped arena), `Heap`, and `LocalHeap` are stdlib defaults, not an exhaustive set. Pool allocators, slab allocators, stack arenas, and any custom type implementing the region interface plug into the same bracket channel position and receive the same static guarantees.
 
 **Affine ownership** (RFC-0071) grounds the entire system. Region pointers are non-`Copy` by construction — exactly one live owner at all times. This is what makes allocation lifetime tracking sound and what allows the interpreter and compiler to share identical semantics.
 
@@ -74,7 +74,7 @@ The design space around memory management is crowded, but "allocators as lifetim
 
 The consequences of that last column:
 
-**Lifetime errors are anchored.** When the borrow checker rejects a program, it names a variable — the same variable the programmer wrote when they allocated. Not `'a cannot outlive 'b` between two abstract parameters, but `node escapes region r` pointing at the actual `let r = Region::new()`.
+**Lifetime errors are anchored.** When the borrow checker rejects a program, it names a variable — the same variable the programmer wrote when they allocated. Not `'a cannot outlive 'b` between two abstract parameters, but `node escapes region r` pointing at the actual `let r = AutoRegion::new()`.
 
 **Disjointness is structural.** Two pointers with distinct region tags name distinct allocators and therefore cannot alias. This is a compile-time fact, not a runtime check, not a proof obligation. It falls out of the type system for free.
 

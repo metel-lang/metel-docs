@@ -37,7 +37,14 @@ the error type an allocation may produce. Assigning `!` declares the region infa
 panics; no error handling required). Fallible regions assign a concrete error type and
 allocation expressions at those sites return `Perhaps<@[r] T, AllocationError>`. The system
 is open: pool allocators, slab allocators, stack arenas, and other custom types all qualify.
-The three stdlib regions cover the common cases and are all infallible (`AllocationError = !`):
+The four stdlib regions cover the common cases and are all infallible (`AllocationError = !`):
+
+| Region | Lifetime | Move-out | Sendable |
+|---|---|---|---|
+| `Heap` | Indefinite | Always safe | Yes |
+| `LocalHeap` | Indefinite, thread-local | Always safe | No |
+| `BumpRegion` | Scoped, bump arena | `T: !Drop` only | No |
+| `AutoRegion` | Scoped, bump arena + drop list | Always safe | No |
 
 ### 1.1 Heap
 
@@ -65,48 +72,53 @@ use LocalHeap;
 let cache = @[LocalHeap] HashMap::new();  // thread-local, not sendable
 ```
 
-### 1.3 Scoped regions — `Region` and custom allocators
+### 1.3 Scoped regions — `BumpRegion`, `AutoRegion`, and custom allocators
 
-`Region` is the stdlib scoped allocator: a bump arena with O(1) allocation and O(1)
-bulk-free when the region drops. Pointers tagged with a scoped region are **not sendable**
-— a fiber may outlive the region.
+`BumpRegion` is the stdlib scoped bump arena: O(1) allocation and O(1) bulk-free when the
+region drops. Move-out requires `T: !Drop`. Pointers tagged with a scoped region are **not
+sendable** — a fiber may outlive the region.
 
-`Region` is one implementation of the region interface. A custom scoped allocator — a pool,
-a slab, a stack arena — may be used in the same bracket channel position and carries the
-same lifetime and sendability rules: the tag is non-sendable, and the allocator's own drop
-governs when memory is reclaimed.
+`AutoRegion` is the stdlib scoped region with a drop list: move-out is always safe because
+the allocator tracks live slots with `Drop` implementations and calls their destructors
+before reclaiming memory. When all allocations are `T: !Drop`, `AutoRegion` behaves
+identically to `BumpRegion`.
+
+`BumpRegion` and `AutoRegion` are two implementations of the region interface. A custom
+scoped allocator — a pool, a slab, a stack arena — may be used in the same bracket channel
+position and carries the same lifetime and sendability rules: the tag is non-sendable, and
+the allocator's own drop governs when memory is reclaimed.
 
 A scoped region can be created in two ways:
 
-**Closure-scoped** — `Region::scoped` delimits the region's lifetime with a closure
+**Closure-scoped** — `BumpRegion::scoped` delimits the region's lifetime with a closure
 boundary. Nothing carrying the tag may escape:
 
 ```metel
-Region::scoped([r]() -> {
+BumpRegion::scoped([r]() -> {
     let node = @[r] Node { val: 1, next: null };
     process(&node);
     // r freed here; node is gone
 });
 ```
 
-**Variable-scoped** — `let r = Region::new()` binds the arena to a variable. The binding
+**Variable-scoped** — `let r = BumpRegion::new()` binds the arena to a variable. The binding
 name `r` is the type-level tag. The arena is freed when `r` is dropped — explicitly via
 `drop(r)` or implicitly at the end of its scope. This form is more flexible: the region
 can span multiple function calls and be dropped early:
 
 ```metel
-let r = Region::new();
+let r = BumpRegion::new();
 let list = build_list[r](data);   // [r] threaded explicitly
 process(&list);
 drop(r);                          // arena freed here; list is invalid from this point
 ```
 
-`Region::scoped` is equivalent to a block with an implicit drop:
+`BumpRegion::scoped` is equivalent to a block with an implicit drop:
 
 ```metel
-Region::scoped([r]() -> { body });
+BumpRegion::scoped([r]() -> { body });
 // ≡
-{ let r = Region::new(); body }
+{ let r = BumpRegion::new(); body }
 ```
 
 The closure form is preferred when the arena scope aligns with a single block; the `let`
@@ -170,12 +182,12 @@ the compile-time tag and the runtime arena.
 The return type depends on the region's `AllocationError` associated type:
 
 - **Infallible** (`r::AllocationError = !`): type is `@[r] T`. OOM panics; no error handling
-  required. All three stdlib regions are infallible.
+  required. All four stdlib regions are infallible.
 - **Fallible** (`r::AllocationError = E`): type is `Perhaps<@[r] T, E>`. Callers propagate
   with `?` or handle explicitly.
 
 ```metel
-// infallible (Region, Heap, LocalHeap) — type is @[r] Node
+// infallible (BumpRegion, AutoRegion, Heap, LocalHeap) — type is @[r] Node
 let node = @[r] Node { val: 1, next: null };
 
 // fallible custom arena — type is Perhaps<@[pool] Node, AllocationFailed>
@@ -247,7 +259,7 @@ An omitted bracket argument at a call site auto-fills from the unique region han
 lexical scope:
 
 ```metel
-Region::scoped([r]() -> {
+BumpRegion::scoped([r]() -> {
     let node = build_node(42);      // [r] inferred
     let node = build_node[r](42);   // explicit — always valid
 });
@@ -272,13 +284,13 @@ use Heap;
 let cfg = @Config { workers: 4 };   // infers [Heap]
 
 // 2. No import, inside arena — arena is the sole candidate
-Region::scoped([r]() -> {
+BumpRegion::scoped([r]() -> {
     let node = make_node(1);        // infers [r]
 });
 
 // 3. Both imported and arena in scope — explicit required
 use Heap;
-Region::scoped([r]() -> {
+BumpRegion::scoped([r]() -> {
     let node = make_node[r](1);     // explicit
     let cfg  = make_node[Heap](1);  // explicit — visible heap escape
 });
@@ -316,7 +328,7 @@ Move-out consumes `ptr` and returns `T`. Safety depends on the region kind.
 without calling `T::drop` again.
 
 **Non-heap `@[r] T`** — constrained by `T`'s Drop status when the allocator uses bulk
-deallocation. Bulk-deallocating allocators (e.g. `Region`) reclaim all slots at once when
+deallocation. Bulk-deallocating allocators (e.g. `BumpRegion`) reclaim all slots at once when
 the region drops; a vacated slot is orphaned and the allocator cannot skip destructor calls
 it does not individually track.
 
@@ -365,7 +377,7 @@ struct Parser[own r] {
 ```
 
 `r` is internal — the external type is just `Parser`, not `Parser[r]`. The compiler
-desugars `[own r]` to `Region::new()` in the constructor and a drop of the arena in the
+desugars `[own r]` to `BumpRegion::new()` in the constructor and a drop of the arena in the
 struct's destructor.
 
 Within `impl Parser`, `r` is implicitly in scope. Methods have access to two distinct
@@ -400,7 +412,7 @@ types `r` as `SubRegion<R>` (RFC-0069). `SubRegion<R>` carries the constraint `R
 Outlives<r>` automatically — no annotation needed at the call site:
 
 ```metel
-Region::scoped([outer]() -> {
+BumpRegion::scoped([outer]() -> {
     let parser = @[outer] Parser::new(src);
     // parser's owned region r : SubRegion<outer>
     // outer: Outlives<r>  — automatic

@@ -98,7 +98,7 @@ fun build_list[region](vals: i64[]) -> @[region] Node {
     head
 }
 
-Region::scoped([region]() -> {
+BumpRegion::scoped([region]() -> {
     let list = build_list(data);         // [region] inferred
     let list = build_list[region](data); // explicit — always available
 });
@@ -118,7 +118,7 @@ Rules:
 2. **Two or more** handles in scope → bracket required: `f[which](args)`. Omitting it is an
    error naming the candidates.
 3. **None** in scope but the callee needs one → the usual "no region available" error;
-   establish a region via `Region::scoped` or `let r = Region::new()`, import `Heap`, or
+   establish a region via `BumpRegion::scoped` or `let r = BumpRegion::new()`, import `Heap`, or
    pass the region explicitly.
 
 The resolution is always a single named handle the compiler can surface in diagnostics and
@@ -142,13 +142,13 @@ use Heap;
 let a = Arc::new(Config { workers: 4 }); // infers [Heap] → @[Heap] Config ✓
 
 // 2. No Heap import, inside a scoped region — [region] is the sole candidate
-Region::scoped([region]() -> {
+BumpRegion::scoped([region]() -> {
     let n = make_node(1);  // infers [region] ✓
 });
 
 // 3. Heap imported, inside a scoped region — two candidates → explicit required
 use Heap;
-Region::scoped([region]() -> {
+BumpRegion::scoped([region]() -> {
     let n = make_node(1);           // error: ambiguous — Heap or region?
     let n = make_node[region](1);   // @[region] Node ✓
     let n = make_node[Heap](1);     // @[Heap] Node ✓ — visible escape from the arena
@@ -211,7 +211,7 @@ Region tags surface in written code in exactly three places:
 
 ## 4. Unresolved questions
 
-1. **Closures and `[region]() -> {}`.** The `Region::scoped` callback uses the bracket
+1. **Closures and `[region]() -> {}`.** The `BumpRegion::scoped` callback uses the bracket
    channel on a closure literal; the exact grammar for region parameters on closure types and
    values is left to the closure RFC (RFC-0050).
 

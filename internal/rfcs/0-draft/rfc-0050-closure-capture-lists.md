@@ -96,7 +96,7 @@ position this RFC uses for capture lists:
 let inc = [&mut count]() -> () { count += 1; };
 
 // RFC-0063/0065 — region parameter
-Region::scoped([region]() -> { process(region) });
+AutoRegion::scoped([region]() -> { process(region) });
 ```
 
 Both forms place `[…]` immediately before `(`. A closure that needs *both* — a

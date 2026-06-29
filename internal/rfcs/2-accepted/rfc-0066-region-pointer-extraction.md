@@ -80,7 +80,7 @@ whether the region is scoped. Two strategies are possible:
 drops, without calling individual destructors per slot. A slot vacated by move-out is
 *orphaned* — the allocator cannot distinguish it from a live slot. If `T` has a `Drop` impl,
 the allocator would invoke `T::drop` on the orphaned slot at drop time, but `T::drop` has
-already been called by the new owner — undefined behaviour. The stdlib `Region` (bump arena)
+already been called by the new owner — undefined behaviour. The stdlib `BumpRegion` (bump arena)
 is a bulk-deallocating allocator.
 
 **Individually-tracking allocators** maintain a record of live allocations and their
@@ -133,7 +133,7 @@ natively without language changes, making it transparent to callers.
 **Option C — caller-driven.** Move-out requires the caller to explicitly run `T::drop`
 before vacating the slot. Unsafe; inconsistent with Metel's safe-by-default posture.
 
-Option A is the recommended starting point for the stdlib `Region` (bump arena). Arena
+Option A is the recommended starting point for the stdlib `BumpRegion` (bump arena). Arena
 workloads typically deal in plain data types, not resource-holding ones. The restriction is
 zero-cost, statically visible at the call site, and the escape valve — use `@[Heap] T` — is
 idiomatic. Custom allocators with specific requirements may implement Option B instead.

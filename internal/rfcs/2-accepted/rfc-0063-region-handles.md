@@ -77,9 +77,10 @@ satisfying the interface may be used as a region handle in the bracket channel. 
 allocators, slab allocators, stack arenas, and domain-specific stores all fit without
 language changes.
 
-The three regions the stdlib provides as defaults:
+The four regions the stdlib provides as defaults:
 
-- **`Region`** — scoped bump arena; values freed in O(1) when the region drops.
+- **`BumpRegion`** — scoped bump arena; values freed in O(1) when the region drops. Move-out requires `T: !Drop`.
+- **`AutoRegion`** — scoped bump arena with a drop list; move-out always safe. The default scoped region.
 - **`Heap`** — the static global heap; values freed individually when the last owner drops.
 - **`LocalHeap`** — thread-local heap; not sendable across fibers.
 
@@ -99,11 +100,12 @@ type) declares the region infallible — no allocation error can ever be returne
 runtime panics on OOM instead. The compiler treats `Perhaps<@[r] T, !>` as equivalent to
 `@[r] T`, collapsing the error wrapper away entirely at infallible allocation sites.
 
-The three stdlib regions are all infallible:
+The four stdlib regions are all infallible:
 
 | Region | `AllocationError` | OOM behaviour |
 |---|---|---|
-| `Region` | `!` | panics |
+| `BumpRegion` | `!` | panics |
+| `AutoRegion` | `!` | panics |
 | `Heap` | `!` | panics |
 | `LocalHeap` | `!` | panics |
 
@@ -112,24 +114,24 @@ capacity assigns a concrete error type — typically `AllocationFailed`, a unit-
 stdlib — and callers of that region propagate or handle the error at each allocation site.
 Infallible custom allocators assign `!` and require no error handling.
 
-**Creating a scoped region.** A `Region` can be brought into scope in two ways:
+**Creating a scoped region.** A `BumpRegion` can be brought into scope in two ways:
 
-1. **Closure-scoped** — `Region::scoped([r]() -> { … })` passes the region handle to a
+1. **Closure-scoped** — `BumpRegion::scoped([r]() -> { … })` passes the region handle to a
    closure via the bracket channel; the arena is freed when the closure returns. Nothing
    carrying the tag `r` may escape the closure.
 
-2. **Variable-scoped** — `let r = Region::new()` binds the region to `r`. The binding name
+2. **Variable-scoped** — `let r = BumpRegion::new()` binds the region to `r`. The binding name
    `r` becomes the type-level tag — the same name that appears in `@[r] T`, `&[r] T`, and
    bracket parameters throughout the code. The arena is freed when `r` is dropped: either
    explicitly via `drop(r)`, or implicitly when `r` goes out of lexical scope. The borrow
    checker rejects any live `@[r] T` or `&[r] T` at the point of drop.
 
-`Region::scoped` is equivalent to a block with an implicit drop at the end:
+`BumpRegion::scoped` is equivalent to a block with an implicit drop at the end:
 
 ```metel
-Region::scoped([r]() -> { body });
+BumpRegion::scoped([r]() -> { body });
 // ≡
-{ let r = Region::new(); body }  // r dropped at end of block
+{ let r = BumpRegion::new(); body }  // r dropped at end of block
 ```
 
 The closure form creates a visible syntactic boundary signalling the block is arena-managed.
@@ -348,7 +350,7 @@ name serves all three roles at once: binder, runtime handle, and result tag.
 
 **Default (no annotation).** A bare name accepts any region whose `AllocationError = !`
 (infallible). The concrete type is determined by the call site — whether it resolves to a
-scoped `Region`, `Heap`, or `LocalHeap` handle. Fallible allocators require an explicit
+scoped `BumpRegion`, `Heap`, or `LocalHeap` handle. Fallible allocators require an explicit
 type annotation; a bare parameter never silently introduces a fallible allocation path:
 
 ```metel
@@ -371,7 +373,7 @@ fun build_on_heap[r: Heap](val: i64) -> @[r] Node {
 ```
 
 The annotation is any type that implements the region allocator interface — `Heap`,
-`LocalHeap`, `Region`, or a custom allocator type, including fallible ones.
+`LocalHeap`, `BumpRegion`, or a custom allocator type, including fallible ones.
 
 Functions that only need to *name* a region — to relate input and output tags without
 allocating — use the same form; they simply never use `@[region] expr`:

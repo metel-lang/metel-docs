@@ -34,7 +34,7 @@ struct Parser[own r] {
     nodes: @[r] List<AstNode>,
 }
 
-Region::scoped([outer]() -> {
+BumpRegion::scoped([outer]() -> {
     let parser: @[outer] Parser = @[outer] Parser::new(src);
     let node = parser.root();  // returns &[r] AstNode
     // What is the relationship between r and outer?
@@ -79,7 +79,7 @@ When `@[R] Foo::new()` is evaluated and `Foo` declares `[own r]`, the compiler t
 as `SubRegion<R>`:
 
 ```metel
-Region::scoped([outer]() -> {
+BumpRegion::scoped([outer]() -> {
     let parser = @[outer] Parser::new(src);
     // parser's owned region r : SubRegion<outer>
     // outer: Outlives<r>  — held automatically
@@ -107,9 +107,9 @@ in a plain `let` binding — there is no outer region to sub from:
 let parser = Parser::new(src);  // no @[R] prefix
 ```
 
-In this case `r` is typed as a plain `Region` with no outer bound. The borrow checker
+In this case `r` is typed as a plain `BumpRegion` with no outer bound. The borrow checker
 treats `r`'s lifetime as the scope of `parser`'s binding, the same as any
-`let r = Region::new()` (RFC-0063 §1).
+`let r = BumpRegion::new()` (RFC-0063 §1).
 
 ### 3.2 Heap-allocated struct
 
@@ -195,7 +195,7 @@ determined and an explicit bound is still required.
 
 ## References
 
-- RFC-0063 (Region Handles) §3 — `Outlives` bounds; §1 — `Region::new()` and region
+- RFC-0063 (Region Handles) §3 — `Outlives` bounds; §1 — `BumpRegion::new()` and region
   creation.
 - RFC-0068 (Struct-Owned Regions) — `[own r]` declaration; §8.3 — the unresolved
   `Outlives` question this RFC partially resolves.

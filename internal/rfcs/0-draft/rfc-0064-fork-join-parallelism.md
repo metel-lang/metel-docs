@@ -29,7 +29,7 @@ race-free by type.
 The natural parallelism primitive — `spawn` — cannot parallelize over scoped region data:
 
 ```metel
-Region::scoped(fun[region: &mut Region]() {
+AutoRegion::scoped(fun[region: &mut AutoRegion]() {
     let t = build(…);                     // @[region] Node — non-sendable
     spawn(fun() { process(&t.left); });   // error: @[region] T is not sendable
 });
@@ -82,7 +82,7 @@ independently type-checks against the ordinary borrow rules.
 > distinct regions (each branch holding a different region tag) is sound and natural.
 
 ```metel
-Region::scoped(fun[region: &mut Region]() {
+AutoRegion::scoped(fun[region: &mut AutoRegion]() {
     let t = build(…);                             // @[region] Node
     let (ls, rs) = sum(&t.left) || sum(&t.right); // &Node borrows, disjoint sub-trees
 });                                               // both branches done before region drops

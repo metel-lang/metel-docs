@@ -12,7 +12,7 @@ date: '2026-06-28'
 ## Summary
 
 RFC-0063 establishes two region kinds: `@[Heap] T` (heap, indefinite lifetime) and scoped
-`@[r] T` (arena, lifetime bounded by a `Region::scoped` closure). Both treat the region as
+`@[r] T` (arena, lifetime bounded by a `BumpRegion::scoped` closure). Both treat the region as
 an *externally-owned* capability threaded through the bracket channel.
 
 This RFC adds a third form: a struct may declare an **owned region** `[own r]` in its
@@ -31,7 +31,7 @@ blocks, `r` is implicitly in scope and may be used to:
 The existing region forms do not provide a way to tie a region's lifetime to a struct's
 lifetime. The two natural workarounds both have friction:
 
-**`Region::scoped` around the struct.** The struct must be contained within the closure;
+**`BumpRegion::scoped` around the struct.** The struct must be contained within the closure;
 nothing tagged with the scoped region's tag can escape. This inverts ownership — the scope
 owns the struct rather than the struct owning its arena.
 
@@ -77,10 +77,10 @@ let parser = Parser::new(source);
 ```
 
 The arena is allocated as part of the `Parser` value. Semantically, `[own r]` desugars to
-`Region::new()` in the constructor and a drop of the region in the struct's destructor
+`BumpRegion::new()` in the constructor and a drop of the region in the struct's destructor
 (RFC-0063 §1). The compiler synthesises both; no user-written Drop impl is required.
 
-Because `[own r]` always desugars to `Region`, and `Region::AllocationError = !`
+Because `[own r]` always desugars to `BumpRegion`, and `BumpRegion::AllocationError = !`
 (RFC-0063 §1.1), all `@[r] expr` allocations inside impl blocks are infallible — their
 type is `@[r] T`, not `Perhaps<@[r] T, _>`. Specifying a custom allocator type for an
 owned region is deferred to a future RFC.
