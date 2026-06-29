@@ -93,7 +93,7 @@ independently of regions altogether.
 aspect SharedRegion: Region {
     type AllocationError = !;
 
-    fun unique<T, U, F>(self: @[Self] T, f: F) -> U
+    fun unique<T, U, F>(ptr: @[Self] T, f: F) -> U
         where F: fun(&mut T) -> U,
               F: NotCapturing<@[Self] T>;
 }
@@ -103,11 +103,22 @@ aspect SharedRegion: Region {
 tags** (like `Heap` and `LocalHeap`, as opposed to binding-level tags like the `r` in a
 `BumpRegion::scoped` scope) whose pointers carry reference-counted lifetimes.
 
-The aspect uses `@[Self] T` as the receiver type of `unique`, where `Self` is the
-implementing tag (e.g., `Rc` or `Arc`). This requires the aspect system to support
-arbitrary self types — receivers that are not `Self` directly but are a type parameterised
-by `Self`. Metel's region pointer `@[R] T` is the natural vehicle for this: the method
-belongs on the pointer type, not on the bare tag.
+`unique` is a **static method on the tag**. The canonical call form is:
+
+```metel
+Rc::unique(a, fun(s: &mut Spaceship) -> () { ... });
+```
+
+As a convenience, the compiler also accepts method-call syntax on the pointer:
+
+```metel
+a.unique(fun(s: &mut Spaceship) -> () { ... });
+```
+
+This desugars to `Rc::unique(a, ...)` because the tag `Rc` is statically known from the
+type `@[Rc] Spaceship` of `a`. The sugar applies to any static aspect method whose first
+parameter is `@[Self] T` — it is not specific to `unique` or to `SharedRegion`. The
+underlying call is always the static form; the method-call form is notation only.
 
 Implementing `SharedRegion` on a tag type `R` declares three things:
 
@@ -118,16 +129,14 @@ Implementing `SharedRegion` on a tag type `R` declares three things:
 2. **`Drop`**: `@[R] T` implements `Drop`. Dropping a pointer decrements the reference
    count. If the count reaches zero, `T::drop` is called and the backing memory is freed.
 
-3. **`unique`**: `@[R] T` gains the `unique` method (§2), declared in the aspect and
-   provided by the implementing tag. The method gives exclusive mutable access under a
-   `NotCapturing` bound.
+3. **`unique`**: The static method (§2) declared in the aspect, giving exclusive mutable
+   access to the pointed-to value under a `NotCapturing` bound.
 
 `Clone` and `Drop` are derived automatically by the compiler for any `R: SharedRegion`;
 no `impl Clone for @[R] T` or `impl Drop for @[R] T` is written by hand. `unique` is
-declared in the aspect body; the compiler provides the canonical implementation for all
-`R: SharedRegion` since the behaviour is determined entirely by the RC semantics and the
-`NotCapturing` bound. An implementor may provide their own `unique` if the RC strategy
-differs (e.g., a pool-managed region with a distinct control block).
+declared in the aspect body and must be provided by each implementor; the compiler does
+not generate it. For `Rc` and `Arc` the implementation is canonical (lock-free RC +
+`NotCapturing` check); a user-defined shared region may implement a different strategy.
 
 ### 1.1 Allocation
 
@@ -163,26 +172,34 @@ is the sole determinant. `SharedRegion` introduces no new sendability rules.
 
 ## 2. The `unique` method
 
-`unique` is declared in the `SharedRegion` aspect and available on all `@[R] T` where
-`R: SharedRegion`:
+`unique` is a static method declared in the `SharedRegion` aspect:
 
 ```metel
-fun unique<T, U, F>(self: @[Self] T, f: F) -> U
+fun unique<T, U, F>(ptr: @[Self] T, f: F) -> U
     where F: fun(&mut T) -> U,
           F: NotCapturing<@[Self] T>
 ```
 
-`unique` takes a closure that receives an exclusive mutable borrow of the allocation and
-returns a result. Within the closure, `self` is accessible as `&mut T`. The
-`NotCapturing<@[Self] T>` bound (§3) ensures that no other pointer of type `@[R] T` is
-closed over by the closure — the proof that no other owning reference is accessible in
-the current scope.
+It takes an owned pointer and a closure that receives an exclusive mutable borrow of the
+allocation and returns a result. The `NotCapturing<@[Self] T>` bound (§3) ensures that no
+other pointer of type `@[R] T` is closed over by the closure — the static proof that no
+other owning reference is reachable during the mutation.
+
+The canonical call form names the tag explicitly:
 
 ```metel
 let a: @[Rc] Spaceship = @[Rc] Spaceship {
     engine: Engine::StringTheory { core: Core::new() },
 };
 
+Rc::unique(a, fun(ship: &mut Spaceship) -> () {
+    ship.engine = Engine::Impulse { fuel: 100 };
+});
+```
+
+The method-call sugar (§1) allows the pointer as the receiver, desugaring to the above:
+
+```metel
 a.unique(fun(ship: &mut Spaceship) -> () {
     ship.engine = Engine::Impulse { fuel: 100 };
 });
@@ -341,7 +358,7 @@ distinct and do not interfere with each other's alias analysis.
 
 ```metel
 struct Node {
-    value: I32,
+    value: i32,
     children: @[Heap] List<@[Rc] Node>,
 }
 
@@ -357,7 +374,7 @@ Each node is freed when its last `@[Rc] Node` owner drops.
 ### 7.2 Safe variant replacement via `unique`
 
 ```metel
-enum Engine { StringTheory { core: @[Heap] Core }, Impulse { fuel: I32 } }
+enum Engine { StringTheory { core: @[Heap] Core }, Impulse { fuel: i32 } }
 
 let ship: @[Rc] Spaceship = @[Rc] Spaceship { engine: Engine::StringTheory { ... } };
 
@@ -390,7 +407,7 @@ access for its duration).
 ### 7.4 `unique` with a called function
 
 ```metel
-fun upgrade_engine(ship: &mut Spaceship, fuel: I32) {
+fun upgrade_engine(ship: &mut Spaceship, fuel: i32) {
     ship.engine = Engine::Impulse { fuel };
 }
 
@@ -407,18 +424,18 @@ ship.unique(fun(s: &mut Spaceship) -> () {
 
 ```metel
 // Sandbox: the scoring function must not perform any IO
-fun run_scored<F>(board: &Board, score: F) -> I32
-    where F: fun(&Board) -> I32,
+fun run_scored<F>(board: &Board, score: F) -> i32
+    where F: fun(&Board) -> i32,
           F: NotCapturing<IOCap>
 {
     score(board)
 }
 
 // Pure scorer — no IOCap in scope, trivially satisfies NotCapturing<IOCap>
-run_scored(&board, fun(b: &Board) -> I32 { b.white_score() - b.black_score() });
+run_scored(&board, fun(b: &Board) -> i32 { b.white_score() - b.black_score() });
 
 // Logging scorer — captures io_cap, fails NotCapturing<IOCap> at compile time
-run_scored(&board, fun(b: &Board) -> I32 {
+run_scored(&board, (b: &Board) -> i32 {
     log_move(&io_cap, b);   // ERROR: closure captures IOCap
     b.white_score() - b.black_score()
 });
