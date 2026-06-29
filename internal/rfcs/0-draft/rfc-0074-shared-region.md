@@ -1,14 +1,15 @@
 ---
 id: rfc-0074
-title: "Shared Region"
+title: "Rc and Arc — Reference-Counted Pointers"
 date: '2026-06-29'
 ---
 
 > **Status — draft.** Depends on RFC-0063 (Region Handles), RFC-0065 (Region
 > Ergonomics), RFC-0066 (Region Pointer Extraction), RFC-0071 (Ownership and Move
-> Semantics), and RFC-0072 (Negative Bounds). Introduces `Shared` as a fifth stdlib
+> Semantics), and RFC-0072 (Negative Bounds). Introduces `Rc` as a fifth stdlib
 > region with reference-counted lifetime semantics, and the `uniq` scope for
-> compile-time-verified exclusive access to shared allocations.
+> compile-time-verified exclusive access to shared allocations. Names `Arc` as
+> the sendable atomic-RC counterpart, deferred to a follow-up RFC.
 
 ## Summary
 
@@ -28,8 +29,8 @@ C++). Without it, graph-like structures and parent-child relationships where eit
 may outlive the other require manual lifetime management or allocation into a long-lived
 region.
 
-`Shared` fills this slot. `@[Shared] T` is a reference-counted heap pointer. The
-allocation is freed and `T::drop` is called when the last `@[Shared] T` owner is dropped.
+`Rc` fills this slot. `@[Rc] T` is a reference-counted heap pointer. The
+allocation is freed and `T::drop` is called when the last `@[Rc] T` owner is dropped.
 
 The reference-counted ownership model introduces a new hazard: because multiple owning
 references to the same allocation can coexist, mutating through one reference — in
@@ -64,21 +65,21 @@ The existing workaround is `@[Heap] T` with interior sharing via `&T` borrows, b
 ties the allocation's lifetime to a single owning scope. When the owner's scope ends,
 all borrows become invalid — even if other parties would have kept the allocation alive.
 A reference-counted pointer solves this by making ownership additive: cloning an
-`@[Shared] T` increments a reference count, dropping it decrements the count, and the
-allocation is freed only when the count reaches zero.
+`@[Rc] T` increments a reference count, dropping it decrements the count, and the
+allocation is freed only when the count reaches zero. This is what `Rc` provides.
 
 ### The mutation hazard: why `Rc<RefCell<T>>` is unsatisfying
 
 Naive shared mutable access is unsafe. Consider:
 
 ```metel
-let a: @[Shared] Engine = @[Shared] Engine::StringTheory { core: @[Heap] Core::new() };
+let a: @[Rc] Engine = @[Rc] Engine::StringTheory { core: @[Heap] Core::new() };
 let b = a.clone();   // b is a second owner of the same Engine
 
 // If a and b alias the same Engine, this is unsound:
 match &a {
     Engine::StringTheory { core } => {
-        b = @[Shared] Engine::Impulse { fuel: 100 };
+        b = @[Rc] Engine::Impulse { fuel: 100 };
                                 // ^^^ drops the old StringTheory variant,
                                 //     freeing core while &core is still live
         use(core);              // use-after-free
@@ -97,12 +98,12 @@ during the mutation.
 
 ---
 
-## 1. The `Shared` region kind
+## 1. The `Rc` region kind
 
-`Shared` is a stdlib type that implements the region allocator interface (RFC-0063 §1.1):
+`Rc` is a stdlib type that implements the region allocator interface (RFC-0063 §1.1):
 
 ```metel
-impl Region for Shared {
+impl Region for Rc {
     type AllocationError = !;
 }
 ```
@@ -110,25 +111,25 @@ impl Region for Shared {
 `AllocationError = !` means allocation is infallible — OOM panics rather than returning
 an error. This matches `Heap`, `LocalHeap`, and `AutoRegion`.
 
-`Shared` is not a scoped region. There is no `Shared::scoped` form — the allocation's
+`Rc` is not a scoped region. There is no `Rc::scoped` form — the allocation's
 lifetime is determined by reference counting, not lexical scope. Creation uses a single
 form:
 
 ```metel
-let x: @[Shared] T = @[Shared] expr;
+let x: @[Rc] T = @[Rc] expr;
 ```
 
 ---
 
-## 2. Semantics of `@[Shared] T`
+## 2. Semantics of `@[Rc] T` and `@[Arc] T`
 
 ### 2.1 Clone — acquiring a second owner
 
-`@[Shared] T` is non-`Copy` (RFC-0071 §4). Moving an `@[Shared] T` value transfers
+`@[Rc] T` is non-`Copy` (RFC-0071 §4). Moving an `@[Rc] T` value transfers
 ownership without changing the reference count:
 
 ```metel
-let a: @[Shared] Node = @[Shared] Node { val: 1 };
+let a: @[Rc] Node = @[Rc] Node { val: 1 };
 let b = a;   // ownership transferred; a is gone; reference count unchanged
 ```
 
@@ -136,27 +137,27 @@ Acquiring a *second* owning reference requires an explicit clone, which incremen
 reference count:
 
 ```metel
-let a: @[Shared] Node = @[Shared] Node { val: 1 };
+let a: @[Rc] Node = @[Rc] Node { val: 1 };
 let b = a.clone();   // reference count: 2; both a and b are valid owners
 ```
 
-`clone()` on `@[Shared] T` is always O(1) and does not copy the `T` value — it copies
+`clone()` on `@[Rc] T` is always O(1) and does not copy the `T` value — it copies
 only the pointer and increments the count.
 
 ### 2.2 Drop — releasing ownership
 
-When an `@[Shared] T` is dropped — either by going out of scope or by an explicit
+When an `@[Rc] T` is dropped — either by going out of scope or by an explicit
 `drop` — the reference count is decremented. If the count reaches zero, `T::drop` is
 called and the backing memory is freed. If the count remains above zero, no visible action
 occurs. This is the standard reference-counting destructor protocol.
 
 ### 2.3 Immutable borrow
 
-Borrowing `@[Shared] T` as `&T` is always safe and does not affect the reference count.
+Borrowing `@[Rc] T` as `&T` is always safe and does not affect the reference count.
 Multiple simultaneous `&T` borrows to the same allocation are permitted:
 
 ```metel
-let a: @[Shared] Node = @[Shared] Node { val: 1 };
+let a: @[Rc] Node = @[Rc] Node { val: 1 };
 let b = a.clone();
 let r1: &Node = &a;
 let r2: &Node = &b;   // both borrows valid simultaneously
@@ -164,8 +165,8 @@ let r2: &Node = &b;   // both borrows valid simultaneously
 
 ### 2.4 Mutable borrow — the `uniq` scope
 
-Borrowing `@[Shared] T` as `&mut T` (exclusive mutable borrow) is only valid within a
-`uniq` scope (§3). Outside a `uniq` scope, `&mut @[Shared] T` is not permitted — the
+Borrowing `@[Rc] T` as `&mut T` (exclusive mutable borrow) is only valid within a
+`uniq` scope (§3). Outside a `uniq` scope, `&mut @[Rc] T` is not permitted — the
 compiler cannot prove at that point that no other owning reference exists.
 
 ---
@@ -174,7 +175,7 @@ compiler cannot prove at that point that no other owning reference exists.
 
 ### 3.1 Syntax
 
-`uniq` is a method on `@[Shared] T` that accepts a closure through the bracket channel:
+`uniq` is a method on `@[Rc] T` that accepts a closure through the bracket channel:
 
 ```metel
 a.uniq([ship]() -> {
@@ -185,44 +186,44 @@ a.uniq([ship]() -> {
 
 The bracket parameter `ship` receives `&mut T`. Within the closure body, `a` is
 temporarily consumed as a uniqueness witness; it is returned when the closure exits.
-After the `uniq` call, `a` is again a valid `@[Shared] T`.
+After the `uniq` call, `a` is again a valid `@[Rc] T`.
 
 `uniq` does not change the reference count. It does not require the reference count to
 equal one — it requires only that no other owning reference is *accessible in the current
-scope*. Other `@[Shared] T` owners may exist in unreachable code or in functions that
+scope*. Other `@[Rc] T` owners may exist in unreachable code or in functions that
 were not called with an aliasing reference.
 
 ### 3.2 Alias analysis: what the compiler checks
 
 When the compiler encounters `a.uniq([ship]() -> { body })`, it performs alias analysis
 over the variables in scope at the call site. The analysis asks: **could any variable
-accessible to `body` be an owning alias of the same `@[Shared] T` allocation as `a`?**
+accessible to `body` be an owning alias of the same `@[Rc] T` allocation as `a`?**
 
 A variable `v` is considered a potential alias if:
 
-1. **Direct alias**: `v` has type `@[Shared] T` — it is a direct owning reference of
+1. **Direct alias**: `v` has type `@[Rc] T` — it is a direct owning reference of
    the same type.
-2. **Transitive alias**: `v` has a type that contains `@[Shared] T` as a field,
+2. **Transitive alias**: `v` has a type that contains `@[Rc] T` as a field,
    transitively — accessing `v` could yield an owning reference of the same type.
-3. **Reference to alias**: `v` has type `&@[Shared] T` or `&mut @[Shared] T` — dereferencing
+3. **Reference to alias**: `v` has type `&@[Rc] T` or `&mut @[Rc] T` — dereferencing
    it yields a potential alias.
 
 The closure `body` must not access any such variable. If it does, the compiler emits a
 type error at the point of access.
 
 The closure *may* access:
-- Variables of types that do not contain `@[Shared] T` (directly or transitively)
+- Variables of types that do not contain `@[Rc] T` (directly or transitively)
 - `a` itself, through the exclusive `ship` parameter
 - Owned `@[Heap] T` or region-allocated values of `T` — these have distinct tags and
-  cannot alias `a`'s `Shared` allocation
+  cannot alias `a`'s `Rc` allocation
 
 ```metel
-let a: @[Shared] Spaceship = @[Shared] Spaceship { engine: Engine::StringTheory { ... } };
-let b = a.clone();          // b: @[Shared] Spaceship — potential alias
-let fuel: I32 = 100;        // I32 — no @[Shared] Spaceship, safe to access
+let a: @[Rc] Spaceship = @[Rc] Spaceship { engine: Engine::StringTheory { ... } };
+let b = a.clone();          // b: @[Rc] Spaceship — potential alias
+let fuel: I32 = 100;        // I32 — no @[Rc] Spaceship, safe to access
 
 a.uniq([ship]() -> {
-    let _ = b;              // ERROR: b is @[Shared] Spaceship — potential alias of a
+    let _ = b;              // ERROR: b is @[Rc] Spaceship — potential alias of a
     ship.engine = Engine::Impulse { fuel };   // OK: fuel is I32; ship is the exclusive borrow
 });
 ```
@@ -230,15 +231,15 @@ a.uniq([ship]() -> {
 ### 3.3 Function calls within `uniq`
 
 A function called inside a `uniq` body is permitted if its signature does not accept a
-`@[Shared] T` parameter or a parameter of a type containing `@[Shared] T`. The alias
+`@[Rc] T` parameter or a parameter of a type containing `@[Rc] T`. The alias
 analysis extends to call sites: if calling `f(x)` would pass a potential alias into `f`,
 it is rejected.
 
 ```metel
 a.uniq([ship]() -> {
-    update_engine(ship);   // OK: update_engine takes &mut Engine, not @[Shared] Spaceship
+    update_engine(ship);   // OK: update_engine takes &mut Engine, not @[Rc] Spaceship
     log_fuel(fuel);        // OK: log_fuel takes I32
-    process(b);            // ERROR: process takes @[Shared] Spaceship — potential alias
+    process(b);            // ERROR: process takes @[Rc] Spaceship — potential alias
 });
 ```
 
@@ -251,21 +252,32 @@ still holds one owning reference throughout.
 
 ---
 
-## 4. Sendability
+## 4. Sendability — `Rc` vs `Arc`
 
-`@[Shared] T` uses **non-atomic reference counting**. Incrementing or decrementing the
+`@[Rc] T` uses **non-atomic reference counting**. Incrementing or decrementing the
 count is not thread-safe. Therefore:
 
 ```metel
-// @[Shared] T: !Send — cannot cross fiber boundaries
-// @[Shared] T: !Sync — cannot be shared across threads
+// @[Rc] T: !Send — cannot cross fiber boundaries
+// @[Rc] T: !Sync — cannot be shared across threads
 ```
 
-This matches the semantics of Rust's `Rc<T>`. For cross-fiber shared ownership, a
-separate `SharedSend` region — analogous to Rust's `Arc<T>` — using atomic reference
-counting is the correct type. `SharedSend` is deferred to a future RFC; the two types
+The sendable complement is `Arc` — Atomic Reference Counted — which uses atomic
+operations on the reference count and is sendable when `T: Send + Sync`:
+
+```metel
+impl Region for Arc {
+    type AllocationError = !;
+}
+
+// @[Arc] T: Send when T: Send + Sync
+// @[Arc] T: Sync when T: Send + Sync
+```
+
+`Arc` is deferred to a follow-up RFC. The two types are identical in interface and
 differ only in the atomicity of the reference count operations and their `Send`/`Sync`
-impls.
+impls. Naming both here establishes the pair: `Rc` for single-fiber use, `Arc` for
+cross-fiber shared ownership.
 
 ---
 
@@ -273,27 +285,28 @@ impls.
 
 ### 5.1 `@[Heap] T` — the unique-ownership counterpart
 
-`@[Heap] T` and `@[Shared] T` are distinct region tags and cannot alias. An `@[Heap] T`
-allocation is always uniquely owned; moving it does not create a second owner. A
-`uniq` scope is never required for `@[Heap] T` because the type system already guarantees
-exclusive access — there is always exactly one owner.
+`@[Heap] T` and `@[Rc] T` are distinct region tags and cannot alias. An `@[Heap] T`
+allocation is always uniquely owned; moving it does not create a second owner. A `uniq`
+scope is never required for `@[Heap] T` because the type system already guarantees
+exclusive access — there is always exactly one owner. `@[Arc] T` is similarly distinct
+from both.
 
 ### 5.2 Region-allocated containers of shared values
 
-`@[Shared] T` pointers may be stored in arena-allocated structures:
+`@[Rc] T` pointers may be stored in arena-allocated structures:
 
 ```metel
 AutoRegion::scoped([r]() -> {
     let node = @[r] ListNode {
-        value: @[Shared] HeavyData::load("data.bin"),
+        value: @[Rc] HeavyData::load("data.bin"),
         next: null,
     };
     // node's arena slot is freed when r drops; the HeavyData's RC is decremented at that point
-    // if this was the last owner, HeavyData::drop runs and the Shared allocation is freed
+    // if this was the last owner, HeavyData::drop runs and the Rc allocation is freed
 });
 ```
 
-The arena slot holds an `@[Shared] HeavyData` value. When the region drops, the arena
+The arena slot holds an `@[Rc] HeavyData` value. When the region drops, the arena
 slot is freed, decrementing the reference count. This composes correctly with `AutoRegion`
 (which calls `Drop::drop` on tracked slots before bulk-freeing): the arena's drop of the
 slot decrements the RC, and if the count hits zero, `HeavyData::drop` runs in the normal
@@ -301,8 +314,8 @@ way.
 
 ### 5.3 Struct-owned regions and shared values (RFC-0068)
 
-A struct with `[own r]` may hold `@[Shared] T` fields. The struct's destructor drops the
-owned region, which decrements the reference count of any `@[Shared] T` stored in the
+A struct with `[own r]` may hold `@[Rc] T` fields. The struct's destructor drops the
+owned region, which decrements the reference count of any `@[Rc] T` stored in the
 arena — exactly as in §5.2.
 
 ---
@@ -315,23 +328,24 @@ invalidate references held through sibling borrows. For shape-stable types, Ante
 the single-`&mut` rule.
 
 Metel does not currently adopt this relaxation. The `uniq` scope is the only path to
-mutable access through `@[Shared] T`. This is conservative: even for shape-stable types,
+mutable access through `@[Rc] T`. This is conservative: even for shape-stable types,
 the programmer must enter a `uniq` scope to mutate through a shared pointer.
 
 A future RFC may introduce a `ShapeStable` marker aspect and relax the `uniq` requirement
 for types implementing it, allowing multiple simultaneous `&mut T` borrows through
-distinct `@[Shared] T` owners. This is deferred until the `uniq` scope semantics are
-validated in practice.
+distinct `@[Rc] T` or `@[Arc] T` owners. This is deferred until the `uniq` scope
+semantics are validated in practice.
 
 ---
 
-## 7. The five stdlib regions
+## 7. The stdlib regions
 
 | Type | Lifetime | Drop behaviour | Move-out | Sendable |
 |---|---|---|---|---|
 | `Heap` | Indefinite | `Drop::drop` when owner dropped | Always safe | Yes |
+| `Arc` | Indefinite, atomic RC | `Drop::drop` when RC hits zero | Always safe | Yes (when `T: Send + Sync`) |
 | `LocalHeap` | Indefinite, thread-local | `Drop::drop` when owner dropped | Always safe | No |
-| `Shared` | Indefinite, reference-counted | `Drop::drop` when RC hits zero | Always safe | No |
+| `Rc` | Indefinite, non-atomic RC | `Drop::drop` when RC hits zero | Always safe | No |
 | `BumpRegion` | Scoped, bump arena | Bulk free; no `Drop::drop` per slot | `T: !Drop` only | No |
 | `AutoRegion` | Scoped, bump + drop list | Drop list then bulk free | Always safe | No |
 
@@ -344,20 +358,20 @@ validated in practice.
 ```metel
 struct Node {
     value: I32,
-    children: @[Heap] List<@[Shared] Node>,
+    children: @[Heap] List<@[Rc] Node>,
 }
 
-fun make_tree() -> @[Shared] Node {
-    let leaf1 = @[Shared] Node { value: 1, children: @[Heap] List::Nil {} };
-    let leaf2 = @[Shared] Node { value: 2, children: @[Heap] List::Nil {} };
-    @[Shared] Node {
+fun make_tree() -> @[Rc] Node {
+    let leaf1 = @[Rc] Node { value: 1, children: @[Heap] List::Nil {} };
+    let leaf2 = @[Rc] Node { value: 2, children: @[Heap] List::Nil {} };
+    @[Rc] Node {
         value: 0,
         children: @[Heap] List::from([leaf1, leaf2]),
     }
 }
 ```
 
-Multiple `@[Shared] Node` owners may exist simultaneously. Each node is freed when its
+Multiple `@[Rc] Node` owners may exist simultaneously. Each node is freed when its
 last owner is dropped.
 
 ### 8.2 Safe variant replacement via `uniq`
@@ -365,12 +379,12 @@ last owner is dropped.
 ```metel
 effect Engine = StringTheory { core: @[Heap] Core } | Impulse { fuel: I32 }
 
-let ship: @[Shared] Spaceship = @[Shared] Spaceship {
+let ship: @[Rc] Spaceship = @[Rc] Spaceship {
     engine: Engine::StringTheory { core: Core::new() },
 };
 
 ship.uniq([s]() -> {
-    // Safe: within uniq, no other @[Shared] Spaceship is accessible
+    // Safe: within uniq, no other @[Rc] Spaceship is accessible
     // The old StringTheory variant (and its core) is dropped before the new variant is set
     s.engine = Engine::Impulse { fuel: 100 };
 });
@@ -380,11 +394,11 @@ ship.uniq([s]() -> {
 
 ```metel
 struct Cache {
-    entries: @[Heap] Map<String, @[Shared] CacheEntry>,
+    entries: @[Heap] Map<String, @[Rc] CacheEntry>,
 }
 
 impl Cache {
-    fun get(self: &Cache, key: &String) -> Perhaps<@[Shared] CacheEntry> {
+    fun get(self: &Cache, key: &String) -> Perhaps<@[Rc] CacheEntry> {
         self.entries.get(key).map(|e| e.clone())
         // caller receives a second owner; entry lives until both Cache and caller drop it
     }
@@ -398,10 +412,10 @@ fun upgrade_engine(ship: &mut Spaceship, fuel: I32) {
     ship.engine = Engine::Impulse { fuel };
 }
 
-let ship: @[Shared] Spaceship = @[Shared] Spaceship { ... };
+let ship: @[Rc] Spaceship = @[Rc] Spaceship { ... };
 
 ship.uniq([s]() -> {
-    upgrade_engine(s, 100);   // OK: upgrade_engine takes &mut Spaceship, not @[Shared] Spaceship
+    upgrade_engine(s, 100);   // OK: upgrade_engine takes &mut Spaceship, not @[Rc] Spaceship
 });
 ```
 
@@ -432,31 +446,31 @@ The static alias analysis is strictly better and has zero runtime cost.
 
 ### A single unified `Heap` region with optional sharing
 
-Rather than a separate `Shared` region kind, `@[Heap] T` could carry a flag indicating
-whether it is uniquely or reference-counted owned. Unique heap pointers and shared heap
-pointers would have the same type, differentiated by a runtime flag.
+Rather than separate `Rc` and `Arc` region kinds, `@[Heap] T` could carry a flag
+indicating whether it is uniquely or reference-counted owned. Unique heap pointers and
+shared heap pointers would have the same type, differentiated by a runtime flag.
 
 Rejected because: the ownership mode is a compile-time property and encodes different
 static guarantees. Collapsing them into one type erases the distinction the type system
 uses to reason about aliasing. The `uniq` scope, which relies on the alias analysis over
-`@[Shared] T` tags, would not be expressible.
+`@[Rc] T` tags, would not be expressible.
 
 ---
 
 ## Unresolved questions
 
-1. **Cycle handling.** Reference counting cannot free cyclic structures — two `@[Shared]
-   T` values that reference each other will never reach a count of zero and will leak.
-   Options: weak references (`@[Weak] T`, a non-owning reference that yields
-   `Perhaps<@[Shared] T>`), a cycle collector run alongside RC, or a language-level
-   prohibition on `@[Shared] T` cycles enforced by the type system. Deferred — cycle
-   detection is a substantial addition and the right answer depends on observed usage
-   patterns.
+1. **Cycle handling.** Reference counting cannot free cyclic structures — two `@[Rc] T`
+   values that reference each other will never reach a count of zero and will leak. The
+   same applies to `@[Arc] T`. Options: weak references (`@[Weak] T` and `@[WeakArc] T`,
+   non-owning references that yield `Perhaps<@[Rc] T>` / `Perhaps<@[Arc] T>`), a cycle
+   collector run alongside RC, or a language-level prohibition on `@[Rc] T` / `@[Arc] T`
+   cycles enforced by the type system. Deferred — cycle detection is a substantial
+   addition and the right answer depends on observed usage patterns.
 
-2. **`SharedSend` — atomic RC for cross-fiber sharing.** `@[Shared] T` is non-atomic and
-   non-sendable. A `SharedSend` region using atomic reference counting, sendable when `T:
-   Send + Sync`, is the natural complement. Deferred to a follow-up RFC to keep this RFC
-   focused on the core ownership and `uniq` mechanism.
+2. **`Arc` — atomic RC for cross-fiber sharing.** `@[Rc] T` is non-atomic and
+   non-sendable. `Arc` uses atomic reference counting and is sendable when `T: Send +
+   Sync`. Named in this RFC; full design (including interaction with `uniq` across fiber
+   boundaries) deferred to a follow-up RFC.
 
 3. **Shape-stability relaxation.** As noted in §6, shape-stable types could be exempted
    from the `uniq` requirement for mutation. Deferred until `uniq` scopes are validated in
@@ -464,7 +478,7 @@ uses to reason about aliasing. The `uniq` scope, which relies on the alias analy
 
 4. **Alias analysis across module boundaries.** The `uniq` alias analysis must reason
    about types defined in other modules. If a foreign type's fields are not visible
-   (private fields), the compiler must conservatively assume it may contain `@[Shared] T`.
+   (private fields), the compiler must conservatively assume it may contain `@[Rc] T`.
    Whether this conservatism is acceptable in practice, or whether a visibility-aware
    analysis is needed, is deferred to the implementation RFC.
 
@@ -478,14 +492,15 @@ uses to reason about aliasing. The `uniq` scope, which relies on the alias analy
 ## References
 
 - RFC-0063 (Region Handles) — region allocator interface; `@[r] expr`; sendability rules;
-  the `Region` aspect that `Shared` implements.
+  the `Region` aspect that `Rc` and `Arc` implement.
 - RFC-0065 (Region Ergonomics) — `@`-position elision; call-site inference; both apply to
-  `@[Shared] T` identically.
-- RFC-0066 (Region Pointer Extraction) — move-out semantics; `@[Shared] T` move-out is
-  always safe (no `T: !Drop` restriction; RC decrement handles cleanup).
+  `@[Rc] T` and `@[Arc] T` identically.
+- RFC-0066 (Region Pointer Extraction) — move-out semantics; `@[Rc] T` and `@[Arc] T`
+  move-out is always safe (no `T: !Drop` restriction; RC decrement handles cleanup).
 - RFC-0071 (Ownership and Move Semantics) — non-`Copy` move semantics; `Drop` protocol;
-  drop ordering; `@[Shared] T` is non-`Copy` by construction.
-- RFC-0072 (Negative Bounds) — `T: !Drop`; not required for `@[Shared] T` move-out.
+  drop ordering; `@[Rc] T` and `@[Arc] T` are non-`Copy` by construction.
+- RFC-0072 (Negative Bounds) — `T: !Drop`; not required for `@[Rc] T` or `@[Arc] T`
+  move-out.
 - Ante programming language — Léo Stefanesco and Evan Ovadia, "Blending Borrowing and
   Reference Counting" — the `uniq` scope and compile-time alias analysis for safe mutation
   of shared values, which this RFC adapts to Metel's region tag model.
