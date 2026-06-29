@@ -870,3 +870,130 @@ constraints through the handler boundary simultaneously via the same move.
 The third row is the only interaction that requires new machinery beyond what either
 system currently specifies. Everything else composes from the linearity checker, the
 typestate type parameter, and the existing effect resume-type discipline.
+
+---
+
+## 13. Lessons from Koka
+
+Koka is the most mature algebraic-effect language and the closest design point to what
+this report proposes. Several of its decisions are directly applicable to Metel; others
+solve problems Metel does not have.
+
+### 13.1 `fun` vs `ctl`: most operations don't need a continuation
+
+Koka splits effect operations into two kinds at the declaration site:
+
+- **`fun`** — the operation always resumes exactly once with a value, like a function
+  call. No continuation needs to be captured; the handler computes a value and returns.
+- **`ctl`** — the handler decides whether to resume, how many times, and with what. Full
+  continuation machinery is required.
+
+Metel's current proposal treats all effect operations uniformly — every performance
+allocates a `@[Heap] Continuation`. That is unnecessarily expensive. The vast majority of
+practical effects (state reads, configuration queries, logging) are `fun`-style: resume
+exactly once immediately. Distinguishing them at the declaration site lets the compiler
+skip continuation allocation for the common case:
+
+```metel
+effect State<S> {
+    fun get() -> S       // always resumes once — no continuation allocated
+    fun set(x: S) -> () // same
+}
+
+effect Yield<T> {
+    ctl yield(x: T) -> Bool   // handler decides whether to resume — continuation required
+}
+```
+
+This is a declaration-level change with no effect on the semantics visible to the
+programmer. State and reader effects become zero-overhead; generators and async retain
+full power.
+
+### 13.2 `final ctl`: non-resuming operations need no continuation at all
+
+Koka's `final ctl` marks operations that never resume. The compiler allocates no
+continuation — the handler is a straight abort.
+
+```metel
+effect Fail {
+    final ctl fail(msg: String) -> !   // ! = Never; never resumes
+}
+
+fun safe_div(x: I32, y: I32) -> @[Fail] I32 {
+    if y == 0 { Fail::fail("division by zero") } else { x / y }
+}
+
+fun run_safe<T>(f: fun() -> @[Fail] T) -> Perhaps<T> {
+    handle f() {
+        Fail::fail(msg) => Perhaps::None    // no resume call — final handler
+    }
+}
+```
+
+This covers exceptions, panics, and early return — the most common "effectful" operations
+in practice — at zero continuation cost. Without the distinction every `fail()` call would
+allocate and immediately discard a continuation.
+
+### 13.3 Evidence passing: O(1) resumption without heap allocation
+
+Koka dispatches effect operations via *evidence passing*: each effectful function receives
+hidden parameters pointing to the nearest handler in the call stack. Resuming a `ctl`
+continuation is then a return from a function — the stack frame is already in place.
+
+The current Metel proposal boxes continuations into `@[Heap] Continuation<V, R>`. That is
+sound but potentially expensive: every effect performance allocates. Evidence passing
+avoids this for single-shot synchronous handlers, which are the overwhelmingly common case.
+
+The two approaches are not in conflict. A practical implementation could use evidence
+passing for `fun` and `final ctl` operations and only box into `@[Heap] Continuation` for
+multi-shot or cross-fiber handlers — those where the continuation genuinely needs to
+outlive the handler's stack frame. The programmer's code is unchanged; only the generated
+code differs. This is an implementation strategy, not a language design change, but it is
+the reason Koka's effects are competitive with hand-written state machines in benchmarks.
+
+### 13.4 Open effect rows for higher-order composability
+
+Koka's effect rows distinguish closed and open effect sets:
+
+- `<io>` — exactly `io`, nothing more
+- `<io|e>` — at least `io`, plus whatever is in `e`
+
+The open tail `|e` is what makes effect-polymorphic standard library functions work.
+Without it, a `map` that accepts a closure must either enumerate every effect the closure
+might perform or discard the effect information entirely. With it:
+
+```metel
+// open — map carries whatever effects f carries, plus nothing extra
+fun map<T, U, E>(xs: List<T>, f: fun(T) -> U ^ {E}) -> List<U> ^ {E} { ... }
+
+// closed — run_logged accepts only IO closures; anything more is a type error
+fun run_logged(f: fun() -> () ^ {IO}) -> () { ... }
+```
+
+Metel's current `^` annotation uses a type variable `E` for effect polymorphism, which
+achieves the same result. The Koka insight is that making the closed/open distinction
+*syntactically explicit* — `{IO}` vs `{IO | E}` — prevents a class of inference
+ambiguities at higher-order call sites and makes the constraint visible in documentation.
+
+### 13.5 What not to borrow
+
+**Perceus / functional-but-in-place.** Koka needs Perceus because it has no
+programmer-visible regions — it must infer when memory can be reused. Metel's explicit
+region system (`BumpRegion`, `AutoRegion`, `@[r]`) gives the programmer direct control
+over allocation patterns. Perceus solves a problem Metel does not have.
+
+**`st<h>` effect elimination.** Koka tracks all mutation through `ref<h,a>` and erases
+the heap variable `h` when it does not escape the function. Metel handles the same case
+with scoped regions: allocation into a `BumpRegion::scoped` or `AutoRegion::scoped` block
+produces a tag that does not escape the block. The mechanism is different but the outcome
+is the same — local mutation does not appear in the external type. No new machinery is
+needed.
+
+### 13.6 Priority order
+
+| Borrow | Cost | Value |
+|---|---|---|
+| `fun` vs `ctl` in effect declarations | Low — declaration syntax only | High — eliminates continuation allocation for the common case |
+| `final ctl` for non-resuming operations | Low — declaration syntax + one compiler rule | High — zero-cost exceptions and early return |
+| Evidence passing | Medium — implementation work | High — O(1) resumption; no heap box for synchronous handlers |
+| Explicit open/closed effect row syntax | Low — syntax clarification | Medium — better inference and documentation |
