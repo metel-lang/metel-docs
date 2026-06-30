@@ -102,11 +102,11 @@ and the borrow expires with them — the region scope does not extend the borrow
 
 ```metel
 AutoRegion::scoped([r]() -> {
-    let x: @[r] Node = @[r] Node { val: 1 };
+    let x: @[r] Node = Node { val: 1 };
     let ref_x: &Node = &*x;
     drop(x);      // ERROR: x is borrowed by ref_x
                   // r is still live, but x — the binding — is gone
-    let y: @[r] Node = @[r] Node { val: 2 };  // independent binding, independent lifetime
+    let y: @[r] Node = Node { val: 2 };  // independent binding, independent lifetime
 });
 ```
 
@@ -115,11 +115,11 @@ cannot outlive `r` even if the binding were kept alive past it — but the bindi
 primary anchor. This is the same structure as:
 
 ```metel
-let h: @[Heap] Node = @[Heap] Node { val: 1 };
+let h: @[Heap] Node = Node { val: 1 };
 let r_h: &Node = &*h;
 drop(h);   // ERROR: h is borrowed by r_h
 
-let a: @[Rc] Node = @[Rc] Node { val: 1 };
+let a: @[Rc] Node = Node { val: 1 };
 let b = a.clone();
 let r_a: &Node = &*a;
 drop(a);   // ERROR: a is borrowed by r_a
@@ -162,44 +162,127 @@ naturally continue to exclude shared pointers. No amendments needed.
 
 ## Question 5: Is the ergonomic benefit large enough to justify `Allocatable`?
 
-The concrete benefit: allocation expressions use the same syntax regardless of strategy.
+The claimed benefit is two-fold: uniform allocation syntax, and transparent strategy
+changes — changing `@[Heap]` to `@[Rc]` without touching downstream code.
+
+### 5.1 What downstream code can actually ignore
+
+Downstream code that only *borrows* is genuinely strategy-agnostic. A function taking
+`&Node` works identically whether the caller holds `@[Heap] Node` or `@[Rc] Node`:
 
 ```metel
-// Change allocation strategy by changing one word:
-let a: @[Heap] Node = @[Heap] Node { val: 1 };
-let a: @[Rc]   Node = @[Rc]   Node { val: 1 };
-let a: @[Arc]  Node = @[Arc]  Node { val: 1 };
+fun read(n: &Node) -> I32 { n.val }
+
+let h: @[Heap] Node = Node { val: 1 };
+let r: @[Rc]   Node = Node { val: 1 };
+
+read(&*h);   // fine
+read(&*r);   // fine — same call site
 ```
 
-Downstream code that borrows `&Node` from `a` is unchanged in all three cases. This
-fits Metel's design identity ("allocators as lifetimes") — the allocation strategy is a
-local decision that should not ripple through the rest of the codebase.
+This is a real benefit. Read-only access to allocated values is common, and the borrow
+being uniform means functions that only read do not need to know the allocation strategy.
 
-The alternative (`Rc<T>` as a library struct) partially recovers this via `Deref`
-coercion, but the allocation expression changes form:
+### 5.2 What downstream code cannot ignore
+
+**Mutation.** For `@[Heap] Node`, direct mutation through the owning pointer is
+unconditional — unique ownership guarantees no alias exists:
 
 ```metel
-let a: @[Heap] Node = @[Heap] Node { val: 1 };
-let a: Rc<Node>     = Rc::new(Node { val: 1 });  // different syntax, different type annotation
+let mut h: @[Heap] Node = Node { val: 1 };
+h.val = 42;   // fine
 ```
 
-This is a genuine loss. The strategy-change use case is the strongest argument for
-keeping shared pointers in the bracket position.
+For `@[Rc] Node`, the same mutation requires a runtime check:
 
-The cost of `Allocatable` is one new concept. Its benefit is that the concept does real
-work: it names the property that justifies `@[_] T` syntax — "this type can appear in
-the bracket channel" — separately from the property that justifies region-specific
-operations like move-out, `SubRegion`, and `[own r]`. Without `Allocatable`, `Region`
-is doing both jobs and doing neither cleanly.
+```metel
+let mut r: @[Rc] Node = Node { val: 1 };
+r.val = 42;   // ERROR: cannot mutate through a shared pointer directly
+r.get_mut().unwrap().val = 42;   // get_mut() returns None if other owners exist
+```
+
+Every mutation site must change when moving from unique to shared ownership. This is
+not a transparent strategy change.
+
+**Clone semantics.** For `@[Heap] Node`, `.clone()` deep-copies `Node` — the result
+is an independent value. For `@[Rc] Node`, `.clone()` increments the reference count
+and returns a second pointer to the *same* `Node`. Code that clones and mutates the
+clone — expecting an independent copy — silently aliases instead:
+
+```metel
+let a: @[Heap] Node = Node { val: 1 };
+let mut b = a.clone();
+b.val = 99;   // a.val is still 1 — independent copy
+
+let a: @[Rc] Node = Node { val: 1 };
+let b = a.clone();
+// b.val = 99 requires get_mut, and would also affect a if it succeeded
+// a and b point to the same Node — completely different semantics
+```
+
+**Extraction and pattern matching.** `@[Heap] Node` can be consumed and its inner
+value extracted unconditionally. `@[Rc] Node` requires `try_unwrap` — a fallible,
+runtime-checked operation that returns `Result<Node, @[Rc] Node>`.
+
+### 5.3 The transparent-change boundary
+
+The transparent strategy-change property holds within the **unique-ownership** family:
+`@[Heap] T`, `@[LocalHeap] T`, `@[AutoRegion] T`, `@[BumpRegion] T` (modulo the
+`!Drop` restriction). These share the same ownership model — one owner, direct
+mutation, deep-copy clone — so switching between them really does leave downstream
+code unchanged.
+
+Changing from any unique-ownership type to `@[Rc] T` or `@[Arc] T` is **not**
+transparent. It changes the ownership model, which changes mutation patterns, clone
+semantics, and extraction. Downstream code that does anything beyond borrowing must
+change.
+
+### 5.4 What remains of the benefit
+
+The `@[_]` syntax uniformity is still worth something, but narrower than presented:
+
+- **Borrow sites** — `&@[R] T` code is genuinely unchanged. This is common.
+- **Allocation expressions** — `@[Rc] Node { ... }` is more ergonomic than
+  `Rc::new(Node { ... })`, regardless of what else changes.
+- **Type annotation consistency** — `@[Rc] Node` reads like `@[Heap] Node` rather
+  than like a structurally different type.
+
+These are surface ergonomics. They are real but they do not justify the "transparent
+strategy change" framing. The accurate claim is: *allocation syntax and borrow syntax
+are uniform; ownership semantics are not*.
+
+### 5.5 Does this undermine `Allocatable`?
+
+Partially. The strongest argument for `Allocatable` — transparent strategy change —
+does not hold across the unique/shared boundary. The remaining benefit is syntactic
+uniformity for allocation expressions and borrow sites.
+
+Whether syntactic uniformity alone justifies introducing `Allocatable` as a language
+concept depends on how heavily the language wants to emphasize "allocation strategy is
+a local decision." If that principle is load-bearing, `Allocatable` is worth the cost.
+If it applies only within the unique-ownership family (which is where it is actually
+sound), then `Allocatable` may be over-engineering: the unique-ownership types already
+unify under `Region`, and `Rc`/`Arc` can be library structs with allocation sugar
+(`@[Rc] expr` desugaring to `Rc::new(expr)`) without being `Allocatable` implementors.
 
 ---
 
 ## Recommendation
 
-The analysis supports introducing `Allocatable` with the following structure:
+The analysis produces a more conditional recommendation than initially expected.
+
+### The case for `Allocatable`
+
+The four core properties (construction, borrow, sendability, drop contract) unify
+genuinely. Move-out is the only hard incompatibility, and it is well-contained.
+Borrow semantics are uniform across all allocation kinds. RFC-0068 and RFC-0069 need
+no changes. The `Allocatable` interface is coherent.
+
+If the language treats "allocation syntax is uniform" as a first-class design value —
+even knowing that ownership semantics differ — then `Allocatable` is justified:
 
 ```
-Allocatable                          — can appear in @[_] T; borrow and drop
+Allocatable                          — @[_] T syntax; borrow; sendability; drop contract
 ├── Region                           — unique ownership; move-out; SubRegion; [own r]
 │   ├── BumpRegion  (handle region)
 │   ├── AutoRegion  (handle region)
@@ -210,33 +293,37 @@ Allocatable                          — can appear in @[_] T; borrow and drop
     └── Arc
 ```
 
-**`Allocatable` provides:**
-- Construction syntax — `@[R] expr`
-- Borrow — `&@[R] T` with lifetime = source binding
-- Sendability rule — R specifies the condition on T
-- Drop contract — T::drop called exactly once, no leaks
+### The case against `Allocatable`
 
-**`Allocatable` does not provide:**
-- Move-out — stays in `Region` (unique ownership required)
-- SubRegion ordering — stays in `Region`
-- `[own r]` struct fields — stays in `Region`
-- Clone on the pointer — stays in `SharedPointer`
-- `get_mut` — stays in `SharedPointer`
+The "transparent strategy change" claim does not hold across the unique/shared
+boundary. Mutation, clone semantics, and extraction all change when moving to shared
+ownership. Downstream code that does anything beyond borrowing must be updated. The
+principal benefit reduces to: allocation expressions and borrow sites use the same
+syntax.
 
-**What changes in the RFCs:**
-- RFC-0063: introduce `Allocatable` as the bracket-channel interface; demote `Region`
-  to a subtrait covering unique-ownership allocation strategies.
-- RFC-0074: rename to "Shared Pointers"; replace `SharedRegion: Region` with
-  `SharedPointer: Allocatable`; remove the three-category region table (it was a
-  symptom of the forced classification); Rc and Arc are no longer regions.
-- RFC-0065, RFC-0066, RFC-0067: audit each for `Region` bounds — some will stay
-  `Region` (move-out, SubRegion interaction); others will widen to `Allocatable`
-  (borrow syntax, ergonomic elision).
-- RFC-0068, RFC-0069: no changes — already anchored to `Region` specifically.
+Syntactic uniformity at those two sites can be achieved more cheaply: `@[Rc] expr`
+could be allocation sugar that desugars to `Rc::new(expr)` without `Rc` implementing
+any `Allocatable` trait. The programmer writes `@[Rc] Node { val: 1 }` and gets
+`Rc<Node>`; the borrow `&*ptr` is covered by `Deref`. No new trait, no hierarchy.
 
-**What does not change:** syntax, coercion, and borrow semantics as seen by the
-programmer. The `@[Rc] T` form, `@[Heap] T` form, and downstream borrow code are
-identical before and after.
+### The open design question
+
+The decision hinges on whether the following two positions are held:
+
+1. **"Allocation syntax should be uniform for all kinds."** → `Allocatable` is worth
+   introducing as a trait, with the ownership-model differences visible in the subtype.
+   Programmers who only borrow get full transparency; those who mutate see the
+   difference in the type.
+
+2. **"Syntax uniformity for its own sake is not sufficient."** → `Rc`/`Arc` are
+   library structs; `@[Rc] expr` is allocation sugar (not a trait bound); the `Region`
+   concept stays clean and exception-free.
+
+Both positions are internally consistent. This report does not resolve the choice —
+that is a language philosophy decision. What the analysis rules out is the middle
+ground: treating `Rc` and `Arc` as full `Region` implementors (the current RFC-0074
+design) is the worst of both worlds — it forces exceptions into the region model
+without delivering the transparent-strategy-change property that would justify them.
 
 ---
 
