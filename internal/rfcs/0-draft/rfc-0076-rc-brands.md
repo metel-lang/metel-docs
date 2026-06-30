@@ -476,3 +476,6 @@ naturally with the lifetime/borrow system.
   application in §Applications.
 - Haskell `ST` monad — the original rank-2 brand introduction (`runST`) that ensures
   brands cannot escape their introduction scope.
+- Report: `shared-ownership-survey-2026-06-29` — survey of Ante, Rust RC APIs, Pony
+  reference capabilities, and GhostCell/qcell; establishes that `RegionToken<b>` is the
+  correct future direction for static exclusive access to `@[Rc<b>] T` (RFC-0074 §6.1).

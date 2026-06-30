@@ -271,26 +271,50 @@ is desirable when it can be made formally sound.
 
 Two open design threads:
 
-### 6.1 `unique` keyword for `Rc`
+### 6.1 Static exclusive access via `RegionToken<b>` (GhostCell pattern)
 
-Because `Rc: !Send`, all clones of `@[Rc] T` are confined to the same fiber. A
-compiler-level alias analysis operating on binding provenance — tracking which
-in-scope bindings were derived from a specific `@[Rc] T` via `.clone()` — could
-establish statically that no accessible alias exists, and admit a `unique` block that
-provides `&mut T` without a runtime check.
+The binding-level alias analysis direction (tracking which in-scope bindings were
+derived from a specific `@[Rc] T` via `.clone()`) is not sound in the general case.
+A clone moved into a data structure accessible from inside the exclusive block
+represents an alias the binding-level analysis cannot see; the standard borrow checker
+does not catch this because it does not know the two paths alias the same allocation.
 
-This analysis is sound for the cases it can track: clones that are direct bindings in
-scope, and clones captured by closures with explicit capture-list types (RFC-0050).
-It is not sound in the general case. A clone moved into a data structure accessible
-from inside the block represents an alias the binding-level analysis cannot see; the
-standard borrow checker does not catch this because it does not know the two paths
-alias the same allocation. The full solution requires type-level allocation identity —
-brand types (RFC-0076) — to make same-allocation relationships visible to the type
-checker.
+A sound alternative — identified in a survey of Ante, Rust RC APIs, Pony reference
+capabilities, and the GhostCell pattern (see report: `shared-ownership-survey-2026-06-29`)
+— is to invert the question entirely. Instead of proving an RC pointer is unique,
+introduce a **linear token** whose exclusive borrow grants mutable access to all
+same-brand cells regardless of how many RC aliases exist:
 
-Until the interaction between binding-level alias analysis, explicit closure capture
-lists (RFC-0050), and brand types (RFC-0076) is fully worked out, a statically sound
-`unique` construct cannot be specified. This is deferred.
+```metel
+brand::new[b](() -> {
+    let token: RegionToken<b> = RegionToken::new();
+    let a: @[Rc<b>] Node = @[Rc<b>] Node { val: 1 };
+    let alias = a.clone();   // multiple owners — fine
+
+    // &mut token gives exclusive access to all @[Rc<b>] T in scope:
+    a.borrow_mut(&mut token).val = 42;
+    // alias is still live; soundness comes from &mut token exclusivity
+});
+```
+
+Soundness comes from `&mut RegionToken<b>` exclusivity — the standard borrow checker
+guarantees only one `&mut token` exists at a time, which means only one mutable view
+of all same-brand cells at a time. No `strong_count()` check is required.
+
+Prerequisites:
+- **RFC-0076 (Brand Types)** — the invariant brand parameter `b`.
+- `RegionToken<b>` must be non-`Copy` and non-`Clone` (already guaranteed by
+  RFC-0071 for any type not explicitly implementing `Copy`).
+- `Rc<b>` as a brand-parameterized variant of `Rc`.
+
+Note: RFC-0050 (Closure Capture Lists) is **not** a prerequisite for this path.
+
+The coarse-grained tradeoff: `&mut token` covers all cells of the brand simultaneously.
+This is acceptable for most graph/tree manipulation patterns. Fine-grained per-cell
+access requires multiple brand parameters or inner mutability.
+
+This design is deferred until RFC-0076 is accepted and the interaction between
+branded RC and `RegionToken` is fully specified.
 
 ### 6.2 Static `unique` for `Arc` via structured concurrency
 
@@ -343,9 +367,9 @@ analysis in §6 to be added later without changing the type.
    pointers (a non-owning pointer yielding `Perhaps<@[Rc] T>`, via a `WeakSharedRegion`
    aspect); a cycle collector; a type-system prohibition on cycles. Deferred.
 
-2. **Static `unique` for `Rc`.** Contingent on RFC-0050 (explicit closure capture
-   lists) and RFC-0076 (brand types). The design sketch is in §6.1; formal
-   specification is deferred to a follow-up RFC once those dependencies are accepted.
+2. **Static exclusive access for `Rc`.** Contingent on RFC-0076 (brand types).
+   The `RegionToken<b>` approach (§6.1) is the target direction; formal specification
+   is deferred to a follow-up RFC once RFC-0076 is accepted.
 
 3. **Static `unique` for `Arc`.** Contingent on §6.1 being resolved and RFC-0064
    (structured fork-join parallelism) being accepted. Deferred.
@@ -364,10 +388,11 @@ analysis in §6 to be added later without changing the type.
   exclusion means neither `@[Rc] T` nor `@[Arc] T` is `Copy`.
 - RFC-0072 (Negative Bounds) — `Rc: !Send`; used in §6.1 as the necessary condition
   for the future static analysis.
-- RFC-0050 (Closure Capture Lists) — prerequisite for static `unique` (§6.1); explicit
-  capture types make closure-captured clones visible to alias analysis.
-- RFC-0076 (Brand Types) — prerequisite for static `unique` (§6.1); allocation
-  identity at the type level is required for the analysis to be formally sound.
-- RFC-0064 (Fork-Join Parallelism) — prerequisite for static `unique` on `Arc` (§6.2).
-- Ante programming language — the compile-time alias exclusion concept for shared
-  pointers that inspired the `unique` direction in §6.
+- RFC-0050 (Closure Capture Lists) — no longer a prerequisite for the static exclusive
+  access path; the `RegionToken<b>` approach (§6.1) does not depend on closure captures.
+- RFC-0076 (Brand Types) — prerequisite for `RegionToken<b>` (§6.1); the invariant
+  brand parameter is the mechanism that brands `Rc` pointers to a specific token.
+- RFC-0064 (Fork-Join Parallelism) — prerequisite for static exclusive access on
+  `Arc` (§6.2), contingent on §6.1 being resolved first.
+- Report: `shared-ownership-survey-2026-06-29` — survey of Ante, Rust RC APIs, Pony
+  reference capabilities, and the GhostCell/qcell pattern that motivated §6.1.
