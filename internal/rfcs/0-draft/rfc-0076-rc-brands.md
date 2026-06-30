@@ -55,6 +55,25 @@ In all three cases, the required distinction is **identity**, not **structure**.
 values of the same structural type need to be different types when they represent
 different things. Brands are the mechanism for this.
 
+### Why handle regions do not need explicit brands
+
+Handle regions (`BumpRegion`, `AutoRegion`) introduce a fresh runtime handle at each
+scope entry. That handle is simultaneously the runtime allocator, the compile-time
+lifetime tag, and the identity token — three roles unified in one value. The handle's
+freshness per scope is the brand: two `BumpRegion` handles are already distinct types
+because the compiler treats each introduction site as producing a new region kind.
+
+Strategy regions with unique ownership (`Heap`, `LocalHeap`) introduce no handle and
+no aliasing. Unique ownership means the pointer itself is the proof of exclusive access;
+no identity token is needed to reason about aliasing because aliasing cannot occur.
+
+Only shared-ownership strategy regions (`Rc`, `Arc`) require explicit brands — they
+have no handle (so no implicit identity) and aliasing is their entire purpose (so
+identity is essential for reasoning). The brand parameter `'b` in `Rc<'b>` fills
+exactly the role that the runtime handle fills for scoped regions: it is the identity
+token that makes two pointers to the same cell distinguishable from two pointers to
+different cells.
+
 ---
 
 ## Design

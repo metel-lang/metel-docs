@@ -65,6 +65,43 @@ the failure.
 Purely static exclusive access — establishing at compile time that no live alias exists
 — is a goal for future work and is discussed in §Future work.
 
+### Two kinds of regions
+
+The region abstraction in RFC-0063 covers two fundamentally different implementation
+patterns that are worth naming explicitly.
+
+**Handle regions.** The region tag is a runtime value — the allocator handle — passed
+through the bracket channel. Each introduction site produces a fresh, distinct handle.
+`BumpRegion` and `AutoRegion` are handle regions: the `r` in
+`AutoRegion::scoped([r]() -> {...})` is simultaneously (1) the runtime allocator,
+(2) the compile-time lifetime tag, and (3) the identity token. All three roles are
+unified in one value. No separate identity mechanism is needed; the handle is the proof.
+
+**Strategy regions.** The region tag is a compile-time type-level marker with no
+corresponding runtime value passed through the bracket channel. The actual allocation
+always resolves to a fixed underlying allocator. `Heap`, `LocalHeap`, `Rc`, and `Arc`
+are strategy regions — `@[Heap] T` always goes to the global heap; `@[Rc] T` goes to
+the global heap with a refcount header. There is no per-use "Heap handle" or "Rc handle."
+
+Strategy regions differ in ownership:
+
+- **Unique-ownership strategy regions** (`Heap`, `LocalHeap`): the pointer is uniquely
+  owned. Aliasing does not occur. The type system enforces uniqueness without any
+  identity token — the pointer itself is the proof of exclusive ownership.
+
+- **Shared-ownership strategy regions** (`Rc`, `Arc`): aliasing is fundamental to the
+  purpose. Multiple owning pointers to the same allocation coexist by design. Because
+  there is no handle to serve as an identity token, and because aliasing makes identity
+  essential for reasoning, explicit brand parameters (`Rc<'b>`, `Arc<'b>`) must fill
+  this role. This is why `Rc` and `Arc` are the only regions that require brands: they
+  are the only regions where (a) no handle exists and (b) aliasing makes per-allocation
+  identity necessary.
+
+The `SharedRegion` supertrait captures this shared-ownership pattern as a first-class
+extension point. Defining it as a supertrait — rather than building `Rc` and `Arc` as
+language exceptions — keeps the door open for user-defined shared-ownership regions
+(pool-managed RC, arena-backed RC with a shared control block) without special-casing.
+
 ### Why not introduce Rc/Arc as exceptions
 
 Introducing `Rc` and `Arc` as region types with special language rules would treat
@@ -204,14 +241,30 @@ concurrent access to the outer pointer within the same fiber, making the check s
 
 ## 4. The six stdlib regions
 
+**Handle regions** — the region tag is a runtime allocator handle; freshness and
+identity come from the handle itself.
+
+| Type | Lifetime | Drop behaviour | Move-out | Sendable |
+|---|---|---|---|---|
+| `BumpRegion` | Scoped, bump arena | Bulk free; no `Drop::drop` per slot | `T: !Drop` only | No |
+| `AutoRegion` | Scoped, compiler-managed | Compiler-managed drop | Always safe | No |
+
+**Strategy regions, unique ownership** — the region tag is a type-level marker; the
+pointer is uniquely owned; no brand parameter needed.
+
 | Type | Lifetime | Drop behaviour | Move-out | Sendable |
 |---|---|---|---|---|
 | `Heap` | Indefinite | `Drop::drop` when owner dropped | Always safe | Yes |
-| `Arc` | Indefinite, atomic RC | `Drop::drop` when RC hits zero | Always safe | Yes (when `T: Send + Sync`) |
 | `LocalHeap` | Indefinite, thread-local | `Drop::drop` when owner dropped | Always safe | No |
+
+**Strategy regions, shared ownership** — the region tag is a type-level marker;
+aliasing is fundamental; a brand parameter (`Rc<'b>`, `Arc<'b>`) provides
+per-allocation identity.
+
+| Type | Lifetime | Drop behaviour | Move-out | Sendable |
+|---|---|---|---|---|
 | `Rc` | Indefinite, non-atomic RC | `Drop::drop` when RC hits zero | Always safe | No |
-| `BumpRegion` | Scoped, bump arena | Bulk free; no `Drop::drop` per slot | `T: !Drop` only | No |
-| `AutoRegion` | Scoped, compiler-managed | Compiler-managed drop | Always safe | No |
+| `Arc` | Indefinite, atomic RC | `Drop::drop` when RC hits zero | Always safe | Yes (when `T: Send + Sync`) |
 
 ---
 
