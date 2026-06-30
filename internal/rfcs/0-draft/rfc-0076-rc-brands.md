@@ -29,6 +29,13 @@ introducing fresh brands: an explicit **brand block** and an implicit **allocati
 brand** for types that opt in. Brand parameters propagate through type inference and
 are erased at compile time.
 
+Beyond simple identity, brands enable a general pattern — **token-gated access** —
+where a linear token `Token<'b>` holds the permission to access a set of branded
+resources, and `&mut Token<'b>` is the access key enforced by the standard borrow
+checker. This pattern applies to RC memory cells, effect handlers, concurrent fibers,
+and shared mutable state. In every case the soundness argument is the same: ordinary
+`&mut` exclusivity, no runtime check required.
+
 ---
 
 ## Motivation
@@ -199,11 +206,9 @@ let a = @[Rc] Node { val: 1 };   // a: @[Rc<'a>] Node
 let b = a.clone();                // b: @[Rc<'a>] Node — same cell
 let c = @[Rc] Node { val: 2 };   // c: @[Rc<'c>] Node — different cell
 
-// NotCapturing<@[Rc<'a>] Node> excludes b, allows c
-Rc::unique(a, fun(node: &mut Node) -> () {
-    node.val = c.val;   // OK
-    node.val = b.val;   // ERROR: b has same brand as a
-});
+// NotCapturing<@[Rc<'a>] Node> excludes b (same brand), allows c (different brand)
+// Future: RegionToken<'a> gates exclusive write access to the 'a cell
+// Present: a.get_mut() returns None because b is a live alias
 ```
 
 ### Arena identity
@@ -242,25 +247,129 @@ brand 'f1 { let log_cap: FileCapability<'f1> = open_file("log.txt"); ... }
 brand 'f2 { let data_cap: FileCapability<'f2> = open_file("data.bin"); ... }
 ```
 
-### GhostCell-style interior mutability
+### Token-gated access
 
-A brand token held uniquely proves exclusive access to a branded cell:
+A brand token held uniquely proves exclusive access to all resources carrying the
+same brand. The pattern has three components:
+
+- A **token** `Token<'b>` — a non-`Copy`, non-`Clone` struct; holds no data, only
+  the brand. Its linearity means exactly one live binding exists at any time.
+- **Cells** — resource holders of any kind, each parameterised by `'b`.
+- **`&mut Token<'b>`** — the access key. The borrow checker ensures only one
+  `&mut token` exists at a time, granting exclusive access to all same-brand cells.
+  No runtime check. Soundness is ordinary `&mut` exclusivity.
+
+The three components are separate values. Cells may be freely aliased via `@[Rc] _`
+or shared via `@[Arc] _`; the token is the one value that cannot be aliased. Access
+to cell data requires passing the token borrow — and that borrow is the proof.
+
+This pattern generalises the GhostCell design (Yanovski et al., 2021) to any resource
+that needs scoped, exclusive, identity-specific access. Three concrete instantiations
+follow.
+
+#### RC memory — `RegionToken<'b>`
 
 ```metel
-struct GhostToken<brand 'b> { _brand: PhantomBrand<'b> }
-struct GhostCell<brand 'b, T> { value: T, _brand: PhantomBrand<'b> }
+struct RegionToken<brand 'b> { _brand: PhantomBrand<'b> }
+struct RcCell<brand 'b, T> { value: T, _brand: PhantomBrand<'b> }
 
-impl<brand 'b, T> GhostCell<'b, T> {
-    // Exclusive access requires the unique token for this brand
-    fun borrow_mut<'a>(self: &'a mut GhostCell<'b, T>, _token: &mut GhostToken<'b>) -> &'a mut T {
+impl<brand 'b, T> RcCell<'b, T> {
+    fun borrow_mut<'s>(self: &'s RcCell<'b, T>, _token: &mut RegionToken<'b>) -> &'s mut T {
         &mut self.value
     }
 }
+
+brand 'b {
+    let token = RegionToken::<'b>::new();
+    let cell_a: @[Rc<'b>] RcCell<'b, I32> = @[Rc<'b>] RcCell { value: 0, _brand: PhantomBrand };
+    let alias_a = cell_a.clone();   // multiple RC owners — fine
+
+    cell_a.borrow_mut(&mut token).value = 42;
+    // alias_a is still live; soundness from &mut token, not from RC count
+}
 ```
 
-The token `GhostToken<'b>` is unique (not `Clone`). Holding `&mut GhostToken<'b>`
-proves no one else has access — the borrow checker enforces this. No runtime check
-needed.
+`RegionToken<'b>` is the future direction for static exclusive mutable access to
+`@[Rc<'b>] T` cells, as described in RFC-0074 §6.1. It does not require proving
+the RC count is one; it requires holding the token exclusively.
+
+#### Effect handlers — `HandlerToken<'b, E>`
+
+An effect handler with mutable state has the same aliasing problem as an RC cell:
+multiple call sites may reference the same handler concurrently. A `HandlerToken`
+separates the permission from the handler state:
+
+```metel
+struct HandlerToken<brand 'b, E> { _brand: PhantomBrand<'b> }
+struct HandlerCell<brand 'b, E, S> { state: S, _brand: PhantomBrand<'b> }
+
+impl<brand 'b> HandlerCell<'b, Logger, Vec<String>> {
+    fun record(self: &HandlerCell<'b, Logger, Vec<String>>, msg: String,
+               _token: &mut HandlerToken<'b, Logger>) {
+        self.state.push(msg);
+    }
+}
+
+brand 'h {
+    let token = HandlerToken::<'h, Logger>::new();
+    let handler: @[Rc<'h>] HandlerCell<'h, Logger, Vec<String>> =
+        @[Rc<'h>] HandlerCell { state: Vec::new(), _brand: PhantomBrand };
+
+    // Explicit dispatch to this specific handler:
+    handler.record("first message", &mut token);
+    handler.record("second message", &mut token);
+
+    // handler.state contains ["first message", "second message"]
+}
+```
+
+`&mut HandlerToken<'h, Logger>` is the proof that no other caller is currently
+accessing handler `'h`'s state. Non-reentrant handlers become statically
+non-reentrant: attempting to call `handler.record` while already holding `&mut token`
+is a borrow error. See §Algebraic effects for how this integrates with `perform` dispatch.
+
+#### Structured concurrency — `JoinToken<'b>`
+
+A fork produces a `JoinToken<'b>` that must be consumed at the join point. The token
+is linear — it cannot be dropped without joining:
+
+```metel
+struct JoinToken<brand 'b, T> { _brand: PhantomBrand<'b> }
+
+fun fork<brand 'b, T, F>(f: F) -> JoinToken<'b, T>
+    where F: forall<brand 'b> fun() -> T + Send
+
+fun join<brand 'b, T>(token: JoinToken<'b, T>) -> T
+
+brand 'fiber {
+    let join_token: JoinToken<'fiber, I32> = fork::<'fiber>(|| heavy_computation());
+    do_other_work();
+    let result: I32 = join(join_token);   // consumes token; waits for fiber
+}
+// brand 'fiber is gone; no dangling fiber handle
+```
+
+The brand `'fiber` ensures a join token can only be paired with the fork that produced
+it — you cannot accidentally join the wrong fiber when multiple forks are in scope with
+different brands. The linearity of `JoinToken<'b, T>` makes fiber abandonment a compile
+error: the only way to consume the token is to join. This gives structured concurrency
+the same static guarantee that scoped regions give to allocation.
+
+This is a forward-looking application. Full specification is contingent on RFC-0064
+(Fork-Join Parallelism).
+
+#### The general shape
+
+All three instantiations follow the same structure:
+
+| Resource | Token | Cells | `&mut token` grants |
+|---|---|---|---|
+| RC-aliased memory | `RegionToken<'b>` | `@[Rc<'b>] T` | Exclusive write to all `'b` cells |
+| Effect handler state | `HandlerToken<'b, E>` | `HandlerCell<'b, E, S>` | Exclusive write to handler state |
+| Concurrent fiber | `JoinToken<'b, T>` | Fiber-local values | Join and collect result |
+
+In every case: the token is unique, the cells are freely shareable, and `&mut token`
+is the access key enforced entirely by the existing borrow checker.
 
 ### Typestate
 
@@ -320,7 +429,7 @@ No runtime ID comparison needed — the type system enforces guard–mutex pairi
 
 Brands address two distinct problems in algebraic effect systems.
 
-#### Handler identity
+#### Handler identity and static dispatch
 
 When effect handlers are nested, the runtime must determine which handler handles each
 effect operation. In the evidence-passing model (RFC report: `algebraic-effects-and-memory-model.md`),
@@ -345,6 +454,20 @@ Without brands, two nested handlers of the same effect type are structurally ide
 and the runtime must inspect the handler stack to find the right one. With brands, the
 type of the `perform` expression encodes which handler to use — O(1) dispatch with no
 stack search.
+
+#### Handler state exclusivity via `HandlerToken`
+
+When a handler carries mutable state — accumulating results, tracking budgets — the
+token-gated access pattern from §Token-gated access applies directly. A
+`HandlerToken<'h, E>` is the proof of exclusive access to handler `'h`'s state; the
+`perform` desugaring passes this token to the handler cell, which requires `&mut token`
+to mutate its state. Non-reentrant handlers (handlers that must not be called while
+already running) become statically non-reentrant: re-entrant calls would require a
+second `&mut HandlerToken<'h, E>`, which the borrow checker rejects.
+
+Stateless handlers (those that only read or that produce fresh values on each invocation)
+need only `&HandlerToken<'h, E>` — shared read access, which supports multiple concurrent
+`perform` calls at the same handler.
 
 #### Capability-based effects
 
@@ -375,25 +498,31 @@ presence context-specific and unforgeable.
 
 #### The unifying pattern
 
-Typestate, algebraic effects, and brands all address the same underlying need: the type
-system must distinguish values that are structurally identical but semantically distinct
-— the same file in different states, the same effect type in different handler scopes,
-the same capability type in different permission contexts. Brands provide the identity
-dimension that the other two mechanisms lack on their own:
+Typestate, algebraic effects, token-gated access, and brands all address the same
+underlying need: the type system must distinguish values that are structurally identical
+but semantically distinct — the same file in different states, the same effect type in
+different handler scopes, the same capability type in different permission contexts.
+Brands provide the identity dimension; the token pattern provides the exclusive-access
+dimension.
 
-| Mechanism | Tracks *what* | Tracks *which* |
-|---|---|---|
-| Typestate (phantom state) | Yes | No |
-| Effect annotations (`^IO`) | Yes | No |
-| Capability objects | Partial | No |
-| Brands alone | No | Yes |
-| Brands + typestate | Yes | Yes |
-| Brands + capabilities | Yes | Yes |
+| Mechanism | Tracks *what* | Tracks *which* | Exclusive access |
+|---|---|---|---|
+| Typestate (phantom state) | Yes | No | No |
+| Effect annotations (`^IO`) | Yes | No | No |
+| Capability objects | Partial | No | Via `&mut cap` |
+| Brands alone | No | Yes | No |
+| Brands + typestate | Yes | Yes | No |
+| Brands + capabilities | Yes | Yes | Via `&mut cap` |
+| Brands + token-gated access | No | Yes | Yes — `&mut token` over all `'b` cells |
+| Brands + typestate + token | Yes | Yes | Yes |
 
-The combination of brands with typestate gives linear state machines where identity
-is preserved across transitions. The combination of brands with capability objects
-gives effect systems where each handler instance is type-distinct. Neither combination
-requires new language primitives beyond what this RFC introduces.
+The combinations compose without new primitives:
+- **Brands + typestate**: linear state machines where identity is preserved across
+  transitions (`File<'f, Open>` → `File<'f, Closed>`, same file, different state).
+- **Brands + capabilities**: effect systems where each handler instance is type-distinct
+  and unforgeable.
+- **Brands + token-gated access**: exclusive mutable access to arbitrarily-aliased cells
+  — RC nodes, handler state, or fiber results — without runtime checks.
 
 ---
 
@@ -445,10 +574,14 @@ naturally with the lifetime/borrow system.
    parameter is existential (fresh per call) or propagating (shared with input) must be
    specified precisely, especially for recursive functions and trait objects. Deferred.
 
-4. **Interaction with `unique` across fiber boundaries.** When `@[Arc<'b>] T` clones
-   are distributed across fibers, the brand correctly identifies them as aliases. The
-   mechanism for ensuring `unique` blocks in different fibers do not overlap is
-   unresolved. Deferred to the concurrency RFC cluster.
+4. **`RegionToken<'b>` and `Arc<'b>` across fiber boundaries.** `RegionToken<'b>`
+   grants exclusive access to all `@[Rc<'b>] T` cells within a single fiber. When
+   `@[Arc<'b>] T` clones are distributed across fibers, the brand correctly identifies
+   them as aliases, but a single `RegionToken<'b>` cannot be the access key — it would
+   need to coordinate across fiber boundaries. Whether this requires a distinct
+   `SharedToken<'b>` with lock-like semantics, or whether `Arc<'b>` simply does not
+   participate in token-gated access and remains runtime-only (`get_mut`), is unresolved.
+   Deferred to the concurrency RFC cluster (RFC-0064).
 
 5. **Brand equality across modules.** If a library returns `@[Rc<'b>] T` from an
    opaque function, the caller cannot inspect the brand's origin. Whether opaque brands
@@ -476,6 +609,8 @@ naturally with the lifetime/borrow system.
   application in §Applications.
 - Haskell `ST` monad — the original rank-2 brand introduction (`runST`) that ensures
   brands cannot escape their introduction scope.
+- RFC-0064 (Fork-Join Parallelism) — `JoinToken<'b>` structured concurrency application
+  (§Token-gated access) is contingent on this RFC being accepted.
 - Report: `shared-ownership-survey-2026-06-29` — survey of Ante, Rust RC APIs, Pony
-  reference capabilities, and GhostCell/qcell; establishes that `RegionToken<b>` is the
-  correct future direction for static exclusive access to `@[Rc<b>] T` (RFC-0074 §6.1).
+  reference capabilities, and GhostCell/qcell; establishes that `RegionToken<'b>` is the
+  correct future direction for static exclusive access to `@[Rc<'b>] T` (RFC-0074 §6.1).
