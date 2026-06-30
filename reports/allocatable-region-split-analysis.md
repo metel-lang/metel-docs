@@ -90,11 +90,29 @@ well-contained: move-out is already a specific RFC-0066 operation, not a core
 
 ## Question 3: What is the lifetime of `&@[Rc] T`?
 
-A potential concern: for handle regions the borrow lifetime is tied to the region
-scope; for `@[Rc] T` there is no scope. Does this create a rule divergence?
+A potential concern: for handle regions there is a region scope `r`; for `@[Rc] T`
+there is no scope. Does this create a borrow-rule divergence?
 
-It does not, because `@[Rc] T` behaves like `@[Heap] T` in this respect, not like
-`@[AutoRegion] T`. Consider:
+It does not. The borrow rule is uniform across all allocation kinds: **the borrow
+lifetime is tied to the source binding**, with any enclosing region scope acting as an
+additive upper bound.
+
+For handle regions, individual bindings can be dropped before the region scope expires,
+and the borrow expires with them — the region scope does not extend the borrow:
+
+```metel
+AutoRegion::scoped([r]() -> {
+    let x: @[r] Node = @[r] Node { val: 1 };
+    let ref_x: &Node = &*x;
+    drop(x);      // ERROR: x is borrowed by ref_x
+                  // r is still live, but x — the binding — is gone
+    let y: @[r] Node = @[r] Node { val: 2 };  // independent binding, independent lifetime
+});
+```
+
+The region scope `r` is an additional upper bound — a borrow into a region allocation
+cannot outlive `r` even if the binding were kept alive past it — but the binding is the
+primary anchor. This is the same structure as:
 
 ```metel
 let h: @[Heap] Node = @[Heap] Node { val: 1 };
@@ -108,17 +126,13 @@ drop(a);   // ERROR: a is borrowed by r_a
 // b is still live, but r_a borrows from `a` specifically, not from `b`
 ```
 
-In both cases the borrow checker ties `r` to the specific owning binding, not to any
-scope or any other alias. The borrow lifetime rule is uniform for all strategy types
-(Heap, LocalHeap, Rc, Arc): the borrow cannot outlive the binding it was derived from.
+In all three cases — handle region, unique strategy, shared strategy — the borrow
+checker ties the borrow to the specific owning binding. The region scope adds an upper
+bound for handle regions but does not change the primary rule.
 
-The handle-region case is the unusual one: there, the borrow is tied to the region tag
-`r` rather than a specific allocation binding, because every allocation in the region
-shares the same scope. This is a genuine divergence between handle regions and strategy
-types, but it does not create a divergence between unique and shared strategy types.
-
-**Borrow lifetime semantics are uniform across all strategy types and unify cleanly
-under `Allocatable`.**
+**Borrow lifetime semantics are uniform across all allocation kinds and unify cleanly
+under `Allocatable`.** This is a stronger result than the handle vs strategy framing
+suggested.
 
 ---
 
