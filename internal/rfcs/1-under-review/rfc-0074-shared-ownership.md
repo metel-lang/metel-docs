@@ -1,7 +1,7 @@
 ---
 id: rfc-0074
 title: "Shared Ownership — SharedRegion, Rc, and Arc"
-date: '2026-06-29'
+date: '2026-06-30'
 ---
 
 > **Status — under review.** Depends on RFC-0063 (Region Handles), RFC-0065 (Region
@@ -32,12 +32,18 @@ extension to the existing system is required:
 
 **`SharedRegion`** — a supertrait of `Region` for type-level region tags that carry
 reference-counted lifetime semantics. Any tag implementing `SharedRegion` gets `Clone`
-and `Drop` automatically, and enables use of the `unique` keyword on its pointers. The
-mechanism is available to user-defined regions, not only to stdlib types.
+and `Drop` automatically. The mechanism is available to user-defined regions, not only
+to stdlib types.
 
-`Rc` and `Arc` are two stdlib type tags that implement `SharedRegion`. No language rules
-specific to `Rc` or `Arc` are introduced; everything they provide falls out of
-`SharedRegion` and the `unique` keyword.
+`Rc` and `Arc` are two stdlib type tags that implement `SharedRegion`. They differ in
+one critical dimension: sendability.
+
+- **`Rc`** is non-atomic and non-sendable. All clones are confined to the same fiber.
+  This enables the `unique` keyword (§2), which performs compile-time binding-level
+  alias analysis to provide static exclusive mutable access.
+- **`Arc`** is atomic and sendable. Clones may exist in other fibers beyond the
+  compiler's view. Compile-time `unique` is therefore unsound for `Arc`; instead,
+  `Arc` exposes `get_mut` (§4.1), a runtime-checked API that returns `Option<&mut T>`.
 
 ---
 
@@ -45,37 +51,37 @@ specific to `Rc` or `Arc` are introduced; everything they provide falls out of
 
 ### The shared ownership gap
 
-RFC-0063 establishes `@[Heap] T` as Metel's uniquely-owned heap pointer — the direct
-equivalent of Rust's `Box<T>`. Unique ownership is the right default: the borrow checker
-can prove exactly one owner exists at all times, mutation through `&mut T` is always
-safe, and the allocation is freed deterministically when the owner is dropped.
-
-Unique ownership does not cover every data structure. A doubly-linked list node needs
-a reference to both neighbours; a tree node may need a reference to its parent; a
-shared cache entry may be referenced by multiple consumers with unpredictable lifetimes.
-In all of these cases, the allocation should live as long as at least one owner keeps it
+RFC-0063 establishes `@[Heap] T` as Metel's uniquely-owned heap pointer. Unique
+ownership does not cover every data structure. A doubly-linked list node needs a
+reference to both neighbours; a tree node may need a reference to its parent; a shared
+cache entry may be referenced by multiple consumers with unpredictable lifetimes. In
+all of these cases, the allocation should live as long as at least one owner keeps it
 alive — the defining property of reference counting.
 
-### The mutation hazard
+### The mutation hazard and its two solutions
 
 Naive shared mutable access is unsafe. Consider two owning pointers `a` and `b` to the
 same `Engine` value. If `a` is used to match on the current variant and extract a
 reference to its field, while `b` is used to replace the variant, the replacement
 destroys the field while the reference derived from `a` is still live — a use-after-free.
 
-In Rust, `Rc<RefCell<T>>` defends against this with a runtime borrow check that panics
-on violation. The panic cannot be statically prevented. This RFC eliminates the hazard
-at compile time using the `unique` keyword (§2), which performs a binding-level alias
-analysis to prove statically that no other owning pointer to the same allocation is
-accessible during the mutation.
+The two stdlib shared-ownership types solve this differently, matching their aliasing
+models:
+
+- **`Rc`**: All clones are local to one fiber and visible to the compiler. The `unique`
+  keyword performs a static alias analysis and rejects programs where a known clone
+  would be accessible during mutation. No runtime cost; no possible panic.
+- **`Arc`**: Clones may exist in other fibers. The compiler cannot enumerate all live
+  aliases. The `get_mut` method checks `strong_count() == 1` at runtime and returns
+  `None` if other aliases exist. The caller handles the failure.
 
 ### Why not introduce Rc/Arc as exceptions
 
-Introducing `Rc` and `Arc` as region types with special language rules — a non-cloneable
-region handle that suddenly becomes cloneable, ad-hoc alias analysis — would be treating
-symptoms rather than extending the system. The `SharedRegion` supertrait is general: any
-user-defined RC-style region (pool-managed RC, arena-backed RC with a shared control
-block) gets `Clone`, `Drop`, and `unique` block support for free.
+Introducing `Rc` and `Arc` as region types with special language rules would treat
+symptoms rather than extending the system. The `SharedRegion` supertrait is general:
+any user-defined RC-style region (pool-managed RC, arena-backed RC with a shared
+control block) gets `Clone` and `Drop` for free. If the region is non-sendable, it also
+gets the `unique` keyword.
 
 ---
 
@@ -87,11 +93,10 @@ aspect SharedRegion: Region {
 }
 ```
 
-`SharedRegion` is a supertrait of `Region`. Types implementing it are **type-level region
-tags** (like `Heap` and `LocalHeap`, as opposed to binding-level tags like the `r` in a
-`BumpRegion::scoped` scope) whose pointers carry reference-counted lifetimes.
+`SharedRegion` is a supertrait of `Region`. Types implementing it are **type-level
+region tags** whose pointers carry reference-counted lifetimes.
 
-Implementing `SharedRegion` on a tag type `R` declares three things:
+Implementing `SharedRegion` on a tag type `R` declares two things:
 
 1. **`Clone`**: `@[R] T` implements `Clone`. Cloning a pointer increments the reference
    count of the underlying allocation and returns a second owning pointer to the same
@@ -100,11 +105,11 @@ Implementing `SharedRegion` on a tag type `R` declares three things:
 2. **`Drop`**: `@[R] T` implements `Drop`. Dropping a pointer decrements the reference
    count. If the count reaches zero, `T::drop` is called and the backing memory is freed.
 
-3. **`unique` blocks**: The `unique` keyword (§2) may be used on any `@[R] T` where
-   `R: SharedRegion`. The compiler's binding-level alias analysis applies to the block.
-
 `Clone` and `Drop` are derived automatically by the compiler for any `R: SharedRegion`;
 no `impl Clone for @[R] T` or `impl Drop for @[R] T` is written by hand.
+
+The `unique` keyword is **not** a property of `SharedRegion` alone. It additionally
+requires `R: !Send` — see §2.
 
 ### 1.1 Allocation
 
@@ -133,20 +138,26 @@ let b = a;   // b is now the only owner; a is consumed; count unchanged
 ### 1.3 Sendability
 
 The sendability of `@[R] T` for any `R: SharedRegion` follows the existing rule from
-RFC-0063 §4: `@[R] T` is sendable iff `R: Send`. The tag type's `Send` implementation
-is the sole determinant. `SharedRegion` introduces no new sendability rules.
+RFC-0063 §4: `@[R] T` is sendable iff `R: Send`. `SharedRegion` introduces no new
+sendability rules.
 
 ---
 
 ## 2. The `unique` keyword
 
 `unique` is a compiler keyword that provides exclusive mutable access to a
-shared-region pointer. It is only applicable to `@[R] T` where `R: SharedRegion`.
+shared-region pointer. It requires `R: SharedRegion + !Send`.
+
+The `!Send` requirement is not incidental — it is the soundness condition. When
+`R: !Send`, no clone of `@[R] T` can cross a fiber boundary. Every live alias is in
+the current fiber's scope and is visible to the compiler's alias analysis. If `R: Send`,
+clones may exist in other fibers beyond the compiler's view, and compile-time alias
+exclusion cannot be guaranteed. `Arc` therefore does not support `unique`; see §4.1.
 
 ### Alias analysis
 
 The safety guarantee of `unique` rests on a **binding-level alias analysis** performed
-by the compiler on the block:
+by the compiler:
 
 - The pointer operand `a` is **consumed** by the `unique` expression and is not
   accessible inside the block as `@[R] T`.
@@ -157,9 +168,8 @@ by the compiler on the block:
   from `a`) are unrelated and may be freely used inside the block.
 
 `unique` does not assert or check that the reference count equals one at runtime — the
-alias analysis is a static, compile-time guarantee. Other `@[R] T` owners that are not
-reachable from known clones of `a` may exist in memory; they cannot be accessed through
-the block and therefore pose no hazard.
+alias analysis is a static, compile-time guarantee. No runtime overhead; no possible
+crash.
 
 ### 2.1 Form A — explicit block with explicit binding
 
@@ -170,8 +180,7 @@ unique a as s {
 ```
 
 `a` is consumed; inside the block, `s` is bound as `&mut T`. The alias analysis checks
-that no known clone of `a` is referenced inside the block. The result of the block is
-the value of the last expression, as with any block expression.
+that no known clone of `a` is referenced inside the block.
 
 ### 2.2 Form B — explicit block with implicit rebinding
 
@@ -182,8 +191,7 @@ unique a {
 ```
 
 Equivalent to form A with the binding name equal to `a`. Inside the block, `a` is
-rebound as `&mut T` — its type changes from `@[R] T` to `&mut T` for the duration of
-the block.
+rebound as `&mut T` for the duration of the block.
 
 ### 2.3 Form C — binding without explicit block *(deferred)*
 
@@ -192,20 +200,15 @@ let s = unique a;
 s.engine = Engine::Impulse { fuel: 100 };
 ```
 
-`unique a` produces a `&mut T` whose scope is determined by the borrow checker. The
-exclusive-access region extends to the end of `s`'s live range; the compiler synthesises
-the block boundary at that point.
-
-This form requires the compiler to capture the continuation of the `let` binding as the
-block body — the same mechanism as `async`/`await` lowering. The design and
-implementation of continuation capture in this context are deferred to a follow-up RFC.
-Forms A and B cover the common cases without it.
+`unique a` produces a `&mut T` whose scope is determined by the borrow checker. This
+form requires continuation capture and is deferred to a follow-up RFC. Forms A and B
+cover the common cases without it.
 
 ---
 
 ## 3. `Rc` — non-atomic shared ownership
 
-`Rc` is a stdlib type tag that implements `SharedRegion`:
+`Rc` implements `SharedRegion` with **non-atomic** reference counting:
 
 ```metel
 impl Region for Rc {
@@ -215,24 +218,23 @@ impl Region for Rc {
 impl SharedRegion for Rc {}
 ```
 
-`Rc` uses **non-atomic** reference counting. The reference count is a plain integer;
-incrementing and decrementing it is not thread-safe. Therefore `Rc` does not implement
-`Send` or `Sync`:
+The reference count is a plain integer; incrementing and decrementing it is not
+thread-safe. `Rc` therefore does not implement `Send` or `Sync`:
 
 ```metel
-// @[Rc] T: !Send — cannot cross fiber boundaries
-// @[Rc] T: !Sync — cannot be shared across threads simultaneously
+// Rc: !Send — @[Rc] T cannot cross fiber boundaries
+// Rc: !Sync — @[Rc] T cannot be shared across threads simultaneously
 ```
 
-This falls out of the existing sendability rule (RFC-0063 §4): `@[Rc] T` is sendable iff
-`Rc: Send`. Since `Rc: !Send`, no `@[Rc] T` is sendable, regardless of `T`.
+`Rc: !Send` is what makes the `unique` keyword applicable to `@[Rc] T`. Because no
+clone can leave the current fiber, the compiler's scope-level alias analysis is
+exhaustive.
 
 ---
 
 ## 4. `Arc` — atomic shared ownership
 
-`Arc` implements `SharedRegion` with **atomic** reference counting, making it safe to
-clone and drop across fiber boundaries:
+`Arc` implements `SharedRegion` with **atomic** reference counting:
 
 ```metel
 impl Region for Arc {
@@ -240,25 +242,52 @@ impl Region for Arc {
 }
 
 impl SharedRegion for Arc {}
-
 impl Send for Arc {}
 impl Sync for Arc {}
 ```
 
 Sendability of `@[Arc] T` follows the standard rule: `@[Arc] T: Send` iff `Arc: Send`
-and `T: Send + Sync`. Since `Arc: Send`, `@[Arc] T` is sendable when `T: Send + Sync`.
+and `T: Send + Sync`.
 
-`Arc` and `Rc` are otherwise identical in interface. The distinction is:
+`Arc: Send` means clones may exist in other fibers. The compiler cannot enumerate all
+live aliases at any given point, so compile-time `unique` is unsound for `@[Arc] T`.
+`Arc` does not satisfy the `R: !Send` precondition of the `unique` keyword; attempting
+`unique` on `@[Arc] T` is a type error.
+
+### 4.1 `get_mut` — runtime-checked exclusive access
+
+`Arc` exposes exclusive mutable access through a runtime check:
+
+```metel
+fun get_mut[s](self: &mut [s] @[Arc] T) -> Option<&mut [s] T>
+```
+
+`get_mut` checks `strong_count() == 1` atomically. If the count is one, no other owner
+exists and a mutable reference is returned. If the count is greater than one, `None` is
+returned and the caller handles the failure.
+
+```metel
+let counter: @[Arc] Counter = @[Arc] Counter::new(0);
+
+match counter.get_mut() {
+    Some(c) => c.increment(),
+    None    => { /* other owners exist; handle accordingly */ }
+}
+```
+
+The caller must hold a `&mut @[Arc] T` to call `get_mut` — the standard borrow rule
+prevents concurrent borrows of the outer pointer, ensuring the count check and the
+resulting `&mut T` are used safely within a single fiber.
+
+### 4.2 `Arc` vs. `Rc` comparison
 
 | | `Rc` | `Arc` |
 |---|---|---|
 | RC operations | Non-atomic | Atomic |
 | `Send` | No | Yes (when `T: Send + Sync`) |
 | Per-clone cost | One integer increment | One atomic increment |
+| Exclusive access | `unique` — static, no cost | `get_mut` — runtime, returns `Option` |
 | Use case | Single-fiber shared ownership | Cross-fiber shared ownership |
-
-The `unique` keyword is available on both `@[Rc] T` and `@[Arc] T`; the alias analysis
-is identical for both since it operates on binding provenance, not on the tag type.
 
 ---
 
@@ -303,7 +332,6 @@ let ship: @[Rc] Spaceship = @[Rc] Spaceship { engine: Engine::StringTheory { ...
 
 // Form A — explicit block, renamed binding
 unique ship as s {
-    // The old StringTheory variant (and its core) drops before the new variant is set.
     s.engine = Engine::Impulse { fuel: 100 };
 }
 
@@ -317,31 +345,14 @@ unique ship {
 
 ```metel
 let a: @[Rc] Node = @[Rc] Node { val: 1 };
-let b: @[Rc] Node = @[Rc] Node { val: 2 };   // independent allocation — not a clone of a
+let b: @[Rc] Node = @[Rc] Node { val: 2 };   // independent allocation
 
 unique a as node {
     node.val = b.val;   // OK: b was not derived from a
 }
 ```
 
-### 6.4 Cross-fiber shared state with `Arc`
-
-```metel
-let counter: @[Arc] Counter = @[Arc] Counter::new(0);
-let c2 = counter.clone();   // atomic RC increment; c2 is a known clone of counter
-
-spawn(fun() -> () {
-    unique c2 { c2.increment() }
-});
-
-unique counter { counter.increment() }
-```
-
-`@[Arc] Counter: Send` because `Arc: Send` and `Counter: Send + Sync`. Inside each
-`unique` block, the other handle (`counter` / `c2`) is a known clone and is excluded.
-The two blocks cannot overlap because each consumes its handle for the duration.
-
-### 6.5 `unique` with a called function
+### 6.4 `unique` with a called function
 
 ```metel
 fun upgrade_engine(ship: &mut Spaceship, fuel: I32) {
@@ -352,56 +363,97 @@ let ship: @[Rc] Spaceship = @[Rc] Spaceship { ... };
 
 unique ship as s {
     upgrade_engine(s, 100);
-    // OK: upgrade_engine receives &mut Spaceship, not @[Rc] Spaceship.
 }
 ```
+
+`upgrade_engine` receives `&mut Spaceship`, not `@[Rc] Spaceship`. The `unique` block
+converts the shared pointer to an exclusive borrow before calling out.
+
+### 6.5 `Arc` with `get_mut`
+
+```metel
+let config: @[Arc] Config = @[Arc] Config::default();
+
+// ... config cloned and shared across fibers ...
+// ... all clones dropped ...
+
+match config.get_mut() {
+    Some(cfg) => cfg.update(new_settings),
+    None      => panic("unexpected Arc alias during reconfiguration"),
+}
+```
+
+`get_mut` is the correct tool for `Arc` when exclusive access is needed and the
+program's logic guarantees uniqueness at a certain point — but cannot prove it
+statically. The `Option` return forces the caller to handle the aliased case.
 
 ---
 
 ## Alternatives considered
 
-### Rc/Arc as exceptions to the region system
+### Compile-time `unique` for `Arc`
 
-Introducing `clone()` on region handles as a one-off feature of `Rc` and `Arc`, and
-`unique` as dedicated syntax with ad-hoc alias rules, would work but would not
-generalise. The `SharedRegion` supertrait means any user-defined RC-style region gets
-`Clone`, `Drop`, and `unique` block support for free.
+The compile-time binding-level alias analysis that makes `unique` sound for `Rc` does
+not extend to `Arc`. When a clone of `@[Arc] T` is sent to another fiber, it leaves
+the compiler's scope — the clone is no longer a live binding in the current fiber, so
+the alias analysis sees no known aliases and would permit `unique`. But the clone is
+still alive in the other fiber, pointing to the same allocation. Two simultaneous
+`&mut T` borrows would result: a data race.
 
-### Runtime alias check for `unique`
+The `!Send` precondition on `unique` is exactly the condition that closes this gap. It
+cannot be relaxed without replacing scope-level analysis with something that can reason
+across fiber boundaries.
 
-`unique` could check `RC == 1` at runtime and panic if not. This is Rust's `Rc::get_mut`
-approach. It works but cannot be statically prevented from panicking. The binding-level
-alias analysis makes the check static: the compiler rejects programs where a known alias
-would be accessible during mutation. No runtime overhead; no possible crash.
+Static `unique` for `Arc` would require structured fork-join concurrency (RFC-0064)
+with an additional branch non-escape condition: every `Arc` clone moved into a fork
+branch must be provably consumed within that branch and must not escape through
+channels, return values, or shared heap state that outlives the join. After the join,
+the compiler can prove all forked clones are dropped. This is a meaningful future
+direction but depends on RFC-0064 being finalised and introduces significant additional
+machinery. It is not part of this RFC.
+
+### Runtime alias check for `unique` on `Rc`
+
+`unique` on `Rc` could check `RC == 1` at runtime and panic if not. This is Rust's
+`Rc::get_mut` approach. It works but cannot be statically prevented from panicking.
+The binding-level alias analysis makes the check static: the compiler rejects programs
+where a known alias would be accessible during mutation. No runtime overhead; no
+possible crash. `Rc`'s `!Send` property makes this static approach sound.
+
+### `get_mut` for `Rc`
+
+`Rc` could expose only `get_mut` (like `Arc`) rather than the `unique` keyword. This
+unifies the API surface but discards the static guarantee that `Rc`'s non-sendability
+enables. A runtime check that could never actually fail (because `Rc: !Send` means the
+program structure is what controls all aliases, and the programmer already knows the
+count) is pure overhead. The `unique` keyword exists precisely to exploit the static
+guarantee.
 
 ### Closure-based `unique` with a type-level alias bound
 
-An earlier design expressed `unique` as a static method on `SharedRegion` accepting a
-closure, with a type-level bound to exclude aliases. This design has two problems: first,
-the bound cannot be expressed precisely at the type level because it requires
-distinguishing aliases of a specific binding from unrelated pointers of the same type;
-second, even an approximation (`NotCapturing<@[R] T>`) may not be well-formed if region
-tags are not type constructors. The binding-level analysis in the keyword form correctly
-excludes only known clones of the specific pointer being mutated, without any type-level
-machinery.
+An earlier design expressed `unique` as a static method accepting a closure, with a
+type-level bound to exclude aliases. This design has two problems: the bound cannot be
+expressed precisely at the type level because it requires distinguishing aliases of a
+specific binding from unrelated pointers of the same type; and even an approximation
+may not be well-formed if region tags are not type constructors. The binding-level
+analysis in the keyword form correctly excludes only known clones of the specific
+pointer being mutated, without any type-level machinery.
 
 ### `Rc<T>` as a library struct (not a region tag)
 
-`Rc<T>` could be a plain struct containing `@[Heap] T` plus a reference count, with
-`Deref` for read access and a `borrow_mut`-style method for guarded write access. This
-fits the existing system completely but requires a runtime borrow check for mutation —
-the same situation as `Rc<RefCell<T>>` in Rust. The region tag approach enables the
-static `unique` keyword analysis; the struct approach cannot.
+`Rc<T>` could be a plain struct containing `@[Heap] T` plus a reference count. This
+fits the existing system but requires a runtime borrow check for mutation — the same
+situation as `Rc<RefCell<T>>` in Rust. The region tag approach enables the static
+`unique` keyword analysis; the struct approach cannot.
 
 ---
 
 ## Unresolved questions
 
-1. **Cycle handling.** Reference counting cannot free cyclic structures — two `@[Rc] T`
-   values referencing each other will never reach a count of zero and will leak. Options:
-   weak pointers (a non-owning `@[WeakRc] T` that yields `Perhaps<@[Rc] T>`, also
-   implementing a `WeakSharedRegion` aspect); a cycle collector; a type-system
-   prohibition on cycles. Deferred — the right answer depends on observed usage patterns.
+1. **Cycle handling.** Reference counting cannot free cyclic structures. Options: weak
+   pointers (a non-owning `@[WeakRc] T` that yields `Perhaps<@[Rc] T>`, implementing
+   a `WeakSharedRegion` aspect); a cycle collector; a type-system prohibition on cycles.
+   Deferred — the right answer depends on observed usage patterns.
 
 2. **Precision of the alias analysis.** The current analysis excludes only bindings
    derived from `a` via `.clone()` calls. A more sophisticated analysis based on
@@ -409,18 +461,18 @@ static `unique` keyword analysis; the struct approach cannot.
    or field projections. The conservative clone-tracking approach is sound; the extent
    to which it can be made more precise is an implementation question. Deferred.
 
-3. **`unique` across fiber boundaries for `Arc`.** The example in §6.4 shows two
-   `unique` blocks on distinct clones in distinct fibers. The soundness argument relies
-   on each block consuming its handle for its duration; the details of how the borrow
-   checker reasons across fiber spawn points (RFC-0003/RFC-0064) are unresolved.
-
-4. **`unique` nesting.** Whether a `unique` block may open a second `unique` block on
+3. **`unique` nesting.** Whether a `unique` block may open a second `unique` block on
    a different `@[R] U` (for `U ≠ T`) is unspecified. The naive rule — each `unique`
    block independently performs its own alias analysis — appears sound; formal
    verification deferred.
 
-5. **Form C (deferred).** The continuation-capture mechanism required for
+4. **Form C (deferred).** The continuation-capture mechanism required for
    `let s = unique a;` is unspecified. Deferred to a follow-up RFC.
+
+5. **Static `unique` for `Arc` via structured concurrency.** If RFC-0064 introduces
+   strict fork-join with branch non-escape conditions for `Arc` clones, static `unique`
+   on `Arc` after a join point becomes statically sound. The design and the required
+   interaction between RFC-0064 and this RFC are deferred to RFC-0064.
 
 ---
 
@@ -428,13 +480,17 @@ static `unique` keyword analysis; the struct approach cannot.
 
 - RFC-0063 (Region Handles) — region allocator interface; the `Region` aspect that
   `SharedRegion` extends; sendability rule (`@[R] T: Send iff R: Send`) that determines
-  `Rc` and `Arc` sendability without new rules.
+  `Rc` and `Arc` sendability.
 - RFC-0065 (Region Ergonomics) — `@`-position elision and call-site inference apply to
   `@[Rc] T` and `@[Arc] T` identically to any other region tag.
 - RFC-0066 (Region Pointer Extraction) — move-out semantics; `@[Rc] T` and `@[Arc] T`
-  move-out is always safe (no `T: !Drop` restriction; RC decrement handles cleanup).
-- RFC-0071 (Ownership and Move Semantics) — `Clone` and `Drop` aspects; `@[Rc] T` and
-  `@[Arc] T` implement both; `Copy`/`Drop` mutual exclusion means neither is `Copy`.
-- RFC-0072 (Negative Bounds) — `T: !Drop`; not required for `@[Rc] T` or `@[Arc] T`.
-- Ante programming language — the compile-time alias exclusion concept for shared
-  pointers, adapted here as the `unique` keyword with binding-level alias analysis.
+  move-out is always safe (RC decrement handles cleanup).
+- RFC-0071 (Ownership and Move Semantics) — `Clone` and `Drop` aspects; `Copy`/`Drop`
+  mutual exclusion means neither `@[Rc] T` nor `@[Arc] T` is `Copy`.
+- RFC-0072 (Negative Bounds) — `T: !Send`; the precondition that makes `unique`
+  statically sound, applied here as `R: !Send` on the region tag.
+- RFC-0064 (Fork-Join Parallelism) — future work; structured concurrency with branch
+  non-escape conditions may eventually enable static `unique` for `Arc`.
+- Ante programming language — the compile-time alias exclusion concept for non-sendable
+  shared pointers, adapted here as the `unique` keyword. Ante's shared pointer (`Ref`)
+  is non-sendable; the extension to sendable `Arc` via `get_mut` is Metel-specific.
