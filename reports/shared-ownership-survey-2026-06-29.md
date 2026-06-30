@@ -18,7 +18,7 @@ a sound, practical alternative that maps directly onto Metel's brand types (RFC-
 ## 1. The Problem Statement
 
 RFC-0074 defers static exclusive mutable access to RC-wrapped values as future work.
-The core difficulty: a `.clone()` of an `@[Rc] T` can be moved into an arbitrary data
+The core difficulty: a `.clone()` of an `Rc<T>` can be moved into an arbitrary data
 structure, after which no binding-level analysis can prove the original binding is the
 sole owner. The question driving this research was: have other languages solved this,
 and if so, how?
@@ -48,7 +48,7 @@ The distinction:
 | Ante concept | Metel analogue | Notes |
 |---|---|---|
 | `uniq Foo` | `&mut T` (uniquely owned) | Directly-owned mutable reference |
-| `shared Foo` | `@[Rc] T` (immutable) | Non-sendable, non-atomic RC |
+| `shared Foo` | `Rc<T>` (immutable) | Non-sendable, non-atomic RC |
 | `shared mut Foo` | Not yet in Metel | Freely-mutable non-atomic RC |
 
 Ante does not have a `get_mut` analogue — it does not attempt to prove RC uniqueness
@@ -94,8 +94,8 @@ Details:
 - **`get_mut`** — the conservative check. Requires no weak references (since a weak
   pointer could be upgraded after the check). Requires `&mut Rc<T>` as the receiver
   to prevent concurrent access to the pointer within the same thread (same role as
-  Metel's `&mut [s] @[Rc] T`). Returns `Option<&mut T>` that borrows from the `Rc`.
-  This is the model for Metel's `SharedRegion::get_mut`.
+  Metel's `&mut Rc<T>`). Returns `Option<&mut T>` that borrows from the `Rc`.
+  This is the model for Metel's `SharedPointer::get_mut`.
 
 - **`make_mut`** — the "I always need to mutate" API. If the RC is uniquely held,
   returns the inner `&mut T` directly. If aliases exist, deep-clones `T` into a new
@@ -108,11 +108,11 @@ Details:
   on failure returns the original `Rc` wrapped in `Err`. Useful for extracting from
   the last known owner after all other handles are confirmed dropped.
 
-**Design note for Metel.** `make_mut` could be added to `SharedRegion` once `Clone` is
-properly tracked in the type system — it requires `T: Clone`, which interacts with the
-region's allocation and copy semantics. `try_unwrap` is a consuming operation that
-returns an owned `T`; this is straightforward to add and may be useful for teardown
-patterns. Neither is required for the current RFC.
+**Design note for Metel.** `make_mut` could be added to `SharedPointer` once `Clone` is
+properly tracked in the type system — it requires `T: Clone`, which interacts with
+allocation and copy semantics. `try_unwrap` is a consuming operation that returns an
+owned `T`; this is already in RFC-0074 and useful for teardown patterns. Neither is
+required for the current RFC-0074 design.
 
 ---
 
@@ -146,14 +146,14 @@ either `iso` (no aliases, ever) or it has given up that property by creating an 
 The downgrade is one-way. Once a second alias exists, the value becomes `ref` or `box`
 and the `iso` property is permanently lost for that allocation.
 
-Metel's `@[Rc] T` is analogous to a Pony `ref` object shared among actors — aliases
+Metel's `Rc<T>` is analogous to a Pony `ref` object shared among actors — aliases
 are fundamental to its purpose. There is no Pony path from "I have a `ref`-refcapped
 value with multiple aliases" to "I hold `iso`-refcapped access to it." The same is
 true in Metel: once a clone exists, binding-level analysis cannot recover exclusive
 access.
 
 The Pony analogy is useful for a different framing: rather than trying to prove the
-`@[Rc] T` is unique, give the unique proof to a *capability token* and let the token
+`Rc<T>` is unique, give the unique proof to a *capability token* and let the token
 grant access to the data.
 
 ---
@@ -241,12 +241,12 @@ This is the same structure as `GhostToken::new`. The connection is direct:
 | GhostCell concept | Metel analogue |
 |---|---|
 | `'brand` invariant lifetime | Brand parameter `b` (RFC-0076) |
-| `GhostToken<'brand>` | `RegionToken<b>` (linear token value) |
-| `GhostCell<'brand, T>` | `@[Rc<b>] T` — Rc carrying the brand |
-| `&mut token` grants exclusive access | `&mut RegionToken<b>` grants exclusive access to all `@[Rc<b>] T` |
+| `GhostToken<'brand>` | `RcToken<'b>` (linear token value) |
+| `GhostCell<'brand, T>` | `Rc<T, 'b>` — Rc struct carrying the brand |
+| `&mut token` grants exclusive access | `&mut RcToken<'b>` grants exclusive access to all `Rc<T, 'b>` cells |
 
-A `RegionToken<b>` would be a zero-size linear value (one live binding, no `Copy`). Holding
-`&mut RegionToken<b>` means holding the exclusive access right to all `@[Rc<b>] T`
+An `RcToken<'b>` would be a zero-size linear value (one live binding, no `Copy`). Holding
+`&mut RcToken<'b>` means holding the exclusive access right to all `Rc<T, 'b>`
 allocations. The borrow checker enforces this exactly as it does for any other `&mut`.
 
 ### 6.2 Reframing RFC-0074 §6 future work
@@ -254,17 +254,17 @@ allocations. The borrow checker enforces this exactly as it does for any other `
 RFC-0074 §6.1 describes the future work direction as "binding-level alias analysis." The
 GhostCell insight reframes this:
 
-**Old framing:** Prove at compile time that the `@[Rc] T` binding has no live aliases.
+**Old framing:** Prove at compile time that the `Rc<T>` binding has no live aliases.
 
-**New framing:** Do not attempt to prove RC uniqueness. Instead, introduce a `RegionToken<b>`
-whose exclusive borrow grants mutable access to all `@[Rc<b>] T` cells, regardless of
+**New framing:** Do not attempt to prove RC uniqueness. Instead, introduce an `RcToken<'b>`
+whose exclusive borrow grants mutable access to all `Rc<T, 'b>` cells, regardless of
 how many RC aliases exist.
 
 The new framing is:
-- **Formally sound** — soundness comes from `&mut RegionToken<b>` exclusivity, not from a
+- **Formally sound** — soundness comes from `&mut RcToken<'b>` exclusivity, not from a
   fragile alias count proof.
 - **Zero runtime cost** — no `strong_count()` check.
-- **Composable with RFC-0076** — brands already exist; `RegionToken` is a thin addition.
+- **Composable with RFC-0076** — brands already exist; `RcToken` is a thin stdlib addition.
 - **More powerful** — it works when many RC aliases exist, not only when the count is one.
 
 The only cost relative to the original `unique` idea is that access is coarse-grained:
@@ -273,14 +273,14 @@ For most graph/tree manipulation patterns this is acceptable.
 
 ### 6.3 Required prerequisites
 
-Implementing the `RegionToken` pattern as a formal language feature requires:
+Implementing the `RcToken` pattern as a formal language feature requires:
 
-1. **RFC-0076 (Brand Types)** — the invariant brand parameter `b`.
-2. **Linearity constraint on `RegionToken<b>`** — the token must be affine (non-`Copy`,
+1. **RFC-0076 (Brand Types)** — the invariant brand parameter `'b`.
+2. **Linearity constraint on `RcToken<'b>`** — the token must be affine (non-`Copy`,
    non-`Clone`) to maintain the one-token-per-brand invariant. This follows from
    RFC-0071 (Ownership and Move Semantics) — any non-`Copy` type is already affine.
-3. **Branded RC interaction** — `Rc<b>` as a variant of `Rc` that carries the brand
-   parameter. Borrow rules for `@[Rc<b>] T` when the token's borrow is active.
+3. **Branded RC interaction** — `Rc<T, 'b>` as the struct carrying the brand
+   parameter. Borrow rules for `Rc<T, 'b>` cells when the token's borrow is active.
 
 RFC-0050 (Closure Capture Lists) is no longer a required prerequisite — the GhostCell
 approach does not depend on tracking closure captures.
@@ -296,7 +296,7 @@ approach does not depend on tracking closure captures.
 | Rust `get_mut` | No | No (requires 0) | Yes | Sound, practical, the RFC-0074 baseline |
 | Rust `make_mut` | No | Yes (clone-on-write) | Yes (then clone) | Useful for COW; `T: Clone` required |
 | Pony `iso` | Yes | No | No | Aliasing tracked from creation; lost on first alias |
-| GhostCell / `RegionToken<b>` | Yes | Yes | No | Sound via `&mut token`; coarse-grained |
+| GhostCell / `RcToken<'b>` | Yes | Yes | No | Sound via `&mut token`; coarse-grained |
 
 GhostCell is the only approach that achieves static exclusive mutable access to a
 value that has multiple RC aliases. It does so by transferring the exclusivity question
@@ -319,6 +319,6 @@ as the target for static access, contingent on RFC-0076.
 - Pony tutorial — six reference capabilities; the "share only val, transfer only iso"
   philosophy.
 - RFC-0074 (Shared Ownership) — current `get_mut` approach; §6 future work.
-- RFC-0076 (Brand Types) — invariant phantom brands; the prerequisite for `RegionToken`.
+- RFC-0076 (Brand Types) — invariant phantom brands; the prerequisite for `RcToken<'b>`.
 - RFC-0050 (Closure Capture Lists) — **no longer a required prerequisite** for the
   GhostCell-based static access path.

@@ -20,7 +20,7 @@ A **brand** is a phantom type parameter with two properties:
    equal itself.
 
 Brands carry no runtime data. They exist purely at the type level to give the compiler
-a way to distinguish values that would otherwise be indistinguishable — two `@[Rc] Node`
+a way to distinguish values that would otherwise be indistinguishable — two `Rc<Node>`
 pointers to different cells, two arena allocators in different scopes, two capability
 tokens with different permissions.
 
@@ -43,9 +43,9 @@ and shared mutable state. In every case the soundness argument is the same: ordi
 Several language features need to distinguish values of the same type by identity
 rather than by structure:
 
-- `@[Rc<'b>] T` and `@[Rc<'c>] T` are pointers of the same type but to different
-  cells. Without brands, `NotCapturing<@[Rc] T>` cannot express "does not alias this
-  specific cell."
+- `Rc<T, 'b>` and `Rc<T, 'c>` are smart pointers of the same structural type but to
+  different cells. Without brands, there is no type-level way to express "does not
+  alias this specific cell."
 - Two `BumpRegion` handles in the same scope allocate into different arenas. Without
   brands, the type system cannot prevent mixing pointers from the two arenas.
 - A capability token for a file descriptor and a capability token for a socket are
@@ -55,7 +55,7 @@ In all three cases, the required distinction is **identity**, not **structure**.
 values of the same structural type need to be different types when they represent
 different things. Brands are the mechanism for this.
 
-### Why handle regions do not need explicit brands
+### Why regions do not need explicit brands — and why Rc and Arc do
 
 Handle regions (`BumpRegion`, `AutoRegion`) introduce a fresh runtime handle at each
 scope entry. That handle is simultaneously the runtime allocator, the compile-time
@@ -63,15 +63,15 @@ lifetime tag, and the identity token — three roles unified in one value. The h
 freshness per scope is the brand: two `BumpRegion` handles are already distinct types
 because the compiler treats each introduction site as producing a new region kind.
 
-Strategy regions with unique ownership (`Heap`, `LocalHeap`) introduce no handle and
-no aliasing. Unique ownership means the pointer itself is the proof of exclusive access;
-no identity token is needed to reason about aliasing because aliasing cannot occur.
+Unique-ownership regions (`Heap`, `LocalHeap`) introduce no handle and no aliasing.
+Unique ownership means the pointer itself is the proof of exclusive access; no identity
+token is needed because aliasing cannot occur.
 
-Only shared-ownership strategy regions (`Rc`, `Arc`) require explicit brands — they
-have no handle (so no implicit identity) and aliasing is their entire purpose (so
-identity is essential for reasoning). The brand parameter `'b` in `Rc<'b>` fills
-exactly the role that the runtime handle fills for scoped regions: it is the identity
-token that makes two pointers to the same cell distinguishable from two pointers to
+`Rc<T>` and `Arc<T>` are not regions — they are library smart pointer structs (RFC-0074).
+They require explicit brand parameters because aliasing is their entire purpose and they
+have no runtime handle to serve as an implicit identity token. The brand parameter `'b`
+in `Rc<T, 'b>` fills exactly the role that the runtime handle fills for scoped regions:
+it makes two pointers to the same cell type-distinguishable from two pointers to
 different cells.
 
 ---
@@ -97,8 +97,8 @@ Types do not need to hold a `PhantomBrand` field; the brand parameter may appear
 in the context of another type that uses it:
 
 ```metel
-// Rc carries the brand in its region tag position — no field needed
-impl<brand 'b> Region for Rc<'b> { ... }
+// Rc carries the brand as a type parameter — no field needed at runtime
+struct Rc<T, brand 'b> { inner: @[Heap] RcInner<T>, _brand: PhantomBrand<'b> }
 ```
 
 ### Brand introduction — explicit form
@@ -143,22 +143,21 @@ any brand outside the closure.
 
 ### Brand introduction — allocation-site form
 
-Types may declare that each allocation of that type implicitly introduces a fresh
+Types may declare that each construction of that type implicitly introduces a fresh
 brand. This is the **allocation-site brand** mechanism. A type opts in by declaring a
-brand parameter without an explicit value in its allocation expression:
+brand parameter that the compiler fills with a fresh brand per call site:
 
 ```metel
-// @[Rc] T { ... } introduces a fresh brand per allocation
-let a = @[Rc] Node { val: 1 };   // a: @[Rc<'_>] Node, brand inferred as fresh
-let b = @[Rc] Node { val: 2 };   // b: @[Rc<'_>] Node, different fresh brand
+let a: Rc<Node> = Rc::new(Node { val: 1 });   // a: Rc<Node, '_>, brand inferred as fresh
+let b: Rc<Node> = Rc::new(Node { val: 2 });   // b: Rc<Node, '_>, different fresh brand
 ```
 
-The compiler desugars this as if each allocation were wrapped in a `brand` block:
+The compiler desugars this as if each construction were wrapped in a `brand` block:
 
 ```metel
 // Conceptual desugaring:
-brand 'a { let a = @[Rc<'a>] Node { val: 1 }; ... }
-brand 'b { let b = @[Rc<'b>] Node { val: 2 }; ... }
+brand 'a { let a: Rc<Node, 'a> = Rc::new(Node { val: 1 }); ... }
+brand 'b { let b: Rc<Node, 'b> = Rc::new(Node { val: 2 }); ... }
 ```
 
 The allocation-site form is the ergonomic entry point for types like `Rc` and `Arc`.
@@ -171,10 +170,10 @@ visible to callers:
 
 ```metel
 // Clone preserves the brand — caller knows the result aliases the input
-fun clone<brand 'b, T>(self: @[Rc<'b>] T) -> @[Rc<'b>] T
+fun clone<T, brand 'b>(self: &Rc<T, 'b>) -> Rc<T, 'b>
 
 // Constructor — fresh brand per call (existential return)
-fun new<T>(val: T) -> @[Rc] T   // brand is existential, fresh per call site
+fun new<T>(val: T) -> Rc<T>   // brand is existential, fresh per call site
 ```
 
 The compiler infers which form applies from the function body: if the return value
@@ -187,7 +186,7 @@ The compiler enforces two rules:
 
 1. **Non-unification.** Two distinct brand introduction sites produce brands that the
    type checker never unifies, even if both appear in the same type position. A function
-   that returns `@[Rc<'b>] T` for some `'b` cannot return values from two different
+   that returns `Rc<T, 'b>` for some `'b` cannot return values from two different
    brand introduction sites without a type error.
 
 2. **Non-escape.** A value carrying a brand from a `brand` block cannot escape the
@@ -202,9 +201,9 @@ error messages:
 
 ```metel
 // Written — no brand annotations:
-let a = @[Rc] Node { val: 1 };
-let b = a.clone();   // compiler infers b has same brand as a
-let c = @[Rc] Node { val: 2 };   // compiler infers fresh brand for c
+let a = Rc::new(Node { val: 1 });
+let b = a.clone();               // compiler infers b has same brand as a
+let c = Rc::new(Node { val: 2 });   // compiler infers fresh brand for c
 ```
 
 Brands appear in error messages only when relevant to the reported issue.
@@ -215,18 +214,18 @@ Brands appear in error messages only when relevant to the reported issue.
 
 ### Shared pointer alias analysis (RFC-0074)
 
-`Rc<'b>` and `Arc<'b>` carry a brand identifying their backing cell. Clone preserves
-the brand. `NotCapturing<@[Rc<'b>] T>` becomes a precise alias exclusion: it excludes
-same-brand bindings (aliases of the same cell) and allows different-brand bindings
-(independent cells).
+`Rc<T, 'b>` and `Arc<T, 'b>` carry a brand identifying their backing cell. Clone
+preserves the brand. `NotCapturing<Rc<T, 'b>>` becomes a precise alias exclusion: it
+excludes same-brand bindings (aliases of the same cell) and allows different-brand
+bindings (independent cells).
 
 ```metel
-let a = @[Rc] Node { val: 1 };   // a: @[Rc<'a>] Node
-let b = a.clone();                // b: @[Rc<'a>] Node — same cell
-let c = @[Rc] Node { val: 2 };   // c: @[Rc<'c>] Node — different cell
+let a = Rc::new(Node { val: 1 });   // a: Rc<Node, 'a>
+let b = a.clone();                   // b: Rc<Node, 'a> — same cell
+let c = Rc::new(Node { val: 2 });   // c: Rc<Node, 'c> — different cell
 
-// NotCapturing<@[Rc<'a>] Node> excludes b (same brand), allows c (different brand)
-// Future: RegionToken<'a> gates exclusive write access to the 'a cell
+// NotCapturing<Rc<Node, 'a>> excludes b (same brand), allows c (different brand)
+// Future: RcToken<'a> gates exclusive write access to the 'a cell (RFC-0074 §6.1)
 // Present: a.get_mut() returns None because b is a live alias
 ```
 
@@ -278,29 +277,29 @@ same brand. The pattern has three components:
   `&mut token` exists at a time, granting exclusive access to all same-brand cells.
   No runtime check. Soundness is ordinary `&mut` exclusivity.
 
-The three components are separate values. Cells may be freely aliased via `@[Rc] _`
-or shared via `@[Arc] _`; the token is the one value that cannot be aliased. Access
-to cell data requires passing the token borrow — and that borrow is the proof.
+The three components are separate values. Cells may be freely aliased via `Rc<_>` or
+shared via `Arc<_>`; the token is the one value that cannot be aliased. Access to cell
+data requires passing the token borrow — and that borrow is the proof.
 
 This pattern generalises the GhostCell design (Yanovski et al., 2021) to any resource
 that needs scoped, exclusive, identity-specific access. Three concrete instantiations
 follow.
 
-#### RC memory — `RegionToken<'b>`
+#### RC memory — `RcToken<'b>`
 
 ```metel
-struct RegionToken<brand 'b> { _brand: PhantomBrand<'b> }
+struct RcToken<brand 'b> { _brand: PhantomBrand<'b> }
 struct RcCell<brand 'b, T> { value: T, _brand: PhantomBrand<'b> }
 
 impl<brand 'b, T> RcCell<'b, T> {
-    fun borrow_mut<'s>(self: &'s RcCell<'b, T>, _token: &mut RegionToken<'b>) -> &'s mut T {
+    fun borrow_mut<'s>(self: &'s RcCell<'b, T>, _token: &mut RcToken<'b>) -> &'s mut T {
         &mut self.value
     }
 }
 
 brand 'b {
-    let token = RegionToken::<'b>::new();
-    let cell_a: @[Rc<'b>] RcCell<'b, I32> = @[Rc<'b>] RcCell { value: 0, _brand: PhantomBrand };
+    let token = RcToken::<'b>::new();
+    let cell_a: Rc<RcCell<'b, I32>, 'b> = Rc::new(RcCell { value: 0, _brand: PhantomBrand });
     let alias_a = cell_a.clone();   // multiple RC owners — fine
 
     cell_a.borrow_mut(&mut token).value = 42;
@@ -308,8 +307,8 @@ brand 'b {
 }
 ```
 
-`RegionToken<'b>` is the future direction for static exclusive mutable access to
-`@[Rc<'b>] T` cells, as described in RFC-0074 §6.1. It does not require proving
+`RcToken<'b>` is the future direction for static exclusive mutable access to
+`Rc<T, 'b>` cells, as described in RFC-0074 §6.1. It does not require proving
 the RC count is one; it requires holding the token exclusively.
 
 #### Effect handlers — `HandlerToken<'b, E>`
@@ -331,8 +330,8 @@ impl<brand 'b> HandlerCell<'b, Logger, Vec<String>> {
 
 brand 'h {
     let token = HandlerToken::<'h, Logger>::new();
-    let handler: @[Rc<'h>] HandlerCell<'h, Logger, Vec<String>> =
-        @[Rc<'h>] HandlerCell { state: Vec::new(), _brand: PhantomBrand };
+    let handler: Rc<HandlerCell<'h, Logger, Vec<String>>, 'h> =
+        Rc::new(HandlerCell { state: Vec::new(), _brand: PhantomBrand });
 
     // Explicit dispatch to this specific handler:
     handler.record("first message", &mut token);
@@ -383,7 +382,7 @@ All three instantiations follow the same structure:
 
 | Resource | Token | Cells | `&mut token` grants |
 |---|---|---|---|
-| RC-aliased memory | `RegionToken<'b>` | `@[Rc<'b>] T` | Exclusive write to all `'b` cells |
+| RC-aliased memory | `RcToken<'b>` | `Rc<T, 'b>` | Exclusive write to all `'b` cells |
 | Effect handler state | `HandlerToken<'b, E>` | `HandlerCell<'b, E, S>` | Exclusive write to handler state |
 | Concurrent fiber | `JoinToken<'b, T>` | Fiber-local values | Join and collect result |
 
@@ -593,16 +592,16 @@ naturally with the lifetime/borrow system.
    parameter is existential (fresh per call) or propagating (shared with input) must be
    specified precisely, especially for recursive functions and trait objects. Deferred.
 
-4. **`RegionToken<'b>` and `Arc<'b>` across fiber boundaries.** `RegionToken<'b>`
-   grants exclusive access to all `@[Rc<'b>] T` cells within a single fiber. When
-   `@[Arc<'b>] T` clones are distributed across fibers, the brand correctly identifies
-   them as aliases, but a single `RegionToken<'b>` cannot be the access key — it would
+4. **`RcToken<'b>` and `Arc<'b>` across fiber boundaries.** `RcToken<'b>`
+   grants exclusive access to all `Rc<T, 'b>` cells within a single fiber. When
+   `Arc<T, 'b>` clones are distributed across fibers, the brand correctly identifies
+   them as aliases, but a single `RcToken<'b>` cannot be the access key — it would
    need to coordinate across fiber boundaries. Whether this requires a distinct
    `SharedToken<'b>` with lock-like semantics, or whether `Arc<'b>` simply does not
    participate in token-gated access and remains runtime-only (`get_mut`), is unresolved.
    Deferred to the concurrency RFC cluster (RFC-0064).
 
-5. **Brand equality across modules.** If a library returns `@[Rc<'b>] T` from an
+5. **Brand equality across modules.** If a library returns `Rc<T, 'b>` from an
    opaque function, the caller cannot inspect the brand's origin. Whether opaque brands
    from library functions are treated as always-distinct or sometimes-equal requires a
    visibility rule. Deferred.
@@ -611,14 +610,14 @@ naturally with the lifetime/borrow system.
 
 ## References
 
-- RFC-0063 (Region Handles) — `@[r] T` pointer types; `Rc` and `Arc` use brands as
-  their region tag parameter.
+- RFC-0063 (Region Handles) — `@[r] T` pointer types; the bracket channel for handle
+  regions. `Rc` and `Arc` are library structs, not regions (RFC-0074).
 - RFC-0071 (Ownership and Move Semantics) — `Clone`; clone-preserving brands make the
   alias relationship visible in the type.
 - RFC-0072 (Negative Bounds) — `NotCapturing<T>`; with brands, this bound becomes a
-  precise alias exclusion for `@[Rc<'b>] T`.
-- RFC-0074 (Shared Ownership) — `Rc`, `Arc`, `unique`; the RC alias analysis
-  application of brands.
+  precise alias exclusion for `Rc<T, 'b>`.
+- RFC-0074 (Shared Pointers — Rc and Arc) — `Rc<T, 'b>`, `Arc<T, 'b>` as library
+  smart pointer structs with brand parameters; the RC alias analysis application of brands.
 - Report: `algebraic-effects-and-memory-model.md` — evidence-passing model for
   algebraic effects; brands on handler instances enable O(1) type-directed dispatch.
 - Report: `capability-objects.md` — capability-based effect model; branded capabilities
@@ -631,5 +630,5 @@ naturally with the lifetime/borrow system.
 - RFC-0064 (Fork-Join Parallelism) — `JoinToken<'b>` structured concurrency application
   (§Token-gated access) is contingent on this RFC being accepted.
 - Report: `shared-ownership-survey-2026-06-29` — survey of Ante, Rust RC APIs, Pony
-  reference capabilities, and GhostCell/qcell; establishes that `RegionToken<'b>` is the
-  correct future direction for static exclusive access to `@[Rc<'b>] T` (RFC-0074 §6.1).
+  reference capabilities, and GhostCell/qcell; establishes that `RcToken<'b>` is the
+  correct future direction for static exclusive access to `Rc<T, 'b>` (RFC-0074 §6.1).

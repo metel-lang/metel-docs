@@ -1,40 +1,38 @@
 ---
 id: rfc-0074
-title: "Shared Ownership — SharedRegion, Rc, and Arc"
+title: "Shared Pointers — Rc and Arc"
 date: '2026-06-30'
 ---
 
-> **Status — under review.** Depends on RFC-0063 (Region Handles), RFC-0065 (Region
-> Ergonomics), RFC-0066 (Region Pointer Extraction), RFC-0071 (Ownership and Move
-> Semantics), and RFC-0072 (Negative Bounds). Introduces `SharedRegion` as a general
-> extension to the existing region system, and defines `Rc` and `Arc` as the two stdlib
-> types that implement it.
+> **Status — under review.** Depends on RFC-0071 (Ownership and Move Semantics) and
+> RFC-0072 (Negative Bounds). Introduces `Rc` and `Arc` as library smart pointer
+> structs with reference-counted lifetimes. They are **not** region types and do not
+> implement `Region` (RFC-0063). A standalone `SharedPointer` aspect captures their
+> shared interface for generic use.
 
 ## Summary
 
-The four existing stdlib regions cover four distinct allocation strategies:
+The existing region types (`Heap`, `LocalHeap`, `BumpRegion`, `AutoRegion`) all provide
+**unique ownership**: each allocation has exactly one owner; moving transfers it; the
+type system enforces this statically. One ownership pattern is absent: **shared
+ownership** — multiple owning pointers to the same allocation, with the allocation freed
+when the last owner drops.
 
-| Type | Lifetime | Move-out | Sendable |
-|---|---|---|---|
-| `Heap` | Indefinite | Always safe | Yes |
-| `LocalHeap` | Indefinite, thread-local | Always safe | No |
-| `BumpRegion` | Scoped, bump arena | `T: !Drop` only | No |
-| `AutoRegion` | Scoped, compiler-managed | Always safe | No |
+This RFC introduces shared ownership through two stdlib **smart pointer structs**:
 
-One ownership pattern is absent: **shared heap ownership** — multiple owning pointers
-to the same allocation, with the allocation freed when the last owner drops.
+- **`Rc<T>`** — reference-counted, non-sendable. The reference count is a plain
+  integer. All owners are confined to the same fiber.
+- **`Arc<T>`** — atomically reference-counted, sendable when `T: Send + Sync`. Owners
+  may be distributed across fibers.
 
-This RFC introduces shared ownership without treating it as a special case. One general
-extension is required:
+`Rc<T>` and `Arc<T>` are structs, not region tags. They wrap a heap allocation and
+manage its lifetime through the reference count. They implement `Clone` (increment
+count), `Drop` (decrement; free when zero), and `Deref` (borrow the inner `T`). They
+do not implement `Region`.
 
-**`SharedRegion`** — a supertrait of `Region` for type-level region tags that carry
-reference-counted lifetime semantics. Any tag implementing `SharedRegion` gets `Clone`
-and `Drop` automatically, and exposes `get_mut` for runtime-checked exclusive mutable
-access. The mechanism is available to user-defined regions, not only to stdlib types.
-
-`Rc` and `Arc` are the two stdlib type tags that implement `SharedRegion`. They differ
-in one dimension: `Rc` uses non-atomic reference counting and is non-sendable; `Arc`
-uses atomic reference counting and is sendable when `T: Send + Sync`.
+A standalone **`SharedPointer`** aspect captures the common interface — `clone`,
+`get_mut`, `try_unwrap` — for generic code over shared pointers. `SharedPointer` is
+not a subtype of `Region`.
 
 ---
 
@@ -42,12 +40,12 @@ uses atomic reference counting and is sendable when `T: Send + Sync`.
 
 ### The shared ownership gap
 
-RFC-0063 establishes `@[Heap] T` as Metel's uniquely-owned heap pointer. Unique
-ownership does not cover every data structure. A doubly-linked list node needs a
-reference to both neighbours; a tree node may need a reference to its parent; a shared
-cache entry may be referenced by multiple consumers with unpredictable lifetimes. In
-all of these cases the allocation should live as long as at least one owner keeps it
-alive — the defining property of reference counting.
+RFC-0063 establishes uniquely-owned heap allocation via `@[Heap] T`. Unique ownership
+does not cover every data structure. A doubly-linked list node needs a reference to
+both neighbours; a tree node may need a reference to its parent; a shared cache entry
+may be referenced by multiple consumers with unpredictable lifetimes. In all of these
+cases the allocation should live as long as at least one owner keeps it alive — the
+defining property of reference counting.
 
 ### The mutation hazard
 
@@ -57,120 +55,141 @@ reference to its field, while `b` is used to replace the variant, the replacemen
 destroys the field while the reference derived from `a` is still live — a use-after-free.
 
 The safe approach is to verify, at the moment mutation is attempted, that no other
-owner exists. This RFC provides `get_mut` — a runtime check that returns
-`Option<&mut T>`. If the reference count is exactly one, no other owner exists and
-exclusive mutable access is safe. Otherwise `None` is returned and the caller handles
-the failure.
+owner exists. This RFC provides `get_mut` — a runtime check returning `Option<&mut T>`.
+If the reference count is exactly one, no other owner exists and exclusive mutable
+access is safe. Otherwise `None` is returned and the caller handles the failure.
 
-Purely static exclusive access — establishing at compile time that no live alias exists
-— is a goal for future work and is discussed in §Future work.
+### Why Rc and Arc are not regions
 
-### Two kinds of regions
+An earlier design of this RFC classified `Rc` and `Arc` as implementors of a
+`SharedRegion: Region` supertrait. That classification was rejected after analysis
+(see report: `allocatable-region-split-analysis`). The exceptions required to fit
+shared pointers into the region model are not edge cases — they describe a
+fundamentally different kind of thing:
 
-The region abstraction in RFC-0063 covers two fundamentally different implementation
-patterns that are worth naming explicitly.
+- **No runtime handle.** Region allocation passes an allocator handle through the
+  bracket channel (`@[r] T`). There is no "Rc handle" — the allocation always goes to
+  the global heap. The bracket channel would pass nothing.
+- **Clone on the pointer.** No region pointer `@[R] T` implements `Clone`. Moving is
+  the norm. Rc and Arc require clone-as-refcount-increment as a core operation.
+- **Drop with side effects on the pointer.** For region types, drop is managed by the
+  region scope or the owning binding. For Rc/Arc, the pointer itself carries significant
+  drop logic (decrement; conditionally free).
+- **Brand parameter required for identity.** No other allocation type needs a brand
+  parameter. Rc and Arc need one because aliasing is fundamental to their purpose and
+  there is no handle to serve as an identity token.
+- **`get_mut` — a runtime aliasing query.** Nothing else in the region system asks
+  "am I the only reference to this?" The question does not arise for unique ownership.
 
-**Handle regions.** The region tag is a runtime value — the allocator handle — passed
-through the bracket channel. Each introduction site produces a fresh, distinct handle.
-`BumpRegion` and `AutoRegion` are handle regions: the `r` in
-`AutoRegion::scoped([r]() -> {...})` is simultaneously (1) the runtime allocator,
-(2) the compile-time lifetime tag, and (3) the identity token. All three roles are
-unified in one value. No separate identity mechanism is needed; the handle is the proof.
+Beyond the structural exceptions, the claimed ergonomic benefit of the region
+classification — that changing `@[Heap] T` to `@[Rc] T` leaves downstream code
+unchanged — does not hold in practice. Mutation requires `get_mut`; clone produces a
+second pointer to the *same* allocation rather than an independent copy; extraction
+requires `try_unwrap` rather than a direct move. Code that does anything beyond
+borrowing must be updated when switching to shared ownership. The transparent
+strategy-change property holds within the unique-ownership region family but not across
+the unique/shared ownership boundary.
 
-**Strategy regions.** The region tag is a compile-time type-level marker with no
-corresponding runtime value passed through the bracket channel. The actual allocation
-always resolves to a fixed underlying allocator. `Heap`, `LocalHeap`, `Rc`, and `Arc`
-are strategy regions — `@[Heap] T` always goes to the global heap; `@[Rc] T` goes to
-the global heap with a refcount header. There is no per-use "Heap handle" or "Rc handle."
-
-Strategy regions differ in ownership:
-
-- **Unique-ownership strategy regions** (`Heap`, `LocalHeap`): the pointer is uniquely
-  owned. Aliasing does not occur. The type system enforces uniqueness without any
-  identity token — the pointer itself is the proof of exclusive ownership.
-
-- **Shared-ownership strategy regions** (`Rc`, `Arc`): aliasing is fundamental to the
-  purpose. Multiple owning pointers to the same allocation coexist by design. Because
-  there is no handle to serve as an identity token, and because aliasing makes identity
-  essential for reasoning, explicit brand parameters (`Rc<'b>`, `Arc<'b>`) must fill
-  this role. This is why `Rc` and `Arc` are the only regions that require brands: they
-  are the only regions where (a) no handle exists and (b) aliasing makes per-allocation
-  identity necessary.
-
-The `SharedRegion` supertrait captures this shared-ownership pattern as a first-class
-extension point. Defining it as a supertrait — rather than building `Rc` and `Arc` as
-language exceptions — keeps the door open for user-defined shared-ownership regions
-(pool-managed RC, arena-backed RC with a shared control block) without special-casing.
-
-### Why not introduce Rc/Arc as exceptions
-
-Introducing `Rc` and `Arc` as region types with special language rules would treat
-symptoms rather than extending the system. The `SharedRegion` supertrait is general:
-any user-defined RC-style region (pool-managed RC, arena-backed RC with a shared
-control block) gets `Clone`, `Drop`, and `get_mut` for free.
+Rc and Arc are smart pointer structs. The region system is for allocation strategies
+with unique ownership.
 
 ---
 
-## 1. The `SharedRegion` aspect
+## 1. The `SharedPointer` aspect
 
 ```metel
-aspect SharedRegion: Region {
-    type AllocationError = !;
+aspect SharedPointer<T> {
+    fun clone(self: &Self) -> Self
+    fun get_mut<'s>(self: &'s mut Self) -> Option<&'s mut T>
+    fun try_unwrap(self: Self) -> Result<T, Self>
+    fun strong_count(self: &Self) -> USize
 }
 ```
 
-`SharedRegion` is a supertrait of `Region`. Types implementing it are **type-level
-region tags** whose pointers carry reference-counted lifetimes.
+`SharedPointer<T>` is a standalone aspect — not a subtype of `Region`. Types
+implementing it are owning smart pointers to `T` with reference-counted lifetime
+semantics.
 
-Implementing `SharedRegion` on a tag type `R` declares two things:
+`SharedPointer` is the extension point for user-defined shared pointer types: a
+pool-managed RC, an arena-backed RC with a shared control block, or an intrusive
+reference count. Any type implementing `SharedPointer<T>` gets the full generic
+interface without special-casing.
 
-1. **`Clone`**: `@[R] T` implements `Clone`. Cloning a pointer increments the reference
-   count and returns a second owning pointer to the same allocation. This is O(1) and
-   does not copy `T`.
+---
 
-2. **`Drop`**: `@[R] T` implements `Drop`. Dropping a pointer decrements the reference
-   count. If the count reaches zero, `T::drop` is called and the backing memory is freed.
+## 2. `Rc<T>` — non-atomic shared ownership
 
-`Clone` and `Drop` are derived automatically by the compiler for any `R: SharedRegion`.
-
-### 1.1 Allocation
+`Rc<T>` is a smart pointer struct with non-atomic reference counting:
 
 ```metel
-let a: @[Rc] Node = @[Rc] Node { val: 1 };
+struct Rc<T, brand 'b> {
+    inner: @[Heap] RcInner<T>,
+    _brand: PhantomBrand<'b>,
+}
+
+struct RcInner<T> {
+    strong: USize,
+    value: T,
+}
 ```
 
-There is no `Rc::scoped` form — the allocation's lifetime is governed by the reference
-count, not by lexical scope.
+The brand parameter `'b` provides per-allocation identity (RFC-0076). Two `Rc<T, 'b>`
+values with the same brand are aliases of the same cell; two with different brands are
+independent. In normal code the brand is inferred and invisible; it appears in error
+messages when aliasing is relevant.
 
-### 1.2 Clone — acquiring a second owner
+### 2.1 Allocation
 
 ```metel
-let a: @[Rc] Node = @[Rc] Node { val: 1 };
-let b = a.clone();   // reference count: 2; a and b are both valid owners
+let a: Rc<Node> = Rc::new(Node { val: 1 });
 ```
 
-Moving `a` transfers the single owner without touching the reference count:
+`Rc::new` allocates `Node` on the global heap, prepends a reference count initialised
+to one, and returns the owning pointer. There is no scope form — the lifetime is
+governed by the reference count, not a lexical scope.
+
+### 2.2 Clone — acquiring a second owner
 
 ```metel
-let b = a;   // b is now the only owner; a is consumed; count unchanged
+let a: Rc<Node> = Rc::new(Node { val: 1 });
+let b = a.clone();   // reference count: 2; a and b are both owners of the same Node
 ```
 
-### 1.3 `get_mut` — runtime-checked exclusive access
-
-`SharedRegion` pointers expose exclusive mutable access through a runtime check:
+Clone increments the reference count and returns a second pointer to the *same*
+allocation. It does not copy `Node`. Moving `a` transfers one owner without touching
+the count:
 
 ```metel
-fun get_mut[s](self: &mut [s] @[R] T) -> Option<&mut [s] T>
+let b = a;   // b is the only owner; a is consumed; count unchanged
 ```
 
-`get_mut` checks `strong_count() == 1`. If the count is one, no other owner exists and
-a mutable reference is returned. Otherwise `None` is returned.
+### 2.3 Borrow — read access
 
-The caller must hold `&mut @[R] T` to call `get_mut`. This prevents concurrent borrows
-of the outer pointer within the same fiber.
+`Rc<T>` implements `Deref<Target = T>`. Any borrow of an `Rc<T>` yields `&T`:
 
 ```metel
-let node: @[Rc] Node = @[Rc] Node { val: 1 };
+let a: Rc<Node> = Rc::new(Node { val: 1 });
+let r: &Node = &*a;   // borrow; lifetime tied to binding `a`
+```
+
+The borrow expires when `a` goes out of scope or is moved. Borrows derived from
+different `Rc` aliases (e.g., from `b = a.clone()`) are independent borrows that each
+track their source binding, not the shared allocation.
+
+### 2.4 `get_mut` — runtime-checked exclusive access
+
+```metel
+fun get_mut<'s>(self: &'s mut Rc<T, 'b>) -> Option<&'s mut T>
+```
+
+`get_mut` checks `strong_count == 1`. If the count is one, no other owner exists and a
+mutable reference is returned. Otherwise `None` is returned.
+
+The receiver is `&mut Rc<T>`, which prevents concurrent borrows of the outer pointer
+within the same fiber, making the check sound.
+
+```metel
+let mut node: Rc<Node> = Rc::new(Node { val: 1 });
 
 match node.get_mut() {
     Some(n) => n.val = 42,
@@ -178,93 +197,83 @@ match node.get_mut() {
 }
 ```
 
-### 1.4 Sendability
+### 2.5 `try_unwrap` — consuming extraction
 
-The sendability of `@[R] T` follows the existing rule from RFC-0063 §4: `@[R] T` is
-sendable iff `R: Send`. `SharedRegion` introduces no new sendability rules.
+```metel
+fun try_unwrap(self: Rc<T, 'b>) -> Result<T, Rc<T, 'b>>
+```
+
+`try_unwrap` consumes the `Rc<T>` and checks `strong_count == 1`. If the count is one,
+the inner `T` is returned. Otherwise the original `Rc<T>` is returned in `Err`. Useful
+for teardown patterns where the caller holds the last known owner.
+
+### 2.6 Sendability
+
+`Rc<T>` is not sendable. The reference count is a plain integer and is not safe to
+share or transfer across fibers:
+
+```metel
+impl<T, brand 'b> !Send for Rc<T, 'b> {}
+impl<T, brand 'b> !Sync for Rc<T, 'b> {}
+```
+
+`T`'s sendability is irrelevant — the counter is the unsound part.
 
 ---
 
-## 2. `Rc` — non-atomic shared ownership
+## 3. `Arc<T>` — atomic shared ownership
 
-`Rc` implements `SharedRegion` with non-atomic reference counting:
+`Arc<T>` is a smart pointer struct with atomic reference counting:
 
 ```metel
-impl Region for Rc {
-    type AllocationError = !;
+struct Arc<T, brand 'b> {
+    inner: @[Heap] ArcInner<T>,
+    _brand: PhantomBrand<'b>,
 }
 
-impl SharedRegion for Rc {}
+struct ArcInner<T> {
+    strong: AtomicUSize,
+    value: T,
+}
 ```
 
-The reference count is a plain integer; incrementing and decrementing it is not
-thread-safe. `Rc` does not implement `Send` or `Sync`:
+The interface is identical to `Rc<T>`: `new`, `clone`, `Deref`, `get_mut`,
+`try_unwrap`. The difference is the counter type and sendability.
+
+### 3.1 Sendability
+
+`Arc<T>` is sendable when `T: Send + Sync`:
 
 ```metel
-// Rc: !Send — @[Rc] T cannot cross fiber boundaries
-// Rc: !Sync — @[Rc] T cannot be shared across threads simultaneously
+impl<T: Send + Sync, brand 'b> Send for Arc<T, 'b> {}
+impl<T: Send + Sync, brand 'b> Sync for Arc<T, 'b> {}
 ```
 
-`get_mut` on `@[Rc] T` checks the non-atomic integer count.
+Both `Send` and `Sync` require `T: Send + Sync` because the allocation is reachable
+from any fiber that holds an `Arc` clone; any fiber may read `T` through its `Arc`
+(requiring `Sync`), and any fiber may be the last to drop (requiring `Send` for the
+destructor).
+
+### 3.2 `get_mut` race safety
+
+`get_mut` on `Arc<T>` checks the atomic count. The check is inherently racy in the
+presence of concurrent clones from other fibers; requiring `&mut Arc<T>` as the
+receiver prevents concurrent access to the *outer pointer* within the same fiber and
+makes the check sound. A concurrent clone on another fiber that arrives after the check
+would have to produce a new `Arc` that is not the one being checked.
 
 ---
 
-## 3. `Arc` — atomic shared ownership
+## 4. Comparison
 
-`Arc` implements `SharedRegion` with atomic reference counting:
-
-```metel
-impl Region for Arc {
-    type AllocationError = !;
-}
-
-impl SharedRegion for Arc {}
-impl Send for Arc {}
-impl Sync for Arc {}
-```
-
-Sendability of `@[Arc] T`: `@[Arc] T: Send` iff `T: Send + Sync`.
-
-`get_mut` on `@[Arc] T` checks the atomic count. The check is inherently racy in the
-presence of concurrent clones; `get_mut` requires `&mut @[Arc] T`, which prevents
-concurrent access to the outer pointer within the same fiber, making the check sound.
-
-| | `Rc` | `Arc` |
+| | `Rc<T>` | `Arc<T>` |
 |---|---|---|
 | RC operations | Non-atomic | Atomic |
 | `Send` | No | Yes (when `T: Send + Sync`) |
 | Per-clone cost | One integer increment | One atomic increment |
 | Exclusive access | `get_mut` — runtime `Option` | `get_mut` — runtime `Option` |
+| Extraction | `try_unwrap` — runtime `Result` | `try_unwrap` — runtime `Result` |
 | Use case | Single-fiber shared ownership | Cross-fiber shared ownership |
-
----
-
-## 4. The six stdlib regions
-
-**Handle regions** — the region tag is a runtime allocator handle; freshness and
-identity come from the handle itself.
-
-| Type | Lifetime | Drop behaviour | Move-out | Sendable |
-|---|---|---|---|---|
-| `BumpRegion` | Scoped, bump arena | Bulk free; no `Drop::drop` per slot | `T: !Drop` only | No |
-| `AutoRegion` | Scoped, compiler-managed | Compiler-managed drop | Always safe | No |
-
-**Strategy regions, unique ownership** — the region tag is a type-level marker; the
-pointer is uniquely owned; no brand parameter needed.
-
-| Type | Lifetime | Drop behaviour | Move-out | Sendable |
-|---|---|---|---|---|
-| `Heap` | Indefinite | `Drop::drop` when owner dropped | Always safe | Yes |
-| `LocalHeap` | Indefinite, thread-local | `Drop::drop` when owner dropped | Always safe | No |
-
-**Strategy regions, shared ownership** — the region tag is a type-level marker;
-aliasing is fundamental; a brand parameter (`Rc<'b>`, `Arc<'b>`) provides
-per-allocation identity.
-
-| Type | Lifetime | Drop behaviour | Move-out | Sendable |
-|---|---|---|---|---|
-| `Rc` | Indefinite, non-atomic RC | `Drop::drop` when RC hits zero | Always safe | No |
-| `Arc` | Indefinite, atomic RC | `Drop::drop` when RC hits zero | Always safe | Yes (when `T: Send + Sync`) |
 
 ---
 
@@ -275,13 +284,13 @@ per-allocation identity.
 ```metel
 struct Node {
     value: I32,
-    children: @[Heap] List<@[Rc] Node>,
+    children: @[Heap] List<Rc<Node>>,
 }
 
-fun make_tree() -> @[Rc] Node {
-    let leaf1 = @[Rc] Node { value: 1, children: @[Heap] List::Nil {} };
-    let leaf2 = @[Rc] Node { value: 2, children: @[Heap] List::Nil {} };
-    @[Rc] Node { value: 0, children: @[Heap] List::from([leaf1, leaf2]) }
+fun make_tree() -> Rc<Node> {
+    let leaf1 = Rc::new(Node { value: 1, children: @[Heap] List::Nil {} });
+    let leaf2 = Rc::new(Node { value: 2, children: @[Heap] List::Nil {} });
+    Rc::new(Node { value: 0, children: @[Heap] List::from([leaf1, leaf2]) })
 }
 ```
 
@@ -290,7 +299,7 @@ fun make_tree() -> @[Rc] Node {
 ```metel
 enum Engine { StringTheory { core: @[Heap] Core }, Impulse { fuel: I32 } }
 
-let ship: @[Rc] Spaceship = @[Rc] Spaceship { engine: Engine::StringTheory { ... } };
+let mut ship: Rc<Spaceship> = Rc::new(Spaceship { engine: Engine::StringTheory { ... } });
 
 match ship.get_mut() {
     Some(s) => s.engine = Engine::Impulse { fuel: 100 },
@@ -301,16 +310,26 @@ match ship.get_mut() {
 ### 5.3 Shared state with `Arc`
 
 ```metel
-let config: @[Arc] Config = @[Arc] Config::default();
-let config2 = config.clone();
-
-// config2 sent to another fiber ...
+let config: Arc<Config> = Arc::new(Config::default());
+let config2 = config.clone();   // send to another fiber
 
 // after all other owners are dropped:
+let mut config = config;
 match config.get_mut() {
     Some(cfg) => cfg.update(new_settings),
     None      => { /* still shared */ }
 }
+```
+
+### 5.4 Generic over shared pointers
+
+```metel
+fun log_count<T, P: SharedPointer<T>>(ptr: &P) {
+    println("owners: {}", ptr.strong_count());
+}
+
+log_count(&rc_node);
+log_count(&arc_config);
 ```
 
 ---
@@ -319,133 +338,113 @@ match config.get_mut() {
 
 The `get_mut` approach is always sound but imposes a runtime check and forces the
 caller to handle the `None` case even when the program structure guarantees uniqueness.
-A purely static mechanism — establishing at compile time that no live alias exists —
-is desirable when it can be made formally sound.
+A purely static mechanism is desirable when it can be made formally sound.
 
-Two open design threads:
+### 6.1 Token-gated access via `RcToken<'b>` (GhostCell pattern)
 
-### 6.1 Static exclusive access via `RegionToken<b>` (GhostCell pattern)
-
-The binding-level alias analysis direction (tracking which in-scope bindings were
-derived from a specific `@[Rc] T` via `.clone()`) is not sound in the general case.
-A clone moved into a data structure accessible from inside the exclusive block
-represents an alias the binding-level analysis cannot see; the standard borrow checker
-does not catch this because it does not know the two paths alias the same allocation.
-
-A sound alternative — identified in a survey of Ante, Rust RC APIs, Pony reference
-capabilities, and the GhostCell pattern (see report: `shared-ownership-survey-2026-06-29`)
-— is to invert the question entirely. Instead of proving an RC pointer is unique,
-introduce a **linear token** whose exclusive borrow grants mutable access to all
-same-brand cells regardless of how many RC aliases exist:
+A sound alternative to proving the RC count is one: introduce a **linear token** whose
+exclusive borrow grants mutable access to all same-brand cells regardless of how many
+aliases exist. Soundness comes from `&mut token` exclusivity — the borrow checker
+enforces that only one `&mut token` exists at a time:
 
 ```metel
-brand::new[b](() -> {
-    let token: RegionToken<b> = RegionToken::new();
-    let a: @[Rc<b>] Node = @[Rc<b>] Node { val: 1 };
+brand 'b {
+    let token: RcToken<'b> = RcToken::new();
+    let a: Rc<Node, 'b> = Rc::new_branded(Node { val: 1 });
     let alias = a.clone();   // multiple owners — fine
 
-    // &mut token gives exclusive access to all @[Rc<b>] T in scope:
     a.borrow_mut(&mut token).val = 42;
-    // alias is still live; soundness comes from &mut token exclusivity
-});
+    // alias is still live; soundness from &mut token, not from count
+}
 ```
 
-Soundness comes from `&mut RegionToken<b>` exclusivity — the standard borrow checker
-guarantees only one `&mut token` exists at a time, which means only one mutable view
-of all same-brand cells at a time. No `strong_count()` check is required.
+No `strong_count` check required. The coarse-grained tradeoff: `&mut token` covers all
+`'b`-branded cells simultaneously. This is acceptable for most graph manipulation
+patterns.
 
-Prerequisites:
-- **RFC-0076 (Brand Types)** — the invariant brand parameter `b`.
-- `RegionToken<b>` must be non-`Copy` and non-`Clone` (already guaranteed by
-  RFC-0071 for any type not explicitly implementing `Copy`).
-- `Rc<b>` as a brand-parameterized variant of `Rc`.
+Prerequisites: RFC-0076 (Brand Types) must be accepted. `Rc::new_branded` and
+`RcToken` are follow-on stdlib additions contingent on RFC-0076.
 
-Note: RFC-0050 (Closure Capture Lists) is **not** a prerequisite for this path.
+### 6.2 Static exclusive access for `Arc` via structured concurrency
 
-The coarse-grained tradeoff: `&mut token` covers all cells of the brand simultaneously.
-This is acceptable for most graph/tree manipulation patterns. Fine-grained per-cell
-access requires multiple brand parameters or inner mutability.
-
-This design is deferred until RFC-0076 is accepted and the interaction between
-branded RC and `RegionToken` is fully specified.
-
-### 6.2 Static `unique` for `Arc` via structured concurrency
-
-For `Arc`, the binding-level analysis is additionally unsound because `Arc: Send` —
-clones can cross fiber boundaries and exist outside the compiler's view. Static
-`unique` for `Arc` would require structured fork-join concurrency (RFC-0064) with a
-branch non-escape condition: every `Arc` clone moved into a fork branch must be
-provably consumed within that branch and must not escape through channels or shared
-state that outlives the join. After the join point, the compiler could prove all
-forked clones are dropped. This is a further future direction, contingent on both
-RFC-0064 and the `Rc` static analysis being resolved first.
+For `Arc`, token-gated access across fiber boundaries requires coordination. Whether
+this takes the form of a `SharedToken<'b>` with lock-like semantics or is simply out
+of scope for static analysis is an open question deferred to the concurrency RFC cluster
+(RFC-0064).
 
 ---
 
 ## Alternatives considered
 
-### Static `unique` keyword now
+### `Rc` and `Arc` as `SharedRegion: Region` implementors
 
-Introducing a `unique` keyword with binding-level alias analysis in this RFC was
-considered and rejected. The analysis is not formally sound in the general case: a
-clone moved into a data structure accessible from inside the `unique` block creates an
-alias that the binding-level analysis cannot see and the standard borrow checker cannot
-detect. Presenting an unsound construct as a safety guarantee is worse than the
-runtime check. The path to a sound static mechanism is clear (§6), but it depends on
-RFC-0050 and RFC-0076, neither of which is accepted.
+The previous version of this RFC classified `Rc` and `Arc` as implementors of a
+`SharedRegion` supertrait of `Region`, using region tag syntax (`@[Rc] T`,
+`@[Arc] T`). This was rejected after analysis (report: `allocatable-region-split-analysis`).
 
-### `get_mut` only for `Arc`, `unique` only for `Rc`
+The classification required seven exceptions to the region model: no runtime handle,
+clone on the pointer, per-pointer drop with side effects, brand parameter for identity,
+a new `SharedRegion` supertrait, `get_mut`, and the aliasing semantics themselves. The
+claimed benefit — transparent allocation strategy change (`@[Heap] T` → `@[Rc] T`
+without touching downstream code) — does not hold: mutation, clone semantics, and
+extraction all change when crossing the unique/shared ownership boundary. Downstream
+code that does anything beyond borrowing must change.
 
-An earlier version of this RFC proposed `unique` for `Rc` and `get_mut` only for
-`Arc`, based on the observation that `Rc: !Send` confines all clones to one fiber.
-This was rejected for the reason above: confinement to one fiber is necessary but not
-sufficient for a sound static analysis. Clones stored in data structures accessible
-from inside the block still escape the analysis. Soundness requires either RFC-0050
-and RFC-0076, or restricting `unique` so severely that it becomes impractical.
+Forcing shared pointers into the region model is the worst of both worlds: the region
+concept accumulates exceptions without delivering the transparency that would justify them.
 
-### `Rc<T>` as a library struct (not a region tag)
+### `Allocatable` supertrait with `@[Rc] T` allocation syntax
 
-`Rc<T>` could be a plain struct containing `@[Heap] T` plus a reference count, with
-`Deref` for read access and a `borrow_mut`-style method for guarded write access. This
-fits the existing system completely but requires a runtime borrow check for mutation —
-the same situation as `Rc<RefCell<T>>` in Rust, with all the accompanying panic risk.
-The region tag approach keeps the interface uniform and leaves room for the static
-analysis in §6 to be added later without changing the type.
+An intermediate design introduces an `Allocatable` supertrait above both `Region` and
+`SharedPointer`, with the `@[_]` bracket syntax tied to `Allocatable` rather than
+`Region`. `Rc` and `Arc` would implement `SharedPointer: Allocatable`, preserving the
+`@[Rc] T` allocation expression syntax while being explicitly non-region types.
+
+The analysis shows that `Allocatable` would unify construction, borrow, sendability,
+and drop contract — but not move-out, which remains a `Region`-only operation. The
+remaining benefit of `Allocatable` is syntactic uniformity at allocation expressions
+and borrow sites. Syntactic uniformity is achievable more cheaply: `@[Rc] expr` can be
+allocation sugar that desugars to `Rc::new(expr)` without `Rc` implementing any trait.
+
+This RFC does not adopt the `Allocatable` design. The `@[Rc] T` allocation syntax
+remains an open question (§Unresolved questions).
 
 ---
 
 ## Unresolved questions
 
-1. **Cycle handling.** Reference counting cannot free cyclic structures. Options: weak
-   pointers (a non-owning pointer yielding `Perhaps<@[Rc] T>`, via a `WeakSharedRegion`
-   aspect); a cycle collector; a type-system prohibition on cycles. Deferred.
+1. **Allocation syntax.** Whether `@[Rc] expr` and `@[Arc] expr` are supported as
+   syntactic sugar for `Rc::new(expr)` and `Arc::new(expr)` is unresolved. The sugar
+   would preserve allocation-site uniformity without requiring `Rc` to implement any
+   trait. Whether the benefit justifies the special syntax rule is a language design
+   decision deferred to a follow-on RFC.
 
-2. **Static exclusive access for `Rc`.** Contingent on RFC-0076 (brand types).
-   The `RegionToken<b>` approach (§6.1) is the target direction; formal specification
-   is deferred to a follow-up RFC once RFC-0076 is accepted.
+2. **Cycle handling.** Reference counting cannot free cyclic structures. Options: weak
+   pointers (`Weak<T>`, a non-owning pointer that does not extend the lifetime); a
+   cycle collector; a type-system prohibition on cycles. Deferred.
 
-3. **Static `unique` for `Arc`.** Contingent on §6.1 being resolved and RFC-0064
-   (structured fork-join parallelism) being accepted. Deferred.
+3. **Token-gated static exclusive access.** Contingent on RFC-0076 (brand types). The
+   `RcToken<'b>` direction is the target; formal specification deferred to a follow-on
+   RFC once RFC-0076 is accepted.
+
+4. **Static exclusive access for `Arc`.** Contingent on the Rc case being resolved and
+   RFC-0064 (structured fork-join parallelism) being accepted. Deferred.
 
 ---
 
 ## References
 
-- RFC-0063 (Region Handles) — region allocator interface; the `Region` aspect that
-  `SharedRegion` extends; sendability rule that determines `Rc` and `Arc` sendability.
-- RFC-0065 (Region Ergonomics) — elision and inference apply to `@[Rc] T` and
-  `@[Arc] T` identically to any other region tag.
-- RFC-0066 (Region Pointer Extraction) — move-out semantics; always safe for `Rc`
-  and `Arc` (RC decrement handles cleanup).
-- RFC-0071 (Ownership and Move Semantics) — `Clone` and `Drop`; `Copy`/`Drop` mutual
-  exclusion means neither `@[Rc] T` nor `@[Arc] T` is `Copy`.
-- RFC-0072 (Negative Bounds) — `Rc: !Send`; used in §6.1 as the necessary condition
-  for the future static analysis.
-- RFC-0050 (Closure Capture Lists) — no longer a prerequisite for the static exclusive
-  access path; the `RegionToken<b>` approach (§6.1) does not depend on closure captures.
-- RFC-0076 (Brand Types) — prerequisite for `RegionToken<b>` (§6.1); the invariant
-  brand parameter is the mechanism that brands `Rc` pointers to a specific token.
+- RFC-0071 (Ownership and Move Semantics) — `Clone`, `Drop`, `Deref`; `Copy`/`Drop`
+  mutual exclusion means neither `Rc<T>` nor `Arc<T>` is `Copy`.
+- RFC-0072 (Negative Bounds) — `Rc<T>: !Send` and `Rc<T>: !Sync`.
+- RFC-0063 (Region Handles) — region system that Rc and Arc are explicitly *not* part
+  of; `@[Heap] T` as the unique-ownership heap pointer.
+- RFC-0076 (Brand Types) — brand parameter `'b` on `Rc<T, 'b>` and `Arc<T, 'b>`;
+  prerequisite for `RcToken<'b>` static exclusive access (§6.1).
 - RFC-0064 (Fork-Join Parallelism) — prerequisite for static exclusive access on
-  `Arc` (§6.2), contingent on §6.1 being resolved first.
+  `Arc` (§6.2).
+- Report: `allocatable-region-split-analysis` — analysis of whether Rc/Arc should be
+  regions, `Allocatable` implementors, or library structs; motivates the current design.
 - Report: `shared-ownership-survey-2026-06-29` — survey of Ante, Rust RC APIs, Pony
-  reference capabilities, and the GhostCell/qcell pattern that motivated §6.1.
+  reference capabilities, and GhostCell/qcell; motivates `get_mut` as the baseline and
+  `RcToken<'b>` as the future static access path.
