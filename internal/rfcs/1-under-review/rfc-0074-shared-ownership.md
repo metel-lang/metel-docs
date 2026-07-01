@@ -209,13 +209,20 @@ for teardown patterns where the caller holds the last known owner.
 
 ### 2.6 Sendability
 
-`Rc<T>` is not sendable. The reference count is a plain integer and is not safe to
-share or transfer across fibers:
+`Rc<T>` is not sendable. The reference count is a non-atomic integer; cloning an
+`Rc` from one fiber while another fiber drops it produces a data race.
 
 ```metel
 impl<T, brand 'b> !Send for Rc<T, 'b> {}
 impl<T, brand 'b> !Sync for Rc<T, 'b> {}
 ```
+
+Negative impls are required here rather than relying on absence of a positive impl.
+The `Send` auto-impl rule (RFC-0080 §3.2) grants `Send` to any struct whose fields
+are all `Send`. `Rc<T, 'b>`'s reference count field is an integer, which is `Send`
+by value — so the auto-impl would incorrectly grant `Rc<T>: Send` without an
+explicit override. The negative impls (RFC-0081) prevent this regardless of any
+blanket that might otherwise apply.
 
 `T`'s sendability is irrelevant — the counter is the unsound part.
 
@@ -436,7 +443,12 @@ remains an open question (§Unresolved questions).
 
 - RFC-0071 (Ownership and Move Semantics) — `Clone`, `Drop`, `Deref`; `Copy`/`Drop`
   mutual exclusion means neither `Rc<T>` nor `Arc<T>` is `Copy`.
-- RFC-0072 (Negative Bounds) — `Rc<T>: !Send` and `Rc<T>: !Sync`.
+- RFC-0072 (Negative Bounds) — `T: !Aspect` bounds used at call sites.
+- RFC-0081 (Negative Impls) — `impl !Send for Rc<T>` and `impl !Sync for Rc<T>`;
+  required because the `Send` auto-impl would otherwise grant sendability via the
+  integer reference-count field.
+- RFC-0080 (Stdlib Aspects) — `Send`/`Sync` auto-impl rules; `Clone` and `Deref`
+  impls for `Rc` and `Arc`.
 - RFC-0063 (Region Handles) — region system that Rc and Arc are explicitly *not* part
   of; `@[Heap] T` as the unique-ownership heap pointer.
 - RFC-0076 (Brand Types) — brand parameter `'b` on `Rc<T, 'b>` and `Arc<T, 'b>`;

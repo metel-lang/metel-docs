@@ -224,25 +224,24 @@ these before the region cluster can be considered complete.
 
 | Gap | Blocking RFC(s) | Action |
 |---|---|---|
-| `Result<T, !>` → `T` collapse rule — `!`, `Perhaps<T>`, `Result<T,E>` all implemented; collapse is not | 0063, 0073 | RFC specifying `!` subtyping and the collapse rule |
-| Negative impls (`impl !Send for Rc<T>`) — not covered by RFC-0072 | 0074 | Extend RFC-0072 or introduce in negative-impls RFC |
-| `Clone`, `Deref`, `Send`, `Sync` — assumed pre-existing, never specified | 0066, 0071, 0074, 0076 | Stdlib aspects RFC |
-| RFC-0063 contradicts RFC-0074 — Arc/Rc model split | 0063 (accepted) | Amend RFC-0063 to reflect library struct model |
-| `Vec<T>` vs `List<T>` naming inconsistency | 0076 | Update RFC-0076 examples to use `List<T>` |
+| `Result<T, !>` → `T` collapse rule — addressed by RFC-0078 §3.2/§3.3 (general uninhabited-variant and inhabited-singleton coercion rules) | 0063, 0073 | Done — RFC-0078 under review |
+| `Clone`, `Deref`, `Send`, `Sync` — assumed pre-existing, never specified | 0066, 0071, 0074, 0076 | Done — RFC-0080 under review |
+| RFC-0063 contradicts RFC-0074 — Arc/Rc model split | 0063 (accepted) | Done — RFC-0063 amended |
+| `Vec<T>` vs `List<T>` naming inconsistency | 0076 | Done — RFC-0076 examples updated |
+| Negative impls (`impl !Send for Rc<T>`) — auto-impl would otherwise grant sendability | 0074 | Done — RFC-0081 under review |
 
-**Type system drafts to complete or rewrite (audit required first):**
+**Type system RFCs — all now under review:**
 
-| RFC | Title | Notes |
+| RFC | Title | Status |
 |---|---|---|
-| 0060 | Aspect Impl Coherence | Orphan rules; needed by SharedPointer, all aspect impls |
-| 0061 | Structural Aspect Bounds | `T: {field: Aspect}`; needed for generic region code |
-| 0036 | Conditional Impl Blocks | `impl<T: Aspect> Foo for Bar<T>`; generic library code |
-| 0037 | Return-Position Impl Aspect | `fun f() -> impl Aspect`; needed for ergonomic APIs |
-| 0008 | Aspect Objects | `dyn Aspect`; needed for dynamic dispatch |
+| 0060 | Aspect Impl Coherence | Under review — orphan rule, overlap, CWA, auto-impl, negative impl priority |
+| 0036 | Conditional Impl Blocks | Under review — `where` clause syntax, overlap rule, use-site checking |
+| 0061 | Structural Aspect Bounds | Under review — blanket impls for `T[]`, std::core ownership of structural constructors |
+| 0037 | Return-Position Impl Aspect | Under review — opaque monomorphised return type, independence rule |
+| 0008 | Aspect Objects | Under review — `dyn Aspect`, fat pointer, object safety, vtable dispatch |
 
-Several of these are low-numbered and were written before the current region and
-ownership model existed. Each must be reviewed against the current language before
-being completed or rewritten.
+All five were rewritten against the current region and ownership model. The old drafts
+are superseded.
 
 Secondary type system drafts (in scope for this phase but not blocking the region
 cluster): RFC-0038 (impl aspect struct fields), RFC-0039 (aspect alias syntax),

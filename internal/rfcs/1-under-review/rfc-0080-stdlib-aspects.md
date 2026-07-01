@@ -1,0 +1,300 @@
+---
+id: rfc-0080
+title: "Standard Library Aspects — Clone, Deref, Send, Sync"
+date: '2026-07-01'
+---
+
+> **Status — under review.** Depends on RFC-0071 (Ownership and Move Semantics) and
+> RFC-0060 (Aspect Impl Coherence). Formally specifies four aspects that are assumed
+> pre-existing across the accepted and under-review region RFC cluster (RFC-0063–0079)
+> but have never been defined. The sendability aspects (`Send`, `Sync`) rely on
+> closed-world coherence from RFC-0060 for their auto-impl rules.
+
+## Summary
+
+Four aspects are referenced as pre-existing throughout the region RFC cluster without
+formal definition:
+
+- **`Clone`** — explicit duplication of an owned value.
+- **`Deref` / `DerefMut`** — dereference coercion; allows smart pointers to be used as references.
+- **`Send`** — marker aspect: a value is safe to transfer across fiber boundaries.
+- **`Sync`** — marker aspect: a shared reference to a value is safe across fiber boundaries.
+
+This RFC provides the formal specification for each.
+
+---
+
+## 1. Clone
+
+### 1.1 Definition
+
+`Clone` is the aspect for types that support explicit duplication. Calling `.clone()`
+on a `T: Clone` produces a new independent owned value of type `T`; the original value
+remains valid.
+
+```metel
+aspect Clone {
+    fun clone(self: &Self) -> Self;
+}
+```
+
+`clone` takes a shared reference and returns a new owned value. The caller retains the
+original; no move occurs.
+
+### 1.2 Relationship to Copy
+
+Every `Copy` type is also `Clone`. The blanket impl clones by bitwise copy:
+
+```metel
+impl<T: Copy> Clone for T {
+    fun clone(self: &T) -> T { *self }
+}
+```
+
+`Clone` types that are not `Copy` run user-defined logic — allocating a new backing
+buffer, deep-copying a list, incrementing a reference count. The distinction between
+`Copy` (implicit, free) and `Clone` (explicit, potentially expensive) is preserved.
+
+### 1.3 Derive
+
+`Clone` may be derived for any struct or enum whose fields all implement `Clone`. The
+derived impl calls `.clone()` on each field and assembles the result:
+
+```metel
+#[derive(Clone)]
+struct Point { x: f64, y: f64 }
+
+// Generated:
+impl Clone for Point {
+    fun clone(self: &Point) -> Point {
+        Point { x: self.x.clone(), y: self.y.clone() }
+    }
+}
+```
+
+For enums, the derived impl matches the active variant and clones its fields.
+
+### 1.4 Clone and region pointers
+
+`@[r] T` — a region pointer — does not implement `Clone` by default. Cloning a region
+pointer would require a fresh allocation into the same or another region; the caller
+must make that explicit. No blanket `impl Clone for @[r] T` is provided.
+
+---
+
+## 2. Deref and DerefMut
+
+### 2.1 Deref
+
+`Deref` is the aspect for types that can be transparently dereferenced to a target
+type. Smart pointers implement `Deref` to allow access to their contents without
+explicit unwrapping.
+
+```metel
+aspect Deref {
+    type Target;
+
+    fun deref(self: &Self) -> &Target;
+}
+```
+
+`Target` is the type produced by dereferencing. The compiler applies deref coercions
+implicitly: when a `T: Deref<Target = U>` appears where `&U` is expected, `.deref()`
+is inserted.
+
+### 2.2 DerefMut
+
+`DerefMut` extends `Deref` with mutable access:
+
+```metel
+aspect DerefMut: Deref {
+    fun deref_mut(self: &mut Self) -> &mut Target;
+}
+```
+
+`Deref` is a supertrait of `DerefMut`. Any `DerefMut` implementation must also provide
+a `Deref` implementation with the same `Target`. The compiler applies `DerefMut`
+coercions when `&mut U` is expected and `T: DerefMut<Target = U>`.
+
+### 2.3 Coercion rules
+
+Deref coercions are applied in the following positions:
+
+- Function call arguments: `f(smart_ptr)` coerces when `f` expects `&Target`.
+- Method call receivers: `smart_ptr.method()` coerces to `&Target` to find the method.
+- Explicit borrow: `&smart_ptr` coerces to `&Target`.
+
+Coercions are applied at most once per position. The compiler does not chain coercions
+across multiple `Deref` impls.
+
+### 2.4 Standard impls
+
+`Rc<T, 'b>` and `Arc<T, 'b>` implement `Deref` but not `DerefMut` — shared
+ownership precludes unique mutable access through a shared pointer. `get_mut` and
+`try_unwrap` (RFC-0074 §2.4–2.5) are the explicit mechanisms for mutation.
+
+```metel
+impl<T, brand 'b> Deref for Rc<T, 'b> {
+    type Target = T;
+    fun deref(self: &Rc<T, 'b>) -> &T { ... }
+}
+
+impl<T, brand 'b> Deref for Arc<T, 'b> {
+    type Target = T;
+    fun deref(self: &Arc<T, 'b>) -> &T { ... }
+}
+```
+
+---
+
+## 3. Send
+
+### 3.1 Definition
+
+`Send` is a marker aspect with no methods. A type `T: Send` is safe to transfer across
+fiber boundaries — it may be moved from one fiber's stack to another's without data
+races or unsoundness.
+
+```metel
+aspect Send { }
+```
+
+`Send` appears as a bound on fiber-crossing operations. Any function that transfers a
+value to another fiber requires `T: Send`.
+
+### 3.2 Auto-impl
+
+`Send` is an auto-aspect: the compiler automatically derives `Send` for any type all
+of whose fields are `Send`. Under closed-world coherence (RFC-0060):
+
+- Primitive types (`i64`, `u64`, `f64`, `boolean`, `String`, `!`, ...) are `Send`.
+- A struct or enum is `Send` if every field type is `Send`.
+- `&T` is `Send` if `T: Sync`.
+- `&mut T` is `Send` if `T: Send`.
+
+No `#[derive(Send)]` annotation is needed; the compiler applies the rule automatically.
+
+### 3.3 Opting out
+
+A type that must not be `Send` despite the auto-impl rule must use a negative impl
+(RFC-0081): `impl !Send for MyType {}`. The negative impl overrides any blanket that
+would otherwise apply.
+
+Relying on absence of a positive impl is insufficient when the auto-impl rule would
+otherwise fire. `Rc<T, 'b>` is the canonical example: its reference count is an
+integer, which is `Send` — so the auto-impl would grant `Rc<T>: Send`. The negative
+impl prevents this (RFC-0074 §2.6).
+
+### 3.4 Region pointers
+
+Sendability of `@[r] T` depends on the region type. General principle: a region
+pointer is `Send` when the underlying region is globally accessible and `T: Send`.
+Per-region rules:
+
+| Region | `@[r] T: Send`? | Reason |
+|---|---|---|
+| `Heap` | Yes, when `T: Send` | Global allocator; accessible from any fiber |
+| `LocalHeap` | No | Thread-local allocator; pointer invalid on another fiber |
+| `BumpRegion` / `AutoRegion` | Deferred to RFC-0003 | Depends on whether the region handle has been transferred |
+
+---
+
+## 4. Sync
+
+### 4.1 Definition
+
+`Sync` is a marker aspect with no methods. A type `T: Sync` may be accessed through a
+shared reference from multiple fibers simultaneously.
+
+```metel
+aspect Sync { }
+```
+
+The defining relationship between `Send` and `Sync`:
+
+> `T: Sync` if and only if `&T: Send`.
+
+A type is `Sync` precisely when sharing a reference to it across fibers is safe.
+
+### 4.2 Auto-impl
+
+`Sync` is an auto-aspect under the same closed-world rules as `Send`:
+
+- Primitive types are `Sync`.
+- A struct or enum is `Sync` if every field type is `Sync`.
+- `&T` is `Sync` if `T: Sync`.
+- `&mut T` is `Sync` if `T: Sync`.
+
+### 4.3 Standard impls
+
+`Rc<T, 'b>` provides no `Sync` impl. A shared reference `&Rc<T>` used from multiple
+fibers would race on the non-atomic reference count.
+
+`Arc<T, 'b>` is both `Send` and `Sync` when `T: Send + Sync`:
+
+```metel
+impl<T: Send + Sync, brand 'b> Send for Arc<T, 'b> {}
+impl<T: Send + Sync, brand 'b> Sync for Arc<T, 'b> {}
+```
+
+Both conditions are required: `Sync` of `T` because any fiber may read through `&T`;
+`Send` of `T` because any fiber may be the last to drop, running `T`'s destructor.
+
+---
+
+## 5. Interactions
+
+| Relationship | Rule |
+|---|---|
+| `Copy` implies `Clone` | Blanket impl: clone by bitwise copy |
+| `Copy` and `Drop` are mutually exclusive | RFC-0071 |
+| `DerefMut` requires `Deref` | Supertrait |
+| `T: Sync` iff `&T: Send` | Definition of `Sync` |
+| `Arc<T>: Send + Sync` when `T: Send + Sync` | §4.3 |
+
+---
+
+## 6. Relationship to RFC-0003
+
+RFC-0003 (Concurrency Model, draft) specifies the fiber API and the rules for crossing
+fiber boundaries. `Send` and `Sync` are the type-system vocabulary those rules are
+written in. This RFC provides the vocabulary; RFC-0003 provides the grammar. This RFC
+does not depend on RFC-0003 and may be accepted independently.
+
+---
+
+## Unresolved Questions
+
+1. **Region-parameterised `Clone`.** Whether `Clone` should carry a region parameter —
+   `fun clone[r](self: &Self) -> @[r] Self` — to allow deep cloning into a
+   caller-specified region is deferred. The current definition returns a value without
+   a region tag, which is appropriate for `Copy` and stack-local types but limiting for
+   heap-allocated types where the destination region matters.
+
+2. **Auto-impl scope.** The auto-impl rules for `Send` and `Sync` depend on RFC-0060
+   specifying closed-world coherence. The interaction between auto-impl and explicit
+   negative impls (RFC-0081) — specifically, whether auto-impl fires before or after
+   negative impl resolution — is deferred to RFC-0060.
+
+3. **`BumpRegion` / `AutoRegion` sendability.** The sendability of pointers into
+   scoped regions depends on whether the region handle itself is transferred. The full
+   rule is deferred to RFC-0003.
+
+4. **Deref coercion chaining.** A single level of transitive deref (e.g., `Box<Rc<T>>`
+   coercing to `&T` in two steps) may be useful. Currently prohibited; may be revisited
+   when the full coercion system is specified.
+
+---
+
+## References
+
+- RFC-0060 (Aspect Impl Coherence) — closed-world coherence required for `Send`/`Sync`
+  auto-impl rules.
+- RFC-0081 (Negative Impls) — mechanism for overriding auto-impl when a type must not
+  have `Send` or `Sync` despite its fields being `Send`/`Sync`.
+- RFC-0071 (Ownership and Move Semantics) — `Copy`/`Drop` mutual exclusion; move
+  semantics; `Clone` as the explicit duplication primitive.
+- RFC-0074 (Shared Pointers) — `Rc<T>: !Send`, `!Sync`; `Arc<T>: Send + Sync`;
+  `Deref` impls for `Rc` and `Arc`; `get_mut` and `try_unwrap` as the mutation API.
+- RFC-0003 (Concurrency Model, draft) — fiber boundary crossing; consumer of `Send`
+  and `Sync` bounds.

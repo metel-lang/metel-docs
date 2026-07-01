@@ -42,12 +42,14 @@ This cluster is clean. RFC-0071 covers it.
 | `T: !Aspect` negative bounds | 0066, 0071, 0072, 0073, 0074 | Draft — RFC-0072 (under review; used by 0066 and 0071 before it is accepted) |
 | `impl<T: !Aspect> Foo for Bar` conditional impls | 0072 §4 | Draft — RFC-0036 |
 | `where T: !Drop` in function signatures | 0072 | Draft — RFC-0072; `where` clause syntax on functions is unclear |
-| Explicit negative impls `impl !Send for Rc<T>` | 0074 §2.6 | **Gap** — RFC-0072 §5.1 explicitly declines to introduce negative impls; RFC-0074 writes them; no RFC bridges this |
+| Negative impls `impl !Send for Rc<T>` | 0074 §2.6 | Draft — RFC-0081 (under review) |
 
-The negative impl gap is acute. RFC-0074 writes `Rc<T>: !Send` and `Rc<T>: !Sync`
-as coherent declarations, but the mechanism for declaring them does not exist. RFC-0072
-introduces negative *bounds* (what callers can assert) but not negative *impls* (what
-library authors declare). These are different features and both are needed.
+RFC-0080's `Send` auto-impl rule grants `Send` to any struct whose fields are all
+`Send`. `Rc<T, 'b>`'s reference count is an integer — `Send` by value — so the
+auto-impl would incorrectly grant `Rc<T>: Send`. Absence of a positive impl is
+insufficient because the auto-impl fires automatically. RFC-0081 (Negative Impls)
+provides `impl !Aspect for Type` as the explicit override mechanism, following
+Rust's model: blanket impls are permitted, negative impls override them.
 
 ---
 
@@ -58,12 +60,14 @@ library authors declare). These are different features and both are needed.
 | Never type `!` | 0063 (`AllocationError = !`), 0073 | **Implemented** — defined in public spec (types.md §Never Type) as the bottom type for diverging expressions |
 | `Perhaps<T>` stdlib type (nullable) | 0063, 0065, 0067, 0074, 0075 | **Implemented** — defined in public spec (types.md §Perhaps) |
 | `Result<T, E>` stdlib type (fallible) | 0063, 0068, 0074, 0075 | **Implemented** — defined in public spec (types.md §Result) |
-| `Result<T, !>` → `T` collapse rule | 0063 §1.1 | Draft — RFC-0078 (under review) specifies `!` subtyping and collapse |
+| `Result<T, !>` → `T` collapse rule | 0063 §1.1 | Draft — RFC-0078 (under review) §3.2 (uninhabited-variant exhaustiveness) and §3.3 (inhabited-singleton coercion) together specify this |
 
-**Naming is settled** and both types are implemented. The remaining gap is narrow:
-the `Result<T, !>` collapse rule — that `Result<@[r] T, !>` is treated as `@[r] T`
-at infallible allocation sites — is stated as a fact in RFC-0063 but specified nowhere.
-An RFC is needed to formally define `!`'s subtyping properties and the collapse rule.
+**Naming is settled** and both types are implemented. RFC-0078 resolves the collapse
+rule via two general rules: any uninhabited variant may be omitted from a match
+(§3.2), and any enum with exactly one inhabited single-field variant implicitly
+coerces to that field's type (§3.3). `Result<T, !>` is a special case of both.
+RFC-0063's infallible allocation (`@[r] T` when `AllocationError = !`) is a
+separate allocation-expression rule that does not rely on the coercion.
 
 ---
 
@@ -71,10 +75,10 @@ An RFC is needed to formally define `!`'s subtyping properties and the collapse 
 
 | Feature | Assumed by | Status |
 |---|---|---|
-| `Clone` aspect | 0066, 0071, 0074, 0076 | **Gap** — used but no RFC specifies it |
-| `Deref<Target = T>` aspect | 0074 §2.3 | **Gap** — no RFC specifies this aspect |
-| `Send` aspect | 0063, 0073, 0074 | **Gap** — RFC-0003 (concurrency model) is draft only |
-| `Sync` aspect | 0074 | **Gap** — same as `Send` |
+| `Clone` aspect | 0066, 0071, 0074, 0076 | Draft — RFC-0080 (under review) |
+| `Deref<Target = T>` / `DerefMut` aspects | 0074 §2.3 | Draft — RFC-0080 (under review) |
+| `Send` aspect | 0063, 0073, 0074 | Draft — RFC-0080 (under review); auto-impl rules depend on RFC-0060 closed-world coherence |
+| `Sync` aspect | 0074 | Draft — RFC-0080 (under review); same coherence dependency |
 | `NotCapturing<T>` bound | 0076 | **Gap** — referenced in RFC-0076; no RFC defines it |
 
 `Clone` is used in RFC-0071 itself (which is accepted) without being formally
@@ -172,8 +176,8 @@ RFC-0074 rewrite and should be removed or replaced.
 | Feature | Assumed by | Status |
 |---|---|---|
 | `given`/`using` implicit parameters | 0076 (IO capability example) | **Gap** — referenced in RFC-0076 as if it exists; no RFC specifies it |
-| Return-position `impl Aspect` | referenced in drafts | Draft — RFC-0037 |
-| Aspect objects (`dyn Aspect` or equivalent) | referenced by name | Draft — RFC-0008 |
+| Return-position `impl Aspect` | referenced in drafts | Under review — RFC-0037 |
+| Aspect objects (`dyn Aspect` or equivalent) | referenced by name | Under review — RFC-0008 |
 | `impl[r] Struct[r]` / `aspect impl[r]` headers | 0077 | Draft — RFC-0077 specifies this |
 
 ---
@@ -185,18 +189,22 @@ RFC-0074 rewrite and should be removed or replaced.
 These gaps mean the under-review or accepted region RFCs are internally inconsistent
 or underspecified right now. They must be resolved in the type system phase:
 
-1. **`Result<T, !>` collapse rule** — addressed by RFC-0078 (under review), which
-   formally specifies `!` subtyping and the infallible result collapse rule.
+1. **`Result<T, !>` collapse rule** — addressed by RFC-0078 (under review). The general
+   uninhabited-variant exhaustiveness rule (§3.2) and the inhabited-singleton coercion
+   rule (§3.3) together specify the collapse. `Result<T, !>` is a consequence of both
+   general rules.
 
-2. **Negative impls** (`impl !Send for Rc<T>`) — RFC-0074 requires them; RFC-0072
-   does not provide them. A gap that requires extending RFC-0072 or a new RFC.
+2. **`Clone`, `Deref`, `Send`, `Sync` aspects** — addressed by RFC-0080 (under review).
+   Auto-impl rules for `Send` and `Sync` depend on RFC-0060 specifying closed-world
+   coherence.
 
-3. **`Clone`, `Deref`, `Send`, `Sync` aspects** — assumed as pre-existing in multiple
-   accepted RFCs. Likely belong in a stdlib aspects RFC.
+3. **Negative impls** (`impl !Send for Rc<T>`) — addressed by RFC-0081 (under review).
+   Required because the `Send` auto-impl (RFC-0080) would otherwise grant sendability
+   to `Rc<T>` via its integer reference-count field.
 
-4. **RFC-0063 amendment for Arc/Rc** — resolved in this audit session (committed).
+3. **RFC-0063 amendment for Arc/Rc** — resolved in this audit session (committed).
 
-5. **`Vec<T>` vs `List<T>`** — resolved in this audit session (committed).
+4. **`Vec<T>` vs `List<T>`** — resolved in this audit session (committed).
 
 ### Gaps That Can Wait for the Type System Phase
 

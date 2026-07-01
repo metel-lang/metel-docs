@@ -6,17 +6,21 @@ date: '2026-07-01'
 
 > **Status — under review.** Depends on RFC-0071 (Ownership and Move Semantics).
 > Formally specifies `!` as the bottom of the type hierarchy: its subtyping rule,
-> coercion behaviour, match exhaustiveness implications, and the `Result<T, !>`
-> collapse rule that underpins infallible region allocation (RFC-0063 §1.1).
+> coercion behaviour, and match exhaustiveness implications. Establishes the general
+> uninhabited-variant rule and the inhabited-singleton coercion rule that together
+> underpin infallible region allocation (RFC-0063 §1.1).
 
 ## Summary
 
 `!` (pronounced "never") is already in the language as the inferred type of diverging
 expressions. This RFC gives it a formal specification: `!` is the **uninhabited bottom
 type** — no value of type `!` can ever be constructed. As the bottom of the type
-hierarchy, `!` is a subtype of every type. This subtyping rule has two important
-consequences: expressions of type `!` coerce freely to any type, and `Result<T, !>`
-collapses to `T` because the `Err` variant is uninhabited and unreachable.
+hierarchy, `!` is a subtype of every type. This has three normative consequences:
+expressions of type `!` coerce freely to any type; any enum variant whose payload
+contains `!` is uninhabited and may be omitted from match exhaustiveness; and any enum
+with exactly one inhabited variant that has exactly one field implicitly coerces to
+that field's type (the inhabited-singleton coercion rule). `Result<T, !>` satisfies
+all three as a special case of the general rules.
 
 ---
 
@@ -79,33 +83,75 @@ fun unreachable_code(x: !) -> i64 {
 }
 ```
 
-### 3.2 Unreachable arms
+### 3.2 Uninhabited variants
 
-A match arm whose pattern has type `!` is unreachable. The compiler may warn but
-must not reject it. This applies to:
+A general rule: an enum variant whose payload type is `!` is uninhabited. No value
+of that variant can ever be constructed. A match arm for an uninhabited variant is
+unreachable — the compiler may warn but must not reject it; the arm need not be
+written for the match to be exhaustive.
 
-- An `Err { error }` arm in a `match result: Result<T, !>` — the `Err` variant
-  cannot be constructed, so the arm is dead.
+This applies to any enum, not only to `Result`. If a user defines:
 
-### 3.3 Inference through match
+```metel
+enum Foo {
+    A { x: i64 },
+    B { y: ! },
+}
+```
+
+then `Foo::B` is uninhabited, and a match on `Foo` that omits the `B` arm is
+exhaustive. The rule follows from `!` being uninhabited and applies wherever `!`
+appears as a variant's payload type, regardless of the surrounding type.
+
+### 3.3 Inhabited-singleton coercion
+
+If an enum type has exactly one inhabited variant (all other variants are uninhabited
+per §3.2), and that inhabited variant has exactly one field, a value of that enum type
+implicitly coerces to that field's type. The compiler inserts the destructuring; no
+explicit match is required at the use site.
+
+Conditions for the rule to apply:
+1. The enum has more than one variant.
+2. Exactly one variant is inhabited; all others have a payload type of `!`.
+3. The inhabited variant has exactly one field (any name).
+
+```metel
+enum Wrapper<T> {
+    Present { value: T },
+    Absent  { _: ! },
+}
+
+fun infallible() -> Wrapper<i64> { Wrapper::Present { value: 42 } }
+
+let x: i64 = infallible();  // implicit coercion via inhabited-singleton rule
+```
+
+If the single inhabited variant has zero fields or more than one field, the rule does
+not apply — there is no single type to coerce to.
+
+`Result<T, !>` satisfies the conditions: `Ok { value: T }` is the one inhabited
+variant with one field; `Err { error: ! }` is uninhabited. See §4.1.
+
+`Perhaps<!>` does not satisfy the conditions: `None` is inhabited but has zero fields.
+`Perhaps<!>` does not implicitly coerce to any type.
+
+### 3.4 Inference through match
 
 If all arms of a `match` expression diverge (have type `!`), the overall `match`
 expression has type `!`.
 
 ---
 
-## 4. `Result<T, !>` — Infallible Results
+## 4. `Result<T, !>` — Consequences of Uninhabitedness
 
-When `E = !`, the `Err` variant of `Result<T, E>` is uninhabited. A
-`Result<T, !>` can only ever be `Result::Ok { value }`. The compiler applies the
-**infallible result rule**:
+When `E = !`, the `Err` variant of `Result<T, E>` is uninhabited by the general rule
+in §3.2. A `Result<T, !>` can only ever be `Result::Ok { value }`.
 
-> A `Result<T, !>` is treated as equivalent to `T` at the type level. It may be
-> used wherever `T` is expected without an explicit match.
+### 4.1 Coercion and exhaustiveness
 
-### 4.1 Implicit unwrap
-
-A `Result<T, !>` value coerces implicitly to `T`:
+`Result<T, !>` satisfies the inhabited-singleton coercion rule (§3.3): `Ok` is the
+one inhabited variant and has exactly one field. A `Result<T, !>` value may therefore
+be used wherever `T` is expected with no explicit match:
 
 ```metel
 fun infallible() -> Result<i64, !> {
@@ -118,33 +164,27 @@ fun main() -> i64 {
 }
 ```
 
-The compiler inserts a conceptual `match result { Ok { value } => value }` during
-lowering. Since the `Err` arm is uninhabited, it is never generated.
-
-### 4.2 Partial match
-
-A `match` on `Result<T, !>` that omits the `Err` arm is exhaustive:
+A match that omits the `Err` arm is exhaustive (§3.2). If the `Err` arm is written,
+the compiler warns that it is unreachable:
 
 ```metel
 fun use_result(r: Result<i64, !>) -> i64 {
     match r {
         Result::Ok { value } => value,
-        // Err arm omitted — compiler accepts this; Err is uninhabited
+        // Err arm omitted — exhaustive; Err is uninhabited
     }
 }
 ```
 
-The compiler does not require the `Err` arm and does not warn about its absence.
-If the `Err` arm is written explicitly, the compiler warns that it is unreachable.
-
-### 4.3 `AllocationError = !` (RFC-0063)
+### 4.2 `AllocationError = !` (RFC-0063)
 
 RFC-0063 gives each region a `type AllocationError`. When a region sets
 `AllocationError = !` (as all stdlib regions do), the `@[r] expr` allocation
-expression has type `@[r] T` — not `Result<@[r] T, !>`. This is the infallible
-result rule applied at the allocation expression site: the compiler sees
-`Result<@[r] T, !>` in the intermediate type and collapses it to `@[r] T` before
-surfacing it to the programmer.
+expression has type `@[r] T` — not `Result<@[r] T, !>`. This is a rule on the
+allocation expression itself: the type of `@[r] expr` is determined by the region's
+`AllocationError` type, and when that type is `!` the expression directly produces
+`@[r] T`. This is distinct from a post-hoc coercion from `Result<@[r] T, !>` to
+`@[r] T`; no coercion is needed because the `Result` wrapper is never surfaced.
 
 Fallible custom allocators (where `AllocationError = SomeError`) produce
 `Result<@[r] T, SomeError>` and require the caller to handle or propagate the error.
@@ -198,8 +238,8 @@ convention already established in RFC-0063.
 1. **`!` in generic bounds.** Whether `T: !` is a meaningful bound (asserting `T`
    is uninhabited) is deferred. The practical need is low.
 
-2. **Coercion precedence.** When both an implicit `Result<T, !>` coercion and
-   another coercion are applicable, the resolution order is deferred to the
+2. **Coercion precedence.** When the inhabited-singleton coercion (§3.3) and another
+   coercion are both applicable at a use site, resolution order is deferred to the
    type inference RFC.
 
 ---
