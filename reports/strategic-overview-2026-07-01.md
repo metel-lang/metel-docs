@@ -216,11 +216,22 @@ Finish the type system RFC cluster. These are prerequisites for correctly specif
 the region and shared-ownership designs, and for any implementation that handles
 generic code.
 
-**Audit first.** Several type system drafts are low-numbered (RFC-0008, RFC-0036,
-RFC-0037) and were written before the current region and ownership model existed. Each
-must be reviewed against the current language before being completed or rewritten.
+A dependency audit (`region-rfc-dependency-audit.md`) identified concrete gaps that
+make the accepted region RFCs internally inconsistent right now. Phase 1 must address
+these before the region cluster can be considered complete.
 
-Target RFCs (draft, to be completed or rewritten):
+**Blocking gaps — must be resolved in Phase 1:**
+
+| Gap | Blocking RFC(s) | Action |
+|---|---|---|
+| `Perhaps<T,E>` / `Result<T,E>` / `Option<T>` — three names, no definition | 0063–0077 throughout | Single RFC defining fallibility types and settling the naming |
+| Never type `!` and `Perhaps<T,!>` → `T` collapse rule | 0063, 0073 | Include in fallibility RFC |
+| Negative impls (`impl !Send for Rc<T>`) — not covered by RFC-0072 | 0074 | Extend RFC-0072 or introduce in negative-impls RFC |
+| `Clone`, `Deref`, `Send`, `Sync` — assumed pre-existing, never specified | 0066, 0071, 0074, 0076 | Stdlib aspects RFC |
+| RFC-0063 contradicts RFC-0074 — Arc/Rc model split | 0063 (accepted) | Amend RFC-0063 to reflect library struct model |
+| `Vec<T>` vs `List<T>` naming inconsistency | 0076 | Update RFC-0076 examples to use `List<T>` |
+
+**Type system drafts to complete or rewrite (audit required first):**
 
 | RFC | Title | Notes |
 |---|---|---|
@@ -230,8 +241,12 @@ Target RFCs (draft, to be completed or rewritten):
 | 0037 | Return-Position Impl Aspect | `fun f() -> impl Aspect`; needed for ergonomic APIs |
 | 0008 | Aspect Objects | `dyn Aspect`; needed for dynamic dispatch |
 
-Secondary type system drafts (less urgent but in scope for this phase):
-RFC-0038 (impl aspect struct fields), RFC-0039 (aspect alias syntax),
+Several of these are low-numbered and were written before the current region and
+ownership model existed. Each must be reviewed against the current language before
+being completed or rewritten.
+
+Secondary type system drafts (in scope for this phase but not blocking the region
+cluster): RFC-0038 (impl aspect struct fields), RFC-0039 (aspect alias syntax),
 RFC-0049 (linear fun type system).
 
 ### Phase 2 — Region System Finalization
