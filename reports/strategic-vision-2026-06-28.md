@@ -125,7 +125,7 @@ Accepting the region cluster closes the design phase for the core model. Several
 
 ### 5.1 Error handling and OOM — in progress
 
-The `Region` aspect now carries a `type AllocationError` associated type. Infallible regions (all three stdlib regions — `Region`, `Heap`, `LocalHeap`) assign `!`, so OOM panics and `@[r] expr` retains its existing `@[r] T` type at those sites. Fallible custom allocators assign a concrete error type; `@[r] expr` returns `Perhaps<@[r] T, E>` and callers propagate with `?`. The design is specified in RFC-0063 §1.1 and §2.
+The `Region` aspect now carries a `type AllocationError` associated type. Infallible regions (all three stdlib regions — `Region`, `Heap`, `LocalHeap`) assign `!`, so OOM panics and `@[r] expr` retains its existing `@[r] T` type at those sites. Fallible custom allocators assign a concrete error type; `@[r] expr` returns `Result<@[r] T, E>` and callers propagate with `?`. The design is specified in RFC-0063 §1.1 and §2.
 
 ### 5.2 Negative bounds — in progress
 

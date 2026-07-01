@@ -101,7 +101,7 @@ with unique ownership.
 aspect SharedPointer<T> {
     fun clone(self: &Self) -> Self
     fun get_mut<'s>(self: &'s mut Self) -> Perhaps<&'s mut T>
-    fun try_unwrap(self: Self) -> Perhaps<T, Self>
+    fun try_unwrap(self: Self) -> Result<T, Self>
     fun strong_count(self: &Self) -> USize
 }
 ```
@@ -200,7 +200,7 @@ match node.get_mut() {
 ### 2.5 `try_unwrap` — consuming extraction
 
 ```metel
-fun try_unwrap(self: Rc<T, 'b>) -> Perhaps<T, Rc<T, 'b>>
+fun try_unwrap(self: Rc<T, 'b>) -> Result<T, Rc<T, 'b>>
 ```
 
 `try_unwrap` consumes the `Rc<T>` and checks `strong_count == 1`. If the count is one,

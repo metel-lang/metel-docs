@@ -56,20 +56,17 @@ library authors declare). These are different features and both are needed.
 | Feature | Assumed by | Status |
 |---|---|---|
 | Never type `!` | 0063 (`AllocationError = !`), 0073 | **Gap** — no accepted RFC defines `!` as a type |
-| `Perhaps<T, E>` stdlib type (Metel's Result analogue) | 0063, 0065, 0067, 0075 | **Gap** — used ubiquitously across the accepted cluster; never specified |
-| `Perhaps<T, !>` → `T` collapsing at infallible sites | 0063 §1.1 | **Gap** — stated as a fact in RFC-0063; no RFC specifies the collapse rule |
-| `Result<T, E>` type | 0074 SharedPointer aspect | **Gap** — RFC-0074 uses `Result` while accepted RFCs use `Perhaps`; relationship unresolved |
-| `Option<T>` type | 0074 (`get_mut` return type) | **Gap** — not defined in any RFC |
+| `Perhaps<T>` stdlib type (nullable) | 0063, 0065, 0067, 0074, 0075 | **Gap** — used throughout; never formally specified |
+| `Result<T, E>` stdlib type (fallible) | 0063, 0068, 0074, 0075 | **Gap** — used throughout; never formally specified |
+| `Result<T, !>` → `T` collapsing at infallible sites | 0063 §1.1 | **Gap** — stated as a fact in RFC-0063; no RFC specifies the collapse rule |
 
-This is the most pervasive gap cluster. `Perhaps<T, E>` appears in virtually every
-accepted RFC but is never formally defined. RFC-0074 then introduces `Result<T, E>`
-and `Option<T>` for the `SharedPointer` aspect — three names for what may or may not
-be two or three distinct types. This inconsistency must be resolved before the region
-cluster is internally coherent.
+**Naming is settled:** `Perhaps<T>` is nullable (one type param); `Result<T, E>` is
+fallible (two type params). This matches the implemented language (RFC-0020). The gap
+is that neither type is formally defined in any accepted RFC.
 
-The `!` / `Perhaps<T, !>` collapse is load-bearing: RFC-0063 uses infallible
-allocation as a stated property of `Heap` and `LocalHeap`. Without a specified `!`
-type and collapse rule, the type of `@[Heap] T` expressions is underspecified.
+The `Result<T, !>` collapse is load-bearing: RFC-0063 uses infallible allocation as a
+stated property of `Heap` and `LocalHeap`. Without a specified `!` type and collapse
+rule, the type of `@[r] T` expressions is underspecified.
 
 ---
 

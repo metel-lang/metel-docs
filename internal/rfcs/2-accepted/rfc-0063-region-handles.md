@@ -97,7 +97,7 @@ aspect Region {
 
 `AllocationError` is the error type an allocation may produce. Assigning `!` (the never
 type) declares the region infallible — no allocation error can ever be returned, so the
-runtime panics on OOM instead. The compiler treats `Perhaps<@[r] T, !>` as equivalent to
+runtime panics on OOM instead. The compiler treats `Result<@[r] T, !>` as equivalent to
 `@[r] T`, collapsing the error wrapper away entirely at infallible allocation sites.
 
 The four stdlib regions are all infallible:
@@ -249,13 +249,13 @@ bracket channel. The return type depends on the region's `AllocationError`:
 - **Infallible region** (`r::AllocationError = !`): `@[r] expr` has type `@[r] T`. No error
   handling is required; OOM panics. All three stdlib regions fall into this category.
 - **Fallible region** (`r::AllocationError = E`): `@[r] expr` has type
-  `Perhaps<@[r] T, E>`. The caller propagates with `?` or handles the error explicitly.
+  `Result<@[r] T, E>`. The caller propagates with `?` or handles the error explicitly.
 
 ```metel
 // infallible — AllocationError = !; type is @[r] Node
 let node = @[r] Node { val: 1, next: null };
 
-// fallible — AllocationError = AllocationFailed; type is Perhaps<@[pool] Node, AllocationFailed>
+// fallible — AllocationError = AllocationFailed; type is Result<@[pool] Node, AllocationFailed>
 let node = @[pool] Node { val: 1, next: null }?;
 ```
 

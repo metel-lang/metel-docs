@@ -35,7 +35,7 @@ one. A region is any value implementing the region allocator interface — an or
 contract for allocation and drop. The interface requires one associated type: `AllocationError`,
 the error type an allocation may produce. Assigning `!` declares the region infallible (OOM
 panics; no error handling required). Fallible regions assign a concrete error type and
-allocation expressions at those sites return `Perhaps<@[r] T, AllocationError>`. The system
+allocation expressions at those sites return `Result<@[r] T, AllocationError>`. The system
 is open: pool allocators, slab allocators, stack arenas, and other custom types all qualify.
 The four stdlib regions cover the common cases and are all infallible (`AllocationError = !`):
 
@@ -183,14 +183,14 @@ The return type depends on the region's `AllocationError` associated type:
 
 - **Infallible** (`r::AllocationError = !`): type is `@[r] T`. OOM panics; no error handling
   required. All four stdlib regions are infallible.
-- **Fallible** (`r::AllocationError = E`): type is `Perhaps<@[r] T, E>`. Callers propagate
+- **Fallible** (`r::AllocationError = E`): type is `Result<@[r] T, E>`. Callers propagate
   with `?` or handle explicitly.
 
 ```metel
 // infallible (BumpRegion, AutoRegion, Heap, LocalHeap) — type is @[r] Node
 let node = @[r] Node { val: 1, next: null };
 
-// fallible custom arena — type is Perhaps<@[pool] Node, AllocationFailed>
+// fallible custom arena — type is Result<@[pool] Node, AllocationFailed>
 let node = @[pool] Node { val: 1, next: null }?;
 ```
 

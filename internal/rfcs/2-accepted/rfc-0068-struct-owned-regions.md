@@ -82,7 +82,7 @@ The arena is allocated as part of the `Parser` value. Semantically, `[own r]` de
 
 Because `[own r]` always desugars to `BumpRegion`, and `BumpRegion::AllocationError = !`
 (RFC-0063 §1.1), all `@[r] expr` allocations inside impl blocks are infallible — their
-type is `@[r] T`, not `Perhaps<@[r] T, _>`. Specifying a custom allocator type for an
+type is `@[r] T`, not `Result<@[r] T, _>`. Specifying a custom allocator type for an
 owned region is deferred to a future RFC.
 
 When `parser` is dropped — either by going out of scope or by an explicit `drop` — the

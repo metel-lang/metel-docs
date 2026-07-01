@@ -224,8 +224,8 @@ these before the region cluster can be considered complete.
 
 | Gap | Blocking RFC(s) | Action |
 |---|---|---|
-| `Perhaps<T,E>` / `Result<T,E>` / `Option<T>` — three names, no definition | 0063–0077 throughout | Single RFC defining fallibility types and settling the naming |
-| Never type `!` and `Perhaps<T,!>` → `T` collapse rule | 0063, 0073 | Include in fallibility RFC |
+| `Perhaps<T>` (nullable) and `Result<T, E>` (fallible) — naming settled, neither formally defined | 0063–0077 throughout | Single RFC defining both types and the `Result<T, !>` → `T` collapse rule |
+| Never type `!` and `Result<T, !>` → `T` collapse rule | 0063, 0073 | Include in same RFC |
 | Negative impls (`impl !Send for Rc<T>`) — not covered by RFC-0072 | 0074 | Extend RFC-0072 or introduce in negative-impls RFC |
 | `Clone`, `Deref`, `Send`, `Sync` — assumed pre-existing, never specified | 0066, 0071, 0074, 0076 | Stdlib aspects RFC |
 | RFC-0063 contradicts RFC-0074 — Arc/Rc model split | 0063 (accepted) | Amend RFC-0063 to reflect library struct model |
