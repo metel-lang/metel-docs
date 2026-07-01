@@ -4,7 +4,7 @@ title: "Negative Impls"
 date: '2026-07-01'
 ---
 
-> **Status — under review.** Depends on RFC-0060 (Aspect Impl Coherence) and
+> **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence) and
 > RFC-0072 (Negative Bounds). Introduces `impl !Aspect for Type` as the mechanism
 > for library authors to declare that a type definitively does not implement an
 > aspect, overriding any blanket impl that would otherwise grant it.

@@ -5,7 +5,7 @@ date: '2026-07-01'
 deferred_from: rfc-0035 (Q3)
 ---
 
-> **Status — under review.** Depends on RFC-0060 (Aspect Impl Coherence). Specifies
+> **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence). Specifies
 > `impl Aspect` in function return position: the return type is an opaque concrete
 > type known only to satisfy the named aspect. Complements RFC-0035 (parameter-
 > position `impl Aspect`).

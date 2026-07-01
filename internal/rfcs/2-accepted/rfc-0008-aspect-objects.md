@@ -4,7 +4,7 @@ title: "Aspect Objects"
 date: '2026-07-01'
 ---
 
-> **Status — under review.** Depends on RFC-0060 (Aspect Impl Coherence). Specifies
+> **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence). Specifies
 > `dyn Aspect` as the mechanism for runtime polymorphism: values whose concrete type
 > is erased at compile time and dispatch happens through a vtable. Complements
 > RFC-0037 (return-position `impl Aspect`), which provides compile-time opaque types.
@@ -82,9 +82,11 @@ ownership rules of their inner type.
 Not every aspect can be used as `dyn Aspect`. An aspect is **object-safe** if all
 its methods satisfy the following rules:
 
-1. **Receiver rule**: the method's first parameter must be `self: Self`, `self: &Self`,
-   or `self: &mut Self`. Methods with `Self` in any other position — return type,
-   other parameters — are not object-safe.
+1. **Receiver rule**: the method's first parameter must be `self: &Self`,
+   `self: &mut Self`, or `self: @[r] Self` for some region `r`. A bare by-move
+   receiver (`self: Self`) is not object-safe: moving a value requires knowing its
+   size at compile time, but `dyn Aspect` is unsized. Methods with `Self` in any
+   other position — return type, non-receiver parameters — are also not object-safe.
 
 2. **No generic type parameters on methods**: a method with its own type parameters
    (`fun map<U>(...)`) cannot be dispatched through a vtable because the vtable
@@ -110,7 +112,7 @@ error: aspect Clone is not object-safe
 Standard library object-safety:
 - `Display` — object-safe (`to_string` takes `&Self`, returns `String`)
 - `Callable<A, B>` — object-safe
-- `Drop` — object-safe
+- `Drop` — object-safe (the vtable carries a drop function pointer; `drop` is not called through normal dispatch but through the vtable's drop slot, which the runtime invokes with the concrete type's size)
 - `Clone` — **not** object-safe (`clone` returns `Self`)
 - `Deref` — **not** object-safe (associated type `Target` in method signature)
 - `Send`, `Sync` — marker aspects with no methods; object-safe but rarely used as `dyn`

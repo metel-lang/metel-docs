@@ -57,10 +57,14 @@ bound automatically; no annotation is written.
 `SubRegion<R>` is a region type in the stdlib with one constraint baked in:
 
 ```metel
-// stdlib definition (conceptual)
-type SubRegion<R: Region> impl Region, Outlives<R> { … }
-//                             ^^^^^^^^^^^^^^^^^^^^^^
-//                             R outlives SubRegion<R>
+// stdlib definition (normative — see RFC-0082 §7)
+struct SubRegion<R: Region> { /* compiler-managed */ }
+
+impl<R: Region> Region for SubRegion<R> {
+    type AllocationError = !;
+}
+
+impl<R: Region> Outlives<R> for SubRegion<R> {}
 ```
 
 It is not a user-constructible type. The compiler assigns it when a struct-owned region is

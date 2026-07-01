@@ -229,18 +229,18 @@ these before the region cluster can be considered complete.
 | `Vec<T>` vs `List<T>` naming inconsistency | 0076 | Done — RFC-0076 examples updated |
 | Negative impls (`impl !Send for Rc<T>`) — auto-impl would otherwise grant sendability | 0074 | Done — RFC-0081 under review |
 
-**Type system RFCs — all now under review:**
+**Type system RFCs — all accepted:**
 
 | RFC | Title | Status |
 |---|---|---|
-| 0060 | Aspect Impl Coherence | Under review — orphan rule, overlap, CWA, auto-impl, negative impl priority |
-| 0036 | Conditional Impl Blocks | Under review — `where` clause syntax, overlap rule, use-site checking |
-| 0061 | Structural Aspect Bounds | Under review — blanket impls for `T[]`, std::core ownership of structural constructors |
-| 0037 | Return-Position Impl Aspect | Under review — opaque monomorphised return type, independence rule |
-| 0008 | Aspect Objects | Under review — `dyn Aspect`, fat pointer, object safety, vtable dispatch |
+| 0060 | Aspect Impl Coherence | Accepted — orphan rule, overlap, CWA, auto-impl, negative impl priority |
+| 0036 | Conditional Impl Blocks | Accepted — `where` clause syntax, syntactic negation disjointness, use-site checking |
+| 0061 | Structural Aspect Bounds | Accepted — blanket impls for `T[]`, std::core ownership of structural constructors |
+| 0037 | Return-Position Impl Aspect | Accepted — opaque monomorphised return type, independence rule |
+| 0008 | Aspect Objects | Accepted — `dyn Aspect`, fat pointer, object safety, vtable dispatch |
 
-All five were rewritten against the current region and ownership model. The old drafts
-are superseded.
+All five were rewritten against the current region and ownership model, reviewed,
+amended, and accepted in Chunk 1. The old drafts are superseded.
 
 Secondary type system drafts (in scope for this phase but not blocking the region
 cluster): RFC-0038 (impl aspect struct fields), RFC-0039 (aspect alias syntax),

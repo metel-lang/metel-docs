@@ -4,7 +4,7 @@ title: "Shared Pointers — Rc and Arc"
 date: '2026-06-30'
 ---
 
-> **Status — under review.** Depends on RFC-0071 (Ownership and Move Semantics) and
+> **Status — accepted.** Depends on RFC-0071 (Ownership and Move Semantics) and
 > RFC-0072 (Negative Bounds). Introduces `Rc` and `Arc` as library smart pointer
 > structs with reference-counted lifetimes. They are **not** region types and do not
 > implement `Region` (RFC-0063). A standalone `SharedPointer` aspect captures their

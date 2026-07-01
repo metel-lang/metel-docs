@@ -4,7 +4,7 @@ title: "Standard Library Aspects — Clone, Deref, Send, Sync"
 date: '2026-07-01'
 ---
 
-> **Status — under review.** Depends on RFC-0071 (Ownership and Move Semantics) and
+> **Status — accepted.** Depends on RFC-0071 (Ownership and Move Semantics) and
 > RFC-0060 (Aspect Impl Coherence). Formally specifies four aspects that are assumed
 > pre-existing across the accepted and under-review region RFC cluster (RFC-0063–0079)
 > but have never been defined. The sendability aspects (`Send`, `Sync`) rely on
@@ -271,16 +271,11 @@ does not depend on RFC-0003 and may be accepted independently.
    a region tag, which is appropriate for `Copy` and stack-local types but limiting for
    heap-allocated types where the destination region matters.
 
-2. **Auto-impl scope.** The auto-impl rules for `Send` and `Sync` depend on RFC-0060
-   specifying closed-world coherence. The interaction between auto-impl and explicit
-   negative impls (RFC-0081) — specifically, whether auto-impl fires before or after
-   negative impl resolution — is deferred to RFC-0060.
-
-3. **`BumpRegion` / `AutoRegion` sendability.** The sendability of pointers into
+2. **`BumpRegion` / `AutoRegion` sendability.** The sendability of pointers into
    scoped regions depends on whether the region handle itself is transferred. The full
    rule is deferred to RFC-0003.
 
-4. **Deref coercion chaining.** A single level of transitive deref (e.g., `Box<Rc<T>>`
+3. **Deref coercion chaining.** A single level of transitive deref (e.g., `Box<Rc<T>>`
    coercing to `&T` in two steps) may be useful. Currently prohibited; may be revisited
    when the full coercion system is specified.
 

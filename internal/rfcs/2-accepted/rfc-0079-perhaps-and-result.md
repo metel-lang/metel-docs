@@ -4,7 +4,7 @@ title: "Perhaps<T> and Result<T, E>"
 date: '2026-07-01'
 ---
 
-> **Status — under review.** Depends on RFC-0071 (Ownership and Move Semantics)
+> **Status — accepted.** Depends on RFC-0071 (Ownership and Move Semantics)
 > and RFC-0078 (Bottom Type). Formally defines `Perhaps<T>` and `Result<T, E>` as
 > built-in enum types with specified methods. Resolves RFC-0015 (Unwrap Syntax) in
 > favour of the method form: `.yolo()` is a method, not a keyword. Specifies that

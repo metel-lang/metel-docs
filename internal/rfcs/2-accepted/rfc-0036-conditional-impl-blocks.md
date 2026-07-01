@@ -5,7 +5,7 @@ date: '2026-07-01'
 deferred_from: rfc-0034 (Q6)
 ---
 
-> **Status — under review.** Depends on RFC-0060 (Aspect Impl Coherence). Specifies
+> **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence). Specifies
 > conditional `impl` blocks where an aspect implementation for a generic type is
 > valid only when the type's parameters satisfy additional bounds. Required by
 > RFC-0072 (Negative Bounds) §4 and by the region cluster's generic region bounds.
@@ -118,25 +118,37 @@ compiler does not infer which bounds are needed; the author must state them.
 
 ### 3.1 Overlap rule for conditional impls
 
-Two conditional impls of the same aspect for the same type constructor are a coherence
-error if there exists any concrete instantiation for which both would apply. The
-compiler rejects the pair at the declaration site:
+Two conditional impls of the same aspect for the same type are a coherence error if
+there exists any concrete instantiation for which both would apply (RFC-0060 §2).
+
+The compiler uses **syntactic negation** to determine disjointness: two conditional
+impls are accepted as non-conflicting only when one contains an explicit negative bound
+(RFC-0072) that directly negates a positive bound in the other. No inference beyond
+this direct negation check is performed.
 
 ```metel
-// Error: overlapping conditional impls
-impl<A: Printable> Printable for Pair<A, B> { ... }
-impl<B: Printable> Printable for Pair<A, B> { ... }
-// When A: Printable and B: Printable, both apply — T0015
+// Accepted — T: !Copy directly negates T: Copy; provably disjoint
+impl<T: Copy>  Serialize for Wrapper<T> { ... }
+impl<T: !Copy> Serialize for Wrapper<T> { ... }
 ```
-
-The overlap check is conservative: if the compiler cannot prove the bound sets are
-disjoint, it rejects the pair. Negative bounds can be used to make disjointness
-explicit:
 
 ```metel
-impl<T: Copy> Serialize for Wrapper<T>        { ... }   // Copy types
-impl<T: !Copy> Serialize for Wrapper<T>       { ... }   // non-Copy types — disjoint
+// Error T0015 — no direct negation between Clone and Display;
+// the compiler cannot prove these are disjoint
+impl<T: Clone>   Serialize for Wrapper<T> { ... }
+impl<T: Display> Serialize for Wrapper<T> { ... }
 ```
+
+To make the second example compile, the programmer must add an explicit negative bound
+to establish disjointness:
+
+```metel
+impl<T: Clone, T: !Display> Serialize for Wrapper<T> { ... }
+impl<T: Display>             Serialize for Wrapper<T> { ... }
+```
+
+This rule is intentional: disjointness appears explicitly in the source code, making
+it visible and verifiable without running a constraint solver.
 
 ### 3.2 Conditional and unconditional impls
 
@@ -169,13 +181,7 @@ innermost unsatisfied bound.
 
 ## 5. Unresolved Questions
 
-1. **Non-overlapping parameterised impls.** The current overlap rule keys on the
-   type constructor. Full non-overlap reasoning — allowing `impl Aspect for List<i64>`
-   and `impl Aspect for List<String>` as distinct non-overlapping impls — is deferred
-   to a future RFC. The conservative key-on-constructor rule is safe; it may reject
-   some valid non-overlapping pairs.
-
-2. **Where clause on `impl` blocks for non-generic types.** Whether a non-generic
+1. **Where clause on `impl` blocks for non-generic types.** Whether a non-generic
    type may have a conditional impl (e.g. `impl Aspect for Foo where SOME_CONST: Condition`)
    is deferred. The primary use case for conditional impls is generic types.
 

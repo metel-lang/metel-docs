@@ -4,7 +4,7 @@ title: "Negative Bounds"
 date: '2026-06-28'
 ---
 
-> **Status — under review, design-only.** Introduces `T: !Aspect` as a bound that is
+> **Status — accepted.** Introduces `T: !Aspect` as a bound that is
 > satisfied when `T` does not implement `Aspect`. Required by RFC-0066 (Region Pointer
 > Extraction) and RFC-0071 (Ownership and Move Semantics), both of which use `T: !Drop`.
 
@@ -188,8 +188,10 @@ implement an aspect (`impl !Drop for T {}`). Negative bounds are checked against
 absence of a positive impl; they do not require any opt-out declaration at the type
 definition site.
 
-Explicit negative impls (for opting concrete types out of auto-aspects, if such a feature
-is ever introduced) are a separate and more complex mechanism. That question is deferred.
+Explicit negative impls — needed to opt a type out of an auto-impl aspect that would
+otherwise fire — are specified in RFC-0081 (Negative Impls). The two mechanisms are
+distinct: negative bounds are use-site constraints; negative impls are impl-site
+declarations that affect what the negative bound check finds.
 
 ### 5.2 Negative bounds on the `Self` type within impl blocks
 
@@ -214,3 +216,5 @@ None.
   the move-out constraint that motivates this RFC.
 - RFC-0071 (Ownership and Move Semantics) — establishes `Copy`/`Drop` mutual exclusion;
   §3–4 ground the `Copy implies !Drop` implication.
+- RFC-0081 (Negative Impls) — explicit `impl !Aspect for Type` declarations that affect
+  what negative bound checking finds; complement to this RFC.

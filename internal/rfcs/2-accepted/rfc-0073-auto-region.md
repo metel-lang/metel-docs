@@ -4,7 +4,7 @@ title: "AutoRegion"
 date: '2026-06-29'
 ---
 
-> **Status — under review.** Depends on RFC-0063 (Region Handles), RFC-0065 (Region
+> **Status — accepted.** Depends on RFC-0063 (Region Handles), RFC-0065 (Region
 > Ergonomics), RFC-0066 (Region Pointer Extraction), RFC-0071 (Ownership and Move
 > Semantics), and RFC-0072 (Negative Bounds). Introduces `AutoRegion` as a stdlib region
 > that delegates allocation strategy entirely to the compiler, preserving lifetime
@@ -176,7 +176,7 @@ inherently tied to the current fiber's stack. The non-sendable guarantee is stat
 unconditional — the programmer cannot accidentally send a value whose backing may be on
 the stack.
 
-When cross-fiber data is needed, `@[Heap] T` or `@[Arc] T` (RFC-0074) are the correct
+When cross-fiber data is needed, `@[Heap] T` or `Arc<T>` (RFC-0074) are the correct
 choices.
 
 ### Interaction with SubRegion (RFC-0069)
@@ -203,7 +203,7 @@ to `BumpRegion`. The relationship described above is illustrative.
 
 ---
 
-## The stdlib regions
+## Stdlib allocation types
 
 | Type | Lifetime | Allocator decision | Move-out | Sendable |
 |---|---|---|---|---|

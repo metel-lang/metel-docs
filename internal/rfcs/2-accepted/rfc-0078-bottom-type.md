@@ -4,7 +4,7 @@ title: "Bottom Type — `!`"
 date: '2026-07-01'
 ---
 
-> **Status — under review.** Depends on RFC-0071 (Ownership and Move Semantics).
+> **Status — accepted.** Depends on RFC-0071 (Ownership and Move Semantics).
 > Formally specifies `!` as the bottom of the type hierarchy: its subtyping rule,
 > coercion behaviour, and match exhaustiveness implications. Establishes the general
 > uninhabited-variant rule and the inhabited-singleton coercion rule that together
