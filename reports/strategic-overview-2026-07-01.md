@@ -154,22 +154,20 @@ are easier to evaluate once the core is running.
 
 ---
 
-## The New Cross-RFC Dependency
+## Brand Types — Deferred
 
-A dependency that did not exist on June 29: RFC-0074 Q1 (`@[Rc] expr` sugar) and
-RFC-0076 Q1 (brand introduction mechanism) are coupled.
+RFC-0076 (Brand Types) remains under review but is deferred from the current
+acceptance block. The brand introduction mechanism (Q1) is a fundamental open design
+question with no clear resolution, and enough other material is ready to proceed
+without it.
 
-If `@[Rc] expr` is allocation sugar, it implicitly introduces a fresh brand at the
-call site — this is exactly the allocation-site brand form described in RFC-0076.
-If RFC-0076's brand introduction uses explicit `brand 'b { ... }` blocks, then
-the allocation-site form is a special rule layered on top. If RFC-0076's brand
-introduction instead uses implicit per-binding brands, then `@[Rc] expr` sugar
-becomes a natural special case of the general mechanism with no special rule needed.
+RFC-0074 Q1 (`@[Rc] expr` allocation sugar) is coupled to RFC-0076 Q1 and is
+deferred alongside it. RFC-0074 is accepted with Q1 marked as deferred future work.
 
-The design of each RFC is blocked on the resolution of the other. The practical path:
-resolve RFC-0076 Q1 first (brand introduction mechanism), then close RFC-0074 Q1
-as a consequence. RFC-0074 can be accepted with Q1 marked as "deferred pending
-RFC-0076 Q1."
+RFC-0077 (Region Generics) does not depend on RFC-0076 and proceeds independently.
+RFC-0064 (Fork-Join Parallelism) references `JoinToken<'b>` from RFC-0076; the
+concurrency RFC can be scoped to proceed without brand-gated tokens and treat them
+as a follow-on extension when RFC-0076 is resolved.
 
 ---
 
@@ -182,9 +180,10 @@ high after the RFC-0074 rewrite. The design/implementation gap is unchanged.
 structs is the right call; the seven-exceptions problem is resolved. The cost is a
 new dependency on RFC-0076 for the allocation sugar question.
 
-**Brand types** — under review but not ready to accept. The brand introduction
-mechanism (Q1) is a fundamental open question. Resolving it is the critical path
-before RFC-0076 can be accepted.
+**Brand types** — deferred from the current acceptance block. RFC-0076 Q1 (brand
+introduction mechanism) is an open design question with no clear resolution. There
+is enough material to complete Phase 2 without it; brand types become a follow-on
+block after implementation begins.
 
 **Type system** — incomplete, and now the first priority. RFC-0060 (coherence) is
 still a draft. The `SharedPointer` aspect in RFC-0074 is in the under-review layer
@@ -250,19 +249,19 @@ RFC-0049 (linear fun type system).
 ### Phase 2 — Region System Finalization
 
 With the type system specified, finalize the region and shared-ownership designs.
-The under-review cluster is the primary target; RFC-0064 (concurrency) closes the
-phase.
+RFC-0076 (Brand Types) is excluded from this block — it is deferred to a follow-on.
 
 1. **Accept RFC-0072** — zero open questions; clear the queue.
-2. **Accept RFC-0073 and RFC-0074** together. RFC-0074 Q1 (allocation sugar) is
-   deferred pending RFC-0076 Q1 resolution.
-3. **Resolve RFC-0076 Q1** (brand introduction mechanism) — the single open question
-   blocking RFC-0076 acceptance, and by dependency, RFC-0074 Q1. Requires a focused
-   design decision.
-4. **Accept RFC-0075** (region inference) — after RFC-0073.
-5. **Accept RFC-0076 and RFC-0077** — after Q1 is resolved.
-6. **Complete RFC-0064** (fork-join parallelism) — the memory model is stable enough;
-   `JoinToken<'b>` from RFC-0076 provides the integration point.
+2. **Accept RFC-0073 and RFC-0074** together. RFC-0074 Q1 (`@[Rc] expr` allocation
+   sugar) is deferred alongside RFC-0076.
+3. **Accept RFC-0075** (region inference) — after RFC-0073.
+4. **Accept RFC-0077** (region generics) — no dependency on RFC-0076.
+5. **Complete RFC-0064** (fork-join parallelism) — scoped without brand-gated tokens;
+   `JoinToken<'b>` integration is a follow-on when RFC-0076 is resolved.
+
+**Deferred to follow-on block:** RFC-0076 (Brand Types) and RFC-0074 Q1 (allocation
+sugar). These require resolving the brand introduction mechanism (Q1) first. They
+do not block implementation of the region system core.
 
 ### Phase 3 — Implementation
 
@@ -280,12 +279,9 @@ ergonomically wrong. The longer the feedback loop, the higher this risk.
 
 The mitigant: the type system phase produces RFCs that can be evaluated syntactically
 and by worked examples, before any implementation. The RFC-0074 rewrite demonstrated
-that paper-level review is effective at catching fundamental design errors. The brand
-introduction mechanism (RFC-0076 Q1) is a design decision that can be resolved the
-same way.
+that paper-level review is effective at catching fundamental design errors.
 
-The assessment changes if: the type system RFC audit reveals that the draft backlog
-is more extensively stale than expected, making Phase 1 substantially longer than
-anticipated. In that case, a narrower scope — accept the under-review region cluster
-first, then do the type system — may be warranted to avoid indefinite deferral of
-the region design.
+The assessment changes if the brand introduction mechanism (RFC-0076 Q1) turns out
+to require early implementation feedback to resolve — in which case deferring it was
+the right call regardless, and the follow-on block picks it up once the interpreter
+is running against the region model.
