@@ -321,8 +321,8 @@ separates the permission from the handler state:
 struct HandlerToken<brand 'b, E> { _brand: PhantomBrand<'b> }
 struct HandlerCell<brand 'b, E, S> { state: S, _brand: PhantomBrand<'b> }
 
-impl<brand 'b> HandlerCell<'b, Logger, Vec<String>> {
-    fun record(self: &HandlerCell<'b, Logger, Vec<String>>, msg: String,
+impl<brand 'b> HandlerCell<'b, Logger, List<String>> {
+    fun record(self: &HandlerCell<'b, Logger, List<String>>, msg: String,
                _token: &mut HandlerToken<'b, Logger>) {
         self.state.push(msg);
     }
@@ -330,8 +330,8 @@ impl<brand 'b> HandlerCell<'b, Logger, Vec<String>> {
 
 brand 'h {
     let token = HandlerToken::<'h, Logger>::new();
-    let handler: Rc<HandlerCell<'h, Logger, Vec<String>>, 'h> =
-        Rc::new(HandlerCell { state: Vec::new(), _brand: PhantomBrand });
+    let handler: Rc<HandlerCell<'h, Logger, List<String>>, 'h> =
+        Rc::new(HandlerCell { state: List::new(), _brand: PhantomBrand });
 
     // Explicit dispatch to this specific handler:
     handler.record("first message", &mut token);

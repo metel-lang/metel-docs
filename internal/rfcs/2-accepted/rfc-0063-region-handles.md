@@ -138,16 +138,11 @@ The closure form creates a visible syntactic boundary signalling the block is ar
 The `let` form is more flexible: the region can span multiple function calls, be passed as a
 bracket argument, or be dropped early. Both forms use the same underlying arena type.
 
-`Arc<T>` is the one stdlib wrapper that adds semantics beyond the region tag: shared
-ownership via refcount. It is region-polymorphic — the region is supplied at the call site —
-and its sendability follows from the tag:
+Shared ownership via reference counting is provided by `Rc<T>` and `Arc<T>` as library
+smart pointer structs. They are **not regions** and do not participate in the bracket
+channel — they allocate their backing storage internally via `@[Heap]` and carry a
+brand parameter for alias analysis. Their design is specified in RFC-0074.
 
-- `Arc<T>[Heap]` — atomic refcount, sendable across fibers.
-- `Arc<T>[LocalHeap]` — non-atomic refcount, not sendable; the tag already guarantees
-  single-thread access, so the cheaper implementation is sound.
-
-The second form subsumes `Rc<T>` from the Rust model: the non-sendability that justified
-a separate `Rc` type is already encoded in `[LocalHeap]`, so no additional type is needed.
 `Box<T>` is **retired** — `@[Heap] T` is self-documenting and direct heap allocation is
 written `@[Heap] expr`.
 
@@ -327,9 +322,9 @@ alias, with no locks and no runtime checks required.
 **Sendability encoded in the tag.** With `Box<T, A>`, sendability depends on `T: Send + A:
 Send` — a scoped arena could accidentally implement `Send`. With `@[r] T` the rule is
 structural: `[Heap]` → sendable, `[LocalHeap]` → thread-local only, scoped `[region]` →
-never sendable. The same rule unifies `Arc` and `Rc`: `Arc<T>[Heap]` uses atomic refcounting
-and is sendable; `Arc<T>[LocalHeap]` uses non-atomic refcounting and is not — one type, two
-behaviors, no separate `Rc`.
+never sendable. For reference-counted shared pointers (`Rc<T>`, `Arc<T>`), sendability
+is determined by the struct itself: `Rc<T>` is never sendable; `Arc<T>` is sendable when
+`T: Send + Sync`. See RFC-0074.
 
 `@[r] T` is therefore not sugar around `Box<T, A>`. It could lower to a structure shaped
 like `Box<T, A>` at the IR level, but the tag operates at the instance level rather than the
@@ -413,9 +408,9 @@ is uniform across both channels: `<T: Trait>` and `[r: Outlives<other>]`.
 The region tag decides what crosses a fiber boundary:
 
 ```
-fiber boundary  :  @[Heap] T  /  Arc<T>[Heap]  /  Chan endpoint   — sendable
-                   @[LocalHeap] T  /  Arc<T>[LocalHeap]             — thread-local only
-                   @[region] T                                       — REJECTED (scope-bound)
+fiber boundary  :  @[Heap] T  /  Arc<T> (when T: Send+Sync)  /  Chan endpoint   — sendable
+                   @[LocalHeap] T  /  Rc<T>                                        — thread-local only
+                   @[region] T                                                      — REJECTED (scope-bound)
 ```
 
 A region pointer is sendable iff its tag is `[Heap]`. `[LocalHeap]` is thread-local: the
@@ -423,9 +418,9 @@ value exists on the heap but cannot cross a fiber boundary. A scoped `[region]` 
 non-sendable by construction — a fiber may outlive the region. No `RegionFree`/`Send`
 approximations are needed; the tag is the check.
 
-The same rule unifies `Arc` and `Rc`: `Arc<T>[Heap]` is sendable and uses atomic refcount
-operations; `Arc<T>[LocalHeap]` is non-sendable and can use non-atomic operations. The
-region tag is the only distinction — no separate `Rc` type is needed.
+Shared ownership (`Rc<T>`, `Arc<T>`) is outside the region system. Their sendability
+is intrinsic to the struct: `Rc<T>` is `!Send`; `Arc<T>` is `Send + Sync` when
+`T: Send + Sync`. See RFC-0074.
 
 ---
 

@@ -165,15 +165,16 @@ fun alloc_copy<T: Clone, R: Region>[r: R](val: T) -> @[r] T {
     @[r] val.clone()
 }
 
-fun share<T, R: SharedRegion>[r: R](val: T) -> @[r] T {
-    @[r] val
-}
 ```
 
-`R` is declared in `<...>` with a region aspect bound (`R: Region`, `R: SharedRegion`,
-or any aspect that is itself a supertrait of `Region`). `[r: R]` constrains the bracket
-parameter `r` to have concrete type `R`. At the call site, `R` is inferred from the
-supplied region handle, or written explicitly as a type argument.
+`R` is declared in `<...>` with a region aspect bound (`R: Region`, or any aspect that
+is itself a supertrait of `Region`). `[r: R]` constrains the bracket parameter `r` to
+have concrete type `R`. At the call site, `R` is inferred from the supplied region
+handle, or written explicitly as a type argument.
+
+Note: `Rc<T>` and `Arc<T>` are **not** regions (RFC-0074). There is no `SharedRegion`
+aspect. Shared-ownership types do not participate in the bracket channel and cannot
+appear as region bounds.
 
 ### 2.2 Structs
 
@@ -194,8 +195,8 @@ impl<R: Region>[r: R] Cache<R>[r: R] {
 ```
 
 `Cache` is polymorphic over the region kind. A caller using `BumpRegion` gets an
-arena-backed cache; a caller using an `Arc` region gets shared-ownership cache storage —
-with no specialisation in the library.
+arena-backed cache; a caller using `Heap` gets a heap-allocated cache — with no
+specialisation in the library.
 
 ### 2.3 Region bounds on `aspect` methods
 
@@ -221,7 +222,6 @@ aspect impl Serialize for Record {
 | `[r]` | any infallible region | allocate, no opinion on region kind |
 | `[r: Heap]` | exactly `Heap` | heap-only |
 | `[r: R]` where `R: Region` | any region implementing `Region` | region-polymorphic allocation |
-| `[r: R]` where `R: SharedRegion` | any shared-ownership region | `Rc`/`Arc` abstraction |
 
 The bare form `[r]` is preserved as the ergonomic default. The generic bound form is
 used when the region type must be named (as a struct field, or to constrain multiple
@@ -494,5 +494,5 @@ covariance is sound and necessary for practical generic code.
   blocks; §1.4 of this RFC provides the complementary rule for external `[r]`.
 - RFC-0069 (Sub-Region Typing) — `SubRegion<R: Region>`; the sole pre-existing use of
   a `<R: Region>` generic region bound, now generalised in §2 of this RFC.
-- RFC-0074 (Shared Ownership) — `SharedRegion`; used as a concrete example of a
-  region aspect in the generic bound table (§2.4).
+- RFC-0074 (Shared Pointers — Rc and Arc) — `Rc<T>` and `Arc<T>` are library structs,
+  not regions; they do not appear in the generic region bound table.
