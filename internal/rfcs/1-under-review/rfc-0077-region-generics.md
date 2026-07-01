@@ -188,7 +188,7 @@ impl<R: Region>[r: R] Cache<R>[r: R] {
         Cache { data: @[r] HashMap::new() }
     }
 
-    fun get[s](self: &[s] Cache<R>[r: R], key: &Key) -> Option<&[r] Value> {
+    fun get[s](self: &[s] Cache<R>[r: R], key: &Key) -> Perhaps<&[r] Value> {
         self.data.get(key)
     }
 }

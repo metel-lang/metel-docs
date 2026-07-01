@@ -94,7 +94,7 @@ Details:
 - **`get_mut`** — the conservative check. Requires no weak references (since a weak
   pointer could be upgraded after the check). Requires `&mut Rc<T>` as the receiver
   to prevent concurrent access to the pointer within the same thread (same role as
-  Metel's `&mut Rc<T>`). Returns `Option<&mut T>` that borrows from the `Rc`.
+  Metel's `&mut Rc<T>`). Returns `Perhaps<&mut T>` that borrows from the `Rc`.
   This is the model for Metel's `SharedPointer::get_mut`.
 
 - **`make_mut`** — the "I always need to mutate" API. If the RC is uniquely held,

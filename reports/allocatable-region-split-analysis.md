@@ -70,7 +70,7 @@ For regions: move-out is always possible (with the `T: !Drop` restriction for
 region. This is safe because unique ownership guarantees no other pointer exists.
 
 For shared pointers: the equivalent operation is `try_unwrap`, which succeeds only if
-the reference count is exactly one — `Result<T, @[Rc] T>`. If other owners exist, the
+the reference count is exactly one — `Perhaps<T, Rc<T>>`. If other owners exist, the
 operation fails at runtime and returns the pointer unchanged.
 
 These are not the same operation. Unique-ownership move-out is unconditional; shared
@@ -222,7 +222,7 @@ let b = a.clone();
 
 **Extraction and pattern matching.** `@[Heap] Node` can be consumed and its inner
 value extracted unconditionally. `@[Rc] Node` requires `try_unwrap` — a fallible,
-runtime-checked operation that returns `Result<Node, @[Rc] Node>`.
+runtime-checked operation that returns `Perhaps<Node, Rc<Node>>`.
 
 ### 5.3 The transparent-change boundary
 

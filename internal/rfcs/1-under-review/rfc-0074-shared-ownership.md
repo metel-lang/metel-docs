@@ -55,7 +55,7 @@ reference to its field, while `b` is used to replace the variant, the replacemen
 destroys the field while the reference derived from `a` is still live — a use-after-free.
 
 The safe approach is to verify, at the moment mutation is attempted, that no other
-owner exists. This RFC provides `get_mut` — a runtime check returning `Option<&mut T>`.
+owner exists. This RFC provides `get_mut` — a runtime check returning `Perhaps<&mut T>`.
 If the reference count is exactly one, no other owner exists and exclusive mutable
 access is safe. Otherwise `None` is returned and the caller handles the failure.
 
@@ -100,8 +100,8 @@ with unique ownership.
 ```metel
 aspect SharedPointer<T> {
     fun clone(self: &Self) -> Self
-    fun get_mut<'s>(self: &'s mut Self) -> Option<&'s mut T>
-    fun try_unwrap(self: Self) -> Result<T, Self>
+    fun get_mut<'s>(self: &'s mut Self) -> Perhaps<&'s mut T>
+    fun try_unwrap(self: Self) -> Perhaps<T, Self>
     fun strong_count(self: &Self) -> USize
 }
 ```
@@ -179,7 +179,7 @@ track their source binding, not the shared allocation.
 ### 2.4 `get_mut` — runtime-checked exclusive access
 
 ```metel
-fun get_mut<'s>(self: &'s mut Rc<T, 'b>) -> Option<&'s mut T>
+fun get_mut<'s>(self: &'s mut Rc<T, 'b>) -> Perhaps<&'s mut T>
 ```
 
 `get_mut` checks `strong_count == 1`. If the count is one, no other owner exists and a
@@ -200,7 +200,7 @@ match node.get_mut() {
 ### 2.5 `try_unwrap` — consuming extraction
 
 ```metel
-fun try_unwrap(self: Rc<T, 'b>) -> Result<T, Rc<T, 'b>>
+fun try_unwrap(self: Rc<T, 'b>) -> Perhaps<T, Rc<T, 'b>>
 ```
 
 `try_unwrap` consumes the `Rc<T>` and checks `strong_count == 1`. If the count is one,
