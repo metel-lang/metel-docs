@@ -58,7 +58,7 @@ library authors declare). These are different features and both are needed.
 | Never type `!` | 0063 (`AllocationError = !`), 0073 | **Implemented** — defined in public spec (types.md §Never Type) as the bottom type for diverging expressions |
 | `Perhaps<T>` stdlib type (nullable) | 0063, 0065, 0067, 0074, 0075 | **Implemented** — defined in public spec (types.md §Perhaps) |
 | `Result<T, E>` stdlib type (fallible) | 0063, 0068, 0074, 0075 | **Implemented** — defined in public spec (types.md §Result) |
-| `Result<T, !>` → `T` collapse rule | 0063 §1.1 | **Gap** — `!` is in the spec but the collapse rule is not; no RFC specifies it |
+| `Result<T, !>` → `T` collapse rule | 0063 §1.1 | Draft — RFC-0078 (under review) specifies `!` subtyping and collapse |
 
 **Naming is settled** and both types are implemented. The remaining gap is narrow:
 the `Result<T, !>` collapse rule — that `Result<@[r] T, !>` is treated as `@[r] T`
@@ -185,11 +185,8 @@ RFC-0074 rewrite and should be removed or replaced.
 These gaps mean the under-review or accepted region RFCs are internally inconsistent
 or underspecified right now. They must be resolved in the type system phase:
 
-1. **`Result<T, !>` collapse rule** — `!`, `Perhaps<T>`, and `Result<T, E>` are all
-   implemented (public spec types.md). What is missing is the formal rule that
-   `Result<T, !>` collapses to `T` at infallible allocation sites. RFC-0063 states
-   this as a given; no RFC specifies `!`'s subtyping properties or the collapse
-   mechanism. An RFC is needed.
+1. **`Result<T, !>` collapse rule** — addressed by RFC-0078 (under review), which
+   formally specifies `!` subtyping and the infallible result collapse rule.
 
 2. **Negative impls** (`impl !Send for Rc<T>`) — RFC-0074 requires them; RFC-0072
    does not provide them. A gap that requires extending RFC-0072 or a new RFC.
