@@ -55,18 +55,15 @@ library authors declare). These are different features and both are needed.
 
 | Feature | Assumed by | Status |
 |---|---|---|
-| Never type `!` | 0063 (`AllocationError = !`), 0073 | **Gap** — no accepted RFC defines `!` as a type |
-| `Perhaps<T>` stdlib type (nullable) | 0063, 0065, 0067, 0074, 0075 | **Gap** — used throughout; never formally specified |
-| `Result<T, E>` stdlib type (fallible) | 0063, 0068, 0074, 0075 | **Gap** — used throughout; never formally specified |
-| `Result<T, !>` → `T` collapsing at infallible sites | 0063 §1.1 | **Gap** — stated as a fact in RFC-0063; no RFC specifies the collapse rule |
+| Never type `!` | 0063 (`AllocationError = !`), 0073 | **Implemented** — defined in public spec (types.md §Never Type) as the bottom type for diverging expressions |
+| `Perhaps<T>` stdlib type (nullable) | 0063, 0065, 0067, 0074, 0075 | **Implemented** — defined in public spec (types.md §Perhaps) |
+| `Result<T, E>` stdlib type (fallible) | 0063, 0068, 0074, 0075 | **Implemented** — defined in public spec (types.md §Result) |
+| `Result<T, !>` → `T` collapse rule | 0063 §1.1 | **Gap** — `!` is in the spec but the collapse rule is not; no RFC specifies it |
 
-**Naming is settled:** `Perhaps<T>` is nullable (one type param); `Result<T, E>` is
-fallible (two type params). This matches the implemented language (RFC-0020). The gap
-is that neither type is formally defined in any accepted RFC.
-
-The `Result<T, !>` collapse is load-bearing: RFC-0063 uses infallible allocation as a
-stated property of `Heap` and `LocalHeap`. Without a specified `!` type and collapse
-rule, the type of `@[r] T` expressions is underspecified.
+**Naming is settled** and both types are implemented. The remaining gap is narrow:
+the `Result<T, !>` collapse rule — that `Result<@[r] T, !>` is treated as `@[r] T`
+at infallible allocation sites — is stated as a fact in RFC-0063 but specified nowhere.
+An RFC is needed to formally define `!`'s subtyping properties and the collapse rule.
 
 ---
 
@@ -188,24 +185,21 @@ RFC-0074 rewrite and should be removed or replaced.
 These gaps mean the under-review or accepted region RFCs are internally inconsistent
 or underspecified right now. They must be resolved in the type system phase:
 
-1. **`Perhaps<T,E>` / `Result<T,E>` / `Option<T>` naming** — three names used across
-   the cluster; no RFC defines any of them. A single RFC should define the fallibility
-   types and settle the naming.
+1. **`Result<T, !>` collapse rule** — `!`, `Perhaps<T>`, and `Result<T, E>` are all
+   implemented (public spec types.md). What is missing is the formal rule that
+   `Result<T, !>` collapses to `T` at infallible allocation sites. RFC-0063 states
+   this as a given; no RFC specifies `!`'s subtyping properties or the collapse
+   mechanism. An RFC is needed.
 
-2. **Never type `!` and `Perhaps<T,!>` collapsing** — foundational to infallible
-   allocation. RFC-0063 uses it as a given.
-
-3. **Negative impls** (`impl !Send for Rc<T>`) — RFC-0074 requires them; RFC-0072
+2. **Negative impls** (`impl !Send for Rc<T>`) — RFC-0074 requires them; RFC-0072
    does not provide them. A gap that requires extending RFC-0072 or a new RFC.
 
-4. **`Clone`, `Deref`, `Send`, `Sync` aspects** — assumed as pre-existing in multiple
+3. **`Clone`, `Deref`, `Send`, `Sync` aspects** — assumed as pre-existing in multiple
    accepted RFCs. Likely belong in a stdlib aspects RFC.
 
-5. **RFC-0063 amendment for Arc/Rc** — the accepted RFC contradicts the under-review
-   RFC. Must be corrected before the cluster can be considered coherent.
+4. **RFC-0063 amendment for Arc/Rc** — resolved in this audit session (committed).
 
-6. **`Vec<T>` vs `List<T>`** — naming inconsistency between implemented stdlib and
-   RFC-0076 code examples.
+5. **`Vec<T>` vs `List<T>`** — resolved in this audit session (committed).
 
 ### Gaps That Can Wait for the Type System Phase
 
