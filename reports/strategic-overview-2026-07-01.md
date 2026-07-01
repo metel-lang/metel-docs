@@ -186,69 +186,93 @@ new dependency on RFC-0076 for the allocation sugar question.
 mechanism (Q1) is a fundamental open question. Resolving it is the critical path
 before RFC-0076 can be accepted.
 
-**Type system** — still incomplete. RFC-0060 (coherence) is still a draft. The
-`SharedPointer` aspect in RFC-0074 is now in the under-review layer but its coherence
-properties are unspecified. This will become a blocker when implementation begins.
+**Type system** — incomplete, and now the first priority. RFC-0060 (coherence) is
+still a draft. The `SharedPointer` aspect in RFC-0074 is in the under-review layer
+but its coherence properties are unspecified. Several type system drafts predate the
+current region model and may need to be reviewed against it rather than simply
+completed. These are prerequisites for the region system — without coherence,
+`SharedPointer` cannot be correctly scoped; without conditional impls, generic region
+bounds cannot express complex constraints.
 
-**Concurrency** — still parked. RFC-0064 can be resumed. The memory model is stable
-enough to ground it.
+**Concurrency** — parked until the region system is finalised. RFC-0064 belongs in
+the region-finalization phase, not before.
 
-**Borrow checker** — unimplemented. This is still Priority 1.
+**Implementation** — deferred until the type system and region system designs are
+complete. Implementing before the specification is stable risks implementation rework
+when design decisions change. The RFC-0074 rewrite is a concrete example: implementing
+the borrow checker against the old `SharedRegion` design would have produced discarded
+work.
 
 ---
 
 ## Priorities
 
-**Immediate.**
+The project has three phases in sequence. No phase begins until the previous one is
+complete.
 
-1. Accept RFC-0072. Zero open questions. Unblocks nothing further but clears the
-   queue of a ready item.
+### Phase 1 — Type System
 
-2. Accept RFC-0073 and RFC-0074 together, with all non-blocking open questions
-   deferred. The group is ready. RFC-0074 Q1 (allocation sugar) is marked "deferred
-   pending RFC-0076 Q1."
+Finish the type system RFC cluster. These are prerequisites for correctly specifying
+the region and shared-ownership designs, and for any implementation that handles
+generic code.
 
-**Short term.**
+**Audit first.** Several type system drafts are low-numbered (RFC-0008, RFC-0036,
+RFC-0037) and were written before the current region and ownership model existed. Each
+must be reviewed against the current language before being completed or rewritten.
 
-3. Resolve RFC-0076 Q1 (brand introduction mechanism). This is the single question
-   that blocks RFC-0076 acceptance and, by dependency, closes RFC-0074 Q1. It is a
-   design decision, not a specification gap — it can be resolved with a focused
-   analysis.
+Target RFCs (draft, to be completed or rewritten):
 
-4. Accept RFC-0075 once RFC-0073 is accepted (its primary dependency).
+| RFC | Title | Notes |
+|---|---|---|
+| 0060 | Aspect Impl Coherence | Orphan rules; needed by SharedPointer, all aspect impls |
+| 0061 | Structural Aspect Bounds | `T: {field: Aspect}`; needed for generic region code |
+| 0036 | Conditional Impl Blocks | `impl<T: Aspect> Foo for Bar<T>`; generic library code |
+| 0037 | Return-Position Impl Aspect | `fun f() -> impl Aspect`; needed for ergonomic APIs |
+| 0008 | Aspect Objects | `dyn Aspect`; needed for dynamic dispatch |
 
-5. Accept RFC-0077 with remaining open questions deferred. The core design is
-   implementation-blocking without it.
+Secondary type system drafts (less urgent but in scope for this phase):
+RFC-0038 (impl aspect struct fields), RFC-0039 (aspect alias syntax),
+RFC-0049 (linear fun type system).
 
-**Medium term.**
+### Phase 2 — Region System Finalization
 
-6. Resume RFC-0064 (fork-join parallelism). The memory model is stable; the
-   `JoinToken<'b>` pattern from RFC-0076 provides a well-specified integration
-   point.
+With the type system specified, finalize the region and shared-ownership designs.
+The under-review cluster is the primary target; RFC-0064 (concurrency) closes the
+phase.
 
-7. Return to RFC-0060 (coherence) and RFC-0061 (structural bounds). These are the
-   type system blockers that determine whether generic library code is writable.
+1. **Accept RFC-0072** — zero open questions; clear the queue.
+2. **Accept RFC-0073 and RFC-0074** together. RFC-0074 Q1 (allocation sugar) is
+   deferred pending RFC-0076 Q1 resolution.
+3. **Resolve RFC-0076 Q1** (brand introduction mechanism) — the single open question
+   blocking RFC-0076 acceptance, and by dependency, RFC-0074 Q1. Requires a focused
+   design decision.
+4. **Accept RFC-0075** (region inference) — after RFC-0073.
+5. **Accept RFC-0076 and RFC-0077** — after Q1 is resolved.
+6. **Complete RFC-0064** (fork-join parallelism) — the memory model is stable enough;
+   `JoinToken<'b>` from RFC-0076 provides the integration point.
 
-**Hold.**
+### Phase 3 — Implementation
 
-- RFC-0076 acceptance: wait for Q1 resolution.
-- RFC-0075 acceptance: wait for RFC-0073 acceptance.
-- All draft backlog items outside the clusters above.
-
-**Priority 1, unchanged: implement the borrow checker.** Every design decision
-between now and then is made without feedback from the actual model. The six-RFC
-under-review cluster is ready to land; the implementation is not.
+With a complete, coherent specification, begin implementation. The borrow checker,
+region allocators, and move semantics enforcement can all be built against a stable
+target. Implementation rework risk is minimised.
 
 ---
 
 ## What Would Change This Assessment
 
-The analysis remains the same as June 29: implement the borrow checker in the
-interpreter, even partially, and the design/implementation gap begins to close.
-At that point, brand introduction can be evaluated against real programs, the
-`@[Rc] expr` sugar question becomes testable, and RFC-0076 Q1 may resolve itself
-through observed ergonomics rather than top-down design.
+The primary risk of the design-first approach is that design without feedback from
+running programs can produce specifications that are internally consistent but
+ergonomically wrong. The longer the feedback loop, the higher this risk.
 
-Until then, the project is in a state where the design is approximately two layers
-ahead of the implementation: the under-review cluster (0072–0077) assumes the
-accepted cluster (0063–0071) is running, and the accepted cluster is not running.
+The mitigant: the type system phase produces RFCs that can be evaluated syntactically
+and by worked examples, before any implementation. The RFC-0074 rewrite demonstrated
+that paper-level review is effective at catching fundamental design errors. The brand
+introduction mechanism (RFC-0076 Q1) is a design decision that can be resolved the
+same way.
+
+The assessment changes if: the type system RFC audit reveals that the draft backlog
+is more extensively stale than expected, making Phase 1 substantially longer than
+anticipated. In that case, a narrower scope — accept the under-review region cluster
+first, then do the type system — may be warranted to avoid indefinite deferral of
+the region design.
