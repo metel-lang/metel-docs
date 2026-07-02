@@ -4,11 +4,12 @@ title: "Shared Pointers — Rc and Arc"
 date: '2026-06-30'
 ---
 
-> **Status — accepted.** Depends on RFC-0071 (Ownership and Move Semantics) and
-> RFC-0072 (Negative Bounds). Introduces `Rc` and `Arc` as library smart pointer
-> structs with reference-counted lifetimes. They are **not** region types and do not
-> implement `Region` (RFC-0063). A standalone `SharedPointer` aspect captures their
-> shared interface for generic use.
+> **Status — under review.** Moved back from accepted: the struct definitions use
+> `brand 'b` as a type parameter kind (`struct Rc<T, brand 'b>`, `PhantomBrand<'b>`),
+> which is syntax from RFC-0076 (Brand Types). RFC-0076 Q1 (brand introduction
+> mechanism) remains unresolved. Until RFC-0076 is accepted, the type signatures in
+> this RFC are formally incomplete. Blocking: RFC-0076. Also depends on RFC-0071
+> (Ownership and Move Semantics) and RFC-0072 (Negative Bounds).
 
 ## Summary
 

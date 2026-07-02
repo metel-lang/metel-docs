@@ -24,9 +24,11 @@ the function types section (correcting the claim that function types cannot impl
 aspects — they do implement `Callable<A, B>`); `Ord` and `Hash` deferred impls added;
 and the `T[]` representation made explicit (sized owned fat struct, never `Copy`).
 
-**Phase 2 (region system) completed modulo RFC-0064.** RFC-0072, 0073, 0074, 0077,
-0078, 0079, 0080, 0081 accepted. Three gap-filling RFCs identified and accepted
-in the same pass:
+**Phase 2 (region system) substantially completed modulo RFC-0064 and RFC-0074.**
+RFC-0072, 0073, 0077, 0078, 0079, 0080, 0081 accepted. RFC-0074 (Shared Ownership)
+was subsequently moved back to under review — its type signatures use `brand 'b`
+syntax from RFC-0076, which remains unresolved. Three gap-filling RFCs identified
+and accepted in the same pass:
 
 - **RFC-0082 (Associated Types)** — `type X;` in aspect blocks and `type X = Y;` in
   impl blocks were used throughout accepted RFCs without formal specification.
@@ -46,13 +48,16 @@ as a visible allocation signal. Cases 2/3 (inter-function) cannot be fairly eval
 without implementation experience. Moved to `0-draft`, status parked.
 
 **RFC-0076 remains under review, deferred.** The brand introduction mechanism (Q1)
-is unresolved. No change from the July 1 draft.
+is unresolved. Resolving RFC-0076 now also unblocks RFC-0074.
+
+**RFC-0074 moved back to under review.** The core Rc/Arc design is sound, but the
+type signatures use `brand 'b` from RFC-0076. Blocking: RFC-0076 Q1.
 
 ---
 
 ## RFC State
 
-### Accepted (23)
+### Accepted (22)
 
 | RFC | Title |
 |---|---|
@@ -70,7 +75,6 @@ is unresolved. No change from the July 1 draft.
 | 0071 | Ownership and Move Semantics — affine types, `Clone`, `Drop` |
 | 0072 | Negative Bounds — `T: !Aspect` |
 | 0073 | AutoRegion — five guarantees, compiler latitude |
-| 0074 | Shared Ownership — `Rc<T, 'b>`, `Arc<T, 'b>`, `SharedPointer` aspect |
 | 0077 | Region Generics — impl headers, variance, wellformedness |
 | 0078 | Bottom Type — `!`, uninhabited coercions, `Result<T, !>` collapse |
 | 0079 | Perhaps and Result — formal definitions, prelude membership |
@@ -83,10 +87,17 @@ is unresolved. No change from the July 1 draft.
 None of these is implemented except the memory model primitives in RFC-0063/0065.
 Every RFC from 0066 onward is ahead of the interpreter.
 
-### Under Review (1)
+### Under Review (2)
 
 **RFC-0076 — Brand Types.** Q1 (brand introduction mechanism) remains unresolved.
-Deferred to the follow-on block after Phase 3 begins. No change from July 1 draft.
+Deferred to the follow-on block after Phase 3 begins.
+
+**RFC-0074 — Shared Ownership (`Rc`, `Arc`).** Moved back from accepted. The struct
+definitions use `brand 'b` as a type parameter kind (`struct Rc<T, brand 'b>`,
+`PhantomBrand<'b>`), which is RFC-0076 syntax. Until RFC-0076 Q1 is resolved, the
+type signatures are formally incomplete. The core API design (`new`, `clone`,
+`get_mut`, `try_unwrap`, sendability rules) is solid and does not change. Blocking:
+RFC-0076.
 
 ### Draft / Parked
 
@@ -124,11 +135,13 @@ section was wrong (blanket exclusion from all aspects); auto-impl propagation fo
 structural types was absent; `T[]` representation was implicit. These are now
 specified.
 
-**Region and ownership model** — complete. The full lifecycle of a value — allocation,
-borrowing, move-out, drop, shared ownership — is specified across 15 accepted RFCs.
-Associated types (RFC-0082) filled the last gap that made existing RFCs formally
-incomplete. The module system extension (RFC-0083) and array syntax fix (RFC-0084)
-address two concrete usability issues.
+**Region and ownership model** — substantially complete. Allocation, borrowing,
+move-out, and drop are fully specified across 14 accepted RFCs. Shared ownership
+(RFC-0074) is under review pending RFC-0076: the `brand 'b` parameter in `Rc<T, 'b>`
+and `Arc<T, 'b>` cannot be formally grounded until the brand introduction mechanism
+is resolved. The core Rc/Arc API design is not in dispute — only the type signatures.
+Associated types (RFC-0082), the module system extension (RFC-0083), and array syntax
+fix (RFC-0084) close three concrete usability gaps.
 
 **Brand types** — deferred. RFC-0076 Q1 (brand introduction mechanism) is an open
 design question that cannot be resolved without implementation feedback. The correct
