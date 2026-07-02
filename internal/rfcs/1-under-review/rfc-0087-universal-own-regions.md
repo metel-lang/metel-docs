@@ -126,8 +126,8 @@ inside another value's scope, the same nesting-derives-`Outlives` reasoning
 (RFC-0069 §3.3) applies without any special casing for the phantom backing — nothing
 in RFC-0069's derivation depends on what the region actually allocates.
 
-This is what lets RFC-0086's `Outlives<x, y>` be nothing more than an ordinary
-multi-way `Outlives` bound between two already-existing regions, rather than a
+This is what lets RFC-0086's `[x, y]` tag-position sugar be nothing more than an
+ordinary multi-way `Outlives` bound between two already-existing regions, rather than a
 bespoke relating mechanism: by the time RFC-0086 is invoked, `x` and `y` already have
 regions to relate, courtesy of this RFC.
 
