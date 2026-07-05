@@ -3,7 +3,7 @@ id: lifetimes-vs-regions-2026-07-02
 title: "Allocators first-class, lifetimes visible — the split model"
 type: report
 created_date: '2026-07-02'
-updated_date: '2026-07-04'
+updated_date: '2026-07-05'
 ---
 
 # Allocators first-class, lifetimes visible — the split model
@@ -22,6 +22,10 @@ settled; (7) Storage Transparency Principle added; (8) all semantic open questio
 settled; (9) syntactic channel reassignment: allocators move to the value channel `()` with
 `@` prefix (they are values), lifetime anchors move to the type-parameter channel `<>` with
 `&` prefix, `[]` freed for capture lists, multi-anchor form deferred.*
+
+*Updated 2026-07-05: mutable borrow syntax settled — `&r mut T` (anchor groups with `&`,
+`mut` follows); anchors are type-level only, expression position always uses `&val` /
+`&mut val` with anchor inferred from context.*
 
 *Nothing here is ratified; the remaining open question is the ratification vehicle. The
 purpose, as before, is to settle a single model **before** any accepted RFC is rewritten.*
@@ -61,13 +65,15 @@ The honest framing retracts that move and renames accordingly:
   @a Node<T>`. Elision applies when exactly one allocator is in scope; `@` alone suffices.
 - **Lifetime anchors are a separate, visible-but-elidable concept.** Every borrow carries
   a lifetime anchor — a binding whose scope bounds the borrow's validity. Anchors are
-  named directly after the `&` sigil in type position: `&r T` means "borrow of T valid
-  while `r` is alive." Because lifetime anchors are a form of compile-time parameter
-  (like type parameters), they are declared in the **type-parameter channel** `<>` with
-  the `&` prefix: `fun foo<&r>(&r T) -> &r U`. There is no `'a`-style abstract variable
-  — anchor names are always binding names, concrete things in scope. Elision covers the
-  common cases; explicit `<&r>` declarations appear only when the anchor relationship is
-  ambiguous.
+  named directly after the `&` sigil in type position: `&r T` (immutable) and `&r mut T`
+  (mutable) — the anchor groups with `&`, and mutability qualifies the reference after.
+  Because lifetime anchors are a form of compile-time parameter (like type parameters),
+  they are declared in the **type-parameter channel** `<>` with the `&` prefix:
+  `fun foo<&r>(&r T) -> &r mut U`. There is no `'a`-style abstract variable — anchor
+  names are always binding names, concrete things in scope. Elision covers the common
+  cases; explicit `<&r>` declarations appear only when the anchor relationship is
+  ambiguous. **Anchors are a type-level concept only** — in expression position you
+  write `&val` and `&mut val`; the anchor is inferred from the expected type.
 
 This is the blog's "best of Rust's lifetimes with Zig's Allocator model," taken literally
 and named correctly: allocators are values passed through the value channel; lifetime
@@ -194,8 +200,13 @@ The language has three parameter channels, each with a clear semantic category:
 At use sites, the sigil alone carries the meaning — no brackets needed:
 - `@a T` — value of type T allocated in allocator `a`
 - `@T` — same, allocator elided (one in scope)
-- `&r T` — borrow of T anchored to binding `r`
-- `&T` — same, anchor elided (one input anchor, or `self` wins)
+- `&r T` — immutable borrow of T anchored to binding `r`
+- `&r mut T` — mutable borrow of T anchored to `r`; anchor groups with `&`, `mut` follows
+- `&T` / `&mut T` — anchor elided (one input anchor, or `self` wins)
+
+**Anchors are type-level only.** In expression position, write `&val` or `&mut val`;
+the anchor is inferred from the expected type. Explicit anchor annotations never appear
+on expressions.
 
 **Allocator elision rule:** if exactly one allocator is in scope, `@` without a name
 suffices. When a second allocator enters scope, both must be named.
@@ -259,11 +270,13 @@ case, which is uncommon in practice. Deferral does not affect any other part of 
    `AutoAlloc`, and scoped allocators not. `@a T` sendable iff `a` and `T` are both
    `Send`. Borrows `&r T` never sendable — scopes are per-fiber. No `Sync` distinction
    needed.
-7. ~~**Lifetime anchor grammar**~~ — **Settled** (§7): `<&r>` declaration, `&r T` use.
-   Optional `@`/`&` prefix within `<>` when mixing kinds: required when declaration
-   contains both type params and anchor params or anchors and ordering bounds. Elision
-   rules as stated in §7. Ordering bounds: `<&s, &t: &s>` — t outlives s. Multi-anchor
-   form deferred (§7).
+7. ~~**Lifetime anchor grammar**~~ — **Settled** (§7): `<&r>` declaration, `&r T`
+   (immutable) and `&r mut T` (mutable) at use; anchor groups with `&`, `mut` follows.
+   Anchors are type-level only — expression position always uses `&val` / `&mut val`,
+   anchor inferred from expected type. Optional `@`/`&` prefix within `<>` when mixing
+   kinds: required when declaration contains both type params and anchor params or
+   anchors and ordering bounds. Elision rules as stated in §7. Ordering bounds:
+   `<&s, &t: &s>` — t outlives s. Multi-anchor form deferred (§7).
 
 ## 10. Blast radius across the cluster
 
