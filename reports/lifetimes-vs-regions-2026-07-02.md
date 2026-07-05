@@ -17,12 +17,14 @@ the evidence that unification does not hold. This report resolves it the other w
 *Updated 2026-07-04: expanded with subsequent design decisions — (1) "regions" renamed to
 "allocators"; (2) `own` keyword dropped from struct allocator declarations; (3) `Outlives`
 dropped from the allocator layer; (4) `SubRegion` retracted; (5) lifetimes revised from
-"inferred" to "visible-but-elidable" via binding-anchored bracket channel; (6) `[self]`
-denotation settled; (7) the Storage Transparency Principle added as §3.*
+"inferred" to "visible-but-elidable" via binding-anchored syntax; (6) `[self]` denotation
+settled; (7) Storage Transparency Principle added; (8) all semantic open questions
+settled; (9) syntactic channel reassignment: allocators move to the value channel `()` with
+`@` prefix (they are values), lifetime anchors move to the type-parameter channel `<>` with
+`&` prefix, `[]` freed for capture lists, multi-anchor form deferred.*
 
-*Nothing here is ratified; the remaining Open Questions are real decisions for the
-designer. The purpose, as before, is to settle a single model **before** any accepted RFC
-is rewritten.*
+*Nothing here is ratified; the remaining open question is the ratification vehicle. The
+purpose, as before, is to settle a single model **before** any accepted RFC is rewritten.*
 
 ---
 
@@ -54,21 +56,22 @@ The honest framing retracts that move and renames accordingly:
 - **Allocators are first-class values** — `Heap`, `LocalHeap`, `BumpAlloc`, `AutoAlloc`,
   and scoped allocators, passed explicitly, stored in structs, named in signatures. These
   were called "regions" because they also acted as lifetimes; that role is now separated
-  out, so the correct name is the plain one. Nothing about the allocator concept changes —
-  only the name and the dropped lifetime duties.
-- **Lifetimes are a separate, visible-but-elidable concept.** Every borrow carries a
-  lifetime anchor — a binding whose scope bounds the borrow's validity. The anchor is
-  named in the bracket channel on borrows: `&[r] T` means "borrow valid while `r` is
-  alive," `&[r, t] T` means "valid while both are alive" (intersection). The anchor is
-  elidable when unambiguous from context; in complex cases (function signatures, structs)
-  it is named explicitly. There is no `'a`-style abstract lifetime variable — lifetime
-  anchors are always binding names, concrete things already in scope. At the function
-  boundary, anchors are introduced as bracket-channel parameters: `fun foo[r](&[r] T) ->
-  &[r] U` universally quantifies `r` over the call, the same way allocator parameters do.
+  out, so the correct name is the plain one. Because allocators are values, they live in
+  the **value channel** `()` with the `@` prefix: `fun build(@a: BumpAlloc, val: T) ->
+  @a Node<T>`. Elision applies when exactly one allocator is in scope; `@` alone suffices.
+- **Lifetime anchors are a separate, visible-but-elidable concept.** Every borrow carries
+  a lifetime anchor — a binding whose scope bounds the borrow's validity. Anchors are
+  named directly after the `&` sigil in type position: `&r T` means "borrow of T valid
+  while `r` is alive." Because lifetime anchors are a form of compile-time parameter
+  (like type parameters), they are declared in the **type-parameter channel** `<>` with
+  the `&` prefix: `fun foo<&r>(&r T) -> &r U`. There is no `'a`-style abstract variable
+  — anchor names are always binding names, concrete things in scope. Elision covers the
+  common cases; explicit `<&r>` declarations appear only when the anchor relationship is
+  ambiguous.
 
 This is the blog's "best of Rust's lifetimes with Zig's Allocator model," taken literally
-and named correctly: allocators are the named, passed, first-class thing; lifetimes are
-binding-anchored and elidable, never abstract variables.
+and named correctly: allocators are values passed through the value channel; lifetime
+anchors are compile-time parameters declared in the type channel.
 
 ## 3. The Storage Transparency Principle
 
@@ -78,30 +81,19 @@ propagate through such constructs without annotation.
 
 This partitions the language surface into two strata:
 
-**Storage-transparent** — no annotation needed, polymorphism is implicit:
+**Storage-transparent — no annotation needed:**
 - Functions that do not allocate
-- Struct definitions that do not own an allocator
-- Closures
-- Pattern matching and destructuring
-- Generic functions and aspect methods
-- Operators and control flow
-- Type aliases and enums
+- Struct definitions without owned allocators
+- Closures, pattern matching, operators, type aliases
 
-**Storage-explicit** — the only places where storage annotations appear:
-- Allocation expressions: `@[a] expr`
-- Borrows with explicit lifetime anchors: `&[r] T`
-- Struct allocator ownership declarations: `struct Foo[r]`
-- Passing allocators as first-class values: `fun new(alloc: BumpAlloc)`
+**Storage-explicit — the only places where storage annotations appear:**
+- Allocation expressions: `@a expr` (or `@expr` with elision)
+- Explicit borrow anchors: `&r T`
+- Struct allocator ownership: `struct Foo(@a: BumpAlloc) { ... }`
+- Passing allocators as values: `fun new(@a: BumpAlloc, ...)`
 
-The programmer only thinks about storage when making a storage decision. Reading a field,
-calling a method, transforming a value, matching on an enum — none of these require
-storage annotations because none of them make a storage decision. Storage flows through
-them the way types flow through a generic function.
-
-This is the key distinction from Rust. Rust makes lifetimes pervasive — every reference
-carries one, and complex function signatures accumulate annotations regardless of whether
-the function makes any storage decision. Storage transparency inverts this: annotations
-concentrate at decision points and are absent everywhere else.
+The programmer only thinks about storage when making a storage decision. Storage flows
+through all other constructs the way types flow through a generic function.
 
 **Storage transparency as a design rule:** any proposed language feature that requires
 storage annotations on code that does not allocate or explicitly borrow is a design leak.
@@ -117,18 +109,18 @@ implementor. The whole review since is the evidence that unified does not work:
   names the stretch, it does not remove it.
 - The "two regions on one value" conflation (RFC-0087 Exception B) exists *because* both
   the allocator and the value's duration are forced into the same `Region` category.
-- The `&[r]` vs `&[n]` borrow-tag ambiguity exists *because* the tag slot can hold either
-  an allocator or a pseudo-region-lifetime and nothing distinguishes them.
+- Borrow-tag ambiguity exists *because* the tag slot could hold either an allocator or a
+  pseudo-region-lifetime with nothing distinguishing them.
 
 Splitting resolves all three by category: an allocator and a lifetime are simply different
-kinds of thing, so there is nothing to conflate. Splitting is also more faithful to the
-blog's stated goal than the unified over-reading was.
+kinds of thing, so there is nothing to conflate. The syntactic split reinforces the
+semantic one: allocators in `()`, lifetime anchors in `<>`.
 
 The usual objection to splitting — that the unified model gives errors a concrete
-region-in-scope to point at — does not survive: lifetime anchors are binding names in the
-bracket channel (`&[x] T`), so diagnostics still say "escapes the lifetime of `x`,"
-pointable because `x` is a real binding. No `'a`-style abstract variable is reintroduced;
-the rejected RFC-0052 phantom-lifetime failure mode does not return.
+region-in-scope to point at — does not survive: lifetime anchors are binding names
+(`&r T`), so diagnostics still say "escapes the lifetime of `r`," pointable because `r`
+is a real binding. No `'a`-style abstract variable is reintroduced; the rejected RFC-0052
+phantom-lifetime failure mode does not return.
 
 ## 5. RFCs that retract
 
@@ -141,17 +133,16 @@ binding names, not allocator instances.
 **RFC-0069 (`SubRegion`)** exists to propagate `Outlives` relationships automatically
 when a struct's allocator is nested inside an outer allocator. Since `Outlives` is dropped
 (see §6), `SubRegion` has nothing left to propagate. The nesting relationship it expressed
-is now handled by the borrow checker directly: if a struct `Foo[r]` is allocated into
-allocator `a` (`@[a] Foo::new()`), any borrow `&[r] T` from `Foo`'s allocator is bounded
-by `Foo`'s own scope, which is bounded by `a`'s scope — the borrow checker derives this
-chain from scope nesting without allocator-level constraints. RFC-0069 retracts entirely.
+is now handled by the borrow checker directly: if a struct `Foo(@a)` is allocated via
+`@b Foo::new(arena_a)`, any borrow `&a T` from `Foo`'s allocator is bounded by `Foo`'s
+own scope, which is bounded by `b`'s scope — the borrow checker derives this chain from
+scope nesting without allocator-level constraints. RFC-0069 retracts entirely.
 
 **`Outlives` as an allocator constraint** retracts from RFC-0063 and RFC-0077. It was
 introduced to order allocator scopes so that the region-as-lifetime machinery could reason
 about which region outlived which. Allocators do not need to carry this constraint:
 ordering relationships between durations are expressed through the lifetime anchor system
-(`&[r, t] T`), and the borrow checker reasons about scope nesting from binding structure,
-not from declared allocator constraints.
+and the borrow checker's scope analysis.
 
 When a reframe retracts four RFCs and one cross-cutting constraint as workarounds for a
 single mis-framing, that is a strong signal the frame is correct.
@@ -159,186 +150,166 @@ single mis-framing, that is a strong signal the frame is correct.
 ## 6. What stays, what changes
 
 - **Allocators are first-class values.** `Heap`, `LocalHeap`, `BumpAlloc`, `AutoAlloc`,
-  scoped allocators. The `Alloc` aspect means "an allocator." It replaces the `Region`
-  aspect in name and drops the lifetime obligations that the old name carried.
-- **`@[a] T` carries an allocator; `&[r] T` carries a lifetime anchor.** The prefix sigil
-  decides the category. Allocator bindings may appear as lifetime anchors — their scope is
-  a duration like any other binding's, so `&[a] T` where `a` is an allocator binding means
-  "borrow valid for the scope of allocator `a`." This falls out of the general rule; it is
-  not a special case.
-- **`[x, y]` on borrows is the lifetime anchor syntax.** `&[x, y] T` is a borrow valid
-  while both `x` and `y` are alive — intersection of their scopes. Elidable when context
-  is unambiguous.
-- **Struct allocator declarations use plain `[r]`.** The `own` keyword is dropped. A
-  struct declares it holds an allocator with `struct Foo[r] { ... }`; the allocator is
-  owned by the struct implicitly — the struct's constructor creates it, the struct's
-  destructor drops it. The allocator type may be constrained: `struct Foo[r: BumpAlloc]`.
-  The `own` keyword was needed to distinguish "this struct owns a region (allocator)" from
-  "this struct is parameterized by a lifetime-region" — a distinction that no longer
-  exists once the two roles are separated.
-- **`[self]` on borrows** denotes the scope of the `self` binding, uniformly. In
-  `&self`/`&mut self` methods, `self` is the borrow, so `&[self] T` chains the caller's
-  borrow to the returned reference. In by-value methods the scope ends at return, making
-  `&[self] T` as a return type always unsatisfiable (borrow checker catches it, no special
-  rule). In associated functions `self` is not in scope — undefined binding error.
-- **`Outlives` is dropped** from the allocator layer. Duration ordering between scopes is
-  expressed through the lifetime anchor system and derived by the borrow checker from
-  binding structure.
+  scoped allocators. The `Alloc` aspect means "an allocator." Allocator parameters are
+  declared in the value channel with `@` prefix: `(@a: BumpAlloc)`. Allocation
+  expressions use `@a expr`; elided to `@expr` when exactly one allocator is in scope.
+- **Lifetime anchors in `<>` with `&` prefix.** `<&r>` at declaration, `&r T` at use.
+  Anchors are binding names — concrete things already in scope. The `&` prefix
+  distinguishes lifetime anchor parameters from type parameters within `<>`.
+- **Lifetime ordering bounds** use `: &s` in the `<>` declaration: `<&s, &t: &s>` means
+  t outlives s, matching the established `:` bound convention. Needed only when anchors
+  are structurally unrelated at the call site.
+- **Struct allocator ownership uses primary constructor syntax.** `struct Foo(@a: BumpAlloc)`
+  brings `a` into scope for field types: `struct Foo(@a: BumpAlloc) { data: @a [u8] }`.
+  The allocator is created at construction and dropped with the struct. This replaces the
+  old `[own r]` / `[r]` bracket syntax.
+- **Scoped allocator closures** use the value channel naturally: `BumpAlloc::scoped((@a)
+  -> { @a Node { val: 1 } })`. `@a` is a closure parameter. No special lambda syntax.
+- **`&self` on borrows** — `self` in `&self`/`&mut self` methods is a binding; `&self T`
+  as a return type means "borrow valid while `self` is alive." Works without any explicit
+  `<&self>` declaration because `self` is always in scope in method bodies.
+- **`[]` freed for capture lists.** Closures use `[x, y]` for capture lists without
+  conflict. The bracket channel is no longer a storage-parameter channel.
+- **`Outlives` is dropped** from the allocator layer. Duration ordering is expressed
+  through lifetime anchor bounds in `<>` and derived by the borrow checker from scope
+  nesting.
 - **`SubRegion` is retracted** (§5). The borrow checker derives nesting from scope
   structure.
-- **`AutoAlloc` stays**, a first-class allocator specified by semantic contract (scoped,
-  non-sendable, sound move-out, observationally equivalent to heap within its scope).
-  Renamed from `AutoRegion`.
-- **Storage transparency (§3) applies to all language constructs** that do not explicitly
-  reference an allocator or lifetime anchor. Functions, closures, pattern matching,
-  operators, type aliases, and aspect methods are all storage-polymorphic by default.
+- **`AutoAlloc` stays**, renamed from `AutoRegion`, a first-class allocator specified by
+  semantic contract (scoped, non-sendable, sound move-out, observationally equivalent to
+  heap within its scope).
+- **Storage transparency (§3) applies to all constructs** that do not explicitly
+  reference an allocator or lifetime anchor.
 
-## 7. The `[...]` slot: disambiguated by sigil
+## 7. Channel assignments
 
-The `[...]` slot holds two categories, disambiguated by the prefix sigil:
+The language has three parameter channels, each with a clear semantic category:
 
-- after `@`, it holds an **allocator** (`@[a] T`, `@[Heap] expr`);
-- after `&` / `&mut`, it holds a **lifetime anchor** — a binding name or comma-separated
-  list of binding names (`&[r] T`, `&[r, t] T`, `&[self] T`).
+| Channel | Contents | Syntax |
+|---|---|---|
+| `<>` | Type parameters and lifetime anchor parameters | `<T>`, `<&r>`, `<&r, &s: &r>` |
+| `()` | Value parameters and allocator parameters | `(x: T)`, `(@a: BumpAlloc)` |
+| `[]` | Capture lists (closures) | `[x, y]` |
 
-The disambiguator is the prefix sigil, which the reader already has in hand. This is the
-explicit rule: `@` → allocator, `&`/`&mut` → lifetime anchor. Both positions are elidable
-when the context is unambiguous — elision is the default, annotation the exception,
-consistent with the Storage Transparency Principle (§3).
+At use sites, the sigil alone carries the meaning — no brackets needed:
+- `@a T` — value of type T allocated in allocator `a`
+- `@T` — same, allocator elided (one in scope)
+- `&r T` — borrow of T anchored to binding `r`
+- `&T` — same, anchor elided (one input anchor, or `self` wins)
 
-**The `&[a]` rule — settled.** Allocator names are allowed in borrow slots. An allocator
-binding is a binding; its scope is a duration; `&[a] T` where `a` is an allocator means
-"borrow valid for the scope of allocator `a`." The general rule subsumes it.
+**Allocator elision rule:** if exactly one allocator is in scope, `@` without a name
+suffices. When a second allocator enters scope, both must be named.
 
-**The multi-anchor form.** `&[r, t] T` is valid in both the lifetime-anchor and the
-function-parameter positions. At the call site, `r` and `t` are bindings; the borrow's
-validity is the intersection of their scopes. At the function declaration site, `[r, t]`
-in the bracket channel introduces two generic lifetime parameters. The exact grammar for
-introducing vs. naming anchors is deferred to grammar refinement; the semantics are
-settled.
+**Lifetime anchor elision rules:**
+1. Each elided `&` in input position gets a distinct fresh anchor
+2. If `&self`/`&mut self` is present, the elided output anchor is `self`'s anchor
+3. If exactly one input anchor exists, the elided output anchor is that anchor
+4. Otherwise — compile error, explicit `<&r>` declaration required
+
+**Lifetime ordering bounds** in `<>`: `<&s, &t: &s>` declares anchors `s` and `t` where
+`t` outlives `s`. The right-hand side is the shorter-lived anchor. Needed only when two
+anchors arrive from outside with no structural relationship the borrow checker can derive.
+
+**Multi-anchor borrows** (`&r, s T` — borrow valid while both `r` and `s` are alive) are
+deferred. The multi-anchor form is needed only for the "return one of several borrows"
+case, which is uncommon in practice. Deferral does not affect any other part of the model.
 
 ## 8. Concrete implications, re-read under the split
 
-1. **The allocator tag is not a value-lifetime.** `@[a] T`'s tag is where the value is
-   allocated and the disjointness witness; the value's validity duration is tracked by the
-   borrow checker through the lifetime anchor system, and may be shorter (individual drop).
-2. **Borrows carry lifetime anchors.** A borrow derived from `@[a] T` carries an anchor
-   naming the binding that determines its validity scope — not the allocator itself, unless
-   the programmer explicitly writes `&[a] T` to tie the borrow to the allocator's scope.
+1. **The allocator is not a value-lifetime.** `@a T`'s allocator tag is where the value
+   is allocated and the disjointness witness; the value's validity duration is tracked by
+   the borrow checker through lifetime anchors, and may be shorter (individual drop).
+2. **Borrows carry lifetime anchors.** A borrow derived from `@a T` carries an anchor
+   naming the binding that determines its validity scope.
 3. **Disjointness and sendability are allocator properties**, preserved unchanged from
    the old region model. The allocator's identity (not the value's lifetime) determines
    whether data can cross fiber/thread boundaries.
-4. **Drop order is two-sorted** (move-out drops interleaved with scope-end drops); arena
-   teardown stays scope-based, value drops incremental within. Unchanged.
+4. **Drop order:** values drop at the earliest of (a) explicit `drop(x)` — destructor
+   runs immediately in program order; (b) move-out — obligation transfers to recipient;
+   (c) scope end — reverse declaration order among surviving values. Allocator teardown
+   follows all value-level drops at the same scope boundary. Conditional move of `T: Drop`
+   requires all branches to resolve the obligation.
 5. **Wellformedness:** a value's lifetime is nested in its allocator's scope — the borrow
    checker enforces this from binding structure without an explicit `Outlives` constraint.
 6. **Allocator identity is compile-time**; runtime dispatch is per-kind deallocation
    semantics (`Heap` per-slot free, `BumpAlloc` arena-free-at-scope, etc.).
-7. **Storage-transparent constructs are monomorphized over storage at compile time.**
-   Storage qualifiers are erased at runtime — a value is a value; the qualifier is a
-   compile-time property used for borrow checking and optimization only.
+7. **Storage-transparent constructs monomorphize over storage at compile time.** Storage
+   qualifiers are erased at runtime — a value is a value; the qualifier is a compile-time
+   property used for borrow checking and optimization only.
 
-## 9. Underspecified behaviors the model must settle
+## 9. Underspecified behaviors — all settled
 
-1. ~~**The `&[r]` rule**~~ — **Settled** (§7): allocator names allowed in borrow slots.
-2. ~~**The `[...]` disambiguation rule**~~ — **Settled** (§7): `@` → allocator,
-   `&`/`&mut` → lifetime anchor. Grammar formalization deferred.
+1. ~~**The borrow-tag rule**~~ — **Settled** (§7): `&r T` at use sites; `<&r>` at
+   declaration. Allocator bindings are bindings; `&a T` where `a` is an allocator means
+   "borrow valid for the scope of allocator `a`."
+2. ~~**Channel disambiguation**~~ — **Settled** (§7): `<>` for types and lifetime
+   anchors, `()` for values and allocators, `[]` for capture lists.
 3. ~~**`Outlives` on durations**~~ — **Dropped** (§5, §6): not part of the allocator
-   layer. Duration ordering is expressed through the lifetime anchor system.
-4. ~~**Drop order with interleaved move-out**~~ — **Settled:** values drop at the
-   earliest of (a) an explicit `drop(x)` call — destructor runs immediately in program
-   order; (b) a move-out — obligation transfers to the recipient, original scope is clear;
-   (c) scope end — destructors run in reverse declaration order among values not already
-   dropped or moved. Allocator teardown follows all value-level drops at the same scope
-   boundary; no destructor runs after its backing allocator tears down. Conditional move
-   of `T: Drop` values is a compile error unless all branches resolve the obligation
-   (move or explicit drop in every branch).
-5. ~~**`[self]`'s exact denotation**~~ — **Settled** (§6): scope of the `self` binding,
-   uniformly. In `&self`/`&mut self` methods, `self` is the borrow — `[self]` chains the
-   caller's borrow to the returned reference. In by-value methods the scope ends at return,
-   making `&[self] T` as a return type always unsatisfiable (borrow checker, no special
+   layer. Duration ordering is expressed through lifetime anchor bounds `<&t: &s>` and
+   the borrow checker's scope analysis.
+4. ~~**Drop order with interleaved move-out**~~ — **Settled** (§8 item 4): earliest of
+   explicit drop, move-out, or scope end; allocator teardown last; conditional move of
+   `T: Drop` must resolve in all branches.
+5. ~~**`[self]` / `&self` denotation**~~ — **Settled** (§6): `&self T` as a return type
+   means "borrow valid while `self` is alive." `self` is always in scope in method bodies;
+   no explicit `<&self>` declaration needed. In by-value methods the scope ends at return,
+   making `&self T` as a return type always unsatisfiable (borrow checker, no special
    rule). In associated functions `self` is not in scope — undefined binding error.
-6. ~~**Sendability**~~ — **Settled:** stated per category. **Allocators:** sendable iff
-   the kind is inherently fiber-safe — `Heap` is sendable; `LocalHeap`, `BumpAlloc`,
-   `AutoAlloc`, and all scoped allocators are not. User-defined allocators implement
-   `Send` iff declared to. **Owned values `@[a] T`:** sendable iff `a` is sendable and
-   `T` is sendable. **Borrows `&[r] T`:** never sendable — borrows are scoped to lifetime
-   anchors, and scopes are per-fiber; cross-fiber sharing uses `Arc` instead.
-   **Struct-owned allocators:** no special case — `Foo[r]` is sendable iff `r`'s kind is
-   sendable and all fields are sendable. No `Sync` distinction needed: since borrows are
-   unconditionally non-sendable, shared-reference-across-fibers never arises at the borrow
-   level.
-7. ~~**Lifetime anchor grammar**~~ — **Settled:** bracket-channel parameters use an
-   optional prefix to distinguish allocator from lifetime anchor parameters at the
-   declaration point: `@r` declares an allocator parameter, `&r` declares a lifetime
-   anchor parameter. The prefix is **optional when unambiguous from use sites** —
-   if `r` appears only in `@[r]` positions the compiler infers allocator; only in `&[r]`
-   positions, lifetime anchor — and **required when mixed or unused**. The explicit prefix
-   is always valid as a documentation choice. Elision rules for the bracket channel in
-   signatures: (1) each elided `&` in input position gets a distinct fresh anchor;
-   (2) if `&self`/`&mut self` is present, the elided output anchor is `self`'s anchor;
-   (3) if exactly one input anchor exists, the elided output anchor is that anchor;
-   (4) otherwise a compile error — explicit annotation required. Elision is the default
-   per the Storage Transparency Principle; explicit bracket parameters appear only when
-   the anchor relationship is ambiguous.
+6. ~~**Sendability**~~ — **Settled:** `Heap` sendable; `LocalHeap`, `BumpAlloc`,
+   `AutoAlloc`, and scoped allocators not. `@a T` sendable iff `a` and `T` are both
+   `Send`. Borrows `&r T` never sendable — scopes are per-fiber. No `Sync` distinction
+   needed.
+7. ~~**Lifetime anchor grammar**~~ — **Settled** (§7): `<&r>` declaration, `&r T` use.
+   Optional `@`/`&` prefix within `<>` when mixing kinds: required when declaration
+   contains both type params and anchor params or anchors and ordering bounds. Elision
+   rules as stated in §7. Ordering bounds: `<&s, &t: &s>` — t outlives s. Multi-anchor
+   form deferred (§7).
 
 ## 10. Blast radius across the cluster
 
 | RFC | Effect of the split |
 |---|---|
-| 0063 | **Rewritten as "allocators."** `Region` aspect → `Alloc` aspect; `Outlives` dropped from the allocator layer; lifetime duties separated out entirely. |
-| 0065 | Elision becomes **lifetime anchor elision** (from `&[r]` to `&`); the rules restate over anchors rather than region names. Elision is the default per §3. |
-| 0066 | The trigger; move-out is what forces lifetimes to be shorter than allocator scopes. Borrow tagging becomes the category distinction (`&` = lifetime anchor). |
-| 0067 | Reference types carry **lifetime anchors**; `&[r]` rule settled (§7). Storage-transparent by default per §3. |
-| 0068 | `[own r]` → **`[r]`**; `own` dropped. Struct allocator declarations are plain bracket parameters. |
-| 0069 | **Retracted** (§5): `SubRegion` was `Outlives` propagation for allocators; both are dropped. |
+| 0063 | **Rewritten as "allocators."** `Region` aspect → `Alloc` aspect; `Outlives` dropped; allocators move to value channel. |
+| 0065 | Elision restated: allocator elision (single `@`), anchor elision (three rules in §7). |
+| 0066 | The trigger; move-out forces lifetimes shorter than allocator scopes. |
+| 0067 | Reference types carry lifetime anchors; `&r T` syntax at use, `<&r>` at declaration. |
+| 0068 | `[own r]` → **primary constructor** `(@a: AllocType)`; `own` and bracket channel dropped. |
+| 0069 | **Retracted** (§5): `SubRegion` was `Outlives` propagation; both dropped. |
 | 0071 | Drop order extended for interleaved move-out and moved values. |
-| 0073 | `AutoRegion` → **`AutoAlloc`**, first-class allocator, spec'd by semantic contract (§6). |
-| 0077 | Wellformedness/variance restate over **allocator scopes** only; value-lifetime constraints fall to the borrow checker via anchor structure, not declared `Outlives`. |
+| 0073 | `AutoRegion` → **`AutoAlloc`**, first-class allocator, semantic contract unchanged. |
+| 0077 | Wellformedness restated over allocator scopes only; value-lifetime constraints are borrow-checker-derived. |
 | 0085 | **Retracted** (§5). |
-| 0086 | `[x, y]` sugar **survives**, reinterpreted as lifetime anchor intersection on borrows. |
+| 0086 | `[x, y]` sugar reinterpreted as `<&x, &y>` lifetime anchor parameter declarations; multi-anchor borrow form deferred. |
 | 0087 | **Retracted** (§5). |
 
-This is a larger change than the "two-level model" draft: it touches 0063 fundamentally,
-**retracts 0069, 0085, and 0087**, drops `Outlives` from the allocator layer, and renames
-throughout. It also re-bases the implementation plan in
-`rfc-implementation-breakdown-2026-07-01.md`: Phase 3 (region cluster) is **pending the
-model settle**; the static type-system cluster (Phase 1) is unaffected and proceeds
+Phase 3 of `rfc-implementation-breakdown-2026-07-01.md` remains **pending model
+ratification**. Phase 1 (static type-system cluster) is unaffected and proceeds
 independently.
 
 ## 11. Recommended process and open questions
 
-**Process.** (1) Agree this report's split model. (2) Ratify it as a short foundational
-RFC — a new RFC-0088 ("Allocators and Lifetimes") that states the split model and the
-Storage Transparency Principle, which the cluster then conforms to; explicitly mark 0069,
-0085, 0087 retracted. (3) Sweep the cluster mechanically against the ratified model. (4)
-Re-base the implementation breakdown's Phase 3. As before, a position report is faster to
-iterate on than RFC rewrites; do not start the sweep until the model is signed off.
+**Process.** (1) Ratify this report's model as RFC-0088 ("Allocators and Lifetimes"):
+allocators = first-class values in the value channel, lifetime anchors = `<>` channel
+with `&` prefix, Storage Transparency Principle as a named constraint. Mark 0069, 0085,
+0087 retracted. (2) Sweep the cluster against the ratified model. (3) Re-base the
+implementation breakdown's Phase 3.
 
 **Open questions for the designer.**
 
-- ~~**Confirm the split.**~~ **Decided:** allocators first-class, lifetimes
-  visible-but-elidable via binding-anchored bracket channel.
-- ~~**The `&[r]` rule.**~~ **Decided** (§7): allowed; allocator bindings are bindings.
-- ~~**The `[...]` disambiguation.**~~ **Decided** (§7): `@` → allocator, `&`/`&mut` →
-  lifetime anchor.
-- ~~**`Outlives` as duration-general.**~~ **Dropped** (§5): not part of the allocator
-  layer; duration ordering is the borrow checker's concern via anchor structure.
-- ~~**`[own r]` replacement syntax.**~~ **Decided** (§6): plain `[r]`; `own` dropped.
-- ~~**`[self]`'s exact denotation.**~~ **Decided** (§6, §9 item 5): scope of the `self`
-  binding, uniformly across all receiver forms.
-- **Drop order with interleaved move-out** — RFC-0071 extension. Remaining semantic open
-  question.
-- **Sendability** — per-category statement (allocators by kind, borrows never sendable).
-- ~~**Lifetime anchor grammar.**~~ **Decided** (§9 item 7): optional `@r`/`&r` prefixes
-  at declaration; prefix required when mixed or unused, inferred when unambiguous.
-  Elision covers single-anchor and self-receiver cases; ambiguous multi-anchor signatures
-  require explicit bracket parameters.
-- **Ratification vehicle** — new RFC-0088, or an amendment that reframes RFC-0063 and
-  marks 0069/0085/0087 retracted?
+- ~~**Confirm the split.**~~ **Decided.**
+- ~~**Borrow-tag rule.**~~ **Decided** (§7).
+- ~~**Channel disambiguation.**~~ **Decided** (§7): `<>` types/anchors, `()` values/allocators, `[]` captures.
+- ~~**`Outlives` as duration-general.**~~ **Dropped** (§5).
+- ~~**Struct allocator syntax.**~~ **Decided** (§6): primary constructor `(@a: AllocType)`.
+- ~~**`&self` denotation.**~~ **Decided** (§6, §9 item 5).
+- ~~**Drop order.**~~ **Decided** (§8 item 4, §9 item 4).
+- ~~**Sendability.**~~ **Decided** (§9 item 6).
+- ~~**Lifetime anchor grammar.**~~ **Decided** (§7, §9 item 7).
+- **Multi-anchor borrows** — deferred (§7). No other part of the model depends on this.
+- **Ratification vehicle** — new RFC-0088 vs. amendment that reframes RFC-0063.
 
-All semantic open questions are now settled. The only remaining decision is the
-ratification vehicle. The model is internally consistent: allocators are first-class
-values, lifetimes are binding-scoped anchors, storage transparency means most code carries
-no storage annotations at all, and the annotation burden concentrates exactly at the
-points where storage decisions are actually being made.
+All semantic questions are settled. The model is internally consistent: allocators are
+values in the value channel, lifetime anchors are compile-time parameters in the type
+channel, storage transparency means most code carries no storage annotations at all, and
+the annotation burden concentrates exactly at the points where storage decisions are
+actually being made.

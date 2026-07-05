@@ -1,145 +1,161 @@
 ---
 id: blog-regions-not-lifetimes-2026-07-02
-title: "Introducing Metel: Current state and future of the region system"
+title: "Memory without magic: Metel's approach to static safety"
 type: blog
 created_date: '2026-07-02'
+updated_date: '2026-07-04'
 ---
 
-# Introducing Metel: Current state and future of the region system
+# Memory without magic: Metel's approach to static safety
 
-Metel is a programming language that was born out of personal interest in type systems and memory safety. It started as a toy project, but has grown into a serious development effort. While the language is still in its early stages and does not have the pretension of being a competitor to Rust, Zig, Go, or C/C++, it has a unique approach to memory safety that is worth exploring. In this post, I will discuss the current state of Metel's type system, the design of its region system, and the future direction of the language.
+Metel is a programming language I've been building out of a personal interest in type systems and memory safety. It started as a toy project and has grown into a more serious design effort — not a Rust competitor, but an exploration of what a memory-safe systems language can look like when you're willing to make different trade-offs.
 
-## The type system is settled
+This post is about the memory model: how Metel handles allocation, borrows, and lifetimes, and the core design principle that ties them together.
 
-The basic type system is now stable, and the language has a working interpreter. There are a few rough edges, but the core features are in place and the soundness improvements are already in progress. The core of the type system is very similar to Rust's, with a few small tweaks.
+## Two jobs, two tools
 
-The most important feature is the planned region system, which tries to mix the best of Rust's lifetimes with Zig's Allocator model. The goal is to provide static memory safety while allowing for more flexible memory management than Rust offers out of the box.
+Every memory-safe language without a garbage collector has to answer two questions for every value:
 
-## Regions: the core idea
+1. **Where does it live?** Stack, heap, arena, somewhere else?
+2. **How long is it valid?** When can something hold a reference to it and know that reference won't dangle?
 
-A region is an allocation arena with a scope. Its handle is an ordinary runtime value, and that handle's *name* does triple duty — lifetime tag, disjointness proof, and the allocation strategy for the region. The compiler uses the name to prove that two pointers tagged with different regions can't alias, and to determine when a region can be safely deallocated:
+Rust answers both questions through a single mechanism: lifetimes. A lifetime tags both the allocation's scope and the borrow's validity, and the borrow checker enforces consistency between the two. It works — but it means lifetimes are everywhere, even in code that has no opinion about allocation at all. A function that just reads a field and returns a view into it still has to carry lifetime annotations through its signature.
+
+Metel separates the two questions and gives each its own tool.
+
+**Allocators** answer where a value lives. They are first-class runtime values — ordinary objects you can pass around, store in structs, and name in function signatures. `Heap` is a global allocator. `BumpAlloc` is a scoped bump arena. `AutoAlloc` is a compiler-managed scoped allocator that chooses its strategy freely. You allocate into one with the `@` prefix:
 
 ```metel
-fun build_node[region](val: i64) -> @[region] Node {
-    @[region] Node { val, next: null }
-}
-
-BumpRegion::scoped([region]() -> {
-    let n = build_node(42);   // [region] inferred — sole handle in scope
+BumpAlloc::scoped([@a]() -> {
+    let node = @[a] Node { val: 42 };
+    process(&node);
 });
 ```
 
-Two pointers tagged with different regions are provably non-aliasing at compile time — no locks, no runtime checks. It's the same guarantee Rust's borrow checker gives, but the "lifetime" is `region`, a variable sitting right there in scope. Errors can say "value escapes the scope of `region`" instead of explaining an abstraction the programmer never wrote.
+The bracket channel `[a]` carries the allocator. `@[a] Node` means "allocate a `Node` into `a`." The allocator's scope is real — `a` is a binding, and when it goes out of scope the arena is freed.
 
-## Cutting the ceremony: elision and inference
-
-Every example above is the *explicit* form — always legal, never ambiguous, but noisy once a function touches more than one field or a struct holds more than one pointer. In practice almost all code only ever has a single region in scope at a time, so two ergonomics rules do most of the work of getting rid of the noise.
-
-The first rule: wherever exactly one region is in scope, a bare `@` stands in for `@[region]`. This applies in type position and in expression position alike, so it collapses both a struct's field types and the allocation expressions that fill them:
+**Lifetime anchors** answer how long a reference is valid. A borrow `&[r] T` carries `r` — not an abstract `'a`-style variable, but a concrete binding name. The borrow is valid for as long as `r` is alive. Multiple anchors mean intersection: `&[r, s] T` is valid while both `r` and `s` are alive.
 
 ```metel
-// fully explicit
-struct Header[r] {
-    name:  @[r] String,
-    value: @[r] String,
-}
-
-fun parse_header[region](line: String) -> Perhaps<@[region] Header> {
-    @[region] Header { name: parse_name(line), value: parse_value(line) }
-}
-
-// same thing, elided
-struct Header[r] {
-    name:  @String,
-    value: @String,
-}
-
-fun parse_header[region](line: String) -> Perhaps<@Header> {
-    @Header { name: parse_name(line), value: parse_value(line) }
-}
-```
-
-The `[region]` binder on the function itself never goes away — that's the one place a region has to be introduced by name. Elision only strips the tag everywhere *inside* the signature and body.
-
-The second rule handles the call site, not just the type: if a function takes a region parameter and there's exactly one region handle in scope where you're calling it, you can drop the bracket argument entirely and let it get filled in for you:
-
-```metel
-fun build_list[region](vals: i64[]) -> @[region] Node {
-    let mut head = @[region] Node { val: vals[0], next: null };
-    for (let i in 1..array_len(vals)) {
-        head = build_node(vals[i]);      // [region] inferred — no need to write build_node[region](...)
-    }
-    head
-}
-```
-
-Both rules share the same escape hatch: the moment a second region enters scope, elision switches off and every tag has to be named again. That's deliberate — it's the same discipline Rust uses for lifetime elision. A two-region function like a "copy from one region into another" helper has to spell out both:
-
-```metel
-fun transfer<T>[src, dst: Outlives<src>](val: @[src] T) -> @[dst] T {
-    @[dst] *val
-}
-```
-
-There's one more wrinkle worth knowing about: `Heap` and `LocalHeap` are always usable by name, but they only join the pool of "things elision might infer" once you explicitly `use Heap;` (or `LocalHeap`). Inside a scoped arena that hasn't imported `Heap`, the scoped region is the only candidate and everything infers cleanly. Import `Heap` in that same scope and now there are two candidates, so inference refuses to guess and asks you to disambiguate:
-
-```metel
-use Heap;
-
-BumpRegion::scoped([region]() -> {
-    let a = make_node(1);           // error: ambiguous — Heap or region?
-    let b = make_node[region](1);   // @[region] Node — arena-allocated
-    let c = make_node[Heap](1);     // @[Heap] Node — a visible, deliberate escape from the arena
-});
-```
-
-That ambiguity error is a feature, not friction — it's the compiler catching the one moment where "what region did this allocation escape into?" actually matters and making you say so.
-
-## PhantomRegion: getting Rust's lifetimes back for plain borrows
-
-Everything so far has been about *allocation* — a region you actually allocate into. But plenty of borrow-checking has nothing to do with allocation at all. Take the classic example:
-
-```metel
-fun longest(x: &Str, y: &Str) -> &Str { ... }
-```
-
-`x` and `y` are plain borrows. Nobody's allocating anything here, so there's no `[region]` in sight — and yet the borrow checker still needs to reason about how long `x` and `y` live relative to each other to know how long the returned borrow is allowed to live. This is exactly the case that sank the original phantom-lifetime design: you need *something* to hang that relationship on, but a bare `'a` with no runtime correspondent is precisely the "nothing in scope you could point at" complaint that regions were invented to fix. Reintroducing a `'a`-shaped escape hatch just to handle plain borrows would undercut the whole pitch.
-
-The fix keeps faith with that pitch instead of abandoning it: **`PhantomRegion`** is a completely ordinary region — same `Region` interface as `BumpRegion` or `Heap` — with one extra guarantee: every allocation into it is unconditionally elided. It's real, constructible, sits in the type system like any other region; it just happens to compile away to nothing, always. That's the load-bearing difference from a bare `'a` — it's not phantom in the bad sense, it's just free.
-
-The second piece: instead of making you declare one of these explicitly, **every binding of every type owns one by default.** `x: &Str` and `y: &Str` already, silently, each have their own `PhantomRegion` scoped to their own binding — the same way every value already has a drop obligation and a liveness range without you writing either down. Since the default region costs nothing to construct, giving one to every binding costs nothing either.
-
-That alone doesn't let you *say* anything about the relationship between `x`'s region and `y`'s — for that there's a small piece of sugar that lets a region-tag position name the bindings directly, instead of requiring a separately-declared region parameter to exist purely as an anchor:
-
-```metel
-// what you'd have to write without the sugar — `a` exists for no reason
-// except to be a name the bound can attach to
-fun longest[a: PhantomRegion](x: &[a] Str, y: &[a] Str) -> &[a] Str {
-    if x.len() > y.len() { x } else { y }
-}
-
-// with the sugar — x and y keep their plain types,
-// the relationship is stated once, where it's actually needed
 fun longest(x: &Str, y: &Str) -> &[x, y] Str {
     if x.len() > y.len() { x } else { y }
 }
 ```
 
-A region-tag position already resolves a bare name to a region — that's the same `[r]` from `&[r] T` earlier in this post. The sugar just extends that lookup: a name that isn't a declared region resolves to *that binding's own region* instead, and a list of names resolves to the tightest region all of them outlive. `[x, y]` here means the same thing an explicit `Outlives` bound would mean between two named regions — it's just reached by naming the bindings directly rather than inventing a throwaway anchor for the bound to sit on. (An earlier version of this sugar spelled it `Outlives<x, y>`, putting the bound's name itself in the tag slot — but `Outlives` everywhere else in the design is something you write *after* a region name, not a stand-in for one, so that got dropped in favor of extending the plain lookup rule instead.) Structurally, this is Rust's lifetime elision by another name: the common case reads exactly like `fn longest<'a>(x: &'a str, y: &'a str) -> &'a str`, minus the part where `'a` is an annotation invented purely for the compiler's benefit. Here it's still a real region underneath, it's just one that happens to be free.
+The return borrow is valid while both `x` and `y` are alive. No made-up variable. The names in the bracket slot are the names you already have.
 
-I'll admit this is still the least battle-tested piece of the region story — it's a small generalization of an existing rule rather than a load-bearing mechanism of its own, but I want to see it survive contact with real code before I'd call it settled. Still, it's the missing piece that lets plain borrows get the same "no phantom annotations" treatment as everything else in the region system.
+Allocators live in `@[...]`. Lifetime anchors live in `&[...]`. The prefix sigil is the disambiguator — the same bracket channel, two categories, no ambiguity.
 
-## Design is ahead of the interpreter
+## The storage transparency principle
 
-I want to be upfront about this: the design is currently running well ahead of the implementation. The interpreter today still deep-clones values on bind and leans on reference counting under the hood — there's no borrow checker, no region allocator, none of the affine-move enforcement the design calls for. That's on purpose. I'd rather nail down a stable target on paper than build a borrow checker against a spec that's still shifting under it. But it does mean most of what's described here — regions included — is closer to "this is the plan" than "you can run this today."
+Separating the two questions makes a stronger claim possible: **most code doesn't make storage decisions at all.**
 
-## What's still open
+A function that reads a field and returns a view isn't deciding where anything lives or how long it lives — it's just moving a value from one place to another. It shouldn't need storage annotations. In Metel, it doesn't:
 
-Three bigger ideas are still unresolved. None of them block the core region work, but they'll shape how the language feels once they land.
+```metel
+fun get_name(user: &User) -> &Str {
+    &user.name
+}
+```
 
-**Brand types.** Regions solve disjointness for uniquely-owned data — two different `[r]` tags can't alias, full stop. But shared, reference-counted data doesn't fit that story: two `Rc` handles to the *same* cell are supposed to alias. What's missing is a lightweight way to give the compiler an unforgeable per-instance identity — a "brand" — so it can still reason about aliasing precisely even when ownership is shared instead of unique. The idea is solid in outline; the part I haven't settled is how a brand actually gets introduced into a program without turning into its own parallel annotation system.
+No `@`, no `&[r]` in the signature. The compiler infers that the returned borrow is anchored to `user`'s borrow, and that inference is right. Storage flows through the function transparently.
 
-**Compile-time unique `Rc`.** Right now, the plan for mutating through a shared pointer is a runtime check: ask "am I the only owner?", get back a maybe, and handle the case where the answer is no. That's always sound, but it's a runtime cost and an ergonomic tax for code that structurally *is* unique, just not provably so to the type system. The direction I like is a token-gated pattern, roughly GhostCell-style: a linear token whose exclusive borrow grants mutable access to every cell sharing its brand, with soundness coming from ordinary `&mut` exclusivity rather than a refcount check. It turns "prove I'm the sole owner at runtime" into "prove I hold the only `&mut` token at compile time" — but it depends on brand types existing first.
+This is the Storage Transparency Principle: **any language construct that doesn't explicitly reference an allocator or lifetime anchor is implicitly polymorphic over storage.** Annotations appear at the decision points — allocation expressions and explicit borrow anchors — and nowhere else.
 
-**Algebraic effects.** This one's further out and more exploratory. The appeal is structured, resumable side-effect handling — a computation declares the effects it might perform, and a surrounding handler intercepts them and decides whether to resume, abort, or resume more than once. What I like about how it might fit Metel is that most of the safety story falls out of rules the region model already has: a captured continuation is just an ordinary affine, heap-allocated value, so one-shot resumption isn't a special case bolted on for effects — it's what affine ownership already gives you for free. Multi-shot resumption is the part that doesn't fall out for free and is still an open question.
+The full language surface partitions into two strata:
 
+**Storage-transparent — no annotation needed:**
+- Functions that don't allocate
+- Struct definitions without owned allocators
+- Closures, pattern matching, operators, type aliases
+
+**Storage-explicit — where annotations appear:**
+- Allocation: `@[a] expr`
+- Explicit borrow anchors: `&[r] T`
+- Struct allocator ownership: `struct Foo[@a] { ... }`
+- Passing allocators as values: `fun new(alloc: BumpAlloc)`
+
+If a piece of code requires storage annotations and it's not in that second list, it's a design leak — the feature should be revised until the annotation is gone.
+
+## Elision: the common cases require nothing
+
+Even within the storage-explicit layer, most uses don't need explicit annotations.
+
+**For allocations**, if there's exactly one allocator in scope, a bare `@` without a bracket is enough:
+
+```metel
+BumpAlloc::scoped([@a]() -> {
+    let x = @Node { val: 1 };   // same as @[a] Node { val: 1 }
+    let y = @Node { val: 2 };
+    process(&x, &y);
+});
+```
+
+The moment a second allocator enters scope, elision switches off and you name both explicitly. The ambiguity is caught before it silently picks the wrong one.
+
+**For borrow anchors**, the common cases are covered by three rules:
+1. A single input borrow anchor elides to the output
+2. If `&self` is present, it wins as the output anchor
+3. Otherwise — multiple borrows, no `self` — annotation required
+
+```metel
+fun first_char(&self) -> &Char { ... }       // self wins — no annotation needed
+fun get(&self, key: &Key) -> &Val { ... }    // self wins over key — no annotation
+fun longest(x: &Str, y: &Str) -> &[x, y] Str { ... }  // ambiguous — explicit
+```
+
+The annotation only appears at the one point where the compiler genuinely can't infer what you mean.
+
+## Declaring bracket parameters
+
+When a function or struct needs to introduce explicit allocator or lifetime anchor parameters, they go in the bracket channel with an optional prefix that makes the kind visible at the declaration point:
+
+```metel
+fun transfer[@a, @b](@[a] T) -> @[b] T { ... }   // two allocator params
+fun copy[&r, &s](&[r] T, &[s] U) -> &[r] T { ... }  // two lifetime anchor params
+fun mixed[@a, &r](@[a] T, &[r] Config) -> @[a] T { ... }  // one of each
+```
+
+`@r` declares an allocator parameter; `&r` declares a lifetime anchor parameter. The prefix mirrors the use-site syntax exactly — `@r` declared, used as `@[r]`; `&r` declared, used as `&[r]`.
+
+The prefix is **optional when unambiguous**. If every use of `r` in the signature is as `@[r]`, the compiler infers it's an allocator parameter and you can write just `[r]`. The prefix is **required** when a declaration has both kinds, or when a parameter is never used in the signature:
+
+```metel
+fun process[r](@[r] Data) -> @[r] Result { ... }  // r inferred as allocator — prefix optional
+fun mixed[@a, &r](@[a] T, &[r] Config) -> @[a] T { ... }  // mixed — prefixes required
+```
+
+Type parameters use the angle bracket channel `<T>` as usual. The two channels stay separate.
+
+## Allocators own their scope
+
+A struct can own an allocator, declared with a bracket parameter:
+
+```metel
+struct Cache[@a] {
+    entries: @[a] HashMap<Key, Val>,
+}
+```
+
+The struct's constructor creates `a`; the struct's destructor frees it. Any borrow into `a`'s memory is bounded by the struct's lifetime — the borrow checker derives this from scope nesting, with no explicit constraint annotation needed.
+
+`AutoAlloc` is the allocator for code that wants lifetime safety without choosing a strategy. It's compiler-managed — the compiler picks stack, arena, heap, or inline allocation per-value based on escape analysis — and is observationally equivalent to heap allocation within its scope. The programmer says what, the compiler decides how:
+
+```metel
+AutoAlloc::scoped([@a]() -> {
+    let node = @[a] Node { val: 1 };   // compiler allocates however it sees fit
+    process(&node);
+});
+```
+
+## Sendability
+
+Allocator sendability is per-kind: `Heap` is sendable across fibers; `LocalHeap`, `BumpAlloc`, `AutoAlloc`, and all scoped allocators are not. An owned value `@[a] T` is sendable iff `a` is sendable and `T` is sendable. Borrows `&[r] T` are never sendable — borrows are scoped to lifetime anchors, and scopes are per-fiber. Cross-fiber sharing uses `Arc`, which transfers ownership rather than a scoped reference.
+
+## Where things stand
+
+The design is ahead of the implementation. The interpreter today has no borrow checker, no allocator, and no lifetime tracking — it deep-clones values and leans on reference counting internally. That's deliberate: the goal right now is a stable design target before building the enforcement machinery. Most of what's described here is a plan, not a runnable program.
+
+The remaining open design questions are small. The grammar rules for elision and bracket-channel disambiguation are still being refined. The ratification process — which of the region RFCs get rewritten, which get retracted — is the next concrete step.
+
+What I'm most pleased with is the Storage Transparency Principle as a design constraint. It gives every future feature proposal a clear test: does this require annotations on code that isn't making storage decisions? If yes, the design needs another pass. That's a sharper criterion than "is this ergonomic?" and I think it'll keep the system honest as the language grows.
