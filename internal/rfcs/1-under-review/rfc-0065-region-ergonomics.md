@@ -4,10 +4,13 @@ title: "Region Ergonomics"
 date: '2026-06-27'
 ---
 
-> **Status — accepted.** Depends on RFC-0063 (Region Handles). Specifies the
-> annotation-reduction layer on top of the core region system: elision rules and call-site
-> inference that eliminate bracket ceremony in the common single-region case. Do **not**
-> implement before RFC-0063 is resolved.
+> **Status — under review.** Moved back from accepted, together with the rest of the
+> region RFC cluster (RFC-0063, 0066, 0067, 0068, 0069, 0073, 0077) — see RFC-0063's status
+> note and `docs/reports/lifetimes-vs-regions-2026-07-02.md`. If the proposed split lands,
+> elision here becomes lifetime inference rather than region elision. Depends on RFC-0063
+> (Region Handles). Specifies the annotation-reduction layer on top of the core region
+> system: elision rules and call-site inference that eliminate bracket ceremony in the
+> common single-region case. Do **not** implement before RFC-0063 is resolved.
 
 ## Summary
 

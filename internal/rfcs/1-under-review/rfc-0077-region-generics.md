@@ -4,12 +4,16 @@ title: "Region Generics"
 date: '2026-06-29'
 ---
 
-> **Status — accepted.** Depends on RFC-0063 (Region Handles), RFC-0065 (Region
-> Ergonomics), RFC-0068 (Struct-Owned Regions), and RFC-0069 (Sub-Region Typing).
-> Fills four gaps in the accepted region RFCs: `impl` and `aspect impl` block headers
-> for structs with external region parameters; generic region bounds in the bracket
-> channel; wellformedness of `@[r] T` when `T` contains nested region-tagged types;
-> and variance rules for region-annotated pointer types.
+> **Status — under review.** Moved back from accepted, together with the rest of the
+> region RFC cluster (RFC-0063, 0065, 0066, 0067, 0068, 0069, 0073) — see RFC-0063's status
+> note and `docs/reports/lifetimes-vs-regions-2026-07-02.md`. Under the proposed split, this
+> RFC's wellformedness and variance rules need restating once over **durations** (allocator
+> scopes and value lifetimes together), rather than over regions alone. Depends on RFC-0063
+> (Region Handles), RFC-0065 (Region Ergonomics), RFC-0068 (Struct-Owned Regions), and
+> RFC-0069 (Sub-Region Typing). Fills four gaps in the accepted region RFCs: `impl` and
+> `aspect impl` block headers for structs with external region parameters; generic region
+> bounds in the bracket channel; wellformedness of `@[r] T` when `T` contains nested
+> region-tagged types; and variance rules for region-annotated pointer types.
 
 ## Summary
 

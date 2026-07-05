@@ -4,10 +4,16 @@ title: "Struct-Owned Regions"
 date: '2026-06-28'
 ---
 
-> **Status — accepted.** Depends on RFC-0063 (Region Handles), RFC-0065 (Region
-> Ergonomics), and RFC-0067 (Reference Types). Introduces owned region declarations on
-> structs, giving the struct's arena the same lifetime as the struct itself and making that
-> lifetime available as a type-level tag in method signatures.
+> **Status — under review.** Moved back from accepted, together with the rest of the
+> region RFC cluster (RFC-0063, 0065, 0066, 0067, 0069, 0073, 0077) — see RFC-0063's status
+> note and `docs/reports/lifetimes-vs-regions-2026-07-02.md`. Under the proposed split,
+> `[own r]` is reframed as declaring a **backing allocator**
+> (`struct Parser[r: BumpRegion]`), not a lifetime; the struct's lifetime equals `r`'s scope
+> only because the struct owns the arena and dies with it, not because a region name is a
+> lifetime in general. Depends on RFC-0063 (Region Handles), RFC-0065 (Region Ergonomics),
+> and RFC-0067 (Reference Types). Introduces owned region declarations on structs, giving
+> the struct's arena the same lifetime as the struct itself and making that lifetime
+> available as a type-level tag in method signatures.
 
 ## Summary
 

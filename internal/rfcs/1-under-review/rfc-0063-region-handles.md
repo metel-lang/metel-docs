@@ -4,7 +4,16 @@ title: "Region Handles"
 date: '2026-06-24'
 ---
 
-> **Status — accepted.** This RFC consolidates the region-related half of
+> **Status — under review.** Moved back from accepted, together with the rest of the
+> region RFC cluster (RFC-0065, 0066, 0067, 0068, 0069, 0073, 0077). This RFC's triple-duty
+> premise — a region name is simultaneously a lifetime tag, a disjointness proof, and an
+> allocation strategy — holds only when a value lives exactly as long as the region it is
+> allocated into. RFC-0066 (individual drop / move-out) breaks that: a value can be moved
+> out or dropped while its region continues to hold other allocations, so a value's
+> lifetime and its region's lifetime are not always the same thing. See
+> `docs/reports/lifetimes-vs-regions-2026-07-02.md` for the finding and the proposed
+> allocators-vs-inferred-lifetimes split (not yet ratified). This RFC consolidates the
+> region-related half of
 > `docs/reports/memory-model/capability-region-synthesis.md` into a single normative
 > proposal and adopts the **bracket parameter channel** syntax (region handles declared in
 > `[...]`, value parameters in `(...)`). It depends on RFC-0071 (Ownership and Move

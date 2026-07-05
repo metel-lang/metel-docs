@@ -4,9 +4,14 @@ title: "Reference Types"
 date: '2026-06-28'
 ---
 
-> **Status — accepted.** Supersedes RFC-0043 (Regular Pointers). Amends
-> RFC-0044 (Explicit Receiver Semantics), RFC-0063 (Region Handles), RFC-0065 (Region
-> Ergonomics), and RFC-0066 (Region Pointer Extraction).
+> **Status — under review.** Moved back from accepted, together with the rest of the
+> region RFC cluster (RFC-0063, 0065, 0066, 0068, 0069, 0073, 0077) — see RFC-0063's status
+> note and `docs/reports/lifetimes-vs-regions-2026-07-02.md`. The proposed split assigns
+> this RFC's borrows an **inferred lifetime**, not a region; the `&[r]` tag-slot rule (does
+> a borrow slot admit an allocator name, or only a binding?) is called out there as the
+> highest-leverage open decision, and is decided here once settled. Supersedes RFC-0043
+> (Regular Pointers). Amends RFC-0044 (Explicit Receiver Semantics), RFC-0063 (Region
+> Handles), RFC-0065 (Region Ergonomics), and RFC-0066 (Region Pointer Extraction).
 
 ## Summary
 

@@ -4,10 +4,15 @@ title: "Region Pointer Extraction"
 date: '2026-06-27'
 ---
 
-> **Status — accepted.** Depends on RFC-0063 (Region Handles) and RFC-0065
-> (Region Ergonomics). Addresses the gap identified in RFC-0063 §8.1: how a caller obtains
-> a plain `T` or `&T` from an `@[r] T` region pointer, and what the destructor semantics
-> are in each case.
+> **Status — under review.** Moved back from accepted, together with the rest of the
+> region RFC cluster (RFC-0063, 0065, 0067, 0068, 0069, 0073, 0077). This RFC is the
+> trigger for the cluster-wide finding, not a downstream casualty of it: the individual
+> move-out/drop semantics specified here are exactly what allows a value's lifetime to end
+> before its backing region's scope does, which is what breaks RFC-0063's triple-duty
+> premise. See `docs/reports/lifetimes-vs-regions-2026-07-02.md`. Depends on RFC-0063
+> (Region Handles) and RFC-0065 (Region Ergonomics). Addresses the gap identified in
+> RFC-0063 §8.1: how a caller obtains a plain `T` or `&T` from an `@[r] T` region pointer,
+> and what the destructor semantics are in each case.
 
 ## Summary
 

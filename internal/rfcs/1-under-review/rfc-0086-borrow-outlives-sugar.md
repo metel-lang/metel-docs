@@ -4,15 +4,19 @@ title: "Outlives-of-Bindings Sugar"
 date: '2026-07-02'
 ---
 
-> **Status — under review, speculative.** Depends on RFC-0063 (Region Handles), RFC-0069
-> (Sub-Region Typing), RFC-0085 (PhantomRegion), RFC-0087 (Universal Own Regions). Purely
-> a syntax layer: every rule here reads a fact RFC-0087 already establishes (every
-> binding owns a region) and expresses a relationship between two such regions using the
-> ordinary `Outlives` bound RFC-0063 §3.2 already defines. Nothing here introduces new
-> semantics; it generalizes an existing rule — that a name in tag position denotes a
-> region — to also accept ordinary value bindings, and a list of them. Revised from an
-> earlier draft that spelled this with the `Outlives<x, y>` aspect sitting directly in
-> tag position; see §Alternatives for why that was replaced.
+> **Status — under review, speculative.** Depends on RFC-0063 (Region Handles), RFC-0067
+> (Reference Types), RFC-0069 (Sub-Region Typing), RFC-0085 (PhantomRegion), RFC-0087
+> (Universal Own Regions). Purely a syntax layer: every rule here reads a fact RFC-0087
+> already establishes (every binding owns a region) and expresses a relationship between
+> two such regions using the ordinary `Outlives` bound RFC-0063 §3.2 already defines.
+> Nothing here introduces new semantics, and no new token is introduced: it generalizes an
+> existing rule — that a name in tag position denotes a region — to accept
+> addressable-lvalue paths (RFC-0067 §2), not just declared region parameters, and a list
+> of them. The bracket slot itself is the only surface for referring to a binding's
+> region. Revised from an earlier draft that spelled this with the `Outlives<x, y>` aspect
+> sitting directly in tag position (see §Alternatives); a further revision generalized
+> tag contents from bare identifiers to addressable paths so field/array reborrows
+> compose without a new special case.
 
 ## Summary
 
@@ -26,9 +30,10 @@ This RFC adds that syntax by generalizing an existing rule instead of introducin
 one. A region-tag position (after `@`, `&`, or `&mut`, or as an explicit bracket
 argument) has always resolved a single name to a region. This RFC extends that lookup:
 
-1. a name that resolves to an ordinary value binding (not a declared region parameter)
-   denotes that binding's own region (RFC-0087);
-2. a tag position may hold a **list** of names, denoting the tightest region all of
+1. an **addressable-lvalue path** (RFC-0067 §2 — a named binding, a field access, an
+   array index, or a chain of these) denotes its own region (RFC-0087), whether or not
+   it is a declared region parameter;
+2. a tag position may hold a **list** of paths, denoting the tightest region all of
    them outlive — their meet, under the existing `Outlives` partial order (RFC-0063
    §3.2).
 
@@ -44,8 +49,8 @@ they sit in resolves to a region both of their own regions (RFC-0087) outlive. `
 it is actually needed. No aspect name is involved: `Outlives` itself is untouched by
 this RFC and keeps its one existing job, a bound written after a colon on an
 already-named region (`dst: Outlives<src>`, RFC-0063 §3.2). This RFC only teaches the
-tag position itself — the slot `[r]` already occupies in `&[r] T` — to accept binding
-names and lists of them, not just declared region parameters.
+tag position itself — the slot `[r]` already occupies in `&[r] T` — to accept paths
+and lists of them, not just declared region parameters.
 
 ---
 
@@ -80,53 +85,77 @@ needing to invent and thread a name for the bound to attach to.
 
 ## Design
 
-### 1. `[n1, n2, ...]` in tag position
+### 1. `[p1, p2, ...]` in tag position
 
-> **Grammar.** No new grammar production is added. A region-tag position — directly
-> after `&`, `&mut`, or `@`, or inside an explicit `[...]` bracket position — has
-> always accepted a comma-separated list of names (region-generic functions already
-> declare more than one there). This RFC changes only what a *name* in that position is
-> allowed to resolve to.
+> **Grammar.** A region-tag position — directly after `&`, `&mut`, or `@`, or inside an
+> explicit `[...]` bracket position — accepts a comma-separated list of
+> **addressable-lvalue paths** (RFC-0067 §2: named bindings, field accesses, array
+> indexing, and chains thereof). This is a widening of the existing list-of-names form:
+> a bare name is the one-step path, so the prior behavior is the degenerate case.
+> Arbitrary expressions are still excluded — only paths that are themselves addressable
+> (and therefore borrowable) may name a region.
 
-> **Name resolution.** Each `n1, n2, ...` must be an identifier already in scope at the
-> point of use. Two kinds resolve differently:
-> - If `ni` names a declared region (a bracket-channel parameter, `Heap`, `LocalHeap`,
->   or any other region-kinded name), it denotes that region directly — exactly the
->   existing rule, unchanged.
-> - If `ni` names an ordinary value binding (a parameter or `let`, not a type or region
->   name), it denotes `own(ni)` — the region RFC-0087 gives that binding by default (or
->   the real region a struct's explicit `[own r]` supplies, if `ni`'s type declared
->   one — RFC-0087 §5).
+> **Name resolution.** Each `p1, p2, ...` must be an addressable-lvalue path (RFC-0067
+> §2) already in scope at the point of use. Two kinds resolve differently:
+> - If `pi` is (or ends in) a declared region (a bracket-channel parameter, `Heap`,
+>   `LocalHeap`, or any other region-kinded name), it denotes that region directly —
+>   exactly the existing rule, unchanged.
+> - If `pi` is an addressable value path (a parameter, `let`, field access, or array
+>   index — not a type or region name), it denotes `own(pi)` — the **value's lifetime**
+>   RFC-0087 gives that lvalue (or the real region a struct's explicit `[own r]`
+>   supplies, since such a struct owns its arena and dies with it — RFC-0087 §5). For a
+>   `@[r] T` pointer, `own(pi)` is the value's lifetime, which is bounded by but
+>   distinct from `r` (the pointee can be moved out or dropped while `r` continues —
+>   RFC-0066, RFC-0087 §2 Exception B); only `[own r]` structs resolve to `r`.
 >
-> These are different kinds of names to begin with (region parameters and value
-> bindings already occupy different namespaces for typechecking purposes), so
-> resolution is unambiguous: the compiler already knows which kind `ni` is before
-> deciding what it denotes.
+> These are different kinds of paths to begin with (region parameters and value bindings
+> already occupy different namespaces for typechecking purposes), so resolution is
+> unambiguous: the compiler already knows which kind `pi` is before deciding what it
+> denotes. `own(p)` is metalinguistic notation in this RFC for "the region `p` denotes";
+> it is not a language token, and it needs none — the bracket slot `[p]` is the only
+> surface that ever refers to it.
 
-> **Semantics.** A tag position holding `n1, n2, ...` denotes a region `a` such that
-> `region(n1): Outlives<a>`, `region(n2): Outlives<a>`, …, chosen as the tightest such
-> `a` — i.e., the meet of `region(n1)`, `region(n2)`, … under the existing `Outlives`
-> partial order (RFC-0063 §3.2), where `region(ni)` is the region `ni` denotes under the
-> resolution rule above. A single name is the degenerate case of this rule (the meet of
-> one region is itself), which is exactly the existing single-name tag behavior —
-> this RFC is a strict generalization, not a special case bolted alongside it.
+> **Semantics.** A tag position holding `p1, p2, ...` denotes a region `a` such that
+> `own(p1): Outlives<a>`, `own(p2): Outlives<a>`, …, chosen as the tightest such `a` —
+> i.e., the meet of `own(p1)`, `own(p2)`, … under the existing `Outlives` partial order
+> (RFC-0063 §3.2), where `own(pi)` is the region `pi` denotes under the resolution rule
+> above. A single path is the degenerate case of this rule (the meet of one region is
+> itself, i.e. `own(p)`), which is exactly the existing single-name tag behavior — this
+> RFC is a strict generalization, not a special case bolted alongside it.
 
-> **Desugaring.** `[n1, n2, ...]` used in a signature desugars to introducing a fresh,
-> anonymous bracket parameter `[a: PhantomRegion]` together with the bounds
-> `region(n1): Outlives<a>`, `region(n2): Outlives<a>`, …, exactly as if those bounds
-> had been written explicitly. `n1`'s, `n2`'s, … own declared parameter types are
-> **not** rewritten — they stay exactly as written (`x: &Str`, not `x: &[a] Str`),
-> because the bound is stated against `region(ni)`, a fact already true of `ni`
-> regardless of what its surface type says.
+> **Meet well-formedness.** The meet is not computed as an explicit lattice operation; it
+> is the solution of a constraint set. The desugaring introduces a fresh region variable
+> `a` and emits `own(pi): Outlives<a>` for each operand; the region-inference solver
+> (which RFC-0063's borrow checker runs regardless) solves `a` to its greatest feasible
+> scope — and that greatest solution *is* the meet. Because every operand is in scope at
+> the use site (a precondition of the syntax), the use site's scope is always a common
+> lower bound of the operands' regions, so the constraint set is always satisfiable and
+> the meet always exists. Operationally the solver picks the deepest scope nested inside
+> every operand's region — their greatest common lower bound under the `Outlives` order,
+> resting on RFC-0069 §3.3's nesting structure. Failure, when it occurs, is never
+> meet-existence: it is the function body failing to produce a value that outlives `a`,
+> which the existing borrow check reports. Two residual questions are governed by
+> RFC-0069, not this RFC: that the scope model yields a unique greatest lower bound (i.e.
+> the nesting structure is tree-shaped), and the interaction of the static handles `Heap`
+> / `LocalHeap` with the per-binding scope lattice.
 
-No admission or coercion step is needed here: `own(ni)` already exists for every value
-binding `ni` by RFC-0087, so relating it to a fresh `a` is exactly the same operation as
-relating any two already-existing named regions — nothing about `ni`'s borrow needs to
-be retroactively treated as belonging anywhere it doesn't already, structurally, belong.
+> **Desugaring.** `[p1, p2, ...]` desugars to introducing a fresh, anonymous bracket
+> parameter `[a: PhantomRegion]` together with the bounds `own(p1): Outlives<a>`,
+> `own(p2): Outlives<a>`, …, exactly as if those bounds had been written explicitly. The
+> single-path form `[p]` is just `own(p)` (the degenerate meet). The paths' own declared
+> types are **not** rewritten — they stay exactly as written (`x: &Str`, not `x: &[a] Str`),
+> because the bound is stated against `own(pi)`, a fact already true of `pi` regardless of
+> what its surface type says.
+
+No admission or coercion step is needed here: `own(pi)` already exists for every
+addressable lvalue `pi` by RFC-0087, so relating it to a fresh `a` is exactly the same
+operation as relating any two already-existing named regions — nothing about `pi`'s
+borrow needs to be retroactively treated as belonging anywhere it doesn't already,
+structurally, belong.
 
 ### 2. Independent relation groups
 
-Each **distinct set** of names used in a tag position produces its own independent
+Each **distinct set** of paths used in a tag position produces its own independent
 synthesized tag. A function may relate more than one group without interference:
 
 ```metel
@@ -147,18 +176,27 @@ fun pick_longer(a: &Str, b: &Str) -> &[a, b] Str {
 The tags synthesized for `[w, x]` and `[y, z]` are unrelated — `w`/`x` are never
 constrained against `y`/`z`.
 
-Every occurrence of a tag position naming the same set of bindings (order-independent)
+Every occurrence of a tag position naming the same set of paths (order-independent)
 within one function resolves to the same synthesized tag — writing `[x, y]` twice does
 not produce two unrelated regions.
 
-### 3. Where it may not appear
+### 3. Where it may and may not appear
 
-- Only identifiers naming already-bound values or declared regions are accepted — not
-  arbitrary expressions, and not `self.field`-style paths (deferred, §Unresolved).
-- A name may not appear inside its own declaration's constraint — a tag position
+- Addressable-lvalue paths (RFC-0067 §2) are accepted — named bindings, field accesses,
+  array indexing, and chains thereof. Arbitrary expressions are not; the contents must
+  themselves be addressable (and therefore borrowable). This generalizes the prior
+  identifiers-only form, so `[self.field]` and `[arr[i]]` are now permitted where they
+  are addressable.
+- A path may not appear inside its own declaration's constraint — a tag position
   referencing `x` and `y` can only do so once both are already in scope at the point of
   use, so it is legal in a return type (after the full parameter list is bound) or in a
   later local binding, never in an earlier parameter's own type.
+- Directed `Outlives` between two *declared region parameters* (the case that actually
+  arises, e.g. `transfer`'s `[src, dst: Outlives<src>]`) is unchanged and uses
+  RFC-0063 §3.2's existing syntax; this RFC adds nothing there. A directed relation
+  between two *binding* regions is not something the sugar expresses, and no separate
+  token is provided for it — it has not been shown to correspond to anything a program
+  needs to state.
 
 ---
 
@@ -188,6 +226,23 @@ fun combine(x: &Str, y: &Str) {
 }
 ```
 
+### Field-path operand
+
+```metel
+struct Cursor[a] { source: &[a] Str, pos: USize }
+
+fun rest[a](c: &[a] Cursor) -> &[c.source] Str {
+    // [c.source] denotes own(c.source), which is a — the region that backs
+    // the cursor's source field. A bare [a] would mean the same thing here;
+    // the path form earns its keep when the field's region is not otherwise named.
+    slice_from(c.source, c.pos)
+}
+```
+
+For a struct that is **not** region-parameterized (`struct Cursor { source: &Str }`),
+what `own(c.source)` denotes is governed by RFC-0087's per-binding default and
+RFC-0069's `Outlives` derivation, not by this RFC; see §Unresolved Q1.
+
 ### Mixing a real owned region with a default one
 
 ```metel
@@ -199,7 +254,7 @@ fun pick[s](p: &[s] Parser, other: &Str) -> &[p, other] AstNode { ... }
 `p`'s own region is `r` (real, from `Parser`'s explicit `[own r]`, per RFC-0087 §5);
 `other`'s own region is a default `PhantomRegion`. `[p, other]` relates them the same
 way regardless — the resolution rule in §1 doesn't distinguish real from phantom
-operands, only value bindings from declared regions.
+operands, only value paths from declared regions.
 
 ---
 
@@ -238,6 +293,31 @@ outside analogy to justify it, unlike the original draft, which had to appeal to
 RFC-0076's allocation-site brand inference as the closest existing precedent for an
 implicit, undeclared tag.
 
+### A `region(p)` projection primitive (intermediate draft)
+
+An intermediate draft introduced a named `region(p)` primitive — "the region `p`
+denotes" — and treated the bracket list as sugar over it (`[p]` = `region(p)`,
+`[x, y]` = `meet(region(x), region(y))`). Retracted: the bracket slot already *is* the
+surface for a path's region (single name = degenerate meet), and once the meet is framed
+as constraint-solving rather than a lattice operation, there is no operation left that
+needs the projection named. The only case that would have justified a separate token —
+a directed `Outlives` between two *binding* regions — does not correspond to anything a
+program needs to state (directed `Outlives` that arises in practice is between declared
+region parameters, already handled by RFC-0063 §3.2). The notation `own(p)` is retained
+purely as metalinguistic shorthand in this RFC's desugaring, matching RFC-0087's
+terminology; it is not a language token.
+
+### Identifiers only, paths deferred (intermediate draft)
+
+An intermediate revision restricted tag contents to bare identifiers and deferred
+`self.field`-style paths. Rejected in favor of accepting addressable-lvalue paths
+(RFC-0067 §2) directly: the region a path denotes is well-defined for any addressable
+lvalue, so accepting paths is a grammar widening of an existing rule rather than a new
+special case, and it removes a seam — `longest` would have worked while `peek` into a
+borrowed struct's field would not — that would otherwise make the sugar feel partial.
+Constraining the contents to *addressable* paths (not arbitrary expressions) preserves
+the property that only things which can themselves be borrowed may name a region.
+
 ### A single ambient `own` region per function
 
 An earlier direction considered generalizing RFC-0068's `[own r]` to be automatic for
@@ -266,10 +346,14 @@ if this sugar's restrictions (§3) don't fit.
 
 ## Unresolved questions
 
-1. **Struct fields and paths.** `[self.field, y]` or similar path expressions are not
-   supported by §3; only bare identifiers are. Whether this should extend to field
-   paths is deferred, consistent with RFC-0087's own deferral of per-field defaults
-   beyond whole bindings.
+1. **Path operands into unparameterized structs.** §1 now accepts addressable-lvalue
+   paths, so `[c.source]` denotes `own(c.source)`. The open question is not syntactic
+   but semantic: for a struct *not* region-parameterized
+   (`struct Cursor { source: &Str }`), what `own(c.source)` denotes and whether it is
+   the region a return-borrow needs is governed by RFC-0087's per-field default (still
+   under review) and RFC-0069's `Outlives` derivation. Structs that are
+   region-parameterized (`struct Cursor[a] { source: &[a] Str }`) are unambiguous:
+   `own(c.source)` = `a`.
 
 2. **Cross-closure references.** Whether a tag position may name a binding captured
    from an enclosing scope, rather than only the current function's own parameters and
@@ -277,14 +361,21 @@ if this sugar's restrictions (§3) don't fit.
    further along — the same open point as RFC-0087 §Unresolved Q3.
 
 3. **Diagnostics.** Error messages must be phrased in terms of the original surface
-   names (`x`, `y`) and which one actually determined the tightest bound, not the
-   synthesized anonymous tag introduced by desugaring. Exact format deferred to
+   paths (`x`, `y`, `c.source`) and which one actually determined the tightest bound,
+   not the synthesized anonymous tag introduced by desugaring. Exact format deferred to
    implementation.
 
 4. **Canonicalization across nested scopes.** §2 states that repeated occurrences of
-   the same name-set resolve to the same tag. The precise rule when occurrences are
+   the same path-set resolve to the same tag. The precise rule when occurrences are
    inside different nested blocks (e.g., one inside a loop body, one at the function's
    top level) is deferred to implementation.
+
+5. **Meet existence — resolved (residuals in RFC-0069).** §1 (Meet well-formedness)
+   resolves this: the meet is the greatest solution of the desugar's `Outlives<a>`
+   constraints, found by region inference, and always exists for co-in-scope operands
+   (the use-site scope is a satisfiability witness). The remaining questions — unique
+   greatest lower bounds (tree-shaped nesting) and `Heap`/`LocalHeap` in the scope
+   lattice — belong to RFC-0069.
 
 ---
 
@@ -293,11 +384,14 @@ if this sugar's restrictions (§3) don't fit.
 - RFC-0063 (Region Handles) §2 — the single-name tag-position lookup rule this RFC
   generalizes; §3.2 — the existing `Outlives<R>` bound, reused unchanged as the
   semantics underlying the desugaring, never itself placed in tag position.
+- RFC-0067 (Reference Types) §2 — defines the addressable-lvalue paths this RFC accepts
+  as tag contents; only paths that are themselves addressable (and therefore borrowable)
+  may name a region.
 - RFC-0069 (Sub-Region Typing) §3.3 — the transitive `Outlives` derivation that lets
-  mixed real/phantom relations (§Examples, third example) resolve without special
-  casing.
+  mixed real/phantom relations (§Examples, fourth example) resolve without special
+  casing, and on which meet well-formedness (§1) rests.
 - RFC-0085 (PhantomRegion) — the type backing the synthesized tag this RFC's
   desugaring introduces.
-- RFC-0087 (Universal Own Regions) — establishes `own(n)` for every binding `n`; this
-  RFC is entirely downstream of that fact and adds no semantics of its own beyond
-  syntax for referring to it.
+- RFC-0087 (Universal Own Regions) — establishes an own region for every binding `n`
+  (written `own(n)` in this RFC's desugaring); this RFC is entirely downstream of that
+  fact and adds no semantics of its own beyond syntax for referring to it.

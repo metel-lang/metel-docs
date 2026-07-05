@@ -4,11 +4,16 @@ title: "AutoRegion"
 date: '2026-06-29'
 ---
 
-> **Status — accepted.** Depends on RFC-0063 (Region Handles), RFC-0065 (Region
-> Ergonomics), RFC-0066 (Region Pointer Extraction), RFC-0071 (Ownership and Move
-> Semantics), and RFC-0072 (Negative Bounds). Introduces `AutoRegion` as a stdlib region
-> that delegates allocation strategy entirely to the compiler, preserving lifetime
-> relationships while freeing the programmer from allocator decisions.
+> **Status — under review.** Moved back from accepted, together with the rest of the
+> region RFC cluster (RFC-0063, 0065, 0066, 0067, 0068, 0069, 0077) — see RFC-0063's status
+> note and `docs/reports/lifetimes-vs-regions-2026-07-02.md`. Under the proposed split,
+> `AutoRegion` is unaffected in substance — it remains a first-class allocator specified by
+> semantic contract — but the "preserving lifetime relationships" framing below needs
+> rephrasing once lifetimes are no longer region-instances. Depends on RFC-0063 (Region
+> Handles), RFC-0065 (Region Ergonomics), RFC-0066 (Region Pointer Extraction), RFC-0071
+> (Ownership and Move Semantics), and RFC-0072 (Negative Bounds). Introduces `AutoRegion` as
+> a stdlib region that delegates allocation strategy entirely to the compiler, preserving
+> lifetime relationships while freeing the programmer from allocator decisions.
 
 ## Summary
 

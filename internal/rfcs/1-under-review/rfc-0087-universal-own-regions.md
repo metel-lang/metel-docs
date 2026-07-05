@@ -76,8 +76,10 @@ loan of a binding that already had its own region from the start.
 > **Rule.** Every binding — a `let`, a function parameter, a struct field's storage
 > for its own value, anything the borrow checker tracks a liveness range for —
 > implicitly performs the RFC-0068 §2 construction step (an owned region, created when
-> the binding comes into existence, freed when it goes out of scope) targeting
-> `PhantomRegion`, unless one of the two exceptions in §2 applies.
+> the binding comes into existence, ending when the value is moved out, dropped, or goes
+> out of scope) targeting `PhantomRegion`, unless one of the two exceptions in §2
+> applies. This region represents the **value's lifetime** — distinct, as §2 Exception B
+> explains, from any region the value may be allocated *into*.
 
 This generalizes RFC-0068 §1–§3 from an opt-in struct declaration to the default for
 everything. The mechanics are unchanged — construction happens as part of the binding
@@ -97,13 +99,18 @@ does so by naming the *binding*, not the region.
 > the phantom default. The default only fills the gap when nothing else is declared.
 
 > **Exception B — the binding is itself a region pointer.** A binding of type `@[r] T`
-> already has an explicit backing region `r` for what it points to. This RFC still
-> gives the *pointer binding itself* its own default region under §1 — tracking how
-> long this particular binding of the pointer is around, which is a different question
-> from what backs the pointee — but this is stated explicitly here because it is easy
-> to conflate the two: `r` (real, explicit, backs the pointee) and the pointer
-> binding's own default region (phantom, implicit, backs nothing, just times the
-> binding) are two separate facts that happen to coexist on the same value.
+> already has an explicit backing region `r` for what it points into, and this RFC still
+> gives the *pointer binding itself* its own default region under §1. The two must not
+> be conflated, and the reason is not stylistic: `r` is the **region's** lifetime (how
+> long the arena is alive), while the binding's own region is the **value's** lifetime
+> (how long this particular value is usable). The value lifetime is bounded by `r` but
+> may be strictly shorter, because a region-allocated value can be moved out or dropped
+> while `r` continues to hold other allocations (RFC-0066). This distinction is
+> load-bearing: a borrow derived from the value is tagged with the *value* lifetime, not
+> with `r`, precisely so that individual drop remains possible — tagging it with `r`
+> would promise validity as long as the arena lives and so forbid moving the pointee
+> before `r` ends. (`[own r]` structs are the one case that resolves to `r` instead:
+> they *own* the arena and die with it, so their value lifetime equals `r` — see §5.)
 
 ### 3. Zero cost
 
@@ -173,10 +180,11 @@ storage.
 
 ```metel
 fun read[r](n: @[r] Node) -> I64 {
-    // `n`'s pointee is backed by `r` (real, explicit).
-    // `n` the *binding* also owns a default PhantomRegion (this RFC),
-    // tracking how long this particular binding of `n` lasts — separate,
-    // and in this example unused, but present per Exception B.
+    // `r` is the region's lifetime — the arena backing n's pointee.
+    // `own(n)` is n's *value* lifetime — how long this particular pointer value is
+    // usable, which ends if the pointee is moved out (RFC-0066) even though `r`
+    // continues. A borrow derived from `n` is tagged with `own(n)`, not `r`, so that
+    // individual drop stays possible (Exception B). Unused here, but present.
     n.val
 }
 ```
