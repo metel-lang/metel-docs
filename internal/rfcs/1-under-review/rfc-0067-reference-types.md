@@ -2,54 +2,50 @@
 id: rfc-0067
 title: "Reference Types"
 date: '2026-06-28'
+updated: '2026-07-05'
 ---
 
-> **Status — under review.** Moved back from accepted, together with the rest of the
-> region RFC cluster (RFC-0063, 0065, 0066, 0068, 0069, 0073, 0077) — see RFC-0063's status
-> note and `docs/reports/lifetimes-vs-regions-2026-07-02.md`. The proposed split assigns
-> this RFC's borrows an **inferred lifetime**, not a region; the `&[r]` tag-slot rule (does
-> a borrow slot admit an allocator name, or only a binding?) is called out there as the
-> highest-leverage open decision, and is decided here once settled. Supersedes RFC-0043
-> (Regular Pointers). Amends RFC-0044 (Explicit Receiver Semantics), RFC-0063 (Region
-> Handles), RFC-0065 (Region Ergonomics), and RFC-0066 (Region Pointer Extraction).
+> **Status — under review.** Rewritten 2026-07-05. The original RFC used `&[r] T` /
+> `&mut [r] T` for region-tagged borrows. Under the split model (RFC-0063 rewritten),
+> borrows carry **lifetime anchors**, not allocator tags. The anchor syntax is `&r T`
+> (immutable) and `&r mut T` (mutable) — the anchor groups with `&`, mutability follows.
+> Anchors are type-level only; expression position always uses `&val` / `&mut val`.
+> Supersedes RFC-0043 (Regular Pointers). Amends RFC-0044 (Explicit Receiver Semantics).
+> Depends on RFC-0063 (Allocator Handles) and RFC-0071 (Ownership and Move Semantics).
 
 ## Summary
 
-Replace Metel's `*T` / `*mut T` pointer model (RFC-0043) with Rust-style **reference
-types**: `&T` (shared immutable reference) and `&mut T` (exclusive mutable reference).
-Remove the explicit `*p` dereference operator. Access to referenced values is always
-through auto-deref; the language has no safe dereference expression.
+Replace Metel's `*T` / `*mut T` pointer model (RFC-0043) with **reference types**:
+`&T` (shared immutable) and `&mut T` (exclusive mutable). Remove the explicit `*p`
+dereference operator — all value access is through auto-deref.
 
-The same change resolves the move-out syntax for region pointers: `*ptr` is gone, and
-consuming a region pointer is handled by a dedicated method and type-directed move-out.
+This RFC also specifies **lifetime anchors** — the compile-time names that bound a
+borrow's validity scope. A borrow `&r T` carries anchor `r`, a binding whose scope
+determines how long the borrow remains valid. Anchors are separate from allocators:
+the allocator says where a value lives; the lifetime anchor says how long a particular
+borrow of it is valid.
 
 ---
 
 ## Motivation
 
-RFC-0043 introduced `*T` / `*mut T` as the non-owning alias types with `&x` for
-address-of and `*p` for explicit dereference. This model accumulates visible friction
-when combined with the region pointer system. The extraction examples in RFC-0066 show
-it most clearly:
+RFC-0043's `*T` / `*mut T` model accumulates friction when combined with the allocator
+system. The extraction examples in RFC-0066 show it most clearly:
 
 ```metel
-// clone extraction from a region pointer — current
-let copy: @[Heap] Config = (*(&src)).clone();
+// clone extraction — current *T model
+let copy: @Heap Config = (*(&src)).clone();
 ```
 
-`src: @[r] Config`. To call `.clone()` the programmer must borrow-deref (`&*src` or
-`&src` producing `*Config`), then dereference again — two visible `*` operations that
-obscure a conceptually simple "borrow this value and clone it." The same sigil (`*`)
-marks region-pointer move-out, regular-pointer dereference, and the type notation for
-non-owning references. The overloading is the source of confusion.
+Two visible `*` operations obscure a conceptually simple "borrow this value and clone
+it." The same sigil marks allocator-pointer move-out, regular-pointer dereference, and
+the type notation for non-owning references.
 
-Rust's reference model resolves this: `&T` / `&mut T` are the reference types, auto-deref
-handles all value access, and the programmer only names pointers when creating or
-explicitly storing them. The same example becomes:
+Reference types and auto-deref resolve this:
 
 ```metel
 // clone extraction — with reference types
-let copy: @[Heap] Config = src.clone();
+let copy: @Heap Config = src.clone();
 ```
 
 ---
@@ -59,160 +55,152 @@ let copy: @[Heap] Config = src.clone();
 Metel has two reference types:
 
 ```metel
-&T      // shared immutable reference
-&mut T  // exclusive mutable reference
+&T       // shared immutable reference
+&mut T   // exclusive mutable reference
 ```
 
-These replace `*T` and `*mut T` from RFC-0043. Their semantics are unchanged: both are
-non-owning aliases to a value held elsewhere. `&T` allows multiple simultaneous readers;
-`&mut T` is exclusive — no other reference to the same location may exist while it is
-live.
+These replace `*T` and `*mut T` from RFC-0043. Semantics are unchanged: both are
+non-owning aliases. `&T` allows multiple simultaneous readers; `&mut T` is exclusive —
+no other reference to the same location may exist while it is live.
 
 `&mut T` coerces to `&T` implicitly. No other reference coercion is implicit.
 
 ---
 
-## 2. Address-of
+## 2. Lifetime anchors
 
-The address-of operators `&` and `&mut` are syntactically unchanged:
+Every borrow carries a **lifetime anchor** — the name of a binding whose scope bounds
+the borrow's validity. The anchor appears directly after `&` in type position:
+
+```metel
+&r T       // immutable borrow of T; valid while binding r is alive
+&r mut T   // mutable borrow of T; valid while binding r is alive
+```
+
+The anchor groups with `&`; `mut` qualifies the reference after it. A borrow `&r T`
+does not know or care whether `T` was allocated in allocator `r` — `r` is a binding
+name, and the borrow is valid for exactly as long as `r` is in scope.
+
+**Anchors are type-level only.** In expression position, write `&val` and `&mut val`.
+The anchor is inferred from the expected type; explicit anchors never appear on
+expressions. This matches Rust's design: lifetimes annotate types, not terms.
+
+**Declaration.** When a function needs to name an anchor explicitly (because elision is
+ambiguous), it declares it in the type-parameter channel `<>` with the `&` prefix:
+
+```metel
+fun longest<&r>(&r Str, &r Str) -> &r Str { ... }
+```
+
+Elision rules (RFC-0065 §2) cover the common cases; `<&r>` declarations appear only
+when the relationship is ambiguous.
+
+**Lifetime ordering bounds.** When two anchors have no structural relationship the
+borrow checker can derive, a `: &s` bound in the `<>` declaration expresses that the
+right-hand side is the shorter-lived anchor:
+
+```metel
+fun pick<&s, &t: &s>(&s Str, &t Str) -> &t Str { ... }
+// &t: &s means t outlives s; t is the shorter-lived anchor
+```
+
+---
+
+## 3. Address-of
+
+The address-of operators `&` and `&mut` are syntactically unchanged at the expression level:
 
 ```metel
 let x = 42;
-let r: &i64      = &x;      // shared reference to x
+let r: &i64     = &x;      // shared reference to x
 let mut y = 42;
-let m: &mut i64  = &mut y;  // exclusive reference to y
+let m: &mut i64 = &mut y;  // exclusive reference to y
 ```
 
 Addressability rules from RFC-0043 §5 are preserved: only stable lvalues (named
 bindings, fields, array elements, and chains thereof) may be addressed. Temporaries
 cannot.
 
+The anchor in the resulting type is inferred from the binding being addressed. Taking
+`&x` where `x` is in the current scope produces a borrow with the anchor inferred to
+be `x`'s scope.
+
 ---
 
-## 3. Auto-deref
+## 4. Auto-deref
 
-There is no explicit dereference operator in safe code. All access to referenced values
-goes through auto-deref, which applies in three positions:
+There is no explicit dereference operator in safe code. All access goes through auto-deref:
 
 1. **Field access** — `r.field` where `r: &T` dereferences to access `T.field`.
 2. **Method dispatch** — `r.method(args)` inserts the borrow required by the method's
    receiver.
-3. **Deref coercions** — `&T` or `&mut T` coerces to a less-capable reference in
-   positions where a shared borrow of the inner type is expected:
-   `& @[r] T` coerces to `&T`; `&mut @[r] T` coerces to `&mut T`.
+3. **Deref coercions** — `&T` or `&mut T` coerces to a less-capable reference when the
+   expected type requires it.
 
-Auto-deref chains: a `& &T` will deref through both levels if needed. The compiler
-resolves the chain depth from the expected type.
-
----
-
-## 4. Region pointer access
-
-`@[r] T` participates in auto-deref. It is treated by the compiler as a "one-level
-owner" over `T`: field access and method dispatch deref through the region pointer
-transparently.
-
-```metel
-let node = @[r] Node { val: 1, next: null };
-
-let v = node.val;           // auto-deref: @[r] Node → Node, read field
-node.val = 2;               // auto-deref: @[r] Node → Node, write field
-node.method(args);          // auto-deref: dispatches on Node
-```
-
-**Explicit borrows** through a region pointer produce a region-tagged reference:
-
-```metel
-let r: &[r] Node     = &node;      // shared borrow — &[r] Node, coerces to &Node
-let m: &mut [r] Node = &mut node;  // exclusive borrow — &mut [r] Node, coerces to &mut Node
-```
-
-`&node` where `node: @[r] T` gives `&[r] T` — the region-tagged borrow established in
-RFC-0063 §2 as the shorthand for `& @[r] T`. `&[r] T` coerces to `&T` in positions
-where the region tag is not needed (e.g., calls to functions that take plain `&T`).
+Auto-deref chains: a `&&T` will deref through both levels if needed. Chain depth is
+bounded by the type structure; no infinite cycles are possible.
 
 ---
 
-## 5. Move-out from `@[r] T`
+## 5. Allocator pointer access
 
-Move-out is the consuming operation that extracts `T` from `@[r] T`, destroying the
-region pointer. Since `*ptr` is gone, move-out is expressed in two ways:
-
-### 5.1 Type-directed move-out
-
-When a `let` binding or return position declares type `T` and the source is `@[r] T`,
-the compiler performs move-out implicitly:
+`@a T` participates in auto-deref. It is treated as a one-level owner over `T`: field
+access and method dispatch deref through the allocator pointer transparently.
 
 ```metel
-let ptr = @[r] Node { val: 1, next: null };
+let node = @a Node { val: 1, next: null };
+
+let v = node.val;      // auto-deref: @a Node → Node, read field
+node.val = 2;          // auto-deref: @a Node → Node, write field
+node.method(args);     // auto-deref: dispatches on Node
+```
+
+**Explicit borrows** through an allocator pointer produce an anchor-carrying reference.
+The anchor is the binding being borrowed:
+
+```metel
+let r: &node T   = &node;      // shared borrow; anchor = `node` binding
+let m: &node mut T = &mut node; // exclusive borrow; anchor = `node` binding
+```
+
+In practice the anchor is almost always elided and inferred from context. The explicit
+form appears in type signatures when the anchor must be named.
+
+**Coercion.** A borrow of `@a T` — written `&node` where `node: @a T` — coerces to
+plain `&T` in positions where the allocator tag and anchor are not needed. The coercion
+is implicit at function arguments, return expressions, and annotated `let` bindings.
+
+---
+
+## 6. Move-out from `@a T`
+
+Move-out is the consuming operation that extracts `T` from `@a T`, destroying the
+allocator pointer. Since `*ptr` is gone, move-out is expressed via type context:
+
+**Type-directed** — when a `let` binding or return position declares type `T` and the
+source is `@a T`, the compiler performs move-out implicitly:
+
+```metel
+let ptr = @a Node { val: 1 };
 let node: Node = ptr;    // move-out: ptr consumed, Node returned
 ```
 
-If `T: Copy`, the operation is a copy — `ptr` remains valid:
+**Type ascription** — drives move-out in any expression position:
 
 ```metel
-let ptr = @[r] Point { x: 1, y: 2 };
-let p: Point = ptr;   // copy: Point is Copy, ptr still valid
+let node = ptr: Node;       // ascription in let — ptr consumed
+process(ptr: Node);         // ascription at call site — ptr consumed
 ```
 
-The same rules from RFC-0066 apply: move-out from `@[Heap] T` is always safe; move-out
-from bulk-deallocating `@[r] T` requires `T: !Drop` (Option A) or allocator-tracked
-destruction (Option B).
-
-### 5.2 Type ascription move-out
-
-For explicit move-out in any expression position, the type ascription operator drives
-consumption the same way a declared binding type does:
-
-```metel
-let node = ptr: Node;     // ascription in let — ptr consumed
-process(ptr: Node);       // ascription at call site — ptr consumed
-```
-
-This keeps `@[r] T` behaviorally identical to `T` itself — the pointer type carries no
-special consuming method, and no stdlib import is required.
+Move-out semantics and constraints (heap always safe, scoped allocators require
+`T: !Drop` for bulk-deallocating kinds) are specified in RFC-0066.
 
 ---
 
-## 6. Impact on the borrow forms in RFC-0063
-
-RFC-0063 §2 defines borrow shorthand:
-
-| Sugar | Expands to | Meaning |
-|---|---|---|
-| `&[r] T` | `&@[r] T` | shared borrow of a region-`r` value |
-| `&mut [r] T` | `&mut @[r] T` | exclusive borrow of a region-`r` value |
-
-Under this RFC, `&node` where `node: @[r] T` gives `&[r] T` (§4) — the RFC-0063
-shorthand for `& @[r] T`. `&[r] T` coerces to plain `&T` where the region tag is not
-required. The `&[r] T` form in signatures names the region for lifetime tracking and
-elision; `&T` is what callers that don't care about the region observe after coercion.
-These describe the same borrow from different vantage points.
-
----
-
-## 7. Impact on RFC-0066
-
-RFC-0066's extraction forms update as follows:
-
-| Extraction form | Old syntax | New syntax |
-|---|---|---|
-| Borrow `&[r] T` (→ `&T`) | `&*ptr` | `&ptr` |
-| Borrow `&mut [r] T` (→ `&mut T`) | `&mut *ptr` | `&mut ptr` |
-| Copy out (T: Copy) | `*ptr` | `let x: T = ptr` or `ptr: T` |
-| Move out | `*ptr` | `let x: T = ptr` or `ptr: T` |
-| Clone out | `(*(&src)).clone()` | `src.clone()` |
-
-RFC-0066 §5.3 (auto-deref for borrows, open question) is resolved by this RFC: `src.clone()` on `@[r] T` dispatches to `T::clone` through auto-deref. The unresolved question is closed.
-
----
-
-## 8. Supersession of RFC-0043
-
-This RFC supersedes RFC-0043. The correspondence is:
+## 7. Supersession of RFC-0043
 
 | RFC-0043 | This RFC |
-|---|---|
+|----------|----------|
 | `*T` | `&T` |
 | `*mut T` | `&mut T` |
 | `&x` → `*T` | `&x` → `&T` |
@@ -220,27 +208,23 @@ This RFC supersedes RFC-0043. The correspondence is:
 | `*p` explicit dereference | removed; auto-deref only |
 | `*mut T` coerces to `*T` | `&mut T` coerces to `&T` |
 
-RFC-0043 §6 (auto-deref for field access, method calls, function pointer calls) is
-preserved and extended to apply to `@[r] T` as specified in §4.
-
-RFC-0043 §8 (no pointer arithmetic) and §8 (nullability via `Perhaps<*T>`) carry over
-unchanged, with the type renamed to `Perhaps<&T>`.
+RFC-0043 §6 (auto-deref for field access, method calls) is preserved and extended to
+apply to `@a T`. RFC-0043 §8 (no pointer arithmetic) carries over unchanged.
+Nullability via `Perhaps<*T>` becomes `Perhaps<&T>`.
 
 ---
 
-## 9. Unresolved questions
+## 8. Unresolved questions
 
 None.
 
-**Closed — `&[r] T` coercion depth.** `&[r] T` coerces to `&T` implicitly at coercion
-sites — function arguments, return expressions, and `let` bindings with an explicit type
-annotation. No coercion is inserted in unannotated expression positions where no expected
-type is known. This matches Rust's deref-coercion rules for `&Box<T>` → `&T`.
+**Closed — borrow coercion depth.** A borrow of `@a T` coerces to `&T` at coercion
+sites (function arguments, return expressions, annotated `let` bindings). No coercion
+is inserted in unannotated expression positions where no expected type is known. Matches
+Rust's deref-coercion rules.
 
-**Closed — Auto-deref chain depth.** The compiler follows the deref chain until it reaches
-the expected type, with no explicit numeric depth limit. The chain is bounded by the type
-structure (no infinite deref cycles are possible). Ambiguous chains are resolved by the
-expected type at the coercion site. This also matches Rust's approach.
+**Closed — auto-deref chain depth.** The compiler follows the deref chain until it
+reaches the expected type, with no explicit depth limit. Chain bounded by type structure.
 
 ---
 
@@ -249,7 +233,8 @@ expected type at the coercion site. This also matches Rust's approach.
 - RFC-0043 (Regular Pointers) — superseded by this RFC.
 - RFC-0044 (Explicit Receiver Semantics) — `&self` / `&mut self` receivers are now
   consistent with `&T` / `&mut T` as general reference types.
-- RFC-0063 (Region Handles) §2 — borrow forms `&[r] T` and `&mut [r] T`.
-- RFC-0065 (Region Ergonomics) §1 — elision rules apply to `&T` and `&mut T` equally.
-- RFC-0066 (Region Pointer Extraction) — move-out and borrow-deref forms updated by §5
-  and §7 of this RFC.
+- RFC-0063 (Allocator Handles) — `@a T`; allocator-tagged owned pointers that this
+  RFC borrows from.
+- RFC-0065 (Allocator Ergonomics) — elision rules for lifetime anchors and allocator tags.
+- RFC-0066 (Allocated Value Extraction) — move-out and borrow forms updated by §6
+  of this RFC.

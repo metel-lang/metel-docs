@@ -4,25 +4,24 @@ title: "Region Pointer Extraction"
 date: '2026-06-27'
 ---
 
-> **Status — under review.** Moved back from accepted, together with the rest of the
-> region RFC cluster (RFC-0063, 0065, 0067, 0068, 0069, 0073, 0077). This RFC is the
-> trigger for the cluster-wide finding, not a downstream casualty of it: the individual
-> move-out/drop semantics specified here are exactly what allows a value's lifetime to end
-> before its backing region's scope does, which is what breaks RFC-0063's triple-duty
-> premise. See `docs/reports/lifetimes-vs-regions-2026-07-02.md`. Depends on RFC-0063
-> (Region Handles) and RFC-0065 (Region Ergonomics). Addresses the gap identified in
-> RFC-0063 §8.1: how a caller obtains a plain `T` or `&T` from an `@[r] T` region pointer,
-> and what the destructor semantics are in each case.
+> **Status — under review.** Rewritten syntax 2026-07-05. This RFC is the trigger for
+> the cluster-wide model split: individual move-out/drop allows a value's lifetime to end
+> before its allocator's scope, which is what breaks RFC-0063's triple-duty premise. The
+> semantic content is unchanged under the split model — extraction families, `T: !Drop`
+> constraints, and drop safety analysis all stand. Syntax updated from `@a T` to `@a T`
+> throughout. Depends on RFC-0063 (Allocator Handles) and RFC-0065 (Allocator Ergonomics).
+> Addresses the gap identified in RFC-0063 §5: how a caller obtains a plain `T` or `&T`
+> from an `@a T` allocator pointer, and what the destructor semantics are in each case.
 
 ## Summary
 
-`@[r] expr` allocates `T` into region `r`; extraction is the inverse. Given `ptr: @[r] T`,
+`@a expr` allocates `T` into allocator `a`; extraction is the inverse. Given `ptr: @a T`,
 two families of operations are available:
 
 - **Borrow-deref** — obtain `&T` or `&mut T` without consuming `ptr`; works for any region
   kind and any `T`.
-- **Move-out** — obtain `T` by consuming `ptr`; always safe for `@[Heap] T`, constrained
-  by `T`'s Drop status for scoped `@[r] T`.
+- **Move-out** — obtain `T` by consuming `ptr`; always safe for `@Heap T`, constrained
+  by `T`'s Drop status for scoped `@a T`.
 
 The asymmetry between region kinds follows directly from their Drop semantics: heap regions
 free slots individually; scoped bump arenas reclaim memory in bulk, which creates a
@@ -32,9 +31,9 @@ double-drop hazard when a slot has been vacated by move-out.
 
 ## Motivation
 
-Functions and methods take plain `T` or `&T`. A caller holding `@[r] List<T>` cannot pass
+Functions and methods take plain `T` or `&T`. A caller holding `@a List<T>` cannot pass
 it to such a call site without extracting the value first. The extraction forms this RFC
-specifies are the complement to the `@[r] expr` allocation form: together they define the
+specifies are the complement to the `@a expr` allocation form: together they define the
 full lifecycle of a region-allocated value.
 
 ---
@@ -45,7 +44,7 @@ Borrow-deref obtains a temporary loan of the value without consuming the region 
 It is unconditional — no restriction on region kind or `T`:
 
 ```metel
-let ptr = @[r] Node { val: 1, next: null };
+let ptr = @a Node { val: 1, next: null };
 
 let v: &Node     = &ptr;     // shared borrow — &[r] Node, coerces to &Node
 let v: &mut Node = &mut ptr; // exclusive borrow
@@ -62,21 +61,21 @@ field access and method dispatch through region pointers (RFC-0067 §3–4).
 
 Move-out consumes `ptr` and returns `T`. Safety depends on the region kind.
 
-### 2.1 `@[Heap] T` — always safe
+### 2.1 `@Heap T` — always safe
 
 The heap tracks allocations individually. When `ptr` is consumed by move-out, the heap
 slot is freed without calling `T::drop` again — `T` is now owned elsewhere and will be
-dropped by its new owner. This is exactly symmetric with `@[Heap] expr` allocation:
+dropped by its new owner. This is exactly symmetric with `@Heap expr` allocation:
 
 ```metel
-let ptr = @[Heap] String { … };
+let ptr = @Heap String { … };
 let s = ptr: String;  // type ascription drives move-out; heap slot freed; ptr consumed
 // s is dropped normally when it goes out of scope
 ```
 
-Move-out from `@[Heap] T` is safe for all `T`, including `T: Drop`.
+Move-out from `@Heap T` is safe for all `T`, including `T: Drop`.
 
-### 2.2 Non-heap `@[r] T` — constrained by allocator drop strategy
+### 2.2 Non-heap `@a T` — constrained by allocator drop strategy
 
 Move-out safety for non-heap regions depends on how the allocator handles drops, not on
 whether the region is scoped. Two strategies are possible:
@@ -102,7 +101,7 @@ A `Copy` type is extracted by copy, not move. The slot is not vacated; `ptr` rem
 valid:
 
 ```metel
-let ptr = @[r] Point { x: 1, y: 2 };
+let ptr = @a Point { x: 1, y: 2 };
 let p = ptr: Point;   // type ascription copies Point out — ptr still valid, slot intact
 ```
 
@@ -115,7 +114,7 @@ The slot is orphaned, but when the arena drops it reclaims raw memory without ca
 destructor. Nothing leaks; nothing runs twice:
 
 ```metel
-let ptr = @[r] Pair { a: 1, b: 2 };  // Pair has no Drop impl
+let ptr = @a Pair { a: 1, b: 2 };  // Pair has no Drop impl
 let p = ptr: Pair;                     // type ascription moves out — safe; slot orphaned
 // arena frees the raw memory on drop, no destructor to call
 ```
@@ -125,9 +124,9 @@ let p = ptr: Pair;                     // type ascription moves out — safe; sl
 Move-out creates a double-drop hazard. Three options resolve this:
 
 **Option A — restrict move-out to `T: !Drop` (recommended for bulk-deallocating
-allocators).** Move-out from `@[r] T` is a compile error when `T: Drop`. The type system
+allocators).** Move-out from `@a T` is a compile error when `T: Drop`. The type system
 enforces the restriction statically via the negative bound; no runtime bookkeeping. Types
-that hold external resources should use `@[Heap] T`, which supports move-out for all `T`.
+that hold external resources should use `@Heap T`, which supports move-out for all `T`.
 
 **Option B — allocator-tracked destruction.** The allocator maintains a live-allocation
 list with destructor entries. Move-out removes the entry; the allocator's own drop only
@@ -140,7 +139,7 @@ before vacating the slot. Unsafe; inconsistent with Metel's safe-by-default post
 
 Option A is the recommended starting point for the stdlib `BumpRegion` (bump arena). Arena
 workloads typically deal in plain data types, not resource-holding ones. The restriction is
-zero-cost, statically visible at the call site, and the escape valve — use `@[Heap] T` — is
+zero-cost, statically visible at the call site, and the escape valve — use `@Heap T` — is
 idiomatic. Custom allocators with specific requirements may implement Option B instead.
 
 ---
@@ -150,7 +149,7 @@ idiomatic. Custom allocators with specific requirements may implement Option B i
 Move-out is expressed in two equivalent forms:
 
 **Type-directed binding** — when a `let` binding declares type `T` and the right-hand
-side is `@[r] T`, move-out is implicit:
+side is `@a T`, move-out is implicit:
 
 ```metel
 let node: Node = ptr;   // declared type drives move-out; ptr consumed
@@ -160,13 +159,13 @@ let node: Node = ptr;   // declared type drives move-out; ptr consumed
 including call sites and return expressions:
 
 ```metel
-let ptr = @[r] Node { val: 1, next: null };
+let ptr = @a Node { val: 1, next: null };
 let node = ptr: Node;         // ascription in expression position
 process(ptr: Node);           // move-out at call site
 ```
 
-Both forms obey the same constraints: unconditionally legal for `@[Heap] T`; requires
-`T: !Drop` for bulk-deallocating `@[r] T` (Option A). The compiler enforces this via the
+Both forms obey the same constraints: unconditionally legal for `@Heap T`; requires
+`T: !Drop` for bulk-deallocating `@a T` (Option A). The compiler enforces this via the
 negative bound — if `T` has a `Drop` impl the binding is rejected at the call site.
 
 ---
@@ -178,10 +177,10 @@ the safe path is to clone the value into a target region:
 
 ```metel
 // auto-deref dispatches clone() through the region pointer
-let copy: @[Heap] Config = src.clone();
+let copy: @Heap Config = src.clone();
 
 // stdlib convenience (naming open — see §5)
-let copy: @[Heap] Config = src.clone_into[Heap]();
+let copy: @Heap Config = src.clone_into[Heap]();
 ```
 
 The source pointer and its arena slot remain valid. The clone is independently owned in
@@ -204,21 +203,20 @@ encompasses the clone's use is valid.
 
 ## 6. Summary table
 
-| Extraction form | `@[Heap] T` | `T: Copy` | `T: !Drop` | `T: Drop` |
+| Extraction form | `@Heap T` | `T: Copy` | `T: !Drop` | `T: Drop` |
 |---|---|---|---|---|
 | Borrow `&T` | `&ptr` | `&ptr` | `&ptr` | `&ptr` |
 | Borrow `&mut T` | `&mut ptr` | `&mut ptr` | `&mut ptr` | `&mut ptr` |
 | Copy out | `ptr: T` | `ptr: T` | — | — |
 | Move out | `ptr: T` | — | `ptr: T` | not supported |
 | Type-directed move | `let x: T = ptr` | — | `let x: T = ptr` | not supported |
-| Clone out | `clone_into[dst]()` | — | — | `clone_into[dst]()` |
+| Clone out | `src.clone()` | — | — | `src.clone()` |
 
 ---
 
 ## References
 
-- RFC-0063 (Region Handles) §8.1 — the extraction gap this RFC addresses; §2 —
-  type-directed allocation, the symmetric counterpart to §3 of this RFC.
-- RFC-0065 (Region Ergonomics) §1 — elision rules that interact with auto-deref (§5.3).
-- `docs/reports/memory-model/arena-handles-as-lifetime-annotations.md` §8 — bump arena
-  Drop semantics.
+- RFC-0063 (Allocator Handles) §3 — allocation expressions; the symmetric counterpart
+  to extraction.
+- RFC-0065 (Allocator Ergonomics) — elision rules for `@` and lifetime anchors.
+- RFC-0067 (Reference Types) — `&T` / `&mut T`; auto-deref through `@a T`.

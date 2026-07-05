@@ -4,14 +4,14 @@ title: "PhantomRegion"
 date: '2026-07-02'
 ---
 
-> **Status — under review.** Depends on RFC-0063 (Region Handles), RFC-0073 (AutoRegion).
-> Defines the `PhantomRegion` type only — a `Region` implementor whose allocations are
-> unconditionally elided. It is infrastructure for RFC-0087 (Universal Own Regions),
-> which gives every binding one of these by default, and RFC-0086 (Outlives-of-Bindings
-> Sugar), which provides syntax to relate them. This RFC does not itself define any
-> call-site inference or borrow-admission rule; earlier drafts did, and folding that
-> responsibility into RFC-0087 instead is why they no longer appear here (see
-> §Alternatives).
+> **RETRACTED — 2026-07-05.** `PhantomRegion` exists as infrastructure for RFC-0087
+> (Universal Own Regions) and RFC-0086 (Outlives-of-Bindings Sugar). Both of those RFCs
+> are also retracted under the split model (RFC-0088). In the split model, lifetime
+> anchors are binding names, not `Region` instances — every binding has a scope that the
+> borrow checker tracks directly, without requiring a phantom allocator to carry that
+> scope. The zero-cost allocation guarantee `PhantomRegion` provides is subsumed by the
+> fact that lifetime anchors have no runtime representation at all. See
+> `reports/memory-model/lifetimes-vs-regions-2026-07-02.md` §5.
 
 ## Summary
 

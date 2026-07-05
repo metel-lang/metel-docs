@@ -4,11 +4,14 @@ title: "Universal Own Regions"
 date: '2026-07-02'
 ---
 
-> **Status — under review.** Depends on RFC-0063 (Region Handles), RFC-0068 (Struct-Owned
-> Regions), RFC-0069 (Sub-Region Typing), RFC-0085 (PhantomRegion). Amends RFC-0068:
-> every binding of every type gets an owned region by default, not only structs that
-> opt in with `[own r]`. The default backing is `PhantomRegion`, so the default costs
-> nothing. Read RFC-0085 first for what `PhantomRegion` guarantees.
+> **RETRACTED — 2026-07-05.** Universal own-regions exist to give every binding a
+> `Region` instance so that `Outlives` constraints and the `[x, y]` borrow sugar (RFC-0086)
+> have something to name. Under the split model (RFC-0088), lifetime anchors *are* binding
+> names — `&r T` names the binding `r` directly as the anchor, without any `Region`
+> instance attached to `r`. The universal-own-region machinery is therefore unnecessary:
+> bindings have scopes the borrow checker tracks, and those scopes are named directly in
+> the `<&r>` anchor syntax. All three of its dependencies (RFC-0069, RFC-0085, RFC-0086)
+> are also retracted. See `reports/memory-model/lifetimes-vs-regions-2026-07-02.md` §5.
 
 ## Summary
 

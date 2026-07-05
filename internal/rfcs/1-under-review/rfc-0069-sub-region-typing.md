@@ -4,14 +4,14 @@ title: "Sub-Region Typing"
 date: '2026-06-28'
 ---
 
-> **Status — under review.** Moved back from accepted, together with the rest of the
-> region RFC cluster (RFC-0063, 0065, 0066, 0067, 0068, 0073, 0077) — see RFC-0063's status
-> note and `docs/reports/lifetimes-vs-regions-2026-07-02.md`. Under the proposed split,
-> `SubRegion` is reframed as lifetime-nesting under a duration-general `Outlives` (ordering
-> allocator scopes and value lifetimes alike), rather than a region-only relationship.
-> Depends on RFC-0063 (Region Handles) and RFC-0068 (Struct-Owned Regions). Introduces
-> `SubRegion<R>` as a stdlib region type that automatically encodes the `Outlives`
-> relationship when a struct with an owned region is allocated into an existing region.
+> **RETRACTED — 2026-07-05.** `SubRegion<R>` exists solely to propagate `Outlives`
+> relationships when a struct with a struct-owned allocator is nested inside an outer
+> allocator. Under the split model (RFC-0088), `Outlives` is dropped from the allocator
+> layer entirely. Nesting relationships between allocator scopes are now derived by the
+> borrow checker from scope nesting — no explicit constraint type is needed. The struct
+> allocator owned-by-value pattern (`struct Foo(@a: BumpAlloc)`) makes the scope nesting
+> structurally visible; the borrow checker reads it directly. See
+> `reports/memory-model/lifetimes-vs-regions-2026-07-02.md` §5.
 
 ## Summary
 

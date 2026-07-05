@@ -4,19 +4,14 @@ title: "Outlives-of-Bindings Sugar"
 date: '2026-07-02'
 ---
 
-> **Status — under review, speculative.** Depends on RFC-0063 (Region Handles), RFC-0067
-> (Reference Types), RFC-0069 (Sub-Region Typing), RFC-0085 (PhantomRegion), RFC-0087
-> (Universal Own Regions). Purely a syntax layer: every rule here reads a fact RFC-0087
-> already establishes (every binding owns a region) and expresses a relationship between
-> two such regions using the ordinary `Outlives` bound RFC-0063 §3.2 already defines.
-> Nothing here introduces new semantics, and no new token is introduced: it generalizes an
-> existing rule — that a name in tag position denotes a region — to accept
-> addressable-lvalue paths (RFC-0067 §2), not just declared region parameters, and a list
-> of them. The bracket slot itself is the only surface for referring to a binding's
-> region. Revised from an earlier draft that spelled this with the `Outlives<x, y>` aspect
-> sitting directly in tag position (see §Alternatives); a further revision generalized
-> tag contents from bare identifiers to addressable paths so field/array reborrows
-> compose without a new special case.
+> **RETRACTED — 2026-07-05.** This RFC provides syntax for relating the implicit regions
+> of two bindings via `[x, y]` in tag position. All three of its enabling dependencies
+> (RFC-0085 PhantomRegion, RFC-0087 Universal Own Regions, RFC-0069 SubRegion) are
+> retracted under the split model. The motivating use case — expressing that a return
+> borrow is valid for the shorter of two input lifetimes — is covered in the split model
+> by lifetime anchor ordering bounds: `fun longest<&x, &y: &x>(&x Str, &y Str) -> &y Str`
+> or the elided form when the relationship is inferable. The `[]` channel is freed for
+> capture lists. See `reports/memory-model/lifetimes-vs-regions-2026-07-02.md` §7.
 
 ## Summary
 

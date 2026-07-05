@@ -1,226 +1,162 @@
 ---
 id: rfc-0065
-title: "Region Ergonomics"
+title: "Allocator and Lifetime Ergonomics"
 date: '2026-06-27'
+updated: '2026-07-05'
 ---
 
-> **Status — under review.** Moved back from accepted, together with the rest of the
-> region RFC cluster (RFC-0063, 0066, 0067, 0068, 0069, 0073, 0077) — see RFC-0063's status
-> note and `docs/reports/lifetimes-vs-regions-2026-07-02.md`. If the proposed split lands,
-> elision here becomes lifetime inference rather than region elision. Depends on RFC-0063
-> (Region Handles). Specifies the annotation-reduction layer on top of the core region
-> system: elision rules and call-site inference that eliminate bracket ceremony in the
-> common single-region case. Do **not** implement before RFC-0063 is resolved.
+> **Status — under review.** Rewritten 2026-07-05. The original RFC specified elision
+> for the bracket channel (`@[r]` → `@`). Under the split model the bracket channel is
+> gone: allocators live in the value channel `()`, lifetime anchors in the type channel
+> `<>`. This RFC restates elision for both. Depends on RFC-0063 (Allocator Handles) and
+> RFC-0067 (Reference Types). Do not implement before RFC-0063 is resolved.
 
 ## Summary
 
-RFC-0063 establishes the core region system — `@[r] T`, the bracket parameter channel, and
-sendability — in fully explicit form: every region argument is written out. This RFC adds
-two rules that make the common single-region case annotation-free:
+RFC-0063 and RFC-0067 specify the core allocator and lifetime-anchor systems in explicit
+form. This RFC adds two elision layers that make the common cases annotation-free:
 
-1. **`@`-position elision** — bare `@` anywhere in a type or expression resolves to the
-   unique in-scope region;
-2. **call-site deep-threading inference** — omitting the bracket argument at a call site
-   auto-fills from the unique region handle in lexical scope.
+1. **Allocator elision** — bare `@` without a name resolves to the unique in-scope
+   allocator; two or more forces an explicit name.
+2. **Lifetime anchor elision** — the common one-to-one and self-anchor cases need no
+   explicit `<&r>` declaration.
 
-Both rules share one invariant: **elision is legal only when exactly one region is in scope;
-two or more forces an explicit name.**
-
-Region-tagged borrows (`&[r] T`, `&mut [r] T`) are **never elided** in signatures. A bare
-`&T` in a signature always means a plain borrow with no region tag; if the region matters,
-`&[r] T` must be written explicitly.
+Both rules share one invariant: **elision is legal only when the compiler can determine
+the unique correct answer**; ambiguity is always a compile error, never a silent choice.
 
 ---
 
-## 1. All-position elision
+## 1. Allocator elision
 
-If exactly one region is in the bracket channel, the explicit tag `[r]` may be dropped in
-`@`-bearing type and expression positions:
-
-| Sugar | Expands to | When legal |
-| `@T` | `@[r] T` | Always — `@` always implies a region pointer |
-
-### 1.1 `@` positions
-
-Bare `@` always elides the single region tag. The same rule applies in both **type position**
-and **expression position**:
+If exactly one allocator is in scope, the name after `@` may be dropped:
 
 ```metel
-// return type
-fun build_node[region](val: i64) -> @Node { … }
-//                                  ^^^^^ == @[region] Node
+BumpAlloc::scoped((@a) -> {
+    let x = @Node { val: 1 };     // @a Node — `a` is the sole allocator
+    let y = @List::Cons { head: x, tail: @List::Nil {} };
+});
+```
 
-// parameter
-fun concat[region](left: @Rope, right: @Rope) -> @Rope { … }
-//                       ^^^^^                   ^^^^^  == @[region] Rope
+`@` alone always implies allocation; it never means "address-of" (that is `&`). Elision
+applies in both type position and expression position:
 
-// struct / enum field
-enum Rope[r] {
-    Leaf { bytes: @String },           // == @[r] String
-    Node { left: @Rope, right: @Rope, len: u64 },  // == @[r] Rope
+```metel
+// type position
+fun build_node(@a: BumpAlloc, val: i64) -> @Node { ... }
+//                                          ^^^^^ == @a Node
+
+// expression position
+let node = @Node { val: 1 };   // == @a Node { val: 1 }
+```
+
+**Two or more allocators.** When two or more allocators are in scope, every `@` must be
+named. The disambiguation is forced at the source level — the compiler never silently
+picks one:
+
+```metel
+fun transfer<A: Alloc, B: Alloc>(@src: A, @dst: B, val: @src T) -> @dst T {
+    @dst val: T   // explicit: two allocators, both must be named
 }
-
-// expression position — @expr allocates into the sole in-scope region
-let node = @Node { val: 1, next: null };
-//         ^^^^^^^^^^^^^^^^^^^^^^ == @[region] Node { val: 1, next: null }
-
-let list = @List::Cons { head: 1, tail: @List::Cons { head: 2, tail: @List::Nil {} } };
-//         all @-prefixed sub-expressions allocate into [region]
 ```
 
-Expression-position elision follows the same single-region invariant as type-position
-elision: illegal with two or more regions in scope (§1.2).
-
-### 1.2 Two-or-more regions
-
-With two or more regions in scope the bare forms are illegal; every tag must be named.
-This is the same discipline as Rust's lifetime-elision ambiguity rule:
+**Static allocators.** `Heap` and `LocalHeap` are always accessible by name and may be
+used explicitly (`@Heap expr`) anywhere. They enter the elision candidate set only when
+they appear as declared parameters in the current function or scope:
 
 ```metel
-fun copy_list<[src, dst: Outlives<src>]>(v: &[src] List<u32>) -> @[dst] List<u32> { … }
-//  ^^^^^^^^^                                ^^^^^^^^^^^^^^^^^    ^^^^^^^^^^^^^^^^^
-//  two regions → all tags explicit
+fun store(@h: Heap, val: T) -> @h T {
+    @val   // h is the sole allocator in scope; elides to @h T
+}
 ```
 
-`@[region] Node` (named) is always the full explicit form; `@Node` is sugar legal only
-under single-region elision. Tools may always render the inferred tag.
+This keeps heap allocations visible — a bare `@` inside a `BumpAlloc::scoped` block
+always resolves to the scoped allocator, never to a heap that happens to be importable.
 
 ---
 
-## 2. Call-site deep-threading inference
+## 2. Lifetime anchor elision
 
-At a call to a function that declares a region parameter, an omitted bracket argument
-auto-fills from the **unique region handle in lexical scope** at the call site:
+Explicit `<&r>` declarations and `&r T` / `&r mut T` annotations in signatures are
+needed only when the compiler cannot infer the anchor relationship. Four rules cover the
+common cases:
 
-```metel
-fun build_list[region](vals: i64[]) -> @[region] Node {
-    let mut head = @[region] Node { val: vals[0], next: null };
-    for (let i in 1..array_len(vals)) {
-        head = build_node(vals[i]);      // [region] inferred: sole handle in scope
-    }
-    head
-}
-
-BumpRegion::scoped([region]() -> {
-    let list = build_list(data);         // [region] inferred
-    let list = build_list[region](data); // explicit — always available
-});
-```
-
-> **Interaction with `@[r] expr`.** The allocation expression `@[r] expr` (RFC-0063 §1)
-> addresses the value-threading problem for allocation: functions that allocate via
-> `@[region] expr` do not need the caller to thread the runtime handle as a value argument.
-> Call-site bracket inference (this section) handles the remaining case — functions that
-> declare `[region]` in their bracket channel for reasons other than allocation (naming the
-> region tag in return types, `Outlives` bounds, etc.) still benefit from omitting the
-> bracket argument at call sites.
-
-Rules:
-
-1. **One** handle in scope → omitted `[…]` resolves to it. `f(args)` ≡ `f[that_handle](args)`.
-2. **Two or more** handles in scope → bracket required: `f[which](args)`. Omitting it is an
-   error naming the candidates.
-3. **None** in scope but the callee needs one → the usual "no region available" error;
-   establish a region via `BumpRegion::scoped` or `let r = BumpRegion::new()`, import `Heap`, or
-   pass the region explicitly.
-
-The resolution is always a single named handle the compiler can surface in diagnostics and
-hovers. The explicit form `f[region](args)` is preferred wherever more than one region is
-nearby or where the allocation context is worth making visible.
-
-**Static handles and the inference candidate set.** `Heap` and `LocalHeap` are always
-accessible by name — `@[Heap] T`, `@[LocalHeap] T`, and explicit bracket arguments like
-`make_node[Heap](v)` work anywhere without any import. However, they enter the inference
-candidate set **only when explicitly imported**:
+**Rule 1 — Each elided `&` input gets a distinct fresh anchor.**
 
 ```metel
-use Heap;
+fun process(&Str, &i64) -> ()
+// each & gets its own anonymous anchor; no relationship between them
 ```
 
-This gives three clean scenarios:
+**Rule 2 — Single input anchor propagates to output.**
 
 ```metel
-// 1. Heap imported, no scoped region — Heap is the sole candidate
-use Heap;
-let a = Arc::new(Config { workers: 4 }); // infers [Heap] → @[Heap] Config ✓
-
-// 2. No Heap import, inside a scoped region — [region] is the sole candidate
-BumpRegion::scoped([region]() -> {
-    let n = make_node(1);  // infers [region] ✓
-});
-
-// 3. Heap imported, inside a scoped region — two candidates → explicit required
-use Heap;
-BumpRegion::scoped([region]() -> {
-    let n = make_node(1);           // error: ambiguous — Heap or region?
-    let n = make_node[region](1);   // @[region] Node ✓
-    let n = make_node[Heap](1);     // @[Heap] Node ✓ — visible escape from the arena
-});
+fun first_char(&Str) -> &Char
+// one input anchor → output uses the same anchor; no declaration needed
 ```
 
-Scenario 2 is the key improvement over a prelude-resident model: arena-heavy code that
-does not import `Heap` gets clean single-candidate inference inside scoped blocks with no
-ambiguity errors. Scenario 3 preserves the forced acknowledgement that a `Heap` allocation
-escapes the arena — but only when the programmer has explicitly opted `Heap` into the
-candidate set.
+**Rule 3 — `&self` / `&mut self` wins as the output anchor.**
 
-> **Scope of inference.** These rules fill *region* arguments only — the region analogue of
-> type-argument inference. Generalising `[…]` to arbitrary context parameters is out of
-> scope.
+```metel
+fun get(&self, key: &Key) -> &Val
+// self anchor wins over key; return borrow valid for self's lifetime
+```
+
+**Rule 4 — Ambiguous → compile error, explicit `<&r>` required.**
+
+```metel
+fun longest(&Str, &Str) -> &Str
+// two distinct anchors; which one bounds the return? compile error.
+
+fun longest<&r>(&r Str, &r Str) -> &r Str { ... }
+// explicit: both inputs and the output share the same anchor
+```
+
+These four rules together eliminate anchor annotations from the vast majority of
+function signatures. Explicit `<&r>` declarations appear only at the handful of points
+where the anchor relationship genuinely matters and is not derivable from structure.
 
 ---
 
 ## 3. What the programmer actually writes
 
-With both rules active, the region annotation surface is minimal. Below is a full
-single-region API written without elision on the left and with elision on the right:
+With both rules active, the annotation surface is minimal. A full single-allocator API,
+without elision on the left and with elision on the right:
 
 ```
-── without elision (RFC-0063 explicit) ──────────────────────────┐  ── with elision ──────────────────────────────────────────────┐
-                                                                  │                                                               │
-struct Header[r] {                                                │  struct Header[r] {                                           │
-    name:  @[r] String,                                           │      name:  @String,                                         │
-    value: @[r] String,                                           │      value: @String,                                         │
-}                                                                 │  }                                                            │
-                                                                  │                                                               │
-fun parse_header[region](                                         │  fun parse_header[region](                                    │
-    line: String,                                                 │      line: String,                                            │
-) -> Perhaps<@[region] Header> {                                  │  ) -> Perhaps<@Header> {                                      │
-    @[region] Header { name: …, value: … }                        │      @Header { name: …, value: … }                           │
-}                                                                 │  }                                                            │
-                                                                  │                                                               │
-fun find_header[r](                                               │  fun find_header[r](                                          │
-    req:  &[r] Request,                                           │      req:  &[r] Request,                                      │
-    name: String,                                                 │      name: String,                                            │
-) -> Perhaps<@[r] String>                                         │  ) -> Perhaps<@String>                                        │
+── explicit (RFC-0063 + RFC-0067) ──────────────────────────────────┐  ── with elision ──────────────────────────────────────────────┐
+                                                                     │                                                               │
+struct Header<&a> {                                                  │  struct Header<&a> {                                          │
+    name:  @a String,                                                │      name:  @String,                                         │
+    value: @a String,                                                │      value: @String,                                         │
+}                                                                    │  }                                                            │
+                                                                     │                                                               │
+fun parse_header(@a: BumpAlloc,                                      │  fun parse_header(@a: BumpAlloc,                              │
+    line: String,                                                    │      line: String,                                            │
+) -> Perhaps<@a Header> {                                            │  ) -> Perhaps<@Header> {                                      │
+    @a Header { name: ..., value: ... }                              │      @Header { name: ..., value: ... }                        │
+}                                                                    │  }                                                            │
+                                                                     │                                                               │
+fun find_header<&a>(@a: BumpAlloc,                                   │  fun find_header(@a: BumpAlloc,                               │
+    req:  &a Request,                                                │      req:  &Request,                                          │
+    name: String,                                                    │      name: String,                                            │
+) -> Perhaps<&a String> { ... }                                      │  ) -> Perhaps<&String> { ... }                                │
 ```
 
-The `[r]` bracket channel is still written on the function and struct — that is the
-declaration that a region exists. Elision applies only to `@`-bearing positions inside
-field and parameter types. Region-tagged borrows (`&[r] T`) are written explicitly in all
-positions; a bare `&T` always means a plain borrow with no region information.
-
-Static handles (`[Heap]`, `[LocalHeap]`) are always accessible by name and are never
-subject to elision. They participate in inference only when explicitly imported (§2).
-
-Region tags surface in written code in exactly three places:
-
-1. **function and type declarations** — `[region]` in the bracket channel;
-2. **multi-region code** — all tags named, `Outlives` bounds written;
-3. **static handle annotations and explicit region borrows** — `@[Heap] T`, `&[r] T`,
-   `&[Heap] T`.
+The allocator parameter is still declared — that is the decision point where an
+allocation strategy is named. Elision applies to the `@`-bearing type positions inside
+the signature and the `&`-bearing positions that follow from it.
 
 ---
 
 ## 4. Unresolved questions
 
-1. **Closures and `[region]() -> {}`.** The `BumpRegion::scoped` callback uses the bracket
-   channel on a closure literal; the exact grammar for region parameters on closure types and
-   values is left to the closure RFC (RFC-0050).
+1. **Closures.** The grammar for allocator parameters on closure literals
+   (`BumpAlloc::scoped((@a) -> { ... })`) is left to RFC-0050 (Closure Capture Lists).
 
 ---
 
 ## References
 
-- RFC-0063 (Region Handles) — core system this RFC builds on.
-- RFC-0050 (Closure Capture Lists) — closure grammar for `[region]() -> {}`.
+- RFC-0063 (Allocator Handles) — allocator parameters, `@a T`, `@a expr`.
+- RFC-0067 (Reference Types) — lifetime anchors, `&r T`, `&r mut T`, anchor elision rules.
+- RFC-0050 (Closure Capture Lists) — closure grammar for `(@a) -> {}`.
