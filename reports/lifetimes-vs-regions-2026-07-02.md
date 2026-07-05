@@ -245,18 +245,42 @@ settled.
    `&`/`&mut` → lifetime anchor. Grammar formalization deferred.
 3. ~~**`Outlives` on durations**~~ — **Dropped** (§5, §6): not part of the allocator
    layer. Duration ordering is expressed through the lifetime anchor system.
-4. **Drop order with interleaved move-out** — RFC-0071's rules extended for mid-scope
-   drops and already-moved values.
+4. ~~**Drop order with interleaved move-out**~~ — **Settled:** values drop at the
+   earliest of (a) an explicit `drop(x)` call — destructor runs immediately in program
+   order; (b) a move-out — obligation transfers to the recipient, original scope is clear;
+   (c) scope end — destructors run in reverse declaration order among values not already
+   dropped or moved. Allocator teardown follows all value-level drops at the same scope
+   boundary; no destructor runs after its backing allocator tears down. Conditional move
+   of `T: Drop` values is a compile error unless all branches resolve the obligation
+   (move or explicit drop in every branch).
 5. ~~**`[self]`'s exact denotation**~~ — **Settled** (§6): scope of the `self` binding,
    uniformly. In `&self`/`&mut self` methods, `self` is the borrow — `[self]` chains the
    caller's borrow to the returned reference. In by-value methods the scope ends at return,
    making `&[self] T` as a return type always unsatisfiable (borrow checker, no special
    rule). In associated functions `self` is not in scope — undefined binding error.
-6. **Sendability** — allocators by kind (`Heap` sendable, scoped not); borrows with
-   lifetime anchors never sendable. Stated per category.
-7. **Lifetime anchor grammar** — introducing vs. naming anchors (function-level generic
-   bracket parameters vs. call-site binding references); elision rules. Deferred to
-   grammar refinement.
+6. ~~**Sendability**~~ — **Settled:** stated per category. **Allocators:** sendable iff
+   the kind is inherently fiber-safe — `Heap` is sendable; `LocalHeap`, `BumpAlloc`,
+   `AutoAlloc`, and all scoped allocators are not. User-defined allocators implement
+   `Send` iff declared to. **Owned values `@[a] T`:** sendable iff `a` is sendable and
+   `T` is sendable. **Borrows `&[r] T`:** never sendable — borrows are scoped to lifetime
+   anchors, and scopes are per-fiber; cross-fiber sharing uses `Arc` instead.
+   **Struct-owned allocators:** no special case — `Foo[r]` is sendable iff `r`'s kind is
+   sendable and all fields are sendable. No `Sync` distinction needed: since borrows are
+   unconditionally non-sendable, shared-reference-across-fibers never arises at the borrow
+   level.
+7. ~~**Lifetime anchor grammar**~~ — **Settled:** bracket-channel parameters use an
+   optional prefix to distinguish allocator from lifetime anchor parameters at the
+   declaration point: `@r` declares an allocator parameter, `&r` declares a lifetime
+   anchor parameter. The prefix is **optional when unambiguous from use sites** —
+   if `r` appears only in `@[r]` positions the compiler infers allocator; only in `&[r]`
+   positions, lifetime anchor — and **required when mixed or unused**. The explicit prefix
+   is always valid as a documentation choice. Elision rules for the bracket channel in
+   signatures: (1) each elided `&` in input position gets a distinct fresh anchor;
+   (2) if `&self`/`&mut self` is present, the elided output anchor is `self`'s anchor;
+   (3) if exactly one input anchor exists, the elided output anchor is that anchor;
+   (4) otherwise a compile error — explicit annotation required. Elision is the default
+   per the Storage Transparency Principle; explicit bracket parameters appear only when
+   the anchor relationship is ambiguous.
 
 ## 10. Blast radius across the cluster
 
@@ -306,12 +330,15 @@ iterate on than RFC rewrites; do not start the sweep until the model is signed o
 - **Drop order with interleaved move-out** — RFC-0071 extension. Remaining semantic open
   question.
 - **Sendability** — per-category statement (allocators by kind, borrows never sendable).
-- **Lifetime anchor grammar** — elision rules; function-level generic anchor parameters
-  vs. call-site binding references. Deferred to grammar refinement.
+- ~~**Lifetime anchor grammar.**~~ **Decided** (§9 item 7): optional `@r`/`&r` prefixes
+  at declaration; prefix required when mixed or unused, inferred when unambiguous.
+  Elision covers single-anchor and self-receiver cases; ambiguous multi-anchor signatures
+  require explicit bracket parameters.
 - **Ratification vehicle** — new RFC-0088, or an amendment that reframes RFC-0063 and
   marks 0069/0085/0087 retracted?
 
-The model is now internally consistent: allocators are allocators, lifetimes are
-binding-scoped anchors, storage transparency means most code carries no storage
-annotations at all, and the annotation burden concentrates exactly at the points where
-storage decisions are actually being made.
+All semantic open questions are now settled. The only remaining decision is the
+ratification vehicle. The model is internally consistent: allocators are first-class
+values, lifetimes are binding-scoped anchors, storage transparency means most code carries
+no storage annotations at all, and the annotation burden concentrates exactly at the
+points where storage decisions are actually being made.
