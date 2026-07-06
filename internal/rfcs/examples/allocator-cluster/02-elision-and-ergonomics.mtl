@@ -1,0 +1,115 @@
+// RFC-0065 — Allocator and Lifetime Ergonomics
+//
+// Two independent elision layers on top of RFC-0063 (allocators) and
+// RFC-0067 (lifetime anchors). Both share one invariant: elision is legal
+// only when the compiler can determine a unique correct answer; ambiguity
+// is always a compile error, never a silent choice. Illustrative only.
+
+struct Node { val: i64 }
+
+// -----------------------------------------------------------------------
+// 1. Allocator elision — bare `@`
+// -----------------------------------------------------------------------
+
+fun single_allocator_example() {
+    BumpAlloc::scoped((@a) -> {
+        let x = @Node { val: 1 };   // == @a Node { val: 1 } — `a` is the sole allocator
+        process(&x);
+    });
+}
+
+// Elision works in both type position and expression position.
+fun build_node(@a: BumpAlloc, val: i64) -> @Node {
+    //                                     ^^^^^ == @a Node
+    @Node { val }   // == @a Node { val }
+}
+
+// Two or more allocators in scope: every `@` must be named. The compiler
+// never silently picks one.
+fun transfer<T, A: Alloc, B: Alloc>(@src: A, @dst: B, val: @src T) -> @dst T {
+    @dst val: T   // explicit — ambiguous otherwise
+}
+
+// `Heap` / `LocalHeap` are always addressable by name (`@Heap expr`), but they
+// only enter the elision candidate set when they appear as a declared
+// parameter in the current scope — a bare `@` inside a `BumpAlloc::scoped`
+// block always resolves to the scoped allocator, never to an importable heap.
+fun store(@h: Heap, val: Node) -> @h Node {
+    @val   // `h` is the sole allocator in scope; elides to `@h Node`
+}
+
+// -----------------------------------------------------------------------
+// 2. Lifetime anchor elision
+// -----------------------------------------------------------------------
+
+// Rule 1 — each elided `&` input gets a distinct fresh anchor; no relation
+// between them is assumed.
+fun compare_lengths(a: &String, b: &String) -> boolean {
+    a.len() == b.len()
+}
+
+// Rule 2 — a single input anchor propagates to the (elided) output anchor.
+fun value_ref(n: &Node) -> &i64 {
+    &n.val
+}
+
+// Rule 3 — `&self` / `&mut self` wins as the output anchor over any other
+// input.
+struct Registry { name: String }
+
+impl Registry {
+    fun get(&self, key: &String) -> &String {
+        // `self`'s anchor wins: the returned borrow lives as long as `self`,
+        // not as long as `key`.
+        &self.name
+    }
+}
+
+// Rule 4 — ambiguous relationships are a compile error; an explicit `<&r>`
+// declaration is required.
+//
+//   fun longest(a: &String, b: &String) -> &String { ... }
+//   // error: two distinct input anchors, neither wins — which bounds
+//   // the return? explicit `<&r>` required.
+
+fun longest<&r>(a: &r String, b: &r String) -> &r String {
+    if (a.len() >= b.len()) { a } else { b }
+}
+
+// Ordering bounds — needed only when two anchors arrive with no structural
+// relationship the borrow checker can derive on its own. `&t: &s` means `t`
+// outlives `s` (the right-hand side is the shorter-lived anchor).
+fun pick_shorter_lived<&s, &t: &s>(long_lived: &t String, short_lived: &s String) -> &s String {
+    short_lived
+}
+
+// -----------------------------------------------------------------------
+// 3. What the programmer actually writes — side by side
+// -----------------------------------------------------------------------
+//
+// Fully explicit (RFC-0063 + RFC-0067), no elision, vs. with both elision
+// layers active — the annotation burden concentrates at declaration sites
+// (allocator parameters, struct anchor parameters) and disappears from the
+// `@`/`&`-bearing positions that follow structurally from them:
+//
+// ── explicit ──────────────────────────────┬── elided ─────────────────────
+// struct Header<&a> {                       │ struct Header<&a> {
+//     name:  @a String,                     │     name:  @String,
+//     value: @a String,                     │     value: @String,
+// }                                         │ }
+//                                           │
+// fun parse_header(@a: BumpAlloc,           │ fun parse_header(@a: BumpAlloc,
+//     line: String,                         │     line: String,
+// ) -> Perhaps<@a Header> { ... }           │ ) -> Perhaps<@Header> { ... }
+//                                           │
+// fun find_header<&a>(@a: BumpAlloc,        │ fun find_header(@a: BumpAlloc,
+//     req: &a Request, name: String,        │     req: &Request, name: String,
+// ) -> Perhaps<&a String> { ... }           │ ) -> Perhaps<&String> { ... }
+//
+// The allocator parameter itself is never elided away — `@a: BumpAlloc` is
+// the one place a storage decision is actually being made (RFC-0063's
+// Storage Transparency Principle, restated in the position report §3).
+
+fun process(n: &Node) {
+    println("val=${n.val}");
+}

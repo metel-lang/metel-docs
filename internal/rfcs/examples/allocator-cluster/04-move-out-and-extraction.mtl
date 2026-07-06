@@ -1,0 +1,149 @@
+// RFC-0066 — Allocated Value Extraction (+ RFC-0072 negative bounds)
+//
+// `@a expr` allocates; extraction is the inverse. Borrow-deref works
+// unconditionally for any allocator kind. Move-out is unconditional for
+// `@Heap T`, and for bulk-deallocating scoped allocators (`BumpAlloc`) is
+// restricted to `T: !Drop` to avoid a double-drop on the orphaned slot.
+// Illustrative only.
+
+struct Pair { a: i64, b: i64 }        // no Drop impl -> T: !Drop holds
+
+struct Point { x: i64, y: i64 }
+impl Copy for Point {}                 // T: Copy
+
+struct Config { path: String, handle: FileHandle }   // holds a FileHandle -> Config: Drop
+impl Clone for Config {
+    fun clone(&self) -> Config {
+        Config { path: self.path, handle: FileHandle { fd: self.handle.fd } }
+    }
+}
+impl Drop for Config {
+    fun drop(self: Config) {}   // fields (including `handle`) still drop after this runs
+}
+
+struct FileHandle { fd: i64 }
+impl Drop for FileHandle {
+    fun drop(self: FileHandle) {
+        println("closing fd ${self.fd}");
+    }
+}
+
+// -----------------------------------------------------------------------
+// 1. Borrow-deref — unconditional, any allocator kind
+// -----------------------------------------------------------------------
+
+fun borrow_deref_example() {
+    let a = BumpAlloc::new();
+    let mut ptr = @a Pair { a: 1, b: 2 };
+
+    let v: &Pair     = &ptr;      // shared borrow — coerces to &Pair
+    read_pair(v);
+
+    let m: &mut Pair = &mut ptr;  // exclusive borrow
+    m.a = 10;
+    // ptr is still live after both borrows expire
+    drop(a);
+}
+
+fun read_pair(p: &Pair) {
+    println("a=${p.a} b=${p.b}");
+}
+
+// -----------------------------------------------------------------------
+// 2. Move-out from `@Heap T` — always safe, even for `T: Drop`
+// -----------------------------------------------------------------------
+
+fun heap_move_out_example() {
+    let ptr = @Heap FileHandle { fd: 3 };
+    let handle: FileHandle = ptr;   // type-directed move-out; heap slot freed
+                                     // without calling drop; `handle` now
+                                     // owns the value and will drop it later
+    process_handle(handle);         // ownership moves into process_handle
+}
+
+fun process_handle(h: FileHandle) {
+    println("using fd ${h.fd}");
+    // FileHandle::drop runs here, at the end of this function's scope
+}
+
+// -----------------------------------------------------------------------
+// 3. Copy extraction — any allocator kind, slot stays intact
+// -----------------------------------------------------------------------
+
+fun copy_extraction_example() {
+    let a = BumpAlloc::new();
+    let ptr = @a Point { x: 1, y: 2 };
+    let p: Point = ptr;    // T: Copy -> copies out; ptr (and its slot) still valid
+    let q = ptr;           // ptr can be read again — it was never consumed
+    println("p=(${p.x},${p.y}) q=(${q.x},${q.y})");
+    drop(a);
+}
+
+// -----------------------------------------------------------------------
+// 4. Move-out of `T: !Drop` from a bulk-deallocating allocator — safe
+// -----------------------------------------------------------------------
+
+fun bump_move_out_example() {
+    let a = BumpAlloc::new();
+    let ptr = @a Pair { a: 1, b: 2 };   // Pair: !Drop
+    let pair: Pair = ptr;                // move-out ok; slot orphaned, but the
+                                          // arena frees raw memory without
+                                          // calling any destructor
+    read_pair(&pair);
+    drop(a);
+}
+
+// -----------------------------------------------------------------------
+// 5. Move-out of `T: Drop` from a bulk-deallocating allocator — rejected
+// -----------------------------------------------------------------------
+//
+//   fun rejected(@a: BumpAlloc) {
+//       let ptr = @a FileHandle { fd: 3 };
+//       let handle: FileHandle = ptr;
+//       // error: `FileHandle: Drop` — move-out from `BumpAlloc` requires
+//       // `T: !Drop`. Use `@Heap FileHandle { ... }` instead.
+//   }
+
+// RFC-0072's motivating negative-bound signature, restated for the split
+// model: `T: !Drop` is the constraint the type system enforces so that
+// `ptr: T` is legal for a bulk-deallocating allocator. `a` is named only
+// to type the parameter — the function does not allocate through it.
+fun generic_move_out<T: !Drop, A: Alloc>(@a: A, ptr: @a T) -> T {
+    ptr: T
+}
+
+// -----------------------------------------------------------------------
+// 6. Clone extraction — the escape hatch when `T: Drop`
+// -----------------------------------------------------------------------
+
+fun clone_extraction_example() {
+    let a = BumpAlloc::new();
+    let src = @a Config { path: "/etc/metel.conf", handle: FileHandle { fd: 3 } };
+    // Config: Drop, so move-out from a bulk-deallocating BumpAlloc is
+    // rejected (§5). Clone into a target allocator instead — the source
+    // pointer and its slot stay valid; the target need not be Heap, any
+    // allocator whose lifetime encompasses the clone's use works.
+    let copy: @Heap Config = src.clone();
+    drop(a);
+}
+
+// -----------------------------------------------------------------------
+// Summary (RFC-0066 §6)
+// -----------------------------------------------------------------------
+//
+// | Extraction form   | @Heap T | T: Copy | T: !Drop | T: Drop |
+// |--------------------|---------|---------|----------|---------|
+// | Borrow &T           | &ptr    | &ptr    | &ptr     | &ptr    |
+// | Borrow &mut T        | &mut ptr| &mut ptr| &mut ptr | &mut ptr|
+// | Copy out            | ptr: T  | ptr: T  | —        | —       |
+// | Move out            | ptr: T  | —       | ptr: T   | not supported |
+// | Clone out           | src.clone() | — | — | src.clone() |
+
+fun main() -> i64 {
+    borrow_deref_example();
+    copy_extraction_example();
+    bump_move_out_example();
+    clone_extraction_example();
+    heap_move_out_example();
+    0
+}

@@ -1,0 +1,104 @@
+// RFC-0067 — Reference Types
+//
+// `&T` / `&mut T` replace the old `*T` / `*mut T` pointer model; there is no
+// explicit dereference operator, only auto-deref. Every borrow carries a
+// lifetime anchor — a binding name, not an abstract `'a` — visible in type
+// position (`&r T`) and elided in expression position (`&val`). Illustrative
+// only; see the cluster README.
+
+struct Node { val: i64 }
+
+// -----------------------------------------------------------------------
+// 1. Reference types and address-of
+// -----------------------------------------------------------------------
+
+fun basics() {
+    let x = 42;
+    let r: &i64 = &x;          // shared reference to x
+
+    let mut y = 42;
+    let m: &mut i64 = &mut y;  // exclusive reference to y
+
+    // `&mut T` coerces to `&T` implicitly; no other coercion is implicit.
+    let also_r: &i64 = m;
+}
+
+// -----------------------------------------------------------------------
+// 2. Lifetime anchors — type position vs. expression position
+// -----------------------------------------------------------------------
+
+// Type position names the anchor: `&r T` / `&r mut T`. The anchor groups
+// with `&`; `mut` qualifies the reference after it.
+fun read_at<&r>(n: &r Node) -> &r i64 {
+    &n.val   // expression position: always `&val`, never `&r val`
+}
+
+fun write_at<&r>(n: &r mut Node) {
+    n.val = 0;
+}
+
+// A borrow `&r T` does not know or care whether `T` was allocated by an
+// allocator named `r` — `r` is just a binding name, and the borrow is valid
+// for exactly as long as that binding is in scope. This is what keeps
+// diagnostics concrete ("escapes the lifetime of `r`") without reintroducing
+// an abstract `'a`.
+
+// -----------------------------------------------------------------------
+// 3. Auto-deref — no explicit `*`
+// -----------------------------------------------------------------------
+
+fun auto_deref_examples(n: &mut Node) {
+    let v = n.val;      // field read through &mut Node — no `*n.val`
+    n.val = v + 1;       // field write through &mut Node — no `*n = ...`
+}
+
+// -----------------------------------------------------------------------
+// 4. Allocator pointers participate in auto-deref
+// -----------------------------------------------------------------------
+
+fun through_allocator_pointer(@a: BumpAlloc) {
+    let node = @a Node { val: 1 };
+
+    let v = node.val;      // auto-deref: @a Node -> Node, read field
+    // (mutation would need `node` to be `@a mut`-capable via &mut, see file 05)
+
+    node.describe();       // auto-deref: dispatches on Node
+
+    // Explicit borrow through an allocator pointer: the anchor is the
+    // binding being borrowed.
+    let r: &node Node = &node;
+    let m: &node mut Node = &mut node;
+
+    // In practice the anchor is elided and inferred from context — this is
+    // what actually gets written:
+    let r2 = &node;
+
+    // Coercion: a borrow of `@a T` coerces to plain `&T` at coercion sites
+    // (function arguments, return expressions, annotated `let` bindings).
+    print_val(&node.val);
+}
+
+impl Node {
+    fun describe(&self) {
+        println("Node(${self.val})");
+    }
+}
+
+fun print_val(v: &i64) {
+    println(v.to_string());
+}
+
+// -----------------------------------------------------------------------
+// 5. Addressability
+// -----------------------------------------------------------------------
+//
+// Only stable lvalues may be addressed: named bindings, fields, array
+// elements, and chains thereof. Temporaries cannot be addressed — this rule
+// is unchanged from the old `*T` model (RFC-0043 §5) and carries over as-is.
+
+fun main() -> i64 {
+    let mut n = Node { val: 1 };
+    write_at(&mut n);
+    print_val(read_at(&n));
+    0
+}
