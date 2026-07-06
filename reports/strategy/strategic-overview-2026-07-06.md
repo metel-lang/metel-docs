@@ -53,12 +53,16 @@ row-polymorphic generics, typestate via row-conditional impls, a standalone
 `NonLinear<T>` operator, and keyword sugar unifying `copy`/`linear`/`affine` declaration
 syntax with RFC-0072's negative bounds and RFC-0039's still-draft aspect-alias syntax).
 
-All of it is captured in one place:
-`reports/memory-model/linear-types-and-structural-records-2026-07-06.md`. It is now the
-single largest exploratory document in the repo outside the memory-model position
-report itself — nine sections, worked example programs, and fourteen explicitly
-unresolved questions, one of them (§5.7) a direction *considered and declined* on the
-record rather than merely left open.
+All of it was captured in one place through 2026-07-06,
+`reports/memory-model/linear-types-and-structural-records-2026-07-06.md`; that document
+has since been split into `reports/substructural-types/` — five focused living
+documents (`linear-types.md`, `structural-records.md`, `brand-types.md`,
+`algebraic-effects.md`, `structured-concurrency.md`) plus an index README, replacing
+what had become the single largest exploratory document in the repo outside the
+memory-model position report itself. The original is archived at
+`reports/substructural-types/archive/linear-types-and-structural-records-2026-07-06.md`;
+its "considered and declined" verdict on a fully record-based type system (old §5.7)
+now lives in `structural-records.md` §7.
 
 **Nothing here is ratified, and nothing changes RFC-0063's core surface.** The RFC's
 already-under-review content is unaffected; only its §9 open-questions list grew, from
@@ -234,11 +238,11 @@ against, independent of how the runtime pieces end up sequenced.
 
 ### Priority 2 — Linear and structural types (promoted)
 
-The floor is unchanged: resolve RFC-0063 §9 item 5 using only the closed mechanism
-from `linear-types-and-structural-records-2026-07-06.md` §4.2/§4.3 — a phantom marker
-over a statically-known, finite field list, no row kind or unification algorithm
-required — since it has a real clock (Phase 3 steps 1–2) and should stay scoped that
-narrowly on purpose.
+The floor is unchanged: resolve RFC-0063 §9 item 5 using only the closed mechanism now
+documented as Option B in `reports/substructural-types/linear-types.md` §3 — explicit
+residual extraction over a statically-known, finite field list, no row kind or
+unification algorithm required — since it has a real clock (Phase 3 steps 1–2) and
+should stay scoped that narrowly on purpose.
 
 What changes this pass is everything *above* that floor. The fuller vision — `record`
 as a real type-former, `HasField`/`Lacks`, open `<row R>` generics, typestate via

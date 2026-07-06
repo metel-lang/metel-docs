@@ -2,7 +2,29 @@
 id: linear-types-and-structural-records
 title: "Linear Types and Structural Records — A Design Exploration"
 type: report
+status: archived
 created_date: '2026-07-06'
+---
+
+> **Archived 2026-07-06.** Split into five focused living documents in
+> `reports/substructural-types/` rather than continuing to grow as a single file — the
+> same unbounded-growth pattern that preceded the 2026-06-28 delete-instead-of-archive
+> incident this reorganization is meant to prevent (see
+> `reports/substructural-types/README.md`). Superseded by:
+>
+> - §3–4 (`Linear` as an aspect, partial consumption) → `../linear-types.md`
+> - §5 (structural records, `HasField`, row-conditional typestate) plus the relevant
+>   parts of §6/§7 → `../structural-records.md`
+> - §9 example programs → split across both of the above
+>
+> Nothing here was discarded — every substantive point was carried forward, and in
+> several places corrected or extended against material recovered from git history
+> after this report was written (`archive/per-field-multiplicities.md`'s multiplicity
+> lattice in particular). **Read the two documents above as current; read this as the
+> historical record of how they were arrived at.**
+>
+> Original content follows unchanged.
+
 ---
 
 # Linear Types and Structural Records — A Design Exploration

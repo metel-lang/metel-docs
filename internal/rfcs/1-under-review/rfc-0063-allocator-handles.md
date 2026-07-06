@@ -45,6 +45,13 @@ updated: '2026-07-06'
 > `reports/memory-model/linear-types-and-structural-records-2026-07-06.md`, a design
 > exploration of the `Linear` aspect shape, partial consumption, and structural
 > records. Exploratory only — nothing recorded above changes.
+>
+> **Updated 2026-07-06 (fifth pass):** the design exploration above has been
+> reorganized into `reports/substructural-types/` — five focused living documents
+> (`linear-types.md`, `structural-records.md`, `brand-types.md`,
+> `algebraic-effects.md`, `structured-concurrency.md`) plus an `archive/` for
+> superseded material, replacing the single file cited just above (now archived
+> there). See that directory's `README.md` for the index. Still exploratory only.
 
 ## Summary
 
@@ -481,8 +488,10 @@ a *custom* `Alloc` implementation, which nothing currently depends on.
 **Full exploration of items 1, 2, and 5** (the `Linear` aspect shape, the
 `Drop`/`Linear` exclusion, residual/record-based partial consumption, and how far the
 same mechanism could be pushed toward general structural records) is worked through in
-`reports/memory-model/linear-types-and-structural-records-2026-07-06.md`. That report
-is itself exploratory, not a decision — it does not change anything recorded above.
+`reports/substructural-types/linear-types.md` and
+`reports/substructural-types/structural-records.md` (index at that directory's
+`README.md`). Those documents are themselves exploratory, not a decision — they do not
+change anything recorded above.
 
 ---
 

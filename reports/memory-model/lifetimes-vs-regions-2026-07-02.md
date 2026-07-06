@@ -59,6 +59,15 @@ the `Linear` aspect shape, why it should exclude `Drop`, residual/record-based p
 consumption, and how far that mechanism generalizes toward structural records. That
 report is exploratory only; it does not change anything decided or left open here.*
 
+*Updated 2026-07-06 (fifth pass): the companion exploration above has been reorganized
+into `reports/substructural-types/` — a directory of focused living documents
+(`linear-types.md`, `structural-records.md`, `brand-types.md`, `algebraic-effects.md`,
+`structured-concurrency.md`) plus an `archive/` for superseded material, replacing the
+single ever-growing file referenced just above (now archived at
+`reports/substructural-types/archive/linear-types-and-structural-records-2026-07-06.md`).
+See that directory's `README.md` for the index. Still exploratory only; nothing here
+changes as a result.*
+
 *Nothing here is ratified; the remaining open question is the ratification vehicle. The
 purpose, as before, is to settle a single model **before** any accepted RFC is rewritten.*
 
@@ -406,7 +415,9 @@ implementation breakdown's Phase 3.
   more than deciding it first. Full statement: RFC-0063 §9 item 5. Design
   exploration (the `Linear` aspect shape, `Drop`/`Linear` exclusion, and how far
   this pushes toward general structural records):
-  `reports/memory-model/linear-types-and-structural-records-2026-07-06.md`.
+  `reports/substructural-types/linear-types.md` and
+  `reports/substructural-types/structural-records.md` (see that directory's
+  `README.md` for the full index).
 
 All semantic questions **specified by this report** are settled: allocators are values in
 the value channel, lifetime anchors are compile-time parameters in the type channel,
