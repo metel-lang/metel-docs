@@ -36,6 +36,14 @@ allocator parameter (`<@a>` / elided `@T`) is the new, explicit, zero-cost mecha
 genuine storage-generic pass-through. Companion RFC changes: RFC-0063 §4, RFC-0065 §1a,
 RFC-0066 §3a, RFC-0067 §5, RFC-0077 §2.3.*
 
+*Updated 2026-07-06 (second pass): §11 now records four explicitly open questions —
+allocator teardown discipline (affine vs. linear), `drop`'s interaction with a linear
+discipline if adopted, the unspecified `Alloc.alloc` method signature, and the
+unsafe-primitive layer custom allocator authoring needs. These are deliberately left
+open, not decided; full statement in RFC-0063 §9. None of it blocks ratifying the model
+as currently written — it blocks writing a custom `Alloc` implementation, which nothing
+currently depends on.*
+
 *Nothing here is ratified; the remaining open question is the ratification vehicle. The
 purpose, as before, is to settle a single model **before** any accepted RFC is rewritten.*
 
@@ -341,12 +349,40 @@ implementation breakdown's Phase 3.
 - ~~**Lifetime anchor grammar.**~~ **Decided** (§7, §9 item 7).
 - **Multi-anchor borrows** — deferred (§7). No other part of the model depends on this.
 - **Ratification vehicle** — new RFC-0088 vs. amendment that reframes RFC-0063.
+- **Allocator teardown discipline — affine (as currently written) vs. linear.**
+  **Not decided.** A phantom-marker-based linear discipline — the allocator carries a
+  hidden linear field (structurally like `PhantomBrand<'b>`, RFC-0074), making the whole
+  allocator value linear, with a designated method (e.g. `.free()`) as the *only* way to
+  discharge it, and reaching scope end without consuming it a compile error rather than
+  an implicit drop — has been proposed but not adopted. Full statement: RFC-0063 §9
+  item 1.
+- **`drop`'s interaction with a linear teardown discipline, if one is adopted.**
+  **Not decided.** RFC-0049 (draft, orphaned) already documents the failure mode a naive
+  interaction hits: a generic `drop` that discharges a linearity obligation without
+  running the real teardown logic is a genuine bug class, not a hypothetical one
+  ("`drop(f)` appears to work but leaves captured values dangling"). Full statement:
+  RFC-0063 §9 item 2.
+- **The `Alloc` aspect's `alloc` method signature.** **Not decided — not yet specified
+  at all.** §1 of RFC-0063 declares only `type AllocationError`; the method `@a expr`
+  desugars to (`a.alloc(expr)`, RFC-0063 §3) is never given a signature as part of the
+  aspect. Full statement: RFC-0063 §9 item 3.
+- **Custom allocator authoring's primitive layer.** **Not decided.** Depends on reviving
+  RFC-0026 (Unsafe Blocks), currently deferred and blocked on the now-refused RFC-0028,
+  and still written against pre-split pointer syntax. Full statement: RFC-0063 §9 item 4.
 
-All semantic questions are settled. The model is internally consistent: allocators are
-values in the value channel, lifetime anchors are compile-time parameters in the type
-channel, storage transparency means most code carries no storage annotations at all, and
-the annotation burden concentrates exactly at the points where storage decisions are
-actually being made.
+All semantic questions **specified by this report** are settled: allocators are values in
+the value channel, lifetime anchors are compile-time parameters in the type channel,
+storage transparency means most code carries no storage annotations at all, and the
+annotation burden concentrates exactly at the points where storage decisions are actually
+being made.
+
+The four items just above are a different kind of open question — they don't concern
+anything this report specifies; they concern *custom allocator authoring and allocator
+teardown discipline*, which this report and RFC-0063 deliberately leave unspecified.
+Nothing above blocks ratifying the model as currently written. It blocks writing a
+*custom* `Alloc` implementation — which nothing in the current cluster depends on — and
+is deferred on purpose: the interpreter has no allocator backend yet regardless, so there
+is no implementation pressure forcing these decisions before the design is ready for them.
 
 ## 12. Storage preservation: tag-only parameters, and why extraction stays explicit
 

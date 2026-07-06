@@ -23,6 +23,16 @@ updated: '2026-07-06'
 > Companion changes: RFC-0065 (elision for the new form), RFC-0066 §3a (extraction
 > is never implicit at a plain-parameter call site — the rule this form's existence
 > depends on), RFC-0077 (bounds table).
+>
+> **Updated 2026-07-06 (second pass):** §9 now explicitly records four open
+> questions this RFC deliberately does not resolve: allocator teardown
+> discipline (affine vs. linear), `drop`'s interaction with a linear
+> teardown discipline if one is adopted, the still-unspecified `Alloc.alloc`
+> method signature, and the unsafe-primitive layer custom allocator authoring
+> would need (RFC-0026). None of these block the surface already specified
+> here; they block writing a *custom* `Alloc` implementation, which nothing
+> currently depends on. Deliberately left open rather than decided — see
+> `reports/memory-model/lifetimes-vs-regions-2026-07-02.md` §11.
 
 ## Summary
 
@@ -371,7 +381,56 @@ the same principle holds: each allocator tag in the error is a concrete name in 
 
 ## 9. Unresolved questions
 
-None.
+**None, for the surface this RFC specifies** — the `Alloc` aspect's associated
+error type, `@a T`, `@a expr`, allocator parameters (including tag-only, §4),
+and sendability are settled as written. The following are explicitly **not**
+decided, are out of scope for this RFC, and are deferred until the
+implementation catches up with the design (there is no urgency: the
+interpreter has no allocator backend yet regardless):
+
+1. **Teardown discipline — affine (as currently written) vs. linear.** This
+   RFC and §5 describe allocators as ordinary affine values: movable, dropped
+   via explicit `drop(a)` or implicitly at scope end. A stricter alternative
+   has been proposed and is **not decided**: allocators carry a phantom
+   linearity marker (structurally analogous to `PhantomBrand<'b>`, RFC-0074)
+   making the whole allocator value linear, with a designated consuming
+   method (e.g. `.free()`) as the *only* way to discharge that obligation —
+   reaching scope end without consuming it would become a compile error
+   rather than triggering an implicit drop. **Undecided; §5's "or at scope
+   end" wording stands only until this is resolved.**
+
+2. **If linear teardown is adopted, `drop`'s interaction with it is a second,
+   separate open question.** RFC-0071 §6's `drop(x)` free function is
+   currently unconditional — it works on any value. A generic `drop` that
+   merely discharges a linearity obligation *without* running the real
+   teardown logic is a genuine, previously-encountered bug class, not a
+   hypothetical one: RFC-0049 (draft, orphaned) documents exactly this
+   failure for `linear fun` — *"`drop(f)` appears to work but leaves
+   captured values dangling."* **Undecided:** whether `drop` should be
+   excluded from linear allocators entirely (e.g. a `T: !Linear` bound,
+   mirroring RFC-0072's negative-bound mechanism), or some other resolution.
+
+3. **The `Alloc` aspect's allocation method is not actually specified.** §1
+   declares only `type AllocationError`; §3 states that `@a expr` "desugars
+   to `a.alloc(expr)`," but no `fun alloc(...)` signature is part of the
+   aspect declaration. Neither the stdlib allocators nor a user-defined one
+   have a documented method contract to implement against yet. **Undecided
+   and unspecified** — this blocks any custom `Alloc` implementation, not
+   just the linear-teardown question above.
+
+4. **Custom allocator authoring needs a lower-level primitive layer that
+   does not currently exist in the accepted/under-review cluster.** RFC-0026
+   (Unsafe Blocks) names "custom allocators" as a motivating use case, but it
+   is deferred, blocked on the now-refused RFC-0028, and still uses
+   pre-split pointer syntax (`*mut Byte`, `Region::create`). It needs to be
+   revived and re-anchored to this RFC onward before item 3 above can be
+   given a real signature, let alone implemented safely.
+
+These four are connected — resolving item 3 requires a decision on item 1
+(does `alloc`'s signature need to thread a linear capability token?), and
+implementing either requires item 4. None of this blocks the allocator
+surface already specified in this RFC from being ratified; it blocks writing
+a *custom* `Alloc` implementation, which nothing currently depends on.
 
 ---
 
