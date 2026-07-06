@@ -40,6 +40,11 @@ updated: '2026-07-06'
 > RFC-0071/RFC-0067 implementation (move semantics, borrow checking) begins,
 > since it concerns the same partial-move mechanism RFC-0071 §7 already
 > specifies for the affine case.
+>
+> **Updated 2026-07-06 (fourth pass):** §9 items 1, 2, and 5 now point to
+> `reports/memory-model/linear-types-and-structural-records-2026-07-06.md`, a design
+> exploration of the `Linear` aspect shape, partial consumption, and structural
+> records. Exploratory only — nothing recorded above changes.
 
 ## Summary
 
@@ -472,6 +477,12 @@ a *custom* `Alloc` implementation, which nothing currently depends on.
    whenever the design catches up at its own pace — retrofitting a
    different mechanism after move semantics and the borrow checker are
    already built would be far more costly than deciding this first.
+
+**Full exploration of items 1, 2, and 5** (the `Linear` aspect shape, the
+`Drop`/`Linear` exclusion, residual/record-based partial consumption, and how far the
+same mechanism could be pushed toward general structural records) is worked through in
+`reports/memory-model/linear-types-and-structural-records-2026-07-06.md`. That report
+is itself exploratory, not a decision — it does not change anything recorded above.
 
 ---
 

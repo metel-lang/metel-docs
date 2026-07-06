@@ -52,6 +52,13 @@ real deadline unlike the other four: it has to be settled before move-semantics
 same partial-move mechanism those steps build regardless. Full statement in RFC-0063
 §9 item 5.*
 
+*Updated 2026-07-06 (fourth pass): the deferred `Linear`/partial-consumption questions
+now have a companion design exploration —
+`reports/memory-model/linear-types-and-structural-records-2026-07-06.md` — covering
+the `Linear` aspect shape, why it should exclude `Drop`, residual/record-based partial
+consumption, and how far that mechanism generalizes toward structural records. That
+report is exploratory only; it does not change anything decided or left open here.*
+
 *Nothing here is ratified; the remaining open question is the ratification vehicle. The
 purpose, as before, is to settle a single model **before** any accepted RFC is rewritten.*
 
@@ -396,7 +403,10 @@ implementation breakdown's Phase 3.
   implementation order (`rfc-implementation-breakdown-2026-07-01.md`), ahead of the
   allocator layer (step 3) that the four items above wait on. This has to be settled
   before that work starts; retrofitting a different mechanism afterward would cost far
-  more than deciding it first. Full statement: RFC-0063 §9 item 5.
+  more than deciding it first. Full statement: RFC-0063 §9 item 5. Design
+  exploration (the `Linear` aspect shape, `Drop`/`Linear` exclusion, and how far
+  this pushes toward general structural records):
+  `reports/memory-model/linear-types-and-structural-records-2026-07-06.md`.
 
 All semantic questions **specified by this report** are settled: allocators are values in
 the value channel, lifetime anchors are compile-time parameters in the type channel,
