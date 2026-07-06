@@ -42,6 +42,16 @@ doesn't need its own aspect for generic code at all — `T: !Copy + !Linear` (RF
 already says it, nameable via RFC-0039's (draft) alias syntax as `aspect Affine = !Copy
 + !Linear`. Exploratory only, same as everything else here.*
 
+*Updated 2026-07-06 (fifth pass): §4.4 adds a standalone `NonLinear<T>` operator,
+flagged as likely needed regardless of how the rest of this report's sequencing plays
+out — it only needs a closed, known field list, not open-row unification, so it
+doesn't wait on §5.4. §5.7 records "make everything a record, nominal types as sugar"
+as considered and declined, not merely left open — enums don't fit a products-only
+foundation, nominal identity can't actually become sugar, and routing ordinary structs
+through row machinery costs the common case for no benefit to it. §9 adds worked
+example programs for §3–§5's mechanisms. Exploratory only, same as everything else
+here.*
+
 ---
 
 ## 1. Why this exists
@@ -264,6 +274,40 @@ Tracking "which of *this* struct's known fields remain" needs no unknown-remaind
 variable at all. A phantom marker riding the existing nominal type — structurally the
 same trick as `PhantomBrand<'b>` (RFC-0074) or an allocator tag (RFC-0063 §2) — is
 sufficient for this narrow case, with no new type-formation kind required.
+
+### 4.4 A standalone `NonLinear<T>` operator
+
+§5.3 already shows that consuming a struct's linear fields produces a residual that
+automatically stops being `Linear`, via the same auto-impl composition rule re-checked
+against a smaller row — no separate mechanism needed for *that*. But what falls out
+automatically is tied to an actual consumption event at a specific program point; the
+residual only exists because something in some function body actually consumed the
+field. A **standalone, nameable type-level operator** is a different, additional thing:
+`NonLinear<T>` — computed by filtering `T`'s own, fully known, closed field list to
+exclude anything `Linear` — is *reusable* in a signature without requiring the caller
+to have gone through an actual consumption first:
+
+```metel
+struct Session { token: LinearToken, name: String, retries: i64 }
+
+// NonLinear<Session> = record { name: String, retries: i64 }, computed structurally
+// from Session's declaration -- not tied to any particular consumption call site.
+fun archive(entry: NonLinear<Session>) { ... }
+```
+
+This is the natural companion to `HasField` in the same family, one level up:
+`HasField` is a *predicate* ("does this row have field `X`"); `NonLinear<T>` is a
+*function* on rows ("this row, minus whichever fields are `Linear`"). Row-level
+functions alongside row-level predicates are exactly PureScript's own pattern
+(`Row.Cons`/`Row.Union` compute new rows from existing ones, the same way `Cons`
+backs `Record.delete`) — this isn't a new *kind* of mechanism, just a second operation
+in a family this report already needs one member of.
+
+Flagged in review as a priority, independent of whether the fuller open-`<row R>`
+generics step (§5.4) is ever taken: `NonLinear<T>` only needs to reason about a single,
+closed, already-known field list (the same closed-world simplification as §4.3), so it
+does not by itself require open-row unification — it can exist alongside the narrow,
+closed mechanism from §4.2/§4.3 without waiting on §5.4's fuller machinery.
 
 ---
 
@@ -490,6 +534,44 @@ than asking in the abstract:
   yet (see §7), so this pattern should be rejected outright for now rather than
   permitted without a guardrail.
 
+### 5.7 Considered and declined: a fully record-based type system
+
+The natural next question, given §5.6, is whether records should stop being an
+*addition* alongside nominal structs and become the *foundation* everything else
+reduces to — nominal types as pure sugar over an underlying record. Considered and
+declined, for reasons that go beyond style:
+
+- **Enums don't fit.** Records are products (all these fields, simultaneously); enums
+  are sums (exactly one shape, tagged, at runtime). A records-only foundation has
+  nothing to say about sum types on its own — it would need a *separate* structural
+  mechanism (row polymorphism's dual, sometimes "variant rows," OCaml's polymorphic
+  variants) with its own unification story, and that mechanism has a well-known cost:
+  materially weaker exhaustiveness checking, since the compiler can't always know the
+  full set of possible tags for an open variant. Metel's enum system leans on
+  closed-world exhaustiveness as a real, hard-won property (the bottom-type and
+  unreachable-pattern work); trading it away for structural uniformity would be a
+  regression, not a simplification.
+- **Primitives don't fit either.** `i64` as "a one-field record" is indirection with
+  no payoff.
+- **Nominal identity can't actually become sugar — it's load-bearing.** §5.6 already
+  establishes records can't be allocators (disjointness needs per-*instance* identity,
+  which is precisely what structural interchangeability can't express) and can't carry
+  inherent impls or non-local aspect impls (no owning module). If "structs are sugar
+  over records," the sugar has to reintroduce a real, separate identity/ownership tag
+  for any of that to keep working — at which point the reframing hasn't reduced what
+  the system has to track, only renamed the part that was never really sugar.
+- **Implementation cost for the common case.** Routing every ordinary struct through
+  row-unification machinery means the 99% of code that never writes `record {...}` or
+  bounds on `HasField` pays for machinery it never asked for — the reverse of keeping
+  the common path simple and making the general mechanism strictly additive, which is
+  how the current split (§5.1) already behaves.
+
+**Verdict:** records as the natural representation for structural, identity-free data
+— yes, exactly where §4 and §5.3 already use it. Records as the universal foundation
+— no. The two things records are structurally bad at (sum types, identity) are things
+the rest of the language genuinely needs, and sugar can't quietly bring them back
+without admitting they were never sugar in the first place.
+
 ---
 
 ## 6. Consequences and costs, if the fuller version is pursued
@@ -563,6 +645,13 @@ than asking in the abstract:
 12. `aspect Affine = !Copy + !Linear` (§3.2) depends on RFC-0039 (draft, not accepted)
     — this report takes no position on whether RFC-0039 itself should advance; it only
     notes the mechanism fits if RFC-0039 does.
+13. `NonLinear<T>` (§4.4) — flagged in review as likely needed independent of the rest
+    of this report's sequencing. Exact syntax (is it a type-level function, a special
+    form, something else) and how it's spelled at a use site are both unresolved; only
+    the shape of what it computes is settled.
+14. Full record-based type system (§5.7) — **considered and declined**, not merely
+    open. Recorded so the direction doesn't get silently re-explored without the
+    reasons already being on hand.
 
 ---
 
@@ -578,3 +667,180 @@ have to build regardless of whether `Linear` or `record` ship alongside them, so
 has to be settled before that work starts, not whenever the rest of this design
 catches up at its own pace. This report is the working material toward that
 resolution, not a substitute for making it.
+
+---
+
+## 9. Example programs
+
+Illustrative only, more so than usual for this repo's example conventions — every
+mechanism below is exploratory (§7), not settled, let alone ratified. Nothing here
+should be read as showing what Metel code "will" look like; it shows what the
+mechanisms proposed in §3–§5 would look like if adopted roughly as described. Field
+and method names, and the exact spelling of row operations in §9.5, are illustrative,
+not proposed syntax.
+
+### 9.1 `Linear` as an aspect — basics, auto-impl, mutual exclusion
+
+```metel
+aspect Linear { }   // §3 — marker aspect, no methods
+
+struct BumpAlloc { /* ... */ }
+impl Linear for BumpAlloc {}   // leaf declaration — linear "by fiat", nothing structural forces it
+
+impl BumpAlloc {
+    fun new() -> BumpAlloc { ... }
+    fun free(self) { /* release backing memory */ }   // the only way to discharge it
+}
+
+// Auto-impl (§3): a struct containing a Linear field is automatically Linear too --
+// not re-declared, matching RFC-0024's original composition rule.
+struct Arena {
+    alloc: BumpAlloc,
+    label: String,
+}
+// Arena : Linear -- derived, not written
+
+fun teardown(a: Arena) {
+    a.alloc.free();
+    // residual is now record { label: String } -- no Linear field left, so it
+    // reverts to ordinary affine (§4.4) and drops normally at scope end; nothing
+    // further has to be written here
+}
+
+fun main() -> i64 {
+    teardown(Arena { alloc: BumpAlloc::new(), label: "scratch" });
+    0
+}
+```
+
+### 9.2 Partial consumption and `uses (...)` for `Drop`
+
+```metel
+struct Connection {
+    fd: i64,
+    tag: i64,
+    label: String,
+}
+
+impl Drop for Connection {
+    // §5.2 -- declares exactly what this destructor touches
+    fun drop(self: Connection) uses (fd) {
+        close_fd(self.fd);
+    }
+}
+
+// Because Connection's own Drop impl only reads `fd`, moving `tag` out first is
+// legal -- the residual record { fd: i64, label: String } still satisfies
+// everything `drop` declared it needs. Without `uses (fd)`, RFC-0071 section 7 bans
+// partial moves of any Drop-implementing type outright, full stop, regardless of
+// which field is being extracted.
+fun extract_tag(conn: Connection) -> (i64, record { fd: i64, label: String }) {
+    let tag = conn.tag;
+    (tag, record { fd: conn.fd, label: conn.label })
+}
+```
+
+### 9.3 Records, `HasField`, and where they stop being usable
+
+```metel
+let point = record { x: 1.0, y: 2.0 };   // closed record (§5.3) -- exact shape
+
+fun magnitude<T: HasField<"x", f64> + HasField<"y", f64>>(p: T) -> f64 {
+    (p.x * p.x + p.y * p.y).sqrt()
+}
+
+println("mag = ${magnitude(point)}");
+
+// Any nominal struct with matching fields satisfies the same bound, no opt-in (§5.6):
+struct ScreenPos { x: f64, y: f64, z_index: i64 }
+println("mag = ${magnitude(ScreenPos { x: 3.0, y: 4.0, z_index: 1 })}");
+
+// Not usable, per §5.6:
+//   impl record { x: f64, y: f64 } { fun scale(&self, k: f64) -> ... }
+//   -- no owning module; inherent impls on records are banned outright.
+//   aspect impl Display for record { x: f64, y: f64 } { ... }
+//   -- Display isn't local to this module; banned the other direction of the same rule.
+```
+
+### 9.4 A standalone `NonLinear<T>`
+
+```metel
+struct LinearToken { id: u64 }
+impl Linear for LinearToken {}
+impl LinearToken {
+    fun release(self) { /* ... */ }
+}
+
+struct Session {
+    token: LinearToken,
+    name: String,
+    retries: i64,
+}
+
+// NonLinear<Session> (§4.4) = record { name: String, retries: i64 }, computed
+// structurally from Session's own declaration -- reusable in a signature without
+// requiring a caller to have consumed `token` locally first.
+fun archive(entry: NonLinear<Session>) {
+    println("archiving ${entry.name}, retries=${entry.retries}");
+}
+
+fun close_session(s: Session) {
+    let token = s.token;   // consumes the one linear field
+    token.release();
+    archive(s);            // s's residual now matches NonLinear<Session> exactly
+}
+```
+
+### 9.5 Typestate via row-conditional impls
+
+```metel
+struct Session<row R> { data: record { ..R } }
+
+impl<row R: HasField<"token", String>> Session<R> {
+    // §5.5 -- `R without "token"` is illustrative row-subtraction notation, not
+    // proposed syntax; only the resulting bound shape is meant here
+    fun authenticate(self) -> Session<R without "token"> { ... }
+}
+
+impl<row R: Lacks<"token">> Session<R> {
+    fun send_data(&self, bytes: String) {
+        println("sending: ${bytes}");
+    }
+}
+
+fun main() -> i64 {
+    let s = Session { data: record { token: "secret", host: "example.com" } };
+    let authenticated = s.authenticate();
+    authenticated.send_data("hello");
+    // s.send_data("hello");   -- would not compile: s's row still has `token`
+    0
+}
+```
+
+### 9.6 `copy`/`linear`/`affine` keyword sugar and the `Affine` alias
+
+```metel
+copy struct Point { x: f64, y: f64 }
+// desugars to: struct Point {...} + impl Copy for Point {}
+
+linear struct Receipt { id: i64 }
+// desugars to: struct Receipt {...} + impl Linear for Receipt {}
+
+affine struct Handle { fd: i64 }
+// desugars to: struct Handle {...} + impl !Copy for Handle {} + impl !Linear for Handle {}
+// -- and locks out any later `impl Copy for Handle` elsewhere in the codebase (§3.2)
+
+aspect Affine = !Copy + !Linear   // RFC-0039 (draft) alias syntax
+
+fun move_only_op<T: Affine>(x: T) -> T { x }
+
+fun main() -> i64 {
+    let p = Point { x: 1.0, y: 2.0 };
+    let q = p;   // Copy -- p still usable afterward
+    println("p=(${p.x},${p.y}) q=(${q.x},${q.y})");
+
+    let h2 = move_only_op(Handle { fd: 3 });   // fine -- Handle : Affine
+    println("fd=${h2.fd}");
+    0
+}
+```
