@@ -11,6 +11,13 @@ created_date: '2026-07-06'
 see that document. The archives in `reports/archive/` cover the earlier session
 history.*
 
+*Updated 2026-07-06 (second pass): the priority ordering below is revised. Linear and
+structural types are promoted from a paced, sequenced-after-ratification initiative to
+the second overall priority, ahead of allocator-specific low-level design work — the
+region/lifetime decoupling that used to make the latter urgent no longer holds. See
+"The Design/Implementation Gap," "Honest Assessment," and "Priorities" for the
+reasoning and its consequences.*
+
 ---
 
 ## What Changed
@@ -119,6 +126,24 @@ The open-row, `record`-as-type-former, typestate vision in §5 is explicitly dec
 from that deadline in the report's own build-order recommendation (§5.4). The scope
 expansion is real; the urgency has not expanded with it, and it must not be allowed to.
 
+**A further refinement: the scope axis isn't evenly distributed across the memory-model
+thread.** The split that separated allocators from lifetime anchors
+(`lifetimes-vs-regions-2026-07-02.md`) did more than rename `Region` to `Alloc` — it
+removed the reason allocator-level detail used to be urgent in the first place. Under
+the old, unified region model, getting the region concept right *was* getting lifetimes
+right, because one concept carried both jobs. Post-split, that's no longer true: the
+reference-type core (ordinary borrows, lifetime-anchor elision, RFC-0067's own body
+minus §5) and the borrow checker's core liveness/exclusivity logic don't reference
+`Alloc` at all — only a specific extension does (allocator-pointer auto-deref, RFC-0067
+§5; allocator-scope wellformedness, RFC-0077 §3). That means allocator-specific
+low-level design — the still-unspecified `Alloc.alloc` method signature and the
+unsafe-primitive layer custom allocator authoring would need (RFC-0063 §9 items 3–4) —
+is further from the critical path than this document's own first-pass framing assumed.
+Linear/structural types is closer to it, not farther: item 5's resolution feeds
+directly into move-semantics and borrow-checker implementation (Phase 3 steps 1–2 in
+`rfc-implementation-breakdown-2026-07-01.md`), which is not optional and not decoupled
+from anything. See "Priorities" for what this changes in practice.
+
 ---
 
 ## Honest Assessment — is this actually worth it?
@@ -166,6 +191,23 @@ against — is at least as exposed to that failure mode as region inference was,
 arguably more, since it would be new type-system machinery rather than a refinement of
 existing machinery.
 
+**A late but important refinement to this assessment, worth stating precisely rather
+than just asserted.** Allocator-specific design work is less urgent than this
+document's own first pass assumed, for a concrete, checkable reason: the four stdlib
+allocators (`Heap`, `LocalHeap`, `BumpAlloc`, `AutoAlloc`) don't need a Metel-level
+`unsafe`/raw-memory feature to exist at all. They can be implemented directly in the
+interpreter's host language, the same way the existing stdlib already does this —
+`native(@std.core.list_new)` and its neighbors in `core.mtl` are exactly this pattern
+already in production. A Metel-level unsafe-blocks feature and a specified
+`Alloc.alloc` signature (RFC-0063 §9 items 3–4) are specifically what would let *user*
+code write its own allocator — a real feature, but a strictly optional one that
+nothing else in this assessment depends on. Combined with the reference-type/borrow-
+checker decoupling above, this means Linear/structural types and allocator-specific
+low-level plumbing were never actually competing for the same attention — one sits on
+the critical path implied by Phase 3 steps 1–2, the other gates nothing at all. Treating
+them as though they were on the same track, as this document's first pass did, understated
+the case for the former and overstated the urgency of the latter.
+
 **Verdict:** pursue it, because the opportunity is real and specific, not because
 "more design" is free. But it has to be pursued on its own timeline, explicitly
 separated from the one deadline that actually exists — which the exploratory report
@@ -176,43 +218,62 @@ project-planning level too, not just inside one report's own internal structure.
 
 ## Priorities
 
-### Track A — deadline-bound, ship narrow
+Revised into three explicit tiers this pass, replacing the previous Track A/B framing
+— not because Track A/B was wrong, but because it left allocator-specific work and
+structural/linear types implicitly competing for the same sequencing slot when they
+no longer do.
 
-Resolve RFC-0063 §9 item 5 using only the closed mechanism from
-`linear-types-and-structural-records-2026-07-06.md` §4.2/§4.3 — a phantom marker over a
-statically-known, finite field list. No row kind, no unification algorithm, no
-`record`-as-type-former is needed to meet this specific deadline. This is the one item
-from the whole new thread with a real clock on it (Phase 3 steps 1–2), and it should be
-scoped exactly that narrowly, on purpose.
+### Priority 1 — Ratify the allocator/lifetime cluster's design
 
-### Track B — strategic, deliberately paced, not gating anything
+Unchanged from July 5's still-unactioned priority #1: write RFC-0088 (or amend
+RFC-0063 directly), retract RFC-0069/RFC-0085/RFC-0087, sweep RFC-0063/0065/0066/
+0067/0068/0073/0077 back to accepted. This stays first not because allocator
+*implementation* is urgent — the point above is precisely that it isn't as urgent as
+assumed — but because Phase 2–4 implementation work needs settled RFC *text* to build
+against, independent of how the runtime pieces end up sequenced.
 
-Treat the fuller vision — `record` as a real type-former, `HasField`/`Lacks`, open
-`<row R>` generics, typestate via row-conditional impls, standalone `NonLinear<T>`,
-`copy`/`linear`/`affine` keyword sugar, the `Affine` alias — as its own initiative, on
-the same footing as fork-join concurrency (RFC-0064) or brand types (RFC-0076): real,
-worth eventually doing, and not permitted to gate the allocator cluster's ratification
-or Phase 3's start.
+### Priority 2 — Linear and structural types (promoted)
 
-Sequencing recommendation: **ratify the current allocator/lifetime cluster first** —
-July 5's own still-unactioned priority #1 (write RFC-0088, retract RFC-0069/0085/0087,
-sweep RFC-0063/0065/0066/0067/0068/0073/0077 back to accepted) — before investing
-further design effort in Track B. Track B's own usability analysis (§5.6 of the
-exploratory report) already leans on nominal-struct coherence and orphan-rule machinery
-that is on firmer ground once the allocator cluster itself is settled rather than still
-mid-sweep.
+The floor is unchanged: resolve RFC-0063 §9 item 5 using only the closed mechanism
+from `linear-types-and-structural-records-2026-07-06.md` §4.2/§4.3 — a phantom marker
+over a statically-known, finite field list, no row kind or unification algorithm
+required — since it has a real clock (Phase 3 steps 1–2) and should stay scoped that
+narrowly on purpose.
 
-If Track B is eventually taken to an actual RFC, budget for it at the scale of the
+What changes this pass is everything *above* that floor. The fuller vision — `record`
+as a real type-former, `HasField`/`Lacks`, open `<row R>` generics, typestate via
+row-conditional impls, standalone `NonLinear<T>`, `copy`/`linear`/`affine` keyword
+sugar, the `Affine` alias — is no longer treated as paced-and-sequenced-after
+allocator ratification. **The previous pass's sequencing advice — ratify the cluster
+before investing further in this thread — is retracted, not merely superseded:** it
+was based on treating allocator design and structural/linear-types design as
+contending for the same attention, which the reference-type/borrow-checker decoupling
+above shows isn't the case. This thread can and should proceed in parallel with
+Priority 1, not after it.
+
+If it's eventually taken to an actual RFC, budget for it at the scale of the
 memory-model split, not as a quick follow-on — the exploratory report's own §6 cost
 list (row unification, coherence extension, an unprecedented width-subtyping rule) is
 the honest sizing, not an afterthought to be resolved in passing.
 
+### Priority 3 — Lower-level memory API and unsafe blocks (demoted further)
+
+RFC-0063 §9 items 3–4 — the still-unspecified `Alloc.alloc` method signature, and the
+unsafe-primitive layer (RFC-0026, revived and re-anchored) that a real implementation
+of it and of custom allocator authoring generally would need. This drops below "no
+urgency waiting on the allocator layer": it doesn't gate the allocator/lifetime
+cluster's ratification, doesn't gate Phase 2–4 implementation, and doesn't gate
+anything in Priority 2 either. The four stdlib allocators can be implemented in the
+interpreter's host language directly, with no Metel-level unsafe feature required at
+all. This priority is specifically about enabling *user-authored* custom allocators —
+real, but the one item on this whole list that nothing else depends on.
+
 ### Unchanged from July 5
 
-Ratify the memory model (RFC-0088 or an amendment reframing RFC-0063), retract
-RFC-0069/RFC-0085/RFC-0087, sweep the cluster, rebase the implementation breakdown's
-Phase 3, and scope RFC-0064/revisit RFC-0076 as follow-on work. None of this was
-displaced by the new thread; see the July 5 document for the full detail, still current.
+`pub let` (RFC-0083) and array syntax (RFC-0084) as mechanical residuals, and
+RFC-0064/RFC-0076 as concurrency/brand-type follow-on. None of this was displaced by
+the new thread or the reprioritization; see the July 5 document for full detail,
+still current.
 
 ---
 
@@ -240,3 +301,9 @@ the differentiation window this overview is arguing for narrows. This can't be
 forecast precisely, but it's worth naming as the one external risk to the "worth
 pursuing" verdict that has nothing to do with Metel's own design or implementation
 choices.
+
+**If a concrete need for user-authored custom allocators emerges** — a library wanting
+a specialized pool allocator, say — Priority 3 (the low-level memory API and unsafe
+blocks) gets re-promoted from "nothing depends on it" back up, independent of
+everything else in this document. That's the one thing that would change specifically
+that ranking; it doesn't touch the Priority 1/2 reasoning at all.
