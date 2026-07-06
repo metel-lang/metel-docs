@@ -19,6 +19,11 @@ before RFC-0071 (move semantics) / RFC-0067 (borrow checking) implementation beg
 (Phase 3 steps 1–2). This report is the working-through of that last item, and of how
 far the same machinery can be pushed toward a general "structural records" feature.*
 
+*Updated 2026-07-06 (second pass): §5.5 adds typestate via row-conditional impls —
+using open records (§5.4 step 2) to gate which methods exist on a value based on its
+row shape, generalizing RFC-0036's conditional impl blocks from aspect conditions to
+row conditions. Exploratory only, same as everything else here.*
+
 ---
 
 ## 1. Why this exists
@@ -69,6 +74,10 @@ line of exploration in one place.
   use case, blocked on the now-refused RFC-0028, still written against pre-split
   pointer syntax. Needed for anyone actually implementing a custom `Alloc`/`Linear`
   type's teardown logic, independent of everything below.
+- **RFC-0036 (Conditional Impl Blocks, accepted).** Already provides `impl<T: !Aspect>
+  Foo for Bar` — impl blocks that only apply when a type-level condition holds. §5.5
+  reuses this directly, generalizing the condition from an aspect bound to a row
+  shape (`HasField`/`Lacks`-style constraints).
 
 ---
 
@@ -233,6 +242,68 @@ Concrete shape:
    materializes.** This is where the actual cost lives (§6) — treat it as its own
    decision with its own timeline, not a prerequisite for §4/§5.2.
 
+### 5.5 Typestate via row-conditional impls
+
+If step 2 of §5.4 is ever pursued, it enables something considerably more compelling
+than plain duck-typing: **typestate**, realized directly by the row rather than by a
+hand-rolled phantom marker (the usual Rust idiom — a `Request<Unsent>`/`Request<Sent>`
+pair of types distinguished only by an invented tag that carries no real information).
+With a row-typed record, the state *is* the row, and RFC-0036's conditional impl
+blocks (§2) generalize directly from aspect conditions to row-shape conditions:
+
+```metel
+impl<row R: HasField<"token", Token>> Session<R> {
+    fun authenticate(self) -> Session<R without "token"> { ... }
+}
+
+impl<row R: Lacks<"token">> Session<R> {
+    fun send_data(&self, bytes: Bytes) { ... }
+}
+```
+
+`send_data` does not exist on a `Session` whose row still has `token` — not a runtime
+precondition, an absent method. Calling it too early is the same class of error as
+calling a method that was never defined.
+
+**Where this is compelling, concretely:**
+
+- **Protocol/session state machines** — handshake steps, auth flows, parser
+  progress — where each transition adds or removes a marker field and the available
+  API tracks it exactly. The standard motivating example for row types in the
+  literature, for this reason.
+- **Builders, in the dual direction.** Consumption removes a field from a row;
+  building one up adds one. A config builder where `.with_timeout()` requires `R:
+  Lacks<"timeout">` and returns `R + "timeout"` prevents setting the same field twice,
+  at compile time.
+- **A linear-allocator session, tying directly back to §1's motivation.** A wrapper
+  whose row tracks which capability tokens are still held — `{alloc_token,
+  free_token}` — where finishing allocation consumes `alloc_token` from the row,
+  moving into a state where only `free`-adjacent methods exist. This is not a new idea
+  bolted onto the allocator discussion; it is the same linearity guarantee from §3,
+  generalized from "consume exactly once" into "consume in the right order, proved by
+  the type system" — a strictly stronger property than plain `Linear` alone gives.
+
+**What it costs, beyond §6's general row-polymorphism costs:**
+
+- **Coherence has to grow, not just get reused.** RFC-0036/RFC-0060's conditional-impl
+  coherence checking would need extending to row-shape conditions specifically,
+  ensuring two conditional impls (one gated `HasField`, one gated `Lacks`) can't both
+  apply to some under-constrained row-variable case. Same framework, genuine
+  additional work, not free.
+- **Diagnostics need their own care.** "Method does not exist" is a worse error than
+  "method requires row to contain `authenticated`, but this session's row is
+  `{tcp_connected}`" — getting the legible version is not automatic just because the
+  mechanism works; it is the same "concrete, pointable diagnostics" concern that
+  motivated allocator bindings being real values in the first place (RFC-0063
+  Motivation).
+- **Bounded, but worth remembering.** The 2^*N*-ish monomorphization argument from
+  §5.4 still holds — realistic protocol step-counts stay small — but a state machine
+  modeled with many independent flags rather than a handful of ordered steps could
+  push on this more than a plain closed record would.
+
+This is not part of the recommended build order in §5.4 — it is a reason step 2 might
+eventually earn its cost, not an argument for taking on that cost now.
+
 ---
 
 ## 6. Consequences and costs, if the fuller version is pursued
@@ -292,6 +363,9 @@ Concrete shape:
    unresolved, no proposal yet.
 9. Does residual/record typing, if adopted, replace RFC-0071 §7's mechanism for
    ordinary affine partial moves too, or stay linear/record-scoped only — unresolved.
+10. Row-conditional impl coherence (§5.5) — extending RFC-0036/RFC-0060's conditional-impl
+    checking to `HasField`/`Lacks`-style row conditions is asserted to be tractable but
+    not worked out; no concrete overlap-checking rule proposed yet.
 
 ---
 
