@@ -3,7 +3,7 @@ id: lifetimes-vs-regions-2026-07-02
 title: "Allocators first-class, lifetimes visible — the split model"
 type: report
 created_date: '2026-07-02'
-updated_date: '2026-07-05'
+updated_date: '2026-07-06'
 ---
 
 # Allocators first-class, lifetimes visible — the split model
@@ -26,6 +26,15 @@ settled; (9) syntactic channel reassignment: allocators move to the value channe
 *Updated 2026-07-05: mutable borrow syntax settled — `&r mut T` (anchor groups with `&`,
 `mut` follows); anchors are type-level only, expression position always uses `&val` /
 `&mut val` with anchor inferred from context.*
+
+*Updated 2026-07-06: added §12, the storage preservation principle. Passing an owned
+`@a T` value to a plain, `@`-free `T` parameter without ascription was previously
+unaddressed; it is now settled as a compile error, never an implicit move-out and never
+implicit preservation. §8 item 7 rescoped accordingly — it previously read as if it
+licensed automatic owned-value monomorphization, which is not what happens. The tag-only
+allocator parameter (`<@a>` / elided `@T`) is the new, explicit, zero-cost mechanism for
+genuine storage-generic pass-through. Companion RFC changes: RFC-0063 §4, RFC-0065 §1a,
+RFC-0066 §3a, RFC-0067 §5, RFC-0077 §2.3.*
 
 *Nothing here is ratified; the remaining open question is the ratification vehicle. The
 purpose, as before, is to settle a single model **before** any accepted RFC is rewritten.*
@@ -244,9 +253,15 @@ case, which is uncommon in practice. Deferral does not affect any other part of 
    checker enforces this from binding structure without an explicit `Outlives` constraint.
 6. **Allocator identity is compile-time**; runtime dispatch is per-kind deallocation
    semantics (`Heap` per-slot free, `BumpAlloc` arena-free-at-scope, etc.).
-7. **Storage-transparent constructs monomorphize over storage at compile time.** Storage
-   qualifiers are erased at runtime — a value is a value; the qualifier is a compile-time
-   property used for borrow checking and optimization only.
+7. **Storage-transparent constructs monomorphize over storage at compile time — but only
+   where a storage-generic construct is actually written (§12).** Storage qualifiers are
+   erased at runtime — a value is a value; the qualifier is a compile-time property used
+   for borrow checking and optimization only. This does **not** mean a plain, `@`-free
+   `T` parameter silently becomes storage-generic when called with an `@a T` argument —
+   that would make a function's legality depend invisibly on the caller's storage choice.
+   Genuine storage-generic pass-through is written with the tag-only form (`<@a>` /
+   elided `@T`, RFC-0063 §4) and monomorphizes exactly as this bullet describes; a bare
+   `T` parameter is never implicitly promoted to it.
 
 ## 9. Underspecified behaviors — all settled
 
@@ -277,20 +292,26 @@ case, which is uncommon in practice. Deferral does not affect any other part of 
    kinds: required when declaration contains both type params and anchor params or
    anchors and ordering bounds. Elision rules as stated in §7. Ordering bounds:
    `<&s, &t: &s>` — t outlives s. Multi-anchor form deferred (§7).
+8. ~~**Owned-value call-site disambiguation**~~ — **Settled** (§12): passing an `@a T`
+   value to a plain, `@`-free `T` parameter without explicit ascription is a compile
+   error — never an implicit move-out, never implicit preservation. The tag-only
+   parameter form (`<@a>` / elided `@T`) is the explicit, zero-cost tool for
+   preservation; explicit ascription (RFC-0066 §3) is the explicit tool for extraction.
+   See RFC-0063 §4, RFC-0065 §1a, RFC-0066 §3a, RFC-0067 §5.
 
 ## 10. Blast radius across the cluster
 
 | RFC | Effect of the split |
 |---|---|
-| 0063 | **Rewritten as "allocators."** `Region` aspect → `Alloc` aspect; `Outlives` dropped; allocators move to value channel. |
-| 0065 | Elision restated: allocator elision (single `@`), anchor elision (three rules in §7). |
-| 0066 | The trigger; move-out forces lifetimes shorter than allocator scopes. |
-| 0067 | Reference types carry lifetime anchors; `&r T` syntax at use, `<&r>` at declaration. |
+| 0063 | **Rewritten as "allocators."** `Region` aspect → `Alloc` aspect; `Outlives` dropped; allocators move to value channel. §4 adds tag-only parameters, 2026-07-06 (§12). |
+| 0065 | Elision restated: allocator elision (single `@`), anchor elision (three rules in §7). §1a adds tag-only elision, 2026-07-06 (§12). |
+| 0066 | The trigger; move-out forces lifetimes shorter than allocator scopes. §3a settles that extraction is never implicit at a plain-parameter call site, 2026-07-06 (§12). |
+| 0067 | Reference types carry lifetime anchors; `&r T` syntax at use, `<&r>` at declaration. §5 scopes borrow-coercion to borrows only, not owned values, 2026-07-06 (§12). |
 | 0068 | `[own r]` → **primary constructor** `(@a: AllocType)`; `own` and bracket channel dropped. |
 | 0069 | **Retracted** (§5): `SubRegion` was `Outlives` propagation; both dropped. |
 | 0071 | Drop order extended for interleaved move-out and moved values. |
 | 0073 | `AutoRegion` → **`AutoAlloc`**, first-class allocator, semantic contract unchanged. |
-| 0077 | Wellformedness restated over allocator scopes only; value-lifetime constraints are borrow-checker-derived. |
+| 0077 | Wellformedness restated over allocator scopes only; value-lifetime constraints are borrow-checker-derived. Tag-only form added to the §2.3 bounds table, 2026-07-06 (§12). |
 | 0085 | **Retracted** (§5). |
 | 0086 | `[x, y]` sugar reinterpreted as `<&x, &y>` lifetime anchor parameter declarations; multi-anchor borrow form deferred. |
 | 0087 | **Retracted** (§5). |
@@ -326,3 +347,125 @@ values in the value channel, lifetime anchors are compile-time parameters in the
 channel, storage transparency means most code carries no storage annotations at all, and
 the annotation burden concentrates exactly at the points where storage decisions are
 actually being made.
+
+## 12. Storage preservation: tag-only parameters, and why extraction stays explicit
+
+Storage transparency (§3) says a construct that doesn't reference an allocator needs no
+annotation. It does not, by itself, say what happens when a construct *is* called with a
+storage-tagged value anyway. That gap surfaced during review of RFC-0066's extraction
+rules and turned out to have a real, previously-unaddressed answer.
+
+### 12.1 The question
+
+```metel
+fun consume(val: Node) -> Node { val }
+
+let ptr = @a Node { val: 1 };
+consume(ptr);   // ptr : @a Node, consume expects a plain Node — what happens?
+```
+
+Three readings are superficially plausible:
+
+1. **Type error, no implicit conversion.** `@a Node` and `Node` are different types;
+   the call is simply rejected until the caller converts explicitly.
+2. **Implicit move-out**, by treating the parameter as a `let`-like binding — the same
+   rule RFC-0066 §3 gives for `let node: Node = ptr;`.
+3. **Implicit storage-generic preservation** — treat `consume`'s plain `Node` as secretly
+   meaning "whatever tag flows in," monomorphized per call site, so the tag survives
+   the call untouched.
+
+These are not three spellings of the same behavior. They differ in cost (free vs.
+lossy), in failure mode (silent vs. visible), and in what they imply about how much a
+function signature is allowed to hide.
+
+### 12.2 Why (2) is ruled out
+
+Implicit move-out at a call site makes a function's legality depend on the *caller's*
+storage choice, invisibly. `consume`'s signature gives no hint that calling it could
+fail — but if `Node: Drop` and `ptr` came from a bulk-deallocating allocator (RFC-0066
+§2.2.3), `consume(ptr)` would silently hit that restriction, for a reason legible only
+by tracing back to wherever `ptr` was allocated. Storage transparency exists precisely
+so that plain-looking code doesn't have to think about storage; (2) violates that for
+*callers*, even while appearing to uphold it for the function's own author.
+
+### 12.3 Why (3), made fully implicit, is not adopted
+
+(3) is tempting, and one bullet in §8 (item 7, "storage-transparent constructs
+monomorphize over storage") read as if it endorsed exactly this before this section
+was written. The problem is what soundly implementing it would require: checking
+`consume`'s *body* to determine whether it actually is storage-generic. Consider:
+
+```metel
+fun maybe_default(val: Node) -> Node {
+    if (cond) { val } else { Node { val: 0 } }
+}
+```
+
+One branch relays the input; the other fabricates a fresh, untagged `Node` from
+nothing. If plain `Node` in a transparent signature is silently generic, the compiler
+must check this the way it checks a real `fun f<T>(x: T) -> T { ... }` — and by that
+standard, `maybe_default` fails, for the same reason `fun f<T>(x: T) -> T { if cond { x
+} else { SomeConcreteType {} } }` fails: the `else` branch doesn't produce a `T`. That's
+the *correct* answer for this example, but arriving at it requires running full generic
+inference over every plain-typed function body in the language to discover which ones
+qualify — exactly the shape of thing RFC-0075 (region/storage inference) was parked
+for: "inference that looked plausible on paper became speculative without running
+programs." Adopting (3) implicitly makes every unannotated function a candidate for
+that inference, a much larger surface than RFC-0075 ever proposed.
+
+### 12.4 The resolution: two explicit tools, no silent third option
+
+**(1) is the default**, formalized as RFC-0066 §3a: a plain, `@`-free `T` parameter
+only accepts genuinely untagged values; passing `@a T` to it without ascription is a
+compile error. This generalizes RFC-0063 §3's existing restriction on the *allocation*
+direction ("type-directed allocation applies at the binding level only") to the
+*extraction* direction — type-directed conversion, either way, only fires for a `let`
+binding whose own declared type differs from its initializer's, never silently across
+a call boundary.
+
+**A version of (3) is adopted, but only when written down** — RFC-0063 §4's tag-only
+allocator parameter, `<@a>`, elidable to bare `@T` (RFC-0065 §1a):
+
+```metel
+fun consume(val: @Node) -> @Node { val }   // preserves whatever tag ptr already has
+consume(ptr);                               // fine — no extraction, no Drop restriction
+```
+
+This is not new inference machinery. A function declaring (or eliding) `<@a>` is
+checked exactly like an ordinary `<T>` generic: the body is type-checked once,
+abstractly, against the tag, and monomorphized per call site. `maybe_default` rewritten
+with `@Node` fails to type-check for exactly the reason given in §12.3 — the difference
+is that the check is now scoped to signatures that *opted in* by writing `@`, not run
+speculatively over every plain function in the program.
+
+The deciding factor for which tool a function needs is not "does it look like it should
+work with tagged data" — it's whether the function needs storage-independent ownership
+(extraction, RFC-0066 §3/§3a) or is merely relaying a value it never inspects
+(preservation, RFC-0063 §4). The two differ concretely: extraction vacates the
+allocator slot and is subject to `T: !Drop` on bulk-deallocating allocators (RFC-0066
+§2.2); preservation touches nothing and works for `T: Drop` from any allocator, because
+nothing is ever vacated.
+
+### 12.5 Borrows already had the free version
+
+None of this changes RFC-0067 §5's existing borrow coercion (`&node` coercing `@a T`'s
+borrow to plain `&T`). That coercion was always sound for a different reason than
+anything in §12.4: a borrow never had move/ownership rights over the allocation to
+begin with, so dropping the tag from the *borrow's* type discards nothing. The owned
+case has no equivalent free lunch — extraction is genuinely lossy (vacates a slot) and
+sometimes illegal (§2.2.3) — which is exactly why it stays opt-in rather than becoming
+implicit by analogy with borrows.
+
+### 12.6 Summary
+
+| Signature form | Accepts `@a T` argument? | What happens | Cost |
+|---|---|---|---|
+| `val: T` (bare) | No, without ascription | Compile error; caller must extract explicitly | n/a |
+| `val: T`, caller writes `ptr: T` | Yes | Move-out (RFC-0066 §3), `T: !Drop` restriction applies | Real — vacates slot |
+| `val: @a T` / `<@a>` explicit | Yes, for tag `a` | Preserved, untouched | Free — erased at compile time |
+| `val: @T` (elided tag-only) | Yes, for any tag | Preserved, monomorphized per call site | Free — erased at compile time |
+| `val: &T` / `val: &r T` | N/A — borrow, not owned | Coerced from `&(@a T)` (RFC-0067 §5) | Free — never had ownership |
+
+The row that does not exist, deliberately, is "bare `T`, accepts `@a T` implicitly." Its
+absence is the point: it's the one cell that would have made a signature's meaning
+depend on facts not visible in the signature.

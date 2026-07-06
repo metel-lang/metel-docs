@@ -37,6 +37,26 @@ model (see position report §5) and have moved to `5-refused/`.
 | [`06-generic-allocators-and-variance.mtl`](06-generic-allocators-and-variance.mtl) | 0077 | `<A: Alloc>` bounds, generic `impl`/`aspect impl` headers, wellformedness, variance |
 | [`07-auto-alloc.mtl`](07-auto-alloc.mtl) | 0073 | `AutoAlloc`, compiler-chosen strategy, drop/move-out guarantees |
 | [`08-shared-ownership-rc-arc.mtl`](08-shared-ownership-rc-arc.mtl) | 0074 (draft) | `Rc<T>` / `Arc<T>` as library structs, `SharedPointer`, `get_mut`, `try_unwrap`, sendability |
+| [`09-storage-preservation.mtl`](09-storage-preservation.mtl) | 0063, 0065, 0066, 0067 | Tag-only allocator parameters (`<@a>` / elided `@T`); why a plain `T` parameter never implicitly accepts `@a T`; extraction vs. preservation |
 
 Read them in order — later files assume the allocator/anchor vocabulary
 established earlier and lean on elision once it has been introduced in `02`.
+
+## A note on file 09
+
+`09-storage-preservation.mtl` is the odd one out: it doesn't correspond to a
+single RFC section the way the others do. It answers a question that came up
+during review and wasn't previously addressed anywhere — what a plain,
+`@`-free `T` parameter does when called with an `@a T` argument. The answer
+settled on (full analysis in the position report §12) is: a signature's plain
+types fall into three, never-conflated categories —
+
+| Form | Meaning | Accepts `@a T` without ascription? |
+|---|---|---|
+| `T` (bare) | Storage-independent ownership | No — compile error; extract explicitly (RFC-0066 §3) |
+| `@T` / `<@a>` | Preserve whatever storage flows in | Yes — free, monomorphized per call site |
+| `&T` / `&r T` | Borrow, storage irrelevant | Yes — already free (RFC-0067 §5), unaffected by this |
+
+The middle row is the new piece; the other two already existed. See the file
+itself for the reasoning against the two rejected alternatives (implicit
+move-out, and fully-implicit preservation without the `@`/`<@a>` marker).

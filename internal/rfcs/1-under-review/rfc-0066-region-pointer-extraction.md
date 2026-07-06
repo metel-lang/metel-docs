@@ -2,6 +2,7 @@
 id: rfc-0066
 title: "Region Pointer Extraction"
 date: '2026-06-27'
+updated: '2026-07-06'
 ---
 
 > **Status — under review.** Rewritten syntax 2026-07-05. This RFC is the trigger for
@@ -12,6 +13,13 @@ date: '2026-06-27'
 > throughout. Depends on RFC-0063 (Allocator Handles) and RFC-0065 (Allocator Ergonomics).
 > Addresses the gap identified in RFC-0063 §5: how a caller obtains a plain `T` or `&T`
 > from an `@a T` allocator pointer, and what the destructor semantics are in each case.
+>
+> **Updated 2026-07-06:** added §3a, closing a gap §3 left open: whether passing
+> `@a T` to a plain, `@`-free `T` parameter *without* ascription counts as a
+> type-directed binding the way `let node: Node = ptr;` does. It does not — this was
+> previously unstated. See `reports/memory-model/lifetimes-vs-regions-2026-07-02.md`
+> §12 for the analysis. Companion change: RFC-0063 §4 adds a tag-only parameter form
+> for the case this rule would otherwise leave with no cheap alternative.
 
 ## Summary
 
@@ -170,6 +178,66 @@ negative bound — if `T` has a `Drop` impl the binding is rejected at the call 
 
 ---
 
+## 3a. Extraction is never implicit at a plain-parameter call site
+
+§3 gives two forms that drive move-out: a `let` binding whose *own* declared type is
+plain `T`, and explicit ascription (`ptr: T`). Both are written by the caller, at the
+exact point extraction happens. A third, unwritten form is conspicuously absent: a
+function parameter declared as plain `T`, called with an `@a T` argument and no
+ascription at all —
+
+```metel
+fun consume(val: Node) -> Node { val }
+
+let ptr = @a Node { val: 1 };
+consume(ptr);          // is this move-out, a type error, or something else?
+```
+
+**This is a compile error, not implicit move-out.** A parameter is a binding, and it
+may be tempting to read §3's "type-directed binding" rule as covering it by analogy —
+but doing so would make a function's callability depend invisibly on the *caller's*
+storage choice. `consume`'s signature gives no hint that calling it could fail: if
+`Node: Drop` and `ptr` came from a bulk-deallocating allocator, `consume(ptr)` would
+silently hit the §2.2.3 restriction from a call site that looks unremarkable, for a
+reason legible only by tracing back to wherever `ptr` was allocated. That is exactly
+the failure mode storage transparency (RFC-0063, `reports/memory-model/lifetimes-vs-regions-2026-07-02.md`
+§3) exists to prevent: plain-looking code should not have to think about storage, and
+that includes not having its legality silently depend on a caller's storage decision.
+
+The rule generalizes RFC-0063 §3's restriction on the allocation direction —
+*"type-directed allocation applies at the binding level only; nested sub-expressions
+require an explicit `@`"* — to the extraction direction: **type-directed conversion,
+in either direction, fires only for a `let` binding whose own declared type differs
+from its initializer's, never silently across a call boundary.** `consume(ptr)` above
+is rejected; the caller must write one of:
+
+```metel
+consume(ptr: Node);          // explicit ascription — extracts, subject to §2's rules
+let v: Node = ptr;
+consume(v);                  // same extraction, spelled at the binding
+```
+
+**The alternative to extraction: don't extract.** If `consume` does not actually need
+ownership independent of any allocator — it just wants to use the value and hand it
+back, say — RFC-0063 §4's tag-only parameter is the tool, not extraction:
+
+```metel
+fun consume(val: @Node) -> @Node { val }   // preserves whatever tag `ptr` already has
+
+consume(ptr);   // fine: no extraction, no Drop restriction, ptr's tag flows through
+```
+
+This is a genuine fork, not two spellings of the same thing: `consume(val: Node)`
+requires the caller to have already discharged (or be willing to discharge) the
+allocator tag, with all of §2's consequences; `consume(val: @Node)` never touches the
+tag at all, and works for `T: Drop` values from any allocator kind, scoped or not,
+because nothing is vacated. Which one a function should use depends on whether it
+genuinely needs storage-independent ownership (extraction) or is merely relaying a
+value it doesn't inspect (preservation) — the signature should say which, and the
+compiler will not guess on the caller's behalf.
+
+---
+
 ## 4. Clone extraction
 
 When `T: Clone` and move-out from a scoped arena is unavailable (Option A: `T: Drop`),
@@ -217,6 +285,8 @@ encompasses the clone's use is valid.
 ## References
 
 - RFC-0063 (Allocator Handles) §3 — allocation expressions; the symmetric counterpart
-  to extraction.
-- RFC-0065 (Allocator Ergonomics) — elision rules for `@` and lifetime anchors.
+  to extraction. §4 — the tag-only parameter form that §3a recommends in place of
+  extraction when ownership doesn't actually need to be storage-independent.
+- RFC-0065 (Allocator Ergonomics) §1a — elision for the tag-only form; distinguishes
+  it from this RFC's plain, `@`-free `T`.
 - RFC-0067 (Reference Types) — `&T` / `&mut T`; auto-deref through `@a T`.

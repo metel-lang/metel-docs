@@ -75,7 +75,9 @@ fun transfer<T, A: Alloc, B: Alloc>(@src: A, @dst: B, val: @src T) -> @dst T {
 }
 
 // Naming-only: a function that relates an input tag to an output tag without
-// itself allocating.
+// itself allocating. This still costs a real (if unused) runtime parameter —
+// see 09-storage-preservation.mtl for the lighter tag-only form (`<@a>`) that
+// drops it when the function never needs the runtime handle at all.
 fun identity<A: Alloc>(@a: A, val: @a Node) -> @a Node { val }
 
 // -----------------------------------------------------------------------

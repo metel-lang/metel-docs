@@ -1,0 +1,149 @@
+// Storage preservation — tag-only allocator parameters.
+//
+// RFC-0063 §4 ("Tag-only parameters"), RFC-0065 §1a, RFC-0066 §3a, RFC-0067 §5.
+// Full analysis: reports/memory-model/lifetimes-vs-regions-2026-07-02.md §12.
+//
+// The question this file answers: what happens when an `@a T` value is passed
+// to a function whose parameter is declared as plain `T`? The answer is: it
+// depends entirely on whether that `T` is written bare or with a `@`, and the
+// language never guesses between them. Illustrative only.
+
+struct Node { val: i64 }
+
+struct FileHandle { fd: i64 }
+impl Drop for FileHandle {
+    fun drop(self: FileHandle) {
+        println("closing fd ${self.fd}");
+    }
+}
+
+// -----------------------------------------------------------------------
+// 1. Bare `T` never implicitly accepts `@a T` (RFC-0066 §3a)
+// -----------------------------------------------------------------------
+
+fun consume(val: Node) -> Node { val }
+
+fun bare_parameter_rejects_tagged_argument() {
+    let a = BumpAlloc::new();
+    let ptr = @a Node { val: 1 };
+
+    // consume(ptr);
+    // error: `ptr` is `@a Node`; `consume` expects a plain, untagged `Node`.
+    // This is a compile error, not an implicit move-out — see sections 2 and 3
+    // below for the two ways to actually call `consume` with `ptr`.
+
+    drop(a);
+}
+
+// -----------------------------------------------------------------------
+// 2. Option A: extract explicitly (a real storage decision, RFC-0066 §3)
+// -----------------------------------------------------------------------
+
+fun extraction_example() {
+    let a = BumpAlloc::new();
+    let ptr = @a Node { val: 1 };   // Node: !Drop, so this is legal even from BumpAlloc
+
+    let result = consume(ptr: Node);   // ascription drives move-out at the call site
+    println("val=${result.val}");
+
+    drop(a);
+}
+
+// Extraction is not always available: a `T: Drop` value from a bulk-deallocating
+// allocator can't be extracted at all (RFC-0066 §2.2.3) —
+//
+//   let ptr = @a FileHandle { fd: 3 };
+//   consume_handle(ptr: FileHandle);
+//   // error: FileHandle: Drop, and `a` is a bump arena — move-out is unsupported.
+//   // The only fixes are @Heap (RFC-0066 §2.1) or not extracting at all (§3 below).
+
+// -----------------------------------------------------------------------
+// 3. Option B: don't extract — preserve the tag (RFC-0063 §4)
+// -----------------------------------------------------------------------
+
+// Explicit tag-only parameter: no runtime handle, no Alloc bound.
+fun identity_explicit<@a>(val: @a Node) -> @a Node { val }
+
+// Elided: `@Node` with no name and no `<@a>` declaration at all — the same
+// single-input-anchor-style elision already used for lifetime anchors.
+fun identity(val: @Node) -> @Node { val }
+
+fun preservation_example() {
+    let a = BumpAlloc::new();
+    let ptr = @a Node { val: 1 };
+
+    let same = identity(ptr);   // no extraction: ptr's tag `a` flows straight through
+    println("val=${same.val}");
+
+    drop(a);
+}
+
+// This is what makes preservation strictly more capable than extraction for
+// resource-holding types: it works for T: Drop from *any* allocator, because
+// nothing is ever vacated.
+fun preserve_handle(val: @FileHandle) -> @FileHandle { val }
+
+fun preservation_works_for_drop_types() {
+    let a = BumpAlloc::new();
+    let ptr = @a FileHandle { fd: 3 };
+
+    let same = preserve_handle(ptr);   // fine — FileHandle: Drop, but nothing is extracted
+    println("fd=${same.fd}");
+
+    // same's slot is still inside `a`; it is dropped normally when `a` tears down.
+    drop(a);
+}
+
+// -----------------------------------------------------------------------
+// 4. Relating multiple tag-only positions
+// -----------------------------------------------------------------------
+
+// Two independently-elided `@` positions get independent tags by default —
+// nothing forces them to be the same allocator (mirrors RFC-0065 §2 Rule 1
+// for lifetime anchors).
+fun pair_independent(x: @Node, y: @Node) {}
+
+// Forcing two positions to share a tag requires the explicit declaration
+// (mirrors RFC-0065 §2 Rule 4 — ambiguity is a compile error, never guessed).
+fun pair_same_arena<@a>(x: @a Node, y: @a Node) -> @a Node { x }
+
+fun relate_tags_example() {
+    let a = BumpAlloc::new();
+    let x = @a Node { val: 1 };
+    let y = @a Node { val: 2 };
+
+    pair_same_arena(x, y);   // fine: both x and y really do share tag `a`
+
+    drop(a);
+}
+
+// -----------------------------------------------------------------------
+// 5. What tag-only parameters cannot do: fabricate storage from nothing
+// -----------------------------------------------------------------------
+//
+// A tag-only parameter is checked exactly like an ordinary `<T>` generic —
+// once, abstractly, against the tag. A body that does not preserve a single
+// consistent tag on every path is rejected, for the same reason a generic
+// `fun f<T>(x: T) -> T { ... }` is rejected if some branch fabricates a
+// concrete, unrelated type instead of producing a `T`:
+//
+//   fun maybe_default(val: @Node) -> @Node {
+//       if (cond) { val } else { Node { val: 0 } }
+//       // error: the `else` branch produces an untagged Node, not a value
+//       // carrying the generic tag `a` — this is not actually storage-generic,
+//       // it only looks like it from the signature.
+//   }
+//
+// This is not new inference machinery: it is the ordinary generic-body check,
+// applied to a tag parameter instead of a type parameter. It is why adopting
+// preservation as an *implicit* default (rather than the explicit `<@a>` /
+// `@T` form used throughout this file) was rejected — see position report §12.3.
+
+fun main() -> i64 {
+    bare_parameter_rejects_tagged_argument();
+    extraction_example();
+    preservation_example();
+    preservation_works_for_drop_types();
+    relate_tags_example();
+    0
+}

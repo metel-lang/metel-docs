@@ -2,7 +2,7 @@
 id: rfc-0067
 title: "Reference Types"
 date: '2026-06-28'
-updated: '2026-07-05'
+updated: '2026-07-06'
 ---
 
 > **Status — under review.** Rewritten 2026-07-05. The original RFC used `&[r] T` /
@@ -12,6 +12,9 @@ updated: '2026-07-05'
 > Anchors are type-level only; expression position always uses `&val` / `&mut val`.
 > Supersedes RFC-0043 (Regular Pointers). Amends RFC-0044 (Explicit Receiver Semantics).
 > Depends on RFC-0063 (Allocator Handles) and RFC-0071 (Ownership and Move Semantics).
+>
+> **Updated 2026-07-06:** §5's coercion paragraph now says explicitly why it is safe
+> only for borrows, not owned values, cross-referencing RFC-0066 §3a and RFC-0063 §4.
 
 ## Summary
 
@@ -170,6 +173,20 @@ form appears in type signatures when the anchor must be named.
 plain `&T` in positions where the allocator tag and anchor are not needed. The coercion
 is implicit at function arguments, return expressions, and annotated `let` bindings.
 
+**This coercion is sound precisely because it applies to borrows, not owned values.**
+`&node` never had move/ownership rights over the allocation in the first place — it is
+a temporary loan — so dropping the tag from the *borrow's* type discards nothing the
+reference held. This does **not** extend to `node` itself: passing the owned `node`
+(no `&`) to a plain, `@`-free `T` parameter is a completely different, and much more
+consequential, operation — it would require extraction (move-out, RFC-0066 §3), which
+is lossy (the allocator slot is vacated) and sometimes illegal (`T: Drop` on a
+bulk-deallocating allocator, RFC-0066 §2.2.3). RFC-0066 §3a specifies that this never
+happens implicitly, by analogy with this section's borrow coercion — the two look
+similar at a glance (both "drop the tag") but the owned case has no free equivalent,
+which is why it is opt-in (explicit ascription) rather than automatic. RFC-0063 §4's
+tag-only parameter is the mechanism for passing an *owned* `@a T` through generic code
+without paying extraction's cost — see that section for the counterpart to this one.
+
 ---
 
 ## 6. Move-out from `@a T`
@@ -234,7 +251,8 @@ reaches the expected type, with no explicit depth limit. Chain bounded by type s
 - RFC-0044 (Explicit Receiver Semantics) — `&self` / `&mut self` receivers are now
   consistent with `&T` / `&mut T` as general reference types.
 - RFC-0063 (Allocator Handles) — `@a T`; allocator-tagged owned pointers that this
-  RFC borrows from.
+  RFC borrows from. §4's tag-only parameter is the owned-value counterpart to this
+  RFC's borrow coercion (§5).
 - RFC-0065 (Allocator Ergonomics) — elision rules for lifetime anchors and allocator tags.
 - RFC-0066 (Allocated Value Extraction) — move-out and borrow forms updated by §6
   of this RFC.

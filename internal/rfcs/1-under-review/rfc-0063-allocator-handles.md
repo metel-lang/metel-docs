@@ -2,7 +2,7 @@
 id: rfc-0063
 title: "Allocator Handles"
 date: '2026-06-24'
-updated: '2026-07-05'
+updated: '2026-07-06'
 ---
 
 > **Status — under review.** Rewritten 2026-07-05 from the original "Region Handles"
@@ -14,6 +14,15 @@ updated: '2026-07-05'
 > unified model is documented in `reports/memory-model/lifetimes-vs-regions-2026-07-02.md`.
 > Depends on RFC-0071 (Ownership and Move Semantics). Annotation-reduction ergonomics
 > are deferred to RFC-0065. RFC-0069, RFC-0085, RFC-0087 are retracted.
+>
+> **Updated 2026-07-06:** added tag-only allocator parameters (§4, "Tag-only
+> parameters — preservation without a handle"). The existing "naming only" form
+> (a real value parameter that is never used to allocate) is a real but avoidable
+> cost — the storage-preservation analysis in
+> `reports/memory-model/lifetimes-vs-regions-2026-07-02.md` §12 works through why.
+> Companion changes: RFC-0065 (elision for the new form), RFC-0066 §3a (extraction
+> is never implicit at a plain-parameter call site — the rule this form's existence
+> depends on), RFC-0077 (bounds table).
 
 ## Summary
 
@@ -32,7 +41,9 @@ This RFC specifies:
 1. the `Alloc` aspect and the four stdlib allocators;
 2. the `@a T` pointer type and the `@a expr` allocation expression;
 3. allocator parameters in the value channel `()`;
-4. sendability rules.
+4. tag-only allocator parameters — a compile-time-only form for code that relays
+   an allocator tag without ever allocating through it;
+5. sendability rules.
 
 Lifetime anchor tracking (`&r T`, `&r mut T`) is specified in RFC-0067. Elision and
 call-site inference are in RFC-0065.
@@ -190,6 +201,69 @@ signature (to relate input and output tags) simply declares the parameter and ne
 fun identity<A: Alloc>(@a: A, val: @a Node) -> @a Node { val }
 ```
 
+### Tag-only parameters — preservation without a handle
+
+The "naming only" form above still takes a real runtime value parameter `(@a: A)`,
+even though `identity`'s body never calls `a.alloc(...)`. Under monomorphization the
+parameter is never touched at runtime — it exists purely so the type checker has a
+binding to attach the tag `a` to. That is a real, if small, cost: a parameter slot
+for a capability the function never exercises.
+
+A function or struct that only **relays** an already-allocated value — never
+allocates through it, never inspects which concrete `Alloc` type it is — does not
+need the runtime handle at all. It needs only the *name*, exactly the way a lifetime
+anchor (RFC-0067) needs only a name and no accompanying value. Declare it in the
+type-parameter channel, bare and unbounded:
+
+```metel
+fun identity<@a>(val: @a Node) -> @a Node { val }
+```
+
+`<@a>` is a **tag-only allocator parameter**: a compile-time-only name, erased at
+runtime, with no paired value parameter and no `Alloc` bound. It may appear in `@a T`
+positions for typing, exactly like `(@a: A)`'s tag does — but it grants no allocation
+capability. A function or struct declaring `<@a>` (with no paired `(@a: A)`) may not
+contain any `@a expr` allocation expression; that always requires the full
+value-channel form.
+
+No `Alloc` bound is needed on `<@a>` because it never has to prove anything about a
+*concrete* allocator kind — it only asserts that `a` names an allocator instance
+already in scope somewhere in the caller's chain, and that instance already
+discharged its own `Alloc` obligation at the point it was actually created. `<@a>`
+merely relays that fact; it does not re-derive it.
+
+`<@a>` elides the same way lifetime anchors do (RFC-0065). `identity` above elides
+fully to:
+
+```metel
+fun identity(val: @Node) -> @Node { val }
+```
+
+Here the bare `@` sigil (no name, no declaration) means "this position carries a
+storage tag, generic over whatever it is" — resolved by the same rule that already
+governs `@` elision (RFC-0065 §1): if a real value-channel allocator is in scope,
+`@` names it (the existing rule); otherwise `@` introduces a fresh, per-call-site
+tag-only parameter, following the same single-input/self/ambiguous structure already
+given for lifetime anchor elision (RFC-0065 §2). Explicit `<@a>` is written out only
+when that inference is ambiguous — for instance, relating two independently-tagged
+parameters that must carry the *same* tag.
+
+This is not new inference machinery: a `<@a>`-declared (or elided) function is
+checked exactly like an ordinary `<T>` generic — its body is type-checked once,
+abstractly, against the tag, and monomorphized per call site. A body that does not
+actually preserve a single consistent tag on every path — one branch returning the
+input, another fabricating a fresh, untagged value — fails to type-check, for the
+same reason a generic `fun f<T>(x: T) -> T { ... }` fails to type-check if some
+branch does not produce a `T`.
+
+**Where extraction is still required.** `<@a>` / elided-`@T` positions only ever
+*relay* a value — they never convert an allocator-tagged `@a T` into a genuinely
+untagged, storage-erased `T`. That conversion is extraction (RFC-0066 §3), and it is
+never implicit: passing an `@a T` value to a plain (`@`-free) `T` parameter without
+explicit ascription is a compile error, not a silent move-out (RFC-0066 §3a). Use the
+tag-only form when the goal is passing storage through unexamined; use explicit
+ascription when the goal is genuinely discharging the tag.
+
 ---
 
 ## 5. Creating a scoped allocator
@@ -303,8 +377,11 @@ None.
 
 ## References
 
-- RFC-0065 (Allocator Ergonomics) — `@`-elision, call-site inference.
-- RFC-0066 (Allocated Value Extraction) — how to obtain `T` or `&T` from `@a T`.
+- RFC-0065 (Allocator Ergonomics) — `@`-elision, call-site inference, and elision
+  for tag-only parameters (§1a).
+- RFC-0066 (Allocated Value Extraction) — how to obtain `T` or `&T` from `@a T`;
+  §3a specifies why extraction never happens implicitly at a plain-parameter call
+  site, which is what makes the tag-only form necessary rather than redundant.
 - RFC-0067 (Reference Types) — lifetime anchors `&r T`, `&r mut T`; the split from
   allocator lifetime.
 - RFC-0068 (Struct-Owned Allocators) — `struct Foo(@a: BumpAlloc)` primary constructor
