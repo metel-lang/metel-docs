@@ -24,6 +24,15 @@ using open records (§5.4 step 2) to gate which methods exist on a value based o
 row shape, generalizing RFC-0036's conditional impl blocks from aspect conditions to
 row conditions. Exploratory only, same as everything else here.*
 
+*Updated 2026-07-06 (third pass): §3.1 evaluates `Linear`'s surface syntax
+(aspect-only vs. keyword-only vs. a mix), concluding the aspect is necessary
+regardless (everything else here needs it to be boundable) and a struct-only keyword
+is viable as pure sugar over it, never extended to `record`. §5.6 walks Metel's type
+positions one by one to show concretely where records are and aren't usable, and
+surfaces a previously-implicit gap: no `AllCopy`-shaped row bound exists yet to make
+open records with a discarded remainder safe, so that pattern is rejected outright for
+now (§7 item 6).*
+
 ---
 
 ## 1. Why this exists
@@ -105,6 +114,51 @@ properties, both reusing existing accepted machinery rather than inventing new:
   called directly.
 
 None of this is ratified. It's the leading candidate shape, not a decision.
+
+### 3.1 Surface syntax: aspect, keyword, or a mix
+
+Before settling on "aspect" above, it's worth checking whether a dedicated `linear`
+keyword (RFC-0024's original spelling) is a genuinely separate option, or whether
+`Copy`'s or `Send`'s precedent even applies once the rest of this report's mechanisms
+are taken into account.
+
+**The decisive question is boundability, not style.** Every other mechanism already
+proposed needs `Linear` to be usable in a bound position: `drop<T: !Linear>` (§3
+itself), the `HasField`/`Lacks` conditions in §5.1 and §5.5, and §4's residual
+recomposition, which has to *re-check* "is this still `Linear`" against a smaller row
+every time a field is consumed. A bare keyword on a declaration site gives the type
+checker nothing to ask that question against — `fun consume<T: linear>(x: T)` isn't
+meaningful unless `linear` already denotes some aspect underneath. So "keyword, no
+aspect" isn't really a third option: either it collapses into being sugar for an
+aspect (the mix, below), or it's a strictly weaker mechanism that can't participate in
+anything else this report proposes.
+
+**That leaves aspect vs. aspect-plus-sugar.** A pure aspect (as §3 states it) is fully
+sufficient, and it's consistent with everything else here already being an aspect or
+aspect-family — `HasField`, `Lacks`, `Drop`, the conditional-impl conditions in §5.5.
+A keyword adds one real thing on top: a way to declare a type linear *by fiat*, when
+nothing about its fields structurally requires it — `struct Receipt { id: i64 }` will
+never auto-derive `Linear` (nothing in it is linear), but a type author might still
+want that discipline for API reasons (an exclusive capability token, semantically,
+regardless of what it's implemented with). That override already has to exist either
+way, symmetric to how `Send`/`Sync` already support forcing a *positive* impl beyond
+what auto-derivation grants, not only RFC-0081's negative override:
+
+```metel
+impl Linear for Receipt {}          // explicit, forces it
+linear struct Receipt { id: i64 }   // proposed sugar for exactly the line above
+```
+
+**The keyword should stay struct-only — never extend it to `record`.** Records have no
+declaration site to attach a keyword to, and more importantly, forcing a
+structurally-plain row to be linear "by fiat" reintroduces exactly the kind of hidden,
+non-structural fact records exist to avoid (§5.3's whole premise: a record is *just*
+its row). If that discipline is wanted for a record-shaped value, wrap it in a nominal
+struct and force it there — records stay purely derived, structs remain the place for
+anything nominal or asserted.
+
+**Leaning:** aspect, plus struct-only keyword sugar over an explicit `impl`. Not
+ratified — recorded as a refinement of §3, not a new decision.
 
 ---
 
@@ -304,6 +358,69 @@ calling a method that was never defined.
 This is not part of the recommended build order in §5.4 — it is a reason step 2 might
 eventually earn its cost, not an argument for taking on that cost now.
 
+### 5.6 Where records are — and aren't — usable
+
+Working through Metel's actual type-position taxonomy position by position, rather
+than asking in the abstract:
+
+**Usable, no special treatment needed:**
+
+- **Ordinary value positions** — parameters, returns, `let` bindings, struct/enum
+  fields. Records are just types: `fun midpoint(a: record { x: f64, y: f64 }, ...) ->
+  record { x: f64, y: f64 } { ... }`.
+- **Allocator-tagged and borrowed positions** — `@a record { x: f64, y: f64 }`, `&r
+  record { x: f64, y: f64 }`. A record is an ordinary owned value; it participates in
+  `@a T` / `&r T` exactly like a struct.
+- **Pattern matching** — not optional, this is load-bearing for §4's whole
+  partial-consumption mechanism, not an extra capability.
+- **Generic instantiation** — `T` unifying against a concrete record is ordinary
+  unification, nothing record-specific.
+- **Aspect impls, if the aspect is local to you** — reusing RFC-0061's orphan-rule
+  treatment of `T[]`/tuples/function types directly: `aspect impl Describe for record
+  { x: f64, y: f64 } { ... }` is legal when `Describe` is your own aspect.
+- **Auto-derived aspects** — `Send`, `Sync`, `Linear` all extend to records via the
+  same field-composition rule already used for structs; RFC-0080 §3.2's rule already
+  reads generically enough ("a struct *or enum*") to cover this without amendment.
+- **Open records whose row variable is only ever passed through, never inspected** —
+  same reasoning as tag-only allocator preservation: if nothing is discarded, it
+  doesn't matter what the row variable's contents are.
+
+**Not usable, and why:**
+
+- **Inherent impls.** `impl record { x: f64, y: f64 } { fun magnitude(&self) -> f64
+  {...} }` is banned outright — records have no nominal owner for orphan-rule
+  purposes, so two unrelated modules could write conflicting inherent methods for the
+  same shape with no principled way to say which wins. RFC-0061's own reasoning for
+  `T[]`, applied to user-defined shapes.
+- **Aspect impls for a non-local aspect.** `aspect impl Display for record { x: f64, y:
+  f64 } { ... }` is banned the same way, the other direction — you may implement your
+  own aspect for a shape you don't own, but not someone else's stdlib aspect for a
+  shape you also don't own.
+- **Custom `Drop` logic, specifically.** A corollary of the rule above, worth stating
+  on its own because the consequence matters in practice: `Drop` is a stdlib aspect,
+  never local to ordinary user code, so **no record can ever carry custom teardown
+  logic** — only nominal structs can. Anything needing its own destructor behavior has
+  to be wrapped in a struct first.
+- **Serving as an allocator type.** `struct Cache(@a: record { block: RawBlock }) {
+  ... }` is a category mismatch, not a coherence technicality: RFC-0063 §2's
+  disjointness story depends on allocator identity being per-*instance* (two
+  `BumpAlloc` values of the same type still carry distinct tags), while a record's
+  entire premise is that two values with the same row are interchangeable. Something
+  whose job is proving "these are different even though they look the same" cannot
+  also be the thing whose job is "these are the same because they look the same."
+- **Using `record { ... }` itself as a bound.** `fun f<T: record { x: f64 }>(v: T) ->
+  f64` isn't meaningful — a closed record type names a concrete shape, it isn't a
+  predicate. `HasField`/`Lacks` (§5.1) are the bound forms; `record { ... }` stays for
+  concrete positions.
+- **Open records where a non-empty row-variable remainder is silently discarded,
+  without a guarantee everything in it is `Copy`.** `fun get_x<row R>(p: record { x:
+  f64, ..R }) -> f64 { p.x }` lets `R` vanish the moment the function returns — if a
+  caller's `R` contains a `Linear` or `Drop`-bearing field, that's a silent leak or
+  soundness hole, not a style issue (§6's width-subtyping tension, concretely). No
+  bound expressing "every field in `R` is `Copy`" is proposed anywhere in this report
+  yet (see §7), so this pattern should be rejected outright for now rather than
+  permitted without a guardrail.
+
 ---
 
 ## 6. Consequences and costs, if the fuller version is pursued
@@ -346,7 +463,9 @@ eventually earn its cost, not an argument for taking on that cost now.
 ## 7. Open questions — explicitly not decided
 
 1. `Linear` as an auto-impl marker aspect (§3), reusing RFC-0080/0081's template —
-   leading candidate, not ratified.
+   leading candidate, not ratified. §3.1: a struct-only `linear` keyword as sugar over
+   an explicit `impl Linear for X {}` is a further leaning, never extended to
+   `record` — also not ratified.
 2. `Linear` ⊥ `Drop` mutual exclusion, and `drop<T: !Linear>` (§3) — leading candidate,
    not ratified.
 3. Partial consumption: extend RFC-0071 §7's side-table, or adopt residual/record
@@ -356,7 +475,10 @@ eventually earn its cost, not an argument for taking on that cost now.
 5. Plain-record style vs. OCaml-object style (§6) — recommend plain records; not
    ratified.
 6. Width-subtyping-requires-`Copy` rule (§6) — proposed with no existing precedent to
-   verify it against; not ratified.
+   verify it against; not ratified. §5.6 makes the gap concrete: no bound expressing
+   "every field in row `R` is `Copy`" (an `AllCopy`-shaped predicate) is defined yet,
+   so open records with a discarded, uninspected remainder have to be rejected
+   outright until one is designed.
 7. Implicit vs. explicit-opt-in structural satisfaction (§6) — genuinely open, no
    leaning stated; needs a deliberate decision either way.
 8. Transitive field-usage checking when a `Drop` body calls helper methods (§5.2) —
