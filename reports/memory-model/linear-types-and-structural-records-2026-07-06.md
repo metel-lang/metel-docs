@@ -33,6 +33,15 @@ surfaces a previously-implicit gap: no `AllCopy`-shaped row bound exists yet to 
 open records with a discarded remainder safe, so that pattern is rejected outright for
 now (§7 item 6).*
 
+*Updated 2026-07-06 (fourth pass): §3.2 closes the loop on this report's own opening
+motivation — whether affineness could be opt-in — without flipping the default or
+reopening RFC-0071. Extends §3.1's struct-only keyword sugar to `copy`/`affine`
+(`affine` desugars to a locking pair of negative impls, not a positive capability, since
+affine is the absence of `Copy`/`Linear` rather than an addition); and shows `Affine`
+doesn't need its own aspect for generic code at all — `T: !Copy + !Linear` (RFC-0072)
+already says it, nameable via RFC-0039's (draft) alias syntax as `aspect Affine = !Copy
++ !Linear`. Exploratory only, same as everything else here.*
+
 ---
 
 ## 1. Why this exists
@@ -87,6 +96,14 @@ line of exploration in one place.
   Foo for Bar` — impl blocks that only apply when a type-level condition holds. §5.5
   reuses this directly, generalizing the condition from an aspect bound to a row
   shape (`HasField`/`Lacks`-style constraints).
+- **RFC-0072 (Negative Bounds, accepted).** `T: !Aspect`, already used for mixed
+  positive-and-negative bounds (`T: Clone + !Drop`, RFC-0072 §1). §3.2 reuses this
+  directly to express "affine" compositionally as `T: !Copy + !Linear`, with no new
+  aspect needed.
+- **RFC-0039 (`aspect` Alias Syntax, draft).** Proposes `aspect Alias = A + B + C` as
+  pure compile-time shorthand for a compound bound — *"no new `impl Alias for T` is
+  needed or allowed"* (its own recommended answer to Q2). §3.2 uses this directly:
+  `aspect Affine = !Copy + !Linear`.
 
 ---
 
@@ -159,6 +176,58 @@ anything nominal or asserted.
 
 **Leaning:** aspect, plus struct-only keyword sugar over an explicit `impl`. Not
 ratified — recorded as a refinement of §3, not a new decision.
+
+### 3.2 Affine as opt-in, without flipping the default
+
+The original motivation for this whole thread — Rust's "can't tell if a library type
+is `Copy` without hunting for the impl" complaint — was, at the very start, answered
+by recommending LSP tooling over a language change, specifically because making a
+keyword *mandatory* on every struct touches RFC-0071 (accepted) and rewrites the
+entire language surface for a readability complaint alone. Nothing about §3–§5.6
+changes that cost. But §3.1's pattern — optional, struct-only keyword sugar over an
+explicit, checked declaration, never touching the default — turns out to extend to
+`Copy` and to affine itself, symmetrically, and gives a genuinely useful "opt-in" that
+doesn't require flipping anything:
+
+```metel
+copy struct Point { x: f64, y: f64 }   // sugar for: struct Point {...} + impl Copy for Point {}
+linear struct Receipt { id: i64 }       // sugar for: struct Receipt {...} + impl Linear for Receipt {}
+affine struct Handle { fd: i64 }        // sugar for: struct Handle {...} + impl !Copy for Handle {}
+                                        //                                + impl !Linear for Handle {}
+```
+
+`copy` and `linear` are sugar for *adding* a capability (an ordinary positive impl).
+`affine` is a different kind of sugar, because affine isn't a capability — it's the
+*absence* of the other two — so its desugaring is a pair of negative impls, not a
+positive one. That difference is what makes it more than documentation: RFC-0081's
+negative impls don't just decline an auto-grant, they lock out any *future* conflicting
+impl too, via ordinary coherence (RFC-0060) — `T: Copy` and `T: !Copy` can't both hold.
+Writing `affine struct Handle` is a real, checked commitment that nothing elsewhere in
+the codebase can later add `impl Copy for Handle` and silently change what moving a
+`Handle` means — a gap in Rust today, where a later `#[derive(Copy)]` can quietly
+change semantics for existing callers who relied on move-only behavior. None of this
+requires bare `struct Foo {...}` to mean anything different than it does today.
+
+**For generic code, `Affine` doesn't need to be its own aspect at all.** It's
+definitionally *not `Copy` and not `Linear`*, and RFC-0072's negative bounds already
+express exactly that — `T: !Copy + !Linear` — reusing the already-accepted
+mixed-positive-and-negative bound form (`fun transfer<T: Clone + !Drop>`, RFC-0072 §1).
+No new aspect, no new coherence rule, only composition of what already exists. Writing
+that compound bound out at every call site is real friction, and RFC-0039 ("`aspect`
+Alias Syntax," draft) already proposes exactly the mechanism to name it — `aspect Alias
+= A + B + C` as pure compile-time shorthand, no separate impl needed or allowed (its
+own recommended answer to its Q2):
+
+```metel
+aspect Affine = !Copy + !Linear
+
+fun move_only_op<T: Affine>(x: T) -> T { ... }
+```
+
+**Net effect:** the default stays opt-out, unchanged, zero blast radius on RFC-0071 —
+what becomes newly available is an optional, checked, locking declaration-site keyword,
+and a nameable, boundable category built entirely out of RFC-0072 and RFC-0039, neither
+of which this report had to invent. Not ratified; RFC-0039 itself is still draft.
 
 ---
 
@@ -488,6 +557,12 @@ than asking in the abstract:
 10. Row-conditional impl coherence (§5.5) — extending RFC-0036/RFC-0060's conditional-impl
     checking to `HasField`/`Lacks`-style row conditions is asserted to be tractable but
     not worked out; no concrete overlap-checking rule proposed yet.
+11. `copy`/`linear`/`affine` struct-only keyword sugar (§3.2), including whether
+    `affine`'s negative-impl-pair desugaring is the right shape — leaning stated, not
+    ratified.
+12. `aspect Affine = !Copy + !Linear` (§3.2) depends on RFC-0039 (draft, not accepted)
+    — this report takes no position on whether RFC-0039 itself should advance; it only
+    notes the mechanism fits if RFC-0039 does.
 
 ---
 
