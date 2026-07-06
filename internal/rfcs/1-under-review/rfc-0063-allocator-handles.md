@@ -33,6 +33,13 @@ updated: '2026-07-06'
 > here; they block writing a *custom* `Alloc` implementation, which nothing
 > currently depends on. Deliberately left open rather than decided — see
 > `reports/memory-model/lifetimes-vs-regions-2026-07-02.md` §11.
+>
+> **Updated 2026-07-06 (third pass):** §9 item 5 adds a fifth open question —
+> partial consumption of a linear struct — with a note that it does **not**
+> share items 1–4's "no urgency" status: it has to be resolved before
+> RFC-0071/RFC-0067 implementation (move semantics, borrow checking) begins,
+> since it concerns the same partial-move mechanism RFC-0071 §7 already
+> specifies for the affine case.
 
 ## Summary
 
@@ -383,10 +390,12 @@ the same principle holds: each allocator tag in the error is a concrete name in 
 
 **None, for the surface this RFC specifies** — the `Alloc` aspect's associated
 error type, `@a T`, `@a expr`, allocator parameters (including tag-only, §4),
-and sendability are settled as written. The following are explicitly **not**
+and sendability are settled as written. Items 1–4 below are explicitly **not**
 decided, are out of scope for this RFC, and are deferred until the
-implementation catches up with the design (there is no urgency: the
-interpreter has no allocator backend yet regardless):
+implementation catches up with the design (no urgency: the interpreter has no
+allocator backend yet regardless — RFC-0063's own layer is Phase 3 step 3 of
+the planned implementation order). **Item 5 is different and carries a real
+deadline** — see its own note below.
 
 1. **Teardown discipline — affine (as currently written) vs. linear.** This
    RFC and §5 describe allocators as ordinary affine values: movable, dropped
@@ -426,11 +435,43 @@ interpreter has no allocator backend yet regardless):
    revived and re-anchored to this RFC onward before item 3 above can be
    given a real signature, let alone implemented safely.
 
-These four are connected — resolving item 3 requires a decision on item 1
+Items 1–4 are connected — resolving item 3 requires a decision on item 1
 (does `alloc`'s signature need to thread a linear capability token?), and
 implementing either requires item 4. None of this blocks the allocator
 surface already specified in this RFC from being ratified; it blocks writing
 a *custom* `Alloc` implementation, which nothing currently depends on.
+
+5. **Partial consumption of a linear struct — deferred, but with a real
+   deadline, unlike items 1–4 above.** If `Linear` is introduced (item 1),
+   a struct with more than one linear field raises a question RFC-0071 §7
+   already answers differently for the affine case: partial moves are
+   tracked in a side-table ("the compiler tracks moved fields at field
+   granularity"), invisible in the value's type, and forbidden outright for
+   `Drop` types. Two candidate resolutions for `Linear` specifically:
+   (a) extend the same side-table approach — matching RFC-0024 §7's rule
+   that a linear field may never be silently left unconsumed by a partial
+   destructure — or (b) have each field consumption produce a new residual
+   type (structurally, "the struct minus that field"), so that "the
+   remainder is still linear and must still be consumed" falls out of the
+   ordinary linearity rule automatically rather than needing a bespoke rule
+   like RFC-0024 §7's. Option (b) is more elegant — it also sidesteps the
+   `Drop`-needs-the-whole-value hazard that forces RFC-0071's affine
+   restriction, since `Linear` and `Drop` are not expected to coexist (item
+   2 above) — but is a materially bigger type-system feature (closer to
+   row-polymorphism than to anything else in the accepted cluster), and
+   raises its own open questions (does the residual type get a nameable
+   surface form, or stay anonymous and function-local like affine partial
+   moves today; does it replace RFC-0071 §7's mechanism for affine types
+   too, or stay linear-only). **Not decided.** Unlike items 1–4, **this one
+   is not free to leave open indefinitely**: partial-move tracking is part
+   of move-semantics enforcement itself (RFC-0071), which — together with
+   borrow checking (RFC-0067) — is Phase 3 **steps 1–2** of the planned
+   implementation order, ahead of the allocator layer (step 3) that items
+   1–4 wait on. Whatever partial-consumption mechanism `Linear` ends up
+   with has to be settled before that implementation work starts, not
+   whenever the design catches up at its own pace — retrofitting a
+   different mechanism after move semantics and the borrow checker are
+   already built would be far more costly than deciding this first.
 
 ---
 

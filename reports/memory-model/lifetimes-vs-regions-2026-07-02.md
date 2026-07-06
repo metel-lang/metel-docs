@@ -44,6 +44,14 @@ open, not decided; full statement in RFC-0063 §9. None of it blocks ratifying t
 as currently written — it blocks writing a custom `Alloc` implementation, which nothing
 currently depends on.*
 
+*Updated 2026-07-06 (third pass): §11 adds a fifth open question — partial consumption
+of a linear struct (side-table extension of RFC-0071 §7 vs. each field consumption
+producing a residual "struct minus that field" type) — explicitly flagged as carrying a
+real deadline unlike the other four: it has to be settled before move-semantics
+(RFC-0071) and borrow-checker (RFC-0067) implementation begins, since it concerns the
+same partial-move mechanism those steps build regardless. Full statement in RFC-0063
+§9 item 5.*
+
 *Nothing here is ratified; the remaining open question is the ratification vehicle. The
 purpose, as before, is to settle a single model **before** any accepted RFC is rewritten.*
 
@@ -369,6 +377,26 @@ implementation breakdown's Phase 3.
 - **Custom allocator authoring's primitive layer.** **Not decided.** Depends on reviving
   RFC-0026 (Unsafe Blocks), currently deferred and blocked on the now-refused RFC-0028,
   and still written against pre-split pointer syntax. Full statement: RFC-0063 §9 item 4.
+- **Partial consumption of a linear struct — not decided, and unlike the four items
+  above, not free to defer indefinitely.** If `Linear` is introduced, a struct with more
+  than one linear field needs a partial-consumption rule distinct from RFC-0071 §7's
+  affine one (a side-table, invisible in the type, forbidden outright for `Drop` types).
+  Two candidates: extend the same side-table approach (matching RFC-0024 §7's rule that
+  a linear field may never be silently left unconsumed), or have each field consumption
+  produce a residual type — "the struct minus that field" — so the remainder's own
+  linearity (and thus the obligation to consume it) falls out of the ordinary
+  composition rule automatically rather than needing a bespoke rule. The residual-type
+  option is more elegant and sidesteps the `Drop`-needs-the-whole-value hazard entirely
+  (`Linear`/`Drop` aren't expected to coexist), but is a materially larger type-system
+  feature — closer to row-polymorphism than anything else in the accepted cluster — and
+  raises its own questions (nameable residual type or anonymous/local like today's
+  partial moves; linear-only or a replacement for RFC-0071 §7 generally). **The
+  deadline is real:** partial-move tracking is part of move-semantics enforcement
+  itself, which — with borrow checking — is Phase 3 **steps 1–2** of the planned
+  implementation order (`rfc-implementation-breakdown-2026-07-01.md`), ahead of the
+  allocator layer (step 3) that the four items above wait on. This has to be settled
+  before that work starts; retrofitting a different mechanism afterward would cost far
+  more than deciding it first. Full statement: RFC-0063 §9 item 5.
 
 All semantic questions **specified by this report** are settled: allocators are values in
 the value channel, lifetime anchors are compile-time parameters in the type channel,
@@ -376,13 +404,19 @@ storage transparency means most code carries no storage annotations at all, and 
 annotation burden concentrates exactly at the points where storage decisions are actually
 being made.
 
-The four items just above are a different kind of open question — they don't concern
+The five items just above are a different kind of open question — they don't concern
 anything this report specifies; they concern *custom allocator authoring and allocator
 teardown discipline*, which this report and RFC-0063 deliberately leave unspecified.
-Nothing above blocks ratifying the model as currently written. It blocks writing a
-*custom* `Alloc` implementation — which nothing in the current cluster depends on — and
-is deferred on purpose: the interpreter has no allocator backend yet regardless, so there
-is no implementation pressure forcing these decisions before the design is ready for them.
+Nothing above blocks ratifying the model as currently written.
+
+That deferral is not uniform, though. The first four block writing a *custom* `Alloc`
+implementation — which nothing in the current cluster depends on — and are deferred on
+purpose: the interpreter has no allocator backend yet regardless, so there is no
+implementation pressure forcing those decisions before the design is ready for them. The
+fifth (partial consumption of a linear struct) is different: it has to be resolved
+before move-semantics and borrow-checker implementation begins, not whenever the design
+gets around to it, because it concerns a mechanism (partial moves) those two
+implementation steps have to build regardless of whether `Linear` ships alongside them.
 
 ## 12. Storage preservation: tag-only parameters, and why extraction stays explicit
 
