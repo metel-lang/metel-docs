@@ -1,0 +1,122 @@
+// RFC-0063 — Allocator Handles
+//
+// Allocators are ordinary runtime values that implement `Alloc`. They are
+// passed as value parameters (channel `()`, `@` prefix), and the name of the
+// binding doubles as a compile-time tag: `@a T` is "a T allocated in a".
+// Illustrative only — see the cluster README.
+
+struct Node {
+    val: i64,
+}
+
+// (A struct whose fields themselves hold `@a T` — e.g. a linked node pointing
+// at another arena-allocated node — needs its own allocator parameter or
+// lifetime anchor; that form is introduced in 05-struct-owned-allocators.mtl
+// and 06-generic-allocators-and-variance.mtl.)
+
+// -----------------------------------------------------------------------
+// 1. The `Alloc` aspect
+// -----------------------------------------------------------------------
+
+aspect Alloc {
+    type AllocationError;
+}
+
+// The four stdlib allocators. All four are infallible: `AllocationError = !`
+// means out-of-memory panics rather than returning an error.
+//
+//   BumpAlloc   — scoped bump arena; T: !Drop required for move-out (RFC-0066)
+//   AutoAlloc   — scoped; compiler picks the strategy (RFC-0073)
+//   Heap        — global; sendable; frees one slot at a time
+//   LocalHeap   — thread-local; frees one slot at a time
+
+// A custom, fallible allocator assigns a real error type instead of `!`:
+struct BoundedPool { capacity: u64 }
+
+struct AllocationFailed {}
+
+impl Alloc for BoundedPool {
+    type AllocationError = AllocationFailed;
+}
+
+// -----------------------------------------------------------------------
+// 2. Allocation expressions — `@a expr`
+// -----------------------------------------------------------------------
+
+fun build_one(@a: BumpAlloc) -> @a Node {
+    // `@a expr` allocates `expr` into allocator `a` and produces `@a Node`.
+    @a Node { val: 1 }
+}
+
+// Type-directed allocation: an explicit `@a T` binding lets the right-hand
+// side be a bare `T` — the declared type drives the allocation.
+fun build_one_annotated(@a: BumpAlloc) -> @a Node {
+    let node: @a Node = Node { val: 1 };
+    node
+}
+
+// Fallible allocators return `Result<@a T, E>`; the caller propagates with `?`.
+fun build_pooled(@pool: BoundedPool) -> Result<@pool Node, AllocationFailed> {
+    let node = @pool Node { val: 1 }?;
+    Result::Ok { value: node }
+}
+
+// -----------------------------------------------------------------------
+// 3. Allocator parameters — generic over `Alloc`
+// -----------------------------------------------------------------------
+
+fun build_generic<A: Alloc>(@a: A, val: i64) -> @a Node {
+    @a Node { val }
+}
+
+// Multiple allocators: every `@` must be named once more than one is in scope.
+fun transfer<T, A: Alloc, B: Alloc>(@src: A, @dst: B, val: @src T) -> @dst T {
+    @dst val: T   // move-out from src (RFC-0066), allocate into dst
+}
+
+// Naming-only: a function that relates an input tag to an output tag without
+// itself allocating. This still costs a real (if unused) runtime parameter —
+// see 09-storage-preservation.mtl for the lighter tag-only form (`<@a>`) that
+// drops it when the function never needs the runtime handle at all.
+fun identity<A: Alloc>(@a: A, val: @a Node) -> @a Node { val }
+
+// -----------------------------------------------------------------------
+// 4. Creating a scoped allocator
+// -----------------------------------------------------------------------
+
+fun closure_scoped_example() {
+    BumpAlloc::scoped((@a) -> {
+        let node = @a Node { val: 1 };
+        process(&node);
+    });   // arena freed here; any @a Node still live would be a borrow-check error
+}
+
+fun variable_scoped_example() {
+    let a = BumpAlloc::new();
+    let node = @a Node { val: 1 };
+    process(&node);
+    drop(a);   // error if `node` (or a borrow of it) is still live at this point
+}
+
+fun process(n: &Node) {
+    println("val=${n.val}");
+}
+
+// -----------------------------------------------------------------------
+// 5. Sendability — `@a T: Send` iff `a: Send` and `T: Send`
+// -----------------------------------------------------------------------
+//
+//   @Heap Node       — sendable (Heap: Send, assuming Node: Send)
+//   @LocalHeap Node  — not sendable (LocalHeap: !Send)
+//   @a Node          — not sendable when `a` is BumpAlloc/AutoAlloc/scoped
+//
+// This is a structural check on the allocator's own `Send`-ness; no separate
+// annotation is required on `Node` itself.
+
+fun main() -> i64 {
+    BumpAlloc::scoped((@a) -> {
+        let node = build_one(@a);
+        process(&node);
+    });
+    0
+}

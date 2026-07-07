@@ -2,7 +2,7 @@
 id: rfc-0077
 title: "Allocator Generics"
 date: '2026-06-29'
-updated: '2026-07-05'
+updated: '2026-07-06'
 ---
 
 > **Status — under review.** Rewritten 2026-07-05. The original RFC used the bracket
@@ -14,6 +14,9 @@ updated: '2026-07-05'
 > is restated for `@a T`, `&r T`, and `&r mut T`. Depends on RFC-0063 (Allocator
 > Handles), RFC-0065 (Allocator Ergonomics), RFC-0067 (Reference Types), and RFC-0068
 > (Struct-Owned Allocators).
+>
+> **Updated 2026-07-06:** §2.3's bounds table adds the tag-only `<@a>` form
+> (RFC-0063 §4); §3.1 notes that wellformedness applies unchanged to it.
 
 ## Summary
 
@@ -182,6 +185,16 @@ aspect impl Serialize for Record {
 | `(@a: BumpAlloc)` | exactly `BumpAlloc` | arena-only |
 | `(@a: Heap)` | exactly `Heap` | heap-only |
 | `<A: Alloc>(@a: A)` | any allocator implementing `Alloc` | allocator-polymorphic |
+| `<@a>` (no value parameter) | no bound — tag only, no runtime handle | pass-through / preservation, never allocates |
+
+The first three rows all carry a real runtime value parameter and therefore always
+satisfy some concrete or bounded `Alloc` type, because the function may need to call
+`a.alloc(...)`. `<@a>` (RFC-0063 §4) is categorically different, not just a weaker
+bound: it never allocates, so it has nothing to prove about a concrete `Alloc` type —
+it only relays a tag that was already established elsewhere. Reach for it when a
+function's allocator parameter exists purely to relate an input tag to an output tag,
+never to name a type whose interface (`AllocationError`, etc.) the function actually
+uses.
 
 ---
 
@@ -202,6 +215,11 @@ therefore do not outlive `a`'s slot that contains them.
 The concrete rule: `@a T` is well-formed if and only if, for every allocator tag `b`
 appearing in `T`, `b`'s scope encloses `a`'s scope — i.e., `b` lives at least as long
 as `a`. The borrow checker verifies this from scope structure.
+
+This applies unchanged whether `a` and `b` came from real value-channel parameters
+(`(@a: A)`) or from tag-only parameters (`<@a>`, RFC-0063 §4) — wellformedness is a
+property of the scope a tag names, not of whether a runtime handle happens to be
+attached to it.
 
 ### 3.2 Concrete examples
 
@@ -340,7 +358,8 @@ expecting `@outer Node` could not accept `@inner Node` even when `inner` outlive
 
 ## References
 
-- RFC-0063 (Allocator Handles) — allocator parameters; `@a T`; sendability.
+- RFC-0063 (Allocator Handles) — allocator parameters; `@a T`; sendability; §4's
+  tag-only parameter form, added to the bounds table in §2.3.
 - RFC-0065 (Allocator Ergonomics) — elision; the forms that make generic allocator
   parameters less frequently needed in simple cases.
 - RFC-0067 (Reference Types) — `&r T` / `&r mut T`; lifetime anchors; variance in `T`

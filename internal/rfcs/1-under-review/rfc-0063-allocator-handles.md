@@ -2,7 +2,7 @@
 id: rfc-0063
 title: "Allocator Handles"
 date: '2026-06-24'
-updated: '2026-07-05'
+updated: '2026-07-06'
 ---
 
 > **Status — under review.** Rewritten 2026-07-05 from the original "Region Handles"
@@ -14,6 +14,44 @@ updated: '2026-07-05'
 > unified model is documented in `reports/memory-model/lifetimes-vs-regions-2026-07-02.md`.
 > Depends on RFC-0071 (Ownership and Move Semantics). Annotation-reduction ergonomics
 > are deferred to RFC-0065. RFC-0069, RFC-0085, RFC-0087 are retracted.
+>
+> **Updated 2026-07-06:** added tag-only allocator parameters (§4, "Tag-only
+> parameters — preservation without a handle"). The existing "naming only" form
+> (a real value parameter that is never used to allocate) is a real but avoidable
+> cost — the storage-preservation analysis in
+> `reports/memory-model/lifetimes-vs-regions-2026-07-02.md` §12 works through why.
+> Companion changes: RFC-0065 (elision for the new form), RFC-0066 §3a (extraction
+> is never implicit at a plain-parameter call site — the rule this form's existence
+> depends on), RFC-0077 (bounds table).
+>
+> **Updated 2026-07-06 (second pass):** §9 now explicitly records four open
+> questions this RFC deliberately does not resolve: allocator teardown
+> discipline (affine vs. linear), `drop`'s interaction with a linear
+> teardown discipline if one is adopted, the still-unspecified `Alloc.alloc`
+> method signature, and the unsafe-primitive layer custom allocator authoring
+> would need (RFC-0026). None of these block the surface already specified
+> here; they block writing a *custom* `Alloc` implementation, which nothing
+> currently depends on. Deliberately left open rather than decided — see
+> `reports/memory-model/lifetimes-vs-regions-2026-07-02.md` §11.
+>
+> **Updated 2026-07-06 (third pass):** §9 item 5 adds a fifth open question —
+> partial consumption of a linear struct — with a note that it does **not**
+> share items 1–4's "no urgency" status: it has to be resolved before
+> RFC-0071/RFC-0067 implementation (move semantics, borrow checking) begins,
+> since it concerns the same partial-move mechanism RFC-0071 §7 already
+> specifies for the affine case.
+>
+> **Updated 2026-07-06 (fourth pass):** §9 items 1, 2, and 5 now point to
+> `reports/memory-model/linear-types-and-structural-records-2026-07-06.md`, a design
+> exploration of the `Linear` aspect shape, partial consumption, and structural
+> records. Exploratory only — nothing recorded above changes.
+>
+> **Updated 2026-07-06 (fifth pass):** the design exploration above has been
+> reorganized into `reports/substructural-types/` — five focused living documents
+> (`linear-types.md`, `structural-records.md`, `brand-types.md`,
+> `algebraic-effects.md`, `structured-concurrency.md`) plus an `archive/` for
+> superseded material, replacing the single file cited just above (now archived
+> there). See that directory's `README.md` for the index. Still exploratory only.
 
 ## Summary
 
@@ -32,7 +70,9 @@ This RFC specifies:
 1. the `Alloc` aspect and the four stdlib allocators;
 2. the `@a T` pointer type and the `@a expr` allocation expression;
 3. allocator parameters in the value channel `()`;
-4. sendability rules.
+4. tag-only allocator parameters — a compile-time-only form for code that relays
+   an allocator tag without ever allocating through it;
+5. sendability rules.
 
 Lifetime anchor tracking (`&r T`, `&r mut T`) is specified in RFC-0067. Elision and
 call-site inference are in RFC-0065.
@@ -190,6 +230,69 @@ signature (to relate input and output tags) simply declares the parameter and ne
 fun identity<A: Alloc>(@a: A, val: @a Node) -> @a Node { val }
 ```
 
+### Tag-only parameters — preservation without a handle
+
+The "naming only" form above still takes a real runtime value parameter `(@a: A)`,
+even though `identity`'s body never calls `a.alloc(...)`. Under monomorphization the
+parameter is never touched at runtime — it exists purely so the type checker has a
+binding to attach the tag `a` to. That is a real, if small, cost: a parameter slot
+for a capability the function never exercises.
+
+A function or struct that only **relays** an already-allocated value — never
+allocates through it, never inspects which concrete `Alloc` type it is — does not
+need the runtime handle at all. It needs only the *name*, exactly the way a lifetime
+anchor (RFC-0067) needs only a name and no accompanying value. Declare it in the
+type-parameter channel, bare and unbounded:
+
+```metel
+fun identity<@a>(val: @a Node) -> @a Node { val }
+```
+
+`<@a>` is a **tag-only allocator parameter**: a compile-time-only name, erased at
+runtime, with no paired value parameter and no `Alloc` bound. It may appear in `@a T`
+positions for typing, exactly like `(@a: A)`'s tag does — but it grants no allocation
+capability. A function or struct declaring `<@a>` (with no paired `(@a: A)`) may not
+contain any `@a expr` allocation expression; that always requires the full
+value-channel form.
+
+No `Alloc` bound is needed on `<@a>` because it never has to prove anything about a
+*concrete* allocator kind — it only asserts that `a` names an allocator instance
+already in scope somewhere in the caller's chain, and that instance already
+discharged its own `Alloc` obligation at the point it was actually created. `<@a>`
+merely relays that fact; it does not re-derive it.
+
+`<@a>` elides the same way lifetime anchors do (RFC-0065). `identity` above elides
+fully to:
+
+```metel
+fun identity(val: @Node) -> @Node { val }
+```
+
+Here the bare `@` sigil (no name, no declaration) means "this position carries a
+storage tag, generic over whatever it is" — resolved by the same rule that already
+governs `@` elision (RFC-0065 §1): if a real value-channel allocator is in scope,
+`@` names it (the existing rule); otherwise `@` introduces a fresh, per-call-site
+tag-only parameter, following the same single-input/self/ambiguous structure already
+given for lifetime anchor elision (RFC-0065 §2). Explicit `<@a>` is written out only
+when that inference is ambiguous — for instance, relating two independently-tagged
+parameters that must carry the *same* tag.
+
+This is not new inference machinery: a `<@a>`-declared (or elided) function is
+checked exactly like an ordinary `<T>` generic — its body is type-checked once,
+abstractly, against the tag, and monomorphized per call site. A body that does not
+actually preserve a single consistent tag on every path — one branch returning the
+input, another fabricating a fresh, untagged value — fails to type-check, for the
+same reason a generic `fun f<T>(x: T) -> T { ... }` fails to type-check if some
+branch does not produce a `T`.
+
+**Where extraction is still required.** `<@a>` / elided-`@T` positions only ever
+*relay* a value — they never convert an allocator-tagged `@a T` into a genuinely
+untagged, storage-erased `T`. That conversion is extraction (RFC-0066 §3), and it is
+never implicit: passing an `@a T` value to a plain (`@`-free) `T` parameter without
+explicit ascription is a compile error, not a silent move-out (RFC-0066 §3a). Use the
+tag-only form when the goal is passing storage through unexamined; use explicit
+ascription when the goal is genuinely discharging the tag.
+
 ---
 
 ## 5. Creating a scoped allocator
@@ -297,14 +400,108 @@ the same principle holds: each allocator tag in the error is a concrete name in 
 
 ## 9. Unresolved questions
 
-None.
+**None, for the surface this RFC specifies** — the `Alloc` aspect's associated
+error type, `@a T`, `@a expr`, allocator parameters (including tag-only, §4),
+and sendability are settled as written. Items 1–4 below are explicitly **not**
+decided, are out of scope for this RFC, and are deferred until the
+implementation catches up with the design (no urgency: the interpreter has no
+allocator backend yet regardless — RFC-0063's own layer is Phase 3 step 3 of
+the planned implementation order). **Item 5 is different and carries a real
+deadline** — see its own note below.
+
+1. **Teardown discipline — affine (as currently written) vs. linear.** This
+   RFC and §5 describe allocators as ordinary affine values: movable, dropped
+   via explicit `drop(a)` or implicitly at scope end. A stricter alternative
+   has been proposed and is **not decided**: allocators carry a phantom
+   linearity marker (structurally analogous to `PhantomBrand<'b>`, RFC-0074)
+   making the whole allocator value linear, with a designated consuming
+   method (e.g. `.free()`) as the *only* way to discharge that obligation —
+   reaching scope end without consuming it would become a compile error
+   rather than triggering an implicit drop. **Undecided; §5's "or at scope
+   end" wording stands only until this is resolved.**
+
+2. **If linear teardown is adopted, `drop`'s interaction with it is a second,
+   separate open question.** RFC-0071 §6's `drop(x)` free function is
+   currently unconditional — it works on any value. A generic `drop` that
+   merely discharges a linearity obligation *without* running the real
+   teardown logic is a genuine, previously-encountered bug class, not a
+   hypothetical one: RFC-0049 (draft, orphaned) documents exactly this
+   failure for `linear fun` — *"`drop(f)` appears to work but leaves
+   captured values dangling."* **Undecided:** whether `drop` should be
+   excluded from linear allocators entirely (e.g. a `T: !Linear` bound,
+   mirroring RFC-0072's negative-bound mechanism), or some other resolution.
+
+3. **The `Alloc` aspect's allocation method is not actually specified.** §1
+   declares only `type AllocationError`; §3 states that `@a expr` "desugars
+   to `a.alloc(expr)`," but no `fun alloc(...)` signature is part of the
+   aspect declaration. Neither the stdlib allocators nor a user-defined one
+   have a documented method contract to implement against yet. **Undecided
+   and unspecified** — this blocks any custom `Alloc` implementation, not
+   just the linear-teardown question above.
+
+4. **Custom allocator authoring needs a lower-level primitive layer that
+   does not currently exist in the accepted/under-review cluster.** RFC-0026
+   (Unsafe Blocks) names "custom allocators" as a motivating use case, but it
+   is deferred, blocked on the now-refused RFC-0028, and still uses
+   pre-split pointer syntax (`*mut Byte`, `Region::create`). It needs to be
+   revived and re-anchored to this RFC onward before item 3 above can be
+   given a real signature, let alone implemented safely.
+
+Items 1–4 are connected — resolving item 3 requires a decision on item 1
+(does `alloc`'s signature need to thread a linear capability token?), and
+implementing either requires item 4. None of this blocks the allocator
+surface already specified in this RFC from being ratified; it blocks writing
+a *custom* `Alloc` implementation, which nothing currently depends on.
+
+5. **Partial consumption of a linear struct — deferred, but with a real
+   deadline, unlike items 1–4 above.** If `Linear` is introduced (item 1),
+   a struct with more than one linear field raises a question RFC-0071 §7
+   already answers differently for the affine case: partial moves are
+   tracked in a side-table ("the compiler tracks moved fields at field
+   granularity"), invisible in the value's type, and forbidden outright for
+   `Drop` types. Two candidate resolutions for `Linear` specifically:
+   (a) extend the same side-table approach — matching RFC-0024 §7's rule
+   that a linear field may never be silently left unconsumed by a partial
+   destructure — or (b) have each field consumption produce a new residual
+   type (structurally, "the struct minus that field"), so that "the
+   remainder is still linear and must still be consumed" falls out of the
+   ordinary linearity rule automatically rather than needing a bespoke rule
+   like RFC-0024 §7's. Option (b) is more elegant — it also sidesteps the
+   `Drop`-needs-the-whole-value hazard that forces RFC-0071's affine
+   restriction, since `Linear` and `Drop` are not expected to coexist (item
+   2 above) — but is a materially bigger type-system feature (closer to
+   row-polymorphism than to anything else in the accepted cluster), and
+   raises its own open questions (does the residual type get a nameable
+   surface form, or stay anonymous and function-local like affine partial
+   moves today; does it replace RFC-0071 §7's mechanism for affine types
+   too, or stay linear-only). **Not decided.** Unlike items 1–4, **this one
+   is not free to leave open indefinitely**: partial-move tracking is part
+   of move-semantics enforcement itself (RFC-0071), which — together with
+   borrow checking (RFC-0067) — is Phase 3 **steps 1–2** of the planned
+   implementation order, ahead of the allocator layer (step 3) that items
+   1–4 wait on. Whatever partial-consumption mechanism `Linear` ends up
+   with has to be settled before that implementation work starts, not
+   whenever the design catches up at its own pace — retrofitting a
+   different mechanism after move semantics and the borrow checker are
+   already built would be far more costly than deciding this first.
+
+**Full exploration of items 1, 2, and 5** (the `Linear` aspect shape, the
+`Drop`/`Linear` exclusion, residual/record-based partial consumption, and how far the
+same mechanism could be pushed toward general structural records) is worked through in
+`reports/substructural-types/linear-types.md` and
+`reports/substructural-types/structural-records.md` (index at that directory's
+`README.md`). Those documents are themselves exploratory, not a decision — they do not
+change anything recorded above.
 
 ---
 
 ## References
 
-- RFC-0065 (Allocator Ergonomics) — `@`-elision, call-site inference.
-- RFC-0066 (Allocated Value Extraction) — how to obtain `T` or `&T` from `@a T`.
+- RFC-0065 (Allocator Ergonomics) — `@`-elision, call-site inference, and elision
+  for tag-only parameters (§1a).
+- RFC-0066 (Allocated Value Extraction) — how to obtain `T` or `&T` from `@a T`;
+  §3a specifies why extraction never happens implicitly at a plain-parameter call
+  site, which is what makes the tag-only form necessary rather than redundant.
 - RFC-0067 (Reference Types) — lifetime anchors `&r T`, `&r mut T`; the split from
   allocator lifetime.
 - RFC-0068 (Struct-Owned Allocators) — `struct Foo(@a: BumpAlloc)` primary constructor

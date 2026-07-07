@@ -1,0 +1,96 @@
+// RFC-0068 — Struct-Owned Allocators
+//
+// A struct may own an allocator via primary-constructor syntax:
+// `struct Foo(@a: BumpAlloc)`. The allocator is created with the struct and
+// freed after the struct's fields drop. `a` is implicitly in scope inside
+// `impl Foo` — never re-declared on the impl header or on individual
+// methods. Illustrative only.
+
+struct AstNode { tag: i64 }
+
+// -----------------------------------------------------------------------
+// 1. Declaration — primary constructor syntax
+// -----------------------------------------------------------------------
+
+struct Parser(@a: BumpAlloc) {
+    source: String,
+    root:   @a AstNode,
+}
+
+// The owned allocator is not part of Parser's external type — from the call
+// site it is just `Parser`, a private implementation detail.
+
+// -----------------------------------------------------------------------
+// 2 & 3. Construction, drop order, and implicit scope in `impl`
+// -----------------------------------------------------------------------
+
+impl Parser {
+    fun new(source: String, root_tag: i64) -> Parser {
+        // `a` in scope here as the freshly-constructed arena; no explicit
+        // allocator handle is passed by the caller.
+        Parser { source, root: @a AstNode { tag: root_tag } }
+    }
+
+    // Read-only access to the arena-held root node.
+    fun root(&self) -> &self AstNode {
+        &self.root
+        // &self AstNode: valid for the struct's own lifetime (RFC-0067 §2 —
+        // `self` is the anchor). The borrow of `Parser` used to *call* root
+        // may expire; the returned reference stays valid as long as the
+        // `Parser` binding itself does.
+    }
+
+    // Allocation mutates the arena, so it requires `&mut self` (§5).
+    fun replace_root(&mut self, tag: i64) -> &self AstNode {
+        self.root = @a AstNode { tag };
+        &self.root
+    }
+}
+
+// Construction: `let parser = Parser::new(source, tag);` creates the arena
+// as part of the value; drop order is: fields first (in declaration order —
+// `source`, then `root`), owned allocator `a` last. This guarantees the
+// `@a AstNode` pointer stored in `root` is unreachable before the bulk free.
+// The borrow checker rejects any live `&self AstNode` borrow at the point
+// `Parser` itself is dropped.
+
+// -----------------------------------------------------------------------
+// 4. Two lifetimes in method signatures
+// -----------------------------------------------------------------------
+//
+// `&self AstNode` (the return type of `root`/`replace_root`) is valid for
+// the struct's own lifetime — as long as the `Parser` binding is alive —
+// not just for the duration of the particular `&self` borrow used to call
+// the method. This mirrors Rust's `&'this self` vs `'arena` two-lifetime
+// pattern.
+
+// -----------------------------------------------------------------------
+// 5. Allocation requires exclusive access
+// -----------------------------------------------------------------------
+//
+//   impl Parser {
+//       fun replace_root_shared(&self, tag: i64) -> &self AstNode {
+//           self.root = @a AstNode { tag };   // error: cannot allocate
+//           &self.root                          // through a shared borrow
+//       }                                       // (&self, not &mut self)
+//   }
+
+// -----------------------------------------------------------------------
+// 6. Interaction with allocator ergonomics (RFC-0065)
+// -----------------------------------------------------------------------
+
+impl Parser {
+    fun reset(&mut self) {
+        // Only the implicit allocator `a` is in scope here, so the elision
+        // rule applies: bare `@` elides to `@a`.
+        self.root = @AstNode { tag: 0 };
+    }
+}
+
+fun main() -> i64 {
+    let mut parser = Parser::new("1 + 2", 1);
+    println("root tag: ${parser.root().tag}");
+    parser.replace_root(2);
+    println("root tag: ${parser.root().tag}");
+    0
+}

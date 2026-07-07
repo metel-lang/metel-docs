@@ -4,10 +4,21 @@ title: "Structured Fork-Join Parallelism"
 date: '2026-06-25'
 ---
 
-> **Status — deferred.** This RFC specifies the `||` structured fork-join combinator and
-> its interaction with region pointers. It depends on RFC-0063 (Region Handles) for the
-> region tag and sendability rules. Deferred until the core region RFC cluster (0063,
-> 0065–0069) reaches a stable state.
+> **Status — RETRACTED (2026-07-07).** The `||` combinator this RFC specifies is dropped
+> from the design: it barely interacted with the rest of the language and did not justify
+> a second concurrency mechanism alongside `spawn` + `Chan<T>`. The one guarantee it
+> provided — a fiber cannot be silently abandoned — is relocated onto a `Linear`
+> `JoinHandle<T>` returned from `spawn` (must `.join()` or explicitly `.detach()`),
+> which also subsumes the `JoinToken<'b>` of RFC-0076. The Capture Separation Calculus
+> that complemented `||` at sub-allocation granularity lost its consumer and is deferred.
+> See `reports/substructural-types/structured-concurrency.md` (rewritten 2026-07-07) for
+> the replacement model and the one capability given up (in-place data parallelism over
+> arena data). This file is retained for history and should move to `5-refused/`.
+>
+> *Prior status — deferred.* This RFC specifies the `||` structured fork-join combinator
+> and its interaction with region pointers, depending on RFC-0063 for the tag and
+> sendability rules. It was written against the pre-split "region" model; the text below
+> is unchanged and pre-dates both the allocator/lifetime split and this retraction.
 
 ## Summary
 
