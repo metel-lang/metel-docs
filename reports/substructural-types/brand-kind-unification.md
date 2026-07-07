@@ -282,6 +282,16 @@ its Q2 answer, not on its own clock.
    directly** — a project-planning question. This document argues it is the Q2 answer;
    whether it lands as an amendment to RFC-0076, a new RFC, or stays exploratory until
    the brand cluster is next opened is not decided here.
+6. **A candidate fourth surface use, and a new nesting question it raises (added
+   2026-07-07, from `structural-records.md` §9).** That document proposes ordinary
+   struct/enum nominal identity as another surface use of the `'c` role — not a new
+   kind, per this document's own recommendation (§7) to keep the unification at the
+   mechanism level. That immediately raises a crossing case item 3 didn't anticipate:
+   `@a T` where `T` itself now carries an identity brand is a *storage* brand wrapping a
+   value whose own type carries an *identity* brand — composition of the same kind at
+   two levels, not obviously a "crossing" in item 3's sense at all, but not yet
+   distinguished from one either. Whether nesting needs its own rule, or falls out of
+   §3's per-role relation algebra once that's formalized, is open.
 
 ---
 

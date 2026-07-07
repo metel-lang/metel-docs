@@ -149,7 +149,13 @@ understood:
   primary subject — its content lives as much in the allocator/lifetime cluster (RFC-0063,
   RFC-0067, `../memory-model/lifetimes-vs-regions-2026-07-02.md`) as in brands — and it is
   the concrete example of the convergence the next paragraph asks about, resolved for the
-  identity sub-question specifically rather than for the cluster as a whole.
+  identity sub-question specifically rather than for the cluster as a whole. (Added
+  2026-07-07:) `structural-records.md` §9 proposes a fourth surface use of the same
+  identity kind — ordinary struct/enum nominal identity — reached from the opposite
+  direction (asking whether named types could be a special case of structural types,
+  rather than the reverse §1 already commits to); see that section for why this doesn't
+  reopen §7's declined "records as the foundation" verdict, only reuses the identity tag
+  §7 already establishes is unavoidable.
 
 **What this map does not yet resolve**, tracked as its own item below: whether all six
 of these are headed toward one coherent proposal or toward two-or-three independent
@@ -193,6 +199,11 @@ document for the reasoning behind each entry, not just the one-line summary here
 - Phantom-parameter typestate vs. row-conditional-impl typestate — which is canonical,
   or do both stay? **Open, too early to decide** (a 2026-07-07 consolidation toward
   brands was reopened as premature); considerations recorded in `brand-types.md` §3.
+- (Added 2026-07-07, §9) Brand-vs-row impl coherence priority — no specificity rule
+  between an ordinary brand-keyed impl and a row-keyed blanket impl is written down.
+- (Added 2026-07-07, §9) Private-field leakage into cross-module structural matching —
+  `HasField`/`Lacks` need a public-only row projection when checked from outside the
+  declaring module; not designed, not addressed anywhere else in this cluster.
 
 **From `brand-types.md`:**
 - The five unresolved questions from RFC-0076 itself (brand introduction mechanism,
@@ -247,6 +258,11 @@ structured-guarantee mechanism is reopened as premature to settle):
 - Cross-module identity (shared with `brand-types.md` / RFC-0076 Q5) — one visibility
   rule for all three roles, or three.
 - Whether it lands as an RFC-0076 amendment, a new RFC, or stays exploratory.
+- (Added 2026-07-07, item 6, from `structural-records.md` §9) A candidate fourth surface
+  use — struct/enum nominal identity as another instance of the `'c` role — and the
+  nesting question it raises: is `@a T` where `T` itself carries an identity brand a
+  role-crossing, or just composition of the same role at two levels? Not distinguished
+  from a crossing yet, not resolved.
 
 **Cross-cutting, not owned by any single document:**
 - Whether this whole cluster (linear types, structural records, brands, effects,

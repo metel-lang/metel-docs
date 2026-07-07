@@ -326,7 +326,80 @@ bring them back without admitting they were never sugar in the first place.
   satisfaction, or require a lightweight opt-in (e.g. `struct Point derives record {
   ... }`) before a struct is usable structurally.
 
-## 9. Open questions
+## 9. Reconciling with the inverse direction: structural types as the foundation
+
+*Added 2026-07-07, from a design conversation exploring the opposite direction from §1:
+instead of records as an additive bound layer over an unchanged nominal `Type::Named`,
+what if every struct were represented internally as `(row, brand)` — a structural shape
+plus an identity tag — making named types a special case of structural types rather than
+the reverse? Real precedent exists for the strong version of this (TypeScript: every
+named type is a label over a structural descriptor, with nominal safety faked via
+manually-added brand fields when it's needed at all; OCaml's object/row system, where a
+class name is a constructor convenience over a structural object type).*
+
+**This is not a re-litigation of §7.** §7 already considered exactly this — "nominal
+types as pure sugar over an underlying record" — and declined it, for a reason that
+still holds at full strength: nominal identity is load-bearing (disjointness, inherent
+impls, non-local aspect impls all need it), so the sugar has to reintroduce a real
+identity tag to keep working, "at which point the reframing hasn't reduced what the
+system has to track, only renamed the part that was never really sugar." Nothing below
+disputes that verdict. What survives is narrower: not *elimination* of the tag, but
+*reuse* of it.
+
+**Surviving claim 1 — the tag doesn't need to be a bespoke fourth mechanism.**
+`brand-kind-unification.md` already proposes that `@a` (allocator tags), `&r` (lifetime
+anchors), and `'c` (brands, RFC-0076) are one underlying identity kind under three
+sigils. A struct's inevitable identity tag (§7's point) is a plausible fourth surface use
+of that same `'c`-role kind, not a new kind alongside it — implementer economy (one
+freshness/erasure/rigidity checker), not a new concept for users, consistent with that
+document's own recommendation in its §7 not to surface the unification itself. See that
+document's Open Questions §3 for the specific new question this raises (whether nesting
+a brand-carrying struct inside `@a`/`Rc` is an intentional role-crossing or just ordinary
+composition of the same role at two levels — unresolved there, not here).
+
+**Surviving claim 2 — partial consumption's residual can reuse this document's own
+row machinery instead of a separate mechanism.** `linear-types.md`'s Option B (the
+currently-adopted floor: explicit residual extraction via side-table, no row kind) exists
+specifically to avoid needing row unification before Phase 3. But if a struct is already
+internally `(row, brand)`, the residual after consuming one field is just `(row - field,
+brand)` — the *same* thing `Lacks<"field">` (§5) already names for open records, applied
+to a nominal residual with its brand held fixed rather than erased. That would make
+nominal partial consumption and this document's row-conditional typestate one mechanism
+applied to two syntactic forms, rather than two designs that need separately justifying
+and separately maintaining.
+
+This may also be the missing piece for `linear-types.md`'s blocked Option C: the open
+question there is what type a borrow taken *before* a downgrade has *after* it. A row
+gives the downgrade a precise strong-update semantics (shrink the row, keep the brand)
+and — because a row decomposes a value into named slots the checker can already reason
+about independently — lets borrow exclusivity be checked per *field* rather than only
+per whole struct, narrowing exactly what must be un-borrowed for the consumption to be
+legal. Promising, not proven; no soundness argument is written down here, only the shape
+of one.
+
+**Scope stays where §7 already drew it.** This is a representation-sharing move for
+structs specifically. It says nothing new about enums (§7's sum-type objection is
+untouched — no variant-row mechanism is proposed here) or primitives (still not
+records-shaped, still not worth the indirection).
+
+**Two new open questions this raises, appended to §10:**
+
+- **Coherence needs a specificity rule between the two axes an impl can now match on.**
+  An ordinary `impl Display for Point` is brand-keyed; RFC-0061's structural/blanket
+  impls (`impl<row R: HasField<"x", f64>> Display for record R`) are row-keyed. If a
+  `Point` value matches both, which wins? The obvious default — brand-keyed beats
+  row-keyed blanket impls, more-specific-wins — is not written down as a rule anywhere,
+  and RFC-0060/RFC-0061's coherence checking does not yet account for a second axis at
+  all.
+- **Field-level visibility (RFC-0032) and structural matching haven't been reconciled.**
+  If `HasField<"secret", T>` is checked directly against a struct's row, does code
+  outside the declaring module get to observe — or structurally match against — a
+  private field? It shouldn't, which means the row isn't a single flat structure per
+  brand; cross-module structural matching needs to see only a *public projection* of the
+  row, with private fields invisible to `HasField`/`Lacks` checks from outside the
+  module. This does not appear to be addressed anywhere else in this cluster.
+
+## 10. Open questions
 
 1. Ship closed `record` types only for now, or also `<row R>` open generics
    immediately (§4) — recommend closed-only first; not ratified.
@@ -348,6 +421,14 @@ bring them back without admitting they were never sugar in the first place.
    resolved — too early to decide; tracked as a cross-thread question in `README.md`. The
    considerations (brand form cheaper and covers state-plus-identity; row form more novel,
    needs deferred open-`<row R>`) are recorded in `brand-types.md` §3 as inputs.
+8. **Brand-vs-row impl coherence priority (§9)** — no specificity rule between
+   brand-keyed and row-keyed blanket impls is written down; RFC-0060/RFC-0061's
+   coherence checking doesn't yet model a second matching axis.
+9. **Private-field leakage into cross-module structural matching (§9)** — `HasField`/
+   `Lacks` checks need a public-only projection of a struct's row when checked from
+   outside its declaring module; no mechanism for this projection is designed yet, and
+   the interaction with RFC-0032 field visibility isn't addressed anywhere in this
+   cluster.
 
 ## Example programs
 
