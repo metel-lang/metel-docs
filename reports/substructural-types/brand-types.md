@@ -45,7 +45,9 @@ want different points:
   directly: "the token is linear — it cannot be dropped without joining." Silently
   dropping a `JoinToken` abandons the fiber; there is a real teardown obligation, which
   is exactly `linear-types.md` §2's criterion for requiring the `Linear` aspect rather
-  than accepting the affine default.
+  than accepting the affine default. (Whether this guarantee is carried by a standalone
+  `JoinToken` or absorbed into a `Linear` `spawn` handle is an open concurrency question —
+  `structured-concurrency.md` §3; the lattice point is the same either way.)
 - **`RcToken<'b>` and `HandlerToken<'b, E>` only need to be affine.** Dropping either
   one has no cleanup obligation attached — it just means no future `&mut token` can be
   produced, so the branded cells become permanently read-only (via `Rc` sharing) or the
@@ -89,7 +91,16 @@ actually competing solutions to the same problem, but a partial overlap: **for s
 tracking alone, either works; for state-plus-identity, brands are not optional.** A
 brand-parameterized record — `record { ..R }` with an added `brand 'b` — is not
 discussed in either source document and is the natural next question if row-conditional
-typestate is pursued seriously. Left open in §6 below rather than resolved here.
+typestate is pursued seriously. Left open in §6 below rather than resolved here — it is
+too early to pick a canonical typestate encoding.
+
+**Considerations for whenever this is eventually decided** (recorded as inputs, not a
+verdict): brand typestate reuses *only already-accepted machinery* (generics + RFC-0072
+negative bounds, the table above), whereas row-conditional typestate requires the open
+`<row R>` generics (`structural-records.md` §4 step 2 — row unification, a coherence
+extension, the unprecedented width-subtyping rule of §8) that the build order defers; and
+row-conditional cannot express state-plus-identity at all. Both push toward brands, but
+neither is being treated as decisive yet.
 
 ## 4. Why regions don't need this, and allocators barely do
 
@@ -102,6 +113,11 @@ the allocator side: allocator identity (RFC-0063's disjointness story) and brand
 identity are the same underlying mechanism wearing two names, and region handles
 already get it for free. `Rc`/`Arc` need brands explicitly only because, unlike
 regions, they have no runtime handle to press into double duty.
+
+This section's observation — allocator identity and brand identity are one mechanism
+wearing two names — is generalized in `brand-kind-unification.md` into a claim about all
+three identity kinds (`@a`, `&r`, `'c`) and a proposed answer to RFC-0076 Q2. This
+document establishes the two-way case (regions/brands); that one takes it to three.
 
 ## 5. Effects — pointer forward, not a claim
 
@@ -122,7 +138,11 @@ RFC is the source of record for these):
 1. Brand introduction mechanism — `brand` block / `forall<brand 'b>` rank-2
    polymorphism vs. a simpler per-binding-fresh rule. Deferred in the RFC.
 2. Brand kind vs. lifetime kind — shared syntactic kind, or `brand 'b` distinguished
-   from `'r`. Deferred in the RFC.
+   from `'r`. Deferred in the RFC. **`brand-kind-unification.md` now takes a position on
+   this specific question:** `@a`, `&r`, and `'c` are one kind under three sigil-selected
+   roles — same kind, distinguished by sigil rather than being separate kinds. Read that
+   document for the argument; this item is no longer open in a vacuum, though the RFC
+   itself hasn't been amended.
 3. Brand inference at function boundaries (existential vs. propagating), especially
    for recursive functions and trait objects. Deferred in the RFC.
 4. `RcToken`/`Arc` across fiber boundaries — needs a `SharedToken<'b>` with lock-like
@@ -142,13 +162,15 @@ New, raised by this document specifically:
    dimension it currently lacks (§3 above)? No proposal exists yet either way.
 8. Do brands and row-conditional impls end up as two permanent, independently-useful
    mechanisms for typestate, or should the language eventually recommend one over the
-   other? §3's comparison suggests "both, for different needs" rather than "pick one,"
-   but that has not been stated anywhere as a decision, only as an observation.
+   other? §3's comparison records the considerations (brand form is cheaper and covers
+   state-plus-identity; row form is more novel and ties into the structural-records
+   vision) but **it is too early to pick a canonical encoding — left open, not decided.**
 
 ## Example program
 
-Illustrative only — brand-indexed state machine plus a `Linear`-per-§2 join token,
-composed in one sketch.
+Illustrative only — a brand-indexed state machine (one of the two typestate encodings,
+§3) plus a `spawn` handle standing in for whatever mechanism ends up carrying the
+structured-concurrency guarantee (`structured-concurrency.md` §3, open).
 
 ```metel
 struct File<brand 'b, State> { fd: i64 }
@@ -159,19 +181,23 @@ fun open<brand 'b>(path: String) -> File<'b, Open> { ... }
 fun read<brand 'b>(f: &File<'b, Open>) -> String { ... }
 fun close<brand 'b>(f: File<'b, Open>) -> File<'b, Closed> { ... }
 
-// Structured concurrency: JoinToken is Linear (§2) — dropping it without
-// joining is a compile error, not just a lint.
-linear struct JoinToken<brand 'b, T> { }
-
-fun fork<brand 'b, T>(f: fun() -> T) -> JoinToken<'b, T> { ... }
-fun join<brand 'b, T>(token: JoinToken<'b, T>) -> T { ... }
-
 fun main() -> i64 {
     let f = open("/tmp/log.txt");        // File<'f, Open>
-    let token = fork(|| read(&f));       // JoinToken<'t, String>
-    let closed = close(f);               // File<'f, Closed> — same file, new state
-    let contents = join(token);          // must join; token is Linear, can't be dropped
-    println(contents);
+    let text = read(&f);                 // read into an owned String (borrow ends here)
+    let closed = close(f);               // File<'f, Closed> — provably the same file, new state
+
+    // Independent background work; the handle is Linear, so it can't be silently abandoned.
+    let h = spawn { summarize(text) };   // owned `text` (Send) MOVED into the fiber
+    let summary = h.join();              // must join (or detach) — the handle's linearity enforces it
+    println(summary);
     0
 }
 ```
+
+Two separate mechanisms in one sketch: the brand `'b` does its **identity** job on `File`
+(proving `File<'f, Open>` and `File<'f, Closed>` are the *same* file across the
+transition), while the concurrency guarantee — here shown via a linear `spawn` handle — is
+carried by *some* must-join mechanism whose exact form is an open question (linear handle
+vs. a standalone `JoinToken`, `structured-concurrency.md` §3). Note also *why* the read is
+done before the spawn: a fiber can only capture sendable data, so an owned `String` moves
+in cleanly where a borrow `&f` could not have crossed the boundary at all.

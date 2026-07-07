@@ -140,13 +140,16 @@ impl<row R: Lacks<"token">> Session<R> {
 precondition, an absent method. Calling it too early is the same class of error as
 calling a method that was never defined.
 
-**This is one of (at least) two competing typestate encodings now on the table, not the
-only one.** `brand-types.md` (RFC-0076's own applications section) does typestate via a
-phantom type parameter — `File<'b, Open>` — the conventional approach, simpler, already
-well-precedented (Rust idiom). Row-conditional impls are more novel and tie into the
-larger structural-records vision, but the two aren't obviously meant to coexist as
-permanent alternatives for the same problem; see `README.md` for this listed as an
-open cross-thread question rather than resolved here.
+**This is one of (at least) two competing typestate encodings on the table, not the only
+one — and which is canonical is not yet decided (too early).** `brand-types.md` (RFC-0076's
+own applications section) does typestate via a phantom type parameter — `File<'b, Open>` —
+the conventional approach, simpler, already well-precedented (Rust idiom). Row-conditional
+impls are more novel and tie into the larger structural-records vision. One consideration
+for whenever this *is* decided: **making row-conditional the canonical path would pull
+open-row generics, row-conditional coherence, and the width-subtyping rule (§8) onto the
+critical path**, which the build order deliberately avoids — a point in the brand form's
+favor, but not treated as decisive. See `brand-types.md` §3 for the comparison and
+`README.md` for the cross-thread open question.
 
 **Where row-conditional typestate is compelling, concretely:**
 
@@ -342,7 +345,9 @@ bring them back without admitting they were never sugar in the first place.
    not worked out; no concrete overlap-checking rule proposed yet.
 7. **Phantom-type-parameter typestate (`brand-types.md`) vs. row-conditional-impl
    typestate (§5) — which is canonical, or do both stay, and for which cases?** Not
-   resolved here; tracked as a cross-thread question in `README.md`.
+   resolved — too early to decide; tracked as a cross-thread question in `README.md`. The
+   considerations (brand form cheaper and covers state-plus-identity; row form more novel,
+   needs deferred open-`<row R>`) are recorded in `brand-types.md` §3 as inputs.
 
 ## Example programs
 

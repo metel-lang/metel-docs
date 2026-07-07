@@ -290,22 +290,27 @@ the implementation work is in the runtime.
 
 ---
 
-## 9. Interaction with structured parallelism (RFC-0064, deferred)
+## 9. Interaction with structured concurrency
 
-RFC-0064's `||` combinator requires both branches to complete before returning. If an
-effect is performed inside a `||` branch, the continuation captures that branch's
-stack. The continuation cannot escape the combinator's synchronization boundary — it
-must be resumed or dropped before the `||` expression returns. This is automatically
-enforced: the continuation's captured allocator tags include the branch's scoped
-allocator (if any), making it non-sendable and therefore non-escapable past the `||`
-join point.
+*Updated 2026-07-07: `||` (RFC-0064) is dropped; concurrency is `spawn` + `Chan<T>` with
+a `Linear` `JoinHandle` (`structured-concurrency.md`). This section is rescoped from
+"effects inside a `||` branch" to "effects inside a spawned fiber," which is the same
+sendability argument on the surviving primitive.*
 
-This means effect handlers inside `||` branches must be synchronous — consistent with
-`||`'s structured semantics. No additional constraint is needed; the tag-based
-sendability rule already does the right thing. See also `brand-types.md` §5 and
-`structured-concurrency.md` (pending) for `JoinToken<'b>`'s independent, linear-typed
-answer to the same "must not escape the structured boundary" requirement, applied to
-fork/join rather than to effect continuations.
+If an effect is performed inside a spawned fiber, the continuation captures that fiber's
+stack. Whether the continuation may cross back out is governed by the ordinary
+sendability rule (§3): if the fiber's frame holds any scoped-allocator data or borrow,
+the continuation is non-sendable and cannot leave the fiber — so its handler must be
+synchronous within that fiber. A continuation over only `@Heap`/`Copy` data is sendable
+and may be shipped to a worker (§11.5). No effect-specific constraint is needed; the
+tag-based sendability rule already does the right thing.
+
+The fiber itself should not be silently abandonable mid-effect — the "must not escape the
+structured boundary" guarantee. *Which* mechanism carries that guarantee (a `Linear`
+`spawn` handle vs. a standalone `JoinToken<'b>`) is an open concurrency question, reopened
+2026-07-07 — see `structured-concurrency.md` §3 and `brand-types.md` §2. The effects
+analysis here is unaffected by that choice: it relies only on the guarantee existing, not
+on its packaging.
 
 ---
 
