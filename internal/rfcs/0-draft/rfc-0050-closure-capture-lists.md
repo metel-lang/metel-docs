@@ -11,9 +11,16 @@ implementation-guidance section was added covering how to build captures so stru
 and brand types don't force a rewrite later. See Timing Recommendation and Implementation
 Guidance below.*
 
+*Updated again 2026-07-07: capture lists are now exhaustive. A bare `ident` specifier captures
+by value (clone), and once a closure has a capture list at all, every free variable it references
+must appear in it — no more silent, unlisted clone captures alongside explicit `&mut`/`move`
+items. This was previously deferred (see the old "Exhaustive capture lists" alternative, now
+adopted below) and is what makes the capture list a complete, checkable field list for the
+closure's captured-environment aggregate — see Implementation Guidance.*
+
 ## Summary
 
-Add an optional capture list syntax to closure expressions. The capture list supports two specifiers: `&mut ident` captures a non-linear binding by mutable reference, enabling a closure to mutate outer-scope state without a separate `*mut` binding; `move ident` transfers ownership of a linear binding into the closure (RFC-0046 — refused; a split-model successor is needed, see Timing Recommendation). Both specifiers may appear in the same list. All captures are explicit at the closure definition site.
+Add an optional capture list syntax to closure expressions. The capture list supports three specifiers: `&mut ident` captures a non-linear binding by mutable reference, enabling a closure to mutate outer-scope state without a separate `*mut` binding; `move ident` transfers ownership of a linear binding into the closure (RFC-0046 — refused; a split-model successor is needed, see Timing Recommendation); bare `ident` captures by value (clone). All three may appear in the same list. Once a closure has a capture list at all, it must be exhaustive — every free variable the closure body references must appear in it. All captures are explicit at the closure definition site.
 
 ---
 
@@ -48,10 +55,10 @@ Extend the closure expression syntax with an optional capture list placed before
 ```
 closure_expr  = capture_list? "(" params ")" "->" return_type block
 capture_list  = "[" capture_item ("," capture_item)* "]"
-capture_item  = "&mut" ident | "move" ident
+capture_item  = "&mut" ident | "move" ident | ident
 ```
 
-`&mut ident` captures a non-linear binding by mutable reference. `move ident` transfers ownership of a linear binding into the closure (see RFC-0046). Both specifiers may appear in the same list: `[&mut count, move buf]`.
+`&mut ident` captures a non-linear binding by mutable reference. `move ident` transfers ownership of a linear binding into the closure (see RFC-0046). A bare `ident` captures by value (clone) — the same behavior closures have always had for unlisted bindings, just now written explicitly. All three specifiers may appear in the same list: `[&mut count, move buf, log_prefix]`.
 
 Bindings named with `&mut` in the capture list are captured by mutable reference rather than by value. Inside the closure body they are used with ordinary read and assignment syntax — no pointer dereference required:
 
@@ -69,7 +76,25 @@ fun main() {
 }
 ```
 
-Bindings not listed in the capture list continue to be captured by value (deep clone), preserving the current semantics for the common case.
+If a closure has no capture list at all, every free variable it references continues to be captured by value (deep clone) implicitly — the RFC-0006 default, unchanged for the common case where nothing needs `&mut` or `move`.
+
+If a closure *does* have a capture list, that list must be exhaustive: every free variable the closure body references must appear in it, with the specifier matching how it's used. A closure mixing a mutable capture with an otherwise-ordinary clone capture now looks like:
+
+```metel
+fun main() {
+    let mut count = 0;
+    let log_prefix = "counter: ";
+
+    let inc = [&mut count, log_prefix] () -> () {
+        count += 1;
+        print(log_prefix + count.to_string());
+    };
+
+    inc();
+}
+```
+
+Referencing a free variable that is not in the list — of any kind, including ones that would only need clone capture — is a compile error once the closure has a capture list at all.
 
 ### Semantics
 
@@ -83,9 +108,13 @@ Bindings not listed in the capture list continue to be captured by value (deep c
 - A closure with any `move` capture has type `linear fun(...) -> T`: it must be called exactly once (see RFC-0046).
 - Linear bindings referenced in the closure body that are not listed with `move` are a type error — linear values cannot be clone-captured.
 
-**Both:**
-- A binding may not appear in both the capture list and the value-captured portion of the same closure's environment (no dual capture of the same name).
-- Unlisted non-linear bindings continue to be clone-captured (RFC-0006 default).
+**Bare `ident` (clone) captures:**
+- At closure creation time, each bare `ident` capture deep-clones the named binding into the closure's captured environment — identical to today's implicit RFC-0006 capture, just named explicitly.
+- Any non-linear binding the closure body reads (without mutating through it or moving it) can use this form.
+
+**All three:**
+- A binding may not appear more than once across the capture list (no dual capture of the same name under different kinds).
+- **Exhaustiveness.** A closure with no capture list retains the RFC-0006 default: every free variable is implicitly clone-captured. A closure *with* a capture list must enumerate every free variable it references — there is no third, partial mode where some captures are explicit and others are silently implicit. This closes a gap in the original design, where `[&mut count]` could coexist with other, unlisted clone-captured variables in the same closure; see Implementation Guidance for why this matters beyond ergonomics.
 
 ### Read-only reference captures
 
@@ -130,7 +159,17 @@ Allow closures to detect at analysis time that a captured binding is assigned an
 
 ### Exhaustive capture lists
 
-Require every captured binding to appear in the list, with `&mut` or by-value markers. More explicit, but adds significant boilerplate for the common case where most captures are read-only values. Deferred as a possible opt-in lint or future strict mode, not a language requirement.
+*Adopted 2026-07-07 — see the Semantics section above.* Originally considered and deferred:
+require every captured binding to appear in the list, with `&mut`, `move`, or by-value markers.
+The concern at the time was boilerplate for the common case where most captures are read-only
+values. That concern is addressed by scoping exhaustiveness to closures that already have a
+capture list — a closure with no `&mut`/`move` need still writes no list at all and keeps full
+implicit clone-capture, so the common case pays nothing. What changed the calculus: once a
+closure has a list, allowing some captures to stay implicit means the list is no longer a
+reliable field enumeration for the closure's environment, which undermines treating that
+environment as a checkable aggregate (see Implementation Guidance). Adopting exhaustiveness only
+for closures that opt into a list at all gets both properties — no boilerplate tax on the common
+case, and a trustworthy field list wherever a capture list exists.
 
 ---
 
@@ -190,6 +229,12 @@ forces a rewrite of closure capture when they land:
   aggregate — the same shape as struct field storage — not a bespoke closure-environment type.
   Structural records, when they land, are closed field-lists of the same shape; if the
   representation already matches, records can describe or subsume it without a runtime rewrite.
+  Exhaustiveness (see Semantics) is what makes this more than aspirational: when a closure has a
+  capture list, that list *is* the complete field list of the aggregate, with each field's
+  capture kind (`&mut`/`move`/clone) known statically from the specifier. Without exhaustiveness,
+  some fields would exist in the runtime environment without appearing anywhere in the syntax,
+  which is exactly the kind of implicit state that would need discovering and reconciling by hand
+  when records or brand-based escape checking arrive.
 - **Escape checking.** Whatever the split model uses to check that an allocator/lifetime-tagged
   value doesn't escape its scope should be written as a generic check over an aggregate's field
   types, not as bespoke closure logic. A `[&mut count]` or future `[move buf]` closure is then
