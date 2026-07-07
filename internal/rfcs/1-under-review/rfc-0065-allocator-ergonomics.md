@@ -9,7 +9,7 @@ updated: '2026-07-06'
 > for the bracket channel (`@[r]` → `@`). Under the split model the bracket channel is
 > gone: allocators live in the value channel `()`, lifetime anchors in the type channel
 > `<>`. This RFC restates elision for both. Depends on RFC-0063 (Allocator Handles) and
-> RFC-0067 (Reference Types). Do not implement before RFC-0063 is resolved.
+> RFC-0067 (Lifetime Anchors and Allocator-Pointer References). Do not implement before RFC-0063 is resolved.
 >
 > **Updated 2026-07-06:** added §1a, elision for RFC-0063's new tag-only allocator
 > parameters (`<@a>`). Reuses the existing single-input/self/ambiguous structure of
@@ -225,5 +225,5 @@ the signature and the `&`-bearing positions that follow from it.
 - RFC-0066 (Allocated Value Extraction) — §3a: why a plain, `@`-free `T` never
   implicitly accepts an `@a T` argument, which is what distinguishes it from the
   elided tag-only form here.
-- RFC-0067 (Reference Types) — lifetime anchors, `&r T`, `&r mut T`, anchor elision rules.
+- RFC-0067 (Lifetime Anchors and Allocator-Pointer References) — lifetime anchors, `&r T`, `&r mut T`, anchor elision rules.
 - RFC-0050 (Closure Capture Lists) — closure grammar for `(@a) -> {}`.

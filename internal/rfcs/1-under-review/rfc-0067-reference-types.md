@@ -1,91 +1,94 @@
 ---
 id: rfc-0067
-title: "Reference Types"
+title: "Lifetime Anchors and Allocator-Pointer References"
 date: '2026-06-28'
-updated: '2026-07-06'
+updated: '2026-07-07'
 ---
 
-> **Status — under review.** Rewritten 2026-07-05. The original RFC used `&[r] T` /
-> `&mut [r] T` for region-tagged borrows. Under the split model (RFC-0063 rewritten),
-> borrows carry **lifetime anchors**, not allocator tags. The anchor syntax is `&r T`
-> (immutable) and `&r mut T` (mutable) — the anchor groups with `&`, mutability follows.
-> Anchors are type-level only; expression position always uses `&val` / `&mut val`.
-> Supersedes RFC-0043 (Regular Pointers). Amends RFC-0044 (Explicit Receiver Semantics).
-> Depends on RFC-0063 (Allocator Handles) and RFC-0071 (Ownership and Move Semantics).
+> **Status — under review.** Rewritten 2026-07-05 for the split model. Split again
+> 2026-07-07: the plain `&T` / `&mut T` rename and auto-deref (the original RFC-0067's
+> §1/§3/§4/§7) had no dependency on affine types, the borrow checker, or allocators, and
+> has been accepted separately as **RFC-0067a** and sequenced into Cluster A. What remains
+> here — lifetime anchors, allocator-pointer (`@a T`) auto-deref and coercion, and move-out
+> — genuinely needs both: anchors are borrow-checker core (scope/liveness tracking is what
+> "is anchor `r` still valid" means), and the allocator-pointer sections need `@a T` to
+> exist (RFC-0063). This stays Phase 3 in `reports/implementation/roadmap-2026-07-07.md`,
+> unchanged from before the split.
 >
-> **Updated 2026-07-06:** §5's coercion paragraph now says explicitly why it is safe
-> only for borrows, not owned values, cross-referencing RFC-0066 §3a and RFC-0063 §4.
+> Depends on RFC-0067a (base `&T` / `&mut T`, which this RFC extends with anchors —
+> no further reference-type syntax to invent), RFC-0063 (Allocator Handles), and RFC-0071
+> (Ownership and Move Semantics). Amends RFC-0044 (Explicit Receiver Semantics).
+>
+> Note on a related but distinct independence claim: `reports/strategy/strategic-overview-2026-07-06.md`
+> observes that "the reference-type core (ordinary borrows, lifetime-anchor elision, RFC-0067's
+> own body minus §5) ... don't reference `Alloc` at all." That is a true and useful claim about
+> independence from *allocators* specifically — lifetime anchors don't need `@a T` to make sense.
+> It is not the same claim as this split makes, which is independence from the *borrow checker*.
+> Lifetime anchors need the borrow checker's scope/liveness machinery even though they don't need
+> `Alloc` — which is exactly why anchors (§1 below) stay in this document rather than moving to
+> RFC-0067a alongside the allocator-independent, borrow-checker-independent rename.
+>
+> **Updated 2026-07-06:** §2's coercion paragraph (originally §5) says explicitly why it is
+> safe only for borrows, not owned values, cross-referencing RFC-0066 §3a and RFC-0063 §4.
 
 ## Summary
 
-Replace Metel's `*T` / `*mut T` pointer model (RFC-0043) with **reference types**:
-`&T` (shared immutable) and `&mut T` (exclusive mutable). Remove the explicit `*p`
-dereference operator — all value access is through auto-deref.
+Specify **lifetime anchors** — the compile-time names that bound a borrow's validity scope —
+on top of the `&T` / `&mut T` reference types from RFC-0067a. A borrow `&r T` carries anchor
+`r`, a binding whose scope determines how long the borrow remains valid. Anchors are separate
+from allocators: the allocator says where a value lives; the lifetime anchor says how long a
+particular borrow of it is valid.
 
-This RFC also specifies **lifetime anchors** — the compile-time names that bound a
-borrow's validity scope. A borrow `&r T` carries anchor `r`, a binding whose scope
-determines how long the borrow remains valid. Anchors are separate from allocators:
-the allocator says where a value lives; the lifetime anchor says how long a particular
-borrow of it is valid.
+This RFC also specifies how allocator pointers (`@a T`, RFC-0063) participate in auto-deref and
+coerce to plain references, and how move-out from `@a T` is expressed.
 
 ---
 
 ## Motivation
 
-RFC-0043's `*T` / `*mut T` model accumulates friction when combined with the allocator
-system. The extraction examples in RFC-0066 show it most clearly:
+RFC-0043's `*T` / `*mut T` model (now RFC-0067a's `&T` / `&mut T`) accumulates friction when
+combined with the allocator system. The extraction examples in RFC-0066 show it most clearly:
 
 ```metel
-// clone extraction — current *T model
+// clone extraction — pre-auto-deref
 let copy: @Heap Config = (*(&src)).clone();
 ```
 
-Two visible `*` operations obscure a conceptually simple "borrow this value and clone
-it." The same sigil marks allocator-pointer move-out, regular-pointer dereference, and
-the type notation for non-owning references.
+Two visible `*` operations obscure a conceptually simple "borrow this value and clone it."
+The same sigil marked allocator-pointer move-out, regular-pointer dereference, and the type
+notation for non-owning references, all at once.
 
 Reference types and auto-deref resolve this:
 
 ```metel
-// clone extraction — with reference types
+// clone extraction — with reference types and allocator auto-deref
 let copy: @Heap Config = src.clone();
 ```
 
----
-
-## 1. Reference types
-
-Metel has two reference types:
-
-```metel
-&T       // shared immutable reference
-&mut T   // exclusive mutable reference
-```
-
-These replace `*T` and `*mut T` from RFC-0043. Semantics are unchanged: both are
-non-owning aliases. `&T` allows multiple simultaneous readers; `&mut T` is exclusive —
-no other reference to the same location may exist while it is live.
-
-`&mut T` coerces to `&T` implicitly. No other reference coercion is implicit.
+Lifetime anchors solve a separate problem: naming how long a borrow is valid. The pre-split
+unified `Region` model tried to answer this using the allocator itself as the lifetime; that
+broke once a value could be moved out of or dropped from a region while the region continued
+holding other allocations (RFC-0066), which is why anchors are their own concept here rather
+than folded back into `@a`.
 
 ---
 
-## 2. Lifetime anchors
+## 1. Lifetime anchors
 
-Every borrow carries a **lifetime anchor** — the name of a binding whose scope bounds
-the borrow's validity. The anchor appears directly after `&` in type position:
+Every borrow carries a **lifetime anchor** — the name of a binding whose scope bounds the
+borrow's validity. The anchor appears directly after `&` in type position:
 
 ```metel
 &r T       // immutable borrow of T; valid while binding r is alive
 &r mut T   // mutable borrow of T; valid while binding r is alive
 ```
 
-The anchor groups with `&`; `mut` qualifies the reference after it. A borrow `&r T`
-does not know or care whether `T` was allocated in allocator `r` — `r` is a binding
-name, and the borrow is valid for exactly as long as `r` is in scope.
+The anchor groups with `&`; `mut` qualifies the reference after it. A borrow `&r T` does not
+know or care whether `T` was allocated in allocator `r` — `r` is a binding name, and the
+borrow is valid for exactly as long as `r` is in scope.
 
-**Anchors are type-level only.** In expression position, write `&val` and `&mut val`.
-The anchor is inferred from the expected type; explicit anchors never appear on
+**Anchors are type-level only.** In expression position, write `&val` and `&mut val` (RFC-0067a
+§2). The anchor is inferred from the expected type; explicit anchors never appear on
 expressions. This matches Rust's design: lifetimes annotate types, not terms.
 
 **Declaration.** When a function needs to name an anchor explicitly (because elision is
@@ -95,12 +98,12 @@ ambiguous), it declares it in the type-parameter channel `<>` with the `&` prefi
 fun longest<&r>(&r Str, &r Str) -> &r Str { ... }
 ```
 
-Elision rules (RFC-0065 §2) cover the common cases; `<&r>` declarations appear only
-when the relationship is ambiguous.
+Elision rules (RFC-0065 §2) cover the common cases; `<&r>` declarations appear only when the
+relationship is ambiguous.
 
-**Lifetime ordering bounds.** When two anchors have no structural relationship the
-borrow checker can derive, a `: &s` bound in the `<>` declaration expresses that the
-right-hand side is the shorter-lived anchor:
+**Lifetime ordering bounds.** When two anchors have no structural relationship the borrow
+checker can derive, a `: &s` bound in the `<>` declaration expresses that the right-hand side
+is the shorter-lived anchor:
 
 ```metel
 fun pick<&s, &t: &s>(&s Str, &t Str) -> &t Str { ... }
@@ -109,46 +112,10 @@ fun pick<&s, &t: &s>(&s Str, &t Str) -> &t Str { ... }
 
 ---
 
-## 3. Address-of
+## 2. Allocator pointer access
 
-The address-of operators `&` and `&mut` are syntactically unchanged at the expression level:
-
-```metel
-let x = 42;
-let r: &i64     = &x;      // shared reference to x
-let mut y = 42;
-let m: &mut i64 = &mut y;  // exclusive reference to y
-```
-
-Addressability rules from RFC-0043 §5 are preserved: only stable lvalues (named
-bindings, fields, array elements, and chains thereof) may be addressed. Temporaries
-cannot.
-
-The anchor in the resulting type is inferred from the binding being addressed. Taking
-`&x` where `x` is in the current scope produces a borrow with the anchor inferred to
-be `x`'s scope.
-
----
-
-## 4. Auto-deref
-
-There is no explicit dereference operator in safe code. All access goes through auto-deref:
-
-1. **Field access** — `r.field` where `r: &T` dereferences to access `T.field`.
-2. **Method dispatch** — `r.method(args)` inserts the borrow required by the method's
-   receiver.
-3. **Deref coercions** — `&T` or `&mut T` coerces to a less-capable reference when the
-   expected type requires it.
-
-Auto-deref chains: a `&&T` will deref through both levels if needed. Chain depth is
-bounded by the type structure; no infinite cycles are possible.
-
----
-
-## 5. Allocator pointer access
-
-`@a T` participates in auto-deref. It is treated as a one-level owner over `T`: field
-access and method dispatch deref through the allocator pointer transparently.
+`@a T` participates in auto-deref (RFC-0067a §3). It is treated as a one-level owner over `T`:
+field access and method dispatch deref through the allocator pointer transparently.
 
 ```metel
 let node = @a Node { val: 1, next: null };
@@ -158,44 +125,44 @@ node.val = 2;          // auto-deref: @a Node → Node, write field
 node.method(args);     // auto-deref: dispatches on Node
 ```
 
-**Explicit borrows** through an allocator pointer produce an anchor-carrying reference.
-The anchor is the binding being borrowed:
+**Explicit borrows** through an allocator pointer produce an anchor-carrying reference. The
+anchor is the binding being borrowed:
 
 ```metel
 let r: &node T   = &node;      // shared borrow; anchor = `node` binding
 let m: &node mut T = &mut node; // exclusive borrow; anchor = `node` binding
 ```
 
-In practice the anchor is almost always elided and inferred from context. The explicit
-form appears in type signatures when the anchor must be named.
+In practice the anchor is almost always elided and inferred from context. The explicit form
+appears in type signatures when the anchor must be named.
 
-**Coercion.** A borrow of `@a T` — written `&node` where `node: @a T` — coerces to
-plain `&T` in positions where the allocator tag and anchor are not needed. The coercion
-is implicit at function arguments, return expressions, and annotated `let` bindings.
+**Coercion.** A borrow of `@a T` — written `&node` where `node: @a T` — coerces to plain `&T`
+in positions where the allocator tag and anchor are not needed. The coercion is implicit at
+function arguments, return expressions, and annotated `let` bindings.
 
-**This coercion is sound precisely because it applies to borrows, not owned values.**
-`&node` never had move/ownership rights over the allocation in the first place — it is
-a temporary loan — so dropping the tag from the *borrow's* type discards nothing the
-reference held. This does **not** extend to `node` itself: passing the owned `node`
-(no `&`) to a plain, `@`-free `T` parameter is a completely different, and much more
-consequential, operation — it would require extraction (move-out, RFC-0066 §3), which
-is lossy (the allocator slot is vacated) and sometimes illegal (`T: Drop` on a
-bulk-deallocating allocator, RFC-0066 §2.2.3). RFC-0066 §3a specifies that this never
-happens implicitly, by analogy with this section's borrow coercion — the two look
-similar at a glance (both "drop the tag") but the owned case has no free equivalent,
-which is why it is opt-in (explicit ascription) rather than automatic. RFC-0063 §4's
-tag-only parameter is the mechanism for passing an *owned* `@a T` through generic code
-without paying extraction's cost — see that section for the counterpart to this one.
+**This coercion is sound precisely because it applies to borrows, not owned values.** `&node`
+never had move/ownership rights over the allocation in the first place — it is a temporary
+loan — so dropping the tag from the *borrow's* type discards nothing the reference held. This
+does **not** extend to `node` itself: passing the owned `node` (no `&`) to a plain, `@`-free
+`T` parameter is a completely different, and much more consequential, operation — it would
+require extraction (move-out, RFC-0066 §3), which is lossy (the allocator slot is vacated) and
+sometimes illegal (`T: Drop` on a bulk-deallocating allocator, RFC-0066 §2.2.3). RFC-0066 §3a
+specifies that this never happens implicitly, by analogy with this section's borrow coercion —
+the two look similar at a glance (both "drop the tag") but the owned case has no free
+equivalent, which is why it is opt-in (explicit ascription) rather than automatic. RFC-0063 §4's
+tag-only parameter is the mechanism for passing an *owned* `@a T` through generic code without
+paying extraction's cost — see that section for the counterpart to this one.
 
 ---
 
-## 6. Move-out from `@a T`
+## 3. Move-out from `@a T`
 
-Move-out is the consuming operation that extracts `T` from `@a T`, destroying the
-allocator pointer. Since `*ptr` is gone, move-out is expressed via type context:
+Move-out is the consuming operation that extracts `T` from `@a T`, destroying the allocator
+pointer. Since there is no `*ptr` any more (RFC-0067a removed the explicit dereference
+operator), move-out is expressed via type context:
 
-**Type-directed** — when a `let` binding or return position declares type `T` and the
-source is `@a T`, the compiler performs move-out implicitly:
+**Type-directed** — when a `let` binding or return position declares type `T` and the source
+is `@a T`, the compiler performs move-out implicitly:
 
 ```metel
 let ptr = @a Node { val: 1 };
@@ -209,50 +176,31 @@ let node = ptr: Node;       // ascription in let — ptr consumed
 process(ptr: Node);         // ascription at call site — ptr consumed
 ```
 
-Move-out semantics and constraints (heap always safe, scoped allocators require
-`T: !Drop` for bulk-deallocating kinds) are specified in RFC-0066.
+Move-out semantics and constraints (heap always safe, scoped allocators require `T: !Drop` for
+bulk-deallocating kinds) are specified in RFC-0066.
 
 ---
 
-## 7. Supersession of RFC-0043
-
-| RFC-0043 | This RFC |
-|----------|----------|
-| `*T` | `&T` |
-| `*mut T` | `&mut T` |
-| `&x` → `*T` | `&x` → `&T` |
-| `&mut x` → `*mut T` | `&mut x` → `&mut T` |
-| `*p` explicit dereference | removed; auto-deref only |
-| `*mut T` coerces to `*T` | `&mut T` coerces to `&T` |
-
-RFC-0043 §6 (auto-deref for field access, method calls) is preserved and extended to
-apply to `@a T`. RFC-0043 §8 (no pointer arithmetic) carries over unchanged.
-Nullability via `Perhaps<*T>` becomes `Perhaps<&T>`.
-
----
-
-## 8. Unresolved questions
+## Unresolved questions
 
 None.
 
-**Closed — borrow coercion depth.** A borrow of `@a T` coerces to `&T` at coercion
-sites (function arguments, return expressions, annotated `let` bindings). No coercion
-is inserted in unannotated expression positions where no expected type is known. Matches
-Rust's deref-coercion rules.
-
-**Closed — auto-deref chain depth.** The compiler follows the deref chain until it
-reaches the expected type, with no explicit depth limit. Chain bounded by type structure.
+**Closed — borrow coercion depth.** A borrow of `@a T` coerces to `&T` at coercion sites
+(function arguments, return expressions, annotated `let` bindings). No coercion is inserted in
+unannotated expression positions where no expected type is known. Matches Rust's deref-coercion
+rules.
 
 ---
 
 ## References
 
-- RFC-0043 (Regular Pointers) — superseded by this RFC.
-- RFC-0044 (Explicit Receiver Semantics) — `&self` / `&mut self` receivers are now
-  consistent with `&T` / `&mut T` as general reference types.
-- RFC-0063 (Allocator Handles) — `@a T`; allocator-tagged owned pointers that this
-  RFC borrows from. §4's tag-only parameter is the owned-value counterpart to this
-  RFC's borrow coercion (§5).
+- RFC-0067a (Reference Types) — `&T` / `&mut T`, address-of, auto-deref, and the RFC-0043
+  supersession this RFC builds on. Split off 2026-07-07 as the allocator/borrow-checker
+  independent slice of the original RFC-0067.
+- RFC-0043 (Regular Pointers) — superseded by RFC-0067a.
+- RFC-0044 (Explicit Receiver Semantics) — `&self` / `&mut self` receivers.
+- RFC-0063 (Allocator Handles) — `@a T`; allocator-tagged owned pointers this RFC borrows
+  from. §4's tag-only parameter is the owned-value counterpart to this RFC's borrow coercion
+  (§2).
 - RFC-0065 (Allocator Ergonomics) — elision rules for lifetime anchors and allocator tags.
-- RFC-0066 (Allocated Value Extraction) — move-out and borrow forms updated by §6
-  of this RFC.
+- RFC-0066 (Allocated Value Extraction) — move-out and borrow forms updated by §3 of this RFC.

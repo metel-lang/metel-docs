@@ -61,7 +61,8 @@ let v: &mut Node = &mut ptr; // exclusive borrow
 
 The borrow checker enforces that no borrow outlives `ptr`, and that a `&mut` borrow is
 exclusive. No new rules are needed beyond the existing borrow semantics. Auto-deref handles
-field access and method dispatch through region pointers (RFC-0067 §3–4).
+field access and method dispatch through region pointers (RFC-0067 §2, allocator pointer
+access; base auto-deref rule is RFC-0067a §3).
 
 ---
 
@@ -289,4 +290,6 @@ encompasses the clone's use is valid.
   extraction when ownership doesn't actually need to be storage-independent.
 - RFC-0065 (Allocator Ergonomics) §1a — elision for the tag-only form; distinguishes
   it from this RFC's plain, `@`-free `T`.
-- RFC-0067 (Reference Types) — `&T` / `&mut T`; auto-deref through `@a T`.
+- RFC-0067a (Reference Types) — `&T` / `&mut T`, base auto-deref.
+- RFC-0067 (Lifetime Anchors and Allocator-Pointer References) — auto-deref through `@a T`
+  specifically (§2), split from RFC-0067a 2026-07-07.

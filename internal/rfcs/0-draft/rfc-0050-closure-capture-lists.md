@@ -199,7 +199,7 @@ case, and a trustworthy field list wherever a capture list exists.
 
 1. **Lifetime of the mutable reference. ✓ Resolved** — In the interpreter, the outer binding's storage is heap-backed so there is no unsoundness. Under a future compiler, a closure holding `&mut` (or `&`) to a stack binding must not outlive that binding. Precise enforcement defers to the borrow checker. No interpreter-level restriction is imposed now.
 
-2. **Interaction with concurrency. ✓ Resolved** — `*mut T` and `*T` are not `Send` (RFC-0003's `Send` marker aspect; the original citation of RFC-0028 no longer applies — that RFC is refused). A closure is `Send` only if all its captured values are `Send`. Any `[&mut x]` or `[&x]` closure is therefore automatically non-`Send` — no new rule needed; falls out of the existing model. Once RFC-0067 lands and `*mut T`/`*T` are superseded by `&r mut T`/`&r T`, this should be restated in terms of whatever `Send` rule RFC-0067/RFC-0074 give lifetime-anchored references — not yet specified, tracked as a residual, not a blocker.
+2. **Interaction with concurrency. ✓ Resolved** — `*mut T` and `*T` (or, targeting RFC-0067a, `&mut T` and `&T`) are not `Send` (RFC-0003's `Send` marker aspect; the original citation of RFC-0028 no longer applies — that RFC is refused). A closure is `Send` only if all its captured values are `Send`. Any `[&mut x]` or `[&x]` closure is therefore automatically non-`Send` — no new rule needed; falls out of the existing model. Once the remaining RFC-0067 lands and adds lifetime anchors (`&r mut T`/`&r T`), this should be restated in terms of whatever `Send` rule RFC-0067/RFC-0074 give anchored references — not yet specified, tracked as a residual, not a blocker.
 
 3. **Multiple closures capturing the same binding. ✓ Resolved** — Two closures with `[&mut x]` both hold a mutable pointer to `x`. This is safe in the single-threaded interpreter (sequential calls; aliased mutation is not concurrent). Under the borrow checker, at most one live mutable reference at a time (or many live `&x` read-only references, exclusive of any `&mut x`) will be enforced. Document now; restrict later.
 
@@ -233,13 +233,19 @@ case, and a trustworthy field list wherever a capture list exists.
 because it was written jointly with RFC-0046 before the split model existed. `move` now has
 independent timing from the other three.*
 
+*Updated again 2026-07-07: RFC-0067 has since been split. Its allocator/borrow-checker
+independent slice — the plain `&T`/`&mut T` rename — is now accepted separately as **RFC-0067a**
+and sequenced into Cluster A, removing the mechanical-rename concern below entirely: `&mut`/`&`
+captures can target RFC-0067a's syntax directly instead of today's `*mut T`/`*T`, with no
+rename step to schedule around.*
+
 **`&mut`, `&`, and bare `ident` (clone) captures** have no dependency on linear types,
-allocators, or brands. Their only prerequisite (RFC-0043) is already implemented. They can be
-implemented as soon as convenient, targeting whatever pointer/reference syntax is current at
-implementation time — if implemented before RFC-0067 (Reference Types) lands, `&mut`/`&` will
-use today's `*mut T`/`*T` and need a mechanical rename to `&r mut T`/`&r T` once RFC-0067
-supersedes RFC-0043; sequencing the implementation immediately after RFC-0067 avoids that rename
-but is not required. Bare `ident` has no pointer representation to rename at all.
+allocators, or brands. Their only prerequisites are RFC-0043 (already implemented) or, once it
+lands, RFC-0067a (accepted, Cluster A — `&T`/`&mut T` with no anchors, no allocator
+interaction). Target RFC-0067a's syntax rather than RFC-0043's `*mut T`/`*T` if sequencing this
+RFC after it; both are implementable in the same Cluster-A timeframe, so there's no reason to
+prefer one over the other except avoiding a later rename. Bare `ident` has no pointer
+representation to rename at all, in either case.
 
 **`move` captures** remain blocked. RFC-0046, which specified `move`'s semantics (`linear fun`,
 consume-at-capture, single-call safety), is refused — not merely on hold — because it was
@@ -249,8 +255,8 @@ before it can be implemented. That successor is not yet written and is properly 
 concern (see `reports/implementation/roadmap-2026-07-07.md`), alongside the rest of the
 linear-types tower.
 
-**Suggested order:** implement the `&mut`/`&`/clone three of this RFC now (or alongside
-RFC-0067); implement `move` once a split-model successor to RFC-0046 exists and linear types
+**Suggested order:** implement the `&mut`/`&`/clone three of this RFC now, targeting RFC-0067a's
+`&T`/`&mut T`; implement `move` once a split-model successor to RFC-0046 exists and linear types
 have a settled design.
 
 ---
@@ -300,8 +306,10 @@ forces a rewrite of closure capture when they land:
   section above.
 - RFC-0065: Allocator Ergonomics (`1-under-review`, retitled from "Region Ergonomics") — no
   longer affects this RFC's bracket syntax.
-- RFC-0067: Reference Types (`1-under-review`) — supersedes RFC-0043's `*mut T` with `&r mut T`;
-  see Timing Recommendation above for sequencing.
+- RFC-0067a: Reference Types (`2-accepted`, split from RFC-0067 2026-07-07) — supersedes
+  RFC-0043's `*mut T`/`*T` with `&mut T`/`&T`; no anchors, no dependency on this RFC's timing.
+- RFC-0067: Lifetime Anchors and Allocator-Pointer References (`1-under-review`) — adds
+  `&r mut T`/`&r T` on top of RFC-0067a; see Timing Recommendation above for sequencing.
 - `reports/implementation/roadmap-2026-07-07.md` — phased sequencing this RFC's two halves fit
   into.
 - C++ lambda capture lists — prior art for syntax and semantics

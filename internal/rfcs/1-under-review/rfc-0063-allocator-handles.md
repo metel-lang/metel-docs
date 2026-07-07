@@ -10,7 +10,7 @@ updated: '2026-07-06'
 > lifetime tag, a disjointness proof, and an allocation strategy — fails once RFC-0066
 > (individual drop/move-out) is admitted: a value's lifetime and its allocator's scope
 > are two distinct things. The split model separates them. This RFC specifies the
-> allocator half. Lifetime anchors are specified in RFC-0067 (Reference Types). The
+> allocator half. Lifetime anchors are specified in RFC-0067 (Lifetime Anchors and Allocator-Pointer References). The
 > unified model is documented in `reports/memory-model/lifetimes-vs-regions-2026-07-02.md`.
 > Depends on RFC-0071 (Ownership and Move Semantics). Annotation-reduction ergonomics
 > are deferred to RFC-0065. RFC-0069, RFC-0085, RFC-0087 are retracted.
@@ -502,7 +502,7 @@ change anything recorded above.
 - RFC-0066 (Allocated Value Extraction) — how to obtain `T` or `&T` from `@a T`;
   §3a specifies why extraction never happens implicitly at a plain-parameter call
   site, which is what makes the tag-only form necessary rather than redundant.
-- RFC-0067 (Reference Types) — lifetime anchors `&r T`, `&r mut T`; the split from
+- RFC-0067 (Lifetime Anchors and Allocator-Pointer References) — lifetime anchors `&r T`, `&r mut T`; the split from
   allocator lifetime.
 - RFC-0068 (Struct-Owned Allocators) — `struct Foo(@a: BumpAlloc)` primary constructor
   syntax for allocator ownership.

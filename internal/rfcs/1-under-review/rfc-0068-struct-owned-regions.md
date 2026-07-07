@@ -131,7 +131,7 @@ Every method on a struct with an owned allocator has access to two distinct life
 
 ```metel
 fun root(&self) -> &self AstNode { ... }
-// &self AstNode: valid for the struct's own lifetime (RFC-0067 §2 — `self` is the anchor)
+// &self AstNode: valid for the struct's own lifetime (RFC-0067 §1 — `self` is the anchor)
 // The borrow of Parser used to call `root` may expire; the returned ref stays valid
 // as long as `parser` (the binding) is alive.
 ```
@@ -188,4 +188,4 @@ impl Parser {
 
 - RFC-0063 (Allocator Handles) — allocator values; `@a expr`; sendability.
 - RFC-0065 (Allocator Ergonomics) — `@`-elision; two-or-more allocator discipline.
-- RFC-0067 (Reference Types) — `&r T` / `&r mut T`; `&self` denotation in return types.
+- RFC-0067 (Lifetime Anchors and Allocator-Pointer References) — `&r T` / `&r mut T`; `&self` denotation in return types.
