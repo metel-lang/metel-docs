@@ -18,9 +18,15 @@ items. This was previously deferred (see the old "Exhaustive capture lists" alte
 adopted below) and is what makes the capture list a complete, checkable field list for the
 closure's captured-environment aggregate — see Implementation Guidance.*
 
+*Updated a third time 2026-07-07: read-only reference captures (`&ident`), previously deferred,
+are now included — see the Semantics section. "Free variable," for exhaustiveness purposes, is
+clarified to mean outer-scope local bindings only; references to module-level functions,
+constants, types, and aspects are name resolution, not capture, and never need to appear in the
+list.*
+
 ## Summary
 
-Add an optional capture list syntax to closure expressions. The capture list supports three specifiers: `&mut ident` captures a non-linear binding by mutable reference, enabling a closure to mutate outer-scope state without a separate `*mut` binding; `move ident` transfers ownership of a linear binding into the closure (RFC-0046 — refused; a split-model successor is needed, see Timing Recommendation); bare `ident` captures by value (clone). All three may appear in the same list. Once a closure has a capture list at all, it must be exhaustive — every free variable the closure body references must appear in it. All captures are explicit at the closure definition site.
+Add an optional capture list syntax to closure expressions. The capture list supports four specifiers: `&mut ident` captures a non-linear binding by mutable reference, enabling a closure to mutate outer-scope state without a separate `*mut` binding; `&ident` captures a non-linear binding by read-only reference, avoiding a clone for values that are only read; `move ident` transfers ownership of a linear binding into the closure (RFC-0046 — refused; a split-model successor is needed, see Timing Recommendation); bare `ident` captures by value (clone). All four may appear in the same list. Once a closure has a capture list at all, it must be exhaustive — every free variable the closure body references, where "free variable" means an outer-scope local binding (not a module-level function, constant, type, or aspect), must appear in it. All captures are explicit at the closure definition site.
 
 ---
 
@@ -55,10 +61,10 @@ Extend the closure expression syntax with an optional capture list placed before
 ```
 closure_expr  = capture_list? "(" params ")" "->" return_type block
 capture_list  = "[" capture_item ("," capture_item)* "]"
-capture_item  = "&mut" ident | "move" ident | ident
+capture_item  = "&mut" ident | "&" ident | "move" ident | ident
 ```
 
-`&mut ident` captures a non-linear binding by mutable reference. `move ident` transfers ownership of a linear binding into the closure (see RFC-0046). A bare `ident` captures by value (clone) — the same behavior closures have always had for unlisted bindings, just now written explicitly. All three specifiers may appear in the same list: `[&mut count, move buf, log_prefix]`.
+`&mut ident` captures a non-linear binding by mutable reference. `&ident` captures a non-linear binding by read-only reference — the value is not cloned, but the closure may not write through it. `move ident` transfers ownership of a linear binding into the closure (see RFC-0046). A bare `ident` captures by value (clone) — the same behavior closures have always had for unlisted bindings, just now written explicitly. All four specifiers may appear in the same list: `[&mut count, &config, move buf, log_prefix]`.
 
 Bindings named with `&mut` in the capture list are captured by mutable reference rather than by value. Inside the closure body they are used with ordinary read and assignment syntax — no pointer dereference required:
 
@@ -76,9 +82,24 @@ fun main() {
 }
 ```
 
-If a closure has no capture list at all, every free variable it references continues to be captured by value (deep clone) implicitly — the RFC-0006 default, unchanged for the common case where nothing needs `&mut` or `move`.
+`&ident` exists for the same reason `&mut ident` does: avoiding a cost the clone-capture default imposes unnecessarily. A large read-only structure that a closure only reads doesn't need to be cloned into it:
 
-If a closure *does* have a capture list, that list must be exhaustive: every free variable the closure body references must appear in it, with the specifier matching how it's used. A closure mixing a mutable capture with an otherwise-ordinary clone capture now looks like:
+```metel
+fun main() {
+    let config: Config = Config::load();   // large struct, read-only in the closure below
+
+    let handle = [&config] (req: Request) -> Response {
+        route(req, config)   // reads through the reference; no clone at closure-creation time
+    };
+
+    handle(req_a);
+    handle(req_b);
+}
+```
+
+If a closure has no capture list at all, every free variable it references continues to be captured by value (deep clone) implicitly — the RFC-0006 default, unchanged for the common case where nothing needs `&mut`, `&`, or `move`.
+
+If a closure *does* have a capture list, that list must be exhaustive: every free variable the closure body references must appear in it, with the specifier matching how it's used. "Free variable" means an outer-scope **local binding** — a `let` binding or function/closure parameter visible in the lexical scope enclosing the closure. It does not include references to module-level functions, constants, types, or aspects: those are resolved by ordinary name resolution regardless of any capture list, and never need to appear in it, since nothing about them is being captured from a stack frame. A closure mixing a mutable capture with an otherwise-ordinary clone capture now looks like:
 
 ```metel
 fun main() {
@@ -87,14 +108,14 @@ fun main() {
 
     let inc = [&mut count, log_prefix] () -> () {
         count += 1;
-        print(log_prefix + count.to_string());
+        print(log_prefix + count.to_string());   // `print` is a module-level function, not a free variable
     };
 
     inc();
 }
 ```
 
-Referencing a free variable that is not in the list — of any kind, including ones that would only need clone capture — is a compile error once the closure has a capture list at all.
+Referencing a free local binding that is not in the list — of any kind, including ones that would only need clone capture — is a compile error once the closure has a capture list at all. References to module-level items are unaffected.
 
 ### Semantics
 
@@ -103,6 +124,11 @@ Referencing a free variable that is not in the list — of any kind, including o
 - Inside the closure body, reads and writes of the binding are automatically routed through the stored pointer. The programmer never sees the pointer explicitly.
 - The outer binding must be declared `let mut`. Attempting to capture a non-mutable binding via `&mut` is a compile error.
 
+**`&` (read-only reference) captures:**
+- At closure creation time, each `&ident` capture takes the address of the named binding (equivalent to `&ident`) and stores the resulting `*T` in the closure's captured environment. No clone occurs.
+- Inside the closure body, reads of the binding are automatically routed through the stored pointer. The programmer never sees the pointer explicitly, and cannot write through it — assigning to a `&`-captured binding inside the closure body is a compile error, the same rule that applies to any `*T` value outside a closure.
+- Unlike `&mut`, the outer binding does not need to be declared `let mut` — `&ident` is valid for any addressable non-linear binding, matching `&x`'s existing rules outside of closures (RFC-0043).
+
 **`move` captures:**
 - At closure creation time, each `move ident` capture transfers ownership of the named linear binding into the closure's environment. The outer binding is consumed at closure creation — using it after is a compile error.
 - A closure with any `move` capture has type `linear fun(...) -> T`: it must be called exactly once (see RFC-0046).
@@ -110,15 +136,11 @@ Referencing a free variable that is not in the list — of any kind, including o
 
 **Bare `ident` (clone) captures:**
 - At closure creation time, each bare `ident` capture deep-clones the named binding into the closure's captured environment — identical to today's implicit RFC-0006 capture, just named explicitly.
-- Any non-linear binding the closure body reads (without mutating through it or moving it) can use this form.
+- Any non-linear binding the closure body reads (without mutating through it or moving it) can use this form; `&ident` is usually preferable for large values purely to avoid the clone, but both are legal.
 
-**All three:**
+**All four:**
 - A binding may not appear more than once across the capture list (no dual capture of the same name under different kinds).
-- **Exhaustiveness.** A closure with no capture list retains the RFC-0006 default: every free variable is implicitly clone-captured. A closure *with* a capture list must enumerate every free variable it references — there is no third, partial mode where some captures are explicit and others are silently implicit. This closes a gap in the original design, where `[&mut count]` could coexist with other, unlisted clone-captured variables in the same closure; see Implementation Guidance for why this matters beyond ergonomics.
-
-### Read-only reference captures
-
-This RFC covers only `&mut` captures. Read-only reference capture (`&ident`) is deferred; value capture already handles the immutable case adequately.
+- **Exhaustiveness.** A closure with no capture list retains the RFC-0006 default: every free local binding is implicitly clone-captured. A closure *with* a capture list must enumerate every free local binding it references — there is no partial mode where some captures are explicit and others are silently implicit. Module-level functions, constants, types, and aspects are never "free variables" for this rule (see Proposal); only outer-scope `let` bindings and parameters count. This closes a gap in the original design, where `[&mut count]` could coexist with other, unlisted clone-captured variables in the same closure; see Implementation Guidance for why this matters beyond ergonomics.
 
 ---
 
@@ -175,11 +197,11 @@ case, and a trustworthy field list wherever a capture list exists.
 
 ## Resolved Questions
 
-1. **Lifetime of the mutable reference. ✓ Resolved** — In the interpreter, the outer binding's storage is heap-backed so there is no unsoundness. Under a future compiler, a closure holding `&mut` to a stack binding must not outlive that binding. Precise enforcement defers to the borrow checker. No interpreter-level restriction is imposed now.
+1. **Lifetime of the mutable reference. ✓ Resolved** — In the interpreter, the outer binding's storage is heap-backed so there is no unsoundness. Under a future compiler, a closure holding `&mut` (or `&`) to a stack binding must not outlive that binding. Precise enforcement defers to the borrow checker. No interpreter-level restriction is imposed now.
 
-2. **Interaction with concurrency. ✓ Resolved** — `*mut T` is not `Send` (RFC-0003's `Send` marker aspect; the original citation of RFC-0028 no longer applies — that RFC is refused). A closure is `Send` only if all its captured values are `Send`. Any `[&mut x]` closure is therefore automatically non-`Send` — no new rule needed; falls out of the existing model. Once RFC-0067 lands and `*mut T` is superseded by `&r mut T`, this should be restated in terms of whatever `Send` rule RFC-0067/RFC-0074 give lifetime-anchored references — not yet specified, tracked as a residual, not a blocker.
+2. **Interaction with concurrency. ✓ Resolved** — `*mut T` and `*T` are not `Send` (RFC-0003's `Send` marker aspect; the original citation of RFC-0028 no longer applies — that RFC is refused). A closure is `Send` only if all its captured values are `Send`. Any `[&mut x]` or `[&x]` closure is therefore automatically non-`Send` — no new rule needed; falls out of the existing model. Once RFC-0067 lands and `*mut T`/`*T` are superseded by `&r mut T`/`&r T`, this should be restated in terms of whatever `Send` rule RFC-0067/RFC-0074 give lifetime-anchored references — not yet specified, tracked as a residual, not a blocker.
 
-3. **Multiple closures capturing the same binding. ✓ Resolved** — Two closures with `[&mut x]` both hold a mutable pointer to `x`. This is safe in the single-threaded interpreter (sequential calls; aliased mutation is not concurrent). Under the borrow checker, at most one live mutable reference at a time will be enforced. Document now; restrict later.
+3. **Multiple closures capturing the same binding. ✓ Resolved** — Two closures with `[&mut x]` both hold a mutable pointer to `x`. This is safe in the single-threaded interpreter (sequential calls; aliased mutation is not concurrent). Under the borrow checker, at most one live mutable reference at a time (or many live `&x` read-only references, exclusive of any `&mut x`) will be enforced. Document now; restrict later.
 
 4. **Syntax. ✓ Re-resolved** — `[&mut x]` was confirmed jointly with RFC-0046. RFC-0063's
    pre-split "Region Handles" draft briefly introduced `[region]` in the same position,
@@ -188,21 +210,36 @@ case, and a trustworthy field list wherever a capture list exists.
    RFC reached implementation. `[...]` is unambiguously capture-list syntax; no grammar
    change is needed.
 
+5. **Read-only reference captures. ✓ Resolved (2026-07-07)** — Originally deferred on the
+   grounds that clone capture "already handles the immutable case adequately." Adopted instead:
+   clone capture handles correctness but not cost — a large read-only value captured by many
+   closures pays a full deep clone per closure for no reason, symmetric to why `&mut` was added
+   over the `*mut` workaround in the first place. `&ident` closes that gap using exactly the
+   existing `&x` → `*T` rule (RFC-0043); no new addressing mechanism was needed, only exposing it
+   as a capture-list specifier.
+
+6. **Scope of "free variable" for exhaustiveness. ✓ Resolved (2026-07-07)** — Only outer-scope
+   local bindings (`let` bindings and parameters visible in the closure's enclosing lexical
+   scope) count. Module-level functions, constants, types, and aspects are resolved by ordinary
+   name resolution and are never subject to the capture list or its exhaustiveness rule — nothing
+   about them is being captured from a stack frame, so there is nothing for the list to enumerate.
+
 ---
 
 ## Timing Recommendation
 
-*Superseded 2026-07-07: the original recommendation below tied the entire RFC — including the
-`&mut` half, which has no linear dependency — to linear types landing first, because it was
-written jointly with RFC-0046 before the split model existed. The two capture kinds now have
-independent timing.*
+*Superseded 2026-07-07: the original recommendation below tied the entire RFC — including
+`&mut`/`&`/clone captures, which have no linear dependency — to linear types landing first,
+because it was written jointly with RFC-0046 before the split model existed. `move` now has
+independent timing from the other three.*
 
-**`&mut` captures** have no dependency on linear types, allocators, or brands. Their only
-prerequisite (RFC-0043) is already implemented. They can be implemented as soon as convenient,
-targeting whatever pointer/reference syntax is current at implementation time — if implemented
-before RFC-0067 (Reference Types) lands, they'll use today's `*mut T` and need a mechanical
-rename to `&r mut T` once RFC-0067 supersedes RFC-0043; sequencing the implementation
-immediately after RFC-0067 avoids that rename but is not required.
+**`&mut`, `&`, and bare `ident` (clone) captures** have no dependency on linear types,
+allocators, or brands. Their only prerequisite (RFC-0043) is already implemented. They can be
+implemented as soon as convenient, targeting whatever pointer/reference syntax is current at
+implementation time — if implemented before RFC-0067 (Reference Types) lands, `&mut`/`&` will
+use today's `*mut T`/`*T` and need a mechanical rename to `&r mut T`/`&r T` once RFC-0067
+supersedes RFC-0043; sequencing the implementation immediately after RFC-0067 avoids that rename
+but is not required. Bare `ident` has no pointer representation to rename at all.
 
 **`move` captures** remain blocked. RFC-0046, which specified `move`'s semantics (`linear fun`,
 consume-at-capture, single-call safety), is refused — not merely on hold — because it was
@@ -212,9 +249,9 @@ before it can be implemented. That successor is not yet written and is properly 
 concern (see `reports/implementation/roadmap-2026-07-07.md`), alongside the rest of the
 linear-types tower.
 
-**Suggested order:** implement the `&mut` half of this RFC now (or alongside RFC-0067);
-implement the `move` half once a split-model successor to RFC-0046 exists and linear types have
-a settled design.
+**Suggested order:** implement the `&mut`/`&`/clone three of this RFC now (or alongside
+RFC-0067); implement `move` once a split-model successor to RFC-0046 exists and linear types
+have a settled design.
 
 ---
 
