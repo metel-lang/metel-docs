@@ -4,9 +4,16 @@ title: "Closure Capture Lists"
 date: '2026-06-03'
 ---
 
+*Updated 2026-07-07 against the split model: the bracket-syntax conflict with region/allocator
+parameters no longer applies (RFC-0063/0065 dropped bracket syntax for allocators); the `&mut`
+and `move` halves now have independent timing, since only `move` depends on linear types; and an
+implementation-guidance section was added covering how to build captures so structural records
+and brand types don't force a rewrite later. See Timing Recommendation and Implementation
+Guidance below.*
+
 ## Summary
 
-Add an optional capture list syntax to closure expressions. The capture list supports two specifiers: `&mut ident` captures a non-linear binding by mutable reference, enabling a closure to mutate outer-scope state without a separate `*mut` binding; `move ident` transfers ownership of a linear binding into the closure (RFC-0046). Both specifiers may appear in the same list. All captures are explicit at the closure definition site.
+Add an optional capture list syntax to closure expressions. The capture list supports two specifiers: `&mut ident` captures a non-linear binding by mutable reference, enabling a closure to mutate outer-scope state without a separate `*mut` binding; `move ident` transfers ownership of a linear binding into the closure (RFC-0046 — refused; a split-model successor is needed, see Timing Recommendation). Both specifiers may appear in the same list. All captures are explicit at the closure definition site.
 
 ---
 
@@ -86,130 +93,24 @@ This RFC covers only `&mut` captures. Read-only reference capture (`&ident`) is 
 
 ---
 
-## Conflict with Region Syntax (RFC-0063)
+## Historical: Conflict with Region Syntax (resolved, no longer applicable)
 
-RFC-0063 and RFC-0065 introduce region parameters on closures using the same bracket
-position this RFC uses for capture lists:
+*This section described a real conflict against the pre-split "Region Handles" version of
+RFC-0063, which used `[region]` bracket syntax for region parameters on closures. It is kept
+here for the record; it no longer applies to the current design.*
 
-```metel
-// RFC-0050 — capture list
-let inc = [&mut count]() -> () { count += 1; };
+The original concern: RFC-0063/0065 appeared to introduce allocator/region parameters on
+closures using the same bracket position this RFC uses for capture lists (`[region]()` vs.
+`[&mut count]()`), which would have been ambiguous or required one of three disambiguation
+schemes (sequential brackets, a unified bracket, or moving captures to a `capture(...)`
+keyword form).
 
-// RFC-0063/0065 — region parameter
-AutoRegion::scoped([region]() -> { process(region) });
-```
-
-Both forms place `[…]` immediately before `(`. A closure that needs *both* — a
-region-parameterised callback that also captures mutable outer state — has no defined
-form under either RFC.
-
-Content-based disambiguation partially rescues the single-bracket case:
-
-- Items beginning with `&mut` or `move` are unambiguously capture specifiers.
-- A bare identifier is unambiguously a region parameter.
-
-This works for the two common solo cases. It fails for the combined case, and it creates
-a latent parsing ambiguity if future capture specifiers are added that do not begin with a
-keyword.
-
-Three solutions are proposed below; the syntax resolved question is re-opened pending a
-decision.
-
-### Solution A — Sequential brackets
-
-Assign a fixed order: region parameters always come first, capture list always comes
-second. Each bracket retains its existing syntax unchanged.
-
-```
-closure_expr = region_params? capture_list? "(" params ")" "->" type block
-region_params = "[" ident ("," ident)* "]"
-capture_list  = "[" capture_item ("," capture_item)* "]"
-capture_item  = "&mut" ident | "move" ident
-```
-
-The parser distinguishes the two brackets by content: if the first token after `[` is
-`&mut` or `move`, the bracket is a capture list; if it is a bare identifier, it is a
-region parameter list. Two consecutive brackets give one of each in order.
-
-```metel
-// region only
-[region]() -> { ... }
-
-// captures only
-[&mut count]() -> { ... }
-
-// both — region first, captures second
-[region][&mut count]() -> { ... }
-```
-
-**Advantages:** both existing syntaxes are preserved exactly; the combined form is
-unambiguous and systematic.
-
-**Disadvantages:** `[region][&mut count]` is visually heavy and double-bracket syntax
-is unusual; content-based disambiguation relies on the rule that region parameters are
-always bare identifiers, which must be maintained by all future extensions to both RFCs.
-
-### Solution B — Unified bracket
-
-Merge both concerns into a single `[…]` list. Items are distinguished by form: bare
-identifiers are region parameters; prefixed items are captures. Both may appear in the
-same list.
-
-```
-bracket_list = "[" bracket_item ("," bracket_item)* "]"
-bracket_item = ident              // region parameter
-             | "&mut" ident       // mutable capture
-             | "move" ident       // move capture
-```
-
-```metel
-// region only
-[region]() -> { ... }
-
-// captures only
-[&mut count]() -> { ... }
-
-// both — order within the bracket is unconstrained
-[region, &mut count]() -> { ... }
-```
-
-**Advantages:** one bracket, fewer tokens; the solo cases parse identically to today.
-
-**Disadvantages:** the single bracket now carries two independent semantic roles; the
-ordering of region parameters relative to capture items is unconstrained, which may make
-reading closures harder; a future capture specifier that is also a bare identifier (e.g.
-a by-name value capture `ident`) would reintroduce ambiguity.
-
-### Solution C — Keyword-prefixed captures, brackets reserved for regions
-
-Repurpose the `[…]` position exclusively for region parameters (consistent with RFC-0063)
-and introduce a new keyword form for captures, placed after the region bracket and before
-the parameter list.
-
-```
-closure_expr = region_params? ("capture" "(" capture_item ("," capture_item)* ")")?
-               "(" params ")" "->" type block
-capture_item = "&mut" ident | "move" ident
-```
-
-```metel
-// region only
-[region]() -> { ... }
-
-// captures only — brackets gone; capture keyword used
-capture(&mut count)() -> { ... }
-
-// both
-[region] capture(&mut count)() -> { ... }
-```
-
-**Advantages:** `[…]` is unambiguously region syntax everywhere in the language;
-captures are visually distinct from region parameters; no content-based disambiguation
-needed.
-
-**Disadvantages:** breaks the capture-list syntax established by this RFC; the `capture`
-keyword adds verbosity and a new reserved word; existing documentation and test code
-using `[&mut x]` closures must be updated.
+**Resolution:** RFC-0063's 2026-07-05 rewrite (the "split model," retitled "Allocator
+Handles") dropped the bracket channel for allocator parameters entirely — RFC-0065 §1a notes
+the change explicitly as `@[r]` → `@`. Allocator/tag parameters are now written with the `@`
+prefix directly on the type or value channel, not with `[...]`. `[...]` is therefore
+unambiguously reserved for capture lists; no disambiguation scheme is needed, and Resolved
+Question 4 below is re-resolved rather than left open.
 
 ---
 
@@ -237,26 +138,69 @@ Require every captured binding to appear in the list, with `&mut` or by-value ma
 
 1. **Lifetime of the mutable reference. ✓ Resolved** — In the interpreter, the outer binding's storage is heap-backed so there is no unsoundness. Under a future compiler, a closure holding `&mut` to a stack binding must not outlive that binding. Precise enforcement defers to the borrow checker. No interpreter-level restriction is imposed now.
 
-2. **Interaction with concurrency. ✓ Resolved** — `*mut T` is not `Send` (RFC-0028, RFC-0003). A closure is `Send` only if all its captured values are `Send`. Any `[&mut x]` closure is therefore automatically non-`Send` — no new rule needed; falls out of the existing model.
+2. **Interaction with concurrency. ✓ Resolved** — `*mut T` is not `Send` (RFC-0003's `Send` marker aspect; the original citation of RFC-0028 no longer applies — that RFC is refused). A closure is `Send` only if all its captured values are `Send`. Any `[&mut x]` closure is therefore automatically non-`Send` — no new rule needed; falls out of the existing model. Once RFC-0067 lands and `*mut T` is superseded by `&r mut T`, this should be restated in terms of whatever `Send` rule RFC-0067/RFC-0074 give lifetime-anchored references — not yet specified, tracked as a residual, not a blocker.
 
 3. **Multiple closures capturing the same binding. ✓ Resolved** — Two closures with `[&mut x]` both hold a mutable pointer to `x`. This is safe in the single-threaded interpreter (sequential calls; aliased mutation is not concurrent). Under the borrow checker, at most one live mutable reference at a time will be enforced. Document now; restrict later.
 
-4. **Syntax. ✗ Re-opened** — `[&mut x]` was confirmed jointly with RFC-0046. RFC-0063
-   subsequently introduced `[region]` in the same syntactic position for region parameters,
-   creating a conflict for closures that need both. Solutions A, B, and C above are the
-   live candidates; a decision is required before this RFC can be implemented. The choice
-   also determines whether the capture-list grammar in this RFC must be revised, and
-   whether existing interpreter code using `[&mut x]` closures needs updating.
+4. **Syntax. ✓ Re-resolved** — `[&mut x]` was confirmed jointly with RFC-0046. RFC-0063's
+   pre-split "Region Handles" draft briefly introduced `[region]` in the same position,
+   creating a conflict (see the Historical section above), but the split-model rewrite of
+   RFC-0063/0065 dropped bracket syntax for allocator parameters (`@[r]` → `@`) before this
+   RFC reached implementation. `[...]` is unambiguously capture-list syntax; no grammar
+   change is needed.
 
 ---
 
 ## Timing Recommendation
 
-This RFC should not be implemented before at least a prototype design exists for linear types (see the Memory and Reference Model RFC). The capture list is semantically a borrow, and the two features need a compatible story for lifetime checking before the interpreter implementation can be considered sound under a future compiler. Implementing it in the interpreter as syntactic sugar over the existing `*mut` pointer mechanism is safe for the short term, but the semantics must be locked down before the compiler milestone.
+*Superseded 2026-07-07: the original recommendation below tied the entire RFC — including the
+`&mut` half, which has no linear dependency — to linear types landing first, because it was
+written jointly with RFC-0046 before the split model existed. The two capture kinds now have
+independent timing.*
 
-**Prerequisite:** RFC-0043 (Regular Pointers and Mutable Pointers) — already implemented.
+**`&mut` captures** have no dependency on linear types, allocators, or brands. Their only
+prerequisite (RFC-0043) is already implemented. They can be implemented as soon as convenient,
+targeting whatever pointer/reference syntax is current at implementation time — if implemented
+before RFC-0067 (Reference Types) lands, they'll use today's `*mut T` and need a mechanical
+rename to `&r mut T` once RFC-0067 supersedes RFC-0043; sequencing the implementation
+immediately after RFC-0067 avoids that rename but is not required.
 
-**Suggested order:** RFC-0028 accepted → RFC-0046 accepted → this RFC implemented in interpreter → compiler picks up native reference semantics.
+**`move` captures** remain blocked. RFC-0046, which specified `move`'s semantics (`linear fun`,
+consume-at-capture, single-call safety), is refused — not merely on hold — because it was
+written entirely in terms of the old unified `Region` model (cites RFC-0025, RFC-0028,
+RFC-0051, all now in `5-refused/`). `move` capture needs a split-model successor to RFC-0046
+before it can be implemented. That successor is not yet written and is properly a Stage B
+concern (see `reports/implementation/roadmap-2026-07-07.md`), alongside the rest of the
+linear-types tower.
+
+**Suggested order:** implement the `&mut` half of this RFC now (or alongside RFC-0067);
+implement the `move` half once a split-model successor to RFC-0046 exists and linear types have
+a settled design.
+
+---
+
+## Implementation Guidance: Build Captures as Aggregates, Not a Closure-Specific Mechanism
+
+*Added 2026-07-07.* Structural records and brand types are both expected in later stages (see
+`reports/substructural-types/` and `reports/strategy/integrated-language-overview-2026-07-07.md`).
+Neither is a dependency of this RFC, but the implementation should be shaped so that neither
+forces a rewrite of closure capture when they land:
+
+- **Representation.** Store a closure's captured bindings as a plain closed, named-field
+  aggregate — the same shape as struct field storage — not a bespoke closure-environment type.
+  Structural records, when they land, are closed field-lists of the same shape; if the
+  representation already matches, records can describe or subsume it without a runtime rewrite.
+- **Escape checking.** Whatever the split model uses to check that an allocator/lifetime-tagged
+  value doesn't escape its scope should be written as a generic check over an aggregate's field
+  types, not as bespoke closure logic. A `[&mut count]` or future `[move buf]` closure is then
+  covered automatically because its captured environment *is* an aggregate, with nothing
+  closure-specific to revisit if brand-kind unification later generalizes escape checking.
+- **`move` and linear consumption, when Stage B lands.** Implement "is this closure `linear
+  fun`" as a derived fact — the captured-environment aggregate has an outstanding unconsumed
+  linear field — using the same per-field consumption mechanism adopted for partial consumption
+  of a linear struct (RFC-0063 §9 item 5's eventual resolution). This treats linear closure
+  capture and linear struct partial-consumption as one mechanism applied to two syntactic forms,
+  rather than two features designed separately that later need reconciling.
 
 ---
 
@@ -266,9 +210,18 @@ This RFC should not be implemented before at least a prototype design exists for
 - RFC-0041: Lambda Syntax for Anonymous Functions
 - RFC-0043: Regular Pointers and Mutable Pointers
 - Closure capture tests: `tests/evaluator/sources/closures/72_closure_internal_ptr_no_outer_effect.mtl`, `73_closure_direct_assign_no_outer_effect.mtl`, `74_closure_external_ptr_affects_outer.mtl`
-- RFC-0046: Linear Closure Capture — `move` specifier in capture lists; `linear fun` type; resolved jointly with this RFC
-- RFC-0063: Region Handles — introduces `[region]` in the same bracket position; source of the syntax conflict analysed above
-- RFC-0065: Region Ergonomics — uses `[region]() -> {}` closure form throughout; affected by whichever solution is chosen
+- RFC-0046: Linear Closure Capture — **refused** (`5-refused/`); specified `move`'s semantics
+  (`linear fun` type, consume-at-capture) against the old unified `Region` model. A split-model
+  successor is needed before `move` capture can be implemented — see Timing Recommendation above.
+- RFC-0063: Allocator Handles (`1-under-review`, retitled from "Region Handles" in the 2026-07-05
+  split-model rewrite) — no longer uses bracket syntax for allocator parameters; see Historical
+  section above.
+- RFC-0065: Allocator Ergonomics (`1-under-review`, retitled from "Region Ergonomics") — no
+  longer affects this RFC's bracket syntax.
+- RFC-0067: Reference Types (`1-under-review`) — supersedes RFC-0043's `*mut T` with `&r mut T`;
+  see Timing Recommendation above for sequencing.
+- `reports/implementation/roadmap-2026-07-07.md` — phased sequencing this RFC's two halves fit
+  into.
 - C++ lambda capture lists — prior art for syntax and semantics
 
 ---
