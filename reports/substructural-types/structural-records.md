@@ -798,3 +798,107 @@ let r = p.to_record();   // record { small: i32, big: i32 } == { small: 1, big: 
 // pack whatever `small`/`big` a record holds straight back into a SortedPair, silently
 // bypassing `new`'s reordering. Reconstruction stays routed through `SortedPair::new`.
 ```
+
+### Per-field multiplicity, worked end to end
+
+Three examples, each showing a different facet of what tracking multiplicity per field
+(rather than once for the whole struct) actually buys — added 2026-07-08, motivated by
+`linear-types.md`'s multiplicity lattice, illustrated here across all three tiers of §10.
+
+**Why whole-value `Drop` isn't enough, concretely.** Today, RFC-0071 §7 bans *any*
+partial move out of a type that implements `Drop` — wholesale, regardless of which
+fields `drop` actually reads:
+
+```metel
+struct Connection { socket: Socket, stats: ConnStats }
+
+impl Drop for Connection {
+    fun drop(self: Connection) {
+        self.socket.close_if_open();
+    }
+}
+
+fun close_and_report(c: Connection) -> ConnStats {
+    let stats = c.stats;   // ERROR today: partial move out of a Drop type is banned
+                           // outright, even though `stats` has nothing to do with
+                           // what `drop` actually touches
+    c.socket.close();
+    stats
+}
+```
+
+`stats` never needed any consumption discipline at all — it only inherited one because
+it happened to share a struct with `socket`. With §2's declared field-usage on `drop`,
+the residual left after moving `stats` out stays exactly as droppable as it needs to be:
+
+```metel
+impl Drop for Connection {
+    fun drop(self: Connection) uses (socket) {   // declares: drop only ever touches `socket`
+        self.socket.close_if_open();
+    }
+}
+
+fun close_and_report(c: Connection) -> ConnStats {
+    let stats = c.stats;      // fine now — residual record { socket: Socket } is still
+                              // Drop-eligible on its own, and dropping it only reads
+                              // `socket`, which is still there
+    c.socket.close();
+    stats
+}
+```
+
+**Tier 2's `to_record_mut`/`from_record_mut`: static absence, not a runtime check.**
+
+```metel
+struct FileHandle derives Linear, ToRecord, FromRecord {
+    fd: RawFd,     // the reason FileHandle as a whole is Linear
+    path: String,  // ordinary data, no consumption discipline
+}
+
+fun take_fd(h: &mut FileHandle) -> (RawFd, &mut record { path: String }) {
+    let view = h.to_record_mut();
+    let fd = move view.fd;
+    (fd, view)          // view's residual type, record { path: String }, is not Linear —
+                         // §6's field-composition rule applies to records exactly as it
+                         // does to structs, and `path` alone carries no obligation
+}
+
+fun log_path(view: &record { path: String }) {
+    println("still open at: ${view.path}");
+    // view.fd doesn't typecheck here at all. Compare to fd being declared Perhaps<RawFd>
+    // instead: every read site would need a match/unwrap to find out it's gone. Here
+    // the caller's own parameter type already says so — checked once, at compile time.
+}
+
+fun release(view: &mut record { path: String }, fd: RawFd) -> &mut FileHandle {
+    view.fd = fd;
+    FileHandle::from_record_mut(view)
+}
+```
+
+**Tier 3's row-conditional impls, the construction direction.** Per-field multiplicity
+is equally about a field going from absent (0) to present (1) exactly once — §5's
+"builders, in the dual direction" claim, illustrated in code for the first time here,
+reusing the `R + "field"` notation §5 already introduced in prose:
+
+```metel
+struct RequestBuilder<row R> { data: record { host: String, ..R } }
+
+impl<row R: Lacks<"auth">> RequestBuilder<R> {
+    fun with_auth(self, token: String) -> RequestBuilder<R + "auth"> {
+        RequestBuilder { data: record { ..self.data, auth: token } }
+    }
+}
+
+impl<row R: HasField<"auth", String>> RequestBuilder<R> {
+    fun send(self) -> Response { ... }
+}
+
+fun main() {
+    let req = RequestBuilder { data: record { host: "example.com" } }
+        .with_auth("secret");
+    req.send();
+    // req.with_auth("again");                              -- R already Lacks "auth"
+    // RequestBuilder { data: record { host: "x" } }.send()  -- needs HasField<"auth", _>
+}
+```
