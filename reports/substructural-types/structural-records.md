@@ -102,7 +102,8 @@ then deallocate. Rust's real `Rc`/`Arc` cannot express "drop half this struct, l
 rest alive" safely in the type system, so it does this with raw pointers and
 `ManuallyDrop` instead — declaring `uses (value)` above is the same guarantee this
 document already proposes, applied to a case with actual prior-art pressure behind it
-rather than a constructed example.
+rather than a constructed example. See "Example programs" below for three more cases in
+the same vein.
 
 **This is a narrow point of contact with `Rc`/`Arc`, not a claim that this mechanism
 implements them.** It only covers the teardown-ordering detail — that `value` outlives
@@ -947,3 +948,141 @@ fun main() {
     // RequestBuilder { data: record { host: "x" } }.send()  -- needs HasField<"auth", _>
 }
 ```
+
+### More unsafe-in-Rust gaps this model would close
+
+Added 2026-07-08, continuing §2's `RcBox` example — three further real, documented Rust
+patterns where `unsafe` exists specifically because the type system can't reason about
+part of a struct changing while the rest stays valid, each mapping to a different piece
+of the mechanism above. **Scope, stated plainly:** this is not a claim that `unsafe`
+becomes unnecessary generally — FFI, raw pointer arithmetic, and address-stability
+concerns (`Pin`, self-referential structs) are a different problem this model says
+nothing about. It is specifically the partial-struct-manipulation slice of `unsafe` that
+these examples target.
+
+**Swapping a field's value with no cheap placeholder available.** `mem::replace` needs
+*some* value of the field's type to put in the slot temporarily; when no cheap or
+semantically valid one exists, real code falls back to `unsafe { ptr::read }`/`ptr::write`
+— packaged, for exactly this reason, by crates whose entire purpose is wrapping this one
+unsafe operation, which must additionally abort the process on panic, because there is no
+safe way to represent "this slot currently holds no valid value of any kind" if the
+transformation closure unwinds partway through:
+
+```rust
+struct Session { host: String, state: AuthState }
+enum AuthState { Connected { socket: Socket }, Authenticated { socket: Socket, token: String } }
+
+fn authenticate(session: &mut Session, token: String) {
+    // mem::replace needs a placeholder AuthState to install here first — if every
+    // variant holds a resource with no cheap "empty" case, there isn't a good one
+    let old = std::mem::replace(&mut session.state, /* ??? */);
+    session.state = match old {
+        AuthState::Connected { socket } => AuthState::Authenticated { socket, token },
+        other => other,
+    };
+}
+```
+
+```metel
+struct Session derives ToRecord, FromRecord { host: String, state: AuthState }
+
+fun authenticate(session: &mut Session, token: String) {
+    let view = session.to_record_mut();   // &mut record { host: String, state: AuthState }
+    let old_state = move view.state;       // view narrows to &mut record { host: String } —
+                                            // `state` is genuinely absent here, not holding
+                                            // a placeholder value of any kind
+    let new_state = match old_state {
+        AuthState::Connected { socket } => AuthState::Authenticated { socket, token },
+        other => other,
+    };
+    view.state = new_state;                // view widens back to the full row
+    Session::from_record_mut(view);
+}
+```
+
+No placeholder is ever needed, because the row can represent "no value here at all" as a
+first-class static fact — the thing `mem::replace` has no way to express without a
+same-typed stand-in. A likely additional benefit, not fully worked out here: if the
+transformation panics between the two lines, the residual `view` (`record { host: String
+}`) is an ordinary, fully-valid value — dropping it should fall out of the same
+field-composition Drop rule (§6) this document already relies on, rather than needing the
+process-abort escape hatch the placeholder-free crates above are forced into.
+
+**Piecewise struct construction, field by field, instead of one atomic literal.** Real
+code needing to build a struct incrementally — fields expensive or order-dependent to
+compute, or filled in a loop — uses `MaybeUninit` plus per-field `unsafe` writes plus a
+final `assume_init()`, and has to handle a genuine hazard along the way: if a later
+field's computation panics, the fields already written need manual unsafe drop handling
+or they leak:
+
+```rust
+struct BigConfig { a: A, b: B, c: C }
+
+fn build() -> BigConfig {
+    let mut config = std::mem::MaybeUninit::<BigConfig>::uninit();
+    let ptr = config.as_mut_ptr();
+    unsafe {
+        std::ptr::addr_of_mut!((*ptr).a).write(compute_a());
+        std::ptr::addr_of_mut!((*ptr).b).write(compute_b());  // if this panics, `a` above
+                                                                 // needs manual unsafe cleanup
+        std::ptr::addr_of_mut!((*ptr).c).write(compute_c());
+        config.assume_init()   // an unchecked runtime assertion that every field landed
+    }
+}
+```
+
+```metel
+struct BigConfig derives ToRecord, FromRecord { a: A, b: B, c: C }
+
+fun build() -> BigConfig {
+    let partial = record { a: compute_a() };
+    let partial = record { ..partial, b: compute_b() };  // if this panics, `partial` is an
+                                                            // ordinary, fully-valid record
+                                                            // { a: A } — dropped through the
+                                                            // same safe machinery as any
+                                                            // other value, no manual cleanup
+    let partial = record { ..partial, c: compute_c() };
+    BigConfig::from_record(partial)   // only typechecks once the row exactly matches
+                                       // BigConfig's full shape — assume_init()'s runtime
+                                       // assertion, made a compile-time fact instead
+}
+```
+
+Every intermediate `partial` is a distinct, fully-valid, ordinary record type — never an
+uninitialized-memory state — so there is no window where a panic leaves anything to clean
+up by hand.
+
+**A generic, reusable helper that splits a struct's fields into independent `&mut`
+pieces, across a function boundary.** Rust's borrow checker's field-sensitivity is
+intra-procedural only — it can tell `&mut s.a` and `&mut s.b` are disjoint *within one
+function body*, but there is no stable, safe, generic way to write a function that takes
+`&mut S` and *returns* two independently-usable disjoint field borrows, reusable across
+different struct types. Real code either duplicates the splitting logic inline at every
+call site, or reaches for unsafe pointer-cast tricks to manufacture the two references
+and manually promise they don't alias. This is exactly the motivating gap behind Rust's
+own (still unshipped, as of writing) "view types" proposal. With row polymorphism, the
+split is expressed generically once:
+
+```metel
+fun drain_field<row R, name: Symbol, T>(s: &mut record { name: T | R })
+    -> (T, &mut record { R })
+{
+    let v = move s.[name];
+    (v, s)
+}
+
+struct Handle derives ToRecord, FromRecord { fd: i32, alloc: @a Buffer }
+
+fun example(h: &mut Handle) {
+    let view = h.to_record_mut();
+    let (buf, rest) = drain_field::<_, "alloc", @a Buffer>(view);
+    // `buf: @a Buffer` and `rest: &mut record { fd: i32 }` are independently usable —
+    // `drain_field` was written once, generically, and works unmodified for any struct
+    // that derives ToRecord/FromRecord, not just Handle
+}
+```
+
+`drain_field` never mentions `Handle` — it is written against the row shape once and
+reused for every struct that bridges into it via `to_record_mut`, which is precisely the
+generic, cross-function case plain nominal types (and Rust's borrow checker as it stands
+today) cannot express without either per-struct duplication or unsafe aliasing promises.
