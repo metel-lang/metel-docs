@@ -63,6 +63,17 @@ teardown obligation exists" rather than as one undifferentiated rule. If `linear
 `JoinToken<'b, T>: Linear` and `RcToken<'b>`/`HandlerToken<'b, E>: !Linear` (affine)
 explicitly, rather than leaving both under the same "non-Copy, non-Clone" description.
 
+**Division of labor with `structural-records.md` §2 (added 2026-07-08):** `RcToken`
+answers *who may share and mutate* — handle identity and multiplicity, the subject of
+this document. It says nothing about how the shared allocation's own internal struct
+(refcounts plus value) tears itself down, which is a separate, narrower question:
+`value` outlives the box by *less* than the counters do (a weak handle keeps the
+allocation alive without keeping the value alive), and mainstream implementations handle
+that teardown ordering with `unsafe`/`ManuallyDrop` for lack of a safe alternative.
+`structural-records.md` §2's declared-Drop-field-usage mechanism is a candidate for
+expressing that ordering safely instead — a narrow point of contact with this document's
+subject, not an overlap with it.
+
 ## 3. Two typestate encodings, not one — the fork this document exists to name
 
 `structural-records.md` §5 works out typestate via **row-conditional impls**: the state

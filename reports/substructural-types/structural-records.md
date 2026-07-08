@@ -74,6 +74,51 @@ aware — Rust's restriction is exactly as blunt as Metel's current one, for the
 reason (no per-`Drop`-impl field-dependency tracking exists there either). If worked
 out, this would be a genuinely distinctive capability.
 
+**A second worked example, motivated by a real gap in prior art rather than invented for
+illustration (added 2026-07-08):** `Rc`/`Arc`'s own internal allocation struct has
+exactly this shape, and mainstream implementations resort to `unsafe` specifically
+because their type systems can't express it safely. Internally, something like:
+
+```metel
+struct RcBox<T> {
+    strong: AtomicUsize,
+    weak: AtomicUsize,
+    value: T,
+}
+
+impl<T> Drop for RcBox<T> {
+    fun drop(self: RcBox<T>) uses (value) {
+        drop(self.value);
+    }
+}
+```
+
+When the last *strong* handle drops, `value` must be torn down immediately, but the
+allocation can't be freed yet if any *weak* handle still exists — weak references exist
+precisely to keep the box alive without keeping the value alive. `value`'s lifetime is
+provably shorter than `strong`/`weak`'s, and teardown genuinely happens in two phases:
+drop `value` now, keep the counters valid and readable until weak also reaches zero, only
+then deallocate. Rust's real `Rc`/`Arc` cannot express "drop half this struct, leave the
+rest alive" safely in the type system, so it does this with raw pointers and
+`ManuallyDrop` instead — declaring `uses (value)` above is the same guarantee this
+document already proposes, applied to a case with actual prior-art pressure behind it
+rather than a constructed example.
+
+**This is a narrow point of contact with `Rc`/`Arc`, not a claim that this mechanism
+implements them.** It only covers the teardown-ordering detail — that `value` outlives
+the box by *less* than the counters do, and tearing it down early is sound. The
+reference-counting and aliasing semantics that make `Rc`/`Arc` what they are — many
+handles sharing one allocation, an atomic count mutated through shared references, a
+dynamic uniqueness check for `get_mut` — are a different axis entirely (shared, dynamic,
+many-handles-one-resource, checked at runtime) from what per-field multiplicity provides
+(exclusive, static, one-owner-many-fields, checked at compile time). That axis already
+has a purpose-built answer in this cluster: `brand-types.md`'s `RcToken`, which
+identifies handles by brand and treats `get_mut`-style uniqueness as a runtime check, not
+a row fact (see `README.md`'s open question on `RcToken` vs. `get_mut` — unrelated to,
+and unaffected by, anything in this document). The two mechanisms divide the labor
+cleanly: `RcToken` for who may share and mutate; this document's `uses (...)` declaration
+for how the shared allocation's own internal struct tears itself down.
+
 ## 3. The unifying move: `record` as a real type-former
 
 Once `record` exists, a partial-consumption residual (`linear-types.md` §3, Option C)
