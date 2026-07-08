@@ -155,10 +155,13 @@ understood:
   direction (asking whether named types could be a special case of structural types,
   rather than the reverse §1 already commits to); see that section for why this doesn't
   reopen §7's declined "records as the foundation" verdict, only reuses the identity tag
-  §7 already establishes is unavoidable. (Added 2026-07-08:) `structural-records.md` §10
-  resolves how far that reuse goes: not a universal `(row, brand)` representation for
-  every struct, but a second, opt-in nominal kind (a *named record*) that a struct
-  upgrades into deliberately — `struct` itself stays whole-value-only, unchanged.
+  §7 already establishes is unavoidable. (Added 2026-07-08, revised same day:)
+  `structural-records.md` §10 resolves how far that reuse goes: not a universal
+  `(row, brand)` representation for every struct, but three tiers of increasing
+  commitment a struct opts into deliberately — plain `struct` (unchanged), `derives
+  ToRecord, FromRecord` (on-demand conversion, no impl exposure), and a named-record kind
+  (`(row, brand)` intrinsically, impl-eligible). Only the named-record kind carries this
+  fourth-surface-use identity tag; `struct` and the derive-pair tier never do.
 
 **What this map does not yet resolve**, tracked as its own item below: whether all six
 of these are headed toward one coherent proposal or toward two-or-three independent
@@ -204,17 +207,20 @@ document for the reasoning behind each entry, not just the one-line summary here
   brands was reopened as premature); considerations recorded in `brand-types.md` §3.
 - (Added 2026-07-07, §9; narrowed 2026-07-08, §10) Brand-vs-row impl coherence
   priority — no specificity rule between an ordinary brand-keyed impl and a row-keyed
-  blanket impl is written down; now scoped to the opt-in record kind only, not every
+  blanket impl is written down; now scoped to the named-record tier only, not every
   struct, but still unresolved.
 - (Added 2026-07-07, §9; narrowed 2026-07-08, §10) Private-field leakage into
   cross-module structural matching — `HasField`/`Lacks` need a public-only row
-  projection when checked from outside the declaring module; now scoped to the opt-in
-  record kind only, not every struct, but still not designed.
-- (Added 2026-07-08, §10) Two parallel kinds, not one universal representation —
-  `struct` stays whole-value-only; row/multiplicity capability is an opt-in second
-  nominal kind (a *named record*) with a non-breaking upgrade path from the former to
-  the latter. What syntactically marks the record kind, and whether §6's
-  allocator-type restriction transfers to it, are both open.
+  projection when checked from outside the declaring module; now scoped to the
+  named-record tier only, not every struct, but still not designed.
+- (Added 2026-07-08, revised same day, §10) Three tiers of row capability, not one
+  mechanism — plain `struct` (unchanged), `derives ToRecord, FromRecord` (on-demand
+  conversion, kept as two separate aspects rather than merged, since auto-derived
+  `FromRecord` can bypass constructor invariants a hand-written one wouldn't), and a
+  named-record kind (`(row, brand)` intrinsically, the only tier eligible for
+  row-conditional impls). What syntactically marks the named-record tier, whether §6's
+  allocator-type restriction transfers to it, borrowed (`&mut`) variants of the derive
+  pair, and a constructor-invariant guard for `FromRecord` are all open.
 
 **From `brand-types.md`:**
 - The five unresolved questions from RFC-0076 itself (brand introduction mechanism,

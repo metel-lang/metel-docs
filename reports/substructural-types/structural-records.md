@@ -399,107 +399,205 @@ records-shaped, still not worth the indirection).
   row, with private fields invisible to `HasField`/`Lacks` checks from outside the
   module. This does not appear to be addressed anywhere else in this cluster.
 
-## 10. Resolution: two parallel kinds, not one universal representation
+## 10. Resolution: three tiers of row capability, not one mechanism
 
-*Added 2026-07-08, resolving the tension §9 left open — from a design conversation
-weighing whether pursuing row/multiplicity machinery broadly risks recreating
-TypeScript's structural-typing problems (silent nominal-identity collapse between
-same-shaped types, several competing overlapping idioms for "is this here or not") if
-it becomes available on every struct by default.*
+*Added 2026-07-08, revised same day — resolving the tension §9 left open, from a design
+conversation weighing whether pursuing row/multiplicity machinery broadly risks
+recreating TypeScript's structural-typing problems (silent nominal-identity collapse
+between same-shaped types, several competing overlapping idioms for "is this here or
+not") if it becomes available on every struct by default.*
 
 Decision: **`struct` and the row/multiplicity machinery this cluster has been designing
 (§1, §3, §5, `linear-types.md`'s per-field multiplicity, drain/restore-style partial
-consumption) do not merge into one representation applied to every struct. They stay
-two parallel, purpose-built kinds**, and a struct only gains the row-capable behavior by
-explicit, one-time, per-type declaration.
+consumption) do not merge into one representation applied to every struct.** Row
+capability comes in three tiers of increasing commitment, each answering a genuinely
+different question — not three idioms competing to answer the same one — and a type
+author opts into exactly the tier their use case needs, no further.
 
-- **`struct` stays exactly as simple as it is today.** Whole-value semantics only: one
-  multiplicity for the entire value, moved or dropped as a single unit, no partial
-  consumption, no `Lacks`/row-conditional typestate applicable to it. Nothing about the
-  core `Type::Named` representation or the ordinary struct typechecking path needs to
-  change, ever, to support anything else in this document.
-- **A second, opt-in nominal kind — a *named record*, distinct from but closely related
-  to §3's anonymous `record {...}` type-former — carries §9's `(row, brand)`
-  representation.** Only types explicitly declared this way expose `HasField`/`Lacks`
-  row-conditional impls, per-field multiplicity, and drain/restore. Illustrative syntax
-  only, not settled:
+**Tier 1 — plain `struct`, unchanged.** Whole-value semantics only: one multiplicity for
+the entire value, moved or dropped as a single unit, no partial consumption, no
+`Lacks`/row-conditional typestate applicable to it. Nothing about the core `Type::Named`
+representation or the ordinary struct typechecking path needs to change, ever, to
+support anything else in this document. This stays the default; nothing below changes
+what a plain `struct` means.
 
-  ```metel
-  struct Handle { fd: i32, alloc: @a Buffer }   // whole-value only — the default
+**Tier 2 — `derives ToRecord, FromRecord`: on-demand, explicit, no impl or coherence
+exposure.** A struct stays a `struct` — no representation change, no row-conditional
+impls become legal against it, no `HasField`/`Lacks` bound is ever satisfied by it
+implicitly — but gains two derived conversions, in the same auto-derivable-aspect family
+RFC-0080 already defines for `Send`/`Sync`/`Copy`/`Drop`/`Linear`:
 
-  record Handle { fd: i32, alloc: @a Buffer }   // opts into row/multiplicity machinery
-  ```
+```metel
+struct Handle derives ToRecord, FromRecord { fd: i32, alloc: @a Buffer }
 
-  A named record's full form is exactly an anonymous `record { fd: i32, alloc: @a Buffer
-  }` (§3) wearing a fixed brand (§9 surviving claim 1) — the two `record` uses are the
-  same underlying mechanism, one anonymous and structural, one named and nominal, not
-  two features that happen to share a keyword.
+let h: Handle = ...;
+let r = h.to_record();        // record { fd: i32, alloc: @a Buffer } — same bits, new static type
+let h2 = Handle::from_record(r);
+```
 
-**Why this split, not a compromise between the two extremes already on the table:**
+Both directions are zero-cost — a relabeling of the same bits, not a real conversion —
+but the two aspects are kept **separate, not merged into one**, because the two
+directions carry different soundness weight. Consider a type with a constructor-checked
+invariant:
 
-- **Closes the TypeScript failure mode at its root, not around the edges.**
-  TypeScript's structural-typing problems stem from structural matching being
-  *ambient* — available on every type, by default, all the time. Confining row and
-  multiplicity capability to types that opt in means the overwhelming majority of types
-  never raise the question "does this support drain/restore, or Lacks-typestate, or one
-  of several absence-idioms" at all — the answer is decided once, by the author, at
-  declaration, not re-litigated at every call site by every caller.
-- **Shrinks the implementation cost from §8/§9 by confining it to the opt-in subset.**
-  §8's "the 99% of code that never writes `record {...}` pays for machinery it never
-  asked for" concern, and §9's coherence question, both assumed row-awareness might need
-  to reach every `Type::Named` site. Under this split it only ever needs to reach the
-  record kind — an additive new path alongside the existing one, not a change to it.
-- **Cleanly separates the Cluster A / Cluster B phasing this cluster has been organized
-  around.** Ordinary structs — the large majority of types in any real program — never
-  need the affine/multiplicity/row work to exist at all. Cluster A ships structs,
-  aspects, and generics untouched by anything in this document; the record kind, and
-  everything in `linear-types.md` it depends on, becomes a self-contained Cluster B
-  addition with no retroactive obligation on Cluster A code to have predicted which
-  types would eventually want it.
+```metel
+struct SortedPair { small: i32, big: i32 }   // invariant: small <= big, enforced by SortedPair::new
+```
 
-**The non-breaking upgrade path, and what has to hold for it to actually be
-non-breaking.** Converting `struct Handle {...}` to `record Handle {...}` should not
-require touching any existing caller, provided:
+`derives ToRecord` here is always safe — reading fields out can't violate anything.
+Auto-deriving `FromRecord` would synthesize a reconstruction that packs whatever
+`small`/`big` a record holds straight back into a `SortedPair`, silently bypassing
+`new`'s check. So a type like this derives `ToRecord` alone, and either hand-writes
+`FromRecord` with the check re-added or declines it entirely, forcing reconstruction
+through the real constructor. This mirrors a decision the ecosystem has already made and
+kept for the same reason — serde's `Serialize`/`Deserialize` are separate traits,
+commonly derived together but not merged, because "safe to read out" and "safe to
+construct from arbitrary input" are different risk profiles in practice. It is also the
+only choice consistent with how every other aspect in this design already composes:
+`Send` without `Sync`, `Copy` alone — asymmetric capability sets are the norm here, not
+an exception requiring justification. A bundled `derives Record` shorthand expanding to
+both was considered and declined for the same reason this cluster has repeatedly avoided
+a second spelling for the same action (RFC-0050's exhaustiveness rule, RFC-0065's
+elision-is-never-silent principle).
+
+**No implicit coercion at call sites, regardless of tier.** A `ToRecord`-deriving struct
+must never be silently accepted wherever a row-generic bound is expected — `.to_record()`
+has to appear in the source. Allowing implicit structural coercion here would quietly
+re-widen tier 2 into tier 3 without the type author having asked for it, and would reopen
+the "implicit vs. explicit-opt-in structural satisfaction" question (§11 item 4) in its
+most permissive form. The explicit call is tier 2's entire value, not incidental ceremony.
+
+**Tier 3 — named record kind: permanent, intrinsic, impl-eligible.** A second, opt-in
+nominal kind — a *named record*, distinct from but closely related to §3's anonymous
+`record {...}` type-former — carries §9's `(row, brand)` representation intrinsically,
+not just convertibly. Illustrative syntax only, not settled:
+
+```metel
+record Handle { fd: i32, alloc: @a Buffer }   // row/multiplicity machinery, permanently
+```
+
+This is strictly more than tier 2, and tier 2 cannot substitute for it: **row-conditional
+impls (§5) are resolved by the type system matching a type's own declared row at
+impl-resolution time, not by calling a conversion function.** `impl<row R: Lacks<"token">>
+Session<R> { ... }` needs `Session` to intrinsically carry row structure as part of its
+type — there is no call site for a derived conversion to intercept, so a type that merely
+derives `ToRecord`/`FromRecord` can never have row-conditional impls written against it.
+Conversely, a tier-3 type gets tier 2's conversions for free — `to_record`/`from_record`
+on a type that already *is* `(row, brand)` are the trivial identity coercion, nothing to
+derive separately.
+
+**Why three tiers and not two, and why not merge 2 and 3:** collapsing tier 2 into tier 3
+would force anyone who wants a single local drain/restore dance in one function to also
+accept the coherence-priority and private-field-leakage exposure (§9, narrowed below)
+that only matters for types with row-conditional impls — paying for machinery never
+asked for, the exact complaint §8 already raised about the fuller row system in general.
+Keeping the tiers separate lets each type author stop at the minimum commitment their use
+case needs. The guardrail this depends on: **each tier must correspond to a distinct
+capability requirement — "no row access" / "temporary, explicit, non-impl-eligible row
+access" / "permanent, impl-eligible row access" — never offered as interchangeable
+alternatives for the same need.** If a future addition ever answers a question two tiers
+already answer, that is a sign to fold it in, not to add a fourth tier.
+
+**A separate, smaller feature that rides on top of either tier 2 or tier 3: `from_record`
+tolerating omitted fields typed `Perhaps<T>`.** If a struct declares a field as
+`Perhaps<T>` rather than bare `T`, `from_record` can accept an input record missing that
+field's key entirely and default it to `Perhaps::none()`, rather than requiring an exact
+row match:
+
+```metel
+struct Config derives ToRecord, FromRecord {
+    host: String,
+    timeout: Perhaps<i32>,
+}
+
+let partial = record { host: "example.com" };   // `timeout` key absent entirely
+let cfg = Config::from_record(partial);          // cfg.timeout == Perhaps::none()
+```
+
+Worth being precise about what this is and isn't. `Perhaps<T>` absence is *value-level*
+and dynamic — the field's key and static type are unchanged (`Config` is always
+`{host: String, timeout: Perhaps<i32>}`), and whether it holds a value is checked by
+pattern-matching at each use site, same as `Option::take()` in any language with
+optional types. That is a different axis from *row-level* absence (`record { fd: i32 }`
+with the `alloc` key genuinely gone), which is what drain/restore's static tracking uses.
+For a single concrete struct this feature needs no records at all — declaring
+`timeout: Perhaps<i32>` and calling `.take()` directly gets the identical result with no
+conversion. It earns its keep specifically for **generic, struct-agnostic code**: one
+library function that reconstructs *any* `FromRecord`-deriving type from a partial
+record, defaulting whichever fields happen to be declared `Perhaps<T>` — essentially
+Rust's `..Default::default()` struct-update syntax, generalized to per-field defaults
+instead of requiring the whole remainder to implement `Default`. It should not be
+described as extending drain/restore's static-tracking precision — it is a construction-
+ergonomics convenience answering a different question, and conflating the two would
+recreate exactly the "which mechanism owns absence" ambiguity flagged when this cluster
+first discussed the TypeScript comparison.
+
+**Why any of this split, restated concisely (unchanged from the two-tier version this
+revises):**
+
+- **Closes the TypeScript failure mode at its root.** Structural matching stays
+  non-ambient — the overwhelming majority of types never raise "does this support
+  drain/restore, Lacks-typestate, or some absence-idiom" at all, because the answer is
+  fixed once, by the author, at the declaration or derive, never re-litigated per call
+  site.
+- **Shrinks the implementation cost by confining row-awareness to whichever tier a type
+  opted into** — an additive path alongside ordinary `Type::Named` handling, not a change
+  to it, for both tier 2 and tier 3.
+- **Cleanly separates Cluster A / Cluster B phasing.** Ordinary structs need none of the
+  affine/multiplicity/row work to exist. Cluster A ships structs, aspects, and generics
+  untouched; tiers 2 and 3, and everything in `linear-types.md` they depend on, are a
+  self-contained Cluster B addition with no retroactive obligation on Cluster A code.
+
+**The non-breaking upgrade path.** Tier 1 → tier 2 (adding `derives ToRecord,
+FromRecord`) is additive by construction — no representation change, so nothing about an
+existing caller's typechecking can be affected. Tier 1 → tier 3 (`struct` → `record`)
+needs more care; converting should not require touching any existing caller, provided:
 
 - The nominal name and identity are unchanged — aspect impls, orphan-rule coherence, and
   generic instantiation all key off the same identity as before.
 - Construction and field-access syntax are unchanged — `Handle { fd, alloc }`, `h.fd`,
   pattern matching all read the same.
 - Whole-value use sites keep typechecking exactly as before, against the record's full
-  row — a caller that only ever moves, passes, or returns the entire value never needs
-  to know or care which kind `Handle` is.
+  row — a caller that only ever moves, passes, or returns the entire value never needs to
+  know or care which tier `Handle` is.
 - Row/multiplicity tracking costs nothing at runtime for whole-value-only callers — every
-  mechanism sketched in this cluster so far (row shrink/grow, the affine "must-consume"
-  marker) is compile-time only, so callers who never use the new capabilities pay
-  nothing for their existence.
+  mechanism sketched in this cluster so far is compile-time only.
 
-**One honest caveat: "non-breaking" means "doesn't break existing callers," not
-"changes nothing observable about the type."** The conversion does newly make
-row-conditional generic functions and drain/restore-style APIs legal against `Handle`,
-callable from the declaring module forward — that is the point of upgrading, not a side
-effect to apologize for, but it should be named precisely rather than oversold as fully
-inert.
+**One honest caveat, for tier 3 specifically: "non-breaking" means "doesn't break
+existing callers," not "changes nothing observable about the type."** The conversion
+does newly make row-conditional generic functions and drain/restore-style APIs legal
+against `Handle`, callable from the declaring module forward — that is the point of
+upgrading, not a side effect to apologize for, but it should be named precisely rather
+than oversold as fully inert.
 
 **What this narrows, without fully closing, from §9's open questions:** both still
 apply — brand-vs-row coherence priority, and private-field leakage into cross-module
-structural matching — but only to the subset of types that opted into the record kind,
-not to every struct in the language. The hazard surface shrinks to types whose authors
-already intended some degree of structural exposure by choosing `record` over `struct`;
-it does not disappear.
+structural matching — but only to tier 3, not to every struct in the language, and not to
+tier 2 (which never exposes impls or bound satisfaction at all). The hazard surface
+shrinks to types whose authors deliberately took on the fullest commitment; it does not
+disappear.
 
-**Two new open questions this raises:**
+**Open questions this raises:**
 
-- **What syntactically marks a type as record-kind is not decided.** A separate keyword
-  (`record Handle {...}`, sketched above) versus a modifier on `struct` (e.g. a marker in
-  the `<>` channel, consistent with how `<row R>` and `<&r>` already work) are both
-  plausible; nothing here picks one.
-- **Does §6's "records can't serve as allocator types" restriction transfer to the
-  named-record kind?** §6's objection was that an allocator needs per-*instance*
-  identity while a record's premise is structural interchangeability — but a named
-  record keeps its brand fixed (§9 surviving claim 1), so it is not structurally
-  interchangeable the way an anonymous `record {...}` is. Whether §6's restriction was
-  really about brandless/anonymous records specifically, and simply doesn't transfer to
-  the named kind, is unresolved here.
+- **What syntactically marks tier 3 is not decided.** A separate keyword (`record Handle
+  {...}`, sketched above) versus a modifier on `struct` (e.g. a marker in the `<>`
+  channel, consistent with how `<row R>` and `<&r>` already work) are both plausible;
+  nothing here picks one. (Tier 2's marker is settled by construction — it is just an
+  ordinary derive, no new syntax needed.)
+- **Does §6's "records can't serve as allocator types" restriction transfer to tier 3?**
+  §6's objection was that an allocator needs per-*instance* identity while a record's
+  premise is structural interchangeability — but a tier-3 type keeps its brand fixed (§9
+  surviving claim 1), so it is not structurally interchangeable the way an anonymous
+  `record {...}` is. Whether §6's restriction was really about brandless/anonymous
+  records specifically, and simply doesn't transfer to tier 3, is unresolved here.
+- **Tier 2 as sketched is by-value only (consumes the whole struct, hands back a whole
+  struct).** It does not obviously cover the borrowed, `&mut`-based drain pattern from
+  this cluster's earlier sketches (keep using `h.fd` while `h.alloc` is drained) — that
+  would need borrowed variants, something like `to_record_mut(&mut self) -> &mut record
+  {...}`, not designed here.
+- **Whether `derives FromRecord` should require an explicit acknowledgment when the
+  struct has a private, invariant-checking constructor** — so the `SortedPair` hazard
+  above is caught at derive time rather than discovered later. No mechanism proposed.
 
 ## 11. Open questions
 
@@ -533,12 +631,21 @@ it does not disappear.
    the interaction with RFC-0032 field visibility isn't addressed anywhere in this
    cluster. Narrowed by §10 to only the opt-in record kind, not every struct, but not
    resolved.
-10. **What syntactically marks a type as record-kind (§10)** — a separate keyword vs. a
-    modifier on `struct` are both plausible; not decided.
-11. **Whether §6's allocator-type restriction transfers to the named-record kind
-    (§10)** — §6's objection assumed structural interchangeability, which a named
-    record's fixed brand (§9 surviving claim 1) arguably avoids; unresolved whether the
-    restriction was really about brandless records specifically.
+10. **What syntactically marks tier 3, the named record kind (§10)** — a separate
+    keyword vs. a modifier on `struct` are both plausible; not decided. (Tier 2 needs no
+    new syntax — it is an ordinary derive.)
+11. **Whether §6's allocator-type restriction transfers to tier 3 (§10)** — §6's
+    objection assumed structural interchangeability, which tier 3's fixed brand (§9
+    surviving claim 1) arguably avoids; unresolved whether the restriction was really
+    about brandless records specifically.
+12. **Borrowed (`&mut`) variants of tier 2's conversions (§10)** — `to_record`/
+    `from_record` as sketched are by-value only; a `to_record_mut`/`from_record_mut` pair
+    would be needed to unify tier 2 with this cluster's earlier borrowed drain/restore
+    sketches. Not designed.
+13. **Whether `derives FromRecord` needs a guard against bypassing constructor
+    invariants (§10)** — the `SortedPair` case shows auto-derived reconstruction can
+    silently skip validation a hand-written constructor enforces; no compile-time check
+    for this is proposed.
 
 ## Example programs
 
@@ -592,7 +699,7 @@ fun main() -> i64 {
 }
 ```
 
-### Two parallel kinds: an upgrade that doesn't touch existing callers
+### Tier 3: an upgrade that doesn't touch existing callers
 
 Illustrative only (§10) — `record` as a named-declaration keyword is not settled syntax.
 
@@ -618,4 +725,27 @@ fun restore(h: &mut record { fd: i32 }, buf: @a Buffer) -> &mut Handle {
     h.alloc = buf;
     h
 }
+```
+
+### Tier 2: on-demand conversion, and where `ToRecord`/`FromRecord` stay separate
+
+```metel
+struct SortedPair derives ToRecord {   // ToRecord only — see below
+    small: i32,
+    big: i32,
+}
+
+impl SortedPair {
+    fun new(a: i32, b: i32) -> SortedPair {
+        if a <= b { SortedPair { small: a, big: b } } else { SortedPair { small: b, big: a } }
+    }
+}
+
+// A caller can still read the shape out generically:
+let p = SortedPair::new(3, 1);
+let r = p.to_record();   // record { small: i32, big: i32 } == { small: 1, big: 3 }
+
+// `derives FromRecord` is deliberately not added: an auto-derived reconstruction would
+// pack whatever `small`/`big` a record holds straight back into a SortedPair, silently
+// bypassing `new`'s reordering. Reconstruction stays routed through `SortedPair::new`.
 ```
