@@ -291,7 +291,11 @@ its Q2 answer, not on its own clock.
    value whose own type carries an *identity* brand — composition of the same kind at
    two levels, not obviously a "crossing" in item 3's sense at all, but not yet
    distinguished from one either. Whether nesting needs its own rule, or falls out of
-   §3's per-role relation algebra once that's formalized, is open.
+   §3's per-role relation algebra once that's formalized, is open. (Narrowed
+   2026-07-08, `structural-records.md` §10: this surface use, and the nesting question
+   it raises, only arise for the opt-in *named record* kind — an ordinary `struct`
+   never carries this identity tag at all, so the nesting question is scoped to
+   `@a T` where `T` is specifically a named record, not any struct.)
 
 ---
 

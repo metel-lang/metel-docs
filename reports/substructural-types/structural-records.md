@@ -382,7 +382,7 @@ structs specifically. It says nothing new about enums (§7's sum-type objection 
 untouched — no variant-row mechanism is proposed here) or primitives (still not
 records-shaped, still not worth the indirection).
 
-**Two new open questions this raises, appended to §10:**
+**Two new open questions this raises, appended to §11:**
 
 - **Coherence needs a specificity rule between the two axes an impl can now match on.**
   An ordinary `impl Display for Point` is brand-keyed; RFC-0061's structural/blanket
@@ -399,7 +399,109 @@ records-shaped, still not worth the indirection).
   row, with private fields invisible to `HasField`/`Lacks` checks from outside the
   module. This does not appear to be addressed anywhere else in this cluster.
 
-## 10. Open questions
+## 10. Resolution: two parallel kinds, not one universal representation
+
+*Added 2026-07-08, resolving the tension §9 left open — from a design conversation
+weighing whether pursuing row/multiplicity machinery broadly risks recreating
+TypeScript's structural-typing problems (silent nominal-identity collapse between
+same-shaped types, several competing overlapping idioms for "is this here or not") if
+it becomes available on every struct by default.*
+
+Decision: **`struct` and the row/multiplicity machinery this cluster has been designing
+(§1, §3, §5, `linear-types.md`'s per-field multiplicity, drain/restore-style partial
+consumption) do not merge into one representation applied to every struct. They stay
+two parallel, purpose-built kinds**, and a struct only gains the row-capable behavior by
+explicit, one-time, per-type declaration.
+
+- **`struct` stays exactly as simple as it is today.** Whole-value semantics only: one
+  multiplicity for the entire value, moved or dropped as a single unit, no partial
+  consumption, no `Lacks`/row-conditional typestate applicable to it. Nothing about the
+  core `Type::Named` representation or the ordinary struct typechecking path needs to
+  change, ever, to support anything else in this document.
+- **A second, opt-in nominal kind — a *named record*, distinct from but closely related
+  to §3's anonymous `record {...}` type-former — carries §9's `(row, brand)`
+  representation.** Only types explicitly declared this way expose `HasField`/`Lacks`
+  row-conditional impls, per-field multiplicity, and drain/restore. Illustrative syntax
+  only, not settled:
+
+  ```metel
+  struct Handle { fd: i32, alloc: @a Buffer }   // whole-value only — the default
+
+  record Handle { fd: i32, alloc: @a Buffer }   // opts into row/multiplicity machinery
+  ```
+
+  A named record's full form is exactly an anonymous `record { fd: i32, alloc: @a Buffer
+  }` (§3) wearing a fixed brand (§9 surviving claim 1) — the two `record` uses are the
+  same underlying mechanism, one anonymous and structural, one named and nominal, not
+  two features that happen to share a keyword.
+
+**Why this split, not a compromise between the two extremes already on the table:**
+
+- **Closes the TypeScript failure mode at its root, not around the edges.**
+  TypeScript's structural-typing problems stem from structural matching being
+  *ambient* — available on every type, by default, all the time. Confining row and
+  multiplicity capability to types that opt in means the overwhelming majority of types
+  never raise the question "does this support drain/restore, or Lacks-typestate, or one
+  of several absence-idioms" at all — the answer is decided once, by the author, at
+  declaration, not re-litigated at every call site by every caller.
+- **Shrinks the implementation cost from §8/§9 by confining it to the opt-in subset.**
+  §8's "the 99% of code that never writes `record {...}` pays for machinery it never
+  asked for" concern, and §9's coherence question, both assumed row-awareness might need
+  to reach every `Type::Named` site. Under this split it only ever needs to reach the
+  record kind — an additive new path alongside the existing one, not a change to it.
+- **Cleanly separates the Cluster A / Cluster B phasing this cluster has been organized
+  around.** Ordinary structs — the large majority of types in any real program — never
+  need the affine/multiplicity/row work to exist at all. Cluster A ships structs,
+  aspects, and generics untouched by anything in this document; the record kind, and
+  everything in `linear-types.md` it depends on, becomes a self-contained Cluster B
+  addition with no retroactive obligation on Cluster A code to have predicted which
+  types would eventually want it.
+
+**The non-breaking upgrade path, and what has to hold for it to actually be
+non-breaking.** Converting `struct Handle {...}` to `record Handle {...}` should not
+require touching any existing caller, provided:
+
+- The nominal name and identity are unchanged — aspect impls, orphan-rule coherence, and
+  generic instantiation all key off the same identity as before.
+- Construction and field-access syntax are unchanged — `Handle { fd, alloc }`, `h.fd`,
+  pattern matching all read the same.
+- Whole-value use sites keep typechecking exactly as before, against the record's full
+  row — a caller that only ever moves, passes, or returns the entire value never needs
+  to know or care which kind `Handle` is.
+- Row/multiplicity tracking costs nothing at runtime for whole-value-only callers — every
+  mechanism sketched in this cluster so far (row shrink/grow, the affine "must-consume"
+  marker) is compile-time only, so callers who never use the new capabilities pay
+  nothing for their existence.
+
+**One honest caveat: "non-breaking" means "doesn't break existing callers," not
+"changes nothing observable about the type."** The conversion does newly make
+row-conditional generic functions and drain/restore-style APIs legal against `Handle`,
+callable from the declaring module forward — that is the point of upgrading, not a side
+effect to apologize for, but it should be named precisely rather than oversold as fully
+inert.
+
+**What this narrows, without fully closing, from §9's open questions:** both still
+apply — brand-vs-row coherence priority, and private-field leakage into cross-module
+structural matching — but only to the subset of types that opted into the record kind,
+not to every struct in the language. The hazard surface shrinks to types whose authors
+already intended some degree of structural exposure by choosing `record` over `struct`;
+it does not disappear.
+
+**Two new open questions this raises:**
+
+- **What syntactically marks a type as record-kind is not decided.** A separate keyword
+  (`record Handle {...}`, sketched above) versus a modifier on `struct` (e.g. a marker in
+  the `<>` channel, consistent with how `<row R>` and `<&r>` already work) are both
+  plausible; nothing here picks one.
+- **Does §6's "records can't serve as allocator types" restriction transfer to the
+  named-record kind?** §6's objection was that an allocator needs per-*instance*
+  identity while a record's premise is structural interchangeability — but a named
+  record keeps its brand fixed (§9 surviving claim 1), so it is not structurally
+  interchangeable the way an anonymous `record {...}` is. Whether §6's restriction was
+  really about brandless/anonymous records specifically, and simply doesn't transfer to
+  the named kind, is unresolved here.
+
+## 11. Open questions
 
 1. Ship closed `record` types only for now, or also `<row R>` open generics
    immediately (§4) — recommend closed-only first; not ratified.
@@ -423,12 +525,20 @@ records-shaped, still not worth the indirection).
    needs deferred open-`<row R>`) are recorded in `brand-types.md` §3 as inputs.
 8. **Brand-vs-row impl coherence priority (§9)** — no specificity rule between
    brand-keyed and row-keyed blanket impls is written down; RFC-0060/RFC-0061's
-   coherence checking doesn't yet model a second matching axis.
+   coherence checking doesn't yet model a second matching axis. Narrowed by §10 to only
+   the opt-in record kind, not every struct, but not resolved.
 9. **Private-field leakage into cross-module structural matching (§9)** — `HasField`/
    `Lacks` checks need a public-only projection of a struct's row when checked from
    outside its declaring module; no mechanism for this projection is designed yet, and
    the interaction with RFC-0032 field visibility isn't addressed anywhere in this
-   cluster.
+   cluster. Narrowed by §10 to only the opt-in record kind, not every struct, but not
+   resolved.
+10. **What syntactically marks a type as record-kind (§10)** — a separate keyword vs. a
+    modifier on `struct` are both plausible; not decided.
+11. **Whether §6's allocator-type restriction transfers to the named-record kind
+    (§10)** — §6's objection assumed structural interchangeability, which a named
+    record's fixed brand (§9 surviving claim 1) arguably avoids; unresolved whether the
+    restriction was really about brandless records specifically.
 
 ## Example programs
 
@@ -479,5 +589,33 @@ fun main() -> i64 {
     authenticated.send_data("hello");
     // s.send_data("hello");   -- would not compile: s's row still has `token`
     0
+}
+```
+
+### Two parallel kinds: an upgrade that doesn't touch existing callers
+
+Illustrative only (§10) — `record` as a named-declaration keyword is not settled syntax.
+
+```metel
+// Before: an ordinary struct, whole-value only.
+struct Handle { fd: i32, alloc: @a Buffer }
+
+fun close_it(h: Handle) { /* uses h.fd, h.alloc as a whole */ }
+
+// After: `Handle` opts into row/multiplicity machinery. Same name, same fields,
+// same construction and field-access syntax — `close_it` above still typechecks
+// unchanged, because it only ever used Handle as a whole value.
+record Handle { fd: i32, alloc: @a Buffer }
+
+// Only new code, written from here on, can reach for the capability the upgrade
+// unlocked:
+fun drain(h: &mut Handle) -> (@a Buffer, &mut record { fd: i32 }) {
+    let buf = move h.alloc;
+    (buf, h)
+}
+
+fun restore(h: &mut record { fd: i32 }, buf: @a Buffer) -> &mut Handle {
+    h.alloc = buf;
+    h
 }
 ```
