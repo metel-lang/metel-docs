@@ -460,6 +460,54 @@ both was considered and declined for the same reason this cluster has repeatedly
 a second spelling for the same action (RFC-0050's exhaustiveness rule, RFC-0065's
 elision-is-never-silent principle).
 
+**`to_record_mut`/`from_record_mut` extend tier 2 to the borrowed case — and this is what
+actually unifies it with this cluster's earlier `&mut`-based drain/restore sketches.**
+The by-value pair alone only covers "consume the whole struct, get a whole record, maybe
+build a new struct later." It does not cover "keep using `h.fd` while `h.alloc` is being
+drained," which is what every drain/restore example elsewhere in this document actually
+needed — and until now, tier 2 had no answer for that case at all (§11 item 12). Both
+directions come from the *same* two aspects, not new ones: `derives ToRecord` yields
+`to_record(self) -> record {...}` **and** `to_record_mut(&mut self) -> &mut record
+{...}`; `derives FromRecord` yields `from_record(record {...}) -> Self` **and**
+`from_record_mut(&mut record {...}) -> &mut Self`. By-value vs. by-reference is a mode,
+not a separate capability — only the `To`/`From` direction is worth keeping split, for
+the `SortedPair` reason above.
+
+```metel
+struct Handle derives ToRecord, FromRecord { fd: i32, alloc: @a Buffer }
+
+fun drain(h: &mut Handle) -> (@a Buffer, &mut record { fd: i32 }) {
+    let view = h.to_record_mut();   // &mut record { fd: i32, alloc: @a Buffer } — reborrow, zero-cost
+    let buf = move view.alloc;       // ordinary row-shrink; view's type narrows to record { fd: i32 }
+    (buf, view)
+}
+
+fun restore(view: &mut record { fd: i32 }, buf: @a Buffer) -> &mut Handle {
+    view.alloc = buf;                // ordinary row-grow; view's type widens back to the full row
+    Handle::from_record_mut(view)    // trivial re-coercion — the row already matches Handle's in full
+}
+```
+
+This is exactly the shape of the tier-3 `drain`/`restore` example further down, now
+available to *any* tier-2 struct — the only difference is the two explicit conversion
+calls bridging `&mut Handle` to `&mut record {...}` and back, in place of `Handle` being
+intrinsically row-shaped. Soundness is the same reason the by-value pair is sound (§3's
+"same bits, new static type" — a reborrow, not a copy or allocation), and `restore`
+requires the row to have already grown back to `Handle`'s exact full shape by ordinary
+field assignment *before* `from_record_mut` is reached, so there is nothing beyond
+structural row-matching to check — no separate obligation-tracking, consistent with how
+this cluster settled the "must the hole be refilled" question earlier: the type system
+enforces safety, not liveness. Nothing stops code from never calling `restore` and simply
+being stuck holding `&mut record { fd: i32 }` forever, unable to typecheck it back to
+`&mut Handle`.
+
+**This does not erode the tier 2 / tier 3 boundary.** Tier 3's one remaining, unique
+advantage is untouched: row-conditional impls (§5) and direct `HasField`/`Lacks` bound
+satisfaction still require a type to intrinsically carry row structure at
+impl-resolution time, which no amount of explicit conversion machinery provides. `Handle`
+itself is still never usable where a row-generic bound is expected — only `view` is, and
+only for as long as it's held, under the same "no implicit coercion" rule below.
+
 **No implicit coercion at call sites, regardless of tier.** A `ToRecord`-deriving struct
 must never be silently accepted wherever a row-generic bound is expected — `.to_record()`
 has to appear in the source. Allowing implicit structural coercion here would quietly
@@ -638,10 +686,11 @@ disappear.
     objection assumed structural interchangeability, which tier 3's fixed brand (§9
     surviving claim 1) arguably avoids; unresolved whether the restriction was really
     about brandless records specifically.
-12. **Borrowed (`&mut`) variants of tier 2's conversions (§10)** — `to_record`/
-    `from_record` as sketched are by-value only; a `to_record_mut`/`from_record_mut` pair
-    would be needed to unify tier 2 with this cluster's earlier borrowed drain/restore
-    sketches. Not designed.
+12. ~~Borrowed (`&mut`) variants of tier 2's conversions~~ — **Resolved 2026-07-08,
+    §10**: `to_record_mut`/`from_record_mut`, provided by the same `ToRecord`/
+    `FromRecord` aspects as their by-value counterparts (by-value vs. by-reference is a
+    mode, not a separate capability). This is what unifies tier 2 with this cluster's
+    earlier borrowed drain/restore sketches.
 13. **Whether `derives FromRecord` needs a guard against bypassing constructor
     invariants (§10)** — the `SortedPair` case shows auto-derived reconstruction can
     silently skip validation a hand-written constructor enforces; no compile-time check

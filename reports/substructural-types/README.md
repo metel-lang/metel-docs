@@ -218,9 +218,12 @@ document for the reasoning behind each entry, not just the one-line summary here
   conversion, kept as two separate aspects rather than merged, since auto-derived
   `FromRecord` can bypass constructor invariants a hand-written one wouldn't), and a
   named-record kind (`(row, brand)` intrinsically, the only tier eligible for
-  row-conditional impls). What syntactically marks the named-record tier, whether §6's
-  allocator-type restriction transfers to it, borrowed (`&mut`) variants of the derive
-  pair, and a constructor-invariant guard for `FromRecord` are all open.
+  row-conditional impls). Borrowed (`&mut`) variants of the derive pair
+  (`to_record_mut`/`from_record_mut`) are resolved — same two aspects, by-reference is a
+  mode not a new capability — and unify tier 2 with this cluster's earlier borrowed
+  drain/restore sketches. Still open: what syntactically marks the named-record tier,
+  whether §6's allocator-type restriction transfers to it, and a constructor-invariant
+  guard for `FromRecord`.
 
 **From `brand-types.md`:**
 - The five unresolved questions from RFC-0076 itself (brand introduction mechanism,
