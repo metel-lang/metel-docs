@@ -186,7 +186,9 @@ document for the reasoning behind each entry, not just the one-line summary here
   (automatic downgrade) as a separately-pursued fuller vision — revised leaning, not
   ratified.
 - The aliasing question for Option C (what type does a pre-downgrade borrow have
-  afterward) — unresolved; blocks Option C specifically.
+  afterward) — **a candidate answer exists as of 2026-07-08** (the shrunk row type,
+  justified by ordinary `&mut` exclusivity — `linear-types.md` §3,
+  `structural-records.md` §10). Promising, not proven; still blocks ratifying Option C.
 - `NonLinear<T>`'s exact surface syntax — unresolved.
 - Multiplicity polymorphism (`Guarded<T, Cap>`) — noted as a real later extension, not
   attempted.
@@ -199,7 +201,9 @@ document for the reasoning behind each entry, not just the one-line summary here
 - Plain-record style vs. OCaml-object style — recommend plain records.
 - Width-subtyping-requires-`Copy` rule — proposed with no precedent to verify against;
   no `AllCopy`-shaped bound designed yet.
-- Implicit vs. explicit-opt-in structural satisfaction — genuinely open.
+- ~~Implicit vs. explicit-opt-in structural satisfaction~~ — **Resolved 2026-07-08**:
+  `HasField`/`Lacks`-as-bound stays implicit; the tier system (§10) gates everything
+  with actual capability (impls, conversion, multiplicity).
 - Transitive field-usage checking when a `Drop` body calls helper methods — unresolved.
 - Row-conditional impl coherence extension — asserted tractable, not worked out.
 - Phantom-parameter typestate vs. row-conditional-impl typestate — which is canonical,
@@ -294,6 +298,95 @@ structured-guarantee mechanism is reopened as premature to settle):
   RFC-0071/RFC-0067 implementation begins: RFC-0063 §9 item 5, partial consumption of a
   linear struct. `linear-types.md` §3's Option B is what currently satisfies it — see
   that document's closing section for the exact claim.
+
+---
+
+## Roadmap: what's next, in order
+
+Added 2026-07-08. Not a schedule — a dependency order, worked out by asking which open
+items are inputs to which others, rather than tackling whichever document feels least
+finished.
+
+**Two loose ends closed as part of writing this roadmap, not left as pending items:**
+`linear-types.md` §3/item 5 (Option C's aliasing question) and `structural-records.md`
+§8/item 4 (implicit vs. opt-in structural satisfaction) were both resolved directly —
+see each document's own changelog note — rather than carried forward, since both were
+small, self-contained, and already answered by work already done elsewhere in this
+cluster.
+
+**Next: the derive/comptime foundation, before brand-kind-unification, not after or
+alongside it.** Nearly every mechanism in this cluster — `derives Linear`, `derives
+ToRecord, FromRecord`, §2's `uses (fd)` field-usage declarations — assumes a derive/
+compile-time-execution mechanism that no document here actually specifies. This bundles
+at least three genuinely different things, worth resolving as three separate questions
+rather than one:
+
+1. **Auto-trait-style structural composition** (`Send`/`Sync`/`Linear` — a membership
+   fact computed by walking fields, no codegen). Likely already scoped by RFC-0080's
+   auto-impl pattern, referenced repeatedly across this cluster but not re-checked in
+   any of these documents. First, cheapest action: re-read RFC-0080 to see how far it
+   already goes before assuming a gap.
+2. **Derive-as-codegen** (`ToRecord`/`FromRecord` — the compiler synthesizes actual
+   method bodies, not just a membership fact). The consequential fork: a closed,
+   compiler-hardcoded list of derivable capabilities (cheaper, but every future addition
+   needs a compiler release) versus an open, library-extensible meta-programming
+   facility (a materially bigger, currently entirely unaddressed feature). This decision
+   gates how every other open item in this cluster eventually gets expressed.
+3. **Static analysis over existing function bodies** (§2's `uses (fd)` checking, and its
+   acknowledged transitive-helper-call gap). Worth checking directly against
+   `algebraic-effects.md`'s existing effect system before assuming this needs its own
+   bespoke mechanism — "which fields does this function read" may just be an
+   application of an effect system that's already being designed for a different
+   reason, not a fourth new thing.
+
+Row-conditional impl coherence (§5/`structural-records.md` item 6, the brand-vs-row
+priority question in its item 8) is *not* part of this bucket — it's ordinary type-level
+constraint solving, needed regardless of whether any comptime facility exists at all.
+Worth stating explicitly so the two don't get conflated.
+
+**Then: brand-kind-unification, using the method that actually worked this session, not
+just "think about it more."** The reason it's the right next target isn't that it's
+unaddressed — it's that its resolution is an *input* to two other open questions rather
+than sitting parallel to them: whether the named-record tier's identity tag is literally
+the same mechanism as `@a`/`&r` (its own item 6 nesting question), and whether the
+row-vs-brand typestate fork below should lean brand (cheap, if brands are already needed
+infrastructure) or row (if identity and allocator/lifetime brands turn out more separate
+than hoped). What actually produced progress this session wasn't reasoning about
+structural records in the abstract — it was finding a real external case (`Rc`/`Arc`)
+that forced the abstract questions to become concrete and testable. The same move is
+the right one here: find or construct a real scenario that exercises the unenumerated
+role-crossing matrix (`'c`↔`@a`, `'c`↔`&r`), rather than reasoning about legality in the
+abstract.
+
+**Then: the row-vs-brand typestate fork, decided as a consequence of the above, not
+independently.** This is the fork a 2026-07-07 consolidation attempt already tried to
+force and explicitly walked back as premature. It shouldn't be forced again in
+isolation — it should fall out once brand-kind-unification settles whether brands are
+cheap, already-needed infrastructure or a separate cost typestate would be paying for on
+its own.
+
+**Then: `algebraic-effects.md` and `structured-concurrency.md`, together, both
+downstream of the fork above, not two more independent items.** Effects' `HandlerToken`
+needs the typestate fork settled to know what it *is*. Structured concurrency's central
+open question (`Linear` spawn handle vs. `JoinToken`) is the same fork wearing different
+clothes. Neither has independent content that would change by being tackled sooner.
+
+**Last, deliberately: the packaging question (one RFC or several).** Nobody has taken a
+position on this except brand-kind-unification, for its own narrow slice (see "What
+this map does not yet resolve" above). It should stay last on purpose — answering it
+requires knowing how tightly the pieces actually turn out to be coupled, which is
+exactly what the steps above reveal. Deciding it now would repeat the same mistake the
+07-07 consolidation attempt made: forcing a convergence answer ahead of the evidence for
+one.
+
+**One placement question outside this directory, worth re-checking once the above
+settles:** `reports/implementation/roadmap-2026-07-07.md` bundles all of structural
+records into Stage B/C, written before the tier system existed. Tier 1 and tier 2
+specifically need nothing from the borrow checker or allocators — `derives ToRecord,
+FromRecord` is ordinary aspect derivation over plain data. Worth asking whether tier 1/2
+could ship in Cluster A, with only tier 3 (and the impl-eligibility, coherence, and
+visibility costs that come with it) staying gated behind Stage B, rather than the whole
+cluster being bundled together by an assumption made before the split existed.
 
 ---
 

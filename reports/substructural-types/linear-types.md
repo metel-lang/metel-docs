@@ -164,6 +164,19 @@ no unresolved aliasing question — and Option C as the fuller vision from
 `structural-records.md` §5.4's build order, pursued separately and only once the
 aliasing question above has an answer.
 
+**Update (2026-07-08): a candidate answer to the aliasing question now exists**, arrived
+at independently while designing `structural-records.md` §10's tier-2 `to_record_mut`/
+`from_record_mut` conversions. The answer: `p`'s type becomes the shrunk row (`&mut
+record { <remaining fields> }`), sound for an unremarkable reason — `&mut` already
+guarantees no other live reference exists to observe the stale, pre-downgrade type, so no
+new aliasing machinery (a brand, a fork/join token) is needed beyond ordinary `&mut`
+exclusivity and structural row equality. This is promising, not proven: no formal
+soundness argument has been written down, only a worked mechanism plus several worked
+examples (`structural-records.md`'s `RcBox`, `FileHandle`, and `MaybeUninit`-style
+construction cases) that exercise it without incident. Option C should still be treated as
+unratified until this gets a real argument, not just examples that haven't broken it —
+see item 5 below, updated accordingly.
+
 ---
 
 ## 4. `NonLinear<T>`: a standalone, nameable projection
@@ -233,8 +246,11 @@ decision between two different models.
    separately-pursued fuller vision**, reversing this session's earlier lean toward C
    alone. Not ratified.
 5. The aliasing question for Option C — what type does a borrow taken before a
-   downgrade have afterward — has no proposed answer yet. This blocks Option C
-   specifically, not Option B.
+   downgrade have afterward — **has a candidate answer as of 2026-07-08** (§3's update:
+   the shrunk row type, justified by ordinary `&mut` exclusivity, from
+   `structural-records.md` §10's `to_record_mut`/`from_record_mut`). Not yet a proven
+   soundness argument — still blocks treating Option C as ratified, but no longer blocks
+   it for lack of *any* proposed answer.
 6. `NonLinear<T>`'s exact surface syntax (is it a type-level function, a special form,
    something else) — unresolved; only the shape of what it computes is settled.
 7. Multiplicity polymorphism (`Guarded<T, Cap>` generic over a field's multiplicity,

@@ -372,6 +372,22 @@ bring them back without admitting they were never sugar in the first place.
   satisfaction, or require a lightweight opt-in (e.g. `struct Point derives record {
   ... }`) before a struct is usable structurally.
 
+  **Resolved 2026-07-08, by the tier system (§10) — narrower than either option above.**
+  Full implicit satisfaction and a blanket opt-in requirement were both the wrong shape
+  of answer, because they treat "structural satisfaction" as one question when it's
+  really two. `HasField`/`Lacks` as a *bound* (this section, §1/§3) stays implicit,
+  exactly as originally written — a struct satisfies a field-shape bound just by having
+  the right fields, no opt-in required, because a bound alone grants no new capability
+  *over the type itself*; it only lets a generic function accept it. What the tier
+  system gates is capability that changes what the type can do on its own:
+  row-conditional impls, `to_record`/`from_record` conversion, and per-field
+  multiplicity tracking all require an explicit tier-2/tier-3 opt-in (§10). On
+  inspection, Go's implicit-interfaces criticism was really about the second category
+  (surprising method/behavior availability appearing unannounced), not the first (a
+  generic function structurally matching on field shape) — so gating the second while
+  leaving the first alone resolves the actual worry instead of over-applying the fix to
+  a case that never had the problem.
+
 ## 9. Reconciling with the inverse direction: structural types as the foundation
 
 *Added 2026-07-07, from a design conversation exploring the opposite direction from §1:
@@ -703,8 +719,11 @@ disappear.
    verify it against; not ratified. No bound expressing "every field in row `R` is
    `Copy`" (an `AllCopy`-shaped predicate) is defined yet, so open records with a
    discarded, uninspected remainder have to be rejected outright until one is designed.
-4. Implicit vs. explicit-opt-in structural satisfaction (§8) — genuinely open, no
-   leaning stated; needs a deliberate decision either way.
+4. ~~Implicit vs. explicit-opt-in structural satisfaction~~ — **Resolved 2026-07-08,
+   §8/§10**: `HasField`/`Lacks` as a bound stays implicit (no opt-in); row-conditional
+   impls, conversion, and multiplicity tracking require the tier-2/3 opt-in. Not one
+   policy for everything structural — two different questions with two different
+   answers.
 5. Transitive field-usage checking when a `Drop` body calls helper methods (§2) —
    unresolved, no proposal yet.
 6. Row-conditional impl coherence (§5) — extending RFC-0036/RFC-0060's conditional-impl
