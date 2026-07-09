@@ -11,9 +11,27 @@ This document did not exist before 2026-07-09 — the lifecycle below had been r
 an implicit convention (directory names only) for 94 RFCs with nothing written down
 explaining it. Written down now alongside `INDEX.md`, prompted by two things surfacing
 in the same sitting: RFC-0055 sat undiscovered in draft for five weeks while RFC-0092
-independently reinvented a large part of it, and several accepted RFCs have historically
-turned out wrong only once someone tried to build against them (RFC-0075 is this
-project's own repeated cautionary tale for that failure).
+independently reinvented a large part of it, and RFC-0063 — this project's own concrete
+precedent for the failure `3-integrated` exists to catch.
+
+**The RFC-0063 precedent, traced from git history rather than repeated from memory:**
+RFC-0063 ("Region Handles" at the time) was accepted, alongside seven siblings —
+RFC-0065, 0066, 0067, 0068, 0069, 0073, 0077 — in one commit. Later, while working on
+RFC-0066 specifically (individual move-out/drop), it became clear that RFC-0066's own
+natural semantics — a value's lifetime can end *before* its backing region's lifetime —
+directly broke RFC-0063's founding premise: that one region name simultaneously served
+as lifetime tag, disjointness proof, *and* allocation strategy, bundled into a single
+identity. All eight accepted RFCs had to be demoted back to under-review in one commit;
+three more were flagged for outright retraction as collateral; a new position report and
+a new unifying principle (Storage Transparency) were needed to put the cluster back
+together. **This was caught by reasoning, not by implementation** — nobody built
+anything and hit a wall; someone working through RFC-0066's consequences noticed it
+contradicted RFC-0063's own stated invariant. That is exactly a worked-example-style
+catch (construct the case where RFC-0066's move-out happens, ask what RFC-0063's
+region-name-as-lifetime-tag then means, watch it stop making sense), done informally,
+after acceptance, instead of formally, before it. `3-integrated` exists to do this
+catch on purpose and earlier, so it costs one RFC's amendment instead of eight RFCs'
+joint demotion.
 
 ## The lifecycle
 
@@ -34,22 +52,30 @@ here when they've earned it, not on a schedule.
 **2-accepted.** The design is settled: no more open questions block it, alternatives have
 been weighed and one chosen. This is where RFC lifecycle has stopped, historically, for
 anything not yet implemented — 14 RFCs currently sit here with no further gate before
-"implemented," which is exactly the gap that let RFC-0075's failure mode happen: a
-design can be accepted on paper and still be wrong in ways nobody notices until
-implementation is attempted, or until it's checked against everything else that's also
-accepted.
+"implemented," which is exactly the gap that let RFC-0063's history happen: a design can
+be accepted on paper and still be wrong in ways nobody notices until it's checked against
+everything else that's also accepted, or in flight alongside it.
 
 **3-integrated *(new)*.** The RFC's content is incorporated into `public/reference/spec/`
 — not just cross-referenced from RFC text, actually merged into the language reference —
 and detailed worked examples are written combining this RFC's feature with other
 already-integrated features, specifically hunting for soundness gaps at the
-intersection, not just re-checking the RFC in isolation. Exit criterion: no known
-unsoundness or contradiction between this RFC and the rest of the currently-integrated
-spec. If a worked example surfaces a real problem (as happened repeatedly this
-session — the comptime/structural-records circular dependency, the `Linear`
-auto-impl-vs-derive miscategorization, RFC-0080 shipping syntax RFC-0012 had already
-rejected), that's this phase doing its job, not a failure of it — the RFC goes back for
-amendment rather than proceeding to implementation carrying the problem forward.
+intersection, not just re-checking the RFC in isolation. **Critically, per the RFC-0063
+precedent above: this cross-checking must also cover sibling RFCs still moving through
+the same cluster, not only work that has already reached `3-integrated` itself.**
+RFC-0063 and RFC-0066 were developing concurrently, in the same tightly-coupled cluster,
+neither settled independently of the other — "checked against everything already
+integrated" alone would not have caught their conflict, because by a strict reading
+neither had gotten there yet. A worked example combining a still-in-flight sibling RFC's
+consequences with this RFC's own stated invariants counts, and is often exactly where
+this kind of contradiction lives. Exit criterion: no known unsoundness or contradiction
+between this RFC and the rest of the currently-integrated spec, *and* no known
+contradiction with sibling RFCs still active in the same cluster. If a worked example
+surfaces a real problem (as happened repeatedly this session — the comptime/structural-
+records circular dependency, the `Linear` auto-impl-vs-derive miscategorization,
+RFC-0080 shipping syntax RFC-0012 had already rejected), that's this phase doing its
+job, not a failure of it — the RFC goes back for amendment rather than proceeding to
+implementation carrying the problem forward.
 
 **4-implemented.** Built against the integrated spec, not against the accepted RFC text
 directly — by the time something reaches this stage, "the spec" and "the RFC" should
