@@ -2,7 +2,7 @@
 id: rfc-0007
 title: "Compiler-Compatible Primitive Type System"
 date: '2026-05-21'
-status: incorporated
+status: implemented
 ---
 
 ## Summary

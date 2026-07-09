@@ -2,7 +2,7 @@
 id: rfc-0045
 title: "Mutable Address-Of for Lvalue Paths"
 date: '2026-06-02'
-status: incorporated
+status: implemented
 ---
 
 ## Summary

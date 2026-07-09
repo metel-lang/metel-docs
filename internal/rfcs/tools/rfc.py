@@ -383,7 +383,8 @@ def cmd_supersede(args):
 # check
 # --------------------------------------------------------------------------
 
-PATH_REF_RE = re.compile(r"internal/rfcs/[0-6]-[a-z]+/rfc-[\w.-]+\.md")
+# [a-z-]+ not [a-z]+: stage dir names like "1-under-review" have more than one hyphen.
+PATH_REF_RE = re.compile(r"internal/rfcs/[0-6]-[a-z-]+/rfc-[\w.-]+\.md")
 
 
 def cmd_check(args=None):

@@ -1,5 +1,5 @@
 ---
-status: active
+status: draft
 id: rfc-0038
 title: "impl Aspect in Struct Fields and Existential Types"
 date: '2026-06-01'

@@ -2,7 +2,7 @@
 id: rfc-0058
 title: "SourceProvider Abstraction for the Module Loader"
 date: '2026-06-10'
-status: draft
+status: implemented
 spec_status: pending
 ---
 

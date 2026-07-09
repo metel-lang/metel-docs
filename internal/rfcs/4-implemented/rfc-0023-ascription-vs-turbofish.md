@@ -2,7 +2,7 @@
 id: rfc-0023
 title: "Type Ascription vs Turbofish — Call-Site Type Annotation Review"
 date: '2026-05-23'
-status: incorporated
+status: implemented
 ---
 
 ## Summary

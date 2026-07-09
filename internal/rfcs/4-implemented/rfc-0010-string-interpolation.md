@@ -1,5 +1,5 @@
 ---
-status: active
+status: implemented
 id: rfc-0010
 title: "String Interpolation"
 date: '2026-05-31'

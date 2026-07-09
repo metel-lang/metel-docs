@@ -144,14 +144,17 @@ of this process that don't need judgment:
   needs a human, or an agent, to actually think about it.
 - `rfc.py check` — validates frontmatter status matches directory, no duplicate RFC
   ids, no dangling `internal/rfcs/N-stage/rfc-....md` path references anywhere in the
-  repo. Read-only. Running it against this repo for the first time found 21 pre-existing
-  problems predating this document — mostly older RFCs using ad hoc status vocabulary
-  ("incorporated", "active", "deferred") that was never standardized against the
-  lifecycle names above, plus two genuine dangling references in RFC-0006 and RFC-0051.
-  Not fixed as part of writing this tool — a real, separate backlog, listed here so it
-  isn't lost: RFC-0007, 0010, 0016, 0023, 0026, 0032, 0034, 0035, 0038, 0039, 0040-0045,
-  0056, 0058, 0059 have frontmatter/directory status mismatches; RFC-0006 and RFC-0051
-  have dangling path references.
+  repo. Read-only. Running it against this repo for the first time found, and a
+  follow-up fixed, 21 pre-existing problems predating this document: 19 older RFCs
+  using ad hoc status vocabulary ("incorporated", "active", "deferred") never
+  standardized against the lifecycle names above, normalized to match; and dangling
+  path references, which turned out to be far more widespread than the first pass
+  found — the initial path-reference regex silently failed to match multi-hyphen
+  directory names like `1-under-review`, so references into that whole directory were
+  never actually checked until the regex itself was fixed. Once corrected, 20 dangling
+  references surfaced (not 2) across the RFC-0025/0028/0046/0047/0048/0050/0051 cluster
+  plus RFC-0006/0049/0052 — all now fixed. `rfc.py check` reports clean as of
+  2026-07-09.
 - `rfc.py index --check-drift` — compares every RFC's own `updated`/`date` frontmatter
   against `INDEX.md`'s `last_built`; flags anything changed since. Read-only.
 - `rfc.py index --suggest-placement <id>` — cosine similarity between an RFC and each

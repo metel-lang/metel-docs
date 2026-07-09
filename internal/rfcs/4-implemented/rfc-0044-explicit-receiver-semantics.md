@@ -2,7 +2,7 @@
 id: rfc-0044
 title: "Explicit Receiver Semantics"
 date: '2026-06-02'
-status: incorporated
+status: implemented
 spec_status: done
 ---
 

@@ -1,5 +1,5 @@
 ---
-status: active
+status: draft
 id: rfc-0039
 title: "aspect Alias Syntax"
 date: '2026-06-01'

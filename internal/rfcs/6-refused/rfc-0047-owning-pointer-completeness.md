@@ -122,7 +122,7 @@ Could the compiler auto-derive a `Drop` for `linear struct Node` that recursivel
 
 ## References
 
-- RFC-0028: `docs/internal/rfcs/1-under-review/rfc-0028-memory-and-reference-model.md` — §2 (Owning Pointers), §1.8–1.9 (drop/Drop)
+- RFC-0028: `docs/internal/rfcs/6-refused/rfc-0028-memory-and-reference-model.md` — §2 (Owning Pointers), §1.8–1.9 (drop/Drop)
 - RFC-0043: pointer addressability rules — incorporated into RFC-0028
 - RFC-0048: region × pointer interaction — `@T` in regions depends on OQ-2
 - RFC-0026: unsafe blocks (deferred) — OQ-2 Option C depends on unsafe

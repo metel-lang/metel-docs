@@ -2,7 +2,7 @@
 id: rfc-0059
 title: "Symbol Definition Index in ResolvedNames"
 date: '2026-06-10'
-status: draft
+status: implemented
 spec_status: pending
 ---
 

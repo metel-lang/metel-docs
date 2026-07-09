@@ -256,9 +256,9 @@ This RFC is the capstone of the memory safety stack. Suggested order within it:
 ## References
 
 - Lifetime system proposal: `docs/reports/memory-model/lifetime-system-proposal.md` — exploratory design; §4.1–4.3 for region, linear, and pointer interactions
-- RFC-0028: `docs/internal/rfcs/1-under-review/rfc-0028-memory-and-reference-model.md` — linear types, `@T`, `*T`; §1.5 explicitly defers to this RFC for linear borrows
-- RFC-0025: `docs/internal/rfcs/1-under-review/rfc-0025-region-allocation.md` — region lifetimes; `*'r T`; `Send` interim constraint
-- RFC-0051: `docs/internal/rfcs/1-under-review/rfc-0051-regionfree-exit-constraint.md` — `RegionFree<'r>`; lands as part of step 4 above
-- RFC-0047: `docs/internal/rfcs/1-under-review/rfc-0047-owning-pointer-completeness.md` — `*T` from `@T`; OQ-2 there resolves under this RFC
+- RFC-0028: `docs/internal/rfcs/6-refused/rfc-0028-memory-and-reference-model.md` — linear types, `@T`, `*T`; §1.5 explicitly defers to this RFC for linear borrows
+- RFC-0025: `docs/internal/rfcs/6-refused/rfc-0025-region-allocation.md` — region lifetimes; `*'r T`; `Send` interim constraint
+- RFC-0051: `docs/internal/rfcs/6-refused/rfc-0051-regionfree-exit-constraint.md` — `RegionFree<'r>`; lands as part of step 4 above
+- RFC-0047: `docs/internal/rfcs/6-refused/rfc-0047-owning-pointer-completeness.md` — `*T` from `@T`; OQ-2 there resolves under this RFC
 - RFC-0026: unsafe blocks (deferred) — OQ-1 option B depends on unsafe
 - Prior art: Rust lifetime system and borrow checker; Cyclone region-based memory management

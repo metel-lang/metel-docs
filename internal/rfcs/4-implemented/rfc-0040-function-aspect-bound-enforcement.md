@@ -1,5 +1,5 @@
 ---
-status: incorporated
+status: implemented
 id: rfc-0040
 title: "Aspect Bound Enforcement on Function Type Parameters"
 date: '2026-06-01'

@@ -115,8 +115,8 @@ Inside a `region { }` block, `RegionFree` without a lifetime parameter could mea
 
 ## References
 
-- RFC-0025: `docs/internal/rfcs/1-under-review/rfc-0025-region-allocation.md` — region allocation, interim `Send` constraint
-- RFC-0028: `docs/internal/rfcs/1-under-review/rfc-0028-memory-and-reference-model.md` — `@T`, `*T`, `Send` model
-- RFC-0046: `docs/internal/rfcs/1-under-review/rfc-0046-linear-closure-capture.md` — closures in regions gated by `Send` until this RFC lands
-- RFC-0048: `docs/internal/rfcs/0-draft/rfc-0048-region-pointer-interaction.md` — region × pointer interaction; OQ-2 resolved by this RFC
+- RFC-0025: `docs/internal/rfcs/6-refused/rfc-0025-region-allocation.md` — region allocation, interim `Send` constraint
+- RFC-0028: `docs/internal/rfcs/6-refused/rfc-0028-memory-and-reference-model.md` — `@T`, `*T`, `Send` model
+- RFC-0046: `docs/internal/rfcs/6-refused/rfc-0046-linear-closure-capture.md` — closures in regions gated by `Send` until this RFC lands
+- RFC-0048: `docs/internal/rfcs/6-refused/rfc-0048-region-pointer-interaction.md` — region × pointer interaction; OQ-2 resolved by this RFC
 - Lifetime proposal: `docs/reports/memory-model/lifetime-system-proposal.md` — §4.1 region lifetime integration

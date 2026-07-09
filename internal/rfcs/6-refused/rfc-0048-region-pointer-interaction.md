@@ -74,7 +74,7 @@ This requires the runtime/compiler to maintain a "current allocator" thread-loca
 
 ## References
 
-- RFC-0025: `docs/internal/rfcs/1-under-review/rfc-0025-region-allocation.md` — `RegionFree`, implicit allocation, named region lifetimes
-- RFC-0028: `docs/internal/rfcs/1-under-review/rfc-0028-memory-and-reference-model.md` — `@T`, `*T`, pointer model
+- RFC-0025: `docs/internal/rfcs/6-refused/rfc-0025-region-allocation.md` — `RegionFree`, implicit allocation, named region lifetimes
+- RFC-0028: `docs/internal/rfcs/6-refused/rfc-0028-memory-and-reference-model.md` — `@T`, `*T`, pointer model
 - RFC-0047: owning pointer completeness — `@T` addressability interacts with region allocation
 - Lifetime proposal: `docs/reports/memory-model/lifetime-system-proposal.md` — §4.1 region lifetime integration

@@ -2,7 +2,7 @@
 id: rfc-0042
 title: "let mut for Mutable Bindings"
 date: '2026-06-02'
-status: incorporated
+status: implemented
 spec_status: done
 ---
 

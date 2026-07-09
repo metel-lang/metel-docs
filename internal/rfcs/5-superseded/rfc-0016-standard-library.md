@@ -2,7 +2,7 @@
 id: rfc-0016
 title: "Standard Library Foundation"
 date: '2026-05-21'
-status: draft
+status: superseded
 superseded_by: rfc-0057
 ---
 

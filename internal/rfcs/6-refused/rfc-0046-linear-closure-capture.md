@@ -155,6 +155,6 @@ Direct `[move buf]` capture of an unboxed linear value is supported. Boxing befo
 ## References
 
 - RFC-0006: `docs/internal/rfcs/4-implemented/rfc-0006-closure-capture-semantics.md` — §"Fit with Linear Types and the Compiler"
-- RFC-0028: `docs/internal/rfcs/1-under-review/rfc-0028-memory-and-reference-model.md`
-- RFC-0025: `docs/internal/rfcs/1-under-review/rfc-0025-region-allocation.md`
-- RFC-0050: `docs/internal/rfcs/1-under-review/rfc-0050-closure-capture-lists.md`
+- RFC-0028: `docs/internal/rfcs/6-refused/rfc-0028-memory-and-reference-model.md`
+- RFC-0025: `docs/internal/rfcs/6-refused/rfc-0025-region-allocation.md`
+- RFC-0050: `docs/internal/rfcs/0-draft/rfc-0050-closure-capture-lists.md`
