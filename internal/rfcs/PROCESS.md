@@ -104,10 +104,29 @@ specifying independently, discovered only after the fact because nothing was che
 against it first. This is the single highest-leverage rule here — it's what would have
 prevented the concrete, expensive failure that prompted this whole document.
 
-**Every dated strategic-overview snapshot does a triage pass, not just narration.**
-Explicitly call out stale drafts, dangling dependency pointers (e.g. an RFC still
-depending on something now-refused), and mergeable/supersedable RFCs each cycle — not
-just what moved, but what should move and hasn't.
+**Every dated strategic-overview snapshot does a triage pass, not just narration, and
+reads from/writes back to `reports/strategy/OBJECTIVES.md`.** Explicitly call out stale
+drafts, dangling dependency pointers (e.g. an RFC still depending on something
+now-refused), and mergeable/supersedable RFCs each cycle — not just what moved, but what
+should move and hasn't. Before writing one: `OBJECTIVES.md` did not exist before
+2026-07-09 because nothing in this repo persisted long-term priorities or open triggers
+between dated snapshots — each strategic-overview only referenced the previous one in
+prose, so "what are we currently prioritizing" had to be reconstructed by finding
+whichever dated file was most recent. Now: check its open triggers (§3) against real
+progress, update its priorities (§2) in place, add anything new, append to its review
+log (§4), and only then decide whether a new dated narrative snapshot is warranted (see
+"Triggering a new strategic overview" below — this document changing is not always
+itself sufficient reason for one).
+
+**Triggering a new strategic overview stays event-based, not calendar-based** —
+matching the actual history (07-01 → 07-05 → 07-06 → 07-08, each written at a real
+inflection point). Natural triggers: a cluster's `3-integrated` backlog has real
+candidates ready, `rfc.py check`/`index --check-drift` reports meaningful drift, or
+enough has changed that `OBJECTIVES.md` no longer reflects reality. Do not tie this to
+a specific lifecycle transition (e.g. `3-integrated` promotions) — that conflates a
+planning document with a technical soundness-checking gate, which is `3-integrated`'s
+own concern (above), performed whenever a promotion is actually attempted, not deferred
+to wait for the next planning cycle.
 
 **Prune open questions inside RFC bodies harder.** Only genuinely blocking questions
 stay inline. RFC-0012 accumulated 18 open questions before being split — most weren't
