@@ -54,6 +54,22 @@ target:
 > under review too, correctly still blocked on this RFC, though its `derives Clone`
 > syntax is now stable (matches this RFC's recommended, if not yet accepted, surface
 > syntax) rather than at further risk of changing.
+>
+> **Revised (call-site syntax) 2026-07-09, later the same day.** The claim two
+> paragraphs up — that RFC-0080's syntax was no longer "at further risk of
+> changing" — turned out to be wrong within the same day. The `derives Aspect`
+> keyword-clause call-site syntax is retired in favour of `@derive(Aspect, ...)` as an
+> attribute on the struct/enum declaration itself, for two reasons: it keeps the
+> struct's own declaration line uncrowded (no trailing clause competing for space
+> alongside generic parameters and row-conditional bounds before the opening brace),
+> and it is closer to what Rust users already expect. This also forced a real gap into
+> the open: nothing in this RFC ever specified how a derive request resolves to the
+> *specific* comptime function implementing it. §9 (new) answers both at once — the
+> same `@derive(Aspect)` form, attached to a comptime function's own declaration
+> instead of a struct/enum, registers it as that aspect's deriver, disambiguated purely
+> by attachment target. `derives` is dropped entirely, not merely deprioritized: Path
+> C's syntax is no longer adopted anywhere in this RFC (Alternatives Considered,
+> updated). RFC-0080 §1.3 is updated again, to `@derive(Clone)`.
 
 ## Summary
 
@@ -483,14 +499,79 @@ macros collapsed into generalized `emit` (Motivation, "Macros") is folded into O
 Question 13 rather than treated as settled here.
 
 **One open design fork this raises, not resolved here:** should a derive function's own
-configuration travel as arguments to `derives` itself (`derives Serialize(rename_all = "camelCase")`),
-or always as separate per-field/per-type `@` attributes read via `typeinfo`, as sketched
-above? Rust does the latter — configuration lives beside the derive, not inside its
-invocation. Recorded as Open Question 15 rather than decided here.
+configuration travel as arguments nested inside `@derive(...)` itself
+(`@derive(Serialize(rename_all = "camelCase"))`), or always as separate per-field/
+per-type `@` attributes read via `typeinfo`, as sketched above? Rust does the latter —
+configuration lives beside the derive, not inside its invocation. Recorded as Open
+Question 15 rather than decided here.
+
+### 9. Resolving a derive request to a comptime function: `@derive(...)` as both request and registration
+
+Nothing so far in this Proposal specifies how a derive request at a struct or enum's
+declaration finds the *specific* comptime function that implements it. It needs a
+registration mechanism, and the `@` attribute system already specified for other
+metadata is the natural vehicle: `@derive(Aspect)`, attached to the comptime function
+that implements the derive, registers it as that aspect's deriver.
+
+```metel
+@derive(Clone)
+comptime fun derive_clone(comptime T: type) {
+    let fields = typeinfo(T).row;
+    emit impl Clone for T { ... }
+}
+```
+
+`@derive(Clone) struct Point { x: f64, y: f64 }` then resolves by looking up whichever
+comptime function is registered for `Clone` — exactly how Rust's own `#[derive(Clone)]`
+isn't magic either: it resolves via `#[proc_macro_derive(Clone)]` on the macro's own
+implementing function, in a compiler-visible table keyed by name.
+
+The same `@derive(Aspect)` spelling is used in both places above, disambiguated purely
+by what kind of declaration it is attached to — a struct/enum means "derive this for
+me," a `comptime fun` means "I implement this" — the same way `@inline` only makes
+sense attached to a function. This is a real design choice, not an assumed one: Rust
+deliberately uses two different attribute names (`derive` vs. `proc_macro_derive`) to
+keep the two roles unambiguous at the syntax level; reusing one spelling for both here
+trades a small amount of that separation for one fewer concept to learn.
+
+This also gives Path D's "open/extensible" pro (§ Pros and cons) an actual mechanism,
+which it did not have before this section: a third-party library makes its own aspect
+derivable by writing `@derive(MyAspect) comptime fun derive_my_aspect(comptime T: type) { ... }`
+in its own module, with no special compiler support beyond the registration lookup
+itself.
+
+**This retires the `derives` keyword entirely, not just at the call site.** Earlier
+revisions of this RFC (and, provisionally, RFC-0080 §1.3) used
+`struct Point derives Clone { ... }` — Path C's trailing keyword-clause syntax.
+`@derive(Clone) struct Point { ... }` is adopted instead: nothing about Path D's
+*mechanism* ever required `derives` specifically — Path C's own stated con was lack of
+extensibility, which the registration mechanism above solves regardless of which
+surface syntax sits on top of it. Path C is therefore not adopted at the call site after
+all (Alternatives Considered, below, updated accordingly); its `derives` keyword is
+dropped rather than reserved (Timing Recommendation, updated).
+
+**Open questions this raises, not yet resolved, and load-bearing enough to matter for
+acceptance (Decision, below):**
+
+- **Registration coherence.** Can two different comptime functions both carry
+  `@derive(Clone)`? An orphan-rule-shaped question, sibling to Open Question 2's
+  `emit`-soundness question — most likely a hard compile error on conflicting
+  registration, matching RFC-0060's coherence discipline for impls, but asserted here,
+  not specified (Open Question 16).
+- **Who may register for a given aspect.** Can any library register `@derive(Clone)`
+  for the stdlib's own `Clone`, or only `Clone`'s defining module — the same
+  orphan-rule question RFC-0060 already answers for impls, now needed for derive
+  *registration* specifically (Open Question 17).
+- **Required signature shape.** A function tagged `@derive(Aspect)` presumably must
+  match a fixed signature (`comptime fun(comptime T: type)`, or a variant accepting
+  configuration per Open Question 15) — checked by the compiler, the way Rust's
+  `#[proc_macro_derive]` functions must match a fixed `TokenStream -> TokenStream`
+  shape (Open Question 18).
 
 ### Worked example
 
 ```metel
+@derive(Clone)
 comptime fun derive_clone(comptime T: type) {
     let fields = typeinfo(T).row;   // T's row, reified as a comptime value
     emit impl Clone for T {
@@ -502,18 +583,19 @@ comptime fun derive_clone(comptime T: type) {
 }
 ```
 
-Surface syntax at the call site stays exactly what RFC-0080 §1.3 already uses
-provisionally: `struct Point derives Clone { x: f64, y: f64 }`. `derives Clone` parses
-as Path C's syntax and resolves to a standard-library comptime function per Path D —
-closed-list ergonomics today, with an open path to user-defined derivable aspects later,
-with no syntax change required when that lands.
+Surface syntax at the call site is `@derive(Clone) struct Point { x: f64, y: f64 }`
+(§9), resolving via the registration `@derive(Clone)` attaches to `derive_clone`'s own
+declaration above. Closed-list ergonomics today — the standard library provides and
+registers the initial derivable set — with an open path to user-defined derivable
+aspects later: a third party registers its own aspect the same way, with no syntax
+change required when that lands.
 
 ### Pros and cons
 
 **Pros:** open/extensible like Path B (any library can write a comptime function that
 emits an impl), without Path B's macro-hygiene and token-stream complexity — there is
 only one language, not two. Subsumes the `linear` keyword vs. derive question (Open
-Question 6) for free: `derives Linear` becomes an ordinary comptime function inspecting
+Question 14) for free: `@derive(Linear)` becomes an ordinary comptime function inspecting
 field linearity via `typeinfo`, not a special case. Unifies with `<T>` generics rather
 than sitting beside them as an unrelated feature. Reaches most of what a general macro
 system (Path B, and the "Lisp-style macros" alternative below) would have been for,
@@ -555,14 +637,15 @@ bespoke compiler rule.
 
 ---
 
-## Preferred Syntax: `@`, for non-derive attributes
+## Preferred Syntax: `@`, for attributes and metadata — including derive
 
-The preferred grammar symbol for attributes and metadata *other than derive* is `@`.
+The preferred grammar symbol for attributes and metadata, derive included, is `@`.
 This is distinct from all current Metel operators and consistent with annotation syntax
 in several modern languages (Java, Python decorators, Zig's `@builtins`).
 
 ```metel
-struct Point derives Clone, Eq {
+@derive(Clone, Eq)
+struct Point {
     x: Float,
     y: Float,
 }
@@ -579,7 +662,9 @@ let _debug_value = compute();
 
 Multiple attributes stack vertically, one per line, before the item they annotate.
 Attributes apply to the next declaration or binding — they do not apply to
-expressions. Derive uses `derives`, not `@derive(...)` — see Proposal above.
+expressions. Derive uses `@derive(Aspect, ...)`, both to request derivation (attached to
+a struct/enum) and to register an implementation (attached to a comptime function) —
+see §9.
 
 The `@` form is preferred over Rust's `#[...]` because:
 - `#` is visually associated with comments in many languages; `@` is unambiguously an annotation sigil
@@ -595,7 +680,10 @@ The `@` form is preferred over Rust's `#[...]` because:
 Derive is a closed set of structurally derivable aspects known to the compiler, with no
 user extensibility. Simple to implement, guaranteed-correct, but third-party libraries
 can never add derivable aspects. Superseded by Path D, which gets the same closed
-initial set (see Derivable Aspects above) without foreclosing extensibility later.
+initial set (see Derivable Aspects above) without foreclosing extensibility later —
+but Path A's own original call-site syntax, `@derive(Aspect, ...)`, is in fact the
+syntax adopted (§9, Preferred Syntax), just resolving through Path D's comptime
+registration mechanism rather than Path A's hardcoded compiler list.
 
 ### Path B — Attribute macros (procedural macros)
 
@@ -603,7 +691,9 @@ initial set (see Derivable Aspects above) without foreclosing extensibility late
 `Aspect` — Rust's model. Fully extensible, but procedural macros are notoriously
 complex to write and maintain, and require a full macro system (token streams, hygiene)
 as a prerequisite. Superseded by Path D, which reaches the same extensibility by
-running ordinary staged code over reflected values instead of syntax.
+running ordinary staged code over reflected values instead of syntax — while keeping
+Path B's own `@derive(Aspect)` call-site spelling (§9), since nothing about Path B's
+con (macro complexity) was actually about that syntax.
 
 ### Path C — Derive as a language keyword, closed
 
@@ -615,16 +705,25 @@ struct Point derives Eq, Ord, Display { x: Float, y: Float }
 ```
 
 Ergonomic and self-contained, but does not scale to user-defined derivable aspects.
-Not superseded so much as **absorbed**: this is the exact surface syntax Path D uses,
-with the compiler-known list becoming the standard library's initial comptime derive
-functions rather than a hardcoded special case. Path C is what a user of Path D sees
-before writing a custom derivable aspect.
+**Not adopted, at the mechanism level or the syntax level.** An earlier revision of
+this RFC treated Path C as "absorbed" into Path D — the reasoning being that Path C's
+only stated con (no extensibility) is exactly what Path D's comptime mechanism solves,
+so Path C's syntax could ride along on top of it. §9 reconsiders the syntax question on
+its own terms: `derives` as a trailing clause crowds a struct's declaration line
+(competing for space with generic parameters and row-conditional bounds before the
+opening brace) in a way `@derive(Aspect, ...)` as a leading attribute does not, and
+`@derive(...)` is closer to what Rust users already expect. Path C's `derives` keyword
+is therefore dropped, not merely superseded by something else that happens to look
+the same.
 
 ### `#[...]` Rust-style attributes
 
 Familiar to Rust programmers but visually ambiguous with comments (`#`). Rejected in
 favour of `@`. (RFC-0080 §1.3 briefly used this syntax for `Clone`'s derive example;
-corrected 2026-07-09 to `derives Clone`, consistent with this RFC.)
+corrected 2026-07-09 to `derives Clone`, then revised again the same day to
+`@derive(Clone)` — §9. The final form ends up structurally close to what was rejected
+here, differing only in the sigil, not the overall shape: the objection was always to
+`#` specifically, not to attaching derive information via an attribute-like form.)
 
 ### Lisp-style macros (hygienic, syntax-level)
 
@@ -656,16 +755,24 @@ and Tier 2/3 record conversion (§2 above). This is the load-bearing dependency 
 D's reflection design and is not yet reconciled in either direction — row ordering and
 visibility metadata, needed for reflection, are not currently specified there either.
 
+Separately, a plain syntax debt: `structural-records.md`'s own worked examples (and
+`reports/substructural-types/README.md`'s summaries of them) still use
+`derives ToRecord, FromRecord`-style syntax throughout, predating §9's retirement of
+`derives` in favour of `@derive(...)`. Both documents need a pass reconciling their
+examples to `@derive(ToRecord, FromRecord)` — not done as part of this revision, since
+it touches a large, separate living document rather than this RFC's own text.
+
 ### RFC-0080 (Standard Library Aspects)
 
 `Clone`'s derive (§1.3) is the concrete first test case for this RFC's mechanism.
 RFC-0080 was moved back to under-review 2026-07-09 pending this RFC's resolution, and
-currently spells derive as `derives Clone` provisionally, matching the syntax this RFC
-recommends regardless of whether the underlying mechanism is Path C or Path D.
+now spells derive as `@derive(Clone)`, matching this RFC's settled call-site syntax
+(§9) — its own registration function, `derive_clone`, would live wherever the standard
+library places its comptime derive implementations, tagged `@derive(Clone)` in turn.
 
 ### RFC-0024 (Linear Types)
 
-The `linear` keyword on struct/enum declarations could be replaced by `derives Linear`
+The `linear` keyword on struct/enum declarations could be replaced by `@derive(Linear)`
 resolving to a comptime function per Path D. The keyword form is simpler and available
 sooner; the derive form is more uniform and consistent with every other derivable
 aspect once Path D lands. Open question for RFC-0024's final form.
@@ -791,14 +898,37 @@ must be accepted before derived `Eq`/`Ord` can be implemented, regardless of mec
 
 13. **`@cfg` and conditional compilation.** Conditional compilation is a significant feature in its own right (platform-specific code, feature flags). Should `@cfg` be in scope for this RFC or a separate one? §8 adds a sharper version of this question: Zig has no `@cfg`-equivalent attribute at all, using ordinary `comptime if` instead — should Metel's `@cfg` similarly collapse into comptime `if`, the way general macros collapsed into generalized `emit` (Motivation, "Macros"), rather than staying a bespoke directive?
 
-14. **`linear` keyword vs `derives Linear`.** Should RFC-0024's `linear` keyword be removed in favour of `derives Linear` once this RFC is accepted? The keyword form is available sooner (v0.3); the derive form is more uniform but requires v0.5+ and Path D's mechanism specifically. A possible migration: accept `linear` keyword now, deprecate in favour of derive when comptime derive lands.
+14. **`linear` keyword vs `@derive(Linear)`.** Should RFC-0024's `linear` keyword be removed in favour of `@derive(Linear)` once this RFC is accepted? The keyword form is available sooner (v0.3); the derive form is more uniform but requires v0.5+ and Path D's mechanism specifically. A possible migration: accept `linear` keyword now, deprecate in favour of derive when comptime derive lands.
 
-15. **`derives(...)` arguments vs. separate `@` attributes for derive configuration.** §8
-    raises this without resolving it: should a derive function's own configuration (e.g.
-    a rename convention for every field at once) travel as arguments to `derives` itself
-    (`derives Serialize(rename_all = "camelCase")`), or always as separate per-field/
+15. **`@derive(Aspect(...))` arguments vs. separate `@` attributes for derive
+    configuration.** §8/§9 raise this without resolving it: should a derive function's
+    own configuration (e.g. a rename convention for every field at once) travel as
+    arguments nested inside `@derive(...)` itself
+    (`@derive(Serialize(rename_all = "camelCase"))`), or always as separate per-field/
     per-type `@` attributes read via `typeinfo`? Rust uses the latter pattern
-    exclusively; both are coherent, and this RFC does not yet pick one.
+    exclusively; both are coherent, and this RFC does not yet pick one. Connects
+    directly to Open Question 18 (the registered function's signature would need to
+    accept whichever form is chosen).
+
+16. **Registration coherence for `@derive(Aspect)`.** §9: can two different comptime
+    functions both carry `@derive(Clone)`? An orphan-rule-shaped question, sibling to
+    Open Question 2's `emit`-soundness question. Most likely resolution is a hard
+    compile error on conflicting registration, matching RFC-0060's coherence
+    discipline for impls, but this is asserted in §9, not specified — and, despite its
+    number, is treated as load-bearing enough to block acceptance (Decision, below),
+    alongside Open Questions 1, 2, and 4.
+
+17. **Who may register `@derive(Aspect)` for a given aspect.** §9: can any library
+    register `@derive(Clone)` for the stdlib's own `Clone`, or only `Clone`'s defining
+    module? The same orphan-rule question RFC-0060 already answers for impls, now
+    needed for derive *registration* specifically, distinct from Open Question 2's
+    question about `emit`-ing an impl for a type the comptime function doesn't own.
+
+18. **Required signature shape for `@derive`-tagged comptime functions.** §9: presumably
+    a fixed shape (`comptime fun(comptime T: type)`, or a variant accepting
+    configuration per Open Question 15) — checked by the compiler, the way Rust's
+    `#[proc_macro_derive]` functions must match a fixed `TokenStream -> TokenStream`
+    signature. Not yet specified.
 
 ---
 
@@ -817,7 +947,7 @@ as-comptime-value and `typeinfo` reflection (with the row-metadata question in O
 Question 1 resolved) must exist before any derive function can be written, comptime or
 otherwise. RFC-0080's `Clone` derive is blocked on this, not just on syntax.
 
-Minimum action before v0.5: reserve `@` as a grammar token so it cannot be used for other purposes. Reserve `derives` and `comptime` as keywords for the same reason. This prevents a breaking change when the attribute system and comptime derive land.
+Minimum action before v0.5: reserve `@` as a grammar token so it cannot be used for other purposes. Reserve `comptime` as a keyword for the same reason. `derives` does not need reserving — §9 retires it in favour of `@derive(...)`, which the `@` reservation already covers.
 
 ---
 
@@ -827,7 +957,7 @@ Minimum action before v0.5: reserve `@` as a grammar token so it cannot be used 
 - `reports/substructural-types/structural-records.md` — row concept reused by `typeinfo`'s struct arm (§2); §8's implicit/tier-gated split is the model for reflection vs. runtime conversion
 - RFC-0011: `docs/internal/rfcs/rfc-0011-operator-overloading.md` — `Eq`/`Ord` derive depends on operator aspects
 - RFC-0009: `docs/internal/rfcs/rfc-0009-module-system.md` — visibility and `@cfg` interaction; also field-visibility for reflection (Open Question 1)
-- RFC-0024: `docs/internal/rfcs/rfc-0024-linear-types.md` — `linear` keyword vs `derives Linear`
+- RFC-0024: `docs/internal/rfcs/rfc-0024-linear-types.md` — `linear` keyword vs `@derive(Linear)`
 - RFC-0026: `docs/internal/rfcs/rfc-0026-unsafe-blocks.md` — `@extern` for FFI uses attribute syntax
 - RFC-0060: `docs/internal/rfcs/rfc-0060-aspect-impl-coherence.md` — coherence/orphan rules `emit` must respect (Open Question 2)
 - RFC-0008: `docs/internal/rfcs/rfc-0008-aspect-objects.md` — states "static dispatch
@@ -856,10 +986,12 @@ Minimum action before v0.5: reserve `@` as a grammar token so it cannot be used 
 ## Decision
 
 **Outcome:** **Under review.** Path D (comptime derive) is adopted as this RFC's
-recommended mechanism — not one of four undifferentiated options — with Paths A/B/C
-retained as alternatives considered (§ Alternatives Considered) and Path C absorbed as
-Path D's surface syntax. Not accepted: three open questions are load-bearing enough to
-block acceptance outright —
+recommended mechanism — not one of four undifferentiated options. Call-site and
+registration syntax are both settled as `@derive(Aspect, ...)` (§9), disambiguated by
+attachment target (struct/enum = request; comptime fun = registration): Path C's
+`derives` keyword is dropped entirely, not absorbed as an earlier revision of this RFC
+claimed. Not accepted: four open questions are load-bearing enough to block acceptance
+outright —
 
 - **Open Question 1** (row metadata for reflection — order, visibility, and, since §8,
   each field's `@` attributes) blocks a concrete `typeinfo` spec.
@@ -868,19 +1000,25 @@ block acceptance outright —
   concentrate.
 - **Open Question 4** (comptime-callable parser API surface) is sketched by example
   (§5) only, not specified.
+- **Open Question 16** (registration coherence for `@derive(Aspect)`, §9) is a sibling
+  soundness gap to Open Question 2, discovered later in this RFC's revision history but
+  no less load-bearing: without it, `@derive(Clone)` at a call site has no guaranteed,
+  well-defined function to resolve to.
 
-The remaining twelve open questions (§ Open Questions 3, 5-15) are real but not
+The remaining fourteen open questions (§ Open Questions 3, 5-15, 17-18) are real but not
 blocking acceptance in the same direct way. Some are genuinely independent of the
 derive mechanism (`Display`/`From`, Open Question 11); some are already flagged as
 paced future work in their own right (body reflection, Open Question 6). Open
 Question 10 is explicitly *not* independent — §8 established that field-level
 attributes are a real consumer of the derive mechanism, which is exactly why it now
-feeds Open Question 1 rather than standing apart from it.
+feeds Open Question 1 rather than standing apart from it. Open Questions 17-18 (§9)
+are real but narrower than Open Question 16 — they refine *how* registration works
+once Open Question 16 is answered, rather than whether it works at all.
 
 Per `reports/strategy/strategic-overview-2026-07-08.md`'s Priority 2b classification and
 Honest Assessment (paper-only territory, RFC-0075 as the applicable cautionary tale),
 this RFC is deliberately not pursued toward acceptance on any particular timeline —
-under review, paced, revisited when Open Questions 1/2/4 have concrete answers, not on
-a schedule.
+under review, paced, revisited when Open Questions 1/2/4/16 have concrete answers, not
+on a schedule.
 
 **Target:** v0.5+, unchanged, and contingent on the above.

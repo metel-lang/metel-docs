@@ -10,18 +10,23 @@ updated: '2026-07-09'
 > Derived Aspects, under review) explicitly rejects in its own Alternatives Considered
 > section in favour of either `@derive(...)` or the `derives` keyword. An accepted RFC
 > using a syntax the governing RFC rejects is an inconsistency, not a settled precedent.
-> §1.3 now uses `derives Clone`.
+> §1.3 used `derives Clone` at this point; see the update immediately below for its
+> current, further-revised spelling.
 >
-> **Update (same day, later):** RFC-0012 has since settled on Path D (comptime derive)
-> as its recommended mechanism, with `derives Clone` as Path D's stable surface syntax
-> (Path C, absorbed) — so §1.3's spelling is no longer provisional, it is confirmed.
-> The *mechanism* underneath it is not: RFC-0012 itself remains under review, not
-> accepted (its own Open Questions 1/2/4 — row metadata, `emit` soundness, parser API
-> surface — are load-bearing enough to block that). Re-promote this RFC to accepted
-> once RFC-0012 reaches acceptance, or sooner if RFC-0012's Open Questions 1/2/4 turn
-> out not to affect `Clone`'s specific derive (they concern the general mechanism, not
-> this RFC's four aspects, which do not depend on which path implements derive).
-> Depends on RFC-0071 (Ownership and Move Semantics) and RFC-0060 (Aspect Impl
+> **Update (same day, later):** RFC-0012 settled on Path D (comptime derive) as its
+> recommended mechanism, with `derives Clone` as Path D's stable surface syntax — so
+> §1.3's spelling was briefly confirmed rather than provisional. That confirmation did
+> not last the day: RFC-0012 §9 retired the `derives` keyword entirely in favour of
+> `@derive(Aspect, ...)`, an attribute on the struct/enum itself, reused (disambiguated
+> by attachment target) to also register the comptime function that implements a given
+> aspect's derive. §1.3 now uses `@derive(Clone)`. The *mechanism* underneath it remains
+> unaccepted: RFC-0012 itself stays under review (its own Open Questions 1/2/4/16 — row
+> metadata, `emit` soundness, parser API surface, and now registration coherence for
+> `@derive(Aspect)` — are load-bearing enough to block that). Re-promote this RFC to
+> accepted once RFC-0012 reaches acceptance, or sooner if RFC-0012's blocking open
+> questions turn out not to affect `Clone`'s specific derive (they concern the general
+> mechanism, not this RFC's four aspects, which do not depend on which path implements
+> derive). Depends on RFC-0071 (Ownership and Move Semantics) and RFC-0060 (Aspect Impl
 > Coherence). Formally specifies four aspects that are assumed pre-existing across the
 > accepted and under-review region RFC cluster (RFC-0063–0079) but have never been
 > defined. The sendability aspects (`Send`, `Sync`) rely on closed-world coherence from
@@ -78,7 +83,8 @@ buffer, deep-copying a list, incrementing a reference count. The distinction bet
 derived impl calls `.clone()` on each field and assembles the result:
 
 ```metel
-struct Point derives Clone { x: f64, y: f64 }
+@derive(Clone)
+struct Point { x: f64, y: f64 }
 
 // Generated:
 impl Clone for Point {
@@ -188,7 +194,7 @@ of whose fields are `Send`. Under closed-world coherence (RFC-0060):
 - `&T` is `Send` if `T: Sync`.
 - `&mut T` is `Send` if `T: Send`.
 
-No `derives Send` annotation is needed; the compiler applies the rule automatically.
+No `@derive(Send)` annotation is needed; the compiler applies the rule automatically.
 
 ### 3.3 Opting out
 
