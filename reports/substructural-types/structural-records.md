@@ -19,6 +19,18 @@ See `linear-types.md` for the `Linear` aspect, the multiplicity lattice, and par
 consumption — this document assumes that context and focuses on the structural-typing
 half specifically.
 
+*Promoted to RFC status 2026-07-09: §1-10 (the row/`HasField` mechanism, the
+`record` type-former, and the three-tier model) are now
+`internal/rfcs/0-draft/rfc-0090-structural-records.md`. The per-field-multiplicity
+worked examples and §2's `uses (fd)` Drop-field-usage mechanism are now
+`internal/rfcs/0-draft/rfc-0091-linear-records.md`, which depends on this RFC and
+RFC-0089 (Linear Types). This document remains the living exploration those RFCs were
+extracted from; it is not superseded, but new substantive changes to the topics above
+should land in the RFCs directly, not here, once they move past draft. Note also that
+this document's own `derives ToRecord, FromRecord`-style examples predate RFC-0093's
+retirement of the `derives` keyword in favour of `@derive(...)` — not yet reconciled
+here.*
+
 ---
 
 ## 1. Two complementary mechanisms, not one import

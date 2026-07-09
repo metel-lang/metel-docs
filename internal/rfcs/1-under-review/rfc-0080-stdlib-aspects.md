@@ -19,15 +19,20 @@ updated: '2026-07-09'
 > not last the day: RFC-0012 §9 retired the `derives` keyword entirely in favour of
 > `@derive(Aspect, ...)`, an attribute on the struct/enum itself, reused (disambiguated
 > by attachment target) to also register the comptime function that implements a given
-> aspect's derive. §1.3 now uses `@derive(Clone)`. The *mechanism* underneath it remains
-> unaccepted: RFC-0012 itself stays under review (its own Open Questions 1/2/4/16 — row
-> metadata, `emit` soundness, parser API surface, and now registration coherence for
-> `@derive(Aspect)` — are load-bearing enough to block that). Re-promote this RFC to
-> accepted once RFC-0012 reaches acceptance, or sooner if RFC-0012's blocking open
-> questions turn out not to affect `Clone`'s specific derive (they concern the general
-> mechanism, not this RFC's four aspects, which do not depend on which path implements
-> derive). Depends on RFC-0071 (Ownership and Move Semantics) and RFC-0060 (Aspect Impl
-> Coherence). Formally specifies four aspects that are assumed pre-existing across the
+> aspect's derive. §1.3 now uses `@derive(Clone)`.
+>
+> **Update (2026-07-09, later still):** RFC-0012 was itself split into four smaller
+> RFCs and superseded (`internal/rfcs/4-superseded/rfc-0012-derived-aspects.md`). The
+> derive mechanism `Clone`'s §1.3 depends on now lives in **RFC-0093 (Derive
+> Registration)**. The *mechanism* underneath `@derive(Clone)` remains unaccepted:
+> RFC-0093 stays draft (its Open Questions 1-4 — `emit` soundness, registration
+> coherence, who may register for a given aspect, required function signature — are
+> load-bearing enough to block acceptance). Re-promote this RFC to accepted once
+> RFC-0093 reaches acceptance, or sooner if RFC-0093's blocking open questions turn out
+> not to affect `Clone`'s specific derive (they concern the general mechanism, not this
+> RFC's four aspects, which do not depend on which path implements derive). Depends on
+> RFC-0071 (Ownership and Move Semantics) and RFC-0060 (Aspect Impl Coherence).
+> Formally specifies four aspects that are assumed pre-existing across the
 > accepted and under-review region RFC cluster (RFC-0063–0079) but have never been
 > defined. The sendability aspects (`Send`, `Sync`) rely on closed-world coherence from
 > RFC-0060 for their auto-impl rules.
@@ -315,6 +320,6 @@ does not depend on RFC-0003 and may be accepted independently.
   `Deref` impls for `Rc` and `Arc`; `get_mut` and `try_unwrap` as the mutation API.
 - RFC-0003 (Concurrency Model, draft) — fiber boundary crossing; consumer of `Send`
   and `Sync` bounds.
-- RFC-0012 (Attributes, Metadata, Macros, and Derived Aspects, under review) — governs
-  the derive syntax/mechanism `Clone`'s §1.3 depends on; this RFC's move back to
-  under-review pending that resolution.
+- RFC-0093 (Derive Registration, draft) — governs the derive syntax/mechanism `Clone`'s
+  §1.3 depends on; this RFC's move back to under-review pending that resolution.
+  (Superseded RFC-0012, which originally specified this, on 2026-07-09.)
