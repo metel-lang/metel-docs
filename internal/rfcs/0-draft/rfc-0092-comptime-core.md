@@ -11,7 +11,20 @@ target:
 > reviewable pieces. This RFC is the dependency root of the split: RFC-0093 (Derive
 > Registration) and RFC-0094 (Comptime Metaprogramming) both build on the mechanism
 > specified here. RFC-0012 itself is superseded by this RFC plus RFC-0093/0094/0095,
-> collectively — see `internal/rfcs/4-superseded/rfc-0012-derived-aspects.md`.
+> collectively — see `internal/rfcs/5-superseded/rfc-0012-derived-aspects.md`.
+>
+> **Reconciled with RFC-0055 the same day**, after `internal/rfcs/INDEX.md` surfaced an
+> overlap that had gone undiscovered through this RFC's entire drafting: RFC-0055
+> ("Comptime," draft since 2026-06-05) already covers foundational execution-model
+> ground this RFC had silently assumed — `comptime let` for constants, `comptime fun`'s
+> general restrictions (no I/O, no non-comptime calls, a recursion limit), and
+> `comptime if`. §0 below folds that content in. RFC-0055's own Open Question 4 ("can
+> comptime code inspect whether a type implements an aspect... could replace some uses
+> of conditional `impl` blocks") is answered more precisely by RFC-0093's `@derive`
+> registration than by RFC-0055's own sketch. RFC-0055 is now superseded by this RFC
+> (plus RFC-0093 for OQ-4 and RFC-0095 for the `comptime if`/`@cfg` overlap RFC-0055's
+> design already anticipated without RFC-0095 knowing it) —
+> `internal/rfcs/5-superseded/rfc-0055-comptime.md`.
 
 ## Summary
 
@@ -35,6 +48,69 @@ failure modes of Rust's alternative (a closed, compiler-hardcoded derive list; a
 separate procedural-macro language with its own grammar, token streams, and hygiene
 system): comptime code is the same language as runtime code, staged earlier, because
 the same evaluator runs it.
+
+---
+
+## 0. Execution model: `comptime let`, `comptime fun`, `comptime if`
+
+Before `type`-as-value (§1) or reflection (§2) mean anything, comptime needs a base
+execution model — folded in here from RFC-0055, which specified this ground first and
+was never cross-checked against while this RFC was drafted (see the note above).
+
+**`comptime let`.** A binding whose initializer is evaluated at compile time:
+
+```metel
+comptime let MAX_CONNECTIONS: i64 = 1024;
+comptime let BUFFER_SIZE: i64 = MAX_CONNECTIONS * 64;
+```
+
+Motivating cases RFC-0055 identified and this RFC inherits: derived constants (a
+buffer size computed from a protocol limit, rather than duplicated or computed at
+runtime), and compile-time lookup tables (`comptime let SIN_TABLE: f64[256] = ...`) —
+zero runtime cost, since the value is fully computed before any generated code runs.
+Also the natural source of `N` in fixed-size array types (`T[N]`, RFC-0053/RFC-0084):
+`comptime let CHUNK: i64 = 64; let buf: u8[CHUNK] = [0; CHUNK];`.
+
+**`comptime fun`.** A function evaluable at compile time. The annotation means "the
+compiler *can* evaluate this," not "this may only be called at compile time" — an
+ordinary call site at runtime is still legal:
+
+```metel
+comptime fun pow2(n: i64) -> i64 {
+    let mut result = 1;
+    let mut i = 0;
+    while (i < n) { result *= 2; i += 1; }
+    result
+}
+
+comptime let PAGE_SIZE: i64 = pow2(12);   // 4096, computed at compile time
+```
+
+Restrictions, inherited from RFC-0055: no I/O builtins (`print`, `println`); no heap
+allocation via runtime allocators (comptime needs its own scratch storage, distinct
+from `@a T`'s runtime allocators — see Open Question 6); no calls to non-comptime
+functions; no recursion beyond a compiler-enforced depth limit (Open Question 5).
+`@derive(Aspect)`-tagged functions (RFC-0093) and `emit` (§3) are comptime functions in
+this sense, with `emit` as an additional capability layered on top, not a different
+execution model.
+
+**`comptime if`.** A conditional whose condition is a comptime-known value is resolved
+at compile time; the untaken branch is never type-checked or emitted:
+
+```metel
+comptime let IS_64BIT: boolean = target_pointer_width() == 64;
+
+fun word_size() -> i64 {
+    comptime if (IS_64BIT) { 8 } else { 4 }
+}
+```
+
+This is the mechanism RFC-0095's Open Question 4 already speculates might subsume
+`@cfg` — RFC-0055 had already reached the same conclusion independently
+("conditional boolean conditions fold cleanly into the generated code with no
+overhead"), without RFC-0095 knowing RFC-0055 existed. Both RFCs converging on the same
+answer from opposite starting points is worth treating as *more* confidence in it, not
+double work to reconcile — no content conflict here, just independent confirmation.
 
 ---
 
@@ -231,6 +307,24 @@ specified (ordering, visibility, attributes).
    set), deferring `Enum`/`Int`/`Pointer`/... arms until something actually needs them?
    Or does the sum type need to be specified in full before any of it ships, to avoid a
    breaking change to `TypeInfo` later?
+6. **Recursion and termination for `comptime fun`** (inherited from RFC-0055 OQ-1).
+   Should Metel allow recursive comptime functions with a compiler-enforced depth
+   limit (Zig's approach), or forbid comptime recursion entirely (forcing comptime
+   loops to cover all cases, at the cost of some recursively-natural programs being
+   inexpressible as comptime)? Neither this RFC nor RFC-0055 settles this.
+7. **Comptime and allocation** (inherited from RFC-0055 OQ-2). Can comptime functions
+   allocate at all? §0 asserts comptime needs "its own scratch storage, distinct from
+   `@a T`'s runtime allocators" without specifying what that storage is or how it's
+   bounded — does comptime get its own dedicated allocator kind, or is heap-shaped
+   allocation simply disallowed in comptime functions, with only stack-like/scratch
+   values permitted?
+8. **Comptime error messages.** When a comptime computation fails (division by zero,
+   an assertion, an unsupported type reaching `comptime if`), the error must report the
+   original comptime call site, not the internals of whatever comptime function was
+   evaluating — otherwise error quality regresses badly relative to ordinary runtime
+   errors. RFC-0094 §3 specifies span-tracking for comptime-*parsed strings*
+   specifically; this is the same concern for comptime *execution* errors generally,
+   inherited from RFC-0055 OQ-5, and not obviously the same mechanism.
 
 ---
 
@@ -261,6 +355,11 @@ Minimum action before v0.5: reserve `comptime` as a keyword.
   case for this RFC's mechanism (via RFC-0093)
 - RFC-0093 (Derive Registration) — depends on this RFC
 - RFC-0094 (Comptime Metaprogramming) — depends on this RFC, generalizes `emit`
+- RFC-0055 (Comptime, superseded) — original design sketch; §0's execution model
+  (`comptime let`/`fun`/`if`) and Open Questions 6-8 are inherited from it, reconciled
+  2026-07-09 after `INDEX.md` surfaced the overlap
+- RFC-0053 (Fixed-Size Array Type) / RFC-0084 (Fixed-Size Array Syntax) — `T[N]`'s `N`
+  is the concrete motivating case for `comptime let` (§0)
 - Prior art: Zig `comptime`, `@typeInfo`, `comptime T: type`
 
 ---

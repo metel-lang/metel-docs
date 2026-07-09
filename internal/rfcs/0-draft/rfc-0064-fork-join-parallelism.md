@@ -13,7 +13,7 @@ date: '2026-06-25'
 > that complemented `||` at sub-allocation granularity lost its consumer and is deferred.
 > See `reports/substructural-types/structured-concurrency.md` (rewritten 2026-07-07) for
 > the replacement model and the one capability given up (in-place data parallelism over
-> arena data). This file is retained for history and should move to `5-refused/`.
+> arena data). This file is retained for history and should move to `6-refused/`.
 >
 > *Prior status — deferred.* This RFC specifies the `||` structured fork-join combinator
 > and its interaction with region pointers, depending on RFC-0063 for the tag and

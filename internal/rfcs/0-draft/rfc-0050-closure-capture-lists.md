@@ -250,7 +250,7 @@ representation to rename at all, in either case.
 **`move` captures** remain blocked. RFC-0046, which specified `move`'s semantics (`linear fun`,
 consume-at-capture, single-call safety), is refused — not merely on hold — because it was
 written entirely in terms of the old unified `Region` model (cites RFC-0025, RFC-0028,
-RFC-0051, all now in `5-refused/`). `move` capture needs a split-model successor to RFC-0046
+RFC-0051, all now in `6-refused/`). `move` capture needs a split-model successor to RFC-0046
 before it can be implemented. That successor is not yet written and is properly a Stage B
 concern (see `reports/implementation/roadmap-2026-07-07.md`), alongside the rest of the
 linear-types tower.
@@ -298,7 +298,7 @@ forces a rewrite of closure capture when they land:
 - RFC-0041: Lambda Syntax for Anonymous Functions
 - RFC-0043: Regular Pointers and Mutable Pointers
 - Closure capture tests: `tests/evaluator/sources/closures/72_closure_internal_ptr_no_outer_effect.mtl`, `73_closure_direct_assign_no_outer_effect.mtl`, `74_closure_external_ptr_affects_outer.mtl`
-- RFC-0046: Linear Closure Capture — **refused** (`5-refused/`); specified `move`'s semantics
+- RFC-0046: Linear Closure Capture — **refused** (`6-refused/`); specified `move`'s semantics
   (`linear fun` type, consume-at-capture) against the old unified `Region` model. A split-model
   successor is needed before `move` capture can be implemented — see Timing Recommendation above.
 - RFC-0063: Allocator Handles (`1-under-review`, retitled from "Region Handles" in the 2026-07-05

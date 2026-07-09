@@ -23,7 +23,7 @@ RFC-0074 itself is still in `0-draft`, blocked on RFC-0076 (brand types) Q1.
 
 None of RFC-0069 (`SubRegion`), RFC-0085 (`PhantomRegion`), or RFC-0087
 (universal own-region) appear here — all three are retracted by the split
-model (see position report §5) and have moved to `5-refused/`.
+model (see position report §5) and have moved to `6-refused/`.
 
 ## Files
 

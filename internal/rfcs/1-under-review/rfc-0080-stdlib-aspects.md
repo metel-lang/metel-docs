@@ -22,7 +22,7 @@ updated: '2026-07-09'
 > aspect's derive. §1.3 now uses `@derive(Clone)`.
 >
 > **Update (2026-07-09, later still):** RFC-0012 was itself split into four smaller
-> RFCs and superseded (`internal/rfcs/4-superseded/rfc-0012-derived-aspects.md`). The
+> RFCs and superseded (`internal/rfcs/5-superseded/rfc-0012-derived-aspects.md`). The
 > derive mechanism `Clone`'s §1.3 depends on now lives in **RFC-0093 (Derive
 > Registration)**. The *mechanism* underneath `@derive(Clone)` remains unaccepted:
 > RFC-0093 stays draft (its Open Questions 1-4 — `emit` soundness, registration

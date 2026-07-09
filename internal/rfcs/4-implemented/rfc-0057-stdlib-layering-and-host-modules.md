@@ -345,5 +345,5 @@ Recommended implementation order:
 - ADR-0039: `metel-interpreter/docs/decisions/adr-0039-native-bindings-embedded-stdcore.md`
   (native bindings, embedded `std::core`; supersedes ADR-0027)
 - ADR-0038: `metel-interpreter/docs/decisions/adr-0038-overload-resolution-symbolid-dispatch.md`
-- RFC-0054: `docs/internal/rfcs/3-implemented/rfc-0054-list-type.md`
+- RFC-0054: `docs/internal/rfcs/4-implemented/rfc-0054-list-type.md`
 - Public spec entry point: `docs/public/reference/spec.md`

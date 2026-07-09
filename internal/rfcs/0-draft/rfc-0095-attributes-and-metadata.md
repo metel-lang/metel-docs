@@ -192,7 +192,12 @@ rules are not fully independent.
    Question 3: Zig has no `@cfg`-equivalent attribute at all, using ordinary
    `comptime if` instead — should Metel's `@cfg` similarly collapse into comptime `if`,
    the way general macros collapsed into generalized `emit` (RFC-0094), rather than
-   staying a bespoke directive?
+   staying a bespoke directive? Independently corroborated after the fact: RFC-0055
+   (Comptime, superseded by RFC-0092), discovered 2026-07-09 via `INDEX.md` after this
+   question was already written, reached the same conclusion from its own motivation
+   section ("conditional boolean conditions fold cleanly into the generated code with
+   no overhead") without knowing this RFC existed. Two independent routes reaching the
+   same answer is worth reading as added confidence, not as work needing reconciling.
 
 ---
 

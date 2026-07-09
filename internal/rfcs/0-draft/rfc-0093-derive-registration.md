@@ -13,6 +13,14 @@ target:
 > for `Clone`'s derive mechanism; RFC-0090 (Structural Records) depends on this RFC only
 > for `ToRecord`/`FromRecord`'s auto-derive *convenience*, not their existence as
 > ordinary aspects.
+>
+> **Answers RFC-0055's Open Question 4** ("can comptime code inspect whether a type
+> implements an aspect... could replace some uses of conditional `impl` blocks"),
+> discovered 2026-07-09 via `INDEX.md` after this RFC was already drafted — §1's
+> `@derive(Aspect)` registration is a more precise answer than RFC-0055's own
+> `comptime has_aspect(T, Aspect)` sketch, since it resolves to a specific registered
+> comptime function rather than a boolean query. RFC-0055 is superseded by RFC-0092
+> primarily, with this RFC covering its OQ-4 specifically.
 
 ## Summary
 

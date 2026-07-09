@@ -139,4 +139,4 @@ This is the useful direction: a generic `run_once` that accepts `linear fun` can
 
 - RFC-0046: `docs/internal/rfcs/1-under-review/rfc-0046-linear-closure-capture.md` — `linear fun` type, `[move x]` captures
 - RFC-0028: `docs/internal/rfcs/1-under-review/rfc-0028-memory-and-reference-model.md` — `Drop` aspect, linearity checker, `drop` function
-- RFC-0006: `docs/internal/rfcs/3-implemented/rfc-0006-closure-capture-semantics.md` — non-linear closure model
+- RFC-0006: `docs/internal/rfcs/4-implemented/rfc-0006-closure-capture-semantics.md` — non-linear closure model
