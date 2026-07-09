@@ -87,19 +87,73 @@ registers. There is no macro grammar, no token stream, no hygiene problem — co
 code is the same language as runtime code, staged earlier, because the same evaluator
 runs it.
 
-### 1. `type` as a first-class comptime value
+### 1. Generics as comptime sugar
 
 A `type` (e.g. `Point`, `i64`, `Perhaps<T>`) can be bound, passed, and returned like any
 other comptime-known value. This is also the natural explanation for Metel's existing
 `<T>` generics (spec: `public/reference/spec/types.md`, "Generics"): Zig does not have
 `<T>`-style generics as a mechanism separate from comptime — `fun first(comptime T: type, arr: T[])`
 *is* how Zig spells a generic function, because a compile-time-known `type` parameter
-is just an ordinary parameter, staged. If Path D is adopted, `fun first<T>(arr: T[])`
-would most naturally be sugar over the same comptime type-parameter mechanism, rather
-than a second, independently-specified feature living alongside it. This is not
-required for Path D to work in isolation, but leaving `<T>` generics unrelated to
-comptime would mean maintaining two separate explanations for what is, underneath, the
-same idea.
+is just an ordinary parameter, staged. Under Path D, `fun first<T>(arr: T[])` is sugar
+over the same comptime type-parameter mechanism, rather than a second,
+independently-specified feature living alongside it.
+
+This is worth more than a passing mention, because it isn't a free-standing design
+choice — it interacts with two things Metel's generics already commit to in accepted
+RFCs, one confirming the unification and one in tension with it.
+
+**Monomorphization is already assumed, not a retrofit.** RFC-0008 (Aspect Objects,
+accepted) draws its entire dynamic-dispatch proposal as a contrast against an existing
+default: "Static dispatch (generics + monomorphisation) requires the concrete type to
+be known at compile time... a function accepting `impl Aspect` is monomorphised per
+caller type." That is exactly what comptime-parameter semantics produce: a distinct,
+compile-time-known `T` triggers a fresh evaluation of the function body specialized to
+that `T`, i.e. monomorphization, by construction, with no separate codegen step to
+design. Adopting Path D for generics doesn't change Metel's dispatch model — it gives
+the model RFC-0008 already assumes an actual mechanism, rather than leaving
+"monomorphisation" as an unexamined word every generics-adjacent RFC (RFC-0008,
+RFC-0036, RFC-0037, RFC-0061, RFC-0072, RFC-0082) currently relies on without
+specifying how it happens.
+
+**Bound-checking timing is a real tension, not a free unification.** RFC-0061
+(Structural Aspect Bounds, accepted) already assumes a *bound checker*: aspect bounds
+like `T: Display` are checked with "a precise diagnostic" when a bound cannot be
+satisfied, implying failures are caught systematically against the bound, not merely
+wherever a missing method happens to be called. Zig's actual comptime generics have no
+equivalent: there is no bound-checking layer at all. A Zig generic function's body is
+type-checked only once instantiated with a concrete `T`; a call to a method that `T`
+does not provide fails at the use site, deep inside that specific instantiation,
+frequently with an error pointing into generic library code rather than at the caller
+who chose an unsuitable `T`. This is a well-known, deliberate ergonomic trade in Zig (simplicity of
+"just duck-type it") that Metel's aspect system has already rejected in favour of
+checked bounds. Adopting Path D's *execution model* for generics does not require
+adopting Zig's *checking discipline* along with it — but naming them as "the same
+mechanism" without saying so risks implying it does.
+
+**Recommendation:** keep `<T: Clone>`-style bounds checked structurally at the generic
+function's own definition, as RFC-0061 already establishes for structural types —
+implemented as a constraint verified against `typeinfo(T)` and aspect-impl lookups
+*before* any instantiation is permitted, not as a property only discovered during
+comptime evaluation of the body. Concretely:
+
+```metel
+fun first<T: Clone>(arr: T[]) -> Perhaps<T> {
+    // comptime T: type, with `T: Clone` checked against typeinfo(T)/impl lookup
+    // at this definition, exactly as RFC-0061's bound checker already does today —
+    // not deferred to whichever call site happens to instantiate T
+    if (array_len(arr) == 0) { return None; }
+    return Perhaps::Some { value: arr[0] };
+}
+```
+
+This gets Metel Zig's single-execution-model economy (one evaluator, staged, no
+separate generics-codegen machinery to specify) without Zig's weaker error locality.
+The cost is that this checked layer is itself new design work: neither Zig (which has
+no such layer) nor RFC-0061 (which specifies checked bounds but not a comptime
+substitution mechanism underneath them) hands it over pre-assembled. Designing exactly
+how bound-checking composes with comptime substitution — a distinct compiler pass
+before evaluation, or a comptime-expressible assertion the aspect system inserts
+automatically — is tracked as Open Question 3 below.
 
 ### 2. Reflection: `typeinfo(T)`, and its relationship to structural records
 
@@ -340,6 +394,22 @@ resolving to a comptime function per Path D. The keyword form is simpler and ava
 sooner; the derive form is more uniform and consistent with every other derivable
 aspect once Path D lands. Open question for RFC-0024's final form.
 
+### RFC-0008 (Aspect Objects)
+
+RFC-0008's entire proposal is framed as a contrast against an already-assumed default:
+"static dispatch (generics + monomorphisation)." §1 above treats this as confirmation,
+not tension — comptime type parameters produce monomorphization by construction, so
+Path D's generics-as-comptime-sugar unification gives RFC-0008's assumed dispatch model
+an actual mechanism rather than introducing a new one.
+
+### RFC-0061 (Structural Aspect Bounds)
+
+RFC-0061 already specifies a bound checker that rejects unsatisfiable aspect bounds
+"with a precise diagnostic" — a checked-bounds discipline Zig's own comptime generics
+do not have. §1 above recommends preserving RFC-0061's declaration-site checking as a
+layer on top of comptime substitution rather than adopting Zig's use-site duck typing
+wholesale; see Open Question 3 for the unresolved mechanics of that composition.
+
 ### RFC-0001 (Pointers) and RFC-0026 (Unsafe Blocks)
 
 `@extern("C")` for FFI function signatures (RFC-0026 open question 4) uses the `@`
@@ -374,30 +444,42 @@ must be accepted before derived `Eq`/`Ord` can be implemented, regardless of mec
    stdlib type)? This is the crux of Path D's "cons" above and needs its own worked
    examples before the mechanism can be specified precisely.
 
-3. **Is the `<T>`-generics/comptime unification required, or just recommended?** Path D
-   works even if `<T>` generics remain a separate, unrelated mechanism — the unification
-   in §1 is presented as desirable (one explanation instead of two) but not load-bearing
-   for derive itself. Confirm whether pursuing it is in scope for this RFC or belongs in
-   a generics-specific RFC.
+3. **How does declaration-site bound checking compose with comptime substitution?**
+   §1 recommends keeping RFC-0061's checked-bounds discipline (`T: Clone` verified at
+   the generic function's own definition) layered on top of comptime type parameters,
+   rather than drifting toward Zig's use-site duck typing. Is that check a distinct
+   compiler pass that runs before any comptime evaluation of the body, or is it itself
+   expressible as comptime code (an assertion the aspect system inserts automatically
+   at the top of every bounded generic function)? Neither Zig nor RFC-0061 specifies
+   this composition today — it is new design work either way.
 
-4. **Incremental rollout.** Can `typeinfo`'s `TypeInfo` enum be introduced starting with
+4. **Is the `<T>`-generics/comptime unification required, or just recommended?** Path D
+   works even if `<T>` generics remain a separate, unrelated mechanism — the unification
+   in §1 is presented as desirable (one explanation instead of two, and a concrete
+   mechanism underneath RFC-0008's assumed monomorphisation) but not load-bearing for
+   derive itself. Confirm whether pursuing it is in scope for this RFC or belongs in a
+   generics-specific RFC — no such RFC currently exists; `public/reference/spec/types.md`'s
+   "Generics" section is the only current specification, and it does not address dispatch
+   model or bound-checking timing at all.
+
+5. **Incremental rollout.** Can `typeinfo`'s `TypeInfo` enum be introduced starting with
    only the `Struct` arm (sufficient for every aspect in the initial derivable set),
    deferring `Enum`/`Int`/`Pointer`/... arms until something actually needs them? Or
    does the sum type need to be specified in full before any of it ships, to avoid a
    breaking change to `TypeInfo` later?
 
-5. **`@` attribute scope.** What items can be annotated — struct/enum declarations, function declarations, `let` bindings, individual fields? Field-level attributes (e.g. `@skip` on a field to exclude it from `Display`) are useful but add parsing complexity.
+6. **`@` attribute scope.** What items can be annotated — struct/enum declarations, function declarations, `let` bindings, individual fields? Field-level attributes (e.g. `@skip` on a field to exclude it from `Display`) are useful but add parsing complexity.
 
-6. **`Display` vs `From` for string conversion.** `print` currently only accepts `String`. When aspects land, `print` should accept any type with a string representation. The question is which aspect owns that conversion:
+7. **`Display` vs `From` for string conversion.** `print` currently only accepts `String`. When aspects land, `print` should accept any type with a string representation. The question is which aspect owns that conversion:
    - A `Display` aspect (`fun to_string(self) -> String`) implemented by the source type — the natural direction for user-defined types.
    - `String` implementing `From<T>` for each printable type — consistent with the `from` pattern but puts the responsibility on `String`, which cannot know about user-defined types without open dispatch.
    These serve different purposes and should likely remain separate aspects. Resolve before finalising the `print` signature.
 
-7. **Compiler-known attribute registry.** The compiler needs a fixed set of recognised `@` attributes (e.g. `@inline`, `@cfg`, `@allow`). Should unknown `@` attributes be a compile error, a warning, or silently ignored (for forward compatibility)?
+8. **Compiler-known attribute registry.** The compiler needs a fixed set of recognised `@` attributes (e.g. `@inline`, `@cfg`, `@allow`). Should unknown `@` attributes be a compile error, a warning, or silently ignored (for forward compatibility)?
 
-8. **`@cfg` and conditional compilation.** Conditional compilation is a significant feature in its own right (platform-specific code, feature flags). Should `@cfg` be in scope for this RFC or a separate one?
+9. **`@cfg` and conditional compilation.** Conditional compilation is a significant feature in its own right (platform-specific code, feature flags). Should `@cfg` be in scope for this RFC or a separate one?
 
-9. **`linear` keyword vs `derives Linear`.** Should RFC-0024's `linear` keyword be removed in favour of `derives Linear` once this RFC is accepted? The keyword form is available sooner (v0.3); the derive form is more uniform but requires v0.5+ and Path D's mechanism specifically. A possible migration: accept `linear` keyword now, deprecate in favour of derive when comptime derive lands.
+10. **`linear` keyword vs `derives Linear`.** Should RFC-0024's `linear` keyword be removed in favour of `derives Linear` once this RFC is accepted? The keyword form is available sooner (v0.3); the derive form is more uniform but requires v0.5+ and Path D's mechanism specifically. A possible migration: accept `linear` keyword now, deprecate in favour of derive when comptime derive lands.
 
 ---
 
@@ -429,6 +511,12 @@ Minimum action before v0.5: reserve `@` as a grammar token so it cannot be used 
 - RFC-0024: `docs/internal/rfcs/rfc-0024-linear-types.md` — `linear` keyword vs `derives Linear`
 - RFC-0026: `docs/internal/rfcs/rfc-0026-unsafe-blocks.md` — `@extern` for FFI uses attribute syntax
 - RFC-0060: `docs/internal/rfcs/rfc-0060-aspect-impl-coherence.md` — coherence/orphan rules `emit` must respect (Open Question 2)
+- RFC-0008: `docs/internal/rfcs/rfc-0008-aspect-objects.md` — states "static dispatch
+  (generics + monomorphisation)" as Metel's existing default, confirming §1's
+  generics-as-comptime-sugar unification rather than introducing a new dispatch model
+- RFC-0061: `docs/internal/rfcs/rfc-0061-structural-aspect-bounds.md` — the existing
+  bound checker (checked declaration-site aspect bounds) §1 recommends preserving
+  alongside comptime substitution, in place of Zig's use-site duck typing
 - RFC-0080: `docs/internal/rfcs/rfc-0080-stdlib-aspects.md` — `Clone`/`Send`/`Sync` derive
   and auto-impl semantics depend on this RFC's mechanism; moved back to under-review
   2026-07-09 pending it
