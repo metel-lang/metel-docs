@@ -66,10 +66,16 @@ hygiene problem, because compile-time code and run-time code are the same langua
 staged differently. It requires two things new to Metel: `type` as a first-class
 comptime value, and a reflection primitive over it.
 
-This does not replace the rest of the meta-feature layer. The `@` attribute/metadata
-system (`@inline`, `@cfg`, `@allow`, `@doc`) remains in scope, unaffected — those are
-compiler hints and conditional compilation, not code generation, and gain nothing from
-comptime.
+This does not replace the rest of the meta-feature layer, but an earlier revision of
+this RFC overstated how independent the two are. Pure compiler hints (`@inline`,
+`@cold`, `@must_use`, `@allow`, `@deny`) stay exactly what they were — directives the
+compiler reads directly, with no reason for comptime code to see them. But attributes
+attached to a field or type are a different matter: in nearly every language with both
+a metadata layer and a reflection/codegen layer, the two are tightly coupled — Rust's
+derive macros read sibling attributes to customize their generated code, C#/Java
+reflect over annotations to decide field-by-field behavior. §8 makes this interaction
+concrete rather than leaving attributes and comptime as two systems that only happen to
+share a sigil.
 
 What comptime derive does replace turns out to be larger than just derive's own
 extensibility. Generalizing `emit` to produce more than one declaration, and to
@@ -108,7 +114,17 @@ Beyond derive, a general attribute/metadata system enables:
 - Lints and suppressions (`@allow(...)`, `@deny(...)`)
 - Documentation metadata (`@doc(...)`)
 
-Without a principled attribute syntax, these accumulate as ad-hoc keywords or magic comments. A single syntax form (`@`) handles all of them uniformly. This part of the RFC is independent of the derive mechanism and is unaffected by the Path D recommendation below.
+Without a principled attribute syntax, these accumulate as ad-hoc keywords or magic comments. A single syntax form (`@`) handles all of them uniformly.
+
+Whether this is independent of the derive mechanism depends on which attribute. Pure
+compiler hints (`@inline`, `@cold`, `@must_use`, `@allow`, `@deny`) are: nothing about
+Path D changes what they mean or how they're checked. Field- and type-level attributes
+are not — they are exactly the kind of metadata a comptime derive function needs to
+read to customize its output (skip a field, rename it, and so on), and treating them as
+unrelated to comptime, as an earlier revision of this RFC did, doesn't match how nearly
+every language with both a metadata layer and a reflection/codegen layer actually uses
+them. §8 (under Proposal) works this out concretely; Open Question 10 already named the
+`@skip` case without connecting it to the mechanism that would act on it.
 
 ### Macros — mostly closed by comptime, not just superseded for derive
 
@@ -257,12 +273,13 @@ This reuse is not free, and surfaces two gaps neither document currently resolve
 - **Rows may need metadata they don't currently carry.** Rows as scoped in
   `structural-records.md` are presence facts — name/type pairs — used for bound
   satisfaction and conversion, where declaration order and per-field visibility don't
-  matter. Reflection likely needs both: order, for deterministic codegen (a derived
-  `Clone` or `Display` needs a stable field order, not whatever order a set happens to
-  iterate in); visibility, to decide whether a comptime function defined outside a
-  type's module should see its private fields at all. Whether this means extending the
-  row concept itself with this metadata, or defining a reflection-only superset of it,
-  is open.
+  matter. Reflection likely needs three things rows don't carry today: order, for
+  deterministic codegen (a derived `Clone` or `Display` needs a stable field order, not
+  whatever order a set happens to iterate in); visibility, to decide whether a comptime
+  function defined outside a type's module should see its private fields at all; and
+  each field's `@` attributes (§8), for a derive function to act on `@skip`/`@rename(...)`
+  and similar per-field metadata. Whether this means extending the row concept itself
+  with this metadata, or defining a reflection-only superset of it, is open.
 
 - **Reflection and the tier system are orthogonal, not layered.** Reflecting a
   struct's shape at comptime grants no *runtime* capability — it is compile-time only,
@@ -415,6 +432,61 @@ If Metel ever wants shallow, non-transitive body reflection for its own sake (cu
 lints, style-rule enforcement scoped to a single function's own written code, not its
 transitive callees), that remains a legitimate, separate design question — just not one
 this RFC scopes or proposes a mechanism for.
+
+### 8. Attributes as comptime-visible metadata
+
+Not every `@` attribute interacts with comptime. Pure compiler hints — `@inline`,
+`@cold`, `@must_use`, `@allow`, `@deny` — are directives the compiler reads directly;
+comptime derive code has no reason to see them, and nothing else in this section
+applies to them.
+
+Field- and type-level attributes are different, and an earlier revision of this RFC's
+claim that the `@` system is "independent of the derive mechanism" didn't hold up for
+them. In nearly every language with both a metadata layer and a reflection/codegen
+layer, the two are tightly coupled: Rust's derive macros read sibling attributes
+(`#[serde(rename = "...")]`, `#[serde(skip)]`) to customize their generated code;
+C#/Java's serialization and ORM frameworks reflect over annotations precisely to decide
+field-by-field behavior. Open Question 10 (`@` attribute scope) already named the exact
+case — `@skip` excluding a field from `Display` — without connecting it to the
+mechanism that would act on it.
+
+Concretely: for a comptime derive function to honor `@skip` or `@rename(...)`,
+`typeinfo(T)`'s row (§2) needs to carry each field's attributes, not just its name and
+type — a third gap in the row-metadata question (Open Question 1), alongside
+declaration order and visibility.
+
+```metel
+struct User {
+    id: i64,
+    @skip
+    password_hash: String,
+    @rename("full_name")
+    name: String,
+}
+
+comptime fun derive_display(comptime T: type) {
+    let fields = typeinfo(T).row;   // now carrying each field's @ attributes too
+    emit impl Display for T {
+        fun to_string(self: &T) -> String {
+            // ordinary comptime code: skip fields tagged @skip, and use
+            // @rename's argument in place of the field's own name
+        }
+    }
+}
+```
+
+**`@cfg` deserves its own note**, because Zig doesn't have a separate attribute for
+conditional compilation at all — it's ordinary `comptime if`, branching on a
+comptime-known value, the same mechanism as everything else in this RFC. Whether
+Metel's `@cfg` should stay its own attribute or collapse into comptime `if` the way
+macros collapsed into generalized `emit` (Motivation, "Macros") is folded into Open
+Question 13 rather than treated as settled here.
+
+**One open design fork this raises, not resolved here:** should a derive function's own
+configuration travel as arguments to `derives` itself (`derives Serialize(rename_all = "camelCase")`),
+or always as separate per-field/per-type `@` attributes read via `typeinfo`, as sketched
+above? Rust does the latter — configuration lives beside the derive, not inside its
+invocation. Recorded as Open Question 15 rather than decided here.
 
 ### Worked example
 
@@ -636,11 +708,11 @@ must be accepted before derived `Eq`/`Ord` can be implemented, regardless of mec
 
 ## Open Questions
 
-1. **Row metadata for reflection.** Do rows need declaration order and per-field
-   visibility added to their definition in `structural-records.md`, or should
-   `typeinfo`'s `Row` be a reflection-specific superset that carries this without
-   changing the row concept used for `HasField`/`Lacks`/Tier 2-3? Blocks a concrete
-   `typeinfo` spec.
+1. **Row metadata for reflection.** Do rows need declaration order, per-field
+   visibility, and each field's `@` attributes (§8) added to their definition in
+   `structural-records.md`, or should `typeinfo`'s `Row` be a reflection-specific
+   superset that carries all three without changing the row concept used for
+   `HasField`/`Lacks`/Tier 2-3? Blocks a concrete `typeinfo` spec.
 
 2. **`emit` soundness.** Does ordinary orphan-rule/coherence checking (RFC-0060) apply
    unchanged to an impl emitted by comptime code? Can a comptime function emit an impl
@@ -708,7 +780,7 @@ must be accepted before derived `Eq`/`Ord` can be implemented, regardless of mec
    does the sum type need to be specified in full before any of it ships, to avoid a
    breaking change to `TypeInfo` later?
 
-10. **`@` attribute scope.** What items can be annotated — struct/enum declarations, function declarations, `let` bindings, individual fields? Field-level attributes (e.g. `@skip` on a field to exclude it from `Display`) are useful but add parsing complexity.
+10. **`@` attribute scope.** What items can be annotated — struct/enum declarations, function declarations, `let` bindings, individual fields? Field-level attributes (e.g. `@skip` on a field to exclude it from `Display`) are no longer just "useful but add parsing complexity" — §8 gives them a concrete consumer (comptime derive functions reading them via `typeinfo`), so this question is now load-bearing for §8/Open Question 1, not merely nice-to-have.
 
 11. **`Display` vs `From` for string conversion.** `print` currently only accepts `String`. When aspects land, `print` should accept any type with a string representation. The question is which aspect owns that conversion:
    - A `Display` aspect (`fun to_string(self) -> String`) implemented by the source type — the natural direction for user-defined types.
@@ -717,9 +789,16 @@ must be accepted before derived `Eq`/`Ord` can be implemented, regardless of mec
 
 12. **Compiler-known attribute registry.** The compiler needs a fixed set of recognised `@` attributes (e.g. `@inline`, `@cfg`, `@allow`). Should unknown `@` attributes be a compile error, a warning, or silently ignored (for forward compatibility)?
 
-13. **`@cfg` and conditional compilation.** Conditional compilation is a significant feature in its own right (platform-specific code, feature flags). Should `@cfg` be in scope for this RFC or a separate one?
+13. **`@cfg` and conditional compilation.** Conditional compilation is a significant feature in its own right (platform-specific code, feature flags). Should `@cfg` be in scope for this RFC or a separate one? §8 adds a sharper version of this question: Zig has no `@cfg`-equivalent attribute at all, using ordinary `comptime if` instead — should Metel's `@cfg` similarly collapse into comptime `if`, the way general macros collapsed into generalized `emit` (Motivation, "Macros"), rather than staying a bespoke directive?
 
 14. **`linear` keyword vs `derives Linear`.** Should RFC-0024's `linear` keyword be removed in favour of `derives Linear` once this RFC is accepted? The keyword form is available sooner (v0.3); the derive form is more uniform but requires v0.5+ and Path D's mechanism specifically. A possible migration: accept `linear` keyword now, deprecate in favour of derive when comptime derive lands.
+
+15. **`derives(...)` arguments vs. separate `@` attributes for derive configuration.** §8
+    raises this without resolving it: should a derive function's own configuration (e.g.
+    a rename convention for every field at once) travel as arguments to `derives` itself
+    (`derives Serialize(rename_all = "camelCase")`), or always as separate per-field/
+    per-type `@` attributes read via `typeinfo`? Rust uses the latter pattern
+    exclusively; both are coherent, and this RFC does not yet pick one.
 
 ---
 
@@ -782,18 +861,21 @@ retained as alternatives considered (§ Alternatives Considered) and Path C abso
 Path D's surface syntax. Not accepted: three open questions are load-bearing enough to
 block acceptance outright —
 
-- **Open Question 1** (row metadata for reflection — order, visibility) blocks a
-  concrete `typeinfo` spec.
+- **Open Question 1** (row metadata for reflection — order, visibility, and, since §8,
+  each field's `@` attributes) blocks a concrete `typeinfo` spec.
 - **Open Question 2** (`emit` soundness — orphan rules, ownership of the target type)
   is unresolved and is where this RFC's own text says its soundness questions
   concentrate.
 - **Open Question 4** (comptime-callable parser API surface) is sketched by example
   (§5) only, not specified.
 
-The remaining eleven open questions (§ Open Questions 3, 5-14) are real but not
-blocking in the same way — either genuinely independent of the derive mechanism itself
-(the `@` attribute-scope questions, `@cfg` scope, `Display`/`From`) or already flagged
-as paced future work in their own right (body reflection, Open Question 6).
+The remaining twelve open questions (§ Open Questions 3, 5-15) are real but not
+blocking acceptance in the same direct way. Some are genuinely independent of the
+derive mechanism (`Display`/`From`, Open Question 11); some are already flagged as
+paced future work in their own right (body reflection, Open Question 6). Open
+Question 10 is explicitly *not* independent — §8 established that field-level
+attributes are a real consumer of the derive mechanism, which is exactly why it now
+feeds Open Question 1 rather than standing apart from it.
 
 Per `reports/strategy/strategic-overview-2026-07-08.md`'s Priority 2b classification and
 Honest Assessment (paper-only territory, RFC-0075 as the applicable cautionary tale),
