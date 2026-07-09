@@ -2,9 +2,18 @@
 id: rfc-0012
 title: "Attributes, Metadata, Macros, and Derived Aspects"
 date: '2026-05-21'
+updated: '2026-07-09'
 status: draft
 target:
 ---
+
+> **Updated 2026-07-09:** added Path D (comptime-based derive, §"Proposal Space")
+> following a Zig-style comptime design discussion in
+> `reports/substructural-types/`. RFC-0080 (Standard Library Aspects) was moved back
+> from accepted to under-review the same day: its §1.3 had specified `Clone` derive
+> using `#[derive(Clone)]`, the one syntax this RFC's Alternatives Considered section
+> explicitly rejects. §1.3 now uses `derives Clone` (Path C) provisionally; RFC-0080
+> is blocked on whichever path this RFC ultimately settles on.
 
 ## Summary
 
@@ -111,6 +120,68 @@ The `derives` keyword is closed (compiler-known) but readable and requires no at
 
 **Pros:** derive is ergonomic and self-contained; attribute syntax is not a prerequisite. **Cons:** `derives` is a new keyword; does not scale to user-extensible derivation.
 
+### Path D — Comptime derive (Zig-style, no separate macro language)
+
+Derive is not a special compiler feature at all. It is an ordinary function that runs
+at compile time (`comptime`) over a reflected description of a type's structure and
+produces an `impl` block as a value the compiler registers. There is no macro grammar,
+no token stream, no hygiene problem — comptime code is the same language as runtime
+code, staged earlier, because the same evaluator runs it.
+
+Two pieces make this possible, neither of which exists in Metel today:
+
+- `type` as a first-class comptime value, with a reflection primitive over it —
+  a `typeinfo(T)`-equivalent (Zig calls this `@typeInfo`) returning an ordinary,
+  inspectable value: field names, field types, variant lists. Comptime code branches
+  and loops over this value like any other data.
+- A way for comptime code to **emit a declaration** — specifically, a coherence-checked
+  `impl Aspect for T` — as a side effect of compile-time evaluation, not just compute a
+  value or a type. This is the one genuine extension beyond Zig's own model: Zig has no
+  nominal aspect/impl/coherence system to target (a Zig "generic" function returning a
+  `type` returns a struct with its methods already inside it), so Zig itself never had
+  to solve "synthesize an impl of an existing nominal aspect for an existing type."
+  Metel's aspect system means `emit`-ing an impl block is new design work, not a
+  transplant.
+
+```metel
+comptime fun derive_clone(comptime T: type) {
+    let fields = typeinfo(T).fields;   // ordinary value: [(name: "x", type: f64), ...]
+    emit impl Clone for T {
+        fun clone(self: &T) -> T {
+            // built field-by-field from `fields` by ordinary comptime code —
+            // a loop generating a constructor expression, not a macro template
+        }
+    }
+}
+```
+
+`typeinfo` (placeholder name) rather than `@typeInfo` because `@` already denotes
+allocators in Metel (RFC-0063 and the allocator-handle cluster) — reusing it for
+reflection would collide with an established, unrelated sigil.
+
+A second consequence worth noting: Zig does not have `<T>`-style generics as a
+mechanism separate from comptime — `fun first(comptime T: type, arr: T[])` *is* how
+Zig spells a generic function, because a compile-time-known `type` parameter is just
+an ordinary parameter, staged. If Path D is adopted, Metel's existing `<T>` generics
+(spec: `public/reference/spec/types.md`, "Generics") would most naturally be explained
+as sugar over the same comptime type-parameter mechanism, rather than as a second,
+independently-specified feature living alongside it. This is not required for Path D to
+work, but leaving `<T>` generics unrelated to comptime would mean maintaining two
+separate explanations for what is, underneath, the same idea.
+
+**Pros:** open/extensible like Path B (any library can write a comptime function that
+emits an impl), without Path B's macro-hygiene and token-stream complexity — there is
+only one language, not two. Subsumes the `linear` keyword vs. derive question (open
+question 6 below) for free: `derives Linear` becomes an ordinary comptime function
+inspecting field linearity, not a special case. **Cons:** requires `type` to become a
+first-class comptime value and a reflection primitive over it — both new to the
+language, not currently specified anywhere in the type system (`public/reference/spec/types.md`'s
+"Generics" section has no notion of `type`-as-value). Emitting a coherence-checked impl
+from arbitrary user code raises its own soundness questions (can `emit` target a type
+the comptime function doesn't own? does normal orphan-rule/coherence checking apply
+unchanged?) that have not been worked out. Larger design surface than Path A or C
+in isolation, though smaller than a full Path B macro system.
+
 ---
 
 ## Derivable Aspects (initial set)
@@ -168,7 +239,17 @@ Full hygienic macro system allowing arbitrary syntactic transformation. Maximum 
 
 ## Open Questions
 
-1. **Path choice.** Compiler-built-in (Path A), procedural macros (Path B), or `derives` keyword (Path C)? Path A and C are compatible — Path C for derive, `@` for everything else. Path B requires the macro system first.
+1. **Path choice.** Compiler-built-in (Path A), procedural macros (Path B), `derives`
+   keyword (Path C), or comptime derive (Path D)? Path A and C are compatible with
+   each other — Path C for derive, `@` for everything else — and both are also
+   compatible with Path D as an *implementation strategy underneath* the `derives`
+   keyword: `derives Clone` could parse as Path C's syntax while resolving to a
+   built-in comptime function per Path D, giving closed-list ergonomics now with an
+   open path to user extension later without a syntax change. Path B requires the
+   macro system first and is largely superseded by Path D's extensibility without
+   that cost. RFC-0080 (Standard Library Aspects) is currently blocked on this
+   choice: its `Clone` derive uses `derives Clone` provisionally (Path C spelling)
+   pending resolution.
 
 2. **`@` attribute scope.** What items can be annotated — struct/enum declarations, function declarations, `let` bindings, individual fields? Field-level attributes (e.g. `@skip` on a field to exclude it from `Display`) are useful but add parsing complexity.
 
@@ -207,6 +288,12 @@ Minimum action before v0.5: reserve `@` as a grammar token so it cannot be used 
 - RFC-0024: `docs/internal/rfcs/rfc-0024-linear-types.md` — `linear` keyword vs `@derive(Linear)`
 - RFC-0026: `docs/internal/rfcs/rfc-0026-unsafe-blocks.md` — `@extern` for FFI uses attribute syntax
 - Prior art: Rust `#[derive(...)]` and proc-macro system, Java annotations, Python decorators, Zig `@builtins`
+- RFC-0080: `docs/internal/rfcs/rfc-0080-stdlib-aspects.md` — `Clone`/`Send`/`Sync` derive
+  and auto-impl semantics depend on this RFC's path choice; moved back to under-review
+  2026-07-09 pending it
+- Prior art (Path D): Zig `comptime` — no separate macro language; `type` as a
+  first-class comptime value; `@typeInfo` reflection; `comptime T: type` unifying
+  generics with comptime rather than treating them as separate mechanisms
 
 ---
 
