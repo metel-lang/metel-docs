@@ -19,6 +19,17 @@ target:
 > `#[derive(Clone)]`, a syntax this RFC's Alternatives Considered section explicitly
 > rejects. §1.3 now uses `derives Clone` (this RFC's chosen surface syntax) provisionally;
 > RFC-0080 is blocked on this RFC's decision, not the reverse.
+>
+> **Updated 2026-07-09 (same day).** Folded in a full pass on whether comptime derive
+> also closes the RFC's original, still-open "does Metel need a general macro system"
+> question. It mostly does: generalizing `emit` to multiple declarations and to
+> expression position (§4), plus exposing Metel's own parser as a comptime-callable
+> function over strings (§5), covers nearly everything a macro system is normally for —
+> including cases previously written off as categorically out of reach. What remains is
+> narrower than "macros are still open": span-tracked diagnostics for comptime-parsed
+> strings (§6), and a short list of genuinely unclosed residual cases (§5). The Macros
+> subsection of Motivation, the Lisp-style-macros alternative, and the open questions are
+> rewritten accordingly.
 
 ## Summary
 
@@ -34,9 +45,18 @@ comptime value, and a reflection primitive over it.
 This does not replace the rest of the meta-feature layer. The `@` attribute/metadata
 system (`@inline`, `@cfg`, `@allow`, `@doc`) remains in scope, unaffected — those are
 compiler hints and conditional compilation, not code generation, and gain nothing from
-comptime. What comptime derive does replace is the need for a general **macro** system
-(Path B) to get extensible derive: a library can make an aspect derivable by writing an
-ordinary comptime function, not a procedural macro operating on syntax.
+comptime.
+
+What comptime derive does replace turns out to be larger than just derive's own
+extensibility. Generalizing `emit` to produce more than one declaration, and to
+splice an expression at its call site rather than only a top-level declaration
+elsewhere (§4), plus exposing Metel's own parser as an ordinary comptime-callable
+function over string values (§5), covers nearly every case this RFC previously listed
+under "general macro system, still open" — repetitive declaration generation,
+compile-time-validated embedded DSLs, and even pattern-as-argument macros
+(Rust's `matches!`), all without a token-stream grammar, a macro-invocation syntax
+form, or a hygiene system to design. What's left over (§5, §6) is a short, named list —
+not an open-ended deferred feature.
 
 All features in this RFC remain tentatively deferred to **v0.5+**, after the core
 language (generics, aspects, concurrency, memory model) is stable — comptime derive
@@ -66,16 +86,36 @@ Beyond derive, a general attribute/metadata system enables:
 
 Without a principled attribute syntax, these accumulate as ad-hoc keywords or magic comments. A single syntax form (`@`) handles all of them uniformly. This part of the RFC is independent of the derive mechanism and is unaffected by the Path D recommendation below.
 
-### Macros — superseded for derive, still open for everything else
+### Macros — mostly closed by comptime, not just superseded for derive
 
 A general macro system enables syntactic abstraction — generating code from a compact
 notation, operating on unexpanded syntax. Comptime derive (Path D) gets derive's
-extensibility without one: a comptime function operates on ordinary, already-typed
-values (a reflected `type`), not on syntax trees, so there is no grammar to define, no
-hygiene to get right, no separate expansion phase to specify. Whether Metel wants a
-*general* macro system — for syntactic abstraction beyond derive, e.g. compact
-notations for repetitive expressions — remains an open question, but it is no longer a
-prerequisite for extensible derive, which was macros' strongest motivating use case.
+extensibility without one, and — once `emit` is generalized (§4) and Metel's parser is
+exposed as a comptime-callable function (§5) — it reaches most of what a macro system is
+normally reached for, not only derive:
+
+- **Repetitive declaration generation** (one getter per field, one match arm per
+  variant, builder-pattern boilerplate) — a loop over `typeinfo(T).row` emitting one
+  declaration per iteration. No grammar needed; this is ordinary comptime control flow.
+- **Compile-time-validated embedded DSLs** (a `sql("SELECT ...", id)` that parses and
+  type-checks its query string at compile time) — a comptime function receiving a
+  string literal and parsing it with an exposed grammar production, producing a value
+  or a type. No foreign parser integration or macro-invocation syntax needed.
+- **Pattern-as-argument macros** (Rust's `matches!(expr, Pattern::Variant(x) if x > 0)`)
+  — previously assumed to need genuine syntax-level macros. It does not: a comptime
+  function parses the pattern from a string using the same exposed grammar, then emits
+  an expression *at the call site* (§4), evaluated against the caller's own locals.
+  Because the parsed text is spliced back at the exact position the caller wrote it,
+  there is no cross-scope identifier injection and therefore no new hygiene problem to
+  solve — the caller's `x` binds exactly where they typed it.
+
+What remains is a short, specific list, not "everything else is still open": tooling
+ergonomics for DSL text embedded in string literals (§6, closable with span-tracked
+comptime strings), auto-capturing a caller's own source text without them retyping it
+as a string (a narrow, separately addressable ask), and genuinely bare, unquoted foreign
+syntax appearing directly in Metel source with no call-syntax wrapping at all (the one
+case that is structurally out of reach — Zig does not support this either). None of the
+three motivate a token-stream/hygiene macro system on their own.
 
 ---
 
@@ -224,6 +264,96 @@ RFC's soundness questions concentrate (see Open Questions): does normal orphan-r
 coherence checking (RFC-0060) apply unchanged to an emitted impl? Can a comptime
 function emit an impl for a type it does not own?
 
+### 4. Emitting more than one declaration, and at expression position
+
+Derive only ever needs `emit` to produce a single `impl` block. Reaching the macro-like
+use cases in Motivation needs two generalizations of the same primitive, neither of
+which changes what kind of thing `emit` fundamentally does — a side effect of
+compile-time evaluation that registers a checked declaration:
+
+- **Multiple declarations from one comptime function.** `emit` inside a loop over
+  `typeinfo(T).row` can run once per field, each iteration emitting its own
+  declaration (a getter function, a match arm, a builder method). This requires no new
+  concept — ordinary comptime control flow around an `emit` that was always going to
+  run zero or more times, not exactly once.
+
+- **Expression-position `emit`.** Rather than registering a declaration to live
+  elsewhere, comptime code can produce an expression that is spliced back in *at its
+  own call site*, evaluated in the caller's lexical scope against the caller's own
+  locals. This is the piece that makes pattern-as-argument macros (§5) possible: a
+  comptime function receiving `"Variant(x) if x > 0"` as a string can parse it and emit
+  the resulting pattern expression back into the `match` the caller wrote, binding `x`
+  exactly where the caller's own code expects it. Because the splice target is the same
+  textual position the caller invoked from — not some other scope the macro expansion
+  reaches into — this does not reintroduce the identifier-capture hygiene problems
+  syntax-level macros are known for; the caller's own scoping rules apply unchanged.
+
+### 5. Comptime-callable parsing: closing most of the remaining gap with macros
+
+The other piece needed is exposing Metel's own parser as an ordinary function callable
+from comptime code — parsing a string value into a pattern, expression, or (subject to
+Open Question 11) other grammar productions, rather than requiring a macro-invocation
+syntax form that operates on unexpanded surrounding tokens.
+
+```metel
+comptime fun matches_str(comptime pat: string, expr: T) -> boolean {
+    let parsed = parse_pattern(pat);   // Metel's own pattern grammar, comptime-callable
+    emit match expr {
+        parsed => true,
+        _ => false,
+    }   // expression-position emit (§4): spliced back at the call site
+}
+```
+
+```metel
+comptime fun sql(comptime query: string, params: ...) -> QueryResult {
+    let validated = parse_sql(query);   // validated at compile time against schema
+    // ordinary comptime code computing a result type/value from `validated`
+}
+```
+
+Both read a string the caller wrote directly as an argument — not raw, unexpanded
+surrounding syntax the way a syntax-level macro would receive it — and both produce
+either a value/type (the `sql` case) or a spliced-back expression via §4 (the
+`matches_str` case). Neither needs a macro grammar, a separate expansion phase, or
+hygiene machinery: it is a function call with a string-literal argument, using the same
+`comptime`/`emit`/`type`-as-value pieces already proposed above.
+
+**What this does not close**, honestly: an embedded DSL inside a string literal loses
+editor syntax highlighting and autocomplete even when the compiler validates it
+correctly (§6 addresses diagnostics, not highlighting, directly); auto-capturing a
+caller's own literal source text without them retyping it as a string (Rust's `dbg!`
+printing both a value and its literal expression text) is a separate, narrower ask this
+does not provide by itself; and genuinely bare, unquoted foreign syntax appearing
+directly in Metel source (no wrapping call, no quotes) is structurally out of reach,
+because it requires the parser to accept something other than Metel's own grammar at
+that exact position — which comptime, operating strictly after Metel's own parse
+completes, cannot do. Zig does not support this case either.
+
+### 6. Span-tracked comptime strings and diagnostics
+
+Good error messages for a comptime-parsed string need more than "the call to `sql(...)`
+on line 10 failed" — they need to point at the exact offset inside the string literal
+where parsing broke. This requires the compiler to preserve, for any string value
+originating from a literal at a comptime-known source location, a mapping from
+byte-offset-within-the-string back to absolute source position, and a span-aware
+error-reporting primitive (e.g. `compileError(msg, at: span)`) that the exposed parser
+(§5) can call using spans it already tracks internally while walking the string.
+
+This also happens to be the same primitive an LSP would need to offer semantic
+highlighting for embedded DSL text — by invoking the same comptime-exposed parser
+interactively over a string literal's known span and mapping the resulting tokens back
+to editor ranges. That is downstream tooling architecture, not something this RFC
+specifies, but it rests on nothing beyond the span-tracking this section already needs
+for diagnostics.
+
+**A real limit, not a hand-wave:** this works cleanly only for strings that are literals
+typed directly at the call site. A string built up via comptime concatenation or
+`format`-style assembly from multiple pieces has no single contiguous source range the
+final value corresponds to, so span attribution degrades or disappears — mirroring a
+well-known limitation in existing macro/DSL tooling (a literal format string gets
+precise diagnostics; a dynamically assembled one usually does not).
+
 ### Worked example
 
 ```metel
@@ -251,7 +381,10 @@ emits an impl), without Path B's macro-hygiene and token-stream complexity — t
 only one language, not two. Subsumes the `linear` keyword vs. derive question (Open
 Question 6) for free: `derives Linear` becomes an ordinary comptime function inspecting
 field linearity via `typeinfo`, not a special case. Unifies with `<T>` generics rather
-than sitting beside them as an unrelated feature.
+than sitting beside them as an unrelated feature. Reaches most of what a general macro
+system (Path B, and the "Lisp-style macros" alternative below) would have been for,
+covered by §4/§5 instead of a second grammar/expansion/hygiene system — a much larger
+scope reduction than "derive doesn't need macros" alone.
 
 **Cons:** requires `type` to become a first-class comptime value and a reflection
 primitive over it — both new to the language, not currently specified anywhere in the
@@ -259,7 +392,11 @@ type system (`public/reference/spec/types.md`'s "Generics" section has no notion
 `type`-as-value). Emitting a coherence-checked impl from arbitrary user code raises
 soundness questions not yet worked out. Larger design surface than Path A or C in
 isolation, though smaller than a full Path B macro system, and the row-reuse in §2
-above is itself not yet fully specified (ordering, visibility).
+above is itself not yet fully specified (ordering, visibility). Reaching macro-like
+expressivity (§4/§5) adds its own new surface on top of derive alone: expression-position
+`emit`'s scoping rules, a comptime-callable parser's API shape, and span-tracked string
+provenance for diagnostics (§6) — none of these are needed for derive by itself, and all
+are presently unspecified beyond the sketch above.
 
 ---
 
@@ -360,8 +497,13 @@ corrected 2026-07-09 to `derives Clone`, consistent with this RFC.)
 Full hygienic macro system allowing arbitrary syntactic transformation over unexpanded
 syntax. Maximum power, maximum complexity — well outside the scope of a v0.5 feature
 for a language at v0.1, and no longer motivated by derive specifically now that Path D
-covers that case. Not ruled out as a distant future direction for syntactic abstraction
-unrelated to derive.
+covers that case. More than that: §4/§5 above show that generalized `emit` plus a
+comptime-callable parser already reaches repetitive declaration generation,
+compile-time-validated embedded DSLs, and pattern-as-argument macros — the use cases
+that would normally motivate reaching for this alternative in the first place. What
+remains unreachable without it is narrow: genuinely bare, unquoted foreign syntax with
+no call-site wrapping at all. Not ruled out for that one residual case, but no longer a
+broad, open-ended future direction — a small, specific, likely-skippable gap.
 
 ### No attribute syntax — ad-hoc keywords only
 
@@ -444,7 +586,32 @@ must be accepted before derived `Eq`/`Ord` can be implemented, regardless of mec
    stdlib type)? This is the crux of Path D's "cons" above and needs its own worked
    examples before the mechanism can be specified precisely.
 
-3. **How does declaration-site bound checking compose with comptime substitution?**
+3. **Expression-position `emit`'s scoping rules.** §4 asserts that splicing a
+   comptime-parsed expression back at its own call site avoids syntax-macro-style
+   hygiene problems because the caller's own scope applies unchanged — but the precise
+   rule (what exactly counts as "the call site" once a comptime function itself calls
+   other comptime functions before emitting; whether an emitted expression can reference
+   comptime-local bindings from inside the emitting function, not just the caller's
+   locals) is asserted, not specified. Needs a formal scoping rule before §4/§5's
+   pattern-as-argument examples can be trusted.
+
+4. **Comptime-callable parser API surface.** §5 sketches `parse_pattern`/`parse_sql`-
+   style functions informally. Which grammar productions does Metel actually expose as
+   comptime-callable (expressions only? patterns? statement lists? full item
+   declarations?), and is this a small fixed set of builtins or a general
+   "parse-a-production-by-name" facility? The broader the surface, the more this
+   overlaps with exposing the compiler's own parser as a library, which is a larger
+   commitment than derive alone needs.
+
+5. **Scope of span-tracking, and whether highlighting is this RFC's concern.** §6
+   commits to span-tracked comptime strings for diagnostics but explicitly limits this
+   to literal strings, not computed/concatenated ones — is that limitation acceptable
+   long-term, or does it need a real solution (e.g. span-preserving string
+   concatenation) before v0.5? Separately: is LSP/editor semantic-highlighting support
+   for embedded DSL text in scope for this RFC at all, or does it belong in a dedicated
+   tooling RFC that merely depends on the span-tracking primitive specified here?
+
+6. **How does declaration-site bound checking compose with comptime substitution?**
    §1 recommends keeping RFC-0061's checked-bounds discipline (`T: Clone` verified at
    the generic function's own definition) layered on top of comptime type parameters,
    rather than drifting toward Zig's use-site duck typing. Is that check a distinct
@@ -453,7 +620,7 @@ must be accepted before derived `Eq`/`Ord` can be implemented, regardless of mec
    at the top of every bounded generic function)? Neither Zig nor RFC-0061 specifies
    this composition today — it is new design work either way.
 
-4. **Is the `<T>`-generics/comptime unification required, or just recommended?** Path D
+7. **Is the `<T>`-generics/comptime unification required, or just recommended?** Path D
    works even if `<T>` generics remain a separate, unrelated mechanism — the unification
    in §1 is presented as desirable (one explanation instead of two, and a concrete
    mechanism underneath RFC-0008's assumed monomorphisation) but not load-bearing for
@@ -462,24 +629,24 @@ must be accepted before derived `Eq`/`Ord` can be implemented, regardless of mec
    "Generics" section is the only current specification, and it does not address dispatch
    model or bound-checking timing at all.
 
-5. **Incremental rollout.** Can `typeinfo`'s `TypeInfo` enum be introduced starting with
+8. **Incremental rollout.** Can `typeinfo`'s `TypeInfo` enum be introduced starting with
    only the `Struct` arm (sufficient for every aspect in the initial derivable set),
    deferring `Enum`/`Int`/`Pointer`/... arms until something actually needs them? Or
    does the sum type need to be specified in full before any of it ships, to avoid a
    breaking change to `TypeInfo` later?
 
-6. **`@` attribute scope.** What items can be annotated — struct/enum declarations, function declarations, `let` bindings, individual fields? Field-level attributes (e.g. `@skip` on a field to exclude it from `Display`) are useful but add parsing complexity.
+9. **`@` attribute scope.** What items can be annotated — struct/enum declarations, function declarations, `let` bindings, individual fields? Field-level attributes (e.g. `@skip` on a field to exclude it from `Display`) are useful but add parsing complexity.
 
-7. **`Display` vs `From` for string conversion.** `print` currently only accepts `String`. When aspects land, `print` should accept any type with a string representation. The question is which aspect owns that conversion:
+10. **`Display` vs `From` for string conversion.** `print` currently only accepts `String`. When aspects land, `print` should accept any type with a string representation. The question is which aspect owns that conversion:
    - A `Display` aspect (`fun to_string(self) -> String`) implemented by the source type — the natural direction for user-defined types.
    - `String` implementing `From<T>` for each printable type — consistent with the `from` pattern but puts the responsibility on `String`, which cannot know about user-defined types without open dispatch.
    These serve different purposes and should likely remain separate aspects. Resolve before finalising the `print` signature.
 
-8. **Compiler-known attribute registry.** The compiler needs a fixed set of recognised `@` attributes (e.g. `@inline`, `@cfg`, `@allow`). Should unknown `@` attributes be a compile error, a warning, or silently ignored (for forward compatibility)?
+11. **Compiler-known attribute registry.** The compiler needs a fixed set of recognised `@` attributes (e.g. `@inline`, `@cfg`, `@allow`). Should unknown `@` attributes be a compile error, a warning, or silently ignored (for forward compatibility)?
 
-9. **`@cfg` and conditional compilation.** Conditional compilation is a significant feature in its own right (platform-specific code, feature flags). Should `@cfg` be in scope for this RFC or a separate one?
+12. **`@cfg` and conditional compilation.** Conditional compilation is a significant feature in its own right (platform-specific code, feature flags). Should `@cfg` be in scope for this RFC or a separate one?
 
-10. **`linear` keyword vs `derives Linear`.** Should RFC-0024's `linear` keyword be removed in favour of `derives Linear` once this RFC is accepted? The keyword form is available sooner (v0.3); the derive form is more uniform but requires v0.5+ and Path D's mechanism specifically. A possible migration: accept `linear` keyword now, deprecate in favour of derive when comptime derive lands.
+13. **`linear` keyword vs `derives Linear`.** Should RFC-0024's `linear` keyword be removed in favour of `derives Linear` once this RFC is accepted? The keyword form is available sooner (v0.3); the derive form is more uniform but requires v0.5+ and Path D's mechanism specifically. A possible migration: accept `linear` keyword now, deprecate in favour of derive when comptime derive lands.
 
 ---
 
@@ -523,6 +690,10 @@ Minimum action before v0.5: reserve `@` as a grammar token so it cannot be used 
 - Prior art: Zig `comptime`, `@typeInfo`, `comptime T: type` — no separate macro
   language; `type` as a first-class comptime value; generics unified with comptime
 - Prior art (superseded paths): Rust `#[derive(...)]` and proc-macro system, Java annotations, Python decorators
+- Prior art (§4-§6, macro-closing): Rust `matches!`/`dbg!` (motivating pattern-as-argument
+  and source-capture cases); compile-time-validated query-builder libraries in
+  macro-free languages (motivating comptime-on-strings for embedded DSLs); `syn`/
+  proc-macro span-tracked diagnostics (motivating §6's span-aware `compileError`)
 
 ---
 
