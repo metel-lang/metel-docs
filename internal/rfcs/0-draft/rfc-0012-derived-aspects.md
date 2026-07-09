@@ -354,6 +354,44 @@ final value corresponds to, so span attribution degrades or disappears — mirro
 well-known limitation in existing macro/DSL tooling (a literal format string gets
 precise diagnostics; a dynamically assembled one usually does not).
 
+### 7. Body reflection: a plausible but much larger extension, not proposed here
+
+`typeinfo(T)` reflects a *type's* shape — a flat row of (name, type) pairs, a handful
+of enum arms. It is natural to ask whether the same idea extends to a *function's own
+body*: a `bodyinfo(f)`-style value exposing its statements, expressions, and control
+flow to comptime code, for uses like linting, custom style-rule enforcement, or
+security auditing ("does this function call an unsafe operation").
+
+This does not belong in this RFC's proposed mechanism, for two separate reasons, and is
+recorded here only as a scoped, deliberately-not-designed open question:
+
+- **It is a much larger reflection surface than `typeinfo`.** A type's shape is a flat
+  set of fields; a function body is arbitrarily nested expressions, control flow,
+  closures, pattern matches. Where `TypeInfo` (§2) has a handful of arms, a body
+  representation would need to cover every expression and statement form in the
+  grammar — closer to exposing the compiler's own AST than to `typeinfo`'s narrow,
+  purpose-built shape.
+
+- **The motivating use case — auditing for a property like "performs IO" or "uses
+  unsafe" — is a transitive, whole-call-graph question that body reflection cannot
+  actually answer, regardless of how much of it gets built.** Checking "does this
+  function, or anything it calls, do X" requires walking into every callee, and RFC-0008
+  (Aspect Objects) already establishes that a `dyn Aspect` method call's concrete callee
+  is not known until runtime. Auditing cannot walk into a call it cannot resolve at
+  compile time — this is not a design gap more comptime power closes, it is what dynamic
+  dispatch means by definition. The properly-scoped mechanism for exactly this
+  motivation is an effect system, not source inspection: `reports/substructural-types/algebraic-effects.md`
+  §11.1 already works through IO as a tracked effect, checked and propagated through a
+  function's *signature*, compositionally, and (because the obligation lives on the
+  aspect's interface contract rather than requiring the compiler to inspect whatever
+  concrete type shows up at a `dyn` boundary) does not hit the same dynamic-dispatch
+  wall that defeats body reflection for this purpose.
+
+If Metel ever wants shallow, non-transitive body reflection for its own sake (custom
+lints, style-rule enforcement scoped to a single function's own written code, not its
+transitive callees), that remains a legitimate, separate design question — just not one
+this RFC scopes or proposes a mechanism for.
+
 ### Worked example
 
 ```metel
@@ -611,7 +649,18 @@ must be accepted before derived `Eq`/`Ord` can be implemented, regardless of mec
    for embedded DSL text in scope for this RFC at all, or does it belong in a dedicated
    tooling RFC that merely depends on the span-tracking primitive specified here?
 
-6. **How does declaration-site bound checking compose with comptime substitution?**
+6. **Is body reflection in scope for this RFC at all?** §7 deliberately does not
+   propose a mechanism for reflecting over a function's own statements/expressions
+   (as opposed to `typeinfo`'s reflection over a *type's* shape), on the grounds that
+   it is a much larger reflection surface and that its main motivating use case
+   (auditing for a property like "performs IO" or "uses unsafe") is better served by
+   an effect system (`algebraic-effects.md`) than by source inspection, since auditing
+   cannot see through a `dyn Aspect` call's runtime-resolved callee (RFC-0008) while an
+   effect obligation on the aspect's own interface can. Confirm this scoping decision,
+   or, if shallow non-transitive body reflection is wanted for its own sake (lints,
+   style rules), decide whether it belongs in this RFC or a separate one.
+
+7. **How does declaration-site bound checking compose with comptime substitution?**
    §1 recommends keeping RFC-0061's checked-bounds discipline (`T: Clone` verified at
    the generic function's own definition) layered on top of comptime type parameters,
    rather than drifting toward Zig's use-site duck typing. Is that check a distinct
@@ -620,7 +669,7 @@ must be accepted before derived `Eq`/`Ord` can be implemented, regardless of mec
    at the top of every bounded generic function)? Neither Zig nor RFC-0061 specifies
    this composition today — it is new design work either way.
 
-7. **Is the `<T>`-generics/comptime unification required, or just recommended?** Path D
+8. **Is the `<T>`-generics/comptime unification required, or just recommended?** Path D
    works even if `<T>` generics remain a separate, unrelated mechanism — the unification
    in §1 is presented as desirable (one explanation instead of two, and a concrete
    mechanism underneath RFC-0008's assumed monomorphisation) but not load-bearing for
@@ -629,24 +678,24 @@ must be accepted before derived `Eq`/`Ord` can be implemented, regardless of mec
    "Generics" section is the only current specification, and it does not address dispatch
    model or bound-checking timing at all.
 
-8. **Incremental rollout.** Can `typeinfo`'s `TypeInfo` enum be introduced starting with
+9. **Incremental rollout.** Can `typeinfo`'s `TypeInfo` enum be introduced starting with
    only the `Struct` arm (sufficient for every aspect in the initial derivable set),
    deferring `Enum`/`Int`/`Pointer`/... arms until something actually needs them? Or
    does the sum type need to be specified in full before any of it ships, to avoid a
    breaking change to `TypeInfo` later?
 
-9. **`@` attribute scope.** What items can be annotated — struct/enum declarations, function declarations, `let` bindings, individual fields? Field-level attributes (e.g. `@skip` on a field to exclude it from `Display`) are useful but add parsing complexity.
+10. **`@` attribute scope.** What items can be annotated — struct/enum declarations, function declarations, `let` bindings, individual fields? Field-level attributes (e.g. `@skip` on a field to exclude it from `Display`) are useful but add parsing complexity.
 
-10. **`Display` vs `From` for string conversion.** `print` currently only accepts `String`. When aspects land, `print` should accept any type with a string representation. The question is which aspect owns that conversion:
+11. **`Display` vs `From` for string conversion.** `print` currently only accepts `String`. When aspects land, `print` should accept any type with a string representation. The question is which aspect owns that conversion:
    - A `Display` aspect (`fun to_string(self) -> String`) implemented by the source type — the natural direction for user-defined types.
    - `String` implementing `From<T>` for each printable type — consistent with the `from` pattern but puts the responsibility on `String`, which cannot know about user-defined types without open dispatch.
    These serve different purposes and should likely remain separate aspects. Resolve before finalising the `print` signature.
 
-11. **Compiler-known attribute registry.** The compiler needs a fixed set of recognised `@` attributes (e.g. `@inline`, `@cfg`, `@allow`). Should unknown `@` attributes be a compile error, a warning, or silently ignored (for forward compatibility)?
+12. **Compiler-known attribute registry.** The compiler needs a fixed set of recognised `@` attributes (e.g. `@inline`, `@cfg`, `@allow`). Should unknown `@` attributes be a compile error, a warning, or silently ignored (for forward compatibility)?
 
-12. **`@cfg` and conditional compilation.** Conditional compilation is a significant feature in its own right (platform-specific code, feature flags). Should `@cfg` be in scope for this RFC or a separate one?
+13. **`@cfg` and conditional compilation.** Conditional compilation is a significant feature in its own right (platform-specific code, feature flags). Should `@cfg` be in scope for this RFC or a separate one?
 
-13. **`linear` keyword vs `derives Linear`.** Should RFC-0024's `linear` keyword be removed in favour of `derives Linear` once this RFC is accepted? The keyword form is available sooner (v0.3); the derive form is more uniform but requires v0.5+ and Path D's mechanism specifically. A possible migration: accept `linear` keyword now, deprecate in favour of derive when comptime derive lands.
+14. **`linear` keyword vs `derives Linear`.** Should RFC-0024's `linear` keyword be removed in favour of `derives Linear` once this RFC is accepted? The keyword form is available sooner (v0.3); the derive form is more uniform but requires v0.5+ and Path D's mechanism specifically. A possible migration: accept `linear` keyword now, deprecate in favour of derive when comptime derive lands.
 
 ---
 
@@ -680,7 +729,11 @@ Minimum action before v0.5: reserve `@` as a grammar token so it cannot be used 
 - RFC-0060: `docs/internal/rfcs/rfc-0060-aspect-impl-coherence.md` — coherence/orphan rules `emit` must respect (Open Question 2)
 - RFC-0008: `docs/internal/rfcs/rfc-0008-aspect-objects.md` — states "static dispatch
   (generics + monomorphisation)" as Metel's existing default, confirming §1's
-  generics-as-comptime-sugar unification rather than introducing a new dispatch model
+  generics-as-comptime-sugar unification rather than introducing a new dispatch model;
+  also the source of the dynamic-dispatch limit §7 relies on to scope body reflection
+  out of this RFC
+- `reports/substructural-types/algebraic-effects.md` — §11.1's tracked IO effect is the
+  recommended mechanism for audit-style motivations (§7), in place of body reflection
 - RFC-0061: `docs/internal/rfcs/rfc-0061-structural-aspect-bounds.md` — the existing
   bound checker (checked declaration-site aspect bounds) §1 recommends preserving
   alongside comptime substitution, in place of Zig's use-site duck typing
