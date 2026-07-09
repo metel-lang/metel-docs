@@ -54,8 +54,7 @@ per-field ownership discipline plus concrete binding-named lifetime errors inste
 
 ### The standing meta-risk
 
-Stated once, here, persistently, rather than buried in whichever dated file happened to name
-it — from `integrated-language-overview-2026-07-07.md` §5/§7:
+Originally, from `integrated-language-overview-2026-07-07.md` §5/§7:
 
 > The design is roughly two major threads ahead of the implementation. The interpreter still
 > deep-clones values and has no borrow checker, no allocator, no move-semantics enforcement.
@@ -63,14 +62,40 @@ it — from `integrated-language-overview-2026-07-07.md` §5/§7:
 > overreach risk compounds. The discipline to stop designing is itself the most important
 > planning decision here.
 
-**Honest note, written the same day this document was created:** the session that created
-this document, `INDEX.md`, `PROCESS.md`, and the `rfc.py` tool is itself evidence bearing on
-this risk, not evidence against it. It produced seven new RFCs (0089–0095), a new lifecycle
-stage, and process tooling — zero lines of interpreter code changed. That work was arguably
-worth doing (RFC-0055's silent duplication was real; the RFC-0063 precedent for undetected
-cross-RFC conflict was real), but it is still design-and-process extension, not building, and
-should be weighed as such at the next review rather than quietly exempted because it felt like
-infrastructure rather than feature design.
+**Sharpened 2026-07-09**, prompted directly by introducing `3-integrated` — a lifecycle stage
+whose entire purpose is *more* pre-implementation design work (worked examples, spec
+integration). Does that institutionalize the exact overreach this risk warns against? The flat
+framing above doesn't distinguish two cases that need different answers.
+
+- **For L3 (comptime/derive, brands, structural records) — genuinely still forming — letting
+  design run ahead of implementation is the right call, not overreach, for a specific reason:**
+  RFC-0092's own Open Question 4 (whether `<T>` generics should be reinterpreted as sugar over
+  comptime type parameters) is a real case where implementing generics naively now, then
+  unifying with comptime later, would likely require rebuilding the specialization mechanism's
+  internals. Settling this kind of question before implementation is exactly what avoids the
+  build-it-then-rebuild-it cost. `3-integrated`'s cross-checking (catching an
+  RFC-0063/RFC-0066-style conflict before something is built against it) is aligned with this,
+  not opposed to it — done narrowly.
+- **For L2 (the allocator/lifetime cluster, Priority 1) — already accepted, stable, and not
+  entangled with L3 — the same argument does not apply, and leaving it un-actioned *is* the
+  actual overreach.** Per `integrated-language-overview-2026-07-07.md`'s own dependency table,
+  L2 does not depend on L3 at all. Nothing about comptime/derive's still-forming state touches
+  allocator/lifetime semantics. Priority 1 has sat unactioned through five strategic-overview
+  cycles (07-01 through 07-08) and still is as of this document's creation — that is the
+  concrete instance of the meta-risk, not the L3 design work happening alongside it.
+
+**Practical consequence: scope `3-integrated` narrowly** — to genuinely-coupled, still-forming
+clusters (comptime/derive now; brand-kind-unification later, once it has real RFCs) — not
+applied uniformly across the whole 14-RFC accepted backlog. Most of that backlog (the
+aspect-system core) isn't part of active churn and doesn't need the full
+worked-examples-against-siblings treatment before implementation; running it there would be
+more process delaying implementation with no real conflict to catch.
+
+**Honest note, unchanged in substance:** the session that produced this sharpening is still
+evidence bearing on the risk, not against it. It spent its effort on L3/process work — seven
+new RFCs, a new lifecycle stage, tooling, this document — and never once triggered Priority 1's
+ratification sweep, despite nothing blocking it. That's the pattern to watch: not whether L3
+design kept happening, but whether the unblocked, already-settled layer kept not getting built.
 
 ---
 
@@ -80,11 +105,15 @@ Seeded from `strategic-overview-2026-07-08.md`, corrected for what's actually ha
 
 ### Priority 1 — Ratify the allocator/lifetime cluster's design
 
-Unchanged. RFC-0067a is accepted; the rest of the sweep (RFC-0088 or amending RFC-0063
-directly, retracting RFC-0069/0085/0087 — already done, see `INDEX.md` — and returning
-RFC-0063/0065/0066/0067/0068/0073/0077 to accepted) is still unactioned. This remains the one
-item integrated-language-overview-07-07 §3 calls genuinely critical-path: Phase 2–4
-implementation needs settled text to build against.
+**Sharpened 2026-07-09: not blocked by anything, including the L3 design-ahead argument in
+§1.** RFC-0067a is accepted; the rest of the sweep (RFC-0088 or amending RFC-0063 directly,
+retracting RFC-0069/0085/0087 — already done, see `INDEX.md` — and returning
+RFC-0063/0065/0066/0067/0068/0073/0077 to accepted) is still unactioned, through five
+strategic-overview cycles now (07-01 through 07-08). Nothing about L3's still-forming state
+touches this cluster — L2 does not depend on L3. The "let design run ahead" argument in §1
+does not apply here; this is the one item that should move regardless of what's still being
+settled in L3, and its continued inaction is the concrete instance of the meta-risk, not a
+side effect of it.
 
 ### Priority 2a — The floor, plus tiers 1/2
 
@@ -141,10 +170,12 @@ of what was watched for and what actually happened is part of the point.
    language shipping a similar structural-plus-linear combination first (the one external risk
    to the "worth pursuing" verdict); RFC-0039's independent prioritization; a concrete
    user-authored-allocator need. None resolved or superseded this session.
-5. ⬜ **Open, standing.** The meta-risk itself (§1): is design continuing to outpace
-   implementation, cycle over cycle? Check this explicitly at every review, not just when
-   something else prompts concern — it's the one risk `integrated-language-overview-07-07`
-   ranked highest, and the easiest one to quietly stop tracking.
+5. ⬜ **Open, standing, sharpened 2026-07-09.** The meta-risk (§1) is not "is any design
+   happening ahead of any implementation" — that's expected and correct for L3. Check
+   specifically: has Priority 1 (L2, unblocked by L3) moved yet? If not, that's the real
+   instance of the risk. This is the easiest one to quietly stop tracking precisely because
+   L3 activity can look like progress while masking that the unblocked layer still hasn't
+   moved.
 6. ⬜ **New, 2026-07-09.** Priority 2a's tension: does RFC-0089's floor genuinely need
    RFC-0090's record machinery to satisfy RFC-0063 §9 item 5, or does that dependency need
    removing to preserve the "narrow, no row kind" property `integrated-language-overview-07-07`
