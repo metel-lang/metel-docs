@@ -10,18 +10,30 @@ target:
 > §3 (Option C) and `structural-records.md`'s per-field-multiplicity content, as part of
 > decomposing an oversized RFC-0012 into smaller, independently reviewable pieces. This
 > is explicitly the "fuller vision" layered on top of two already-sufficient RFCs:
-> RFC-0089 (Linear Types) already satisfies RFC-0063 §9 item 5's deadline on its own via
-> Option B, with no dependency on this RFC. Everything here is additive, paced
-> exploration, not gating work — consistent with `strategic-overview-2026-07-08.md`'s
-> classification of this whole thread as "paper-only territory," not yet validated
-> against a real implementation.
+> RFC-0089 (Linear Types) plus RFC-0090's `record`/tier 2 already satisfy RFC-0063 §9
+> item 5's deadline via explicit `.to_record()`/`.from_record()` conversion, with no
+> dependency on this RFC. Everything here is additive, paced exploration, not gating
+> work — consistent with `strategic-overview-2026-07-08.md`'s classification of this
+> whole thread as "paper-only territory," not yet validated against a real
+> implementation.
+>
+> **Revised 2026-07-09, later the same day**, matching RFC-0089's own revision: the
+> "floor" this RFC builds on top of is no longer "RFC-0089's Option B (raw field access
+> off a nominal struct)" — that mechanism was dropped. RFC-0089 §3 now specifies the
+> floor as conversion through `ToRecord`/`FromRecord` (RFC-0090) instead. This RFC's own
+> content is unaffected in substance: Option C (automatic downgrade, no explicit
+> `.to_record()` call needed at the point of consumption) is still the more expressive,
+> additive extension on top of that floor — the contrast is now "explicit conversion
+> call, then move" vs. "no conversion call needed, the compiler downgrades the type
+> automatically," rather than "raw struct field access" vs. "records."
 
 ## Summary
 
-Extends RFC-0089's partial-consumption floor (Option B, explicit residual extraction)
-with Option C: automatic downgrade, where a mixed-multiplicity struct's binding type
-changes at the point of partial consumption to reflect exactly which fields remain,
-using RFC-0090's row/record machinery. Resolves the long-standing aliasing question that
+Extends the RFC-0089/RFC-0090 partial-consumption floor (explicit `.to_record()`/
+`.from_record()` conversion, then move) with Option C: automatic downgrade, where a
+mixed-multiplicity struct's binding type changes at the point of partial consumption to
+reflect exactly which fields remain, with no explicit conversion call needed, using
+RFC-0090's row/record machinery. Resolves the long-standing aliasing question that
 blocked Option C — what type does a borrow taken before the downgrade have afterward —
 with a candidate (not proven) answer: the shrunk row type, sound because `&mut` already
 guarantees no other alias exists to observe the stale type. Also specifies a
@@ -32,12 +44,14 @@ partial moves out of `Drop` types to only the fields a `Drop` impl actually read
 
 ## Motivation
 
-RFC-0089's Option B is sufficient and unblocks Phase 3, but it requires every
-consuming function to manually thread the non-linear remainder through its own return
-type — workable, but it means the *type itself* never reflects "which fields have
-already been consumed" for a value held across multiple calls. Option C makes that
-reflection automatic: the compiler tracks it as part of the type, the same way
-RFC-0090's row-conditional typestate tracks protocol state. It also closes a gap
+RFC-0089/RFC-0090's floor (explicit `.to_record()`, move, `.from_record()`) is
+sufficient and unblocks Phase 3, but it requires every consuming function to manually
+convert and re-convert, and to manually thread the non-linear remainder through its own
+return type — workable, but it means the *type itself* never reflects "which fields
+have already been consumed" for a value held across multiple calls without an explicit
+conversion at each step. Option C makes that reflection automatic: the compiler tracks
+it as part of the type, the same way RFC-0090's row-conditional typestate tracks
+protocol state. It also closes a gap
 RFC-0071 §7 leaves open: partial moves out of `Drop`-implementing types are banned
 outright, wholesale, even when the fields being moved out have nothing to do with what
 `Drop::drop` actually reads.
@@ -412,7 +426,7 @@ fun example(h: &mut Handle) {
 
 ## References
 
-- RFC-0089 (Linear Types) — the multiplicity lattice and Option B floor this RFC
+- RFC-0089 (Linear Types) — the multiplicity lattice and `ToRecord`-based floor this RFC
   extends
 - RFC-0090 (Structural Records — Rows and Tiers) — the row/tier machinery (`HasField`,
   `Lacks`, tier 2's `to_record_mut`/`from_record_mut`) this RFC's Option C is built
@@ -432,6 +446,6 @@ fun example(h: &mut Handle) {
 
 **Outcome:** *(pending)*
 **Target:** unspecified; explicitly not required for RFC-0063 §9 item 5's deadline,
-which RFC-0089 already satisfies independently.
+which RFC-0089 (together with RFC-0090's `record`/tier 2) already satisfies.
 
 *(Decision rationale goes here when the RFC is evaluated.)*

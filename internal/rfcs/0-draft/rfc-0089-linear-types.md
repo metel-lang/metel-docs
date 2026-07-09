@@ -16,9 +16,26 @@ target:
 > rather than reviving RFC-0024's `linear`-keyword-only, `@T` read-reference form.
 > Depends on RFC-0071 (Ownership and Move Semantics, accepted), RFC-0080 (Standard
 > Library Aspects, for the auto-impl pattern), RFC-0081 (Negative Impls), and RFC-0072
-> (Negative Bounds). No dependency on structural records (RFC-0090) or comptime derive
-> (RFC-0092/0093) — the record-based extension of partial consumption is split out to
-> RFC-0091 (Linear Records) specifically so this RFC stands on its own.
+> (Negative Bounds). No dependency on comptime derive (RFC-0092/0093).
+>
+> **Revised 2026-07-09, later the same day.** §3 originally specified a bespoke
+> "Option B" partial-consumption mechanism — ordinary field access directly off a
+> nominal struct, with no record involved, requiring its own extension to RFC-0071
+> §7's affine partial-move tracking for linear fields specifically. Decided against as
+> a first implementation: `ToRecord` (RFC-0090) is the canonical mechanism instead —
+> convert via `.to_record()`, move fields out of the resulting record value, where
+> ordinary record field-narrowing (RFC-0090 §2-3) already determines the residual
+> type. This removes a second, redundant partial-move mechanism that would have had to
+> be built and maintained specifically for nominal structs, when records need
+> equivalent field-narrowing semantics anyway. The real cost, stated plainly: a
+> `Linear`-bearing struct now needs to additionally derive `ToRecord`/`FromRecord`
+> before any of its fields can be partially consumed at all — plain structs with no
+> such derive can only be consumed as a whole. §3 is rewritten accordingly, and this
+> RFC now depends on RFC-0090 (specifically its `record` type-former and tier 2, not
+> tier 3 or RFC-0091's fuller automatic-downgrade extension) for the partial-
+> consumption floor — the "no dependency on structural records" claim above no longer
+> holds for that specific case, though the `Linear` aspect, lattice, and keyword sugar
+> (§1-2, §4-5) remain fully independent of RFC-0090.
 
 ## Summary
 
@@ -27,9 +44,12 @@ once — not silently dropped, not used twice. This sits on top of RFC-0071's ex
 affine-by-default model rather than replacing it: affine already means "at most once, no
 duplication"; `Linear` narrows that to "at least once too," ruling out silent drop.
 Linearity is checked statically, no runtime overhead. Partial consumption of a struct
-with mixed multiplicities (some `Linear` fields, some not) is resolved with an explicit,
-non-record floor (Option B, below) sufficient to meet RFC-0063 §9 item 5's deadline
-without any row/record machinery.
+with mixed multiplicities (some `Linear` fields, some not) is not supported directly on
+plain structs; `ToRecord` (RFC-0090) is the canonical mechanism instead — convert
+explicitly, then move fields out of the resulting record, whose type already narrows to
+reflect what remains. This is sufficient to meet RFC-0063 §9 item 5's deadline, using
+RFC-0090's `record` type-former and tier 2 rather than a bespoke mechanism invented for
+Linear specifically.
 
 ---
 
@@ -145,39 +165,59 @@ and silently change what moving a `Handle` means.
 
 ---
 
-## 3. Partial consumption: the floor, without records
+## 3. Partial consumption: no bespoke mechanism on plain structs — `ToRecord` is canonical
 
 When a struct with mixed multiplicities has its `1` fields consumed, what happens to
-the rest? Two options that need no row/record machinery at all:
+the rest? Two mechanisms were considered:
 
-**Option A — drop everything.** The struct is consumed atomically; `affine`/`ω` fields
-are discarded alongside the `1` ones. Simplest, but the caller can never recover an
-otherwise-unrestricted field after the terminal action. Not adopted as the floor — too
-coarse for the common case of "release one resource, keep using the rest."
+**Ordinary field access directly off a nominal struct** (`f.fd`, moving one field out
+while the rest of `f` stays live) is **not supported as a first implementation.**
+Building this would mean extending RFC-0071 §7's affine partial-move tracking to
+reason specifically about linear fields, on plain nominal structs, as its own bespoke
+mechanism — real design and implementation work that a second, later mechanism (below)
+would duplicate anyway.
 
-**Option B — explicit residual extraction, the adopted floor.** The consuming function
-returns the non-linear fields as ordinary values; the compiler injects nothing
-automatically:
+**The canonical mechanism: convert to a record, move fields out of that.** A struct
+that wants any of its fields partially consumed derives `ToRecord`/`FromRecord`
+(RFC-0090), converts explicitly via `.to_record()`, and moves fields out of the
+resulting record value — whose type narrows to reflect exactly which fields remain,
+because that narrowing is already part of what makes RFC-0090's `record` type-former a
+type-former at all (§2-3 there), not a new mechanism invented for this case:
 
 ```metel
-fun close(f: File) -> i64 {
-    sys_close(f.fd);
-    f.fd   // fd survives; the linear field's obligation is satisfied by having been
-           // reached at all
+@derive(ToRecord, FromRecord)
+struct File { fd: i64, path: String }
+
+fun close(f: File) -> String {
+    let r = f.to_record();       // record { fd: i64, path: String }
+    sys_close(r.fd);
+    let path = move r.path;      // r narrows to record { fd: i64 } — but `fd`'s
+                                  // obligation was already satisfied by sys_close
+                                  // above; nothing further needs to happen to it
+    path
 }
 ```
 
-Unambiguous, no per-binding state tracking beyond ordinary move semantics, no row kind,
-no row-unification algorithm. **This is what satisfies RFC-0063 §9 item 5's deadline on
-its own** — sufficient for Phase 3 to proceed, with no dependency on RFC-0090 or
-RFC-0091.
+Explicit, no per-binding state tracking beyond what RFC-0090's records already need for
+their own sake, no new row-unification algorithm invented for Linear specifically.
+**This is what satisfies RFC-0063 §9 item 5's deadline** — via this RFC's `Linear`
+aspect and lattice (§1-2) plus RFC-0090's `record` type-former and tier 2
+(`ToRecord`/`FromRecord`), not RFC-0091's fuller automatic-downgrade extension or its
+still-open aliasing question, neither of which is required for the deadline.
 
-A third option — automatic downgrade, where the binding's type changes at the point of
-consumption to reflect exactly which fields remain — is real and more expressive, but
-it needs the row/record machinery from RFC-0090, and an aliasing question (what type
-does a borrow taken before the downgrade have afterward) that took real design work to
-answer. That option, and the aliasing question's answer, are specified in RFC-0091
-(Linear Records) as an additive extension, not a prerequisite for this RFC's floor.
+**The real cost, stated plainly:** a `Linear`-bearing struct that does not derive
+`ToRecord`/`FromRecord` cannot have its fields partially consumed at all — it can only
+be consumed as a whole (equivalent to what an "Option A, drop/consume everything
+atomically" choice would have given, had this RFC specified one). This is a real
+behavior change from an earlier draft of this RFC, which allowed partial field access
+with no extra derive required. It is also consistent with this whole design cluster's
+tier philosophy (RFC-0090 §8): no capability is ambient; partial consumption is an
+explicit opt-in, not something every struct gets for free.
+
+A more expressive mechanism — automatic downgrade, where the binding's type changes at
+the point of consumption with no explicit `.to_record()` call needed — is specified in
+RFC-0091 (Linear Records) as an additive extension on top of this floor, not a
+prerequisite for it.
 
 ---
 
@@ -244,16 +284,23 @@ decision between two different models.
    something else) — unresolved; only the shape of what it computes is settled.
 4. Multiplicity polymorphism (`Guarded<T, Cap>` generic over a field's multiplicity) —
    noted as a real, later extension; not attempted here.
-5. Does `Linear` interact with RFC-0071 §7's affine partial-move side-table directly, or
-   stay a separate check layered on top — unresolved.
+5. ~~Does `Linear` interact with RFC-0071 §7's affine partial-move side-table
+   directly, or stay a separate check layered on top~~ — **Resolved 2026-07-09, §3:**
+   no. `Linear`-bearing structs do not support direct partial moves at all; the
+   canonical path is conversion to a record (RFC-0090) first, an entirely separate
+   mechanism from RFC-0071's affine side-table. No extension of that side-table for
+   linear fields is needed.
 
 ---
 
 ## Relationship to the tracked deadline
 
 RFC-0063 §9 item 5 requires partial consumption to be resolved before RFC-0071/RFC-0067
-implementation begins (Phase 3 steps 1–2). §3's Option B is what satisfies that
-deadline, entirely within this RFC, with no dependency on RFC-0090 or RFC-0091.
+implementation begins (Phase 3 steps 1–2). §3 is what satisfies that deadline — this
+RFC's `Linear` aspect and lattice (§1-2) together with RFC-0090's `record` type-former
+and tier 2 (`ToRecord`/`FromRecord`). This is a real dependency on RFC-0090 that an
+earlier draft of this RFC did not have; RFC-0091's fuller automatic-downgrade extension
+and its open aliasing question remain explicitly not required for the deadline.
 
 ---
 
@@ -269,7 +316,10 @@ deadline, entirely within this RFC, with no dependency on RFC-0090 or RFC-0091.
 - RFC-0049 (Linear Function Type System, draft) — documents the generic-`drop`-discharges-
   linearity hazard this RFC's `drop<T: !Linear>` avoids
 - RFC-0063 (Allocator Handles, under review) — §9 item 5's deadline this RFC's §3
-  satisfies
+  satisfies, together with RFC-0090
+- RFC-0090 (Structural Records — Rows and Tiers) — the `record` type-former and tier 2
+  (`ToRecord`/`FromRecord`) §3 depends on as the canonical partial-consumption
+  mechanism
 - RFC-0024 (Linear Types, superseded) — prior exploration; superseded by RFC-0028
 - RFC-0028 (Memory and Reference Model, refused) — its foundation-layer content is what
   this RFC re-homes, using the more developed design from `linear-types.md` rather than
