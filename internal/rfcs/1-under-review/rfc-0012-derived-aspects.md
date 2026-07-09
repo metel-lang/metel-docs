@@ -3,7 +3,7 @@ id: rfc-0012
 title: "Attributes, Metadata, Macros, and Derived Aspects"
 date: '2026-05-21'
 updated: '2026-07-09'
-status: draft
+status: under-review
 target:
 ---
 
@@ -30,6 +30,30 @@ target:
 > strings (§6), and a short list of genuinely unclosed residual cases (§5). The Macros
 > subsection of Motivation, the Lisp-style-macros alternative, and the open questions are
 > rewritten accordingly.
+>
+> **Resolved (partially) 2026-07-09, against `reports/strategy/strategic-overview-2026-07-08.md`.**
+> That report's "What Would Change This Assessment" named an explicit trigger: if
+> re-reading RFC-0080 showed it did not naturally extend to derive-as-codegen (only to
+> auto-trait-style structural composition), that would confirm the derive/comptime
+> foundation is a genuinely new feature, not an extension of accepted work, and should
+> prompt scoping it as its own initiative before tier 3 or brand-kind-unification proceed
+> further. RFC-0080 was re-read (this RFC's own revision history above) and the trigger
+> fired: §1.3's `Clone` derive is a single hardcoded example, and RFC-0080's own
+> Unresolved Questions section says nothing about a general mechanism — `Send`/`Sync`
+> auto-impl is the only part of RFC-0080 that was ever a real precedent. This RFC is
+> therefore promoted from draft to **under review**, on the strength of now having a
+> substantiated primary proposal (Path D) rather than four undifferentiated options — but
+> deliberately not further, to accepted. The 07-08 report classifies this whole thread
+> (Priority 2b) as "paced, not urgent, explicitly not gating anything," and its Honest
+> Assessment places tier 3/brand-kind-unification/comptime-derive in "paper-only
+> territory," invoking RFC-0075 (region inference) by name as this project's own
+> cautionary tale for "plausible on paper, expensive against a real implementation."
+> Moving this RFC to accepted now, with §5's parser-exposure surface, §4's
+> expression-position scoping rule, and §2's row-metadata extension all still open
+> (Open Questions 1, 3, 4), would repeat exactly that failure shape. RFC-0080 stays
+> under review too, correctly still blocked on this RFC, though its `derives Clone`
+> syntax is now stable (matches this RFC's recommended, if not yet accepted, surface
+> syntax) rather than at further risk of changing.
 
 ## Summary
 
@@ -752,7 +776,29 @@ Minimum action before v0.5: reserve `@` as a grammar token so it cannot be used 
 
 ## Decision
 
-**Outcome:** *(pending — Path D recommended by this revision, not yet formally accepted)*
-**Target:** v0.5+
+**Outcome:** **Under review.** Path D (comptime derive) is adopted as this RFC's
+recommended mechanism — not one of four undifferentiated options — with Paths A/B/C
+retained as alternatives considered (§ Alternatives Considered) and Path C absorbed as
+Path D's surface syntax. Not accepted: three open questions are load-bearing enough to
+block acceptance outright —
 
-*(Decision rationale goes here when the RFC is evaluated.)*
+- **Open Question 1** (row metadata for reflection — order, visibility) blocks a
+  concrete `typeinfo` spec.
+- **Open Question 2** (`emit` soundness — orphan rules, ownership of the target type)
+  is unresolved and is where this RFC's own text says its soundness questions
+  concentrate.
+- **Open Question 4** (comptime-callable parser API surface) is sketched by example
+  (§5) only, not specified.
+
+The remaining eleven open questions (§ Open Questions 3, 5-14) are real but not
+blocking in the same way — either genuinely independent of the derive mechanism itself
+(the `@` attribute-scope questions, `@cfg` scope, `Display`/`From`) or already flagged
+as paced future work in their own right (body reflection, Open Question 6).
+
+Per `reports/strategy/strategic-overview-2026-07-08.md`'s Priority 2b classification and
+Honest Assessment (paper-only territory, RFC-0075 as the applicable cautionary tale),
+this RFC is deliberately not pursued toward acceptance on any particular timeline —
+under review, paced, revisited when Open Questions 1/2/4 have concrete answers, not on
+a schedule.
+
+**Target:** v0.5+, unchanged, and contingent on the above.

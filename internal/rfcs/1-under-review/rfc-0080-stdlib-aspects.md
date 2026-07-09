@@ -7,19 +7,25 @@ updated: '2026-07-09'
 
 > **Status — under review.** Moved back from accepted 2026-07-09: §1.3 specified
 > derive using `#[derive(Clone)]`, a syntax RFC-0012 (Attributes, Metadata, Macros, and
-> Derived Aspects, draft) explicitly rejects in its own Alternatives Considered section
-> in favour of either `@derive(...)` or the `derives` keyword. An accepted RFC using a
-> syntax the governing draft RFC rejects is an inconsistency, not a settled precedent.
-> §1.3 now uses `derives Clone` (RFC-0012 Path C) as a provisional spelling — the choice
-> among RFC-0012's derive paths (including the new Path D, comptime-based derive) is
-> still open, and this RFC's substance (which aspects exist, their semantics, the
-> auto-impl rules for `Send`/`Sync`) does not depend on which path wins. Re-promote to
-> accepted once RFC-0012 settles the derive syntax/mechanism and §1.3 is confirmed
-> consistent with it. Depends on RFC-0071 (Ownership and Move Semantics) and RFC-0060
-> (Aspect Impl Coherence). Formally specifies four aspects that are assumed pre-existing
-> across the accepted and under-review region RFC cluster (RFC-0063–0079) but have never
-> been defined. The sendability aspects (`Send`, `Sync`) rely on closed-world coherence
-> from RFC-0060 for their auto-impl rules.
+> Derived Aspects, under review) explicitly rejects in its own Alternatives Considered
+> section in favour of either `@derive(...)` or the `derives` keyword. An accepted RFC
+> using a syntax the governing RFC rejects is an inconsistency, not a settled precedent.
+> §1.3 now uses `derives Clone`.
+>
+> **Update (same day, later):** RFC-0012 has since settled on Path D (comptime derive)
+> as its recommended mechanism, with `derives Clone` as Path D's stable surface syntax
+> (Path C, absorbed) — so §1.3's spelling is no longer provisional, it is confirmed.
+> The *mechanism* underneath it is not: RFC-0012 itself remains under review, not
+> accepted (its own Open Questions 1/2/4 — row metadata, `emit` soundness, parser API
+> surface — are load-bearing enough to block that). Re-promote this RFC to accepted
+> once RFC-0012 reaches acceptance, or sooner if RFC-0012's Open Questions 1/2/4 turn
+> out not to affect `Clone`'s specific derive (they concern the general mechanism, not
+> this RFC's four aspects, which do not depend on which path implements derive).
+> Depends on RFC-0071 (Ownership and Move Semantics) and RFC-0060 (Aspect Impl
+> Coherence). Formally specifies four aspects that are assumed pre-existing across the
+> accepted and under-review region RFC cluster (RFC-0063–0079) but have never been
+> defined. The sendability aspects (`Send`, `Sync`) rely on closed-world coherence from
+> RFC-0060 for their auto-impl rules.
 
 ## Summary
 
@@ -303,6 +309,6 @@ does not depend on RFC-0003 and may be accepted independently.
   `Deref` impls for `Rc` and `Arc`; `get_mut` and `try_unwrap` as the mutation API.
 - RFC-0003 (Concurrency Model, draft) — fiber boundary crossing; consumer of `Send`
   and `Sync` bounds.
-- RFC-0012 (Attributes, Metadata, Macros, and Derived Aspects, draft) — governs the
-  derive syntax/mechanism `Clone`'s §1.3 depends on; this RFC's move back to
+- RFC-0012 (Attributes, Metadata, Macros, and Derived Aspects, under review) — governs
+  the derive syntax/mechanism `Clone`'s §1.3 depends on; this RFC's move back to
   under-review pending that resolution.
