@@ -123,3 +123,43 @@ somewhere it won't be re-read on every pass.
 3. If a real overlap is found, reconcile it as part of the same piece of work, not as a
    follow-up — an unreconciled overlap discovered later costs more than a few extra
    minutes checking now.
+
+## Tooling
+
+`internal/rfcs/tools/rfc.py` (stdlib-only Python, no dependencies) mechanizes the parts
+of this process that don't need judgment:
+
+- `rfc.py new "Title" -d "description"` — creates a draft with the next free number,
+  and runs a TF-IDF/cosine-similarity check against every existing RFC first, printing
+  anything above a similarity threshold before you commit to writing it. Caught the
+  RFC-0055/RFC-0092 case in testing (0.47 similarity) — this is the automated version
+  of "check `INDEX.md` before opening a new RFC," not a replacement for actually reading
+  what it flags.
+- `rfc.py transition <id> --to <stage> -r "reason"` — `git mv`s to the right directory,
+  updates frontmatter (`status`, `updated`), inserts a dated status blockquote, and
+  fixes any other file's literal path references to the old location. Runs `check`
+  afterward automatically.
+- `rfc.py supersede <id> --by <ids> -r "reason"` — the same, plus `superseded_by`. Does
+  not write the reconciliation content (what carried forward, what didn't) — that still
+  needs a human, or an agent, to actually think about it.
+- `rfc.py check` — validates frontmatter status matches directory, no duplicate RFC
+  ids, no dangling `internal/rfcs/N-stage/rfc-....md` path references anywhere in the
+  repo. Read-only. Running it against this repo for the first time found 21 pre-existing
+  problems predating this document — mostly older RFCs using ad hoc status vocabulary
+  ("incorporated", "active", "deferred") that was never standardized against the
+  lifecycle names above, plus two genuine dangling references in RFC-0006 and RFC-0051.
+  Not fixed as part of writing this tool — a real, separate backlog, listed here so it
+  isn't lost: RFC-0007, 0010, 0016, 0023, 0026, 0032, 0034, 0035, 0038, 0039, 0040-0045,
+  0056, 0058, 0059 have frontmatter/directory status mismatches; RFC-0006 and RFC-0051
+  have dangling path references.
+- `rfc.py index --check-drift` — compares every RFC's own `updated`/`date` frontmatter
+  against `INDEX.md`'s `last_built`; flags anything changed since. Read-only.
+- `rfc.py index --suggest-placement <id>` — cosine similarity between an RFC and each
+  `INDEX.md` cluster section's combined text; suggests where it belongs rather than
+  deciding it. Verified against three existing placements (RFC-0091, RFC-0074, RFC-0003)
+  and agreed with the manual choice in all three.
+
+None of this replaces the `3-integrated` phase's actual judgment work (is the design
+sound, do the worked examples really stress-test the interaction) — it only makes the
+procedural half (move the file correctly, don't lose a cross-reference, don't forget to
+check for an existing RFC first) hard to get wrong by accident.
