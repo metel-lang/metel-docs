@@ -69,13 +69,25 @@ framing above doesn't distinguish two cases that need different answers.
 
 - **For L3 (comptime/derive, brands, structural records) — genuinely still forming — letting
   design run ahead of implementation is the right call, not overreach, for a specific reason:**
-  RFC-0092's own Open Question 4 (whether `<T>` generics should be reinterpreted as sugar over
-  comptime type parameters) is a real case where implementing generics naively now, then
-  unifying with comptime later, would likely require rebuilding the specialization mechanism's
-  internals. Settling this kind of question before implementation is exactly what avoids the
-  build-it-then-rebuild-it cost. `3-integrated`'s cross-checking (catching an
-  RFC-0063/RFC-0066-style conflict before something is built against it) is aligned with this,
-  not opposed to it — done narrowly.
+  `comptime`/`emit`/derive registration (RFC-0092–0095) have zero footprint in
+  `reports/implementation/roadmap-2026-07-07.md` — nothing exists yet to rebuild, so settling
+  the mechanism's shape before writing it is not paying a build-then-rebuild cost, it's simply
+  sequencing design before the only implementation that would use it.
+  **Correction, 2026-07-10:** this section originally cited RFC-0092's Open Question 4 (whether
+  `<T>` generics should be reinterpreted as sugar over comptime type parameters) as that
+  evidence, framed as "implementing generics naively now, then unifying with comptime later,
+  would likely require rebuilding the specialization mechanism's internals." That's wrong as
+  stated — per the roadmap (`reports/implementation/roadmap-2026-07-07.md` L0 row), generics via
+  monomorphization are **already implemented and mature**, not a future action being weighed.
+  OQ4 itself says the unification is "not load-bearing for derive itself" — recommended, not
+  required — precisely because it's optional, no forced rebuild follows regardless of when it's
+  settled. That example actually shows the opposite pattern from the one it was cited for:
+  implementation (L0 generics) already ran ahead of a later L3 design question, harmlessly,
+  because the later question was scoped not to be load-bearing on the earlier build. The
+  general L3 argument (above) doesn't depend on that example and still holds on its own — but
+  the specific citation was wrong and is corrected rather than quietly dropped.
+  `3-integrated`'s cross-checking (catching an RFC-0063/RFC-0066-style conflict before something
+  is built against it) is aligned with the general argument, not opposed to it — done narrowly.
 - **For L2 (the allocator/lifetime cluster, Priority 1) — already accepted, stable, and not
   entangled with L3 — the same argument does not apply, and leaving it un-actioned *is* the
   actual overreach.** Per `integrated-language-overview-2026-07-07.md`'s own dependency table,
