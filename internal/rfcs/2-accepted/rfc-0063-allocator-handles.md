@@ -2,7 +2,8 @@
 id: rfc-0063
 title: "Allocator Handles"
 date: '2026-06-24'
-updated: '2026-07-06'
+updated: '2026-07-10'
+status: accepted
 ---
 
 > **Status — under review.** Rewritten 2026-07-05 from the original "Region Handles"
@@ -52,6 +53,20 @@ updated: '2026-07-06'
 > `algebraic-effects.md`, `structured-concurrency.md`) plus an `archive/` for
 > superseded material, replacing the single file cited just above (now archived
 > there). See that directory's `README.md` for the index. Still exploratory only.
+>
+> **Updated 2026-07-10, ratification pass.** §9 items 1, 2, and 5 are resolved —
+> a decision `reports/implementation/roadmap-2026-07-07.md` Phase 0 already made in a
+> separate document and never synced back here until now, exactly the kind of drift a
+> ratification pass exists to catch. Allocator teardown is affine-only for Stage A (item
+> 1 resolved against the linear alternative, not on technical grounds but because Stage A
+> doesn't need it); this moots `drop`'s interaction with a linear discipline entirely
+> (item 2); and everything needing linear (use-exactly-once) struct-field semantics —
+> including partial consumption itself — is deferred whole to Stage B, which removes item
+> 5's earlier real deadline (RFC-0071's own affine partial-move side-table, §7, is
+> sufficient for Phase 3 as planned). Items 3 and 4 remain open with no urgency, unchanged.
+> This RFC moves to **accepted** on that basis.
+
+> **Status — accepted (2026-07-10).** Phase 0 ratification sweep: split model consistency-checked (RFC-0063 sec9 items 1/2/5 synced with roadmap-2026-07-07 Phase 0 decision; RFC-0066/0068 stale titles fixed); sweeping the cluster from under-review to accepted per reports/implementation/roadmap-2026-07-07.md Phase 0.
 
 ## Summary
 
@@ -402,34 +417,27 @@ the same principle holds: each allocator tag in the error is a concrete name in 
 
 **None, for the surface this RFC specifies** — the `Alloc` aspect's associated
 error type, `@a T`, `@a expr`, allocator parameters (including tag-only, §4),
-and sendability are settled as written. Items 1–4 below are explicitly **not**
-decided, are out of scope for this RFC, and are deferred until the
-implementation catches up with the design (no urgency: the interpreter has no
-allocator backend yet regardless — RFC-0063's own layer is Phase 3 step 3 of
-the planned implementation order). **Item 5 is different and carries a real
-deadline** — see its own note below.
+and sendability are settled as written. Items 1, 2, and 5 below are **resolved
+2026-07-10** (see the status note at the top); items 3–4 remain genuinely open
+but with no urgency (no urgency: the interpreter has no allocator backend yet
+regardless — RFC-0063's own layer is Phase 3 step 3 of the planned
+implementation order).
 
-1. **Teardown discipline — affine (as currently written) vs. linear.** This
-   RFC and §5 describe allocators as ordinary affine values: movable, dropped
-   via explicit `drop(a)` or implicitly at scope end. A stricter alternative
-   has been proposed and is **not decided**: allocators carry a phantom
-   linearity marker (structurally analogous to `PhantomBrand<'b>`, RFC-0074)
-   making the whole allocator value linear, with a designated consuming
-   method (e.g. `.free()`) as the *only* way to discharge that obligation —
-   reaching scope end without consuming it would become a compile error
-   rather than triggering an implicit drop. **Undecided; §5's "or at scope
-   end" wording stands only until this is resolved.**
+1. ~~Teardown discipline — affine (as currently written) vs. linear.~~
+   **Resolved 2026-07-10** (`reports/implementation/roadmap-2026-07-07.md` Phase 0):
+   affine, exactly as §5 already describes — movable, dropped via explicit `drop(a)` or
+   implicitly at scope end. The stricter linear alternative considered here (a phantom
+   linearity marker forcing a designated `.free()` as the only discharge) is not
+   rejected on technical grounds; it is out of scope for Stage A and deferred whole to
+   Stage B alongside the rest of the substructural-types tower, alongside item 5 below.
+   §5's "or at scope end" wording stands as final for Stage A, not provisionally.
 
-2. **If linear teardown is adopted, `drop`'s interaction with it is a second,
-   separate open question.** RFC-0071 §6's `drop(x)` free function is
-   currently unconditional — it works on any value. A generic `drop` that
-   merely discharges a linearity obligation *without* running the real
-   teardown logic is a genuine, previously-encountered bug class, not a
-   hypothetical one: RFC-0049 (draft, orphaned) documents exactly this
-   failure for `linear fun` — *"`drop(f)` appears to work but leaves
-   captured values dangling."* **Undecided:** whether `drop` should be
-   excluded from linear allocators entirely (e.g. a `T: !Linear` bound,
-   mirroring RFC-0072's negative-bound mechanism), or some other resolution.
+2. ~~If linear teardown is adopted, `drop`'s interaction with it is a second,
+   separate open question.~~ **Moot as of 2026-07-10:** item 1's resolution means no
+   linear teardown discipline exists in Stage A for `drop` to interact with. RFC-0049's
+   documented hazard (*"`drop(f)` appears to work but leaves captured values dangling"*)
+   remains real background context for *if* Stage B later adopts linear allocator
+   teardown, but does not need resolving to ratify this RFC.
 
 3. **The `Alloc` aspect's allocation method is not actually specified.** §1
    declares only `type AllocationError`; §3 states that `@a expr` "desugars
@@ -447,51 +455,39 @@ deadline** — see its own note below.
    revived and re-anchored to this RFC onward before item 3 above can be
    given a real signature, let alone implemented safely.
 
-Items 1–4 are connected — resolving item 3 requires a decision on item 1
-(does `alloc`'s signature need to thread a linear capability token?), and
-implementing either requires item 4. None of this blocks the allocator
-surface already specified in this RFC from being ratified; it blocks writing
-a *custom* `Alloc` implementation, which nothing currently depends on.
+Item 3 no longer waits on item 1 as of 2026-07-10: with teardown resolved to affine-only
+for Stage A, `alloc`'s signature has no linear capability token to thread — it can be
+specified as an ordinary affine method whenever item 3 is picked up. Item 4 remains a
+real prerequisite for actually implementing item 3 safely. None of this blocks the
+allocator surface already specified in this RFC from being ratified; it blocks writing a
+*custom* `Alloc` implementation, which nothing currently depends on.
 
-5. **Partial consumption of a linear struct — deferred, but with a real
-   deadline, unlike items 1–4 above.** If `Linear` is introduced (item 1),
-   a struct with more than one linear field raises a question RFC-0071 §7
-   already answers differently for the affine case: partial moves are
-   tracked in a side-table ("the compiler tracks moved fields at field
-   granularity"), invisible in the value's type, and forbidden outright for
-   `Drop` types. Two candidate resolutions for `Linear` specifically:
-   (a) extend the same side-table approach — matching RFC-0024 §7's rule
-   that a linear field may never be silently left unconsumed by a partial
-   destructure — or (b) have each field consumption produce a new residual
-   type (structurally, "the struct minus that field"), so that "the
-   remainder is still linear and must still be consumed" falls out of the
-   ordinary linearity rule automatically rather than needing a bespoke rule
-   like RFC-0024 §7's. Option (b) is more elegant — it also sidesteps the
-   `Drop`-needs-the-whole-value hazard that forces RFC-0071's affine
-   restriction, since `Linear` and `Drop` are not expected to coexist (item
-   2 above) — but is a materially bigger type-system feature (closer to
-   row-polymorphism than to anything else in the accepted cluster), and
-   raises its own open questions (does the residual type get a nameable
-   surface form, or stay anonymous and function-local like affine partial
-   moves today; does it replace RFC-0071 §7's mechanism for affine types
-   too, or stay linear-only). **Not decided.** Unlike items 1–4, **this one
-   is not free to leave open indefinitely**: partial-move tracking is part
-   of move-semantics enforcement itself (RFC-0071), which — together with
-   borrow checking (RFC-0067) — is Phase 3 **steps 1–2** of the planned
-   implementation order, ahead of the allocator layer (step 3) that items
-   1–4 wait on. Whatever partial-consumption mechanism `Linear` ends up
-   with has to be settled before that implementation work starts, not
-   whenever the design catches up at its own pace — retrofitting a
-   different mechanism after move semantics and the borrow checker are
-   already built would be far more costly than deciding this first.
+5. ~~Partial consumption of a linear struct — deferred, but with a real
+   deadline, unlike items 1–4 above.~~ **Resolved 2026-07-10, deadline lifted**
+   (`reports/implementation/roadmap-2026-07-07.md` Phase 0): **linear types are not a
+   dependency of the allocator cluster.** Phase 3 (move semantics, borrow checking)
+   ships under affine-only semantics — RFC-0071 §7's existing side-table (partial moves
+   tracked at field granularity, forbidden outright for `Drop` types) is what Phase 3
+   builds against, with no `.free()`-as-sole-discharge linear discipline and no
+   residual-extraction mechanism needed to unblock it. Anything that actually needs
+   linear (use-exactly-once) field semantics — including partial consumption of a
+   `Linear` struct specifically — is deferred whole to Stage B alongside the rest of the
+   substructural-types tower, and has since been designed there in full: RFC-0089
+   (Linear Types) §3/§3.1 and RFC-0091 (Linear Records), reached independently of this
+   item's earlier urgency. The two candidate resolutions floated here, (a) extending
+   RFC-0071's side-table and (b) a residual-record-producing consumption, were decided
+   in RFC-0090/RFC-0091's favor of (b) — `ToRecord`/`FromRecord` conversion producing a
+   narrowing residual record — not by this RFC.
 
 **Full exploration of items 1, 2, and 5** (the `Linear` aspect shape, the
 `Drop`/`Linear` exclusion, residual/record-based partial consumption, and how far the
-same mechanism could be pushed toward general structural records) is worked through in
+same mechanism could be pushed toward general structural records) started in
 `reports/substructural-types/linear-types.md` and
 `reports/substructural-types/structural-records.md` (index at that directory's
-`README.md`). Those documents are themselves exploratory, not a decision — they do not
-change anything recorded above.
+`README.md`), and has since graduated into RFC-0089 (Linear Types), RFC-0090 (Structural
+Records), and RFC-0091 (Linear Records) — the actual resolution referenced in items 1, 2,
+and 5 above. Those RFCs remain draft (Stage B work, per item 5's resolution); this RFC's
+own ratification does not depend on their reaching accepted.
 
 ---
 

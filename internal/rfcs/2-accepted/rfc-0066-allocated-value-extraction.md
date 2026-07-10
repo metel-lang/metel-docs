@@ -1,18 +1,28 @@
 ---
 id: rfc-0066
-title: "Region Pointer Extraction"
+title: "Allocated Value Extraction"
 date: '2026-06-27'
-updated: '2026-07-06'
+updated: '2026-07-10'
+status: accepted
 ---
 
 > **Status — under review.** Rewritten syntax 2026-07-05. This RFC is the trigger for
 > the cluster-wide model split: individual move-out/drop allows a value's lifetime to end
 > before its allocator's scope, which is what breaks RFC-0063's triple-duty premise. The
 > semantic content is unchanged under the split model — extraction families, `T: !Drop`
-> constraints, and drop safety analysis all stand. Syntax updated from `@a T` to `@a T`
-> throughout. Depends on RFC-0063 (Allocator Handles) and RFC-0065 (Allocator Ergonomics).
-> Addresses the gap identified in RFC-0063 §5: how a caller obtains a plain `T` or `&T`
-> from an `@a T` allocator pointer, and what the destructor semantics are in each case.
+> constraints, and drop safety analysis all stand. Syntax updated from the pre-split
+> region-pointer notation to `@a T` throughout. Depends on RFC-0063 (Allocator Handles)
+> and RFC-0065 (Allocator Ergonomics). Addresses the gap identified in RFC-0063 §2: how a
+> caller obtains a plain `T` or `&T` from an `@a T` allocator pointer, and what the
+> destructor semantics are in each case.
+>
+> **Renamed 2026-07-10, ratification pass:** title corrected from "Region Pointer
+> Extraction" to "Allocated Value Extraction" — every other RFC in this cluster already
+> referred to this document by the latter name (RFC-0063, RFC-0065, RFC-0067, RFC-0073,
+> RFC-0077), but this file's own frontmatter title and filename were never updated to
+> match after the region→allocator rename. File renamed from
+> `rfc-0066-region-pointer-extraction.md` to `rfc-0066-allocated-value-extraction.md`
+> accordingly.
 >
 > **Updated 2026-07-06:** added §3a, closing a gap §3 left open: whether passing
 > `@a T` to a plain, `@`-free `T` parameter *without* ascription counts as a
@@ -20,6 +30,8 @@ updated: '2026-07-06'
 > previously unstated. See `reports/memory-model/lifetimes-vs-regions-2026-07-02.md`
 > §12 for the analysis. Companion change: RFC-0063 §4 adds a tag-only parameter form
 > for the case this rule would otherwise leave with no cheap alternative.
+
+> **Status — accepted (2026-07-10).** Phase 0 ratification sweep: split model consistency-checked (RFC-0063 sec9 items 1/2/5 synced with roadmap-2026-07-07 Phase 0 decision; RFC-0066/0068 stale titles fixed); sweeping the cluster from under-review to accepted per reports/implementation/roadmap-2026-07-07.md Phase 0.
 
 ## Summary
 
@@ -292,4 +304,5 @@ encompasses the clone's use is valid.
   it from this RFC's plain, `@`-free `T`.
 - RFC-0067a (Reference Types) — `&T` / `&mut T`, base auto-deref.
 - RFC-0067 (Lifetime Anchors and Allocator-Pointer References) — auto-deref through `@a T`
-  specifically (§2), split from RFC-0067a 2026-07-07.
+  specifically (§2); RFC-0067a split off from this RFC 2026-07-07 as the
+  allocator/borrow-checker-independent slice.

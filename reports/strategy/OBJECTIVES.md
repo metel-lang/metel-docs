@@ -148,15 +148,17 @@ Seeded from `strategic-overview-2026-07-08.md`, corrected for what's actually ha
 
 ### Priority 1 — Ratify the allocator/lifetime cluster's design
 
-**Sharpened 2026-07-09: not blocked by anything, including the L3 design-ahead argument in
-§1.** RFC-0067a is accepted; the rest of the sweep (RFC-0088 or amending RFC-0063 directly,
-retracting RFC-0069/0085/0087 — already done, see `INDEX.md` — and returning
-RFC-0063/0065/0066/0067/0068/0073/0077 to accepted) is still unactioned, through five
-strategic-overview cycles now (07-01 through 07-08). Nothing about L3's still-forming state
-touches this cluster — L2 does not depend on L3. The "let design run ahead" argument in §1
-does not apply here; this is the one item that should move regardless of what's still being
-settled in L3, and its continued inaction is the concrete instance of the meta-risk, not a
-side effect of it.
+**Done 2026-07-10**, after six strategic-overview cycles unactioned (07-01 through 07-09) —
+the concrete instance of the meta-risk this section warned about while it sat idle. Ratified
+by amending RFC-0063 directly rather than creating RFC-0088 (the vehicle question the roadmap
+left open): RFC-0063/0065/0066/0067/0068/0073/0077 are now `2-accepted`. This was not a pure
+formality — a consistency pass first found RFC-0063 §9 items 1/2/5 still written up as
+open/blocking, three days after `reports/implementation/roadmap-2026-07-07.md`'s Phase 0 had
+already resolved them in a separate document with no sync back to the RFC itself (exactly the
+drift `PROCESS.md`'s ratification/consistency step exists to catch), plus stale
+"Region..." titles on RFC-0066/0068 that never got renamed when the rest of the cluster moved
+to "Allocator" terminology. Both fixed before sweeping. RFC-0080 is now the only RFC left
+under review.
 
 ### Priority 2a — The floor, plus tiers 1/2
 
@@ -213,12 +215,10 @@ of what was watched for and what actually happened is part of the point.
    language shipping a similar structural-plus-linear combination first (the one external risk
    to the "worth pursuing" verdict); RFC-0039's independent prioritization; a concrete
    user-authored-allocator need. None resolved or superseded this session.
-5. ⬜ **Open, standing, sharpened 2026-07-09.** The meta-risk (§1) is not "is any design
-   happening ahead of any implementation" — that's expected and correct for L3. Check
-   specifically: has Priority 1 (L2, unblocked by L3) moved yet? If not, that's the real
-   instance of the risk. This is the easiest one to quietly stop tracking precisely because
-   L3 activity can look like progress while masking that the unblocked layer still hasn't
-   moved.
+5. ✅ **Fired and resolved, 2026-07-10.** Priority 1 (L2, unblocked by L3) moved — see
+   above. This trigger did its job: it named exactly the pattern that was actually
+   happening (L3 activity masking L2 inaction) and it's what caused the check that led to
+   ratification, rather than this being noticed by accident.
 6. ⬜ **New, 2026-07-09.** Priority 2a's tension: does RFC-0089's floor genuinely need
    RFC-0090's record machinery to satisfy RFC-0063 §9 item 5, or does that dependency need
    removing to preserve the "narrow, no row kind" property `integrated-language-overview-07-07`
@@ -249,6 +249,7 @@ of what was watched for and what actually happened is part of the point.
 | 2026-07-08 | (predates this document) | `strategic-overview-2026-07-08.md` |
 | 2026-07-09 | This document created, seeded from 07-08 and 07-07; RFC-0012 split into RFC-0089–0095; RFC-0055 reconciled; `INDEX.md`/`PROCESS.md`/`rfc.py` created; Priority 2a's ToRecord-floor tension surfaced (Trigger 6) | *(none yet — no dated overview written this cycle)* |
 | 2026-07-10 | Corrected the RFC-0092/generics citation in the meta-risk section (generics were already implemented, not a future action); RFC-0084 reversed to keep `[T; N]`/`[expr; N]`; added the "interpreter as temporary feedback mechanism" corollary (§1, Trigger 9) after a ClickUp check found no sprint task consolidating the scattered monomorphization pass | *(none yet)* |
+| 2026-07-10 | Priority 1 done: allocator/lifetime cluster (RFC-0063/0065/0066/0067/0068/0073/0077) ratified to accepted after a consistency pass fixed real drift (RFC-0063 §9 items 1/2/5 out of sync with the roadmap's Phase 0 decision; stale "Region..." titles on RFC-0066/0068). Trigger 5 fired and resolved. | *(none yet)* |
 
 ---
 

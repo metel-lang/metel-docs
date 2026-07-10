@@ -19,7 +19,7 @@ updated: '2026-07-10'
 >    bracket channel," citing `@[r] expr` (RFC-0063 as it stood on 2026-07-01). RFC-0063
 >    was itself rewritten 2026-07-05 — four days later — from that bracket-based region
 >    syntax to the current tag-based `@a T` / `@a expr` (see
->    `internal/rfcs/1-under-review/rfc-0063-allocator-handles.md`), which uses no
+>    `internal/rfcs/2-accepted/rfc-0063-allocator-handles.md`), which uses no
 >    brackets at all. The specific ambiguity this RFC gave up `[expr; N]` to avoid
 >    evaporated independently, four days after this RFC cited it.
 > 2. **Reverting costs nothing.** RFC-0084 was accepted but never implemented or applied

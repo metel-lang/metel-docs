@@ -2,7 +2,8 @@
 id: rfc-0068
 title: "Struct-Owned Allocators"
 date: '2026-06-28'
-updated: '2026-07-05'
+updated: '2026-07-10'
+status: accepted
 ---
 
 > **Status — under review.** Rewritten 2026-07-05. The original RFC used `[own r]` in
@@ -10,8 +11,18 @@ updated: '2026-07-05'
 > ownership is expressed via **primary constructor syntax**: `struct Foo(@a: BumpAlloc)`.
 > The allocator parameter `a` is declared in the value channel `()` with the `@` prefix;
 > it is created at construction and freed at drop. The `own` keyword is dropped. Depends
-> on RFC-0063 (Allocator Handles), RFC-0065 (Allocator Ergonomics), RFC-0067 (Reference
-> Types). Introduces struct-owned allocators.
+> on RFC-0063 (Allocator Handles), RFC-0065 (Allocator Ergonomics), RFC-0067 (Lifetime
+> Anchors and Allocator-Pointer References). Introduces struct-owned allocators.
+>
+> **Corrected 2026-07-10, ratification pass:** the RFC-0067 cross-reference above still
+> said "(Reference Types)" — RFC-0067's own title after the 2026-07-07 split is "Lifetime
+> Anchors and Allocator-Pointer References"; "Reference Types" is RFC-0067a. This RFC's
+> own References section already used the correct title; only this blockquote was stale.
+> File renamed from `rfc-0068-struct-owned-regions.md` to
+> `rfc-0068-struct-owned-allocators.md` to match the title, for the same reason as
+> RFC-0066's rename.
+
+> **Status — accepted (2026-07-10).** Phase 0 ratification sweep: split model consistency-checked (RFC-0063 sec9 items 1/2/5 synced with roadmap-2026-07-07 Phase 0 decision; RFC-0066/0068 stale titles fixed); sweeping the cluster from under-review to accepted per reports/implementation/roadmap-2026-07-07.md Phase 0.
 
 ## Summary
 

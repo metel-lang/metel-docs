@@ -2,21 +2,23 @@
 id: rfc-index
 title: "RFC Index"
 type: index
-last_built: '2026-07-09'
+last_built: '2026-07-10'
 ---
 
 # RFC Index
 
-Generated 2026-07-09. Not auto-regenerated — rebuild it (or ask for a rebuild) whenever
-RFCs are added, moved, or change status; it will drift otherwise. Grouped by theme, not
-by number, because number order tells you nothing about what's related. See
-`PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added the same day
-this index was built) and the working rules adopted alongside this index.
+Generated 2026-07-09, last updated 2026-07-10. Not auto-regenerated — rebuild it (or ask
+for a rebuild) whenever RFCs are added, moved, or change status; it will drift otherwise.
+Grouped by theme, not by number, because number order tells you nothing about what's
+related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
+the same day this index was built) and the working rules adopted alongside this index.
 
-**94 RFCs total.** 27 draft, 8 under review, 14 accepted, 0 integrated (new stage — see
+**94 RFCs total.** 27 draft, 1 under review, 21 accepted, 0 integrated (new stage — see
 `PROCESS.md`) (49 "live" — need active tracking), 25 implemented, 9 superseded, 11
 refused (45 "settled" — reference only). (RFC-0055 moved draft → superseded 2026-07-09,
-reconciled into RFC-0092/0093/0095 — see below.)
+reconciled into RFC-0092/0093/0095 — see below. **2026-07-10:** the allocator/lifetime
+cluster — RFC-0063/0065/0066/0067/0068/0073/0077 — swept from under-review to accepted;
+only RFC-0080 remains under review.)
 
 ---
 
@@ -67,26 +69,36 @@ was found and reconciled, and where this session did most of its work.
 - **RFC-0039** — `aspect` Alias Syntax — vehicle for RFC-0089's `Affine` alias
   (`!Copy + !Linear`). Small, standalone.
 
-## Region / Allocator / Lifetime cluster (under review — Phase 3's actual blocker)
+## Region / Allocator / Lifetime cluster (accepted 2026-07-10 — ratified, Phase 3's dependency now clear)
 
-The cluster the roadmap has been trying to get to "accepted, ready to implement" for
-weeks. Internally consistent as of the 2026-07-05/07 rewrites; the remaining work is
-sequencing and final sign-off, not open design questions.
+The cluster the roadmap tried to get to "accepted, ready to implement" for weeks. Ratified
+2026-07-10 via a consistency pass before sweeping: RFC-0063 §9 items 1/2/5 (allocator
+teardown discipline, `drop` interaction, partial consumption) were still written up as
+open/blocking, even though `reports/implementation/roadmap-2026-07-07.md`'s Phase 0 had
+already resolved them in a separate document three days earlier and never synced back —
+now fixed in RFC-0063 itself. RFC-0066 and RFC-0068's frontmatter titles/filenames also
+still said "Region ..." after the rest of the cluster renamed region → allocator; renamed
+to match (`rfc-0066-allocated-value-extraction.md`, `rfc-0068-struct-owned-allocators.md`),
+plus a few stale cross-reference bugs (a self-contradictory syntax note, a wrong section
+number, a backwards RFC-0067a split direction).
 
-- **RFC-0063** — Allocator Handles — the allocator half of the old "region handles"
-  premise. Central to the whole cluster.
-- **RFC-0065** — Allocator and Lifetime Ergonomics — elision rules for both channels.
-  Depends on RFC-0063 + RFC-0067.
-- **RFC-0066** — Region Pointer Extraction — individual drop/move-out; the RFC that
-  triggered the whole cluster-wide split.
-- **RFC-0067** — Lifetime Anchors and Allocator-Pointer References — the narrowed
-  remainder after RFC-0067a was split out and accepted separately.
+- **RFC-0063** *(accepted)* — Allocator Handles — the allocator half of the old "region
+  handles" premise. Central to the whole cluster.
+- **RFC-0065** *(accepted)* — Allocator and Lifetime Ergonomics — elision rules for both
+  channels. Depends on RFC-0063 + RFC-0067.
+- **RFC-0066** *(accepted)* — Allocated Value Extraction — individual drop/move-out; the
+  RFC that triggered the whole cluster-wide split. Renamed from "Region Pointer
+  Extraction" 2026-07-10 to match how every other RFC already referred to it.
+- **RFC-0067** *(accepted)* — Lifetime Anchors and Allocator-Pointer References — the
+  narrowed remainder after RFC-0067a was split out and accepted separately.
 - **RFC-0067a** *(accepted)* — Reference Types — plain `&T`/`&mut T`, auto-deref. No
   allocator/borrow-checker dependency; already sequenced into Cluster A.
-- **RFC-0068** — Struct-Owned Allocators — primary-constructor syntax
-  (`struct Foo(@a: BumpAlloc)`).
-- **RFC-0073** — AutoAlloc — renamed from AutoRegion; SubRegion interaction dropped.
-- **RFC-0077** — Allocator Generics — `<A: Alloc>` impl headers, variance for `@a T`.
+- **RFC-0068** *(accepted)* — Struct-Owned Allocators — primary-constructor syntax
+  (`struct Foo(@a: BumpAlloc)`). Renamed from "Struct-Owned Regions" 2026-07-10.
+- **RFC-0073** *(accepted)* — AutoAlloc — renamed from AutoRegion; SubRegion interaction
+  dropped.
+- **RFC-0077** *(accepted)* — Allocator Generics — `<A: Alloc>` impl headers, variance
+  for `@a T`.
 - **RFC-0074** *(draft)* — Shared Pointers (Rc/Arc) — blocked on RFC-0076 (brand
   introduction mechanism unresolved).
 - **RFC-0075** *(draft, parked)* — Region Inference — deliberately deferred until

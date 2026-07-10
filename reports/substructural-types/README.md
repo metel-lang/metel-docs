@@ -392,7 +392,7 @@ cluster being bundled together by an assumption made before the split existed.
 
 ## Related material outside this directory
 
-- `internal/rfcs/1-under-review/rfc-0063-allocator-handles.md` §9 — the tracked,
+- `internal/rfcs/2-accepted/rfc-0063-allocator-handles.md` §9 — the tracked,
   deadline-bound open questions this cluster's design work is answering.
 - `reports/memory-model/lifetimes-vs-regions-2026-07-02.md` — the accepted position on
   the allocator/lifetime split that every document here assumes as background.

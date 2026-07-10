@@ -2,7 +2,8 @@
 id: rfc-0073
 title: "AutoAlloc"
 date: '2026-06-29'
-updated: '2026-07-05'
+updated: '2026-07-10'
+status: accepted
 ---
 
 > **Status — under review.** Syntax and terminology updated 2026-07-05. Renamed from
@@ -12,6 +13,8 @@ updated: '2026-07-05'
 > unchanged. Depends on RFC-0063 (Allocator Handles), RFC-0065 (Allocator Ergonomics),
 > RFC-0066 (Allocated Value Extraction), RFC-0071 (Ownership and Move Semantics), and
 > RFC-0072 (Negative Bounds).
+
+> **Status — accepted (2026-07-10).** Phase 0 ratification sweep: split model consistency-checked (RFC-0063 sec9 items 1/2/5 synced with roadmap-2026-07-07 Phase 0 decision; RFC-0066/0068 stale titles fixed); sweeping the cluster from under-review to accepted per reports/implementation/roadmap-2026-07-07.md Phase 0.
 
 ## Summary
 

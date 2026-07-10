@@ -2,7 +2,8 @@
 id: rfc-0077
 title: "Allocator Generics"
 date: '2026-06-29'
-updated: '2026-07-06'
+updated: '2026-07-10'
+status: accepted
 ---
 
 > **Status — under review.** Rewritten 2026-07-05. The original RFC used the bracket
@@ -17,6 +18,8 @@ updated: '2026-07-06'
 >
 > **Updated 2026-07-06:** §2.3's bounds table adds the tag-only `<@a>` form
 > (RFC-0063 §4); §3.1 notes that wellformedness applies unchanged to it.
+
+> **Status — accepted (2026-07-10).** Phase 0 ratification sweep: split model consistency-checked (RFC-0063 sec9 items 1/2/5 synced with roadmap-2026-07-07 Phase 0 decision; RFC-0066/0068 stale titles fixed); sweeping the cluster from under-review to accepted per reports/implementation/roadmap-2026-07-07.md Phase 0.
 
 ## Summary
 

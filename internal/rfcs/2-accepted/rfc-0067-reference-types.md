@@ -2,7 +2,8 @@
 id: rfc-0067
 title: "Lifetime Anchors and Allocator-Pointer References"
 date: '2026-06-28'
-updated: '2026-07-07'
+updated: '2026-07-10'
+status: accepted
 ---
 
 > **Status — under review.** Rewritten 2026-07-05 for the split model. Split again
@@ -30,6 +31,8 @@ updated: '2026-07-07'
 >
 > **Updated 2026-07-06:** §2's coercion paragraph (originally §5) says explicitly why it is
 > safe only for borrows, not owned values, cross-referencing RFC-0066 §3a and RFC-0063 §4.
+
+> **Status — accepted (2026-07-10).** Phase 0 ratification sweep: split model consistency-checked (RFC-0063 sec9 items 1/2/5 synced with roadmap-2026-07-07 Phase 0 decision; RFC-0066/0068 stale titles fixed); sweeping the cluster from under-review to accepted per reports/implementation/roadmap-2026-07-07.md Phase 0.
 
 ## Summary
 

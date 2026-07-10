@@ -2,7 +2,8 @@
 id: rfc-0065
 title: "Allocator and Lifetime Ergonomics"
 date: '2026-06-27'
-updated: '2026-07-06'
+updated: '2026-07-10'
+status: accepted
 ---
 
 > **Status — under review.** Rewritten 2026-07-05. The original RFC specified elision
@@ -14,6 +15,8 @@ updated: '2026-07-06'
 > **Updated 2026-07-06:** added §1a, elision for RFC-0063's new tag-only allocator
 > parameters (`<@a>`). Reuses the existing single-input/self/ambiguous structure of
 > §2 rather than introducing a third rule set.
+
+> **Status — accepted (2026-07-10).** Phase 0 ratification sweep: split model consistency-checked (RFC-0063 sec9 items 1/2/5 synced with roadmap-2026-07-07 Phase 0 decision; RFC-0066/0068 stale titles fixed); sweeping the cluster from under-review to accepted per reports/implementation/roadmap-2026-07-07.md Phase 0.
 
 ## Summary
 
