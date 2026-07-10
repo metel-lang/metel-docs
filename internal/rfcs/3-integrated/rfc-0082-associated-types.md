@@ -23,6 +23,13 @@ impl_status: not-started
 > only, not as still-applicable content.
 
 > **Status — integrated (2026-07-10).** Integrated into public/reference/spec/declarations.md: associated types (type X;/type X = Y;, projection, equality-constrained bounds, object safety). RFC's stale Region/@[r] naming fixed and its RFC-0069 amendment (SubRegion, retracted) marked historical-only, not integrated.
+>
+> **Amended 2026-07-10, later the same day.** §10 Open Question 1 (disambiguation for
+> identically-named associated types) resolved rather than left deferred to a
+> nonexistent "type inference RFC" — type inference is already specified
+> (`public/reference/spec/types.md` §Type Inference) and implemented (RFC-0031),
+> so there was no future RFC for this to actually wait on. New §3a: `<T as
+> Aspect>::AssocType`, required only when ambiguous, always legal otherwise.
 
 ## Summary
 
@@ -143,6 +150,47 @@ type for the specific `T` at each instantiation. Projections may appear in:
 
 `T::AssocType` is only valid when `T: Aspect` is in scope. Writing `T::Target` without
 `T: Deref` in scope is a compile error.
+
+### 3a. Disambiguation — `<T as Aspect>::AssocType`
+
+When `T` is bound to two or more aspects that each declare an associated type of the
+same name, the bare projection `T::Target` is ambiguous — the compiler cannot tell
+which aspect's `Target` is meant:
+
+```metel
+aspect Deref { type Target; fun deref(self: &Self) -> &Target; }
+aspect Convert { type Target; fun convert(self: &Self) -> Target; }
+
+fun f<T: Deref + Convert>(x: &T) -> T::Target { ... }
+// error: T::Target is ambiguous — both Deref and Convert declare `Target`
+```
+
+The fully qualified form `<T as Aspect>::AssocType` names which aspect's associated
+type is meant:
+
+```metel
+fun f<T: Deref + Convert>(x: &T) -> <T as Deref>::Target { ... }
+```
+
+**Required only when ambiguous; always legal otherwise.** `T::AssocType` remains valid
+and preferred whenever exactly one bound aspect declares that name — the fully
+qualified form is available at every projection site, not just ambiguous ones, but
+writing it where the bare form would already resolve unambiguously is unnecessary
+verbosity, not an error. This matches every other elision mechanism in the language
+(allocator elision, lifetime-anchor elision): the explicit form is always accepted,
+the terse form is used whenever the compiler can determine the unique correct answer
+on its own, and ambiguity — never silent choice — is what forces the explicit spelling.
+
+**No new resolution machinery, and no dependency on a future type-inference RFC.**
+Resolving `<T as Aspect>::AssocType` is an ordinary lookup at the same
+associated-type-projection step §3 already specifies — the aspect name simply selects
+which of `T`'s bound aspects to project from, before that step runs, rather than
+requiring the step itself to disambiguate. It does not touch unification, generalization,
+or any other part of the inference algorithm (Hindley-Milner with let-polymorphism,
+already implemented per RFC-0031 and `public/reference/spec/types.md` §Type Inference).
+The original deferral to "the type inference RFC" assumed a future foundational RFC
+would need to define this; no such RFC exists or is planned — type inference is already
+specified and implemented, and this disambiguation rule doesn't touch any part of it.
 
 ---
 
@@ -275,11 +323,12 @@ under the overlap rules. No current use case requires defaults.
 
 ## 10. Unresolved Questions
 
-1. **Disambiguation for identically-named associated types.** When a type implements two
-   aspects each declaring `type Target;`, the bare projection `T::Target` is ambiguous.
-   The fully qualified form `<T as Aspect>::Target` resolves the ambiguity, but the
-   syntax and rules for fully qualified projections are deferred to the type inference
-   RFC.
+1. ~~Disambiguation for identically-named associated types.~~ **Resolved 2026-07-10,
+   §3a:** `<T as Aspect>::AssocType`, required only when ambiguous, always legal
+   otherwise. The "type inference RFC" this was deferred to was never a real
+   dependency — type inference (RFC-0031) is already implemented, and this
+   disambiguation is an ordinary lookup at the projection step this RFC already
+   specifies, not something inference itself needs to define.
 
 2. **Higher-kinded associated types.** Whether an associated type may itself be generic
    (`type Container<T>;`) is deferred. No current use case requires this.

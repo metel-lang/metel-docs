@@ -443,6 +443,27 @@ fun deref_display<T: Deref>(x: &T) where T::Target: Display {
 `T::AssocType` is only valid when `T: Aspect` is in scope — writing it without that
 bound is a compile error.
 
+**Disambiguation.** When `T` is bound to two or more aspects that each declare an
+associated type of the same name, the bare projection is ambiguous:
+
+```metel
+aspect Deref { type Target; fun deref(self: &Self) -> &Target; }
+aspect Convert { type Target; fun convert(self: &Self) -> Target; }
+
+fun f<T: Deref + Convert>(x: &T) -> T::Target { ... }
+// error: T::Target is ambiguous — both Deref and Convert declare Target
+```
+
+The fully qualified form `<T as Aspect>::AssocType` names which aspect's associated
+type is meant, and is always legal — not just where the bare form would be
+ambiguous — the same way every other elision mechanism in the language keeps its
+explicit form available everywhere and only forces it where the terse form can't
+resolve on its own:
+
+```metel
+fun f<T: Deref + Convert>(x: &T) -> <T as Deref>::Target { ... }
+```
+
 **Equality constraints in bounds.** `Aspect<AssocType = ConcreteType>` asserts both that
 `T` implements `Aspect` and that its associated type equals a known type, pinning
 `T::AssocType` to `ConcreteType` at every use:
@@ -467,11 +488,11 @@ signature references the associated type directly (see Static Dispatch Only, bel
 returns `&Target`, which varies per implementor, and a vtable entry cannot encode a
 type that differs per implementation.
 
-> **Not yet decided:** disambiguation when a type implements two aspects that both
-> declare `type Target` (the bare projection `T::Target` is ambiguous; a fully-qualified
-> form is deferred to the type inference RFC), and whether a negative bound on a
-> projection (`where T::Target: !Copy`) is meaningful — neither this RFC nor RFC-0072
-> addresses bounds on projections specifically, only on bare type parameters.
+> **Not yet decided:** whether a negative bound on a projection (`where T::Target:
+> !Copy`) is meaningful — neither this RFC nor RFC-0072 addresses bounds on projections
+> specifically, only on bare type parameters. (Disambiguation, above, was resolved
+> 2026-07-10 — the "type inference RFC" it was deferred to doesn't exist; type
+> inference is already implemented and this didn't depend on it.)
 
 ### Default Methods
 
