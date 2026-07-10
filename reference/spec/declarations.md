@@ -1,6 +1,9 @@
 # Declarations
 
-`pub` may be prefixed to any top-level `fun`, `struct`, `enum`, or `aspect` declaration to mark it as accessible from other modules. See [Modules — Visibility](modules.md#visibility) for the full rules.
+`pub` may be prefixed to any top-level `fun`, `struct`, `enum`, `aspect`, or `let`
+declaration to mark it as accessible from other modules. See
+[Modules — Visibility](modules.md#visibility) for the full rules, including `pub let`
+(module-level exported values).
 
 ## Variables
 

@@ -223,7 +223,35 @@ fun main() -> i64 {
 }
 ```
 
-`pub` is valid on `struct`, `enum`, `fun`, and `aspect` declarations. Top-level `let` and `mut` bindings are always module-private; public value exports are not supported in the current version.
+`pub` is valid on `struct`, `enum`, `fun`, `aspect`, and module-level `let` declarations.
+There is no `pub let mut` — mutable module-level state is never exported.
+
+> **Not yet implemented** — see
+> `internal/rfcs/3-integrated/rfc-0083-public-value-exports.md`. `LetDecl` has no
+> visibility field in the current parser/AST; `pub` on a module-level `let` is rejected
+> until that RFC's tracking task closes.
+
+```metel
+// config.mtl (conceptual)
+pub let MAX_CONNECTIONS: u64 = 1024;
+```
+
+```metel
+// importer
+import config::MAX_CONNECTIONS;
+
+fun accept(current: u64) -> boolean {
+    current < MAX_CONNECTIONS
+}
+```
+
+A `pub let` declares a named, typed, immutable value that is part of the module's
+public API — imported with the same `import` syntax as types and functions, and
+re-exportable with `export` like any other declaration. The initializer must be a
+**constant expression** (literals, arithmetic on literals, struct constructors over
+other constant expressions, and calls to `comptime` functions once RFC-0092 lands) —
+the full definition is RFC-0092's, not extended here. The value is always read-only at
+the import site.
 
 Struct field visibility is independent from the struct's own visibility. Fields are module-private by default; add `pub` on each field that should be accessible outside the declaring module.
 
