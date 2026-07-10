@@ -36,6 +36,12 @@ impl_status: not-started
 > ambiguous projection stays a hard error (matching the existing method-name-collision
 > precedent, `T0013`), and §4's existing equality constraint with a fresh type
 > parameter already covers every real case. See §3a for the full reasoning.
+>
+> **Considered and rejected, same day: `<T:Aspect>::AssocType`** (colon instead of
+> `as`) as a second candidate spelling — it collides with `<T: Aspect>`'s one existing
+> meaning everywhere in Metel (declaring a fresh generic parameter, `grammar.md:44`),
+> a stronger clash than `as`'s two prior uses. Neither spelling is adopted; §3a records
+> why, so neither gets re-proposed without this reasoning attached.
 
 ## Summary
 
@@ -178,6 +184,28 @@ proposed: `as` is already a reserved keyword with two existing uses (import rena
 `ImportItem → IDENTIFIER ("as" IDENTIFIER)?`; the cast operator, `CastExpression →
 AscribeExpression ("as" Type)*`) — a third, type-position use was never specified in
 `grammar.md`, and more importantly, it wasn't needed in the first place.
+
+**A second spelling, `<T:Aspect>::AssocType` (colon instead of `as`), was also
+considered and rejected the same day, for a sharper reason than aesthetics.**
+`<T: Aspect>` already has exactly one meaning everywhere in Metel: declaring a fresh
+generic type parameter with a bound —
+
+```
+GenericParam → IDENTIFIER ( ":" BoundList )?    // grammar.md:44, RFC-0034
+```
+
+— used identically in function signatures, struct/enum declarations, and `impl`
+headers. A grep across every RFC stage and the whole public spec found zero instances
+of that exact bracketed shape meaning anything other than "introduce a new type
+parameter here." Reusing it in projection position to mean "select `T`'s
+`Aspect`-specific view instead" collides with the *one, single* meaning that shape has
+had everywhere else in the language — a reader's trained association from every other
+`<T: Aspect>` is "this declares T," not "this selects among T's existing bounds." That
+is a stronger collision than `as`'s two prior uses above, neither of which means
+"declare a fresh binding" — so if a bracketed qualifier were ever adopted despite not
+being needed, `<T as Aspect>::AssocType` would be the safer of the two spellings, not
+`<T:Aspect>::AssocType`. Neither is adopted; this is recorded so neither gets
+re-proposed without this reasoning attached.
 
 **The bare projection stays ambiguous — this is a hard error, matching the existing
 method-name-collision precedent (Static Dispatch Only, `T0013`) exactly**, not a case
