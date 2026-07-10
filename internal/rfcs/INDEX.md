@@ -111,7 +111,8 @@ Nothing open here; these are the load-bearing accepted RFCs everything else cite
 - **RFC-0081** — Negative Impls — `impl !Aspect for Type`.
 - **RFC-0082** — Associated Types.
 - **RFC-0083** — Public Value Exports.
-- **RFC-0084** — Fixed-Size Array Syntax `T[N]` — supersedes RFC-0053's syntax only.
+- **RFC-0084** — Fixed-Size Array Syntax — reaffirms RFC-0053's `[T; N]`/`[expr; N]`
+  (reverted 2026-07-10 from an earlier `T[N]` proposal; never implemented either way).
 
 ## Linear closures / concurrency
 

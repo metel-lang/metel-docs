@@ -66,10 +66,10 @@ comptime let BUFFER_SIZE: i64 = MAX_CONNECTIONS * 64;
 
 Motivating cases RFC-0055 identified and this RFC inherits: derived constants (a
 buffer size computed from a protocol limit, rather than duplicated or computed at
-runtime), and compile-time lookup tables (`comptime let SIN_TABLE: f64[256] = ...`) —
+runtime), and compile-time lookup tables (`comptime let SIN_TABLE: [f64; 256] = ...`) —
 zero runtime cost, since the value is fully computed before any generated code runs.
-Also the natural source of `N` in fixed-size array types (`T[N]`, RFC-0053/RFC-0084):
-`comptime let CHUNK: i64 = 64; let buf: u8[CHUNK] = [0; CHUNK];`.
+Also the natural source of `N` in fixed-size array types (`[T; N]`, RFC-0053/RFC-0084):
+`comptime let CHUNK: i64 = 64; let buf: [u8; CHUNK] = [0; CHUNK];`.
 
 **`comptime fun`.** A function evaluable at compile time. The annotation means "the
 compiler *can* evaluate this," not "this may only be called at compile time" — an
@@ -358,7 +358,7 @@ Minimum action before v0.5: reserve `comptime` as a keyword.
 - RFC-0055 (Comptime, superseded) — original design sketch; §0's execution model
   (`comptime let`/`fun`/`if`) and Open Questions 6-8 are inherited from it, reconciled
   2026-07-09 after `INDEX.md` surfaced the overlap
-- RFC-0053 (Fixed-Size Array Type) / RFC-0084 (Fixed-Size Array Syntax) — `T[N]`'s `N`
+- RFC-0053 (Fixed-Size Array Type) / RFC-0084 (Fixed-Size Array Syntax) — `[T; N]`'s `N`
   is the concrete motivating case for `comptime let` (§0)
 - Prior art: Zig `comptime`, `@typeInfo`, `comptime T: type`
 

@@ -1,102 +1,89 @@
 ---
 id: rfc-0084
-title: "Fixed-Size Array Syntax — T[N]"
+title: "Fixed-Size Array Syntax — Retaining [T; N]"
 date: '2026-07-01'
+updated: '2026-07-10'
 ---
 
-> **Status — accepted.** Supersedes the type syntax introduced in RFC-0053 (Fixed-Size
-> Array Type). Depends on RFC-0053 for the semantics of fixed-size arrays; this RFC
-> changes only the surface syntax. The replacement syntax must be implemented and the
-> public spec updated before RFC-0053 is considered fully superseded.
+> **Status — accepted. Rewritten 2026-07-10, reversing this RFC's original 2026-07-01
+> conclusion.** The original text replaced RFC-0053's `[T; N]` with postfix `T[N]` and
+> removed the `[expr; N]` repeat-construction expression. On reconsideration, both
+> changes are reverted: the type syntax stays `[T; N]` (Rust-derived, as RFC-0053
+> specified it), and `[expr; N]` is kept. Depends on RFC-0053 for semantics, unchanged
+> throughout.
+>
+> Two things make this a clean reversal rather than a contested one:
+>
+> 1. **The collision that motivated removing `[expr; N]` no longer exists.** §2.3 of the
+>    original text removed repeat construction because it collided with "the region
+>    bracket channel," citing `@[r] expr` (RFC-0063 as it stood on 2026-07-01). RFC-0063
+>    was itself rewritten 2026-07-05 — four days later — from that bracket-based region
+>    syntax to the current tag-based `@a T` / `@a expr` (see
+>    `internal/rfcs/1-under-review/rfc-0063-allocator-handles.md`), which uses no
+>    brackets at all. The specific ambiguity this RFC gave up `[expr; N]` to avoid
+>    evaporated independently, four days after this RFC cited it.
+> 2. **Reverting costs nothing.** RFC-0084 was accepted but never implemented or applied
+>    — `public/reference/spec/types.md`, `expressions.md`, `runtime.md`, the changelog,
+>    and the getting-started tutorials all still use `[T; N]` today, exactly as RFC-0053
+>    left them. There is no migration in either direction; this RFC now simply stops
+>    proposing one.
 
 ## Summary
 
-RFC-0053 introduced the fixed-size array type with Rust-derived syntax `[T; N]`. This
-syntax conflicts with Metel's existing array convention: dynamic arrays use the postfix
-form `T[]`, so `T` followed by `[]` means "array of T." Fixed-size arrays should
-follow the same postfix convention. This RFC replaces `[T; N]` with `T[N]`.
+RFC-0053 introduced the fixed-size array type with Rust-derived syntax `[T; N]` and the
+repeat-construction expression `[expr; N]`. This RFC's original text (2026-07-01)
+proposed replacing `[T; N]` with the postfix form `T[N]`, for consistency with the
+dynamic-array convention `T[]`, and removed `[expr; N]` as colliding with region-handle
+bracket syntax. **This rewrite keeps `[T; N]` and `[expr; N]` exactly as RFC-0053
+specified them.** Nothing about fixed-size arrays changes as a result of this RFC.
 
 ---
 
-## Motivation
+## Motivation for the reversal
 
-The two array type syntaxes in the current language are structurally inconsistent:
+The postfix-consistency argument for `T[N]` was real and is not retracted here: `T[]`
+(dynamic array) and `[T; N]` (fixed-size array) do use two different bracket
+conventions for what is structurally the same construct with an added size constraint.
+That inconsistency still exists in the language as specified. It is outweighed here by:
 
-| Type | Syntax | Convention |
-|---|---|---|
-| Dynamic array | `T[]` | Postfix — the element type comes first |
-| Fixed-size array | `[T; N]` | Prefix bracket — the element type is inside |
-
-A reader who sees `i64[]` and `[i64; 3]` in the same codebase must remember two
-unrelated syntactic conventions for what is fundamentally the same construct with an
-additional size constraint.
-
-`[T; N]` also introduces two independent sources of visual ambiguity:
-
-1. It resembles an array literal expression: `[1, 2, 3]` creates a `T[]`; `[T; N]`
-   looks like it might create a fixed-size literal, not name a type.
-2. The repeat construction expression `[expr; N]` (also from RFC-0053) uses the same
-   bracket-semicolon form, making the distinction between the type and the expression
-   form rely entirely on what is inside the brackets.
-
-`T[N]` resolves both problems. It extends `T[]` uniformly: `T[]` is "an array of T
-with unspecified length"; `T[N]` is "an array of T with length N." The size is a
-postfix annotation, not a wrapper.
+- **Rust familiarity.** `[T; N]` and `[expr; N]` are literally Rust's syntax for this
+  feature — no relearning for the population of users this project is most directly
+  positioned to draw from. Consistency with `T[]` is a real but purely internal
+  aesthetic; consistency with a syntax convention users already know is worth more.
+- **Zero cost to reverting now, real cost to proceeding.** Nothing in the public spec,
+  the changelog, or the tutorials was ever updated to `T[N]` — RFC-0084 sat accepted but
+  unimplemented since 2026-07-01. Reverting is free. Proceeding would require rewriting
+  all of the above, plus every internal RFC example already written against `[T; N]`
+  (RFC-0061, RFC-0092, and others), for a purely cosmetic gain.
+- **The removal of `[expr; N]` is no longer motivated at all.** Independently of the
+  `T[N]` question, §2.3's collision with the region bracket channel stopped being true
+  once RFC-0063 moved to `@a`/`@a expr`. Keeping `[expr; N]` removed today would be
+  paying a real ergonomic cost (users write explicit loops to build a repeated-element
+  array) for a conflict that no longer exists.
 
 ---
 
-## 1. New Type Syntax
-
-### 1.1 Replacement
-
-The fixed-size array type is now written with the size inside the postfix brackets:
+## 1. Type Syntax — `[T; N]`, unchanged from RFC-0053
 
 ```
-T[N]
+[T; N]
 ```
 
-where `T` is any type and `N` is a compile-time integer constant (non-negative integer
-literal or, when RFC-0055 is accepted, a comptime expression).
+`T` is any type; `N` is a compile-time integer constant (a non-negative integer literal,
+or, once RFC-0092's comptime core is accepted, a `comptime`-evaluable expression). Two
+fixed-size array types are equal only when both element type and size match: `[i64; 3]`
+and `[i64; 4]` are distinct types. `T[]` (dynamic array) is unrelated and unchanged.
 
-Old and new forms side-by-side:
+### 1.1 Nested arrays
 
-| Old | New |
-|---|---|
-| `[i64; 3]` | `i64[3]` |
-| `[f64; 0]` | `f64[0]` |
-| `[[f64; 4]; 4]` | `f64[4][4]` |
-| `[String; 8]` | `String[8]` |
-
-`T[]` (dynamic array) is unchanged.
-
-### 1.2 Grammar
-
-Old rule:
-
-```
-Type ::= … | "[" Type ";" INT "]"
-```
-
-New rule — the two array forms are now both postfix variants of the same grammar
-production:
-
-```
-Type ::= TypeBase ArraySuffix*
-ArraySuffix ::= "[" "]"          // dynamic array: T[]
-              | "[" INT "]"      // fixed-size array: T[N]
-```
-
-This grammar also naturally expresses nested fixed arrays: `f64[4][4]` parses as
-`(f64[4])[4]` — a fixed-size array of 4 elements, each a fixed-size array of 4
-`f64` values.
-
-### 1.3 Nested arrays
-
-`f64[4][4]` is the matrix type. The outer dimension is written last, matching the
-postfix left-to-right order:
+`[[f64; 4]; 4]` is the matrix type: a fixed-size array of 4 elements, each itself a
+fixed-size array of 4 `f64` values. The outer dimension is written outermost (leftmost),
+matching ordinary Rust-style nesting — this is the opposite reading order from the
+postfix `f64[4][4]` this RFC's original text proposed, which wrote the outer dimension
+last.
 
 ```metel
-let matrix: f64[4][4] = [
+let matrix: [[f64; 4]; 4] = [
     [0.0, 0.0, 0.0, 0.0],
     [0.0, 0.0, 0.0, 0.0],
     [0.0, 0.0, 0.0, 0.0],
@@ -104,89 +91,88 @@ let matrix: f64[4][4] = [
 ];
 ```
 
-This is equivalent to the old `[[f64; 4]; 4]`. The reading is: "`f64`, in a
-fixed-size array of 4, in a fixed-size array of 4."
-
 ---
 
-## 2. Unchanged
+## 2. Expression Syntax — `[expr; N]`, kept
 
-### 2.1 Semantics
+Repeat construction evaluates `expr` once and clones the result `N` times:
 
-All semantics from RFC-0053 are unchanged: two-way distinct types keyed on both
-element type and size; coercion from `T[N]` to `T[]`; no reverse coercion; `T[0]`
-is valid; indexing and `for-in` work identically to `T[]`.
-
-### 2.2 Literal construction
-
-Array literals are typed by context and are unchanged:
-
-```metel
-let ones: i64[3] = [1, 2, 3];   // literal [1, 2, 3] typed as i64[3]
-let dyn: i64[] = [1, 2, 3];     // same literal typed as i64[]
+```
+[expr; N]
 ```
 
-### 2.3 Repeat construction — removed
+If `expr` has side effects, it is still evaluated exactly once — matching Rust's
+semantics and avoiding a divergence between `[f(); 3]` and `[f(), f(), f()]`. To
+evaluate an expression `N` times independently, use a loop.
 
-The repeat construction expression `[expr; N]` is **removed**. It uses the same
-bracket form as the region bracket channel (RFC-0063), which takes priority. No
-replacement syntax is specified at this stage; fixed-size arrays are constructed via
-explicit literals or loops.
-
-### 2.4 Pattern matching
-
-Array patterns are unchanged:
+Literal construction (`[e1, e2, e3]`) and repeat construction (`[expr; N]`) are
+distinguished the same way Rust distinguishes them: by what follows the first element —
+a comma starts a literal, a semicolon starts a repeat. This RFC's original text treated
+that distinction as insufficiently robust once region bracket syntax entered the
+picture; with that syntax gone (see status note above), the distinction is unambiguous
+again.
 
 ```metel
-fun sum(xs: i64[3]) -> i64 {
-    match xs {
-        [a, b, c] => a + b + c,
-    }
-}
+let zeros: [i64; 5] = [0; 5];       // repeat construction
+let ones: [i64; 3] = [1, 1, 1];     // literal construction
 ```
 
-The pattern `[a, b, c]` matches a `T[3]`; an incorrect count is a type error.
+---
 
-### 2.5 Coercion
+## 3. Unchanged from RFC-0053
 
-`T[N]` coerces to `T[]` implicitly. The coercion rule from RFC-0053 is unchanged; only
-the type name in the source changes.
+Everything else RFC-0053 specified is unaffected by this RFC, in either direction:
+
+- **Coercion.** `[T; N]` coerces implicitly to `T[]`; the reverse is a type error.
+- **Struct fields.** `[T; N]` is a valid field type.
+- **Pattern matching.** `[a, b, c]` matches a `[T; 3]` exactly; a count mismatch is a
+  type error.
+
+  ```metel
+  fun sum(xs: [i64; 3]) -> i64 {
+      match xs {
+          [a, b, c] => a + b + c,
+      }
+  }
+  ```
+- **Generics limitation.** Without const generics, `N` cannot appear as a type
+  parameter; `fun reverse<T>(arr: [T; N]) -> [T; N]` remains unwritable until a const
+  generics RFC exists.
+- **Runtime representation.** `[T; N]` uses the same `Value::Array` representation as
+  `T[]`; the size constraint is enforced statically only.
 
 ---
 
-## 3. Migration
+## 4. Migration
 
-Two breaking changes:
-
-1. **`[T; N]` → `T[N]` in type position.** Mechanical replacement.
-2. **`[expr; N]` repeat construction is removed.** Call sites must be rewritten
-   as explicit array literals or loops.
-
-The public spec (types.md, grammar.md, expressions.md, runtime.md) and all internal
-RFC examples using `[T; N]` or `[expr; N]` must be updated as part of implementing
-this RFC.
+None. This RFC reverts to what RFC-0053 already specifies and what
+`public/reference/spec/`, the changelog, and the tutorials already show. No spec text,
+example, or (per the roadmap) interpreter code needs to change as a result of this RFC.
 
 ---
 
-## 4. Alternatives Considered
+## 5. Alternatives Considered
 
-### Keep `[T; N]`
+### `T[N]` (postfix, this RFC's own original 2026-07-01 proposal)
 
-Retaining the existing syntax avoids a breaking change but leaves a permanent
-inconsistency in the type system. Every future occurrence of fixed-size arrays in
-specs, RFCs, and user code requires readers to hold two conventions simultaneously.
+Real consistency argument with `T[]` (see "Motivation for the reversal" above), and
+resolves the literal-vs-repeat-construction ambiguity by construction (the size sits
+outside a distinct bracket pair from the literal). Rejected on reconsideration: the
+ambiguity it resolves no longer exists once `[expr; N]` doesn't collide with anything,
+and it trades Rust-familiar syntax for internal consistency at a real (if one-time)
+migration cost across specs and RFC examples that was never actually paid.
 
 ### `Array<T, N>` (generic struct)
 
-A fully generic notation avoids the bracket syntax entirely. It is self-evidently
-readable but requires const generics (not yet specified) and breaks the visual
-uniformity with `T[]`. Deferred; if const generics land, `Array<T, N>` could be an
-alias.
+Avoids bracket syntax entirely; self-evidently readable but requires const generics
+(not yet specified). Deferred, as in the original text; if const generics land,
+`Array<T, N>` could exist as an alias alongside `[T; N]`, not instead of it.
 
 ### `[N]T` (Go-style prefix)
 
-`[N]T` places the size before the type. It differs from `T[]` (size after), making it
-inconsistent in the opposite direction. Rejected.
+Places the size before the type. Rejected, as in the original text — it does not
+resolve anything `[T; N]` doesn't already resolve, and is less familiar than either
+`[T; N]` or `T[N]` to this project's likely audience.
 
 ---
 
@@ -198,9 +184,12 @@ None.
 
 ## References
 
-- RFC-0053 (Fixed-Size Array Type) — semantics specification this RFC replaces the
-  syntax of; moves to superseded status when this RFC is implemented.
-- RFC-0055 (Comptime, draft) — will extend valid `N` expressions beyond integer
-  literals.
+- RFC-0053 (Fixed-Size Array Type, implemented) — this RFC reaffirms its syntax in
+  full rather than replacing any part of it.
+- RFC-0063 (Allocator Handles) — the bracket-syntax collision this RFC's original text
+  cited to justify removing `[expr; N]` no longer exists; RFC-0063 moved from
+  bracket-based region syntax to tag-based `@a`/`@a expr` on 2026-07-05.
+- RFC-0092 (Comptime Core) — will extend valid `N` expressions beyond integer literals;
+  its examples use `[T; N]` per this RFC.
 - RFC-0061 (Structural Aspect Bounds) — references fixed-size arrays in §1 (structural
-  type constructors); the `T[N]` syntax applies there.
+  type constructors); no syntax-specific text there requires updating.
