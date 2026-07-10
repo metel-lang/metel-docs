@@ -266,8 +266,10 @@ convention already established in RFC-0063.
   `Result<@a T, !>` collapse at allocation sites.
 - RFC-0071 (Ownership and Move Semantics) — move semantics; `!` values are never
   moved (they cannot be constructed).
-- RFC-0079 (Perhaps and Result) — formal definitions of `Perhaps<T>` and
-  `Result<T, E>`; methods including `.yolo()`; depends on this RFC for
-  `Result<T, !>` semantics.
+- RFC-0079 (Perhaps and Result, refused 2026-07-10 — most of its content was already
+  implemented/spec'd by the time it was written; real remaining gaps tracked at
+  https://app.clickup.com/t/86cap1wzb) — `Result<T, !>`'s exhaustiveness and the
+  inhabited-singleton collapse this RFC specifies (§3.3-§4.1) are what actually govern
+  `Result<T, !>`'s relationship to `!`; unaffected by RFC-0079's refusal.
 - Public spec `types.md §Never Type` — existing description of `!` as the type
   of diverging expressions; this RFC formalises that description.

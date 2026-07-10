@@ -2,6 +2,8 @@
 id: rfc-0079
 title: "Perhaps<T> and Result<T, E>"
 date: '2026-07-01'
+status: refused
+updated: '2026-07-10'
 ---
 
 > **Status — accepted.** Depends on RFC-0071 (Ownership and Move Semantics)
@@ -10,6 +12,8 @@ date: '2026-07-01'
 > favour of the method form: `.yolo()` is a method, not a keyword. Specifies that
 > `.yolo()` must be implemented as a proper method dispatch rather than a compiler
 > or interpreter special case.
+
+> **Status — refused (2026-07-10).** Superseded by reality, not by another RFC: Perhaps<T>/Result<T,E> and most specified methods (is_some/is_none/is_ok/is_err/map/unwrap_or/unwrap_or_else) are already implemented and spec'd (runtime.md), plus .and_then which this RFC never mentioned. This RFC's own ?-operator section is additionally wrong, not just redundant: it specifies exact-error-type-match only, deferring From-based coercion as unresolved, while functions.md already documents full From-based coercion, live since v0.4.0 -- predating this RFC. Real remaining gaps (yolo() as a method-dispatch special case, missing .ok_or/.map_err/.ok conversion methods, undocumented ?-on-Perhaps) tracked separately: https://app.clickup.com/t/86cap1wzb
 
 ## Summary
 

@@ -13,14 +13,15 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**94 RFCs total.** 27 draft, 1 under review, 17 accepted, 3 integrated (new stage — see
-`PROCESS.md`) (48 "live" — need active tracking), 25 implemented, 9 superseded, 12
-refused (46 "settled" — reference only). (RFC-0055 moved draft → superseded 2026-07-09,
+**94 RFCs total.** 27 draft, 1 under review, 16 accepted, 3 integrated (new stage — see
+`PROCESS.md`) (47 "live" — need active tracking), 25 implemented, 9 superseded, 13
+refused (47 "settled" — reference only). (RFC-0055 moved draft → superseded 2026-07-09,
 reconciled into RFC-0092/0093/0095 — see below. **2026-07-10:** the allocator/lifetime
 cluster — RFC-0063/0065/0066/0067/0068/0073/0077 — swept from under-review to accepted;
 only RFC-0080 remains under review. Same day: RFC-0067a/0078/0083 became the first RFCs
 to reach `3-integrated`, merged into `public/reference/spec/`; RFC-0067 renamed to
-"Lifetime Anchors"; RFC-0084 refused, having reverted to a no-op.)
+"Lifetime Anchors"; RFC-0084 and RFC-0079 refused, both redundant with — or, for
+RFC-0079's `?`-operator text, factually superseded by — already-shipped behavior.)
 
 ---
 
@@ -129,7 +130,6 @@ Nothing open here; these are the load-bearing accepted RFCs everything else cite
   exhaustiveness, inhabited-singleton coercion, `-> !` returns. Integrated into
   `public/reference/spec/types.md`; §4.2's stale pre-split allocator syntax fixed first.
   Not yet implemented.
-- **RFC-0079** — `Perhaps<T>` and `Result<T, E>`.
 - **RFC-0081** — Negative Impls — `impl !Aspect for Type`.
 - **RFC-0082** — Associated Types.
 - **RFC-0083** *(integrated 2026-07-10)* — Public Value Exports (`pub let`). Integrated
@@ -154,9 +154,11 @@ Nothing open here; these are the load-bearing accepted RFCs everything else cite
 - **RFC-0004** — `main()` return type — should it return `Result`?
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
 - **RFC-0014** — Panic Recovery.
-- **RFC-0015** — Unwrap Syntax — `.yolo()` vs. a keyword (resolved in practice by
-  accepted RFC-0079, which specifies `.yolo()` as a method; this RFC may be
-  supersedable).
+- **RFC-0015** — Unwrap Syntax — `.yolo()` vs. a keyword (resolved in practice: `.yolo()`
+  is already implemented as a method, though as an interpreter special case rather than
+  real dispatch — RFC-0079, which formalized this, was refused 2026-07-10 as redundant
+  with already-shipped behavior; the dispatch fix is tracked at
+  https://app.clickup.com/t/86cap1wzb, not by this RFC).
 - **RFC-0017** — Language Edition System.
 - **RFC-0026** — Unsafe Blocks — deferred, depends on a stable memory-safety model
   (RFC-0028, refused — needs re-pointing at whatever supersedes it).
@@ -179,11 +181,15 @@ RFC-0009 (module system → RFC-0030), RFC-0012 (→ RFC-0092/0093/0094/0095), R
 which was then refused — RFC-0089 re-homes this), RFC-0029 (module system gaps),
 RFC-0055 (comptime → RFC-0092/0093/0095, reconciled 2026-07-09 — see above).
 
-**Refused (12):** RFC-0025, 0028, 0046-0048, 0051, 0056, 0069, 0084, 0085-0087 — mostly
-the earlier region/lifetime model iterations that didn't survive the 2026-07-05 split,
-plus RFC-0046 (linear closure capture, blocking RFC-0050's `move` half), plus RFC-0084
-(refused 2026-07-10 — reverted in place to reaffirm RFC-0053's `[T; N]`/`[expr; N]`
-exactly, with nothing left of its own to propose).
+**Refused (13):** RFC-0025, 0028, 0046-0048, 0051, 0056, 0069, 0079, 0084, 0085-0087 —
+mostly the earlier region/lifetime model iterations that didn't survive the 2026-07-05
+split, plus RFC-0046 (linear closure capture, blocking RFC-0050's `move` half), plus
+RFC-0084 (refused 2026-07-10 — reverted in place to reaffirm RFC-0053's
+`[T; N]`/`[expr; N]` exactly, with nothing left of its own to propose), plus RFC-0079
+(refused 2026-07-10 — most of `Perhaps<T>`/`Result<T, E>` was already implemented and
+spec'd by the time it was written, and its `?`-operator section was factually wrong
+relative to already-shipped `From`-based coercion; real remaining gaps tracked at
+https://app.clickup.com/t/86cap1wzb).
 
 ---
 

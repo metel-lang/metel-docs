@@ -52,9 +52,10 @@ here when they've earned it, not on a schedule.
 **2-accepted.** The design is settled: no more open questions block it, alternatives have
 been weighed and one chosen. This is where RFC lifecycle has stopped, historically, for
 anything not yet implemented — 14 RFCs sat here with no further gate before
-"implemented" when this stage was introduced (2026-07-09; 18 as of 2026-07-10, after the
-allocator/lifetime cluster's ratification sweep and RFC-0067a/0078/0083 moving on to
-`3-integrated`) — which is exactly the gap that let RFC-0063's history happen: a design can
+"implemented" when this stage was introduced (2026-07-09; 16 as of 2026-07-10, after the
+allocator/lifetime cluster's ratification sweep, RFC-0067a/0078/0083 moving on to
+`3-integrated`, and RFC-0079/0084 leaving by refusal instead) — which is exactly the gap
+that let RFC-0063's history happen: a design can
 be accepted on paper and still be wrong in ways nobody notices until it's checked against
 everything else that's also accepted, or in flight alongside it.
 
@@ -145,8 +146,10 @@ reference (fixed, extending RFC-0066 §3a's type-directed-binding pattern); RFC-
 motivating example turned out to be obsolete under the ratified allocator design and was
 rewritten; and a pre-existing, unrelated contradiction between `types.md` and
 `expressions.md` over `&mut`-on-field-paths (RFC-0045, already implemented, was reflected
-in one file but not the other) was caught and fixed along the way. 11 RFCs remain in the
-backlog: RFC-0008, 0036, 0037, 0060, 0061, 0071, 0072, 0079, 0081, 0082, 0084.
+in one file but not the other) was caught and fixed along the way. 9 RFCs remain in the
+backlog: RFC-0008, 0036, 0037, 0060, 0061, 0071, 0072, 0081, 0082. (RFC-0079 and RFC-0084
+left the backlog by refusal rather than integration, same day — both had reverted to
+proposing nothing beyond what already exists.)
 
 ## Working rules, adopted 2026-07-09
 
