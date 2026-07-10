@@ -52,9 +52,10 @@ here when they've earned it, not on a schedule.
 **2-accepted.** The design is settled: no more open questions block it, alternatives have
 been weighed and one chosen. This is where RFC lifecycle has stopped, historically, for
 anything not yet implemented — 14 RFCs sat here with no further gate before
-"implemented" when this stage was introduced (2026-07-09; 16 as of 2026-07-10, after the
-allocator/lifetime cluster's ratification sweep, RFC-0067a/0078/0083 moving on to
-`3-integrated`, and RFC-0079/0084 leaving by refusal instead) — which is exactly the gap
+"implemented" when this stage was introduced (2026-07-09; 13 as of 2026-07-10, after the
+allocator/lifetime cluster's ratification sweep, RFC-0067a/0072/0078/0081/0082/0083
+moving on to `3-integrated`, and RFC-0079/0084 leaving by refusal instead) — which is
+exactly the gap
 that let RFC-0063's history happen: a design can
 be accepted on paper and still be wrong in ways nobody notices until it's checked against
 everything else that's also accepted, or in flight alongside it.
@@ -146,10 +147,23 @@ reference (fixed, extending RFC-0066 §3a's type-directed-binding pattern); RFC-
 motivating example turned out to be obsolete under the ratified allocator design and was
 rewritten; and a pre-existing, unrelated contradiction between `types.md` and
 `expressions.md` over `&mut`-on-field-paths (RFC-0045, already implemented, was reflected
-in one file but not the other) was caught and fixed along the way. 9 RFCs remain in the
-backlog: RFC-0008, 0036, 0037, 0060, 0061, 0071, 0072, 0081, 0082. (RFC-0079 and RFC-0084
-left the backlog by refusal rather than integration, same day — both had reverted to
-proposing nothing beyond what already exists.)
+in one file but not the other) was caught and fixed along the way. 6 RFCs remain in the
+backlog: RFC-0008, 0036, 0037, 0060, 0061, 0071. (RFC-0079 and RFC-0084 left the backlog
+by refusal rather than integration, same day — both had reverted to proposing nothing
+beyond what already exists.)
+
+**Updated again, same day:** RFC-0072 (Negative Bounds), RFC-0081 (Negative Impls), and
+RFC-0082 (Associated Types) followed RFC-0067a/0078/0083 into `3-integrated` — merged
+into `public/reference/spec/declarations.md`. All three needed real fixes first, not
+just formalities: RFC-0072's own examples still used pre-split bracket-channel allocator
+syntax (`@[r] T`); RFC-0081 pointed to `#[derive(Send)]` and RFC-0012, both retired
+(now `@derive`/RFC-0093); RFC-0082 still named the allocator aspect `Region` and used
+`@[r] expr`, and its §7 amended RFC-0069's `SubRegion`, a concept that no longer exists
+anywhere in the ratified design — marked historical-only rather than integrated, not
+silently carried forward as if still current. A pre-existing gap from the *previous*
+integration pass was also caught here: `declarations.md`'s "Receiver Forms" section
+still described `*T`/`*mut T` pointers, missed when RFC-0067a's `&T`/`&mut T` rename
+touched `types.md` and `expressions.md` but not this file.
 
 ## Working rules, adopted 2026-07-09
 

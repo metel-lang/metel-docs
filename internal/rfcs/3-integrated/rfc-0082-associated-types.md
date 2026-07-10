@@ -2,14 +2,27 @@
 id: rfc-0082
 title: "Associated Types"
 date: '2026-07-01'
+status: integrated
+updated: '2026-07-10'
+impl_tracking: 'https://app.clickup.com/t/86cam5fmd'
+impl_status: not-started
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence). Formally
 > specifies associated types: `type X;` declarations in aspect blocks and `type X = Y;`
 > definitions in impl blocks. This syntax is assumed pre-existing across the accepted
-> region RFC cluster (RFC-0063, 0069, 0074, 0080) without formal specification. Also
-> amends RFC-0069 to replace its informal `type SubRegion<R> impl ...` notation with
-> normative struct syntax.
+> allocator RFC cluster (RFC-0063, RFC-0074, RFC-0080) without formal specification.
+> §7 amends RFC-0069's now-superseded `type SubRegion<R> impl ...` notation — kept as
+> historical record; see §7's own note.
+>
+> **Corrected 2026-07-10, while integrating into the spec.** The motivating example (§1,
+> §6) used the pre-split `Region` aspect name and `@[r] expr` bracket syntax — updated to
+> RFC-0063's ratified `Alloc` aspect and `@a expr` syntax. RFC-0069 was retracted as part
+> of the 2026-07-05 split (its `SubRegion` concept no longer exists — RFC-0073's own
+> status note confirms "SubRegion interaction removed"); §7 is kept for historical record
+> only, not as still-applicable content.
+
+> **Status — integrated (2026-07-10).** Integrated into public/reference/spec/declarations.md: associated types (type X;/type X = Y;, projection, equality-constrained bounds, object safety). RFC's stale Region/@[r] naming fixed and its RFC-0069 amendment (SubRegion, retracted) marked historical-only, not integrated.
 
 ## Summary
 
@@ -22,11 +35,11 @@ without making them generic type parameters on the aspect itself.
 The primary motivating examples already in accepted RFCs:
 
 ```metel
-aspect Region {
+aspect Alloc {
     type AllocationError;
 }
 
-impl Region for AutoRegion {
+impl Alloc for BumpAlloc {
     type AllocationError = !;
 }
 
@@ -193,14 +206,21 @@ basis for that rule.
 A vtable entry for `deref` cannot encode a type that differs per implementor — the
 vtable is fixed at compile time.
 
-`Region` is object-safe with respect to associated types: its allocation and
-deallocation methods do not surface `AllocationError` in their vtable signatures.
-The return type of the `@[r] expr` allocation expression is handled by the allocation
-expression rule (RFC-0063 §1.1), not by vtable dispatch.
+`Alloc` is object-safe with respect to associated types: its allocation methods do
+not surface `AllocationError` in their vtable signatures. The return type of the
+`@a expr` allocation expression is handled by the allocation expression rule
+(RFC-0063 §3), not by vtable dispatch.
 
 ---
 
-## 7. Amendment to RFC-0069 — SubRegion
+## 7. Amendment to RFC-0069 — SubRegion (historical — RFC-0069 retracted, not integrated)
+
+**This section no longer describes anything in the ratified design.** RFC-0069 was
+retracted as part of the 2026-07-05 allocator/lifetime split; `SubRegion` does not exist
+in RFC-0063/0065/0066/0067/0068/0073/0077, and RFC-0073's own status note confirms
+"SubRegion interaction removed." Kept below as historical record of what this RFC once
+amended, not as spec content — nothing here is integrated into
+`public/reference/spec/`.
 
 RFC-0069 §1 defines `SubRegion<R>` with a non-standard notation:
 
@@ -273,9 +293,10 @@ under the overlap rules. No current use case requires defaults.
 
 - RFC-0060 (Aspect Impl Coherence) — orphan rule and coherence rules apply to impl
   blocks that define associated types.
-- RFC-0063 (Region Handles) — primary consumer; `type AllocationError` in the `Region`
-  aspect; `AllocationError = !` for infallible impls.
-- RFC-0069 (Sub-Region Typing) — `SubRegion<R>` definition amended in §7.
+- RFC-0063 (Allocator Handles) — primary consumer; `type AllocationError` in the
+  `Alloc` aspect; `AllocationError = !` for infallible impls.
+- RFC-0069 (Sub-Region Typing, refused) — `SubRegion<R>` definition §7 amended;
+  retracted 2026-07-05, §7 kept as historical record only.
 - RFC-0074 (Shared Pointers) — `Deref` impl for `Rc<T>` and `Arc<T>`; associated type
   `Target = T`.
 - RFC-0080 (Stdlib Aspects) — `Deref` aspect definition; associated type `Target` in

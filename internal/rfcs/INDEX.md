@@ -13,7 +13,7 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**94 RFCs total.** 27 draft, 1 under review, 16 accepted, 3 integrated (new stage — see
+**94 RFCs total.** 27 draft, 1 under review, 13 accepted, 6 integrated (new stage — see
 `PROCESS.md`) (47 "live" — need active tracking), 25 implemented, 9 superseded, 13
 refused (47 "settled" — reference only). (RFC-0055 moved draft → superseded 2026-07-09,
 reconciled into RFC-0092/0093/0095 — see below. **2026-07-10:** the allocator/lifetime
@@ -21,7 +21,9 @@ cluster — RFC-0063/0065/0066/0067/0068/0073/0077 — swept from under-review t
 only RFC-0080 remains under review. Same day: RFC-0067a/0078/0083 became the first RFCs
 to reach `3-integrated`, merged into `public/reference/spec/`; RFC-0067 renamed to
 "Lifetime Anchors"; RFC-0084 and RFC-0079 refused, both redundant with — or, for
-RFC-0079's `?`-operator text, factually superseded by — already-shipped behavior.)
+RFC-0079's `?`-operator text, factually superseded by — already-shipped behavior.
+RFC-0072/0081/0082 followed into `3-integrated` the same day, each with its own stale
+pre-split/dangling-reference fixes first — see `PROCESS.md`'s backlog note.)
 
 ---
 
@@ -125,13 +127,20 @@ Nothing open here; these are the load-bearing accepted RFCs everything else cite
   Prerequisite for most of the above and below.
 - **RFC-0061** — Structural Aspect Bounds — `T[]`/tuples/function-type bounds.
 - **RFC-0071** — Ownership and Move Semantics — affine-by-default foundation.
-- **RFC-0072** — Negative Bounds — `T: !Aspect`.
+- **RFC-0072** *(integrated 2026-07-10)* — Negative Bounds — `T: !Aspect`. Integrated
+  into `public/reference/spec/declarations.md`; its own stale bracket-channel allocator
+  examples (`@[r] T`) fixed first. Not yet implemented.
 - **RFC-0078** *(integrated 2026-07-10)* — Bottom Type `!` — subtyping, coercion, match
   exhaustiveness, inhabited-singleton coercion, `-> !` returns. Integrated into
   `public/reference/spec/types.md`; §4.2's stale pre-split allocator syntax fixed first.
   Not yet implemented.
-- **RFC-0081** — Negative Impls — `impl !Aspect for Type`.
-- **RFC-0082** — Associated Types.
+- **RFC-0081** *(integrated 2026-07-10)* — Negative Impls — `impl !Aspect for Type`.
+  Integrated into `public/reference/spec/declarations.md`; dangling `#[derive]`/RFC-0012
+  reference fixed first (now `@derive`/RFC-0093). Not yet implemented.
+- **RFC-0082** *(integrated 2026-07-10)* — Associated Types. Integrated into
+  `public/reference/spec/declarations.md`; stale `Region`/`@[r]` naming corrected to
+  `Alloc`/`@a`, and §7 (amending retracted RFC-0069's `SubRegion`) marked historical-only
+  rather than integrated. Not yet implemented.
 - **RFC-0083** *(integrated 2026-07-10)* — Public Value Exports (`pub let`). Integrated
   into `public/reference/spec/modules.md`. Motivating example rewritten — the original
   `heap`/`local_heap` case is obsolete under the ratified allocator design (RFC-0063/0065

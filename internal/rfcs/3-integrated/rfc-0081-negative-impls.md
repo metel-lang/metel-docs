@@ -2,12 +2,18 @@
 id: rfc-0081
 title: "Negative Impls"
 date: '2026-07-01'
+status: integrated
+updated: '2026-07-10'
+impl_tracking: 'https://app.clickup.com/t/86cam5fm5'
+impl_status: not-started
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence) and
 > RFC-0072 (Negative Bounds). Introduces `impl !Aspect for Type` as the mechanism
 > for library authors to declare that a type definitively does not implement an
 > aspect, overriding any blanket impl that would otherwise grant it.
+
+> **Status — integrated (2026-07-10).** Integrated into public/reference/spec/declarations.md: impl !Aspect for Type negative impls. RFC's dangling #[derive]/RFC-0012 reference fixed first (now @derive/RFC-0093).
 
 ## Summary
 
@@ -144,9 +150,11 @@ independently; RFC-0081 is a separate acceptance.
    a negative impl would be unusual and its interaction with method resolution is
    unclear.
 
-2. **Negative impls and derived aspects (RFC-0012).** Whether `#[derive(Send)]` on
-   a type that has a negative impl in scope is a compile error or silently loses is
-   deferred to RFC-0012.
+2. **Negative impls and derived aspects.** Whether `@derive(Send)` on a type that has
+   a negative impl in scope is a compile error or silently loses is deferred to
+   RFC-0093 (Derive Registration). (Originally deferred to RFC-0012, which was split
+   into RFC-0092/0093/0094/0095 on 2026-07-09; this question belongs with derive
+   registration specifically.)
 
 ---
 

@@ -2,11 +2,22 @@
 id: rfc-0072
 title: "Negative Bounds"
 date: '2026-06-28'
+status: integrated
+updated: '2026-07-10'
+impl_tracking: 'https://app.clickup.com/t/86cam5fkt'
+impl_status: not-started
 ---
 
 > **Status — accepted.** Introduces `T: !Aspect` as a bound that is
-> satisfied when `T` does not implement `Aspect`. Required by RFC-0066 (Region Pointer
+> satisfied when `T` does not implement `Aspect`. Required by RFC-0066 (Allocated Value
 > Extraction) and RFC-0071 (Ownership and Move Semantics), both of which use `T: !Drop`.
+>
+> **Corrected 2026-07-10, while integrating into the spec.** §1 and §2.2's examples used
+> pre-split bracket-channel allocator syntax (`@[r] T`, `[r]` bracket parameters) —
+> updated to the ratified value-channel form (`@a T`, `(@a: A)`). The bound mechanism
+> itself is unaffected; only the allocator examples illustrating it were stale.
+
+> **Status — integrated (2026-07-10).** Integrated into public/reference/spec/declarations.md: T: !Aspect negative bounds. RFC's own stale @[r] bracket-channel syntax fixed first.
 
 ## Summary
 
@@ -52,13 +63,10 @@ positive bound is accepted:
 
 ```metel
 // generic parameter bound
-fun move_out<T: !Drop>(ptr: @[r] T) -> T { … }
+fun move_out<T: !Drop, A: Alloc>(@a: A, ptr: @a T) -> T { … }
 
 // multiple bounds — positive and negative may mix
-fun transfer<T: Clone + !Drop>(src: @[r] T) -> T { … }
-
-// bracket channel bounds
-fun extract<T: !Drop>[r](ptr: @[r] T) -> T { … }
+fun transfer<T: Clone + !Drop, A: Alloc>(@a: A, src: @a T) -> T { … }
 
 // struct field bounds (when conditional impls are in play, RFC-0036)
 struct Arena<T: !Drop> { … }
@@ -96,20 +104,20 @@ A function that requires `T: !Drop` must declare it explicitly:
 
 ```metel
 // correct — T: !Drop is a stated requirement
-fun extract<T: !Drop>[r](ptr: @[r] T) -> T { … }
+fun extract<T: !Drop, A: Alloc>(@a: A, ptr: @a T) -> T { … }
 
 // incorrect — T may or may not implement Drop; this is a type error if the
 // body requires T: !Drop
-fun extract<T>[r](ptr: @[r] T) -> T { … }
+fun extract<T, A: Alloc>(@a: A, ptr: @a T) -> T { … }
 ```
 
 At the call site, the compiler verifies that the instantiated type satisfies the bound:
 
 ```metel
-let ptr: @[r] Point = @[r] Point { x: 1.0, y: 2.0 };
+let ptr: @a Point = @a Point { x: 1.0, y: 2.0 };
 extract(ptr);    // Point: !Drop ✓
 
-let ptr: @[r] Handle = @[r] Handle { fd: open("f") };
+let ptr: @a Handle = @a Handle { fd: open("f") };
 extract(ptr);    // compile error: Handle implements Drop; Handle: !Drop not satisfied
 ```
 
@@ -212,7 +220,7 @@ None.
 - RFC-0034 (Struct-Enum-Aspect Bounds) — the bound syntax this RFC extends.
 - RFC-0060 (Aspect Impl Coherence) — coherence rules that govern which impls are reachable
   and therefore relevant to negative bound checking.
-- RFC-0066 (Region Pointer Extraction) — primary consumer of `T: !Drop`; §2.2 specifies
+- RFC-0066 (Allocated Value Extraction) — primary consumer of `T: !Drop`; §2.2 specifies
   the move-out constraint that motivates this RFC.
 - RFC-0071 (Ownership and Move Semantics) — establishes `Copy`/`Drop` mutual exclusion;
   §3–4 ground the `Copy implies !Drop` implication.

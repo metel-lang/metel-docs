@@ -239,9 +239,10 @@ impl Counter {
 }
 ```
 
-Calls requiring `&mut self` need a mutable addressable receiver or a `*mut T`
-pointer. Calls requiring `&self` may use an addressable receiver or a `*T` / `*mut T`
-pointer.
+Calls requiring `&mut self` need a mutable addressable receiver or a `&mut T`
+reference. Calls requiring `&self` may use an addressable receiver or a `&T` / `&mut T`
+reference (RFC-0067a — missed when that RFC integrated `*T`/`*mut T` → `&T`/`&mut T`
+elsewhere; caught while integrating this batch).
 
 ```metel
 struct Counter {
@@ -396,6 +397,82 @@ fun main() {
 }
 ```
 
+### Associated Types
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0082-associated-types.md`.
+> This syntax is already assumed by the aspects below and by stdlib types like `Deref`;
+> this section is the formal specification, not yet checked by the typechecker, until
+> that RFC's tracking task closes.
+
+An aspect may declare an **associated type** — a type-level output that each
+implementing type must specify — with `type Name;`. An impl block defines it with
+`type Name = ConcreteType;`:
+
+```metel
+aspect Deref {
+    type Target;
+    fun deref(self: &Self) -> &Target;
+}
+
+struct Boxed { value: i64 }
+
+impl Deref for Boxed {
+    type Target = i64;
+    fun deref(self: &Boxed) -> &i64 { &self.value }
+}
+```
+
+Inside the aspect block, the bare name (`Target`) is sugar for `Self::Target`. A bound
+may be declared on the associated type, constraining every impl:
+
+```metel
+aspect Collection {
+    type Item: Display;
+}
+```
+
+**Projection.** In a generic context where `T: Aspect`, the associated type is written
+`T::AssocType`:
+
+```metel
+fun deref_display<T: Deref>(x: &T) where T::Target: Display {
+    println(x.deref());
+}
+```
+
+`T::AssocType` is only valid when `T: Aspect` is in scope — writing it without that
+bound is a compile error.
+
+**Equality constraints in bounds.** `Aspect<AssocType = ConcreteType>` asserts both that
+`T` implements `Aspect` and that its associated type equals a known type, pinning
+`T::AssocType` to `ConcreteType` at every use:
+
+```metel
+fun deref_to_i64<T: Deref<Target = i64>>(x: &T) -> &i64 {
+    x.deref()
+}
+```
+
+**Associated type vs. a type parameter on the aspect.** Use an associated type when the
+implementing type determines exactly one output (`Deref::Target` — a type has one deref
+target). Use a type parameter on the aspect itself when a type may implement it for
+multiple type arguments simultaneously (e.g. `From<i64>` and `From<String>` on the same
+type). Writing `impl Deref<i64> for X {}` and `impl Deref<String> for X {}` side by side
+would be the wrong model for `Deref` specifically — one type has one dereference target,
+not several.
+
+**Object safety.** An aspect with associated types is object-safe only if no method
+signature references the associated type directly (see Static Dispatch Only, below, and
+`dyn Aspect`, deferred to a future release). `Deref` above is *not* object-safe — `deref`
+returns `&Target`, which varies per implementor, and a vtable entry cannot encode a
+type that differs per implementation.
+
+> **Not yet decided:** disambiguation when a type implements two aspects that both
+> declare `type Target` (the bare projection `T::Target` is ambiguous; a fully-qualified
+> form is deferred to the type inference RFC), and whether a negative bound on a
+> projection (`where T::Target: !Copy`) is meaningful — neither this RFC nor RFC-0072
+> addresses bounds on projections specifically, only on bare type parameters.
+
 ### Default Methods
 
 > *Since v0.7.0.*
@@ -507,6 +584,73 @@ Each `impl Aspect` occurrence in a signature is a **fresh, independent** type va
 > - `impl Aspect` in struct fields (`dyn Aspect`) — RFC-0038
 > - `aspect` alias syntax (`aspect Sortable = Comparable + Display + Clone`) — RFC-0039
 > - Conditional impls (`impl Aspect for S<T> where T: OtherAspect`) — RFC-0036
+
+---
+
+### Negative Bounds
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0072-negative-bounds.md`.
+
+`T: !Aspect` is the complement of `T: Aspect`: it asserts that `T` does **not**
+implement the named aspect. `!` binds tightly to the aspect name — `T: !Drop + Clone`
+reads as `T: (!Drop) + Clone` — and positive and negative bounds may mix freely, inline
+or in a `where` clause, on the same terms as ordinary bounds above.
+
+```metel
+fun move_out<T: !Drop, A: Alloc>(@a: A, ptr: @a T) -> T { ... }
+```
+
+**Satisfaction.** For a concrete type, `T: !Aspect` is satisfied exactly when no
+implementation of `Aspect` for `T` is reachable — the same lookup used for a positive
+bound, inverted. In a generic context, absence of a bound does not imply satisfaction:
+a function requiring `T: !Drop` must declare it, since the type parameter could still be
+instantiated with a `Drop`-implementing type otherwise.
+
+**`Copy` implies `!Drop`.** Since `Copy` and `Drop` are mutually exclusive (see
+Ownership, not yet integrated — RFC-0071), any type satisfying `T: Copy` automatically
+satisfies `T: !Drop`, derived without an explicit declaration.
+
+**Compound types.** `T: !Drop` is a claim about `T` itself, not its fields — a struct
+with `Drop`-implementing fields but no `impl Drop` of its own satisfies `!Drop`; its
+fields still drop normally through the ordinary per-field chain.
+
+> Negative bounds do not by themselves let a type opt out of an aspect an existing
+> blanket impl would otherwise grant — that's Negative Impls, directly below. Negative
+> bounds are a use-site constraint; negative impls are a definition-site declaration
+> that affects what the negative-bound check finds. Coherence rules governing which
+> impls are reachable (RFC-0060) are accepted but not yet integrated; until then, this
+> section describes the ratified rule, checked against whatever impl-lookup behavior
+> the interpreter currently has.
+
+### Negative Impls
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0081-negative-impls.md`.
+
+A library author declares that a type **definitively** does not implement an aspect
+with `impl !Aspect for Type {}` — body always empty, since a negative impl is a
+declaration of non-implementation, not a definition of behavior:
+
+```metel
+impl<T, brand 'b> !Send for Rc<T, 'b> {}
+impl<T, brand 'b> !Sync for Rc<T, 'b> {}
+```
+
+**Why this needs its own mechanism, not just the absence of a positive impl.** A
+blanket impl can inadvertently grant an aspect to a type that must not have it — `Rc<T>`
+would satisfy an auto-derived `Send` blanket (its field is an ordinary, `Send`-by-value
+integer) even though sharing it across fibers is unsound. A negative impl overrides any
+blanket that would otherwise apply: `Rc<T>: !Send` holds for all `T`, regardless of what
+a blanket impl elsewhere says.
+
+**Finality.** No positive impl may coexist with a negative impl for the same type and
+aspect — a concrete `impl Aspect for Type` alongside `impl !Aspect for Type` is a
+coherence error. A negative impl overriding a *blanket* positive impl is the intended,
+allowed case; a negative impl does not propagate to subtypes or supertypes (`impl !Send
+for Rc<T>` says nothing about `Arc<T>`).
+
+**Orphan rules apply the same way as positive impls** (RFC-0060, accepted, not yet
+integrated) — a negative impl is permitted only when the aspect or the type is local to
+the current module or stdlib.
 
 ---
 
