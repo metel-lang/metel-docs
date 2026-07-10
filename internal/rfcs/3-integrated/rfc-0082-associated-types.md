@@ -27,9 +27,15 @@ impl_status: not-started
 > **Amended 2026-07-10, later the same day.** §10 Open Question 1 (disambiguation for
 > identically-named associated types) resolved rather than left deferred to a
 > nonexistent "type inference RFC" — type inference is already specified
-> (`public/reference/spec/types.md` §Type Inference) and implemented (RFC-0031),
-> so there was no future RFC for this to actually wait on. New §3a: `<T as
-> Aspect>::AssocType`, required only when ambiguous, always legal otherwise.
+> (`public/reference/spec/types.md` §Type Inference) and implemented (RFC-0031), so
+> there was no future RFC for this to actually wait on. First pass proposed `<T as
+> Aspect>::AssocType`, borrowed from Rust without checking it against Metel's own
+> grammar (`as` already has two other uses — import renaming, cast).
+>
+> **Corrected 2026-07-10, still the same day.** No new syntax needed at all: the bare
+> ambiguous projection stays a hard error (matching the existing method-name-collision
+> precedent, `T0013`), and §4's existing equality constraint with a fresh type
+> parameter already covers every real case. See §3a for the full reasoning.
 
 ## Summary
 
@@ -151,7 +157,7 @@ type for the specific `T` at each instantiation. Projections may appear in:
 `T::AssocType` is only valid when `T: Aspect` is in scope. Writing `T::Target` without
 `T: Deref` in scope is a compile error.
 
-### 3a. Disambiguation — `<T as Aspect>::AssocType`
+### 3a. Disambiguation — no new syntax; use §4's equality constraint with a fresh variable
 
 When `T` is bound to two or more aspects that each declare an associated type of the
 same name, the bare projection `T::Target` is ambiguous — the compiler cannot tell
@@ -165,32 +171,43 @@ fun f<T: Deref + Convert>(x: &T) -> T::Target { ... }
 // error: T::Target is ambiguous — both Deref and Convert declare `Target`
 ```
 
-The fully qualified form `<T as Aspect>::AssocType` names which aspect's associated
-type is meant:
+**This RFC's first pass (2026-07-10, since corrected) proposed a new bracketed
+qualifier, `<T as Aspect>::AssocType`, borrowed directly from Rust's UFCS syntax
+without checking it against Metel's own grammar first.** It doesn't actually work as
+proposed: `as` is already a reserved keyword with two existing uses (import renaming,
+`ImportItem → IDENTIFIER ("as" IDENTIFIER)?`; the cast operator, `CastExpression →
+AscribeExpression ("as" Type)*`) — a third, type-position use was never specified in
+`grammar.md`, and more importantly, it wasn't needed in the first place.
+
+**The bare projection stays ambiguous — this is a hard error, matching the existing
+method-name-collision precedent (Static Dispatch Only, `T0013`) exactly**, not a case
+needing its own disambiguation syntax. The escape hatch already exists, unmodified,
+in §4: bind the associated type to a **fresh type parameter** instead of a concrete
+type, via the equality constraint:
 
 ```metel
-fun f<T: Deref + Convert>(x: &T) -> <T as Deref>::Target { ... }
+fun f<T: Deref<Target = U> + Convert, U>(x: &T) -> U {
+    x.deref()   // ordinary, unambiguous method dispatch — `deref` and `convert`
+                // are different method names, ordinary call resolution applies
+}
 ```
 
-**Required only when ambiguous; always legal otherwise.** `T::AssocType` remains valid
-and preferred whenever exactly one bound aspect declares that name — the fully
-qualified form is available at every projection site, not just ambiguous ones, but
-writing it where the bare form would already resolve unambiguously is unnecessary
-verbosity, not an error. This matches every other elision mechanism in the language
-(allocator elision, lifetime-anchor elision): the explicit form is always accepted,
-the terse form is used whenever the compiler can determine the unique correct answer
-on its own, and ambiguity — never silent choice — is what forces the explicit spelling.
+`U` is an ordinary, unambiguous type parameter everywhere it's used — in the return
+type, in `where` clauses, in `let` bindings — with no projection syntax involved at
+all. This isn't a workaround bolted on after the fact: real code reaches an associated
+type by calling the aspect's own (uniquely named) method in the overwhelming majority
+of cases, which is unambiguous by ordinary method dispatch regardless of how many
+aspects `T` is bound to; the bare-projection ambiguity only ever arises when a type is
+named abstractly without going through a call, and §4's equality constraint already
+covers that case completely.
 
-**No new resolution machinery, and no dependency on a future type-inference RFC.**
-Resolving `<T as Aspect>::AssocType` is an ordinary lookup at the same
-associated-type-projection step §3 already specifies — the aspect name simply selects
-which of `T`'s bound aspects to project from, before that step runs, rather than
-requiring the step itself to disambiguate. It does not touch unification, generalization,
-or any other part of the inference algorithm (Hindley-Milner with let-polymorphism,
-already implemented per RFC-0031 and `public/reference/spec/types.md` §Type Inference).
-The original deferral to "the type inference RFC" assumed a future foundational RFC
-would need to define this; no such RFC exists or is planned — type inference is already
-specified and implemented, and this disambiguation rule doesn't touch any part of it.
+**No new resolution machinery, no new grammar, and no dependency on a future
+type-inference RFC.** §4's equality constraint and ordinary type inference/ascription
+(both already specified and implemented — Hindley-Milner with let-polymorphism, RFC-0031;
+ascription, `public/reference/spec/types.md` §Type Ascription) are sufficient. The
+original deferral to "the type inference RFC" assumed a future foundational RFC would
+need to define new syntax for this; no such RFC exists or is planned, and no new syntax
+turned out to be needed either.
 
 ---
 
@@ -324,11 +341,14 @@ under the overlap rules. No current use case requires defaults.
 ## 10. Unresolved Questions
 
 1. ~~Disambiguation for identically-named associated types.~~ **Resolved 2026-07-10,
-   §3a:** `<T as Aspect>::AssocType`, required only when ambiguous, always legal
-   otherwise. The "type inference RFC" this was deferred to was never a real
-   dependency — type inference (RFC-0031) is already implemented, and this
-   disambiguation is an ordinary lookup at the projection step this RFC already
-   specifies, not something inference itself needs to define.
+   §3a (corrected the same day):** no new syntax — the bare projection stays ambiguous
+   as a hard error (matching the existing method-name-collision precedent, `T0013`),
+   and §4's equality constraint with a fresh type parameter already covers every real
+   case. An earlier pass proposed `<T as Aspect>::AssocType`, borrowed from Rust
+   without checking it against Metel's grammar (`as` already has two other uses); it
+   wasn't needed once the existing mechanism was checked properly. The "type inference
+   RFC" this was originally deferred to was never a real dependency either way — type
+   inference (RFC-0031) is already implemented.
 
 2. **Higher-kinded associated types.** Whether an associated type may itself be generic
    (`type Container<T>;`) is deferred. No current use case requires this.
