@@ -443,27 +443,6 @@ fun deref_display<T: Deref>(x: &T) where T::Target: Display {
 `T::AssocType` is only valid when `T: Aspect` is in scope — writing it without that
 bound is a compile error.
 
-**Disambiguation.** When `T` is bound to two or more aspects that each declare an
-associated type of the same name, the bare projection is ambiguous:
-
-```metel
-aspect Deref { type Target; fun deref(self: &Self) -> &Target; }
-aspect Convert { type Target; fun convert(self: &Self) -> Target; }
-
-fun f<T: Deref + Convert>(x: &T) -> T::Target { ... }
-// error: T::Target is ambiguous — both Deref and Convert declare Target
-```
-
-The fully qualified form `<T as Aspect>::AssocType` names which aspect's associated
-type is meant, and is always legal — not just where the bare form would be
-ambiguous — the same way every other elision mechanism in the language keeps its
-explicit form available everywhere and only forces it where the terse form can't
-resolve on its own:
-
-```metel
-fun f<T: Deref + Convert>(x: &T) -> <T as Deref>::Target { ... }
-```
-
 **Equality constraints in bounds.** `Aspect<AssocType = ConcreteType>` asserts both that
 `T` implements `Aspect` and that its associated type equals a known type, pinning
 `T::AssocType` to `ConcreteType` at every use:
@@ -473,6 +452,38 @@ fun deref_to_i64<T: Deref<Target = i64>>(x: &T) -> &i64 {
     x.deref()
 }
 ```
+
+`ConcreteType` doesn't have to be a fixed, known type — it can be a fresh type
+parameter instead, which is also how disambiguation works (below).
+
+**Disambiguation.** When `T` is bound to two or more aspects that each declare an
+associated type of the same name, the bare projection is ambiguous — a hard error,
+matching the existing method-name-collision rule (Static Dispatch Only, below):
+
+```metel
+aspect Deref { type Target; fun deref(self: &Self) -> &Target; }
+aspect Convert { type Target; fun convert(self: &Self) -> Target; }
+
+fun f<T: Deref + Convert>(x: &T) -> T::Target { ... }
+// error: T::Target is ambiguous — both Deref and Convert declare Target
+```
+
+There's no dedicated disambiguation syntax for this — the equality constraint above
+already covers it, by binding the associated type to a **fresh type parameter** rather
+than a concrete one:
+
+```metel
+fun f<T: Deref<Target = U> + Convert, U>(x: &T) -> U {
+    x.deref()   // ordinary method dispatch — deref and convert are different
+                // method names, so this was never ambiguous to begin with
+}
+```
+
+`U` is used unambiguously everywhere afterward — return type, `where` clauses, `let`
+bindings — with no projection syntax involved. In practice this covers the real cases:
+code reaches an associated type by calling the aspect's own uniquely-named method, and
+the bare-projection ambiguity only arises when a type needs naming abstractly without
+going through a call, which the fresh-variable equality constraint already handles.
 
 **Associated type vs. a type parameter on the aspect.** Use an associated type when the
 implementing type determines exactly one output (`Deref::Target` — a type has one deref
