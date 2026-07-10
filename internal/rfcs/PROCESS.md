@@ -14,6 +14,18 @@ in the same sitting: RFC-0055 sat undiscovered in draft for five weeks while RFC
 independently reinvented a large part of it, and RFC-0063 — this project's own concrete
 precedent for the failure `3-integrated` exists to catch.
 
+**Correction, 2026-07-10: "nothing written down" above was wrong.** `internal/versioning.md`
+(2026-05-21) already had a written RFC-lifecycle section — 6 stages, a `spec_status:
+pending/done` field tracking spec-sync — that nobody checked against when this document
+was created, so it went un-reconciled for a full day while this document and
+`3-integrated` were built independently of it. This is the same failure mode as the
+RFC-0055 duplication above, one level up: it happened to *this document's own creation*,
+not to an ordinary RFC. `versioning.md`'s RFC-lifecycle section is now retired in favor
+of this document; its `spec_status` field is retired in favor of `3-integrated` +
+`impl_status`/`impl_tracking`, which do the same job as a real lifecycle stage rather
+than a side field. Worth remembering: "check what's already written down" applies to
+process documents too, not only to RFC content.
+
 **The RFC-0063 precedent, traced from git history rather than repeated from memory:**
 RFC-0063 ("Region Handles" at the time) was accepted, alongside seven siblings —
 RFC-0065, 0066, 0067, 0068, 0069, 0073, 0077 — in one commit. Later, while working on

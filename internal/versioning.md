@@ -3,11 +3,15 @@ id: versioning
 title: "Versioning Model"
 type: guide
 created_date: '2026-05-21'
+updated: '2026-07-10'
 ---
 
 # Metel Versioning Model
 
-This document is the authority on version numbering, the RFC lifecycle, and documentation conventions. All other guides defer to it on these topics.
+This document is the authority on version numbering and documentation conventions.
+**It is not the authority on the RFC lifecycle** — see the note in place of the old
+"RFC Lifecycle" section below. All other guides defer to this document on version
+numbering and doc conventions specifically.
 
 ---
 
@@ -62,55 +66,26 @@ Spec sections are annotated to indicate which version introduced or changed a fe
 
 ## RFC Lifecycle
 
-RFCs are the mechanism for proposing language changes. An RFC must be accepted and assigned a target version before implementation begins.
+**Superseded 2026-07-10 by `internal/rfcs/PROCESS.md` — that document is now the sole
+authority on the RFC lifecycle, frontmatter requirements, and tooling.** This section
+previously duplicated that content (6 stages, no `3-integrated`; a `spec_status:
+pending/done` frontmatter field tracking spec-sync separately from lifecycle state) and
+was never reconciled when PROCESS.md was written, leaving two documents disagreeing
+about the same thing. `spec_status` is retired outright: `3-integrated` is now a real
+lifecycle *stage* (spec merged, worked examples checked) rather than a side field on
+`2-accepted`, and `impl_status`/`impl_tracking` (also on RFC frontmatter, from
+`3-integrated` onward) track implementation progress the same way `spec_status` tried
+to. See `PROCESS.md` for the current 7-stage lifecycle, the tooling (`rfc.py`), and the
+working rules.
 
-### States
+Two things below are unaffected by this and remain accurate:
 
-The main representation of an RFC's lifecycle state is the directory containing the RFC file. The RFC frontmatter and the Plane `RFC Status` custom property must mirror that directory exactly. Plane RFC tracking items must use the custom `RFC` work item type.
+**Target version.** Still not stored in RFC frontmatter — it lives in exactly one
+place, the project milestone (a Codeberg milestone; see `metel-core/AGENTS.md`'s Task
+Tracking section). The RFC's own `## Decision` section may record it in prose
+(`**Target:** vX.Y.0`) as a human-readable note, but the milestone is authoritative.
 
-| Directory | State | Meaning |
-|---|---|---|
-| `docs/internal/rfcs/0-draft/` | `draft` | Being written; not yet ready for review |
-| `docs/internal/rfcs/1-under-review/` | `under-review` | Ready for evaluation; set manually by the author |
-| `docs/internal/rfcs/2-accepted/` | `accepted` | Design decided; target version milestone assigned; **spec must be updated before implementation begins** |
-| `docs/internal/rfcs/3-implemented/` | `implemented` | Implemented and shipped in the target version |
-| `docs/internal/rfcs/4-superseded/` | `superseded` | Replaced by a later RFC; successor recorded in frontmatter or `## Decision` |
-| `docs/internal/rfcs/5-refused/` | `refused` | Will not be implemented; reason recorded in `## Decision` |
-
-### Frontmatter fields
-
-```yaml
----
-id: rfc-NNNN
-title: "..."
-date: 'YYYY-MM-DD'
-status: draft          # one of the states above
-spec_status: pending   # pending | done — tracks whether the relevant spec/docs reflect the RFC decisions
----
-```
-
-`spec_status` is required for all `accepted` RFCs. It is independent of `status`:
-- `pending` — RFC is accepted but the relevant spec or architecture docs have not yet been updated to reflect its decisions. **Implementation is blocked until this is `done`.**
-- `done` — The spec (for language-visible RFCs: `docs/public/reference/spec/`) or internal architecture docs (for implementation RFCs: `metel-interpreter/docs/`) have been updated. Implementation may proceed.
-
-The target version is **not** stored in the RFC frontmatter. It lives in exactly one place: the project milestone. The `## Decision` section records it in prose (`**Target:** vX.Y.0`) as a human-readable audit trail, but the milestone is the authoritative field.
-
-### Acceptance process
-
-1. Author moves the RFC to `1-under-review/` and sets `status: under-review` when the RFC is ready for evaluation.
-2. Discussion happens in the linked Plane item with work item type `RFC`.
-3. The project owner records the outcome in a `## Decision` section at the bottom of the RFC file.
-4. **If accepted**:
-   - Move the RFC to `2-accepted/`, set `status: accepted`, and set `spec_status: pending`.
-   - Assign the Plane `RFC` work item to the target version milestone and set its `RFC Status` custom property to `accepted`.
-   - Record `**Target:** vX.Y.0` in `## Decision`.
-   - **Immediately** update the relevant spec or docs to reflect the RFC's decisions and set `spec_status: done`. This may be a single commit. Implementation items must not be created or started until `spec_status: done`.
-5. **If refused**: move the RFC to `5-refused/`, set `status: refused`, set the Plane `RFC Status` custom property to `refused`, and record the reason in `## Decision`.
-6. **If superseded**: move the RFC to `4-superseded/`, set `status: superseded`, set the Plane `RFC Status` custom property to `superseded`, and record the successor in frontmatter or `## Decision`.
-
-Once the RFC's target version ships (git tag applied), move it to `3-implemented/`, set `status: implemented`, and set the Plane `RFC Status` custom property to `implemented`. This is a required step of the release process — every accepted RFC whose target version matches the tag must be updated before the tag is pushed. The sprint-end quality gate enforces this with a full RFC staleness sweep.
-
-### Decision section format
+**Decision section format:**
 
 ```markdown
 ## Decision
@@ -123,13 +98,16 @@ Brief rationale — why this design was chosen (or not), what alternatives were 
 
 ---
 
-## Plane Milestone Structure
+## Milestone Structure
 
 | Milestone type | Examples | Purpose |
 |---|---|---|
 | **Version** | `v0.4.0`, `v0.5.0`, `v1.0.0` | Release planning — what ships in which version |
 
-Implementation work items are assigned to the **version milestone** they target. Plane RFC tracking items must use the custom `RFC` work item type. Their `RFC Status` custom property must use the exact lifecycle state represented by their RFC directory: `draft`, `under-review`, `accepted`, `implemented`, `superseded`, or `refused`.
+Implementation issues are assigned to the **version milestone** they target (see
+`metel-core/AGENTS.md`'s Task Tracking section). RFCs are not separately tracked by a
+milestone-adjacent custom field — the RFC file's own directory and frontmatter is the
+complete lifecycle record; see `PROCESS.md`.
 
 ---
 
@@ -146,3 +124,5 @@ Patch releases (`vX.Y.Z` with Z > 0) get a short entry listing only the interpre
 - Project vision and dual-mode commitment: `docs/internal/vision.md`
 - Language spec: `docs/public/reference/spec.md`
 - Changelog: `docs/public/release-notes/changelog.md`
+- RFC lifecycle (authoritative, not this document): `internal/rfcs/PROCESS.md`
+- Long-term objectives and priorities: `reports/strategy/OBJECTIVES.md`
