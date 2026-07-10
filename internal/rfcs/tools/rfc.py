@@ -5,17 +5,33 @@ Subcommands:
   new <title> [-d description]        Create a new draft RFC, next free number,
                                        with a duplicate/overlap check against
                                        existing RFCs first.
-  transition <rfc-id> --to <stage> [-r reason]
+  transition <rfc-id> --to <stage> [-r reason] [--tracking LINK]
                                        Move an RFC to a new lifecycle stage:
                                        git mv, update frontmatter, insert a
                                        dated status note, fix path references
                                        elsewhere in the repo, then run `check`.
+                                       `--to integrated` requires `--tracking`
+                                       (a ClickUp task/URL) and sets
+                                       `impl_status: not-started` alongside it —
+                                       no RFC enters integrated without a
+                                       linked implementation-tracking task.
+                                       `--to implemented` sets
+                                       `impl_status: implemented`.
+  impl-status <rfc-id> --set <status> [--tracking LINK]
+                                       Update `impl_status` (not-started /
+                                       in-progress / implemented) on an RFC
+                                       already at integrated or implemented,
+                                       without moving it. Optionally updates
+                                       `impl_tracking` too.
   supersede <rfc-id> --by <ids> [-r reason]
                                        Shortcut for `transition ... --to superseded`
                                        that also sets `superseded_by`.
   check                                Validate frontmatter/directory consistency,
-                                       duplicate RFC ids, and dangling path
-                                       references. Read-only.
+                                       duplicate RFC ids, dangling path
+                                       references, and (for integrated/implemented
+                                       RFCs) that impl_status/impl_tracking are set
+                                       and the spec actually references the RFC.
+                                       Read-only.
   index --check-drift                  Compare INDEX.md's last_built date against
                                        every RFC's own frontmatter date. Read-only.
   index --suggest-placement <rfc-id>   Suggest which INDEX.md cluster section an
@@ -123,9 +139,10 @@ def parse_file(path):
 
 
 def format_fm_value(val):
-    if re.match(r"^\d{4}-\d{2}-\d{2}$", str(val)):
+    val = str(val)
+    if re.match(r"^\d{4}-\d{2}-\d{2}$", val) or ":" in val:
         return f"'{val}'"
-    return str(val)
+    return val
 
 
 def update_frontmatter_fields(text, updates):
@@ -365,8 +382,44 @@ def fix_referrers(old_rel, new_rel):
 
 def cmd_transition(args):
     rid = normalize_id(args.rfc_id)
-    do_transition(rid, args.to, args.reason)
+    extra_fm = {}
+    if args.to == "integrated":
+        if not args.tracking:
+            error(
+                "transitioning to 'integrated' requires --tracking <ClickUp task/URL> — "
+                "no RFC enters integrated without a linked implementation-tracking task "
+                "(see PROCESS.md's 3-integrated exit criteria)."
+            )
+        extra_fm["impl_tracking"] = args.tracking
+        extra_fm["impl_status"] = "not-started"
+    elif args.tracking:
+        extra_fm["impl_tracking"] = args.tracking
+    if args.to == "implemented":
+        extra_fm["impl_status"] = "implemented"
+    do_transition(rid, args.to, args.reason, extra_fm=extra_fm or None)
     cmd_check(args)
+
+
+def cmd_impl_status(args):
+    rid = normalize_id(args.rfc_id)
+    path = find_path_for_id(rid)
+    if path is None:
+        error(f"RFC {rid} not found")
+    fm, _ = parse_file(path)
+    stage = STAGE_FOR_DIR.get(path.parent.name)
+    if stage not in ("integrated", "implemented"):
+        error(
+            f"{rid} is at stage '{stage}', not 'integrated' or 'implemented' — "
+            "impl_status only applies once an RFC has reached integrated (PROCESS.md)."
+        )
+    updates = {"impl_status": args.set}
+    if args.tracking:
+        updates["impl_tracking"] = args.tracking
+    text = update_frontmatter_fields(path.read_text(), updates)
+    path.write_text(text)
+    print(f"{rid.upper()}: impl_status -> {args.set}" + (f", impl_tracking -> {args.tracking}" if args.tracking else ""))
+    if args.set == "implemented" and stage != "implemented":
+        print(f"Reminder: run `rfc.py transition {rid} --to implemented` to move the RFC itself.")
 
 
 def cmd_supersede(args):
@@ -385,6 +438,25 @@ def cmd_supersede(args):
 
 # [a-z-]+ not [a-z]+: stage dir names like "1-under-review" have more than one hyphen.
 PATH_REF_RE = re.compile(r"internal/rfcs/[0-6]-[a-z-]+/rfc-[\w.-]+\.md")
+
+
+SPEC_DIR = REPO_ROOT / "public" / "reference" / "spec"
+VALID_IMPL_STATUS = {"not-started", "in-progress", "implemented"}
+
+
+def spec_mentions(rid):
+    """Does anything under public/reference/spec/ reference this RFC id?"""
+    if not SPEC_DIR.is_dir():
+        return False
+    num = re.match(r"rfc-0*(\d+)([a-z]?)$", rid)
+    needle = f"RFC-{int(num.group(1)):04d}{num.group(2)}" if num else rid.upper()
+    for f in SPEC_DIR.rglob("*.md"):
+        try:
+            if needle in f.read_text():
+                return True
+        except (UnicodeDecodeError, OSError):
+            continue
+    return False
 
 
 def cmd_check(args=None):
@@ -413,6 +485,34 @@ def cmd_check(args=None):
                 f"{rel}: frontmatter status '{fm_status}' doesn't match directory "
                 f"'{stage_dir}' (expected '{expected_status}')"
             )
+
+        impl_status = fm.get("impl_status")
+        impl_tracking = fm.get("impl_tracking")
+        if expected_status == "integrated":
+            # Hard-enforced: nothing enters 3-integrated without these (PROCESS.md).
+            if not impl_tracking:
+                problems.append(f"{rel}: missing impl_tracking (required from integrated onward)")
+            if impl_status not in VALID_IMPL_STATUS:
+                problems.append(
+                    f"{rel}: impl_status is '{impl_status}', expected one of {sorted(VALID_IMPL_STATUS)}"
+                )
+            elif impl_status == "implemented":
+                problems.append(
+                    f"{rel}: impl_status is 'implemented' but the RFC is still in 3-integrated — "
+                    f"run `rfc.py transition {rid} --to implemented`"
+                )
+            if not spec_mentions(rid):
+                problems.append(
+                    f"{rel}: no reference to {rid.upper()} found under public/reference/spec/ — "
+                    "was it actually integrated into the spec text?"
+                )
+        elif expected_status == "implemented" and impl_status is not None:
+            # Not retroactively required (25 RFCs predate this convention, adopted
+            # 2026-07-10) — only checked for consistency when the field is present.
+            if impl_status != "implemented":
+                problems.append(
+                    f"{rel}: RFC is in 4-implemented but impl_status is '{impl_status}', not 'implemented'"
+                )
 
     for f in REPO_ROOT.rglob("*.md"):
         if ".git" in f.parts:
@@ -540,7 +640,14 @@ def main():
     p_trans.add_argument("rfc_id")
     p_trans.add_argument("--to", required=True, choices=list(STAGES))
     p_trans.add_argument("-r", "--reason", default="", help="One-line reason, used in the inserted status note")
+    p_trans.add_argument("--tracking", default="", help="ClickUp task/URL — required when --to integrated")
     p_trans.set_defaults(func=cmd_transition)
+
+    p_impl = sub.add_parser("impl-status", help="Update impl_status on an integrated/implemented RFC")
+    p_impl.add_argument("rfc_id")
+    p_impl.add_argument("--set", required=True, choices=sorted(["not-started", "in-progress", "implemented"]))
+    p_impl.add_argument("--tracking", default="", help="Optionally update impl_tracking too")
+    p_impl.set_defaults(func=cmd_impl_status)
 
     p_sup = sub.add_parser("supersede", help="Move an RFC to superseded and set superseded_by")
     p_sup.add_argument("rfc_id")

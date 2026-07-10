@@ -2,7 +2,7 @@
 id: rfc-process
 title: "RFC Process"
 type: process
-last_updated: '2026-07-09'
+last_updated: '2026-07-10'
 ---
 
 # RFC Process
@@ -76,6 +76,43 @@ records circular dependency, the `Linear` auto-impl-vs-derive miscategorization,
 RFC-0080 shipping syntax RFC-0012 had already rejected), that's this phase doing its
 job, not a failure of it — the RFC goes back for amendment rather than proceeding to
 implementation carrying the problem forward.
+
+**Additional exit criteria, added 2026-07-10 — implementation-tracking, not just spec
+text.** Landing in the spec is exactly the moment a real gap opens between "what the spec
+says" and "what the interpreter does," and nothing before this tracked that gap
+explicitly. Modeled on Swift Evolution's convention (every accepted proposal document
+itself carries an `Implementation:` field — a compiler version, or "Not yet implemented"
+— updated as the compiler catches up) rather than Rust's or TC39's multi-implementation
+tracking (a single-engine language doesn't need a per-engine comparison table, just an
+honest single status). Concretely:
+
+- **A linked implementation-tracking task must exist before an RFC enters
+  `3-integrated`.** `rfc.py transition <id> --to integrated` refuses to run without
+  `--tracking <ClickUp task/URL>` — the same discipline as Rust's rule that no feature
+  ships behind `#![feature(x)]` without an open tracking issue, enforced mechanically
+  rather than left to memory.
+- **Every RFC frontmatter gains two fields once integrated:** `impl_status`
+  (`not-started` / `in-progress` / `implemented`) and `impl_tracking` (the task link).
+  These are the RFC's own Swift-Evolution-style status field — a reader of the RFC sees
+  both "is the design settled" (the lifecycle `status`) and "does the interpreter
+  actually do this yet" (`impl_status`) without cross-referencing a second system.
+  `rfc.py impl-status <id> --set in-progress|implemented` updates it as work proceeds;
+  `rfc.py transition <id> --to implemented` sets it to `implemented` automatically.
+- **Inline markers in `public/reference/spec/*.md` are required, not optional, at every
+  section the RFC touches** — a short callout (e.g. `> **Not yet implemented — see
+  METEL-NNN.**`) at the point of use, not just a global status field. A reader of the
+  spec directly, not the RFC, still needs to see it; a single central table would miss
+  exactly the reader this exists for. `rfc.py check` can confirm the spec references the
+  RFC at all (a weak proxy — it greps for the RFC id under `public/reference/spec/`) but
+  cannot verify the callout's actual wording; that part stays a human judgment call, the
+  same way worked-example soundness does.
+
+**Not retroactive.** The 25 RFCs already `4-implemented` before 2026-07-10 predate this
+convention and are not required to carry `impl_status`/`impl_tracking` after the fact —
+`rfc.py check` only enforces this from `3-integrated` onward, matching this document's
+existing policy of not re-litigating the pre-existing accepted backlog (below) all at
+once. It starts applying in full the first time an RFC actually reaches `3-integrated` —
+which, as of this writing, none have yet.
 
 **4-implemented.** Built against the integrated spec, not against the accepted RFC text
 directly — by the time something reaches this stage, "the spec" and "the RFC" should
@@ -154,26 +191,40 @@ of this process that don't need judgment:
   RFC-0055/RFC-0092 case in testing (0.47 similarity) — this is the automated version
   of "check `INDEX.md` before opening a new RFC," not a replacement for actually reading
   what it flags.
-- `rfc.py transition <id> --to <stage> -r "reason"` — `git mv`s to the right directory,
-  updates frontmatter (`status`, `updated`), inserts a dated status blockquote, and
-  fixes any other file's literal path references to the old location. Runs `check`
-  afterward automatically.
+- `rfc.py transition <id> --to <stage> -r "reason" [--tracking LINK]` — `git mv`s to the
+  right directory, updates frontmatter (`status`, `updated`), inserts a dated status
+  blockquote, and fixes any other file's literal path references to the old location.
+  Runs `check` afterward automatically. `--to integrated` refuses to run without
+  `--tracking`, and sets `impl_status: not-started` alongside it; `--to implemented`
+  sets `impl_status: implemented`.
+- `rfc.py impl-status <id> --set not-started|in-progress|implemented [--tracking LINK]`
+  — updates `impl_status` (and optionally `impl_tracking`) on an RFC already at
+  integrated or implemented, without moving it. The day-to-day command for recording
+  implementation progress between transitions.
 - `rfc.py supersede <id> --by <ids> -r "reason"` — the same, plus `superseded_by`. Does
   not write the reconciliation content (what carried forward, what didn't) — that still
   needs a human, or an agent, to actually think about it.
 - `rfc.py check` — validates frontmatter status matches directory, no duplicate RFC
   ids, no dangling `internal/rfcs/N-stage/rfc-....md` path references anywhere in the
-  repo. Read-only. Running it against this repo for the first time found, and a
-  follow-up fixed, 21 pre-existing problems predating this document: 19 older RFCs
-  using ad hoc status vocabulary ("incorporated", "active", "deferred") never
-  standardized against the lifecycle names above, normalized to match; and dangling
-  path references, which turned out to be far more widespread than the first pass
-  found — the initial path-reference regex silently failed to match multi-hyphen
-  directory names like `1-under-review`, so references into that whole directory were
-  never actually checked until the regex itself was fixed. Once corrected, 20 dangling
-  references surfaced (not 2) across the RFC-0025/0028/0046/0047/0048/0050/0051 cluster
-  plus RFC-0006/0049/0052 — all now fixed. `rfc.py check` reports clean as of
-  2026-07-09.
+  repo, and (since 2026-07-10, not retroactive — see above) that any RFC at
+  `3-integrated` has `impl_tracking` set, `impl_status` set to a valid value and not
+  already `implemented`, and that `public/reference/spec/` references the RFC at all;
+  an RFC at `4-implemented` with `impl_status` present is checked for consistency
+  (`implemented`) but not required to have the field at all. Read-only. Running it
+  against this repo for the first time found, and a follow-up fixed, 21 pre-existing
+  problems predating this document: 19 older RFCs using ad hoc status vocabulary
+  ("incorporated", "active", "deferred") never standardized against the lifecycle names
+  above, normalized to match; and dangling path references, which turned out to be far
+  more widespread than the first pass found — the initial path-reference regex silently
+  failed to match multi-hyphen directory names like `1-under-review`, so references into
+  that whole directory were never actually checked until the regex itself was fixed.
+  Once corrected, 20 dangling references surfaced (not 2) across the
+  RFC-0025/0028/0046/0047/0048/0050/0051 cluster plus RFC-0006/0049/0052 — all now
+  fixed. A later pass (2026-07-10) also found and fixed two RFCs whose own frontmatter
+  title/filename still said "Region ..." after the rest of the allocator cluster
+  renamed region → allocator (RFC-0066, RFC-0068) — `check` doesn't catch stale titles
+  itself, that was found by reading the cluster before ratifying it. `rfc.py check`
+  reports clean as of 2026-07-10.
 - `rfc.py index --check-drift` — compares every RFC's own `updated`/`date` frontmatter
   against `INDEX.md`'s `last_built`; flags anything changed since. Read-only.
 - `rfc.py index --suggest-placement <id>` — cosine similarity between an RFC and each
