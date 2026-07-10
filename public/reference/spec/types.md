@@ -199,46 +199,83 @@ fun sum(xs: [i64; 3]) -> i64 {
 
 > Fixed-size array type `[T; N]`: since v0.8.0 (RFC-0053).
 
-## Pointers
+## References
 
-Regular pointer types provide explicit aliasing for non-linear values.
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0067a-reference-types.md`.
+> The interpreter currently implements the `*T` / `*mut T` model this section replaces
+> (RFC-0043); this section describes the ratified design, not the running interpreter,
+> until that RFC's tracking task closes.
+
+Reference types provide explicit aliasing for non-linear values.
 
 ```metel
 fun main() -> i64 {
     let mut value = 1;
-    let p: *i64 = &value;
-    let q: *mut i64 = &mut value;
-    *q = *p + 1;
-    return *q;
+    let p: &i64 = &value;
+    let q: &mut i64 = &mut value;
+    q = p + 1;
+    return q;
 }
 ```
 
-Metel has two regular pointer types:
+Metel has two reference types:
 
-- `*T` — readable pointer to `T`
-- `*mut T` — readable and writable pointer to `T`
+- `&T` — shared immutable reference to `T`
+- `&mut T` — exclusive mutable reference to `T`
 
-`*mut T` coerces to `*T`. The reverse coercion does not exist.
+`&mut T` coerces to `&T`. The reverse coercion does not exist. Both are non-owning
+aliases — a reference never owns the value it points to.
 
-Regular pointers are first-class values, but they are distinct from the pointee type.
-There is no implicit dereference for ordinary reads or writes.
+References are first-class values, but they are distinct from the referent type. There
+is no explicit dereference operator in safe code (contrast the interpreter's current
+`*T`/`*mut T` model, which requires explicit `*p`); ordinary access goes through
+auto-deref instead — see [Expressions — References](expressions.md#references).
 
-Regular pointers are only for non-linear aliasing. They cannot target linear values.
+References are only for non-linear aliasing. They cannot target linear values.
 
-`&mut` accepts arbitrary addressable lvalue paths — struct fields, tuple elements, array elements, and chains thereof. Writes through the resulting `*mut T` propagate back to the original storage location:
+`&mut` accepts arbitrary addressable lvalue paths — struct fields, tuple elements, array elements, and chains thereof. Writes through the resulting `&mut T` propagate back to the original storage location:
 
 ```metel
 struct Counter { value: i64 }
 
 fun main() -> i64 {
     let mut c = Counter { value: 0 };
-    let p: *mut i64 = &mut c.value;
-    *p = 42;
+    let p: &mut i64 = &mut c.value;
+    p = 42;
     return c.value;   // 42
 }
 ```
 
-> `&mut` for lvalue paths: since v0.8.0 (RFC-0045).
+> `&mut` for lvalue paths: since v0.8.0 (RFC-0045), restated here for `&mut T` rather
+> than `*mut T`.
+
+### Reading a value out of a reference
+
+No field, no method, no operator — just the plain value a reference points to. This
+cannot be a *move* (references never own their referent), only a *copy*, and only when
+the referent's type permits copying:
+
+```metel
+fun main() -> i64 {
+    let x = 42;
+    let r: &i64 = &x;
+    let y: i64 = r;   // type-directed copy: y's declared type differs from r's
+    return y;
+}
+```
+
+The copy fires only at a `let` binding whose own declared type differs from its
+initializer, or at an explicit ascription (`r: i64`) — never silently at a plain call
+site; `fun f(v: i64)` called as `f(r)` where `r: &i64` is a type error, not an implicit
+copy. Argument position has no declared type of its own for the rule to compare against,
+the same reason type-directed extraction of an allocated value never fires implicitly at
+a plain-parameter call site either (`internal/rfcs/2-accepted/rfc-0066-allocated-value-extraction.md`
+§3a — not yet integrated, cited here only for the parallel).
+
+**Until affine ownership (`Copy`/`Drop`, not yet integrated) lands, this applies to
+every type** — the interpreter has no move semantics today (everything is deep-cloned on
+bind), so there is no non-`Copy` type yet to exclude. Once ownership is integrated, a
+non-`Copy` `T` cannot be produced this way.
 
 ## List\<T\>
 
@@ -409,7 +446,14 @@ fun main() -> i64 {
 
 ## Never Type
 
-`!` (Never) is the bottom type — the type of an expression that never produces a value because it diverges (runs forever, panics, or exits). A `loop` with no reachable `break` has type `!`:
+> **Not yet implemented as a formal, user-writable type** — see
+> `internal/rfcs/3-integrated/rfc-0078-bottom-type.md`. The interpreter already infers `!`
+> for diverging expressions (as described below); the subtyping rule, `-> !` return
+> annotations, and the match-exhaustiveness rules in this section are the ratified
+> design, not yet checked by the typechecker, until that RFC's tracking task closes.
+
+`!` (Never) is the **uninhabited bottom type** — no value of type `!` can ever be
+constructed. A `loop` with no reachable `break` has type `!`:
 
 ```metel
 fun main() -> i64 {
@@ -418,7 +462,69 @@ fun main() -> i64 {
 }
 ```
 
-`!` is not a type users write in practice; it appears as an inferred type when the typechecker determines a branch or expression cannot return. It is the type of `return`, `panic!`, and `loop { }` with no reachable `break`.
+`return <expr>`, `panic!(<message>)`, `loop { }` with no reachable `break`, and `break`/`continue` used as value expressions in loop context all have type `!`. If any sub-expression has type `!`, that sub-expression diverges before the outer expression can produce a value, so the outer expression's type is unconstrained and any type is accepted in that position.
+
+### Subtyping and coercion
+
+`!` is a subtype of every type — `! <: T` for all `T` — so an expression of type `!` coerces implicitly, with no cast, to any context expecting `T`. This is what makes the rule above sound: code after a diverging expression is unreachable, but still typechecks against whatever its context requires.
+
+### Match exhaustiveness
+
+A `match` whose scrutinee has type `!` needs no arms — an empty match is vacuously exhaustive, since no value of type `!` can ever reach it:
+
+```metel
+fun unreachable_code(x: !) -> i64 {
+    match x { }   // exhaustive — no arms needed
+}
+```
+
+More generally, an enum variant whose payload type is `!` is uninhabited — no value of that variant can ever be constructed — and a `match` may omit the arm for an uninhabited variant while remaining exhaustive:
+
+```metel
+enum Foo {
+    A { x: i64 },
+    B { y: ! },
+}
+
+fun handle(f: Foo) -> i64 {
+    match f {
+        Foo::A { x } => x,
+        // Foo::B omitted — exhaustive; B is uninhabited
+    }
+}
+```
+
+### Inhabited-singleton coercion
+
+If an enum has exactly one inhabited variant (every other variant's payload is `!`) and that variant has exactly one field, a value of the enum type coerces implicitly to the field's type — the compiler inserts the destructuring, no explicit `match` required:
+
+```metel
+enum Wrapper<T> {
+    Present { value: T },
+    Absent  { _: ! },
+}
+
+fun infallible() -> Wrapper<i64> { Wrapper::Present { value: 42 } }
+
+fun main() -> i64 {
+    let x: i64 = infallible();  // implicit coercion via the inhabited-singleton rule
+    return x;
+}
+```
+
+`Result<T, !>` satisfies this: `Ok { value: T }` is the one inhabited variant with one field, so a `Result<T, !>`-returning function's caller can use the result as a plain `T` with no `match`. `Perhaps<!>` does **not** satisfy it — `None` is inhabited but has zero fields — so `Perhaps<!>` never coerces implicitly to anything, though nothing prevents it from arising through generic instantiation.
+
+### `!` as a return type
+
+A function annotated `-> !` promises never to return; every control-flow path must end in a diverging expression, checked by the compiler:
+
+```metel
+fun abort(msg: String) -> ! {
+    panic!(msg);
+}
+```
+
+A `-> !` function containing a reachable `return` is a type error.
 
 ## `Perhaps<T>`
 

@@ -227,9 +227,15 @@ of what was watched for and what actually happened is part of the point.
    second RFC-0055-shaped silent duplication going forward, or does it quietly fall out of use
    the way the undocumented process before it did? Check at the next review whether `rfc.py
    new` was actually run before any RFC created since.
-8. ⬜ **New, 2026-07-09.** The `3-integrated` backlog (14 RFCs — see `PROCESS.md`) — does it
-   start shrinking, or does it just grow alongside the draft/under-review pile? A backlog that
-   only grows is a sign the new stage isn't actually being used, not just that it's early.
+8. 🟡 **Partially fired, 2026-07-10.** The `3-integrated` backlog first shrank: RFC-0067a,
+   RFC-0078, RFC-0083 moved from accepted through integrated, merged into
+   `public/reference/spec/`, each surfacing a real problem in the worked-examples step
+   (RFC-0067a's missing value-extraction rule, RFC-0083's obsolete motivating example, a
+   pre-existing `types.md`/`expressions.md` contradiction over `&mut` field paths) —
+   the stage is doing real work, not being skipped. Still open: 11 RFCs remain in the
+   backlog (RFC-0008, 0036, 0037, 0060, 0061, 0071, 0072, 0079, 0081, 0082, 0084), and one
+   cycle of movement doesn't yet establish a trend — keep watching whether it keeps
+   shrinking or stalls back out.
 9. ⬜ **New, 2026-07-10.** Watch for the "interpreter is temporary" corollary (§1) being
    misapplied to justify skipping *feedback-trustworthiness* work under cover of "it's all
    throwaway anyway" — e.g. a real dispatch bug shrugged off instead of fixed. That's a
@@ -250,6 +256,7 @@ of what was watched for and what actually happened is part of the point.
 | 2026-07-09 | This document created, seeded from 07-08 and 07-07; RFC-0012 split into RFC-0089–0095; RFC-0055 reconciled; `INDEX.md`/`PROCESS.md`/`rfc.py` created; Priority 2a's ToRecord-floor tension surfaced (Trigger 6) | *(none yet — no dated overview written this cycle)* |
 | 2026-07-10 | Corrected the RFC-0092/generics citation in the meta-risk section (generics were already implemented, not a future action); RFC-0084 reversed to keep `[T; N]`/`[expr; N]`; added the "interpreter as temporary feedback mechanism" corollary (§1, Trigger 9) after a ClickUp check found no sprint task consolidating the scattered monomorphization pass | *(none yet)* |
 | 2026-07-10 | Priority 1 done: allocator/lifetime cluster (RFC-0063/0065/0066/0067/0068/0073/0077) ratified to accepted after a consistency pass fixed real drift (RFC-0063 §9 items 1/2/5 out of sync with the roadmap's Phase 0 decision; stale "Region..." titles on RFC-0066/0068). Trigger 5 fired and resolved. | *(none yet)* |
+| 2026-07-10 | RFC-0067a/0078/0083 became the first RFCs to reach `3-integrated`, merged into `public/reference/spec/`; each surfaced a real problem while writing worked examples (Trigger 8 partially fired) | *(none yet)* |
 
 ---
 

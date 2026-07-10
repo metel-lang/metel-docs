@@ -247,31 +247,37 @@ fun main() -> i64 {
 }
 ```
 
-### Pointers
+### References
 
-Regular pointers provide explicit aliasing for non-linear values.
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0067a-reference-types.md`.
+> The interpreter currently implements the `*T` / `*mut T` model this section replaces
+> (RFC-0043); this section describes the ratified design, not the running interpreter,
+> until that RFC's tracking task closes.
+
+References provide explicit aliasing for non-linear values.
 
 ```metel
 fun main() -> i64 {
     let mut n = 1;
-    let p: *mut i64 = &mut n;
-    *p = 4;
-    return *p;
+    let p: &mut i64 = &mut n;
+    p = 4;
+    return p;
 }
 ```
 
 Rules:
 
-- `&expr` creates a read-only pointer `*T` where `expr` is an addressable lvalue
-- `&mut x` creates a mutable pointer `*mut T` where `x` is a `let mut` named binding
-- `*p` reads through a pointer
-- `*p = value` writes through a `*mut T`
+- `&expr` creates a shared reference `&T` where `expr` is an addressable lvalue
+- `&mut x` creates an exclusive reference `&mut T` where `x` is a `let mut` addressable lvalue
+- there is no explicit dereference operator — access goes through auto-deref (below) or,
+  for reading a plain value out with no field/method involved, type-directed copy (see
+  [Types — Reading a value out of a reference](types.md#reading-a-value-out-of-a-reference))
 
-Addressable lvalues for `&` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), and chains thereof (`nested.outer.field`, `t.1.0`). Non-addressable expressions (call results, arithmetic) are rejected at runtime.
+Addressable lvalues for both `&` and `&mut` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), and chains thereof (`nested.outer.field`, `t.1.0`). Non-addressable expressions (call results, arithmetic) are rejected at runtime.
 
-`&mut` requires the operand to be a `let mut` binding — applying it to a plain `let` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)). `&mut` is additionally restricted to named bindings only; `&struct.field` captures a snapshot of the field value at the time of the address-of operation, with subsequent mutations to the original binding not visible through the pointer.
+`&mut` requires the operand to be a `let mut` binding — applying it to a plain `let` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)). `&mut` on a lvalue path (`&mut s.field`, `&mut arr[i]`) produces a true exclusive reference with write-back semantics, matching `&mut` on a named binding exactly — writes through it propagate to the original storage location (RFC-0045, already implemented; this section previously described `&mut struct.field` as a non-propagating snapshot, which was the *pre*-RFC-0045 behavior and had never been updated to match). `&` on a field or element still evaluates to an independent, read-only reference to a copy of the current value at the time `&` was applied — correct and unchanged, since a shared reference is never written through.
 
-Field access, field assignment, method calls, and function pointer calls auto-dereference one pointer layer:
+Field access, field assignment, and method dispatch auto-dereference through a reference:
 
 ```metel
 struct Counter {
@@ -286,34 +292,34 @@ impl Counter {
 
 fun main() -> i64 {
     let mut counter = Counter { value: 0 };
-    let p: *mut Counter = &mut counter;
-    p.increment();    // auto-deref: equivalent to (*p).increment()
-    p.value = 1;      // auto-deref field assign; the pointer binding need not be mut
-    return p.value;   // auto-deref: equivalent to (*p).value
+    let p: &mut Counter = &mut counter;
+    p.increment();    // auto-deref: equivalent to accessing through the reference directly
+    p.value = 1;      // auto-deref field assign; the reference binding need not be mut
+    return p.value;   // auto-deref field read
 }
 ```
 
-Function pointers (`*() -> T` and `*mut () -> T`) are callable directly without explicit dereference:
+Function references (`&() -> T` and `&mut () -> T`) are callable directly, the same way:
 
 ```metel
 fun main() -> i64 {
     let f = () -> { return 42; };
-    let ptr: *() -> i64 = &f;
-    return ptr();     // auto-deref: equivalent to (*ptr)()
+    let r: &() -> i64 = &f;
+    return r();       // auto-deref: calls through the reference directly
 }
 ```
 
-This applies uniformly: a closure or named function stored behind a pointer can be called as if it were the function value itself. A common use is passing arrays of function pointers:
+This applies uniformly: a closure or named function stored behind a reference can be called as if it were the function value itself. A common use is passing arrays of function references:
 
 ```metel
-fun apply_all(fns: Array<*() -> ()>) {
+fun apply_all(fns: Array<&() -> ()>) {
     for (let f in fns) {
         f();          // auto-deref each element
     }
 }
 ```
 
-Indexing, plain reads, argument passing, and assignment remain explicit pointer operations.
+Indexing, argument passing, and assignment remain ordinary reference operations — none of them are the value-extraction case (see `types.md`), so none require type-directed copy.
 
 ### Loop
 

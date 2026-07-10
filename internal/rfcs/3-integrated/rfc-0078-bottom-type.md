@@ -2,6 +2,10 @@
 id: rfc-0078
 title: "Bottom Type — `!`"
 date: '2026-07-01'
+status: integrated
+updated: '2026-07-10'
+impl_tracking: 'https://app.clickup.com/t/86canu6pe'
+impl_status: not-started
 ---
 
 > **Status — accepted.** Depends on RFC-0071 (Ownership and Move Semantics).
@@ -9,6 +13,13 @@ date: '2026-07-01'
 > coercion behaviour, and match exhaustiveness implications. Establishes the general
 > uninhabited-variant rule and the inhabited-singleton coercion rule that together
 > underpin infallible region allocation (RFC-0063 §1.1).
+>
+> **Amended 2026-07-10, while integrating into the spec.** §4.2's terminology corrected
+> — it still used pre-split "region"/`@[r]` bracket-channel syntax and RFC-0063's old
+> title ("Region Handles"), predating the 2026-07-05 allocator/lifetime split. Semantic
+> content unchanged.
+
+> **Status — integrated (2026-07-10).** Integrated into public/reference/spec/types.md: ! subtyping, coercion, match exhaustiveness, inhabited-singleton coercion, and -> ! return type. RFC's own stale @[r] allocator syntax fixed first.
 
 ## Summary
 
@@ -178,16 +189,21 @@ fun use_result(r: Result<i64, !>) -> i64 {
 
 ### 4.2 `AllocationError = !` (RFC-0063)
 
-RFC-0063 gives each region a `type AllocationError`. When a region sets
-`AllocationError = !` (as all stdlib regions do), the `@[r] expr` allocation
-expression has type `@[r] T` — not `Result<@[r] T, !>`. This is a rule on the
-allocation expression itself: the type of `@[r] expr` is determined by the region's
+RFC-0063 gives each allocator a `type AllocationError`. When an allocator sets
+`AllocationError = !` (as all stdlib allocators do), the `@a expr` allocation
+expression has type `@a T` — not `Result<@a T, !>`. This is a rule on the
+allocation expression itself: the type of `@a expr` is determined by the allocator's
 `AllocationError` type, and when that type is `!` the expression directly produces
-`@[r] T`. This is distinct from a post-hoc coercion from `Result<@[r] T, !>` to
-`@[r] T`; no coercion is needed because the `Result` wrapper is never surfaced.
+`@a T`. This is distinct from a post-hoc coercion from `Result<@a T, !>` to
+`@a T`; no coercion is needed because the `Result` wrapper is never surfaced.
 
 Fallible custom allocators (where `AllocationError = SomeError`) produce
-`Result<@[r] T, SomeError>` and require the caller to handle or propagate the error.
+`Result<@a T, SomeError>` and require the caller to handle or propagate the error.
+
+> Terminology corrected 2026-07-10, while integrating into the spec: this section
+> originally used pre-split "region"/`@[r]` bracket-channel syntax throughout. RFC-0063
+> moved to allocator/`@a` tag-based syntax on 2026-07-05; the semantic content here
+> (infallible-allocation collapse) is unchanged, only the notation was stale.
 
 ---
 
@@ -246,8 +262,8 @@ convention already established in RFC-0063.
 
 ## References
 
-- RFC-0063 (Region Handles) — `AllocationError = !`; infallible allocation;
-  `Result<@[r] T, !>` collapse at allocation sites.
+- RFC-0063 (Allocator Handles) — `AllocationError = !`; infallible allocation;
+  `Result<@a T, !>` collapse at allocation sites.
 - RFC-0071 (Ownership and Move Semantics) — move semantics; `!` values are never
   moved (they cannot be constructed).
 - RFC-0079 (Perhaps and Result) — formal definitions of `Perhaps<T>` and

@@ -445,14 +445,15 @@ VALID_IMPL_STATUS = {"not-started", "in-progress", "implemented"}
 
 
 def spec_mentions(rid):
-    """Does anything under public/reference/spec/ reference this RFC id?"""
+    """Does anything under public/reference/spec/ reference this RFC id? Case-insensitive
+    — callouts sometimes cite a lowercase file path (rfc-0067a-...md) rather than the
+    RFC-0067a prose form, and both should count."""
     if not SPEC_DIR.is_dir():
         return False
-    num = re.match(r"rfc-0*(\d+)([a-z]?)$", rid)
-    needle = f"RFC-{int(num.group(1)):04d}{num.group(2)}" if num else rid.upper()
+    needle = rid.lower()
     for f in SPEC_DIR.rglob("*.md"):
         try:
-            if needle in f.read_text():
+            if needle in f.read_text().lower():
                 return True
         except (UnicodeDecodeError, OSError):
             continue

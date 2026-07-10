@@ -13,12 +13,13 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**94 RFCs total.** 27 draft, 1 under review, 21 accepted, 0 integrated (new stage — see
+**94 RFCs total.** 27 draft, 1 under review, 18 accepted, 3 integrated (new stage — see
 `PROCESS.md`) (49 "live" — need active tracking), 25 implemented, 9 superseded, 11
 refused (45 "settled" — reference only). (RFC-0055 moved draft → superseded 2026-07-09,
 reconciled into RFC-0092/0093/0095 — see below. **2026-07-10:** the allocator/lifetime
 cluster — RFC-0063/0065/0066/0067/0068/0073/0077 — swept from under-review to accepted;
-only RFC-0080 remains under review.)
+only RFC-0080 remains under review. Same day: RFC-0067a/0078/0083 became the first RFCs
+to reach `3-integrated`, merged into `public/reference/spec/`.)
 
 ---
 
@@ -91,8 +92,11 @@ number, a backwards RFC-0067a split direction).
   Extraction" 2026-07-10 to match how every other RFC already referred to it.
 - **RFC-0067** *(accepted)* — Lifetime Anchors and Allocator-Pointer References — the
   narrowed remainder after RFC-0067a was split out and accepted separately.
-- **RFC-0067a** *(accepted)* — Reference Types — plain `&T`/`&mut T`, auto-deref. No
-  allocator/borrow-checker dependency; already sequenced into Cluster A.
+- **RFC-0067a** *(integrated 2026-07-10)* — Reference Types — plain `&T`/`&mut T`,
+  auto-deref. No allocator/borrow-checker dependency; already sequenced into Cluster A.
+  Integrated into `public/reference/spec/types.md` and `expressions.md`; gained a new
+  §3a (type-directed value-copy-out) resolving a gap found writing the worked examples.
+  Not yet implemented — tracked at the RFC's `impl_tracking` link.
 - **RFC-0068** *(accepted)* — Struct-Owned Allocators — primary-constructor syntax
   (`struct Foo(@a: BumpAlloc)`). Renamed from "Struct-Owned Regions" 2026-07-10.
 - **RFC-0073** *(accepted)* — AutoAlloc — renamed from AutoRegion; SubRegion interaction
@@ -118,11 +122,18 @@ Nothing open here; these are the load-bearing accepted RFCs everything else cite
 - **RFC-0061** — Structural Aspect Bounds — `T[]`/tuples/function-type bounds.
 - **RFC-0071** — Ownership and Move Semantics — affine-by-default foundation.
 - **RFC-0072** — Negative Bounds — `T: !Aspect`.
-- **RFC-0078** — Bottom Type `!`.
+- **RFC-0078** *(integrated 2026-07-10)* — Bottom Type `!` — subtyping, coercion, match
+  exhaustiveness, inhabited-singleton coercion, `-> !` returns. Integrated into
+  `public/reference/spec/types.md`; §4.2's stale pre-split allocator syntax fixed first.
+  Not yet implemented.
 - **RFC-0079** — `Perhaps<T>` and `Result<T, E>`.
 - **RFC-0081** — Negative Impls — `impl !Aspect for Type`.
 - **RFC-0082** — Associated Types.
-- **RFC-0083** — Public Value Exports.
+- **RFC-0083** *(integrated 2026-07-10)* — Public Value Exports (`pub let`). Integrated
+  into `public/reference/spec/modules.md`. Motivating example rewritten — the original
+  `heap`/`local_heap` case is obsolete under the ratified allocator design (RFC-0063/0065
+  reference them by type name, no instance value needed); replaced with exported-constant
+  examples. Not yet implemented.
 - **RFC-0084** — Fixed-Size Array Syntax — reaffirms RFC-0053's `[T; N]`/`[expr; N]`
   (reverted 2026-07-10 from an earlier `T[N]` proposal; never implemented either way).
 

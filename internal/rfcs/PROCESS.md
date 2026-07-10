@@ -51,8 +51,10 @@ here when they've earned it, not on a schedule.
 
 **2-accepted.** The design is settled: no more open questions block it, alternatives have
 been weighed and one chosen. This is where RFC lifecycle has stopped, historically, for
-anything not yet implemented — 14 RFCs currently sit here with no further gate before
-"implemented," which is exactly the gap that let RFC-0063's history happen: a design can
+anything not yet implemented — 14 RFCs sat here with no further gate before
+"implemented" when this stage was introduced (2026-07-09; 18 as of 2026-07-10, after the
+allocator/lifetime cluster's ratification sweep and RFC-0067a/0078/0083 moving on to
+`3-integrated`) — which is exactly the gap that let RFC-0063's history happen: a design can
 be accepted on paper and still be wrong in ways nobody notices until it's checked against
 everything else that's also accepted, or in flight alongside it.
 
@@ -126,12 +128,25 @@ material, cross-referenced from the RFC, per the existing convention.
 
 ## Backlog this creates
 
-The 14 currently-accepted RFCs (RFC-0008, 0036, 0037, 0060, 0061, 0067a, 0071, 0072,
-0078, 0079, 0081, 0082, 0083, 0084 — see `INDEX.md`) have not been through
-`3-integrated` under this definition; they were accepted before this stage existed. This
-is not retroactively re-litigated all at once — it's a real backlog, sized honestly as
-14 RFCs' worth of spec-integration-plus-worked-examples work, to be worked through over
-time rather than blocking anything immediately.
+The 14 currently-accepted RFCs that existed when this stage was introduced (RFC-0008,
+0036, 0037, 0060, 0061, 0067a, 0071, 0072, 0078, 0079, 0081, 0082, 0083, 0084 — see
+`INDEX.md`) had not been through `3-integrated` under this definition; they were
+accepted before this stage existed. This is not retroactively re-litigated all at
+once — it's a real backlog, sized honestly, to be worked through over time rather than
+blocking anything immediately.
+
+**Updated 2026-07-10:** RFC-0067a, RFC-0078, and RFC-0083 became the first three to move
+through it — merged into `public/reference/spec/` (`types.md`, `expressions.md`,
+`modules.md`), each gaining `impl_status`/`impl_tracking` and a linked ClickUp task. All
+three surfaced real problems while writing the worked examples this stage requires,
+confirming the stage does what it was built for: RFC-0067a's own text removed the
+explicit dereference operator without specifying how to read a plain value out of a
+reference (fixed, extending RFC-0066 §3a's type-directed-binding pattern); RFC-0083's
+motivating example turned out to be obsolete under the ratified allocator design and was
+rewritten; and a pre-existing, unrelated contradiction between `types.md` and
+`expressions.md` over `&mut`-on-field-paths (RFC-0045, already implemented, was reflected
+in one file but not the other) was caught and fixed along the way. 11 RFCs remain in the
+backlog: RFC-0008, 0036, 0037, 0060, 0061, 0071, 0072, 0079, 0081, 0082, 0084.
 
 ## Working rules, adopted 2026-07-09
 
