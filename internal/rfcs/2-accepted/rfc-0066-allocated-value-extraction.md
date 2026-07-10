@@ -303,6 +303,6 @@ encompasses the clone's use is valid.
 - RFC-0065 (Allocator Ergonomics) §1a — elision for the tag-only form; distinguishes
   it from this RFC's plain, `@`-free `T`.
 - RFC-0067a (Reference Types) — `&T` / `&mut T`, base auto-deref.
-- RFC-0067 (Lifetime Anchors and Allocator-Pointer References) — auto-deref through `@a T`
+- RFC-0067 (Lifetime Anchors) — auto-deref through `@a T`
   specifically (§2); RFC-0067a split off from this RFC 2026-07-07 as the
   allocator/borrow-checker-independent slice.

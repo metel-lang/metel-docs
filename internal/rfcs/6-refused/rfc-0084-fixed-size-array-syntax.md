@@ -3,6 +3,7 @@ id: rfc-0084
 title: "Fixed-Size Array Syntax — Retaining [T; N]"
 date: '2026-07-01'
 updated: '2026-07-10'
+status: refused
 ---
 
 > **Status — accepted. Rewritten 2026-07-10, reversing this RFC's original 2026-07-01
@@ -27,6 +28,8 @@ updated: '2026-07-10'
 >    and the getting-started tutorials all still use `[T; N]` today, exactly as RFC-0053
 >    left them. There is no migration in either direction; this RFC now simply stops
 >    proposing one.
+
+> **Status — refused (2026-07-10).** Reverted 2026-07-10 to reaffirm RFC-0053's [T; N]/[expr; N] exactly, with no remaining change of its own to propose (see the RFC's own Migration section: 'None'). Refusing rather than leaving it accepted-but-inert, since it no longer does anything RFC-0053 doesn't already specify.
 
 ## Summary
 

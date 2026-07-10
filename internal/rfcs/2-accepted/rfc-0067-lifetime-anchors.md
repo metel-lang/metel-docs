@@ -1,6 +1,6 @@
 ---
 id: rfc-0067
-title: "Lifetime Anchors and Allocator-Pointer References"
+title: "Lifetime Anchors"
 date: '2026-06-28'
 updated: '2026-07-10'
 status: accepted
@@ -15,6 +15,13 @@ status: accepted
 > "is anchor `r` still valid" means), and the allocator-pointer sections need `@a T` to
 > exist (RFC-0063). This stays Phase 3 in `reports/implementation/roadmap-2026-07-07.md`,
 > unchanged from before the split.
+>
+> **Renamed 2026-07-10** from "Lifetime Anchors and Allocator-Pointer References" to
+> "Lifetime Anchors" — the RFC's own content is split roughly 1/3 anchors (§1) to 2/3
+> allocator-pointer interaction (§2-3), but "Allocator-Pointer References" duplicated
+> RFC-0063/RFC-0066's own naming rather than describing what's distinctive about this
+> RFC specifically. File renamed from `rfc-0067-reference-types.md` to
+> `rfc-0067-lifetime-anchors.md` to match.
 >
 > Depends on RFC-0067a (base `&T` / `&mut T`, which this RFC extends with anchors —
 > no further reference-type syntax to invent), RFC-0063 (Allocator Handles), and RFC-0071

@@ -308,7 +308,7 @@ forces a rewrite of closure capture when they land:
   longer affects this RFC's bracket syntax.
 - RFC-0067a: Reference Types (`2-accepted`, split from RFC-0067 2026-07-07) — supersedes
   RFC-0043's `*mut T`/`*T` with `&mut T`/`&T`; no anchors, no dependency on this RFC's timing.
-- RFC-0067: Lifetime Anchors and Allocator-Pointer References (`1-under-review`) — adds
+- RFC-0067: Lifetime Anchors (`1-under-review`) — adds
   `&r mut T`/`&r T` on top of RFC-0067a; see Timing Recommendation above for sequencing.
 - `reports/implementation/roadmap-2026-07-07.md` — phased sequencing this RFC's two halves fit
   into.

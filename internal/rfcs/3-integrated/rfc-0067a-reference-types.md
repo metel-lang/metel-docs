@@ -27,7 +27,7 @@ impl_status: not-started
 >
 > The remaining scope of the original RFC-0067 — lifetime anchors (`&r T`, `<&r>`
 > declarations, ordering bounds), allocator-pointer auto-deref/coercion, and move-out from
-> `@a T` — stays at `internal/rfcs/2-accepted/rfc-0067-reference-types.md` under the
+> `@a T` — stays at `internal/rfcs/2-accepted/rfc-0067-lifetime-anchors.md` under the
 > same number, since every existing cross-reference to "RFC-0067" in the allocator-cluster
 > RFCs (0063/0065/0066/0068/0077) already refers to that anchor/allocator content
 > specifically, not to this rename. Supersedes RFC-0043 (Regular Pointers). Amends RFC-0044

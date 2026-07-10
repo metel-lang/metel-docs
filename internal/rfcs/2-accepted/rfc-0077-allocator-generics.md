@@ -13,7 +13,7 @@ status: accepted
 > corresponding `(@a: A)` parameter; `Outlives` is dropped from the allocator layer;
 > wellformedness for nested allocator-tagged types is borrow-checker derived. Variance
 > is restated for `@a T`, `&r T`, and `&r mut T`. Depends on RFC-0063 (Allocator
-> Handles), RFC-0065 (Allocator Ergonomics), RFC-0067 (Lifetime Anchors and Allocator-Pointer References), and RFC-0068
+> Handles), RFC-0065 (Allocator Ergonomics), RFC-0067 (Lifetime Anchors), and RFC-0068
 > (Struct-Owned Allocators).
 >
 > **Updated 2026-07-06:** §2.3's bounds table adds the tag-only `<@a>` form
@@ -365,7 +365,7 @@ expecting `@outer Node` could not accept `@inner Node` even when `inner` outlive
   tag-only parameter form, added to the bounds table in §2.3.
 - RFC-0065 (Allocator Ergonomics) — elision; the forms that make generic allocator
   parameters less frequently needed in simple cases.
-- RFC-0067 (Lifetime Anchors and Allocator-Pointer References) — `&r T` / `&r mut T`; lifetime anchors; variance in `T`
+- RFC-0067 (Lifetime Anchors) — `&r T` / `&r mut T`; lifetime anchors; variance in `T`
   for mutable borrows.
 - RFC-0068 (Struct-Owned Allocators) — `(@a: AllocType)` and the implicit-`a` rule for
   `impl` blocks; §1.3 of this RFC provides the complementary rule for external allocators.

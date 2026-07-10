@@ -199,4 +199,4 @@ impl Parser {
 
 - RFC-0063 (Allocator Handles) — allocator values; `@a expr`; sendability.
 - RFC-0065 (Allocator Ergonomics) — `@`-elision; two-or-more allocator discipline.
-- RFC-0067 (Lifetime Anchors and Allocator-Pointer References) — `&r T` / `&r mut T`; `&self` denotation in return types.
+- RFC-0067 (Lifetime Anchors) — `&r T` / `&r mut T`; `&self` denotation in return types.

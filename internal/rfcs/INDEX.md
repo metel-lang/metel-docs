@@ -13,13 +13,14 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**94 RFCs total.** 27 draft, 1 under review, 18 accepted, 3 integrated (new stage — see
-`PROCESS.md`) (49 "live" — need active tracking), 25 implemented, 9 superseded, 11
-refused (45 "settled" — reference only). (RFC-0055 moved draft → superseded 2026-07-09,
+**94 RFCs total.** 27 draft, 1 under review, 17 accepted, 3 integrated (new stage — see
+`PROCESS.md`) (48 "live" — need active tracking), 25 implemented, 9 superseded, 12
+refused (46 "settled" — reference only). (RFC-0055 moved draft → superseded 2026-07-09,
 reconciled into RFC-0092/0093/0095 — see below. **2026-07-10:** the allocator/lifetime
 cluster — RFC-0063/0065/0066/0067/0068/0073/0077 — swept from under-review to accepted;
 only RFC-0080 remains under review. Same day: RFC-0067a/0078/0083 became the first RFCs
-to reach `3-integrated`, merged into `public/reference/spec/`.)
+to reach `3-integrated`, merged into `public/reference/spec/`; RFC-0067 renamed to
+"Lifetime Anchors"; RFC-0084 refused, having reverted to a no-op.)
 
 ---
 
@@ -90,8 +91,10 @@ number, a backwards RFC-0067a split direction).
 - **RFC-0066** *(accepted)* — Allocated Value Extraction — individual drop/move-out; the
   RFC that triggered the whole cluster-wide split. Renamed from "Region Pointer
   Extraction" 2026-07-10 to match how every other RFC already referred to it.
-- **RFC-0067** *(accepted)* — Lifetime Anchors and Allocator-Pointer References — the
-  narrowed remainder after RFC-0067a was split out and accepted separately.
+- **RFC-0067** *(accepted)* — Lifetime Anchors — the narrowed remainder after RFC-0067a
+  was split out and accepted separately. Renamed 2026-07-10 from "Lifetime Anchors and
+  Allocator-Pointer References" (`rfc-0067-lifetime-anchors.md`) — the dropped half of
+  the title duplicated RFC-0063/RFC-0066's own naming.
 - **RFC-0067a** *(integrated 2026-07-10)* — Reference Types — plain `&T`/`&mut T`,
   auto-deref. No allocator/borrow-checker dependency; already sequenced into Cluster A.
   Integrated into `public/reference/spec/types.md` and `expressions.md`; gained a new
@@ -134,9 +137,6 @@ Nothing open here; these are the load-bearing accepted RFCs everything else cite
   `heap`/`local_heap` case is obsolete under the ratified allocator design (RFC-0063/0065
   reference them by type name, no instance value needed); replaced with exported-constant
   examples. Not yet implemented.
-- **RFC-0084** — Fixed-Size Array Syntax — reaffirms RFC-0053's `[T; N]`/`[expr; N]`
-  (reverted 2026-07-10 from an earlier `T[N]` proposal; never implemented either way).
-
 ## Linear closures / concurrency
 
 - **RFC-0049** *(draft)* — `linear fun` Type System — unconsumed-scope-exit, `Drop`
@@ -179,9 +179,11 @@ RFC-0009 (module system → RFC-0030), RFC-0012 (→ RFC-0092/0093/0094/0095), R
 which was then refused — RFC-0089 re-homes this), RFC-0029 (module system gaps),
 RFC-0055 (comptime → RFC-0092/0093/0095, reconciled 2026-07-09 — see above).
 
-**Refused (11):** RFC-0025, 0028, 0046-0048, 0051, 0056, 0069, 0085-0087 — mostly the
-earlier region/lifetime model iterations that didn't survive the 2026-07-05 split, plus
-RFC-0046 (linear closure capture, blocking RFC-0050's `move` half).
+**Refused (12):** RFC-0025, 0028, 0046-0048, 0051, 0056, 0069, 0084, 0085-0087 — mostly
+the earlier region/lifetime model iterations that didn't survive the 2026-07-05 split,
+plus RFC-0046 (linear closure capture, blocking RFC-0050's `move` half), plus RFC-0084
+(refused 2026-07-10 — reverted in place to reaffirm RFC-0053's `[T; N]`/`[expr; N]`
+exactly, with nothing left of its own to propose).
 
 ---
 
