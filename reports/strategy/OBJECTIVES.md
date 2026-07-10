@@ -109,6 +109,37 @@ new RFCs, a new lifecycle stage, tooling, this document — and never once trigg
 ratification sweep, despite nothing blocking it. That's the pattern to watch: not whether L3
 design kept happening, but whether the unblocked, already-settled layer kept not getting built.
 
+### Corollary, 2026-07-10: the interpreter is a temporary feedback mechanism, not the target structure
+
+Follows from the meta-risk framing above and a sequencing decision already visible in the
+ClickUp tracker (the METEL-123/METEL-171 split), made explicit rather than re-derived each
+time it matters. The current interpreter's job is to produce real-program feedback the design
+can't get any other way — not to be, or to become through careful internal refactoring, the
+eventual compiler. METEL-171 already defers monomorphization strategy, ABI/calling-convention
+design, MIR/CFG lowering, and closure-codegen metadata until after "the v0.8.1 elaboration
+pipeline lands and the interpreter boundary is stable" — a real compiler-direction decision
+this interpreter is a precursor to, not an instance of.
+
+**The filter this gives:** interpreter-internals work falls into one of two budgets, and only
+the first is worth spending on now:
+
+- **Feedback-trustworthiness budget** — work needed so the interpreter's behavior is a
+  reliable signal about the *design*, not an artifact of how the interpreter happens to be
+  built. Sprint 25's SymbolId/coherence-pipeline work is this: it exists because the prior
+  string-keyed dispatch was producing real bugs (METEL-185's string-fallback notes), and a
+  buggy interpreter can't tell you whether a language-design question is wrong or just
+  mis-executed. Worth doing regardless of whether this interpreter's structure survives.
+- **Forward-structure budget** — work that only pays off if this interpreter's internals
+  persist into whatever comes after METEL-171's compiler-direction decision: consolidating a
+  scattered monomorphization pass, clean IR shape, ABI/calling-convention groundwork. Not
+  worth spending on now — the tracker already made this call once, by scoping it into
+  METEL-171 specifically to hold it out of the current sprint.
+
+**Applied to the concrete case that raised this:** the monomorphization pass being scattered
+across the codebase is real, but consolidating it belongs to the forward-structure budget
+unless the scattering is itself producing incorrect programs — in which case it moves to the
+trustworthiness budget and the calculus flips. Nothing surfaced so far indicates the latter.
+
 ---
 
 ## 2. Current priorities
@@ -199,6 +230,11 @@ of what was watched for and what actually happened is part of the point.
 8. ⬜ **New, 2026-07-09.** The `3-integrated` backlog (14 RFCs — see `PROCESS.md`) — does it
    start shrinking, or does it just grow alongside the draft/under-review pile? A backlog that
    only grows is a sign the new stage isn't actually being used, not just that it's early.
+9. ⬜ **New, 2026-07-10.** Watch for the "interpreter is temporary" corollary (§1) being
+   misapplied to justify skipping *feedback-trustworthiness* work under cover of "it's all
+   throwaway anyway" — e.g. a real dispatch bug shrugged off instead of fixed. That's a
+   misuse of the corollary, not an instance of it; the corollary only excuses
+   forward-structure work (§1), never correctness.
 
 ---
 
@@ -212,6 +248,7 @@ of what was watched for and what actually happened is part of the point.
 | 2026-07-07 | (predates this document) | `integrated-language-overview-2026-07-07.md`, `reports/implementation/roadmap-2026-07-07.md` |
 | 2026-07-08 | (predates this document) | `strategic-overview-2026-07-08.md` |
 | 2026-07-09 | This document created, seeded from 07-08 and 07-07; RFC-0012 split into RFC-0089–0095; RFC-0055 reconciled; `INDEX.md`/`PROCESS.md`/`rfc.py` created; Priority 2a's ToRecord-floor tension surfaced (Trigger 6) | *(none yet — no dated overview written this cycle)* |
+| 2026-07-10 | Corrected the RFC-0092/generics citation in the meta-risk section (generics were already implemented, not a future action); RFC-0084 reversed to keep `[T; N]`/`[expr; N]`; added the "interpreter as temporary feedback mechanism" corollary (§1, Trigger 9) after a ClickUp check found no sprint task consolidating the scattered monomorphization pass | *(none yet)* |
 
 ---
 
