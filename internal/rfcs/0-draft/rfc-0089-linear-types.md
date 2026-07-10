@@ -36,6 +36,14 @@ target:
 > consumption floor — the "no dependency on structural records" claim above no longer
 > holds for that specific case, though the `Linear` aspect, lattice, and keyword sugar
 > (§1-2, §4-5) remain fully independent of RFC-0090.
+>
+> **Revised 2026-07-10.** §3.1 added: fiat-linearity (§2.1) has a gap at the `ToRecord`
+> boundary — a record's `Linear` status is always recomputed from its row alone (RFC-0090
+> §5), so a struct forced `Linear` by fiat rather than by any field's own multiplicity
+> silently loses that status on conversion. Resolved using a brand, not a synthetic field:
+> the derived conversion for such a struct carries the source's brand, and the derive
+> emits one ordinary explicit `impl Linear` against that specific branded shape.
+> Corresponding amendment in RFC-0090 §8.
 
 ## Summary
 
@@ -219,6 +227,54 @@ the point of consumption with no explicit `.to_record()` call needed — is spec
 RFC-0091 (Linear Records) as an additive extension on top of this floor, not a
 prerequisite for it.
 
+### 3.1 Fiat-linear structs: `ToRecord` must preserve the origin brand, not produce a bare row
+
+§2.1's fiat-linearity (`impl Linear for Receipt {}`, forcing a struct `Linear` with no
+field of its own requiring exactly-once handling) creates a gap the rest of §3 doesn't
+cover. `.to_record()`'s output is `Linear` only via RFC-0090 §5's structural join over
+the row — recomputed from field types alone. For a struct whose `Linear` status is *not*
+explained by any field (the entire point of fiat), the produced record's row contains
+nothing that would make the join rule return `Linear`, and the fiat assertion is silently
+lost: `receipt.to_record()` followed by letting the result fall out of scope would
+typecheck today, discharging a "must consume exactly once" obligation with no
+consumption having occurred.
+
+**Why a synthetic marker field is the wrong fix.** The natural first idea — add a hidden,
+zero-sized field whose own type is genuinely `Linear`, so the ordinary join rule produces
+the right answer with no new mechanism — treats a nominal fact (this bundle, not any
+particular field, must be handled once) as if it were structural content. It works
+mechanically, but requires the row/`HasField` machinery to support fields invisible even
+to the declaring module's own field access, and misattributes *why* the record is linear
+to a field that was never really there.
+
+**Resolution: a brand-carrying `ToRecord`, for this case only.** Fiat linearity is a
+nominal-identity fact, and brands (RFC-0074/RFC-0076, `brand-kind-unification.md`) are
+this design's existing mechanism for nominal facts that must survive a structural
+conversion — a brand cannot itself carry the "consume exactly once" obligation (it sits
+at multiplicity `0`, outside the lattice entirely, per §1; something erased was never a
+runtime value to consume), but it can preserve *which specific origin* a converted value
+came from, which is the actual missing ingredient. For a struct whose `Linear` status is
+not fully explained by its own row, `ToRecord`'s derive produces a record that carries
+the source's brand rather than RFC-0090 §8's ordinarily-bare row: `record { id: i64 } @
+'receipt-origin` instead of a plain `record { id: i64 }`. The derive (RFC-0093's `emit`)
+then generates one ordinary, explicit `impl Linear for record { id: i64 } @
+'receipt-origin {}` against that exact branded shape — no new coherence primitive, no
+dynamic brand-to-aspect lookup: an explicit impl targeting one specific nominal/branded
+type is completely ordinary machinery, and the brand is what makes the target specific
+enough that unrelated same-shaped records (which carry no such brand, or a different one)
+are correctly unaffected.
+
+This composes with RFC-0090 §9 / RFC-0091 §2.2's existing `(row, brand)` residual idea
+rather than introducing a fourth mechanism alongside it — see RFC-0090 §8 for the
+corresponding amendment to the tier-2 conversion itself.
+
+**Scope, stated precisely: this only applies when `Linear` isn't row-derivable.** A
+struct that is `Linear` purely because a field is (the ordinary case throughout the rest
+of this RFC) converts to a fully bare, brand-less record exactly as RFC-0090 §8 already
+specifies — the join rule alone already gets the right answer, and attaching a brand
+there would be spending machinery nothing asked for, the exact thing RFC-0090's tier
+discipline (§8) is built to avoid.
+
 ---
 
 ## 4. `NonLinear<T>`: a standalone, nameable projection
@@ -290,6 +346,15 @@ decision between two different models.
    canonical path is conversion to a record (RFC-0090) first, an entirely separate
    mechanism from RFC-0071's affine side-table. No extension of that side-table for
    linear fields is needed.
+6. **New, 2026-07-10.** The brand-carrying `ToRecord` for fiat-linear structs (§3.1) is a
+   candidate, not a proven mechanism — no soundness argument is written down, only the
+   shape of one, matching the standard this cluster already holds RFC-0091's Option C to.
+   Needs: (a) confirmation that a derive-emitted impl against one specific branded record
+   shape is genuinely unreachable by any other code (i.e., the brand is unforgeable from
+   outside the derive — plausible given brand rigidity/freshness, RFC-0076, but not
+   proven here); and (b) a decision on whether `FromRecord` for such a struct needs to
+   check the brand matches before reconstructing, or whether the row alone suffices once
+   the value is back in nominal form.
 
 ---
 
@@ -319,7 +384,13 @@ and its open aliasing question remain explicitly not required for the deadline.
   satisfies, together with RFC-0090
 - RFC-0090 (Structural Records — Rows and Tiers) — the `record` type-former and tier 2
   (`ToRecord`/`FromRecord`) §3 depends on as the canonical partial-consumption
-  mechanism
+  mechanism; §8 there carries the corresponding amendment for §3.1's brand-carrying
+  conversion
+- RFC-0074 (Shared Ownership), RFC-0076 (Rc Brands) — brand rigidity/freshness
+  properties §3.1's derive-emitted impl depends on being unforgeable from outside
+- `brand-kind-unification.md` — the erased/value-channel distinction (§4 there) that
+  separates "a brand carries the obligation" (no) from "a brand preserves identity so
+  the obligation can still be checked" (yes), the distinction §3.1 turns on
 - RFC-0024 (Linear Types, superseded) — prior exploration; superseded by RFC-0028
 - RFC-0028 (Memory and Reference Model, refused) — its foundation-layer content is what
   this RFC re-homes, using the more developed design from `linear-types.md` rather than

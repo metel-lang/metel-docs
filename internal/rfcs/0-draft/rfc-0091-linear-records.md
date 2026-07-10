@@ -179,6 +179,15 @@ whole struct, narrowing exactly what must be un-borrowed for the consumption to 
 legal. Promising, not proven; no soundness argument is written down here either, only
 the shape of one.
 
+**A second application of the same idea, added 2026-07-10:** RFC-0089 §3.1 reuses
+`(row, brand)` for a different purpose than this section's residual identity —
+preserving a *fiat*-linear struct's nominal origin through an ordinary tier-2
+`ToRecord` conversion, so a derive-emitted `impl Linear` can target that specific
+branded shape instead of the conversion's `Linear` status silently reverting to
+whatever the bare row implies. Worth noting here because it's the same underlying
+move (a brand riding along with a row after a struct-to-record conversion) applied to
+a second problem, not a third mechanism.
+
 ---
 
 ## 3. Worked examples

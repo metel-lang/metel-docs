@@ -15,6 +15,12 @@ target:
 > (RFC-0092/0093) — `ToRecord`/`FromRecord` are ordinary, hand-writable aspects; only the
 > convenience of auto-deriving them depends on comptime, and that convenience is
 > RFC-0093's concern, not this RFC's.
+>
+> **Revised 2026-07-10.** §8 amended: tier 2's conversion is bare/anonymous *except* for
+> a fiat-linear source struct (RFC-0089 §2.1), whose `Linear` status a bare row can't
+> represent (RFC-0089 §3.1). For that narrow case, the derived conversion carries the
+> source's brand and the derive emits one explicit `impl Linear` against that specific
+> branded shape — full mechanism and scope in RFC-0089 §3.1.
 
 ## Summary
 
@@ -362,6 +368,28 @@ impl-resolution time, which no amount of explicit conversion machinery provides.
 `Handle` itself is still never usable where a row-generic bound is expected — only
 `view` is, and only for as long as it's held.
 
+**Exception: a fiat-linear source struct's `ToRecord` output carries its origin brand,
+not a bare row.** RFC-0089 §2.1 allows a struct to be declared `Linear` by fiat (`impl
+Linear for Receipt {}`), independent of any field's own multiplicity. The tier-2
+conversion specified above cannot represent that fact as stated: a record's `Linear`
+status is always recomputed from its row alone (§5's field-composition rule), and a fiat
+assertion isn't row content, so it would otherwise be silently lost by an ordinary bare
+conversion. For this narrow case only — a struct whose `Linear` status the row cannot
+reconstruct on its own — the derived `.to_record()` output carries the source struct's
+brand, and the derive (RFC-0093) emits one ordinary explicit `impl Linear` against that
+specific branded shape. See RFC-0089 §3.1 for the full mechanism, its worked example, and
+its scope.
+
+This does not itself erode the tier 2 / tier 3 boundary either: carrying a brand for
+aspect-impl-targeting purposes is not the same capability as row-conditional-impl
+eligibility, which tier 2 still lacks entirely regardless of this exception — a value
+produced this way is nominally distinguishable enough to host one specific explicit impl,
+but still cannot satisfy `HasField`/`Lacks` bounds or match row-conditional impls the way
+a true tier-3 named record can. The exception is scoped exactly as narrowly as RFC-0089
+§3.1 states: ordinary structurally-linear structs (the overwhelming majority) keep
+converting to a fully bare, brand-less record exactly as specified above — this fires
+only when the row alone cannot already answer the `Linear` question correctly.
+
 **No implicit coercion at call sites, regardless of tier.** A `ToRecord`-deriving
 struct must never be silently accepted wherever a row-generic bound is expected —
 `.to_record()` has to appear in the source. Allowing implicit structural coercion here
@@ -530,6 +558,11 @@ this idea, specified in RFC-0091, not here.
     (§8)** — the `SortedPair` case shows auto-derived reconstruction can silently skip
     validation a hand-written constructor enforces; no compile-time check for this is
     proposed.
+11. **Whether the brand-carrying `ToRecord` exception (§8, RFC-0089 §3.1) needs its own
+    coherence check** to guarantee no other code can independently produce a value
+    carrying the same brand plus a conflicting impl. Likely resolves to "no need" given
+    brand rigidity/freshness (RFC-0076) — the brand is unforgeable from outside the
+    derive — but this is asserted, not proven, matching RFC-0089's own Open Question 6.
 
 ---
 
