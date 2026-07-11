@@ -397,6 +397,32 @@ fun main() {
 }
 ```
 
+### Aspect Implementation Coherence
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0060-aspect-impl-coherence.md`; the interpreter currently has no orphan-rule or overlap check, so any impl is accepted regardless of where it's written.
+
+Every `(aspect, type)` pair has at most one implementation visible to the program, independent of module load order. Two rules make this checkable without a whole-program scan.
+
+**Orphan rule.** `impl Aspect for Type` is permitted only when at least one of `Aspect` or `Type`'s outermost type constructor is declared in the same module as the impl. Built-in aspects and built-in types count as local to `std::core`.
+
+```metel
+impl Display for MyStruct { ... }  // ok: MyStruct is local
+impl MyAspect for i64 { ... }      // ok: MyAspect is local
+impl Display for i64 { ... }       // ok only inside std::core: both are foreign elsewhere
+```
+
+A violating impl is `T0014 — orphan implementation`. The orphan rule is what keeps coherence a local, per-module property: a module can only add impls it owns at least one half of, so no other module's impls need to be consulted to know whether a given impl is even legal.
+
+**Overlap detection.** Two impls of the same aspect conflict when some concrete type instantiation would satisfy both. `impl Display for List<i64>` and `impl Display for List<String>` don't conflict — disjoint element types — but registering either one twice does. A conflict is `T0015 — conflicting implementation`, reported at both impl spans. Combined with the orphan rule, an overlap can only arise within a single module or between a module and `std::core`, so this check is local too.
+
+**Closed-world assumption.** The set of impls in a program is fixed at compile time — nothing visible at compilation can add an impl later. This is what makes Negative Bounds, below, dischargeable from absence alone: `T: !Aspect` holds whenever no impl, concrete or blanket, applies to `T`, without requiring an explicit negative impl for every excluded type. A blanket `impl<T: Foo> Bar for T` is expanded when checking applicability — `T: !Bar` is provable only once no applicable blanket covers `T` either.
+
+**Auto-impl aspects.** A marker aspect (no methods) may be an auto-impl aspect: the compiler derives an implementation for any type whose field types (all of them, for a struct; all of them in every variant, for an enum) also implement the aspect, with no explicit `impl` required. `Send`/`Sync` are intended auto-impl aspects once `internal/rfcs/1-under-review/rfc-0080-stdlib-aspects.md` (currently under review, not yet accepted) settles — an auto-impl is an ordinary positive impl for coherence purposes: overlap detection and negative-impl override both apply to it the same as an explicit one. The surface syntax an aspect declaration uses to opt into auto-impl is deferred to the derive-registration mechanism (RFC-0093, draft).
+
+**Negative impl priority.** See Negative Impls, below, for the mechanism itself; the priority order coherence establishes is: an explicit negative impl beats an auto-impl or blanket positive impl for the same type, but an explicit positive impl and an explicit negative impl for the same concrete type is itself a `T0015` coherence error, not a priority question.
+
+**What this deliberately doesn't cover.** Coherence here is scoped to a single program's module graph — a future package system, compiling packages separately, needs its own cross-package coherence model, not addressed here. Rejected alternatives (a global overlap check without the orphan rule, last-impl-wins ordering, an open-world assumption, specialisation) are recorded in the RFC, not repeated here — each fails a property this design keeps: coherence errors are local and order-independent, and overlapping impls are always illegal rather than resolved by specificity.
+
 ### Associated Types
 
 > **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0082-associated-types.md`; this syntax is already assumed by the aspects below and by stdlib types like `Deref`, but isn't checked by the typechecker until that RFC's tracking task closes.
@@ -646,10 +672,8 @@ fields still drop normally through the ordinary per-field chain.
 > Negative bounds do not by themselves let a type opt out of an aspect an existing
 > blanket impl would otherwise grant — that's Negative Impls, directly below. Negative
 > bounds are a use-site constraint; negative impls are a definition-site declaration
-> that affects what the negative-bound check finds. Coherence rules governing which
-> impls are reachable (RFC-0060) are accepted but not yet integrated; until then, this
-> section describes the ratified rule, checked against whatever impl-lookup behavior
-> the interpreter currently has.
+> that affects what the negative-bound check finds. See Aspect Implementation
+> Coherence, above, for exactly which impls are reachable in the first place.
 
 ### Negative Impls
 
@@ -677,9 +701,10 @@ coherence error. A negative impl overriding a *blanket* positive impl is the int
 allowed case; a negative impl does not propagate to subtypes or supertypes (`impl !Send
 for Rc<T>` says nothing about `Arc<T>`).
 
-**Orphan rules apply the same way as positive impls** (RFC-0060, accepted, not yet
-integrated) — a negative impl is permitted only when the aspect or the type is local to
-the current module or stdlib.
+**Orphan rules apply the same way as positive impls** (Aspect Implementation Coherence,
+above) — a negative impl is permitted only when the aspect or the type is local to
+the current module or stdlib. A positive and a negative impl for the same concrete
+type is `T0015`, the same coherence error two conflicting positive impls produce.
 
 ---
 

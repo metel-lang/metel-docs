@@ -143,6 +143,35 @@ call like `value.method()` does not have a unique static target.
 **Fix:** rename one of the methods, remove one of the conflicting impls, or change the
 design so the receiver type does not expose two indistinguishable aspect methods.
 
+### T0014 — Orphan implementation
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0060-aspect-impl-coherence.md`.
+
+An `impl Aspect for Type` where neither `Aspect` nor `Type`'s outermost type
+constructor is declared in the current module (or `std::core`, for built-ins).
+
+```
+[T0014] type error in main.mtl at 1..40: orphan implementation: neither `Display` nor `i64` is local to this module
+```
+
+**Fix:** move the impl into the module that declares the aspect or the type, or (for
+two foreign types) into `std::core` if this is genuinely a standard-library concern.
+
+### T0015 — Conflicting implementation
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0060-aspect-impl-coherence.md`.
+
+Two impls of the same aspect cover the same concrete type — either two identical
+impls, or a positive and a negative impl (see Negative Impls in the declarations
+reference) for the same concrete type.
+
+```
+[T0015] type error in main.mtl at 1..40: conflicting implementation: `Display` is already implemented for `List<i64>` at 10..30
+```
+
+**Fix:** remove the duplicate impl, or narrow one impl's type arguments so the two no
+longer overlap.
+
 ---
 
 ## Runtime errors (R)
