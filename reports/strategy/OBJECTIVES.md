@@ -3,7 +3,7 @@ id: strategic-objectives
 title: "Strategic Objectives, Priorities, and Watch List"
 type: report
 status: active
-last_reviewed: '2026-07-09'
+last_reviewed: '2026-07-11'
 ---
 
 # Strategic Objectives, Priorities, and Watch List
@@ -158,7 +158,13 @@ already resolved them in a separate document with no sync back to the RFC itself
 drift `PROCESS.md`'s ratification/consistency step exists to catch), plus stale
 "Region..." titles on RFC-0066/0068 that never got renamed when the rest of the cluster moved
 to "Allocator" terminology. Both fixed before sweeping. RFC-0080 is now the only RFC left
-under review.
+under review, unchanged since — no movement this cycle.
+
+**Follow-through, 2026-07-10/11:** six of this cluster's RFCs (RFC-0067a/0072/0078/0081/0082/0083)
+went the rest of the way through `3-integrated`, each surfacing a real spec-vs-design gap while
+writing worked examples (Trigger 8). Their `impl_tracking` fields were later repointed from
+ClickUp to Codeberg Issues (#236/#243/#234/#264/#242/#235) as a side effect of the task-tracker
+migration below — a mechanical link update, not a status or design change.
 
 ### Priority 2a — The floor, plus tiers 1/2
 
@@ -188,9 +194,17 @@ still exploration-only, no RFC, exactly where `integrated-language-overview-2026
 worth deciding at the next review whether to split it the way Priority 2 itself was already
 split from Priority 1.
 
+**Re-verified 2026-07-11, unchanged:** no commits touched `reports/substructural-types/`,
+RFC-0089, or RFC-0090 since 07-09 (checked directly against `git log`). Trigger 6's tension
+is exactly as unresolved as when it was opened.
+
 ### Priority 3 — Lower-level memory API and unsafe blocks
 
-Unchanged. Nothing this session touched this priority's reasoning or ranking.
+**Unchanged again — now flagged, see Trigger 11.** Nothing has touched this priority's
+reasoning or ranking across every cycle in this document's review log (07-01 through
+07-11). That's the same shape Priority 1 sat in for six cycles before the meta-risk
+section (§1) named it explicitly as the concrete instance of the risk it warns about.
+This document owes Priority 3 the same scrutiny, not a seventh consecutive "unchanged."
 
 ---
 
@@ -223,10 +237,11 @@ of what was watched for and what actually happened is part of the point.
    RFC-0090's record machinery to satisfy RFC-0063 §9 item 5, or does that dependency need
    removing to preserve the "narrow, no row kind" property `integrated-language-overview-07-07`
    wanted? Neither RFC currently states the conflict; resolve or explicitly accept it.
-7. ⬜ **New, 2026-07-09.** Does `INDEX.md` + `rfc.py`'s overlap check actually prevent a
-   second RFC-0055-shaped silent duplication going forward, or does it quietly fall out of use
-   the way the undocumented process before it did? Check at the next review whether `rfc.py
-   new` was actually run before any RFC created since.
+7. ⬜ **Open, still untested as of 2026-07-11.** Does `INDEX.md` + `rfc.py`'s overlap check
+   actually prevent a second RFC-0055-shaped silent duplication going forward, or does it
+   quietly fall out of use the way the undocumented process before it did? Still can't be
+   checked — zero new RFCs were created this cycle (confirmed via `git log`), so `rfc.py new`
+   has had no opportunity to be run or skipped. Keep watching at the next RFC creation.
 8. 🟡 **Fired twice the same day, 2026-07-10 — now a real trend, not just one cycle.**
    First RFC-0067a/0078/0083, then RFC-0072/0081/0082, moved from accepted through
    integrated, merged into `public/reference/spec/`. Every single one of these six
@@ -240,11 +255,31 @@ of what was watched for and what actually happened is part of the point.
    Still open: 6 RFCs remain in the backlog (RFC-0008, 0036, 0037, 0060, 0061, 0071).
    RFC-0079/0084 left the backlog by refusal, not integration — worth noting that path
    exists too. Keep watching whether the remaining 6 keep moving or the pace stalls.
+   **Update, 2026-07-11: the pace stalled this cycle** — none of the remaining 6 moved, and
+   RFC-0080 (the sole under-review RFC) didn't either. Not neglect: the cycle's effort went
+   into closing a gap the *previous* integration batch exposed (the spec's "Not yet
+   implemented" callouts had no enforced removal step — now fixed, see review log). Still,
+   a stall is a stall; if the next cycle also produces no movement on the remaining 6 with
+   no comparably concrete reason, that's the pattern worth calling out, not this one alone.
 9. ⬜ **New, 2026-07-10.** Watch for the "interpreter is temporary" corollary (§1) being
    misapplied to justify skipping *feedback-trustworthiness* work under cover of "it's all
    throwaway anyway" — e.g. a real dispatch bug shrugged off instead of fixed. That's a
    misuse of the corollary, not an instance of it; the corollary only excuses
    forward-structure work (§1), never correctness.
+10. ⬜ **New, 2026-07-11.** Task tracking moved from ClickUp to Codeberg Issues, explicitly to
+    avoid vendor lock-in and eventually enable outside contributors. Neither payoff is
+    verified yet — the migration only proves the mechanics work. Watch for: any issue or PR
+    filed by a non-maintainer; whether `tea-paced.sh` and the RFC-tooling enforcement added
+    this cycle actually get reused next time rather than being one-off tooling nobody revisits
+    (the same question Trigger 7 already asks about `rfc.py new` — this is that question's
+    sibling for the tracker migration).
+11. ⬜ **New, 2026-07-11.** Priority 3 (lower-level memory API and unsafe blocks) has now gone
+    unactioned across every cycle in this document's review log (07-01 through 07-11) — the
+    same shape Priority 1 sat in for six cycles before §1's meta-risk section named it
+    explicitly. Unlike Priority 1, nothing currently blocks Priority 3 from being picked up
+    either. If the next cycle again produces no movement here with no L3-shaped reason (the
+    way this cycle's stall on Trigger 8 had one), that's the concrete recurrence of the
+    meta-risk this document exists to catch.
 
 ---
 
@@ -262,13 +297,16 @@ of what was watched for and what actually happened is part of the point.
 | 2026-07-10 | Priority 1 done: allocator/lifetime cluster (RFC-0063/0065/0066/0067/0068/0073/0077) ratified to accepted after a consistency pass fixed real drift (RFC-0063 §9 items 1/2/5 out of sync with the roadmap's Phase 0 decision; stale "Region..." titles on RFC-0066/0068). Trigger 5 fired and resolved. | *(none yet)* |
 | 2026-07-10 | RFC-0067a/0078/0083 became the first RFCs to reach `3-integrated`, merged into `public/reference/spec/`; each surfaced a real problem while writing worked examples (Trigger 8 partially fired) | *(none yet)* |
 | 2026-07-10 | RFC-0072/0081/0082 followed the same day, merged into `declarations.md`; RFC-0067/0079/0084 also handled (renamed, refused, refused respectively). Trigger 8 fired again — 6 RFCs left in the `3-integrated` backlog (was 14) | *(none yet)* |
+| 2026-07-10/11 | RFC-0082's associated-type disambiguation hardened further: a second candidate syntax (`<T:Aspect>::AssocType`) considered and rejected against `grammar.md`, recorded in the RFC only (not the spec) per explicit direction. `metel-core/AGENTS.md` and `metel-docs/internal/versioning.md` reconciled (both had stale, contradictory task-tracker/RFC-lifecycle docs); `AGENTS.md`'s repo-slug typo (`metel-lang/metel` → `metel-lang/metel-core`) fixed. Task tracking fully migrated from ClickUp to Codeberg Issues: 49 pre-existing stale/duplicate Codeberg issues reconciled (closed with explanatory comments or reused instead of duplicated), 34 active tasks migrated, 10 labels + 1 milestone created, 6 integrated RFCs' `impl_tracking` repointed to the new issue URLs. Self-hosting a Forgejo instance assessed as feasible (this environment's own Hetzner box could run it) but explicitly deferred — Codeberg's discoverability for future outside contributors outweighs full control, for now. `internal/rfcs/tools/rfc.py` gained enforcement for the spec's "Not yet implemented" callouts: required to be one-liners, `transition --to implemented` now refuses to run while one still exists for that RFC, `check` flags any that survive anyway — closing a real gap the previous integration batch left open. Triggers 7/8 updated (both still open, for different reasons); Triggers 10/11 opened. | `strategic-overview-2026-07-11.md` |
 
 ---
 
 ## References
 
 - `strategic-overview-2026-07-08.md` — priorities and triggers this document was seeded from
+- `strategic-overview-2026-07-11.md` — this cycle's dated narrative snapshot
 - `integrated-language-overview-2026-07-07.md` — long-term objectives, the meta-risk framing,
   and the "narrow, no row kind" floor property Trigger 6 checks against
 - `internal/rfcs/PROCESS.md` — the RFC lifecycle this document's priorities reference
 - `internal/rfcs/INDEX.md` — current RFC state by number and cluster
+- `metel-core/AGENTS.md` — Codeberg Issues task-tracking design (Trigger 10)
