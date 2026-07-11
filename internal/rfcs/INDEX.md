@@ -66,7 +66,12 @@ was found and reconciled, and where this session did most of its work.
   not a bespoke mechanism (revised 2026-07-09). `Linear`'s auto-impl categorization
   now depends on RFC-0096 for the shared mechanism it's an instance of.
 - **RFC-0090** — Structural Records — Rows and Tiers — `HasField`/`Lacks`, `record`
-  type-former, three-tier capability model. No dependency on comptime.
+  type-former, three-tier capability model. No dependency on comptime. §1 calls
+  `HasField` an extension of RFC-0080's auto-impl pattern; RFC-0096 §7 (2026-07-11)
+  works out that it's a family with existential satisfaction, not the same mechanism
+  as `Send`/`Sync`/`Linear`, and flags two gaps RFC-0090 itself leaves open
+  (whether `HasField` goes through impl coherence at all; a string-literal bound
+  argument `grammar.md` doesn't cover).
 - **RFC-0091** — Linear Records — per-field multiplicity, automatic-downgrade partial
   consumption, the `uses(fd)` Drop mechanism. Depends on RFC-0089 + RFC-0090.
 - **RFC-0092** — Comptime Core — `type`-as-value, `typeinfo`, single-declaration
@@ -88,9 +93,15 @@ was found and reconciled, and where this session did most of its work.
   fourth instance of this mechanism, since RFC-0071 §3 already makes `Drop` opt-in
   for structs/enums. Also found, in passing, that RFC-0050 independently derived
   the same closure-capture `Send` rule without citing a shared source — a fourth
-  uncited instance of the pattern this RFC names. 5 Unresolved Questions recorded
-  (unit variants, raw pointers, `Linear`'s missing reference rule, the RFC-0061 §5
-  heading fix, whether the closed list is expected to grow). No behavior change to
+  uncited instance of the pattern this RFC names. **Corrected later 2026-07-11:** §1's
+  "closed list of three" claim was itself wrong — RFC-0090 §1 independently calls
+  `HasField`/`Lacks` an extension of this same pattern, missed on the first pass
+  (different INDEX.md cluster). New §7 explains why it's related but not a fourth
+  fixed-marker instance (a parameterized family with existential, not universal,
+  satisfaction — possibly outside the impl/coherence system entirely). 6 Unresolved
+  Questions recorded (unit variants, raw pointers, `Linear`'s missing reference rule,
+  the RFC-0061 §5 heading fix, whether the fixed-marker category is expected to grow,
+  whether `HasField` goes through coherence at all). No behavior change to
   `Send`/`Sync`/`Linear` themselves.
 - **RFC-0094** — Comptime Metaprogramming — generalized `emit`, comptime-callable
   parsing, diagnostics, body-reflection scoping. Depends on RFC-0092 only; independent

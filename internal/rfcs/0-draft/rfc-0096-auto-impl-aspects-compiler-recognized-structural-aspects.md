@@ -15,6 +15,14 @@ target:
 > auto-impl aspects from its own scope (§2: "`Linear` does not belong on this list...
 > no `@derive(Linear)` annotation is needed or meaningful"). This RFC is the missing
 > piece those four all assume exists.
+>
+> **Correction (2026-07-11, later the same day):** §1's original text claimed the
+> auto-impl list was closed at exactly these three. Wrong — RFC-0090 (Structural
+> Records) §1 independently calls `HasField`/`Lacks` "an extension of RFC-0080's
+> auto-impl pattern," a fifth document assuming this mechanism, missed on the first
+> pass because RFC-0090 sits in a different INDEX.md cluster than RFC-0080/0089/0061.
+> §1, §6, References, and Unresolved Question 5 corrected; new §7 explains why
+> `HasField`/`Lacks` is related but not simply a fourth instance of §2's algorithm.
 
 ## Summary
 
@@ -35,6 +43,9 @@ RFC-0080 itself — specifies what this RFC settles:
    compiler-synthesized conditional impl (RFC-0036), not a single eager classification.
 4. **That `Drop` is not a fourth member of this set** (§4), correcting a plausible
    misreading of RFC-0061 §5's heading against already-accepted behavior (RFC-0071 §3).
+5. **That `HasField`/`Lacks` (RFC-0090) is related but not a fourth *fixed-marker*
+   member either** (§7) — a family with an existential satisfaction rule, structurally
+   unlike §2's algorithm, and possibly outside the aspect/impl system entirely.
 
 This RFC does not change what `Send`/`Sync`/`Linear` compute — RFC-0080 §3.2/§4.2 and
 RFC-0089 §2's rules are unchanged and are not repeated in full here. It answers *why*
@@ -70,7 +81,7 @@ answer from three RFCs that each assumed someone else had written it down.
 
 ---
 
-## 1. Recognition: a closed, compiler-intrinsic list — not a declaration-level marker
+## 1. Recognition: a closed, compiler-intrinsic list for single marker aspects
 
 An aspect is auto-impl because the compiler's own source recognizes its identity, the
 same way `i64`, `String`, and the rest of `SymbolTable`'s seeded entries are recognized
@@ -87,10 +98,14 @@ spelling — no attribute, no keyword — by which a user's own `aspect` declara
 opt into auto-impl. This is a deliberate design decision, not an oversight this RFC
 forgot to fix:
 
-- Every auto-impl aspect proposed anywhere in the RFC corpus (`Send`, `Sync`, `Linear`)
-  is a standard-library aspect with compiler-known semantics — sendability and
-  linearity are properties the compiler itself reasons about elsewhere (fiber
-  boundaries, move/drop checking), not arbitrary user semantics being generalized.
+- Every single, fixed marker aspect proposed anywhere in the RFC corpus (`Send`,
+  `Sync`, `Linear`) is a standard-library aspect with compiler-known semantics —
+  sendability and linearity are properties the compiler itself reasons about
+  elsewhere (fiber boundaries, move/drop checking), not arbitrary user semantics
+  being generalized. (`HasField`/`Lacks`, RFC-0090, is *not* a fixed marker aspect at
+  all — it's a parameterized family with a different satisfaction shape; see §7. It
+  doesn't reopen this bullet's point, since it isn't a counterexample to "fixed
+  marker aspects stay closed" — it was never in that category.)
 - RFC-0093 already provides the extensible path for "I want this generated
   structurally": `@derive(Aspect)`, resolved through a registered comptime function.
   A hypothetical user-defined auto-impl aspect would have no comptime function to
@@ -99,10 +114,11 @@ forgot to fix:
   Making auto-impl user-extensible would require a second, separate extension point
   purely for this, with no motivating use case anywhere in the accepted corpus.
 
-A fourth auto-impl aspect is therefore added to the language the same way a fourth
-primitive type would be: by changing the compiler's own source (the recognition list
-and the structural rule below), not by a user or library writing a declaration that
-requests it.
+A fourth *fixed marker* auto-impl aspect is therefore added to the language the same
+way a fourth primitive type would be: by changing the compiler's own source (the
+recognition list and the structural rule below), not by a user or library writing a
+declaration that requests it. This says nothing about families like `HasField` — §7
+covers those on their own terms, not as an exception carved out of this rule.
 
 ---
 
@@ -255,11 +271,12 @@ defined, by construction.
 - **A general "derive this structurally" mechanism for user aspects.** That's
   RFC-0093 (`@derive(Aspect)`), a distinct, separately-invoked mechanism. See §1 for
   why the two don't merge.
-- **Adding a fourth auto-impl aspect (beyond `Send`/`Sync`/`Linear`).** This RFC
-  establishes where such a proposal would live (compiler-recognized identity + §2's
-  algorithm, instantiated with that aspect's own primitive/reference/function-pointer
-  rules) — it does not itself propose one. Whether the list should stay closed at
-  exactly three or is expected to grow is Unresolved Question 5.
+- **Adding a fourth *fixed marker* auto-impl aspect (beyond `Send`/`Sync`/`Linear`).**
+  This RFC establishes where such a proposal would live (compiler-recognized identity
+  + §2's algorithm, instantiated with that aspect's own primitive/reference/
+  function-pointer rules) — it does not itself propose one. (`HasField`/`Lacks` is
+  not this — see §7.) Whether *this* category should stay closed at exactly three is
+  Unresolved Question 5.
 - **Tuples.** RFC-0061 §6 defers all tuple aspect impls, auto-impl included, pending a
   per-arity or variadic-generics design; this RFC inherits that gap rather than
   resolving it. (Function pointers are *not* in this category — see below.)
@@ -274,6 +291,50 @@ defined, by construction.
   generically without citing a shared source — a fourth instance of the pattern this
   RFC's Motivation describes, found while drafting this section. Worth a cross-link
   from RFC-0050 to this RFC once accepted, but no content of RFC-0050's own is wrong.
+
+---
+
+## 7. `HasField`/`Lacks`: a related but distinct case
+
+RFC-0090 §1 calls `HasField<"name", T>`/`Lacks<"name">` "an extension of RFC-0080's
+auto-impl pattern: one marker aspect *family* instead of one aspect, same machinery."
+That's right in spirit — no `impl`, no `@derive`, structural satisfaction — but wrong
+in one respect worth naming precisely: it is not "the same machinery" as §2's
+algorithm, and treating it as a fourth instance of §1's closed list would be a
+category error in the other direction from `Drop`'s (§4).
+
+**It's a family, not a fixed aspect.** `Send` is one aspect, checked once. `HasField`
+is parameterized over an arbitrary field-name *and* an arbitrary type — an unbounded
+number of distinct bounds (`HasField<"x", f64>`, `HasField<"token", String>`, ...),
+not a fixed identity a compiler `match` could enumerate the way `SYM_ASPECT_SEND`
+does. §1's "closed list" framing describes *fixed marker aspects*; `HasField` was
+never a candidate for that list, not an exception carved out of it.
+
+**Its satisfaction rule is existential, not universal.** §2's algorithm is
+`all(satisfies(A, field) for field in T's fields)` — *every* field must qualify.
+`HasField<"x", f64>`'s rule is "does `T` have *a* field named `x` of type `f64`" —
+one specific, named field checked for presence, not every field checked against a
+recursive condition. These are different quantifiers over the same `typeinfo`/row
+data, not one algorithm parameterized two ways.
+
+**It may not go through the aspect/impl system at all.** `Send`/`Sync`/`Linear` are
+each a real `aspect` declaration in `stdlib/core.mtl` that the compiler recognizes by
+identity and then substitutes §2's algorithm for the normal impl lookup. RFC-0090
+never shows a textual `aspect HasField<Name, T> { }` declaration anywhere, and
+explicitly states Tier 2 (`derives ToRecord, FromRecord`) has "no impl or coherence
+exposure." That suggests `HasField`/`Lacks` bounds may be checked directly against a
+type's row by the typechecker, never entering `impl_aspect_env`/coherence at all —
+in which case it sits *outside* the category this RFC recognizes, rather than being
+governed by it. RFC-0090 does not settle this explicitly either; not resolved here.
+
+**A further, unrelated observation made while checking this:** `HasField<"x", f64>`'s
+own bound-position syntax (RFC-0090's worked examples, e.g. `T: HasField<"x", f64>`)
+puts a string literal (`"x"`) where `grammar.md`'s `BoundList → Type ("+" Type)*`
+only ever allows a `Type`. Nothing in RFC-0090, RFC-0036, or this RFC's own review
+extends the grammar to admit a literal argument in bound position. This is a gap in
+RFC-0090's own syntax, not this RFC's mechanism — flagged here only because it was
+noticed in the course of checking whether `HasField` belongs in §1's list, not
+because this RFC is the right place to resolve it.
 
 ---
 
@@ -305,14 +366,27 @@ defined, by construction.
    already-accepted RFC, deliberately left for a separate, focused change rather than
    folded into this RFC's own acceptance.
 
-5. **Is the auto-impl list expected to grow past three?** §1 argues the list is
-   closed because every proposed member so far is a standard-library aspect with
-   compiler-known semantics (fiber-safety, linearity) rather than arbitrary user
-   semantics. If a real fourth candidate is ever proposed, whether the *compiler's*
-   internal representation should be a hardcoded match over exactly `{Send, Sync,
-   Linear}` or an open (but still user-inaccessible) internal registry is an
-   implementation choice this RFC does not need to settle in advance — recorded here
-   so it isn't decided by accident the first time a fourth candidate actually appears.
+5. **Is the *fixed-marker* auto-impl category expected to grow past three?**
+   (Originally asked as "is the auto-impl list expected to grow past three" — answer
+   turned out to be yes in a different sense: `HasField`/`Lacks` already extends the
+   *pattern*, but as a family, not a fourth fixed marker, per §7. The question as
+   originally meant — a fourth `Send`-shaped single aspect — is still open.) §1 argues
+   this narrower category is closed because every proposed member so far is a
+   standard-library aspect with compiler-known semantics (fiber-safety, linearity)
+   rather than arbitrary user semantics. If a real fourth fixed-marker candidate is
+   ever proposed, whether the *compiler's* internal representation should be a
+   hardcoded match over exactly `{Send, Sync, Linear}` or an open (but still
+   user-inaccessible) internal registry is an implementation choice this RFC does not
+   need to settle in advance.
+
+6. **Does `HasField`/`Lacks` go through the aspect/impl coherence system at all?**
+   §7 flags this as unresolved by RFC-0090 itself. If it does, RFC-0097's
+   bare-parameter orphan-rule work may need a family-aware generalization (a
+   `HasField<"x", T>` impl's "target" is arguably the field-name literal, which fits
+   neither this RFC's nor RFC-0097's notion of a target type at all). If it doesn't,
+   this RFC's own recognition category (§1) is simply inapplicable to it, and no
+   further coordination is needed. Belongs to whichever RFC ends up specifying
+   `HasField`'s own coherence story, not decided here.
 
 ---
 
@@ -344,6 +418,9 @@ defined, by construction.
   pattern.
 - Issue #238 / `src/coherence.rs` — where the absence of an `AspectDecl` auto-impl
   marker was confirmed empty by direct inspection, motivating §1's design decision.
+- RFC-0090 (Structural Records, draft) — §1's `HasField`/`Lacks` auto-derivation,
+  the fifth document assuming this RFC's pattern, missed on the first drafting pass;
+  the subject of this RFC's §7.
 
 ---
 

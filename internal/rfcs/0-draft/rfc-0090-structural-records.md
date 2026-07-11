@@ -60,6 +60,16 @@ pieces that each extend something Metel already has:
   the same problem (`HasField "x" MyRecord Float`, auto-derived, no shared row-kind
   system needed), and translates directly into an extension of RFC-0080's auto-impl
   pattern: one marker aspect *family* instead of one aspect, same machinery.
+
+  > **Note (2026-07-11):** "same machinery" is right in spirit, not in mechanism —
+  > RFC-0096 (Auto-Impl Aspects) §7 works out the difference: `HasField` is a
+  > parameterized family, not a fixed marker aspect, and its satisfaction rule is
+  > existential ("does `T` have *a* field named `x`") rather than universal ("every
+  > field satisfies `A`"), so it doesn't fit RFC-0096 §2's recursive algorithm
+  > directly. RFC-0096 §7 also flags, unresolved: whether this ever goes through
+  > `impl`/coherence at all, and that `HasField<"x", f64>`'s bound-position syntax
+  > (a string-literal argument) isn't covered by `grammar.md`'s `BoundList → Type
+  > ("+" Type)*`.
 - **A closed `record { ... }` type-former** (§3) — an anonymous, exact-shape product
   type, usable in ordinary value positions.
 
@@ -671,6 +681,10 @@ let r = p.to_record();   // record { small: i32, big: i32 } == { small: 1, big: 
   RFC is extracted from
 - RFC-0080 (Standard Library Aspects) — auto-impl pattern this RFC's `HasField` family
   and `ToRecord`/`FromRecord` reuse
+- RFC-0096 (Auto-Impl Aspects, draft) §7 — works out precisely how `HasField`/`Lacks`
+  differs from `Send`/`Sync`/`Linear`'s auto-impl mechanism (family vs. fixed marker,
+  existential vs. universal satisfaction), and flags this RFC's own unresolved
+  coherence and bound-syntax gaps for `HasField`
 - RFC-0036 (Conditional Impl Blocks) — row-conditional impls generalize this directly
 - RFC-0060 (Aspect Impl Coherence), RFC-0061 (Structural Aspect Bounds) — coherence
   checking this RFC's row-conditional impls and structural bounds extend
