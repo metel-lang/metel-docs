@@ -16,7 +16,9 @@ Subcommands:
                                        no RFC enters integrated without a
                                        linked implementation-tracking task.
                                        `--to implemented` sets
-                                       `impl_status: implemented`.
+                                       `impl_status: implemented`, and refuses to run
+                                       while a "Not yet implemented" callout for this
+                                       RFC still exists under public/reference/spec/.
   impl-status <rfc-id> --set <status> [--tracking LINK]
                                        Update `impl_status` (not-started /
                                        in-progress / implemented) on an RFC
@@ -31,7 +33,9 @@ Subcommands:
                                        references, and (for integrated/implemented
                                        RFCs) that impl_status/impl_tracking are set
                                        and the spec actually references the RFC.
-                                       Read-only.
+                                       Also flags any stale "Not yet implemented"
+                                       callout left behind for an RFC that's already
+                                       4-implemented. Read-only.
   index --check-drift                  Compare INDEX.md's last_built date against
                                        every RFC's own frontmatter date. Read-only.
   index --suggest-placement <rfc-id>   Suggest which INDEX.md cluster section an
@@ -396,6 +400,20 @@ def cmd_transition(args):
         extra_fm["impl_tracking"] = args.tracking
     if args.to == "implemented":
         extra_fm["impl_status"] = "implemented"
+        # Checked before do_transition (and its fix_referrers path rewrite) runs:
+        # once the RFC file moves to 4-implemented, a leftover "Not yet implemented"
+        # callout's path reference would get silently rewritten to point at
+        # 4-implemented too, turning it into self-contradictory nonsense instead of
+        # failing loudly.
+        hits = spec_not_implemented_refs(rid)
+        if hits:
+            lines = "\n".join(f"  {p}:{lineno}: {text}" for p, lineno, text in hits)
+            error(
+                f"{rid.upper()} still has a 'Not yet implemented' callout under "
+                f"public/reference/spec/ — delete it (it's a required one-liner, safe "
+                f"to remove outright, see PROCESS.md) before transitioning to "
+                f"implemented:\n{lines}"
+            )
     do_transition(rid, args.to, args.reason, extra_fm=extra_fm or None)
     cmd_check(args)
 
@@ -460,6 +478,35 @@ def spec_mentions(rid):
     return False
 
 
+NOT_IMPLEMENTED_RE = re.compile(r"not yet implemented", re.IGNORECASE)
+
+
+def spec_not_implemented_refs(rid):
+    """Lines under public/reference/spec/ that read as a "Not yet implemented" callout
+    *for this specific RFC* — the phrase appears on the line, and the line's own
+    `internal/rfcs/.../rfc-....md` path reference (not just any RFC number mentioned in
+    passing, e.g. background context about an older, unrelated RFC) resolves to this id.
+    These callouts are required to be one-liners (PROCESS.md) specifically so this check
+    (and a human deleting one by hand) never has to figure out where a multi-line
+    blockquote ends."""
+    if not SPEC_DIR.is_dir():
+        return []
+    hits = []
+    for f in sorted(SPEC_DIR.rglob("*.md")):
+        try:
+            lines = f.read_text().splitlines()
+        except (UnicodeDecodeError, OSError):
+            continue
+        for lineno, line in enumerate(lines, start=1):
+            if not NOT_IMPLEMENTED_RE.search(line):
+                continue
+            for m in PATH_REF_RE.finditer(line):
+                if rfc_id_from_filename(Path(m.group(0))) == rid:
+                    hits.append((f.relative_to(REPO_ROOT), lineno, line.strip()))
+                    break
+    return hits
+
+
 def cmd_check(args=None):
     problems = []
     seen_ids = {}
@@ -513,6 +560,13 @@ def cmd_check(args=None):
             if impl_status != "implemented":
                 problems.append(
                     f"{rel}: RFC is in 4-implemented but impl_status is '{impl_status}', not 'implemented'"
+                )
+
+        if expected_status == "implemented":
+            for spec_path, lineno, text in spec_not_implemented_refs(rid):
+                problems.append(
+                    f"{spec_path}:{lineno}: stale 'Not yet implemented' callout for "
+                    f"{rid.upper()}, which is already 4-implemented — delete this line: {text}"
                 )
 
     for f in REPO_ROOT.rglob("*.md"):

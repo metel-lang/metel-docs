@@ -399,10 +399,7 @@ fun main() {
 
 ### Associated Types
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0082-associated-types.md`.
-> This syntax is already assumed by the aspects below and by stdlib types like `Deref`;
-> this section is the formal specification, not yet checked by the typechecker, until
-> that RFC's tracking task closes.
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0082-associated-types.md`; this syntax is already assumed by the aspects below and by stdlib types like `Deref`, but isn't checked by the typechecker until that RFC's tracking task closes.
 
 An aspect may declare an **associated type** — a type-level output that each
 implementing type must specify — with `type Name;`. An impl block defines it with

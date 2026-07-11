@@ -115,20 +115,32 @@ honest single status). Concretely:
   `rfc.py impl-status <id> --set in-progress|implemented` updates it as work proceeds;
   `rfc.py transition <id> --to implemented` sets it to `implemented` automatically.
 - **Inline markers in `public/reference/spec/*.md` are required, not optional, at every
-  section the RFC touches** — a short callout (e.g. `> **Not yet implemented — see
-  METEL-NNN.**`) at the point of use, not just a global status field. A reader of the
-  spec directly, not the RFC, still needs to see it; a single central table would miss
-  exactly the reader this exists for. `rfc.py check` can confirm the spec references the
-  RFC at all (a weak proxy — it greps for the RFC id under `public/reference/spec/`) but
-  cannot verify the callout's actual wording; that part stays a human judgment call, the
-  same way worked-example soundness does.
+  section the RFC touches** — a callout at the point of use (e.g. `> **Not yet
+  implemented** — see` followed by a link to the RFC's file under `3-integrated/`, then a
+  short reason), not just a global status field. A reader of the spec directly, not the
+  RFC, still needs to see it; a single central table would miss exactly the reader this
+  exists for.
+- **The callout must be exactly one line (2026-07-11)** — no continuation lines in the
+  blockquote, whatever explanatory detail doesn't fit gets cut, not wrapped. This is
+  specifically so that removing it, once the RFC reaches `4-implemented`, is an
+  unambiguous single-line deletion — no risk of leaving orphaned prose behind or having
+  to work out where a multi-line callout ends. `rfc.py check` confirms the spec
+  references the RFC at all (a weak proxy — it greps for the RFC id under
+  `public/reference/spec/`) and, more strongly, flags any such callout that survives
+  after the RFC reaches `4-implemented`. `rfc.py transition <id> --to implemented`
+  refuses to run at all while one still exists for that RFC — the deletion has to happen
+  as part of the same step that moves the RFC file, not as a separately rememberable
+  follow-up (this is the same failure shape as every stale-doc bug this process has
+  already caught: a manual step nobody enforced). The callout's wording, while it still
+  exists, stays a human judgment call, the same way worked-example soundness does — only
+  its presence or absence relative to lifecycle stage is mechanically checked.
 
 **Not retroactive.** The 25 RFCs already `4-implemented` before 2026-07-10 predate this
 convention and are not required to carry `impl_status`/`impl_tracking` after the fact —
 `rfc.py check` only enforces this from `3-integrated` onward, matching this document's
 existing policy of not re-litigating the pre-existing accepted backlog (below) all at
-once. It starts applying in full the first time an RFC actually reaches `3-integrated` —
-which, as of this writing, none have yet.
+once. It started applying in full the same day, once RFC-0067a/0072/0078/0081/0082/0083
+became the first RFCs to actually reach `3-integrated` under this definition.
 
 **4-implemented.** Built against the integrated spec, not against the accepted RFC text
 directly — by the time something reaches this stage, "the spec" and "the RFC" should
