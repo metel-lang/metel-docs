@@ -176,6 +176,21 @@ backlog: RFC-0008, 0036, 0037, 0060, 0061, 0071. (RFC-0079 and RFC-0084 left the
 by refusal rather than integration, same day — both had reverted to proposing nothing
 beyond what already exists.)
 
+**Updated 2026-07-11:** RFC-0060 (Aspect Impl Coherence) integrated on its own, ahead of
+implementing issue #238 (the coherence pipeline this RFC specifies) — deliberately, since
+every prior integration this pass had found a real problem, and this RFC cross-references
+two already-integrated RFCs (RFC-0072, RFC-0081) plus two still-unsettled ones (RFC-0036,
+RFC-0080). Merged into `declarations.md` as a new "Aspect Implementation Coherence"
+section; two forward-references in "Negative Bounds"/"Negative Impls" that had been
+written anticipating this integration now point here instead of saying "accepted, not yet
+integrated." Also surfaced a real, unrelated staleness bug: `error-codes.md` never
+actually documented T0009-T0012 despite the interpreter using them, and two still-draft
+RFCs (RFC-0032, RFC-0033) had recommended error codes (T0013, T0014) that were both
+already claimed by other, unrelated shipped features by the time anyone checked — T0014
+is what RFC-0060 itself needed, so RFC-0033's stale recommendation was flagged in place
+rather than silently left to collide. 5 RFCs remain in the backlog: RFC-0008, 0036, 0037,
+0061, 0071.
+
 **Updated again, same day:** RFC-0072 (Negative Bounds), RFC-0081 (Negative Impls), and
 RFC-0082 (Associated Types) followed RFC-0067a/0078/0083 into `3-integrated` — merged
 into `public/reference/spec/declarations.md`. All three needed real fixes first, not

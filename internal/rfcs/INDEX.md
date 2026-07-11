@@ -2,7 +2,7 @@
 id: rfc-index
 title: "RFC Index"
 type: index
-last_built: '2026-07-10'
+last_built: '2026-07-11'
 ---
 
 # RFC Index
@@ -13,7 +13,7 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**94 RFCs total.** 27 draft, 1 under review, 13 accepted, 6 integrated (new stage — see
+**94 RFCs total.** 27 draft, 1 under review, 12 accepted, 7 integrated (new stage — see
 `PROCESS.md`) (47 "live" — need active tracking), 25 implemented, 9 superseded, 13
 refused (47 "settled" — reference only). (RFC-0055 moved draft → superseded 2026-07-09,
 reconciled into RFC-0092/0093/0095 — see below. **2026-07-10:** the allocator/lifetime
@@ -23,7 +23,9 @@ to reach `3-integrated`, merged into `public/reference/spec/`; RFC-0067 renamed 
 "Lifetime Anchors"; RFC-0084 and RFC-0079 refused, both redundant with — or, for
 RFC-0079's `?`-operator text, factually superseded by — already-shipped behavior.
 RFC-0072/0081/0082 followed into `3-integrated` the same day, each with its own stale
-pre-split/dangling-reference fixes first — see `PROCESS.md`'s backlog note.)
+pre-split/dangling-reference fixes first — see `PROCESS.md`'s backlog note. **2026-07-11:**
+RFC-0060 (Aspect Impl Coherence) integrated on its own, ahead of implementing issue #238
+— see the Aspect system core section below.)
 
 ---
 
@@ -121,12 +123,20 @@ number, a backwards RFC-0067a split direction).
 Nothing open here; these are the load-bearing accepted RFCs everything else cites.
 
 - **RFC-0008** — Aspect Objects — `dyn Aspect`, vtable dispatch.
-- **RFC-0036** — Conditional Impl Blocks.
+- **RFC-0036** — Conditional Impl Blocks. Depends on RFC-0060 (now integrated).
 - **RFC-0037** — Return-Position `impl Aspect`.
-- **RFC-0060** — Aspect Impl Coherence — orphan rule, overlap detection, auto-impl.
-  Prerequisite for most of the above and below.
-- **RFC-0061** — Structural Aspect Bounds — `T[]`/tuples/function-type bounds.
+- **RFC-0061** — Structural Aspect Bounds — `T[]`/tuples/function-type bounds. Depends
+  on RFC-0060 (now integrated) and RFC-0036.
 - **RFC-0071** — Ownership and Move Semantics — affine-by-default foundation.
+- **RFC-0060** *(integrated 2026-07-11)* — Aspect Impl Coherence — orphan rule, overlap
+  detection, closed-world assumption, auto-impl, negative-impl priority. Integrated
+  ahead of implementing issue #238 (the coherence pipeline it specifies), on its own,
+  since it cross-references two already-integrated RFCs. Integrated into
+  `public/reference/spec/declarations.md` as a new section; two forward-references in
+  Negative Bounds/Negative Impls that had anticipated this now point here. Surfaced a
+  real, unrelated bug: RFC-0033's recommended error code (T0014) was already claimed
+  by this RFC's own orphan-rule error — flagged in RFC-0033 rather than silently
+  colliding. Not yet implemented.
 - **RFC-0072** *(integrated 2026-07-10)* — Negative Bounds — `T: !Aspect`. Integrated
   into `public/reference/spec/declarations.md`; its own stale bracket-channel allocator
   examples (`@[r] T`) fixed first. Not yet implemented.

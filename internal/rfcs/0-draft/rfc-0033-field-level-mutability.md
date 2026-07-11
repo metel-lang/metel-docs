@@ -263,6 +263,14 @@ This depends on how struct update syntax is defined. If it is pure construction 
 
 Private field access already has an error code proposed in RFC-0032 (T0013). Mutating a `let` field needs its own distinct error code. Recommendation: T0014 — "assignment to `let` field `{name}`."
 
+> **Both recommended numbers are stale, noted 2026-07-11 while integrating RFC-0060.**
+> Private field access actually shipped as **T0009** (`visibility error: cannot ...
+> private field`, `typechecker/inference.rs`), not T0013 — T0013 went to ambiguous
+> aspect method resolution instead. T0014 is now claimed by RFC-0060 (orphan
+> implementation), integrated this session. Whichever error code this RFC eventually
+> ships with needs to be picked fresh against `public/reference/error-codes.md`'s
+> actual state at that time, not either number recommended above.
+
 ### OQ-3 — Relationship to future `const` fields
 
 If Metel later adds compile-time constants at the struct level (e.g. associated constants), `let` fields and `const` fields would overlap in meaning but differ in timing: `let` is a runtime immutability guarantee; `const` would be a compile-time constant. They should not share the same keyword. This RFC does not block a future `const` field design.

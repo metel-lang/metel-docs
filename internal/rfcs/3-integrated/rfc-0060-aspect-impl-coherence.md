@@ -2,6 +2,10 @@
 id: rfc-0060
 title: "Aspect Impl Coherence"
 date: '2026-07-01'
+status: integrated
+updated: '2026-07-11'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/244'
+impl_status: not-started
 ---
 
 > **Status — accepted.** No dependencies on other under-review RFCs; this RFC
@@ -9,6 +13,8 @@ date: '2026-07-01'
 > Aspect Bounds), RFC-0080 (Stdlib Aspects), and RFC-0081 (Negative Impls). Defines
 > the orphan rule, overlap detection, closed-world coherence, auto-impl rules, and
 > the priority of negative impls over blanket impls.
+
+> **Status — integrated (2026-07-11).** Integrated into public/reference/spec/declarations.md as a new Aspect Implementation Coherence section (orphan rule, overlap detection, closed-world assumption, auto-impl, negative-impl priority). Two forward-references in Negative Bounds/Negative Impls, written anticipating this integration, now point here instead. Added T0014/T0015 to error-codes.md. Fixed a stale error-code collision in RFC-0033 (its recommended T0013/T0014 were both already claimed by other, unrelated shipped features).
 
 ## Summary
 
