@@ -213,6 +213,21 @@ Everything in RFC-0030 and the current module spec is unchanged:
    Until RFC-0092 is accepted, legal initialisers are restricted to literals and
    struct constructors over other constant expressions.
 
+2. **Added 2026-07-11, surfaced while implementing ADR-0042's symbol-id work
+   (metel-core).** This RFC's constant-expression restriction (item 1) already implies
+   `pub let` values are evaluated order-independently — a constant expression can't
+   observe execution order. That's real static/const-like machinery Metel doesn't have
+   yet outside `comptime let` (RFC-0092 §0). Whether implementing `pub let` means
+   literally desugaring to `comptime let` evaluation, or defining a separate-but-
+   equivalent restricted evaluator, is not decided here or in RFC-0092 — tracked as a
+   pending cross-RFC question (see RFC-0092's matching note). **Explicitly out of
+   scope regardless of how it resolves:** ordinary (non-`pub`) module-level `let`/`mut`
+   bindings. Their evaluation order is unspecified by this RFC or any other — the
+   interpreter's current behavior (evaluate top-to-bottom in declaration order;
+   referencing one before its line executes is a runtime error) is an implementation
+   detail, not a ratified decision, and is left as-is by the ADR-0042 work rather than
+   resolved as a side effect of it.
+
 ---
 
 ## References

@@ -71,6 +71,15 @@ zero runtime cost, since the value is fully computed before any generated code r
 Also the natural source of `N` in fixed-size array types (`[T; N]`, RFC-0053/RFC-0084):
 `comptime let CHUNK: i64 = 64; let buf: [u8; CHUNK] = [0; CHUNK];`.
 
+> **Pending cross-RFC question, added 2026-07-11.** RFC-0083 (Public Value Exports,
+> integrated) requires `pub let` initializers to be constant expressions — the same
+> shape of restriction `comptime let` already enforces. Not yet decided: whether
+> implementing `pub let` should literally desugar to `comptime let` evaluation, or
+> define a separate-but-equivalent restricted evaluator. Whichever it is, it only
+> covers `pub`-marked module-level values — ordinary (non-`pub`) module-level
+> `let`/`mut` evaluation order is a separate, still fully unspecified question that
+> this RFC does not address (see RFC-0083's matching note).
+
 **`comptime fun`.** A function evaluable at compile time. The annotation means "the
 compiler *can* evaluate this," not "this may only be called at compile time" — an
 ordinary call site at runtime is still legal:
