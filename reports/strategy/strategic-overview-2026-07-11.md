@@ -17,7 +17,10 @@ touched language design at all. The entire cycle since 07-09 went into process a
 tooling — migrating task tracking off ClickUp, closing a real enforcement gap in the
 RFC lifecycle tooling, and reconciling stale cross-repo documentation. See "What
 Changed" for what happened and "Honest Assessment" for whether that was the right
-thing to spend a cycle on.*
+thing to spend a cycle on. Corrected after first publishing this snapshot: it initially
+said the design/implementation gap was untouched this cycle, which missed that six RFCs
+integrated into the spec at the tail of the *previous* cycle are now sitting fully
+specified and completely unimplemented — see "The Design/Implementation Gap" below.*
 
 ---
 
@@ -108,12 +111,37 @@ RFC-0067 renamed; RFC-0079/0084 refused). RFC-0080 remains the sole RFC in
 
 ---
 
-## The Design/Implementation Gap — unchanged, and untouched
+## The Design/Implementation Gap — widened, concretely, by the RFCs already-integrated last cycle
 
-Identical to every prior report: no borrow checker, no allocator, no move-semantics
-enforcement in the interpreter. Nothing this cycle bears on it either way — this is the
-first cycle in the series where that sentence is trivially true because nothing
-design- or implementation-facing happened at all, not because the gap moved.
+The standing structural absence is unchanged: no borrow checker, no allocator, no
+move-semantics enforcement in the interpreter. But that framing, repeated unchanged
+every cycle in this series, is no longer the whole picture as of this snapshot — and
+an earlier draft of this section said "nothing this cycle bears on it," which was
+wrong. It missed something that was already true on disk before this cycle started and
+that this cycle's own tooling work (the callout-enforcement fix) was reacting to
+directly.
+
+RFC-0067a/0072/0078/0081/0082/0083 reached `3-integrated` in the tail of the *previous*
+cycle (07-10), which means this is the first dated snapshot in the series written after
+`public/reference/spec/expressions.md`, `types.md`, `modules.md`, and `declarations.md`
+all gained real, formally-specified, worked-example-checked content for features the
+interpreter does not implement. All six carry `impl_status: not-started` as of this
+writing — zero of the six has moved since integration. This is a different *kind* of
+gap from the standing structural one: not one large, diffuse absence, but six small,
+sharply-scoped, individually tracked instances (each with its own `impl_tracking`
+Codeberg issue: #236, #243, #234, #264, #242, #235) of the exact thing this section
+has described only in the abstract every prior cycle. The spec is, right now,
+concretely ahead of the interpreter in six itemized, checkable places, not just
+"generally more advanced than the runtime."
+
+That's worth naming as an opportunity, not just a debt. Unlike the standing structural
+absence — which requires real design-and-engineering investment (a borrow checker, an
+allocator model) before any of it can be built — these six are fully specified, already
+ratified, and worked-example-checked. There is no design work left to do on any of
+them; only interpreter engineering. That makes them the cheapest, most shovel-ready
+implementation work currently available anywhere in this document, cheaper than
+Priority 3 (which still needs scoping) and orthogonal to Priority 2a/2b's unresolved
+questions.
 
 ---
 
@@ -136,14 +164,20 @@ session). That's a legitimate category of work, not idle process theater — but
 means Priority 2a's Trigger 6 tension, Priority 2b's comptime scope, and Priority 3
 are exactly where they were on 07-09, and RFC-0080 hasn't moved.
 
-**Priority 3 is now the more pointed version of this question than any single thread.**
-It has gone unactioned across every cycle this document's review log covers — the same
-number of cycles Priority 1 sat idle before the meta-risk section named it explicitly as
-the concrete instance of the risk. Nothing currently blocks Priority 3 the way L3's
-still-forming state arguably justified not touching L2 early on. If the next cycle
-produces a seventh consecutive "unchanged" here with no comparably concrete reason (the
-way this cycle at least has one for its own stall on the RFC backlog), that would be the
-real recurrence to flag — not this cycle.
+**Priority 3 is one pointed version of this question; the six newly-integrated RFCs are
+a sharper one.** Priority 3 has gone unactioned across every cycle this document's
+review log covers — the same number of cycles Priority 1 sat idle before the meta-risk
+section named it explicitly. But RFC-0067a/0072/0078/0081/0082/0083 are a stronger
+case still: they don't even need scoping, only building, and every one of them sitting
+at `impl_status: not-started` is a more concrete, checkable instance of "unblocked work
+not getting done" than Priority 3 currently is. Building even one would also be direct
+evidence for the interpreter-as-feedback-mechanism corollary (§1) — it tests whether a
+ratified, worked-example-checked design actually holds up against a real
+implementation, which is squarely feedback-trustworthiness work, always worth doing
+regardless of whether this interpreter's internals persist. If the next cycle produces
+a seventh consecutive "unchanged" on Priority 3, *or* all six RFCs are still
+`not-started`, with no comparably concrete reason for either, that's the real
+recurrence to flag.
 
 **The task-tracker migration's actual payoff is still unverified.** It was justified by
 two goals — avoid vendor lock-in, eventually enable outside contributors — and the
@@ -168,6 +202,11 @@ and `PROCESS.md` already did once this session.
 ---
 
 ## What Would Change This Assessment
+
+**If any of the six newly-integrated RFCs moves off `impl_status: not-started`**, that's
+concrete progress closing the itemized gap named above, and directly informs whether
+the ratified allocator/lifetime and associated-types designs actually hold up against a
+real build — the strongest available test of this cluster's soundness right now.
 
 **If the next cycle also produces zero movement on Priority 3 with no concrete reason**,
 that's the pattern worth calling out explicitly, the way Priority 1's six-cycle stall

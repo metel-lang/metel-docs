@@ -164,7 +164,11 @@ under review, unchanged since — no movement this cycle.
 went the rest of the way through `3-integrated`, each surfacing a real spec-vs-design gap while
 writing worked examples (Trigger 8). Their `impl_tracking` fields were later repointed from
 ClickUp to Codeberg Issues (#236/#243/#234/#264/#242/#235) as a side effect of the task-tracker
-migration below — a mechanical link update, not a status or design change.
+migration below — a mechanical link update, not a status or design change. **All six are still
+`impl_status: not-started` as of 2026-07-11** — fully specified, ratified, worked-example-checked,
+and zero engineering has started on any of them. Unlike Priority 3, this needs no scoping, only
+building — see Trigger 12 and `strategic-overview-2026-07-11.md`'s "Design/Implementation Gap"
+section, which named this explicitly after an earlier draft of that snapshot missed it.
 
 ### Priority 2a — The floor, plus tiers 1/2
 
@@ -280,6 +284,14 @@ of what was watched for and what actually happened is part of the point.
     either. If the next cycle again produces no movement here with no L3-shaped reason (the
     way this cycle's stall on Trigger 8 had one), that's the concrete recurrence of the
     meta-risk this document exists to catch.
+12. ⬜ **New, 2026-07-11.** The six RFCs that reached `3-integrated` (RFC-0067a/0072/0078/0081/
+    0082/0083) are all still `impl_status: not-started` — fully specified, ratified, and
+    worked-example-checked, needing no further design, only engineering. This is a sharper
+    instance of Trigger 11's question than Priority 3 itself: there's no scoping excuse
+    available here at all. Watch whether any moves to `in-progress`/`implemented` next cycle
+    (via `rfc.py impl-status <id> --set ...`) — if all six are still `not-started` after a
+    second consecutive cycle, that's concrete, checkable evidence of the meta-risk, not just
+    a plausible risk.
 
 ---
 
@@ -298,6 +310,7 @@ of what was watched for and what actually happened is part of the point.
 | 2026-07-10 | RFC-0067a/0078/0083 became the first RFCs to reach `3-integrated`, merged into `public/reference/spec/`; each surfaced a real problem while writing worked examples (Trigger 8 partially fired) | *(none yet)* |
 | 2026-07-10 | RFC-0072/0081/0082 followed the same day, merged into `declarations.md`; RFC-0067/0079/0084 also handled (renamed, refused, refused respectively). Trigger 8 fired again — 6 RFCs left in the `3-integrated` backlog (was 14) | *(none yet)* |
 | 2026-07-10/11 | RFC-0082's associated-type disambiguation hardened further: a second candidate syntax (`<T:Aspect>::AssocType`) considered and rejected against `grammar.md`, recorded in the RFC only (not the spec) per explicit direction. `metel-core/AGENTS.md` and `metel-docs/internal/versioning.md` reconciled (both had stale, contradictory task-tracker/RFC-lifecycle docs); `AGENTS.md`'s repo-slug typo (`metel-lang/metel` → `metel-lang/metel-core`) fixed. Task tracking fully migrated from ClickUp to Codeberg Issues: 49 pre-existing stale/duplicate Codeberg issues reconciled (closed with explanatory comments or reused instead of duplicated), 34 active tasks migrated, 10 labels + 1 milestone created, 6 integrated RFCs' `impl_tracking` repointed to the new issue URLs. Self-hosting a Forgejo instance assessed as feasible (this environment's own Hetzner box could run it) but explicitly deferred — Codeberg's discoverability for future outside contributors outweighs full control, for now. `internal/rfcs/tools/rfc.py` gained enforcement for the spec's "Not yet implemented" callouts: required to be one-liners, `transition --to implemented` now refuses to run while one still exists for that RFC, `check` flags any that survive anyway — closing a real gap the previous integration batch left open. Triggers 7/8 updated (both still open, for different reasons); Triggers 10/11 opened. | `strategic-overview-2026-07-11.md` |
+| 2026-07-11 | Correction to the same-day snapshot above: it originally said the design/implementation gap was untouched this cycle, missing that the six RFCs integrated into the spec (RFC-0067a/0072/0078/0081/0082/0083) are all still `impl_status: not-started` — a real, itemized widening of the gap, and the cheapest available implementation work in this document since none of it needs further design. Trigger 12 opened; Priority 1's follow-through note and the dated snapshot's "Design/Implementation Gap" and "Honest Assessment" sections amended. | `strategic-overview-2026-07-11.md` (amended) |
 
 ---
 
