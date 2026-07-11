@@ -140,6 +140,8 @@ in pipelines without explicit `match`:
 | `.and_then(f)`       | `<U>((T) -> Perhaps<U>) -> Perhaps<U>` | Chain a `Perhaps`-returning function     |
 | `.unwrap_or(d)`      | `(T) -> T`                         | The value, or `d` when `None`                |
 | `.unwrap_or_else(f)` | `(() -> T) -> T`                   | The value, or `f()` when `None`              |
+| `.yolo()`            | `() -> T`                          | The value, or panics (`R0014`) when `None`   |
+| `.ok_or(error)`      | `<E>(E) -> Result<T, E>`           | `Some` becomes `Ok`; `None` becomes `Err(error)` |
 
 `Result<T, E>` — `Ok { value: T }` or `Err { error: E }`:
 
@@ -151,6 +153,13 @@ in pipelines without explicit `match`:
 | `.and_then(f)`       | `<U>((T) -> Result<U, E>) -> Result<U, E>` | Chain a `Result`-returning function |
 | `.unwrap_or(d)`      | `(T) -> T`                         | The success value, or `d` when `Err`         |
 | `.unwrap_or_else(f)` | `(() -> T) -> T`                   | The success value, or `f()` when `Err`       |
+| `.yolo()`            | `() -> T`                          | The success value, or panics (`R0014`) when `Err`, including the error's debug representation |
+| `.map_err(f)`        | `<F>((E) -> F) -> Result<T, F>`    | Transform the error value, passing `Ok` through |
+| `.ok()`              | `() -> Perhaps<T>`                 | `Ok` becomes `Some`; `Err` becomes `None`, discarding the error |
+
+> `.yolo()`, `.ok_or()`, `.map_err()`, and `.ok()`: implemented 2026-07-11
+> (issue #232, following up on the refused RFC-0079), not yet released in a
+> tagged version — will get their own changelog entry when `sprint/25` ships.
 
 ## List\<T\>
 

@@ -290,6 +290,44 @@ The `?` operator is applied to a value that is not a `Result`.
 
 **Fix:** only use `?` on expressions whose type is `Result[T, E]`.
 
+> **Note:** this misuse is actually caught statically. `?` constrains its operand's
+> type to `Result<T, E>` during type inference (`infer_propagate_error`), so a
+> non-`Result` operand is rejected as a `T0001` type mismatch before the program
+> ever runs. `R0012` does not appear in the interpreter's `RuntimeErrorCode` enum
+> today and is unreachable in practice — kept here for the code number, not because
+> the described runtime error can currently occur. (Found while investigating
+> issue #232; not fixed as part of it, since removing a documented code is a
+> separate decision from the yolo/conversion-method work that issue tracked.)
+
+### R0013 — Assertion failed
+
+`assert(cond)` or `assert_msg(cond, msg)` is called with `cond` evaluating to
+`false`. The panic message is the fixed string `"assertion failed"` for `assert`,
+or the caller-supplied `msg` for `assert_msg`.
+
+```
+[R0013] runtime error in main.mtl at 5..10: assertion failed
+```
+
+**Fix:** this is not a bug in the interpreter — it means the asserted condition
+was actually false at runtime. Fix the condition, or the code that led to it.
+
+### R0014 — Unwrap on `None`/`Err`
+
+`.yolo()` is called on a `Perhaps<T>` that is `None`, or a `Result<T, E>` that is
+`Err`. For `Result`, the panic message includes the `Err` value's debug
+representation.
+
+```
+[R0014] runtime error in main.mtl at 5..10: called `.yolo()` on a `None` value
+[R0014] runtime error in main.mtl at 5..10: called `.yolo()` on an `Err` value: "not found"
+```
+
+**Fix:** this is not a bug in the interpreter — `.yolo()` is meant only for cases
+where `None`/`Err` represents a logic error that should never occur in correct
+code. Use `match`, `.unwrap_or`, `.unwrap_or_else`, or (for `Result`) `?` to
+handle the expected case instead.
+
 ---
 
 ## Internal errors (I)
