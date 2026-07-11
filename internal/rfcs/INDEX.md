@@ -13,8 +13,8 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**95 RFCs total.** 28 draft, 1 under review, 12 accepted, 7 integrated (new stage — see
-`PROCESS.md`) (48 "live" — need active tracking), 25 implemented, 9 superseded, 13
+**96 RFCs total.** 29 draft, 1 under review, 12 accepted, 7 integrated (new stage — see
+`PROCESS.md`) (49 "live" — need active tracking), 25 implemented, 9 superseded, 13
 refused (47 "settled" — reference only). (RFC-0055 moved draft → superseded 2026-07-09,
 reconciled into RFC-0092/0093/0095 — see below. **2026-07-10:** the allocator/lifetime
 cluster — RFC-0063/0065/0066/0067/0068/0073/0077 — swept from under-review to accepted;
@@ -32,7 +32,11 @@ branch's own history is ahead of that checkout and is authoritative). Implementi
 issue #238 exposed that RFC-0080/0089/0061 each cite "the auto-impl pattern" without
 any one of them owning it as a mechanism, so RFC-0096 was opened to formalize the
 recognition rule and the shared structural-composition algorithm — no behavior change
-to `Send`/`Sync`/`Linear`.)
+to `Send`/`Sync`/`Linear`. Same review pass, a follow-up question about blanket impls
+surfaced a second, related gap: RFC-0060 §1's orphan rule has no answer for
+`impl<T: Bound> Aspect for T` — a bare-parameter blanket, the exact form RFC-0060's
+own §3/§5 and RFC-0080 §1.2 all use as their running example, but never revisited by
+§1 itself. RFC-0097 opened to formalize it.)
 
 ---
 
@@ -145,7 +149,9 @@ number, a backwards RFC-0067a split direction).
 
 ## Aspect system core (accepted — the stable foundation)
 
-Nothing open here; these are the load-bearing accepted RFCs everything else cites.
+The load-bearing accepted RFCs everything else cites. One open item as of 2026-07-11
+(RFC-0097, below) — a narrow gap found by scrutiny, not a design problem with the
+cluster itself.
 
 - **RFC-0008** — Aspect Objects — `dyn Aspect`, vtable dispatch.
 - **RFC-0036** — Conditional Impl Blocks. Depends on RFC-0060 (now integrated).
@@ -162,6 +168,12 @@ Nothing open here; these are the load-bearing accepted RFCs everything else cite
   real, unrelated bug: RFC-0033's recommended error code (T0014) was already claimed
   by this RFC's own orphan-rule error — flagged in RFC-0033 rather than silently
   colliding. Not yet implemented.
+- **RFC-0097** *(draft)* — Orphan Rule for Bare-Parameter Blanket Impls. RFC-0060 §1's
+  orphan rule assumes every impl target has an outermost type constructor to check —
+  but a bare-parameter blanket (`impl<T: Bound> Aspect for T`, the exact form RFC-0060
+  §3/§5 and RFC-0080 §1.2 all use as their own running example) has none. Formalizes
+  that target-locality is vacuously unsatisfiable for this shape, so such an impl is
+  permitted only via the aspect side. Opened 2026-07-11, same review pass as RFC-0096.
 - **RFC-0072** *(integrated 2026-07-10)* — Negative Bounds — `T: !Aspect`. Integrated
   into `public/reference/spec/declarations.md`; its own stale bracket-channel allocator
   examples (`@[r] T`) fixed first. Not yet implemented.

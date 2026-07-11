@@ -82,6 +82,13 @@ impl<T: Copy> Clone for T {
 buffer, deep-copying a list, incrementing a reference count. The distinction between
 `Copy` (implicit, free) and `Clone` (explicit, potentially expensive) is preserved.
 
+> **Note (2026-07-11):** this blanket's target is the impl's own bare parameter `T`,
+> not a named type wrapping it — a form RFC-0036 (Conditional Impl Blocks) never
+> shows in its own examples, and one the orphan rule (RFC-0060 §1) has no stated
+> answer for either, since `T` has no outermost type constructor to check. RFC-0097
+> (draft) formalizes both: no new syntax needed, and this impl is permitted here only
+> because `Clone` itself is local to `std::core` — never on the strength of `T`.
+
 ### 1.3 Derive
 
 `Clone` may be derived for any struct or enum whose fields all implement `Clone`. The
@@ -323,6 +330,8 @@ does not depend on RFC-0003 and may be accepted independently.
   auto-impl rules.
 - RFC-0096 (Auto-Impl Aspects, draft) — the general recognition rule and shared
   structural-composition algorithm §3.2/§4.2 are instances of.
+- RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls, draft) — §1.2's `Clone`
+  blanket is the motivating example for its orphan-rule formalization.
 - RFC-0081 (Negative Impls) — mechanism for overriding auto-impl when a type must not
   have `Send` or `Sync` despite its fields being `Send`/`Sync`.
 - RFC-0071 (Ownership and Move Semantics) — `Copy`/`Drop` mutual exclusion; move

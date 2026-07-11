@@ -51,6 +51,13 @@ may write:
 
 A violating impl is a compile-time error (`T0014 — orphan implementation`).
 
+> **Note (2026-07-11):** this wording assumes `Type` always has an outermost type
+> constructor. A bare-parameter blanket impl (`impl<T: Bound> Aspect for T` — see this
+> RFC's own §3/§5 examples below, which already use exactly this form) has none: `T`
+> is the impl's own generic parameter, not a declared struct or enum. RFC-0097
+> (draft) formalizes that target-locality is vacuously unsatisfiable for this shape of
+> impl, so such an impl is permitted only via the aspect side of this rule.
+
 The orphan rule guarantees that coherence is checkable locally: a module can only
 add impls it "owns" one half of. No whole-program overlap scan is required at each
 use site.
@@ -205,3 +212,5 @@ Metel avoids it entirely by making overlap unconditionally illegal.
 - RFC-0072 (Negative Bounds) — `T: !Aspect` bounds discharged via CWA (§3).
 - RFC-0080 (Stdlib Aspects) — `Send`/`Sync` auto-impl rules; depend on §4.
 - RFC-0081 (Negative Impls) — negative impl priority over blanket impls; depend on §5.
+- RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls, draft) — formalizes §1 for
+  the `impl<T: Bound> Aspect for T` case this RFC's own §3/§5 examples already use.
