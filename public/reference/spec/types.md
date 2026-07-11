@@ -201,7 +201,9 @@ fun sum(xs: [i64; 3]) -> i64 {
 
 ## References
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0067a-reference-types.md`; the interpreter still implements the `*T` / `*mut T` model this section replaces (RFC-0043) until that RFC's tracking task closes.
+> **Availability:** Implemented 2026-07-11 (RFC-0067a) — see
+> `internal/rfcs/4-implemented/rfc-0067a-reference-types.md`. Not yet released in a
+> tagged version; will get its own changelog entry when `sprint/25` ships.
 
 Reference types provide explicit aliasing for non-linear values.
 
@@ -224,8 +226,8 @@ Metel has two reference types:
 aliases — a reference never owns the value it points to.
 
 References are first-class values, but they are distinct from the referent type. There
-is no explicit dereference operator in safe code (contrast the interpreter's current
-`*T`/`*mut T` model, which requires explicit `*p`); ordinary access goes through
+is no explicit dereference operator in safe code — the old `*T`/`*mut T` model
+(RFC-0043) with its explicit `*p` is superseded; ordinary access goes through
 auto-deref instead — see [Expressions — References](expressions.md#references).
 
 References are only for non-linear aliasing. They cannot target linear values.
@@ -261,13 +263,39 @@ fun main() -> i64 {
 }
 ```
 
-The copy fires only at a `let` binding whose own declared type differs from its
-initializer, or at an explicit ascription (`r: i64`) — never silently at a plain call
-site; `fun f(v: i64)` called as `f(r)` where `r: &i64` is a type error, not an implicit
-copy. Argument position has no declared type of its own for the rule to compare against,
-the same reason type-directed extraction of an allocated value never fires implicitly at
-a plain-parameter call site either (`internal/rfcs/2-accepted/rfc-0066-allocated-value-extraction.md`
-§3a — not yet integrated, cited here only for the parallel).
+**The copy fires at every position where a declared or expected type is already
+known** — not only `let`/`mut` bindings and explicit ascription, but also a `return`
+value against the enclosing function's declared return type, a `break` value against
+the enclosing `loop`'s inferred type, and any tail expression of a function/method/
+closure body, an `if`/`else` branch, or a `match` arm (each of those resolves its
+result against a declared or expected type the same way a `let` binding does):
+
+```metel
+fun bump(p: &mut i64) -> i64 {
+    p += 1;
+    p          // tail expression, no explicit `return` — copies out of p
+}
+```
+
+It never fires silently at a plain call site; `fun f(v: i64)` called as `f(r)` where
+`r: &i64` is a type error, not an implicit copy. Argument position has no declared type
+of its own for the rule to compare against, the same reason type-directed extraction of
+an allocated value never fires implicitly at a plain-parameter call site either
+(`internal/rfcs/2-accepted/rfc-0066-allocated-value-extraction.md` §3a — not yet
+integrated, cited here only for the parallel).
+
+Chains through multiple reference layers the same way auto-deref does — reaching the
+declared type may require copying out of more than one layer:
+
+```metel
+fun main() -> i64 {
+    let x = 42;
+    let r: &i64 = &x;
+    let rr: &&i64 = &r;
+    let y: i64 = rr;   // copies through both layers of the chain
+    return y;
+}
+```
 
 **Until affine ownership (`Copy`/`Drop`, not yet integrated) lands, this applies to
 every type** — the interpreter has no move semantics today (everything is deep-cloned on

@@ -13,8 +13,8 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**96 RFCs total.** 29 draft, 1 under review, 12 accepted, 7 integrated (new stage — see
-`PROCESS.md`) (49 "live" — need active tracking), 25 implemented, 9 superseded, 13
+**96 RFCs total.** 29 draft, 1 under review, 12 accepted, 6 integrated (new stage — see
+`PROCESS.md`) (48 "live" — need active tracking), 26 implemented, 9 superseded, 13
 refused (47 "settled" — reference only). (RFC-0055 moved draft → superseded 2026-07-09,
 reconciled into RFC-0092/0093/0095 — see below. **2026-07-10:** the allocator/lifetime
 cluster — RFC-0063/0065/0066/0067/0068/0073/0077 — swept from under-review to accepted;
@@ -36,7 +36,12 @@ to `Send`/`Sync`/`Linear`. Same review pass, a follow-up question about blanket 
 surfaced a second, related gap: RFC-0060 §1's orphan rule has no answer for
 `impl<T: Bound> Aspect for T` — a bare-parameter blanket, the exact form RFC-0060's
 own §3/§5 and RFC-0080 §1.2 all use as their running example, but never revisited by
-§1 itself. RFC-0097 opened to formalize it.)
+§1 itself. RFC-0097 opened to formalize it. RFC-0067a (Reference Types) implemented in
+`metel-core` the same day, moving `3-integrated` → `4-implemented` — the first RFC
+from this session's integration pass to complete that step; its §3a amended once more
+to state that read-copy fires at `return`/tail-expression positions too and that
+read-copy/write-through/auto-deref all chain through multiple reference layers, both
+gaps found only by the implementation's own regression tests.)
 
 ---
 
@@ -140,11 +145,15 @@ number, a backwards RFC-0067a split direction).
   was split out and accepted separately. Renamed 2026-07-10 from "Lifetime Anchors and
   Allocator-Pointer References" (`rfc-0067-lifetime-anchors.md`) — the dropped half of
   the title duplicated RFC-0063/RFC-0066's own naming.
-- **RFC-0067a** *(integrated 2026-07-10)* — Reference Types — plain `&T`/`&mut T`,
+- **RFC-0067a** *(implemented 2026-07-11)* — Reference Types — plain `&T`/`&mut T`,
   auto-deref. No allocator/borrow-checker dependency; already sequenced into Cluster A.
   Integrated into `public/reference/spec/types.md` and `expressions.md`; gained a new
   §3a (type-directed value-copy-out) resolving a gap found writing the worked examples.
-  Not yet implemented — tracked at the RFC's `impl_tracking` link.
+  Implemented in `metel-core` (issue #236); §3a amended the same day to state that
+  read-copy fires at `return`/`break`/tail-expression positions too (not just `let`/
+  ascription) and that read-copy, write-through, and auto-deref all chain through
+  multiple reference layers — both found only once the implementation's own regression
+  tests exercised a `&&T`-shaped case.
 - **RFC-0068** *(accepted)* — Struct-Owned Allocators — primary-constructor syntax
   (`struct Foo(@a: BumpAlloc)`). Renamed from "Struct-Owned Regions" 2026-07-10.
 - **RFC-0073** *(accepted)* — AutoAlloc — renamed from AutoRegion; SubRegion interaction

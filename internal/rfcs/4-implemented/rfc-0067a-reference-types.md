@@ -2,10 +2,10 @@
 id: rfc-0067a
 title: "Reference Types"
 date: '2026-06-28'
-updated: '2026-07-10'
-status: integrated
+updated: '2026-07-11'
+status: implemented
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/236'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — accepted.** Split 2026-07-07 from the original RFC-0067 ("Reference Types"),
@@ -34,6 +34,25 @@ impl_status: not-started
 > (Explicit Receiver Semantics).
 
 > **Status — integrated (2026-07-10).** Integrated into public/reference/spec/types.md and expressions.md: &T/&mut T reference types replace *T/*mut T, auto-deref, and a new type-directed value-copy-out rule resolving a gap found while writing worked examples (RFC amended, see its own status note).
+
+> **Amended 2026-07-11, after implementation (issue #236).** §3a's own text named only
+> `let`/`mut` bindings and explicit ascription as read-copy sites — implementing it
+> surfaced that the same rule also has to fire at `return`, `break`, and (since a
+> function/method/closure body, an `if`/`else` branch, and a `match` arm all resolve
+> against a declared/expected type the same way a `let` binding does) any tail
+> expression, or the RFC's own worked pattern — `fun f() -> i64 { ...; p }` with no
+> explicit `return` — would be a hole in its own rule. §3a's text and worked example
+> updated to state this. Separately, §3's existing chain-depth guarantee ("a `&&T` will
+> deref through both levels if needed") turned out to need making explicit that it
+> covers read-copy and write-through too, not only field access/method dispatch/
+> reference-coercion — the first implementation only peeled one layer for each of the
+> three new mechanisms (read-copy, write-through, and — found only because a regression
+> test exercised it — the pre-existing method-dispatch/field-access auto-deref itself,
+> whose own `deref_value`/receiver-resolution helpers turned out to only follow one
+> layer at runtime despite the type-checking side already being fully recursive) —
+> each needed a dedicated fix once a `&&T`/`&mut &mut T`-shaped test caught it.
+
+> **Status — implemented (2026-07-11).**
 
 ## Summary
 
@@ -113,7 +132,10 @@ There is no explicit dereference operator in safe code. All access goes through 
    expected type requires it.
 
 Auto-deref chains: a `&&T` will deref through both levels if needed. Chain depth is bounded by
-the type structure; no infinite cycles are possible.
+the type structure; no infinite cycles are possible. This applies uniformly to all three
+rules above, and to §3a's read-copy and write-through below — none of these are a
+single-layer special case; `let x: i64 = rr;` where `rr: &&i64` copies through both
+layers, the same as `rr.field` would auto-deref through both to reach a struct.
 
 Auto-deref through an allocator pointer (`@a T`) is specified separately in the remaining
 RFC-0067 §2 (Allocator pointer access), since it requires `@a T` to exist (RFC-0063).
@@ -139,17 +161,45 @@ let r: &i64 = &x;
 let y: i64 = r;   // type-directed copy — r's type differs from y's declared type
 ```
 
-Exactly like RFC-0066 §3a's rule, this fires only at a `let` binding whose own declared
-type differs from its initializer, or at an explicit ascription — never silently at a
-plain call site. `fun f(v: i64)` called as `f(r)` where `r: &i64` is a type error, not an
-implicit copy: the argument position has no declared-type-of-its-own for the rule to
-compare against, the same reason RFC-0066 §3a's extraction never fires implicitly at a
-plain-parameter call site either. Type ascription (`r: T`) fires the copy in any
-expression position, including call sites, matching RFC-0066 §3's two forms exactly:
+**This fires at every position where a declared or expected type is already known, not
+only `let`/`mut` bindings and explicit ascription** — the same test that applies to a
+`let` binding's own declared type applies equally to a `return` value against the
+enclosing function's declared return type, a `break` value against the enclosing
+`loop`'s inferred type, and — since a function/method/closure body, an `if`/`else`
+branch, and a `match` arm all resolve their result against a declared or expected type
+the exact same way a `let` binding does — any tail expression in one of those positions:
+
+```metel
+fun bump(p: &mut i64) -> i64 {
+    p += 1;
+    p          // tail expression, no explicit `return` — copies out of p
+}
+
+fun read(p: &mut i64) -> i64 {
+    return p;  // same rule at `return`
+}
+```
+
+It never fires silently at a plain call site. `fun f(v: i64)` called as `f(r)` where
+`r: &i64` is a type error, not an implicit copy: the argument position has no
+declared-type-of-its-own for the rule to compare against, the same reason RFC-0066
+§3a's extraction never fires implicitly at a plain-parameter call site either. Type
+ascription (`r: T`) fires the copy in any expression position, including call sites,
+matching RFC-0066 §3's two forms exactly:
 
 ```metel
 let copy = r: i64;        // ascription in expression position
 process(r: i64);          // ascription at call site
+```
+
+Chains through multiple reference layers the same way §3's auto-deref does — reaching
+the declared type may require copying out of more than one layer:
+
+```metel
+let n = 42;
+let r: &i64 = &n;
+let rr: &&i64 = &r;
+let x: i64 = rr;   // copies through both layers of the chain
 ```
 
 **The `T: Copy` gate depends on RFC-0071, itself accepted but not yet integrated or
