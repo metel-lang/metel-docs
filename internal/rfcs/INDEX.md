@@ -77,7 +77,16 @@ was found and reconciled, and where this session did most of its work.
   structural-composition algorithm that RFC-0080 §3.2/§4.2 and RFC-0089 §2 each
   independently invoke as "the auto-impl pattern" without either owning it. Opened
   2026-07-11 while implementing issue #238 (Aspect Impl Coherence pipeline), which
-  confirmed `AspectDecl` carries no such marker today. No behavior change to
+  confirmed `AspectDecl` carries no such marker today. Fleshed out same day: §3
+  covers generic types (an auto-impl on a generic struct/enum is an implicit
+  RFC-0036 conditional impl, never evaluated eagerly); §4 corrects a plausible
+  misreading of RFC-0061 §5's heading — `Drop`'s array-only propagation is not a
+  fourth instance of this mechanism, since RFC-0071 §3 already makes `Drop` opt-in
+  for structs/enums. Also found, in passing, that RFC-0050 independently derived
+  the same closure-capture `Send` rule without citing a shared source — a fourth
+  uncited instance of the pattern this RFC names. 5 Unresolved Questions recorded
+  (unit variants, raw pointers, `Linear`'s missing reference rule, the RFC-0061 §5
+  heading fix, whether the closed list is expected to grow). No behavior change to
   `Send`/`Sync`/`Linear` themselves.
 - **RFC-0094** — Comptime Metaprogramming — generalized `emit`, comptime-callable
   parsing, diagnostics, body-reflection scoping. Depends on RFC-0092 only; independent

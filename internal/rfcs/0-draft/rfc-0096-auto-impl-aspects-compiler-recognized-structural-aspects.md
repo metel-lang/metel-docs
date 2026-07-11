@@ -22,19 +22,25 @@ Three aspects — `Send`, `Sync` (RFC-0080), and `Linear` (RFC-0089, draft) — 
 **auto-impl**: the compiler grants them to a type automatically, based on the type's
 structure, with no `impl` block and no `@derive` annotation written anywhere. Every
 RFC that uses this pattern cites RFC-0080 §3.2 as precedent but none of them — including
-RFC-0080 itself — specifies two things this RFC settles:
+RFC-0080 itself — specifies what this RFC settles:
 
-1. **How the compiler recognizes that a given aspect *is* auto-impl at all.** `AspectDecl`
-   has no marker field for it (confirmed empty during issue #238's implementation), and
-   no RFC proposes adding one.
-2. **The structural-composition algorithm**, stated once instead of three times: how
-   "every field is `Send`" generalizes to structs, enums, arrays (RFC-0061 §5), and
-   references, and what varies per-aspect versus what's shared.
+1. **How the compiler recognizes that a given aspect *is* auto-impl at all** (§1).
+   `AspectDecl` has no marker field for it (confirmed empty during issue #238's
+   implementation), and no RFC proposes adding one.
+2. **The structural-composition algorithm** (§2), stated once instead of three times:
+   how "every field is `Send`" generalizes to structs, enums, arrays (RFC-0061 §5),
+   function pointers, and references, and what varies per-aspect versus what's shared.
+3. **How the algorithm applies to generic types** (§3), which it is never actually
+   evaluated against directly — an auto-impl on `struct Pair<A, B>` is an implicit,
+   compiler-synthesized conditional impl (RFC-0036), not a single eager classification.
+4. **That `Drop` is not a fourth member of this set** (§4), correcting a plausible
+   misreading of RFC-0061 §5's heading against already-accepted behavior (RFC-0071 §3).
 
 This RFC does not change what `Send`/`Sync`/`Linear` compute — RFC-0080 §3.2/§4.2 and
 RFC-0089 §2's rules are unchanged and are not repeated in full here. It answers *why*
-those rules are structured the way they are and *where* a fourth auto-impl aspect,
-if one is ever proposed, would have to be added.
+those rules are structured the way they are, *how* they extend to generic types no
+existing RFC addresses, and *where* a fourth true auto-impl aspect, if one is ever
+proposed, would have to be added.
 
 ---
 
@@ -113,9 +119,13 @@ satisfies(A, T):
         return all(satisfies(A, field_type) for field_type in T's fields
                    (all variants' fields, for an enum))
     if T is an array T'[]:
-        return satisfies(A, T')                          (RFC-0061 §5)
+        return satisfies(A, T')                          (RFC-0061 §5.1/§5.2)
     if T is &U or &mut U:
         return A's reference rule, applied to U           (aspect-specific — see below)
+    if T is fun(...) -> _  (a bare function pointer, not a closure):
+        return A's function-pointer rule — typically a fixed constant, not a
+        recursion, since a bare function pointer carries no captured state to
+        recurse into (RFC-0061 §7.2: Send/Sync both unconditionally `Yes`)
     otherwise (structural type with no auto-impl rule defined for A):
         A does not apply to T
 ```
@@ -124,14 +134,15 @@ satisfies(A, T):
 every variant of an enum, the element type of an array — terminating at primitives.
 This is the piece three RFCs each assumed without stating.
 
-**What's aspect-specific:** the primitive rule and the reference rule. `Send`'s
-reference rule and `Sync`'s reference rule are *not* the same function applied to
-different aspects — RFC-0080 §3.2 has `&T: Send` iff `T: Sync` (crossing a reference
-boundary flips which aspect is being asked about), while §4.2 has `&T: Sync` iff
-`T: Sync` (no flip). A future auto-impl aspect must state its own primitive rule and
-reference rule explicitly in its own RFC; this RFC does not supply a default for
-either, because `Send`/`Sync` already demonstrate the default isn't always "same
-aspect, no change."
+**What's aspect-specific:** the primitive rule, the reference rule, and the
+function-pointer rule. `Send`'s reference rule and `Sync`'s reference rule are *not*
+the same function applied to different aspects — RFC-0080 §3.2 has `&T: Send` iff
+`T: Sync` (crossing a reference boundary flips which aspect is being asked about),
+while §4.2 has `&T: Sync` iff `T: Sync` (no flip). A future auto-impl aspect must
+state its own primitive rule, reference rule, and function-pointer rule explicitly in
+its own RFC; this RFC does not supply a default for any of the three, because
+`Send`/`Sync` already demonstrate the default isn't always "same aspect, no change."
+`Linear` (RFC-0089) does not state a reference rule at all — see Unresolved Question 3.
 
 This RFC does not re-derive or restate `Send`/`Sync`/`Linear`'s actual rules —
 RFC-0080 §3.2/§4.2 and RFC-0089 §2 remain the canonical source for those. This section
@@ -140,7 +151,94 @@ at one place instead of pattern-matching against three.
 
 ---
 
-## 3. Coherence
+## 3. Generic types: an auto-impl is an implicit conditional impl
+
+§2's algorithm is written as if `T` is always fully concrete. It isn't — most real
+uses involve a generic struct or enum:
+
+```metel
+struct Pair<A, B> { a: A, b: B }
+```
+
+`Pair`'s own declaration has no concrete `A`/`B` to recurse into, so `satisfies(Send,
+Pair<A, B>)` cannot be decided once, eagerly, at the struct's declaration site. An
+auto-impl on a generic type is equivalent to an implicit, compiler-synthesized
+**conditional impl** (RFC-0036) that is never spelled by any author:
+
+```metel
+// never written by anyone; the compiler behaves as if this exists
+impl<A: Send, B: Send> Send for Pair<A, B> { }
+```
+
+and it is checked exactly the way RFC-0036 §2.1 checks any conditional impl: at every
+point the aspect is actually required — a bound check, a fiber-crossing call, another
+auto-impl's own recursive descent into `Pair` as someone else's field — using whatever
+bounds are in scope at that point, not resolved once at `Pair`'s declaration.
+
+Concretely, inside generic code:
+
+```metel
+fun send_it<T: Send>(x: Pair<T, i64>) {
+    cross_fiber(x);   // ok — Pair<T, i64>: Send, because T: Send and i64: Send
+}
+
+fun send_it_unbounded<T>(x: Pair<T, i64>) {
+    cross_fiber(x);   // error — T carries no Send bound; the auto-impl's
+                       // condition on A is not established in this scope
+}
+```
+
+matching RFC-0036 §2.3: the compiler does not infer which bounds a generic function
+needs for its auto-impl-dependent operations to type-check — the author states them,
+same as for any other conditional impl. Auto-impl means the *impl itself* is never
+written by hand; it does not mean generic code is exempt from stating the conditions
+under which it holds.
+
+**Concrete instantiations need no bound lookup at all** — `Pair<Handle, i64>` (with
+`Handle: !Send`, say) is resolved by direct recursive evaluation of §2's algorithm
+against the concrete field types, with no generic machinery involved. The conditional-
+impl framing above only matters when `T`'s own concrete type isn't known yet at the
+point being checked.
+
+---
+
+## 4. `Drop` is not a fourth instance of this pattern
+
+RFC-0061 §5 groups `Send`, `Sync`, and `Drop` together under one heading, "Auto-Impl
+Propagation," for arrays. Taken at face value alongside RFC-0080/RFC-0089, this reads
+as if `Drop` is a fourth auto-impl aspect belonging in §1's recognized set. It is not,
+and conflating the two would misstate already-accepted behavior:
+
+- **For structs and enums, `Drop` is opt-in — never auto-derived.** RFC-0071 §3 is
+  explicit: "Types without a `Drop` impl are reclaimed by recursively dropping their
+  fields, with no user-defined logic." A struct containing a `Drop` field does *not*
+  thereby satisfy `T: Drop` as a bound — its fields are unconditionally dropped in
+  declaration order regardless, but the struct itself only gains a `Drop` impl (and
+  the ability to run its own destructor logic, per RFC-0071 §3's example) if a user
+  writes `impl Drop for Struct` by hand. Running §2's `satisfies` algorithm for `Drop`
+  against a struct would give the wrong answer.
+- **RFC-0061 §5.3's array rule is a narrow, deliberate exception, not a generalization.**
+  `T[]: Drop` is auto-derived when `T: Drop` specifically because arrays cannot receive
+  a user-written `impl Drop for T[]` at all (structural types are `std::core`-owned for
+  orphan-rule purposes, RFC-0061 §1) — the only way `T[]: !Drop` can ever be
+  established, which RFC-0066 §2.2's move-out-of-region permission needs, is
+  structurally. This necessity does not exist for structs and enums, which can always
+  receive an explicit `impl Drop`, so nothing forces (or permits) the same structural
+  shortcut there.
+
+`Send`, `Sync`, and `Linear` are true instances of this RFC's mechanism: the compiler
+grants the aspect itself, as an ordinary positive impl (§5, below), to *any* structurally
+qualifying type, struct/enum included. `Drop`'s array rule instead answers a narrower
+question — whether resources need cleaning up — using the same recursive shape by
+coincidence of arrays' constrained position, not because `Drop` joined the recognized
+set in §1. RFC-0061 §5's heading should be read with this distinction in mind; a
+follow-up documentation fix narrowing that heading (or splitting `Drop`'s subsection out
+from "Auto-Impl Propagation") is tracked as Unresolved Question 4 rather than made here,
+to keep this RFC's own diff from touching an already-accepted RFC's structure.
+
+---
+
+## 5. Coherence
 
 An auto-impl is an ordinary positive impl for coherence purposes: overlap detection
 (T0015) and negative-impl override (RFC-0081) both apply to it exactly as they would
@@ -152,17 +250,30 @@ defined, by construction.
 
 ---
 
-## 4. What this doesn't cover
+## 6. What this doesn't cover
 
 - **A general "derive this structurally" mechanism for user aspects.** That's
   RFC-0093 (`@derive(Aspect)`), a distinct, separately-invoked mechanism. See §1 for
   why the two don't merge.
-- **Adding a fifth auto-impl aspect.** This RFC establishes where such a proposal
-  would live (compiler-recognized identity + this section's algorithm, instantiated
-  with that aspect's own primitive/reference rules) — it does not itself propose one.
-- **Structural types beyond arrays** (tuples, function types) propagating auto-impl
-  aspects. RFC-0061 §6 defers tuples generally; this RFC inherits that gap rather than
-  resolving it.
+- **Adding a fourth auto-impl aspect (beyond `Send`/`Sync`/`Linear`).** This RFC
+  establishes where such a proposal would live (compiler-recognized identity + §2's
+  algorithm, instantiated with that aspect's own primitive/reference/function-pointer
+  rules) — it does not itself propose one. Whether the list should stay closed at
+  exactly three or is expected to grow is Unresolved Question 5.
+- **Tuples.** RFC-0061 §6 defers all tuple aspect impls, auto-impl included, pending a
+  per-arity or variadic-generics design; this RFC inherits that gap rather than
+  resolving it. (Function pointers are *not* in this category — see below.)
+- **Raw pointer types** (`Pointer`/`MutPointer` in the AST — not RFC-0080's region
+  pointers `@[r] T`, which have their own bespoke, region-dependent rule at RFC-0080
+  §3.4/§4.3, nor closures, covered below). No RFC states a `satisfies` rule for these
+  at all; see Unresolved Question 2.
+- **Closures' captured-state rule.** *Not* an open gap — RFC-0050 §"Interaction with
+  concurrency" already independently derives "a closure is `Send` only if all its
+  captured values are `Send`," which is exactly §2's struct/enum case applied to a
+  closure's anonymous capture record. It arrived at the same rule this RFC states
+  generically without citing a shared source — a fourth instance of the pattern this
+  RFC's Motivation describes, found while drafting this section. Worth a cross-link
+  from RFC-0050 to this RFC once accepted, but no content of RFC-0050's own is wrong.
 
 ---
 
@@ -172,24 +283,65 @@ defined, by construction.
    aspect (the `all(...)` over zero fields is vacuously true) — worth stating
    explicitly once implementation begins, so it isn't rediscovered as a special case.
 
+2. **Raw pointer types have no stated rule anywhere.** `Pointer`/`MutPointer` fall
+   into §2's `otherwise` branch by default (no rule defined, so no auto-impl aspect
+   ever applies to them structurally) — but no RFC has ever said this is the intended
+   behavior versus an oversight. Given raw pointers carry no compiler-tracked aliasing
+   information, "never auto-derived, always requires an explicit (likely `unsafe`)
+   impl" is the plausible answer, but it should be stated by whichever RFC actually
+   specifies raw pointers' semantics, not assumed silently here.
+
+3. **`Linear` states no reference rule.** RFC-0089 §2 never says whether `&T`/`&mut T`
+   is ever `Linear` for any `T`. Intuitively no — a reference borrows without owning
+   the underlying multiplicity-1 resource, so multiplicity shouldn't transfer through
+   a reference at all — but §2 of *this* RFC requires every auto-impl aspect to state
+   its own reference rule explicitly, and RFC-0089 doesn't. This RFC does not resolve
+   RFC-0089's gap on its behalf; flagged here so RFC-0089 picks it up before acceptance.
+
+4. **RFC-0061 §5's heading conflates `Drop` with the true auto-impl aspects.** §4
+   above explains why `Drop`'s array-only rule isn't a fourth instance of this
+   mechanism. Whether to retitle RFC-0061 §5 (e.g. splitting `Drop` into its own
+   subsection outside "Auto-Impl Propagation") is a documentation fix to an
+   already-accepted RFC, deliberately left for a separate, focused change rather than
+   folded into this RFC's own acceptance.
+
+5. **Is the auto-impl list expected to grow past three?** §1 argues the list is
+   closed because every proposed member so far is a standard-library aspect with
+   compiler-known semantics (fiber-safety, linearity) rather than arbitrary user
+   semantics. If a real fourth candidate is ever proposed, whether the *compiler's*
+   internal representation should be a hardcoded match over exactly `{Send, Sync,
+   Linear}` or an open (but still user-inaccessible) internal registry is an
+   implementation choice this RFC does not need to settle in advance — recorded here
+   so it isn't decided by accident the first time a fourth candidate actually appears.
+
 ---
 
 ## References
 
-- RFC-0080 (Standard Library Aspects) — `Send`/`Sync`'s own auto-impl rules (§3.2,
-  §4.2), unchanged by this RFC; the pattern this RFC generalizes.
+- RFC-0080 (Standard Library Aspects) — `Send`/`Sync`'s own auto-impl rules (§3.1-
+  §3.2, §4.1-§4.2), unchanged by this RFC; the pattern this RFC generalizes. §7.2
+  (via RFC-0061) supplies the function-pointer rule cited in §2.
 - RFC-0089 (Linear Types, draft) — `Linear` as the third auto-impl aspect (§2); the
-  citation that made the missing shared definition visible.
+  citation that made the missing shared definition visible. Does not state a
+  reference rule (Unresolved Question 3).
 - RFC-0093 (Derive Registration) — the user-invoked `@derive(Aspect)` mechanism this
   RFC deliberately does not merge with; §2's correction of `Linear`'s earlier
   mis-classification motivates this RFC's §1.
-- RFC-0061 (Structural Aspect Bounds) — array propagation of auto-impl aspects (§5),
-  cited here as the array case of §2's shared algorithm.
-- RFC-0060 (Aspect Impl Coherence) — overlap detection and orphan rule; §3 states how
-  auto-impls participate in coherence (as ordinary positive impls, orphan rule
-  inapplicable).
+- RFC-0061 (Structural Aspect Bounds) — array propagation of `Send`/`Sync` (§5.1-5.2,
+  the array case of §2's shared algorithm) and function-pointer rules (§7.2, §2's
+  function-pointer case); §5.3's `Drop` rule is the subject of this RFC's §4.
+- RFC-0060 (Aspect Impl Coherence) — overlap detection and orphan rule; this RFC's
+  own §5 states how auto-impls participate in coherence (as ordinary positive impls,
+  orphan rule inapplicable).
 - RFC-0081 (Negative Impls) — the override mechanism for opting a type out of an
   auto-impl rule that would otherwise apply.
+- RFC-0036 (Conditional Impl Blocks) — §3's use-site checking model, which §3 of this
+  RFC relies on directly to explain auto-impl for generic types.
+- RFC-0071 (Ownership and Move Semantics) — §3's "Drop is opt-in, fields still drop
+  recursively" rule, the basis for this RFC's §4 correction.
+- RFC-0050 (Closure Capture Lists, draft) — independently derives the same
+  captured-state `Send` rule this RFC's §6 names as a fourth, uncited instance of the
+  pattern.
 - Issue #238 / `src/coherence.rs` — where the absence of an `AspectDecl` auto-impl
   marker was confirmed empty by direct inspection, motivating §1's design decision.
 
