@@ -249,7 +249,9 @@ fun main() -> i64 {
 
 ### References
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0067a-reference-types.md`; the interpreter still implements the `*T` / `*mut T` model this section replaces (RFC-0043) until that RFC's tracking task closes.
+> **Availability:** Implemented 2026-07-11 (RFC-0067a) — see
+> `internal/rfcs/4-implemented/rfc-0067a-reference-types.md`. Not yet released in a
+> tagged version; will get its own changelog entry when `sprint/25` ships.
 
 References provide explicit aliasing for non-linear values.
 
@@ -257,8 +259,8 @@ References provide explicit aliasing for non-linear values.
 fun main() -> i64 {
     let mut n = 1;
     let p: &mut i64 = &mut n;
-    p = 4;
-    return p;
+    p = 4;    // write-through: p's own binding need not be `mut` for this
+    return p; // type-directed copy: reads the value out at `return`
 }
 ```
 
@@ -269,6 +271,10 @@ Rules:
 - there is no explicit dereference operator — access goes through auto-deref (below) or,
   for reading a plain value out with no field/method involved, type-directed copy (see
   [Types — Reading a value out of a reference](types.md#reading-a-value-out-of-a-reference))
+- assigning a plain value to a `&mut T`-typed binding **writes through** the reference —
+  exclusivity comes from the reference, not the binding, so this holds whether or not
+  the binding itself is `mut` (`p = 4;` above is exactly this, not a reassignment of `p`
+  — `p`'s own binding has no annotation requiring it to be `mut` at all)
 
 Addressable lvalues for both `&` and `&mut` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), and chains thereof (`nested.outer.field`, `t.1.0`). Non-addressable expressions (call results, arithmetic) are rejected at runtime.
 
@@ -313,6 +319,28 @@ fun apply_all(fns: Array<&() -> ()>) {
     for (let f in fns) {
         f();          // auto-deref each element
     }
+}
+```
+
+Field access, method dispatch, and calling through a reference all chain through
+multiple reference layers, not just one — `rr: &&mut Counter` auto-derefs through both
+levels to reach the `Counter` for a field read, a field write, or a method call
+(`&mut self` included: a shared outer layer doesn't remove the write access the inner
+`&mut` layer carries, it just adds a read-only step to reach it):
+
+```metel
+struct Counter { value: i64 }
+
+impl Counter {
+    fun increment(&mut self) { self.value += 1; }
+}
+
+fun main() -> i64 {
+    let mut c = Counter { value: 0 };
+    let p: &mut Counter = &mut c;
+    let rr: &&mut Counter = &p;
+    rr.increment();   // auto-deref through both layers
+    return rr.value;  // likewise for a field read
 }
 ```
 
