@@ -4,7 +4,7 @@ title: "Associated Types"
 date: '2026-07-01'
 status: integrated
 updated: '2026-07-10'
-impl_tracking: 'https://app.clickup.com/t/86cam5fmd'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/242'
 impl_status: not-started
 ---
 

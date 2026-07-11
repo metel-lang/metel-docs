@@ -4,7 +4,7 @@ title: "Reference Types"
 date: '2026-06-28'
 updated: '2026-07-10'
 status: integrated
-impl_tracking: 'https://app.clickup.com/t/86cam5fhr'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/236'
 impl_status: not-started
 ---
 
