@@ -201,10 +201,7 @@ fun sum(xs: [i64; 3]) -> i64 {
 
 ## References
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0067a-reference-types.md`.
-> The interpreter currently implements the `*T` / `*mut T` model this section replaces
-> (RFC-0043); this section describes the ratified design, not the running interpreter,
-> until that RFC's tracking task closes.
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0067a-reference-types.md`; the interpreter still implements the `*T` / `*mut T` model this section replaces (RFC-0043) until that RFC's tracking task closes.
 
 Reference types provide explicit aliasing for non-linear values.
 
@@ -446,11 +443,7 @@ fun main() -> i64 {
 
 ## Never Type
 
-> **Not yet implemented as a formal, user-writable type** — see
-> `internal/rfcs/3-integrated/rfc-0078-bottom-type.md`. The interpreter already infers `!`
-> for diverging expressions (as described below); the subtyping rule, `-> !` return
-> annotations, and the match-exhaustiveness rules in this section are the ratified
-> design, not yet checked by the typechecker, until that RFC's tracking task closes.
+> **Not yet implemented as a formal, user-writable type** — see `internal/rfcs/3-integrated/rfc-0078-bottom-type.md`; the interpreter already infers `!` for diverging expressions, but the subtyping rule, `-> !` return annotations, and match-exhaustiveness in this section aren't checked by the typechecker until that RFC's tracking task closes.
 
 `!` (Never) is the **uninhabited bottom type** — no value of type `!` can ever be
 constructed. A `loop` with no reachable `break` has type `!`:

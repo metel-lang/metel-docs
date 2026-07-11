@@ -226,10 +226,7 @@ fun main() -> i64 {
 `pub` is valid on `struct`, `enum`, `fun`, `aspect`, and module-level `let` declarations.
 There is no `pub let mut` — mutable module-level state is never exported.
 
-> **Not yet implemented** — see
-> `internal/rfcs/3-integrated/rfc-0083-public-value-exports.md`. `LetDecl` has no
-> visibility field in the current parser/AST; `pub` on a module-level `let` is rejected
-> until that RFC's tracking task closes.
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0083-public-value-exports.md`; `LetDecl` has no visibility field in the current parser/AST, so `pub` on a module-level `let` is rejected until that RFC's tracking task closes.
 
 ```metel
 // config.mtl (conceptual)

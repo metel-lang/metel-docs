@@ -249,10 +249,7 @@ fun main() -> i64 {
 
 ### References
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0067a-reference-types.md`.
-> The interpreter currently implements the `*T` / `*mut T` model this section replaces
-> (RFC-0043); this section describes the ratified design, not the running interpreter,
-> until that RFC's tracking task closes.
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0067a-reference-types.md`; the interpreter still implements the `*T` / `*mut T` model this section replaces (RFC-0043) until that RFC's tracking task closes.
 
 References provide explicit aliasing for non-linear values.
 
