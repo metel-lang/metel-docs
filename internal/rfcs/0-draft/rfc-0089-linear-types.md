@@ -117,12 +117,15 @@ A marker aspect, structurally identical in form to `Send` (RFC-0080). Auto-deriv
 opt-in: a struct containing a multiplicity-`1` field is `Linear` automatically, per
 RFC-0080 §3.2's auto-impl rule (the same structural-composition mechanism that grants
 `Send`/`Sync`, substituting `Linear` for `Send`), matching the lattice's join rule
-directly rather than being a bespoke case. **No `@derive(Linear)` annotation is needed
-or meaningful** — this is category 1 (auto-trait structural composition), not category 2
-(derive-as-codegen); it should never appear in a derivable-aspects list alongside
-`Clone`/`Eq`/`Display` (RFC-0093 §"Derivable Aspects" corrects an earlier draft's error
-on exactly this point). `impl !Linear for X {}` (RFC-0081) is the escape hatch for a
-type that would otherwise structurally qualify but shouldn't.
+directly rather than being a bespoke case — RFC-0096 (2026-07-11) is where that
+mechanism is now formalized once, generically, since this citation and RFC-0080 §3.2's
+own text were the two places it was previously only informally assumed. **No
+`@derive(Linear)` annotation is needed or meaningful** — this is category 1 (auto-trait
+structural composition), not category 2 (derive-as-codegen); it should never appear in
+a derivable-aspects list alongside `Clone`/`Eq`/`Display` (RFC-0093 §"Derivable Aspects"
+corrects an earlier draft's error on exactly this point). `impl !Linear for X {}`
+(RFC-0081) is the escape hatch for a type that would otherwise structurally qualify but
+shouldn't.
 
 **Mutually exclusive with `Copy`** (`ω` and `1` can't coexist in the same field) **and
 with `Drop`.** `Drop`'s triggers — implicit scope-end, the generic `drop(x)` free
@@ -375,6 +378,8 @@ and its open aliasing question remain explicitly not required for the deadline.
   RFC builds on
 - RFC-0080 (Standard Library Aspects) — the auto-impl pattern `Linear` reuses (§2),
   substituting `Linear` for `Send`
+- RFC-0096 (Auto-Impl Aspects, draft) — formalizes that pattern once, generically,
+  rather than each auto-impl aspect (`Send`/`Sync`/`Linear`) restating it
 - RFC-0081 (Negative Impls) — `impl !Linear for X {}` opt-out
 - RFC-0072 (Negative Bounds) — `T: !Copy + !Linear` compound bound form (§2.1)
 - RFC-0039 (`aspect` Alias Syntax, draft) — vehicle for the `Affine` alias (§2.1)

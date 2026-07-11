@@ -239,6 +239,8 @@ Deferred to **v0.5+**, alongside RFC-0092. `@derive(Clone)`'s registration funct
   case; its `@derive(Clone)` example depends on this RFC
 - RFC-0089 (Linear Types) — §2's correction (`Linear` is auto-impl, not derive-as-
   codegen)
+- RFC-0096 (Auto-Impl Aspects, draft) — owns the auto-impl category (§2) this RFC
+  deliberately excludes `Linear`/`Send`/`Sync` from
 - RFC-0090 (Structural Records) — `ToRecord`/`FromRecord`'s auto-derive convenience
   depends on this RFC, though the aspects themselves do not
 - RFC-0060 (Aspect Impl Coherence) — coherence/orphan rules Open Questions 1-3 depend

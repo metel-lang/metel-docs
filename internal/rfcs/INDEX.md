@@ -13,8 +13,8 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**94 RFCs total.** 27 draft, 1 under review, 12 accepted, 7 integrated (new stage — see
-`PROCESS.md`) (47 "live" — need active tracking), 25 implemented, 9 superseded, 13
+**95 RFCs total.** 28 draft, 1 under review, 12 accepted, 7 integrated (new stage — see
+`PROCESS.md`) (48 "live" — need active tracking), 25 implemented, 9 superseded, 13
 refused (47 "settled" — reference only). (RFC-0055 moved draft → superseded 2026-07-09,
 reconciled into RFC-0092/0093/0095 — see below. **2026-07-10:** the allocator/lifetime
 cluster — RFC-0063/0065/0066/0067/0068/0073/0077 — swept from under-review to accepted;
@@ -25,7 +25,14 @@ RFC-0079's `?`-operator text, factually superseded by — already-shipped behavi
 RFC-0072/0081/0082 followed into `3-integrated` the same day, each with its own stale
 pre-split/dangling-reference fixes first — see `PROCESS.md`'s backlog note. **2026-07-11:**
 RFC-0060 (Aspect Impl Coherence) integrated on its own, ahead of implementing issue #238
-— see the Aspect system core section below.)
+— see the Aspect system core section below. RFC-0080 stays under review (moved there
+2026-07-09 over `#[derive]` syntax, `4d1ec42`, unrelated to the point below — a stale
+non-worktree checkout of `main` elsewhere on disk still shows it as accepted, but this
+branch's own history is ahead of that checkout and is authoritative). Implementing
+issue #238 exposed that RFC-0080/0089/0061 each cite "the auto-impl pattern" without
+any one of them owning it as a mechanism, so RFC-0096 was opened to formalize the
+recognition rule and the shared structural-composition algorithm — no behavior change
+to `Send`/`Sync`/`Linear`.)
 
 ---
 
@@ -52,7 +59,8 @@ was found and reconciled, and where this session did most of its work.
 
 - **RFC-0089** — Linear Types — multiplicity lattice, `Linear` auto-impl aspect. Depends
   on RFC-0071 (accepted). Partial consumption now routes through RFC-0090's `ToRecord`,
-  not a bespoke mechanism (revised 2026-07-09).
+  not a bespoke mechanism (revised 2026-07-09). `Linear`'s auto-impl categorization
+  now depends on RFC-0096 for the shared mechanism it's an instance of.
 - **RFC-0090** — Structural Records — Rows and Tiers — `HasField`/`Lacks`, `record`
   type-former, three-tier capability model. No dependency on comptime.
 - **RFC-0091** — Linear Records — per-field multiplicity, automatic-downgrade partial
@@ -62,7 +70,15 @@ was found and reconciled, and where this session did most of its work.
   execution model. Dependency root of 0093/0094.
 - **RFC-0093** — Derive Registration — `@derive(Aspect)` as request + registration.
   Depends on RFC-0092. RFC-0080's `Clone` derive depends on this. Answers RFC-0055's
-  aspect-inspection open question.
+  aspect-inspection open question. Deliberately excludes auto-impl aspects
+  (`Send`/`Sync`/`Linear`) from its scope — see RFC-0096.
+- **RFC-0096** — Auto-Impl Aspects — formalizes the recognition rule (closed,
+  compiler-intrinsic list, not a declaration-level marker) and the shared
+  structural-composition algorithm that RFC-0080 §3.2/§4.2 and RFC-0089 §2 each
+  independently invoke as "the auto-impl pattern" without either owning it. Opened
+  2026-07-11 while implementing issue #238 (Aspect Impl Coherence pipeline), which
+  confirmed `AspectDecl` carries no such marker today. No behavior change to
+  `Send`/`Sync`/`Linear` themselves.
 - **RFC-0094** — Comptime Metaprogramming — generalized `emit`, comptime-callable
   parsing, diagnostics, body-reflection scoping. Depends on RFC-0092 only; independent
   of RFC-0093.

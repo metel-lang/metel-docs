@@ -201,6 +201,12 @@ of whose fields are `Send`. Under closed-world coherence (RFC-0060):
 
 No `@derive(Send)` annotation is needed; the compiler applies the rule automatically.
 
+> **Note (2026-07-11):** this rule is `Send`'s own instance of a shared mechanism —
+> how the compiler recognizes an aspect as auto-impl at all, and the general
+> structural-composition algorithm this per-field/per-reference rule follows — now
+> formalized once in RFC-0096, rather than each auto-impl aspect restating it. This
+> section's actual rule is unchanged.
+
 ### 3.3 Opting out
 
 A type that must not be `Send` despite the auto-impl rule must use a negative impl
@@ -251,6 +257,9 @@ A type is `Sync` precisely when sharing a reference to it across fibers is safe.
 - A struct or enum is `Sync` if every field type is `Sync`.
 - `&T` is `Sync` if `T: Sync`.
 - `&mut T` is `Sync` if `T: Sync`.
+
+> See §3.2's 2026-07-11 note — RFC-0096 formalizes the shared mechanism this and
+> `Send`'s rule both instantiate.
 
 ### 4.3 Standard impls
 
@@ -312,6 +321,8 @@ does not depend on RFC-0003 and may be accepted independently.
 
 - RFC-0060 (Aspect Impl Coherence) — closed-world coherence required for `Send`/`Sync`
   auto-impl rules.
+- RFC-0096 (Auto-Impl Aspects, draft) — the general recognition rule and shared
+  structural-composition algorithm §3.2/§4.2 are instances of.
 - RFC-0081 (Negative Impls) — mechanism for overriding auto-impl when a type must not
   have `Send` or `Sync` despite its fields being `Send`/`Sync`.
 - RFC-0071 (Ownership and Move Semantics) — `Copy`/`Drop` mutual exclusion; move
