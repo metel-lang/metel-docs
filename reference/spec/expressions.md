@@ -14,7 +14,10 @@ fun main() -> i64 {
 }
 ```
 
-Each arm body can be an expression, a `return`/`break` statement, or a block:
+Each arm body can be any expression, or a block. `return`/`break`/`continue` are
+themselves expressions of type `!` (see [Break, Continue, and Return](#break-continue-and-return)
+below), so a bare arm body like `1 => return 10` needs no special grammar case —
+it's just an ordinary expression arm, like any other:
 
 ```metel
 // Match arm body forms start here.
@@ -364,13 +367,54 @@ fun main() -> i64 {
 - `loop { break expr; }` has type `T` where `expr: T`. All `break` arms must produce the same type.
 - `loop { }` — a loop with no reachable `break` — has type `!` (Never). See [Never Type](types.md#never-type).
 
-### Break and Continue
+### Break, Continue, and Return
 
-`break` exits the innermost loop. `break expr` exits a `loop` and produces `expr` as the loop's value.
+> **Availability:** expressions since 2026-07-12 (issue #229); statements-only
+> (requiring a trailing `;`, plus a grammar-level exception for bare match-arm
+> bodies, #226) since v0.1.0/v0.6.3.
 
-`continue` skips to the next iteration of the innermost loop.
+`return`, `break`, and `continue` are expressions of type `!` (Never — see
+[Never Type](types.md#never-type)), not statements. Since `!` is a subtype of
+every type, they're valid anywhere an expression is valid — a block tail with
+no trailing `;`, a braceless `if`-arm, a match-arm body, or nested inside
+another expression — not just as a semicolon-terminated statement on its own
+line:
 
-### Return
+```metel
+fun pick(ok: boolean) -> i64 {
+    if (ok) return 42;   // braceless if-arm, no braces needed
+    0
+}
+
+fun compute() -> i64 {
+    let mut i = 0;
+    loop {
+        i = i + 1;
+        if (i == 5) {
+            break i * 10   // loop-body tail, no trailing `;`
+        }
+    }
+}
+
+fun classify(value: i64) -> i64 {
+    match value {
+        0 => 0,
+        1 => return 10,   // match-arm body, same as any other expression arm
+        _ => 20,
+    }
+}
+
+fun nested(c: boolean) -> i64 {
+    let x = if (c) return 99 else 0;   // nested expression position
+    x
+}
+```
+
+`break` exits the innermost loop; `break expr` exits a `loop` and produces
+`expr` as the loop's value (`break` with no value produces `Unit`).
+`continue` skips to the next iteration of the innermost loop. `return`/
+`return expr` returns from the enclosing function, using the function's
+declared return type (or `Unit`, if omitted):
 
 ```metel
 fun returns_unit() {
