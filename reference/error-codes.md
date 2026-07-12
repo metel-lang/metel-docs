@@ -172,6 +172,23 @@ reference) for the same concrete type.
 **Fix:** remove the duplicate impl, or narrow one impl's type arguments so the two no
 longer overlap.
 
+### T0016 — Non-diverging `-> !` function
+
+A function declared `-> !` (RFC-0078) contains a reachable path that doesn't
+diverge — most commonly an ordinary `return <expr>` where `<expr>` isn't itself
+`!`-typed. A `-> !` function promises never to return; the compiler verifies
+every control-flow path ends in a diverging expression (a `panic`, a `loop`
+with no reachable `break`, or a `return`/tail expression whose own value is
+already `!`-typed).
+
+```
+[T0016] type error in main.mtl at 1..40: function `bad` is declared `-> !` but does not diverge on all paths
+```
+
+**Fix:** make every path genuinely diverge (`panic(msg)`, `loop { }`, or a
+recursive/other `!`-returning call), or drop the `-> !` annotation if the
+function is meant to return normally.
+
 ---
 
 ## Runtime errors (R)
@@ -327,6 +344,18 @@ representation.
 where `None`/`Err` represents a logic error that should never occur in correct
 code. Use `match`, `.unwrap_or`, `.unwrap_or_else`, or (for `Result`) `?` to
 handle the expected case instead.
+
+### R0015 — Explicit panic
+
+`panic(msg)` (RFC-0078) is called. Always panics unconditionally with `msg`.
+
+```
+[R0015] runtime error in main.mtl at 5..10: boom
+```
+
+**Fix:** this is not a bug in the interpreter — `panic` is meant for logic
+errors that should never occur in correct code. Handle the expected case with
+ordinary control flow instead of reaching the `panic` call.
 
 ---
 

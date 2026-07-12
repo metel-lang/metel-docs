@@ -9,6 +9,7 @@ Panics are triggered by:
 - Out-of-bounds array access
 - Integer division by zero
 - `assert(false)` or `assert(false, msg)`
+- `panic(msg)`, called directly
 
 ## Built-in Functions
 
@@ -24,8 +25,11 @@ These are available in every module without any `import` declaration (provided b
 | `assert`          | `(cond: boolean)`                    | Panic with `"assertion failed"` if `cond` is `false` |
 | `assert`          | `(cond: boolean, msg: String)`       | Overload: panic with `msg` if `cond` is `false` |
 | `dbg`             | `<T>(v: T) -> T`                     | Print `[dbg] <value>` to stderr and return the value unchanged |
+| `panic`           | `(msg: String) -> !`                 | Panic unconditionally with `msg` (RFC-0078) |
 
 `assert` is overloaded — the two-argument form carries the panic message.
+
+`panic`'s return type `!` coerces to whatever type its calling context expects — see [Never Type](types.md#never-type).
 
 `print` and `println` require their argument to implement `Display`
 (`print<T: Display>`): passing a struct or enum with no `Display`
