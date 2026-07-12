@@ -2,10 +2,11 @@
 id: rfc-0083
 title: "Public Value Exports"
 date: '2026-07-01'
-status: integrated
-updated: '2026-07-10'
+status: superseded
+updated: '2026-07-12'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/235'
 impl_status: not-started
+superseded_by: rfc-0092
 ---
 
 > **Status — accepted.** Extends the module system (RFC-0030, implemented) to allow
@@ -27,6 +28,8 @@ impl_status: not-started
 > RFC-0063/0073 titles) is also corrected to match the ratified cluster.
 
 > **Status — integrated (2026-07-10).** Integrated into public/reference/spec/modules.md: pub let declarations, import/export. RFC's heap/local_heap motivating example rewritten (obsolete under the ratified allocator design; mechanism itself unaffected).
+
+> **Status — superseded (2026-07-12).** Folded into RFC-0092: pub value exports are 'pub' applied to 'comptime let', not a separate constant-expression concept RFC-0083 never actually specified. Codeberg issue #235 closed unimplemented. See RFC-0092 section 0a.
 
 ## Summary
 

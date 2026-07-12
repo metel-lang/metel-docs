@@ -2,7 +2,7 @@
 id: rfc-index
 title: "RFC Index"
 type: index
-last_built: '2026-07-11'
+last_built: '2026-07-12'
 ---
 
 # RFC Index
@@ -13,9 +13,9 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**96 RFCs total.** 29 draft, 1 under review, 12 accepted, 6 integrated (new stage — see
-`PROCESS.md`) (48 "live" — need active tracking), 26 implemented, 9 superseded, 13
-refused (47 "settled" — reference only). (RFC-0055 moved draft → superseded 2026-07-09,
+**96 RFCs total.** 29 draft, 1 under review, 12 accepted, 4 integrated (new stage — see
+`PROCESS.md`) (46 "live" — need active tracking), 27 implemented, 10 superseded, 13
+refused (50 "settled" — reference only). (RFC-0055 moved draft → superseded 2026-07-09,
 reconciled into RFC-0092/0093/0095 — see below. **2026-07-10:** the allocator/lifetime
 cluster — RFC-0063/0065/0066/0067/0068/0073/0077 — swept from under-review to accepted;
 only RFC-0080 remains under review. Same day: RFC-0067a/0078/0083 became the first RFCs
@@ -41,7 +41,11 @@ own §3/§5 and RFC-0080 §1.2 all use as their running example, but never revis
 from this session's integration pass to complete that step; its §3a amended once more
 to state that read-copy fires at `return`/tail-expression positions too and that
 read-copy/write-through/auto-deref all chain through multiple reference layers, both
-gaps found only by the implementation's own regression tests.)
+gaps found only by the implementation's own regression tests. **2026-07-12:** RFC-0083
+(Public Value Exports) moved `3-integrated` → `5-superseded`, folded into RFC-0092 §0a
+— see the RFC-0083 fold note below. The 4 remaining in `3-integrated` are
+RFC-0060/0072/0081/0082 (RFC-0078 also left `3-integrated` already, for
+`4-implemented`, alongside RFC-0067a on 2026-07-11).)
 
 ---
 
@@ -58,6 +62,27 @@ open questions are now RFC-0092 Open Questions 6-8. Its aspect-inspection questi
 Open Question 4 rather than needing merging into it. RFC-0055 is now superseded
 (`5-superseded/rfc-0055-comptime.md`) — kept as the first concrete proof that
 `INDEX.md` and the check-before-opening-a-new-RFC rule (`PROCESS.md`) earn their keep.
+
+---
+
+## ✅ RFC-0083 folded into RFC-0092 — 2026-07-12
+
+RFC-0083 (Public Value Exports, `pub let`) had reached `3-integrated` requiring `pub
+let` initializers to be "constant expressions," a concept it never specified itself —
+it deferred that definition to RFC-0092, while RFC-0092 only carried the connection as
+a pending open question ("added 2026-07-11"). Neither RFC actually owned the
+restriction it depended on. Surfaced while deciding whether to implement Codeberg issue
+#235 (RFC-0083's tracking issue): implementing `pub let` as drafted would have meant
+building a bespoke restricted evaluator now, then reconciling it against `comptime let`
+later once RFC-0092 lands. Resolved instead by folding RFC-0083 into RFC-0092 §0a:
+public value exports are `pub` applied to `comptime let`, not a parallel mechanism.
+Issue #235 closed unimplemented. RFC-0083 is now superseded
+(`5-superseded/rfc-0083-public-value-exports.md`); `public/reference/spec/modules.md`'s
+`pub let` section (added when RFC-0083 integrated) was reverted to its pre-integration
+wording ("public value exports are not supported in the current version"), since the
+feature is no longer backed by a settled RFC — the mechanism now lives in draft-stage
+RFC-0092 instead, gated on that RFC's own v0.5+ timeline (a real cost, noted in
+RFC-0092's own Timing Recommendation).
 
 ---
 
@@ -81,7 +106,8 @@ was found and reconciled, and where this session did most of its work.
   consumption, the `uses(fd)` Drop mechanism. Depends on RFC-0089 + RFC-0090.
 - **RFC-0092** — Comptime Core — `type`-as-value, `typeinfo`, single-declaration
   `emit`, plus (as of the RFC-0055 reconciliation) the base `comptime let`/`fun`/`if`
-  execution model. Dependency root of 0093/0094.
+  execution model, plus (as of the RFC-0083 fold, 2026-07-12) `pub` on `comptime let`
+  for public value exports (§0a). Dependency root of 0093/0094.
 - **RFC-0093** — Derive Registration — `@derive(Aspect)` as request + registration.
   Depends on RFC-0092. RFC-0080's `Clone` derive depends on this. Answers RFC-0055's
   aspect-inspection open question. Deliberately excludes auto-impl aspects
@@ -213,11 +239,13 @@ cluster itself.
   `public/reference/spec/declarations.md`; stale `Region`/`@[r]` naming corrected to
   `Alloc`/`@a`, and §7 (amending retracted RFC-0069's `SubRegion`) marked historical-only
   rather than integrated. Not yet implemented.
-- **RFC-0083** *(integrated 2026-07-10)* — Public Value Exports (`pub let`). Integrated
-  into `public/reference/spec/modules.md`. Motivating example rewritten — the original
-  `heap`/`local_heap` case is obsolete under the ratified allocator design (RFC-0063/0065
-  reference them by type name, no instance value needed); replaced with exported-constant
-  examples. Not yet implemented.
+- **RFC-0083** *(superseded 2026-07-12, was integrated 2026-07-10)* — Public Value
+  Exports (`pub let`). Reached `3-integrated` requiring "constant expression"
+  initializers, a concept it never specified — deferred to RFC-0092, which only had it
+  as an open question. Folded into RFC-0092 §0a instead of implementing as drafted; see
+  the RFC-0083 fold note above. `modules.md`'s `pub let` section reverted to
+  pre-integration wording. Codeberg issue #235 (tracking) closed unimplemented.
+
 ## Linear closures / concurrency
 
 - **RFC-0049** *(draft)* — `linear fun` Type System — unconsumed-scope-exit, `Drop`

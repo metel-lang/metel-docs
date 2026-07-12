@@ -25,6 +25,17 @@ target:
 > (plus RFC-0093 for OQ-4 and RFC-0095 for the `comptime if`/`@cfg` overlap RFC-0055's
 > design already anticipated without RFC-0095 knowing it) —
 > `internal/rfcs/5-superseded/rfc-0055-comptime.md`.
+>
+> **RFC-0083 folded in, 2026-07-12.** RFC-0083 (Public Value Exports, `pub let`) had
+> reached `3-integrated` on the strength of a "constant expression" concept it never
+> specified — it deferred that definition to this RFC while this RFC only existed as a
+> pending cross-RFC question (§0 below, "added 2026-07-11"). Codeberg issue #235 (its
+> implementation tracking) was closed without implementing RFC-0083 as drafted, since
+> doing so would have meant building a bespoke restricted evaluator now, then
+> reconciling it against `comptime let` later. §0a below resolves the pending question
+> directly: `pub` value exports are `pub` applied to `comptime let`, not a
+> parallel concept. RFC-0083 is superseded by this RFC —
+> `internal/rfcs/5-superseded/rfc-0083-public-value-exports.md`.
 
 ## Summary
 
@@ -71,14 +82,49 @@ zero runtime cost, since the value is fully computed before any generated code r
 Also the natural source of `N` in fixed-size array types (`[T; N]`, RFC-0053/RFC-0084):
 `comptime let CHUNK: i64 = 64; let buf: [u8; CHUNK] = [0; CHUNK];`.
 
-> **Pending cross-RFC question, added 2026-07-11.** RFC-0083 (Public Value Exports,
-> integrated) requires `pub let` initializers to be constant expressions — the same
-> shape of restriction `comptime let` already enforces. Not yet decided: whether
-> implementing `pub let` should literally desugar to `comptime let` evaluation, or
-> define a separate-but-equivalent restricted evaluator. Whichever it is, it only
-> covers `pub`-marked module-level values — ordinary (non-`pub`) module-level
-> `let`/`mut` evaluation order is a separate, still fully unspecified question that
-> this RFC does not address (see RFC-0083's matching note).
+### 0a. `pub` on `comptime let`: public value exports
+
+RFC-0083 (Public Value Exports, superseded by this RFC — see the note at the top)
+identified a real, independent need: a named value — an error code, a default
+timeout, a protocol limit — exported from a module and imported by name, the same way
+`struct`/`enum`/`fun`/`aspect` already can be:
+
+```metel
+// config.mtl
+pub comptime let MAX_CONNECTIONS: u64 = 1024;
+pub comptime let DEFAULT_TIMEOUT_MS: u64 = 5000;
+
+// importer
+import config::MAX_CONNECTIONS;
+fun accept(current: u64) -> boolean { current < MAX_CONNECTIONS }
+```
+
+RFC-0083's draft required `pub let` initializers to be "constant expressions" —
+literals, arithmetic on literals, struct constructors over other constant
+expressions — without tying that restriction to any actual language mechanism; it
+deferred the full definition to this RFC, while this RFC only carried it as an open
+question. That was circular, not just incomplete: neither RFC specified the thing the
+other depended on. `comptime let` already *is* the restricted, order-independent,
+compile-time-evaluated binding RFC-0083 was describing by another name — so the
+resolution is that public value exports are `pub` applied directly to `comptime let`,
+not a second, parallel "constant expression" concept living under plain `let`:
+
+- **Visibility composes with `comptime let` exactly as it already does with
+  `struct`/`enum`/`fun`/`aspect`** (module spec, "Visibility") — no new visibility rule,
+  just a new declaration kind `pub` can attach to.
+- **Import/export syntax is unchanged.** `import config::MAX_CONNECTIONS;` and
+  `export config::MAX_CONNECTIONS;` work exactly as for any other `pub` item.
+- **There is no `pub comptime let mut`** — `comptime let` has no mutable form at all
+  (mirroring RFC-0083's "no `pub let mut`" rule, but for a stronger reason: comptime
+  bindings aren't mutable regardless of visibility).
+- **Ordinary (non-`pub`, non-`comptime`) module-level `let`/`mut` is untouched by this.**
+  Their evaluation order remains unspecified — an implementation detail (evaluate
+  top-to-bottom in declaration order; forward reference is a runtime error), not
+  resolved by this RFC, exactly as RFC-0083 itself left it.
+
+This also retires RFC-0083's own Unresolved Question 2 (added 2026-07-11, asking the
+same "desugar to `comptime let`, or a separate evaluator?" question from the other
+side) — answered: desugar, no separate evaluator.
 
 **`comptime fun`.** A function evaluable at compile time. The annotation means "the
 compiler *can* evaluate this," not "this may only be called at compile time" — an
@@ -346,6 +392,20 @@ RFC-0080's `Clone` derive is blocked on this.
 
 Minimum action before v0.5: reserve `comptime` as a keyword.
 
+**Cost of the §0a fold, noted honestly.** Prior strategy reports (e.g.
+`reports/strategy/strategic-overview-2026-07-01.md`,
+`reports/strategy/strategic-overview-2026-07-05.md`) categorized `pub let` (RFC-0083)
+as a small, mechanical, near-term, independently-parallelizable change — a three-file
+diff, unblocked by nothing else. Folding it into this RFC means public value exports
+now wait on `comptime let` reaching a settled, implemented state — this RFC's own
+target — rather than shipping on its own timeline. That's a real cost, accepted here
+because the alternative (implementing RFC-0083's undefined "constant expression"
+restriction now) would either duplicate `comptime let`'s evaluator or produce a
+different-but-similar restricted evaluator to reconcile later. If the wait proves too
+costly in practice, the base `comptime let` mechanism (§0/§0a only, not `type`-as-value
+or reflection) could in principle ship ahead of the rest of this RFC — that's a
+sequencing question for whoever schedules the work, not resolved here.
+
 ---
 
 ## References
@@ -369,6 +429,9 @@ Minimum action before v0.5: reserve `comptime` as a keyword.
   2026-07-09 after `INDEX.md` surfaced the overlap
 - RFC-0053 (Fixed-Size Array Type) / RFC-0084 (Fixed-Size Array Syntax) — `[T; N]`'s `N`
   is the concrete motivating case for `comptime let` (§0)
+- RFC-0083 (Public Value Exports, superseded) — original `pub let` design; folded into
+  §0a 2026-07-12, its Codeberg tracking issue (#235) closed unimplemented in favor of
+  this RFC's `pub comptime let` mechanism
 - Prior art: Zig `comptime`, `@typeInfo`, `comptime T: type`
 
 ---
