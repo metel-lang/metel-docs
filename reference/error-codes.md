@@ -131,6 +131,25 @@ A `match` expression does not cover all possible values of the scrutinee type.
 
 **Fix:** add the missing arms, or add a wildcard arm `_ => ...`.
 
+### T0012 — Aspect bound not satisfied
+
+A generic type parameter's bound is not satisfied by the concrete type at the call
+site or construction site. Covers both directions: a positive bound (`T: Aspect`)
+requires an implementation that isn't reachable, or a negative bound (`T: !Aspect`,
+RFC-0072) is violated because the concrete type *does* implement the aspect.
+
+```
+[T0012] type error in main.mtl at 5..15: `i64` does not implement `Display` (required by `show`)
+[T0012] type error in main.mtl at 8..20: `Handle` implements `Drop`; `!Drop` bound not satisfied (required by `move_out`)
+```
+
+A type satisfying `T: Copy` automatically satisfies `T: !Drop` (RFC-0072 §2.3) even
+though it implements `Drop` — this is a narrow, Copy/Drop-specific exception, not a
+general rule.
+
+**Fix:** implement the required aspect for the type, or (for a negative bound) remove
+the conflicting positive implementation.
+
 ### T0013 — Ambiguous aspect method resolution
 
 Two different aspects define the same method name on the same receiver type, so a
