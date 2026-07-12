@@ -216,7 +216,11 @@ cluster itself.
   Negative Bounds/Negative Impls that had anticipated this now point here. Surfaced a
   real, unrelated bug: RFC-0033's recommended error code (T0014) was already claimed
   by this RFC's own orphan-rule error — flagged in RFC-0033 rather than silently
-  colliding. Not yet implemented.
+  colliding. `impl_status: in-progress` as of 2026-07-12 (issue #244) — orphan rule,
+  concrete-impl overlap (#238), and negative-vs-concrete-positive conflict (#264) are
+  done; blanket-impl disjointness/priority (RFC-0036/#241), closed-world negative-bound
+  discharge (RFC-0072/#243), and auto-impl rules (RFC-0080/RFC-0096) remain, each
+  blocked on its sibling RFC.
 - **RFC-0097** *(draft)* — Orphan Rule for Bare-Parameter Blanket Impls. RFC-0060 §1's
   orphan rule assumes every impl target has an outermost type constructor to check —
   but a bare-parameter blanket (`impl<T: Bound> Aspect for T`, the exact form RFC-0060

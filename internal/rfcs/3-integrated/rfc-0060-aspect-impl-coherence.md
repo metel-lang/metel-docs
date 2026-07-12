@@ -3,9 +3,9 @@ id: rfc-0060
 title: "Aspect Impl Coherence"
 date: '2026-07-01'
 status: integrated
-updated: '2026-07-11'
+updated: '2026-07-12'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/244'
-impl_status: not-started
+impl_status: in-progress
 ---
 
 > **Status — accepted.** No dependencies on other under-review RFCs; this RFC
@@ -15,6 +15,8 @@ impl_status: not-started
 > the priority of negative impls over blanket impls.
 
 > **Status — integrated (2026-07-11).** Integrated into public/reference/spec/declarations.md as a new Aspect Implementation Coherence section (orphan rule, overlap detection, closed-world assumption, auto-impl, negative-impl priority). Two forward-references in Negative Bounds/Negative Impls, written anticipating this integration, now point here instead. Added T0014/T0015 to error-codes.md. Fixed a stale error-code collision in RFC-0033 (its recommended T0013/T0014 were both already claimed by other, unrelated shipped features).
+
+> **Status — in progress (2026-07-12).** Confirmed via issue #244: §1 (orphan rule) and §2's concrete-impl half (overlap detection between fully-applied types) were already delivered by #238; §5's explicit-vs-explicit half (negative impl conflicting with a concrete positive impl) was delivered by #264. The `merge_from` bug named in #244's own text (`method_env`/`method_receiver_env` silently dropping one module's methods when two independent modules implement different aspects for the same foreign type — confirmed live via a diamond-dependency repro) is now fixed. Still unimplemented: §2's blanket-impl disjointness half and §5's blanket-priority half (both blocked on RFC-0036/#241), §3 closed-world negative-bound discharge (blocked on RFC-0072/#243), and §4 auto-impl rules (blocked on RFC-0080/RFC-0096) — a majority of this RFC's own specified content, not merely sibling properties. #244 stays open until those land.
 
 ## Summary
 
