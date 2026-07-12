@@ -471,7 +471,9 @@ fun main() -> i64 {
 
 ## Never Type
 
-> **Not yet implemented as a formal, user-writable type** — see `internal/rfcs/3-integrated/rfc-0078-bottom-type.md`; the interpreter already infers `!` for diverging expressions, but the subtyping rule, `-> !` return annotations, and match-exhaustiveness in this section aren't checked by the typechecker until that RFC's tracking task closes.
+> **Availability:** RFC-0078, implemented 2026-07-12 — see
+> `internal/rfcs/4-implemented/rfc-0078-bottom-type.md`. Not yet released in a
+> tagged version; will get its own changelog entry when `sprint/25` ships.
 
 `!` (Never) is the **uninhabited bottom type** — no value of type `!` can ever be
 constructed. A `loop` with no reachable `break` has type `!`:
@@ -483,7 +485,7 @@ fun main() -> i64 {
 }
 ```
 
-`return <expr>`, `panic!(<message>)`, `loop { }` with no reachable `break`, and `break`/`continue` used as value expressions in loop context all have type `!`. If any sub-expression has type `!`, that sub-expression diverges before the outer expression can produce a value, so the outer expression's type is unconstrained and any type is accepted in that position.
+`return <expr>`, `panic(<message>)`, `loop { }` with no reachable `break`, and `break`/`continue` used as value expressions in loop context all have type `!`. If any sub-expression has type `!`, that sub-expression diverges before the outer expression can produce a value, so the outer expression's type is unconstrained and any type is accepted in that position.
 
 ### Subtyping and coercion
 
@@ -541,7 +543,7 @@ A function annotated `-> !` promises never to return; every control-flow path mu
 
 ```metel
 fun abort(msg: String) -> ! {
-    panic!(msg);
+    panic(msg);
 }
 ```
 

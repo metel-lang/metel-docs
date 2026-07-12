@@ -197,10 +197,15 @@ cluster itself.
 - **RFC-0072** *(integrated 2026-07-10)* — Negative Bounds — `T: !Aspect`. Integrated
   into `public/reference/spec/declarations.md`; its own stale bracket-channel allocator
   examples (`@[r] T`) fixed first. Not yet implemented.
-- **RFC-0078** *(integrated 2026-07-10)* — Bottom Type `!` — subtyping, coercion, match
+- **RFC-0078** *(implemented 2026-07-12)* — Bottom Type `!` — subtyping, coercion, match
   exhaustiveness, inhabited-singleton coercion, `-> !` returns. Integrated into
   `public/reference/spec/types.md`; §4.2's stale pre-split allocator syntax fixed first.
-  Not yet implemented.
+  Implemented in metel-core sprint/25 (issue #234): `!` surface syntax (grammar),
+  `panic(msg)` native, general uninhabited-variant exhaustiveness (subsuming
+  `Result<T, !>` as the general rule's special case rather than a hardcoded one),
+  inhabited-singleton coercion, and `-> !` divergence checking. §4.2 (allocator
+  collapse) intentionally out of scope — depends on RFC-0063's allocator syntax,
+  not yet implemented.
 - **RFC-0081** *(integrated 2026-07-10)* — Negative Impls — `impl !Aspect for Type`.
   Integrated into `public/reference/spec/declarations.md`; dangling `#[derive]`/RFC-0012
   reference fixed first (now `@derive`/RFC-0093). Not yet implemented.

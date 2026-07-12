@@ -2,10 +2,10 @@
 id: rfc-0078
 title: "Bottom Type — `!`"
 date: '2026-07-01'
-status: integrated
-updated: '2026-07-10'
+status: implemented
+updated: '2026-07-12'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/234'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — accepted.** Depends on RFC-0071 (Ownership and Move Semantics).
@@ -20,6 +20,8 @@ impl_status: not-started
 > content unchanged.
 
 > **Status — integrated (2026-07-10).** Integrated into public/reference/spec/types.md: ! subtyping, coercion, match exhaustiveness, inhabited-singleton coercion, and -> ! return type. RFC's own stale @[r] allocator syntax fixed first.
+
+> **Status — implemented (2026-07-12).** Implemented in metel-core sprint/25 (issue #234): ! surface syntax, subtyping/coercion, uninhabited-variant exhaustiveness, inhabited-singleton coercion, -> ! divergence checking.
 
 ## Summary
 
