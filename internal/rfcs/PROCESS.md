@@ -146,6 +146,30 @@ became the first RFCs to actually reach `3-integrated` under this definition.
 directly — by the time something reaches this stage, "the spec" and "the RFC" should
 agree, because §3-integrated is what makes them agree.
 
+**When to transition to `4-implemented`, added 2026-07-12.** This stage's own definition
+says what it means but never said when to flip it — three rules, settled alongside
+`metel-core`'s branching/release rework:
+
+- **Trigger: at issue-close, not at sprint-close, `develop`-merge, or release.** Run
+  `rfc.py transition <id> --to implemented` in the same session/commit that closes the
+  Codeberg issue implementing it, on `sprint/N` — the same "update it when it's true, not
+  batched for later" discipline the changelog now follows (`metel-core/AGENTS.md`). The
+  sprint-close gate's existing RFC-state check (`rfc.py check` clean, `impl_status`/
+  `impl_tracking` correct) is a *verification* that this already happened correctly
+  before the sprint is admitted to `develop` — it is not the trigger, and finding a
+  problem there means the transition was missed earlier, not that it's now due.
+- **An RFC implemented across multiple issues waits for the last one.** Not previously
+  addressed. `impl_status` stays `in-progress` until the final tracked issue closes;
+  `impl_tracking` points at whichever issue is understood to be that last one (or a
+  parent/tracking issue covering all of them) — not just the first issue opened.
+  Transitioning on partial coverage would claim the spec and interpreter agree when they
+  don't yet.
+- **A bug found later in already-`4-implemented` behavior does not roll the stage back.**
+  File it as an ordinary bug issue and fix forward. `4-implemented` is a statement about
+  a point in time — spec and interpreter agreed when this was declared — not a live
+  guarantee that gets revoked the moment a bug surfaces, the same way a shipped feature
+  with a later-found bug doesn't get "unshipped."
+
 **5-superseded / 6-refused.** Terminal states, reachable from any stage. Superseded RFCs
 keep a pointer to what replaced them; refused RFCs are kept as historical record with
 the refusal reason. Living reports (`reports/substructural-types/*.md` and similar) are
