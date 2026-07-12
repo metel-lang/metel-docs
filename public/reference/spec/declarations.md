@@ -644,8 +644,6 @@ Each `impl Aspect` occurrence in a signature is a **fresh, independent** type va
 
 ### Negative Bounds
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0072-negative-bounds.md`.
-
 `T: !Aspect` is the complement of `T: Aspect`: it asserts that `T` does **not**
 implement the named aspect. `!` binds tightly to the aspect name — `T: !Drop + Clone`
 reads as `T: (!Drop) + Clone` — and positive and negative bounds may mix freely, inline

@@ -13,12 +13,15 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**96 RFCs total.** 29 draft, 1 under review, 12 accepted, 3 integrated (new stage — see
-`PROCESS.md`) (45 "live" — need active tracking), 28 implemented, 10 superseded, 13
-refused (51 "settled" — reference only). **2026-07-12:** RFC-0081 (Negative Impls)
+**96 RFCs total.** 29 draft, 1 under review, 12 accepted, 2 integrated (new stage — see
+`PROCESS.md`) (44 "live" — need active tracking), 29 implemented, 10 superseded, 13
+refused (52 "settled" — reference only). **2026-07-12:** RFC-0081 (Negative Impls)
 implemented on sprint/26 (issue #264) — syntax, finality, and the orphan rule are done
-and tested; priority over blanket impls and negative-bound consultation are properties
-of RFC-0036/RFC-0072 (issues #241/#243), not those RFCs' own implementation yet. (RFC-0055 moved draft → superseded 2026-07-09,
+and tested; priority over blanket impls is a property of RFC-0036 (issue #241), not
+that RFC's own implementation yet — but negative-bound consultation is now covered,
+since RFC-0072 (Negative Bounds) was also implemented the same day (issue #243):
+enforcement at all function-call and generic-literal-construction sites, by inverting
+the same `impl_aspect_env_has` lookup the positive-bound check already uses. (RFC-0055 moved draft → superseded 2026-07-09,
 reconciled into RFC-0092/0093/0095 — see below. **2026-07-10:** the allocator/lifetime
 cluster — RFC-0063/0065/0066/0067/0068/0073/0077 — swept from under-review to accepted;
 only RFC-0080 remains under review. Same day: RFC-0067a/0078/0083 became the first RFCs
@@ -227,9 +230,16 @@ cluster itself.
   §3/§5 and RFC-0080 §1.2 all use as their own running example) has none. Formalizes
   that target-locality is vacuously unsatisfiable for this shape, so such an impl is
   permitted only via the aspect side. Opened 2026-07-11, same review pass as RFC-0096.
-- **RFC-0072** *(integrated 2026-07-10)* — Negative Bounds — `T: !Aspect`. Integrated
-  into `public/reference/spec/declarations.md`; its own stale bracket-channel allocator
-  examples (`@[r] T`) fixed first. Not yet implemented.
+- **RFC-0072** *(implemented 2026-07-12, was integrated 2026-07-10)* — Negative Bounds
+  — `T: !Aspect`. Integrated into `public/reference/spec/declarations.md`; its own
+  stale bracket-channel allocator examples (`@[r] T`) fixed first. Implemented (issue
+  #243): enforcement at all four function-call-expression branches plus generic
+  struct/enum literal construction, by inverting the same `impl_aspect_env_has` lookup
+  the positive-bound check already uses (this also means negative impls, RFC-0081/
+  #264, are correctly consulted for free). §2.3 Copy-implies-!Drop implemented as a
+  narrow, name-literal override, per the RFC's own "do not generalize" wording.
+  Blanket-impl-aware discharge (RFC-0060 §3's fuller closed-world form) remains
+  blocked on RFC-0036/#241 — flagged with `TODO(#241)` comments at each check site.
 - **RFC-0078** *(implemented 2026-07-12)* — Bottom Type `!` — subtyping, coercion, match
   exhaustiveness, inhabited-singleton coercion, `-> !` returns. Integrated into
   `public/reference/spec/types.md`; §4.2's stale pre-split allocator syntax fixed first.
@@ -242,11 +252,14 @@ cluster itself.
 - **RFC-0081** *(implemented 2026-07-12, was integrated 2026-07-10)* — Negative
   Impls — `impl !Aspect for Type`. Syntax, finality (conflict with a concrete
   positive impl), and the orphan rule are implemented and tested (issue #264).
-  Priority over blanket impls (SS2.1) and negative-bound consultation (SS2.3)
-  are properties of RFC-0036/RFC-0072 (issues #241/#243) — not implemented
-  themselves yet, but `register_aspect_impl` already refuses to register a
-  negative impl as positive, so both compose correctly once those land (same
-  scoping precedent as RFC-0078 SS4.2 deferring to RFC-0063).
+  Negative-bound consultation (SS2.3) is now implemented too (issue #243,
+  RFC-0072/2026-07-12): `T: !Aspect` checking inverts the same
+  `impl_aspect_env_has` lookup, which already excludes negative impls, so this
+  composes correctly with no extra work. Priority over blanket impls (SS2.1) is
+  still a property of RFC-0036 (issue #241) — not implemented yet, but
+  `register_aspect_impl` already refuses to register a negative impl as
+  positive, so this will compose correctly once RFC-0036 lands (same scoping
+  precedent as RFC-0078 SS4.2 deferring to RFC-0063).
 - **RFC-0082** *(integrated 2026-07-10)* — Associated Types. Integrated into
   `public/reference/spec/declarations.md`; stale `Region`/`@[r]` naming corrected to
   `Alloc`/`@a`, and §7 (amending retracted RFC-0069's `SubRegion`) marked historical-only

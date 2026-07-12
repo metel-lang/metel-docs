@@ -2,10 +2,10 @@
 id: rfc-0072
 title: "Negative Bounds"
 date: '2026-06-28'
-status: integrated
-updated: '2026-07-10'
+status: implemented
+updated: '2026-07-12'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/243'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — accepted.** Introduces `T: !Aspect` as a bound that is
@@ -18,6 +18,8 @@ impl_status: not-started
 > itself is unaffected; only the allocator examples illustrating it were stale.
 
 > **Status — integrated (2026-07-10).** Integrated into public/reference/spec/declarations.md: T: !Aspect negative bounds. RFC's own stale @[r] bracket-channel syntax fixed first.
+
+> **Status — implemented (2026-07-12).** Enforced at all call sites + literal construction; issue #243
 
 ## Summary
 
