@@ -6,10 +6,11 @@ title: "Metel Language Changelog"
 
 ## v0.10.0
 
-**In progress on `sprint/25` — not yet released.** Updated incrementally as each
-issue lands, not written retroactively at release time; entries below may still
-be reworded for clarity before the version is tagged, but nothing here should go
-stale relative to what's actually merged.
+**In progress — not yet released.** Updated incrementally as each issue lands, not
+written retroactively at release time; entries below may still be reworded for
+clarity before the version is tagged, but nothing here should go stale relative to
+what's actually merged. Shipped from `sprint/25` (merged into `develop`) and
+`sprint/26` (in progress).
 
 **New language features:**
 - The bottom type `!` is now real and user-writable: subtyping/coercion to any
@@ -24,10 +25,21 @@ stale relative to what's actually merged.
 - New syntax parses for upcoming Cluster A RFCs, **not yet type-checked or
   enforced**: negative bounds (`T: !Aspect`), conditional/structural impls
   (`impl<T: Bound> Aspect for Type<T>`, the `where` form, blanket impls over
-  `T[]`), negative impls (`impl !Aspect for Type {}`), associated types
-  (`type Name;` / `type Name = Concrete;` in aspect/impl blocks), and
-  `T::AssocType` projections. Real bound-satisfaction/coherence checking for
-  each lands in its own follow-up issue (#241/#243/#264/#242/#245) (#233)
+  `T[]`), associated types (`type Name;` / `type Name = Concrete;` in
+  aspect/impl blocks), and `T::AssocType` projections. Real bound-satisfaction/
+  coherence checking for each lands in its own follow-up issue (#241/#243/#242/
+  #245) (#233)
+- Negative impls (`impl !Aspect for Type {}`) now fully participate in aspect
+  coherence: the orphan rule applies to them, a concrete positive impl and a
+  negative impl for the same type/aspect correctly conflict (`T0015`), and a
+  negative impl is no longer required to provide the aspect's methods, nor
+  does it silently inherit the aspect's default-bodied methods (previously,
+  both were real bugs — the first made a negative impl of any aspect with a
+  non-default method fail to even declare; the second made a negative impl
+  quietly grant the aspect's default methods, the opposite of what `!Aspect`
+  means). Taking priority over a *blanket* positive impl and being consulted
+  by `T: !Aspect` bound satisfaction are properties of RFC-0036/RFC-0072
+  (`#241`/`#243`), not implemented yet themselves (RFC-0081, `#264`)
 
 **Breaking changes:**
 - Reference-type syntax renamed to match the integrated spec: `*T`/`*mut T`
