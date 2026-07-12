@@ -2,10 +2,10 @@
 id: rfc-0081
 title: "Negative Impls"
 date: '2026-07-01'
-status: integrated
-updated: '2026-07-10'
+status: implemented
+updated: '2026-07-12'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/264'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence) and
@@ -14,6 +14,8 @@ impl_status: not-started
 > aspect, overriding any blanket impl that would otherwise grant it.
 
 > **Status — integrated (2026-07-10).** Integrated into public/reference/spec/declarations.md: impl !Aspect for Type negative impls. RFC's dangling #[derive]/RFC-0012 reference fixed first (now @derive/RFC-0093).
+
+> **Status — implemented (2026-07-12).** Implemented on sprint/26 (metel-core). Syntax (SS1), finality/conflict with concrete positive impls (SS2.2), orphan rule (SS3) all correct and tested. SS2.1 (priority over blanket impls) and SS2.3 (negative-bound consultation) are properties of RFC-0036/RFC-0072 (issues #241/#243), not yet implemented themselves -- register_aspect_impl already refuses to register a negative impl as positive, so both will compose correctly once those land, same scoping precedent as RFC-0078 SS4.2 deferring to RFC-0063.
 
 ## Summary
 

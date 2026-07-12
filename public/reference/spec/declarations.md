@@ -677,8 +677,6 @@ fields still drop normally through the ordinary per-field chain.
 
 ### Negative Impls
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0081-negative-impls.md`.
-
 A library author declares that a type **definitively** does not implement an aspect
 with `impl !Aspect for Type {}` — body always empty, since a negative impl is a
 declaration of non-implementation, not a definition of behavior:
