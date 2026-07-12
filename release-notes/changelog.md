@@ -4,6 +4,69 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.10.0
+
+**In progress on `sprint/25` — not yet released.** Updated incrementally as each
+issue lands, not written retroactively at release time; entries below may still
+be reworded for clarity before the version is tagged, but nothing here should go
+stale relative to what's actually merged.
+
+**New language features:**
+- The bottom type `!` is now real and user-writable: subtyping/coercion to any
+  type, uninhabited-variant exhaustiveness, inhabited-singleton coercion, and
+  `-> !` divergence checking (`T0016` if a function declared `-> !` doesn't
+  diverge on every path) (RFC-0078, #234)
+- `return`, `break`, and `continue` are now ordinary expressions of type `!`,
+  valid anywhere any expression is valid — braceless `if`-arms, loop-body
+  tails, match arms, and nested expression positions — rather than statements
+  with one grammar exception carved out per new context (#229)
+- `Perhaps`/`Result` gain `.yolo()`, `.ok_or()`, `.map_err()`, `.ok()` (#232)
+- New syntax parses for upcoming Cluster A RFCs, **not yet type-checked or
+  enforced**: negative bounds (`T: !Aspect`), conditional/structural impls
+  (`impl<T: Bound> Aspect for Type<T>`, the `where` form, blanket impls over
+  `T[]`), negative impls (`impl !Aspect for Type {}`), associated types
+  (`type Name;` / `type Name = Concrete;` in aspect/impl blocks), and
+  `T::AssocType` projections. Real bound-satisfaction/coherence checking for
+  each lands in its own follow-up issue (#241/#243/#264/#242/#245) (#233)
+
+**Breaking changes:**
+- Reference-type syntax renamed to match the integrated spec: `*T`/`*mut T`
+  are no longer accepted in type position (`&T`/`&mut T` only); explicit
+  `*p` dereference syntax is removed (address-of `&x`/`&mut x` at the
+  expression level is unchanged) (RFC-0067a)
+
+**Bug fixes:**
+- Auto-deref, read-copy, and write-through now chain correctly through
+  arbitrarily deep reference layers (`&&T`, `&mut &mut T`, …) instead of
+  peeling only one layer
+- Generic method bodies reconstructed at call time now correctly recover the
+  receiver's own type parameters from its field values, instead of silently
+  defaulting them to `Unit` — fixes spurious "cannot infer receiver type"
+  errors when a generic method calls another bounded method (e.g. `to_string`)
+  on a `T`-typed field (#267)
+- Zero-argument generic calls (e.g. `yolo_none()`) now fall back to the
+  caller's expected type when argument-based instantiation leaves a type
+  variable free, matching the retry already used for qualified-path calls
+
+**Internal improvements:**
+- **`SymbolId` migration (ADR-0041/ADR-0042).** A reference-resolution pass
+  records every bare-identifier reference to a top-level/imported declaration;
+  direct calls, impl/aspect method dispatch, and the runtime type registry
+  now all dispatch by stable `SymbolId` instead of surface name — fixes two
+  modules each declaring a same-named struct/enum colliding instead of
+  dispatching independently. Closes the last `Call::callee_id` name-lookup
+  fallback, surfacing and fixing two latent bugs along the way: an overloaded
+  name's bare reference resolving to a stale id, and an imported re-exported
+  name minting an orphaned id instead of reusing its real declaration's
+- New `coherence` pass: orphan rule (`T0014`) and overlap detection (`T0015`)
+  for concrete aspect impls, run between path normalization and typechecking
+  (#238)
+- All `clippy::pedantic` warnings resolved (619 → 0); targeted, justified
+  `#[allow]`s where the "fix" would change actual behavior (numeric casts,
+  exact float equality) rather than improve clarity (#266)
+- Task-tracking and RFC workflow docs rewritten for the current Codeberg
+  Issues + 7-stage RFC lifecycle process
+
 ## v0.9.1
 
 Bug fixes. Shipped from sprint/24.
