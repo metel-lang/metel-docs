@@ -425,8 +425,6 @@ A violating impl is `T0014 — orphan implementation`. The orphan rule is what k
 
 ### Associated Types
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0082-associated-types.md`; this syntax is already assumed by the aspects below and by stdlib types like `Deref`, but isn't checked by the typechecker until that RFC's tracking task closes.
-
 An aspect may declare an **associated type** — a type-level output that each
 implementing type must specify — with `type Name;`. An impl block defines it with
 `type Name = ConcreteType;`:
