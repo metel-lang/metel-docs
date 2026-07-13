@@ -501,7 +501,7 @@ This composes without any new mechanism: the conditional impl's bound-checking (
 
 ### Aspect Implementation Coherence
 
-> **Partially implemented** — see `internal/rfcs/3-integrated/rfc-0060-aspect-impl-coherence.md`. The orphan rule and concrete-impl overlap detection are implemented and enforced (issue #238), as is negative-vs-concrete-positive impl conflict (issue #264) and negative-bound discharge for the concrete-impl case (issue #243). Blanket-impl-aware negative-bound discharge, blanket-vs-concrete overlap detection, and negative-impl priority over a blanket positive impl remain open (issue #244). Auto-impl aspects (below) are unimplemented — no aspect can yet opt into auto-impl.
+> **Mostly implemented** — see `internal/rfcs/3-integrated/rfc-0060-aspect-impl-coherence.md`. The orphan rule, concrete-impl overlap detection, blanket-vs-concrete overlap detection, blanket-impl-aware negative-bound discharge, and negative-impl priority over a blanket positive impl are all implemented and enforced (issues #238, #243, #264, #244). Auto-impl aspects (below) remain unimplemented — no aspect can yet opt into auto-impl (blocked on RFC-0080/RFC-0096).
 
 Every `(aspect, type)` pair has at most one implementation visible to the program, independent of module load order. Two rules make this checkable without a whole-program scan.
 

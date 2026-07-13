@@ -275,8 +275,8 @@ implementation).
   that the implementation had skipped on a mistaken belief the parser didn't support
   `!Aspect` bounds — it does, at every level (inline, `where`-clause, and impl-level
   polarity). This resolves the "priority over blanket impls"/"blanket-impl-aware
-  discharge" blockers noted in RFC-0060, RFC-0072, and RFC-0081's own entries below;
-  those RFCs' remaining work is now unblocked (tracked under issue #244).
+  discharge" blockers noted in RFC-0060, RFC-0072, and RFC-0081's own entries below —
+  #244 (2026-07-13) landed that remaining work; see those RFCs' own entries.
 - **RFC-0037** *(integrated 2026-07-13)* — Return-Position `impl Aspect` — opaque,
   monomorphised-per-function return types. Integrated into
   `public/reference/spec/declarations.md` right after the parameter-position `impl
@@ -305,6 +305,13 @@ implementation).
   priority logic remains open under this issue (#244). Auto-impl rules
   (RFC-0080/RFC-0096) remain unblocked-but-unimplemented on their own timeline,
   unrelated to #241.
+  **Update 2026-07-13 (later still):** #244 landed — blanket-impl-aware negative-bound
+  discharge (both polarities, at struct/enum literal construction and RFC-0082 assoc-
+  type completeness), blanket-vs-concrete overlap detection (via a shape-crossing
+  compatibility check replacing the old exact-key grouping), and negative-impl
+  priority over a blanket positive impl (a new `neg_impl_env` registry table) are all
+  implemented now, without disturbing the existing negative-vs-concrete-positive
+  conflict rule (RFC-0081 §2.2/#264). Only §4 auto-impl rules remain unimplemented.
 - **RFC-0097** *(integrated 2026-07-13)* — Orphan Rule for Bare-Parameter Blanket
   Impls. RFC-0060 §1's orphan rule assumes every impl target has an outermost type
   constructor to check — but a bare-parameter blanket (`impl<T: Bound> Aspect for T`,
@@ -335,8 +342,8 @@ implementation).
   negative bound against a conditionally-implementing type was being evaluated
   incorrectly until this fix). Blanket-impl-aware discharge (RFC-0060 §3's fuller
   closed-world form) was blocked on RFC-0036/#241; that dependency has now landed,
-  unblocking it, but the discharge/priority logic itself is still open under #244 —
-  the `TODO(#241)` comments at each check site should be revisited there.
+  unblocking it. **Update 2026-07-13 (later):** #244 landed the discharge/priority
+  logic itself — the `TODO(#241)` comments at each check site are resolved.
 - **RFC-0078** *(implemented 2026-07-12)* — Bottom Type `!` — subtyping, coercion, match
   exhaustiveness, inhabited-singleton coercion, `-> !` returns. Integrated into
   `public/reference/spec/types.md`; §4.2's stale pre-split allocator syntax fixed first.
@@ -356,8 +363,12 @@ implementation).
   composes correctly with no extra work. Priority over blanket impls (SS2.1) was
   a property of RFC-0036 (issue #241) — that RFC is now implemented (2026-07-13),
   and `register_aspect_impl` already refuses to register a negative impl as
-  positive, so this composes correctly; whether the priority ordering itself needs
-  its own dedicated check beyond that refusal is still open under #244.
+  positive, so this composes correctly. **Update 2026-07-13 (later):** #244 landed
+  the dedicated priority check itself (a `neg_impl_env` registry table consulted by
+  `type_satisfies_aspect` before either positive path) — a concrete negative impl now
+  overrides a blanket positive impl for its exact instantiation, without disturbing
+  the existing negative-vs-concrete-positive conflict rule (§2.2/#264, confirmed by
+  a regression this fix initially introduced and then corrected).
 - **RFC-0082** *(implemented 2026-07-13, was integrated 2026-07-10)* — Associated
   Types. Integrated into `public/reference/spec/declarations.md`; stale
   `Region`/`@[r]` naming corrected to `Alloc`/`@a`, and §7 (amending retracted
