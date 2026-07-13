@@ -13,9 +13,11 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**96 RFCs total.** 29 draft, 1 under review, 12 accepted, 1 integrated (new stage — see
-`PROCESS.md`) (43 "live" — need active tracking), 30 implemented, 10 superseded, 13
-refused (53 "settled" — reference only). **2026-07-12:** RFC-0081 (Negative Impls)
+**97 RFCs total.** 30 draft, 1 under review, 12 accepted, 1 integrated (new stage — see
+`PROCESS.md`) (44 "live" — need active tracking), 30 implemented, 10 superseded, 13
+refused (53 "settled" — reference only). **2026-07-13:** RFC-0098 (Surface Keyword
+Renames) opened — amends RFC-0032/0042/0044/0067A's surface syntax only, no semantic
+change; see "Small, mostly standalone syntax/ergonomics items" below. **2026-07-12:** RFC-0081 (Negative Impls)
 implemented on sprint/26 (issue #264) — syntax, finality, and the orphan rule are done
 and tested; priority over blanket impls is a property of RFC-0036 (issue #241), not
 that RFC's own implementation yet — but negative-bound consultation is now covered,
@@ -313,6 +315,12 @@ cluster itself.
 - **RFC-0038** — `impl Aspect` in Struct Fields / Existential Types.
 - **RFC-0052** *(draft, on hold)* — Lifetime System — held pending the memory-strategy
   reconsideration.
+- **RFC-0098** *(draft)* — Surface Keyword Renames — `impl X for Y` → `extend X with Y`,
+  `pub` → `public`, `mut` → `var` (bindings, reference types, and reference expressions
+  together). Three independent, purely lexical renames with no semantic change. Amends
+  RFC-0032/0042/0044/0067A's surface syntax only — each already-implemented RFC's actual
+  semantics (field-visibility enforcement, binding mutability, reference/auto-deref
+  behavior, receiver dispatch) are untouched. Opened 2026-07-13.
 
 ---
 
