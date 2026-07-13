@@ -3,12 +3,18 @@ id: rfc-0036
 title: "Conditional Impl Blocks"
 date: '2026-07-01'
 deferred_from: rfc-0034 (Q6)
+status: integrated
+updated: '2026-07-13'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/241'
+impl_status: not-started
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence). Specifies
 > conditional `impl` blocks where an aspect implementation for a generic type is
 > valid only when the type's parameters satisfy additional bounds. Required by
 > RFC-0072 (Negative Bounds) §4 and by the region cluster's generic region bounds.
+
+> **Status — integrated (2026-07-13).** Conditional impl blocks integrated into declarations.md; fixed a stale T0013 collision (corrected to reuse T0012), deferred bare-parameter blanket impls to RFC-0097 explicitly, worked example checking interaction with equality-constrained bounds (RFC-0082)
 
 ## Summary
 
@@ -161,15 +167,31 @@ those the conditional impl would cover.
 Conditional impls are subject to the same orphan rule as unconditional impls
 (RFC-0060 §1): the aspect or the outermost type constructor must be local.
 
+**Bare-parameter blanket impls out of scope.** Every example in this RFC targets a
+genuinely named type (`Pair<A, B>`, `Container<T>`, `Wrapper<T>`) with a real,
+nameable outermost constructor. `impl<T: Bound> Aspect for T` — where the target is
+the impl's own bare generic parameter, with no struct or enum wrapping it — has no
+such constructor, so §3.3's orphan rule as stated doesn't say what "local" means for
+it. This shape is deferred to RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls,
+draft, not yet accepted), which resolves it as vacuously unsatisfiable on the
+type side (permitted only through the aspect side of the orphan rule). This RFC's own
+implementation does not need to support that shape.
+
 ---
 
 ## 4. Error Reporting
 
 A failed conditional impl bound is reported with a diagnostic that names the
-unsatisfied condition:
+unsatisfied condition. This reuses **T0012** ("Aspect bound not satisfied") rather than
+a new code — a conditional impl's `where`-clause bound failing is the same class of
+error as an ordinary function bound failing (see RFC-0072's own precedent of reusing
+T0012 for the negative-bound direction rather than minting a new code); it does not
+warrant its own code, and `T0013` (this RFC's original text) was already claimed
+elsewhere (ambiguous aspect method/associated-type resolution) by the time this RFC
+was integrated — corrected here, not left stale.
 
 ```
-T0013: Pair<i64, SomeNonPrintable> does not implement Printable
+T0012: Pair<i64, SomeNonPrintable> does not implement Printable
        because SomeNonPrintable does not implement Printable
        (required by: impl<A: Printable, B: Printable> Printable for Pair<A, B>)
 ```

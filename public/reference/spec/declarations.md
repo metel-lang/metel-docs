@@ -397,6 +397,84 @@ fun main() {
 }
 ```
 
+**Conditional impl blocks.** *Specified by RFC-0036.* An impl for a generic type may be conditional on its own type parameters satisfying additional bounds, written in a `where` clause after the target type (or inline, before the aspect name):
+
+```metel
+struct Pair<A, B> { first: A, second: B }
+
+impl Printable for Pair<A, B> where A: Printable, B: Printable {
+    fun print(self) { ... }
+}
+
+// equivalent, inline form:
+impl<A: Printable, B: Printable> Printable for Pair<A, B> { ... }
+```
+
+`Pair<i64, String>` is `Printable`; `Pair<i64, SomeNonPrintableType>` is not — both remain constructable, since a struct's own unconditional bounds (above) and an impl's conditional bounds are checked independently. The compiler checks a conditional impl's bounds at every point the aspect is required — method call, bound check, impl selection — not at the impl's own declaration site:
+
+```metel
+fun print_pair<A: Printable, B: Printable>(p: Pair<A, B>) {
+    p.print();   // ok -- conditional impl applies; A: Printable and B: Printable
+}
+
+fun use_pair(p: Pair<i64, SomeNonPrintable>) {
+    p.print();   // error T0012: Pair<i64, SomeNonPrintable> does not implement
+                 //   Printable, because SomeNonPrintable does not implement Printable
+}
+```
+
+A generic function propagates a conditional impl to its own callers by stating the bound explicitly — the compiler never infers which bounds a caller needs:
+
+```metel
+fun print_sorted<T: Comparable + Printable>(list: SortedList<T>) {
+    list.print();   // ok -- T: Printable, so the conditional impl applies
+}
+```
+
+Negative bounds may appear in a conditional impl's `where` clause on the same terms as positive ones:
+
+```metel
+impl<T: !Drop> BulkDrop for Container<T> { ... }
+```
+
+**Coherence.** Two conditional impls of the same aspect for the same type are a coherence error (`T0015`) unless they are provably disjoint. Disjointness is established by **syntactic negation** only — one impl must carry an explicit negative bound that directly negates a positive bound in the other. The compiler performs no inference beyond this direct check:
+
+```metel
+// Accepted -- T: !Copy directly negates T: Copy; provably disjoint
+impl<T: Copy>  Serialize for Wrapper<T> { ... }
+impl<T: !Copy> Serialize for Wrapper<T> { ... }
+
+// error T0015 -- no direct negation between Clone and Display; not provably disjoint
+impl<T: Clone>   Serialize for Wrapper<T> { ... }
+impl<T: Display> Serialize for Wrapper<T> { ... }
+```
+
+A conditional impl and an unconditional impl for the same type constructor are also a coherence error — the unconditional impl already covers every instantiation the conditional one would. Conditional impls are subject to the same orphan rule as unconditional ones (above): the aspect or the type's outermost constructor must be local.
+
+> **Bare-parameter blanket impls** — `impl<T: Bound> Aspect for T`, where the target
+> is the impl's own generic parameter rather than a named struct or enum wrapping it
+> (e.g. a hypothetical `impl<T: Copy> Clone for T`) — are **not** covered by this
+> section. The orphan rule above is stated in terms of the target's outermost type
+> constructor, which a bare type parameter doesn't have; this shape is deferred to
+> `internal/rfcs/0-draft/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md`
+> (draft, not yet accepted). Every conditional-impl example in this section targets a
+> genuine named type (`Pair<A, B>`, `Container<T>`, `Wrapper<T>`) for exactly this
+> reason.
+
+**Worked example — interaction with equality-constrained bounds.** A conditional impl's `where` clause accepts the same equality-constrained bound form Associated Types (above) specifies for ordinary function bounds, since both are stored and checked as the same `Bound` structure:
+
+```metel
+aspect Container { type Item: Display; fun get(self) -> Item; }
+
+struct Wrapper<T> { inner: T }
+
+impl<T: Container<Item = i64>> Printable for Wrapper<T> {
+    fun print(self) { println(self.inner.get().to_string()); }
+}
+```
+
+This composes without any new mechanism: the conditional impl's bound-checking (this section) and the equality-constraint-checking Associated Types already specifies are the same call-site check, run once per bound in the `where` clause, regardless of which kind of aspect the bound names.
+
 ### Aspect Implementation Coherence
 
 > **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0060-aspect-impl-coherence.md`; the interpreter currently has no orphan-rule or overlap check, so any impl is accepted regardless of where it's written.
@@ -632,11 +710,59 @@ fun print_all<_T: Printable>(items: _T[]) { ... }
 
 Each `impl Aspect` occurrence in a signature is a **fresh, independent** type variable. To constrain two parameters to the same type, use a named type parameter.
 
-> **Not yet implemented (deferred):**
-> - `impl Aspect` in return position (`fun foo() -> impl Display`) — RFC-0037
+**Return-position `impl Aspect`.** A function may return `impl Aspect` instead of a named type. The caller sees an opaque type known only to satisfy `Aspect` — no boxing, no heap allocation, no vtable, since the concrete type is fixed by the function's own body:
+
+```metel
+fun make_adder(n: i64) -> impl Callable<i64, i64> {
+    fun(x: i64) -> i64 { x + n }
+}
+
+let add5 = make_adder(5);
+add5(10);   // 15 — callable, but its concrete type is not nameable
+```
+
+A function returning `impl Aspect` must produce the **same concrete type on every code path** — the compiler resolves one fixed type per function definition, not per call:
+
+```metel
+fun bad(flag: boolean) -> impl Display {
+    if flag { 42 } else { "hello" }   // error: branches return different concrete types
+}
+```
+
+Two calls to the same function return values of the same opaque type; two *different* `impl Aspect`-returning functions never share an opaque type even if their concrete implementations coincide. Each occurrence of `impl Aspect` in a signature is independent (as in parameter position, above) — a function with both an `impl Aspect` parameter and return type may return the parameter directly, in which case ordinary type inference unifies the two independent type variables:
+
+```metel
+fun transform(x: impl Display) -> impl Display {
+    x   // return type inferred to be the same concrete type as x's
+}
+```
+
+The caller may call any method the declared aspect provides, store the value, and pass it to anything accepting the same opaque type or aspect bound — but may not name the concrete type, cast it, or call methods outside the aspect even if the concrete type has them. Ownership (ownership/`Copy`/`Drop`, not yet integrated — RFC-0071) applies to the concrete type normally; the caller cannot observe which impls it has beyond the declared aspect bound.
+
+**Worked example — interaction with associated types.** A function may return `impl Aspect` where `Aspect` declares an associated type; the caller can still use the aspect's own methods to produce values of that associated type, and those values type-check normally, even though the caller cannot name the opaque type itself:
+
+```metel
+aspect Container { type Item: Display; fun get(self) -> Item; }
+struct IntBox { value: i64 }
+impl Container for IntBox { type Item = i64; fun get(self) -> i64 { self.value } }
+
+fun make_box(n: i64) -> impl Container {
+    IntBox { value: n }
+}
+
+let v: i64 = make_box(42).get();   // resolves through Container's Item binding for
+                                    // IntBox, the same associated-type mechanism
+                                    // Associated Types (above) specifies -- the
+                                    // caller never names IntBox, only Container.
+```
+
+This composes for free: the opaque return type is a real concrete type internally (erased only from the caller's *naming* surface, not from the typechecker's own bookkeeping), so associated-type resolution runs exactly as it does for a named type.
+
+> **Deferred, tracked separately:**
 > - `impl Aspect` in struct fields (`dyn Aspect`) — RFC-0038
 > - `aspect` alias syntax (`aspect Sortable = Comparable + Display + Clone`) — RFC-0039
-> - Conditional impls (`impl Aspect for S<T> where T: OtherAspect`) — RFC-0036
+> - Named linkage between an `impl Aspect` parameter and return type (e.g. `impl(x) Display`) — deferred by RFC-0037 itself, unresolved
+> - Multiple aspect bounds in return position (`impl Aspect + OtherAspect`) — deferred by RFC-0037 itself, unresolved
 
 ---
 
@@ -733,10 +859,7 @@ struct Cache<K, V> where K: Hashable + Comparable { entries: Pair<K, V>[] }
 - `impl AspectName for Struct<T>` blocks: the struct's bounds are inherited
 - Match arm bodies when matching a value of the bounded struct or enum type
 
-The bound is an invariant of the type, not of the binding site. It propagates wherever a value of that type is used.
-
-> **Not yet implemented (deferred):**
-> - Conditional impls (`impl Aspect for S<T> where T: OtherAspect`) — RFC-0036
+The bound is an invariant of the type, not of the binding site. It propagates wherever a value of that type is used. See Conditional Impl Blocks, above, for how this interacts with an aspect impl's own additional bounds.
 
 ---
 

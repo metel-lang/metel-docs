@@ -3,12 +3,18 @@ id: rfc-0037
 title: "Return-Position impl Aspect"
 date: '2026-07-01'
 deferred_from: rfc-0035 (Q3)
+status: integrated
+updated: '2026-07-13'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/240'
+impl_status: not-started
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence). Specifies
 > `impl Aspect` in function return position: the return type is an opaque concrete
 > type known only to satisfy the named aspect. Complements RFC-0035 (parameter-
 > position `impl Aspect`).
+
+> **Status — integrated (2026-07-13).** Return-position impl Aspect integrated into declarations.md; worked example checking interaction with associated types (RFC-0082)
 
 ## Summary
 

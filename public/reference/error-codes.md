@@ -136,11 +136,15 @@ A `match` expression does not cover all possible values of the scrutinee type.
 A generic type parameter's bound is not satisfied by the concrete type at the call
 site or construction site. Covers both directions: a positive bound (`T: Aspect`)
 requires an implementation that isn't reachable, or a negative bound (`T: !Aspect`,
-RFC-0072) is violated because the concrete type *does* implement the aspect.
+RFC-0072) is violated because the concrete type *does* implement the aspect. Also
+covers a conditional impl's own `where`-clause bounds (RFC-0036) failing at a use
+site — the same check as an ordinary function bound, just reached through an impl's
+condition instead of a function's generic parameter.
 
 ```
 [T0012] type error in main.mtl at 5..15: `i64` does not implement `Display` (required by `show`)
 [T0012] type error in main.mtl at 8..20: `Handle` implements `Drop`; `!Drop` bound not satisfied (required by `move_out`)
+[T0012] type error in main.mtl at 3..12: `Pair<i64, SomeNonPrintable>` does not implement `Printable`, because `SomeNonPrintable` does not implement `Printable`
 ```
 
 A type satisfying `T: Copy` automatically satisfies `T: !Drop` (RFC-0072 §2.3) even
