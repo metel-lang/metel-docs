@@ -477,7 +477,7 @@ This composes without any new mechanism: the conditional impl's bound-checking (
 
 ### Aspect Implementation Coherence
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0060-aspect-impl-coherence.md`; the interpreter currently has no orphan-rule or overlap check, so any impl is accepted regardless of where it's written.
+> **Partially implemented** — see `internal/rfcs/3-integrated/rfc-0060-aspect-impl-coherence.md`. The orphan rule and concrete-impl overlap detection are implemented and enforced (issue #238), as is negative-vs-concrete-positive impl conflict (issue #264) and negative-bound discharge for the concrete-impl case (issue #243). Blanket-impl-aware negative-bound discharge, blanket-vs-concrete overlap detection, and negative-impl priority over a blanket positive impl remain open (issue #244). Auto-impl aspects (below) are unimplemented — no aspect can yet opt into auto-impl.
 
 Every `(aspect, type)` pair has at most one implementation visible to the program, independent of module load order. Two rules make this checkable without a whole-program scan.
 
@@ -500,6 +500,39 @@ A violating impl is `T0014 — orphan implementation`. The orphan rule is what k
 **Negative impl priority.** See Negative Impls, below, for the mechanism itself; the priority order coherence establishes is: an explicit negative impl beats an auto-impl or blanket positive impl for the same type, but an explicit positive impl and an explicit negative impl for the same concrete type is itself a `T0015` coherence error, not a priority question.
 
 **What this deliberately doesn't cover.** Coherence here is scoped to a single program's module graph — a future package system, compiling packages separately, needs its own cross-package coherence model, not addressed here. Rejected alternatives (a global overlap check without the orphan rule, last-impl-wins ordering, an open-world assumption, specialisation) are recorded in the RFC, not repeated here — each fails a property this design keeps: coherence errors are local and order-independent, and overlapping impls are always illegal rather than resolved by specificity.
+
+### Structural Aspect Bounds
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0061-structural-aspect-bounds.md` (issue #245). Independent review while integrating this RFC found that today, any impl targeting a structural type (`T[]`, tuples, `fun` types) — with or without its own generics — fails immediately with an internal `generic impl blocks not yet supported` error, and array values are separately blocked from aspect-based method dispatch by a hardcoded intrinsic gate (only `.len()` is recognized on an array receiver). Neither gap is specific to this RFC's own content; both are groundwork issue #245 must fix before any of the behavior below can work.
+
+Arrays (`T[]`), tuples (`(A, B)`, …), and function types (`fun(A) -> B`) are **structural types** — built into the language rather than declared by a user, with no name that can serve as an impl target the ordinary way. For the orphan rule (above), structural type constructors are treated as belonging to `std::core`: a user module may write `impl Aspect for T[]` only when `Aspect` itself is local to that module.
+
+**Blanket impls for structural constructors.** `std::core` declares aspect impls for structural constructors using the conditional impl syntax (above):
+
+```metel
+// std::core
+impl<T: Display> Display for T[] {
+    fun to_string(self: &T[]) -> String { ... }
+}
+```
+
+This is what makes `println([1, 2, 3])` compile: `[1, 2, 3]` has type `i64[]`; `i64: Display`; the conditional impl applies. Coherence for structural impl targets follows the same rules as any other conditional impl (above) — two impls of the same aspect for `T[]` conflict (`T0015`) unless one directly negates a bound the other requires.
+
+**Without a matching impl**, a structural type fails an aspect bound with a diagnostic naming the constructor:
+
+```
+T0012: i64[] does not implement Display
+       hint: arrays implement Display only when their element type does;
+             no impl<T: Display> Display for T[] is registered
+```
+
+**Standard array impls.** `std::core` provides `Display`, `Clone`, and `Eq` for arrays, each conditional on the element type satisfying the same bound (element-wise `to_string`/join, element-wise clone into new backing storage, and element-wise equality respectively). These cannot be overridden by user code (orphan rule). `List<T>` is a separate nominal struct; its impls coexist independently of the array impls. `impl<T: Ord> Ord for T[]` and `impl<T: Hash> Hash for T[]` are natural follow-ons, deferred until RFC-0062 (Ord Comparison Aspect, draft) and a Hash RFC (none yet) exist.
+
+**Tuples** are deferred pending a decision on per-arity boilerplate vs. variadic generics — until then, tuples fail aspect bounds the same way arrays do without a matching impl (`(i64, String)` does not implement `Display`, with a hint to use a named struct instead).
+
+**Function types.** `fun(A) -> B` is a function pointer (word-sized, no captured state) — distinct from closures. Every function type auto-provides `Callable<A, B>` (its formal aspect declaration is deferred to a follow-on stdlib RFC) and, from `std::core`, `Copy`/`Clone`/`Send`/`Sync` (all trivially true for a stateless code pointer). `Display`, `Eq`, `Ord`, `Hash`, and `Drop` are not implemented for function types — there is no canonical string form, function equality is undecidable in general, and there is no state to drop.
+
+**Auto-impl propagation through arrays.** Once auto-impl aspects exist (above), `T[]: Send`/`T[]: Sync`/`T[]: Drop` are each auto-derived exactly when `T` itself has the aspect — an array can cross the same boundaries its elements can, and is dropped by dropping each live element (in reverse index order) before reclaiming the backing storage. When `T: !Drop`, only the backing storage is reclaimed and `T[]: !Drop` holds, permitting move-out from scoped regions.
 
 ### Associated Types
 

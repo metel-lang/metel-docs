@@ -2,12 +2,18 @@
 id: rfc-0061
 title: "Structural Aspect Bounds"
 date: '2026-07-01'
+status: integrated
+updated: '2026-07-13'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/245'
+impl_status: not-started
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence) and
 > RFC-0036 (Conditional Impl Blocks). Specifies how aspect bounds are satisfied for
 > structural types — arrays (`T[]`), tuples, and function types — and how `std::core`
 > provides blanket impls for structural type constructors.
+
+> **Status — integrated (2026-07-13).** Integrated ahead of implementing issue #245. Confirmed no error-code collision (T0012 reuse, consistent with RFC-0036's precedent). Confirmed via direct source testing that #233/#241 did NOT leave structural impls in a safe not-yet-implemented state as this RFC's dependents assumed -- three independent hard-crash/skip bugs block any structural impl today (inference.rs's unconditional internal error for any non-Named impl target, a hardcoded array-method dispatch gate, and registry.rs silently skipping structural targets during registration) -- flagged as groundwork issue #245 must fix first, not a gap in this RFC's own content. Auto-impl propagation (S5) and function-pointer auto-derived aspects (S7.2) both depend on the auto-impl mechanism itself, which doesn't exist for any type yet (confirmed zero hits for auto-impl anywhere in source) -- marked not-yet-implemented pending that separate prerequisite, consistent with how RFC-0060 S4 auto-impl is itself still unimplemented.
 
 ## Summary
 

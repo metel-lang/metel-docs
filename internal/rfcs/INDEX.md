@@ -13,7 +13,7 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**99 RFCs total.** 32 draft, 1 under review, 10 accepted, 2 integrated (new stage — see
+**99 RFCs total.** 32 draft, 1 under review, 9 accepted, 3 integrated (new stage — see
 `PROCESS.md`) (45 "live" — need active tracking), 31 implemented, 10 superseded, 13
 refused (53 "settled" — reference only). **2026-07-13:** RFC-0036 (Conditional Impl
 Blocks) implemented (issue #241) — see its entry below for a correctness bug found and
@@ -22,7 +22,10 @@ method dispatch) and two coherence-negation fixtures restored after the original
 implementation had incorrectly skipped them as unsupported. RFC-0037 (Return-Position
 `impl Aspect`) is still integrated, not yet implemented (issue #240) — see its entry
 below for the error-code fix and worked-example findings from the same integration pass.
-Also, three sibling surface-syntax
+RFC-0061 (Structural Aspect Bounds) also integrated the same day, ahead of implementing
+issue #245 — see its entry below for three real, previously-uncalled-out implementation
+bugs found during integration that block any structural impl from working today. Also,
+three sibling surface-syntax
 RFCs opened from the same review — RFC-0098 (Surface Keyword Renames, amends
 RFC-0032/0042/0044/0067A's surface syntax only, no semantic change), RFC-0099
 (Dot-Separated Module Paths, `::` → `.`, one genuinely open disambiguation question),
@@ -224,9 +227,27 @@ The load-bearing accepted RFCs everything else cites. One open item as of 2026-0
 cluster itself.
 
 - **RFC-0008** — Aspect Objects — `dyn Aspect`, vtable dispatch.
-- **RFC-0061** — Structural Aspect Bounds — `T[]`/tuples/function-type bounds. Depends
-  on RFC-0060 (now integrated) and RFC-0036 (now implemented, 2026-07-13) — not yet
-  implemented (issue #245); its #241 dependency has landed, so it's now unblocked.
+- **RFC-0061** *(integrated 2026-07-13)* — Structural Aspect Bounds — `T[]`/tuples/
+  function-type bounds. Depends on RFC-0060 (integrated) and RFC-0036 (implemented,
+  2026-07-13) — both landed, so implementation is now unblocked. Integrated into
+  `public/reference/spec/declarations.md` as a new "Structural Aspect Bounds" section
+  right after Aspect Implementation Coherence (also corrected that section's own
+  stale "not yet implemented" banner to reflect #238/#243/#264's partial progress).
+  No error-code collision (reuses T0012, consistent with RFC-0036's precedent).
+  Found during integration, by direct testing against current source rather than
+  assumption: contrary to what this RFC's dependents (and the anticipatory `RFC-0061`
+  comments already in `construction.rs`/`registry.rs` from #233) assumed, structural
+  impls are NOT in a safe "parses fine, just missing real semantics" state today —
+  three independent bugs (an unconditional internal-error crash in `inference.rs` for
+  any non-named impl target, a hardcoded array-method-call gate that blocks aspect
+  dispatch on arrays before it's ever attempted, and a registry pass that silently
+  skips registering structural targets) block ANY structural impl from working at
+  all, regardless of whether it declares its own generics. Flagged as groundwork
+  issue #245 must fix first — not a gap in this RFC's own content. §5 (auto-impl
+  propagation through arrays) and §7.2 (function-pointer auto-derived aspects) are
+  marked not-yet-implemented pending the auto-impl mechanism itself, which doesn't
+  exist for any type yet (confirmed: zero references anywhere in source) — the same
+  blocker RFC-0060 §4's own auto-impl rule already has.
 - **RFC-0071** — Ownership and Move Semantics — affine-by-default foundation.
 - **RFC-0036** *(implemented 2026-07-13, was integrated 2026-07-13)* — Conditional Impl
   Blocks — `impl Aspect for Type<T> where T: Bound`, both inline and `where`-clause
