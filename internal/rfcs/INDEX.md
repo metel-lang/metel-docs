@@ -13,11 +13,15 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**97 RFCs total.** 30 draft, 1 under review, 12 accepted, 1 integrated (new stage — see
-`PROCESS.md`) (44 "live" — need active tracking), 30 implemented, 10 superseded, 13
-refused (53 "settled" — reference only). **2026-07-13:** RFC-0098 (Surface Keyword
-Renames) opened — amends RFC-0032/0042/0044/0067A's surface syntax only, no semantic
-change; see "Small, mostly standalone syntax/ergonomics items" below. **2026-07-12:** RFC-0081 (Negative Impls)
+**99 RFCs total.** 32 draft, 1 under review, 12 accepted, 1 integrated (new stage — see
+`PROCESS.md`) (46 "live" — need active tracking), 30 implemented, 10 superseded, 13
+refused (53 "settled" — reference only). **2026-07-13:** three sibling surface-syntax
+RFCs opened from the same review — RFC-0098 (Surface Keyword Renames, amends
+RFC-0032/0042/0044/0067A's surface syntax only, no semantic change), RFC-0099
+(Dot-Separated Module Paths, `::` → `.`, one genuinely open disambiguation question),
+RFC-0100 (Constructor-Call Construction, struct literals → call syntax, really a
+general-keyword-arguments RFC); see "Small, mostly standalone syntax/ergonomics items"
+below. **2026-07-12:** RFC-0081 (Negative Impls)
 implemented on sprint/26 (issue #264) — syntax, finality, and the orphan rule are done
 and tested; priority over blanket impls is a property of RFC-0036 (issue #241), not
 that RFC's own implementation yet — but negative-bound consultation is now covered,
@@ -321,6 +325,22 @@ cluster itself.
   RFC-0032/0042/0044/0067A's surface syntax only — each already-implemented RFC's actual
   semantics (field-visibility enforcement, binding mutability, reference/auto-deref
   behavior, receiver dispatch) are untouched. Opened 2026-07-13.
+- **RFC-0099** *(draft)* — Dot-Separated Module Paths — `::` → `.` for import/export,
+  static/module, and enum-variant paths. Not a pure rename: `.` already means field/
+  method access (RFC-0045), so this RFC has to settle a real disambiguation rule (two
+  candidates proposed, capitalization-based vs. name-resolution-time — genuinely
+  unresolved, the one blocking open question) before the grammar change is well-formed.
+  Turbofish's `::<T>` (RFC-0023) is a third, separate use of `::` this RFC found and
+  explicitly leaves alone. Amends RFC-0030's path grammar and reserved path roots
+  (`root::`/`std::`/`self::`/`super::` → `.`-spelled). Opened 2026-07-13.
+- **RFC-0100** *(draft)* — Constructor-Call Construction — `Type { field: value }` struct
+  literals → `Type(field: value)` call-shaped construction. Real deliverable is general
+  keyword arguments for function calls, not a struct-only rename — struct construction
+  is just the first consumer. Pattern-matching destructuring explicitly keeps its
+  current `{ field }` syntax (deliberate asymmetry, not an oversight — see the RFC's
+  own §3). Old literal syntax retired outright rather than kept as a second spelling,
+  following RFC-0042's own precedent against permanent transition aliases. Opened
+  2026-07-13.
 
 ---
 
