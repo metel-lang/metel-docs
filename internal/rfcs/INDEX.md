@@ -13,15 +13,16 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**99 RFCs total.** 31 draft, 1 under review, 9 accepted, 4 integrated (new stage — see
-`PROCESS.md`) (45 "live" — need active tracking), 31 implemented, 10 superseded, 13
+**99 RFCs total.** 31 draft, 1 under review, 9 accepted, 3 integrated (new stage — see
+`PROCESS.md`) (44 "live" — need active tracking), 32 implemented, 10 superseded, 13
 refused (53 "settled" — reference only). **2026-07-13:** RFC-0036 (Conditional Impl
 Blocks) implemented (issue #241) — see its entry below for a correctness bug found and
 fixed during review (conditional-impl satisfaction wasn't consulted outside direct
 method dispatch) and two coherence-negation fixtures restored after the original
 implementation had incorrectly skipped them as unsupported. RFC-0037 (Return-Position
-`impl Aspect`) is still integrated, not yet implemented (issue #240) — see its entry
-below for the error-code fix and worked-example findings from the same integration pass.
+`impl Aspect`) also implemented the same day (issue #240) — see its entry below for a
+real `TypeVar`-generator aliasing bug and a fully-disconnected opacity-enforcement
+mechanism found and fixed during review.
 RFC-0061 (Structural Aspect Bounds) also integrated the same day, ahead of implementing
 issue #245 — see its entry below for three real, previously-uncalled-out implementation
 bugs found during integration that block any structural impl from working today.
@@ -277,14 +278,21 @@ implementation).
   polarity). This resolves the "priority over blanket impls"/"blanket-impl-aware
   discharge" blockers noted in RFC-0060, RFC-0072, and RFC-0081's own entries below —
   #244 (2026-07-13) landed that remaining work; see those RFCs' own entries.
-- **RFC-0037** *(integrated 2026-07-13)* — Return-Position `impl Aspect` — opaque,
-  monomorphised-per-function return types. Integrated into
+- **RFC-0037** *(implemented 2026-07-13, was integrated 2026-07-13)* — Return-Position
+  `impl Aspect` — opaque, monomorphised-per-function return types. Integrated into
   `public/reference/spec/declarations.md` right after the parameter-position `impl
   Aspect` shorthand. Worked example checks composition with RFC-0082 (Associated
   Types): a function returning `impl Container` still resolves `Container::Item`
   correctly through the caller's method calls, since the opaque type is a real
-  concrete type internally, erased only from the caller's naming surface. Not yet
-  implemented (issue #240).
+  concrete type internally, erased only from the caller's naming surface. Implemented
+  (issue #240): per-quantified-var opaque metadata, linked/unlinked discrimination,
+  definition-time bound checking, and real opacity enforcement (T0018) checked
+  incrementally per-constraint rather than once at the end of solving (see ADR-0044 —
+  the end-of-solve version can't tell a legitimate `impl Aspect`-to-`impl Aspect`
+  pass-through apart from an actual violation). Independent review found and fixed a
+  real `TypeVar`-generator bug that aliased independent opaque-returning calls once
+  three or more appeared in one scope, and that the opacity check itself had been
+  left entirely disconnected (never called) despite existing in the source.
 - **RFC-0060** *(integrated 2026-07-11)* — Aspect Impl Coherence — orphan rule, overlap
   detection, closed-world assumption, auto-impl, negative-impl priority. Integrated
   ahead of implementing issue #238 (the coherence pipeline it specifies), on its own,

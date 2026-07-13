@@ -3,10 +3,10 @@ id: rfc-0037
 title: "Return-Position impl Aspect"
 date: '2026-07-01'
 deferred_from: rfc-0035 (Q3)
-status: integrated
+status: implemented
 updated: '2026-07-13'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/240'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence). Specifies
@@ -15,6 +15,8 @@ impl_status: not-started
 > position `impl Aspect`).
 
 > **Status — integrated (2026-07-13).** Return-position impl Aspect integrated into declarations.md; worked example checking interaction with associated types (RFC-0082)
+
+> **Status — implemented (2026-07-13).** Implemented (issue #240): `TypeScheme.opaque_returns` per-quantified-var metadata, linked/unlinked discrimination at definition time (RFC-0037 §1.1's divergent-branches and generic-linkage cases), definition-time aspect-bound checking, and real opacity enforcement at use sites (a caller cannot name the concrete type, cast it, or pass it to a non-generic concrete parameter — T0018). Independent review found and fixed two real bugs the implementation's own testing missed: a `TypeVar`-generator bug that aliased independent opaque-returning calls once three or more appeared in the same scope (a disposable generator snapshotted the live counter without ever advancing it), and the opacity-enforcement mechanism itself being entirely disconnected (the validation function existed but was never called). See ADR-0044 for the validation strategy and why an end-of-solve single check (the first approach tried) can't distinguish a legitimate `impl Aspect`-to-`impl Aspect` pass-through from an actual violation.
 
 ## Summary
 
