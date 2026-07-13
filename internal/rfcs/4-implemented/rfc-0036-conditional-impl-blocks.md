@@ -3,10 +3,10 @@ id: rfc-0036
 title: "Conditional Impl Blocks"
 date: '2026-07-01'
 deferred_from: rfc-0034 (Q6)
-status: integrated
+status: implemented
 updated: '2026-07-13'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/241'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence). Specifies
@@ -15,6 +15,8 @@ impl_status: not-started
 > RFC-0072 (Negative Bounds) §4 and by the region cluster's generic region bounds.
 
 > **Status — integrated (2026-07-13).** Conditional impl blocks integrated into declarations.md; fixed a stale T0013 collision (corrected to reuse T0012), deferred bare-parameter blanket impls to RFC-0097 explicitly, worked example checking interaction with equality-constrained bounds (RFC-0082)
+
+> **Status — implemented (2026-07-13).** Issue #241 merged into sprint/26 (commit f43392e): conditional impl blocks fully implemented -- registry/inference/construction bound-gated impl support, coherence disjointness checking including syntactic negation (RFC-0036 §3.1), use-site bound enforcement. 502 integration + 115 unit tests passing, clippy::pedantic clean.
 
 ## Summary
 

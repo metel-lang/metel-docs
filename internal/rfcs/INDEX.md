@@ -13,12 +13,16 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**99 RFCs total.** 32 draft, 1 under review, 10 accepted, 3 integrated (new stage — see
-`PROCESS.md`) (46 "live" — need active tracking), 30 implemented, 10 superseded, 13
+**99 RFCs total.** 32 draft, 1 under review, 10 accepted, 2 integrated (new stage — see
+`PROCESS.md`) (45 "live" — need active tracking), 31 implemented, 10 superseded, 13
 refused (53 "settled" — reference only). **2026-07-13:** RFC-0036 (Conditional Impl
-Blocks) and RFC-0037 (Return-Position `impl Aspect`) integrated ahead of implementing
-issues #241/#240 — see their entries below for the error-code fix and worked-example
-findings from this pass. Also, three sibling surface-syntax
+Blocks) implemented (issue #241) — see its entry below for a correctness bug found and
+fixed during review (conditional-impl satisfaction wasn't consulted outside direct
+method dispatch) and two coherence-negation fixtures restored after the original
+implementation had incorrectly skipped them as unsupported. RFC-0037 (Return-Position
+`impl Aspect`) is still integrated, not yet implemented (issue #240) — see its entry
+below for the error-code fix and worked-example findings from the same integration pass.
+Also, three sibling surface-syntax
 RFCs opened from the same review — RFC-0098 (Surface Keyword Renames, amends
 RFC-0032/0042/0044/0067A's surface syntax only, no semantic change), RFC-0099
 (Dot-Separated Module Paths, `::` → `.`, one genuinely open disambiguation question),
@@ -221,20 +225,33 @@ cluster itself.
 
 - **RFC-0008** — Aspect Objects — `dyn Aspect`, vtable dispatch.
 - **RFC-0061** — Structural Aspect Bounds — `T[]`/tuples/function-type bounds. Depends
-  on RFC-0060 (now integrated) and RFC-0036 (now integrated) — not yet implemented
-  (issue #245); waits on #241 landing first.
+  on RFC-0060 (now integrated) and RFC-0036 (now implemented, 2026-07-13) — not yet
+  implemented (issue #245); its #241 dependency has landed, so it's now unblocked.
 - **RFC-0071** — Ownership and Move Semantics — affine-by-default foundation.
-- **RFC-0036** *(integrated 2026-07-13)* — Conditional Impl Blocks — `impl Aspect for
-  Type<T> where T: Bound`, both inline and `where`-clause forms. Integrated into
-  `public/reference/spec/declarations.md` right after the basic `impl Aspect for Type`
-  example. Fixed a stale error-code collision while integrating: the RFC's own §4
-  example used `T0013`, already claimed (ambiguous aspect method/associated-type
-  resolution) by the time this integrated — corrected to reuse `T0012` instead, per
-  RFC-0072's own precedent for the negative-bound direction. Explicitly defers
-  bare-parameter blanket impls (`impl<T: Bound> Aspect for T`) to RFC-0097 (draft) —
-  every example in this RFC targets a genuinely named type. Worked example checks
-  composition with RFC-0082's equality-constrained bounds (both are the same `Bound`
-  structure, so no new machinery needed). Not yet implemented (issue #241).
+- **RFC-0036** *(implemented 2026-07-13, was integrated 2026-07-13)* — Conditional Impl
+  Blocks — `impl Aspect for Type<T> where T: Bound`, both inline and `where`-clause
+  forms. Integrated into `public/reference/spec/declarations.md` right after the basic
+  `impl Aspect for Type` example. Fixed a stale error-code collision while integrating:
+  the RFC's own §4 example used `T0013`, already claimed (ambiguous aspect
+  method/associated-type resolution) by the time this integrated — corrected to reuse
+  `T0012` instead, per RFC-0072's own precedent for the negative-bound direction.
+  Explicitly defers bare-parameter blanket impls (`impl<T: Bound> Aspect for T`) to
+  RFC-0097 (draft) — every example in this RFC targets a genuinely named type. Worked
+  example checks composition with RFC-0082's equality-constrained bounds (both are the
+  same `Bound` structure, so no new machinery needed). Implemented (issue #241):
+  registry/inference/construction bound-gated impl support, coherence disjointness
+  detection (including syntactic negation, §3.1), use-site bound enforcement at every
+  point the aspect is required. Independent review found and fixed a real gap the
+  implementation's own self-report missed: conditional-impl satisfaction was only
+  consulted for direct method dispatch on the receiver, not when the conditionally-
+  implementing type was passed through an *unrelated* generic function's own bound —
+  such calls were unconditionally rejected regardless of whether the bound actually
+  held. Also restored two coherence-negation fixtures (this RFC's own §3.1 examples)
+  that the implementation had skipped on a mistaken belief the parser didn't support
+  `!Aspect` bounds — it does, at every level (inline, `where`-clause, and impl-level
+  polarity). This resolves the "priority over blanket impls"/"blanket-impl-aware
+  discharge" blockers noted in RFC-0060, RFC-0072, and RFC-0081's own entries below;
+  those RFCs' remaining work is now unblocked (tracked under issue #244).
 - **RFC-0037** *(integrated 2026-07-13)* — Return-Position `impl Aspect` — opaque,
   monomorphised-per-function return types. Integrated into
   `public/reference/spec/declarations.md` right after the parameter-position `impl
@@ -257,9 +274,12 @@ cluster itself.
   here previously cited RFC-0072/#243 as the blocker — #243 landed 2026-07-12 (issue
   #243, negative bounds now enforced) but only for the concrete-impl-only case, per its
   own explicit scope; the blanket-impl-aware half of discharge this section describes
-  is still blocked on RFC-0036/#241, the same as blanket-impl disjointness/priority.
-  Auto-impl rules (RFC-0080/RFC-0096) remain unblocked-but-unimplemented on their own
-  timeline, unrelated to #241.
+  was blocked on RFC-0036/#241, the same as blanket-impl disjointness/priority.
+  **Update 2026-07-13 (later):** RFC-0036/#241 has now landed (implemented), so both
+  are unblocked — actually wiring the blanket-impl-aware discharge and disjointness/
+  priority logic remains open under this issue (#244). Auto-impl rules
+  (RFC-0080/RFC-0096) remain unblocked-but-unimplemented on their own timeline,
+  unrelated to #241.
 - **RFC-0097** *(draft)* — Orphan Rule for Bare-Parameter Blanket Impls. RFC-0060 §1's
   orphan rule assumes every impl target has an outermost type constructor to check —
   but a bare-parameter blanket (`impl<T: Bound> Aspect for T`, the exact form RFC-0060
@@ -270,12 +290,18 @@ cluster itself.
   — `T: !Aspect`. Integrated into `public/reference/spec/declarations.md`; its own
   stale bracket-channel allocator examples (`@[r] T`) fixed first. Implemented (issue
   #243): enforcement at all four function-call-expression branches plus generic
-  struct/enum literal construction, by inverting the same `impl_aspect_env_has` lookup
-  the positive-bound check already uses (this also means negative impls, RFC-0081/
-  #264, are correctly consulted for free). §2.3 Copy-implies-!Drop implemented as a
-  narrow, name-literal override, per the RFC's own "do not generalize" wording.
-  Blanket-impl-aware discharge (RFC-0060 §3's fuller closed-world form) remains
-  blocked on RFC-0036/#241 — flagged with `TODO(#241)` comments at each check site.
+  struct/enum literal construction, by inverting the same lookup the positive-bound
+  check already uses (this also means negative impls, RFC-0081/#264, are correctly
+  consulted for free). §2.3 Copy-implies-!Drop implemented as a narrow, name-literal
+  override, per the RFC's own "do not generalize" wording. **Update 2026-07-13:**
+  that shared lookup was `impl_aspect_env_has` at the time #243 landed — since
+  corrected, while implementing RFC-0036/#241, to `type_satisfies_aspect`, which also
+  consults conditional impls (`impl_aspect_env_has` alone can't see those, so a
+  negative bound against a conditionally-implementing type was being evaluated
+  incorrectly until this fix). Blanket-impl-aware discharge (RFC-0060 §3's fuller
+  closed-world form) was blocked on RFC-0036/#241; that dependency has now landed,
+  unblocking it, but the discharge/priority logic itself is still open under #244 —
+  the `TODO(#241)` comments at each check site should be revisited there.
 - **RFC-0078** *(implemented 2026-07-12)* — Bottom Type `!` — subtyping, coercion, match
   exhaustiveness, inhabited-singleton coercion, `-> !` returns. Integrated into
   `public/reference/spec/types.md`; §4.2's stale pre-split allocator syntax fixed first.
@@ -290,12 +316,13 @@ cluster itself.
   positive impl), and the orphan rule are implemented and tested (issue #264).
   Negative-bound consultation (SS2.3) is now implemented too (issue #243,
   RFC-0072/2026-07-12): `T: !Aspect` checking inverts the same
-  `impl_aspect_env_has` lookup, which already excludes negative impls, so this
-  composes correctly with no extra work. Priority over blanket impls (SS2.1) is
-  still a property of RFC-0036 (issue #241) — not implemented yet, but
-  `register_aspect_impl` already refuses to register a negative impl as
-  positive, so this will compose correctly once RFC-0036 lands (same scoping
-  precedent as RFC-0078 SS4.2 deferring to RFC-0063).
+  `impl_aspect_env_has` lookup (since corrected to `type_satisfies_aspect`, see
+  RFC-0072's entry above), which already excludes negative impls, so this
+  composes correctly with no extra work. Priority over blanket impls (SS2.1) was
+  a property of RFC-0036 (issue #241) — that RFC is now implemented (2026-07-13),
+  and `register_aspect_impl` already refuses to register a negative impl as
+  positive, so this composes correctly; whether the priority ordering itself needs
+  its own dedicated check beyond that refusal is still open under #244.
 - **RFC-0082** *(implemented 2026-07-13, was integrated 2026-07-10)* — Associated
   Types. Integrated into `public/reference/spec/declarations.md`; stale
   `Region`/`@[r]` naming corrected to `Alloc`/`@a`, and §7 (amending retracted
