@@ -150,17 +150,27 @@ general rule.
 **Fix:** implement the required aspect for the type, or (for a negative bound) remove
 the conflicting positive implementation.
 
-### T0013 — Ambiguous aspect method resolution
+### T0013 — Ambiguous aspect method/associated-type resolution
 
 Two different aspects define the same method name on the same receiver type, so a
-call like `value.method()` does not have a unique static target.
+call like `value.method()` does not have a unique static target — or (RFC-0082 §3a)
+two different aspects bound on the same generic type parameter both declare an
+associated type of the same name, so a bare projection like `T::AssocName` doesn't
+have a unique target either.
 
 ```
 [T0013] type error in main.mtl at 12..20: ambiguous aspect method `label` on type `S`: both `A` and `B` provide this method
+[T0013] type error in main.mtl at 8..16: ambiguous associated type `Target`: multiple aspects declare it: Deref, Convert
 ```
 
-**Fix:** rename one of the methods, remove one of the conflicting impls, or change the
-design so the receiver type does not expose two indistinguishable aspect methods.
+**Fix (method case):** rename one of the methods, remove one of the conflicting impls,
+or change the design so the receiver type does not expose two indistinguishable
+aspect methods.
+
+**Fix (associated-type case):** bind the associated type to a fresh type parameter via
+an equality-constrained bound instead of projecting it directly — e.g.
+`fun f<T: Deref<Target = U> + Convert, U>(x: &T) -> U` — which resolves unambiguously
+since `U` is an ordinary type parameter, not a projection.
 
 ### T0014 — Orphan implementation
 
@@ -207,6 +217,18 @@ already `!`-typed).
 **Fix:** make every path genuinely diverge (`panic(msg)`, `loop { }`, or a
 recursive/other `!`-returning call), or drop the `-> !` annotation if the
 function is meant to return normally.
+
+### T0017 — Missing associated type definition
+
+An `impl Aspect for Type` omits a `type Name = ConcreteType;` definition for an
+associated type the aspect declares (RFC-0082 §2). Every impl of an aspect with
+associated types must define all of them.
+
+```
+[T0017] type error in main.mtl at 1..40: `IntBox` is missing associated type `Item` required by aspect `Container`
+```
+
+**Fix:** add the missing `type Item = ConcreteType;` definition to the impl block.
 
 ---
 

@@ -13,15 +13,20 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**96 RFCs total.** 29 draft, 1 under review, 12 accepted, 2 integrated (new stage — see
-`PROCESS.md`) (44 "live" — need active tracking), 29 implemented, 10 superseded, 13
-refused (52 "settled" — reference only). **2026-07-12:** RFC-0081 (Negative Impls)
+**96 RFCs total.** 29 draft, 1 under review, 12 accepted, 1 integrated (new stage — see
+`PROCESS.md`) (43 "live" — need active tracking), 30 implemented, 10 superseded, 13
+refused (53 "settled" — reference only). **2026-07-12:** RFC-0081 (Negative Impls)
 implemented on sprint/26 (issue #264) — syntax, finality, and the orphan rule are done
 and tested; priority over blanket impls is a property of RFC-0036 (issue #241), not
 that RFC's own implementation yet — but negative-bound consultation is now covered,
 since RFC-0072 (Negative Bounds) was also implemented the same day (issue #243):
 enforcement at all function-call and generic-literal-construction sites, by inverting
-the same `impl_aspect_env_has` lookup the positive-bound check already uses. (RFC-0055 moved draft → superseded 2026-07-09,
+the same `impl_aspect_env_has` lookup the positive-bound check already uses.
+**2026-07-13:** RFC-0082 (Associated Types) implemented on sprint/26 (issue #242) —
+real `T::AssocType` projection resolution (both at generic call sites and inside
+still-abstract function bodies), equality-constrained bounds, impl-completeness
+checking, and bare-name sugar in both directions; §6 object safety remains blocked
+on RFC-0008 (`dyn Aspect`, no consumer yet). (RFC-0055 moved draft → superseded 2026-07-09,
 reconciled into RFC-0092/0093/0095 — see below. **2026-07-10:** the allocator/lifetime
 cluster — RFC-0063/0065/0066/0067/0068/0073/0077 — swept from under-review to accepted;
 only RFC-0080 remains under review. Same day: RFC-0067a/0078/0083 became the first RFCs
@@ -260,10 +265,17 @@ cluster itself.
   `register_aspect_impl` already refuses to register a negative impl as
   positive, so this will compose correctly once RFC-0036 lands (same scoping
   precedent as RFC-0078 SS4.2 deferring to RFC-0063).
-- **RFC-0082** *(integrated 2026-07-10)* — Associated Types. Integrated into
-  `public/reference/spec/declarations.md`; stale `Region`/`@[r]` naming corrected to
-  `Alloc`/`@a`, and §7 (amending retracted RFC-0069's `SubRegion`) marked historical-only
-  rather than integrated. Not yet implemented.
+- **RFC-0082** *(implemented 2026-07-13, was integrated 2026-07-10)* — Associated
+  Types. Integrated into `public/reference/spec/declarations.md`; stale
+  `Region`/`@[r]` naming corrected to `Alloc`/`@a`, and §7 (amending retracted
+  RFC-0069's `SubRegion`) marked historical-only rather than integrated. Implemented
+  (issue #242): §1/§1.1/§1.2 declaration + bound enforcement + bare-name sugar
+  (in both directions — explicit `T::AssocType` and an aspect's own bare-name
+  method signatures, for concrete impls and generic dispatch alike), §2 impl
+  completeness (new error code T0017), §3/§3a real projection resolution with
+  ambiguity detection (T0013), §4 equality constraints
+  (`Aspect<AssocType = Concrete>`). §6 object safety remains unimplemented —
+  blocked on RFC-0008 (`dyn Aspect`), which has no consumer yet.
 - **RFC-0083** *(superseded 2026-07-12, was integrated 2026-07-10)* — Public Value
   Exports (`pub let`). Reached `3-integrated` requiring "constant expression"
   initializers, a concept it never specified — deferred to RFC-0092, which only had it

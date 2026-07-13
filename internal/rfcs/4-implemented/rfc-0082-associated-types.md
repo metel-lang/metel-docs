@@ -2,10 +2,10 @@
 id: rfc-0082
 title: "Associated Types"
 date: '2026-07-01'
-status: integrated
-updated: '2026-07-10'
+status: implemented
+updated: '2026-07-13'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/242'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence). Formally
@@ -42,6 +42,8 @@ impl_status: not-started
 > meaning everywhere in Metel (declaring a fresh generic parameter, `grammar.md:44`),
 > a stronger clash than `as`'s two prior uses. Neither spelling is adopted; §3a records
 > why, so neither gets re-proposed without this reasoning attached.
+
+> **Status — implemented (2026-07-13).** Real projection resolution, equality constraints, impl-completeness, and §1.2 bare-name sugar all enforced; issue #242 (object safety, §6, remains blocked on RFC-0008)
 
 ## Summary
 
