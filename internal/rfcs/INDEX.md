@@ -13,7 +13,7 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**99 RFCs total.** 32 draft, 1 under review, 9 accepted, 3 integrated (new stage — see
+**99 RFCs total.** 31 draft, 1 under review, 9 accepted, 4 integrated (new stage — see
 `PROCESS.md`) (45 "live" — need active tracking), 31 implemented, 10 superseded, 13
 refused (53 "settled" — reference only). **2026-07-13:** RFC-0036 (Conditional Impl
 Blocks) implemented (issue #241) — see its entry below for a correctness bug found and
@@ -24,8 +24,10 @@ implementation had incorrectly skipped them as unsupported. RFC-0037 (Return-Pos
 below for the error-code fix and worked-example findings from the same integration pass.
 RFC-0061 (Structural Aspect Bounds) also integrated the same day, ahead of implementing
 issue #245 — see its entry below for three real, previously-uncalled-out implementation
-bugs found during integration that block any structural impl from working today. Also,
-three sibling surface-syntax
+bugs found during integration that block any structural impl from working today.
+RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls) accepted and integrated the
+same day (issue #269) — the narrow gap RFC-0036's own integration had flagged as
+deferred. Also, three sibling surface-syntax
 RFCs opened from the same review — RFC-0098 (Surface Keyword Renames, amends
 RFC-0032/0042/0044/0067A's surface syntax only, no semantic change), RFC-0099
 (Dot-Separated Module Paths, `::` → `.`, one genuinely open disambiguation question),
@@ -224,7 +226,8 @@ number, a backwards RFC-0067a split direction).
 
 The load-bearing accepted RFCs everything else cites. One open item as of 2026-07-11
 (RFC-0097, below) — a narrow gap found by scrutiny, not a design problem with the
-cluster itself.
+cluster itself. **Resolved 2026-07-13**: RFC-0097 integrated (issue #269 tracks
+implementation).
 
 - **RFC-0008** — Aspect Objects — `dyn Aspect`, vtable dispatch.
 - **RFC-0061** *(integrated 2026-07-13)* — Structural Aspect Bounds — `T[]`/tuples/
@@ -257,7 +260,8 @@ cluster itself.
   method/associated-type resolution) by the time this integrated — corrected to reuse
   `T0012` instead, per RFC-0072's own precedent for the negative-bound direction.
   Explicitly defers bare-parameter blanket impls (`impl<T: Bound> Aspect for T`) to
-  RFC-0097 (draft) — every example in this RFC targets a genuinely named type. Worked
+  RFC-0097 (now integrated, 2026-07-13) — every example in this RFC targets a
+  genuinely named type. Worked
   example checks composition with RFC-0082's equality-constrained bounds (both are the
   same `Bound` structure, so no new machinery needed). Implemented (issue #241):
   registry/inference/construction bound-gated impl support, coherence disjointness
@@ -301,12 +305,22 @@ cluster itself.
   priority logic remains open under this issue (#244). Auto-impl rules
   (RFC-0080/RFC-0096) remain unblocked-but-unimplemented on their own timeline,
   unrelated to #241.
-- **RFC-0097** *(draft)* — Orphan Rule for Bare-Parameter Blanket Impls. RFC-0060 §1's
-  orphan rule assumes every impl target has an outermost type constructor to check —
-  but a bare-parameter blanket (`impl<T: Bound> Aspect for T`, the exact form RFC-0060
-  §3/§5 and RFC-0080 §1.2 all use as their own running example) has none. Formalizes
-  that target-locality is vacuously unsatisfiable for this shape, so such an impl is
-  permitted only via the aspect side. Opened 2026-07-11, same review pass as RFC-0096.
+- **RFC-0097** *(integrated 2026-07-13)* — Orphan Rule for Bare-Parameter Blanket
+  Impls. RFC-0060 §1's orphan rule assumes every impl target has an outermost type
+  constructor to check — but a bare-parameter blanket (`impl<T: Bound> Aspect for T`,
+  the exact form RFC-0060 §3/§5 and RFC-0080 §1.2 all use as their own running
+  example) has none. Formalizes that target-locality is vacuously unsatisfiable for
+  this shape, so such an impl is permitted only via the aspect side; no new syntax,
+  no new error code (reuses T0014), no new overlap-detection machinery (the
+  orphan-rule fix alone confines any one aspect's bare-parameter blanket to a single
+  module). Opened 2026-07-11, same review pass as RFC-0096. Integrated into
+  `public/reference/spec/declarations.md`, expanding the existing "not covered by
+  this section" deferral note (added while integrating RFC-0036) into full spec
+  content with its three worked examples. Not yet implemented (issue #269) —
+  `coherence.rs`'s `outermost_id` has no explicit case for "target is the impl's own
+  generic parameter" today; it happens to often return `None` for one by incidental
+  name-resolution failure, not by a deliberate check, the same fragile-by-accident
+  pattern #241 and #245 each had to fix for their own target shapes.
 - **RFC-0072** *(implemented 2026-07-12, was integrated 2026-07-10)* — Negative Bounds
   — `T: !Aspect`. Integrated into `public/reference/spec/declarations.md`; its own
   stale bracket-channel allocator examples (`@[r] T`) fixed first. Implemented (issue
