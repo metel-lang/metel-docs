@@ -451,15 +451,39 @@ impl<T: Display> Serialize for Wrapper<T> { ... }
 
 A conditional impl and an unconditional impl for the same type constructor are also a coherence error — the unconditional impl already covers every instantiation the conditional one would. Conditional impls are subject to the same orphan rule as unconditional ones (above): the aspect or the type's outermost constructor must be local.
 
-> **Bare-parameter blanket impls** — `impl<T: Bound> Aspect for T`, where the target
-> is the impl's own generic parameter rather than a named struct or enum wrapping it
-> (e.g. a hypothetical `impl<T: Copy> Clone for T`) — are **not** covered by this
-> section. The orphan rule above is stated in terms of the target's outermost type
-> constructor, which a bare type parameter doesn't have; this shape is deferred to
-> `internal/rfcs/0-draft/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md`
-> (draft, not yet accepted). Every conditional-impl example in this section targets a
-> genuine named type (`Pair<A, B>`, `Container<T>`, `Wrapper<T>`) for exactly this
-> reason.
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md` (issue #269). The orphan-rule check today only knows about named-type targets; it has no case yet for a bare-parameter target being vacuously non-local.
+
+**Bare-parameter blanket impls.** `impl<T: Bound> Aspect for T` — where the target is
+the impl's own generic parameter rather than a named struct or enum wrapping it, e.g.
+`impl<T: Copy> Clone for T` — is a distinct case from every other example in this
+section, which all target a genuine named type (`Pair<A, B>`, `Container<T>`,
+`Wrapper<T>`). A bare type parameter has no outermost type constructor for the orphan
+rule (below) to check — it isn't declared in any module, including the impl's own.
+Target-locality is therefore **vacuously unsatisfiable** for this shape: such an impl
+is permitted only through the aspect side of the orphan rule, never the target side.
+
+```metel
+// std::core — permitted: Clone is local to std::core
+impl<T: Copy> Clone for T { fun clone(self: &T) -> T { *self } }
+
+// user module — permitted: MyAspect is local here
+aspect MyAspect { fun tag(self) -> String; }
+impl<T: Copy> MyAspect for T { fun tag(self) -> String { "copyable" } }
+
+// user module — REJECTED (T0014): Display is foreign, and a bare-parameter
+// target can never be local, anywhere
+impl<T: Copy> Display for T { fun to_string(self) -> String { "?" } }
+```
+
+This confines any one aspect's bare-parameter blanket impl to a single module (its own
+declaring module, or `std::core` for a built-in aspect) — no separate overlap-detection
+mechanism is needed beyond the ordinary rule already stated above (two impls of the
+same aspect conflict when some instantiation satisfies both): a competing
+bare-parameter blanket from another module can never pass the orphan check in the
+first place, and a concrete impl overlapping the blanket (e.g. a type implementing
+`Clone` directly while also being `Copy`) is caught by the existing concrete-vs-blanket
+overlap rule with no special case. See
+`internal/rfcs/3-integrated/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md`.
 
 **Worked example — interaction with equality-constrained bounds.** A conditional impl's `where` clause accepts the same equality-constrained bound form Associated Types (above) specifies for ordinary function bounds, since both are stored and checked as the same `Bound` structure:
 
