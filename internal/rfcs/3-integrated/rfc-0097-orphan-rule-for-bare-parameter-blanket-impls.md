@@ -121,9 +121,13 @@ impl's own and including `std::core`.
 
 **Consequence:** for a bare-parameter blanket impl, the orphan rule (RFC-0060 §1)
 reduces to checking only the aspect side. The impl is permitted exactly when the
-aspect is local to the impl's module (or the impl is in `std::core` and the aspect is
-a built-in). It is never permitted on the strength of the target, because the target
-side of the check is permanently unsatisfiable for this shape of impl.
+aspect is local to the impl's own module — including the `impl` living in `std::core`
+and naming one of `std::core`'s own aspects, which is simply the ordinary case of that
+rule, not a separate exception: every aspect in this codebase (`Display`, `Clone`,
+`Eq`, and so on) is a real `aspect` declaration living in some real module, `std::core`
+included, so "the aspect is local to the impl's module" already covers it without a
+parenthetical carve-out. It is never permitted on the strength of the target, because
+the target side of the check is permanently unsatisfiable for this shape of impl.
 
 ```metel
 // std::core, RFC-0080 §1.2 — permitted: Clone is local to std::core

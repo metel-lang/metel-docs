@@ -1,0 +1,62 @@
+// RFC-0099 — Dot-Separated Module Paths
+//
+// `::` -> `.` for import/export paths, static/module paths, enum-variant
+// paths, and reserved path roots (`root.`/`std.`/`self.`/`super.`).
+// Disambiguated at name-resolution time (Option B), not by a parse-time
+// capitalization check — a plain dotted-path expression is parsed
+// uniformly, and `name_resolver` decides hop by hop whether each segment
+// is a module, a type, or a value, the same way it already produces
+// `Expr::ResolvedPath` for ordinary paths today.
+// Turbofish `::<T>` -> `.<T>` for the same reason: a straight respelling of
+// an already-distinct two-character token, not a new ambiguity.
+// Illustrative only — see the cluster README.
+
+import parser.{Ast, Token};
+import std.math;
+import root.lexer.Token as Tok;
+
+export ast.Ast;
+
+enum Colour {
+    Red,
+    Green,
+    Blue,
+}
+
+struct Point {
+    x: i64,
+    y: i64,
+}
+
+extend Point {
+    fun origin() -> Point {
+        Point(x: 0, y: 0)   // RFC-0100 construction, see file 03
+    }
+}
+
+fun main() {
+    // Static/module path: type first, then the reserved root chain
+    // (`root`, `std`, `parser` are all lowercase — resolved hop by hop by
+    // name_resolver, not by checking the leading segment's casing).
+    let p: root.parser.Ast = root.parser.Ast.new();
+
+    // Enum-variant path.
+    let colour = Colour.Blue;
+    match colour {
+        Colour.Blue => println("blue"),
+        _ => println("other"),
+    }
+
+    // Ordinary static/associated-function call — same dot, resolved to a
+    // type-associated function rather than a module path or field access.
+    let origin = Point.origin();
+
+    // Turbofish, respelled `.<T>` — same disambiguation guarantee as
+    // today's `::<T>`, just spelled to match the rest of this RFC.
+    let parsed = parse_value.<i64>("42");
+}
+
+fun parse_value<T>(input: String) -> T {
+    // ...
+    yolo_none()
+}

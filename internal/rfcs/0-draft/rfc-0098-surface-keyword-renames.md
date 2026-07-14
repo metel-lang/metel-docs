@@ -8,7 +8,7 @@ target:
 
 ## Summary
 
-Three independent, purely lexical syntax renames with zero semantic impact: impl-block spelling (`extend X with Y`), `pub` → `public`, and `mut` → `var` (bindings, reference types, and reference expressions all together). Amends RFC-0032, RFC-0042, RFC-0044, and RFC-0067A's surface syntax only — no semantics, AST shape, or type-system behavior from any of the four changes.
+Three independent, purely lexical syntax renames with zero semantic impact: impl-block spelling (`extend Type` / `extend Type: Aspect`), `pub` → `public`, and `mut` → `var` (bindings, reference types, and reference expressions all together). Amends RFC-0032, RFC-0042, RFC-0044, and RFC-0067A's surface syntax only — no semantics, AST shape, or type-system behavior from any of the four changes.
 
 ---
 
@@ -20,23 +20,87 @@ Metel already diverges from Rust's naming where it costs nothing — `aspect` no
 
 ## 1. Impl-block spelling
 
-Today:
+Today, an impl block has two shapes — inherent (no aspect at all) and
+aspect-implementing (`for`, aspect named first):
+
 ```metel
+impl IntBox {
+    fun new(value: i64) -> IntBox { return IntBox { value }; }
+}
+
 impl Container for IntBox {
     type Item = i64;
     fun get(&self) -> i64 { return self.value; }
 }
 ```
 
-Proposed:
+Proposed: `impl` renames to `extend`, and the aspect-implementing form reorders
+target-first with a trailing `: Aspect` clause — mirroring Swift's `extension
+Type` / `extension Type: ProtocolName`, the closest existing precedent for "one
+construct, target named first, an optional trailing conformance clause" (a
+survey of Rust/Haskell/TypeScript/Kotlin/C#/Elixir/Go found no language that
+invents a *separate* keyword just for the aspectless case; the ones with a
+genuinely separate impl-block construct at all — Rust, Swift — both use one
+keyword with an optional clause):
+
 ```metel
-extend IntBox with Container {
+extend IntBox {
+    fun new(value: i64) -> IntBox { return IntBox { value }; }
+}
+
+extend IntBox: Container {
     type Item = i64;
     fun get(&self) -> i64 { return self.value; }
 }
 ```
 
-Grammar change is contained entirely to `impl_block`'s two keyword tokens and their order (target first, aspect second, matching the new preposition) — `ast::ImplBlock`'s fields (`target_type`, `aspect_name`, `polarity`, `generics`, `where_clause`, `assoc_type_defs`, etc.) are unchanged, only what `parser::parse_impl_block` matches against. Negative impls (RFC-0081) follow the same reordering: `impl !Aspect for Type` becomes `extend Type without Aspect`.
+The inherent form is simply the `: Aspect` clause omitted — exactly mirroring
+`impl_block`'s existing `(named_type ~ "for")?` optionality today, not a new
+rule. This matters more than it looks: inherent impls are not a peripheral
+case — they're roughly as common as aspect impls in `stdlib/core.mtl` itself
+(`impl List<T> { ... }`, `impl Perhaps<T> { ... }`, `impl Result<T, E> { ... }`,
+`impl OsError { ... }`, and so on), so any spelling that required *something*
+after the target on every impl would touch the majority of the existing
+codebase's impl blocks, not just the minority that implement an aspect.
+
+Grammar change is contained to `impl_block`'s keyword and clause order — target
+first, then an optional `: Aspect` clause — `ast::ImplBlock`'s fields
+(`target_type`, `aspect_name`, `polarity`, `generics`, `where_clause`,
+`assoc_type_defs`, etc.) are unchanged, only what `parser::parse_impl_block`
+matches against. Generic params keep their existing position, immediately
+after the introducing keyword (unchanged from `impl`'s own slot today):
+
+```metel
+extend<T: Comparable + Printable> SortedList<T>: Printable {
+    fun print(self) -> String { ... }
+}
+```
+
+Negative impls (RFC-0081) do **not** get their own keyword. Folding them into
+the same `: Aspect` clause via the `!` prefix already used for bound negation
+(`T: !Copy`) means `!` consistently spells "negative" everywhere it appears in
+an impl, rather than introducing a fourth new keyword (`without`) for a single
+case — an earlier draft of this RFC proposed exactly that and was walked back
+during review:
+
+```metel
+extend Type: !Aspect { }
+```
+
+Bare-parameter blanket impls (RFC-0097) are unaffected beyond the token
+rename — the target is simply the impl's own generic parameter, named
+wherever any other target would be:
+
+```metel
+extend<T: Copy> T: Clone {
+    fun clone(self: &T) -> T { *self }
+}
+```
+
+The net new keyword surface for this section is `extend` alone — the
+colon and `!` are both already-established tokens elsewhere in the grammar
+(field/param type annotations and generic bounds use `:`; bound negation
+already uses `!`), not new syntax invented for this RFC.
 
 No existing RFC specifies `impl X for Y` as its own subject — every RFC that uses the shape (RFC-0060, RFC-0072, RFC-0081, RFC-0082, and others) does so incidentally, as the pre-existing syntax for a different feature. This section doesn't amend any of them individually; it's a pure token/ordering change underneath all of them at once.
 
@@ -96,12 +160,16 @@ Grammar sites affected, all a straight token substitution (`mut_kw` → `var_kw`
 
 RFC-0033 (Field-Level Mutability) is still `0-draft` and uses a bare `mut field` sketch in its own examples; since it hasn't been accepted, this RFC doesn't formally amend it, but whoever picks RFC-0033 back up should spell its `mut` as `var` from the start rather than drafting against a token this RFC retires.
 
+**Identifier collision to audit at implementation time:** `var` is not currently reserved, and at least one existing stdlib item is named exactly that — `std::env::var` (`stdlib/env.mtl`, mirroring Rust's `std::env::var`). Reserving `var` as a keyword means this needs renaming (e.g. `std::env::get_var`) as part of landing this section; a full identifier audit across `stdlib/` for `var`, `public`, and `extend` should be a checklist item on the implementing issue rather than assumed clean.
+
 ---
 
 ## Alternatives Considered
 
 - **Go-style capitalization instead of `public`**: no keyword at all, capitalization of the identifier itself signals visibility. Rejected for this RFC as a bigger lexer-level change than a token rename, and it would need its own RFC amending RFC-0032 far more invasively than a rename does; worth pursuing separately if desired.
 - **Keeping any one of the three as Rust's spelling**: each of the three sections in this RFC is independently reversible and doesn't block the other two — a narrower version of this RFC accepting only a subset is a legitimate outcome of review, not a reason to split into three separate RFCs up front (unlike RFC B/C from the surface-syntax discussion this RFC grew out of, these three don't each carry their own unresolved design question — see "Unresolved Questions" below).
+- **`extend Type with Aspect` / `extend Type without Aspect`**: an earlier draft of §1 used `with` for aspect conformance and a separate `without` keyword for negative impls. Rejected during review on two grounds: it left the inherent (aspectless) form completely unspecified — every worked example showed the `with`-clause form, with no indication whether a bare `extend Type { }` was even legal, despite inherent impls being roughly as common as aspect impls in the existing codebase — and `without` was a fourth new keyword spent on a single case that the existing `!` bound-negation token already covers for free.
+- **Two distinct keywords, `impl` for inherent + `extend` for aspect conformance**: keeps `impl Type { }` completely unchanged and reserves `extend` only for `extend Type: Aspect { }`, drawing a real semantic line between "defining a type's own methods" and "extending it with a capability from outside." Not chosen: it doubles the impl-introducing keyword surface for a distinction the grammar doesn't otherwise need to make (both forms produce the same `ast::ImplBlock`, differing only in whether `aspect_name` is `None`), and no clear precedent language draws this line at the keyword level either (Rust and Swift both use one keyword for both forms).
 
 ---
 
@@ -118,8 +186,9 @@ None load-bearing. Each of the three sections is independently reversible; none 
 - RFC-0044 (Explicit Receiver Semantics) — amended, §3 (`&mut self` → `&var self`).
 - RFC-0067A (Reference Types) — amended, §3 (`&mut T` reference type and `&mut expr` address-of → `&var`).
 - RFC-0033 (Field-Level Mutability, draft) — not amended (not yet accepted), but should adopt `var` rather than `mut` when resumed.
-- RFC-0081 (Negative Impls) — impl-block reordering (§1) must account for `!`-prefixed negative impls too (`extend Type without Aspect`).
+- RFC-0081 (Negative Impls) — impl-block reordering (§1) folds `!`-prefixed negative impls into the same `: Aspect` clause (`extend Type: !Aspect`), reusing the existing bound-negation token rather than adding a `without` keyword.
 - RFC-0034 (Struct-Enum-Aspect Bounds) — `aspect`'s own naming precedent this RFC continues in spirit.
+- RFC-0101 (Grammar-Enforced Naming Case Conventions) — reviewed alongside this RFC; no conflict — `extend`, `public`, and `var` are all lowercase, consistent with that RFC's non-type casing category.
 
 ---
 

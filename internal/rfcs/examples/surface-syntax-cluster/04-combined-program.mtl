@@ -1,0 +1,90 @@
+// Combined worked example — RFC-0098 (extend/public/var), RFC-0099
+// (dot paths, turbofish), and RFC-0100 (call-shaped construction, keyword
+// arguments), all together in one realistic program, to sanity-check the
+// three compose cleanly rather than fighting each other.
+// Illustrative only — see the cluster README.
+
+import std.math;
+
+aspect Area {
+    fun area(&self) -> f64;
+}
+
+public struct Circle {
+    public radius: f64,
+}
+
+// Aspect impl, target first, `: Aspect` trailing clause (RFC-0098).
+extend Circle: Area {
+    fun area(&self) -> f64 {
+        std.math.pi * self.radius * self.radius
+    }
+}
+
+extend Circle: Display {
+    fun to_string(&self) -> String {
+        "Circle(radius: " + self.radius.to_string() + ")"
+    }
+}
+
+public struct Rectangle {
+    public width: f64,
+    public height: f64,
+}
+
+extend Rectangle: Area {
+    fun area(&self) -> f64 {
+        self.width * self.height
+    }
+}
+
+aspect Summarizable {
+    fun summarize(&self) -> String;
+}
+
+// Bare-parameter blanket impl (RFC-0097, integrated) — the target is the
+// impl's own generic parameter itself, not a wrapping struct/enum: any
+// `Area`-implementing type gets `Summarizable` for free, with no per-type
+// impl. Permitted because `Summarizable` is declared in this same module
+// (RFC-0097 S2: target-locality is vacuously unsatisfiable for a bare
+// parameter, so permission comes only from the aspect side).
+extend<T: Area> T: Summarizable {
+    fun summarize(&self) -> String {
+        "area = " + self.area().to_string()
+    }
+}
+
+fun main() {
+    // Call-shaped construction with keyword arguments (RFC-0100) — field
+    // order is non-load-bearing.
+    let c = Circle(radius: 2.0);
+    let r = Rectangle(width: 3.0, height: 4.0);
+
+    println(c.summarize());
+    println(r.summarize());
+
+    // Mutable binding via `var`, not `mut` (RFC-0098) — the array itself is
+    // rebuilt each time (raw arrays have no `.push`; `List<T>` is the
+    // growable collection type, orthogonal to this cluster of RFCs).
+    var shapes = [Circle(radius: 1.0), Circle(radius: 2.0)];
+
+    var total = 0.0;
+    for (var i = 0; i < shapes.len(); i += 1) {
+        total += shapes[i as u64].area();
+    }
+    println("total area: " + total.to_string());
+
+    // Turbofish, respelled `.<T>` (RFC-0099) — explicit type argument at a
+    // call site where inference alone can't pin it down.
+    let parsed = parse.<f64>("3.14");
+
+    // Destructuring keeps today's `{ field }` shape (RFC-0100 S3) even
+    // though construction above used call syntax — deliberate asymmetry.
+    match c {
+        Circle { radius } => println("radius: " + radius.to_string()),
+    }
+}
+
+fun parse<T>(input: String) -> T {
+    yolo_none()
+}

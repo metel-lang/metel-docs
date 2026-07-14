@@ -2,7 +2,7 @@
 id: rfc-index
 title: "RFC Index"
 type: index
-last_built: '2026-07-12'
+last_built: '2026-07-14'
 ---
 
 # RFC Index
@@ -13,8 +13,8 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**99 RFCs total.** 31 draft, 1 under review, 9 accepted, 3 integrated (new stage — see
-`PROCESS.md`) (44 "live" — need active tracking), 32 implemented, 10 superseded, 13
+**100 RFCs total.** 32 draft, 1 under review, 9 accepted, 3 integrated (new stage — see
+`PROCESS.md`) (45 "live" — need active tracking), 32 implemented, 10 superseded, 13
 refused (53 "settled" — reference only). **2026-07-13:** RFC-0036 (Conditional Impl
 Blocks) implemented (issue #241) — see its entry below for a correctness bug found and
 fixed during review (conditional-impl satisfaction wasn't consulted outside direct
@@ -31,10 +31,18 @@ same day (issue #269) — the narrow gap RFC-0036's own integration had flagged 
 deferred. Also, three sibling surface-syntax
 RFCs opened from the same review — RFC-0098 (Surface Keyword Renames, amends
 RFC-0032/0042/0044/0067A's surface syntax only, no semantic change), RFC-0099
-(Dot-Separated Module Paths, `::` → `.`, one genuinely open disambiguation question),
-RFC-0100 (Constructor-Call Construction, struct literals → call syntax, really a
-general-keyword-arguments RFC); see "Small, mostly standalone syntax/ergonomics items"
-below. **2026-07-12:** RFC-0081 (Negative Impls)
+(Dot-Separated Module Paths, `::` → `.`), RFC-0100 (Constructor-Call Construction,
+struct literals → call syntax, really a general-keyword-arguments RFC); see "Small,
+mostly standalone syntax/ergonomics items" below. **2026-07-14:** both RFC-0099 and
+RFC-0100's own disambiguation questions were reviewed and resolved — RFC-0099 rejected
+capitalization-based path disambiguation after it failed against real fixture code, in
+favor of name-resolution-time resolution, and also respelled turbofish (`::<` → `.<`)
+alongside its own `::` → `.` change; RFC-0100's keyword-argument/ascription grammar
+collision (not previously identified) was found and resolved via `arg_list` reordering.
+That review also produced a fourth sibling, RFC-0101 (Grammar-Enforced Naming Case
+Conventions) — PascalCase types, camelCase `fun` declarations, snake_case everything
+else, enforced as a real compile-time rule — scoped as its own RFC rather than folded
+into RFC-0100, whose ambiguity it narrows but doesn't fully resolve on its own. **2026-07-12:** RFC-0081 (Negative Impls)
 implemented on sprint/26 (issue #264) — syntax, finality, and the orphan rule are done
 and tested; priority over blanket impls is a property of RFC-0036 (issue #241), not
 that RFC's own implementation yet — but negative-bound consultation is now covered,
@@ -432,21 +440,47 @@ implementation).
   semantics (field-visibility enforcement, binding mutability, reference/auto-deref
   behavior, receiver dispatch) are untouched. Opened 2026-07-13.
 - **RFC-0099** *(draft)* — Dot-Separated Module Paths — `::` → `.` for import/export,
-  static/module, and enum-variant paths. Not a pure rename: `.` already means field/
-  method access (RFC-0045), so this RFC has to settle a real disambiguation rule (two
-  candidates proposed, capitalization-based vs. name-resolution-time — genuinely
-  unresolved, the one blocking open question) before the grammar change is well-formed.
-  Turbofish's `::<T>` (RFC-0023) is a third, separate use of `::` this RFC found and
-  explicitly leaves alone. Amends RFC-0030's path grammar and reserved path roots
-  (`root::`/`std::`/`self::`/`super::` → `.`-spelled). Opened 2026-07-13.
+  static/module, and enum-variant paths, and `::<` → `.<` for turbofish. Not a pure
+  rename: `.` already means field/method access (RFC-0045), so this RFC has to settle a
+  real disambiguation rule before the grammar change is well-formed. Capitalization-
+  based disambiguation (Option A) was reviewed and rejected — it fails on real fixture
+  code (`std::core::Perhaps::Some`, and the RFC's own worked example) since module path
+  segments are lowercase, same as values; resolved at name-resolution time instead
+  (Option B), reusing the existing `Expr::ResolvedPath` pattern already in the codebase.
+  Turbofish (RFC-0023), found as a third, separate use of `::` this RFC also addresses,
+  is respelled `.<` rather than left as `::<` (a "same disambiguation guarantee, just
+  spelled to match" token substitution, not a new ambiguity). Amends RFC-0030's path
+  grammar, reserved path roots (`root::`/`std::`/`self::`/`super::` → `.`-spelled), and
+  RFC-0023's turbofish syntax. Opened 2026-07-13, revised 2026-07-14.
 - **RFC-0100** *(draft)* — Constructor-Call Construction — `Type { field: value }` struct
   literals → `Type(field: value)` call-shaped construction. Real deliverable is general
   keyword arguments for function calls, not a struct-only rename — struct construction
-  is just the first consumer. Pattern-matching destructuring explicitly keeps its
-  current `{ field }` syntax (deliberate asymmetry, not an oversight — see the RFC's
-  own §3). Old literal syntax retired outright rather than kept as a second spelling,
-  following RFC-0042's own precedent against permanent transition aliases. Opened
-  2026-07-13.
+  is just the first consumer. Like RFC-0099, not a pure addition: keyword arguments
+  collide with the existing type-ascription expression (RFC-0023) at the grammar level
+  (`Foo(bar: Baz)` is ambiguous between a keyword argument and an ascribed positional
+  argument) — resolved by reordering `arg_list` to try a keyword-argument shape before
+  falling through to plain `expr`, at the cost of no longer being able to write a bare
+  ascribed variable as an unparenthesized positional call argument. Pattern-matching
+  destructuring explicitly keeps its current `{ field }` syntax (deliberate asymmetry,
+  not an oversight — see the RFC's own §4). Old literal syntax retired outright rather
+  than kept as a second spelling, following RFC-0042's own precedent against permanent
+  transition aliases. Opened 2026-07-13, revised 2026-07-14.
+- **RFC-0101** *(draft)* — Grammar-Enforced Naming Case Conventions — PascalCase for type
+  declarations (struct/enum/aspect/generic params) and enum variants, camelCase for
+  `fun` declarations (free functions, methods, associated functions), SCREAMING_CASE for
+  constants (module-level, immutable `let` bindings — no dedicated `const` keyword
+  needed, since the grammar already distinguishes `let` from `let mut`), snake_case for
+  everything else that introduces a name (function-local `let` bindings, parameters,
+  struct fields) — enforced as a real compile-time check (a post-parse AST pass, not
+  literally embedded in `grammar.pest`), not just a style convention. PascalCase-types,
+  snake_case-bindings, and the (currently unused) constants row all need zero renames
+  across `stdlib/` and the test suite; camelCase-for-`fun` is the one real, active
+  change, requiring a full rename pass across every existing function and method.
+  Surfaced from reviewing RFC-0100's keyword-argument/ascription collision, but
+  deliberately scoped as its own RFC rather than folded into that one — it's a general
+  readability property, and does *not* rescue RFC-0099's own disambiguation question
+  (module path segments share casing with
+  values, an orthogonal problem). Opened 2026-07-14.
 
 ---
 
