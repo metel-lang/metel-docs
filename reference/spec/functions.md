@@ -1,5 +1,8 @@
 # Functions
 
+> *Planned for a future minor release (RFC-0098).* Mutable bindings use `var`, impl
+> blocks use `extend`, and standard-library visibility uses `public`.
+
 ```metel
 fun add(a: i64, b: i64) -> i64 {
     return a + b;
@@ -14,7 +17,8 @@ Parameter type annotations are optional when types can be inferred from context.
 
 ## Associated Functions
 
-`impl` blocks may contain functions with no `self` parameter. These are called on the type via `::` syntax and serve as the canonical constructor pattern:
+`extend` blocks may contain functions with no `self` parameter. These are called on
+the type via `::` syntax and serve as the canonical constructor pattern:
 
 ```metel
 struct Point {
@@ -22,7 +26,7 @@ struct Point {
     y: f64,
 }
 
-impl Point {
+extend Point {
     fun new(x: f64, y: f64) -> Point {
         return Point { x: x, y: y };
     }
@@ -71,7 +75,7 @@ Closures capture variables from their enclosing scope by value. A captured varia
 
 ```metel
 fun main() -> i64 {
-    let mut count = 0;
+    var count = 0;
     let inc = () -> { count += 1; };
     inc();
     inc();
@@ -83,9 +87,9 @@ Shared mutable closure state is explicit. If multiple closures must observe and 
 
 ```metel
 fun main() -> i64 {
-    let mut count = 0;
-    let p: *mut i64 = &mut count;
-    let inc = () -> { *p += 1; };
+    var count = 0;
+    let p: &var i64 = &var count;
+    let inc = () -> { p += 1; };
     inc();
     inc();
     return *p;
@@ -172,18 +176,18 @@ implementation provided by the host interpreter instead of a Metel body:
 
 ```metel
 // from std::core — not writable in user code
-native(@std.core.println) pub fun println<T>(x: T);
-native(@std.core.clock)   pub fun clock() -> i64;
+native(@std.core.println) public fun println<T>(x: T);
+native(@std.core.clock)   public fun clock() -> i64;
 ```
 
 A native declaration has no body — it ends with `;` instead of a block. The
 `@`-path inside the parentheses is the binding key that selects the host
-implementation. The form is also valid on methods inside `impl` blocks; for
+implementation. The form is also valid on methods inside `extend` blocks; for
 example, the primitive `Display` implementations in `std::core` are declared
 this way:
 
 ```metel
-impl Display for i64 {
+extend i64: Display {
     native(@std.core.to_string) fun to_string(&self) -> String;
 }
 ```

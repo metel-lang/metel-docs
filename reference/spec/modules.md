@@ -31,8 +31,8 @@ src/
   main.mtl            ← import parser::Ast; import parser::lexer::Token;
   parser.mtl          ← export ast::Ast; export lexer::Token;
   parser/
-    ast.mtl           ← pub struct Ast { ... }
-    lexer.mtl         ← pub struct Token { ... }
+    ast.mtl           ← public struct Ast { ... }
+    lexer.mtl         ← public struct Token { ... }
 ```
 
 `parser.mtl` is the facade. Files in `parser/` form the namespace. There is no `name/mod.mtl` convention.
@@ -89,7 +89,7 @@ fun main() -> i64 {
 }
 
 // src/parser.mtl
-pub struct Token {
+public struct Token {
     value: i64,
 }
 ```
@@ -118,11 +118,11 @@ export lexer::Token;
 
 // src/parser/ast.mtl
 import super::lexer::Token;
-pub struct Ast { token: Token }
-pub fun parse(token: Token) -> i64 { token.value }
+public struct Ast { token: Token }
+public fun parse(token: Token) -> i64 { token.value }
 
 // src/lexer.mtl
-pub struct Token { value: i64 }
+public struct Token { value: i64 }
 ```
 
 Import forms:
@@ -153,11 +153,11 @@ fun main() -> i64 {
 
 `export` and `import` share the same path and tree syntax. Re-exported names are indistinguishable from names defined directly in the re-exporting module.
 
-`pub` and `export` serve different roles:
+`public` and `export` serve different roles:
 
 | Keyword | Purpose |
 |---|---|
-| `pub` | Marks a declaration in this file as externally accessible |
+| `public` | Marks a declaration in this file as externally accessible |
 | `export path::Name;` | Re-exports a name from a submodule into this module's public API |
 
 `export` declarations are processed after the module graph is fully loaded; they do not affect which files are loaded.
@@ -206,13 +206,16 @@ Conflict rules:
 
 ## Visibility
 
-Declarations are module-private by default. A declaration is accessible from outside its module only if it is annotated with `pub`.
+> *Planned for a future minor release (RFC-0098).* Visibility is spelled `public`
+> rather than `pub`.
+
+Declarations are module-private by default. A declaration is accessible from outside its module only if it is annotated with `public`.
 
 ```metel
-pub struct Token { pub kind: i64, span: i64 }
+public struct Token { public kind: i64, span: i64 }
 struct InternalState { count: i64 }
 
-pub fun parse(tokens: Token[]) -> i64 { return array_len(tokens); }
+public fun parse(tokens: Token[]) -> i64 { return array_len(tokens); }
 fun helper(token: Token) -> boolean { return token.kind == 0; }
 
 fun main() -> i64 {
@@ -223,13 +226,13 @@ fun main() -> i64 {
 }
 ```
 
-`pub` is valid on `struct`, `enum`, `fun`, and `aspect` declarations. Top-level `let` and `mut` bindings are always module-private; public value exports are not supported in the current version.
+`public` is valid on `struct`, `enum`, `fun`, and `aspect` declarations. Top-level `let` and `var` bindings are always module-private; public value exports are not supported in the current version.
 
-Struct field visibility is independent from the struct's own visibility. Fields are module-private by default; add `pub` on each field that should be accessible outside the declaring module.
+Struct field visibility is independent from the struct's own visibility. Fields are module-private by default; add `public` on each field that should be accessible outside the declaring module.
 
 ```metel
-pub struct Token {
-    pub kind: i64,
+public struct Token {
+    public kind: i64,
     span: i64,
 }
 ```
@@ -238,7 +241,7 @@ From outside the declaring module, `Token` is nameable, `token.kind` is accessib
 
 Within a module, all names defined in that module are accessible without qualification, including private names.
 
-Modules do not have their own visibility annotation. Module-level access control is handled entirely by `pub` on individual items.
+Modules do not have their own visibility annotation. Module-level access control is handled entirely by `public` on individual items.
 
 ## Circular Imports
 

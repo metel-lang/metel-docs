@@ -27,11 +27,15 @@ By convention:
 
 ```
 and       as        aspect    break     continue  else      enum
-export    false     for       fun       if        impl      import
-let       loop      match     mut       or        pub       return
-root      self      std       struct    super     true      where
-while
+export    extend    false     for       fun       if        impl
+import    let       loop      match     or        public    return
+root      self      std       struct    super     true      var
+where     while
 ```
+
+> *Planned for a future minor release (RFC-0098).* `public`, `var`, and `extend`
+> are added as keywords; `impl` remains reserved because `impl Aspect` shorthand is
+> unchanged.
 
 ## Literals
 
