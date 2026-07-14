@@ -33,10 +33,6 @@ root      self      std       struct    super     true      var
 where     while
 ```
 
-> *Planned for a future minor release (RFC-0098).* `public`, `var`, and `extend`
-> are added as keywords; `impl` remains reserved because `impl Aspect` shorthand is
-> unchanged.
-
 ## Literals
 
 **Integers** — decimal, with optional `_` separators:

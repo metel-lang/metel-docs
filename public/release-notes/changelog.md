@@ -40,12 +40,19 @@ what's actually merged. Shipped from `sprint/25` (merged into `develop`) and
   means). Taking priority over a *blanket* positive impl and being consulted
   by `T: !Aspect` bound satisfaction are properties of RFC-0036/RFC-0072
   (`#241`/`#243`), not implemented yet themselves (RFC-0081, `#264`)
+- Integrated surface-syntax RFCs are now fully implemented: `public` replaces
+  `pub`, `var` replaces `mut`, impl blocks are spelled `extend`, bodyless
+  `extend Type: Aspect;` / `extend Type: !Aspect;` are accepted, and empty
+  aspect declarations may be written as `aspect Name;` (RFC-0098, RFC-0102,
+  RFC-0103, #274, #277, #278)
 
 **Breaking changes:**
 - Reference-type syntax renamed to match the integrated spec: `*T`/`*mut T`
   are no longer accepted in type position (`&T`/`&mut T` only); explicit
   `*p` dereference syntax is removed (address-of `&x`/`&mut x` at the
   expression level is unchanged) (RFC-0067a)
+- Legacy surface spellings `pub`, `mut`, and `impl` are no longer accepted;
+  code must use `public`, `var`, and `extend`
 
 **Bug fixes:**
 - Auto-deref, read-copy, and write-through now chain correctly through
@@ -105,7 +112,7 @@ The first presentable standard library. Shipped from sprint/23.
 - `OsError` — the error type for the host modules, with a `Display` implementation and a `message()` accessor
 
 **Standard library — host modules (explicit import):**
-- `std::env` — `var(name) -> Perhaps<String>`, `vars() -> EnvVar[]` (read-only)
+- `std::env` — `get(name) -> Perhaps<String>`, `vars() -> EnvVar[]` (read-only)
 - `std::fs` — text-oriented file operations (`read_to_string`, `write_string`, `append_string`, `exists`, `read_dir`, `create_dir`, `create_dir_all`, `remove_file`, `remove_dir`, `remove_dir_all`), all returning `Result<_, OsError>`
 - `std::process` — `args()` and shell-free synchronous `run(command, args) -> Result<ProcessOutput, OsError>`
 

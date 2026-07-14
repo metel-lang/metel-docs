@@ -1,14 +1,10 @@
 # Declarations
 
-> *Planned for a future minor release (RFC-0098/RFC-0102/RFC-0103).* Visibility is
-> spelled `public`, mutable bindings are spelled `var`, impl blocks are spelled
-> `extend`, negative impls may be bodyless, and empty aspect declarations may be
-> written with `;`.
-
 `public` may be prefixed to top-level `fun`, `struct`, `enum`, and `aspect`
 declarations to mark them as accessible from other modules. Top-level `let` and `var`
 bindings remain module-private. See [Modules — Visibility](modules.md#visibility) for
-the full rules.
+the full rules. The current `public` / `var` / `extend` surface spellings are the
+spelling set introduced by RFC-0098.
 
 ## Variables
 
@@ -943,7 +939,7 @@ extend<T, brand 'b> Rc<T, 'b>: !Sync;
 ```
 
 More generally, a bodyless `extend` block is permitted whenever the body would be empty
-already:
+already (RFC-0102):
 
 ```metel
 aspect Copy2;
@@ -954,6 +950,9 @@ extend Handle: Copy2;
 extend Handle: !Send;
 extend Handle: Copy2, !Send;
 ```
+
+A methodless aspect declaration may itself be written bodylessly as `aspect Name;`
+(RFC-0103), as in the `Copy2` example above.
 
 `extend Type: Aspect;` is valid only when every method of `Aspect` already has a
 default body and the aspect declares no associated types. `extend Type: !Aspect;` is

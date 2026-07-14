@@ -2,16 +2,18 @@
 id: rfc-0098
 title: "Surface Keyword Renames"
 date: '2026-07-13'
-status: integrated
+status: implemented
 target:
 updated: '2026-07-14'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/274'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — accepted (2026-07-14).** Reviewed and revised: extend Type / extend Type: Aspect (Swift-precedent, settles the inherent-impl gap an earlier with/without draft left open), negative impls folded into the same clause via the existing bound-negation !, identifier-collision audit noted for implementation. No open questions block it.
 
 > **Status — integrated (2026-07-14).** Integrated into spec: `public`/`var`/`extend` surface keyword renames
+
+> **Status — implemented (2026-07-14).**
 
 ## Summary
 
@@ -167,7 +169,7 @@ Grammar sites affected, all a straight token substitution (`mut_kw` → `var_kw`
 
 RFC-0033 (Field-Level Mutability) is still `0-draft` and uses a bare `mut field` sketch in its own examples; since it hasn't been accepted, this RFC doesn't formally amend it, but whoever picks RFC-0033 back up should spell its `mut` as `var` from the start rather than drafting against a token this RFC retires.
 
-**Identifier collision to audit at implementation time:** `var` is not currently reserved, and at least one existing stdlib item is named exactly that — `std::env::var` (`stdlib/env.mtl`, mirroring Rust's `std::env::var`). Reserving `var` as a keyword means this needs renaming (e.g. `std::env::get_var`) as part of landing this section; a full identifier audit across `stdlib/` for `var`, `public`, and `extend` should be a checklist item on the implementing issue rather than assumed clean.
+**Identifier collision audit, resolved at implementation time:** reserving `var` as a keyword collided with the existing stdlib item `std::env::var`. The shipped implementation renamed that function to `std::env::get`; the same audit should still be applied to any future surface-keyword additions (`public`, `extend`, and later RFCs) rather than assumed clean.
 
 ---
 

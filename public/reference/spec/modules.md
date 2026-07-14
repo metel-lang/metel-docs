@@ -206,9 +206,6 @@ Conflict rules:
 
 ## Visibility
 
-> *Planned for a future minor release (RFC-0098).* Visibility is spelled `public`
-> rather than `pub`.
-
 Declarations are module-private by default. A declaration is accessible from outside its module only if it is annotated with `public`.
 
 ```metel

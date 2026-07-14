@@ -2,16 +2,18 @@
 id: rfc-0102
 title: "Bodyless Extend Blocks for Marker Aspects and Negative Impls"
 date: '2026-07-14'
-status: integrated
+status: implemented
 target:
 updated: '2026-07-14'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/277'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — accepted (2026-07-14).** Reviewed and revised: extended to a comma-separated multi-aspect list (S5), and the negative-impl braces spelling retired outright (bodyless is now mandatory, not just sugar), matching this project's own precedent (RFC-0100, RFC-0042) for retiring a strictly-superseded old spelling. No open questions block it.
 
 > **Status — integrated (2026-07-14).** Integrated into spec: bodyless `extend` blocks, including bodyless negative impls and multi-aspect bodyless lists
+
+> **Status — implemented (2026-07-14).**
 
 ## Summary
 
