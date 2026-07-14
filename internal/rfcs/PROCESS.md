@@ -115,25 +115,27 @@ honest single status). Concretely:
   `rfc.py impl-status <id> --set in-progress|implemented` updates it as work proceeds;
   `rfc.py transition <id> --to implemented` sets it to `implemented` automatically.
 - **Inline markers in `public/reference/spec/*.md` are required, not optional, at every
-  section the RFC touches** — a callout at the point of use (e.g. `> **Not yet
-  implemented** — see` followed by a link to the RFC's file under `3-integrated/`, then a
-  short reason), not just a global status field. A reader of the spec directly, not the
-  RFC, still needs to see it; a single central table would miss exactly the reader this
-  exists for.
+  section the RFC touches** — they are **public availability markers first**, with a
+  narrow exception for future-facing features: a `Planned for vX.Y.Z` marker may also
+  include the RFC id so implementation drift can still be tracked against a stable
+  design handle. The spec must say what version first ships a feature, whether the
+  current text is future-facing, and when behavior changed; it must not require the
+  reader to open an RFC file just to learn whether the feature exists. Use versioned
+  wording at the point of use (for example `> **Available in v0.11.0.** ...`,
+  `> **Changed in v0.11.0.** ...`, or `> **Planned for v0.11.0 (RFC-0123).** ...`), not
+  just a global status field. A reader of the spec directly, not the RFC, still needs
+  to see it; a single central table would miss exactly the reader this exists for.
 - **The callout must be exactly one line (2026-07-11)** — no continuation lines in the
   blockquote, whatever explanatory detail doesn't fit gets cut, not wrapped. This is
   specifically so that removing it, once the RFC reaches `4-implemented`, is an
   unambiguous single-line deletion — no risk of leaving orphaned prose behind or having
-  to work out where a multi-line callout ends. `rfc.py check` confirms the spec
-  references the RFC at all (a weak proxy — it greps for the RFC id under
-  `public/reference/spec/`) and, more strongly, flags any such callout that survives
-  after the RFC reaches `4-implemented`. `rfc.py transition <id> --to implemented`
-  refuses to run at all while one still exists for that RFC — the deletion has to happen
-  as part of the same step that moves the RFC file, not as a separately rememberable
-  follow-up (this is the same failure shape as every stale-doc bug this process has
-  already caught: a manual step nobody enforced). The callout's wording, while it still
-  exists, stays a human judgment call, the same way worked-example soundness does — only
-  its presence or absence relative to lifecycle stage is mechanically checked.
+  to work out where a multi-line callout ends. The lifecycle tool may still verify that
+  an integrated RFC's content has been merged into the spec, but the public-facing spec
+  text still talks first in terms of released or planned versions. Issue numbers and
+  tracking links stay out of the spec entirely; the RFC id is allowed only inside a
+  future-facing availability marker. Removing a future-facing callout, once the feature
+  ships, still happens in the same change that moves the RFC to `4-implemented`, not as
+  a separately rememberable follow-up.
 
 **Not retroactive.** The 25 RFCs already `4-implemented` before 2026-07-10 predate this
 convention and are not required to carry `impl_status`/`impl_tracking` after the fact —
@@ -265,6 +267,63 @@ stay inline. RFC-0012 accumulated 18 open questions before being split — most 
 blocking anything, they just made the document read as permanently unfinished. If a
 question isn't load-bearing for acceptance, it either gets resolved, cut, or moved
 somewhere it won't be re-read on every pass.
+
+## Specification rules, adopted 2026-07-14
+
+These rules govern what belongs in `public/reference/spec.md` and
+`public/reference/spec/*.md` once RFC content is integrated.
+
+**The spec is normative; RFCs are design history.** The public spec states what the
+language is. RFCs explain how a design was reached, what alternatives were rejected,
+and what is still under review. Once integrated, the spec should stand on its own.
+
+**Only integrated content belongs in the spec.** `2-accepted` is not enough. Until an
+RFC reaches `3-integrated`, the public spec does not grow text for it beyond a
+version-based future-availability marker where genuinely needed.
+
+**The spec describes behavior, not motivation.** Public spec text should define syntax,
+static semantics, dynamic behavior, and availability. Design rationale, historical
+notes, trade-off discussion, and issue triage stay in RFCs, reports, changelog notes,
+or internal docs unless they are needed to prevent a reader from misreading the rule.
+
+**Every language-visible feature must specify all three layers.** A spec addition is
+not complete unless it covers:
+- syntax: what source forms are accepted;
+- static semantics: name resolution, typing, validity constraints, and compile-time
+  errors where relevant;
+- runtime behavior: evaluation order, side effects, produced values, and runtime
+  failures where relevant.
+
+**New syntax does not silently weaken old syntax.** If a proposal removes, narrows, or
+steals a previously valid source form, that has to be called out explicitly in the RFC
+and settled as a design decision before integration. "Rare in practice" is not enough
+on its own.
+
+**Surface-syntax RFCs must prove adjacent interactions, not only the happy path.**
+Grammar changes are checked against nearby syntax, precedence, existing parses,
+destructuring forms, type syntax, overload behavior, and evaluation-order consequences.
+The integration examples should stress the collision boundaries, not just showcase the
+feature working in isolation.
+
+**Examples in the spec should carry weight.** Prefer examples that pin down ambiguity,
+edge conditions, or interaction rules over examples that merely restate the obvious.
+An example that would not catch a misunderstanding is usually documentation garnish,
+not spec work.
+
+**Public availability is version-based only.** The public spec may say `Since vX.Y.Z.`,
+`Changed in vX.Y.Z: ...`, or `Planned for vX.Y.Z.` It must not mention RFC ids, issue
+numbers, tracking links, or other internal process artifacts. Availability is a product
+question, not a lifecycle question.
+
+**If spec text and interpreter behavior differ, that is a defect to resolve, not a
+state to normalize.** Either the implementation is fixed to match the spec, or the spec
+is corrected deliberately in the same work. The public spec must not drift into
+describing a half-remembered or aspirational language.
+
+**The spec entry point must match the section files.** `public/reference/spec.md`
+cannot describe an older language model than the detailed sections it links to. When a
+cluster materially changes the language model, the top-level overview needs the same
+update pass, not a deferred "later" cleanup.
 
 ## Before opening a new RFC
 

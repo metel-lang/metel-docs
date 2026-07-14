@@ -2,16 +2,14 @@
 id: rfc-0100
 title: "Constructor-Call Construction"
 date: '2026-07-13'
-status: integrated
+status: under-review
 target:
 updated: '2026-07-14'
-impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/276'
-impl_status: not-started
 ---
 
-> **Status — accepted (2026-07-14).** Reviewed and revised: found and fixed a real grammar collision between keyword arguments and type ascription (arg_list reordering fix), resolved all three remaining Unresolved Questions (evaluation order, aspect-method calls, overload resolution) against the actual implementation. No open questions block it.
+> **Status — under review (2026-07-14).** Reconsidering whether general keyword arguments belong in the spec at all, given the collision with type ascription at call sites.
 
-> **Status — integrated (2026-07-14).** Integrated into spec: constructor-call construction and keyword arguments
+> **Previous Status — accepted (2026-07-14).** Reviewed and revised: found and fixed a real grammar collision between keyword arguments and type ascription (arg_list reordering fix), resolved all three remaining Unresolved Questions (evaluation order, aspect-method calls, overload resolution) against the actual implementation. No open questions block it.
 
 ## Summary
 
@@ -104,7 +102,8 @@ one accepted trade-off negligible in practice, it doesn't substitute for it.
 ## 6. Evaluation order, aspect methods, and overload resolution
 
 Three questions an earlier draft of this RFC left open, resolved here against the actual implementation
-rather than by analogy alone:
+rather than by analogy alone. These resolutions remain technically valid, but the RFC is back under review
+because the larger spec trade-off around keyword arguments is no longer considered settled:
 
 **Evaluation order.** `evaluator/mod.rs`'s existing `TypedExpr::Call` handling evaluates arguments via
 `args.iter().map(|a| eval_expr(a, ...))` — strict left-to-right over the stored argument list, which today
@@ -154,10 +153,16 @@ Unresolved Questions cited hypothetically: `assert(cond: boolean)` and `assert(c
 
 ## Unresolved Questions
 
-None load-bearing. The three questions an earlier draft left open — evaluation order, aspect-method
-calls, and overload resolution — are resolved in §6, each checked directly against the relevant existing
-implementation (`evaluator/mod.rs`'s argument evaluation, RFC-0044's receiver forms, and `overload.rs`'s
-own documented exact-match rule) rather than assumed.
+The main open question is now specification policy, not parser mechanics:
+
+- Should Metel keep only constructor-call syntax and drop general keyword arguments?
+- If keyword arguments stay, is removing bare type-ascription expressions from positional call arguments
+  an acceptable cost?
+- More generally, should new surface syntax be admitted when it weakens an already-specified construct,
+  even if the weakened construct is uncommon in practice?
+
+The lower-level questions from the earlier draft — evaluation order, aspect-method calls, and overload
+resolution — are resolved in §6, but that no longer closes the RFC on its own.
 
 ---
 

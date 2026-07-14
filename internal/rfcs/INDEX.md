@@ -533,19 +533,21 @@ implementation).
   non-empty body across multiple aspects has no principled disambiguation and isn't
   attempted. Depends on RFC-0098's `extend Type: Aspect` grammar shape. Opened
   2026-07-14, accepted 2026-07-14.
-- **RFC-0103** *(accepted 2026-07-14)* — Bodyless Aspect Declarations and
-  Struct-Embedded Aspect Lists — two additions on top of RFC-0102. A bodyless
+- **RFC-0103** *(accepted 2026-07-14)* — Bodyless Aspect Declarations — a bodyless
   spelling for the aspect *declaration* itself (`aspect Copy2;` — pure sugar for
   `aspect Copy2 { }`, legal whenever the braced form already would be, no permanence
-  guarantee attached, unlike an earlier draft's dropped `marker` keyword). And a
-  struct/enum-embedded aspect list (`struct Token: Copy2, Serializable, !Send {
-  value: String }`) reusing RFC-0102 §5's `extend_aspect_list`, where struct/enum
-  bodies stay fields-only: negative items are fully satisfied by the list itself,
-  while every positive item declares a checked, module-wide *obligation* discharged
-  by an ordinary, separately-editable `extend` block elsewhere — revised from an
-  earlier draft that rejected positive items outright, once it was clear the "no
-  escape hatch" concern only applies to items the list itself tries to implement
-  inline. A still-earlier `marker` keyword (permanently gating which positive items
+  guarantee attached, unlike an earlier draft's dropped `marker` keyword). This is
+  the aspect-declaration analogue of RFC-0102's bodyless `extend`-block sugar, and
+  nothing more.
+- **RFC-0105** *(draft, split from RFC-0103 on 2026-07-14)* — Struct-Embedded Aspect
+  Lists — the deferred `struct Token: Copy2, Serializable, !Send { value: String }`
+  / `enum ... : ...` proposal. Reuses RFC-0102 §5's `extend_aspect_list`, where
+  struct/enum bodies stay fields-only: negative items are fully satisfied by the list
+  itself, while every positive item declares a checked, module-wide *obligation*
+  discharged by an ordinary, separately-editable `extend` block elsewhere. Split out
+  so the larger declaration-surface and coherence/auto-impl questions can be judged
+  separately from RFC-0103's smaller bodyless-declaration feature. A still-earlier
+  `marker` keyword (permanently gating which positive items
   the list alone could satisfy) was dropped outright once every positive item became
   an obligation uniformly — the permanence guarantee it offered stopped being
   load-bearing. Its last two open questions are now resolved: the obligation check

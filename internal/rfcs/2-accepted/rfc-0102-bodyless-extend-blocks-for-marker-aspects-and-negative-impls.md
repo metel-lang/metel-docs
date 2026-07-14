@@ -2,16 +2,12 @@
 id: rfc-0102
 title: "Bodyless Extend Blocks for Marker Aspects and Negative Impls"
 date: '2026-07-14'
-status: integrated
+status: accepted
 target:
 updated: '2026-07-14'
-impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/277'
-impl_status: not-started
 ---
 
 > **Status — accepted (2026-07-14).** Reviewed and revised: extended to a comma-separated multi-aspect list (S5), and the negative-impl braces spelling retired outright (bodyless is now mandatory, not just sugar), matching this project's own precedent (RFC-0100, RFC-0042) for retiring a strictly-superseded old spelling. No open questions block it.
-
-> **Status — integrated (2026-07-14).** Integrated into spec: bodyless extend blocks for marker aspects and negative impls
 
 ## Summary
 
@@ -257,10 +253,12 @@ extend Handle: !Displayable;
   amended, only reused in a new position.
 - RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls) — §5's example composing a multi-aspect list with
   a bare-parameter blanket target; not amended, the two features are orthogonal.
-- RFC-0103 (Bodyless Aspect Declarations and Struct-Embedded Aspect Lists) — depends on this RFC (reuses
-  `extend_aspect_list` and the negative-always-eligible reasoning directly); considered and then also
-  dropped the same `marker`-keyword alternative rejected above, for its own struct/enum-embedding reasons —
-  see this RFC's own Alternatives Considered note.
+- RFC-0103 (Bodyless Aspect Declarations) — depends on this RFC as the direct precedent for
+  bodyless declaration sugar one production earlier; also dropped the same `marker`-keyword
+  alternative rejected above.
+- RFC-0105 (Struct-Embedded Aspect Lists, draft) — the larger struct/enum-embedding proposal
+  split out of RFC-0103; reuses `extend_aspect_list` and the negative-always-eligible reasoning
+  directly.
 
 ---
 

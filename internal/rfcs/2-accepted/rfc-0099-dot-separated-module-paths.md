@@ -2,16 +2,12 @@
 id: rfc-0099
 title: "Dot-Separated Module Paths"
 date: '2026-07-13'
-status: integrated
+status: accepted
 target:
 updated: '2026-07-14'
-impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/275'
-impl_status: not-started
 ---
 
 > **Status — accepted (2026-07-14).** Reviewed and revised: capitalization-based path disambiguation (Option A) rejected after failing against real fixture code; resolved at name-resolution time (Option B) reusing the existing Expr::ResolvedPath pattern. Turbofish respelled .< to match. No open questions block it.
-
-> **Status — integrated (2026-07-14).** Integrated into spec: dot-separated module paths
 
 ## Summary
 

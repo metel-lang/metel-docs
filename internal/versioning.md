@@ -39,7 +39,9 @@ Versions v0.1 through v0.4 were tagged with two-digit identifiers (`v0.3`, `v0.4
 
 ## The Spec as a Living Document
 
-`docs/public/reference/spec.md` is the entry point for the language specification. It links to focused sub-files in `docs/public/reference/spec/`. The public docs are split into `getting-started/`, `reference/`, and `release-notes/` so the published site can stay navigable without flattening everything into one directory. The spec describes the full language including features planned for future versions. Version snapshots are captured as **git tags**, not separate document files.
+`docs/public/reference/spec.md` is the entry point for the language specification. It links to focused sub-files in `docs/public/reference/spec/`. The public docs are split into `getting-started/`, `reference/`, and `release-notes/` so the published site can stay navigable without flattening everything into one directory. The spec describes the full language, including features planned for future versions, but **availability is expressed only in terms of versions**. Version snapshots are captured as **git tags**, not separate document files.
+
+**Public/spec vs. internal/process boundary.** The public spec is for language users. It may say that a feature is available since `vX.Y.Z`, changed in `vX.Y.Z`, or planned for `vX.Y.Z`. As a narrow exception, a future-facing availability note may also include the RFC id in parentheses, so not-yet-implemented spec text can still be tied back to its design source during implementation. Issue numbers, `impl_tracking` links, and other tracking artifacts still do not belong in `docs/public/reference/spec/`.
 
 ### Version tags
 
@@ -60,7 +62,9 @@ Spec sections are annotated to indicate which version introduced or changed a fe
 |---|---|
 | Feature added in a specific version | `> *Since vX.Y.Z.*` |
 | Existing feature changed in a version | `> *Changed in vX.Y.Z: description.*` |
-| Feature planned for a future version | `> **vX.Y.Z feature.** description...` |
+| Feature planned for a future version | `> *Planned for vX.Y.Z (RFC-0123).*` |
+
+**Availability rule.** Prefer these annotations over prose like "not yet implemented." The public question is "in which version is this language behavior available?"; for future-facing text only, the RFC id may appear as the stable design reference, but issue numbers and tracking links stay out.
 
 ---
 

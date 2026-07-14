@@ -388,15 +388,15 @@ because this RFC is the right place to resolve it.
    further coordination is needed. Belongs to whichever RFC ends up specifying
    `HasField`'s own coherence story, not decided here.
 
-7. **RFC-0103 (accepted) places a concrete implementation requirement on this RFC,
-   surfaced while reviewing RFC-0103's own struct/enum-embedded aspect-list
+7. **RFC-0105 (draft) surfaces a concrete implementation requirement on this RFC,
+   inherited from the split-out struct/enum-embedded aspect-list
    obligation model.** §5 above already says "an auto-impl is an ordinary positive
-   impl for coherence purposes" — RFC-0103 takes that literally: each auto-impl
+   impl for coherence purposes" — RFC-0105 takes that literally: each auto-impl
    determination (`Send`/`Sync`/`Linear`) must be made visible through the *same*
    aspect-implementation registry an ordinary `extend` block populates (a real
    registered entry — for a generic type, the conditional-impl-bounds entry §3 above
    already describes as the intended shape), not merely through a `satisfies(A, T)`
-   query consulted only by direct bound-checking. Without this, RFC-0103's own
+   query consulted only by direct bound-checking. Without this, RFC-0105's own
    obligation check would have no way to discharge a struct/enum-embedded positive
    `Send`/`Sync`/`Linear` item — no `extend` block for those aspects is ever written,
    so a registry-based lookup finds nothing unless this RFC's implementation puts an
@@ -437,11 +437,11 @@ because this RFC is the right place to resolve it.
 - RFC-0090 (Structural Records, draft) — §1's `HasField`/`Lacks` auto-derivation,
   the fifth document assuming this RFC's pattern, missed on the first drafting pass;
   the subject of this RFC's §7.
-- RFC-0103 (Bodyless Aspect Declarations and Struct-Embedded Aspect Lists,
-  accepted) — its §4 places a concrete implementation requirement on this RFC
-  (Unresolved Question 7): auto-impl determinations must be injected into the same
+- RFC-0105 (Struct-Embedded Aspect Lists, draft) — inherits the split-out requirement
+  originally developed while RFC-0103 still bundled this syntax: auto-impl determinations
+  must be injected into the same
   aspect-implementation registry ordinary `extend` blocks populate, not exposed only
-  via a `satisfies`-style query, so RFC-0103's struct/enum-embedded obligation check
+  via a `satisfies`-style query, so RFC-0105's struct/enum-embedded obligation check
   never needs to special-case `Send`/`Sync`/`Linear` by name.
 
 ---
