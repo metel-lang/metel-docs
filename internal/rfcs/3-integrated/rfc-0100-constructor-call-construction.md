@@ -2,12 +2,16 @@
 id: rfc-0100
 title: "Constructor-Call Construction"
 date: '2026-07-13'
-status: accepted
+status: integrated
 target:
 updated: '2026-07-14'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/276'
+impl_status: not-started
 ---
 
 > **Status — accepted (2026-07-14).** Reviewed and revised: found and fixed a real grammar collision between keyword arguments and type ascription (arg_list reordering fix), resolved all three remaining Unresolved Questions (evaluation order, aspect-method calls, overload resolution) against the actual implementation. No open questions block it.
+
+> **Status — integrated (2026-07-14).** Integrated into spec: constructor-call construction and keyword arguments
 
 ## Summary
 

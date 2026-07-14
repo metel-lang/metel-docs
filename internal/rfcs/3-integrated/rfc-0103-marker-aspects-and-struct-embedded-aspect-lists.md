@@ -2,12 +2,16 @@
 id: rfc-0103
 title: "Bodyless Aspect Declarations and Struct-Embedded Aspect Lists"
 date: '2026-07-14'
-status: accepted
+status: integrated
 target:
 updated: '2026-07-14'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/278'
+impl_status: not-started
 ---
 
 > **Status — accepted (2026-07-14).** Reviewed and resolved: the obligation check (§3) runs inside the same already-existing whole-graph coherence pass (coherence.rs, RFC-0060). §4 resolves a real interaction with RFC-0096's auto-impl aspects: rather than §3 special-casing Send/Sync/Linear with a direct satisfies() query, RFC-0096's own implementation is required to inject each auto-impl determination into the same aspect-implementation registry ordinary extend blocks populate — a commitment RFC-0096 §5 already half-makes ("an auto-impl is an ordinary positive impl for coherence purposes") — so §3 needs zero special-casing at all. No open questions remain.
+
+> **Status — integrated (2026-07-14).** Integrated into spec: bodyless aspect declarations and struct-embedded aspect lists
 
 ## Summary
 
