@@ -1,0 +1,107 @@
+// RFC-0100 S2 — Keyword arguments as a general call-syntax feature
+//
+// The RFC's real deliverable: struct construction (file 03) is just the
+// first consumer. Any function or method call can use its parameters'
+// declared names at the call site, in any order, mixed with positional
+// arguments. Illustrative only — see the cluster README.
+
+struct Connection {
+    host: String,
+    port: i64,
+}
+
+fun connect(host: String, port: i64, timeout: i64) -> Connection {
+    Connection(host: host, port: port)
+}
+
+// ---------------------------------------------------------------------
+// 1. Free functions — full keyword, and positional/keyword mixing
+// ---------------------------------------------------------------------
+
+fun demo_free_functions() {
+    // All-keyword, declaration order.
+    connect(host: "db.local", port: 5432, timeout: 30);
+
+    // All-keyword, reordered — field order is non-load-bearing, same as
+    // struct construction (file 03).
+    connect(timeout: 30, host: "db.local", port: 5432);
+
+    // Positional, then keyword — positional arguments must precede keyword
+    // ones, matching every other language with this feature.
+    connect("db.local", port: 5432, timeout: 30);
+
+    // Purely positional calls remain valid and unchanged for every
+    // function, including ones defined before this RFC.
+    connect("db.local", 5432, 30);
+}
+
+// ---------------------------------------------------------------------
+// 2. Aspect-method calls — no special case (RFC-0100 S6)
+// ---------------------------------------------------------------------
+//
+// `self`/the receiver is always positional, supplied by the expression
+// before the dot; every parameter after `self` is an ordinary named
+// parameter, exactly like a free function's.
+
+struct Rectangle {
+    width: f64,
+    height: f64,
+}
+
+extend Rectangle {
+    fun scaled(&self, factor_x: f64, factor_y: f64) -> Rectangle {
+        Rectangle(width: self.width * factor_x, height: self.height * factor_y)
+    }
+}
+
+fun demo_method_calls() {
+    let r = Rectangle(width: 3.0, height: 4.0);
+
+    // Keyword arguments on a method call, same rules as a free function —
+    // `self` (the receiver, `r`) is never named, only the parameters after it.
+    let stretched = r.scaled(factor_y: 2.0, factor_x: 1.0);
+}
+
+// ---------------------------------------------------------------------
+// 3. Evaluation order (RFC-0100 S6) — written order, not declaration order
+// ---------------------------------------------------------------------
+//
+// Arguments are evaluated strictly in the order they're *written* at the
+// call site, left to right, regardless of position vs. keyword — then the
+// already-computed values (not the expressions) are re-mapped onto the
+// callee's declared parameter positions. Reordering the expressions
+// themselves to declaration order before evaluating would silently change
+// which side effect runs first.
+
+fun get_port() -> i64 {
+    println("reading port");
+    5432
+}
+
+fun get_host() -> String {
+    println("reading host");
+    "db.local"
+}
+
+fun demo_evaluation_order() {
+    // Declaration order is (host, port, timeout), but this call writes
+    // `port` first — `get_port()` still runs before `get_host()`, printing
+    // "reading port" then "reading host", because evaluation follows the
+    // order written here, not the callee's declared parameter order.
+    connect(port: get_port(), host: get_host(), timeout: 30);
+}
+
+// ---------------------------------------------------------------------
+// 4. Overloaded natives (RFC-0100 S6) — keyword names resolve within
+//    whichever overload the argument types/count already select
+// ---------------------------------------------------------------------
+
+fun demo_overloads() {
+    // Resolves to the one-parameter `assert(cond: boolean)` overload.
+    assert(cond: true);
+
+    // Resolves to the two-parameter `assert(cond: boolean, msg: String)`
+    // overload — `msg` doesn't exist on the one-parameter overload, so a
+    // call naming it can only match the candidate that declares it.
+    assert(cond: true, msg: "should hold");
+}

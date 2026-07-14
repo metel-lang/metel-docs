@@ -30,10 +30,11 @@ shown here depends on it.
 |---|---|---|
 | [`01-keyword-renames.mtl`](01-keyword-renames.mtl) | 0098 | `extend Type` / `extend Type: Aspect` (inherent and aspect impls), negative impls via `extend Type: !Aspect`, generic impls (`extend<T: Bound> ...`), a bare-parameter blanket impl (RFC-0097) under the new spelling, `public`, `var` in every position (bindings, for-loops, `&var`) |
 | [`02-dot-paths-and-turbofish.mtl`](02-dot-paths-and-turbofish.mtl) | 0099 | Import/export paths, reserved path roots (`root.`/`std.`), enum-variant paths, static/associated-function calls, turbofish respelled `.<T>` |
-| [`03-constructor-call-construction.mtl`](03-constructor-call-construction.mtl) | 0100 | Call-shaped construction (`Type(field: value)`), single-field positional shorthand, general keyword arguments on ordinary function calls, positional/keyword mixing, destructuring's unchanged `{ field }` syntax |
-| [`04-combined-program.mtl`](04-combined-program.mtl) | 0098, 0099, 0100, 0097 | One realistic program using all three (plus RFC-0097, already integrated) together, to sanity-check they compose cleanly rather than fighting each other |
+| [`03-constructor-call-construction.mtl`](03-constructor-call-construction.mtl) | 0100 | Call-shaped construction (`Type(field: value)`), single-field positional shorthand, field-order independence, destructuring's unchanged `{ field }` syntax |
+| [`04-keyword-arguments-general.mtl`](04-keyword-arguments-general.mtl) | 0100 | RFC-0100 §2's real deliverable in depth — keyword arguments on ordinary free-function calls, on aspect-method calls (no special case), evaluation order with side-effecting arguments (written order, not declaration order), and interaction with overloaded natives (`assert`/`assert_msg`) |
+| [`05-combined-program.mtl`](05-combined-program.mtl) | 0098, 0099, 0100, 0097 | One realistic program using all three (plus RFC-0097, already integrated) together, to sanity-check they compose cleanly rather than fighting each other |
 
-Read `01`–`03` in any order — each is self-contained. `04` assumes all three
+Read `01`–`04` in any order — each is self-contained. `05` assumes all four
 and is meant to be read last.
 
 ## Notes on specific choices
@@ -49,6 +50,11 @@ and is meant to be read last.
   narrow trade-off from RFC-0100 §3's grammar-ordering fix for the keyword-
   argument/type-ascription collision. Ascription itself (`let`, match arms,
   general sub-expressions) is untouched.
-- **`04` drops raw-array `.push`** in favor of an array literal — `T[]` has no
+- **`04`'s evaluation-order example** (`get_port()`/`get_host()`) is the
+  concrete illustration of RFC-0100 §6's two-step rule: arguments are
+  evaluated in the order *written* at the call site, then the resulting
+  values (not the expressions) are re-mapped onto declared parameter
+  positions. The comment states which `println` fires first and why.
+- **`05` drops raw-array `.push`** in favor of an array literal — `T[]` has no
   `.push` (that's `List<T>`, a separate, unrelated stdlib type), which isn't
   part of this cluster and would have been a distracting error to leave in.

@@ -1,11 +1,12 @@
-// RFC-0100 — Constructor-Call Construction
+// RFC-0100 §1 — Constructor-Call Construction
 //
 // `Type { field: value }` struct literals -> `Type(field: value)` call-shaped
-// construction, plus general keyword arguments for any function call (the
-// real deliverable — struct construction is just the first consumer).
-// Pattern-matching destructuring keeps its current `{ field }` syntax,
-// unchanged (a deliberate asymmetry — construction produces a value,
-// destructuring matches an existing one). The old literal syntax is
+// construction. Struct construction is just the first consumer of keyword
+// arguments as a general call-syntax feature — see 04-keyword-arguments-
+// general.mtl for that feature applied to ordinary function and method
+// calls. Pattern-matching destructuring keeps its current `{ field }`
+// syntax, unchanged (a deliberate asymmetry — construction produces a
+// value, destructuring matches an existing one). The old literal syntax is
 // retired outright, not kept as a second spelling.
 // Illustrative only — see the cluster README.
 
@@ -33,22 +34,10 @@ fun main() {
         Token { value } => println(value),
     }
 
-    connect(host: "db.local", port: 5432, timeout: 30);
-    connect("db.local", port: 5432, timeout: 30);   // positional + keyword mix
-
     // Note (S3 of the RFC): a bare ascribed variable can no longer be used
     // as an unparenthesized positional call argument, since `ident: expr`
     // now always reads as a keyword argument first — `f(x: SomeType)`
     // meaning "the expression `x`, ascribed to `SomeType`" is no longer
     // available in that position. Ascription itself is untouched everywhere
     // else (`let`, match arms, general sub-expressions).
-}
-
-struct Connection {
-    host: String,
-    port: i64,
-}
-
-fun connect(host: String, port: i64, timeout: i64) -> Connection {
-    Connection(host: host, port: port)
 }
