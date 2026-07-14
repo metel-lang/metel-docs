@@ -13,7 +13,7 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**102 RFCs total.** 34 draft, 1 under review, 9 accepted, 3 integrated (new stage — see
+**102 RFCs total.** 30 draft, 1 under review, 13 accepted, 3 integrated (new stage — see
 `PROCESS.md`) (47 "live" — need active tracking), 32 implemented, 10 superseded, 13
 refused (53 "settled" — reference only). **2026-07-13:** RFC-0036 (Conditional Impl
 Blocks) implemented (issue #241) — see its entry below for a correctness bug found and
@@ -51,7 +51,14 @@ Aspects and Struct-Embedded Aspect Lists), followed directly from RFC-0102 — a
 `marker` keyword giving RFC-0080 §3's existing "marker aspect" terminology (`Send`/
 `Sync`) a real, permanent-guarantee keyword, plus embedding RFC-0102's aspect list
 straight into a struct/enum's own declaration, with positive items requiring `marker`
-specifically because that position has no per-aspect body to fall back on. **2026-07-12:** RFC-0081 (Negative Impls)
+specifically because that position has no per-aspect body to fall back on. RFC-0098,
+0099, 0100, and 0102 all moved `0-draft` → `2-accepted` the same day, after this
+review resolved every open question each RFC had — RFC-0102 additionally retired the
+old `extend Type: !Aspect { }` braces spelling outright (bodyless is now mandatory for
+negative impls, not just sugar), matching this project's precedent for retiring a
+strictly-superseded spelling (RFC-0100, RFC-0042) rather than keeping two. RFC-0101
+and RFC-0103 remain `0-draft`, not assumed to land with the other four.
+**2026-07-12:** RFC-0081 (Negative Impls)
 implemented on sprint/26 (issue #264) — syntax, finality, and the orphan rule are done
 and tested; priority over blanket impls is a property of RFC-0036 (issue #241), not
 that RFC's own implementation yet — but negative-bound consultation is now covered,
@@ -442,13 +449,15 @@ implementation).
 - **RFC-0038** — `impl Aspect` in Struct Fields / Existential Types.
 - **RFC-0052** *(draft, on hold)* — Lifetime System — held pending the memory-strategy
   reconsideration.
-- **RFC-0098** *(draft)* — Surface Keyword Renames — `impl X for Y` → `extend X with Y`,
-  `pub` → `public`, `mut` → `var` (bindings, reference types, and reference expressions
-  together). Three independent, purely lexical renames with no semantic change. Amends
-  RFC-0032/0042/0044/0067A's surface syntax only — each already-implemented RFC's actual
-  semantics (field-visibility enforcement, binding mutability, reference/auto-deref
-  behavior, receiver dispatch) are untouched. Opened 2026-07-13.
-- **RFC-0099** *(draft)* — Dot-Separated Module Paths — `::` → `.` for import/export,
+- **RFC-0098** *(accepted 2026-07-14)* — Surface Keyword Renames — `extend Type` /
+  `extend Type: Aspect` (reordered target-first, Swift precedent — not `impl X with Y`
+  as first drafted), `pub` → `public`, `mut` → `var` (bindings, reference types, and
+  reference expressions together). Three independent, purely lexical renames with no
+  semantic change. Amends RFC-0032/0042/0044/0067A's surface syntax only — each
+  already-implemented RFC's actual semantics (field-visibility enforcement, binding
+  mutability, reference/auto-deref behavior, receiver dispatch) are untouched. Opened
+  2026-07-13, accepted 2026-07-14.
+- **RFC-0099** *(accepted 2026-07-14)* — Dot-Separated Module Paths — `::` → `.` for import/export,
   static/module, and enum-variant paths, and `::<` → `.<` for turbofish. Not a pure
   rename: `.` already means field/method access (RFC-0045), so this RFC has to settle a
   real disambiguation rule before the grammar change is well-formed. Capitalization-
@@ -460,8 +469,8 @@ implementation).
   is respelled `.<` rather than left as `::<` (a "same disambiguation guarantee, just
   spelled to match" token substitution, not a new ambiguity). Amends RFC-0030's path
   grammar, reserved path roots (`root::`/`std::`/`self::`/`super::` → `.`-spelled), and
-  RFC-0023's turbofish syntax. Opened 2026-07-13, revised 2026-07-14.
-- **RFC-0100** *(draft)* — Constructor-Call Construction — `Type { field: value }` struct
+  RFC-0023's turbofish syntax. Opened 2026-07-13, accepted 2026-07-14.
+- **RFC-0100** *(accepted 2026-07-14)* — Constructor-Call Construction — `Type { field: value }` struct
   literals → `Type(field: value)` call-shaped construction. Real deliverable is general
   keyword arguments for function calls, not a struct-only rename — struct construction
   is just the first consumer. Like RFC-0099, not a pure addition: keyword arguments
@@ -473,7 +482,7 @@ implementation).
   destructuring explicitly keeps its current `{ field }` syntax (deliberate asymmetry,
   not an oversight — see the RFC's own §4). Old literal syntax retired outright rather
   than kept as a second spelling, following RFC-0042's own precedent against permanent
-  transition aliases. Opened 2026-07-13, revised 2026-07-14.
+  transition aliases. Opened 2026-07-13, accepted 2026-07-14.
 - **RFC-0101** *(draft)* — Grammar-Enforced Naming Case Conventions — PascalCase for type
   declarations (struct/enum/aspect/generic params) and enum variants, camelCase for
   `fun` declarations (free functions, methods, associated functions), SCREAMING_CASE for
@@ -490,19 +499,24 @@ implementation).
   readability property, and does *not* rescue RFC-0099's own disambiguation question
   (module path segments share casing with
   values, an orthogonal problem). Opened 2026-07-14.
-- **RFC-0102** *(draft)* — Bodyless Extend Blocks for Marker Aspects and Negative Impls
-  — `extend Type: Aspect;` / `extend Type: !Aspect;` (no braces) as sugar for an
-  empty-bodied `extend` block, valid in exactly the situations an empty body is
-  already accepted today (negative impls, always — the parser already enforces zero
-  methods there; positive impls when every method has a default body or the aspect
-  declares none, the true marker-aspect case). Pure desugaring, no new semantic
-  category — mirrors `fun_decl`'s existing `(block | ";")` alternative. §5 extends the
-  aspect clause to a comma-separated, per-item-polarity list for the same bodyless
-  case (`extend Type: A, B, !C;`, desugaring to N independent single-aspect blocks),
-  reusing RFC-0036's existing `bound` grammar directly — strictly scoped to
-  bodyless/empty-bodied extends, since a shared non-empty body across multiple
-  aspects has no principled disambiguation and isn't attempted. Depends on RFC-0098's
-  `extend Type: Aspect` grammar shape. Opened 2026-07-14.
+- **RFC-0102** *(accepted 2026-07-14)* — Bodyless Extend Blocks for Marker Aspects and
+  Negative Impls — `extend Type: Aspect;` / `extend Type: !Aspect;` (no braces) as
+  sugar for an empty-bodied `extend` block, valid in exactly the situations an empty
+  body is already accepted today (positive impls, when every method has a default
+  body or the aspect declares none, the true marker-aspect case). Pure desugaring, no
+  new semantic category — mirrors `fun_decl`'s existing `(block | ";")` alternative.
+  **For negative impls, the bodyless form isn't optional sugar — the old
+  `extend Type: !Aspect { }` braces spelling is retired outright**, since a negative
+  impl's body is never meaningfully non-empty (nothing `{ }` could say that `;`
+  doesn't), matching this project's own precedent (RFC-0100, RFC-0042) for retiring a
+  strictly-superseded spelling rather than keeping two. §5 extends the aspect clause
+  to a comma-separated, per-item-polarity list for the same bodyless case
+  (`extend Type: A, B, !C;`, desugaring to N independent single-aspect blocks; any
+  negative item forces the whole list bodyless), reusing RFC-0036's existing `bound`
+  grammar directly — strictly scoped to bodyless/empty-bodied extends, since a shared
+  non-empty body across multiple aspects has no principled disambiguation and isn't
+  attempted. Depends on RFC-0098's `extend Type: Aspect` grammar shape. Opened
+  2026-07-14, accepted 2026-07-14.
 - **RFC-0103** *(draft)* — Marker Aspects and Struct-Embedded Aspect Lists — a `marker`
   keyword permanently declaring an aspect has zero methods/associated types
   (`marker aspect Copy2;`, itself bodyless — gives RFC-0080 §3's existing "marker

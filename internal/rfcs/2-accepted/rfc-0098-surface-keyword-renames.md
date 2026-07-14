@@ -2,9 +2,12 @@
 id: rfc-0098
 title: "Surface Keyword Renames"
 date: '2026-07-13'
-status: draft
+status: accepted
 target:
+updated: '2026-07-14'
 ---
+
+> **Status — accepted (2026-07-14).** Reviewed and revised: extend Type / extend Type: Aspect (Swift-precedent, settles the inherent-impl gap an earlier with/without draft left open), negative impls folded into the same clause via the existing bound-negation !, identifier-collision audit noted for implementation. No open questions block it.
 
 ## Summary
 

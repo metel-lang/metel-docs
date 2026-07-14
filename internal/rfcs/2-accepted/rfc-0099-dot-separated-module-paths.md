@@ -2,9 +2,12 @@
 id: rfc-0099
 title: "Dot-Separated Module Paths"
 date: '2026-07-13'
-status: draft
+status: accepted
 target:
+updated: '2026-07-14'
 ---
+
+> **Status — accepted (2026-07-14).** Reviewed and revised: capitalization-based path disambiguation (Option A) rejected after failing against real fixture code; resolved at name-resolution time (Option B) reusing the existing Expr::ResolvedPath pattern. Turbofish respelled .< to match. No open questions block it.
 
 ## Summary
 

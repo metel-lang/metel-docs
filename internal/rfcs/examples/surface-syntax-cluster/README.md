@@ -28,7 +28,7 @@ shown here depends on it.
 
 | File | RFC(s) | Covers |
 |---|---|---|
-| [`01-keyword-renames.mtl`](01-keyword-renames.mtl) | 0098 | `extend Type` / `extend Type: Aspect` (inherent and aspect impls), negative impls via `extend Type: !Aspect`, generic impls (`extend<T: Bound> ...`), a bare-parameter blanket impl (RFC-0097) under the new spelling, `public`, `var` in every position (bindings, for-loops, `&var`) |
+| [`01-keyword-renames.mtl`](01-keyword-renames.mtl) | 0098, 0102 | `extend Type` / `extend Type: Aspect` (inherent and aspect impls), negative impls via bodyless `extend Type: !Aspect;` (mandatory per RFC-0102 §3, not just sugar — the old `{ }` form is retired), generic impls (`extend<T: Bound> ...`), a bare-parameter blanket impl (RFC-0097) under the new spelling, `public`, `var` in every position (bindings, for-loops, `&var`) |
 | [`02-dot-paths-and-turbofish.mtl`](02-dot-paths-and-turbofish.mtl) | 0099 | Import/export paths, reserved path roots (`root.`/`std.`), enum-variant paths, static/associated-function calls, turbofish respelled `.<T>` |
 | [`03-constructor-call-construction.mtl`](03-constructor-call-construction.mtl) | 0100 | Call-shaped construction (`Type(field: value)`), single-field positional shorthand, field-order independence, destructuring's unchanged `{ field }` syntax |
 | [`04-keyword-arguments-general.mtl`](04-keyword-arguments-general.mtl) | 0100 | RFC-0100 §2's real deliverable in depth — keyword arguments on ordinary free-function calls, on aspect-method calls (no special case), evaluation order with side-effecting arguments (written order, not declaration order), and interaction with overloaded natives (`assert`/`assert_msg`) |

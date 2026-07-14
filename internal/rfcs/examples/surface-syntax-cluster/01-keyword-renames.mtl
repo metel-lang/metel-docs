@@ -40,11 +40,15 @@ extend Token: Display {
 // Negative impl — folds into the same `: Aspect` clause via the `!` prefix
 // already used for bound negation (`T: !Copy`); no separate `without`
 // keyword. `extend Type: !Aspect` reads as "Type does not implement Aspect."
+// Bodyless (RFC-0102) is mandatory here, not just sugar — a negative impl's
+// body is never meaningfully non-empty, so the old `extend Token: !Sendable
+// { }` spelling is retired outright, the same way RFC-0100 retired the old
+// struct-literal syntax rather than keeping two ways to say the same thing.
 aspect Sendable {
     fun check_sendable(&self);
 }
 
-extend Token: !Sendable { }
+extend Token: !Sendable;
 
 // Generic impl — generic params keep their existing position, immediately
 // after `extend` (unchanged from `impl`'s own slot today).

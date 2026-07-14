@@ -2,9 +2,12 @@
 id: rfc-0100
 title: "Constructor-Call Construction"
 date: '2026-07-13'
-status: draft
+status: accepted
 target:
+updated: '2026-07-14'
 ---
+
+> **Status — accepted (2026-07-14).** Reviewed and revised: found and fixed a real grammar collision between keyword arguments and type ascription (arg_list reordering fix), resolved all three remaining Unresolved Questions (evaluation order, aspect-method calls, overload resolution) against the actual implementation. No open questions block it.
 
 ## Summary
 

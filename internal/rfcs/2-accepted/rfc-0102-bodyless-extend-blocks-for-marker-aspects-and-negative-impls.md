@@ -2,9 +2,12 @@
 id: rfc-0102
 title: "Bodyless Extend Blocks for Marker Aspects and Negative Impls"
 date: '2026-07-14'
-status: draft
+status: accepted
 target:
+updated: '2026-07-14'
 ---
+
+> **Status — accepted (2026-07-14).** Reviewed and revised: extended to a comma-separated multi-aspect list (S5), and the negative-impl braces spelling retired outright (bodyless is now mandatory, not just sugar), matching this project's own precedent (RFC-0100, RFC-0042) for retiring a strictly-superseded old spelling. No open questions block it.
 
 ## Summary
 
@@ -71,17 +74,19 @@ Display;` (bodyless) fails with the same missing-required-method error `extend T
 produces today, since `Display::to_string` has no default body — not a new, bodyless-specific diagnostic
 category, just the existing one, reached one token sooner.
 
-## 3. Negative impls: always legal, unconditionally
+## 3. Negative impls: the bodyless form is mandatory, not optional
 
 Since a negative impl's method list is already grammar-and-parser-enforced to be empty regardless of
 spelling, the bodyless form is always available for `extend Type: !Aspect;` with no further condition to
-check — polarity alone decides it. Whether the explicit-braces spelling (`extend Type: !Aspect { }`) should
-be *retired* in favor of requiring the bodyless one, or simply left as an equally-valid alternative, is an
-open question (see Unresolved Questions) — this RFC's own recommendation is to leave both valid, since
-unlike RFC-0100's struct-literal rename (two genuinely competing spellings of the *same* construction,
-where keeping both was rejected), the braces form here isn't a second, older mechanism being carried
-forward — it's the exact same feature, with sugar layered on top, the same relationship `fun_decl`'s own
-`(block | ";")` already has between a real body and a bare signature.
+check — polarity alone decides it. **The explicit-braces spelling (`extend Type: !Aspect { }`) is retired,
+not kept as a second valid way to write a negative impl.** This is the same call this project already made
+twice for an analogous choice — RFC-0100 retiring `Type { field: value }` once `Type(field: value)` existed
+rather than keeping both, and RFC-0042 retiring standalone `mut` rather than keeping every spelling that
+ever worked — and it applies more cleanly here than the "leave both valid" framing an earlier draft of this
+RFC proposed: unlike `fun_decl`'s own `(block | ";")` (a real choice, since a function can meaningfully have
+either), a negative impl's body is *never* meaningfully non-empty — there is no case where writing `{ }`
+communicates anything `;` doesn't, so keeping both is pure duplication, not two spellings serving different
+needs. `extend Type: !Aspect { }` is a compile error once this RFC lands: **use `extend Type: !Aspect;`.**
 
 ## 4. Marker aspects and default methods (positive impls)
 
@@ -136,12 +141,16 @@ extend Type: B; extend Type: !C;` — three fully independent extend blocks, eac
 others weren't there. There is no cross-item interaction: `A`'s requirements, `B`'s requirements, and `C`'s
 negative-impl rule are each validated completely independently.
 
-**Restriction: a multi-aspect list may only appear on a bodyless (or explicitly-empty-braced) extend
-block.** `extend Type: A, B { fun foo() { ... } }` is rejected outright — there is no principled way to say
-which aspect `foo` belongs to (Rust sidesteps this question entirely by requiring exactly one trait per
-`impl` block in the first place). This RFC doesn't invent a disambiguation mechanism for a shared, non-empty
-body (e.g. a qualified `A::foo` method-declaration syntax) — multi-aspect lists are scoped exactly to the
-situation this RFC already covers: nothing to write in the body, no matter how many aspects are named.
+**Restriction: a multi-aspect list may only appear on a bodyless (or, for an all-positive list, an
+explicitly-empty-braced) extend block.** `extend Type: A, B { fun foo() { ... } }` is rejected outright —
+there is no principled way to say which aspect `foo` belongs to (Rust sidesteps this question entirely by
+requiring exactly one trait per `impl` block in the first place). This RFC doesn't invent a disambiguation
+mechanism for a shared, non-empty body (e.g. a qualified `A::foo` method-declaration syntax) — multi-aspect
+lists are scoped exactly to the situation this RFC already covers: nothing to write in the body, no matter
+how many aspects are named. **Per §3, if the list contains any negative item, the block must be bodyless —
+never explicit braces, empty or otherwise:** `extend Type: A, !B { }` is rejected the same way a lone
+`extend Type: !B { }` is; the choice between bodyless and empty-braced (§4) exists only for lists that are
+entirely positive.
 
 **Each aspect name may appear at most once per list, regardless of polarity** — `extend Type: A, !A;` is
 rejected as self-contradictory (declaring both "implements `A`" and "does not implement `A`" in the same
@@ -197,23 +206,25 @@ extend Handle: !Displayable;
   than this RFC — effectively its own feature (closer to Rust's exploratory `impl Trait1 + Trait2`
   discussions), and not needed for either of §5's two motivating cases (marker aspects, negative impls),
   both of which never have a body regardless of how many are named.
+- **Keep the explicit-braces spelling valid alongside the bodyless one for negative impls** (an earlier
+  draft of this RFC's own recommendation). Reversed in §3: unlike `fun_decl`'s real body-vs-signature
+  choice, a negative impl's body is never meaningfully non-empty, so keeping both spellings would be pure
+  duplication rather than two forms serving different needs — this project's own precedent (RFC-0100,
+  RFC-0042) is to retire the old spelling outright once a strictly-better one exists, not to carry it
+  forward as a permanent alternative.
 
 ---
 
 ## Unresolved Questions
 
-1. **Retire the explicit-braces spelling for negative impls, or keep both valid?** This RFC's own leaning
-   is to keep both — see §3 — but it's a real choice, not a foregone conclusion, and this project has
-   precedent on both sides (RFC-0100 retired an old spelling outright; RFC-0042 also retired `mut` as a
-   standalone modifier rather than keeping every spelling that ever existed).
-2. **A tailored diagnostic hint for the bodyless-but-not-actually-empty-eligible case** — e.g. "hint:
+1. **A tailored diagnostic hint for the bodyless-but-not-actually-empty-eligible case** — e.g. "hint:
    `extend Type: Aspect;` requires every method to have a default body; `to_string` does not" — versus
    reusing today's generic missing-required-method message verbatim. Not blocking; a documentation/UX
    refinement that can be decided at implementation time.
-3. **Confirm the RFC-0082 associated-type interaction (§4) against the actual completeness-check code**
+2. **Confirm the RFC-0082 associated-type interaction (§4) against the actual completeness-check code**
    before implementation — this RFC asserts it needs no changes there, but that should be verified directly
    against `infer_decl`'s associated-type handling rather than assumed from this RFC's own reasoning alone.
-4. **Does §5's per-list duplicate-aspect-name check need to look outside the list at all** — e.g. `extend
+3. **Does §5's per-list duplicate-aspect-name check need to look outside the list at all** — e.g. `extend
    Handle: Sendable;` written once as its own block *and* `Sendable` also named again inside a separate
    `extend Handle: Copy2, Sendable;` list elsewhere in the same module? This RFC's position is that this is
    the same question ordinary duplicate-impl coherence checking already answers for any two separate impls
