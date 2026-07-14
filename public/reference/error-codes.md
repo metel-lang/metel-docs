@@ -103,13 +103,13 @@ A write operation targets a `let` binding. This covers three forms:
 
 - Direct reassignment: `x = newValue`
 - Field assignment through an immutable binding: `point.x = 1`
-- Taking a mutable pointer to an immutable binding: `&mut x`
+- Taking a mutable reference to an immutable binding: `&var x`
 
 ```
-[T0006] type error in main.mtl at 3..12: `x` is immutable; use `mut x` to allow reassignment
+[T0006] type error in main.mtl at 3..12: `x` is immutable; use `var x` to allow reassignment
 ```
 
-**Fix:** change the binding declaration to `let mut`.
+**Fix:** change the binding declaration to `var`.
 
 ### T0007 — Invalid cast
 
@@ -137,8 +137,9 @@ A generic type parameter's bound is not satisfied by the concrete type at the ca
 site or construction site. Covers both directions: a positive bound (`T: Aspect`)
 requires an implementation that isn't reachable, or a negative bound (`T: !Aspect`,
 RFC-0072) is violated because the concrete type *does* implement the aspect. Also
-covers a conditional impl's own `where`-clause bounds (RFC-0036) failing at a use
-site — the same check as an ordinary function bound, just reached through an impl's
+covers a conditional `extend` block's own `where`-clause bounds (RFC-0036) failing at a
+use site — the same check as an ordinary function bound, just reached through an
+implementation block's
 condition instead of a function's generic parameter.
 
 ```
@@ -180,29 +181,29 @@ since `U` is an ordinary type parameter, not a projection.
 
 > **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0060-aspect-impl-coherence.md`.
 
-An `impl Aspect for Type` where neither `Aspect` nor `Type`'s outermost type
+An `extend Type: Aspect` block where neither `Aspect` nor `Type`'s outermost type
 constructor is declared in the current module (or `std::core`, for built-ins).
 
 ```
 [T0014] type error in main.mtl at 1..40: orphan implementation: neither `Display` nor `i64` is local to this module
 ```
 
-**Fix:** move the impl into the module that declares the aspect or the type, or (for
+**Fix:** move the `extend` block into the module that declares the aspect or the type, or (for
 two foreign types) into `std::core` if this is genuinely a standard-library concern.
 
 ### T0015 — Conflicting implementation
 
 > **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0060-aspect-impl-coherence.md`.
 
-Two impls of the same aspect cover the same concrete type — either two identical
-impls, or a positive and a negative impl (see Negative Impls in the declarations
+Two implementations of the same aspect cover the same concrete type — either two
+identical `extend` blocks, or a positive and a negative impl (see Negative Impls in the declarations
 reference) for the same concrete type.
 
 ```
 [T0015] type error in main.mtl at 1..40: conflicting implementation: `Display` is already implemented for `List<i64>` at 10..30
 ```
 
-**Fix:** remove the duplicate impl, or narrow one impl's type arguments so the two no
+**Fix:** remove the duplicate `extend` block, or narrow one block's type arguments so the two no
 longer overlap.
 
 ### T0016 — Non-diverging `-> !` function
@@ -224,15 +225,15 @@ function is meant to return normally.
 
 ### T0017 — Missing associated type definition
 
-An `impl Aspect for Type` omits a `type Name = ConcreteType;` definition for an
-associated type the aspect declares (RFC-0082 §2). Every impl of an aspect with
+An `extend Type: Aspect` block omits a `type Name = ConcreteType;` definition for an
+associated type the aspect declares (RFC-0082 §2). Every implementation of an aspect with
 associated types must define all of them.
 
 ```
 [T0017] type error in main.mtl at 1..40: `IntBox` is missing associated type `Item` required by aspect `Container`
 ```
 
-**Fix:** add the missing `type Item = ConcreteType;` definition to the impl block.
+**Fix:** add the missing `type Item = ConcreteType;` definition to the `extend` block.
 
 ---
 
@@ -322,7 +323,7 @@ A method call cannot be resolved for the receiver type.
 [R0009] runtime error in main.mtl at 5..20: no method `draw` on `Circle`
 ```
 
-**Fix:** define the method in an `impl` block for the type.
+**Fix:** define the method in an `extend` block for the type.
 
 ### R0010 — Call on non-callable value
 

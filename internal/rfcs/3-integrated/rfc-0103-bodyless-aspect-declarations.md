@@ -2,12 +2,16 @@
 id: rfc-0103
 title: "Bodyless Aspect Declarations"
 date: '2026-07-14'
-status: accepted
+status: integrated
 target:
 updated: '2026-07-14'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/278'
+impl_status: not-started
 ---
 
 > **Status — accepted (2026-07-14).** Scope narrowed on split: this RFC now covers bodyless aspect declarations only. The struct/enum-embedded aspect-list proposal that previously lived here has been extracted into deferred RFC-0105. No open questions block the remaining bodyless-declaration feature.
+
+> **Status — integrated (2026-07-14).** Integrated into spec: bodyless aspect declarations (`aspect Name;`)
 
 ## Summary
 

@@ -465,15 +465,15 @@ implementation).
 - **RFC-0038** — `impl Aspect` in Struct Fields / Existential Types.
 - **RFC-0052** *(draft, on hold)* — Lifetime System — held pending the memory-strategy
   reconsideration.
-- **RFC-0098** *(accepted 2026-07-14)* — Surface Keyword Renames — `extend Type` /
+- **RFC-0098** *(integrated 2026-07-14)* — Surface Keyword Renames — `extend Type` /
   `extend Type: Aspect` (reordered target-first, Swift precedent — not `impl X with Y`
   as first drafted), `pub` → `public`, `mut` → `var` (bindings, reference types, and
   reference expressions together). Three independent, purely lexical renames with no
   semantic change. Amends RFC-0032/0042/0044/0067A's surface syntax only — each
   already-implemented RFC's actual semantics (field-visibility enforcement, binding
   mutability, reference/auto-deref behavior, receiver dispatch) are untouched. Opened
-  2026-07-13, accepted 2026-07-14.
-- **RFC-0099** *(accepted 2026-07-14)* — Dot-Separated Module Paths — `::` → `.` for import/export,
+  2026-07-13, accepted and integrated 2026-07-14.
+- **RFC-0099** *(under review again, reopened 2026-07-14)* — Dot-Separated Module Paths — `::` → `.` for import/export,
   static/module, and enum-variant paths, and `::<` → `.<` for turbofish. Not a pure
   rename: `.` already means field/method access (RFC-0045), so this RFC has to settle a
   real disambiguation rule before the grammar change is well-formed. Capitalization-
@@ -485,8 +485,9 @@ implementation).
   is respelled `.<` rather than left as `::<` (a "same disambiguation guarantee, just
   spelled to match" token substitution, not a new ambiguity). Amends RFC-0030's path
   grammar, reserved path roots (`root::`/`std::`/`self::`/`super::` → `.`-spelled), and
-  RFC-0023's turbofish syntax. Opened 2026-07-13, accepted 2026-07-14.
-- **RFC-0100** *(accepted 2026-07-14)* — Constructor-Call Construction — `Type { field: value }` struct
+  RFC-0023's turbofish syntax. Reopened after acceptance to compare the full-dot design
+  against a narrower context-limited dotted-path alternative before any integration.
+- **RFC-0100** *(under review again, reopened 2026-07-14)* — Constructor-Call Construction — `Type { field: value }` struct
   literals → `Type(field: value)` call-shaped construction. Real deliverable is general
   keyword arguments for function calls, not a struct-only rename — struct construction
   is just the first consumer. Like RFC-0099, not a pure addition: keyword arguments
@@ -515,7 +516,7 @@ implementation).
   readability property, and does *not* rescue RFC-0099's own disambiguation question
   (module path segments share casing with
   values, an orthogonal problem). Opened 2026-07-14.
-- **RFC-0102** *(accepted 2026-07-14)* — Bodyless Extend Blocks for Marker Aspects and
+- **RFC-0102** *(integrated 2026-07-14)* — Bodyless Extend Blocks for Marker Aspects and
   Negative Impls — `extend Type: Aspect;` / `extend Type: !Aspect;` (no braces) as
   sugar for an empty-bodied `extend` block, valid in exactly the situations an empty
   body is already accepted today (positive impls, when every method has a default
@@ -532,8 +533,8 @@ implementation).
   grammar directly — strictly scoped to bodyless/empty-bodied extends, since a shared
   non-empty body across multiple aspects has no principled disambiguation and isn't
   attempted. Depends on RFC-0098's `extend Type: Aspect` grammar shape. Opened
-  2026-07-14, accepted 2026-07-14.
-- **RFC-0103** *(accepted 2026-07-14)* — Bodyless Aspect Declarations — a bodyless
+  2026-07-14, accepted and integrated 2026-07-14.
+- **RFC-0103** *(integrated 2026-07-14)* — Bodyless Aspect Declarations — a bodyless
   spelling for the aspect *declaration* itself (`aspect Copy2;` — pure sugar for
   `aspect Copy2 { }`, legal whenever the braced form already would be, no permanence
   guarantee attached, unlike an earlier draft's dropped `marker` keyword). This is

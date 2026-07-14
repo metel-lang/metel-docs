@@ -62,10 +62,10 @@ let x: i32 = 10i32;
 let y = x + 5;            // 5 adopts i32 from x; y is i32
 ```
 
-This also applies to `mut` reassignment — the right-hand side of `m = expr` adopts `m`'s declared type:
+This also applies to `var` reassignment — the right-hand side of `m = expr` adopts `m`'s declared type:
 
 ```metel
-let mut count: i32 = 0;
+var count: i32 = 0;
 count = 99;               // 99 is i32
 ```
 
@@ -209,9 +209,9 @@ Reference types provide explicit aliasing for non-linear values.
 
 ```metel
 fun main() -> i64 {
-    let mut value = 1;
+    var value = 1;
     let p: &i64 = &value;
-    let q: &mut i64 = &mut value;
+    let q: &var i64 = &var value;
     q = p + 1;
     return q;
 }
@@ -220,33 +220,33 @@ fun main() -> i64 {
 Metel has two reference types:
 
 - `&T` — shared immutable reference to `T`
-- `&mut T` — exclusive mutable reference to `T`
+- `&var T` — exclusive mutable reference to `T`
 
-`&mut T` coerces to `&T`. The reverse coercion does not exist. Both are non-owning
+`&var T` coerces to `&T`. The reverse coercion does not exist. Both are non-owning
 aliases — a reference never owns the value it points to.
 
 References are first-class values, but they are distinct from the referent type. There
-is no explicit dereference operator in safe code — the old `*T`/`*mut T` model
+is no explicit dereference operator in safe code — the old `*T`/`*var T` model
 (RFC-0043) with its explicit `*p` is superseded; ordinary access goes through
 auto-deref instead — see [Expressions — References](expressions.md#references).
 
 References are only for non-linear aliasing. They cannot target linear values.
 
-`&mut` accepts arbitrary addressable lvalue paths — struct fields, tuple elements, array elements, and chains thereof. Writes through the resulting `&mut T` propagate back to the original storage location:
+`&var` accepts arbitrary addressable lvalue paths — struct fields, tuple elements, array elements, and chains thereof. Writes through the resulting `&var T` propagate back to the original storage location:
 
 ```metel
 struct Counter { value: i64 }
 
 fun main() -> i64 {
-    let mut c = Counter { value: 0 };
-    let p: &mut i64 = &mut c.value;
+    var c = Counter { value: 0 };
+    let p: &var i64 = &var c.value;
     p = 42;
     return c.value;   // 42
 }
 ```
 
-> `&mut` for lvalue paths: since v0.8.0 (RFC-0045), restated here for `&mut T` rather
-> than `*mut T`.
+> `&var` for lvalue paths: since v0.8.0 (RFC-0045), restated here for `&var T` rather
+> than `*var T`.
 
 ### Reading a value out of a reference
 
@@ -264,14 +264,14 @@ fun main() -> i64 {
 ```
 
 **The copy fires at every position where a declared or expected type is already
-known** — not only `let`/`mut` bindings and explicit ascription, but also a `return`
+known** — not only `let`/`var` bindings and explicit ascription, but also a `return`
 value against the enclosing function's declared return type, a `break` value against
 the enclosing `loop`'s inferred type, and any tail expression of a function/method/
 closure body, an `if`/`else` branch, or a `match` arm (each of those resolves its
 result against a declared or expected type the same way a `let` binding does):
 
 ```metel
-fun bump(p: &mut i64) -> i64 {
+fun bump(p: &var i64) -> i64 {
     p += 1;
     p          // tail expression, no explicit `return` — copies out of p
 }
@@ -310,7 +310,7 @@ non-`Copy` `T` cannot be produced this way.
 
 ```metel
 fun main() {
-    let mut xs: List<i64> = List::new();
+    var xs: List<i64> = List::new();
     xs.push(1);
     xs.push(2);
     xs.push(3);
@@ -330,8 +330,8 @@ fun main() {
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `push` | `(&mut self, value: T)` | Append an element |
-| `pop` | `(&mut self) -> Perhaps<T>` | Remove and return the last element, or `None` |
+| `push` | `(&var self, value: T)` | Append an element |
+| `pop` | `(&var self) -> Perhaps<T>` | Remove and return the last element, or `None` |
 | `len` | `(&self) -> i64` | Number of elements |
 | `get` | `(&self, index: i64) -> Perhaps<T>` | Bounds-checked access |
 | `as_slice` | `(&self) -> T[]` | View as an immutable array (no copy) |

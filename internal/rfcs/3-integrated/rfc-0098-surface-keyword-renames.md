@@ -2,12 +2,16 @@
 id: rfc-0098
 title: "Surface Keyword Renames"
 date: '2026-07-13'
-status: accepted
+status: integrated
 target:
 updated: '2026-07-14'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/274'
+impl_status: not-started
 ---
 
 > **Status — accepted (2026-07-14).** Reviewed and revised: extend Type / extend Type: Aspect (Swift-precedent, settles the inherent-impl gap an earlier with/without draft left open), negative impls folded into the same clause via the existing bound-negation !, identifier-collision audit noted for implementation. No open questions block it.
+
+> **Status — integrated (2026-07-14).** Integrated into spec: `public`/`var`/`extend` surface keyword renames
 
 ## Summary
 

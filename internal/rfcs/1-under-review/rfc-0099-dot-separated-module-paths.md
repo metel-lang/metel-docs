@@ -2,12 +2,14 @@
 id: rfc-0099
 title: "Dot-Separated Module Paths"
 date: '2026-07-13'
-status: accepted
+status: under-review
 target:
 updated: '2026-07-14'
 ---
 
-> **Status — accepted (2026-07-14).** Reviewed and revised: capitalization-based path disambiguation (Option A) rejected after failing against real fixture code; resolved at name-resolution time (Option B) reusing the existing Expr::ResolvedPath pattern. Turbofish respelled .< to match. No open questions block it.
+> **Status — under review (2026-07-14).** Reopened after acceptance to reconsider the readability cost of using `.` everywhere. The fully-dotted proposal remains one option, but a narrower context-limited dotted-path alternative has been added for comparison before any integration work proceeds.
+
+> **Previous Status — accepted (2026-07-14).** Reviewed and revised: capitalization-based path disambiguation (Option A) rejected after failing against real fixture code; resolved at name-resolution time (Option B) reusing the existing Expr::ResolvedPath pattern. Turbofish respelled `.<` to match. No open questions blocked the RFC in that form.
 
 ## Summary
 
@@ -161,6 +163,7 @@ about when each is required, is untouched; only turbofish's own token changes.
 ## Alternatives Considered
 
 - **Capitalization-based disambiguation (§3 Option A).** Considered as the RFC's original recommendation; rejected once checked against real fixture code (`std::core::Perhaps::Some` and the RFC's own `root.parser.Ast.new()` example both have lowercase segments before the type) — see §3 for the full finding.
+- **Context-limited dots: `.` only in import/export/module-declaration contexts, keep `::` in expression and type paths.** New alternative, added on reconsideration (2026-07-14). Example shape: `import std.math;` and `export ast.Ast;`, while expression/type-level paths remain `List::new()`, `Colour::Blue`, `root::parser::Ast`, and `f::<T>()`. This removes most of the readability risk that reopened the RFC — readers can still tell from syntax when a path is a type/module qualification rather than value-level member access — while still modernizing the most obviously "module-like" surface forms. The cost is asymmetry: import/export syntax would no longer match expression/type syntax exactly, so the language would stop having one universal path spelling.
 - **Hybrid: keep `::` for type-level paths (modules, enum variants), `.` only for value-level field/method access.** Smaller change, zero new ambiguity — §3's disambiguation problem becomes unnecessary. Rejected as the default proposal here because it keeps the strongest Rust tell (`::`) fully intact for exactly the paths most visible in everyday code (imports, static calls); recorded here as the fallback should Option B's forward-reference/hoisting-order check (§3) turn up a real blocker during implementation.
 - **`.` everywhere, ambiguity resolved by making static/module paths a distinct token requiring a capital-letter grammar rule enforced universally (not just for disambiguation, but as a new naming-convention requirement).** Rejected as out of scope — this RFC disambiguates a token, it doesn't newly mandate a naming convention across the whole language.
 - **Turbofish alternatives** (bare `<T>`, square-bracket type args, deleting turbofish for ascription-only) — see §4 for each and why they were rejected in favor of respelling `::<` to `.<`.
@@ -169,13 +172,15 @@ about when each is required, is untouched; only turbofish's own token changes.
 
 ## Unresolved Questions
 
-None load-bearing. §3's disambiguation rule is settled (Option B); its one remaining implementation-time
-check — forward-reference/hoisting-order interaction with the module loader — is not expected to block
-acceptance, but should be verified before this RFC moves past `1-accepted`, with the hybrid alternative
-above as a documented fallback if it does turn up a real problem. The reserved-path-root spelling
-(`root.`/`std.`/`self.`/`super.`) needs no special carve-out under Option B, unlike under Option A: the
-resolver already recognizes these as reserved at the first hop of any path today, the same way it does
-before this RFC, so there is no capitalization check for them to be exempted from in the first place.
+The main open question is now whether the fully-dotted design should remain the proposal at all.
+
+- Should Metel use `.` everywhere for import paths, static/type paths, enum variants, and turbofish, with
+  Option B's name-resolution disambiguation?
+- Or should it adopt the narrower context-limited alternative, using `.` only in import/export/module
+  qualification contexts while keeping `::`/`::<` in expression and type paths?
+
+The previous implementation-time check from the accepted draft still stands if the full-dot design survives:
+forward-reference/hoisting-order interaction with the module loader should be verified before integration.
 
 ---
 
@@ -193,5 +198,5 @@ before this RFC, so there is no capitalization check for them to be exempted fro
 
 ## Decision
 
-**Outcome:** *(pending)*
+**Outcome:** Under review
 **Target:** *(set when accepted)*

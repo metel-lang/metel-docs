@@ -43,6 +43,9 @@ the `+` operator.
 
 ## Built-in Aspects
 
+> *Planned for a future minor release (RFC-0098).* Mutable references in signatures use
+> `&var`, and impl blocks in examples use `extend`.
+
 The following aspects are pre-implemented for built-in types:
 
 ### Display
@@ -59,7 +62,7 @@ aspect Display {
 
 ```metel
 aspect Iterable<T> {
-    fun next(&mut self) -> Perhaps<T>;
+    fun next(&var self) -> Perhaps<T>;
 }
 ```
 
@@ -175,8 +178,8 @@ in pipelines without explicit `match`:
 |----------------------|------------------------------------|----------------------------------------------|
 | `List::new()`        | `() -> List<T>`                    | A new empty list                             |
 | `List::from(arr)`    | `(T[]) -> List<T>`                 | A list with a copy of the array's elements   |
-| `.push(x)`           | `(&mut self, T)`                   | Append an element                            |
-| `.pop()`             | `(&mut self) -> Perhaps<T>`        | Remove and return the last element           |
+| `.push(x)`           | `(&var self, T)`                   | Append an element                            |
+| `.pop()`             | `(&var self) -> Perhaps<T>`        | Remove and return the last element           |
 | `.len()`             | `() -> i64`                        | Number of elements                           |
 | `.get(i)`            | `(i64) -> Perhaps<T>`              | Element at index `i`, or `None`              |
 | `.as_slice()`        | `() -> T[]`                        | The backing array                            |
