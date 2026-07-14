@@ -13,7 +13,7 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**103 RFCs total.** 31 draft, 1 under review, 13 accepted, 3 integrated (new stage — see
+**103 RFCs total.** 30 draft, 1 under review, 14 accepted, 3 integrated (new stage — see
 `PROCESS.md`) (48 "live" — need active tracking), 32 implemented, 10 superseded, 13
 refused (53 "settled" — reference only). **2026-07-13:** RFC-0036 (Conditional Impl
 Blocks) implemented (issue #241) — see its entry below for a correctness bug found and
@@ -66,7 +66,14 @@ with Shared Bodies), since it doesn't depend on anything specific to RFC-0103; a
 finally the `marker` keyword itself was dropped outright once the obligation model
 made its permanence guarantee moot — RFC-0103's bodyless-declaration sugar (§1) now
 inherits exactly RFC-0102's own weaker "currently has zero methods" rule instead.
-RFC-0101 and RFC-0104 remain `0-draft`, not assumed to land with the others.
+RFC-0103's last two open questions were then resolved directly against the actual
+coherence implementation: the obligation check runs inside the same already-existing
+whole-graph coherence pass (`coherence.rs`, RFC-0060) rather than a new pipeline
+stage, and a real (not merely asserted) interaction with RFC-0096 (Auto-Impl Aspects,
+draft) was found and fixed — `Send`/`Sync`/`Linear` have no `Decl::Impl` to search
+for, so their obligation is discharged by querying RFC-0096 §2's `satisfies` check
+directly instead. RFC-0103 moved `0-draft` → `2-accepted` the same day. RFC-0101 and
+RFC-0104 remain `0-draft`, not assumed to land with the others.
 **2026-07-12:** RFC-0081 (Negative Impls)
 implemented on sprint/26 (issue #264) — syntax, finality, and the orphan rule are done
 and tested; priority over blanket impls is a property of RFC-0036 (issue #241), not
@@ -526,22 +533,32 @@ implementation).
   non-empty body across multiple aspects has no principled disambiguation and isn't
   attempted. Depends on RFC-0098's `extend Type: Aspect` grammar shape. Opened
   2026-07-14, accepted 2026-07-14.
-- **RFC-0103** *(draft)* — Bodyless Aspect Declarations and Struct-Embedded Aspect
-  Lists — two additions on top of RFC-0102. A bodyless spelling for the aspect
-  *declaration* itself (`aspect Copy2;` — pure sugar for `aspect Copy2 { }`, legal
-  whenever the braced form already would be, no permanence guarantee attached, unlike
-  an earlier draft's dropped `marker` keyword). And a struct/enum-embedded aspect
-  list (`struct Token: Copy2, Serializable, !Send { value: String }`) reusing
-  RFC-0102 §5's `extend_aspect_list`, where struct/enum bodies stay fields-only:
-  negative items are fully satisfied by the list itself, while every positive item
-  declares a checked, module-wide *obligation* discharged by an ordinary,
-  separately-editable `extend` block elsewhere — revised from an earlier draft that
-  rejected positive items outright, once it was clear the "no escape hatch" concern
-  only applies to items the list itself tries to implement inline. A still-earlier
-  `marker` keyword (permanently gating which positive items the list alone could
-  satisfy) was dropped outright once every positive item became an obligation
-  uniformly — the permanence guarantee it offered stopped being load-bearing.
-  Depends on RFC-0102. Opened 2026-07-14.
+- **RFC-0103** *(accepted 2026-07-14)* — Bodyless Aspect Declarations and
+  Struct-Embedded Aspect Lists — two additions on top of RFC-0102. A bodyless
+  spelling for the aspect *declaration* itself (`aspect Copy2;` — pure sugar for
+  `aspect Copy2 { }`, legal whenever the braced form already would be, no permanence
+  guarantee attached, unlike an earlier draft's dropped `marker` keyword). And a
+  struct/enum-embedded aspect list (`struct Token: Copy2, Serializable, !Send {
+  value: String }`) reusing RFC-0102 §5's `extend_aspect_list`, where struct/enum
+  bodies stay fields-only: negative items are fully satisfied by the list itself,
+  while every positive item declares a checked, module-wide *obligation* discharged
+  by an ordinary, separately-editable `extend` block elsewhere — revised from an
+  earlier draft that rejected positive items outright, once it was clear the "no
+  escape hatch" concern only applies to items the list itself tries to implement
+  inline. A still-earlier `marker` keyword (permanently gating which positive items
+  the list alone could satisfy) was dropped outright once every positive item became
+  an obligation uniformly — the permanence guarantee it offered stopped being
+  load-bearing. Its last two open questions are now resolved: the obligation check
+  runs inside the same already-existing whole-graph coherence pass (`coherence.rs`,
+  RFC-0060) rather than a new stage, since that pass already collects every
+  `Decl::Impl` across every loaded module before checking orphan/overlap rules —
+  confirmed directly against the actual implementation, not assumed; and a real
+  interaction with RFC-0096 (Auto-Impl Aspects, draft) was found and fixed —
+  `Send`/`Sync`/`Linear` are granted by a compiler-internal `satisfies` check with no
+  `Decl::Impl` ever written for them, so the obligation for those three specifically
+  is discharged by querying that check directly rather than searching for an impl
+  block that will never exist. Depends on RFC-0102 and (for §4) RFC-0096. Opened
+  2026-07-14, accepted 2026-07-14.
 - **RFC-0104** *(draft)* — Multi-Aspect Extend Blocks with Shared Bodies — split out
   of an earlier draft of RFC-0103's own struct/enum-embedding section, since it's a
   separate feature that doesn't depend on anything there. Lifts RFC-0102 §5's

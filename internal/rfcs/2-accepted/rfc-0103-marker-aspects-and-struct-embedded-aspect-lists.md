@@ -2,9 +2,12 @@
 id: rfc-0103
 title: "Bodyless Aspect Declarations and Struct-Embedded Aspect Lists"
 date: '2026-07-14'
-status: draft
+status: accepted
 target:
+updated: '2026-07-14'
 ---
+
+> **Status — accepted (2026-07-14).** Reviewed and resolved: the obligation check (§3) runs inside the same already-existing whole-graph coherence pass (coherence.rs, RFC-0060), and §4 resolves a real interaction with RFC-0096's auto-impl aspects (Send/Sync/Linear have no Decl::Impl to search for; the obligation is discharged by querying RFC-0096 §2's satisfies check directly instead). No open questions remain.
 
 ## Summary
 
@@ -158,6 +161,53 @@ itself name more than one aspect and share a real body across them, under RFC-01
 Blocks with Shared Bodies), split out of an earlier draft of this section into its own RFC since it's a
 separate feature that doesn't need anything here to work.
 
+## 3. Where and how the obligation check runs
+
+The obligation check is inherently cross-declaration — a struct/enum's own embedded list names an aspect,
+and the satisfying `extend` block may be written anywhere else the type is visible, possibly in a different
+module. This is not a new kind of pass: it's the same shape of question RFC-0060's existing coherence
+checking already answers (orphan rule, overlap detection), and it runs in the same place for the same
+reason. Confirmed directly against the actual coherence implementation (`coherence.rs`, RFC-0060/issue
+#238): `coherence::check` already takes the *entire* `NormalizedModuleGraph` — not one module at a time —
+and does a single pass collecting every `Decl::Impl` block across every loaded module into one flat list
+before checking orphan/overlap rules against it. The obligation check slots into that same already-existing
+whole-graph pass: for each struct/enum declaration with a positive item in its embedded list, scan the same
+already-collected cross-module impl list for a `Decl::Impl` matching that target and aspect name (any
+polarity-appropriate match, same resolution rules `coherence.rs::resolve_id` already uses for names). No new
+pipeline stage, no new whole-module traversal — this reuses the one that's already there, and the satisfying
+block is found regardless of which loaded module declares it, exactly as already true for orphan-rule
+locality checks today.
+
+**Diagnostic wording.** Because the check already has the entire graph in view (not a partial or
+incremental search), a missing obligation is reported once, definitively — "no `extend Token: Serializable {
+... }` found in any loaded module" — rather than "not found in module X, still checking Y," since there is
+no partial-search state to report; the whole graph has already been scanned by the time coherence checking
+runs. The error points at the struct/enum's own declaration span, matching T0014/T0015's existing
+span-reporting convention.
+
+## 4. Interaction with auto-impl aspects (RFC-0096)
+
+RFC-0096 settles a fact this RFC's obligation model (§2) must account for directly, not merely assume
+doesn't collide: `Send`, `Sync`, and `Linear` are **auto-impl** — granted by the compiler's own
+`satisfies(A, T)` structural-composition check (RFC-0096 §2), with **no `Decl::Impl` node ever written or
+synthesized in the AST for them**. §3's obligation check, as stated, only ever looks for a real `Decl::Impl`
+in the module graph — which means, unmodified, `struct Handle: Send { ... }` would always report a false
+"unsatisfied obligation," even when `Handle`'s fields genuinely make it `Send` under RFC-0096 §2's rule,
+because no `extend Handle: Send { ... }` block exists or ever will.
+
+This is a real interaction, not a non-issue, and needs a real carve-out: **when a struct/enum-embedded
+positive item names one of RFC-0096 §1's closed set of auto-impl aspects (`Send`, `Sync`, `Linear`), the
+obligation is discharged by querying RFC-0096 §2's own `satisfies` check directly against the struct/enum's
+field types — the same check any other consumer of an auto-impl aspect already goes through — instead of
+searching for a `Decl::Impl`.** For every other aspect (the general case), §3's `Decl::Impl` graph scan
+applies unchanged. `struct Handle: Send { id: i64 }` is therefore satisfied immediately (i64 is `Send`), with
+no `extend` block required or possible; `struct Handle: Serializable { ... }` still requires a real,
+separately-written `extend Handle: Serializable { ... }` exactly as §2 already states. The negative case
+(`!Send`) needs no special handling beyond what §2 already gives it — RFC-0080 §3's explicit override
+(`impl !Send for MyType {}`, spelled `struct MyType: !Send { ... }` under this RFC) is already how RFC-0096
+itself expects an auto-impl aspect to be overridden, unrelated to whether the positive case is inline-listed
+or an obligation.
+
 ---
 
 ## Alternatives Considered
@@ -195,23 +245,10 @@ separate feature that doesn't need anything here to work.
 
 ## Unresolved Questions
 
-1. **Confirm no interaction with RFC-0096 (Auto-Impl Aspects, draft)** — `Send`/`Sync`/`Linear` are granted
-   automatically by the compiler based on field types, never via an explicit positive `extend` or embedded
-   list; this RFC's positive-embedding case is for aspects a type *chooses* to implement, and its negative
-   case (`!Send`) is exactly RFC-0080 §3's existing override, unchanged. This RFC asserts these don't
-   collide, but it's worth confirming directly against RFC-0096's own mechanism once that RFC is further
-   along, rather than assumed here.
-2. **Where and when does §2's obligation check run?** It's inherently cross-declaration (a struct/enum's
-   own list vs. one or more `extend` blocks that could appear anywhere the type is visible), unlike every
-   other check in this RFC and RFC-0102, which are local to one declaration. This RFC doesn't pin down the
-   exact pipeline stage — plausibly alongside existing coherence checking, which already runs as its own
-   whole-module (or whole-graph) pass — nor whether the satisfying `extend` block may live in a different
-   module than the struct/enum declaration itself. Needs real design work against the actual module-loading
-   pipeline before implementation, not assumed here.
-3. **Diagnostic quality for an unsatisfied obligation spanning multiple modules** — if `struct Token:
-   Serializable { ... }` is declared in one module and the satisfying `extend Token: Serializable { ... }`
-   is expected in another, a missing-obligation error should probably say where it looked, not just that it
-   didn't find one. A UX concern for implementation time, not a blocking design question.
+None remaining — §3 and §4 resolve the two design questions an earlier draft left open (where the
+obligation check runs, and its interaction with RFC-0096's auto-impl aspects); the earlier draft's
+diagnostic-quality question is answered as part of §3, once it was clear the check is whole-graph rather
+than incremental.
 
 ---
 
@@ -227,15 +264,19 @@ separate feature that doesn't need anything here to work.
   RFC's §2 lets be written as `struct MyType: !Send { ... }` instead; not amended, only given a shorter
   spelling for its existing concept and override syntax.
 - RFC-0096 (Auto-Impl Aspects, draft) — the compiler-automatic-derivation mechanism for `Send`/`Sync`/
-  `Linear`, distinct from and not amended by this RFC; see Unresolved Question 1.
+  `Linear`; §4 depends on RFC-0096 §1/§2 directly (the closed auto-impl aspect list and the `satisfies`
+  structural check), which this RFC's obligation model must query directly for those three aspects instead
+  of searching for a `Decl::Impl`. Not amended, but this RFC is no longer independent of it.
 - RFC-0098 (Surface Keyword Renames) — `extend Type: Aspect` grammar this RFC's struct/enum embedding
   parallels; not amended.
 - RFC-0081 (Negative Impls) — the polarity mechanism §2's negative-always-eligible rule relies on,
   unchanged.
 - RFC-0060 (Aspect Impl Coherence) — the existing duplicate/overlapping-impl detection that already governs
   what happens if a struct-embedded item is also given a redundant, separate `extend` block for the same
-  aspect; not amended, and §2's obligation check (a *different* question — does a satisfying impl exist at
-  all, not whether two conflict) is meant to sit alongside it, not replace it.
+  aspect; not amended. §3 confirms the obligation check (a *different* question — does a satisfying impl
+  exist at all, not whether two conflict) runs inside the same already-existing whole-graph coherence pass
+  (`coherence.rs`) rather than as a separate stage, sitting alongside the orphan/overlap checks rather than
+  replacing them.
 - RFC-0104 (Multi-Aspect Extend Blocks with Shared Bodies) — split out of an earlier draft of this RFC's
   own §2; a positive item's obligation may be discharged by a multi-aspect `extend` block under that RFC's
   own rules, with no special interaction beyond what's already stated in either RFC.
