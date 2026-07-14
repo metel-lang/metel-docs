@@ -62,10 +62,10 @@ let x: i32 = 10i32;
 let y = x + 5;            // 5 adopts i32 from x; y is i32
 ```
 
-This also applies to `var` reassignment — the right-hand side of `v = expr` adopts `v`'s declared type:
+This also applies to `mut` reassignment — the right-hand side of `m = expr` adopts `m`'s declared type:
 
 ```metel
-var count: i32 = 0;
+let mut count: i32 = 0;
 count = 99;               // 99 is i32
 ```
 
@@ -79,7 +79,7 @@ count = 99;               // 99 is i32
 fun main() {
     let c: Char = 'a';
     let code: u32 = c.to_u32();
-    let back: Perhaps<Char> = Char.from_u32(code);
+    let back: Perhaps<Char> = Char::from_u32(code);
 }
 ```
 
@@ -201,13 +201,17 @@ fun sum(xs: [i64; 3]) -> i64 {
 
 ## References
 
+> **Availability:** Implemented 2026-07-11 (RFC-0067a) — see
+> `internal/rfcs/4-implemented/rfc-0067a-reference-types.md`. Not yet released in a
+> tagged version; will get its own changelog entry when `sprint/25` ships.
+
 Reference types provide explicit aliasing for non-linear values.
 
 ```metel
 fun main() -> i64 {
-    var value = 1;
+    let mut value = 1;
     let p: &i64 = &value;
-    let q: &var i64 = &var value;
+    let q: &mut i64 = &mut value;
     q = p + 1;
     return q;
 }
@@ -216,9 +220,9 @@ fun main() -> i64 {
 Metel has two reference types:
 
 - `&T` — shared immutable reference to `T`
-- `&var T` — exclusive mutable reference to `T`
+- `&mut T` — exclusive mutable reference to `T`
 
-`&var T` coerces to `&T`. The reverse coercion does not exist. Both are non-owning
+`&mut T` coerces to `&T`. The reverse coercion does not exist. Both are non-owning
 aliases — a reference never owns the value it points to.
 
 References are first-class values, but they are distinct from the referent type. There
@@ -228,18 +232,21 @@ auto-deref instead — see [Expressions — References](expressions.md#reference
 
 References are only for non-linear aliasing. They cannot target linear values.
 
-`&var` accepts arbitrary addressable lvalue paths — struct fields, tuple elements, array elements, and chains thereof. Writes through the resulting `&var T` propagate back to the original storage location:
+`&mut` accepts arbitrary addressable lvalue paths — struct fields, tuple elements, array elements, and chains thereof. Writes through the resulting `&mut T` propagate back to the original storage location:
 
 ```metel
 struct Counter { value: i64 }
 
 fun main() -> i64 {
-    var c = Counter(value: 0);
-    let p: &var i64 = &var c.value;
+    let mut c = Counter { value: 0 };
+    let p: &mut i64 = &mut c.value;
     p = 42;
     return c.value;   // 42
 }
 ```
+
+> `&mut` for lvalue paths: since v0.8.0 (RFC-0045), restated here for `&mut T` rather
+> than `*mut T`.
 
 ### Reading a value out of a reference
 
@@ -303,12 +310,12 @@ non-`Copy` `T` cannot be produced this way.
 
 ```metel
 fun main() {
-    var xs: List<i64> = List.new();
+    let mut xs: List<i64> = List::new();
     xs.push(1);
     xs.push(2);
     xs.push(3);
     println(xs.len().to_string());   // 3
-    let last = xs.pop();             // Perhaps.Some(value: 3)
+    let last = xs.pop();             // Perhaps::Some { value: 3 }
 }
 ```
 
@@ -316,15 +323,15 @@ fun main() {
 
 | Form | Description |
 |------|-------------|
-| `List.new()` | Empty list |
-| `List.from(arr)` | Construct from a `T[]` — copies elements |
+| `List::new()` | Empty list |
+| `List::from(arr)` | Construct from a `T[]` — copies elements |
 
 **Methods:**
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `push` | `(&var self, value: T)` | Append an element |
-| `pop` | `(&var self) -> Perhaps<T>` | Remove and return the last element, or `None` |
+| `push` | `(&mut self, value: T)` | Append an element |
+| `pop` | `(&mut self) -> Perhaps<T>` | Remove and return the last element, or `None` |
 | `len` | `(&self) -> i64` | Number of elements |
 | `get` | `(&self, index: i64) -> Perhaps<T>` | Bounds-checked access |
 | `as_slice` | `(&self) -> T[]` | View as an immutable array (no copy) |
@@ -378,7 +385,7 @@ fun make_row(use_default: boolean, fallback: i64[]) -> i64[] {
 
 fun first_or_default(items: i64[], fallback: Perhaps<i64>) -> i64 {
     return match fallback {
-        Perhaps.Some { value } => value,
+        Perhaps::Some { value } => value,
         None => if (array_len(items) > 0) { items[0] } else { 0 },
     };
 }
@@ -398,8 +405,8 @@ fun main() -> i64 {
     let arr = [] : i64[];
     let value = None : Perhaps<i64>;
     match value {
-        Perhaps.Some { value } => value + array_len(arr),
-        Perhaps.None => array_len(arr),
+        Perhaps::Some { value } => value + array_len(arr),
+        Perhaps::None => array_len(arr),
     }
 }
 ```
@@ -552,8 +559,8 @@ The type of `None` is `Perhaps<T>` for some `T` that must be determinable from c
 fun main() -> i64 {
     let x: Perhaps<i64> = None;
     match x {
-        Perhaps.Some { value } => value,
-        Perhaps.None => 0,
+        Perhaps::Some { value } => value,
+        Perhaps::None => 0,
     }
 }
 ```
@@ -563,10 +570,10 @@ fun main() -> i64 {
     let result: Perhaps<i64> = None;
     let value: Perhaps<i64> = 42;
     match value {
-        Perhaps.Some { value } => value,
-        Perhaps.None => match result {
-            Perhaps.Some { value } => value,
-            Perhaps.None => 0,
+        Perhaps::Some { value } => value,
+        Perhaps::None => match result {
+            Perhaps::Some { value } => value,
+            Perhaps::None => 0,
         },
     }
 }
@@ -581,15 +588,15 @@ struct User {
 
 fun find_user(id: i64) -> Perhaps<User> {
     if (id == 1) {
-        return Perhaps.Some(value: User(id: 1));
+        return Perhaps::Some { value: User { id: 1 } };
     }
     return None;
 }
 
 fun main() -> i64 {
     match find_user(1) {
-        Perhaps.Some(value) => value.id,
-        Perhaps.None => 0,
+        Perhaps::Some { value } => value.id,
+        Perhaps::None => 0,
     }
 }
 ```
@@ -603,7 +610,7 @@ struct User {
 
 fun find_user(id: i64) -> Perhaps<User> {
     if (id == 1) {
-        return Perhaps.Some(value: User(id: 1));
+        return Perhaps::Some { value: User { id: 1 } };
     }
     return None;
 }
@@ -621,15 +628,15 @@ fun main() -> i64 {
 ```metel
 fun divide(a: f64, b: f64) -> Result<f64, String> {
     if (b == 0.0) {
-        return Result.Err(error: "division by zero");
+        return Result::Err { error: "division by zero" };
     }
-    return Result.Ok(value: a / b);
+    return Result::Ok { value: a / b };
 }
 
 fun main() -> i64 {
     match divide(8.0, 2.0) {
-        Result.Ok(value) => value as i64,
-        Result.Err(error) => 0,
+        Result::Ok { value } => value as i64,
+        Result::Err { error } => 0,
     }
 }
 ```

@@ -59,19 +59,17 @@ enum Shape {
 }
 
 fun main() -> i64 {
-    let shape = Shape.Circle(radius: 3.0);
+    let shape = Shape::Circle { radius: 3.0 };
     let desc: String = match shape {
-        Shape.Circle(radius) => {
+        Shape::Circle { radius } => {
             let area = radius * radius;
             (area as i64).to_string()
         },
-        Shape.Rectangle(width, height) => "rectangle",
+        Shape::Rectangle { width, height } => "rectangle",
     };
     return desc.len();
 }
 ```
-
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0099-dot-separated-module-paths.md` (issue #275). Enum variant paths changed from `Type::Variant` to `Type.Variant`.
 
 ### Pattern Kinds
 
@@ -80,8 +78,8 @@ fun main() -> i64 {
 | Wildcard | `_` | anything, binds nothing |
 | Binding | `n` | anything, binds to `n` |
 | Literal | `0`, `"hi"`, `true`, `None` | exact value |
-| Enum variant | `Direction.North` | unit variant |
-| Enum with fields | `Shape.Circle { radius }` | variant, binds fields |
+| Enum variant | `Direction::North` | unit variant |
+| Enum with fields | `Shape::Circle { radius }` | variant, binds fields |
 | Tuple | `(a, b)` | tuple, binds elements |
 | Guard | `n if n < 0` | binding + boolean condition |
 
@@ -95,13 +93,13 @@ enum Shape {
 }
 
 fun main() -> i64 {
-    let shape = Shape.Rectangle(width: 4.0, height: 2.0);
+    let shape = Shape::Rectangle { width: 4.0, height: 2.0 };
     let x = -3;
     let point: (i64, i64) = (0, 7);
 
     let a = match shape {
-        Shape.Circle { radius } => radius as i64,
-        Shape.Rectangle { width, height } => width as i64,
+        Shape::Circle { radius } => radius as i64,
+        Shape::Rectangle { width, height } => width as i64,
     };
 
     let b = match x {
@@ -193,8 +191,8 @@ The braceless form desugars to a single-expression block. Three restrictions app
 
 ```metel
 fun main() -> i64 {
-    var n = 3;
-    var total = 0;
+    let mut n = 3;
+    let mut total = 0;
     while (n > 0) {
         total += n;
         n -= 1;
@@ -207,8 +205,8 @@ fun main() -> i64 {
 
 ```metel
 fun main() -> i64 {
-    var total = 0;
-    for (var i = 0; i < 4; i += 1) {
+    let mut total = 0;
+    for (let mut i = 0; i < 4; i += 1) {
         total += i;
     }
     return total;
@@ -225,11 +223,11 @@ fun main() -> i64 {
 receives type `T`. `T[]`, `[T; N]` (array and fixed-size array), and `Range` (produced by `..` and `..=`) implement
 `Iterable<T>` by default. User-defined types can be made iterable by implementing
 `Iterable<T>`. The loop binding is immutable by default and may be made loop-locally
-mutable with `var`:
+mutable with `let mut`:
 
 ```metel
 aspect Iterable<T> {
-    fun next(&var self) -> Perhaps<T>;
+    fun next(&mut self) -> Perhaps<T>;
 }
 
 fun main() -> i64 {
@@ -240,9 +238,9 @@ fun main() -> i64 {
 ```metel
 fun main() -> i64 {
     let collection = [1, 2, 3];
-    var total = 0;
+    let mut total = 0;
     for (let item in collection) { total += item; }
-    for (var item in collection) {
+    for (let mut item in collection) {
         item += 1;
         total += item;
     }
@@ -262,9 +260,9 @@ References provide explicit aliasing for non-linear values.
 
 ```metel
 fun main() -> i64 {
-    var n = 1;
-    let p: &var i64 = &var n;
-    p = 4;    // write-through: p's own binding need not be `var` for this
+    let mut n = 1;
+    let p: &mut i64 = &mut n;
+    p = 4;    // write-through: p's own binding need not be `mut` for this
     return p; // type-directed copy: reads the value out at `return`
 }
 ```
@@ -272,18 +270,18 @@ fun main() -> i64 {
 Rules:
 
 - `&expr` creates a shared reference `&T` where `expr` is an addressable lvalue
-- `&var x` creates an exclusive reference `&var T` where `x` is a `var` addressable lvalue
+- `&mut x` creates an exclusive reference `&mut T` where `x` is a `let mut` addressable lvalue
 - there is no explicit dereference operator — access goes through auto-deref (below) or,
   for reading a plain value out with no field/method involved, type-directed copy (see
   [Types — Reading a value out of a reference](types.md#reading-a-value-out-of-a-reference))
-- assigning a plain value to a `&var T`-typed binding **writes through** the reference —
+- assigning a plain value to a `&mut T`-typed binding **writes through** the reference —
   exclusivity comes from the reference, not the binding, so this holds whether or not
-  the binding itself is `var` (`p = 4;` above is exactly this, not a reassignment of `p`
-  — `p`'s own binding has no annotation requiring it to be `var` at all)
+  the binding itself is `mut` (`p = 4;` above is exactly this, not a reassignment of `p`
+  — `p`'s own binding has no annotation requiring it to be `mut` at all)
 
-Addressable lvalues for both `&` and `&var` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), and chains thereof (`nested.outer.field`, `t.1.0`). Non-addressable expressions (call results, arithmetic) are rejected at runtime.
+Addressable lvalues for both `&` and `&mut` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), and chains thereof (`nested.outer.field`, `t.1.0`). Non-addressable expressions (call results, arithmetic) are rejected at runtime.
 
-`&var` requires the operand to be a `var` binding — applying it to a plain `let` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)). `&var` on a lvalue path (`&var s.field`, `&var arr[i]`) produces a true exclusive reference with write-back semantics, matching `&var` on a named binding exactly — writes through it propagate to the original storage location (RFC-0045, already implemented; this section previously described `&mut struct.field` as a non-propagating snapshot, which was the *pre*-RFC-0045 behavior and had never been updated to match). `&` on a field or element still evaluates to an independent, read-only reference to a copy of the current value at the time `&` was applied — correct and unchanged, since a shared reference is never written through.
+`&mut` requires the operand to be a `let mut` binding — applying it to a plain `let` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)). `&mut` on a lvalue path (`&mut s.field`, `&mut arr[i]`) produces a true exclusive reference with write-back semantics, matching `&mut` on a named binding exactly — writes through it propagate to the original storage location (RFC-0045, already implemented; this section previously described `&mut struct.field` as a non-propagating snapshot, which was the *pre*-RFC-0045 behavior and had never been updated to match). `&` on a field or element still evaluates to an independent, read-only reference to a copy of the current value at the time `&` was applied — correct and unchanged, since a shared reference is never written through.
 
 Field access, field assignment, and method dispatch auto-dereference through a reference:
 
@@ -292,17 +290,17 @@ struct Counter {
     value: i64,
 }
 
-extend Counter {
-    fun increment(&var self) {
+impl Counter {
+    fun increment(&mut self) {
         self.value += 1;
     }
 }
 
 fun main() -> i64 {
-    var counter = Counter(value: 0);
-    let p: &var Counter = &var counter;
+    let mut counter = Counter { value: 0 };
+    let p: &mut Counter = &mut counter;
     p.increment();    // auto-deref: equivalent to accessing through the reference directly
-    p.value = 1;      // auto-deref field assign; the reference binding need not be var
+    p.value = 1;      // auto-deref field assign; the reference binding need not be mut
     return p.value;   // auto-deref field read
 }
 ```
@@ -328,22 +326,22 @@ fun apply_all(fns: Array<&() -> ()>) {
 ```
 
 Field access, method dispatch, and calling through a reference all chain through
-multiple reference layers, not just one — `rr: &&var Counter` auto-derefs through both
+multiple reference layers, not just one — `rr: &&mut Counter` auto-derefs through both
 levels to reach the `Counter` for a field read, a field write, or a method call
-(`&var self` included: a shared outer layer doesn't remove the write access the inner
-`&var` layer carries, it just adds a read-only step to reach it):
+(`&mut self` included: a shared outer layer doesn't remove the write access the inner
+`&mut` layer carries, it just adds a read-only step to reach it):
 
 ```metel
 struct Counter { value: i64 }
 
-extend Counter {
-    fun increment(&var self) { self.value += 1; }
+impl Counter {
+    fun increment(&mut self) { self.value += 1; }
 }
 
 fun main() -> i64 {
-    var c = Counter(value: 0);
-    let p: &var Counter = &var c;
-    let rr: &&var Counter = &p;
+    let mut c = Counter { value: 0 };
+    let p: &mut Counter = &mut c;
+    let rr: &&mut Counter = &p;
     rr.increment();   // auto-deref through both layers
     return rr.value;  // likewise for a field read
 }
@@ -389,7 +387,7 @@ fun pick(ok: boolean) -> i64 {
 }
 
 fun compute() -> i64 {
-    var i = 0;
+    let mut i = 0;
     loop {
         i = i + 1;
         if (i == 5) {
@@ -430,93 +428,5 @@ fun returns_value() -> i64 {
 fun main() -> i64 {
     returns_unit();
     return returns_value();
-}
-```
-
----
-
-## Cross-Feature Examples
-
-### Example: Modern Metel Expression Syntax
-
-```metel
-// RFC-0098: var bindings and &var references
-public struct DataStore {
-    values: i64[],
-}
-
-extend DataStore {
-    fun add(&var self, value: i64) {
-        self.values.push(value);
-    }
-}
-
-fun main() -> i64 {
-    var store = DataStore(values: [1, 2, 3]);
-    
-    // RFC-0098: &var references
-    let p: &var DataStore = &var store;
-    p.add(4);
-    
-    // RFC-0100: Keyword arguments
-    let result = array_len(store.values);
-    return result;
-}
-```
-
-### Example: Pattern Matching with Modern Syntax
-
-```metel
-public enum Shape {
-    Circle { radius: f64 },
-    Rectangle { width: f64, height: f64 },
-}
-
-extend Shape {
-    fun area(self) -> f64 {
-        match self {
-            Shape.Circle { radius } => 3.14159 * radius * radius,
-            Shape.Rectangle { width, height } => width * height,
-        }
-    }
-}
-
-fun main() -> i64 {
-    // RFC-0100: Keyword arguments in construction
-    let circle = Shape.Circle(radius: 5.0);
-    let rect = Shape.Rectangle(width: 4.0, height: 3.0);
-    
-    let total_area = circle.area() + rect.area();
-    return total_area as i64;
-}
-```
-
-### Example: Method Calls and Associated Functions
-
-```metel
-public struct Point {
-    x: f64,
-    y: f64,
-}
-
-extend Point {
-    fun new(x: f64, y: f64) -> Point {
-        return Point(x: x, y: y);
-    }
-    
-    fun distance(self, other: Point) -> f64 {
-        let dx = self.x - other.x;
-        let dy = self.y - other.y;
-        return (dx * dx + dy * dy).sqrt();
-    }
-}
-
-fun main() -> i64 {
-    // RFC-0098 & RFC-0099: Associated function calls with dot syntax
-    let p1 = Point.new(0.0, 0.0);
-    let p2 = Point.new(3.0, 4.0);
-    
-    let dist = p1.distance(p2);
-    return dist as i64;  // 5
 }
 ```

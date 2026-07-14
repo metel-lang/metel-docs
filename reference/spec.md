@@ -7,6 +7,7 @@ created_date: '2026-05-16'
 
 > **Status:** Active. This document is the single source of truth for the Metel language.
 > Features not described here are not part of the language.
+> Availability in this spec is stated by released or planned versions, not by RFC ids or issue numbers.
 
 Source files use the `.mtl` extension.
 

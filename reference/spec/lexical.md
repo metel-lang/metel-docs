@@ -27,12 +27,11 @@ By convention:
 
 ```
 and       as        aspect    break     continue  else      enum
-export    false     for       fun       if        let       loop
-match     or        public    return    root      self      std
-struct    super     true      var       where     while
+export    false     for       fun       if        impl      import
+let       loop      match     mut       or        pub       return
+root      self      std       struct    super     true      where
+while
 ```
-
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). Keywords renamed: `impl` → `extend`, `pub` → `public`, `mut` → `var`.
 
 ## Literals
 
@@ -159,7 +158,5 @@ let full = "hello" + ", " + "world";   // "hello, world"
 | Assignment      | `=`                                           |
 | Error prop      | `?`                                           |
 | Type cast       | `as`                                          |
-| Path            | `.`                                           |
+| Path            | `::`                                          |
 | Range           | `..`  `..=`  (for use in `for-in` only)       |
-
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0099-dot-separated-module-paths.md` (issue #275). Path separator changed from `::` to `.` for module paths, enum variants, and associated functions. Turbofish changed from `::<T>` to `.<T>`.

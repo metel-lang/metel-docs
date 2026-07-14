@@ -12,27 +12,27 @@ The root file passed to the toolchain is the root module:
 metel src/main.mtl
 ```
 
-In that example, `root.` refers to `src/main.mtl`.
+In that example, `root::` refers to `src/main.mtl`.
 
 ## File-to-Module Mapping
 
-`.` maps directly to `/` in the filesystem. There is no special directory module file.
+`::` maps directly to `/` in the filesystem. There is no special directory module file.
 
 | Import | File resolved |
 |---|---|
-| `import parser.Ast;` | `parser.mtl` |
-| `import parser.ast.Ast;` | `parser/ast.mtl` |
-| `import root.a.b.c.T;` | `a/b/c.mtl` relative to the root file |
+| `import parser::Ast;` | `parser.mtl` |
+| `import parser::ast::Ast;` | `parser/ast.mtl` |
+| `import root::a::b::c::T;` | `a/b/c.mtl` relative to the root file |
 
 A directory module with a public facade is expressed by placing `name.mtl` alongside the `name/` directory. The two coexist without ambiguity — they are different paths:
 
 ```
 src/
-  main.mtl            ← import parser.Ast; import parser.lexer.Token;
-  parser.mtl          ← export ast.Ast; export lexer.Token;
+  main.mtl            ← import parser::Ast; import parser::lexer::Token;
+  parser.mtl          ← export ast::Ast; export lexer::Token;
   parser/
-    ast.mtl           ← public struct Ast { ... }
-    lexer.mtl         ← public struct Token { ... }
+    ast.mtl           ← pub struct Ast { ... }
+    lexer.mtl         ← pub struct Token { ... }
 ```
 
 `parser.mtl` is the facade. Files in `parser/` form the namespace. There is no `name/mod.mtl` convention.
@@ -49,17 +49,17 @@ At file scope, `import` and `export` declarations must precede all other declara
 
 ## Paths
 
-Paths use `.` separators.
+Paths use `::` separators.
 
 Path roots are:
 
 | Root | Meaning |
 |---|---|
-| `root.` | The selected root module for the current program |
-| `std.` | The bundled standard library root; `std.core` is always available |
-| `self.` | The current module |
-| `super.` | The parent module; invalid from the root module |
-| imported module handle | A module brought into scope by `import path.module;` |
+| `root::` | The selected root module for the current program |
+| `std::` | The bundled standard library root; `std::core` is always available |
+| `self::` | The current module |
+| `super::` | The parent module; invalid from the root module |
+| imported module handle | A module brought into scope by `import path::module;` |
 
 ### Reserved namespaces
 
@@ -68,7 +68,7 @@ paths may not begin with `std` — a module file at `std.mtl` or anywhere under
 `std/` in the project tree is a compile error:
 
 ```
-error: module path `std.` is reserved for the standard library
+error: module path `std::…` is reserved for the standard library
 ```
 
 `std` is also a reserved keyword and cannot appear as an identifier. Both
@@ -81,15 +81,15 @@ Fully-qualified paths are valid anywhere a name is expected:
 
 ```metel
 // src/main.mtl
-import root.parser.Token;
+import root::parser::Token;
 
 fun main() -> i64 {
-    let token: root.parser.Token = root.parser.Token(value: 42);
+    let token: root::parser::Token = root::parser::Token { value: 42 };
     return token.value;
 }
 
 // src/parser.mtl
-public struct Token {
+pub struct Token {
     value: i64,
 }
 ```
@@ -100,41 +100,41 @@ public struct Token {
 
 ```metel
 // src/main.mtl
-import parser.{Ast, Token};
-import root.lexer.Token as Tok;
-import parser.*;
-import std.core;
+import parser::{Ast, Token};
+import root::lexer::Token as Tok;
+import parser::*;
+import std::core;
 
 fun main() -> i64 {
-    let ast = Ast(token: Token(value: 1));
-    let tok: Tok = core.dbg(Token(value: 2));
+    let ast = Ast { token: Token { value: 1 } };
+    let tok: Tok = core::dbg(Token { value: 2 });
     return ast.token.value + tok.value + parse(ast.token);
 }
 
 // src/parser.mtl
-export ast.Ast;
-export ast.parse;
-export lexer.Token;
+export ast::Ast;
+export ast::parse;
+export lexer::Token;
 
 // src/parser/ast.mtl
-import super.lexer.Token;
-public struct Ast { token: Token }
-public fun parse(token: Token) -> i64 { token.value }
+import super::lexer::Token;
+pub struct Ast { token: Token }
+pub fun parse(token: Token) -> i64 { token.value }
 
 // src/lexer.mtl
-public struct Token { value: i64 }
+pub struct Token { value: i64 }
 ```
 
 Import forms:
 
 | Form | Effect |
 |---|---|
-| `import path.Name;` | imports `Name` |
-| `import path.Name as Alias;` | imports `Name` under `Alias` |
-| `import path.{A, B, C};` | imports multiple names from one path |
-| `import path.{A as X, B};` | imports with per-item aliases |
-| `import path.*;` | imports all public names from the module |
-| `import path.module;` | imports `module` as a module handle; `module.item` is then valid |
+| `import path::Name;` | imports `Name` |
+| `import path::Name as Alias;` | imports `Name` under `Alias` |
+| `import path::{A, B, C};` | imports multiple names from one path |
+| `import path::{A as X, B};` | imports with per-item aliases |
+| `import path::*;` | imports all public names from the module |
+| `import path::module;` | imports `module` as a module handle; `module::item` is then valid |
 
 ## Re-exports
 
@@ -142,9 +142,9 @@ Import forms:
 
 ```metel
 // parser.mtl — facade module for the parser namespace
-export ast.Ast;
-export lexer.{Token, Span};
-export ast.ParseError as Error;
+export ast::Ast;
+export lexer::{Token, Span};
+export ast::ParseError as Error;
 
 fun main() -> i64 {
     return 0;
@@ -153,12 +153,12 @@ fun main() -> i64 {
 
 `export` and `import` share the same path and tree syntax. Re-exported names are indistinguishable from names defined directly in the re-exporting module.
 
-`public` and `export` serve different roles:
+`pub` and `export` serve different roles:
 
 | Keyword | Purpose |
 |---|---|
-| `public` | Marks a declaration in this file as externally accessible |
-| `export path.Name;` | Re-exports a name from a submodule into this module's public API |
+| `pub` | Marks a declaration in this file as externally accessible |
+| `export path::Name;` | Re-exports a name from a submodule into this module's public API |
 
 `export` declarations are processed after the module graph is fully loaded; they do not affect which files are loaded.
 
@@ -166,24 +166,24 @@ fun main() -> i64 {
 
 > **Availability:** Since v0.6.1.
 
-Every module automatically has `std.core` glob-imported at the lowest priority tier. This means `Perhaps`, `Result`, `Display`, `Iterable`, `From`, and all built-in functions are available in every module without any explicit import statement.
+Every module automatically has `std::core` glob-imported at the lowest priority tier. This means `Perhaps`, `Result`, `Display`, `Iterable`, `From`, and all built-in functions are available in every module without any explicit import statement.
 
 ```metel
 // No import needed — Perhaps and Result are always in scope
 fun maybe_parse(s: String) -> Perhaps<i64> {
-    if (s == "1") { return Perhaps.Some(value: 1); }
+    if (s == "1") { return Perhaps::Some { value: 1 }; }
     return None;
 }
 
 fun main() -> i64 {
     match maybe_parse("1") {
-        Perhaps.Some(value) => value,
-        Perhaps.None => 0,
+        Perhaps::Some { value } => value,
+        Perhaps::None => 0,
     }
 }
 ```
 
-You can still write `import std.core.Perhaps;` or `import std.core.*;` explicitly — the result is the same. If a local declaration or explicit import shadows a `std.core` name, the local binding wins silently.
+You can still write `import std::core::Perhaps;` or `import std::core::*;` explicitly — the result is the same. If a local declaration or explicit import shadows a `std::core` name, the local binding wins silently.
 
 `std::core` is a **virtual module** — it has no physical `.mtl` file and cannot be listed or enumerated. Its contents are seeded by the runtime.
 
@@ -206,30 +206,30 @@ Conflict rules:
 
 ## Visibility
 
-Declarations are module-private by default. A declaration is accessible from outside its module only if it is annotated with `public`.
+Declarations are module-private by default. A declaration is accessible from outside its module only if it is annotated with `pub`.
 
 ```metel
-public struct Token { public kind: i64, span: i64 }
+pub struct Token { pub kind: i64, span: i64 }
 struct InternalState { count: i64 }
 
-public fun parse(tokens: Token[]) -> i64 { return array_len(tokens); }
+pub fun parse(tokens: Token[]) -> i64 { return array_len(tokens); }
 fun helper(token: Token) -> boolean { return token.kind == 0; }
 
 fun main() -> i64 {
-    let token = Token(kind: 0, span: 1);
-    let state = InternalState(count: 2);
+    let token = Token { kind: 0, span: 1 };
+    let state = InternalState { count: 2 };
     if (helper(token)) { return parse([token]) + state.count; }
     return 0;
 }
 ```
 
-`public` is valid on `struct`, `enum`, `fun`, and `aspect` declarations. Top-level `let` and `var` bindings are always module-private; public value exports are not supported in the current version.
+`pub` is valid on `struct`, `enum`, `fun`, and `aspect` declarations. Top-level `let` and `mut` bindings are always module-private; public value exports are not supported in the current version.
 
-Struct field visibility is independent from the struct's own visibility. Fields are module-private by default; add `public` on each field that should be accessible outside the declaring module.
+Struct field visibility is independent from the struct's own visibility. Fields are module-private by default; add `pub` on each field that should be accessible outside the declaring module.
 
 ```metel
-public struct Token {
-    public kind: i64,
+pub struct Token {
+    pub kind: i64,
     span: i64,
 }
 ```
@@ -238,7 +238,7 @@ From outside the declaring module, `Token` is nameable, `token.kind` is accessib
 
 Within a module, all names defined in that module are accessible without qualification, including private names.
 
-Modules do not have their own visibility annotation. Module-level access control is handled entirely by `public` on individual items.
+Modules do not have their own visibility annotation. Module-level access control is handled entirely by `pub` on individual items.
 
 ## Circular Imports
 
@@ -249,7 +249,7 @@ Circular imports are a compile error. The error message includes the full import
 The module graph is built from `import` declarations:
 
 1. The root file is parsed.
-2. All `import` declarations are collected; each is resolved to a file path via the `.` → `/` mapping.
+2. All `import` declarations are collected; each is resolved to a file path via the `::` → `/` mapping.
 3. Each referenced file is loaded recursively; cycles are detected and rejected.
 4. Only files reachable via at least one `import` declaration are loaded.
 
@@ -258,164 +258,3 @@ The module graph is built from `import` declarations:
 ## Single-File Compatibility
 
 A `.mtl` file with no `import` or `export` declarations is a complete program. Existing single-file programs remain valid without modification.
-
----
-
-## Cross-Feature Module Examples
-
-### Example: Modern Module Structure with All RFCs
-
-```metel
-// src/main.mtl
-import parser.{Ast, Token};
-import std.math;
-
-fun main() -> i64 {
-    // RFC-0100: Keyword arguments
-    let token = Token(kind: 0, value: "42");
-    
-    // RFC-0099: Dot-separated paths
-    let ast = parser.Ast(tokens: [token]);
-    
-    // RFC-0099: Associated function calls
-    let result = ast.parse();
-    
-    return result;
-}
-```
-
-```metel
-// src/parser.mtl (facade)
-export ast.{Ast, parse};
-export lexer.Token;
-
-aspect Copy2;
-
-public struct Ast {
-    tokens: Token[],
-}
-
-extend Ast: Copy2;
-
-extend Ast {
-    fun new(tokens: Token[]) -> Ast {
-        return Ast(tokens: tokens);
-    }
-    
-    fun parse(self) -> i64 {
-        return self.tokens.len();
-    }
-}
-```
-
-```metel
-// src/parser/ast.mtl
-import super.lexer.Token;
-
-public struct Ast {
-    public tokens: Token[],
-}
-
-extend Ast {
-    fun new(tokens: Token[]) -> Ast {
-        return Ast(tokens: tokens);
-    }
-    
-    fun parse(self) -> i64 {
-        return self.tokens.len();
-    }
-}
-```
-
-```metel
-// src/lexer.mtl
-public struct Token {
-    public kind: i64,
-    value: String,
-}
-```
-
-### Example: Embedded Aspect Lists in Modules
-
-```metel
-// src/types.mtl
-aspect Copy2;
-aspect Serializable;
-
-// RFC-0103: Embedded aspect lists
-public struct Config: Copy2, Serializable {
-    public name: String,
-    public port: i64,
-}
-
-extend Config: Serializable {
-    fun serialize(&self) -> String {
-        return self.name + ":" + self.port.to_string();
-    }
-}
-```
-
-```metel
-// src/main.mtl
-import types.Config;
-
-fun main() -> i64 {
-    // RFC-0100: Keyword arguments
-    let config = Config(name: "localhost", port: 8080);
-    println(config.serialize());
-    return 0;
-}
-```
-
-### Example: Multi-Aspect Lists and Negative Impls
-
-```metel
-// src/models.mtl
-aspect Copy2;
-aspect Sendable;
-aspect Debug;
-
-// RFC-0102: Multi-aspect bodyless extend
-extend MyType: Copy2, Sendable, !Debug;
-
-// RFC-0103: Embedded lists work the same way
-public struct Data: Copy2, Sendable, !Debug {
-    id: i64,
-}
-```
-
-### Example: Module System with Public Visibility
-
-```metel
-// src/network.mtl
-public struct Connection {
-    public host: String,
-    public port: i64,
-    timeout: i64,  // private field
-}
-
-extend Connection {
-    public fun connect(host: String, port: i64, timeout: i64) -> Connection {
-        return Connection(host: host, port: port, timeout: timeout);
-    }
-    
-    public fun is_connected(&self) -> boolean {
-        return self.timeout > 0;
-    }
-}
-```
-
-```metel
-// src/main.mtl
-import network.Connection;
-
-fun main() -> i64 {
-    // RFC-0100: Keyword arguments in constructor
-    let conn = Connection.connect(host: "localhost", port: 8080, timeout: 30);
-    
-    if (conn.is_connected()) {
-        return 1;
-    }
-    return 0;
-}
-```
