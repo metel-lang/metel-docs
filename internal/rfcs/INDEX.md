@@ -13,8 +13,8 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**100 RFCs total.** 32 draft, 1 under review, 9 accepted, 3 integrated (new stage — see
-`PROCESS.md`) (45 "live" — need active tracking), 32 implemented, 10 superseded, 13
+**102 RFCs total.** 34 draft, 1 under review, 9 accepted, 3 integrated (new stage — see
+`PROCESS.md`) (47 "live" — need active tracking), 32 implemented, 10 superseded, 13
 refused (53 "settled" — reference only). **2026-07-13:** RFC-0036 (Conditional Impl
 Blocks) implemented (issue #241) — see its entry below for a correctness bug found and
 fixed during review (conditional-impl satisfaction wasn't consulted outside direct
@@ -42,7 +42,16 @@ collision (not previously identified) was found and resolved via `arg_list` reor
 That review also produced a fourth sibling, RFC-0101 (Grammar-Enforced Naming Case
 Conventions) — PascalCase types, camelCase `fun` declarations, snake_case everything
 else, enforced as a real compile-time rule — scoped as its own RFC rather than folded
-into RFC-0100, whose ambiguity it narrows but doesn't fully resolve on its own. **2026-07-12:** RFC-0081 (Negative Impls)
+into RFC-0100, whose ambiguity it narrows but doesn't fully resolve on its own. A fifth,
+RFC-0102 (Bodyless Extend Blocks for Marker Aspects and Negative Impls), followed from
+using RFC-0098's new `extend Type: Aspect` syntax directly — `extend Type: Aspect;` /
+`extend Type: !Aspect;` as sugar for an empty body, mirroring `fun_decl`'s own existing
+`(block | ";")` alternative, no new semantic category. A sixth, RFC-0103 (Marker
+Aspects and Struct-Embedded Aspect Lists), followed directly from RFC-0102 — a
+`marker` keyword giving RFC-0080 §3's existing "marker aspect" terminology (`Send`/
+`Sync`) a real, permanent-guarantee keyword, plus embedding RFC-0102's aspect list
+straight into a struct/enum's own declaration, with positive items requiring `marker`
+specifically because that position has no per-aspect body to fall back on. **2026-07-12:** RFC-0081 (Negative Impls)
 implemented on sprint/26 (issue #264) — syntax, finality, and the orphan rule are done
 and tested; priority over blanket impls is a property of RFC-0036 (issue #241), not
 that RFC's own implementation yet — but negative-bound consultation is now covered,
@@ -481,6 +490,29 @@ implementation).
   readability property, and does *not* rescue RFC-0099's own disambiguation question
   (module path segments share casing with
   values, an orthogonal problem). Opened 2026-07-14.
+- **RFC-0102** *(draft)* — Bodyless Extend Blocks for Marker Aspects and Negative Impls
+  — `extend Type: Aspect;` / `extend Type: !Aspect;` (no braces) as sugar for an
+  empty-bodied `extend` block, valid in exactly the situations an empty body is
+  already accepted today (negative impls, always — the parser already enforces zero
+  methods there; positive impls when every method has a default body or the aspect
+  declares none, the true marker-aspect case). Pure desugaring, no new semantic
+  category — mirrors `fun_decl`'s existing `(block | ";")` alternative. §5 extends the
+  aspect clause to a comma-separated, per-item-polarity list for the same bodyless
+  case (`extend Type: A, B, !C;`, desugaring to N independent single-aspect blocks),
+  reusing RFC-0036's existing `bound` grammar directly — strictly scoped to
+  bodyless/empty-bodied extends, since a shared non-empty body across multiple
+  aspects has no principled disambiguation and isn't attempted. Depends on RFC-0098's
+  `extend Type: Aspect` grammar shape. Opened 2026-07-14.
+- **RFC-0103** *(draft)* — Marker Aspects and Struct-Embedded Aspect Lists — a `marker`
+  keyword permanently declaring an aspect has zero methods/associated types
+  (`marker aspect Copy2;`, itself bodyless — gives RFC-0080 §3's existing "marker
+  aspect" terminology for `Send`/`Sync` a real keyword), plus a struct/enum-embedded
+  aspect list (`struct Token: Copy2, !Send { value: String }`) reusing RFC-0102 §5's
+  `extend_aspect_list`. Positive items require `marker` — a *permanent* guarantee,
+  stricter than RFC-0102 §4's "currently bodyless-eligible" rule for `extend` blocks
+  — because a struct/enum declaration has no per-aspect body to grow into if the
+  aspect later gains a real method; negative items are always eligible regardless of
+  the aspect's own shape. Depends on RFC-0102. Opened 2026-07-14.
 
 ---
 
