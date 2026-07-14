@@ -193,11 +193,12 @@ extend Handle: !Displayable;
   rather than changing the impl-site grammar. Rejected *for this RFC's own scope*: the pain point this RFC
   targets is at each *impl site*, not at the aspect declaration (which is written once); marking the aspect
   doesn't remove the need to write `{ }` at every `extend` site, so it doesn't solve the problem this RFC
-  is scoped to. A sibling RFC (RFC-0103) revisits this same idea for a different, genuinely stronger
-  reason — a permanent, declared guarantee that a struct/enum-embedded aspect list (which has no per-aspect
-  body to fall back on) needs and `extend` blocks don't — and reaches the opposite conclusion there. The
-  two aren't in tension: this RFC's `extend`-block sugar never needed the permanent guarantee in the first
-  place, so not adding `marker` here was the right call for §1–§5's own scope.
+  is scoped to. A sibling RFC (RFC-0103) considered this same idea for a different reason — a permanent,
+  declared guarantee that a struct/enum-embedded aspect list (which has no per-aspect body to fall back on)
+  might need — but ultimately dropped it too, once it settled on treating every positive struct/enum-
+  embedded item as a checked obligation rather than something the list itself could satisfy; a bodyless
+  *aspect declaration* (`aspect Copy2;`) still exists there, but as plain sugar inheriting this RFC's own
+  weaker "currently has zero methods" rule, not a `marker` keyword's permanent one.
 - **A dedicated bodyless-specific diagnostic** distinguishing "you wrote `;` but this aspect needs a method"
   from the ordinary missing-method error. Considered in Unresolved Questions rather than assumed — the
   minimal version of this RFC reuses the existing error verbatim.
@@ -252,10 +253,10 @@ extend Handle: !Displayable;
   amended, only reused in a new position.
 - RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls) — §5's example composing a multi-aspect list with
   a bare-parameter blanket target; not amended, the two features are orthogonal.
-- RFC-0103 (Marker Aspects and Struct-Embedded Aspect Lists) — depends on this RFC (reuses
-  `extend_aspect_list` and the negative-always-eligible reasoning directly); revisits the `marker`-keyword
-  alternative rejected above, for a different, stronger reason specific to its own struct/enum-embedding
-  position — see this RFC's own Alternatives Considered note.
+- RFC-0103 (Bodyless Aspect Declarations and Struct-Embedded Aspect Lists) — depends on this RFC (reuses
+  `extend_aspect_list` and the negative-always-eligible reasoning directly); considered and then also
+  dropped the same `marker`-keyword alternative rejected above, for its own struct/enum-embedding reasons —
+  see this RFC's own Alternatives Considered note.
 
 ---
 

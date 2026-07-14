@@ -46,25 +46,27 @@ into RFC-0100, whose ambiguity it narrows but doesn't fully resolve on its own. 
 RFC-0102 (Bodyless Extend Blocks for Marker Aspects and Negative Impls), followed from
 using RFC-0098's new `extend Type: Aspect` syntax directly — `extend Type: Aspect;` /
 `extend Type: !Aspect;` as sugar for an empty body, mirroring `fun_decl`'s own existing
-`(block | ";")` alternative, no new semantic category. A sixth, RFC-0103 (Marker
-Aspects and Struct-Embedded Aspect Lists), followed directly from RFC-0102 — a
-`marker` keyword giving RFC-0080 §3's existing "marker aspect" terminology (`Send`/
-`Sync`) a real, permanent-guarantee keyword, plus embedding RFC-0102's aspect list
-straight into a struct/enum's own declaration. RFC-0098, 0099, 0100, and 0102 all
-moved `0-draft` → `2-accepted` the same day, after this review resolved every open
-question each RFC had — RFC-0102 additionally retired the old `extend Type: !Aspect {
-}` braces spelling outright (bodyless is now mandatory for negative impls, not just
-sugar), matching this project's precedent for retiring a strictly-superseded spelling
-(RFC-0100, RFC-0042) rather than keeping two. RFC-0103 was itself revised twice more:
-positive struct/enum-embedded items no longer require `marker` outright — a
-non-`marker` positive aspect now declares a checked, module-wide *obligation*
+`(block | ";")` alternative, no new semantic category. A sixth, RFC-0103 (Bodyless
+Aspect Declarations and Struct-Embedded Aspect Lists), followed directly from
+RFC-0102 — a bodyless spelling for the aspect *declaration* itself (`aspect Copy2;`,
+pure sugar, no permanence attached), plus embedding RFC-0102's aspect list straight
+into a struct/enum's own declaration. RFC-0098, 0099, 0100, and 0102 all moved
+`0-draft` → `2-accepted` the same day, after this review resolved every open question
+each RFC had — RFC-0102 additionally retired the old `extend Type: !Aspect { }` braces
+spelling outright (bodyless is now mandatory for negative impls, not just sugar),
+matching this project's precedent for retiring a strictly-superseded spelling
+(RFC-0100, RFC-0042) rather than keeping two. RFC-0103 went through several more
+revisions: positive struct/enum-embedded items no longer require a `marker` keyword
+outright — every positive aspect now declares a checked, module-wide *obligation*
 discharged by an ordinary `extend` block elsewhere, once it was clear the
 no-escape-hatch concern only applies to items the list itself tries to implement
-inline — and a third idea (letting an `extend` block share a real body across
-multiple aspects) was split out into a seventh sibling, RFC-0104 (Multi-Aspect Extend
-Blocks with Shared Bodies), since it doesn't depend on anything specific to RFC-0103.
-RFC-0101, 0103, and 0104 all remain `0-draft`, not assumed to land with the four
-already-accepted ones.
+inline; a third idea (letting an `extend` block share a real body across multiple
+aspects) was split out into a seventh sibling, RFC-0104 (Multi-Aspect Extend Blocks
+with Shared Bodies), since it doesn't depend on anything specific to RFC-0103; and
+finally the `marker` keyword itself was dropped outright once the obligation model
+made its permanence guarantee moot — RFC-0103's bodyless-declaration sugar (§1) now
+inherits exactly RFC-0102's own weaker "currently has zero methods" rule instead.
+RFC-0101 and RFC-0104 remain `0-draft`, not assumed to land with the others.
 **2026-07-12:** RFC-0081 (Negative Impls)
 implemented on sprint/26 (issue #264) — syntax, finality, and the orphan rule are done
 and tested; priority over blanket impls is a property of RFC-0036 (issue #241), not
@@ -524,19 +526,22 @@ implementation).
   non-empty body across multiple aspects has no principled disambiguation and isn't
   attempted. Depends on RFC-0098's `extend Type: Aspect` grammar shape. Opened
   2026-07-14, accepted 2026-07-14.
-- **RFC-0103** *(draft)* — Marker Aspects and Struct-Embedded Aspect Lists — two
-  additions on top of RFC-0102. A `marker` keyword permanently declaring an aspect
-  has zero methods/associated types (`marker aspect Copy2;`, itself bodyless — gives
-  RFC-0080 §3's existing "marker aspect" terminology for `Send`/`Sync` a real
-  keyword). And a struct/enum-embedded aspect list (`struct Token: Copy2,
-  Serializable, !Send { value: String }`) reusing RFC-0102 §5's `extend_aspect_list`,
-  where struct/enum bodies stay fields-only: `marker`-declared and negative items are
-  fully satisfied by the list itself, while a non-`marker` positive item declares a
-  checked, module-wide *obligation* discharged by an ordinary, separately-editable
-  `extend` block elsewhere — revised from an earlier draft that rejected non-`marker`
-  positive items outright, once it was clear the "no escape hatch" concern only
-  applies to items the list itself tries to implement inline. Depends on RFC-0102.
-  Opened 2026-07-14.
+- **RFC-0103** *(draft)* — Bodyless Aspect Declarations and Struct-Embedded Aspect
+  Lists — two additions on top of RFC-0102. A bodyless spelling for the aspect
+  *declaration* itself (`aspect Copy2;` — pure sugar for `aspect Copy2 { }`, legal
+  whenever the braced form already would be, no permanence guarantee attached, unlike
+  an earlier draft's dropped `marker` keyword). And a struct/enum-embedded aspect
+  list (`struct Token: Copy2, Serializable, !Send { value: String }`) reusing
+  RFC-0102 §5's `extend_aspect_list`, where struct/enum bodies stay fields-only:
+  negative items are fully satisfied by the list itself, while every positive item
+  declares a checked, module-wide *obligation* discharged by an ordinary,
+  separately-editable `extend` block elsewhere — revised from an earlier draft that
+  rejected positive items outright, once it was clear the "no escape hatch" concern
+  only applies to items the list itself tries to implement inline. A still-earlier
+  `marker` keyword (permanently gating which positive items the list alone could
+  satisfy) was dropped outright once every positive item became an obligation
+  uniformly — the permanence guarantee it offered stopped being load-bearing.
+  Depends on RFC-0102. Opened 2026-07-14.
 - **RFC-0104** *(draft)* — Multi-Aspect Extend Blocks with Shared Bodies — split out
   of an earlier draft of RFC-0103's own struct/enum-embedding section, since it's a
   separate feature that doesn't depend on anything there. Lifts RFC-0102 §5's

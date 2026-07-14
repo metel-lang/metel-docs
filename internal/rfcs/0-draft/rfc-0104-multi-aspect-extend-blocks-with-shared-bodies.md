@@ -14,8 +14,8 @@ beyond an aspect's requirements already become ordinary inherent methods today) 
 aspect's own required-method coverage independently, by name, against the shared pool. The one new rule:
 if two named aspects in the same list declare a method with the identical name, the whole combination is
 rejected outright rather than guessing or introducing a qualified-declaration syntax. Depends on RFC-0102;
-split out of an earlier draft of RFC-0103, which covers a separate, narrower feature (marker aspects and
-struct/enum-embedded lists) that doesn't need this RFC to work.
+split out of an earlier draft of RFC-0103, which covers a separate, narrower feature (bodyless aspect
+declarations and struct/enum-embedded lists) that doesn't need this RFC to work.
 
 ---
 
@@ -98,7 +98,7 @@ Questions).
 
 ## 3. Interaction with RFC-0103
 
-RFC-0103 (Marker Aspects and Struct-Embedded Aspect Lists) covers a non-`marker` positive aspect named on
+RFC-0103 (Bodyless Aspect Declarations and Struct-Embedded Aspect Lists) covers a positive aspect named on
 a struct/enum's own declaration as a checked *obligation*, discharged by an ordinary `extend` block written
 elsewhere. That block may itself be a multi-aspect one under this RFC's own rules, with no special
 interaction beyond what's already stated in either RFC — the two features compose without needing to know
@@ -139,8 +139,9 @@ about each other.
 - RFC-0102 (Bodyless Extend Blocks for Marker Aspects and Negative Impls) — this RFC depends on it
   directly: the comma-separated, per-item-polarity aspect list (§5) is the same production, just with its
   bodyless-only restriction lifted for a real, shared body.
-- RFC-0103 (Marker Aspects and Struct-Embedded Aspect Lists) — sibling RFC this was split out of; covers a
-  separate, narrower feature (marker aspects, struct/enum-embedded lists) that doesn't depend on this one.
+- RFC-0103 (Bodyless Aspect Declarations and Struct-Embedded Aspect Lists) — sibling RFC this was split out
+  of; covers a separate, narrower feature (bodyless aspect declarations, struct/enum-embedded lists) that
+  doesn't depend on this one.
 - RFC-0098 (Surface Keyword Renames) — `extend Type: Aspect` grammar this RFC's multi-aspect body extends;
   not amended.
 - RFC-0060 (Aspect Impl Coherence) — the existing per-aspect completeness check (`infer_decl`) this RFC's
