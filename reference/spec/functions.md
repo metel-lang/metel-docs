@@ -1,8 +1,5 @@
 # Functions
 
-> *Planned for a future minor release (RFC-0098).* Mutable bindings use `var`, impl
-> blocks use `extend`, and standard-library visibility uses `public`.
-
 ```metel
 fun add(a: i64, b: i64) -> i64 {
     return a + b;

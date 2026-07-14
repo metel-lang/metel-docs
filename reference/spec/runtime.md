@@ -43,9 +43,6 @@ the `+` operator.
 
 ## Built-in Aspects
 
-> *Planned for a future minor release (RFC-0098).* Mutable references in signatures use
-> `&var`, and impl blocks in examples use `extend`.
-
 The following aspects are pre-implemented for built-in types:
 
 ### Display
@@ -213,7 +210,7 @@ Read-only process environment inspection.
 
 | Function     | Signature                       | Description                                   |
 |--------------|---------------------------------|-----------------------------------------------|
-| `var(name)`  | `(String) -> Perhaps<String>`   | The value of an environment variable, or `None` |
+| `get(name)`  | `(String) -> Perhaps<String>`   | The value of an environment variable, or `None` |
 | `vars()`     | `() -> EnvVar[]`                | All environment variables (`EnvVar { name, value }`) |
 
 ### std::fs

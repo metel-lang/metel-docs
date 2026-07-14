@@ -131,7 +131,3 @@ Type               → IDENTIFIER ( "<" TypeArgs ">" )?
 TypeArgs           → Type ( "," Type )*
 TypeList           → Type ( "," Type )*
 ```
-
-> *Planned for a future minor release (RFC-0098/RFC-0102/RFC-0103).* Impl blocks
-> rename to `extend`, mutable bindings rename to `var`, empty `extend` blocks may be
-> written with `;`, and empty aspect declarations may be written as `aspect Name;`.
