@@ -1,9 +1,11 @@
 # Declarations
 
-`pub` may be prefixed to any top-level `fun`, `struct`, `enum`, `aspect`, or `let`
+`public` may be prefixed to any top-level `fun`, `struct`, `enum`, `aspect`, or `let`
 declaration to mark it as accessible from other modules. See
-[Modules — Visibility](modules.md#visibility) for the full rules, including `pub let`
+[Modules — Visibility](modules.md#visibility) for the full rules, including `public let`
 (module-level exported values).
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `pub` → `public` for visibility keyword.
 
 ## Variables
 
@@ -30,20 +32,22 @@ All three forms require `let mut`.
 
 ```metel
 fun main() -> i64 {
-    let mut counter = 0;
+    var counter = 0;
     counter = counter + 1;
     counter += 1;
     return counter;
 }
 ```
 
-`let mut` bindings can be reassigned and also must be initialized at declaration. Compound assignment operators `+=`, `-=`, `*=`, `/=`, `%=` are supported.
+`var` bindings can be reassigned and also must be initialized at declaration. Compound assignment operators `+=`, `-=`, `*=`, `/=`, `%=` are supported.
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `let mut` → `var` for mutable bindings.
 
 ### Scoping and Shadowing
 
 Variables are lexically scoped. Each block `{ }` introduces a new scope. Inner scopes can shadow outer variables.
 
-`let` and `let mut` declarations are sequential — a binding is visible only from its declaration point to the end of its containing block.
+`let` and `var` declarations are sequential — a binding is visible only from its declaration point to the end of its containing block.
 
 `fun` declarations are hoisted to the top of their containing block. All `fun` declarations in a block are mutually visible to each other and to all other statements in that block, regardless of declaration order. This enables forward references and mutual recursion at any nesting level.
 
@@ -152,7 +156,7 @@ struct Point {
 }
 
 fun main() -> i64 {
-    let p = Point { x: 1.0, y: 2.0 };
+    let p = Point(x: 1.0, y: 2.0);
     let x = p.x;
     return x as i64;
 }
@@ -169,12 +173,14 @@ struct Point {
 fun main() -> i64 {
     let x = 1.0;
     let y = 2.0;
-    let p = Point { x, y };
+    let p = Point(x, y);
     return p.x as i64;
 }
 ```
 
 Shorthand and explicit fields may be mixed freely within one literal.
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0100-constructor-call-construction.md` (issue #276). Struct literal syntax changed from `Type { field: value }` to `Type(field: value)`.
 
 ### Methods
 
@@ -184,7 +190,7 @@ struct Point {
     y: f64,
 }
 
-impl Point {
+extend Point {
     fun distance(self, other: Point) -> f64 {
         let dx = self.x - other.x;
         let dy = self.y - other.y;
@@ -193,8 +199,8 @@ impl Point {
 }
 
 fun main() -> i64 {
-    let p = Point { x: 1.0, y: 2.0 };
-    let q = Point { x: 4.0, y: 6.0 };
+    let p = Point(x: 1.0, y: 2.0);
+    let q = Point(x: 4.0, y: 6.0);
     let d = p.distance(q);
     return d as i64;
 }
@@ -202,13 +208,15 @@ fun main() -> i64 {
 
 `self` refers to the receiver. Methods are called with dot syntax.
 
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `impl` → `extend` for impl blocks.
+
 ### Receiver Forms
 
 Methods may declare one of three receiver forms:
 
 - `self` — value receiver
 - `&self` — shared reference receiver
-- `&mut self` — mutable reference receiver
+- `&var self` — mutable reference receiver
 
 Value receivers follow ordinary Metel value semantics. Shared and mutable reference
 receivers operate on the original receiver storage and are the right forms for
@@ -220,7 +228,7 @@ struct Point {
     y: f64,
 }
 
-impl Point {
+extend Point {
     fun length(&self) -> f64 {
         self.x * self.x + self.y * self.y
     }
@@ -232,15 +240,15 @@ struct Counter {
     value: i64,
 }
 
-impl Counter {
-    fun increment(&mut self) {
+extend Counter {
+    fun increment(&var self) {
         self.value += 1;
     }
 }
 ```
 
-Calls requiring `&mut self` need a mutable addressable receiver or a `&mut T`
-reference. Calls requiring `&self` may use an addressable receiver or a `&T` / `&mut T`
+Calls requiring `&var self` need a mutable addressable receiver or a `&var T`
+reference. Calls requiring `&self` may use an addressable receiver or a `&T` / `&var T`
 reference (RFC-0067a — missed when that RFC integrated `*T`/`*mut T` → `&T`/`&mut T`
 elsewhere; caught while integrating this batch).
 
@@ -249,18 +257,20 @@ struct Counter {
     value: i64,
 }
 
-impl Counter {
-    fun increment(&mut self) {
+extend Counter {
+    fun increment(&var self) {
         self.value += 1;
     }
 }
 
 fun main() -> i64 {
-    let mut c = Counter { value: 1 };
+    var c = Counter(value: 1);
     c.increment();
     return c.value;
 }
 ```
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `&mut self` → `&var self` for mutable receivers.
 
 ### Generic Structs
 
@@ -281,6 +291,7 @@ fun main() -> i64 {
 ## Enums
 
 ```metel
+```metel
 enum Direction { North, South, East, West }
 
 enum Shape {
@@ -289,18 +300,20 @@ enum Shape {
 }
 
 fun main() -> i64 {
-    let dir = Direction::North;
-    let s = Shape::Circle { radius: 5.0 };
+    let dir = Direction.North;
+    let s = Shape.Circle(radius: 5.0);
     match dir {
-        Direction::North => s.radius as i64,
-        Direction::South => 0,
-        Direction::East => 0,
-        Direction::West => 0,
+        Direction.North => s.radius as i64,
+        Direction.South => 0,
+        Direction.East => 0,
+        Direction.West => 0,
     }
 }
 ```
 
 Variants may be unit (no data) or struct-like (named fields).
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0099-dot-separated-module-paths.md` (issue #275). Enum variant paths changed from `Type::Variant` to `Type.Variant`.
 
 ### Instantiation
 
@@ -313,16 +326,18 @@ enum Shape {
 }
 
 fun main() -> i64 {
-    let dir = Direction::North;
-    let s = Shape::Circle { radius: 5.0 };
+    let dir = Direction.North;
+    let s = Shape.Circle(radius: 5.0);
     match dir {
-        Direction::North => s.radius as i64,
-        Direction::South => 0,
-        Direction::East => 0,
-        Direction::West => 0,
+        Direction.North => s.radius as i64,
+        Direction.South => 0,
+        Direction.East => 0,
+        Direction.West => 0,
     }
 }
 ```
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0099-dot-separated-module-paths.md` (issue #275). Enum variant paths changed from `Type::Variant` to `Type.Variant`.
 
 ### Methods on Enums
 
@@ -369,7 +384,57 @@ fun main() -> i64 {
 }
 ```
 
-### Implementing a Aspect
+### Bodyless Aspect Declarations
+
+Aspects with no methods and no associated types may be declared without braces:
+
+```metel
+aspect Copy2;
+```
+
+This is pure sugar for `aspect Copy2 { }` and is legal only when the aspect declares zero methods and zero associated types. The bodyless spelling is a convenience for marker aspects (aspects with no methods at all).
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0103-marker-aspects-and-struct-embedded-aspect-lists.md` (issue #278). Bodyless aspect declarations: `aspect Name;`.
+
+### Struct and Enum Embedded Aspect Lists
+
+Struct and enum declarations may include a list of aspects directly after the type name:
+
+```metel
+struct Token: Copy2, Serializable, !Send {
+    value: String,
+}
+
+enum Color: Copy, Debug {
+    Red,
+    Green,
+    Blue,
+}
+```
+
+Negative items (prefixed with `!`) are fully satisfied by the list itself. Positive items declare a checked obligation that must be discharged by an `extend` block elsewhere in the module:
+
+```metel
+aspect Copy2;
+
+aspect Serializable {
+    fun serialize(&self) -> String;
+}
+
+struct Token: Copy2, Serializable, !Send {
+    value: String,
+}
+
+extend Token: Serializable {
+    fun serialize(&self) -> String { self.value }
+}
+```
+
+A positive item like `Serializable` is an obligation, not an implementation. The type must have a corresponding `extend Token: Serializable { ... }` block somewhere in the module. Forgetting to write that block is a compile error.
+
+Embedded aspect lists may include both positive and negative items, separated by commas. Each aspect name may appear at most once per list.
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0103-marker-aspects-and-struct-embedded-aspect-lists.md` (issue #278). Struct/enum embedded aspect lists: `struct Name: Aspects { ... }`. Positive items declare an obligation, not an implementation.
 
 ```metel
 struct Point {
@@ -381,7 +446,7 @@ aspect Printable {
     fun print(self);
 }
 
-impl Printable for Point {
+extend Point: Printable {
     fun print(self) {
         print("(");
         print(self.x.to_string());
@@ -392,23 +457,27 @@ impl Printable for Point {
 }
 
 fun main() {
-    let p = Point { x: 1.0, y: 2.0 };
+    let p = Point(x: 1.0, y: 2.0);
     p.print();
 }
 ```
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `impl Aspect for Type` → `extend Type: Aspect`.
 
 **Conditional impl blocks.** *Specified by RFC-0036.* An impl for a generic type may be conditional on its own type parameters satisfying additional bounds, written in a `where` clause after the target type (or inline, before the aspect name):
 
 ```metel
 struct Pair<A, B> { first: A, second: B }
 
-impl Printable for Pair<A, B> where A: Printable, B: Printable {
+extend<A: Printable, B: Printable> Pair<A, B>: Printable {
     fun print(self) { ... }
 }
 
-// equivalent, inline form:
-impl<A: Printable, B: Printable> Printable for Pair<A, B> { ... }
+// equivalent, where-clause form:
+extend Pair<A, B>: Printable where A: Printable, B: Printable { ... }
 ```
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `impl Aspect for Type` → `extend Type: Aspect`.
 
 `Pair<i64, String>` is `Printable`; `Pair<i64, SomeNonPrintableType>` is not — both remain constructable, since a struct's own unconditional bounds (above) and an impl's conditional bounds are checked independently. The compiler checks a conditional impl's bounds at every point the aspect is required — method call, bound check, impl selection — not at the impl's own declaration site:
 
@@ -434,28 +503,28 @@ fun print_sorted<T: Comparable + Printable>(list: SortedList<T>) {
 Negative bounds may appear in a conditional impl's `where` clause on the same terms as positive ones:
 
 ```metel
-impl<T: !Drop> BulkDrop for Container<T> { ... }
+extend<T: !Drop> Container<T>: BulkDrop { ... }
 ```
 
 **Coherence.** Two conditional impls of the same aspect for the same type are a coherence error (`T0015`) unless they are provably disjoint. Disjointness is established by **syntactic negation** only — one impl must carry an explicit negative bound that directly negates a positive bound in the other. The compiler performs no inference beyond this direct check:
 
 ```metel
 // Accepted -- T: !Copy directly negates T: Copy; provably disjoint
-impl<T: Copy>  Serialize for Wrapper<T> { ... }
-impl<T: !Copy> Serialize for Wrapper<T> { ... }
+extend<T: Copy> Wrapper<T>: Serialize { ... }
+extend<T: !Copy> Wrapper<T>: Serialize { ... }
 
 // error T0015 -- no direct negation between Clone and Display; not provably disjoint
-impl<T: Clone>   Serialize for Wrapper<T> { ... }
-impl<T: Display> Serialize for Wrapper<T> { ... }
+extend<T: Clone> Wrapper<T>: Serialize { ... }
+extend<T: Display> Wrapper<T>: Serialize { ... }
 ```
 
 A conditional impl and an unconditional impl for the same type constructor are also a coherence error — the unconditional impl already covers every instantiation the conditional one would. Conditional impls are subject to the same orphan rule as unconditional ones (above): the aspect or the type's outermost constructor must be local.
 
 > **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md` (issue #269). The orphan-rule check today only knows about named-type targets; it has no case yet for a bare-parameter target being vacuously non-local.
 
-**Bare-parameter blanket impls.** `impl<T: Bound> Aspect for T` — where the target is
+**Bare-parameter blanket impls.** `extend<T: Bound> T: Aspect` — where the target is
 the impl's own generic parameter rather than a named struct or enum wrapping it, e.g.
-`impl<T: Copy> Clone for T` — is a distinct case from every other example in this
+`extend<T: Copy> T: Clone` — is a distinct case from every other example in this
 section, which all target a genuine named type (`Pair<A, B>`, `Container<T>`,
 `Wrapper<T>`). A bare type parameter has no outermost type constructor for the orphan
 rule (below) to check — it isn't declared in any module, including the impl's own.
@@ -463,20 +532,20 @@ Target-locality is therefore **vacuously unsatisfiable** for this shape: such an
 is permitted only through the aspect side of the orphan rule, never the target side.
 
 ```metel
-// std::core — permitted: Clone is local to std::core
-impl<T: Copy> Clone for T { fun clone(self: &T) -> T { *self } }
+// std.core — permitted: Clone is local to std.core
+extend<T: Copy> T: Clone { fun clone(self: &T) -> T { *self } }
 
 // user module — permitted: MyAspect is local here
 aspect MyAspect { fun tag(self) -> String; }
-impl<T: Copy> MyAspect for T { fun tag(self) -> String { "copyable" } }
+extend<T: Copy> T: MyAspect { fun tag(self) -> String { "copyable" } }
 
 // user module — REJECTED (T0014): Display is foreign, and a bare-parameter
 // target can never be local, anywhere
-impl<T: Copy> Display for T { fun to_string(self) -> String { "?" } }
+extend<T: Copy> T: Display { fun to_string(self: -> String { "?" } }
 ```
 
 This confines any one aspect's bare-parameter blanket impl to a single module (its own
-declaring module, or `std::core` for a built-in aspect) — no separate overlap-detection
+declaring module, or `std.core` for a built-in aspect) — no separate overlap-detection
 mechanism is needed beyond the ordinary rule already stated above (two impls of the
 same aspect conflict when some instantiation satisfies both): a competing
 bare-parameter blanket from another module can never pass the orphan check in the
@@ -484,6 +553,8 @@ first place, and a concrete impl overlapping the blanket (e.g. a type implementi
 `Clone` directly while also being `Copy`) is caught by the existing concrete-vs-blanket
 overlap rule with no special case. See
 `internal/rfcs/3-integrated/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md`.
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `impl Aspect for Type` → `extend Type: Aspect`.
 
 **Worked example — interaction with equality-constrained bounds.** A conditional impl's `where` clause accepts the same equality-constrained bound form Associated Types (above) specifies for ordinary function bounds, since both are stored and checked as the same `Bound` structure:
 
@@ -505,12 +576,12 @@ This composes without any new mechanism: the conditional impl's bound-checking (
 
 Every `(aspect, type)` pair has at most one implementation visible to the program, independent of module load order. Two rules make this checkable without a whole-program scan.
 
-**Orphan rule.** `impl Aspect for Type` is permitted only when at least one of `Aspect` or `Type`'s outermost type constructor is declared in the same module as the impl. Built-in aspects and built-in types count as local to `std::core`.
+**Orphan rule.** `extend Type: Aspect` is permitted only when at least one of `Aspect` or `Type`'s outermost type constructor is declared in the same module as the impl. Built-in aspects and built-in types count as local to `std.core`.
 
 ```metel
-impl Display for MyStruct { ... }  // ok: MyStruct is local
-impl MyAspect for i64 { ... }      // ok: MyAspect is local
-impl Display for i64 { ... }       // ok only inside std::core: both are foreign elsewhere
+extend i64: Display { ... }  // ok: i64 is local (built-in)
+extend MyAspect: i64 { ... }      // ok: MyAspect is local
+extend Display: i64 { ... }       // ok only inside std.core: both are foreign elsewhere
 ```
 
 A violating impl is `T0014 — orphan implementation`. The orphan rule is what keeps coherence a local, per-module property: a module can only add impls it owns at least one half of, so no other module's impls need to be consulted to know whether a given impl is even legal.
@@ -531,11 +602,11 @@ A violating impl is `T0014 — orphan implementation`. The orphan rule is what k
 
 Arrays (`T[]`), tuples (`(A, B)`, …), and function types (`fun(A) -> B`) are **structural types** — built into the language rather than declared by a user, with no name that can serve as an impl target the ordinary way. For the orphan rule (above), structural type constructors are treated as belonging to `std::core`: a user module may write `impl Aspect for T[]` only when `Aspect` itself is local to that module.
 
-**Blanket impls for structural constructors.** `std::core` declares aspect impls for structural constructors using the conditional impl syntax (above):
+**Blanket impls for structural constructors.** `std.core` declares aspect impls for structural constructors using the conditional impl syntax (above):
 
 ```metel
-// std::core
-impl<T: Display> Display for T[] {
+// std.core
+extend<T: Display> T[]: Display {
     fun to_string(self: &T[]) -> String { ... }
 }
 ```
@@ -572,13 +643,13 @@ aspect Deref {
 
 struct Boxed { value: i64 }
 
-impl Deref for Boxed {
+extend Boxed: Deref {
     type Target = i64;
     fun deref(self: &Boxed) -> &i64 { &self.value }
 }
 ```
 
-Inside the aspect block, the bare name (`Target`) is sugar for `Self::Target`. A bound
+Inside the aspect block, the bare name (`Target`) is sugar for `Self.Target`. A bound
 may be declared on the associated type, constraining every impl:
 
 ```metel
@@ -588,20 +659,20 @@ aspect Collection {
 ```
 
 **Projection.** In a generic context where `T: Aspect`, the associated type is written
-`T::AssocType`:
+`T.AssocType`:
 
 ```metel
-fun deref_display<T: Deref>(x: &T) where T::Target: Display {
+fun deref_display<T: Deref>(x: &T) where T.Target: Display {
     println(x.deref());
 }
 ```
 
-`T::AssocType` is only valid when `T: Aspect` is in scope — writing it without that
+`T.AssocType` is only valid when `T: Aspect` is in scope — writing it without that
 bound is a compile error.
 
 **Equality constraints in bounds.** `Aspect<AssocType = ConcreteType>` asserts both that
 `T` implements `Aspect` and that its associated type equals a known type, pinning
-`T::AssocType` to `ConcreteType` at every use:
+`T.AssocType` to `ConcreteType` at every use:
 
 ```metel
 fun deref_to_i64<T: Deref<Target = i64>>(x: &T) -> &i64 {
@@ -620,8 +691,8 @@ matching the existing method-name-collision rule (Static Dispatch Only, below):
 aspect Deref { type Target; fun deref(self: &Self) -> &Target; }
 aspect Convert { type Target; fun convert(self: &Self) -> Target; }
 
-fun f<T: Deref + Convert>(x: &T) -> T::Target { ... }
-// error: T::Target is ambiguous — both Deref and Convert declare Target
+fun f<T: Deref + Convert>(x: &T) -> T.Target { ... }
+// error: T.Target is ambiguous — both Deref and Convert declare Target
 ```
 
 There's no dedicated disambiguation syntax for this — the equality constraint above
@@ -642,10 +713,10 @@ the bare-projection ambiguity only arises when a type needs naming abstractly wi
 going through a call, which the fresh-variable equality constraint already handles.
 
 **Associated type vs. a type parameter on the aspect.** Use an associated type when the
-implementing type determines exactly one output (`Deref::Target` — a type has one deref
+implementing type determines exactly one output (`Deref.Target` — a type has one deref
 target). Use a type parameter on the aspect itself when a type may implement it for
 multiple type arguments simultaneously (e.g. `From<i64>` and `From<String>` on the same
-type). Writing `impl Deref<i64> for X {}` and `impl Deref<String> for X {}` side by side
+type). Writing `extend Deref<i64> for X {}` and `extend Deref<String> for X {}` side by side
 would be the wrong model for `Deref` specifically — one type has one dereference target,
 not several.
 
@@ -654,6 +725,8 @@ signature references the associated type directly (see Static Dispatch Only, bel
 `dyn Aspect`, deferred to a future release). `Deref` above is *not* object-safe — `deref`
 returns `&Target`, which varies per implementor, and a vtable entry cannot encode a
 type that differs per implementation.
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `impl Aspect for Type` → `extend Type: Aspect`.
 
 > **Not yet decided:** whether a negative bound on a projection (`where T::Target:
 > !Copy`) is meaningful — neither this RFC nor RFC-0072 addresses bounds on projections
@@ -665,7 +738,7 @@ type that differs per implementation.
 
 > *Since v0.7.0.*
 
-An aspect method may supply a default body. An `impl` block may omit any method that has a default; the aspect's implementation is inherited automatically.
+An aspect method may supply a default body. An `extend` block may omit any method that has a default; the aspect's implementation is inherited automatically.
 
 ```metel
 aspect Greet {
@@ -680,7 +753,7 @@ struct Person {
     name: String,
 }
 
-impl Greet for Person {
+extend Person: Greet {
     fun name(self) -> String {
         return self.name;
     }
@@ -688,16 +761,18 @@ impl Greet for Person {
 }
 
 fun main() {
-    let p = Person { name: "Ada" };
+    let p = Person(name: "Ada");
     println(p.greet());   // Hello, Ada
 }
 ```
 
-A method without a default body must be provided by every `impl` block; omitting it is a compile-time error.
+A method without a default body must be provided by every `extend` block; omitting it is a compile-time error.
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `impl` → `extend` for impl blocks.
 
 ### The Self Type
 
-`Self` inside an aspect or an `impl` block refers to the concrete implementing type.
+`Self` inside an aspect or an `extend` block refers to the concrete implementing type.
 
 In an aspect definition, `Self` is the implementing type at the call site:
 
@@ -707,7 +782,7 @@ aspect Comparable {
 }
 ```
 
-In a struct or enum `impl` block, `Self` is an alias for the type being implemented:
+In a struct or enum `extend` block, `Self` is an alias for the type being implemented:
 
 > *Since v0.7.0.*
 
@@ -716,7 +791,7 @@ struct Point {
     x: i64,
 }
 
-impl Point {
+extend Point {
     fun clone(self) -> Self {
         self
     }
@@ -726,6 +801,8 @@ impl Point {
     }
 }
 ```
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `impl` → `extend` for impl blocks.
 
 ### Aspect Bounds on Function Type Parameters
 
@@ -857,12 +934,12 @@ fields still drop normally through the ordinary per-field chain.
 ### Negative Impls
 
 A library author declares that a type **definitively** does not implement an aspect
-with `impl !Aspect for Type {}` — body always empty, since a negative impl is a
+with `extend Type: !Aspect;` — body always empty, since a negative impl is a
 declaration of non-implementation, not a definition of behavior:
 
 ```metel
-impl<T, brand 'b> !Send for Rc<T, 'b> {}
-impl<T, brand 'b> !Sync for Rc<T, 'b> {}
+extend<T, brand 'b> Rc<T, 'b>: !Send;
+extend<T, brand 'b> Rc<T, 'b>: !Sync;
 ```
 
 **Why this needs its own mechanism, not just the absence of a positive impl.** A
@@ -873,15 +950,17 @@ blanket that would otherwise apply: `Rc<T>: !Send` holds for all `T`, regardless
 a blanket impl elsewhere says.
 
 **Finality.** No positive impl may coexist with a negative impl for the same type and
-aspect — a concrete `impl Aspect for Type` alongside `impl !Aspect for Type` is a
+aspect — a concrete `extend Type: Aspect` alongside `extend Type: !Aspect` is a
 coherence error. A negative impl overriding a *blanket* positive impl is the intended,
-allowed case; a negative impl does not propagate to subtypes or supertypes (`impl !Send
-for Rc<T>` says nothing about `Arc<T>`).
+allowed case; a negative impl does not propagate to subtypes or supertypes (`extend Rc<T>: !Send`
+says nothing about `Arc<T>`).
 
 **Orphan rules apply the same way as positive impls** (Aspect Implementation Coherence,
 above) — a negative impl is permitted only when the aspect or the type is local to
 the current module or stdlib. A positive and a negative impl for the same concrete
 type is `T0015`, the same coherence error two conflicting positive impls produce.
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0102-bodyless-extend-blocks-for-marker-aspects-and-negative-impls.md` (issue #277). Bodyless extend blocks: `extend Type: !Aspect;`.
 
 ---
 
@@ -912,8 +991,8 @@ struct Cache<K, V> where K: Hashable + Comparable { entries: Pair<K, V>[] }
 
 **Bound propagation.** A struct's bounds are automatically available — without re-declaration — in:
 
-- `impl` blocks on the same struct: `impl SortedList<T>` has `T: Comparable` in scope
-- `impl AspectName for Struct<T>` blocks: the struct's bounds are inherited
+- `extend` blocks on the same struct: `extend SortedList<T>` has `T: Comparable` in scope
+- `extend Struct<T>: AspectName` blocks: the struct's bounds are inherited
 - Match arm bodies when matching a value of the bounded struct or enum type
 
 The bound is an invariant of the type, not of the binding site. It propagates wherever a value of that type is used. See Conditional Impl Blocks, above, for how this interacts with an aspect impl's own additional bounds.

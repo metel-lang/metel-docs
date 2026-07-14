@@ -14,7 +14,7 @@ Parameter type annotations are optional when types can be inferred from context.
 
 ## Associated Functions
 
-`impl` blocks may contain functions with no `self` parameter. These are called on the type via `::` syntax and serve as the canonical constructor pattern:
+`extend` blocks may contain functions with no `self` parameter. These are called on the type via `.` syntax and serve as the canonical constructor pattern:
 
 ```metel
 struct Point {
@@ -22,17 +22,19 @@ struct Point {
     y: f64,
 }
 
-impl Point {
+extend Point {
     fun new(x: f64, y: f64) -> Point {
-        return Point { x: x, y: y };
+        return Point(x: x, y: y);
     }
 }
 
 fun main() -> i64 {
-    let p = Point::new(1.0, 2.0);
+    let p = Point.new(1.0, 2.0);
     return p.x as i64;
 }
 ```
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `impl` → `extend` for impl blocks. `Type::method()` → `Type.method()` for associated functions.
 
 ## First-Class Functions
 
@@ -92,17 +94,45 @@ fun main() -> i64 {
 }
 ```
 
-## Turbofish
+## Keyword Arguments
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0100-constructor-call-construction.md` (issue #276). Function calls support keyword arguments: `fun(arg1: value1, arg2: value2)`.
+
+Function calls may specify arguments by name using keyword argument syntax:
+
+```metel
+fun connect(host: String, port: i64, timeout: i64) -> Connection { ... }
+
+connect(host: "db.local", port: 5432, timeout: 30);
+connect("db.local", port: 5432, timeout: 30);   // positional + keyword mix
+```
+
+Keyword arguments must follow positional arguments in the call. The order of keyword arguments does not matter; they are matched to parameter names.
+
+Keyword arguments apply uniformly to all function calls, including struct construction:
+
+```metel
+struct Point {
+    x: f64,
+    y: f64,
+}
+
+let p = Point(x: 1.0, y: 2.0);
+```
+
+Parameter names become part of a function's public API surface. When keyword arguments are used, the compiler validates that each named argument corresponds to a declared parameter.
+
+Note: Type ascription cannot be used as a positional argument when keyword arguments are involved. `f(x: SomeType)` is always interpreted as a keyword argument named `x`, not as a positional argument `x` with type `SomeType`.
 
 > **Availability:** Since v0.8.0.
 
-When a generic function's type parameters cannot be inferred from the arguments, they can be specified explicitly with turbofish syntax: `name::<T, U>(args)`.
+When a generic function's type parameters cannot be inferred from the arguments, they can be specified explicitly with turbofish syntax: `name.<T, U>(args)`.
 
 ```metel
 fun identity<T>(x: T) -> T { x }
 
 fun main() -> i64 {
-    let x = identity::<i64>(42);
+    let x = identity.<i64>(42);
     return x;
 }
 ```
@@ -113,15 +143,17 @@ Turbofish is most useful when two or more independent type parameters must be pi
 fun zip<A, B>(a: A[], b: B[]) -> (A, B)[] { /* ... */ }
 
 fun main() {
-    let pairs = zip::<i64, String>([1, 2], ["a", "b"]);
+    let pairs = zip.<i64, String>([1, 2], ["a", "b"]);
 }
 ```
 
 Type ascription (`: T`) remains available for annotating the result type. Turbofish and ascription can be used together:
 
 ```metel
-let result = parse::<i64>("42") : Perhaps<i64>;
+let result = parse.<i64>("42") : Perhaps<i64>;
 ```
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0099-dot-separated-module-paths.md` (issue #275). Turbofish changed from `::<T>` to `.<T>`.
 
 ## The ? Operator
 
@@ -134,27 +166,29 @@ Inside a function returning `Result<T, E>`, `?` propagates errors early:
 ```metel
 fun parse_int(s: String) -> Result<i64, String> {
     if (s == "21") {
-        return Result::Ok { value: 21 };
+        return Result.Ok(value: 21);
     }
-    return Result::Err { error: "not a number" };
+    return Result.Err(error: "not a number");
 }
 
 fun parse_and_double(s: String) -> Result<i64, String> {
     let n = parse_int(s)?;   // returns Err early if parse_int fails
-    return Result::Ok { value: n * 2 };
+    return Result.Ok(value: n * 2);
 }
 
 fun main() -> i64 {
     match parse_and_double("21") {
-        Result::Ok { value } => value,
-        Result::Err { error } => 0,
+        Result.Ok(value) => value,
+        Result.Err(error) => 0,
     }
 }
 ```
 
-`?` desugars to: if the expression is `Err(e)`, return `Err(E2::from(e))` immediately (where `E2` is the enclosing function's error type); otherwise unwrap to the `Ok` value.
+`?` desugars to: if the expression is `Err(e)`, return `Err(E2.from(e))` immediately (where `E2` is the enclosing function's error type); otherwise unwrap to the `Ok` value.
 
-The inner expression's error type `E1` and the function's return error type `E2` must satisfy `E2: From<E1>`. When `E1 == E2` no conversion is performed. When they differ, `From::from` is called automatically on the error value before re-wrapping in `Err`.
+The inner expression's error type `E1` and the function's return error type `E2` must satisfy `E2: From<E1>`. When `E1 == E2` no conversion is performed. When they differ, `From.from` is called automatically on the error value before re-wrapping in `Err`.
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0099-dot-separated-module-paths.md` (issue #275). Enum variant paths changed from `Type::Variant` to `Type.Variant`.
 
 > **Not implemented: `?` on `Perhaps<T>`.** Only `Result<T, E>` is supported today.
 > `infer_propagate_error`, the typechecker pass that handles `?`, unconditionally
@@ -171,29 +205,31 @@ Standard library declarations may be marked `native`, binding them to an
 implementation provided by the host interpreter instead of a Metel body:
 
 ```metel
-// from std::core — not writable in user code
-native(@std.core.println) pub fun println<T>(x: T);
-native(@std.core.clock)   pub fun clock() -> i64;
+// from std.core — not writable in user code
+native(@std.core.println) public fun println<T>(x: T);
+native(@std.core.clock)   public fun clock() -> i64;
 ```
 
 A native declaration has no body — it ends with `;` instead of a block. The
 `@`-path inside the parentheses is the binding key that selects the host
-implementation. The form is also valid on methods inside `impl` blocks; for
-example, the primitive `Display` implementations in `std::core` are declared
+implementation. The form is also valid on methods inside `extend` blocks; for
+example, the primitive `Display` implementations in `std.core` are declared
 this way:
 
 ```metel
-impl Display for i64 {
+extend i64: Display {
     native(@std.core.to_string) fun to_string(&self) -> String;
 }
 ```
 
 **`native` is reserved for the standard library.** Using it in any module
 outside the `std` namespace is a compile error, and user projects cannot place
-modules under `std::` (see [Modules](modules.md)). From the caller's side,
+modules under `std` (see [Modules](modules.md)). From the caller's side,
 native functions are indistinguishable from ordinary functions: they are
 imported, typechecked, and called exactly like any other declaration — the
 binding key is an implementation detail of the standard library's source.
 
 Native declarations must annotate every parameter type; an omitted return
 type means the function returns `()`.
+
+> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `pub` → `public` for visibility keyword. `impl` → `extend` for impl blocks.
