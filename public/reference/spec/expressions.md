@@ -80,8 +80,8 @@ fun main() -> i64 {
 | Wildcard | `_` | anything, binds nothing |
 | Binding | `n` | anything, binds to `n` |
 | Literal | `0`, `"hi"`, `true`, `None` | exact value |
-| Enum variant | `Direction::North` | unit variant |
-| Enum with fields | `Shape::Circle { radius }` | variant, binds fields |
+| Enum variant | `Direction.North` | unit variant |
+| Enum with fields | `Shape.Circle { radius }` | variant, binds fields |
 | Tuple | `(a, b)` | tuple, binds elements |
 | Guard | `n if n < 0` | binding + boolean condition |
 
@@ -95,13 +95,13 @@ enum Shape {
 }
 
 fun main() -> i64 {
-    let shape = Shape::Rectangle { width: 4.0, height: 2.0 };
+    let shape = Shape.Rectangle(width: 4.0, height: 2.0);
     let x = -3;
     let point: (i64, i64) = (0, 7);
 
     let a = match shape {
-        Shape::Circle { radius } => radius as i64,
-        Shape::Rectangle { width, height } => width as i64,
+        Shape.Circle { radius } => radius as i64,
+        Shape.Rectangle { width, height } => width as i64,
     };
 
     let b = match x {
@@ -252,8 +252,6 @@ fun main() -> i64 {
 }
 ```
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `let mut` → `var` for mutable bindings. `&mut self` → `&var self` for mutable receivers.
-
 ### References
 
 > **Availability:** Implemented 2026-07-11 (RFC-0067a) — see
@@ -308,8 +306,6 @@ fun main() -> i64 {
     return p.value;   // auto-deref field read
 }
 ```
-
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `&mut` → `&var` for mutable references. `impl` → `extend` for impl blocks. `let mut` → `var` for mutable bindings.
 
 Function references (`&() -> T` and `&mut () -> T`) are callable directly, the same way:
 
@@ -393,7 +389,7 @@ fun pick(ok: boolean) -> i64 {
 }
 
 fun compute() -> i64 {
-    let mut i = 0;
+    var i = 0;
     loop {
         i = i + 1;
         if (i == 5) {
@@ -434,5 +430,93 @@ fun returns_value() -> i64 {
 fun main() -> i64 {
     returns_unit();
     return returns_value();
+}
+```
+
+---
+
+## Cross-Feature Examples
+
+### Example: Modern Metel Expression Syntax
+
+```metel
+// RFC-0098: var bindings and &var references
+public struct DataStore {
+    values: i64[],
+}
+
+extend DataStore {
+    fun add(&var self, value: i64) {
+        self.values.push(value);
+    }
+}
+
+fun main() -> i64 {
+    var store = DataStore(values: [1, 2, 3]);
+    
+    // RFC-0098: &var references
+    let p: &var DataStore = &var store;
+    p.add(4);
+    
+    // RFC-0100: Keyword arguments
+    let result = array_len(store.values);
+    return result;
+}
+```
+
+### Example: Pattern Matching with Modern Syntax
+
+```metel
+public enum Shape {
+    Circle { radius: f64 },
+    Rectangle { width: f64, height: f64 },
+}
+
+extend Shape {
+    fun area(self) -> f64 {
+        match self {
+            Shape.Circle { radius } => 3.14159 * radius * radius,
+            Shape.Rectangle { width, height } => width * height,
+        }
+    }
+}
+
+fun main() -> i64 {
+    // RFC-0100: Keyword arguments in construction
+    let circle = Shape.Circle(radius: 5.0);
+    let rect = Shape.Rectangle(width: 4.0, height: 3.0);
+    
+    let total_area = circle.area() + rect.area();
+    return total_area as i64;
+}
+```
+
+### Example: Method Calls and Associated Functions
+
+```metel
+public struct Point {
+    x: f64,
+    y: f64,
+}
+
+extend Point {
+    fun new(x: f64, y: f64) -> Point {
+        return Point(x: x, y: y);
+    }
+    
+    fun distance(self, other: Point) -> f64 {
+        let dx = self.x - other.x;
+        let dy = self.y - other.y;
+        return (dx * dx + dy * dy).sqrt();
+    }
+}
+
+fun main() -> i64 {
+    // RFC-0098 & RFC-0099: Associated function calls with dot syntax
+    let p1 = Point.new(0.0, 0.0);
+    let p2 = Point.new(3.0, 4.0);
+    
+    let dist = p1.distance(p2);
+    return dist as i64;  // 5
 }
 ```

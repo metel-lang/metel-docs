@@ -12,7 +12,7 @@ The root file passed to the toolchain is the root module:
 metel src/main.mtl
 ```
 
-In that example, `root::` refers to `src/main.mtl`.
+In that example, `root.` refers to `src/main.mtl`.
 
 ## File-to-Module Mapping
 
@@ -36,8 +36,6 @@ src/
 ```
 
 `parser.mtl` is the facade. Files in `parser/` form the namespace. There is no `name/mod.mtl` convention.
-
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0099-dot-separated-module-paths.md` (issue #275). Path separator changed from `::` to `.`. Disambiguation is resolved at name-resolution time, not grammar time.
 
 ## File Header Ordering
 
@@ -70,7 +68,7 @@ paths may not begin with `std` — a module file at `std.mtl` or anywhere under
 `std/` in the project tree is a compile error:
 
 ```
-error: module path `std::…` is reserved for the standard library
+error: module path `std.` is reserved for the standard library
 ```
 
 `std` is also a reserved keyword and cannot appear as an identifier. Both
@@ -260,3 +258,164 @@ The module graph is built from `import` declarations:
 ## Single-File Compatibility
 
 A `.mtl` file with no `import` or `export` declarations is a complete program. Existing single-file programs remain valid without modification.
+
+---
+
+## Cross-Feature Module Examples
+
+### Example: Modern Module Structure with All RFCs
+
+```metel
+// src/main.mtl
+import parser.{Ast, Token};
+import std.math;
+
+fun main() -> i64 {
+    // RFC-0100: Keyword arguments
+    let token = Token(kind: 0, value: "42");
+    
+    // RFC-0099: Dot-separated paths
+    let ast = parser.Ast(tokens: [token]);
+    
+    // RFC-0099: Associated function calls
+    let result = ast.parse();
+    
+    return result;
+}
+```
+
+```metel
+// src/parser.mtl (facade)
+export ast.{Ast, parse};
+export lexer.Token;
+
+aspect Copy2;
+
+public struct Ast {
+    tokens: Token[],
+}
+
+extend Ast: Copy2;
+
+extend Ast {
+    fun new(tokens: Token[]) -> Ast {
+        return Ast(tokens: tokens);
+    }
+    
+    fun parse(self) -> i64 {
+        return self.tokens.len();
+    }
+}
+```
+
+```metel
+// src/parser/ast.mtl
+import super.lexer.Token;
+
+public struct Ast {
+    public tokens: Token[],
+}
+
+extend Ast {
+    fun new(tokens: Token[]) -> Ast {
+        return Ast(tokens: tokens);
+    }
+    
+    fun parse(self) -> i64 {
+        return self.tokens.len();
+    }
+}
+```
+
+```metel
+// src/lexer.mtl
+public struct Token {
+    public kind: i64,
+    value: String,
+}
+```
+
+### Example: Embedded Aspect Lists in Modules
+
+```metel
+// src/types.mtl
+aspect Copy2;
+aspect Serializable;
+
+// RFC-0103: Embedded aspect lists
+public struct Config: Copy2, Serializable {
+    public name: String,
+    public port: i64,
+}
+
+extend Config: Serializable {
+    fun serialize(&self) -> String {
+        return self.name + ":" + self.port.to_string();
+    }
+}
+```
+
+```metel
+// src/main.mtl
+import types.Config;
+
+fun main() -> i64 {
+    // RFC-0100: Keyword arguments
+    let config = Config(name: "localhost", port: 8080);
+    println(config.serialize());
+    return 0;
+}
+```
+
+### Example: Multi-Aspect Lists and Negative Impls
+
+```metel
+// src/models.mtl
+aspect Copy2;
+aspect Sendable;
+aspect Debug;
+
+// RFC-0102: Multi-aspect bodyless extend
+extend MyType: Copy2, Sendable, !Debug;
+
+// RFC-0103: Embedded lists work the same way
+public struct Data: Copy2, Sendable, !Debug {
+    id: i64,
+}
+```
+
+### Example: Module System with Public Visibility
+
+```metel
+// src/network.mtl
+public struct Connection {
+    public host: String,
+    public port: i64,
+    timeout: i64,  // private field
+}
+
+extend Connection {
+    public fun connect(host: String, port: i64, timeout: i64) -> Connection {
+        return Connection(host: host, port: port, timeout: timeout);
+    }
+    
+    public fun is_connected(&self) -> boolean {
+        return self.timeout > 0;
+    }
+}
+```
+
+```metel
+// src/main.mtl
+import network.Connection;
+
+fun main() -> i64 {
+    // RFC-0100: Keyword arguments in constructor
+    let conn = Connection.connect(host: "localhost", port: 8080, timeout: 30);
+    
+    if (conn.is_connected()) {
+        return 1;
+    }
+    return 0;
+}
+```

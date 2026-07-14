@@ -5,8 +5,6 @@ declaration to mark it as accessible from other modules. See
 [Modules — Visibility](modules.md#visibility) for the full rules, including `public let`
 (module-level exported values).
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `pub` → `public` for visibility keyword.
-
 ## Variables
 
 ### Immutable Bindings
@@ -162,26 +160,6 @@ fun main() -> i64 {
 }
 ```
 
-When a local variable has the same name as a field, the `: value` part can be omitted (**shorthand field init**):
-
-```metel
-struct Point {
-    x: f64,
-    y: f64,
-}
-
-fun main() -> i64 {
-    let x = 1.0;
-    let y = 2.0;
-    let p = Point(x, y);
-    return p.x as i64;
-}
-```
-
-Shorthand and explicit fields may be mixed freely within one literal.
-
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0100-constructor-call-construction.md` (issue #276). Struct literal syntax changed from `Type { field: value }` to `Type(field: value)`.
-
 ### Methods
 
 ```metel
@@ -207,8 +185,6 @@ fun main() -> i64 {
 ```
 
 `self` refers to the receiver. Methods are called with dot syntax.
-
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `impl` → `extend` for impl blocks.
 
 ### Receiver Forms
 
@@ -281,7 +257,7 @@ struct Pair<A, B> {
 }
 
 fun main() -> i64 {
-    let p = Pair { first: 1, second: true };
+    let p = Pair(first: 1, second: true);
     return p.first;
 }
 ```
@@ -313,8 +289,6 @@ fun main() -> i64 {
 
 Variants may be unit (no data) or struct-like (named fields).
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0099-dot-separated-module-paths.md` (issue #275). Enum variant paths changed from `Type::Variant` to `Type.Variant`.
-
 ### Instantiation
 
 ```metel
@@ -337,11 +311,9 @@ fun main() -> i64 {
 }
 ```
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0099-dot-separated-module-paths.md` (issue #275). Enum variant paths changed from `Type::Variant` to `Type.Variant`.
-
 ### Methods on Enums
 
-`impl` blocks on enums follow the same syntax as structs:
+`extend` blocks on enums follow the same syntax as structs:
 
 ```metel
 enum Shape {
@@ -349,17 +321,17 @@ enum Shape {
     Rectangle { width: f64, height: f64 },
 }
 
-impl Shape {
+extend Shape {
     fun area(self) -> f64 {
         match self {
-            Shape::Circle { radius } => 3.14159 * radius * radius,
-            Shape::Rectangle { width, height } => width * height,
+            Shape.Circle { radius } => 3.14159 * radius * radius,
+            Shape.Rectangle { width, height } => width * height,
         }
     }
 }
 
 fun main() -> i64 {
-    let s = Shape::Circle { radius: 5.0 };
+    let s = Shape.Circle(radius: 5.0);
     return s.area() as i64;
 }
 ```
@@ -394,8 +366,6 @@ aspect Copy2;
 
 This is pure sugar for `aspect Copy2 { }` and is legal only when the aspect declares zero methods and zero associated types. The bodyless spelling is a convenience for marker aspects (aspects with no methods at all).
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0103-marker-aspects-and-struct-embedded-aspect-lists.md` (issue #278). Bodyless aspect declarations: `aspect Name;`.
-
 ### Struct and Enum Embedded Aspect Lists
 
 Struct and enum declarations may include a list of aspects directly after the type name:
@@ -413,56 +383,6 @@ enum Color: Copy, Debug {
 ```
 
 Negative items (prefixed with `!`) are fully satisfied by the list itself. Positive items declare a checked obligation that must be discharged by an `extend` block elsewhere in the module:
-
-```metel
-aspect Copy2;
-
-aspect Serializable {
-    fun serialize(&self) -> String;
-}
-
-struct Token: Copy2, Serializable, !Send {
-    value: String,
-}
-
-extend Token: Serializable {
-    fun serialize(&self) -> String { self.value }
-}
-```
-
-A positive item like `Serializable` is an obligation, not an implementation. The type must have a corresponding `extend Token: Serializable { ... }` block somewhere in the module. Forgetting to write that block is a compile error.
-
-Embedded aspect lists may include both positive and negative items, separated by commas. Each aspect name may appear at most once per list.
-
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0103-marker-aspects-and-struct-embedded-aspect-lists.md` (issue #278). Struct/enum embedded aspect lists: `struct Name: Aspects { ... }`. Positive items declare an obligation, not an implementation.
-
-```metel
-struct Point {
-    x: f64,
-    y: f64,
-}
-
-aspect Printable {
-    fun print(self);
-}
-
-extend Point: Printable {
-    fun print(self) {
-        print("(");
-        print(self.x.to_string());
-        print(", ");
-        print(self.y.to_string());
-        println(")");
-    }
-}
-
-fun main() {
-    let p = Point(x: 1.0, y: 2.0);
-    p.print();
-}
-```
-
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `impl Aspect for Type` → `extend Type: Aspect`.
 
 **Conditional impl blocks.** *Specified by RFC-0036.* An impl for a generic type may be conditional on its own type parameters satisfying additional bounds, written in a `where` clause after the target type (or inline, before the aspect name):
 
@@ -563,7 +483,7 @@ aspect Container { type Item: Display; fun get(self) -> Item; }
 
 struct Wrapper<T> { inner: T }
 
-impl<T: Container<Item = i64>> Printable for Wrapper<T> {
+extend<T: Container<Item = i64>> Wrapper<T>: Printable {
     fun print(self) { println(self.inner.get().to_string()); }
 }
 ```
@@ -571,8 +491,6 @@ impl<T: Container<Item = i64>> Printable for Wrapper<T> {
 This composes without any new mechanism: the conditional impl's bound-checking (this section) and the equality-constraint-checking Associated Types already specifies are the same call-site check, run once per bound in the `where` clause, regardless of which kind of aspect the bound names.
 
 ### Aspect Implementation Coherence
-
-> **Mostly implemented** — see `internal/rfcs/3-integrated/rfc-0060-aspect-impl-coherence.md`. The orphan rule, concrete-impl overlap detection, blanket-vs-concrete overlap detection, blanket-impl-aware negative-bound discharge, and negative-impl priority over a blanket positive impl are all implemented and enforced (issues #238, #243, #264, #244). Auto-impl aspects (below) remain unimplemented — no aspect can yet opt into auto-impl (blocked on RFC-0080/RFC-0096).
 
 Every `(aspect, type)` pair has at most one implementation visible to the program, independent of module load order. Two rules make this checkable without a whole-program scan.
 
@@ -586,11 +504,11 @@ extend Display: i64 { ... }       // ok only inside std.core: both are foreign e
 
 A violating impl is `T0014 — orphan implementation`. The orphan rule is what keeps coherence a local, per-module property: a module can only add impls it owns at least one half of, so no other module's impls need to be consulted to know whether a given impl is even legal.
 
-**Overlap detection.** Two impls of the same aspect conflict when some concrete type instantiation would satisfy both. `impl Display for List<i64>` and `impl Display for List<String>` don't conflict — disjoint element types — but registering either one twice does. A conflict is `T0015 — conflicting implementation`, reported at both impl spans. Combined with the orphan rule, an overlap can only arise within a single module or between a module and `std::core`, so this check is local too.
+**Overlap detection.** Two impls of the same aspect conflict when some concrete type instantiation would satisfy both. `extend Display for List<i64>` and `extend Display for List<String>` don't conflict — disjoint element types — but registering either one twice does. A conflict is `T0015 — conflicting implementation`, reported at both impl spans. Combined with the orphan rule, an overlap can only arise within a single module or between a module and `std::core`, so this check is local too.
 
-**Closed-world assumption.** The set of impls in a program is fixed at compile time — nothing visible at compilation can add an impl later. This is what makes Negative Bounds, below, dischargeable from absence alone: `T: !Aspect` holds whenever no impl, concrete or blanket, applies to `T`, without requiring an explicit negative impl for every excluded type. A blanket `impl<T: Foo> Bar for T` is expanded when checking applicability — `T: !Bar` is provable only once no applicable blanket covers `T` either.
+**Closed-world assumption.** The set of impls in a program is fixed at compile time — nothing visible at compilation can add an impl later. This is what makes Negative Bounds, below, dischargeable from absence alone: `T: !Aspect` holds whenever no impl, concrete or blanket, applies to `T`, without requiring an explicit negative impl for every excluded type. A blanket `extend<T: Foo> T: Bar` is expanded when checking applicability — `T: !Bar` is provable only once no applicable blanket covers `T` either.
 
-**Auto-impl aspects.** A marker aspect (no methods) may be an auto-impl aspect: the compiler derives an implementation for any type whose field types (all of them, for a struct; all of them in every variant, for an enum) also implement the aspect, with no explicit `impl` required. `Send`/`Sync` are intended auto-impl aspects once `internal/rfcs/1-under-review/rfc-0080-stdlib-aspects.md` (currently under review, not yet accepted) settles — an auto-impl is an ordinary positive impl for coherence purposes: overlap detection and negative-impl override both apply to it the same as an explicit one. The surface syntax an aspect declaration uses to opt into auto-impl is deferred to the derive-registration mechanism (RFC-0093, draft).
+**Auto-impl aspects.** A marker aspect (no methods) may be an auto-impl aspect: the compiler derives an implementation for any type whose field types (all of them, for a struct; all of them in every variant, for an enum) also implement the aspect, with no explicit `extend` required. `Send`/`Sync` are intended auto-impl aspects once `internal/rfcs/1-under-review/rfc-0080-stdlib-aspects.md` (currently under review, not yet accepted) settles — an auto-impl is an ordinary positive impl for coherence purposes: overlap detection and negative-impl override both apply to it the same as an explicit one. The surface syntax an aspect declaration uses to opt into auto-impl is deferred to the derive-registration mechanism (RFC-0093, draft).
 
 **Negative impl priority.** See Negative Impls, below, for the mechanism itself; the priority order coherence establishes is: an explicit negative impl beats an auto-impl or blanket positive impl for the same type, but an explicit positive impl and an explicit negative impl for the same concrete type is itself a `T0015` coherence error, not a priority question.
 
@@ -600,7 +518,7 @@ A violating impl is `T0014 — orphan implementation`. The orphan rule is what k
 
 > **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0061-structural-aspect-bounds.md` (issue #245). Independent review while integrating this RFC found that today, any impl targeting a structural type (`T[]`, tuples, `fun` types) — with or without its own generics — fails immediately with an internal `generic impl blocks not yet supported` error, and array values are separately blocked from aspect-based method dispatch by a hardcoded intrinsic gate (only `.len()` is recognized on an array receiver). Neither gap is specific to this RFC's own content; both are groundwork issue #245 must fix before any of the behavior below can work.
 
-Arrays (`T[]`), tuples (`(A, B)`, …), and function types (`fun(A) -> B`) are **structural types** — built into the language rather than declared by a user, with no name that can serve as an impl target the ordinary way. For the orphan rule (above), structural type constructors are treated as belonging to `std::core`: a user module may write `impl Aspect for T[]` only when `Aspect` itself is local to that module.
+Arrays (`T[]`), tuples (`(A, B)`, …), and function types (`fun(A) -> B`) are **structural types** — built into the language rather than declared by a user, with no name that can serve as an impl target the ordinary way. For the orphan rule (above), structural type constructors are treated as belonging to `std.core`: a user module may write `extend T[]: Aspect` only when `Aspect` itself is local to that module.
 
 **Blanket impls for structural constructors.** `std.core` declares aspect impls for structural constructors using the conditional impl syntax (above):
 
@@ -1010,3 +928,243 @@ like `value.method()` is rejected with `T0013` rather than resolved by declarati
 `dyn Aspect` (runtime-dispatched existential types with vtable-based dispatch) is **not part of the language** in this version. Dynamic dispatch is specified by RFC-0038 and will be introduced in a future release. Until then, all polymorphism must go through generic type parameters with aspect bounds.
 
 Aspect objects (`dyn Aspect`) are not part of the language. All polymorphism is via generics (static dispatch).
+
+---
+
+## Cross-Feature Examples
+
+### Example: Modern Metel Syntax with All Recent RFCs
+
+```metel
+// RFC-0098: public/var/extend keywords
+public struct Token {
+    public kind: i64,
+    value: String,
+}
+
+// RFC-0103: Bodyless aspect declarations
+aspect Copy2;
+aspect Serializable;
+aspect Displayable;
+
+// RFC-0103: Embedded aspect lists with obligations
+public struct Request: Copy2, Serializable, Displayable {
+    public method: String,
+    public url: String,
+}
+
+// RFC-0098: extend blocks with new syntax
+extend Request: Displayable {
+    fun display(&self) -> String {
+        self.method + " " + self.url
+    }
+}
+
+// RFC-0102: Bodyless negative impl
+extend Request: !Send;
+
+// RFC-0100: Keyword arguments in construction
+fun main() -> i64 {
+    var request = Request(method: "GET", url: "https://example.com");
+    println(request.display());
+    return 0;
+}
+```
+
+### Example: Multiple Aspects with Multi-Aspect Lists (RFC-0102)
+
+```metel
+aspect Copy2;
+aspect Sendable;
+aspect Debug;
+
+// Bodyless marker aspect
+aspect NoClone;
+
+// RFC-0102: Multi-aspect bodyless extend
+extend MyType: Copy2, Sendable, !Debug;
+
+// RFC-0103: Embedded lists work the same way
+public struct Data: Copy2, Sendable, !Debug {
+    id: i64,
+}
+```
+
+### Example: Constructor Calls and Keyword Arguments (RFC-0100)
+
+```metel
+public struct Point {
+    x: f64,
+    y: f64,
+}
+
+public struct Rectangle {
+    top_left: Point,
+    bottom_right: Point,
+}
+
+// RFC-0100: Keyword arguments in all positions
+fun create_rect() -> Rectangle {
+    let p1 = Point(x: 0.0, y: 0.0);
+    let p2 = Point(y: 10.0, x: 10.0);  // keyword args can be reordered
+    return Rectangle(top_left: p1, bottom_right: p2);
+}
+
+fun main() -> i64 {
+    let rect = create_rect();
+    return rect.bottom_right.x as i64;
+}
+```
+
+### Example: Module Paths and Turbofish (RFC-0099)
+
+```metel
+// RFC-0099: Dot-separated paths
+import std.core.Perhaps;
+import std.math;
+
+// RFC-0099: Turbofish syntax
+fun identity<T>(x: T) -> T { x }
+
+// RFC-0099: Associated function calls with dot syntax
+fun main() -> i64 {
+    let x = identity.<i64>(42);
+    let maybe = Perhaps.Some(value: x);
+    return maybe.value;
+}
+```
+
+### Example: Mutable References and Receivers (RFC-0098)
+
+```metel
+public struct Counter {
+    value: i64,
+}
+
+extend Counter {
+    // RFC-0098: &var self instead of &mut self
+    fun increment(&var self) {
+        self.value += 1;
+    }
+}
+
+fun main() -> i64 {
+    // RFC-0098: var instead of let mut
+    var counter = Counter(value: 0);
+    counter.increment();
+    
+    // RFC-0098: &var references
+    let p: &var Counter = &var counter;
+    p.increment();
+    
+    return counter.value;
+}
+```
+
+### Example: Complete Cross-Feature Demonstration
+
+```metel
+// All integrated RFC features working together
+
+// RFC-0098: public visibility keyword
+public struct Document {
+    public title: String,
+    content: String,
+}
+
+// RFC-0103: Bodyless marker aspect
+aspect Copy2;
+aspect Serializable;
+aspect Displayable;
+
+// RFC-0103: Embedded aspect list with obligations
+public struct Document: Copy2, Serializable, Displayable {
+    public title: String,
+    content: String,
+}
+
+extend Document: Displayable {
+    fun display(&self) -> String {
+        self.title + ": " + self.content
+    }
+}
+
+extend Document: Serializable {
+    fun serialize(&self) -> String {
+        self.title + "|" + self.content
+    }
+}
+
+// RFC-0102: Multi-aspect bodyless extend with negative
+extend Document: !Send;
+
+public struct DocumentBuilder {
+    title: String,
+    content: String,
+}
+
+extend DocumentBuilder {
+    // RFC-0098: &var self
+    public fun set_title(&var self, title: String) {
+        self.title = title;
+    }
+    
+    public fun set_content(&var self, content: String) {
+        self.content = content;
+    }
+    
+    public fun build(self) -> Document {
+        // RFC-0100: Keyword arguments
+        Document(title: self.title, content: self.content)
+    }
+}
+
+fun main() -> i64 {
+    // RFC-0098: var bindings
+    var builder = DocumentBuilder(title: "", content: "");
+    builder.set_title("RFC Review");
+    builder.set_content("All features integrated!");
+    
+    // RFC-0100: Keyword arguments
+    let doc = builder.build();
+    
+    // RFC-0099: Dot syntax for method calls
+    let display = doc.display();
+    let serialized = doc.serialize();
+    
+    println(display);
+    println(serialized);
+    
+    return 0;
+}
+```
+
+### Example: Negative Impls and Multi-Aspect Lists (RFC-0102)
+
+```metel
+aspect Copy2;
+aspect Sendable;
+aspect Debug;
+aspect Clone;
+
+// Marker aspect - bodyless declaration
+aspect NoClone;
+
+// Multiple aspects in one bodyless extend
+extend MyType: Copy2, Sendable, !Debug;
+
+// Same with embedded list
+public struct Data: Copy2, Sendable, !Debug {
+    id: i64,
+}
+
+// Negative impl with bodyless syntax
+extend<T, brand 'b> Rc<T, 'b>: !Send;
+
+// Multi-aspect list with blanket impl
+extend<T: Copy + Clone> Wrapper<T>: Copy2, Sendable {
+    fun wrap(value: T) -> Wrapper<T> {
+        Wrapper(value: value)
+    }
+}
+```
