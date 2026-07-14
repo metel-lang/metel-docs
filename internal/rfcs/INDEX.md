@@ -517,16 +517,23 @@ implementation).
   non-empty body across multiple aspects has no principled disambiguation and isn't
   attempted. Depends on RFC-0098's `extend Type: Aspect` grammar shape. Opened
   2026-07-14, accepted 2026-07-14.
-- **RFC-0103** *(draft)* — Marker Aspects and Struct-Embedded Aspect Lists — a `marker`
-  keyword permanently declaring an aspect has zero methods/associated types
-  (`marker aspect Copy2;`, itself bodyless — gives RFC-0080 §3's existing "marker
-  aspect" terminology for `Send`/`Sync` a real keyword), plus a struct/enum-embedded
-  aspect list (`struct Token: Copy2, !Send { value: String }`) reusing RFC-0102 §5's
-  `extend_aspect_list`. Positive items require `marker` — a *permanent* guarantee,
-  stricter than RFC-0102 §4's "currently bodyless-eligible" rule for `extend` blocks
-  — because a struct/enum declaration has no per-aspect body to grow into if the
-  aspect later gains a real method; negative items are always eligible regardless of
-  the aspect's own shape. Depends on RFC-0102. Opened 2026-07-14.
+- **RFC-0103** *(draft)* — Marker Aspects and Struct-Embedded Aspect Lists — three
+  additions on top of RFC-0102. A `marker` keyword permanently declaring an aspect
+  has zero methods/associated types (`marker aspect Copy2;`, itself bodyless — gives
+  RFC-0080 §3's existing "marker aspect" terminology for `Send`/`Sync` a real
+  keyword). A struct/enum-embedded aspect list (`struct Token: Copy2, Serializable,
+  !Send { value: String }`) reusing RFC-0102 §5's `extend_aspect_list`, where
+  struct/enum bodies stay fields-only: `marker`-declared and negative items are fully
+  satisfied by the list itself, while a non-`marker` positive item declares a
+  checked, module-wide *obligation* discharged by an ordinary, separately-editable
+  `extend` block elsewhere — revised from an earlier draft that rejected non-`marker`
+  positive items outright, once it was clear the "no escape hatch" concern only
+  applies to items the list itself tries to implement inline. And, lifting a
+  restriction from RFC-0102 §5 for `extend` blocks specifically: a multi-aspect list
+  may have a real, shared, non-empty body, disambiguated by name against each
+  aspect's own required methods — any method-name collision between two named
+  aspects rejects the whole combination outright rather than guessing, so no
+  qualified-declaration syntax is needed. Depends on RFC-0102. Opened 2026-07-14.
 
 ---
 

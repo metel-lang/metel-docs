@@ -8,13 +8,16 @@ target:
 
 ## Summary
 
-A `marker` keyword for aspects permanently declared to have zero methods and zero associated types
-(`marker aspect Copy2;`, itself bodyless per the same nothing-to-write theme as RFC-0102), plus a
-struct/enum-declaration-embedded aspect list (`struct Token: Copy2, !Send { value: String }`) reusing
-RFC-0102's `extend_aspect_list`. Positive items require the `marker` keyword — a *permanent* guarantee, not
-just "currently has zero methods" — since a struct's body has no per-aspect slot to patch into if the
-aspect later gains a real method; negative items are always allowed regardless of the aspect's own shape,
-the same asymmetry RFC-0102 §3 already establishes for `extend` blocks. Depends on RFC-0102.
+Three related additions on top of RFC-0102. A `marker` keyword for aspects permanently declared to have
+zero methods and zero associated types (`marker aspect Copy2;`, itself bodyless per the same
+nothing-to-write theme as RFC-0102). A struct/enum-declaration-embedded aspect list (`struct Token: Copy2,
+Serializable, !Send { value: String }`) reusing RFC-0102's `extend_aspect_list`, where struct/enum bodies
+stay fields-only — `marker`-declared and negative items are fully satisfied by the list itself, while a
+non-`marker` positive item declares a checked, module-wide *obligation* discharged by an ordinary,
+separately-editable `extend` block, not embedded inline. And, lifting a restriction from RFC-0102 §5 for
+`extend` blocks specifically: a multi-aspect list may have a real, shared, non-empty body, disambiguated
+by name against each aspect's own required methods (any name-collision between two named aspects rejects
+the combination outright, rather than trying to guess). Depends on RFC-0102.
 
 ---
 
@@ -100,38 +103,63 @@ extend Token: A;
 extend Token: !B;
 ```
 
-**Eligibility — deliberately narrower than RFC-0102 §5's extend-block list:**
+**Eligibility.** Struct and enum bodies stay fields/variants-only — this RFC does not let a method
+implementation live inside a `struct`/`enum` declaration's own braces. That constrains what a *positive*,
+non-`marker` item in the list can mean, but doesn't rule it out the way an earlier draft of this RFC
+assumed:
 
-| Item | Eligible when |
-|---|---|
-| `!Aspect` (negative) | Always — any aspect, any shape, regardless of methods or associated types (RFC-0081's polarity guarantee, independent of the aspect's own declaration) |
-| `Aspect` (positive) | Only if `Aspect` is `marker`-declared |
+| Item | Eligible when | What it means |
+|---|---|---|
+| `!Aspect` (negative) | Always — any aspect, any shape, regardless of methods or associated types (RFC-0081's polarity guarantee, independent of the aspect's own declaration) | Fully satisfied by the list itself, same as an `extend Type: !Aspect;` block |
+| `Aspect`, `marker`-declared | Always | Fully satisfied by the list itself, same as an `extend Type: Aspect;` block (RFC-0102 §4) |
+| `Aspect`, not `marker`-declared | Always | **Declares an obligation, not an implementation** — see below |
 
-Positive items do **not** get RFC-0102 §4's looser "currently zero methods, or all methods have a default"
-rule here — an aspect that's all-default *today* could stop being all-default tomorrow (a default body
-removed), and unlike an `extend` block, a struct declaration has nowhere to grow a method implementation
-if that happens. Restricting positive struct/enum embedding to `marker`-declared aspects only is what makes
-this position safe to have no escape hatch at all.
+**The obligation model for non-`marker` positive items.** Naming a real, non-`marker` aspect on a
+struct/enum's own declaration doesn't try to satisfy it there (there's nowhere in a fields-only body to put
+its methods) — it declares that the type *must* implement that aspect, checked module-wide against ordinary
+`extend` blocks written elsewhere, the same ones you'd write without this RFC at all. `struct Token:
+Serializable { value: String }` means: `Token`'s own declaration is unchanged, plus a checked obligation
+that *some* `extend Token: Serializable { ... }` block exists (anywhere it would ordinarily be visible) and
+passes its own already-existing completeness check. Forgetting to write that block is a compile error
+reported at the struct's own declaration — earlier and more direct than today's alternative, where the gap
+is only ever discovered wherever `Token: Serializable` happens to be required later.
+
+This is why the earlier concern about "no escape hatch" (§1's motivation for requiring `marker` at all)
+doesn't apply here: a non-`marker` positive item's real implementation lives in an ordinary, always-editable
+`extend` block, exactly like it would without this RFC — the struct/enum-embedded list only ever adds a
+forward-declared, checked *promise* that the block exists, never the implementation itself. `marker` still
+matters for exactly one thing: whether the list *alone* is enough, or whether a separate `extend` block is
+still required.
 
 ```metel
 marker aspect Copy2;
+
+aspect Serializable {
+    fun serialize(&self) -> String;
+}
 
 struct Handle {
     id: i64,
 }
 
-// Composes with RFC-0080's real Send/Sync (auto-impl aspects): the compiler
-// grants Send automatically based on field types, and the explicit negative
-// override RFC-0080 §3 already specifies (`impl !Send for MyType {}`) is
-// exactly the negative case this RFC's list embeds directly.
-struct Token: Copy2, !Send {
+// Copy2 (marker) is fully satisfied here; Serializable is not -- it's an
+// obligation, discharged by the separate extend block below. Composes with
+// RFC-0080's real Send/Sync (auto-impl aspects): the compiler grants Send
+// automatically based on field types, and the explicit negative override
+// RFC-0080 §3 already specifies (`impl !Send for MyType {}`) is exactly the
+// negative case this RFC's list embeds directly.
+struct Token: Copy2, Serializable, !Send {
     value: String,
 }
 
-// Rejected — Display is not marker-declared (it has a real required
-// method), so it cannot appear positively in a struct-embedded list, even
-// though `extend Token: Display { ... }` naming a real body is fine.
-struct BadToken: Display {   // error: `Display` is not a marker aspect
+extend Token: Serializable {
+    fun serialize(&self) -> String { self.value }
+}
+
+// Rejected -- Token names Serializable but no extend block anywhere
+// provides it. Error is reported at Token's own declaration line, not
+// wherever Token: Serializable is later required.
+struct BadToken: Serializable {   // error: no `extend BadToken: Serializable { ... }` found
     value: String,
 }
 ```
@@ -140,6 +168,69 @@ Out of scope: conditional/generic aspect satisfaction (`struct Box<T>: SomeAspec
 `T`) is not addressed here — the aspect list this RFC adds is unconditional, exactly like RFC-0102's own
 `extend`-block lists. A generic struct that needs a *conditional* impl still writes an ordinary, separate
 `extend<T: Bound> Box<T>: Aspect { ... }` block, unaffected by this RFC.
+
+## 3. Multi-aspect `extend` blocks with a shared body
+
+RFC-0102 §5 restricts its comma-separated aspect list to bodyless (or explicitly-empty-braced) `extend`
+blocks — a genuinely shared, non-empty body across multiple aspects was flagged there as a harder problem
+and explicitly deferred. This section takes it on, for `extend` blocks specifically (not struct/enum
+bodies, which stay fields-only per §2 above):
+
+```metel
+extend A: Aspect3, Aspect4 {
+    fun foo(&self) { ... }
+    fun bar(&self) { ... }
+}
+```
+
+**The disambiguation problem this needs to solve** is which named aspect each method in the body belongs
+to. The answer doesn't need new syntax, because of something already true of *single*-aspect impls today:
+`infer_decl`'s existing completeness check (`inference.rs`) only verifies that an aspect's *required*
+methods are covered by name in the body — it never checks the reverse, that every method in the body
+belongs to the aspect. An impl can already contain "extra" methods beyond what its aspect requires, and
+they simply become ordinary callable methods on the type. Generalizing to multiple aspects inherits that
+same tolerance directly:
+
+- The body is one shared pool of methods.
+- Each named aspect's own required-method coverage is checked independently against that pool, by name —
+  exactly like today's single-aspect check, just run once per named aspect instead of once total.
+- A method name matching none of the named aspects becomes an ordinary inherent method, exactly like
+  today's already-tolerated "extra method in a single-aspect impl" case.
+
+**The one new rule this needs:** if two or more aspects in the *same* list declare a method with the
+identical name, the combination is rejected outright, at the list level, independent of what the body
+actually contains — `extend A: Aspect3, Aspect4 { ... }` is a compile error if `Aspect3` and `Aspect4` both
+declare (say) `fun display(&self) -> String;`, even before looking at whether the body provides one. No
+qualified-declaration syntax (e.g. `Aspect3::foo`) is introduced to resolve such a collision — the
+combination is simply disallowed, and the fix is to stop sharing the body: write `extend A: Aspect3 { ...
+}` and `extend A: Aspect4 { ... }` separately, exactly as today, unaffected by this RFC. This keeps the
+feature safe by construction: every method name in a body that's accepted at all maps to at most one named
+aspect, with no silent "whichever aspect matched first" behavior anywhere.
+
+```metel
+aspect Aspect3 { fun foo(&self); }
+aspect Aspect4 { fun bar(&self); }
+
+struct A { }
+
+extend A: Aspect3, Aspect4 {
+    fun foo(&self) { println("foo"); }   // Aspect3::foo
+    fun bar(&self) { println("bar"); }   // Aspect4::bar
+    fun helper(&self) { }                 // matches neither -- ordinary inherent method
+}
+
+// Rejected -- Aspect3 and Aspect5 both declare `foo`, so this combination
+// can never be disambiguated by name, regardless of the body's contents.
+aspect Aspect5 { fun foo(&self) -> i64; }
+extend A: Aspect3, Aspect5 {   // error: `foo` is declared by both Aspect3 and Aspect5
+    fun foo(&self) { ... }
+}
+```
+
+Combining §2 (struct/enum-embedded lists) with this section: a non-`marker` positive item on a
+struct/enum's own declaration is still discharged by an *ordinary* `extend` block — that block may itself
+be a multi-aspect one under this section's own rules, with no special interaction between the two features
+beyond what's already stated.
 
 ---
 
@@ -156,10 +247,20 @@ Out of scope: conditional/generic aspect satisfaction (`struct Box<T>: SomeAspec
   RFC-0102 §5; reusing it directly is smaller than introducing an entirely new attribute/annotation syntax
   for the same purpose.
 - **Allow RFC-0102 §4's looser "all-default-methods" aspects into positive struct-embedded lists too**,
-  matching `extend`-block eligibility exactly. Rejected (§2) — an all-default aspect can stop being
-  all-default later (a default body removed), and unlike `extend` blocks, a struct declaration has no
-  local fix available if that happens; restricting positive embedding to `marker`-declared aspects only is
-  what makes the no-escape-hatch position safe.
+  matching `extend`-block eligibility exactly, treating them as fully satisfied by the list itself the same
+  way `marker`-declared aspects are. Rejected — an all-default aspect can stop being all-default later (a
+  default body removed), and unlike an `extend` block or the obligation model (§2), there'd be no local fix
+  available if the list itself were treated as the complete implementation. `marker` remains the only way a
+  positive item is satisfied *by the list alone*; a non-`marker` positive item is still allowed (§2), just
+  as an obligation discharged elsewhere, never as an inline implementation.
+- **Reject non-`marker` positive items entirely** (an earlier draft of this RFC's own position). Reversed
+  in §2 once it became clear the "no escape hatch" concern only applies to items the list itself is trying
+  to *implement* — a non-`marker` positive item never does that under the obligation model, so there's
+  nothing unsafe about allowing it as a forward-declared, separately-checked promise.
+- **A qualified method-declaration syntax** (e.g. `fun Aspect3::foo(&self) { ... }`) to disambiguate a
+  shared `extend`-block body when two named aspects' method names collide (§3). Rejected in favor of simply
+  disallowing the colliding combination — smaller, and the same information a qualifier would carry (which
+  aspect owns which method) is exactly what's already unambiguous by name whenever no collision exists.
 
 ---
 
@@ -178,6 +279,22 @@ Out of scope: conditional/generic aspect satisfaction (`struct Box<T>: SomeAspec
    case (`!Send`) is exactly RFC-0080 §3's existing override, unchanged. This RFC asserts these don't
    collide, but it's worth confirming directly against RFC-0096's own mechanism once that RFC is further
    along, rather than assumed here.
+4. **Where and when does §2's obligation check run?** It's inherently cross-declaration (a struct/enum's
+   own list vs. one or more `extend` blocks that could appear anywhere the type is visible), unlike every
+   other check in this RFC and RFC-0102, which are local to one declaration. This RFC doesn't pin down the
+   exact pipeline stage — plausibly alongside existing coherence checking, which already runs as its own
+   whole-module (or whole-graph) pass — nor whether the satisfying `extend` block may live in a different
+   module than the struct/enum declaration itself. Needs real design work against the actual module-loading
+   pipeline before implementation, not assumed here.
+5. **Diagnostic quality for an unsatisfied obligation spanning multiple modules** — if `struct Token:
+   Serializable { ... }` is declared in one module and the satisfying `extend Token: Serializable { ... }`
+   is expected in another, a missing-obligation error should probably say where it looked, not just that it
+   didn't find one. A UX concern for implementation time, not a blocking design question.
+6. **§3's collision check needs a stable, explicit trigger point.** "Two named aspects declare the same
+   method name" is checked purely from the aspects' own declarations, independent of the body — this should
+   run as soon as the aspect list itself is resolved, before the body is type-checked at all, so the error
+   is reported without needing to look at (or even successfully parse past) the body's contents. Worth
+   confirming this ordering is achievable against the actual construction pipeline, not assumed.
 
 ---
 
@@ -196,6 +313,10 @@ Out of scope: conditional/generic aspect satisfaction (`struct Box<T>: SomeAspec
   parallels; not amended.
 - RFC-0081 (Negative Impls) — the polarity mechanism §2's negative-always-eligible rule relies on,
   unchanged.
+- RFC-0060 (Aspect Impl Coherence) — the existing duplicate/overlapping-impl detection that already governs
+  what happens if a `marker`-declared struct-embedded item is also given a redundant, separate `extend`
+  block for the same aspect; not amended, and §2's obligation check (a *different* question — does a
+  satisfying impl exist at all, not whether two conflict) is meant to sit alongside it, not replace it.
 
 ---
 
