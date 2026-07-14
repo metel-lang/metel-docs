@@ -7,7 +7,7 @@ target:
 updated: '2026-07-14'
 ---
 
-> **Status — accepted (2026-07-14).** Reviewed and resolved: the obligation check (§3) runs inside the same already-existing whole-graph coherence pass (coherence.rs, RFC-0060), and §4 resolves a real interaction with RFC-0096's auto-impl aspects (Send/Sync/Linear have no Decl::Impl to search for; the obligation is discharged by querying RFC-0096 §2's satisfies check directly instead). No open questions remain.
+> **Status — accepted (2026-07-14).** Reviewed and resolved: the obligation check (§3) runs inside the same already-existing whole-graph coherence pass (coherence.rs, RFC-0060). §4 resolves a real interaction with RFC-0096's auto-impl aspects: rather than §3 special-casing Send/Sync/Linear with a direct satisfies() query, RFC-0096's own implementation is required to inject each auto-impl determination into the same aspect-implementation registry ordinary extend blocks populate — a commitment RFC-0096 §5 already half-makes ("an auto-impl is an ordinary positive impl for coherence purposes") — so §3 needs zero special-casing at all. No open questions remain.
 
 ## Summary
 
@@ -188,25 +188,44 @@ span-reporting convention.
 ## 4. Interaction with auto-impl aspects (RFC-0096)
 
 RFC-0096 settles a fact this RFC's obligation model (§2) must account for directly, not merely assume
-doesn't collide: `Send`, `Sync`, and `Linear` are **auto-impl** — granted by the compiler's own
-`satisfies(A, T)` structural-composition check (RFC-0096 §2), with **no `Decl::Impl` node ever written or
-synthesized in the AST for them**. §3's obligation check, as stated, only ever looks for a real `Decl::Impl`
-in the module graph — which means, unmodified, `struct Handle: Send { ... }` would always report a false
-"unsatisfied obligation," even when `Handle`'s fields genuinely make it `Send` under RFC-0096 §2's rule,
-because no `extend Handle: Send { ... }` block exists or ever will.
+doesn't collide: `Send`, `Sync`, and `Linear` are **auto-impl** — the compiler grants them automatically
+based on a type's structure, with no author ever writing an `extend`/`impl` block for them. If §3's
+obligation check only ever looked for a literal `Decl::Impl` AST node in the module graph, `struct Handle:
+Send { ... }` would always report a false "unsatisfied obligation," even when `Handle`'s fields genuinely
+make it `Send`, because no `extend Handle: Send { ... }` block exists or ever will.
 
-This is a real interaction, not a non-issue, and needs a real carve-out: **when a struct/enum-embedded
-positive item names one of RFC-0096 §1's closed set of auto-impl aspects (`Send`, `Sync`, `Linear`), the
-obligation is discharged by querying RFC-0096 §2's own `satisfies` check directly against the struct/enum's
-field types — the same check any other consumer of an auto-impl aspect already goes through — instead of
-searching for a `Decl::Impl`.** For every other aspect (the general case), §3's `Decl::Impl` graph scan
-applies unchanged. `struct Handle: Send { id: i64 }` is therefore satisfied immediately (i64 is `Send`), with
-no `extend` block required or possible; `struct Handle: Serializable { ... }` still requires a real,
-separately-written `extend Handle: Serializable { ... }` exactly as §2 already states. The negative case
-(`!Send`) needs no special handling beyond what §2 already gives it — RFC-0080 §3's explicit override
-(`impl !Send for MyType {}`, spelled `struct MyType: !Send { ... }` under this RFC) is already how RFC-0096
-itself expects an auto-impl aspect to be overridden, unrelated to whether the positive case is inline-listed
-or an obligation.
+**The fix belongs to RFC-0096's implementation, not to a special case inside §3.** RFC-0096 §5 already
+states that "an auto-impl is an ordinary positive impl for coherence purposes" — overlap detection and
+negative-impl override both apply to it exactly as they would to an explicit `impl` block. Taken seriously,
+that commitment means RFC-0096's own implementation must make each auto-impl determination *visible through
+the same aspect-implementation registry an ordinary `extend` block populates* — not merely through a
+`satisfies(A, T)` query consulted only by direct bound-checking, which is a separate, narrower promise than
+"is an ordinary positive impl." For a concrete type, this means registering an entry equivalent to `extend
+Handle: Send { }` the moment `Handle`'s auto-impl determination is known; for a generic type, RFC-0096 §3
+already describes the auto-impl as equivalent to an implicit, compiler-synthesized *conditional* impl
+(`impl<A: Send, B: Send> Send for Pair<A, B> {}`), so the natural implementation registers that same
+conditional-bounds entry via the identical mechanism RFC-0036's own conditional impls already use — not a
+second, bespoke predicate living outside that registry.
+
+**Under this framing, §3's obligation check needs zero special-casing for auto-impl aspects.** It performs
+exactly the one registry lookup already described in §3, and an auto-impl aspect is present in precisely
+the shape a hand-written `extend` block would have produced — §3 is not coupled to RFC-0096's specific
+mechanism or its closed three-aspect list at all, and neither would a fourth auto-impl aspect, if RFC-0096
+§1 is ever revisited, require touching this RFC again. `struct Handle: Send { id: i64 }` is satisfied because
+the registry already has an entry for it by the time coherence runs, not because §3 asked a question
+specifically about `Send`; `struct Handle: Serializable { ... }` still requires a real, separately-written
+`extend Handle: Serializable { ... }` exactly as §2 already states, since nothing registers an entry for it
+any other way. The negative case (`!Send`) needs no special handling beyond what §2 already gives it —
+RFC-0080 §3's explicit override (`impl !Send for MyType {}`, spelled `struct MyType: !Send { ... }` under
+this RFC) is already how RFC-0096 itself expects an auto-impl aspect to be overridden, unrelated to whether
+the positive case is inline-listed or an obligation.
+
+This is a real requirement RFC-0103 now places on RFC-0096's own eventual implementation (flagged directly
+in RFC-0096's own Unresolved Questions, since RFC-0096 is still draft), not a dependency on any particular
+internal function of RFC-0096's. If RFC-0096's implementation ever exposes auto-impl determinations *only*
+via a satisfies()-style query with no corresponding registry entry, §3's obligation check would need the
+special-casing this section explicitly avoids — that outcome should be treated as an RFC-0096 implementation
+bug against its own §5 commitment, not as a gap in this RFC.
 
 ---
 
@@ -240,6 +259,15 @@ or an obligation.
   own position). Reversed in §2 once it became clear the "no escape hatch" concern only applies to items the
   list itself is trying to *implement* — a positive item never does that under the obligation model, so
   there's nothing unsafe about allowing it as a forward-declared, separately-checked promise.
+- **Special-case RFC-0096's three auto-impl aspects directly inside §3's obligation check**, querying a
+  `satisfies(A, T)`-style predicate for `Send`/`Sync`/`Linear` specifically instead of a plain registry
+  lookup (this RFC's own immediately preceding position on §4). Reversed: it couples §3 — otherwise a single,
+  mechanism-agnostic registry lookup — to RFC-0096's specific identities and closed list, so any future
+  auto-impl aspect, or any other future producer of implicit aspect facts, would require touching this RFC
+  again. Requiring RFC-0096 (and any future producer) to inject into the same shared registry ordinary
+  `extend` blocks populate keeps §3 needing exactly one lookup path, regardless of how an aspect came to be
+  implemented — and RFC-0096 §5 already commits to auto-impls behaving as "ordinary positive impls for
+  coherence purposes," so this asks nothing of RFC-0096 beyond what it already promises.
 
 ---
 
@@ -264,9 +292,12 @@ than incremental.
   RFC's §2 lets be written as `struct MyType: !Send { ... }` instead; not amended, only given a shorter
   spelling for its existing concept and override syntax.
 - RFC-0096 (Auto-Impl Aspects, draft) — the compiler-automatic-derivation mechanism for `Send`/`Sync`/
-  `Linear`; §4 depends on RFC-0096 §1/§2 directly (the closed auto-impl aspect list and the `satisfies`
-  structural check), which this RFC's obligation model must query directly for those three aspects instead
-  of searching for a `Decl::Impl`. Not amended, but this RFC is no longer independent of it.
+  `Linear`. §4 places a requirement on RFC-0096's own eventual implementation (also flagged in RFC-0096's
+  own Unresolved Questions): each auto-impl determination must be injected into the same
+  aspect-implementation registry an ordinary `extend` block populates, so this RFC's obligation model (§3)
+  never needs to know RFC-0096's specific aspect identities or query a separate `satisfies` predicate. Not
+  an amendment to RFC-0096's own auto-impl rules, but this RFC is no longer independent of how RFC-0096
+  exposes its outcome.
 - RFC-0098 (Surface Keyword Renames) — `extend Type: Aspect` grammar this RFC's struct/enum embedding
   parallels; not amended.
 - RFC-0081 (Negative Impls) — the polarity mechanism §2's negative-always-eligible rule relies on,

@@ -553,11 +553,16 @@ implementation).
   RFC-0060) rather than a new stage, since that pass already collects every
   `Decl::Impl` across every loaded module before checking orphan/overlap rules —
   confirmed directly against the actual implementation, not assumed; and a real
-  interaction with RFC-0096 (Auto-Impl Aspects, draft) was found and fixed —
-  `Send`/`Sync`/`Linear` are granted by a compiler-internal `satisfies` check with no
-  `Decl::Impl` ever written for them, so the obligation for those three specifically
-  is discharged by querying that check directly rather than searching for an impl
-  block that will never exist. Depends on RFC-0102 and (for §4) RFC-0096. Opened
+  interaction with RFC-0096 (Auto-Impl Aspects, draft) was found and fixed by placing
+  a requirement on RFC-0096's own implementation instead of special-casing it here —
+  `Send`/`Sync`/`Linear` must be injected into the same aspect-implementation
+  registry an ordinary `extend` block populates (RFC-0096 §5 already half-commits to
+  this: "an auto-impl is an ordinary positive impl for coherence purposes"), so this
+  RFC's obligation check needs a single, mechanism-agnostic registry lookup with zero
+  special-casing, rather than querying a separate `satisfies` predicate keyed to
+  three specific aspect names (an initial draft of §4, reversed once it was clear
+  that coupled this RFC to RFC-0096's internals unnecessarily). Depends on RFC-0102
+  and (for §4) places a new implementation requirement on RFC-0096. Opened
   2026-07-14, accepted 2026-07-14.
 - **RFC-0104** *(draft)* — Multi-Aspect Extend Blocks with Shared Bodies — split out
   of an earlier draft of RFC-0103's own struct/enum-embedding section, since it's a
