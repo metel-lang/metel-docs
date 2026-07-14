@@ -16,26 +16,6 @@ Parameter type annotations are optional when types can be inferred from context.
 
 `extend` blocks may contain functions with no `self` parameter. These are called on the type via `.` syntax and serve as the canonical constructor pattern:
 
-```metel
-struct Point {
-    x: f64,
-    y: f64,
-}
-
-extend Point {
-    fun new(x: f64, y: f64) -> Point {
-        return Point(x: x, y: y);
-    }
-}
-
-fun main() -> i64 {
-    let p = Point.new(1.0, 2.0);
-    return p.x as i64;
-}
-```
-
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `impl` → `extend` for impl blocks. `Type::method()` → `Type.method()` for associated functions.
-
 ## First-Class Functions
 
 Functions are first-class values and can be assigned, passed, and returned:
@@ -96,8 +76,6 @@ fun main() -> i64 {
 
 ## Keyword Arguments
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0100-constructor-call-construction.md` (issue #276). Function calls support keyword arguments: `fun(arg1: value1, arg2: value2)`.
-
 Function calls may specify arguments by name using keyword argument syntax:
 
 ```metel
@@ -124,7 +102,7 @@ Parameter names become part of a function's public API surface. When keyword arg
 
 Note: Type ascription cannot be used as a positional argument when keyword arguments are involved. `f(x: SomeType)` is always interpreted as a keyword argument named `x`, not as a positional argument `x` with type `SomeType`.
 
-> **Availability:** Since v0.8.0.
+## Turbofish
 
 When a generic function's type parameters cannot be inferred from the arguments, they can be specified explicitly with turbofish syntax: `name.<T, U>(args)`.
 
@@ -153,7 +131,47 @@ Type ascription (`: T`) remains available for annotating the result type. Turbof
 let result = parse.<i64>("42") : Perhaps<i64>;
 ```
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0099-dot-separated-module-paths.md` (issue #275). Turbofish changed from `::<T>` to `.<T>`.
+### Cross-Feature Example: Surface Syntax Integration
+
+The following example demonstrates multiple integrated surface syntax features working together:
+
+```metel
+// RFC-0098: public/var/extend keywords
+public struct Config {
+    public host: String,
+    public port: i64,
+    public timeout: i64,
+}
+
+// RFC-0103: Bodyless aspect declarations
+aspect Copy2;
+aspect Debug;
+
+// RFC-0098: extend blocks with new syntax
+extend Config: Debug {
+    fun debug(&self) -> String {
+        "Config(host: " + self.host + ", port: " + self.port.to_string() + ")"
+    }
+}
+
+// RFC-0100: Keyword arguments in construction
+fun default_config() -> Config {
+    Config(host: "localhost", port: 8080, timeout: 30)
+}
+
+// RFC-0099: Dot-separated paths and turbofish
+fun main() -> i64 {
+    var cfg = default_config();
+    
+    // RFC-0099: Dot-separated module path
+    println(std.core.to_string(cfg.port));
+    
+    // RFC-0099: Turbofish with .<T> syntax
+    let parsed = parse.<Config>(std.core.to_string(cfg));
+    
+    return 0;
+}
+```
 
 ## The ? Operator
 

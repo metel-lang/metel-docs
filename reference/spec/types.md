@@ -201,10 +201,6 @@ fun sum(xs: [i64; 3]) -> i64 {
 
 ## References
 
-> **Availability:** Implemented 2026-07-11 (RFC-0067a) — see
-> `internal/rfcs/4-implemented/rfc-0067a-reference-types.md`. Not yet released in a
-> tagged version; will get its own changelog entry when `sprint/25` ships.
-
 Reference types provide explicit aliasing for non-linear values.
 
 ```metel
@@ -244,8 +240,6 @@ fun main() -> i64 {
     return c.value;   // 42
 }
 ```
-
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `&var` instead of `&mut` for mutable references.
 
 ### Reading a value out of a reference
 
@@ -335,8 +329,6 @@ fun main() {
 | `get` | `(&self, index: i64) -> Perhaps<T>` | Bounds-checked access |
 | `as_slice` | `(&self) -> T[]` | View as an immutable array (no copy) |
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0098-surface-keyword-renames.md` (issue #274). `&var self` instead of `&mut self` for mutable receivers.
-
 `List<T>` does not implicitly coerce to `T[]`. Call `.as_slice()` to get a read-only view.
 
 ## Type Ascription
@@ -386,7 +378,7 @@ fun make_row(use_default: boolean, fallback: i64[]) -> i64[] {
 
 fun first_or_default(items: i64[], fallback: Perhaps<i64>) -> i64 {
     return match fallback {
-        Perhaps::Some { value } => value,
+        Perhaps.Some { value } => value,
         None => if (array_len(items) > 0) { items[0] } else { 0 },
     };
 }
@@ -406,8 +398,8 @@ fun main() -> i64 {
     let arr = [] : i64[];
     let value = None : Perhaps<i64>;
     match value {
-        Perhaps::Some { value } => value + array_len(arr),
-        Perhaps::None => array_len(arr),
+        Perhaps.Some { value } => value + array_len(arr),
+        Perhaps.None => array_len(arr),
     }
 }
 ```
@@ -560,8 +552,8 @@ The type of `None` is `Perhaps<T>` for some `T` that must be determinable from c
 fun main() -> i64 {
     let x: Perhaps<i64> = None;
     match x {
-        Perhaps::Some { value } => value,
-        Perhaps::None => 0,
+        Perhaps.Some { value } => value,
+        Perhaps.None => 0,
     }
 }
 ```
@@ -571,10 +563,10 @@ fun main() -> i64 {
     let result: Perhaps<i64> = None;
     let value: Perhaps<i64> = 42;
     match value {
-        Perhaps::Some { value } => value,
-        Perhaps::None => match result {
-            Perhaps::Some { value } => value,
-            Perhaps::None => 0,
+        Perhaps.Some { value } => value,
+        Perhaps.None => match result {
+            Perhaps.Some { value } => value,
+            Perhaps.None => 0,
         },
     }
 }
