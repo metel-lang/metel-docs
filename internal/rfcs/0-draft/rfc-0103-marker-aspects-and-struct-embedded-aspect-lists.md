@@ -8,16 +8,16 @@ target:
 
 ## Summary
 
-Three related additions on top of RFC-0102. A `marker` keyword for aspects permanently declared to have
+Two related additions on top of RFC-0102. A `marker` keyword for aspects permanently declared to have
 zero methods and zero associated types (`marker aspect Copy2;`, itself bodyless per the same
-nothing-to-write theme as RFC-0102). A struct/enum-declaration-embedded aspect list (`struct Token: Copy2,
-Serializable, !Send { value: String }`) reusing RFC-0102's `extend_aspect_list`, where struct/enum bodies
-stay fields-only — `marker`-declared and negative items are fully satisfied by the list itself, while a
-non-`marker` positive item declares a checked, module-wide *obligation* discharged by an ordinary,
-separately-editable `extend` block, not embedded inline. And, lifting a restriction from RFC-0102 §5 for
-`extend` blocks specifically: a multi-aspect list may have a real, shared, non-empty body, disambiguated
-by name against each aspect's own required methods (any name-collision between two named aspects rejects
-the combination outright, rather than trying to guess). Depends on RFC-0102.
+nothing-to-write theme as RFC-0102). And a struct/enum-declaration-embedded aspect list (`struct Token:
+Copy2, Serializable, !Send { value: String }`) reusing RFC-0102's `extend_aspect_list`, where struct/enum
+bodies stay fields-only — `marker`-declared and negative items are fully satisfied by the list itself,
+while a non-`marker` positive item declares a checked, module-wide *obligation* discharged by an ordinary,
+separately-editable `extend` block, not embedded inline. Depends on RFC-0102. (A third, related idea —
+lifting RFC-0102 §5's bodyless-only restriction so an `extend` block can share a real, non-empty body
+across multiple aspects — was split out to RFC-0104, since it's a separate feature that doesn't need
+anything in this RFC to work.)
 
 ---
 
@@ -169,68 +169,10 @@ Out of scope: conditional/generic aspect satisfaction (`struct Box<T>: SomeAspec
 `extend`-block lists. A generic struct that needs a *conditional* impl still writes an ordinary, separate
 `extend<T: Bound> Box<T>: Aspect { ... }` block, unaffected by this RFC.
 
-## 3. Multi-aspect `extend` blocks with a shared body
-
-RFC-0102 §5 restricts its comma-separated aspect list to bodyless (or explicitly-empty-braced) `extend`
-blocks — a genuinely shared, non-empty body across multiple aspects was flagged there as a harder problem
-and explicitly deferred. This section takes it on, for `extend` blocks specifically (not struct/enum
-bodies, which stay fields-only per §2 above):
-
-```metel
-extend A: Aspect3, Aspect4 {
-    fun foo(&self) { ... }
-    fun bar(&self) { ... }
-}
-```
-
-**The disambiguation problem this needs to solve** is which named aspect each method in the body belongs
-to. The answer doesn't need new syntax, because of something already true of *single*-aspect impls today:
-`infer_decl`'s existing completeness check (`inference.rs`) only verifies that an aspect's *required*
-methods are covered by name in the body — it never checks the reverse, that every method in the body
-belongs to the aspect. An impl can already contain "extra" methods beyond what its aspect requires, and
-they simply become ordinary callable methods on the type. Generalizing to multiple aspects inherits that
-same tolerance directly:
-
-- The body is one shared pool of methods.
-- Each named aspect's own required-method coverage is checked independently against that pool, by name —
-  exactly like today's single-aspect check, just run once per named aspect instead of once total.
-- A method name matching none of the named aspects becomes an ordinary inherent method, exactly like
-  today's already-tolerated "extra method in a single-aspect impl" case.
-
-**The one new rule this needs:** if two or more aspects in the *same* list declare a method with the
-identical name, the combination is rejected outright, at the list level, independent of what the body
-actually contains — `extend A: Aspect3, Aspect4 { ... }` is a compile error if `Aspect3` and `Aspect4` both
-declare (say) `fun display(&self) -> String;`, even before looking at whether the body provides one. No
-qualified-declaration syntax (e.g. `Aspect3::foo`) is introduced to resolve such a collision — the
-combination is simply disallowed, and the fix is to stop sharing the body: write `extend A: Aspect3 { ...
-}` and `extend A: Aspect4 { ... }` separately, exactly as today, unaffected by this RFC. This keeps the
-feature safe by construction: every method name in a body that's accepted at all maps to at most one named
-aspect, with no silent "whichever aspect matched first" behavior anywhere.
-
-```metel
-aspect Aspect3 { fun foo(&self); }
-aspect Aspect4 { fun bar(&self); }
-
-struct A { }
-
-extend A: Aspect3, Aspect4 {
-    fun foo(&self) { println("foo"); }   // Aspect3::foo
-    fun bar(&self) { println("bar"); }   // Aspect4::bar
-    fun helper(&self) { }                 // matches neither -- ordinary inherent method
-}
-
-// Rejected -- Aspect3 and Aspect5 both declare `foo`, so this combination
-// can never be disambiguated by name, regardless of the body's contents.
-aspect Aspect5 { fun foo(&self) -> i64; }
-extend A: Aspect3, Aspect5 {   // error: `foo` is declared by both Aspect3 and Aspect5
-    fun foo(&self) { ... }
-}
-```
-
-Combining §2 (struct/enum-embedded lists) with this section: a non-`marker` positive item on a
-struct/enum's own declaration is still discharged by an *ordinary* `extend` block — that block may itself
-be a multi-aspect one under this section's own rules, with no special interaction between the two features
-beyond what's already stated.
+A non-`marker` positive item's obligation (above) is always discharged by an *ordinary* `extend` block —
+that block may itself name more than one aspect and share a real body across them, under RFC-0104
+(Multi-Aspect Extend Blocks with Shared Bodies), split out of an earlier draft of this section into its
+own RFC since it's a separate feature that doesn't need anything here to work.
 
 ---
 
@@ -257,10 +199,6 @@ beyond what's already stated.
   in §2 once it became clear the "no escape hatch" concern only applies to items the list itself is trying
   to *implement* — a non-`marker` positive item never does that under the obligation model, so there's
   nothing unsafe about allowing it as a forward-declared, separately-checked promise.
-- **A qualified method-declaration syntax** (e.g. `fun Aspect3::foo(&self) { ... }`) to disambiguate a
-  shared `extend`-block body when two named aspects' method names collide (§3). Rejected in favor of simply
-  disallowing the colliding combination — smaller, and the same information a qualifier would carry (which
-  aspect owns which method) is exactly what's already unambiguous by name whenever no collision exists.
 
 ---
 
@@ -290,11 +228,6 @@ beyond what's already stated.
    Serializable { ... }` is declared in one module and the satisfying `extend Token: Serializable { ... }`
    is expected in another, a missing-obligation error should probably say where it looked, not just that it
    didn't find one. A UX concern for implementation time, not a blocking design question.
-6. **§3's collision check needs a stable, explicit trigger point.** "Two named aspects declare the same
-   method name" is checked purely from the aspects' own declarations, independent of the body — this should
-   run as soon as the aspect list itself is resolved, before the body is type-checked at all, so the error
-   is reported without needing to look at (or even successfully parse past) the body's contents. Worth
-   confirming this ordering is achievable against the actual construction pipeline, not assumed.
 
 ---
 
@@ -317,6 +250,9 @@ beyond what's already stated.
   what happens if a `marker`-declared struct-embedded item is also given a redundant, separate `extend`
   block for the same aspect; not amended, and §2's obligation check (a *different* question — does a
   satisfying impl exist at all, not whether two conflict) is meant to sit alongside it, not replace it.
+- RFC-0104 (Multi-Aspect Extend Blocks with Shared Bodies) — split out of an earlier draft of this RFC's
+  own §2; a non-`marker` positive item's obligation may be discharged by a multi-aspect `extend` block
+  under that RFC's own rules, with no special interaction beyond what's already stated in either RFC.
 
 ---
 

@@ -13,8 +13,8 @@ Grouped by theme, not by number, because number order tells you nothing about wh
 related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
 the same day this index was built) and the working rules adopted alongside this index.
 
-**102 RFCs total.** 30 draft, 1 under review, 13 accepted, 3 integrated (new stage — see
-`PROCESS.md`) (47 "live" — need active tracking), 32 implemented, 10 superseded, 13
+**103 RFCs total.** 31 draft, 1 under review, 13 accepted, 3 integrated (new stage — see
+`PROCESS.md`) (48 "live" — need active tracking), 32 implemented, 10 superseded, 13
 refused (53 "settled" — reference only). **2026-07-13:** RFC-0036 (Conditional Impl
 Blocks) implemented (issue #241) — see its entry below for a correctness bug found and
 fixed during review (conditional-impl satisfaction wasn't consulted outside direct
@@ -50,14 +50,21 @@ using RFC-0098's new `extend Type: Aspect` syntax directly — `extend Type: Asp
 Aspects and Struct-Embedded Aspect Lists), followed directly from RFC-0102 — a
 `marker` keyword giving RFC-0080 §3's existing "marker aspect" terminology (`Send`/
 `Sync`) a real, permanent-guarantee keyword, plus embedding RFC-0102's aspect list
-straight into a struct/enum's own declaration, with positive items requiring `marker`
-specifically because that position has no per-aspect body to fall back on. RFC-0098,
-0099, 0100, and 0102 all moved `0-draft` → `2-accepted` the same day, after this
-review resolved every open question each RFC had — RFC-0102 additionally retired the
-old `extend Type: !Aspect { }` braces spelling outright (bodyless is now mandatory for
-negative impls, not just sugar), matching this project's precedent for retiring a
-strictly-superseded spelling (RFC-0100, RFC-0042) rather than keeping two. RFC-0101
-and RFC-0103 remain `0-draft`, not assumed to land with the other four.
+straight into a struct/enum's own declaration. RFC-0098, 0099, 0100, and 0102 all
+moved `0-draft` → `2-accepted` the same day, after this review resolved every open
+question each RFC had — RFC-0102 additionally retired the old `extend Type: !Aspect {
+}` braces spelling outright (bodyless is now mandatory for negative impls, not just
+sugar), matching this project's precedent for retiring a strictly-superseded spelling
+(RFC-0100, RFC-0042) rather than keeping two. RFC-0103 was itself revised twice more:
+positive struct/enum-embedded items no longer require `marker` outright — a
+non-`marker` positive aspect now declares a checked, module-wide *obligation*
+discharged by an ordinary `extend` block elsewhere, once it was clear the
+no-escape-hatch concern only applies to items the list itself tries to implement
+inline — and a third idea (letting an `extend` block share a real body across
+multiple aspects) was split out into a seventh sibling, RFC-0104 (Multi-Aspect Extend
+Blocks with Shared Bodies), since it doesn't depend on anything specific to RFC-0103.
+RFC-0101, 0103, and 0104 all remain `0-draft`, not assumed to land with the four
+already-accepted ones.
 **2026-07-12:** RFC-0081 (Negative Impls)
 implemented on sprint/26 (issue #264) — syntax, finality, and the orphan rule are done
 and tested; priority over blanket impls is a property of RFC-0036 (issue #241), not
@@ -517,23 +524,31 @@ implementation).
   non-empty body across multiple aspects has no principled disambiguation and isn't
   attempted. Depends on RFC-0098's `extend Type: Aspect` grammar shape. Opened
   2026-07-14, accepted 2026-07-14.
-- **RFC-0103** *(draft)* — Marker Aspects and Struct-Embedded Aspect Lists — three
+- **RFC-0103** *(draft)* — Marker Aspects and Struct-Embedded Aspect Lists — two
   additions on top of RFC-0102. A `marker` keyword permanently declaring an aspect
   has zero methods/associated types (`marker aspect Copy2;`, itself bodyless — gives
   RFC-0080 §3's existing "marker aspect" terminology for `Send`/`Sync` a real
-  keyword). A struct/enum-embedded aspect list (`struct Token: Copy2, Serializable,
-  !Send { value: String }`) reusing RFC-0102 §5's `extend_aspect_list`, where
-  struct/enum bodies stay fields-only: `marker`-declared and negative items are fully
-  satisfied by the list itself, while a non-`marker` positive item declares a
+  keyword). And a struct/enum-embedded aspect list (`struct Token: Copy2,
+  Serializable, !Send { value: String }`) reusing RFC-0102 §5's `extend_aspect_list`,
+  where struct/enum bodies stay fields-only: `marker`-declared and negative items are
+  fully satisfied by the list itself, while a non-`marker` positive item declares a
   checked, module-wide *obligation* discharged by an ordinary, separately-editable
   `extend` block elsewhere — revised from an earlier draft that rejected non-`marker`
   positive items outright, once it was clear the "no escape hatch" concern only
-  applies to items the list itself tries to implement inline. And, lifting a
-  restriction from RFC-0102 §5 for `extend` blocks specifically: a multi-aspect list
-  may have a real, shared, non-empty body, disambiguated by name against each
-  aspect's own required methods — any method-name collision between two named
-  aspects rejects the whole combination outright rather than guessing, so no
-  qualified-declaration syntax is needed. Depends on RFC-0102. Opened 2026-07-14.
+  applies to items the list itself tries to implement inline. Depends on RFC-0102.
+  Opened 2026-07-14.
+- **RFC-0104** *(draft)* — Multi-Aspect Extend Blocks with Shared Bodies — split out
+  of an earlier draft of RFC-0103's own struct/enum-embedding section, since it's a
+  separate feature that doesn't depend on anything there. Lifts RFC-0102 §5's
+  bodyless-only restriction for `extend` blocks specifically: `extend A: Aspect3,
+  Aspect4 { ... }` with a real, shared, non-empty body. Disambiguation reuses a
+  tolerance that already exists in today's single-aspect impl checking (extra methods
+  beyond what an aspect requires already become ordinary inherent methods,
+  uncontested) — generalized to multiple aspects by checking each one's own
+  required-method coverage independently against the same shared pool. The one new
+  rule: if two named aspects in the same list declare a method with the identical
+  name, the whole combination is rejected outright rather than guessing or
+  introducing a qualified-declaration syntax. Depends on RFC-0102. Opened 2026-07-14.
 
 ---
 
