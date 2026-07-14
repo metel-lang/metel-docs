@@ -2,10 +2,10 @@
 id: rfc-0061
 title: "Structural Aspect Bounds"
 date: '2026-07-01'
-status: integrated
-updated: '2026-07-13'
+status: implemented
+updated: '2026-07-14'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/245'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence) and
@@ -13,7 +13,9 @@ impl_status: not-started
 > structural types — arrays (`T[]`), tuples, and function types — and how `std::core`
 > provides blanket impls for structural type constructors.
 
-> **Status — integrated (2026-07-13).** Integrated ahead of implementing issue #245. Confirmed no error-code collision (T0012 reuse, consistent with RFC-0036's precedent). Confirmed via direct source testing that #233/#241 did NOT leave structural impls in a safe not-yet-implemented state as this RFC's dependents assumed -- three independent hard-crash/skip bugs block any structural impl today (inference.rs's unconditional internal error for any non-Named impl target, a hardcoded array-method dispatch gate, and registry.rs silently skipping structural targets during registration) -- flagged as groundwork issue #245 must fix first, not a gap in this RFC's own content. Auto-impl propagation (S5) and function-pointer auto-derived aspects (S7.2) both depend on the auto-impl mechanism itself, which doesn't exist for any type yet (confirmed zero hits for auto-impl anywhere in source) -- marked not-yet-implemented pending that separate prerequisite, consistent with how RFC-0060 S4 auto-impl is itself still unimplemented.
+> **Status — integrated (2026-07-13).** Integrated ahead of implementing issue #245. Confirmed no error-code collision (T0012 reuse, consistent with RFC-0036's precedent). Confirmed via direct source testing that #233/#241 did NOT leave structural impls in a safe not-yet-implemented state as this RFC's dependents assumed -- three independent hard-crash/skip bugs block any structural impl today (inference.rs's unconditional internal error for any non-Named impl target, a hardcoded array-method dispatch gate, and registry.rs silently skipping structural targets during registration) -- flagged as groundwork issue #245 must fix first, not a gap in this RFC's own content. A first integration draft also carried array auto-impl propagation as §5, but that was later rehomed to RFC-0096 so this RFC only owns structural impl lookup/bounds and the explicit std::core structural impl surface.
+
+> **Status — implemented (2026-07-14).** Issue #245 landed the structural impl machinery this RFC depends on. The earlier array auto-impl propagation subsection was rehomed to RFC-0096, so no remaining unimplemented dependency stays inside RFC-0061's own scope.
 
 ## Summary
 
@@ -36,8 +38,8 @@ This RFC specifies:
    aspect bounds with a precise diagnostic.
 4. **Standard impls**: `std::core` provides `Display`, `Clone`, and `Eq` for arrays
    when the element type satisfies the bound.
-5. **Auto-impl propagation**: `Send`, `Sync`, and `Drop` propagate through `T[]`
-   structurally via the RFC-0060 §4 auto-impl rule.
+5. **Out of scope here:** array auto-impl propagation (`Send`/`Sync`/`Drop`) belongs
+   to RFC-0096's auto-impl mechanism, not to this RFC's structural-impl lookup rules.
 6. Tuples and function types are covered below; tuples are deferred.
 
 ---
@@ -154,38 +156,21 @@ accepted, `T[]` does not implement `Hash`. The blanket impls will be added to
 
 ---
 
-## 5. Auto-Impl Propagation
+## 5. Rehomed: Array Auto-Impl Propagation
 
-The RFC-0060 §4 auto-impl rule generates impls for marker aspects whose conditions
-hold structurally over all fields. `T[]` is a structural type whose single "field"
-kind is its element type `T`. The rule applies as follows:
+An earlier integrated draft placed array propagation of `Send`, `Sync`, and `Drop`
+here, because arrays are structural types and the rule is phrased structurally over an
+array's element type. That ownership boundary was wrong.
 
-### 5.1 Send
+Whether `T[]` auto-implements a marker aspect is part of the **auto-impl mechanism**
+itself, now owned by RFC-0096, not part of structural impl lookup. RFC-0061 owns:
 
-`T[]: Send` is auto-derived when `T: Send`.
+- how structural types participate in ordinary impl lookup
+- which explicit blanket impls `std::core` may write for structural constructors
+- what diagnostics appear when no matching structural impl exists
 
-An array can be transferred across fiber boundaries when its elements can — all
-elements are of type `T`, and no additional non-`T` state introduces a thread
-dependency. If `T: !Send`, `T[]: !Send` automatically (no negative impl required).
-
-### 5.2 Sync
-
-`T[]: Sync` is auto-derived when `T: Sync`.
-
-A shared reference `&T[]` is safe to use from multiple fibers when `&T` is, which
-holds exactly when `T: Sync`.
-
-### 5.3 Drop
-
-`T[]: Drop` is auto-derived when `T: Drop`.
-
-When an array is dropped:
-1. If `T: Drop`, the destructor is called on each live element in reverse index order.
-2. The backing storage is then reclaimed.
-
-When `T: !Drop`, step 1 is skipped — only the backing storage is reclaimed. The array
-itself therefore has a Drop impl iff `T: Drop`. When `T: !Drop`, the array satisfies
-`T[]: !Drop`, which permits move-out from scoped regions under RFC-0066 §2.2.
+RFC-0096 owns whether a marker aspect is synthesized without any explicit impl block
+at all, arrays included.
 
 ---
 
@@ -206,7 +191,7 @@ T0012: (i64, String) does not implement Display
        hint: tuple impls are not yet provided; use a named struct instead
 ```
 
-Auto-impl propagation (§5) applies to tuples as soon as per-arity blanket impls land:
+Auto-impl propagation (RFC-0096) applies to tuples as soon as per-arity blanket impls land:
 `(A, B): Send` when `A: Send` and `B: Send`, and so on. The auto-impl rule already
 handles this — no separate specification is needed once the blanket impls exist.
 
@@ -299,14 +284,16 @@ aspect impls are specified in RFC-0050.
 - RFC-0050 (Closure Capture Lists, draft) — closure types and their aspect impls;
   distinct from function pointer types.
 - RFC-0060 (Aspect Impl Coherence) — orphan rule; structural constructors owned by
-  `std::core`; overlap detection; §4 auto-impl rule used in §5.
+  `std::core`; overlap detection.
 - RFC-0062 (Ord Comparison Aspect, draft) — prerequisite for `impl<T: Ord> Ord for T[]`.
 - RFC-0066 (Region Pointer Extraction) — §2.2 move-out constraint requires `T: !Drop`;
-  §5.3 specifies when `T[]: !Drop`.
+  array `!Drop` propagation now belongs to RFC-0096.
 - RFC-0071 (Ownership and Move Semantics) — `Copy`/`Drop` mutual exclusion; function
   pointers are `Copy`.
 - RFC-0080 (Stdlib Aspects) — `Clone`, `Send`, `Sync` formal definitions; `Copy`
   implies `Clone` blanket; function pointer `Send`/`Sync` follows from §3.2/§4.2.
+- RFC-0096 (Auto-Impl Aspects, draft) — owns array propagation of `Send`/`Sync`/`Drop`
+  that an earlier draft of this RFC had carried as §5.
 - RFC-0008 (Aspect Objects) — `Callable<A, B>` object safety; `dyn Callable<A, B>`.
 - RFC-0054 — `List<T>` as a nominal struct; `List<T>` impls are separate from array
   impls and coexist.

@@ -2,23 +2,25 @@
 id: rfc-0060
 title: "Aspect Impl Coherence"
 date: '2026-07-01'
-status: integrated
-updated: '2026-07-12'
+status: implemented
+updated: '2026-07-14'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/244'
-impl_status: in-progress
+impl_status: implemented
 ---
 
 > **Status — accepted.** No dependencies on other under-review RFCs; this RFC
 > is a prerequisite for RFC-0036 (Conditional Impl Blocks), RFC-0061 (Structural
 > Aspect Bounds), RFC-0080 (Stdlib Aspects), and RFC-0081 (Negative Impls). Defines
-> the orphan rule, overlap detection, closed-world coherence, auto-impl rules, and
-> the priority of negative impls over blanket impls.
+> the orphan rule, overlap detection, closed-world coherence, the coherence treatment
+> of auto-impls, and the priority of negative impls over blanket impls.
 
 > **Status — integrated (2026-07-11).** Integrated into public/reference/spec/declarations.md as a new Aspect Implementation Coherence section (orphan rule, overlap detection, closed-world assumption, auto-impl, negative-impl priority). Two forward-references in Negative Bounds/Negative Impls, written anticipating this integration, now point here instead. Added T0014/T0015 to error-codes.md. Fixed a stale error-code collision in RFC-0033 (its recommended T0013/T0014 were both already claimed by other, unrelated shipped features).
 
-> **Status — in progress (2026-07-12).** Confirmed via issue #244: §1 (orphan rule) and §2's concrete-impl half (overlap detection between fully-applied types) were already delivered by #238; §5's explicit-vs-explicit half (negative impl conflicting with a concrete positive impl) was delivered by #264. The `merge_from` bug named in #244's own text (`method_env`/`method_receiver_env` silently dropping one module's methods when two independent modules implement different aspects for the same foreign type — confirmed live via a diamond-dependency repro) is now fixed. Still unimplemented: §2's blanket-impl disjointness half and §5's blanket-priority half (both blocked on RFC-0036/#241), §3 closed-world negative-bound discharge (blocked on RFC-0072/#243), and §4 auto-impl rules (blocked on RFC-0080/RFC-0096) — a majority of this RFC's own specified content, not merely sibling properties. #244 stays open until those land.
+> **Status — in progress (2026-07-12).** Confirmed via issue #244: §1 (orphan rule) and §2's concrete-impl half (overlap detection between fully-applied types) were already delivered by #238; §5's explicit-vs-explicit half (negative impl conflicting with a concrete positive impl) was delivered by #264. The `merge_from` bug named in #244's own text (`method_env`/`method_receiver_env` silently dropping one module's methods when two independent modules implement different aspects for the same foreign type — confirmed live via a diamond-dependency repro) is now fixed. Still unimplemented: §2's blanket-impl disjointness half and §5's blanket-priority half (both blocked on RFC-0036/#241), §3 closed-world negative-bound discharge (blocked on RFC-0072/#243), and §4's auto-impl coherence interaction (blocked in practice on RFC-0080/RFC-0096's still-missing mechanism) — a majority of this RFC's own specified content, not merely sibling properties. #244 stays open until those land.
 
-> **Status — in progress (2026-07-13).** #244 landed the remaining, previously-blocked-but-now-unblocked pieces: struct/enum literal construction and RFC-0082 associated-type completeness now consult conditional impls for §3's closed-world negative-bound discharge (both polarities — a genuine type-arg-stripping bug in the original construction.rs call sites had made this vacuously pass regardless of the real bound, found and fixed during review); a concrete negative impl now overrides a blanket positive impl for its exact instantiation (§5's blanket-priority half), without disturbing the existing negative-vs-concrete-positive conflict rule (RFC-0081 §2.2/#264); and §2's blanket-impl disjointness half now works via a shape-crossing compatibility check in `coherence.rs`'s overlap detection (the pre-#244 exact-key grouping never even compared a blanket impl's canonicalized target against a concrete impl's, silently missing real conflicts). Only §4 (auto-impl rules) remains unimplemented, still blocked on RFC-0080/RFC-0096 on their own unrelated timeline — everything else this RFC specifies is done.
+> **Status — in progress (2026-07-13).** #244 landed the remaining, previously-blocked-but-now-unblocked pieces: struct/enum literal construction and RFC-0082 associated-type completeness now consult conditional impls for §3's closed-world negative-bound discharge (both polarities — a genuine type-arg-stripping bug in the original construction.rs call sites had made this vacuously pass regardless of the real bound, found and fixed during review); a concrete negative impl now overrides a blanket positive impl for its exact instantiation (§5's blanket-priority half), without disturbing the existing negative-vs-concrete-positive conflict rule (RFC-0081 §2.2/#264); and §2's blanket-impl disjointness half now works via a shape-crossing compatibility check in `coherence.rs`'s overlap detection (the pre-#244 exact-key grouping never even compared a blanket impl's canonicalized target against a concrete impl's, silently missing real conflicts). Only §4's reference to the still-unimplemented RFC-0096-owned auto-impl mechanism remains blocked — everything else this RFC specifies is done.
+
+> **Status — implemented (2026-07-14).** Issue #244's own deliverable set is now complete. RFC-0060 no longer owns the auto-impl mechanism itself — only how such impls participate in coherence — so RFC-0096 remaining unimplemented is no longer a blocker to this RFC's lifecycle.
 
 ## Summary
 
@@ -30,8 +32,8 @@ program, independent of module load order. This RFC specifies:
    compile error.
 3. **Closed-world assumption** — absence of an applicable impl is a provable fact;
    `T: !Aspect` is dischargeable from the absence of any impl covering `T`.
-4. **Auto-impl rules** — marker aspects may declare rules under which the compiler
-   automatically derives an impl for a type.
+4. **Auto-impl coherence participation** — auto-impls, as defined elsewhere, behave
+   as ordinary positive impls for overlap and priority purposes.
 5. **Negative impl priority** — an explicit negative impl (RFC-0081) overrides any
    blanket positive impl.
 
@@ -109,28 +111,20 @@ override definitive: there are no future impls that could re-grant the aspect.
 
 ---
 
-## 4. Auto-Impl Aspects
+## 4. Auto-Impl Participation in Coherence
 
-A marker aspect (an aspect with no methods) may be designated as an **auto-impl
-aspect**: the compiler automatically derives an implementation for any type all of
-whose field types also implement the aspect, without requiring an explicit impl
-declaration from the programmer.
+This RFC does not define which aspects are auto-impl aspects or the structural rule
+by which one is derived for a type. That mechanism belongs to RFC-0096.
 
-The rule is structural: for a struct, every field type must implement the aspect;
-for an enum, every field type in every variant must implement the aspect.
+For coherence purposes, however, an auto-impl is treated exactly like an ordinary
+positive impl generated by the compiler:
 
-The following stdlib aspects are auto-impl aspects (RFC-0080):
-- `Send` — auto-impl when all fields are `Send`
-- `Sync` — auto-impl when all fields are `Sync`
+- overlap detection (§2) applies to it
+- negative-impl override (§5) applies to it
+- the orphan rule (§1) does not apply to it, because there is no authored impl site
 
-An auto-impl is a positive impl generated by the compiler. It is subject to negative
-impl override (§5) and to overlap detection (§2): an explicit impl for a type that
-the auto-impl rule would also cover is a conflict.
-
-The syntax by which an aspect definition declares itself as auto-impl is deferred to
-RFC-0012 (Derived Aspects), which will specify the general derive mechanism. This RFC
-establishes the concept and its coherence properties; RFC-0012 specifies the surface
-syntax.
+An explicit positive impl for a type that an applicable auto-impl would also cover is
+a coherence conflict.
 
 ---
 
@@ -201,8 +195,8 @@ Metel avoids it entirely by making overlap unconditionally illegal.
    graph. A future package system will need a coherence model for separately compiled
    packages; this RFC does not address that. Deferred to the package system design.
 
-2. **Auto-impl declaration syntax.** The surface syntax by which an aspect definition
-   declares itself as auto-impl is deferred to RFC-0012.
+2. **Auto-impl mechanism ownership.** Which aspects are auto-impl aspects, and the
+   structural derivation rule they use, belong to RFC-0096 rather than this RFC.
 
 ---
 
@@ -214,7 +208,10 @@ Metel avoids it entirely by making overlap unconditionally illegal.
 - RFC-0061 (Structural Aspect Bounds) — structural type constructors are owned by
   `std::core` and follow the orphan rule.
 - RFC-0072 (Negative Bounds) — `T: !Aspect` bounds discharged via CWA (§3).
-- RFC-0080 (Stdlib Aspects) — `Send`/`Sync` auto-impl rules; depend on §4.
+- RFC-0080 (Stdlib Aspects) — `Send`/`Sync` are auto-impl aspects; their coherence
+  participation depends on §4 here, while their shared mechanism is owned by RFC-0096.
 - RFC-0081 (Negative Impls) — negative impl priority over blanket impls; depend on §5.
+- RFC-0096 (Auto-Impl Aspects) — ownership of the auto-impl mechanism this RFC only
+  refers to for coherence purposes.
 - RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls, draft) — formalizes §1 for
   the `impl<T: Bound> Aspect for T` case this RFC's own §3/§5 examples already use.

@@ -182,7 +182,8 @@ was found and reconciled, and where this session did most of its work.
   Depends on RFC-0092. RFC-0080's `Clone` derive depends on this. Answers RFC-0055's
   aspect-inspection open question. Deliberately excludes auto-impl aspects
   (`Send`/`Sync`/`Linear`) from its scope — see RFC-0096.
-- **RFC-0096** — Auto-Impl Aspects — formalizes the recognition rule (closed,
+- **RFC-0096** — Auto-Impl Aspects — owns the auto-impl mechanism: formalizes the
+  recognition rule (closed,
   compiler-intrinsic list, not a declaration-level marker) and the shared
   structural-composition algorithm that RFC-0080 §3.2/§4.2 and RFC-0089 §2 each
   independently invoke as "the auto-impl pattern" without either owning it. Opened
@@ -271,27 +272,17 @@ cluster itself. **Resolved 2026-07-13**: RFC-0097 integrated (issue #269 tracks
 implementation).
 
 - **RFC-0008** — Aspect Objects — `dyn Aspect`, vtable dispatch.
-- **RFC-0061** *(integrated 2026-07-13)* — Structural Aspect Bounds — `T[]`/tuples/
-  function-type bounds. Depends on RFC-0060 (integrated) and RFC-0036 (implemented,
-  2026-07-13) — both landed, so implementation is now unblocked. Integrated into
+- **RFC-0061** *(implemented 2026-07-14, was integrated 2026-07-13)* — Structural
+  Aspect Bounds — `T[]`/tuples/function-type bounds. Depends on RFC-0060 and
+  RFC-0036; both were in place before implementation. Integrated into
   `public/reference/spec/declarations.md` as a new "Structural Aspect Bounds" section
-  right after Aspect Implementation Coherence (also corrected that section's own
-  stale "not yet implemented" banner to reflect #238/#243/#264's partial progress).
-  No error-code collision (reuses T0012, consistent with RFC-0036's precedent).
-  Found during integration, by direct testing against current source rather than
-  assumption: contrary to what this RFC's dependents (and the anticipatory `RFC-0061`
-  comments already in `construction.rs`/`registry.rs` from #233) assumed, structural
-  impls are NOT in a safe "parses fine, just missing real semantics" state today —
-  three independent bugs (an unconditional internal-error crash in `inference.rs` for
-  any non-named impl target, a hardcoded array-method-call gate that blocks aspect
-  dispatch on arrays before it's ever attempted, and a registry pass that silently
-  skips registering structural targets) block ANY structural impl from working at
-  all, regardless of whether it declares its own generics. Flagged as groundwork
-  issue #245 must fix first — not a gap in this RFC's own content. §5 (auto-impl
-  propagation through arrays) and §7.2 (function-pointer auto-derived aspects) are
-  marked not-yet-implemented pending the auto-impl mechanism itself, which doesn't
-  exist for any type yet (confirmed: zero references anywhere in source) — the same
-  blocker RFC-0060 §4's own auto-impl rule already has.
+  right after Aspect Implementation Coherence. Integration also surfaced three real
+  groundwork bugs in the interpreter's structural-impl path (non-named impl-target
+  crashes, array method-dispatch gating, and structural-target registration being
+  skipped entirely), all fixed as part of issue #245 rather than left implicit. The
+  initial integrated draft had carried array auto-impl propagation as §5, but that
+  dependency has now been rehomed to RFC-0096, leaving RFC-0061 to own structural
+  impl lookup/bounds and explicit `std::core` structural impls only.
 - **RFC-0071** — Ownership and Move Semantics — affine-by-default foundation.
 - **RFC-0036** *(implemented 2026-07-13, was integrated 2026-07-13)* — Conditional Impl
   Blocks — `impl Aspect for Type<T> where T: Bound`, both inline and `where`-clause
@@ -333,33 +324,17 @@ implementation).
   real `TypeVar`-generator bug that aliased independent opaque-returning calls once
   three or more appeared in one scope, and that the opacity check itself had been
   left entirely disconnected (never called) despite existing in the source.
-- **RFC-0060** *(integrated 2026-07-11)* — Aspect Impl Coherence — orphan rule, overlap
-  detection, closed-world assumption, auto-impl, negative-impl priority. Integrated
-  ahead of implementing issue #238 (the coherence pipeline it specifies), on its own,
-  since it cross-references two already-integrated RFCs. Integrated into
-  `public/reference/spec/declarations.md` as a new section; two forward-references in
-  Negative Bounds/Negative Impls that had anticipated this now point here. Surfaced a
-  real, unrelated bug: RFC-0033's recommended error code (T0014) was already claimed
-  by this RFC's own orphan-rule error — flagged in RFC-0033 rather than silently
-  colliding. `impl_status: in-progress` as of 2026-07-12 (issue #244) — orphan rule,
-  concrete-impl overlap (#238), and negative-vs-concrete-positive conflict (#264) are
-  done. **Correction 2026-07-13:** the closed-world negative-bound discharge line item
-  here previously cited RFC-0072/#243 as the blocker — #243 landed 2026-07-12 (issue
-  #243, negative bounds now enforced) but only for the concrete-impl-only case, per its
-  own explicit scope; the blanket-impl-aware half of discharge this section describes
-  was blocked on RFC-0036/#241, the same as blanket-impl disjointness/priority.
-  **Update 2026-07-13 (later):** RFC-0036/#241 has now landed (implemented), so both
-  are unblocked — actually wiring the blanket-impl-aware discharge and disjointness/
-  priority logic remains open under this issue (#244). Auto-impl rules
-  (RFC-0080/RFC-0096) remain unblocked-but-unimplemented on their own timeline,
-  unrelated to #241.
-  **Update 2026-07-13 (later still):** #244 landed — blanket-impl-aware negative-bound
-  discharge (both polarities, at struct/enum literal construction and RFC-0082 assoc-
-  type completeness), blanket-vs-concrete overlap detection (via a shape-crossing
-  compatibility check replacing the old exact-key grouping), and negative-impl
-  priority over a blanket positive impl (a new `neg_impl_env` registry table) are all
-  implemented now, without disturbing the existing negative-vs-concrete-positive
-  conflict rule (RFC-0081 §2.2/#264). Only §4 auto-impl rules remain unimplemented.
+- **RFC-0060** *(implemented 2026-07-14, was integrated 2026-07-11)* — Aspect Impl
+  Coherence — orphan rule, overlap detection, closed-world assumption, auto-impl
+  coherence participation, negative-impl priority. Integrated into
+  `public/reference/spec/declarations.md` as a new section; also surfaced a real,
+  unrelated docs bug while integrating (RFC-0033's recommended error code T0014 was
+  already claimed by this RFC's own orphan-rule error, so RFC-0033 was corrected
+  rather than silently colliding). Implemented across issues #238, #243, #264, and
+  #244: orphan-rule enforcement, concrete and blanket-aware overlap detection,
+  blanket-impl-aware closed-world negative-bound discharge, and negative-impl
+  priority over blanket positives. RFC-0096 still owns the separate auto-impl
+  mechanism itself, but that is no longer part of RFC-0060's unimplemented surface.
 - **RFC-0097** *(integrated 2026-07-13)* — Orphan Rule for Bare-Parameter Blanket
   Impls. RFC-0060 §1's orphan rule assumes every impl target has an outermost type
   constructor to check — but a bare-parameter blanket (`impl<T: Bound> Aspect for T`,
@@ -567,6 +542,12 @@ implementation).
   that coupled this RFC to RFC-0096's internals unnecessarily). Depends on RFC-0102
   and (for §4) places a new implementation requirement on RFC-0096. Opened
   2026-07-14, accepted 2026-07-14.
+- **RFC-0106** *(implemented 2026-07-14)* — Optional Braces for Empty Constructors —
+  zero-field structs may be written as either `Empty` or `Empty {}`, and zero-field
+  enum variants as either `Type::Variant` or `Type::Variant {}`. Implemented as a
+  narrow parser/typechecker change only: non-empty constructors are unchanged, and
+  empty enum-pattern braces were not added as part of this RFC. Opened 2026-07-14,
+  implemented 2026-07-14.
 - **RFC-0104** *(draft)* — Multi-Aspect Extend Blocks with Shared Bodies — split out
   of an earlier draft of RFC-0103's own struct/enum-embedding section, since it's a
   separate feature that doesn't depend on anything there. Lifts RFC-0102 §5's
@@ -584,8 +565,8 @@ implementation).
 
 ## Settled (reference only — not part of active tracking)
 
-**Implemented (25):** RFC-0006, 0007, 0010, 0018-0023, 0030-0032, 0034, 0035, 0040-0045,
-0053, 0054, 0057-0059.
+**Implemented (28):** RFC-0006, 0007, 0010, 0018-0023, 0030-0032, 0034, 0035, 0040-0045,
+0053, 0054, 0057-0061, 0106.
 
 **Superseded (9):** RFC-0001 (→ later pointer work), RFC-0002 (aspect bound syntax),
 RFC-0009 (module system → RFC-0030), RFC-0012 (→ RFC-0092/0093/0094/0095), RFC-0013

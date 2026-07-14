@@ -2,11 +2,11 @@
 id: rfc-0097
 title: "Orphan Rule for Bare-Parameter Blanket Impls"
 date: '2026-07-11'
-status: integrated
+status: implemented
 target:
-updated: '2026-07-13'
+updated: '2026-07-14'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/269'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **New RFC.** Created despite `rfc.py new`'s overlap warning against RFC-0060, 0061,
@@ -26,6 +26,8 @@ impl_status: not-started
 > **Status — accepted (2026-07-13).** Reviewed: the RFC is small, well-scoped, and closes a genuine gap in RFC-0060's own worked examples. Resolving Unresolved Question 1 (should RFC-0036 get a dedicated example) by keeping this RFC's own S2 examples as authoritative and updating RFC-0036's existing cross-reference (declarations.md) rather than duplicating content into RFC-0036 itself.
 
 > **Status — integrated (2026-07-13).**
+
+> **Status — implemented (2026-07-14).**
 
 ## Summary
 

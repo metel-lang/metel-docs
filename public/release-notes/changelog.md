@@ -45,6 +45,10 @@ what's actually merged. Shipped from `sprint/25` (merged into `develop`) and
   `extend Type: Aspect;` / `extend Type: !Aspect;` are accepted, and empty
   aspect declarations may be written as `aspect Name;` (RFC-0098, RFC-0102,
   RFC-0103, #274, #277, #278)
+- Bare-parameter blanket impls now obey the orphan rule correctly: `extend<T>
+  T: Aspect` is permitted only when the aspect is local to the declaring
+  module, and such blankets now participate in aspect-bound satisfaction
+  instead of being silently ignored (RFC-0097, #269)
 
 **Breaking changes:**
 - Reference-type syntax renamed to match the integrated spec: `*T`/`*mut T`

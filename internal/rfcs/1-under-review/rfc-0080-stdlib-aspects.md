@@ -35,7 +35,7 @@ updated: '2026-07-09'
 > Formally specifies four aspects that are assumed pre-existing across the
 > accepted and under-review region RFC cluster (RFC-0063–0079) but have never been
 > defined. The sendability aspects (`Send`, `Sync`) rely on closed-world coherence from
-> RFC-0060 for their auto-impl rules.
+> RFC-0060 and on the auto-impl mechanism owned by RFC-0096.
 
 ## Summary
 
