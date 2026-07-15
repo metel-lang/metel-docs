@@ -11,7 +11,7 @@ Subcommands:
                                        dated status note, fix path references
                                        elsewhere in the repo, then run `check`.
                                        `--to integrated` requires `--tracking`
-                                       (a ClickUp task/URL) and sets
+                                       (a tracking task/URL) and sets
                                        `impl_status: not-started` alongside it —
                                        no RFC enters integrated without a
                                        linked implementation-tracking task.
@@ -30,14 +30,19 @@ Subcommands:
                                        that also sets `superseded_by`.
   check                                Validate frontmatter/directory consistency,
                                        duplicate RFC ids, dangling path
-                                       references, and (for integrated/implemented
+                                       references, REGISTRY.md exact-generation
+                                       drift, and (for integrated/implemented
                                        RFCs) that impl_status/impl_tracking are set
                                        and the spec actually references the RFC.
                                        Also flags any stale "Not yet implemented"
                                        callout left behind for an RFC that's already
                                        4-implemented. Read-only.
-  index --check-drift                  Compare INDEX.md's last_built date against
-                                       every RFC's own frontmatter date. Read-only.
+  index --check-drift                  Check whether generated REGISTRY.md matches
+                                       the current RFC corpus exactly, and whether
+                                       the curated INDEX.md mentions every current
+                                       RFC at least once. Read-only.
+  index --rebuild-registry             Regenerate internal/rfcs/REGISTRY.md from
+                                       the current RFC corpus.
   index --suggest-placement <rfc-id>   Suggest which INDEX.md cluster section an
                                        RFC's content is most similar to. Read-only.
 
@@ -55,6 +60,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 RFCS_DIR = REPO_ROOT / "internal" / "rfcs"
+INDEX_PATH = RFCS_DIR / "INDEX.md"
+REGISTRY_PATH = RFCS_DIR / "REGISTRY.md"
 
 STAGES = {
     "draft": "0-draft",
@@ -119,6 +126,13 @@ def find_path_for_id(rid):
         if rfc_id_from_filename(f) == rid:
             return f
     return None
+
+
+def rfc_sort_key(rid):
+    m = re.match(r"rfc-(\d+)([a-z]?)$", rid)
+    if not m:
+        return (10**9, rid)
+    return (int(m.group(1)), m.group(2))
 
 
 def parse_file(path):
@@ -325,6 +339,7 @@ target:
 **Target:** *(set when accepted)*
 '''
     path.write_text(template)
+    rebuild_registry()
     print(f"Created {path.relative_to(REPO_ROOT)}")
     print("Reminder: internal/rfcs/INDEX.md needs a new entry for this RFC.")
 
@@ -390,7 +405,7 @@ def cmd_transition(args):
     if args.to == "integrated":
         if not args.tracking:
             error(
-                "transitioning to 'integrated' requires --tracking <ClickUp task/URL> — "
+                "transitioning to 'integrated' requires --tracking <tracking task/URL> — "
                 "no RFC enters integrated without a linked implementation-tracking task "
                 "(see PROCESS.md's 3-integrated exit criteria)."
             )
@@ -415,6 +430,7 @@ def cmd_transition(args):
                 f"implemented:\n{lines}"
             )
     do_transition(rid, args.to, args.reason, extra_fm=extra_fm or None)
+    rebuild_registry()
     cmd_check(args)
 
 
@@ -435,6 +451,7 @@ def cmd_impl_status(args):
         updates["impl_tracking"] = args.tracking
     text = update_frontmatter_fields(path.read_text(), updates)
     path.write_text(text)
+    rebuild_registry()
     print(f"{rid.upper()}: impl_status -> {args.set}" + (f", impl_tracking -> {args.tracking}" if args.tracking else ""))
     if args.set == "implemented" and stage != "implemented":
         print(f"Reminder: run `rfc.py transition {rid} --to implemented` to move the RFC itself.")
@@ -445,6 +462,7 @@ def cmd_supersede(args):
     by_ids = [normalize_id(x) for x in args.by.split(",")]
     reason = args.reason or f"Superseded by {', '.join(i.upper() for i in by_ids)}."
     do_transition(rid, "superseded", reason, extra_fm={"superseded_by": ", ".join(by_ids)})
+    rebuild_registry()
     print("Reminder: write the reconciliation content by hand (what carried forward, "
           "what didn't) — this tool only performs the mechanical move.")
     cmd_check(args)
@@ -460,6 +478,114 @@ PATH_REF_RE = re.compile(r"internal/rfcs/[0-6]-[a-z-]+/rfc-[\w.-]+\.md")
 
 SPEC_DIR = REPO_ROOT / "public" / "reference" / "spec"
 VALID_IMPL_STATUS = {"not-started", "in-progress", "implemented"}
+
+
+def collect_rfc_records():
+    records = []
+    for path in find_rfc_files():
+        rid = rfc_id_from_filename(path)
+        fm, _ = parse_file(path)
+        stage = STAGE_FOR_DIR[path.parent.name]
+        records.append({
+            "id": rid,
+            "title": fm.get("title", path.stem),
+            "stage": stage,
+            "stage_dir": path.parent.name,
+            "path": path.relative_to(REPO_ROOT),
+            "date": fm.get("date", ""),
+            "updated": fm.get("updated", ""),
+            "impl_status": fm.get("impl_status", ""),
+            "impl_tracking": fm.get("impl_tracking", ""),
+        })
+    records.sort(key=lambda r: rfc_sort_key(r["id"]))
+    return records
+
+
+def build_registry_text(records=None):
+    records = collect_rfc_records() if records is None else records
+    by_stage = {stage: [] for stage in STAGES}
+    for rec in records:
+        by_stage[rec["stage"]].append(rec)
+    counts = {stage: len(items) for stage, items in by_stage.items()}
+    total = len(records)
+    live = counts["draft"] + counts["under-review"] + counts["accepted"] + counts["integrated"]
+    settled = counts["implemented"] + counts["superseded"] + counts["refused"]
+
+    lines = [
+        "---",
+        "id: rfc-registry",
+        'title: "RFC Registry"',
+        "type: registry",
+        f"generated_on: '{today()}'",
+        "---",
+        "",
+        "# RFC Registry",
+        "",
+        "This file is generated by `internal/rfcs/tools/rfc.py index --rebuild-registry`.",
+        "Do not edit it by hand. It is the authoritative RFC state inventory; `INDEX.md` is",
+        "the curated thematic map.",
+        "",
+        f"**{total} RFCs total.** {counts['draft']} draft, {counts['under-review']} under review, "
+        f"{counts['accepted']} accepted, {counts['integrated']} integrated ({live} live), "
+        f"{counts['implemented']} implemented, {counts['superseded']} superseded, "
+        f"{counts['refused']} refused ({settled} settled).",
+        "",
+    ]
+
+    stage_titles = [
+        ("draft", "Draft"),
+        ("under-review", "Under Review"),
+        ("accepted", "Accepted"),
+        ("integrated", "Integrated"),
+        ("implemented", "Implemented"),
+        ("superseded", "Superseded"),
+        ("refused", "Refused"),
+    ]
+    for stage, title in stage_titles:
+        entries = by_stage[stage]
+        lines.append(f"## {title} ({len(entries)})")
+        lines.append("")
+        if not entries:
+            lines.append("*(none)*")
+            lines.append("")
+            continue
+        for rec in entries:
+            meta = [f"`{rec['stage_dir']}`", str(rec["path"])]
+            if rec["date"]:
+                meta.append(f"date {rec['date']}")
+            if rec["updated"]:
+                meta.append(f"updated {rec['updated']}")
+            if rec["impl_status"]:
+                meta.append(f"impl {rec['impl_status']}")
+            if rec["impl_tracking"]:
+                meta.append(f"tracking {rec['impl_tracking']}")
+            lines.append(
+                f"- **{rec['id'].upper()}** — {rec['title']} "
+                f"({' ; '.join(meta)})"
+            )
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def rebuild_registry():
+    REGISTRY_PATH.write_text(build_registry_text())
+
+
+def registry_drift_problem():
+    expected = build_registry_text()
+    if not REGISTRY_PATH.exists():
+        return "internal/rfcs/REGISTRY.md is missing — run `rfc.py index --rebuild-registry`"
+    actual = REGISTRY_PATH.read_text()
+    if actual != expected:
+        return "internal/rfcs/REGISTRY.md is stale or hand-edited — run `rfc.py index --rebuild-registry`"
+    return None
+
+
+def index_mentioned_rfc_ids(text):
+    ids = set()
+    for m in re.finditer(r"RFC-(\d+[a-z]?)", text, flags=re.IGNORECASE):
+        ids.add(normalize_id(m.group(1)))
+    return ids
 
 
 def spec_mentions(rid):
@@ -511,11 +637,13 @@ def cmd_check(args=None):
     problems = []
     seen_ids = {}
     known_paths = set()
+    current_ids = set()
 
     for f in find_rfc_files():
         rel = str(f.relative_to(REPO_ROOT))
         known_paths.add(rel)
         rid = rfc_id_from_filename(f)
+        current_ids.add(rid)
         if rid is None:
             problems.append(f"{rel}: filename doesn't match rfc-NNNN[letter] pattern")
             continue
@@ -582,6 +710,19 @@ def cmd_check(args=None):
             if ref not in known_paths:
                 problems.append(f"{rel}: dangling path reference '{ref}'")
 
+    registry_problem = registry_drift_problem()
+    if registry_problem:
+        problems.append(registry_problem)
+
+    if INDEX_PATH.exists():
+        mentioned = index_mentioned_rfc_ids(INDEX_PATH.read_text())
+        missing = sorted(current_ids - mentioned, key=rfc_sort_key)
+        if missing:
+            problems.append(
+                "internal/rfcs/INDEX.md is missing RFC mentions for: "
+                + ", ".join(r.upper() for r in missing)
+            )
+
     if problems:
         print(f"{len(problems)} problem(s):")
         for p in problems:
@@ -596,27 +737,35 @@ def cmd_check(args=None):
 # --------------------------------------------------------------------------
 
 def cmd_index(args):
-    index_path = RFCS_DIR / "INDEX.md"
-    if not index_path.exists():
-        error(f"{index_path} not found")
+    if not INDEX_PATH.exists():
+        error(f"{INDEX_PATH} not found")
+
+    if args.rebuild_registry:
+        rebuild_registry()
+        print(f"Rebuilt {REGISTRY_PATH.relative_to(REPO_ROOT)}")
+        return
 
     if args.check_drift:
-        fm, _ = parse_file(index_path)
-        last_built = fm.get("last_built")
-        if not last_built:
-            error("INDEX.md has no last_built frontmatter field")
-        stale = []
-        for f in find_rfc_files():
-            rfm, _ = parse_file(f)
-            rfc_date = rfm.get("updated") or rfm.get("date")
-            if rfc_date and rfc_date > last_built:
-                stale.append((rfc_date, f.relative_to(REPO_ROOT)))
-        if stale:
-            print(f"INDEX.md last_built = {last_built}. Changed since then:")
-            for d, path in sorted(stale):
-                print(f"  {d}  {path}")
+        problems = []
+        registry_problem = registry_drift_problem()
+        if registry_problem:
+            problems.append(registry_problem)
+
+        current_ids = {r["id"] for r in collect_rfc_records()}
+        mentioned = index_mentioned_rfc_ids(INDEX_PATH.read_text())
+        missing = sorted(current_ids - mentioned, key=rfc_sort_key)
+        if missing:
+            problems.append(
+                "internal/rfcs/INDEX.md is missing RFC mentions for: "
+                + ", ".join(r.upper() for r in missing)
+            )
+
+        if problems:
+            print("index drift found:")
+            for p in problems:
+                print(f"  - {p}")
         else:
-            print(f"INDEX.md ({last_built}) looks current.")
+            print("RFC registry/index look current.")
         return
 
     if args.suggest_placement:
@@ -624,7 +773,7 @@ def cmd_index(args):
         target_path = find_path_for_id(rid)
         if target_path is None:
             error(f"RFC {rid} not found")
-        clusters = parse_index_clusters(index_path.read_text())
+        clusters = parse_index_clusters(INDEX_PATH.read_text())
         if not clusters:
             error("no cluster sections found in INDEX.md")
         corpus = dict(rfc_corpus())
@@ -649,7 +798,7 @@ def cmd_index(args):
             print(f"  {score:.3f}  {cname}")
         return
 
-    error("index requires --check-drift or --suggest-placement RFC-ID")
+    error("index requires --check-drift, --rebuild-registry, or --suggest-placement RFC-ID")
 
 
 # Prefixes, not substrings — "Comptime / Derive cluster (... least settled cluster)"
@@ -695,7 +844,7 @@ def main():
     p_trans.add_argument("rfc_id")
     p_trans.add_argument("--to", required=True, choices=list(STAGES))
     p_trans.add_argument("-r", "--reason", default="", help="One-line reason, used in the inserted status note")
-    p_trans.add_argument("--tracking", default="", help="ClickUp task/URL — required when --to integrated")
+    p_trans.add_argument("--tracking", default="", help="Tracking task/URL — required when --to integrated")
     p_trans.set_defaults(func=cmd_transition)
 
     p_impl = sub.add_parser("impl-status", help="Update impl_status on an integrated/implemented RFC")
@@ -713,8 +862,9 @@ def main():
     p_check = sub.add_parser("check", help="Validate frontmatter/directory consistency and path references")
     p_check.set_defaults(func=cmd_check)
 
-    p_index = sub.add_parser("index", help="Index maintenance helpers (read-only)")
+    p_index = sub.add_parser("index", help="Registry/index maintenance helpers")
     p_index.add_argument("--check-drift", action="store_true")
+    p_index.add_argument("--rebuild-registry", action="store_true")
     p_index.add_argument("--suggest-placement", metavar="RFC_ID")
     p_index.set_defaults(func=cmd_index)
 

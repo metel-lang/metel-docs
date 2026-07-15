@@ -2,120 +2,26 @@
 id: rfc-index
 title: "RFC Index"
 type: index
-last_built: '2026-07-14'
+last_updated: '2026-07-15'
 ---
 
 # RFC Index
 
-Generated 2026-07-09, last updated 2026-07-10. Not auto-regenerated — rebuild it (or ask
-for a rebuild) whenever RFCs are added, moved, or change status; it will drift otherwise.
-Grouped by theme, not by number, because number order tells you nothing about what's
-related. See `PROCESS.md` for the full lifecycle (a new `3-integrated` stage was added
-the same day this index was built) and the working rules adopted alongside this index.
+This file is the **curated thematic map** of the RFC corpus. It groups RFCs by design
+cluster, points out meaningful cross-RFC relationships, and records non-derivable
+judgment about why certain RFCs matter together.
 
-**103 RFCs total.** 30 draft, 1 under review, 14 accepted, 3 integrated (new stage — see
-`PROCESS.md`) (48 "live" — need active tracking), 32 implemented, 10 superseded, 13
-refused (53 "settled" — reference only). **2026-07-13:** RFC-0036 (Conditional Impl
-Blocks) implemented (issue #241) — see its entry below for a correctness bug found and
-fixed during review (conditional-impl satisfaction wasn't consulted outside direct
-method dispatch) and two coherence-negation fixtures restored after the original
-implementation had incorrectly skipped them as unsupported. RFC-0037 (Return-Position
-`impl Aspect`) also implemented the same day (issue #240) — see its entry below for a
-real `TypeVar`-generator aliasing bug and a fully-disconnected opacity-enforcement
-mechanism found and fixed during review.
-RFC-0061 (Structural Aspect Bounds) also integrated the same day, ahead of implementing
-issue #245 — see its entry below for three real, previously-uncalled-out implementation
-bugs found during integration that block any structural impl from working today.
-RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls) accepted and integrated the
-same day (issue #269) — the narrow gap RFC-0036's own integration had flagged as
-deferred. Also, three sibling surface-syntax
-RFCs opened from the same review — RFC-0098 (Surface Keyword Renames, amends
-RFC-0032/0042/0044/0067A's surface syntax only, no semantic change), RFC-0099
-(Dot-Separated Module Paths, `::` → `.`), RFC-0100 (Constructor-Call Construction,
-struct literals → call syntax, really a general-keyword-arguments RFC); see "Small,
-mostly standalone syntax/ergonomics items" below. **2026-07-14:** both RFC-0099 and
-RFC-0100's own disambiguation questions were reviewed and resolved — RFC-0099 rejected
-capitalization-based path disambiguation after it failed against real fixture code, in
-favor of name-resolution-time resolution, and also respelled turbofish (`::<` → `.<`)
-alongside its own `::` → `.` change; RFC-0100's keyword-argument/ascription grammar
-collision (not previously identified) was found and resolved via `arg_list` reordering.
-That review also produced a fourth sibling, RFC-0101 (Grammar-Enforced Naming Case
-Conventions) — PascalCase types, camelCase `fun` declarations, snake_case everything
-else, enforced as a real compile-time rule — scoped as its own RFC rather than folded
-into RFC-0100, whose ambiguity it narrows but doesn't fully resolve on its own. A fifth,
-RFC-0102 (Bodyless Extend Blocks for Marker Aspects and Negative Impls), followed from
-using RFC-0098's new `extend Type: Aspect` syntax directly — `extend Type: Aspect;` /
-`extend Type: !Aspect;` as sugar for an empty body, mirroring `fun_decl`'s own existing
-`(block | ";")` alternative, no new semantic category. A sixth, RFC-0103 (Bodyless
-Aspect Declarations and Struct-Embedded Aspect Lists), followed directly from
-RFC-0102 — a bodyless spelling for the aspect *declaration* itself (`aspect Copy2;`,
-pure sugar, no permanence attached), plus embedding RFC-0102's aspect list straight
-into a struct/enum's own declaration. RFC-0098, 0099, 0100, and 0102 all moved
-`0-draft` → `2-accepted` the same day, after this review resolved every open question
-each RFC had — RFC-0102 additionally retired the old `extend Type: !Aspect { }` braces
-spelling outright (bodyless is now mandatory for negative impls, not just sugar),
-matching this project's precedent for retiring a strictly-superseded spelling
-(RFC-0100, RFC-0042) rather than keeping two. RFC-0103 went through several more
-revisions: positive struct/enum-embedded items no longer require a `marker` keyword
-outright — every positive aspect now declares a checked, module-wide *obligation*
-discharged by an ordinary `extend` block elsewhere, once it was clear the
-no-escape-hatch concern only applies to items the list itself tries to implement
-inline; a third idea (letting an `extend` block share a real body across multiple
-aspects) was split out into a seventh sibling, RFC-0104 (Multi-Aspect Extend Blocks
-with Shared Bodies), since it doesn't depend on anything specific to RFC-0103; and
-finally the `marker` keyword itself was dropped outright once the obligation model
-made its permanence guarantee moot — RFC-0103's bodyless-declaration sugar (§1) now
-inherits exactly RFC-0102's own weaker "currently has zero methods" rule instead.
-RFC-0103's last two open questions were then resolved directly against the actual
-coherence implementation: the obligation check runs inside the same already-existing
-whole-graph coherence pass (`coherence.rs`, RFC-0060) rather than a new pipeline
-stage, and a real (not merely asserted) interaction with RFC-0096 (Auto-Impl Aspects,
-draft) was found and fixed — `Send`/`Sync`/`Linear` have no `Decl::Impl` to search
-for, so their obligation is discharged by querying RFC-0096 §2's `satisfies` check
-directly instead. RFC-0103 moved `0-draft` → `2-accepted` the same day. RFC-0101 and
-RFC-0104 remain `0-draft`, not assumed to land with the others.
-**2026-07-12:** RFC-0081 (Negative Impls)
-implemented on sprint/26 (issue #264) — syntax, finality, and the orphan rule are done
-and tested; priority over blanket impls is a property of RFC-0036 (issue #241), not
-that RFC's own implementation yet — but negative-bound consultation is now covered,
-since RFC-0072 (Negative Bounds) was also implemented the same day (issue #243):
-enforcement at all function-call and generic-literal-construction sites, by inverting
-the same `impl_aspect_env_has` lookup the positive-bound check already uses.
-**2026-07-13:** RFC-0082 (Associated Types) implemented on sprint/26 (issue #242) —
-real `T::AssocType` projection resolution (both at generic call sites and inside
-still-abstract function bodies), equality-constrained bounds, impl-completeness
-checking, and bare-name sugar in both directions; §6 object safety remains blocked
-on RFC-0008 (`dyn Aspect`, no consumer yet). (RFC-0055 moved draft → superseded 2026-07-09,
-reconciled into RFC-0092/0093/0095 — see below. **2026-07-10:** the allocator/lifetime
-cluster — RFC-0063/0065/0066/0067/0068/0073/0077 — swept from under-review to accepted;
-only RFC-0080 remains under review. Same day: RFC-0067a/0078/0083 became the first RFCs
-to reach `3-integrated`, merged into `public/reference/spec/`; RFC-0067 renamed to
-"Lifetime Anchors"; RFC-0084 and RFC-0079 refused, both redundant with — or, for
-RFC-0079's `?`-operator text, factually superseded by — already-shipped behavior.
-RFC-0072/0081/0082 followed into `3-integrated` the same day, each with its own stale
-pre-split/dangling-reference fixes first — see `PROCESS.md`'s backlog note. **2026-07-11:**
-RFC-0060 (Aspect Impl Coherence) integrated on its own, ahead of implementing issue #238
-— see the Aspect system core section below. RFC-0080 stays under review (moved there
-2026-07-09 over `#[derive]` syntax, `4d1ec42`, unrelated to the point below — a stale
-non-worktree checkout of `main` elsewhere on disk still shows it as accepted, but this
-branch's own history is ahead of that checkout and is authoritative). Implementing
-issue #238 exposed that RFC-0080/0089/0061 each cite "the auto-impl pattern" without
-any one of them owning it as a mechanism, so RFC-0096 was opened to formalize the
-recognition rule and the shared structural-composition algorithm — no behavior change
-to `Send`/`Sync`/`Linear`. Same review pass, a follow-up question about blanket impls
-surfaced a second, related gap: RFC-0060 §1's orphan rule has no answer for
-`impl<T: Bound> Aspect for T` — a bare-parameter blanket, the exact form RFC-0060's
-own §3/§5 and RFC-0080 §1.2 all use as their running example, but never revisited by
-§1 itself. RFC-0097 opened to formalize it. RFC-0067a (Reference Types) implemented in
-`metel-core` the same day, moving `3-integrated` → `4-implemented` — the first RFC
-from this session's integration pass to complete that step; its §3a amended once more
-to state that read-copy fires at `return`/tail-expression positions too and that
-read-copy/write-through/auto-deref all chain through multiple reference layers, both
-gaps found only by the implementation's own regression tests. **2026-07-12:** RFC-0083
-(Public Value Exports) moved `3-integrated` → `5-superseded`, folded into RFC-0092 §0a
-— see the RFC-0083 fold note below. The 4 remaining in `3-integrated` are
-RFC-0060/0072/0081/0082 (RFC-0078 also left `3-integrated` already, for
-`4-implemented`, alongside RFC-0067a on 2026-07-11).)
+It is **not** the authoritative source for mutable state such as counts, stage totals,
+paths, or "what changed most recently." Those facts live in the generated
+[`REGISTRY.md`](REGISTRY.md), rebuilt by `internal/rfcs/tools/rfc.py`.
+
+Use the two files differently:
+
+- `REGISTRY.md`: exact state inventory, generated, trusted for counts/stages/paths.
+- `INDEX.md`: curated reading map, trusted for grouping and cross-reference guidance.
+
+Grouped by theme, not by number, because number order tells you nothing about what's
+related. See `PROCESS.md` for the lifecycle rules that govern how RFCs move.
 
 ---
 
@@ -565,16 +471,20 @@ implementation).
 
 ## Settled (reference only — not part of active tracking)
 
-**Implemented (28):** RFC-0006, 0007, 0010, 0018-0023, 0030-0032, 0034, 0035, 0040-0045,
-0053, 0054, 0057-0061, 0106.
+**Implemented:** RFC-0006, RFC-0007, RFC-0010, RFC-0018, RFC-0019, RFC-0020, RFC-0021,
+RFC-0022, RFC-0023, RFC-0030, RFC-0031, RFC-0032, RFC-0034, RFC-0035, RFC-0040,
+RFC-0041, RFC-0042, RFC-0043, RFC-0044, RFC-0045, RFC-0053, RFC-0054, RFC-0057,
+RFC-0058, RFC-0059, RFC-0060, RFC-0061, RFC-0106.
 
-**Superseded (9):** RFC-0001 (→ later pointer work), RFC-0002 (aspect bound syntax),
+**Superseded:** RFC-0001 (→ later pointer work), RFC-0002 (aspect bound syntax),
 RFC-0009 (module system → RFC-0030), RFC-0012 (→ RFC-0092/0093/0094/0095), RFC-0013
 (integer overflow), RFC-0016 (stdlib foundation), RFC-0024 (linear types → RFC-0028,
 which was then refused — RFC-0089 re-homes this), RFC-0029 (module system gaps),
-RFC-0055 (comptime → RFC-0092/0093/0095, reconciled 2026-07-09 — see above).
+RFC-0055 (comptime → RFC-0092/0093/0095, reconciled 2026-07-09 — see above), RFC-0083
+(public value exports → RFC-0092 §0a; see fold note above).
 
-**Refused (13):** RFC-0025, 0028, 0046-0048, 0051, 0056, 0069, 0079, 0084, 0085-0087 —
+**Refused:** RFC-0025, RFC-0028, RFC-0046, RFC-0047, RFC-0048, RFC-0051, RFC-0056,
+RFC-0069, RFC-0079, RFC-0084, RFC-0085, RFC-0086, RFC-0087 —
 mostly the earlier region/lifetime model iterations that didn't survive the 2026-07-05
 split, plus RFC-0046 (linear closure capture, blocking RFC-0050's `move` half), plus
 RFC-0084 (refused 2026-07-10 — reverted in place to reaffirm RFC-0053's
@@ -588,7 +498,8 @@ https://app.clickup.com/t/86cap1wzb).
 
 ## Maintenance note
 
-This file is a manual snapshot, not a generated artifact — there's no script producing
-it. If RFCs move between directories or new ones land, this drifts silently. Treat
-"last_built" in the frontmatter as the trust boundary: anything changed after that date
-isn't reflected here yet.
+This file is intentionally **manual and curated**. Update it when a current RFC needs
+thematic placement, a cluster description changes, or a relationship note becomes
+misleading. Do **not** duplicate stage counts, generated status summaries, or other
+derivable facts here — those belong in `REGISTRY.md`, and `rfc.py check` treats that
+generated file as the exact source of truth.

@@ -104,7 +104,7 @@ honest single status). Concretely:
 
 - **A linked implementation-tracking task must exist before an RFC enters
   `3-integrated`.** `rfc.py transition <id> --to integrated` refuses to run without
-  `--tracking <ClickUp task/URL>` — the same discipline as Rust's rule that no feature
+  `--tracking <tracking task/URL>` — the same discipline as Rust's rule that no feature
   ships behind `#![feature(x)]` without an open tracking issue, enforced mechanically
   rather than left to memory.
 - **Every RFC frontmatter gains two fields once integrated:** `impl_status`
@@ -189,7 +189,7 @@ blocking anything immediately.
 
 **Updated 2026-07-10:** RFC-0067a, RFC-0078, and RFC-0083 became the first three to move
 through it — merged into `public/reference/spec/` (`types.md`, `expressions.md`,
-`modules.md`), each gaining `impl_status`/`impl_tracking` and a linked ClickUp task. All
+`modules.md`), each gaining `impl_status`/`impl_tracking` and a linked tracking task. All
 three surfaced real problems while writing the worked examples this stage requires,
 confirming the stage does what it was built for: RFC-0067a's own text removed the
 explicit dereference operator without specifying how to read a plain value out of a
@@ -328,9 +328,11 @@ update pass, not a deferred "later" cleanup.
 ## Before opening a new RFC
 
 1. Check `INDEX.md`'s thematic groupings for anything adjacent.
-2. If nothing turns up there but the topic feels like it should have prior art, grep
-   `internal/rfcs/` directly — the index is a manual snapshot and may already be stale.
-3. If a real overlap is found, reconcile it as part of the same piece of work, not as a
+2. Check `REGISTRY.md` for the exact current corpus and status/path inventory.
+3. If nothing turns up there but the topic feels like it should have prior art, grep
+   `internal/rfcs/` directly — the registry is exact, but the right adjacent RFC may
+   still sit in a cluster you weren't expecting.
+4. If a real overlap is found, reconcile it as part of the same piece of work, not as a
    follow-up — an unreconciled overlap discovered later costs more than a few extra
    minutes checking now.
 
@@ -343,24 +345,26 @@ of this process that don't need judgment:
   and runs a TF-IDF/cosine-similarity check against every existing RFC first, printing
   anything above a similarity threshold before you commit to writing it. Caught the
   RFC-0055/RFC-0092 case in testing (0.47 similarity) — this is the automated version
-  of "check `INDEX.md` before opening a new RFC," not a replacement for actually reading
-  what it flags.
+  of "check the curated map plus the exact registry before opening a new RFC," not a
+  replacement for actually reading what it flags.
 - `rfc.py transition <id> --to <stage> -r "reason" [--tracking LINK]` — `git mv`s to the
   right directory, updates frontmatter (`status`, `updated`), inserts a dated status
   blockquote, and fixes any other file's literal path references to the old location.
-  Runs `check` afterward automatically. `--to integrated` refuses to run without
-  `--tracking`, and sets `impl_status: not-started` alongside it; `--to implemented`
-  sets `impl_status: implemented`.
+  Rebuilds `REGISTRY.md` and runs `check` afterward automatically. `--to integrated`
+  refuses to run without `--tracking`, and sets `impl_status: not-started` alongside it;
+  `--to implemented` sets `impl_status: implemented`.
 - `rfc.py impl-status <id> --set not-started|in-progress|implemented [--tracking LINK]`
   — updates `impl_status` (and optionally `impl_tracking`) on an RFC already at
-  integrated or implemented, without moving it. The day-to-day command for recording
-  implementation progress between transitions.
+  integrated or implemented, without moving it, and rebuilds `REGISTRY.md`. The
+  day-to-day command for recording implementation progress between transitions.
 - `rfc.py supersede <id> --by <ids> -r "reason"` — the same, plus `superseded_by`. Does
   not write the reconciliation content (what carried forward, what didn't) — that still
-  needs a human, or an agent, to actually think about it.
+  needs a human, or an agent, to actually think about it. Rebuilds `REGISTRY.md`.
 - `rfc.py check` — validates frontmatter status matches directory, no duplicate RFC
   ids, no dangling `internal/rfcs/N-stage/rfc-....md` path references anywhere in the
-  repo, and (since 2026-07-10, not retroactive — see above) that any RFC at
+  repo, that generated `REGISTRY.md` matches the current RFC corpus exactly, that the
+  curated `INDEX.md` mentions every current RFC at least once, and (since 2026-07-10,
+  not retroactive — see above) that any RFC at
   `3-integrated` has `impl_tracking` set, `impl_status` set to a valid value and not
   already `implemented`, and that `public/reference/spec/` references the RFC at all;
   an RFC at `4-implemented` with `impl_status` present is checked for consistency
@@ -379,8 +383,11 @@ of this process that don't need judgment:
   renamed region → allocator (RFC-0066, RFC-0068) — `check` doesn't catch stale titles
   itself, that was found by reading the cluster before ratifying it. `rfc.py check`
   reports clean as of 2026-07-10.
-- `rfc.py index --check-drift` — compares every RFC's own `updated`/`date` frontmatter
-  against `INDEX.md`'s `last_built`; flags anything changed since. Read-only.
+- `rfc.py index --rebuild-registry` — regenerates `REGISTRY.md` from the current RFC
+  corpus. This is the exact state inventory, meant to be machine-trustworthy.
+- `rfc.py index --check-drift` — checks whether generated `REGISTRY.md` still matches the
+  current RFC corpus exactly, and whether curated `INDEX.md` still mentions every current
+  RFC at least once. Read-only.
 - `rfc.py index --suggest-placement <id>` — cosine similarity between an RFC and each
   `INDEX.md` cluster section's combined text; suggests where it belongs rather than
   deciding it. Verified against three existing placements (RFC-0091, RFC-0074, RFC-0003)

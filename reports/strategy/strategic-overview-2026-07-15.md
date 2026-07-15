@@ -100,8 +100,9 @@ first.
 
 **A real documentation-drift instance, caught by `rfc.py check`, not yet fixed.**
 `public/reference/error-codes.md` still references
-`internal/rfcs/3-integrated/rfc-0060-aspect-impl-coherence.md` — a path that stopped
-existing the moment RFC-0060 moved to `4-implemented` in this same batch. Separately,
+RFC-0060 at its old `3-integrated` location rather than its current
+`internal/rfcs/4-implemented/rfc-0060-aspect-impl-coherence.md` path — a drift bug
+introduced the moment RFC-0060 moved to `4-implemented` in this same batch. Separately,
 `INDEX.md`'s own header counts (`103 RFCs total... 3 integrated... 32 implemented`)
 were not updated alongside the batch that just landed — actual on-disk counts are 31
 draft, 3 under-review (RFC-0099/0100's reversal accounts for the rise from 1),

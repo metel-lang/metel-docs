@@ -179,7 +179,7 @@ since `U` is an ordinary type parameter, not a projection.
 
 ### T0014 — Orphan implementation
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0060-aspect-impl-coherence.md`.
+> **Not yet implemented** — see `internal/rfcs/4-implemented/rfc-0060-aspect-impl-coherence.md`.
 
 An `extend Type: Aspect` block where neither `Aspect` nor `Type`'s outermost type
 constructor is declared in the current module (or `std::core`, for built-ins).
@@ -193,7 +193,7 @@ two foreign types) into `std::core` if this is genuinely a standard-library conc
 
 ### T0015 — Conflicting implementation
 
-> **Not yet implemented** — see `internal/rfcs/3-integrated/rfc-0060-aspect-impl-coherence.md`.
+> **Not yet implemented** — see `internal/rfcs/4-implemented/rfc-0060-aspect-impl-coherence.md`.
 
 Two implementations of the same aspect cover the same concrete type — either two
 identical `extend` blocks, or a positive and a negative impl (see Negative Impls in the declarations

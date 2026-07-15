@@ -39,18 +39,20 @@ counterpart.*
 Seeded from `integrated-language-overview-2026-07-07.md` §1 — restate or correct this, don't
 treat it as fixed by virtue of being written down first.
 
-A systems language organized around two axes most languages fuse or omit: **where a value
-lives** (allocators as first-class values) and **how a value may be used** (an affine-by-
-default substructural discipline, with `Linear` at the strict end and `Copy` opt-in), with an
-ordinary modern surface on top (aspects, exhaustive enums, `Perhaps`/`Result`, generics,
-pattern matching), governed by **Storage Transparency**: code that doesn't allocate or borrow
-carries no storage annotation, so the annotation budget concentrates exactly where a real
-storage or resource decision is made.
+A systems language whose public face is **allocator-aware storage and resource control**, but
+whose real semantic substrate is lower-level: **structural shape**, **per-field multiplicity**,
+**brand identity/provenance**, and **binding-named lifetime validity**. Allocators remain
+central to the language's identity, but they are the first major *synthesis* of that substrate,
+not the substrate itself. The ordinary modern surface (aspects, exhaustive enums,
+`Perhaps`/`Result`, generics, pattern matching) still matters, but it is not the differentiator.
 
-The differentiation claim: linear-types-plus-regions is a proven neighborhood (Austral),
-structural typing is proven (TypeScript) — the combination, row-polymorphic products with a
-per-field ownership discipline plus concrete binding-named lifetime errors instead of abstract
-`'a`, is the actual bet.
+The differentiation claim is therefore slightly sharper than the earlier allocator-first
+framing: the bet is not merely "allocators as first-class values," but **fine-grained resource
+semantics over structured values** — row-shaped products with per-field ownership discipline,
+identity where plain structure is not enough, and concrete lifetime diagnostics named after real
+bindings rather than abstract `'a`. Allocator semantics remain the flagship integrative use
+case that justifies this machinery, rather than the only low-level concept the language is
+"about."
 
 ### The standing meta-risk
 
@@ -178,45 +180,59 @@ done; watch instead whether the *next* `3-integrated` batch (currently empty —
 at that stage as of 07-15) repeats the same not-started stall before being fully
 built, per the new Trigger 13 below.
 
-### Priority 2a — The floor, plus tiers 1/2
+### Priority 2 — The substrate for fine-grained resource semantics
 
-**Materially changed since 07-08, not just restated.** The floor and tiers 1/2 are no longer
-report-only content — they're RFC-0089 (Linear Types) and RFC-0090 (Structural Records — Rows
-and Tiers), both draft. But the floor mechanism itself changed underneath them: RFC-0089 §3
-now routes partial consumption through `ToRecord`/`FromRecord` (RFC-0090), not through a
-bespoke struct-level mechanism.
+**This is now the main medium-term design priority.** The project should stop treating the
+allocator cluster as the deepest layer. The lower-level work that needs the most clarity is:
 
-**This creates a real, unreconciled tension worth surfacing rather than smoothing over.**
-`integrated-language-overview-2026-07-07.md` §3 describes the critical-path floor as "already
-satisfied by a narrow mechanism (explicit residual extraction over a closed field list — no
-row kind, no unification), and must stay scoped that narrowly on purpose." The 2026-07-09
-decision routes that same floor through RFC-0090's record/row machinery instead — meaning
-RFC-0063 §9 item 5's deadline may now depend on RFC-0090 reaching a workable state, which is
-exactly the "no row kind" independence the 07-07 framing wanted to preserve. Neither RFC-0089
-nor RFC-0090 currently states this conflict explicitly. Tracked as Open Trigger 6 below.
+- **Structural types / records** as the carrier for non-coarse resource reasoning.
+- **Per-field multiplicity** so ownership is not only a whole-value property.
+- **Brand semantics** for identity/provenance wherever plain structure is insufficient.
+- **Lifetime validity** in its narrower but essential role: borrow scope, exclusivity, and
+  concrete diagnostics.
 
-### Priority 2b — The fuller vision
+This framing demotes the old typestate question from "central fork in the roadmap" to a
+secondary stylistic consequence unless implementation pressure proves otherwise. The core design
+question is not "rows vs brands for typestate"; it is whether the language has a coherent
+substrate for structured, fine-grained resource semantics at all.
 
-**Very unevenly developed since 07-08, not uniformly "paced" anymore.** Comptime/derive
-graduated from "newly-discovered gap" to seven draft RFCs (0089–0095) with a working
-registration mechanism, reconciled against a five-week-old sibling (RFC-0055) that predated
-all of it. Brand-kind-unification and the row-vs-brand typestate fork have not moved at all —
-still exploration-only, no RFC, exactly where `integrated-language-overview-2026-07-07.md`
-§2's L3 table left them. If 2b is still meant to be one paced track, it currently isn't one —
-worth deciding at the next review whether to split it the way Priority 2 itself was already
-split from Priority 1.
+**Concrete consequence:** RFC-0089 (Linear Types) and RFC-0090 (Structural Records — Rows and
+Tiers) are not just optional future polish. They sit directly in this substrate, as does the
+still-unwritten brand-unification work. The unresolved issue is not merely that RFC-0089 now
+depends on RFC-0090's `ToRecord`/`FromRecord` mechanism — it's that this dependency is exactly
+where the project must decide whether the "narrow floor" story from
+`integrated-language-overview-2026-07-07.md` still holds or has been deliberately revised.
+That remains Trigger 6 below, but it now matters as a substrate-shaping decision, not just as a
+local RFC dependency question.
 
-**Re-verified 2026-07-11, unchanged:** no commits touched `reports/substructural-types/`,
-RFC-0089, or RFC-0090 since 07-09 (checked directly against `git log`). Trigger 6's tension
-is exactly as unresolved as when it was opened.
+### Priority 3 — Allocator semantics as the flagship synthesis
 
-### Priority 3 — Lower-level memory API and unsafe blocks
+Allocator semantics remain central to the language's identity, but they are **not** currently
+the most primitive thing to prioritize directly. They should be treated as the first major
+integration target that proves the substrate above is coherent: allocators exercise structure,
+multiplicity, identity/provenance, and borrowing all at once. In that sense they stay more
+important strategically than the current implementation order alone would suggest.
 
-**Unchanged again — now flagged, see Trigger 11.** Nothing has touched this priority's
-reasoning or ranking across every cycle in this document's review log (07-01 through
-07-11). That's the same shape Priority 1 sat in for six cycles before the meta-risk
-section (§1) named it explicitly as the concrete instance of the risk it warns about.
-This document owes Priority 3 the same scrutiny, not a seventh consecutive "unchanged."
+**What changes here is sequencing, not importance.** If allocator values are ultimately
+structured, branded resources with borrowing rules and storage-transparency ergonomics on top,
+then parts of the allocator cluster are downstream presentation and synthesis work rather than
+foundational semantics. That does **not** reduce their importance to the language's public
+identity. It does mean the medium-term planning question is "what substrate do allocator
+semantics need?" before "which allocator-facing RFC lands next?"
+
+### Priority 4 — Active adjacent design, and deferred frontier work
+
+Comptime/derive remains active design work with real internal motion (RFC-0092–0095), but it is
+not the same priority shape as the substrate above. It should continue, but not be conflated
+with the structural/brand/lifetime foundation or with allocator semantics.
+
+By contrast, the lower-level unsafe/custom-allocator layer remains **demand-gated frontier
+work**, not a neglected near-term priority. Both
+`integrated-language-overview-2026-07-07.md` and `reports/implementation/roadmap-2026-07-07.md`
+still classify it that way: it gates user-authored custom allocators, not the four stdlib
+allocators or the allocator/lifetime MVP, and RFC-0026 still predates the split model and
+needs a rewrite before it is actionable. Promotion signal unchanged: a concrete need that
+host-implemented stdlib allocators cannot satisfy.
 
 ---
 
@@ -232,23 +248,27 @@ of what was watched for and what actually happened is part of the point.
    split.
 2. ⬜ **Open.** If a real scenario forces the brand-kind-unification role-crossing matrix to
    resolve and reveals identity brands and allocator/lifetime brands are more separate than
-   hoped → tier 3's core premise (reusing the same tag) weakens. Untouched this session.
-3. ⬜ **Open.** If Phase 3 implementation experience shows tier 1/2's drain/restore patterns
-   are needed constantly in real allocator/resource code → concrete evidence for pulling
-   tier 1/2 into Cluster A's sequencing sooner. No implementation has happened yet to produce
-   this evidence.
+   hoped → the emerging substrate story weakens at exactly the point where it wants brands to
+   carry cross-cutting identity/provenance. Still untouched.
+3. ⬜ **Open.** If real allocator/resource implementation shows partial-consumption and
+   drain/restore patterns are needed constantly, not exceptionally → that is evidence the
+   substrate priority above is correct, and that structural/per-field machinery belongs closer
+   to the implementation path rather than parked as a later tower. No implementation has
+   happened yet to produce this evidence.
 4. ⬜ **Open, carried from 07-06.** Implementation pressure on Option B/C; a comparable
    language shipping a similar structural-plus-linear combination first (the one external risk
    to the "worth pursuing" verdict); RFC-0039's independent prioritization; a concrete
-   user-authored-allocator need. None resolved or superseded this session.
+   user-authored-allocator need that would promote the unsafe/custom-allocator frontier. None
+   resolved or superseded this session.
 5. ✅ **Fired and resolved, 2026-07-10.** Priority 1 (L2, unblocked by L3) moved — see
    above. This trigger did its job: it named exactly the pattern that was actually
    happening (L3 activity masking L2 inaction) and it's what caused the check that led to
    ratification, rather than this being noticed by accident.
-6. ⬜ **New, 2026-07-09.** Priority 2a's tension: does RFC-0089's floor genuinely need
-   RFC-0090's record machinery to satisfy RFC-0063 §9 item 5, or does that dependency need
-   removing to preserve the "narrow, no row kind" property `integrated-language-overview-07-07`
-   wanted? Neither RFC currently states the conflict; resolve or explicitly accept it.
+6. ⬜ **New, 2026-07-09; reframed 2026-07-15.** Does the substrate for fine-grained resource
+   semantics genuinely require RFC-0090's record machinery for RFC-0089's floor, or does that
+   dependency need removing to preserve the "narrow, no row kind" property
+   `integrated-language-overview-07-07` wanted? Neither RFC currently states the conflict;
+   resolve or explicitly accept that the earlier framing has changed.
 7. ⬜ **Open, still untested as of 2026-07-11.** Does `INDEX.md` + `rfc.py`'s overlap check
    actually prevent a second RFC-0055-shaped silent duplication going forward, or does it
    quietly fall out of use the way the undocumented process before it did? Still can't be
@@ -290,13 +310,14 @@ of what was watched for and what actually happened is part of the point.
     this cycle actually get reused next time rather than being one-off tooling nobody revisits
     (the same question Trigger 7 already asks about `rfc.py new` — this is that question's
     sibling for the tracker migration).
-11. ⬜ **New, 2026-07-11.** Priority 3 (lower-level memory API and unsafe blocks) has now gone
-    unactioned across every cycle in this document's review log (07-01 through 07-11) — the
-    same shape Priority 1 sat in for six cycles before §1's meta-risk section named it
-    explicitly. Unlike Priority 1, nothing currently blocks Priority 3 from being picked up
-    either. If the next cycle again produces no movement here with no L3-shaped reason (the
-    way this cycle's stall on Trigger 8 had one), that's the concrete recurrence of the
-    meta-risk this document exists to catch.
+11. ✅ **Re-evaluated and closed, 2026-07-15.** The analogy this trigger drew to Priority 1
+    does not hold. Priority 3 is explicitly Stage C / demand-gated in both the integrated
+    overview and the implementation roadmap: it blocks user-authored custom allocators, not
+    the MVP allocator/lifetime path, and RFC-0026 still predates the split model and needs a
+    rewrite before it is actionable anyway. No concrete custom-allocator demand has appeared.
+    Keep the signal, but in the form those source docs already named: re-promote this work if
+    a real user-authored allocator need emerges that host-implemented stdlib allocators cannot
+    cover.
 12. ✅ **Fired and resolved, 2026-07-15.** The six RFCs that reached `3-integrated`
     (RFC-0067a/0072/0078/0081/0082/0083) all moved to `4-implemented` in the four days
     since 07-11 — the fastest resolution any trigger in this document has had. Five have
@@ -355,6 +376,9 @@ of what was watched for and what actually happened is part of the point.
 | 2026-07-10/11 | RFC-0082's associated-type disambiguation hardened further: a second candidate syntax (`<T:Aspect>::AssocType`) considered and rejected against `grammar.md`, recorded in the RFC only (not the spec) per explicit direction. `metel-core/AGENTS.md` and `metel-docs/internal/versioning.md` reconciled (both had stale, contradictory task-tracker/RFC-lifecycle docs); `AGENTS.md`'s repo-slug typo (`metel-lang/metel` → `metel-lang/metel-core`) fixed. Task tracking fully migrated from ClickUp to Codeberg Issues: 49 pre-existing stale/duplicate Codeberg issues reconciled (closed with explanatory comments or reused instead of duplicated), 34 active tasks migrated, 10 labels + 1 milestone created, 6 integrated RFCs' `impl_tracking` repointed to the new issue URLs. Self-hosting a Forgejo instance assessed as feasible (this environment's own Hetzner box could run it) but explicitly deferred — Codeberg's discoverability for future outside contributors outweighs full control, for now. `internal/rfcs/tools/rfc.py` gained enforcement for the spec's "Not yet implemented" callouts: required to be one-liners, `transition --to implemented` now refuses to run while one still exists for that RFC, `check` flags any that survive anyway — closing a real gap the previous integration batch left open. Triggers 7/8 updated (both still open, for different reasons); Triggers 10/11 opened. | `strategic-overview-2026-07-11.md` |
 | 2026-07-11 | Correction to the same-day snapshot above: it originally said the design/implementation gap was untouched this cycle, missing that the six RFCs integrated into the spec (RFC-0067a/0072/0078/0081/0082/0083) are all still `impl_status: not-started` — a real, itemized widening of the gap, and the cheapest available implementation work in this document since none of it needs further design. Trigger 12 opened; Priority 1's follow-through note and the dated snapshot's "Design/Implementation Gap" and "Honest Assessment" sections amended. | `strategic-overview-2026-07-11.md` (amended) |
 | 2026-07-15 | Both repos pulled to current tips (`metel-docs` main, `metel-core` sprint/26 + submodule). Eleven RFCs shipped `4-implemented` since 07-11 (RFC-0067a/0072/0078/0081/0082 + RFC-0060/0061/0097/0098/0102/0103/0106 — RFC-0083 superseded instead); Trigger 12 fired and resolved, Trigger 8 un-stalled. RFC-0103 split again: bodyless-declaration half implemented, struct/enum-embedded-list half (this session's own prior obligation-model/auto-impl-registry-injection work) deferred into new draft RFC-0105 with that reasoning preserved. RFC-0099/0100 reverted accepted → under-review post-integration over design questions review hadn't surfaced (Trigger 14, new). Found `metel-core` PR #270/issues #245/#269 fully superseded by direct `sprint/26` commits, not yet closed (Trigger 15, new) — flagged, not acted on. Found and named, not yet fixed: a dangling `3-integrated` path reference in `public/reference/error-codes.md` and stale RFC-count header in `INDEX.md` (real drift `rfc.py index --check-drift`'s date-only comparison doesn't catch). | `strategic-overview-2026-07-15.md` |
+| 2026-07-15 | Fixed the dangling RFC-0060 path references in `public/reference/error-codes.md` and the dated 07-15 strategic overview; `rfc.py check` is clean again. Re-evaluated Priority 3 against the integrated overview and implementation roadmap: closed Trigger 11 as a false analogy to Priority 1, and reframed unsafe/custom-allocator work as demand-gated frontier scope rather than neglected near-term work. | *(none yet)* |
+| 2026-07-15 | Split RFC indexing into two roles: generated `internal/rfcs/REGISTRY.md` is now the authoritative state inventory, while `internal/rfcs/INDEX.md` is explicitly curated/thematic only. `rfc.py check` and `rfc.py index --check-drift` now enforce that split mechanically instead of relying on `INDEX.md`'s old date-only drift check. | *(none yet)* |
+| 2026-07-15 | Rewrote the medium-term priority narrative around a substrate-first model: structural types, per-field multiplicity, brand semantics, and lifetime validity are now the main low-level design priority; allocator semantics are kept central to language identity but reframed as the flagship synthesis built on that substrate; typestate is explicitly demoted to a secondary stylistic consequence unless implementation pressure proves otherwise. | *(none yet)* |
 
 ---
 
@@ -366,5 +390,6 @@ of what was watched for and what actually happened is part of the point.
 - `integrated-language-overview-2026-07-07.md` — long-term objectives, the meta-risk framing,
   and the "narrow, no row kind" floor property Trigger 6 checks against
 - `internal/rfcs/PROCESS.md` — the RFC lifecycle this document's priorities reference
-- `internal/rfcs/INDEX.md` — current RFC state by number and cluster
+- `internal/rfcs/REGISTRY.md` — exact current RFC state by stage/path/status
+- `internal/rfcs/INDEX.md` — curated thematic grouping and cross-reference map
 - `metel-core/AGENTS.md` — Codeberg Issues task-tracking design (Trigger 10)
