@@ -3,7 +3,7 @@ id: strategic-objectives
 title: "Strategic Objectives, Priorities, and Watch List"
 type: report
 status: active
-last_reviewed: '2026-07-11'
+last_reviewed: '2026-07-15'
 ---
 
 # Strategic Objectives, Priorities, and Watch List
@@ -170,6 +170,14 @@ and zero engineering has started on any of them. Unlike Priority 3, this needs n
 building — see Trigger 12 and `strategic-overview-2026-07-11.md`'s "Design/Implementation Gap"
 section, which named this explicitly after an earlier draft of that snapshot missed it.
 
+**Resolved 2026-07-15.** All five still-tracked RFCs (RFC-0067a/#236, RFC-0072/#243,
+RFC-0078/#234, RFC-0081/#264, RFC-0082/#242 — RFC-0083 was superseded rather than
+implemented, reconciled elsewhere) are now `4-implemented`. Trigger 12 fired and is
+resolved — see `strategic-overview-2026-07-15.md`. This priority's follow-through is
+done; watch instead whether the *next* `3-integrated` batch (currently empty — 0 RFCs
+at that stage as of 07-15) repeats the same not-started stall before being fully
+built, per the new Trigger 13 below.
+
 ### Priority 2a — The floor, plus tiers 1/2
 
 **Materially changed since 07-08, not just restated.** The floor and tiers 1/2 are no longer
@@ -265,6 +273,11 @@ of what was watched for and what actually happened is part of the point.
    implemented" callouts had no enforced removal step — now fixed, see review log). Still,
    a stall is a stall; if the next cycle also produces no movement on the remaining 6 with
    no comparably concrete reason, that's the pattern worth calling out, not this one alone.
+   **Update, 2026-07-15: emphatically un-stalled.** RFC-0060 and RFC-0061 both moved
+   through and shipped as `4-implemented` (issues #238/#245 respectively); RFC-0071 and
+   RFC-0037/0036 (already implemented per the 07-13 entry above) are also done.
+   RFC-0008 remains the one genuinely open item in this original list, still gated on
+   `dyn Aspect` having no consumer.
 9. ⬜ **New, 2026-07-10.** Watch for the "interpreter is temporary" corollary (§1) being
    misapplied to justify skipping *feedback-trustworthiness* work under cover of "it's all
    throwaway anyway" — e.g. a real dispatch bug shrugged off instead of fixed. That's a
@@ -284,14 +297,44 @@ of what was watched for and what actually happened is part of the point.
     either. If the next cycle again produces no movement here with no L3-shaped reason (the
     way this cycle's stall on Trigger 8 had one), that's the concrete recurrence of the
     meta-risk this document exists to catch.
-12. ⬜ **New, 2026-07-11.** The six RFCs that reached `3-integrated` (RFC-0067a/0072/0078/0081/
-    0082/0083) are all still `impl_status: not-started` — fully specified, ratified, and
-    worked-example-checked, needing no further design, only engineering. This is a sharper
-    instance of Trigger 11's question than Priority 3 itself: there's no scoping excuse
-    available here at all. Watch whether any moves to `in-progress`/`implemented` next cycle
-    (via `rfc.py impl-status <id> --set ...`) — if all six are still `not-started` after a
-    second consecutive cycle, that's concrete, checkable evidence of the meta-risk, not just
-    a plausible risk.
+12. ✅ **Fired and resolved, 2026-07-15.** The six RFCs that reached `3-integrated`
+    (RFC-0067a/0072/0078/0081/0082/0083) all moved to `4-implemented` in the four days
+    since 07-11 — the fastest resolution any trigger in this document has had. Five have
+    real tracking issues (#236/#243/#234/#264/#242); RFC-0083 was superseded rather than
+    implemented. This is the single cleanest piece of evidence yet that naming a stall
+    explicitly (rather than letting "unchanged again" accumulate silently) is what gets
+    it moved — the same shape as Trigger 5's resolution for Priority 1 itself.
+
+13. ⬜ **New, 2026-07-15.** With Trigger 12 resolved, `3-integrated` is now empty (0 RFCs)
+    for the first time since the stage was created — the batch that just shipped went
+    straight from accepted/draft to implemented without sitting at `3-integrated` first
+    in most cases (RFC-0098/0102/0103/0106), unlike the RFC-0067a-cluster's own path.
+    Watch whether that's the new normal (worked-examples-then-immediate-build, collapsing
+    the stall this document exists to catch) or whether the next batch of accepted RFCs
+    sits at `3-integrated` again with no engineering following — the condition Trigger 12
+    was originally watching for.
+
+14. ⬜ **New, 2026-07-15.** RFC-0099 (Dot-Separated Module Paths) and RFC-0100
+    (Constructor-Call Construction) both reverted `2-accepted` → `1-under-review` during
+    integration, on grounds neither this document's 07-11 snapshot nor the review that
+    accepted them had surfaced (RFC-0099: readability cost of `.` everywhere; RFC-0100:
+    whether general keyword arguments belong in the spec at all, not just the
+    ascription-collision fix already found). Watch whether either resolves cleanly next
+    cycle or whether RFC-0100 in particular gets scoped down or refused — "does this
+    belong at all" is a design-level reopening, not an engineering gap, and the pattern
+    of accepted-then-reopened is new; if it recurs with a third RFC, that's evidence
+    `2-accepted`'s own bar ("no more open questions block it") is being called too early
+    somewhere in this project's actual practice, not just in this one pair.
+
+15. ⬜ **New, 2026-07-15.** `metel-core` PR #270 (issue #245's own WIP branch) was found,
+    while pulling both repos this cycle, to be fully superseded by direct commits on
+    `sprint/26` (`a9b49a5`/`20c81a3`) that independently reimplemented the same feature
+    using the newer RFC-0098 `extend` syntax. Neither PR #270 nor issues #245/#269 have
+    been closed yet. Watch whether this gets cleaned up next cycle, and — more
+    importantly for process — whether a cheap, repeatable check ("does an open PR's
+    branch still contain work not already on the target branch") gets added anywhere,
+    since this instance was only caught by an explicit pull-and-compare, not by any
+    standing mechanism.
 
 ---
 
@@ -311,13 +354,15 @@ of what was watched for and what actually happened is part of the point.
 | 2026-07-10 | RFC-0072/0081/0082 followed the same day, merged into `declarations.md`; RFC-0067/0079/0084 also handled (renamed, refused, refused respectively). Trigger 8 fired again — 6 RFCs left in the `3-integrated` backlog (was 14) | *(none yet)* |
 | 2026-07-10/11 | RFC-0082's associated-type disambiguation hardened further: a second candidate syntax (`<T:Aspect>::AssocType`) considered and rejected against `grammar.md`, recorded in the RFC only (not the spec) per explicit direction. `metel-core/AGENTS.md` and `metel-docs/internal/versioning.md` reconciled (both had stale, contradictory task-tracker/RFC-lifecycle docs); `AGENTS.md`'s repo-slug typo (`metel-lang/metel` → `metel-lang/metel-core`) fixed. Task tracking fully migrated from ClickUp to Codeberg Issues: 49 pre-existing stale/duplicate Codeberg issues reconciled (closed with explanatory comments or reused instead of duplicated), 34 active tasks migrated, 10 labels + 1 milestone created, 6 integrated RFCs' `impl_tracking` repointed to the new issue URLs. Self-hosting a Forgejo instance assessed as feasible (this environment's own Hetzner box could run it) but explicitly deferred — Codeberg's discoverability for future outside contributors outweighs full control, for now. `internal/rfcs/tools/rfc.py` gained enforcement for the spec's "Not yet implemented" callouts: required to be one-liners, `transition --to implemented` now refuses to run while one still exists for that RFC, `check` flags any that survive anyway — closing a real gap the previous integration batch left open. Triggers 7/8 updated (both still open, for different reasons); Triggers 10/11 opened. | `strategic-overview-2026-07-11.md` |
 | 2026-07-11 | Correction to the same-day snapshot above: it originally said the design/implementation gap was untouched this cycle, missing that the six RFCs integrated into the spec (RFC-0067a/0072/0078/0081/0082/0083) are all still `impl_status: not-started` — a real, itemized widening of the gap, and the cheapest available implementation work in this document since none of it needs further design. Trigger 12 opened; Priority 1's follow-through note and the dated snapshot's "Design/Implementation Gap" and "Honest Assessment" sections amended. | `strategic-overview-2026-07-11.md` (amended) |
+| 2026-07-15 | Both repos pulled to current tips (`metel-docs` main, `metel-core` sprint/26 + submodule). Eleven RFCs shipped `4-implemented` since 07-11 (RFC-0067a/0072/0078/0081/0082 + RFC-0060/0061/0097/0098/0102/0103/0106 — RFC-0083 superseded instead); Trigger 12 fired and resolved, Trigger 8 un-stalled. RFC-0103 split again: bodyless-declaration half implemented, struct/enum-embedded-list half (this session's own prior obligation-model/auto-impl-registry-injection work) deferred into new draft RFC-0105 with that reasoning preserved. RFC-0099/0100 reverted accepted → under-review post-integration over design questions review hadn't surfaced (Trigger 14, new). Found `metel-core` PR #270/issues #245/#269 fully superseded by direct `sprint/26` commits, not yet closed (Trigger 15, new) — flagged, not acted on. Found and named, not yet fixed: a dangling `3-integrated` path reference in `public/reference/error-codes.md` and stale RFC-count header in `INDEX.md` (real drift `rfc.py index --check-drift`'s date-only comparison doesn't catch). | `strategic-overview-2026-07-15.md` |
 
 ---
 
 ## References
 
 - `strategic-overview-2026-07-08.md` — priorities and triggers this document was seeded from
-- `strategic-overview-2026-07-11.md` — this cycle's dated narrative snapshot
+- `strategic-overview-2026-07-11.md`, `strategic-overview-2026-07-15.md` — dated narrative
+  snapshots, most recent last
 - `integrated-language-overview-2026-07-07.md` — long-term objectives, the meta-risk framing,
   and the "narrow, no row kind" floor property Trigger 6 checks against
 - `internal/rfcs/PROCESS.md` — the RFC lifecycle this document's priorities reference
