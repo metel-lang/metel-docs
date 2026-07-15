@@ -89,7 +89,7 @@ fun main() -> i64 {
     let inc = () -> { p += 1; };
     inc();
     inc();
-    return *p;
+    return p;
 }
 ```
 

@@ -67,21 +67,21 @@ Capture Means “Use an Outer Binding”
 If the closure body mentions a binding declared outside the closure, that binding becomes part of the closure's environment.
 :::
 
-## Shared mutable state uses pointers
+## Shared mutable state uses references
 
-Closures capture by value. If you want shared mutable state across closures, make that sharing explicit with a pointer:
+Closures capture by value. If you want shared mutable state across closures, make that sharing explicit with a mutable reference:
 
 ```metel
 fun main() {
-    let mut count = 0;
-    let p: *mut i64 = &mut count;
+    var count = 0;
+    let r: &var i64 = &var count;
 
     let inc = () -> () {
-        *p += 1;
+        r += 1;
     };
 
     let get = () -> i64 {
-        *p
+        r
     };
 
     inc();
@@ -90,12 +90,12 @@ fun main() {
 }
 ```
 
-This keeps shared mutation explicit. The closures do not magically share `count`; they share the pointer `p`.
+This keeps shared mutation explicit. The closures do not magically share `count`; they share the reference `r`.
 
 :::caution
 Shared Mutation Must Be Explicit
 
-If multiple closures need to mutate the same value, introduce a pointer on purpose. Ordinary closure capture is not the mechanism for implicit shared mutable state.
+If multiple closures need to mutate the same value, introduce a mutable reference on purpose. Ordinary closure capture is not the mechanism for implicit shared mutable state.
 :::
 
 ## Returning a closure
@@ -126,12 +126,12 @@ Here a closure tracks how many items matched a filter:
 ```metel
 fun main() {
     let values = [1, 2, 3, 4, 5, 6];
-    let mut matched = 0;
-    let matched_ptr: *mut i64 = &mut matched;
+    var matched = 0;
+    let matched_ref: &var i64 = &var matched;
 
     let is_even = (x: i64) -> boolean {
         if (x % 2 == 0) {
-            *matched_ptr += 1;
+            matched_ref += 1;
             return true;
         }
         return false;
@@ -143,23 +143,24 @@ fun main() {
         }
     }
 
-    println("matched ${*matched_ptr} values");
+    let matched_total: i64 = matched_ref;
+    println("matched ${matched_total} values");
 }
 ```
 
-The closure both computes an answer and updates shared state, but the shared state is explicit because it flows through `matched_ptr`.
+The closure both computes an answer and updates shared state, but the shared state is explicit because it flows through `matched_ref`.
 
 For the public language today, the main rules to remember are:
 
 - closures use `(...) -> ... { ... }`
 - they can capture outer bindings
-- shared mutable state across closures should be explicit and pointer-based
+- shared mutable state across closures should be explicit and reference-based
 
 ## What you learned
 
 - Closures are anonymous functions with ordinary function types.
 - They can be passed, stored, and returned.
 - A closure captures bindings from the surrounding scope automatically.
-- Shared mutable closure state is explicit: use pointers when multiple closures must mutate the same value.
+- Shared mutable closure state is explicit: use `&var` references when multiple closures must mutate the same value.
 
 Next: [Control Flow and Errors](control-flow-and-errors) — loops, optional values, and error handling.

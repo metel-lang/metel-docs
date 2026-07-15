@@ -152,7 +152,7 @@ fun main() -> i64 {
 fun main() -> i64 {
     let nums: i64[] = [1, 2, 3];
     let names: Array<String> = ["alice", "bob"];
-    if (array_len(names) == 2) { nums[0] } else { 0 }
+    if (names.len() == 2) { nums[0] } else { 0 }
 }
 ```
 
@@ -349,7 +349,7 @@ type inline is clearer than introducing a separate annotated binding.
 fun main() -> i64 {
     let xs = [] : i64[];
     let x  = 1 : i64;
-    if (array_len(xs) == 0) { x } else { 0 }
+    if (xs.len() == 0) { x } else { 0 }
 }
 ```
 
@@ -370,7 +370,7 @@ Because of that, ambiguous literals like `[]` and `None` often type-check withou
 
 ```metel
 fun zip_lengths(a: i64[], b: String[]) -> i64 {
-    return array_len(a) + array_len(b);
+    return a.len() + b.len();
 }
 
 fun make_row(use_default: boolean, fallback: i64[]) -> i64[] {
@@ -383,7 +383,7 @@ fun make_row(use_default: boolean, fallback: i64[]) -> i64[] {
 fun first_or_default(items: i64[], fallback: Perhaps<i64>) -> i64 {
     return match fallback {
         Perhaps::Some { value } => value,
-        None => if (array_len(items) > 0) { items[0] } else { 0 },
+        None => if (items.len() > 0) { items[0] } else { 0 },
     };
 }
 
@@ -391,7 +391,7 @@ fun main() -> i64 {
     let total = zip_lengths([], ["a", "b"]);
     let row = make_row(true, [1, 2, 3]);
     let first = first_or_default([1, 2, 3], None);
-    return total + array_len(row) + first;
+    return total + row.len() + first;
 }
 ```
 
@@ -402,8 +402,8 @@ fun main() -> i64 {
     let arr = [] : i64[];
     let value = None : Perhaps<i64>;
     match value {
-        Perhaps::Some { value } => value + array_len(arr),
-        Perhaps::None => array_len(arr),
+        Perhaps::Some { value } => value + arr.len(),
+        Perhaps::None => arr.len(),
     }
 }
 ```
@@ -449,7 +449,7 @@ struct Stack<T> {
 }
 
 fun first<T>(arr: T[]) -> Perhaps<T> {
-    if (array_len(arr) == 0) {
+    if (arr.len() == 0) {
         return None;
     }
     return Perhaps::Some { value: arr[0] };

@@ -87,30 +87,30 @@ See [Sized Numeric Types](../../reference/spec/types#sized-numeric-types) for th
 
 ## Mutable variables
 
-`let` bindings are immutable by default. To rebind a variable, use `let mut`:
+`let` bindings are immutable. To rebind a variable, use `var`:
 
 ```metel
 fun main() {
-    let mut count = 0;
+    var count = 0;
     count = count + 1;
     count = count + 1;
     println(count);   // 2
 }
 ```
 
-`let` and `mut` are not types — together they describe a mutable binding. Compound assignment operators work on `let mut` variables too:
+`var` creates a mutable binding. Compound assignment operators work on `var` bindings too:
 
 ```metel
 fun main() {
-    let mut total = 10;
+    var total = 10;
     total += 5;
     total -= 2;
     total *= 3;
-println(total);   // 39
+    println(total);   // 39
 }
 ```
 
-`mut` marks a mutable binding. It allows reassignment and is also part of whether operations that require mutable access, such as taking `&mut` to a binding or mutating through its storage, are permitted.
+`var` allows reassignment and is also part of whether operations that require mutable access, such as taking `&var` to a binding or mutating through its storage, are permitted.
 
 ## Strings
 
@@ -173,14 +173,14 @@ Here is a short program that puts variables, arithmetic, and strings together:
 fun main() {
     let name = "Metel";
     let major = 0;
-    let minor = 7;
+    let minor = 10;
     let patch = 0;
 
     let version = "${major}.${minor}.${patch}";
     let banner = "Welcome to ${name} v${version}";
     println(banner);
 
-    let mut items = 0;
+    var items = 0;
     items += 3;
     items += 2;
     let summary = "Processed ${items} items in this run.";
@@ -197,7 +197,7 @@ Processed 5 items in this run.
 ## What you learned
 
 - `fun main()` is the program entry point.
-- `let` creates an immutable binding; `mut` allows reassignment.
+- `let` creates an immutable binding; `var` creates a mutable binding.
 - Types are inferred — annotations are optional but always accepted.
 - `println` prints any built-in type directly.
 - `+` concatenates strings; `${expr}` embeds expressions inside string literals.

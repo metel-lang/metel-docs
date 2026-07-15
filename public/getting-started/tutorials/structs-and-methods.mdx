@@ -4,7 +4,7 @@ sidebar_position: 5
 
 # Tutorial: Structs, Enums, and Methods
 
-This tutorial shows how to define your own types in Metel. Structs hold named data; enums represent a fixed set of alternatives; `impl` blocks attach methods to either.
+This tutorial shows how to define your own types in Metel. Structs hold named data; enums represent a fixed set of alternatives; `extend` blocks attach methods to either.
 
 ## Structs
 
@@ -36,9 +36,9 @@ Struct Literals Are Explicit
 When you construct a struct, you name every field unless shorthand field init applies. There is no positional constructor syntax here.
 :::
 
-## Adding methods with `impl`
+## Adding methods with `extend`
 
-Methods live in an `impl` block for the type. The first parameter `self` is the receiver:
+Methods live in an `extend` block for the type. The first parameter `self` is the receiver:
 
 ```metel
 struct Point {
@@ -46,7 +46,7 @@ struct Point {
     y: f64,
 }
 
-impl Point {
+extend Point {
     fun distance_from_origin(self) -> f64 {
         let x2 = self.x * self.x;
         let y2 = self.y * self.y;
@@ -71,12 +71,12 @@ Methods are called with `.method_name(args)`. `self` is passed implicitly.
 :::tip
 Think “Function Namespaced Under The Type”
 
-An `impl` method is still just a function. Dot syntax is the ergonomic call form, but the main extra idea is the implicit `self`.
+An `extend` method is still just a function. Dot syntax is the ergonomic call form, but the main extra idea is the implicit `self`.
 :::
 
 ## The `Self` type
 
-Inside an `impl` block, `Self` is an alias for the type being implemented. This is useful for methods that return a modified copy:
+Inside an `extend` block, `Self` is an alias for the type being extended. This is useful for methods that return a modified copy:
 
 ```metel
 struct Point {
@@ -84,7 +84,7 @@ struct Point {
     y: f64,
 }
 
-impl Point {
+extend Point {
     fun translate(self, dx: f64, dy: f64) -> Self {
         return Point { x: self.x + dx, y: self.y + dy };
     }
@@ -197,7 +197,7 @@ When you add a new enum variant later, every `match` over that enum must be upda
 
 ## Methods on enums
 
-`impl` works the same way on enums:
+`extend` works the same way on enums:
 
 ```metel
 enum Shape {
@@ -205,7 +205,7 @@ enum Shape {
     Rectangle { width: f64, height: f64 },
 }
 
-impl Shape {
+extend Shape {
     fun area(self) -> f64 {
         match self {
             Shape::Circle { radius } => 3.14159 * radius * radius,
@@ -228,7 +228,7 @@ fun main() {
         Shape::Circle { radius: 1.0 },
     ];
 
-    let mut total_area = 0.0;
+    var total_area = 0.0;
     for (let s in shapes) {
         println("${s.describe()} — area ${s.area()}");
         total_area += s.area();
@@ -270,7 +270,7 @@ struct Card {
     rank: Rank,
 }
 
-impl Suit {
+extend Suit {
     fun to_string(self) -> String {
         match self {
             Suit::Clubs    => "Clubs",
@@ -281,7 +281,7 @@ impl Suit {
     }
 }
 
-impl Rank {
+extend Rank {
     fun to_string(self) -> String {
         match self {
             Rank::Number { value } => value.to_string(),
@@ -303,7 +303,7 @@ impl Rank {
     }
 }
 
-impl Card {
+extend Card {
     fun to_string(self) -> String {
         return "${self.rank.to_string()} of ${self.suit.to_string()}";
     }
@@ -314,7 +314,7 @@ impl Card {
 }
 
 fun hand_value(hand: Card[]) -> i64 {
-    let mut total = 0;
+    var total = 0;
     for (let card in hand) {
         total += card.value();
     }
@@ -351,10 +351,10 @@ Structs and enums become more useful together: structs model stable records, enu
 
 ## What you learned
 
-- `struct` defines a named record with typed fields; `impl` attaches methods to it.
+- `struct` defines a named record with typed fields; `extend` attaches methods to it.
 - `self` is the receiver; `Self` is an alias for the implementing type.
 - `enum` defines a type with named variants, each optionally carrying data.
 - `match` exhaustively handles every variant and destructures field data into local variables.
-- Both structs and enums support `impl` blocks in the same way.
+- Both structs and enums support `extend` blocks in the same way.
 
-Next: [Pointers](pointers) — address-of, dereference, and shared mutable state.
+Next: [References](pointers) — address-of, write-through references, and shared mutable state.

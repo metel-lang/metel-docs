@@ -2,64 +2,69 @@
 sidebar_position: 6
 ---
 
-# Tutorial: Pointers
+# Tutorial: References
 
-This tutorial introduces Metel's regular pointer model. The core idea is simple:
+This tutorial introduces Metel's reference model. References are explicit aliases to existing storage:
 
-- `&x` takes the address of a value and produces `*T`
-- `&mut x` takes a mutable address and produces `*mut T`
-- `&mut` also works on addressable fields, elements, and nested lvalue paths
-- pointers are storable and cloneable handles
+- `&x` creates a shared reference with type `&T`
+- `&var x` creates an exclusive mutable reference with type `&var T`
+- `&var` also works on addressable fields, elements, and nested lvalue paths
+- references are storable values, but they do not own the thing they point at
 
-## Taking an address
+The file is still named `pointers.mdx` for link stability, but the current language surface calls these values references.
 
-The syntax uses `&` as address-of:
+## Taking a reference
 
 ```metel
 fun main() {
-    let mut value = 42;
+    let value = 42;
+    let read_ref: &i64 = &value;
+    let current: i64 = read_ref;
+    println(current);   // 42
 
-    let read_ptr: *i64 = &value;
-    let write_ptr: *mut i64 = &mut value;
+    var counter = 0;
+    let write_ref: &var i64 = &var counter;
+    write_ref = 50;
+    println(counter);   // 50
 }
 ```
 
-`*i64` is a pointer to `i64`. `*mut i64` is a mutable pointer to `i64`.
+`&i64` is a shared reference to an `i64`. `&var i64` is an exclusive mutable reference to an `i64`.
 
 :::tip
 Read This As Two Choices
 
-Choose pointer mutability at the address-taking site:
+Choose reference capability at the address-taking site:
 
-- `&x` for `*T`
-- `&mut x` for `*mut T`
+- `&x` for `&T`
+- `&var x` for `&var T`
 :::
 
-## Why pointers exist
+## Why references exist
 
-Pointers are mainly about shared state and indirection. They let multiple places talk about the same value instead of copying it around.
+References are mainly about explicit aliasing. They let multiple places talk about the same storage instead of copying a value around.
 
 That matters in patterns like:
 
-- graph nodes with back-links
 - mutable shared state between closures
-- data structures where values point at each other
+- data structures that need indirection
+- APIs that observe or update a value without taking ownership of it
 
 ## Shared mutable state
 
-Pointers are useful when multiple parts of a program need to talk about the same value explicitly. That includes shared mutable state between closures:
+References are useful when multiple parts of a program need to talk about the same value explicitly. That includes shared mutable state between closures:
 
 ```metel
 fun main() {
-    let mut total = 0;
-    let cell: *mut i64 = &mut total;
+    var total = 0;
+    let cell: &var i64 = &var total;
 
     let add_one = () -> {
-        *cell += 1;
+        cell += 1;
     };
 
     let add_ten = () -> {
-        *cell += 10;
+        cell += 10;
     };
 
     add_one();
@@ -69,13 +74,13 @@ fun main() {
 }
 ```
 
-Both closures mutate the same underlying `i64` through the same pointer.
+Both closures mutate the same underlying `i64` through the same reference.
 
-Ordinary closure capture is by value. The pointer is what makes the sharing explicit: both closures talk to the same storage location, not independent copies.
+Ordinary closure capture is by value. The reference is what makes the sharing explicit: both closures talk to the same storage location, not independent copies.
 
-## Taking mutable addresses of fields and elements
+## Taking mutable references to fields and elements
 
-In v0.8.0, `&mut` is not limited to a plain variable. It also works on addressable paths such as struct fields, tuple elements, and array elements:
+`&var` is not limited to a plain variable. It also works on addressable paths such as struct fields, tuple elements, and array elements:
 
 ```metel
 struct Counter {
@@ -83,99 +88,93 @@ struct Counter {
 }
 
 fun main() {
-    let mut counter = Counter { value: 10 };
-    let field_ptr: *mut i64 = &mut counter.value;
+    var counter = Counter { value: 10 };
+    let field_ref: &var i64 = &var counter.value;
 
-    *field_ptr += 5;
+    field_ref += 5;
     println(counter.value);   // 15
 }
 ```
 
 That same rule applies to nested paths. The write goes back to the original storage location, not a temporary copy.
 
-## Dereferencing
+## Reading and writing through references
 
-Use `*p` to read through a pointer, and `*p = value` to write through a mutable pointer:
+There is no explicit dereference operator. A value is read out of a reference when the expected type is the referent type:
 
 ```metel
 fun main() {
-    let mut n = 1;
-    let p: *mut i64 = &mut n;
+    var n = 1;
+    let r: &var i64 = &var n;
 
-    *p = 4;
-    println(*p);   // 4
+    r = 4;             // write-through
+    let value: i64 = r; // type-directed read
+    println(value);    // 4
 }
 ```
 
-`*T` is read-only. `*mut T` is readable and writable.
+A `let` binding that stores a `&var T` can still write through the reference. The binding itself is not being reassigned; the storage behind the reference is being updated.
 
 :::note
 Explicit Where It Matters
 
-Metel keeps pointer reads and writes explicit. You can spot aliasing-sensitive operations by looking for `&`, `&mut`, or `*`.
+Metel makes aliasing visible with `&` and `&var`, but ordinary field access and method calls do not require a separate dereference operator.
 :::
 
 ## Auto-deref for fields and methods
 
-Field access and method calls automatically dereference one pointer layer:
+Field access and method calls automatically dereference through reference layers:
 
 ```metel
 struct Counter {
     value: i64,
 }
 
-impl Counter {
-    fun increment(&mut self) {
+extend Counter {
+    fun increment(&var self) {
         self.value += 1;
     }
 }
 
 fun main() {
-    let mut counter = Counter { value: 0 };
-    let p: *mut Counter = &mut counter;
+    var counter = Counter { value: 0 };
+    let r: &var Counter = &var counter;
 
-    p.increment();
-    println(p.value);   // 1
+    r.increment();
+    println(r.value);   // 1
 }
 ```
 
-This is shorthand for `(*p).increment()` and `(*p).value`.
+Auto-deref chains through multiple reference layers, so a `&&var Counter` can still reach the underlying `Counter` for field reads and method calls.
 
-Auto-deref is only for field access, method calls, and function-pointer calls. Plain reads, writes, and argument passing still use explicit `*p`.
+## Function references
 
-## Function pointers
-
-Pointers to closures or functions can be called directly:
+References to closures or functions can be called directly:
 
 ```metel
 fun main() {
     let f = () -> i64 { return 42; };
-    let ptr: *() -> i64 = &f;
-    println(ptr());   // 42
+    let r: &() -> i64 = &f;
+    println(r());   // 42
 }
 ```
 
-## Pointer types and linear values
+## References and future ownership features
 
-Regular pointers provide explicit aliasing for non-linear values:
-
-- `*T` and `*mut T` are for non-linear, shared values
-- linear values are not meant to be addressed with `&x`
-
-This keeps pointer aliasing and linear ownership from fighting each other.
+Current references provide explicit aliasing for non-linear values. Future affine/linear ownership features will introduce stricter rules for exactly-once consumption; ordinary `&T` / `&var T` references are not the mechanism for consuming owned values.
 
 :::caution
 Boundary Rule
 
-Regular pointers are for explicit aliasing of non-linear values. If a feature depends on exactly-once ownership, regular `*T` / `*mut T` are the wrong tool.
+References are for explicit aliasing. If a feature depends on exactly-once ownership, regular references are the wrong tool.
 :::
 
 ## What you learned
 
-- `&x` yields `*T`.
-- `&mut x` yields `*mut T`, and `&mut` also works on addressable lvalue paths.
-- `*p` reads and `*p = value` writes through a pointer.
-- Fields, methods, and function-pointer calls auto-dereference one pointer layer.
-- Pointers are for explicit aliasing of non-linear values.
+- `&x` yields `&T`.
+- `&var x` yields `&var T`, and `&var` also works on addressable lvalue paths.
+- Writing to a `&var T` writes through to the referenced storage.
+- Reading a plain value out of a reference is type-directed; there is no `*p` operator.
+- Fields, methods, and function-reference calls auto-dereference through reference layers.
 
 Next: [Closures and Capturing](closures-and-capturing) — first-class functions, captured values, and shared mutation.

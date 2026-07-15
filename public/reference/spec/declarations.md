@@ -515,7 +515,7 @@ is permitted only through the aspect side of the orphan rule, never the target s
 
 ```metel
 // std::core — permitted: Clone is local to std::core
-extend<T: Copy> T: Clone { fun clone(self: &T) -> T { *self } }
+extend<T: Copy> T: Clone { fun clone(self: &T) -> T { self } }
 
 // user module — permitted: MyAspect is local here
 aspect MyAspect { fun tag(self) -> String; }
