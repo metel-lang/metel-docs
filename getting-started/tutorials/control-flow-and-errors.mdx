@@ -61,8 +61,8 @@ fun main() {
 
 ```metel
 fun main() {
-    let mut n = 1;
-    let mut product = 1;
+    var n = 1;
+    var product = 1;
     while (n <= 5) {
         product *= n;
         n += 1;
@@ -82,7 +82,7 @@ fun main() {
         println(word);
     }
 
-    let mut sum = 0;
+    var sum = 0;
     for (let i in 1..=10) {
         sum += i;
     }
@@ -104,7 +104,7 @@ If a loop is off by one, confirm whether you wanted `..` or `..=` before looking
 
 ```metel
 fun first_over(threshold: i64, values: i64[]) -> Perhaps<i64> {
-    let mut i: u64 = 0;
+    var i: u64 = 0;
     loop {
         if ((i as i64) >= values.len()) {
             break Perhaps::None;
@@ -137,7 +137,7 @@ Use it whenever a function can legitimately return nothing (a search that finds 
 
 ```metel
 fun find(haystack: String[], needle: String) -> Perhaps<i64> {
-    let mut i = 0;
+    var i = 0;
     for (let s in haystack) {
         if (s == needle) {
             return Perhaps::Some { value: i };
@@ -281,13 +281,13 @@ aspect From<T> {
     fun from(value: T) -> Self;
 }
 
-impl From<IoError> for AppError {
+extend AppError: From<IoError> {
     fun from(value: IoError) -> AppError {
         AppError { msg: "io: ${value.msg}" }
     }
 }
 
-impl From<ParseError> for AppError {
+extend AppError: From<ParseError> {
     fun from(value: ParseError) -> AppError {
         AppError { msg: "parse: ${value.msg}" }
     }
@@ -322,7 +322,7 @@ fun main() {
 }
 ```
 
-The `?` on `read_data(path)?` automatically calls `AppError::from(io_error)` because `IoError` and `AppError` differ, and `impl From<IoError> for AppError` exists. No explicit conversion needed.
+The `?` on `read_data(path)?` automatically calls `AppError::from(io_error)` because `IoError` and `AppError` differ, and `extend AppError: From<IoError>` exists. No explicit conversion needed.
 
 ## Match with guards
 

@@ -179,8 +179,6 @@ since `U` is an ordinary type parameter, not a projection.
 
 ### T0014 — Orphan implementation
 
-> **Not yet implemented** — see `internal/rfcs/4-implemented/rfc-0060-aspect-impl-coherence.md`.
-
 An `extend Type: Aspect` block where neither `Aspect` nor `Type`'s outermost type
 constructor is declared in the current module (or `std::core`, for built-ins).
 
@@ -192,8 +190,6 @@ constructor is declared in the current module (or `std::core`, for built-ins).
 two foreign types) into `std::core` if this is genuinely a standard-library concern.
 
 ### T0015 — Conflicting implementation
-
-> **Not yet implemented** — see `internal/rfcs/4-implemented/rfc-0060-aspect-impl-coherence.md`.
 
 Two implementations of the same aspect cover the same concrete type — either two
 identical `extend` blocks, or a positive and a negative impl (see Negative Impls in the declarations
@@ -247,7 +243,7 @@ Execution requires a `main` function but none was found.
 [R0001] runtime error in main.mtl at 0..0: no main() function defined
 ```
 
-**Fix:** add `fn main() { ... }` to your program.
+**Fix:** add `fun main() { ... }` to your program.
 
 ### R0002 — `main` is not a valid entry point
 
@@ -364,9 +360,9 @@ The `?` operator is applied to a value that is not a `Result`.
 
 ### R0013 — Assertion failed
 
-`assert(cond)` or `assert_msg(cond, msg)` is called with `cond` evaluating to
-`false`. The panic message is the fixed string `"assertion failed"` for `assert`,
-or the caller-supplied `msg` for `assert_msg`.
+`assert(cond)` or `assert(cond, msg)` is called with `cond` evaluating to
+`false`. The panic message is the fixed string `"assertion failed"` for the
+one-argument form, or the caller-supplied `msg` for the two-argument form.
 
 ```
 [R0013] runtime error in main.mtl at 5..10: assertion failed

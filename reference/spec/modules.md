@@ -212,7 +212,7 @@ Declarations are module-private by default. A declaration is accessible from out
 public struct Token { public kind: i64, span: i64 }
 struct InternalState { count: i64 }
 
-public fun parse(tokens: Token[]) -> i64 { return array_len(tokens); }
+public fun parse(tokens: Token[]) -> i64 { return tokens.len(); }
 fun helper(token: Token) -> boolean { return token.kind == 0; }
 
 fun main() -> i64 {
