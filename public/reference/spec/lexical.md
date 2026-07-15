@@ -90,8 +90,7 @@ let y = x + 5;          // 5 adopts i32; y is i32
 assert(x > 5);          // 5 adopts i32
 ```
 
-> Sized literal suffixes: since v0.8.0 (RFC-0007).
-> Polymorphic literal coercion: since v0.8.0.
+> **Availability:** Sized literal suffixes and polymorphic literal coercion since v0.8.0.
 
 **Characters** — single-quoted Unicode scalar values:
 
@@ -106,7 +105,7 @@ assert(x > 5);          // 5 adopts i32
 
 The type of a character literal is `Char`.
 
-> `Char` type: since v0.8.0 (RFC-0007).
+> **Availability:** `Char` since v0.8.0.
 
 **Strings** — double-quoted UTF-8:
 
@@ -127,7 +126,7 @@ let n = 42;
 let s  = "n=${n}";                 // "n=42"
 ```
 
-> *Since v0.7.0.*
+> **Availability:** Since v0.7.0.
 
 The expression inside `${…}` may be any expression whose type implements the `Display` aspect (i.e. has a `.to_string()` method). The placeholder desugars to `.to_string()` concatenated with the surrounding literal fragments using `+`. String literals may appear inside `${…}`:
 
@@ -141,7 +140,7 @@ let x = "${if (true) { "yes" } else { "no" }}";
 let full = "hello" + ", " + "world";   // "hello, world"
 ```
 
-> *Since v0.7.0.*
+> **Availability:** Since v0.7.0.
 
 **Booleans:** `true`, `false`
 
