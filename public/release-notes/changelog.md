@@ -6,89 +6,66 @@ title: "Metel Language Changelog"
 
 ## v0.10.0
 
-**In progress — not yet released.** Updated incrementally as each issue lands, not
-written retroactively at release time; entries below may still be reworded for
-clarity before the version is tagged, but nothing here should go stale relative to
-what's actually merged. Shipped from `sprint/25` (merged into `develop`) and
-`sprint/26` (in progress).
+**In progress — not yet released.**
 
-**New language features:**
-- The bottom type `!` is now real and user-writable: subtyping/coercion to any
-  type, uninhabited-variant exhaustiveness, inhabited-singleton coercion, and
-  `-> !` divergence checking (`T0016` if a function declared `-> !` doesn't
-  diverge on every path) (RFC-0078, #234)
-- `return`, `break`, and `continue` are now ordinary expressions of type `!`,
-  valid anywhere any expression is valid — braceless `if`-arms, loop-body
-  tails, match arms, and nested expression positions — rather than statements
-  with one grammar exception carved out per new context (#229)
-- `Perhaps`/`Result` gain `.yolo()`, `.ok_or()`, `.map_err()`, `.ok()` (#232)
-- New syntax parses for upcoming Cluster A RFCs, **not yet type-checked or
-  enforced**: negative bounds (`T: !Aspect`), conditional/structural impls
-  (`impl<T: Bound> Aspect for Type<T>`, the `where` form, blanket impls over
-  `T[]`), associated types (`type Name;` / `type Name = Concrete;` in
-  aspect/impl blocks), and `T::AssocType` projections. Real bound-satisfaction/
-  coherence checking for each lands in its own follow-up issue (#241/#243/#242/
-  #245) (#233)
-- Negative impls (`impl !Aspect for Type {}`) now fully participate in aspect
-  coherence: the orphan rule applies to them, a concrete positive impl and a
-  negative impl for the same type/aspect correctly conflict (`T0015`), and a
-  negative impl is no longer required to provide the aspect's methods, nor
-  does it silently inherit the aspect's default-bodied methods (previously,
-  both were real bugs — the first made a negative impl of any aspect with a
-  non-default method fail to even declare; the second made a negative impl
-  quietly grant the aspect's default methods, the opposite of what `!Aspect`
-  means). Taking priority over a *blanket* positive impl and being consulted
-  by `T: !Aspect` bound satisfaction are properties of RFC-0036/RFC-0072
-  (`#241`/`#243`), not implemented yet themselves (RFC-0081, `#264`)
-- Integrated surface-syntax RFCs are now fully implemented: `public` replaces
-  `pub`, `var` replaces `mut`, impl blocks are spelled `extend`, bodyless
-  `extend Type: Aspect;` / `extend Type: !Aspect;` are accepted, and empty
-  aspect declarations may be written as `aspect Name;` (RFC-0098, RFC-0102,
-  RFC-0103, #274, #277, #278)
-- Bare-parameter blanket impls now obey the orphan rule correctly: `extend<T>
-  T: Aspect` is permitted only when the aspect is local to the declaring
-  module, and such blankets now participate in aspect-bound satisfaction
-  instead of being silently ignored (RFC-0097, #269)
+**Language surface:**
+- `public`, `var`, and `extend` are now the canonical spellings. The old
+  `pub`, `mut`, and `impl` declaration spellings are removed.
+- Empty aspect declarations may be written as `aspect Name;`.
+- Bodyless positive and negative aspect implementations are accepted:
+  `extend Type: Aspect;` and `extend Type: !Aspect;`.
+- Zero-field structs and zero-field enum variants may be constructed with or
+  without braces: `Empty` / `Empty {}` and `Flag::On` / `Flag::On {}`.
+- `return`, `break`, and `continue` are expressions of type `!`, so they work
+  in braceless `if` arms, match arms, loop tails, and other expression positions.
+
+**References and control flow:**
+- Reference types are now spelled `&T` and `&var T`.
+- Explicit dereference syntax is gone; field access, method calls, function
+  calls through references, type-directed reads, and write-through assignment
+  handle ordinary reference use.
+- Reference operations chain through multiple layers such as `&&T` and
+  `&&var T`.
+- The bottom type `!` is user-writable, coerces to any type, participates in
+  exhaustiveness for uninhabited enum variants, and is checked for `-> !`
+  functions.
+
+**Aspect and type system:**
+- Conditional aspect implementations are enforced, including `where` clauses
+  and negative bounds.
+- Aspect implementation coherence is enforced with orphan-rule and overlap
+  checks.
+- Negative bounds (`T: !Aspect`) and negative implementations
+  (`extend Type: !Aspect;`) participate in bound checking and coherence.
+- Associated types are supported in aspects and implementations, including
+  projections such as `T::AssocType` and equality-constrained bounds.
+- Return-position `impl Aspect` is supported as an opaque static return type.
+- Structural aspect implementations over built-in constructors such as arrays
+  participate in aspect-bound satisfaction.
+- Bare-parameter blanket implementations such as `extend<T> T: Aspect` are
+  allowed only when the aspect is local to the declaring module.
+
+**Standard library:**
+- `Perhaps` and `Result` gain `.yolo()`.
+- `Perhaps` gains `.ok_or(error)`.
+- `Result` gains `.map_err(f)` and `.ok()`.
 
 **Breaking changes:**
-- Reference-type syntax renamed to match the integrated spec: `*T`/`*mut T`
-  are no longer accepted in type position (`&T`/`&mut T` only); explicit
-  `*p` dereference syntax is removed (address-of `&x`/`&mut x` at the
-  expression level is unchanged) (RFC-0067a)
-- Legacy surface spellings `pub`, `mut`, and `impl` are no longer accepted;
-  code must use `public`, `var`, and `extend`
+- Replace `pub` with `public`.
+- Replace `mut` bindings with `var` bindings.
+- Replace `impl` blocks with `extend` blocks.
+- Replace `*T` / `*mut T` with `&T` / `&var T`.
+- Remove explicit `*p` dereference syntax.
 
-**Bug fixes:**
-- Auto-deref, read-copy, and write-through now chain correctly through
-  arbitrarily deep reference layers (`&&T`, `&mut &mut T`, …) instead of
-  peeling only one layer
-- Generic method bodies reconstructed at call time now correctly recover the
-  receiver's own type parameters from its field values, instead of silently
-  defaulting them to `Unit` — fixes spurious "cannot infer receiver type"
-  errors when a generic method calls another bounded method (e.g. `to_string`)
-  on a `T`-typed field (#267)
-- Zero-argument generic calls (e.g. `yolo_none()`) now fall back to the
-  caller's expected type when argument-based instantiation leaves a type
-  variable free, matching the retry already used for qualified-path calls
-
-**Internal improvements:**
-- **`SymbolId` migration (ADR-0041/ADR-0042).** A reference-resolution pass
-  records every bare-identifier reference to a top-level/imported declaration;
-  direct calls, impl/aspect method dispatch, and the runtime type registry
-  now all dispatch by stable `SymbolId` instead of surface name — fixes two
-  modules each declaring a same-named struct/enum colliding instead of
-  dispatching independently. Closes the last `Call::callee_id` name-lookup
-  fallback, surfacing and fixing two latent bugs along the way: an overloaded
-  name's bare reference resolving to a stale id, and an imported re-exported
-  name minting an orphaned id instead of reusing its real declaration's
-- New `coherence` pass: orphan rule (`T0014`) and overlap detection (`T0015`)
-  for concrete aspect impls, run between path normalization and typechecking
-  (#238)
-- All `clippy::pedantic` warnings resolved (619 → 0); targeted, justified
-  `#[allow]`s where the "fix" would change actual behavior (numeric casts,
-  exact float equality) rather than improve clarity (#266)
-- Task-tracking and RFC workflow docs rewritten for the current Codeberg
-  Issues + 7-stage RFC lifecycle process
+**Fixes and cleanup:**
+- Generic method bodies now recover the receiver's own type parameters when
+  reconstructing method dispatch.
+- Zero-argument generic calls can use the caller's expected type when arguments
+  alone do not determine all type parameters.
+- Aspect dispatch, import resolution, and the runtime type registry now use
+  stable symbol identities, avoiding same-name collisions across modules.
+- The RFC/process documentation was reorganized around the current public docs
+  and implementation state.
 
 ## v0.9.1
 
