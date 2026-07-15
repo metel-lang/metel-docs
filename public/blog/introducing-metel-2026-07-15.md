@@ -1,8 +1,10 @@
 ---
-id: blog-introducing-metel-rewrite-2026-07-15
+slug: introducing-metel
 title: "Introducing Metel"
-type: blog
-created_date: '2026-07-15'
+date: 2026-07-15
+authors:
+  - name: Vladislav Parfeniuc
+tags: [language-design, metel, roadmap]
 ---
 
 # Introducing Metel
@@ -18,6 +20,8 @@ Once the basic language existed, I started reading more seriously about memory s
 What if I tried to combine several well-researched ideas into a language with its own point of view?
 
 That question is what Metel is now.
+
+{/* truncate */}
 
 ## What Metel is trying to be
 
