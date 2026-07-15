@@ -196,6 +196,25 @@ secondary stylistic consequence unless implementation pressure proves otherwise.
 question is not "rows vs brands for typestate"; it is whether the language has a coherent
 substrate for structured, fine-grained resource semantics at all.
 
+**Pinned down further, 2026-07-15:** this substrate now explicitly includes a **minimal
+low-level allocation model** that allocator APIs are expected to build on top of, rather than
+continuing to elaborate allocators top-down. "Low-level" here does **not** mean the whole
+unsafe/custom-allocator tower. It means the narrow semantic layer that defines:
+
+- storage-backed value ownership (creation, transfer, destruction, invalidation);
+- provenance/identity for allocated storage, where brands are the leading candidate;
+- borrowing into owned storage, and when those borrows remain valid or become invalid;
+- field-sensitive extraction/destruction, rather than treating allocated values as coarse blobs;
+- the primitive operations on allocated storage-backed values, independently of any specific
+  allocator family or surface syntax.
+
+**Just as important, this model should refuse to decide several later questions too early.**
+It should not yet define the standard allocator family in detail, the full ergonomic surface,
+the unsafe/custom-allocator layer, a full pointer taxonomy, or every future memory feature
+that might eventually live above it. The test for this layer is narrower: could real
+allocator-facing designs such as `Heap`, `BumpAlloc`, and `LocalHeap` be rebuilt on top of it
+without changing the core model?
+
 **Concrete consequence:** RFC-0089 (Linear Types) and RFC-0090 (Structural Records — Rows and
 Tiers) are not just optional future polish. They sit directly in this substrate, as does the
 still-unwritten brand-unification work. The unresolved issue is not merely that RFC-0089 now
@@ -218,7 +237,10 @@ structured, branded resources with borrowing rules and storage-transparency ergo
 then parts of the allocator cluster are downstream presentation and synthesis work rather than
 foundational semantics. That does **not** reduce their importance to the language's public
 identity. It does mean the medium-term planning question is "what substrate do allocator
-semantics need?" before "which allocator-facing RFC lands next?"
+semantics need?" before "which allocator-facing RFC lands next?" Concretely, that now means:
+design the low-level allocation model first, then judge which parts of the allocator RFC
+cluster are genuine language-level consequences of it and which parts are allocator-family or
+surface-level design that can be layered later.
 
 ### Priority 4 — Active adjacent design, and deferred frontier work
 
@@ -379,6 +401,7 @@ of what was watched for and what actually happened is part of the point.
 | 2026-07-15 | Fixed the dangling RFC-0060 path references in `public/reference/error-codes.md` and the dated 07-15 strategic overview; `rfc.py check` is clean again. Re-evaluated Priority 3 against the integrated overview and implementation roadmap: closed Trigger 11 as a false analogy to Priority 1, and reframed unsafe/custom-allocator work as demand-gated frontier scope rather than neglected near-term work. | *(none yet)* |
 | 2026-07-15 | Split RFC indexing into two roles: generated `internal/rfcs/REGISTRY.md` is now the authoritative state inventory, while `internal/rfcs/INDEX.md` is explicitly curated/thematic only. `rfc.py check` and `rfc.py index --check-drift` now enforce that split mechanically instead of relying on `INDEX.md`'s old date-only drift check. | *(none yet)* |
 | 2026-07-15 | Rewrote the medium-term priority narrative around a substrate-first model: structural types, per-field multiplicity, brand semantics, and lifetime validity are now the main low-level design priority; allocator semantics are kept central to language identity but reframed as the flagship synthesis built on that substrate; typestate is explicitly demoted to a secondary stylistic consequence unless implementation pressure proves otherwise. | *(none yet)* |
+| 2026-07-15 | Refined that substrate-first model further: the immediate storage-design target is now a minimal low-level allocation model (storage-backed ownership, provenance/identity, borrowing into owned storage, field-sensitive extraction/destruction), explicitly narrower than the full allocator family, ergonomic surface, or unsafe/custom-allocator layer that will later build on top of it. | *(none yet)* |
 
 ---
 
