@@ -598,8 +598,6 @@ orphan rule does not apply because there is no authored impl site.
 
 ### Structural Aspect Bounds
 
-> **Implemented** — see `internal/rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md` (issue #245). Structural impl lookup, registration, and use-site checking for arrays and function types are implemented. Tuple blanket impls remain deferred by the RFC itself; that deferral is part of the design, not an implementation gap.
-
 Arrays (`T[]`), tuples (`(A, B)`, …), and function types (`fun(A) -> B`) are
 **structural types** — built into the language rather than declared by a user, with no
 name that can serve as an impl target the ordinary way. For the orphan rule (above),
