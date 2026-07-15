@@ -2,8 +2,7 @@
 slug: introducing-metel
 title: "Introducing Metel"
 date: 2026-07-15
-authors:
-  - name: Vladislav Parfeniuc
+authors: [vladislav]
 tags: [language-design, metel, roadmap]
 ---
 
