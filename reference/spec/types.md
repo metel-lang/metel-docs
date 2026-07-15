@@ -17,7 +17,7 @@ The unit type `()` is only written explicitly when needed as a type parameter (e
 
 ## Sized Numeric Types
 
-> **Availability:** Since v0.8.0 (RFC-0007).
+> **Availability:** Since v0.8.0.
 
 Metel provides exact-width numeric types for low-level and systems programming. `i64` and `f64` are the default integer and floating-point types in ordinary code.
 
@@ -71,7 +71,7 @@ count = 99;               // 99 is i32
 
 ## Char
 
-> **Availability:** Since v0.8.0 (RFC-0007).
+> **Availability:** Since v0.8.0.
 
 `Char` represents a single Unicode scalar value. Character literals use single quotes: `'a'`, `'\n'`, `'\u{1F600}'`.
 
@@ -197,13 +197,11 @@ fun sum(xs: [i64; 3]) -> i64 {
 }
 ```
 
-> Fixed-size array type `[T; N]`: since v0.8.0 (RFC-0053).
+> **Availability:** Since v0.8.0.
 
 ## References
 
-> **Availability:** Implemented 2026-07-11 (RFC-0067a) — see
-> `internal/rfcs/4-implemented/rfc-0067a-reference-types.md`. Not yet released in a
-> tagged version; will get its own changelog entry when `sprint/25` ships.
+> **Availability:** Since v0.10.0.
 
 Reference types provide explicit aliasing for non-linear values.
 
@@ -245,8 +243,7 @@ fun main() -> i64 {
 }
 ```
 
-> `&var` for lvalue paths: since v0.8.0 (RFC-0045), restated here for `&var T` rather
-> than `*var T`.
+> **Availability:** `&var` for lvalue paths since v0.10.0.
 
 ### Reading a value out of a reference
 
@@ -304,7 +301,7 @@ non-`Copy` `T` cannot be produced this way.
 
 ## List\<T\>
 
-> **Availability:** Since v0.8.0 (RFC-0054).
+> **Availability:** Since v0.8.0.
 
 `List<T>` is the standard growable-sequence type. Use it when you need to append, pop, or otherwise mutate a sequence. Use `T[]` when the sequence is fixed after construction.
 
@@ -442,9 +439,7 @@ Because `as` desugars to `From`, user-defined types become castable by implement
 
 ## Generics
 
-> **Availability:**
-> User-defined generic functions and types: since v0.3.0.
-> Built-in generic types (`Perhaps<T>`, `Result<T, E>`, `T[]`): since v0.1.0.
+> **Availability:** Built-in generic types (`Perhaps<T>`, `Result<T, E>`, `T[]`) since v0.1.0. User-defined generic functions and types since v0.3.0.
 
 Types and functions can be parameterized with `<T>` syntax.
 
@@ -471,9 +466,7 @@ fun main() -> i64 {
 
 ## Never Type
 
-> **Availability:** RFC-0078, implemented 2026-07-12 — see
-> `internal/rfcs/4-implemented/rfc-0078-bottom-type.md`. Not yet released in a
-> tagged version; will get its own changelog entry when `sprint/25` ships.
+> **Availability:** Since v0.10.0.
 
 `!` (Never) is the **uninhabited bottom type** — no value of type `!` can ever be
 constructed. A `loop` with no reachable `break` has type `!`:

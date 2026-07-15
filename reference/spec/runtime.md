@@ -118,7 +118,7 @@ Strings are concatenated with the `+` operator.
 
 ## Char Methods
 
-> Since v0.8.0.
+> **Availability:** Since v0.8.0.
 
 | Method / Function         | Signature                        | Description                                  |
 |---------------------------|----------------------------------|----------------------------------------------|
@@ -128,7 +128,7 @@ Strings are concatenated with the `+` operator.
 
 ## Core Sum Types
 
-> Methods since v0.9.0.
+> **Availability:** Core methods since v0.9.0. `.yolo()`, `.ok_or()`, `.map_err()`, and `.ok()` since v0.10.0.
 
 `Perhaps<T>` and `Result<T, E>` are the core optional/fallible types, both in
 `std::core` and available unqualified. Their combinator methods let them be used
@@ -161,13 +161,9 @@ in pipelines without explicit `match`:
 | `.map_err(f)`        | `<F>((E) -> F) -> Result<T, F>`    | Transform the error value, passing `Ok` through |
 | `.ok()`              | `() -> Perhaps<T>`                 | `Ok` becomes `Some`; `Err` becomes `None`, discarding the error |
 
-> `.yolo()`, `.ok_or()`, `.map_err()`, and `.ok()`: implemented 2026-07-11
-> (issue #232, following up on the refused RFC-0079), not yet released in a
-> tagged version — will get their own changelog entry when `sprint/25` ships.
-
 ## List\<T\>
 
-> Since v0.9.0.
+> **Availability:** Since v0.9.0.
 
 `List<T>` is the growable collection type in `std::core`, available unqualified.
 
@@ -188,7 +184,7 @@ in pipelines without explicit `match`:
 
 ## OsError
 
-> Since v0.9.0.
+> **Availability:** Since v0.9.0.
 
 `OsError` is the error type returned by the host-backed standard-library modules
 (`std::fs`, `std::process`). It is in `std::core` (available unqualified) and

@@ -215,9 +215,7 @@ fun main() -> i64 {
 
 ### For-In
 
-> **Availability:**
-> Array and range iteration: since v0.1.0.
-> User-defined `Iterable<T>` implementations: since v0.4.0.
+> **Availability:** Array and range iteration since v0.1.0. User-defined `Iterable<T>` implementations since v0.4.0.
 
 `for-in` works on any type implementing the `Iterable<T>` aspect. The loop variable
 receives type `T`. `T[]`, `[T; N]` (array and fixed-size array), and `Range` (produced by `..` and `..=`) implement
@@ -252,9 +250,7 @@ fun main() -> i64 {
 
 ### References
 
-> **Availability:** Implemented 2026-07-11 (RFC-0067a) — see
-> `internal/rfcs/4-implemented/rfc-0067a-reference-types.md`. Not yet released in a
-> tagged version; will get its own changelog entry when `sprint/25` ships.
+> **Availability:** Since v0.10.0.
 
 References provide explicit aliasing for non-linear values.
 
@@ -369,9 +365,7 @@ fun main() -> i64 {
 
 ### Break, Continue, and Return
 
-> **Availability:** expressions since 2026-07-12 (issue #229); statements-only
-> (requiring a trailing `;`, plus a grammar-level exception for bare match-arm
-> bodies, #226) since v0.1.0/v0.6.3.
+> **Availability:** Since v0.10.0.
 
 `return`, `break`, and `continue` are expressions of type `!` (Never — see
 [Never Type](types.md#never-type)), not statements. Since `!` is a subtype of

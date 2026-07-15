@@ -126,9 +126,7 @@ let result = parse::<i64>("42") : Perhaps<i64>;
 
 ## The ? Operator
 
-> **Availability:**
-> `?` with matching error types: since v0.1.0.
-> `?` with `From`-based error coercion: since v0.4.0.
+> **Availability:** Matching-error `?` since v0.1.0. `From`-based error coercion since v0.4.0.
 
 Inside a function returning `Result<T, E>`, `?` propagates errors early:
 
@@ -157,14 +155,9 @@ fun main() -> i64 {
 
 The inner expression's error type `E1` and the function's return error type `E2` must satisfy `E2: From<E1>`. When `E1 == E2` no conversion is performed. When they differ, `From::from` is called automatically on the error value before re-wrapping in `Err`.
 
-> **Not implemented: `?` on `Perhaps<T>`.** Only `Result<T, E>` is supported today.
-> `infer_propagate_error`, the typechecker pass that handles `?`, unconditionally
-> constrains both the inner expression and the enclosing function's return type to
-> `Result<T, E>` — there is no `Perhaps` branch. Using `?` on a `Perhaps` value is
-> rejected at type-check time (`T0001`), not desugared to an early `None` return.
-> Confirmed absent while investigating issue #232; supporting it would require
-> changes to both typechecker passes' propagation logic and the evaluator's
-> early-return mechanics, which was judged out of scope for that issue.
+`?` does not apply to `Perhaps<T>` in this language version. It is supported only for
+`Result<T, E>`, so using `?` on a `Perhaps` value is a type error (`T0001`) rather
+than an early `None` return.
 
 ## Native Functions (Standard Library Only)
 
