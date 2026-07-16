@@ -167,19 +167,34 @@ fun drop_value<T>(cell: &var RcBox<T>) {
 }
 ```
 
-This is a design sketch, not executable Metel. `to_record_mut()` would come from `ToRecord`; `from_record_mut()` would only be available again once the row has been restored to the full `RcBox<T>` shape. The motivating case is `Rc`/`Arc`-style teardown: the payload may need to be destroyed when the last strong reference disappears, while the allocation and counters remain alive until weak references are gone too. In Rust, this is exactly the kind of internal logic that tends to involve `unsafe` and `ManuallyDrop`. A field-sensitive record view might let the type system model that transition directly.
+This is a design sketch, not executable Metel. `to_record_mut()` would come from `ToRecord`; `from_record_mut()` would only be available again once the row has been restored to the full `RcBox<T>` shape. The motivating case is `Rc`/`Arc`-style teardown: the payload may need to be destroyed when the last strong reference disappears, while the allocation and counters remain alive until weak references are gone too. In Rust, this is exactly the kind of internal logic you can see in the standard library's actual [`RcInner`](https://doc.rust-lang.org/src/alloc/rc.rs.html#284-288) and [`ArcInner`](https://doc.rust-lang.org/src/alloc/sync.rs.html#387-391) layouts, along with the corresponding [`Rc::drop_slow`](https://doc.rust-lang.org/src/alloc/rc.rs.html#393-399) and [`Arc::drop_slow`](https://doc.rust-lang.org/src/alloc/sync.rs.html#2131-2135) teardown paths. A field-sensitive record view might let the type system model that transition more directly.
 
 That is the part I find more interesting than "structural typing" on its own. The nominal type remains the normal interface. The structural view appears only when the program deliberately takes a value apart and the checker needs vocabulary for what remains.
 
+### Linear Types
+
+Another idea I take seriously is linear types, which are stricter than the affine ownership model that languages like Rust already use.
+
+The difference is simple but important. An affine value may be used at most once: you can move it, or you can drop it without using it again. A linear value must be used exactly once: it cannot be silently discarded, because consuming it is part of the invariant. Rust is mostly affine in this sense. An ordinary non-`Copy` value can always just go out of scope:
+
+```rust
+fn main() {
+    let file = std::fs::File::open("log.txt").unwrap();
+    // `file` is never used again, but this is fine: it is simply dropped.
+}
+```
+
+That is often the right default. Most resources do not need a proof that they were consumed in some specific way; they only need to avoid accidental duplication. But some things are stronger than that. A join handle that must be joined or detached, a capability token that must be returned, or a protocol state that must be driven to a valid terminal state is not just "non-copyable." It represents an obligation.
+
+Protocol enforcement is the clearest example. If opening a session gives you a value representing "handshake in progress," and the only legal next steps are "authenticate," "reject," or "close," then silently dropping that value is not neutral behavior. It means the protocol was abandoned halfway through. The same shape appears with must-join concurrency handles, transactional capabilities that must commit or roll back, and resources that must be explicitly released back to some owner.
+
+That is why I do not think affine ownership makes linear types redundant. Affinity is a good default for ordinary resources. Linearity is useful for the smaller set of values where dropping them is itself a bug, because the program has failed to discharge some obligation the type system was supposed to track. If Metel grows a real linear layer, it should be because there are concrete cases like that where "you may forget this" is not strong enough.
+
 ### Algebraic Effects
 
-Another design area I am actively evaluating is algebraic effects and handlers.
+Another design area I am evaluating, as an option for now rather than a committed direction, is algebraic effects and handlers.
 
-I do not mean "exceptions, but renamed." I mean a typed effect system where a computation can declare the operations it may perform, and a surrounding handler can intercept them, decide whether to resume the suspended computation, and control what state or capability is threaded through that interaction.
-
-That becomes interesting in Metel specifically because it is not just a surface-language feature. It collides directly with ownership, borrows, allocator-tagged values, handler state, and sendability across fibers. A continuation that captures only heap-owned, sendable values is one thing. A continuation that captures an active mutable borrow or arena-allocated data is another. The memory model should not be bolted on after the effect system; it has to determine which handlers are legal in the first place.
-
-I am especially interested in whether the same brand-like machinery used for resource identity could also help with effect handlers. A handler token may be the right way to express "this continuation resumes into this specific handler state and not some other one," with ordinary borrow exclusivity enforcing non-reentrancy instead of a bespoke runtime rule. That is still design work, not settled syntax, but it is part of the same cluster of ideas rather than a separate curiosity.
+What makes that interesting in Metel is not the surface syntax by itself, but the interaction with ownership, borrows, allocator-tagged values, handler state, and sendability across fibers. If Metel ever goes in that direction, the effect system would need to fit the memory model cleanly rather than sit beside it as an unrelated feature.
 
 ### Brands
 
@@ -202,12 +217,6 @@ fun preserve_identity<'b>(cell: RcCell<'b, Node>) -> RcCell<'b, Node> {
 The exact syntax is undecided. The point is conceptual: allocators, lifetimes, and identity brands all give the type checker a concrete identity to preserve and compare.
 
 If that unification holds, it could keep the design from becoming three unrelated special cases. An allocator brand says where storage comes from. A lifetime brand says which binding bounds a borrow. An identity brand says which family of cells or permissions a value belongs to. Different roles, same underlying channel.
-
-That also exposes some real design decisions still being evaluated.
-
-One is brand introduction. Should the language have an explicit fresh-brand form, something like a `brand` block or rank-2 helper, or should fresh brands mostly appear implicitly at allocation and construction sites? Another is whether allocator tags, lifetime anchors, and brands are genuinely different kinds in the type system, or whether they are better understood as one identity-tracking kind showing up in different roles.
-
-The other important fork is typestate. One route is the familiar phantom-parameter style, where a type carries both an identity brand and a state marker. Another route is a more structural one, where records and row-like field facts describe what state transitions have happened and which operations are still available. Those approaches overlap, but not perfectly: brands are naturally good at tracking which resource something is, while structural records are naturally good at tracking what parts or capabilities remain. I do not want to pretend that choice has already been made, because it has not.
 
 ## Why Build It?
 
