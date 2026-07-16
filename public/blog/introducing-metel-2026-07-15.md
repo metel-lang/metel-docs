@@ -220,3 +220,13 @@ I am building Metel because it gives me a place to test a combination I do not s
 The immediate job is not to add ten more ambitious ideas. It is to keep turning the parts that already define the language's shape into working machinery.
 
 If Metel ends up being worth anyone else's time, it will not be because it looked clever in RFCs. It will be because the language demonstrates that these ideas can form a coherent, teachable, implementable whole.
+
+## What Now?
+
+The long-term goal is straightforward, even if the path is not. I want to finish the language design far enough that the remaining open questions are the right kind of open questions: narrow, explicit, and attached to real trade-offs rather than vague ambition.
+
+That means continuing to turn exploratory reports into accepted RFCs, rejecting ideas that do not justify their cost, and getting the ownership, allocation, lifetime, record, brand, and effect stories into a shape that can actually be taught and implemented. It also means opening parts of that design process to outside contribution carefully. I do not want Metel to become a design-by-committee project, but I do want serious feedback, counterexamples, and eventually carefully-scoped contributions from people who want to help push the design toward something more rigorous.
+
+Past that, the project needs to become more than an interpreter. A real compiler matters, partly for performance and partly because some language ideas only become honest once they survive a lower-level implementation pipeline. I also want the project to become more legible as research, not just as software: write a research-quality paper or technical report that explains the model clearly, states the claims precisely, and positions Metel against the relevant prior work instead of treating it as an isolated experiment.
+
+And if the design keeps earning that level of effort, the final standard is higher still. The interesting parts of the language should not rely only on intuition and examples. They should be backed by rigorous soundness arguments, and where the claims are strong enough to deserve it, by real machine-checked proofs. That is a long road from where the project is today, but it is the road I think is worth taking.
