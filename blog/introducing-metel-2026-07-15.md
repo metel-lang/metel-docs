@@ -14,7 +14,7 @@ At first, the goal was small and personal: a statically typed, Rust-influenced i
 
 That version did not stay small for long.
 
-Once the basics existed, I started reading more seriously about memory safety, type systems, ownership, regions, linear capabilities, structural typing, and brand-like identity systems. The project slowly stopped being "my small Rust-like interpreter" and became a more interesting question:
+Once the basics existed, I started reading more seriously about memory safety, type systems, ownership, regions, linear capabilities, structural typing, and brand-like identity systems. Federico Bruzzone's [A friendly tour of substructural, uniqueness, ownership and capabilities types (and more)](https://federicobruzzone.github.io/posts/eter/a-friendly-tour-of-substructural-uniqueness-ownership-and-capabilities-types-and-more.html) was one of the pieces that pushed me deeper in that direction. The project slowly stopped being "my small Rust-like interpreter" and became a more interesting question:
 
 What if I tried to combine several well-researched ideas into a language with its own point of view?
 
@@ -173,7 +173,7 @@ That is the part I find more interesting than "structural typing" on its own. Th
 
 ### Linear Types
 
-Another idea I take seriously is linear types, which are stricter than the affine ownership model that languages like Rust already use.
+Another idea I take seriously is [linear types](https://arxiv.org/abs/1710.09756), which are stricter than the affine ownership model that languages like [Rust](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html) already use.
 
 The difference is simple but important. An affine value may be used at most once: you can move it, or you can drop it without using it again. A linear value must be used exactly once: it cannot be silently discarded, because consuming it is part of the invariant. Rust is mostly affine in this sense. An ordinary non-`Copy` value can always just go out of scope:
 
@@ -192,7 +192,7 @@ That is why I do not think affine ownership makes linear types redundant. Affini
 
 ### Algebraic Effects
 
-Another design area I am evaluating, as an option for now rather than a committed direction, is algebraic effects and handlers.
+Another design area I am evaluating, as an option for now rather than a committed direction, is [algebraic effects and handlers](https://arxiv.org/abs/1312.1399). Languages like [Koka](https://koka-lang.github.io/koka/doc/index.html) make that tradition concrete.
 
 What makes that interesting in Metel is not the surface syntax by itself, but the interaction with ownership, borrows, allocator-tagged values, handler state, and sendability across fibers. If Metel ever goes in that direction, the effect system would need to fit the memory model cleanly rather than sit beside it as an unrelated feature.
 
@@ -237,3 +237,20 @@ The long-term goal is to finish the language design far enough that the remainin
 It also means opening parts of that process to outside contribution carefully. I do not want Metel to become a design-by-committee project, but I do want serious feedback, counterexamples, and eventually carefully-scoped contributions from people who want to help push the design toward something more rigorous.
 
 Past that, the project needs to become more than an interpreter. It needs a real compiler, a research-quality paper or technical report, and eventually rigorous soundness arguments for the interesting parts of the design. If the project keeps earning that level of effort, I would want the strongest claims backed by real proofs, not only by intuition and examples.
+
+## References
+
+- Federico Bruzzone, [A friendly tour of substructural, uniqueness, ownership and capabilities types (and more)](https://federicobruzzone.github.io/posts/eter/a-friendly-tour-of-substructural-uniqueness-ownership-and-capabilities-types-and-more.html)
+- The Rust Programming Language, [Understanding Ownership](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html)
+- The Rust Programming Language, [Validating References with Lifetimes](https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html)
+- Rust standard library source, [`RcInner` and `Rc::drop_slow`](https://doc.rust-lang.org/src/alloc/rc.rs.html)
+- Rust standard library source, [`ArcInner` and `Arc::drop_slow`](https://doc.rust-lang.org/src/alloc/sync.rs.html)
+- Antoine Delignat-Lavaud, Cédric Fournet, Markulf Kohlweiss, Jonathan Protzenko, Aseem Rastogi, Nikhil Swamy, Santiago Zanella-Béguelin, [Implementing and Proving the TLS 1.3 Record Layer](https://arxiv.org/abs/2205.05181)
+- TypeScript Handbook, [Type Compatibility](https://www.typescriptlang.org/docs/handbook/type-compatibility.html)
+- PureScript Book, [Records and Row Polymorphism](https://book.purescript.org/chapter3.html)
+- Jean-Philippe Bernardy, Mathieu Boespflug, Ryan R. Newton, Simon Peyton Jones, Arnaud Spiwack, [Linear Haskell: practical linearity in a higher-order polymorphic language](https://arxiv.org/abs/1710.09756)
+- Gordon D. Plotkin, Matija Pretnar, [Handling Algebraic Effects](https://arxiv.org/abs/1312.1399)
+- Koka documentation, [The Koka Programming Language](https://koka-lang.github.io/koka/doc/index.html)
+- Rust standard library, [`PhantomData`](https://doc.rust-lang.org/std/marker/struct.PhantomData.html)
+- Haskell base library, [`Control.Monad.ST`](https://hackage.haskell.org/package/base/docs/Control-Monad-ST.html)
+- Yanovski, Charguéraud, Dreyer, Jung, Pottier, [GhostCell: Separating Permissions from Data in Rust](https://plv.mpi-sws.org/rustbelt/ghostcell/)
