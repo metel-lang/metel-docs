@@ -180,6 +180,8 @@ fn main() {
 }
 ```
 
+Rust itself has circled back to real linearity more than once — the usual name in those discussions is [must-move types](https://smallcultfollowing.com/babysteps/blog/2023/03/16/must-move-types/) — but never adopted it. Part of the reason is baked in: since Rust 1.0, leaking a value (through `mem::forget`, or a reference cycle) is *safe*, so the language deliberately does not guarantee that a destructor ever runs. Once "might never be cleaned up" is a sanctioned outcome, "must be consumed exactly once" cannot be enforced. The `#[must_use]` attribute approximates it as a lint at call sites, not as a type-system guarantee. So affinity in Rust is not an oversight — it is a decision the rest of the language is built around.
+
 That is often the right default. Most resources do not need a proof that they were consumed in some specific way; they only need to avoid accidental duplication. But some things are stronger than that. Protocol enforcement is the clearest example: if opening a session gives you a value representing "handshake in progress," and the only legal next steps are "authenticate," "reject," or "close," then silently dropping that value means the protocol was abandoned halfway through. The same shape appears with must-join concurrency handles, transactional capabilities that must commit or roll back, and resources that must be explicitly returned to some owner.
 
 That is why affine ownership does not make linear types redundant. Affinity is a good default for ordinary resources. Linearity is useful for the smaller set of values where dropping them is itself a bug, because the program has failed to discharge some obligation the type system was supposed to track.
