@@ -171,6 +171,16 @@ This is a design sketch, not executable Metel. `to_record_mut()` would come from
 
 That is the part I find more interesting than "structural typing" on its own. The nominal type remains the normal interface. The structural view appears only when the program deliberately takes a value apart and the checker needs vocabulary for what remains.
 
+### Algebraic Effects
+
+Another design area I am actively evaluating is algebraic effects and handlers.
+
+I do not mean "exceptions, but renamed." I mean a typed effect system where a computation can declare the operations it may perform, and a surrounding handler can intercept them, decide whether to resume the suspended computation, and control what state or capability is threaded through that interaction.
+
+That becomes interesting in Metel specifically because it is not just a surface-language feature. It collides directly with ownership, borrows, allocator-tagged values, handler state, and sendability across fibers. A continuation that captures only heap-owned, sendable values is one thing. A continuation that captures an active mutable borrow or arena-allocated data is another. The memory model should not be bolted on after the effect system; it has to determine which handlers are legal in the first place.
+
+I am especially interested in whether the same brand-like machinery used for resource identity could also help with effect handlers. A handler token may be the right way to express "this continuation resumes into this specific handler state and not some other one," with ordinary borrow exclusivity enforcing non-reentrancy instead of a bespoke runtime rule. That is still design work, not settled syntax, but it is part of the same cluster of ideas rather than a separate curiosity.
+
 ### Brands
 
 Brands are less designed than allocators and lifetimes, but they seem to fill an important identity-tracking gap.
@@ -192,6 +202,12 @@ fun preserve_identity<'b>(cell: RcCell<'b, Node>) -> RcCell<'b, Node> {
 The exact syntax is undecided. The point is conceptual: allocators, lifetimes, and identity brands all give the type checker a concrete identity to preserve and compare.
 
 If that unification holds, it could keep the design from becoming three unrelated special cases. An allocator brand says where storage comes from. A lifetime brand says which binding bounds a borrow. An identity brand says which family of cells or permissions a value belongs to. Different roles, same underlying channel.
+
+That also exposes some real design decisions still being evaluated.
+
+One is brand introduction. Should the language have an explicit fresh-brand form, something like a `brand` block or rank-2 helper, or should fresh brands mostly appear implicitly at allocation and construction sites? Another is whether allocator tags, lifetime anchors, and brands are genuinely different kinds in the type system, or whether they are better understood as one identity-tracking kind showing up in different roles.
+
+The other important fork is typestate. One route is the familiar phantom-parameter style, where a type carries both an identity brand and a state marker. Another route is a more structural one, where records and row-like field facts describe what state transitions have happened and which operations are still available. Those approaches overlap, but not perfectly: brands are naturally good at tracking which resource something is, while structural records are naturally good at tracking what parts or capabilities remain. I do not want to pretend that choice has already been made, because it has not.
 
 ## Why Build It?
 
