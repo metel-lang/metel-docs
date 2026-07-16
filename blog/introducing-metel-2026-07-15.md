@@ -8,13 +8,11 @@ tags: [language-design, metel, roadmap]
 
 # Introducing Metel
 
-We probably agree on the fact that the world does not need another amateur C++/Rust/Zig/Go/Odin clone, so the honest introduction is this: I started building Metel because I wanted to build a programming language.
+The world does not need another amateur C++/Rust/Zig/Go/Odin clone, so the honest introduction is this: I started building Metel because I wanted to build a programming language.
 
 At first, the goal was small and personal: a statically typed, Rust-influenced interpreted language with a garbage collector. I wanted to learn, and I wanted to build something that felt like a real language rather than a parser demo.
 
-That version did not stay small for long.
-
-Once the basics existed, I started reading more seriously about memory safety, type systems, ownership, regions, linear capabilities, structural typing, and brand-like identity systems. Federico Bruzzone's [A friendly tour of substructural, uniqueness, ownership and capabilities types (and more)](https://federicobruzzone.github.io/posts/eter/a-friendly-tour-of-substructural-uniqueness-ownership-and-capabilities-types-and-more.html) was one of the pieces that pushed me deeper in that direction. The project slowly stopped being "my small Rust-like interpreter" and became a more interesting question:
+That version did not stay small for long. Once the basics existed, I started reading more seriously about memory safety, type systems, ownership, regions, linear capabilities, structural typing, and brand-like identity systems. Federico Bruzzone's [A friendly tour of substructural, uniqueness, ownership and capabilities types (and more)](https://federicobruzzone.github.io/posts/eter/a-friendly-tour-of-substructural-uniqueness-ownership-and-capabilities-types-and-more.html) was one of the pieces that pushed me deeper in that direction. The project slowly stopped being "my small Rust-like interpreter" and became a more interesting question:
 
 What if I tried to combine several well-researched ideas into a language with its own point of view?
 
@@ -24,7 +22,7 @@ That question is what Metel is now.
 
 ## The Shape Of The Project
 
-Metel is an exploratory systems language. It is not trying to beat Rust, Zig, or C++ at their own game, and it is not production-ready. The project is an attempt to design a language around a few bets that I find worth taking seriously:
+Metel is an exploratory systems language. It is not trying to beat Rust, Zig, or C++ at their own game, and it is not production-ready. It is an attempt to design a language around a few bets that I find worth taking seriously:
 
 - allocation should be explicit when it matters;
 - resource usage should be visible in the type system;
@@ -33,8 +31,6 @@ Metel is an exploratory systems language. It is not trying to beat Rust, Zig, or
 - ownership should eventually work over structured values, not only whole values.
 
 Earlier, I thought of Metel mainly as "the allocator-aware language." That is still part of its identity, but the better description is broader. The current design treats allocators as the first major use case of a lower-level substrate: structural shape, field-sensitive ownership, brand-like identity, and lifetimes named after actual bindings.
-
-In other words, allocators are not the whole story. They are where the story starts to get interesting.
 
 ## What Already Exists
 
@@ -58,11 +54,9 @@ fun main() -> i64 {
 }
 ```
 
-The deepest ownership and allocation model is still ahead of the runtime. The interpreter is a feedback mechanism, not a finished semantic engine. That gap is real, and it is the main discipline problem in the project: not inventing endlessly, but deciding what is settled enough to build.
+The deepest ownership and allocation model is still ahead of the runtime. The interpreter is a feedback mechanism, not a finished semantic engine, but it is enough machinery for syntax, modules, generics, aspects, and standard-library code to push back on design ideas before they become too abstract.
 
-That also makes the interpreter useful in a very specific way. It is not proof that the whole design works, but it is enough machinery for syntax, modules, generics, aspects, and standard-library code to push back on design ideas before they become too abstract.
-
-One more thing I want to be explicit about: Metel is heavily AI-assisted. The implementation of the interpreter especially has been built with a lot of help from AI tools. The design work is also AI-assisted, but in a different way: the ideas, priorities, trade-offs, and final decisions are personal and carefully curated. AI has been useful as a collaborator, critic, and accelerator, not as a substitute for deciding what Metel should be.
+Metel is also heavily AI-assisted. AI has been useful as a collaborator, critic, and accelerator, but the ideas, priorities, trade-offs, and final decisions are personal and carefully curated.
 
 ## The Ideas I Care About
 
@@ -107,7 +101,7 @@ The important point is not the exact spelling. It is that a function should be a
 fun identity(value: @Node) -> @Node { value }
 ```
 
-That is the small version of the bigger goal: memory-safe allocator-aware programming where storage is explicit enough for the checker to reason about, but not so noisy that ordinary heap allocation becomes ceremony.
+The goal is memory-safe allocator-aware programming where storage is explicit enough for the checker to reason about, but not so noisy that ordinary heap allocation becomes ceremony.
 
 ### Lifetimes
 
@@ -121,15 +115,13 @@ fun first(x: &Str, y: &Str) -> &x Str {
 
 The name in the return type refers to a real binding already present in the function. The signature says directly that the result is tied to `x`.
 
-The common case should still avoid annotation. A method like `as_slice(&self) -> &Byte[]` should not need to invent a lifetime name just to say "the result comes from `self`." The explicit form is for the cases where there is real ambiguity.
-
-This is design syntax, not implemented surface syntax today, and the exact spelling may still change. The accepted direction is the important part: lifetime anchors should be names from the program, not invented variables that only exist in the type signature.
+The common case should still avoid annotation. A method like `as_slice(&self) -> &Byte[]` should not need to invent a lifetime name just to say "the result comes from `self`." The explicit form is for real ambiguity. This is design syntax, not implemented surface syntax today, and the exact spelling may still change, but the direction is the point: lifetime anchors should be names from the program, not invented variables that only exist in the type signature.
 
 ### Records
 
 Records are interesting to me because they may let nominal and structural typing coexist without choosing one as the whole language.
 
-Purely structural systems are powerful. [TypeScript](https://www.typescriptlang.org/docs/handbook/type-compatibility.html) is built around structural compatibility, and [PureScript](https://book.purescript.org/chapter3.html) has records as a standard feature. But structural compatibility can also blur distinctions that are meaningful in a program. If everything matches because the shape lines up, it becomes easier to frankenstein together values that should remain conceptually distinct. That is one reason TypeScript developers reach for [branded types](https://www.learningtypescript.com/articles/branded-types) and other [nominal-typing patterns](https://www.totaltypescript.com/workshops/advanced-typescript-patterns/branded-types/what-is-a-branded-type).
+Purely structural systems are powerful. [TypeScript](https://www.typescriptlang.org/docs/handbook/type-compatibility.html) is built around structural compatibility, and [PureScript](https://book.purescript.org/chapter3.html) has records as a standard feature. But structural compatibility can also blur distinctions that matter. If everything matches because the shape lines up, it becomes easier to frankenstein together values that should remain conceptually distinct. That is one reason TypeScript developers reach for [branded types](https://www.learningtypescript.com/articles/branded-types) and other [nominal-typing patterns](https://www.totaltypescript.com/workshops/advanced-typescript-patterns/branded-types/what-is-a-branded-type).
 
 What I want to explore in Metel is narrower: ordinary nominal types, plus an explicit structural `record` view when the checker needs to reason about fields.
 
@@ -167,15 +159,13 @@ fun drop_value<T>(cell: &var RcBox<T>) {
 }
 ```
 
-This is a design sketch, not executable Metel. `to_record_mut()` would come from `ToRecord`; `from_record_mut()` would only be available again once the row has been restored to the full `RcBox<T>` shape. The motivating case is `Rc`/`Arc`-style teardown: the payload may need to be destroyed when the last strong reference disappears, while the allocation and counters remain alive until weak references are gone too. In Rust, this is exactly the kind of internal logic you can see in the standard library's actual [`RcInner`](https://doc.rust-lang.org/src/alloc/rc.rs.html#284-288) and [`ArcInner`](https://doc.rust-lang.org/src/alloc/sync.rs.html#387-391) layouts, along with the corresponding [`Rc::drop_slow`](https://doc.rust-lang.org/src/alloc/rc.rs.html#393-399) and [`Arc::drop_slow`](https://doc.rust-lang.org/src/alloc/sync.rs.html#2131-2135) teardown paths. A field-sensitive record view might let the type system model that transition more directly.
-
-That is the part I find more interesting than "structural typing" on its own. The nominal type remains the normal interface. The structural view appears only when the program deliberately takes a value apart and the checker needs vocabulary for what remains.
+This is a design sketch, not executable Metel. `to_record_mut()` would come from `ToRecord`; `from_record_mut()` would only be available again once the row has been restored to the full `RcBox<T>` shape. The motivating case is `Rc`/`Arc`-style teardown: the payload may need to be destroyed when the last strong reference disappears, while the allocation and counters remain alive until weak references are gone too. In Rust, this is exactly the kind of internal logic you can see in the standard library's actual [`RcInner`](https://doc.rust-lang.org/src/alloc/rc.rs.html#284-288) and [`ArcInner`](https://doc.rust-lang.org/src/alloc/sync.rs.html#387-391) layouts, along with the corresponding [`Rc::drop_slow`](https://doc.rust-lang.org/src/alloc/rc.rs.html#393-399) and [`Arc::drop_slow`](https://doc.rust-lang.org/src/alloc/sync.rs.html#2131-2135) teardown paths. That is the part I find more interesting than "structural typing" on its own: the nominal type remains the normal interface, and the structural view appears only when the program deliberately takes a value apart and the checker needs vocabulary for what remains.
 
 ### Linear Types
 
 Another idea I take seriously is [linear types](https://arxiv.org/abs/1710.09756), which are stricter than the affine ownership model that languages like [Rust](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html) already use.
 
-The difference is simple but important. An affine value may be used at most once: you can move it, or you can drop it without using it again. A linear value must be used exactly once: it cannot be silently discarded, because consuming it is part of the invariant. Rust is mostly affine in this sense. An ordinary non-`Copy` value can always just go out of scope:
+The difference is simple. An affine value may be used at most once: you can move it, or you can drop it without using it again. A linear value must be used exactly once: it cannot be silently discarded, because consuming it is part of the invariant. Rust is mostly affine in this sense. An ordinary non-`Copy` value can always just go out of scope:
 
 ```rust
 fn main() {
@@ -184,11 +174,9 @@ fn main() {
 }
 ```
 
-That is often the right default. Most resources do not need a proof that they were consumed in some specific way; they only need to avoid accidental duplication. But some things are stronger than that. A join handle that must be joined or detached, a capability token that must be returned, or a protocol state that must be driven to a valid terminal state is not just "non-copyable." It represents an obligation.
+That is often the right default. Most resources do not need a proof that they were consumed in some specific way; they only need to avoid accidental duplication. But some things are stronger than that. Protocol enforcement is the clearest example: if opening a session gives you a value representing "handshake in progress," and the only legal next steps are "authenticate," "reject," or "close," then silently dropping that value means the protocol was abandoned halfway through. The same shape appears with must-join concurrency handles, transactional capabilities that must commit or roll back, and resources that must be explicitly returned to some owner.
 
-Protocol enforcement is the clearest example. If opening a session gives you a value representing "handshake in progress," and the only legal next steps are "authenticate," "reject," or "close," then silently dropping that value is not neutral behavior. It means the protocol was abandoned halfway through. The same shape appears with must-join concurrency handles, transactional capabilities that must commit or roll back, and resources that must be explicitly released back to some owner.
-
-That is why I do not think affine ownership makes linear types redundant. Affinity is a good default for ordinary resources. Linearity is useful for the smaller set of values where dropping them is itself a bug, because the program has failed to discharge some obligation the type system was supposed to track. If Metel grows a real linear layer, it should be because there are concrete cases like that where "you may forget this" is not strong enough.
+That is why affine ownership does not make linear types redundant. Affinity is a good default for ordinary resources. Linearity is useful for the smaller set of values where dropping them is itself a bug, because the program has failed to discharge some obligation the type system was supposed to track.
 
 ### Algebraic Effects
 
@@ -220,9 +208,7 @@ If that unification holds, it could keep the design from becoming three unrelate
 
 ## Why Build It?
 
-A lot of languages sound interesting in design documents. The hard part is whether the ideas still hold together when they collide with generics, borrowing, closures, partial moves, collections, modules, diagnostics, and performance constraints.
-
-Metel is at that stage now. Some ideas have worked. Some have been reopened after implementation exposed problems. That is healthy. I would rather have a project that corrects itself than one that preserves a fake sense of certainty.
+A lot of languages sound interesting in design documents. The hard part is whether the ideas still hold together when they collide with generics, borrowing, closures, partial moves, collections, modules, diagnostics, and performance constraints. Metel is at that stage now. Some ideas have worked. Some have been reopened after implementation exposed problems. That is healthy. I would rather have a project that corrects itself than one that preserves a fake sense of certainty.
 
 I am building Metel because it gives me a place to test a combination I do not see assembled quite this way elsewhere: allocator-aware programming, binding-named lifetime reasoning, resource-sensitive types, and eventually field-sensitive ownership over structured data.
 
@@ -234,9 +220,9 @@ If Metel ends up being worth anyone else's time, it will not be because it looke
 
 The long-term goal is to finish the language design far enough that the remaining open questions are narrow, explicit, and attached to real trade-offs. That means turning exploratory reports into accepted RFCs, rejecting ideas that do not justify their cost, and getting the ownership, allocation, lifetime, record, brand, and effect stories into a shape that can actually be taught and implemented.
 
-It also means opening parts of that process to outside contribution carefully. I do not want Metel to become a design-by-committee project, but I do want serious feedback, counterexamples, and eventually carefully-scoped contributions from people who want to help push the design toward something more rigorous.
+It also means opening parts of that process to outside contribution carefully. I do not want Metel to become a design-by-committee project, but I do want serious feedback, counterexamples, and eventually carefully-scoped contributions.
 
-Past that, the project needs to become more than an interpreter. It needs a real compiler, a research-quality paper or technical report, and eventually rigorous soundness arguments for the interesting parts of the design. If the project keeps earning that level of effort, I would want the strongest claims backed by real proofs, not only by intuition and examples.
+Past that, the project needs to become more than an interpreter. It needs a real compiler, a research-quality paper or technical report, and eventually rigorous soundness arguments for the interesting parts of the design.
 
 ## References
 
