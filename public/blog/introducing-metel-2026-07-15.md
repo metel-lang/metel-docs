@@ -56,7 +56,7 @@ Metel is also heavily AI-assisted — a useful collaborator, critic, and acceler
 
 The part of Metel I currently find most worth pursuing is the separation between two questions that many systems languages tie tightly together: where does a value live, and for how long is a reference to it valid? In Metel's design, allocators answer the first question, lifetime anchors answer the second, and brands may eventually answer a third: which specific resource, region, or cell family are we talking about?
 
-One disclaimer before going through these: each idea below has deep, well-studied prior art — in several cases formalized and proven sound by people far better at type theory than I am — and I will point at that work as I go. Metel's bet is not any single one of these mechanisms. It is whether these particular pieces fit together into one coherent language.
+Each idea below has real prior art, cited as it comes up — in several cases already formalized and proven sound. Metel's bet is not any single one of these mechanisms; it is whether these particular pieces fit together into one coherent language.
 
 ### Allocators
 
@@ -84,7 +84,7 @@ The goal is memory-safe allocator-aware programming where storage is explicit en
 
 ### Lifetimes
 
-Lifetimes are not a new idea, and Metel is not inventing the mechanism. Region-based memory management goes back to Tofte and Talpin's [region calculus](https://dl.acm.org/doi/10.1145/174675.177855), and [Cyclone](https://cyclone.thelanguage.org/wiki/Introduction%20to%20Regions/), a safe C dialect, already had named, lexically-scoped regions threaded through pointer types two decades ago — the direct ancestor of [Rust](https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html)'s lifetimes. [Move](https://github.com/move-language/move) has its own static reference-safety model. The only thing Metel varies is spelling: instead of a fresh abstract lifetime variable (`'a`) or a separate region declaration, a borrow anchors to a binding that already exists in the program.
+Region-based memory management goes back to Tofte and Talpin's [region calculus](https://dl.acm.org/doi/10.1145/174675.177855), and [Cyclone](https://cyclone.thelanguage.org/wiki/Introduction%20to%20Regions/), a safe C dialect, already had named, lexically-scoped regions threaded through pointer types two decades ago — the direct ancestor of [Rust](https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html)'s lifetimes. [Move](https://github.com/move-language/move) has its own static reference-safety model. What Metel varies is spelling: instead of a fresh abstract lifetime variable (`'a`) or a separate region declaration, a borrow anchors to a binding that already exists in the program.
 
 ```metel
 fun first(x: &Str, y: &Str) -> &x Str {
@@ -94,7 +94,7 @@ fun first(x: &Str, y: &Str) -> &x Str {
 
 The name in the return type refers to a real binding already present in the function. The common case should still avoid annotation — a method like `as_slice(&self) -> &Byte[]` should not need to invent a lifetime name just to say "the result comes from `self`." This is design syntax, not implemented surface syntax today, and the exact spelling may still change.
 
-To be clear about the size of that claim: I have not found this exact "anchor to an existing value binding" spelling in prior work, but the underlying machinery is Cyclone's, and Rust's own lifetime elision already removes annotations in these same common cases. This is an ergonomic bet, not a new capability — and it may turn out to be a rediscovery.
+I have not found this exact "anchor to an existing value binding" spelling elsewhere, though the underlying machinery is Cyclone's and Rust's own lifetime elision already removes annotations in these same common cases — so treat it as an ergonomic variant on old machinery, not a new capability.
 
 ### Records
 
@@ -138,7 +138,7 @@ fun drop_value<T>(cell: &var RcBox<T>) {
 
 This is a design sketch, not executable Metel. The motivating case is `Rc`/`Arc`-style teardown: the payload may need to be destroyed when the last strong reference disappears, while the allocation and counters remain alive until weak references are gone too — exactly the kind of logic visible in the standard library's actual [`RcInner`/`Rc::drop_slow`](https://doc.rust-lang.org/src/alloc/rc.rs.html#284-288) and [`ArcInner`/`Arc::drop_slow`](https://doc.rust-lang.org/src/alloc/sync.rs.html#387-391) layouts. The nominal type remains the normal interface, and the structural view appears only when the program deliberately takes a value apart.
 
-This is also the one area where I think Metel is closest to a genuinely open problem rather than re-treading solved ground. The same need — letting a function say "I only touch these fields" so that a partial move or a disjoint borrow can type-check — is exactly what Rust's proposed [view types](https://smallcultfollowing.com/babysteps/blog/2021/11/05/view-types/) are reaching for, and it is unsolved there too. Metel's bet is to reach it through an explicit nominal-to-structural bridge rather than by annotating references — a *different approach to an acknowledged-hard problem*, not a demonstrated improvement over it. It may not pan out.
+This is also the one area where Metel is closest to a genuinely open problem rather than re-treading solved ground. The same need — letting a function say "I only touch these fields" so that a partial move or a disjoint borrow can type-check — is exactly what Rust's proposed [view types](https://smallcultfollowing.com/babysteps/blog/2021/11/05/view-types/) are reaching for, and it is unsolved there too. Metel's bet is to reach it through an explicit nominal-to-structural bridge rather than by annotating references — a different approach to an acknowledged-hard problem, not a demonstrated improvement over it.
 
 ### Linear Types
 
@@ -155,7 +155,7 @@ Rust itself has circled back to real linearity more than once — the usual name
 
 Affinity is a good default for ordinary resources, which only need to avoid accidental duplication. But some things are stronger than that: a "handshake in progress" value whose only legal next steps are authenticate, reject, or close should not be silently droppable, and the same shape appears with must-join concurrency handles and transactional capabilities that must commit or roll back.
 
-None of this is new theory, and I do not want to imply otherwise. Combining "use at most once" and "use exactly once" in one system is precisely what graded and quantitative type systems already do: [Quantitative Type Theory](https://idris2.readthedocs.io/en/latest/tutorial/multiplicities.html), as realized in Idris 2 with its `0`/`1`/`many` multiplicities, and [Granule](https://granule-project.github.io/) treat linear, affine, and unrestricted use uniformly — and Granule's group has gone further and unified linearity, uniqueness, and ownership in a single type system. [Austral](https://borretti.me/article/introducing-austral) already ships a strict linear-versus-unrestricted split in a real systems language today. Metel's job here is not to invent the combination but to fit it to the rest of the memory model without making everyday code pay for it.
+Combining "use at most once" and "use exactly once" in one system is already standard in graded and quantitative type systems: [Quantitative Type Theory](https://idris2.readthedocs.io/en/latest/tutorial/multiplicities.html), as realized in Idris 2 with its `0`/`1`/`many` multiplicities, and [Granule](https://granule-project.github.io/) treat linear, affine, and unrestricted use uniformly — and Granule's group has gone further and unified linearity, uniqueness, and ownership in a single type system. [Austral](https://borretti.me/article/introducing-austral) already ships a strict linear-versus-unrestricted split in a real systems language today. Metel's job here is not to invent the combination but to fit it to the rest of the memory model without making everyday code pay for it.
 
 ### Algebraic Effects
 
@@ -163,7 +163,7 @@ Another design area I am evaluating, as an option for now rather than a committe
 
 What makes that interesting in Metel is not the surface syntax by itself, but the interaction with ownership, borrows, allocator-tagged values, handler state, and sendability across fibers. If Metel ever goes in that direction, the effect system would need to fit the memory model cleanly rather than sit beside it as an unrelated feature.
 
-I should be honest that this interaction is not unexplored either. [Effekt](https://effekt-lang.org/), through its [System C](https://se.cs.uni-tuebingen.de/publications/brachthaeuser22effects/) calculus, already reconciles effect handlers with a second-class-value and capability discipline, and proves it sound. So if Metel goes here, it would be joining an active line of work, not opening one — the honest question is only whether the specific memory model it has to fit against is different enough to be worth the effort.
+This interaction isn't unexplored either. [Effekt](https://effekt-lang.org/), through its [System C](https://se.cs.uni-tuebingen.de/publications/brachthaeuser22effects/) calculus, already reconciles effect handlers with a second-class-value and capability discipline, and proves it sound. If Metel goes here, it would be joining an active line of work, not opening one — the open question is only whether the specific memory model it has to fit against is different enough to be worth the effort.
 
 ### Brands
 
@@ -171,13 +171,13 @@ Brands are less designed than allocators and lifetimes, but they seem to fill an
 
 That is close to the role I am interested in, but Metel may not need to encode all identity through lifetimes. Allocator identities, lifetime anchors, and pure identity brands might be different roles of the same underlying idea: an allocator brand says where storage comes from, a lifetime brand says which binding bounds a borrow, and an identity brand says which family of cells or permissions a value belongs to. The exact syntax is undecided; the point is conceptual — if the unification holds, it could keep the design from becoming three unrelated special cases instead of one shared channel.
 
-Two honest caveats. The brand idea itself is settled prior art: GhostCell formalized branded types in Rust and proved them sound in Coq, building on a trick that goes back to Haskell's `ST` monad. And the broader move — tracking resource, lifetime, and capability identity through a single mechanism — is an active research program in its own right, closest to Scala's [capture checking](https://docs.scala-lang.org/scala3/reference/experimental/cc.html). Metel's specific unification is a design bet placed inside that space, not a discovery of it.
+The brand idea itself is settled prior art: GhostCell formalized branded types in Rust and proved them sound in Coq, building on a trick that goes back to Haskell's `ST` monad. The broader move — tracking resource, lifetime, and capability identity through a single mechanism — is also an active research program, closest to Scala's [capture checking](https://docs.scala-lang.org/scala3/reference/experimental/cc.html). Metel's specific unification is a design bet placed inside that space, not a discovery of it.
 
 ## Why Build It?
 
 A lot of languages sound interesting in design documents. The hard part is whether the ideas still hold together when they collide with generics, borrowing, closures, partial moves, collections, modules, diagnostics, and performance constraints. Metel is at that stage now. Some ideas have worked. Some have been reopened after implementation exposed problems. That is healthy — I would rather have a project that corrects itself than one that preserves a fake sense of certainty.
 
-I want to be plain about what Metel actually claims: almost none of the individual ingredients above is novel, and several have already been formalized and proven sound, as noted section by section above. If Metel is worth anything, it will not be because it invented one of these mechanisms. It will be because the *combination*, and the ergonomics of that combination, turn out to be coherent, teachable, and implementable. That is a smaller and more honest claim than "new research," and it is the one I actually intend to defend. The single place I think Metel might push past the state of the art rather than reassemble it is field-sensitive ownership over structured data — and even there, the honest status is "an open problem others are also stuck on," not "solved."
+What Metel actually claims is smaller than "new research": almost none of the individual ingredients above is novel, and several are already formalized and proven sound, as noted section by section above. If Metel is worth anything, it will be because the *combination*, and the ergonomics of that combination, turn out to be coherent, teachable, and implementable — that is the claim I actually intend to defend. The single place Metel might push past the state of the art rather than reassemble it is field-sensitive ownership over structured data, and even there the status is "an open problem others are also stuck on," not "solved."
 
 The immediate job is not to add ten more ambitious ideas. It is to keep turning the parts that already define the language's shape into working machinery.
 
