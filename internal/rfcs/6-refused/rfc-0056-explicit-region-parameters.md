@@ -247,7 +247,7 @@ This RFC depends on RFC-0025 (region blocks), RFC-0052 (lifetime system), and th
 ## References
 
 - RFC-0025: `docs/internal/rfcs/6-refused/rfc-0025-region-allocation.md` — `region { }` blocks, implicit allocation, `RegionFree`
-- RFC-0052: `docs/internal/rfcs/0-draft/rfc-0052-lifetime-system.md` — `*'r T`, region lifetime `'r`, `RegionFree<'r>`
+- RFC-0052: `docs/internal/rfcs/5-superseded/rfc-0052-lifetime-system.md` — `*'r T`, region lifetime `'r`, `RegionFree<'r>`
 - RFC-0051: `docs/internal/rfcs/6-refused/rfc-0051-regionfree-exit-constraint.md` — exit constraint
 - RFC-0055: `docs/internal/rfcs/5-superseded/rfc-0055-comptime.md` — required for `FixedRegion<N>` (its OQ-4 is now RFC-0093's aspect-inspection mechanism; RFC-0055 itself is superseded by RFC-0092/0093/0095)
 - Zig allocator documentation: https://ziglang.org/documentation/master/#Choosing-an-Allocator

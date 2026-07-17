@@ -2,6 +2,8 @@
 id: rfc-0064
 title: "Structured Fork-Join Parallelism"
 date: '2026-06-25'
+status: refused
+updated: '2026-07-17'
 ---
 
 > **Status — RETRACTED (2026-07-07).** The `||` combinator this RFC specifies is dropped
@@ -19,6 +21,8 @@ date: '2026-06-25'
 > and its interaction with region pointers, depending on RFC-0063 for the tag and
 > sendability rules. It was written against the pre-split "region" model; the text below
 > is unchanged and pre-dates both the allocator/lifetime split and this retraction.
+
+> **Status — refused (2026-07-17).** Retracted 2026-07-07: the || combinator barely interacted with the rest of the language; JoinHandle<T> from spawn subsumes its one guarantee. Only the directory placement was stale -- the file's own status note already said this.
 
 ## Summary
 

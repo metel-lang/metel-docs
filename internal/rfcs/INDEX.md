@@ -325,8 +325,6 @@ implementation).
   RFC-0046.
 - **RFC-0003** *(draft)* — Concurrency Model — fiber handles, channels, `select`,
   `Send`.
-- **RFC-0064** *(draft, retracted)* — Structured Fork-Join Parallelism — the `||`
-  combinator dropped; its one guarantee relocated onto `JoinHandle<T>`.
 
 ## Small, mostly standalone syntax/ergonomics items
 
@@ -344,9 +342,7 @@ implementation).
 - **RFC-0027** — C FFI.
 - **RFC-0033** — Field-Level Mutability — additive `let` field annotation.
 - **RFC-0038** — `impl Aspect` in Struct Fields / Existential Types.
-- **RFC-0052** *(draft, on hold)* — Lifetime System — held pending the memory-strategy
-  reconsideration.
-- **RFC-0098** *(integrated 2026-07-14)* — Surface Keyword Renames — `extend Type` /
+- **RFC-0098** *(implemented)* — Surface Keyword Renames — `extend Type` /
   `extend Type: Aspect` (reordered target-first, Swift precedent — not `impl X with Y`
   as first drafted), `pub` → `public`, `mut` → `var` (bindings, reference types, and
   reference expressions together). Three independent, purely lexical renames with no
@@ -474,19 +470,28 @@ implementation).
 **Implemented:** RFC-0006, RFC-0007, RFC-0010, RFC-0018, RFC-0019, RFC-0020, RFC-0021,
 RFC-0022, RFC-0023, RFC-0030, RFC-0031, RFC-0032, RFC-0034, RFC-0035, RFC-0040,
 RFC-0041, RFC-0042, RFC-0043, RFC-0044, RFC-0045, RFC-0053, RFC-0054, RFC-0057,
-RFC-0058, RFC-0059, RFC-0060, RFC-0061, RFC-0106.
+RFC-0058, RFC-0059, RFC-0060, RFC-0061, RFC-0098, RFC-0106.
+
+Also implemented but not yet folded into this list (Cluster A, landed
+2026-07-15/17 — see `REGISTRY.md` for the exact, generated set): RFC-0036,
+RFC-0037, RFC-0067A, RFC-0072, RFC-0078, RFC-0081, RFC-0082, RFC-0097,
+RFC-0102, RFC-0103.
 
 **Superseded:** RFC-0001 (→ later pointer work), RFC-0002 (aspect bound syntax),
 RFC-0009 (module system → RFC-0030), RFC-0012 (→ RFC-0092/0093/0094/0095), RFC-0013
 (integer overflow), RFC-0016 (stdlib foundation), RFC-0024 (linear types → RFC-0028,
 which was then refused — RFC-0089 re-homes this), RFC-0029 (module system gaps),
-RFC-0055 (comptime → RFC-0092/0093/0095, reconciled 2026-07-09 — see above), RFC-0083
-(public value exports → RFC-0092 §0a; see fold note above).
+RFC-0052 (lifetime system → RFC-0067; predates the 2026-07-02 allocator/anchor split
+and depended entirely on refused prerequisites RFC-0025/0028/0051), RFC-0055 (comptime
+→ RFC-0092/0093/0095, reconciled 2026-07-09 — see above), RFC-0083 (public value
+exports → RFC-0092 §0a; see fold note above).
 
 **Refused:** RFC-0025, RFC-0028, RFC-0046, RFC-0047, RFC-0048, RFC-0051, RFC-0056,
-RFC-0069, RFC-0079, RFC-0084, RFC-0085, RFC-0086, RFC-0087 —
+RFC-0064, RFC-0069, RFC-0079, RFC-0084, RFC-0085, RFC-0086, RFC-0087 —
 mostly the earlier region/lifetime model iterations that didn't survive the 2026-07-05
 split, plus RFC-0046 (linear closure capture, blocking RFC-0050's `move` half), plus
+RFC-0064 (structured fork-join `||`, retracted 2026-07-07 — its one guarantee, a fiber
+cannot be silently abandoned, relocated onto `JoinHandle<T>` from `spawn`), plus
 RFC-0084 (refused 2026-07-10 — reverted in place to reaffirm RFC-0053's
 `[T; N]`/`[expr; N]` exactly, with nothing left of its own to propose), plus RFC-0079
 (refused 2026-07-10 — most of `Perhaps<T>`/`Result<T, E>` was already implemented and

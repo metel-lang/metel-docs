@@ -2,9 +2,14 @@
 id: rfc-0052
 title: "Lifetime System"
 date: '2026-06-05'
+status: superseded
+updated: '2026-07-17'
+superseded_by: rfc-0067
 ---
 
 > **⏸ On hold (2026-06-13) — memory-strategy reconsideration.** A full lifetime system is the most expensive, most Rust-derivative layer of the region model, and the reconsideration is specifically evaluating whether to avoid lifetimes entirely (mutable value semantics, generational references, Perceus). Do **not** implement pending that decision. See `docs/reports/memory-model/memory-strategy-research-directions.md`.
+
+> **Status — superseded (2026-07-17).** Predates the 2026-07-02 allocator/lifetime-anchor split and depends entirely on refused prerequisites (RFC-0028, RFC-0025, RFC-0051). Its on-hold memory-strategy reconsideration concluded with that split; the live lifetime-anchor design is RFC-0067 (&T/&mut T anchors named after real bindings), not this RFC's abstract 'a/*'a T syntax.
 
 ## Summary
 

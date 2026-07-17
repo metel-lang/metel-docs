@@ -398,7 +398,7 @@ cluster being bundled together by an assumption made before the split existed.
   the allocator/lifetime split that every document here assumes as background.
 - `internal/rfcs/0-draft/rfc-0076-rc-brands.md` — the RFC `brand-types.md` is
   commentary on.
-- `internal/rfcs/0-draft/rfc-0064-fork-join-parallelism.md` — **retracted 2026-07-07**
+- `internal/rfcs/6-refused/rfc-0064-fork-join-parallelism.md` — **retracted 2026-07-07**
   (the `\|\|` combinator this defined is dropped); `structured-concurrency.md` §3 records
   where its structured guarantee went (a `Linear` `JoinHandle`).
 - `reports/strategy/strategic-overview-2026-07-06.md` — why this whole cluster is
