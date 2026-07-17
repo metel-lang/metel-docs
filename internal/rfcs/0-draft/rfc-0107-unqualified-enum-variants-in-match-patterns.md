@@ -4,6 +4,7 @@ title: "Unqualified Enum Variants in Match Patterns"
 date: '2026-07-17'
 status: draft
 target:
+updated: '2026-07-17'
 ---
 
 ## Summary
@@ -271,6 +272,13 @@ something this RFC introduces or needs to solve — §1's resolution logic runs 
 whatever `scrutinee_ty` construction already produces, so it inherits exactly this
 existing behavior (works on `Colour`, fails the same way on `&Colour`) with no
 divergence between the qualified and bare forms.
+
+**Update 2026-07-17:** this gap is now proposed separately as **RFC-0108**
+(Reference-Transparent Match Scrutinees, draft) rather than folded in here — it's a
+general match-scrutinee limitation, not specific to bare variants, so it's this RFC's
+sibling, not its own scope. RFC-0108 §2 notes the sequencing interaction explicitly:
+its peel needs to run before this RFC's `Type::Named` check for both to compose
+correctly on a reference-typed scrutinee.
 
 Two of this RFC's original open questions turned out to be settleable directly against
 the current codebase rather than genuinely open, so they're recorded here as decisions,

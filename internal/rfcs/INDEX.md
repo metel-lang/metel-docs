@@ -347,6 +347,14 @@ implementation).
   against the scrutinee's known enum (not a lexical-scope import, so no cross-enum
   collision risk). Generalizes the existing `Perhaps::None`-only special case
   (`Pattern::None`) into a real mechanism; answers RFC-0101's Unresolved Question 1.
+- **RFC-0108** *(draft, opened 2026-07-17)* — Reference-Transparent Match Scrutinees —
+  matching a `&T`/`&mut T` value directly (`match c { Colour::Red => .., .. }` for
+  `c: &Colour`) instead of the current `T0001 cannot unify &Colour with Colour`, with
+  no workaround available today (`*expr` doesn't parse — Metel has no general deref
+  expression). Extends RFC-0067a's field-access/method-dispatch auto-deref-chain
+  principle to match scrutinees, the one place it's currently missing — `self` inside
+  method bodies and `for`-loop element bindings already get this transparency via their
+  own separate, narrower mechanisms. Sibling to RFC-0107 (§2 there), not overlapping.
 - **RFC-0098** *(implemented)* — Surface Keyword Renames — `extend Type` /
   `extend Type: Aspect` (reordered target-first, Swift precedent — not `impl X with Y`
   as first drafted), `pub` → `public`, `mut` → `var` (bindings, reference types, and
