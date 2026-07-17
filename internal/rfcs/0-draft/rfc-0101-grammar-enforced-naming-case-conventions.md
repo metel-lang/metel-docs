@@ -4,6 +4,7 @@ title: "Grammar-Enforced Naming Case Conventions"
 date: '2026-07-14'
 status: draft
 target:
+updated: '2026-07-17'
 ---
 
 ## Summary
@@ -157,6 +158,13 @@ keyword collision.
    a live conflict today — `enum_pattern` in the grammar always requires the qualified `Type.Variant` form,
    so there's no unqualified bare-PascalCase-value case to collide with "PascalCase means type" yet. Worth
    checking explicitly if unqualified variant access is ever proposed.
+
+   **Now proposed: RFC-0107** (Unqualified Enum Variants in Match Patterns, draft,
+   2026-07-17) — narrower than the glob-import mechanism sketched above (type-directed
+   against the match scrutinee's own resolved enum, not a general scope import), so it
+   doesn't reopen the collision concern this item raises; see RFC-0107 §1.3/§3 for why,
+   and §3 there for how this RFC's PascalCase convention reduces (without being required
+   for) the shadowing ambiguity a bare variant pattern can still produce.
 2. **Exact scope of the post-parse enforcement pass** — does a violation block compilation outright (this
    RFC's assumption), or is there a suppression/opt-out mechanism for generated code or FFI-bound native
    declarations whose names might legitimately need to mirror an external, differently-cased API? Needs a

@@ -1,0 +1,291 @@
+---
+id: rfc-0107
+title: "Unqualified Enum Variants in Match Patterns"
+date: '2026-07-17'
+status: draft
+target:
+---
+
+## Summary
+
+Allow a bare variant name (`Some`, `Red`) in a match arm when it resolves unambiguously
+against the scrutinee's known enum type, instead of always requiring the `Enum::`
+prefix. Scoped to pattern position only — `match p { Red => ..., Green => ... }`, not
+`let c: Colour = Red;` (see "Out of scope").
+
+---
+
+## Motivation
+
+Every enum-variant pattern today requires full qualification, with one pre-existing,
+hardcoded exception. `Pattern::None(Span)` is a dedicated AST node special-cased for
+exactly `Perhaps::None` (`src/ast/mod.rs`, matched in `src/evaluator/pattern.rs`,
+`src/typechecker/construction.rs`'s `pattern_covers_variant`, and elsewhere) — every
+existing test fixture already writes `match n { None => -1, Perhaps::Some { value } =>
+value }`, never `Perhaps::None`. `None` gets the ergonomic short form; `Some` does not,
+and neither does any variant of a user-defined enum:
+
+```metel
+enum Colour { Red, Green, Blue }
+
+fun name(c: Colour) -> String {
+    match c {
+        Colour::Red => "red",
+        Colour::Green => "green",
+        Colour::Blue => "blue",
+    }
+}
+```
+
+The repetition scales with variant count and is pure noise once the match's scrutinee
+type is already known — `c`'s type is `Colour`, so every arm's `Colour::` prefix is
+exactly the same, forced, and uninformative. This RFC generalizes the existing
+`Perhaps::None` special case into a real language feature covering any enum, rather than
+leaving it a one-off exception.
+
+---
+
+## 1. Design
+
+The change is resolved during construction (Pass 2, `src/typechecker/construction.rs`),
+not the grammar. A bare pattern identifier's *meaning* (fresh binding vs. a specific
+variant tag) depends on the scrutinee's now-known concrete type, which the grammar
+cannot see — the same reason `enum_pattern`'s existing `ident ~ "::" ~ ident` form
+requires no lexical scope tracking today.
+
+### 1.1 No-field variants (`Red`, `None`) — pure resolution, no grammar change
+
+`bind_pattern = { ident }` already parses `Red` as `Pattern::Binding("Red", span)` —
+this doesn't need to change. What changes is `construct_pattern_bindings`'s handling of
+that node once `scrutinee_ty` is known:
+
+```rust
+Pattern::Binding(name, span) => {
+    if let Type::Named(enum_name, _) = scrutinee_ty {
+        if let Some(info) = ctx.registry.enum_info(enum_name) {
+            if let Some(variant) = info.variants.iter().find(|v| &v.name == name) {
+                if variant.fields.is_empty() {
+                    // Rewrite in place: from here on this is exactly the pattern
+                    // `EnumName::Red` would have produced.
+                    *pattern = Pattern::EnumVariant {
+                        path: vec![enum_name.clone(), name.clone()],
+                        fields: vec![],
+                        span: span.clone(),
+                    };
+                    return construct_pattern_bindings(pattern, scrutinee_ty, ctx);
+                }
+            }
+        }
+    }
+    ctx.bind(name, scrutinee_ty.clone());
+}
+```
+
+**This is the key design decision: rewrite the pattern node in place at the single point
+where the scrutinee's type first becomes known, rather than teaching every downstream
+consumer about a new ambiguous case.** `TypedMatchArm.pattern` (`src/typed_ast/mod.rs`)
+owns its own `Pattern` value — "Patterns don't contain expressions, reuse as-is" — so
+construction can freely replace it. After the rewrite, `is_catch_all_pattern`,
+`pattern_covers_variant`, `check_match_exhaustiveness` (all in `construction.rs`), and
+`src/evaluator/pattern.rs::match_pattern` (which the typed tree feeds at runtime) see an
+ordinary, fully-qualified `Pattern::EnumVariant` exactly as if the user had written
+`Colour::Red` — **zero changes needed to any of them.** This also means `Pattern::None`'s
+existing special case becomes an instance of the general mechanism rather than a
+separate hardcoded node once this ships (see §4).
+
+The alternative — leaving `Pattern::Binding` ambiguous and pushing the "is this really a
+variant?" check into `is_catch_all_pattern`, `pattern_covers_variant`, and
+`match_pattern` separately — was considered and rejected: it means every one of those
+(including the runtime evaluator, which only ever sees a `Value`, not the static
+scrutinee type, and so has no sound way to resolve the ambiguity itself) would need the
+same lookup duplicated, for no benefit over resolving it once during construction.
+
+### 1.2 Fieldful variants (`Some { value }`) — needs one grammar addition
+
+Today, `Some { value }` doesn't parse as a pattern at all: `bind_pattern` is a bare
+`ident` with nothing following, and `enum_pattern` requires the `Type ~ "::"` prefix.
+This is a genuinely new syntactic form, not a collision with anything that currently
+parses successfully, so it can be added as a new alternative without touching
+`bind_pattern`:
+
+```
+enum_pattern = { ident ~ "::" ~ ident ~ ("{" ident ("," ident)* "}")?   // unchanged
+              | ident ~ "{" ident ("," ident)* "}" }                    // new: bare, fieldful
+```
+
+The two alternatives are distinguished by the presence of `::`, so there's no PEG
+ordering hazard against each other, and neither can be confused with plain
+`bind_pattern` (which only matches when there's no trailing `{` at all) — ordinary
+catch-all bindings (`x => ...`) are completely unaffected.
+
+This produces `Pattern::EnumVariant { path: vec![name], fields, span }` — a
+**one-segment** path, which `path: Vec<String>` already represents without any AST
+change. `construct_pattern_bindings`'s existing `Pattern::EnumVariant` arm
+(`src/typechecker/construction.rs:2399`) currently destructures unconditionally via
+`let [enum_name, variant_name] = path.as_slice() else { return
+Err(internal("invalid pattern path")) }` — this becomes the second place needing a
+change: when `path` has one element, resolve it against `scrutinee_ty`'s enum the same
+way §1.1 does, filling in `enum_name` before proceeding exactly as today. Once resolved,
+`path` is rewritten to the full two-segment form for the same reason as §1.1 — every
+downstream consumer keeps seeing the fully-qualified shape it already expects.
+
+### 1.3 Resolution is purely type-directed, not scope-based
+
+The candidate enum is *only* the scrutinee's own resolved type — never a general "bring
+every enum's variants into lexical scope" mechanism. This sidesteps the scope-collision
+problem that a real `import Colour.*`-style bare-variant-import would have (two enums in
+scope both declaring `Red`, say) entirely, because there is exactly one enum under
+consideration: whatever `scrutinee_ty` already, concretely is. If `scrutinee_ty` isn't a
+resolved `Type::Named` pointing at a known enum yet (e.g. inside a generic function
+where the scrutinee's type is still an abstract, aspect-bounded type parameter), the
+bare identifier falls back to being an ordinary binding, unchanged from today — the sugar
+is additive and only ever activates when there's a single, concrete, unambiguous enum to
+check against.
+
+### 1.4 `enum_info`'s missing reverse index
+
+`TypeDefinitionRegistry::enum_info(name: &str) -> Option<&EnumInfo>` is keyed forward,
+by enum name — exactly what §1.1/§1.2 need, since the scrutinee's enum name is already
+known before the variant-name lookup happens. No reverse (variant name → declaring
+enum) index is needed for this RFC's mechanism, since resolution is always "does *this
+specific* enum have a variant named X," never "which enum(s) somewhere declare a variant
+named X." Worth noting only because a bare-variant *expression* (out of scope, §5) would
+need exactly that reverse index and would face the real multi-enum ambiguity problem
+this RFC's design avoids.
+
+---
+
+## 2. Exhaustiveness
+
+No new logic needed, by construction of §1: because the rewrite in §1.1/§1.2 always
+produces an ordinary two-segment `Pattern::EnumVariant` before `check_match_exhaustiveness`
+ever runs, `pattern_covers_variant` and `is_catch_all_pattern` require no changes.
+
+**The risk this section exists to flag:** an implementation that skipped the "rewrite
+in place" design and instead special-cased `Pattern::Binding` inline inside
+`is_catch_all_pattern` (`src/typechecker/construction.rs:2348`) — today the function
+unconditionally treats `Pattern::Binding(_, _)` as a catch-all/irrefutable pattern —
+would need to duplicate the exact same enum-variant lookup there too, and getting it
+wrong (or forgetting it) would silently make `check_match_exhaustiveness` treat a
+variant-tag arm as if it covered every case, accepting a genuinely non-exhaustive match.
+This is the concrete argument for centralizing the resolution at one rewrite point
+(§1.1) rather than distributing an ad hoc check across every consumer.
+
+---
+
+## 3. Ambiguity with shadowing bindings
+
+If a match arm's bare identifier exactly names a no-field variant of the scrutinee's
+enum, it is *always* resolved as that variant, never as a fresh binding — there is no
+way to write a catch-all arm that happens to share a variant's exact spelling for that
+scrutinee type; `_` or a differently-named binding must be used instead. This mirrors a
+well-known Rust ergonomic surprise (`bindings_with_variant_name`) rather than avoiding
+it, and is called out as an open question below rather than resolved silently.
+
+RFC-0101 (Grammar-Enforced Naming Case Conventions, draft) reduces how often this
+actually bites in practice, if both RFCs ship: variants are PascalCase and ordinary
+bindings are snake_case, so a bare pattern identifier that happens to be PascalCase is
+already, by convention, unlikely to be an intended fresh binding. RFC-0101 §"Unresolved
+Questions" item 1 explicitly flags this exact scenario ("worth checking explicitly if
+unqualified variant access is ever proposed") — this RFC is that proposal; see the
+cross-reference added there. This RFC's mechanism does not *depend* on RFC-0101 (the
+type-directed lookup in §1 is the sole authority regardless of naming convention), but
+the two are complementary: RFC-0101 makes the shadowing case in this section rarer in
+well-cased code, without being required for this RFC's correctness.
+
+---
+
+## 4. `Pattern::None`'s special case becomes redundant
+
+Once this ships, `Pattern::None(Span)` (`src/ast/mod.rs`) — hardcoded to recognize bare
+`None` as specifically `Perhaps::None` — is subsumed by the general mechanism: a bare
+`None` in a match arm over a `Perhaps<T>` scrutinee resolves via the same §1.1 path any
+other no-field variant does. Removing the dedicated AST node, its grammar production,
+and its three-or-more call sites (`src/evaluator/pattern.rs`, `construction.rs`'s
+`pattern_covers_variant` and `is_catch_all_pattern`, `Literal::None`'s pattern-context
+handling) is in scope for this RFC's implementation, not deferred — the whole point is
+that `None` stops being a special case. `Literal::None` (the *expression*-position
+value) is unaffected; only the pattern-position AST node is retired.
+
+---
+
+## 5. Out of scope
+
+**Bare variant names in expression position** (`let c: Colour = Red;`, mirroring
+`Colour::Red`) is a related but separate question, deliberately not addressed here.
+Unlike a match pattern, an arbitrary expression's "expected type" isn't always
+available at the point a bare identifier needs resolving (e.g. `println(Red)` — nothing
+to check `Red` against), so the multi-enum-ambiguity problem §1.3 sidesteps for patterns
+resurfaces for expressions and needs its own design (most likely a real reverse
+variant→enum index, §1.4). Left for a follow-up RFC if wanted.
+
+**`use Enum::*`-style explicit glob imports of variants into lexical scope** is a
+different mechanism (scope-based, not type-directed) with the multi-enum collision
+problem this RFC avoids by design — not proposed here.
+
+---
+
+## Alternatives considered
+
+- **Teach `is_catch_all_pattern`/`pattern_covers_variant`/`match_pattern` about the
+  ambiguity separately, instead of rewriting the pattern once during construction.**
+  Rejected (§1.1, §2) — duplicates the same lookup three-plus times, and the runtime
+  evaluator has no sound, type-directed way to do it at all on its own.
+- **General lexical scope import of variants** (`use Colour::*`). Rejected for this RFC
+  (§5) — reintroduces exactly the cross-enum name-collision problem the type-directed
+  design in §1.3 was chosen specifically to avoid.
+- **Extend to expression position in the same RFC.** Rejected (§5) — expression position
+  lacks a scrutinee to resolve against in the general case; folding it in here would
+  force designing the harder reverse-index problem before the pattern-only feature (which
+  needs none of it) ships.
+
+---
+
+## Open Questions
+
+1. **Shadowing ergonomics (§3).** Should writing a bare identifier that exactly matches
+   a no-field variant name, when a fresh binding was actually intended, produce a lint
+   or warning (mirroring Rust's `bindings_with_variant_name`), or ship silent, matching
+   Rust's own actual default? No strong argument either way yet; flagged rather than
+   guessed at.
+2. **Interaction with RFC-0106** (Optional Braces for Empty Constructors, implemented).
+   RFC-0106 made `Type::Variant` and `Type::Variant {}` both valid for zero-field
+   variants; confirm the bare form in this RFC accepts both spellings identically
+   (`Red` and `Red {}`) rather than only one, for consistency with the qualified form.
+3. **Should the `Pattern::None` removal (§4) be a breaking change gated on a version
+   bump, or purely additive** (old `Perhaps::None`/`None` spellings both keep working,
+   only the *implementation* simplifies)? Almost certainly the latter — no user-visible
+   syntax is removed, only an internal special case — but worth stating explicitly
+   before implementation rather than assuming.
+
+---
+
+## References
+
+- `src/ast/mod.rs` — `Pattern` enum, `Pattern::EnumVariant { path: Vec<String>, .. }`,
+  `Pattern::None(Span)`.
+- `src/grammar.pest` — `pattern`, `enum_pattern`, `bind_pattern` rules.
+- `src/typechecker/construction.rs` — `construct_pattern_bindings`,
+  `check_match_exhaustiveness`, `is_catch_all_pattern`, `pattern_covers_variant`.
+- `src/evaluator/pattern.rs` — `match_pattern`, the runtime counterpart.
+- `src/typeinference/mod.rs` — `EnumInfo`, `TypeDefinitionRegistry::enum_info`.
+- RFC-0101 (Grammar-Enforced Naming Case Conventions, draft) — Unresolved Question 1
+  anticipates this exact proposal; see §3 above.
+- RFC-0106 (Optional Braces for Empty Constructors, implemented) — the other recent
+  enum-variant-pattern ergonomics RFC; see Open Question 2.
+- RFC-0100 (Constructor-Call Construction, under review) §4 — a related but orthogonal
+  axis (destructuring *shape*, `{ field }` vs. call-parens) explicitly kept unchanged by
+  that RFC; this RFC only touches *qualification*, not shape.
+- RFC-0099 (Dot-Separated Module Paths, under review) — proposes `::` → `.` for
+  qualified enum-variant paths among other things; orthogonal to this RFC (separator
+  choice vs. whether qualification is required at all) and not yet landed, so this RFC's
+  examples use the current `::` form. If RFC-0099 ships first, the rewritten,
+  fully-qualified pattern this RFC's §1.1/§1.2 produces just uses whatever separator is
+  then current — a mechanical detail, not a design conflict.
+
+---
+
+## Decision
+
+**Outcome:** *(pending)*
+**Target:** *(set when accepted)*
