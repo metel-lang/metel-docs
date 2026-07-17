@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-07-15'
+generated_on: '2026-07-17'
 ---
 
 # RFC Registry
