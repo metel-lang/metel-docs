@@ -6,7 +6,7 @@ title: "Metel Language Changelog"
 
 ## v0.10.0
 
-**In progress — not yet released.**
+**Released 2026-07-17.**
 
 **Language surface:**
 - `public`, `var`, and `extend` are now the canonical spellings. The old
@@ -44,6 +44,11 @@ title: "Metel Language Changelog"
   participate in aspect-bound satisfaction.
 - Bare-parameter blanket implementations such as `extend<T> T: Aspect` are
   allowed only when the aspect is local to the declaring module.
+- Coherence's disjoint-negation overlap check now recognizes structural
+  targets (arrays, tuples, function types) the same way it already did for
+  named types: two conditional implementations for the same structural
+  target, distinguished only by a positive versus negative bound on the same
+  type parameter, no longer incorrectly conflict.
 
 **Standard library:**
 - `Perhaps` and `Result` gain `.yolo()`.
@@ -64,6 +69,8 @@ title: "Metel Language Changelog"
   alone do not determine all type parameters.
 - Aspect dispatch, import resolution, and the runtime type registry now use
   stable symbol identities, avoiding same-name collisions across modules.
+- Generic bounds are preserved when a type variable is aliased to another
+  type variable during inference, instead of being silently dropped.
 - The RFC/process documentation was reorganized around the current public docs
   and implementation state.
 
