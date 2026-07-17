@@ -56,42 +56,59 @@ requires no lexical scope tracking today.
 ### 1.1 No-field variants (`Red`, `None`) — pure resolution, no grammar change
 
 `bind_pattern = { ident }` already parses `Red` as `Pattern::Binding("Red", span)` —
-this doesn't need to change. What changes is `construct_pattern_bindings`'s handling of
-that node once `scrutinee_ty` is known:
+this doesn't need to change.
+
+**Correction (caught checking this design against the actual call chain, not just
+sketched in isolation):** an earlier draft of this section showed the resolution
+mutating the pattern node in place through `&mut Pattern`. That doesn't match the real
+signatures — `construct_pattern_bindings` takes `pattern: &Pattern` (shared), and its
+caller, `construct_match`, builds `TypedMatchArm` via `arm.pattern.clone()` from an
+`&MatchExpr` it never owns mutably (construction reads the source AST throughout, it
+never mutates it). The resolution has to happen as a **clone-then-rewrite into a new
+owned `Pattern`**, produced *before* `TypedMatchArm` is built, not an in-place mutation
+through the existing borrow:
 
 ```rust
-Pattern::Binding(name, span) => {
-    if let Type::Named(enum_name, _) = scrutinee_ty {
-        if let Some(info) = ctx.registry.enum_info(enum_name) {
-            if let Some(variant) = info.variants.iter().find(|v| &v.name == name) {
-                if variant.fields.is_empty() {
-                    // Rewrite in place: from here on this is exactly the pattern
-                    // `EnumName::Red` would have produced.
-                    *pattern = Pattern::EnumVariant {
-                        path: vec![enum_name.clone(), name.clone()],
-                        fields: vec![],
-                        span: span.clone(),
-                    };
-                    return construct_pattern_bindings(pattern, scrutinee_ty, ctx);
+// In construct_match, replacing `pattern: arm.pattern.clone()`:
+let pattern = resolve_bare_variants(&arm.pattern, &scrutinee_ty, ctx);
+construct_pattern_bindings(&pattern, &scrutinee_ty, ctx)?;
+// ... build TypedMatchArm using this `pattern`, not arm.pattern.clone() directly.
+
+fn resolve_bare_variants(pattern: &Pattern, scrutinee_ty: &Type, ctx: &ConstructCtx) -> Pattern {
+    if let Pattern::Binding(name, span) = pattern {
+        if let Type::Named(enum_name, _) = scrutinee_ty {
+            if let Some(info) = ctx.registry.enum_info(enum_name) {
+                if let Some(variant) = info.variants.iter().find(|v| &v.name == name) {
+                    if variant.fields.is_empty() {
+                        return Pattern::EnumVariant {
+                            path: vec![enum_name.clone(), name.clone()],
+                            fields: vec![],
+                            span: span.clone(),
+                        };
+                    }
                 }
             }
         }
     }
-    ctx.bind(name, scrutinee_ty.clone());
+    pattern.clone()
 }
 ```
 
-**This is the key design decision: rewrite the pattern node in place at the single point
-where the scrutinee's type first becomes known, rather than teaching every downstream
-consumer about a new ambiguous case.** `TypedMatchArm.pattern` (`src/typed_ast/mod.rs`)
-owns its own `Pattern` value — "Patterns don't contain expressions, reuse as-is" — so
-construction can freely replace it. After the rewrite, `is_catch_all_pattern`,
-`pattern_covers_variant`, `check_match_exhaustiveness` (all in `construction.rs`), and
-`src/evaluator/pattern.rs::match_pattern` (which the typed tree feeds at runtime) see an
-ordinary, fully-qualified `Pattern::EnumVariant` exactly as if the user had written
-`Colour::Red` — **zero changes needed to any of them.** This also means `Pattern::None`'s
-existing special case becomes an instance of the general mechanism rather than a
-separate hardcoded node once this ships (see §4).
+`construct_pattern_bindings` itself stays completely unchanged — it still just binds
+names given a pattern and a scrutinee type, exactly as today. The new step is a small
+pre-pass producing the pattern `construct_pattern_bindings` (and everything after it)
+operates on.
+
+**The design decision this section exists to make, independent of the signature fix
+above: resolve bare variants once, into an ordinary fully-qualified `Pattern::EnumVariant`,
+at the single point where the scrutinee's type first becomes known, rather than teaching
+every downstream consumer about a new ambiguous case.** After resolution,
+`is_catch_all_pattern`, `pattern_covers_variant`, `check_match_exhaustiveness` (all in
+`construction.rs`), and `src/evaluator/pattern.rs::match_pattern` (which the typed tree
+feeds at runtime) see an ordinary, fully-qualified `Pattern::EnumVariant` exactly as if
+the user had written `Colour::Red` — **zero changes needed to any of them.** This also
+means `Pattern::None`'s existing special case becomes an instance of the general
+mechanism rather than a separate hardcoded node once this ships (see §4).
 
 The alternative — leaving `Pattern::Binding` ambiguous and pushing the "is this really a
 variant?" check into `is_catch_all_pattern`, `pattern_covers_variant`, and
@@ -242,6 +259,18 @@ problem this RFC avoids by design — not proposed here.
 ---
 
 ## Resolved while drafting
+
+**Worked example: matching on a reference-typed scrutinee.** Checked directly against
+the built interpreter whether `fun name(c: &Colour) -> String { match c { Colour::Red
+=> ..., ... } }` — the *existing*, fully-qualified form — already works today, since
+if it didn't, this RFC's bare form would need to independently decide whether to fix or
+inherit that gap. It doesn't: `match c { Colour::Red => "red", ... }` on a `c: &Colour`
+fails today with `T0001 cannot unify &Colour with Colour`, before pattern construction
+is even reached. This is a pre-existing, general limitation of match scrutinees, not
+something this RFC introduces or needs to solve — §1's resolution logic runs on
+whatever `scrutinee_ty` construction already produces, so it inherits exactly this
+existing behavior (works on `Colour`, fails the same way on `&Colour`) with no
+divergence between the qualified and bare forms.
 
 Two of this RFC's original open questions turned out to be settleable directly against
 the current codebase rather than genuinely open, so they're recorded here as decisions,
