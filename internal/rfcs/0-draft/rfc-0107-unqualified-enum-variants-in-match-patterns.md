@@ -241,22 +241,44 @@ problem this RFC avoids by design — not proposed here.
 
 ---
 
+## Resolved while drafting
+
+Two of this RFC's original open questions turned out to be settleable directly against
+the current codebase rather than genuinely open, so they're recorded here as decisions,
+not questions:
+
+- **Interaction with RFC-0106 — moot, not a design choice.** Re-read RFC-0106's actual
+  Decision section rather than relying on a paraphrase: it is scoped *exclusively* to
+  construction/expression position (`Type::Variant` vs `Type::Variant {}` when
+  *building* a value) — its own text says so explicitly ("Non-empty constructors are
+  unchanged" is about construction throughout; pattern position is never mentioned).
+  `enum_pattern`'s grammar today has no empty-brace qualified *pattern* form at all
+  (`Colour::Red {}` as a match arm doesn't parse), so there is no existing "both
+  spellings" convention in pattern position for this RFC to match. §1.1's bare,
+  brace-free form (`Red`) is therefore the sole and correctly-scoped pattern spelling —
+  nothing to reconcile.
+- **`Pattern::None` removal is purely additive, not breaking.** Confirmed directly: the
+  qualified grammar production (`ident ~ "::" ~ ident ~ ...`) and the bare-identifier
+  path (§1.1) are both unchanged by §4's removal — `Perhaps::None` keeps parsing exactly
+  as before, and bare `None` keeps working via the general mechanism instead of the
+  dedicated node. No spelling a user could write today stops working; only the internal
+  representation (one dedicated AST node vs. one general rewrite) changes. No version
+  gate needed.
+
 ## Open Questions
 
 1. **Shadowing ergonomics (§3).** Should writing a bare identifier that exactly matches
    a no-field variant name, when a fresh binding was actually intended, produce a lint
-   or warning (mirroring Rust's `bindings_with_variant_name`), or ship silent, matching
-   Rust's own actual default? No strong argument either way yet; flagged rather than
-   guessed at.
-2. **Interaction with RFC-0106** (Optional Braces for Empty Constructors, implemented).
-   RFC-0106 made `Type::Variant` and `Type::Variant {}` both valid for zero-field
-   variants; confirm the bare form in this RFC accepts both spellings identically
-   (`Red` and `Red {}`) rather than only one, for consistency with the qualified form.
-3. **Should the `Pattern::None` removal (§4) be a breaking change gated on a version
-   bump, or purely additive** (old `Perhaps::None`/`None` spellings both keep working,
-   only the *implementation* simplifies)? Almost certainly the latter — no user-visible
-   syntax is removed, only an internal special case — but worth stating explicitly
-   before implementation rather than assuming.
+   or warning (mirroring Rust's `bindings_with_variant_name`)? **Recommendation: no —
+   ship silent, matching Rust's own actual default.** Grep confirms Metel has *no*
+   warning/lint mechanism anywhere in the interpreter today (only hard `MetelError`
+   type errors) — introducing the entire diagnostic-severity category of "warning,
+   not error" for this one narrow case would be disproportionate scope for this RFC.
+   If a general warning mechanism is ever added (RFC-0005, "Warn on unreachable match
+   arms," is an empty stub gesturing at the same gap), this specific lint can be layered
+   on then without being a prerequisite now. Left open only in the sense that it's a
+   judgment call about scope, not a technical unknown — flagging the recommendation
+   explicitly rather than silently deciding it.
 
 ---
 
@@ -272,7 +294,8 @@ problem this RFC avoids by design — not proposed here.
 - RFC-0101 (Grammar-Enforced Naming Case Conventions, draft) — Unresolved Question 1
   anticipates this exact proposal; see §3 above.
 - RFC-0106 (Optional Braces for Empty Constructors, implemented) — the other recent
-  enum-variant-pattern ergonomics RFC; see Open Question 2.
+  enum-variant ergonomics RFC; scoped to construction only, doesn't touch pattern
+  position at all (see "Resolved while drafting").
 - RFC-0100 (Constructor-Call Construction, under review) §4 — a related but orthogonal
   axis (destructuring *shape*, `{ field }` vs. call-parens) explicitly kept unchanged by
   that RFC; this RFC only touches *qualification*, not shape.
