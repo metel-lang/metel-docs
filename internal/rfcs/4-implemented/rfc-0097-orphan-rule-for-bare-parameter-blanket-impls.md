@@ -215,13 +215,13 @@ with no bare-parameter-specific handling needed.
 
 ## References
 
-- RFC-0060 (Aspect Impl Coherence, integrated) — §1's orphan rule, whose wording this
+- RFC-0060 (Aspect Impl Coherence, implemented) — §1's orphan rule, whose wording this
   RFC extends to bare-parameter targets; §3/§5's own examples are what exposed the gap.
-- RFC-0036 (Conditional Impl Blocks, accepted) — the syntax this RFC's target form is
-  an instance of; never shows the bare-parameter case in its own examples.
+- RFC-0036 (Conditional Impl Blocks, implemented) — the syntax this RFC's target form
+  is an instance of; never shows the bare-parameter case in its own examples.
 - RFC-0080 (Standard Library Aspects, under review) — §1.2's `Clone` blanket, the
   concrete motivating example.
-- RFC-0061 (Structural Aspect Bounds, accepted) — §1's "structural constructors are
+- RFC-0061 (Structural Aspect Bounds, implemented) — §1's "structural constructors are
   owned by `std::core`" fix, the closest existing precedent, contrasted in §2.
 - RFC-0096 (Auto-Impl Aspects, draft) — opened the same review pass; the auto-impl
   recognition gap that prompted checking blanket impls' own orphan-rule treatment.

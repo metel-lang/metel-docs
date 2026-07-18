@@ -217,7 +217,7 @@ innermost unsatisfied bound.
   this RFC deferred conditional impls (Q6).
 - RFC-0060 (Aspect Impl Coherence) — orphan rule and overlap detection; conditional
   impls must satisfy both.
-- RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls, draft) — this RFC's own
+- RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls, implemented) — this RFC's own
   examples never show the target as a bare impl parameter (`for T` rather than
   `for Type<T>`); RFC-0097 covers that case, which RFC-0080 §1.2 already uses.
 - RFC-0061 (Structural Aspect Bounds) — blanket impls for structural type constructors;

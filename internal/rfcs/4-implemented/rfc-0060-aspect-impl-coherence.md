@@ -213,5 +213,5 @@ Metel avoids it entirely by making overlap unconditionally illegal.
 - RFC-0081 (Negative Impls) — negative impl priority over blanket impls; depend on §5.
 - RFC-0096 (Auto-Impl Aspects) — ownership of the auto-impl mechanism this RFC only
   refers to for coherence purposes.
-- RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls, draft) — formalizes §1 for
-  the `impl<T: Bound> Aspect for T` case this RFC's own §3/§5 examples already use.
+- RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls, implemented) — formalizes §1
+  for the `impl<T: Bound> Aspect for T` case this RFC's own §3/§5 examples already use.

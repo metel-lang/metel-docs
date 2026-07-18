@@ -220,7 +220,7 @@ implementation).
   method/associated-type resolution) by the time this integrated — corrected to reuse
   `T0012` instead, per RFC-0072's own precedent for the negative-bound direction.
   Explicitly defers bare-parameter blanket impls (`impl<T: Bound> Aspect for T`) to
-  RFC-0097 (now integrated, 2026-07-13) — every example in this RFC targets a
+  RFC-0097 (now implemented) — every example in this RFC targets a
   genuinely named type. Worked
   example checks composition with RFC-0082's equality-constrained bounds (both are the
   same `Bound` structure, so no new machinery needed). Implemented (issue #241):

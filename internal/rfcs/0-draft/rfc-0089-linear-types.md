@@ -385,7 +385,7 @@ and its open aliasing question remain explicitly not required for the deadline.
 - RFC-0039 (`aspect` Alias Syntax, draft) — vehicle for the `Affine` alias (§2.1)
 - RFC-0049 (Linear Function Type System, draft) — documents the generic-`drop`-discharges-
   linearity hazard this RFC's `drop<T: !Linear>` avoids
-- RFC-0063 (Allocator Handles, under review) — §9 item 5's deadline this RFC's §3
+- RFC-0063 (Allocator Handles, accepted) — §9 item 5's deadline this RFC's §3
   satisfies, together with RFC-0090
 - RFC-0090 (Structural Records — Rows and Tiers) — the `record` type-former and tier 2
   (`ToRecord`/`FromRecord`) §3 depends on as the canonical partial-consumption

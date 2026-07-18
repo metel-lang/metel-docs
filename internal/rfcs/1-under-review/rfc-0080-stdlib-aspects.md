@@ -330,7 +330,7 @@ does not depend on RFC-0003 and may be accepted independently.
   auto-impl rules.
 - RFC-0096 (Auto-Impl Aspects, draft) — the general recognition rule and shared
   structural-composition algorithm §3.2/§4.2 are instances of.
-- RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls, draft) — §1.2's `Clone`
+- RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls, implemented) — §1.2's `Clone`
   blanket is the motivating example for its orphan-rule formalization.
 - RFC-0081 (Negative Impls) — mechanism for overriding auto-impl when a type must not
   have `Send` or `Sync` despite its fields being `Send`/`Sync`.
