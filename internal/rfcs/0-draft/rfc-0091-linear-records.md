@@ -432,11 +432,13 @@ fun example(h: &mut Handle) {
    ratified.
 
 > **Update 2026-07-18:** RFC-0109 (Self-View Narrowing and Reference-Destructuring
-> Patterns) reuses this RFC's row-shrink-on-partial-move representation directly for a
-> second purpose — checking whether a method's declared self-view is still satisfiable
-> against a receiver's current (possibly already-narrowed) row. That RFC's own §4.2
-> treats "can I call this method" and "has this field already been moved out" as the
-> same row-containment question, asked against the same representation.
+> Patterns) reuses this RFC's `(row, brand)` residual representation directly for a
+> second purpose. Its §4 defines named *views* — `view X for Struct { fields }` — as a
+> named, non-consuming point in the same `(row, brand)` lattice §2.2 above defines for
+> partial-move residuals; its §4.5 splits "does a self-view fit the receiver's row"
+> into the ordinary intact-struct case (no dependency on Option C at all) and the
+> already-partially-consumed-residual case, which does inherit this RFC's still-open
+> §2.1 aliasing question rather than resolving it independently.
 
 ---
 

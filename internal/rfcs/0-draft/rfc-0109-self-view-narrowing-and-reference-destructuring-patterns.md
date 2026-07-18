@@ -14,8 +14,18 @@ target:
 > lands, the same footing RFC-0091 (Linear Records) already stands on. Amends RFC-0044
 > (Explicit Receiver Semantics) — precedent for amending it already exists (RFC-0067a
 > did so for reference types). Depends on RFC-0090 (Structural Records, draft) for the
-> `record { ... }` vocabulary and RFC-0091 (Linear Records, draft) for the row-shrink
-> tracking this RFC's self-view checking rule directly reuses.
+> `record { ... }` vocabulary and RFC-0091 (Linear Records, draft) for the `(row,
+> brand)` representation §4 reuses directly.
+>
+> **Revised 2026-07-18, later the same day.** §4 rewritten: the inline `self: &record
+> { field: Type }` self-view spelling from the first draft is replaced by named `view`
+> declarations — a view is a *branded* record, sharing RFC-0090 §9 / RFC-0091 §2.2's
+> `(row, brand)` representation rather than an anonymous one. This is a strictly
+> smaller-machinery, better-justified design: it resolves Open Question 1 (named,
+> reusable views) directly instead of leaving it open, and turns the "why doesn't this
+> reopen RFC-0090 §8" argument from an assertion about *where* the syntax appears into
+> a mechanical consequence of brand equality. See §4.7 for how this reconciles with
+> §8's existing "tier 2 is bare by default" rule rather than violating it.
 
 ## Summary
 
@@ -26,18 +36,20 @@ abstraction (`drain_field<row R, ...>`), but nothing gives a *caller* the zero-s
 benefit view types provide: calling a method that only touches some fields, while other
 fields stay separately usable, without the caller writing any conversion:
 
-- **Self-view narrowing** — an inherent method's `self` parameter may declare which
-  sub-row of the receiver it touches (`self: &record { golden_tickets: Token }`),
-  checked by the compiler against the receiver's own row, with no call-site syntax and
-  no `ToRecord`/`FromRecord` tier opt-in required.
+- **Named views** (`view TicketView for Ticketing { golden_tickets }`) — a *branded*
+  record: the same `(row, brand)` representation RFC-0090 §9 and RFC-0091 §2.2 already
+  define for a struct's own internal shape, reused for a named, reusable sub-row tied
+  to one specific struct. **Self-view narrowing** — an inherent method's `self`
+  parameter declared as `&TicketView`/`&mut TicketView` — is the primary application:
+  checked by the compiler with no call-site syntax and no `ToRecord`/`FromRecord` tier
+  opt-in required.
 - **Reference-destructuring patterns** — `let &mut { a, b } = h;` splits one `&mut`
-  borrow into disjoint per-field sub-borrows within a function body, without a
-  dedicated `split_record_mut::<R1, R2>()` primitive.
+  borrow into disjoint per-field sub-borrows within a function body, for the ad hoc
+  cases a named view isn't worth declaring.
 
-Neither mechanism weakens RFC-0090 §8's "no implicit coercion at call sites" rule —
-both are scoped so they never let a value escape into generic, reusable structural-bound
-territory; they only ever narrow what a *specific* struct's *own* declared access looks
-like, which is a materially smaller claim.
+Neither mechanism weakens RFC-0090 §8's "no implicit coercion at call sites" rule — a
+view's brand is exactly what prevents it from ever satisfying a *generic* structural
+bound the way an anonymous record could; see §4.2.
 
 ---
 
@@ -95,9 +107,10 @@ Two more gaps, found by checking the actual source rather than assuming:
 
 The two problems look similar but are not the same claim:
 
-- **Self-view narrowing** answers "can I call this *specific* method while other
-  fields of the receiver are in use *elsewhere*" — the check spans a call boundary, so
-  it has to live in the callee's own signature, checked once, reused by every caller.
+- **Named views / self-view narrowing** answer "can I call this *specific* method
+  while other fields of the receiver are in use *elsewhere*" — the check spans a call
+  boundary, so it has to live in the callee's own signature, checked once, reused by
+  every caller.
 - **Reference-destructuring patterns** answer "can I get two independently-usable
   sub-borrows of one value *within this function body* right now" — purely local, no
   signature involved, closer to an ordinary `let` pattern than to a method contract.
@@ -134,7 +147,7 @@ Shorthand `x` desugars to `x: x` (a binding pattern reusing the field name), mat
 inventing a new one.
 
 **Scoped deliberately narrow.** This RFC only needs enough struct-pattern grammar for
-§4's reference form to have something to destructure into. It explicitly does not
+§3's reference form to have something to destructure into. It explicitly does not
 re-derive:
 
 - How a partial struct destructure interacts with RFC-0071's affine move rules beyond
@@ -179,96 +192,188 @@ not-yet-real checker.
 Composes with §2 by dropping the leading `&`/`&mut`: `let { x, y } = &point;` for a
 shared multi-field borrow is the same mechanism, immutable.
 
+**Once §4 exists, a named view is usually the better choice for anything reused across
+more than one call site** — `let v: &mut TicketView = h;` (§4.1's coercion) says the
+same thing as `let &mut { golden_tickets } = h;` but gives the shape a name, checked
+once at the `view` declaration instead of re-derived at every destructure site. This
+pattern form stays the right tool for genuinely ad hoc, one-off splits that don't merit
+declaring a type for.
+
 ---
 
-## 4. Self-view narrowing
+## 4. Named views: branded records tied to one struct
 
-An inherent method's `self` parameter may be typed as a reference to a **sub-row** of
-the receiver's own fields, using `record {...}` purely as field-list notation:
+### 4.1 Declaration and semantics
 
 ```metel
 struct Ticketing { golden_tickets: Token, bars: Vec<Bar> }
 
+view TicketView for Ticketing { golden_tickets }
+```
+
+The field list is bare — no re-declared types. `golden_tickets`'s type is looked up
+from `Ticketing`'s own declaration and checked against it, not restated; re-typing it
+here would create exactly the divergence risk RFC-0091 §1's `uses(fd)` mechanism is
+careful to avoid by being checked rather than merely declared.
+
+Semantically, this declares:
+
+```
+(row: { golden_tickets: Token }, brand: brand_of(Ticketing))
+```
+
+reusing RFC-0090 §9 / RFC-0091 §2.2's `(row, brand)` representation directly, rather
+than inventing a new type-former. RFC-0091 §2.2 already describes the general operation
+this specializes: "if a struct is already internally `(row, brand)`, the residual after
+consuming one field is just `(row - field, brand)`." A named view is a *named point* in
+that same lattice, reached non-consumingly (borrowed) rather than by move.
+
+The coercion this buys is symmetric and free, because it's ordinary row-shrink/grow on
+one fixed brand, not a bespoke conversion:
+
+```metel
+fun example(h: &mut Ticketing) {
+    let v: &mut TicketView = h;   // row-shrink, same brand — no .to_record_mut() needed
+    v.golden_tickets.redeem();
+}
+```
+
+**A view's `for` target must name a concrete struct in scope**, and (§4.3) a method may
+only declare `self` as a view whose `for` target is that method's own enclosing `impl`
+type — a view can't be used to make one function generic across two unrelated structs
+that happen to share a field name. That would reopen exactly the structural-matching
+question §4.2 exists to close off; it's a deliberately declined generalization, the
+same discipline §4.8 applies to per-field mutability.
+
+### 4.2 Brand equality is the ambient-typing guard
+
+RFC-0090 §8's core concern is a value silently satisfying a *generic* structural bound
+it was never declared against — the TypeScript failure mode. A named view can't do
+that: `TicketView` cannot apply to any struct other than `Ticketing`, because its
+brand *is* `Ticketing`'s brand, not a lookalike shape that happens to match. This
+replaces what an earlier draft of this RFC described as "a declared, closed, nominal
+pairing, checked once" with something more mechanical — the guard isn't a separate
+rule bolted onto `view`, it's the same brand-equality check every other nominal
+operation in this cluster already relies on.
+
+### 4.3 Self-view narrowing
+
+```metel
 impl Ticketing {
-    fun should_insert_ticket(self: &record { golden_tickets: Token }, idx: usize) -> bool {
+    fun should_insert_ticket(self: &TicketView, idx: usize) -> bool {
         self.golden_tickets.matches(idx)
     }
 }
 
 fun example(t: &mut Ticketing) {
-    let bars = &mut t.bars;             // field-level mutable borrow
-    if t.should_insert_ticket(0) {      // legal: only needs `golden_tickets`, disjoint from `bars`
+    let bars = &mut t.bars;
+    if t.should_insert_ticket(0) {      // legal: TicketView's row is disjoint from
+                                          // `bars`, same brand as t — no ceremony here
         bars.push(Bar::default());
     }
 }
 ```
 
 The caller writes nothing beyond an ordinary method call — `t.should_insert_ticket(0)`.
-No `.to_record()` appears anywhere. This is the entire point: the promise lives in
+No `.to_record()` appears anywhere; the promise lives entirely in
 `should_insert_ticket`'s own signature, checked once at its declaration, consulted by
 the checker at every call site the same way an ordinary `&self`/`&mut self` signature
-already is.
+already is. The call-site check itself is now: does `TicketView`'s row fit inside `t`'s
+currently-live row, same brand — see §4.5 for what "currently-live row" means when part
+of `t` has already been partially consumed.
 
-### 4.1 Why this doesn't reopen RFC-0090 §8
+Because this never touches `ToRecord`/`FromRecord`/row-conditional-impl machinery
+(§4.6), self-view narrowing needs **no tier opt-in at all** — it applies to plain
+tier-1 structs exactly as freely as to tier-2/3 ones.
 
-§8's rule targets a specific failure mode: a value silently satisfying a *generic,
-reusable* structural bound it was never declared against, so two unrelated pieces of
-code can accidentally treat unrelated structs as interchangeable. Self-view narrowing
-never produces a value that can do that:
+### 4.4 View-to-view composition and disjointness
 
-- It only ever appears on `self`, inside an `impl` block inherent to one specific
-  struct. It cannot be written as a free function's parameter type, and cannot be
-  called on any type other than the one declaring it — there is no cross-struct
-  unification to accidentally trigger.
-- `record {...}` here is never a first-class value flowing anywhere; it names a
-  *subset of an already-known type's own fields*, checked once against that type's own
-  declaration. Nothing downstream ever needs to ask "does this satisfy `HasField`" —
-  the compiler already knows the exact struct and the exact row.
+Two views of the same struct are two named points in the same `(row, brand)` lattice,
+so both of the operations that matter fall out of the representation rather than
+needing their own rule:
 
-Because of this, self-view narrowing needs **no tier opt-in at all** — it applies to
-plain tier-1 structs exactly as freely as to tier-2/3 ones, since it never touches
-`ToRecord`/`FromRecord`/row-conditional-impl machinery. This is a real simplification
-found while drafting, not an assumption carried in from RFC-0090: self-view narrowing
-and the tier system are orthogonal, not layered.
+- **Narrowing/widening between views composes.** Given a broader `view FullView for
+  Ticketing { golden_tickets, bars }` and the narrower `TicketView`, moving between
+  them is ordinary row-shrink/grow on one fixed brand — nothing view-specific to
+  define beyond §4.1.
+- **Disjointness is a two-line check.** `TicketView` (`{golden_tickets}`) and `view
+  BarsView for Ticketing { bars }` are safe to hold simultaneously — as two separately
+  narrowed method calls, or as two bindings produced by §3's destructuring pattern —
+  exactly when their brands match and their field-name sets don't intersect. This
+  lets simultaneity be checked once, structurally, rather than re-derived per call
+  site the way an anonymous `record {...}` self-view would require.
 
-### 4.2 Checking rule, reusing RFC-0091's row-shrink tracking directly
+### 4.5 Interaction with RFC-0091 Option C
 
-Rather than inventing a second "which fields are currently borrowed" tracker alongside
-RFC-0091's row-shrink-on-partial-move tracking, self-view narrowing is checked against
-the *same* row state: a call to a method declaring `self: &record { R_needed }` is
-legal exactly when `R_needed` is a subset of whatever row the receiver currently has
-present — whether that's the type's full declared row (the ordinary case) or an
-already-narrowed residual row left over from an earlier partial move
-(RFC-0091 §2's `record { b: B }` left behind after moving field `a` out). This reuses
-RFC-0091's residual-row representation rather than adding new machinery: "can I call
-this method" and "has this field already been moved out" become the same question —
-row containment — asked against the same row.
+This inherits part of RFC-0091 §2.1's still-unproven aliasing question, but only the
+part that's actually the same question:
 
-### 4.3 Deliberately no mixed per-field mutability
+- **A view borrowed from an intact struct — no prior partial move involved — is an
+  ordinary disjoint borrow, not a move.** It never touches Option C's downgrade
+  machinery at all, so it doesn't inherit §2.1's open soundness question. This is also
+  Rust's own motivating scenario for view types (`should_insert_ticket` above never
+  moves anything), so it's the common case, not the edge case.
+- **Checking a self-view against an already-partially-consumed residual** — some field
+  was previously moved out via RFC-0091 Option C, and a later call's declared view
+  needs to fit inside what remains — genuinely is the same question RFC-0091 §2.1
+  leaves open ("what type does a pre-downgrade borrow have afterward"), and this RFC
+  does not resolve it independently. If Option C never gets a soundness argument, this
+  RFC's §4.3 still stands on its own for the intact-struct case; only this
+  already-partially-moved interaction would need to fall back to something more
+  conservative (e.g. rejecting the call outright once any field has been consumed).
+
+### 4.6 Deliberately not tier 3 — views never enter coherence
+
+A view's brand is consumed only by §4.2's ambient-typing guard, §4.3's row-containment
+check, and §4.4's disjointness check — **never handed to the coherence/impl-resolution
+pass.** This is what keeps `view` from silently becoming "tier 3 for free": RFC-0090
+§8's tier-3 named record is distinguished specifically by row-conditional impls
+resolving against a type's own intrinsic row *at impl-resolution time*. A view is
+deliberately never inserted into that resolution path, regardless of the fact that it
+now carries the same `(row, brand)` shape tier 3 uses internally. Reusing a
+representation is not the same as reusing a capability, and this boundary is what keeps
+that distinction real rather than nominal.
+
+### 4.7 A third exception to "tier 2 is bare by default," not a violation of it
+
+RFC-0090 §8 states tier 2's `to_record()`/`to_record_mut()` output is bare/anonymous
+"except for a fiat-linear source struct" (RFC-0089 §3.1) — one narrow, explicitly
+justified case where the derived record carries a brand because the bare row can't
+reconstruct some fact (there: `Linear`-by-fiat status). A named `view` is a second,
+differently-motivated instance of the same exception pattern: the fact the bare row
+can't reconstruct here is provenance/reversibility — an anonymous `record {
+golden_tickets: Token }` has no way to widen back to `Ticketing` specifically, but a
+brand-carrying view does, for free (§4.1). Framed this way, `view` doesn't weaken §8's
+bare-by-default rule; it's the second of what the rule already anticipated could need
+narrow, justified carve-outs — and §4.6 is what keeps this exception from creeping
+further than RFC-0089 §3.1's already did.
+
+### 4.8 Deliberately no mixed per-field mutability
 
 Rust's `&{bars, mut golden_tickets} self` mixes shared and exclusive access to
-different fields in one view. This RFC does not — a self-view is uniformly `&record
-{...}` or `&mut record {...}`, matching RFC-0044's existing all-or-nothing `&self` /
-`&mut self` split (Metel has no per-field mutability anywhere else in the language
-either). **Considered and declined for v1:** per-field mutability inside a view would
-need new grammar (`mut golden_tickets` inside a field list, meaning something different
-from the field's own declared mutability) and a second mutability axis nothing else in
-the language has. Narrower scope: a view is exclusive-or-shared as a whole, over
-whichever field subset it names. This does give up some of Rust's expressiveness (a
-single narrowed method can no longer simultaneously read one field and write another)
-but keeps the mechanism consistent with RFC-0044 rather than introducing a novel
-mutability model to serve one feature.
+different fields in one view. This RFC does not — a view is uniformly `&View` or `&mut
+View`, matching RFC-0044's existing all-or-nothing `&self` / `&mut self` split (Metel
+has no per-field mutability anywhere else in the language either). **Considered and
+declined for v1:** per-field mutability inside a view would need new grammar (`mut
+golden_tickets` inside a field list, meaning something different from the field's own
+declared mutability) and a second mutability axis nothing else in the language has.
+Narrower scope: a view is exclusive-or-shared as a whole, over whichever field subset
+it names. This does give up some of Rust's expressiveness (a single narrowed method can
+no longer simultaneously read one field and write another) but keeps the mechanism
+consistent with RFC-0044 rather than introducing a novel mutability model to serve one
+feature. §4.4's disjointness check is the intended escape hatch for the mixed-mode
+case: declare two views instead of one field list with mixed modes.
 
-### 4.4 Accuracy checking, not a declared-and-trusted annotation
+### 4.9 Accuracy checking, not a declared-and-trusted annotation
 
 A self-view is a soundness-relevant claim, not documentation — unlike RFC-0091 §1's
 `uses(fd)` (which that RFC already requires to be "checked (not just asserted) against
 the method body," the same standard this RFC follows): if `should_insert_ticket`'s body
-read `self.bars` while declaring only `golden_tickets`, a caller relying on the
-narrowed view to keep `bars` usable elsewhere would be unsound. The construction pass
-must reject any field access inside the method body that isn't covered by the declared
-view — the same check RFC-0091 §1 already specifies for `uses(...)`, applied here to a
-receiver's declared sub-row instead of a `Drop` impl's declared field usage. Not a new
+read `self.bars` while declaring only `TicketView`, a caller relying on the narrowed
+view to keep `bars` usable elsewhere would be unsound. The construction pass must
+reject any field access inside the method body that isn't covered by the declared
+view's row — the same check RFC-0091 §1 already specifies for `uses(...)`, applied here
+to a receiver's declared view instead of a `Drop` impl's declared field usage. Not a new
 checking philosophy, the same one applied a second place.
 
 ---
@@ -277,18 +382,24 @@ checking philosophy, the same one applied a second place.
 
 - **RFC-0044 (Explicit Receiver Semantics, implemented)** — amended. The three
   receiver forms (`self`, `&self`, `&mut self`) are unchanged; self-view narrowing adds
-  an optional row annotation *to* `&self`/`&mut self`, it does not introduce a fourth
-  receiver kind. Precedent for amending RFC-0044 already exists (RFC-0067a).
-- **RFC-0090 (Structural Records, draft)** — self-view narrowing reuses `record {...}`
-  purely as notation (§4.1); it does not depend on tier 2/3 existing, and does not
-  touch `HasField`/`Lacks`/row-conditional impls at all.
-- **RFC-0091 (Linear Records, draft)** — §4.2 reuses its row-shrink-on-partial-move
-  representation directly rather than adding a parallel tracker. If RFC-0091's Option C
-  (automatic downgrade) is adopted, self-view checking and partial-move checking become
-  literally the same code path checking the same row; if only RFC-0091's floor
-  (explicit `to_record_mut`) is adopted, self-view narrowing still works standalone —
-  it does not depend on Option C, only on the *representation* of "which fields remain"
-  existing in some form.
+  an optional named-view refinement *to* `&self`/`&mut self`, it does not introduce a
+  fourth receiver kind. Precedent for amending RFC-0044 already exists (RFC-0067a).
+- **RFC-0090 (Structural Records, draft)** — §4 reuses §9's `(row, brand)`
+  representation directly, and §4.7 frames the view-carries-a-brand exception as a
+  second instance of §8's existing fiat-`Linear` carve-out rather than a new one. §4.6
+  keeps views out of tier 3's coherence-facing capability regardless of representation
+  overlap.
+- **RFC-0091 (Linear Records, draft)** — §4.1 specializes §2.2's `(row, brand)`
+  residual-reuse operation; §4.5 inherits part, but only part, of §2.1's open aliasing
+  question. If RFC-0091's Option C is adopted, self-view checking against a partially
+  consumed residual and Option C's own downgrade tracking become literally the same
+  code path checking the same row; if only RFC-0091's floor (explicit
+  `to_record_mut`) is adopted, self-view narrowing over *intact* structs (§4.5's first
+  case) still works standalone.
+- **`brand-kind-unification.md`** — already proposes `@a`/`&r`/`'c` as one underlying
+  identity kind with a struct's own identity tag as a plausible fourth surface use
+  (RFC-0090 §9). A view's brand is that same tag, reused a second time for a narrower
+  purpose (§4.6) — not a fifth kind alongside it.
 - **RFC-0071 (Ownership and Move Semantics, accepted, unimplemented)** — both
   mechanisms in this RFC are inert without RFC-0071's field-sensitive borrow tracking;
   see the status note at the top.
@@ -301,47 +412,59 @@ checking philosophy, the same one applied a second place.
 
 ## Alternatives considered
 
-- **Adopt Rust's `&{a, b}` sigil syntax directly**, instead of reusing `record {...}`
-  notation. Rejected: it would be a second, unrelated way to spell "a set of field
-  names" alongside the one this cluster already has, for no expressiveness gain — this
-  RFC's `record {...}` spelling is inert notation in self-view position (§4.1), so
-  there is no real machinery cost to reusing it instead of inventing new syntax.
-- **A dedicated `split_record_mut<R1, R2>()` primitive**, instead of a pattern. Rejected
-  as the primary mechanism for §3: it would require row-generic parameters spelled out
-  at every call site for what is, in the common case, an ordinary local `let` splitting
-  a handful of named fields — more ceremony than the problem needs. Might still be
-  worth adding later as a *generic, reusable* helper (in the spirit of `drain_field`)
-  for code that wants to split a row without knowing the field names statically, but
-  that is additive, not a replacement for the pattern form.
+- **Anonymous, brandless self-views** (`self: &record { golden_tickets: Token }`,
+  this RFC's own original spelling before this revision). Superseded, not merely
+  rejected: it worked, but required re-deriving §4.2's ambient-typing safety argument
+  from "declared inside an inherent impl" each time, gave no free reversibility or
+  view-to-view composition (§4.1, §4.4), and left named-view reuse (Open Question 1 in
+  the prior draft) unanswered. The branded design is strictly less new machinery (no
+  new type-former, reuses RFC-0091 §2.2's representation) for strictly more capability.
+- **Adopt Rust's `&{a, b}` sigil syntax directly**, instead of a `view` declaration.
+  Rejected: it would be a second, unrelated way to spell "a set of field names"
+  alongside the one this cluster already has (`record {...}`), for no expressiveness
+  gain, and it has no natural resting place for a brand the way a named declaration
+  does.
+- **A dedicated `split_record_mut<R1, R2>()` primitive**, instead of a pattern, for §3.
+  Rejected as the primary mechanism there: it would require row-generic parameters
+  spelled out at every call site for what is, in the common case, an ordinary local
+  `let` splitting a handful of named fields. Might still be worth adding later as a
+  *generic, reusable* helper (in the spirit of `drain_field`) for code that wants to
+  split a row without knowing the field names statically, but that is additive, not a
+  replacement for the pattern form.
 - **Require self-view narrowing to go through tier 2** (a struct must derive
   `ToRecord`/`FromRecord` before its methods can declare narrowed self-views).
-  Rejected — §4.1 shows this isn't needed for soundness, and requiring it would be
+  Rejected — §4.3 shows this isn't needed for soundness, and requiring it would be
   pure, unjustified ceremony.
 
 ---
 
 ## Open Questions
 
-1. **Named, reusable views.** Matsakis's own writeup flags the same gap: repeating an
-   identical field list across several methods on the same struct has no abstraction
-   mechanism yet (a `type` alias for a self-view shape, analogous to his `type
-   GoldenTicket = {serial_number, mut owner} GoldenTicketData` sketch). Not designed
-   here.
+1. ~~Named, reusable views~~ — **resolved by §4**: `view X for Struct { fields }`.
 2. **Two simultaneously narrowed method calls, not just one call plus a raw field
-   borrow.** The worked example above splits one field-borrow and one narrowed call.
-   Whether the checker also permits `t.method_a()` (declares `{bars}`) and
-   `t.method_b()` (declares `{golden_tickets}`) with *overlapping* call lifetimes (not
-   just sequential) needs the same disjoint-path reasoning §3 already assumes from
-   RFC-0071 — asserted to fall out for free, not independently verified here.
-3. **Cross-module field visibility (RFC-0032).** A self-view can only ever be declared
-   inside the struct's own inherent `impl` (§4.1), so it never exposes private fields
-   to outside code — but this hasn't been checked against RFC-0032's actual visibility
-   rules line by line.
-4. **§2's by-value struct pattern is scoped to this RFC's own needs, not a full
+   borrow.** §4.4's disjointness check covers this in principle (same brand, disjoint
+   rows), but whether the checker's call-lifetime reasoning composes correctly for
+   *overlapping*, not just sequential, calls needs the same disjoint-path reasoning §3
+   already assumes from RFC-0071 — asserted to fall out for free, not independently
+   verified here.
+3. **Where a `view X for Struct` declaration is allowed to live**, and its interaction
+   with cross-module field visibility (RFC-0032). A view can only ever be declared
+   against fields it can see, so it never *exposes* private fields to outside code —
+   but whether `view` declarations themselves are orphan-rule-restricted to `Struct`'s
+   own declaring module, or open to any module that can already see the fields it
+   names, hasn't been checked against RFC-0032's actual rules line by line.
+4. **§4.6's coherence-avoidance needs verification once implemented, not just
+   assertion.** The design intent is that a view's brand never reaches the
+   coherence/impl-resolution pass; confirming no code path accidentally lets it leak in
+   (the same class of gap RFC-0089 §3.1's Open Question 11 flags for its own
+   brand-carrying exception) is future work, not settled here.
+5. **§2's by-value struct pattern is scoped to this RFC's own needs, not a full
    proposal.** Whether it should be split into its own RFC (matching this project's
    general preference for decomposing shared/foundational grammar work — see issue
    #233's AST-generalization scoping) or folded permanently into RFC-0071's move
    semantics is not decided.
+6. **Whether a view's `for` target may itself be generic** (`view X for Container<T> {
+   field }`) — not addressed; out of scope for this draft.
 
 ---
 
@@ -353,10 +476,17 @@ checking philosophy, the same one applied a second place.
   RFC amends.
 - RFC-0067a (Reference Types, implemented) — precedent for amending RFC-0044; the
   `&T`/`&mut T` vocabulary self-views and reference-destructuring patterns build on.
-- RFC-0090 (Structural Records — Rows and Tiers, draft) — `record {...}` notation and
-  the tier system this RFC deliberately stays orthogonal to (§4.1).
-- RFC-0091 (Linear Records, draft) — the row-shrink-on-partial-move representation
-  §4.2 reuses; `drain_field`'s single-field asymmetric split, the gap §3 closes.
+- RFC-0090 (Structural Records — Rows and Tiers, draft) — §9's `(row, brand)`
+  representation §4.1 reuses; §8's tier system and its existing fiat-`Linear` bare-vs-
+  branded exception §4.7 mirrors; §8's tier-3 coherence-eligibility boundary §4.6
+  deliberately stays clear of.
+- RFC-0091 (Linear Records, draft) — §2.2's `(row, brand)` residual-reuse operation §4.1
+  specializes; §2.1's open aliasing question §4.5 partially, not wholly, inherits;
+  `drain_field`'s single-field asymmetric split, the gap §3 closes.
+- RFC-0089 (Linear Types, draft) §3.1 — the fiat-`Linear` brand-carrying exception to
+  tier 2's bare-by-default rule, the precedent §4.7 extends.
+- `brand-kind-unification.md` — the `(row, brand)`/`'c`-kind tag-reuse claim §4.1 and
+  §5 depend on.
 - RFC-0071 (Ownership and Move Semantics, accepted, unimplemented) — the field-
   sensitive move/borrow tracking both mechanisms in this RFC assume exists.
 - RFC-0108 (Reference-Transparent Match Scrutinees, draft) — adjacent pattern-position
