@@ -414,6 +414,58 @@ shared borrow, only subdivide an already-exclusive borrow into a mix of exclusiv
 shared sub-borrows. A tuple where every slot is `&ViewX` only ever needs `&Ticketing`.
 This extends RFC-0044 §9's addressability table by one row rather than replacing it.
 
+**Worked example: three views, to exercise "pairwise" for real instead of just for a
+pair.** Extend `Ticketing` with a third field:
+
+```metel
+struct Ticketing { golden_tickets: Token, bars: Vec<Bar>, metadata: Meta }
+
+view TicketView for Ticketing { golden_tickets }
+view BarsView for Ticketing { bars }
+view MetaView for Ticketing { metadata }
+
+impl Ticketing {
+    fun reconcile(self: (&mut BarsView, &TicketView, &mut MetaView)) {
+        let (bars, tickets, meta) = self;
+        if tickets.golden_tickets.matches(0) {
+            bars.bars.push(Bar::default());
+            meta.metadata.record_redemption();
+        }
+    }
+}
+
+fun example(t: &mut Ticketing) {
+    t.reconcile();   // ordinary call
+}
+```
+
+`self`'s three slots require checking all `C(3,2) = 3` pairs — `(BarsView, TicketView)`,
+`(BarsView, MetaView)`, `(TicketView, MetaView)` — each pairwise disjoint since `{bars}`,
+`{golden_tickets}`, `{metadata}` share no field. Two slots are `&mut` and one is `&`; by
+the addressability rule above, the *tightest* slot governs, so `t.reconcile()` still
+only needs `&mut Ticketing` overall — the same single requirement as the two-view case,
+not one requirement per `&mut` slot.
+
+**What the pairwise check rejects.** A fourth view whose row overlaps an existing one
+in the tuple is caught by the same check, not a special case of it:
+
+```metel
+view GoldenNameView for Ticketing { golden_tickets, metadata }   // overlaps both
+                                                                   // TicketView and MetaView
+
+impl Ticketing {
+    fun broken(self: (&TicketView, &GoldenNameView)) { ... }
+    // ERROR: TicketView ({golden_tickets}) and GoldenNameView ({golden_tickets,
+    // metadata}) are not disjoint — `golden_tickets` appears in both rows, so this
+    // pair fails §4.4's check even though every individual view is well-formed on
+    // its own.
+}
+```
+
+Nothing about this needs a new diagnostic path: it's the exact same "two views, same
+brand, intersecting field sets" case §4.4 already defines, just found while checking
+one pair out of a larger tuple instead of a lone two-element case.
+
 **This is §3's reference-destructuring pattern, applied at the receiver boundary
 instead of a local `let`.** `self: (&mut BarsView, &TicketView)` and a hypothetical
 `let (bars, tickets): (&mut BarsView, &TicketView) = t;` inside an ordinary function
