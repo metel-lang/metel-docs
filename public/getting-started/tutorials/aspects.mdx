@@ -1,0 +1,186 @@
+---
+sidebar_position: 7
+---
+
+# Tutorial: Aspects
+
+An aspect is a named set of methods a type can promise to provide. If you know interfaces or traits from other languages, an aspect plays the same role: it lets you write code against a capability ("this type can be printed", "this type can be compared") instead of against one specific type. Aspects are also what makes a constrained type parameter like `<T: Printable>` — introduced in the previous tutorial — mean anything at all.
+
+## Declaring an aspect
+
+```metel
+aspect Printable {
+    fun print(self);
+}
+```
+
+This declares a method signature with no body. Any type can implement `Printable` by providing that method.
+
+## Implementing an aspect with `extend`
+
+`extend Type: Aspect` attaches an implementation of the aspect to a type:
+
+```metel
+struct Point {
+    x: f64,
+    y: f64,
+}
+
+aspect Printable {
+    fun print(self);
+}
+
+extend Point: Printable {
+    fun print(self) {
+        println("(${self.x}, ${self.y})");
+    }
+}
+
+fun main() {
+    let p = Point { x: 1.0, y: 2.0 };
+    p.print();   // (1, 2)
+}
+```
+
+This is the same `extend` keyword the structs-and-methods tutorial used for inherent methods — `extend Type { ... }` attaches methods with no aspect involved; `extend Type: Aspect { ... }` attaches methods that also satisfy an aspect's contract. A type can have any number of inherent `extend` blocks and any number of aspect implementations.
+
+:::note
+Every Method Named In The Aspect Must Appear
+
+`extend Point: Printable` must implement every method `Printable` declares (unless the aspect supplies a default body — see below). Leaving one out is a compile error, not a runtime surprise.
+:::
+
+## Why this matters: aspect bounds
+
+A generic function with an unconstrained type parameter can only move values of that type around — it cannot call any method on them, because the compiler has no idea what `T` will be. Writing `T: Printable` tells the compiler exactly which methods are guaranteed to exist:
+
+```metel
+fun print_all<T: Printable>(items: T[]) {
+    for (let item in items) {
+        item.print();
+    }
+}
+
+fun main() {
+    let points = [Point { x: 0.0, y: 0.0 }, Point { x: 3.0, y: 4.0 }];
+    print_all(points);
+}
+```
+
+Try to call `print_all` with a type that has no `Printable` implementation and you get a compile error at the call site, not a missing-method error buried at runtime.
+
+Multiple bounds combine with `+`, inline or in a `where` clause — both forms are equivalent:
+
+```metel
+fun describe<T: Printable + Comparable>(a: T, b: T) {
+    a.print();
+    if (a.compare(b) == 0) {
+        println("equal");
+    }
+}
+
+// equivalent, where-clause form
+fun describe2<T>(a: T, b: T) where T: Printable + Comparable {
+    a.print();
+}
+```
+
+For a type parameter that appears once and isn't referenced elsewhere, `impl Aspect` is a shorthand that skips naming the parameter at all:
+
+```metel
+fun print_all(items: impl Printable[]) { ... }
+// equivalent to: fun print_all<T: Printable>(items: T[]) { ... }
+```
+
+## Default methods
+
+An aspect method can supply a body. An implementing type may then omit that method entirely and inherit the default:
+
+```metel
+aspect Greet {
+    fun name(self) -> String;
+
+    fun greet(self) -> String {
+        return "Hello, " + self.name();
+    }
+}
+
+struct Person {
+    name: String,
+}
+
+extend Person: Greet {
+    fun name(self) -> String {
+        return self.name;
+    }
+    // greet() is inherited — no need to write it
+}
+
+fun main() {
+    let p = Person { name: "Ada" };
+    println(p.greet());   // Hello, Ada
+}
+```
+
+Only `name` has no default, so only `name` is required from every implementor.
+
+## `Self` inside an aspect
+
+`Self` refers to whichever concrete type is implementing the aspect at the call site — useful for a method that takes or returns "another value of my own type":
+
+```metel
+aspect Comparable {
+    fun compare(self, other: Self) -> i64;
+}
+
+struct Money { cents: i64 }
+
+extend Money: Comparable {
+    fun compare(self, other: Self) -> i64 {
+        return self.cents - other.cents;
+    }
+}
+```
+
+`Comparable`'s signature says "compare against another value of the same type as me" without naming that type — `Money::compare` only ever accepts another `Money`, and a different type implementing `Comparable` would only ever accept its own type in that position.
+
+## A worked example: unifying error types with `From`
+
+`From` is a `std::core` aspect, not special syntax — you already saw it used to coerce error types with `?` in an earlier tutorial. Seeing its declaration now that you know what an aspect is should make that trick unsurprising:
+
+```metel
+aspect From<T> {
+    fun from(value: T) -> Self;
+}
+
+struct IoError { msg: String }
+struct AppError { msg: String }
+
+extend AppError: From<IoError> {
+    fun from(value: IoError) -> AppError {
+        return AppError { msg: "io: ${value.msg}" };
+    }
+}
+
+fun main() {
+    let err = AppError::from(IoError { msg: "disk full" });
+    println(err.msg);   // io: disk full
+}
+```
+
+`?` on a `Result<_, IoError>` inside a function returning `Result<_, AppError>` calls exactly this `from` conversion automatically, because `extend AppError: From<IoError>` exists.
+
+## What's next in the aspect system
+
+This tutorial covers the everyday 80%: declaring an aspect, implementing it, bounding generics with it, default methods, and `Self`. The aspect system goes considerably further — associated types (an aspect can declare a type-level output alongside its methods), negative bounds and negative impls (`T: !Aspect`, asserting a type definitely does *not* implement something), coherence rules that keep two implementations of the same aspect for the same type from conflicting, and aspect implementations conditional on a generic type's own parameters. None of that is needed to read or write everyday Metel code — reach for the [Aspects reference](../../reference/spec/declarations#aspects) when you hit a case this tutorial didn't cover.
+
+## What you learned
+
+- `aspect Name { ... }` declares a set of method signatures a type can implement.
+- `extend Type: Aspect { ... }` implements an aspect for a type; every non-default method must be provided.
+- `<T: Aspect>` bounds a generic type parameter, making the aspect's methods callable inside the function body.
+- `impl Aspect` is shorthand for a type parameter used once and not referenced elsewhere.
+- An aspect method with a body is a default — implementors may omit it.
+- `Self` refers to the concrete implementing type at the call site.
+
+Next: [References](pointers) — address-of, write-through references, and shared mutable state.
