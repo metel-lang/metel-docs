@@ -36,7 +36,10 @@ Subcommands:
                                        and the spec actually references the RFC.
                                        Also flags any stale "Not yet implemented"
                                        callout left behind for an RFC that's already
-                                       4-implemented. Read-only.
+                                       4-implemented, and any inline "RFC-NNNN (...,
+                                       status)" citation anywhere in the repo whose
+                                       cited status no longer matches that RFC's
+                                       actual current stage. Read-only.
   index --check-drift                  Check whether generated REGISTRY.md matches
                                        the current RFC corpus exactly, and whether
                                        the curated INDEX.md mentions every current
@@ -633,11 +636,67 @@ def spec_not_implemented_refs(rid):
     return hits
 
 
+# --------------------------------------------------------------------------
+# Inline status citations — "RFC-0044 (Explicit Receiver Semantics,
+# implemented)" — checked against the cited RFC's actual current stage. This
+# is prose, not frontmatter, so it can go stale silently the moment the cited
+# RFC transitions; a human has to notice by reading, which is exactly the
+# class of drift REGISTRY.md/INDEX.md's own automated checks exist to avoid
+# for every *other* kind of cross-reference.
+# --------------------------------------------------------------------------
+
+# Word boundaries matter here: "unimplemented" must not match "implemented" —
+# and it doesn't, because \b requires a transition to/from a non-word char, and
+# there is none between "un" and "implemented" in one contiguous word.
+STATUS_WORD_RE = re.compile(
+    r"\b(draft|under-review|under review|accepted|integrated|implemented|superseded|refused)\b",
+    re.IGNORECASE,
+)
+# An RFC id immediately followed by a parenthetical — "RFC-0044 (...)" — is
+# this repo's established convention for annotating a cross-referenced RFC's
+# current status inline. Capped at 200 chars so a multi-sentence parenthetical
+# aside elsewhere in a line can't accidentally sprawl the match.
+STATUS_CITATION_RE = re.compile(r"RFC-(\d+[a-z]?)\s*\(([^)]{0,200})\)")
+
+
+def status_citation_problems(id_to_stage):
+    problems = []
+    for f in REPO_ROOT.rglob("*.md"):
+        # "archive" dirs (reports/**/archive/) hold dated, superseded snapshots —
+        # citing an RFC's then-current status there is historically correct, not
+        # stale, and must not be "fixed" to match the present.
+        if ".git" in f.parts or "archive" in f.parts or f == REGISTRY_PATH:
+            continue
+        try:
+            lines = f.read_text().splitlines()
+        except (UnicodeDecodeError, OSError):
+            continue
+        rel = f.relative_to(REPO_ROOT)
+        for lineno, line in enumerate(lines, start=1):
+            for m in STATUS_CITATION_RE.finditer(line):
+                rid = normalize_id(m.group(1))
+                actual = id_to_stage.get(rid)
+                if actual is None:
+                    continue  # unknown/renumbered/non-Metel id — not this check's job
+                words = {w.lower().replace(" ", "-") for w in STATUS_WORD_RE.findall(m.group(2))}
+                words &= set(STAGES)
+                if len(words) != 1:
+                    continue  # no status word, or more than one — don't guess which is "the" claim
+                cited = next(iter(words))
+                if cited != actual:
+                    problems.append(
+                        f"{rel}:{lineno}: cites {rid.upper()} as '{cited}' but it is "
+                        f"currently '{actual}' ({STAGES[actual]})"
+                    )
+    return problems
+
+
 def cmd_check(args=None):
     problems = []
     seen_ids = {}
     known_paths = set()
     current_ids = set()
+    id_to_stage = {}
 
     for f in find_rfc_files():
         rel = str(f.relative_to(REPO_ROOT))
@@ -655,6 +714,7 @@ def cmd_check(args=None):
         fm, _ = parse_file(f)
         stage_dir = f.parent.name
         expected_status = STAGE_FOR_DIR.get(stage_dir)
+        id_to_stage[rid] = expected_status
         fm_status = fm.get("status")
         if fm_status and expected_status and fm_status != expected_status:
             problems.append(
@@ -696,6 +756,8 @@ def cmd_check(args=None):
                     f"{spec_path}:{lineno}: stale 'Not yet implemented' callout for "
                     f"{rid.upper()}, which is already 4-implemented — delete this line: {text}"
                 )
+
+    problems.extend(status_citation_problems(id_to_stage))
 
     for f in REPO_ROOT.rglob("*.md"):
         if ".git" in f.parts:
