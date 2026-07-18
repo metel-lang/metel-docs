@@ -580,6 +580,82 @@ an error even though `golden_tickets` is somewhere in scope (via `tickets`), bec
 checked against its own slot's row, not the union — the union only matters for deciding
 whether the *method as a whole* may exist against a given receiver.
 
+### 4.11 Interaction with RFC-0032 field visibility
+
+Two cases, worth separating because only one of them is actually novel.
+
+**Self-view narrowing never crosses the boundary at all.** Every self-view/tuple-of-views
+declaration in this RFC lives inside an inherent `impl` block (§4.3, §4.9), and
+inherent impls are restricted to a type's own declaring module — the same "no owning
+module" reasoning RFC-0090 §5 already relies on to explain why *records* can't have
+inherent impls at all; ordinary structs have one, and it's fixed. So a method declaring
+`self: &TicketView` is always written where every field of `Ticketing` — private or
+`pub` — is already visible:
+
+```metel
+// ticketing.mln
+struct Ticketing {
+    pub golden_tickets: Token,
+        bars: Vec<Bar>,          // private — no `pub`
+}
+
+view TicketView for Ticketing { golden_tickets }
+view BarsView for Ticketing { bars }    // names a private field — fine here, this file
+                                          // IS Ticketing's own declaring module
+
+impl Ticketing {
+    fun should_insert_ticket(self: &TicketView, idx: usize) -> bool { ... }   // untouched
+                                                                                 // by RFC-0032
+}
+```
+
+**Declaring a view from outside the module is checked exactly like a struct pattern —
+reused, not reinvented.** A `view`'s field list is a list of field names checked against
+`Struct`, the same syntactic shape RFC-0032's own pattern-matching rule already covers
+("Explicitly naming a private field in a pattern is a compile error"):
+
+```metel
+// caller.mln — a different module
+// view LeakyView for Ticketing { bars }
+// ERROR: field `bars` is private — same error family as constructing or
+// pattern-matching Ticketing { bars } from outside ticketing.mln (RFC-0032 D1)
+```
+
+**The genuinely open case: a view declared inside the module, naming a private field,
+then exposed outside it through an ordinary `pub` function.** Nothing in §4.1's
+coercion rule stops this:
+
+```metel
+// ticketing.mln
+view BarsView for Ticketing { bars }   // legal here — bars is private, but this is
+                                         // Ticketing's own module
+
+pub fun peek_bars(t: &mut Ticketing) -> &mut BarsView {
+    t   // ordinary row-shrink coercion (§4.1) — legal cross-module because peek_bars
+        // itself is pub, independent of bars's own visibility
+}
+```
+
+```metel
+// caller.mln
+let v = peek_bars(&mut t);
+v.bars.push(Bar::default());
+// must still be an error — `bars` is private to ticketing.mln, and returning a view
+// over it through a pub function must not become a way to launder that
+```
+
+If field access through a view only checked the view's own *declaration* site (inside
+`ticketing.mln`, where `bars` is visible), this would silently defeat RFC-0032 — any
+`pub` function returning a view over a private field becomes an unintended backdoor. The
+check has to be re-applied at the point of *access* (`v.bars`), against the field's own
+visibility on `Ticketing`, regardless of where or by whom the view type itself was
+declared — the same discipline `struct_value.field` already uses today, just reapplied
+through one more layer of indirection. **Not settled here which pass performs this
+check or how field-visibility metadata threads through a view's own type
+representation** — this is the concrete design gap Open Question 3 refers to; this
+section gives it a specific failure case to check an implementation against, rather
+than leaving it a vague cross-module concern.
+
 ---
 
 ## 5. Interaction with existing/adjacent RFCs
@@ -603,6 +679,15 @@ whether the *method as a whole* may exist against a given receiver.
   code path checking the same row; if only RFC-0091's floor (explicit
   `to_record_mut`) is adopted, self-view narrowing over *intact* structs (§4.5's first
   case) still works standalone.
+- **RFC-0032 (Field-Level Visibility, implemented)** — §4.11 reuses its existing
+  pattern-matching private-field check directly for a cross-module `view` declaration's
+  field list, and identifies one genuinely open gap: a view declared inside a module
+  over a private field, then exposed outside it through an ordinary `pub` function,
+  must still reject field access at the *use* site, not just check visibility at the
+  view's *declaration* site — otherwise a `pub` function returning a view becomes an
+  unintended way to launder a private field. Self-view narrowing itself (§4.3, §4.9)
+  never interacts with this RFC at all, since inherent impls are always written inside
+  the declaring module already.
 - **`brand-kind-unification.md`** — already proposes `@a`/`&r`/`'c` as one underlying
   identity kind with a struct's own identity tag as a plausible fourth surface use
   (RFC-0090 §9). A view's brand is that same tag, reused a second time for a narrower
@@ -656,12 +741,14 @@ whether the *method as a whole* may exist against a given receiver.
    the checker's call-lifetime reasoning composes correctly for genuinely *overlapping*,
    not just sequential, calls needs the same disjoint-path reasoning §3 already assumes
    from RFC-0071 — asserted to fall out for free, not independently verified here.
-3. **Where a `view X for Struct` declaration is allowed to live**, and its interaction
-   with cross-module field visibility (RFC-0032). A view can only ever be declared
-   against fields it can see, so it never *exposes* private fields to outside code —
-   but whether `view` declarations themselves are orphan-rule-restricted to `Struct`'s
-   own declaring module, or open to any module that can already see the fields it
-   names, hasn't been checked against RFC-0032's actual rules line by line.
+3. ~~Where a `view X for Struct` declaration is allowed to live, and its interaction
+   with cross-module field visibility~~ — **substantially addressed by §4.11.**
+   Declaring a view from outside the module reuses RFC-0032's existing pattern-matching
+   private-field check unchanged; self-view narrowing never crosses the boundary at
+   all. What §4.11 leaves genuinely open: exactly which pass enforces the private-field
+   check at a view's *access* site (`v.private_field`) when the view itself was
+   declared inside the module and later exposed outside it through a `pub` function —
+   the mechanism isn't designed, only the failure case it must prevent.
 4. **§4.6's coherence-avoidance needs verification once implemented, not just
    assertion.** The design intent is that a view's brand never reaches the
    coherence/impl-resolution pass; confirming no code path accidentally lets it leak in
@@ -698,6 +785,9 @@ whether the *method as a whole* may exist against a given receiver.
   `drain_field`'s single-field asymmetric split, the gap §3 closes.
 - RFC-0089 (Linear Types, draft) §3.1 — the fiat-`Linear` brand-carrying exception to
   tier 2's bare-by-default rule, the precedent §4.7 extends.
+- RFC-0032 (Field-Level Visibility, implemented) — the private-field-access check §4.11
+  reuses for cross-module `view` declarations, and the rule a view exposed through a
+  `pub` function must not be allowed to bypass.
 - `brand-kind-unification.md` — the `(row, brand)`/`'c`-kind tag-reuse claim §4.1 and
   §5 depend on.
 - RFC-0071 (Ownership and Move Semantics, accepted, unimplemented) — the field-
