@@ -414,6 +414,56 @@ shared borrow, only subdivide an already-exclusive borrow into a mix of exclusiv
 shared sub-borrows. A tuple where every slot is `&ViewX` only ever needs `&Ticketing`.
 This extends RFC-0044 §9's addressability table by one row rather than replacing it.
 
+**Worked example, in RFC-0044 §9's own allowed/disallowed style** (that section's
+worked examples are exactly this shape — `counter.increment()` vs.
+`make_counter().increment()` — extended here to a tuple self):
+
+```metel
+impl Ticketing {
+    // all-shared tuple: only ever needs &Ticketing, same row as an ordinary &self method
+    fun summarize(self: (&TicketView, &BarsView)) -> String { ... }
+
+    // mixed tuple, from above: at least one &mut slot, needs &mut Ticketing
+    fun reconcile(self: (&mut BarsView, &TicketView, &mut MetaView)) { ... }
+}
+```
+
+Allowed:
+
+```metel
+let mut t = Ticketing { golden_tickets: Token::new(), bars: vec![], metadata: Meta::new() };
+t.summarize();     // &Ticketing suffices — t is addressable, mut not required
+t.reconcile();     // t is mutably addressable, so the &mut-containing tuple is satisfied
+
+let shared: &Ticketing = &t;
+shared.summarize();   // all-shared tuple — an ordinary shared reference is enough
+```
+
+Disallowed:
+
+```metel
+let shared: &Ticketing = &t;
+// shared.reconcile();
+// ERROR: reconcile's self contains &mut BarsView and &mut MetaView slots, which need
+// &mut Ticketing for the whole receiver — `shared` is only a shared reference, the
+// same failure as calling an ordinary &mut self method through a &T (RFC-0044 §9's
+// own `(&counter).increment()` case), just now triggered by one slot out of several
+// rather than the receiver's only mode.
+
+fun make_ticketing() -> Ticketing { ... }
+// make_ticketing().reconcile();
+// ERROR: an rvalue has no stable address to borrow &mut from — RFC-0044 §9's
+// `make_counter().increment()` case, unchanged by this RFC, and triggered here for
+// the same reason it's triggered for an ordinary &mut self call.
+```
+
+Whether `make_ticketing().summarize()` (all-shared tuple, no `&mut` slot) is allowed
+depends entirely on whether an ordinary `&self` method may already be called on an
+rvalue — a question RFC-0044 §9 doesn't settle either (its own worked examples only
+cover `&mut self` on an rvalue). This RFC adds nothing to that question; the
+all-shared-tuple case inherits whatever RFC-0044 §9 already says, or eventually says,
+about `&self` there, unchanged.
+
 **Worked example: three views, to exercise "pairwise" for real instead of just for a
 pair.** Extend `Ticketing` with a third field:
 
