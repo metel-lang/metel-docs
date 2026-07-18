@@ -467,13 +467,48 @@ brand, intersecting field sets" case §4.4 already defines, just found while che
 one pair out of a larger tuple instead of a lone two-element case.
 
 **This is §3's reference-destructuring pattern, applied at the receiver boundary
-instead of a local `let`.** `self: (&mut BarsView, &TicketView)` and a hypothetical
-`let (bars, tickets): (&mut BarsView, &TicketView) = t;` inside an ordinary function
-describe the identical split — the only difference is *where* the split happens
-(implicitly at call entry vs. explicitly at a `let`). Naming the split once, in the
-receiver position, gives every caller the benefit with zero call-site syntax; the local
-`let` form (§3) stays the right tool when a specific caller wants to split a receiver it
-already holds, without declaring a whole method for it.
+instead of a local `let`** — worked out concretely, not just asserted, using §3's own
+bare-field-list syntax rather than a named-view tuple type:
+
+```metel
+fun reconcile_inline(t: &mut Ticketing) {
+    let &mut { bars, metadata } = t;   // §3's pattern — two disjoint mutable sub-borrows
+    if t.golden_tickets.matches(0) {   // `golden_tickets` was never named in the pattern,
+                                        // so `t` itself stays usable to reach it directly —
+                                        // ordinary field-sensitive borrowing (RFC-0071),
+                                        // no new syntax needed for the read-only slot
+        bars.push(Bar::default());
+        metadata.record_redemption();
+    }
+}
+```
+
+This reproduces §4.9's `reconcile` example's exact access pattern (exclusive on `bars`
+and `metadata`, shared on `golden_tickets`) with no mixed-mode pattern syntax at all —
+the trick is that §3's pattern only ever needs to *name* the fields being reborrowed
+exclusively; a field left out of the pattern is simply still reachable through the
+original binding, at whatever mode the checker can still justify. This is why §3 never
+needed its own per-field mutability annotation (§4.8's concern for named views): the
+"mixed mode" case falls out for free at the local level, because the un-destructured
+field always has a live whole-value binding (`t`) to fall back on.
+
+**That fallback doesn't exist inside a self-view-narrowed method.** Once `self` is
+declared `(&mut BarsView, &TicketView, &mut MetaView)`, the method body never sees an
+un-narrowed `Ticketing` at all — only the three declared slots (§4.10 enforces this by
+construction) — so there is no binding equivalent to `t` above to reach an
+un-destructured field through. This is the real reason §4.9's tuple form has to name
+every field it touches, including the read-only ones, while §3's local pattern doesn't:
+one is checked against a value the function still holds in full; the other replaces
+that value's visibility entirely once inside the method.
+
+`self: (&mut BarsView, &TicketView)` and `let &mut { bars, metadata } = t;` (plus
+ordinary continued access to whatever's left over) describe the same underlying split;
+the difference is *where* it happens (implicitly at call entry, reusable by every
+caller vs. explicitly at one `let`, local to one function) and *how much has to be
+named* (every slot vs. only the exclusively-borrowed ones). Naming the split once, in
+the receiver position, is what buys zero-call-site-syntax reuse; the local `let` form
+(§3) stays the right tool when a specific caller wants to split a receiver it already
+holds, without declaring a whole method for it.
 
 ### 4.10 Accuracy checking, not a declared-and-trusted annotation
 
