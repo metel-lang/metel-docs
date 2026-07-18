@@ -91,8 +91,12 @@ was found and reconciled, and where this session did most of its work.
   it to (no reopening of "no implicit coercion"). Framed as a second instance of
   RFC-0089 §3.1's existing bare-vs-branded tier-2 exception, not a new carve-out, and
   deliberately kept out of coherence/impl-resolution so it never becomes tier 3 "for
-  free." Plus `let &mut { a, b } = h;` for the ad hoc, one-off splits a named view isn't
-  worth declaring for. Amends RFC-0044. Paper-only pending RFC-0071 (0% implemented,
+  free." `self` may also be a tuple of independently-moded views (`self: (&mut
+  BarsView, &TicketView)`, unpacked via ordinary `Pattern::Tuple`) for Rust's mixed
+  shared/exclusive `&{bars, mut golden_tickets} self` case, with addressability
+  following the tightest slot. Plus `let &mut { a, b } = h;` for the ad hoc, one-off
+  splits a named view isn't worth declaring for. Amends RFC-0044. Paper-only pending
+  RFC-0071 (0% implemented,
   confirmed by source search) — inherits RFC-0091 §2.1's open aliasing question only for
   the already-partially-consumed-residual case, not the common intact-struct case. Also
   defines the minimal by-value struct-destructuring pattern Metel currently lacks

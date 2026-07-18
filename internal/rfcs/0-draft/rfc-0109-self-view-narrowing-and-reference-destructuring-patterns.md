@@ -26,6 +26,12 @@ target:
 > reopen RFC-0090 §8" argument from an assertion about *where* the syntax appears into
 > a mechanical consequence of brand equality. See §4.7 for how this reconciles with
 > §8's existing "tier 2 is bare by default" rule rather than violating it.
+>
+> **Revised again 2026-07-18, later still.** §4.8's "declare two views instead" escape
+> hatch is worked out concretely in new §4.9: `self` may be typed as a tuple of views
+> with independent `&`/`&mut` modes per slot, checked pairwise-disjoint via §4.4 and
+> unpacked in the body via ordinary `Pattern::Tuple` — no new grammar, no new
+> mutability axis, just composing mechanisms already specified elsewhere in this RFC.
 
 ## Summary
 
@@ -42,7 +48,9 @@ fields stay separately usable, without the caller writing any conversion:
   to one specific struct. **Self-view narrowing** — an inherent method's `self`
   parameter declared as `&TicketView`/`&mut TicketView` — is the primary application:
   checked by the compiler with no call-site syntax and no `ToRecord`/`FromRecord` tier
-  opt-in required.
+  opt-in required. `self` may also be a **tuple of views** with independently-moded
+  slots (§4.9) for mixed-mode access, Metel's answer to Rust's `&{bars, mut
+  golden_tickets} self`.
 - **Reference-destructuring patterns** — `let &mut { a, b } = h;` splits one `&mut`
   borrow into disjoint per-field sub-borrows within a function body, for the ad hoc
   cases a named view isn't worth declaring.
@@ -362,9 +370,60 @@ it names. This does give up some of Rust's expressiveness (a single narrowed met
 no longer simultaneously read one field and write another) but keeps the mechanism
 consistent with RFC-0044 rather than introducing a novel mutability model to serve one
 feature. §4.4's disjointness check is the intended escape hatch for the mixed-mode
-case: declare two views instead of one field list with mixed modes.
+case: declare two views instead of one field list with mixed modes — worked out
+concretely in §4.9.
 
-### 4.9 Accuracy checking, not a declared-and-trusted annotation
+### 4.9 Mixed-mode methods: a tuple-of-views `self`
+
+Worked out, §4.8's escape hatch is: `self` may be declared as a **tuple of views**,
+each with its own independent `&`/`&mut` mode, checked pairwise-disjoint via §4.4.
+
+```metel
+view BarsView for Ticketing { bars }
+view TicketView for Ticketing { golden_tickets }
+
+impl Ticketing {
+    fun redeem_and_log(self: (&mut BarsView, &TicketView)) {
+        let (bars, tickets) = self;    // ordinary Pattern::Tuple destructure — §2
+                                        // doesn't even need to introduce this, it's
+                                        // already in the AST
+        if tickets.golden_tickets.matches(0) {
+            bars.bars.push(Bar::default());
+        }
+    }
+}
+
+fun example(t: &mut Ticketing) {
+    t.redeem_and_log();   // ordinary call — no new syntax, same as any &mut self method
+}
+```
+
+This reuses three things that already exist rather than adding a fourth mutability
+axis: ordinary tuple types, §4.4's disjointness check (generalized from a pair to
+however many views a tuple names — every pairwise combination among the N elements must
+be disjoint, a mechanical extension of the same rule, not a new one), and
+`Pattern::Tuple`, already in the AST, for unpacking `self` in the body. No new grammar
+for mixed modes: each tuple slot stays uniformly `&View` or `&mut View`, exactly what
+§4.8 requires of any single view — the mixing happens *across* slots, never within one.
+
+**Addressability follows the tightest slot — the same rule Rust's own reborrowing
+already uses, not a new one.** A tuple self-declaration containing at least one `&mut
+ViewX` element can only be satisfied by a caller holding (or able to produce) `&mut
+Ticketing` for the whole receiver: you cannot manufacture new exclusive access out of a
+shared borrow, only subdivide an already-exclusive borrow into a mix of exclusive and
+shared sub-borrows. A tuple where every slot is `&ViewX` only ever needs `&Ticketing`.
+This extends RFC-0044 §9's addressability table by one row rather than replacing it.
+
+**This is §3's reference-destructuring pattern, applied at the receiver boundary
+instead of a local `let`.** `self: (&mut BarsView, &TicketView)` and a hypothetical
+`let (bars, tickets): (&mut BarsView, &TicketView) = t;` inside an ordinary function
+describe the identical split — the only difference is *where* the split happens
+(implicitly at call entry vs. explicitly at a `let`). Naming the split once, in the
+receiver position, gives every caller the benefit with zero call-site syntax; the local
+`let` form (§3) stays the right tool when a specific caller wants to split a receiver it
+already holds, without declaring a whole method for it.
+
+### 4.10 Accuracy checking, not a declared-and-trusted annotation
 
 A self-view is a soundness-relevant claim, not documentation — unlike RFC-0091 §1's
 `uses(fd)` (which that RFC already requires to be "checked (not just asserted) against
@@ -376,6 +435,14 @@ view's row — the same check RFC-0091 §1 already specifies for `uses(...)`, ap
 to a receiver's declared view instead of a `Drop` impl's declared field usage. Not a new
 checking philosophy, the same one applied a second place.
 
+For §4.9's tuple form, the same rule applies to the *union* of the tuple's rows, with
+one addition: an access through one slot's binding that only the *other* slot's row
+covers must also be rejected — `bars.golden_tickets` inside `redeem_and_log` above is
+an error even though `golden_tickets` is somewhere in scope (via `tickets`), because
+`bars`'s own declared type (`&mut BarsView`) doesn't include it. Each binding is
+checked against its own slot's row, not the union — the union only matters for deciding
+whether the *method as a whole* may exist against a given receiver.
+
 ---
 
 ## 5. Interaction with existing/adjacent RFCs
@@ -383,7 +450,10 @@ checking philosophy, the same one applied a second place.
 - **RFC-0044 (Explicit Receiver Semantics, implemented)** — amended. The three
   receiver forms (`self`, `&self`, `&mut self`) are unchanged; self-view narrowing adds
   an optional named-view refinement *to* `&self`/`&mut self`, it does not introduce a
-  fourth receiver kind. Precedent for amending RFC-0044 already exists (RFC-0067a).
+  fourth receiver kind. §4.9's tuple-of-views `self` extends §9's addressability table
+  by one row (a `&mut`-containing tuple requires `&mut` addressability of the whole
+  receiver) rather than replacing it. Precedent for amending RFC-0044 already exists
+  (RFC-0067a).
 - **RFC-0090 (Structural Records, draft)** — §4 reuses §9's `(row, brand)`
   representation directly, and §4.7 frames the view-carries-a-brand exception as a
   second instance of §8's existing fiat-`Linear` carve-out rather than a new one. §4.6
@@ -441,12 +511,14 @@ checking philosophy, the same one applied a second place.
 ## Open Questions
 
 1. ~~Named, reusable views~~ — **resolved by §4**: `view X for Struct { fields }`.
-2. **Two simultaneously narrowed method calls, not just one call plus a raw field
-   borrow.** §4.4's disjointness check covers this in principle (same brand, disjoint
-   rows), but whether the checker's call-lifetime reasoning composes correctly for
-   *overlapping*, not just sequential, calls needs the same disjoint-path reasoning §3
-   already assumes from RFC-0071 — asserted to fall out for free, not independently
-   verified here.
+2. **Multiple, separately-declared narrowed method calls with overlapping lifetimes** —
+   distinct from §4.9's resolved case (one method, mixed modes, split at call entry).
+   Here two *different* methods (`t.method_a()` returning something still held while
+   `t.method_b()` is also called) each narrowed to disjoint views. §4.4's disjointness
+   check covers the shape of this in principle (same brand, disjoint rows), but whether
+   the checker's call-lifetime reasoning composes correctly for genuinely *overlapping*,
+   not just sequential, calls needs the same disjoint-path reasoning §3 already assumes
+   from RFC-0071 — asserted to fall out for free, not independently verified here.
 3. **Where a `view X for Struct` declaration is allowed to live**, and its interaction
    with cross-module field visibility (RFC-0032). A view can only ever be declared
    against fields it can see, so it never *exposes* private fields to outside code —
@@ -465,6 +537,10 @@ checking philosophy, the same one applied a second place.
    semantics is not decided.
 6. **Whether a view's `for` target may itself be generic** (`view X for Container<T> {
    field }`) — not addressed; out of scope for this draft.
+7. **Whether tuple-of-views self-declarations (§4.9) should be allowed to nest, or mix
+   a named view with a raw field reference** (e.g. `self: (&mut BarsView, &Token)`
+   naming a field directly instead of via a one-field view) — not addressed; §4.9's
+   worked example only shows named views in every slot.
 
 ---
 
