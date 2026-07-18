@@ -431,6 +431,13 @@ fun example(h: &mut Handle) {
    unbroken worked examples — tracked as the primary blocker on treating Option C as
    ratified.
 
+> **Update 2026-07-18:** RFC-0109 (Self-View Narrowing and Reference-Destructuring
+> Patterns) reuses this RFC's row-shrink-on-partial-move representation directly for a
+> second purpose — checking whether a method's declared self-view is still satisfiable
+> against a receiver's current (possibly already-narrowed) row. That RFC's own §4.2
+> treats "can I call this method" and "has this field already been moved out" as the
+> same row-containment question, asked against the same representation.
+
 ---
 
 ## References
@@ -448,6 +455,9 @@ fun example(h: &mut Handle) {
   living design reports this RFC is extracted from
 - `reports/strategy/strategic-overview-2026-07-08.md` — classifies this thread as
   paced, paper-only-territory work, not gating anything
+- RFC-0109 (Self-View Narrowing and Reference-Destructuring Patterns) — reuses this
+  RFC's row-shrink representation for a second purpose; see the Open Questions update
+  above
 
 ---
 

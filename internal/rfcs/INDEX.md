@@ -80,6 +80,16 @@ was found and reconciled, and where this session did most of its work.
   argument `grammar.md` doesn't cover).
 - **RFC-0091** — Linear Records — per-field multiplicity, automatic-downgrade partial
   consumption, the `uses(fd)` Drop mechanism. Depends on RFC-0089 + RFC-0090.
+- **RFC-0109** *(draft, opened 2026-07-18)* — Self-View Narrowing and
+  Reference-Destructuring Patterns — closes the gap found comparing RFC-0090's records
+  against Rust's (unshipped) view-types proposal: `self: &record { field }` lets an
+  inherent method declare which sub-row it touches, checked with zero call-site syntax
+  (unlike `to_record_mut()`), plus `let &mut { a, b } = h;` for in-body disjoint splits.
+  Amends RFC-0044; reuses RFC-0091's row-shrink-on-partial-move representation directly
+  rather than adding a second tracker. Paper-only pending RFC-0071 (0% implemented,
+  confirmed by source search). Also defines the minimal by-value struct-destructuring
+  pattern Metel currently lacks entirely (`Pattern` in `src/ast/mod.rs` has no `Struct`
+  variant), since the reference form needs one to exist.
 - **RFC-0092** — Comptime Core — `type`-as-value, `typeinfo`, single-declaration
   `emit`, plus (as of the RFC-0055 reconciliation) the base `comptime let`/`fun`/`if`
   execution model, plus (as of the RFC-0083 fold, 2026-07-12) `pub` on `comptime let`
