@@ -1,47 +1,14 @@
 ---
-sidebar_position: 8
+sidebar_position: 10
 ---
 
 # Tutorial: Control Flow and Error Handling
 
 This tutorial covers loops, conditional expressions, optional values (`Perhaps<T>`), and error propagation (`Result<T, E>`). These are the tools you will reach for whenever a program needs to make decisions, repeat work, or handle failure.
 
-## If / else
+## If, while, for-in, and loop
 
-`if` can be used as a statement or as an expression. As a statement:
-
-```metel
-fun main() {
-    let score = 72;
-    if (score >= 90) {
-        println("A");
-    } else if (score >= 80) {
-        println("B");
-    } else if (score >= 70) {
-        println("C");
-    } else {
-        println("F");
-    }
-}
-```
-
-As an expression, both branches must produce the same type:
-
-```metel
-fun main() {
-    let x = 15;
-    let label = if (x % 2 == 0) { "even" } else { "odd" };
-println("${x} is ${label}");   // 15 is odd
-}
-```
-
-:::note
-Expression-Oriented Control Flow
-
-`if` is not only a statement. You can use it directly to compute a value, as long as every branch agrees on the type.
-:::
-
-Braceless bodies are allowed for single expressions:
+`if`/`else`, `while`, and `for-in` work the way they do in most languages, with two notable extras. `if` doubles as an expression — both branches must agree on a type — and allows a braceless body for a single expression:
 
 ```metel
 fun clamp(value: i64, lo: i64, hi: i64) -> i64 {
@@ -49,58 +16,17 @@ fun clamp(value: i64, lo: i64, hi: i64) -> i64 {
 }
 
 fun main() {
-    println(clamp(3, 5, 10));    // 5
-    println(clamp(7, 5, 10));    // 7
     println(clamp(15, 5, 10));   // 10
-}
-```
-
-## While
-
-`while` repeats a block as long as a condition is true:
-
-```metel
-fun main() {
-    var n = 1;
-    var product = 1;
-    while (n <= 5) {
-        product *= n;
-        n += 1;
-    }
-    println("5! = ${product}");   // 5! = 120
-}
-```
-
-## For-in
-
-`for-in` iterates over any collection. Arrays and integer ranges both work:
-
-```metel
-fun main() {
-    let words = ["apple", "banana", "cherry"];
-    for (let word in words) {
-        println(word);
-    }
 
     var sum = 0;
-    for (let i in 1..=10) {
+    for (let i in 1..=10) {   // ..= is inclusive; .. is exclusive
         sum += i;
     }
     println("1 + 2 + … + 10 = ${sum}");   // 55
 }
 ```
 
-`..` produces an exclusive range (`0..5` yields 0, 1, 2, 3, 4). `..=` is inclusive (`0..=5` yields 0 through 5).
-
-:::tip
-Check The Range Boundary First
-
-If a loop is off by one, confirm whether you wanted `..` or `..=` before looking for a deeper bug.
-:::
-
-## Loop with break
-
-`loop` runs indefinitely. `break expr` exits the loop and produces a value:
+`loop` runs indefinitely; `break expr` exits it and produces a value, which is what makes `loop` useful for a search that needs to bail out early with a result:
 
 ```metel
 fun first_over(threshold: i64, values: i64[]) -> Perhaps<i64> {
@@ -117,8 +43,7 @@ fun first_over(threshold: i64, values: i64[]) -> Perhaps<i64> {
 }
 
 fun main() {
-    let data = [3, 1, 7, 2, 9, 4];
-    let result = first_over(6, data);
+    let result = first_over(6, [3, 1, 7, 2, 9, 4]);
     match result {
         Perhaps::Some { value } => println("first over 6: ${value}"),   // 7
         Perhaps::None => println("none found"),
@@ -269,17 +194,13 @@ Start with an explicit `match` if the flow is still confusing. Once the success/
 
 ## Error coercion with From
 
-When a function calls multiple fallible helpers that return different error types, you can unify them using the `From` aspect:
+When a function calls multiple fallible helpers that return different error types, `?` can unify them automatically via the `From` aspect from the [Aspects](aspects) tutorial. Define `extend AppError: From<SomeOtherError>` once, and every `?` on a `Result<_, SomeOtherError>` inside a function returning `Result<_, AppError>` converts through it for free.
 
 ```metel
 struct IoError    { msg: String }
 struct ParseError { msg: String }
 
 struct AppError { msg: String }
-
-aspect From<T> {
-    fun from(value: T) -> Self;
-}
 
 extend AppError: From<IoError> {
     fun from(value: IoError) -> AppError {
@@ -351,6 +272,19 @@ Output:
 0: zero
 4: positive even
 7: positive odd
+```
+
+`match` also destructures tuples directly, binding or ignoring each element by position:
+
+```metel
+fun describe(point: (i64, i64)) -> String {
+    match point {
+        (0, 0) => "origin",
+        (x, 0) => "on the x-axis at ${x}",
+        (0, y) => "on the y-axis at ${y}",
+        (x, y) => "at (${x}, ${y})",
+    }
+}
 ```
 
 ## A complete example: input validation pipeline
@@ -440,6 +374,6 @@ ok: Ada, age 30
 - `Perhaps<T>` represents an optional value; always handle both `Some` and `None`.
 - `Result<T, E>` represents a recoverable error; `?` propagates errors automatically.
 - `From<E>` lets `?` coerce between error types without explicit conversions.
-- `match` guards (`if cond`) add extra conditions to individual arms.
+- `match` guards (`if cond`) add extra conditions to individual arms; tuples destructure by position.
 
-From here, explore the [language reference](../../reference/spec.md) for the full detail on any of these features, or read the [error catalog](../../reference/error-codes.md) for the complete list of compile-time errors.
+Next: [Modules](modules) — splitting a program across files, imports, and visibility.

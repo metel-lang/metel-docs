@@ -1,0 +1,124 @@
+---
+sidebar_position: 11
+---
+
+# Tutorial: Modules
+
+Every previous tutorial has fit in one file. This tutorial covers what happens once a program outgrows that: how files become modules, how to import names across them, and how visibility controls what one module exposes to another.
+
+## Every file is a module
+
+There is no `mod` declaration. Every `.mtl` file is a module, and `::` in a path maps directly to `/` in the filesystem:
+
+```
+src/
+  main.mtl        ← the root module
+  parser.mtl      ← import parser::Ast;  (from main.mtl)
+  parser/
+    ast.mtl       ← import parser::ast::Ast;
+```
+
+The file you pass to the toolchain is the root module, addressed as `root::` from anywhere in the program.
+
+## Importing names
+
+`import` brings names from another module into scope:
+
+```metel
+// src/lexer.mtl
+public struct Token { value: i64 }
+```
+
+```metel
+// src/main.mtl
+import lexer::Token;
+
+fun main() {
+    let t = Token { value: 42 };
+    println(t.value);   // 42
+}
+```
+
+A handful of import forms cover the common cases:
+
+| Form | Effect |
+|---|---|
+| `import path::Name;` | imports `Name` |
+| `import path::Name as Alias;` | imports `Name` under a different local name |
+| `import path::{A, B};` | imports several names at once |
+| `import path::*;` | imports every public name from the module |
+| `import path::module;` | imports the module itself as a handle; use `module::item` |
+
+`import` (and `export`, below) must appear at the top of the file, before any other declaration.
+
+## Visibility
+
+Declarations are module-private by default — invisible outside the file that declares them — until marked `public`:
+
+```metel
+// src/parser.mtl
+public struct Token { public kind: i64, span: i64 }
+struct InternalState { count: i64 }   // not importable elsewhere
+
+public fun parse(tokens: Token[]) -> i64 { return tokens.len(); }
+fun helper(token: Token) -> boolean { return token.kind == 0; }   // module-private
+```
+
+`public` applies independently to a struct and to each of its fields — `Token` above is importable, `token.kind` is readable from outside the module, but `token.span` is not. This is also why constructing a struct with any private field requires being inside its declaring module: an outside caller can't name every field the literal syntax requires.
+
+:::note
+Private By Default
+
+If a name compiles inside its own file but fails to resolve from an importer, check for a missing `public` before looking for anything more complicated.
+:::
+
+## Re-exporting with `export`
+
+A module can forward names from its own submodules into its own public surface with `export`. This is how a directory of files presents one flat namespace to the outside:
+
+```
+src/
+  main.mtl        ← import parser::{Ast, Token};
+  parser.mtl      ← export ast::Ast; export lexer::Token;
+  parser/
+    ast.mtl       ← public struct Ast { ... }
+  lexer.mtl       ← public struct Token { ... }
+```
+
+```metel
+// src/parser.mtl — the facade module for the parser namespace
+export ast::Ast;
+export lexer::Token;
+```
+
+From `main.mtl`'s point of view, `import parser::{Ast, Token}` works exactly as if both structs were declared directly in `parser.mtl` — re-exported names are indistinguishable from names defined in the re-exporting module.
+
+`public` and `export` answer different questions: `public` marks a declaration as visible outside its own file; `export` reaches into a submodule and forwards one of its already-public names into the current module's own public surface.
+
+## std::core needs no import
+
+Every module automatically has `std::core` in scope — that's why `Perhaps`, `Result`, and the built-ins have never needed an `import` in any earlier tutorial:
+
+```metel
+// No import needed — Perhaps is always in scope
+fun maybe_parse(s: String) -> Perhaps<i64> {
+    if (s == "1") { return Perhaps::Some { value: 1 }; }
+    return Perhaps::None;
+}
+```
+
+You can still write `import std::core::Perhaps;` explicitly — it has no effect beyond documenting the dependency, since the name was already in scope. A local declaration or an explicit import that reuses one of these names silently takes priority over the automatic one.
+
+## Single-file programs stay valid
+
+None of this is mandatory. A `.mtl` file with no `import` or `export` declarations — every program in the earlier tutorials — is a complete program on its own. Modules are there for when a program grows past one file, not a tax on every program.
+
+## What you learned
+
+- Every `.mtl` file is a module; `::` in a path maps to `/` in the filesystem.
+- `import path::Name;` (and its `as`, `{...}`, and `*` variants) brings names into scope.
+- Declarations and struct fields are module-private unless marked `public`.
+- `export path::Name;` re-exports an already-public name from a submodule into the current module's own public surface.
+- `std::core` is auto-imported everywhere; no program is required to use modules at all.
+
+Next: [The Standard Library](standard-library) — a tour of what `std::core` and the host modules actually provide.

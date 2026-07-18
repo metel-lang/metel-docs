@@ -1,12 +1,13 @@
 ---
-sidebar_position: 9
+sidebar_position: 12
 ---
 
 # Tutorial: The Standard Library
 
 Metel ships a small standard library. The core types and their methods are
 always available; a handful of host modules (files, environment, processes) are
-imported explicitly. This tutorial tours the surface you will reach for most
+imported explicitly — see the [Modules](modules) tutorial for how `import`
+works in general. This tutorial tours the surface you will reach for most
 often.
 
 ## Lists
@@ -151,5 +152,5 @@ failure to launch the command is an `Err`.
 
 Everything under "Lists", "Perhaps and Result", and "Strings" is in `std::core`
 and needs no import. The host modules — `std::env`, `std::fs`, `std::process` —
-must be imported explicitly. See the [Runtime reference](../../reference/spec/runtime.md)
-for the complete signatures.
+must be imported explicitly, the same as any other module. See the
+[Runtime reference](../../reference/spec/runtime.md) for the complete signatures.

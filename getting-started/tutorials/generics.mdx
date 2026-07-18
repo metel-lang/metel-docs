@@ -1,0 +1,137 @@
+---
+sidebar_position: 6
+---
+
+# Tutorial: Generics
+
+Structs, enums, and functions can all be parameterized over a type with `<T>`. This tutorial covers writing your own generic code — the turbofish syntax for calling it explicitly was already introduced in the previous tutorial.
+
+## Generic functions
+
+A type parameter in angle brackets after the function name can be used anywhere a type is expected in the signature and body:
+
+```metel
+fun first<T>(items: T[]) -> Perhaps<T> {
+    if (items.len() == 0) {
+        return Perhaps::None;
+    }
+    return Perhaps::Some { value: items[0u64] };
+}
+
+fun main() {
+    let names = ["Ada", "Alan", "Grace"];
+    match first(names) {
+        Perhaps::Some { value } => println(value),   // Ada
+        Perhaps::None => println("empty"),
+    }
+
+    let empty: i64[] = [];
+    match first(empty) {
+        Perhaps::Some { value } => println(value),
+        Perhaps::None => println("empty"),           // empty
+    }
+}
+```
+
+`T` is inferred from the argument at each call site — `first(names)` instantiates `T = String`, `first(empty)` instantiates `T = i64`, and neither call site needs to say so.
+
+:::note
+One Definition, Many Types
+
+`first<T>` is written once. The compiler generates the right behavior for whichever `T` a given call site needs — you are not writing `first_string`, `first_i64`, and so on by hand.
+:::
+
+## Multiple type parameters
+
+A function or type can take more than one parameter:
+
+```metel
+fun swap<A, B>(pair: (A, B)) -> (B, A) {
+    return (pair.1, pair.0);
+}
+
+fun main() {
+    let p = (1, "one");
+    let q = swap(p);
+    println("${q.0}, ${q.1}");   // one, 1
+}
+```
+
+Each parameter is independent — `A` and `B` can be instantiated with the same concrete type or different ones.
+
+## Generic structs
+
+The same `<T>` syntax parameterizes a struct's fields:
+
+```metel
+struct Stack<T> {
+    items: T[],
+}
+
+extend Stack<T> {
+    fun peek(self) -> Perhaps<T> {
+        if (self.items.len() == 0) {
+            return Perhaps::None;
+        }
+        return Perhaps::Some { value: self.items[self.items.len() - 1] };
+    }
+}
+
+fun main() {
+    let numbers = Stack { items: [1, 2, 3] };
+    match numbers.peek() {
+        Perhaps::Some { value } => println(value),   // 3
+        Perhaps::None => println("empty"),
+    }
+}
+```
+
+`extend Stack<T>` reuses the same parameter name the struct itself declared — the methods inside are written once and apply to every instantiation of `Stack<T>`.
+
+A struct can have more than one type parameter, exactly like a function:
+
+```metel
+struct Pair<A, B> {
+    first: A,
+    second: B,
+}
+
+fun main() {
+    let p = Pair { first: 1, second: "one" };
+    println("${p.first} / ${p.second}");   // 1 / one
+}
+```
+
+## Generic enums
+
+Enums generalize the same way. `Perhaps<T>` and `Result<T, E>`, which you have already been using, are themselves ordinary generic enums defined in the standard library — there is nothing special about them syntactically:
+
+```metel
+enum Tree<T> {
+    Leaf,
+    Node { value: T, left: Tree<T>, right: Tree<T> },
+}
+```
+
+## Constraining a type parameter
+
+An unconstrained `T` supports only what every type supports — you cannot call `.print()` or `.compare(other)` on a bare `T`, because the compiler has no guarantee any particular `T` has those methods. Adding `: AspectName` after a type parameter constrains it, and unlocks the aspect's methods inside the function body:
+
+```metel
+fun print_twice<T: Printable>(value: T) {
+    value.print();
+    value.print();
+}
+```
+
+This is a preview — the next tutorial, [Aspects](aspects), covers what an aspect is, how to define one, and how to implement it for your own types. Bounds are the main reason generic code reaches for aspects at all: without a bound, a generic function can only move values around, not call methods on them.
+
+## What you learned
+
+- `<T>` parameterizes functions, structs, and enums over a type.
+- Type parameters are usually inferred from call-site arguments; turbofish (`::<T>`) makes them explicit when needed.
+- A generic struct's `extend` block must introduce the same type parameters as the struct.
+- `Perhaps<T>` and `Result<T, E>` are ordinary generic enums, not special syntax.
+- `<T: Aspect>` constrains a type parameter so its methods become callable — the subject of the next tutorial.
+
+Next: [Aspects](aspects) — Metel's interface mechanism, and how it powers constrained generics.
