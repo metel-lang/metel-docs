@@ -43,7 +43,7 @@ The project started as **Yoloscript**, with one deliberately silly objective: a 
 
 The next iteration tried to be a mix of Rust and Go, and I named it **Gust** — which felt clever for about a week, until I realized I was nowhere near the first person to think "a Rust/Go hybrid should be called Gust." A fair number of other projects had already landed on the same name. That was a small crisis: I'd already grown attached to the wind theme Gust had put in my head, and I wasn't ready to let it go.
 
-I landed on **Metel** — Russian for "snowstorm," and the title of a poem by Sergei Yesenin, one of my father's favorite poets. It kept the wind, carried more weight than a pun, and it's the one that stuck.
+After a bit of wandering, I landed on **Metel** — Russian for "snowstorm," and the title of a poem by Sergei Yesenin, one of my father's favorite poets. It kept the wind, carried more weight than a pun, and it's the one that stuck.
 
 ## What Already Exists
 
@@ -138,7 +138,9 @@ This is where Metel is closest to an open problem. The same need — letting a f
 
 **Brands** are already decided as a piece of Metel — a single mechanism for tracking allocator, lifetime, and capability identity, in the spirit of [GhostCell](https://plv.mpi-sws.org/rustbelt/ghostcell/) and Scala's [capture checking](https://docs.scala-lang.org/scala3/reference/experimental/cc.html) — **it is the details that are still unsettled, not whether they belong**.
 
-Less committed than that are [linear types](https://arxiv.org/abs/1710.09756) (use *exactly* once, stricter than Rust's affine ownership, as shipped in [Austral](https://borretti.me/article/introducing-austral)) and [algebraic effects and handlers](https://arxiv.org/abs/1312.1399) in the style of [Koka](https://koka-lang.github.io/koka/doc/index.html). Both have strong prior art; **the open question for these two is whether they belong in Metel at all**, and if so, whether they fit its memory model cleanly rather than sitting beside it as an unrelated feature. I will write all three up separately as they firm up.
+**Comptime** is further along than either, on paper: two draft RFCs already specify it in Zig's image — compile-time execution of ordinary Metel code, staged by the same evaluator, rather than a separate macro language with its own grammar and hygiene rules. The interesting bet in those drafts is that generalizing a single primitive — `emit`, which lets comptime code register a declaration or splice an expression back at its own call site — plus exposing Metel's own parser as an ordinary comptime-callable function, **closes most of what a macro system is normally needed for**: derive, repetitive declaration generation, compile-time-validated embedded DSLs, even Rust's `matches!`-style pattern macros. No token-stream grammar, no macro-invocation syntax, no hygiene system to design. It is still draft and deferred to after the core language settles.
+
+Less committed than either are [linear types](https://arxiv.org/abs/1710.09756) (use *exactly* once, stricter than Rust's affine ownership, as shipped in [Austral](https://borretti.me/article/introducing-austral)) and [algebraic effects and handlers](https://arxiv.org/abs/1312.1399) in the style of [Koka](https://koka-lang.github.io/koka/doc/index.html). Both have strong prior art; **the open question for these two is whether they belong in Metel at all**, and if so, whether they fit its memory model cleanly rather than sitting beside it as an unrelated feature. I will write these up separately as they firm up.
 
 ## Why Build It?
 
