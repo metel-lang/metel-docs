@@ -8,43 +8,36 @@ tags: [language-design, metel, roadmap]
 
 # Introducing Metel
 
-> **DRAFT — not final.** This post is a work in progress and may change before it is considered published.
+You surely know as well as I do that the world does not need another amateur C++/Rust/Zig/Go/Odin clone, so the honest introduction is this: I started building Metel because I wanted to build a programming language.
 
-We probably agree on the fact that the world does not need another amateur C++/Rust/Zig/Go/Odin clone, so the honest introduction is this: I started building Metel because I wanted to build a programming language.
+At first, the goal was small and personal: a statically typed, Rust-influenced interpreted language with a garbage collector, built to learn rather than to ship.
 
-At first, the goal was small and personal: a statically typed, Rust-influenced interpreted language with a garbage collector. I wanted to learn, and I wanted to build something that felt like a real language rather than a parser demo.
+That version did not stay small for long. Once the basics existed, I started reading more seriously about memory safety, type systems, ownership, regions, linear capabilities, structural typing, and brand-like identity systems — Federico Bruzzone's [A friendly tour of substructural, uniqueness, ownership and capabilities types (and more)](https://federicobruzzone.github.io/posts/eter/a-friendly-tour-of-substructural-uniqueness-ownership-and-capabilities-types-and-more.html) was one of the pieces that pushed me deeper in that direction.
 
-That version did not stay small for long.
+What struck me reading that material is how much of it never left academia or research prototypes: real, sound ideas — some decades old — that mainstream systems languages never adopted, either because they arrived too early, or because a language design incompatible with them already won. And often if they were adopted, they were adopted in a way that I did not find satisfying.
 
-Once the basics existed, I started reading more seriously about memory safety, type systems, ownership, regions, linear capabilities, structural typing, and brand-like identity systems. The project slowly stopped being "my small Rust-like interpreter" and became a more interesting question:
-
-What if I tried to combine several well-researched ideas into a language with its own point of view?
-
-That question is what Metel is now.
+The project slowly stopped being "my small Rust-like interpreter" and became a different question: what if a language deliberately went back for that unclaimed research, current publications included, and tried to combine it into something with its own point of view? That question is what Metel is now.
 
 {/* truncate */}
 
 ## The Shape Of The Project
 
-Metel is an exploratory systems language. It is not trying to beat Rust, Zig, or C++ at their own game, and it is not production-ready. The project is an attempt to design a language around a few bets that I find worth taking seriously:
+Metel is a personal project. There is no team, no company, and no roadmap driven by anything other than my own curiosity — I work on it because I want to know whether these ideas actually fit together, not because it needs to ship or win adoption. It is not trying to beat Rust, Zig, or C++ at their own game, and it is not production-ready. It is built around a few bets I take seriously:
 
 - Allocation should be explicit when it matters;
 - Resource usage should be visible in the type system;
 - Ordinary code should still read like ordinary modern code;
-- Lifetime errors should name real program bindings, not abstract `'a` variables;
+- Lifetimes should be easy to understand and to reason about — for now that means treating bindings themselves as lifetime anchors;
 - Ownership should eventually work over structured values, not only whole values.
 
-Earlier, I thought of Metel mainly as "an allocator-aware language." That is still part of its identity, but the better description is broader. The current design treats allocators as the first major use case of a lower-level substrate: structural shape, field-sensitive ownership, brand-like identity, and lifetimes named after actual bindings.
+I used to describe Metel mainly as "an allocator-aware language." The better description now is broader: allocators are the first major use case of a lower-level substrate — structural shape, field-sensitive ownership, brand-like identity, and lifetimes named after actual bindings. That substrate is more than one post can cover honestly, so I am starting a series: this first post gives the overall shape of the project and a first look at the piece I currently find most worth pursuing, **records** and the field-sensitive ownership they are meant to unlock, with a dedicated post to follow once that design is further along.
 
-In other words, allocators are not the whole story. They are where the story starts to get interesting.
+One thing I want to be explicit about upfront: Metel is heavily AI-assisted. The implementation of the interpreter especially has been built with a lot of help from AI tools.
+The design work however, while also AI-assisted, is very carefully curated and reviewed in detail. Whether that puts the result closer to careful engineering or vibe-coded slop, I'll let you be the judge - but I'd like to think the former.
 
 ## What Already Exists
 
-Metel is not just notes in a folder anymore. There is a real interpreter, a module system, generics, exhaustive pattern matching, a standard library with `Perhaps`, `Result`, `List`, strings, host-backed `fs`/`env`/`process` modules, and a growing specification and RFC process.
-
-Recent work has also moved a large batch of type-system and surface-language ideas into the implementation: negative bounds and impls, associated types, bottom type `!`, structural aspect bounds, coherence checks, `return`/`break`/`continue` as expressions, and the newer `public`/`var`/`extend` surface syntax.
-
-For example, this is ordinary Metel today:
+Metel is already in a pretty good shape. There is a real interpreter, a module system, generics, aspects, exhaustive pattern matching, a standard library with `Perhaps`, `Result`, `List`, strings, host-backed `fs`/`env`/`process` modules, and a growing specification and RFC process. Recent work has also moved a large batch of type-system and surface-language ideas into the implementation: negative bounds and impls, associated types, bottom type `!`, structural aspect bounds, coherence checks, `return`/`break`/`continue` as expressions, and the newer `public`/`var`/`extend` surface syntax. For example, this is ordinary Metel today:
 
 ```metel
 fun main() -> i64 {
@@ -60,92 +53,23 @@ fun main() -> i64 {
 }
 ```
 
-Aspects and generics are also part of that "ordinary" surface. An aspect names a capability a type can promise to provide, `extend Type: Aspect` supplies the implementation, and a bound like `<T: Printable>` lets a generic function rely on that capability instead of one concrete type:
+The deepest ownership and allocation model is still ahead of the runtime. The interpreter is a feedback mechanism, not a finished semantic engine, but it is enough machinery for syntax, modules, generics, aspects, and standard-library code to push back on design ideas before they are written down in stone.
 
-```metel
-aspect Printable {
-    fun print(self);
-}
+That means that all of the ideas described in this article are subject to change. Any feedback on them is welcome and may very well make me change my mind on some things.
 
-struct Point {
-    x: f64,
-    y: f64,
-}
+## The Foundation: Allocators And Lifetimes
 
-extend Point: Printable {
-    fun print(self) {
-        println("(${self.x}, ${self.y})");
-    }
-}
+Two questions that many systems languages tie tightly together, Metel keeps apart: where does a value live, and for how long is a reference to it valid? Allocators answer the first, lifetime anchors answer the second. Both are background for the main event, so I will keep them short.
 
-fun print_all<T: Printable>(items: T[]) {
-    for (let item in items) {
-        item.print();
-    }
-}
-
-fun main() {
-    let points = [Point { x: 0.0, y: 0.0 }, Point { x: 3.0, y: 4.0 }];
-    print_all(points);
-}
-```
-
-`print_all` never mentions `Point`. It only asks the compiler to guarantee that whatever type it receives can `print()`, and that guarantee is checked at the call site, not discovered at runtime.
-
-The deepest ownership and allocation model is still ahead of the runtime. The interpreter is a feedback mechanism, not a finished semantic engine. That gap is real, and it is the main discipline problem in the project: not inventing endlessly, but deciding what is settled enough to build.
-
-That also makes the interpreter useful in a very specific way. It is not proof that the whole design works, but it is enough machinery for syntax, modules, generics, aspects, and standard-library code to push back on design ideas before they become too abstract.
-
-One more thing I want to be explicit about: Metel is heavily AI-assisted. The implementation of the interpreter especially has been built with a lot of help from AI tools. The design work is also AI-assisted, but in a different way: the ideas, priorities, trade-offs, and final decisions are personal and carefully curated. AI has been useful as a collaborator, critic, and accelerator, not as a substitute for deciding what Metel should be.
-
-## The Ideas I Care About
-
-The part of Metel I currently find most worth pursuing is the separation between two questions that many systems languages tie tightly together:
-
-1. Where does a value live?
-2. For how long is a reference to it valid?
-
-In Metel's design, allocators answer the first question. Lifetime anchors answer the second. Brands may eventually answer a third: which specific resource, region, or cell family are we talking about?
-
-### Allocators
-
-The allocator side of the design makes storage an explicit program-level choice. [Zig](https://ziglang.org/documentation/master/#Choosing-an-Allocator) and [Odin](https://odin-lang.org/docs/overview/#allocators) already make allocator-passing a normal part of programming, and Rust has an [`Allocator` API](https://doc.rust-lang.org/std/alloc/trait.Allocator.html). Metel's bet is slightly different: allocator identity should be visible in the language's own type and syntax rules, not only in library APIs.
-
-That matters because allocator choice is often part of an invariant. A value may live in a bump arena, a long-lived heap, or a scoped temporary region, and APIs sometimes need to preserve that fact rather than merely receive an allocator argument by convention.
+**Allocators** make storage an explicit program-level choice. [Zig](https://ziglang.org/documentation/master/#Choosing-an-Allocator) and [Odin](https://odin-lang.org/docs/overview/#allocators) already make allocator-passing normal, and Rust has an experimental [`Allocator` API](https://doc.rust-lang.org/std/alloc/trait.Allocator.html). Metel's bet is that allocator identity should be visible in the language's own type and syntax rules, not only in library APIs, because allocator choice is often part of an invariant a value's type should preserve:
 
 ```metel
 let user = @Heap User { name: "Ada" };
-```
 
-If `Heap` is the only allocator in scope, the common case can stay terse:
-
-```metel
-import std::mem::Heap;
-
-let user1 = @User { name: "Ada" };
-let user2 = @User { name: "Alan" };
-```
-
-Scoped allocators would make the same idea local:
-
-```metel
-BumpAlloc::scoped((@a) -> {
-    let node = @Node { value: 42 }; // `a` is the only allocator in scope
-    process(&node);
-});
-```
-
-The important point is not the exact spelling. It is that a function should be able to preserve storage in its signature instead of silently erasing it:
-
-```metel
 fun identity(value: @Node) -> @Node { value }
 ```
 
-That is the small version of the bigger goal: memory-safe allocator-aware programming where storage is explicit enough for the checker to reason about, but not so noisy that ordinary heap allocation becomes ceremony.
-
-### Lifetimes
-
-Lifetimes are not a new idea. [Rust](https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html) is the obvious reference point, and [Move](https://arxiv.org/abs/2205.05181) also has a static reference-safety model. The Metel direction is to use real binding handles where possible instead of abstract lifetime parameters everywhere.
+**Lifetimes** in Metel anchor to a binding that already exists in the program, rather than a fresh abstract variable (`'a`). The idea descends from Tofte and Talpin's [region calculus](https://dl.acm.org/doi/10.1145/174675.177855) and [Cyclone](https://cyclone.thelanguage.org/wiki/Introduction%20to%20Regions/)'s named regions, the direct ancestor of [Rust](https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html)'s lifetimes; what Metel varies is only the spelling:
 
 ```metel
 fun first(x: &Str, y: &Str) -> &x Str {
@@ -153,21 +77,16 @@ fun first(x: &Str, y: &Str) -> &x Str {
 }
 ```
 
-The name in the return type refers to a real binding already present in the function. The signature says directly that the result is tied to `x`.
+The name in the return type refers to a real binding in the function. The common case should still avoid annotation — treat this as an ergonomic variant on old machinery, not a new capability.
 
-The common case should still avoid annotation. A method like `as_slice(&self) -> &Byte[]` should not need to invent a lifetime name just to say "the result comes from `self`." The explicit form is for the cases where there is real ambiguity.
+## Records And Field-Sensitive Ownership
 
-This is design syntax, not implemented surface syntax today, and the exact spelling may still change. The accepted direction is the important part: lifetime anchors should be names from the program, not invented variables that only exist in the type signature.
+This is the first post in a series, and records are the idea I want to introduce here rather than fully argue for — they get a dedicated, more in-depth post of their own, because they are the part of Metel I find most worth pursuing.
+They may let nominal and structural typing coexist without choosing one as the whole language, and they are the closest Metel gets to a genuinely open problem rather than re-treading solved ground. What follows is the shape of the idea, not the full case for it.
 
-### Records
+Purely structural systems are powerful — [TypeScript](https://www.typescriptlang.org/docs/handbook/type-compatibility.html) is built around structural compatibility, and [PureScript](https://book.purescript.org/chapter3.html) has records as a standard feature — but structural compatibility can also blur distinctions that matter. That is one reason TypeScript developers reach for [branded types](https://www.learningtypescript.com/articles/branded-types) and other [nominal-typing patterns](https://www.totaltypescript.com/workshops/advanced-typescript-patterns/branded-types/what-is-a-branded-type).
 
-Records are interesting to me because they may let nominal and structural typing coexist without choosing one as the whole language.
-
-Purely structural systems are powerful. [TypeScript](https://www.typescriptlang.org/docs/handbook/type-compatibility.html) is built around structural compatibility, and [PureScript](https://book.purescript.org/chapter3.html) has records as a standard feature. But structural compatibility can also blur distinctions that are meaningful in a program. If everything matches because the shape lines up, it becomes easier to frankenstein together values that should remain conceptually distinct. That is one reason TypeScript developers reach for [branded types](https://www.learningtypescript.com/articles/branded-types) and other [nominal-typing patterns](https://www.totaltypescript.com/workshops/advanced-typescript-patterns/branded-types/what-is-a-branded-type).
-
-What I want to explore in Metel is narrower: ordinary nominal types, plus an explicit structural `record` view when the checker needs to reason about fields.
-
-The bridge would be opt-in. A nominal type can derive `ToRecord` to expose its fields as a structural row, and `FromRecord` to allow reconstruction from the full row again:
+What I want to explore in Metel is narrower: ordinary nominal types, plus an explicit structural `record` view when the checker needs to reason about fields. The bridge would be opt-in — a nominal type can derive `ToRecord` to expose its fields as a structural row, and `FromRecord` to allow reconstruction from the full row again:
 
 ```metel
 @derive(ToRecord, FromRecord)
@@ -181,9 +100,9 @@ let row: record { fd: i32, label: String } = handle.to_record();
 let handle2 = Handle::from_record(row);
 ```
 
-Those two aspects are deliberately separate. Reading a type into a record is not the same promise as reconstructing the type from arbitrary field values; types with constructor-checked invariants may want `ToRecord` without derived `FromRecord`.
+Those two aspects are deliberately separate: types with constructor-checked invariants may want `ToRecord` without derived `FromRecord`.
 
-The real use case is partial consumption. Sometimes a program needs to say: this field is gone, these fields are still here.
+The real use case is partial consumption — a program needs to say: this field is gone, these fields are still here.
 
 ```metel
 @derive(ToRecord, FromRecord)
@@ -201,40 +120,36 @@ fun drop_value<T>(cell: &var RcBox<T>) {
 }
 ```
 
-This is a design sketch, not executable Metel. `to_record_mut()` would come from `ToRecord`; `from_record_mut()` would only be available again once the row has been restored to the full `RcBox<T>` shape. The motivating case is `Rc`/`Arc`-style teardown: the payload may need to be destroyed when the last strong reference disappears, while the allocation and counters remain alive until weak references are gone too. In Rust, this is exactly the kind of internal logic that tends to involve `unsafe` and `ManuallyDrop`. A field-sensitive record view might let the type system model that transition directly.
+This is a design sketch, not executable Metel. The motivating case is `Rc`/`Arc`-style teardown: the payload may need to be destroyed when the last strong reference disappears, while the allocation and counters remain alive until weak references are gone too — exactly the kind of logic visible in the standard library's actual [`RcInner`/`Rc::drop_slow`](https://doc.rust-lang.org/src/alloc/rc.rs.html#284-288) and [`ArcInner`/`Arc::drop_slow`](https://doc.rust-lang.org/src/alloc/sync.rs.html#387-391) layouts. The nominal type remains the normal interface, and the structural view appears only when the program deliberately takes a value apart.
 
-That is the part I find more interesting than "structural typing" on its own. The nominal type remains the normal interface. The structural view appears only when the program deliberately takes a value apart and the checker needs vocabulary for what remains.
+This is where Metel is closest to an open problem. The same need — letting a function say "I only touch these fields" so that a partial move or a disjoint borrow can type-check — is exactly what Rust compiler team member Niko Matsakis's ["view types" idea](https://smallcultfollowing.com/babysteps/blog/2021/11/05/view-types/) is reaching for. It is a personal exploration on his blog, not an accepted RFC or a language feature Rust has committed to, but it names the same open problem Rust's affine-only field-sensitivity keeps running into. Metel's bet is to reach it through an explicit nominal-to-structural bridge rather than by annotating references — a different approach to an acknowledged-hard problem, not a demonstrated improvement over it.
 
-### Brands
+## Other Directions I'm Weighing
 
-Brands are less designed than allocators and lifetimes, but they seem to fill an important identity-tracking gap.
+**Brands** are already decided as a piece of Metel — a single mechanism for tracking allocator, lifetime, and capability identity, in the spirit of [GhostCell](https://plv.mpi-sws.org/rustbelt/ghostcell/) and Scala's [capture checking](https://docs.scala-lang.org/scala3/reference/experimental/cc.html) — it is the details that are still unsettled, not whether they belong.
 
-The prior art is strong. Rust's [`PhantomData`](https://doc.rust-lang.org/std/marker/struct.PhantomData.html) carries type-level information without runtime data. Haskell's [`ST`](https://hackage.haskell.org/package/base/docs/Control-Monad-ST.html) uses a state-thread parameter to keep mutable state from escaping. [GhostCell](https://plv.mpi-sws.org/rustbelt/ghostcell/) uses Rust lifetimes to imitate brands: a `GhostCell` and its token share a lifetime that acts less like "how long does this borrow live?" and more like "which cell family is this?"
-
-That is close to the role I am interested in, but Metel may not need to encode all identity through lifetimes. Allocator identities, lifetime anchors, and pure identity brands might be different roles of the same underlying idea:
-
-```metel
-fun preserve_storage<@a>(value: @a Node) -> @a Node { value }
-
-fun borrow_from_value<&l>(x: &Str) -> &l Str { x }
-
-fun preserve_identity<'b>(cell: RcCell<'b, Node>) -> RcCell<'b, Node> {
-    cell
-}
-```
-
-The exact syntax is undecided. The point is conceptual: allocators, lifetimes, and identity brands all give the type checker a concrete identity to preserve and compare.
-
-If that unification holds, it could keep the design from becoming three unrelated special cases. An allocator brand says where storage comes from. A lifetime brand says which binding bounds a borrow. An identity brand says which family of cells or permissions a value belongs to. Different roles, same underlying channel.
+Less committed than that are [linear types](https://arxiv.org/abs/1710.09756) (use *exactly* once, stricter than Rust's affine ownership, as shipped in [Austral](https://borretti.me/article/introducing-austral)) and [algebraic effects and handlers](https://arxiv.org/abs/1312.1399) in the style of [Koka](https://koka-lang.github.io/koka/doc/index.html). Both have strong prior art; the open question for these two is whether they belong in Metel at all, and if so, whether they fit its memory model cleanly rather than sitting beside it as an unrelated feature. I will write all three up separately as they firm up.
 
 ## Why Build It?
 
-A lot of languages sound interesting in design documents. The hard part is whether the ideas still hold together when they collide with generics, borrowing, closures, partial moves, collections, modules, diagnostics, and performance constraints.
+A lot of languages sound interesting in design documents. The hard part is whether the ideas still hold together when they collide with generics, borrowing, closures, partial moves, collections, modules, diagnostics, and performance constraints. Metel is at that stage now. Some ideas have worked; some have been reopened after implementation exposed problems. That is healthy.
 
-Metel is at that stage now. Some ideas have worked. Some have been reopened after implementation exposed problems. That is healthy. I would rather have a project that corrects itself than one that preserves a fake sense of certainty.
+What Metel actually claims is smaller than "new research": almost none of the individual ingredients is novel, and several are already formalized and proven sound. If Metel is worth anything, it will be because the *combination*, and the ergonomics of that combination, turn out to be coherent, teachable, and implementable. The single place Metel might push past the state of the art is field-sensitive ownership over structured data — and even there the status is "an open problem others are also stuck on," not "solved."
 
-I am building Metel because it gives me a place to test a combination I do not see assembled quite this way elsewhere: allocator-aware programming, binding-named lifetime reasoning, resource-sensitive types, and eventually field-sensitive ownership over structured data.
+## What Now?
 
-The immediate job is not to add ten more ambitious ideas. It is to keep turning the parts that already define the language's shape into working machinery.
+Short term: the dedicated records post, then an RFC, then `ToRecord`/`FromRecord` and partial-consumption borrows actually working in the interpreter. Medium term: find out whether allocators, lifetimes, and brands really unify into one substrate, and give linear types and effects their own posts once there's real design behind them. Long term: a real compiler and soundness arguments for the parts of Metel that matter most — an interpreter can pressure-test syntax, but it can't carry that weight.
 
-If Metel ends up being worth anyone else's time, it will not be because it looked clever in RFCs. It will be because the language demonstrates that these ideas can form a coherent, teachable, implementable whole.
+I'd also like to open parts of the process to outside contributions. Not design-by-committee — I want the room to be wrong in my own direction for a while first — but real feedback, critique, counterexamples, and eventually carefully-scoped contributions, once there's enough structure for that to land somewhere useful.
+
+## References
+
+- Federico Bruzzone, [A friendly tour of substructural, uniqueness, ownership and capabilities types (and more)](https://federicobruzzone.github.io/posts/eter/a-friendly-tour-of-substructural-uniqueness-ownership-and-capabilities-types-and-more.html)
+- The Rust Programming Language, [Validating References with Lifetimes](https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html)
+- Mads Tofte, Jean-Pierre Talpin, [Implementation of the Typed Call-by-Value λ-calculus using a Stack of Regions](https://dl.acm.org/doi/10.1145/174675.177855) (POPL 1994)
+- Dan Grossman, Greg Morrisett, Trevor Jim, Michael Hicks, Yanling Wang, [Region-Based Memory Management in Cyclone](https://dl.acm.org/doi/10.1145/543552.512563) (PLDI 2002); see also the [Cyclone regions manual](https://cyclone.thelanguage.org/wiki/Introduction%20to%20Regions/)
+- Rust standard library source, [`RcInner` and `Rc::drop_slow`](https://doc.rust-lang.org/src/alloc/rc.rs.html)
+- Rust standard library source, [`ArcInner` and `Arc::drop_slow`](https://doc.rust-lang.org/src/alloc/sync.rs.html)
+- Niko Matsakis, [View types for Rust](https://smallcultfollowing.com/babysteps/blog/2021/11/05/view-types/)
+- TypeScript Handbook, [Type Compatibility](https://www.typescriptlang.org/docs/handbook/type-compatibility.html)
+- PureScript Book, [Records and Row Polymorphism](https://book.purescript.org/chapter3.html)
