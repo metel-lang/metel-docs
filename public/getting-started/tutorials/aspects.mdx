@@ -72,16 +72,19 @@ Try to call `print_all` with a type that has no `Printable` implementation and y
 Multiple bounds combine with `+`, inline or in a `where` clause — both forms are equivalent:
 
 ```metel
-fun describe<T: Printable + Comparable>(a: T, b: T) {
-    a.print();
-    if (a.compare(b) == 0) {
-        println("equal");
-    }
+aspect Loud {
+    fun shout(self);
+}
+
+fun announce<T: Printable + Loud>(value: T) {
+    value.print();
+    value.shout();
 }
 
 // equivalent, where-clause form
-fun describe2<T>(a: T, b: T) where T: Printable + Comparable {
-    a.print();
+fun announce2<T>(value: T) where T: Printable + Loud {
+    value.print();
+    value.shout();
 }
 ```
 

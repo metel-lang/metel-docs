@@ -73,7 +73,7 @@ extend Stack<T> {
         if (self.items.len() == 0) {
             return Perhaps::None;
         }
-        return Perhaps::Some { value: self.items[self.items.len() - 1] };
+        return Perhaps::Some { value: self.items[(self.items.len() - 1) as u64] };
     }
 }
 
