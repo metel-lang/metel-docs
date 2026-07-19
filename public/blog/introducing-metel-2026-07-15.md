@@ -28,13 +28,13 @@ That question is what Metel is now.
 
 Metel is an exploratory systems language. It is not trying to beat Rust, Zig, or C++ at their own game, and it is not production-ready. The project is an attempt to design a language around a few bets that I find worth taking seriously:
 
-- allocation should be explicit when it matters;
-- resource usage should be visible in the type system;
-- ordinary code should still read like ordinary modern code;
-- lifetime errors should name real program bindings, not abstract `'a` variables;
-- ownership should eventually work over structured values, not only whole values.
+- Allocation should be explicit when it matters;
+- Resource usage should be visible in the type system;
+- Ordinary code should still read like ordinary modern code;
+- Lifetime errors should name real program bindings, not abstract `'a` variables;
+- Ownership should eventually work over structured values, not only whole values.
 
-Earlier, I thought of Metel mainly as "the allocator-aware language." That is still part of its identity, but the better description is broader. The current design treats allocators as the first major use case of a lower-level substrate: structural shape, field-sensitive ownership, brand-like identity, and lifetimes named after actual bindings.
+Earlier, I thought of Metel mainly as "an allocator-aware language." That is still part of its identity, but the better description is broader. The current design treats allocators as the first major use case of a lower-level substrate: structural shape, field-sensitive ownership, brand-like identity, and lifetimes named after actual bindings.
 
 In other words, allocators are not the whole story. They are where the story starts to get interesting.
 
@@ -59,6 +59,38 @@ fun main() -> i64 {
     return total;
 }
 ```
+
+Aspects and generics are also part of that "ordinary" surface. An aspect names a capability a type can promise to provide, `extend Type: Aspect` supplies the implementation, and a bound like `<T: Printable>` lets a generic function rely on that capability instead of one concrete type:
+
+```metel
+aspect Printable {
+    fun print(self);
+}
+
+struct Point {
+    x: f64,
+    y: f64,
+}
+
+extend Point: Printable {
+    fun print(self) {
+        println("(${self.x}, ${self.y})");
+    }
+}
+
+fun print_all<T: Printable>(items: T[]) {
+    for (let item in items) {
+        item.print();
+    }
+}
+
+fun main() {
+    let points = [Point { x: 0.0, y: 0.0 }, Point { x: 3.0, y: 4.0 }];
+    print_all(points);
+}
+```
+
+`print_all` never mentions `Point`. It only asks the compiler to guarantee that whatever type it receives can `print()`, and that guarantee is checked at the call site, not discovered at runtime.
 
 The deepest ownership and allocation model is still ahead of the runtime. The interpreter is a feedback mechanism, not a finished semantic engine. That gap is real, and it is the main discipline problem in the project: not inventing endlessly, but deciding what is settled enough to build.
 
