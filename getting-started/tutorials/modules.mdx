@@ -26,7 +26,7 @@ The file you pass to the toolchain is the root module, addressed as `root::` fro
 
 ```metel
 // src/lexer.mtl
-public struct Token { value: i64 }
+public struct Token { public value: i64 }
 ```
 
 ```metel
@@ -38,6 +38,8 @@ fun main() {
     println(t.value);   // 42
 }
 ```
+
+Both the struct and the field it constructs with need `public` — see Visibility, below, for why.
 
 A handful of import forms cover the common cases:
 
