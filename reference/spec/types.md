@@ -223,10 +223,11 @@ Metel has two reference types:
 `&var T` coerces to `&T`. The reverse coercion does not exist. Both are non-owning
 aliases — a reference never owns the value it points to.
 
-References are first-class values, but they are distinct from the referent type. There
-is no explicit dereference operator in safe code — the old `*T`/`*var T` model
-(RFC-0043) with its explicit `*p` is superseded; ordinary access goes through
-auto-deref instead — see [Expressions — References](expressions.md#references).
+References are first-class values, but they are distinct from the referent type. Ordinary
+access — field reads/writes, method dispatch, reading a plain value out — goes through
+auto-deref and type-directed copy; an explicit dereference operator `*p` is also available
+(v0.11.0) for reading through a reference and for writing through a `&var T` (`*p = v`).
+See [Expressions — References](expressions.md#references).
 
 References are only for non-linear aliasing. They cannot target linear values.
 

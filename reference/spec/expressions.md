@@ -77,9 +77,9 @@ fun main() -> i64 {
 |---------|---------|---------|
 | Wildcard | `_` | anything, binds nothing |
 | Binding | `n` | anything, binds to `n` |
-| Literal | `0`, `"hi"`, `true`, `None` | exact value |
-| Enum variant | `Direction::North` | unit variant |
-| Enum with fields | `Shape::Circle { radius }` | variant, binds fields |
+| Literal | `0`, `"hi"`, `true` | exact value |
+| Enum variant | `Direction::North`, `North` | unit variant (qualified or, since v0.11.0, bare) |
+| Enum with fields | `Shape::Circle { radius }`, `Circle { radius }` | variant, binds fields |
 | Tuple | `(a, b)` | tuple, binds elements |
 | Guard | `n if n < 0` | binding + boolean condition |
 
@@ -116,6 +116,82 @@ fun main() -> i64 {
     };
 
     return a + b + c;
+}
+```
+
+### Unqualified variant patterns
+
+> **Planned for v0.11.0 (RFC-0107).**
+
+A match arm may name an enum variant without its `Enum::` prefix when the variant
+resolves unambiguously against the scrutinee's known enum type. The candidate enum is
+*only* the scrutinee's own type — this is type-directed resolution, not a lexical import
+of variant names — so there is no cross-enum collision to resolve:
+
+```metel
+enum Colour { Red, Green, Blue }
+
+fun name(c: Colour) -> String {
+    match c {
+        Red   => "red",
+        Green => "green",
+        Blue  => "blue",
+    }
+}
+```
+
+Fieldful variants may also be written bare:
+
+```metel
+fun unwrap_or_zero(v: Perhaps<i64>) -> i64 {
+    match v {
+        Some { value } => value,
+        None           => 0,
+    }
+}
+```
+
+Resolution happens during type-checking, against the scrutinee's concrete type. If that
+type is not a known enum at the point of matching (for example an abstract, aspect-bounded
+type parameter inside a generic function), a bare identifier is an ordinary binding, as
+before. A bare identifier that exactly names a no-field variant of the scrutinee's enum is
+*always* the variant, never a fresh binding — use `_` or a differently-named binding for a
+catch-all. The fully-qualified form (`Colour::Red`) remains valid everywhere; qualification
+is optional, not removed.
+
+### Matching through a reference
+
+> **Planned for v0.11.0 (RFC-0108).**
+
+A scrutinee of reference type (`&T`, `&var T`, and chains thereof) matches against `T`'s
+own patterns — reference layers are peeled before pattern resolution, the same way field
+access and method dispatch already auto-dereference:
+
+```metel
+enum Colour { Red, Green, Blue }
+
+fun name(c: &Colour) -> String {
+    match c {
+        Colour::Red   => "red",
+        Colour::Green => "green",
+        Colour::Blue  => "blue",
+    }
+}
+```
+
+Bindings introduced by a pattern matched through a reference copy the referent, following
+the ordinary type-directed copy rule (see [Types](types.md#reading-a-value-out-of-a-reference)).
+
+Reference-transparency and unqualified variants compose — peeling happens first, so a bare
+variant resolves against the referent's enum:
+
+```metel
+fun name(c: &Colour) -> String {
+    match c {
+        Red   => "red",     // c is peeled &Colour -> Colour, then Red resolves against Colour
+        Green => "green",
+        Blue  => "blue",
+    }
 }
 ```
 
@@ -258,7 +334,7 @@ References provide explicit aliasing for non-linear values.
 fun main() -> i64 {
     var n = 1;
     let p: &var i64 = &var n;
-    p = 4;    // write-through: p's own binding need not be `var` for this
+    *p = 4;   // write-through: mutate the referent via explicit deref
     return p; // type-directed copy: reads the value out at `return`
 }
 ```
@@ -267,22 +343,55 @@ Rules:
 
 - `&expr` creates a shared reference `&T` where `expr` is an addressable lvalue
 - `&var x` creates an exclusive reference `&var T` where `x` is a `var` addressable lvalue
-- there is no explicit dereference operator — access goes through auto-deref (below) or,
-  for reading a plain value out with no field/method involved, type-directed copy (see
-  [Types — Reading a value out of a reference](types.md#reading-a-value-out-of-a-reference))
-- assigning a plain value to a `&var T`-typed binding **writes through** the reference —
-  exclusivity comes from the reference, not the binding, so this holds whether or not
-  the binding itself is `var` (`p = 4;` above is exactly this, not a reassignment of `p`
-  — `p`'s own binding has no annotation requiring it to be `var` at all)
-- **known limitation:** because write-through is unconditional whenever a binding's
-  static type is `&var T`, there is no way to *repoint* such a binding to a different
-  reference, even if the binding itself is declared `var` — `p = &var m;` for
-  `p: &var i64` is a type error (the right side is `&var i64`, not the `i64`
-  write-through expects). Assignment to a `&var T`-typed binding can only ever mean
-  "mutate the referent." RFC-0110 proposes retiring this write-through rule
-  for bare-identifier assignment targets specifically (leaving field/index write-through
-  untouched) in favor of an explicit `*p = v`, which would resolve this limitation as a
-  direct consequence — not yet accepted or implemented.
+- `*p` dereferences a reference — reading its value, or, as an assignment target
+  (`*p = v`), writing through it to the referent (see "Dereference" below)
+- reading a plain value out of a reference with no field/method involved can also go
+  through type-directed copy (see
+  [Types — Reading a value out of a reference](types.md#reading-a-value-out-of-a-reference)),
+  and field access / method dispatch go through auto-deref (below); `*p` is the explicit
+  form available everywhere those apply, and the only form where they don't
+
+#### Dereference
+
+> **Changed in v0.11.0 (RFC-0110): assignment to a `&var T`-typed binding now rebinds it; use `*p = v` to write through.**
+
+`*expr` dereferences a `&T`/`&var T` value. As an expression it reads the referent; as an
+assignment target `*p = v` writes through a `&var T` to the referent. Prior to v0.11.0 a
+bare `p = v` on a `&var T`-typed binding wrote through the reference; that is no longer the
+case — bare assignment now **rebinds** the variable like any other type (and so requires
+the binding to be `var`), and write-through is spelled explicitly:
+
+```metel
+fun main() -> i64 {
+    var a = 1;
+    var b = 2;
+    var p: &var i64 = &var a;
+    p = &var b;   // repoint: p now refers to b (p is `var`) — a stays 1
+    *p = 5;       // write-through: b becomes 5
+    return a + b; // 1 + 5
+}
+```
+
+Repointing a `&var T` binding — impossible before v0.11.0, because bare assignment always
+meant write-through — is a direct consequence of this change. Field- and index-path
+write-through (`s.field = v`, `arr[i] = v`) is unchanged: those targets have no competing
+"rebind" reading, so they continue to write through with no `*` needed.
+
+`*` reads compose with everything auto-deref already reaches, and extend to two positions
+type-directed copy did not previously cover — an argument to a call whose parameter type is
+concretely known, and an operand of a binary operator:
+
+```metel
+fun add(x: i64, y: i64) -> i64 { x + y }
+
+fun main() -> i64 {
+    let a = 3;
+    let b = 4;
+    let p: &i64 = &a;
+    let q: &i64 = &b;
+    return add(p, q) + (p + q);   // read-copy at the call args and the `+` operands
+}
+```
 
 Addressable lvalues for both `&` and `&var` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), and chains thereof (`nested.outer.field`, `t.1.0`). Non-addressable expressions (call results, arithmetic) are rejected at runtime.
 
