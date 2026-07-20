@@ -74,6 +74,24 @@ It kept the wind, carried more weight than a pun, and it's the one that stuck.
 Metel is already in a pretty good shape. There is a real interpreter, a module system, generics, aspects, exhaustive pattern matching, a standard library with `Perhaps`, `Result`, `List`, strings, host-backed `fs`/`env`/`process` modules, and a growing specification and RFC process. Recent work has also moved a large batch of type-system and surface-language ideas into the implementation: negative bounds and impls, associated types, bottom type `!`, structural aspect bounds, coherence checks, `return`/`break`/`continue` as expressions, and the newer `public`/`var`/`extend` surface syntax. For example, this is ordinary Metel today:
 
 ```metel
+aspect Greet {
+    fun greet(&self) -> String;
+}
+
+struct Person { name: String }
+
+extend Person: Greet {
+    fun greet(&self) -> String {
+        "Hello, ${self.name}!"
+    }
+}
+
+fun greet_all<T: Greet>(people: T[]) {
+    for (p in people) {
+        println(p.greet());
+    }
+}
+
 fun main() -> i64 {
     let nums = List::from([1, 2, 3, 4]);
 
@@ -82,6 +100,7 @@ fun main() -> i64 {
         .map((x: i64) -> i64 { x * 10 })
         .fold(0i64, (acc: i64, x: i64) -> i64 { acc + x });
 
+    greet_all([Person { name: "Ada" }, Person { name: "Grace" }]);
     println("total = ${total}");
     return total;
 }
