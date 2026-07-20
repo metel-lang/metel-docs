@@ -13,7 +13,7 @@ spec_status: done
 > it — caught by `rfc.py check`'s stale-status-citation check while drafting RFC-0110,
 > which cites this RFC as superseded. `*T`/`*mut T` and this RFC's explicit `*p` no
 > longer exist in the language; `&T`/`&mut T` and auto-deref (RFC-0067a) replaced them,
-> and RFC-0110 (draft) reintroduces an explicit `*` deref operator on top of RFC-0067a's
+> and RFC-0110 reintroduces an explicit `*` deref operator on top of RFC-0067a's
 > notation — not a revival of this RFC's own `*T` type-position sigil.
 
 ## Summary

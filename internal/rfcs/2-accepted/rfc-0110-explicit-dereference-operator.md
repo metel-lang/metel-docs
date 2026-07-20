@@ -2,9 +2,14 @@
 id: rfc-0110
 title: "Explicit Dereference Operator"
 date: '2026-07-20'
-status: draft
+status: accepted
 target:
+updated: '2026-07-20'
 ---
+
+> **Status — under review (2026-07-20).** Thorough draft; open questions (&*p borrow-checker interaction, redundant-deref lint, Eq/Ne peeling) are all non-blocking or implementation-time. Reviewing with the enum/reference cluster.
+
+> **Status — accepted (2026-07-20).** Design settled; extend auto-deref read-copy to call args/binops, retire bare-identifier write-through for explicit *p=v, add unary * for reads and writes. Open questions non-blocking/impl-time.
 
 ## Summary
 
@@ -66,7 +71,7 @@ workaround short of a throwaway `let` per operand. This is a second real gap thi
 closes directly (§2 below), reusing `peel_type_references` — already defined in this
 same file for method/field-receiver resolution — rather than inventing new machinery.
 
-RFC-0108 (Reference-Transparent Match Scrutinees, draft) independently found and named
+RFC-0108 (Reference-Transparent Match Scrutinees) independently found and named
 this same absence while scoping a narrower fix for match scrutinees specifically,
 confirming `match *c { .. }` fails as a *parse* error today (`*` only exists as
 `mul_op`) and explicitly flagging general `*expr` as "could still be proposed
@@ -491,7 +496,7 @@ question, since the rewrite is mechanical (`p = v` → `*p = v`) and grep-and-fi
 - RFC-0071 (Ownership and Move Semantics, accepted, 0% implemented) — the eventual
   home for exclusivity *enforcement*; this RFC only extends/restores notation, same
   posture RFC-0067a itself took.
-- RFC-0108 (Reference-Transparent Match Scrutinees, draft) — independently found and
+- RFC-0108 (Reference-Transparent Match Scrutinees) — independently found and
   named the same "no general deref expression" gap while scoping a narrower,
   match-only fix; its own Alternatives Considered section explicitly left general
   `*expr` open to be proposed separately (§7 above).

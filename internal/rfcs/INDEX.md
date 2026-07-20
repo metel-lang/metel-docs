@@ -400,12 +400,12 @@ implementation).
 - **RFC-0027** — C FFI.
 - **RFC-0033** — Field-Level Mutability — additive `let` field annotation.
 - **RFC-0038** — `impl Aspect` in Struct Fields / Existential Types.
-- **RFC-0107** *(draft, opened 2026-07-17)* — Unqualified Enum Variants in Match
+- **RFC-0107** *(accepted, opened 2026-07-17)* — Unqualified Enum Variants in Match
   Patterns — `Red` instead of `Colour::Red` in a match arm, resolved type-directed
   against the scrutinee's known enum (not a lexical-scope import, so no cross-enum
   collision risk). Generalizes the existing `Perhaps::None`-only special case
   (`Pattern::None`) into a real mechanism; answers RFC-0101's Unresolved Question 1.
-- **RFC-0108** *(draft, opened 2026-07-17)* — Reference-Transparent Match Scrutinees —
+- **RFC-0108** *(accepted, opened 2026-07-17)* — Reference-Transparent Match Scrutinees —
   matching a `&T`/`&mut T` value directly (`match c { Colour::Red => .., .. }` for
   `c: &Colour`) instead of the current `T0001 cannot unify &Colour with Colour`, with
   no workaround available today (`*expr` doesn't parse — Metel has no general deref
@@ -413,7 +413,7 @@ implementation).
   principle to match scrutinees, the one place it's currently missing — `self` inside
   method bodies and `for`-loop element bindings already get this transparency via their
   own separate, narrower mechanisms. Sibling to RFC-0107 (§2 there), not overlapping.
-- **RFC-0110** *(draft, opened 2026-07-20)* — Explicit Dereference Operator — extends
+- **RFC-0110** *(accepted, opened 2026-07-20)* — Explicit Dereference Operator — extends
   and formally documents RFC-0067a's existing auto-deref, treating it as the several
   distinct mechanisms it actually is rather than one. Closes two confirmed read-copy
   gaps (call arguments for monomorphic callees — `param_hints` already threads the

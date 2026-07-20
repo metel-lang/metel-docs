@@ -279,7 +279,7 @@ Rules:
   reference, even if the binding itself is declared `var` — `p = &var m;` for
   `p: &var i64` is a type error (the right side is `&var i64`, not the `i64`
   write-through expects). Assignment to a `&var T`-typed binding can only ever mean
-  "mutate the referent." RFC-0110 (draft) proposes retiring this write-through rule
+  "mutate the referent." RFC-0110 proposes retiring this write-through rule
   for bare-identifier assignment targets specifically (leaving field/index write-through
   untouched) in favor of an explicit `*p = v`, which would resolve this limitation as a
   direct consequence — not yet accepted or implemented.

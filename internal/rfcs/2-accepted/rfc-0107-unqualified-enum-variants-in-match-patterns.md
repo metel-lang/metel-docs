@@ -2,10 +2,14 @@
 id: rfc-0107
 title: "Unqualified Enum Variants in Match Patterns"
 date: '2026-07-17'
-status: draft
+status: accepted
 target:
-updated: '2026-07-17'
+updated: '2026-07-20'
 ---
+
+> **Status — under review (2026-07-20).** Thorough draft; sole open question (shadowing lint) has an explicit non-blocking 'ship silent' recommendation. Reviewing with the enum/reference cluster.
+
+> **Status — accepted (2026-07-20).** Design settled; type-directed bare-variant resolution during construction, Pattern::None special case retired. Shadowing lint declined (ship silent, matching Rust).
 
 ## Summary
 

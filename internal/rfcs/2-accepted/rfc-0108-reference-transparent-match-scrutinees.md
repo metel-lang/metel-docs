@@ -2,9 +2,14 @@
 id: rfc-0108
 title: "Reference-Transparent Match Scrutinees"
 date: '2026-07-17'
-status: draft
+status: accepted
 target:
+updated: '2026-07-20'
 ---
+
+> **Status — under review (2026-07-20).** Thorough draft with resolved worked examples; open questions (exhaustiveness wording, 0107 sequencing) are non-blocking recommendations. Reviewing as part of the enum/reference cluster (0107/0108/0110).
+
+> **Status — accepted (2026-07-20).** Design settled; peel-references-before-pattern-resolution using existing helpers, no open questions block it. Sequencing with RFC-0107 noted (peel before variant resolution).
 
 ## Summary
 
@@ -152,7 +157,7 @@ pattern at all.
 
 ---
 
-## 2. Interaction with RFC-0107 (Unqualified Enum Variants in Match Patterns, draft)
+## 2. Interaction with RFC-0107 (Unqualified Enum Variants in Match Patterns)
 
 RFC-0107's own resolution logic (§1.1 there: `if let Type::Named(enum_name, _) =
 scrutinee_ty`) needs to run against the *peeled* scrutinee type this RFC produces, not
@@ -220,7 +225,7 @@ specific position "the expression being matched" gains the same transparency `se
   principle for field access and method dispatch this RFC extends to match scrutinees.
 - RFC-0066 §3a (Allocated Value Extraction, accepted) — "type-directed copy," the
   existing convention §1.4 relies on rather than reinvents.
-- RFC-0107 (Unqualified Enum Variants in Match Patterns, draft) — see §2 for the
+- RFC-0107 (Unqualified Enum Variants in Match Patterns) — see §2 for the
   sequencing interaction.
 
 ---
