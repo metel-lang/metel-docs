@@ -190,6 +190,14 @@ allocator cluster as the deepest layer. The lower-level work that needs the most
 - **Brand semantics** for identity/provenance wherever plain structure is insufficient.
 - **Lifetime validity** in its narrower but essential role: borrow scope, exclusivity, and
   concrete diagnostics.
+- **Context parameters** (added 2026-07-20) — a *general* mechanism for a value a call tree
+  needs, resolved by type from scope with ambiguity an error, of which the allocator handle
+  `(@a: A)` is one instance (see Priority 3 and
+  `reports/substructural-types/allocators-as-emergent-synthesis.md`). Newly recognized as a
+  substrate primitive rather than allocator-specific ergonomics, and the one member of this
+  list with **no RFC of any kind yet** — the largest unwritten hole on the allocator critical
+  path, larger than any open brand or borrow-checker question, since those at least have a
+  document.
 
 This framing demotes the old typestate question from "central fork in the roadmap" to a
 secondary stylistic consequence unless implementation pressure proves otherwise. The core design
@@ -224,23 +232,56 @@ where the project must decide whether the "narrow floor" story from
 That remains Trigger 6 below, but it now matters as a substrate-shaping decision, not just as a
 local RFC dependency question.
 
-### Priority 3 — Allocator semantics as the flagship synthesis
+### Priority 3 — Allocator semantics as an emergent synthesis and acceptance test, built last
 
-Allocator semantics remain central to the language's identity, but they are **not** currently
-the most primitive thing to prioritize directly. They should be treated as the first major
-integration target that proves the substrate above is coherent: allocators exercise structure,
-multiplicity, identity/provenance, and borrowing all at once. In that sense they stay more
-important strategically than the current implementation order alone would suggest.
+Allocator semantics remain central to the language's public identity, but they are **not** a
+primitive, and — sharpened 2026-07-20 — they are almost certainly not a standalone feature
+either. They should be treated as the **last** major subsystem and as the **acceptance test**
+that proves the primitives beneath them are sufficient, not as an early or foundational build.
 
-**What changes here is sequencing, not importance.** If allocator values are ultimately
-structured, branded resources with borrowing rules and storage-transparency ergonomics on top,
-then parts of the allocator cluster are downstream presentation and synthesis work rather than
-foundational semantics. That does **not** reduce their importance to the language's public
-identity. It does mean the medium-term planning question is "what substrate do allocator
-semantics need?" before "which allocator-facing RFC lands next?" Concretely, that now means:
-design the low-level allocation model first, then judge which parts of the allocator RFC
-cluster are genuine language-level consequences of it and which parts are allocator-family or
-surface-level design that can be layered later.
+**The design is essentially complete and deliberately unimplemented, and it stays that way
+until the primitives it synthesizes are all built.** This is intentional, not neglect, and it
+matches what the public blog ("Introducing Metel") already tells readers: the deepest
+ownership/allocation model is ahead of the runtime on purpose. Allocator implementation is
+gated on **all** of: the borrow checker, records/views, linear types, lifetime anchors, and
+brands. Allocators are not being *delayed* past those — they are *downstream of* those by
+construction, because (see below) they are largely built *out of* them.
+
+**Why "not even a standalone feature": the decomposition.** Worked out in full in
+`reports/substructural-types/allocators-as-emergent-synthesis.md`, the claim is that the
+current allocator cluster decomposes almost entirely into more general primitives:
+
+- the `(@a: A)` handle-threading (RFC-0065 §1/§1b ergonomics) is a special case of a general
+  **context-parameter** feature (Kotlin-style: resolved by type from scope, ambiguity an
+  error) — a feature that *does not exist in the corpus at all yet* (see Priority 2);
+- the `@a T` instance-level tag, disjointness, and sendability are a special case of **brands**
+  (`brand-kind-unification.md` already established `@a` is a brand role) — `@a T` is
+  `Box<T, instance-brand>`, precisely, with *brand* (not *type*, unlike Rust's `Box<T, A>`)
+  carrying the load;
+- `@a T` being owned/affine/extractable is an owned **box** type + the **borrow checker**
+  checking it outlives `a`;
+- `@a expr`/`Alloc` is `@`-sugar over an ordinary aspect and library code.
+
+What remains irreducibly allocator-specific after that decomposition is strikingly small: the
+sugar and the library. The strategic risk this exposes is real — the allocator cluster was
+specified *before* any of those primitives existed, so some of its machinery (the `@`
+value-channel parameter; the tag-only `<@a>` form, which was a brand re-invented under an
+allocator name without anyone noticing) is general-purpose primitives wearing
+allocator-specific clothing.
+
+**The concrete decision, deferred until brands and context-parameters are real:** can `Heap`,
+`BumpAlloc`, `@a T`, disjointness, and sendability be rebuilt as (context parameter) +
+(allocator-instance brand) + (owned box) + (borrow-checked lifetime), leaving only the `Alloc`
+aspect and `@`-sugar as allocator-specific residue? **Yes** shrinks the language; **no** names
+exactly what is genuinely allocator-specific. This is Trigger 18 below.
+
+**What does *not* change: the allocator RFCs stay intact.** They are reframed from "accepted
+design awaiting implementation" to "the acceptance test the primitives must reconstruct" — but
+they are *not* refused, gutted, or superseded. The paper-complete standalone design is the
+concrete target that keeps the general-primitive work honest ("does this rebuild `BumpAlloc`?"
+is a real, checkable question at every step); dissolving it into abstractions before the
+primitives can reconstruct it would lose exactly that check. The decomposition is a lens for
+sequencing and de-risking, never a license to delete the worked example.
 
 ### Priority 4 — Active adjacent design, and deferred frontier work
 
@@ -405,6 +446,20 @@ of what was watched for and what actually happened is part of the point.
     either higher-ranked item, or whether ergonomics-cluster churn keeps substituting
     for it.
 
+18. ⬜ **New, 2026-07-20.** The allocator-decomposition hypothesis
+    (`reports/substructural-types/allocators-as-emergent-synthesis.md`, Priority 3):
+    can the allocator cluster be rebuilt as (context parameter) + (allocator-instance
+    brand) + (owned box) + (borrow-checked lifetime), leaving only the `Alloc` aspect
+    and `@`-sugar as allocator-specific residue? Cannot be tested until brands and a
+    context-parameter feature are real. Watch for: (a) the decomposition proving true
+    (allocators shrink to sugar + library — the language gets smaller) or false (the
+    part that resists the rebuild is the genuinely allocator-specific residue worth
+    keeping); (b) whether a context-parameter RFC actually gets written, since it's the
+    one primitive on this path with no document at all; (c) the coupling risk — if
+    brands (still unsettled, Trigger 2) don't unify cleanly, allocators are now bet on
+    a two-deep chain of unsettled-on-unsettled, and the mitigation (keep the allocator
+    RFCs intact as the concrete acceptance test, never gutted) has to actually hold.
+
 ---
 
 ## 4. Review log
@@ -430,6 +485,7 @@ of what was watched for and what actually happened is part of the point.
 | 2026-07-15 | Refined that substrate-first model further: the immediate storage-design target is now a minimal low-level allocation model (storage-backed ownership, provenance/identity, borrowing into owned storage, field-sensitive extraction/destruction), explicitly narrower than the full allocator family, ergonomic surface, or unsafe/custom-allocator layer that will later build on top of it. | *(none yet)* |
 | 2026-07-20 | First cycle to cross-reference the public blog post ("Introducing Metel") against this document as real strategic intent, per explicit request. Found strong alignment (the substrate reframing and records' priority are near-verbatim matches; the hedging on comptime/linear-types/effects is honestly undersold, not oversold) and two divergences: the blog's Foundation section shows 0%-implemented allocator/lifetime-anchor syntax with no "design sketch" disclaimer (Records has one; Foundation doesn't — confirmed via direct grep of `src/grammar.pest`, only one `@` use exists and it's the unrelated `native(@std.core...)` FFI annotation), and this cycle's actual RFC output (RFC-0107/108/109/110, a reference/deref ergonomics cluster) went to neither of the two higher-declared priorities (records, allocator/lifetime follow-through), both of which sat untouched. Also found and named (not yet fixed): RFC-0097's frontmatter claims `implemented` but `INDEX.md` and direct inspection of `coherence.rs::outermost_id` show the underlying check is incidental, not deliberate. Triggers 16/17 opened. | `strategic-overview-2026-07-20.md` |
 | 2026-07-20 | Trigger 16 fixed the same day it was opened: landed the real, deliberate `outermost_id` check for bare-parameter blanket-impl targets in `metel-interpreter/src/coherence.rs` (`fix-272-ambiguous-aspect-method-dispatch` branch), rather than downgrading RFC-0097's frontmatter. Verified against both existing fixtures plus the full suite (546 integration + 119 unit tests, clippy-clean); zero regressions, since the fix only makes an already-`None`-producing path explicit. RFC-0097 and its `INDEX.md` entry updated to reflect confirmed, deliberate implementation. Trigger 16 closed. | *(none — code fix, not a design cycle)* |
+| 2026-07-20 | Reframed allocators from "flagship synthesis" (Priority 3) to "emergent synthesis + acceptance test, built last." New exploration doc `reports/substructural-types/allocators-as-emergent-synthesis.md` works out that the allocator cluster decomposes into (context parameters) + (brands) + (owned box) + (borrow checker) + (`Alloc` library), leaving almost no irreducibly allocator-specific machinery — continuing `brand-kind-unification.md`'s brand-half argument into its sequencing/scoping payoff. Consequences recorded: allocator implementation explicitly gated on borrow checker + records/views + linear types + lifetimes + brands all landing first (intentional, matches the blog); context parameters added to Priority 2 as a substrate primitive with no RFC yet (the largest unwritten hole on the path); the allocator RFCs kept intact as the acceptance test, not gutted; Trigger 18 opened for the decomposition hypothesis + coupling risk. Roadmap phase re-sequencing (allocators are Phase 3 today, this argues last) flagged but not yet rewritten, pending a firm decision. | *(none yet — discussion/reframe cycle; a dated snapshot may follow)* |
 
 ---
 

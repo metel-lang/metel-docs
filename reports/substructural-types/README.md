@@ -23,6 +23,13 @@ document — read on for why that mattered enough to reorganize around.
    `@a` (allocator tags), `&r` (lifetime anchors), and `'c` (brands) as three
    sigil-selected roles of a single kind. Read after `brand-types.md`; it is that
    document's direct continuation and the proposed answer to RFC-0076 Q2.
+7. [`allocators-as-emergent-synthesis.md`](allocators-as-emergent-synthesis.md) — the
+   strategic payoff of #6: if `@a` is a brand role and the `(@a: A)` handle is a
+   context parameter, then allocators are largely (context params) + (brands) +
+   (owned box) + (borrow checker), i.e. a *synthesis* of primitives rather than a
+   primitive — so they come last and act as an acceptance test, not a foundation.
+   Read after `brand-kind-unification.md`; it continues that document's argument into
+   its sequencing and language-scoping consequences.
 
 Each is a **living document**: updated in place as understanding changes, not
 superseded by a new dated file every time something is revised. Substantive changes get
