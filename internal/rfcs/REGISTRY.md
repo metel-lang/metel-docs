@@ -59,7 +59,7 @@ the curated thematic map.
 
 - **RFC-0008** — Aspect Objects (`2-accepted` ; internal/rfcs/2-accepted/rfc-0008-aspect-objects.md ; date 2026-07-01)
 - **RFC-0063** — Allocator Handles (`2-accepted` ; internal/rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
-- **RFC-0065** — Allocator and Lifetime Ergonomics (`2-accepted` ; internal/rfcs/2-accepted/rfc-0065-allocator-ergonomics.md ; date 2026-06-27 ; updated 2026-07-10)
+- **RFC-0065** — Allocator and Lifetime Ergonomics (`2-accepted` ; internal/rfcs/2-accepted/rfc-0065-allocator-ergonomics.md ; date 2026-06-27 ; updated 2026-07-20)
 - **RFC-0066** — Allocated Value Extraction (`2-accepted` ; internal/rfcs/2-accepted/rfc-0066-allocated-value-extraction.md ; date 2026-06-27 ; updated 2026-07-10)
 - **RFC-0067** — Lifetime Anchors (`2-accepted` ; internal/rfcs/2-accepted/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-07-10)
 - **RFC-0068** — Struct-Owned Allocators (`2-accepted` ; internal/rfcs/2-accepted/rfc-0068-struct-owned-allocators.md ; date 2026-06-28 ; updated 2026-07-10)

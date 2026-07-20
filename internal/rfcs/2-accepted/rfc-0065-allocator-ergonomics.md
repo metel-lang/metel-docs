@@ -2,7 +2,7 @@
 id: rfc-0065
 title: "Allocator and Lifetime Ergonomics"
 date: '2026-06-27'
-updated: '2026-07-10'
+updated: '2026-07-20'
 status: accepted
 ---
 
@@ -29,6 +29,20 @@ status: accepted
 > inter-function inference, this rule never adds anything invisible to a *signature*
 > — the callee's `(@a: A)` parameter stays exactly as explicit as it is today; only a
 > caller's redundant re-naming of an already-unambiguous argument is elided.
+
+> **Updated 2026-07-20 (second pass):** §1's "Static allocators" paragraph guaranteed
+> that a merely-*importable* `Heap`/`LocalHeap` never enters the elision candidate set
+> inside a `BumpAlloc::scoped` closure — but said nothing about an allocator genuinely
+> **declared** two scopes out (e.g. `Heap` as an outer function's own parameter,
+> with an inner `BumpAlloc::scoped((@a) -> {...})` closure). Read literally, "in
+> scope" had no depth qualifier, so the outer declared allocator and the closure's own
+> would both count as candidates, forcing an explicit name inside the closure — exactly
+> backwards from what the closure is for, and the concrete shape of a real
+> "elision is counterintuitive" critique. Added a general rule directly under that
+> same paragraph: elision candidates are computed per lexical scope, innermost first;
+> a scope with its own declared allocator shadows every outer one entirely. The
+> existing Heap/LocalHeap guarantee is now a degenerate case of this rule rather than
+> a separate carve-out.
 
 > **Status — accepted (2026-07-10).** Phase 0 ratification sweep: split model consistency-checked (RFC-0063 sec9 items 1/2/5 synced with roadmap-2026-07-07 Phase 0 decision; RFC-0066/0068 stale titles fixed); sweeping the cluster from under-review to accepted per reports/implementation/roadmap-2026-07-07.md Phase 0.
 
@@ -99,6 +113,57 @@ fun store(@h: Heap, val: T) -> @h T {
 
 This keeps heap allocations visible — a bare `@` inside a `BumpAlloc::scoped` block
 always resolves to the scoped allocator, never to a heap that happens to be importable.
+
+**Nested scopes: innermost declared allocator shadows every outer one entirely.** The
+guarantee above ("never to a heap that happens to be importable") covers only
+*merely-importable* Heap/LocalHeap — it does not, as written, say what happens when
+an allocator is genuinely **declared** two scopes deep, not just one:
+
+```metel
+fun process(@h: Heap, items: List<i64>) {
+    BumpAlloc::scoped((@a) -> {
+        let x = @Node { val: 1 };   // @a or @h? — undefined by the text above
+    });
+}
+```
+
+Read literally, "in scope" has no depth qualifier — `h` (declared on `process`) and
+`a` (declared on the closure) are both lexically visible at the point `@Node` appears,
+so §1's own "two or more allocators forces an explicit name" rule would make this
+ambiguous. That is exactly backwards from what `BumpAlloc::scoped` is *for*: the whole
+point of writing that closure is to establish a fresh, local allocation context, and
+an outer function's unrelated `Heap` parameter — never referenced inside the closure
+at all — forcing an explicit name here is the concrete shape of a real "elision is
+counterintuitive" critique, not a hypothetical one.
+
+**Resolution: the elision candidate set is computed per lexical scope, innermost
+first.** A scope that declares its own allocator parameter(s) — a function or a
+closure literal's own `(@a: A)` — shadows every allocator declared in any enclosing
+scope completely; outer allocators are not merged into a wider pool, they are simply
+not candidates once an inner declaration exists. Only when the current scope declares
+no allocator of its own does resolution fall through to the nearest enclosing scope
+that does — the same inner-first walk ordinary name resolution already performs for
+any binding, generalized here from "same name" shadowing to "member of the elision
+candidate set" shadowing:
+
+```metel
+fun process(@h: Heap, items: List<i64>) {
+    BumpAlloc::scoped((@a) -> {
+        let x = @Node { val: 1 };   // unambiguous: @a Node — h is not a candidate,
+                                     // the closure's own scope declares a
+    });
+    let y = @Node { val: 2 };       // unambiguous: @h Node — no inner declaration
+                                     // here, falls through to process's own h
+}
+```
+
+This is not a special case bolted onto the Heap/LocalHeap rule above — it is the
+general form the Heap guarantee was always a degenerate instance of: a *merely
+importable* Heap is never a declared candidate at any scope depth, so it was already
+being "shadowed" by definition, vacuously, at every point. Stating the rule in terms
+of scope depth rather than "importable vs. declared" is what makes the
+`BumpAlloc::scoped`-with-an-outer-`Heap`-parameter case fall out for free instead of
+needing its own separate carve-out.
 
 ---
 

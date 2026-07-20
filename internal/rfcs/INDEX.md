@@ -172,7 +172,15 @@ number, a backwards RFC-0067a split direction).
   `context.allocator`, rejected for the same reason RFC-0075's inter-function
   inference was — invisible at the call site), and Kotlin (context parameters,
   stable as of 2.4 — the closest precedent, since it independently arrived at the
-  same "ambiguity is a compile error" invariant this RFC already commits to).
+  same "ambiguity is a compile error" invariant this RFC already commits to). Second
+  fix the same day: "in scope" had no depth qualifier, so an allocator declared two
+  scopes out (e.g. `Heap` as an *outer function's* own parameter, with an inner
+  `BumpAlloc::scoped((@a) -> {...})` closure) would force an explicit name inside the
+  closure even though the closure declares its own `a` — backwards from what the
+  closure is for. Fixed by generalizing the existing Heap/LocalHeap
+  importable-vs-declared guarantee into a real rule: elision candidates are computed
+  per lexical scope, innermost first; an inner declared allocator shadows every outer
+  one entirely, not merged into one flat pool.
 - **RFC-0066** *(accepted)* — Allocated Value Extraction — individual drop/move-out; the
   RFC that triggered the whole cluster-wide split. Renamed from "Region Pointer
   Extraction" 2026-07-10 to match how every other RFC already referred to it.
