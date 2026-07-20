@@ -84,6 +84,10 @@ extend Person: Greet {
     fun greet(&self) -> String {
         "Hello, ${self.name}!"
     }
+
+    fun rename(&var self, new_name: String) {
+        self.name = new_name;
+    }
 }
 
 fun greet_all<T: Greet>(people: T[]) {
@@ -100,7 +104,14 @@ fun main() -> i64 {
         .map((x: i64) -> i64 { x * 10 })
         .fold(0i64, (acc: i64, x: i64) -> i64 { acc + x });
 
-    greet_all([Person { name: "Ada" }, Person { name: "Grace" }]);
+    var ada = Person { name: "Ada" };
+    let ada_ref: &var Person = &var ada;
+    ada_ref.rename("Ada Lovelace");   // auto-deref through &var — writes back to ada
+
+    let reader: &Person = &ada;
+    println(reader.greet());          // auto-deref through &, read-only
+
+    greet_all([ada, Person { name: "Grace" }]);
     println("total = ${total}");
     return total;
 }
