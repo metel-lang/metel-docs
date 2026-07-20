@@ -8,22 +8,21 @@ target:
 
 ## Summary
 
-Extend and formally document Metel's existing auto-deref mechanism (RFC-0067a §3/§3a),
-closing its two real coverage gaps — call arguments and binary operator operands —
-confirmed directly against the implementation, not assumed. Separately, reintroduce a
-general unary `*expr`, removed by RFC-0067a, as an explicit, always-legal spelling for
-the same reads and writes auto-deref already performs. **This RFC does not retire or
-narrow auto-deref anywhere it already applies, including the implicit write-through
-rule described in §4** — it extends read-copy's reach, writes down the write-through
-rule that RFC-0067a's own text never actually specified, and adds `*` alongside both as
-an optional, visible alternative, not a replacement.
+Extend and formally document Metel's existing auto-deref mechanism (RFC-0067a §3/§3a,
+RFC-0045), closing its two real read-side coverage gaps — call arguments and binary
+operator operands — confirmed directly against the implementation, not assumed.
+Separately, reintroduce a general unary `*expr`, removed by RFC-0067a.
 
-**Known limitation, carried forward unresolved: a `var &mut T` binding cannot be
-repointed to a different reference.** Because write-through is unconditional whenever
-a binding's static type is `&mut T`, plain assignment to such a binding always means
-"mutate the referent," never "rebind this variable to point elsewhere" — the second
-meaning, ordinary in Rust (where assignment always rebinds and `*p = v` is required for
-write-through), has no syntax in Metel today and gets none from this RFC. See §4.
+**Auto-deref is not one mechanism, and this RFC does not treat it as one.** Field/method
+dispatch, RFC-0045's fat-pointer field/index write-through, and §3a's read-copy (now
+extended, §1-§2) are all kept exactly as they are — none of them competes with a second
+sensible reading of the same syntax, so none of them changes. The one mechanism that
+*does* — bare-identifier whole-value write-through, where `p = v` for `p: &mut T`
+silently means "mutate the referent" and forecloses `p` ever being repointed to a
+different reference — is retired (§4.2) in favor of the same resolution Rust and Go
+both already use: bare assignment rebinds, and the explicit `*p = v` this RFC adds is
+the one spelling for writing through. Repoint is unlocked as a direct, mechanical
+consequence, not a separate feature.
 
 ---
 
@@ -185,23 +184,38 @@ distinct messages, the same one-code-per-*class* convention RFC-0036 §4 documen
 
 ---
 
-## 4. Write-through, written down
+## 4. Write-through: kept where it's unambiguous, retired where it collides with repoint
 
-**This is the rule as it is implemented today, unchanged by this RFC — stated here so
-an RFC actually specifies it:**
+Auto-deref is not one mechanism — RFC-0067a and RFC-0045 together ship at least four
+distinct ones (field/method dispatch, RFC-0045's fat-pointer field/index write-through,
+§3a's read-copy, and bare-identifier whole-value write-through). Only the last of
+these is genuinely ambiguous, because it's the only one competing with a second,
+equally sensible reading of the exact same syntax. This RFC keeps the first three
+exactly as they are and retires only the fourth.
 
-> Assigning to a plain identifier `p` whose static type is `&mut T` (at any chain
-> depth: `&mut T`, `&mut &mut T`, ...) writes through every `&mut` layer to the
-> innermost `T`, regardless of whether `p` itself is declared `let` or `var`. This
-> applies to `=` and every compound-assignment operator (`+=`, `-=`, ...) uniformly,
-> since both resolve through the same `TypedPlace::Deref` construction
-> (`assign_target_to_typed_place`/the `write_through` path in `construction.rs`).
-> A binding whose static type is a plain (non-reference) `T`, or a shared `&T`, is
-> never written through this way — `&T` has no write path at all, matching the
-> existing `type_chain_provides_mut_access` distinction already made elsewhere in this
-> file, and a plain `T` binding's assignment is ordinary rebinding, unaffected.
+### 4.1 Kept, unchanged: field- and index-path write-through (RFC-0045)
 
-Confirmed directly against a shipped fixture
+Any assignment whose *target* is a `FieldAccess` or `Index` (`obj.field = v`,
+`arr[i] = v`, including when auto-deref is needed to reach `obj`/`arr` through a
+reference at the root) goes through `resolve_field_assign_root`, a mechanism entirely
+separate from the one this RFC touches. There is no competing "repoint" reading for a
+field or index target — `obj.field = v` can only ever mean "write into that field" —
+so nothing here changes:
+
+```metel
+var q = Point { x: 5, y: 7 };
+let qptr: &var Point = &var q;
+qptr.y = 99;      // auto-deref field write — unambiguous, unaffected by this RFC
+assert(q.y == 99);
+```
+
+### 4.2 Retired: bare-identifier whole-value write-through
+
+**This is the one case that collides with repoint, and the one this RFC changes.**
+Today, assigning to a plain identifier `p` whose static type is `&mut T` (at any chain
+depth) writes through every `&mut` layer to the innermost `T`, unconditionally,
+regardless of whether `p` itself is declared `let` or `var` — confirmed directly
+against a shipped fixture
 (`tests/integration/sources/evaluator/references/08_write_through_reference_chain.mtl`):
 
 ```metel
@@ -209,50 +223,45 @@ var n = 1;
 var p: &var i64 = &var n;
 let pp: &var &var i64 = &var p;
 
-pp = 5;        // writes n, through both layers — unchanged by this RFC
+pp = 5;        // today: writes n, through both layers
 assert(n == 5);
 ```
 
-### 4.1 Limitation: no repoint syntax for `var &mut T` bindings
+Because this rule is unconditional, there is currently no way to *repoint* a
+`var`-declared `&mut T` binding — `p = &var m;` is a type error today (the right side
+is `&var i64`, not the `i64` write-through expects), even though `p` is `var` and every
+*other* type's `var` binding can be reassigned freely. Rust and Go both avoid this
+collision entirely by never having implicit write-through in the first place: bare
+assignment always rebinds, and `*p = v` is the only spelling for writing through.
 
-**Documented here explicitly, since RFC-0067a never stated it and this RFC's own
-first draft tried to quietly resolve it by narrowing write-through — reverted; the
-limitation stands, unresolved, for now.**
+**This RFC adopts the same resolution, but only for this one mechanism.** The special
+case in `Expr::Assign`'s handling of `AssignTarget::Ident` (`ctx.mark_write_through` in
+`inference.rs` ~line 2113, and the corresponding peeling logic in `construction.rs`
+~line 1420-1480) is removed. After this RFC:
 
-Because write-through is unconditional whenever the target's type is `&mut T`, plain
-assignment to such a binding can only ever mean "write through to the referent" — it
-can never mean "rebind this variable to point at a different reference," even when the
-binding is declared `var`:
+- `p = v;` for a bare identifier `p` always means *rebind `p`* — legal exactly when `p`
+  is declared `var`, the same rule every other type already follows. No special case
+  for `&mut T`-typed bindings.
+- `*p = v;` (§5) is the spelling for writing through a bare reference identifier.
 
 ```metel
 var a = 1;
 var b = 2;
-var p: &var i64 = &var a;
-
-p = &var b;   // type error: &var i64 doesn't match write-through's expected i64
-              // -- there is no way to make p point at b instead of a
+var p: &mut i64 = &mut a;
+p = &mut b;    // repoint — a type error today; legal after this RFC (p is var)
+*p = 5;        // write through — b becomes 5, a unchanged
 ```
 
-**Contrast with Rust**, where this isn't a limitation at all: Rust has no implicit
-write-through, so plain assignment to any `mut` binding — reference-typed or not —
-always rebinds, and `*p = v` is the only spelling for writing through:
-
-```rust
-let mut p: &mut i32 = &mut a;
-p = &mut b;   // repoint — ordinary rebinding; Rust's assignment never means anything else
-*p = 5;       // write through — the explicit sigil is what selects this meaning
-```
-
-Metel's design inverts which meaning is the unmarked default (write-through, not
-rebind), and having made that choice, there is currently no second spelling for the
-other meaning. Adding one — a distinct repoint sigil, or conditioning write-through on
-the binding's own `let`/`var`-ness — is a real design question with its own
-trade-offs, deliberately left to a future RFC rather than decided here; see Open
-Questions.
+§4.1's field/index write-through is untouched by this change — `resolve_field_assign_root`
+never shared code with the `AssignTarget::Ident` special case being removed here, so
+nothing about it needs to change for this rule to be dropped cleanly.
 
 ---
 
-## 5. Grammar and parser: explicit `*`, as an available synonym
+## 5. Grammar and parser: explicit `*`
+
+For reads, an available synonym alongside auto-deref. For bare-identifier
+write-through (§4.2), the only spelling, now that the implicit form is retired.
 
 One line, additive, in `grammar.pest`:
 
@@ -326,15 +335,13 @@ AssignTarget::Deref(object, span) => {
 }
 ```
 
-`*p = v;` and `p = v;` (for `p: &mut T`) produce the **identical** `TypedPlace::Deref`
-node and therefore identical runtime behavior — true synonyms, not two mechanisms that
-might disagree. This is a harmless redundancy of exactly the kind Metel's design
-already tolerates elsewhere: `&mut T` implicitly coerces to `&T` while nothing stops a
-narrower explicit annotation achieving the same thing, and (§6 below) `match *c { .. }`
-and RFC-0108's auto-transparent `match c { .. }` will coexist the same way. `*p = v`'s
-value is entirely in being visible and unambiguous at the call site to a reader who
-doesn't want to check `p`'s declared type to know what an assignment does — not in
-changing what's legal.
+For field/index targets (§4.1), `*(obj.field) = v` and `obj.field = v` would likewise
+be synonyms — the same harmless redundancy already tolerated elsewhere in this design
+(`&mut T` implicitly coercing to `&T` while a narrower explicit annotation achieves the
+same thing; §7 below, where `match *c { .. }` and RFC-0108's auto-transparent
+`match c { .. }` will coexist the same way). For a **bare identifier** target,
+`*p = v` is not redundant with anything after §4.2 — it is the only spelling that
+writes through, since bare `p = v` now means repoint.
 
 ---
 
@@ -375,26 +382,45 @@ writes. Neither RFC needs the other; sequencing is immaterial between them.
   "borrow-deref" operator (`&a expr`) — a different mechanism for a different type.
   `construct_unaryop`'s existing match on `Type::Reference`/`Type::MutReference`
   already excludes `@a T`; this RFC doesn't touch that.
-- **Repoint syntax for `var &mut T` bindings.** Documented as a known limitation in
-  §4.1 — solving it would require narrowing or conditioning the implicit write-through
-  rule, which this RFC deliberately leaves untouched. Left for a future RFC if wanted.
+- **A dedicated repoint sigil (`:=`) or type-directed repoint dispatch.** Both were
+  considered as ways to add repoint *while keeping* bare-identifier write-through
+  unconditional (see Alternatives Considered) — superseded once it was clear the
+  write-through rule causing the collision could simply be retired instead, which
+  resolves repoint as a side effect rather than needing a new mechanism of its own.
 
 ---
 
 ## Alternatives Considered
 
-- **Retire implicit write-through in favor of explicit-only `*p = v`.** An earlier
-  draft of this RFC proposed exactly this, reasoning that two spellings for the same
-  effect is an inconsistency worth removing. Rejected on review: it would be a breaking
-  change to already-shipped RFC-0067a behavior across every fixture that relies on it
-  today (at least three confirmed: `04_write_through_thin_reference.mtl`,
-  `08_write_through_reference_chain.mtl`, `14_mut_field_pointer.mtl`), for a
-  consistency argument that doesn't hold up against the coercion precedent already in
-  the language (§5) — `&mut T` → `&T` is exactly this same "implicit default, explicit
-  alternative available" shape, and nobody proposes removing the implicit coercion
-  because an explicit narrowing exists too. Extending auto-deref's reach and writing
-  down what it already does is the smaller, non-breaking change, and is what this
-  version of the RFC does instead.
+- **Keep bare-identifier write-through unconditional and add a distinct repoint
+  sigil (`:=`).** `p := &var b;` repoints, `p = v;` stays write-through. Cleanly
+  resolves the ambiguity without touching existing behavior at all. Rejected in favor
+  of retiring write-through instead, for two reasons: `:=` carries strong, conflicting
+  precedent from other languages (Go: declare-a-new-binding; Pascal/Ada: the *ordinary*
+  assignment operator, with `=` reserved for equality) that a Metel reader would likely
+  misread; and it leaves the underlying inconsistency in place (assignment to a
+  `&mut T`-typed binding still behaves unlike assignment to every other type) rather
+  than resolving it.
+- **Keep bare-identifier write-through unconditional and disambiguate repoint by the
+  right-hand side's type instead** (an RHS of type `T` writes through, an RHS of type
+  `&mut T` — matching `p`'s own declared type exactly — repoints; generalizes cleanly
+  to chains, where each layer of `&mut` is its own "rung"). No new syntax at all, and
+  consistent with §3a's own type-directed-copy precedent. Rejected: it makes the
+  write-through/repoint distinction *less* visible than either the status quo or `:=`
+  — a reader would need to know both `p`'s exact declared type and the right-hand
+  side's inferred type to know which of several behaviors an assignment performs,
+  which is the same "no hidden behavior" objection this RFC already raises against
+  today's unconditional rule (Motivation §2), not a fix for it.
+- **Retire implicit write-through in favor of explicit-only `*p = v`, entirely — a
+  breaking change across the board.** An earlier draft of this RFC proposed exactly
+  this, framed as a general consistency argument against having two spellings for the
+  same effect. That framing was too broad: field/index write-through (§4.1) and
+  read-copy (§3a) were never actually inconsistent with anything, since neither
+  competes with a second reading of the same syntax the way bare-identifier
+  write-through does. This RFC keeps that version's *technical* scope — only
+  `AssignTarget::Ident`'s special case is removed, exactly as before — but grounds it
+  in the narrower, correct reason: this is the one mechanism that's genuinely
+  ambiguous, not "implicit mechanisms in general are worse than explicit ones."
 - **Add `*` for reads only; leave the call-argument/binop gaps as auto-deref
   limitations, permanently requiring `*` or ascription there.** Rejected — §1/§2 show
   both gaps are closable with infrastructure that already exists (`param_hints`,
@@ -406,33 +432,36 @@ writes. Neither RFC needs the other; sequencing is immaterial between them.
 
 ## Migration
 
-None. Sections 1-2 are pure extensions — every call and binary expression that already
-typechecks continues to, unchanged, and strictly more now do. Section 4 documents
-existing behavior without altering it. Section 5's explicit `*` is new, additive
-syntax. No existing fixture, in `tests/` or `stdlib/`, needs any change as a result of
-this RFC — unlike an earlier draft that proposed retiring write-through (see
-Alternatives Considered), which would have required rewriting at least three fixtures.
+Sections 1-2 are pure extensions — every call and binary expression that already
+typechecks continues to, unchanged, and strictly more now do; no migration cost.
+§4.1 (field/index write-through) is untouched; no migration cost.
+
+§4.2 (retiring bare-identifier write-through) has a real, precisely bounded cost:
+three fixtures rely on it today — `04_write_through_thin_reference.mtl`,
+`08_write_through_reference_chain.mtl`, `14_mut_field_pointer.mtl`. Every
+bare-identifier assignment/compound-assignment in those three (`p = 4`, `p += 6`,
+`pp = 5`, `pp += 10`, `px = 10`, `px += 5`, `t1 = 999`, `a1 = 42`, `a1 += 8`,
+`brx = 20`) needs a `*` prefix added. `14`'s trailing `qptr.y = 99;` is untouched — a
+`FieldAccess` target, covered by §4.1, never part of the ambiguity §4.2 resolves. No
+repo-wide grep beyond these three fixtures was performed as part of this RFC; a full
+sweep across `tests/` and `stdlib/` is implementation-time work, not a design
+question, since the rewrite is mechanical (`p = v` → `*p = v`) and grep-and-fix-able.
 
 ---
 
 ## Open Questions
 
-1. **Repoint syntax for `var &mut T` bindings.** Documented as a known limitation in
-   §4.1, explicitly not addressed (§8) — solving it would mean narrowing today's
-   unconditional write-through rule, which this RFC deliberately leaves untouched. If
-   repoint is wanted later, it needs its own RFC that reopens §4's rule specifically
-   (e.g. a distinct sigil, or conditioning write-through on the binding's own
-   `let`/`var`-ness) — not attempted here.
-2. **`&*p` and future borrow-checker interaction.** Once RFC-0071 lands, does `&*p`
+1. **`&*p` and future borrow-checker interaction.** Once RFC-0071 lands, does `&*p`
    meaningfully shorten a borrow's effective scope relative to using `p` directly, or
    does Metel's (not yet written) borrow-checker design make the distinction moot? Not
    resolved here — a forward pointer, the same deferral pattern RFC-0067a already used
    repeatedly for exclusivity *enforcement* versus notation.
-3. **Lint for redundant `*&x` / `*&mut x` / `*p` where auto-deref alone would already
-   do the same thing.** Harmless, not a type error, worth a style lint once Metel has a
-   lint pass. Not blocking, and deliberately not a compiler error — §5 is explicit that
-   the redundancy itself is intended, not a defect to warn away by default.
-4. **Should `Eq`/`Ne`/`And`/`Or` get the same peeling §2 gives the other operators?**
+2. **Lint for redundant `*&x` / `*&mut x` / `*(obj.field)` where auto-deref alone
+   would already do the same thing.** Harmless, not a type error, worth a style lint
+   once Metel has a lint pass. Not blocking, and deliberately not a compiler error —
+   §5 is explicit that this redundancy is intended for field/index targets, not a
+   defect to warn away by default.
+3. **Should `Eq`/`Ne`/`And`/`Or` get the same peeling §2 gives the other operators?**
    Left open because their operand-compatibility checking, if any, wasn't found in
    `construct_binop` itself (§2) — determining where it actually lives (if anywhere)
    and whether it already tolerates references is implementation-time investigation,
@@ -446,13 +475,15 @@ Alternatives Considered), which would have required rewriting at least three fix
   §5's addressability rule and its auto-deref-for-field-access precedent were carried
   forward unchanged by RFC-0067a and are unaffected by this RFC.
 - RFC-0045 (Mutable Address-Of for Lvalue Paths, implemented) — designed fat-pointer
-  write-through entirely in terms of explicit `*p = v`; §5 of this RFC restores that
-  spelling on top of RFC-0067a's `&`/`&mut` notation, alongside the implicit mechanism
-  RFC-0045's own design predates.
+  field/index write-through, kept entirely unchanged by this RFC (§4.1); originally
+  specified in terms of explicit `*p = v`, which §5 of this RFC restores as available
+  syntax for it, redundantly with the auto-deref this RFC leaves alone.
 - RFC-0067a (Reference Types, implemented) — this RFC extends §3a's read-copy (§1/§2)
-  and formally specifies the write-through rule its own amendment blockquotes named
-  but never gave a numbered section (§4). Its actual proposal-body rules (§3's
-  auto-deref chain guarantee, §3a's five existing call sites) are unchanged.
+  and **amends** the bare-identifier write-through rule its own amendment blockquotes
+  named but never gave a numbered section, retiring it in favor of explicit `*p = v`
+  (§4.2) — a real behavioral change, not just documentation, unlike §4.1's mechanism.
+  §3's auto-deref chain guarantee and RFC-0045's field/index write-through are
+  unaffected.
 - RFC-0044 (Explicit Receiver Semantics, implemented) — §9 addressability; `*p` is a
   straightforward new addressable place under the existing rule (§6 above).
 - RFC-0067 (Lifetime Anchors, accepted) — §1's allocator-pointer borrow-deref (`&a
@@ -467,7 +498,9 @@ Alternatives Considered), which would have required rewriting at least three fix
 - `tests/integration/sources/evaluator/references/04_write_through_thin_reference.mtl`,
   `08_write_through_reference_chain.mtl`,
   `tests/integration/sources/evaluator/types/14_mut_field_pointer.mtl` — the fixtures
-  confirming §4's write-through rule as actually implemented.
+  confirming §4.2's write-through rule as implemented today, and (§4.1's trailing
+  `qptr.y = 99;` in the last) the field-write mechanism this RFC leaves alone;
+  migration cost cited in Migration.
 
 ---
 

@@ -378,21 +378,23 @@ implementation).
   method bodies and `for`-loop element bindings already get this transparency via their
   own separate, narrower mechanisms. Sibling to RFC-0107 (§2 there), not overlapping.
 - **RFC-0110** *(draft, opened 2026-07-20)* — Explicit Dereference Operator — extends
-  and formally documents RFC-0067a's existing auto-deref, rather than replacing any of
-  it. Closes two confirmed read-copy gaps (call arguments for monomorphic callees —
-  `param_hints` already threads the expected type through, `maybe_read_copy` just
-  isn't called afterward there; binary operator operands, via the same
-  `peel_type_references` helper already used for method/field receivers), and writes
-  down the implicit write-through rule for the first time (named three times in
-  RFC-0067a's amendment blockquotes but never given a numbered section) — left
-  behaviorally unchanged, not retired. Separately reintroduces a general unary `*expr`,
-  removed by RFC-0067a, as an always-legal, visible *synonym* alongside auto-deref for
-  both reads and writes (`*p = v` and `p = v` produce the identical `TypedPlace::Deref`
-  node) — the same "implicit default, explicit alternative available" shape `&mut T` →
-  `&T` coercion already has. Zero migration cost: no existing fixture needs any change.
-  Complementary to, not overlapping with, RFC-0108 (§7 there addresses match
-  scrutinees specifically; this RFC is general-purpose). Sibling to RFC-0107/0108 in
-  this cluster.
+  and formally documents RFC-0067a's existing auto-deref, treating it as the several
+  distinct mechanisms it actually is rather than one. Closes two confirmed read-copy
+  gaps (call arguments for monomorphic callees — `param_hints` already threads the
+  expected type through, `maybe_read_copy` just isn't called afterward there; binary
+  operator operands, via `peel_type_references`) and keeps field/method dispatch and
+  RFC-0045's fat-pointer field/index write-through completely unchanged, since neither
+  competes with a second reading of the same syntax. The one mechanism that does —
+  bare-identifier whole-value write-through, where `p = v` for `p: &mut T` silently
+  means "mutate the referent" and forecloses ever repointing `p` to a different
+  reference, even when `p` is `var` — is retired in favor of the Rust/Go resolution:
+  bare assignment rebinds, explicit `*p = v` writes through. Repoint falls out as a
+  direct consequence, with no new sigil (`:=`) or type-directed dispatch needed —
+  both considered and rejected in favor of this smaller, more surgical fix. Migration
+  cost is precisely bounded to three fixtures' bare-identifier write-through lines;
+  field/index writes and all read-side auto-deref are unaffected. Complementary to,
+  not overlapping with, RFC-0108 (§7 there addresses match scrutinees specifically;
+  this RFC is general-purpose). Sibling to RFC-0107/0108 in this cluster.
 - **RFC-0098** *(implemented)* — Surface Keyword Renames — `extend Type` /
   `extend Type: Aspect` (reordered target-first, Swift precedent — not `impl X with Y`
   as first drafted), `pub` → `public`, `mut` → `var` (bindings, reference types, and
