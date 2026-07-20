@@ -18,6 +18,13 @@ rule described in §4** — it extends read-copy's reach, writes down the write-
 rule that RFC-0067a's own text never actually specified, and adds `*` alongside both as
 an optional, visible alternative, not a replacement.
 
+**Known limitation, carried forward unresolved: a `var &mut T` binding cannot be
+repointed to a different reference.** Because write-through is unconditional whenever
+a binding's static type is `&mut T`, plain assignment to such a binding always means
+"mutate the referent," never "rebind this variable to point elsewhere" — the second
+meaning, ordinary in Rust (where assignment always rebinds and `*p = v` is required for
+write-through), has no syntax in Metel today and gets none from this RFC. See §4.
+
 ---
 
 ## Motivation
@@ -206,12 +213,42 @@ pp = 5;        // writes n, through both layers — unchanged by this RFC
 assert(n == 5);
 ```
 
-**Known, accepted consequence, left as-is by this RFC:** because write-through is
-unconditional whenever the target's type is `&mut T`, there is no way to *repoint* a
-`var`-declared `&mut T` binding to a different reference — `var p: &mut i64 = &mut a; p
-= &mut b;` is a type error today (the right-hand `&mut i64` doesn't match the
-write-through target's expected `i64`), and stays a type error after this RFC. This
-RFC does not add repoint syntax; see Open Questions.
+### 4.1 Limitation: no repoint syntax for `var &mut T` bindings
+
+**Documented here explicitly, since RFC-0067a never stated it and this RFC's own
+first draft tried to quietly resolve it by narrowing write-through — reverted; the
+limitation stands, unresolved, for now.**
+
+Because write-through is unconditional whenever the target's type is `&mut T`, plain
+assignment to such a binding can only ever mean "write through to the referent" — it
+can never mean "rebind this variable to point at a different reference," even when the
+binding is declared `var`:
+
+```metel
+var a = 1;
+var b = 2;
+var p: &var i64 = &var a;
+
+p = &var b;   // type error: &var i64 doesn't match write-through's expected i64
+              // -- there is no way to make p point at b instead of a
+```
+
+**Contrast with Rust**, where this isn't a limitation at all: Rust has no implicit
+write-through, so plain assignment to any `mut` binding — reference-typed or not —
+always rebinds, and `*p = v` is the only spelling for writing through:
+
+```rust
+let mut p: &mut i32 = &mut a;
+p = &mut b;   // repoint — ordinary rebinding; Rust's assignment never means anything else
+*p = 5;       // write through — the explicit sigil is what selects this meaning
+```
+
+Metel's design inverts which meaning is the unmarked default (write-through, not
+rebind), and having made that choice, there is currently no second spelling for the
+other meaning. Adding one — a distinct repoint sigil, or conditioning write-through on
+the binding's own `let`/`var`-ness — is a real design question with its own
+trade-offs, deliberately left to a future RFC rather than decided here; see Open
+Questions.
 
 ---
 
@@ -338,10 +375,9 @@ writes. Neither RFC needs the other; sequencing is immaterial between them.
   "borrow-deref" operator (`&a expr`) — a different mechanism for a different type.
   `construct_unaryop`'s existing match on `Type::Reference`/`Type::MutReference`
   already excludes `@a T`; this RFC doesn't touch that.
-- **Repoint syntax for `var &mut T` bindings.** Noted as a known, unaddressed
-  consequence in §4 — solving it would require narrowing or conditioning the implicit
-  write-through rule, which this RFC deliberately leaves untouched. Left for a future
-  RFC if wanted.
+- **Repoint syntax for `var &mut T` bindings.** Documented as a known limitation in
+  §4.1 — solving it would require narrowing or conditioning the implicit write-through
+  rule, which this RFC deliberately leaves untouched. Left for a future RFC if wanted.
 
 ---
 
@@ -381,11 +417,12 @@ Alternatives Considered), which would have required rewriting at least three fix
 
 ## Open Questions
 
-1. **Repoint syntax for `var &mut T` bindings.** Explicitly not addressed (§8) —
-   solving it would mean narrowing today's unconditional write-through rule, which this
-   RFC deliberately leaves untouched. If repoint is wanted later, it needs its own RFC
-   that reopens §4's rule specifically (e.g. a distinct sigil, or conditioning
-   write-through on the binding's own `let`/`var`-ness) — not attempted here.
+1. **Repoint syntax for `var &mut T` bindings.** Documented as a known limitation in
+   §4.1, explicitly not addressed (§8) — solving it would mean narrowing today's
+   unconditional write-through rule, which this RFC deliberately leaves untouched. If
+   repoint is wanted later, it needs its own RFC that reopens §4's rule specifically
+   (e.g. a distinct sigil, or conditioning write-through on the binding's own
+   `let`/`var`-ness) — not attempted here.
 2. **`&*p` and future borrow-checker interaction.** Once RFC-0071 lands, does `&*p`
    meaningfully shorten a borrow's effective scope relative to using `p` directly, or
    does Metel's (not yet written) borrow-checker design make the distinction moot? Not
