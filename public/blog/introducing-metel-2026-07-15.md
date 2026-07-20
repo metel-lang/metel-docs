@@ -16,7 +16,7 @@ That version did not stay small for long. Once the basics existed, I started rea
 
 What struck me reading that material was how vast it was, and how much of it is already proven out somewhere: region calculus shipped in Cyclone decades before it became Rust's lifetimes; Zig and Odin already pass allocators explicitly; GhostCell and Koka already do brand-like identity and effect handlers; TypeScript and PureScript already treat structural typing as a first-class citizen. Almost none of the individual ideas is unclaimed. What is still genuinely open is how much room is left in combining them — most of this work was done in isolation, one idea answering one problem, and there is real exploration left in seeing which of these already-researched concepts actually fit together in a single language rather than sitting beside each other.
 
-The project slowly stopped being "my small Rust-like interpreter" and became a different question: what if a language deliberately went and collected the pieces that already work, wherever they had shipped and however old they were, and tried to combine them into something with its own point of view — rather than trying to invent new ones? That question is what Metel is now.
+The project slowly stopped being "my small Rust-like interpreter" and became a different question — not "how do I clone Rust" and not "what entirely new idea can I invent," but something in between: what does a language look like that takes several of these already-proven ideas seriously and actually puts them together? That question is what Metel is now.
 
 {/* truncate */}
 
