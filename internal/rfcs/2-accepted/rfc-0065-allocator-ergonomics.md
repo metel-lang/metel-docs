@@ -30,19 +30,28 @@ status: accepted
 > — the callee's `(@a: A)` parameter stays exactly as explicit as it is today; only a
 > caller's redundant re-naming of an already-unambiguous argument is elided.
 
-> **Updated 2026-07-20 (second pass):** §1's "Static allocators" paragraph guaranteed
-> that a merely-*importable* `Heap`/`LocalHeap` never enters the elision candidate set
-> inside a `BumpAlloc::scoped` closure — but said nothing about an allocator genuinely
-> **declared** two scopes out (e.g. `Heap` as an outer function's own parameter,
-> with an inner `BumpAlloc::scoped((@a) -> {...})` closure). Read literally, "in
-> scope" had no depth qualifier, so the outer declared allocator and the closure's own
-> would both count as candidates, forcing an explicit name inside the closure — exactly
-> backwards from what the closure is for, and the concrete shape of a real
-> "elision is counterintuitive" critique. Added a general rule directly under that
-> same paragraph: elision candidates are computed per lexical scope, innermost first;
-> a scope with its own declared allocator shadows every outer one entirely. The
-> existing Heap/LocalHeap guarantee is now a degenerate case of this rule rather than
-> a separate carve-out.
+> **Updated 2026-07-20 (second pass):** a real critique — an allocator genuinely
+> **declared** two scopes out (e.g. `Heap` as an outer function's own parameter, with
+> an inner `BumpAlloc::scoped((@a) -> {...})` closure) had no stated resolution;
+> read literally, both would count as candidates for a bare allocation expression
+> inside the closure, forcing an explicit name — exactly backwards from what the
+> closure is for. A first draft of this fix proposed silent depth-based shadowing
+> (innermost declared allocator always wins); **reverted after discussion.** Silent
+> shadowing between two differently-named, differently-typed candidates is closer to
+> overload resolution than to ordinary name scoping, and reintroduces exactly the
+> hazard this RFC's own "ambiguity is always a compile error, never a silent choice"
+> invariant exists to prevent: adding an unrelated `BumpAlloc::scoped` closure
+> anywhere inside a function would silently change what every already-elided
+> allocation inside it means, with no diagnostic. Replaced with **type-directed
+> candidate filtering** (new subsection under §1): "in scope" for elision means *in
+> scope and of the type this position statically requires*, whenever a concrete type
+> is known — which resolves the `Heap`-vs-`BumpAlloc` case for free, for any
+> concretely-typed position, with no shadowing rule needed at all, since the two
+> never share a type to begin with. The one residual shape — a bare allocation
+> expression with no concrete type to filter by — stays a hard compile error, not a
+> silent tiebreak, matching how Kotlin's own context parameters (already surveyed in
+> §1b) resolve a genuine same-type collision: loudly, not by nesting depth. §1b
+> updated to state explicitly that it inherits this same type-directed filtering.
 
 > **Status — accepted (2026-07-10).** Phase 0 ratification sweep: split model consistency-checked (RFC-0063 sec9 items 1/2/5 synced with roadmap-2026-07-07 Phase 0 decision; RFC-0066/0068 stale titles fixed); sweeping the cluster from under-review to accepted per reports/implementation/roadmap-2026-07-07.md Phase 0.
 
@@ -91,13 +100,37 @@ fun build_node(@a: BumpAlloc, val: i64) -> @Node { ... }
 let node = @Node { val: 1 };   // == @a Node { val: 1 }
 ```
 
-**Two or more allocators.** When two or more allocators are in scope, every `@` must be
-named. The disambiguation is forced at the source level — the compiler never silently
-picks one:
+**Type-directed candidate filtering.** "In scope," for elision purposes, means *in
+scope and of the type this position statically requires*, whenever a specific
+concrete type is known — not merely "any value implementing `Alloc`, of any type,
+pooled into one flat set." A position resolves against `Alloc` generically only when
+nothing more specific is known (a `<A: Alloc>` type parameter, as in `transfer` below
+— there is no concrete type to filter by, so every in-scope allocator is a candidate
+regardless of its own concrete type). A position with a genuinely concrete
+requirement — a call to a non-generic `fun build_node(@a: BumpAlloc, ...)`, or a type
+annotation against one — filters candidates down to that exact type first. Two
+allocators of *different* concrete types therefore never collide at such a position,
+by construction, regardless of how they're nested:
+
+```metel
+fun process(@h: Heap, items: List<i64>) {
+    BumpAlloc::scoped((@a) -> {
+        let n = build_node(1);   // requires BumpAlloc specifically (§1b elision) —
+                                  // h: Heap was never a candidate; resolves to a
+    });
+}
+```
+
+**Two or more allocators (of the same required type, or no concrete type to filter
+by).** When two or more *candidates* remain after type-directed filtering, every `@`
+must be named. The disambiguation is forced at the source level — the compiler never
+silently picks one:
 
 ```metel
 fun transfer<A: Alloc, B: Alloc>(@src: A, @dst: B, val: @src T) -> @dst T {
-    @dst val: T   // explicit: two allocators, both must be named
+    @dst val: T   // explicit: two allocators, both must be named — A and B are
+                  // abstract type parameters, so there is no concrete type to
+                  // filter by; type-directed filtering cannot help here
 }
 ```
 
@@ -114,56 +147,58 @@ fun store(@h: Heap, val: T) -> @h T {
 This keeps heap allocations visible — a bare `@` inside a `BumpAlloc::scoped` block
 always resolves to the scoped allocator, never to a heap that happens to be importable.
 
-**Nested scopes: innermost declared allocator shadows every outer one entirely.** The
-guarantee above ("never to a heap that happens to be importable") covers only
-*merely-importable* Heap/LocalHeap — it does not, as written, say what happens when
-an allocator is genuinely **declared** two scopes deep, not just one:
+**Nested scopes: type-directed filtering resolves the common case; a residual
+same-type collision is a hard error, not a silent shadow.** An allocator can be
+genuinely **declared** two lexical scopes out, not just importable:
 
 ```metel
 fun process(@h: Heap, items: List<i64>) {
     BumpAlloc::scoped((@a) -> {
-        let x = @Node { val: 1 };   // @a or @h? — undefined by the text above
+        let x = @Node { val: 1 };   // bare allocation expression — no signature
+                                     // constrains a required type here
     });
 }
 ```
 
-Read literally, "in scope" has no depth qualifier — `h` (declared on `process`) and
-`a` (declared on the closure) are both lexically visible at the point `@Node` appears,
-so §1's own "two or more allocators forces an explicit name" rule would make this
-ambiguous. That is exactly backwards from what `BumpAlloc::scoped` is *for*: the whole
-point of writing that closure is to establish a fresh, local allocation context, and
-an outer function's unrelated `Heap` parameter — never referenced inside the closure
-at all — forcing an explicit name here is the concrete shape of a real "elision is
-counterintuitive" critique, not a hypothetical one.
+`@Node { val: 1 }` is a *bare allocation expression* — nothing about it requires a
+specific concrete allocator type the way calling `build_node(@a: BumpAlloc, ...)`
+does, so type-directed candidate filtering (above) has nothing to filter by: `h:
+Heap` and `a: BumpAlloc` are both structurally valid candidates for "any `Alloc`,"
+regardless of depth. This is genuinely different from the call-site and
+concretely-typed-annotation cases, which type-directed filtering already resolves
+for free — this is the one residual shape where a real answer is still needed.
 
-**Resolution: the elision candidate set is computed per lexical scope, innermost
-first.** A scope that declares its own allocator parameter(s) — a function or a
-closure literal's own `(@a: A)` — shadows every allocator declared in any enclosing
-scope completely; outer allocators are not merged into a wider pool, they are simply
-not candidates once an inner declaration exists. Only when the current scope declares
-no allocator of its own does resolution fall through to the nearest enclosing scope
-that does — the same inner-first walk ordinary name resolution already performs for
-any binding, generalized here from "same name" shadowing to "member of the elision
-candidate set" shadowing:
+**Resolution: this is ambiguous, and stays a compile error — it is not resolved by
+depth-based shadowing.** An earlier version of this section proposed that the
+innermost scope's own declared allocator should silently shadow every outer one.
+Rejected: shadowing by nesting depth alone is a *silent* choice among two
+differently-named, differently-typed candidates — closer to overload resolution
+than to ordinary name scoping — and it reintroduces exactly the hazard this RFC's
+own governing invariant exists to prevent: introduce a `BumpAlloc::scoped` closure
+anywhere inside `process` for an unrelated reason, and every bare allocation
+expression already inside it silently starts meaning the new arena instead of `h`,
+with no diagnostic marking the change. Kotlin's own context parameters — the
+precedent §1b already surveys — answer this exact shape of question the same way:
+a genuine same-type collision between two in-scope candidates is a compile error,
+full stop; there is no implicit "closer one wins" rule.
 
 ```metel
 fun process(@h: Heap, items: List<i64>) {
     BumpAlloc::scoped((@a) -> {
-        let x = @Node { val: 1 };   // unambiguous: @a Node — h is not a candidate,
-                                     // the closure's own scope declares a
+        let x = @a Node { val: 1 };   // explicit: h and a are both bare-Alloc
+                                        // candidates here; name the one you mean
     });
-    let y = @Node { val: 2 };       // unambiguous: @h Node — no inner declaration
-                                     // here, falls through to process's own h
 }
 ```
 
-This is not a special case bolted onto the Heap/LocalHeap rule above — it is the
-general form the Heap guarantee was always a degenerate instance of: a *merely
-importable* Heap is never a declared candidate at any scope depth, so it was already
-being "shadowed" by definition, vacuously, at every point. Stating the rule in terms
-of scope depth rather than "importable vs. declared" is what makes the
-`BumpAlloc::scoped`-with-an-outer-`Heap`-parameter case fall out for free instead of
-needing its own separate carve-out.
+Type-directed filtering (above) is what keeps this error rare in practice rather
+than common: it already resolves every elided position with a concretely-known
+required type — which covers most real code, since an outer "ambient" allocator
+(`Heap`, or a caller-supplied arena) and an inner throwaway one (`BumpAlloc` for a
+hot loop) are, in the overwhelming majority of real cases, different concrete
+types to begin with. The residual bare-expression, same-type case above is the
+genuinely rare shape this RFC leaves as an explicit-naming requirement rather than
+inventing a silent tiebreak for.
 
 ---
 
@@ -246,9 +281,25 @@ candidate in scope. This section closes that gap:
 
 > A call to a function whose signature declares **exactly one** value-channel
 > allocator parameter `(@a: A)` may omit the corresponding argument entirely when
-> exactly one allocator is in scope at the call site. The omitted allocator is not
-> a positional gap — the argument list simply has one fewer entry, the same way
-> `<@a>` (§1a) never occupies a value-argument slot at all.
+> exactly one *matching* allocator is in scope at the call site — subject to the
+> same type-directed filtering §1 already defines: if the parameter's declared type
+> is concrete (e.g. `@a: BumpAlloc`), only in-scope allocators of that exact type
+> count as candidates; if it is a generic `<A: Alloc>` bound (as `wrap` above), any
+> in-scope allocator counts, the same as an ordinary §1 elision site. The omitted
+> allocator is not a positional gap — the argument list simply has one fewer entry,
+> the same way `<@a>` (§1a) never occupies a value-argument slot at all.
+
+```metel
+fun build_node(@a: BumpAlloc, val: i64) -> @a Node { @a Node { val, next: null } }
+
+fun process(@h: Heap, items: List<i64>) {
+    BumpAlloc::scoped((@a) -> {
+        let n = build_node(1);   // requires BumpAlloc specifically — h: Heap was
+                                  // never a candidate; resolves to a unambiguously,
+                                  // regardless of h being in scope at all
+    });
+}
+```
 
 ```metel
 BumpAlloc::scoped((@a) -> {

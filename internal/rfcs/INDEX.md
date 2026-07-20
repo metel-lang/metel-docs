@@ -173,14 +173,20 @@ number, a backwards RFC-0067a split direction).
   inference was — invisible at the call site), and Kotlin (context parameters,
   stable as of 2.4 — the closest precedent, since it independently arrived at the
   same "ambiguity is a compile error" invariant this RFC already commits to). Second
-  fix the same day: "in scope" had no depth qualifier, so an allocator declared two
-  scopes out (e.g. `Heap` as an *outer function's* own parameter, with an inner
-  `BumpAlloc::scoped((@a) -> {...})` closure) would force an explicit name inside the
-  closure even though the closure declares its own `a` — backwards from what the
-  closure is for. Fixed by generalizing the existing Heap/LocalHeap
-  importable-vs-declared guarantee into a real rule: elision candidates are computed
-  per lexical scope, innermost first; an inner declared allocator shadows every outer
-  one entirely, not merged into one flat pool.
+  fix the same day, revised once during discussion: an allocator declared two scopes
+  out (e.g. `Heap` as an *outer function's* own parameter, with an inner
+  `BumpAlloc::scoped((@a) -> {...})` closure) had no stated resolution — a first
+  draft proposed silent depth-based shadowing (innermost declared allocator always
+  wins), reverted as too close to overload resolution and a silent-refactor hazard
+  (adding an unrelated inner allocator would silently change what existing elided
+  code means, no diagnostic). Replaced with **type-directed candidate filtering**:
+  "in scope" now means in scope *and of the required concrete type*, whenever one is
+  known — which resolves `Heap`-vs-`BumpAlloc` for free at any concretely-typed
+  position (a call, or an annotation against a non-generic signature), with no
+  shadowing rule needed, since the two never share a type. The one residual case — a
+  bare allocation expression with no concrete type to filter by — stays a hard
+  compile error, matching how Kotlin's own context parameters resolve a genuine
+  same-type collision (loudly, not by nesting depth), not a new silent tiebreak.
 - **RFC-0066** *(accepted)* — Allocated Value Extraction — individual drop/move-out; the
   RFC that triggered the whole cluster-wide split. Renamed from "Region Pointer
   Extraction" 2026-07-10 to match how every other RFC already referred to it.
