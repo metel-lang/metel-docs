@@ -190,7 +190,7 @@ What Metel actually claims is **smaller than "new research"**: almost none of th
 
 ## What Now?
 
-Here's something that surprised me: allocators are the language's public face, but they're the *last* major piece I plan to build. The more I work on the design, the more it looks like a combination of simpler things — an `@a T` is roughly an owned box carrying a brand, and checking it doesn't outlive its allocator is just the borrow checker's job — rather than a primitive of its own. So allocators wait until brands, records, and borrow-checking exist, and the finished design becomes an acceptance test: can I rebuild `Heap` and `BumpAlloc` from those pieces, or is there a genuinely allocator-specific remainder?
+Allocators were initially thought of as the public face of the language, but they're the *last* major piece I plan to build. The more I work on the design, the more it looks like a combination of simpler things — an `@a T` is roughly an owned box carrying a brand, and checking it doesn't outlive its allocator is just the borrow checker's job — rather than a primitive of its own. So allocators wait until brands, records, and borrow-checking exist, and the finished design becomes an acceptance test: can I rebuild `Heap` and `BumpAlloc` from those pieces, or is there a genuinely allocator-specific remainder?
 
 So: **short term**, the records post and `ToRecord`/`FromRecord` working in the interpreter. **Medium term**, the borrow checker, linear types, and brands as real primitives. **Then allocators**, on top of all of it. **Long term:** a real compiler and soundness arguments for the parts that matter most — an interpreter can pressure-test syntax, but it can't carry that weight.
 
