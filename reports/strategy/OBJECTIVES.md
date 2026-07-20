@@ -3,7 +3,7 @@ id: strategic-objectives
 title: "Strategic Objectives, Priorities, and Watch List"
 type: report
 status: active
-last_reviewed: '2026-07-15'
+last_reviewed: '2026-07-20'
 ---
 
 # Strategic Objectives, Priorities, and Watch List
@@ -379,6 +379,25 @@ of what was watched for and what actually happened is part of the point.
     since this instance was only caught by an explicit pull-and-compare, not by any
     standing mechanism.
 
+16. ⬜ **New, 2026-07-20.** RFC-0097's frontmatter (`status: implemented`) and
+    `REGISTRY.md` disagree with `INDEX.md`'s own more careful narrative and with direct
+    inspection of `coherence.rs::outermost_id` (no dedicated branch for a bare
+    blanket-impl target — it happens to return `None` incidentally, not by design).
+    Watch whether this gets resolved (real check landed, or frontmatter downgraded) or
+    persists quietly the way PR #270 did before Trigger 15 named it.
+
+17. ⬜ **New, 2026-07-20.** This cycle's actual RFC-writing effort (RFC-0107/108/109/110,
+    all opened 07-17 through 07-20) went into a reference/deref/pattern-matching
+    ergonomics cluster extending the already-implemented RFC-0067a — while Priority 1's
+    allocator/lifetime follow-through (ratified since 07-10, still 0% implemented) and
+    Priority 2's records/substrate work (the declared main medium-term priority) both
+    sat untouched. The blog post ("Introducing Metel") independently corroborates that
+    records and the allocator cluster, not reference ergonomics, are the stated
+    priorities — reinforcing that this is a real gap between stated and actual
+    attention, not just this document's own read. Watch whether the next cycle moves
+    either higher-ranked item, or whether ergonomics-cluster churn keeps substituting
+    for it.
+
 ---
 
 ## 4. Review log
@@ -402,14 +421,15 @@ of what was watched for and what actually happened is part of the point.
 | 2026-07-15 | Split RFC indexing into two roles: generated `internal/rfcs/REGISTRY.md` is now the authoritative state inventory, while `internal/rfcs/INDEX.md` is explicitly curated/thematic only. `rfc.py check` and `rfc.py index --check-drift` now enforce that split mechanically instead of relying on `INDEX.md`'s old date-only drift check. | *(none yet)* |
 | 2026-07-15 | Rewrote the medium-term priority narrative around a substrate-first model: structural types, per-field multiplicity, brand semantics, and lifetime validity are now the main low-level design priority; allocator semantics are kept central to language identity but reframed as the flagship synthesis built on that substrate; typestate is explicitly demoted to a secondary stylistic consequence unless implementation pressure proves otherwise. | *(none yet)* |
 | 2026-07-15 | Refined that substrate-first model further: the immediate storage-design target is now a minimal low-level allocation model (storage-backed ownership, provenance/identity, borrowing into owned storage, field-sensitive extraction/destruction), explicitly narrower than the full allocator family, ergonomic surface, or unsafe/custom-allocator layer that will later build on top of it. | *(none yet)* |
+| 2026-07-20 | First cycle to cross-reference the public blog post ("Introducing Metel") against this document as real strategic intent, per explicit request. Found strong alignment (the substrate reframing and records' priority are near-verbatim matches; the hedging on comptime/linear-types/effects is honestly undersold, not oversold) and two divergences: the blog's Foundation section shows 0%-implemented allocator/lifetime-anchor syntax with no "design sketch" disclaimer (Records has one; Foundation doesn't — confirmed via direct grep of `src/grammar.pest`, only one `@` use exists and it's the unrelated `native(@std.core...)` FFI annotation), and this cycle's actual RFC output (RFC-0107/108/109/110, a reference/deref ergonomics cluster) went to neither of the two higher-declared priorities (records, allocator/lifetime follow-through), both of which sat untouched. Also found and named (not yet fixed): RFC-0097's frontmatter claims `implemented` but `INDEX.md` and direct inspection of `coherence.rs::outermost_id` show the underlying check is incidental, not deliberate. Triggers 16/17 opened. | `strategic-overview-2026-07-20.md` |
 
 ---
 
 ## References
 
 - `strategic-overview-2026-07-08.md` — priorities and triggers this document was seeded from
-- `strategic-overview-2026-07-11.md`, `strategic-overview-2026-07-15.md` — dated narrative
-  snapshots, most recent last
+- `strategic-overview-2026-07-11.md`, `strategic-overview-2026-07-15.md`,
+  `strategic-overview-2026-07-20.md` — dated narrative snapshots, most recent last
 - `integrated-language-overview-2026-07-07.md` — long-term objectives, the meta-risk framing,
   and the "narrow, no row kind" floor property Trigger 6 checks against
 - `internal/rfcs/PROCESS.md` — the RFC lifecycle this document's priorities reference
