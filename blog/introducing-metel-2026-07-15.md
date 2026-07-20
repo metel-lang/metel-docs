@@ -30,6 +30,8 @@ What struck me reading that material was how vast it was, and how much of it is 
 
 What is still genuinely open is how much room is left in combining them. Most of this work was done in isolation, one idea answering one problem, and there is real exploration left in seeing which of these already-researched concepts actually fit together in a single language rather than sitting beside each other.
 
+There's also a more immediate motivation than old research: mainstream languages are constantly evaluating new proposals for these exact problems today. Rust's own Niko Matsakis has floated [view types](https://smallcultfollowing.com/babysteps/blog/2021/11/05/view-types/) — letting a function borrow only the fields it touches — and, separately, a [place-based lifetime syntax](https://smallcultfollowing.com/babysteps/blog/2024/06/02/the-borrow-checker-within/) aimed specifically at making lifetimes easier to teach. Watching proposals like these, I realized I could try my hand at the same real problems myself, in a language of my own.
+
 The project slowly stopped being "my small Rust-like interpreter" and became a different question — not "how do I clone Rust" and not "what entirely new idea can I invent," but something in between: what does a language look like that takes several of these already-proven ideas seriously and actually puts them together? That question is what Metel is now.
 
 {/* truncate */}
