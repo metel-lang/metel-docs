@@ -14,9 +14,9 @@ At first, the goal was small and personal: a statically typed, Rust-influenced i
 
 That version did not stay small for long. Once the basics existed, I started reading more seriously about memory safety, type systems, ownership, regions, linear capabilities, structural typing, and brand-like identity systems — Federico Bruzzone's [A friendly tour of substructural, uniqueness, ownership and capabilities types (and more)](https://federicobruzzone.github.io/posts/eter/a-friendly-tour-of-substructural-uniqueness-ownership-and-capabilities-types-and-more.html) was one of the pieces that pushed me deeper in that direction.
 
-What struck me reading that material is how much of it **never left academia or research prototypes**: real, sound ideas — some decades old — that mainstream systems languages never adopted, either because they arrived too early, or because a language design incompatible with them already won. And often if they were adopted, they were adopted in a way that I did not find satisfying.
+What struck me reading that material is how scattered it all is: region calculus shipped in Cyclone decades before it became Rust's lifetimes; Zig and Odin already pass allocators explicitly; GhostCell and Koka already do brand-like identity and effect handlers; TypeScript and PureScript already treat structural typing as a first-class citizen. Almost none of it is unclaimed — it is mostly implemented already, just never in the same language, and rarely in one that reads like the systems languages people actually reach for.
 
-The project slowly stopped being "my small Rust-like interpreter" and became a different question: what if a language deliberately **went back for that unclaimed research**, current publications included, and tried to combine it into something with its own point of view? That question is what Metel is now.
+The project slowly stopped being "my small Rust-like interpreter" and became a different question: what if a language deliberately went and collected the pieces that already work, wherever they had shipped and however old they were, and tried to combine them into something with its own point of view — rather than trying to invent new ones? That question is what Metel is now.
 
 {/* truncate */}
 
