@@ -274,6 +274,12 @@ Rules:
   exclusivity comes from the reference, not the binding, so this holds whether or not
   the binding itself is `var` (`p = 4;` above is exactly this, not a reassignment of `p`
   — `p`'s own binding has no annotation requiring it to be `var` at all)
+- **known limitation:** because write-through is unconditional whenever a binding's
+  static type is `&var T`, there is no way to *repoint* such a binding to a different
+  reference, even if the binding itself is declared `var` — `p = &var m;` for
+  `p: &var i64` is a type error (the right side is `&var i64`, not the `i64`
+  write-through expects). Assignment to a `&var T`-typed binding can only ever mean
+  "mutate the referent." Tracked as an open, unresolved question in RFC-0110 (draft).
 
 Addressable lvalues for both `&` and `&var` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), and chains thereof (`nested.outer.field`, `t.1.0`). Non-addressable expressions (call results, arithmetic) are rejected at runtime.
 
