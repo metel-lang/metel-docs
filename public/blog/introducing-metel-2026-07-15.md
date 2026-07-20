@@ -141,7 +141,11 @@ fun first(x: &Str, y: &Str) -> &x Str {
 }
 ```
 
-The name in the return type refers to a real binding in the function. The common case should still avoid annotation — **treat this as an ergonomic variant on old machinery, not a new capability**.
+Both code samples above are design sketches, not executable Metel — the allocator and
+lifetime-anchor cluster is accepted design, not yet built. The name in the return type
+refers to a real binding in the function. The common case should still avoid
+annotation — **treat this as an ergonomic variant on old machinery, not a new
+capability**.
 
 ## Records And Field-Sensitive Ownership
 
@@ -194,7 +198,7 @@ This is where Metel is closest to an open problem. The same need — letting a f
 
 **Comptime** is further along than either, on paper: two draft RFCs already specify it in Zig's image — compile-time execution of ordinary Metel code, staged by the same evaluator, rather than a separate macro language with its own grammar and hygiene rules. The interesting bet in those drafts is that generalizing a single primitive — `emit`, which lets comptime code register a declaration or splice an expression back at its own call site — plus exposing Metel's own parser as an ordinary comptime-callable function, **closes most of what a macro system is normally needed for**: derive, repetitive declaration generation, compile-time-validated embedded DSLs, even Rust's `matches!`-style pattern macros. No token-stream grammar, no macro-invocation syntax, no hygiene system to design. It is still draft and deferred to after the core language settles.
 
-Less committed than either are [linear types](https://arxiv.org/abs/1710.09756) (use *exactly* once, stricter than Rust's affine ownership, as shipped in [Austral](https://borretti.me/article/introducing-austral)) and [algebraic effects and handlers](https://arxiv.org/abs/1312.1399) in the style of [Koka](https://koka-lang.github.io/koka/doc/index.html). Both have strong prior art; **the open question for these two is whether they belong in Metel at all**, and if so, whether they fit its memory model cleanly rather than sitting beside it as an unrelated feature. I will write these up separately as they firm up.
+Less settled than either are [linear types](https://arxiv.org/abs/1710.09756) (use *exactly* once, stricter than Rust's affine ownership, as shipped in [Austral](https://borretti.me/article/introducing-austral)) and [algebraic effects and handlers](https://arxiv.org/abs/1312.1399) in the style of [Koka](https://koka-lang.github.io/koka/doc/index.html) — but "less settled" means different things for each. Linear types already have a draft RFC and real design work behind them; effects don't have an RFC at all yet. Both have strong prior art elsewhere, and I think both are worth having — **the honest open question isn't whether they belong, it's whether either fits Metel's own memory model cleanly enough to commit to**, rather than sitting beside it as a bolted-on feature. I will write these up separately as they firm up.
 
 ## Why Build It?
 
