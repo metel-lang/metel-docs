@@ -161,8 +161,18 @@ number, a backwards RFC-0067a split direction).
 
 - **RFC-0063** *(accepted)* — Allocator Handles — the allocator half of the old "region
   handles" premise. Central to the whole cluster.
-- **RFC-0065** *(accepted)* — Allocator and Lifetime Ergonomics — elision rules for both
-  channels. Depends on RFC-0063 + RFC-0067.
+- **RFC-0065** *(accepted, amended 2026-07-20)* — Allocator and Lifetime Ergonomics —
+  elision rules for both channels. Depends on RFC-0063 + RFC-0067. §1b added
+  2026-07-20: call-site allocator-*argument* elision (`wrap(@a, 42_u64)` →
+  `wrap(42_u64)` when exactly one allocator is in scope and the callee's signature
+  declares exactly one) — closes the gap §1/§1a never covered (every worked example
+  in the cluster, e.g. RFC-0077 §3.3, wrote the argument out in full even when
+  unambiguous), the concrete substance behind a real "elision is still too verbose"
+  critique. Surveyed against Zig (no such mechanism, by design), Odin (ambient
+  `context.allocator`, rejected for the same reason RFC-0075's inter-function
+  inference was — invisible at the call site), and Kotlin (context parameters,
+  stable as of 2.4 — the closest precedent, since it independently arrived at the
+  same "ambiguity is a compile error" invariant this RFC already commits to).
 - **RFC-0066** *(accepted)* — Allocated Value Extraction — individual drop/move-out; the
   RFC that triggered the whole cluster-wide split. Renamed from "Region Pointer
   Extraction" 2026-07-10 to match how every other RFC already referred to it.

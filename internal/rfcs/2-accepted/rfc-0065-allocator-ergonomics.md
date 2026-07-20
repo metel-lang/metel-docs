@@ -16,6 +16,20 @@ status: accepted
 > parameters (`<@a>`). Reuses the existing single-input/self/ambiguous structure of
 > §2 rather than introducing a third rule set.
 
+> **Updated 2026-07-20:** added §1b, call-site allocator-argument elision. Every
+> worked example in the accepted allocator cluster (`wrap(@a, 42_u64)` — RFC-0077
+> §3.3, checked directly, not assumed) writes the allocator argument out in full at
+> every call, including calls made from inside a scope with only one allocator, where
+> §1's own type-position rule would already elide it if it were a type annotation
+> instead of a call argument. That gap — real code threading an allocator through
+> several layers of helper calls still spells `@a` at every single call — is the
+> concrete substance behind a real critique of this cluster's ergonomics (verbose even
+> with §1/§1a/§2 all active), cross-checked against how Zig, Odin, and Kotlin handle
+> the same problem (see §1b's own Alternatives note). Unlike RFC-0075's withdrawn
+> inter-function inference, this rule never adds anything invisible to a *signature*
+> — the callee's `(@a: A)` parameter stays exactly as explicit as it is today; only a
+> caller's redundant re-naming of an already-unambiguous argument is elided.
+
 > **Status — accepted (2026-07-10).** Phase 0 ratification sweep: split model consistency-checked (RFC-0063 sec9 items 1/2/5 synced with roadmap-2026-07-07 Phase 0 decision; RFC-0066/0068 stale titles fixed); sweeping the cluster from under-review to accepted per reports/implementation/roadmap-2026-07-07.md Phase 0.
 
 ## Summary
@@ -28,10 +42,13 @@ form. This RFC adds elision layers that make the common cases annotation-free:
 2. **Tag-only allocator elision** (§1a) — the same bare `@`, when no value-channel
    allocator is in scope at all, resolves to a fresh compile-time-only tag rather
    than a type error.
-3. **Lifetime anchor elision** (§2) — the common one-to-one and self-anchor cases
+3. **Call-site allocator-argument elision** (§1b) — a call to a function with
+   exactly one value-channel allocator parameter may omit that argument entirely
+   when exactly one allocator is in scope at the call site.
+4. **Lifetime anchor elision** (§2) — the common one-to-one and self-anchor cases
    need no explicit `<&r>` declaration.
 
-All three rules share one invariant: **elision is legal only when the compiler can
+All four rules share one invariant: **elision is legal only when the compiler can
 determine the unique correct answer**; ambiguity is always a compile error, never a
 silent choice.
 
@@ -140,6 +157,93 @@ ownership" (`Node`).
 
 ---
 
+## 1b. Call-site allocator-argument elision
+
+§1 and §1a elide the allocator *name* inside a type or expression, but neither
+touches the argument list of a call — every worked example in the accepted cluster,
+checked directly rather than assumed, spells the allocator argument out in full at
+every single call site, including calls made from a scope with only one allocator
+in it:
+
+```metel
+fun wrap<T, A: Alloc>(@a: A, val: T) -> @a T { @a val }
+
+BumpAlloc::scoped((@a) -> {
+    let x = wrap(@a, 42_u64);   // RFC-0077 §3.3 — `a` is the sole allocator, yet
+                                 // still written out in full at the call site
+});
+```
+
+That is the real substance of "the elision rules are insufficient" — a helper
+threading an allocator down through several layers of calls still writes `@a` at
+every layer, even though every one of those call sites already has exactly one
+candidate in scope. This section closes that gap:
+
+> A call to a function whose signature declares **exactly one** value-channel
+> allocator parameter `(@a: A)` may omit the corresponding argument entirely when
+> exactly one allocator is in scope at the call site. The omitted allocator is not
+> a positional gap — the argument list simply has one fewer entry, the same way
+> `<@a>` (§1a) never occupies a value-argument slot at all.
+
+```metel
+BumpAlloc::scoped((@a) -> {
+    let x = wrap(42_u64);   // == wrap(@a, 42_u64) — the sole allocator, elided
+});
+```
+
+**Scoped strictly to single-allocator signatures — this does not extend to
+multi-allocator calls.** `transfer<T, A: Alloc, B: Alloc>(@src: A, @dst: B, val: @src
+T) -> @dst T` from RFC-0063 §4 keeps its two allocator arguments explicit at every
+call site, even when the caller happens to have exactly two allocators in scope:
+which in-scope allocator plays `src` and which plays `dst` is a *positional*
+question elision cannot answer from type compatibility alone — unlike Kotlin's
+context parameters (see Alternatives, below), where two differently-*named*
+same-typed parameters in one signature are already a compiler-flagged ambiguity, not
+a case elision is expected to resolve either. This mirrors §1's own existing
+"two or more allocators forces explicit naming" invariant exactly, generalized from
+"in scope" to "in the callee's own signature."
+
+**Why this is safe where RFC-0075's withdrawn inter-function inference wasn't.**
+RFC-0075 considered and rejected giving a function an *implicit* allocator
+parameter inferred from its body, for three reasons: hidden lifetime contracts,
+stack-overflow risk from invisibly-allocated recursive structures, and ABI changes
+invisible at the signature. None of those apply here — the callee's signature is
+untouched; `(@a: A)` is exactly as explicit as it was before this section. Only a
+caller's *redundant* re-statement of an argument the compiler can already determine
+uniquely is elided, the same class of "legal only when the answer is unique, never a
+silent choice" rule §1/§1a/§2 already use.
+
+### Alternatives considered
+
+Three real languages solve the same underlying problem — a value every call in a
+chain needs, but nobody wants to repeat at every call site — with different
+tradeoffs, surveyed directly rather than from memory:
+
+- **Zig** has no such mechanism at all, by explicit design: the allocator is always
+  a visible, explicit parameter, every time, permanently. Rejected as this section's
+  model precisely because that's the status quo being amended.
+- **Odin**'s implicit `context` struct (carrying `context.allocator`) is passed on
+  every call automatically under the default calling convention and read implicitly
+  by anything that allocates; a scope reassigns `context` to override it, and a
+  function opts out entirely via the `"contextless"` calling convention. This solves
+  verbosity completely but reintroduces exactly what RFC-0075 already rejected for
+  inference: which allocator a function actually uses becomes invisible at its call
+  site, resolved from mutable ambient state rather than readable off a signature.
+  Rejected for the same reason RFC-0075's inter-function inference was.
+- **Kotlin**'s context parameters (`context(users: UserService) fun f(...)`, stable
+  as of Kotlin 2.4) are the closest precedent to this section's rule: every function
+  that needs one still declares it in its own signature — no silent propagation
+  across call depth — but the call site never re-passes it by name, resolving it by
+  type from an ambient `context(users) { ... }` block or the caller's own context
+  parameters; ambiguity between two same-typed candidates is a compile error. That
+  last rule is verbatim this RFC's own governing invariant, arrived at
+  independently. Kotlin's own design history is a useful cross-check: context
+  parameters replaced an earlier, nameless "context receivers" design specifically
+  because namelessness broke traceability — this section's rule keeps the parameter
+  named in every signature for the same reason, never anonymous.
+
+---
+
 ## 2. Lifetime anchor elision
 
 Explicit `<&r>` declarations and `&r T` / `&r mut T` annotations in signatures are
@@ -219,6 +323,15 @@ the signature and the `&`-bearing positions that follow from it.
 1. **Closures.** The grammar for allocator parameters on closure literals
    (`BumpAlloc::scoped((@a) -> { ... })`) is left to RFC-0050 (Closure Capture Lists).
 
+2. **§1b's exact spelling at the parser level.** This RFC specifies that the omitted
+   argument is not a positional gap — the call's argument list simply has one fewer
+   entry, mirroring `<@a>` never occupying a value-argument slot. An alternative
+   spelling would keep a bare `@` placeholder in the call (`wrap(@, 42_u64)`),
+   mirroring §1's own `@a Node` → `@Node` pattern more literally at the cost of
+   giving up the full ergonomic win. This RFC's position is the former (full
+   omission); recorded here as the one specific grammar-level choice left to confirm
+   once §1b's rule is actually implemented, not left ambiguous in the rule itself.
+
 ---
 
 ## References
@@ -230,3 +343,10 @@ the signature and the `&`-bearing positions that follow from it.
   elided tag-only form here.
 - RFC-0067 (Lifetime Anchors) — lifetime anchors, `&r T`, `&r mut T`, anchor elision rules.
 - RFC-0050 (Closure Capture Lists) — closure grammar for `(@a) -> {}`.
+- RFC-0075 (Region Inference, draft/parked) — a different elision axis (local
+  temporaries that never cross a function boundary need no `@` at all); §1b above
+  is call-site argument elision for already-explicit signatures, which is why §1b's
+  safety argument doesn't depend on RFC-0075's own withdrawn inter-function
+  inference, and why the two proposals don't compete for the same scope.
+- RFC-0077 (Allocator Generics) — §3.3's `wrap(@a, 42_u64)` worked example, the
+  concrete evidence for §1b's motivation.
