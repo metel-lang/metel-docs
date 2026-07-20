@@ -59,7 +59,7 @@ The project started as **Yoloscript**, with one deliberately silly objective: a 
 
 The next iteration tried to be a mix of Rust and Go, and I named it **Gust** — which felt clever for about a week, until I realized I was nowhere near the first person to think "a Rust/Go hybrid should be called Gust." A fair number of other projects had already landed on the same name. That was a small crisis: I'd already grown attached to the wind theme Gust had put in my head, and I wasn't ready to let it go.
 
-After a bit of wandering, I landed on **Metel** — Russian for "snowstorm," and the title of a poem by Sergei Yesenin, one of my father's favorite poets:
+After a bit of wandering, I landed on **Metel** — Russian for "blizzard," and the title of a poem by Sergei Yesenin, one of my father's favorite poets:
 
 > Прядите, дни, свою былую пряжу...
 >
