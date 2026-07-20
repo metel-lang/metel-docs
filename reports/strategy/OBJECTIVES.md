@@ -379,12 +379,19 @@ of what was watched for and what actually happened is part of the point.
     since this instance was only caught by an explicit pull-and-compare, not by any
     standing mechanism.
 
-16. ⬜ **New, 2026-07-20.** RFC-0097's frontmatter (`status: implemented`) and
-    `REGISTRY.md` disagree with `INDEX.md`'s own more careful narrative and with direct
-    inspection of `coherence.rs::outermost_id` (no dedicated branch for a bare
-    blanket-impl target — it happens to return `None` incidentally, not by design).
-    Watch whether this gets resolved (real check landed, or frontmatter downgraded) or
-    persists quietly the way PR #270 did before Trigger 15 named it.
+16. ✅ **Fired and resolved, same day, 2026-07-20.** RFC-0097's frontmatter (`status:
+    implemented`) and `REGISTRY.md` disagreed with `INDEX.md`'s own more careful
+    narrative and with direct inspection of `coherence.rs::outermost_id` (no
+    dedicated branch for a bare blanket-impl target — it happened to return `None`
+    incidentally, not by design). Resolved by landing the real check rather than
+    downgrading the frontmatter: `outermost_id` now takes the enclosing impl's own
+    generic parameter names and explicitly returns `None` for a bare `Named(name,
+    [])` matching one of them, before ever reaching name resolution. Verified
+    against both existing fixtures plus the full suite (546 integration + 119 unit
+    tests, clippy-clean) — zero regressions, since the fix only makes an
+    already-correct outcome deliberate rather than changing it. The fastest
+    same-day resolution any trigger in this document has had, the same shape as
+    Trigger 12/15's own quick turnarounds once named explicitly.
 
 17. ⬜ **New, 2026-07-20.** This cycle's actual RFC-writing effort (RFC-0107/108/109/110,
     all opened 07-17 through 07-20) went into a reference/deref/pattern-matching
@@ -422,6 +429,7 @@ of what was watched for and what actually happened is part of the point.
 | 2026-07-15 | Rewrote the medium-term priority narrative around a substrate-first model: structural types, per-field multiplicity, brand semantics, and lifetime validity are now the main low-level design priority; allocator semantics are kept central to language identity but reframed as the flagship synthesis built on that substrate; typestate is explicitly demoted to a secondary stylistic consequence unless implementation pressure proves otherwise. | *(none yet)* |
 | 2026-07-15 | Refined that substrate-first model further: the immediate storage-design target is now a minimal low-level allocation model (storage-backed ownership, provenance/identity, borrowing into owned storage, field-sensitive extraction/destruction), explicitly narrower than the full allocator family, ergonomic surface, or unsafe/custom-allocator layer that will later build on top of it. | *(none yet)* |
 | 2026-07-20 | First cycle to cross-reference the public blog post ("Introducing Metel") against this document as real strategic intent, per explicit request. Found strong alignment (the substrate reframing and records' priority are near-verbatim matches; the hedging on comptime/linear-types/effects is honestly undersold, not oversold) and two divergences: the blog's Foundation section shows 0%-implemented allocator/lifetime-anchor syntax with no "design sketch" disclaimer (Records has one; Foundation doesn't — confirmed via direct grep of `src/grammar.pest`, only one `@` use exists and it's the unrelated `native(@std.core...)` FFI annotation), and this cycle's actual RFC output (RFC-0107/108/109/110, a reference/deref ergonomics cluster) went to neither of the two higher-declared priorities (records, allocator/lifetime follow-through), both of which sat untouched. Also found and named (not yet fixed): RFC-0097's frontmatter claims `implemented` but `INDEX.md` and direct inspection of `coherence.rs::outermost_id` show the underlying check is incidental, not deliberate. Triggers 16/17 opened. | `strategic-overview-2026-07-20.md` |
+| 2026-07-20 | Trigger 16 fixed the same day it was opened: landed the real, deliberate `outermost_id` check for bare-parameter blanket-impl targets in `metel-interpreter/src/coherence.rs` (`fix-272-ambiguous-aspect-method-dispatch` branch), rather than downgrading RFC-0097's frontmatter. Verified against both existing fixtures plus the full suite (546 integration + 119 unit tests, clippy-clean); zero regressions, since the fix only makes an already-`None`-producing path explicit. RFC-0097 and its `INDEX.md` entry updated to reflect confirmed, deliberate implementation. Trigger 16 closed. | *(none — code fix, not a design cycle)* |
 
 ---
 

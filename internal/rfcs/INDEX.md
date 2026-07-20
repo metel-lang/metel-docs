@@ -287,22 +287,34 @@ implementation).
   blanket-impl-aware closed-world negative-bound discharge, and negative-impl
   priority over blanket positives. RFC-0096 still owns the separate auto-impl
   mechanism itself, but that is no longer part of RFC-0060's unimplemented surface.
-- **RFC-0097** *(integrated 2026-07-13)* — Orphan Rule for Bare-Parameter Blanket
-  Impls. RFC-0060 §1's orphan rule assumes every impl target has an outermost type
-  constructor to check — but a bare-parameter blanket (`impl<T: Bound> Aspect for T`,
-  the exact form RFC-0060 §3/§5 and RFC-0080 §1.2 all use as their own running
-  example) has none. Formalizes that target-locality is vacuously unsatisfiable for
-  this shape, so such an impl is permitted only via the aspect side; no new syntax,
-  no new error code (reuses T0014), no new overlap-detection machinery (the
-  orphan-rule fix alone confines any one aspect's bare-parameter blanket to a single
-  module). Opened 2026-07-11, same review pass as RFC-0096. Integrated into
-  `public/reference/spec/declarations.md`, expanding the existing "not covered by
-  this section" deferral note (added while integrating RFC-0036) into full spec
-  content with its three worked examples. Not yet implemented (issue #269) —
-  `coherence.rs`'s `outermost_id` has no explicit case for "target is the impl's own
-  generic parameter" today; it happens to often return `None` for one by incidental
-  name-resolution failure, not by a deliberate check, the same fragile-by-accident
-  pattern #241 and #245 each had to fix for their own target shapes.
+- **RFC-0097** *(implemented, confirmed 2026-07-20)* — Orphan Rule for
+  Bare-Parameter Blanket Impls. RFC-0060 §1's orphan rule assumes every impl target
+  has an outermost type constructor to check — but a bare-parameter blanket
+  (`impl<T: Bound> Aspect for T`, the exact form RFC-0060 §3/§5 and RFC-0080 §1.2 all
+  use as their own running example) has none. Formalizes that target-locality is
+  vacuously unsatisfiable for this shape, so such an impl is permitted only via the
+  aspect side; no new syntax, no new error code (reuses T0014), no new
+  overlap-detection machinery (the orphan-rule fix alone confines any one aspect's
+  bare-parameter blanket to a single module). Opened 2026-07-11, same review pass as
+  RFC-0096. Integrated into `public/reference/spec/declarations.md`, expanding the
+  existing "not covered by this section" deferral note (added while integrating
+  RFC-0036) into full spec content with its three worked examples. **Fixed
+  2026-07-20:** the frontmatter had claimed `implemented` since integration, but
+  `coherence.rs`'s `outermost_id` had no explicit case for "target is the impl's own
+  generic parameter" — it happened to return `None` for one by incidental
+  name-resolution failure (a bare generic parameter name is never registered in
+  `names.symbols`), not by a deliberate check, the same fragile-by-accident pattern
+  #241 and #245 each had to fix for their own target shapes. Landed the real check:
+  `outermost_id` now takes the enclosing impl's own generic parameter names and
+  explicitly returns `None` for a bare `Named(name, [])` matching one of them,
+  before ever falling through to name resolution — same observable behavior, now
+  deliberate and immune to `resolve_id` someday changing underneath it. Verified
+  against both existing fixtures
+  (`bare_parameter_blanket_foreign_aspect_is_orphan`,
+  `bare_parameter_blanket_local_aspect_permitted`) plus the full suite (546
+  integration + 119 unit tests, `cargo clippy --release --lib -- -W
+  clippy::pedantic` clean) — zero regressions, since the change only narrows an
+  already-`None`-producing path to be explicit rather than changing any outcome.
 - **RFC-0072** *(implemented 2026-07-12, was integrated 2026-07-10)* — Negative Bounds
   — `T: !Aspect`. Integrated into `public/reference/spec/declarations.md`; its own
   stale bracket-channel allocator examples (`@[r] T`) fixed first. Implemented (issue
