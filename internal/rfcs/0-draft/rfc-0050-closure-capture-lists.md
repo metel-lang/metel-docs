@@ -240,7 +240,7 @@ captures can target RFC-0067a's syntax directly instead of today's `*mut T`/`*T`
 rename step to schedule around.*
 
 **`&mut`, `&`, and bare `ident` (clone) captures** have no dependency on linear types,
-allocators, or brands. Their only prerequisites are RFC-0043 (already implemented) or, once it
+allocators, or brands. Their only prerequisites are RFC-0043 (superseded by RFC-0067a) or, once it
 lands, RFC-0067a (accepted, Cluster A — `&T`/`&mut T` with no anchors, no allocator
 interaction). Target RFC-0067a's syntax rather than RFC-0043's `*mut T`/`*T` if sequencing this
 RFC after it; both are implementable in the same Cluster-A timeframe, so there's no reason to

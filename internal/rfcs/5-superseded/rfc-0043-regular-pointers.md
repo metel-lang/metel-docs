@@ -2,9 +2,19 @@
 id: rfc-0043
 title: "Regular Pointers and Mutable Pointers"
 date: '2026-06-02'
-status: implemented
+status: superseded
+superseded_by: rfc-0067a
 spec_status: done
 ---
+
+> **Superseded by RFC-0067a (Reference Types), 2026-07-20.** RFC-0067a's own status
+> blockquote already stated "Supersedes RFC-0043 (Regular Pointers)" from 2026-06-28
+> onward, but this file was never moved out of `4-implemented/` or updated to reflect
+> it — caught by `rfc.py check`'s stale-status-citation check while drafting RFC-0110,
+> which cites this RFC as superseded. `*T`/`*mut T` and this RFC's explicit `*p` no
+> longer exist in the language; `&T`/`&mut T` and auto-deref (RFC-0067a) replaced them,
+> and RFC-0110 (draft) reintroduces an explicit `*` deref operator on top of RFC-0067a's
+> notation — not a revival of this RFC's own `*T` type-position sigil.
 
 ## Summary
 

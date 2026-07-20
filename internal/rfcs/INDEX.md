@@ -377,6 +377,21 @@ implementation).
   principle to match scrutinees, the one place it's currently missing — `self` inside
   method bodies and `for`-loop element bindings already get this transparency via their
   own separate, narrower mechanisms. Sibling to RFC-0107 (§2 there), not overlapping.
+- **RFC-0110** *(draft, opened 2026-07-20)* — Explicit Dereference Operator — reintroduces
+  a general unary `*expr` for `&T`/`&mut T`, removed by RFC-0067a in favor of auto-deref
+  alone. Closes two confirmed gaps RFC-0067a §3a's type-directed read-copy doesn't reach
+  (call arguments, binary operator operands — neither has an expected-type position to
+  copy against) and retires an implicit, undocumented write-through-on-plain-assignment
+  rule (named three times in RFC-0067a's amendment blockquotes but never given a
+  numbered section) in favor of the explicit `*p = v` RFC-0045 originally specified.
+  Unlocks repointing a `var`-declared `&mut T` binding, impossible today since bare
+  assignment to any `&mut T`-typed identifier always writes through regardless of
+  binding mutability. Nearly the entire read path is already implemented internally
+  (`UnaryOp::Deref`, `TypedPlace::Deref` — the parser just never produces them); mostly
+  a grammar/parser change plus removing the implicit write-through special case.
+  Complementary to, not overlapping with, RFC-0108 (§6 there addresses match
+  scrutinees specifically; this RFC is general-purpose). Sibling to RFC-0107/0108 in
+  this cluster.
 - **RFC-0098** *(implemented)* — Surface Keyword Renames — `extend Type` /
   `extend Type: Aspect` (reordered target-first, Swift precedent — not `impl X with Y`
   as first drafted), `pub` → `public`, `mut` → `var` (bindings, reference types, and
@@ -504,7 +519,7 @@ implementation).
 
 **Implemented:** RFC-0006, RFC-0007, RFC-0010, RFC-0018, RFC-0019, RFC-0020, RFC-0021,
 RFC-0022, RFC-0023, RFC-0030, RFC-0031, RFC-0032, RFC-0034, RFC-0035, RFC-0040,
-RFC-0041, RFC-0042, RFC-0043, RFC-0044, RFC-0045, RFC-0053, RFC-0054, RFC-0057,
+RFC-0041, RFC-0042, RFC-0044, RFC-0045, RFC-0053, RFC-0054, RFC-0057,
 RFC-0058, RFC-0059, RFC-0060, RFC-0061, RFC-0098, RFC-0106.
 
 Also implemented but not yet folded into this list (Cluster A, landed
@@ -513,6 +528,9 @@ RFC-0037, RFC-0067A, RFC-0072, RFC-0078, RFC-0081, RFC-0082, RFC-0097,
 RFC-0102, RFC-0103.
 
 **Superseded:** RFC-0001 (→ later pointer work), RFC-0002 (aspect bound syntax),
+RFC-0043 (Regular Pointers, `*T`/`*mut T` → RFC-0067a's `&T`/`&mut T`; file was never
+moved out of `4-implemented/` despite RFC-0067a's own text saying so since
+2026-06-28 — caught and fixed 2026-07-20 while drafting RFC-0110),
 RFC-0009 (module system → RFC-0030), RFC-0012 (→ RFC-0092/0093/0094/0095), RFC-0013
 (integer overflow), RFC-0016 (stdlib foundation), RFC-0024 (linear types → RFC-0028,
 which was then refused — RFC-0089 re-homes this), RFC-0029 (module system gaps),
