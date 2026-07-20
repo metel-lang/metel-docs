@@ -2,14 +2,18 @@
 id: rfc-0107
 title: "Unqualified Enum Variants in Match Patterns"
 date: '2026-07-17'
-status: accepted
+status: integrated
 target:
 updated: '2026-07-20'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/278'
+impl_status: not-started
 ---
 
 > **Status — under review (2026-07-20).** Thorough draft; sole open question (shadowing lint) has an explicit non-blocking 'ship silent' recommendation. Reviewing with the enum/reference cluster.
 
 > **Status — accepted (2026-07-20).** Design settled; type-directed bare-variant resolution during construction, Pattern::None special case retired. Shadowing lint declined (ship silent, matching Rust).
+
+> **Status — integrated (2026-07-20).** Merged into expressions.md (Unqualified variant patterns) + Pattern Kinds table; Pattern::None retirement noted; cross-checked with RFC-0108 peel ordering.
 
 ## Summary
 

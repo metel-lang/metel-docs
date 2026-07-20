@@ -2,14 +2,18 @@
 id: rfc-0108
 title: "Reference-Transparent Match Scrutinees"
 date: '2026-07-17'
-status: accepted
+status: integrated
 target:
 updated: '2026-07-20'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/278'
+impl_status: not-started
 ---
 
 > **Status — under review (2026-07-20).** Thorough draft with resolved worked examples; open questions (exhaustiveness wording, 0107 sequencing) are non-blocking recommendations. Reviewing as part of the enum/reference cluster (0107/0108/0110).
 
 > **Status — accepted (2026-07-20).** Design settled; peel-references-before-pattern-resolution using existing helpers, no open questions block it. Sequencing with RFC-0107 noted (peel before variant resolution).
+
+> **Status — integrated (2026-07-20).** Merged into expressions.md (Matching through a reference) with a cross-check example composing with RFC-0107's bare-variant resolution; peel runs before variant resolution.
 
 ## Summary
 

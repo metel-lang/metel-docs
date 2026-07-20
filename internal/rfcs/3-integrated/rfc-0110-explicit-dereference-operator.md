@@ -2,14 +2,18 @@
 id: rfc-0110
 title: "Explicit Dereference Operator"
 date: '2026-07-20'
-status: accepted
+status: integrated
 target:
 updated: '2026-07-20'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/278'
+impl_status: not-started
 ---
 
 > **Status — under review (2026-07-20).** Thorough draft; open questions (&*p borrow-checker interaction, redundant-deref lint, Eq/Ne peeling) are all non-blocking or implementation-time. Reviewing with the enum/reference cluster.
 
 > **Status — accepted (2026-07-20).** Design settled; extend auto-deref read-copy to call args/binops, retire bare-identifier write-through for explicit *p=v, add unary * for reads and writes. Open questions non-blocking/impl-time.
+
+> **Status — integrated (2026-07-20).** Merged into expressions.md (Dereference) + types.md; write-through change flagged as Changed in v0.11.0; field/index write-through unchanged; read-copy extension documented.
 
 ## Summary
 
