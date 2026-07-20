@@ -63,9 +63,11 @@ The next iteration tried to be a mix of Rust and Go, and I named it **Gust** —
 
 After a bit of wandering, I landed on **Metel** — Russian for "snowstorm," and the title of a poem by Sergei Yesenin, one of my father's favorite poets:
 
-> Прядите, дни, свою былую пряжу...
+> Визжит метель,
+> Как будто бы кабан,
+> Которого зарезать собрались.
 >
-> *(Spin on, you days, your age-old thread...)*
+> *(The blizzard squeals — like a boar about to be slaughtered.)*
 >
 > — Sergei Yesenin, "Метель" (1924)
 
