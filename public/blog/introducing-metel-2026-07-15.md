@@ -10,9 +10,25 @@ tags: [language-design, metel, roadmap]
 
 You surely know as well as I do that the world does not need another amateur C++/Rust/Zig/Go/Odin clone, so the honest introduction is this: I started building Metel because I wanted to build a programming language.
 
+Here's a taste of what that turned into:
+
+```metel
+fun main() {
+    let name = "Metel";
+    let answer: Perhaps<i64> = Perhaps::Some { value: 42 };
+    println("${name} says the answer is ${answer.yolo()}");
+}
+```
+
+`.yolo()` is not a typo — more on that name below.
+
 At first, the goal was small and personal: a statically typed, Rust-influenced interpreted language with a garbage collector, **built to learn rather than to ship**.
 
-That version did not stay small for long. Once the basics existed, I started reading more seriously about memory safety, type systems, ownership, regions, linear capabilities, structural typing, and brand-like identity systems — Federico Bruzzone's [A friendly tour of substructural, uniqueness, ownership and capabilities types (and more)](https://federicobruzzone.github.io/posts/eter/a-friendly-tour-of-substructural-uniqueness-ownership-and-capabilities-types-and-more.html) was one of the pieces that pushed me deeper in that direction.
+That version did not stay small for long. Once the basics existed, I started reading more seriously about memory safety, type systems, ownership, regions, linear capabilities, structural typing, and brand-like identity systems — Federico Bruzzone's [A friendly tour of substructural, uniqueness, ownership and capabilities types (and more)](https://federicobruzzone.github.io/posts/eter/a-friendly-tour-of-substructural-uniqueness-ownership-and-capabilities-types-and-more.html) was one of the pieces that pushed me deeper in that direction. One line from it has stuck with me since:
+
+> The type systems we inherit from the simply-typed λ-calculus have no vocabulary for "this value must be used exactly once" or "there must never be two copies of this reference."
+>
+> — Federico Bruzzone, *["Resources are not Truths"](https://federicobruzzone.github.io/posts/eter/a-friendly-tour-of-substructural-uniqueness-ownership-and-capabilities-types-and-more.html)*
 
 What struck me reading that material was how vast it was, and how much of it is already proven out somewhere. Region calculus shipped in [Cyclone](https://cyclone.thelanguage.org/wiki/Introduction%20to%20Regions/) decades before it became [Rust](https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html)'s lifetimes. [Zig](https://ziglang.org/documentation/master/#Choosing-an-Allocator) and [Odin](https://odin-lang.org/docs/overview/#allocators) already pass allocators explicitly. [GhostCell](https://plv.mpi-sws.org/rustbelt/ghostcell/) and [Koka](https://koka-lang.github.io/koka/doc/index.html) already do brand-like identity and effect handlers. [TypeScript](https://www.typescriptlang.org/docs/handbook/type-compatibility.html) and [PureScript](https://book.purescript.org/chapter3.html) already treat structural typing as a first-class citizen. Almost none of the individual ideas is unclaimed.
 
@@ -45,7 +61,15 @@ The project started as **Yoloscript**, with one deliberately silly objective: a 
 
 The next iteration tried to be a mix of Rust and Go, and I named it **Gust** — which felt clever for about a week, until I realized I was nowhere near the first person to think "a Rust/Go hybrid should be called Gust." A fair number of other projects had already landed on the same name. That was a small crisis: I'd already grown attached to the wind theme Gust had put in my head, and I wasn't ready to let it go.
 
-After a bit of wandering, I landed on **Metel** — Russian for "snowstorm," and the title of a poem by Sergei Yesenin, one of my father's favorite poets. It kept the wind, carried more weight than a pun, and it's the one that stuck.
+After a bit of wandering, I landed on **Metel** — Russian for "snowstorm," and the title of a poem by Sergei Yesenin, one of my father's favorite poets:
+
+> Прядите, дни, свою былую пряжу...
+>
+> *(Spin on, you days, your age-old thread...)*
+>
+> — Sergei Yesenin, "Метель" (1924)
+
+It kept the wind, carried more weight than a pun, and it's the one that stuck.
 
 ## What Already Exists
 
