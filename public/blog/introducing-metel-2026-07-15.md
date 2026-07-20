@@ -33,7 +33,7 @@ Metel is a personal project. **There is no team, no company, and no roadmap** dr
 I used to describe Metel mainly as "an allocator-aware language." The better description now is broader: allocators are the first major use case of a **lower-level substrate** — structural shape, field-sensitive ownership, brand-like identity, and lifetimes named after actual bindings. That substrate is more than one post can cover honestly, so I am starting a series: this first post gives the overall shape of the project and a first look at the piece I currently find most worth pursuing, **records** and the field-sensitive ownership they are meant to unlock, with a dedicated post to follow once that design is further along.
 
 One thing I want to be explicit about upfront: **Metel is heavily AI-assisted**. The implementation of the interpreter especially has been built with a lot of help from AI tools.
-The design work however, while also AI-assisted, is very carefully curated and reviewed in detail. Whether that puts the result closer to careful engineering or vibe-coded slop, I'll let you be the judge - but I'd like to think the former.
+The design work however, while also AI-assisted, is very carefully curated and reviewed in detail. Whether that puts the result closer to careful engineering or vibe-coded slop, I'll let you be the judge – but I'd like to think closer to the middle than to the latter.
 
 ## Why Metel?
 
