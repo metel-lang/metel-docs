@@ -28,7 +28,7 @@ That version did not stay small for long. Once the basics existed, I started rea
 
 What struck me reading that material was how vast it was, and how much of it is already proven out somewhere — region calculus, explicit allocators, branded identity, structural typing, each already shipped in some corner of some language (more on each below). Almost none of the individual ideas is unclaimed.
 
-What is still genuinely open is how much room is left in combining them. Most of this work was done in isolation, one idea answering one problem, and there is real exploration left in seeing which of these already-researched concepts actually fit together in a single language rather than sitting beside each other.
+What is still genuinely open is how much room is left in combining them. Each already solves its own problem well, in its own language; what's still unexplored is whether several of these already-researched concepts can hold together at once, in a single language, rather than each staying in a different one.
 
 There's also a more immediate motivation: mainstream languages are still actively floating new proposals for these exact problems — Rust's own Niko Matsakis has one for [view types](https://smallcultfollowing.com/babysteps/blog/2021/11/05/view-types/) and, separately, one for a [place-based lifetime syntax](https://smallcultfollowing.com/babysteps/blog/2024/06/02/the-borrow-checker-within/) aimed at teachability. Watching that, I realized I could try my hand at the same problems myself, in a language of my own.
 
