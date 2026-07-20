@@ -59,7 +59,7 @@ The project started as **Yoloscript**, with one deliberately silly objective: a 
 
 The next iteration tried to be a mix of Rust and Go, and I named it **Gust** — which felt clever for about a week, until I realized I was nowhere near the first person to think "a Rust/Go hybrid should be called Gust." A fair number of other projects had already landed on the same name. That was a small crisis: I'd already grown attached to the wind theme Gust had put in my head, and I wasn't ready to let it go.
 
-After a bit of wandering, I landed on **Metel** — Russian for "blizzard," and the title of a poem by Sergei Yesenin, one of my father's favorite poets:
+After a bit of wandering, I landed on **Metel** — Russian for "blizzard," and the title of a poem by Sergei Yesenin, one of my late father's favorite poets:
 
 > Прядите, дни, свою былую пряжу...
 >
@@ -81,39 +81,21 @@ aspect Greet {
 struct Person { name: String }
 
 extend Person: Greet {
-    fun greet(&self) -> String {
-        "Hello, ${self.name}!"
-    }
-
-    fun rename(&var self, new_name: String) {
-        self.name = new_name;
-    }
+    fun greet(&self) -> String { "Hello, ${self.name}!" }
+    fun rename(&var self, new_name: String) { self.name = new_name; }
 }
 
 fun greet_all<T: Greet>(people: T[]) {
-    for (p in people) {
-        println(p.greet());
-    }
+    for (p in people) { println(p.greet()); }
 }
 
 fun main() -> i64 {
-    let nums = List::from([1, 2, 3, 4]);
-
-    let total = nums
-        .filter((x: i64) -> boolean { x % 2 == 0 })
-        .map((x: i64) -> i64 { x * 10 })
-        .fold(0i64, (acc: i64, x: i64) -> i64 { acc + x });
-
     var ada = Person { name: "Ada" };
     let ada_ref: &var Person = &var ada;
     ada_ref.rename("Ada Lovelace");   // auto-deref through &var — writes back to ada
 
-    let reader: &Person = &ada;
-    println(reader.greet());          // auto-deref through &, read-only
-
     greet_all([ada, Person { name: "Grace" }]);
-    println("total = ${total}");
-    return total;
+    return 0;
 }
 ```
 
