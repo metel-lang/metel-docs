@@ -377,19 +377,20 @@ implementation).
   principle to match scrutinees, the one place it's currently missing — `self` inside
   method bodies and `for`-loop element bindings already get this transparency via their
   own separate, narrower mechanisms. Sibling to RFC-0107 (§2 there), not overlapping.
-- **RFC-0110** *(draft, opened 2026-07-20)* — Explicit Dereference Operator — reintroduces
-  a general unary `*expr` for `&T`/`&mut T`, removed by RFC-0067a in favor of auto-deref
-  alone. Closes two confirmed gaps RFC-0067a §3a's type-directed read-copy doesn't reach
-  (call arguments, binary operator operands — neither has an expected-type position to
-  copy against) and retires an implicit, undocumented write-through-on-plain-assignment
-  rule (named three times in RFC-0067a's amendment blockquotes but never given a
-  numbered section) in favor of the explicit `*p = v` RFC-0045 originally specified.
-  Unlocks repointing a `var`-declared `&mut T` binding, impossible today since bare
-  assignment to any `&mut T`-typed identifier always writes through regardless of
-  binding mutability. Nearly the entire read path is already implemented internally
-  (`UnaryOp::Deref`, `TypedPlace::Deref` — the parser just never produces them); mostly
-  a grammar/parser change plus removing the implicit write-through special case.
-  Complementary to, not overlapping with, RFC-0108 (§6 there addresses match
+- **RFC-0110** *(draft, opened 2026-07-20)* — Explicit Dereference Operator — extends
+  and formally documents RFC-0067a's existing auto-deref, rather than replacing any of
+  it. Closes two confirmed read-copy gaps (call arguments for monomorphic callees —
+  `param_hints` already threads the expected type through, `maybe_read_copy` just
+  isn't called afterward there; binary operator operands, via the same
+  `peel_type_references` helper already used for method/field receivers), and writes
+  down the implicit write-through rule for the first time (named three times in
+  RFC-0067a's amendment blockquotes but never given a numbered section) — left
+  behaviorally unchanged, not retired. Separately reintroduces a general unary `*expr`,
+  removed by RFC-0067a, as an always-legal, visible *synonym* alongside auto-deref for
+  both reads and writes (`*p = v` and `p = v` produce the identical `TypedPlace::Deref`
+  node) — the same "implicit default, explicit alternative available" shape `&mut T` →
+  `&T` coercion already has. Zero migration cost: no existing fixture needs any change.
+  Complementary to, not overlapping with, RFC-0108 (§7 there addresses match
   scrutinees specifically; this RFC is general-purpose). Sibling to RFC-0107/0108 in
   this cluster.
 - **RFC-0098** *(implemented)* — Surface Keyword Renames — `extend Type` /
