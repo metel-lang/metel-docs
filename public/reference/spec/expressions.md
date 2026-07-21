@@ -352,7 +352,7 @@ Rules:
 - assigning to a reference-typed binding (`p = v`) **rebinds** it, like any other type;
   `*p = v` is the spelling that writes through
 
-Addressable lvalues for both `&` and `&var` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), and chains thereof (`nested.outer.field`, `t.1.0`). Non-addressable expressions (call results, arithmetic) are rejected at runtime.
+Addressable places for both `&` and `&var` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), a dereference (`*p` — so `&*p` is a reborrow that shares the referent's storage), and chains thereof (`nested.outer.field`, `t.1.0`). Non-addressable expressions (literals, call results, struct and enum construction, arithmetic) are rejected at compile time with [T0005](../error-codes.md#t0005--invalid-operand-types).
 
 `&var` requires the operand to be a `var` binding — applying it to a plain `let` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)). `&var` on a lvalue path (`&var s.field`, `&var arr[i]`) produces a true exclusive reference with write-back semantics, matching `&var` on a named binding exactly — writes through it propagate to the original storage location (RFC-0045, already implemented; this section previously described `&var struct.field` as a non-propagating snapshot, which was the *pre*-RFC-0045 behavior and had never been updated to match). `&` on a field or element still evaluates to an independent, read-only reference to a copy of the current value at the time `&` was applied — correct and unchanged, since a shared reference is never written through.
 
