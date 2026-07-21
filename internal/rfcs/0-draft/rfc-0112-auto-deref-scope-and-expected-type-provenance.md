@@ -328,7 +328,7 @@ only so the trail from RFC-0110's open question to its answer is not lost.
 
 - RFC-0067a (Reference Types, implemented) — §3a's read-copy is the mechanism this RFC
   scopes; Motivation §1 documents where its text overstates its implementation.
-- RFC-0110 (Explicit Dereference Operator, under review) — this RFC was split out of it.
+- RFC-0110 (Explicit Dereference Operator) — this RFC was split out of it.
   RFC-0110 keeps the write side and explicit `*`; §4 here re-examines and declines the two
   read-side extensions it originally carried. Neither RFC depends on the other's outcome.
 - RFC-0111 (Unqualified Enum Variants in Expression Position, draft) — wants expected types

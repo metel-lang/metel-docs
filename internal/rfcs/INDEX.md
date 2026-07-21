@@ -425,7 +425,7 @@ implementation).
   request came from actually points at scope import (`use Colour::*`), weighed and
   declined in §2.1 for consistency with RFC-0107's already-shipped choice. Real work is
   in Pass 1, which has no expected-type parameter at all.
-- **RFC-0110** *(under review, integrated 2026-07-20 then demoted 2026-07-21 — issue #278)* —
+- **RFC-0110** *(integrated 2026-07-21, impl in-progress — issue #278)* —
   Explicit Dereference Operator — **the Go half** of what was one RFC. Unary `*expr` for
   reads and for writing through (`*p = v`); auto-deref kept at *selectors only* (field
   access, field assign, method dispatch); bare assignment to a reference-typed identifier

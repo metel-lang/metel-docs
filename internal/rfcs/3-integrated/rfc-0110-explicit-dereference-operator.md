@@ -2,7 +2,7 @@
 id: rfc-0110
 title: "Explicit Dereference Operator"
 date: '2026-07-20'
-status: under-review
+status: integrated
 target:
 updated: '2026-07-21'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/278'
@@ -16,6 +16,10 @@ impl_status: not-started
 > **Status — integrated (2026-07-20).** Merged into expressions.md (Dereference) + types.md; write-through change flagged as Changed in v0.11.0; field/index write-through unchanged; read-copy extension documented.
 
 > **Status — under review (2026-07-21).** Design changed materially: adopting the Go model (explicit *, selector auto-deref only, bare assignment rebinds). Read-copy extensions to call arguments and binary operands split out into RFC-0112, which is still being decided. Spec text backed out.
+
+> **Status — accepted (2026-07-21).** Go model settled: explicit unary * for reads and writes, auto-deref at selectors only, bare assignment rebinds (unlocking repoint). Read-side extensions live in RFC-0112 and are not a dependency. Index-path write-through ships here as an addition; repointing does not wait for RFC-0071. Remaining open questions (&*p borrow interaction, redundant-deref lint) are both explicitly non-blocking.
+
+> **Status — integrated (2026-07-21).** Merged into expressions.md (Dereference) + types.md: explicit * for reads and writes, auto-deref at selectors only, bare assignment rebinds, field and index write-through implicit. Worked examples cross-checked against RFC-0107/0108/0112/0045/0044; RFC-0045 gave the index write-through correction, RFC-0044 surfaced metel-core#280.
 
 ## Summary
 
@@ -463,6 +467,52 @@ question, since the rewrite is mechanical (`p = v` → `*p = v`) and grep-and-fi
    Motivation §1a's assessment stands — repointing adds no new soundness hole, only new
    routes to one that already exists and that RFC-0071 is the designated fix for. §4.2
    ships with the rest of this RFC rather than waiting for the borrow checker.
+
+---
+
+## Resolved while integrating (2026-07-21)
+
+Worked examples combining this RFC with each sibling it can interact with, per PROCESS's
+`3-integrated` exit criterion. Two of the four turned up something.
+
+**RFC-0108 (Reference-Transparent Match Scrutinees, implemented) — no conflict, confirmed
+redundant by design.** `match *c { .. }` and `match c { .. }` for `c: &Colour` both work
+and produce the same result: RFC-0108 peels the scrutinee, and `*c` peels it explicitly
+first. §7 predicted this; nothing changes. Checked that RFC-0108's peel runs on the
+scrutinee's constructed type, so an explicit `*` simply arrives having already done the
+peel — the two do not compound into a double deref.
+
+**RFC-0107 (Unqualified Enum Variants, implemented) — no interaction.** Bare-variant
+resolution runs on the *pattern* side against the scrutinee's enum; `*` is expression-level
+only (§8). `match *c { Red => .. }` composes both with no ordering question, because the
+peel happens before variant resolution either way.
+
+**RFC-0112 (Auto-Deref Scope, draft) — the coupling is one-directional and safe.** RFC-0112
+may narrow or widen where *implicit* read-copy fires. Every position it could touch remains
+spellable with an explicit `*` regardless, so no outcome of RFC-0112 can invalidate anything
+here. The reverse is also true: this RFC adds no new implicit read-copy site. Confirmed the
+two RFCs share no code — §5's parser/`AssignTarget` work does not touch `maybe_read_copy`.
+
+**RFC-0045 (Mutable Address-Of for Lvalue Paths, implemented) — turned up the §4.1
+correction, already folded in.** Field-path write-through works today at arbitrary nesting;
+index-path write-through *through a reference* does not (`fun f(xs: &var i64[]) { xs[0] = 9; }`
+fails with `cannot unify &mut i64[] with ?t19[]`). This RFC therefore adds it rather than
+preserving it. Caught here rather than at implementation time, which is what this stage is
+for.
+
+**RFC-0044 (Addressability, implemented) — turned up a live hazard, filed rather than
+absorbed.** §6 says `*p` is a new addressable place and `&*p` is a legal reborrow. But
+address-of a non-lvalue currently aborts with `[I0001] internal error` rather than a
+diagnostic, and there is no static addressability check anywhere in the typechecker — so
+`&*p` failing would fail *badly*. Filed as metel-core#280 with the finding that the check is
+static-determinable (the evaluator decides purely on typed-AST shape). Not a blocker for
+this RFC — `*p` for a reference-typed `p` is always addressable — but §5's write side should
+land after #280, not before, so that a malformed `*expr = v` produces a real error.
+
+**Not cross-checked, deliberately:** RFC-0080's `Deref`/`DerefMut` aspects (under review).
+§8 scopes user-overloadable deref out entirely, and §8's forward-compatibility note already
+records the one place the two would collide — RFC-0080 §2.2's `deref_mut` returns a *value*
+of reference type where §5 needs a *place*.
 
 ---
 
