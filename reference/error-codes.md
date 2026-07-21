@@ -89,13 +89,21 @@ A function is called with the wrong number of arguments.
 
 ### T0005 — Invalid operand types
 
-A binary operator is applied to types it does not support.
+An operator is applied to operands it does not support. Three forms share this code:
+
+- **Binary arithmetic/ordering** on unsupported types.
+- **Equality** (`==`, `!=`) on anything other than a numeric type, `boolean`, `String` or
+  `char`. `==` does not yet dispatch through the `Eq` aspect, so structs, enums, arrays,
+  tuples and references are rejected; use `.eq(..)` on a type that implements `Eq`.
+- **Address-of** (`&`, `&var`) applied to something that is not an addressable place —
+  a literal, a call result, or a struct/enum construction. Bind it to a name first.
 
 ```
 [T0005] type error in main.mtl at 6..13: operator `+` cannot be applied to boolean and i64
 ```
 
-**Fix:** use compatible types, or cast one operand.
+**Fix:** use compatible types, cast one operand, or bind the value to a name so it has an
+address.
 
 ### T0006 — Assignment to immutable binding
 
