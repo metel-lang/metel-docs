@@ -121,7 +121,7 @@ fun main() -> i64 {
 
 ### Unqualified variant constructors
 
-> **Planned for v0.11.0 (RFC-0111).**
+> **Since v0.11.0 (RFC-0111).**
 
 A bare variant name may be used where the *expected* type determines which enum is meant —
 the expression-position counterpart of "Unqualified variant patterns" below. Both no-field
