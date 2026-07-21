@@ -94,6 +94,17 @@ five distinct kinds of thing, not one:
    (1315, 1324, 1342). Machinery, not a statement of anyone's intent.
 5. **Inherited** — block tail (1030), array elements, `if`/`match` arms: these carry
    whatever the parent had.
+6. **Inference-derived** *(added 2026-07-21, after metel-core#281)* — a closure body is now
+   constructed against the closure's own return type, and for an *unannotated* closure that
+   type comes from pass 1's inference rather than from anything an author wrote. Before
+   #281 this supplier did not exist: `body_expected` was `None` whenever the closure had no
+   `-> T`, because pass 2 had no access to the inferred type at all.
+
+   This is a genuinely new kind, not a re-labelling of category 1. The type is real and
+   correct, but nobody wrote it down anywhere, so "authored in the declaration the
+   expression is lexically inside" does not describe it. §1's rule must say what it does
+   with this case before it can be accepted; the safe default, consistent with the rest of
+   the rule, is that read-copy does **not** fire on it. Not decided here.
 
 Category 3 is the sharpest illustration. `r + 1` propagates `1`'s inferred `i64` onto `r`.
 A trigger keyed on `Some` would make that deref — reintroducing RFC-0110's old §2 through a
