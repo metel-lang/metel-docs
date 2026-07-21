@@ -126,39 +126,44 @@ in the spec:
 > else — a callee's parameter list, a struct's field declaration, another operand, or the
 > compiler's own bookkeeping — the copy must be spelled explicitly.
 
-### 1.0 The rule is necessary but not sufficient — solve order also gates it
+### 1.0 The rule was not positional; it is now — resolved 2026-07-21
 
-**Correction, 2026-07-21.** Everything below states the rule *positionally*: read-copy
-fires at these positions and not those. Probing the implementation shows position is only
-half of it. The value's own type must **already be resolved to a reference** at the moment
-the constraint is added; if it is still an unsolved type variable, no peel happens and the
-constraint fails outright:
+**Found while checking this RFC against the implementation, then fixed.** The rule below is
+stated *positionally*: read-copy fires at these positions and not those. That was not what
+the implementation did. `constrain_with_read_copy` decided whether to peel by
+pattern-matching `actual` **raw**, without applying the current substitution — so the peel
+depended on whether the value's type happened to be in reference form already:
 
-| at a `let` annotation (category 1 throughout) | today |
-|---|---|
-| `let n: i64 = r;` where `let r: &i64 = &a;` | works |
-| `let n: i64 = s.r;` where the field's type is `&i64` | works |
-| `let n: i64 = g();` where `fun g() -> &i64` | **`T0001`** |
-| `let r = g(); let n: i64 = r;` | **`T0001`** |
-| `let n = g(): i64;` (ascription) | **`T0001`** |
-| `return g();` from a `-> i64` function | **`T0001`** |
+| at a `let` annotation (category 1 throughout) | before | now |
+|---|---|---|
+| `let n: i64 = r;` where `let r: &i64 = &a;` | works | works |
+| `let n: i64 = s.r;` where the field's type is `&i64` | works | works |
+| `let n: i64 = g();` where `fun g() -> &i64` | **`T0001`** | works |
+| `let r = g(); let n: i64 = r;` | **`T0001`** | works |
+| `let n = g(): i64;` (ascription) | **`T0001`** | works |
+| `return g();` from a `-> i64` function | **`T0001`** | works |
 
-Every row is category 1 by this RFC's rule, so a purely positional rule predicts all six
-work. Four do not. The distinguishing factor is not the position but whether the value is
-syntactically a reference (`&a`, a field of reference type) versus a call whose return type
-is a pending inference variable when `constrain_with_read_copy` runs.
+A call returns a fresh inference variable, which matches no reference pattern, so the peel
+decision was made *before the information needed to make it existed* and was silently made
+wrong. `let n: i64 = g()` failing where `let n: i64 = r` succeeds is not a distinction any
+user could predict, so this was treated as a defect to remove rather than a design to
+codify. Fixed by solving and applying before the peel test — the same shape `infer_match`
+(RFC-0108) and `Expr::Call`'s auto-deref already used; `constrain_with_read_copy` was the
+one place still inspecting raw. Fixture:
+`evaluator/references/13_read_copy_from_call_result.mtl`.
 
-This is pre-existing and unrelated to any RFC in this cluster — reproduced with a plain
-function, no closures or references-of-references involved. It matters here for two reasons:
+**Consequence for this RFC: §1's rule is now literally true, and §2's zero-behaviour-change
+claim is restored.** It was briefly false, and it is worth recording that it was — the claim
+is this RFC's main evidence that the rule describes the design rather than being imposed on
+it, and it survived only because the implementation was corrected to match, not because the
+rule was right about the code as it stood.
 
-- **§2's "zero behaviour change" claim is about positions and is therefore incomplete.**
-  Adopting §1's rule as written would not reproduce today's behaviour, because today's
-  behaviour is not purely positional.
-- **A rule that cannot be stated without "…and if solve order cooperates" is not the
-  enforceable rule this RFC set out to write.** Either the solve-order dependency gets
-  fixed first (so the positional rule becomes true), or §1 has to state it explicitly and
-  give up some of its claim to being mechanical. Not resolved here; see Unresolved
-  Questions.
+**One related limitation deliberately left alone.** `let f: () -> i64 = () -> { g() };`
+still fails. There the declared type is the closure's own return variable, and the
+constraint that would resolve it is not generated until after the body is inferred — so
+applying the current substitution is a no-op. That is an ordering limitation in constraint
+generation, not a missing `apply`, and substituting `declared` was tried and fixed nothing.
+Out of scope for this RFC; it is not a provenance question.
 
 Three properties worth stating, because each rules out a worse formulation:
 
@@ -206,12 +211,10 @@ Applying the rule to the implemented behavior in Motivation §1:
 | binary operand | 3 | does not fire | does not fire |
 | index / array element | 4 | does not fire | does not fire |
 
-Every row agrees **on position**. That was originally offered as evidence that this RFC is
-a formalization with zero behaviour change, and it is weaker than it looked: §1.0 shows
-behaviour also depends on whether the value's type is resolved when the constraint is
-added, which no row above captures. The table remains true as far as it goes — no position
-changes category — but "zero behaviour change" cannot be claimed until the solve-order
-dependency is either fixed or written into the rule.
+Every row agrees. **This RFC is a formalization with zero behavior change**, which is the
+strongest available evidence that the rule is a description of the design rather than a
+constraint imposed on it after the fact — with the caveat recorded in §1.0 that this became
+true only after the implementation was corrected to be genuinely positional.
 
 One row deserves a note: `match`/`if` arms inherit, and today inherit from a parent that
 does not propagate, so they do not fire. If arm propagation is ever fixed (it is a plausible
@@ -369,16 +372,9 @@ only so the trail from RFC-0110's open question to its answer is not lost.
 3. ~~**`Eq`/`Ne` on references.**~~ Answered and moved out — see §4.2. It is a general
    `==` typechecking hole, not a reference or auto-deref question; issue #279, with the
    aspect-dispatch design fix at #263 / RFC-0062.
-4. **The solve-order dependency (§1.0) — fix it, or write it into the rule?** Read-copy
-   does not fire when the value's type is still an unsolved variable, most visibly for any
-   call returning `&T`. Two ways forward, and this RFC cannot be accepted without choosing:
-   fix it first, so §1's positional rule becomes literally true and "zero behaviour change"
-   can be claimed honestly; or state it as part of the rule, accepting that the rule is
-   then "position **and** resolvedness," which is materially less mechanical than what §1
-   promises. Recommend the former — the current behaviour is hard to defend on its own
-   terms (`let n: i64 = g()` failing where `let n: i64 = r` succeeds is not a distinction
-   any user could predict), so it looks like a limitation to remove rather than a design to
-   codify.
+4. ~~**The solve-order dependency — fix it, or write it into the rule?**~~ **Resolved
+   2026-07-21: fixed.** See §1.0. The peel test now runs against the substituted type, so
+   §1's rule is positional in fact and not only on paper.
 5. **Does read-copy fire on the inference-derived expected type (category 6)?** The safe
    default, consistent with the rest of §1, is no — it is not authored by anyone. But this
    category only came into existence with metel-core#281 and has had no design attention.
