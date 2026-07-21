@@ -67,6 +67,27 @@ RFC-0092's own Timing Recommendation).
 All v0.5+, none implemented, none accepted. This is where the RFC-0055 overlap (above)
 was found and reconciled, and where this session did most of its work.
 
+> **Moved to under review, 2026-07-21.** RFC-0089, RFC-0090, RFC-0091 and RFC-0109 — the
+> records/views substrate — were swept from draft to `1-under-review` together, along with
+> the new **RFC-0113 (Context Parameters)**. This is `OBJECTIVES.md` Priority 2, the
+> declared main medium-term design priority, and the blog's stated short-term commitment
+> (`ToRecord`/`FromRecord` working in the interpreter). It also answers Trigger 17, which
+> asked whether the next cycle would move a higher-ranked item or keep substituting
+> reference/deref ergonomics work for it. The cluster is reviewed as a unit because
+> RFC-0091 extends the RFC-0089/RFC-0090 floor and RFC-0109 depends on both — Trigger 6's
+> 0089↔0090 dependency direction is the question review has to settle.
+
+- **RFC-0113** *(under review, opened 2026-07-21)* — Context Parameters — a value a call
+  tree needs, declared on the callee and resolved *by type* from the caller's scope, with
+  ambiguity always a compile error. Fills what `OBJECTIVES.md` Priority 2 calls "the largest
+  unwritten hole on the allocator critical path" — the one substrate primitive with no RFC
+  of any kind. Generalizes RFC-0065's four separate elision rules (§1/§1a/§1b/§2 all restate
+  the same "elide only when the unique answer is determinable" invariant) and adopts its
+  reverted-depth-shadowing lesson as §3.1's type-directed filtering. Also retires the
+  invented `given` keyword in RFC-0076's capability-token sketch. Deliberately scoped to
+  the *threading* only: allocated values stay owned/affine/move-tracked, which is the
+  box+brand+borrow-checker column, untouched.
+
 - **RFC-0089** — Linear Types — multiplicity lattice, `Linear` auto-impl aspect. Depends
   on RFC-0071 (accepted). Partial consumption now routes through RFC-0090's `ToRecord`,
   not a bespoke mechanism (revised 2026-07-09). `Linear`'s auto-impl categorization

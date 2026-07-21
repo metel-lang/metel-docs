@@ -411,7 +411,7 @@ because this RFC is the right place to resolve it.
 - RFC-0080 (Standard Library Aspects) — `Send`/`Sync`'s own auto-impl rules (§3.1-
   §3.2, §4.1-§4.2), unchanged by this RFC; the pattern this RFC generalizes. §7.2
   (via RFC-0061) supplies the function-pointer rule cited in §2.
-- RFC-0089 (Linear Types, draft) — `Linear` as the third auto-impl aspect (§2); the
+- RFC-0089 (Linear Types) — `Linear` as the third auto-impl aspect (§2); the
   citation that made the missing shared definition visible. Does not state a
   reference rule (Unresolved Question 3).
 - RFC-0093 (Derive Registration) — the user-invoked `@derive(Aspect)` mechanism this
@@ -434,7 +434,7 @@ because this RFC is the right place to resolve it.
   pattern.
 - Issue #238 / `src/coherence.rs` — where the absence of an `AspectDecl` auto-impl
   marker was confirmed empty by direct inspection, motivating §1's design decision.
-- RFC-0090 (Structural Records, draft) — §1's `HasField`/`Lacks` auto-derivation,
+- RFC-0090 (Structural Records) — §1's `HasField`/`Lacks` auto-derivation,
   the fifth document assuming this RFC's pattern, missed on the first drafting pass;
   the subject of this RFC's §7.
 - RFC-0105 (Struct-Embedded Aspect Lists, draft) — inherits the split-out requirement

@@ -173,7 +173,7 @@ resolution — are resolved in §6, but that no longer closes the RFC on its own
   positional call argument is affected.
 - RFC-0042 (`let mut` for Mutable Bindings) — precedent cited in §5 for retiring an old spelling outright rather than keeping a permanent transition alias.
 - RFC-0044 (Explicit Receiver Semantics) — receiver-form distinctions confirmed against §6's aspect-method-call resolution.
-- RFC-0091 (Linear Records, draft) — uses `record { field: Type }` as a *type-level* notation (not a construction-site expression); related surface shape, but a different grammar position, not directly amended by this RFC.
+- RFC-0091 (Linear Records) — uses `record { field: Type }` as a *type-level* notation (not a construction-site expression); related surface shape, but a different grammar position, not directly amended by this RFC.
 - RFC-0098 (Surface Keyword Renames) — sibling surface-syntax RFC from the same review; independent of this one (no shared grammar production, no shared open question).
 - RFC-0099 (Dot-Separated Module Paths) — sibling surface-syntax RFC from the same review; independent of this one.
 - RFC-0101 (Grammar-Enforced Naming Case Conventions) — reviewed alongside this RFC; narrows (but does not

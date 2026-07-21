@@ -194,10 +194,10 @@ allocator cluster as the deepest layer. The lower-level work that needs the most
   needs, resolved by type from scope with ambiguity an error, of which the allocator handle
   `(@a: A)` is one instance (see Priority 3 and
   `reports/substructural-types/allocators-as-emergent-synthesis.md`). Newly recognized as a
-  substrate primitive rather than allocator-specific ergonomics, and the one member of this
-  list with **no RFC of any kind yet** — the largest unwritten hole on the allocator critical
-  path, larger than any open brand or borrow-checker question, since those at least have a
-  document.
+  substrate primitive rather than allocator-specific ergonomics. **Written 2026-07-21 as
+  RFC-0113 (Context Parameters), now `1-under-review`** — until then it was the one member
+  of this list with no RFC of any kind, and the largest unwritten hole on the allocator
+  critical path.
 
 This framing demotes the old typestate question from "central fork in the roadmap" to a
 secondary stylistic consequence unless implementation pressure proves otherwise. The core design
@@ -434,7 +434,7 @@ of what was watched for and what actually happened is part of the point.
     same-day resolution any trigger in this document has had, the same shape as
     Trigger 12/15's own quick turnarounds once named explicitly.
 
-17. ⬜ **New, 2026-07-20.** This cycle's actual RFC-writing effort (RFC-0107/108/109/110,
+17. ✅ **New, 2026-07-20; answered 2026-07-21.** This cycle's actual RFC-writing effort (RFC-0107/108/109/110,
     all opened 07-17 through 07-20) went into a reference/deref/pattern-matching
     ergonomics cluster extending the already-implemented RFC-0067a — while Priority 1's
     allocator/lifetime follow-through (ratified since 07-10, still 0% implemented) and
@@ -445,6 +445,16 @@ of what was watched for and what actually happened is part of the point.
     attention, not just this document's own read. Watch whether the next cycle moves
     either higher-ranked item, or whether ergonomics-cluster churn keeps substituting
     for it.
+
+    **Answered 2026-07-21 — both, in that order.** The cycle first continued the cluster:
+    RFC-0107, RFC-0108 and RFC-0110 were implemented and RFC-0111 was opened *and*
+    implemented, all reference/deref ergonomics, with records and allocators still
+    untouched. So the substitution did continue, and for a full session. It was then
+    named and corrected within the same cycle: RFC-0089/0090/0091/0109 were swept to
+    `1-under-review` as the records/views substrate, and **RFC-0113 (Context Parameters)**
+    was written from nothing — closing the "largest unwritten hole" this document's own
+    Priority 2 names. Worth recording honestly rather than as a clean win: the correction
+    happened because the trigger was read back, not because the priority was followed.
 
 18. ⬜ **New, 2026-07-20.** The allocator-decomposition hypothesis
     (`reports/substructural-types/allocators-as-emergent-synthesis.md`, Priority 3):

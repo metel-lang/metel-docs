@@ -2,8 +2,9 @@
 id: rfc-0089
 title: "Linear Types"
 date: '2026-07-09'
-status: draft
+status: under-review
 target:
+updated: '2026-07-21'
 ---
 
 > **New RFC, split out 2026-07-09** from `reports/substructural-types/linear-types.md`
@@ -44,6 +45,8 @@ target:
 > the derived conversion for such a struct carries the source's brand, and the derive
 > emits one ordinary explicit `impl Linear` against that specific branded shape.
 > Corresponding amendment in RFC-0090 §8.
+
+> **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 2 (the main medium-term design priority) and the blog's short-term commitment to ToRecord/FromRecord in the interpreter. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 
 ## Summary
 
@@ -402,7 +405,7 @@ and its open aliasing question remain explicitly not required for the deadline.
   RFC-0024's original form
 - `reports/substructural-types/linear-types.md` — the living design report this RFC is
   extracted from
-- RFC-0091 (Linear Records, draft) — the record-based fuller extension of §3's partial
+- RFC-0091 (Linear Records) — the record-based fuller extension of §3's partial
   consumption, depends on this RFC
 - Prior art: `archive/per-field-multiplicities.md` — the multiplicity lattice's
   theoretical foundation (Atkey 2018, Idris 2, Linear Haskell)

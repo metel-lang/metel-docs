@@ -2,8 +2,9 @@
 id: rfc-0090
 title: "Structural Records — Rows and Tiers"
 date: '2026-07-09'
-status: draft
+status: under-review
 target:
+updated: '2026-07-21'
 ---
 
 > **New RFC, split out 2026-07-09** from `reports/substructural-types/structural-records.md`
@@ -21,6 +22,8 @@ target:
 > represent (RFC-0089 §3.1). For that narrow case, the derived conversion carries the
 > source's brand and the derive emits one explicit `impl Linear` against that specific
 > branded shape — full mechanism and scope in RFC-0089 §3.1.
+
+> **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 2 (the main medium-term design priority) and the blog's short-term commitment to ToRecord/FromRecord in the interpreter. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 
 ## Summary
 

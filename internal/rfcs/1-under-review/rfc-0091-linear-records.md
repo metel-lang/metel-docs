@@ -2,8 +2,9 @@
 id: rfc-0091
 title: "Linear Records"
 date: '2026-07-09'
-status: draft
+status: under-review
 target:
+updated: '2026-07-21'
 ---
 
 > **New RFC, split out 2026-07-09** from `reports/substructural-types/linear-types.md`
@@ -26,6 +27,8 @@ target:
 > additive extension on top of that floor — the contrast is now "explicit conversion
 > call, then move" vs. "no conversion call needed, the compiler downgrades the type
 > automatically," rather than "raw struct field access" vs. "records."
+
+> **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 2 (the main medium-term design priority) and the blog's short-term commitment to ToRecord/FromRecord in the interpreter. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 
 ## Summary
 

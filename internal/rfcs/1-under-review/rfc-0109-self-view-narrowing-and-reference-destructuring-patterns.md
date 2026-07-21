@@ -2,8 +2,9 @@
 id: rfc-0109
 title: "Self-View Narrowing and Reference-Destructuring Patterns"
 date: '2026-07-18'
-status: draft
+status: under-review
 target:
+updated: '2026-07-21'
 ---
 
 > **Paper-only territory, more so than most drafts in this cluster.** This RFC's
@@ -13,8 +14,8 @@ target:
 > src/`) returns nothing. Everything here describes intended behavior once RFC-0071
 > lands, the same footing RFC-0091 (Linear Records) already stands on. Amends RFC-0044
 > (Explicit Receiver Semantics) — precedent for amending it already exists (RFC-0067a
-> did so for reference types). Depends on RFC-0090 (Structural Records, draft) for the
-> `record { ... }` vocabulary and RFC-0091 (Linear Records, draft) for the `(row,
+> did so for reference types). Depends on RFC-0090 (Structural Records) for the
+> `record { ... }` vocabulary and RFC-0091 (Linear Records) for the `(row,
 > brand)` representation §4 reuses directly.
 >
 > **Revised 2026-07-18, later the same day.** §4 rewritten: the inline `self: &record
@@ -32,6 +33,8 @@ target:
 > with independent `&`/`&mut` modes per slot, checked pairwise-disjoint via §4.4 and
 > unpacked in the body via ordinary `Pattern::Tuple` — no new grammar, no new
 > mutability axis, just composing mechanisms already specified elsewhere in this RFC.
+
+> **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 2 (the main medium-term design priority) and the blog's short-term commitment to ToRecord/FromRecord in the interpreter. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 
 ## Summary
 
@@ -667,12 +670,12 @@ than leaving it a vague cross-module concern.
   by one row (a `&mut`-containing tuple requires `&mut` addressability of the whole
   receiver) rather than replacing it. Precedent for amending RFC-0044 already exists
   (RFC-0067a).
-- **RFC-0090 (Structural Records, draft)** — §4 reuses §9's `(row, brand)`
+- **RFC-0090 (Structural Records)** — §4 reuses §9's `(row, brand)`
   representation directly, and §4.7 frames the view-carries-a-brand exception as a
   second instance of §8's existing fiat-`Linear` carve-out rather than a new one. §4.6
   keeps views out of tier 3's coherence-facing capability regardless of representation
   overlap.
-- **RFC-0091 (Linear Records, draft)** — §4.1 specializes §2.2's `(row, brand)`
+- **RFC-0091 (Linear Records)** — §4.1 specializes §2.2's `(row, brand)`
   residual-reuse operation; §4.5 inherits part, but only part, of §2.1's open aliasing
   question. If RFC-0091's Option C is adopted, self-view checking against a partially
   consumed residual and Option C's own downgrade tracking become literally the same
@@ -776,14 +779,14 @@ than leaving it a vague cross-module concern.
   RFC amends.
 - RFC-0067a (Reference Types, implemented) — precedent for amending RFC-0044; the
   `&T`/`&mut T` vocabulary self-views and reference-destructuring patterns build on.
-- RFC-0090 (Structural Records — Rows and Tiers, draft) — §9's `(row, brand)`
+- RFC-0090 (Structural Records — Rows and Tiers) — §9's `(row, brand)`
   representation §4.1 reuses; §8's tier system and its existing fiat-`Linear` bare-vs-
   branded exception §4.7 mirrors; §8's tier-3 coherence-eligibility boundary §4.6
   deliberately stays clear of.
-- RFC-0091 (Linear Records, draft) — §2.2's `(row, brand)` residual-reuse operation §4.1
+- RFC-0091 (Linear Records) — §2.2's `(row, brand)` residual-reuse operation §4.1
   specializes; §2.1's open aliasing question §4.5 partially, not wholly, inherits;
   `drain_field`'s single-field asymmetric split, the gap §3 closes.
-- RFC-0089 (Linear Types, draft) §3.1 — the fiat-`Linear` brand-carrying exception to
+- RFC-0089 (Linear Types) §3.1 — the fiat-`Linear` brand-carrying exception to
   tier 2's bare-by-default rule, the precedent §4.7 extends.
 - RFC-0032 (Field-Level Visibility, implemented) — the private-field-access check §4.11
   reuses for cross-module `view` declarations, and the rule a view exposed through a
