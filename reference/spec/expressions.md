@@ -343,18 +343,79 @@ Rules:
 
 - `&expr` creates a shared reference `&T` where `expr` is an addressable lvalue
 - `&var x` creates an exclusive reference `&var T` where `x` is a `var` addressable lvalue
-- reading a plain value out of a reference with no field/method involved goes through
-  type-directed copy (see
+- `*p` dereferences a reference — reading the referent, or, as an assignment target
+  (`*p = v`), writing through to it (see "Dereference" below)
+- reading a plain value out of a reference with no field/method involved can also go
+  through type-directed copy (see
   [Types — Reading a value out of a reference](types.md#reading-a-value-out-of-a-reference)),
-  and field access / method dispatch go through auto-deref (below)
-- assigning to a `&var T`-typed binding (`p = v`) writes through to the referent; there
-  is no explicit dereference operator, and a `&var T` binding cannot be repointed
+  and field access, index, and method dispatch go through auto-deref (below)
+- assigning to a reference-typed binding (`p = v`) **rebinds** it, like any other type;
+  `*p = v` is the spelling that writes through
 
 Addressable lvalues for both `&` and `&var` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), and chains thereof (`nested.outer.field`, `t.1.0`). Non-addressable expressions (call results, arithmetic) are rejected at runtime.
 
 `&var` requires the operand to be a `var` binding — applying it to a plain `let` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)). `&var` on a lvalue path (`&var s.field`, `&var arr[i]`) produces a true exclusive reference with write-back semantics, matching `&var` on a named binding exactly — writes through it propagate to the original storage location (RFC-0045, already implemented; this section previously described `&var struct.field` as a non-propagating snapshot, which was the *pre*-RFC-0045 behavior and had never been updated to match). `&` on a field or element still evaluates to an independent, read-only reference to a copy of the current value at the time `&` was applied — correct and unchanged, since a shared reference is never written through.
 
-Field access, field assignment, and method dispatch auto-dereference through a reference:
+#### Dereference
+
+> **Planned for v0.11.0 (RFC-0110).**
+
+`*expr` dereferences a `&T`/`&var T`. As an expression it reads the referent; as an
+assignment target, `*p = v` writes through a `&var T`. Applying `*` to a non-reference is
+a type error ([T0002](../error-codes.md#t0002--cannot-infer-type)).
+
+Auto-deref covers **selectors only** — field access, indexing, and method dispatch, where
+the target of the operation is unambiguous. Everywhere else, reading through a reference
+is spelled explicitly:
+
+```metel
+fun add(x: i64, y: i64) -> i64 { x + y }
+
+fun main() -> i64 {
+    let a = 3;
+    let b = 4;
+    let p: &i64 = &a;
+    let q: &i64 = &b;
+    return add(*p, *q) + (*p + *q);   // explicit: call arguments and operands
+}
+```
+
+Bare assignment to a reference-typed binding rebinds it rather than writing through, so a
+`&var T` can be repointed:
+
+```metel
+fun main() -> i64 {
+    var a = 1;
+    var b = 2;
+    var p: &var i64 = &var a;
+    p = &var b;   // repoint: p now refers to b (p is `var`) — a stays 1
+    *p = 5;       // write-through: b becomes 5
+    return a + b; // 1 + 5
+}
+```
+
+Field- and index-path targets keep writing through with no `*` needed — `s.field = v` and
+`arr[i] = v` have no competing "rebind" reading, so they are unambiguous as they stand:
+
+```metel
+struct Point { x: i64, y: i64 }
+
+fun main() -> i64 {
+    var q = Point { x: 5, y: 7 };
+    let qp: &var Point = &var q;
+    qp.y = 99;        // field write-through — no `*` needed
+    var xs = [1, 2, 3];
+    let xp: &var i64[] = &var xs;
+    xp[0] = 9;        // index write-through — no `*` needed
+    return q.y + xs[0];
+}
+```
+
+`*(obj.field) = v` and `obj.field = v` are synonyms; for a bare identifier target, `*p = v`
+is the only spelling that writes through.
+
+Field access, field assignment, indexing, and method dispatch auto-dereference through a
+reference:
 
 ```metel
 struct Counter {
