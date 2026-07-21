@@ -2,11 +2,11 @@
 id: rfc-0111
 title: "Unqualified Enum Variants in Expression Position"
 date: '2026-07-21'
-status: integrated
+status: implemented
 target:
 updated: '2026-07-21'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/284'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-07-21).** Substantiated proposal with a verified implementation sketch. All three original open questions resolved against the implementation (2026-07-21): no param_hints widening is needed, method args and struct fields already carry hints, Result's Ok/Err falls out free. Dependency on RFC-0112 removed as a consequence.
@@ -14,6 +14,10 @@ impl_status: not-started
 > **Status — accepted (2026-07-21).** Design settled: type-directed resolution against the expected type, binding wins over variant in expression position (the deliberate asymmetry with RFC-0107), no reverse-index fallback when no expected type exists. Scope import weighed and declined for consistency with RFC-0107. No open questions remain and no RFC dependency.
 
 > **Status — integrated (2026-07-21).** Merged into expressions.md (Unqualified variant constructors) and types.md (Perhaps<T> reframed: None/Some are ordinary variants, not literals). Worked examples cross-checked against RFC-0106/0107/0101/0112; turned up that a unit struct may share a name with a variant, resolved by reading SS1.1's third condition as covering unit-struct constructors -- a bare variant is a last resort, never a shadowing mechanism.
+
+> **Status — implemented (2026-07-21).** Pass 1 defers a bare identifier only when `has_variant_named` says some enum declares it, never using that index to pick an enum; Pass 2 resolves against `expected_ty` at two hooks, both placed after the binding lookup and the struct-literal branch so §1.2's binding-wins and the integrate-stage unit-struct-wins rule hold. `Literal::None` and `none_lit` are gone entirely — zero occurrences remain — and `None`/`Some`/`Ok`/`Err` all route through the general mechanism. 797 tests green, including the 51 existing fixtures using `None`. Fixtures: `evaluator/enums/41_unqualified_variant_constructors.mtl` plus negatives for no-expected-type and unit-struct-wins.
+
+> **Known limitation, inherited not introduced (2026-07-21).** A bare variant inside an *uncalled* closure body is silently accepted: `let f = () -> { Red };` compiles. This is not specific to this RFC — `let f = () -> { [] };` behaves identically and predates it. An uncalled generic closure's body is never constructed, so no Pass 2 resolution runs over it and any deferred-resolution construct escapes. Filed as metel-core#285. §3.1's goal of preserving the `T0003` typo diagnostic is met everywhere else: a name no enum declares still errors in Pass 1, and a bare variant in any reachable position still errors.
 
 ## Summary
 
