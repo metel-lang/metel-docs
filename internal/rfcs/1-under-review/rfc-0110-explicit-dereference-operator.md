@@ -2,9 +2,9 @@
 id: rfc-0110
 title: "Explicit Dereference Operator"
 date: '2026-07-20'
-status: integrated
+status: under-review
 target:
-updated: '2026-07-20'
+updated: '2026-07-21'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/278'
 impl_status: not-started
 ---
@@ -15,72 +15,73 @@ impl_status: not-started
 
 > **Status — integrated (2026-07-20).** Merged into expressions.md (Dereference) + types.md; write-through change flagged as Changed in v0.11.0; field/index write-through unchanged; read-copy extension documented.
 
+> **Status — under review (2026-07-21).** Design changed materially: adopting the Go model (explicit *, selector auto-deref only, bare assignment rebinds). Read-copy extensions to call arguments and binary operands split out into RFC-0112, which is still being decided. Spec text backed out.
+
 ## Summary
 
-Extend and formally document Metel's existing auto-deref mechanism (RFC-0067a §3/§3a,
-RFC-0045), closing its two real read-side coverage gaps — call arguments and binary
-operator operands — confirmed directly against the implementation, not assumed.
-Separately, reintroduce a general unary `*expr`, removed by RFC-0067a.
+Adopt the Go model for references, for this phase: an explicit unary `*expr` for reading
+through a reference and for writing through it (`*p = v`); auto-deref kept **at selectors
+only** — field access, field assignment, method dispatch; and bare assignment to a
+reference-typed identifier changed to mean *rebind*, as it does for every other type,
+which is what unlocks repointing.
 
-**Auto-deref is not one mechanism, and this RFC does not treat it as one.** Field/method
-dispatch, RFC-0045's fat-pointer field/index write-through, and §3a's read-copy (now
-extended, §1-§2) are all kept exactly as they are — none of them competes with a second
-sensible reading of the same syntax, so none of them changes. The one mechanism that
-*does* — bare-identifier whole-value write-through, where `p = v` for `p: &mut T`
-silently means "mutate the referent" and forecloses `p` ever being repointed to a
-different reference — is retired (§4.2) in favor of the same resolution Rust and Go
-both already use: bare assignment rebinds, and the explicit `*p = v` this RFC adds is
-the one spelling for writing through. Repoint is unlocked as a direct, mechanical
-consequence, not a separate feature.
+**Auto-deref is not one mechanism, and this RFC does not treat it as one.** Metel ships at
+least four: selector dispatch, RFC-0045's field/index write-through, RFC-0067a §3a's
+type-directed read-copy, and bare-identifier whole-value write-through. Go keeps the first
+kind and requires `*` for everything else. This RFC applies that split to the *write* side
+and to explicit syntax; the *read* side — where implicit copy-out should and should not
+fire — is a separable question, split out into **RFC-0112** and deliberately not decided
+here. Nothing in this RFC depends on how RFC-0112 lands.
 
 ---
 
 ## Motivation
 
-### 1. §3a's read-copy fires only at a fixed set of positions — confirmed, not assumed
+### 1. What the interpreter actually does today — measured, not assumed
 
-RFC-0067a §3a (post-implementation, per its 2026-07-11 amendment) fires at: `let`/`mut`
-bindings, explicit type ascription, `return`, `break`, and tail-expression position —
-because each of those is the one place `maybe_read_copy` (`construction.rs`, ~line
-4131) is called from, chosen specifically because each already has a genuine
-declared/expected type in hand. The RFC's own text says this is deliberate: "never
-fires silently at a plain call site... the argument position has no
-declared-type-of-its-own for the rule to compare against."
+Every row below was probed directly against the built interpreter rather than read off
+RFC-0067a's text, which turns out to overstate its own coverage (see RFC-0112):
 
-**That last claim is only half true, checked directly against `construct_call`
-(`construction.rs`, line 2639).** For a call to a monomorphic, already-typed callee,
-`param_hints` already extracts each parameter's declared type and threads it into
-`construct_expr(a, hint.as_ref(), ctx)` for every argument — the expected type
-genuinely exists and is already flowing through the exact same code path §3a's other
-five call sites use. `maybe_read_copy` simply isn't called afterward there. This makes
-the call-argument gap a real oversight, not a fundamental limitation: `f(r)` where
-`f(v: i64)` and `r: &i64` fails today with no read-copy, even though the machinery
-needed to fix it (a known expected type, `construct_expr` already given it as a hint)
-is already sitting right there.
+| construct | today |
+|---|---|
+| `p.x`, `p.i.v` field read through `&` | works |
+| `p.x = v` field write-through | works |
+| `xs[0] = v` index write-through through a reference | **fails** (`T0001`) |
+| `p = v` bare-identifier write-through | works |
+| `p = &var b` (repoint) | **fails** — `cannot unify i64 with &mut ?t18` |
+| `let y: i64 = r` type-directed copy-out | works, including `&&i64` |
+| `return p` where the return type is `i64` | works |
+| `r + 1` binary operand | fails (`T0001`) |
+| `takes(r)` call argument | fails (`T0001`) |
+| `let w = W { v: r }` struct-literal field | fails (`T0001`) |
+| `match .. { true => r }` arm against an `i64` expected type | fails (`T0001`) |
 
-**Generic (scheme-instantiated) callees are the genuine limitation**, confirmed in the
-same function: `instantiate_scheme_for_call` needs the arguments' own types *first* to
-infer the callee's type-parameter instantiation, so no parameter-type hint exists
-before argument construction for that path — the chicken-and-egg problem RFC-0067a's
-text was gesturing at, just true for one call shape, not all of them. This RFC extends
-read-copy to the monomorphic case (§1 below) and leaves the generic case as-is.
+Two things fall out. First, **repointing is not merely awkward today, it is
+unrepresentable** — row 5 is the empirical confirmation of §4.2's premise. Second,
+§4.1's claim to keep field- *and index*-path write-through "unchanged" is wrong on the
+index half: it does not work through a reference today, so this RFC *adds* it rather than
+preserving it (§4.1, corrected).
 
-**Binary operator operands have no expected-type position at all, monomorphic or
-not — confirmed directly against `construct_binop` (`construction.rs`, line 3861).**
-Every arithmetic and ordering-comparison arm calls `.is_numeric()` (or checks
-`Type::Str`/`Type::Char`) on the operand's *raw* constructed type with no peeling
-first — `Type::Reference`/`Type::MutReference` fails `is_numeric()` outright, so
-`*p + *q` for `p, q: &i64` fails at `T0005` before unification is even reached, with no
-workaround short of a throwaway `let` per operand. This is a second real gap this RFC
-closes directly (§2 below), reusing `peel_type_references` — already defined in this
-same file for method/field-receiver resolution — rather than inventing new machinery.
+### 1a. Why Go, and why only for this phase
 
-RFC-0108 (Reference-Transparent Match Scrutinees) independently found and named
-this same absence while scoping a narrower fix for match scrutinees specifically,
-confirming `match *c { .. }` fails as a *parse* error today (`*` only exists as
-`mul_op`) and explicitly flagging general `*expr` as "could still be proposed
-separately on its own merits; not a prerequisite for or blocker of this RFC." This is
-that RFC.
+Go's rule is: `*p` explicit for reads and writes; auto-deref at selectors only (`p.f`,
+`p.m()`, `p[i]` for pointer-to-array); `p = q` always rebinds, `*p = v` always writes
+through. Rust reaches the same place by a different route (no implicit write-through
+either), so the two agree on everything this RFC decides.
+
+The attraction is that it makes exactly one rule carry the ambiguity: **an operation whose
+direction could be misread requires the sigil.** `p.x = v` cannot mean anything but "write
+into that field," so it stays implicit. `p = v` can mean either "write through" or
+"repoint," so it becomes explicit. That is a smaller and more defensible claim than
+"implicit mechanisms are worse than explicit ones," which an earlier draft of this RFC
+leaned on and which does not survive contact with §4.1.
+
+"for this phase" is load-bearing. Metel has no borrow checker (RFC-0071, accepted, 0%
+implemented), so the repointing this RFC unlocks is unpoliced. Assessed rather than waved
+past: repointing introduces **no new soundness hole** — a `&var T` can already escape its
+referent's scope today without repointing — it only adds more routes to a hole that already
+exists and that RFC-0071 is the designated fix for. That is acceptable now and should be
+re-examined when RFC-0071 lands, not treated as settled forever.
 
 ### 2. Write-through is real and shipped, but was never actually written down
 
@@ -117,66 +118,24 @@ RFC-0067a's `&`/`&mut` notation — alongside the implicit mechanism, not instea
 
 ---
 
-## 1. Extending read-copy to call arguments (monomorphic callees)
+## 1-2. Implicit read-coercion: out of scope, see RFC-0112
 
-In `construct_call`, after `typed_args` is built from `param_hints`, apply
-`maybe_read_copy` per argument wherever a hint exists — the same call `Decl::Let`
-already makes, just one more site:
+An earlier version of this RFC proposed extending RFC-0067a §3a's type-directed read-copy
+to two further positions — arguments of monomorphic calls, and binary-operator operands —
+so that `takes(r)` and `r + 1` would work without a sigil. Under the Go model both stay
+errors, written `takes(*r)` and `*r + 1`.
 
-```rust
-let typed_args: Vec<TypedExpr> = args
-    .iter()
-    .zip(param_hints.iter())
-    .map(|(a, hint)| {
-        let built = construct_expr(a, hint.as_ref(), ctx)?;
-        Ok(match hint {
-            Some(h) => maybe_read_copy(h, built, a.span()),
-            None => built,
-        })
-    })
-    .collect::<Result<_, _>>()?;
-```
+That is not a decision this RFC should make, because it is not really about `*` at all: it
+is about how far implicit read-coercion should reach, which positions count, and how that
+boundary is enforced as new expected-type-carrying positions get added. **Split out into
+RFC-0112 (Auto-Deref Scope and Expected-Type Provenance)**, along with the gap analysis
+that motivated the two extensions and the finding that RFC-0067a §3a's text claims more
+coverage than it has.
 
-```metel
-fun f(v: i64) { .. }
-let r: &i64 = &a;
-f(r);          // read-copy now fires — no ascription needed
-```
-
-`param_hints` is only populated for monomorphic callees (`Expr::Ident`/`Path`/
-`ResolvedPath` resolving to a known `Type::Fun`); the generic/scheme-instantiation path
-is unaffected, per Motivation §1 — its own argument types still drive instantiation,
-unchanged. A generic call still needs ascription (`f(r: i64)`, already legal today) or
-this RFC's explicit `*` (§5) if the parameter's monomorphized type turns out not to be
-a reference.
-
-## 2. Extending read-copy to binary operator operands
-
-In `construct_binop`, peel both operands to their base (non-reference) type
-immediately after construction, before any operator-specific type check —
-`peel_type_references` already exists in this file for exactly this shape of
-operation (method/field-receiver resolution, and RFC-0108's match-scrutinee peeling):
-
-```rust
-let lhs_built = construct_expr(lhs, None, ctx)?;
-let rhs_built = construct_expr(rhs, None, ctx)?;
-let lhs_built = maybe_read_copy(peel_type_references(lhs_built.ty()).clone(), lhs_built, span);
-let rhs_built = maybe_read_copy(peel_type_references(rhs_built.ty()).clone(), rhs_built, span);
-// ...unchanged from here: the existing is_numeric()/Type::Str/Type::Char checks
-// now see the peeled type, exactly as if the caller had written the base type directly.
-```
-
-```metel
-let p: &i64 = &a;
-let q: &i64 = &b;
-let sum = p + q;     // now typechecks directly — no *, no ascription
-```
-
-Applies uniformly to `Add`/`Sub`/`Mul`/`Div`/`Rem`/`Lt`/`Le`/`Gt`/`Ge` — every arm that
-already inspects the operand's own type in this function. `Eq`/`Ne`/`And`/`Or` return
-`Type::Boolean` unconditionally in this function today (their operand compatibility, if
-any, is enforced elsewhere in the pipeline) and are unaffected by this change either
-way; not touched by this RFC.
+This RFC is independent of that outcome. `*p` is a legal read spelling everywhere,
+whatever RFC-0112 decides about where the implicit form also fires — the two compose as
+redundant spellings exactly as §5 describes for writes. Section numbering below is left
+unchanged so cross-references from other RFCs stay valid.
 
 ---
 
@@ -202,14 +161,23 @@ these is genuinely ambiguous, because it's the only one competing with a second,
 equally sensible reading of the exact same syntax. This RFC keeps the first three
 exactly as they are and retires only the fourth.
 
-### 4.1 Kept, unchanged: field- and index-path write-through (RFC-0045)
+### 4.1 Kept: field-path write-through (RFC-0045) — and index-path, which is an *addition*
 
 Any assignment whose *target* is a `FieldAccess` or `Index` (`obj.field = v`,
 `arr[i] = v`, including when auto-deref is needed to reach `obj`/`arr` through a
 reference at the root) goes through `resolve_field_assign_root`, a mechanism entirely
 separate from the one this RFC touches. There is no competing "repoint" reading for a
 field or index target — `obj.field = v` can only ever mean "write into that field" —
-so nothing here changes:
+so this is the selector case Go keeps implicit, and it stays implicit here:
+
+**Correction to an earlier draft of this section, which claimed both halves were "kept,
+unchanged."** Field paths do work today, at arbitrary nesting (`o.i.v = 8` verified).
+Index paths through a reference **do not** — `fun f(xs: &var i64[]) { xs[0] = 9; }` fails
+today with `cannot unify &mut i64[] with ?t19[]`. So the index half is a new capability
+this RFC adds, with its own implementation cost and its own fixtures, not a preservation
+of existing behavior. It is kept in scope because Go's selector rule covers `p[i]` and
+splitting it out would leave the write side half-specified, but it must not be budgeted
+as free.
 
 ```metel
 var q = Point { x: 5, y: 7 };
@@ -300,14 +268,13 @@ node came from the parser or was synthesized internally, so **no typechecker or
 evaluator change is needed for reads** beyond removing the now-inaccurate comment at
 `construction.rs` line 4131 claiming the parser never produces this node.
 
-**Reads**, once this exists, are legal everywhere §1's read-copy reach doesn't
-(unchanged) already covers, plus everywhere it does — a visible, unconditionally-legal
-alternative spelling:
+**Reads**, once this exists, are legal everywhere — including the positions where
+implicit copy-out already fires, as a redundant but always-available spelling:
 
 ```metel
-let sum = *p + *q;    // equivalent to `p + q` after §2; both legal
-f(*r);                // equivalent to `f(r)` after §1 (monomorphic); both legal
-g(*r);                // still needed for a *generic* callee `g` — §1 doesn't reach here
+let sum = *p + *q;    // the only spelling for binary operands under the Go model
+f(*r);                // the only spelling for call arguments under the Go model
+let y: i64 = *r;      // redundant with today's copy-out, and legal either way
 ```
 
 **Writes** get one new `ast::AssignTarget` variant, mirroring the existing write-through
@@ -430,20 +397,22 @@ writes. Neither RFC needs the other; sequencing is immaterial between them.
   `AssignTarget::Ident`'s special case is removed, exactly as before — but grounds it
   in the narrower, correct reason: this is the one mechanism that's genuinely
   ambiguous, not "implicit mechanisms in general are worse than explicit ones."
-- **Add `*` for reads only; leave the call-argument/binop gaps as auto-deref
-  limitations, permanently requiring `*` or ascription there.** Rejected — §1/§2 show
-  both gaps are closable with infrastructure that already exists (`param_hints`,
-  `peel_type_references`) at low cost; leaving them as permanent `*`-required spots
-  would make auto-deref's coverage boundary arbitrary (works for `let`, not for `f(x)`)
-  rather than principled (works everywhere a real expected type is knowable).
+- **Extend implicit read-copy to call arguments and binary operands in this RFC**
+  (what the accepted version proposed). Moved out rather than rejected — see §1-2 and
+  RFC-0112. Under the Go model these positions stay explicit, but the question deserves
+  its own decision rather than riding along with the write-side change.
+- **Strict Go, including retiring RFC-0067a §3a's copy-out entirely** so that even
+  `let y: i64 = r;` requires `*r`. Rejected for this RFC's scope: §3a is implemented and
+  integrated, retiring it is a second breaking change with a different justification from
+  §4.2's, and it is squarely RFC-0112's question, not this one's.
 
 ---
 
 ## Migration
 
-Sections 1-2 are pure extensions — every call and binary expression that already
-typechecks continues to, unchanged, and strictly more now do; no migration cost.
-§4.1 (field/index write-through) is untouched; no migration cost.
+Field-path write-through (§4.1) is untouched; no migration cost. Index-path
+write-through through a reference is an addition (§4.1's correction) and so has no
+migration cost either — nothing relies on behavior that does not exist.
 
 §4.2 (retiring bare-identifier write-through) has a real, precisely bounded cost:
 three fixtures rely on it today — `04_write_through_thin_reference.mtl`,
@@ -470,11 +439,14 @@ question, since the rewrite is mechanical (`p = v` → `*p = v`) and grep-and-fi
    once Metel has a lint pass. Not blocking, and deliberately not a compiler error —
    §5 is explicit that this redundancy is intended for field/index targets, not a
    defect to warn away by default.
-3. **Should `Eq`/`Ne`/`And`/`Or` get the same peeling §2 gives the other operators?**
-   Left open because their operand-compatibility checking, if any, wasn't found in
-   `construct_binop` itself (§2) — determining where it actually lives (if anywhere)
-   and whether it already tolerates references is implementation-time investigation,
-   not resolved by this RFC.
+3. **Does index-path write-through through a reference (§4.1's correction) belong in
+   this RFC at all?** It is a genuine new capability rather than a preservation, and it
+   could ship separately. Kept here because Go's selector rule covers `p[i]` and the
+   write side reads as half-specified without it — but that is a judgment, not a
+   necessity, and the cost was discovered late enough that it has not been sized.
+4. **Should repointing be gated behind RFC-0071?** Motivation §1a argues it adds no new
+   soundness hole, only new routes to an existing one. If that assessment is wrong, §4.2
+   should wait for the borrow checker and this RFC should ship reads-only first.
 
 ---
 
@@ -487,8 +459,8 @@ question, since the rewrite is mechanical (`p = v` → `*p = v`) and grep-and-fi
   field/index write-through, kept entirely unchanged by this RFC (§4.1); originally
   specified in terms of explicit `*p = v`, which §5 of this RFC restores as available
   syntax for it, redundantly with the auto-deref this RFC leaves alone.
-- RFC-0067a (Reference Types, implemented) — this RFC extends §3a's read-copy (§1/§2)
-  and **amends** the bare-identifier write-through rule its own amendment blockquotes
+- RFC-0067a (Reference Types, implemented) — this RFC **amends** the bare-identifier
+  write-through rule its own amendment blockquotes
   named but never gave a numbered section, retiring it in favor of explicit `*p = v`
   (§4.2) — a real behavioral change, not just documentation, unlike §4.1's mechanism.
   §3's auto-deref chain guarantee and RFC-0045's field/index write-through are
@@ -500,6 +472,10 @@ question, since the rewrite is mechanical (`p = v` → `*p = v`) and grep-and-fi
 - RFC-0071 (Ownership and Move Semantics, accepted, 0% implemented) — the eventual
   home for exclusivity *enforcement*; this RFC only extends/restores notation, same
   posture RFC-0067a itself took.
+- RFC-0112 (Auto-Deref Scope and Expected-Type Provenance, draft) — split out of this
+  RFC. Owns the read side: where implicit copy-out fires, and the two extensions this RFC
+  originally proposed (call arguments, binary operands), declined there under a
+  provenance-based rule. Neither RFC depends on the other's outcome.
 - RFC-0108 (Reference-Transparent Match Scrutinees) — independently found and
   named the same "no general deref expression" gap while scoping a narrower,
   match-only fix; its own Alternatives Considered section explicitly left general

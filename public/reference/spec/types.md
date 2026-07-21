@@ -225,8 +225,7 @@ aliases — a reference never owns the value it points to.
 
 References are first-class values, but they are distinct from the referent type. Ordinary
 access — field reads/writes, method dispatch, reading a plain value out — goes through
-auto-deref and type-directed copy; an explicit dereference operator `*p` is also available
-(v0.11.0) for reading through a reference and for writing through a `&var T` (`*p = v`).
+auto-deref and type-directed copy; there is no explicit dereference operator.
 See [Expressions — References](expressions.md#references).
 
 References are only for non-linear aliasing. They cannot target linear values.

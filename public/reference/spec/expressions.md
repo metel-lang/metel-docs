@@ -343,55 +343,12 @@ Rules:
 
 - `&expr` creates a shared reference `&T` where `expr` is an addressable lvalue
 - `&var x` creates an exclusive reference `&var T` where `x` is a `var` addressable lvalue
-- `*p` dereferences a reference — reading its value, or, as an assignment target
-  (`*p = v`), writing through it to the referent (see "Dereference" below)
-- reading a plain value out of a reference with no field/method involved can also go
-  through type-directed copy (see
+- reading a plain value out of a reference with no field/method involved goes through
+  type-directed copy (see
   [Types — Reading a value out of a reference](types.md#reading-a-value-out-of-a-reference)),
-  and field access / method dispatch go through auto-deref (below); `*p` is the explicit
-  form available everywhere those apply, and the only form where they don't
-
-#### Dereference
-
-> **Changed in v0.11.0 (RFC-0110): assignment to a `&var T`-typed binding now rebinds it; use `*p = v` to write through.**
-
-`*expr` dereferences a `&T`/`&var T` value. As an expression it reads the referent; as an
-assignment target `*p = v` writes through a `&var T` to the referent. Prior to v0.11.0 a
-bare `p = v` on a `&var T`-typed binding wrote through the reference; that is no longer the
-case — bare assignment now **rebinds** the variable like any other type (and so requires
-the binding to be `var`), and write-through is spelled explicitly:
-
-```metel
-fun main() -> i64 {
-    var a = 1;
-    var b = 2;
-    var p: &var i64 = &var a;
-    p = &var b;   // repoint: p now refers to b (p is `var`) — a stays 1
-    *p = 5;       // write-through: b becomes 5
-    return a + b; // 1 + 5
-}
-```
-
-Repointing a `&var T` binding — impossible before v0.11.0, because bare assignment always
-meant write-through — is a direct consequence of this change. Field- and index-path
-write-through (`s.field = v`, `arr[i] = v`) is unchanged: those targets have no competing
-"rebind" reading, so they continue to write through with no `*` needed.
-
-`*` reads compose with everything auto-deref already reaches, and extend to two positions
-type-directed copy did not previously cover — an argument to a call whose parameter type is
-concretely known, and an operand of a binary operator:
-
-```metel
-fun add(x: i64, y: i64) -> i64 { x + y }
-
-fun main() -> i64 {
-    let a = 3;
-    let b = 4;
-    let p: &i64 = &a;
-    let q: &i64 = &b;
-    return add(p, q) + (p + q);   // read-copy at the call args and the `+` operands
-}
-```
+  and field access / method dispatch go through auto-deref (below)
+- assigning to a `&var T`-typed binding (`p = v`) writes through to the referent; there
+  is no explicit dereference operator, and a `&var T` binding cannot be repointed
 
 Addressable lvalues for both `&` and `&var` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), and chains thereof (`nested.outer.field`, `t.1.0`). Non-addressable expressions (call results, arithmetic) are rejected at runtime.
 
