@@ -2,11 +2,11 @@
 id: rfc-0110
 title: "Explicit Dereference Operator"
 date: '2026-07-20'
-status: integrated
+status: implemented
 target:
 updated: '2026-07-21'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/278'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-07-20).** Thorough draft; open questions (&*p borrow-checker interaction, redundant-deref lint, Eq/Ne peeling) are all non-blocking or implementation-time. Reviewing with the enum/reference cluster.
@@ -20,6 +20,8 @@ impl_status: not-started
 > **Status — accepted (2026-07-21).** Go model settled: explicit unary * for reads and writes, auto-deref at selectors only, bare assignment rebinds (unlocking repoint). Read-side extensions live in RFC-0112 and are not a dependency. Index-path write-through ships here as an addition; repointing does not wait for RFC-0071. Remaining open questions (&*p borrow interaction, redundant-deref lint) are both explicitly non-blocking.
 
 > **Status — integrated (2026-07-21).** Merged into expressions.md (Dereference) + types.md: explicit * for reads and writes, auto-deref at selectors only, bare assignment rebinds, field and index write-through implicit. Worked examples cross-checked against RFC-0107/0108/0112/0045/0044; RFC-0045 gave the index write-through correction, RFC-0044 surfaced metel-core#280.
+
+> **Status — implemented (2026-07-21).** `*` needed no typechecker or evaluator change for reads — `UnaryOp::Deref` was already fully handled and merely unreachable from surface syntax; writes got `AssignTarget::Deref` lowering to the existing `TypedPlace::Deref`. Migration touched 13 fixtures, not the 3 Migration predicted (it deferred the sweep to implementation time); all mechanical except the two chain fixtures, where one-star-per-layer is a real semantic change. `08_write_through_reference_chain` was rewritten to cover repointing through a chain, which the old peel-every-layer rule made impossible. Dead `write_through_assigns` plumbing removed. 773 tests green.
 
 ## Summary
 
