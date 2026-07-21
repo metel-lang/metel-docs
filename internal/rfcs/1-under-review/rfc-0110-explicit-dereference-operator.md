@@ -353,7 +353,22 @@ writes. Neither RFC needs the other; sequencing is immaterial between them.
   position.
 - **`Deref`/`DerefMut` as user-overloadable aspects.** `*` in this RFC only ever
   applies to the two built-in reference types, `&T`/`&mut T`, exactly like RFC-0067a's
-  own auto-deref. A user-overloadable version is a separate, larger RFC.
+  own auto-deref. A user-overloadable version is a separate, larger RFC — RFC-0080 §2
+  (under review) already drafts the aspects.
+
+  One forward-compatibility note, since §5's write side is the part that would strain:
+  `*p = v` is specified here as an `AssignTarget::Deref` producing a `TypedPlace::Deref`,
+  i.e. `*p` names a *place*. RFC-0080 §2.2's `fun deref_mut(self: &mut Self) -> &mut Target`
+  returns a *value* of reference type. Those are not the same thing, and reconciling them
+  is the known-hard part of user-overloadable deref (Rust has the same tension). Nothing
+  here needs to solve it, but §5's write side should not be read as already covering
+  user types.
+- **Making `&T` a nominal type (`Ref<T>`/`VarRef<T>`) rather than a structural
+  `Type::Reference` variant.** Raised 2026-07-21 while reviewing this RFC. It is a real
+  and separable question — see the analysis recorded on it — but it does not change this
+  RFC's surface semantics: `*` would dispatch on a nominal type instead of a structural
+  variant and behave identically. This RFC is written against `&T`/`&var T` as spelled
+  today and stays correct either way.
 - **Allocator pointers (`@a T`).** RFC-0067 §1 already gives `@a T` its own
   "borrow-deref" operator (`&a expr`) — a different mechanism for a different type.
   `construct_unaryop`'s existing match on `Type::Reference`/`Type::MutReference`
@@ -439,14 +454,15 @@ question, since the rewrite is mechanical (`p = v` → `*p = v`) and grep-and-fi
    once Metel has a lint pass. Not blocking, and deliberately not a compiler error —
    §5 is explicit that this redundancy is intended for field/index targets, not a
    defect to warn away by default.
-3. **Does index-path write-through through a reference (§4.1's correction) belong in
-   this RFC at all?** It is a genuine new capability rather than a preservation, and it
-   could ship separately. Kept here because Go's selector rule covers `p[i]` and the
-   write side reads as half-specified without it — but that is a judgment, not a
-   necessity, and the cost was discovered late enough that it has not been sized.
-4. **Should repointing be gated behind RFC-0071?** Motivation §1a argues it adds no new
-   soundness hole, only new routes to an existing one. If that assessment is wrong, §4.2
-   should wait for the borrow checker and this RFC should ship reads-only first.
+3. ~~**Does index-path write-through belong in this RFC?**~~ **Resolved 2026-07-21: yes.**
+   It ships here rather than separately — Go's selector rule covers `p[i]`, and the write
+   side is half-specified without it. It remains an addition rather than a preservation
+   (§4.1's correction), so it carries its own implementation cost and needs its own
+   fixtures; that is a budgeting note, not an open design question.
+4. ~~**Should repointing be gated behind RFC-0071?**~~ **Resolved 2026-07-21: no.**
+   Motivation §1a's assessment stands — repointing adds no new soundness hole, only new
+   routes to one that already exists and that RFC-0071 is the designated fix for. §4.2
+   ships with the rest of this RFC rather than waiting for the borrow checker.
 
 ---
 
