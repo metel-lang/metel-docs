@@ -4,6 +4,87 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.11.0
+
+**Unreleased.** In development; `Cargo.toml` is still at `0.10.0`. The spec's
+`Since v0.11.0` / `Changed in v0.11.0` markers refer to this entry.
+
+**RFCs implemented:** RFC-0107 (Unqualified Enum Variants in Match Patterns),
+RFC-0108 (Reference-Transparent Match Scrutinees), RFC-0110 (Explicit Dereference
+Operator), RFC-0111 (Unqualified Enum Variants in Expression Position).
+
+**Enum variants:**
+- A match arm may name a variant without its `Enum::` prefix when the scrutinee's
+  enum determines it: `match c { Red => .., Green => .. }`. Resolution is
+  type-directed against the scrutinee's own type — not a lexical import — so two
+  enums may both declare `Red` with no ambiguity.
+- The same applies in expression position, against the *expected* type:
+  `let c: Colour = Red;`, `paint(Blue)`, `fun favourite() -> Colour { Green }`.
+- **`None`, `Some`, `Ok` and `Err` are ordinary variants, not literals.** They have
+  no special status in the grammar or the type system and resolve exactly as a
+  user-declared variant does. Qualified forms remain valid everywhere.
+- A bare variant is a last resort: an in-scope binding wins, and so does a
+  same-named unit struct. Where no expected type exists the bare form does not
+  resolve — there is deliberately no search for "some enum, somewhere".
+
+**References:**
+- Explicit `*expr` returns, for reading through a reference and, as an assignment
+  target, for writing through a `&var T`. This reverses v0.10.0's removal of
+  explicit dereference syntax.
+- Auto-deref is now confined to *selectors* — field access, field assignment,
+  indexing, and method dispatch. Call arguments and operator operands are spelled
+  explicitly: `add(*p, *q)`, `*p + *q`.
+- Matching a `&T`/`&var T` scrutinee matches against the referent's own patterns.
+- `&*p` is a reborrow that shares the referent's storage; reborrowing a `&var T`
+  as `&T` downgrades to shared.
+- Index-path write-through works through a reference: `xs[0] = 9` for
+  `xs: &var i64[]`.
+- Tuple elements are assignable — `t.0 = v`, `t.0 += v`, and nested and chained
+  forms — including through a `&var` reference.
+
+**Breaking changes:**
+- **Assignment to a reference-typed binding now rebinds it**, like every other
+  type. `*p = v` is the spelling that writes through. Previously a bare `p = v`
+  wrote through the reference, which made repointing a `&var T` unrepresentable.
+  Migration is mechanical: `p = v` becomes `*p = v`.
+- **Write-through takes one `*` per reference layer.** The previous rule peeled
+  every layer at once, so `pp = 5` on a `&var &var i64` wrote the innermost value;
+  it is now `**pp = 5`. In exchange, `*pp = &var m` repoints the inner reference,
+  which the old rule could not express.
+- `&` applied to a field or element now **aliases** the original storage instead
+  of snapshotting a copy, so later writes are visible through it. It remains
+  read-only.
+
+**Diagnostics:**
+- `==` and `!=` on operand types the evaluator cannot compare — references,
+  structs, enums, arrays, tuples, unit — are rejected at compile time
+  ([T0005](../reference/error-codes.md#t0005--invalid-operand-types)) instead of
+  aborting at run time with an internal error.
+- A binary operator whose operands disagree now names the operator:
+  ``operator `==` cannot be applied to an integer literal and `String` `` rather
+  than a bare `cannot unify`.
+- Address-of a non-addressable place — a literal, a call result, a struct or enum
+  construction — is a compile-time error with a span, not a runtime internal
+  error. The rule was always static-determinable.
+- `&var *r` on a shared reference is a compile-time error rather than a runtime
+  failure.
+- Assigning to a tuple element out of range, or through an immutable binding,
+  reports a type error instead of an internal error.
+
+**Fixes:**
+- A closure with no declared return type is no longer typed `()` at the call site.
+  Pass 1 inferred it correctly and pass 2 discarded it; `let f = () -> { 42 };
+  let n = f(); n + 1` failed.
+- Type-directed read-copy decides whether to peel against the *substituted* type,
+  so `let n: i64 = g();` works for `fun g() -> &i64` — previously only the
+  syntactically-a-reference forms did, and a call returning `&T` did not.
+- Generic bodies constructed at call time use the argument and receiver types
+  recorded at the call site, refined over the runtime-derived ones. An empty
+  collection has no element to sample, and the resulting `Never` coerced without
+  ever pinning a type parameter, so `[].eq(&[])` failed with an error pointing
+  inside `std::core`.
+- A bare variant that can never resolve is reported rather than silently accepted.
+
 ## v0.10.0
 
 **Released 2026-07-17.**
