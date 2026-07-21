@@ -358,7 +358,7 @@ Addressable lvalues for both `&` and `&var` include named bindings (`x`), struct
 
 #### Dereference
 
-> **Planned for v0.11.0 (RFC-0110).**
+> **Changed in v0.11.0 (RFC-0110): `*p` added; assignment to a reference-typed binding now rebinds it, use `*p = v` to write through.**
 
 `*expr` dereferences a `&T`/`&var T`. As an expression it reads the referent; as an
 assignment target, `*p = v` writes through a `&var T`. Applying `*` to a non-reference is
