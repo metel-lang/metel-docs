@@ -400,12 +400,12 @@ implementation).
 - **RFC-0027** — C FFI.
 - **RFC-0033** — Field-Level Mutability — additive `let` field annotation.
 - **RFC-0038** — `impl Aspect` in Struct Fields / Existential Types.
-- **RFC-0107** *(integrated 2026-07-20, impl not-started — issue #278)* — Unqualified Enum Variants in Match
+- **RFC-0107** *(implemented 2026-07-21 — issue #278)* — Unqualified Enum Variants in Match
   Patterns — `Red` instead of `Colour::Red` in a match arm, resolved type-directed
   against the scrutinee's known enum (not a lexical-scope import, so no cross-enum
   collision risk). Generalizes the existing `Perhaps::None`-only special case
   (`Pattern::None`) into a real mechanism; answers RFC-0101's Unresolved Question 1.
-- **RFC-0108** *(integrated 2026-07-20, impl not-started — issue #278)* — Reference-Transparent Match Scrutinees —
+- **RFC-0108** *(implemented 2026-07-21 — issue #278)* — Reference-Transparent Match Scrutinees —
   matching a `&T`/`&mut T` value directly (`match c { Colour::Red => .., .. }` for
   `c: &Colour`) instead of the current `T0001 cannot unify &Colour with Colour`, with
   no workaround available today (`*expr` doesn't parse — Metel has no general deref

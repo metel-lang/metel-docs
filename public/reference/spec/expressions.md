@@ -121,7 +121,7 @@ fun main() -> i64 {
 
 ### Unqualified variant patterns
 
-> **Planned for v0.11.0 (RFC-0107).**
+> **Since v0.11.0 (RFC-0107).**
 
 A match arm may name an enum variant without its `Enum::` prefix when the variant
 resolves unambiguously against the scrutinee's known enum type. The candidate enum is
@@ -161,7 +161,7 @@ is optional, not removed.
 
 ### Matching through a reference
 
-> **Planned for v0.11.0 (RFC-0108).**
+> **Since v0.11.0 (RFC-0108).**
 
 A scrutinee of reference type (`&T`, `&var T`, and chains thereof) matches against `T`'s
 own patterns — reference layers are peeled before pattern resolution, the same way field
