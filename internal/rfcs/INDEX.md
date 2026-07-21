@@ -413,6 +413,18 @@ implementation).
   principle to match scrutinees, the one place it's currently missing — `self` inside
   method bodies and `for`-loop element bindings already get this transparency via their
   own separate, narrower mechanisms. Sibling to RFC-0107 (§2 there), not overlapping.
+- **RFC-0111** *(draft, opened 2026-07-21)* — Unqualified Enum Variants in Expression
+  Position — the expression-position half of RFC-0107, and the follow-up RFC-0107 §5
+  explicitly left open. Bare `Red` / `Some { value: 5 }` / `None` resolved type-directed
+  against the *expected* type (`let c: Colour = Red;`, return position, monomorphic call
+  arguments), which is what finally lets `Literal::None` retire and makes `None` an
+  ordinary variant rather than a privileged builtin. Deliberately declines the reverse
+  variant→enum index RFC-0107 §1.4 anticipated as the resolution mechanism (action at a
+  distance — an unrelated new enum would break distant code); the index survives only as
+  a gate on Pass 1 deferral, never to pick an enum. Notes that the Rust analogy the
+  request came from actually points at scope import (`use Colour::*`), weighed and
+  declined in §2.1 for consistency with RFC-0107's already-shipped choice. Real work is
+  in Pass 1, which has no expected-type parameter at all.
 - **RFC-0110** *(integrated 2026-07-20, impl not-started — issue #278)* — Explicit Dereference Operator — extends
   and formally documents RFC-0067a's existing auto-deref, treating it as the several
   distinct mechanisms it actually is rather than one. Closes two confirmed read-copy

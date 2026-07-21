@@ -247,6 +247,13 @@ to check `Red` against), so the multi-enum-ambiguity problem §1.3 sidesteps for
 resurfaces for expressions and needs its own design (most likely a real reverse
 variant→enum index, §1.4). Left for a follow-up RFC if wanted.
 
+**Now proposed: RFC-0111** (Unqualified Enum Variants in Expression Position, draft,
+2026-07-21). Worth noting how it lands relative to the guess above: it resolves against
+the *expected* type rather than by a reverse index, and declines the reverse index as a
+resolution mechanism precisely because of the multi-enum ambiguity this section flags —
+the index survives there only as a gate on deferring resolution to Pass 2, never to pick
+which enum a bare name belongs to. See RFC-0111 §1.4.
+
 **`use Enum::*`-style explicit glob imports of variants into lexical scope** is a
 different mechanism (scope-based, not type-directed) with the multi-enum collision
 problem this RFC avoids by design — not proposed here.
