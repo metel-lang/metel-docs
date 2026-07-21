@@ -89,8 +89,10 @@ A function is called with the wrong number of arguments.
 
 ### T0005 — Invalid operand types
 
-An operator is applied to operands it does not support. Three forms share this code:
+An operator is applied to operands it does not support. Four forms share this code:
 
+- **Mismatched operands.** The two sides of a binary operator disagree, e.g. `1 == "x"`.
+  The message names the operator and both types.
 - **Binary arithmetic/ordering** on unsupported types.
 - **Equality** (`==`, `!=`) on anything other than a numeric type, `boolean`, `String` or
   `char`. `==` does not yet dispatch through the `Eq` aspect, so structs, enums, arrays,
