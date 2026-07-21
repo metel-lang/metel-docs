@@ -133,21 +133,31 @@ inventing a parallel one — `let`/`var` annotations, `return` (via RFC-0019's
 `current_return_ty`), function-call arguments, struct-literal fields, and the arms of an
 `if`/`match` resolved against the expression's own expected type.
 
-Two gaps in that list are real today and are stated here rather than papered over, both
-in Pass 2's `construct_call`:
+**Correction, 2026-07-21.** An earlier version of this section claimed *two* gaps. Only one
+is real; the other was my error, and it was load-bearing for this RFC's dependencies, so it
+is worth stating plainly rather than quietly editing.
 
-- **Generic callees get no hints.** `param_hints` (`construction.rs:2750`) only populates
-  for a monomorphic callee already in scope as `Type::Fun`; generic scheme-based callees
-  need argument types *first* in order to instantiate, so they pass `None`.
-- **Method-call arguments get no hints at all** — `construct_expr(arg, None, ctx)`
-  unconditionally.
+- **Generic callees get no hints — real, and inherent.** `param_hints`
+  (`construction.rs:2750`) only populates for a monomorphic callee already in scope as
+  `Type::Fun`. Generic scheme-based callees need argument types *first* in order to
+  instantiate, so no hint can exist before argument construction. Confirmed against the
+  implementation: `fun take<T>(p: T)` called as `take(None)` fails with `T0002` today.
+  This is a chicken-and-egg property of instantiation, not an oversight to widen away.
+- ~~**Method-call arguments get no hints at all.**~~ **False.** The cited
+  `construct_expr(arg, None, ctx)` at `construction.rs:1552` is the *array-builtin* branch,
+  not the general method path. The general path goes through `construct_method_args`
+  (`construction.rs:275`), which skips `params[0]` (the receiver) and threads each remaining
+  parameter's declared type as a hint. Verified: a method taking `Perhaps<i64>` accepts a
+  bare `None` argument today, which is only possible if the hint reaches it.
 
-In both, a bare variant argument does not resolve and the user must qualify (`Colour::Red`)
-or ascribe (`Red: Colour`, RFC-0021). This is a coverage limit, not an unsoundness: the
-feature is additive everywhere it fires and inert everywhere it does not. Widening
-`param_hints` is tracked as its own concern — RFC-0110 §1 already wants to touch exactly
-this code for its own reasons, so the two should be sequenced together rather than each
-half-widening it.
+Struct-literal fields likewise get hints (`field_hints`), also verified with a bare `None`.
+
+**Consequence: there is no `param_hints` widening for this RFC to do**, and therefore no
+sequencing dependency on any other RFC. Every position this RFC needs already carries an
+expected type; the single gap is generic callees, which cannot be closed by widening. A
+bare variant there does not resolve and the user qualifies (`Colour::Red`) or ascribes
+(`Red: Colour`, RFC-0021) — a coverage limit, not an unsoundness, since the feature is
+additive where it fires and inert where it does not.
 
 ### 1.4 No expected type is an error, not a guess
 
@@ -291,18 +301,34 @@ unchanged.
 
 ## 4. Unresolved questions
 
-1. **Does the `param_hints` widening (§1.3) belong to this RFC or to RFC-0110?** RFC-0110 §1
-   already proposes touching `construct_call`'s hint threading for its own read-copy reasons.
-   Doing it once, in one place, is clearly right; which RFC owns it is not yet decided, and
-   RFC-0110's own design is currently being revisited, so this cannot be settled unilaterally
-   here.
-2. **Should method-call arguments get hints at all?** `construct_expr(arg, None, ctx)` at
-   `construction.rs:1552` is unconditional and predates any of this. Whether that is a
-   deliberate choice or an unexamined default has not been established, and this RFC should
-   not change it without finding out.
-3. **`Result`'s variants.** `Perhaps::None`/`Some` are the visible motivation, but `Result`
-   (`Ok`/`Err`) has the same shape and no `Literal` special case today. Confirm bare `Ok`/`Err`
-   fall out of §1 for free with nothing extra, rather than assuming it.
+All three questions this RFC opened are now resolved (2026-07-21). None blocks
+implementation.
+
+1. ~~**Does the `param_hints` widening belong to this RFC or to RFC-0110?**~~ **Moot.**
+   RFC-0110 shipped under the Go model, which dropped the read-copy extensions that would
+   have touched `construct_call`'s hint threading — it never went near `param_hints`. And
+   per §1.3's correction there is no widening to do at all: method arguments and
+   struct-literal fields already carry hints, and the one genuine gap (generic callees) is
+   inherent to instantiation rather than closable by widening.
+
+   **This also removes the dependency on RFC-0112.** That RFC's §2 argued the two features
+   turn the same knob in opposite directions — RFC-0111 widening hints, RFC-0110 narrowing
+   auto-deref — so an origin tag was needed to decouple them. Since this RFC widens nothing,
+   the coupling does not arise and RFC-0111 can be implemented while RFC-0112 remains
+   parked. RFC-0112 still stands on its own merits; it is simply not a prerequisite here.
+2. ~~**Should method-call arguments get hints at all?**~~ **They already do**, via
+   `construct_method_args`. The premise was my error — see §1.3. Nothing to decide.
+3. ~~**`Result`'s variants.**~~ **Confirmed, falls out for free.** `Result<T, E>` is an
+   ordinary `public enum` in `stdlib/core.mtl:86` with no `Literal` special case, and bare
+   `Ok`/`Err` already work in *pattern* position through RFC-0107's general mechanism.
+   Expression position needs nothing beyond §1.
+
+One case has appeared since this RFC was drafted and is worth stating, though it needs no
+decision: **an inference-derived expected type** (RFC-0112 §3's category 6, which came into
+existence with metel-core#281 — a closure body is now constructed against its own inferred
+return type). Inside `let f = () -> { Red };` there is no authored type for `Red` to resolve
+against, so §1.4 applies unchanged and the bare form simply does not resolve. Consistent
+with the rest of the design; recorded so it is not rediscovered as a surprise.
 
 ---
 
