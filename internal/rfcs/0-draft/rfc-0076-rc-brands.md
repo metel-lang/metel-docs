@@ -4,11 +4,19 @@ title: "Brand Types"
 date: '2026-06-29'
 ---
 
-> **Status — draft.** Depends on RFC-0063 (Region Handles), RFC-0071 (Ownership and
+> **Status — draft.** Depends on RFC-0063 (Allocator Handles), RFC-0071 (Ownership and
 > Move Semantics), RFC-0072 (Negative Bounds). Introduces brands as a general
 > language feature: phantom type parameters that carry unforgeable allocation-site
 > identity. `Rc` and `Arc` (RFC-0074) using brands for precise alias analysis is one
 > application among several.
+
+> **Drift audit — 2026-07-21.** Fixed mechanically: RFC-0063's title (`Region Handles` →
+> `Allocator Handles`), its retired `@[r] T` bracket syntax (now `@a T`), and the
+> `BumpRegion`/`AutoRegion` type names (now `BumpAlloc`/`AutoAlloc`). Flagged but *not*
+> fixed: the "Why regions do not need explicit brands" section rests on RFC-0063's
+> abandoned triple-duty premise and needs re-derivation (see the note there). Added:
+> Unresolved Question on binding-site brands, raised while asking whether `&T` could become
+> `Ref<T, 'b>`.
 
 ## Summary
 
@@ -46,7 +54,7 @@ rather than by structure:
 - `Rc<T, 'b>` and `Rc<T, 'c>` are smart pointers of the same structural type but to
   different cells. Without brands, there is no type-level way to express "does not
   alias this specific cell."
-- Two `BumpRegion` handles in the same scope allocate into different arenas. Without
+- Two `BumpAlloc` handles in the same scope allocate into different arenas. Without
   brands, the type system cannot prevent mixing pointers from the two arenas.
 - A capability token for a file descriptor and a capability token for a socket are
   both "capability tokens" — but they should not be interchangeable.
@@ -57,10 +65,24 @@ different things. Brands are the mechanism for this.
 
 ### Why regions do not need explicit brands — and why Rc and Arc do
 
-Handle regions (`BumpRegion`, `AutoRegion`) introduce a fresh runtime handle at each
+> **Needs re-derivation (flagged 2026-07-21, not resolved here).** This section's argument
+> rests on the premise that a handle is "simultaneously the runtime allocator, the
+> compile-time lifetime tag, and the identity token — three roles unified in one value."
+> That is precisely the triple-duty premise RFC-0063 **abandoned** when it was rewritten
+> on 2026-07-05: under the split model the allocator (RFC-0063) and the lifetime anchor
+> (RFC-0067) are separate things, exactly because RFC-0066's individual move-out showed a
+> value's lifetime and its allocator's scope can diverge. So the conclusion — that scoped
+> allocators need no explicit brand because the handle already serves as one — no longer
+> follows from a premise that holds, and must be re-derived against the split model. The
+> conclusion may well survive; the argument for it does not, as written. Terminology below
+> has been mechanically updated (`BumpRegion`/`AutoRegion` → `BumpAlloc`/`AutoAlloc`), but
+> the reasoning has deliberately been left alone rather than patched, since patching it
+> would disguise a real design question as an editing pass.
+
+Handle regions (`BumpAlloc`, `AutoAlloc`) introduce a fresh runtime handle at each
 scope entry. That handle is simultaneously the runtime allocator, the compile-time
 lifetime tag, and the identity token — three roles unified in one value. The handle's
-freshness per scope is the brand: two `BumpRegion` handles are already distinct types
+freshness per scope is the brand: two `BumpAlloc` handles are already distinct types
 because the compiler treats each introduction site as producing a new region kind.
 
 Unique-ownership regions (`Heap`, `LocalHeap`) introduce no handle and no aliasing.
@@ -231,22 +253,22 @@ let c = Rc::new(Node { val: 2 });   // c: Rc<Node, 'c> — different cell
 
 ### Arena identity
 
-A `BumpRegion` could carry a brand to prevent mixing pointers from different arenas:
+A `BumpAlloc` could carry a brand to prevent mixing pointers from different arenas:
 
 ```metel
 // Two arenas — same type, different brands
 brand 'r1 {
-    let arena1 = BumpRegion::new<'r1>();
+    let arena1 = BumpAlloc::new<'r1>();
     brand 'r2 {
-        let arena2 = BumpRegion::new<'r2>();
+        let arena2 = BumpAlloc::new<'r2>();
         let x = @[arena1] Node { val: 1 };
         let y = @[arena2] Node { val: 2 };
-        // x: @[BumpRegion<'r1>] Node — cannot be used where 'r2 is expected
+        // x: @arena1 Node — cannot be used where 'r2 is expected
     }
 }
 ```
 
-This RFC does not mandate that `BumpRegion` carries a brand; it provides the mechanism
+This RFC does not mandate that `BumpAlloc` carries a brand; it provides the mechanism
 for a future RFC to add it.
 
 ### Capability tokens
@@ -592,7 +614,32 @@ naturally with the lifetime/borrow system.
    parameter is existential (fresh per call) or propagating (shared with input) must be
    specified precisely, especially for recursive functions and trait objects. Deferred.
 
-4. **`RcToken<'b>` and `Arc<'b>` across fiber boundaries.** `RcToken<'b>`
+4. **Binding-site brands — required if references are ever branded** (raised 2026-07-21
+   while asking whether `&T` could become `Ref<T, 'b>`; recorded here, not proposed).
+   Neither introduction mechanism in this RFC fits references. Allocation-site brands are
+   fresh **per construction site**, and for a reference the construction site is the `&`
+   expression — so `&x` written twice would mint two *different* brands for the same
+   storage, making two references to one variable type-incompatible. That is backwards:
+   reference identity has to be minted where the *storage* is created (the binding) and
+   then **inherited** by every `&` of it. Call it a binding-site or storage-site brand;
+   it is a third mechanism, not an application of the two here.
+
+   Two further findings from the same discussion, both relevant to whether this is worth
+   building. First, **brands would give provenance, not cell identity** — this RFC's own
+   framing is "unforgeable *allocation-site* identity," so `&q.x` and `&q.y` share an
+   allocation and would share a brand. Branded references therefore would *not* answer the
+   "should two references be equal only when pointing at the same variable" question
+   (metel-core#263, deliberately open). Second, **ergonomics is the gating constraint**:
+   `Ref<T, 'b>` on the language's most-used type needs near-total brand elision — Rust's
+   lifetime elision exists for exactly this — and that is the same verbosity objection
+   already raised against the allocator annotations in RFC-0065. Establish elision before
+   committing, not after.
+
+   Note also that this whole direction is blocked on a representation change: `&T` is a
+   structural `Type::Reference(Box<Type>)` with exactly one slot, so no brand parameter can
+   be added to it at all until references become nominal. Not proposed here either.
+
+5. **`RcToken<'b>` and `Arc<'b>` across fiber boundaries.** `RcToken<'b>`
    grants exclusive access to all `Rc<T, 'b>` cells within a single fiber. When
    `Arc<T, 'b>` clones are distributed across fibers, the brand correctly identifies
    them as aliases, but a single `RcToken<'b>` cannot be the access key — it would
@@ -610,8 +657,11 @@ naturally with the lifetime/borrow system.
 
 ## References
 
-- RFC-0063 (Region Handles) — `@[r] T` pointer types; the bracket channel for handle
-  regions. `Rc` and `Arc` are library structs, not regions (RFC-0074).
+- RFC-0063 (Allocator Handles, accepted) — `@a T` allocator-owned value types. Note this
+  RFC was rewritten 2026-07-05 from the original "Region Handles" draft, splitting the
+  allocator from the lifetime anchor (RFC-0067); the `@[r] T` bracket syntax this RFC
+  previously cited no longer exists. `Rc` and `Arc` are library structs, not allocators
+  (RFC-0074).
 - RFC-0071 (Ownership and Move Semantics) — `Clone`; clone-preserving brands make the
   alias relationship visible in the type.
 - RFC-0072 (Negative Bounds) — `NotCapturing<T>`; with brands, this bound becomes a
