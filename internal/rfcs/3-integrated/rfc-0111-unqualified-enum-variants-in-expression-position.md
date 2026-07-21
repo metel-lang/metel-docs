@@ -2,9 +2,18 @@
 id: rfc-0111
 title: "Unqualified Enum Variants in Expression Position"
 date: '2026-07-21'
-status: draft
+status: integrated
 target:
+updated: '2026-07-21'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/284'
+impl_status: not-started
 ---
+
+> **Status — under review (2026-07-21).** Substantiated proposal with a verified implementation sketch. All three original open questions resolved against the implementation (2026-07-21): no param_hints widening is needed, method args and struct fields already carry hints, Result's Ok/Err falls out free. Dependency on RFC-0112 removed as a consequence.
+
+> **Status — accepted (2026-07-21).** Design settled: type-directed resolution against the expected type, binding wins over variant in expression position (the deliberate asymmetry with RFC-0107), no reverse-index fallback when no expected type exists. Scope import weighed and declined for consistency with RFC-0107. No open questions remain and no RFC dependency.
+
+> **Status — integrated (2026-07-21).** Merged into expressions.md (Unqualified variant constructors) and types.md (Perhaps<T> reframed: None/Some are ordinary variants, not literals). Worked examples cross-checked against RFC-0106/0107/0101/0112; turned up that a unit struct may share a name with a variant, resolved by reading SS1.1's third condition as covering unit-struct constructors -- a bare variant is a last resort, never a shadowing mechanism.
 
 ## Summary
 
@@ -329,6 +338,66 @@ existence with metel-core#281 — a closure body is now constructed against its 
 return type). Inside `let f = () -> { Red };` there is no authored type for `Red` to resolve
 against, so §1.4 applies unchanged and the bare form simply does not resolve. Consistent
 with the rest of the design; recorded so it is not rediscovered as a surprise.
+
+---
+
+## Resolved while integrating (2026-07-21)
+
+Worked examples combining this RFC with each sibling that could interact, per PROCESS's
+`3-integrated` exit criterion. One turned up a case the design had not considered.
+
+**RFC-0106 (Optional Braces for Empty Constructors, implemented) — no conflict.**
+`C::Red {}` and `C::Red` are already equivalent, so the bare forms `Red` and `Red {}` are
+too. §1.1 says so; confirmed against the implementation that the qualified empty-brace form
+works today, so the bare form inherits it rather than introducing a second rule.
+
+**RFC-0107 (Unqualified Variant Patterns, implemented) — the asymmetry is deliberate and
+holds.** Pattern position: variant beats a fresh binding. Expression position: an in-scope
+binding beats the variant. Confirmed by example that a parameter named `Red` shadowing an
+enum variant `Red` compiles today and returns the parameter — so §1.2's rule preserves
+existing behaviour rather than changing it.
+
+**RFC-0101 (Grammar-Enforced Naming, draft) — unaffected either way.** §1.2 must be correct
+for code that violates the PascalCase convention, and the shadowing example above does
+violate it and still behaves correctly. This RFC does not depend on RFC-0101 landing.
+
+**RFC-0112 (Auto-Deref Scope, draft) — coupling removed, see §4 Q1.** RFC-0112's Motivation
+§2 was written on the assumption that this RFC would widen `param_hints`. It will not, so
+the two are independent and either may land first.
+
+### The finding: a unit struct may share a name with an enum variant
+
+Not previously considered by this RFC, and legal today:
+
+```metel
+struct Red { }
+enum C { Red }
+
+fun main() {
+    let s = Red;        // resolves to the unit struct — works today
+    let c: C = Red;     // T0001: cannot unify Red with C
+}
+```
+
+`construct_expr`'s `Expr::Ident` arm tries the empty-struct-literal path *before* the point
+where §3.1 would hook in bare-variant resolution, so a unit struct wins on name. The second
+line is the interesting one: an expected type of `C` does not rescue it.
+
+**Resolution: the unit struct keeps winning, and the rule is stated as a last resort.**
+§1.1's third condition ("`V` is not bound by any enclosing binding or declaration in scope")
+is hereby read as covering unit-struct constructors as well as bindings — same justification
+as §1.2, since a unit-struct constructor is equally a *use* of a name already in scope, and
+an expression must resolve to what that name already means. So:
+
+> A bare variant resolves only when the name means nothing else — not a binding, not a
+> unit struct. It is a last resort, never a shadowing mechanism.
+
+Chosen over "expected type wins" because that would make the meaning of `Red` depend on
+context in a way the reader cannot see locally, which is the same objection §1.4 raises
+against a global reverse-index fallback. The cost is that `let c: C = Red;` stays a T0001
+in that (rare, and RFC-0101-discouraged) situation; the user writes `C::Red`. Implementation
+consequence: §3.1's hook must sit *after* the existing struct-literal branch, not before it,
+and the Pass 1 deferral gate must likewise not fire for a name that resolves to a struct.
 
 ---
 

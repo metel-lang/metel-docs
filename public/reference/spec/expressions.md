@@ -119,6 +119,57 @@ fun main() -> i64 {
 }
 ```
 
+### Unqualified variant constructors
+
+> **Planned for v0.11.0 (RFC-0111).**
+
+A bare variant name may be used where the *expected* type determines which enum is meant —
+the expression-position counterpart of "Unqualified variant patterns" below. Both no-field
+and fieldful variants participate, and per RFC-0106 the empty-brace spelling `Red {}` is
+equally valid:
+
+```metel
+enum Colour { Red, Green, Blue }
+
+fun paint(c: Colour) { }
+fun favourite() -> Colour { Green }        // return type supplies the expected type
+
+fun main() {
+    let c: Colour = Red;                   // annotation supplies it
+    paint(Blue);                           // parameter type supplies it
+    let p: Perhaps<i64> = Some { value: 5 };
+    let q: Perhaps<i64> = None;            // `None` is an ordinary variant, not a literal
+}
+```
+
+Resolution is type-directed against the expected type only — never a lexical import of
+variant names — so two enums may both declare `Red` with no ambiguity.
+
+**A bare variant is a last resort, never a shadowing mechanism.** It resolves only when the
+name means nothing else in scope — not a binding, and not a unit struct (`struct Red {}` and
+`enum C { Red }` may coexist, and `Red` then means the struct even where a `C` is expected;
+write `C::Red`).
+
+**An in-scope binding wins over a variant of the same name.** This is the opposite of
+pattern position, and deliberately so: a pattern *introduces* names, so a bare identifier
+there is always the variant, while an expression *uses* names and must resolve to the
+nearest binding or lexical scoping breaks.
+
+```metel
+fun demo(Red: i64) -> i64 {
+    return Red;          // the parameter, not Colour::Red
+}
+```
+
+**Where no expected type exists, the bare form does not resolve** and the name is reported
+as undefined ([T0003](../error-codes.md#t0003--undefined-name)) — there is deliberately no
+search for "some enum, somewhere, declaring `Red`". Qualify (`Colour::Red`) or ascribe
+(`Red: Colour`). This affects an unannotated `let x = Red;`, an argument to a *generic*
+callee (whose parameter types are not known until the arguments are), and the body of a
+closure with no declared return type. `None` without a determinable type keeps its existing
+[T0002](../error-codes.md#t0002--annotation-required) "add a type annotation" diagnostic
+rather than degrading to T0003.
+
 ### Unqualified variant patterns
 
 > **Since v0.11.0 (RFC-0107).**

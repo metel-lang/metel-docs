@@ -413,7 +413,7 @@ implementation).
   principle to match scrutinees, the one place it's currently missing — `self` inside
   method bodies and `for`-loop element bindings already get this transparency via their
   own separate, narrower mechanisms. Sibling to RFC-0107 (§2 there), not overlapping.
-- **RFC-0111** *(draft, opened 2026-07-21)* — Unqualified Enum Variants in Expression
+- **RFC-0111** *(integrated 2026-07-21, impl not-started — issue #284)* — Unqualified Enum Variants in Expression
   Position — the expression-position half of RFC-0107, and the follow-up RFC-0107 §5
   explicitly left open. Bare `Red` / `Some { value: 5 }` / `None` resolved type-directed
   against the *expected* type (`let c: Colour = Red;`, return position, monomorphic call

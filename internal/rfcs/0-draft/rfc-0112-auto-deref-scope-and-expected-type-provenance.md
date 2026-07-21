@@ -391,9 +391,13 @@ only so the trail from RFC-0110's open question to its answer is not lost.
 - RFC-0110 (Explicit Dereference Operator) — this RFC was split out of it.
   RFC-0110 keeps the write side and explicit `*`; §4 here re-examines and declines the two
   read-side extensions it originally carried. Neither RFC depends on the other's outcome.
-- RFC-0111 (Unqualified Enum Variants in Expression Position, draft) — wants expected types
-  threaded to more positions; §3's origin tag is what lets it widen hints without widening
-  read-copy. Motivation §2.
+- RFC-0111 (Unqualified Enum Variants in Expression Position) — Motivation §2 argued the
+  two RFCs turn the same knob in opposite directions and that §3's origin tag was needed to
+  decouple them. **That coupling turned out not to exist** (RFC-0111 §1.3, corrected
+  2026-07-21): method arguments and struct-literal fields already carry hints, so RFC-0111
+  widens nothing and needs no tag to stay safe. Motivation §2's argument for this RFC is
+  weaker as a result — the tag's value is now the forward-looking one (a *future* widening
+  cannot silently widen auto-deref), not an active conflict between two in-flight RFCs.
 - RFC-0045 (Mutable Address-Of for Lvalue Paths, implemented) — field/index write-through;
   a write-side mechanism, unaffected by this RFC (§1.2).
 
