@@ -444,7 +444,11 @@ implementation).
   widened and RFC-0110 wants auto-deref narrowed *through the same parameter*, so without
   the tag the enum-variant work would silently re-add call-argument auto-deref. Verified to
   be a zero-behavior-change formalization; also documents that RFC-0067a §3a's text claims
-  two positions (struct fields, match arms) it does not actually cover.
+  two positions (struct fields, match arms) it does not actually cover. Its §4.2 records
+  where RFC-0110's "what does `&i64 == &i64` do?" open question actually led: nowhere near
+  auto-deref — `==` has no operand check at all, so it typechecks and then aborts at runtime
+  for references, structs, enums (including `Perhaps`), arrays, tuples and unit. Filed as
+  issue #279; aspect-dispatch design fix at #263 / RFC-0062.
 - **RFC-0098** *(implemented)* — Surface Keyword Renames — `extend Type` /
   `extend Type: Aspect` (reordered target-first, Swift precedent — not `impl X with Y`
   as first drafted), `pub` → `public`, `mut` → `var` (bindings, reference types, and

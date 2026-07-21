@@ -264,11 +264,24 @@ implicit deref driven by a type nobody wrote. Once RFC-0110's `*` exists the wor
 `*p + *q`, which is one character per operand rather than a throwaway binding, so the
 original motivation largely evaporates.
 
-**Carried over as a real open question**, since RFC-0110 left it open and it does not
-disappear: `Eq`/`Ne`/`And`/`Or` return `Type::Boolean` unconditionally in `construct_binop`,
-and where (if anywhere) their operand compatibility is enforced was never located. Whether
-`&i64 == &i64` compares referents or addresses today is unknown and should be established —
-it is a correctness question independent of this RFC's rule.
+**A question RFC-0110 left open here has now been answered, and it turned out not to
+belong to either RFC.** RFC-0110 noted that `Eq`/`Ne`/`And`/`Or` return `Type::Boolean`
+unconditionally in `construct_binop` and that their operand compatibility checking could not
+be located, and asked whether `&i64 == &i64` compares referents or addresses today.
+
+It does neither: it typechecks and then aborts with `[I0001] internal error: binop:
+unsupported operand types ... (typechecker should have caught this)`. There is no semantics
+to discover. `construct_binop`'s `Eq | Ne` arm has no operand check at all — Pass 1 only
+constrains the two operands to unify with each other, so mixed types are caught by
+unification while same-type-on-both-sides reaches an evaluator whose `==` arms cover only
+the numeric scalars, `Boolean`, `Str` and `Char`. This is not reference-specific: structs,
+enums (including `Perhaps`), arrays, tuples and unit all behave the same way.
+
+**Filed as issue #279**, with the design fix (routing `==` through the `Eq` aspect that
+already exists at `stdlib/core.mtl:194` and already works via `.eq()` method dispatch)
+tracked separately at #263 / RFC-0062. Neither is this RFC's business, and neither is
+RFC-0110's — auto-deref has nothing to do with it, and the bug predates both. Recorded here
+only so the trail from RFC-0110's open question to its answer is not lost.
 
 ---
 
@@ -305,8 +318,9 @@ it is a correctness question independent of this RFC's rule.
    plausibly desirable for RFC-0111 independently, and §2 notes it would make copy-out
    start firing in arms. Not proposed here; flagged so it is a decision rather than a
    surprise.
-3. **`Eq`/`Ne` on references** — §4.2's carried-over question. Establish the current
-   behavior before deciding whether anything needs to change.
+3. ~~**`Eq`/`Ne` on references.**~~ Answered and moved out — see §4.2. It is a general
+   `==` typechecking hole, not a reference or auto-deref question; issue #279, with the
+   aspect-dispatch design fix at #263 / RFC-0062.
 
 ---
 
