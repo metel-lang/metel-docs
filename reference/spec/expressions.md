@@ -356,6 +356,11 @@ Addressable places for both `&` and `&var` include named bindings (`x`), struct 
 
 `&var` requires the operand to be a `var` binding — applying it to a plain `let` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)). `&var` on a lvalue path (`&var s.field`, `&var arr[i]`) produces a true exclusive reference with write-back semantics, matching `&var` on a named binding exactly — writes through it propagate to the original storage location (RFC-0045, already implemented; this section previously described `&var struct.field` as a non-propagating snapshot, which was the *pre*-RFC-0045 behavior and had never been updated to match). `&` on a field or element also aliases the original storage through the same path machinery, so later writes to the binding remain visible through the shared reference; it is still read-only, so writing through `&T` remains rejected. Reborrowing preserves this: `&*r` shares whatever storage `r` names, and reborrowing a `&var T` as `&T` downgrades to shared. The reverse is rejected — `&var *r` where `r: &T` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)), since a shared reference never grants write access.
 
+Tuple elements are assignable like struct fields and array elements — `t.0 = v`, `t.0 += v`,
+and nested or chained forms (`s.pair.0`, `t.1.0`), including through a `&var` reference. An
+out-of-range index is a type error ([T0003](../error-codes.md#t0003--undefined-name)), and a
+shared `&` grants no write access ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)).
+
 #### Dereference
 
 > **Changed in v0.11.0 (RFC-0110): `*p` added; assignment to a reference-typed binding now rebinds it, use `*p = v` to write through.**
