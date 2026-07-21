@@ -29,7 +29,7 @@ the curated thematic map.
 - **RFC-0039** — aspect Alias Syntax (`0-draft` ; internal/rfcs/0-draft/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01)
 - **RFC-0049** — `linear fun` Type System (`0-draft` ; internal/rfcs/0-draft/rfc-0049-linear-fun-type-system.md ; date 2026-06-04)
 - **RFC-0050** — Closure Capture Lists (`0-draft` ; internal/rfcs/0-draft/rfc-0050-closure-capture-lists.md ; date 2026-06-03)
-- **RFC-0062** — Ord / Eq Comparison Aspects (`0-draft` ; internal/rfcs/0-draft/rfc-0062-ord-comparison-aspect.md ; date 2026-06-11)
+- **RFC-0062** — Ord / Eq Comparison Aspects (`0-draft` ; internal/rfcs/0-draft/rfc-0062-ord-comparison-aspect.md ; date 2026-06-11 ; updated 2026-07-21)
 - **RFC-0074** — Shared Pointers — Rc and Arc (`0-draft` ; internal/rfcs/0-draft/rfc-0074-shared-ownership.md ; date 2026-06-30)
 - **RFC-0075** — Region Inference — Local AutoRegion (`0-draft` ; internal/rfcs/0-draft/rfc-0075-region-inference.md ; date 2026-07-01)
 - **RFC-0076** — Brand Types (`0-draft` ; internal/rfcs/0-draft/rfc-0076-rc-brands.md ; date 2026-06-29)
