@@ -38,6 +38,11 @@ They are related but they are not the same claim, they have different costs, and
 substantive point — **the access side is the one that connects to effects**, which is
 where its unsolved problem already lives.
 
+The split is about **rules, not representation**. §3 argues the two roles should share one
+row solver and differ in four specific rules; it is the section to read first if the
+obvious objection ("aren't these the same thing with a well-formedness check?") is the one
+you have.
+
 ---
 
 ## 2. Where the corpus currently merges them
@@ -65,7 +70,93 @@ presence.
 
 ---
 
-## 3. Access rows are effect rows
+## 3. Why one semantics plus a well-formedness check isn't enough
+
+The natural objection to §1, and the one worth answering in full: if access rows are just
+presence rows whose labels are restricted to fields that actually exist on the referenced
+struct, why are they a separate concept at all? Add the check, reuse everything else.
+
+**The check is real and necessary.** It does the work of rejecting a view that names a
+field the struct doesn't have, and of keeping a view tied to a nominal type — RFC-0109
+relies on something like it already, noting that a view's brand "is exactly what prevents
+it from ever satisfying a *generic* structural bound the way an anonymous record could."
+
+What it cannot do is settle the rules below, because those don't follow from which labels
+are legal.
+
+### 3.1 The generating difference: what the complement means
+
+- **Presence row** — `record { fd }`: the fields *not* in the row **do not exist**. The
+  value is smaller; `alloc` was moved out and is gone.
+- **Access row** — `&mut Handle.{fd}`: the fields not in the row **exist and are live**.
+  `alloc` is still owned by the original value, and may be in use through another view at
+  the same moment. That simultaneity is the entire purpose of view types.
+
+Same syntactic structure, opposite reading of what is missing. Everything below is a
+consequence of that one difference.
+
+### 3.2 The consequences
+
+| | Presence row | Access row |
+|---|---|---|
+| The row describes | a **value** | a **reference or computation** |
+| Fields outside the row | gone | live, possibly in use elsewhere |
+| `Drop` behaviour | computed **from the row** | drops **nothing** — a borrow |
+| `Linear`/`Send`/`Sync` | recomputed from the row | inherited from the whole struct |
+| Narrowing the row | **unsound** for owned values | **always safe** |
+| Read/write modes | none | required |
+| How many per value | exactly one | many, simultaneously |
+| The empty row `{}` | a useless value | maximally composable |
+
+Three of these deserve expanding, because they are rules rather than checks.
+
+**Narrowing runs in opposite directions.** RFC-0090 §2 states that an open record "permits
+width subtyping, i.e. silently forgetting fields, which is exactly what non-`Copy`
+ownership exists to prevent," and §5 rejects the pattern outright until some
+`AllCopy`-shaped bound exists to guard it. For access rows, narrowing is never dangerous —
+promising to touch *fewer* fields cannot leak anything — and it is the operation performed
+constantly, whenever a `{a, b}` reference is passed to something requiring `{a}`. A shared
+solver would therefore need its subtyping rule parameterised by role. That is the
+definition of different rules, not of one semantics with a guard.
+
+*Precision, so this isn't overstated:* presence rows in **bound** position narrow safely —
+a wider struct satisfying `HasField<"x", f64>` is fine, which is RFC-0090 §7's own
+resolution ("a bound alone grants no new capability *over the type itself*"). The
+unsoundness is specific to owned-value positions, where narrowing means fields are
+silently dropped.
+
+**`Drop` is a computation, not a check.** Under presence semantics a record's destructor
+and its `Linear`/`Send`/`Sync` status are *derived from its row*, by RFC-0090 §5's
+field-composition rule. Give a view the same semantics and `Handle.{fd}` would claim to own
+and drop `fd` — while the real owner drops it too. Nothing about label legality prevents
+that; the derivation itself has to be switched off for the access role.
+
+**Modes are an additional axis with no presence-row counterpart.** RFC-0109 §4.9 types
+`self` as a tuple of views with independent `&`/`&mut` per slot, checked pairwise-disjoint.
+Access rows need a per-label mode and a compatibility relation *between two rows over the
+same value*. Presence rows have neither, because a value has exactly one shape — there is
+no second row to be compatible with.
+
+### 3.3 The resolution: one mechanism, two roles
+
+The conclusion is not that these need separate implementations. The representation — a
+finite label map with row variables, unification, subset and disjointness checks — should
+be shared, along with its inference and its diagnostics. Building it twice would be
+indefensible.
+
+The precedent is already in this directory. `brand-kind-unification.md` argues that `@a`
+(allocator tags), `&r` (lifetime anchors), and `'c` (brands) are **three sigil-selected
+roles of a single kind** — unified at the mechanism level, with distinct rules per role,
+for implementer economy rather than user-facing uniformity. Rows appear to want the same
+treatment: one row kind, two roles, with role-parameterised rules for narrowing, `Drop`
+derivation, mode, and cardinality.
+
+If that holds, it is a second independent instance of the same unification pattern, which
+is mild evidence for the pattern itself rather than a coincidence of this cluster.
+
+---
+
+## 4. Access rows are effect rows
 
 The framing this document proposes: **an access row is a statement about what a
 computation does, over a finite label set.** That is the same shape as an effect row.
@@ -109,7 +200,7 @@ over it at boundaries), and that the field-access case is the better-behaved one
 
 ---
 
-## 4. Prior art, verified
+## 5. Prior art, verified
 
 Checked directly rather than recalled. Two claims made earlier in the originating
 conversation were **wrong and are corrected here**.
@@ -207,7 +298,7 @@ core, not immunity.
 
 ---
 
-## 5. What rows buy that fixed field sets cannot
+## 6. What rows buy that fixed field sets cannot
 
 The positive case, which the originating conversation initially got wrong by looking only
 outside the corpus. **RFC-0109 already contains the strongest example**, in its
@@ -240,7 +331,7 @@ made the cluster's dependency direction hard to settle.
 
 ---
 
-## 6. What this suggests
+## 7. What this suggests
 
 Not a decision — the cluster is under review and this is one input.
 
@@ -263,20 +354,24 @@ Not a decision — the cluster is under review and this is one input.
 
 ## Open questions
 
-1. **Are presence rows and access rows one kind or two, at the implementation level?**
-   This document argues they are two *concepts*; whether they share a representation
-   (both being finite label sets with variables) is unexamined here.
+1. **What is the minimal set of role-parameterised rules?** §3 answers the earlier, vaguer
+   version of this question — the representation should be shared, the rules should not —
+   and identifies four rules that differ: narrowing direction, `Drop`/multiplicity
+   derivation, per-label mode, and cardinality per value. Whether those four are
+   sufficient, or whether unification and inference also need role-awareness (they may:
+   an access row unified with a presence row is presumably ill-formed, and something has
+   to say so), is not worked out.
 2. **Does the `uses (…)` transitivity problem actually dissolve into the effect system,
    or only look like it does?** The shapes match; no worked example has been written
    through `algebraic-effects.md`'s actual `^ {E}` mechanism.
 3. **If field-access becomes an effect, what is its interaction with real effects?** A
    function that both touches `self.x` and performs `IO` would carry two rows over
    different label universes. Composition unexamined.
-4. **Does the finite-label-set argument survive abstraction?** §4 concedes variables
+4. **Does the finite-label-set argument survive abstraction?** §5 concedes variables
    reappear at boundaries; whether the remaining core is enough to avoid PureScript's
    error-message failure is unknown.
 5. **Is row-tracked partial consumption still unprecedented after a proper literature
-   search?** §4's negative claim rests on targeted searching, not a systematic review,
+   search?** §5's negative claim rests on targeted searching, not a systematic review,
    and one earlier negative claim in this area has already been falsified once.
 6. **Does separating the kinds change Trigger 6's answer** (RFC-0089's dependency on
    RFC-0090), or only clarify what the question was? Not worked through.
@@ -295,4 +390,4 @@ Not a decision — the cluster is under review and this is one input.
 - `algebraic-effects.md` §8 (effects desugar to aspects), §13.4 (open effect rows),
   §13.6 (borrow priority table)
 - `structural-records.md` §2 — the `RcBox` partial-drop case and the `unsafe`-gap catalogue
-- External sources are linked inline in §4.
+- External sources are linked inline in §5.

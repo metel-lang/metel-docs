@@ -302,9 +302,10 @@ structured-guarantee mechanism is reopened as premature to settle):
   from a crossing yet, not resolved.
 
 **From `access-and-presence-rows.md`:**
-- Are presence rows (which fields a value has) and access rows (which fields a
-  computation touches) one kind or two at the implementation level? The document argues
-  they are two *concepts*; shared representation is unexamined.
+- What is the minimal set of role-parameterised rules? §3 settles the coarse question —
+  share the row solver, separate the rules — and names four that differ (narrowing
+  direction, `Drop`/multiplicity derivation, per-label mode, cardinality per value).
+  Whether unification and inference also need role-awareness is unresolved.
 - Does RFC-0091 §1's `uses (…)` transitivity problem actually dissolve into the effect
   system, or only look like it does? No worked example through `algebraic-effects.md`'s
   `^ {E}` mechanism yet.
