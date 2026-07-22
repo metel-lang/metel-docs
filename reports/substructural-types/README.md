@@ -304,9 +304,15 @@ structured-guarantee mechanism is reopened as premature to settle):
   from a crossing yet, not resolved.
 
 **From `access-and-presence-rows.md`:**
-- Should a view carry a brand? §3.2 reopens it: unbranded gives reusability across
-  structs, branded prevents silent nominal collapse (RFC-0109's choice). The
-  rows-of-borrows desugaring makes it a decision rather than a consequence.
+- What identity should a view carry, and is it a brand or a type parameter? §3.4 maps six
+  options and leans toward a nominal `View<S, R>` constructor plus structural
+  bound-position acceptance — identity as an ordinary type parameter, needing nothing from
+  RFC-0076. Unresolved: whether `View<S, R - name>` needs row arithmetic the closed-record
+  build order deliberately avoids.
+- Does inherited view identity close RFC-0090's open question 10? §3.4 argues the identity
+  question and OQ10 (`FromRecord` bypassing constructor invariants) are the same question,
+  since structural-only reassembly lets any matching-shaped view rebuild the struct.
+  Argued for the borrowed case only; neither RFC currently connects the two.
 - What exactly is the call-site coercion rule? The whole views-vs-records tension
   relocates into it — RFC-0090 §8 bans implicit structural coercion, view types' headline
   benefit requires it, and no rule narrow enough to permit the second without reopening

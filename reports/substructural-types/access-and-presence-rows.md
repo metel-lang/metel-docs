@@ -149,7 +149,8 @@ silent-nominal-collapse failure the tier system exists to prevent — depending 
 views should be structurally satisfiable. RFC-0109 chose branded specifically to prevent
 it, noting the brand "is exactly what prevents it from ever satisfying a *generic*
 structural bound the way an anonymous record could." The desugaring reopens that as a
-decision rather than settling it.
+decision rather than settling it — **§3.4 maps the options, which are not the binary this
+paragraph implies.**
 
 **3. `uses (fd)` does not desugar.** `fun drop(self: Handle) uses (fd)` takes `self` **by
 value**. There is no borrow to encode as a field type; the declaration constrains which
@@ -181,11 +182,81 @@ Under the `Copy` phrasing, narrowing a record of borrows would be rejected — w
 break the desugaring's most common operation (passing a `{a, b}` record where `{a}` is
 wanted). Under the §7 phrasing it is fine.
 
-### 3.4 Revised resolution
+### 3.4 What identity should a view carry?
+
+§3.2 leaves this open. It is the sharpest of the surviving questions, and it is not the
+binary it looks like.
+
+**Inheriting the source struct's brand already has precedent in this cluster**, narrowly
+scoped: RFC-0090 §8's "Exception: a fiat-linear source struct's `ToRecord` output carries
+its origin brand, not a bare row." RFC-0109's `(row, brand)` view is the same idea again.
+So "the desugared record inherits the struct's brand" generalizes an accepted mechanism
+rather than introducing one — a row of borrows can carry a brand exactly as a row of
+values can.
+
+But inherit-or-not is a false binary. The space:
+
+| | View type | Reuse across structs | Prevents collapse |
+|---|---|---|---|
+| **A** Bare | `record { fd: &mut i32 }` | ✓ free | ✗ |
+| **B** Brand-rigid *(RFC-0109 today)* | `record {…} @ brand_of(Handle)` | ✗ | ✓ |
+| **C** Brand-polymorphic | `record {…} @ 'b`, generic in `'b` | ✓ | ✓ |
+| **D** Nominal constructor | `View<Handle, {fd}>` | ✓ via `View<S, R>` | ✓ |
+| **E** Branded identity + structural *bounds* | B, accepted via `HasField` bounds | ✓ in bound position | ✓ |
+| **F** Inherit, with explicit erasure | B, plus an explicit "forget the brand" step | ✓ when asked | ✓ by default |
+
+**C beats both extremes rather than trading between them.** With identity as a
+*parameter*, a helper can be generic over which struct a view came from **and** can require
+that two views came from the *same* value — `f<'b>(x: record { a: &mut A } @ 'b, y: record
+{ b: &mut B } @ 'b)`. Neither extreme expresses that: bare rows cannot distinguish two
+structs, rigid brands cannot abstract over them. "Two views of the same value" is exactly
+the property disjointness and reassembly reasoning needs.
+
+**D is C with machinery that already exists.** If a view is a nominal constructor
+parameterised by source struct and row, the identity is an ordinary type parameter and
+nothing depends on RFC-0076, still `0-draft`. Narrowing becomes `View<S, R - name>` — the
+shape RFC-0091's `drain_field<row R, name, T>` wants, and far more readable than the same
+operation on a bare record. Its one cost is a type-level field lookup (given `S` and label
+`fd`, what type?), which is what `HasField<"fd", T>` already provides — expressible, not new.
+
+**E applies a distinction RFC-0090 has already resolved.** §7 concluded that
+`HasField`/`Lacks` in *bound* position stays implicit "because a bound alone grants no new
+capability *over the type itself*; it only lets a generic function accept it," while the
+tiers gate capability that changes what a type can do on its own. Applied here: give the
+view a branded identity, and let generic helpers accept it structurally *via bounds*. Both
+properties, no new mechanism, consistent with a question this RFC already settled.
+
+E's limit is real: it serves helpers that **consume** a view, not ones that **return a
+narrowed** view, since a narrowed return type needs a row operation. So D and E are layers,
+not competitors — D for transforming helpers, E for consuming ones.
+
+**The argument for inheriting identity that is not about hygiene: reassembly.** RFC-0090 §8
+currently types `from_record_mut` purely structurally — the row must "have already grown
+back to `Handle`'s exact full shape… so there is nothing beyond structural row-matching to
+check." That means *any* view of matching shape can be reassembled into a `Handle`, which
+is precisely the hole RFC-0090's **open question 10** names: `FromRecord` bypassing a
+constructor's invariants (the `SortedPair` case), with "no compile-time check for this
+proposed."
+
+Inherited identity closes it for the borrowed case: `Handle::from_record_mut` can require
+the view's identity to *be* `Handle`'s, so only what was taken apart can be put back
+together. **The identity question and open question 10 are therefore the same question**,
+which neither RFC currently says.
+
+**Leaning: D, with E as the bound-position complement**, and F retained as the escape hatch
+whichever wins — erasing to a bare structural row should be something written, not
+something that happens, per RFC-0065's "elision is never a silent choice." Reach for real
+brands (B/C) only if something forces it; the likeliest forcing case is `RcBox`
+(RFC-0091 §1.1), where the residual outlives the borrow and is reached through many
+handles.
+
+### 3.5 Revised resolution
 
 Presence rows are the mechanism. **"Access row" names a *use* of that mechanism** — a row
 whose fields are borrows — plus exactly two things the desugaring forces into the open: a
-call-site coercion rule, and a decision about whether views carry a brand.
+call-site coercion rule (§3.2), and what identity the view carries (§3.4, leaning toward a
+nominal `View<S, R>` constructor rather than a brand, since it needs nothing from
+RFC-0076 and makes narrowing and reassembly both expressible).
 
 One case stays genuinely outside it: **access declared over an owned value**, which is
 `uses (…)`, and which is where the transitivity problem lives. That is the subject of §4,
@@ -405,27 +476,34 @@ Not a decision — the cluster is under review and this is one input.
 
 ## Open questions
 
-1. **Should a view carry a brand?** §3.2 reopens this. Unbranded gives reusability across
-   structs (one helper for many shapes); branded prevents silent nominal collapse, which is
-   what RFC-0109 chose. The desugaring makes it a decision rather than a consequence, and
-   nothing here settles it.
-2. **What exactly is the call-site coercion rule?** §3.2 relocates the whole
+1. **What identity should a view carry, and is it a brand or a type parameter?** §3.4 maps
+   six options and leans toward a nominal `View<S, R>` constructor (identity as an ordinary
+   type parameter, no dependence on RFC-0076) with structural *bound*-position acceptance
+   as its complement. Not settled — in particular, whether `View<S, R - name>` needs
+   type-level row arithmetic that the closed-record build order (RFC-0090 §3 step 1)
+   deliberately avoids.
+2. **Does inherited view identity actually close RFC-0090's open question 10?** §3.4 argues
+   the identity question and OQ10 (`FromRecord` bypassing constructor invariants) are the
+   same question, since structural-only reassembly lets any matching-shaped view rebuild a
+   `Handle`. The argument is stated for the borrowed case only; whether it extends to the
+   by-value `from_record` is unexamined, and neither RFC currently connects the two.
+3. **What exactly is the call-site coercion rule?** §3.2 relocates the whole
    views-vs-records tension into it. RFC-0090 §8 bans implicit structural coercion; view
    types' headline benefit requires it. A rule narrow enough to permit the second without
    reopening the first has not been written.
-3. **Does the `uses (…)` transitivity problem actually dissolve into the effect system,
+4. **Does the `uses (…)` transitivity problem actually dissolve into the effect system,
    or only look like it does?** The shapes match; no worked example has been written
    through `algebraic-effects.md`'s actual `^ {E}` mechanism.
-4. **If field-access becomes an effect, what is its interaction with real effects?** A
+5. **If field-access becomes an effect, what is its interaction with real effects?** A
    function that both touches `self.x` and performs `IO` would carry two rows over
    different label universes. Composition unexamined.
-5. **Does the finite-label-set argument survive abstraction?** §5 concedes variables
+6. **Does the finite-label-set argument survive abstraction?** §5 concedes variables
    reappear at boundaries; whether the remaining core is enough to avoid PureScript's
    error-message failure is unknown.
-6. **Is row-tracked partial consumption still unprecedented after a proper literature
+7. **Is row-tracked partial consumption still unprecedented after a proper literature
    search?** §5's negative claim rests on targeted searching, not a systematic review,
    and one earlier negative claim in this area has already been falsified once.
-7. **Does separating the kinds change Trigger 6's answer** (RFC-0089's dependency on
+8. **Does separating the kinds change Trigger 6's answer** (RFC-0089's dependency on
    RFC-0090), or only clarify what the question was? Not worked through.
 
 ---
