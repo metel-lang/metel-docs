@@ -250,13 +250,77 @@ brands (B/C) only if something forces it; the likeliest forcing case is `RcBox`
 (RFC-0091 §1.1), where the residual outlives the borrow and is reached through many
 handles.
 
-### 3.5 Revised resolution
+### 3.5 Surface syntax: the two forms name the two identity choices
+
+Superficial on its face, but the choice interacts with §3.4 rather than merely decorating
+it. Two candidate forms, and the division between them is not arbitrary:
+
+```metel
+{| x: f64, y: f64 |}      // anonymous record type — identity-free (§3.4 option A)
+{| x: 1.0,  y: 2.0  |}    // the same form as a value
+Handle.{ fd, alloc }      // a view of Handle — identity-carrying (§3.4 option D)
+```
+
+**`Handle.{ fd }` names its source struct in the syntax**, so option D's `View<S, R>` gets
+a surface form in which identity is inherited *by construction* rather than by a rule
+anyone has to state: `Handle.{ fd }` simply is `View<Handle, { fd }>`. Row genericity reads
+naturally too — `fun drain_field<S, row R>(v: S.{ R })`.
+
+**`{| … |}` is the identity-free form**, which makes §3.4's option F fall out for free:
+erasing a view to a bare structural row becomes a *visible change of syntax*, not an
+invisible coercion. That satisfies RFC-0065's "elision is never a silent choice" by
+construction rather than by adding a rule to enforce it — the strongest argument for
+carrying both forms rather than picking one.
+
+**Precedent for each.** F# faced exactly Metel's coexistence problem — nominal records
+`{ x = 1 }` alongside anonymous ones — and answered with `{| x = 1 |}`. Rust's view types
+are spelled `Foo.{a}`, and Zig uses `.{…}` for anonymous struct literals. So both forms are
+borrowed rather than invented, and `Handle.{ fd }` additionally makes Metel's spelling of
+views match the one Rust is standardising on.
+
+**Feasibility, checked against `grammar.pest` rather than assumed:**
+
+- **The pipe character appears nowhere in the grammar.** No bitwise-or, no or-patterns, no
+  leading-`|` match arms, and closures are `(x) -> T { … }` (`closure_expr`), not `|x| …`.
+  So `{|` and `|}` collide with nothing — the ambiguity that would sink this proposal in a
+  Rust-shaped grammar does not exist here.
+- **Postfix `.` accepts only three forms** — `.0` (tuple access), `.ident(…)`, `.ident` —
+  so `.{` is free. `Handle.{ … }` is distinguished from the struct literal
+  `Handle { … }` (`struct_literal = type_path ~ "{" ~ …`) by the dot alone.
+- **Float literals require digits on both sides** (`ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+`),
+  so there is no leading-dot literal to collide with.
+- Pest is **scannerless**, so neither form inherits a maximal-munch tokenisation hazard —
+  the same property that lets `List<List<T>>` parse today without a `>>` special case.
+
+**Rejected: `<: … :>`.** Feasible (nothing in the grammar spells `<:` or `:>`; `<` and `>`
+appear only in `cmp_op`, `generic_params`, `named_type`, and turbofish) but wrong on three
+counts. It collides with the meaning this language has consistently given `<…>` — the
+compile-time parameter channel, which RFC-0090 §2 explicitly invokes when motivating
+`<row R>` as "exactly the shape of `<&r>` and `<@a>`" — and a record is a runtime product,
+not a compile-time parameter. `<:` and `:>` are also C's digraphs for `[` and `]`, so they
+carry a bracket reading for anyone who has met them. And it buys nothing: the one real
+ambiguity in RFC-0090's current syntax is that `record { x: f64 }` and `record { x: 1.0 }`
+have the same shape, disambiguated only by whether the right-hand side parses as a type or
+an expression — and `<: … :>` has that overlap too. So does `{| … |}`; neither form fixes
+it, and it should be tracked separately.
+
+*Elsewhere this document keeps RFC-0090's current `record { … }` spelling, since the
+syntax question is separable from the semantic one.*
+
+**Interaction to watch: RFC-0099 (Dot-Separated Module Paths), currently `1-under-review`.**
+If it lands, `.` separates module paths *and* projects a view, so `Handle.{ fd }` sits next
+to `mod.Handle`. Still unambiguous (a `{` cannot start a path segment), but it makes `.`
+carry two unrelated jobs, and the two RFCs do not currently know about each other.
+
+### 3.6 Revised resolution
 
 Presence rows are the mechanism. **"Access row" names a *use* of that mechanism** — a row
 whose fields are borrows — plus exactly two things the desugaring forces into the open: a
 call-site coercion rule (§3.2), and what identity the view carries (§3.4, leaning toward a
 nominal `View<S, R>` constructor rather than a brand, since it needs nothing from
-RFC-0076 and makes narrowing and reassembly both expressible).
+RFC-0076 and makes narrowing and reassembly both expressible). §3.5 proposes a surface
+syntax in which those two identity choices are two different spellings, so erasing one to
+the other is visible in the source.
 
 One case stays genuinely outside it: **access declared over an owned value**, which is
 `uses (…)`, and which is where the transitivity problem lives. That is the subject of §4,
@@ -487,23 +551,29 @@ Not a decision — the cluster is under review and this is one input.
    same question, since structural-only reassembly lets any matching-shaped view rebuild a
    `Handle`. The argument is stated for the borrowed case only; whether it extends to the
    by-value `from_record` is unexamined, and neither RFC currently connects the two.
-3. **What exactly is the call-site coercion rule?** §3.2 relocates the whole
+3. **Does `{| … |}` / `S.{ … }` survive contact with the rest of the grammar?** §3.5 checks
+   the direct collisions (the pipe character is unused; postfix `.` takes only three forms;
+   floats need digits on both sides) but not the indirect ones — chained projection
+   `S.{ R }.{ R' }`, projection in pattern position, or the overlap with RFC-0099's
+   dot-separated module paths if that lands. Neither form addresses the type/value overlap
+   RFC-0090's `record { … }` already has.
+4. **What exactly is the call-site coercion rule?** §3.2 relocates the whole
    views-vs-records tension into it. RFC-0090 §8 bans implicit structural coercion; view
    types' headline benefit requires it. A rule narrow enough to permit the second without
    reopening the first has not been written.
-4. **Does the `uses (…)` transitivity problem actually dissolve into the effect system,
+5. **Does the `uses (…)` transitivity problem actually dissolve into the effect system,
    or only look like it does?** The shapes match; no worked example has been written
    through `algebraic-effects.md`'s actual `^ {E}` mechanism.
-5. **If field-access becomes an effect, what is its interaction with real effects?** A
+6. **If field-access becomes an effect, what is its interaction with real effects?** A
    function that both touches `self.x` and performs `IO` would carry two rows over
    different label universes. Composition unexamined.
-6. **Does the finite-label-set argument survive abstraction?** §5 concedes variables
+7. **Does the finite-label-set argument survive abstraction?** §5 concedes variables
    reappear at boundaries; whether the remaining core is enough to avoid PureScript's
    error-message failure is unknown.
-7. **Is row-tracked partial consumption still unprecedented after a proper literature
+8. **Is row-tracked partial consumption still unprecedented after a proper literature
    search?** §5's negative claim rests on targeted searching, not a systematic review,
    and one earlier negative claim in this area has already been falsified once.
-8. **Does separating the kinds change Trigger 6's answer** (RFC-0089's dependency on
+9. **Does separating the kinds change Trigger 6's answer** (RFC-0089's dependency on
    RFC-0090), or only clarify what the question was? Not worked through.
 
 ---

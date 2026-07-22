@@ -313,6 +313,12 @@ structured-guarantee mechanism is reopened as premature to settle):
   question and OQ10 (`FromRecord` bypassing constructor invariants) are the same question,
   since structural-only reassembly lets any matching-shaped view rebuild the struct.
   Argued for the borrowed case only; neither RFC currently connects the two.
+- Surface syntax: §3.5 proposes `{| … |}` for anonymous records (F#'s answer to the same
+  nominal/anonymous coexistence) and `S.{ … }` for views (Rust's view-type spelling), so
+  that §3.4's two identity choices become two spellings and erasure is visible in the
+  source. Direct grammar collisions checked and absent — the pipe character is unused in
+  `grammar.pest` and closures are `(x) -> T { … }` — but chained projection, pattern
+  position, and the overlap with RFC-0099's dot-separated module paths are not.
 - What exactly is the call-site coercion rule? The whole views-vs-records tension
   relocates into it — RFC-0090 §8 bans implicit structural coercion, view types' headline
   benefit requires it, and no rule narrow enough to permit the second without reopening
