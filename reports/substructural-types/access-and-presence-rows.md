@@ -298,11 +298,19 @@ counts. It collides with the meaning this language has consistently given `<…>
 compile-time parameter channel, which RFC-0090 §2 explicitly invokes when motivating
 `<row R>` as "exactly the shape of `<&r>` and `<@a>`" — and a record is a runtime product,
 not a compile-time parameter. `<:` and `:>` are also C's digraphs for `[` and `]`, so they
-carry a bracket reading for anyone who has met them. And it buys nothing: the one real
-ambiguity in RFC-0090's current syntax is that `record { x: f64 }` and `record { x: 1.0 }`
-have the same shape, disambiguated only by whether the right-hand side parses as a type or
-an expression — and `<: … :>` has that overlap too. So does `{| … |}`; neither form fixes
-it, and it should be tracked separately.
+carry a bracket reading for anyone who has met them. And it buys nothing over `{| … |}`.
+
+*Correction, same day.* An earlier version of this paragraph claimed a type/value ambiguity
+in `record { x: f64 }` versus `record { x: 1.0 }` and offered it as the thing a new bracket
+might fix. **There is no such ambiguity.** Types and values occupy disjoint nonterminals,
+and `grammar.pest:245`'s `field_init = { ident ~ (":" ~ expr)? }` already matches `ident ~
+":"` directly rather than routing the field name through `expr` — which is exactly why
+today's struct literals do not collide with type ascription. A delimited record literal
+written the same way inherits that. The real collision in this area is ascription against
+*keyword arguments*, which arises only where contents route through a general `expr`
+(`arg_list`), and RFC-0100 §3 has already analysed and fixed it. That analysis generalizes
+into a grammar-wide separator invariant — see `../syntax/colon-classifies-equals-defines.md`,
+which also proposes `{| x = 1.0 |}` for record *values*, F#'s actual spelling.
 
 *Elsewhere this document keeps RFC-0090's current `record { … }` spelling, since the
 syntax question is separable from the semantic one.*
@@ -555,8 +563,10 @@ Not a decision — the cluster is under review and this is one input.
    the direct collisions (the pipe character is unused; postfix `.` takes only three forms;
    floats need digits on both sides) but not the indirect ones — chained projection
    `S.{ R }.{ R' }`, projection in pattern position, or the overlap with RFC-0099's
-   dot-separated module paths if that lands. Neither form addresses the type/value overlap
-   RFC-0090's `record { … }` already has.
+   dot-separated module paths if that lands. The type/value overlap an earlier draft
+   claimed here does not exist (§3.5's correction); whether values should be spelled
+   `{| x = 1.0 |}` per `../syntax/colon-classifies-equals-defines.md` is a live question
+   that depends on RFC-0100's outcome.
 4. **What exactly is the call-site coercion rule?** §3.2 relocates the whole
    views-vs-records tension into it. RFC-0090 §8 bans implicit structural coercion; view
    types' headline benefit requires it. A rule narrow enough to permit the second without
