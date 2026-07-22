@@ -3,7 +3,7 @@ id: strategic-objectives
 title: "Strategic Objectives, Priorities, and Watch List"
 type: report
 status: active
-last_reviewed: '2026-07-20'
+last_reviewed: '2026-07-22'
 ---
 
 # Strategic Objectives, Priorities, and Watch List
@@ -11,20 +11,18 @@ last_reviewed: '2026-07-20'
 *Living document — updated in place, not a point-in-time snapshot, matching the convention
 already used for `reports/substructural-types/*.md`. Dated strategic-overview reports
 (`strategic-overview-YYYY-MM-DD.md`) remain the periodic narrative record of what was found
-and decided each cycle — that value doesn't go away. What changes: this document is what
-each cycle reads from and writes back to, so "what are the current priorities" and "what are
-we watching for" don't have to be reconstructed by finding whichever dated file happens to be
-most recent and reading its prose. Created 2026-07-09 because nothing like it existed —
-`README.md` is repo layout only, and every other planning document
-(`integrated-language-overview-2026-07-07.md`, `reports/implementation/roadmap-2026-07-07.md`,
-the strategic-overview series itself) is a dated, point-in-time snapshot with no persistent
-counterpart.*
+and decided each cycle. What this document adds: a single place each cycle reads from and
+writes back to, so "what are the current priorities" and "what are we watching for" don't
+have to be reconstructed by finding whichever dated file happens to be most recent and
+reading its prose. Created 2026-07-09; **§1/§2 rewritten and the priorities reordered
+2026-07-22** — see the review log for what changed and why.*
 
 **How to use this document, each strategic-overview cycle:**
 1. Check §3's open triggers against real progress since `last_reviewed`. Mark any that fired,
    with a one-line resolution note, or that got closed for other reasons.
 2. Update §2's priorities in place — not "restated unchanged," actually re-verified against
-   current RFC/INDEX.md state.
+   current RFC/`REGISTRY.md` state **and against the issue tracker**, which is where the
+   claim "this is a priority" either is or isn't cashed out.
 3. Add any new triggers this cycle surfaced.
 4. Append one line to §4's review log.
 5. Update `last_reviewed` above.
@@ -36,9 +34,6 @@ counterpart.*
 
 ## 1. Long-term objectives
 
-Seeded from `integrated-language-overview-2026-07-07.md` §1 — restate or correct this, don't
-treat it as fixed by virtue of being written down first.
-
 A systems language whose public face is **allocator-aware storage and resource control**, but
 whose real semantic substrate is lower-level: **structural shape**, **per-field multiplicity**,
 **brand identity/provenance**, and **binding-named lifetime validity**. Allocators remain
@@ -46,13 +41,23 @@ central to the language's identity, but they are the first major *synthesis* of 
 not the substrate itself. The ordinary modern surface (aspects, exhaustive enums,
 `Perhaps`/`Result`, generics, pattern matching) still matters, but it is not the differentiator.
 
-The differentiation claim is therefore slightly sharper than the earlier allocator-first
-framing: the bet is not merely "allocators as first-class values," but **fine-grained resource
-semantics over structured values** — row-shaped products with per-field ownership discipline,
-identity where plain structure is not enough, and concrete lifetime diagnostics named after real
-bindings rather than abstract `'a`. Allocator semantics remain the flagship integrative use
-case that justifies this machinery, rather than the only low-level concept the language is
-"about."
+The differentiation claim is therefore sharper than the earlier allocator-first framing: the
+bet is not merely "allocators as first-class values," but **fine-grained resource semantics
+over structured values** — row-shaped products with per-field ownership discipline, identity
+where plain structure is not enough, and concrete lifetime diagnostics named after real
+bindings rather than abstract `'a`.
+
+This is restated near-verbatim in the public blog post ("Introducing Metel", 07-15), which is
+the external commitment this document is accountable to. Its sequencing sentence is the one to
+measure §2 against:
+
+> **short term**, the records post and `ToRecord`/`FromRecord` working in the interpreter.
+> **Medium term**, the borrow checker, linear types, and brands as real primitives.
+> **Then allocators**, on top of all of it.
+
+§2's order below is that sentence, with one addition the blog doesn't have a slot for (the
+interpreter-as-instrument track, Priority 5) because pretending it isn't consuming effort
+would make this document less honest, not more focused.
 
 ### The standing meta-risk
 
@@ -64,238 +69,230 @@ Originally, from `integrated-language-overview-2026-07-07.md` §5/§7:
 > overreach risk compounds. The discipline to stop designing is itself the most important
 > planning decision here.
 
-**Sharpened 2026-07-09**, prompted directly by introducing `3-integrated` — a lifecycle stage
-whose entire purpose is *more* pre-implementation design work (worked examples, spec
-integration). Does that institutionalize the exact overreach this risk warns against? The flat
-framing above doesn't distinguish two cases that need different answers.
+**Still literally true fifteen days later**, word for word: the interpreter still deep-clones,
+still has no borrow checker, still has no move-semantics enforcement. That sentence has now
+survived seven strategic-overview cycles unchanged. It is not a warning about a possible
+future; it is a description of the present.
 
-- **For L3 (comptime/derive, brands, structural records) — genuinely still forming — letting
-  design run ahead of implementation is the right call, not overreach, for a specific reason:**
-  `comptime`/`emit`/derive registration (RFC-0092–0095) have zero footprint in
-  `reports/implementation/roadmap-2026-07-07.md` — nothing exists yet to rebuild, so settling
-  the mechanism's shape before writing it is not paying a build-then-rebuild cost, it's simply
-  sequencing design before the only implementation that would use it.
-  **Correction, 2026-07-10:** this section originally cited RFC-0092's Open Question 4 (whether
-  `<T>` generics should be reinterpreted as sugar over comptime type parameters) as that
-  evidence, framed as "implementing generics naively now, then unifying with comptime later,
-  would likely require rebuilding the specialization mechanism's internals." That's wrong as
-  stated — per the roadmap (`reports/implementation/roadmap-2026-07-07.md` L0 row), generics via
-  monomorphization are **already implemented and mature**, not a future action being weighed.
-  OQ4 itself says the unification is "not load-bearing for derive itself" — recommended, not
-  required — precisely because it's optional, no forced rebuild follows regardless of when it's
-  settled. That example actually shows the opposite pattern from the one it was cited for:
-  implementation (L0 generics) already ran ahead of a later L3 design question, harmlessly,
-  because the later question was scoped not to be load-bearing on the earlier build. The
-  general L3 argument (above) doesn't depend on that example and still holds on its own — but
-  the specific citation was wrong and is corrected rather than quietly dropped.
-  `3-integrated`'s cross-checking (catching an RFC-0063/RFC-0066-style conflict before something
-  is built against it) is aligned with the general argument, not opposed to it — done narrowly.
-- **For L2 (the allocator/lifetime cluster, Priority 1) — already accepted, stable, and not
-  entangled with L3 — the same argument does not apply, and leaving it un-actioned *is* the
-  actual overreach.** Per `integrated-language-overview-2026-07-07.md`'s own dependency table,
-  L2 does not depend on L3 at all. Nothing about comptime/derive's still-forming state touches
-  allocator/lifetime semantics. Priority 1 has sat unactioned through five strategic-overview
-  cycles (07-01 through 07-08) and still is as of this document's creation — that is the
-  concrete instance of the meta-risk, not the L3 design work happening alongside it.
+**Sharpened 2026-07-09** (prompted by introducing `3-integrated`, a stage whose entire purpose
+is *more* pre-implementation design work) into a two-case rule that still holds:
 
-**Practical consequence: scope `3-integrated` narrowly** — to genuinely-coupled, still-forming
-clusters (comptime/derive now; brand-kind-unification later, once it has real RFCs) — not
-applied uniformly across the whole 14-RFC accepted backlog. Most of that backlog (the
-aspect-system core) isn't part of active churn and doesn't need the full
-worked-examples-against-siblings treatment before implementation; running it there would be
-more process delaying implementation with no real conflict to catch.
+- **For genuinely still-forming clusters** — comptime/derive, brand-kind unification — letting
+  design run ahead of implementation is correct, not overreach: nothing exists yet to rebuild,
+  so settling the mechanism's shape first isn't paying a build-then-rebuild cost.
+- **For already-accepted, unentangled clusters, leaving them un-actioned *is* the overreach.**
+  This is where the risk actually lives.
 
-**Honest note, unchanged in substance:** the session that produced this sharpening is still
-evidence bearing on the risk, not against it. It spent its effort on L3/process work — seven
-new RFCs, a new lifecycle stage, tooling, this document — and never once triggered Priority 1's
-ratification sweep, despite nothing blocking it. That's the pattern to watch: not whether L3
-design kept happening, but whether the unblocked, already-settled layer kept not getting built.
+  *Historical correction, 2026-07-10, kept rather than dropped:* this section originally cited
+  RFC-0092's Open Question 4 (reinterpreting `<T>` generics as sugar over comptime type
+  parameters) as evidence for the first case. That was wrong — generics via monomorphization
+  were already implemented, and OQ4 explicitly says the unification is "not load-bearing." The
+  example in fact showed the opposite pattern (implementation running safely ahead of a later
+  design question). The general argument doesn't depend on it and still holds.
 
-### Corollary, 2026-07-10: the interpreter is a temporary feedback mechanism, not the target structure
+**Practical consequence: scope `3-integrated` narrowly**, to genuinely-coupled, still-forming
+clusters — not uniformly across the whole accepted backlog. Most of that backlog isn't in
+active churn and doesn't need worked-examples-against-siblings before implementation.
 
-Follows from the meta-risk framing above and a sequencing decision already visible in the
-ClickUp tracker (the METEL-123/METEL-171 split), made explicit rather than re-derived each
-time it matters. The current interpreter's job is to produce real-program feedback the design
-can't get any other way — not to be, or to become through careful internal refactoring, the
-eventual compiler. METEL-171 already defers monomorphization strategy, ABI/calling-convention
-design, MIR/CFG lowering, and closure-codegen metadata until after "the v0.8.1 elaboration
-pipeline lands and the interpreter boundary is stable" — a real compiler-direction decision
-this interpreter is a precursor to, not an instance of.
+### Corollary: the interpreter is a temporary feedback mechanism, not the target structure
 
-**The filter this gives:** interpreter-internals work falls into one of two budgets, and only
-the first is worth spending on now:
+*Added 2026-07-10; unchanged in substance, and now load-bearing for Priority 5.*
+
+The current interpreter's job is to produce real-program feedback the design can't get any
+other way — not to be, or to become through careful internal refactoring, the eventual
+compiler. Interpreter-internals work falls into one of two budgets, and only the first is
+worth spending on now:
 
 - **Feedback-trustworthiness budget** — work needed so the interpreter's behavior is a
   reliable signal about the *design*, not an artifact of how the interpreter happens to be
-  built. Sprint 25's SymbolId/coherence-pipeline work is this: it exists because the prior
-  string-keyed dispatch was producing real bugs (METEL-185's string-fallback notes), and a
-  buggy interpreter can't tell you whether a language-design question is wrong or just
-  mis-executed. Worth doing regardless of whether this interpreter's structure survives.
-- **Forward-structure budget** — work that only pays off if this interpreter's internals
-  persist into whatever comes after METEL-171's compiler-direction decision: consolidating a
-  scattered monomorphization pass, clean IR shape, ABI/calling-convention groundwork. Not
-  worth spending on now — the tracker already made this call once, by scoping it into
-  METEL-171 specifically to hold it out of the current sprint.
+  built. A real dispatch bug, a wrong diagnostic, a construct that can't be written at all.
+  Worth doing regardless of whether this interpreter's structure survives.
+- **Forward-structure budget** — work that only pays off if these internals persist into
+  whatever comes after the compiler-direction decision: consolidating a scattered
+  monomorphization pass, clean IR shape, ABI groundwork. Not worth spending on now.
 
-**Applied to the concrete case that raised this:** the monomorphization pass being scattered
-across the codebase is real, but consolidating it belongs to the forward-structure budget
-unless the scattering is itself producing incorrect programs — in which case it moves to the
-trustworthiness budget and the calculus flips. Nothing surfaced so far indicates the latter.
+**The failure mode this filter is most often used to excuse is the opposite one** — skipping
+trustworthiness work because "it's all throwaway anyway." That is a misuse of the corollary,
+never an instance of it (Trigger 9).
 
 ---
 
 ## 2. Current priorities
 
-Seeded from `strategic-overview-2026-07-08.md`, corrected for what's actually happened since.
+**Reordered 2026-07-22.** The previous ordering had a *completed* item (ratifying the
+allocator cluster, done 07-10) occupying the Priority 1 slot, which made the document read as
+though the top priority were finished when the actual top priority sat at number 2. The order
+below is the blog's own sequencing sentence, made checkable.
 
-### Priority 1 — Ratify the allocator/lifetime cluster's design
+| # | Priority | Design state | Engineering state |
+|---|---|---|---|
+| 1 | Records / views as the structural carrier | RFC-0089/0090/0091/0109 `1-under-review` | not started, **no issue** |
+| 2 | Ownership enforcement and the borrow checker | RFC-0071 `2-accepted`; borrow checker **has no RFC at all** | not started, **no issue** |
+| 3 | Brands and context parameters | RFC-0076 `0-draft`; RFC-0113 `1-under-review` | not started, **no issue** |
+| 4 | Allocators — emergent synthesis, built last | RFC-0063/65/66/67/68/73/77 `2-accepted`, complete | deliberately not started |
+| 5 | The interpreter as a feedback instrument | n/a | **all 19 open issues** |
+| 6 | Adjacent design and demand-gated frontier | RFC-0092–0095 `0-draft`; RFC-0026 stale | not started |
 
-**Done 2026-07-10**, after six strategic-overview cycles unactioned (07-01 through 07-09) —
-the concrete instance of the meta-risk this section warned about while it sat idle. Ratified
-by amending RFC-0063 directly rather than creating RFC-0088 (the vehicle question the roadmap
-left open): RFC-0063/0065/0066/0067/0068/0073/0077 are now `2-accepted`. This was not a pure
-formality — a consistency pass first found RFC-0063 §9 items 1/2/5 still written up as
-open/blocking, three days after `reports/implementation/roadmap-2026-07-07.md`'s Phase 0 had
-already resolved them in a separate document with no sync back to the RFC itself (exactly the
-drift `PROCESS.md`'s ratification/consistency step exists to catch), plus stale
-"Region..." titles on RFC-0066/0068 that never got renamed when the rest of the cluster moved
-to "Allocator" terminology. Both fixed before sweeping. RFC-0080 is now the only RFC left
-under review, unchanged since — no movement this cycle.
+**Read that table's last two columns together — that is this cycle's central finding.**
+Priorities 1–4 hold every RFC the project calls foundational and, between them, zero open
+issues. Priority 5, which this document had never ranked at all until today, holds all of
+them. This is not the same claim as 07-20's Trigger 17 ("ergonomics churn substituted for the
+stated priority"); it is structural. The stated priorities and the tracker do not intersect.
 
-**Follow-through, 2026-07-10/11:** six of this cluster's RFCs (RFC-0067a/0072/0078/0081/0082/0083)
-went the rest of the way through `3-integrated`, each surfacing a real spec-vs-design gap while
-writing worked examples (Trigger 8). Their `impl_tracking` fields were later repointed from
-ClickUp to Codeberg Issues (#236/#243/#234/#264/#242/#235) as a side effect of the task-tracker
-migration below — a mechanical link update, not a status or design change. **All six are still
-`impl_status: not-started` as of 2026-07-11** — fully specified, ratified, worked-example-checked,
-and zero engineering has started on any of them. Unlike Priority 3, this needs no scoping, only
-building — see Trigger 12 and `strategic-overview-2026-07-11.md`'s "Design/Implementation Gap"
-section, which named this explicitly after an earlier draft of that snapshot missed it.
+### Priority 1 — Records / views as the structural carrier
 
-**Resolved 2026-07-15.** All five still-tracked RFCs (RFC-0067a/#236, RFC-0072/#243,
-RFC-0078/#234, RFC-0081/#264, RFC-0082/#242 — RFC-0083 was superseded rather than
-implemented, reconciled elsewhere) are now `4-implemented`. Trigger 12 fired and is
-resolved — see `strategic-overview-2026-07-15.md`. This priority's follow-through is
-done; watch instead whether the *next* `3-integrated` batch (currently empty — 0 RFCs
-at that stage as of 07-15) repeats the same not-started stall before being fully
-built, per the new Trigger 13 below.
+The blog's short-term commitment, and the substrate item with the most design momentum:
+RFC-0089 (Linear Types), RFC-0090 (Structural Records — Rows and Tiers), RFC-0091 (Linear
+Records), and RFC-0109 (Self-View Narrowing) were all swept to `1-under-review` on 07-21 and
+are reviewed as one cluster, because RFC-0091 extends the RFC-0089/0090 floor and RFC-0109
+depends on both.
 
-### Priority 2 — The substrate for fine-grained resource semantics
+**Review must settle Trigger 6 first**, and it is a substrate-shaping question, not a local
+RFC dependency: does the floor genuinely require RFC-0090's record machinery for RFC-0089, or
+does that dependency need removing to preserve the "narrow, no row kind" property
+`integrated-language-overview-2026-07-07.md` wanted? Neither RFC currently states the
+conflict. Resolve it or explicitly record that the earlier framing has been revised.
 
-**This is now the main medium-term design priority.** The project should stop treating the
-allocator cluster as the deepest layer. The lower-level work that needs the most clarity is:
+The concrete deliverable the blog names is narrower than the full cluster: **`ToRecord` /
+`FromRecord` working in the interpreter.** That is the acceptance test to aim at, and it is
+small enough to be tracked as real engineering rather than as a design phase.
 
-- **Structural types / records** as the carrier for non-coarse resource reasoning.
-- **Per-field multiplicity** so ownership is not only a whole-value property.
-- **Brand semantics** for identity/provenance wherever plain structure is insufficient.
-- **Lifetime validity** in its narrower but essential role: borrow scope, exclusivity, and
-  concrete diagnostics.
-- **Context parameters** (added 2026-07-20) — a *general* mechanism for a value a call tree
-  needs, resolved by type from scope with ambiguity an error, of which the allocator handle
-  `(@a: A)` is one instance (see Priority 3 and
-  `reports/substructural-types/allocators-as-emergent-synthesis.md`). Newly recognized as a
-  substrate primitive rather than allocator-specific ergonomics. **Written 2026-07-21 as
-  RFC-0113 (Context Parameters), now `1-under-review`** — until then it was the one member
-  of this list with no RFC of any kind, and the largest unwritten hole on the allocator
-  critical path.
+Also in this priority, and still unwritten: **per-field multiplicity** — ownership as a
+per-field rather than whole-value property. It is the half of the substrate that makes records
+more than a structural-typing convenience.
 
-This framing demotes the old typestate question from "central fork in the roadmap" to a
-secondary stylistic consequence unless implementation pressure proves otherwise. The core design
-question is not "rows vs brands for typestate"; it is whether the language has a coherent
-substrate for structured, fine-grained resource semantics at all.
+### Priority 2 — Ownership enforcement and the borrow checker
 
-**Pinned down further, 2026-07-15:** this substrate now explicitly includes a **minimal
-low-level allocation model** that allocator APIs are expected to build on top of, rather than
-continuing to elaborate allocators top-down. "Low-level" here does **not** mean the whole
-unsafe/custom-allocator tower. It means the narrow semantic layer that defines:
+Promoted to its own slot 2026-07-22. Previously this was one bullet inside the substrate list
+("lifetime validity in its narrower but essential role"), which understated two things:
 
-- storage-backed value ownership (creation, transfer, destruction, invalidation);
-- provenance/identity for allocated storage, where brands are the leading candidate;
-- borrowing into owned storage, and when those borrows remain valid or become invalid;
-- field-sensitive extraction/destruction, rather than treating allocated values as coarse blobs;
-- the primitive operations on allocated storage-backed values, independently of any specific
-  allocator family or surface syntax.
+**RFC-0071 (Ownership and Move Semantics) has been `2-accepted` since 2026-06-28 and is 0%
+implemented, with no tracking issue.** It is the most-depended-on document in the corpus —
+RFC-0063 and every downstream allocator RFC take affine ownership as a given, RFC-0066's
+`T: !Drop` scoped move-out assumes it, RFC-0068's struct-owned arenas assume its drop order —
+and the interpreter still deep-clones, so none of it is enforced. Nearly a month accepted,
+nothing built.
 
-**Just as important, this model should refuse to decide several later questions too early.**
-It should not yet define the standard allocator family in detail, the full ergonomic surface,
-the unsafe/custom-allocator layer, a full pointer taxonomy, or every future memory feature
-that might eventually live above it. The test for this layer is narrower: could real
-allocator-facing designs such as `Heap`, `BumpAlloc`, and `LocalHeap` be rebuilt on top of it
-without changing the core model?
+**The borrow checker has no RFC at all.** Verified against `REGISTRY.md`: the only match for
+"borrow" across 112 RFCs is RFC-0086 (Outlives-of-Bindings Sugar), which is `6-refused`. The
+blog commits to it as a medium-term primitive; `allocators-as-emergent-synthesis.md` makes it
+a load-bearing term in the decomposition ("`@a T` being owned/affine/extractable is an owned
+box type + the borrow checker checking it outlives `a`"); Priority 4 is gated on it. It is
+carrying more architectural weight than any other undocumented thing in the project. This is a
+larger unwritten hole than context parameters were before RFC-0113, and it is now Trigger 19.
 
-**Concrete consequence:** RFC-0089 (Linear Types) and RFC-0090 (Structural Records — Rows and
-Tiers) are not just optional future polish. They sit directly in this substrate, as does the
-still-unwritten brand-unification work. The unresolved issue is not merely that RFC-0089 now
-depends on RFC-0090's `ToRecord`/`FromRecord` mechanism — it's that this dependency is exactly
-where the project must decide whether the "narrow floor" story from
-`integrated-language-overview-2026-07-07.md` still holds or has been deliberately revised.
-That remains Trigger 6 below, but it now matters as a substrate-shaping decision, not just as a
-local RFC dependency question.
+The two halves sequence naturally: move checking makes ownership real and is specified
+already; borrowing needs a design document before it can be built.
 
-### Priority 3 — Allocator semantics as an emergent synthesis and acceptance test, built last
+### Priority 3 — Brands and context parameters
+
+The two primitives that carry identity and threading, both needed before Priority 4's
+decomposition can even be tested.
+
+- **Brands** (RFC-0076, `0-draft`) — identity/provenance where plain structure is
+  insufficient. `brand-kind-unification.md` already established that the allocator handle
+  `@a` is a brand role. Still unsettled, and Trigger 2's role-crossing matrix is the thing
+  that would settle it. *Carried caveat:* RFC-0076's argument for why regions don't need
+  brands rests on RFC-0063's abandoned triple-duty premise and needs re-deriving.
+- **Context parameters** (RFC-0113, `1-under-review`, written 2026-07-21) — a general
+  mechanism for a value a call tree needs, resolved by type from scope with ambiguity an
+  error, of which the allocator handle `(@a: A)` is one instance. Written deliberately
+  without allocator syntax in its core, and scoped narrowly: it replaces the *threading*
+  only. Five open questions, chiefly syntax and whether contexts propagate through
+  intermediate frames.
+
+This priority is where the coupling risk in Trigger 18 concentrates: brands are unsettled,
+and Priority 4 is bet on them.
+
+### Priority 4 — Allocators as an emergent synthesis and acceptance test, built last
+
+*Unchanged in substance from the 2026-07-20 reframe; renumbered from 3.*
 
 Allocator semantics remain central to the language's public identity, but they are **not** a
-primitive, and — sharpened 2026-07-20 — they are almost certainly not a standalone feature
-either. They should be treated as the **last** major subsystem and as the **acceptance test**
-that proves the primitives beneath them are sufficient, not as an early or foundational build.
+primitive, and almost certainly not a standalone feature either. They are the **last** major
+subsystem and the **acceptance test** proving the primitives beneath them are sufficient.
 
 **The design is essentially complete and deliberately unimplemented, and it stays that way
 until the primitives it synthesizes are all built.** This is intentional, not neglect, and it
-matches what the public blog ("Introducing Metel") already tells readers: the deepest
-ownership/allocation model is ahead of the runtime on purpose. Allocator implementation is
-gated on **all** of: the borrow checker, records/views, linear types, lifetime anchors, and
-brands. Allocators are not being *delayed* past those — they are *downstream of* those by
-construction, because (see below) they are largely built *out of* them.
+matches what the blog already tells readers. Implementation is gated on all of: the borrow
+checker, records/views, linear types, lifetime anchors, and brands. Allocators are not being
+*delayed* past those — they are *downstream of* those by construction, because they are
+largely built *out of* them.
 
-**Why "not even a standalone feature": the decomposition.** Worked out in full in
-`reports/substructural-types/allocators-as-emergent-synthesis.md`, the claim is that the
-current allocator cluster decomposes almost entirely into more general primitives:
+**The decomposition** (worked out in full in
+`reports/substructural-types/allocators-as-emergent-synthesis.md`):
 
-- the `(@a: A)` handle-threading (RFC-0065 §1/§1b ergonomics) is a special case of a general
-  **context-parameter** feature (Kotlin-style: resolved by type from scope, ambiguity an
-  error) — a feature that *does not exist in the corpus at all yet* (see Priority 2);
-- the `@a T` instance-level tag, disjointness, and sendability are a special case of **brands**
-  (`brand-kind-unification.md` already established `@a` is a brand role) — `@a T` is
-  `Box<T, instance-brand>`, precisely, with *brand* (not *type*, unlike Rust's `Box<T, A>`)
-  carrying the load;
-- `@a T` being owned/affine/extractable is an owned **box** type + the **borrow checker**
+- `(@a: A)` handle-threading (RFC-0065 §1/§1b) is a special case of **context parameters**
+  (now RFC-0113);
+- the `@a T` instance-level tag, disjointness, and sendability are a special case of
+  **brands** — `@a T` is `Box<T, instance-brand>` precisely, with *brand* rather than *type*
+  (unlike Rust's `Box<T, A>`) carrying the load;
+- `@a T` being owned/affine/extractable is an owned **box** type plus the **borrow checker**
   checking it outlives `a`;
-- `@a expr`/`Alloc` is `@`-sugar over an ordinary aspect and library code.
+- `@a expr` / `Alloc` is `@`-sugar over an ordinary aspect and library code.
 
-What remains irreducibly allocator-specific after that decomposition is strikingly small: the
-sugar and the library. The strategic risk this exposes is real — the allocator cluster was
-specified *before* any of those primitives existed, so some of its machinery (the `@`
-value-channel parameter; the tag-only `<@a>` form, which was a brand re-invented under an
-allocator name without anyone noticing) is general-purpose primitives wearing
-allocator-specific clothing.
+What remains irreducibly allocator-specific is strikingly small: the sugar and the library.
+The strategic risk this exposes is real — the cluster was specified *before* any of those
+primitives existed, so some of its machinery (the `@` value-channel parameter; the tag-only
+`<@a>` form, a brand re-invented under an allocator name without anyone noticing) is
+general-purpose primitives wearing allocator-specific clothing.
 
-**The concrete decision, deferred until brands and context-parameters are real:** can `Heap`,
-`BumpAlloc`, `@a T`, disjointness, and sendability be rebuilt as (context parameter) +
-(allocator-instance brand) + (owned box) + (borrow-checked lifetime), leaving only the `Alloc`
-aspect and `@`-sugar as allocator-specific residue? **Yes** shrinks the language; **no** names
-exactly what is genuinely allocator-specific. This is Trigger 18 below.
+**What does not change: the allocator RFCs stay intact.** Reframed from "accepted design
+awaiting implementation" to "the acceptance test the primitives must reconstruct" — but not
+refused, gutted, or superseded. The paper-complete standalone design is what keeps the
+general-primitive work honest ("does this rebuild `BumpAlloc`?" is checkable at every step).
+Dissolving it into abstractions before the primitives can reconstruct it would lose exactly
+that check. This is Trigger 18.
 
-**What does *not* change: the allocator RFCs stay intact.** They are reframed from "accepted
-design awaiting implementation" to "the acceptance test the primitives must reconstruct" — but
-they are *not* refused, gutted, or superseded. The paper-complete standalone design is the
-concrete target that keeps the general-primitive work honest ("does this rebuild `BumpAlloc`?"
-is a real, checkable question at every step); dissolving it into abstractions before the
-primitives can reconstruct it would lose exactly that check. The decomposition is a lens for
-sequencing and de-risking, never a license to delete the worked example.
+### Priority 5 — The interpreter as a feedback instrument
 
-### Priority 4 — Active adjacent design, and deferred frontier work
+**New slot, 2026-07-22.** This document has never ranked this work, while every open issue
+has been in it. Naming it is not a promotion — it is ranked fifth deliberately — but leaving
+it unlisted meant the tracker and the priorities described two unrelated projects, and the
+gap could never be measured because one side of it wasn't written down.
 
-Comptime/derive remains active design work with real internal motion (RFC-0092–0095), but it is
-not the same priority shape as the substrate above. It should continue, but not be conflated
-with the structural/brand/lifetime foundation or with allocator semantics.
+The §1 corollary supplies the filter, and it is the whole content of this priority:
+**trustworthiness work qualifies; forward-structure work does not.** Applied to what's
+currently open:
 
-By contrast, the lower-level unsafe/custom-allocator layer remains **demand-gated frontier
-work**, not a neglected near-term priority. Both
-`integrated-language-overview-2026-07-07.md` and `reports/implementation/roadmap-2026-07-07.md`
-still classify it that way: it gates user-authored custom allocators, not the four stdlib
-allocators or the allocator/lifetime MVP, and RFC-0026 still predates the split model and
-needs a rewrite before it is actionable. Promotion signal unchanged: a concrete need that
-host-implemented stdlib allocators cannot satisfy.
+- **Qualifies** — diagnostics and correctness that make interpreter behaviour a reliable
+  signal about the design: the operator-aspect work (#149, #263 / RFC-0062), stack-safety
+  where recursion depth silently changes what programs can be written (#261), missing
+  language surface that blocks writing realistic test programs at all.
+- **Instrument-quality, qualifies conditionally** — the LSP MVP (#246–#250). It doesn't make
+  the interpreter more *correct*, but it does make feedback cheaper to obtain, which is the
+  same argument one level up. Worth it if it stays an MVP; not worth it as a product.
+- **Does not qualify while Priorities 1–3 have no issues at all** — parser performance
+  (#260), the System F HIR follow-up (#259), stdlib breadth (#258). These are forward-
+  structure or product work on an interpreter explicitly described as temporary.
+
+**The honest reading of the tracker:** it currently holds a well-run interpreter project. That
+is worth something — the last several cycles genuinely improved diagnostics, fixed eight real
+bugs, and shipped four RFCs. It is just not the project §1 describes, and the two have not
+been distinguishable from this document until now.
+
+### Priority 6 — Adjacent design and demand-gated frontier
+
+Two unrelated things, previously conflated in one section:
+
+- **Comptime / derive** (RFC-0092–0095) remains active design work with real internal
+  motion. It should continue, but not be conflated with the substrate or with allocators. It
+  is the clearest legitimate instance of §1's "still-forming, nothing to rebuild" case.
+- **The unsafe / custom-allocator layer** remains **demand-gated frontier work**, not a
+  neglected near-term priority. It gates user-authored custom allocators, not the four stdlib
+  allocators or the allocator MVP, and RFC-0026 still predates the split model and needs a
+  rewrite before it is actionable. Promotion signal unchanged: a concrete need that
+  host-implemented stdlib allocators cannot satisfy.
+
+### Closed: ratifying the allocator/lifetime cluster (former Priority 1)
+
+Kept as a record, no longer a priority. **Done 2026-07-10** after six cycles unactioned — the
+concrete instance of the meta-risk while it sat idle. Ratified by amending RFC-0063 directly
+rather than creating RFC-0088. Not a formality: a consistency pass first found RFC-0063 §9
+items 1/2/5 still written as open/blocking three days after the roadmap's Phase 0 had resolved
+them elsewhere with no sync back, plus stale "Region…" titles on RFC-0066/0068. **Follow-through
+resolved 2026-07-15** — RFC-0067a/0072/0078/0081/0082 all reached `4-implemented` (RFC-0083
+superseded). Triggers 5 and 12 fired and resolved here.
 
 ---
 
@@ -304,171 +301,125 @@ host-implemented stdlib allocators cannot satisfy.
 Living checklist. Fired/resolved items stay listed with resolution, not deleted — the record
 of what was watched for and what actually happened is part of the point.
 
-1. ✅ **Fired, 2026-07-09.** If re-reading RFC-0080 showed it did not naturally extend to
-   derive-as-codegen (only auto-trait-style structural composition) → confirmed: `Clone`'s
-   derive was one hardcoded example, and RFC-0080's own Unresolved Questions section never
-   mentioned a general mechanism. This directly caused the RFC-0012 → RFC-0092/0093/0094/0095
-   split.
+1. ✅ **Fired, 2026-07-09.** Re-reading RFC-0080 confirmed it did not naturally extend to
+   derive-as-codegen — `Clone`'s derive was one hardcoded example, and its Unresolved
+   Questions never mentioned a general mechanism. Directly caused the RFC-0012 →
+   RFC-0092/0093/0094/0095 split.
 2. ⬜ **Open.** If a real scenario forces the brand-kind-unification role-crossing matrix to
    resolve and reveals identity brands and allocator/lifetime brands are more separate than
-   hoped → the emerging substrate story weakens at exactly the point where it wants brands to
-   carry cross-cutting identity/provenance. Still untouched.
+   hoped → the substrate story weakens at exactly the point where it wants brands to carry
+   cross-cutting identity/provenance. Still untouched. **Now Priority 3's gating question,
+   and Trigger 18's first term.**
 3. ⬜ **Open.** If real allocator/resource implementation shows partial-consumption and
-   drain/restore patterns are needed constantly, not exceptionally → that is evidence the
-   substrate priority above is correct, and that structural/per-field machinery belongs closer
-   to the implementation path rather than parked as a later tower. No implementation has
-   happened yet to produce this evidence.
+   drain/restore patterns are needed constantly, not exceptionally → evidence that the
+   substrate priority is correct and that per-field machinery belongs closer to the
+   implementation path. No implementation has happened yet to produce this evidence.
 4. ⬜ **Open, carried from 07-06.** Implementation pressure on Option B/C; a comparable
-   language shipping a similar structural-plus-linear combination first (the one external risk
-   to the "worth pursuing" verdict); RFC-0039's independent prioritization; a concrete
-   user-authored-allocator need that would promote the unsafe/custom-allocator frontier. None
-   resolved or superseded this session.
-5. ✅ **Fired and resolved, 2026-07-10.** Priority 1 (L2, unblocked by L3) moved — see
-   above. This trigger did its job: it named exactly the pattern that was actually
-   happening (L3 activity masking L2 inaction) and it's what caused the check that led to
-   ratification, rather than this being noticed by accident.
-6. ⬜ **New, 2026-07-09; reframed 2026-07-15.** Does the substrate for fine-grained resource
-   semantics genuinely require RFC-0090's record machinery for RFC-0089's floor, or does that
-   dependency need removing to preserve the "narrow, no row kind" property
-   `integrated-language-overview-07-07` wanted? Neither RFC currently states the conflict;
-   resolve or explicitly accept that the earlier framing has changed.
-7. ⬜ **Open, still untested as of 2026-07-11.** Does `INDEX.md` + `rfc.py`'s overlap check
-   actually prevent a second RFC-0055-shaped silent duplication going forward, or does it
-   quietly fall out of use the way the undocumented process before it did? Still can't be
-   checked — zero new RFCs were created this cycle (confirmed via `git log`), so `rfc.py new`
-   has had no opportunity to be run or skipped. Keep watching at the next RFC creation.
-8. 🟡 **Fired twice the same day, 2026-07-10 — now a real trend, not just one cycle.**
-   First RFC-0067a/0078/0083, then RFC-0072/0081/0082, moved from accepted through
-   integrated, merged into `public/reference/spec/`. Every single one of these six
-   surfaced a real problem while writing the worked examples this stage requires — not
-   formalities: RFC-0067a's missing value-extraction rule, RFC-0083's obsolete
-   motivating example, a pre-existing `types.md`/`expressions.md` contradiction over
-   `&mut` field paths, RFC-0072's stale bracket-channel examples, RFC-0081's dangling
-   `#[derive]`/RFC-0012 reference, RFC-0082 amending a since-retracted RFC's dead
-   concept and mislabeling the allocator aspect. The pattern holding across two
-   consecutive batches is itself evidence this stage is doing its job, not a fluke.
-   Still open: 6 RFCs remain in the backlog (RFC-0008, 0036, 0037, 0060, 0061, 0071).
-   RFC-0079/0084 left the backlog by refusal, not integration — worth noting that path
-   exists too. Keep watching whether the remaining 6 keep moving or the pace stalls.
-   **Update, 2026-07-11: the pace stalled this cycle** — none of the remaining 6 moved, and
-   RFC-0080 (the sole under-review RFC) didn't either. Not neglect: the cycle's effort went
-   into closing a gap the *previous* integration batch exposed (the spec's "Not yet
-   implemented" callouts had no enforced removal step — now fixed, see review log). Still,
-   a stall is a stall; if the next cycle also produces no movement on the remaining 6 with
-   no comparably concrete reason, that's the pattern worth calling out, not this one alone.
-   **Update, 2026-07-15: emphatically un-stalled.** RFC-0060 and RFC-0061 both moved
-   through and shipped as `4-implemented` (issues #238/#245 respectively); RFC-0071 and
-   RFC-0037/0036 (already implemented per the 07-13 entry above) are also done.
-   RFC-0008 remains the one genuinely open item in this original list, still gated on
-   `dyn Aspect` having no consumer.
-9. ⬜ **New, 2026-07-10.** Watch for the "interpreter is temporary" corollary (§1) being
-   misapplied to justify skipping *feedback-trustworthiness* work under cover of "it's all
-   throwaway anyway" — e.g. a real dispatch bug shrugged off instead of fixed. That's a
-   misuse of the corollary, not an instance of it; the corollary only excuses
-   forward-structure work (§1), never correctness.
-10. ⬜ **New, 2026-07-11.** Task tracking moved from ClickUp to Codeberg Issues, explicitly to
-    avoid vendor lock-in and eventually enable outside contributors. Neither payoff is
-    verified yet — the migration only proves the mechanics work. Watch for: any issue or PR
-    filed by a non-maintainer; whether `tea-paced.sh` and the RFC-tooling enforcement added
-    this cycle actually get reused next time rather than being one-off tooling nobody revisits
-    (the same question Trigger 7 already asks about `rfc.py new` — this is that question's
-    sibling for the tracker migration).
-11. ✅ **Re-evaluated and closed, 2026-07-15.** The analogy this trigger drew to Priority 1
-    does not hold. Priority 3 is explicitly Stage C / demand-gated in both the integrated
-    overview and the implementation roadmap: it blocks user-authored custom allocators, not
-    the MVP allocator/lifetime path, and RFC-0026 still predates the split model and needs a
-    rewrite before it is actionable anyway. No concrete custom-allocator demand has appeared.
-    Keep the signal, but in the form those source docs already named: re-promote this work if
-    a real user-authored allocator need emerges that host-implemented stdlib allocators cannot
-    cover.
-12. ✅ **Fired and resolved, 2026-07-15.** The six RFCs that reached `3-integrated`
-    (RFC-0067a/0072/0078/0081/0082/0083) all moved to `4-implemented` in the four days
-    since 07-11 — the fastest resolution any trigger in this document has had. Five have
-    real tracking issues (#236/#243/#234/#264/#242); RFC-0083 was superseded rather than
-    implemented. This is the single cleanest piece of evidence yet that naming a stall
-    explicitly (rather than letting "unchanged again" accumulate silently) is what gets
-    it moved — the same shape as Trigger 5's resolution for Priority 1 itself.
-
-13. ⬜ **New, 2026-07-15.** With Trigger 12 resolved, `3-integrated` is now empty (0 RFCs)
-    for the first time since the stage was created — the batch that just shipped went
-    straight from accepted/draft to implemented without sitting at `3-integrated` first
-    in most cases (RFC-0098/0102/0103/0106), unlike the RFC-0067a-cluster's own path.
-    Watch whether that's the new normal (worked-examples-then-immediate-build, collapsing
-    the stall this document exists to catch) or whether the next batch of accepted RFCs
-    sits at `3-integrated` again with no engineering following — the condition Trigger 12
-    was originally watching for.
-
-14. ⬜ **New, 2026-07-15.** RFC-0099 (Dot-Separated Module Paths) and RFC-0100
-    (Constructor-Call Construction) both reverted `2-accepted` → `1-under-review` during
-    integration, on grounds neither this document's 07-11 snapshot nor the review that
-    accepted them had surfaced (RFC-0099: readability cost of `.` everywhere; RFC-0100:
-    whether general keyword arguments belong in the spec at all, not just the
-    ascription-collision fix already found). Watch whether either resolves cleanly next
-    cycle or whether RFC-0100 in particular gets scoped down or refused — "does this
-    belong at all" is a design-level reopening, not an engineering gap, and the pattern
-    of accepted-then-reopened is new; if it recurs with a third RFC, that's evidence
-    `2-accepted`'s own bar ("no more open questions block it") is being called too early
-    somewhere in this project's actual practice, not just in this one pair.
-
-15. ⬜ **New, 2026-07-15.** `metel-core` PR #270 (issue #245's own WIP branch) was found,
-    while pulling both repos this cycle, to be fully superseded by direct commits on
-    `sprint/26` (`a9b49a5`/`20c81a3`) that independently reimplemented the same feature
-    using the newer RFC-0098 `extend` syntax. Neither PR #270 nor issues #245/#269 have
-    been closed yet. Watch whether this gets cleaned up next cycle, and — more
-    importantly for process — whether a cheap, repeatable check ("does an open PR's
-    branch still contain work not already on the target branch") gets added anywhere,
-    since this instance was only caught by an explicit pull-and-compare, not by any
-    standing mechanism.
-
-16. ✅ **Fired and resolved, same day, 2026-07-20.** RFC-0097's frontmatter (`status:
-    implemented`) and `REGISTRY.md` disagreed with `INDEX.md`'s own more careful
-    narrative and with direct inspection of `coherence.rs::outermost_id` (no
-    dedicated branch for a bare blanket-impl target — it happened to return `None`
-    incidentally, not by design). Resolved by landing the real check rather than
-    downgrading the frontmatter: `outermost_id` now takes the enclosing impl's own
-    generic parameter names and explicitly returns `None` for a bare `Named(name,
-    [])` matching one of them, before ever reaching name resolution. Verified
-    against both existing fixtures plus the full suite (546 integration + 119 unit
-    tests, clippy-clean) — zero regressions, since the fix only makes an
-    already-correct outcome deliberate rather than changing it. The fastest
-    same-day resolution any trigger in this document has had, the same shape as
-    Trigger 12/15's own quick turnarounds once named explicitly.
-
-17. ✅ **New, 2026-07-20; answered 2026-07-21.** This cycle's actual RFC-writing effort (RFC-0107/108/109/110,
-    all opened 07-17 through 07-20) went into a reference/deref/pattern-matching
-    ergonomics cluster extending the already-implemented RFC-0067a — while Priority 1's
-    allocator/lifetime follow-through (ratified since 07-10, still 0% implemented) and
-    Priority 2's records/substrate work (the declared main medium-term priority) both
-    sat untouched. The blog post ("Introducing Metel") independently corroborates that
-    records and the allocator cluster, not reference ergonomics, are the stated
-    priorities — reinforcing that this is a real gap between stated and actual
-    attention, not just this document's own read. Watch whether the next cycle moves
-    either higher-ranked item, or whether ergonomics-cluster churn keeps substituting
-    for it.
-
-    **Answered 2026-07-21 — both, in that order.** The cycle first continued the cluster:
-    RFC-0107, RFC-0108 and RFC-0110 were implemented and RFC-0111 was opened *and*
-    implemented, all reference/deref ergonomics, with records and allocators still
-    untouched. So the substitution did continue, and for a full session. It was then
-    named and corrected within the same cycle: RFC-0089/0090/0091/0109 were swept to
-    `1-under-review` as the records/views substrate, and **RFC-0113 (Context Parameters)**
-    was written from nothing — closing the "largest unwritten hole" this document's own
-    Priority 2 names. Worth recording honestly rather than as a clean win: the correction
-    happened because the trigger was read back, not because the priority was followed.
-
-18. ⬜ **New, 2026-07-20.** The allocator-decomposition hypothesis
-    (`reports/substructural-types/allocators-as-emergent-synthesis.md`, Priority 3):
-    can the allocator cluster be rebuilt as (context parameter) + (allocator-instance
-    brand) + (owned box) + (borrow-checked lifetime), leaving only the `Alloc` aspect
-    and `@`-sugar as allocator-specific residue? Cannot be tested until brands and a
-    context-parameter feature are real. Watch for: (a) the decomposition proving true
-    (allocators shrink to sugar + library — the language gets smaller) or false (the
-    part that resists the rebuild is the genuinely allocator-specific residue worth
-    keeping); (b) whether a context-parameter RFC actually gets written, since it's the
-    one primitive on this path with no document at all; (c) the coupling risk — if
-    brands (still unsettled, Trigger 2) don't unify cleanly, allocators are now bet on
-    a two-deep chain of unsettled-on-unsettled, and the mitigation (keep the allocator
-    RFCs intact as the concrete acceptance test, never gutted) has to actually hold.
+   language shipping a similar structural-plus-linear combination first (the one external
+   risk to the "worth pursuing" verdict); RFC-0039's independent prioritization; a concrete
+   user-authored-allocator need that would promote the frontier layer. None resolved.
+5. ✅ **Fired and resolved, 2026-07-10.** The former Priority 1 moved. This trigger did its
+   job: it named the pattern that was actually happening (L3 activity masking L2 inaction)
+   and caused the check that led to ratification.
+6. ⬜ **Open; now Priority 1's gating question.** Does the substrate genuinely require
+   RFC-0090's record machinery for RFC-0089's floor, or does that dependency need removing to
+   preserve the "narrow, no row kind" property? Neither RFC states the conflict. **Review of
+   the under-review cluster must settle this**, and it is the reason the four RFCs were swept
+   as a unit rather than individually.
+7. ⬜ **Open, still untested.** Does `INDEX.md` + `rfc.py`'s overlap check actually prevent a
+   second RFC-0055-shaped silent duplication, or does it quietly fall out of use the way the
+   undocumented process before it did? **Partially exercised 2026-07-21:** RFC-0111 and
+   RFC-0113 were both created this window, and `INDEX.md` was checked first in both cases.
+   Two data points, both by the same operator who wrote the rule — keep watching.
+8. 🟡 **Fired repeatedly; the mechanism works.** Twelve RFCs moved through `3-integrated` and
+   each surfaced a real problem while writing worked examples — RFC-0067a's missing
+   value-extraction rule, RFC-0083's obsolete motivating example, a pre-existing
+   `types.md`/`expressions.md` contradiction over `&mut` field paths, RFC-0072's stale
+   bracket-channel examples, RFC-0081's dangling `#[derive]` reference, RFC-0082 amending a
+   retracted RFC's dead concept. Of the original backlog only RFC-0008 remains, still gated on
+   `dyn Aspect` having no consumer. Superseded as a watch item by Trigger 13.
+9. ⬜ **Open.** Watch for the "interpreter is temporary" corollary (§1) being misapplied to
+   justify skipping *feedback-trustworthiness* work under cover of "it's all throwaway
+   anyway" — e.g. a real dispatch bug shrugged off instead of fixed. **Now directly operative:
+   Priority 5 turns this corollary into a triage rule, which makes it much easier to misuse
+   in both directions.** Watch for both: trustworthiness work skipped as throwaway, and
+   forward-structure work admitted by relabelling it trustworthiness.
+10. ⬜ **Open, 2026-07-11.** Task tracking moved from ClickUp to Codeberg Issues, to avoid
+    vendor lock-in and eventually enable outside contributors. Neither payoff is verified —
+    the migration only proves the mechanics work. Watch for any issue or PR filed by a
+    non-maintainer, and whether the tooling added then gets reused rather than being a one-off.
+    The blog's "open parts of the process to outside contributions" makes this a stated goal
+    now, not just an internal hope.
+11. ✅ **Re-evaluated and closed, 2026-07-15.** The analogy to the former Priority 1 does not
+    hold: the frontier layer is demand-gated in both source documents, blocks only
+    user-authored custom allocators, and RFC-0026 needs a rewrite anyway. Signal retained in
+    Priority 6's form.
+12. ✅ **Fired and resolved, 2026-07-15.** The six RFCs at `3-integrated` all reached
+    `4-implemented` within four days — the fastest resolution any trigger here has had.
+    Cleanest evidence yet that naming a stall explicitly is what gets it moved.
+13. ⬜ **Open, 2026-07-15.** `3-integrated` has been empty since Trigger 12 resolved; recent
+    RFCs (0098/0102/0103/0106/0111) went straight from accepted to implemented. Watch whether
+    that's the new normal (worked-examples-then-immediate-build, collapsing the stall this
+    document exists to catch) or whether the next accepted batch sits there again with no
+    engineering following.
+14. ⬜ **Open, 2026-07-15.** RFC-0099 and RFC-0100 both reverted `2-accepted` →
+    `1-under-review` during integration, on grounds the review that accepted them hadn't
+    surfaced. Both are still under review a week later. If a third RFC follows the same path,
+    that's evidence `2-accepted`'s own bar ("no more open questions block it") is being called
+    too early in practice.
+15. ⬜ **Open, 2026-07-15.** `metel-core` PR #270 was found fully superseded by direct commits
+    on `sprint/26` that reimplemented the same feature with the newer `extend` syntax. Watch
+    whether a cheap repeatable check ("does an open PR's branch still contain work not already
+    on the target branch") gets added anywhere — this instance was only caught by an explicit
+    pull-and-compare.
+16. ✅ **Fired and resolved same day, 2026-07-20.** RFC-0097's frontmatter claimed
+    `implemented` while `coherence.rs::outermost_id` had no deliberate branch for a bare
+    blanket-impl target. Resolved by landing the real check rather than downgrading the
+    frontmatter; zero regressions, since the fix only made an already-correct outcome
+    deliberate.
+17. ✅ **Opened 2026-07-20; answered 2026-07-21 — both, in that order.** Would the next cycle
+    move a higher-ranked priority, or would reference/deref ergonomics churn keep substituting
+    for it? It did both: RFC-0107/0108/0110 were implemented and RFC-0111 was opened *and*
+    implemented — all ergonomics, with records and allocators untouched — and then the cluster
+    was named and corrected within the same cycle, sweeping RFC-0089/0090/0091/0109 to review
+    and writing RFC-0113 from nothing. Recorded honestly rather than as a clean win: **the
+    correction happened because the trigger was read back, not because the priority was
+    followed.** Superseded going forward by Trigger 20, which measures the same thing without
+    depending on someone remembering to re-read this file.
+18. ⬜ **Open, 2026-07-20.** The allocator-decomposition hypothesis (Priority 4): can the
+    cluster be rebuilt as (context parameter) + (allocator-instance brand) + (owned box) +
+    (borrow-checked lifetime), leaving only the `Alloc` aspect and `@`-sugar as residue?
+    Untestable until brands and context parameters are real. Watch for: (a) the decomposition
+    proving true (the language gets smaller) or false (the resisting part is the genuinely
+    allocator-specific remainder worth keeping); (b) the coupling risk — allocators are now
+    bet on a two-deep chain of unsettled-on-unsettled, and the mitigation (keep the allocator
+    RFCs intact as the acceptance test, never gutted) has to actually hold. **One of its three
+    original clauses is discharged:** the context-parameter RFC that didn't exist is now
+    RFC-0113.
+19. ⬜ **New, 2026-07-22. The borrow checker has no RFC.** Verified against `REGISTRY.md`: the
+    only "borrow" match across 112 RFCs is RFC-0086, `6-refused`. Meanwhile the blog commits to
+    it as a medium-term primitive, `allocators-as-emergent-synthesis.md` makes it a load-bearing
+    term in the decomposition, Priority 4 is gated on it, and RFC-0071 — accepted since 06-28,
+    0% implemented — assumes it. It is carrying more architectural weight than anything else
+    undocumented in the project. Watch whether an RFC gets written, or whether the borrow
+    checker keeps being cited as a known quantity by documents that have never specified it.
+    This is the same shape as the context-parameter hole Trigger 18(b) tracked, one layer down
+    and load-bearing for more.
+20. ⬜ **New, 2026-07-22. Priorities 1–4 hold zero open issues; Priority 5 holds all nineteen.**
+    Verified directly against the tracker: no issue references RFC-0071, 0076, 0089, 0090,
+    0091, 0109, or 0113, and none of those RFCs carries an `impl_tracking` field. This is the
+    structural version of Trigger 17 — not "attention went elsewhere this cycle" but "the
+    stated priorities have never been represented in the system that schedules work." Watch
+    for the specific, cheap thing that would falsify it: **one tracked issue against any of
+    Priorities 1–3.** The blog's own short-term commitment (`ToRecord`/`FromRecord` in the
+    interpreter) is small enough to be exactly that issue, and is the recommended first one.
+21. ⬜ **New, 2026-07-22.** Priority 5 is new and is the priority most likely to expand to fill
+    the available effort, because its work is the most immediately satisfying — every issue in
+    it is well-scoped, verifiable, and finishable in a session, which is precisely what the
+    substrate work is not. Watch whether ranking it fifth actually constrains it, or whether
+    naming it legitimises it and the ratio gets worse. If the next cycle closes several
+    Priority 5 issues and opens none against 1–3, ranking it did nothing and the ordering
+    should be treated as descriptive rather than directive.
 
 ---
 
@@ -481,32 +432,35 @@ of what was watched for and what actually happened is part of the point.
 | 2026-07-06 | (predates this document) | `strategic-overview-2026-07-06.md` |
 | 2026-07-07 | (predates this document) | `integrated-language-overview-2026-07-07.md`, `reports/implementation/roadmap-2026-07-07.md` |
 | 2026-07-08 | (predates this document) | `strategic-overview-2026-07-08.md` |
-| 2026-07-09 | This document created, seeded from 07-08 and 07-07; RFC-0012 split into RFC-0089–0095; RFC-0055 reconciled; `INDEX.md`/`PROCESS.md`/`rfc.py` created; Priority 2a's ToRecord-floor tension surfaced (Trigger 6) | *(none yet — no dated overview written this cycle)* |
-| 2026-07-10 | Corrected the RFC-0092/generics citation in the meta-risk section (generics were already implemented, not a future action); RFC-0084 reversed to keep `[T; N]`/`[expr; N]`; added the "interpreter as temporary feedback mechanism" corollary (§1, Trigger 9) after a ClickUp check found no sprint task consolidating the scattered monomorphization pass | *(none yet)* |
-| 2026-07-10 | Priority 1 done: allocator/lifetime cluster (RFC-0063/0065/0066/0067/0068/0073/0077) ratified to accepted after a consistency pass fixed real drift (RFC-0063 §9 items 1/2/5 out of sync with the roadmap's Phase 0 decision; stale "Region..." titles on RFC-0066/0068). Trigger 5 fired and resolved. | *(none yet)* |
-| 2026-07-10 | RFC-0067a/0078/0083 became the first RFCs to reach `3-integrated`, merged into `public/reference/spec/`; each surfaced a real problem while writing worked examples (Trigger 8 partially fired) | *(none yet)* |
-| 2026-07-10 | RFC-0072/0081/0082 followed the same day, merged into `declarations.md`; RFC-0067/0079/0084 also handled (renamed, refused, refused respectively). Trigger 8 fired again — 6 RFCs left in the `3-integrated` backlog (was 14) | *(none yet)* |
-| 2026-07-10/11 | RFC-0082's associated-type disambiguation hardened further: a second candidate syntax (`<T:Aspect>::AssocType`) considered and rejected against `grammar.md`, recorded in the RFC only (not the spec) per explicit direction. `metel-core/AGENTS.md` and `metel-docs/internal/versioning.md` reconciled (both had stale, contradictory task-tracker/RFC-lifecycle docs); `AGENTS.md`'s repo-slug typo (`metel-lang/metel` → `metel-lang/metel-core`) fixed. Task tracking fully migrated from ClickUp to Codeberg Issues: 49 pre-existing stale/duplicate Codeberg issues reconciled (closed with explanatory comments or reused instead of duplicated), 34 active tasks migrated, 10 labels + 1 milestone created, 6 integrated RFCs' `impl_tracking` repointed to the new issue URLs. Self-hosting a Forgejo instance assessed as feasible (this environment's own Hetzner box could run it) but explicitly deferred — Codeberg's discoverability for future outside contributors outweighs full control, for now. `internal/rfcs/tools/rfc.py` gained enforcement for the spec's "Not yet implemented" callouts: required to be one-liners, `transition --to implemented` now refuses to run while one still exists for that RFC, `check` flags any that survive anyway — closing a real gap the previous integration batch left open. Triggers 7/8 updated (both still open, for different reasons); Triggers 10/11 opened. | `strategic-overview-2026-07-11.md` |
-| 2026-07-11 | Correction to the same-day snapshot above: it originally said the design/implementation gap was untouched this cycle, missing that the six RFCs integrated into the spec (RFC-0067a/0072/0078/0081/0082/0083) are all still `impl_status: not-started` — a real, itemized widening of the gap, and the cheapest available implementation work in this document since none of it needs further design. Trigger 12 opened; Priority 1's follow-through note and the dated snapshot's "Design/Implementation Gap" and "Honest Assessment" sections amended. | `strategic-overview-2026-07-11.md` (amended) |
-| 2026-07-15 | Both repos pulled to current tips (`metel-docs` main, `metel-core` sprint/26 + submodule). Eleven RFCs shipped `4-implemented` since 07-11 (RFC-0067a/0072/0078/0081/0082 + RFC-0060/0061/0097/0098/0102/0103/0106 — RFC-0083 superseded instead); Trigger 12 fired and resolved, Trigger 8 un-stalled. RFC-0103 split again: bodyless-declaration half implemented, struct/enum-embedded-list half (this session's own prior obligation-model/auto-impl-registry-injection work) deferred into new draft RFC-0105 with that reasoning preserved. RFC-0099/0100 reverted accepted → under-review post-integration over design questions review hadn't surfaced (Trigger 14, new). Found `metel-core` PR #270/issues #245/#269 fully superseded by direct `sprint/26` commits, not yet closed (Trigger 15, new) — flagged, not acted on. Found and named, not yet fixed: a dangling `3-integrated` path reference in `public/reference/error-codes.md` and stale RFC-count header in `INDEX.md` (real drift `rfc.py index --check-drift`'s date-only comparison doesn't catch). | `strategic-overview-2026-07-15.md` |
-| 2026-07-15 | Fixed the dangling RFC-0060 path references in `public/reference/error-codes.md` and the dated 07-15 strategic overview; `rfc.py check` is clean again. Re-evaluated Priority 3 against the integrated overview and implementation roadmap: closed Trigger 11 as a false analogy to Priority 1, and reframed unsafe/custom-allocator work as demand-gated frontier scope rather than neglected near-term work. | *(none yet)* |
-| 2026-07-15 | Split RFC indexing into two roles: generated `internal/rfcs/REGISTRY.md` is now the authoritative state inventory, while `internal/rfcs/INDEX.md` is explicitly curated/thematic only. `rfc.py check` and `rfc.py index --check-drift` now enforce that split mechanically instead of relying on `INDEX.md`'s old date-only drift check. | *(none yet)* |
-| 2026-07-15 | Rewrote the medium-term priority narrative around a substrate-first model: structural types, per-field multiplicity, brand semantics, and lifetime validity are now the main low-level design priority; allocator semantics are kept central to language identity but reframed as the flagship synthesis built on that substrate; typestate is explicitly demoted to a secondary stylistic consequence unless implementation pressure proves otherwise. | *(none yet)* |
-| 2026-07-15 | Refined that substrate-first model further: the immediate storage-design target is now a minimal low-level allocation model (storage-backed ownership, provenance/identity, borrowing into owned storage, field-sensitive extraction/destruction), explicitly narrower than the full allocator family, ergonomic surface, or unsafe/custom-allocator layer that will later build on top of it. | *(none yet)* |
-| 2026-07-20 | First cycle to cross-reference the public blog post ("Introducing Metel") against this document as real strategic intent, per explicit request. Found strong alignment (the substrate reframing and records' priority are near-verbatim matches; the hedging on comptime/linear-types/effects is honestly undersold, not oversold) and two divergences: the blog's Foundation section shows 0%-implemented allocator/lifetime-anchor syntax with no "design sketch" disclaimer (Records has one; Foundation doesn't — confirmed via direct grep of `src/grammar.pest`, only one `@` use exists and it's the unrelated `native(@std.core...)` FFI annotation), and this cycle's actual RFC output (RFC-0107/108/109/110, a reference/deref ergonomics cluster) went to neither of the two higher-declared priorities (records, allocator/lifetime follow-through), both of which sat untouched. Also found and named (not yet fixed): RFC-0097's frontmatter claims `implemented` but `INDEX.md` and direct inspection of `coherence.rs::outermost_id` show the underlying check is incidental, not deliberate. Triggers 16/17 opened. | `strategic-overview-2026-07-20.md` |
-| 2026-07-20 | Trigger 16 fixed the same day it was opened: landed the real, deliberate `outermost_id` check for bare-parameter blanket-impl targets in `metel-interpreter/src/coherence.rs` (`fix-272-ambiguous-aspect-method-dispatch` branch), rather than downgrading RFC-0097's frontmatter. Verified against both existing fixtures plus the full suite (546 integration + 119 unit tests, clippy-clean); zero regressions, since the fix only makes an already-`None`-producing path explicit. RFC-0097 and its `INDEX.md` entry updated to reflect confirmed, deliberate implementation. Trigger 16 closed. | *(none — code fix, not a design cycle)* |
-| 2026-07-20 | Reframed allocators from "flagship synthesis" (Priority 3) to "emergent synthesis + acceptance test, built last." New exploration doc `reports/substructural-types/allocators-as-emergent-synthesis.md` works out that the allocator cluster decomposes into (context parameters) + (brands) + (owned box) + (borrow checker) + (`Alloc` library), leaving almost no irreducibly allocator-specific machinery — continuing `brand-kind-unification.md`'s brand-half argument into its sequencing/scoping payoff. Consequences recorded: allocator implementation explicitly gated on borrow checker + records/views + linear types + lifetimes + brands all landing first (intentional, matches the blog); context parameters added to Priority 2 as a substrate primitive with no RFC yet (the largest unwritten hole on the path); the allocator RFCs kept intact as the acceptance test, not gutted; Trigger 18 opened for the decomposition hypothesis + coupling risk. Roadmap phase re-sequencing (allocators are Phase 3 today, this argues last) flagged but not yet rewritten, pending a firm decision. | *(none yet — discussion/reframe cycle; a dated snapshot may follow)* |
+| 2026-07-09 | This document created, seeded from 07-08 and 07-07; RFC-0012 split into RFC-0089–0095; RFC-0055 reconciled; `INDEX.md`/`PROCESS.md`/`rfc.py` created; the ToRecord-floor tension surfaced (Trigger 6) | *(none)* |
+| 2026-07-10 | Corrected the RFC-0092/generics citation in the meta-risk section; RFC-0084 reversed to keep `[T; N]`/`[expr; N]`; added the "interpreter as temporary feedback mechanism" corollary (§1, Trigger 9) | *(none)* |
+| 2026-07-10 | Former Priority 1 done: allocator/lifetime cluster ratified to accepted after a consistency pass fixed real drift (RFC-0063 §9 items 1/2/5 out of sync with the roadmap; stale "Region…" titles on RFC-0066/0068). Trigger 5 fired and resolved. | *(none)* |
+| 2026-07-10 | RFC-0067a/0078/0083 became the first RFCs to reach `3-integrated`; RFC-0072/0081/0082 followed the same day. Trigger 8 fired twice. | *(none)* |
+| 2026-07-10/11 | RFC-0082's associated-type disambiguation hardened. `AGENTS.md` and `internal/versioning.md` reconciled. Task tracking fully migrated from ClickUp to Codeberg Issues: 49 stale/duplicate issues reconciled, 34 tasks migrated, 10 labels + 1 milestone created, 6 RFCs' `impl_tracking` repointed. Self-hosting Forgejo assessed as feasible but deferred. `rfc.py` gained enforcement for the spec's "Not yet implemented" callouts. Triggers 10/11 opened. | `strategic-overview-2026-07-11.md` |
+| 2026-07-11 | Correction to the same-day snapshot: it had missed that all six newly-integrated RFCs were still `impl_status: not-started` — a real widening of the design/implementation gap. Trigger 12 opened. | `strategic-overview-2026-07-11.md` (amended) |
+| 2026-07-15 | Eleven RFCs shipped `4-implemented`; Trigger 12 fired and resolved, Trigger 8 un-stalled. RFC-0103 split, deferred half became RFC-0105. RFC-0099/0100 reverted accepted → under-review (Trigger 14). PR #270 found superseded (Trigger 15). Dangling `3-integrated` path in `error-codes.md` and stale `INDEX.md` counts found. | `strategic-overview-2026-07-15.md` |
+| 2026-07-15 | Fixed the dangling RFC-0060 path references; closed Trigger 11 as a false analogy. Split RFC indexing into generated `REGISTRY.md` (authoritative) vs curated `INDEX.md` (thematic), enforced mechanically. Rewrote the medium-term narrative around a substrate-first model, and refined it to a minimal low-level allocation model narrower than the full allocator family. | *(none)* |
+| 2026-07-20 | First cycle to cross-reference the public blog post against this document as real strategic intent. Found strong alignment (substrate reframing and records' priority near-verbatim) and two divergences: the blog's Foundation section shows 0%-implemented syntax with no "design sketch" disclaimer, and the cycle's RFC output went to neither higher-declared priority. RFC-0097 frontmatter/reality drift found. Triggers 16/17 opened. | `strategic-overview-2026-07-20.md` |
+| 2026-07-20 | Trigger 16 fixed the same day: landed the real `outermost_id` check for bare-parameter blanket-impl targets rather than downgrading the frontmatter. Zero regressions. Trigger 16 closed. | *(none — code fix)* |
+| 2026-07-20 | Reframed allocators from "flagship synthesis" to "emergent synthesis + acceptance test, built last." New exploration doc `allocators-as-emergent-synthesis.md`. Context parameters added to the substrate as a primitive with no RFC yet; allocator RFCs kept intact as the acceptance test; Trigger 18 opened. | *(none)* |
+| 2026-07-21 | RFC-0113 (Context Parameters) written from nothing, closing the "largest unwritten hole" this document named — deliberately without allocator syntax in its core, and scoped to replace the threading only. RFC-0089/0090/0091/0109 swept to `1-under-review` as one records/views cluster, with Trigger 6 named as the question review must settle. Twelve status-citation drift problems fixed. Trigger 17 answered honestly ("both, in that order"). | *(none)* |
+| 2026-07-22 | **§1 and §2 rewritten; priorities reordered from four slots to six.** The old ordering had a completed item (allocator ratification, done 07-10) in the Priority 1 slot, so the document read as though the top priority were finished — moved to a "Closed" subsection at the end of §2, preserved as a record. New order follows the blog's own sequencing sentence: records/views (1), ownership + borrow checker (2), brands + context parameters (3), allocators (4). Two structural findings drove it, both verified directly rather than inferred: **the borrow checker has no RFC at all** (only "borrow" match across 112 RFCs is the refused RFC-0086) despite three documents treating it as a known quantity, and **RFC-0071 has been accepted since 06-28, 0% implemented, untracked** — together promoted to Priority 2 and Trigger 19. **Priorities 1–4 hold zero open issues while all nineteen sit in interpreter work that this document had never ranked**; that work is now Priority 5, ranked explicitly fifth with the §1 budget filter as its triage rule, because leaving it unlisted meant the tracker and the priorities described two unrelated projects and the gap could not be measured. Triggers 19/20/21 opened; 8 and 17 marked superseded by later triggers rather than deleted. | *(this entry; a dated snapshot may follow)* |
 
 ---
 
 ## References
 
-- `strategic-overview-2026-07-08.md` — priorities and triggers this document was seeded from
-- `strategic-overview-2026-07-11.md`, `strategic-overview-2026-07-15.md`,
-  `strategic-overview-2026-07-20.md` — dated narrative snapshots, most recent last
+- `public/blog/introducing-metel-2026-07-15.md` — the external commitment §2's ordering is
+  measured against, especially its "What Now?" sequencing sentence
+- `strategic-overview-2026-07-20.md` — most recent dated snapshot; `…-07-11`/`…-07-15`
+  precede it, `…-07-08` is what this document was seeded from
 - `integrated-language-overview-2026-07-07.md` — long-term objectives, the meta-risk framing,
   and the "narrow, no row kind" floor property Trigger 6 checks against
+- `reports/substructural-types/allocators-as-emergent-synthesis.md` — Priority 4's
+  decomposition argument and Trigger 18
+- `reports/substructural-types/brand-kind-unification.md` — Priority 3's brand half, Trigger 2
 - `internal/rfcs/PROCESS.md` — the RFC lifecycle this document's priorities reference
-- `internal/rfcs/REGISTRY.md` — exact current RFC state by stage/path/status
+- `internal/rfcs/REGISTRY.md` — authoritative RFC state; the source for Trigger 19's
+  "no borrow-checker RFC" finding
 - `internal/rfcs/INDEX.md` — curated thematic grouping and cross-reference map
-- `metel-core/AGENTS.md` — Codeberg Issues task-tracking design (Trigger 10)
+- `metel-core/AGENTS.md` — Codeberg Issues task-tracking design (Triggers 10, 20)
