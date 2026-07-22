@@ -30,6 +30,12 @@ document — read on for why that mattered enough to reorganize around.
    primitive — so they come last and act as an acceptance test, not a foundation.
    Read after `brand-kind-unification.md`; it continues that document's argument into
    its sequencing and language-scoping consequences.
+8. [`access-and-presence-rows.md`](access-and-presence-rows.md) — the other cross-cutting
+   one: *which fields a value has* (records, residuals, typestate) and *which fields a
+   computation touches* (views, `uses (…)`, partial borrows) are two different row
+   concepts the cluster currently treats as one, and the second is the one that connects
+   to effects. Read after `structural-records.md` and `algebraic-effects.md`; it argues
+   across both, and carries this directory's verified prior-art survey for rows.
 
 Each is a **living document**: updated in place as understanding changes, not
 superseded by a new dated file every time something is revised. Substantive changes get
@@ -294,6 +300,25 @@ structured-guarantee mechanism is reopened as premature to settle):
   nesting question it raises: is `@a T` where `T` itself carries an identity brand a
   role-crossing, or just composition of the same role at two levels? Not distinguished
   from a crossing yet, not resolved.
+
+**From `access-and-presence-rows.md`:**
+- Are presence rows (which fields a value has) and access rows (which fields a
+  computation touches) one kind or two at the implementation level? The document argues
+  they are two *concepts*; shared representation is unexamined.
+- Does RFC-0091 §1's `uses (…)` transitivity problem actually dissolve into the effect
+  system, or only look like it does? No worked example through `algebraic-effects.md`'s
+  `^ {E}` mechanism yet.
+- If field-access becomes an effect, how do the two rows compose — a function touching
+  `self.x` and performing `IO` carries rows over different label universes.
+- Does the finite-closed-label-set argument (what makes field-access rows better-behaved
+  than PureScript's abandoned effect rows) survive abstraction over boundaries, where
+  variables reappear?
+- Is row-tracked *partial consumption* still unprecedented after a systematic literature
+  review? The negative claim rests on targeted searching, and one earlier negative claim
+  in this area was already falsified once (linear types and rows do coexist, in Lindley
+  and Morris's FST — but not per-field).
+- Does separating the two kinds change Trigger 6's answer (RFC-0089's dependency on
+  RFC-0090), or only clarify what the question was?
 
 **Cross-cutting, not owned by any single document:**
 - Whether this whole cluster (linear types, structural records, brands, effects,
