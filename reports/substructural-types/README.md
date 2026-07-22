@@ -38,6 +38,16 @@ document — read on for why that mattered enough to reorganize around.
    doesn't desugar (`uses (…)` over an owned value), which is where the connection to
    effects attaches. Read after `structural-records.md` and `algebraic-effects.md`; it
    argues across both, and carries this directory's verified prior-art survey for rows.
+9. [`nominal-types-as-branded-rows.md`](nominal-types-as-branded-rows.md) — a more
+   radical, separate thesis than #8's: what if *every* nominal type's canonical
+   representation is `(brand, row)`, not just tier-3's opt-in named record, with the row
+   degrading on partial move? Resolves `HasField`'s bolted-on feel and `uses (…)`'s
+   declaration in one move, but surfaces two sharp problems not yet settled — automatic
+   widening reopens RFC-0090's own constructor-invariant open question (OQ10) as a
+   general risk rather than a `FromRecord`-specific one, and making rows universal risks
+   reopening the ambient-structural-matching failure mode the tier system exists to
+   prevent. Pressure-tested, not settled — read after #8, as a challenge to the
+   architecture #8 argues within rather than a continuation of it.
 
 Each is a **living document**: updated in place as understanding changes, not
 superseded by a new dated file every time something is revised. Substantive changes get
@@ -339,6 +349,24 @@ structured-guarantee mechanism is reopened as premature to settle):
   and Morris's FST — but not per-field).
 - Does separating the two kinds change Trigger 6's answer (RFC-0089's dependency on
   RFC-0090), or only clarify what the question was?
+
+**From `nominal-types-as-branded-rows.md`:**
+- How does OQ10's reopened, general form get fixed — ban automatic widening back to the
+  full nominal type entirely, require it to re-run the constructor, or something else?
+  The single most consequential open question here; the model's central promise (fully
+  automatic, invisible to the surface) depends on the answer, and none was settled on.
+- Is "has a row, for narrowing" versus "row is visible to structural matching" a clean,
+  implementable separation, or does it just relocate the two-tier complexity this model
+  was trying to get away from?
+- Does `Drop`'s row-bounded dispatch actually require general `<row R>` machinery, or can
+  it be special-cased narrowly enough to avoid pulling open generics onto the critical
+  path for everything else?
+- Does row-narrowing/`HasField`-checking on generic structs need to defer to
+  monomorphization time, the way generic function bodies already do? Unexamined.
+- Does the zero-cost-for-ordinary-structs property actually hold at the implementation
+  level, or only at the level of the surface-syntax argument? Unvalidated.
+- What is this document's precise relationship to RFC-0090 §9 — an amendment to it, or a
+  distinct further claim (degrade-on-move) that §9 itself never proposes?
 
 **Cross-cutting, not owned by any single document:**
 - Whether this whole cluster (linear types, structural records, brands, effects,
