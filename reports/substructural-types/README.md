@@ -314,7 +314,8 @@ structured-guarantee mechanism is reopened as premature to settle):
   since structural-only reassembly lets any matching-shaped view rebuild the struct.
   Argued for the borrowed case only; neither RFC currently connects the two.
 - Surface syntax, decided 2026-07-22: one former for all three positions — `.{ … }` for
-  anonymous records, `type X = .{ … }` versus `record X = .{ … }` as the identity switch,
+  anonymous records, `type X = .{ … }` (alias) versus `record X { … }` (declaration) as the
+  identity switch,
   `S.{ … }` / `h.{ … }` for view types and values. Chosen over bare braces because the dot
   lets it coexist with today's struct literals, so it carries no dependency on RFC-0100;
   bare braces remain available as a mechanical simplification if that RFC lands. Answers

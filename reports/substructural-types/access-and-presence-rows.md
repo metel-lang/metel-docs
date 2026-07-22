@@ -250,30 +250,35 @@ brands (B/C) only if something forces it; the likeliest forcing case is `RcBox`
 (RFC-0091 §1.1), where the residual outlives the borrow and is reached through many
 handles.
 
-### 3.5 Surface syntax: one former for all three positions
+### 3.5 Surface syntax: one row former, one declaration form
 
 Superficial on its face, but the choice interacts with §3.4 rather than merely decorating
-it. **Design decision taken 2026-07-22: a named record, an anonymous record and a view all
-use the same syntax.** `.{ … }` is the row former; a prefix says what to project from, and
-its absence means "free-standing."
+it. **Design decision taken 2026-07-22: wherever a row appears as a type or a value — an
+anonymous record, a view type, a view value — it is spelled the same way.** `.{ … }` is the
+row former; a prefix says what to project from, and its absence means "free-standing."
+Declaring a *named* record is a declaration, not a type expression, and joins the
+`struct`/`enum`/`aspect` family instead.
 
 ```metel
-.{ x: f64, y: f64 }        // anonymous record type
-.{ x = 1.0,  y = 2.0 }     // anonymous record value (§3.6's separator invariant)
-type   X = .{ … }           // alias — structural, no new identity (§3.4 option A)
-record X = .{ … }           // named record — new identity carrying the row (§3.4 option D)
-Handle.{ fd, alloc }        // view type — project Handle's row
-h.{ fd, alloc }             // view value — project the value h
+.{ x: f64, y: f64 }     // anonymous record type
+.{ x = 1.0, y = 2.0 }   // anonymous record value (§3.6's separator invariant)
+Handle.{ fd, alloc }    // view type — project Handle's row
+h.{ fd, alloc }         // view value — project the value h
+
+type   X = .{ … }       // alias — structural, no new identity (§3.4 option A)
+record X { … }          // declaration — new identity carrying the row (§3.4 option D)
 ```
 
 **What uniformity buys, beyond consistency:**
 
 - **It answers RFC-0090's open question 8** — "What syntactically marks tier 3, the named
-  record kind — a separate keyword vs. a modifier on `struct`? Not decided." Under this
-  reading it is neither: tier 3 is *a name bound to a row*, which is what it already is
-  semantically.
+  record kind — a separate keyword vs. a modifier on `struct`? Not decided." It takes the
+  first: a `record` declaration sits in the same family as `struct`, `enum` and `aspect`,
+  since it does the same job of minting a nominal type.
 - **`type` versus `record` becomes the identity switch**, turning §3.4's question into a
-  keyword choice visible at the declaration site rather than a rule stated elsewhere.
+  choice visible at the declaration site rather than a rule stated elsewhere:
+  `type X = .{ … }` binds a name to a row and mints nothing, while `record X { … }` mints
+  identity. The two *look* as different as they are, rather than differing by one token.
 - **Anonymous records and views become one construct**, prefixed or not, rather than two
   that happen to share a delimiter.
 - **Label-only entries are already how Metel works.** `Handle.{ fd }` lists labels without
@@ -305,11 +310,17 @@ lower-dependency option while the semantics are still moving.**
 - Postfix `.` accepts only `.0`, `.ident(…)` and `.ident`, so `.{` is free for projection.
 - Pest is scannerless, so no maximal-munch tokenisation hazard is inherited.
 
-**The accepted cost:** the dot is noise in positions where nothing would be ambiguous —
-`let r: .{ x: f64 }` and `record X = .{ … }` gain nothing from it. Dropping it there would
-mean the same type is written two ways depending on position, which abandons the uniformity
-this section exists to get. One construct that reads identically everywhere is worth a
-character in the positions that happen to be unambiguous.
+**Where the dot applies, and where it does not.** `.{ … }` marks a row appearing in *type
+or expression position*, where it must be told apart from a block and from a struct literal.
+A **declaration** is not either of those: `record X { … }`'s braces are a field list, the
+same as `struct X { … }`'s, and the type being declared is spelled `X`. So the declaration
+form takes no dot and no `=`, and this is not a second spelling of the same thing — there is
+no type expression there to spell twice.
+
+**The accepted cost is narrower than that:** the dot is still noise in a type annotation
+that could not be ambiguous, such as `let r: .{ x: f64 }`. Dropping it *there* would mean
+one type written two ways depending on position, which is the case worth paying a character
+to avoid.
 
 **Options considered and set aside:**
 
