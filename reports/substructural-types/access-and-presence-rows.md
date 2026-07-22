@@ -579,20 +579,47 @@ made the cluster's dependency direction hard to settle.
 
 Not a decision — the cluster is under review and this is one input.
 
-1. **Separate the two row kinds explicitly in the RFCs**, even if both are kept. The
-   presence/access distinction is currently implicit, and every hard question in the
-   cluster (Trigger 6's dependency direction, RFC-0109's layering, `uses (…)`'s
-   specification) is a question about which kind is doing the work.
-2. **Let each justify itself on its own evidence.** Access rows are justified by
-   ownership, by Rust's decade of demand, and by the transitivity problem. Presence rows
-   are justified by library reusability (`drain_field`, generic `from_record`) and by
-   typestate — a genuinely interesting case that does not need to borrow the ownership
-   argument to stand up.
-3. **Treat the access/effect connection as a design direction, not a hazard.** It is the
-   one place in this cluster where an open problem has an answer already specified in a
-   neighbouring document.
-4. **Design the error messages first**, for whichever row survives. It is the single
-   failure mode with direct evidence behind it.
+*Revised 2026-07-22 after §3 was rewritten. An earlier version of this section opened with
+"separate the two row kinds explicitly in the RFCs," which was written against the first
+draft and contradicts §3.6's conclusion that they are largely one mechanism. Corrected
+rather than deleted, since the stale recommendation is a fair record of how the argument
+moved.*
+
+**Concrete, and independent of anything else here:**
+
+1. **Fix RFC-0090's width-subtyping guard** (§3.3). §5 and §7 both guard on `Copy` while
+   justifying the guard by `Drop`/`Linear` hazards; `&mut T` is neither, and under the
+   `Copy` phrasing narrowing a row of borrows would be rejected. The guard should read
+   "carries no drop obligation." Small, self-contained, and worth doing whether or not the
+   rest of this document survives review.
+2. **Connect RFC-0090's open question 10 to the view-identity question** (§3.4). Structural
+   reassembly lets any matching-shaped view rebuild a `Handle`, which is the same hole OQ10
+   names for `FromRecord` and constructor invariants. They should not be tracked as two
+   questions.
+3. **Reconsider RFC-0109 §4.9** (§3.1). Its tuple-of-views-with-independent-modes construct
+   exists because that RFC puts the mode on the view *reference*. With the mode in each
+   field's type, mixed-mode access is an ordinary record with mixed field types and §4.9 is
+   unnecessary.
+
+**Framing:**
+
+4. **Record presence and access as two *roles* of one mechanism, not two kinds.** The
+   distinction is real and worth naming — every hard question in the cluster (Trigger 6's
+   dependency direction, RFC-0109's layering, `uses (…)`'s specification) turns on which
+   role is doing the work — but §3 shows the roles differ in *use*, not in machinery, since
+   a view is a row whose field types are borrows.
+5. **Let the two justifications stand separately.** Views are justified by ownership and by
+   Rust's decade of accumulated demand. Presence rows are justified by library reusability
+   (`drain_field`, generic `from_record`) and by typestate — a genuinely interesting case
+   that does not need to borrow the ownership argument to stand up, and should not be made
+   to.
+6. **Treat the access/effect connection as a design direction, not a hazard — for
+   `uses (…)` specifically** (§4). Views-as-parameters propagate through calls the way
+   ordinary types do and need none of it. Access declared over an *owned* value is the case
+   where the transitivity problem is genuinely open, and the one place in this cluster where
+   an open problem has an answer already specified in a neighbouring document.
+7. **Design the error messages first**, for whichever rows survive. It is the single failure
+   mode with direct external evidence behind it (§5, PureScript).
 
 ---
 
