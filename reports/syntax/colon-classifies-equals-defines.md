@@ -109,10 +109,11 @@ reader arriving from Swift.
 **The rule has to be taught in its correct form.** Anyone who learns the short, wrong
 version will meet `type X = Concrete` and conclude the language is inconsistent.
 
-**It is not free for records either.** The anonymous-record forms proposed in
-`access-and-presence-rows.md` §3.5 become `{| x = 1.0 |}` for values and `{| x: f64 |}` for
-types — which is exactly what F# does, but it means record literals and struct fields would
-read differently from each other until RFC-0100 lands.
+**It is not free for records either.** The record forms settled in
+`access-and-presence-rows.md` §3.5 become `{ x = 1.0 }` for values and `{ x: f64 }` for
+types. That is the F# split applied to bare braces, but it means record literals and struct
+fields read differently from each other until RFC-0100 removes the latter — a transitional
+inconsistency, not a permanent one.
 
 ---
 
@@ -121,8 +122,9 @@ read differently from each other until RFC-0100 lands.
 **Adopt it as a named design principle**, not as a syntax patch. This corpus already works
 this way — RFC-0065's "elision is never a silent choice," Storage Transparency — and a
 principle pays for itself by settling later questions cheaply: every future "what separator
-for this new form?" gets a default instead of a fresh debate, and `{| x = 1 |}` stops being
-a special case about records and becomes an instance of a general rule.
+for this new form?" gets a default instead of a fresh debate, and `{ x = 1 }` versus
+`{ x: f64 }` stops being a special case about records and becomes an instance of a general
+rule.
 
 Concretely:
 
@@ -166,4 +168,5 @@ Concretely:
 - `internal/rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md` — the `expr: Type`
   production the invariant keeps unambiguous; not reopened by any of this
 - `reports/substructural-types/access-and-presence-rows.md` §3.5 — the record-syntax
-  question this generalizes from
+  question this generalizes from, and the record syntax (`{ x = 1.0 }` / `{ x: f64 }` /
+  `Handle.{ fd }`) that depends on this invariant for its type/value distinction

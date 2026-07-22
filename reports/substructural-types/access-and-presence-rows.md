@@ -250,67 +250,78 @@ brands (B/C) only if something forces it; the likeliest forcing case is `RcBox`
 (RFC-0091 §1.1), where the residual outlives the borrow and is reached through many
 handles.
 
-### 3.5 Surface syntax: the two forms name the two identity choices
+### 3.5 Surface syntax: one former for all three positions
 
 Superficial on its face, but the choice interacts with §3.4 rather than merely decorating
-it. Two candidate forms, and the division between them is not arbitrary:
+it. **Design decision taken 2026-07-22: a named record, an anonymous record, and a view
+all use the same syntax.** Braces are the row former; a `.`-prefix projects.
 
 ```metel
-{| x: f64, y: f64 |}      // anonymous record type — identity-free (§3.4 option A)
-{| x: 1.0,  y: 2.0  |}    // the same form as a value
-Handle.{ fd, alloc }      // a view of Handle — identity-carrying (§3.4 option D)
+{ x: f64, y: f64 }        // anonymous record type
+{ x = 1.0,  y = 2.0 }     // anonymous record value (§3.6's separator invariant)
+type  X = { … }            // alias — structural, no new identity (§3.4 option A)
+record X = { … }           // named record — new identity carrying the row (§3.4 option D)
+Handle.{ fd, alloc }       // view type — project Handle's row
+h.{ fd, alloc }            // view value — project the value h
 ```
 
-**`Handle.{ fd }` names its source struct in the syntax**, so option D's `View<S, R>` gets
-a surface form in which identity is inherited *by construction* rather than by a rule
-anyone has to state: `Handle.{ fd }` simply is `View<Handle, { fd }>`. Row genericity reads
-naturally too — `fun drain_field<S, row R>(v: S.{ R })`.
+**What uniformity buys, beyond consistency:**
 
-**`{| … |}` is the identity-free form**, which makes §3.4's option F fall out for free:
-erasing a view to a bare structural row becomes a *visible change of syntax*, not an
-invisible coercion. That satisfies RFC-0065's "elision is never a silent choice" by
-construction rather than by adding a rule to enforce it — the strongest argument for
-carrying both forms rather than picking one.
+- **It answers RFC-0090's open question 8** — "What syntactically marks tier 3, the named
+  record kind — a separate keyword vs. a modifier on `struct`? Not decided." Under this
+  reading it is neither: tier 3 is *a name bound to a row*, which is what it already is
+  semantically.
+- **`type` versus `record` becomes the identity switch**, turning §3.4's question into a
+  keyword choice visible at the declaration site rather than a rule stated elsewhere.
+- **Label-only entries are already how Metel works.** `Handle.{ fd }` lists labels without
+  types because the types come from `Handle`; `grammar.pest:245`'s
+  `field_init = { ident ~ (":" ~ expr)? }` already makes the `:` part optional, so `Handle
+  { x }` punning exists today. The general rule — *a bare label means "take it from
+  context"* — is a generalization, not a new mechanism.
+- **`h.{ fd, alloc }` gives RFC-0109 an expression form it currently lacks.** That RFC has
+  named views and destructuring patterns, but no way to say "make me a view of these fields
+  right here."
 
-**Precedent for each.** F# faced exactly Metel's coexistence problem — nominal records
-`{ x = 1 }` alongside anonymous ones — and answered with `{| x = 1 |}`. Rust's view types
-are spelled `Foo.{a}`, and Zig uses `.{…}` for anonymous struct literals. So both forms are
-borrowed rather than invented, and `Handle.{ fd }` additionally makes Metel's spelling of
-views match the one Rust is standardising on.
+**Why bare braces are available, which is the non-obvious part.** A bare block is **not an
+expression** in this grammar. The primary alternation (lines 196–208) lists `closure_expr`,
+`match_expr`, `if_expr`, `loop_expr`, `struct_literal`, `path_expr` and friends — no
+`block`. Blocks appear only in dedicated slots: function and closure bodies, and
+`(block | expr)` in `if_expr` and match arms, where `block` is tried **first**. So an
+anonymous record literal collides with nothing, existing code is unaffected, and the entire
+cost is that such a literal used as an *unparenthesized* if-branch or match-arm body needs
+parens.
 
-**Feasibility, checked against `grammar.pest` rather than assumed:**
+That is a much smaller price than a permanent sigil on every record in the language, and it
+is available here only because Metel chose not to make blocks first-class expressions — a
+real, if accidental, advantage over Rust.
 
-- **The pipe character appears nowhere in the grammar.** No bitwise-or, no or-patterns, no
-  leading-`|` match arms, and closures are `(x) -> T { … }` (`closure_expr`), not `|x| …`.
-  So `{|` and `|}` collide with nothing — the ambiguity that would sink this proposal in a
-  Rust-shaped grammar does not exist here.
-- **Postfix `.` accepts only three forms** — `.0` (tuple access), `.ident(…)`, `.ident` —
-  so `.{` is free. `Handle.{ … }` is distinguished from the struct literal
-  `Handle { … }` (`struct_literal = type_path ~ "{" ~ …`) by the dot alone.
-- **Float literals require digits on both sides** (`ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+`),
-  so there is no leading-dot literal to collide with.
-- Pest is **scannerless**, so neither form inherits a maximal-munch tokenisation hazard —
-  the same property that lets `List<List<T>>` parse today without a `>>` special case.
+**Also verified:** nothing in `type_expr` starts with `{` (its alternatives begin with a
+path, `(`, `&`, `[`, `impl`, or `!`), so the type form is unambiguous; postfix `.` accepts
+only `.0`, `.ident(…)` and `.ident`, so `.{` is free for projection; and pest is
+scannerless, so no maximal-munch hazard is inherited.
 
-**Rejected: `<: … :>`.** Feasible (nothing in the grammar spells `<:` or `:>`; `<` and `>`
-appear only in `cmp_op`, `generic_params`, `named_type`, and turbofish) but wrong on three
-counts. It collides with the meaning this language has consistently given `<…>` — the
-compile-time parameter channel, which RFC-0090 §2 explicitly invokes when motivating
-`<row R>` as "exactly the shape of `<&r>` and `<@a>`" — and a record is a runtime product,
-not a compile-time parameter. `<:` and `:>` are also C's digraphs for `[` and `]`, so they
-carry a bracket reading for anyone who has met them. And it buys nothing over `{| … |}`.
+**Options considered and set aside:**
 
-*Correction, same day.* An earlier version of this paragraph claimed a type/value ambiguity
-in `record { x: f64 }` versus `record { x: 1.0 }` and offered it as the thing a new bracket
-might fix. **There is no such ambiguity.** Types and values occupy disjoint nonterminals,
-and `grammar.pest:245`'s `field_init = { ident ~ (":" ~ expr)? }` already matches `ident ~
-":"` directly rather than routing the field name through `expr` — which is exactly why
-today's struct literals do not collide with type ascription. A delimited record literal
-written the same way inherits that. The real collision in this area is ascription against
-*keyword arguments*, which arises only where contents route through a general `expr`
-(`arg_list`), and RFC-0100 §3 has already analysed and fixed it. That analysis generalizes
-into a grammar-wide separator invariant — see `../syntax/colon-classifies-equals-defines.md`,
-which also proposes `{| x = 1.0 |}` for record *values*, F#'s actual spelling.
+| Form | Status |
+|---|---|
+| `.{ … }` (leading dot, Zig + Rust) | **the fallback** — safe under every assumption, costs a dot everywhere |
+| `#{ … }` (Erlang/Clojure) | `#` is genuinely unused in the whole grammar, but projection reads badly |
+| `record { … }` (RFC-0090 as drafted) | verbose, and **fails uniformity** — `Handle.record { fd }` is unusable |
+| `{\| … \|}` (F#) | F# needs it because nominal literals occupy plain braces; RFC-0100 removes Metel's, so the motivation does not transfer |
+| `_.{ … }` | prefix always present, maximal uniformity, maximal noise |
+| `( … )` | collides three ways — tuple type, parenthesized expression, parenthesized ascription |
+| `[ … ]` | collides with array and sized-array types |
+| `<: … :>` | collides with the `<…>` compile-time parameter channel that RFC-0090 §2 invokes for `<row R>`; also C's digraphs for `[` and `]` |
+
+**Two conditions on this decision, stated because it was taken from grammar reading rather
+than from a built prototype:**
+
+1. **It depends on RFC-0100.** `struct_literal = { type_path ~ "{" ~ … }` currently occupies
+   the prefixed brace form, which would sit awkwardly beside `Handle.{ fd }` meaning
+   something entirely different. RFC-0100 removes struct literals; if it is refused, revisit.
+2. **It has not been prototyped.** The `!"}"` lookahead in `block_expr_stmt` shows
+   brace-adjacent parsing here has already needed care. Build the grammar change and run the
+   suite before treating this as settled.
 
 *Elsewhere this document keeps RFC-0090's current `record { … }` spelling, since the
 syntax question is separable from the semantic one.*
@@ -319,6 +330,15 @@ syntax question is separable from the semantic one.*
 If it lands, `.` separates module paths *and* projects a view, so `Handle.{ fd }` sits next
 to `mod.Handle`. Still unambiguous (a `{` cannot start a path segment), but it makes `.`
 carry two unrelated jobs, and the two RFCs do not currently know about each other.
+
+*Correction, same day.* An earlier version of this section claimed a type/value ambiguity
+in `record { x: f64 }` versus `record { x: 1.0 }`. **There is no such ambiguity.** Types and
+values occupy disjoint nonterminals, and `field_init` already matches `ident ~ ":"` directly
+rather than routing the field name through `expr` — which is why today's struct literals do
+not collide with type ascription. The real collision in this area is ascription against
+*keyword arguments*, which arises only where contents route through a general `expr`
+(`arg_list`); RFC-0100 §3 analysed and fixed it, and that analysis generalizes into the
+separator invariant recorded in `../syntax/colon-classifies-equals-defines.md`.
 
 ### 3.6 Revised resolution
 
@@ -559,14 +579,13 @@ Not a decision — the cluster is under review and this is one input.
    same question, since structural-only reassembly lets any matching-shaped view rebuild a
    `Handle`. The argument is stated for the borrowed case only; whether it extends to the
    by-value `from_record` is unexamined, and neither RFC currently connects the two.
-3. **Does `{| … |}` / `S.{ … }` survive contact with the rest of the grammar?** §3.5 checks
-   the direct collisions (the pipe character is unused; postfix `.` takes only three forms;
-   floats need digits on both sides) but not the indirect ones — chained projection
-   `S.{ R }.{ R' }`, projection in pattern position, or the overlap with RFC-0099's
-   dot-separated module paths if that lands. The type/value overlap an earlier draft
-   claimed here does not exist (§3.5's correction); whether values should be spelled
-   `{| x = 1.0 |}` per `../syntax/colon-classifies-equals-defines.md` is a live question
-   that depends on RFC-0100's outcome.
+3. **Does bare `{ … }` / `S.{ … }` survive contact with the rest of the grammar?** §3.5
+   checks the direct collisions — a bare block is not an expression here, nothing in
+   `type_expr` starts with `{`, postfix `.` takes only three forms — but not the indirect
+   ones: chained projection `S.{ R }.{ R' }`, projection in pattern position, the overlap
+   with RFC-0099's dot-separated module paths, and whether `block_expr_stmt`'s `!"}"`
+   lookahead interacts badly. The decision was taken from grammar reading, not from a
+   built prototype, and is conditional on RFC-0100 removing struct literals.
 4. **What exactly is the call-site coercion rule?** §3.2 relocates the whole
    views-vs-records tension into it. RFC-0090 §8 bans implicit structural coercion; view
    types' headline benefit requires it. A rule narrow enough to permit the second without
