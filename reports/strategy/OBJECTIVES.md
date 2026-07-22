@@ -59,6 +59,15 @@ measure §2 against:
 interpreter-as-instrument track, Priority 5) because pretending it isn't consuming effort
 would make this document less honest, not more focused.
 
+**One qualification the blog sentence needs, added 2026-07-22.** "`ToRecord`/`FromRecord`
+working in the interpreter" is the short-term *goal*, but it is not the short-term *task*, and
+reading it as one produces an unbuildable first step: those conversions are tier 2 of
+RFC-0090's three tiers and convert *into* a record type-former that does not exist yet. The
+record/row semantics have to be defined first. Priority 1 states the resulting order. This
+qualification is recorded here rather than only in §2 because §2's ordering is measured
+against this sentence, so a misreading of it propagates into the priorities themselves — as it
+did in this document's first draft of the reorder.
+
 ### The standing meta-risk
 
 Originally, from `integrated-language-overview-2026-07-07.md` §5/§7:
@@ -153,9 +162,23 @@ does that dependency need removing to preserve the "narrow, no row kind" propert
 `integrated-language-overview-2026-07-07.md` wanted? Neither RFC currently states the
 conflict. Resolve it or explicitly record that the earlier framing has been revised.
 
-The concrete deliverable the blog names is narrower than the full cluster: **`ToRecord` /
-`FromRecord` working in the interpreter.** That is the acceptance test to aim at, and it is
-small enough to be tracked as real engineering rather than as a design phase.
+**The first deliverable is the record/row semantics themselves, not `ToRecord`/`FromRecord`.**
+The blog names the latter as the short-term goal, and this document's first draft of §2
+repeated that as the recommended first tracked issue. That was wrong, and RFC-0090 already
+says so in two places:
+
+- **§3's own recommended build order** puts *closed `record` types + `HasField`
+  auto-derivation* at step 1, explicitly deferring `<row R>` open generics to a separate
+  decision with its own timeline. `ToRecord`/`FromRecord` is nowhere in that step.
+- **§8 makes it tier 2 of three.** Its whole content is a conversion *into* the record
+  type-former — `h.to_record()` has type `record { fd: i32, alloc: @a Buffer }`. Until that
+  type exists as a real type-former, the conversion has no codomain and cannot be built. The
+  derive half depends further on RFC-0093's comptime mechanism, still `0-draft`.
+
+So the sequence inside this priority is: settle Trigger 6's dependency direction → specify and
+build the closed `record` type-former and `HasField` → *then* tier 2's conversions, which are
+the visible acceptance test rather than the entry point. Open row generics (`<row R>`) stay
+out of scope per §3 step 2 unless a real duck-typing need materializes.
 
 Also in this priority, and still unwritten: **per-field multiplicity** — ownership as a
 per-field rather than whole-value property. It is the half of the substrate that makes records
@@ -411,8 +434,17 @@ of what was watched for and what actually happened is part of the point.
     structural version of Trigger 17 — not "attention went elsewhere this cycle" but "the
     stated priorities have never been represented in the system that schedules work." Watch
     for the specific, cheap thing that would falsify it: **one tracked issue against any of
-    Priorities 1–3.** The blog's own short-term commitment (`ToRecord`/`FromRecord` in the
-    interpreter) is small enough to be exactly that issue, and is the recommended first one.
+    Priorities 1–3.**
+
+    *Corrected 2026-07-22, same day:* this trigger originally recommended
+    `ToRecord`/`FromRecord` as that first issue, on the strength of the blog calling it the
+    short-term commitment. It cannot be first — it is tier 2 of RFC-0090 §8 and converts into
+    a record type-former that has to be specified and built before the conversion has a
+    meaning, which RFC-0090 §3's own build order already states. The recommended first issue
+    is instead **the closed `record` type-former plus `HasField`** (§3 step 1), and the
+    honest version of this trigger is that even the "cheap falsifier" was mis-sized on first
+    attempt — the substrate has no genuinely small entry point, which is itself part of why
+    it keeps not being started.
 21. ⬜ **New, 2026-07-22.** Priority 5 is new and is the priority most likely to expand to fill
     the available effort, because its work is the most immediately satisfying — every issue in
     it is well-scoped, verifiable, and finishable in a session, which is precisely what the
@@ -445,6 +477,7 @@ of what was watched for and what actually happened is part of the point.
 | 2026-07-20 | Reframed allocators from "flagship synthesis" to "emergent synthesis + acceptance test, built last." New exploration doc `allocators-as-emergent-synthesis.md`. Context parameters added to the substrate as a primitive with no RFC yet; allocator RFCs kept intact as the acceptance test; Trigger 18 opened. | *(none)* |
 | 2026-07-21 | RFC-0113 (Context Parameters) written from nothing, closing the "largest unwritten hole" this document named — deliberately without allocator syntax in its core, and scoped to replace the threading only. RFC-0089/0090/0091/0109 swept to `1-under-review` as one records/views cluster, with Trigger 6 named as the question review must settle. Twelve status-citation drift problems fixed. Trigger 17 answered honestly ("both, in that order"). | *(none)* |
 | 2026-07-22 | **§1 and §2 rewritten; priorities reordered from four slots to six.** The old ordering had a completed item (allocator ratification, done 07-10) in the Priority 1 slot, so the document read as though the top priority were finished — moved to a "Closed" subsection at the end of §2, preserved as a record. New order follows the blog's own sequencing sentence: records/views (1), ownership + borrow checker (2), brands + context parameters (3), allocators (4). Two structural findings drove it, both verified directly rather than inferred: **the borrow checker has no RFC at all** (only "borrow" match across 112 RFCs is the refused RFC-0086) despite three documents treating it as a known quantity, and **RFC-0071 has been accepted since 06-28, 0% implemented, untracked** — together promoted to Priority 2 and Trigger 19. **Priorities 1–4 hold zero open issues while all nineteen sit in interpreter work that this document had never ranked**; that work is now Priority 5, ranked explicitly fifth with the §1 budget filter as its triage rule, because leaving it unlisted meant the tracker and the priorities described two unrelated projects and the gap could not be measured. Triggers 19/20/21 opened; 8 and 17 marked superseded by later triggers rather than deleted. | *(this entry; a dated snapshot may follow)* |
+| 2026-07-22 | **Corrected the same day, on review:** the reorder below had recommended `ToRecord`/`FromRecord` as Priority 1's first tracked issue, following the blog's "short term" phrasing. It cannot be first. RFC-0090 §8 makes it tier 2 of three, converting *into* a `record { … }` type-former that does not exist yet — the conversion has no codomain until the record/row semantics are defined — and RFC-0090 §3's own recommended build order already puts the closed `record` type-former plus `HasField` at step 1, with `<row R>` open generics deferred to a separate decision. The derive half depends further on RFC-0093, still `0-draft`. Priority 1 now states the real order; §1 records the qualification the blog sentence needs, since §2 is measured against that sentence and a misreading of it propagated straight into the priorities; Trigger 20's recommended first issue corrected, keeping the note that even the "cheap falsifier" was mis-sized on first attempt — the substrate has no genuinely small entry point, which is part of why it keeps not being started. The five under-review RFCs' status notes were carrying the same wrong framing plus a stale Priority number; both fixed. | *(none)* |
 
 ---
 

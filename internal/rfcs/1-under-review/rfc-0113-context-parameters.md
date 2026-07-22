@@ -7,7 +7,7 @@ target:
 updated: '2026-07-21'
 ---
 
-> **Status — under review (2026-07-21).** Fills the substrate hole OBJECTIVES.md Priority 2 names as the largest unwritten one. Substantiated proposal with declaration, provision and resolution specified, grounded in RFC-0065's four elision rules and its reverted depth-shadowing attempt. Five open questions remain, chiefly syntax and whether contexts propagate through intermediate frames. Reviewing with the records/views cluster it shares a substrate with.
+> **Status — under review (2026-07-21).** Fills the substrate hole OBJECTIVES.md named as the largest unwritten one (Priority 3 since the 2026-07-22 reorder). Substantiated proposal with declaration, provision and resolution specified, grounded in RFC-0065's four elision rules and its reverted depth-shadowing attempt. Five open questions remain, chiefly syntax and whether contexts propagate through intermediate frames. Reviewing with the records/views cluster it shares a substrate with.
 
 ## Summary
 
