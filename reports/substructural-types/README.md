@@ -31,11 +31,13 @@ document — read on for why that mattered enough to reorganize around.
    Read after `brand-kind-unification.md`; it continues that document's argument into
    its sequencing and language-scoping consequences.
 8. [`access-and-presence-rows.md`](access-and-presence-rows.md) — the other cross-cutting
-   one: *which fields a value has* (records, residuals, typestate) and *which fields a
-   computation touches* (views, `uses (…)`, partial borrows) are two different row
-   concepts the cluster currently treats as one, and the second is the one that connects
-   to effects. Read after `structural-records.md` and `algebraic-effects.md`; it argues
-   across both, and carries this directory's verified prior-art survey for rows.
+   one: *which fields a value has* (records, residuals, typestate) versus *which fields a
+   computation touches* (views, `uses (…)`, partial borrows). Concludes that views
+   desugar to ordinary rows whose field types are borrows — so most of the distinction
+   dissolves — leaving a call-site coercion rule, a brand decision, and one case that
+   doesn't desugar (`uses (…)` over an owned value), which is where the connection to
+   effects attaches. Read after `structural-records.md` and `algebraic-effects.md`; it
+   argues across both, and carries this directory's verified prior-art survey for rows.
 
 Each is a **living document**: updated in place as understanding changes, not
 superseded by a new dated file every time something is revised. Substantive changes get
@@ -302,10 +304,13 @@ structured-guarantee mechanism is reopened as premature to settle):
   from a crossing yet, not resolved.
 
 **From `access-and-presence-rows.md`:**
-- What is the minimal set of role-parameterised rules? §3 settles the coarse question —
-  share the row solver, separate the rules — and names four that differ (narrowing
-  direction, `Drop`/multiplicity derivation, per-label mode, cardinality per value).
-  Whether unification and inference also need role-awareness is unresolved.
+- Should a view carry a brand? §3.2 reopens it: unbranded gives reusability across
+  structs, branded prevents silent nominal collapse (RFC-0109's choice). The
+  rows-of-borrows desugaring makes it a decision rather than a consequence.
+- What exactly is the call-site coercion rule? The whole views-vs-records tension
+  relocates into it — RFC-0090 §8 bans implicit structural coercion, view types' headline
+  benefit requires it, and no rule narrow enough to permit the second without reopening
+  the first has been written.
 - Does RFC-0091 §1's `uses (…)` transitivity problem actually dissolve into the effect
   system, or only look like it does? No worked example through `algebraic-effects.md`'s
   `^ {E}` mechanism yet.

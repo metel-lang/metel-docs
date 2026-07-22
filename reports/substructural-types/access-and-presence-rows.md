@@ -1,6 +1,6 @@
 ---
 id: access-and-presence-rows
-title: "Access Rows and Presence Rows: Two Row Kinds, and What Connects Views to Effects"
+title: "Access Rows and Presence Rows: What Views Share With Records, and What Connects Them to Effects"
 type: report
 status: active
 last_synced_against_model: '2026-07-22'
@@ -12,9 +12,15 @@ revives: null
 
 *Written 2026-07-22, out of a design conversation about whether the records cluster
 should be built from structural records downward or from views upward. It does not
-resolve that question. It argues that the question is being asked about **two different
-row concepts that the cluster currently treats as one**, and that separating them
-changes what each has to justify.*
+resolve that question. It distinguishes two things the cluster currently names alike —
+which fields a value **has**, and which fields a computation **touches** — and then finds
+that most of the distinction dissolves into one mechanism, leaving a much smaller residue
+that is the part actually worth arguing about.*
+
+*Revised the same day, after the desugaring in §3 was proposed against the first draft.
+The first draft claimed four rules had to differ between the two; three of them do not.
+The revision is kept visible rather than smoothed over, because which arguments survived
+is the useful part.*
 
 **Framing note.** Metel is an experimental language: its purpose includes exploring
 design ideas that are interesting before they are proven necessary. Several arguments
@@ -38,16 +44,18 @@ They are related but they are not the same claim, they have different costs, and
 substantive point — **the access side is the one that connects to effects**, which is
 where its unsolved problem already lives.
 
-The split is about **rules, not representation**. §3 argues the two roles should share one
-row solver and differ in four specific rules; it is the section to read first if the
-obvious objection ("aren't these the same thing with a well-formedness check?") is the one
-you have.
+**How much of a split this is, is §3's subject, and the answer is "less than it looks."**
+Views desugar to ordinary presence rows whose field types are borrows, which dissolves most
+of the difference. What remains is one coercion rule, one decision about nominal identity,
+and one case that genuinely does not desugar — `uses (…)` over an owned value, which is
+where §4's effect connection attaches.
 
 ---
 
 ## 2. Where the corpus currently merges them
 
-This is not a strawman; the merge is explicit and deliberate in the current drafts.
+The merge is explicit and deliberate in the current drafts. §3 finds it largely *right* —
+the interest is in which parts of it are, and which one part isn't.
 
 **RFC-0109 defines named views in terms of presence rows.** Its header states the
 dependency directly: it "depends on RFC-0090 (Structural Records) for the `record { ... }`
@@ -70,89 +78,124 @@ presence.
 
 ---
 
-## 3. Why one semantics plus a well-formedness check isn't enough
+## 3. Views desugar to rows of borrows
 
-The natural objection to §1, and the one worth answering in full: if access rows are just
-presence rows whose labels are restricted to fields that actually exist on the referenced
-struct, why are they a separate concept at all? Add the check, reuse everything else.
+The obvious objection to §1: if access rows are presence rows whose labels are restricted
+to fields that exist on the referenced struct, why are they a separate concept at all?
 
-**The check is real and necessary.** It does the work of rejecting a view that names a
-field the struct doesn't have, and of keeping a view tied to a nominal type — RFC-0109
-relies on something like it already, noting that a view's brand "is exactly what prevents
-it from ever satisfying a *generic* structural bound the way an anonymous record could."
+The strong form of that objection is a **desugaring**, and it mostly works. Read
+`&mut Handle.{fd, alloc}` as
 
-What it cannot do is settle the rules below, because those don't follow from which labels
-are legal.
+```metel
+record { fd: &mut i32, alloc: &mut Buffer }
+```
 
-### 3.1 The generating difference: what the complement means
+— an ordinary presence row whose *field types* are references. This document's first draft
+argued that four rules had to differ between the roles. Three of them, and the single
+difference the other three were derived from, evaporate under this reading. That draft was
+overstated and is corrected here.
 
-- **Presence row** — `record { fd }`: the fields *not* in the row **do not exist**. The
-  value is smaller; `alloc` was moved out and is gone.
-- **Access row** — `&mut Handle.{fd}`: the fields not in the row **exist and are live**.
-  `alloc` is still owned by the original value, and may be in use through another view at
-  the same moment. That simultaneity is the entire purpose of view types.
+### 3.1 What the desugaring dissolves
 
-Same syntactic structure, opposite reading of what is missing. Everything below is a
-consequence of that one difference.
+**The complement.** The first draft's central claim was that fields outside a presence row
+do not exist, while fields outside an access row are live and possibly in use elsewhere —
+and that everything else followed from it. Under the desugaring the tension is gone,
+because a record of borrows is a **separate value** from the struct it was taken from.
+Fields it omits are not "gone"; it simply doesn't mention them. That is the correct
+reading, obtained for free rather than by a special rule.
 
-### 3.2 The consequences
+**`Drop` and multiplicity.** The fields are references, and references carry no drop
+obligation, so RFC-0090 §5's field-composition rule computes "drops nothing" by itself. No
+derivation has to be suppressed for the access role. `Send`/`Sync`/`Linear` likewise
+compose to the right answers, because `&T`/`&mut T`'s own status is already right.
 
-| | Presence row | Access row |
-|---|---|---|
-| The row describes | a **value** | a **reference or computation** |
-| Fields outside the row | gone | live, possibly in use elsewhere |
-| `Drop` behaviour | computed **from the row** | drops **nothing** — a borrow |
-| `Linear`/`Send`/`Sync` | recomputed from the row | inherited from the whole struct |
-| Narrowing the row | **unsound** for owned values | **always safe** |
-| Read/write modes | none | required |
-| How many per value | exactly one | many, simultaneously |
-| The empty row `{}` | a useless value | maximally composable |
+**Modes — and here the desugaring is an improvement on RFC-0109, not merely a
+simplification.** It puts the mode *inside* the row, in each field's type (`&T` versus
+`&mut T`). RFC-0109 puts it *outside*, on the view reference (`&TicketView` /
+`&mut TicketView`), which is exactly why it needs §4.9's tuple-of-views-with-independent-
+modes as a separate construct to express mixed access. With the mode in the field type,
+mixed modes are just a record with mixed field types, and §4.9's construct is unnecessary.
 
-Three of these deserve expanding, because they are rules rather than checks.
+**Cardinality.** Many records of borrows coexist, each being its own value. There is no
+"two rows over one value" compatibility relation left to define.
 
-**Narrowing runs in opposite directions.** RFC-0090 §2 states that an open record "permits
-width subtyping, i.e. silently forgetting fields, which is exactly what non-`Copy`
-ownership exists to prevent," and §5 rejects the pattern outright until some
-`AllCopy`-shaped bound exists to guard it. For access rows, narrowing is never dangerous —
-promising to touch *fewer* fields cannot leak anything — and it is the operation performed
-constantly, whenever a `{a, b}` reference is passed to something requiring `{a}`. A shared
-solver would therefore need its subtyping rule parameterised by role. That is the
-definition of different rules, not of one semantics with a guard.
+The desugaring also **unifies RFC-0109's two mechanisms**, which that RFC deliberately
+keeps apart: reference-destructuring *produces* the record of borrows, and a named view
+*names its type*.
 
-*Precision, so this isn't overstated:* presence rows in **bound** position narrow safely —
-a wider struct satisfying `HasField<"x", f64>` is fine, which is RFC-0090 §7's own
-resolution ("a bound alone grants no new capability *over the type itself*"). The
-unsoundness is specific to owned-value positions, where narrowing means fields are
-silently dropped.
+### 3.2 What survives
 
-**`Drop` is a computation, not a check.** Under presence semantics a record's destructor
-and its `Linear`/`Send`/`Sync` status are *derived from its row*, by RFC-0090 §5's
-field-composition rule. Give a view the same semantics and `Handle.{fd}` would claim to own
-and drop `fd` — while the real owner drops it too. Nothing about label legality prevents
-that; the derivation itself has to be switched off for the access role.
+**1. Call-site coercion — the one that matters.** For `h.should_insert_ticket()` to work
+with no call-site syntax, `&mut Handle` must coerce implicitly to
+`record { golden_tickets: &Token }`. RFC-0090 §8 forbids precisely that: a struct "must
+never be silently accepted wherever a row-generic bound is expected — `.to_record()` has to
+appear in the source," because allowing it "would quietly re-widen tier 2 into tier 3
+without the type author having asked for it."
 
-**Modes are an additional axis with no presence-row counterpart.** RFC-0109 §4.9 types
-`self` as a tuple of views with independent `&`/`&mut` per slot, checked pairwise-disjoint.
-Access rows need a per-label mode and a compatibility relation *between two rows over the
-same value*. Presence rows have neither, because a value has exactly one shape — there is
-no second row to be compatible with.
+This is not incidental; it is RFC-0109's stated reason to exist. Its motivation says that
+rule "is exactly what stands between Metel and view types' actual headline benefit: calling
+an ordinary method while another field is separately in use, with **zero new syntax at the
+call site**."
 
-### 3.3 The resolution: one mechanism, two roles
+The desugaring does not remove that problem. It **relocates** it — from "views need their
+own semantics" to "views need one coercion rule that tier 2 explicitly bans." That is a
+better place for it to live: one rule to argue about, in one document, rather than a
+parallel mechanism.
 
-The conclusion is not that these need separate implementations. The representation — a
-finite label map with row variables, unification, subset and disjointness checks — should
-be shared, along with its inference and its diagnostics. Building it twice would be
-indefensible.
+**2. Nominal identity becomes a live choice again.** A bare record of borrows carries no
+brand, so two unrelated structs with matching field names and types produce the *same* view
+type. That is either the reusability win (one helper working across structs, §6) or the
+silent-nominal-collapse failure the tier system exists to prevent — depending on whether
+views should be structurally satisfiable. RFC-0109 chose branded specifically to prevent
+it, noting the brand "is exactly what prevents it from ever satisfying a *generic*
+structural bound the way an anonymous record could." The desugaring reopens that as a
+decision rather than settling it.
 
-The precedent is already in this directory. `brand-kind-unification.md` argues that `@a`
-(allocator tags), `&r` (lifetime anchors), and `'c` (brands) are **three sigil-selected
-roles of a single kind** — unified at the mechanism level, with distinct rules per role,
-for implementer economy rather than user-facing uniformity. Rows appear to want the same
-treatment: one row kind, two roles, with role-parameterised rules for narrowing, `Drop`
-derivation, mode, and cardinality.
+**3. `uses (fd)` does not desugar.** `fun drop(self: Handle) uses (fd)` takes `self` **by
+value**. There is no borrow to encode as a field type; the declaration constrains which
+fields the body may read, so that *other* fields may have been moved out beforehand. This
+is an access constraint over an owned value, and nothing in the desugaring reaches it. §2's
+observation stands unchanged for this case, and it is the case §4 is really about.
 
-If that holds, it is a second independent instance of the same unification pattern, which
-is mild evidence for the pattern itself rather than a coincidence of this cluster.
+**4. Disjointness is proved elsewhere.** Constructing `record { a: &mut A, b: &mut B }` from
+one `&mut h` requires knowing `a` and `b` are disjoint paths. That is the borrow checker's
+obligation, not the row solver's — RFC-0109 defers it to "ordinary sequential field
+borrows" once RFC-0071's field-sensitive tracking exists. The desugaring makes the *result*
+typeable without making the *construction* checkable.
+
+### 3.3 A guard in RFC-0090 that borrows pull apart
+
+Independently of the above, pushing views through presence rows exposes an inconsistency
+worth fixing. RFC-0090 states its width-subtyping guard twice, and the two disagree:
+
+- §7: "width subtyping is only sound when every silently-dropped field is `Copy`; anything
+  `Drop`- or `Linear`-bearing forces explicit handling."
+- §5 rejects discarding a row remainder "without a guarantee everything in it is `Copy`."
+
+`&mut T` is **not `Copy`**, and also not `Drop`- or `Linear`-bearing. Forgetting one is
+entirely safe — it ends a borrow early. So the `Copy` guard is strictly stronger than the
+hazard used to justify it, and a row of borrows is exactly the case that separates them.
+The right guard is **"carries no drop obligation," not "`Copy`."**
+
+Under the `Copy` phrasing, narrowing a record of borrows would be rejected — which would
+break the desugaring's most common operation (passing a `{a, b}` record where `{a}` is
+wanted). Under the §7 phrasing it is fine.
+
+### 3.4 Revised resolution
+
+Presence rows are the mechanism. **"Access row" names a *use* of that mechanism** — a row
+whose fields are borrows — plus exactly two things the desugaring forces into the open: a
+call-site coercion rule, and a decision about whether views carry a brand.
+
+One case stays genuinely outside it: **access declared over an owned value**, which is
+`uses (…)`, and which is where the transitivity problem lives. That is the subject of §4,
+and the narrowing of scope is a gain — the effect connection now attaches to the one case
+that actually needs it, rather than to views generally.
+
+The shared-representation argument from the first draft still holds, and is now stronger
+rather than weaker: not two roles over one solver, but **one row mechanism whose field
+types carry the distinction**. `brand-kind-unification.md`'s "one kind, several roles"
+precedent is therefore *not* needed here — a simpler answer was available.
 
 ---
 
@@ -161,13 +204,21 @@ is mild evidence for the pattern itself rather than a coincidence of this cluste
 The framing this document proposes: **an access row is a statement about what a
 computation does, over a finite label set.** That is the same shape as an effect row.
 
-| Mechanism | Reads as |
-|---|---|
-| Rust's `fn process(&mut self { statistics })` | this function's field-access row is `{statistics}` |
-| RFC-0109's named view | a named access-row alias |
-| Rust's *abstract fields* (trait members) | row variables over access rows |
-| RFC-0091 §1's `uses (fd)` | the destructor's access row |
-| **transitivity through helper calls** | **effect-row propagation** |
+**Scope, after §3.** Where a view is a parameter — Rust's `&mut self.{statistics}`,
+RFC-0109's named views — the desugaring to a row of borrows already handles propagation
+without any of this: the callee's access is *its parameter type*, so it composes through
+calls the way ordinary types do. The effect framing earns its keep for the case the
+desugaring does **not** reach, which is access declared over a value held **by value**:
+`uses (…)`. That narrowing is a gain, not a retreat — it is the case where the problem is
+actually open.
+
+| Mechanism | Reads as | Covered by §3's desugaring? |
+|---|---|---|
+| Rust's `fn process(&mut self { statistics })` | this function's field-access row is `{statistics}` | yes — parameter type |
+| RFC-0109's named view | a named access-row alias | yes — a named row of borrows |
+| Rust's *abstract fields* (trait members) | row variables over access rows | partly — needs a public projection |
+| RFC-0091 §1's `uses (fd)` | the destructor's access row | **no** — `self` is owned |
+| **transitivity through helper calls** | **effect-row propagation** | **no** — the open problem |
 
 The last line is the payoff, and it is not a new problem invented here. RFC-0091 §1
 lists it as unresolved:
@@ -354,26 +405,27 @@ Not a decision — the cluster is under review and this is one input.
 
 ## Open questions
 
-1. **What is the minimal set of role-parameterised rules?** §3 answers the earlier, vaguer
-   version of this question — the representation should be shared, the rules should not —
-   and identifies four rules that differ: narrowing direction, `Drop`/multiplicity
-   derivation, per-label mode, and cardinality per value. Whether those four are
-   sufficient, or whether unification and inference also need role-awareness (they may:
-   an access row unified with a presence row is presumably ill-formed, and something has
-   to say so), is not worked out.
-2. **Does the `uses (…)` transitivity problem actually dissolve into the effect system,
+1. **Should a view carry a brand?** §3.2 reopens this. Unbranded gives reusability across
+   structs (one helper for many shapes); branded prevents silent nominal collapse, which is
+   what RFC-0109 chose. The desugaring makes it a decision rather than a consequence, and
+   nothing here settles it.
+2. **What exactly is the call-site coercion rule?** §3.2 relocates the whole
+   views-vs-records tension into it. RFC-0090 §8 bans implicit structural coercion; view
+   types' headline benefit requires it. A rule narrow enough to permit the second without
+   reopening the first has not been written.
+3. **Does the `uses (…)` transitivity problem actually dissolve into the effect system,
    or only look like it does?** The shapes match; no worked example has been written
    through `algebraic-effects.md`'s actual `^ {E}` mechanism.
-3. **If field-access becomes an effect, what is its interaction with real effects?** A
+4. **If field-access becomes an effect, what is its interaction with real effects?** A
    function that both touches `self.x` and performs `IO` would carry two rows over
    different label universes. Composition unexamined.
-4. **Does the finite-label-set argument survive abstraction?** §5 concedes variables
+5. **Does the finite-label-set argument survive abstraction?** §5 concedes variables
    reappear at boundaries; whether the remaining core is enough to avoid PureScript's
    error-message failure is unknown.
-5. **Is row-tracked partial consumption still unprecedented after a proper literature
+6. **Is row-tracked partial consumption still unprecedented after a proper literature
    search?** §5's negative claim rests on targeted searching, not a systematic review,
    and one earlier negative claim in this area has already been falsified once.
-6. **Does separating the kinds change Trigger 6's answer** (RFC-0089's dependency on
+7. **Does separating the kinds change Trigger 6's answer** (RFC-0089's dependency on
    RFC-0090), or only clarify what the question was? Not worked through.
 
 ---
