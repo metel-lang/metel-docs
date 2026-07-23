@@ -351,12 +351,13 @@ structured-guarantee mechanism is reopened as premature to settle):
   RFC-0090), or only clarify what the question was?
 
 **From `nominal-types-as-branded-rows.md`:**
-- How does OQ10's reopened, general form get fixed? Split out 2026-07-23 into RFC-0114
-  (Constructor Aspect and Canonical Construction) — a `Construct` aspect as the one path
-  any value is produced through, plus an opt-in `ConstructUnchecked` escape hatch. Not
-  fully closed: RFC-0114 carries forward, as its own most consequential open question,
-  whether an automatically-firing `construct()` can support a genuinely rejecting
-  invariant without an ordinary field assignment becoming able to fail or panic.
+- ~~How does OQ10's reopened, general form get fixed?~~ Split out 2026-07-23 into
+  RFC-0114 (Constructor Aspect and Canonical Construction) and resolved there the same
+  day: `construct(row) -> Result<Self, Self::Error>`, with `Self::Error = !` collapsing
+  to bare `Self` via RFC-0078's already-implemented uninhabited-variant and
+  inhabited-singleton-coercion rules, and a real error type losing the automatic-firing
+  sugar in exchange — one rule deciding both, not a special case. Plus an opt-in
+  `ConstructUnchecked` escape hatch for code that already knows an invariant holds.
 - Is "has a row, for narrowing" versus "row is visible to structural matching" a clean,
   implementable separation, or does it just relocate the two-tier complexity this model
   was trying to get away from?

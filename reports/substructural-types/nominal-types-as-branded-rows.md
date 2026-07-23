@@ -244,7 +244,7 @@ concrete enough to build, not assumed from the surface argument alone.
 | `uses (…)`'s declaration | ✅ §3.3 | `Drop` dispatch must become row-bounded (§4) | pulls `<row R>` onto `Drop`'s critical path early |
 | `HasField`-transparency gap (from `access-and-presence-rows.md`) | ✅ §4, via reading (ii) | — | — |
 | RFC-0071 §7 | — | needs rewriting, not narrowing (§5) | — |
-| RFC-0090 OQ10 | — | reopens as a general risk, not `FromRecord`-specific (§6) | fix split out to RFC-0114; its own fallibility question still open |
+| RFC-0090 OQ10 | ✅ fix in RFC-0114, incl. fallibility, via `Result<Self, Self::Error>` + RFC-0078 | reopened as a general risk first (§6), then resolved | RFC-0114's own OQ3 (default-derivation mechanism) |
 | RFC-0090 §8's non-ambient guarantee | — | at risk under universal rows (§7) | reconciliation proposed, not checked |
 | enums | out of scope, unchanged | — | should be stated explicitly |
 | generic structs | — | — | monomorphization-timing question, open |
@@ -254,17 +254,20 @@ concrete enough to build, not assumed from the surface argument alone.
 
 ## Open Questions
 
-1. **How does OQ10's reopened, general form get fixed?** *Split out 2026-07-23 into its
-   own RFC:* `internal/rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md`
-   proposes a `Construct` aspect — `construct(row) -> Self` as the one path any value of a
-   nominal type is produced through, whether fresh or reassembled after narrowing — with a
-   separate, opt-in `ConstructUnchecked` escape hatch for code that already knows the
-   invariant holds. That RFC does **not** close this question, though: it carries forward,
-   as its own most consequential open item, whether an automatically-firing `construct()`
-   can support a genuinely *rejecting* (not just self-healing) invariant without an
-   ordinary-looking field assignment becoming able to fail or panic. Treat this item as
-   "answered by delegation, not resolved" until RFC-0114's own fallibility question
-   settles.
+1. ~~How does OQ10's reopened, general form get fixed?~~ **Resolved by delegation,
+   2026-07-23, then resolved in substance the same day:**
+   `internal/rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md`
+   proposes a `Construct` aspect — `construct(row) -> Result<Self, Self::Error>` as the
+   one path any value of a nominal type is produced through, whether fresh or
+   reassembled after narrowing — with a separate, opt-in `ConstructUnchecked` escape
+   hatch for code that already knows the invariant holds. Its own fallibility question
+   (whether an automatically-firing `construct()` can support a genuinely *rejecting*
+   invariant without an ordinary field assignment becoming able to fail) is answered
+   there too, reusing two already-*implemented* RFC-0078 rules (uninhabited-variant
+   exhaustiveness, inhabited-singleton coercion): `Self::Error = !` collapses to bare
+   `Self` provably, and a real error type loses the automatic-firing sugar in exchange —
+   one rule, not a special case invented for this. Kept as a struck-through entry rather
+   than removed, per this corpus's convention.
 2. **Is "has a row" vs. "row is visible to structural matching" (§7) a clean, implementable
    separation, or does it just relocate the two-tier complexity this model was trying to
    get away from?**
@@ -291,8 +294,8 @@ concrete enough to build, not assumed from the surface argument alone.
 ## References
 
 - `internal/rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md` —
-  the proposed (partial) answer to Open Question 1, split out 2026-07-23; leaves
-  fallibility open as its own most consequential question
+  the answer to Open Question 1, split out 2026-07-23 and resolved the same day,
+  including the fallibility question it initially carried forward unresolved
 - `access-and-presence-rows.md` — the audit that found `HasField` bolted-on and worked
   through `uses (…)`'s reduction to existing mechanisms; this document responds to and
   extends that audit's findings, particularly §3 (views desugar to rows of borrows) and

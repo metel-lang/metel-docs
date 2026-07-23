@@ -128,17 +128,22 @@ was found and reconciled, and where this session did most of its work.
   §6, which found that automatic row-narrowing/widening reopens RFC-0090's open question
   10 (`FromRecord` bypassing constructor invariants) as a general risk reachable through
   ordinary field reassignment, not one scoped to the `FromRecord` conversion alone.
-  Proposes a `Construct` aspect (`construct(row) -> Self`) as the one path any value of a
-  nominal type is ever produced through — fresh construction (via RFC-0100's call syntax,
-  once it removes bare struct literals) and post-narrowing reconstruction collapse into
-  the same operation. A struct with no invariant gets a compiler-synthesized identity
-  default. Collapses RFC-0090's `FromRecord` into the same mechanism without amending
-  RFC-0090's own text. A separate, opt-in `ConstructUnchecked` aspect (depends on
-  RFC-0026, `unsafe` blocks) gives an explicit escape hatch, mirroring Rust's
-  `new`/`new_unchecked`. Leaves fallibility genuinely open — an infallible,
-  self-healing `construct()` (the `SortedPair` case) is worked through, but whether a
-  genuinely-rejecting invariant can automatically fire on an ordinary-looking field
-  assignment at all is the RFC's own most consequential open question, not resolved.
+  Proposes a `Construct` aspect (`construct(row) -> Result<Self, Self::Error>`) as the
+  one path any value of a nominal type is ever produced through — fresh construction (via
+  RFC-0100's call syntax, once it removes bare struct literals) and post-narrowing
+  reconstruction collapse into the same operation. A struct with no invariant gets a
+  compiler-synthesized identity default (`Error = !`). Collapses RFC-0090's `FromRecord`
+  into the same mechanism without amending RFC-0090's own text. A separate, opt-in
+  `ConstructUnchecked` aspect (depends on RFC-0026, `unsafe` blocks) gives an explicit
+  escape hatch, mirroring Rust's `new`/`new_unchecked`. **Fallibility resolved same day:**
+  `Self::Error = !` collapses `Result<Self, !>` to bare `Self` via RFC-0078's
+  already-implemented uninhabited-variant exhaustiveness and inhabited-singleton
+  coercion rules — provably, not by convention — while a real error type loses the
+  automatic-firing sugar in exchange, decided by the same rule rather than a special
+  case. Open question remaining: whether `Construct`'s default-impl derivation fits
+  RFC-0096's auto-impl pattern, RFC-0093's comptime derive, or needs its own mechanism —
+  RFC-0082 explicitly declined general default associated types, for reasons that may or
+  may not transfer to this narrower, whole-impl case.
 - **RFC-0092** — Comptime Core — `type`-as-value, `typeinfo`, single-declaration
   `emit`, plus (as of the RFC-0055 reconciliation) the base `comptime let`/`fun`/`if`
   execution model, plus (as of the RFC-0083 fold, 2026-07-12) `pub` on `comptime let`

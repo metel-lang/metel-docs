@@ -18,20 +18,33 @@ target:
 > touch construction at all. Depends on RFC-0100 (still `1-under-review`, reopened) for
 > removing bare struct literals, and names RFC-0026 (`unsafe` blocks, `0-draft`,
 > deferred) as the foundation for §6's escape hatch.
+>
+> **Revised 2026-07-23, later the same day.** §5's fallibility question — left with
+> three unadopted candidates in the first draft — is resolved: `construct` returns
+> `Result<Self, Self::Error>`, with `Self::Error` defaulting to `!`. Both halves of the
+> resolution reuse already-*implemented* rules from RFC-0078 (uninhabited-variant
+> exhaustiveness, inhabited-singleton coercion) rather than inventing new type-system
+> machinery. The three original candidates are kept below, marked superseded, not
+> deleted.
 
 ## Summary
 
 A `Construct` aspect makes producing a value of a nominal type canonical: every `Self`
 value, whether built fresh or reassembled after a partial move narrowed it away, comes
-into existence through exactly one function, `Construct::construct(row) -> Self`. This
-closes RFC-0090's open question 10 (`FromRecord` bypassing constructor invariants) in its
-original scope and in the more general form
+into existence through exactly one function, `Construct::construct(row) ->
+Result<Self, Self::Error>`. This closes RFC-0090's open question 10 (`FromRecord`
+bypassing constructor invariants) in its original scope and in the more general form
 `reports/substructural-types/nominal-types-as-branded-rows.md` §6 found — automatic
 widening after an ordinary partial move, not just an explicit conversion call. A
 type author who has no invariant to enforce writes nothing; the compiler synthesizes a
-trivial default. A separate, opt-in aspect, `ConstructUnchecked`, gives performance-
-sensitive code an explicit, `unsafe`-gated way to skip validation when it already knows
-the invariant holds — mirroring Rust's `new`/`new_unchecked` convention directly.
+trivial default, `Self::Error = !`, and RFC-0078's already-implemented coercion rules
+make the resulting `Result<Self, !>` collapse to bare `Self` with no unwrap, no match,
+and no runtime branch — provably, not by convention. A type whose invariant can
+genuinely reject gets a real, typed error instead, and loses the automatic-firing sugar
+in exchange — the same rule, applied uniformly, decides both. A separate, opt-in aspect,
+`ConstructUnchecked`, gives performance-sensitive code an explicit, `unsafe`-gated way to
+skip validation entirely when it already knows the invariant holds — mirroring Rust's
+`new`/`new_unchecked` convention directly.
 
 ---
 
@@ -69,25 +82,33 @@ validation logic, or forgets to.
 
 ```metel
 aspect Construct {
-    fun construct(row: .{ /* all of Self's fields */ }) -> Self;
+    type Error;
+    fun construct(row: .{ /* all of Self's fields */ }) -> Result<Self, Self::Error>;
 }
 
 impl Construct for SortedPair {
-    fun construct(row: .{ small: i32, big: i32 }) -> Self {
-        if row.small <= row.big { SortedPair { small: row.small, big: row.big } }
-        else { SortedPair { small: row.big, big: row.small } }
+    type Error = !;
+    fun construct(row: .{ small: i32, big: i32 }) -> Result<Self, !> {
+        if row.small <= row.big { Ok(SortedPair { small: row.small, big: row.big }) }
+        else { Ok(SortedPair { small: row.big, big: row.small }) }
     }
 }
 ```
 
-`construct` takes the type's own complete row and produces `Self` — the same signature
-shape RFC-0090 §8 already gives `from_record`, not a new calling convention.
+`construct` takes the type's own complete row and produces a `Result`, not a bare `Self`
+— the signature that makes §5's fallibility resolution possible. `ToRecord`/`FromRecord`
+(RFC-0090 §8) use bare `Self`; `construct` deliberately does not, for the reason §5
+works through.
 
 **A struct with no invariant writes nothing.** The compiler synthesizes a trivial default
-— `construct(row) { row }`, an identity — the same way `Send`/`Sync`/`Linear` compose a
-default from field-level facts today. This default must compile away entirely for types
-that never customize it; construction for the overwhelming majority of structs should
-cost exactly what a bare field-literal costs now. That is a *commitment*, matching
+— `type Error = !; construct(row) { Ok(row) }` — the same way `Send`/`Sync`/`Linear`
+compose a default from field-level facts today. Whether this specific default (a *whole*
+synthesized impl, not a partial one) is expressible with mechanisms this corpus already
+has is Open Question 3 — RFC-0082 (associated types) explicitly declined a *general*
+default-associated-type mechanism, for reasons that don't obviously transfer to this
+narrower case; see that question for why. This default must compile away entirely for
+types that never customize it; construction for the overwhelming majority of structs
+should cost exactly what a bare field-literal costs now. That is a *commitment*, matching
 `nominal-types-as-branded-rows.md` §9's own unvalidated zero-cost claim for the
 representation generally — not a new promise, the same one recurring here.
 
@@ -100,7 +121,11 @@ separate surface form — "`Type(args)` call-shaped syntax **replaces**
 `Type { field: value }` struct literals at construction sites," in that RFC's own words.
 Under this RFC, `SortedPair(3, 1)` desugars to `SortedPair::construct(.{ small: 3, big: 1
 })` — fresh construction and post-narrowing reconstruction (§3) become the *same*
-operation, not two mechanisms that happen to need the same validation.
+operation, not two mechanisms that happen to need the same validation. Both get the
+*same* result-handling treatment from §5, uniformly: `let p = SortedPair(3, 1);` binds a
+bare `SortedPair` when `Self::Error = !` (RFC-0078's inhabited-singleton coercion applies
+automatically), and binds a `Result<SortedPair, E>` the caller must handle otherwise —
+ordinary, unsurprising behavior for a function call either way.
 
 **This RFC depends on RFC-0100 removing the bare literal, and that dependency is not
 solid yet.** RFC-0100 is `1-under-review`, reverted there during integration and
@@ -141,35 +166,68 @@ two, not decided unilaterally here.
 
 ---
 
-## 5. Fallibility — the sharpest open problem in this RFC
+## 5. Fallibility — resolved, reusing already-implemented rules
 
 `SortedPair::construct` above is **infallible and self-healing** — it never rejects, only
 reorders. Not every invariant can be repaired that way. A `NonEmptyList<T>` cannot
 manufacture an element out of nothing if its row completes empty; its invariant must be
-able to *reject*, not just normalize.
+able to *reject*, not just normalize. `construct` therefore returns
+`Result<Self, Self::Error>` (§1) rather than bare `Self` — but that alone would leave the
+same problem §2 already names: **an ordinary field assignment looks syntactically
+infallible.** `p.small = 999_999` reads as plain mutation; if `construct` can genuinely
+fail, what does the automatic firing (§3) do with an `Err`?
 
-If `construct()` needs a fallible signature (`-> Perhaps<Self>` or similar) to support
-that, §3's automatic firing runs into a real problem: **an ordinary field assignment
-looks syntactically infallible.** `p.small = 999_999` reads as plain mutation; under this
-RFC it may need to reject the resulting value. What happens then is not settled here.
-Three candidates, none adopted:
+**The resolution reuses two already-*implemented* rules from RFC-0078 (Bottom Type,
+`4-implemented`, integrated 2026-07-10), rather than inventing a new one:**
 
-- **(a) Only infallible `Construct` impls participate in automatic row-completion.** A
-  type whose invariant can genuinely reject opts out of implicit narrow/rewiden
-  entirely — its values cannot be narrowed at all, or reconstruction requires new,
-  explicit, fallible syntax rather than an ordinary assignment.
-- **(b) `construct()` stays infallible by convention; genuine rejection lives only in
-  explicit surface constructors** (`new`, returning `Perhaps<Self>`), called at
-  construction time only, never automatically. This weakens what "canonical" can promise
-  for genuinely-rejecting invariants — the type-level guarantee stops being universal.
-- **(c) Let `construct()` panic on failure**, treating it as infallible at the type level
-  even though the internal check can fail — the same shape as `unwrap()` or array
-  indexing elsewhere in the language. Makes an ordinary-looking assignment able to panic,
-  a real ergonomic surprise worth weighing against the alternative of silently allowing
-  the bypass.
+- **§3.2, uninhabited variants:** "an enum variant whose payload type is `!` is
+  uninhabited. No value of that variant can ever be constructed." `Result<Self, !>`'s
+  `Err(!)` branch is therefore not reachable — not by convention, by construction.
+- **§3.3, inhabited-singleton coercion:** "If an enum type has exactly one inhabited
+  variant... and that inhabited variant has exactly one field, a value of that enum type
+  implicitly coerces to that field's type. The compiler inserts the destructuring; no
+  explicit match is required." `Result<Self, !>` matches this exactly — `Ok` is the sole
+  inhabited variant, holding exactly `Self`.
 
-This is judged the single most consequential open question this RFC leaves — see Open
-Questions §1.
+**For the default case (`Self::Error = !`), these two rules together mean the compiler
+already, today, implicitly coerces `Result<Self, !>` to bare `Self` — no unwrap, no
+match, no runtime branch, and *provably* safe rather than trusted.** The automatic firing
+in §3 needs no special casing: it calls `construct`, the result coerces silently, the
+assignment stays exactly as ordinary as it looks.
+
+**For a genuinely fallible type** (`type Error = NonEmptyListError;`),
+`Result<Self, Error>` has two inhabited variants, so §3.3's coercion simply does not
+trigger — there is no silent path to bare `Self`. Concretely, this means **the
+automatic-firing sugar in §3 is not available for such a type**: completing its row
+cannot happen through a bare assignment at all: the compiler has no implicit coercion to
+insert, so the assignment is rejected, and reconstruction must go through an explicit
+call to `construct`, handled with the same already-existing machinery ordinary fallible
+calls already use (`?`, `match`, `.unwrap_or`) — the `?` operator with `From`-based error
+coercion has been live since v0.4.0 (noted in RFC-0079's own refusal record, which
+otherwise only confirms `Result<T, E>` and `Perhaps<T>` are already implemented and
+spec'd, not that anything about them needs inventing here).
+
+**One rule decides both halves, and it is not a new rule.** Whether a type gets the
+automatic-firing convenience or requires explicit result-handling falls entirely out of
+whether `Self::Error` is uninhabited — the same declaration that expresses "can this
+fail" also decides "does this get silent re-widening," with no separate flag to keep in
+sync. This applies uniformly to fresh construction and post-narrowing reconstruction
+alike (§2) — the same rule, not two rules that happen to agree.
+
+**`ConstructUnchecked` (§6) is a genuinely different flavor of trust, not made redundant
+by this.** `Construct`'s infallibility, when claimed, is *proven* by the type system
+(`Err` uninhabited, checked exhaustively). `ConstructUnchecked`'s is *asserted* by the
+programmer, via `unsafe`, unchecked — the escape hatch remains necessary for types whose
+invariant is real but whose author, in a specific call site, already knows it holds and
+wants to skip re-proving it.
+
+**Superseded, kept for the record — the first draft's three candidates, before this
+resolution:** *(a)* only infallible impls participate in automatic firing, others opt
+out of implicit narrow/widen entirely; *(b)* `construct` stays infallible by convention,
+genuine rejection lives only in separate explicit constructors; *(c)* `construct` panics
+on failure, treated as infallible at the type level. Reading them back, (a) is what the
+resolution above actually *is*, made precise and automatic via RFC-0078 rather than left
+as a design choice to enforce by hand; (b) and (c) are no longer needed.
 
 ---
 
@@ -227,16 +285,27 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
 
 ## Open Questions
 
-1. **Fallibility (§5) — the most consequential open question here.** No candidate among
-   (a)/(b)/(c) is adopted. The answer changes what "canonical construction" can actually
-   guarantee for invariants that must reject rather than normalize.
+1. ~~Fallibility.~~ **Resolved 2026-07-23, §5:** `construct` returns
+   `Result<Self, Self::Error>`; RFC-0078's already-implemented uninhabited-variant and
+   inhabited-singleton-coercion rules make the default (`Error = !`) collapse to bare
+   `Self` provably, and a real `Error` type loses the automatic-firing sugar in exchange,
+   both by the same mechanism. Kept as a struck-through entry rather than removed, per
+   this corpus's convention of leaving resolved questions visible.
 2. **Does this RFC need its own literal-banning rule independent of RFC-0100** (§2), given
    RFC-0100's own status is currently uncertain?
-3. **What derives `Construct`'s default implementation, mechanically?** Composition-based
-   auto-derivation (RFC-0096's pattern) is structurally a closed, compiler-intrinsic list
-   of exactly three aspects (RFC-0096 §1) and does not obviously extend to a
-   user-declarable aspect with a synthesized default; RFC-0093's comptime-derive
-   mechanism is a closer fit but is itself `0-draft`. Not resolved here.
+3. **What derives `Construct`'s default implementation, mechanically?** §5's resolution
+   sharpens this rather than settling it: RFC-0082 (associated types, `4-implemented`)
+   explicitly declined a *general* default-associated-type mechanism — "a default would
+   create a compiler-generated impl that could conflict with user impls under the
+   overlap rules" — but that objection is about a *partial* default merging into a
+   user-written impl. `Construct`'s need is a *whole* synthesized impl
+   (`type Error = !` and the trivial body together), existing only when the user writes
+   no impl at all, which is structurally closer to RFC-0096's auto-impl pattern
+   (`Send`/`Sync`/`Linear`) than to what RFC-0082 declined — but RFC-0096's own pattern is
+   a closed, compiler-intrinsic list of exactly three aspects (RFC-0096 §1), not a
+   general mechanism either. Whether RFC-0082's stated objection actually applies to this
+   narrower, whole-impl case is unexamined. RFC-0093's comptime-derive mechanism is a
+   third candidate, itself `0-draft`. Not resolved here.
 4. **Monomorphization timing for generic structs** (§7) — open in both this RFC and
    `nominal-types-as-branded-rows.md`.
 5. **Does the compiler need to separately enforce that hand-written surface constructors
@@ -247,16 +316,30 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
 6. **Is RFC-0026 a solid enough foundation for §6?** Its own cited blockers are both
    already refused, not open — which may mean it is closer to revisitable than its
    current text suggests, but that is RFC-0026's maintenance question, not settled here.
+7. **Does a fallible type's narrowed-but-incomplete row ever get stuck**, the same
+   liveness-not-safety gap RFC-0090 §8 already accepts for `restore` ("nothing stops code
+   from never calling `restore`")? Presumably yes, and presumably fine for the same
+   reason — not checked against a concrete example here.
 
 ---
 
 ## References
 
 - `reports/substructural-types/nominal-types-as-branded-rows.md` — §6 and Open Question
-  1, the problem this RFC is the proposed (partial) answer to
+  1, the problem this RFC is the proposed answer to
 - `internal/rfcs/1-under-review/rfc-0090-structural-records.md` §5 (field-composition
   auto-derivation), §8 (`ToRecord`/`FromRecord`, the `SortedPair` example, open question
   10 in its original, narrower scope)
+- `internal/rfcs/4-implemented/rfc-0078-bottom-type.md` §3.2 (uninhabited variants), §3.3
+  (inhabited-singleton coercion) — the two already-implemented rules §5's fallibility
+  resolution reuses rather than inventing new machinery
+- `internal/rfcs/6-refused/rfc-0079-perhaps-and-result.md` — refused as redundant with
+  reality, not with the type itself: confirms `Result<T, E>`/`Perhaps<T>` and the
+  `?`-operator with `From`-based error coercion are already implemented, live since
+  v0.4.0, which §5 depends on for the fallible-type path
+- `internal/rfcs/4-implemented/rfc-0082-associated-types.md` §9 — the declined general
+  default-associated-type mechanism, cited precisely in Open Question 3 rather than
+  assumed to transfer to `Construct`'s narrower case
 - `internal/rfcs/0-draft/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md`
   — the auto-impl pattern `Construct`'s default derivation resembles but does not reuse
   directly (§1, §3)
