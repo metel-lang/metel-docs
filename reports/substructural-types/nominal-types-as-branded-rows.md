@@ -376,17 +376,62 @@ committed mechanism.
 
 ---
 
-## 9. Flagged, not worked through
+## 9. Flagged, not worked through — and one resolved
 
-**Enums stay out of scope**, consistent with §6/§9's existing scoping — this is a
-structs-only move. Worth stating explicitly in whatever eventually gets written, rather
-than left to be assumed.
+### 9.1 Enums stay out of scope
 
-**Generic structs are unresolved homework.** `Pair<T> { a: T, b: T }`'s row depends on
-`T`. Metel's generics are monomorphization-based, and generic function bodies are already
-deferred to call time (`FunBody::Generic`/`TypedExpr::GenericClosure`, constructed from
-runtime values). Does row-narrowing and `HasField`-checking on a generic struct's fields
-need the same deferral? Plausible, not examined here.
+Consistent with RFC-0090 §6/§9's existing scoping (unambiguous now that this document has
+its own §9) — this is a structs-only move. Worth stating explicitly in whatever
+eventually gets written, rather than left to be assumed.
+
+### 9.2 Generic structs — resolved 2026-07-23: no deferral needed
+
+**Revised.** This was originally left as unresolved homework. Working through it the same
+way §4.2 already did for `Drop`'s generic-struct case resolves it, by the same reasoning
+applied to a sibling question.
+
+**The load-bearing fact is the one §4.2 already established:** for `struct Container<T> {
+data: T, count: usize }`, *which* field a piece of code touches never depends on `T` —
+only the field's *type* does. The same split answers row-narrowing and `HasField`
+bound-checking here.
+
+**Row-narrowing needs nothing beyond what generic field access already has.** Narrowing
+`Pair<T> { a: T, b: T }` via `let x = pair.a;` only needs to know *which labels* survive
+— fixed the moment `Pair<T>` is declared, before any instantiation exists. The residual
+type stays exactly as generic as `Pair<T>` itself (`Pair<T>.{ b }`, with `b: T`
+unresolved). This is not a new capability: Pass 1/Pass 2 already track `pair.a`'s type
+symbolically as `T` without waiting for monomorphization; narrowing only adds "this label
+is now absent" to information already carried. **Deferred generic bodies
+(`FunBody::Generic`/`TypedExpr::GenericClosure`) are about execution and codegen —
+different instantiations may need different runtime representations — not about
+type-*checking*, which already happens symbolically.**
+
+**Bound-checking against a generic struct's row needs nothing new either.** Checking
+whether `Pair<T>` satisfies `{ b: i64 }` means unifying `T` with `i64` — the same shape of
+check already used for ordinary aspect bounds (`S: Display`) on a generic parameter. In
+practice, by the time a `Pair<T>` *value* exists to check a bound against, `T` is normally
+already concrete — a genuinely uninstantiated struct value cannot exist at runtime, only
+generic *code* stays parametric. Where the bound is checked *inside* still-generic code,
+that is ordinary symbolic type-variable unification, unchanged from what aspect-bound
+checking already does.
+
+**No hidden exception found, checked structurally rather than asserted.** Metel has no
+mechanism where a generic parameter changes *which fields exist* — no variadic generics,
+no field-set-parameterized structs anywhere in this corpus. Field sets are fixed at
+declaration; only field types vary with instantiation. That structural fact is what makes
+both narrowing and bound-checking monomorphization-independent with no exception located.
+
+**Extends to `.narrow()` (§8.3), the second consumer this question named.** Its
+target-row inference is "which labels," inferred from context — the same kind of
+inference Metel already performs for type-argument inference from a `let` binding's
+declared type. Same reasoning, same answer.
+
+**One adjacent question this does *not* settle, kept separate rather than folded in:**
+whether a generic struct's *brand* is tied to the declaration (`Pair`) regardless of
+instantiation, or varies per instantiation. Assumed to be the former, matching how
+nominal identity already works for generics elsewhere in the language — but this is not
+what this question asked, and the assumption has not been checked against anything
+written down. See Open Question 10.
 
 ---
 
@@ -415,7 +460,7 @@ concrete enough to build, not assumed from the surface argument alone.
 | RFC-0090 §8's non-ambient guarantee | ✅ §7.1–7.3 — visibility scoped to brand, inherited by narrowing/views | at risk under universal rows, first pass (§7) | `.to_record()` on an already-narrowed residual, unexamined |
 | passing owned residuals across calls | ✅ §8.2 — strict, no implicit truncation ever | reopens RFC-0090 §7's width-subtyping hazard, first pass | `.narrow()`'s mechanism/naming, sketched not designed (§8.3, OQ8) |
 | enums | out of scope, unchanged | — | should be stated explicitly |
-| generic structs | — | — | monomorphization-timing question, open; `.narrow()` a second consumer |
+| generic structs | ✅ §9.2 — no deferral needed; field sets are declaration-fixed, only types vary | — | brand identity per instantiation, unchecked (OQ10) |
 | zero-cost-for-ordinary-structs | — | — | commitment stated, not validated |
 | `HasField<"fd", i64>` bound syntax | ✅ §12 — replaced outright by bare `{ fd: i64 }` | `bound_head` grammar needs a new alternative; `Lacks` needs a type-position wildcard | neither piece of grammar work is written yet |
 
@@ -507,9 +552,16 @@ corpus, including RFC-0090 §4's row-conditional-impl typestate examples
    RFC-0091 §1's own unresolved note) — real, harder to compute, but not a different
    *kind* of mechanism, and already tracked as the same open thread
    `access-and-presence-rows.md` §4 connects to the effect system.
-4. **Does row-narrowing/`HasField`-checking on generic structs need to defer to
-   monomorphization time**, the way generic function bodies already do? Unexamined (§9).
-   §8.3's `.narrow()` sketch is a second, later consumer of the same question.
+4. ~~Does row-narrowing/`HasField`-checking on generic structs need to defer to
+   monomorphization time?~~ **Resolved 2026-07-23, §9.2: no.** Which fields exist is
+   fixed at declaration, independent of the generic parameter — only field *types* vary,
+   the same split §4.2 already established for `Drop`'s generic-struct case. Narrowing
+   and bound-checking need nothing beyond the symbolic, pre-monomorphization type-checking
+   generic field access and aspect bounds already get; deferred generic bodies are about
+   execution and codegen, not type-checking. No exception found: Metel has no mechanism
+   where a generic parameter changes which fields exist, only what type they hold. Also
+   answers `.narrow()`'s (§8.3) target-row inference, the second consumer this question
+   named.
 5. **Does the zero-cost-for-ordinary-structs property actually hold at the implementation
    level**, or only at the level of the surface-syntax argument (§10)? Unvalidated.
 6. **What is this document's precise relationship to RFC-0090 §9?** §9 proposes
@@ -532,6 +584,10 @@ corpus, including RFC-0090 §4's row-conditional-impl typestate examples
    (`T: !{ tag: _ }`) — `_` exists only in `pattern` today, confirmed absent from
    `type_expr`. Whether this becomes an RFC-0090 amendment or its own small RFC is also
    not decided.
+10. **Does a generic struct's brand vary per instantiation, or stay tied to the
+    declaration regardless of `T`?** (§9.2) Assumed to be the latter, matching ordinary
+    nominal identity elsewhere in the language, but this is a genuinely separate question
+    from OQ4's resolution and has not been checked against anything written down.
 
 ---
 

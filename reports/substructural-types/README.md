@@ -377,8 +377,14 @@ structured-guarantee mechanism is reopened as premature to settle):
   compiler-internal on every struct regardless of tier. Transitivity through helper
   calls remains real, harder-to-compute work, but the same open thread already connected
   to the effect system, not a new problem.
-- Does row-narrowing/`HasField`-checking on generic structs need to defer to
-  monomorphization time, the way generic function bodies already do? Unexamined.
+- ~~Does row-narrowing/`HasField`-checking on generic structs need to defer to
+  monomorphization time?~~ Resolved 2026-07-23: no — which fields exist is fixed at
+  declaration, independent of the generic parameter, only field types vary, the same
+  split already established for `Drop`'s generic-struct case. Narrowing and bound-checking
+  need nothing beyond the symbolic, pre-monomorphization type-checking generic field
+  access and aspect bounds already get. Also answers `.narrow()`'s target-row inference.
+  Left open: whether a generic struct's brand varies per instantiation or stays tied to
+  the declaration — assumed the latter, unchecked.
 - Does the zero-cost-for-ordinary-structs property actually hold at the implementation
   level, or only at the level of the surface-syntax argument? Unvalidated.
 - What is this document's precise relationship to RFC-0090 §9 — an amendment to it, or a
