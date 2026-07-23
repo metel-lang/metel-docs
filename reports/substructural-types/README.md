@@ -422,14 +422,25 @@ structured-guarantee mechanism is reopened as premature to settle):
   evidence, contradicting this document's own standing caveat in the same breath.
   Corrected and left visible rather than smoothed over. Cannot be validated further
   until RFC-0071 is actually built.
-- What is this document's precise relationship to RFC-0090 §9 — an amendment to it, or a
-  distinct further claim (degrade-on-move) that §9 itself never proposes?
-- **`HasField<"fd", i64>`'s bound-position syntax, replaced outright by `.{ fd: i64 }`**
-  (§12) — checked directly against `grammar.pest`: the string-literal form never actually
-  parsed (`type_expr` has no string-literal alternative), a gap RFC-0090 §1 and RFC-0096
-  §7 had already flagged but not resolved. `Lacks` becomes `!.{ tag: _ }`, needing a
-  type-position wildcard that does not exist today (`_` is pattern-only). Two pieces of
-  grammar work remain unwritten: `bound_head`'s new alternative, and the wildcard itself.
+- ~~What is this document's precise relationship to RFC-0090 §9?~~ Resolved 2026-07-23:
+  neither an amendment nor a distinct document — a bundle of claims at different levels
+  of dependency on its own central thesis. Most of what this document resolved (the
+  `HasField`/`Lacks` syntax fix, generic-brand identity, the declaration-as-binding
+  grounding) doesn't need the universal-branding thesis at all and has already been
+  folded back directly into RFC-0090 and `brand-kind-unification.md`. Only `HasField`
+  losing its bolted-on feel and the eligibility gate existing at all actually need it.
+  The process question (RFC-0090 rewrite vs. new RFC vs. wait) is resolved the same
+  way: unbundle rather than decide one fate — fold back what's independent now, leave
+  the central thesis a separate, live exploration that doesn't gate the nearer records/
+  views cluster's review.
+- **`HasField<"fd", i64>`'s bound-position syntax, replaced outright by `{ fd: i64 }`**
+  (§12; also now a direct RFC-0090 amendment, 2026-07-23) — checked directly against
+  `grammar.pest`: the string-literal form never actually parsed (`type_expr` has no
+  string-literal alternative), a gap RFC-0090 §1 and RFC-0096 §7 had already flagged but
+  not resolved. `Lacks` becomes `!{ tag: _ }`, needing a type-position wildcard that
+  does not exist today (`_` is pattern-only). Two pieces of grammar work remain
+  unwritten: `bound_head`'s new alternative, and the wildcard itself — now tracked as
+  RFC-0090's own Open Question 12.
 
 **Cross-cutting, not owned by any single document:**
 - Whether this whole cluster (linear types, structural records, brands, effects,

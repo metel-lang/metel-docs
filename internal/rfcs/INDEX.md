@@ -92,13 +92,21 @@ was found and reconciled, and where this session did most of its work.
   on RFC-0071 (accepted). Partial consumption now routes through RFC-0090's `ToRecord`,
   not a bespoke mechanism (revised 2026-07-09). `Linear`'s auto-impl categorization
   now depends on RFC-0096 for the shared mechanism it's an instance of.
-- **RFC-0090** — Structural Records — Rows and Tiers — `HasField`/`Lacks`, `record`
-  type-former, three-tier capability model. No dependency on comptime. §1 calls
-  `HasField` an extension of RFC-0080's auto-impl pattern; RFC-0096 §7 (2026-07-11)
-  works out that it's a family with existential satisfaction, not the same mechanism
-  as `Send`/`Sync`/`Linear`, and flags two gaps RFC-0090 itself leaves open
-  (whether `HasField` goes through impl coherence at all; a string-literal bound
-  argument `grammar.md` doesn't cover).
+- **RFC-0090** — Structural Records — Rows and Tiers — bare-row bounds (`HasField`/
+  `Lacks` retired 2026-07-23, replaced by `T: { x: f64 }` / `T: !{ tag: _ }`), `record`
+  type-former, three-tier capability model. No dependency on comptime. §1 calls the
+  row-bound mechanism an extension of RFC-0080's auto-impl pattern; RFC-0096 §7
+  (2026-07-11) works out that it's a family with existential satisfaction, not the same
+  mechanism as `Send`/`Sync`/`Linear` — still open. The other 2026-07-11 gap
+  (`HasField`'s string-literal bound argument not covered by the grammar) is fixed by
+  the 2026-07-23 revision: it never actually parsed, and the bare-row form has no
+  string literal to fail on. That revision also folds back two findings from
+  `reports/substructural-types/nominal-types-as-branded-rows.md` — tier 3's declaration
+  syntax (OQ8, resolved to `record X { ... }`) and a pointer to RFC-0114 for OQ10
+  (`FromRecord`/constructor invariants) — while deliberately *not* folding in that
+  document's own central, still-exploratory thesis (every struct, not just tier-3,
+  carrying `(brand, row)`), which stays a separate track so it doesn't gate this
+  cluster's review.
 - **RFC-0091** — Linear Records — per-field multiplicity, automatic-downgrade partial
   consumption, the `uses(fd)` Drop mechanism. Depends on RFC-0089 + RFC-0090.
 - **RFC-0109** *(draft, opened 2026-07-18, revised same day)* — Self-View Narrowing and

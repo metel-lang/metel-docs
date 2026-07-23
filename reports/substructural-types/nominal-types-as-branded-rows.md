@@ -25,6 +25,15 @@ the model's central promise — a single mechanism, invisible to ordinary code �
 yet proven. Read this as the state of an argument in progress, not a proposal ready to
 replace anything.
 
+**Unbundled 2026-07-23 (§9.3, OQ6/OQ7).** This document turned out to be several claims
+at different levels of dependency on its own central thesis. The parts that didn't need
+the thesis have already been folded back directly: the `HasField`/`Lacks` bound-syntax
+fix and the tier-3 declaration syntax are now a revision to RFC-0090 itself; the
+generic-brand-identity finding and the declaration-as-binding grounding are settled in
+`brand-kind-unification.md` §8; RFC-0114 continues as its own draft. The central
+universal-branding thesis stays here, deliberately unfolded, as a live but separate
+exploration — see OQ6/OQ7 for why, and for what specifically remains only here.
+
 ---
 
 ## 1. The intuition, stated plainly
@@ -672,15 +681,30 @@ corpus, including RFC-0090 §4's row-conditional-impl typestate examples
    question wrongly cited RFC-0071's tracking as already-shipped evidence, contradicting
    this document's own standing caveat in the same breath. Corrected and left visible.
    Cannot be validated further until RFC-0071 is actually built.
-6. **What is this document's precise relationship to RFC-0090 §9?** §9 proposes
-   representation-sharing for identity purposes only; this document's degrade-on-move
-   extension is not present in §9 at all. Is this an amendment to §9, or a distinct,
-   further claim that should be argued on its own terms rather than presented as "§9,
-   promoted"?
-7. **Process question, not a design one:** if this line of argument survives further
-   pressure-testing, does it become an RFC-0090 rewrite, an RFC-0071 amendment, a new
-   draft RFC of its own, or does it wait until §1's open question is resolved before any
-   of that is decided? Not addressed here.
+6. ~~What is this document's precise relationship to RFC-0090 §9?~~ **Resolved
+   2026-07-23: neither — it is a bundle of claims at different levels of dependency on
+   its own central thesis, and most of them don't need that thesis at all.** Reviewed
+   piece by piece: the `HasField`/`Lacks` bound-syntax fix, the generic-brand-identity
+   finding (OQ10 above), and the declaration-as-binding grounding
+   (`brand-kind-unification.md` §8) are all true regardless of whether every struct
+   carries `(brand, row)` or only tier-3 does. Only two things actually require the
+   central thesis: `HasField` "stopping being bolted on" (§3.1), and the eligibility
+   gate existing as a problem at all (§7) — tier-3-only branding has nothing to gate.
+   §9's own representation-sharing proposal is narrower than either of those two, not
+   an ancestor of the whole document.
+7. ~~Process question — RFC-0090 rewrite, RFC-0071 amendment, new draft RFC, or wait?~~
+   **Resolved 2026-07-23, given OQ6's answer: unbundle rather than decide one fate for
+   everything.** Folded back now, directly: the `HasField`/`Lacks` syntax fix, as a
+   revision to RFC-0090 itself (its own §1, §2, §4, §9, Example Programs, and Open
+   Questions 8/10/12 all updated same day). Left exactly where it already was: RFC-0114,
+   already its own correctly-scoped draft. Already landed: the declaration-as-binding
+   finding, in `brand-kind-unification.md` §8. **Deliberately not folded in, and not
+   gating the other three:** the central universal-branding thesis itself — it carries
+   real open questions of its own (§10's zero-cost claim, gated on RFC-0071 not existing
+   yet), it is a materially bigger architectural bet than a tier-3 clarification, and
+   letting the nearer, more concrete records/views cluster's review wait on it would be
+   the exact "extending the design instead of freezing and building" trap `OBJECTIVES.md`
+   §1 exists to watch for. It stays a live, separate exploration.
 8. **What is `.narrow()`, mechanically, and does it belong to an existing pattern or a new
    one?** (§8.3) Whether it extends RFC-0090 §8's `to_record`/`from_record` naming, needs
    a general `Into`/`From`-shaped conversion aspect that is not confirmed to exist yet, or
@@ -690,8 +714,9 @@ corpus, including RFC-0090 §4's row-conditional-impl typestate examples
    alternative that lets a bound start from a bare `{ … }` instead of only a `type_path`,
    and a type-position wildcard (`_`, meaning "any type") for `Lacks`'s replacement
    (`T: !{ tag: _ }`) — `_` exists only in `pattern` today, confirmed absent from
-   `type_expr`. Whether this becomes an RFC-0090 amendment or its own small RFC is also
-   not decided.
+   `type_expr`. **Now tracked directly in RFC-0090 itself** (its own Open Question 12,
+   added 2026-07-23 alongside the syntax-fix amendment), since the syntax fix these two
+   pieces support has already been folded into that RFC's text.
 10. ~~Does a generic struct's brand vary per instantiation, or stay tied to the
     declaration regardless of `T`?~~ **Resolved 2026-07-23, §9.3: tied to the
     declaration.** Forced by how one generic impl (`impl<T> Drop for Pair<T>`) has to

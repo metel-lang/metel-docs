@@ -4,7 +4,7 @@ title: "Structural Records — Rows and Tiers"
 date: '2026-07-09'
 status: under-review
 target:
-updated: '2026-07-21'
+updated: '2026-07-23'
 ---
 
 > **New RFC, split out 2026-07-09** from `reports/substructural-types/structural-records.md`
@@ -22,6 +22,29 @@ updated: '2026-07-21'
 > represent (RFC-0089 §3.1). For that narrow case, the derived conversion carries the
 > source's brand and the derive emits one explicit `impl Linear` against that specific
 > branded shape — full mechanism and scope in RFC-0089 §3.1.
+>
+> **Revised 2026-07-23 — `HasField`/`Lacks` retired; bound position now a bare row.**
+> `HasField<"name", T>` never actually parsed: `bound_arg` accepts only `assoc_binding`
+> or `type_expr`, and `type_expr` has no string-literal alternative — the gap the
+> 2026-07-11 note below already flagged, now fixed rather than left open. Replaced
+> outright (no named-sugar layer kept) with the row-bound syntax settled in
+> `reports/substructural-types/access-and-presence-rows.md` §3.5/§12 of
+> `reports/substructural-types/nominal-types-as-branded-rows.md`: a bound is a bare row,
+> `T: { x: f64 }` in place of `T: HasField<"x", f64>`, compacting an ANDed chain of
+> `HasField` facts into one bound naming several labels at once. `Lacks<"tag">` becomes
+> `!{ tag: _ }`, reusing the bound's existing `bang?` negation. This amendment is
+> independent of that document's own central, still-exploratory thesis (whether every
+> struct, not just tier-3, carries this row-and-brand representation) — folding back
+> only the syntax fix, which is needed regardless of how that broader question resolves,
+> not the wider claim. **Two pieces of grammar work remain unwritten** and are not
+> resolved by this amendment: `bound_head`'s new alternative (a bound starting from a
+> bare row instead of only a `type_path`), and a type-position wildcard `_` (`Lacks`'s
+> `_` needs "any type," and `_` exists only in `pattern` today). Also folds back this
+> RFC's own **open question 8** (tier-3's declaration syntax): resolved to
+> `record X { ... }`, joining the `struct`/`enum`/`aspect` declaration family, per the
+> same source. Open question 10 (`FromRecord` bypassing constructor invariants) has a
+> proposed answer too, split out as its own RFC rather than folded in here — see
+> `internal/rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md`.
 
 > **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `record` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 
@@ -57,22 +80,23 @@ to satisfy a bound that was never really about identity.
 Rather than adopting OCaml/PureScript's row-kind system wholesale, this splits into two
 pieces that each extend something Metel already has:
 
-- **`HasField<"name", T>`-style auto-derived structural aspect bounds** — flow-
+- **Bare-row bound syntax, auto-derived structural aspect bounds** — flow-
   *in*sensitive, for generic code that wants to work on "any struct with a matching
-  field" regardless of nominal identity. This is GHC Haskell's actual shipped answer to
-  the same problem (`HasField "x" MyRecord Float`, auto-derived, no shared row-kind
-  system needed), and translates directly into an extension of RFC-0080's auto-impl
-  pattern: one marker aspect *family* instead of one aspect, same machinery.
+  field" regardless of nominal identity. This is the same problem GHC Haskell's
+  `HasField "x" MyRecord Float` (auto-derived, no shared row-kind system needed) ships
+  an answer to, but spelled as a bare row (`T: { x: f64 }`) rather than a named,
+  string-literal-parameterized aspect — see the 2026-07-23 revision note above for why.
+  Structurally still an extension of RFC-0080's auto-impl pattern: the *checking rule*
+  (existential row-membership) is the same regardless of the surface name.
 
-  > **Note (2026-07-11):** "same machinery" is right in spirit, not in mechanism —
-  > RFC-0096 (Auto-Impl Aspects) §7 works out the difference: `HasField` is a
-  > parameterized family, not a fixed marker aspect, and its satisfaction rule is
-  > existential ("does `T` have *a* field named `x`") rather than universal ("every
-  > field satisfies `A`"), so it doesn't fit RFC-0096 §2's recursive algorithm
-  > directly. RFC-0096 §7 also flags, unresolved: whether this ever goes through
-  > `impl`/coherence at all, and that `HasField<"x", f64>`'s bound-position syntax
-  > (a string-literal argument) isn't covered by `grammar.md`'s `BoundList → Type
-  > ("+" Type)*`.
+  > **Note (2026-07-11), resolved 2026-07-23 (see revision note above):** RFC-0096
+  > (Auto-Impl Aspects) §7 already worked out that the *old* `HasField<"x", f64>` form
+  > didn't fit RFC-0096 §2's recursive algorithm (existential satisfaction, not
+  > universal) and that its string-literal bound-position syntax wasn't covered by the
+  > grammar. The bare-row spelling sidesteps the second problem entirely — there is no
+  > string literal to fail to parse — and does not change the first: row-membership
+  > checking is still existential, still not RFC-0096 §2's algorithm, for the same
+  > reason as before.
 - **A closed `record { ... }` type-former** (§3) — an anonymous, exact-shape product
   type, usable in ordinary value positions.
 
@@ -94,10 +118,12 @@ ordinary type is:
   §6: an *open* record (accept "at least these fields") permits width subtyping, i.e.
   silently forgetting fields, which is exactly what non-`Copy` ownership exists to
   prevent. Closed-by-default sidesteps this for the common case.
-- **As a bound, sugar over a bundle of `HasField` facts.** `record { x: f64, y: f64 }`
-  in a parameter position means "anything satisfying `HasField<"x", f64> +
-  HasField<"y", f64>`." Combined with §1's auto-derivation, **any existing nominal
-  struct with matching fields satisfies it with no explicit opt-in** — Go's implicit
+- **As a bound, a bare row directly — not sugar over a named aspect anymore.**
+  `{ x: f64, y: f64 }` in a parameter position means "anything satisfying both fields,"
+  one bound naming several labels rather than an ANDed chain of separate per-field
+  facts (see the 2026-07-23 revision note above). Combined with §1's auto-derivation,
+  **any existing nominal struct with matching fields satisfies it with no explicit
+  opt-in** — Go's implicit
   interface satisfaction (a type satisfies an interface by having matching methods,
   with no `implements` declaration) is the closer real-world precedent here than
   OCaml, since it's the same "structural match, no declared relationship" story without
@@ -132,11 +158,11 @@ row, and RFC-0036's conditional impl blocks generalize directly from aspect cond
 to row-shape conditions:
 
 ```metel
-impl<row R: HasField<"token", Token>> Session<R> {
+impl<row R: { token: Token }> Session<R> {
     fun authenticate(self) -> Session<R without "token"> { ... }
 }
 
-impl<row R: Lacks<"token">> Session<R> {
+impl<row R: !{ token: _ }> Session<R> {
     fun send_data(&self, bytes: Bytes) { ... }
 }
 ```
@@ -161,9 +187,9 @@ decisive.
   progress — where each transition adds or removes a marker field and the available
   API tracks it exactly.
 - **Builders, in the dual direction.** Consumption removes a field from a row;
-  building one up adds one. A config builder where `.with_timeout()` requires `R:
-  Lacks<"timeout">` and returns `R + "timeout"` prevents setting the same field twice,
-  at compile time.
+  building one up adds one. A config builder where `.with_timeout()` requires
+  `R: !{ timeout: _ }` and returns `R + "timeout"` prevents setting the same field
+  twice, at compile time.
 
 **What it costs, beyond §7's general row-polymorphism costs:**
 
@@ -420,7 +446,7 @@ record Handle { fd: i32, alloc: @a Buffer }   // row machinery, permanently
 This is strictly more than tier 2, and tier 2 cannot substitute for it:
 **row-conditional impls are resolved by the type system matching a type's own declared
 row at impl-resolution time, not by calling a conversion function.**
-`impl<row R: Lacks<"token">> Session<R> { ... }` needs `Session` to intrinsically carry
+`impl<row R: !{ token: _ }> Session<R> { ... }` needs `Session` to intrinsically carry
 row structure as part of its type — there is no call site for a derived conversion to
 intercept, so a type that merely derives `ToRecord`/`FromRecord` can never have
 row-conditional impls written against it. Conversely, a tier-3 type gets tier 2's
@@ -523,13 +549,13 @@ untouched) or primitives.
 
 - **Coherence needs a specificity rule between the two axes an impl can now match on.**
   An ordinary `impl Display for Point` is brand-keyed; RFC-0061's structural/blanket
-  impls (`impl<row R: HasField<"x", f64>> Display for record R`) are row-keyed. If a
+  impls (`impl<row R: { x: f64 }> Display for record R`) are row-keyed. If a
   `Point` value matches both, which wins? The obvious default — brand-keyed beats
   row-keyed blanket impls, more-specific-wins — is not written down as a rule anywhere,
   and RFC-0060/RFC-0061's coherence checking does not yet account for a second axis at
   all.
 - **Field-level visibility (RFC-0032) and structural matching haven't been
-  reconciled.** If `HasField<"secret", T>` is checked directly against a struct's row,
+  reconciled.** If a bound `{ secret: T }` is checked directly against a struct's row,
   does code outside the declaring module get to observe — or structurally match
   against — a private field? It shouldn't, which means the row isn't a single flat
   structure per brand; cross-module structural matching needs to see only a *public
@@ -561,32 +587,45 @@ this idea, specified in RFC-0091, not here.
    brand-keyed and row-keyed blanket impls is written down.
 7. **Private-field leakage into cross-module structural matching (§9)** — no mechanism
    for the public-only row projection is designed yet.
-8. **What syntactically marks tier 3, the named record kind (§8)** — a separate
-   keyword vs. a modifier on `struct` are both plausible; not decided. (Tier 2 needs no
-   new syntax — it is an ordinary derive.)
+8. ~~What syntactically marks tier 3, the named record kind?~~ **Proposed answer,
+   2026-07-23:** `record X { ... }`, a separate keyword joining the
+   `struct`/`enum`/`aspect` declaration family — see the revision note above and
+   `reports/substructural-types/access-and-presence-rows.md` §3.5. Not yet folded into
+   §8's own prose below, which still poses this as undecided; flagged here rather than
+   left silently inconsistent.
 9. **Whether §5's allocator-type restriction transfers to tier 3 (§8)** — §5's
    objection assumed structural interchangeability, which tier 3's fixed brand
    arguably avoids; unresolved.
 10. **Whether `FromRecord` needs a guard against bypassing constructor invariants
     (§8)** — the `SortedPair` case shows auto-derived reconstruction can silently skip
     validation a hand-written constructor enforces; no compile-time check for this is
-    proposed.
+    proposed here. **Proposed answer split out as its own RFC, 2026-07-23:**
+    `internal/rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md` —
+    a `Construct` aspect returning `Result<Self, Self::Error>`, with `FromRecord`
+    collapsing into the same mechanism. Not merged into this RFC's own text; that
+    reconciliation is left to whichever review pass handles both.
 11. **Whether the brand-carrying `ToRecord` exception (§8, RFC-0089 §3.1) needs its own
     coherence check** to guarantee no other code can independently produce a value
     carrying the same brand plus a conflicting impl. Likely resolves to "no need" given
     brand rigidity/freshness (RFC-0076) — the brand is unforgeable from outside the
     derive — but this is asserted, not proven, matching RFC-0089's own Open Question 6.
+12. **New, 2026-07-23. Two pieces of grammar work the bound-syntax revision above
+    depends on, neither written yet:** a new `bound_head` alternative letting a bound
+    start from a bare row instead of only a `type_path`, and a type-position wildcard
+    `_` (meaning "any type") for `!{ tag: _ }` — `_` exists only in `pattern` today,
+    confirmed absent from `type_expr`. Whether this lands as part of this RFC's own
+    acceptance or as a separate small amendment is not decided.
 
 ---
 
 ## Example Programs
 
-### Records, `HasField`, and where they stop being usable
+### Records, row bounds, and where they stop being usable
 
 ```metel
 let point = record { x: 1.0, y: 2.0 };   // closed record — exact shape
 
-fun magnitude<T: HasField<"x", f64> + HasField<"y", f64>>(p: T) -> f64 {
+fun magnitude<T: { x: f64, y: f64 }>(p: T) -> f64 {
     (p.x * p.x + p.y * p.y).sqrt()
 }
 
@@ -608,11 +647,11 @@ println("mag = ${magnitude(ScreenPos { x: 3.0, y: 4.0, z_index: 1 })}");
 ```metel
 struct Session<row R> { data: record { ..R } }
 
-impl<row R: HasField<"token", String>> Session<R> {
+impl<row R: { token: String }> Session<R> {
     fun authenticate(self) -> Session<R without "token"> { ... }
 }
 
-impl<row R: Lacks<"token">> Session<R> {
+impl<row R: !{ token: _ }> Session<R> {
     fun send_data(&self, bytes: String) {
         println("sending: ${bytes}");
     }
@@ -684,10 +723,14 @@ let r = p.to_record();   // record { small: i32, big: i32 } == { small: 1, big: 
   RFC is extracted from
 - RFC-0080 (Standard Library Aspects) — auto-impl pattern this RFC's `HasField` family
   and `ToRecord`/`FromRecord` reuse
-- RFC-0096 (Auto-Impl Aspects, draft) §7 — works out precisely how `HasField`/`Lacks`
-  differs from `Send`/`Sync`/`Linear`'s auto-impl mechanism (family vs. fixed marker,
-  existential vs. universal satisfaction), and flags this RFC's own unresolved
-  coherence and bound-syntax gaps for `HasField`
+- RFC-0096 (Auto-Impl Aspects, draft) §7 — works out precisely how the row-bound
+  mechanism differs from `Send`/`Sync`/`Linear`'s auto-impl mechanism (family vs. fixed
+  marker, existential vs. universal satisfaction), and flags the coherence gap this RFC
+  still leaves unresolved; the bound-syntax gap it also flagged is fixed by the
+  2026-07-23 revision above
+- `reports/substructural-types/access-and-presence-rows.md` §3.5,
+  `reports/substructural-types/nominal-types-as-branded-rows.md` §12 — the bare-row
+  bound syntax this RFC's `HasField`/`Lacks` were replaced with
 - RFC-0036 (Conditional Impl Blocks) — row-conditional impls generalize this directly
 - RFC-0060 (Aspect Impl Coherence), RFC-0061 (Structural Aspect Bounds) — coherence
   checking this RFC's row-conditional impls and structural bounds extend
