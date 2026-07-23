@@ -438,12 +438,33 @@ worth taking — rated "low cost, medium value" in §13.6's priority table. Effe
 themselves desugar to aspects (§8), so this is a surface-syntax question, not a change of
 foundation.
 
-**The honest asymmetry**, stated because it is the strongest objection to the framing:
-an effect row ranges over an open world of effect labels, while a field-access row ranges
-over one struct's finitely many declared fields. They are not the same kind, and this
-document does not claim they should share an implementation. The claim is narrower — that
-they share the *problem structure* (declare a set, propagate it through calls, abstract
-over it at boundaries), and that the field-access case is the better-behaved one.
+**Corrected 2026-07-23 — the asymmetry below was wrong as originally stated, and the
+error is worth keeping visible.** The original claim was "an effect row ranges over an
+open world of effect labels, while a field-access row ranges over one struct's finitely
+many declared fields" — contrasting effects against *closed* field rows. That comparison
+picks the easy half of the structural-row story. RFC-0090's own open-row form,
+`record { x: f64, ..R }`, is exactly as open as an effect row: `R` is a generic variable,
+unbounded by any single declaration, resolved only at the call site to whatever a
+caller's concrete value happens to have beyond `x`. A row-polymorphic function over `R`
+can be called with a value from any module, present or future — the same unbounded
+vocabulary an effect row has.
+
+**The real line is not structural-vs-effect at all — it is closed-single-declaration vs.
+open-generic-variable, and it cuts across both row kinds the same way.** A struct's own
+fields, fixed at one declaration and fully enumerable, are the closed, easy case. `<row R>`
+and effect rows (`{IO | E}` / `{ IO, ..E }`) are both the open case — a variable standing
+for a label set no single declaration bounds. Structural rows happen to have both a closed
+form and an open form; effect rows are only ever useful in the open form, since a closed
+effect row (a function's effects fixed in advance, no polymorphism) defeats the point of
+writing effect-polymorphic code like `map<T, U, E>` at all.
+
+**This document does not claim closed field-access rows and open rows (structural or
+effect) should share an implementation — they still shouldn't; the checking rules differ.
+The claim, corrected, is that reusing *syntax* across the open case specifically is
+better-motivated than "the field-access case is the better-behaved one" implied**: `..R`
+and `..E` are not just visually similar, they are the same construct — a polymorphic tail
+over an unbounded label space — spelled once rather than as two conventions that happen
+to look alike. See §5 for the consequence this has for the PureScript comparison.
 
 ---
 
@@ -523,25 +544,38 @@ one row mechanism across records and effects and abandoned the effect half in 0.
 were unification errors users could not solve, anti-modularity (effects need a canonical
 declaration site), boilerplate, and too little benefit at small and medium scale.
 
-Which of those transfer to **field-access** rows:
+Which of those transfer to **field-access** rows — stated below only for the *closed*
+case, per §4's correction: none of this holds once `<row R>`-style open rows are in play,
+structural or effect-flavored:
 
-- **Anti-modularity — does not transfer.** A field-access row's labels are one struct's
-  own declared fields, fixed at its declaration. There is no canonical-location question
-  because the declaration site is the struct.
-- **Open-world growth — does not transfer.** The label set is finite and closed per type,
-  the same observation RFC-0090 §3 makes about closed records being bounded by 2^N and
-  "trivial for realistic struct sizes," applied to the access side.
-- **Little benefit — does not transfer.** PureScript's effect rows tracked something the
-  language did not otherwise need. Under affine ownership, "which fields does this touch"
-  is what makes partial borrows work at all.
-- **Unification error messages — transfers directly, and is the real risk.** This is the
-  one to design against from the start rather than discover late.
+- **Anti-modularity — does not transfer, for a closed row over one concrete struct.** Its
+  labels are that struct's own declared fields, fixed at its declaration; there is no
+  canonical-location question because the declaration site is the struct. This stops
+  being true the moment the row is generic over `R` — a row-polymorphic function has no
+  single declaration bounding what `R` could be, the same anti-modularity concern
+  effects have.
+- **Open-world growth — does not transfer, for the same closed case.** The label set is
+  finite and bounded by 2^N for one concrete struct (RFC-0090 §3). This is exactly the
+  property `<row R>` gives up by design — it is RFC-0090's own "this is where the actual
+  cost lives" piece (§7), deferred for that reason.
+- **Little benefit — does not transfer**, independent of closed vs. open: under affine
+  ownership, "which fields does this touch" is what makes partial borrows work at all,
+  unlike PureScript's effect rows tracking something the language did not otherwise need.
+- **Unification error messages — transfers directly, and is the real risk** — for the
+  open case specifically, where unification actually happens. A closed row over one
+  struct never runs a unification algorithm at all, so this risk is not yet incurred
+  there; it is incurred wherever `<row R>` or an open effect row is used.
 
-**The limit of the finite-label-set argument**, stated so it is not oversold: it holds for
-a *concrete* struct. The moment access rows abstract over a boundary — Rust's abstract
-fields as trait members, or any generic function over "some struct with some accessible
-subset" — variables reappear and so does unification. The finiteness buys a well-behaved
-core, not immunity.
+**Corrected 2026-07-23: the finite-label-set argument does not merely have a limit — it
+does not apply to the case effect rows actually need.** The original close of this
+section said "the finiteness buys a well-behaved core, not immunity," framing the open
+case as an edge condition. It is not an edge condition — it is the *only* form effect
+rows are useful in, since a closed effect row (fixed effects, no polymorphism) defeats
+`map<T, U, E>`'s whole purpose. So the honest comparison was never "closed field rows
+vs. effect rows"; it is "closed field rows vs. `<row R>` vs. effect rows," and the first
+of those three is the only one PureScript's failure mode is actually shown not to touch.
+Whatever risk `<row R>` carries, effect rows likely carry too, regardless of whether
+their syntax is shared.
 
 ---
 
@@ -655,9 +689,14 @@ moved.*
 6. **If field-access becomes an effect, what is its interaction with real effects?** A
    function that both touches `self.x` and performs `IO` would carry two rows over
    different label universes. Composition unexamined.
-7. **Does the finite-label-set argument survive abstraction?** §5 concedes variables
-   reappear at boundaries; whether the remaining core is enough to avoid PureScript's
-   error-message failure is unknown.
+7. ~~Does the finite-label-set argument survive abstraction?~~ **Sharpened 2026-07-23,
+   §4/§5: no, and not just at the edges.** The open case (`<row R>`, and effect rows,
+   which are only useful in their open form) is not a boundary condition the closed
+   argument mostly survives — it is the case the argument never covered, since it
+   compared effects against closed field rows specifically. Whatever unification-error
+   risk `<row R>` carries, effect rows likely carry too. Still genuinely open: whether
+   the *remaining* closed-row core is enough to avoid that risk for the cases that stay
+   closed, which is a narrower and more answerable question than the original one.
 8. **Is row-tracked partial consumption still unprecedented after a proper literature
    search?** §5's negative claim rests on targeted searching, not a systematic review,
    and one earlier negative claim in this area has already been falsified once.

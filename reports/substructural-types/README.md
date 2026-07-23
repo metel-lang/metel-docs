@@ -351,9 +351,13 @@ structured-guarantee mechanism is reopened as premature to settle):
   `^ {E}` mechanism yet.
 - If field-access becomes an effect, how do the two rows compose — a function touching
   `self.x` and performing `IO` carries rows over different label universes.
-- Does the finite-closed-label-set argument (what makes field-access rows better-behaved
-  than PureScript's abandoned effect rows) survive abstraction over boundaries, where
-  variables reappear?
+- ~~Does the finite-closed-label-set argument survive abstraction over boundaries?~~
+  Sharpened 2026-07-23: no, and not at the edges only — the real line was never
+  structural-vs-effect, it is closed-single-declaration vs. open-generic-variable, which
+  cuts across both row kinds the same way (RFC-0090's own `<row R>` is exactly as open
+  as an effect row). Whatever PureScript-style risk `<row R>` carries, effect rows likely
+  carry too, regardless of shared syntax. Still open, narrower: whether the closed-row
+  core that remains is enough to avoid that risk for cases that stay closed.
 - Is row-tracked *partial consumption* still unprecedented after a systematic literature
   review? The negative claim rests on targeted searching, and one earlier negative claim
   in this area was already falsified once (linear types and rows do coexist, in Lindley
