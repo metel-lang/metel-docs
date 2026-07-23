@@ -351,10 +351,12 @@ structured-guarantee mechanism is reopened as premature to settle):
   RFC-0090), or only clarify what the question was?
 
 **From `nominal-types-as-branded-rows.md`:**
-- How does OQ10's reopened, general form get fixed — ban automatic widening back to the
-  full nominal type entirely, require it to re-run the constructor, or something else?
-  The single most consequential open question here; the model's central promise (fully
-  automatic, invisible to the surface) depends on the answer, and none was settled on.
+- How does OQ10's reopened, general form get fixed? Split out 2026-07-23 into RFC-0114
+  (Constructor Aspect and Canonical Construction) — a `Construct` aspect as the one path
+  any value is produced through, plus an opt-in `ConstructUnchecked` escape hatch. Not
+  fully closed: RFC-0114 carries forward, as its own most consequential open question,
+  whether an automatically-firing `construct()` can support a genuinely rejecting
+  invariant without an ordinary field assignment becoming able to fail or panic.
 - Is "has a row, for narrowing" versus "row is visible to structural matching" a clean,
   implementable separation, or does it just relocate the two-tier complexity this model
   was trying to get away from?

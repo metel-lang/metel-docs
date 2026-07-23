@@ -123,6 +123,22 @@ was found and reconciled, and where this session did most of its work.
   defines the minimal by-value struct-destructuring pattern Metel currently lacks
   entirely (`Pattern` in `src/ast/mod.rs` has no `Struct` variant), since the reference
   form needs one to exist.
+- **RFC-0114** *(draft, opened 2026-07-23)* — Constructor Aspect and Canonical
+  Construction — split out of `reports/substructural-types/nominal-types-as-branded-rows.md`
+  §6, which found that automatic row-narrowing/widening reopens RFC-0090's open question
+  10 (`FromRecord` bypassing constructor invariants) as a general risk reachable through
+  ordinary field reassignment, not one scoped to the `FromRecord` conversion alone.
+  Proposes a `Construct` aspect (`construct(row) -> Self`) as the one path any value of a
+  nominal type is ever produced through — fresh construction (via RFC-0100's call syntax,
+  once it removes bare struct literals) and post-narrowing reconstruction collapse into
+  the same operation. A struct with no invariant gets a compiler-synthesized identity
+  default. Collapses RFC-0090's `FromRecord` into the same mechanism without amending
+  RFC-0090's own text. A separate, opt-in `ConstructUnchecked` aspect (depends on
+  RFC-0026, `unsafe` blocks) gives an explicit escape hatch, mirroring Rust's
+  `new`/`new_unchecked`. Leaves fallibility genuinely open — an infallible,
+  self-healing `construct()` (the `SortedPair` case) is worked through, but whether a
+  genuinely-rejecting invariant can automatically fire on an ordinary-looking field
+  assignment at all is the RFC's own most consequential open question, not resolved.
 - **RFC-0092** — Comptime Core — `type`-as-value, `typeinfo`, single-declaration
   `emit`, plus (as of the RFC-0055 reconciliation) the base `comptime let`/`fun`/`if`
   execution model, plus (as of the RFC-0083 fold, 2026-07-12) `pub` on `comptime let`

@@ -244,7 +244,7 @@ concrete enough to build, not assumed from the surface argument alone.
 | `uses (…)`'s declaration | ✅ §3.3 | `Drop` dispatch must become row-bounded (§4) | pulls `<row R>` onto `Drop`'s critical path early |
 | `HasField`-transparency gap (from `access-and-presence-rows.md`) | ✅ §4, via reading (ii) | — | — |
 | RFC-0071 §7 | — | needs rewriting, not narrowing (§5) | — |
-| RFC-0090 OQ10 | — | reopens as a general risk, not `FromRecord`-specific (§6) | no fix proposed yet |
+| RFC-0090 OQ10 | — | reopens as a general risk, not `FromRecord`-specific (§6) | fix split out to RFC-0114; its own fallibility question still open |
 | RFC-0090 §8's non-ambient guarantee | — | at risk under universal rows (§7) | reconciliation proposed, not checked |
 | enums | out of scope, unchanged | — | should be stated explicitly |
 | generic structs | — | — | monomorphization-timing question, open |
@@ -254,12 +254,17 @@ concrete enough to build, not assumed from the surface argument alone.
 
 ## Open Questions
 
-1. **How does OQ10's reopened, general form get fixed?** Ban automatic widening back to
-   the full nominal type entirely (a value can only ever be consumed field-by-field once
-   narrowed)? Require widening to re-run the type's own constructor, or some declared
-   validation? Something else? This is the single most consequential open question — the
-   model's central promise (fully automatic, invisible to the surface) depends directly
-   on the answer, and no candidate was settled on while working through §6.
+1. **How does OQ10's reopened, general form get fixed?** *Split out 2026-07-23 into its
+   own RFC:* `internal/rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md`
+   proposes a `Construct` aspect — `construct(row) -> Self` as the one path any value of a
+   nominal type is produced through, whether fresh or reassembled after narrowing — with a
+   separate, opt-in `ConstructUnchecked` escape hatch for code that already knows the
+   invariant holds. That RFC does **not** close this question, though: it carries forward,
+   as its own most consequential open item, whether an automatically-firing `construct()`
+   can support a genuinely *rejecting* (not just self-healing) invariant without an
+   ordinary-looking field assignment becoming able to fail or panic. Treat this item as
+   "answered by delegation, not resolved" until RFC-0114's own fallibility question
+   settles.
 2. **Is "has a row" vs. "row is visible to structural matching" (§7) a clean, implementable
    separation, or does it just relocate the two-tier complexity this model was trying to
    get away from?**
@@ -285,6 +290,9 @@ concrete enough to build, not assumed from the surface argument alone.
 
 ## References
 
+- `internal/rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md` —
+  the proposed (partial) answer to Open Question 1, split out 2026-07-23; leaves
+  fallibility open as its own most consequential question
 - `access-and-presence-rows.md` — the audit that found `HasField` bolted-on and worked
   through `uses (…)`'s reduction to existing mechanisms; this document responds to and
   extends that audit's findings, particularly §3 (views desugar to rows of borrows) and
