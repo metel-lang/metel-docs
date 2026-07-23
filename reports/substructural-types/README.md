@@ -381,6 +381,12 @@ structured-guarantee mechanism is reopened as premature to settle):
   level, or only at the level of the surface-syntax argument? Unvalidated.
 - What is this document's precise relationship to RFC-0090 §9 — an amendment to it, or a
   distinct further claim (degrade-on-move) that §9 itself never proposes?
+- **`HasField<"fd", i64>`'s bound-position syntax, replaced outright by `.{ fd: i64 }`**
+  (§12) — checked directly against `grammar.pest`: the string-literal form never actually
+  parsed (`type_expr` has no string-literal alternative), a gap RFC-0090 §1 and RFC-0096
+  §7 had already flagged but not resolved. `Lacks` becomes `!.{ tag: _ }`, needing a
+  type-position wildcard that does not exist today (`_` is pattern-only). Two pieces of
+  grammar work remain unwritten: `bound_head`'s new alternative, and the wildcard itself.
 
 **Cross-cutting, not owned by any single document:**
 - Whether this whole cluster (linear types, structural records, brands, effects,

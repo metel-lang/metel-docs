@@ -63,9 +63,10 @@ degradation is this document's own addition, not already present in RFC-0090.
 
 ### 3.1 `HasField` stops being bolted on
 
-If every nominal type already carries a row, `HasField<"fd", i64>` is not a derived fact
-computed by a second mechanism — it is the same row-membership query already used for
-anonymous records and row-conditional impls. One representation, one query.
+If every nominal type already carries a row, `HasField<"fd", i64>` (as RFC-0090 §1
+drafts it — see §12 for why that syntax does not survive) is not a derived fact computed
+by a second mechanism — it is the same row-membership query already used for anonymous
+records and row-conditional impls. One representation, one query.
 
 ### 3.2 Presence and access collapse into one operation, not two roles of one mechanism
 
@@ -109,10 +110,10 @@ fun leak(h: Handle) {
 **Reading (ii) — `Drop` is row-bounded, inferred from the body**, the same "accuracy
 checking, not a declared-and-trusted annotation" discipline RFC-0109 §4.10 already
 specifies for self-view narrowing. `drop`'s body reads `self.fd`, so its bound is
-`HasField<"fd", i32>`; it fires on *any* residual satisfying that bound, regardless of
+`.{ fd: i32 }` (§12); it fires on *any* residual satisfying that bound, regardless of
 what else was moved out first. This closes the leak, and it also beats plain
 decomposition (the earlier proposed fix for `uses (…)`) specifically on this case: no
-wrapper type is needed, `fd` stays a direct field of `Handle`, `HasField<"fd", i32>`
+wrapper type is needed, `fd` stays a direct field of `Handle`, `.{ fd: i32 }`
 stays satisfiable on `Handle` itself — the `HasField`-transparency gap
 `access-and-presence-rows.md`'s audit found in the decomposition fix does not arise here.
 
@@ -314,7 +315,7 @@ description, and they get different treatment.
   `HasField` or coherence. **It is available to every struct, tier-1 or tier-3,
   unconditionally**; §7's brand-gating does not touch it.
 - **Reading B — the receiving method is *generic* over which residual it gets**, e.g.
-  `fun process<row R: HasField<"fd", i32>>(h: Handle.{ R })`, bounding an abstract row
+  `fun process<row R: .{ fd: i32 }>(h: Handle.{ R })`, bounding an abstract row
   variable rather than naming a fixed shape. This is exactly the reusable-helper case
   (`drain_field<row R, name, T>`) §7 gates behind tier-3, deliberately — an ordinary
   struct choosing to stay tier-1 is choosing not to be usable this way.
@@ -415,6 +416,53 @@ concrete enough to build, not assumed from the surface argument alone.
 | enums | out of scope, unchanged | — | should be stated explicitly |
 | generic structs | — | — | monomorphization-timing question, open; `.narrow()` a second consumer |
 | zero-cost-for-ordinary-structs | — | — | commitment stated, not validated |
+| `HasField<"fd", i64>` bound syntax | ✅ §12 — replaced outright by `.{ fd: i64 }` | `bound_head` grammar needs a new alternative; `Lacks` needs a type-position wildcard | neither piece of grammar work is written yet |
+
+---
+
+## 12. `HasField`/`Lacks` bound syntax: replaced outright by `.{ … }`
+
+**The premise, checked directly against `grammar.pest` rather than assumed: `HasField<"fd",
+i64>` does not parse today.** `bound_arg = { assoc_binding | type_expr }`, and `type_expr`
+has no string-literal alternative anywhere in its grammar. This is not new information —
+RFC-0090 §1 and RFC-0096 §7 both already flagged it as an unresolved gap — but it means
+what follows fills a hole nothing currently occupies, rather than migrating working
+syntax.
+
+**Decision: replace `HasField`/`Lacks` outright with the `.{ … }` row syntax already
+settled in `access-and-presence-rows.md` §3.5**, rather than keeping them as named sugar
+over it. Keeping both would reintroduce exactly the "two spellings for one fact" problem
+this whole session has been eliminating everywhere else.
+
+```metel
+fun magnitude<T: .{ x: f64, y: f64 }>(p: T) -> f64 { ... }         // was: HasField<"x", f64> + HasField<"y", f64>
+impl<row R: .{ x: f64 }> Display for record R { ... }               // RFC-0090 §4's row-conditional impls, same reuse
+```
+
+A bound *is* a row, spelled the same way a row is spelled everywhere else — no string
+literal, no separate aspect-name concept. It also compacts multi-field bounds for free:
+what is currently an ANDed chain of separate `HasField` instances becomes one bound
+naming several labels at once.
+
+**The grammar change this needs, precisely.** `bound_head = { type_path ~ (...)? }`
+currently requires every bound to start from an identifier (`type_path`); `.{ … }` is not
+one, so `bound_head` needs a genuinely new alternative
+(`bound_head = { type_path ~ (...)? | row_bound }`), not merely adding `.{ }` to
+`type_expr` generally, which was already the plan for ordinary value/type positions.
+
+**`Lacks` is the harder half.** `Lacks<"tag">` asserts absence regardless of type — it
+does not care what `tag` would be, only that no field by that name exists. Row-bound
+negation, reusing the *existing* `bang?` already in `bound = { bang? ~ bound_head }`, gets
+close: `T: !.{ tag: _ }`. But this needs a type-position wildcard meaning "any type,"
+which does not exist today — checked directly: `_` appears only inside `pattern`
+(`Pattern::Wildcard`), nowhere in `type_expr`. A genuinely new, small addition, not a
+reuse.
+
+**Consequence beyond the bound-position gap.** This is not narrowly scoped to
+`HasField<"fd", i64>` — it is the spelling for every `HasField`-shaped construct in the
+corpus, including RFC-0090 §4's row-conditional-impl typestate examples
+(`impl<row R: HasField<"x", f64>> Session<R> { ... }` becomes
+`impl<row R: .{ x: f64 }> Session<R> { ... }`).
 
 ---
 
@@ -472,6 +520,12 @@ concrete enough to build, not assumed from the surface argument alone.
    a general `Into`/`From`-shaped conversion aspect that is not confirmed to exist yet, or
    is its own dedicated mechanism, is not decided — recorded only as a forward-looking
    sketch, not a committed design.
+9. **Two pieces of grammar work for §12, neither written yet:** the new `bound_head`
+   alternative that lets a bound start from `.{ … }` instead of only a `type_path`, and a
+   type-position wildcard (`_`, meaning "any type") for `Lacks`'s replacement
+   (`T: !.{ tag: _ }`) — `_` exists only in `pattern` today, confirmed absent from
+   `type_expr`. Whether this becomes an RFC-0090 amendment or its own small RFC is also
+   not decided.
 
 ---
 
