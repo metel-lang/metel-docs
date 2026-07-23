@@ -374,14 +374,49 @@ open monomorphization-timing question this document's Open Question 4 already as
 with a second consumer), and a compile-time check that the target is an actual subset of
 the source row.
 
-**Naming left open, deliberately.** Borrowing `Into`'s name implies more machinery than
-is confirmed to exist — Metel's `?`-operator already does `From`-based coercion for
-*error* types (live since v0.4.0), but a general `Into`/`From` conversion aspect for
-ordinary values is not confirmed. `.narrow()` may be closer kin to RFC-0090 §8's
-`to_record`/`from_record` pattern — an explicit, named structural conversion, same shape,
-just narrowing between two residuals of the *same* brand rather than converting to an
-anonymous record. Not designed further here; recorded as a forward-looking sketch, not a
-committed mechanism.
+**Mechanism resolved 2026-07-23: neither of the two candidates originally considered,
+and not a new kind of thing either.** Checked each against what `.narrow()` actually
+needs:
+
+- **Not `to_record`/`from_record`-shaped.** Those are fixed, point-to-point
+  conversions between exactly two types — a struct's full row and the bare anonymous
+  record with that same row. Neither has a parameter for "which subset"; `to_record`
+  always produces the entire row. `.narrow()` needs genericity over the target, which
+  that pattern structurally lacks.
+- **Not `Into`/`From`-shaped either**, even though that pattern *does* have the right
+  genericity. `Into<T>` is generic over arbitrary, unrelated types (`i32` → `i64`,
+  `String` → `Vec<u8>`); `.narrow()` never leaves the same brand, only ever producing
+  another row of the *same* type. Adopting `Into`/`From` would import far more
+  generality than the operation needs. (Metel's `?`-operator already does `From`-based
+  coercion for *error* types, live since v0.4.0 — but a general `Into`/`From`
+  conversion aspect for ordinary values is not confirmed to exist, and would be the
+  wrong shape for this even if it did.)
+- **What actually fits: an ordinary `<row R>` generic method, nothing new to design.**
+  `fun narrow<row R>(self) -> Self.{ R } where R ⊆ <full row>` is exactly RFC-0090
+  §2/§3's already-proposed (and deferred) open-row generics, applied reflexively to a
+  type's own row — the same machinery `drain_field<row R, name, T>`
+  (`access-and-presence-rows.md` §6) already needs, consumed a second way, not a fourth
+  mechanism alongside it.
+
+**Because the body is purely mechanical** — move each excess field into a discard
+binding, let it drop, no invariant to check (unlike `Construct`) — it should be
+**compiler-synthesized and universally available** on every branded type the moment
+`<row R>` exists, not something a programmer writes by hand. Same reasoning as ordinary
+field access being automatic, not opt-in.
+
+**The consequence this settles, and the one it opens.** RFC-0090 §3's build order defers
+`<row R>` "only if a real duck-typing need materializes" — `.narrow()` is a second
+concrete candidate alongside `drain_field`, worth naming since one example was thin
+evidence and two is stronger either way it resolves. But this cuts against easy
+availability, not for it: unlike almost everything else resolved in this document,
+`.narrow()` is not available for free — it is *gated* on RFC-0090's deferred step 2
+actually being built, and cannot exist before `<row R>` does.
+
+**One thing this connects to rather than reopens.** Compiler-synthesizing a default
+method for every type runs into the same question RFC-0114's own Open Question 3 already
+raises for `Construct`'s default — whether a whole-impl, compiler-synthesized default
+collides with RFC-0082's declined general-default-associated-type mechanism. Same open
+question, not a new one.
 
 ---
 
@@ -567,7 +602,8 @@ evidence.
 | RFC-0071 §7 | — | needs rewriting, not narrowing (§5) | — |
 | RFC-0090 OQ10 | ✅ fix in RFC-0114, incl. fallibility, via `Result<Self, Self::Error>` + RFC-0078 | reopened as a general risk first (§6), then resolved | RFC-0114's own OQ3 (default-derivation mechanism) |
 | RFC-0090 §8's non-ambient guarantee | ✅ §7.1–7.3 — visibility scoped to brand, inherited by narrowing/views | at risk under universal rows, first pass (§7) | `.to_record()` on an already-narrowed residual, unexamined |
-| passing owned residuals across calls | ✅ §8.2 — strict, no implicit truncation ever | reopens RFC-0090 §7's width-subtyping hazard, first pass | `.narrow()`'s mechanism/naming, sketched not designed (§8.3, OQ8) |
+| passing owned residuals across calls | ✅ §8.2 — strict, no implicit truncation ever | reopens RFC-0090 §7's width-subtyping hazard, first pass | — |
+| `.narrow()` | ✅ §8.3 — an ordinary `<row R>` generic method, not `Into`/`From` or `to_record`/`from_record` | gated on RFC-0090's deferred `<row R>` actually being built | default-synthesis question, shared with RFC-0114 OQ3 |
 | enums | out of scope, unchanged | — | should be stated explicitly |
 | generic structs | ✅ §9.2 no deferral needed; ✅ §9.3 brand tied to declaration, not instantiation | — | — |
 | zero-cost-for-ordinary-structs | ✅ views + eligibility gate, on real ground (§10.3) | — | narrowing/`Drop` dispatch rest on unbuilt RFC-0071 (§10.1–10.2); a prior draft wrongly claimed this as already validated |
@@ -705,11 +741,19 @@ corpus, including RFC-0090 §4's row-conditional-impl typestate examples
    letting the nearer, more concrete records/views cluster's review wait on it would be
    the exact "extending the design instead of freezing and building" trap `OBJECTIVES.md`
    §1 exists to watch for. It stays a live, separate exploration.
-8. **What is `.narrow()`, mechanically, and does it belong to an existing pattern or a new
-   one?** (§8.3) Whether it extends RFC-0090 §8's `to_record`/`from_record` naming, needs
-   a general `Into`/`From`-shaped conversion aspect that is not confirmed to exist yet, or
-   is its own dedicated mechanism, is not decided — recorded only as a forward-looking
-   sketch, not a committed design.
+8. ~~What is `.narrow()`, mechanically, and does it belong to an existing pattern or a new
+   one?~~ **Resolved 2026-07-23, §8.3: neither of the two candidates, and not a new
+   mechanism either.** Not `to_record`/`from_record`-shaped (those are fixed
+   point-to-point conversions with no target-subset parameter); not `Into`/`From`-shaped
+   (too general — allows unrelated-type conversion `.narrow()` should never permit). It
+   is an ordinary `<row R>` generic method, reflexive over a type's own row — the same
+   deferred machinery `drain_field<row R, name, T>` already needs, a second consumer for
+   RFC-0090 §3's "only if a real duck-typing need materializes" bar. Should be
+   compiler-synthesized and universal, since its body is purely mechanical with no
+   invariant to check. **The real consequence: unlike almost everything else here,
+   `.narrow()` is gated on that deferred `<row R>` machinery actually being built — not
+   available for free.** Its default-synthesis question connects to, rather than
+   duplicates, RFC-0114's own Open Question 3.
 9. **Two pieces of grammar work for §12, neither written yet:** the new `bound_head`
    alternative that lets a bound start from a bare `{ … }` instead of only a `type_path`,
    and a type-position wildcard (`_`, meaning "any type") for `Lacks`'s replacement

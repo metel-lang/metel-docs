@@ -392,7 +392,18 @@ structured-guarantee mechanism is reopened as premature to settle):
   same day: passing *owned* residuals across calls needs a stricter rule than borrowed
   ones — no implicit truncation ever, matching RFC-0090 §8's own no-implicit-coercion
   stance — with a sketched future `.narrow()` utility (explicit, so it needs no
-  droppability gate) left as its own open question (naming, mechanism).
+  droppability gate).
+- ~~What is `.narrow()`, mechanically — an existing pattern or a new one?~~ Resolved
+  2026-07-23, §8.3: neither `to_record`/`from_record` (fixed, no target-subset
+  parameter) nor `Into`/`From` (too general — permits unrelated-type conversion this
+  should never allow). It's an ordinary `<row R>` generic method, reflexive over a
+  type's own row, reusing the same deferred machinery `drain_field<row R, name, T>`
+  already needs — a second candidate justifying RFC-0090 §3's "only if a real
+  duck-typing need materializes" bar. Should be compiler-synthesized, since its body is
+  purely mechanical. The real consequence: unlike almost everything else here,
+  `.narrow()` is gated on that deferred machinery actually being built, not available
+  for free — and its default-synthesis question connects to, rather than duplicates,
+  RFC-0114's own Open Question 3.
 - ~~Does `Drop`'s row-bounded dispatch actually require general `<row R>` machinery?~~
   Resolved 2026-07-23: no — it needs a fixed, concrete required-field-set per impl,
   computed once from the body, plus an ordinary subset check, not a row *variable*
