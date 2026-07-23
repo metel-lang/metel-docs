@@ -250,55 +250,74 @@ brands (B/C) only if something forces it; the likeliest forcing case is `RcBox`
 (RFC-0091 §1.1), where the residual outlives the borrow and is reached through many
 handles.
 
-### 3.5 Surface syntax: one row former, one declaration form
+### 3.5 Surface syntax: one row former, split on whether there is a receiver
 
 Superficial on its face, but the choice interacts with §3.4 rather than merely decorating
-it. **Design decision taken 2026-07-22: wherever a row appears as a type or a value — an
-anonymous record, a view type, a view value — it is spelled the same way.** `.{ … }` is the
-row former; a prefix says what to project from, and its absence means "free-standing."
-Declaring a *named* record is a declaration, not a type expression, and joins the
-`struct`/`enum`/`aspect` family instead.
+it. **Revised 2026-07-23.** The original decision the same day made `.{ … }` uniform
+everywhere a row appears. That overstated what the dot actually earns: pressure-testing it
+against a *third* position (bounds, §12 of `nominal-types-as-branded-rows.md`) surfaced the
+same "the dot is noise here" cost this section had already conceded for type annotations,
+now showing up a second and third time — evidence worth acting on, not absorbing quietly.
+**The dot is kept only where a receiver is being projected from; every freestanding
+position drops it.**
 
 ```metel
-.{ x: f64, y: f64 }     // anonymous record type
-.{ x = 1.0, y = 2.0 }   // anonymous record value (§3.6's separator invariant)
-Handle.{ fd, alloc }    // view type — project Handle's row
-h.{ fd, alloc }         // view value — project the value h
+{ x: f64, y: f64 }      // anonymous record type — no receiver
+{ x = 1.0, y = 2.0 }    // anonymous record value — no receiver (§3.6's separator invariant)
+Handle.{ fd, alloc }    // view type — projects Handle's row
+h.{ fd, alloc }         // view value — projects the value h
 
-type   X = .{ … }       // alias — structural, no new identity (§3.4 option A)
+type   X = { … }        // alias — no receiver (§3.4 option A)
 record X { … }          // declaration — new identity carrying the row (§3.4 option D)
 ```
 
-**What uniformity buys, beyond consistency:**
+**Why the split is not a retreat from uniformity, but a sharper version of it.** The dot
+now means exactly one thing everywhere it appears — *there is a receiver* — instead of
+appearing in some places as leftover disambiguation that was never needed there. Every
+freestanding row, whatever role it plays (anonymous type, anonymous value, alias, bound),
+is still "braces containing a row"; only the presence of a preceding identifier decides
+whether a dot precedes them, and that correlates exactly with a real semantic fact
+(projection versus not), not an arbitrary position-based rule.
 
-- **It answers RFC-0090's open question 8** — "What syntactically marks tier 3, the named
-  record kind — a separate keyword vs. a modifier on `struct`? Not decided." It takes the
-  first: a `record` declaration sits in the same family as `struct`, `enum` and `aspect`,
-  since it does the same job of minting a nominal type.
-- **`type` versus `record` becomes the identity switch**, turning §3.4's question into a
-  choice visible at the declaration site rather than a rule stated elsewhere:
-  `type X = .{ … }` binds a name to a row and mints nothing, while `record X { … }` mints
-  identity. The two *look* as different as they are, rather than differing by one token.
-- **Anonymous records and views become one construct**, prefixed or not, rather than two
-  that happen to share a delimiter.
-- **Label-only entries are already how Metel works.** `Handle.{ fd }` lists labels without
-  types because the types come from `Handle`; `grammar.pest:245`'s
+**What this still buys, unchanged from the original decision:**
+
+- **It still answers RFC-0090's open question 8** — a `record` declaration sits in the
+  same family as `struct`, `enum` and `aspect`, since it does the same job of minting a
+  nominal type.
+- **`type` versus `record` is still the identity switch** — `type X = { … }` binds a name
+  to a row and mints nothing; `record X { … }` mints identity.
+- **Label-only entries are still how Metel works** — `grammar.pest:245`'s
   `field_init = { ident ~ (":" ~ expr)? }` already makes the `:` part optional, so `Handle
-  { x }` punning exists today. The general rule — *a bare label means "take it from
-  context"* — is a generalization, not a new mechanism.
-- **`h.{ fd, alloc }` gives RFC-0109 an expression form it currently lacks.** That RFC has
-  named views and destructuring patterns, but no way to say "make me a view of these fields
-  right here."
+  { x }` punning exists today; *a bare label means "take it from context"* generalizes it.
+- **`h.{ fd, alloc }` still gives RFC-0109 an expression form it currently lacks.**
 
-**Why the leading dot, when bare braces would also work.** Both halves are borrowed rather
-than invented — Zig spells anonymous struct literals `.{ … }`, Rust spells view types
-`Foo.{a}` — but the operative reason is **independence**. `struct_literal = { type_path ~
-"{" ~ … }` already occupies the prefixed bare-brace form, so a bare-brace record syntax
-would only be clean once RFC-0100 removes struct literals, and RFC-0100 is itself
-`1-under-review` with its future uncertain (`OBJECTIVES.md` Trigger 14). The dot lets
-`Handle { … }` and `Handle.{ fd }` coexist indefinitely, so the record syntax can be settled
-now and stay settled regardless of how RFC-0100 resolves. **Deliberately chosen as the
-lower-dependency option while the semantics are still moving.**
+**Why the dot survives at all, now stated precisely rather than broadly.** Checked directly
+against `grammar.pest`: **freestanding bare `{ … }` is unconditionally safe, independent of
+RFC-0100, in every position with no preceding identifier.** A bare block is not a general
+expression alternative (the primary alternation lists `closure_expr`, `match_expr`,
+`if_expr`, `loop_expr`, `struct_literal`, `path_expr` and friends, but no `block` — blocks
+appear only in dedicated slots), so freestanding braces cannot collide with one; and
+`struct_literal = { type_path ~ "{" ~ … }` requires a preceding identifier, which a
+freestanding row genuinely does not have. Neither collision the dot was ever protecting
+against applies here — **this was already true when the original decision was written; it
+just was not acted on.**
+
+The dot's *only* remaining job is **projection**, and that is the one place the RFC-0100
+dependency actually lives: `Handle{ fd }` (no dot) *would* collide with
+`struct_literal = { type_path ~ "{" ~ … }`, since `Handle` is a `type_path` immediately
+followed by `{`, regardless of what appears inside. `Handle.{ fd }` avoids that collision
+entirely, lets `Handle { … }` (struct literal, today) and `Handle.{ fd }` (projection)
+coexist indefinitely, and matches Rust's own `Foo.{a}` view-type spelling directly — the
+strongest single piece of external precedent for keeping it here specifically.
+
+**`{| … |}` (F#), reconsidered and confirmed still wrong, for a sharper reason than before.**
+It was already rejected because F#'s motivation (nominal literals occupying plain braces)
+does not transfer. Checked again for the projection case specifically: `Handle{| fd |}`
+still matches `type_path ~ "{"` — the pipes appear *after* the collision already
+happened — so it does not even solve projection's actual problem; `Handle.{| fd |}`
+avoids it but adds symbols rather than removing them. `{| … |}` was only ever a candidate
+for the freestanding case, where bare `{ … }` already wins outright with zero dependency
+and zero extra symbols.
 
 **Feasibility, verified against `grammar.pest`:**
 
@@ -310,44 +329,28 @@ lower-dependency option while the semantics are still moving.**
 - Postfix `.` accepts only `.0`, `.ident(…)` and `.ident`, so `.{` is free for projection.
 - Pest is scannerless, so no maximal-munch tokenisation hazard is inherited.
 
-**Where the dot applies, and where it does not.** `.{ … }` marks a row appearing in *type
-or expression position*, where it must be told apart from a block and from a struct literal.
-A **declaration** is not either of those: `record X { … }`'s braces are a field list, the
-same as `struct X { … }`'s, and the type being declared is spelled `X`. So the declaration
-form takes no dot and no `=`, and this is not a second spelling of the same thing — there is
-no type expression there to spell twice.
+**Superseded, kept for the record.** The original decision argued the dot should stay in
+type-annotation position too — "dropping it there would mean one type written two ways
+depending on position." That reasoning is retracted, not just extended: under the
+receiver-based split there is no longer "two ways" to retreat from, since *every*
+freestanding position now uniformly drops the dot, annotations included
+(`let r: { x: f64 }`, not `let r: .{ x: f64 }`). The options table below and the
+"later simplification" framing are kept as history, since both were reasoning toward
+this same conclusion without fully landing on it.
 
-**The accepted cost is narrower than that:** the dot is still noise in a type annotation
-that could not be ambiguous, such as `let r: .{ x: f64 }`. Dropping it *there* would mean
-one type written two ways depending on position, which is the case worth paying a character
-to avoid.
-
-**Options considered and set aside:**
+**Options considered and set aside (original pass):**
 
 | Form | Status |
 |---|---|
-| bare `{ … }` | **would work, and is the upgrade path** — see below |
+| bare `{ … }`, freestanding only | **adopted, 2026-07-23** — see above |
+| bare `{ … }`, uniformly (incl. projection) | rejected — collides with `struct_literal` for projection specifically, RFC-0100-dependent there |
 | `#{ … }` (Erlang/Clojure) | `#` is genuinely unused in the whole grammar, but projection reads badly |
 | `record { … }` (RFC-0090 as drafted) | verbose, and **fails uniformity** — `Handle.record { fd }` is unusable |
-| `{\| … \|}` (F#) | F# needs it because nominal literals occupy plain braces; that motivation does not transfer, and it is heavier than the dot |
+| `{\| … \|}` (F#) | does not solve projection (still collides, see above); freestanding-only case beaten outright by bare `{ }` |
 | `_.{ … }` | prefix always present, marginal uniformity gain, more noise |
 | `( … )` | collides three ways — tuple type, parenthesized expression, parenthesized ascription |
 | `[ … ]` | collides with array and sized-array types |
 | `<: … :>` | collides with the `<…>` compile-time parameter channel that RFC-0090 §2 invokes for `<row R>`; also C's digraphs for `[` and `]` |
-
-**Bare `{ … }` as a later simplification, and the finding that makes it possible.** A bare
-block is **not an expression** in this grammar: the primary alternation (lines 196–208)
-lists `closure_expr`, `match_expr`, `if_expr`, `loop_expr`, `struct_literal`, `path_expr`
-and friends, but no `block`. Blocks appear only in dedicated slots — function and closure
-bodies, and `(block | expr)` in `if_expr` and match arms, where `block` is tried **first**.
-So bare braces would collide with nothing, and the entire cost would be that an anonymous
-record literal used as an *unparenthesized* if-branch or match-arm body needs parens.
-
-Worth recording because it is not obvious and it is a real, if accidental, advantage over
-Rust — Metel can afford bare-brace records precisely because it chose not to make blocks
-first-class expressions. **If RFC-0100 lands and removes struct literals, dropping the dot
-becomes a purely mechanical simplification** with no semantic consequence. Until then the
-dot costs one character and buys freedom from that dependency.
 
 **Remaining condition:** this was decided from grammar reading, not from a built prototype.
 Chained projection `S.{ R }.{ R' }`, projection in pattern position, and any interaction
@@ -636,12 +639,12 @@ moved.*
    same question, since structural-only reassembly lets any matching-shaped view rebuild a
    `Handle`. The argument is stated for the borrowed case only; whether it extends to the
    by-value `from_record` is unexamined, and neither RFC currently connects the two.
-3. **Does `.{ … }` / `S.{ … }` survive contact with the rest of the grammar?** §3.5 checks
-   the direct collisions — nothing starts with `.` in expression or type position, postfix
-   `.` takes only three forms — but not the indirect ones: chained projection
-   `S.{ R }.{ R' }`, projection in pattern position, the overlap with RFC-0099's
-   dot-separated module paths, and whether `block_expr_stmt`'s `!"}"` lookahead interacts
-   badly. Decided from grammar reading, not from a built prototype.
+3. **Does `{ … }` / `S.{ … }` survive contact with the rest of the grammar?** §3.5 checks
+   the direct collisions — freestanding braces collide with neither blocks nor struct
+   literals, `S.{ … }` collides with neither — but not the indirect ones: chained
+   projection `S.{ R }.{ R' }`, projection in pattern position, the overlap with
+   RFC-0099's dot-separated module paths, and whether `block_expr_stmt`'s `!"}"`
+   lookahead interacts badly. Decided from grammar reading, not from a built prototype.
 4. **What exactly is the call-site coercion rule?** §3.2 relocates the whole
    views-vs-records tension into it. RFC-0090 §8 bans implicit structural coercion; view
    types' headline benefit requires it. A rule narrow enough to permit the second without

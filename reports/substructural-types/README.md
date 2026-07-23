@@ -323,14 +323,16 @@ structured-guarantee mechanism is reopened as premature to settle):
   question and OQ10 (`FromRecord` bypassing constructor invariants) are the same question,
   since structural-only reassembly lets any matching-shaped view rebuild the struct.
   Argued for the borrowed case only; neither RFC currently connects the two.
-- Surface syntax, decided 2026-07-22: one former for all three positions — `.{ … }` for
-  anonymous records, `type X = .{ … }` (alias) versus `record X { … }` (declaration) as the
-  identity switch,
-  `S.{ … }` / `h.{ … }` for view types and values. Chosen over bare braces because the dot
-  lets it coexist with today's struct literals, so it carries no dependency on RFC-0100;
-  bare braces remain available as a mechanical simplification if that RFC lands. Answers
-  RFC-0090's open question 8 as a side effect. Not yet prototyped — chained projection,
-  pattern position, and the RFC-0099 dot overlap are unchecked.
+- Surface syntax, decided 2026-07-22, **revised 2026-07-23 to split on whether there is a
+  receiver**: bare `{ … }` for every freestanding position (anonymous record type/value,
+  `type X = { … }` alias, and — per `nominal-types-as-branded-rows.md` §12 — bounds), kept
+  unconditionally safe and independent of RFC-0100 (freestanding braces collide with
+  neither blocks nor struct literals); `.{ … }`/`S.{ … }`/`h.{ … }` kept only for
+  projection, the one position that actually collides with `struct_literal` and so
+  actually depends on RFC-0100 not landing (or on this dot, if it doesn't). `record X { … }`
+  stays the identity switch against `type X = { … }`. Answers RFC-0090's open question 8
+  as a side effect. Not yet prototyped — chained projection, pattern position, and the
+  RFC-0099 dot overlap are unchecked.
 - What exactly is the call-site coercion rule? The whole views-vs-records tension
   relocates into it — RFC-0090 §8 bans implicit structural coercion, view types' headline
   benefit requires it, and no rule narrow enough to permit the second without reopening

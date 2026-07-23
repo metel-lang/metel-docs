@@ -110,11 +110,11 @@ fun leak(h: Handle) {
 **Reading (ii) — `Drop` is row-bounded, inferred from the body**, the same "accuracy
 checking, not a declared-and-trusted annotation" discipline RFC-0109 §4.10 already
 specifies for self-view narrowing. `drop`'s body reads `self.fd`, so its bound is
-`.{ fd: i32 }` (§12); it fires on *any* residual satisfying that bound, regardless of
-what else was moved out first. This closes the leak, and it also beats plain
-decomposition (the earlier proposed fix for `uses (…)`) specifically on this case: no
-wrapper type is needed, `fd` stays a direct field of `Handle`, `.{ fd: i32 }`
-stays satisfiable on `Handle` itself — the `HasField`-transparency gap
+`{ fd: i32 }` (§12 — a bound is freestanding, no receiver, so it is bare); it fires on
+*any* residual satisfying that bound, regardless of what else was moved out first. This
+closes the leak, and it also beats plain decomposition (the earlier proposed fix for
+`uses (…)`) specifically on this case: no wrapper type is needed, `fd` stays a direct
+field of `Handle`, `{ fd: i32 }` stays satisfiable on `Handle` itself — the `HasField`-transparency gap
 `access-and-presence-rows.md`'s audit found in the decomposition fix does not arise here.
 
 **Revised 2026-07-23: the cost above is overstated.** Reading (ii) does not actually
@@ -315,7 +315,8 @@ description, and they get different treatment.
   `HasField` or coherence. **It is available to every struct, tier-1 or tier-3,
   unconditionally**; §7's brand-gating does not touch it.
 - **Reading B — the receiving method is *generic* over which residual it gets**, e.g.
-  `fun process<row R: .{ fd: i32 }>(h: Handle.{ R })`, bounding an abstract row
+  `fun process<row R: { fd: i32 }>(h: Handle.{ R })` — bare in bound position, dotted
+  in the projected parameter — bounding an abstract row
   variable rather than naming a fixed shape. This is exactly the reusable-helper case
   (`drain_field<row R, name, T>`) §7 gates behind tier-3, deliberately — an ordinary
   struct choosing to stay tier-1 is choosing not to be usable this way.
@@ -416,11 +417,11 @@ concrete enough to build, not assumed from the surface argument alone.
 | enums | out of scope, unchanged | — | should be stated explicitly |
 | generic structs | — | — | monomorphization-timing question, open; `.narrow()` a second consumer |
 | zero-cost-for-ordinary-structs | — | — | commitment stated, not validated |
-| `HasField<"fd", i64>` bound syntax | ✅ §12 — replaced outright by `.{ fd: i64 }` | `bound_head` grammar needs a new alternative; `Lacks` needs a type-position wildcard | neither piece of grammar work is written yet |
+| `HasField<"fd", i64>` bound syntax | ✅ §12 — replaced outright by bare `{ fd: i64 }` | `bound_head` grammar needs a new alternative; `Lacks` needs a type-position wildcard | neither piece of grammar work is written yet |
 
 ---
 
-## 12. `HasField`/`Lacks` bound syntax: replaced outright by `.{ … }`
+## 12. `HasField`/`Lacks` bound syntax: replaced outright by `{ … }`
 
 **The premise, checked directly against `grammar.pest` rather than assumed: `HasField<"fd",
 i64>` does not parse today.** `bound_arg = { assoc_binding | type_expr }`, and `type_expr`
@@ -429,14 +430,17 @@ RFC-0090 §1 and RFC-0096 §7 both already flagged it as an unresolved gap — b
 what follows fills a hole nothing currently occupies, rather than migrating working
 syntax.
 
-**Decision: replace `HasField`/`Lacks` outright with the `.{ … }` row syntax already
-settled in `access-and-presence-rows.md` §3.5**, rather than keeping them as named sugar
-over it. Keeping both would reintroduce exactly the "two spellings for one fact" problem
-this whole session has been eliminating everywhere else.
+**Decision: replace `HasField`/`Lacks` outright with the row syntax already settled in
+`access-and-presence-rows.md` §3.5**, rather than keeping them as named sugar over it.
+Keeping both would reintroduce exactly the "two spellings for one fact" problem this whole
+session has been eliminating everywhere else. **Revised 2026-07-23, same day as written:**
+§3.5 itself was revised to split the row-former on whether a receiver is present, and a
+bound has none — so this uses **bare `{ … }`**, not `.{ … }`. Pressure-testing the dot in
+this exact position is what surfaced that the receiver-based split was needed at all.
 
 ```metel
-fun magnitude<T: .{ x: f64, y: f64 }>(p: T) -> f64 { ... }         // was: HasField<"x", f64> + HasField<"y", f64>
-impl<row R: .{ x: f64 }> Display for record R { ... }               // RFC-0090 §4's row-conditional impls, same reuse
+fun magnitude<T: { x: f64, y: f64 }>(p: T) -> f64 { ... }         // was: HasField<"x", f64> + HasField<"y", f64>
+impl<row R: { x: f64 }> Display for record R { ... }               // RFC-0090 §4's row-conditional impls, same reuse
 ```
 
 A bound *is* a row, spelled the same way a row is spelled everywhere else — no string
@@ -445,15 +449,17 @@ what is currently an ANDed chain of separate `HasField` instances becomes one bo
 naming several labels at once.
 
 **The grammar change this needs, precisely.** `bound_head = { type_path ~ (...)? }`
-currently requires every bound to start from an identifier (`type_path`); `.{ … }` is not
-one, so `bound_head` needs a genuinely new alternative
-(`bound_head = { type_path ~ (...)? | row_bound }`), not merely adding `.{ }` to
-`type_expr` generally, which was already the plan for ordinary value/type positions.
+currently requires every bound to start from an identifier (`type_path`); a bare row is
+not one, so `bound_head` needs a genuinely new alternative
+(`bound_head = { type_path ~ (...)? | row_bound }`). Bound position has no receiver to
+disambiguate from, so this alternative needs no dot — bound position parses neither
+struct literals nor blocks, so a bare `{ … }` there collides with nothing, the same
+finding §3.5 already established for every other freestanding position.
 
 **`Lacks` is the harder half.** `Lacks<"tag">` asserts absence regardless of type — it
 does not care what `tag` would be, only that no field by that name exists. Row-bound
 negation, reusing the *existing* `bang?` already in `bound = { bang? ~ bound_head }`, gets
-close: `T: !.{ tag: _ }`. But this needs a type-position wildcard meaning "any type,"
+close: `T: !{ tag: _ }`. But this needs a type-position wildcard meaning "any type,"
 which does not exist today — checked directly: `_` appears only inside `pattern`
 (`Pattern::Wildcard`), nowhere in `type_expr`. A genuinely new, small addition, not a
 reuse.
@@ -462,7 +468,7 @@ reuse.
 `HasField<"fd", i64>` — it is the spelling for every `HasField`-shaped construct in the
 corpus, including RFC-0090 §4's row-conditional-impl typestate examples
 (`impl<row R: HasField<"x", f64>> Session<R> { ... }` becomes
-`impl<row R: .{ x: f64 }> Session<R> { ... }`).
+`impl<row R: { x: f64 }> Session<R> { ... }`).
 
 ---
 

@@ -110,9 +110,12 @@ reader arriving from Swift.
 version will meet `type X = Concrete` and conclude the language is inconsistent.
 
 **It is not free for records either.** The record forms settled in
-`access-and-presence-rows.md` §3.5 are `.{ x = 1.0 }` for values and `.{ x: f64 }` for
-types. That is the F# split applied to Metel's row former, but it means record literals and
-struct fields read differently from each other for as long as both exist.
+`access-and-presence-rows.md` §3.5 (revised 2026-07-23 to drop the dot from every
+freestanding position) are `{ x = 1.0 }` for values and `{ x: f64 }` for types — the
+projection forms (`Handle.{ fd }`) keep the dot, since that is the one position that
+still depends on it. Freestanding is now the F# split almost verbatim, minus F#'s own
+pipes. It still means record literals and struct fields read differently from each
+other for as long as both exist.
 
 ---
 
@@ -121,8 +124,8 @@ struct fields read differently from each other for as long as both exist.
 **Adopt it as a named design principle**, not as a syntax patch. This corpus already works
 this way — RFC-0065's "elision is never a silent choice," Storage Transparency — and a
 principle pays for itself by settling later questions cheaply: every future "what separator
-for this new form?" gets a default instead of a fresh debate, and `.{ x = 1 }` versus
-`.{ x: f64 }` stops being a special case about records and becomes an instance of a general
+for this new form?" gets a default instead of a fresh debate, and `{ x = 1 }` versus
+`{ x: f64 }` stops being a special case about records and becomes an instance of a general
 rule.
 
 Concretely:
@@ -167,5 +170,6 @@ Concretely:
 - `internal/rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md` — the `expr: Type`
   production the invariant keeps unambiguous; not reopened by any of this
 - `reports/substructural-types/access-and-presence-rows.md` §3.5 — the record-syntax
-  question this generalizes from, and the record syntax (`.{ x = 1.0 }` / `.{ x: f64 }` /
-  `Handle.{ fd }`) that depends on this invariant for its type/value distinction
+  question this generalizes from, and the record syntax (`{ x = 1.0 }` / `{ x: f64 }` /
+  `Handle.{ fd }`, dotted only where projection needs it) that depends on this invariant
+  for its type/value distinction
