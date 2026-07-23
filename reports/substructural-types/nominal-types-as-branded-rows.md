@@ -527,9 +527,9 @@ corpus, including RFC-0090 §4's row-conditional-impl typestate examples
    is its own dedicated mechanism, is not decided — recorded only as a forward-looking
    sketch, not a committed design.
 9. **Two pieces of grammar work for §12, neither written yet:** the new `bound_head`
-   alternative that lets a bound start from `.{ … }` instead of only a `type_path`, and a
-   type-position wildcard (`_`, meaning "any type") for `Lacks`'s replacement
-   (`T: !.{ tag: _ }`) — `_` exists only in `pattern` today, confirmed absent from
+   alternative that lets a bound start from a bare `{ … }` instead of only a `type_path`,
+   and a type-position wildcard (`_`, meaning "any type") for `Lacks`'s replacement
+   (`T: !{ tag: _ }`) — `_` exists only in `pattern` today, confirmed absent from
    `type_expr`. Whether this becomes an RFC-0090 amendment or its own small RFC is also
    not decided.
 
