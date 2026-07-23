@@ -3,7 +3,7 @@ id: strategic-objectives
 title: "Strategic Objectives, Priorities, and Watch List"
 type: report
 status: active
-last_reviewed: '2026-07-22'
+last_reviewed: '2026-07-23'
 ---
 
 # Strategic Objectives, Priorities, and Watch List
@@ -184,6 +184,22 @@ Also in this priority, and still unwritten: **per-field multiplicity** — owner
 per-field rather than whole-value property. It is the half of the substrate that makes records
 more than a structural-typing convenience.
 
+**2026-07-23: a full session of design work landed here, with one real artifact-level
+result and Trigger 6 still not settled.** `HasField`'s bound syntax — checked directly
+against `grammar.pest` — never actually parsed; it is fixed, as a direct amendment to
+RFC-0090 itself, not just in a parallel exploration document (`HasField<"x", f64>` →
+`{ x: f64 }`, `Lacks<"tag">` → `!{ tag: _ }`). Two of RFC-0090's own open questions got
+resolutions folded in the same pass (tier-3's declaration syntax; a pointer to new draft
+RFC-0114 for `FromRecord`'s constructor-invariant risk). A separate, more radical
+exploration (`nominal-types-as-branded-rows.md` — every nominal type as `(brand, row)`,
+not just tier-3's opt-in named record) was pressure-tested at length and deliberately
+**unbundled**: parts that didn't need its central thesis were folded back now; the
+central thesis itself was kept a live, separate exploration, explicitly not gating this
+priority's own path to acceptance. **Trigger 6 itself — the actual dependency-direction
+question review is gated on — was not touched.** See
+`strategic-overview-2026-07-23.md` for the full account and the honest assessment of
+what this kind of session does and doesn't count as.
+
 ### Priority 2 — Ownership enforcement and the borrow checker
 
 Promoted to its own slot 2026-07-22. Previously this was one bullet inside the substrate list
@@ -226,6 +242,16 @@ decomposition can even be tested.
 
 This priority is where the coupling risk in Trigger 18 concentrates: brands are unsettled,
 and Priority 4 is bet on them.
+
+**2026-07-23: `brand-kind-unification.md`'s own OQ6 (open since 2026-07-07, sixteen
+days) got a candidate answer** — checked property by property against that document's
+own definition of the unified kind, not re-asserted — and Priority 1's exploration was
+checked for whether it deepens this priority's dependency on RFC-0076: it does not.
+Nominal type identity, the thing Priority 1's exploration needs, turns out to be a
+degenerate case of the freshness/rigidity properties (one introduction, at declaration,
+compile-time only), needing none of RFC-0076's actual runtime checking machinery. The
+real RFC-0076 dependency in this cluster (the allocator-instance brand, RFC-0090 §9's
+fiat-linear exception) predates this session and is unchanged either way.
 
 ### Priority 4 — Allocators as an emergent synthesis and acceptance test, built last
 
@@ -344,11 +370,15 @@ of what was watched for and what actually happened is part of the point.
 5. ✅ **Fired and resolved, 2026-07-10.** The former Priority 1 moved. This trigger did its
    job: it named the pattern that was actually happening (L3 activity masking L2 inaction)
    and caused the check that led to ratification.
-6. ⬜ **Open; now Priority 1's gating question.** Does the substrate genuinely require
+6. ⬜ **Open; still Priority 1's gating question.** Does the substrate genuinely require
    RFC-0090's record machinery for RFC-0089's floor, or does that dependency need removing to
    preserve the "narrow, no row kind" property? Neither RFC states the conflict. **Review of
    the under-review cluster must settle this**, and it is the reason the four RFCs were swept
-   as a unit rather than individually.
+   as a unit rather than individually. **2026-07-23: a full session of depth on Priority 1
+   went around this question, not through it** — real fixes landed (RFC-0090's own bound
+   syntax, tier-3 declaration syntax) without ever addressing the RFC-0089↔RFC-0090
+   dependency direction itself. Named explicitly so the volume of related work is not
+   mistaken for progress on the one question actually gating review.
 7. ⬜ **Open, still untested.** Does `INDEX.md` + `rfc.py`'s overlap check actually prevent a
    second RFC-0055-shaped silent duplication, or does it quietly fall out of use the way the
    undocumented process before it did? **Partially exercised 2026-07-21:** RFC-0111 and
@@ -445,6 +475,13 @@ of what was watched for and what actually happened is part of the point.
     honest version of this trigger is that even the "cheap falsifier" was mis-sized on first
     attempt — the substrate has no genuinely small entry point, which is itself part of why
     it keeps not being started.
+
+    **Update, 2026-07-23: still not tripped, for the seventh day running — but a real
+    middle state showed up that this trigger's binary framing didn't anticipate.** A
+    full session's findings became a direct amendment to RFC-0090 itself (the bound
+    syntax fix), reaching the artifact under review without ever touching the issue
+    tracker. That is not the falsifier — no tracked issue exists — but it is not
+    identical to another day of pure `reports/`-only exploration either. See Trigger 22.
 21. ⬜ **New, 2026-07-22.** Priority 5 is new and is the priority most likely to expand to fill
     the available effort, because its work is the most immediately satisfying — every issue in
     it is well-scoped, verifiable, and finishable in a session, which is precisely what the
@@ -452,6 +489,25 @@ of what was watched for and what actually happened is part of the point.
     naming it legitimises it and the ratio gets worse. If the next cycle closes several
     Priority 5 issues and opens none against 1–3, ranking it did nothing and the ordering
     should be treated as descriptive rather than directive.
+22. ⬜ **New, 2026-07-23. A middle state between "pure exploration" and "a tracked issue"
+    showed up, which Trigger 20's binary framing didn't anticipate.** A full session's
+    findings on Priority 1 became a direct amendment to RFC-0090 itself (a real bound-
+    syntax bug, fixed in the RFC under review, not just in a parallel document) —
+    reaching the artifact that governs implementation without ever touching the issue
+    tracker. Not the falsifier; not identical to another day of `reports/`-only churn
+    either. Watch whether this recurs as a reliable leading indicator that a cluster is
+    converging, or whether it can also repeat indefinitely without ever producing a
+    tracked issue.
+23. ⬜ **New, 2026-07-23. An explicit unbundling decision, worth watching whether it
+    holds.** A session's deepest exploration (`nominal-types-as-branded-rows.md` —
+    every nominal type as `(brand, row)`, not just tier-3) turned out to bundle several
+    claims at different levels of dependency on its own central thesis. Rather than one
+    fate for the whole document, the independent parts were folded back now (into
+    RFC-0090, into `brand-kind-unification.md`) and the central, more speculative thesis
+    was deliberately kept separate, explicitly not gating Priority 1's own path to
+    acceptance. Watch whether the next cycle actually acts on that split — moving
+    RFC-0089/0090/0091/0109 toward acceptance without waiting on the broader idea — or
+    whether the split was itself just a well-reasoned form of deferral.
 
 ---
 
@@ -478,6 +534,7 @@ of what was watched for and what actually happened is part of the point.
 | 2026-07-21 | RFC-0113 (Context Parameters) written from nothing, closing the "largest unwritten hole" this document named — deliberately without allocator syntax in its core, and scoped to replace the threading only. RFC-0089/0090/0091/0109 swept to `1-under-review` as one records/views cluster, with Trigger 6 named as the question review must settle. Twelve status-citation drift problems fixed. Trigger 17 answered honestly ("both, in that order"). | *(none)* |
 | 2026-07-22 | **§1 and §2 rewritten; priorities reordered from four slots to six.** The old ordering had a completed item (allocator ratification, done 07-10) in the Priority 1 slot, so the document read as though the top priority were finished — moved to a "Closed" subsection at the end of §2, preserved as a record. New order follows the blog's own sequencing sentence: records/views (1), ownership + borrow checker (2), brands + context parameters (3), allocators (4). Two structural findings drove it, both verified directly rather than inferred: **the borrow checker has no RFC at all** (only "borrow" match across 112 RFCs is the refused RFC-0086) despite three documents treating it as a known quantity, and **RFC-0071 has been accepted since 06-28, 0% implemented, untracked** — together promoted to Priority 2 and Trigger 19. **Priorities 1–4 hold zero open issues while all nineteen sit in interpreter work that this document had never ranked**; that work is now Priority 5, ranked explicitly fifth with the §1 budget filter as its triage rule, because leaving it unlisted meant the tracker and the priorities described two unrelated projects and the gap could not be measured. Triggers 19/20/21 opened; 8 and 17 marked superseded by later triggers rather than deleted. | *(this entry; a dated snapshot may follow)* |
 | 2026-07-22 | **Corrected the same day, on review:** the reorder below had recommended `ToRecord`/`FromRecord` as Priority 1's first tracked issue, following the blog's "short term" phrasing. It cannot be first. RFC-0090 §8 makes it tier 2 of three, converting *into* a `record { … }` type-former that does not exist yet — the conversion has no codomain until the record/row semantics are defined — and RFC-0090 §3's own recommended build order already puts the closed `record` type-former plus `HasField` at step 1, with `<row R>` open generics deferred to a separate decision. The derive half depends further on RFC-0093, still `0-draft`. Priority 1 now states the real order; §1 records the qualification the blog sentence needs, since §2 is measured against that sentence and a misreading of it propagated straight into the priorities; Trigger 20's recommended first issue corrected, keeping the note that even the "cheap falsifier" was mis-sized on first attempt — the substrate has no genuinely small entry point, which is part of why it keeps not being started. The five under-review RFCs' status notes were carrying the same wrong framing plus a stale Priority number; both fixed. | *(none)* |
+| 2026-07-23 | A full session of design work on Priority 1's records/views substrate, not a corpus-wide sweep. Real, verified findings throughout — `HasField`'s bound syntax never actually parsed (confirmed against `grammar.pest`) and is fixed as a direct amendment to RFC-0090 itself; `brand-kind-unification.md`'s OQ6 (open sixteen days) got a candidate answer; a new draft RFC (RFC-0114) closed RFC-0090's OQ10 using only already-implemented machinery; two of the session's own errors were caught and corrected within the same conversation. A more radical exploration (every nominal type as `(brand, row)`, not just tier-3) was pressure-tested and then deliberately **unbundled**: parts independent of its central thesis folded back now, the central thesis itself kept separate and explicitly not gating this priority's own review. Honest assessment, matching Trigger 17's precedent for recording process outcomes plainly: on-topic depth is not the same failure Trigger 17 caught, but it is still design extension rather than building, per §1's own standing risk — and **Trigger 6, the actual question review is gated on, was not touched**. Trigger 20's tracked-issue falsifier was still not tripped, for the seventh day running, though a real middle state (a direct RFC amendment with no tracked issue) showed up that its binary framing hadn't anticipated. Triggers 22/23 opened for that middle state and for whether the unbundling decision actually holds next cycle. | `strategic-overview-2026-07-23.md` |
 
 ---
 
@@ -497,3 +554,5 @@ of what was watched for and what actually happened is part of the point.
   "no borrow-checker RFC" finding
 - `internal/rfcs/INDEX.md` — curated thematic grouping and cross-reference map
 - `metel-core/AGENTS.md` — Codeberg Issues task-tracking design (Triggers 10, 20)
+- `strategic-overview-2026-07-23.md` — most recent dated snapshot, the single-priority,
+  deep-session cycle behind Triggers 22/23 and Priority 1/3's 2026-07-23 updates
