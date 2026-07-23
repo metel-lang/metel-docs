@@ -386,7 +386,13 @@ structured-guarantee mechanism is reopened as premature to settle):
   Left open: whether a generic struct's brand varies per instantiation or stays tied to
   the declaration — assumed the latter, unchecked.
 - Does the zero-cost-for-ordinary-structs property actually hold at the implementation
-  level, or only at the level of the surface-syntax argument? Unvalidated.
+  level? Sharpened, not resolved, 2026-07-23: views (RFC-0067a, implemented) and the
+  declaration-time eligibility gate stand on real ground; static narrowing and `Drop`'s
+  compile-time-only dispatch are a coherent design argument resting on RFC-0071, which is
+  `2-accepted`, **not implemented** — a prior pass wrongly cited it as already-shipped
+  evidence, contradicting this document's own standing caveat in the same breath.
+  Corrected and left visible rather than smoothed over. Cannot be validated further
+  until RFC-0071 is actually built.
 - What is this document's precise relationship to RFC-0090 §9 — an amendment to it, or a
   distinct further claim (degrade-on-move) that §9 itself never proposes?
 - **`HasField<"fd", i64>`'s bound-position syntax, replaced outright by `.{ fd: i64 }`**

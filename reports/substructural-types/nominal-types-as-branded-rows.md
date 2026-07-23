@@ -435,15 +435,84 @@ written down. See Open Question 10.
 
 ---
 
-## 10. The zero-cost claim: a commitment to validate, not a settled property
+## 10. The zero-cost claim: what rests on solid ground, and what doesn't
 
 The model's appeal rests partly on "the surface does not care that it's actually a row."
 For that to be true at the implementation level, not just the surface-syntax level, an
 unnarrowed value's type would need to stay representationally identical to today's plain
 `Type::Named` — row machinery activating only at an actual narrowing operation (a move,
-or a projection), never for code that does neither. That is a defensible design
-*commitment*, not yet a demonstrated property. It needs checking once any of this becomes
-concrete enough to build, not assumed from the surface argument alone.
+or a projection), never for code that does neither. Breaking this into its parts, rather
+than treating it as one claim, separates the pieces that already stand on something real
+from the piece that turned out to rest on nothing.
+
+**Revised 2026-07-23, after a real error while first working through this: an earlier
+draft of this section claimed RFC-0071's partial-move tracking "is already implemented,
+already fully static" as evidence the static-bookkeeping approach costs nothing — while,
+a few paragraphs later in the same draft, repeating this document's own standing caveat
+that "the interpreter still deep-clones values and has no borrow checker." Those two
+statements directly contradict each other. Checked precisely: RFC-0071 is `2-accepted`,
+not implemented — `REGISTRY.md` confirms the stage, and grepping the interpreter source
+for partial-move tracking returns nothing. The correction below is kept visible rather
+than smoothed into the text, because which claims survive it and which don't is the
+substance of the answer.**
+
+### 10.1 Two ways narrowing could be implemented, and which one is cost-free
+
+- **Static** — the row is a type-checker fiction. A struct's memory layout never changes
+  at runtime; narrowing only updates what the type checker believes is legal to touch. A
+  moved-out field's memory sits inert until the whole value is eventually torn down by
+  ordinary recursive per-field drop.
+- **Dynamic** — the value actually carries a runtime discriminant recording which fields
+  are present, checked at runtime.
+
+Static bookkeeping is the cost-free option, matching how Rust's borrow checker already
+works and matching what RFC-0071's own text specifies (a compile-time check, not a
+runtime one). **This is a design argument, not a demonstrated one** — before the
+correction above, this section claimed it as already-validated fact; it is not. It rests
+on external precedent and on RFC-0071's stated design, and on nothing currently running
+in Metel.
+
+### 10.2 `Drop` dispatch resolving at compile time is conditional, not observed
+
+§4.1 argued `Drop`'s row-bounded dispatch (reading ii) could resolve entirely at compile
+time with zero runtime branches, because the type checker already knows the exact
+residual type at every specific program point. That conclusion followed directly from
+"Metel's ownership tracking is already fully static" — which is RFC-0071's *design*, not
+its *status*. The conclusion still follows **if** RFC-0071 is built as specified, and
+does not silently reintroduce runtime cost while being built — but it is contingent two
+levels deep, not something to cite as already true.
+
+### 10.3 What doesn't depend on RFC-0071, and stays on solid ground
+
+**Views cost exactly what taking a reference already costs**, and this piece of the
+argument does not need the correction above: `&`/`&mut` with auto-deref (RFC-0067a) is
+genuinely implemented, confirmed earlier this session. A view is a small value holding
+references to specific fields — the same cost as any struct containing reference fields,
+which already exists in the shipped language, independent of anything in this document.
+
+**The eligibility gate (§7) is a declaration-time flag, unaffected either way.** Whether a
+struct's brand is visible to structural matching is a single fact fixed once, at
+declaration (tier-1 vs. tier-3) — O(1) per declaration, never rechecked per call site,
+and this has nothing to do with move-tracking or RFC-0071 at all.
+
+### 10.4 One genuinely unchecked edge case
+
+Dynamic dispatch through `dyn Aspect` (RFC-0008) could need a runtime row representation,
+if a call site cannot statically know the concrete residual shape behind a trait object.
+RFC-0008 is explicitly deferred with "no consumer yet" per this session's earlier
+research, so this is not a live concern today — but it is the one case where even the
+*static* design, once built, might not hold, and it deserves a note rather than silence.
+
+### 10.5 What this means for the property as a whole
+
+Not resolved — sharpened. The claim is contingent on a foundation (RFC-0071) that is
+accepted as a design but does not exist as an implementation, so "zero cost" cannot be
+validated by inspection the way OQ1–4 were; it can only be validated once that
+foundation is actually built, and even then only by checking that the implementation
+doesn't quietly reintroduce cost RFC-0071's own design says it shouldn't have. The two
+pieces that don't depend on RFC-0071 (views, the eligibility gate) are the parts of this
+claim currently on solid ground; the rest is a coherent design argument, not yet
+evidence.
 
 ---
 
@@ -461,7 +530,7 @@ concrete enough to build, not assumed from the surface argument alone.
 | passing owned residuals across calls | ✅ §8.2 — strict, no implicit truncation ever | reopens RFC-0090 §7's width-subtyping hazard, first pass | `.narrow()`'s mechanism/naming, sketched not designed (§8.3, OQ8) |
 | enums | out of scope, unchanged | — | should be stated explicitly |
 | generic structs | ✅ §9.2 — no deferral needed; field sets are declaration-fixed, only types vary | — | brand identity per instantiation, unchecked (OQ10) |
-| zero-cost-for-ordinary-structs | — | — | commitment stated, not validated |
+| zero-cost-for-ordinary-structs | ✅ views + eligibility gate, on real ground (§10.3) | — | narrowing/`Drop` dispatch rest on unbuilt RFC-0071 (§10.1–10.2); a prior draft wrongly claimed this as already validated |
 | `HasField<"fd", i64>` bound syntax | ✅ §12 — replaced outright by bare `{ fd: i64 }` | `bound_head` grammar needs a new alternative; `Lacks` needs a type-position wildcard | neither piece of grammar work is written yet |
 
 ---
@@ -563,7 +632,15 @@ corpus, including RFC-0090 §4's row-conditional-impl typestate examples
    answers `.narrow()`'s (§8.3) target-row inference, the second consumer this question
    named.
 5. **Does the zero-cost-for-ordinary-structs property actually hold at the implementation
-   level**, or only at the level of the surface-syntax argument (§10)? Unvalidated.
+   level?** **Sharpened, not resolved, 2026-07-23 (§10.1–10.5).** Two pieces stand on
+   real ground independent of anything else: views cost exactly what reference-taking
+   already costs (RFC-0067a, implemented), and the eligibility gate is a declaration-time
+   flag (O(1), unrelated to move-tracking). The rest — static-vs-dynamic narrowing,
+   `Drop`'s compile-time-only dispatch — is a coherent design argument resting on
+   RFC-0071, which is `2-accepted`, **not implemented**: an earlier pass through this
+   question wrongly cited RFC-0071's tracking as already-shipped evidence, contradicting
+   this document's own standing caveat in the same breath. Corrected and left visible.
+   Cannot be validated further until RFC-0071 is actually built.
 6. **What is this document's precise relationship to RFC-0090 §9?** §9 proposes
    representation-sharing for identity purposes only; this document's degrade-on-move
    extension is not present in §9 at all. Is this an amendment to §9, or a distinct,
