@@ -194,11 +194,11 @@ anywhere in the corpus (RFC-0061), every struct becomes structurally eligible to
 TypeScript failure mode §8 exists to prevent, reintroduced at the level of coherence
 rather than at the level of a type's own declared capability.
 
-**Proposed reconciliation, not yet fully checked:** separate *"has a row, for narrowing
-purposes"* (universal — needed for move-tracking to work uniformly across every struct)
-from *"row is visible to `HasField`/row-conditional-impl matching"* (stays opt-in, gated
-exactly the way tier 3 gates it today). The representation can be uniform without the row
-being an ambient input to coherence.
+**Reconciliation, checked 2026-07-23:** separate *"has a row, for narrowing purposes"*
+(universal — needed for move-tracking to work uniformly across every struct) from *"row
+is visible to `HasField`/row-conditional-impl matching"* (stays opt-in, gated exactly the
+way tier 3 gates it today). The representation can be uniform without the row being an
+ambient input to coherence.
 
 **The caveat this puts on §3.1's win.** The *mechanism* becomes uniform — one query,
 checked the same way everywhere — but *eligibility* to be checked still needs a
@@ -207,9 +207,130 @@ struct have a row at all" to "is this struct's row visible to structural matchin
 is a real, if smaller, concession against the model's promise of one unified mechanism
 with nothing bolted on.
 
+### 7.1 The sharper version of the question: does narrowing itself change eligibility?
+
+Stating the reconciliation as a per-*struct* property leaves open what happens to a
+specific narrowed residual, e.g. `Handle.{ fd }` after `tag` is moved out of an ordinary,
+non-opted-in `Handle`. Does that residual inherit `Handle`'s "not visible" status, or does
+producing a row-shaped value via narrowing itself grant visibility — since a residual
+*structurally* looks like exactly the kind of value `HasField` checks are built to find?
+
+**Answer: visibility is scoped to the brand, fixed at declaration time, and inherited
+unchanged by every narrowing and every view under that brand.** `Handle.{ fd }`'s brand
+is still `Handle`; if `Handle` never opted into tier-3, neither `Handle` nor any residual
+or view produced from it is ever visible to structural matching, regardless of which
+fields happen to remain. The row's *content* is irrelevant to the eligibility question —
+only the brand's own, once-fixed declaration matters. This closes the gap precisely: a
+genuinely-declared tier-3 record and an ordinary struct's narrowed residual are never
+confusable, even if their rows happen to look identical, because their brands carry
+independently-fixed eligibility.
+
+### 7.2 This restates, rather than extends, RFC-0090's existing three tiers
+
+No new category is needed — the split was already there, just not previously stated in
+eligibility terms:
+
+- **Tier 1 (ordinary struct):** brand not visible to matching. Narrowing it produces
+  residuals under the *same* invisible brand; narrowing never changes eligibility.
+- **Tier 2 (`ToRecord`/`FromRecord`):** the conversion **strips the brand entirely** —
+  `.to_record()` produces a bare, brandless anonymous record, trivially eligible for
+  `HasField` because there is no brand left to gate behind. This was always tier 2's
+  mechanism; it just was not previously stated in these terms.
+- **Tier 3 (named record):** brand visible to matching, by declaration.
+
+### 7.3 A bonus this produces for RFC-0090 §9's still-open coherence question
+
+§9 asks which wins when a value could match both a brand-keyed impl and a row-keyed
+blanket impl. Under brand-scoped visibility, that ambiguity **can only arise for types
+that opted into tier-3 in the first place** — a tier-1 struct's row is never visible to a
+row-conditional impl at all, so there is nothing to arbitrate for the overwhelming
+majority of types. A real narrowing of an open question, not just a side effect of this
+one.
+
+**One case left unchecked:** does `.to_record()` work on an *already-narrowed* residual —
+`handle_narrowed.to_record()` after `tag` was already moved out — producing an
+even-smaller anonymous record than the type's full declared row? Plausible, not worked
+through; the seam between tier-2 conversion and universal narrowing is not examined
+anywhere in this document or RFC-0090.
+
 ---
 
-## 8. Flagged, not worked through
+## 8. Passing residuals across function boundaries
+
+A residual's whole purpose is often to cross a function boundary — "pass a partially
+consumed struct to another method." Two different capabilities hide under that
+description, and they get different treatment.
+
+### 8.1 Two readings, only one of which needs anything from §7
+
+- **Reading A — the receiving method's signature names a concrete residual shape**,
+  e.g. `fun process(h: Handle.{ fd })`. The "check" happens entirely at compile time: the
+  parameter type *is* the check. This is ordinary type-matching — the same kind that
+  already governs passing an `i64` to something expecting `i64` — and needs nothing from
+  `HasField` or coherence. **It is available to every struct, tier-1 or tier-3,
+  unconditionally**; §7's brand-gating does not touch it.
+- **Reading B — the receiving method is *generic* over which residual it gets**, e.g.
+  `fun process<row R: HasField<"fd", i32>>(h: Handle.{ R })`, bounding an abstract row
+  variable rather than naming a fixed shape. This is exactly the reusable-helper case
+  (`drain_field<row R, name, T>`) §7 gates behind tier-3, deliberately — an ordinary
+  struct choosing to stay tier-1 is choosing not to be usable this way.
+
+Most of what "pass a residual to a method" actually needs is Reading A, and it costs
+nothing extra under this model.
+
+### 8.2 Owned residuals need a stricter rule than borrowed ones
+
+For a *view* (borrowed), passing a wider row where a narrower one is expected is always
+safe — nothing is consumed, only the reference's promise about what it touches shrinks
+(`access-and-presence-rows.md` §3.2). For an **owned** residual, the same move is exactly
+RFC-0090 §7's width-subtyping hazard: passing `Handle.{ fd, tag }` where
+`Handle.{ fd }` (owned) is expected means something has to happen to `tag`, and silently
+discarding it is only sound if `tag` carries no drop obligation (the corrected form of
+RFC-0090's guard, from `access-and-presence-rows.md` §3.3).
+
+**Resolution: strict, no implicit truncation at the call boundary, ever.** A caller
+holding `Handle.{ fd, tag }` who wants to call `process(h: Handle.{ fd })` must narrow
+*itself* first, explicitly (`let t = h.tag;`), so that by the time the call happens its
+own binding's type already matches exactly — the call performs no narrowing of its own.
+This matches RFC-0090 §8's own stance for tier 2 ("no implicit coercion at call sites,
+regardless of tier... would quietly [widen] without the type author having asked for
+it") and RFC-0065's "elision is never a silent choice," applied one level down: narrowing
+only ever happens through the caller's own ordinary moves, never as a side effect of
+argument-passing. The full, un-narrowed `Handle` is not a special case under this rule —
+it is simply the residual where nothing has been narrowed yet, and follows the same
+"match exactly, or narrow yourself first" requirement as any other too-wide residual.
+
+### 8.3 A future ergonomic utility: `.narrow()`
+
+Requiring the caller to spell out every field being moved-and-discarded is real ceremony,
+and a Rust-`.into()`-shaped utility is a plausible answer — **called `.narrow()` here,
+provisionally.** The reason it does not reopen §8.2's hazard is a distinction worth
+keeping precise: the danger was *implicit* coercion, invisible at a call site.
+`.narrow()` is an ordinary, explicit method call, visible in the source, whose body does
+exactly what strict narrowing already requires by hand — move each field not in the
+target row into a discard binding and let it drop normally. Because the call is visible,
+`.narrow()` does **not** need to be gated by droppability the way implicit truncation
+would — it can handle `Drop`-bearing fields uniformly, since nothing is silently skipped,
+only mechanically performed on the caller's behalf.
+
+What it needs: the target row known from context (inferred from a `let` binding's or
+parameter's declared type, the same way Rust's `Into` infers its target — and the same
+open monomorphization-timing question this document's Open Question 4 already asks, now
+with a second consumer), and a compile-time check that the target is an actual subset of
+the source row.
+
+**Naming left open, deliberately.** Borrowing `Into`'s name implies more machinery than
+is confirmed to exist — Metel's `?`-operator already does `From`-based coercion for
+*error* types (live since v0.4.0), but a general `Into`/`From` conversion aspect for
+ordinary values is not confirmed. `.narrow()` may be closer kin to RFC-0090 §8's
+`to_record`/`from_record` pattern — an explicit, named structural conversion, same shape,
+just narrowing between two residuals of the *same* brand rather than converting to an
+anonymous record. Not designed further here; recorded as a forward-looking sketch, not a
+committed mechanism.
+
+---
+
+## 9. Flagged, not worked through
 
 **Enums stay out of scope**, consistent with §6/§9's existing scoping — this is a
 structs-only move. Worth stating explicitly in whatever eventually gets written, rather
@@ -223,7 +344,7 @@ need the same deferral? Plausible, not examined here.
 
 ---
 
-## 9. The zero-cost claim: a commitment to validate, not a settled property
+## 10. The zero-cost claim: a commitment to validate, not a settled property
 
 The model's appeal rests partly on "the surface does not care that it's actually a row."
 For that to be true at the implementation level, not just the surface-syntax level, an
@@ -235,7 +356,7 @@ concrete enough to build, not assumed from the surface argument alone.
 
 ---
 
-## 10. Status summary
+## 11. Status summary
 
 | | Resolved by this model | Newly opened by this model | Flagged, unexamined |
 |---|---|---|---|
@@ -245,9 +366,10 @@ concrete enough to build, not assumed from the surface argument alone.
 | `HasField`-transparency gap (from `access-and-presence-rows.md`) | ✅ §4, via reading (ii) | — | — |
 | RFC-0071 §7 | — | needs rewriting, not narrowing (§5) | — |
 | RFC-0090 OQ10 | ✅ fix in RFC-0114, incl. fallibility, via `Result<Self, Self::Error>` + RFC-0078 | reopened as a general risk first (§6), then resolved | RFC-0114's own OQ3 (default-derivation mechanism) |
-| RFC-0090 §8's non-ambient guarantee | — | at risk under universal rows (§7) | reconciliation proposed, not checked |
+| RFC-0090 §8's non-ambient guarantee | ✅ §7.1–7.3 — visibility scoped to brand, inherited by narrowing/views | at risk under universal rows, first pass (§7) | `.to_record()` on an already-narrowed residual, unexamined |
+| passing owned residuals across calls | ✅ §8.2 — strict, no implicit truncation ever | reopens RFC-0090 §7's width-subtyping hazard, first pass | `.narrow()`'s mechanism/naming, sketched not designed (§8.3, OQ8) |
 | enums | out of scope, unchanged | — | should be stated explicitly |
-| generic structs | — | — | monomorphization-timing question, open |
+| generic structs | — | — | monomorphization-timing question, open; `.narrow()` a second consumer |
 | zero-cost-for-ordinary-structs | — | — | commitment stated, not validated |
 
 ---
@@ -268,17 +390,23 @@ concrete enough to build, not assumed from the surface argument alone.
    `Self` provably, and a real error type loses the automatic-firing sugar in exchange —
    one rule, not a special case invented for this. Kept as a struck-through entry rather
    than removed, per this corpus's convention.
-2. **Is "has a row" vs. "row is visible to structural matching" (§7) a clean, implementable
-   separation, or does it just relocate the two-tier complexity this model was trying to
-   get away from?**
+2. ~~Is "has a row" vs. "row is visible to structural matching" a clean, implementable
+   separation?~~ **Resolved 2026-07-23, §7.1–7.3:** visibility is scoped to the *brand*,
+   fixed at declaration time, and inherited unchanged by every narrowing and view under
+   it — a residual's row *content* never affects its eligibility, only its brand's
+   once-fixed declaration does. Restates RFC-0090's existing three tiers rather than
+   adding a fourth, and narrows §9's brand-vs-row coherence question to types that opted
+   into tier-3 in the first place. One sub-question left open: whether `.to_record()` on
+   an already-narrowed residual is examined anywhere (it isn't).
 3. **Does `Drop`'s row-bounded dispatch (§4, reading ii) actually require general `<row R>`
    machinery, or can it be special-cased narrowly enough to avoid pulling open generics
    onto the critical path for everything else** — including ordinary generic functions
    that have nothing to do with `Drop`?
 4. **Does row-narrowing/`HasField`-checking on generic structs need to defer to
-   monomorphization time**, the way generic function bodies already do? Unexamined (§8).
+   monomorphization time**, the way generic function bodies already do? Unexamined (§9).
+   §8.3's `.narrow()` sketch is a second, later consumer of the same question.
 5. **Does the zero-cost-for-ordinary-structs property actually hold at the implementation
-   level**, or only at the level of the surface-syntax argument (§9)? Unvalidated.
+   level**, or only at the level of the surface-syntax argument (§10)? Unvalidated.
 6. **What is this document's precise relationship to RFC-0090 §9?** §9 proposes
    representation-sharing for identity purposes only; this document's degrade-on-move
    extension is not present in §9 at all. Is this an amendment to §9, or a distinct,
@@ -288,6 +416,11 @@ concrete enough to build, not assumed from the surface argument alone.
    pressure-testing, does it become an RFC-0090 rewrite, an RFC-0071 amendment, a new
    draft RFC of its own, or does it wait until §1's open question is resolved before any
    of that is decided? Not addressed here.
+8. **What is `.narrow()`, mechanically, and does it belong to an existing pattern or a new
+   one?** (§8.3) Whether it extends RFC-0090 §8's `to_record`/`from_record` naming, needs
+   a general `Into`/`From`-shaped conversion aspect that is not confirmed to exist yet, or
+   is its own dedicated mechanism, is not decided — recorded only as a forward-looking
+   sketch, not a committed design.
 
 ---
 

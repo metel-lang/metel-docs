@@ -358,9 +358,15 @@ structured-guarantee mechanism is reopened as premature to settle):
   inhabited-singleton-coercion rules, and a real error type losing the automatic-firing
   sugar in exchange — one rule deciding both, not a special case. Plus an opt-in
   `ConstructUnchecked` escape hatch for code that already knows an invariant holds.
-- Is "has a row, for narrowing" versus "row is visible to structural matching" a clean,
-  implementable separation, or does it just relocate the two-tier complexity this model
-  was trying to get away from?
+- ~~Is "has a row, for narrowing" versus "row is visible to structural matching" a clean
+  separation?~~ Resolved 2026-07-23: visibility is scoped to the *brand*, fixed at
+  declaration, inherited unchanged by every narrowing and view — restates RFC-0090's
+  existing three tiers rather than adding a fourth, and narrows RFC-0090 §9's
+  brand-vs-row coherence question to types that opted into tier-3. Also resolved the
+  same day: passing *owned* residuals across calls needs a stricter rule than borrowed
+  ones — no implicit truncation ever, matching RFC-0090 §8's own no-implicit-coercion
+  stance — with a sketched future `.narrow()` utility (explicit, so it needs no
+  droppability gate) left as its own open question (naming, mechanism).
 - Does `Drop`'s row-bounded dispatch actually require general `<row R>` machinery, or can
   it be special-cased narrowly enough to avoid pulling open generics onto the critical
   path for everything else?
