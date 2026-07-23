@@ -283,6 +283,17 @@ document for the reasoning behind each entry, not just the one-line summary here
   becomes an actual RFC.
 - Whether `effect`/`handle`/`resume` should become its own RFC, and how it sequences
   against the rest of this cluster.
+- (Added 2026-07-23, §14) Connects RFC-0113 (context parameters), the row/view
+  machinery from `access-and-presence-rows.md`/`nominal-types-as-branded-rows.md`, and
+  this report's own aspect-desugaring: several simultaneous handlers form a row
+  (labeled by aspect, per RFC-0113's uniqueness rule), the effect row is that row's
+  type-level projection, and propagating context to a callee needing fewer effects is
+  ordinary row-narrowing, not new machinery — and does not reopen `Drop`'s transitivity
+  problem, since effect rows are declared on every signature where `Drop` isn't. Open:
+  whether real handler-nesting patterns ever need multiple handlers of the same aspect
+  in scope (violating RFC-0113's uniqueness rule this reading depends on), and whether
+  `.narrow()` is actually the right propagation mechanism or RFC-0113 already specifies
+  its own that this reading needs to reconcile with.
 
 **From `structured-concurrency.md`** (rewritten 2026-07-07 — `\|\|` dropped; the
 structured-guarantee mechanism is reopened as premature to settle):

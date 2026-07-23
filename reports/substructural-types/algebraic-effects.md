@@ -3,7 +3,7 @@ id: algebraic-effects
 title: "Algebraic Effects and the Metel Memory Model"
 type: report
 status: active
-last_synced_against_model: '2026-07-06'
+last_synced_against_model: '2026-07-23'
 supersedes: null
 revives: "reports/archive/algebraic-effects-and-memory-model.md"
 ---
@@ -777,6 +777,86 @@ mutation does not appear in the external type.
 
 ---
 
+## 14. The effect row is the type-level projection of the handler context — and it is a row of borrows
+
+**Added 2026-07-23**, connecting three things that had not previously been put in the
+same sentence: RFC-0113 (Context Parameters), the row/view machinery worked out in
+`access-and-presence-rows.md` and `nominal-types-as-branded-rows.md`, and §8's own
+aspect-desugaring. None of the source documents states this; it falls out of reading
+them together.
+
+### 14.1 A handler is an ordinary value; several handlers in scope form a row
+
+§8 already establishes that a handler is an ordinary struct (or any type) implementing
+the desugared effect aspect — the same principle as `Heap`/`BumpAlloc` implementing
+`Alloc`, nothing effect-specific about the value itself. If several handlers can be
+active simultaneously (a `Trace` handler and a `State<S>` handler both in scope), then
+"what is currently in the bracket channel" is a set of `(role, handler value)`
+bindings — structurally a row, whether or not anything in this cluster has called it
+one before.
+
+RFC-0113 supplies the labeling discipline for that row directly: context parameters are
+"resolved by type… ambiguity is always a compile error," meaning at most one handler per
+aspect may be in scope at once. That constraint is exactly what makes "the label is the
+type" well-defined — an ordinary structural row's labels are arbitrary field names
+chosen by the programmer; a context row's labels are implicitly the aspect being
+resolved, a narrower discipline within the same general row mechanism, not a different
+mechanism.
+
+### 14.2 The effect row and the handler context are the same row, at two levels
+
+Under that reading, `^{Trace, State<S>}` is not merely *analogous* to a row — it is the
+**type-level projection** of the row whose **value-level instantiation** is "the actual
+`Trace` and `State<S>` handler instances currently in scope." This is the same
+type/value relationship this whole cluster has built out for ordinary structs (a
+declared type and its concrete values), applied here to context instead of to fields.
+
+### 14.3 Propagating context to a callee is ordinary row-narrowing, not new machinery
+
+If a function `f`'s context row satisfies `{Trace, State<S>}` and it calls `g`, whose
+own signature only needs `^{Trace}`, passing `f`'s context to `g` is the same
+row-narrowing-and-passing operation `nominal-types-as-branded-rows.md` §8 already
+specifies for ordinary structs — project down to the subset `g` needs, pass that. The
+strict rule from that section's §8.2 (exact match, or an explicit narrowing step)
+applies unchanged; nothing new needs designing for effect-context propagation
+specifically.
+
+### 14.4 Why this does not reopen the `Drop` transitivity problem
+
+`nominal-types-as-branded-rows.md` §4.3 (and, before it, RFC-0091 §1's own "not
+resolved" note) flagged transitivity through helper calls as the one place field-usage
+tracking stays genuinely hard — because `Drop::drop` has **no written signature**
+stating what it touches, so the required set has to be *inferred* from the body.
+Effect-performing functions do not share that problem: `^{IO}` is *declared*, on every
+function, by construction — that is the entire point of an effect system. Checking
+whether a caller's context row covers a callee's declared effect row is therefore
+ordinary row-subset type-checking, the same as any other bound check, not inference
+over a call graph. This sharpens rather than contradicts the earlier finding: `Drop`'s
+difficulty is specific to lacking what effect-performing code already has by
+declaration.
+
+### 14.5 This is an access row, not a presence row — worth keeping distinct
+
+A handler is invoked by reference: §8's own desugared signature takes
+`self: &self Self` (RFC-0065's lifetime-anchored `&self`). The "context row" being
+passed from caller to callee is therefore a row of **borrows**, not owned values — an
+*access* row in `access-and-presence-rows.md`'s vocabulary, which is the case that
+already desugars for free (that document's §3), not the owned-narrowing case with its
+stricter no-implicit-truncation rule (`nominal-types-as-branded-rows.md` §8.2). Handler
+*state* (the fields the handler struct itself owns, e.g. a log buffer) stays an
+ordinary owned value inside the handler; only the *reference to the handler* travels
+through the context row.
+
+### 14.6 What this does and does not settle
+
+This reframes how the effect row's propagation could be checked — as reuse of
+already-specified row machinery — rather than proposing new syntax, new runtime
+behavior, or a new checking algorithm. It does not address evidence-passing,
+continuation capture, or any of §2/§12's linearity concerns, which stay exactly as
+open as they were. See Open Question 6 below for what remains unchecked.
+
+---
+
 ## Open questions
 
 1. `^ clean` (or similar) as an explicit declaration-site annotation forbidding active
@@ -797,3 +877,13 @@ mutation does not appear in the external type.
 5. Whether `effect`/`handle`/`resume` syntax should become its own RFC, and if so how
    it's sequenced against the rest of the substructural-types cluster — not addressed
    here; a project-planning question, not a design one.
+6. **(§14) Does the context-row-as-effect-row reading actually hold once more than one
+   handler of the same aspect could plausibly want to be in scope** — e.g. nested
+   `handle` blocks for the same effect, shadowing rather than erroring? RFC-0113's
+   "ambiguity is always a compile error" rule is what makes the labeling-by-type
+   discipline well-defined; whether real handler-nesting patterns ever need to violate
+   that uniqueness constraint is unchecked. Also unchecked: whether `.narrow()`
+   (`nominal-types-as-branded-rows.md` §8.3) is the actual mechanism context-row
+   propagation should use, or whether context resolution already has its own,
+   independently-specified propagation rule in RFC-0113 that this section's reading
+   needs to reconcile with rather than assume matches.
