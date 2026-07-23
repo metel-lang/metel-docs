@@ -367,9 +367,14 @@ structured-guarantee mechanism is reopened as premature to settle):
   ones — no implicit truncation ever, matching RFC-0090 §8's own no-implicit-coercion
   stance — with a sketched future `.narrow()` utility (explicit, so it needs no
   droppability gate) left as its own open question (naming, mechanism).
-- Does `Drop`'s row-bounded dispatch actually require general `<row R>` machinery, or can
-  it be special-cased narrowly enough to avoid pulling open generics onto the critical
-  path for everything else?
+- ~~Does `Drop`'s row-bounded dispatch actually require general `<row R>` machinery?~~
+  Resolved 2026-07-23: no — it needs a fixed, concrete required-field-set per impl,
+  computed once from the body, plus an ordinary subset check, not a row *variable*
+  unified per call site. Composes with generic structs and conditional bodies unchanged;
+  unrelated to the brand-scoped eligibility gate above, since `Drop` dispatch is
+  compiler-internal on every struct regardless of tier. Transitivity through helper
+  calls remains real, harder-to-compute work, but the same open thread already connected
+  to the effect system, not a new problem.
 - Does row-narrowing/`HasField`-checking on generic structs need to defer to
   monomorphization time, the way generic function bodies already do? Unexamined.
 - Does the zero-cost-for-ordinary-structs property actually hold at the implementation

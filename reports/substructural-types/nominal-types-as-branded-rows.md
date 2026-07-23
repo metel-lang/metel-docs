@@ -116,12 +116,56 @@ wrapper type is needed, `fd` stays a direct field of `Handle`, `HasField<"fd", i
 stays satisfiable on `Handle` itself — the `HasField`-transparency gap
 `access-and-presence-rows.md`'s audit found in the decomposition fix does not arise here.
 
-**The real cost, stated plainly.** Reading (ii) requires row-*bounded* method dispatch on
-`Drop`'s own critical path — ahead of RFC-0090 §3's recommended build order, which defers
-`<row R>` open generics "only if a real duck-typing need materializes." `Drop`'s own
-dispatch turns out to be exactly that need, immediately, not eventually. Narrow and
-arguably unavoidable given reading (i)'s leak — but a real exception to name, not one to
-let slide in silently.
+**Revised 2026-07-23: the cost above is overstated.** Reading (ii) does not actually
+require general `<row R>` open-generics machinery, ahead of RFC-0090 §3's deferred build
+order or otherwise. Working through what it needs mechanically, rather than what it
+sounds like it needs, resolves Open Question 3.
+
+### 4.1 What reading (ii) needs is a fixed set, not a row variable
+
+For one specific `Drop` impl, dispatch needs exactly two things: **a body-analysis pass,
+computed once at compile time, producing a fixed, concrete required-field-set** — here,
+`{fd}` — the same "accuracy checking" discipline RFC-0109 §4.10 already specifies for
+self-view narrowing; and **a subset check**, at whatever point `drop` might fire, of
+whether the value's current residual row contains that fixed set.
+
+Neither is what RFC-0090 §3 defers. `<row R>` open generics are about a function written
+*once* that stays polymorphic over an *a priori unknown* shape, with a real unification
+variable threaded through every call site (`drain_field<row R, name, T>`). Drop's
+required set isn't a variable — it is fixed, computed once per impl, never re-solved per
+call. "Does this row contain `fd`" against a known, concrete target is exactly
+`HasField`-as-a-bound-check, which §3.1 already needs regardless of `Drop` — dispatch
+asks for nothing beyond machinery this document already posits elsewhere.
+
+### 4.2 Generic structs and conditional bodies don't change this
+
+`struct Container<T> { data: T, count: usize }` with a `Drop` impl touching only `data` —
+the field *type* varies with `T`, but *which field* the body touches does not; the
+analysis stays `{data}` at every instantiation, composing with ordinary monomorphization
+rather than needing anything new. A body that branches (`if cond { self.fd } else {
+self.tag }`) still produces one fixed set, conservatively the union over every branch —
+still no path-sensitivity, still no variable.
+
+### 4.3 The one place real complexity survives — and it is a different kind
+
+RFC-0091 §1's own "not resolved" note: if `drop` calls a helper method, the required set
+must compose *transitively* across that call. This is genuine, unavoidable work — a
+whole-program, call-graph-level analysis, closer to effect inference than to ordinary
+type-checking — but it still bottoms out in one fixed set per `Drop` impl; it is harder to
+*compute*, not a different *kind* of mechanism. `access-and-presence-rows.md` §4 already
+connects this exact transitivity gap to the effect system as the one access-row case that
+does not desugar away — the same open thread, not a new one.
+
+### 4.4 This is unrelated to §7's eligibility gate — stated explicitly to avoid confusion
+
+§7.1's brand-scoped visibility answers a different question: whether *other, generic user
+code* may query a type's row (`fun f<row R: HasField<...>>`). `Drop`'s dispatch is the
+compiler checking *one type's own* impl against *its own* residual — internal bookkeeping,
+not user-facing structural matching, and **not gated behind tier-3 opt-in**. Every struct
+implementing `Drop`, tier-1 or tier-3, needs this analysis to avoid reading (i)'s leak;
+consistent with `Drop` already receiving bespoke treatment elsewhere in the corpus
+(RFC-0096 §4: "`Drop` is not a fourth instance of [the auto-impl] pattern"), so this is
+not a new precedent.
 
 ---
 
@@ -362,7 +406,7 @@ concrete enough to build, not assumed from the surface argument alone.
 |---|---|---|---|
 | `HasField` bolted-on-ness | ✅ §3.1 | — | eligibility-gating caveat, §7 |
 | presence/access split | ✅ §3.2 — one operation, not two roles | — | — |
-| `uses (…)`'s declaration | ✅ §3.3 | `Drop` dispatch must become row-bounded (§4) | pulls `<row R>` onto `Drop`'s critical path early |
+| `uses (…)`'s declaration | ✅ §3.3 | `Drop` dispatch must become row-bounded (§4) | ✅ §4.1 — a fixed-set check, not `<row R>`; transitivity (§4.3) remains real work |
 | `HasField`-transparency gap (from `access-and-presence-rows.md`) | ✅ §4, via reading (ii) | — | — |
 | RFC-0071 §7 | — | needs rewriting, not narrowing (§5) | — |
 | RFC-0090 OQ10 | ✅ fix in RFC-0114, incl. fallibility, via `Result<Self, Self::Error>` + RFC-0078 | reopened as a general risk first (§6), then resolved | RFC-0114's own OQ3 (default-derivation mechanism) |
@@ -398,10 +442,17 @@ concrete enough to build, not assumed from the surface argument alone.
    adding a fourth, and narrows §9's brand-vs-row coherence question to types that opted
    into tier-3 in the first place. One sub-question left open: whether `.to_record()` on
    an already-narrowed residual is examined anywhere (it isn't).
-3. **Does `Drop`'s row-bounded dispatch (§4, reading ii) actually require general `<row R>`
-   machinery, or can it be special-cased narrowly enough to avoid pulling open generics
-   onto the critical path for everything else** — including ordinary generic functions
-   that have nothing to do with `Drop`?
+3. ~~Does `Drop`'s row-bounded dispatch actually require general `<row R>` machinery?~~
+   **Resolved 2026-07-23, §4.1–4.4: no.** It needs a fixed, concrete required-field-set
+   per impl, computed once from the body, plus an ordinary subset check against it — not
+   a row *variable* unified per call site, which is what `<row R>` actually means. This
+   composes with generic structs and conditional bodies without change (§4.2), and is
+   unrelated to §7's eligibility gate (§4.4) — `Drop`'s dispatch is compiler-internal
+   bookkeeping on every struct regardless of tier, not user-facing structural matching.
+   The one genuine remaining complexity is transitivity through helper calls (§4.3,
+   RFC-0091 §1's own unresolved note) — real, harder to compute, but not a different
+   *kind* of mechanism, and already tracked as the same open thread
+   `access-and-presence-rows.md` §4 connects to the effect system.
 4. **Does row-narrowing/`HasField`-checking on generic structs need to defer to
    monomorphization time**, the way generic function bodies already do? Unexamined (§9).
    §8.3's `.narrow()` sketch is a second, later consumer of the same question.
