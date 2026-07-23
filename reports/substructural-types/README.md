@@ -312,6 +312,15 @@ structured-guarantee mechanism is reopened as premature to settle):
   nesting question it raises: is `@a T` where `T` itself carries an identity brand a
   role-crossing, or just composition of the same role at two levels? Not distinguished
   from a crossing yet, not resolved.
+- (Added 2026-07-23, §8) **Candidate answer to the item above:** "fourth surface use, not
+  a new kind" survives a property-by-property check against §2 — freshness and scoped
+  non-escape generalize to declaration-time, largest-scope introduction rather than
+  failing, and binding-anchored holds because a type declaration is itself a binding, the
+  same "binding-fresh is the default" rule §5 already established. Does not close the
+  nesting question, which still needs OQ2's relation algebra formalized first. Flags a
+  live disagreement: the 2026-07-08 narrowing to "named record only" is exactly what
+  `nominal-types-as-branded-rows.md` proposes removing (every struct, not just tier-3) —
+  unchecked whether the narrowing was ever load-bearing for soundness or just caution.
 
 **From `access-and-presence-rows.md`:**
 - What identity should a view carry, and is it a brand or a type parameter? §3.4 maps six
@@ -383,8 +392,13 @@ structured-guarantee mechanism is reopened as premature to settle):
   split already established for `Drop`'s generic-struct case. Narrowing and bound-checking
   need nothing beyond the symbolic, pre-monomorphization type-checking generic field
   access and aspect bounds already get. Also answers `.narrow()`'s target-row inference.
-  Left open: whether a generic struct's brand varies per instantiation or stays tied to
-  the declaration — assumed the latter, unchecked.
+  ~~Left open: whether a generic struct's brand varies per instantiation or stays tied
+  to the declaration.~~ Resolved 2026-07-23, §9.3: tied to the declaration — forced by
+  how one generic impl has to cover every instantiation, matches every mainstream
+  generic-nominal type system, and would otherwise conflate type-identity with
+  instance-identity brands (`@a`), a real category error. Grounded further by
+  `brand-kind-unification.md` §8, added the same day: a generic type's introduction
+  event is its singular declaration, so freshness itself guarantees one brand.
 - Does the zero-cost-for-ordinary-structs property actually hold at the implementation
   level? Sharpened, not resolved, 2026-07-23: views (RFC-0067a, implemented) and the
   declaration-time eligibility gate stand on real ground; static narrowing and `Drop`'s

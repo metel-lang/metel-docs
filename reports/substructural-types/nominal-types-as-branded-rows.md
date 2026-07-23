@@ -428,10 +428,41 @@ declared type. Same reasoning, same answer.
 
 **One adjacent question this does *not* settle, kept separate rather than folded in:**
 whether a generic struct's *brand* is tied to the declaration (`Pair`) regardless of
-instantiation, or varies per instantiation. Assumed to be the former, matching how
-nominal identity already works for generics elsewhere in the language — but this is not
-what this question asked, and the assumption has not been checked against anything
-written down. See Open Question 10.
+instantiation, or varies per instantiation. See §9.3.
+
+### 9.3 Generic brand identity — resolved 2026-07-23: tied to the declaration
+
+**A brand stays tied to the declaration, not the instantiation.** `Pair<i64>` and
+`Pair<String>` share the same brand; what differs between them is captured entirely by
+their rows (different concrete field types), not by a second identity per instantiation.
+Four independent arguments, no live counter-pressure found:
+
+1. **Forced by how generic impls already have to work.** `impl<T> Drop for Pair<T> { ... }`
+   is written once and covers every instantiation. Per-instantiation brands would leave
+   that one impl with no single, consistent thing to match against.
+2. **Matches every mainstream generic-nominal type system** — `Vec<i64>` and
+   `Vec<String>` are "the same type, instantiated differently" for every purpose that
+   matters to trait/aspect coherence, in Rust and elsewhere.
+3. **Conflating this with instance-identity brands (`@a`) would be a real category
+   error** — a type's brand is shared by every value of that type; an allocator tag is
+   fresh per runtime instance of the *same* type. Different roles, and worth stating
+   explicitly rather than risk brand-kind-unification's own role-crossing concern.
+4. **Nothing is lost — the row already does the distinguishing work.**
+   `(Pair-brand, {a: i64, b: i64})` and `(Pair-brand, {a: String, b: String})` are
+   perfectly distinguishable as types, same brand or not, because their rows differ.
+
+**Specificity (`impl Drop for Pair<i64>` vs. `impl<T> Drop for Pair<T>`) needs nothing
+new either** — ordinary RFC-0036/RFC-0060 specificity/overlap checking already compares
+the *full type* (brand plus type arguments), not brand alone, the same way it already
+handles `impl Foo for i64` being more specific than `impl<T> Foo for T`.
+
+**This is now grounded, not just argued by analogy, via `brand-kind-unification.md`
+§8 (added the same day, in response to this exact question).** That document's own
+freshness property — "each introduction site is distinct from every other" — directly
+*explains* argument 1 above: a generic type's introduction event is its singular
+declaration, never one per instantiation, so freshness itself guarantees one brand
+regardless of how many times `T` varies. Not two independently-argued claims that happen
+to agree; the same underlying fact, checked from two directions.
 
 ---
 
@@ -529,7 +560,7 @@ evidence.
 | RFC-0090 §8's non-ambient guarantee | ✅ §7.1–7.3 — visibility scoped to brand, inherited by narrowing/views | at risk under universal rows, first pass (§7) | `.to_record()` on an already-narrowed residual, unexamined |
 | passing owned residuals across calls | ✅ §8.2 — strict, no implicit truncation ever | reopens RFC-0090 §7's width-subtyping hazard, first pass | `.narrow()`'s mechanism/naming, sketched not designed (§8.3, OQ8) |
 | enums | out of scope, unchanged | — | should be stated explicitly |
-| generic structs | ✅ §9.2 — no deferral needed; field sets are declaration-fixed, only types vary | — | brand identity per instantiation, unchecked (OQ10) |
+| generic structs | ✅ §9.2 no deferral needed; ✅ §9.3 brand tied to declaration, not instantiation | — | — |
 | zero-cost-for-ordinary-structs | ✅ views + eligibility gate, on real ground (§10.3) | — | narrowing/`Drop` dispatch rest on unbuilt RFC-0071 (§10.1–10.2); a prior draft wrongly claimed this as already validated |
 | `HasField<"fd", i64>` bound syntax | ✅ §12 — replaced outright by bare `{ fd: i64 }` | `bound_head` grammar needs a new alternative; `Lacks` needs a type-position wildcard | neither piece of grammar work is written yet |
 
@@ -661,10 +692,15 @@ corpus, including RFC-0090 §4's row-conditional-impl typestate examples
    (`T: !{ tag: _ }`) — `_` exists only in `pattern` today, confirmed absent from
    `type_expr`. Whether this becomes an RFC-0090 amendment or its own small RFC is also
    not decided.
-10. **Does a generic struct's brand vary per instantiation, or stay tied to the
-    declaration regardless of `T`?** (§9.2) Assumed to be the latter, matching ordinary
-    nominal identity elsewhere in the language, but this is a genuinely separate question
-    from OQ4's resolution and has not been checked against anything written down.
+10. ~~Does a generic struct's brand vary per instantiation, or stay tied to the
+    declaration regardless of `T`?~~ **Resolved 2026-07-23, §9.3: tied to the
+    declaration.** Forced by how one generic impl (`impl<T> Drop for Pair<T>`) has to
+    cover every instantiation; matches every mainstream generic-nominal type system;
+    conflating it with instance-identity brands (`@a`) would be a category error; and
+    nothing is lost, since the row already distinguishes instantiations by field type.
+    Grounded further by `brand-kind-unification.md` §8 (added the same day): a generic
+    type's introduction event is its singular declaration, so freshness itself
+    guarantees one brand, not a separately-argued design choice that happens to agree.
 
 ---
 

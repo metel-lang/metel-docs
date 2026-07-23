@@ -3,7 +3,7 @@ id: brand-kind-unification
 title: "Unifying the Identity Kinds: Allocator Tags, Lifetime Anchors, and Brands"
 type: report
 status: active
-last_synced_against_model: '2026-07-07'
+last_synced_against_model: '2026-07-23'
 supersedes: null
 revives: null
 ---
@@ -258,6 +258,63 @@ its Q2 answer, not on its own clock.
 
 ---
 
+## 8. A fourth binding kind: type declarations as the largest-scope case
+
+**Proposed 2026-07-23**, from `nominal-types-as-branded-rows.md`'s own pressure-testing of
+whether nominal type identity actually fits this unification, or only asserts it does. A
+candidate answer to Open Question 6 below, checked property by property against §2 rather
+than re-asserted.
+
+**The concern that prompted this.** Open question 6 (and, before it, `structural-records.md`
+§9) proposes a struct's nominal identity as "a fourth surface use of the `'c` role, not a
+new kind" — asserted, not derived. Checked directly against §2's stated properties, a
+type's identity brand looks, at first pass, like it fails two of them: **freshness**
+("each introduction site is distinct from every other") reads as implicitly runtime and
+repeatable — a `BumpAlloc::scoped` block mints a fresh tag *every time it is entered* — while
+a type is declared exactly once, at compile time, ever. **Scoped non-escape** ("cannot
+outlive the scope that introduced it") reads as implicitly block-sized, while a type's
+brand must outlive every block, function, and module scope in the program.
+
+**The resolution: neither property is actually about runtime repeatability or block size —
+both are about relations that hold at whatever granularity the introduction event occurs
+at, and a type declaration is a legitimate introduction event, just the largest one
+available.**
+
+- **Freshness never required repeatability**, only that *distinct introductions get
+  distinct identities*. `struct Handle` and `struct Pair` are two distinct introduction
+  sites; they get two distinct, un-mergeable brands. That is freshness holding exactly,
+  at a phase (compile-time, one-shot) the existing three roles simply hadn't been checked
+  at, not freshness failing.
+- **Scoped non-escape generalizes rather than degenerates.** The scope a type's brand
+  cannot escape is the type's own declaration-scope — spanning from declaration onward,
+  for as long as the type exists. That is the same lexical-scoping concept already used
+  at block and function granularity, exercised at its largest size, not a vacuous
+  special case argued around.
+- **Binding-anchored generalizes too, and this is the piece that actually supplies the
+  missing justification.** A type declaration *is* a binding — it introduces a name,
+  resolved by ordinary name lookup, the same shape of event as a `let` binding
+  introducing a variable. §5 already resolved RFC-0076's own Q1 with "binding-fresh is
+  the default." This is that same rule, applied to a kind of binding — a type
+  declaration — the three existing roles never happened to exercise, because all three
+  are value-level. Not a fourth rule to add; the same rule, at a binding kind not
+  previously checked against it.
+
+**This also explains, rather than merely agrees with, `nominal-types-as-branded-rows.md`'s
+own finding that a generic type's brand is shared across every instantiation** (that
+document's OQ10): if the brand's introduction event is the singular declaration, one
+brand per instantiation would require one introduction per instantiation, which freshness
+itself rules out — there is exactly one introduction site, so exactly one brand, by the
+same property already governing every other role in this unification, not by a separately
+argued design choice that happens to match.
+
+**Status: a candidate answer, not a closure.** This resolves the *mismatch* found while
+checking OQ6's claim — it does not yet touch open questions 1–5, particularly OQ2's
+demand that the per-role relation algebra actually be formalized (a type-identity brand
+still needs its own place in that algebra, likely at the "bare identity, distinctness
+only" row alongside `'c`, worked out precisely rather than assumed by analogy).
+
+---
+
 ## Open questions
 
 1. **Kind unification vs. deliberate separateness (§6)** — the central decision. Leaning
@@ -296,6 +353,20 @@ its Q2 answer, not on its own clock.
    it raises, only arise for the opt-in *named record* kind — an ordinary `struct`
    never carries this identity tag at all, so the nesting question is scoped to
    `@a T` where `T` is specifically a named record, not any struct.)
+
+   **Candidate answer added 2026-07-23, §8:** checked property by property against §2
+   rather than re-asserted, "fourth surface use, not a new kind" survives the check —
+   freshness and scoped non-escape both generalize (not degenerate) to declaration-time,
+   largest-scope introduction, and binding-anchored generalizes cleanly because a type
+   declaration is itself a binding, the same "binding-fresh is the default" rule §5
+   already established, just at a binding kind not previously exercised. Does not close
+   the nesting question above, which still needs the relation algebra (OQ2) formalized
+   first. **Also worth flagging: the 2026-07-08 narrowing to "named record only" is
+   exactly what `nominal-types-as-branded-rows.md` proposes removing** — that document's
+   whole thesis is every struct, not just the opt-in named-record kind, carrying this
+   identity brand. If §8's reconciliation holds, the narrowing may no longer be load-
+   bearing for soundness (the properties hold regardless of how many types opt in) — but
+   this has not been checked, and the two documents' scoping now directly disagree.
 
 ---
 
