@@ -105,6 +105,17 @@ superseded_by: rfc-0116, rfc-0117, rfc-0118, rfc-0119, rfc-0120, rfc-0121
 > they sit on. Negative bounds are unaffected: `!{ token: _ }` asserts a label is absent,
 > and absence has no "rest" to quantify over.
 >
+> **Also recorded 2026-07-24: §6's justification for the tier split answers the wrong
+> question.** §6 declined a records-only foundation partly on "implementation cost for the
+> common case — routing every ordinary struct through row-unification machinery means the
+> 99% of code that never writes `{...}` or a row bound pays for machinery it never asked
+> for." That is a cost to the *compiler*. The cost that actually justifies making structural
+> capability opt-in is borne by the *type's author*: **a nominal type's API is what it
+> declares; a record's API is what it contains.** Publishing a layout makes field names and
+> types into public interface, so renames become breaking changes and a type can accidentally
+> satisfy bounds its author never heard of. The successor RFCs state it that way — see
+> RFC-0118 §3 and RFC-0120 §2.
+
 > **Recorded 2026-07-24, after supersession: this RFC contradicted itself about whether a
 > struct satisfies a row bound.** Noted here so the next reader does not re-derive it.
 > §2 ("any existing nominal struct with matching fields satisfies it with no explicit

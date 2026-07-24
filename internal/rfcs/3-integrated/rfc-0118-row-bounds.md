@@ -204,6 +204,35 @@ the types do not collapse. Constrained genericity is not substitutability.
   bound is opted into *per type*, by choosing the `record` kind. Nothing is ambient in
   either direction, and that is a sharper statement of the tier principle than "no
   capability is ambient."
+- **And the reason the opt-in is worth having, which the corpus never stated.** RFC-0090 §6
+  justified the tier split on implementation cost — "the 99% of code that never writes a row
+  bound pays for machinery it never asked for." That answers the wrong question. The real
+  cost is borne by the *type's author*, not the compiler:
+
+  > **A nominal type's API is what it declares. A record's API is what it contains.**
+
+  Once a type satisfies row bounds, its field names and types are public interface whether
+  the author meant that or not. Renaming a field breaks every caller who wrote a bound
+  mentioning it; adding one can make the type accidentally satisfy a bound its author never
+  heard of. On a `struct`, a field rename is internal. **That is the disadvantage of purely
+  structural type systems, and making it opt-in is the whole point of the distinction** —
+  not saving the typechecker work.
+
+  **This also retires an observation that looked like a design flaw.** A named record can do
+  everything a struct can *plus* satisfy row bounds, which reads as strict domination and
+  invites "why would anyone write `struct`?". That treats every capability as desirable.
+  Publishing your layout is a capability most types should decline. The relation is a trade,
+  not a hierarchy:
+
+  | | encapsulation | structural flexibility |
+  |---|---|---|
+  | `struct` | layout private; API is what you declare | none |
+  | `record X` | layout **is** the API | full |
+
+  Prior art agrees: **Go** deliberately refuses to let interfaces constrain on fields —
+  methods only, so layout is never API. **Rust** is nominal with traits as the sole API
+  surface. **OCaml** has both and uses objects sparingly. **TypeScript** is the
+  counter-example that demonstrates the cost.
 
 **Why GHC's counter-example does not bind.** GHC solves `HasField` directly against nominal
 records with no conversion — the design rejected here. But GHC has **only one kind of type**,

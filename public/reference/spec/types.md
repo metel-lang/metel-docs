@@ -577,6 +577,26 @@ struct Point { x: f64, y: f64 }    // does not
 Converting an existing struct (`some_point.to_record()`) is the escape hatch for types you
 do not control, not the ordinary path.
 
+### Why row capability is opt-in
+
+A nominal type's API is what it **declares**. A record's API is what it **contains**.
+
+Once a type satisfies row bounds, its field names and types are part of its public interface,
+whether the author intended that or not. Renaming a field breaks every caller who wrote a
+bound mentioning it; adding one can make the type accidentally satisfy a bound its author
+never heard of. On a `struct`, a field rename is an internal change.
+
+That is why structural capability is opt-in rather than automatic, and why a `struct` is not
+simply a less capable `record`. The two trade against each other:
+
+| | encapsulation | structural flexibility |
+|---|---|---|
+| `struct` | layout is private; the API is what you declare | none |
+| `record X` | layout **is** the API | full |
+
+Most types want the first. A type whose *shape* is genuinely the contract — a coordinate
+pair, a configuration fragment — wants the second, and says so by declaring `record`.
+
 ### What satisfies which bound
 
 Both bound kinds are opted into; they differ only in *granularity*. An **aspect** bound is

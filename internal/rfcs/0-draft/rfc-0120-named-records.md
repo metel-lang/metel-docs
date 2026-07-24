@@ -78,6 +78,26 @@ nothing observable."** The conversion does newly make row-conditional generic fu
 drain/restore-style APIs legal against the type. That is the point of upgrading, not a side
 effect to apologize for.
 
+**A second caveat, added 2026-07-24, and this one is a real cost rather than a clarification:
+the upgrade is a one-way door.** Declaring `record X` publishes the type's field names and
+types as public interface — a nominal type's API is what it declares, a record's API is what
+it contains (RFC-0118 §3). Two consequences the framing above misses:
+
+- **Reverting is breaking, and you cannot find who it breaks.** Going back to `struct` breaks
+  every caller who wrote a row bound naming your fields. The forward direction is additive
+  for callers; the reverse is not, and unlike an ordinary API break there is no declaration
+  site to grep for — satisfaction is structural, so the dependency is invisible from your
+  module.
+- **Field renames stop being internal.** After the upgrade, renaming a field is a breaking
+  change to anyone bounded on it. Before it, it was refactoring.
+
+So `struct` → `record` should be read as *publishing a contract*, not as *enabling a
+feature*. Tier 2 (`@derive(ToRecord, FromRecord)`, RFC-0119) exists precisely for the author
+who wants row operations **locally** without making that commitment: it grants conversion and
+withholds bound satisfaction, so the layout stays private. **That is what the tier 2 / tier 3
+boundary is actually for** — §1 above describes it in terms of impl-resolution mechanics,
+which is the mechanism rather than the reason.
+
 ## 3. Reusing the identity tag rather than inventing one
 
 Representing a named type as `(row, brand)` — a structural shape plus an identity tag — has
