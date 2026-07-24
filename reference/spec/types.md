@@ -529,6 +529,46 @@ fun main() -> i64 {
 }
 ```
 
+### Row bounds
+
+> **Planned for v0.12.0 (RFC-0118): a bound may be a bare row, constraining a type by the fields it carries rather than by an aspect.**
+
+A bound written as a row accepts any type carrying at least the listed fields:
+
+```metel
+fun magnitude<T: { x: f64, y: f64, .. }>(p: T) -> f64 {
+    (p.x * p.x + p.y * p.y).sqrt()
+}
+```
+
+**The trailing `..` is load-bearing.** It stands for "and a rest I am not naming," and its
+presence is what makes the bound *open*:
+
+```metel
+fun g<T: { x: f64 }>(p: T)        // closed: T's row is exactly `x`
+fun h<T: { x: f64, .. }>(p: T)    // open:  T has at least `x`
+```
+
+Negation asserts a label is absent, reusing the `!` that bounds already accept. It takes no
+`..`, since absence has no rest to quantify over; `_` means "any type":
+
+```metel
+fun send<T: !{ token: _ }>(t: T) -> i64 { … }
+```
+
+**Any struct with matching fields satisfies a row bound, with no declaration and no opt-in.**
+This is the one place structural matching is implicit in an otherwise nominal aspect system,
+and it is safe for a specific reason: **a bound grants no capability over the type itself.**
+It only decides whether a generic function will accept a value. Nothing about satisfying
+`{ x: f64, .. }` changes what a type can do, which implementations resolve for it, or what it
+converts to.
+
+> **Planned for v0.12.0 (RFC-0118): a row bound matches the *public projection* of a type's row — private fields are invisible to it from outside the declaring module.**
+
+Because fields are module-private by default, a bound is matched against only the fields
+visible to the module doing the matching. A bound naming a private field therefore matches
+inside the declaring module and not outside it.
+
 ## Never Type
 
 > **Availability:** Since v0.10.0.
