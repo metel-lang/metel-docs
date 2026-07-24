@@ -123,6 +123,18 @@ was found and reconciled, and where this session did most of its work.
 Listed in dependency order. Each can be reviewed and accepted independently once the ones
 above it are.
 
+- **RFC-0123** *(draft, opened 2026-07-24)* — Field-Wise Row Constraints — a constraint
+  applying an aspect to **every field of a row** rather than to the row's type
+  (`extend<row R> { ..R }: Display where all R: Display`). Opened after noticing that two
+  questions the corpus tracked separately are one missing construct: RFC-0121's
+  width-subtyping rule needs "every field in `R` is `Copy`", and RFC-0116 needs "every field
+  in `R` is `Display`" before an anonymous record can be printed at all. **Without it no
+  record can satisfy any stdlib aspect**, since they are all non-local and the orphan rule
+  correctly bans per-shape impls. Depends on RFC-0121, so neither is in v0.12.0 — the gap is
+  a stated limit of records as first shipped. Prior art is PureScript's `RowToList` plus
+  instance induction, and Haskell `row-types`' `Forall r c`; both derive it rather than
+  making it primitive, which is open question 2.
+
 - **RFC-0122** *(draft, opened 2026-07-24)* — Borrow Checking — the static rules for when a
   borrow is valid and when two borrows conflict, against the anchor notation RFC-0067
   already accepted. **Adds no syntax**; `&T`/`&var T` (RFC-0067a) and `&r T` (RFC-0067)

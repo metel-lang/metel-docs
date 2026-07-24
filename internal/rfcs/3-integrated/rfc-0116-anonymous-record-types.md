@@ -172,6 +172,22 @@ that is RFC-0120's job.
 - **Aspect impls for a non-local aspect** — the same rule, other direction.
 - **Custom `Drop` logic specifically.** `Drop` is a stdlib aspect, never local to ordinary
   user code, so no record can carry custom teardown. Only nominal types can.
+
+> **Consequence of the two aspect rules above, recorded 2026-07-24 because the restrictions
+> were stated without it: an anonymous record cannot satisfy *any* standard-library aspect.**
+> `Display`, `From`, `Iterable` are all non-local, so no user module may implement them for
+> a record, and stdlib cannot enumerate every shape. Concretely, `println("${p}")` does not
+> work for `let p = { x = 1.0, y = 2.0 }`.
+>
+> **Auto-derived aspects are unaffected** — `Send`, `Sync` and `Linear` are computed from
+> field composition (RFC-0096) rather than declared, so records satisfy them structurally.
+> The gap is specifically *impl-based* aspects.
+>
+> **The fix is a single stdlib implementation covering all rows at once**, which requires
+> constraining every field of a row (`extend<row R> { ..R }: Display where all R: Display`).
+> That construct does not exist and is now **RFC-0123 (Field-Wise Row Constraints)**, which
+> depends on RFC-0121 — so neither is in v0.12.0. **This is a real usability limit of
+> records as first shipped**, and it is stated here rather than discovered later.
 - **Serving as an allocator type.** RFC-0063 §2's disjointness story requires allocator
   identity to be per-*instance*, while a record's premise is that two values with the same
   row are interchangeable. A category mismatch, not a coherence technicality.

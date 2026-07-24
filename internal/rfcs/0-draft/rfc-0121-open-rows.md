@@ -153,9 +153,15 @@ which is a point in the phantom form's favour, though not treated as decisive.
 ## Open Questions
 
 1. **The width-subtyping-requires-`Copy` rule is proposed with no precedent to verify it
-   against, and not ratified.** No bound expressing "every field in row `R` is `Copy`" is
-   defined anywhere. Until one is, open records whose non-empty remainder is silently
-   discarded should be rejected outright. *(From RFC-0090 OQ3.)*
+   against, and not ratified.** Until it is, open records whose non-empty remainder is
+   silently discarded should be rejected outright. *(From RFC-0090 OQ3.)*
+   **The half of this that was "no bound expressing 'every field in row `R` is `Copy`' is
+   defined anywhere" is now RFC-0123 (Field-Wise Row Constraints), opened 2026-07-24.**
+   That construct turned out to be needed identically by RFC-0116 — an anonymous record
+   cannot satisfy *any* stdlib aspect, including `Display`, without it — so the two were
+   being tracked as unrelated problems in different documents when they are one missing
+   feature. What remains here is the rule itself: *whether* `Copy` is the right predicate
+   for sound width subtyping, which stays open independently of being able to write it.
 2. **Row-conditional impl coherence.** Extending RFC-0036/RFC-0060's conditional-impl
    checking to row-shape conditions — ensuring two impls, one gated on presence and one on
    absence, cannot both apply to an under-constrained row variable — is asserted tractable
