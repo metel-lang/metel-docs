@@ -15,6 +15,21 @@ supersedes: "reports/memory-model/linear-types-and-structural-records-2026-07-06
 linear-types/structural-records report so this thread can grow on its own terms rather
 than becoming one ever-larger file — see `README.md` for why.*
 
+> **Note, 2026-07-24 — one notation normalized; the rest of this document is knowingly
+> stale.** `drain_field`'s signature used `{ name: T | R }` for row extension and a bare
+> `{ R }` in its return — two notations in one function, neither the normative one. Both
+> are now `..R` (`{ name: T, ..R }` / `{ ..R }`), matching RFC-0090 §2 and every other
+> row-extension site in the corpus. `| R` existed only here and in RFC-0091's copy of this
+> same signature, so nothing else was affected. No semantic change.
+>
+> **Not normalized here, deliberately:** this document still writes the anonymous record
+> former as `record { … }` (~57 occurrences), which RFC-0090 dropped on 2026-07-24 in
+> favour of bare `{ … }`, and still uses the `HasField`/`Lacks` bound syntax RFC-0090
+> retired on 2026-07-23. This is the living design report RFC-0090 was extracted *from*;
+> sweeping it is a larger pass than the one-line fix above, and doing half of it would
+> leave the document internally inconsistent. Read the RFCs, not this file, for current
+> syntax.
+
 See `linear-types.md` for the `Linear` aspect, the multiplicity lattice, and partial
 consumption — this document assumes that context and focuses on the structural-typing
 half specifically.
@@ -1095,8 +1110,8 @@ own (still unshipped, as of writing) "view types" proposal. With row polymorphis
 split is expressed generically once:
 
 ```metel
-fun drain_field<row R, name: Symbol, T>(s: &mut record { name: T | R })
-    -> (T, &mut record { R })
+fun drain_field<row R, name: Symbol, T>(s: &mut record { name: T, ..R })
+    -> (T, &mut record { ..R })
 {
     let v = move s.[name];
     (v, s)

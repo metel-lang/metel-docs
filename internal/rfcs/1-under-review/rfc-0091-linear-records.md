@@ -44,6 +44,21 @@ updated: '2026-07-24'
 > bound syntax, retired by RFC-0090 on 2026-07-23 in favour of bare rows (`{ auth: String }`
 > / `!{ auth: _ }`). That is a separate amendment from the `record`-keyword one and is a
 > separate sweep.
+>
+> **Also revised 2026-07-24 — §5's `drain_field` row-extension notation normalized to
+> `..R`.** Its signature read `(s: &mut { name: T | R }) -> (T, &mut { R })`, using two
+> notations for row extension in one function and neither of them the corpus's normative
+> one. `| R` appeared **nowhere else in the corpus** except the copy of this same signature
+> in `reports/substructural-types/structural-records.md`, which this RFC was extracted from
+> — it is a leftover from that split, not a competing convention. The normative spelling is
+> RFC-0090 §2's spread tail, `{ x: f64, ..R }`, used consistently in RFC-0090, this RFC's
+> own §2.3, `brand-types.md`, and `access-and-presence-rows.md`. The return type's bare
+> `{ R }` (row variable with no marker at all) is normalized the same way. No semantic
+> change — `{ name: T, ..R }` and `{ name: T | R }` denote the same row.
+>
+> *(Where `{IO | E}` appears elsewhere in the corpus it is quoting **Koka's** effect-row
+> syntax as prior art, not proposing Metel syntax; `access-and-presence-rows.md` §4 writes
+> the two side by side as equivalents, `{IO | E}` / `{ IO, ..E }`.)*
 
 > **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `{ … }` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 
@@ -420,8 +435,8 @@ call site, or reaches for unsafe pointer-cast tricks. This is exactly the motiva
 behind Rust's own (still unshipped, as of writing) "view types" proposal:
 
 ```metel
-fun drain_field<row R, name: Symbol, T>(s: &mut { name: T | R })
-    -> (T, &mut { R })
+fun drain_field<row R, name: Symbol, T>(s: &mut { name: T, ..R })
+    -> (T, &mut { ..R })
 {
     let v = move s.[name];
     (v, s)

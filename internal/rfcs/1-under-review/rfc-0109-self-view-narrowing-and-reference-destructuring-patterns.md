@@ -50,6 +50,12 @@ updated: '2026-07-24'
 > the keyword moved disambiguation from a token to a position. Worth naming here because
 > RFC-0109 is the one RFC that uses both forms heavily and side by side, so if the cost
 > ever bites in practice, it bites here first.
+>
+> **Also 2026-07-24:** §Motivation quoted RFC-0091's `drain_field` return type as
+> `(T, &mut { R })`; RFC-0091 normalized that signature's row extension to the corpus's
+> normative `..R` spread tail the same day, so the quotation follows (`(T, &mut { ..R })`).
+> No semantic change, and the point being made about `drain_field` — single-field,
+> asymmetric — is unaffected.
 
 > **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `{ … }` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 
@@ -123,7 +129,7 @@ Two more gaps, found by checking the actual source rather than assuming:
   whichever RFC ends up as struct patterns' primary owner — RFC-0071 or a follow-up,
   not re-litigated here.
 - **RFC-0091's `drain_field` already gestures at this but only for one field at a
-  time**, and asymmetrically — `(T, &mut { R })` returns an *owned value* plus
+  time**, and asymmetrically — `(T, &mut { ..R })` returns an *owned value* plus
   *one* remainder reference, not two symmetric live references over a genuine row
   partition. Rust's motivating case (read `bars` while mutating `golden_tickets`,
   neither owned/moved out, both alive) needs a real N-way split, not a single-field
