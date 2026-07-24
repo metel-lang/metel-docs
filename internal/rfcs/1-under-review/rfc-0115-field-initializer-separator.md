@@ -2,8 +2,9 @@
 id: rfc-0115
 title: "Field Initializer Separator"
 date: '2026-07-24'
-status: draft
+status: under-review
 target:
+updated: '2026-07-24'
 ---
 
 > **New RFC, split out of RFC-0100 on 2026-07-24.** RFC-0100 bundled two things: a
@@ -20,6 +21,8 @@ target:
 > Mutability) and RFC-0045 (Mutable Address-Of) concern *mutation* of fields, not the
 > literal that initializes them — no shared grammar rule. RFC-0091 and RFC-0096 matched on
 > the word "record" alone and touch neither `struct_literal` nor `field_init`.
+
+> **Status — under review (2026-07-24).** Pulled into v0.12.0 alongside RFC-0116: shipping RFC-0116's { x = 1.0 } anonymous records without this would release the nominal/anonymous separator mismatch that this RFC exists to remove.
 
 ## Summary
 
@@ -117,9 +120,47 @@ bare `x`, then the literal fails on `==`).
 
 ## 3. Migration
 
-Mechanical and total: every struct and enum literal in `stdlib/` and the test corpus
-changes `:` to `=` inside braces. No semantics change, no AST shape changes — `FieldInit`
-keeps its existing shape; only the token the parser expects between label and value moves.
+No semantics change and no AST shape change — `FieldInit` keeps its existing shape; only
+the token the parser expects between label and value moves.
+
+**Sized against the corpus 2026-07-24, and it is not the trivial sweep an earlier draft of
+this section implied.** That draft said "mechanical and total"; the second half is right,
+the first needs qualifying.
+
+| | count |
+|---|---|
+| Literal sites to change (`:` → `=`) | **573** |
+| Declaration lines that must **not** change | **382** |
+| `.mtl` files touched | ~238 |
+
+**The hazard is that three different constructs share brace syntax and only one of them
+changes:**
+
+```metel
+struct Point { x: f64 }                     // declaration — `:` classifies, stays
+match p { Some { value } => … }             // pattern — no separator at all, unchanged
+Some { value: f(value) }                    // literal — `:` becomes `=`
+```
+
+and they co-occur, including on a single line — `stdlib/core.mtl:42` is
+`Perhaps::Some { value } => Perhaps::Some { value: f(value) }`, a pattern and a literal in
+one expression.
+
+**Consequence: a naive regex sweep will corrupt declarations.** The migration wants either a
+parser-driven rewrite (walk the AST, rewrite only `FieldInit` spans) or a careful pass with
+the declaration and pattern forms explicitly excluded and the full test suite as the check.
+The parser-driven option is strongly preferred and is cheap, since the parser already
+distinguishes all three.
+
+**This is a breaking surface change with no transition alias**, per RFC-0042 §D1's
+precedent ("the language keeps only one binding introducer... does not carry a transition
+alias") and RFC-0098's, which renamed three keywords the same way. Accepting both
+spellings during a migration window is not proposed.
+
+**Scheduling note (2026-07-24).** Pulled into v0.12.0, which also carries RFC-0071
+(ownership and move semantics) — by far the more breaking of the two. Batching a small
+breaking syntax change into a release that is already breaking is preferable to spending a
+separate breaking release on it later.
 
 **This is a breaking surface change with no transition alias**, per RFC-0042 §D1's
 precedent ("the language keeps only one binding introducer... does not carry a transition

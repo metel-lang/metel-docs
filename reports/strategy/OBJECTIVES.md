@@ -135,7 +135,7 @@ below is the blog's own sequencing sentence, made checkable.
 
 | # | Priority | Design state | Engineering state |
 |---|---|---|---|
-| 1 | Records / views as the structural carrier | RFC-0116/0118 `1-under-review`, RFC-0117/0119/0120/0121 `0-draft` *(RFC-0090 superseded 07-24)* | **v0.12.0: RFC-0116 + RFC-0118** |
+| 1 | Records / views as the structural carrier | RFC-0115/0116/0118 `1-under-review`, RFC-0117/0119/0120/0121 `0-draft` *(RFC-0090 superseded 07-24)* | **v0.12.0: RFC-0116 + RFC-0118 + RFC-0115** |
 | 2 | Ownership enforcement and the borrow checker | RFC-0071 `2-accepted`; RFC-0122 (Borrow Checking) opened `0-draft` 07-24 | **v0.12.0: RFC-0071 implementation; RFC-0122 design in parallel** |
 | 3 | Brands and context parameters | RFC-0076 `0-draft`; RFC-0113 `1-under-review` | not started, **no issue** |
 | 4 | Allocators — emergent synthesis, built last | RFC-0063/65/66/67/68/73/77 `2-accepted`, complete | deliberately not started |
@@ -151,8 +151,35 @@ stated priority"); it is structural. The stated priorities and the tracker do no
 ### Release plan — v0.12.0 *(added 2026-07-24, after v0.11.0 shipped)*
 
 **Scope decided:** RFC-0116 (Anonymous Record Types) + RFC-0118 (Row Bounds) + RFC-0071
-(Ownership and Move Semantics), with RFC-0122 (Borrow Checking) drafted in parallel as
-design only.
+(Ownership and Move Semantics) + RFC-0115 (Field Initializer Separator), with RFC-0122
+(Borrow Checking) drafted in parallel as design only.
+
+**RFC-0115 was pulled in on 2026-07-24, and RFC-0116 is what makes it close to mandatory
+rather than merely convenient.** RFC-0116 ships `{ x = 1.0 }` as the anonymous record
+value form. Shipping that *without* RFC-0115 would release this into a tagged version:
+
+```metel
+{ x = 1.0 }         // anonymous record — RFC-0116, v0.12.0
+Point { x: 1.0 }    // nominal struct   — unchanged, differs by separator for no reason
+```
+
+— i.e. it would ship the exact mismatch RFC-0115 exists to remove, as a user-visible
+inconsistency, and then break it again later. Either both ship or neither does. Batching it
+here is also cheap in breakage terms: v0.12.0 already carries RFC-0071, by far the most
+breaking change the language will take.
+
+**Its migration is larger than its own §3 first claimed** — corrected there the same day.
+573 literal sites change; **382 declaration lines must not**; and declarations, patterns and
+literals share brace syntax and co-occur on single lines (`stdlib/core.mtl:42` has a pattern
+and a literal in one expression). A regex sweep will corrupt declarations; this wants a
+parser-driven rewrite over `FieldInit` spans, which is cheap because the parser already
+tells the three apart.
+
+**One accepted risk:** RFC-0100 (`1-under-review`) proposes retiring brace literals
+entirely. If it later lands, these 573 sites migrate twice. Judged acceptable — RFC-0115 was
+split out of RFC-0100 precisely so a settled question would stop being hostage to a
+contested one, and reversing that to avoid a second mechanical pass would undo the split's
+whole point.
 
 **The reasoning, which turns on one fact.** The blog's short-term commitment is
 "`ToRecord`/`FromRecord` working in the interpreter" — that is RFC-0119, and its chain is
