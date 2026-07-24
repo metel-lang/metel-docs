@@ -55,10 +55,15 @@ numbers as of 2026-07-22):
 Thirteen of fourteen. The exception is struct-literal field initialization, where `:`
 introduces a value.
 
-**And RFC-0100 (Constructor-Call Construction) deletes that site** — "`Type(args)`
-call-shaped syntax replaces `Type { field: value }` struct literals at construction sites."
-So the single violation is already scheduled for removal by an RFC written for unrelated
-reasons.
+**RFC-0115 (Field Initializer Separator) fixes that site directly** — `field_init = { ident
+~ ("=" ~ expr)? }`, braces and punning unchanged. `Point { x = 1.0 }`.
+
+*(Written 2026-07-22, superseded 2026-07-24: this paragraph originally read "**And RFC-0100
+(Constructor-Call Construction) deletes that site**… the single violation is already
+scheduled for removal by an RFC written for unrelated reasons." That was true but load-
+bearing in the wrong direction — RFC-0100 retires brace literals entirely, so the invariant
+could only complete if a much larger, still-contested change landed. RFC-0115 was split out
+of RFC-0100 to decouple them; see Recommendation 3.)*
 
 ---
 
@@ -141,9 +146,21 @@ Concretely:
    RFC-0114 adopts the same separator for record values, so both RFCs moved together.
    One detail this document did not have: the fix wants `keyword_arg = { ident ~ "=" ~
    !"=" ~ expr }`, mirroring `assign_op`'s own `("=" ~ !"=")` guard.
-3. Leave `field_init` alone; RFC-0100 removes it. If RFC-0100 is refused instead, the
+3. ~~Leave `field_init` alone; RFC-0100 removes it. If RFC-0100 is refused instead, the
    invariant has one permanent exception and this recommendation should be revisited
-   rather than forced.
+   rather than forced.~~ **Reversed 2026-07-24 — this was the wrong structure, and its own
+   stated risk is what changed it.** Waiting on RFC-0100 made a settled, dependency-free
+   question hostage to an unsettled one, with "the invariant has one permanent exception"
+   as the downside if RFC-0100 never lands. **RFC-0115 (Field Initializer Separator) now
+   changes `field_init` directly, keeping braces**, so the invariant completes on its own
+   regardless of RFC-0100's fate. Open question 4 below lapses with it.
+
+   The second, stronger reason arrived from elsewhere the same day: RFC-0090 dropped the
+   `record` keyword, settling anonymous record values as `{ x = 1.0 }`. Leaving
+   `field_init` as `:` would have made a nominal struct literal differ from an anonymous
+   record by separator for no recoverable reason — where `Point { x = 1.0 }` is just
+   `{ x = 1.0 }` with a brand in front, which is exactly the relationship RFC-0090 tier 3
+   claims holds.
 
 ---
 
@@ -161,9 +178,11 @@ Concretely:
 3. **Is `f(x = 1)`'s loss actually acceptable?** Argued here as a benefit, but Metel's
    assignment returns a value today (`assign_expr` is an expression form), so this is a
    real if small narrowing that has not been checked against existing test fixtures.
-4. **What happens if RFC-0100 is refused?** The single violation becomes permanent, and
-   the principle would have to be stated with an exception — which is materially weaker
-   than a rule with none.
+4. ~~What happens if RFC-0100 is refused?~~ **Lapsed 2026-07-24.** The single violation
+   becoming permanent was the risk of routing the fix through RFC-0100; RFC-0115 removes
+   the routing. The invariant no longer depends on any RFC whose outcome is uncertain.
+   Worth keeping visible as the question that motivated the split, since the split is the
+   answer to it.
 
 ---
 

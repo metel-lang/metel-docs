@@ -137,9 +137,12 @@ was found and reconciled, and where this session did most of its work.
   10 (`FromRecord` bypassing constructor invariants) as a general risk reachable through
   ordinary field reassignment, not one scoped to the `FromRecord` conversion alone.
   Proposes a `Construct` aspect (`construct(row) -> Result<Self, Self::Error>`) as the
-  one path any value of a nominal type is ever produced through — fresh construction (via
-  RFC-0100's call syntax, once it removes bare struct literals) and post-narrowing
-  reconstruction collapse into the same operation. A struct with no invariant gets a
+  one path any value of a nominal type is ever produced through — fresh construction and
+  post-narrowing reconstruction collapse into the same operation. **Syntax-independent
+  since 2026-07-24:** the RFC-0100 dependency was found not to be real — a brace literal
+  that *desugars* to `construct` is not a bypass, so `Point { x = 1.0 }` and
+  `Point(x = 1.0)` both work and neither is required. Only §1.1's rule matters, that
+  row-to-`Self` is admitted inside `construct`/`construct_unchecked` and nowhere else. A struct with no invariant gets a
   compiler-synthesized identity default (`Error = !`). Collapses RFC-0090's `FromRecord`
   into the same mechanism without amending RFC-0090's own text. A separate, opt-in
   `ConstructUnchecked` aspect (depends on RFC-0026, `unsafe` blocks) gives an explicit
@@ -521,19 +524,38 @@ implementation).
   grammar, reserved path roots (`root::`/`std::`/`self::`/`super::` → `.`-spelled), and
   RFC-0023's turbofish syntax. Reopened after acceptance to compare the full-dot design
   against a narrower context-limited dotted-path alternative before any integration.
-- **RFC-0100** *(under review again, reopened 2026-07-14)* — Constructor-Call Construction — `Type { field: value }` struct
-  literals → `Type(field: value)` call-shaped construction. Real deliverable is general
+- **RFC-0100** *(under review again, reopened 2026-07-14; split 2026-07-24)* — Constructor-Call Construction — `Type { field: value }` struct
+  literals → `Type(field = value)` call-shaped construction. Real deliverable is general
   keyword arguments for function calls, not a struct-only rename — struct construction
   is just the first consumer. Like RFC-0099, not a pure addition: keyword arguments
-  collide with the existing type-ascription expression (RFC-0023) at the grammar level
-  (`Foo(bar: Baz)` is ambiguous between a keyword argument and an ascribed positional
-  argument) — resolved by reordering `arg_list` to try a keyword-argument shape before
-  falling through to plain `expr`, at the cost of no longer being able to write a bare
-  ascribed variable as an unparenthesized positional call argument. Pattern-matching
-  destructuring explicitly keeps its current `{ field }` syntax (deliberate asymmetry,
-  not an oversight — see the RFC's own §4). Old literal syntax retired outright rather
-  than kept as a second spelling, following RFC-0042's own precedent against permanent
-  transition aliases. Opened 2026-07-13, accepted 2026-07-14.
+  occupy a grammar position already spoken for. **Revised 2026-07-24 to spell them
+  `name = value`, which dissolves the reason the RFC was reopened** — the ascription
+  collision (`Foo(bar: Baz)` ambiguous between a keyword argument and an ascribed
+  positional argument) was specific to the `:` spelling, not to keyword arguments as a
+  feature. Under `=` the collision is with `assign_expr` instead, fixed by the same
+  `arg_list` reordering at a much smaller cost: a bare assignment can no longer be a
+  positional argument (the C `if (x = 5)` footgun), and type ascription is untouched in
+  every position. Pattern-matching destructuring explicitly keeps its current
+  `{ field }` syntax (deliberate asymmetry, not an oversight — see the RFC's own §4);
+  patterns have no separator to change either way. Old literal syntax retired outright
+  rather than kept as a second spelling, following RFC-0042's precedent — **though that
+  case is weaker since the split**, which moved the invariant argument to RFC-0115.
+  Opened 2026-07-13, accepted 2026-07-14.
+- **RFC-0115** *(draft)* — Field Initializer Separator — `field_init` changes from
+  `ident ":" expr` to `ident "=" expr`, so `Point { x = 1.0, y = 2.0 }`. **Split out of
+  RFC-0100 on 2026-07-24**, which had bundled this with call-shaped construction; that
+  made a settled, dependency-free question hostage to a contested one, with "the
+  invariant gets a permanent exception" as the downside if RFC-0100 never landed.
+  `field_init` is the *only* site in the grammar where `:` introduces a value, so this
+  one-token change completes the `:` classifies / `=` defines invariant
+  (`reports/syntax/colon-classifies-equals-defines.md`) with no exceptions left. Braces,
+  punning (`Point { x }`), and pattern destructuring all unchanged. Carries no grammar
+  risk, unlike both of RFC-0100's separator proposals — `field_init` matches
+  `ident ~ "="` directly, so the label never routes through `expr` and nothing can shadow
+  it. Second motivation, and the stronger one: it aligns nominal struct literals with
+  RFC-0090's settled anonymous record values, making `Point { x = 1.0 }` literally
+  `{ x = 1.0 }` plus a brand — the relationship RFC-0090 tier 3 claims holds
+  semantically, now visible in the syntax.
 - **RFC-0101** *(draft)* — Grammar-Enforced Naming Case Conventions — PascalCase for type
   declarations (struct/enum/aspect/generic params) and enum variants, camelCase for
   `fun` declarations (free functions, methods, associated functions), SCREAMING_CASE for

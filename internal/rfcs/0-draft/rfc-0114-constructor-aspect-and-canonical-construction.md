@@ -53,6 +53,16 @@ updated: '2026-07-24'
 > as types and `{ small = 3, big = 1 }` as values. `record` now appears in this RFC not at
 > all — it survives only as RFC-0090 tier 3's *declaration* keyword, which this RFC has no
 > occasion to use.
+>
+> **Revised a third time 2026-07-24 — the RFC-0100 dependency is gone entirely.** RFC-0100
+> was split, its separator half becoming RFC-0115 (braces kept, `field_init`'s `:` → `=`).
+> Reworking §2 against that surfaced that the dependency was never real: this RFC required
+> RFC-0100 to *remove* brace literals, assuming a surviving literal bypasses `construct`.
+> **A literal that desugars to `construct` is not a bypass.** §2 is rewritten to state what
+> this RFC actually needs — every surface form producing a `Self` desugars to `construct`,
+> with §1.1 the only exception — which every candidate syntax satisfies. Open question 2 is
+> resolved by dissolving its premise, and this RFC now has no blocking dependency on any
+> under-review RFC.
 
 ## Summary
 
@@ -187,45 +197,52 @@ written and it follows from the rule rather than being independent of it.
 
 ## 2. Canonical construction: all construction is `Self::construct(row)`
 
-Once RFC-0100 lands, `Type { field: value }` struct literals no longer exist as a
-separate surface form — "`Type(args)` call-shaped syntax **replaces**
-`Type { field: value }` struct literals at construction sites," in that RFC's own words.
-Under this RFC:
+**Rewritten 2026-07-24 (third revision): this section no longer depends on RFC-0100, or
+on any particular construction syntax.** The first two drafts required RFC-0100 to *remove*
+brace literals, on the reasoning that a surviving literal would be a bypass around
+`construct`. That was the wrong requirement. **A literal is not a bypass if it desugars to
+`construct`** — and once it does, which surface form the language settles on stops
+mattering to this RFC at all:
 
 ```metel
-SortedPair(small = 3, big = 1)
-// desugars to
+SortedPair { small = 3, big = 1 }      // brace literal (today's form, RFC-0115's separator)
+SortedPair(small = 3, big = 1)         // call-shaped   (if RFC-0100 lands)
+// both desugar to
 SortedPair::construct({ small = 3, big = 1 })
 ```
 
+**The brace form's desugaring reads directly off the surface, which is worth noting rather
+than treating the two as merely equivalent.** `SortedPair { small = 3, big = 1 }` is
+visibly a brand applied to a row, so rewriting it to "apply that brand's constructor to
+that row" is close to a no-op syntactically — the row is already written as a row. The
+call-shaped form has to collect keyword arguments into a row first. Both work; the brace
+form is the more transparent of the two, which is the opposite of what the first draft
+assumed.
+
 Fresh construction and post-narrowing reconstruction (§3) become the *same* operation, not
-two mechanisms that happen to need the same validation. **The desugaring is a
-one-token-class rewrite, which is the point:** RFC-0100's keyword arguments and a record
-value are the same `name = value` shape, separated by the same `=`, because both bind a
-value to a label. Positional construction (`SortedPair(3, 1)`, RFC-0100 §1's one-or-two-field
-sugar) desugars identically after positional-to-label assignment.
+two mechanisms that happen to need the same validation. Positional construction
+(`SortedPair(3, 1)`, RFC-0100 §1's one-or-two-field sugar) desugars identically after
+positional-to-label assignment, if RFC-0100 lands.
 
-Both get the *same* result-handling treatment from §5, uniformly: `let p = SortedPair(small
-= 3, big = 1);` binds a bare `SortedPair` when `Self::Error = !` (RFC-0078's
+Both get the *same* result-handling treatment from §5, uniformly: `let p = SortedPair {
+small = 3, big = 1 };` binds a bare `SortedPair` when `Self::Error = !` (RFC-0078's
 inhabited-singleton coercion applies automatically), and binds a `Result<SortedPair, E>` the
-caller must handle otherwise — ordinary, unsurprising behavior for a function call either way.
+caller must handle otherwise — ordinary, unsurprising behavior either way.
 
-**This RFC depends on RFC-0100 removing the bare literal. Updated 2026-07-24: that
-dependency is materially firmer than the first draft recorded, but it is not resolved.**
-RFC-0100 is still `1-under-review` — however, the reason it was reopened ("reconsidering
-whether general keyword arguments belong in the spec at all", `OBJECTIVES.md` Trigger 14)
-was revised the same day this RFC was, and **dissolved**: the ascription collision that
-motivated the reconsideration was specific to spelling keyword arguments `name: value`, and
-does not arise under `=`. What remains open in RFC-0100 is whether `=` is the right
-separator, not whether the feature belongs — a materially smaller question, and one whose
-plausible outcomes mostly leave this RFC's §2 intact.
+**What this RFC actually needs, stated precisely now that it is not "RFC-0100 must land":**
+every surface form that produces a `Self` must desugar to `construct`, and §1.1's
+privileged row-to-`Self` admission must be the only exception. Nothing more. RFC-0115
+(separator only, braces kept) satisfies this; RFC-0100 (call-shaped, literal retired)
+satisfies it; today's grammar with neither would satisfy it too, since `field_init`'s
+separator is irrelevant to whether a literal desugars. **This RFC has no blocking
+dependency on either.**
 
-The fallback if RFC-0100 is refused anyway is unchanged and still not worked out here: this
-RFC would need its own narrower restriction — the compiler refuses a bare `Type { field:
-value }` literal specifically for any type implementing a non-default `Construct` — rather
-than leaning on RFC-0100 having landed. Note that under that fallback §1.1's privileged
-site becomes *more* load-bearing, not less, since the bare literal would survive everywhere
-except the types that most need it gone.
+**One cost the brace form carries and the call form does not, recorded because the split
+should not lose track of it.** Braces read as inert data, but `construct` runs code and may
+normalize — `SortedPair { small = 3, big = 1 }` evaluates to `small = 1, big = 3`. §5's
+rule keeps genuinely *fallible* types out of this sugar entirely, so the surprise is
+bounded to silent normalization, not silent failure. It is still a surprise. RFC-0115's own
+open question 1 records the same tension from the other side.
 
 ---
 
@@ -388,13 +405,14 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
    `Self` provably, and a real `Error` type loses the automatic-firing sugar in exchange,
    both by the same mechanism. Kept as a struck-through entry rather than removed, per
    this corpus's convention of leaving resolved questions visible.
-2. **Does this RFC need its own literal-banning rule independent of RFC-0100** (§2)?
-   *(Updated 2026-07-24 — narrowed, not closed.)* RFC-0100 is still `1-under-review`, but
-   the reason it was reopened has dissolved: its ascription collision was specific to the
-   `name: value` spelling and does not arise under `=`. What remains open there is the
-   separator choice, not the feature's existence. The fallback rule is therefore less
-   likely to be needed than the first draft assumed — but it is still not written, and §2
-   notes that under the fallback §1.1 carries more weight, not less.
+2. ~~Does this RFC need its own literal-banning rule independent of RFC-0100 (§2)?~~
+   **Resolved 2026-07-24 by dissolving the premise, not by answering it.** The question
+   assumed a surviving brace literal is a bypass around `construct`. It is not, if it
+   desugars to `construct` — and §2 is rewritten on that basis. No literal-banning rule is
+   needed, from this RFC or RFC-0100, so the fallback that was "not worked out here" no
+   longer needs working out. **This also removes this RFC's only blocking dependency on an
+   under-review RFC**, which is a larger consequence than the question itself: RFC-0114 is
+   now compatible with RFC-0115, with RFC-0100, with both, or with neither.
 3. **What derives `Construct`'s default implementation, mechanically?** §5's resolution
    sharpens this rather than settling it: RFC-0082 (associated types, `4-implemented`)
    explicitly declined a *general* default-associated-type mechanism — "a default would
@@ -471,11 +489,15 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
 - `internal/rfcs/0-draft/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md`
   — the auto-impl pattern `Construct`'s default derivation resembles but does not reuse
   directly (§1, §3)
-- `internal/rfcs/1-under-review/rfc-0100-constructor-call-construction.md` — the
-  literal-removal this RFC's canonical-construction claim depends on, and the source of the
-  `name = value` spelling §2's desugaring reuses. Revised 2026-07-24 alongside this RFC:
-  still `1-under-review`, but the reopening reason tracked by `OBJECTIVES.md` Trigger 14
-  is dissolved rather than outstanding (§2)
+- `internal/rfcs/1-under-review/rfc-0100-constructor-call-construction.md` — call-shaped
+  construction and general keyword arguments. **No longer a dependency of this RFC** (§2,
+  open question 2): if it lands, `Type(args)` desugars to `construct`; if it does not, a
+  brace literal does. Its reopening reason, tracked by `OBJECTIVES.md` Trigger 14, was
+  found dissolved on 2026-07-24 — relevant to that RFC's own prospects, not to this one's
+- `internal/rfcs/0-draft/rfc-0115-field-initializer-separator.md` — the separator half
+  split out of RFC-0100 the same day; keeps brace literals and changes only `field_init`'s
+  `:` to `=`, which is what makes `SortedPair { small = 3, big = 1 }` desugar so directly
+  to `SortedPair::construct({ small = 3, big = 1 })` (§2). Also not a dependency
 - `reports/syntax/colon-classifies-equals-defines.md` — the `:` classifies / `=` defines
   invariant that fixes the separator in this RFC's record values and RFC-0100's keyword
   arguments identically

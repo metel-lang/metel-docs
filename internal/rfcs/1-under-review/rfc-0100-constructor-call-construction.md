@@ -7,6 +7,17 @@ target:
 updated: '2026-07-24'
 ---
 
+> **Split 2026-07-24, later the same day.** The separator half of this RFC — changing
+> `field_init` from `ident ":" expr` to `ident "=" expr` — is extracted into
+> **RFC-0115 (Field Initializer Separator)** and is no longer this RFC's to deliver.
+> The two were bundled only because retiring brace literals happened to remove the
+> grammar's single separator-invariant violation as a side effect; that made a settled,
+> dependency-free question hostage to this RFC's own unsettled one. **RFC-0115 keeps
+> braces and changes only the separator; this RFC keeps call-shaped construction and
+> general keyword arguments.** Neither blocks the other, and this RFC's §5 case is
+> genuinely weaker for the split — see §5, which no longer gets to claim the
+> invariant as a reason to retire the literal.
+>
 > **Status — under review, revised 2026-07-24.** **The reason this RFC was reopened is
 > dissolved, not answered on its own terms.** The ascription collision that motivated
 > reopening was a consequence of spelling keyword arguments `name: value`, not of keyword
@@ -60,10 +71,11 @@ let t = Token(value = "x".to_string(), secret = "shh".to_string());
 to a name — it *defines*, it does not *classify* — so it takes `=` under the separator
 invariant `reports/syntax/colon-classifies-equals-defines.md` audits the grammar against
 (`:` classifies: `x: T`, `T: Bound`; `=` defines or equates: `let x = e`,
-`type X = Concrete`, `Deref<Target = Node>`). This is the same reason the RFC's other half
-— retiring `Type { field: value }` — is a net gain for the grammar rather than a lateral
-move: `field_init` is the single site in the entire grammar that violates the invariant
-(§5).
+`type X = Concrete`, `Deref<Target = Node>`). **The invariant applies to keyword arguments
+on its own merits, independently of RFC-0115** — a keyword argument would take `=` whether
+or not `field_init` ever changes, because binding a value to a name is defining in either
+construct. The split does not weaken this section; it only means this RFC is no longer the
+vehicle that *completes* the invariant.
 
 Field order at the construction site becomes non-load-bearing — `Token(secret = "shh".to_string(), value = "x".to_string())` is equally valid, matching keyword-argument semantics in every language that has them (Python, Kotlin, F#, Ada). Positional arguments remain available for the common one-or-two-field case: `IntBox(42)` is valid when there's exactly one field and no ambiguity about which one it binds to; mixing positional and keyword arguments in one call follows the same rule most languages use (positional arguments must precede keyword ones).
 
@@ -166,16 +178,15 @@ asymmetry argued below is therefore purely about braces-versus-parens.
 
 **The old `Type { field: value }` literal syntax is retired, not kept as a second valid spelling.** Keeping both was considered (see Alternatives) and rejected: having two equally-valid ways to construct any struct is a worse ergonomic outcome than a one-time mechanical migration, and this project's own precedent (RFC-0042 §D1: "the language keeps only one binding introducer... does not carry a transition alias") already establishes that a clean single spelling is preferred over a permanent dual-syntax compromise when a rename like this ships.
 
-**A second, independent reason to retire it, found after this RFC was written.**
-`field_init = { ident ~ (":" ~ expr)? }` (`grammar.pest:242`) is the **only** site in the
-entire grammar where `:` introduces a value — thirteen of the fourteen `:`/`=` sites
-classify or define correctly, and this one does not
-(`reports/syntax/colon-classifies-equals-defines.md`). Retiring the literal therefore
-removes the language's single separator-invariant violation as a side effect of a rename
-proposed for unrelated reasons. **The dependency runs the other way too, and should be
-stated as a risk rather than a bonus: if this RFC is refused, that violation becomes
-permanent**, and the invariant has to be stated with an exception — materially weaker than
-a rule with none.
+**An argument this section briefly had, and lost in the split — recorded rather than
+quietly dropped.** For part of 2026-07-24 this RFC also claimed a second, independent
+reason to retire the literal: `field_init` is the only site in the grammar where `:`
+introduces a value, so retiring the literal would remove the language's single
+separator-invariant violation for free. **RFC-0115 now does that directly, keeping the
+braces**, so this RFC no longer gets the credit — and, more to the point, the invariant is
+no longer at risk if this RFC is refused. That is a real weakening of the case for §5:
+retiring the literal must now be justified on the "one spelling per action" ground alone,
+which is the ground it was originally proposed on. The split was made knowing this.
 
 ## 6. Evaluation order, aspect methods, and overload resolution
 
@@ -278,8 +289,12 @@ are now known to be separator-independent, so this revision does not reopen them
 - RFC-0023 (Type Ascription vs Turbofish) — the `expr: Type` production the `:` spelling collided with
   (§3, superseded half). **Under `=` this RFC does not touch RFC-0023 in any position.**
 - `reports/syntax/colon-classifies-equals-defines.md` — the separator invariant `=` is adopted from (§1),
-  its fourteen-site grammar audit, and its own recommendation that this RFC switch separators; also the
-  source of §5's second, independent reason to retire `field_init`.
+  and its fourteen-site grammar audit. Its recommendation that this RFC switch separators is now split
+  across two RFCs: keyword arguments here, `field_init` in RFC-0115.
+- RFC-0115 (Field Initializer Separator) — the separator half of this RFC, split out 2026-07-24. Keeps
+  brace literals and changes only `field_init`'s `:` to `=`. Independent of this RFC in both directions:
+  it does not need call-shaped construction, and this RFC does not need it. If both land, `field_init`
+  ceases to exist and RFC-0115 becomes moot rather than conflicting.
 - RFC-0042 (`let mut` for Mutable Bindings) — precedent cited in §5 for retiring an old spelling outright rather than keeping a permanent transition alias.
 - RFC-0044 (Explicit Receiver Semantics) — receiver-form distinctions confirmed against §6's aspect-method-call resolution.
 - RFC-0091 (Linear Records) — uses `record { field: Type }` as a *type-level* notation (not a construction-site expression); related surface shape, but a different grammar position, not directly amended by this RFC. Its `:` is classification and conforms to §1's invariant unchanged. **Note (2026-07-24):** RFC-0090 has since dropped the `record` keyword from the anonymous former, so RFC-0091's ~20 uses of it are now stale spelling — a mechanical sweep not yet done.
