@@ -113,8 +113,12 @@ error: use of moved value `x`
    | let z = x;   // error: x is no longer valid
 ```
 
-Move semantics apply to all struct and enum values by default. Primitive types and types
+Move semantics apply to **every non-`Copy` value** by default. Primitive types and types
 implementing `Copy` are excluded (§2).
+
+*(Wording widened 2026-07-24. This previously read "all struct and enum values", which was
+exhaustive when written and no longer is — it excludes records, tuples and arrays by
+omission. See §9a.)*
 
 ---
 
@@ -275,6 +279,52 @@ allocator lifetime guarantees sound:
 
 ---
 
+## 9a. Completeness audit against constructs added since acceptance
+
+*Added 2026-07-24 during integration review.* This RFC was accepted 2026-06-28, when structs
+and enums were the only aggregates. Six constructs it does not cover, with proposed
+resolutions where precedent is unambiguous.
+
+**1. Are `&T` and `&var T` themselves `Copy`? — unspecified anywhere, and blocking.**
+Nothing in this RFC, RFC-0067a, or the rest of the corpus states it. RFC-0067a §205 defers
+its `T: Copy` gate to "RFC-0071's affine/Copy model," and this RFC never mentions references,
+so the two documents point at each other. The consequence if `&T` is affine:
+
+```metel
+let r = &x;
+f(r);
+g(r);        // error — r was moved into f?
+```
+
+Shared borrows would be single-use, which is unusable. **Proposed: `&T` is `Copy`; `&var T`
+is not** — Rust's rule, and near-universal. An exclusive reference must stay unique, so it
+moves or reborrows; a shared reference has no such obligation.
+
+**2. Moving out of an array element — no rule, and it is the case static tracking cannot
+handle.** §7 tracks partial moves "at field granularity". `xs[0]` has no field; the index may
+be dynamic, so which element is gone is not a static fact. **Proposed: banned outright.**
+Rust reaches the same conclusion for the same reason.
+
+**3. Partial moves out of a tuple — no rule.** §7 is written entirely in terms of struct
+fields, but v0.11.0 shipped tuple element assignment (`t.0 = v`), so `let a = t.0;` is
+writable today. **Proposed: identical to struct fields** — tuple elements are positional
+fields and are statically named, so the machinery applies unchanged.
+
+**4. Moving a payload out of an enum variant — no rule.** §1 says move semantics apply to
+enums; §7's partial-move rules never mention them. **Proposed: matching a variant and moving
+its payload consumes the enum wholly**, not partially — there is no "rest of the value" to
+retain, since the other variants were never inhabited.
+
+**5. Closure capture — no rule anywhere.** Whether a closure moves or borrows what it
+captures is unspecified: RFC-0046 (Linear Closure Capture) is `6-refused` and RFC-0050
+(Closure Capture Lists) is `0-draft`. **No proposal — this needs design, not a default.**
+It is the one gap here that is genuinely open rather than merely unwritten.
+
+**6. Records.** Not a gap in substance — RFC-0117 owns narrowing on partial move, and this
+RFC correctly says nothing about it. Only §1's scope sentence needed widening, done above.
+
+---
+
 ## 9. Unresolved questions
 
 1. **`Copy` declaration syntax — resolved.** `Copy` is declared via `extend T: Copy;`.
@@ -288,6 +338,15 @@ allocator lifetime guarantees sound:
    not be partially destructured, and a partially destructured value may not be used as a
    whole. Whether individual pattern bindings may borrow rather than move a field (a `ref`
    binding modifier or equivalent) is deferred to the pattern syntax RFC.
+3. **New, 2026-07-24, from §9a — blocking. Are `&T` and `&var T` themselves `Copy`?**
+   Proposed yes for `&T`, no for `&var T`, following Rust. Unstated here *and* in RFC-0067a,
+   which defers its own `Copy` gate back to this RFC — the two documents point at each other.
+   **Move checking cannot be implemented without an answer**, and if `&T` were affine, a
+   shared borrow would be single-use.
+4. **New, 2026-07-24, from §9a. Closure capture semantics are unspecified.** Whether a
+   closure moves or borrows its captures has no rule anywhere: RFC-0046 (Linear Closure
+   Capture) is `6-refused` and RFC-0050 (Closure Capture Lists) is `0-draft`. Needs design
+   rather than a default.
 
 ---
 
