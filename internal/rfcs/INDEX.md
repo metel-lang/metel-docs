@@ -123,7 +123,17 @@ was found and reconciled, and where this session did most of its work.
 Listed in dependency order. Each can be reviewed and accepted independently once the ones
 above it are.
 
-- **RFC-0116** *(draft)* — Anonymous Record Types — the closed `{ x: f64 }` type-former,
+- **RFC-0122** *(draft, opened 2026-07-24)* — Borrow Checking — the static rules for when a
+  borrow is valid and when two borrows conflict, against the anchor notation RFC-0067
+  already accepted. **Adds no syntax**; `&T`/`&var T` (RFC-0067a) and `&r T` (RFC-0067)
+  exist, and this supplies the rules they are currently checked by, which is nothing.
+  Opened against Trigger 19 — **and correcting it**: that trigger records "the borrow
+  checker has no RFC at all," true of a title search but understating RFC-0067, which is
+  `2-accepted`, specifies anchors, and superseded RFC-0052. The missing piece is the
+  checking rules, not the notation. Scheduled as **design-only** for v0.12.0, running
+  alongside RFC-0071's implementation rather than gating it.
+
+- **RFC-0116** *(under review, scheduled v0.12.0)* — Anonymous Record Types — the closed `{ x: f64 }` type-former,
   `{ x = 1.0 }` values, `Handle.{ fd }` projection, structural identity, and where records
   are usable (no inherent impls, no non-local aspect impls, no custom `Drop`, not an
   allocator). Also carries RFC-0090 §6's declined "records as the universal foundation"
@@ -133,7 +143,7 @@ above it are.
   the closed 2^*N* subset lattice, no row variables and no unification. Depends on
   RFC-0116 and on **RFC-0071** (`2-accepted`, 0% implemented), which is why it is separate
   from RFC-0116 rather than bundled with it.
-- **RFC-0118** *(draft)* — Row Bounds — `T: { x: f64, .. }` and `T: !{ token: _ }`,
+- **RFC-0118** *(under review, scheduled v0.12.0)* — Row Bounds — `T: { x: f64, .. }` and `T: !{ token: _ }`,
   replacing the `HasField`/`Lacks` family that never parsed. The trailing `..` is an
   anonymous row variable and is what makes a bound *open*; without it the bound is closed,
   a reading that previously could not be written at all. Explains why implicit structural

@@ -2,8 +2,9 @@
 id: rfc-0118
 title: "Row Bounds"
 date: '2026-07-24'
-status: draft
+status: under-review
 target:
+updated: '2026-07-24'
 ---
 
 > **Extracted from RFC-0090 on 2026-07-24** (superseded; see RFC-0116's header for the
@@ -13,6 +14,8 @@ target:
 > position, and on nothing else. It does **not** depend on RFC-0121 (Open Rows): a bound
 > is a predicate over a type, not a row variable, and the two were conflated in RFC-0090
 > partly because they shared a spelling.
+
+> **Status — under review (2026-07-24).** Scheduled for v0.12.0 alongside RFC-0116, which is its only dependency.
 
 ## Summary
 

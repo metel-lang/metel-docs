@@ -135,8 +135,8 @@ below is the blog's own sequencing sentence, made checkable.
 
 | # | Priority | Design state | Engineering state |
 |---|---|---|---|
-| 1 | Records / views as the structural carrier | RFC-0089/0090/0091/0109 `1-under-review` | not started, **no issue** |
-| 2 | Ownership enforcement and the borrow checker | RFC-0071 `2-accepted`; borrow checker **has no RFC at all** | not started, **no issue** |
+| 1 | Records / views as the structural carrier | RFC-0116/0118 `1-under-review`, RFC-0117/0119/0120/0121 `0-draft` *(RFC-0090 superseded 07-24)* | **v0.12.0: RFC-0116 + RFC-0118** |
+| 2 | Ownership enforcement and the borrow checker | RFC-0071 `2-accepted`; RFC-0122 (Borrow Checking) opened `0-draft` 07-24 | **v0.12.0: RFC-0071 implementation; RFC-0122 design in parallel** |
 | 3 | Brands and context parameters | RFC-0076 `0-draft`; RFC-0113 `1-under-review` | not started, **no issue** |
 | 4 | Allocators — emergent synthesis, built last | RFC-0063/65/66/67/68/73/77 `2-accepted`, complete | deliberately not started |
 | 5 | The interpreter as a feedback instrument | n/a | **all 19 open issues** |
@@ -147,6 +147,48 @@ Priorities 1–4 hold every RFC the project calls foundational and, between them
 issues. Priority 5, which this document had never ranked at all until today, holds all of
 them. This is not the same claim as 07-20's Trigger 17 ("ergonomics churn substituted for the
 stated priority"); it is structural. The stated priorities and the tracker do not intersect.
+
+### Release plan — v0.12.0 *(added 2026-07-24, after v0.11.0 shipped)*
+
+**Scope decided:** RFC-0116 (Anonymous Record Types) + RFC-0118 (Row Bounds) + RFC-0071
+(Ownership and Move Semantics), with RFC-0122 (Borrow Checking) drafted in parallel as
+design only.
+
+**The reasoning, which turns on one fact.** The blog's short-term commitment is
+"`ToRecord`/`FromRecord` working in the interpreter" — that is RFC-0119, and its chain is
+`RFC-0119 → RFC-0117 → RFC-0071`. **No release delivers that commitment until RFC-0071 is
+implemented.** Including it in v0.12.0 is therefore not ambition, it is the shortest path
+to the stated goal; v0.13.0 then delivers RFC-0117 + RFC-0119 and the commitment is met.
+RFC-0116 and RFC-0118 ride along because they depend on nothing at all and give the
+release a visible records deliverable rather than a purely internal one.
+
+**RFC-0071 is the risk, and it is larger than "accepted since June" suggests.** Checked
+section by section against the interpreter on 2026-07-24:
+
+| RFC-0071 § | State |
+|---|---|
+| §1 move by default | not started — 91 `.clone()` calls in `evaluator/mod.rs`, no move tracking anywhere |
+| §2 `Copy` aspect | not started — zero declarations in `stdlib/` |
+| §3 `Drop` aspect | not started — zero declarations in `stdlib/`, no drop tests |
+| §4 `Copy`/`Drop` exclusive | **done** — one guard at `construction.rs:3661`, the only implemented part |
+| §5 drop order | not started |
+| §6 explicit `drop` | not started |
+| §7 partial moves | not started — **this is what RFC-0117 needs**, so it cannot be descoped |
+
+So RFC-0071 is essentially entirely unbuilt except a single guard clause, and §7 is
+non-negotiable if v0.13.0 is to follow. It should be split into several tracked issues
+rather than one, and it is plausibly larger than all of v0.11.0.
+
+**Lifecycle prerequisites before any code.** `AGENTS.md` states an RFC gets a tracked issue
+"only once it reaches `3-integrated`." Nothing is at `3-integrated` today — the stage is
+empty. So: RFC-0116/0118 need `1-under-review → 2-accepted → 3-integrated`, and **RFC-0071
+needs `3-integrated` too**, which it has never had despite being accepted for four weeks.
+That integration step — spec merged, worked examples checked — is the gate, and it is where
+Trigger 24's tracked issue finally becomes creatable.
+
+**Out of scope, deliberately:** RFC-0008 (Aspect Objects, `2-accepted` since 07-01) stays
+deferred as Phase 4; the seven accepted allocator RFCs stay Priority 4 ("built last"); and
+RFC-0122 ships as a design document only, with no borrow checking in v0.12.0.
 
 ### Priority 1 — Records / views as the structural carrier
 
