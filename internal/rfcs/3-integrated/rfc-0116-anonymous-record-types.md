@@ -2,9 +2,11 @@
 id: rfc-0116
 title: "Anonymous Record Types"
 date: '2026-07-24'
-status: under-review
+status: integrated
 target:
 updated: '2026-07-24'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/288'
+impl_status: not-started
 ---
 
 > **Extracted from RFC-0090 (Structural Records — Rows and Tiers) on 2026-07-24**, which
@@ -23,6 +25,53 @@ updated: '2026-07-24'
 > machinery. Everything else in the cluster sits behind one of those.
 
 > **Status — under review (2026-07-24).** Scheduled for v0.12.0 as the records entry point: no dependency on RFC-0071, RFC-0076, or any row kind.
+
+> **Status — accepted (2026-07-24).** OQ1 resolved empirically -- record_lit added to primary_expr, 755 tests green, bare braces parse, if-blocks unaffected, change reverted. Parenthesised conditions make Rust's struct-literal ambiguity structurally impossible. OQ2 scoped out (chained/pattern projection rejected initially). OQ3 reassigned to RFC-0118/0119: an anonymous record has no declaring module, so no private label can leak through it. OQ4 (RFC-0099) is not in this release.
+
+> **Status — integrated 2026-07-24, targeting v0.12.0.** A new "Anonymous Records" section
+> is merged into `public/reference/spec/types.md`, placed after Tuples as the labelled
+> counterpart to the positional product type, covering the former, exactness, structural
+> identity, punning, the usability rules, and projection. Two one-line availability markers
+> added.
+>
+> **Cross-checked against the siblings still in flight for v0.12.0**, per `PROCESS.md`:
+>
+> - **RFC-0115 (Field Initializer Separator)** — the pairing that put both in this release.
+>   With RFC-0115, `Point { x = 1.0 }` is this RFC's `{ x = 1.0 }` plus a path, so the two
+>   differ by the brand alone. Shipping either without the other would release a separator
+>   mismatch.
+> - **RFC-0118 (Row Bounds)** — depends on this RFC and does not conflict. A row *type*
+>   here and a row *bound* there both classify with `:`; the open/closed distinction is
+>   carried by the trailing `..`, which this RFC does not use.
+> - **RFC-0071 (Ownership)** — no interaction. A record is an ordinary owned value; move
+>   semantics apply to it exactly as to a struct, and this RFC specifies no narrowing
+>   (that is RFC-0117, deliberately out of this release).
+> - **RFC-0114 (Construct)** — no conflict. `construct`'s row parameter is a closed record
+>   type of the shape this RFC defines.
+>
+> **One real intersection found, and it is a restriction the spec should carry rather than
+> a soundness problem.** `block = { "{" ~ block_item* ~ expr? ~ "}" }`, and
+> `if_expr = { "if" ~ "(" ~ expr ~ ")" ~ (block | expr) ~ … }` tries `block` **first**. So
+> in any position that admits a block — an if branch, a function body, a loop body — a bare
+> `{ x }` is parsed as a *block whose tail expression is `x`*, never as a punned record.
+> A function returning a record therefore needs the inner braces:
+>
+> ```metel
+> fun f() -> { x: i64 } { { x = 1 } }   // outer = body block, inner = record
+> fun f() -> { x: i64 } { x = 1 }       // NOT a record — tail expr is an assignment
+> ```
+>
+> This is not ambiguity — the alternation order makes it deterministic — but it is a sharp
+> edge, and it is the one thing this integration turned up that reading the RFC alone would
+> not have.
+>
+> **Grammar feasibility was settled by building it** (open question 1): `record_lit` added
+> to `primary_expr`, 755 tests green, bare braces parsed, if-blocks unaffected, change
+> reverted. The reason it is safe is stronger than the RFC first argued — Metel's
+> parenthesised conditions make Rust's struct-literal-in-condition ambiguity structurally
+> impossible.
+
+> **Status — integrated (2026-07-24).** Anonymous Records section merged into public/reference/spec/types.md after Tuples; two availability markers. Cross-checked against RFC-0115/0118/0071/0114. Grammar feasibility verified by prototype (755 tests green, reverted).
 
 ## Summary
 
@@ -171,20 +220,40 @@ exploration and does not gate this RFC.
 
 Carried from RFC-0090, narrowed to what this RFC owns.
 
-1. **Does bare `{ … }` survive contact with the rest of the grammar?** Checked against
-   `grammar.pest` and believed safe — a bare block is not an expression alternative (the
-   primary alternation lists `closure_expr`, `match_expr`, `if_expr`, `loop_expr`,
-   `struct_literal`, `path_expr`, but no `block`), and `struct_literal` requires a
-   preceding `type_path` — but **established by grammar reading, not by a built
-   prototype.** The interaction with `block_expr_stmt`'s `!"}"` lookahead is explicitly
-   unchecked. *(From RFC-0090 OQ12.)*
+1. ~~Does bare `{ … }` survive contact with the rest of the grammar?~~ **Resolved
+   2026-07-24 by building it, not by reading.** A `record_lit` alternative was added to
+   `primary_expr` ahead of `struct_literal`, the interpreter rebuilt, and the change
+   reverted afterwards. Results:
+   - **The full suite stayed green — 755 passed, 0 failed.** The alternative breaks nothing
+     that exists.
+   - **`{ x: 1, y: 2 }` parses.** The resulting failure is
+     `parse_expr: unexpected rule record_lit` — a missing AST branch, i.e. the grammar
+     accepted it and only the not-yet-written parser arm is absent. That is the expected
+     state and the positive result.
+   - **`if (n > 1) { … }` still parses as a block**, in the same file as a bare record.
+   - **`block_expr_stmt`'s `!"}"` lookahead**, called out as unchecked, is unaffected.
+
+   **The underlying reason is stronger than this RFC originally argued.** The difficulty
+   everyone expects is Rust's — `if x == Foo { }` is ambiguous because the condition is
+   unbracketed. **Metel requires parenthesised conditions**: `if ( expr )`, `while ( expr )`,
+   `for ( … )` (`grammar.pest:137-142, 239`). The brace after `)` is therefore always the
+   block and never a literal, so the ambiguity motivating Rust's restriction is
+   structurally impossible here. The safety is a property of the condition syntax, not a
+   lucky absence of collisions.
 2. **Chained projection (`S.{ a }.{ b }`) and projection in pattern position** are
-   unspecified.
-3. **Field-level visibility (RFC-0032) and structural typing are unreconciled.** If a
-   record type mentions a label private to its declaring module, can code outside that
-   module name the type, or construct a value of it? RFC-0114's open question 8 depends on
-   the answer — canonical construction may hand every struct a public constructor if
-   private labels are writable from outside. *(From RFC-0090 OQ7, narrowed.)*
+   unspecified — **scoped out of v0.12.0 rather than left ambiguous.** Both are rejected by
+   the initial implementation; a single projection in type or expression position is the
+   whole of what ships. Neither has a use case in the cluster today, and admitting them
+   later is additive. Recorded as a deliberate restriction so the implementation has a
+   definite answer rather than an open one.
+3. **Field-level visibility (RFC-0032) and structural typing are unreconciled** — **but
+   not for this RFC, which is why it does not block acceptance.** The question as inherited
+   reads "if a record type mentions a label private to *its declaring module*…", and an
+   *anonymous* record has no declaring module: it is written inline and derived from
+   nothing. A private label can only leak into a row when the row comes *from* a nominal
+   struct, which happens in RFC-0118 (a bound matching a struct's row) and RFC-0119 (a
+   conversion producing one). Reassigned there; RFC-0114's open question 8 depends on
+   their answer, not on this RFC's. *(From RFC-0090 OQ7, narrowed twice.)*
 4. **Interaction with RFC-0099 (Dot-Separated Module Paths), `1-under-review`.** If it
    lands, `.` both separates module paths and projects a record, so `Handle.{ fd }` sits
    beside `mod.Handle`. Still unambiguous — a `{` cannot start a path segment — but the

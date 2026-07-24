@@ -133,7 +133,7 @@ above it are.
   checking rules, not the notation. Scheduled as **design-only** for v0.12.0, running
   alongside RFC-0071's implementation rather than gating it.
 
-- **RFC-0116** *(under review, scheduled v0.12.0)* — Anonymous Record Types — the closed `{ x: f64 }` type-former,
+- **RFC-0116** *(integrated 2026-07-24, target v0.12.0, tracked as #288)* — Anonymous Record Types — the closed `{ x: f64 }` type-former,
   `{ x = 1.0 }` values, `Handle.{ fd }` projection, structural identity, and where records
   are usable (no inherent impls, no non-local aspect impls, no custom `Drop`, not an
   allocator). Also carries RFC-0090 §6's declined "records as the universal foundation"
