@@ -11,7 +11,10 @@ title: "Metel Language Changelog"
 
 **RFCs implemented:** RFC-0107 (Unqualified Enum Variants in Match Patterns),
 RFC-0108 (Reference-Transparent Match Scrutinees), RFC-0110 (Explicit Dereference
-Operator), RFC-0111 (Unqualified Enum Variants in Expression Position).
+Operator), RFC-0111 (Unqualified Enum Variants in Expression Position),
+RFC-0097 (Orphan Rule for Blanket Impls) — the last of these was already accepted and
+marked implemented, but its rule for `extend<T: Bound> T: Aspect` was only satisfied by
+coincidence; the check is now deliberate.
 
 **Enum variants:**
 - A match arm may name a variant without its `Enum::` prefix when the scrutinee's
@@ -84,6 +87,23 @@ Operator), RFC-0111 (Unqualified Enum Variants in Expression Position).
   ever pinning a type parameter, so `[].eq(&[])` failed with an error pointing
   inside `std::core`.
 - A bare variant that can never resolve is reported rather than silently accepted.
+
+**Dispatch and bounds:**
+- **Two aspects may register a same-named method against the same generic or structural
+  target** — `T[]`, `Wrapper<T>` — without silently aliasing. The single-slot registries
+  previously kept whichever impl was registered last, regardless of which one's bounds the
+  concrete instantiation actually satisfied, so calls could dispatch to the wrong impl.
+  Affects nominal generic structs identically, not only arrays.
+- **A generic struct or array implementing `Iterable<T>` generically** — `extend<T>
+  Wrapper<T>: Iterable<T>`, rather than a concrete `extend Counter: Iterable<i64>` — now
+  derives its `for`-in element type correctly. Two separate paths were wrong: inference read
+  the registry's recorded type arguments, which for a still-generic impl are the impl's own
+  parameter *names* rather than types, and construction searched only the concrete method
+  environment, never the polymorphic one.
+- **An associated type's declared bound is registered on its projection.** RFC-0082 allows
+  `type Item: Display;`, but the placeholder minted for `Self::Item` never carried that
+  bound, so chaining directly onto a projection result — `c.get().to_string()` — failed with
+  a spurious "cannot infer receiver type" (T0002).
 
 ## v0.10.0
 
