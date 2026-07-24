@@ -44,6 +44,15 @@ updated: '2026-07-24'
 > `&mut`) despite this RFC post-dating that RFC's implementation by nine days; both are
 > corrected to `extend Type: Aspect` and `&var`. A new Open Question 8 records a privacy
 > question §1.1 exposed and does not answer.
+>
+> **Revised again 2026-07-24, later the same day — the `record` keyword is gone.** The
+> revision above used RFC-0090's then-normative `record { … }` former and noted that
+> `access-and-presence-rows.md` §3.5 recommended bare braces instead, declining to adopt
+> an unadopted spelling unilaterally. **RFC-0090 has since been amended to drop the
+> keyword from anonymous records**, so this RFC follows: rows are `{ small: i32, big: i32 }`
+> as types and `{ small = 3, big = 1 }` as values. `record` now appears in this RFC not at
+> all — it survives only as RFC-0090 tier 3's *declaration* keyword, which this RFC has no
+> occasion to use.
 
 ## Summary
 
@@ -101,14 +110,14 @@ validation logic, or forgets to.
 ```metel
 aspect Construct {
     type Error;
-    fun construct(row: record { /* all of Self's fields */ }) -> Result<Self, Self::Error>;
+    fun construct(row: { /* all of Self's fields */ }) -> Result<Self, Self::Error>;
 }
 
 extend SortedPair: Construct {
     type Error = !;
-    fun construct(row: record { small: i32, big: i32 }) -> Result<Self, !> {
-        if row.small <= row.big { Ok(row) }                              // §1.1
-        else { Ok(record { small = row.big, big = row.small }) }
+    fun construct(row: { small: i32, big: i32 }) -> Result<Self, !> {
+        if row.small <= row.big { Ok(row) }                    // §1.1
+        else { Ok({ small = row.big, big = row.small }) }
     }
 }
 ```
@@ -118,14 +127,15 @@ extend SortedPair: Construct {
 (RFC-0090 §8) use bare `Self`; `construct` deliberately does not, for the reason §5
 works through.
 
-**Syntax note.** Rows here use RFC-0090's normative `record { … }` type-former, and record
-*values* separate with `=` (`record { small = row.big }`) per RFC-0100 §1's separator
-invariant. `access-and-presence-rows.md` §3.5 recommends dropping the `record` keyword in
-every freestanding position (`{ small: i32, big: i32 }`, dot retained only for projection:
-`SortedPair.{ big }`), which would make this read considerably lighter — but RFC-0090 has
-not been amended for that, and this RFC does not adopt an unadopted spelling unilaterally.
-Projection *is* spelled `SortedPair.{ big }` throughout, since that form is settled and has
-no competing normative spelling.
+**Syntax note.** Rows are bare braces in every position this RFC uses, per RFC-0090's
+2026-07-24 amendment and `access-and-presence-rows.md` §3.5: `{ small: i32, big: i32 }` as
+a type, `{ small = row.big }` as a value (the `=` per RFC-0100 §1's separator invariant),
+and `SortedPair.{ big }` for projection — the dot surviving only where there is a receiver
+to project from. `construct`'s parameter is a **closed** record type, not a bound: it names
+the type's exact complete row, and a caller supplying a wider row does not satisfy it.
+RFC-0090's open question 13 records that closed types and bounds now share a spelling and
+are told apart by position alone; `construct`'s signature sits in `param` position, so it
+reads as the closed type.
 
 **A struct with no invariant writes nothing.** The compiler synthesizes a trivial default
 — `type Error = !; construct(row) { Ok(row) }` — the same way `Send`/`Sync`/`Linear`
@@ -185,7 +195,7 @@ Under this RFC:
 ```metel
 SortedPair(small = 3, big = 1)
 // desugars to
-SortedPair::construct(record { small = 3, big = 1 })
+SortedPair::construct({ small = 3, big = 1 })
 ```
 
 Fresh construction and post-narrowing reconstruction (§3) become the *same* operation, not
@@ -227,8 +237,8 @@ completed row and replacing the narrowed value with the result, rather than a ba
 in-place write.
 
 **Piecewise building composes the same way.** A value built up field by field —
-`structural-records.md`'s `MaybeUninit`-avoidance example, `let partial = record { a =
-compute_a() }; let partial = record { ..partial, b = compute_b() }; …` — only calls
+`structural-records.md`'s `MaybeUninit`-avoidance example, `let partial = { a =
+compute_a() }; let partial = { ..partial, b = compute_b() }; …` — only calls
 `construct()` once, at the point the row becomes complete, exactly as a single literal
 would. Intermediate partial states are ordinary, fully-valid values of a narrower type;
 nothing fires until nothing is missing.
@@ -321,7 +331,7 @@ the invariant holds — Rust's `NonZeroU32::new` (checked) alongside `new_unchec
 
 ```metel
 aspect ConstructUnchecked {
-    unsafe fun construct_unchecked(row: record { /* all of Self's fields */ }) -> Self;
+    unsafe fun construct_unchecked(row: { /* all of Self's fields */ }) -> Self;
 }
 ```
 
@@ -422,8 +432,8 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
    `aspect_decl`, which all have `public_kw?` — so an `extend SortedPair: Construct { … }`
    impl cannot be made private, and `SortedPair::construct` is therefore callable wherever
    `SortedPair` is nameable. Two readings, and which holds is genuinely undecided:
-   - **The hole is closed by field visibility.** The caller must supply a `record { small:
-     i32, big: i32 }`, naming every field including private ones. If a private label
+   - **The hole is closed by field visibility.** The caller must supply a `{ small: i32,
+     big: i32 }`, naming every field including private ones. If a private label
      cannot be written in a record literal from outside the declaring module — the natural
      extension of RFC-0090 §8's non-ambient guarantee, and of the brand-scoped visibility
      `nominal-types-as-branded-rows.md` §7.1–7.3 settles — then outside code cannot
@@ -470,9 +480,8 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
   invariant that fixes the separator in this RFC's record values and RFC-0100's keyword
   arguments identically
 - `reports/substructural-types/access-and-presence-rows.md` §3.5 — the settled row-former
-  rules: dot only where a receiver is projected (`SortedPair.{ big }`), bare braces
-  elsewhere. This RFC uses RFC-0090's `record { … }` in freestanding position pending an
-  RFC-0090 amendment (§1's syntax note)
+  rules this RFC now follows in full: dot only where a receiver is projected
+  (`SortedPair.{ big }`), bare braces everywhere else (§1's syntax note)
 - `internal/rfcs/4-implemented/rfc-0098-surface-keyword-renames.md` — `extend Type: Aspect`
   and `&var`, the spellings this RFC's examples were corrected to on 2026-07-24
 - `internal/rfcs/0-draft/rfc-0026-unsafe-blocks.md` — the foundation for

@@ -282,7 +282,7 @@ are now known to be separator-independent, so this revision does not reopen them
   source of §5's second, independent reason to retire `field_init`.
 - RFC-0042 (`let mut` for Mutable Bindings) — precedent cited in §5 for retiring an old spelling outright rather than keeping a permanent transition alias.
 - RFC-0044 (Explicit Receiver Semantics) — receiver-form distinctions confirmed against §6's aspect-method-call resolution.
-- RFC-0091 (Linear Records) — uses `record { field: Type }` as a *type-level* notation (not a construction-site expression); related surface shape, but a different grammar position, not directly amended by this RFC. Its `:` is classification and conforms to §1's invariant unchanged.
+- RFC-0091 (Linear Records) — uses `record { field: Type }` as a *type-level* notation (not a construction-site expression); related surface shape, but a different grammar position, not directly amended by this RFC. Its `:` is classification and conforms to §1's invariant unchanged. **Note (2026-07-24):** RFC-0090 has since dropped the `record` keyword from the anonymous former, so RFC-0091's ~20 uses of it are now stale spelling — a mechanical sweep not yet done.
 - RFC-0114 (Constructor Aspect and Canonical Construction) — the downstream consumer: it makes
   `Type(args)` desugar to `Self::construct(row)`, so this RFC's status directly gates its §2. Its own
   fallback (banning the bare literal only for types with a non-default `Construct` impl, should this RFC be

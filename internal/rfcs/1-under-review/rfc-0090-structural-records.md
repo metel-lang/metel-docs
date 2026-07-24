@@ -4,7 +4,7 @@ title: "Structural Records — Rows and Tiers"
 date: '2026-07-09'
 status: under-review
 target:
-updated: '2026-07-23'
+updated: '2026-07-24'
 ---
 
 > **New RFC, split out 2026-07-09** from `reports/substructural-types/structural-records.md`
@@ -45,6 +45,44 @@ updated: '2026-07-23'
 > same source. Open question 10 (`FromRecord` bypassing constructor invariants) has a
 > proposed answer too, split out as its own RFC rather than folded in here — see
 > `internal/rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md`.
+>
+> **Revised 2026-07-24 — the `record` keyword is dropped from anonymous records.** The
+> anonymous type-former is now bare braces: `{ x: f64, y: f64 }` as a type, `{ x = 1.0,
+> y = 2.0 }` as a value (the `=` per `reports/syntax/colon-classifies-equals-defines.md`,
+> adopted the same day by RFC-0100 for keyword arguments and RFC-0114 for record values).
+> This completes the adoption of `reports/substructural-types/access-and-presence-rows.md`
+> §3.5, whose rule is that the row-former carries a prefix **only where there is a receiver
+> to project from** — `Handle.{ fd }` keeps its dot; every freestanding position drops
+> everything. The 2026-07-23 revision above had already taken the bound half of that rule
+> (`T: { x: f64 }`); this takes the rest, so the corpus no longer spells one construct two
+> ways depending on which position it appears in.
+>
+> **`record` survives as a declaration keyword only** — `record X { ... }` (tier 3, §8),
+> alongside `struct`/`enum`/`aspect`. That is now the *only* thing the keyword does:
+> mint a nominal type. Open question 8 is folded into §8's prose accordingly, rather than
+> left flagged as inconsistent with it.
+>
+> **One real cost this creates, stated rather than glossed (new open question 13):** the
+> `record` keyword was the only visible difference between a *closed* anonymous record
+> type (`record { x: f64 }` — exactly these fields) and a *bound* (`{ x: f64 }` — at
+> least these fields). Both are now spelled `{ x: f64 }`, and only grammatical position
+> distinguishes them: after `:` in a `generic_param`/`where_constraint` it is an
+> existential bound; after `:` in a `param`/`let` annotation it is an exact closed type.
+> The parser can tell these apart — they are disjoint nonterminals — but a *reader* cannot
+> tell from the braces alone, and §5's "a closed record is not a predicate" bullet was
+> written on the assumption that the two spellings differed. That bullet is rewritten
+> below.
+>
+> **What this amendment does not do: sweep the rest of the corpus.** The old spelling
+> survives in RFC-0091 (~20 uses), RFC-0109 (7), RFC-0089 (5), and the design reports
+> this RFC was extracted from — `structural-records.md` (57) most of all. Those are
+> mechanical, but they are not this RFC's text and were left rather than swept silently.
+> `reports/substructural-types/archive/` should keep the old spelling permanently, as a
+> historical record. Also unchanged here, and separately stale: this RFC still uses
+> pre-RFC-0098 spellings throughout (`&mut` for `&var`, `impl Aspect for Type` for
+> `extend Type: Aspect`). Fixing those uniformly is a larger, unrelated pass; doing half
+> of it inside this amendment would have left the RFC internally inconsistent, which is
+> worse than uniformly stale.
 
 > **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `record` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 
@@ -53,7 +91,7 @@ updated: '2026-07-23'
 Adds structural typing to Metel without adopting a full row-kind system wholesale, via
 two complementary, additive mechanisms — `HasField`/`Lacks`-style auto-derived
 structural aspect bounds (flow-insensitive, for generic code matching "any struct with
-these fields") and a closed `record { ... }` type-former (an anonymous, exact-shape
+these fields") and a closed `{ ... }` type-former (an anonymous, exact-shape
 product type). Row capability is then split into three tiers of increasing commitment —
 plain `struct` (unchanged), `derives ToRecord, FromRecord` (on-demand conversion, no
 representation change), and a named `record` kind (permanent, intrinsic, the only tier
@@ -97,8 +135,9 @@ pieces that each extend something Metel already has:
   > string literal to fail to parse — and does not change the first: row-membership
   > checking is still existential, still not RFC-0096 §2's algorithm, for the same
   > reason as before.
-- **A closed `record { ... }` type-former** (§3) — an anonymous, exact-shape product
-  type, usable in ordinary value positions.
+- **A closed `{ ... }` type-former** (§3) — an anonymous, exact-shape product
+  type, usable in ordinary value positions. No keyword: the braces are the former (see
+  the 2026-07-24 revision note).
 
 Per-value, flow-sensitive tracking of which fields a specific binding has had consumed
 is a different concern, handled by RFC-0091 (Linear Records) on top of RFC-0089's
@@ -108,20 +147,22 @@ consumption state.
 
 ---
 
-## 2. `record` as a real type-former
+## 2. `{ ... }` as a real type-former
 
-Once `record` exists as a type, it is a genuine product type, usable anywhere an
-ordinary type is:
+Once the anonymous record exists as a type, it is a genuine product type, usable anywhere
+an ordinary type is:
 
-- **Closed by default.** `record { x: 1.0, y: 2.0 }` as a value is an exact, concrete
+- **Closed by default.** `{ x = 1.0, y = 2.0 }` as a value is an exact, concrete
   product — no hidden extra fields. This matters specifically because of the tension in
   §6: an *open* record (accept "at least these fields") permits width subtyping, i.e.
   silently forgetting fields, which is exactly what non-`Copy` ownership exists to
   prevent. Closed-by-default sidesteps this for the common case.
 - **As a bound, a bare row directly — not sugar over a named aspect anymore.**
-  `{ x: f64, y: f64 }` in a parameter position means "anything satisfying both fields,"
+  `T: { x: f64, y: f64 }` in **bound** position means "anything satisfying both fields,"
   one bound naming several labels rather than an ANDed chain of separate per-field
-  facts (see the 2026-07-23 revision note above). Combined with §1's auto-derivation,
+  facts (see the 2026-07-23 revision note above). *(Corrected 2026-07-24: this bullet
+  previously said "in a parameter position", which the keyword drop made wrong — braces
+  in `param` position are the closed type of the bullet above, not this bound.)* Combined with §1's auto-derivation,
   **any existing nominal struct with matching fields satisfies it with no explicit
   opt-in** — Go's implicit
   interface satisfaction (a type satisfies an interface by having matching methods,
@@ -129,10 +170,17 @@ ordinary type is:
   OCaml, since it's the same "structural match, no declared relationship" story without
   OCaml's object/method-dispatch baggage, which would be redundant with Metel's
   existing aspects anyway.
+
+  > **Position, not spelling, now carries the closed/open distinction (2026-07-24).**
+  > `{ x: f64 }` after `:` in a `generic_param` or `where_constraint` is this existential
+  > bound — "at least these fields." The identical text after `:` in a `param` or `let`
+  > annotation is the *closed* type of the bullet above — "exactly these fields." Dropping
+  > the `record` keyword is what merged the two spellings; the grammar keeps them apart
+  > (disjoint nonterminals), a reader has only position to go on. See open question 13.
 - **Open generalization reuses the existing channel pattern.** If genuine row
   polymorphism is wanted later — "at least these fields, generic over the rest" — that
   is exactly the shape of `<&r>` and `<@a>`: an explicit compile-time parameter in the
-  `<>` channel. Proposed form: `<row R>`, e.g. `fun get_x<row R>(p: record { x: f64,
+  `<>` channel. Proposed form: `<row R>`, e.g. `fun get_x<row R>(p: { x: f64,
   ..R }) -> f64`. Consistent with the pattern this cluster already uses everywhere —
   open/generic behavior is an explicit declared parameter; concrete use stays closed.
 
@@ -140,7 +188,7 @@ ordinary type is:
 
 ## 3. Recommended build order
 
-1. **Closed `record` types + `HasField` auto-derivation first.** No row-kind, no
+1. **Closed `{ ... }` record types + bare-row bound auto-derivation first.** No row-kind, no
    row-unification algorithm — a closed record over *N* fields is a product type with a
    compiler-synthesized identity; the space of "which subset remains" is bounded by
    2^*N*, trivial for realistic struct sizes.
@@ -213,8 +261,8 @@ eventually earn its cost, not an argument for taking on that cost now.
 
 - **Ordinary value positions** — parameters, returns, `let` bindings, struct/enum
   fields.
-- **Allocator-tagged and borrowed positions** — `@a record { x: f64, y: f64 }`, `&r
-  record { x: f64, y: f64 }`. A record is an ordinary owned value; it participates in
+- **Allocator-tagged and borrowed positions** — `@a { x: f64, y: f64 }`, `&r
+  { x: f64, y: f64 }`. A record is an ordinary owned value; it participates in
   `@a T` / `&r T` exactly like a struct.
 - **Pattern matching.**
 - **Generic instantiation.**
@@ -238,9 +286,17 @@ eventually earn its cost, not an argument for taking on that cost now.
   allocator identity being per-*instance*, while a record's entire premise is that two
   values with the same row are interchangeable — a category mismatch, not a coherence
   technicality.
-- **Using `record { ... }` itself as a bound.** A closed record type names a concrete
-  shape, it isn't a predicate. `HasField`/`Lacks` are the bound forms; `record { ... }`
-  stays for concrete positions.
+- **Reading a closed record type as if it were a bound, or vice versa.** *(Rewritten
+  2026-07-24 — this bullet previously leaned on a spelling difference that no longer
+  exists.)* A closed record type names a concrete shape; a bound is a predicate. They
+  remain **semantically distinct** — a closed `{ x: f64 }` is satisfied only by a value
+  with exactly that row, a bound `{ x: f64 }` by any type carrying at least that field.
+  What changed is that both are now written `{ x: f64 }`, so the distinction is carried
+  entirely by **which position the braces appear in**, not by a keyword. Concretely: a
+  closed record type still cannot be used *as* a predicate, and a bound still cannot be
+  used *as* a type — but a reader who mistakes one position for the other gets no
+  syntactic warning, where `record { ... }` used to give one. This is the cost recorded in
+  open question 13, not a claim that the two have merged.
 - **Open records where a non-empty row-variable remainder is silently discarded,
   without a guarantee everything in it is `Copy`** — a silent leak or soundness hole if
   the remainder contains a `Linear` or `Drop`-bearing field (§7's width-subtyping
@@ -271,8 +327,8 @@ underlying record. Considered and declined:
   point the reframing hasn't reduced what the system has to track, only renamed the
   part that was never really sugar.
 - **Implementation cost for the common case.** Routing every ordinary struct through
-  row-unification machinery means the 99% of code that never writes `record {...}` or
-  bounds on `HasField` pays for machinery it never asked for.
+  row-unification machinery means the 99% of code that never writes an anonymous
+  `{ ... }` or a row bound pays for machinery it never asked for.
 
 **Verdict:** records as the natural representation for structural, identity-free data —
 yes. Records as the universal foundation — no.
@@ -336,7 +392,7 @@ implicitly — but gains two derivable conversions:
 struct Handle { fd: i32, alloc: @a Buffer }
 
 let h: Handle = ...;
-let r = h.to_record();        // record { fd: i32, alloc: @a Buffer } — same bits, new static type
+let r = h.to_record();        // { fd: i32, alloc: @a Buffer } — same bits, new static type
 let h2 = Handle::from_record(r);
 ```
 
@@ -371,22 +427,22 @@ for tier 2 to have value.
 pair alone only covers "consume the whole struct, get a whole record, maybe build a new
 struct later." It does not cover "keep using `h.fd` while `h.alloc` is being drained."
 Both directions come from the *same* two aspects, not new ones: `ToRecord` yields
-`to_record(self) -> record {...}` **and** `to_record_mut(&mut self) -> &mut record
-{...}`; `FromRecord` yields `from_record(record {...}) -> Self` **and**
-`from_record_mut(&mut record {...}) -> &mut Self`. By-value vs. by-reference is a mode,
+`to_record(self) -> {...}` **and** `to_record_mut(&mut self) -> &mut {...}`;
+`FromRecord` yields `from_record({...}) -> Self` **and**
+`from_record_mut(&mut {...}) -> &mut Self`. By-value vs. by-reference is a mode,
 not a separate capability — only the `To`/`From` direction is worth keeping split.
 
 ```metel
 @derive(ToRecord, FromRecord)
 struct Handle { fd: i32, alloc: @a Buffer }
 
-fun drain(h: &mut Handle) -> (@a Buffer, &mut record { fd: i32 }) {
-    let view = h.to_record_mut();   // &mut record { fd: i32, alloc: @a Buffer } — reborrow, zero-cost
-    let buf = move view.alloc;       // ordinary row-shrink; view's type narrows to record { fd: i32 }
+fun drain(h: &mut Handle) -> (@a Buffer, &mut { fd: i32 }) {
+    let view = h.to_record_mut();   // &mut { fd: i32, alloc: @a Buffer } — reborrow, zero-cost
+    let buf = move view.alloc;       // ordinary row-shrink; view's type narrows to { fd: i32 }
     (buf, view)
 }
 
-fun restore(view: &mut record { fd: i32 }, buf: @a Buffer) -> &mut Handle {
+fun restore(view: &mut { fd: i32 }, buf: @a Buffer) -> &mut Handle {
     view.alloc = buf;                // ordinary row-grow; view's type widens back to the full row
     Handle::from_record_mut(view)    // trivial re-coercion — the row already matches Handle's in full
 }
@@ -396,7 +452,7 @@ Soundness is the same reason the by-value pair is sound — a reborrow, not a co
 allocation — and `restore` requires the row to have already grown back to `Handle`'s
 exact full shape by ordinary field assignment *before* `from_record_mut` is reached, so
 there is nothing beyond structural row-matching to check. Nothing stops code from never
-calling `restore` and simply being stuck holding `&mut record { fd: i32 }` forever,
+calling `restore` and simply being stuck holding `&mut { fd: i32 }` forever,
 unable to typecheck it back to `&mut Handle` — the type system enforces safety, not
 liveness.
 
@@ -436,12 +492,21 @@ would quietly re-widen tier 2 into tier 3 without the type author having asked f
 
 **Tier 3 — named record kind: permanent, intrinsic, impl-eligible.** A second, opt-in
 nominal kind — a *named record*, distinct from but closely related to §2's anonymous
-`record {...}` type-former — carries a `(row, brand)` representation intrinsically, not
-just convertibly. Illustrative syntax only, not settled:
+`{...}` type-former — carries a `(row, brand)` representation intrinsically, not
+just convertibly. **Syntax settled 2026-07-23, folded in here 2026-07-24** (this
+paragraph previously read "illustrative only, not settled"; open question 8 is now
+resolved rather than flagged as inconsistent with this prose):
 
 ```metel
 record Handle { fd: i32, alloc: @a Buffer }   // row machinery, permanently
 ```
+
+`record` joins `struct`/`enum`/`aspect` as a declaration keyword, and — since the
+2026-07-24 revision dropped it from the anonymous former — **declaring a nominal type is
+now the only job the keyword has.** The division of labour is exactly the one
+`access-and-presence-rows.md` §3.5 draws between `type X = { ... }` (binds a name to a
+row, mints no identity) and `record X { ... }` (mints identity): a keyword where new
+identity is created, bare braces where none is.
 
 This is strictly more than tier 2, and tier 2 cannot substitute for it:
 **row-conditional impls are resolved by the type system matching a type's own declared
@@ -474,7 +539,7 @@ struct Config {
     timeout: Perhaps<i32>,
 }
 
-let partial = record { host: "example.com" };   // `timeout` key absent entirely
+let partial = { host = "example.com" };   // `timeout` key absent entirely
 let cfg = Config::from_record(partial);          // cfg.timeout == Perhaps::none()
 ```
 
@@ -549,7 +614,8 @@ untouched) or primitives.
 
 - **Coherence needs a specificity rule between the two axes an impl can now match on.**
   An ordinary `impl Display for Point` is brand-keyed; RFC-0061's structural/blanket
-  impls (`impl<row R: { x: f64 }> Display for record R`) are row-keyed. If a
+  impls (`impl<row R: { x: f64 }> Display for { ..R }`) are row-keyed — the target
+  spelled with §2's spread tail now that `record R` has no keyword to lean on. If a
   `Point` value matches both, which wins? The obvious default — brand-keyed beats
   row-keyed blanket impls, more-specific-wins — is not written down as a rule anywhere,
   and RFC-0060/RFC-0061's coherence checking does not yet account for a second axis at
@@ -587,12 +653,15 @@ this idea, specified in RFC-0091, not here.
    brand-keyed and row-keyed blanket impls is written down.
 7. **Private-field leakage into cross-module structural matching (§9)** — no mechanism
    for the public-only row projection is designed yet.
-8. ~~What syntactically marks tier 3, the named record kind?~~ **Proposed answer,
-   2026-07-23:** `record X { ... }`, a separate keyword joining the
-   `struct`/`enum`/`aspect` declaration family — see the revision note above and
-   `reports/substructural-types/access-and-presence-rows.md` §3.5. Not yet folded into
-   §8's own prose below, which still poses this as undecided; flagged here rather than
-   left silently inconsistent.
+8. ~~What syntactically marks tier 3, the named record kind?~~ **Resolved 2026-07-23,
+   folded into §8's prose 2026-07-24:** `record X { ... }`, a separate keyword joining
+   the `struct`/`enum`/`aspect` declaration family — see the revision notes above and
+   `reports/substructural-types/access-and-presence-rows.md` §3.5. §8 no longer describes
+   this as illustrative-only, so the inconsistency this entry flagged is gone. The
+   2026-07-24 revision sharpens the answer: since the anonymous former dropped the
+   keyword, **declaring a nominal type is the only remaining job `record` has**, which is
+   a cleaner justification for spending a keyword on it than the original "it joins a
+   family" argument.
 9. **Whether §5's allocator-type restriction transfers to tier 3 (§8)** — §5's
    objection assumed structural interchangeability, which tier 3's fixed brand
    arguably avoids; unresolved.
@@ -615,6 +684,25 @@ this idea, specified in RFC-0091, not here.
     `_` (meaning "any type") for `!{ tag: _ }` — `_` exists only in `pattern` today,
     confirmed absent from `type_expr`. Whether this lands as part of this RFC's own
     acceptance or as a separate small amendment is not decided.
+    **Widened 2026-07-24 by the keyword drop:** the anonymous former now needs a bare
+    `{ ... }` alternative in `type_expr` and in expression position too, not only in
+    bound position. `access-and-presence-rows.md` §3.5 checked both against
+    `grammar.pest` and found them safe — a bare block is not an expression alternative,
+    and `struct_literal` requires a preceding `type_path` — but "safe" was established by
+    grammar reading, not by a built prototype, and the interaction with
+    `block_expr_stmt`'s `!"}"` lookahead is explicitly unchecked there.
+13. **New, 2026-07-24. A closed record type and a row bound are now spelled identically.**
+    Dropping `record` from the anonymous former means `{ x: f64 }` is an exact, closed
+    product type in `param`/`let` position and an existential "at least these fields"
+    predicate in `generic_param`/`where_constraint` position. The grammar keeps them
+    apart; a reader has only position to go on, where the keyword used to disambiguate
+    (§2, §5). Three things not settled: whether this is acceptable as-is (the position
+    genuinely does track the meaning, and no other language spells these differently
+    either — PureScript and Elm both reuse braces for both roles); whether diagnostics
+    need to name which reading was taken when a mismatch occurs; and whether any position
+    exists where *both* readings are grammatically admissible, which would turn a
+    readability cost into a real ambiguity. The third is the one worth checking first,
+    and it has not been checked.
 
 ---
 
@@ -623,7 +711,7 @@ this idea, specified in RFC-0091, not here.
 ### Records, row bounds, and where they stop being usable
 
 ```metel
-let point = record { x: 1.0, y: 2.0 };   // closed record — exact shape
+let point = { x = 1.0, y = 2.0 };   // closed record — exact shape
 
 fun magnitude<T: { x: f64, y: f64 }>(p: T) -> f64 {
     (p.x * p.x + p.y * p.y).sqrt()
@@ -636,16 +724,16 @@ struct ScreenPos { x: f64, y: f64, z_index: i64 }
 println("mag = ${magnitude(ScreenPos { x: 3.0, y: 4.0, z_index: 1 })}");
 
 // Not usable, per §5:
-//   impl record { x: f64, y: f64 } { fun scale(&self, k: f64) -> ... }
+//   impl { x: f64, y: f64 } { fun scale(&self, k: f64) -> ... }
 //   -- no owning module; inherent impls on records are banned outright.
-//   aspect impl Display for record { x: f64, y: f64 } { ... }
+//   aspect impl Display for { x: f64, y: f64 } { ... }
 //   -- Display isn't local to this module; banned the other direction of the same rule.
 ```
 
 ### Typestate via row-conditional impls
 
 ```metel
-struct Session<row R> { data: record { ..R } }
+struct Session<row R> { data: { ..R } }
 
 impl<row R: { token: String }> Session<R> {
     fun authenticate(self) -> Session<R without "token"> { ... }
@@ -658,7 +746,7 @@ impl<row R: !{ token: _ }> Session<R> {
 }
 
 fun main() -> i64 {
-    let s = Session { data: record { token: "secret", host: "example.com" } };
+    let s = Session { data: { token = "secret", host = "example.com" } };
     let authenticated = s.authenticate();
     authenticated.send_data("hello");
     // s.send_data("hello");   -- would not compile: s's row still has `token`
@@ -668,7 +756,7 @@ fun main() -> i64 {
 
 ### Tier 3: an upgrade that doesn't touch existing callers
 
-Illustrative only (§8) — `record` as a named-declaration keyword is not settled syntax.
+`record` as a named-declaration keyword is settled (§8, open question 8).
 
 ```metel
 // Before: an ordinary struct, whole-value only.
@@ -680,12 +768,12 @@ fun close_it(h: Handle) { /* uses h.fd, h.alloc as a whole */ }
 // and field-access syntax — `close_it` above still typechecks unchanged.
 record Handle { fd: i32, alloc: @a Buffer }
 
-fun drain(h: &mut Handle) -> (@a Buffer, &mut record { fd: i32 }) {
+fun drain(h: &mut Handle) -> (@a Buffer, &mut { fd: i32 }) {
     let buf = move h.alloc;
     (buf, h)
 }
 
-fun restore(h: &mut record { fd: i32 }, buf: @a Buffer) -> &mut Handle {
+fun restore(h: &mut { fd: i32 }, buf: @a Buffer) -> &mut Handle {
     h.alloc = buf;
     h
 }
@@ -708,7 +796,7 @@ impl SortedPair {
 
 // A caller can still read the shape out generically:
 let p = SortedPair::new(3, 1);
-let r = p.to_record();   // record { small: i32, big: i32 } == { small: 1, big: 3 }
+let r = p.to_record();   // { small: i32, big: i32 } == { small = 1, big = 3 }
 
 // FromRecord is deliberately not derived: an auto-derived reconstruction would pack
 // whatever small/big a record holds straight back into a SortedPair, silently
