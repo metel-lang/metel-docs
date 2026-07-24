@@ -105,6 +105,21 @@ superseded_by: rfc-0116, rfc-0117, rfc-0118, rfc-0119, rfc-0120, rfc-0121
 > they sit on. Negative bounds are unaffected: `!{ token: _ }` asserts a label is absent,
 > and absence has no "rest" to quantify over.
 >
+> **Recorded 2026-07-24, after supersession: this RFC contradicted itself about whether a
+> struct satisfies a row bound.** Noted here so the next reader does not re-derive it.
+> §2 ("any existing nominal struct with matching fields satisfies it with no explicit
+> opt-in") and §7 ("**Resolved by the tier system (§8)** — a struct satisfies a field-shape
+> bound just by having the right fields, no opt-in required") say **yes, implicitly**.
+> §8 tier 1 ("no `Lacks`/row-conditional typestate applicable to it") and §8 tier 2 ("**no
+> `HasField`/`Lacks` bound is ever satisfied by it implicitly**") say **never**. §7 claims
+> to be resolved *by* §8 while asserting the opposite of what §8 says.
+>
+> **RFC-0118 inherited §2/§7's side, integrated on it, and was amended the same day to
+> §8's** — a bound is satisfied by a record; a struct converts first. The deciding argument
+> is that §7 under-counts: implicit satisfaction grants nothing to the *type* but makes
+> every struct a candidate for every structural bound program-wide, which is the ambient
+> structural compatibility the tier system exists to prevent.
+
 > **What this amendment does not do: sweep the rest of the corpus.** The old spelling
 > survives in RFC-0091 (~20 uses), RFC-0109 (7), RFC-0089 (5), and the design reports
 > this RFC was extracted from — `structural-records.md` (57) most of all. Those are

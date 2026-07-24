@@ -47,12 +47,33 @@ impl_status: not-started
 > unaffected. The prototype also settled a detail the RFC had not specified — the trailing
 > `..` is admitted only after at least one field, so bare `{ .. }` does not parse.
 >
-> **The one substantive decision taken at integration** is the public-projection rule for
-> private fields, and its consequence is unusual enough to state plainly: **bound
-> satisfaction is module-relative.** The same type may satisfy a bound in one module and
-> not another. That is acceptable here only because a bound grants no capability — it means
-> "not callable from here," never divergent behaviour — and it is explicitly *not*
-> acceptable for row-keyed impls, which is why RFC-0121 inherits it.
+> **Amended 2026-07-24, hours after integration, and the amendment is the substantive
+> part.** As first integrated, §3 said any struct with matching fields satisfies a row bound
+> implicitly, and open question 3 was resolved with a "public projection" rule to stop that
+> leaking private fields. **Both were wrong, and the second only existed because of the
+> first.**
+>
+> **What was missed:** RFC-0090 contradicts itself on whether structs satisfy bounds. Its
+> §2 and §7 say yes, implicitly; its §8 tier 1 and tier 2 say never. §7 even claims to be
+> "resolved by the tier system (§8)" while asserting the opposite of §8. This RFC inherited
+> §2/§7's side without noticing §8's, and the integration cross-check above did not catch
+> it — it compared this RFC against its *siblings* and against the grammar, but not against
+> the superseded parent's own tier text, which is where the conflict lived.
+>
+> **§3 now takes §8's side: a row bound is satisfied by a record, not by a struct.** A
+> struct converts first (RFC-0119). The tier rule then applies without exception.
+>
+> **Two consequences.** The public-projection rule is **withdrawn** — a record has no
+> declaring module and no private fields, so nothing needs projecting; the question moves
+> to RFC-0119, where `to_record()` is the actual capability. And in v0.12.0 row bounds are
+> useful over record literals but not over structs, since conversions are not in this
+> release — the headline case is deferred, not abandoned, and needs no further change to
+> this RFC when RFC-0119 lands.
+>
+> **This is `3-integrated` doing its job rather than failing at it**, per `PROCESS.md`: a
+> problem surfaced at integration sends the RFC back for amendment instead of carrying it
+> into implementation. It surfaced late and by challenge rather than by my own cross-check,
+> which is worth recording as the more useful fact.
 
 > **Status — integrated (2026-07-24).** Row bounds merged into public/reference/spec/types.md under Generics; three availability markers. Cross-checked against RFC-0116/0115/0071 and RFC-0121 (which inherits the impl-coherence and module-relative questions). Grammar verified by prototype.
 
@@ -115,21 +136,58 @@ The `_` is a type-position wildcard meaning "any type." It **does not exist toda
 confirmed directly: `_` appears only inside `pattern` (`Pattern::Wildcard`), nowhere in
 `type_expr`. See Open Questions.
 
-## 3. Structural satisfaction is implicit, and why that is safe here
+## 3. What satisfies a row bound: records, not structs
 
-Every other aspect in Metel requires an explicit impl. A row bound does not: any struct
-with matching fields satisfies it. Go's implicit interface satisfaction draws exactly this
-criticism, and TypeScript's silent nominal-identity collapse is the failure mode being
-guarded against.
+**A row bound is satisfied by a record.** A nominal `struct` does not satisfy one, however
+its fields are shaped. To pass a struct where a row bound is expected, convert it first —
+`h.to_record()` (RFC-0119) — which is an explicit, opt-in capability the struct's author
+granted.
 
-**The rule that makes it safe: a bound grants no capability over the type itself.** It only
-lets a generic function accept the type. Nothing about satisfying `{ x: f64, .. }` changes
-what `Point` can do, what impls resolve for it, or what it converts to. Capability that
-*does* change the type — conversion (RFC-0119), row-conditional impls (RFC-0121) — stays
-behind explicit opt-in.
+```metel
+fun magnitude<T: { x: f64, y: f64, .. }>(p: T) -> f64 { … }
 
-That asymmetry is the whole of the answer, and it is why this RFC can ship implicit
-satisfaction without reopening the tiering question the rest of the cluster is built on.
+magnitude({ x = 3.0, y = 4.0 });    // a record — satisfies the bound
+magnitude(some_point);              // a struct — does not, whatever its fields
+magnitude(some_point.to_record());  // explicit conversion, once RFC-0119 lands
+```
+
+**This is the tier rule applied consistently, not an exception carved for bounds.** No
+structural capability is ambient: a plain `struct` (tier 1) has no row-shaped behaviour at
+all, and gaining any of it — conversion, bound satisfaction, row-conditional impls — is
+something an author opts into.
+
+### Why the alternative was rejected, since the corpus argued for it
+
+An earlier draft of this section said the opposite: that any struct with matching fields
+satisfies a bound implicitly, on the argument that **a bound grants no capability over the
+type itself** — it only lets a generic function accept the type, changing nothing about
+what the type can do or which impls resolve for it. That argument is real, and it is why
+RFC-0090 §2 and §7 both stated the implicit rule.
+
+**It under-counts what implicit satisfaction grants.** Nothing accrues to the *type*, but a
+great deal accrues to the *program*: every struct in scope becomes a candidate for every
+structural bound anywhere, which is precisely the ambient structural compatibility the tier
+system exists to prevent. TypeScript's nominal-identity collapse is not caused by types
+gaining methods.
+
+**RFC-0090 contradicted itself on exactly this point**, and the contradiction was inherited
+here before being caught during this RFC's own integration review:
+
+- §2 — "any existing nominal struct with matching fields satisfies it with no explicit
+  opt-in"
+- §7 — "**Resolved by the tier system (§8)** — a struct satisfies a field-shape bound just
+  by having the right fields, no opt-in required"
+- §8 tier 1 — "no `Lacks`/row-conditional typestate applicable to it"
+- §8 tier 2 — "**no `HasField`/`Lacks` bound is ever satisfied by it implicitly**"
+
+§7 claims to be resolved *by* §8 while asserting the opposite of what §8 says. This RFC
+takes §8's side. See the superseded RFC-0090 for the note recording the conflict.
+
+**Consequence for this release, stated plainly:** in v0.12.0 a row bound is useful over
+record literals (RFC-0116) and not over structs, because RFC-0119's conversions are not in
+this release. The headline case — a generic accepting any struct with matching fields — is
+**deferred, not abandoned**; it arrives with RFC-0119, and needs no change to this RFC when
+it does.
 
 ## 4. Relationship to RFC-0116's closed types
 
@@ -168,24 +226,22 @@ position admits both readings.
    at all" — does not parse. That looks right (a bound constraining nothing is better
    spelled by omitting the bound), but it is a decision, and it should be stated rather
    than left to fall out of the grammar.
-3. ~~Cross-module private-field leakage.~~ **Resolved 2026-07-24. Rule: a row bound is
-   matched against the *public projection* of a type's row, as seen from the module doing
-   the matching.** RFC-0032 (`4-implemented`) already makes fields module-private by
-   default, so a private field is not observable from outside; a structural bound must not
-   be a back door around that. Concretely: `{ secret: T, .. }` written outside the
-   declaring module never matches a struct whose `secret` is private, and the same bound
-   written inside the module does match.
+3. ~~Cross-module private-field leakage.~~ **Withdrawn 2026-07-24 — the question does not
+   arise for this RFC, and the resolution briefly recorded here is retracted.** It was
+   resolved as "a bound matches the *public projection* of a type's row," which made bound
+   satisfaction module-relative and left a hole for negative bounds (`!{ secret: _ }` would
+   have succeeded outside the declaring module and failed inside — an affirmatively wrong
+   answer, not merely a non-match).
 
-   **The consequence worth stating explicitly, because it is unusual: bound satisfaction is
-   module-relative.** The same type may satisfy a bound in one module and not in another.
-   That is acceptable *here* for the reason §3 already gives — a bound grants no capability
-   over the type itself, it only decides whether a generic function will accept it, so
-   module-relative satisfaction means "not callable from here," never divergent behaviour.
+   **Both the rule and its hole were artifacts of §3's earlier claim that structs satisfy
+   bounds directly.** Under §3 as it now stands, a row bound is satisfied by a *record*, and
+   an anonymous record has no declaring module and no private fields — so there is nothing
+   to project and nothing to leak.
 
-   **It would not be acceptable for row-conditional *impls*** (RFC-0121), where
-   module-relative matching could make the same type have an impl in one module and not
-   another — genuine incoherence. Flagged there rather than solved here; this RFC ships no
-   impls keyed on rows. *(From RFC-0090 OQ7, via RFC-0116 OQ3.)*
+   **The question is real and moves to RFC-0119**, where it belongs: what does
+   `to_record()` produce for a struct with private fields, and who may call it? That is a
+   question about a *conversion*, which is a capability, which is what the tier system
+   actually governs. *(From RFC-0090 OQ7, via RFC-0116 OQ3, now RFC-0119's.)*
 4. **Coherence between structural and nominal impl selection** — **real, but not reachable
    in v0.12.0, and therefore not blocking.** An ordinary `extend Point: Display` is keyed on
    nominal identity; RFC-0121's row-conditional impls are keyed on shape, and if a value

@@ -186,7 +186,25 @@ fiat-linearity — at the point per-field multiplicity is taken up again.
    earns its keep for generic code that reconstructs *any* `FromRecord` type from a partial
    record. Specified in RFC-0090 §8 as a rider; carried here unresolved, since it is
    separable from the core conversion and nothing depends on it.
-4. **What exactly does `to_record()` return for a generic struct?** `Pair<T>`'s row is not
+4. **New, 2026-07-24, inherited from RFC-0118. What does `to_record()` produce for a
+   struct with *private* fields, and who may call it?** RFC-0032 makes fields
+   module-private by default. `to_record()` turns a struct into a record, and a record's
+   fields are plainly readable — so a conversion callable from outside the declaring module
+   would hand out private data, and one that silently omits private fields would produce a
+   record whose row does not match `Self`, breaking `from_record`'s round trip.
+
+   **This arrived here by elimination, and that is the useful part.** It was originally
+   filed against RFC-0090 (OQ7), narrowed to RFC-0116, then to RFC-0118, where it was
+   briefly "resolved" with a public-projection rule for bounds. That resolution was
+   withdrawn once RFC-0118 settled that bounds are satisfied by *records* rather than
+   structs — a record has no declaring module and no private fields, so it had nothing to
+   project. **The question only ever had force where a row is derived *from* a nominal
+   struct, which is this RFC and nowhere else.**
+
+   Candidate answers, none adopted: `to_record()` is callable only where every field is
+   visible; or it yields only the public projection and `from_record` is correspondingly
+   partial; or private fields make a struct ineligible for the derive at all.
+5. **What exactly does `to_record()` return for a generic struct?** `Pair<T>`'s row is not
    fully known until `T` is concrete. Believed to need no deferral to monomorphization time
    — the row is computed from the declaration — but unverified. *(Shared with RFC-0114 OQ4.)*
 
@@ -213,7 +231,7 @@ by-reference mode (§2).*
 > records are implemented and RFC-0100 has resolved** — at which point there will also be
 > real usage to judge them against, which neither has today.
 
-5. **Should `FromRecord` be spelled as a constructor call and default to `construct`'s
+6. **Should `FromRecord` be spelled as a constructor call and default to `construct`'s
    logic?** *(Rewritten 2026-07-24 — the first version of this entry recorded a different
    and weaker proposal; see the correction at the end.)*
 
@@ -268,20 +286,20 @@ by-reference mode (§2).*
    > gate stays the derive, so there is no such convergence. **The visibility question
    > remains real and open** — can code outside a module write a record naming private
    > fields? — but it is its own question, not the answer to this one.
-6. ~~The by-value and by-reference halves of `FromRecord` are not the same kind of
+7. ~~The by-value and by-reference halves of `FromRecord` are not the same kind of
    operation.~~ **Dissolved 2026-07-24 by dropping the by-reference mode (§2).** There is
    no second half left to be asymmetric with. Recorded because the asymmetry was real and
    is the reason the mode looked wrong before the decision was taken: `from_record_mut`
    constructed nothing, it re-coerced an existing borrow, so it never fit `construct`'s
    owned-`Self` signature.
-7. ~~§2 and RFC-0114 §3 contradict each other.~~ **Dissolved 2026-07-24, same cause.**
+8. ~~§2 and RFC-0114 §3 contradict each other.~~ **Dissolved 2026-07-24, same cause.**
    §2 claimed reassembly needed nothing beyond structural row-matching while RFC-0114 §3
    requires row completion to fire `construct()`. With no by-reference reassembly, the
    contradiction has no site: rebuilding a struct now always goes through
    `from_record` — that is, through `construct` — by value. **RFC-0114 §3's rule stands
    unamended and is now the only story**, which is what it was written to be.
    RFC-0114's own open question 10 is closed by this.
-8. ~~Reassembly needs provenance, not shape.~~ **Dissolved 2026-07-24 by adopting the
+9. ~~Reassembly needs provenance, not shape.~~ **Dissolved 2026-07-24 by adopting the
    third of its own three options.** The question was whether `from_record_mut` could know
    that all the borrows it reassembles belong to one struct instance — a real hole, since
    under the record-of-borrows reading (`access-and-presence-rows.md` §3) nothing prevented
@@ -297,7 +315,7 @@ by-reference mode (§2).*
    never handles a borrow, so it never needs an identity. Second, the
    borrow-of-a-record versus record-of-borrows question is *not* settled by this; it moves
    wholly to RFC-0109, which owns borrowed views and already brands them.
-9. **Should `ToRecord` be a marker aspect enabling a *destructuring operation*, rather than
+10. **Should `ToRecord` be a marker aspect enabling a *destructuring operation*, rather than
    an aspect bearing `to_record` methods?** It is the exact dual of `Construct` — row to
    `Self` at one privileged site, `Self` to row at the dual site — which is the symmetry
    RFC-0114 §8 already gestures at for `Construct`/`Drop`. A methodless marker also matches
