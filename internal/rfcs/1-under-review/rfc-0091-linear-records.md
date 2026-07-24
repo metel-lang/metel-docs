@@ -59,6 +59,20 @@ updated: '2026-07-24'
 > *(Where `{IO | E}` appears elsewhere in the corpus it is quoting **Koka's** effect-row
 > syntax as prior art, not proposing Metel syntax; `access-and-presence-rows.md` §4 writes
 > the two side by side as equivalents, `{IO | E}` / `{ IO, ..E }`.)*
+>
+> **Revised once more 2026-07-24 — `..R` at generic-argument positions too.** RFC-0090
+> adopted the rule that **`row` declares and `..` marks every use**, so a row variable is
+> `..R` wherever it appears in a type and a bare identifier in type position is always a
+> *type* variable. §2.3's `RequestBuilder<R>` becomes `RequestBuilder<..R>`; the binder
+> `<row R>` is unchanged. The forcing case was elsewhere — `Handle.{ R }` versus
+> `Handle.{ fd }` inside projection braces was genuinely ambiguous between a row variable
+> and a field label — but the rule is uniform, so this RFC follows it.
+>
+> **Two things in §2.3 this deliberately leaves wrong, both already noted above:**
+> `Lacks<"auth">` / `HasField<"auth", String>` (retired 2026-07-23, separate sweep), and
+> `RequestBuilder<R + "auth">` — a row *operation* using a string literal in type
+> position, which is the same gap `HasField` had. RFC-0090's new open question 14 now
+> tracks that class of problem; it is not fixed here.
 
 > **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `{ … }` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 
@@ -315,13 +329,13 @@ exactly once — RFC-0090 §4's "builders, in the dual direction" claim:
 ```metel
 struct RequestBuilder<row R> { data: { host: String, ..R } }
 
-impl<row R: Lacks<"auth">> RequestBuilder<R> {
+impl<row R: Lacks<"auth">> RequestBuilder<..R> {
     fun with_auth(self, token: String) -> RequestBuilder<R + "auth"> {
         RequestBuilder { data: { ..self.data, auth = token } }
     }
 }
 
-impl<row R: HasField<"auth", String>> RequestBuilder<R> {
+impl<row R: HasField<"auth", String>> RequestBuilder<..R> {
     fun send(self) -> Response { ... }
 }
 

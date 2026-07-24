@@ -324,9 +324,12 @@ description, and they get different treatment.
   `HasField` or coherence. **It is available to every struct, tier-1 or tier-3,
   unconditionally**; §7's brand-gating does not touch it.
 - **Reading B — the receiving method is *generic* over which residual it gets**, e.g.
-  `fun process<row R: { fd: i32 }>(h: Handle.{ R })` — bare in bound position, dotted
-  in the projected parameter — bounding an abstract row
-  variable rather than naming a fixed shape. This is exactly the reusable-helper case
+  `fun process<row R: { fd: i32, .. }>(h: Handle.{ ..R })` — bounding an abstract row
+  variable rather than naming a fixed shape. *(Updated 2026-07-24 to RFC-0090's marker
+  rules: `..` marks the row variable at its use site, and the trailing `..` in the bound
+  makes it open — "R has at least `fd`", which is what this reading needs. Without it the
+  bound would now read as "R is exactly `{ fd: i32 }`", collapsing the genericity this
+  bullet exists to describe.)* This is exactly the reusable-helper case
   (`drain_field<row R, name, T>`) §7 gates behind tier-3, deliberately — an ordinary
   struct choosing to stay tier-1 is choosing not to be usable this way.
 
@@ -392,7 +395,7 @@ needs:
   conversion aspect for ordinary values is not confirmed to exist, and would be the
   wrong shape for this even if it did.)
 - **What actually fits: an ordinary `<row R>` generic method, nothing new to design.**
-  `fun narrow<row R>(self) -> Self.{ R } where R ⊆ <full row>` is exactly RFC-0090
+  `fun narrow<row R>(self) -> Self.{ ..R } where R ⊆ <full row>` is exactly RFC-0090
   §2/§3's already-proposed (and deferred) open-row generics, applied reflexively to a
   type's own row — the same machinery `drain_field<row R, name, T>`
   (`access-and-presence-rows.md` §6) already needs, consumed a second way, not a fourth
@@ -629,8 +632,8 @@ bound has none — so this uses **bare `{ … }`**, not `.{ … }`. Pressure-tes
 this exact position is what surfaced that the receiver-based split was needed at all.
 
 ```metel
-fun magnitude<T: { x: f64, y: f64 }>(p: T) -> f64 { ... }         // was: HasField<"x", f64> + HasField<"y", f64>
-impl<row R: { x: f64 }> Display for record R { ... }               // RFC-0090 §4's row-conditional impls, same reuse
+fun magnitude<T: { x: f64, y: f64, .. }>(p: T) -> f64 { ... }     // was: HasField<"x", f64> + HasField<"y", f64>
+impl<row R: { x: f64, .. }> Display for { ..R } { ... }           // RFC-0090 §4's row-conditional impls, same reuse
 ```
 
 A bound *is* a row, spelled the same way a row is spelled everywhere else — no string
@@ -658,7 +661,7 @@ reuse.
 `HasField<"fd", i64>` — it is the spelling for every `HasField`-shaped construct in the
 corpus, including RFC-0090 §4's row-conditional-impl typestate examples
 (`impl<row R: HasField<"x", f64>> Session<R> { ... }` becomes
-`impl<row R: { x: f64 }> Session<R> { ... }`).
+`impl<row R: { x: f64, .. }> Session<..R> { ... }`).
 
 ---
 

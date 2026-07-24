@@ -73,6 +73,37 @@ updated: '2026-07-24'
 > written on the assumption that the two spellings differed. That bullet is rewritten
 > below.
 >
+> **Revised 2026-07-24, later the same day — `..` marks every row variable, and open
+> bounds. Open question 13 is resolved by it.** Three related changes, all falling out of
+> one observation: **`..` is only ever valid on a row**, so it can carry row-ness wherever
+> row-ness needs marking.
+>
+> 1. **A row variable is written `..R` at every use site** — `{ x: f64, ..R }`,
+>    `Handle.{ ..R }`, `Session<..R>`. `..` stops being a "spread operator" applied to a
+>    row variable and simply becomes *how a row variable is written* in a type. **A bare
+>    identifier in type position is therefore always a type variable, never a row.**
+> 2. **`row R` stays at the binder.** A declaration naming its own kind is normal (Rust's
+>    `const N: usize` does exactly this, then uses bare `N`), and `<..R>` would read as
+>    splicing something into the parameter list rather than declaring a row. So: **`row`
+>    declares, `..` marks every use.**
+> 3. **`..` alone is an anonymous row variable, and that is what makes a bound open** —
+>    `T: { x: f64, .. }` is "at least `x`", `T: { x: f64 }` is "exactly `x`".
+>
+> **The forcing case for (1) was a real ambiguity, not a readability preference.** Inside
+> projection braces a bare identifier could be either a field label or a row variable —
+> `Handle.{ fd }` projects a field, `Handle.{ R }` projects a row — with nothing but case
+> convention separating them, and RFC-0101 (which would make that convention normative and
+> enforced) still `0-draft`. `Handle.{ ..R }` removes the dependency on an unratified RFC.
+> Four sites in `reports/substructural-types/` relied on the ambiguous form.
+>
+> **Consequence for existing bounds: every bound meant as "at least these fields" now needs
+> its `..`.** `T: { x: f64, y: f64 }` (the `magnitude` example, §1's `HasField` replacement,
+> §4's typestate impls) becomes `T: { x: f64, y: f64, .. }`. This is not merely notation —
+> it makes the closed reading *expressible* where previously only the open one was
+> intended, so the two are now distinguished by a token rather than by which side of a `:`
+> they sit on. Negative bounds are unaffected: `!{ token: _ }` asserts a label is absent,
+> and absence has no "rest" to quantify over.
+>
 > **What this amendment does not do: sweep the rest of the corpus.** The old spelling
 > survives in RFC-0091 (~20 uses), RFC-0109 (7), RFC-0089 (5), and the design reports
 > this RFC was extracted from — `structural-records.md` (57) most of all. Those are
@@ -158,11 +189,29 @@ an ordinary type is:
   silently forgetting fields, which is exactly what non-`Copy` ownership exists to
   prevent. Closed-by-default sidesteps this for the common case.
 - **As a bound, a bare row directly — not sugar over a named aspect anymore.**
-  `T: { x: f64, y: f64 }` in **bound** position means "anything satisfying both fields,"
-  one bound naming several labels rather than an ANDed chain of separate per-field
-  facts (see the 2026-07-23 revision note above). *(Corrected 2026-07-24: this bullet
-  previously said "in a parameter position", which the keyword drop made wrong — braces
-  in `param` position are the closed type of the bullet above, not this bound.)* Combined with §1's auto-derivation,
+  `T: { x: f64, y: f64, .. }` means "anything satisfying at least both fields," one bound
+  naming several labels rather than an ANDed chain of separate per-field facts (see the
+  2026-07-23 revision note above).
+
+  > **The trailing `..` is load-bearing, not decoration (2026-07-24).** It is an
+  > *anonymous row variable* — "and a rest I am not naming" — exactly as `..R` is a named
+  > one. Its presence is what makes the bound open:
+  >
+  > ```metel
+  > fun f(p: { x: f64 })              // closed type: a record with exactly x
+  > fun g<T: { x: f64 }>(p: T)        // closed bound: T's row is exactly x
+  > fun h<T: { x: f64, .. }>(p: T)    // open bound: T has at least x
+  > ```
+  >
+  > This is what resolves open question 13. Before the marker, the closed and open
+  > readings were spelled identically and told apart only by whether the braces sat in a
+  > `param` or a `generic_param` position — and the closed *bound* reading could not be
+  > written at all. Both are now expressible, and distinguished by a token.
+  >
+  > *(This bullet twice said something the syntax had outgrown: it first located the bound
+  > reading "in a parameter position", which the `record`-keyword drop made wrong, and then
+  > described the bound as open without a marker, which this revision makes wrong. Both
+  > corrections are recorded rather than silently overwritten.)* Combined with §1's auto-derivation,
   **any existing nominal struct with matching fields satisfies it with no explicit
   opt-in** — Go's implicit
   interface satisfaction (a type satisfies an interface by having matching methods,
@@ -171,12 +220,6 @@ an ordinary type is:
   OCaml's object/method-dispatch baggage, which would be redundant with Metel's
   existing aspects anyway.
 
-  > **Position, not spelling, now carries the closed/open distinction (2026-07-24).**
-  > `{ x: f64 }` after `:` in a `generic_param` or `where_constraint` is this existential
-  > bound — "at least these fields." The identical text after `:` in a `param` or `let`
-  > annotation is the *closed* type of the bullet above — "exactly these fields." Dropping
-  > the `record` keyword is what merged the two spellings; the grammar keeps them apart
-  > (disjoint nonterminals), a reader has only position to go on. See open question 13.
 - **Open generalization reuses the existing channel pattern.** If genuine row
   polymorphism is wanted later — "at least these fields, generic over the rest" — that
   is exactly the shape of `<&r>` and `<@a>`: an explicit compile-time parameter in the
@@ -206,11 +249,11 @@ row, and RFC-0036's conditional impl blocks generalize directly from aspect cond
 to row-shape conditions:
 
 ```metel
-impl<row R: { token: Token }> Session<R> {
-    fun authenticate(self) -> Session<R without "token"> { ... }
+impl<row R: { token: Token, .. }> Session<..R> {
+    fun authenticate(self) -> Session<..(R without "token")> { ... }
 }
 
-impl<row R: !{ token: _ }> Session<R> {
+impl<row R: !{ token: _ }> Session<..R> {
     fun send_data(&self, bytes: Bytes) { ... }
 }
 ```
@@ -511,7 +554,7 @@ identity is created, bare braces where none is.
 This is strictly more than tier 2, and tier 2 cannot substitute for it:
 **row-conditional impls are resolved by the type system matching a type's own declared
 row at impl-resolution time, not by calling a conversion function.**
-`impl<row R: !{ token: _ }> Session<R> { ... }` needs `Session` to intrinsically carry
+`impl<row R: !{ token: _ }> Session<..R> { ... }` needs `Session` to intrinsically carry
 row structure as part of its type — there is no call site for a derived conversion to
 intercept, so a type that merely derives `ToRecord`/`FromRecord` can never have
 row-conditional impls written against it. Conversely, a tier-3 type gets tier 2's
@@ -614,7 +657,7 @@ untouched) or primitives.
 
 - **Coherence needs a specificity rule between the two axes an impl can now match on.**
   An ordinary `impl Display for Point` is brand-keyed; RFC-0061's structural/blanket
-  impls (`impl<row R: { x: f64 }> Display for { ..R }`) are row-keyed — the target
+  impls (`impl<row R: { x: f64, .. }> Display for { ..R }`) are row-keyed — the target
   spelled with §2's spread tail now that `record R` has no keyword to lean on. If a
   `Point` value matches both, which wins? The obvious default — brand-keyed beats
   row-keyed blanket impls, more-specific-wins — is not written down as a rule anywhere,
@@ -691,18 +734,36 @@ this idea, specified in RFC-0091, not here.
     and `struct_literal` requires a preceding `type_path` — but "safe" was established by
     grammar reading, not by a built prototype, and the interaction with
     `block_expr_stmt`'s `!"}"` lookahead is explicitly unchecked there.
-13. **New, 2026-07-24. A closed record type and a row bound are now spelled identically.**
-    Dropping `record` from the anonymous former means `{ x: f64 }` is an exact, closed
-    product type in `param`/`let` position and an existential "at least these fields"
-    predicate in `generic_param`/`where_constraint` position. The grammar keeps them
-    apart; a reader has only position to go on, where the keyword used to disambiguate
-    (§2, §5). Three things not settled: whether this is acceptable as-is (the position
-    genuinely does track the meaning, and no other language spells these differently
-    either — PureScript and Elm both reuse braces for both roles); whether diagnostics
-    need to name which reading was taken when a mismatch occurs; and whether any position
-    exists where *both* readings are grammatically admissible, which would turn a
-    readability cost into a real ambiguity. The third is the one worth checking first,
-    and it has not been checked.
+    **Widened again 2026-07-24 by the `..` marker.** Three more pieces: a row entry may
+    now be `..` alone or `..R`, so the row-body rule needs a tail alternative; `<..R>` must
+    be accepted as a generic *argument* while `<row R>` remains the *parameter* form; and
+    the `..` must not be confused with `range_op = { "..=" | ".." }`. That last one is
+    checked and clean — `range_expr = { add_expr ~ (range_op ~ add_expr)? }` requires a
+    left operand, so no prefix `..` exists in expression position, and rows are type
+    position regardless. Prefix `..` in a *record value* (`{ ..partial, b = 1 }`) is the
+    same token doing the analogous job one universe down, which is intended, not a clash.
+    Still: grammar reading, not a prototype.
+13. ~~A closed record type and a row bound are spelled identically.~~ **Resolved
+    2026-07-24, same day it was opened, by the `..` marker (§2).** An open bound carries a
+    trailing `..` — an anonymous row variable — and a bound without one is closed:
+    `T: { x: f64, .. }` is "at least `x`", `T: { x: f64 }` is "exactly `x`". The two
+    readings are now distinguished by a token rather than by position, and the closed
+    *bound* reading, which previously could not be written at all, becomes expressible.
+    **The fix was not invented for this question** — it fell out of needing to mark row
+    variables at use sites (`Handle.{ ..R }`) to remove a genuine projection ambiguity,
+    and the open-bound marker is the same mechanism with the variable left unnamed. Two
+    of the three sub-questions lapse with it; the third — *does any position admit both
+    readings?* — is answered rather than lapsed: with the marker present they are
+    different token sequences, so no position can admit both.
+14. **New, 2026-07-24. Row-level operations still use the string-literal-in-type-position
+    form that the 2026-07-23 amendment retired for bounds.** §4 writes
+    `Session<..(R without "token")>` and `returns R + "timeout"` — `without` and `+` as
+    row operators taking a string literal, which `type_expr` cannot parse for exactly the
+    reason `HasField<"x", f64>` could not. The `..` marker forced explicit parentheses
+    around the operation (`..(R without "token")`) to keep its extent unambiguous, which
+    makes the underlying problem more visible without addressing it. Needs its own pass:
+    a label is not a string, and these operators have no specified precedence, arity, or
+    grammar.
 
 ---
 
@@ -713,7 +774,7 @@ this idea, specified in RFC-0091, not here.
 ```metel
 let point = { x = 1.0, y = 2.0 };   // closed record — exact shape
 
-fun magnitude<T: { x: f64, y: f64 }>(p: T) -> f64 {
+fun magnitude<T: { x: f64, y: f64, .. }>(p: T) -> f64 {
     (p.x * p.x + p.y * p.y).sqrt()
 }
 
@@ -735,11 +796,11 @@ println("mag = ${magnitude(ScreenPos { x: 3.0, y: 4.0, z_index: 1 })}");
 ```metel
 struct Session<row R> { data: { ..R } }
 
-impl<row R: { token: String }> Session<R> {
-    fun authenticate(self) -> Session<R without "token"> { ... }
+impl<row R: { token: String, .. }> Session<..R> {
+    fun authenticate(self) -> Session<..(R without "token")> { ... }
 }
 
-impl<row R: !{ token: _ }> Session<R> {
+impl<row R: !{ token: _ }> Session<..R> {
     fun send_data(&self, bytes: String) {
         println("sending: ${bytes}");
     }

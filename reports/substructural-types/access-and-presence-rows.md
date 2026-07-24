@@ -353,7 +353,7 @@ this same conclusion without fully landing on it.
 | `<: … :>` | collides with the `<…>` compile-time parameter channel that RFC-0090 §2 invokes for `<row R>`; also C's digraphs for `[` and `]` |
 
 **Remaining condition:** this was decided from grammar reading, not from a built prototype.
-Chained projection `S.{ R }.{ R' }`, projection in pattern position, and any interaction
+Chained projection `S.{ ..R }.{ ..R' }`, projection in pattern position, and any interaction
 with `block_expr_stmt`'s `!"}"` lookahead are unchecked.
 
 *Elsewhere this document keeps RFC-0090's current `record { … }` spelling, since the
@@ -680,7 +680,7 @@ moved.*
 3. **Does `{ … }` / `S.{ … }` survive contact with the rest of the grammar?** §3.5 checks
    the direct collisions — freestanding braces collide with neither blocks nor struct
    literals, `S.{ … }` collides with neither — but not the indirect ones: chained
-   projection `S.{ R }.{ R' }`, projection in pattern position, the overlap with
+   projection `S.{ ..R }.{ ..R' }`, projection in pattern position, the overlap with
    RFC-0099's dot-separated module paths, and whether `block_expr_stmt`'s `!"}"`
    lookahead interacts badly. Decided from grammar reading, not from a built prototype.
 4. **What exactly is the call-site coercion rule?** §3.2 relocates the whole

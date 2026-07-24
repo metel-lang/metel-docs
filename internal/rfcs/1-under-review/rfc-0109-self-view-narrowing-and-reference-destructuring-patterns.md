@@ -56,6 +56,13 @@ updated: '2026-07-24'
 > normative `..R` spread tail the same day, so the quotation follows (`(T, &mut { ..R })`).
 > No semantic change, and the point being made about `drain_field` — single-field,
 > asymmetric — is unaffected.
+>
+> **Checked against RFC-0090's `..`-marks-every-row-use rule (adopted 2026-07-24) and
+> found already conformant.** That rule makes a row variable `..R` at every use site, so a
+> bare identifier in type position is always a *type* variable. This RFC turns out to have
+> no bare row-variable use sites at all — only binder mentions (`drain_field<row R, ...>`,
+> which the rule leaves alone) and the `{ ..R }` above. Recorded so a later pass knows it
+> was checked rather than skipped.
 
 > **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `{ … }` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 
