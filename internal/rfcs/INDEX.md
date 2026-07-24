@@ -143,7 +143,7 @@ above it are.
   the closed 2^*N* subset lattice, no row variables and no unification. Depends on
   RFC-0116 and on **RFC-0071** (`2-accepted`, 0% implemented), which is why it is separate
   from RFC-0116 rather than bundled with it.
-- **RFC-0118** *(under review, scheduled v0.12.0)* — Row Bounds — `T: { x: f64, .. }` and `T: !{ token: _ }`,
+- **RFC-0118** *(integrated 2026-07-24, target v0.12.0, tracked as #289)* — Row Bounds — `T: { x: f64, .. }` and `T: !{ token: _ }`,
   replacing the `HasField`/`Lacks` family that never parsed. The trailing `..` is an
   anonymous row variable and is what makes a bound *open*; without it the bound is closed,
   a reading that previously could not be written at all. Explains why implicit structural

@@ -135,7 +135,7 @@ below is the blog's own sequencing sentence, made checkable.
 
 | # | Priority | Design state | Engineering state |
 |---|---|---|---|
-| 1 | Records / views as the structural carrier | RFC-0115 `3-integrated` (**#287**), RFC-0116 `3-integrated` (**#288**), RFC-0118 `1-under-review`, RFC-0117/0119/0120/0121 `0-draft` *(RFC-0090 superseded 07-24)* | **v0.12.0: RFC-0116 + RFC-0118 + RFC-0115** |
+| 1 | Records / views as the structural carrier | RFC-0115 `3-integrated` (**#287**), RFC-0116 `3-integrated` (**#288**), RFC-0118 `3-integrated` (**#289**), RFC-0117/0119/0120/0121 `0-draft` *(RFC-0090 superseded 07-24)* | **v0.12.0: #287, #288, #289 filed; RFC-0071 remains** |
 | 2 | Ownership enforcement and the borrow checker | RFC-0071 `2-accepted`; RFC-0122 (Borrow Checking) opened `0-draft` 07-24 | **v0.12.0: RFC-0071 implementation; RFC-0122 design in parallel** |
 | 3 | Brands and context parameters | RFC-0076 `0-draft`; RFC-0113 `1-under-review` | not started, **no issue** |
 | 4 | Allocators — emergent synthesis, built last | RFC-0063/65/66/67/68/73/77 `2-accepted`, complete | deliberately not started |
