@@ -237,7 +237,7 @@ References are only for non-linear aliasing. They cannot target linear values.
 struct Counter { value: i64 }
 
 fun main() -> i64 {
-    var c = Counter { value: 0 };
+    var c = Counter { value = 0 };
     let p: &var i64 = &var c.value;
     p = 42;
     return c.value;   // 42
@@ -313,7 +313,7 @@ fun main() {
     xs.push(2);
     xs.push(3);
     println(xs.len().to_string());   // 3
-    let last = xs.pop();             // Perhaps::Some { value: 3 }
+    let last = xs.pop();             // Perhaps::Some { value = 3 }
 }
 ```
 
@@ -453,11 +453,11 @@ fun first<T>(arr: T[]) -> Perhaps<T> {
     if (arr.len() == 0) {
         return None;
     }
-    return Perhaps::Some { value: arr[0] };
+    return Perhaps::Some { value = arr[0] };
 }
 
 fun main() -> i64 {
-    let stack = Stack { items: [1, 2, 3] };
+    let stack = Stack { items = [1, 2, 3] };
     match first(stack.items) {
         Perhaps::Some { value } => value,
         Perhaps::None => 0,
@@ -521,7 +521,7 @@ enum Wrapper<T> {
     Absent  { _: ! },
 }
 
-fun infallible() -> Wrapper<i64> { Wrapper::Present { value: 42 } }
+fun infallible() -> Wrapper<i64> { Wrapper::Present { value = 42 } }
 
 fun main() -> i64 {
     let x: i64 = infallible();  // implicit coercion via the inhabited-singleton rule
@@ -586,7 +586,7 @@ struct User {
 
 fun find_user(id: i64) -> Perhaps<User> {
     if (id == 1) {
-        return Perhaps::Some { value: User { id: 1 } };
+        return Perhaps::Some { value = User { id = 1 } };
     }
     return None;
 }
@@ -608,7 +608,7 @@ struct User {
 
 fun find_user(id: i64) -> Perhaps<User> {
     if (id == 1) {
-        return Perhaps::Some { value: User { id: 1 } };
+        return Perhaps::Some { value = User { id = 1 } };
     }
     return None;
 }
@@ -626,9 +626,9 @@ fun main() -> i64 {
 ```metel
 fun divide(a: f64, b: f64) -> Result<f64, String> {
     if (b == 0.0) {
-        return Result::Err { error: "division by zero" };
+        return Result::Err { error = "division by zero" };
     }
-    return Result::Ok { value: a / b };
+    return Result::Ok { value = a / b };
 }
 
 fun main() -> i64 {

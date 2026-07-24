@@ -2,7 +2,7 @@
 id: rfc-0115
 title: "Field Initializer Separator"
 date: '2026-07-24'
-status: under-review
+status: accepted
 target:
 updated: '2026-07-24'
 ---
@@ -23,6 +23,44 @@ updated: '2026-07-24'
 > the word "record" alone and touch neither `struct_literal` nor `field_init`.
 
 > **Status — under review (2026-07-24).** Pulled into v0.12.0 alongside RFC-0116: shipping RFC-0116's { x = 1.0 } anonymous records without this would release the nominal/anonymous separator mismatch that this RFC exists to remove.
+
+> **Status — accepted (2026-07-24).** OQ3 resolved by direct verification: the parser never sees the separator (zero parser changes needed), punning is unaffected, no fixture uses = inside a literal brace, and no negative test pins the : spelling. OQ1 is inherited unchanged from the current syntax; OQ2 is delegated to colon-classifies-equals-defines.md by construction. Neither blocks.
+
+> **Status — integrated 2026-07-24, targeting v0.12.0.** `field_init`'s change is merged
+> into `public/reference/spec/`: 41 struct- and enum-literal sites across six spec files
+> converted to `=`, with a one-line availability marker at `declarations.md`'s
+> "Instantiation and Field Access", and the shorthand prose reworded (`the : value part`
+> → `the = value part`). Field *declarations*, enum *variant* declarations
+> (`Circle { radius: f64 }`, `B { y: ! }`) and patterns were verified untouched.
+>
+> **Cross-checked against the siblings still in flight for v0.12.0**, per `PROCESS.md`'s
+> requirement that integration test against active cluster members and not only
+> already-integrated work:
+>
+> - **RFC-0116 (Anonymous Record Types)** — no collision, and this is the pairing that
+>   motivated pulling this RFC into the release: `struct_literal = { type_path ~ "{" … }`
+>   requires a preceding path, so `Point { x = 1.0 }` and bare `{ x = 1.0 }` are
+>   distinguishable by the path alone, and now differ only by that path rather than also by
+>   separator.
+> - **RFC-0118 (Row Bounds)** — no interaction. A row *type* (`{ x: f64 }`) and a row bound
+>   (`T: { x: f64, .. }`) both classify and keep `:`; only initialization moves to `=`.
+>   The two constructs becoming visually distinct is the separator invariant working, not a
+>   clash.
+> - **RFC-0114 (Construct)** — a positive interaction worth recording. RFC-0114 §2 desugars
+>   `Point { x = 1.0 }` to `Point::construct({ x = 1.0 })`; with this RFC the literal's
+>   inner form is now *character-identical* to the record it desugars to, so the
+>   desugaring is transparent rather than a re-spelling.
+> - **RFC-0071 (Ownership and Move Semantics)** — separator-neutral. Whether the
+>   initializer expression moves or copies is unaffected by the token before it.
+> - **RFC-0100 (Constructor-Call Construction, `1-under-review`)** — the one live conflict,
+>   already recorded as an accepted risk: if it lands, `field_init` ceases to exist and
+>   these sites migrate twice.
+>
+> **Two behaviours confirmed unchanged against `grammar.pest` directly.** Patterns have no
+> separator to change — `enum_pattern` (line 265) accepts a bare `ident` in field position
+> and nothing else — so destructuring is untouched. And `Point { x == y }` fails exactly as
+> it does today: `field_init` matches the bare `x`, then the literal fails on `==`, before
+> and after.
 
 ## Summary
 
@@ -202,9 +240,32 @@ spellings during a migration window is not proposed.
    report and binds nothing. This RFC applies it to one site; whether the *rule* should be
    ratified so it settles future syntax questions by default is that document's own open
    question 1, not decided here.
-3. **Does anything in the test corpus depend on the current spelling in a
-   non-mechanical way?** §3 asserts the migration is purely mechanical; that has not been
-   verified against the actual fixtures.
+3. ~~Does anything in the test corpus depend on the current spelling in a non-mechanical
+   way?~~ **Resolved 2026-07-24 — verified against the fixtures and the parser, which was
+   the one thing blocking acceptance.** Four checks:
+   - **The parser never sees the separator.** `parse_expr`'s `struct_literal` branch takes
+     `it.next()` for the name and `it.next()` for the value; `:` is a bare literal in the
+     grammar rule, so pest emits no pair for it (`parser/mod.rs:1885-1895`). Changing the
+     token therefore requires **zero parser changes** — grammar line only.
+   - **Punning survives untouched.** `tests/.../43_shorthand_field.mtl` exercises
+     `Point { x, y }`; the `("=" ~ expr)?` clause stays optional, so the fixture is
+     unaffected. Only its explanatory comment ("desugars to `Point { x: x, y: y }`") needs
+     rewording.
+   - **No fixture currently writes `=` inside a literal brace**, so nothing that is a parse
+     error today silently becomes valid.
+   - **No negative test asserts the `:` spelling.** Nothing in `tests/` pins the separator
+     as behaviour.
+
+   So the migration is mechanical, subject to §3's caveat that a *regex* sweep is unsafe
+   because declarations, patterns and literals share brace syntax — the rewrite must be
+   parser-driven.
+
+**Neither remaining question blocks acceptance, and it is worth being explicit about why**
+rather than leaving a reader to infer it. Question 1 is *inherited, not created* — the
+data-versus-computation tension exists identically today with `:`, so this RFC does not
+change it in either direction. Question 2 is delegated by construction: whether the
+separator invariant should be normative is `colon-classifies-equals-defines.md`'s own open
+question, and this RFC applies the invariant to one site whatever that document decides.
 
 ---
 

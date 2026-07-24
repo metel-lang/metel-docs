@@ -103,7 +103,7 @@ point onward; they are not visible from other functions.
 
 ```metel
 fun make_point() -> Point {
-    return Point { x: 1.0, y: 2.0 };   // OK — Point is globally visible
+    return Point { x = 1.0, y = 2.0 };   // OK — Point is globally visible
 }
 
 struct Point {
@@ -116,7 +116,7 @@ fun inner() {
         x: f64,
         y: f64,
     }
-    let p = LocalPoint { x: 1.0, y: 2.0 };
+    let p = LocalPoint { x = 1.0, y = 2.0 };
 }
 
 fun main() -> i64 {
@@ -139,12 +139,14 @@ struct Point {
 }
 
 fun main() -> i64 {
-    let p = Point { x: 1.0, y: 2.0 };
+    let p = Point { x = 1.0, y = 2.0 };
     return p.y as i64;
 }
 ```
 
 ### Instantiation and Field Access
+
+> **Planned for v0.12.0 (RFC-0115): field initializers separate with `=`, not `:` — `Point { x = 1.0 }`; field *declarations* keep `:`.**
 
 ```metel
 struct Point {
@@ -153,13 +155,13 @@ struct Point {
 }
 
 fun main() -> i64 {
-    let p = Point { x: 1.0, y: 2.0 };
+    let p = Point { x = 1.0, y = 2.0 };
     let x = p.x;
     return x as i64;
 }
 ```
 
-When a local variable has the same name as a field, the `: value` part can be omitted (**shorthand field init**):
+When a local variable has the same name as a field, the `= value` part can be omitted (**shorthand field init**):
 
 ```metel
 struct Point {
@@ -203,8 +205,8 @@ extend Point {
 }
 
 fun main() -> i64 {
-    let p = Point { x: 1.0, y: 2.0 };
-    let q = Point { x: 4.0, y: 6.0 };
+    let p = Point { x = 1.0, y = 2.0 };
+    let q = Point { x = 4.0, y = 6.0 };
     let d = p.distance(q);
     return d as i64;
 }
@@ -266,7 +268,7 @@ extend Counter {
 }
 
 fun main() -> i64 {
-    var c = Counter { value: 1 };
+    var c = Counter { value = 1 };
     c.increment();
     return c.value;
 }
@@ -281,7 +283,7 @@ struct Pair<A, B> {
 }
 
 fun main() -> i64 {
-    let p = Pair { first: 1, second: true };
+    let p = Pair { first = 1, second = true };
     return p.first;
 }
 ```
@@ -300,7 +302,7 @@ enum Shape {
 
 fun main() -> i64 {
     let dir = Direction::North;
-    let s = Shape::Circle { radius: 5.0 };
+    let s = Shape::Circle { radius = 5.0 };
     match dir {
         Direction::North => s.radius as i64,
         Direction::South => 0,
@@ -336,7 +338,7 @@ enum Shape {
 
 fun main() -> i64 {
     let dir = Direction::North;
-    let s = Shape::Circle { radius: 5.0 };
+    let s = Shape::Circle { radius = 5.0 };
     match dir {
         Direction::North => s.radius as i64,
         Direction::South => 0,
@@ -366,7 +368,7 @@ extend Shape {
 }
 
 fun main() -> i64 {
-    let s = Shape::Circle { radius: 5.0 };
+    let s = Shape::Circle { radius = 5.0 };
     return s.area() as i64;
 }
 ```
@@ -428,7 +430,7 @@ extend Point: Printable {
 }
 
 fun main() {
-    let p = Point { x: 1.0, y: 2.0 };
+    let p = Point { x = 1.0, y = 2.0 };
     p.print();
 }
 ```
@@ -768,7 +770,7 @@ extend Person: Greet {
 }
 
 fun main() {
-    let p = Person { name: "Ada" };
+    let p = Person { name = "Ada" };
     println(p.greet());   // Hello, Ada
 }
 ```
@@ -885,7 +887,7 @@ struct IntBox { value: i64 }
 extend IntBox: Container { type Item = i64; fun get(self) -> i64 { self.value } }
 
 fun make_box(n: i64) -> impl Container {
-    IntBox { value: n }
+    IntBox { value = n }
 }
 
 let v: i64 = make_box(42).get();   // resolves through Container's Item binding for
@@ -996,7 +998,7 @@ struct SortedList<T: Comparable> {
 }
 
 // error[T0012]: NonComparable does not implement Comparable
-let list = SortedList<NonComparable> { items: [] }
+let list = SortedList<NonComparable> { items = [] }
 ```
 
 The same inline `+` and `where` clause forms apply, with identical semantics:

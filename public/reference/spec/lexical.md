@@ -79,7 +79,7 @@ fun add(a: i32, b: i32) -> i32 { a + b }
 let r = add(1, 2);      // 1 and 2 are i32
 
 struct Pixel { r: u8, g: u8, b: u8 }
-let p = Pixel { r: 255, g: 128, b: 0 };  // fields are u8
+let p = Pixel { r = 255, g = 128, b = 0 };  // fields are u8
 ```
 
 Arithmetic and comparison operators propagate the type from a sized operand to an unsuffixed sibling:
