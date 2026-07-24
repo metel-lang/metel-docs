@@ -536,7 +536,7 @@ fun main() -> i64 {
 A bound written as a row accepts any type carrying at least the listed fields:
 
 ```metel
-fun magnitude<T: { x: f64, y: f64, .. }>(p: T) -> f64 {
+fun magnitude<record T: { x: f64, y: f64, .. }>(p: T) -> f64 {
     (p.x * p.x + p.y * p.y).sqrt()
 }
 ```
@@ -545,28 +545,75 @@ fun magnitude<T: { x: f64, y: f64, .. }>(p: T) -> f64 {
 presence is what makes the bound *open*:
 
 ```metel
-fun g<T: { x: f64 }>(p: T)        // closed: T's row is exactly `x`
-fun h<T: { x: f64, .. }>(p: T)    // open:  T has at least `x`
+fun g<record T: { x: f64 }>(p: T)        // closed: T's row is exactly `x`
+fun h<record T: { x: f64, .. }>(p: T)    // open:  T has at least `x`
 ```
 
 Negation asserts a label is absent, reusing the `!` that bounds already accept. It takes no
 `..`, since absence has no rest to quantify over; `_` means "any type":
 
 ```metel
-fun send<T: !{ token: _ }>(t: T) -> i64 { … }
+fun send<record T: !{ token: _ }>(t: T) -> i64 { … }
 ```
 
 > **Planned for v0.12.0 (RFC-0118): a row bound is satisfied by a record; a `struct` does not satisfy one, whatever its fields.**
 
-**A row bound is satisfied by a record, not by a nominal struct.** Structural capability is
-never ambient: a plain `struct` has no row-shaped behaviour, and gaining any of it is
-something its author opts into. To pass a struct where a row bound is expected, convert it
-first.
+**A row bound is satisfied by a record, not by a nominal struct.** The `record` marker on the
+type parameter says so at the declaration; a bare `<T: { … }>` is an error.
 
 ```metel
 magnitude({ x = 3.0, y = 4.0 });   // a record — satisfies the bound
 magnitude(some_point);             // a struct — does not
 ```
+
+To give a nominal type row behaviour, **declare it as a record** — that is the primary
+route, not conversion:
+
+```metel
+record Point { x: f64, y: f64 }    // satisfies row bounds directly
+struct Point { x: f64, y: f64 }    // does not
+```
+
+Converting an existing struct (`some_point.to_record()`) is the escape hatch for types you
+do not control, not the ordinary path.
+
+### What satisfies which bound
+
+Both bound kinds are opted into; they differ only in *granularity*. An **aspect** bound is
+opted into per aspect, by writing an implementation. A **row** bound is opted into per type,
+by choosing the `record` kind. Nothing is implicit in either direction.
+
+| | non-local aspect (`Display`) | local aspect | row bound |
+|---|---|---|---|
+| `struct` | yes, with an impl | yes, with an impl | **no** |
+| `enum` | yes, with an impl | yes, with an impl | **no** — sums, not products |
+| anonymous record | **no** — see below | yes, with an impl | yes |
+| `record X` (named) | yes, with an impl | yes, with an impl | yes |
+
+> **Planned for v0.12.0 (RFC-0116): an anonymous record cannot implement a non-local aspect, so it satisfies no standard-library aspect bound.**
+
+An anonymous record has no owning module, so the orphan rule permits an implementation only
+for an aspect local to the implementing module. Every standard-library aspect is non-local,
+which means no anonymous record is `Display` and `println("${r}")` does not work on one.
+Auto-derived aspects are unaffected — `Send` and `Sync` are computed from field composition
+rather than declared. A named record has an owning module and does not have this limit.
+
+### Implementing an aspect for a record
+
+Three forms, with different rules:
+
+```metel
+extend { x: f64, y: f64 }: MyAspect { … }                    // one concrete row
+extend<row R: { x: f64, .. }> { ..R }: MyAspect { … }         // every row of a given shape
+extend<row R> { ..R }: MyAspect { … }                         // every row
+```
+
+The first applies to exactly one structural type and is permitted when the aspect is local.
+The second and third require row variables and are not available in v0.12.0. The second also
+needs overlap checking between row bounds — two shape-conditional implementations can be
+*incomparable* rather than one being more specific, so they must be disjoint. The third
+additionally needs a way to require an aspect of every field in the row, which does not yet
+exist.
 
 ## Never Type
 
