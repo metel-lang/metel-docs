@@ -135,7 +135,7 @@ below is the blog's own sequencing sentence, made checkable.
 
 | # | Priority | Design state | Engineering state |
 |---|---|---|---|
-| 1 | Records / views as the structural carrier | RFC-0115/0116/0118 `1-under-review`, RFC-0117/0119/0120/0121 `0-draft` *(RFC-0090 superseded 07-24)* | **v0.12.0: RFC-0116 + RFC-0118 + RFC-0115** |
+| 1 | Records / views as the structural carrier | RFC-0115 `3-integrated` (**#287**), RFC-0116/0118 `1-under-review`, RFC-0117/0119/0120/0121 `0-draft` *(RFC-0090 superseded 07-24)* | **v0.12.0: RFC-0116 + RFC-0118 + RFC-0115** |
 | 2 | Ownership enforcement and the borrow checker | RFC-0071 `2-accepted`; RFC-0122 (Borrow Checking) opened `0-draft` 07-24 | **v0.12.0: RFC-0071 implementation; RFC-0122 design in parallel** |
 | 3 | Brands and context parameters | RFC-0076 `0-draft`; RFC-0113 `1-under-review` | not started, **no issue** |
 | 4 | Allocators — emergent synthesis, built last | RFC-0063/65/66/67/68/73/77 `2-accepted`, complete | deliberately not started |
@@ -668,7 +668,23 @@ of what was watched for and what actually happened is part of the point.
     indefinitely, and each split feels like progress because it genuinely removes a
     dependency. **The test this trigger should now apply is no longer "does the split
     hold?" but "did any of them end in a build?"** So far: no.
-24. ⬜ **New, 2026-07-24. The split's whole promise is that RFC-0116 is buildable today —
+24. 🟡 **Partially fired 2026-07-24, the same day it was opened — by RFC-0115, not RFC-0116.**
+    Issue **#287** exists: the first tracked issue against any of Priorities 1–4, ending a
+    run this document had counted at eight days. A `v0.12.0` milestone was also created,
+    re-establishing a convention dormant since v0.7.0 — v0.8 through v0.11 all shipped
+    without one.
+    **Counted honestly, this is a partial trip, not a clean one.** The falsifier named
+    RFC-0116 specifically, and RFC-0116 is still `1-under-review` with no issue; what
+    actually cleared the gate first was RFC-0115, a one-grammar-line change that was not
+    even in the plan until it was pulled in. The mechanism that forced it is worth naming
+    because it was not willpower: `rfc.py transition --to integrated` **refuses to run
+    without `--tracking`**, so reaching `3-integrated` made the issue mandatory rather than
+    virtuous. That is a tooling constraint doing what eight days of intent did not, and it
+    suggests the useful lever is the gate, not the resolve.
+    **What remains open**, and the trigger stays amber until it closes: RFC-0116 itself,
+    plus RFC-0118 and RFC-0071, are all still short of `3-integrated` and therefore still
+    un-issued. Original wording below.
+25. ⬜ **New, 2026-07-24. The split's whole promise is that RFC-0116 is buildable today —
     and that promise is now falsifiable in a way its predecessors were not.** Trigger 20's
     original recommended first issue ("the closed `record` type-former plus `HasField`")
     was stale twice over by 07-24: `HasField` retired, and the type-former's grammar

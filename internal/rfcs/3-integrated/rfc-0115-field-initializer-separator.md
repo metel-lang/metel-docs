@@ -2,9 +2,11 @@
 id: rfc-0115
 title: "Field Initializer Separator"
 date: '2026-07-24'
-status: accepted
+status: integrated
 target:
 updated: '2026-07-24'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/287'
+impl_status: not-started
 ---
 
 > **New RFC, split out of RFC-0100 on 2026-07-24.** RFC-0100 bundled two things: a
@@ -61,6 +63,8 @@ updated: '2026-07-24'
 > and nothing else — so destructuring is untouched. And `Point { x == y }` fails exactly as
 > it does today: `field_init` matches the bare `x`, then the literal fails on `==`, before
 > and after.
+
+> **Status — integrated (2026-07-24).** Spec merged into public/reference/spec/ (41 literal sites, one-line availability marker, shorthand prose reworded); cross-checked against RFC-0116/0118/0114/0071/0100, the siblings still in flight for v0.12.0.
 
 ## Summary
 

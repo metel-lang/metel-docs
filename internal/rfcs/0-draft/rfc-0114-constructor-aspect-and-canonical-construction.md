@@ -529,7 +529,7 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
   open question 2): if it lands, `Type(args)` desugars to `construct`; if it does not, a
   brace literal does. Its reopening reason, tracked by `OBJECTIVES.md` Trigger 14, was
   found dissolved on 2026-07-24 — relevant to that RFC's own prospects, not to this one's
-- `internal/rfcs/2-accepted/rfc-0115-field-initializer-separator.md` — the separator half
+- `internal/rfcs/3-integrated/rfc-0115-field-initializer-separator.md` — the separator half
   split out of RFC-0100 the same day; keeps brace literals and changes only `field_init`'s
   `:` to `=`, which is what makes `SortedPair { small = 3, big = 1 }` desugar so directly
   to `SortedPair::construct({ small = 3, big = 1 })` (§2). Also not a dependency

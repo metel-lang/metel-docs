@@ -622,7 +622,7 @@ implementation).
   rather than kept as a second spelling, following RFC-0042's precedent — **though that
   case is weaker since the split**, which moved the invariant argument to RFC-0115.
   Opened 2026-07-13, accepted 2026-07-14.
-- **RFC-0115** *(under review, scheduled v0.12.0)* — Field Initializer Separator — `field_init` changes from
+- **RFC-0115** *(integrated 2026-07-24, target v0.12.0, tracked as #287)* — Field Initializer Separator — `field_init` changes from
   `ident ":" expr` to `ident "=" expr`, so `Point { x = 1.0, y = 2.0 }`. **Split out of
   RFC-0100 on 2026-07-24**, which had bundled this with call-shaped construction; that
   made a settled, dependency-free question hostage to a contested one, with "the
