@@ -466,7 +466,7 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
    incidental — it should be confirmed against RFC-0090's own text before acceptance, not
    after. Note this is a question about record-literal typing, so it is now RFC-0116's to
    answer (its open question 3), not this RFC's to decide unilaterally.
-9. **Should `FromRecord` reuse this RFC's call syntax and default to `construct`'s logic?**
+9. **Deferred 2026-07-24. Should `FromRecord` reuse this RFC's call syntax and default to `construct`'s logic?**
    *(Corrected 2026-07-24 — first recorded here as "collapse `FromRecord` into
    `Construct`", which is a different and weaker proposal that was not the one made.)*
    Worked through in **RFC-0119 open question 5**. The shape that matters for *this* RFC:
@@ -484,6 +484,12 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
    *visibility* rather than a derive, making this question, open question 8 above and
    RFC-0116's open question 3 "the same question asked three ways." They are not. Open
    question 8 stands on its own.
+
+   **Deferred with RFC-0119 OQ5, same day.** Not refused — but it cannot be evaluated until
+   RFC-0100 settles what `Handle(r)` means positionally, and its overridability
+   sub-question has to be answered before the syntax rather than after. Nothing in this RFC
+   depends on it: §2 already states that every surface form producing a `Self` desugars to
+   `construct`, and that holds whatever `FromRecord` ends up being spelled as.
 10. ~~§3's automatic firing has no story for the borrowed case.~~ **Closed 2026-07-24, and
     §3 is the half that survived.** The contradiction was between §3 (any assignment
     completing a narrowed row is sugar for `construct()`) and RFC-0119's `from_record_mut`

@@ -190,9 +190,28 @@ fiat-linearity — at the point per-field multiplicity is taken up again.
    fully known until `T` is concrete. Believed to need no deferral to monomorphization time
    — the row is computed from the declaration — but unverified. *(Shared with RFC-0114 OQ4.)*
 
-*Questions 5–8 were opened together on 2026-07-24, from a design conversation about whether
-`FromRecord` and `Construct` are the same thing. They are listed in the order the reasoning
-ran, because each one exposed the next.*
+*Questions 5–9 were opened together on 2026-07-24, from a design conversation about
+`FromRecord`'s relationship to `Construct`. They are listed in the order the reasoning ran,
+because each one exposed the next. Questions 6–8 were dissolved the same day by dropping the
+by-reference mode (§2).*
+
+> **Questions 5 and 9 are deferred, 2026-07-24.** Both are genuine improvements and neither
+> is refused — but working through them showed both are **more entangled than they looked**,
+> and in each case the entanglement is with something that is not settled:
+>
+> - **OQ5** needs RFC-0100's positional-construction form settled before `Handle(r)` can be
+>   given a meaning, and RFC-0100 is `1-under-review` and has been reopened once. Its
+>   overridability sub-question also has to be answered *before* the syntax, not after,
+>   since an overridable `FromRecord` reopens the invariant hole RFC-0114 §1.1 closes.
+> - **OQ9** needs a struct-destructuring pattern that does not exist in the grammar at all,
+>   and its natural home is RFC-0109, which is now `0-draft` and deferred until records are
+>   implemented.
+>
+> Neither is a prerequisite for this RFC. `ToRecord`/`FromRecord` as specified above are
+> complete and reviewable without them; these would change the *spelling* and the
+> *derivation default*, not the capability. **They are candidate refinements to revisit once
+> records are implemented and RFC-0100 has resolved** — at which point there will also be
+> real usage to judge them against, which neither has today.
 
 5. **Should `FromRecord` be spelled as a constructor call and default to `construct`'s
    logic?** *(Rewritten 2026-07-24 — the first version of this entry recorded a different
