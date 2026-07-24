@@ -135,9 +135,13 @@ above it are.
   instance induction, and Haskell `row-types`' `Forall r c`; both derive it rather than
   making it primitive, which is open question 2.
 
-- **RFC-0122** *(draft, opened 2026-07-24)* — Borrow Checking — the static rules for when a
-  borrow is valid and when two borrows conflict, against the anchor notation RFC-0067
-  already accepted. **Adds no syntax**; `&T`/`&var T` (RFC-0067a) and `&r T` (RFC-0067)
+- **RFC-0122** *(draft, opened 2026-07-24)* — Borrow Checking — **headline rule: shared XOR
+  exclusive** (any number of `&T` to a place, or exactly one `&var T`, never both), plus the
+  outlives rule. Neither is stated anywhere in the corpus today, and `&var T` is called
+  "exclusive" by the spec and RFC-0067a with nothing defining or enforcing it. **Depends only
+  on RFC-0067a (`4-implemented`); RFC-0067's anchors are a dependent, not a dependency** —
+  they name a validity scope for the cross-function cases elision cannot infer, and denote
+  nothing without these rules. **Adds no syntax**; `&T`/`&var T` (RFC-0067a) and `&r T` (RFC-0067)
   exist, and this supplies the rules they are currently checked by, which is nothing.
   Opened against Trigger 19 — **and correcting it**: that trigger records "the borrow
   checker has no RFC at all," true of a title search but understating RFC-0067, which is

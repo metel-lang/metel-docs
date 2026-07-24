@@ -41,6 +41,27 @@ status: accepted
 
 > **Status — accepted (2026-07-10).** Phase 0 ratification sweep: split model consistency-checked (RFC-0063 sec9 items 1/2/5 synced with roadmap-2026-07-07 Phase 0 decision; RFC-0066/0068 stale titles fixed); sweeping the cluster from under-review to accepted per reports/implementation/roadmap-2026-07-07.md Phase 0.
 
+> **Dependency corrected 2026-07-24: this RFC depends on RFC-0122 (Borrow Checking), not
+> the reverse.** RFC-0122's first draft described itself as supplying rules "for RFC-0067's
+> anchors," which had the relation backwards.
+>
+> `&r T` names the scope that bounds a borrow's validity. **That name denotes nothing
+> without a checker that enforces it**, whereas a checker needs no user-written anchors to
+> do most of its work: shared-XOR-exclusive is a question about which borrows coexist at a
+> program point and never consults a validity *name*, and local outlives checking is
+> scope-based. This RFC's own text agrees — `<&r>` declarations "appear only when the
+> relationship is ambiguous," with elision (RFC-0065 §2) covering the common cases. A
+> disambiguator for the minority case cannot be the foundation.
+>
+> **Consequence: this RFC should be re-examined against RFC-0122's rules before it is
+> implemented, rather than treated as constraining them.** It was accepted 2026-06-28,
+> before any checker was specified, so its anchor model was designed against an absence.
+>
+> **Also stale, found in the same pass:** nine occurrences of `&mut` / `&r mut`, predating
+> RFC-0098 (`4-implemented` 2026-07-14, renaming the exclusive reference to `&var`). This
+> RFC's last update was 2026-07-10, four days earlier. Not corrected here — flagged so the
+> re-examination above covers it.
+
 ## Summary
 
 Specify **lifetime anchors** — the compile-time names that bound a borrow's validity scope —

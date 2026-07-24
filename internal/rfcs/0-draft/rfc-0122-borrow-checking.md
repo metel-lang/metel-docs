@@ -15,15 +15,32 @@ target:
 > **Trigger 19's framing needs one correction, made here rather than left standing.** It
 > records that "the borrow checker has no RFC at all — the only match for 'borrow' across
 > 112 RFCs is RFC-0086, which is `6-refused`." That is true of the *title* search but
-> understates what exists: **RFC-0067 (Lifetime Anchors) is `2-accepted`** and already
-> specifies the surface — `&r T` carries anchor `r`, a binding whose scope determines how
-> long the borrow stays valid — having itself superseded RFC-0052 (Lifetime System). So
-> the notation and the concept are settled and ratified.
+> understates what exists: **RFC-0067 (Lifetime Anchors) is `2-accepted`** and specifies a
+> surface for naming borrow validity — `&r T` carries anchor `r`, a binding whose scope
+> bounds the borrow — having itself superseded RFC-0052 (Lifetime System).
 >
-> **What is missing is the checking rules**, and that is this RFC's scope: given
-> RFC-0067's anchors, what makes a borrow valid, what makes two borrows conflict, and what
-> the compiler actually computes. The gap is narrower than Trigger 19 says, and more
-> precisely shaped.
+> **What is missing is the checking rules**, and that is this RFC's scope.
+>
+> **This RFC does not depend on RFC-0067, and an earlier draft said it did.** *(Corrected
+> 2026-07-24.)* The dependency runs the other way:
+>
+> - **The rules need only `&T` and `&var T`** (RFC-0067a, `4-implemented`). Shared XOR
+>   exclusive is a question about which borrows coexist at a program point — it never needs
+>   a borrow's validity scope to be *named*. Local outlives checking is scope-based for the
+>   same reason.
+> - **Anchors are a disambiguator for the cross-function minority case.** RFC-0067's own
+>   §-on-declaration says so: `fun longest<&r>(&r Str, &r Str) -> &r Str`, with "elision
+>   rules (RFC-0065 §2) cover the common cases; `<&r>` declarations appear only when the
+>   relationship is ambiguous."
+> - **So anchors presuppose a checker, not the reverse.** `&r T` denotes nothing without
+>   rules that enforce it; rules without anchors still check every local borrow and every
+>   elided signature.
+>
+> The practical consequence is the point: **this RFC is buildable without RFC-0067**, which
+> is `2-accepted`, unimplemented, and itself carrying stale syntax (nine `&mut` occurrences
+> predating RFC-0098, whose last update was 2026-07-10, four days before RFC-0098 shipped).
+> RFC-0067 should be treated as a dependent extension, and its acceptance re-examined
+> against these rules rather than assumed to constrain them.
 
 ## Summary
 
@@ -96,7 +113,8 @@ concerns are separable in the specification even where they interact in the impl
 
 **In scope:**
 
-- When a borrow is valid with respect to its anchor's scope (RFC-0067).
+- When a borrow is valid with respect to the scope of what it borrows. Naming that scope
+  explicitly (`&r T`, RFC-0067) is a separate, later concern.
 - **Enforcing shared-XOR-exclusive** — which borrow pairs conflict (shared/shared never;
   shared/exclusive and exclusive/exclusive always) and over what granularity: whole value,
   field, or index.
@@ -143,9 +161,12 @@ finished proposal.
 
 ## References
 
-- RFC-0067 (Lifetime Anchors), `2-accepted` — the anchor notation this RFC supplies rules
-  for; supersedes RFC-0052 (Lifetime System)
-- RFC-0067a — the `&T` / `&var T` reference types
+- RFC-0067a (Reference Types), `4-implemented` — `&T` / `&var T`, **this RFC's only
+  reference-side dependency**
+- RFC-0067 (Lifetime Anchors), `2-accepted` — **a dependent, not a dependency.** Its `&r T`
+  anchors name a validity scope for the cross-function cases elision cannot infer; they
+  presuppose the rules here rather than supplying them. Supersedes RFC-0052 (Lifetime
+  System). Carries pre-RFC-0098 `&mut` spelling
 - RFC-0071 (Ownership and Move Semantics), `2-accepted` — move and partial-move tracking,
   which this must agree with about places; scheduled for implementation in v0.12.0
 - RFC-0086 (Outlives-of-Bindings Sugar), `6-refused` — the only prior "borrow"-titled RFC;
