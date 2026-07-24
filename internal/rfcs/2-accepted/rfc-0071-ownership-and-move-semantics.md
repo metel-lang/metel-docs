@@ -279,6 +279,32 @@ allocator lifetime guarantees sound:
 
 ---
 
+## 9b. Implementation requirement inherited from RFC-0122
+
+*Added 2026-07-24, from answering RFC-0122's open question 3.*
+
+Move checking (this RFC) and borrow checking (RFC-0122) are **two analyses over one shared
+place abstraction** — Rust's structure, where initialization/move tracking and borrow tracking
+are separate dataflow analyses over a shared place-and-move-path representation.
+
+**The requirement that follows, and it is the only thing RFC-0122 asks of this RFC:**
+
+> The place abstraction — whatever represents `x`, `x.f`, `x.f.g` and "reached through a
+> dynamic index" — must be a **standalone, reusable component with no move-specific
+> assumptions baked in.**
+
+Given that, this RFC ships in v0.12.0 and borrow checking adds a second analysis over the
+same places in a later release, with no rework. If places are instead folded into
+move-specific state, the borrow checker has to rebuild them, and the two will disagree about
+partial moves — which §7's field-granularity tracking makes observable immediately.
+
+**Related, and already consistent:** RFC-0122 resolved its granularity question to *per-field
+for statically-named fields, whole-value through a dynamic index* — which is exactly §7's
+field granularity plus §9a's array-element ban, arrived at independently. The two documents
+agree without either being amended to fit the other.
+
+---
+
 ## 9a. Completeness audit against constructs added since acceptance
 
 *Added 2026-07-24 during integration review.* This RFC was accepted 2026-06-28, when structs

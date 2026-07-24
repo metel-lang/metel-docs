@@ -139,16 +139,54 @@ concerns are separable in the specification even where they interact in the impl
 Deliberately listed rather than answered — this is a draft opened to hold the design, not a
 finished proposal.
 
-1. **What granularity does conflict detection use?** Whole-value is simplest and rejects
-   real programs; per-field is what RFC-0109's reference-destructuring patterns assume;
-   per-index requires reasoning the interpreter cannot do statically.
+1. ~~What granularity does conflict detection use?~~ **Resolved 2026-07-24: per-field for
+   statically-named fields; whole-value for anything reached through a dynamic index.**
+   Three constraints converge and leave no other option:
+   - **RFC-0071 §7 already tracks partial moves "at field granularity."** Whole-value borrow
+     granularity would disagree with it: you could move `x.a` out but not borrow `x.b`
+     without conflicting on `x`. The two analyses must agree about places (see question 3),
+     so borrow granularity is fixed by a decision already taken.
+   - **RFC-0109 §3 requires it.** Its reference-destructuring pattern "splits one `&var`
+     borrow into disjoint per-field sub-borrows." Whole-value granularity makes that
+     construct unimplementable.
+   - **Per-index is not statically decidable, and RFC-0071 §9a already ruled on the same
+     question.** It bans moving out of an array element because the index may be dynamic, so
+     *which* element left is not a static fact. Borrows inherit the reasoning: a borrow
+     through an index borrows the whole container. Rust lands in the same place — indexing
+     borrows the container, and disjoint element access needs an explicit split.
+
+   **Named tuple and record fields are per-field too**, by the same rule: RFC-0071 §9a
+   resolved tuple partial moves as identical to struct fields because positional fields are
+   statically named, and RFC-0117's record narrowing is per-field.
+
+   **One asymmetry worth stating, because it is easy to get backwards: a `Drop` type may be
+   partially *borrowed* even though it may not be partially *moved*.** RFC-0071 §7 bans the
+   latter because the destructor needs the whole value. A borrow ends and returns the value
+   intact, so the destructor still sees everything. Nothing about `Drop` restricts borrow
+   granularity.
 2. **Lexical or non-lexical?** RFC-0067's anchors are bindings with scopes, which reads
    lexical. Rust moved from lexical to NLL because the lexical version rejected too much
    ordinary code. Adopting the lexical version first and tightening later is cheap; the
    reverse is not.
-3. **What is the relationship to RFC-0071's move tracking — one analysis or two?** They
-   share the notion of "place" and must agree about partial moves. Whether that is one pass
-   or two cooperating ones is an implementation question with specification consequences.
+3. ~~What is the relationship to RFC-0071's move tracking — one analysis or two?~~
+   **Resolved 2026-07-24: two analyses over one shared place abstraction.** Rust's borrow
+   checker is the precedent — initialization/move tracking and borrow tracking run as
+   *separate* dataflow analyses over a *shared* place representation (MIR places and move
+   paths), in the same pass. Not one monolithic analysis, and not two passes with
+   independent notions of what a place is.
+
+   **The useful part of this answer is what it implies for sequencing, because the question
+   as posed was slightly the wrong one.** The risk was never "one or two" — it is *whether
+   RFC-0071's implementation builds a move-only place representation that a later borrow
+   checker cannot reuse.* If the place abstraction is a separate, reusable component, move
+   checking can ship in v0.12.0 and borrow checking can add a second analysis over the same
+   places later, with no rework. If places are folded into move-specific state, the borrow
+   checker has to rebuild them.
+
+   **So this converts into one requirement on RFC-0071's implementation**, recorded there
+   and to be carried into its tracking issue: *the place abstraction must be a standalone
+   component with no move-specific assumptions.* Given that, splitting the two across
+   releases is safe, and the argument for pulling this RFC into v0.12.0 falls away.
 4. **Does the interpreter's deep-cloning evaluator make any of this observable?** A checker
    that rejects programs is meaningful even if the runtime would not have misbehaved — but
    the *value* of the checker before the evaluator stops cloning is worth being honest

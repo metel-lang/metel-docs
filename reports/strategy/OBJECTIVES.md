@@ -213,6 +213,8 @@ needs `3-integrated` too**, which it has never had despite being accepted for fo
 That integration step — spec merged, worked examples checked — is the gate, and it is where
 Trigger 24's tracked issue finally becomes creatable.
 
+**RFC-0122's completion bar, set 2026-07-24: reach `2-accepted` in v0.12.0, not merely accumulate prose.** Its two implementation-shaping questions are answered — granularity is per-field for statically-named fields and whole-value through a dynamic index; move and borrow checking are two analyses over one shared place abstraction. That converted the only real argument for pulling it forward into a single requirement on RFC-0071: **the place abstraction must be a standalone reusable component.** Given that, splitting the two across releases costs no rework.
+
 **Out of scope, deliberately:** RFC-0008 (Aspect Objects, `2-accepted` since 07-01) stays
 deferred as Phase 4; the seven accepted allocator RFCs stay Priority 4 ("built last"); and
 RFC-0122 ships as a design document only, with no borrow checking in v0.12.0.
