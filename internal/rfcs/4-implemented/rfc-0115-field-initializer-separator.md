@@ -2,11 +2,11 @@
 id: rfc-0115
 title: "Field Initializer Separator"
 date: '2026-07-24'
-status: integrated
+status: implemented
 target:
 updated: '2026-07-24'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/287'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **New RFC, split out of RFC-0100 on 2026-07-24.** RFC-0100 bundled two things: a
@@ -65,6 +65,21 @@ impl_status: not-started
 > and after.
 
 > **Status — integrated (2026-07-24).** Spec merged into public/reference/spec/ (41 literal sites, one-line availability marker, shorthand prose reworded); cross-checked against RFC-0116/0118/0114/0071/0100, the siblings still in flight for v0.12.0.
+
+> **Implemented 2026-07-24 in `develop` (`00d0bd9`).** The grammar change and the
+> 566-substitution corpus migration were this RFC's entire scope; both are done, verified at
+> 805 tests passing with clippy unchanged. Delegated to codex, diff reviewed and
+> independently re-verified.
+>
+> **Ships in v0.12.0, which has not been tagged — and that does not hold the lifecycle
+> back.** `4-implemented` means the code is built, not that the version shipped: RFC-0110
+> reached `4-implemented` on 2026-07-21, three days before v0.11.0 was tagged, and carried a
+> `Changed in v0.11.0` marker throughout. The spec marker here follows the same convention —
+> the future-facing `Planned for v0.12.0 (RFC-0115)` form is replaced by `Changed in
+> v0.12.0`, which names the version a reader needs and persists as permanent availability
+> documentation rather than needing a second edit at release.
+
+> **Status — implemented (2026-07-24).** Grammar change and 566-substitution corpus migration landed in develop (00d0bd9); 805 tests passing, clippy unchanged. Spec marker moved from the future-facing 'Planned for' form to 'Changed in v0.12.0', per RFC-0110's precedent of reaching 4-implemented before its release was tagged.
 
 ## Summary
 
