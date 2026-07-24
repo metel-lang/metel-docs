@@ -16,6 +16,29 @@ target:
 > own timeline, not a prerequisite for step 1."* The split makes that literally true rather
 > than an intention inside a document that had to be accepted whole.
 
+> **Load-bearing for more than typestate, recorded 2026-07-24.** This RFC is easy to read
+> as an optional convenience — RFC-0090 §3 called `<row R>` "later, separately, only if a
+> real duck-typing need materializes," and its own header repeats that it is the expensive
+> half. Three things turn out to depend on it, and none of them is duck typing:
+>
+> 1. **Records cannot satisfy any standard-library aspect without it.** RFC-0116 §3 bans
+>    non-local aspect impls for records (correctly — a structural type has no owning module),
+>    so `Display` for records requires one stdlib impl over all rows. That needs `<row R>`
+>    *and* RFC-0123's field-wise constraints. Until then no record can be printed.
+> 2. **Decomposition has no substitute.** RFC-0118's bounds are expressively a strict subset
+>    of this RFC — every bound is writable as a row — but the reverse fails: `T` is atomic,
+>    so `{ extra: i64, ..R }` and `where R = { token, ..Rest }` cannot be expressed with a
+>    bounded type variable. `drain_field`, which RFC-0109 cites as the thing records give
+>    that Rust's view types cannot, needs decomposition.
+> 3. **The width-subtyping rule is unstatable without it** (open question 1, now partly
+>    RFC-0123).
+>
+> **Which reframes RFC-0118 honestly: it buys nothing in expressiveness, only implementation
+> cost.** A row bound is a subset check against a concrete row; `..R` needs row unification.
+> That is a real and large difference, and it is the whole justification for shipping bounds
+> first — but it means bounds are the cheap path to a fraction of this RFC, not a peer
+> feature.
+
 ## Summary
 
 Row-kinded generic parameters — `<row R>` at the binder, `..R` at every use — letting code

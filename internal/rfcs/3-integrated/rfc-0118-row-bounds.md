@@ -79,7 +79,7 @@ impl_status: not-started
 
 ## Summary
 
-A bound written as a bare row: `T: { x: f64, y: f64, .. }` means "any type carrying at
+A bound written as a bare row: `record T: { x: f64, y: f64, .. }` means "any type carrying at
 least these fields." Negation reuses the bound grammar's existing `!`: `T: !{ token: _ }`
 means "any type carrying no field named `token`." **Any nominal struct with matching
 fields satisfies a row bound with no explicit opt-in** — this is the one implicit,
@@ -110,16 +110,37 @@ exists for an unrelated reason.
 ## 1. Positive bounds, and the `..` that makes them open
 
 ```metel
-fun magnitude<T: { x: f64, y: f64, .. }>(p: T) -> f64 { ... }
+fun magnitude<record T: { x: f64, y: f64, .. }>(p: T) -> f64 { ... }
 ```
+
+**The `record` kind marker is required; a bare `<T: { … }>` is an error.** *(Adopted
+2026-07-24.)* A row bound is satisfiable only by a record (§3), so a type parameter carrying
+one is record-kinded whether or not it says so. Making it say so follows the same
+explicit-over-inferred principle as RFC-0065's "elision is never a silent choice" and as
+`<row R>` itself, which is declared rather than inferred from `..R` usage.
+
+**It is deliberately *not* spelled `row T`.** `row R` (RFC-0121) declares R to be a **row** —
+a label-to-type mapping, spliced as `..R`. `record T` declares T to be a **record type**,
+used directly as `T`. Those are different kinds, and reusing one keyword for both is the
+error this cluster has spent its whole history removing.
+
+The marker composes with aspect bounds, since a *named* record may implement aspects:
+
+```metel
+fun render<record T: Show + { x: f64, .. }>(p: T) -> String { ... }
+```
+
+`record` is free as a keyword: checked against `grammar.pest` (not currently reserved) and
+against `stdlib/` and the test corpus (one occurrence, in a comment). No rename is needed,
+unlike RFC-0098's `var`/`std::env::var` collision.
 
 **The trailing `..` is load-bearing.** It is an *anonymous row variable* — "and a rest I am
 not naming" — and its presence is what makes the bound open:
 
 ```metel
 fun f(p: { x: f64 })              // a closed type: exactly x
-fun g<T: { x: f64 }>(p: T)        // a closed bound: T's row is exactly x
-fun h<T: { x: f64, .. }>(p: T)    // an open bound: T has at least x
+fun g<record T: { x: f64 }>(p: T)        // a closed bound: T's row is exactly x
+fun h<record T: { x: f64, .. }>(p: T)    // an open bound: T has at least x
 ```
 
 Without the marker, the closed and open readings would be spelled identically and told
@@ -128,7 +149,7 @@ all. The named form `..R` (RFC-0121) is the same mechanism with the rest given a
 
 ## 2. Negative bounds
 
-`T: !{ token: _ }` asserts the absence of a label, reusing `bound = { bang? ~ bound_head }`
+`record T: !{ token: _ }` asserts the absence of a label, reusing `bound = { bang? ~ bound_head }`
 unchanged. **Negative bounds take no `..`**: absence has no rest to quantify over, and
 `!{ token: _ }` already means "no field named `token`, whatever its type would have been."
 
@@ -144,7 +165,7 @@ its fields are shaped. To pass a struct where a row bound is expected, convert i
 granted.
 
 ```metel
-fun magnitude<T: { x: f64, y: f64, .. }>(p: T) -> f64 { … }
+fun magnitude<record T: { x: f64, y: f64, .. }>(p: T) -> f64 { … }
 
 magnitude({ x = 3.0, y = 4.0 });    // a record — satisfies the bound
 magnitude(some_point);              // a struct — does not, whatever its fields
@@ -160,15 +181,37 @@ something an author opts into.
 
 An earlier draft of this section said the opposite: that any struct with matching fields
 satisfies a bound implicitly, on the argument that **a bound grants no capability over the
-type itself** — it only lets a generic function accept the type, changing nothing about
-what the type can do or which impls resolve for it. That argument is real, and it is why
-RFC-0090 §2 and §7 both stated the implicit rule.
+type itself** — it only lets a generic function accept the type. That argument is correct as
+far as it goes, and it is why RFC-0090 §2 and §7 both stated the implicit rule.
 
-**It under-counts what implicit satisfaction grants.** Nothing accrues to the *type*, but a
-great deal accrues to the *program*: every struct in scope becomes a candidate for every
-structural bound anywhere, which is precisely the ambient structural compatibility the tier
-system exists to prevent. TypeScript's nominal-identity collapse is not caused by types
-gaining methods.
+**An earlier version of this section rebutted it badly and the rebuttal is withdrawn.** It
+claimed implicit satisfaction creates "ambient structural compatibility — the TypeScript
+collapse." That conflates two different things. TypeScript's collapse is *subtyping*: a
+`ScreenPos` **is** a `Point`, substitutable wherever one is expected. A row bound does
+nothing of the kind — under `record T: { x: f64, .. }`, `Point` and `ScreenPos` both satisfy
+the bound and remain **completely unrelated to each other**. The function is polymorphic;
+the types do not collapse. Constrained genericity is not substitutability.
+
+**The two arguments that do hold:**
+
+- **Privacy.** Under implicit struct satisfaction, `{ secret: i64, .. }` becomes an oracle
+  for private structure: outside code can learn which fields a struct has by observing which
+  bounds it satisfies. That defeats RFC-0032, and it is what forced the awkward
+  "public projection" rule this RFC briefly carried and then withdrew. Records-only makes
+  the problem vanish rather than needing a rule.
+- **Declaration-gating symmetry.** Both bound kinds are opted into; they differ only in
+  granularity. An **aspect** bound is opted into *per aspect*, by writing an impl. A **row**
+  bound is opted into *per type*, by choosing the `record` kind. Nothing is ambient in
+  either direction, and that is a sharper statement of the tier principle than "no
+  capability is ambient."
+
+**Why GHC's counter-example does not bind.** GHC solves `HasField` directly against nominal
+records with no conversion — the design rejected here. But GHC has **only one kind of type**,
+so a structural predicate must apply to nominal types or be useless. Metel has a dedicated
+kind for row behaviour, so it does not need to make structs structural: you write `record`
+when you want it. **PureScript is the closer analogue** — it has both nominal `data` and
+structural `Record`, and row machinery applies only to the latter, reached by unwrapping the
+constructor. It sides with this RFC.
 
 **RFC-0090 contradicted itself on exactly this point**, and the contradiction was inherited
 here before being caught during this RFC's own integration review:
@@ -220,6 +263,13 @@ position admits both readings.
    - `fun send<T: !{ token: _ }>(t: T)` **parses**, exercising the negative bound and the
      new wildcard together.
    - `fun f<T: Show + Clone>(t: T)` still works — existing named bounds unaffected.
+
+   **The prototype predates the `record` kind marker** adopted later the same day (§1), so
+   it exercised the bare `<T: { … }>` form. One further grammar change is therefore
+   *not* yet verified: `generic_param = { ident ~ (":" ~ bound_list)? }` needs a
+   `record_kw?` prefix, and `record` needs reserving. Both are expected to be trivial —
+   `record` is unused in `grammar.pest` and appears once in the corpus, in a comment — but
+   they were not built.
 
    **One detail the prototype settled that the RFC had not specified:** the rule above
    admits the trailing `..` only *after* at least one field, so `{ .. }` alone — "any row

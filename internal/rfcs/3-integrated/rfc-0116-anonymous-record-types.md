@@ -188,6 +188,11 @@ that is RFC-0120's job.
 > That construct does not exist and is now **RFC-0123 (Field-Wise Row Constraints)**, which
 > depends on RFC-0121 — so neither is in v0.12.0. **This is a real usability limit of
 > records as first shipped**, and it is stated here rather than discovered later.
+>
+> **RFC-0121 is therefore load-bearing for this RFC, not merely adjacent.** It is easy to
+> read as an optional convenience — RFC-0090 §3 scheduled it "only if a real duck-typing
+> need materializes" — but records being usable with stdlib aspects at all runs through it.
+> See RFC-0121's own header for the two further things that turn out to depend on it.
 - **Serving as an allocator type.** RFC-0063 §2's disjointness story requires allocator
   identity to be per-*instance*, while a record's premise is that two values with the same
   row are interchangeable. A category mismatch, not a coherence technicality.
