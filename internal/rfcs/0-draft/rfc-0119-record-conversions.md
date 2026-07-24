@@ -194,30 +194,61 @@ fiat-linearity — at the point per-field multiplicity is taken up again.
 `FromRecord` and `Construct` are the same thing. They are listed in the order the reasoning
 ran, because each one exposed the next.*
 
-5. **Should `FromRecord` collapse into `Construct` outright, rather than being sugar over
-   it?** RFC-0114 §4 already says `from_record(row)` *is* `Self::construct(row)`; the
-   stronger form is to stop having two names. **Two arguments for it, both real:**
-   - §1's serde analogy holds only because serde has no constructor to route through.
-     Metel would. Once `construct` owns the invariant, `SortedPair` need not *decline*
-     `FromRecord` — it just has a `construct` that validates. The separation stops being
-     about soundness and becomes only about capability gating.
-   - RFC-0114 §1.1 admits row-to-`Self` at exactly one privileged site. A separate
-     `Self`-producing `from_record` either needs that privilege too — widening the one hole
-     the design deliberately narrowed — or must call `construct`, making it an alias.
+5. **Should `FromRecord` be spelled as a constructor call and default to `construct`'s
+   logic?** *(Rewritten 2026-07-24 — the first version of this entry recorded a different
+   and weaker proposal; see the correction at the end.)*
 
-   **The catch is structural and is the reason this is a question rather than a proposal.**
-   RFC-0114 §1 *synthesizes* a `Construct` default for every struct with no invariant.
-   `FromRecord` is an opt-in derive, and the tier system's foundational rule is that no
-   capability is ambient. If `FromRecord ≡ Construct` and `Construct` is universal, **every
-   struct is tier 2 by default and the tier boundary collapses.**
+   The proposal: `FromRecord` **stays its own opt-in aspect**, but two things change.
+   - **Surface syntax becomes the constructor call form** — `Handle({ fd = 3, alloc = buf })`
+     or `Handle(r)` for an existing row value `r` — instead of a named
+     `Handle::from_record(r)` method. There is then no `from_record` spelling at all.
+   - **Its default body is `construct`.** Deriving `FromRecord` gives you the ability to
+     build the type from a row; what *happens* when you do is RFC-0114's `construct`,
+     including its validation, unless the author overrides it.
 
-   **A candidate escape, which is the most interesting part:** make the gate *visibility*
-   rather than a derive. `construct` can only be *called* by code that can write its
-   argument — a record naming all of `Self`'s fields — which requires those fields to be
-   visible. A struct with private fields is then not externally constructible even though
-   `construct` exists. This converges with RFC-0116 OQ3 and RFC-0114 OQ8, which are already
-   asking exactly this; three questions turn out to be one. But it genuinely changes the
-   tier model — tier 2 stops being a derive — and should be decided, not slid into.
+   **This separates capability from logic, and that is what makes it work.** `Construct`
+   is synthesized for every struct and is the *internal* rule for how a `Self` comes into
+   existence. `FromRecord` is the *external* permission to invoke that from a row. A struct
+   without the derive still has a `construct` — it just cannot be called with a row from
+   outside. So the tier boundary is untouched: capability stays opt-in, exactly as
+   RFC-0090 §8 requires.
+
+   It also completes a syntactic unification RFC-0114 §2 half-states. That section already
+   desugars `SortedPair { small = 3, big = 1 }` to `SortedPair::construct({ small = 3, big
+   = 1 })`. Under this proposal, building from a *row value* is the same call with the row
+   passed rather than written inline — construction from a literal and construction from a
+   record stop being two mechanisms.
+
+   **What needs answering:**
+   - **Does `Handle(r)` collide with RFC-0100's positional construction?** RFC-0100 proposes
+     `Handle(3, buf)`. For a single-field struct, `Handle(r)` is ambiguous between "the row
+     `r`" and "one positional argument `r`". Needs a disambiguation rule, or the row form
+     restricted to an explicit record literal.
+   - **Are `Handle { fd = 3 }` and `Handle({ fd = 3 })` both legal?** If so that is two
+     spellings for one action, which this cluster has removed three times this week. The
+     defensible reading is that the brace form takes an *inline* row and the call form takes
+     a row *value* — one spelling per situation rather than two per action — but it has to
+     be stated.
+   - **Does the override story work?** If the default body is `construct` and an author may
+     override `FromRecord`, they can bypass `construct` — reintroducing exactly the
+     invariant hole RFC-0114 exists to close. Probably the override should be disallowed,
+     making `FromRecord` purely a *permission* with no body at all, which converges with
+     open question 9's marker-aspect treatment of `ToRecord`.
+
+   > **Correction, same day.** This entry first recorded the proposal as *collapsing*
+   > `FromRecord` into `Construct` — one aspect instead of two — and raised what looked
+   > like a fatal objection: `Construct` is synthesized universally while `FromRecord` is
+   > an opt-in derive, so equating them would make every struct tier 2 and collapse the
+   > tier boundary. **That objection was answering a proposal that had not been made.**
+   > Reusing the call syntax and the default logic is not merging the aspects, and it keeps
+   > the opt-in gate intact.
+   >
+   > One claim built on the misreading is withdrawn with it: that entry asserted the tier
+   > gate could become *visibility* rather than a derive, and that this made RFC-0114 OQ8
+   > and RFC-0116 OQ3 "the same question asked three ways." Under the actual proposal the
+   > gate stays the derive, so there is no such convergence. **The visibility question
+   > remains real and open** — can code outside a module write a record naming private
+   > fields? — but it is its own question, not the answer to this one.
 6. ~~The by-value and by-reference halves of `FromRecord` are not the same kind of
    operation.~~ **Dissolved 2026-07-24 by dropping the by-reference mode (§2).** There is
    no second half left to be asymmetric with. Recorded because the asymmetry was real and

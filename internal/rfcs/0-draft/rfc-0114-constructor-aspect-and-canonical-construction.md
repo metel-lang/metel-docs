@@ -466,16 +466,24 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
    incidental — it should be confirmed against RFC-0090's own text before acceptance, not
    after. Note this is a question about record-literal typing, so it is now RFC-0116's to
    answer (its open question 3), not this RFC's to decide unilaterally.
-9. **Should `FromRecord` collapse into `Construct` outright?** §4 already says
-   `from_record(row)` *is* `Self::construct(row)`; the stronger form drops the second name
-   entirely. **Worked through in RFC-0119 open question 5**, including the argument that
-   §1.1's single privileged site makes any separate `Self`-producing function either
-   privilege-widening or redundant — and the structural catch, which lands on *this* RFC:
-   §1's `Construct` default is **synthesized for every struct**, while `FromRecord` is an
-   opt-in derive, so equating them makes every struct tier 2 by default and collapses the
-   tier boundary. The candidate escape — gate on *visibility* rather than on a derive —
-   converges with open question 8 above and RFC-0116's open question 3, which turn out to
-   be the same question asked three ways.
+9. **Should `FromRecord` reuse this RFC's call syntax and default to `construct`'s logic?**
+   *(Corrected 2026-07-24 — first recorded here as "collapse `FromRecord` into
+   `Construct`", which is a different and weaker proposal that was not the one made.)*
+   Worked through in **RFC-0119 open question 5**. The shape that matters for *this* RFC:
+   `FromRecord` stays a separate opt-in aspect, but is spelled `Handle({ … })` rather than
+   `Handle::from_record(…)`, and its default body is `construct`. **That makes `Construct`
+   the internal rule for how a `Self` comes into existence and `FromRecord` the external
+   permission to invoke it from a row** — capability and logic separated, with the tier
+   gate untouched.
+
+   The consequence to settle here: **if `FromRecord` is overridable, an author can bypass
+   `construct`**, reinstating the exact hole §1.1 and §2 close. The likely answer is that
+   it must not have a body at all — a permission, not an implementation.
+
+   *Also withdrawn with the misreading:* the claim that the tier gate could become
+   *visibility* rather than a derive, making this question, open question 8 above and
+   RFC-0116's open question 3 "the same question asked three ways." They are not. Open
+   question 8 stands on its own.
 10. ~~§3's automatic firing has no story for the borrowed case.~~ **Closed 2026-07-24, and
     §3 is the half that survived.** The contradiction was between §3 (any assignment
     completing a narrowed row is sugar for `construct()`) and RFC-0119's `from_record_mut`
