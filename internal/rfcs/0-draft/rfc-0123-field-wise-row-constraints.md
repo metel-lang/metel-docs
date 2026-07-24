@@ -6,11 +6,12 @@ status: draft
 target:
 ---
 
-> **Opened 2026-07-24, unifying two questions the corpus was carrying separately without
-> noticing they were the same one.** RFC-0121's open question 1 needs a way to say "every
-> field in row `R` is `Copy`" before its width-subtyping rule can be stated. RFC-0116 needs
-> "every field in row `R` is `Display`" before an anonymous record can be printed at all.
-> Neither is expressible, and the missing construct is identical.
+> **Opened 2026-07-24, unifying three questions the corpus was carrying separately without
+> noticing they were the same one.** RFC-0121's open question 1 needs "every field in row
+> `R` is `Copy`" before its width-subtyping rule can be stated. RFC-0116 needs "every field
+> in row `R` is `Display`" before an anonymous record can be printed. And — found the same
+> day while integrating RFC-0071 — **no record can be `Copy` at all**, which makes every
+> record permanently affine. Three symptoms, one missing construct.
 >
 > **Depends on RFC-0121 (Open Rows)** — it quantifies over a row variable, so `<row R>`,
 > `..R`, and row-conditional impls must exist first. Deliberately *not* folded into
@@ -29,9 +30,9 @@ extend<row R> { ..R }: Display where all R: Display { … }
 
 Read: *this impl applies to any record all of whose fields are themselves `Display`.*
 
-Without it, two things the records cluster already promises cannot be written: an
-implementation of any standard-library aspect for anonymous records, and the rule that
-makes width subtyping sound.
+Without it, three things the records cluster already promises cannot be written: an
+implementation of any standard-library aspect for anonymous records, `Copy` for a record of
+copyable fields, and the rule that makes width subtyping sound.
 
 ---
 
@@ -65,6 +66,29 @@ RFC-0121 §4 proposes that width subtyping — silently accepting a wider record
 narrower one is expected — is sound only when every silently-dropped field is `Copy`.
 Its own open question 1 records that this cannot be written: *"No bound expressing 'every
 field in row `R` is `Copy`' is defined anywhere."*
+
+### 3. No record can be `Copy`, which is sharper than either
+
+Found 2026-07-24 while cross-checking RFC-0071 for integration. `Copy` is **declared**, not
+auto-derived — RFC-0096's auto-impl set is a closed list of exactly three (`Send`, `Sync`,
+`Linear`) and `Copy` is not among them (RFC-0071 §2 declares it with `extend T: Copy;`).
+Since RFC-0116 §3 bans non-local aspect impls for records, and `Copy` is standard-library:
+
+```metel
+let a = { x = 1, y = 2 };
+let b = a;        // a MOVES. Every record is affine, forever.
+```
+
+`{ x: i64, y: i64 }` is exactly the shape a reader expects to copy freely, so this is a
+harsher cliff than `Display`. It also **blocks RFC-0121's width-subtyping rule from ever
+applying to a nested record**, since that rule requires each silently-dropped field to be
+`Copy` and a record field can never be.
+
+The fix is the same single stdlib impl shape:
+
+```metel
+extend<row R> { ..R }: Copy where all R: Copy { }
+```
 
 **These are the same missing construct**, and recognising that is most of this RFC's
 justification. Solving it once resolves a soundness rule and a usability cliff that were

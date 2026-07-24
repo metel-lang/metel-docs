@@ -183,6 +183,14 @@ that is RFC-0120's job.
 > field composition (RFC-0096) rather than declared, so records satisfy them structurally.
 > The gap is specifically *impl-based* aspects.
 >
+> **`Copy` is impl-based, so no record is ever `Copy`** — found 2026-07-24 while cross-checking
+> RFC-0071. RFC-0096's auto-impl set is a closed list of exactly three (`Send`, `Sync`,
+> `Linear`); `Copy` is declared with `extend T: Copy;` (RFC-0071 §2). **Every record is
+> therefore affine and must be moved**, including `{ x: i64, y: i64 }`. This is sharper than
+> the `Display` case — a small all-primitive record is exactly what a reader expects to copy
+> freely — and it also blocks RFC-0121's width-subtyping rule for any dropped field that is
+> itself a record. Same fix, RFC-0123.
+>
 > **The fix is a single stdlib implementation covering all rows at once**, which requires
 > constraining every field of a row (`extend<row R> { ..R }: Display where all R: Display`).
 > That construct does not exist and is now **RFC-0123 (Field-Wise Row Constraints)**, which

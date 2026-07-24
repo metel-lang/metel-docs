@@ -5,8 +5,63 @@ date: '2026-06-28'
 ---
 
 > **Status — accepted.** Establishes the foundational ownership model for Metel
-> values. Required by RFC-0063 (Region Handles) and all downstream region RFCs, which
+> values. Required by RFC-0063 (Allocator Handles) and all downstream allocator RFCs, which
 > depend on affine ownership as a given.
+
+> **Refreshed 2026-07-24, before integration — this RFC had gone stale in place.** Accepted
+> 2026-06-28 and never touched since, it missed every subsequent corpus-wide change because
+> nothing was working on it. Four kinds of drift, all corrected, none semantic:
+>
+> | was | now | why |
+> |---|---|---|
+> | "the `Copy` trait" | "the `Copy` aspect" | Metel has aspects; "trait" is not the language's word |
+> | `impl Copy for Point {}` | `extend Point: Copy;` | RFC-0098 (`4-implemented`), plus v0.10.0's bodyless form |
+> | `@[r] T` | `@a T` | RFC-0063's allocator syntax |
+> | "the region system", RFC-0063 "(Region Handles)" | the allocator system | the region cluster is **`6-refused`** (RFC-0025/0028/0056/0069/0087); RFC-0063/0066/0068 were renamed 2026-07-10 |
+>
+> **The last row is the substantive one.** §8 described this RFC's interaction with a
+> subsystem that has since been refused outright and replaced. The claims themselves survive
+> — affine ownership is what makes allocator lifetimes sound, exactly as it made region
+> lifetimes sound — but they were stated about a system that no longer exists.
+>
+> **Worth recording as a process observation, not just a diff.** RFC-0063, RFC-0066 and
+> RFC-0068 were all renamed in the 2026-07-10 sweep. RFC-0071 sits in the same cluster and
+> was missed, because it was `2-accepted` with no open work against it — the one state in
+> the lifecycle where nobody has a reason to open the file. It is the most-depended-on
+> document in the corpus and it spent a month describing a refused subsystem.
+
+> **Cross-checked 2026-07-24 against the records cluster, which did not exist when this RFC
+> was accepted.** Four interactions; three are clean and the fourth is a real gap.
+>
+> **§7 versus RFC-0117 (Row Narrowing) — consistent, and worth saying so.** §7 states a
+> partially-moved value "may not be used as a whole"; RFC-0117 states that a partially-moved
+> *record* narrows to a first-class value of a narrower type. These read as contradictory and
+> are not: a struct has no row to narrow *to*, so §7's rule is what remains when row
+> machinery is absent. The tier system is doing the work.
+>
+> **§7's `Drop` ban versus RFC-0116 §3 — clean by construction.** §7 forbids partially moving
+> a `Drop` type. RFC-0116 §3 forbids custom `Drop` on a record entirely. So a record is never
+> `Drop`, and RFC-0117's narrowing can never collide with §7's ban.
+>
+> **§7 versus RFC-0114 (Construct) — no conflict, but §7 is silent where RFC-0114 speaks.**
+> §7 covers moving *out*; it says nothing about reassembly, because a partially-moved struct
+> simply stays unusable. RFC-0114 §3 governs the inverse for records (completing a row fires
+> `construct`). Neither contradicts the other; the silence is the design.
+>
+> **§2 versus RFC-0116 §3 — a real gap: no anonymous record can ever be `Copy`.** §2 makes
+> `Copy` an opt-in aspect declared with `extend T: Copy;`. RFC-0096's auto-impl list is a
+> closed set of exactly three — `Send`, `Sync`, `Linear` — and `Copy` is not in it, so it must
+> be declared. RFC-0116 §3 bans non-local aspect impls for records, and `Copy` is
+> standard-library. **Therefore every record is affine and must be moved**, including
+> `{ x: i64, y: i64 }`, which is precisely the shape a reader would expect to be freely
+> copyable.
+>
+> This is the same class of problem as records not being `Display`, and it bites harder in one
+> place: RFC-0121's width-subtyping rule requires every silently-dropped field to be `Copy`,
+> so a dropped field that is *itself* a record could never satisfy it. Both need RFC-0123's
+> field-wise constraints. Recorded in RFC-0116 and RFC-0123 as well; **not** a blocker for
+> this RFC, which is correct as written — `Copy` being declared rather than derived is
+> deliberate.
 
 ## Summary
 
@@ -15,8 +70,8 @@ point in time. Moving a value transfers ownership to a new binding; the source b
 invalid. This RFC specifies:
 
 1. move semantics as the default for all struct and enum values;
-2. `Copy` as an opt-in trait for types that may be bitwise duplicated;
-3. `Drop` as an opt-in trait for types with destructor logic;
+2. `Copy` as an opt-in aspect for types that may be bitwise duplicated;
+3. `Drop` as an opt-in aspect for types with destructor logic;
 4. the mutual exclusion of `Copy` and `Drop`;
 5. drop order within a scope;
 6. explicit drop and partial moves.
@@ -25,9 +80,9 @@ invalid. This RFC specifies:
 
 ## Motivation
 
-Affine ownership is the foundation of Metel's memory safety model. The region system
-(RFC-0063 and downstream) relies on region pointers being affine — if `@[r] T` could be
-copied freely, the entire lifetime and disjointness analysis would be unsound. The borrow
+Affine ownership is the foundation of Metel's memory safety model. The allocator system
+(RFC-0063 and downstream) relies on allocator-tagged pointers being affine — if `@a T` could
+be copied freely, the entire lifetime and disjointness analysis would be unsound. The borrow
 checker's single-owner invariant, the `T: !Drop` constraint on scoped move-out (RFC-0066),
 and the drop ordering that makes struct-owned arenas safe (RFC-0068) all assume that values
 move rather than copy by default.
@@ -63,7 +118,7 @@ implementing `Copy` are excluded (§2).
 
 ---
 
-## 2. The `Copy` trait
+## 2. The `Copy` aspect
 
 A type implementing `Copy` is **bitwise-copyable**: whenever it appears in a value
 position, a copy of its bits is made and the original remains valid. No ownership transfer
@@ -88,15 +143,15 @@ the compiler enforces this structurally:
 
 ```metel
 struct Point { x: f64, y: f64 }
-impl Copy for Point {}   // valid — f64 is Copy
+extend Point: Copy;   // valid — f64 is Copy
 
-struct Node { val: i64, next: @[r] Node }
-impl Copy for Node {}    // compile error — @[r] Node is not Copy
+struct Node { val: i64, next: @a Node }
+extend Node: Copy;    // compile error — @a Node is not Copy
 ```
 
 ---
 
-## 3. The `Drop` trait
+## 3. The `Drop` aspect
 
 A type implementing `Drop` declares destructor logic that runs when its last owner is
 dropped — either by going out of scope or by an explicit `drop` call (§6).
@@ -104,7 +159,7 @@ dropped — either by going out of scope or by an explicit `drop` call (§6).
 ```metel
 struct Handle { fd: u64 }
 
-impl Drop for Handle {
+extend Handle: Drop {
     fun drop(self: Handle) {
         close_fd(self.fd);
     }
@@ -128,7 +183,7 @@ type could be duplicated freely, the destructor would run once per copy, potenti
 releasing the same resource multiple times.
 
 ```metel
-impl Copy for Handle {}   // compile error — Handle implements Drop
+extend Handle: Copy;   // compile error — Handle implements Drop
 ```
 
 The negative bound `T: !Drop` (RFC-0066) is satisfied by any type with no `Drop` impl.
@@ -160,8 +215,9 @@ struct Conn {
 }
 ```
 
-For structs with owned regions (`[own r]`, RFC-0068), the struct's fields are dropped
-before the owned arena is freed. This ensures that any `@[r] T` pointers stored as fields
+For structs that own an allocator (`struct Parser(@a: BumpAlloc)`, RFC-0068), the struct's
+fields are dropped before the owned arena is freed. This ensures that any `@a T` pointers
+stored as fields
 are unreachable before the bulk free, preventing use-after-free at the drop site.
 
 ---
@@ -203,15 +259,15 @@ let fd = h.fd;   // compile error — Handle implements Drop; partial move not a
 
 ---
 
-## 8. Interaction with the region system
+## 8. Interaction with the allocator system
 
-Region pointers (`@[r] T`) are non-`Copy` by construction — they carry an allocation that
-must have a single owner at all times. Affine ownership is the mechanism that makes region
-lifetime guarantees sound:
+Allocator-tagged pointers (`@a T`) are non-`Copy` by construction — they carry an allocation
+that must have a single owner at all times. Affine ownership is the mechanism that makes
+allocator lifetime guarantees sound:
 
-- Because `@[r] T` is affine, any region-allocated value always has exactly one live
-  owner. This is what allows the interpreter's uniform allocator to provide deterministic
-  drop semantics equivalent to the compiled region system.
+- Because `@a T` is affine, any allocator-tagged value always has exactly one live owner.
+  This is what allows the interpreter's uniform allocator to provide deterministic drop
+  semantics equivalent to the compiled allocator system.
 - The `T: !Drop` bound in RFC-0066 §2.2 requires the definitions of `Drop` and the
   negative bound mechanism established in §3–4 of this RFC.
 - The drop ordering in §5 directly determines the order in which arena-allocated fields
@@ -221,7 +277,7 @@ lifetime guarantees sound:
 
 ## 9. Unresolved questions
 
-1. **`Copy` declaration syntax — resolved.** `Copy` is declared via `impl Copy for T {}`.
+1. **`Copy` declaration syntax — resolved.** `Copy` is declared via `extend T: Copy;`.
    This is consistent with how other aspects are implemented in Metel. A derive-like
    shorthand (e.g. `derive(Copy)`) will be considered when the derived aspects system
    (RFC-0012) is designed; until then, the explicit impl is the only supported form.
@@ -241,9 +297,9 @@ lifetime guarantees sound:
   Metel; this RFC is the settled formulation of the same core idea.
 - RFC-0049 (Linear Function Type System, draft) — function-level linearity constraints;
   orthogonal to but compatible with the value-level move semantics specified here.
-- RFC-0063 (Region Handles) — depends on affine ownership of `@[r] T`; §2 states the
-  non-`Copy` property of region pointers without grounding it in a prior RFC.
-- RFC-0066 (Region Pointer Extraction) — the `T: !Drop` bound is founded on §3–4 of
+- RFC-0063 (Allocator Handles) — depends on affine ownership of `@a T`; §2 states the
+  non-`Copy` property of allocator-tagged pointers without grounding it in a prior RFC.
+- RFC-0066 (Allocated Value Extraction) — the `T: !Drop` bound is founded on §3–4 of
   this RFC.
-- RFC-0068 (Struct-Owned Regions) — drop ordering in §5 of this RFC governs when
+- RFC-0068 (Struct-Owned Allocators) — drop ordering in §5 of this RFC governs when
   struct fields become unreachable relative to arena freeing.
