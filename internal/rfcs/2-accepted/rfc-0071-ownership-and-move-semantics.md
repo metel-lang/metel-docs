@@ -279,6 +279,26 @@ allocator lifetime guarantees sound:
 
 ---
 
+## 9c. Implementation tracking
+
+*Filed 2026-07-24, against milestone `v0.12.0`.* Four issues rather than the one per RFC
+`AGENTS.md` prescribes — a deliberate exception, because this RFC is seven sections of
+essentially unbuilt work with a real dependency order between the pieces:
+
+| issue | sections | depends on |
+|---|---|---|
+| [#290](https://codeberg.org/metel-lang/metel-core/issues/290) — `Copy` and `Drop` aspects | §2, §3, §4, §9 q3 | — |
+| [#291](https://codeberg.org/metel-lang/metel-core/issues/291) — move checking | §1 | #290 |
+| [#292](https://codeberg.org/metel-lang/metel-core/issues/292) — drop order and explicit drop | §5, §6 | #290, #291 |
+| [#293](https://codeberg.org/metel-lang/metel-core/issues/293) — partial moves | §7, §9a | #291 |
+
+**§9b's place-abstraction requirement is stated in #291**, which is where it constrains the
+design. **§9a's rules for tuples, arrays and enum payloads are in #293.** #293 is also the
+one v0.13.0 depends on — RFC-0117 is built on field-granularity partial-move tracking, so
+descoping it pushes RFC-0119 and the blog's short-term commitment out another release.
+
+---
+
 ## 9b. Implementation requirement inherited from RFC-0122
 
 *Added 2026-07-24, from answering RFC-0122's open question 3.*
