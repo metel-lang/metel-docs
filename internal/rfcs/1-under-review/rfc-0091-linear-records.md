@@ -40,10 +40,7 @@ updated: '2026-07-24'
 > struct literal `data = …` too) is only `0-draft`. Left as-is rather than pre-applying an
 > unaccepted RFC; if RFC-0115 lands, one more mechanical pass makes these uniform.
 >
-> **Also still stale here and not swept:** `HasField<"auth", String>` / `Lacks<"auth">`
-> bound syntax, retired by RFC-0090 on 2026-07-23 in favour of bare rows (`{ auth: String }`
-> / `!{ auth: _ }`). That is a separate amendment from the `record`-keyword one and is a
-> separate sweep.
+> **`HasField`/`Lacks` swept later the same day — see the final note below.**
 >
 > **Also revised 2026-07-24 — §5's `drain_field` row-extension notation normalized to
 > `..R`.** Its signature read `(s: &mut { name: T | R }) -> (T, &mut { R })`, using two
@@ -68,13 +65,35 @@ updated: '2026-07-24'
 > `Handle.{ fd }` inside projection braces was genuinely ambiguous between a row variable
 > and a field label — but the rule is uniform, so this RFC follows it.
 >
-> **Two things in §2.3 this deliberately leaves wrong, both already noted above:**
-> `Lacks<"auth">` / `HasField<"auth", String>` (retired 2026-07-23, separate sweep), and
-> `RequestBuilder<R + "auth">` — a row *operation* using a string literal in type
-> position, which is the same gap `HasField` had. RFC-0090's new open question 14 now
-> tracks that class of problem; it is not fixed here.
+> **Final revision 2026-07-24 — `HasField`/`Lacks` swept.** RFC-0090 retired both on
+> 2026-07-23 in favour of bare rows; this RFC was the last cluster member still using
+> them. §1's prose (`the residual is still HasField<"fd", i64>`), §2.3's two impl bounds,
+> and two call-site comments are converted:
+>
+> | was | now |
+> |---|---|
+> | `HasField<"fd", i64>` | `{ fd: i64, .. }` |
+> | `impl<row R: HasField<"auth", String>>` | `impl<row R: { auth: String, .. }>` |
+> | `impl<row R: Lacks<"auth">>` | `impl<row R: !{ auth: _ }>` |
+>
+> **The trailing `..` on the positive bounds is not cosmetic.** A `HasField` bound was
+> always existential — "has at least this field" — so under the `..` rule adopted earlier
+> today it needs the marker to keep that meaning. Dropped, each would now read as "this
+> row is *exactly* `{ auth: String }`", which would break every one of these examples: the
+> builder's whole point is that `R` carries `host` and whatever else besides. The negative
+> bound takes no `..`, since absence has no rest to quantify over.
+>
+> **One thing in §2.3 this still leaves wrong, deliberately:** `RequestBuilder<R + "auth">`
+> — a row *operation* using a string literal in type position, the same gap `HasField`
+> had. That is RFC-0090's new open question 14, which covers `without`/`+` as a class; it
+> needs a design, not a sweep, so it is not fixed here.
+>
+> **Note the `_` in `!{ auth: _ }` is itself not yet buildable** — a type-position
+> wildcard does not exist (`_` appears only in `pattern`), tracked as RFC-0090 open
+> question 12. This sweep adopts the spelling RFC-0090 settled on; it does not make it
+> parse.
 
-> **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `{ … }` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
+> **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `{ … }` type-former plus bare-row bounds -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 
 ## Summary
 
@@ -124,7 +143,7 @@ impl Drop for Handle {
 ```
 
 — checked (not just asserted) against the method body, so `tag` may be moved out of
-`Handle` first (the residual is still `HasField<"fd", i64>`, all `drop` needs) while
+`Handle` first (the residual is still `{ fd: i64, .. }`, all `drop` needs) while
 moving `fd` itself out remains rejected. Declared rather than inferred, for the same
 reason this whole cluster has repeatedly preferred explicit-and-checked over
 implicit-and-inferred (RFC-0065's elision-is-never-a-silent-choice principle, Storage
@@ -216,7 +235,7 @@ argument, not just examples that haven't broken it.
 ### 2.2 Reusing `(row, brand)` for nominal residuals
 
 RFC-0090 §9 notes that if a struct is already internally `(row, brand)`, the residual
-after consuming one field is just `(row - field, brand)` — the *same* thing `Lacks` (RFC-0090 §4)
+after consuming one field is just `(row - field, brand)` — the *same* thing negative row bounds (`!{ field: _ }`, RFC-0090 §4)
 already names for open records, applied to a nominal residual with its brand held fixed
 rather than erased. That would make nominal partial consumption and RFC-0090's
 row-conditional typestate one mechanism applied to two syntactic forms, rather than two
@@ -329,13 +348,13 @@ exactly once — RFC-0090 §4's "builders, in the dual direction" claim:
 ```metel
 struct RequestBuilder<row R> { data: { host: String, ..R } }
 
-impl<row R: Lacks<"auth">> RequestBuilder<..R> {
+impl<row R: !{ auth: _ }> RequestBuilder<..R> {
     fun with_auth(self, token: String) -> RequestBuilder<R + "auth"> {
         RequestBuilder { data: { ..self.data, auth = token } }
     }
 }
 
-impl<row R: HasField<"auth", String>> RequestBuilder<..R> {
+impl<row R: { auth: String, .. }> RequestBuilder<..R> {
     fun send(self) -> Response { ... }
 }
 
@@ -343,8 +362,8 @@ fun main() {
     let req = RequestBuilder { data: { host = "example.com" } }
         .with_auth("secret");
     req.send();
-    // req.with_auth("again");                              -- R already Lacks "auth"
-    // RequestBuilder { data: { host = "x" } }.send()  -- needs HasField<"auth", _>
+    // req.with_auth("again");                        -- R no longer satisfies !{ auth: _ }
+    // RequestBuilder { data: { host = "x" } }.send()  -- needs { auth: _, .. }
 }
 ```
 
@@ -495,8 +514,8 @@ fun example(h: &mut Handle) {
 
 - RFC-0089 (Linear Types) — the multiplicity lattice and `ToRecord`-based floor this RFC
   extends
-- RFC-0090 (Structural Records — Rows and Tiers) — the row/tier machinery (`HasField`,
-  `Lacks`, tier 2's `to_record_mut`/`from_record_mut`) this RFC's Option C is built
+- RFC-0090 (Structural Records — Rows and Tiers) — the row/tier machinery (bare-row
+  bounds positive and negative, tier 2's `to_record_mut`/`from_record_mut`) this RFC's Option C is built
   entirely from
 - RFC-0071 (Ownership and Move Semantics) — §7's blanket partial-move-out-of-`Drop` ban
   this RFC's §1 narrows
