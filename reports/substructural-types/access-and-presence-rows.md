@@ -372,6 +372,10 @@ not collide with type ascription. The real collision in this area is ascription 
 *keyword arguments*, which arises only where contents route through a general `expr`
 (`arg_list`); RFC-0100 §3 analysed and fixed it, and that analysis generalizes into the
 separator invariant recorded in `../syntax/colon-classifies-equals-defines.md`.
+**Update, 2026-07-24.** RFC-0100 §3 was rewritten to adopt `=` for keyword arguments, so
+that collision no longer exists to be fixed — the invariant removed it rather than
+disambiguating it. The `arg_list` restructuring survives in a smaller form (`keyword_arg =
+{ ident ~ "=" ~ !"=" ~ expr }`, guarding against `assign_expr` rather than `asc_expr`).
 
 ### 3.6 Revised resolution
 

@@ -131,9 +131,16 @@ rule.
 Concretely:
 
 1. Record the principle (this document, or a short RFC if it should be normative).
-2. Recommend `=` for RFC-0100's keyword arguments, with the `call_arg` ordering fix
+2. ~~Recommend `=` for RFC-0100's keyword arguments, with the `call_arg` ordering fix
    restated for `=`, and note that its ascription collision — and the reason it was
-   reopened — dissolve under the change.
+   reopened — dissolve under the change.~~ **Done 2026-07-24.** RFC-0100 §1/§2/§3/§6 now
+   use `=`; §3 is rewritten around the `assign_expr` collision `=` trades into, with the
+   superseded ascription analysis kept behind a fold; its status note records the
+   reopening reason as dissolved rather than answered; and its Unresolved Questions are
+   rewritten to what actually remains (is `=` right; is losing `f(x = 1)` acceptable).
+   RFC-0114 adopts the same separator for record values, so both RFCs moved together.
+   One detail this document did not have: the fix wants `keyword_arg = { ident ~ "=" ~
+   !"=" ~ expr }`, mirroring `assign_op`'s own `("=" ~ !"=")` guard.
 3. Leave `field_init` alone; RFC-0100 removes it. If RFC-0100 is refused instead, the
    invariant has one permanent exception and this recommendation should be revisited
    rather than forced.

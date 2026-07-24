@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-07-23'
+generated_on: '2026-07-24'
 ---
 
 # RFC Registry
@@ -42,7 +42,7 @@ the curated thematic map.
 - **RFC-0104** — Multi-Aspect Extend Blocks with Shared Bodies (`0-draft` ; internal/rfcs/0-draft/rfc-0104-multi-aspect-extend-blocks-with-shared-bodies.md ; date 2026-07-14)
 - **RFC-0105** — Struct-Embedded Aspect Lists (`0-draft` ; internal/rfcs/0-draft/rfc-0105-struct-embedded-aspect-lists.md ; date 2026-07-14 ; updated 2026-07-14)
 - **RFC-0112** — Auto-Deref Scope and Expected-Type Provenance (`0-draft` ; internal/rfcs/0-draft/rfc-0112-auto-deref-scope-and-expected-type-provenance.md ; date 2026-07-21)
-- **RFC-0114** — Constructor Aspect and Canonical Construction (`0-draft` ; internal/rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md ; date 2026-07-23)
+- **RFC-0114** — Constructor Aspect and Canonical Construction (`0-draft` ; internal/rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md ; date 2026-07-23 ; updated 2026-07-24)
 
 ## Under Review (8)
 
@@ -51,7 +51,7 @@ the curated thematic map.
 - **RFC-0090** — Structural Records — Rows and Tiers (`1-under-review` ; internal/rfcs/1-under-review/rfc-0090-structural-records.md ; date 2026-07-09 ; updated 2026-07-23)
 - **RFC-0091** — Linear Records (`1-under-review` ; internal/rfcs/1-under-review/rfc-0091-linear-records.md ; date 2026-07-09 ; updated 2026-07-21)
 - **RFC-0099** — Dot-Separated Module Paths (`1-under-review` ; internal/rfcs/1-under-review/rfc-0099-dot-separated-module-paths.md ; date 2026-07-13 ; updated 2026-07-14)
-- **RFC-0100** — Constructor-Call Construction (`1-under-review` ; internal/rfcs/1-under-review/rfc-0100-constructor-call-construction.md ; date 2026-07-13 ; updated 2026-07-14)
+- **RFC-0100** — Constructor-Call Construction (`1-under-review` ; internal/rfcs/1-under-review/rfc-0100-constructor-call-construction.md ; date 2026-07-13 ; updated 2026-07-24)
 - **RFC-0109** — Self-View Narrowing and Reference-Destructuring Patterns (`1-under-review` ; internal/rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md ; date 2026-07-18 ; updated 2026-07-21)
 - **RFC-0113** — Context Parameters (`1-under-review` ; internal/rfcs/1-under-review/rfc-0113-context-parameters.md ; date 2026-07-21 ; updated 2026-07-21)
 

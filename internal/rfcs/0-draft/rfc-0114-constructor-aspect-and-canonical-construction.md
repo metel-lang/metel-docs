@@ -4,6 +4,7 @@ title: "Constructor Aspect and Canonical Construction"
 date: '2026-07-23'
 status: draft
 target:
+updated: '2026-07-24'
 ---
 
 > **New RFC, split out 2026-07-23** from `reports/substructural-types/nominal-types-as-branded-rows.md`
@@ -26,6 +27,23 @@ target:
 > exhaustiveness, inhabited-singleton coercion) rather than inventing new type-system
 > machinery. The three original candidates are kept below, marked superseded, not
 > deleted.
+>
+> **Revised 2026-07-24 — surface syntax corrected, and one hole closed.** The first draft
+> spelled rows `.{ … }` in freestanding positions, which was already stale when written:
+> `reports/substructural-types/access-and-presence-rows.md` §3.5 keeps the dot **only**
+> where a receiver is projected from (`Handle.{ fd }`), and this RFC's rows are all
+> freestanding. They are restated here in RFC-0090's normative `record { … }` former (§1),
+> with record *values* separated by `=` per
+> `reports/syntax/colon-classifies-equals-defines.md` and RFC-0100 §1 — the same invariant,
+> same day, in both RFCs. Correcting the examples surfaced a real gap the stale syntax had
+> been hiding: **`construct`'s own body cannot construct a `Self`** without either
+> recursing into itself or using the bare literal §2 abolishes. §1.1 settles that
+> (row-to-`Self` is admitted inside `construct`/`construct_unchecked` and nowhere else),
+> which also makes §1's synthesized default `Ok(row)` typecheck — it did not, as written.
+> Separately, the examples used two pre-RFC-0098 spellings (`impl Aspect for Type`,
+> `&mut`) despite this RFC post-dating that RFC's implementation by nine days; both are
+> corrected to `extend Type: Aspect` and `&var`. A new Open Question 8 records a privacy
+> question §1.1 exposed and does not answer.
 
 ## Summary
 
@@ -60,8 +78,8 @@ concern to that one conversion function.
 more than ordinary code, once narrowing and widening are both automatic and structural:
 
 ```metel
-fun mess_with_it(p: &mut SortedPair) {
-    let old_small = p.small;   // move small out; p narrows to .{ big }
+fun mess_with_it(p: &var SortedPair) {
+    let old_small = p.small;   // move small out; p narrows to SortedPair.{ big }
     p.small = 999_999;         // assign an arbitrary value back in; p widens to full SortedPair
     // no call to SortedPair::new, anywhere. invariant possibly broken.
 }
@@ -83,14 +101,14 @@ validation logic, or forgets to.
 ```metel
 aspect Construct {
     type Error;
-    fun construct(row: .{ /* all of Self's fields */ }) -> Result<Self, Self::Error>;
+    fun construct(row: record { /* all of Self's fields */ }) -> Result<Self, Self::Error>;
 }
 
-impl Construct for SortedPair {
+extend SortedPair: Construct {
     type Error = !;
-    fun construct(row: .{ small: i32, big: i32 }) -> Result<Self, !> {
-        if row.small <= row.big { Ok(SortedPair { small: row.small, big: row.big }) }
-        else { Ok(SortedPair { small: row.big, big: row.small }) }
+    fun construct(row: record { small: i32, big: i32 }) -> Result<Self, !> {
+        if row.small <= row.big { Ok(row) }                              // §1.1
+        else { Ok(record { small = row.big, big = row.small }) }
     }
 }
 ```
@@ -99,6 +117,15 @@ impl Construct for SortedPair {
 — the signature that makes §5's fallibility resolution possible. `ToRecord`/`FromRecord`
 (RFC-0090 §8) use bare `Self`; `construct` deliberately does not, for the reason §5
 works through.
+
+**Syntax note.** Rows here use RFC-0090's normative `record { … }` type-former, and record
+*values* separate with `=` (`record { small = row.big }`) per RFC-0100 §1's separator
+invariant. `access-and-presence-rows.md` §3.5 recommends dropping the `record` keyword in
+every freestanding position (`{ small: i32, big: i32 }`, dot retained only for projection:
+`SortedPair.{ big }`), which would make this read considerably lighter — but RFC-0090 has
+not been amended for that, and this RFC does not adopt an unadopted spelling unilaterally.
+Projection *is* spelled `SortedPair.{ big }` throughout, since that form is settled and has
+no competing normative spelling.
 
 **A struct with no invariant writes nothing.** The compiler synthesizes a trivial default
 — `type Error = !; construct(row) { Ok(row) }` — the same way `Send`/`Sync`/`Linear`
@@ -112,6 +139,40 @@ should cost exactly what a bare field-literal costs now. That is a *commitment*,
 `nominal-types-as-branded-rows.md` §9's own unvalidated zero-cost claim for the
 representation generally — not a new promise, the same one recurring here.
 
+### 1.1 What `construct`'s own body may build — the one privileged site
+
+Correcting the syntax above exposed a hole the first draft's examples had papered over:
+its `construct` body wrote `SortedPair { small: …, big: … }`, **a bare struct literal that
+§2 abolishes.** The general problem is not cosmetic — every route to a `Self` value now
+goes through `construct`, including the route out of `construct` itself, which is circular.
+The synthesized default just above, `construct(row) { Ok(row) }`, has the same problem in
+miniature: as written it returns a row where `Self` is expected.
+
+**Rule: a value of `Self`'s complete row type is admitted where `Self` is expected, inside
+the body of `Construct::construct` and `ConstructUnchecked::construct_unchecked`, and
+nowhere else in the language.** That is the primitive the whole mechanism bottoms out in.
+Three things worth stating about it:
+
+- **The privilege sits exactly where the responsibility already sits.** `construct`'s
+  entire job is to be the one place a valid `Self` is minted; giving it — and only it — the
+  ability to actually mint one is not an extra concession, it is the same statement from
+  the other side. Rust's analogous primitive (the struct literal) is always available and
+  gated only by field visibility; this narrows the gate from a module to a function.
+- **It makes §1's synthesized default well-typed** rather than merely plausible. `Ok(row)`
+  typechecks under this rule and does not under any other reading.
+- **It does not depend on the branded-rows thesis, though it is cleaner under it.**
+  If `nominal-types-as-branded-rows.md`'s central claim holds, this is not a coercion at
+  all — `Self` *is* `(brand, row)`, and `construct` is simply the site where the brand is
+  affixed. If that thesis is dropped, the rule survives unchanged as an ordinary typing
+  rule about one function. That independence is deliberate: the thesis was explicitly left
+  non-gating for this cluster.
+
+**The cost, stated plainly: validation cannot be factored out into a `Self`-returning
+helper.** A type whose checking logic is long enough to want its own function must have
+that helper take and return the *row*, with `construct` performing the final step itself.
+Tolerable, and arguably a good pressure, but it is a real constraint on how such code is
+written and it follows from the rule rather than being independent of it.
+
 ---
 
 ## 2. Canonical construction: all construction is `Self::construct(row)`
@@ -119,21 +180,42 @@ representation generally — not a new promise, the same one recurring here.
 Once RFC-0100 lands, `Type { field: value }` struct literals no longer exist as a
 separate surface form — "`Type(args)` call-shaped syntax **replaces**
 `Type { field: value }` struct literals at construction sites," in that RFC's own words.
-Under this RFC, `SortedPair(3, 1)` desugars to `SortedPair::construct(.{ small: 3, big: 1
-})` — fresh construction and post-narrowing reconstruction (§3) become the *same*
-operation, not two mechanisms that happen to need the same validation. Both get the
-*same* result-handling treatment from §5, uniformly: `let p = SortedPair(3, 1);` binds a
-bare `SortedPair` when `Self::Error = !` (RFC-0078's inhabited-singleton coercion applies
-automatically), and binds a `Result<SortedPair, E>` the caller must handle otherwise —
-ordinary, unsurprising behavior for a function call either way.
+Under this RFC:
 
-**This RFC depends on RFC-0100 removing the bare literal, and that dependency is not
-solid yet.** RFC-0100 is `1-under-review`, reverted there during integration and
-currently "reconsidering whether general keyword arguments belong in the spec at all"
-(`OBJECTIVES.md` Trigger 14). If RFC-0100 is refused or narrowed, this RFC needs its own,
-narrower restriction — the compiler simply refuses a bare `Type { field: value }` literal
-specifically for any type implementing a non-default `Construct` — rather than leaning
-entirely on RFC-0100 having landed. That fallback is not worked out here.
+```metel
+SortedPair(small = 3, big = 1)
+// desugars to
+SortedPair::construct(record { small = 3, big = 1 })
+```
+
+Fresh construction and post-narrowing reconstruction (§3) become the *same* operation, not
+two mechanisms that happen to need the same validation. **The desugaring is a
+one-token-class rewrite, which is the point:** RFC-0100's keyword arguments and a record
+value are the same `name = value` shape, separated by the same `=`, because both bind a
+value to a label. Positional construction (`SortedPair(3, 1)`, RFC-0100 §1's one-or-two-field
+sugar) desugars identically after positional-to-label assignment.
+
+Both get the *same* result-handling treatment from §5, uniformly: `let p = SortedPair(small
+= 3, big = 1);` binds a bare `SortedPair` when `Self::Error = !` (RFC-0078's
+inhabited-singleton coercion applies automatically), and binds a `Result<SortedPair, E>` the
+caller must handle otherwise — ordinary, unsurprising behavior for a function call either way.
+
+**This RFC depends on RFC-0100 removing the bare literal. Updated 2026-07-24: that
+dependency is materially firmer than the first draft recorded, but it is not resolved.**
+RFC-0100 is still `1-under-review` — however, the reason it was reopened ("reconsidering
+whether general keyword arguments belong in the spec at all", `OBJECTIVES.md` Trigger 14)
+was revised the same day this RFC was, and **dissolved**: the ascription collision that
+motivated the reconsideration was specific to spelling keyword arguments `name: value`, and
+does not arise under `=`. What remains open in RFC-0100 is whether `=` is the right
+separator, not whether the feature belongs — a materially smaller question, and one whose
+plausible outcomes mostly leave this RFC's §2 intact.
+
+The fallback if RFC-0100 is refused anyway is unchanged and still not worked out here: this
+RFC would need its own narrower restriction — the compiler refuses a bare `Type { field:
+value }` literal specifically for any type implementing a non-default `Construct` — rather
+than leaning on RFC-0100 having landed. Note that under that fallback §1.1's privileged
+site becomes *more* load-bearing, not less, since the bare literal would survive everywhere
+except the types that most need it gone.
 
 ---
 
@@ -145,8 +227,8 @@ completed row and replacing the narrowed value with the result, rather than a ba
 in-place write.
 
 **Piecewise building composes the same way.** A value built up field by field —
-`structural-records.md`'s `MaybeUninit`-avoidance example, `let partial = record { a:
-compute_a() }; let partial = record { ..partial, b: compute_b() }; …` — only calls
+`structural-records.md`'s `MaybeUninit`-avoidance example, `let partial = record { a =
+compute_a() }; let partial = record { ..partial, b = compute_b() }; …` — only calls
 `construct()` once, at the point the row becomes complete, exactly as a single literal
 would. Intermediate partial states are ordinary, fully-valid values of a narrower type;
 nothing fires until nothing is missing.
@@ -239,7 +321,7 @@ the invariant holds — Rust's `NonZeroU32::new` (checked) alongside `new_unchec
 
 ```metel
 aspect ConstructUnchecked {
-    unsafe fun construct_unchecked(row: .{ /* all of Self's fields */ }) -> Self;
+    unsafe fun construct_unchecked(row: record { /* all of Self's fields */ }) -> Self;
 }
 ```
 
@@ -248,6 +330,11 @@ implementing `Construct` — a type author writes it explicitly, taking on the
 responsibility the `unsafe` block already signals elsewhere in the language. Ordinary
 row-completion (§3) never calls it; only code that explicitly reaches for
 `construct_unchecked` inside an `unsafe` block does.
+
+**It gets §1.1's privileged site too, necessarily.** `construct_unchecked` returns bare
+`Self` and skips validation, so its body has no other way to produce one — the typical
+implementation is exactly `row`, unchecked. This is the sharper statement of what the
+`unsafe` is buying: not "skip a branch", but "affix the brand without earning it."
 
 **This depends on RFC-0026 (`unsafe` blocks), which is not a solid foundation yet.**
 RFC-0026 is `0-draft`, and its own header still describes itself as deferred pending
@@ -291,8 +378,13 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
    `Self` provably, and a real `Error` type loses the automatic-firing sugar in exchange,
    both by the same mechanism. Kept as a struck-through entry rather than removed, per
    this corpus's convention of leaving resolved questions visible.
-2. **Does this RFC need its own literal-banning rule independent of RFC-0100** (§2), given
-   RFC-0100's own status is currently uncertain?
+2. **Does this RFC need its own literal-banning rule independent of RFC-0100** (§2)?
+   *(Updated 2026-07-24 — narrowed, not closed.)* RFC-0100 is still `1-under-review`, but
+   the reason it was reopened has dissolved: its ascription collision was specific to the
+   `name: value` spelling and does not arise under `=`. What remains open there is the
+   separator choice, not the feature's existence. The fallback rule is therefore less
+   likely to be needed than the first draft assumed — but it is still not written, and §2
+   notes that under the fallback §1.1 carries more weight, not less.
 3. **What derives `Construct`'s default implementation, mechanically?** §5's resolution
    sharpens this rather than settling it: RFC-0082 (associated types, `4-implemented`)
    explicitly declined a *general* default-associated-type mechanism — "a default would
@@ -308,11 +400,15 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
    third candidate, itself `0-draft`. Not resolved here.
 4. **Monomorphization timing for generic structs** (§7) — open in both this RFC and
    `nominal-types-as-branded-rows.md`.
-5. **Does the compiler need to separately enforce that hand-written surface constructors
-   (`new`, `from_str`) route through `construct()`**, or does removing the bare literal
-   (§2) make this automatic — since, once no other way to produce a `Self` exists
-   structurally, every constructor must bottom out in `construct()` or another function
-   that does? Plausible, not checked against a concrete typechecking design.
+5. ~~Does the compiler need to separately enforce that hand-written surface constructors
+   (`new`, `from_str`) route through `construct()`?~~ **Resolved 2026-07-24 by §1.1: no,
+   and the reason is now precise rather than plausible.** The first draft guessed this was
+   automatic "once no other way to produce a `Self` exists structurally" — §1.1 makes that
+   exact, by naming the one remaining way and confining it. Row-to-`Self` is admitted only
+   inside `construct` and `construct_unchecked`, so a hand-written `new` has no primitive
+   available to it at all: its only routes to a `Self` are calling `construct` (checked) or
+   `construct_unchecked` (`unsafe`, explicitly opted into). No separate enforcement rule is
+   needed, because there is nothing left to enforce it against.
 6. **Is RFC-0026 a solid enough foundation for §6?** Its own cited blockers are both
    already refused, not open — which may mean it is closer to revisitable than its
    current text suggests, but that is RFC-0026's maintenance question, not settled here.
@@ -320,6 +416,28 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
    liveness-not-safety gap RFC-0090 §8 already accepts for `restore` ("nothing stops code
    from never calling `restore`")? Presumably yes, and presumably fine for the same
    reason — not checked against a concrete example here.
+8. **Can a type still refuse to be constructible from outside its module?** *(New,
+   2026-07-24.)* Raised by §1.1, not answered there. Checked directly against `grammar.pest`: `extend_impl_block`
+   carries **no** visibility modifier — unlike `struct_decl`, `enum_decl` and
+   `aspect_decl`, which all have `public_kw?` — so an `extend SortedPair: Construct { … }`
+   impl cannot be made private, and `SortedPair::construct` is therefore callable wherever
+   `SortedPair` is nameable. Two readings, and which holds is genuinely undecided:
+   - **The hole is closed by field visibility.** The caller must supply a `record { small:
+     i32, big: i32 }`, naming every field including private ones. If a private label
+     cannot be written in a record literal from outside the declaring module — the natural
+     extension of RFC-0090 §8's non-ambient guarantee, and of the brand-scoped visibility
+     `nominal-types-as-branded-rows.md` §7.1–7.3 settles — then outside code cannot
+     construct the argument, and `construct`'s public callability is harmless.
+   - **The hole is real.** If record literals are structurally typed and label visibility
+     is not inherited from the declaring struct, then making `Construct` canonical hands
+     every struct a public constructor it may not want, and privacy would have to be
+     recovered some other way (a visibility modifier on `extend`, or an
+     `Error`-typed refusal, neither of which exists).
+
+   The first reading is the one this RFC assumes, and it is *load-bearing* rather than
+   incidental — it should be confirmed against RFC-0090's own text before acceptance, not
+   after. Note this is a question about record-literal typing, so it is RFC-0090's to
+   answer, not this RFC's to decide unilaterally.
 
 ---
 
@@ -344,8 +462,19 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
   — the auto-impl pattern `Construct`'s default derivation resembles but does not reuse
   directly (§1, §3)
 - `internal/rfcs/1-under-review/rfc-0100-constructor-call-construction.md` — the
-  literal-removal this RFC's canonical-construction claim depends on; its own status is
-  uncertain (`OBJECTIVES.md` Trigger 14)
+  literal-removal this RFC's canonical-construction claim depends on, and the source of the
+  `name = value` spelling §2's desugaring reuses. Revised 2026-07-24 alongside this RFC:
+  still `1-under-review`, but the reopening reason tracked by `OBJECTIVES.md` Trigger 14
+  is dissolved rather than outstanding (§2)
+- `reports/syntax/colon-classifies-equals-defines.md` — the `:` classifies / `=` defines
+  invariant that fixes the separator in this RFC's record values and RFC-0100's keyword
+  arguments identically
+- `reports/substructural-types/access-and-presence-rows.md` §3.5 — the settled row-former
+  rules: dot only where a receiver is projected (`SortedPair.{ big }`), bare braces
+  elsewhere. This RFC uses RFC-0090's `record { … }` in freestanding position pending an
+  RFC-0090 amendment (§1's syntax note)
+- `internal/rfcs/4-implemented/rfc-0098-surface-keyword-renames.md` — `extend Type: Aspect`
+  and `&var`, the spellings this RFC's examples were corrected to on 2026-07-24
 - `internal/rfcs/0-draft/rfc-0026-unsafe-blocks.md` — the foundation for
   `ConstructUnchecked`; `0-draft`, deferred, with a stale dependency note (§6)
 - `internal/rfcs/0-draft/rfc-0093-derive-registration.md` — the comptime-derive
