@@ -144,6 +144,70 @@ fun main() -> i64 {
 }
 ```
 
+## Anonymous Records
+
+> **Planned for v0.12.0 (RFC-0116): an anonymous, exact-shape product type written in bare braces.**
+
+A record is a product type whose components are *labelled*, where a tuple's are positional.
+It is written in bare braces, with no keyword:
+
+```metel
+{ x: f64, y: f64 }      // the type
+{ x = 1.0, y = 2.0 }    // a value of it
+```
+
+Field declarations classify and take `:`; field initializers define and take `=` — the same
+distinction `let x: i64 = 1` already draws.
+
+**A record type is exact.** `{ x: f64 }` is inhabited only by records with that row and
+nothing else; a value of `{ x: f64, y: f64 }` is *not* a value of `{ x: f64 }`. Records are
+not implicitly widened or narrowed.
+
+**Records are structurally typed.** Two records with the same labels and field types are the
+same type, wherever they were written. A record has no declaration site and no name.
+
+When a local variable has the same name as a field, the `= value` part may be omitted, as in
+a struct literal:
+
+```metel
+fun main() {
+    let x = 1.0;
+    let y = 2.0;
+    let p = { x, y };       // { x: f64, y: f64 }
+    println("${p.x}");
+}
+```
+
+### Where records may be used
+
+Records are ordinary values: they may appear as parameters, returns, `let` bindings, and
+struct or enum fields; they may be pattern-matched, used as generic arguments, and tagged or
+borrowed (`@a { x: f64 }`, `&r { x: f64 }`) exactly as a struct is. `Send` and `Sync` extend
+to them by the same field-composition rule used for structs.
+
+Three things a record cannot do, all for the same underlying reason — it has no nominal
+owner:
+
+- **No inherent methods.** Two unrelated modules could otherwise write conflicting methods
+  for the same shape with no principled way to choose between them.
+- **No implementations of a non-local aspect**, by the other direction of that rule. An
+  aspect local to the current module may be implemented for a record.
+- **No custom `Drop`.** `Drop` is a standard-library aspect and never local to ordinary
+  user code, so teardown logic belongs to nominal types only.
+
+### Projection
+
+A nominal type's row may be projected to a named subset, written with a dot to distinguish
+it from a struct literal:
+
+```metel
+Handle.{ fd }           // the type: Handle's row, narrowed to `fd`
+```
+
+> **Planned for v0.12.0 (RFC-0116): a bare identifier inside projection braces is always a field label.**
+
+Chained projection (`S.{ a }.{ b }`) and projection in pattern position are not accepted.
+
 ## Arrays
 
 `Array<T>` is the built-in ordered sequence type. The shorthand `T[]` is preferred.
