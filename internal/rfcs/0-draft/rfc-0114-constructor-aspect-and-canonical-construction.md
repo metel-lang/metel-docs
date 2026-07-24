@@ -473,7 +473,7 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
 
 - `reports/substructural-types/nominal-types-as-branded-rows.md` — §6 and Open Question
   1, the problem this RFC is the proposed answer to
-- `internal/rfcs/1-under-review/rfc-0090-structural-records.md` §5 (field-composition
+- `internal/rfcs/5-superseded/rfc-0090-structural-records.md` §5 (field-composition
   auto-derivation), §8 (`ToRecord`/`FromRecord`, the `SortedPair` example, open question
   10 in its original, narrower scope)
 - `internal/rfcs/4-implemented/rfc-0078-bottom-type.md` §3.2 (uninhabited variants), §3.3

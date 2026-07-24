@@ -2,7 +2,7 @@
 id: rfc-0109
 title: "Self-View Narrowing and Reference-Destructuring Patterns"
 date: '2026-07-18'
-status: under-review
+status: draft
 target:
 updated: '2026-07-24'
 ---
@@ -65,6 +65,8 @@ updated: '2026-07-24'
 > was checked rather than skipped.
 
 > **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `{ … }` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
+
+> **Status — draft (2026-07-24).** Deferred 2026-07-24: per-field multiplicity waits until records are implemented. The RFC-0090 coupling was introduced by accident (RFC-0089's 2026-07-09 same-day revision rewrote its floor from Option B to ToRecord), which is why Trigger 6 could observe that neither RFC states the conflict. Returned to draft so the records cluster is not gated on it and the review backlog reflects what is actually reviewable.
 
 ## Summary
 

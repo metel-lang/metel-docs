@@ -161,7 +161,7 @@ to draw this distinction, because no prior cycle produced it.
   `reports/substructural-types/brand-kind-unification.md` §8,
   `reports/substructural-types/algebraic-effects.md` §14 — this session's exploration
   work
-- `internal/rfcs/1-under-review/rfc-0090-structural-records.md` — the direct amendment
+- `internal/rfcs/5-superseded/rfc-0090-structural-records.md` — the direct amendment
   this session produced
 - `internal/rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md` —
   the new RFC this session produced

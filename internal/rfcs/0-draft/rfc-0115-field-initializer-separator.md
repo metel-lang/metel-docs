@@ -175,7 +175,7 @@ spellings during a migration window is not proposed.
 - `internal/rfcs/1-under-review/rfc-0100-constructor-call-construction.md` — the parent
   RFC; keeps call-shaped construction and general keyword arguments, and is independent of
   this one in both directions
-- `internal/rfcs/1-under-review/rfc-0090-structural-records.md` — its 2026-07-24
+- `internal/rfcs/5-superseded/rfc-0090-structural-records.md` — its 2026-07-24
   amendment settles `{ x = 1.0 }` for anonymous record values, the form this RFC aligns
   nominal struct literals with
 - `internal/rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md` — its

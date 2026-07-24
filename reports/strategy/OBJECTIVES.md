@@ -3,7 +3,7 @@ id: strategic-objectives
 title: "Strategic Objectives, Priorities, and Watch List"
 type: report
 status: active
-last_reviewed: '2026-07-23'
+last_reviewed: '2026-07-24'
 ---
 
 # Strategic Objectives, Priorities, and Watch List
@@ -150,17 +150,26 @@ stated priority"); it is structural. The stated priorities and the tracker do no
 
 ### Priority 1 — Records / views as the structural carrier
 
-The blog's short-term commitment, and the substrate item with the most design momentum:
-RFC-0089 (Linear Types), RFC-0090 (Structural Records — Rows and Tiers), RFC-0091 (Linear
-Records), and RFC-0109 (Self-View Narrowing) were all swept to `1-under-review` on 07-21 and
-are reviewed as one cluster, because RFC-0091 extends the RFC-0089/0090 floor and RFC-0109
-depends on both.
+**Restructured 2026-07-24.** Trigger 6 is settled and the cluster is decomposed. The four
+RFCs swept to review on 07-21 are gone as a unit: **RFC-0090 is superseded by six RFCs
+ordered by dependency depth** — RFC-0116 (Anonymous Record Types), RFC-0117 (Row
+Narrowing), RFC-0118 (Row Bounds), RFC-0119 (Record Conversions), RFC-0120 (Named
+Records), RFC-0121 (Open Rows) — and **RFC-0089/0091/0109 return to `0-draft`**, deferred
+until records are implemented.
 
-**Review must settle Trigger 6 first**, and it is a substrate-shaping question, not a local
-RFC dependency: does the floor genuinely require RFC-0090's record machinery for RFC-0089, or
-does that dependency need removing to preserve the "narrow, no row kind" property
-`integrated-language-overview-2026-07-07.md` wanted? Neither RFC currently states the
-conflict. Resolve it or explicitly record that the earlier framing has been revised.
+Trigger 6 resolved by finding the dependency it tracked was **accidental**: RFC-0089's floor
+was rewritten from "Option B" to `ToRecord` by its own same-day revision on 2026-07-09, which
+is why neither RFC ever stated the conflict — neither chose it. Per-field multiplicity was
+always meant to wait for records. The largest consequence was unplanned: removing
+fiat-linearity from the records path drops the brand-carrying `ToRecord` exception and with
+it **the cluster's only dependency on RFC-0076 (`0-draft`)**.
+
+**The entry point is now RFC-0116, and it is unblocked.** Anonymous record types: the closed
+`{ x: f64 }` type-former, `{ x = 1.0 }` values, projection, structural identity, usability
+rules. No narrowing, no bounds, no conversions — and therefore no dependency on RFC-0071
+(`2-accepted`, 0% implemented), on RFC-0076, or on any row kind. That is the whole point of
+splitting six ways rather than three: everything else in the cluster sits behind one of
+those, and RFC-0116 sits behind nothing. **Trigger 24 is its falsifier.**
 
 **The first deliverable is the record/row semantics themselves, not `ToRecord`/`FromRecord`.**
 The blog names the latter as the short-term goal, and this document's first draft of §2
@@ -175,14 +184,20 @@ says so in two places:
   type exists as a real type-former, the conversion has no codomain and cannot be built. The
   derive half depends further on RFC-0093's comptime mechanism, still `0-draft`.
 
-So the sequence inside this priority is: settle Trigger 6's dependency direction → specify and
-build the closed `record` type-former and `HasField` → *then* tier 2's conversions, which are
-the visible acceptance test rather than the entry point. Open row generics (`<row R>`) stay
-out of scope per §3 step 2 unless a real duck-typing need materializes.
+So the sequence inside this priority is now the RFC numbering itself: **RFC-0116 → RFC-0117
+→ RFC-0118 → RFC-0119 → RFC-0120 → RFC-0121**, with tier 2's conversions (RFC-0119) as the
+visible acceptance test the blog names rather than the entry point, and open rows (RFC-0121)
+last because that is where the row kind and row unification live. Each is independently
+acceptable once its predecessors are, which is what the decomposition bought.
 
-Also in this priority, and still unwritten: **per-field multiplicity** — ownership as a
-per-field rather than whole-value property. It is the half of the substrate that makes records
-more than a structural-typing convenience.
+**Per-field multiplicity moves out of this priority** — RFC-0089/0091, now `0-draft`. It is
+still the half of the substrate that makes records more than a structural-typing convenience,
+and it is still unwritten in its final form, but it was never meant to be built alongside
+records. Its floor gets respecified once there is an implemented records substrate to build
+against; RFC-0089 §3 is marked as not-the-specified-floor in the meantime. RFC-0089 §1–2 (the
+`Linear` aspect and multiplicity lattice) and §4–5 are independent of all of the above and
+could be taken up separately at any point — they were only ever blocked by sharing a document
+with §3.
 
 **2026-07-23: a full session of design work landed here, with one real artifact-level
 result and Trigger 6 still not settled.** `HasField`'s bound syntax — checked directly
@@ -370,15 +385,41 @@ of what was watched for and what actually happened is part of the point.
 5. ✅ **Fired and resolved, 2026-07-10.** The former Priority 1 moved. This trigger did its
    job: it named the pattern that was actually happening (L3 activity masking L2 inaction)
    and caused the check that led to ratification.
-6. ⬜ **Open; still Priority 1's gating question.** Does the substrate genuinely require
-   RFC-0090's record machinery for RFC-0089's floor, or does that dependency need removing to
-   preserve the "narrow, no row kind" property? Neither RFC states the conflict. **Review of
-   the under-review cluster must settle this**, and it is the reason the four RFCs were swept
-   as a unit rather than individually. **2026-07-23: a full session of depth on Priority 1
-   went around this question, not through it** — real fixes landed (RFC-0090's own bound
-   syntax, tier-3 declaration syntax) without ever addressing the RFC-0089↔RFC-0090
-   dependency direction itself. Named explicitly so the volume of related work is not
-   mistaken for progress on the one question actually gating review.
+6. ✅ **Settled 2026-07-24 — the dependency was accidental, and the cluster is decomposed.**
+   Working the question through produced a cleaner answer than "yes" or "no": the
+   RFC-0089→RFC-0090 dependency was introduced by RFC-0089's *own same-day revision* on
+   2026-07-09, which rewrote its §3 floor from "Option B" (field access on a nominal
+   struct) to `ToRecord`. **Neither RFC stated the conflict because neither RFC chose it** —
+   that absence was the tell, and this trigger was right to treat it as a signal rather
+   than an oversight. Per-field multiplicity was always meant to wait until records were
+   implemented.
+   Three findings from settling it, in ascending order of consequence:
+   - **The technical answer, had the coupling been deliberate:** RFC-0089's floor needs
+     only RFC-0090 §3 *step 1* — a closed type-former plus narrowing over a 2^*N* subset
+     lattice, all concrete — and no row variables or unification anywhere. So it never
+     threatened the "narrow, no row kind" property, because everything it touched was
+     inside the half of RFC-0090 defined by not having a row kind.
+   - **It was a diamond, not a cycle.** RFC-0090's step-1 core and RFC-0089 §1–2 are
+     mutually independent; the two interaction points (§5's `Linear`-over-records join,
+     §3's floor) both sit *above* both cores. Nothing was circular, and the build order
+     was forced all along.
+   - **Deferring linear removed the cluster's only unratified dependency.** RFC-0090 §8's
+     brand-carrying `ToRecord` exception existed solely to serve RFC-0089 §2.1's
+     fiat-linearity. Dropping it means nothing in RFC-0116–0121 depends on **RFC-0076
+     (Brand Types, `0-draft`)**. The strongest corroboration that the coupling was
+     accidental: removing it made the design *simpler*, not merely differently-shaped.
+   **Action taken:** RFC-0090 superseded by six RFCs partitioned by dependency depth
+   (RFC-0116–0121); RFC-0089/0091/0109 returned to `0-draft`; RFC-0089 §3 marked as not
+   the specified floor, with §1–2 and §4–5 noted as the half that was independently
+   acceptable all along and blocked only by sharing a document. See Trigger 24 for what
+   this now hands to the next cycle.
+   *Original wording, kept because the trigger's value was in how it was posed:* "Does the
+   substrate genuinely require RFC-0090's record machinery for RFC-0089's floor, or does
+   that dependency need removing to preserve the 'narrow, no row kind' property? **Neither
+   RFC states the conflict.** Review of the under-review cluster must settle this, and it
+   is the reason the four RFCs were swept as a unit rather than individually. *2026-07-23:
+   a full session of depth on Priority 1 went around this question, not through it* — real
+   fixes landed without ever addressing the dependency direction itself."
 7. ⬜ **Open, still untested.** Does `INDEX.md` + `rfc.py`'s overlap check actually prevent a
    second RFC-0055-shaped silent duplication, or does it quietly fall out of use the way the
    undocumented process before it did? **Partially exercised 2026-07-21:** RFC-0111 and
@@ -546,6 +587,26 @@ of what was watched for and what actually happened is part of the point.
     blocked-on-an-under-review-RFC to blocked on nothing. Two unbundlings in two days is a
     pattern, not a coincidence; the open part of this trigger is unchanged and unaffected —
     none of it moved RFC-0089/0090/0091/0109 toward acceptance.
+    **Third instance, hours later, and this one *did* move them — by dissolving the
+    cluster.** RFC-0090 superseded into six dependency-ordered RFCs, RFC-0089/0091/0109
+    deferred to draft. Three unbundlings in two days is now the dominant activity of this
+    cycle, which is worth naming as its own risk: a corpus can be re-partitioned
+    indefinitely, and each split feels like progress because it genuinely removes a
+    dependency. **The test this trigger should now apply is no longer "does the split
+    hold?" but "did any of them end in a build?"** So far: no.
+24. ⬜ **New, 2026-07-24. The split's whole promise is that RFC-0116 is buildable today —
+    and that promise is now falsifiable in a way its predecessors were not.** Trigger 20's
+    original recommended first issue ("the closed `record` type-former plus `HasField`")
+    was stale twice over by 07-24: `HasField` retired, and the type-former's grammar
+    surface grew three times in one day. RFC-0116 is the re-scoped version — anonymous
+    record types, no narrowing, no bounds, no conversions, **no dependency on RFC-0071,
+    RFC-0076, or any row kind**. If it is genuinely the small, unblocked entry point the
+    split claims, a tracked issue against it should be cheap to file and cheap to close.
+    **If a month passes with RFC-0116 still `0-draft` and no issue filed, the decomposition
+    was a more sophisticated form of not starting**, and this document should say so
+    plainly rather than crediting the improved structure. That is the falsifier; it is
+    narrower and harder to evade than Trigger 20's, because the excuse of "blocked on
+    something unratified" has been deliberately engineered away.
 
 ---
 
@@ -573,7 +634,7 @@ of what was watched for and what actually happened is part of the point.
 | 2026-07-22 | **§1 and §2 rewritten; priorities reordered from four slots to six.** The old ordering had a completed item (allocator ratification, done 07-10) in the Priority 1 slot, so the document read as though the top priority were finished — moved to a "Closed" subsection at the end of §2, preserved as a record. New order follows the blog's own sequencing sentence: records/views (1), ownership + borrow checker (2), brands + context parameters (3), allocators (4). Two structural findings drove it, both verified directly rather than inferred: **the borrow checker has no RFC at all** (only "borrow" match across 112 RFCs is the refused RFC-0086) despite three documents treating it as a known quantity, and **RFC-0071 has been accepted since 06-28, 0% implemented, untracked** — together promoted to Priority 2 and Trigger 19. **Priorities 1–4 hold zero open issues while all nineteen sit in interpreter work that this document had never ranked**; that work is now Priority 5, ranked explicitly fifth with the §1 budget filter as its triage rule, because leaving it unlisted meant the tracker and the priorities described two unrelated projects and the gap could not be measured. Triggers 19/20/21 opened; 8 and 17 marked superseded by later triggers rather than deleted. | *(this entry; a dated snapshot may follow)* |
 | 2026-07-22 | **Corrected the same day, on review:** the reorder below had recommended `ToRecord`/`FromRecord` as Priority 1's first tracked issue, following the blog's "short term" phrasing. It cannot be first. RFC-0090 §8 makes it tier 2 of three, converting *into* a `record { … }` type-former that does not exist yet — the conversion has no codomain until the record/row semantics are defined — and RFC-0090 §3's own recommended build order already puts the closed `record` type-former plus `HasField` at step 1, with `<row R>` open generics deferred to a separate decision. The derive half depends further on RFC-0093, still `0-draft`. Priority 1 now states the real order; §1 records the qualification the blog sentence needs, since §2 is measured against that sentence and a misreading of it propagated straight into the priorities; Trigger 20's recommended first issue corrected, keeping the note that even the "cheap falsifier" was mis-sized on first attempt — the substrate has no genuinely small entry point, which is part of why it keeps not being started. The five under-review RFCs' status notes were carrying the same wrong framing plus a stale Priority number; both fixed. | *(none)* |
 | 2026-07-23 | A full session of design work on Priority 1's records/views substrate, not a corpus-wide sweep. Real, verified findings throughout — `HasField`'s bound syntax never actually parsed (confirmed against `grammar.pest`) and is fixed as a direct amendment to RFC-0090 itself; `brand-kind-unification.md`'s OQ6 (open sixteen days) got a candidate answer; a new draft RFC (RFC-0114) closed RFC-0090's OQ10 using only already-implemented machinery; two of the session's own errors were caught and corrected within the same conversation. A more radical exploration (every nominal type as `(brand, row)`, not just tier-3) was pressure-tested and then deliberately **unbundled**: parts independent of its central thesis folded back now, the central thesis itself kept separate and explicitly not gating this priority's own review. Honest assessment, matching Trigger 17's precedent for recording process outcomes plainly: on-topic depth is not the same failure Trigger 17 caught, but it is still design extension rather than building, per §1's own standing risk — and **Trigger 6, the actual question review is gated on, was not touched**. Trigger 20's tracked-issue falsifier was still not tripped, for the seventh day running, though a real middle state (a direct RFC amendment with no tracked issue) showed up that its binary framing hadn't anticipated. Triggers 22/23 opened for that middle state and for whether the unbundling decision actually holds next cycle. | `strategic-overview-2026-07-23.md` |
-| 2026-07-24 | **RFC-0114 and RFC-0100 revised together, and the pairing was the point.** RFC-0114 carried stale syntax in three independent ways — freestanding `.{ … }` rows (superseded by `access-and-presence-rows.md` §3.5's receiver-based split the day before), and two *pre-RFC-0098* spellings (`impl Aspect for Type`, `&mut`) despite the RFC post-dating that RFC's implementation by nine days. Correcting the examples exposed a real hole the stale syntax had hidden: **`construct`'s own body had no way to build a `Self`** — the first draft used the bare literal §2 abolishes, and the synthesized default `Ok(row)` did not typecheck as written. New §1.1 confines row-to-`Self` to `construct`/`construct_unchecked` and nowhere else, which also **resolved that RFC's open question 5** (hand-written `new` needs no separate enforcement, because no primitive remains available to it) and raised a new one (8: `extend` blocks have no visibility modifier, so canonical construction may hand every struct a public constructor unless private field labels are unwritable from outside — RFC-0090's question, not RFC-0114's). RFC-0100 adopted `=` for keyword arguments per the separator invariant, which **dissolves the collision it was reopened over** rather than answering it; §3 rewritten around the smaller `assign_expr` collision `=` trades into, with the superseded ascription analysis kept behind a fold. Trigger 14 updated — and deliberately *not* as a vindication: review surfaced a real problem and mis-diagnosed its cause, which is a different failure from accepting too early. **Second consecutive day that findings reached RFC text with no tracked issue filed** — exactly the middle state Trigger 22 was opened to watch, now recurring rather than isolated, and Trigger 20's falsifier is untripped for an eighth day. **Later the same day, on the user's decision, RFC-0090 dropped the `record` keyword from the anonymous type-former** (`{ x: f64 }` as a type, `{ x = 1.0 }` as a value), completing the adoption of `access-and-presence-rows.md` §3.5 — the keyword now does exactly one job, minting nominal identity at `record X { ... }`, which also let open question 8 be folded into §8's prose instead of contradicting it. The change has a real cost, recorded as new open question 13 rather than glossed: closed record types and row bounds are now spelled identically and told apart by grammatical position alone, and one bullet in §2 that asserted the old distinction was wrong the moment the keyword went and had to be corrected. ~141 uses of the old spelling remain across RFC-0091/0109/0089 and the design reports — deliberately not swept, and named in RFC-0090's own revision note so the gap is visible rather than discovered later. **Then, on the user's call, RFC-0100 was split** — the separator fix (`field_init`'s `:` → `=`, braces kept) extracted as new draft **RFC-0115**, leaving call-shaped construction and general keyword arguments in RFC-0100. The trigger for the split was the user's observation that construction could keep its brackets and change only the separator; working it through found that version stronger than what was in RFC-0100 on four independent counts (it aligns nominal literals with RFC-0090's just-settled `{ x = 1.0 }` anonymous records, making `Point { x = 1.0 }` literally a row plus a brand; it restores the construction/destructuring symmetry RFC-0100 §4 had apologized for; it carries **zero** grammar risk where both prior proposals carried a real collision; and it frees the invariant from an under-review RFC). **RFC-0100 is honestly weaker for the split and now says so** — it lost the invariant argument to RFC-0115. **RFC-0114 gained the most:** reworking §2 showed its RFC-0100 dependency was never real — a literal that desugars to `construct` is not a bypass — so it now has no blocking dependency on any under-review RFC, and its open question 2 resolved by dissolving its premise. Still no tracked issue filed; Trigger 20's falsifier untripped for an eighth day, now against a *larger* body of RFC text. **Finally, a notation change that fixed a real ambiguity rather than a preference:** inside projection braces a bare identifier could be either a field label or a row variable (`Handle.{ fd }` vs `Handle.{ R }`), separated only by case convention — and RFC-0101, which would make that convention normative, is `0-draft`. So the design was leaning on an unratified RFC to disambiguate something it never acknowledged as ambiguous. Fixed by adopting **`row` declares, `..` marks every use**: a row variable is `..R` at every use site, a bare identifier in type position is always a *type* variable. The same mechanism with the variable left unnamed (`T: { x: f64, .. }` = "at least x") **resolved open question 13 the same day it was opened** — the closed/open bound distinction now turns on a token instead of on grammatical position, and the closed *bound* reading, previously inexpressible, became writable. Propagated through RFC-0090/0091/0109 and both exploration docs; RFC-0109 checked and found already conformant. New open question 14 opened for row *operations* (`R without "token"`, `R + "auth"`), which still use the string-literal-in-type-position form retired for bounds on 07-23 and now have no specified precedence, arity, or grammar — **and resolved the same day, in new RFC-0090 §2.1, by deleting the operators rather than fixing them.** A prior-art pass (PureScript, Ur/Web, Haskell `row-types`, OCaml, Koka, TypeScript, Elm) found that **extension needs no syntax at all** — every row-typed language writes the new label *inside the row literal*, which for Metel is the spread tail it already has (`{ ..R, auth: String }`), and the string literal was only present because an infix operator had nowhere else to put the name. Only **removal** lacked a form, and it becomes a where-clause decomposition (`where R = { token: Token, ..Rest }`), following PureScript's `Prim.Row.Cons` rather than Ur/Web's `--`. Cost: one grammar addition, no label literal, no label kind, no operators; the equation also subsumes the bound it replaces, and `=` is the invariant-correct separator (it equates), matching the `assoc_binding` equation already in that channel. Elm — the one language that shipped row extension/restriction and then **withdrew both** — is recorded as the standing caution. **The pass also found a third unbacked construct nobody had noticed:** `drain_field<row R, name: Symbol, T>` invents a `Symbol` *kind* that exists nowhere (the corpus's only `Symbol` is RFC-0059's compiler-internal `SymbolId`), spells it in bound position where the grammar reads it as an aspect bound on a *type* variable — inconsistent with `<row R>`'s prefix-keyword pattern sitting in the same parameter list — and indexes with `s.[name]`, which `postfix` does not accept. Opened as RFC-0091 open question 4, deliberately **not** folded into the §2.1 resolution: that retires the label *literal*, but `drain_field` needs label *polymorphism*, a strictly stronger capability (a label kind, a label literal, an index-by-label form, and rules for all three). Named explicitly because if it resolves to "no", RFC-0109's Motivation needs editing — it cites the generic `drain_field` as the reusable half records give and Rust's view types cannot. | *(none)* |
+| 2026-07-24 | **RFC-0114 and RFC-0100 revised together, and the pairing was the point.** RFC-0114 carried stale syntax in three independent ways — freestanding `.{ … }` rows (superseded by `access-and-presence-rows.md` §3.5's receiver-based split the day before), and two *pre-RFC-0098* spellings (`impl Aspect for Type`, `&mut`) despite the RFC post-dating that RFC's implementation by nine days. Correcting the examples exposed a real hole the stale syntax had hidden: **`construct`'s own body had no way to build a `Self`** — the first draft used the bare literal §2 abolishes, and the synthesized default `Ok(row)` did not typecheck as written. New §1.1 confines row-to-`Self` to `construct`/`construct_unchecked` and nowhere else, which also **resolved that RFC's open question 5** (hand-written `new` needs no separate enforcement, because no primitive remains available to it) and raised a new one (8: `extend` blocks have no visibility modifier, so canonical construction may hand every struct a public constructor unless private field labels are unwritable from outside — RFC-0090's question, not RFC-0114's). RFC-0100 adopted `=` for keyword arguments per the separator invariant, which **dissolves the collision it was reopened over** rather than answering it; §3 rewritten around the smaller `assign_expr` collision `=` trades into, with the superseded ascription analysis kept behind a fold. Trigger 14 updated — and deliberately *not* as a vindication: review surfaced a real problem and mis-diagnosed its cause, which is a different failure from accepting too early. **Second consecutive day that findings reached RFC text with no tracked issue filed** — exactly the middle state Trigger 22 was opened to watch, now recurring rather than isolated, and Trigger 20's falsifier is untripped for an eighth day. **Later the same day, on the user's decision, RFC-0090 dropped the `record` keyword from the anonymous type-former** (`{ x: f64 }` as a type, `{ x = 1.0 }` as a value), completing the adoption of `access-and-presence-rows.md` §3.5 — the keyword now does exactly one job, minting nominal identity at `record X { ... }`, which also let open question 8 be folded into §8's prose instead of contradicting it. The change has a real cost, recorded as new open question 13 rather than glossed: closed record types and row bounds are now spelled identically and told apart by grammatical position alone, and one bullet in §2 that asserted the old distinction was wrong the moment the keyword went and had to be corrected. ~141 uses of the old spelling remain across RFC-0091/0109/0089 and the design reports — deliberately not swept, and named in RFC-0090's own revision note so the gap is visible rather than discovered later. **Then, on the user's call, RFC-0100 was split** — the separator fix (`field_init`'s `:` → `=`, braces kept) extracted as new draft **RFC-0115**, leaving call-shaped construction and general keyword arguments in RFC-0100. The trigger for the split was the user's observation that construction could keep its brackets and change only the separator; working it through found that version stronger than what was in RFC-0100 on four independent counts (it aligns nominal literals with RFC-0090's just-settled `{ x = 1.0 }` anonymous records, making `Point { x = 1.0 }` literally a row plus a brand; it restores the construction/destructuring symmetry RFC-0100 §4 had apologized for; it carries **zero** grammar risk where both prior proposals carried a real collision; and it frees the invariant from an under-review RFC). **RFC-0100 is honestly weaker for the split and now says so** — it lost the invariant argument to RFC-0115. **RFC-0114 gained the most:** reworking §2 showed its RFC-0100 dependency was never real — a literal that desugars to `construct` is not a bypass — so it now has no blocking dependency on any under-review RFC, and its open question 2 resolved by dissolving its premise. Still no tracked issue filed; Trigger 20's falsifier untripped for an eighth day, now against a *larger* body of RFC text. **Finally, a notation change that fixed a real ambiguity rather than a preference:** inside projection braces a bare identifier could be either a field label or a row variable (`Handle.{ fd }` vs `Handle.{ R }`), separated only by case convention — and RFC-0101, which would make that convention normative, is `0-draft`. So the design was leaning on an unratified RFC to disambiguate something it never acknowledged as ambiguous. Fixed by adopting **`row` declares, `..` marks every use**: a row variable is `..R` at every use site, a bare identifier in type position is always a *type* variable. The same mechanism with the variable left unnamed (`T: { x: f64, .. }` = "at least x") **resolved open question 13 the same day it was opened** — the closed/open bound distinction now turns on a token instead of on grammatical position, and the closed *bound* reading, previously inexpressible, became writable. Propagated through RFC-0090/0091/0109 and both exploration docs; RFC-0109 checked and found already conformant. New open question 14 opened for row *operations* (`R without "token"`, `R + "auth"`), which still use the string-literal-in-type-position form retired for bounds on 07-23 and now have no specified precedence, arity, or grammar — **and resolved the same day, in new RFC-0090 §2.1, by deleting the operators rather than fixing them.** A prior-art pass (PureScript, Ur/Web, Haskell `row-types`, OCaml, Koka, TypeScript, Elm) found that **extension needs no syntax at all** — every row-typed language writes the new label *inside the row literal*, which for Metel is the spread tail it already has (`{ ..R, auth: String }`), and the string literal was only present because an infix operator had nowhere else to put the name. Only **removal** lacked a form, and it becomes a where-clause decomposition (`where R = { token: Token, ..Rest }`), following PureScript's `Prim.Row.Cons` rather than Ur/Web's `--`. Cost: one grammar addition, no label literal, no label kind, no operators; the equation also subsumes the bound it replaces, and `=` is the invariant-correct separator (it equates), matching the `assoc_binding` equation already in that channel. Elm — the one language that shipped row extension/restriction and then **withdrew both** — is recorded as the standing caution. **The pass also found a third unbacked construct nobody had noticed:** `drain_field<row R, name: Symbol, T>` invents a `Symbol` *kind* that exists nowhere (the corpus's only `Symbol` is RFC-0059's compiler-internal `SymbolId`), spells it in bound position where the grammar reads it as an aspect bound on a *type* variable — inconsistent with `<row R>`'s prefix-keyword pattern sitting in the same parameter list — and indexes with `s.[name]`, which `postfix` does not accept. Opened as RFC-0091 open question 4, deliberately **not** folded into the §2.1 resolution: that retires the label *literal*, but `drain_field` needs label *polymorphism*, a strictly stronger capability (a label kind, a label literal, an index-by-label form, and rules for all three). Named explicitly because if it resolves to "no", RFC-0109's Motivation needs editing — it cites the generic `drain_field` as the reusable half records give and Rust's view types cannot. **The cycle then ended by settling Trigger 6 and decomposing the cluster on that basis.** The question resolved not as yes-or-no but as *the dependency was accidental*: RFC-0089's floor was rewritten from Option B to `ToRecord` by its own same-day revision on 2026-07-09, which is exactly why the trigger could observe that "neither RFC states the conflict" — neither chose it. Per-field multiplicity was always meant to wait for records. **RFC-0090 superseded by six RFCs partitioned by dependency depth** (RFC-0116 Anonymous Record Types, 0117 Row Narrowing, 0118 Row Bounds, 0119 Record Conversions, 0120 Named Records, 0121 Open Rows); **RFC-0089/0091/0109 returned to `0-draft`**; RFC-0089 §3 marked as not the specified floor, with §1–2/§4–5 noted as the half that was independently acceptable all along and blocked only by sharing a document. No feature dropped, no design decision reversed — a re-partition, and PROCESS.md's own named pathology (RFC-0012's 18 open questions before its split; RFC-0090 had 14). **The largest consequence was unplanned:** dropping fiat-linearity from the records path removes the brand-carrying `ToRecord` exception and with it the cluster's *only* dependency on RFC-0076 (`0-draft`) — the coupling's removal made the design simpler, which is the strongest evidence it was accidental. RFC-0071 (`2-accepted`, 0% implemented) remains, gating RFC-0117 onward but **not RFC-0116**, which is why the split is six-way. Trigger 24 opened as the falsifier: RFC-0116 is now the small, genuinely unblocked entry point, and if a month passes with no issue filed against it, the decomposition was a more sophisticated form of not starting. | *(none)* |
 
 ---
 

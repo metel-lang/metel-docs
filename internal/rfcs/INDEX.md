@@ -76,6 +76,27 @@ was found and reconciled, and where this session did most of its work.
 > reference/deref ergonomics work for it. The cluster is reviewed as a unit because
 > RFC-0091 extends the RFC-0089/RFC-0090 floor and RFC-0109 depends on both — Trigger 6's
 > 0089↔0090 dependency direction is the question review has to settle.
+>
+> **Restructured 2026-07-24 — Trigger 6 settled, and the cluster decomposed.** Trigger 6's
+> question resolved by finding the dependency was **accidental**: RFC-0089's floor was
+> rewritten from "Option B" to `ToRecord` by a same-day revision on 2026-07-09, which is
+> why neither RFC ever stated it as a design position. Per-field multiplicity was always
+> meant to wait until records were implemented.
+>
+> Consequently: **RFC-0090 is superseded by six RFCs** — RFC-0116 (Anonymous Record
+> Types), RFC-0117 (Row Narrowing), RFC-0118 (Row Bounds), RFC-0119 (Record Conversions),
+> RFC-0120 (Named Records), RFC-0121 (Open Rows) — re-housed by dependency depth rather
+> than by topic, so the one piece that depends on nothing can be accepted and built
+> independently. **RFC-0089, RFC-0091 and RFC-0109 return to `0-draft`**, deferred until
+> records ship. No feature was dropped and no design decision was reversed; this is a
+> re-partition.
+>
+> **The largest single consequence:** dropping RFC-0089's fiat-linearity from the records
+> path removes the brand-carrying `ToRecord` exception, and with it the records cluster's
+> **only** dependency on RFC-0076 (Brand Types, `0-draft`). Nothing in RFC-0116–0121
+> requires an unratified RFC. The one remaining external dependency is RFC-0071
+> (`2-accepted`, 0% implemented), and it gates only RFC-0117 onward — **RFC-0116 is
+> buildable today**, which is why the split is six-way rather than three-way.
 
 - **RFC-0113** *(under review, opened 2026-07-21)* — Context Parameters — a value a call
   tree needs, declared on the callee and resolved *by type* from the caller's scope, with
@@ -88,11 +109,47 @@ was found and reconciled, and where this session did most of its work.
   the *threading* only: allocated values stay owned/affine/move-tracked, which is the
   box+brand+borrow-checker column, untouched.
 
+### The records cluster after the 2026-07-24 six-way split
+
+Listed in dependency order. Each can be reviewed and accepted independently once the ones
+above it are.
+
+- **RFC-0116** *(draft)* — Anonymous Record Types — the closed `{ x: f64 }` type-former,
+  `{ x = 1.0 }` values, `Handle.{ fd }` projection, structural identity, and where records
+  are usable (no inherent impls, no non-local aspect impls, no custom `Drop`, not an
+  allocator). Also carries RFC-0090 §6's declined "records as the universal foundation"
+  reframing. **Depends on nothing** — the only piece of the cluster buildable today, and
+  the reason the split is six-way.
+- **RFC-0117** *(draft)* — Row Narrowing — moving a field out narrows the record's type;
+  the closed 2^*N* subset lattice, no row variables and no unification. Depends on
+  RFC-0116 and on **RFC-0071** (`2-accepted`, 0% implemented), which is why it is separate
+  from RFC-0116 rather than bundled with it.
+- **RFC-0118** *(draft)* — Row Bounds — `T: { x: f64, .. }` and `T: !{ token: _ }`,
+  replacing the `HasField`/`Lacks` family that never parsed. The trailing `..` is an
+  anonymous row variable and is what makes a bound *open*; without it the bound is closed,
+  a reading that previously could not be written at all. Explains why implicit structural
+  satisfaction is safe here specifically (a bound grants no capability over the type
+  itself). Depends on RFC-0116.
+- **RFC-0119** *(draft)* — Record Conversions — tier 2 `ToRecord`/`FromRecord`, by value
+  and by reference, kept as separate aspects for the serde reason. **Deliberately drops
+  RFC-0090 §8's brand-carrying fiat-linear exception**, which removes the cluster's only
+  RFC-0076 dependency. Depends on RFC-0116, RFC-0117.
+- **RFC-0120** *(draft)* — Named Records — tier 3 `record X { }` carrying `(row, brand)`
+  intrinsically; the tier table, the non-breaking upgrade path, and RFC-0090 §9's
+  identity-tag reuse. Depends on RFC-0116, RFC-0119.
+- **RFC-0121** *(draft)* — Open Rows — `<row R>` / `..R`, row algebra (extension is a
+  literal, removal is a where-clause decomposition), row-conditional typestate, and the
+  width-subtyping-versus-ownership problem. **The expensive half**, and the only piece
+  introducing a row kind or row unification. Depends on RFC-0118, RFC-0120.
+
+**Deferred until records are implemented** — returned to `0-draft` 2026-07-24:
+
 - **RFC-0089** — Linear Types — multiplicity lattice, `Linear` auto-impl aspect. Depends
-  on RFC-0071 (accepted). Partial consumption now routes through RFC-0090's `ToRecord`,
-  not a bespoke mechanism (revised 2026-07-09). `Linear`'s auto-impl categorization
-  now depends on RFC-0096 for the shared mechanism it's an instance of.
-- **RFC-0090** — Structural Records — Rows and Tiers — bare-row bounds (`HasField`/
+  on RFC-0071 (accepted). Its §3 floor was rewritten on 2026-07-09 to route partial
+  consumption through `ToRecord`; **that coupling was accidental** and is what Trigger 6
+  was tracking. `Linear`'s auto-impl categorization depends on RFC-0096 for the shared
+  mechanism it's an instance of.
+- **RFC-0090** *(superseded 2026-07-24 by RFC-0116–0121)* — Structural Records — Rows and Tiers — bare-row bounds (`HasField`/
   `Lacks` retired 2026-07-23, replaced by `T: { x: f64 }` / `T: !{ tag: _ }`), `record`
   type-former, three-tier capability model. No dependency on comptime. §1 calls the
   row-bound mechanism an extension of RFC-0080's auto-impl pattern; RFC-0096 §7

@@ -2,9 +2,10 @@
 id: rfc-0090
 title: "Structural Records — Rows and Tiers"
 date: '2026-07-09'
-status: under-review
+status: superseded
 target:
 updated: '2026-07-24'
+superseded_by: rfc-0116, rfc-0117, rfc-0118, rfc-0119, rfc-0120, rfc-0121
 ---
 
 > **New RFC, split out 2026-07-09** from `reports/substructural-types/structural-records.md`
@@ -116,6 +117,8 @@ updated: '2026-07-24'
 > worse than uniformly stale.
 
 > **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `record` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
+
+> **Status — superseded (2026-07-24).** Split six ways on 2026-07-24 to unblock the dependency chain. RFC-0090 bundled six separable features behind one acceptance decision and had accumulated 14 open questions -- the pathology PROCESS.md names from RFC-0012. The split is not a design change: every feature is preserved, re-housed by dependency depth, so the one piece that depends on nothing (RFC-0116) can be accepted and built without waiting on RFC-0071 or a row kind.
 
 ## Summary
 

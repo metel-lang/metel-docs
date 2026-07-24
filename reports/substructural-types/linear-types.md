@@ -19,9 +19,9 @@ resolved before RFC-0071/RFC-0067 implementation begins (Phase 3 steps 1–2 in
 `reports/implementation/rfc-implementation-breakdown-2026-07-01.md`).*
 
 *Promoted to RFC status 2026-07-09: §1-2, §4-5, and the Option A/B floor from §3 are now
-`internal/rfcs/1-under-review/rfc-0089-linear-types.md`. §3's Option C (record-based automatic
+`internal/rfcs/0-draft/rfc-0089-linear-types.md`. §3's Option C (record-based automatic
 downgrade) and the aliasing-question update are now
-`internal/rfcs/1-under-review/rfc-0091-linear-records.md`, which depends on RFC-0089 and
+`internal/rfcs/0-draft/rfc-0091-linear-records.md`, which depends on RFC-0089 and
 RFC-0090 (Structural Records). This document remains the living exploration those RFCs
 were extracted from; it is not superseded, but new substantive changes to the topics
 above should land in the RFCs directly, not here, once they move past draft.*

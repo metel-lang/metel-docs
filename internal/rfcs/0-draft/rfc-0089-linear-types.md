@@ -2,7 +2,7 @@
 id: rfc-0089
 title: "Linear Types"
 date: '2026-07-09'
-status: under-review
+status: draft
 target:
 updated: '2026-07-24'
 ---
@@ -58,6 +58,8 @@ updated: '2026-07-24'
 > No change to the mechanism.
 
 > **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `{ … }` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
+
+> **Status — draft (2026-07-24).** Deferred 2026-07-24: per-field multiplicity waits until records are implemented. The RFC-0090 coupling was introduced by accident (RFC-0089's 2026-07-09 same-day revision rewrote its floor from Option B to ToRecord), which is why Trigger 6 could observe that neither RFC states the conflict. Returned to draft so the records cluster is not gated on it and the review backlog reflects what is actually reviewable.
 
 ## Summary
 
@@ -189,6 +191,29 @@ commitment that nothing elsewhere in the codebase can later add `impl Copy for H
 and silently change what moving a `Handle` means.
 
 ---
+
+> **§3 is deferred, 2026-07-24, and this is the substance of the deferral rather than a
+> filing change.** The section below routes partial consumption through RFC-0090's
+> `ToRecord`. That coupling was introduced by this RFC's own same-day revision on
+> 2026-07-09 — §3 originally specified "Option B", ordinary field access on a nominal
+> struct — and it was a mistake: per-field multiplicity was meant to wait until records
+> were implemented, not to be built on top of a records design that was itself still
+> under review.
+>
+> That is also the answer to `OBJECTIVES.md` Trigger 6, which asked whether the
+> RFC-0089↔RFC-0090 dependency was genuine and observed that *"neither RFC states the
+> conflict."* Neither states it because neither chose it.
+>
+> **What this means concretely:** §3 below is **not** the specified floor. It is the
+> record-based mechanism as drafted, kept intact so nothing is lost, to be revisited once
+> RFC-0116–0121 are implemented and there is a real records substrate to build against.
+> Whether the floor then routes through conversions (as below), through Option B after
+> all, or through something the implemented records suggest, is genuinely open again.
+>
+> **§1–2 (the `Linear` aspect and the multiplicity lattice) and §4–5 (keyword sugar) are
+> unaffected and remain fully independent of the records cluster** — this RFC's own
+> 2026-07-09 note already said so. They are the half that could have been accepted all
+> along, and were blocked only by being in the same document as §3.
 
 ## 3. Partial consumption: no bespoke mechanism on plain structs — `ToRecord` is canonical
 

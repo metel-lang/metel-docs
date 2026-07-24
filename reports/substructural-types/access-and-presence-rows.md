@@ -711,11 +711,11 @@ moved.*
 
 ## References
 
-- `internal/rfcs/1-under-review/rfc-0090-structural-records.md` — presence rows: §3's
+- `internal/rfcs/5-superseded/rfc-0090-structural-records.md` — presence rows: §3's
   build order, §7's width-subtyping-vs-ownership problem, §9's open question 7
-- `internal/rfcs/1-under-review/rfc-0091-linear-records.md` — §1's `uses (…)` and its
+- `internal/rfcs/0-draft/rfc-0091-linear-records.md` — §1's `uses (…)` and its
   unresolved transitivity; §1.1's `RcBox` case; §2's Option C
-- `internal/rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md`
+- `internal/rfcs/0-draft/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md`
   — named views as `(row, brand)`; reference-destructuring deliberately not row-based;
   the `drain_field<row R, name, T>` reusability argument
 - `algebraic-effects.md` §8 (effects desugar to aspects), §13.4 (open effect rows),
