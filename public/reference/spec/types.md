@@ -165,6 +165,10 @@ not implicitly widened or narrowed.
 
 **Records are structurally typed.** Two records with the same labels and field types are the
 same type, wherever they were written. A record has no declaration site and no name.
+**Field order does not matter:** `{ x: i64, y: i64 }` and `{ y: i64, x: i64 }` are the same
+type, and `{ x = 1, y = 2 }` equals `{ y = 2, x = 1 }`. A record is a set of labelled
+fields, not an ordered one. Repeating a label in one record (`{ x: i64, x: f64 }`) is an
+error.
 
 When a local variable has the same name as a field, the `= value` part may be omitted, as in
 a struct literal:
@@ -177,6 +181,14 @@ fun main() {
     println("${p.x}");
 }
 ```
+
+Punning, and single-field record literals generally, are read as records only in positions
+that expect an expression — a `let`/`var` or field initializer, a call argument, an array
+element. In a position that also admits a block — an `if`/`else` or `match` arm, a
+function, closure, or loop body — a bare `{ x }` is a **block** whose result is `x`, and
+`{ x = 1 }` is a block whose result is the assignment. Write the record in parentheses to
+force it: `({ x })`. A multi-field literal needs no parentheses, as `{ x = 1, y = 2 }`
+cannot be a block.
 
 ### Where records may be used
 

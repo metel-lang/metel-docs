@@ -128,8 +128,31 @@ carries it because `Handle { fd }` would collide with `struct_literal`
 `reports/substructural-types/access-and-presence-rows.md` §3.5.
 
 **Label punning.** `field_init`'s value clause is already optional in the grammar
-(`ident ~ (":" ~ expr)?`), so `{ x }` — take `x` from the enclosing scope — works the same
-way it does for struct literals today.
+(`ident ~ ("=" ~ expr)?`, since RFC-0115), so `{ x }` — take `x` from the enclosing scope —
+is admissible wherever a record literal is.
+
+**But punning does not reach every position, and this is intrinsic, not a bug.** A struct
+literal is always prefixed (`Point { x }`), so its leading `type_path` distinguishes it
+from a block. An anonymous record drops that prefix, which is exactly the case where a bare
+`{ … }` collides with `block`. In any position that admits `(block | expr)` — an `if`/`else`
+arm, a `match` arm, a `loop`/function/closure body — `block` is tried first, and a bare
+`{ x }` parses as a *block whose tail expression is `x`*, never as the punned record
+`{ x: <x> }`. The same is true of `{ x = 1 }`: a block whose tail is the assignment
+expression `x = 1`. This is **deterministic, not ambiguous** — the block always wins — but
+it means the spec's own punning example works only because it sits in `let`-RHS position:
+
+```metel
+let p = { x, y };                     // record: let-RHS is a pure expression position
+fun f() -> { x: i64 } { ({ x = 1 }) } // record: parenthesized to force expression position
+fun g() -> { x: i64 } { x = 1 }       // NOT a record — block whose tail is `x = 1`
+```
+
+Punning and single-field record literals are records in **pure-expression** positions
+(`let`/`var` and struct/enum-field initializers, call arguments, array elements, operands,
+`return`/`break` operands). In **block-admitting** positions a record must be parenthesized:
+`({ … })`. A multi-field literal (`{ x = 1, y = 2 }`) is unaffected — the comma is not valid
+inside a block, so it backtracks to the record parse on its own. §6 specifies the diagnostic
+that fires when a block's tail looks like a mis-parsed record.
 
 ## 2. Closed by default, and what that means
 
@@ -147,6 +170,21 @@ here.
 **Structural identity, not nominal.** Two records with the same labels and field types are
 the same type, wherever they were written. There is no declaration site and no brand —
 that is RFC-0120's job.
+
+**Field order is not part of a record's identity.** `{ x: i64, y: i64 }` and
+`{ y: i64, x: i64 }` are the **same type**, and `{ x = 1, y = 2 }` and `{ y = 2, x = 1 }`
+are the same value. A record is a label→type map, not an ordered tuple with names; nothing
+in the type observes field order, since every access, pattern, and construction is by label.
+The implementation gives each record type a **canonical form** by sorting fields
+lexicographically by label, and identity, equality, and (on any layout-bearing backend) the
+memory layout are all defined over that canonical form. This is not a convenience — it is
+forced by the rest of the cluster: RFC-0118's row bounds (`{ x: f64, .. }`) and RFC-0121's
+open rows are about *which labels are present*, and would be incoherent if a record's
+identity also depended on the order they were written in. Order-insensitivity here is the
+same decision, made once at the root so the siblings inherit it.
+
+Duplicate labels in a single record (`{ x: i64, x: f64 }`) are a compile error, not a
+last-wins or first-wins rule — the map has no key for the collision to resolve to.
 
 ## 3. Where records are usable
 
@@ -245,6 +283,39 @@ exploration and does not gate this RFC.
 
 ---
 
+## 6. Diagnostics
+
+Most of this RFC's user-facing surface is *rejection*, and rejections are only as good as
+the message. Each is specified here so the implementation has a target rather than a
+generic type error to fall back on.
+
+**Block parsed where a record was meant** (§1). When a block's tail expression is a bare
+identifier (`{ x }`) or an assignment (`{ x = e }`) and the position's expected type is a
+record, the type error the user would otherwise hit is confusing (unit-typed block, or an
+undeclared-name error on `x`). Detect the shape and emit instead:
+
+> this `{ … }` is being parsed as a block, not a record. To write a record here, wrap it in
+> parentheses: `({ x })`.
+
+This is a heuristic over an already-deterministic parse, not a grammar change — the parse
+result is fixed; only the diagnostic improves.
+
+**The four "no nominal owner" rejections** (§3) each name the missing capability and point
+at the one fix available in v0.12.0 — declare a nominal type — since RFC-0119's
+`.to_record()` and RFC-0120's `record X` are not in this release:
+
+| attempted on a record | message |
+|---|---|
+| inherent method (`extend { x: f64 } { fun … }`) | anonymous records cannot have inherent methods; declare a `struct` if you need methods |
+| non-local aspect impl (`extend { … }: Display`) | `Display` is not local to this module and cannot be implemented for an anonymous record; declare a `struct` and implement it there |
+| custom `Drop` | anonymous records cannot implement `Drop`; teardown logic requires a nominal type |
+| used as an allocator (`@r` where `r: { … }`) | an anonymous record cannot be an allocator; allocator identity is per-instance (RFC-0063 §2) |
+
+The `Copy`/`Display` usability gap (§2 note) is *not* an error to improve here — a record
+simply does not satisfy those bounds, and the fix is RFC-0123, out of this release.
+
+---
+
 ## Open Questions
 
 Carried from RFC-0090, narrowed to what this RFC owns.
@@ -253,7 +324,7 @@ Carried from RFC-0090, narrowed to what this RFC owns.
    2026-07-24 by building it, not by reading.** A `record_lit` alternative was added to
    `primary_expr` ahead of `struct_literal`, the interpreter rebuilt, and the change
    reverted afterwards. Results:
-   - **The full suite stayed green — 755 passed, 0 failed.** The alternative breaks nothing
+   - **The full suite stayed green — 805 passed, 0 failed.** The alternative breaks nothing
      that exists.
    - **`{ x: 1, y: 2 }` parses.** The resulting failure is
      `parse_expr: unexpected rule record_lit` — a missing AST branch, i.e. the grammar
@@ -269,6 +340,13 @@ Carried from RFC-0090, narrowed to what this RFC owns.
    block and never a literal, so the ambiguity motivating Rust's restriction is
    structurally impossible here. The safety is a property of the condition syntax, not a
    lucky absence of collisions.
+
+   **One residual collision, now specified rather than open:** a bare `{ x }` or `{ x = e }`
+   in a *block-admitting* position (an `if`/`else`/`match` arm, a function/closure/loop
+   body) parses as a block, not a record — deterministically, block-first. This is not the
+   Rust condition ambiguity; it is block-versus-expression precedence, resolved by
+   parenthesizing (`({ x })`) with the §6 diagnostic to guide the fix. §1 states the rule
+   normatively; this question is closed, not reopened.
 2. **Chained projection (`S.{ a }.{ b }`) and projection in pattern position** are
    unspecified — **scoped out of v0.12.0 rather than left ambiguous.** Both are rejected by
    the initial implementation; a single projection in type or expression position is the
