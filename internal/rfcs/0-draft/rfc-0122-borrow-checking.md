@@ -27,14 +27,41 @@ target:
 
 ## Summary
 
-Static rules determining when a borrow is valid: it must not outlive its referent, and it
-must not coexist with a conflicting borrow of the same place. Specifies what the compiler
-computes, what it rejects, and what diagnostics it produces — against the anchor notation
-RFC-0067 already accepted, and on top of the move/partial-move tracking RFC-0071 specifies.
+**The headline rule, which is stated nowhere in the corpus today:**
+
+> **Shared XOR exclusive.** For any given place, a program may hold *any number* of `&T`
+> borrows, or *exactly one* `&var T` borrow, and never both at once.
+
+Everything else here is machinery for enforcing that, plus the second rule that a borrow must
+not outlive its referent. This RFC specifies what the compiler computes, what it rejects, and
+what diagnostics it produces — against the anchor notation RFC-0067 already accepted, and on
+top of the move/partial-move tracking RFC-0071 specifies.
 
 **This RFC adds no syntax.** `&T`, `&var T` (RFC-0067a) and `&r T` (RFC-0067) already
 exist. It supplies the rules those spellings are currently checked by — which today is
 nothing at all.
+
+### Why this is the headline rather than one item among several
+
+**`&var T` is called "exclusive" by both the spec and RFC-0067a, and nothing defines or
+enforces that.** RFC-0067a is `4-implemented`; the spec's References section lists `&var T`
+as "exclusive mutable reference to `T`" and never says what exclusive *means*. The word is
+doing load-bearing work as a bare adjective.
+
+**RFC-0071 cannot supply it, and a nearby resolution makes that easy to miss.** It resolved
+(2026-07-24) that `&var T` is not `Copy`, which stops an exclusive reference being
+*duplicated* — but not two being created independently:
+
+```metel
+let a = &var x;
+let b = a;         // rejected: !Copy, so `a` was moved
+let c = &var x;
+let d = &var x;    // nothing in RFC-0071 forbids this
+```
+
+Ownership answers "how many owners". `Copy` answers "may this be duplicated". Neither answers
+"what is borrowed right now", which is the only question that yields exclusivity. **So
+`&var` ships today on a promise no document makes and no pass checks.**
 
 ---
 
@@ -70,8 +97,9 @@ concerns are separable in the specification even where they interact in the impl
 **In scope:**
 
 - When a borrow is valid with respect to its anchor's scope (RFC-0067).
-- What constitutes a conflict — shared/shared, shared/exclusive, exclusive/exclusive —
-  and over what granularity (whole value, field, index).
+- **Enforcing shared-XOR-exclusive** — which borrow pairs conflict (shared/shared never;
+  shared/exclusive and exclusive/exclusive always) and over what granularity: whole value,
+  field, or index.
 - Interaction with RFC-0071's move and partial-move tracking: a moved-from place cannot be
   borrowed; a borrowed place cannot be moved from.
 - Reborrowing, already surfaced by v0.11.0's `&*p` and by RFC-0067's coercions.

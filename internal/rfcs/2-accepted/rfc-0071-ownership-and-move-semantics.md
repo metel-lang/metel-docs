@@ -350,6 +350,29 @@ RFC correctly says nothing about it. Only §1's scope sentence needed widening, 
    own gate is a separate question and is unaffected** — that gate is about reading a
    *referent* of type `T` through a reference, which still requires `T: Copy`. `&T` being
    `Copy` is about duplicating the *reference*.
+
+   **Important qualifier, so this resolution is not over-read: `&var T: !Copy` is necessary
+   for exclusivity and nowhere near sufficient.** It prevents *duplicating* an exclusive
+   reference:
+
+   ```metel
+   let a = &var x;
+   let b = a;         // a is moved — no duplication
+   ```
+
+   It does nothing about *independent creation*:
+
+   ```metel
+   let a = &var x;
+   let b = &var x;    // two exclusive references to x — this RFC forbids nothing here
+   ```
+
+   The second case needs a checker tracking *what is currently borrowed*, which is neither
+   ownership nor `Copy`-ness and is therefore outside this RFC entirely. **The rule that
+   makes `&var` actually exclusive — any number of `&T`, or exactly one `&var T`, never
+   both — is stated nowhere in the corpus**; it is now RFC-0122's headline. Recorded here
+   because "exclusive references are not `Copy`" reads like a guarantee of uniqueness and is
+   not one.
 4. ~~Closure capture semantics are unspecified.~~ **Resolved 2026-07-24 — the spec already
    settled it and this RFC had not caught up.** `public/reference/spec/functions.md` states
    that "closures capture variables from their enclosing scope **by value**." Under affine
