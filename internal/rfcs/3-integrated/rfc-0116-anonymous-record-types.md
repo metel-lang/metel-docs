@@ -151,8 +151,7 @@ Punning and single-field record literals are records in **pure-expression** posi
 (`let`/`var` and struct/enum-field initializers, call arguments, array elements, operands,
 `return`/`break` operands). In **block-admitting** positions a record must be parenthesized:
 `({ … })`. A multi-field literal (`{ x = 1, y = 2 }`) is unaffected — the comma is not valid
-inside a block, so it backtracks to the record parse on its own. §6 specifies the diagnostic
-that fires when a block's tail looks like a mis-parsed record.
+inside a block, so it backtracks to the record parse on its own.
 
 ## 2. Closed by default, and what that means
 
@@ -289,16 +288,17 @@ Most of this RFC's user-facing surface is *rejection*, and rejections are only a
 the message. Each is specified here so the implementation has a target rather than a
 generic type error to fall back on.
 
-**Block parsed where a record was meant** (§1). When a block's tail expression is a bare
-identifier (`{ x }`) or an assignment (`{ x = e }`) and the position's expected type is a
-record, the type error the user would otherwise hit is confusing (unit-typed block, or an
-undeclared-name error on `x`). Detect the shape and emit instead:
-
-> this `{ … }` is being parsed as a block, not a record. To write a record here, wrap it in
-> parentheses: `({ x })`.
-
-This is a heuristic over an already-deterministic parse, not a grammar change — the parse
-result is fixed; only the diagnostic improves.
+**No special diagnostic for the block-position collision (§1).** An earlier draft specified
+one — "this `{ … }` is being parsed as a block, not a record; wrap it in parentheses." It was
+**dropped 2026-07-24 during implementation**, because a diagnostic that fires reliably and
+only on the mistake turns out not to exist at the type-checking phase. To detect the shape
+after inference, inference must first *accept* the block's tail against the expected record
+type — which happens exactly when the tail genuinely is that record and returning it is
+correct, so the diagnostic fires on valid code (`fun f() -> { a: i64 } { let r = ({ a = 1 });
+r }`). When the tail is not that record, inference reports an ordinary type mismatch first and
+the diagnostic never runs. Either unreachable or a false positive. The block-position rule
+itself (§1) stands; the collision simply surfaces as the ordinary type error. A parse-time
+heuristic could revisit this later, but it is out of scope here.
 
 **The four "no nominal owner" rejections** (§3) each name the missing capability and point
 at the one fix available in v0.12.0 — declare a nominal type — since RFC-0119's
@@ -345,8 +345,8 @@ Carried from RFC-0090, narrowed to what this RFC owns.
    in a *block-admitting* position (an `if`/`else`/`match` arm, a function/closure/loop
    body) parses as a block, not a record — deterministically, block-first. This is not the
    Rust condition ambiguity; it is block-versus-expression precedence, resolved by
-   parenthesizing (`({ x })`) with the §6 diagnostic to guide the fix. §1 states the rule
-   normatively; this question is closed, not reopened.
+   parenthesizing (`({ x })`). §1 states the rule normatively; this question is closed, not
+   reopened. (§6 records why no dedicated diagnostic accompanies it.)
 2. **Chained projection (`S.{ a }.{ b }`) and projection in pattern position** are
    unspecified — **scoped out of v0.12.0 rather than left ambiguous.** Both are rejected by
    the initial implementation; a single projection in type or expression position is the
