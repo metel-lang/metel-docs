@@ -92,11 +92,18 @@ was found and reconciled, and where this session did most of its work.
 > re-partition.
 >
 > **The largest single consequence:** dropping RFC-0089's fiat-linearity from the records
-> path removes the brand-carrying `ToRecord` exception, and with it the records cluster's
-> **only** dependency on RFC-0076 (Brand Types, `0-draft`). Nothing in RFC-0116–0121
-> requires an unratified RFC. The one remaining external dependency is RFC-0071
-> (`2-accepted`, 0% implemented), and it gates only RFC-0117 onward — **RFC-0116 is
-> buildable today**, which is why the split is six-way rather than three-way.
+> path removes the brand-carrying `ToRecord` exception, and with it the brand dependency
+> *that came from fiat-linearity*. **Corrected later the same day:** this was first written
+> as "the records cluster's **only** dependency on RFC-0076 (Brand Types, `0-draft`)", and
+> that overstated what had been established. It holds for the **by-value** conversion pair;
+> RFC-0119's **by-reference** mode may reinstate a brand dependency by an entirely
+> different route — reassembly provenance, RFC-0119 open question 8 — which was not
+> examined when the split was made. Whether the cluster is brand-free overall is undecided.
+>
+> **RFC-0116 is unaffected either way** — no conversions, no borrows, no provenance. The
+> one external dependency that is certain is RFC-0071 (`2-accepted`, 0% implemented), and
+> it gates RFC-0117 onward, not RFC-0116, which is why the split is six-way rather than
+> three-way.
 
 - **RFC-0113** *(under review, opened 2026-07-21)* — Context Parameters — a value a call
   tree needs, declared on the callee and resolved *by type* from the caller's scope, with

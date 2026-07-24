@@ -138,11 +138,24 @@ conversion to carry the source struct's **brand**, with the derive emitting one 
 `impl Linear` against that branded shape.
 
 **That exception is not carried into this RFC**, because per-field multiplicity is deferred
-until records are implemented. The consequence is worth stating plainly, since it is the
-single largest simplification the deferral produced: **this RFC has no dependency on
-RFC-0076 (Brand Types, `0-draft`)**, and neither does any other RFC in the records cluster.
-The exception must be restored — here or in whichever RFC carries fiat-linearity — at the
-point per-field multiplicity is taken up again.
+until records are implemented. It must be restored — here or in whichever RFC carries
+fiat-linearity — at the point per-field multiplicity is taken up again.
+
+> **Correction, 2026-07-24, later the same day. The claim this section originally made was
+> too strong and is withdrawn.** It read: *"this RFC has no dependency on RFC-0076 (Brand
+> Types, `0-draft`), and neither does any other RFC in the records cluster."* That is
+> established only for the **by-value** pair. **§2's by-reference mode may reinstate the
+> dependency by a completely different route** — not through fiat-linearity, but through
+> reassembly provenance (open question 8). The accurate statement is: *removing
+> fiat-linearity removed the brand dependency that came from fiat-linearity.* Whether the
+> cluster is brand-free overall depends on how open question 8 resolves, and that is not
+> yet decided.
+>
+> The same overstated claim was repeated in `internal/rfcs/INDEX.md` and
+> `reports/strategy/OBJECTIVES.md` when the cluster was decomposed; both are corrected.
+> Kept visible here rather than quietly edited, because "this cluster now depends on
+> nothing unratified" was used as evidence that the decomposition had simplified the
+> design, and that evidence is weaker than it was presented as.
 
 ---
 
@@ -165,6 +178,101 @@ point per-field multiplicity is taken up again.
 4. **What exactly does `to_record()` return for a generic struct?** `Pair<T>`'s row is not
    fully known until `T` is concrete. Believed to need no deferral to monomorphization time
    — the row is computed from the declaration — but unverified. *(Shared with RFC-0114 OQ4.)*
+
+*Questions 5–8 were opened together on 2026-07-24, from a design conversation about whether
+`FromRecord` and `Construct` are the same thing. They are listed in the order the reasoning
+ran, because each one exposed the next.*
+
+5. **Should `FromRecord` collapse into `Construct` outright, rather than being sugar over
+   it?** RFC-0114 §4 already says `from_record(row)` *is* `Self::construct(row)`; the
+   stronger form is to stop having two names. **Two arguments for it, both real:**
+   - §1's serde analogy holds only because serde has no constructor to route through.
+     Metel would. Once `construct` owns the invariant, `SortedPair` need not *decline*
+     `FromRecord` — it just has a `construct` that validates. The separation stops being
+     about soundness and becomes only about capability gating.
+   - RFC-0114 §1.1 admits row-to-`Self` at exactly one privileged site. A separate
+     `Self`-producing `from_record` either needs that privilege too — widening the one hole
+     the design deliberately narrowed — or must call `construct`, making it an alias.
+
+   **The catch is structural and is the reason this is a question rather than a proposal.**
+   RFC-0114 §1 *synthesizes* a `Construct` default for every struct with no invariant.
+   `FromRecord` is an opt-in derive, and the tier system's foundational rule is that no
+   capability is ambient. If `FromRecord ≡ Construct` and `Construct` is universal, **every
+   struct is tier 2 by default and the tier boundary collapses.**
+
+   **A candidate escape, which is the most interesting part:** make the gate *visibility*
+   rather than a derive. `construct` can only be *called* by code that can write its
+   argument — a record naming all of `Self`'s fields — which requires those fields to be
+   visible. A struct with private fields is then not externally constructible even though
+   `construct` exists. This converges with RFC-0116 OQ3 and RFC-0114 OQ8, which are already
+   asking exactly this; three questions turn out to be one. But it genuinely changes the
+   tier model — tier 2 stops being a derive — and should be decided, not slid into.
+6. **The by-value and by-reference halves of `FromRecord` are not the same kind of
+   operation, and §2 presents them as if they were.** `from_record(row) -> Self`
+   constructs. `from_record_mut(&mut { … }) -> &mut Self` **constructs nothing** — it
+   re-coerces an existing borrow whose row has grown back to full shape. `construct`
+   returns `Result<Self, _>` by value and does not fit the second. So OQ5's collapse, if
+   adopted, cleanly absorbs the by-value half and leaves the by-reference half homeless.
+7. **§2 and RFC-0114 §3 contradict each other, and neither document notices.** §2 states
+   that `restore` *"requires the row to have already grown back to `Handle`'s exact full
+   shape... so there is nothing beyond structural row-matching to check."* RFC-0114 §3
+   states that **any assignment completing a narrowed row is sugar for calling
+   `construct()`** on the completed row. Under §2, `view.alloc = buf; from_record_mut(view)`
+   validates nothing — which is precisely the invariant bypass RFC-0114 exists to close.
+   One of the two is wrong. Note the asymmetry that makes this hard: `construct` produces an
+   owned `Self`, so it cannot be what fires behind a `&mut` view.
+8. **Reassembly needs *provenance*, not shape — and whether that is free depends on a
+   question the corpus currently answers two ways.** For `from_record_mut` to hand back a
+   `&mut Self`, the compiler must know all the fields belong to **the same struct instance**.
+   Two readings of what a view *is* are both live:
+   - **(a) A borrow of a record** — §2's own signature, `&mut { … }`, one pointer, "same
+     bits, new static type." Under (a) the guarantee is structural: one pointer, one
+     object, nothing to check.
+   - **(b) A record of borrows** — `reports/substructural-types/access-and-presence-rows.md`
+     §3 reads `&mut Handle.{fd, alloc}` as `{ fd: &mut i32, alloc: &mut Buffer }`, *N*
+     independent pointers, and argues this reading is **better** (mode moves inside the row,
+     mixed `&`/`&mut` access falls out for free, RFC-0109 §4.9's tuple-of-views becomes
+     unnecessary).
+
+   **Under (b), §2 is unsound as written.** Nothing prevents `fd` borrowing `h1` and
+   `alloc` borrowing `h2`; `from_record_mut` would then produce one `&mut Handle` whose
+   fields live in different objects — not merely odd, but a direct contradiction of the
+   zero-cost "same bits" claim, because the bits are not one struct's bits.
+
+   The check would have to be an **identity** check, and the corpus has exactly one
+   mechanism for those: brands. RFC-0109 already brands its named views for an adjacent
+   reason (so an unrelated same-shaped value cannot satisfy one). **That is what reinstates
+   the RFC-0076 dependency §5's correction withdraws the denial of** — and it collides with
+   tier 2's defining bare-ness (RFC-0090 §8 specified the conversion as bare/anonymous; a
+   provenance brand is not bare).
+
+   **Three ways out, and the third deserves the hardest look:**
+   1. Views are (a). Sound, no check — but forgoes the desugaring the corpus found better,
+      and RFC-0109 §4.9's separate construct stays necessary.
+   2. Views are (b). Better ergonomics, but by-reference conversion needs a brand,
+      contradicting bare-ness and reinstating RFC-0076.
+   3. **Drop by-reference conversion from tier 2 entirely.** Keep only the by-value pair
+      here; let RFC-0109's branded named views own the borrowed case, which is what they
+      were designed for. This makes the tier boundary *cleaner* rather than patching it —
+      by-value conversion is bare and needs no identity, anything borrowed needs identity
+      and belongs where brands already live — and it dissolves OQ6 and OQ7 as a side
+      effect, since the homeless half simply stops existing.
+9. **Should `ToRecord` be a marker aspect enabling a *destructuring operation*, rather than
+   an aspect bearing `to_record` methods?** It is the exact dual of `Construct` — row to
+   `Self` at one privileged site, `Self` to row at the dual site — which is the symmetry
+   RFC-0114 §8 already gestures at for `Construct`/`Drop`. A methodless marker also matches
+   RFC-0096's `Send`/`Sync`/`Linear` pattern rather than inventing a shape.
+
+   **It would close a gap RFC-0109 found independently:** Metel has **no struct-destructuring
+   pattern at all** — `Pattern` has seven variants (`Wildcard`, `None`, `Literal`,
+   `Binding`, `EnumVariant`, `Tuple`, `Array`) and no `Struct` case, so `let { fd, alloc } =
+   h;` does not parse today. RFC-0109 §2 says it needs that by-value form as a foundation
+   for its reference-destructuring patterns; a `ToRecord`-gated destructuring supplies it,
+   and `let &mut { a, b } = h;` becomes the borrowed mode of the same operation.
+
+   **What needs answering:** destructuring binds fields to names, while `to_record()`
+   yields a record *value* that can be passed onward — strictly more general. A marker-only
+   `ToRecord` needs an account of how the value form is still obtained.
 
 ---
 

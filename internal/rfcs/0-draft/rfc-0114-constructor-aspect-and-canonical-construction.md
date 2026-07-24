@@ -464,8 +464,26 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
 
    The first reading is the one this RFC assumes, and it is *load-bearing* rather than
    incidental — it should be confirmed against RFC-0090's own text before acceptance, not
-   after. Note this is a question about record-literal typing, so it is RFC-0090's to
-   answer, not this RFC's to decide unilaterally.
+   after. Note this is a question about record-literal typing, so it is now RFC-0116's to
+   answer (its open question 3), not this RFC's to decide unilaterally.
+9. **Should `FromRecord` collapse into `Construct` outright?** §4 already says
+   `from_record(row)` *is* `Self::construct(row)`; the stronger form drops the second name
+   entirely. **Worked through in RFC-0119 open question 5**, including the argument that
+   §1.1's single privileged site makes any separate `Self`-producing function either
+   privilege-widening or redundant — and the structural catch, which lands on *this* RFC:
+   §1's `Construct` default is **synthesized for every struct**, while `FromRecord` is an
+   opt-in derive, so equating them makes every struct tier 2 by default and collapses the
+   tier boundary. The candidate escape — gate on *visibility* rather than on a derive —
+   converges with open question 8 above and RFC-0116's open question 3, which turn out to
+   be the same question asked three ways.
+10. **§3's automatic firing has no story for the borrowed case.** §3 says any assignment
+    completing a narrowed row is sugar for calling `construct()`. RFC-0119 §2's
+    `from_record_mut` path completes a row **behind a `&mut` view** and states that nothing
+    beyond structural row-matching needs checking — a direct contradiction, since that is
+    exactly the bypass this RFC exists to close. The asymmetry that makes it hard:
+    `construct` returns an owned `Self`, so it cannot be what fires behind a borrow.
+    Tracked as RFC-0119 open question 7; recorded here too because §3 is this RFC's text
+    and one of the two claims has to give.
 
 ---
 
