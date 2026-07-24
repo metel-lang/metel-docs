@@ -6,8 +6,8 @@ title: "Metel Language Changelog"
 
 ## v0.11.0
 
-**Unreleased.** Version bumped, not yet tagged. The spec's `Since v0.11.0` /
-`Changed in v0.11.0` markers refer to this entry.
+**Released 2026-07-24.** The spec's `Since v0.11.0` / `Changed in v0.11.0` markers
+refer to this entry.
 
 **RFCs implemented:** RFC-0107 (Unqualified Enum Variants in Match Patterns),
 RFC-0108 (Reference-Transparent Match Scrutinees), RFC-0110 (Explicit Dereference
