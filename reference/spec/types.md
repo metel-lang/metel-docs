@@ -284,6 +284,12 @@ Metel has two reference types:
 - `&T` — shared immutable reference to `T`
 - `&var T` — exclusive mutable reference to `T`
 
+> **Planned for v0.13.0 (RFC-0122): shared XOR exclusive — a place may have any number of `&T` borrows, or exactly one `&var T`, never both.**
+
+"Exclusive" means exactly that rule. It is **not yet enforced**: the current interpreter has
+no borrow checker, so a program may hold two `&var T` to the same place and will not be
+rejected.
+
 `&var T` coerces to `&T`. The reverse coercion does not exist. Both are non-owning
 aliases — a reference never owns the value it points to.
 
