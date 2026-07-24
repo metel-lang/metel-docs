@@ -476,14 +476,17 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
    tier boundary. The candidate escape — gate on *visibility* rather than on a derive —
    converges with open question 8 above and RFC-0116's open question 3, which turn out to
    be the same question asked three ways.
-10. **§3's automatic firing has no story for the borrowed case.** §3 says any assignment
-    completing a narrowed row is sugar for calling `construct()`. RFC-0119 §2's
-    `from_record_mut` path completes a row **behind a `&mut` view** and states that nothing
-    beyond structural row-matching needs checking — a direct contradiction, since that is
-    exactly the bypass this RFC exists to close. The asymmetry that makes it hard:
-    `construct` returns an owned `Self`, so it cannot be what fires behind a borrow.
-    Tracked as RFC-0119 open question 7; recorded here too because §3 is this RFC's text
-    and one of the two claims has to give.
+10. ~~§3's automatic firing has no story for the borrowed case.~~ **Closed 2026-07-24, and
+    §3 is the half that survived.** The contradiction was between §3 (any assignment
+    completing a narrowed row is sugar for `construct()`) and RFC-0119's `from_record_mut`
+    path, which completed a row behind a `&mut` view and claimed nothing beyond structural
+    row-matching needed checking. **RFC-0119 dropped its by-reference mode entirely**, as
+    superseded by RFC-0109's named views, so the contradicting site no longer exists.
+    Rebuilding a struct now always goes through `from_record` — that is, through
+    `construct` — by value. §3 stands unamended, which is what it was written to be.
+    The asymmetry that made this hard is worth recording: `construct` returns an owned
+    `Self`, so it could never have been what fires behind a borrow, and any future proposal
+    to complete a row through a borrow has to answer that first.
 
 ---
 

@@ -63,6 +63,29 @@ updated: '2026-07-24'
 > no bare row-variable use sites at all — only binder mentions (`drain_field<row R, ...>`,
 > which the rule leaves alone) and the `{ ..R }` above. Recorded so a later pass knows it
 > was checked rather than skipped.
+>
+> **Scope widened 2026-07-24, without this RFC changing: it is now the *only* borrowed
+> record mechanism in the corpus.** RFC-0119 (Record Conversions, the successor to
+> RFC-0090 §8 tier 2) dropped `to_record_mut`/`from_record_mut` as superseded by this
+> RFC's named views. The chronology supports it — `to_record_mut` was added 2026-07-08
+> with the commit message "resolving tier 2's borrow gap", ten days before this RFC built
+> that mechanism properly — but two consequences land here and should not be assumed
+> benign:
+>
+> 1. **One capability is dropped, not relocated.** `to_record_mut` plus narrowing allowed
+>    *moving a field out through a borrow* (`let buf = move view.alloc;`). Views govern
+>    access, not consumption, so nothing here replaces it. Rust forbids moving out of
+>    `&mut` too, so this is defensible — but if it turns out to be wanted, this is the RFC
+>    that would have to grow it, and §4.5's already-open interaction with partially-consumed
+>    residuals is where it would land.
+> 2. **The borrow-of-a-record versus record-of-borrows question moves here wholly.**
+>    RFC-0119 open question 8 found that under `access-and-presence-rows.md` §3's
+>    record-of-borrows reading, reassembling a struct from independently-obtained borrows
+>    needs a *provenance* check — the compiler must know they came from one instance.
+>    Dropping tier 2's by-reference mode dissolved that question **there**; it does not
+>    answer it **here**. This RFC's views are branded, which is the mechanism that would
+>    supply provenance, so the answer is probably already latent in §4 — but it is not
+>    stated, and §4 justifies the brand on bound-satisfaction grounds, not provenance.
 
 > **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `{ … }` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 

@@ -91,16 +91,18 @@ was found and reconciled, and where this session did most of its work.
 > records ship. No feature was dropped and no design decision was reversed; this is a
 > re-partition.
 >
-> **The largest single consequence:** dropping RFC-0089's fiat-linearity from the records
-> path removes the brand-carrying `ToRecord` exception, and with it the brand dependency
-> *that came from fiat-linearity*. **Corrected later the same day:** this was first written
-> as "the records cluster's **only** dependency on RFC-0076 (Brand Types, `0-draft`)", and
-> that overstated what had been established. It holds for the **by-value** conversion pair;
-> RFC-0119's **by-reference** mode may reinstate a brand dependency by an entirely
-> different route — reassembly provenance, RFC-0119 open question 8 — which was not
-> examined when the split was made. Whether the cluster is brand-free overall is undecided.
+> **The largest single consequence, after two corrections:** the records cluster has **no
+> dependency on RFC-0076 (Brand Types, `0-draft`)**. That claim was first made when
+> fiat-linearity was deferred, **withdrawn** hours later as overstated (it held only for
+> by-value conversion; the by-reference mode looked likely to reinstate a brand through
+> reassembly provenance), and then **restored on different grounds** when RFC-0119 dropped
+> its by-reference mode outright. Tier 2 is now brand-free because it never touches a
+> borrow — a structural property of what it does — rather than because a dependency
+> happened to be deferred. The sequence is kept visible in RFC-0119 §5 because the first
+> version was used as evidence the decomposition had simplified the design, and that
+> evidence only became sound after a second, independent decision.
 >
-> **RFC-0116 is unaffected either way** — no conversions, no borrows, no provenance. The
+> **RFC-0116 was unaffected throughout** — no conversions, no borrows, no provenance. The
 > one external dependency that is certain is RFC-0071 (`2-accepted`, 0% implemented), and
 > it gates RFC-0117 onward, not RFC-0116, which is why the split is six-way rather than
 > three-way.
@@ -137,10 +139,15 @@ above it are.
   a reading that previously could not be written at all. Explains why implicit structural
   satisfaction is safe here specifically (a bound grants no capability over the type
   itself). Depends on RFC-0116.
-- **RFC-0119** *(draft)* — Record Conversions — tier 2 `ToRecord`/`FromRecord`, by value
-  and by reference, kept as separate aspects for the serde reason. **Deliberately drops
-  RFC-0090 §8's brand-carrying fiat-linear exception**, which removes the cluster's only
-  RFC-0076 dependency. Depends on RFC-0116, RFC-0117.
+- **RFC-0119** *(draft)* — Record Conversions — tier 2 `ToRecord`/`FromRecord`, kept as
+  separate aspects for the serde reason. **By value only**: RFC-0090 §8's
+  `to_record_mut`/`from_record_mut` are dropped as superseded by RFC-0109's named views
+  (added 2026-07-08 to "resolve tier 2's borrow gap", ten days before RFC-0109 built that
+  mechanism properly). Also drops §8's brand-carrying fiat-linear exception. Between them
+  those leave tier 2 with **no RFC-0076 dependency for a structural reason** — it never
+  handles a borrow, so it never needs to establish which object one came from — and put
+  the tier boundary on a clean line: *by-value conversion is bare; borrowed access is
+  branded because it must be.* Depends on RFC-0116, RFC-0117.
 - **RFC-0120** *(draft)* — Named Records — tier 3 `record X { }` carrying `(row, brand)`
   intrinsically; the tier table, the non-breaking upgrade path, and RFC-0090 §9's
   identity-tag reuse. Depends on RFC-0116, RFC-0119.

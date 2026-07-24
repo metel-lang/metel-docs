@@ -10,11 +10,15 @@ target:
 > for the split rationale). Depends on RFC-0116 (Anonymous Record Types) and RFC-0117 (Row
 > Narrowing).
 >
-> **One thing was deliberately left behind in the extraction: RFC-0090 §8's brand-carrying
-> exception for fiat-linear structs.** That exception existed solely to serve RFC-0089
-> §2.1's fiat-linearity, and the per-field-multiplicity work is deferred until records are
-> implemented. Dropping it removes this cluster's **only** dependency on RFC-0076 (Brand
-> Types, `0-draft`) — see §5.
+> **Two things from RFC-0090 §8 are deliberately not carried over.** Its brand-carrying
+> exception for fiat-linear structs, which served RFC-0089 §2.1 and is deferred with the
+> rest of the per-field-multiplicity work (§5); and its **by-reference mode**
+> (`to_record_mut`/`from_record_mut`), dropped 2026-07-24 as superseded by RFC-0109's
+> named views (§2).
+>
+> Between them these leave this RFC with **no dependency on RFC-0076 (Brand Types,
+> `0-draft`)** — and, after §2, for a structural reason rather than by omission: tier 2
+> never handles a borrow, so it never needs to establish which object one came from.
 
 ## Summary
 
@@ -31,8 +35,8 @@ let h2 = Handle::from_record(r);
 
 Both directions are zero-cost — a relabelling of the same bits, not a real conversion. They
 are kept **separate aspects, not merged**, because the two directions carry different
-soundness weight. A by-reference mode (`to_record_mut`/`from_record_mut`) extends the same
-two aspects to borrowed access rather than adding new ones.
+soundness weight. **By-value only** — RFC-0090 §8's `to_record_mut`/`from_record_mut` are
+dropped (§2); borrowed sub-row access belongs to RFC-0109's branded named views.
 
 The struct itself is unchanged: no representation change, no new impls become legal against
 it, and it never implicitly satisfies a row bound. Conversion is explicit and appears in the
@@ -77,38 +81,44 @@ profiles. A bundled `Record` shorthand was considered and declined on the same g
 place, rather than by each conversion remembering to. This RFC does not depend on RFC-0114;
 if it lands, the two reconcile as noted there.
 
-## 2. By-reference mode
+## 2. By-value only: `to_record_mut`/`from_record_mut` are dropped
 
-The by-value pair covers "consume the struct, get a record, maybe rebuild later." It does
-not cover "keep using `h.fd` while `h.alloc` is being drained." Both modes come from the
-*same* two aspects:
+**Decided 2026-07-24.** RFC-0090 §8 gave `ToRecord`/`FromRecord` a second, by-reference
+mode — `to_record_mut(&mut self) -> &mut { … }` and
+`from_record_mut(&mut { … }) -> &mut Self` — framed as a *mode* rather than a separate
+capability. **This RFC does not carry it.** Tier 2 is by-value: consume the struct, get a
+record, maybe rebuild later.
 
-- `ToRecord` yields `to_record(self) -> { … }` **and** `to_record_mut(&mut self) -> &mut { … }`
-- `FromRecord` yields `from_record({ … }) -> Self` **and** `from_record_mut(&mut { … }) -> &mut Self`
+**The chronology is the argument.** `to_record_mut` was added on 2026-07-08 with the commit
+message *"resolving tier 2's borrow gap"* — invented because nothing else could express
+borrowed sub-row access at the time. RFC-0109 (Self-View Narrowing, 2026-07-18) built that
+mechanism properly ten days later: named views as *branded* records, plus
+reference-destructuring patterns for the ad hoc case. The by-reference mode is what the
+design reached for before the right tool existed.
 
-By-value versus by-reference is a **mode**, not a separate capability; only the `To`/`From`
-direction is worth splitting.
+**What this removes, stated precisely — it is not purely redundancy.** The dropped
+construct did two things, and only one of them is replaced:
 
-```metel
-fun drain(h: &mut Handle) -> (@a Buffer, &mut { fd: i32 }) {
-    let view = h.to_record_mut();   // &mut { fd: i32, alloc: @a Buffer } — reborrow, zero-cost
-    let buf = move view.alloc;      // RFC-0117 narrowing; view : &mut { fd: i32 }
-    (buf, view)
-}
+- **Borrowed access to a sub-row** — fully replaced by RFC-0109, and better: a named view is
+  branded, so an unrelated same-shaped value cannot satisfy it, whereas a bare
+  `&mut { fd: i32 }` could.
+- **Moving a field *out* through a borrow** (`let buf = move view.alloc;`) — **not
+  replaced.** Views govern access, not consumption. Nothing in the remaining cluster lets
+  you take ownership of one field while the rest stays borrowed.
 
-fun restore(view: &mut { fd: i32 }, buf: @a Buffer) -> &mut Handle {
-    view.alloc = buf;               // row grows back to Handle's exact full shape
-    Handle::from_record_mut(view)
-}
-```
+**That second capability is not obviously wanted, and it was the source of three separate
+problems.** Rust does not permit moving out of `&mut` either. Every open question this RFC
+carried about provenance, about validation on reassembly, and about the by-value/by-reference
+asymmetry originated in that one construct — see the struck-through entries in Open
+Questions. Dropping it dissolves all three rather than answering them.
 
-Soundness is the by-value argument unchanged — a reborrow, not a copy — and `restore`
-requires the row to have grown back to `Handle`'s exact shape *before* `from_record_mut` is
-reached, so there is nothing beyond structural matching to check.
-
-**This enforces safety, not liveness.** Nothing stops code from never calling `restore` and
-simply being stuck holding `&mut { fd: i32 }` forever, unable to typecheck it back. That is
-accepted.
+**Consequence for the tier boundary, which comes out cleaner.** By-value conversion is bare
+and anonymous and needs no notion of identity: it consumes one whole value and produces one
+whole record. Anything *borrowed* needs to know which object it came from, which is an
+identity question, which is why RFC-0109's views are branded. The split is now along that
+line exactly — **tier 2 is bare because it is by-value; borrowed access is branded because
+it must be** — instead of tier 2 straddling both and needing a provenance rule it never
+had.
 
 ## 3. No implicit coercion at call sites
 
@@ -127,7 +137,8 @@ Deriving these conversions does **not** make a struct row-conditional-impl eligi
 not let it satisfy a row bound directly. Those require the type to intrinsically carry row
 structure at impl-resolution time, which no amount of explicit conversion machinery provides
 — that is RFC-0120. `Handle` itself is never usable where a row-generic bound is expected;
-only the converted `view` is, and only while it is held.
+only the record produced by `.to_record()` is, and that record is a separate owned value,
+not a window onto the struct.
 
 ## 5. The brand exception, and why it is not here
 
@@ -141,21 +152,21 @@ conversion to carry the source struct's **brand**, with the derive emitting one 
 until records are implemented. It must be restored — here or in whichever RFC carries
 fiat-linearity — at the point per-field multiplicity is taken up again.
 
-> **Correction, 2026-07-24, later the same day. The claim this section originally made was
-> too strong and is withdrawn.** It read: *"this RFC has no dependency on RFC-0076 (Brand
-> Types, `0-draft`), and neither does any other RFC in the records cluster."* That is
-> established only for the **by-value** pair. **§2's by-reference mode may reinstate the
-> dependency by a completely different route** — not through fiat-linearity, but through
-> reassembly provenance (open question 8). The accurate statement is: *removing
-> fiat-linearity removed the brand dependency that came from fiat-linearity.* Whether the
-> cluster is brand-free overall depends on how open question 8 resolves, and that is not
-> yet decided.
+> **Correction and re-resolution, both 2026-07-24, kept as a pair because the sequence is
+> the point.** This section originally claimed removing fiat-linearity left *"no dependency
+> on RFC-0076... and neither does any other RFC in the records cluster."* That was
+> **withdrawn** hours later: it held only for the by-value pair, and the by-reference mode
+> looked likely to reinstate a brand dependency by a different route entirely — reassembly
+> provenance, then open question 8. The same overstated claim had been repeated in
+> `INDEX.md` and `OBJECTIVES.md`.
 >
-> The same overstated claim was repeated in `internal/rfcs/INDEX.md` and
-> `reports/strategy/OBJECTIVES.md` when the cluster was decomposed; both are corrected.
-> Kept visible here rather than quietly edited, because "this cluster now depends on
-> nothing unratified" was used as evidence that the decomposition had simplified the
-> design, and that evidence is weaker than it was presented as.
+> **The claim is now true again, but not for the original reason.** Dropping the
+> by-reference mode (§2) dissolved open question 8 rather than answering it. So tier 2 is
+> brand-free because it never touches a borrow — a structural property of what it does —
+> rather than because fiat-linearity happened to be deferred. The whole sequence is kept
+> visible because the first version was used as evidence that the decomposition had
+> simplified the design, and it is worth showing that the evidence only became sound after
+> a second, independent decision.
 
 ---
 
@@ -207,56 +218,35 @@ ran, because each one exposed the next.*
    `construct` exists. This converges with RFC-0116 OQ3 and RFC-0114 OQ8, which are already
    asking exactly this; three questions turn out to be one. But it genuinely changes the
    tier model — tier 2 stops being a derive — and should be decided, not slid into.
-6. **The by-value and by-reference halves of `FromRecord` are not the same kind of
-   operation, and §2 presents them as if they were.** `from_record(row) -> Self`
-   constructs. `from_record_mut(&mut { … }) -> &mut Self` **constructs nothing** — it
-   re-coerces an existing borrow whose row has grown back to full shape. `construct`
-   returns `Result<Self, _>` by value and does not fit the second. So OQ5's collapse, if
-   adopted, cleanly absorbs the by-value half and leaves the by-reference half homeless.
-7. **§2 and RFC-0114 §3 contradict each other, and neither document notices.** §2 states
-   that `restore` *"requires the row to have already grown back to `Handle`'s exact full
-   shape... so there is nothing beyond structural row-matching to check."* RFC-0114 §3
-   states that **any assignment completing a narrowed row is sugar for calling
-   `construct()`** on the completed row. Under §2, `view.alloc = buf; from_record_mut(view)`
-   validates nothing — which is precisely the invariant bypass RFC-0114 exists to close.
-   One of the two is wrong. Note the asymmetry that makes this hard: `construct` produces an
-   owned `Self`, so it cannot be what fires behind a `&mut` view.
-8. **Reassembly needs *provenance*, not shape — and whether that is free depends on a
-   question the corpus currently answers two ways.** For `from_record_mut` to hand back a
-   `&mut Self`, the compiler must know all the fields belong to **the same struct instance**.
-   Two readings of what a view *is* are both live:
-   - **(a) A borrow of a record** — §2's own signature, `&mut { … }`, one pointer, "same
-     bits, new static type." Under (a) the guarantee is structural: one pointer, one
-     object, nothing to check.
-   - **(b) A record of borrows** — `reports/substructural-types/access-and-presence-rows.md`
-     §3 reads `&mut Handle.{fd, alloc}` as `{ fd: &mut i32, alloc: &mut Buffer }`, *N*
-     independent pointers, and argues this reading is **better** (mode moves inside the row,
-     mixed `&`/`&mut` access falls out for free, RFC-0109 §4.9's tuple-of-views becomes
-     unnecessary).
+6. ~~The by-value and by-reference halves of `FromRecord` are not the same kind of
+   operation.~~ **Dissolved 2026-07-24 by dropping the by-reference mode (§2).** There is
+   no second half left to be asymmetric with. Recorded because the asymmetry was real and
+   is the reason the mode looked wrong before the decision was taken: `from_record_mut`
+   constructed nothing, it re-coerced an existing borrow, so it never fit `construct`'s
+   owned-`Self` signature.
+7. ~~§2 and RFC-0114 §3 contradict each other.~~ **Dissolved 2026-07-24, same cause.**
+   §2 claimed reassembly needed nothing beyond structural row-matching while RFC-0114 §3
+   requires row completion to fire `construct()`. With no by-reference reassembly, the
+   contradiction has no site: rebuilding a struct now always goes through
+   `from_record` — that is, through `construct` — by value. **RFC-0114 §3's rule stands
+   unamended and is now the only story**, which is what it was written to be.
+   RFC-0114's own open question 10 is closed by this.
+8. ~~Reassembly needs provenance, not shape.~~ **Dissolved 2026-07-24 by adopting the
+   third of its own three options.** The question was whether `from_record_mut` could know
+   that all the borrows it reassembles belong to one struct instance — a real hole, since
+   under the record-of-borrows reading (`access-and-presence-rows.md` §3) nothing prevented
+   `fd` borrowing one `Handle` and `alloc` another, producing a `&mut Handle` whose fields
+   live in different objects. Its three candidate resolutions were: (1) fix the view to be
+   a borrow-of-a-record, (2) add a provenance brand, (3) drop by-reference conversion from
+   tier 2 entirely. **(3) was taken.** Tier 2 no longer reassembles anything through a
+   borrow, so there is no provenance to establish.
 
-   **Under (b), §2 is unsound as written.** Nothing prevents `fd` borrowing `h1` and
-   `alloc` borrowing `h2`; `from_record_mut` would then produce one `&mut Handle` whose
-   fields live in different objects — not merely odd, but a direct contradiction of the
-   zero-cost "same bits" claim, because the bits are not one struct's bits.
-
-   The check would have to be an **identity** check, and the corpus has exactly one
-   mechanism for those: brands. RFC-0109 already brands its named views for an adjacent
-   reason (so an unrelated same-shaped value cannot satisfy one). **That is what reinstates
-   the RFC-0076 dependency §5's correction withdraws the denial of** — and it collides with
-   tier 2's defining bare-ness (RFC-0090 §8 specified the conversion as bare/anonymous; a
-   provenance brand is not bare).
-
-   **Three ways out, and the third deserves the hardest look:**
-   1. Views are (a). Sound, no check — but forgoes the desugaring the corpus found better,
-      and RFC-0109 §4.9's separate construct stays necessary.
-   2. Views are (b). Better ergonomics, but by-reference conversion needs a brand,
-      contradicting bare-ness and reinstating RFC-0076.
-   3. **Drop by-reference conversion from tier 2 entirely.** Keep only the by-value pair
-      here; let RFC-0109's branded named views own the borrowed case, which is what they
-      were designed for. This makes the tier boundary *cleaner* rather than patching it —
-      by-value conversion is bare and needs no identity, anything borrowed needs identity
-      and belongs where brands already live — and it dissolves OQ6 and OQ7 as a side
-      effect, since the homeless half simply stops existing.
+   **Two consequences worth keeping visible.** First, this reinstates the claim §5's
+   correction had withdrawn: with the by-reference mode gone, **this RFC genuinely has no
+   dependency on RFC-0076**, and now for a structural reason rather than by omission — it
+   never handles a borrow, so it never needs an identity. Second, the
+   borrow-of-a-record versus record-of-borrows question is *not* settled by this; it moves
+   wholly to RFC-0109, which owns borrowed views and already brands them.
 9. **Should `ToRecord` be a marker aspect enabling a *destructuring operation*, rather than
    an aspect bearing `to_record` methods?** It is the exact dual of `Construct` — row to
    `Self` at one privileged site, `Self` to row at the dual site — which is the symmetry
