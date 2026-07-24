@@ -1,7 +1,7 @@
 ---
 title: "Metel Language Specification"
 type: spec
-version: v0.7.0
+version: v0.11.0
 created_date: '2026-05-16'
 ---
 
@@ -24,7 +24,9 @@ The language's core design principles are:
 - **Algebraic data types** — enums with data-carrying variants and exhaustive pattern matching
 - **Explicit nullability** — absence of a value is represented by `Perhaps<T>`, never by null
 - **Explicit error handling** — errors are values, represented as `Result<T, E>`
-- **Safe memory by default** — reference counting, no ownership semantics required
+- **Safe memory by default** — affine ownership: a value has one owner, and moves rather
+  than being implicitly copied
+  > **Planned for v0.12.0 (RFC-0071): this replaces the reference-counting model; until then the interpreter copies every value and no ownership rule is enforced.**
 
 
 ## Contents
@@ -34,6 +36,7 @@ The language's core design principles are:
 | [Lexical Structure](spec/lexical.md) | Comments, identifiers, keywords, literals, operators |
 | [Modules](spec/modules.md) | Files, modules, imports, path roots, visibility, re-exports |
 | [Type System](spec/types.md) | Primitive types, inference, tuples, arrays, casting, generics, Never, `Perhaps<T>`, `Result<T,E>` |
+| [Ownership](spec/ownership.md) | Moves, `Copy`, `Drop`, drop order, partial moves |
 | [Declarations](spec/declarations.md) | Variables, structs, enums, aspects |
 | [Functions](spec/functions.md) | Functions, closures, the `?` operator |
 | [Expressions](spec/expressions.md) | Pattern matching, control flow |

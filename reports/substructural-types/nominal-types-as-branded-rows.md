@@ -795,5 +795,5 @@ corpus, including RFC-0090 §4's row-conditional-impl typestate examples
 - `internal/rfcs/0-draft/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md`
   §4.10 — the "accuracy checking, not a declared-and-trusted annotation" discipline §4
   reuses for `Drop`'s row-bounded dispatch
-- `internal/rfcs/2-accepted/rfc-0071-ownership-and-move-semantics.md` §7 — the blanket
+- `internal/rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md` §7 — the blanket
   partial-move ban this proposal requires rewriting, not narrowing

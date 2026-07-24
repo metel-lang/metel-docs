@@ -5,7 +5,7 @@ rfcs: [0063, 0064, 0065, 0066, 0067, 0068, 0069, 0071]
 ---
 
 > **Status — current.** This report describes the memory model as specified by the
-> RFC-006x cluster and RFC-0071 (all accepted). It supersedes all prior memory-model
+> RFC-006x cluster (accepted) and RFC-0071 (integrated 2026-07-24, target v0.12.0). It supersedes all prior memory-model
 > exploration documents. Refer to the individual RFCs for normative detail; this report
 > gives the unified narrative and worked examples.
 

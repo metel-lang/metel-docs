@@ -2,6 +2,10 @@
 id: rfc-0071
 title: "Ownership and Move Semantics"
 date: '2026-06-28'
+status: integrated
+updated: '2026-07-24'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/291'
+impl_status: not-started
 ---
 
 > **Status — accepted.** Establishes the foundational ownership model for Metel
@@ -62,6 +66,37 @@ date: '2026-06-28'
 > field-wise constraints. Recorded in RFC-0116 and RFC-0123 as well; **not** a blocker for
 > this RFC, which is correct as written — `Copy` being declared rather than derived is
 > deliberate.
+
+> **Status — integrated 2026-07-24, targeting v0.12.0.** §1–§7 are merged into
+> `public/reference/spec/` as a **new page**, `spec/ownership.md` — the spec had no home for
+> ownership at all, and `Copy`/`Drop` appeared in it only as bounds inside coherence
+> examples, never defined. Added to the Contents table between Type System and Declarations.
+> Four one-line availability markers.
+>
+> **Integration found two contradictions in the spec's own front matter, both from the
+> language having moved on without it:**
+>
+> - **`spec.md` listed a core design principle reading "Safe memory by default — reference
+>   counting, no ownership semantics required."** That is the direct negation of this RFC.
+>   It described v0.7-era Metel accurately and has been false-in-intent since this RFC was
+>   accepted on 2026-06-28. Replaced with affine ownership, carrying a marker stating that
+>   the interpreter still copies everything until v0.12.0.
+> - **`spec.md`'s frontmatter said `version: v0.7.0`**, four releases stale. Now v0.11.0.
+>   The two are related: that block had not been revisited since v0.7, which is why the
+>   principle survived.
+>
+> **Sibling cross-checks are in §9a** and were done before this pass — three clean
+> interactions with the records cluster and one real gap (no record can ever be `Copy`).
+> Nothing in the spec merge changed them.
+>
+> **What the page deliberately does not claim.** Its closing section states that ownership
+> answers "how many owners" and `Copy` answers "may this be duplicated", and that neither
+> answers "what is borrowed right now" — with an explicit note that nothing here prevents
+> two `&var T` to the same place. That is RFC-0122's rule and is not in this release; saying
+> so on the page is better than letting a reader infer exclusivity from the word "exclusive"
+> two pages away.
+
+> **Status — integrated (2026-07-24).** New spec page ownership.md covering sections 1-7; four availability markers; Contents table updated. Found and fixed two spec contradictions: the 'reference counting, no ownership semantics required' design principle, and a v0.7.0 version stamp. Tracked as #290-#293; #291 (move checking) is canonical.
 
 ## Summary
 

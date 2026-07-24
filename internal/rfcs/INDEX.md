@@ -103,7 +103,7 @@ was found and reconciled, and where this session did most of its work.
 > evidence only became sound after a second, independent decision.
 >
 > **RFC-0116 was unaffected throughout** — no conversions, no borrows, no provenance. The
-> one external dependency that is certain is RFC-0071 (`2-accepted`, 0% implemented), and
+> one external dependency that is certain is RFC-0071 (`3-integrated`, 0% implemented), and
 > it gates RFC-0117 onward, not RFC-0116, which is why the split is six-way rather than
 > three-way.
 
@@ -157,7 +157,7 @@ above it are.
   the reason the split is six-way.
 - **RFC-0117** *(draft)* — Row Narrowing — moving a field out narrows the record's type;
   the closed 2^*N* subset lattice, no row variables and no unification. Depends on
-  RFC-0116 and on **RFC-0071** (`2-accepted`, 0% implemented), which is why it is separate
+  RFC-0116 and on **RFC-0071** (`3-integrated`, 0% implemented), which is why it is separate
   from RFC-0116 rather than bundled with it.
 - **RFC-0118** *(integrated 2026-07-24, target v0.12.0, tracked as #289)* — Row Bounds — `T: { x: f64, .. }` and `T: !{ token: _ }`,
   replacing the `HasField`/`Lacks` family that never parsed. The trailing `..` is an
@@ -185,7 +185,7 @@ above it are.
 **Deferred until records are implemented** — returned to `0-draft` 2026-07-24:
 
 - **RFC-0089** — Linear Types — multiplicity lattice, `Linear` auto-impl aspect. Depends
-  on RFC-0071 (accepted). Its §3 floor was rewritten on 2026-07-09 to route partial
+  on RFC-0071 (integrated). Its §3 floor was rewritten on 2026-07-09 to route partial
   consumption through `ToRecord`; **that coupling was accidental** and is what Trigger 6
   was tracking. `Linear`'s auto-impl categorization depends on RFC-0096 for the shared
   mechanism it's an instance of.

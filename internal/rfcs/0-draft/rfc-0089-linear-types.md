@@ -15,7 +15,7 @@ updated: '2026-07-24'
 > may be implemented," but that content was never re-homed in an active RFC. This RFC
 > is that re-homing, using the current, more developed design from `linear-types.md`
 > rather than reviving RFC-0024's `linear`-keyword-only, `@T` read-reference form.
-> Depends on RFC-0071 (Ownership and Move Semantics, accepted), RFC-0080 (Standard
+> Depends on RFC-0071 (Ownership and Move Semantics, integrated), RFC-0080 (Standard
 > Library Aspects, for the auto-impl pattern), RFC-0081 (Negative Impls), and RFC-0072
 > (Negative Bounds). No dependency on comptime derive (RFC-0092/0093).
 >
@@ -413,8 +413,8 @@ and its open aliasing question remain explicitly not required for the deadline.
 
 ## References
 
-- RFC-0071 (Ownership and Move Semantics, accepted) — affine-by-default foundation this
-  RFC builds on
+- RFC-0071 (Ownership and Move Semantics, integrated 2026-07-24, target v0.12.0) —
+  affine-by-default foundation this RFC builds on
 - RFC-0080 (Standard Library Aspects) — the auto-impl pattern `Linear` reuses (§2),
   substituting `Linear` for `Send`
 - RFC-0096 (Auto-Impl Aspects, draft) — formalizes that pattern once, generically,

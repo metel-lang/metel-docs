@@ -750,7 +750,7 @@ than leaving it a vague cross-module concern.
   identity kind with a struct's own identity tag as a plausible fourth surface use
   (RFC-0090 §9). A view's brand is that same tag, reused a second time for a narrower
   purpose (§4.6) — not a fifth kind alongside it.
-- **RFC-0071 (Ownership and Move Semantics, accepted, unimplemented)** — both
+- **RFC-0071 (Ownership and Move Semantics, integrated, unimplemented)** — both
   mechanisms in this RFC are inert without RFC-0071's field-sensitive borrow tracking;
   see the status note at the top.
 - **RFC-0108 (Reference-Transparent Match Scrutinees)** — no direct dependency,
@@ -848,7 +848,7 @@ than leaving it a vague cross-module concern.
   `pub` function must not be allowed to bypass.
 - `brand-kind-unification.md` — the `(row, brand)`/`'c`-kind tag-reuse claim §4.1 and
   §5 depend on.
-- RFC-0071 (Ownership and Move Semantics, accepted, unimplemented) — the field-
+- RFC-0071 (Ownership and Move Semantics, integrated, unimplemented) — the field-
   sensitive move/borrow tracking both mechanisms in this RFC assume exists.
 - RFC-0108 (Reference-Transparent Match Scrutinees) — adjacent pattern-position
   work; no direct dependency, noted for consistency.
