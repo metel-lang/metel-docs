@@ -285,7 +285,7 @@ allocator lifetime guarantees sound:
 and enums were the only aggregates. Six constructs it does not cover, with proposed
 resolutions where precedent is unambiguous.
 
-**1. Are `&T` and `&var T` themselves `Copy`? — unspecified anywhere, and blocking.**
+**1. Are `&T` and `&var T` themselves `Copy`? — was unspecified anywhere, and was the one blocking gap.**
 Nothing in this RFC, RFC-0067a, or the rest of the corpus states it. RFC-0067a §205 defers
 its `T: Copy` gate to "RFC-0071's affine/Copy model," and this RFC never mentions references,
 so the two documents point at each other. The consequence if `&T` is affine:
@@ -296,9 +296,9 @@ f(r);
 g(r);        // error — r was moved into f?
 ```
 
-Shared borrows would be single-use, which is unusable. **Proposed: `&T` is `Copy`; `&var T`
-is not** — Rust's rule, and near-universal. An exclusive reference must stay unique, so it
-moves or reborrows; a shared reference has no such obligation.
+Shared borrows would be single-use, which is unusable. **Resolved 2026-07-24: `&T` is `Copy`; `&var T` is
+not** — Rust's rule, and near-universal. An exclusive reference must stay unique, so it moves
+or reborrows; a shared reference has no such obligation. See §9 question 3.
 
 **2. Moving out of an array element — no rule, and it is the case static tracking cannot
 handle.** §7 tracks partial moves "at field granularity". `xs[0]` has no field; the index may
@@ -315,10 +315,11 @@ enums; §7's partial-move rules never mention them. **Proposed: matching a varia
 its payload consumes the enum wholly**, not partially — there is no "rest of the value" to
 retain, since the other variants were never inhabited.
 
-**5. Closure capture — no rule anywhere.** Whether a closure moves or borrows what it
-captures is unspecified: RFC-0046 (Linear Closure Capture) is `6-refused` and RFC-0050
-(Closure Capture Lists) is `0-draft`. **No proposal — this needs design, not a default.**
-It is the one gap here that is genuinely open rather than merely unwritten.
+**5. Closure capture — resolved 2026-07-24; the rule already existed and this RFC had not
+caught up.** The spec states capture is **by value**, and by-value capture of a non-`Copy`
+type under affine ownership is a **move**. No design was needed — only noticing that
+`functions.md` had already decided it, and correcting its word "cloned" to match. See §9
+question 4.
 
 **6. Records.** Not a gap in substance — RFC-0117 owns narrowing on partial move, and this
 RFC correctly says nothing about it. Only §1's scope sentence needed widening, done above.
@@ -338,15 +339,30 @@ RFC correctly says nothing about it. Only §1's scope sentence needed widening, 
    not be partially destructured, and a partially destructured value may not be used as a
    whole. Whether individual pattern bindings may borrow rather than move a field (a `ref`
    binding modifier or equivalent) is deferred to the pattern syntax RFC.
-3. **New, 2026-07-24, from §9a — blocking. Are `&T` and `&var T` themselves `Copy`?**
-   Proposed yes for `&T`, no for `&var T`, following Rust. Unstated here *and* in RFC-0067a,
-   which defers its own `Copy` gate back to this RFC — the two documents point at each other.
-   **Move checking cannot be implemented without an answer**, and if `&T` were affine, a
-   shared borrow would be single-use.
-4. **New, 2026-07-24, from §9a. Closure capture semantics are unspecified.** Whether a
-   closure moves or borrows its captures has no rule anywhere: RFC-0046 (Linear Closure
-   Capture) is `6-refused` and RFC-0050 (Closure Capture Lists) is `0-draft`. Needs design
-   rather than a default.
+3. ~~Are `&T` and `&var T` themselves `Copy`?~~ **Resolved 2026-07-24: `&T` is `Copy`;
+   `&var T` is not.** A shared reference carries no obligation — duplicating one grants no
+   capability the holder did not already have, and if it were affine a shared borrow would be
+   single-use, which is unusable. An exclusive reference must stay unique to *be* exclusive,
+   so it moves or reborrows. This is Rust's rule and it is near-universal.
+
+   Recorded here because the gap was circular: RFC-0067a defers its `T: Copy` gate to "this
+   RFC's affine/Copy model", and this RFC did not mention references at all. **RFC-0067a's
+   own gate is a separate question and is unaffected** — that gate is about reading a
+   *referent* of type `T` through a reference, which still requires `T: Copy`. `&T` being
+   `Copy` is about duplicating the *reference*.
+4. ~~Closure capture semantics are unspecified.~~ **Resolved 2026-07-24 — the spec already
+   settled it and this RFC had not caught up.** `public/reference/spec/functions.md` states
+   that "closures capture variables from their enclosing scope **by value**." Under affine
+   ownership, by-value capture of a non-`Copy` type is a **move**: the closure takes
+   ownership and the enclosing binding is invalid afterwards. Cloning it instead is precisely
+   what affine ownership forbids.
+
+   **The spec's wording needed one correction, not its rule.** It said a captured variable is
+   "*cloned* into the closure environment", which is accurate for the current
+   everything-clones interpreter and wrong once this RFC is enforced. Now "copied", with a
+   `Planned for v0.12.0` marker stating the move rule for non-`Copy` captures.
+   RFC-0050 (Closure Capture Lists, `0-draft`) may later add explicit capture modes; it is not
+   needed for the default, which follows from by-value capture plus affine ownership.
 
 ---
 

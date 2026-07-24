@@ -68,7 +68,7 @@ fun main() -> i64 {
 }
 ```
 
-Closures capture variables from their enclosing scope by value. A captured variable is cloned into the closure environment when the closure is created:
+Closures capture variables from their enclosing scope by value. A captured variable is copied into the closure environment when the closure is created:
 
 ```metel
 fun main() -> i64 {
@@ -80,16 +80,25 @@ fun main() -> i64 {
 }
 ```
 
-Shared mutable closure state is explicit. If multiple closures must observe and update the same non-linear storage, the program must capture a regular pointer:
+> **Planned for v0.12.0 (RFC-0071): a captured value of a non-`Copy` type is *moved* into the closure, not copied — the original binding is invalid afterwards.**
+
+Capture is by value, so a `Copy` type is copied and the original stays usable. Once move
+semantics are enforced, a non-`Copy` capture transfers ownership: the closure owns the value
+and the enclosing binding may not be used again. To keep using the original, capture a
+reference instead — a shared reference is `Copy`, so capturing one copies the reference and
+leaves the referent alone.
+
+Shared mutable closure state is explicit. If multiple closures must observe and update the
+same storage, the program captures a reference:
 
 ```metel
 fun main() -> i64 {
     var count = 0;
     let p: &var i64 = &var count;
-    let inc = () -> { p += 1; };
+    let inc = () -> { *p += 1; };
     inc();
     inc();
-    return p;
+    return *p;
 }
 ```
 
