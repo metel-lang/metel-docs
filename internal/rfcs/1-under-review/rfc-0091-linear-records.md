@@ -4,14 +4,14 @@ title: "Linear Records"
 date: '2026-07-09'
 status: under-review
 target:
-updated: '2026-07-21'
+updated: '2026-07-24'
 ---
 
 > **New RFC, split out 2026-07-09** from `reports/substructural-types/linear-types.md`
 > §3 (Option C) and `structural-records.md`'s per-field-multiplicity content, as part of
 > decomposing an oversized RFC-0012 into smaller, independently reviewable pieces. This
 > is explicitly the "fuller vision" layered on top of two already-sufficient RFCs:
-> RFC-0089 (Linear Types) plus RFC-0090's `record`/tier 2 already satisfy RFC-0063 §9
+> RFC-0089 (Linear Types) plus RFC-0090's `{ … }` former/tier 2 already satisfy RFC-0063 §9
 > item 5's deadline via explicit `.to_record()`/`.from_record()` conversion, with no
 > dependency on this RFC. Everything here is additive, paced exploration, not gating
 > work — consistent with `strategic-overview-2026-07-08.md`'s classification of this
@@ -27,8 +27,25 @@ updated: '2026-07-21'
 > additive extension on top of that floor — the contrast is now "explicit conversion
 > call, then move" vs. "no conversion call needed, the compiler downgrades the type
 > automatically," rather than "raw struct field access" vs. "records."
+>
+> **Revised 2026-07-24 — mechanical syntax sweep, no semantic change.** RFC-0090 dropped
+> the `record` keyword from the anonymous type-former, so every `record { … }` here is now
+> `{ … }`, and anonymous record *values* separate with `=` (`{ host = "example.com" }`) per
+> the `:` classifies / `=` defines invariant. Nothing about this RFC's own content changes.
+>
+> **One visible inconsistency this leaves, deliberately, because it is accurate:** §2.3's
+> examples read `RequestBuilder { data: { host = "example.com" } }` — the *struct literal*
+> still separates with `:`, the *record value* inside it with `=`. That mismatch is real
+> and current: RFC-0090's record values are settled, while RFC-0115 (which would make the
+> struct literal `data = …` too) is only `0-draft`. Left as-is rather than pre-applying an
+> unaccepted RFC; if RFC-0115 lands, one more mechanical pass makes these uniform.
+>
+> **Also still stale here and not swept:** `HasField<"auth", String>` / `Lacks<"auth">`
+> bound syntax, retired by RFC-0090 on 2026-07-23 in favour of bare rows (`{ auth: String }`
+> / `!{ auth: _ }`). That is a separate amendment from the `record`-keyword one and is a
+> separate sweep.
 
-> **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `record` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
+> **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `{ … }` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 
 ## Summary
 
@@ -140,9 +157,9 @@ tears itself down.
 
 ## 2. Option C: automatic downgrade via records
 
-Once RFC-0090's `record` type-former exists, a partial-consumption residual stops being
+Once RFC-0090's `{ … }` type-former exists, a partial-consumption residual stops being
 a bespoke, invisible marker — it *is* a record type. Consuming `Foo { a: A, b: B }`'s
-field `a` produces a value typed `record { b: B }`: the struct's own remaining fields,
+field `a` produces a value typed `{ b: B }`: the struct's own remaining fields,
 literally. Since a record containing a linear or `Drop`-needing field is itself
 linear/drop-relevant by the same structural composition rule as ordinary structs, "the
 remainder still needs consuming" is no longer a rule anyone had to write — it's the
@@ -157,7 +174,7 @@ mixed-multiplicity fields.
 
 The long-standing blocker on Option C: if `p = &f` was taken before the downgrade, what
 type does `p` have afterward? **Candidate answer:** `p`'s type becomes the shrunk row
-(`&mut record { <remaining fields> }`), sound for an unremarkable reason — `&mut`
+(`&mut { <remaining fields> }`), sound for an unremarkable reason — `&mut`
 already guarantees no other live reference exists to observe the stale, pre-downgrade
 type, so no new aliasing machinery (a brand, a fork/join token) is needed beyond
 ordinary `&mut` exclusivity and structural row equality.
@@ -230,7 +247,7 @@ impl Drop for Connection {
 }
 
 fun close_and_report(c: Connection) -> ConnStats {
-    let stats = c.stats;      // fine now — residual record { socket: Socket } is still
+    let stats = c.stats;      // fine now — residual { socket: Socket } is still
                               // Drop-eligible on its own, and dropping it only reads
                               // `socket`, which is still there
     c.socket.close();
@@ -253,23 +270,23 @@ multiplicity-`1` — no `@derive(Linear)` annotation is actually needed or meani
 shown for illustration only. `ToRecord`/`FromRecord` are the derivable ones.)
 
 ```metel
-fun take_fd(h: &mut FileHandle) -> (RawFd, &mut record { path: String }) {
+fun take_fd(h: &mut FileHandle) -> (RawFd, &mut { path: String }) {
     let view = h.to_record_mut();
     let fd = move view.fd;
-    (fd, view)          // view's residual type, record { path: String }, is not Linear —
+    (fd, view)          // view's residual type, { path: String }, is not Linear —
                          // RFC-0090 §5's field-composition rule applies to records
                          // exactly as it does to structs, and `path` alone carries no
                          // obligation
 }
 
-fun log_path(view: &record { path: String }) {
+fun log_path(view: &{ path: String }) {
     println("still open at: ${view.path}");
     // view.fd doesn't typecheck here at all. Compare to fd being declared Perhaps<RawFd>
     // instead: every read site would need a match/unwrap to find out it's gone. Here
     // the caller's own parameter type already says so — checked once, at compile time.
 }
 
-fun release(view: &mut record { path: String }, fd: RawFd) -> &mut FileHandle {
+fun release(view: &mut { path: String }, fd: RawFd) -> &mut FileHandle {
     view.fd = fd;
     FileHandle::from_record_mut(view)
 }
@@ -281,11 +298,11 @@ Per-field multiplicity is equally about a field going from absent (0) to present
 exactly once — RFC-0090 §4's "builders, in the dual direction" claim:
 
 ```metel
-struct RequestBuilder<row R> { data: record { host: String, ..R } }
+struct RequestBuilder<row R> { data: { host: String, ..R } }
 
 impl<row R: Lacks<"auth">> RequestBuilder<R> {
     fun with_auth(self, token: String) -> RequestBuilder<R + "auth"> {
-        RequestBuilder { data: record { ..self.data, auth: token } }
+        RequestBuilder { data: { ..self.data, auth = token } }
     }
 }
 
@@ -294,11 +311,11 @@ impl<row R: HasField<"auth", String>> RequestBuilder<R> {
 }
 
 fun main() {
-    let req = RequestBuilder { data: record { host: "example.com" } }
+    let req = RequestBuilder { data: { host = "example.com" } }
         .with_auth("secret");
     req.send();
     // req.with_auth("again");                              -- R already Lacks "auth"
-    // RequestBuilder { data: record { host: "x" } }.send()  -- needs HasField<"auth", _>
+    // RequestBuilder { data: { host = "x" } }.send()  -- needs HasField<"auth", _>
 }
 ```
 
@@ -337,8 +354,8 @@ fn authenticate(session: &mut Session, token: String) {
 struct Session { host: String, state: AuthState }
 
 fun authenticate(session: &mut Session, token: String) {
-    let view = session.to_record_mut();   // &mut record { host: String, state: AuthState }
-    let old_state = move view.state;       // view narrows to &mut record { host: String } —
+    let view = session.to_record_mut();   // &mut { host: String, state: AuthState }
+    let old_state = move view.state;       // view narrows to &mut { host: String } —
                                             // `state` is genuinely absent here, not holding
                                             // a placeholder value of any kind
     let new_state = match old_state {
@@ -352,7 +369,7 @@ fun authenticate(session: &mut Session, token: String) {
 
 No placeholder is ever needed, because the row can represent "no value here at all" as
 a first-class static fact. A likely additional benefit, not fully worked out here: if
-the transformation panics between the two lines, the residual `view` (`record { host:
+the transformation panics between the two lines, the residual `view` (`{ host:
 String }`) is an ordinary, fully-valid value — dropping it should fall out of the same
 field-composition Drop rule this RFC already relies on.
 
@@ -383,13 +400,13 @@ fn build() -> BigConfig {
 struct BigConfig { a: A, b: B, c: C }
 
 fun build() -> BigConfig {
-    let partial = record { a: compute_a() };
-    let partial = record { ..partial, b: compute_b() };  // if this panics, `partial` is an
-                                                            // ordinary, fully-valid record
-                                                            // { a: A } — dropped through the
-                                                            // same safe machinery as any
-                                                            // other value, no manual cleanup
-    let partial = record { ..partial, c: compute_c() };
+    let partial = { a = compute_a() };
+    let partial = { ..partial, b = compute_b() };  // if this panics, `partial` is an
+                                                   // ordinary, fully-valid record
+                                                   // { a: A } — dropped through the
+                                                   // same safe machinery as any
+                                                   // other value, no manual cleanup
+    let partial = { ..partial, c = compute_c() };
     BigConfig::from_record(partial)   // only typechecks once the row exactly matches
                                        // BigConfig's full shape — assume_init()'s runtime
                                        // assertion, made a compile-time fact instead
@@ -403,8 +420,8 @@ call site, or reaches for unsafe pointer-cast tricks. This is exactly the motiva
 behind Rust's own (still unshipped, as of writing) "view types" proposal:
 
 ```metel
-fun drain_field<row R, name: Symbol, T>(s: &mut record { name: T | R })
-    -> (T, &mut record { R })
+fun drain_field<row R, name: Symbol, T>(s: &mut { name: T | R })
+    -> (T, &mut { R })
 {
     let v = move s.[name];
     (v, s)
@@ -416,7 +433,7 @@ struct Handle { fd: i32, alloc: @a Buffer }
 fun example(h: &mut Handle) {
     let view = h.to_record_mut();
     let (buf, rest) = drain_field::<_, "alloc", @a Buffer>(view);
-    // `buf: @a Buffer` and `rest: &mut record { fd: i32 }` are independently usable —
+    // `buf: @a Buffer` and `rest: &mut { fd: i32 }` are independently usable —
     // `drain_field` was written once, generically, and works unmodified for any struct
     // that derives ToRecord/FromRecord, not just Handle
 }
@@ -470,6 +487,6 @@ fun example(h: &mut Handle) {
 
 **Outcome:** *(pending)*
 **Target:** unspecified; explicitly not required for RFC-0063 §9 item 5's deadline,
-which RFC-0089 (together with RFC-0090's `record`/tier 2) already satisfies.
+which RFC-0089 (together with RFC-0090's `{ … }` former/tier 2) already satisfies.
 
 *(Decision rationale goes here when the RFC is evaluated.)*

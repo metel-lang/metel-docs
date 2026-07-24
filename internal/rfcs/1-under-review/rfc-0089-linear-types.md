@@ -4,7 +4,7 @@ title: "Linear Types"
 date: '2026-07-09'
 status: under-review
 target:
-updated: '2026-07-21'
+updated: '2026-07-24'
 ---
 
 > **New RFC, split out 2026-07-09** from `reports/substructural-types/linear-types.md`
@@ -32,7 +32,7 @@ updated: '2026-07-21'
 > `Linear`-bearing struct now needs to additionally derive `ToRecord`/`FromRecord`
 > before any of its fields can be partially consumed at all — plain structs with no
 > such derive can only be consumed as a whole. §3 is rewritten accordingly, and this
-> RFC now depends on RFC-0090 (specifically its `record` type-former and tier 2, not
+> RFC now depends on RFC-0090 (specifically its `{ … }` type-former and tier 2, not
 > tier 3 or RFC-0091's fuller automatic-downgrade extension) for the partial-
 > consumption floor — the "no dependency on structural records" claim above no longer
 > holds for that specific case, though the `Linear` aspect, lattice, and keyword sugar
@@ -45,8 +45,19 @@ updated: '2026-07-21'
 > the derived conversion for such a struct carries the source's brand, and the derive
 > emits one ordinary explicit `impl Linear` against that specific branded shape.
 > Corresponding amendment in RFC-0090 §8.
+>
+> **Revised 2026-07-24 — mechanical syntax sweep, no semantic change.** RFC-0090 dropped
+> the `record` keyword from the anonymous type-former, so every `record { … }` here is now
+> `{ … }`. This touches §3.1's branded-shape notation most visibly: the fiat-linear
+> conversion's output is now written `{ id: i64 } @ 'receipt-origin` rather than
+> `record { id: i64 } @ 'receipt-origin`, and the emitted impl targets
+> `impl Linear for { id: i64 } @ 'receipt-origin`. **The brand is doing more visual work
+> now that the keyword is gone** — `{ id: i64 }` and `{ id: i64 } @ 'receipt-origin` differ
+> only by the tag, which is exactly §3.1's point (unrelated same-shaped records carry no
+> such brand and so do not match the impl), but it is less obvious at a glance than it was.
+> No change to the mechanism.
 
-> **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `record` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
+> **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `{ … }` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 
 ## Summary
 
@@ -59,7 +70,7 @@ with mixed multiplicities (some `Linear` fields, some not) is not supported dire
 plain structs; `ToRecord` (RFC-0090) is the canonical mechanism instead — convert
 explicitly, then move fields out of the resulting record, whose type already narrows to
 reflect what remains. This is sufficient to meet RFC-0063 §9 item 5's deadline, using
-RFC-0090's `record` type-former and tier 2 rather than a bespoke mechanism invented for
+RFC-0090's `{ … }` type-former and tier 2 rather than a bespoke mechanism invented for
 Linear specifically.
 
 ---
@@ -155,7 +166,7 @@ impl Linear for Receipt {}          // explicit, forces it
 linear struct Receipt { id: i64 }   // proposed sugar for exactly the line above
 ```
 
-The keyword should stay struct-only, never extended to the `record` type-former
+The keyword should stay struct-only, never extended to the `{ … }` type-former
 (RFC-0090) — records have no declaration site to attach it to, and forcing a
 structurally-plain row to be linear "by fiat" undermines the premise that a record is
 *just* its row.
@@ -195,7 +206,7 @@ would duplicate anyway.
 that wants any of its fields partially consumed derives `ToRecord`/`FromRecord`
 (RFC-0090), converts explicitly via `.to_record()`, and moves fields out of the
 resulting record value — whose type narrows to reflect exactly which fields remain,
-because that narrowing is already part of what makes RFC-0090's `record` type-former a
+because that narrowing is already part of what makes RFC-0090's `{ … }` type-former a
 type-former at all (§2-3 there), not a new mechanism invented for this case:
 
 ```metel
@@ -203,9 +214,9 @@ type-former at all (§2-3 there), not a new mechanism invented for this case:
 struct File { fd: i64, path: String }
 
 fun close(f: File) -> String {
-    let r = f.to_record();       // record { fd: i64, path: String }
+    let r = f.to_record();       // { fd: i64, path: String }
     sys_close(r.fd);
-    let path = move r.path;      // r narrows to record { fd: i64 } — but `fd`'s
+    let path = move r.path;      // r narrows to { fd: i64 } — but `fd`'s
                                   // obligation was already satisfied by sys_close
                                   // above; nothing further needs to happen to it
     path
@@ -215,7 +226,7 @@ fun close(f: File) -> String {
 Explicit, no per-binding state tracking beyond what RFC-0090's records already need for
 their own sake, no new row-unification algorithm invented for Linear specifically.
 **This is what satisfies RFC-0063 §9 item 5's deadline** — via this RFC's `Linear`
-aspect and lattice (§1-2) plus RFC-0090's `record` type-former and tier 2
+aspect and lattice (§1-2) plus RFC-0090's `{ … }` type-former and tier 2
 (`ToRecord`/`FromRecord`), not RFC-0091's fuller automatic-downgrade extension or its
 still-open aliasing question, neither of which is required for the deadline.
 
@@ -261,9 +272,9 @@ at multiplicity `0`, outside the lattice entirely, per §1; something erased was
 runtime value to consume), but it can preserve *which specific origin* a converted value
 came from, which is the actual missing ingredient. For a struct whose `Linear` status is
 not fully explained by its own row, `ToRecord`'s derive produces a record that carries
-the source's brand rather than RFC-0090 §8's ordinarily-bare row: `record { id: i64 } @
-'receipt-origin` instead of a plain `record { id: i64 }`. The derive (RFC-0093's `emit`)
-then generates one ordinary, explicit `impl Linear for record { id: i64 } @
+the source's brand rather than RFC-0090 §8's ordinarily-bare row: `{ id: i64 } @
+'receipt-origin` instead of a plain `{ id: i64 }`. The derive (RFC-0093's `emit`)
+then generates one ordinary, explicit `impl Linear for { id: i64 } @
 'receipt-origin {}` against that exact branded shape — no new coherence primitive, no
 dynamic brand-to-aspect lookup: an explicit impl targeting one specific nominal/branded
 type is completely ordinary machinery, and the brand is what makes the target specific
@@ -368,7 +379,7 @@ decision between two different models.
 
 RFC-0063 §9 item 5 requires partial consumption to be resolved before RFC-0071/RFC-0067
 implementation begins (Phase 3 steps 1–2). §3 is what satisfies that deadline — this
-RFC's `Linear` aspect and lattice (§1-2) together with RFC-0090's `record` type-former
+RFC's `Linear` aspect and lattice (§1-2) together with RFC-0090's `{ … }` type-former
 and tier 2 (`ToRecord`/`FromRecord`). This is a real dependency on RFC-0090 that an
 earlier draft of this RFC did not have; RFC-0091's fuller automatic-downgrade extension
 and its open aliasing question remain explicitly not required for the deadline.
@@ -390,7 +401,7 @@ and its open aliasing question remain explicitly not required for the deadline.
   linearity hazard this RFC's `drop<T: !Linear>` avoids
 - RFC-0063 (Allocator Handles, accepted) — §9 item 5's deadline this RFC's §3
   satisfies, together with RFC-0090
-- RFC-0090 (Structural Records — Rows and Tiers) — the `record` type-former and tier 2
+- RFC-0090 (Structural Records — Rows and Tiers) — the `{ … }` type-former and tier 2
   (`ToRecord`/`FromRecord`) §3 depends on as the canonical partial-consumption
   mechanism; §8 there carries the corresponding amendment for §3.1's brand-carrying
   conversion

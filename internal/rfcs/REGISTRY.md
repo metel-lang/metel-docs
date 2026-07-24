@@ -48,12 +48,12 @@ the curated thematic map.
 ## Under Review (8)
 
 - **RFC-0080** — Standard Library Aspects — Clone, Deref, Send, Sync (`1-under-review` ; internal/rfcs/1-under-review/rfc-0080-stdlib-aspects.md ; date 2026-07-01 ; updated 2026-07-09)
-- **RFC-0089** — Linear Types (`1-under-review` ; internal/rfcs/1-under-review/rfc-0089-linear-types.md ; date 2026-07-09 ; updated 2026-07-21)
+- **RFC-0089** — Linear Types (`1-under-review` ; internal/rfcs/1-under-review/rfc-0089-linear-types.md ; date 2026-07-09 ; updated 2026-07-24)
 - **RFC-0090** — Structural Records — Rows and Tiers (`1-under-review` ; internal/rfcs/1-under-review/rfc-0090-structural-records.md ; date 2026-07-09 ; updated 2026-07-24)
-- **RFC-0091** — Linear Records (`1-under-review` ; internal/rfcs/1-under-review/rfc-0091-linear-records.md ; date 2026-07-09 ; updated 2026-07-21)
+- **RFC-0091** — Linear Records (`1-under-review` ; internal/rfcs/1-under-review/rfc-0091-linear-records.md ; date 2026-07-09 ; updated 2026-07-24)
 - **RFC-0099** — Dot-Separated Module Paths (`1-under-review` ; internal/rfcs/1-under-review/rfc-0099-dot-separated-module-paths.md ; date 2026-07-13 ; updated 2026-07-14)
 - **RFC-0100** — Constructor-Call Construction (`1-under-review` ; internal/rfcs/1-under-review/rfc-0100-constructor-call-construction.md ; date 2026-07-13 ; updated 2026-07-24)
-- **RFC-0109** — Self-View Narrowing and Reference-Destructuring Patterns (`1-under-review` ; internal/rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md ; date 2026-07-18 ; updated 2026-07-21)
+- **RFC-0109** — Self-View Narrowing and Reference-Destructuring Patterns (`1-under-review` ; internal/rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md ; date 2026-07-18 ; updated 2026-07-24)
 - **RFC-0113** — Context Parameters (`1-under-review` ; internal/rfcs/1-under-review/rfc-0113-context-parameters.md ; date 2026-07-21 ; updated 2026-07-21)
 
 ## Accepted (9)

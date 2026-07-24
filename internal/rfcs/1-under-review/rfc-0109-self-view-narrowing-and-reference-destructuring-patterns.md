@@ -4,7 +4,7 @@ title: "Self-View Narrowing and Reference-Destructuring Patterns"
 date: '2026-07-18'
 status: under-review
 target:
-updated: '2026-07-21'
+updated: '2026-07-24'
 ---
 
 > **Paper-only territory, more so than most drafts in this cluster.** This RFC's
@@ -15,7 +15,7 @@ updated: '2026-07-21'
 > lands, the same footing RFC-0091 (Linear Records) already stands on. Amends RFC-0044
 > (Explicit Receiver Semantics) — precedent for amending it already exists (RFC-0067a
 > did so for reference types). Depends on RFC-0090 (Structural Records) for the
-> `record { ... }` vocabulary and RFC-0091 (Linear Records) for the `(row,
+> `{ ... }` vocabulary and RFC-0091 (Linear Records) for the `(row,
 > brand)` representation §4 reuses directly.
 >
 > **Revised 2026-07-18, later the same day.** §4 rewritten: the inline `self: &record
@@ -33,8 +33,25 @@ updated: '2026-07-21'
 > with independent `&`/`&mut` modes per slot, checked pairwise-disjoint via §4.4 and
 > unpacked in the body via ordinary `Pattern::Tuple` — no new grammar, no new
 > mutability axis, just composing mechanisms already specified elsewhere in this RFC.
+>
+> **Revised 2026-07-24 — mechanical syntax sweep, plus one finding.** RFC-0090 dropped the
+> `record` keyword from the anonymous type-former, so every `record { … }` here is now
+> `{ … }`. The §4 revision note above is left quoting the original `self: &record { field:
+> Type }` spelling, since it is describing what the first draft said.
+>
+> **The finding, which is this RFC's problem more than any other's: `&mut { … }` now means
+> two different things in this document.** §3's reference-destructuring *pattern*
+> (`let &mut { golden_tickets, bars } = h;`) and a *type* naming a reference to an
+> anonymous record (`fun release(view: &mut { path: String })`, RFC-0091 §2.3) are now
+> spelled alike. Pattern position and type position are disjoint nonterminals, so nothing
+> is ambiguous to the parser, and in practice the two read differently — a pattern lists
+> bare labels, a type gives each label a type. But this is a **third** instance of the
+> same cost RFC-0090's open question 13 records for closed-types-versus-bounds: dropping
+> the keyword moved disambiguation from a token to a position. Worth naming here because
+> RFC-0109 is the one RFC that uses both forms heavily and side by side, so if the cost
+> ever bites in practice, it bites here first.
 
-> **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `record` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
+> **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `{ … }` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 
 ## Summary
 
@@ -106,7 +123,7 @@ Two more gaps, found by checking the actual source rather than assuming:
   whichever RFC ends up as struct patterns' primary owner — RFC-0071 or a follow-up,
   not re-litigated here.
 - **RFC-0091's `drain_field` already gestures at this but only for one field at a
-  time**, and asymmetrically — `(T, &mut record { R })` returns an *owned value* plus
+  time**, and asymmetrically — `(T, &mut { R })` returns an *owned value* plus
   *one* remainder reference, not two symmetric live references over a genuine row
   partition. Rust's motivating case (read `bars` while mutating `golden_tickets`,
   neither owned/moved out, both alive) needs a real N-way split, not a single-field
@@ -182,10 +199,10 @@ fun rebalance(h: &mut Handle) {
 ```
 
 `&mut { fields }` (and its shared counterpart `& { fields }`) is a pattern, not an
-expression — it never produces an intermediate `record` value at all, it directly
+expression — it never produces an intermediate record value at all, it directly
 splits the incoming `&mut Handle`/`&Handle` into one reborrow per named field, each
 typed `&mut FieldType` / `&FieldType`. This is deliberately **not** built on RFC-0090's
-`to_record_mut()` — going through an intermediate `record {...}` value would force a
+`to_record_mut()` — going through an intermediate `{...}` value would force a
 tier-2 `ToRecord`/`FromRecord` derive requirement onto every struct that wants to use
 this pattern, which is disproportionate to what the pattern actually needs (structural
 field access, already legal on any struct via ordinary `.field` syntax; this just does
@@ -312,7 +329,7 @@ needing their own rule:
   narrowed method calls, or as two bindings produced by §3's destructuring pattern —
   exactly when their brands match and their field-name sets don't intersect. This
   lets simultaneity be checked once, structurally, rather than re-derived per call
-  site the way an anonymous `record {...}` self-view would require.
+  site the way an anonymous `{...}` self-view would require.
 
 ### 4.5 Interaction with RFC-0091 Option C
 
@@ -352,7 +369,7 @@ RFC-0090 §8 states tier 2's `to_record()`/`to_record_mut()` output is bare/anon
 justified case where the derived record carries a brand because the bare row can't
 reconstruct some fact (there: `Linear`-by-fiat status). A named `view` is a second,
 differently-motivated instance of the same exception pattern: the fact the bare row
-can't reconstruct here is provenance/reversibility — an anonymous `record {
+can't reconstruct here is provenance/reversibility — an anonymous `{
 golden_tickets: Token }` has no way to widen back to `Ticketing` specifically, but a
 brand-carrying view does, for free (§4.1). Framed this way, `view` doesn't weaken §8's
 bare-by-default rule; it's the second of what the rule already anticipated could need
@@ -707,7 +724,7 @@ than leaving it a vague cross-module concern.
 
 ## Alternatives considered
 
-- **Anonymous, brandless self-views** (`self: &record { golden_tickets: Token }`,
+- **Anonymous, brandless self-views** (`self: &{ golden_tickets: Token }`,
   this RFC's own original spelling before this revision). Superseded, not merely
   rejected: it worked, but required re-deriving §4.2's ambient-typing safety argument
   from "declared inside an inherent impl" each time, gave no free reversibility or
@@ -716,7 +733,7 @@ than leaving it a vague cross-module concern.
   new type-former, reuses RFC-0091 §2.2's representation) for strictly more capability.
 - **Adopt Rust's `&{a, b}` sigil syntax directly**, instead of a `view` declaration.
   Rejected: it would be a second, unrelated way to spell "a set of field names"
-  alongside the one this cluster already has (`record {...}`), for no expressiveness
+  alongside the one this cluster already has (`{...}`), for no expressiveness
   gain, and it has no natural resting place for a brand the way a named declaration
   does.
 - **A dedicated `split_record_mut<R1, R2>()` primitive**, instead of a pattern, for §3.
