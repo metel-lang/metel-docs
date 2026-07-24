@@ -83,10 +83,13 @@ updated: '2026-07-24'
 > builder's whole point is that `R` carries `host` and whatever else besides. The negative
 > bound takes no `..`, since absence has no rest to quantify over.
 >
-> **One thing in §2.3 this still leaves wrong, deliberately:** `RequestBuilder<R + "auth">`
-> — a row *operation* using a string literal in type position, the same gap `HasField`
-> had. That is RFC-0090's new open question 14, which covers `without`/`+` as a class; it
-> needs a design, not a sweep, so it is not fixed here.
+> **`RequestBuilder<R + "auth">` fixed later the same day, via RFC-0090 §2.1's resolution
+> of open question 14.** Row extension turns out to need no operator: it is
+> `RequestBuilder<{ ..R, auth: String }>`, this cluster's own spread tail, with the label
+> written where labels are normally written. The string literal was only ever there
+> because an infix operator had nowhere else to put the name. Removal — the other half of
+> that question — becomes a where-clause decomposition, which this RFC does not currently
+> use anywhere.
 >
 > **Note the `_` in `!{ auth: _ }` is itself not yet buildable** — a type-position
 > wildcard does not exist (`_` appears only in `pattern`), tracked as RFC-0090 open
@@ -349,7 +352,7 @@ exactly once — RFC-0090 §4's "builders, in the dual direction" claim:
 struct RequestBuilder<row R> { data: { host: String, ..R } }
 
 impl<row R: !{ auth: _ }> RequestBuilder<..R> {
-    fun with_auth(self, token: String) -> RequestBuilder<R + "auth"> {
+    fun with_auth(self, token: String) -> RequestBuilder<{ ..R, auth: String }> {
         RequestBuilder { data: { ..self.data, auth = token } }
     }
 }
@@ -498,6 +501,48 @@ fun example(h: &mut Handle) {
 3. §2.1's aliasing-question answer needs a real soundness argument, not just
    unbroken worked examples — tracked as the primary blocker on treating Option C as
    ratified.
+4. **New, 2026-07-24. Does Metel want *label polymorphism* — being generic over which
+   field, not just over the rest of the row?** §5's `drain_field` assumes it and is the
+   only construct in the corpus that does:
+
+   ```metel
+   fun drain_field<row R, name: Symbol, T>(s: &mut { name: T, ..R }) -> (T, &mut { ..R })
+   { let v = move s.[name]; (v, s) }
+   ```
+
+   **Three separate things here do not exist**, checked directly against `grammar.pest`:
+
+   - **`Symbol` is not a kind.** The only `Symbol` in the corpus is RFC-0059's
+     compiler-internal `SymbolId`, unrelated. Nothing defines a label kind.
+   - **`name: Symbol` does not even mean what it looks like.**
+     `generic_param = { ident ~ (":" ~ bound_list)? }`, so it parses as "type parameter
+     `name`, bounded by an aspect called `Symbol`" — a *type* variable, not a label. It
+     gets a valid-but-wrong reading rather than an error. Note the inconsistency sitting
+     in the same parameter list: `<row R>` marks a non-type kind with a **prefix
+     keyword**, the pattern this cluster settled on; `<name: Symbol>` tries to mark one in
+     bound position.
+   - **`s.[name]` does not parse.** `postfix` accepts `.0`, `.ident`, `.ident(…)`,
+     `[expr]` and `?`. There is no `.[` form, and bare `[expr]` is the runtime index
+     operator, not a compile-time label projection.
+
+   **This is not settled by RFC-0090 §2.1's resolution of row algebra, and the distinction
+   matters.** That resolution retires the need for a label *literal* — extension writes
+   the label inside a row literal, removal names both halves in an equation. It does not
+   provide label *polymorphism*: `where R = { name: T, ..Rest }` still leaves `name`
+   ranging over labels. `drain_field` needs the stronger capability, independently.
+
+   **What it would cost:** a label kind (spelled as a prefix keyword, to match `row`), a
+   label literal, a record-index-by-label expression form, and typing rules for all three.
+   Precedented — PureScript types `Record.delete` as
+   `IsSymbol l => Row.Cons l a r1 r2 => Proxy l -> Record r2 -> Record r1`, and Haskell's
+   `row-types` is the same shape — but it is the heavy end of row polymorphism, and the
+   part Elm dropped.
+
+   **What is at stake if the answer is no:** `drain_field` either specialises per field
+   (`drain_alloc`, `drain_token`) or goes away, and **RFC-0109's Motivation needs
+   editing** — it cites the generic `drain_field<row R, name, T>` as the "reusable half"
+   that records give and Rust's view types cannot, so it is load-bearing for that RFC's
+   argument, not merely an illustration.
 
 > **Update 2026-07-18:** RFC-0109 (Self-View Narrowing and Reference-Destructuring
 > Patterns) reuses this RFC's `(row, brand)` residual representation directly for a

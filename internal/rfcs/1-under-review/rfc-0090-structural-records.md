@@ -227,6 +227,84 @@ an ordinary type is:
   ..R }) -> f64`. Consistent with the pattern this cluster already uses everywhere —
   open/generic behavior is an explicit declared parameter; concrete use stays closed.
 
+### 2.1 Row algebra: extension is a literal, removal is a decomposition
+
+*Added 2026-07-24, resolving open question 14.* Earlier drafts of this cluster wrote row
+extension and removal as infix operations over a row variable — `R + "auth"`,
+`R without "token"` (RFC-0091 §2.3, and §4's typestate example below). Neither parses:
+both put a **string literal in type position**, the same gap that killed
+`HasField<"x", f64>` on 2026-07-23, and `without` is a bare word that is not a keyword.
+Neither has a specified precedence or arity either. The resolution is not to fix the
+operators but to observe that **only one of the two operations needed anything.**
+
+**Extension needs no syntax — it is already expressible.**
+
+```metel
+RequestBuilder<{ ..R, auth: String }>    // not: RequestBuilder<R + "auth">
+```
+
+That is §2's anonymous row former with a spread tail, which this RFC already defines. It
+is also how every row-typed language expresses extension: PureScript's
+`{ x :: Int | r }`, Koka's `<div|e>`, OCaml's `< x : int; .. >` all put the new label
+*in the row literal* rather than reaching for an operator. Writing the label where labels
+are normally written also means no label *literal* is needed — the string was only there
+because an operator had nowhere else to put the name.
+
+**Removal has no literal form, and gets a decomposition instead of a subtraction.** Name
+both halves and state how they compose:
+
+```metel
+impl<row R, row Rest> Session<..R>
+where R = { token: Token, ..Rest }
+{
+    fun authenticate(self) -> Session<..Rest> { ... }
+}
+```
+
+`Rest` *is* the row with `token` removed, because the equation says so. This is
+PureScript's approach directly — its `Prim.Row.Cons label typ tail row` class means
+exactly `row = (label :: typ | tail)`, and `Record.delete` is typed by using it
+backwards, deriving `tail` from `row`. PureScript reaches for a constraint rather than an
+operator despite having the most mature row system in production use, which is the
+strongest available evidence that the operator is the optional part.
+
+**Three things this buys beyond parsing:**
+
+- **The equation subsumes the bound.** `where R = { token: Token, ..Rest }` already
+  implies `R: { token: Token, .. }`, so the impl above needs no separate bound — it is
+  strictly more informative, since it also names what is left.
+- **`=` is the correct separator, not a coincidence.** It *equates* two rows, per
+  `reports/syntax/colon-classifies-equals-defines.md`. It is also the same shape as
+  `assoc_binding` (`Deref<Target = Node>`), an equation that already lives in this exact
+  channel — so this is a second instance of an existing pattern, not a new one.
+- **No label kind is required.** The alternative — an Ur/Web-style `R -- #token` with a
+  `#label` literal — needs a label kind, a label literal, and typing rules for both. See
+  RFC-0091's open question on label polymorphism for the one construct that *does* still
+  want that machinery, independently of this resolution.
+
+**Costs, stated plainly.** It is verbose: every removal needs a second row variable and a
+`where` clause, and the typestate examples grow. If the cluster ends up doing a lot of row
+arithmetic, that verbosity compounds and an operator starts to look better — this
+resolution should be revisited if removal ever appears in more than a handful of places.
+Worth weighing against the one direct experiment in whether a language should have these
+at all: **Elm shipped record extension and restriction and then withdrew both**, keeping
+only update and open-row annotations, on complexity-versus-benefit grounds. (Recalled
+rather than verified — confirm the version before citing it as precedent.) Today this
+cluster has exactly two sites, one of which dissolves into a row literal.
+
+**The grammar change, precisely.** `where_constraint = { ident ~ ":" ~ bound_list }`
+(`grammar.pest:117`) accepts only bounds. It needs a row-equation alternative:
+
+```
+where_constraint = { row_equation | ident ~ ":" ~ bound_list }
+row_equation     = { ident ~ "=" ~ type_expr }
+```
+
+The equation's subject stays a bare identifier. That is **not** a violation of §2's
+"`..` marks every row use" rule: the `where` subject is a *binder reference*, the same
+slot `where T: Display` occupies, not a use in type position. The right-hand side is an
+ordinary type, so `..Rest` inside it is marked as usual.
+
 ---
 
 ## 3. Recommended build order
@@ -249,8 +327,8 @@ row, and RFC-0036's conditional impl blocks generalize directly from aspect cond
 to row-shape conditions:
 
 ```metel
-impl<row R: { token: Token, .. }> Session<..R> {
-    fun authenticate(self) -> Session<..(R without "token")> { ... }
+impl<row R, row Rest> Session<..R> where R = { token: Token, ..Rest } {
+    fun authenticate(self) -> Session<..Rest> { ... }
 }
 
 impl<row R: !{ token: _ }> Session<..R> {
@@ -279,7 +357,7 @@ decisive.
   API tracks it exactly.
 - **Builders, in the dual direction.** Consumption removes a field from a row;
   building one up adds one. A config builder where `.with_timeout()` requires
-  `R: !{ timeout: _ }` and returns `R + "timeout"` prevents setting the same field
+  `R: !{ timeout: _ }` and returns `{ ..R, timeout: Duration }` prevents setting the same field
   twice, at compile time.
 
 **What it costs, beyond §7's general row-polymorphism costs:**
@@ -737,7 +815,9 @@ this idea, specified in RFC-0091, not here.
     **Widened again 2026-07-24 by the `..` marker.** Three more pieces: a row entry may
     now be `..` alone or `..R`, so the row-body rule needs a tail alternative; `<..R>` must
     be accepted as a generic *argument* while `<row R>` remains the *parameter* form; and
-    the `..` must not be confused with `range_op = { "..=" | ".." }`. That last one is
+    the `..` must not be confused with `range_op = { "..=" | ".." }`; and (§2.1,
+    2026-07-24) `where_constraint` needs a `row_equation` alternative so a where-clause
+    can equate a row variable to a row rather than only bound it. That third one is
     checked and clean — `range_expr = { add_expr ~ (range_op ~ add_expr)? }` requires a
     left operand, so no prefix `..` exists in expression position, and rows are type
     position regardless. Prefix `..` in a *record value* (`{ ..partial, b = 1 }`) is the
@@ -755,15 +835,19 @@ this idea, specified in RFC-0091, not here.
     of the three sub-questions lapse with it; the third — *does any position admit both
     readings?* — is answered rather than lapsed: with the marker present they are
     different token sequences, so no position can admit both.
-14. **New, 2026-07-24. Row-level operations still use the string-literal-in-type-position
-    form that the 2026-07-23 amendment retired for bounds.** §4 writes
-    `Session<..(R without "token")>` and `returns R + "timeout"` — `without` and `+` as
-    row operators taking a string literal, which `type_expr` cannot parse for exactly the
-    reason `HasField<"x", f64>` could not. The `..` marker forced explicit parentheses
-    around the operation (`..(R without "token")`) to keep its extent unambiguous, which
-    makes the underlying problem more visible without addressing it. Needs its own pass:
-    a label is not a string, and these operators have no specified precedence, arity, or
-    grammar.
+14. ~~Row-level operations still use the string-literal-in-type-position form that the
+    2026-07-23 amendment retired for bounds.~~ **Resolved 2026-07-24 in new §2.1, by
+    removing the operators rather than fixing them.** `R + "auth"` and
+    `R without "token"` both put a string literal in type position — the exact gap that
+    killed `HasField<"x", f64>` — and `without` was never a keyword. Neither is replaced
+    by a working operator: **extension turns out to need no syntax at all**
+    (`{ ..R, auth: String }`, this RFC's own spread tail, which is also how PureScript,
+    Koka and OCaml express it), and **removal becomes a decomposition** stated as a
+    where-clause equation (`where R = { token: Token, ..Rest }`), following PureScript's
+    `Prim.Row.Cons` rather than Ur/Web's `--` operator. One grammar addition
+    (`row_equation` as a `where_constraint` alternative); no label literal, no label kind,
+    no new operators. §2.1 records the cost — verbosity, one extra row variable per
+    removal — and the condition under which to revisit it.
 
 ---
 
@@ -796,8 +880,8 @@ println("mag = ${magnitude(ScreenPos { x: 3.0, y: 4.0, z_index: 1 })}");
 ```metel
 struct Session<row R> { data: { ..R } }
 
-impl<row R: { token: String, .. }> Session<..R> {
-    fun authenticate(self) -> Session<..(R without "token")> { ... }
+impl<row R, row Rest> Session<..R> where R = { token: String, ..Rest } {
+    fun authenticate(self) -> Session<..Rest> { ... }
 }
 
 impl<row R: !{ token: _ }> Session<..R> {
