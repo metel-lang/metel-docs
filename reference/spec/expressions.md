@@ -59,7 +59,7 @@ enum Shape {
 }
 
 fun main() -> i64 {
-    let shape = Shape::Circle { radius: 3.0 };
+    let shape = Shape::Circle { radius = 3.0 };
     let desc: String = match shape {
         Shape::Circle { radius } => {
             let area = radius * radius;
@@ -93,7 +93,7 @@ enum Shape {
 }
 
 fun main() -> i64 {
-    let shape = Shape::Rectangle { width: 4.0, height: 2.0 };
+    let shape = Shape::Rectangle { width = 4.0, height = 2.0 };
     let x = -3;
     let point: (i64, i64) = (0, 7);
 
@@ -137,7 +137,7 @@ fun favourite() -> Colour { Green }        // return type supplies the expected 
 fun main() {
     let c: Colour = Red;                   // annotation supplies it
     paint(Blue);                           // parameter type supplies it
-    let p: Perhaps<i64> = Some { value: 5 };
+    let p: Perhaps<i64> = Some { value = 5 };
     let q: Perhaps<i64> = None;            // `None` is an ordinary variant, not a literal
 }
 ```
@@ -457,7 +457,7 @@ Field- and index-path targets keep writing through with no `*` needed — `s.fie
 struct Point { x: i64, y: i64 }
 
 fun main() -> i64 {
-    var q = Point { x: 5, y: 7 };
+    var q = Point { x = 5, y = 7 };
     let qp: &var Point = &var q;
     qp.y = 99;        // field write-through — no `*` needed
     var xs = [1, 2, 3];
@@ -485,7 +485,7 @@ extend Counter {
 }
 
 fun main() -> i64 {
-    var counter = Counter { value: 0 };
+    var counter = Counter { value = 0 };
     let p: &var Counter = &var counter;
     p.increment();    // auto-deref: equivalent to accessing through the reference directly
     p.value = 1;      // auto-deref field assign; the reference binding need not be var
@@ -527,7 +527,7 @@ extend Counter {
 }
 
 fun main() -> i64 {
-    var c = Counter { value: 0 };
+    var c = Counter { value = 0 };
     let p: &var Counter = &var c;
     let rr: &&var Counter = &p;
     rr.increment();   // auto-deref through both layers

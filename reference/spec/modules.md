@@ -84,7 +84,7 @@ Fully-qualified paths are valid anywhere a name is expected:
 import root::parser::Token;
 
 fun main() -> i64 {
-    let token: root::parser::Token = root::parser::Token { value: 42 };
+    let token: root::parser::Token = root::parser::Token { value = 42 };
     return token.value;
 }
 
@@ -106,8 +106,8 @@ import parser::*;
 import std::core;
 
 fun main() -> i64 {
-    let ast = Ast { token: Token { value: 1 } };
-    let tok: Tok = core::dbg(Token { value: 2 });
+    let ast = Ast { token = Token { value = 1 } };
+    let tok: Tok = core::dbg(Token { value = 2 });
     return ast.token.value + tok.value + parse(ast.token);
 }
 
@@ -171,7 +171,7 @@ Every module automatically has `std::core` glob-imported at the lowest priority 
 ```metel
 // No import needed — Perhaps and Result are always in scope
 fun maybe_parse(s: String) -> Perhaps<i64> {
-    if (s == "1") { return Perhaps::Some { value: 1 }; }
+    if (s == "1") { return Perhaps::Some { value = 1 }; }
     return None;
 }
 
@@ -216,8 +216,8 @@ public fun parse(tokens: Token[]) -> i64 { return tokens.len(); }
 fun helper(token: Token) -> boolean { return token.kind == 0; }
 
 fun main() -> i64 {
-    let token = Token { kind: 0, span: 1 };
-    let state = InternalState { count: 2 };
+    let token = Token { kind = 0, span = 1 };
+    let state = InternalState { count = 2 };
     if (helper(token)) { return parse([token]) + state.count; }
     return 0;
 }
