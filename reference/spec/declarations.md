@@ -146,7 +146,7 @@ fun main() -> i64 {
 
 ### Instantiation and Field Access
 
-> **Planned for v0.12.0 (RFC-0115): field initializers separate with `=`, not `:` — `Point { x = 1.0 }`; field *declarations* keep `:`.**
+> **Changed in v0.12.0: field initializers separate with `=`, not `:` — `Point { x = 1.0 }`; field *declarations* keep `:`.**
 
 ```metel
 struct Point {
