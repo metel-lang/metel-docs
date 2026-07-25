@@ -133,7 +133,7 @@ When a value of a non-`Copy` type is assigned, passed as an argument, or returne
 binding is invalid and may not be used.
 
 ```metel
-let x = Node { val: 1 };
+let x = Node { val = 1 };
 let y = x;          // x is moved into y; x is now invalid
 process(y);         // y is moved into process; y is now invalid
 ```
@@ -172,9 +172,28 @@ let z = x;   // copy again — x is still valid
 `Copy` is opt-in. The following are `Copy` by default:
 
 - Primitive numeric types (`i8`–`i64`, `u8`–`u64`, `f32`, `f64`)
-- `bool`, `char`
+- `boolean`, `Char`
 - Fixed-size arrays whose element type is `Copy`
 - Tuples whose element types are all `Copy`
+
+> **Corrected 2026-07-25:** this list said `bool` and `char`. Metel's primitives are named
+> `boolean` and `Char`; the earlier spelling names two types that do not exist.
+
+**Where each of these lives is not a free choice — measured against the implementation on
+2026-07-25:**
+>
+> - **The primitives go in `stdlib/`**, one `extend i64: Copy;` per type. Verified: a
+>   primitive is a valid `extend` target today.
+> - **Fixed-size arrays and tuples must be built into the checker for now**, and should carry
+>   a comment saying so. `extend (A, B): Copy` on a concrete tuple raises an internal error
+>   (#296), and the generic form `extend<A: Copy, B: Copy> (A, B): Copy;` is *accepted but
+>   never satisfies* — a silent no-op, which is worse. `[T; N]` would need a const-generic
+>   arity that does not exist; only literal arities parse. Both move to `stdlib/` once #296
+>   (structural impl targets, RFC-0061) lands.
+> - **Do not write `extend<T: Copy> T[]: Copy;`.** It works today and is *wrong*: `T[]` is
+>   the dynamic, `Rc`-backed array, so a "copy" would duplicate the handle and silently alias
+>   one buffer. Only fixed-size arrays are `Copy`, exactly as this section says. (Noted
+>   because the one array form stdlib can express is the one that must not be written.)
 
 Structs and enums are not `Copy` unless explicitly declared. A type may implement `Copy`
 only if all its fields (for structs) or all payload types (for enum variants) are `Copy`;
@@ -199,13 +218,13 @@ dropped — either by going out of scope or by an explicit `drop` call (§6).
 struct Handle { fd: u64 }
 
 extend Handle: Drop {
-    fun drop(self: Handle) {
+    fun drop(self) {
         close_fd(self.fd);
     }
 }
 
 {
-    let h = Handle { fd: open("file.txt") };
+    let h = Handle { fd = open("file.txt") };
     use_handle(&h);
 }   // h goes out of scope; Handle::drop runs automatically
 ```
@@ -266,7 +285,7 @@ are unreachable before the bulk free, preventing use-after-free at the drop site
 A value may be dropped before the end of its scope with the free function `drop`:
 
 ```metel
-let handle = Handle { fd: open("file.txt") };
+let handle = Handle { fd = open("file.txt") };
 use_handle(&handle);
 drop(handle);   // destructor runs here; handle is invalid from this point
 ```
@@ -282,7 +301,7 @@ Moving out of a struct field leaves the containing value **partially moved**. A 
 moved value may not be used as a whole; only the remaining un-moved fields may be accessed:
 
 ```metel
-let p = Pair { a: String { … }, b: 42i64 };
+let p = Pair { a = String { … }, b = 42i64 };
 let s = p.a;   // p.a moved out; p is partially moved
 let n = p.b;   // p.b moved out; p is now fully consumed
 // p itself cannot be used as a whole at any point after the first partial move
@@ -292,7 +311,7 @@ A struct implementing `Drop` may not be partially moved — the destructor requi
 to the complete value. The compiler rejects partial moves of `Drop` types:
 
 ```metel
-let h = Handle { fd: open("file.txt"), tag: 1u64 };
+let h = Handle { fd = open("file.txt"), tag = 1u64 };
 let fd = h.fd;   // compile error — Handle implements Drop; partial move not allowed
 ```
 
@@ -331,6 +350,19 @@ essentially unbuilt work with a real dependency order between the pieces:
 design. **§9a's rules for tuples, arrays and enum payloads are in #293.** #293 is also the
 one v0.13.0 depends on — RFC-0117 is built on field-granularity partial-move tracking, so
 descoping it pushes RFC-0119 and the blog's short-term commitment out another release.
+
+> **Release gate: #290 must not ship without #292.** *(Recorded 2026-07-25.)* #290 declares
+> the `Drop` aspect and enforces its eligibility rules, but destructor *invocation* is #292.
+> Between them, `extend Handle: Drop { fun drop(self) { … } }` compiles and the destructor
+> **never runs** — a feature that looks functional and silently does nothing, which is the
+> failure mode this project has already hit twice elsewhere.
+>
+> This is acceptable only because both issues target **v0.12.0**, so the gap exists on
+> `develop` and never in a release. **If #292 slips out of v0.12.0, #290 must gain a
+> rejection for `Drop` impls before release** rather than shipping them inert. The same does
+> not apply to `Copy`: declaring it changes no runtime behaviour either way, since the
+> evaluator already duplicates every value — its observable effect is that `T: Copy` bounds
+> begin to resolve.
 
 ---
 
