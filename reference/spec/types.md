@@ -206,9 +206,17 @@ owner:
 - **No inherent methods.** Two unrelated modules could otherwise write conflicting methods
   for the same shape with no principled way to choose between them.
 - **No implementations of a non-local aspect**, by the other direction of that rule. An
-  aspect local to the current module may be implemented for a record.
+  aspect local to the current module may be implemented for a record — but see the note
+  below: that is not available yet.
 - **No custom `Drop`.** `Drop` is a standard-library aspect and never local to ordinary
   user code, so teardown logic belongs to nominal types only.
+
+> **Not available in v0.12.0: implementing a local aspect for a record.** `extend { w: i64 }:
+> MyAspect { … }` does not work. This is not specific to records — `extend` on a tuple or an
+> array target fails the same way; implementations for structural types are not built yet.
+> Until they are, **a record satisfies no aspect that requires an implementation**, so a
+> record cannot be printed, compared, or passed where any such bound is required.
+> Auto-derived aspects are unaffected. Tracked as issue #296.
 
 ### Projection
 
