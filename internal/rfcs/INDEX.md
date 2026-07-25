@@ -123,6 +123,19 @@ was found and reconciled, and where this session did most of its work.
 Listed in dependency order. Each can be reviewed and accepted independently once the ones
 above it are.
 
+- **RFC-0124** *(draft, opened 2026-07-25)* — Sequence Types: Fixed Arrays, Slices, and the
+  Growable List — finishes the split RFC-0054 started. RFC-0054 gave growth to `List<T>` and
+  called `T[]` "the immutable/read-only array type", a view; the implementation never
+  followed, so `T[]` is mutable, owns its buffer, and is deep-copied on every binding.
+  Proposes `[T; N]` as the fixed value type, `T[]` as a borrowed `Copy` slice owning nothing,
+  and `List<T>` as the sole owner — the split Rust, Zig and C++ all converge on for a
+  no-GC ownership-tracked language. **Opened because #290 cannot decide whether `T[]` is
+  `Copy`**: as a view it must be, as an owning buffer it must not, and the corpus asserts
+  both. Also removes the deep-copy-on-binding that RFC-0071's move semantics exist to
+  eliminate, and narrows RFC-0122's cloning-evaluator question. Migration is real — array
+  literals change type — but measured: `stdlib/` has zero index-assignments through a
+  sequence and the test corpus has seventeen.
+
 - **RFC-0123** *(draft, opened 2026-07-24)* — Field-Wise Row Constraints — a constraint
   applying an aspect to **every field of a row** rather than to the row's type
   (`extend<row R> { ..R }: Display where all R: Display`). Opened after noticing that two
