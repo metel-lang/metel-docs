@@ -208,6 +208,15 @@ fun render<record T: Show + { x: f64, .. }>(p: T) -> String { ... }
 corpus uses the word only in comments) and unavoidable regardless: RFC-0120 needs the same
 reservation for `record X { … }`, so taking it now costs one break rather than two.
 
+**The reservation is wider than that one example, as reservations always are.** Once `record`
+is a keyword it is unusable as *any* identifier — a `let` binding, a function name, a struct
+field name, a record field label. Measured 2026-07-25 against the implementation: this
+matches `struct` and `extend` exactly, so it is the language's normal keyword behaviour and
+not a new class of breakage. (Not every keyword-ish word is reserved — `aspect`, for
+instance, is still usable as a struct field name.) Worth stating precisely, because
+"`let record = 5` stops compiling" understates it: a domain model with a `record:` field also
+stops compiling.
+
 `record` is free as a keyword: checked against `grammar.pest` (not currently reserved) and
 against `stdlib/` and the test corpus (one occurrence, in a comment). No rename is needed,
 unlike RFC-0098's `var`/`std::env::var` collision.
@@ -251,7 +260,15 @@ hold for `{ x: f64, y: i64 }`, since a two-field record does not satisfy a close
 bound. That is plainly not the intent, and the distinction is invisible until someone writes
 a wider record, so it is fixed here rather than left to the implementation.
 
-**Negative bounds take no `..`**: absence has no rest to quantify over.
+**Negative bounds take no `..`**: absence has no rest to quantify over. `!{ x, .. }` is a
+**parse error**, not a no-op — the checker would otherwise ignore the `..` silently, and
+syntax that is accepted but meaningless tends to acquire a meaning later by accident.
+
+**The empty bound `{ }` is legal and means "a record with no fields at all"** — the closed
+reading of an empty label set, satisfied only by `{ }`. It falls out of the grammar rather
+than being designed, and it is harmless and consistent (closed bounds require an exact label
+set; the empty set is a set), so it is admitted rather than special-cased. Note this is *not*
+the same as the rejected `{ .. }`, which would mean "any row at all" — see open question 2.
 
 ## 2a. A field may omit its type, in either polarity
 
