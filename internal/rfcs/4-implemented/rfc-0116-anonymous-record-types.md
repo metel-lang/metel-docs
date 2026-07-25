@@ -2,11 +2,11 @@
 id: rfc-0116
 title: "Anonymous Record Types"
 date: '2026-07-24'
-status: integrated
+status: implemented
 target:
-updated: '2026-07-24'
+updated: '2026-07-25'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/288'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Extracted from RFC-0090 (Structural Records — Rows and Tiers) on 2026-07-24**, which
@@ -72,6 +72,8 @@ impl_status: not-started
 > impossible.
 
 > **Status — integrated (2026-07-24).** Anonymous Records section merged into public/reference/spec/types.md after Tuples; two availability markers. Cross-checked against RFC-0115/0118/0071/0114. Grammar feasibility verified by prototype (755 tests green, reverted).
+
+> **Status — implemented (2026-07-25).** Anonymous record types shipped in v0.12.0 (#288, merged e1c0492). Type-former, literals, punning, single projection in expression and type position, structural identity with canonical label sorting, exactness, patterns, Send/Sync composition, and the impl-rejection rules. Two limits recorded in the RFC rather than closed: no local-aspect impls on records (blocked on #296, which affects every structural target) and no impl-based aspect satisfaction at all as a consequence.
 
 ## Summary
 

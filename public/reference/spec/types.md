@@ -146,7 +146,7 @@ fun main() -> i64 {
 
 ## Anonymous Records
 
-> **Planned for v0.12.0 (RFC-0116): an anonymous, exact-shape product type written in bare braces.**
+> **Availability:** Since v0.12.0.
 
 A record is a product type whose components are *labelled*, where a tuple's are positional.
 It is written in bare braces, with no keyword:
@@ -227,9 +227,9 @@ it from a struct literal:
 Handle.{ fd }           // the type: Handle's row, narrowed to `fd`
 ```
 
-> **Planned for v0.12.0 (RFC-0116): a bare identifier inside projection braces is always a field label.**
-
-Chained projection (`S.{ a }.{ b }`) and projection in pattern position are not accepted.
+A bare identifier inside projection braces is always a **field label**, never a type or a
+row variable. Chained projection (`S.{ a }.{ b }`) and projection in pattern position are not
+accepted.
 
 ## Arrays
 
@@ -560,7 +560,7 @@ fun main() -> i64 {
 
 ### Row bounds
 
-> **Planned for v0.12.0 (RFC-0118): a bound may be a bare row, constraining a type by the fields it carries rather than by an aspect.**
+> **Availability:** Since v0.12.0.
 
 A bound written as a row accepts any type carrying at least the listed fields:
 
@@ -597,8 +597,6 @@ fun tag<record T: !{ id: String }>(t: T) -> i64 { … }    // no `String`-typed 
 
 Note the second form is satisfied by a record whose `id` is an `i64` — it does not have a
 `String` `id`. Write `!{ id }` for "no `id` of any type".
-
-> **Planned for v0.12.0 (RFC-0118): a row bound is satisfied by a record; a `struct` does not satisfy one, whatever its fields.**
 
 **A row bound is satisfied by a record, not by a nominal struct.** The `record` marker on the
 type parameter says so at the declaration; a bare `<T: { … }>` is an error.
@@ -666,8 +664,6 @@ by choosing the `record` kind. Nothing is implicit in either direction.
 | `enum` | yes, with an impl | yes, with an impl | **no** — sums, not products |
 | anonymous record | **no** — see below | yes, with an impl | yes |
 | `record X` (named) | yes, with an impl | yes, with an impl | yes |
-
-> **Planned for v0.12.0 (RFC-0116): an anonymous record cannot implement a non-local aspect, so it satisfies no standard-library aspect bound.**
 
 An anonymous record has no owning module, so the orphan rule permits an implementation only
 for an aspect local to the implementing module. Every standard-library aspect is non-local,

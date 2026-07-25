@@ -2,11 +2,11 @@
 id: rfc-0118
 title: "Row Bounds"
 date: '2026-07-24'
-status: integrated
+status: implemented
 target:
-updated: '2026-07-24'
+updated: '2026-07-25'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/289'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Extracted from RFC-0090 on 2026-07-24** (superseded; see RFC-0116's header for the
@@ -100,6 +100,8 @@ impl_status: not-started
 >
 > The last two came out of challenges during the readiness review rather than from my own
 > cross-check, which is the more useful fact to record.
+
+> **Status — implemented (2026-07-25).** Row bounds shipped in v0.12.0 (#289, merged 24b858e). Open/closed bounds, the trailing .., label-only fields, negative bounds as per-field absence, the record kind marker at the parameter or in a where clause, and the bound-less <record T> form. The type-position wildcard was withdrawn during implementation. Useful over record literals only until RFC-0119 lands conversions; the RFC records that.
 
 ## Summary
 
