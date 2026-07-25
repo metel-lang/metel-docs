@@ -227,17 +227,29 @@ all. The named form `..R` (RFC-0121) is the same mechanism with the rest given a
 
 ## 2. Negative bounds
 
-**A negative bound is the complement of the positive one.** `!` already means "does not
-satisfy" everywhere else in the bound grammar — `T: !Copy` is "T does not implement `Copy`" —
-so `T: !{ x: f64 }` is "T does not satisfy `{ x: f64 }`", satisfied when `x` is absent **and**
-when `x` is present at some other type. Reuses `bound = { bang? ~ bound_head }` unchanged.
+`!` already means "does not satisfy" everywhere else in the bound grammar — `T: !Copy` is
+"T does not implement `Copy`". A negative row bound is the same idea applied to each named
+field. Reuses `bound = { bang? ~ bound_head }` unchanged.
 
-That reading is worth stating outright because it will surprise someone:
+**The precise rule: `!{ … }` holds when the record has no field matching *any* of the listed
+entries.** An entry matches when the label matches and, if a type is written, the field's
+type is that type.
 
 ```metel
-record T: !{ x: f64 }    // satisfied by a record with `x: i64` — it does not have an f64 x
-record T: !{ x }         // satisfied only when there is no `x` at all
+record T: !{ x: f64 }    // holds unless T has an `x` of type f64
+record T: !{ x }         // holds unless T has an `x` at all, of any type
+record T: !{ a, b: i64 } // holds when T has no `a`, and no i64-typed `b`
 ```
+
+So `!{ x: f64 }` **is satisfied by a record whose `x` is an `i64`** — it has no `f64`-typed
+`x`. That is the surprising case and it is deliberate; `!{ x }` is the form that rejects the
+label outright.
+
+**The complement is taken per listed field, not against the row as a whole.** Reading it the
+other way — "T does not satisfy the closed bound `{ x: f64 }`" — would make `!{ x: f64 }`
+hold for `{ x: f64, y: i64 }`, since a two-field record does not satisfy a closed one-field
+bound. That is plainly not the intent, and the distinction is invisible until someone writes
+a wider record, so it is fixed here rather than left to the implementation.
 
 **Negative bounds take no `..`**: absence has no rest to quantify over.
 
