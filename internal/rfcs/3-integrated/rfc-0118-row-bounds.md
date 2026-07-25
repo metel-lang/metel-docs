@@ -43,7 +43,7 @@ impl_status: not-started
 > **The design questions that were open at review are settled, two of them by building the
 > change rather than reasoning about it.** `wildcard_type` and a `row_bound` alternative to
 > `bound_head` were added to the grammar, run against the suite (755 green), and reverted:
-> `T: { x: f64, y: f64, .. }` and `T: !{ token: _ }` both parse, `T: Show + Clone` is
+> `T: { x: f64, y: f64, .. }` and `T: !{ token: … }` both parse, `T: Show + Clone` is
 > unaffected. The prototype also settled a detail the RFC had not specified — the trailing
 > `..` is admitted only after at least one field, so bare `{ .. }` does not parse.
 >
@@ -77,11 +77,36 @@ impl_status: not-started
 
 > **Status — integrated (2026-07-24).** Row bounds merged into public/reference/spec/types.md under Generics; three availability markers. Cross-checked against RFC-0116/0115/0071 and RFC-0121 (which inherits the impl-coherence and module-relative questions). Grammar verified by prototype.
 
+> **Amended 2026-07-25, while assessing implementation readiness (#289).** Three changes,
+> all to §1/§2 and the grammar delta; the semantics of what satisfies a bound (§3) are
+> untouched.
+>
+> - **The `record` kind marker is retained**, after being proposed for deferral and the
+>   proposal withdrawn. The argument for dropping it — that a row bound already implies
+>   record-kindedness — fails on `<record T>` with *no* row bound, which is the only way to
+>   write "any record, whatever its shape" and is the signature RFC-0092's comptime row
+>   reflection needs. The kind gates what the body may do, not merely what the caller may
+>   pass. See §1.
+> - **Two forms are now specified that never were:** the row bound is optional
+>   (`<record T>` alone is valid), and `record` may be written in a `where` constraint as
+>   well as at the parameter.
+> - **The type-position wildcard `_` is withdrawn** (open question 1, reopened and closed
+>   the other way). Its 2026-07-24 resolution added `wildcard_type` to `type_expr`, which
+>   would have made `_` writable in every type position while this RFC defined it in one.
+>   Replaced by letting a row field omit its type: `{ x }` means "a label `x`, any type", in
+>   either polarity. §2 also now states that negation is the **complement** of the positive
+>   bound — consistent with `!Copy` — so `!{ x: f64 }` is satisfied by a record whose `x` is
+>   an `i64`, and `!{ x }` is the "no such label at all" form.
+>
+> The last two came out of challenges during the readiness review rather than from my own
+> cross-check, which is the more useful fact to record.
+
 ## Summary
 
 A bound written as a bare row: `record T: { x: f64, y: f64, .. }` means "any type carrying at
-least these fields." Negation reuses the bound grammar's existing `!`: `T: !{ token: _ }`
-means "any type carrying no field named `token`." **Any nominal struct with matching
+least these fields." A field may omit its type (`{ x }`) to constrain the label only.
+Negation reuses the bound grammar's existing `!` and is the complement of the positive
+bound: `T: !{ token }` means "any type carrying no field named `token`." **Any nominal struct with matching
 fields satisfies a row bound with no explicit opt-in** — this is the one implicit,
 structural satisfaction rule in an otherwise nominal aspect system, and §3 explains why
 that is safe here specifically.
@@ -202,13 +227,39 @@ all. The named form `..R` (RFC-0121) is the same mechanism with the rest given a
 
 ## 2. Negative bounds
 
-`record T: !{ token: _ }` asserts the absence of a label, reusing `bound = { bang? ~ bound_head }`
-unchanged. **Negative bounds take no `..`**: absence has no rest to quantify over, and
-`!{ token: _ }` already means "no field named `token`, whatever its type would have been."
+**A negative bound is the complement of the positive one.** `!` already means "does not
+satisfy" everywhere else in the bound grammar — `T: !Copy` is "T does not implement `Copy`" —
+so `T: !{ x: f64 }` is "T does not satisfy `{ x: f64 }`", satisfied when `x` is absent **and**
+when `x` is present at some other type. Reuses `bound = { bang? ~ bound_head }` unchanged.
 
-The `_` is a type-position wildcard meaning "any type." It **does not exist today** —
-confirmed directly: `_` appears only inside `pattern` (`Pattern::Wildcard`), nowhere in
-`type_expr`. See Open Questions.
+That reading is worth stating outright because it will surprise someone:
+
+```metel
+record T: !{ x: f64 }    // satisfied by a record with `x: i64` — it does not have an f64 x
+record T: !{ x }         // satisfied only when there is no `x` at all
+```
+
+**Negative bounds take no `..`**: absence has no rest to quantify over.
+
+## 2a. A field may omit its type, in either polarity
+
+`{ x }` in bound position means "carries a label `x`, of any type". *(Adopted 2026-07-25,
+replacing a type-position wildcard — see open question 1.)*
+
+```metel
+fun f<record T: { x, .. }>(p: T)            // has an `x`; its type is unconstrained
+fun g<record T: { x, y: f64, .. }>(p: T)    // mixed: any-typed `x`, f64 `y`
+fun h<record T: !{ token }>(t: T)           // carries no `token`, whatever its type
+```
+
+Earlier drafts spelled the any-type case `{ x: _ }`, with `_` a new type-position wildcard.
+Omitting the annotation says the same thing with no new construct, and it matches the shape
+the language already uses when a part is inferable — a record literal's `{ x }` likewise
+drops what need not be written. **The wildcard is therefore not introduced.**
+
+No ambiguity arises: a record *type* requires `ident : type` for every field
+(`record_type_field`), so a bare `{ x }` is not a well-formed type and this spelling is
+reachable only in bound position.
 
 ## 3. What satisfies a row bound: records, not structs
 
@@ -327,23 +378,39 @@ position admits both readings.
 
 ## Open Questions
 
-1. ~~The type-position wildcard `_` does not exist.~~ **Resolved 2026-07-24 by prototype.**
-   `wildcard_type = { "_" ~ !(ASCII_ALPHANUMERIC | "_") }` added to `type_expr` ahead of
-   `named_type`; the negative-guard stops it swallowing `_foo`.
-2. ~~`bound_head` needs a new alternative.~~ **Resolved 2026-07-24 by the same prototype:**
+1. ~~The type-position wildcard `_` does not exist.~~ **Closed 2026-07-25 as not needed —
+   the wildcard is withdrawn, not added.** It was resolved on 2026-07-24 by prototyping
+   `wildcard_type = { "_" ~ !(ASCII_ALPHANUMERIC | "_") }` into `type_expr`, and that
+   resolution is retracted.
+
+   **Why it was wrong:** adding the alternative to `type_expr` makes `_` writable in *every*
+   type position — `let x: _ = 5`, `fun f(x: _)`, `{ x: _ }` as a record type — while this
+   RFC defined its meaning in exactly one of them. It would have shipped a construct whose
+   semantics were undefined almost everywhere it could be written, to be settled later by
+   whoever first hit it.
+
+   **What replaces it:** a row field may simply omit its type (§2a). `{ x }` means "carries
+   a label `x`, of any type", in either polarity. Same expressiveness, no new construct, and
+   it matches the shape the language already uses where a part is inferable. A general
+   inference placeholder remains available as a separate future decision, on its own merits
+   rather than as a side effect of negative bounds.
+2. ~~`bound_head` needs a new alternative.~~ **Resolved 2026-07-24 by the same prototype**,
+   with `row_field` since amended to make the type optional (§2a):
 
    ```
    bound_head = { row_bound | type_path ~ ("<" ~ bound_arg ~ … ~ ">")? }
    row_bound  = { "{" ~ (row_field ~ ("," ~ row_field)*)? ~ ("," ~ "..")? ~ ","? ~ "}" }
-   row_field  = { ident ~ ":" ~ type_expr }
+   row_field  = { ident ~ (":" ~ type_expr)? }
    ```
 
    **Both were built, run and reverted**, rather than reasoned about:
    - **755 tests green** with both additions.
    - `fun magnitude<T: { x: f64, y: f64, .. }>(p: T)` **parses** — the failure is
      `path: unexpected rule row_field`, a missing parser arm, not a grammar conflict.
-   - `fun send<T: !{ token: _ }>(t: T)` **parses**, exercising the negative bound and the
-     new wildcard together.
+   - `fun send<T: !{ token: _ }>(t: T)` **parsed**, exercising the negative bound and the
+     then-proposed wildcard together. The wildcard has since been withdrawn (open question 1);
+     the negative-bound half of that result still stands, and the spelling is now
+     `!{ token }`.
    - `fun f<T: Show + Clone>(t: T)` still works — existing named bounds unaffected.
 
    **The prototype predates the `record` kind marker** adopted later the same day (§1), so
