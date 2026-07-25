@@ -188,8 +188,10 @@ let z = x;   // copy again — x is still valid
 >   a comment saying so. `extend (A, B): Copy` on a concrete tuple raises an internal error
 >   (#296), and the generic form `extend<A: Copy, B: Copy> (A, B): Copy;` is *accepted but
 >   never satisfies* — a silent no-op, which is worse. `[T; N]` would need a const-generic
->   arity that does not exist; only literal arities parse. Both move to `stdlib/` once #296
->   (structural impl targets, RFC-0061) lands.
+>   arity that does not exist; only literal arities parse. **The migration out of the
+>   typechecker is tracked as #299**, which records what must exist first: #296 plus
+>   RFC-0061 §6's deferred per-arity decision for tuples, and a const-generics RFC (none
+>   exists; RFC-0053 defers to it) plus RFC-0124 for arrays.
 > - **Do not write `extend<T: Copy> T[]: Copy;`.** It works today and is *wrong*: `T[]` is
 >   the dynamic, `Rc`-backed array, so a "copy" would duplicate the handle and silently alias
 >   one buffer. Only fixed-size arrays are `Copy`, exactly as this section says. (Noted
