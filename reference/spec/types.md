@@ -578,12 +578,25 @@ fun g<record T: { x: f64 }>(p: T)        // closed: T's row is exactly `x`
 fun h<record T: { x: f64, .. }>(p: T)    // open:  T has at least `x`
 ```
 
-Negation asserts a label is absent, reusing the `!` that bounds already accept. It takes no
-`..`, since absence has no rest to quantify over; `_` means "any type":
+**A field may omit its type** to constrain the label only — `{ x }` means "carries an `x`,
+whatever its type":
 
 ```metel
-fun send<record T: !{ token: _ }>(t: T) -> i64 { … }
+fun f<record T: { x, .. }>(p: T)          // has an `x` of some type
+fun g<record T: { x, y: f64, .. }>(p: T)  // any-typed `x`, `f64` `y`
 ```
+
+Negation reuses the `!` that bounds already accept, and is the **complement** of the positive
+bound — just as `!Copy` means "does not implement `Copy`". It takes no `..`, since absence
+has no rest to quantify over:
+
+```metel
+fun send<record T: !{ token }>(t: T) -> i64 { … }        // carries no `token` at all
+fun tag<record T: !{ id: String }>(t: T) -> i64 { … }    // no `String`-typed `id`
+```
+
+Note the second form is satisfied by a record whose `id` is an `i64` — it does not have a
+`String` `id`. Write `!{ id }` for "no `id` of any type".
 
 > **Planned for v0.12.0 (RFC-0118): a row bound is satisfied by a record; a `struct` does not satisfy one, whatever its fields.**
 
