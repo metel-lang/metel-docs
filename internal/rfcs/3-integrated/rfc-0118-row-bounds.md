@@ -124,11 +124,64 @@ a label-to-type mapping, spliced as `..R`. `record T` declares T to be a **recor
 used directly as `T`. Those are different kinds, and reusing one keyword for both is the
 error this cluster has spent its whole history removing.
 
+### The marker is capability-granting, not decorative
+
+*(Recorded 2026-07-25, after the marker was proposed for deferral and the proposal was
+withdrawn.)* The case for dropping it ran: a row bound is satisfiable only by a record, so
+the kind is inferable from the bound and the marker adds nothing but explicitness. **That is
+wrong, and the reason is `<record T>` with no row bound at all.**
+
+```metel
+fun labels<record T>(x: T) -> Symbol[] { ... }   // any record, whatever its shape
+```
+
+There is no other spelling for that. `<T>` is unconstrained and admits `i64`; `<T: { .. }>`
+**does not parse**, deliberately — see open question 2, where the trailing `..` is admitted
+only after at least one field. So without the marker, record-kindedness is obtainable only
+as a side effect of constraining specific fields, and a function that wants "any record"
+would have to invent a fake field constraint to get it.
+
+That case is not hypothetical. **RFC-0092 (Comptime Core) already models `TypeInfo::Struct
+{ row: Row }`** and states that the payload "is exactly what RFC-0090's row concept already
+models", with `typeinfo` inspecting the row at comptime. Label-level operations over an
+otherwise unconstrained record are a designed direction, and `<record T>` is the signature
+they need.
+
+**So the kind gates what the body may do, not merely what the caller may pass.** A row bound
+is an optional further constraint on an already-record-kinded parameter:
+
+```metel
+fun labels<record T>(x: T) -> Symbol[]                  // any record
+fun magnitude<record T: { x: f64, y: f64, .. }>(p: T)   // a record with at least x and y
+```
+
+### Where the marker may be written
+
+`record` may appear at the parameter's declaration **or** in a `where` constraint for it, the
+same way an aspect bound may be written in either place. The two are equivalent, and writing
+it in both is redundant but legal:
+
+```metel
+fun f<record T: { x: f64, .. }>(p: T) -> f64 { ... }
+fun g<record T>(p: T) -> f64 where T: { x: f64, .. } { ... }
+fun h<T>(p: T) -> f64 where record T: { x: f64, .. } { ... }   // kind declared in `where`
+```
+
+**A parameter is record-kinded iff `record` precedes its name in at least one of those two
+positions.** A row bound written for a parameter that is record-kinded in neither is the
+error this section opened with — the diagnostic should name the fix (`add `record` before
+the type parameter`) rather than just rejecting the bound.
+
 The marker composes with aspect bounds, since a *named* record may implement aspects:
 
 ```metel
 fun render<record T: Show + { x: f64, .. }>(p: T) -> String { ... }
 ```
+
+`record` is currently a valid identifier — `let record = 5;` compiles today (verified
+2026-07-25) — so reserving it is a **deliberate breaking change**. It is cheap here (the
+corpus uses the word only in comments) and unavoidable regardless: RFC-0120 needs the same
+reservation for `record X { … }`, so taking it now costs one break rather than two.
 
 `record` is free as a keyword: checked against `grammar.pest` (not currently reserved) and
 against `stdlib/` and the test corpus (one occurrence, in a comment). No rename is needed,
@@ -294,17 +347,25 @@ position admits both readings.
    - `fun f<T: Show + Clone>(t: T)` still works — existing named bounds unaffected.
 
    **The prototype predates the `record` kind marker** adopted later the same day (§1), so
-   it exercised the bare `<T: { … }>` form. One further grammar change is therefore
-   *not* yet verified: `generic_param = { ident ~ (":" ~ bound_list)? }` needs a
-   `record_kw?` prefix, and `record` needs reserving. Both are expected to be trivial —
-   `record` is unused in `grammar.pest` and appears once in the corpus, in a comment — but
-   they were not built.
+   it exercised the bare `<T: { … }>` form. **Three further grammar changes are therefore
+   not yet verified**, and they are the only unprototyped part of this RFC:
+
+   ```
+   generic_param    = { record_kw? ~ ident ~ (":" ~ bound_list)? }
+   where_constraint = { record_kw? ~ ident ~ ":" ~ bound_list }
+   record_kw        = @{ "record" ~ !(ASCII_ALPHANUMERIC | "_") }
+   ```
+
+   Note `generic_param`'s bound stays optional, which is what admits the bound-less
+   `<record T>` form §1 relies on. Reserving `record` is a deliberate breaking change —
+   `let record = 5;` compiles today — and is discussed in §1.
 
    **One detail the prototype settled that the RFC had not specified:** the rule above
-   admits the trailing `..` only *after* at least one field, so `{ .. }` alone — "any row
-   at all" — does not parse. That looks right (a bound constraining nothing is better
-   spelled by omitting the bound), but it is a decision, and it should be stated rather
-   than left to fall out of the grammar.
+   admits the trailing `..` only *after* at least one field, so `{ .. }` alone does not
+   parse. **That is now load-bearing rather than incidental:** it is precisely why the
+   `record` marker cannot be dropped, since "any record, whatever its shape" has no other
+   spelling than `<record T>` (§1). Written as a bound it would have to be `{ .. }`, which
+   the grammar rejects.
 3. ~~Cross-module private-field leakage.~~ **Withdrawn 2026-07-24 — the question does not
    arise for this RFC, and the resolution briefly recorded here is retracted.** It was
    resolved as "a bound matches the *public projection* of a type's row," which made bound

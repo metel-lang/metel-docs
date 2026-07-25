@@ -590,6 +590,21 @@ fun send<record T: !{ token: _ }>(t: T) -> i64 { … }
 **A row bound is satisfied by a record, not by a nominal struct.** The `record` marker on the
 type parameter says so at the declaration; a bare `<T: { … }>` is an error.
 
+The marker may be written at the parameter or in a `where` clause — the two are equivalent,
+and a parameter is record-kinded if either one carries it:
+
+```metel
+fun f<record T: { x: f64, .. }>(p: T) -> f64
+fun g<T>(p: T) -> f64 where record T: { x: f64, .. }
+```
+
+**The row bound is optional.** `<record T>` on its own means "any record, whatever its
+fields" — the only way to write that, since a bound of `{ .. }` alone is not accepted:
+
+```metel
+fun labels<record T>(x: T) -> Symbol[]   // any record; no constraint on its fields
+```
+
 ```metel
 magnitude({ x = 3.0, y = 4.0 });   // a record — satisfies the bound
 magnitude(some_point);             // a struct — does not
