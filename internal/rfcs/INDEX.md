@@ -123,6 +123,18 @@ was found and reconciled, and where this session did most of its work.
 Listed in dependency order. Each can be reviewed and accepted independently once the ones
 above it are.
 
+- **RFC-0125** *(draft, opened 2026-07-25)* — Variadic Generics — a type-parameter pack
+  (`<..Ts>`) so one impl covers tuples of every arity: `extend<..Ts> (..Ts): Copy where all
+  Ts: Copy;`. Supplies the design RFC-0061 §6 deferred as "no design exists", which
+  RFC-0096 §7 then inherited and #299 is now blocked on. **Bounds reuse RFC-0123's `all`
+  quantifier** rather than inventing a second one — `all Ts: A` over an ordered pack is the
+  same construct as `all R: A` over a row's fields, which makes RFC-0123 a likely dependency
+  or a candidate for lifting the quantifier out. Proposes a **two-stage** design: packs plus
+  `all` bounds first (enough for `Copy`/`Send`/`Sync`, which are marker aspects and need no
+  body), deferring body-level expansion (`Display`, `Eq`, `Clone`) where C++ and Swift both
+  accumulated their complexity. Records comptime (RFC-0092, Zig's answer) and per-arity
+  boilerplate (Rust's answer, twelve blocks × seven aspects) as the two real competitors.
+
 - **RFC-0124** *(draft, opened 2026-07-25)* — Sequence Types: Fixed Arrays, Slices, and the
   Growable List — finishes the split RFC-0054 started. RFC-0054 gave growth to `List<T>` and
   called `T[]` "the immutable/read-only array type", a view; the implementation never
