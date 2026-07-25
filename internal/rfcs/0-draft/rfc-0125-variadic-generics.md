@@ -78,16 +78,76 @@ feasibility.
 | **Zig** | none — `comptime` + `anytype` + tuple iteration | Sidesteps the feature entirely (§4) |
 | **Rust** | **none** — macros emitting per-arity impls | Discussed for a decade; never landed |
 
-**Rust is the most instructive entry.** It has the strongest motivation of any language here
-and still chose twelve-arity macro boilerplate over the feature, repeatedly, because the
-design interacts with everything: inference, coherence, error messages, and lifetime
-elision. Metel should assume the same gravity and prefer the smallest thing that solves the
-driving case.
-
 **Swift is the best syntactic model.** `each`/`repeat` reads at a glance where C++'s `...`
-requires knowing which of several expansion contexts you are in. Metel's `..` already means
-"and a rest" in row bounds (RFC-0118) and row variables (RFC-0121), so `..Ts` inherits an
-established meaning rather than importing a new sigil.
+requires knowing which of several expansion contexts you are in.
+
+### 1.1 Rust's decade of proposals, and what to take from it
+
+Rust is the most instructive entry, because it has the strongest motivation of any language
+here and *still has not shipped the feature* after discussing it since 2013. The lang team
+maintains a design note aggregating the attempts:
+<https://github.com/rust-lang/lang-team/blob/main/src/design_notes/variadic_generics.md>
+
+Four named drafts, ordered by ambition:
+
+| draft | shape | notable |
+|---|---|---|
+| **EddyB** | variadic types *are* tuples; `..` expansion; recursive head-tail destructuring | oldest and simplest — `type Tuple<..T> = T;` |
+| **Cramertj** | C++-flavoured, with a `Tuple` trait carrying `AsRefs`/`AsMuts` helpers | `impl<Head, Tail> MyTrait for (Head, ...Tail) where Tail: Tuple {}` |
+| **Fredpointzero** | adds ergonomics and imperative loops over packs, finer bound control | `struct Foo<(..T)> where ..(T: Debug)` |
+| **Jules Bertholet** | most comprehensive: lifetime *and* const variadics, MxN→NxM transforms, homogeneous varargs | explicit iteration via `static for future in futures { … }` |
+
+Their stated use cases are close to Metel's: multi-argument functions (`zip`, `join`),
+**implementing traits for tuples**, homogeneous varargs, and *macro-free `derive`*.
+
+**Five lessons, each of which changes something in this RFC.**
+
+**1. The core shape is settled; only the ergonomics are contested.** All four drafts converge
+on dots for packing and unpacking, acting on tuples to obtain variable arity. That is
+§2.1–§2.2 exactly, so this RFC is adopting a decade-old consensus rather than inventing a
+spelling. The note's own summary of what remains is "usability and 'extra' ergonomic
+functionality still requires a lot of work" — not the core.
+
+**2. The complexity gradient across the four drafts is why nothing shipped, and it is the
+argument for §3's staging.** EddyB is minimal; Bertholet adds lifetime variadics, const
+variadics and a new loop form. Each successive proposal is more capable and less likely to
+land. Rust did not fail to design variadics — it designed them four times and could not
+choose. **Staging is the mitigation**: ship the part with a caller today, defer the part
+where the gradient starts.
+
+**3. The tuple-layout blocker does not bite stage 1, and that determines the model.** The
+lang team records a critical blocker: Rust gives no layout guarantees for tuple fields, which
+limits *subsetting* operations on tuple references. That blocker is specific to head-tail
+recursion — `(Head, ...Tail)`, the EddyB and Cramertj model — because taking `Tail` by
+reference requires knowing where it starts. **This RFC therefore does not adopt head-tail
+recursion.** `all Ts: A` quantifies over the whole pack without ever forming a sub-tuple, so
+the question never arises. Metel would inherit the same blocker the moment it took the
+recursive route, and it is avoidable by construction.
+
+**4. Bertholet's `static for` is the right model for stage 2 — and it is comptime.** An
+explicit compile-time loop over the pack is far more legible than C++'s implicit expansion
+contexts, and it is *the same construct* as RFC-0092's comptime iteration. This reframes §4:
+comptime is not only an alternative to variadic generics, it is plausibly the best
+**implementation of stage 2**. The two converge instead of competing, which is worth knowing
+before either is designed further.
+
+**5. Metel's motivation for the "macro-free derive" use case is stronger than Rust's.** Rust
+falls back on macros; **Metel has no macro system at all**, so the fallback available to
+Rust — generate the boilerplate — is not available here (§5). What is a convenience for Rust
+is closer to a necessity for Metel.
+
+### 1.2 The `..` collision, checked rather than assumed
+
+The lang team notes that `..` overlaps Rust's range syntax. **Metel has the same overlap** —
+`range_op = { "..=" | ".." }` — so the concern transfers and was verified rather than waved
+away.
+
+It is nonetheless not a problem here, and the evidence is already in the language: `..`
+**already** means "and a rest" in row bounds (RFC-0118) and row variables (RFC-0121), and
+coexists with ranges today because the two occur in different grammatical positions —
+`{ x: f64, .. }` in a bound, `0..10` in an expression. A pack in a generic parameter list is
+separated the same way. So `..Ts` inherits an established meaning at no new cost, where in
+Rust the same spelling would have been a fresh collision.
 
 ---
 
@@ -202,9 +262,13 @@ Arguments against, and why this RFC exists anyway:
   question.
 - RFC-0092 is `0-draft` and larger than this RFC.
 
-**Not mutually exclusive.** Stage 1 here plus comptime for stage 2's body expansion is a
-coherent end state, and possibly the best one — recorded as open question 4 rather than
-decided.
+**Not mutually exclusive — and §1.1 lesson 4 sharpens this considerably.** Rust's most
+comprehensive draft (Bertholet) spells body-level expansion as `static for`, an explicit
+compile-time loop over the pack. That is not merely *similar* to comptime iteration; it is
+the same construct under another name. So the likely end state is not "variadics or
+comptime" but **stage 1 as type-system machinery plus comptime as stage 2's expansion
+mechanism** — which would let Metel skip the ad-hoc expansion contexts C++ accreted, and
+reuse a feature it is building anyway. Recorded as open question 4.
 
 ## 5. Considered: per-arity boilerplate (the Rust answer)
 
@@ -219,6 +283,13 @@ must stay consistent. It also caps arity arbitrarily, which C++ and Swift users 
 **For:** it needs no new language feature at all, and would unblock #299's tuple half
 immediately once #296 lands.
 
+**But note what makes Metel's position different from Rust's.** Rust chose this route and
+sustains it because `macro_rules!` generates the twelve copies from one source of truth.
+**Metel has no macro system**, so the same choice means twelve *hand-written, hand-maintained*
+copies per aspect. The option Rust actually took is not the option available here — a point
+worth making explicitly, since "Rust does per-arity impls" is otherwise a persuasive
+one-liner.
+
 **This is the real competitor to stage 1**, and the comparison is close enough that it should
 be decided explicitly rather than by default.
 
@@ -230,9 +301,12 @@ be decided explicitly rather than by default.
    RFC?** Both RFCs need it over different collections. Specifying it twice is the wrong
    answer; which document owns it is not obvious.
 2. **What is the pack spelling — `..Ts`, or Swift's `each T`?** `..Ts` matches the corpus's
-   existing use of `..` for "the rest". `each`/`repeat` is more readable at the expansion
-   site, which matters more in stage 2 than stage 1. Deciding now risks choosing for stage 1
-   and regretting it in stage 2.
+   existing use of `..` for "the rest", and all four Rust drafts converged on dots (§1.1
+   lesson 1), so it is the well-trodden choice. `each`/`repeat` is more readable at the
+   *expansion* site, which matters in stage 2 and not at all in stage 1. Deciding now risks
+   choosing for stage 1 and regretting it in stage 2 — though if stage 2 turns out to be
+   comptime `for` (§4), the expansion site may never need a sigil at all, which would settle
+   this in favour of `..Ts`.
 3. **How does a pack interact with coherence?** `extend<..Ts> (..Ts): Copy` is a blanket impl
    over an infinite family. RFC-0060's coherence pass and `coherence.rs`'s overlap check are
    built on canonicalised types with a finite head; a pack has none. This is the question most
@@ -263,6 +337,10 @@ be decided explicitly rather than by default.
   sibling question.
 - Issues #299 (blocked on this for tuples), #296 (structural impl targets must work first),
   #290 (hardcodes tuple `Copy` in the meantime).
+- **Rust lang-team design note on variadic generics** —
+  <https://github.com/rust-lang/lang-team/blob/main/src/design_notes/variadic_generics.md> —
+  aggregates the EddyB, Cramertj, Fredpointzero and Bertholet drafts, the tuple-layout
+  blocker, and the use-case list. §1.1 draws five lessons from it.
 
 ---
 

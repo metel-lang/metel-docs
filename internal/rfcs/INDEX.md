@@ -133,7 +133,13 @@ above it are.
   `all` bounds first (enough for `Copy`/`Send`/`Sync`, which are marker aspects and need no
   body), deferring body-level expansion (`Display`, `Eq`, `Clone`) where C++ and Swift both
   accumulated their complexity. Records comptime (RFC-0092, Zig's answer) and per-arity
-  boilerplate (Rust's answer, twelve blocks × seven aspects) as the two real competitors.
+  boilerplate (Rust's answer, twelve blocks × seven aspects) as the two real competitors —
+  noting Rust sustains that choice only because macros generate the copies, which Metel has
+  no way to do. §1.1 analyses Rust's four drafts (EddyB, Cramertj, Fredpointzero, Bertholet)
+  from the lang-team design note and draws five lessons, two of which change the design:
+  head-tail recursion is **rejected** because it inherits Rust's tuple-layout blocker, and
+  Bertholet's `static for` is recognised as comptime, making RFC-0092 the likely
+  *implementation* of stage 2 rather than a rival to it.
 
 - **RFC-0124** *(draft, opened 2026-07-25)* — Sequence Types: Fixed Arrays, Slices, and the
   Growable List — finishes the split RFC-0054 started. RFC-0054 gave growth to `List<T>` and
