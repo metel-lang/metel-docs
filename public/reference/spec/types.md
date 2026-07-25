@@ -166,9 +166,12 @@ not implicitly widened or narrowed.
 **Records are structurally typed.** Two records with the same labels and field types are the
 same type, wherever they were written. A record has no declaration site and no name.
 **Field order does not matter:** `{ x: i64, y: i64 }` and `{ y: i64, x: i64 }` are the same
-type, and `{ x = 1, y = 2 }` equals `{ y = 2, x = 1 }`. A record is a set of labelled
-fields, not an ordered one. Repeating a label in one record (`{ x: i64, x: f64 }`) is an
-error.
+type, and `{ x = 1, y = 2 }` and `{ y = 2, x = 1 }` are indistinguishable — each is usable
+wherever the other is. A record is a set of labelled fields, not an ordered one. Repeating a
+label in one record (`{ x: i64, x: f64 }`) is an error.
+
+(Indistinguishable is a statement about the type, not about `==`, which no compound type —
+record, struct, tuple, or array — supports.)
 
 When a local variable has the same name as a field, the `= value` part may be omitted, as in
 a struct literal:
