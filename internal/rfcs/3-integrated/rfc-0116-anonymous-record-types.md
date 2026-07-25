@@ -198,6 +198,19 @@ last-wins or first-wins rule — the map has no key for the collision to resolve
 - **Generic instantiation.**
 - **Aspect impls, when the aspect is local to you** — reusing RFC-0061's orphan-rule
   treatment of `T[]`, tuples and function types directly.
+
+  > **Not available as of v0.12.0 — the design precedent exists, the implementation does
+  > not.** `extend { w: i64 }: LocalAspect { … }` fails, and so do `extend (i64, i64):
+  > LocalAspect` and `extend i64[]: LocalAspect`: RFC-0061's structural impl targets are
+  > unimplemented for *every* structural type, not just records. Verified 2026-07-25 while
+  > reviewing #288 — all three produce the same error, so records inherit an existing gap
+  > rather than introducing one. Tracked as **#296**, which also covers the fact that the
+  > failure is an internal error rather than a diagnostic.
+  >
+  > **Consequence for records specifically:** this is the *only* impl-based capability §3
+  > grants them, so as shipped a record can satisfy no impl-based aspect at all — not just
+  > no stdlib one. The `Copy`/`Display` note in §2 describes the non-local half of that;
+  > this is the other half, and it closes when #296 does.
 - **Auto-derived aspects** — `Send` and `Sync` extend to records by the same
   field-composition rule already used for structs.
 
