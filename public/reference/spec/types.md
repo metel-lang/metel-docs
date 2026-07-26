@@ -316,6 +316,10 @@ rejected.
 `&var T` coerces to `&T`. The reverse coercion does not exist. Both are non-owning
 aliases — a reference never owns the value it points to.
 
+`&T` is `Copy`; `&var T` is not, so an exclusive reference is moved on use rather than
+duplicated. Passing one as an argument reborrows instead of moving — see
+[Ownership — References and moves](ownership.md#references-and-moves).
+
 References are first-class values, but they are distinct from the referent type. Ordinary
 access — field reads/writes, indexing, method dispatch, reading a plain value out — goes
 through auto-deref and type-directed copy; an explicit dereference operator `*p` is also

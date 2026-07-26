@@ -122,6 +122,39 @@ value.
 An array element cannot be moved out because the index may be computed at run time, so which
 element left is not a static fact.
 
+## References and moves
+
+`&T` is `Copy`, so a shared reference is duplicated on use and the original stays valid.
+
+`&var T` is **not** `Copy` — an exclusive reference must stay unique to be exclusive. It is
+therefore moved on use, with one exception:
+
+> **Planned for v0.12.0 (RFC-0071): passing a `&var T` as an argument to a parameter of type
+> `&var T` reborrows it rather than moving it — the original binding remains usable after the
+> call. Every other use moves.**
+
+```metel
+fun bump(r: &var Counter) { }
+
+fun main() {
+    var c = Counter { n = 0 };
+    let r = &var c;
+    bump(r);
+    bump(r);      // fine — each call reborrows
+
+    let q = r;    // moves: plain binding is not a reborrow
+    // bump(r);   // error: `r` was moved into `q`
+}
+```
+
+Returning a reference, storing one in a struct, and capturing one in a closure all move it,
+for the same reason `let` does: a reborrow lasts for a call, and none of those is bounded by
+one.
+
+The reborrow's *duration* is not tracked — tracking it is the borrow checker's job. The rule
+above only prevents a reference from being consumed; it grants no exclusivity guarantee. See
+[What ownership does not cover](#what-ownership-does-not-cover).
+
 ## Closures
 
 Closures capture by value, so capturing a non-`Copy` value **moves** it. To keep using the

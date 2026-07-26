@@ -3,7 +3,7 @@ id: rfc-0071
 title: "Ownership and Move Semantics"
 date: '2026-06-28'
 status: integrated
-updated: '2026-07-24'
+updated: '2026-07-26'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/291'
 impl_status: not-started
 ---
@@ -417,16 +417,16 @@ or reborrows; a shared reference has no such obligation. See §9 question 3.
 
 **2. Moving out of an array element — no rule, and it is the case static tracking cannot
 handle.** §7 tracks partial moves "at field granularity". `xs[0]` has no field; the index may
-be dynamic, so which element is gone is not a static fact. **Proposed: banned outright.**
+be dynamic, so which element is gone is not a static fact. **Resolved: banned outright.**
 Rust reaches the same conclusion for the same reason.
 
 **3. Partial moves out of a tuple — no rule.** §7 is written entirely in terms of struct
 fields, but v0.11.0 shipped tuple element assignment (`t.0 = v`), so `let a = t.0;` is
-writable today. **Proposed: identical to struct fields** — tuple elements are positional
+writable today. **Resolved: identical to struct fields** — tuple elements are positional
 fields and are statically named, so the machinery applies unchanged.
 
 **4. Moving a payload out of an enum variant — no rule.** §1 says move semantics apply to
-enums; §7's partial-move rules never mention them. **Proposed: matching a variant and moving
+enums; §7's partial-move rules never mention them. **Resolved: matching a variant and moving
 its payload consumes the enum wholly**, not partially — there is no "rest of the value" to
 retain, since the other variants were never inhabited.
 
@@ -435,6 +435,14 @@ caught up.** The spec states capture is **by value**, and by-value capture of a 
 type under affine ownership is a **move**. No design was needed — only noticing that
 `functions.md` had already decided it, and correcting its word "cloned" to match. See §9
 question 4.
+
+> **Items 2, 3 and 4 read "Proposed" until 2026-07-26, and that was stale rather than
+> undecided.** All three were adopted normatively when this RFC was integrated — they are the
+> `array elements` / `tuple elements` / `enum payloads` rows of the partial-move table in
+> `public/reference/spec/ownership.md`, written in the same commit that moved this RFC to
+> `3-integrated`. The audit text was simply never updated to match the spec it fed. Marked
+> resolved here so the two documents agree; no decision changed, and per PROCESS.md the spec
+> was already the normative statement of all three.
 
 **6. Records.** Not a gap in substance — RFC-0117 owns narrowing on partial move, and this
 RFC correctly says nothing about it. Only §1's scope sentence needed widening, done above.
@@ -501,6 +509,51 @@ RFC correctly says nothing about it. Only §1's scope sentence needed widening, 
    `Planned for v0.12.0` marker stating the move rule for non-`Copy` captures.
    RFC-0050 (Closure Capture Lists, `0-draft`) may later add explicit capture modes; it is not
    needed for the default, which follows from by-value capture plus affine ownership.
+
+5. ~~Does passing an exclusive reference consume it?~~ **Resolved 2026-07-26 — an interim
+   rule, deliberately narrower than RFC-0122's eventual one.** Question 3 above says an
+   exclusive reference "moves *or reborrows*" and then specifies only the move. That gap
+   became load-bearing the moment `&var T: !Copy` was implemented (#290): with move checking
+   (#291), every use of an exclusive reference is a move, and this — which compiles today —
+   would stop compiling:
+
+   ```metel
+   let r = &var c;
+   bump(r);
+   bump(r);         // `r` was moved into the previous call
+   ```
+
+   That is the same failure §9a question 1 used to decide `&T` must be `Copy`: *"shared
+   borrows would be single-use, which is unusable."* The argument transfers to `&var`, and
+   the mechanism that answers it is reborrowing — which is **RFC-0122's scope**, and
+   RFC-0122 is `0-draft` and deliberately out of v0.12.0.
+
+   **The rule, confined to argument position:**
+
+   > Passing a `&var T` value as an argument to a parameter of type `&var T` **reborrows**
+   > it: the reference is borrowed through for the duration of the call, and the original
+   > binding remains usable afterwards. **Every other use moves**, including `let q = p;`,
+   > returning a reference, storing one in a struct, and capturing one in a closure.
+
+   **The boundary is set by question 3's own example, not chosen freely.** That example
+   requires `let b = a;` to move — *"`a` is moved — no duplication"* — so any rule broad
+   enough to cover plain binding would contradict a resolution already taken. Argument
+   position is what is left, and it is exactly what the failing case needs.
+
+   **Why an interim rule rather than pulling RFC-0122 forward.** Its own question 3 resolved
+   that move and borrow checking split safely across releases given §9b, and concluded *"the
+   argument for pulling this RFC into v0.12.0 falls away."* Pulling it in would mean three
+   lifecycle transitions, an integration cross-check against the thirteen RFCs that reference
+   borrow checking, and two unsettled questions (lexical vs. non-lexical; whether any of it
+   is observable while the evaluator deep-clones) — to obtain one bullet of it. The narrow
+   rule is a strict subset of what RFC-0122 will specify, so it is subsumed rather than
+   contradicted when that lands.
+
+   **What this does not do, stated so the rule is not over-read.** A reborrow's *duration* is
+   not tracked, because tracking it is borrow checking. In v0.12.0 the rule does exactly one
+   thing: it stops move checking from consuming the reference. Two `&var T` to one place
+   remain unrejected, as §9 question 3 already records — no guarantee is gained here, and
+   none is lost.
 
 ---
 
