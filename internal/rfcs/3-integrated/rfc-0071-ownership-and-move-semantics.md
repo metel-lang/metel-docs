@@ -5,7 +5,7 @@ date: '2026-06-28'
 status: integrated
 updated: '2026-07-26'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/291'
-impl_status: not-started
+impl_status: in-progress
 ---
 
 > **Status — accepted.** Establishes the foundational ownership model for Metel
