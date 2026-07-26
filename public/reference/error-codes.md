@@ -243,6 +243,48 @@ associated types must define all of them.
 
 ---
 
+### T0018 — Naming the concrete type of an opaque return value
+
+A function returning `impl Aspect` (RFC-0037) hides its concrete return type. Using the
+result in a position that pins it to a specific type — annotating it, or unifying it with a
+concrete type — defeats that, and is rejected.
+
+```
+[T0018] type error in main.mtl at 1..40: cannot name the concrete type of an opaque `impl Aspect` return value; use `impl Aspect` or a generic bound instead (resolved to `i64`)
+```
+
+**Fix:** keep the value opaque — annotate it as `impl Aspect` too, or accept it through a
+generic parameter with the same bound.
+
+---
+
+### T0019 — Use of moved value
+
+> **Available in v0.12.0, under `--move-check` only.** Move checking is off by default in this release.
+
+An ownership rule from RFC-0071 §1/§7 was violated. Five distinct situations share this
+code, each with its own message:
+
+- a value used after it was moved;
+- a partially moved value used as a whole;
+- a partial move out of a type that implements `Drop`, which is never allowed;
+- a move out of an array element, which is banned outright;
+- a `&var` binding moved by a use that is not a reborrow.
+
+Each message names the binding and the location of the move.
+
+```
+[T0019] type error in main.mtl at 30..40: use of moved value `p`: `p` was moved at main.mtl:30:14
+[T0019] type error in main.mtl at 12..20: cannot partially move value `h`: `h.name` belongs to a `Drop` type
+[T0019] type error in main.mtl at 8..14: cannot move from `xs[0]`: array element moves are not allowed
+```
+
+**Fix:** depending on the rule — borrow instead of moving (`&x`), clone the value, move the
+whole value rather than a field of a `Drop` type, or index-and-copy rather than moving an
+element out of an array.
+
+---
+
 ## Runtime errors (R)
 
 ### R0001 — No `main` function defined

@@ -4,6 +4,99 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.12.0
+
+**In progress on `develop` — not yet released.** The spec's `Available in v0.12.0` /
+`Changed in v0.12.0` markers refer to this entry.
+
+**RFCs implemented:** RFC-0115 (Field Initializer Separator), RFC-0116 (Anonymous
+Record Types), RFC-0118 (Row Bounds). **RFC-0071 (Ownership and Move Semantics) is
+partially implemented** — see "Ownership" below for exactly which parts, and which
+are declared but inert.
+
+**Anonymous records:**
+- Closed, anonymous, exact-shape, structurally typed product types: `{ x: f64, y: f64 }`
+  as a type, `{ x = 1.0, y = 2.0 }` as a value, and `Handle.{ fd }` to project a nominal
+  type's row.
+- Structural identity is order-insensitive — `{ x: i64, y: i64 }` and `{ y: i64, x: i64 }`
+  are the same type.
+- Records are **exact**: unification requires the same label set, and there is no width
+  subtyping. A record with an extra field is a different type, not a subtype.
+- Duplicate labels are a parse error.
+- A bare `{ x }` or `{ x = e }` where a block may appear is still a **block**. Write a
+  record there in parentheses — `({ x = e })`; the diagnostic says so at the point of use.
+- Records satisfy `Send`/`Sync` by field composition, but carry no impl-based aspect.
+  Inherent methods, non-local aspect impls, and a custom `Drop` on a record are rejected.
+- Deliberately not yet shipped: chained and pattern projection, narrowing, record
+  conversions, named records, and open rows. Each belongs to a later RFC.
+
+**Row bounds:**
+- A bound may be a bare row, constraining a type parameter by the fields it carries rather
+  than by an aspect:
+
+  ```metel
+  fun magnitude<record T: { x: f64, y: f64, .. }>(p: T) -> f64
+  fun labels<record T>(x: T) -> Symbol[]
+  fun f<record T: { x, y: f64, .. }>(p: T)
+  fun h<T>(p: T) where record T: { x: f64, .. }
+  fun send<record T: !{ token }>(t: T) -> i64
+  ```
+
+- Only records satisfy a row bound. A struct never does, and the diagnostic says why.
+- A closed row (no `..`) requires exactly that label set; an open row requires at least it.
+- A field may omit its type to constrain the label alone. There is no `_` wildcard.
+- **Negation is per listed field, not the complement of the whole row.** `!{ x: f64 }` is
+  satisfied by a record whose `x` is an `i64`; `!{ x }` rejects the label outright.
+- A row bound on a parameter that is `record`-kinded in neither the parameter list nor the
+  `where` clause is an error that names the fix.
+
+**Ownership — partially implemented, and partly inert:**
+- The `Copy` and `Drop` aspects are declared in the standard library. `Copy` is implemented
+  for the twelve numeric primitives plus `boolean` and `Char`.
+- Structural rules: a tuple is `Copy` iff every element is, a fixed array iff its element
+  type is, `&T` is `Copy`, and `&var T` is not. **Dynamic `T[]` deliberately has no rule in
+  either direction** — the question belongs to sequence types, not to this release.
+- A struct may implement `Copy` only if every field is; an enum only if every payload in
+  every variant is. The diagnostic names the offending field or payload.
+- `Copy` and `Drop` are mutually exclusive. This is rejected in either declaration order,
+  and also when two *overlapping conditional* impls would give one instantiation both.
+- **Move checking is implemented but off by default.** Pass `--move-check` to enable it.
+  Nothing in the language moves without that flag; the default remains copy-on-assign.
+- **A `Drop` impl compiles and its `drop` method never runs.** Destructor invocation and
+  drop order are not in this release. Do not write a type whose correctness depends on its
+  destructor firing until that lands.
+
+**Breaking changes:**
+- **Field initializers use `=`, not `:`** — `Point { x = 1.0, y = 2.0 }`. This completes
+  the rule that `:` classifies and `=` defines, with no exceptions left. Field
+  *declarations* (`message: String`), enum variant declarations, and patterns are
+  unchanged and still use `:`.
+
+  Migration is mechanical but **must not be done with a regex.** Declarations, patterns
+  and literals share brace syntax and co-occur on one line — `Perhaps::Some { value } =>
+  Perhaps::Some { value = f(value) }` has a pattern and a literal in a single expression,
+  and only the literal changes. Rewrite over parsed field-initializer spans.
+- **`record` is now a keyword** and can no longer be used as an identifier.
+
+**Diagnostics:**
+- New error code [T0019](../reference/error-codes.md#t0019--use-of-moved-value), reported
+  only under `--move-check`, with distinct wording per rule rather than one generic
+  message: use after move, a partially moved value used as a whole, a partial move of a
+  `Drop` type, a banned array-element move, and a `&var` moved by a use that is not a
+  reborrow. Each names the binding and the source location of the move.
+- A malformed record projection is diagnosed directly, instead of being reported against a
+  synthesised type name that appears nowhere in the program.
+- A generic field type in a `Copy` eligibility error is rendered as written — `Inner<T>` —
+  rather than leaking the inference variable behind it (`Inner<?t16>`).
+
+**Fixes:**
+- A record no longer satisfies an aspect bound vacuously; it must actually meet it.
+- `..` on a negative row bound is rejected rather than silently accepted, since "at least
+  these fields, negated" has no coherent reading.
+- `Copy` eligibility now sees conditional impls on generic field types, so
+  `extend<T: Copy> Outer<T>: Copy` is accepted when `Outer`'s field is an `Inner<T>` that
+  is itself conditionally `Copy`. It was previously rejected outright.
+
 ## v0.11.0
 
 **Released 2026-07-24.** The spec's `Since v0.11.0` / `Changed in v0.11.0` markers
