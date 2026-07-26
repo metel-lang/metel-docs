@@ -268,6 +268,23 @@ blocking anything, they just made the document read as permanently unfinished. I
 question isn't load-bearing for acceptance, it either gets resolved, cut, or moved
 somewhere it won't be re-read on every pass.
 
+**Brief design review adversarially (adopted 2026-07-26).** Whoever reviews an RFC — for
+`1-under-review`, for acceptance, or for `3-integrated`'s worked-example soundness hunt —
+is asked to **break the design, and told which decisions to attack**, not asked whether it
+looks reasonable. Three things belong in that request. **Name the specific choices the
+reviewer should attempt to falsify, and state that they are not settled merely because the
+author wrote them down** — otherwise a reviewer reads the RFC's own rationale as the
+premise and checks only internal consistency, which by construction cannot surface a wrong
+decision; RFC-0063 was internally consistent throughout. **Supply what has already gone
+wrong in this cluster**, because the useful prior is where this design has been wrong
+before, not where a fresh reader would look. **Ask for a counterexample rather than an
+opinion** — a worked example that produces a contradiction, in the same form
+`3-integrated` already requires. Say explicitly that an honest all-clear is an acceptable
+outcome, so that a reviewer with nothing to report does not manufacture something; an
+invented objection costs a real amendment cycle to disprove. This is the design-stage
+instance of the same practice `metel-core`'s `AGENTS.md` specifies for branch review, and
+the two should stay recognisably the same discipline.
+
 ## Specification rules, adopted 2026-07-14
 
 These rules govern what belongs in `public/reference/spec.md` and
