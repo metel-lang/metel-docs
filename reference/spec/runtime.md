@@ -167,6 +167,11 @@ in pipelines without explicit `match`:
 
 `List<T>` is the growable collection type in `std::core`, available unqualified.
 
+> **Available in v0.12.0: `.set(i, value)`.** Added alongside RFC-0126 — `T[]` becoming an
+> immutable borrowed view meant index-assignment through a slice stopped working, and
+> `List<T>` had no way to overwrite an element in place at all, so an in-place algorithm
+> (a bubble sort, for instance) had no expression until this existed.
+
 | Method / function    | Signature                          | Description                                  |
 |----------------------|------------------------------------|----------------------------------------------|
 | `List::new()`        | `() -> List<T>`                    | A new empty list                             |
@@ -175,6 +180,7 @@ in pipelines without explicit `match`:
 | `.pop()`             | `(&var self) -> Perhaps<T>`        | Remove and return the last element           |
 | `.len()`             | `() -> i64`                        | Number of elements                           |
 | `.get(i)`            | `(i64) -> Perhaps<T>`              | Element at index `i`, or `None`              |
+| `.set(i, value)`     | `(&var self, i64, T) -> Perhaps<T>`| Overwrite the element at `i`; returns the replaced value, or `None` if `i` is out of bounds |
 | `.as_slice()`        | `() -> T[]`                        | The backing array                            |
 | `.map(f)`            | `<U>((T) -> U) -> List<U>`         | A new list of `f` applied to each element    |
 | `.filter(pred)`      | `((T) -> boolean) -> List<T>`      | The elements satisfying `pred`               |
