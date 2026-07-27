@@ -75,7 +75,7 @@ the curated thematic map.
 
 ## Integrated (1)
 
-- **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; internal/rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl not-started ; tracking https://codeberg.org/metel-lang/metel-core/issues/291)
+- **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; internal/rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl in-progress ; tracking https://codeberg.org/metel-lang/metel-core/issues/291)
 
 ## Implemented (45)
 
