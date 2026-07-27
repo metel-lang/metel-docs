@@ -635,6 +635,14 @@ equality respectively). These cannot be overridden by user code (orphan rule).
 `List<T>` is a separate nominal struct; its impls coexist independently of the array
 impls. `Ord` and `Hash` array impls are not provided in this language version.
 
+> **Planned for v0.12.0 (RFC-0126): `T[]`'s `Clone` impl is replaced, not just
+> reconditioned.** Once `T[]` owns nothing, "element-wise clone into new backing storage" is
+> not just unconditional on the element type — it is impossible to implement as `T[]: Clone`
+> at all: `Clone::clone(&self) -> Self` must produce a `T[]`, and a `T[]` can only ever borrow
+> from something that already exists and outlives it, never from a buffer the impl just
+> allocated for itself. `Display` and `Eq` are unaffected — they return `String`/`boolean`,
+> not `Self`.
+
 **Tuples** are deferred pending a decision on per-arity boilerplate vs. variadic generics — until then, tuples fail aspect bounds the same way arrays do without a matching impl (`(i64, String)` does not implement `Display`, with a hint to use a named struct instead).
 
 **Function types.** `fun(A) -> B` is a function pointer (word-sized, no captured state) — distinct from closures. Every function type auto-provides `Callable<A, B>` (its formal aspect declaration is deferred to a follow-on stdlib RFC) and, from `std::core`, `Copy`/`Clone`/`Send`/`Sync` (all trivially true for a stateless code pointer). `Display`, `Eq`, `Ord`, `Hash`, and `Drop` are not implemented for function types — there is no canonical string form, function equality is undecidable in general, and there is no state to drop.

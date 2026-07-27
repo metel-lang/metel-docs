@@ -255,6 +255,14 @@ fun main() -> i64 {
 
 Arrays are usable in `for-in` loops.
 
+> **Planned for v0.12.0 (RFC-0126): `T[]` becomes a borrowed view, not an owning buffer.**
+> `T[]` will be a non-owning, immutable, unconditionally-`Copy` view over a contiguous run —
+> a pointer and a length, produced only by borrowing a `List<T>`, a `[T; N]`, or another
+> slice. `a[0] = 9` through a `T[]` will stop compiling; mutation moves to `List<T>` or a
+> `[T; N]`. Array literals produce `[T; N]` (below), not `T[]` — `let nums: i64[] = [1, 2,
+> 3];` above will keep working via `[T; N]`'s existing implicit coercion to `T[]` (RFC-0053),
+> not because the literal itself is a `T[]`.
+
 ## Fixed-size arrays
 
 `[T; N]` is an array type whose length `N` is a non-negative integer literal known at compile time.
@@ -285,6 +293,14 @@ fun sum(xs: [i64; 3]) -> i64 {
 ```
 
 > **Availability:** Since v0.8.0.
+
+> **Planned for v0.12.0 (RFC-0126): array literals produce `[T; N]`, not `T[]`.** `[1, 2,
+> 3]` will have type `[i64; 3]`; a literal has a statically known length and owns its
+> elements, which is what `[T; N]` already is. Slices arise only from borrowing, never from
+> a literal. The `[T; N]` → `T[]` coercion above already applies wherever `T[]` is expected —
+> a `let`/`var` target, a function argument, a generic instantiation — so this does not by
+> itself require touching call sites that already pass a `[T; N]`-typed or explicitly
+> `T[]`-annotated value; it only changes what an *unannotated* literal's own type is.
 
 ## References
 
@@ -432,6 +448,13 @@ fun main() {
 | `as_slice` | `(&self) -> T[]` | View as an immutable array (no copy) |
 
 `List<T>` does not implicitly coerce to `T[]`. Call `.as_slice()` to get a read-only view.
+
+> **Planned for v0.12.0 (RFC-0126): `as_slice` becomes what its signature already says.**
+> Today `as_slice` returns the same underlying storage, but the result is deep-copied at
+> whatever binding or return receives it, so "no copy" describes only the call itself, not
+> the value's subsequent lifetime. Once `T[]` is a genuine borrowed view, the returned slice
+> stays a live view for as long as it is used — still bounded by `self`'s lifetime, not
+> copied away from it.
 
 ## Type Ascription
 
