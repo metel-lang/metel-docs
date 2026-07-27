@@ -10,9 +10,9 @@ title: "Metel Language Changelog"
 `Changed in v0.12.0` markers refer to this entry.
 
 **RFCs implemented:** RFC-0115 (Field Initializer Separator), RFC-0116 (Anonymous
-Record Types), RFC-0118 (Row Bounds). **RFC-0071 (Ownership and Move Semantics) is
-partially implemented** — see "Ownership" below for exactly which parts, and which
-are declared but inert.
+Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
+**RFC-0071 (Ownership and Move Semantics) is partially implemented** — see
+"Ownership" below for exactly which parts, and which are declared but inert.
 
 **Anonymous records:**
 - Closed, anonymous, exact-shape, structurally typed product types: `{ x: f64, y: f64 }`
@@ -65,6 +65,23 @@ are declared but inert.
 - **A `Drop` impl compiles and its `drop` method never runs.** Destructor invocation and
   drop order are not in this release. Do not write a type whose correctness depends on its
   destructor firing until that lands.
+- **`T[]` is now a non-owning, immutable, unconditionally-`Copy` borrowed view** (RFC-0126),
+  resolving the "Dynamic `T[]` deliberately has no rule" gap above. Produced only by
+  borrowing a `List<T>`, a `[T; N]`, or another slice; array literals with no expected type
+  default to `[T; N]` instead. `a[0] = 9` through a `T[]` no longer compiles — mutate via
+  `List<T>` or `[T; N]` instead. The existing `[T; N]` → `T[]` coercion (v0.8.0) means most
+  existing code needs no changes: it only fires at a genuinely unannotated literal.
+  `List<T>` gains `.set(i, value) -> Perhaps<T>` (overwrites in place, returning the
+  replaced value or `None` if out of bounds) to close the resulting gap — nothing let you
+  mutate a growable sequence's contents in place otherwise.
+
+**References:**
+- **`&<rvalue>` no longer requires binding the value to a name first** (temporary lifetime
+  extension, matching Rust/C++: `foo(&Vec::new())`). A literal, a call result, a struct or
+  enum construction, or any other non-addressable expression is materialized into a fresh,
+  independent cell and referenced directly. `&var` does not get the same treatment and
+  still requires an addressable place — a mutable reference to a cell nothing else can ever
+  observe again has no expressible effect.
 
 **Breaking changes:**
 - **Field initializers use `=`, not `:`** — `Point { x = 1.0, y = 2.0 }`. This completes
@@ -96,6 +113,12 @@ are declared but inert.
 - `Copy` eligibility now sees conditional impls on generic field types, so
   `extend<T: Copy> Outer<T>: Copy` is accepted when `Outer`'s field is an `Inner<T>` that
   is itself conditionally `Copy`. It was previously rejected outright.
+- `String` and `List<T>` methods that only read their receiver (`String`'s entire method
+  surface; `List<T>`'s `get`/`len`/`as_slice`/`map`/`filter`/`fold`/`find`/`concat`) now
+  take `&self` instead of `self`. Under `--move-check`, calling more than one such method
+  on the same binding previously moved it on the first call and rejected the second —
+  since neither type is `Copy`, this affected any program exercising the flag at all, not
+  just a handful of fixtures.
 
 ## v0.11.0
 
