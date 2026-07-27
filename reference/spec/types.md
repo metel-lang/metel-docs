@@ -255,7 +255,7 @@ fun main() -> i64 {
 
 Arrays are usable in `for-in` loops.
 
-> **Planned for v0.12.0 (RFC-0126): `T[]` becomes a borrowed view, not an owning buffer.**
+> **Available in v0.12.0 (RFC-0126): `T[]` is a borrowed view, not an owning buffer.**
 > `T[]` will be a non-owning, immutable, unconditionally-`Copy` view over a contiguous run —
 > a pointer and a length, produced only by borrowing a `List<T>`, a `[T; N]`, or another
 > slice. `a[0] = 9` through a `T[]` will stop compiling; mutation moves to `List<T>` or a
@@ -294,7 +294,7 @@ fun sum(xs: [i64; 3]) -> i64 {
 
 > **Availability:** Since v0.8.0.
 
-> **Planned for v0.12.0 (RFC-0126): array literals produce `[T; N]`, not `T[]`.** `[1, 2,
+> **Available in v0.12.0 (RFC-0126): array literals produce `[T; N]`, not `T[]`.** `[1, 2,
 > 3]` will have type `[i64; 3]`; a literal has a statically known length and owns its
 > elements, which is what `[T; N]` already is. Slices arise only from borrowing, never from
 > a literal. The `[T; N]` → `T[]` coercion above already applies wherever `T[]` is expected —
@@ -449,7 +449,7 @@ fun main() {
 
 `List<T>` does not implicitly coerce to `T[]`. Call `.as_slice()` to get a read-only view.
 
-> **Planned for v0.12.0 (RFC-0126): `as_slice` becomes what its signature already says.**
+> **Available in v0.12.0 (RFC-0126): `as_slice` is what its signature already says.**
 > Today `as_slice` returns the same underlying storage, but the result is deep-copied at
 > whatever binding or return receives it, so "no copy" describes only the call itself, not
 > the value's subsequent lifetime. Once `T[]` is a genuine borrowed view, the returned slice

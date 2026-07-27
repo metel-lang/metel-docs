@@ -635,7 +635,7 @@ equality respectively). These cannot be overridden by user code (orphan rule).
 `List<T>` is a separate nominal struct; its impls coexist independently of the array
 impls. `Ord` and `Hash` array impls are not provided in this language version.
 
-> **Planned for v0.12.0 (RFC-0126): `T[]`'s `Clone` impl is replaced, not just
+> **Available in v0.12.0 (RFC-0126): `T[]`'s `Clone` impl is replaced, not just
 > reconditioned.** Once `T[]` owns nothing, "element-wise clone into new backing storage" is
 > not just unconditional on the element type — it is impossible to implement as `T[]: Clone`
 > at all: `Clone::clone(&self) -> Self` must produce a `T[]`, and a `T[]` can only ever borrow
