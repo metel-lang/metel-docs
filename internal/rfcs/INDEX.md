@@ -141,20 +141,23 @@ above it are.
   Bertholet's `static for` is recognised as comptime, making RFC-0092 the likely
   *implementation* of stage 2 rather than a rival to it.
 
-- **RFC-0126** *(draft, opened 2026-07-27, split from RFC-0124)* — T[] as a Copy Borrowed
-  View — extracts the one part of RFC-0124 that was already settled rather than leaving it
-  waiting on RFC-0124's harder open questions. RFC-0054 (`4-implemented`) already declared
-  `T[]` "the immutable/read-only array type"; this RFC takes that at face value: `T[]`
-  becomes a non-owning, immutable, unconditionally-`Copy` view produced only by borrowing,
-  and array literals retype to `[T; N]`. **Opened because #290 and #291 are blocked on
-  exactly this question** — #291's move checker has no rule for `T[]` beyond "not `Copy`",
-  which is why six of #310's fixture-migration corpus are stuck on nothing but this. Measured
-  migration cost: `stdlib/` has zero index-assignments through a sequence and the test corpus
-  has seventeen, across nine fixtures, most of which exist to test the very lvalue mechanics
-  this doesn't touch. Carries its own adversarial-review section per PROCESS.md, naming two
-  decisions to attack: whether `Copy`-ness of a view can leak a capability through an aspect
-  method rather than the raw pointer-and-length, and whether the 17-site measurement proves
-  absence of need or just absence of a reason to write it yet.
+- **RFC-0126** *(integrated 2026-07-27, target v0.12.0, tracking #317, split from
+  RFC-0124)* — T[] as a Copy Borrowed View — extracts the one part of RFC-0124 that was
+  already settled rather than leaving it waiting on RFC-0124's harder open questions.
+  RFC-0054 (`4-implemented`) already declared `T[]` "the immutable/read-only array type";
+  this RFC takes that at face value: `T[]` becomes a non-owning, immutable,
+  unconditionally-`Copy` view produced only by borrowing, and array literals retype to
+  `[T; N]`. **Opened because #290 and #291 are blocked on exactly this question** — #291's
+  move checker has no rule for `T[]` beyond "not `Copy`", which is why six of #310's
+  fixture-migration corpus were stuck on nothing but this. Adversarial review (per
+  PROCESS.md) checked both named attack vectors directly against the codebase — neither
+  landed — and surfaced a third: literal retyping would break every corpus-wide call site
+  passing an unannotated array to a `T[]`-parameterized function (92 of them), unless
+  `[T; N]` coerces to `T[]` implicitly. Already solved, live, by RFC-0053. Spec merged into
+  `types.md`/`declarations.md` with worked examples against RFC-0053 and RFC-0071
+  (Ownership); the RFC-0071 intersection found no gap, but the RFC-0053 one found that
+  `stdlib`'s existing `T[]: Clone` impl becomes unsound under the view model and must be
+  rewritten — recorded as a required consequence, tracked in #317.
 
 - **RFC-0124** *(draft, opened 2026-07-25, narrowed 2026-07-27)* — Sequence Types: Fixed
   Arrays, Slices, and the Growable List — now covers only what RFC-0126 split off left open:

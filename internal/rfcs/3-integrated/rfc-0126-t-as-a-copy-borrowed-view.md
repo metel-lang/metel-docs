@@ -2,8 +2,11 @@
 id: rfc-0126
 title: "T[] as a Copy Borrowed View"
 date: '2026-07-27'
-status: draft
-target:
+status: integrated
+target: v0.12.0
+updated: '2026-07-27'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/317'
+impl_status: not-started
 ---
 
 > **Status — draft (2026-07-27).** Split out of RFC-0124 when the role assignment itself
@@ -14,6 +17,12 @@ target:
 > and release sequencing — stays with RFC-0124, which this RFC does not attempt to resolve.
 > Filed now because #290 and #291 are blocked on exactly this question, and #310's fixture
 > migration has six fixtures whose only obstacle is it.
+
+> **Status — under review (2026-07-27).** Split from RFC-0124 already stating the settled decision; adversarial review performed same day
+
+> **Status — accepted (2026-07-27).** No open questions of its own remain: both named attack vectors checked with no counterexample found; the third finding (call-site/let-binding migration) verified already solved by RFC-0053
+
+> **Status — integrated (2026-07-27).** Spec merged into types.md/declarations.md with Planned-for-v0.12.0 markers; worked examples against RFC-0053 (already-implemented coercion) and RFC-0071 (Copy/Drop/partial-move) found no unresolved soundness gap, but did surface that stdlib's existing T[]:Clone impl must be rewritten, recorded in Consequences
 
 ## Summary
 
@@ -137,23 +146,34 @@ duplicable has no coherent place — which is exactly the corner `T[]` occupies 
 its elements, which is the fixed-array case, already `Copy` when `T` is (RFC-0071 §2, #290).
 Slices arise only from borrowing.
 
-### The call-site migration this implies is already solved, by RFC-0053
+### The migration this implies is already solved, by RFC-0053, at every expected-type position
 
 Retyping literals to `[T; N]` looks at first like a large migration on its own, independent
 of the index-assignment cost above: `stdlib/` and the corpus are full of generic functions
 taking a bare `T[]` parameter (`filter<T>(arr: T[], ...)`, `map_arr`, `fold`, `zip_with`, and
-92 declarations shaped like them corpus-wide), called with a plain literal-derived binding —
-`filter(nums, pred)` where `nums` came from `let nums: i64[] = [1, 2, ...];`. If literals
-retype to `[T; N]` and nothing else changes, every one of those call sites is a fresh type
-mismatch.
+92 declarations shaped like them corpus-wide), called with an **unannotated** literal-derived
+binding — `let nums = [1, 2, 3]; filter(nums, pred)`. Under this RFC, an unannotated `[1, 2,
+3]` infers to `[i64; 3]` (nothing pressures it toward `T[]`), so if literal retyping were the
+only thing that changed, `filter(nums, pred)` would be a fresh type mismatch — and so would
+every annotated binding that explicitly asks for `T[]` (`let nums: i64[] = [1, 2, 3];`, the
+dominant style actually used in the corpus), unless the annotation itself can force the
+literal there too.
 
-It isn't, because **RFC-0053 (`4-implemented`) already decided this**: "`[T; N]` coerces
-implicitly to `T[]`. The reverse is a type error," including at generic instantiation —
-`sum(fixed)` where `sum` takes `T[]` instantiates `T` from `fixed`'s element type and inserts
-a coercion node in the construction pass. Verified this is still live in the interpreter
-today, unrelated to anything this RFC changes:
+Both are already solved, because **RFC-0053 (`4-implemented`) already decided the general
+mechanism**: "`[T; N]` coerces implicitly to `T[]`. The reverse is a type error." Verified
+directly — not just re-read — that this fires at **both** shapes the corpus actually uses,
+unrelated to anything this RFC changes:
 
 ```metel
+// (a) the annotated let-binding — the corpus's dominant style
+fun main() {
+    let nums: i64[] = [1, 2, 3];   // literal coerces at the binding itself
+    assert(nums.len() == 3);
+}
+```
+
+```metel
+// (b) an unannotated value passed where T[] is expected — the generic-call-argument case
 fun sum<T>(arr: T[]) -> i64 {
     var total = 0;
     for (x in arr) { total += 1; }
@@ -161,19 +181,20 @@ fun sum<T>(arr: T[]) -> i64 {
 }
 fun main() {
     let fixed: [i64; 3] = [1, 2, 3];
-    assert(sum(fixed) == 3);   // coerces today, before this RFC exists
+    assert(sum(fixed) == 3);   // coerces at the call, today, before this RFC exists
 }
 ```
 
-RFC-0053 wrote this coercion for the *old* model, where it was a cheap copy ("the runtime
-representation is identical, coercion is free and correct"). Under this RFC's model, the
-same coercion becomes a **borrow** instead of a copy — which is not a new mechanism to build,
-it is exactly what §2.2 above already says produces a `T[]` ("produced by borrowing... a
-`[T; N]`"). The existing coercion node is the call-site implementation of that borrow; this
-RFC does not need to invent one. What it does *not* settle is whether that borrow is sound
-for every possible callee (one that stashes the view somewhere longer-lived than the call) —
-that is RFC-0124's lifetime-anchor dependency (Open Question 2 there), not a new gap this
-RFC introduces.
+The coercion is general over *any* expected-type position — a `let`/`var` target, a function
+argument, a generic instantiation — not specific to call sites. RFC-0053 wrote it for the
+*old* model, where it was a cheap copy ("the runtime representation is identical, coercion is
+free and correct"). Under this RFC's model, the same coercion becomes a **borrow** instead of
+a copy — which is not a new mechanism to build, it is exactly what §2.2 above already says
+produces a `T[]` ("produced by borrowing... a `[T; N]`"). The existing coercion node is the
+implementation of that borrow, wherever it fires; this RFC does not need to invent one. What
+it does *not* settle is whether that borrow is sound for every possible callee (one that
+stashes the view somewhere longer-lived than the call) — that is RFC-0124's lifetime-anchor
+dependency (Open Question 2 there), not a new gap this RFC introduces.
 
 ### What this does not decide
 
@@ -209,11 +230,65 @@ corpus. This is found by the compiler (a type mismatch, not a silent behavior ch
 the one real migration cost here — see "Why the immutability break is smaller than it looks"
 above for the measured scope.
 
+**`stdlib/core.mtl`'s existing `T[]: Clone` impl becomes unsound and must be rewritten,
+found while writing this RFC's spec-integration worked examples (`declarations.md`'s
+"Standard array impls").** Today it is:
+
+```metel
+extend<T: Clone> T[]: Clone {
+    fun clone(&self) -> Self {
+        var out: List<T> = List::new();
+        for (item in self) { out.push(item.clone()); }
+        return out.as_slice();   // <- a view into a local that is about to go out of scope
+    }
+}
+```
+
+Under the current owning-buffer model this is safe only because `as_slice`'s result is
+deep-copied at the binding/return boundary regardless (RFC-0124's measured-state table), so
+`out`'s deallocation never matters — the copy already happened. Once `T[]` is a genuine
+borrowed view with no such copy-on-return, this function returns a view into `out`, which is
+freed the moment `clone` returns: a dangling reference. More fundamentally, **`T[]: Clone`
+cannot be implemented at all under the view model** — `Clone::clone(&self) -> Self` must
+produce a `Self` (a `T[]`), and a `T[]` can only ever borrow from something that already
+exists and outlives it; `clone` has nothing pre-existing to borrow from, only a buffer it
+just allocated. The only coherent `clone` for a `Copy`, non-owning view is the trivial one
+(`fun clone(&self) -> Self { *self }`, identical to what `Copy` already gives for free), and
+whether that's worth keeping as an explicit impl at all — rather than just relying on `Copy`
+— is a call for whoever implements this RFC, not decided here. **This does not reopen this
+RFC's own decision; it is a required consequence of it**, and is recorded here so it is not
+rediscovered as a bug after implementation lands.
+
 **Deep-copy-on-binding is not removed by this RFC.** The evaluator may keep cloning after
 this lands; that remains true regardless of `T[]`'s `Copy` status, since the evaluator does
 not yet act on the `Copy`/move distinction at all (RFC-0071 #291's own scope note: move
 checking is a static pass, clone-elision is later, separate work). This RFC removes the
 type-level argument that `T[]` cannot be a view — it does not itself make the runtime faster.
+
+---
+
+## Worked example — intersection with RFC-0071 (Ownership and Move Semantics, `3-integrated`)
+
+A `Drop`-implementing struct with a `T[]` field, read twice:
+
+```metel
+struct Wrapper { data: i64[], tag: String }
+extend Wrapper: Drop { fun drop(self) {} }
+
+fun main() {
+    let w = Wrapper { data = [1, 2, 3], tag = "x" };
+    let d = w.data;
+    let d2 = w.data;   // today: T0019, use of moved value `w.data`
+}
+```
+
+Verified today (before this RFC): reusing `w.data` reports exactly one move violation, as
+expected under the current owning-buffer model — `T[]` isn't `Copy` yet. Once this RFC lands
+and `T[]` is `Copy`, the same code has zero violations, with no special-casing anywhere:
+`Wrapper` implementing `Drop` while holding a `Copy` field is the ordinary, already-handled
+shape partial-move tracking needs regardless (a `Drop` struct with any mix of `Copy` and
+non-`Copy` fields), not a new interaction this RFC introduces. No soundness gap found at this
+intersection.
 
 ---
 
@@ -276,12 +351,17 @@ re-read:
 A third issue turned up that neither attack vector named: whether `[T; N]` → `T[]` is coercible
 at a call site, since 92 corpus-wide function declarations take a bare `T[]` parameter and the
 common call shape passes a literal-derived binding. **Already resolved by RFC-0053**
-(`4-implemented`) — see "The call-site migration this implies is already solved" above. Verified
-still live in the interpreter, not just documented.
+(`4-implemented`) — see "The migration this implies is already solved, by RFC-0053, at every
+expected-type position" above. Verified live at both the `let`-binding and the generic-call-
+argument shape, not just documented.
 
 ---
 
 ## Decision
 
-**Outcome:** *(pending)*
-**Target:** *(set when accepted)*
+**Outcome:** Accepted. `T[]` becomes a non-owning, immutable, unconditionally-`Copy` view
+produced only by borrowing; array literals type as `[T; N]`. No open questions of its own
+remain — both named attack vectors in the adversarial review above were checked directly
+against the codebase and neither lands, and the migration-cost concern the review itself
+surfaced (call-site and `let`-binding retyping) is already solved, live, by RFC-0053.
+**Target:** v0.12.0 — the same milestone as #290, #291, and #310, which this RFC unblocks.
