@@ -403,7 +403,23 @@ Rules:
 - assigning to a reference-typed binding (`p = v`) **rebinds** it, like any other type;
   `*p = v` is the spelling that writes through
 
-Addressable places for both `&` and `&var` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), a dereference (`*p` — so `&*p` is a reborrow that shares the referent's storage), and chains thereof (`nested.outer.field`, `t.1.0`). Non-addressable expressions (literals, call results, struct and enum construction, arithmetic) are rejected at compile time with [T0005](../error-codes.md#t0005--invalid-operand-types).
+Addressable places for both `&` and `&var` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), a dereference (`*p` — so `&*p` is a reborrow that shares the referent's storage), and chains thereof (`nested.outer.field`, `t.1.0`).
+
+> **Available in v0.12.0: `&<rvalue>` — temporary lifetime extension.** `&expr` no longer
+> requires `expr` to be an addressable place: a literal, a call result, a struct or enum
+> construction, or any other non-addressable expression is materialized into a fresh,
+> independent cell and referenced directly (matching Rust and C++: `foo(&Vec::new())`
+> needs no intermediate binding). `&var` does **not** get the same treatment and remains
+> rejected with [T0005](../error-codes.md#t0005--invalid-operand-types) on a non-addressable
+> operand — a mutable reference to a cell nothing else can ever observe again has no
+> expressible effect, so bind the value to a name first if a `&var` is actually needed.
+>
+> ```metel
+> fun takes_ref(l: &List<i64>) -> i64 { l.len() }
+> fun main() -> i64 {
+>     return takes_ref(&List::from([1, 2, 3]));   // no `let` needed
+> }
+> ```
 
 `&var` requires the operand to be a `var` binding — applying it to a plain `let` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)). `&var` on a lvalue path (`&var s.field`, `&var arr[i]`) produces a true exclusive reference with write-back semantics, matching `&var` on a named binding exactly — writes through it propagate to the original storage location (RFC-0045, already implemented; this section previously described `&var struct.field` as a non-propagating snapshot, which was the *pre*-RFC-0045 behavior and had never been updated to match). `&` on a field or element also aliases the original storage through the same path machinery, so later writes to the binding remain visible through the shared reference; it is still read-only, so writing through `&T` remains rejected. Reborrowing preserves this: `&*r` shares whatever storage `r` names, and reborrowing a `&var T` as `&T` downgrades to shared. The reverse is rejected — `&var *r` where `r: &T` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)), since a shared reference never grants write access.
 
