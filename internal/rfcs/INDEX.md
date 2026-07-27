@@ -141,18 +141,28 @@ above it are.
   Bertholet's `static for` is recognised as comptime, making RFC-0092 the likely
   *implementation* of stage 2 rather than a rival to it.
 
-- **RFC-0124** *(draft, opened 2026-07-25)* — Sequence Types: Fixed Arrays, Slices, and the
-  Growable List — finishes the split RFC-0054 started. RFC-0054 gave growth to `List<T>` and
-  called `T[]` "the immutable/read-only array type", a view; the implementation never
-  followed, so `T[]` is mutable, owns its buffer, and is deep-copied on every binding.
-  Proposes `[T; N]` as the fixed value type, `T[]` as a borrowed `Copy` slice owning nothing,
-  and `List<T>` as the sole owner — the split Rust, Zig and C++ all converge on for a
-  no-GC ownership-tracked language. **Opened because #290 cannot decide whether `T[]` is
-  `Copy`**: as a view it must be, as an owning buffer it must not, and the corpus asserts
-  both. Also removes the deep-copy-on-binding that RFC-0071's move semantics exist to
-  eliminate, and narrows RFC-0122's cloning-evaluator question. Migration is real — array
-  literals change type — but measured: `stdlib/` has zero index-assignments through a
-  sequence and the test corpus has seventeen.
+- **RFC-0126** *(draft, opened 2026-07-27, split from RFC-0124)* — T[] as a Copy Borrowed
+  View — extracts the one part of RFC-0124 that was already settled rather than leaving it
+  waiting on RFC-0124's harder open questions. RFC-0054 (`4-implemented`) already declared
+  `T[]` "the immutable/read-only array type"; this RFC takes that at face value: `T[]`
+  becomes a non-owning, immutable, unconditionally-`Copy` view produced only by borrowing,
+  and array literals retype to `[T; N]`. **Opened because #290 and #291 are blocked on
+  exactly this question** — #291's move checker has no rule for `T[]` beyond "not `Copy`",
+  which is why six of #310's fixture-migration corpus are stuck on nothing but this. Measured
+  migration cost: `stdlib/` has zero index-assignments through a sequence and the test corpus
+  has seventeen, across nine fixtures, most of which exist to test the very lvalue mechanics
+  this doesn't touch. Carries its own adversarial-review section per PROCESS.md, naming two
+  decisions to attack: whether `Copy`-ness of a view can leak a capability through an aspect
+  method rather than the raw pointer-and-length, and whether the 17-site measurement proves
+  absence of need or just absence of a reason to write it yet.
+
+- **RFC-0124** *(draft, opened 2026-07-25, narrowed 2026-07-27)* — Sequence Types: Fixed
+  Arrays, Slices, and the Growable List — now covers only what RFC-0126 split off left open:
+  whether a mutable slice exists and how it is spelled, the exact dependency on RFC-0067's
+  lifetime anchors (a precondition for this RFC's own acceptance, independent of RFC-0126),
+  whether `[T; N]`'s `Copy` rule needs const generics to leave its hardcoded case (#299,
+  orthogonal to `T[]`'s role), `Value::Array`'s evaluator representation, and release
+  sequencing against #291. None of these block RFC-0126 landing on its own.
 
 - **RFC-0123** *(draft, opened 2026-07-24)* — Field-Wise Row Constraints — a constraint
   applying an aspect to **every field of a row** rather than to the row's type
