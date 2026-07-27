@@ -78,8 +78,11 @@ resolves it.
 
 ## References
 
-- **RFC-0126 (T[] as a Copy Borrowed View), `0-draft`** — split from this RFC; the role
-  assignment, prior art, and migration-cost estimate now live there.
+- **RFC-0126 (T[] as a Copy Borrowed View), `4-implemented` (#317)** — split from this RFC;
+  the role assignment, prior art, and migration-cost estimate live there. Its implementation
+  is concrete evidence for this RFC's own Open Question 1 below: `int_01_statistics.mtl`'s
+  bubble sort needed a real algorithm rewrite, not just a retype, because no mutable-slice
+  spelling exists yet.
 - RFC-0054 (Standard `List<T>` Type), `4-implemented` — assigned growth to `List<T>` and
   declared `T[]` the immutable read-only view; RFC-0126 is that assignment taken at face
   value.

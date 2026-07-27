@@ -2,11 +2,11 @@
 id: rfc-0126
 title: "T[] as a Copy Borrowed View"
 date: '2026-07-27'
-status: integrated
+status: implemented
 target: v0.12.0
 updated: '2026-07-27'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/317'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — draft (2026-07-27).** Split out of RFC-0124 when the role assignment itself
@@ -23,6 +23,8 @@ impl_status: not-started
 > **Status — accepted (2026-07-27).** No open questions of its own remain: both named attack vectors checked with no counterexample found; the third finding (call-site/let-binding migration) verified already solved by RFC-0053
 
 > **Status — integrated (2026-07-27).** Spec merged into types.md/declarations.md with Planned-for-v0.12.0 markers; worked examples against RFC-0053 (already-implemented coercion) and RFC-0071 (Copy/Drop/partial-move) found no unresolved soundness gap, but did surface that stdlib's existing T[]:Clone impl must be rewritten, recorded in Consequences
+
+> **Status — implemented (2026-07-27).** Implemented in metel-core#317, verified independently (640 integration + 122 unit tests, 0 clippy warnings, move-check-count confirms zero T[]-related violations remain)
 
 ## Summary
 
