@@ -137,6 +137,44 @@ duplicable has no coherent place — which is exactly the corner `T[]` occupies 
 its elements, which is the fixed-array case, already `Copy` when `T` is (RFC-0071 §2, #290).
 Slices arise only from borrowing.
 
+### The call-site migration this implies is already solved, by RFC-0053
+
+Retyping literals to `[T; N]` looks at first like a large migration on its own, independent
+of the index-assignment cost above: `stdlib/` and the corpus are full of generic functions
+taking a bare `T[]` parameter (`filter<T>(arr: T[], ...)`, `map_arr`, `fold`, `zip_with`, and
+92 declarations shaped like them corpus-wide), called with a plain literal-derived binding —
+`filter(nums, pred)` where `nums` came from `let nums: i64[] = [1, 2, ...];`. If literals
+retype to `[T; N]` and nothing else changes, every one of those call sites is a fresh type
+mismatch.
+
+It isn't, because **RFC-0053 (`4-implemented`) already decided this**: "`[T; N]` coerces
+implicitly to `T[]`. The reverse is a type error," including at generic instantiation —
+`sum(fixed)` where `sum` takes `T[]` instantiates `T` from `fixed`'s element type and inserts
+a coercion node in the construction pass. Verified this is still live in the interpreter
+today, unrelated to anything this RFC changes:
+
+```metel
+fun sum<T>(arr: T[]) -> i64 {
+    var total = 0;
+    for (x in arr) { total += 1; }
+    total
+}
+fun main() {
+    let fixed: [i64; 3] = [1, 2, 3];
+    assert(sum(fixed) == 3);   // coerces today, before this RFC exists
+}
+```
+
+RFC-0053 wrote this coercion for the *old* model, where it was a cheap copy ("the runtime
+representation is identical, coercion is free and correct"). Under this RFC's model, the
+same coercion becomes a **borrow** instead of a copy — which is not a new mechanism to build,
+it is exactly what §2.2 above already says produces a `T[]` ("produced by borrowing... a
+`[T; N]`"). The existing coercion node is the call-site implementation of that borrow; this
+RFC does not need to invent one. What it does *not* settle is whether that borrow is sound
+for every possible callee (one that stashes the view somewhere longer-lived than the call) —
+that is RFC-0124's lifetime-anchor dependency (Open Question 2 there), not a new gap this
+RFC introduces.
+
 ### What this does not decide
 
 - Whether a mutable slice exists, and how it is spelled.
@@ -191,6 +229,9 @@ type-level argument that `T[]` cannot be a view — it does not itself make the 
   unblocks; §9 q3 is the `&T`-is-`Copy` precedent this RFC extends to views generally.
 - RFC-0067 (Lifetime Anchors), `2-accepted` — the likely dependency for slice validity,
   confirmed by RFC-0124 rather than here.
+- RFC-0053 (Fixed-Size Arrays), `4-implemented` — already decided and already live: `[T; N]`
+  coerces implicitly to `T[]`, including at generic call sites. This RFC's call-site migration
+  cost rides on that coercion rather than needing a new one.
 - Issues #290 (blocked on this question), #291 (move checking has no `T[]` rule without
   this), #310 (six fixtures blocked on this specifically), #299 (`[T; N]`'s own hardcoded
   `Copy` rule, unaffected by this RFC).
@@ -216,6 +257,27 @@ Two decisions here are not settled merely because this document states them, per
    rather than through `List<T>`, which this measurement cannot rule out by counting.
 
 An honest "no counterexample found" on either point is an acceptable review outcome.
+
+**Reviewed 2026-07-27.** Both points above checked directly against the codebase, not just
+re-read:
+
+1. **No counterexample found.** `T[]` is immutable by this RFC's own decision, and nothing in
+   the type system dispatches a `&var self` method through an immutable binding (the `&var` →
+   `&` coercion is already one-way elsewhere in this codebase). There is no path from "holds a
+   `Copy` view" to "can reach mutable access," so the capability-leak attack does not land.
+2. **Independently re-measured, not re-read.** 9 fixtures, matching the RFC's count exactly;
+   site count came out at 22 rather than 17 by naive grep, explainable by counting method (one
+   of the 22 is a negative test that is *supposed* to reject the assignment, supporting the
+   RFC's framing rather than undermining it). One counted fixture
+   (`evaluator/types/13_sized_array_extended.mtl`) mutates a `[i64; 3]`, already fixed-size and
+   irrelevant to this RFC either way — if anything the true `T[]`-specific surface is smaller
+   than stated. This substantially confirms the measurement.
+
+A third issue turned up that neither attack vector named: whether `[T; N]` → `T[]` is coercible
+at a call site, since 92 corpus-wide function declarations take a bare `T[]` parameter and the
+common call shape passes a literal-derived binding. **Already resolved by RFC-0053**
+(`4-implemented`) — see "The call-site migration this implies is already solved" above. Verified
+still live in the interpreter, not just documented.
 
 ---
 
