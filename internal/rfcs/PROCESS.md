@@ -152,14 +152,19 @@ agree, because §3-integrated is what makes them agree.
 says what it means but never said when to flip it — three rules, settled alongside
 `metel-core`'s branching/release rework:
 
-- **Trigger: at issue-close, not at sprint-close, `develop`-merge, or release.** Run
+- **Trigger: at issue-close, not at `develop`-merge or release.** Run
   `rfc.py transition <id> --to implemented` in the same session/commit that closes the
-  Codeberg issue implementing it, on `sprint/N` — the same "update it when it's true, not
-  batched for later" discipline the changelog now follows (`metel-core/AGENTS.md`). The
-  sprint-close gate's existing RFC-state check (`rfc.py check` clean, `impl_status`/
-  `impl_tracking` correct) is a *verification* that this already happened correctly
-  before the sprint is admitted to `develop` — it is not the trigger, and finding a
-  problem there means the transition was missed earlier, not that it's now due.
+  Codeberg issue implementing it, on that issue's own branch — the same "update it when
+  it's true, not batched for later" discipline the changelog follows
+  (`metel-core/AGENTS.md`). The release gate's RFC-state check (`rfc.py check` clean,
+  `impl_status`/`impl_tracking` correct) is a *verification* that this already happened,
+  not the trigger; finding a problem there means the transition was missed earlier, not
+  that it is now due.
+
+  *Revised 2026-07-28:* originally written as "at issue-close, not at sprint-close", with
+  the verification assigned to the sprint-close gate. `metel-core` retired the `sprint/N`
+  branch tier (see its `AGENTS.md` § "Why `sprint/N` was retired"); the verification moved
+  to the release gate. The trigger itself is unchanged — it was always issue-close.
 - **An RFC implemented across multiple issues waits for the last one.** Not previously
   addressed. `impl_status` stays `in-progress` until the final tracked issue closes;
   `impl_tracking` points at whichever issue is understood to be that last one (or a
