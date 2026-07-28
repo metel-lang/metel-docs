@@ -89,7 +89,7 @@ A function is called with the wrong number of arguments.
 
 ### T0005 — Invalid operand types
 
-An operator is applied to operands it does not support. Four forms share this code:
+An operator is applied to operands it does not support. Three forms share this code:
 
 - **Mismatched operands.** The two sides of a binary operator disagree, e.g. `1 == "x"`.
   The message names the operator and both types.
@@ -97,10 +97,11 @@ An operator is applied to operands it does not support. Four forms share this co
 - **Equality** (`==`, `!=`) on anything other than a numeric type, `boolean`, `String` or
   `char`. `==` does not yet dispatch through the `Eq` aspect, so structs, enums, arrays,
   tuples and references are rejected; use `.eq(..)` on a type that implements `Eq`.
-- **`&var` address-of** applied to something that is not an addressable place — a
-  literal, a call result, or a struct/enum construction. Bind it to a name first; unlike
-  `&`, `&var` does not get temporary lifetime extension (v0.12.0), since a mutable
-  reference to a cell nothing else can ever observe has no expressible effect.
+
+> **Since v0.12.0:** address-of (`&`, `&var`) applied to a non-addressable expression — a
+> literal, a call result, a struct/enum construction — is no longer one of this code's
+> cases. Both forms now get temporary lifetime extension instead of being rejected; see
+> [Expressions — References](spec/expressions.md#references).
 
 ```
 [T0005] type error in main.mtl at 6..13: operator `+` cannot be applied to boolean and i64
