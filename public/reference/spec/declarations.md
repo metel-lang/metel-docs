@@ -822,7 +822,7 @@ extend Point {
 
 > **Availability:** Since v0.7.0.
 
-A generic function type parameter may declare an aspect bound using `:` syntax. The bound requires that any concrete type substituted for the parameter implements the named aspect. Passing a type that does not satisfy the bound is error `T0012`, with the span on the offending call-site argument.
+A generic function type parameter may declare an aspect bound using `:` syntax. The bound requires that any concrete type substituted for the parameter implements the named aspect. The named aspect must resolve where the declaration is written; an unknown aspect is error `T0003`, even when the generic function is never called. Passing a type that does not satisfy a resolved bound is error `T0012`, with the span on the offending call-site argument.
 
 ```metel
 fun print_pair<T: Printable>(a: T, b: T) {
