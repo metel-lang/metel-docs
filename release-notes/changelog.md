@@ -119,6 +119,13 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   on the same binding previously moved it on the first call and rejected the second —
   since neither type is `Copy`, this affected any program exercising the flag at all, not
   just a handful of fixtures.
+- `return`, `break`, and `continue` nested inside an ordinary expression position no longer
+  crash the interpreter. RFC-0078 made them legal anywhere an expression is valid, but the
+  evaluator assumed every subexpression yields a value, so `1 + (return 7)`, `f(return 7)`,
+  `[return 7, 1]`, a struct-literal field, a `match` scrutinee, an `if` condition and a
+  `let` initializer each aborted the process rather than propagating the control flow. The
+  signal now propagates to the construct that owns it — the function boundary for `return`,
+  the innermost enclosing loop for `break`/`continue`.
 
 ## v0.11.0
 
