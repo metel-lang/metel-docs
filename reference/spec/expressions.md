@@ -405,19 +405,21 @@ Rules:
 
 Addressable places for both `&` and `&var` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), a dereference (`*p` — so `&*p` is a reborrow that shares the referent's storage), and chains thereof (`nested.outer.field`, `t.1.0`).
 
-> **Available in v0.12.0: `&<rvalue>` — temporary lifetime extension.** `&expr` no longer
-> requires `expr` to be an addressable place: a literal, a call result, a struct or enum
-> construction, or any other non-addressable expression is materialized into a fresh,
-> independent cell and referenced directly (matching Rust and C++: `foo(&Vec::new())`
-> needs no intermediate binding). `&var` does **not** get the same treatment and remains
-> rejected with [T0005](../error-codes.md#t0005--invalid-operand-types) on a non-addressable
-> operand — a mutable reference to a cell nothing else can ever observe again has no
-> expressible effect, so bind the value to a name first if a `&var` is actually needed.
+> **Available in v0.12.0: `&<rvalue>` / `&var <rvalue>` — temporary lifetime extension.**
+> Neither `&expr` nor `&var expr` requires `expr` to be an addressable place anymore: a
+> literal, a call result, a struct or enum construction, or any other non-addressable
+> expression is materialized into a fresh, independent cell and referenced directly
+> (matching Rust and C++: `foo(&Vec::new())`, `foo(&mut Vec::new())` — both need no
+> intermediate binding). Sound for both forms — nothing outside the expression can ever
+> alias the cell, so a mutable reference to it can never conflict with anything else.
 >
 > ```metel
 > fun takes_ref(l: &List<i64>) -> i64 { l.len() }
+> fun bump(x: &var i64) -> i64 { *x = *x + 1; *x }
 > fun main() -> i64 {
->     return takes_ref(&List::from([1, 2, 3]));   // no `let` needed
+>     let a = takes_ref(&List::from([1, 2, 3]));   // no `let` needed for the argument
+>     let b = bump(&var 41);                        // &var works on a temporary too
+>     return a + b;
 > }
 > ```
 

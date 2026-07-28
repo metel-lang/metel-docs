@@ -76,12 +76,12 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   mutate a growable sequence's contents in place otherwise.
 
 **References:**
-- **`&<rvalue>` no longer requires binding the value to a name first** (temporary lifetime
-  extension, matching Rust/C++: `foo(&Vec::new())`). A literal, a call result, a struct or
-  enum construction, or any other non-addressable expression is materialized into a fresh,
-  independent cell and referenced directly. `&var` does not get the same treatment and
-  still requires an addressable place — a mutable reference to a cell nothing else can ever
-  observe again has no expressible effect.
+- **`&<rvalue>` and `&var <rvalue>` no longer require binding the value to a name first**
+  (temporary lifetime extension, matching Rust/C++: `foo(&Vec::new())`,
+  `foo(&mut Vec::new())`). A literal, a call result, a struct or enum construction, or any
+  other non-addressable expression is materialized into a fresh, independent cell and
+  referenced directly, for both forms — nothing outside the expression can ever alias that
+  cell, so a mutable reference to it is always sound.
 
 **Breaking changes:**
 - **Field initializers use `=`, not `:`** — `Point { x = 1.0, y = 2.0 }`. This completes
