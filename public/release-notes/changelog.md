@@ -126,6 +126,14 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   `let` initializer each aborted the process rather than propagating the control flow. The
   signal now propagates to the construct that owns it — the function boundary for `return`,
   the innermost enclosing loop for `break`/`continue`.
+- Taking a reference to a field reached **through** a reference now works. Both `&r.a` and
+  `&(*r).a` (and the tuple, array, and nested equivalents) previously raised an internal
+  error; they now resolve to the same place, as do the `&var` forms through a `&var`
+  reference. Reading such a field always worked — only taking a reference to one did not.
+- `&var` through a **shared** reference is now rejected wherever it appears in an lvalue
+  path — `&var r.field`, not just the already-rejected `&var *r` — since a shared reference
+  never grants write access. It reports T0006, alongside the other forms of "taking a
+  mutable reference to something immutable".
 
 ## v0.11.0
 
