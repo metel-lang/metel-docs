@@ -93,6 +93,12 @@ Annotations are required only where there is no expression to infer from:
 - Struct and enum field types
 - Aspect method signatures
 
+Every named type in an annotation must resolve in the annotation's declaring scope,
+including names nested inside arrays, tuples, function types, and record fields. This is
+checked when the declaration is type-checked, even if no value ever reaches the
+annotation. A generic parameter in scope and `Self` where it is permitted resolve as
+types; every other unknown name is error `T0003`.
+
 ```metel
 fun add_annotated(a: i64, b: i64) -> i64 { a + b }
 fun add_inferred(a, b) { a + b }

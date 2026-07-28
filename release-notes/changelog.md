@@ -107,6 +107,10 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   rather than leaking the inference variable behind it (`Inner<?t16>`).
 
 **Fixes:**
+- Undeclared type and aspect names in annotations and bounds are rejected at their
+  declaration, including unused function signatures, unused struct/enum fields, and
+  `extend` clauses. Diagnostics now name the unresolved type or aspect instead of
+  blaming a later unification or bound-satisfaction attempt.
 - A record no longer satisfies an aspect bound vacuously; it must actually meet it.
 - `..` on a negative row bound is rejected rather than silently accepted, since "at least
   these fields, negated" has no coherent reading.
