@@ -63,7 +63,7 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
 - **Move checking is implemented but off by default.** Pass `--move-check` to enable it.
   Nothing in the language moves without that flag; the default remains copy-on-assign.
 - With move checking enabled, generic function bodies, generic impl method bodies, and
-  named let-polymorphic closure bodies are reconstructed for analysis instead of being
+  named let-polymorphic closure bodies are now reconstructed for analysis instead of being
   skipped wholesale; generic bodies that still cannot be analysed are counted in the
   move-check report.
 - **A `Drop` impl compiles and its `drop` method never runs.** Destructor invocation and
