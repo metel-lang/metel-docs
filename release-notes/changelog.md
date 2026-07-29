@@ -74,8 +74,14 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   failure instead of hiding it behind a generic message; ambiguous symbolic methods
   name their candidate aspects.
 - Pre-existing generic evaluator and typechecker coverage now states its ownership
-  contracts explicitly: read-only callbacks borrow, while duplication and indexed
-  extraction require `Copy`. The move-check corpus has no unintentional violations left.
+  contracts explicitly: read-only callbacks borrow, duplication and indexed extraction
+  require `Copy`, and filter/find fixtures clone through indexed borrows rather than
+  relying on `for-in` to produce owned elements from a borrowed `T[]`. The explicit clone
+  callback is a temporary fixture workaround until borrowed iteration and standard
+  `Clone` coverage are available together. The move-check corpus has no unintentional
+  violations left.
+- Move checking now rejects consuming a non-`Copy` loop element obtained through a
+  borrowed `T[]` view, while function values are recognized as `Copy` as specified.
 - **A `Drop` impl compiles and its `drop` method never runs.** Destructor invocation and
   drop order are not in this release. Do not write a type whose correctness depends on its
   destructor firing until that lands.
