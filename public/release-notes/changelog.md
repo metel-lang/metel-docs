@@ -73,6 +73,9 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   `Copy`), and warnings for bodies that remain unchecked include the reconstruction
   failure instead of hiding it behind a generic message; ambiguous symbolic methods
   name their candidate aspects.
+- Pre-existing generic evaluator and typechecker coverage now states its ownership
+  contracts explicitly: read-only callbacks borrow, while duplication and indexed
+  extraction require `Copy`. The move-check corpus has no unintentional violations left.
 - **A `Drop` impl compiles and its `drop` method never runs.** Destructor invocation and
   drop order are not in this release. Do not write a type whose correctness depends on its
   destructor firing until that lands.
