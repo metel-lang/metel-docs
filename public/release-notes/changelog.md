@@ -69,6 +69,9 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   with their own declared bounds even when nominal, structural-array, or cross-module
   impls provide the same method name. Calls through a generic parameter's aspect bounds,
   including methods with their own type parameters, are reconstructed and checked too.
+  Associated-type bounds now carry through that symbolic reconstruction (including
+  `Copy`), and warnings for bodies that remain unchecked include the reconstruction
+  failure instead of hiding it behind a generic message.
 - **A `Drop` impl compiles and its `drop` method never runs.** Destructor invocation and
   drop order are not in this release. Do not write a type whose correctness depends on its
   destructor firing until that lands.
