@@ -81,7 +81,20 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   `Clone` coverage are available together. The move-check corpus has no unintentional
   violations left.
 - Move checking now rejects consuming a non-`Copy` loop element obtained through a
-  borrowed `T[]` view, while function values are recognized as `Copy` as specified.
+  borrowed `T[]` view, and reusing a function value is no longer counted as a move.
+  **That second rule is currently broader than the specification.** It treats *every*
+  function type as `Copy`, so a closure capturing a non-`Copy` value may be used twice
+  without a move-check error even though invoking it consumes the capture. Only function
+  *pointers* are specified as `Copy`. This is an ownership-soundness gap in the checker
+  rather than memory unsafety — the runtime still produces a value both times — and it
+  must be closed before move checking becomes the default.
+- `impl Aspect` is now lowered wherever it appears in a parameter annotation, not only as
+  the annotation's outermost type. Previously `impl Printable[]` parsed as a bound on the
+  *array* type instead of on its element; no aspect names an array type, so the bound was
+  vacuous — an array of a non-implementing element type was accepted, while a valid array
+  was rejected with a spurious "cannot infer receiver type" error. Nested occurrences in
+  generic arguments, tuples, records, references, function types, and associated-type
+  projections are lowered too, and each occurrence mints its own type parameter.
 - **A `Drop` impl compiles and its `drop` method never runs.** Destructor invocation and
   drop order are not in this release. Do not write a type whose correctness depends on its
   destructor firing until that lands.
