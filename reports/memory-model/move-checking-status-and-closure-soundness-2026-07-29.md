@@ -50,8 +50,24 @@ tracked by metel-core#310.
 Most named generic functions, generic impl methods, aspect-bound calls, and associated
 types are reconstructed and checked. When reconstruction fails, the checker emits a
 warning containing the reason and continues compilation. This is a deliberate visible
-gap, but it is still a false-negative route. Anonymous generic closures have no scheme
-lookup key and are explicitly reported as unchecked.
+gap, but it is still a false-negative route.
+
+*Revised 2026-07-30:* this section previously named two further gaps that turned out not
+to exist.
+
+- **Anonymous generic closures** were described as having no scheme lookup key and being
+  reported as unchecked. `TypedExpr::GenericClosure` has exactly one construction site
+  (`typechecker/construction.rs`), reached only from a `let` whose value is a closure, and
+  it always sets `name: Some(..)`. The `None` arm that records the skip is therefore
+  unreachable, and every generic closure that exists is reconstructed and checked. The
+  `name: Option<String>` field could be narrowed to a plain `String` to make that
+  structural.
+- **Parameters using `impl Aspect`** caused the checker to skip the *entire* body, not
+  just the parameter. That was reachable only for a nested occurrence (`impl Printable[]`),
+  because a top-level one was already lowered before move checking ran. metel-core#331
+  lowers nested occurrences too, so nothing reaches it; the guard has been removed.
+  This was the more serious of the two — a silent false negative for every move in an
+  affected body.
 
 ### This is not a borrow checker
 
@@ -87,6 +103,13 @@ fun filter<T>(arr: T[], pred: (&T) -> boolean, clone: (&T) -> T) -> T[] {
 This is temporary. It avoids moving through a borrowed view while the standard `Clone`
 surface and the remaining borrowed-iteration design work are not both available. Code
 that merely duplicates values should instead require `T: Copy`.
+
+*Revised 2026-07-30:* borrowed iteration has since landed (metel-core#329), so the
+remaining blocker is only the missing duplication surface, now tracked as
+metel-core#335. Note also that the borrowing form this section recommends is not
+currently writable when the callback body calls an aspect method on its `&T`: that does
+not resolve through a reference to a bounded type parameter (metel-core#334). Until that
+lands, such a body needs an explicit `(*x).method()`.
 
 ## Confirmed closure soundness hole
 
