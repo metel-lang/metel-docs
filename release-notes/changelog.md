@@ -83,7 +83,8 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   require `Copy`, and filter/find fixtures clone through indexed borrows rather than
   relying on `for-in` to produce owned elements from a borrowed `T[]`. The explicit clone
   callback is a temporary fixture workaround: borrowed iteration is now enforced, so what
-  remains is the absence of any way to duplicate a non-`Copy` value (#335). The
+  remains is that `Clone` exists as an aspect but has essentially no stdlib impls, so
+  `T: Clone` is not usable as a bound for a primitive or `String` (#335). The
   move-check corpus has no unintentional violations left.
 - Move checking now rejects consuming a non-`Copy` loop element obtained through a
   borrowed `T[]` view, and reusing a function value is no longer counted as a move.
