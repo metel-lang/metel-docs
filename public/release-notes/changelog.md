@@ -82,17 +82,34 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   contracts explicitly: read-only callbacks borrow, duplication and indexed extraction
   require `Copy`, and filter/find fixtures clone through indexed borrows rather than
   relying on `for-in` to produce owned elements from a borrowed `T[]`. The explicit clone
-  callback is a temporary fixture workaround until borrowed iteration and standard
-  `Clone` coverage are available together. The move-check corpus has no unintentional
-  violations left.
+  callback is a temporary fixture workaround: borrowed iteration is now enforced, so what
+  remains is the absence of any way to duplicate a non-`Copy` value (#335). The
+  move-check corpus has no unintentional violations left.
 - Move checking now rejects consuming a non-`Copy` loop element obtained through a
   borrowed `T[]` view, and reusing a function value is no longer counted as a move.
-  **That second rule is currently broader than the specification.** It treats *every*
-  function type as `Copy`, so a closure capturing a non-`Copy` value may be used twice
-  without a move-check error even though invoking it consumes the capture. Only function
-  *pointers* are specified as `Copy`. This is an ownership-soundness gap in the checker
-  rather than memory unsafety — the runtime still produces a value both times — and it
-  must be closed before move checking becomes the default.
+  **That second rule is currently broader than the specification, and it loosens what
+  `--move-check` accepts.** It treats *every* function type as `Copy`, not only function
+  pointers, so this program is accepted where it was previously rejected with `T0019`:
+
+  ```metel
+  fun call(f: () -> String) -> String { f() }
+
+  let s = "hello";
+  let f = () -> String { s };   // captures a non-`Copy` value
+  let a = call(f);
+  let b = call(f);              // second use: no longer an error
+  ```
+
+  Invoking `f` consumes its captured `String`, so under affine ownership `f` is
+  once-callable and the second use must fail. Only function *pointers* are specified as
+  `Copy`; a closure's copyability should follow from its captures. Calling such a closure
+  twice *directly* (`f(); f()`) was already accepted before this release — that half is
+  older, since invoking a closure never updated its captures' moved state.
+
+  This is an ownership-soundness gap in the checker, not memory unsafety: the runtime
+  deep-clones a closure's environment at creation, so both calls do produce a value. Move
+  checking is opt-in, so nothing changes unless you pass `--move-check`. Tracked as #330,
+  and it must close before move checking becomes the default (#310).
 - `impl Aspect` is now lowered wherever it appears in a parameter annotation, not only as
   the annotation's outermost type. Previously `impl Printable[]` parsed as a bound on the
   *array* type instead of on its element; no aspect names an array type, so the bound was

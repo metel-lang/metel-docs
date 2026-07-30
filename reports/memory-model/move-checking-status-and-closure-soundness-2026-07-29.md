@@ -118,6 +118,22 @@ for a named function pointer, but it is not generally appropriate for a closure 
 non-`Copy` capture. The checker also validates a closure body at creation time without
 tracking consumption of captures across later calls.
 
+*Revised 2026-07-30:* the hole has two halves with different ages, which this section
+originally ran together.
+
+| use of a closure capturing a non-`Copy` value | before `541b925` | after |
+|---|---|---|
+| through a higher-order function — `call(f); call(f)` | rejected `T0019` | **accepted** |
+| called directly — `f(); f()` | accepted | accepted |
+| a *named function* value — `apply(g); apply(g)` | rejected `T0019` | accepted (correct) |
+
+Only the direct-call half is long-standing: invoking a closure has never updated its
+captures' moved state. The higher-order half is newer — `541b925`, satisfying #329's
+"reusing a function value of a `Copy` function type remains valid", widened `is_copy` to
+*every* `Type::Fun` rather than to function pointers, which is the third row working as
+intended and the first row as collateral. So a fix must narrow that rule without
+re-breaking row three.
+
 The following program was accepted by the release interpreter with `--move-check` on
 2026-07-29:
 
