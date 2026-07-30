@@ -72,7 +72,12 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   Associated-type bounds now carry through that symbolic reconstruction (including
   `Copy`), and warnings for bodies that remain unchecked include the reconstruction
   failure instead of hiding it behind a generic message; ambiguous symbolic methods
-  name their candidate aspects.
+  name their candidate aspects. A generic body whose parameters use `impl Aspect` in a
+  nested position (`impl Printable[]`, a tuple or generic argument) is now checked as
+  well — such a body was previously skipped in full, because the mis-lowering fixed
+  above left an unlowered `impl Aspect` in the signature and the checker declined to
+  reconstruct it. That was a silent false-negative route for every move in the body,
+  not only for the parameter itself.
 - Pre-existing generic evaluator and typechecker coverage now states its ownership
   contracts explicitly: read-only callbacks borrow, duplication and indexed extraction
   require `Copy`, and filter/find fixtures clone through indexed borrows rather than
