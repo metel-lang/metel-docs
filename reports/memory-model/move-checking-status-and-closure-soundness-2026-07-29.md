@@ -104,12 +104,22 @@ This is temporary. It avoids moving through a borrowed view while the standard `
 surface and the remaining borrowed-iteration design work are not both available. Code
 that merely duplicates values should instead require `T: Copy`.
 
-*Revised 2026-07-30:* borrowed iteration has since landed (metel-core#329), so the
-remaining blocker is only the missing duplication surface, now tracked as
-metel-core#335. Note also that the borrowing form this section recommends is not
-currently writable when the callback body calls an aspect method on its `&T`: that does
-not resolve through a reference to a bounded type parameter (metel-core#334). Until that
-lands, such a body needs an explicit `(*x).method()`.
+*Revised 2026-07-30:* borrowed iteration has since landed (metel-core#329). The
+duplication mechanism is **not** missing — `aspect Clone` exists in `stdlib/core.mtl`, a
+user type may implement it, and `arr[i].clone()` under a `T: Clone` bound typechecks and
+passes move checking. What is missing is stdlib *coverage*: the only impl is the blanket
+`extend<T: Clone> T[]: Clone`, and neither `i64` nor `String` implements `Clone`, so
+`T: Clone` is not a usable bound for a primitive (metel-core#335).
+
+This means the callback pattern above is more avoidable than it looks. Where the elements
+are `Copy` — as they are in most of the affected fixtures — a `T: Copy` bound removes the
+callback today, which is what the sentence above already recommends. Reserve the callback
+for genuinely non-`Copy` elements whose type has no `Clone` impl.
+
+Note also that the borrowing form this section recommends is not currently writable when
+the callback body calls an aspect method on its `&T`: that does not resolve through a
+reference to a bounded type parameter (metel-core#334). Until that lands, such a body
+needs an explicit `(*x).method()`.
 
 ## Confirmed closure soundness hole
 
