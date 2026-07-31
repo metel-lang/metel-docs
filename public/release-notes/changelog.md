@@ -111,6 +111,45 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   deep-clones a closure's environment at creation, so both calls do produce a value. Move
   checking is opt-in, so nothing changes unless you pass `--move-check`. Tracked as #330,
   and it must close before move checking becomes the default (#310).
+- **Loop bodies are now analysed to a fixed point.** A move inside a loop body used to be
+  invisible to the next iteration: the body's exit state was unioned into the code *after*
+  the loop, but never fed back into the loop itself. So this was accepted:
+
+  ```metel
+  let s = "hello";
+  var i = 0;
+  loop {
+      i += 1;
+      let moved = s;         // moves `s` again on every iteration
+      if (i == 2) { break; }
+  }
+  ```
+
+  The body is now re-walked until the state entering it stops growing, for `loop`,
+  `while`, C-style `for`, and `for-in` alike — and a `while` condition is re-checked
+  against it too, so a move in the body is caught where the condition reads the binding
+  next time round. A loop-carried move is usually its own use, the same expression one
+  iteration later, so the diagnostic says which iteration it means:
+  `` `s` was moved here on an earlier iteration ``.
+- **A move on a path that leaves through `break`, `continue`, or `return` no longer
+  reaches the code that follows it.** Those moves are routed to where control actually
+  goes — out of the loop, or round it — instead of being joined into the fall-through
+  path. This is what lets the fixed point above accept `loop { let moved = s; break; }`,
+  and it also removes a pre-existing false positive outside loops entirely:
+
+  ```metel
+  let s = "hello";
+  if (done) {
+      let moved = s;
+      return;                // this path leaves
+  }
+  let again = s;             // previously rejected; the move cannot have happened here
+  ```
+
+- **A dereference is now a place.** The move checker can name `*p` and `(*p).f`, where it
+  previously gave up on any expression under a `*`. Moving the same value out of a
+  reference twice is caught rather than ignored, and diagnostics render such a place the
+  way it is written: `` `(*p)` was moved at … ``.
 - `impl Aspect` is now lowered wherever it appears in a parameter annotation, not only as
   the annotation's outermost type. Previously `impl Printable[]` parsed as a bound on the
   *array* type instead of on its element; no aspect names an array type, so the bound was

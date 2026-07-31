@@ -18,11 +18,12 @@ moves of bindings and places through:
 
 - by-value assignments, returns, call arguments, method receivers, struct and record
   construction, tuples, arrays, and temporary-reference construction;
-- fields, tuple elements, indexed elements, and destructuring patterns;
+- fields, tuple elements, indexed elements, dereferences, and destructuring patterns;
 - use after move, use of a whole value after a partial move, and partial moves of a
   `Drop` type;
 - `if`, `match`, `while`, `for`, `loop`, and `for-in`, using a conservative join of
-  possible moved state;
+  possible moved state, with loop bodies analysed to a fixed point so that a move in one
+  iteration is visible to the next (see "Control flow is conservative" below);
 - `Copy` and `Drop` aspect satisfaction, including generic bounds, conditional impls,
   generic functions, generic impl methods, aspect-bound calls, and associated-type
   bounds; and
@@ -69,6 +70,24 @@ to exist.
   This was the more serious of the two — a silent false negative for every move in an
   affected body.
 
+### The place abstraction is shared, not move-specific
+
+*Added 2026-07-31 (metel-core#291).* RFC-0071 §9b requires that whatever represents `x`,
+`x.f`, `x.f.g`, and "reached through a dynamic index" be a standalone, reusable component
+with no move-specific assumptions, so that borrow checking can later run a second analysis
+over the *same* places without rebuilding them.
+
+That component is `metel-interpreter/src/place.rs`. It was previously
+`src/move_check/place.rs` — owned by, and reachable only through, the move checker's
+namespace — and it could not represent a dereference at all: both constructors returned
+`None` for `*p`, which a borrow checker needs. It now sits at the crate root beside the
+analyses that use it, and carries a neutral `Projection::Deref`.
+
+Policy stays with each analysis. That a move out of a dynamically indexed element is
+rejected, or that a move through a reference needs a reborrow, are facts about moves and
+live in `move_check`; `place` only says such a place exists and how it relates to its
+prefixes.
+
 ### This is not a borrow checker
 
 The checker has a narrow `&var` reborrow rule, but it does not perform lifetime,
@@ -78,9 +97,27 @@ some mutable-reference mistakes.
 
 ### Control flow is conservative
 
-The checker unions possible moved state across branches and loop bodies without proving
-reachability. That can produce false positives for an unreachable move; it does not make
-the ownership check unsound.
+The checker unions possible moved state across branches without proving reachability.
+That can produce false positives for an unreachable move; it does not make the ownership
+check unsound.
+
+*Revised 2026-07-31:* two parts of this have since changed (metel-core#291).
+
+- **Loop bodies are now analysed to a fixed point.** The single pass described above
+  unioned a body's exit state *outwards* but never fed it back in, so a move in a loop
+  body was invisible to the next iteration — a false negative, not a false positive, and
+  the more serious direction. Each body is now re-walked until the state entering it
+  stops growing.
+- **A path that leaves through `break`, `continue`, or `return` no longer contributes its
+  moves to the code that follows it.** Those moves go where control goes: out of the loop
+  for `break`, round it for `continue`, nowhere for `return`. This is what keeps the fixed
+  point from rejecting `loop { let moved = s; break; }`, and it also removed a
+  pre-existing false positive outside loops, where a move in a returning `if` branch was
+  joined into the code after the `if`.
+
+What remains conservative is the join itself: a branch's moves are still unioned without
+asking whether that branch can be taken. Divergence is the only reachability fact the
+checker uses.
 
 ### Ownership RFC work remains incomplete
 
