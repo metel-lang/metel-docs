@@ -51,7 +51,7 @@ updated: '2026-07-24'
 > `{ … }`. This touches §3.1's branded-shape notation most visibly: the fiat-linear
 > conversion's output is now written `{ id: i64 } @ 'receipt-origin` rather than
 > `record { id: i64 } @ 'receipt-origin`, and the emitted impl targets
-> `impl Linear for { id: i64 } @ 'receipt-origin`. **The brand is doing more visual work
+> `extend { id: i64 }: Linear @ 'receipt-origin`. **The brand is doing more visual work
 > now that the keyword is gone** — `{ id: i64 }` and `{ id: i64 } @ 'receipt-origin` differ
 > only by the tag, which is exactly §3.1's point (unrelated same-shaped records carry no
 > such brand and so do not match the impl), but it is less obvious at a glance than it was.
@@ -139,7 +139,7 @@ own text were the two places it was previously only informally assumed. **No
 `@derive(Linear)` annotation is needed or meaningful** — this is category 1 (auto-trait
 structural composition), not category 2 (derive-as-codegen); it should never appear in
 a derivable-aspects list alongside `Clone`/`Eq`/`Display` (RFC-0093 §"Derivable Aspects"
-corrects an earlier draft's error on exactly this point). `impl !Linear for X {}`
+corrects an earlier draft's error on exactly this point). `extend X: !Linear;`
 (RFC-0081) is the escape hatch for a type that would otherwise structurally qualify but
 shouldn't.
 
@@ -164,7 +164,7 @@ declaring a type linear *by fiat* when nothing about its fields structurally req
 it (a capability token wrapping a plain `i64`, say):
 
 ```metel
-impl Linear for Receipt {}          // explicit, forces it
+extend Receipt: Linear {}          // explicit, forces it
 linear struct Receipt { id: i64 }   // proposed sugar for exactly the line above
 ```
 
@@ -187,7 +187,7 @@ to a *locking pair of negative impls* — `impl !Copy for X {} impl !Linear for 
 not a positive capability grant, since affine is an absence, not an addition. That pair
 is more than documentation: RFC-0081's negative impls override any later conflicting
 impl via ordinary coherence, so `affine struct Handle { fd: i64 }` is a real, checked
-commitment that nothing elsewhere in the codebase can later add `impl Copy for Handle`
+commitment that nothing elsewhere in the codebase can later add `extend Handle: Copy`
 and silently change what moving a `Handle` means.
 
 ---
@@ -271,7 +271,7 @@ prerequisite for it.
 
 ### 3.1 Fiat-linear structs: `ToRecord` must preserve the origin brand, not produce a bare row
 
-§2.1's fiat-linearity (`impl Linear for Receipt {}`, forcing a struct `Linear` with no
+§2.1's fiat-linearity (`extend Receipt: Linear {}`, forcing a struct `Linear` with no
 field of its own requiring exactly-once handling) creates a gap the rest of §3 doesn't
 cover. `.to_record()`'s output is `Linear` only via RFC-0090 §5's structural join over
 the row — recomputed from field types alone. For a struct whose `Linear` status is *not*
@@ -419,7 +419,7 @@ and its open aliasing question remain explicitly not required for the deadline.
   substituting `Linear` for `Send`
 - RFC-0096 (Auto-Impl Aspects, draft) — formalizes that pattern once, generically,
   rather than each auto-impl aspect (`Send`/`Sync`/`Linear`) restating it
-- RFC-0081 (Negative Impls) — `impl !Linear for X {}` opt-out
+- RFC-0081 (Negative Impls) — `extend X: !Linear;` opt-out
 - RFC-0072 (Negative Bounds) — `T: !Copy + !Linear` compound bound form (§2.1)
 - RFC-0039 (`aspect` Alias Syntax, draft) — vehicle for the `Affine` alias (§2.1)
 - RFC-0049 (Linear Function Type System, draft) — documents the generic-`drop`-discharges-

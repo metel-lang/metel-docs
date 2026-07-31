@@ -30,7 +30,7 @@ Neither option is straightforward for closures:
 
 **Problem with `drop(f)`:** The captured linear values inside `f` are now unconsumed. `drop(f)` satisfies the linearity checker for `f` itself, but the captured `buf: Buffer` inside `f`'s environment is still live and must be consumed. Calling `drop(f)` does not consume `buf`. This is a nested linearity error — `drop(f)` appears to work but leaves the captured values dangling.
 
-**Problem with `Drop` on closures:** Can a programmer implement `Drop` for a closure? Closures don't have a named type — the programmer cannot write `impl Drop for [move buf] () -> ()`. The compiler would need to auto-generate a `Drop` implementation for each closure that captures linear values, which calls the appropriate cleanup on each captured linear binding.
+**Problem with `Drop` on closures:** Can a programmer implement `Drop` for a closure? Closures don't have a named type — the programmer cannot write `extend [move buf] () -> (): Drop`. The compiler would need to auto-generate a `Drop` implementation for each closure that captures linear values, which calls the appropriate cleanup on each captured linear binding.
 
 **Options:**
 

@@ -143,7 +143,7 @@ answered.
    `nominal-types-as-branded-rows.md` §4.1–4.3 proposes body-inferred, row-bounded dispatch
    and argues it needs a fixed field-set plus a subset check rather than general row
    machinery — plausible, not adopted here.
-2. **Brand-versus-row coherence priority.** An ordinary `impl Display for Point` is
+2. **Brand-versus-row coherence priority.** An ordinary `extend Point: Display` is
    brand-keyed; a row-conditional impl is row-keyed. If a value matches both, which wins?
    More-specific-wins is the obvious default and is written down nowhere.
    *(From RFC-0090 OQ6; RFC-0118 OQ4 is the same question seen from bound position.)*

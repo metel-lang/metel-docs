@@ -298,7 +298,7 @@ This reuse is not free, and surfaces two gaps neither RFC currently resolves:
 ## 3. Emitting a declaration (single-declaration form)
 
 Comptime code needs a way to **emit a declaration** — specifically, a coherence-checked
-`impl Aspect for T` — as a side effect of compile-time evaluation, not just compute a
+`extend T: Aspect` — as a side effect of compile-time evaluation, not just compute a
 value or a type. This is the one genuine extension beyond Zig's own model: Zig has no
 nominal aspect/impl/coherence system to target (a Zig "generic" function returning a
 `type` returns a struct with its methods already inside it), so Zig itself never had to

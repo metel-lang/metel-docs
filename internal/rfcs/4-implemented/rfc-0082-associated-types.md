@@ -60,7 +60,7 @@ aspect Alloc {
     type AllocationError;
 }
 
-impl Alloc for BumpAlloc {
+extend BumpAlloc: Alloc {
     type AllocationError = !;
 }
 
@@ -69,7 +69,7 @@ aspect Deref {
     fun deref(self: &Self) -> &Target;
 }
 
-impl<T, brand 'b> Deref for Rc<T, 'b> {
+extend<T, brand 'b> Rc<T, 'b>: Deref {
     type Target = T;
     fun deref(self: &Rc<T, 'b>) -> &T { ... }
 }
@@ -130,7 +130,7 @@ aspect Deref {
 An impl block must define all associated types declared by the aspect:
 
 ```metel
-impl Iterator for Counter {
+extend Counter: Iterator {
     type Item = i64;
     fun next(self: &mut Counter) -> Perhaps<i64> { ... }
 }
@@ -251,7 +251,7 @@ fun deref_to_node<T: Deref<Target = Node>>(x: &T) -> &Node {
     x.deref()
 }
 
-impl<T: Deref<Target = Node>> PrintNode for T { ... }
+extend<T: Deref<Target = Node>> T: PrintNode { ... }
 ```
 
 The equality constraint is the mechanism for pinning an associated type to a known type
@@ -275,11 +275,11 @@ generic type parameter on the aspect would allow multiple impls per type:
 
 ```metel
 // Wrong model — generic parameter allows both:
-impl Deref<Node> for SmartPtr { ... }
-impl Deref<i64>  for SmartPtr { ... }
+extend SmartPtr: Deref<Node> { ... }
+extend SmartPtr: Deref<i64> { ... }
 
 // Right model — associated type: one Target per implementing type
-impl Deref for SmartPtr {
+extend SmartPtr: Deref {
     type Target = Node;   // unique
 }
 ```
@@ -332,11 +332,11 @@ struct SubRegion<R: Region> {
     // compiler-managed internal state
 }
 
-impl<R: Region> Region for SubRegion<R> {
+extend<R: Region> SubRegion<R>: Region {
     type AllocationError = !;
 }
 
-impl<R: Region> Outlives<R> for SubRegion<R> {}
+extend<R: Region> SubRegion<R>: Outlives<R> {}
 ```
 
 `SubRegion<R>` implements `Region` (so it participates in the bracket channel) and

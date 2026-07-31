@@ -42,7 +42,7 @@ own declaration line uncrowded and is closer to what Rust users already expect.
 
 ## Motivation
 
-Writing `impl Eq for Point { fun eq(self, other: Point) -> boolean { self.x == other.x && self.y == other.y } }`
+Writing `extend Point: Eq { fun eq(self, other: Point) -> boolean { self.x == other.x && self.y == other.y } }`
 by hand for every struct is tedious and error-prone. A derive mechanism generates these
 implementations structurally — field-by-field for structs, variant-by-variant for
 enums. The question this RFC exists to answer is not *whether* derive is useful — that

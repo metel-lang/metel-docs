@@ -44,9 +44,9 @@ fun filter<T: Sortable>(items: T[], pred: fun(T) -> boolean) -> T[] { ... }
 
 ### Q2 — Is an aspect alias a new aspect or just a shorthand?
 
-**Option A — Shorthand only (recommended):** `aspect Sortable = Comparable + Display + Clone` is purely a compile-time alias. A type that implements all three automatically satisfies `Sortable`. No new `impl Sortable for T` is needed or allowed.
+**Option A — Shorthand only (recommended):** `aspect Sortable = Comparable + Display + Clone` is purely a compile-time alias. A type that implements all three automatically satisfies `Sortable`. No new `extend T: Sortable` is needed or allowed.
 
-**Option B — New aspect requiring an explicit impl:** `Sortable` is a distinct aspect. Types must explicitly `impl Sortable for T { ... }` in addition to implementing the component aspects.
+**Option B — New aspect requiring an explicit impl:** `Sortable` is a distinct aspect. Types must explicitly `extend T: Sortable { ... }` in addition to implementing the component aspects.
 
 **Proposal: Option A.** Option B creates redundant work and a sync hazard (a type may implement all three components but forget to add `impl Sortable`). An alias should be transparent.
 

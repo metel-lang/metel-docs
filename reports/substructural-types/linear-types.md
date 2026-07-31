@@ -86,7 +86,7 @@ struct with any `1` field is linear overall; a struct with only `affine`/`ω` fi
 (RFC-0080). Auto-derived, not opt-in: a struct containing a multiplicity-`1` field is
 `Linear` (RFC-0080 §3.2's auto-impl rule, substituting `Linear` for `Send`), matching
 `per-field-multiplicities.md`'s join rule directly rather than being a bespoke case.
-`impl !Linear for X {}` (RFC-0081) is the escape hatch for a type that would otherwise
+`extend X: !Linear;` (RFC-0081) is the escape hatch for a type that would otherwise
 structurally qualify but shouldn't.
 
 **Mutually exclusive with `Copy`** (obviously — `ω` and `1` can't coexist in the same
@@ -111,7 +111,7 @@ when nothing about its fields structurally requires it (a capability token wrapp
 plain `i64`, say):
 
 ```metel
-impl Linear for Receipt {}          // explicit, forces it
+extend Receipt: Linear {}          // explicit, forces it
 linear struct Receipt { id: i64 }   // proposed sugar for exactly the line above
 ```
 

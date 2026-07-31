@@ -41,7 +41,7 @@ Two concrete problems result:
 
 ## Non-Goals
 
-- Conditional `impl` blocks (`impl Aspect for S<T> where T: OtherAspect`) — deferred to RFC-0036.
+- Conditional `impl` blocks (`extend S<T>: Aspect where T: OtherAspect`) — deferred to RFC-0036.
 - Bounds on type aliases — future RFC.
 - Higher-kinded bounds — future RFC.
 - Conditional `impl` blocks — deferred to RFC-0036.
@@ -114,14 +114,14 @@ impl SortedList<T> {
 
 Re-declaring the bound in the `impl` header is not required and is not an error, but is redundant.
 
-### Bound Propagation into `impl AspectName for Struct<T>`
+### Bound Propagation into `extend Struct<T>: AspectName`
 
 The same rule applies to aspect implementation blocks:
 
 ```metel
 struct SortedList<T: Comparable> { items: T[] }
 
-impl Printable for SortedList<T> {
+extend SortedList<T>: Printable {
     fun print(self) {
         // T: Comparable is in scope here — Comparable methods on T are valid
     }
@@ -225,7 +225,7 @@ pub struct EnumDecl {
 
 | Feature | Deferred to |
 |---|---|
-| Conditional impls (`impl Aspect for S<T> where T: Other`) | RFC-0036 |
+| Conditional impls (`extend S<T>: Aspect where T: Other`) | RFC-0036 |
 | Bounds on type aliases | Future RFC |
 | Higher-kinded bounds | Future RFC |
 
@@ -239,7 +239,7 @@ pub struct EnumDecl {
 
 3. **Propagation into `impl` blocks:** Inherited automatically. No re-declaration needed or enforced.
 
-4. **Propagation into `impl AspectName for Struct<T>` blocks:** Inherited automatically, consistent with rule 3.
+4. **Propagation into `extend Struct<T>: AspectName` blocks:** Inherited automatically, consistent with rule 3.
 
 5. **Propagation into match arms:** Yes. The bound is a type invariant. The typechecker propagates it into match arm bodies wherever a value of the bounded type is in scope.
 

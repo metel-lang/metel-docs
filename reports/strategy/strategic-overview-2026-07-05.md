@@ -93,7 +93,7 @@ The type-system cluster and core ownership RFC are unaffected by the redesign.
 | 0078 | Bottom Type — `!`, uninhabited coercions, `Result<T, !>` collapse |
 | 0079 | Perhaps and Result — formal definitions, prelude membership |
 | 0080 | Stdlib Aspects — `Clone`, `Deref`, `Send`, `Sync` |
-| 0081 | Negative Impls — `impl !Aspect for Type`, priority over auto-impl |
+| 0081 | Negative Impls — `extend Type: !Aspect;`, priority over auto-impl |
 | 0082 | Associated Types — `type X;` in aspects, `type X = Y;` in impls, projection |
 | 0083 | Public Value Exports — `pub let`, `heap`/`local_heap` naming |
 | 0084 | Fixed-Size Array Syntax — `T[N]` replaces `[T; N]` |

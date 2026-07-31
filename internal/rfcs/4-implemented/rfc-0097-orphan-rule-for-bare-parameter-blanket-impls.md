@@ -14,7 +14,7 @@ impl_status: implemented
 > position, implemented) is unrelated — a different feature entirely. The other four
 > are genuinely adjacent but none resolve this: RFC-0060 §1 (Orphan Rule) defines
 > locality only in terms of "the outermost type constructor of `Type`," and RFC-0060's
-> *own* §3/§5 worked examples (`impl<T: Foo> Bar for T`) use exactly the case where no
+> *own* §3/§5 worked examples (`extend<T: Foo> T: Bar`) use exactly the case where no
 > such constructor exists, without §1 ever being revisited to say what happens then.
 > RFC-0036 (Conditional Impl Blocks) — the RFC that would normally own this syntax —
 > never shows this form in any of its own examples either. Found while following up on
@@ -31,15 +31,15 @@ impl_status: implemented
 
 ## Summary
 
-`impl<T: Bound> Aspect for T` — a **bare-parameter blanket impl**, where the target is
+`extend<T: Bound> T: Aspect` — a **bare-parameter blanket impl**, where the target is
 literally the impl's own generic parameter, not a named struct or enum wrapping it —
 appears throughout the accepted RFC corpus (RFC-0080 §1.2's `impl<T: Copy> Clone for
-T`; RFC-0060 §3/§5's own `impl<T: Foo> Bar for T` example, used repeatedly to explain
+T`; RFC-0060 §3/§5's own `extend<T: Foo> T: Bar` example, used repeatedly to explain
 closed-world discharge and negative-impl priority) with no RFC ever specifying two
 things:
 
 1. **Whether it's syntactically distinct from an ordinary conditional impl.** RFC-0036
-   only ever shows `impl<T: Bound> Aspect for Container<T>` — a real named type
+   only ever shows `extend<T: Bound> Container<T>: Aspect` — a real named type
    wrapping `T`. It never shows or discusses `for T` alone.
 2. **How the orphan rule (RFC-0060 §1) applies when the target has no outermost type
    constructor at all.** A bare type parameter isn't a struct or enum — it isn't
@@ -56,12 +56,12 @@ overlap detection (§3) that requires no new machinery.
 ## Motivation
 
 RFC-0060 §3 ("Closed-World Assumption") and §5 ("Negative Impl Priority") both use
-`impl<T: Foo> Bar for T` as their running example for how blanket impls interact with
+`extend<T: Foo> T: Bar` as their running example for how blanket impls interact with
 negative bounds and negative impls — the *exact* bare-parameter form. RFC-0080 §1.2
 ships a concrete instance of it as `Clone`'s canonical blanket:
 
 ```metel
-impl<T: Copy> Clone for T {
+extend<T: Copy> T: Clone {
     fun clone(self: &T) -> T { *self }
 }
 ```
@@ -71,9 +71,9 @@ itself — despite being "Conditional Impl Blocks," the RFC that should own this
 ever demonstrates the target as a genuinely named, parameterized type:
 
 ```metel
-impl<T: Bound> Aspect for Type<T> { ... }        // RFC-0036 §1 — every example looks like this
-impl<T: Comparable + Printable> Printable for SortedList<T> { ... }   // §2.2
-impl<T: Copy>  Serialize for Wrapper<T> { ... }  // §3.1
+extend<T: Bound> Type<T>: Aspect { ... }        // RFC-0036 §1 — every example looks like this
+extend<T: Comparable + Printable> SortedList<T>: Printable { ... }   // §2.2
+extend<T: Copy> Wrapper<T>: Serialize { ... }  // §3.1
 ```
 
 `Type<T>`/`SortedList<T>`/`Wrapper<T>` all have a real, nameable outermost constructor
@@ -101,14 +101,14 @@ represents a bare identifier as `Named("T", [])`; parsing `for T` requires nothi
 `for Container<T>` doesn't already parse. The distinction that matters is semantic, not
 syntactic:
 
-> An impl `impl<G1: B1, ..., Gn: Bn> Aspect for Target` is a **bare-parameter blanket**
+> An impl `extend<G1: B1, ..., Gn: Bn> Target: Aspect` is a **bare-parameter blanket**
 > exactly when `Target` is itself one of `G1..Gn` — the impl's own generic parameter,
 > referenced with no wrapping type constructor — rather than a named struct or enum
 > (whether or not that struct/enum is itself parameterized over `G1..Gn`).
 
 This holds regardless of *which* parameter, or how many others the impl declares:
-`impl<A, B: Bound> Aspect for B` is a bare-parameter blanket over `B` exactly the same
-way `impl<T: Bound> Aspect for T` is over `T` — the presence of an unrelated parameter
+`extend<A, B: Bound> B: Aspect` is a bare-parameter blanket over `B` exactly the same
+way `extend<T: Bound> T: Aspect` is over `T` — the presence of an unrelated parameter
 `A` changes nothing about `B`'s own target-locality question.
 
 ---
@@ -133,15 +133,15 @@ the target side of the check is permanently unsatisfiable for this shape of impl
 
 ```metel
 // std::core, RFC-0080 §1.2 — permitted: Clone is local to std::core
-impl<T: Copy> Clone for T { fun clone(self: &T) -> T { *self } }
+extend<T: Copy> T: Clone { fun clone(self: &T) -> T { *self } }
 
 // hypothetical user module — permitted: MyAspect is local here
 aspect MyAspect { fun tag(self) -> String; }
-impl<T: Copy> MyAspect for T { fun tag(self) -> String { "copyable" } }
+extend<T: Copy> T: MyAspect { fun tag(self) -> String { "copyable" } }
 
 // hypothetical user module — REJECTED (T0014): Display is foreign,
 // and a bare-parameter target can never be local, anywhere
-impl<T: Copy> Display for T { fun to_string(self) -> String { "?" } }
+extend<T: Copy> T: Display { fun to_string(self) -> String { "?" } }
 ```
 
 This is a narrower rule than RFC-0061 §1's own fix for a structurally similar problem.
@@ -171,7 +171,7 @@ using syntactic negation to establish disjointness. Nothing here needs a new rul
 module in the first place, which is the property RFC-0060 §2 already relies on to
 call overlap detection "local."
 
-Concretely: `impl<T: Copy> Clone for T` in `std::core` cannot be contested by a second,
+Concretely: `extend<T: Copy> T: Clone` in `std::core` cannot be contested by a second,
 competing bare-parameter `Clone` blanket from any user module, because no user module
 can ever pass §2's orphan check for `Clone` (a foreign aspect to them). The only way a
 concrete type's `Clone` could still conflict with the blanket is the ordinary case
@@ -185,7 +185,7 @@ with no bare-parameter-specific handling needed.
 ## 4. What this doesn't cover
 
 - **Conditional impls for a genuinely named, parameterized target**
-  (`impl<T: Bound> Aspect for Container<T>`) — RFC-0060 §1's existing wording already
+  (`extend<T: Bound> Container<T>: Aspect`) — RFC-0060 §1's existing wording already
   works for these; `Container` has a real outermost constructor to check. This RFC
   only concerns the case where the target *is* the parameter, not a type built from it.
 - **Structural type constructors as targets** (`T[]`, tuples, function types) —

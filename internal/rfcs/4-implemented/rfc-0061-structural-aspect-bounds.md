@@ -24,7 +24,7 @@ satisfied by the standard impl lookup, which keys on type names. Without a
 specification for structural impls:
 
 - `println([1, 2, 3])` fails at compile time with no way to fix it.
-- Generic library code cannot write `impl<T: Display> Display for T[]`.
+- Generic library code cannot write `extend<T: Display> T[]: Display`.
 - The type checker has no representation for "array of displayable elements is
   displayable."
 
@@ -57,7 +57,7 @@ declared by a user. The structural constructors in Metel are:
 
 These are not nominal types — they have no name that can appear as the key in an
 impl. For the orphan rule (RFC-0060 §1), structural type constructors are treated as
-belonging to `std::core`. A user module may not write `impl Aspect for T[]` unless
+belonging to `std::core`. A user module may not write `extend T[]: Aspect` unless
 the **aspect** is local to that module.
 
 ### 1.1 Array representation
@@ -76,7 +76,7 @@ syntax follows RFC-0036 conditional impl syntax:
 
 ```metel
 // std::core
-impl<T: Display> Display for T[] {
+extend<T: Display> T[]: Display {
     fun to_string(self: &T[]) -> String { ... }
 }
 ```
@@ -118,19 +118,19 @@ correctly rejected.
 `std::core` provides the following explicit blanket impls for arrays:
 
 ```metel
-impl<T: Display> Display for T[] {
+extend<T: Display> T[]: Display {
     fun to_string(self: &T[]) -> String {
         // "[" + elements joined by ", " + "]"
     }
 }
 
-impl<T: Clone> Clone for T[] {
+extend<T: Clone> T[]: Clone {
     fun clone(self: &T[]) -> T[] {
         // element-wise clone into new backing storage
     }
 }
 
-impl<T: Eq> Eq for T[] {
+extend<T: Eq> T[]: Eq {
     fun eq(self: &T[], other: &T[]) -> boolean {
         // element-wise equality, short-circuiting; false if lengths differ
     }
@@ -147,8 +147,8 @@ The following blanket impls are natural but deferred pending their aspect defini
 
 | Impl | Blocked on |
 |---|---|
-| `impl<T: Ord> Ord for T[]` — lexicographic ordering | RFC-0062 (Ord Comparison Aspect, draft) |
-| `impl<T: Hash> Hash for T[]` — element-wise hashing | No Hash RFC yet |
+| `extend<T: Ord> T[]: Ord` — lexicographic ordering | RFC-0062 (Ord Comparison Aspect, draft) |
+| `extend<T: Hash> T[]: Hash` — element-wise hashing | No Hash RFC yet |
 
 Until RFC-0062 is accepted, `T[]` does not implement `Ord`. Until a Hash RFC is
 accepted, `T[]` does not implement `Hash`. The blanket impls will be added to
@@ -285,7 +285,7 @@ aspect impls are specified in RFC-0050.
   distinct from function pointer types.
 - RFC-0060 (Aspect Impl Coherence) — orphan rule; structural constructors owned by
   `std::core`; overlap detection.
-- RFC-0062 (Ord Comparison Aspect, draft) — prerequisite for `impl<T: Ord> Ord for T[]`.
+- RFC-0062 (Ord Comparison Aspect, draft) — prerequisite for `extend<T: Ord> T[]: Ord`.
 - RFC-0066 (Region Pointer Extraction) — §2.2 move-out constraint requires `T: !Drop`;
   array `!Drop` propagation now belongs to RFC-0096.
 - RFC-0071 (Ownership and Move Semantics) — `Copy`/`Drop` mutual exclusion; function

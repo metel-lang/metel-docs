@@ -19,7 +19,7 @@ impl_status: in-progress
 > | was | now | why |
 > |---|---|---|
 > | "the `Copy` trait" | "the `Copy` aspect" | Metel has aspects; "trait" is not the language's word |
-> | `impl Copy for Point {}` | `extend Point: Copy;` | RFC-0098 (`4-implemented`), plus v0.10.0's bodyless form |
+> | `extend Point: Copy {}` | `extend Point: Copy;` | RFC-0098 (`4-implemented`), plus v0.10.0's bodyless form |
 > | `@[r] T` | `@a T` | RFC-0063's allocator syntax |
 > | "the region system", RFC-0063 "(Region Handles)" | the allocator system | the region cluster is **`6-refused`** (RFC-0025/0028/0056/0069/0087); RFC-0063/0066/0068 were renamed 2026-07-10 |
 >

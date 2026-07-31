@@ -245,7 +245,7 @@ extend Handle: !Displayable;
 
 - RFC-0098 (Surface Keyword Renames) — this RFC extends `extend Type: Aspect`'s grammar with the bodyless
   alternative; depends on RFC-0098's grammar shape (or, if RFC-0098 doesn't land, could be respelled
-  against today's `impl Aspect for Type` instead — the mechanism itself doesn't depend on which keyword
+  against today's `extend Type: Aspect` instead — the mechanism itself doesn't depend on which keyword
   spelling is current).
 - RFC-0081 (Negative Impls) — the polarity/`!` mechanism §3's case builds on; the parser's existing
   `ib.methods.is_empty()` enforcement for negative impls is what makes the bodyless form unconditionally

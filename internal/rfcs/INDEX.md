@@ -434,13 +434,13 @@ implementation).
   impl lookup/bounds and explicit `std::core` structural impls only.
 - **RFC-0071** — Ownership and Move Semantics — affine-by-default foundation.
 - **RFC-0036** *(implemented 2026-07-13, was integrated 2026-07-13)* — Conditional Impl
-  Blocks — `impl Aspect for Type<T> where T: Bound`, both inline and `where`-clause
+  Blocks — `extend Type<T>: Aspect where T: Bound`, both inline and `where`-clause
   forms. Integrated into `public/reference/spec/declarations.md` right after the basic
-  `impl Aspect for Type` example. Fixed a stale error-code collision while integrating:
+  `extend Type: Aspect` example. Fixed a stale error-code collision while integrating:
   the RFC's own §4 example used `T0013`, already claimed (ambiguous aspect
   method/associated-type resolution) by the time this integrated — corrected to reuse
   `T0012` instead, per RFC-0072's own precedent for the negative-bound direction.
-  Explicitly defers bare-parameter blanket impls (`impl<T: Bound> Aspect for T`) to
+  Explicitly defers bare-parameter blanket impls (`extend<T: Bound> T: Aspect`) to
   RFC-0097 (now implemented) — every example in this RFC targets a
   genuinely named type. Worked
   example checks composition with RFC-0082's equality-constrained bounds (both are the
@@ -487,7 +487,7 @@ implementation).
 - **RFC-0097** *(implemented, confirmed 2026-07-20)* — Orphan Rule for
   Bare-Parameter Blanket Impls. RFC-0060 §1's orphan rule assumes every impl target
   has an outermost type constructor to check — but a bare-parameter blanket
-  (`impl<T: Bound> Aspect for T`, the exact form RFC-0060 §3/§5 and RFC-0080 §1.2 all
+  (`extend<T: Bound> T: Aspect`, the exact form RFC-0060 §3/§5 and RFC-0080 §1.2 all
   use as their own running example) has none. Formalizes that target-locality is
   vacuously unsatisfiable for this shape, so such an impl is permitted only via the
   aspect side; no new syntax, no new error code (reuses T0014), no new
@@ -538,7 +538,7 @@ implementation).
   collapse) intentionally out of scope — depends on RFC-0063's allocator syntax,
   not yet implemented.
 - **RFC-0081** *(implemented 2026-07-12, was integrated 2026-07-10)* — Negative
-  Impls — `impl !Aspect for Type`. Syntax, finality (conflict with a concrete
+  Impls — `extend Type: !Aspect;`. Syntax, finality (conflict with a concrete
   positive impl), and the orphan rule are implemented and tested (issue #264).
   Negative-bound consultation (SS2.3) is now implemented too (issue #243,
   RFC-0072/2026-07-12): `T: !Aspect` checking inverts the same

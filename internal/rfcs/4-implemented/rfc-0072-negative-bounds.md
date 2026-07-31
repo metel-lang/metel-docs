@@ -92,7 +92,7 @@ struct Point { x: f64, y: f64 }
 // no impl Drop for Point — Point: !Drop is satisfied
 
 struct Handle { fd: u64 }
-impl Drop for Handle { fun drop(self: Handle) { close_fd(self.fd); } }
+extend Handle: Drop { fun drop(self: Handle) { close_fd(self.fd); } }
 // impl Drop for Handle exists — Handle: !Drop is NOT satisfied
 ```
 
@@ -133,7 +133,7 @@ compiler derives this without any explicit declaration:
 fun needs_no_drop<T: !Drop>(val: T) { … }
 
 let p = Point { x = 1.0, y = 2.0 };
-impl Copy for Point {}   // Point: Copy
+extend Point: Copy {}   // Point: Copy
 needs_no_drop(p);        // valid — Point: Copy implies Point: !Drop
 ```
 
@@ -144,7 +144,7 @@ the same type, so the bound `T: Copy` is always a strictly stronger condition th
 
 For compound types (structs, enums, tuples), `T: !Drop` is a claim about the type itself —
 whether it has a `Drop` implementation — not about its fields. A struct whose fields
-implement `Drop` does not itself implement `Drop` unless an explicit `impl Drop for Struct`
+implement `Drop` does not itself implement `Drop` unless an explicit `extend Struct: Drop`
 is provided:
 
 ```metel
@@ -181,7 +181,7 @@ RFC-0036 allows impl blocks that are conditional on type bounds. Negative bounds
 in these conditions on the same terms as positive bounds:
 
 ```metel
-impl<T: !Drop> BulkMove for Arena<T> { … }
+extend<T: !Drop> Arena<T>: BulkMove { … }
 ```
 
 This impl applies only when `T` does not implement `Drop`. The compiler checks the condition
@@ -194,7 +194,7 @@ at each instantiation.
 ### 5.1 Explicit negative impls
 
 This RFC does not introduce a mechanism to explicitly *declare* that a type does not
-implement an aspect (`impl !Drop for T {}`). Negative bounds are checked against the
+implement an aspect (`extend T: !Drop;`). Negative bounds are checked against the
 absence of a positive impl; they do not require any opt-out declaration at the type
 definition site.
 
@@ -226,5 +226,5 @@ None.
   the move-out constraint that motivates this RFC.
 - RFC-0071 (Ownership and Move Semantics) — establishes `Copy`/`Drop` mutual exclusion;
   §3–4 ground the `Copy implies !Drop` implication.
-- RFC-0081 (Negative Impls) — explicit `impl !Aspect for Type` declarations that affect
+- RFC-0081 (Negative Impls) — explicit `extend Type: !Aspect;` declarations that affect
   what negative bound checking finds; complement to this RFC.

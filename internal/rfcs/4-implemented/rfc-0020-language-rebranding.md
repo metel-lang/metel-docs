@@ -115,7 +115,7 @@ All other keywords remain as-is: `fun`, `let`, `mut`, `struct`, `enum`, `type`, 
 
 1. **`Some` variant** — `Perhaps::Some` is unchanged. If `None` is accepted, `Some` stays for consistency with the ML/Kotlin/Swift tradition. No wind-themed rename proposed.
 
-2. **`impl Aspect for Type` phrasing** — `impl` is unchanged. The full syntax reads `impl Comparable for Point`, which remains clear. No action needed.
+2. **`extend Type: Aspect` phrasing** — `impl` is unchanged. The full syntax reads `extend Point: Comparable`, which remains clear. No action needed.
 
 ---
 :

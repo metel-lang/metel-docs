@@ -107,7 +107,7 @@ ordinary recursive per-field drop. This reading has a concrete, serious hole:
 
 ```metel
 struct Handle { fd: i32, tag: u64 }
-impl Drop for Handle { fun drop(self) { close_fd(self.fd) } }
+extend Handle: Drop { fun drop(self) { close_fd(self.fd) } }
 
 fun leak(h: Handle) {
     let t = h.tag;       // h narrows to Handle.{ fd }
@@ -484,7 +484,7 @@ instantiation, or varies per instantiation. See §9.3.
 their rows (different concrete field types), not by a second identity per instantiation.
 Four independent arguments, no live counter-pressure found:
 
-1. **Forced by how generic impls already have to work.** `impl<T> Drop for Pair<T> { ... }`
+1. **Forced by how generic impls already have to work.** `extend<T> Pair<T>: Drop { ... }`
    is written once and covers every instantiation. Per-instantiation brands would leave
    that one impl with no single, consistent thing to match against.
 2. **Matches every mainstream generic-nominal type system** — `Vec<i64>` and
@@ -498,10 +498,10 @@ Four independent arguments, no live counter-pressure found:
    `(Pair-brand, {a: i64, b: i64})` and `(Pair-brand, {a: String, b: String})` are
    perfectly distinguishable as types, same brand or not, because their rows differ.
 
-**Specificity (`impl Drop for Pair<i64>` vs. `impl<T> Drop for Pair<T>`) needs nothing
+**Specificity (`extend Pair<i64>: Drop` vs. `extend<T> Pair<T>: Drop`) needs nothing
 new either** — ordinary RFC-0036/RFC-0060 specificity/overlap checking already compares
 the *full type* (brand plus type arguments), not brand alone, the same way it already
-handles `impl Foo for i64` being more specific than `impl<T> Foo for T`.
+handles `extend i64: Foo` being more specific than `extend<T> T: Foo`.
 
 **This is now grounded, not just argued by analogy, via `brand-kind-unification.md`
 §8 (added the same day, in response to this exact question).** That document's own
@@ -633,7 +633,7 @@ this exact position is what surfaced that the receiver-based split was needed at
 
 ```metel
 fun magnitude<T: { x: f64, y: f64, .. }>(p: T) -> f64 { ... }     // was: HasField<"x", f64> + HasField<"y", f64>
-impl<row R: { x: f64, .. }> Display for { ..R } { ... }           // RFC-0090 §4's row-conditional impls, same reuse
+extend<row R: { x: f64, .. }> { ..R }: Display { ... }           // RFC-0090 §4's row-conditional impls, same reuse
 ```
 
 A bound *is* a row, spelled the same way a row is spelled everywhere else — no string
@@ -766,7 +766,7 @@ corpus, including RFC-0090 §4's row-conditional-impl typestate examples
    pieces support has already been folded into that RFC's text.
 10. ~~Does a generic struct's brand vary per instantiation, or stay tied to the
     declaration regardless of `T`?~~ **Resolved 2026-07-23, §9.3: tied to the
-    declaration.** Forced by how one generic impl (`impl<T> Drop for Pair<T>`) has to
+    declaration.** Forced by how one generic impl (`extend<T> Pair<T>: Drop`) has to
     cover every instantiation; matches every mainstream generic-nominal type system;
     conflating it with instance-identity brands (`@a`) would be a category error; and
     nothing is lost, since the row already distinguishes instantiations by field type.

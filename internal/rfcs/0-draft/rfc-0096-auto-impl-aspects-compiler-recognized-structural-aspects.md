@@ -183,7 +183,7 @@ auto-impl on a generic type is equivalent to an implicit, compiler-synthesized
 
 ```metel
 // never written by anyone; the compiler behaves as if this exists
-impl<A: Send, B: Send> Send for Pair<A, B> { }
+extend<A: Send, B: Send> Pair<A, B>: Send { }
 ```
 
 and it is checked exactly the way RFC-0036 §2.1 checks any conditional impl: at every
@@ -231,11 +231,11 @@ and conflating the two would misstate already-accepted behavior:
   thereby satisfy `T: Drop` as a bound — its fields are unconditionally dropped in
   declaration order regardless, but the struct itself only gains a `Drop` impl (and
   the ability to run its own destructor logic, per RFC-0071 §3's example) if a user
-  writes `impl Drop for Struct` by hand. Running §2's `satisfies` algorithm for `Drop`
+  writes `extend Struct: Drop` by hand. Running §2's `satisfies` algorithm for `Drop`
   against a struct would give the wrong answer.
 - **RFC-0061 §5.3's array rule is a narrow, deliberate exception, not a generalization.**
   `T[]: Drop` is auto-derived when `T: Drop` specifically because arrays cannot receive
-  a user-written `impl Drop for T[]` at all (structural types are `std::core`-owned for
+  a user-written `extend T[]: Drop` at all (structural types are `std::core`-owned for
   orphan-rule purposes, RFC-0061 §1) — the only way `T[]: !Drop` can ever be
   established, which RFC-0066 §2.2's move-out-of-region permission needs, is
   structurally. This necessity does not exist for structs and enums, which can always

@@ -40,7 +40,7 @@ updated: '2026-07-24'
 > recursing into itself or using the bare literal §2 abolishes. §1.1 settles that
 > (row-to-`Self` is admitted inside `construct`/`construct_unchecked` and nowhere else),
 > which also makes §1's synthesized default `Ok(row)` typecheck — it did not, as written.
-> Separately, the examples used two pre-RFC-0098 spellings (`impl Aspect for Type`,
+> Separately, the examples used two pre-RFC-0098 spellings (`extend Type: Aspect`,
 > `&mut`) despite this RFC post-dating that RFC's implementation by nine days; both are
 > corrected to `extend Type: Aspect` and `&var`. A new Open Question 8 records a privacy
 > question §1.1 exposed and does not answer.

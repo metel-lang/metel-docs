@@ -41,7 +41,7 @@ program, independent of module load order. This RFC specifies:
 
 ## 1. Orphan Rule
 
-An `impl Aspect for Type` is permitted only if **at least one of** the following is
+An `extend Type: Aspect` is permitted only if **at least one of** the following is
 declared in the same module as the impl:
 
 - the aspect (`Aspect`), or
@@ -51,14 +51,14 @@ declared in the same module as the impl:
 Built-in aspects and built-in types are considered local to `std::core`. User code
 may write:
 
-- `impl Display for MyStruct` — type is local. Permitted.
-- `impl MyAspect for i64` — aspect is local. Permitted.
-- `impl Display for i64` — both foreign. Permitted only in `std::core`.
+- `extend MyStruct: Display` — type is local. Permitted.
+- `extend i64: MyAspect` — aspect is local. Permitted.
+- `extend i64: Display` — both foreign. Permitted only in `std::core`.
 
 A violating impl is a compile-time error (`T0014 — orphan implementation`).
 
 > **Note (2026-07-11):** this wording assumes `Type` always has an outermost type
-> constructor. A bare-parameter blanket impl (`impl<T: Bound> Aspect for T` — see this
+> constructor. A bare-parameter blanket impl (`extend<T: Bound> T: Aspect` — see this
 > RFC's own §3/§5 examples below, which already use exactly this form) has none: `T`
 > is the impl's own generic parameter, not a declared struct or enum. RFC-0097
 > (draft) formalizes that target-locality is vacuously unsatisfiable for this shape of
@@ -77,8 +77,8 @@ that both would cover. A conflict is a compile-time error (`T0015 — conflictin
 implementation`), reported with both impl spans.
 
 **Concrete impls** (no type parameters) conflict when their fully-applied types are
-identical. `impl Display for List<i64>` and `impl Display for List<String>` do not
-conflict — they cover disjoint sets of types. `impl Display for List<i64>` appearing
+identical. `extend List<i64>: Display` and `extend List<String>: Display` do not
+conflict — they cover disjoint sets of types. `extend List<i64>: Display` appearing
 twice is a conflict.
 
 **Conditional/blanket impls** (RFC-0036) conflict when there exists a concrete
@@ -101,7 +101,7 @@ module not visible at compilation.
 whether any impl — concrete or blanket — applies to `T`. If none applies, `T: !Aspect`
 is proven. This requires no explicit negative impl declaration when no blanket covers `T`.
 
-**Consequence for blanket impls:** A blanket `impl<T: Foo> Bar for T` makes every
+**Consequence for blanket impls:** A blanket `extend<T: Foo> T: Bar` makes every
 type satisfying `Foo` implement `Bar`. The compiler expands blankets when checking
 applicability. `T: !Bar` is dischargeable only when no applicable blanket covers `T`.
 
@@ -180,7 +180,7 @@ negative bounds ergonomic: types without impls are provably absent.
 ### Specialisation
 
 Allowing a more-specific impl to override a more general one — for example, a
-concrete `impl Aspect for i64` silently winning over a blanket `impl<T> Aspect for T`
+concrete `extend i64: Aspect` silently winning over a blanket `extend<T> T: Aspect`
 — is rejected. Overlapping impls are always a coherence error. Programmers who need
 different behaviour for specific types use negative bounds to make impls disjoint
 rather than relying on resolution order. Rust's decade-long failed attempt to
@@ -214,4 +214,4 @@ Metel avoids it entirely by making overlap unconditionally illegal.
 - RFC-0096 (Auto-Impl Aspects) — ownership of the auto-impl mechanism this RFC only
   refers to for coherence purposes.
 - RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls, implemented) — formalizes §1
-  for the `impl<T: Bound> Aspect for T` case this RFC's own §3/§5 examples already use.
+  for the `extend<T: Bound> T: Aspect` case this RFC's own §3/§5 examples already use.

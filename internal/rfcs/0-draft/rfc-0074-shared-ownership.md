@@ -214,8 +214,8 @@ for teardown patterns where the caller holds the last known owner.
 `Rc` from one fiber while another fiber drops it produces a data race.
 
 ```metel
-impl<T, brand 'b> !Send for Rc<T, 'b> {}
-impl<T, brand 'b> !Sync for Rc<T, 'b> {}
+extend<T, brand 'b> Rc<T, 'b>: !Send;
+extend<T, brand 'b> Rc<T, 'b>: !Sync;
 ```
 
 Negative impls are required here rather than relying on absence of a positive impl.
@@ -253,8 +253,8 @@ The interface is identical to `Rc<T>`: `new`, `clone`, `Deref`, `get_mut`,
 `Arc<T>` is sendable when `T: Send + Sync`:
 
 ```metel
-impl<T: Send + Sync, brand 'b> Send for Arc<T, 'b> {}
-impl<T: Send + Sync, brand 'b> Sync for Arc<T, 'b> {}
+extend<T: Send + Sync, brand 'b> Arc<T, 'b>: Send {}
+extend<T: Send + Sync, brand 'b> Arc<T, 'b>: Sync {}
 ```
 
 Both `Send` and `Sync` require `T: Send + Sync` because the allocation is reachable
@@ -445,7 +445,7 @@ remains an open question (§Unresolved questions).
 - RFC-0071 (Ownership and Move Semantics) — `Clone`, `Drop`, `Deref`; `Copy`/`Drop`
   mutual exclusion means neither `Rc<T>` nor `Arc<T>` is `Copy`.
 - RFC-0072 (Negative Bounds) — `T: !Aspect` bounds used at call sites.
-- RFC-0081 (Negative Impls) — `impl !Send for Rc<T>` and `impl !Sync for Rc<T>`;
+- RFC-0081 (Negative Impls) — `extend Rc<T>: !Send;` and `extend Rc<T>: !Sync;`;
   required because the `Send` auto-impl would otherwise grant sendability via the
   integer reference-count field.
 - RFC-0080 (Stdlib Aspects) — `Send`/`Sync` auto-impl rules; `Clone` and `Deref`

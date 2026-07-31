@@ -135,18 +135,18 @@ struct RuntimeAspectImpl {
 
 Examples:
 
-- `impl Display for String`
+- `extend String: Display`
   - `aspect = "Display"`
   - `type_args = []`
   - methods: `to_string`
 
-- `impl From<u32> for Char`
+- `extend Char: From<u32>`
   - attached to owner type `Char`
   - `aspect = "From"`
   - `type_args = [RuntimeTypeRef::Named("u32")]`
   - methods: `from`
 
-- `impl Iterable<i64> for Counter`
+- `extend Counter: Iterable<i64>`
   - attached to owner type `Counter`
   - `aspect = "Iterable"`
   - `type_args = [RuntimeTypeRef::Named("i64")]`
@@ -433,7 +433,7 @@ types["List"].inherent_methods = {
 }
 ```
 
-### `impl From<u32> for Char`
+### `extend Char: From<u32>`
 
 ```rust
 types["Char"].aspect_impls = [

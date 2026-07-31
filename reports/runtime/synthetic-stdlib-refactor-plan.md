@@ -212,7 +212,7 @@ Phase 5 is the cleanup after Phase 4.
    directly, so `"i64"` resolves to `Concrete(Type::I64)` and unification with call sites
    works. ~3 lines.
 
-2. **Generic native impls** — `impl<T> From<T> for i64` cannot be written generically:
+2. **Generic native impls** — `extend<T> i64: From<T>` cannot be written generically:
    `register_aspect_impl` drops TypeVar args via `filter_map`, so the registration would
    be empty. Resolution: keep `register_builtin_aspect_impls` for the 90-entry numeric
    From cross-product in Phase 3 as explicit technical debt; revisit when parameterized

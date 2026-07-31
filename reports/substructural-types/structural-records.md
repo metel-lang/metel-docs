@@ -75,7 +75,7 @@ which. Proposed resolution: let a `Drop` impl **declare** which fields its body
 depends on —
 
 ```metel
-impl Drop for Handle {
+extend Handle: Drop {
     fun drop(self: Handle) uses (fd) {
         close_fd(self.fd);
     }
@@ -113,7 +113,7 @@ struct RcBox<T> {
     value: T,
 }
 
-impl<T> Drop for RcBox<T> {
+extend<T> RcBox<T>: Drop {
     fun drop(self: RcBox<T>) uses (value) {
         drop(self.value);
     }
@@ -474,8 +474,8 @@ records-shaped, still not worth the indirection).
 **Two new open questions this raises, appended to §11:**
 
 - **Coherence needs a specificity rule between the two axes an impl can now match on.**
-  An ordinary `impl Display for Point` is brand-keyed; RFC-0061's structural/blanket
-  impls (`impl<row R: HasField<"x", f64>> Display for record R`) are row-keyed. If a
+  An ordinary `extend Point: Display` is brand-keyed; RFC-0061's structural/blanket
+  impls (`extend<row R: HasField<"x", f64>> record R: Display`) are row-keyed. If a
   `Point` value matches both, which wins? The obvious default — brand-keyed beats
   row-keyed blanket impls, more-specific-wins — is not written down as a rule anywhere,
   and RFC-0060/RFC-0061's coherence checking does not yet account for a second axis at
@@ -904,7 +904,7 @@ fields `drop` actually reads:
 ```metel
 struct Connection { socket: Socket, stats: ConnStats }
 
-impl Drop for Connection {
+extend Connection: Drop {
     fun drop(self: Connection) {
         self.socket.close_if_open();
     }
@@ -924,7 +924,7 @@ it happened to share a struct with `socket`. With §2's declared field-usage on 
 the residual left after moving `stats` out stays exactly as droppable as it needs to be:
 
 ```metel
-impl Drop for Connection {
+extend Connection: Drop {
     fun drop(self: Connection) uses (socket) {   // declares: drop only ever touches `socket`
         self.socket.close_if_open();
     }

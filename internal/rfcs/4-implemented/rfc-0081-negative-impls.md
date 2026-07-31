@@ -9,7 +9,7 @@ impl_status: implemented
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence) and
-> RFC-0072 (Negative Bounds). Introduces `impl !Aspect for Type` as the mechanism
+> RFC-0072 (Negative Bounds). Introduces `extend Type: !Aspect;` as the mechanism
 > for library authors to declare that a type definitively does not implement an
 > aspect, overriding any blanket impl that would otherwise grant it.
 
@@ -21,13 +21,13 @@ impl_status: implemented
 
 RFC-0072 introduced negative *bounds* — what callers assert at use sites
 (`T: !Send`). This RFC introduces negative *impls* — what library authors declare
-at definition sites (`impl !Send for Rc<T>`). The two features are complementary
+at definition sites (`extend Rc<T>: !Send;`). The two features are complementary
 and cover different positions in the type system:
 
 | | Where written | What it says |
 |---|---|---|
 | Negative bound `T: !Aspect` | Function/type signature | The caller must supply a `T` that does not implement `Aspect` |
-| Negative impl `impl !Aspect for T` | Impl block | `T` definitively does not implement `Aspect`, regardless of blanket impls |
+| Negative impl `extend T: !Aspect;` | Impl block | `T` definitively does not implement `Aspect`, regardless of blanket impls |
 
 Negative impls are needed because blanket impls can inadvertently grant an aspect
 to a type that must not have it. Under closed-world coherence (RFC-0060), absence
@@ -42,8 +42,8 @@ override it.
 A negative impl is written like a positive impl, with `!` before the aspect name:
 
 ```metel
-impl<T, brand 'b> !Send for Rc<T, 'b> {}
-impl<T, brand 'b> !Sync for Rc<T, 'b> {}
+extend<T, brand 'b> Rc<T, 'b>: !Send;
+extend<T, brand 'b> Rc<T, 'b>: !Sync;
 ```
 
 The body must be empty. Negative impls carry no method implementations — they are
@@ -56,8 +56,8 @@ declarations of non-implementation, not definitions of behaviour.
 ### 2.1 Priority over blanket impls
 
 A negative impl takes priority over any positive blanket impl that would otherwise
-apply. If both a blanket `impl<T: Foo> Bar for MyType<T>` and a negative
-`impl !Bar for MyType<T>` exist, the negative impl wins: `MyType<T>: !Bar` for
+apply. If both a blanket `extend<T: Foo> MyType<T>: Bar` and a negative
+`extend MyType<T>: !Bar;` exist, the negative impl wins: `MyType<T>: !Bar` for
 all `T`.
 
 This is the property that makes negative impls necessary. Without them, adding a
@@ -69,8 +69,8 @@ to have them.
 A negative impl is final. No positive impl may coexist with a negative impl for
 the same type and aspect. The compiler rejects any combination of:
 
-- `impl Bar for MyType` and `impl !Bar for MyType` in the same scope.
-- A blanket `impl<T: Foo> Bar for T` and `impl !Bar for MyType` is allowed — the
+- `extend MyType: Bar` and `extend MyType: !Bar;` in the same scope.
+- A blanket `extend<T: Foo> T: Bar` and `extend MyType: !Bar;` is allowed — the
   negative impl overrides the blanket — but a *concrete* positive impl and a negative
   impl for the same type is a coherence error.
 
@@ -78,7 +78,7 @@ the same type and aspect. The compiler rejects any combination of:
 
 A negative bound `T: !Aspect` at a use site is satisfied when:
 
-1. There is an explicit negative impl `impl !Aspect for T`, OR
+1. There is an explicit negative impl `extend T: !Aspect;`, OR
 2. There is no positive impl (concrete or blanket) that covers `T` under
    closed-world coherence (RFC-0060).
 
@@ -87,7 +87,7 @@ they ensure that a type that must not have an aspect cannot accidentally acquire
 
 ### 2.4 Inheritance is not negated
 
-A negative impl does not propagate to supertypes or subtypes. `impl !Send for Rc<T>`
+A negative impl does not propagate to supertypes or subtypes. `extend Rc<T>: !Send;`
 makes `Rc<T>: !Send`; it does not make `Arc<T>: !Send` or affect any other type.
 
 ---
@@ -95,7 +95,7 @@ makes `Rc<T>: !Send`; it does not make `Arc<T>: !Send` or affect any other type.
 ## 3. Coherence
 
 Negative impls follow the same orphan rules as positive impls. A negative impl
-`impl !Aspect for Type` is permitted only when either the aspect or the type is
+`extend Type: !Aspect;` is permitted only when either the aspect or the type is
 defined in the current module (or the current stdlib). This prevents downstream
 code from negating impls it did not define.
 
@@ -124,8 +124,8 @@ The primary use case in Metel's stdlib is sendability of smart pointers:
 // non-atomic integer, which IS Send by value. The auto-impl would therefore
 // incorrectly grant Rc<T>: Send. A negative impl is required to prevent this.
 
-impl<T, brand 'b> !Send for Rc<T, 'b> {}
-impl<T, brand 'b> !Sync for Rc<T, 'b> {}
+extend<T, brand 'b> Rc<T, 'b>: !Send;
+extend<T, brand 'b> Rc<T, 'b>: !Sync;
 ```
 
 ---
@@ -136,7 +136,7 @@ RFC-0072 (Negative Bounds) explicitly deferred negative impls (RFC-0072 §5.1). 
 RFC is the companion that completes the picture. The two RFCs together cover:
 
 - RFC-0072: negative bounds in signatures — `fun f<T: !Send>(x: T)`
-- RFC-0081: negative impls in definitions — `impl !Send for Rc<T>`
+- RFC-0081: negative impls in definitions — `extend Rc<T>: !Send;`
 
 Both are needed for a complete negative aspect system. RFC-0072 can be accepted
 independently; RFC-0081 is a separate acceptance.
@@ -165,7 +165,7 @@ independently; RFC-0081 is a separate acceptance.
 - RFC-0060 (Aspect Impl Coherence) — orphan rules and closed-world coherence;
   negative impls override blanket impls within the coherence system.
 - RFC-0072 (Negative Bounds) — companion RFC; negative bounds at use sites.
-- RFC-0074 (Shared Pointers) — primary consumer; `impl !Send for Rc<T>` and
-  `impl !Sync for Rc<T>` prevent unsound fiber transfer.
+- RFC-0074 (Shared Pointers) — primary consumer; `extend Rc<T>: !Send;` and
+  `extend Rc<T>: !Sync;` prevent unsound fiber transfer.
 - RFC-0080 (Stdlib Aspects) — `Send` and `Sync` auto-impl rules that make
   negative impls necessary for `Rc<T>`.

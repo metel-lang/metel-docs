@@ -157,7 +157,7 @@ The effective bound list for `T` is `[Display, Clone, Comparable]`. Duplicates a
 1. After type inference, walk all function call expressions.
 2. For each generic function call, resolve the concrete type arguments (explicit or inferred).
 3. Merge inline `TypeParam.bounds` and matching `where_clause` entries into a single bound list per type parameter.
-4. For each bound in the list, check whether the concrete type argument has a registered `impl AspectName for T` in `impl_aspect_env`.
+4. For each bound in the list, check whether the concrete type argument has a registered `extend T: AspectName` in `impl_aspect_env`.
 5. If not, emit T0012 with span on the call-site argument.
 
 The bound-availability pass for function bodies (decision 3) seeds the type environment with the merged bound list so all aspect methods are in scope inside the function.

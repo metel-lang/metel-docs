@@ -101,7 +101,7 @@ resolution function and coherence pass.
 | 1 | **0060** Coherence — orphan rule, overlap detection, CWA, auto-impl, priority resolution + the resolution refactor (prereq 1–3) | **XL** | — | all of A; 0080, 0074 (B) |
 | 2 | **0036** Conditional impl blocks — `where` on impl; use-site applicability; syntactic-negation disjointness | M | 0060 | 0061, 0072§4 |
 | 3 | **0072** Negative bounds — `!Aspect` polarity flag; inverted discharger; `Copy ⇒ !Drop` rule | S | 0060 | 0066, 0073, 0074, 0081 |
-| 4 | **0081** Negative impls — `impl !Aspect for T {}` (empty body); negative registry; priority item 1 | S | 0060, 0072 | 0074, 0080 |
+| 4 | **0081** Negative impls — `extend T: !Aspect;` (empty body); negative registry; priority item 1 | S | 0060, 0072 | 0074, 0080 |
 | 5 | **0082** Associated types — `type X;` / `type X = T;`; projection; equality-constraint unification | **L** | 0060 | 0063, 0080, 0008 §6 |
 | 6 | **0061** Structural aspect bounds — blanket impls for `T[]`, `(A,B)`, `fun(A)->B`; `Callable`; Send/Sync/Drop auto-propagation | M | 0060, 0036 | — |
 | 7 | **0037** Return-position `impl Aspect` — opaque anonymous type per fn; return-site unification | S/M | 0060 | — |

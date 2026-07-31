@@ -73,7 +73,7 @@ original; no move occurs.
 Every `Copy` type is also `Clone`. The blanket impl clones by bitwise copy:
 
 ```metel
-impl<T: Copy> Clone for T {
+extend<T: Copy> T: Clone {
     fun clone(self: &T) -> T { *self }
 }
 ```
@@ -99,7 +99,7 @@ derived impl calls `.clone()` on each field and assembles the result:
 struct Point { x: f64, y: f64 }
 
 // Generated:
-impl Clone for Point {
+extend Point: Clone {
     fun clone(self: &Point) -> Point {
         Point { x: self.x.clone(), y: self.y.clone() }
     }
@@ -112,7 +112,7 @@ For enums, the derived impl matches the active variant and clones its fields.
 
 `@[r] T` — a region pointer — does not implement `Clone` by default. Cloning a region
 pointer would require a fresh allocation into the same or another region; the caller
-must make that explicit. No blanket `impl Clone for @[r] T` is provided.
+must make that explicit. No blanket `extend @[r] T: Clone` is provided.
 
 ---
 
@@ -168,12 +168,12 @@ ownership precludes unique mutable access through a shared pointer. `get_mut` an
 `try_unwrap` (RFC-0074 §2.4–2.5) are the explicit mechanisms for mutation.
 
 ```metel
-impl<T, brand 'b> Deref for Rc<T, 'b> {
+extend<T, brand 'b> Rc<T, 'b>: Deref {
     type Target = T;
     fun deref(self: &Rc<T, 'b>) -> &T { ... }
 }
 
-impl<T, brand 'b> Deref for Arc<T, 'b> {
+extend<T, brand 'b> Arc<T, 'b>: Deref {
     type Target = T;
     fun deref(self: &Arc<T, 'b>) -> &T { ... }
 }
@@ -217,7 +217,7 @@ No `@derive(Send)` annotation is needed; the compiler applies the rule automatic
 ### 3.3 Opting out
 
 A type that must not be `Send` despite the auto-impl rule must use a negative impl
-(RFC-0081): `impl !Send for MyType {}`. The negative impl overrides any blanket that
+(RFC-0081): `extend MyType: !Send;`. The negative impl overrides any blanket that
 would otherwise apply.
 
 Relying on absence of a positive impl is insufficient when the auto-impl rule would
@@ -276,8 +276,8 @@ fibers would race on the non-atomic reference count.
 `Arc<T, 'b>` is both `Send` and `Sync` when `T: Send + Sync`:
 
 ```metel
-impl<T: Send + Sync, brand 'b> Send for Arc<T, 'b> {}
-impl<T: Send + Sync, brand 'b> Sync for Arc<T, 'b> {}
+extend<T: Send + Sync, brand 'b> Arc<T, 'b>: Send {}
+extend<T: Send + Sync, brand 'b> Arc<T, 'b>: Sync {}
 ```
 
 Both conditions are required: `Sync` of `T` because any fiber may read through `&T`;

@@ -29,7 +29,7 @@ non-satisfying parameters) or leaves the impl absent entirely.
 ```metel
 struct Pair<A, B> { first: A, second: B }
 
-impl Printable for Pair<A, B> where A: Printable, B: Printable {
+extend Pair<A, B>: Printable where A: Printable, B: Printable {
     fun print(self) { ... }
 }
 ```
@@ -45,15 +45,15 @@ Conditional bounds are written in a `where` clause on the `impl` block, after th
 target type:
 
 ```metel
-impl Aspect for Type<T> where T: Bound { ... }
-impl Aspect for Type<T> where T: Bound1, T: Bound2 { ... }
-impl Aspect for Type<A, B> where A: Bound1, B: Bound2 { ... }
+extend Type<T>: Aspect where T: Bound { ... }
+extend Type<T>: Aspect where T: Bound1, T: Bound2 { ... }
+extend Type<A, B>: Aspect where A: Bound1, B: Bound2 { ... }
 ```
 
 Type parameters scoped to the impl block are written before the aspect name:
 
 ```metel
-impl<T: Bound> Aspect for Type<T> { ... }
+extend<T: Bound> Type<T>: Aspect { ... }
 ```
 
 Both forms are equivalent. The `where` form is preferred for readability when bounds
@@ -62,7 +62,7 @@ are numerous; the inline form is preferred for simple single-parameter cases.
 Negative bounds (RFC-0072) may appear in the `where` clause:
 
 ```metel
-impl<T: !Drop> BulkDrop for Container<T> { ... }
+extend<T: !Drop> Container<T>: BulkDrop { ... }
 ```
 
 ---
@@ -97,7 +97,7 @@ checked independently.
 ```metel
 struct SortedList<T: Comparable> { ... }
 
-impl<T: Comparable + Printable> Printable for SortedList<T> {
+extend<T: Comparable + Printable> SortedList<T>: Printable {
     fun print(self) { ... }
 }
 ```
@@ -136,23 +136,23 @@ this direct negation check is performed.
 
 ```metel
 // Accepted — T: !Copy directly negates T: Copy; provably disjoint
-impl<T: Copy>  Serialize for Wrapper<T> { ... }
-impl<T: !Copy> Serialize for Wrapper<T> { ... }
+extend<T: Copy> Wrapper<T>: Serialize { ... }
+extend<T: !Copy> Wrapper<T>: Serialize { ... }
 ```
 
 ```metel
 // Error T0015 — no direct negation between Clone and Display;
 // the compiler cannot prove these are disjoint
-impl<T: Clone>   Serialize for Wrapper<T> { ... }
-impl<T: Display> Serialize for Wrapper<T> { ... }
+extend<T: Clone> Wrapper<T>: Serialize { ... }
+extend<T: Display> Wrapper<T>: Serialize { ... }
 ```
 
 To make the second example compile, the programmer must add an explicit negative bound
 to establish disjointness:
 
 ```metel
-impl<T: Clone, T: !Display> Serialize for Wrapper<T> { ... }
-impl<T: Display>             Serialize for Wrapper<T> { ... }
+extend<T: Clone, T: !Display> Wrapper<T>: Serialize { ... }
+extend<T: Display> Wrapper<T>: Serialize { ... }
 ```
 
 This rule is intentional: disjointness appears explicitly in the source code, making
@@ -171,7 +171,7 @@ Conditional impls are subject to the same orphan rule as unconditional impls
 
 **Bare-parameter blanket impls out of scope.** Every example in this RFC targets a
 genuinely named type (`Pair<A, B>`, `Container<T>`, `Wrapper<T>`) with a real,
-nameable outermost constructor. `impl<T: Bound> Aspect for T` — where the target is
+nameable outermost constructor. `extend<T: Bound> T: Aspect` — where the target is
 the impl's own bare generic parameter, with no struct or enum wrapping it — has no
 such constructor, so §3.3's orphan rule as stated doesn't say what "local" means for
 it. This shape is deferred to RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls,
@@ -206,7 +206,7 @@ innermost unsatisfied bound.
 ## 5. Unresolved Questions
 
 1. **Where clause on `impl` blocks for non-generic types.** Whether a non-generic
-   type may have a conditional impl (e.g. `impl Aspect for Foo where SOME_CONST: Condition`)
+   type may have a conditional impl (e.g. `extend Foo: Aspect where SOME_CONST: Condition`)
    is deferred. The primary use case for conditional impls is generic types.
 
 ---

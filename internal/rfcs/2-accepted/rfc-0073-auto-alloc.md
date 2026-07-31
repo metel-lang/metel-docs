@@ -83,7 +83,7 @@ lifetime tracking.
 `AutoAlloc` implements the `Alloc` aspect (RFC-0063 §1):
 
 ```metel
-impl Alloc for AutoAlloc {
+extend AutoAlloc: Alloc {
     type AllocationError = !;
 }
 ```
