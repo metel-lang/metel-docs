@@ -371,9 +371,23 @@ descoping it pushes RFC-0119 and the blog's short-term commitment out another re
 > The conditional above is therefore live, and its remedy — rejecting `Drop` impls before
 > release rather than shipping them inert — is tracked as
 > [#345](https://codeberg.org/metel-lang/metel-core/issues/345), milestoned v0.12.0.
-> Discharging it the other way, by deciding that shipping `Drop` inert is acceptable after
-> all, is a legitimate choice but is an amendment to this section and should be recorded
-> here as one.
+>
+> **Discharged 2026-07-31 (#345), by a narrower rejection than this section's wording.**
+> What is rejected is a `drop` **body**, not a `Drop` impl. Declaring
+> `extend T: Drop { fun drop(self) {} }` remains legal.
+>
+> The reason is that "ship `Drop` inert" conflates two things this section does not
+> separate. Destructor *invocation* is missing, and a body that would clean up and never
+> runs is exactly the silent-no-op failure this gate exists to prevent. But everything
+> `Drop` means at the *type* level is implemented and correct today — the `Copy`/`Drop`
+> exclusion (§4), `T: Drop` and `T: !Drop` bounds, the anonymous-record ban, and §7's
+> refusal to partially move a `Drop` value. None of those depend on the destructor running,
+> and a blanket rejection would delete all of them, along with the twelve corpus fixtures
+> that exercise them — every one of which declares `Drop` with an empty body precisely
+> because it wants the type-level effect and not a destructor.
+>
+> So the rule is: an empty body claims nothing that is not delivered; a body with
+> statements in it does. The restriction lifts with #292.
 
 ---
 

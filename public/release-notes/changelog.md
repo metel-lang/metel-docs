@@ -186,16 +186,30 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   Drop order and `drop` invocation moved to v0.13.0 with the rest of the ownership work
   (#292).
 
-  On `develop` today a `Drop` impl still compiles into a `drop` method that never runs —
-  a feature that looks functional and silently does nothing. RFC-0071 §9c recorded a
-  release gate against exactly that, and it fired when #292 moved, so **v0.12.0 must not
-  release in that state**: providing a `drop` body is to be rejected rather than accepted
-  and inert (#345, required before release). Until that lands, do not write a type whose
-  correctness depends on its destructor firing.
+  **Writing a `drop` body is therefore rejected** (#345), rather than compiling into a
+  destructor that never runs — a feature that looks functional and silently does nothing.
+  RFC-0071 §9c recorded a release gate against exactly that, and it fired when #292 moved
+  to v0.13.0.
 
-  Unaffected either way, because none of it needs the destructor to run: the `Copy`/`Drop`
-  exclusion, the eligibility rules, `T: Drop` bounds, and the move checker's refusal to
-  partially move a `Drop` type.
+  ```metel
+  extend Handle: Drop {
+      fun drop(self) { close(self.fd); }   // rejected: this cleanup would never happen
+  }
+
+  extend Handle: Drop {
+      fun drop(self) {}                    // fine — declares `Drop`, promises nothing
+  }
+  ```
+
+  **Declaring a type `Drop` still works, and everything it means at the type level is
+  implemented.** An empty body claims nothing that is not delivered, and it still gets you
+  the `Copy`/`Drop` exclusion, the eligibility rules, `T: Drop` and `T: !Drop` bounds, the
+  ban on `Drop` for anonymous records, and the move checker's refusal to partially move a
+  `Drop` value. Only invocation is missing.
+
+  If you have cleanup to run today, put it in an ordinary method and call it. The
+  restriction lifts when #292 lands, and it matches `std::core::Drop` by its declaring
+  module — a module's own unrelated `Drop` aspect is unaffected.
 - **`T[]` is now a non-owning, immutable, unconditionally-`Copy` borrowed view** (RFC-0126),
   resolving the "Dynamic `T[]` deliberately has no rule" gap above. Produced only by
   borrowing a `List<T>`, a `[T; N]`, or another slice; array literals with no expected type
