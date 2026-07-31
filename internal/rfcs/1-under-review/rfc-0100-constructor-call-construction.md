@@ -52,10 +52,10 @@ updated: '2026-07-24'
 Today:
 ```metel
 struct IntBox { value: i64 }
-let b = IntBox { value: 42 };
+let b = IntBox { value = 42 };
 
 struct Token { public value: String, secret: String }
-let t = Token { value: "x".to_string(), secret: "shh".to_string() };
+let t = Token { value = "x".to_string(), secret = "shh".to_string() };
 ```
 
 Proposed:

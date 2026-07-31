@@ -489,7 +489,7 @@ impl Ticketing {
 Allowed:
 
 ```metel
-let mut t = Ticketing { golden_tickets: Token::new(), bars: vec![], metadata: Meta::new() };
+let mut t = Ticketing { golden_tickets = Token::new(), bars = vec![], metadata = Meta::new() };
 t.summarize();     // &Ticketing suffices — t is addressable, mut not required
 t.reconcile();     // t is mutably addressable, so the &mut-containing tuple is satisfied
 

@@ -106,7 +106,7 @@ fun favourite() -> Colour { Green }      // return type supplies E
 fun paint(c: Colour) { }
 paint(Blue);                             // parameter type supplies E (§1.3 caveat)
 
-let p: Perhaps<i64> = Some { value: 5 };
+let p: Perhaps<i64> = Some { value = 5 };
 let q: Perhaps<i64> = None;              // `None` via the general mechanism
 ```
 

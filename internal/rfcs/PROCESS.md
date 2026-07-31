@@ -93,6 +93,34 @@ RFC-0080 shipping syntax RFC-0012 had already rejected), that's this phase doing
 job, not a failure of it — the RFC goes back for amendment rather than proceeding to
 implementation carrying the problem forward.
 
+**Additional exit criterion, added 2026-07-31 — an RFC that changes existing syntax
+must sweep prose, not only code.** RFC-0115 renamed the struct-literal field separator
+from `:` to `=` and migrated 566 sites across `stdlib/` and `tests/`. It never touched
+documentation, so for two months the RFCs, the reports and the public blog post kept
+teaching syntax that no longer compiled — and it cost real time when RFC-0071 §3's stale
+example was about to be copied into an implementation task (metel-core#298).
+
+Concretely, for any RFC that changes the spelling of something already written down:
+
+- **Sweep `internal/rfcs/`, `reports/` and `public/` in the same change as the code
+  migration**, not as a follow-up. Prose examples are what implementers reach for first,
+  so a stale one is not cosmetic.
+- **Do not use a blind regex.** Three separate sweeps have now corrupted files this way:
+  `fun clone(self: &T)` rewritten to `self = &T`, `type Item: Display` to `type Item =
+  Display`, and — during metel-core#298 itself — a parameter list `part_b: &pb mut [i64]`
+  rewritten as an initializer. A field separator and a type annotation are spelled alike;
+  only context tells them apart. Scope by code-fence language too: a ```rust fence
+  describing the interpreter's own AST must not be swept as if it were Metel.
+- **Verify by compiling, not by reading.** Extract at least one complete example from the
+  swept prose and run it. That is what confirmed metel-core#298's sweep.
+- **Watch for line endings.** At least one file in this repository is CRLF; a
+  read/split/join in Python will silently rewrite every line of it.
+- **Decide the treatment of dated documents explicitly.** A published blog post is not
+  wrong *for its date*, but a reader today will copy what it shows. metel-core#298
+  corrected the syntax in place, on the grounds that a code sample is an instruction
+  rather than a historical claim. Superseded and refused RFCs, and `reports/archive/`,
+  were deliberately left alone — those are records of what was thought, not guidance.
+
 **Additional exit criteria, added 2026-07-10 — implementation-tracking, not just spec
 text.** Landing in the spec is exactly the moment a real gap opens between "what the spec
 says" and "what the interpreter does," and nothing before this tracked that gap

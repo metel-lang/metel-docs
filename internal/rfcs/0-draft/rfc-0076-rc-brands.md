@@ -170,16 +170,16 @@ brand. This is the **allocation-site brand** mechanism. A type opts in by declar
 brand parameter that the compiler fills with a fresh brand per call site:
 
 ```metel
-let a: Rc<Node> = Rc::new(Node { val: 1 });   // a: Rc<Node, '_>, brand inferred as fresh
-let b: Rc<Node> = Rc::new(Node { val: 2 });   // b: Rc<Node, '_>, different fresh brand
+let a: Rc<Node> = Rc::new(Node { val = 1 });   // a: Rc<Node, '_>, brand inferred as fresh
+let b: Rc<Node> = Rc::new(Node { val = 2 });   // b: Rc<Node, '_>, different fresh brand
 ```
 
 The compiler desugars this as if each construction were wrapped in a `brand` block:
 
 ```metel
 // Conceptual desugaring:
-brand 'a { let a: Rc<Node, 'a> = Rc::new(Node { val: 1 }); ... }
-brand 'b { let b: Rc<Node, 'b> = Rc::new(Node { val: 2 }); ... }
+brand 'a { let a: Rc<Node, 'a> = Rc::new(Node { val = 1 }); ... }
+brand 'b { let b: Rc<Node, 'b> = Rc::new(Node { val = 2 }); ... }
 ```
 
 The allocation-site form is the ergonomic entry point for types like `Rc` and `Arc`.
@@ -223,9 +223,9 @@ error messages:
 
 ```metel
 // Written — no brand annotations:
-let a = Rc::new(Node { val: 1 });
+let a = Rc::new(Node { val = 1 });
 let b = a.clone();               // compiler infers b has same brand as a
-let c = Rc::new(Node { val: 2 });   // compiler infers fresh brand for c
+let c = Rc::new(Node { val = 2 });   // compiler infers fresh brand for c
 ```
 
 Brands appear in error messages only when relevant to the reported issue.
@@ -242,9 +242,9 @@ excludes same-brand bindings (aliases of the same cell) and allows different-bra
 bindings (independent cells).
 
 ```metel
-let a = Rc::new(Node { val: 1 });   // a: Rc<Node, 'a>
+let a = Rc::new(Node { val = 1 });   // a: Rc<Node, 'a>
 let b = a.clone();                   // b: Rc<Node, 'a> — same cell
-let c = Rc::new(Node { val: 2 });   // c: Rc<Node, 'c> — different cell
+let c = Rc::new(Node { val = 2 });   // c: Rc<Node, 'c> — different cell
 
 // NotCapturing<Rc<Node, 'a>> excludes b (same brand), allows c (different brand)
 // Future: RcToken<'a> gates exclusive write access to the 'a cell (RFC-0074 §6.1)
@@ -321,7 +321,7 @@ impl<brand 'b, T> RcCell<'b, T> {
 
 brand 'b {
     let token = RcToken::<'b>::new();
-    let cell_a: Rc<RcCell<'b, I32>, 'b> = Rc::new(RcCell { value: 0, _brand: PhantomBrand });
+    let cell_a: Rc<RcCell<'b, I32>, 'b> = Rc::new(RcCell { value = 0, _brand = PhantomBrand });
     let alias_a = cell_a.clone();   // multiple RC owners — fine
 
     cell_a.borrow_mut(&mut token).value = 42;
@@ -353,7 +353,7 @@ impl<brand 'b> HandlerCell<'b, Logger, List<String>> {
 brand 'h {
     let token = HandlerToken::<'h, Logger>::new();
     let handler: Rc<HandlerCell<'h, Logger, List<String>>, 'h> =
-        Rc::new(HandlerCell { state: List::new(), _brand: PhantomBrand });
+        Rc::new(HandlerCell { state = List::new(), _brand = PhantomBrand });
 
     // Explicit dispatch to this specific handler:
     handler.record("first message", &mut token);

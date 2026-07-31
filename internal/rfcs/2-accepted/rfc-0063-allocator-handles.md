@@ -196,7 +196,7 @@ let node = @pool Node { val: 1 }?;
 annotation, the right-hand side may be a bare `T` — the declared type drives allocation:
 
 ```metel
-let node: @a Node = Node { val: 1, next: null };
+let node: @a Node = Node { val = 1, next = null };
 // equivalent to: let node = @a Node { val: 1, next: null }
 ```
 

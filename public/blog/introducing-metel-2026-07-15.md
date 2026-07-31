@@ -90,11 +90,11 @@ fun greet_all<T: Greet>(people: T[]) {
 }
 
 fun main() -> i64 {
-    var ada = Person { name: "Ada" };
+    var ada = Person { name = "Ada" };
     let ada_ref: &var Person = &var ada;
     ada_ref.rename("Ada Lovelace");   // auto-deref through &var — writes back to ada
 
-    greet_all([ada, Person { name: "Grace" }]);
+    greet_all([ada, Person { name = "Grace" }]);
     return 0;
 }
 ```
@@ -145,7 +145,7 @@ struct Handle {
     label: String,
 }
 
-let handle = Handle { fd: 3, label: "log" };
+let handle = Handle { fd = 3, label = "log" };
 let row: record { fd: i32, label: String } = handle.to_record();
 let handle2 = Handle::from_record(row);
 ```

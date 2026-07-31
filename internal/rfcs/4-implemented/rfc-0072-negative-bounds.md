@@ -132,7 +132,7 @@ compiler derives this without any explicit declaration:
 ```metel
 fun needs_no_drop<T: !Drop>(val: T) { … }
 
-let p = Point { x: 1.0, y: 2.0 };
+let p = Point { x = 1.0, y = 2.0 };
 impl Copy for Point {}   // Point: Copy
 needs_no_drop(p);        // valid — Point: Copy implies Point: !Drop
 ```

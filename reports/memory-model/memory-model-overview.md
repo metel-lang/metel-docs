@@ -200,7 +200,7 @@ When a `let` binding declares type `@[r] T`, the right-hand side may be a bare `
 expression — the declared type drives allocation:
 
 ```metel
-let node: @[r] Node = Node { val: 1, next: null };  // equivalent to @[r] Node { … }
+let node: @[r] Node = Node { val = 1, next = null };  // equivalent to @[r] Node { … }
 ```
 
 This eliminates redundant repetition of `@[r]` when the type annotation is already present.

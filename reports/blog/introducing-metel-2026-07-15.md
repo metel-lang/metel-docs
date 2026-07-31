@@ -111,7 +111,7 @@ struct Handle {
     label: String,
 }
 
-let handle = Handle { fd: 3, label: "log" };
+let handle = Handle { fd = 3, label = "log" };
 let row: record { fd: i32, label: String } = handle.to_record();
 let handle2 = Handle::from_record(row);
 ```

@@ -93,7 +93,7 @@ Bounds are checked at **construction time**. Instantiating a bounded struct or e
 struct SortedList<T: Comparable> { items: T[] }
 
 // error[T0012]: NonComparable does not implement Comparable
-let list = SortedList<NonComparable> { items: [] }
+let list = SortedList<NonComparable> { items = [] }
 ```
 
 Inside the struct's own method bodies and `impl` blocks, the typechecker treats bounded type parameters as having the declared aspect's methods in scope, without requiring any additional annotation.

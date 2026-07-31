@@ -805,7 +805,7 @@ println("mag = ${magnitude(point)}");
 
 // Any nominal struct with matching fields satisfies the same bound, no opt-in (§6):
 struct ScreenPos { x: f64, y: f64, z_index: i64 }
-println("mag = ${magnitude(ScreenPos { x: 3.0, y: 4.0, z_index: 1 })}");
+println("mag = ${magnitude(ScreenPos { x = 3.0, y = 4.0, z_index = 1 })}");
 
 // Not usable, per §6:
 //   impl record { x: f64, y: f64 } { fun scale(&self, k: f64) -> ... }
@@ -832,7 +832,7 @@ impl<row R: Lacks<"token">> Session<R> {
 }
 
 fun main() -> i64 {
-    let s = Session { data: record { token: "secret", host: "example.com" } };
+    let s = Session { data = record { token = "secret", host = "example.com" } };
     let authenticated = s.authenticate();
     authenticated.send_data("hello");
     // s.send_data("hello");   -- would not compile: s's row still has `token`
@@ -987,7 +987,7 @@ impl<row R: HasField<"auth", String>> RequestBuilder<R> {
 }
 
 fun main() {
-    let req = RequestBuilder { data: record { host: "example.com" } }
+    let req = RequestBuilder { data = record { host = "example.com" } }
         .with_auth("secret");
     req.send();
     // req.with_auth("again");                              -- R already Lacks "auth"

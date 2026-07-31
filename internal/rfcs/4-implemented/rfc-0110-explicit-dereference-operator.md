@@ -59,7 +59,7 @@ RFC-0067a's text, which turns out to overstate its own coverage (see RFC-0112):
 | `return p` where the return type is `i64` | works |
 | `r + 1` binary operand | fails (`T0001`) |
 | `takes(r)` call argument | fails (`T0001`) |
-| `let w = W { v: r }` struct-literal field | fails (`T0001`) |
+| `let w = W { v = r }` struct-literal field | fails (`T0001`) |
 | `match .. { true => r }` arm against an `i64` expected type | fails (`T0001`) |
 
 Two things fall out. First, **repointing is not merely awkward today, it is
@@ -186,7 +186,7 @@ splitting it out would leave the write side half-specified, but it must not be b
 as free.
 
 ```metel
-var q = Point { x: 5, y: 7 };
+var q = Point { x = 5, y = 7 };
 let qptr: &var Point = &var q;
 qptr.y = 99;      // auto-deref field write — unambiguous, unaffected by this RFC
 assert(q.y == 99);

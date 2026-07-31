@@ -230,7 +230,7 @@ Calls requiring `&self` or `&mut self` need an addressable receiver source unles
 Allowed examples:
 
 ```metel
-let mut counter = Counter { value: 0 };
+let mut counter = Counter { value = 0 };
 counter.increment();      // &mut self
 
 let p: *Counter = &counter;

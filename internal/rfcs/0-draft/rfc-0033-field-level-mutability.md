@@ -79,7 +79,7 @@ Plain fields (no annotation) behave exactly as today.
 **Assignment after construction is a compile error**, regardless of the mutability of the containing binding:
 
 ```metel
-mut conn = Connection { host: "db.local", port: 5432, retries: 0 };
+mut conn = Connection { host = "db.local", port = 5432, retries = 0 };
 
 conn.retries += 1;   // OK — plain field, binding is mut
 conn.host = "other"; // ERROR: field `host` is declared `let` and cannot be reassigned
@@ -100,7 +100,7 @@ impl Connection {
 **Construction is the only assignment point.** All fields — `let` and plain — are assigned exactly once in the struct literal:
 
 ```metel
-let conn = Connection { host: "db.local", port: 5432, retries: 0 };
+let conn = Connection { host = "db.local", port = 5432, retries = 0 };
 ```
 
 There is no `init`-block or deferred assignment syntax. `let` fields must be provided in the struct literal at construction time; they cannot be left uninitialised and filled in later.
@@ -162,8 +162,8 @@ Tuple-variant fields are positional and cannot be individually annotated, consis
 Struct update syntax (if adopted in a future RFC) must forbid updating `let` fields:
 
 ```metel
-let conn2 = Connection { retries: 0, ..conn };   // OK — only plain fields updated
-let conn3 = Connection { host: "x", ..conn };    // ERROR — host is `let`
+let conn2 = Connection { retries = 0, ..conn };   // OK — only plain fields updated
+let conn3 = Connection { host = "x", ..conn };    // ERROR — host is `let`
 ```
 
 This is a forward-compatibility note; struct update syntax is not yet part of the language.

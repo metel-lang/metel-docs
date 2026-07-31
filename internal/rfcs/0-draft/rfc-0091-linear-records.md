@@ -364,7 +364,7 @@ impl<row R: { auth: String, .. }> RequestBuilder<..R> {
 }
 
 fun main() {
-    let req = RequestBuilder { data: { host = "example.com" } }
+    let req = RequestBuilder { data = { host = "example.com" } }
         .with_auth("secret");
     req.send();
     // req.with_auth("again");                        -- R no longer satisfies !{ auth: _ }

@@ -142,7 +142,7 @@ messages when aliasing is relevant.
 ### 2.1 Allocation
 
 ```metel
-let a: Rc<Node> = Rc::new(Node { val: 1 });
+let a: Rc<Node> = Rc::new(Node { val = 1 });
 ```
 
 `Rc::new` allocates `Node` on the global heap, prepends a reference count initialised
@@ -152,7 +152,7 @@ governed by the reference count, not a lexical scope.
 ### 2.2 Clone — acquiring a second owner
 
 ```metel
-let a: Rc<Node> = Rc::new(Node { val: 1 });
+let a: Rc<Node> = Rc::new(Node { val = 1 });
 let b = a.clone();   // reference count: 2; a and b are both owners of the same Node
 ```
 
@@ -169,7 +169,7 @@ let b = a;   // b is the only owner; a is consumed; count unchanged
 `Rc<T>` implements `Deref<Target = T>`. Any borrow of an `Rc<T>` yields `&T`:
 
 ```metel
-let a: Rc<Node> = Rc::new(Node { val: 1 });
+let a: Rc<Node> = Rc::new(Node { val = 1 });
 let r: &Node = &*a;   // borrow; lifetime tied to binding `a`
 ```
 
@@ -190,7 +190,7 @@ The receiver is `&mut Rc<T>`, which prevents concurrent borrows of the outer poi
 within the same fiber, making the check sound.
 
 ```metel
-let mut node: Rc<Node> = Rc::new(Node { val: 1 });
+let mut node: Rc<Node> = Rc::new(Node { val = 1 });
 
 match node.get_mut() {
     Some(n) => n.val = 42,
@@ -296,9 +296,9 @@ struct Node {
 }
 
 fun make_tree() -> Rc<Node> {
-    let leaf1 = Rc::new(Node { value: 1, children: @[Heap] List::Nil {} });
-    let leaf2 = Rc::new(Node { value: 2, children: @[Heap] List::Nil {} });
-    Rc::new(Node { value: 0, children: @[Heap] List::from([leaf1, leaf2]) })
+    let leaf1 = Rc::new(Node { value = 1, children = @[Heap] List::Nil {} });
+    let leaf2 = Rc::new(Node { value = 2, children = @[Heap] List::Nil {} });
+    Rc::new(Node { value = 0, children = @[Heap] List::from([leaf1, leaf2]) })
 }
 ```
 
@@ -307,7 +307,7 @@ fun make_tree() -> Rc<Node> {
 ```metel
 enum Engine { StringTheory { core: @[Heap] Core }, Impulse { fuel: I32 } }
 
-let mut ship: Rc<Spaceship> = Rc::new(Spaceship { engine: Engine::StringTheory { ... } });
+let mut ship: Rc<Spaceship> = Rc::new(Spaceship { engine = Engine::StringTheory { ... } });
 
 match ship.get_mut() {
     Some(s) => s.engine = Engine::Impulse { fuel: 100 },
@@ -358,7 +358,7 @@ enforces that only one `&mut token` exists at a time:
 ```metel
 brand 'b {
     let token: RcToken<'b> = RcToken::new();
-    let a: Rc<Node, 'b> = Rc::new_branded(Node { val: 1 });
+    let a: Rc<Node, 'b> = Rc::new_branded(Node { val = 1 });
     let alias = a.clone();   // multiple owners — fine
 
     a.borrow_mut(&mut token).val = 42;

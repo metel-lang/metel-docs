@@ -81,7 +81,7 @@ Constructing a `pub struct` with any private field from outside the module is a 
 
 ```metel
 // outside token.mln
-let t = Token { kind: TokenKind::Ident, span: s, offset: 0 };  // ERROR: field `offset` is private
+let t = Token { kind = TokenKind::Ident, span = s, offset = 0 };  // ERROR: field `offset` is private
 ```
 
 The intended pattern is a public constructor function:
