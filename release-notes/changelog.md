@@ -109,8 +109,25 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
 
   This is an ownership-soundness gap in the checker, not memory unsafety: the runtime
   deep-clones a closure's environment at creation, so both calls do produce a value. Move
-  checking is opt-in, so nothing changes unless you pass `--move-check`. Tracked as #330,
-  and it must close before move checking becomes the default (#310).
+  checking is opt-in, so nothing changes unless you pass `--move-check`.
+
+  **Deliberately deferred to v0.13.0 (#330), so v0.12.0 ships with this exclusion
+  stated rather than with a fix rushed to meet the release.** Treat `--move-check` in
+  this release as checking ownership of *values*, not of closures: a closure that
+  captures a non-`Copy` value can be reused freely, and calling one never consumes what
+  it captured. Everything else the checker reports is unaffected.
+
+  The reason it is not a small fix is worth knowing. `Type::Fun` carries parameters and a
+  return type and nothing else, so a closure and a named function with the same signature
+  have the same type; and at runtime a named function is itself a closure value with a
+  captured environment. "Function pointers are `Copy`, closures are not" is therefore not
+  a distinction that exists and was lost — it does not exist at either level, and any fix
+  has to create it. The design alternatives are recorded on #330; the principled ones
+  depend on RFC-0049 and RFC-0050, which are drafts blocked on a successor to the refused
+  RFC-0046.
+
+  This must close before move checking becomes the default (#310), which is consequently
+  not expected to land in v0.12.0 either.
 - **Loop bodies are now analysed to a fixed point.** A move inside a loop body used to be
   invisible to the next iteration: the body's exit state was unioned into the code *after*
   the loop, but never fed back into the loop itself. So this was accepted:
