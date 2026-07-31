@@ -133,6 +133,11 @@ the gap without a control-flow graph.
 
 Each of these was reproduced against the built interpreter.
 
+- **Shadowing erases the shadowed binding's moved state permanently**
+  (metel-core#343), so a shadow inside a loop body launders a carried move:
+  `loop { let moved = s; let s = "replacement"; … }` is accepted. Pre-existing rather than
+  introduced by the loop work, but the fixed point would otherwise catch this case. This
+  is a bug rather than a precision limit, and is the most serious entry in this list.
 - **Calling a closure never consumes its captures** (metel-core#330), so a loop that calls
   a closure capturing a non-`Copy` value on every iteration is accepted. Capturing at
   creation *inside* a loop is caught, since that is an ordinary move. See "Confirmed
