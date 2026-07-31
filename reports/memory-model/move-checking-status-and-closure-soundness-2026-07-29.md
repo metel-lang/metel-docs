@@ -23,7 +23,9 @@ moves of bindings and places through:
   `Drop` type;
 - `if`, `match`, `while`, `for`, `loop`, and `for-in`, using a conservative join of
   possible moved state, with loop bodies analysed to a fixed point so that a move in one
-  iteration is visible to the next (see "Control flow is conservative" below);
+  iteration is visible to the next (see "Control flow is conservative" below), and with
+  shadowing scoped correctly — a binding that shadows another restores it when its scope
+  ends, including across a `break` or `continue` out of the scope;
 - `Copy` and `Drop` aspect satisfaction, including generic bounds, conditional impls,
   generic functions, generic impl methods, aspect-bound calls, and associated-type
   bounds; and
@@ -133,11 +135,11 @@ the gap without a control-flow graph.
 
 Each of these was reproduced against the built interpreter.
 
-- **Shadowing erases the shadowed binding's moved state permanently**
-  (metel-core#343), so a shadow inside a loop body launders a carried move:
-  `loop { let moved = s; let s = "replacement"; … }` is accepted. Pre-existing rather than
-  introduced by the loop work, but the fixed point would otherwise catch this case. This
-  is a bug rather than a precision limit, and is the most serious entry in this list.
+*A seventh gap — shadowing a binding erased the shadowed binding's moved state, laundering
+a carried move — was found by review and **fixed** (metel-core#343), not listed. Binding a
+name now records what it displaced, and a `break` or `continue` unwinds the scopes it
+jumps out of before recording its state.*
+
 - **Calling a closure never consumes its captures** (metel-core#330), so a loop that calls
   a closure capturing a non-`Copy` value on every iteration is accepted. Capturing at
   creation *inside* a loop is caught, since that is an ordinary move. See "Confirmed
