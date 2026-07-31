@@ -92,8 +92,20 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   `T: Aspect` bound, so a read-only generic can borrow its parameter and still call methods
   on it (#334). Both mattered more than their size suggests: the fix for any ownership
   complaint is "take a reference instead", and these were the two places where doing so
-  then stopped you calling a method. Resolving through a shared reference does **not**
-  grant mutable access — a `&var self` method remains unreachable through `&T`.
+  then stopped you calling a method.
+- **A `&var self` method is now rejected through a shared reference in every receiver
+  form.** The check previously asked whether the receiver's *binding* was writable, which
+  has no answer when the receiver is not a binding — `pair.0.bump()` reached through a
+  `&T` was accepted and did mutate. The rule is now about the reference chain itself, so
+  the identifier and non-identifier forms agree, and so do the concrete and generic paths.
+  An owned receiver is unaffected: `var c = C { … }; c.bump()` still works, because owning
+  a value and holding a shared reference to one are different things.
+
+  The diagnostic changes with it. This case reported `T0006 cannot assign to immutable
+  binding`, which named the proxy rather than the problem; it now reads `cannot call
+  `&var self` method `bump` through a shared reference`. The array-method form of the same
+  rule was reporting **`T0008`**, which is *non-exhaustive match* — a miscoding no fixture
+  covered — and is now `T0006` like the other two.
 - Move checking now rejects consuming a non-`Copy` loop element obtained through a
   borrowed `T[]` view, and reusing a function value is no longer counted as a move.
   **That second rule is currently broader than the specification, and it loosens what
