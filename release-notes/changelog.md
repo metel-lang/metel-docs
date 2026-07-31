@@ -126,8 +126,10 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   depend on RFC-0049 and RFC-0050, which are drafts blocked on a successor to the refused
   RFC-0046.
 
-  This must close before move checking becomes the default (#310), which is consequently
-  not expected to land in v0.12.0 either.
+  This gates making move checking the default (#310), which has moved to v0.13.0 with it.
+  The corpus migration #310 describes is finished — no fixture outside the deliberate
+  negative ones fails with checking on — so what is deferred is the flip and the guarantee
+  it would imply, not the work.
 - **Loop bodies are now analysed to a fixed point.** A move inside a loop body used to be
   invisible to the next iteration: the body's exit state was unioned into the code *after*
   the loop, but never fed back into the loop itself. So this was accepted:
