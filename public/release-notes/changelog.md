@@ -182,9 +182,20 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   was rejected with a spurious "cannot infer receiver type" error. Nested occurrences in
   generic arguments, tuples, records, references, function types, and associated-type
   projections are lowered too, and each occurrence mints its own type parameter.
-- **A `Drop` impl compiles and its `drop` method never runs.** Destructor invocation and
-  drop order are not in this release. Do not write a type whose correctness depends on its
-  destructor firing until that lands.
+- **The `Drop` aspect is declared, but destructor invocation is not in this release.**
+  Drop order and `drop` invocation moved to v0.13.0 with the rest of the ownership work
+  (#292).
+
+  On `develop` today a `Drop` impl still compiles into a `drop` method that never runs —
+  a feature that looks functional and silently does nothing. RFC-0071 §9c recorded a
+  release gate against exactly that, and it fired when #292 moved, so **v0.12.0 must not
+  release in that state**: providing a `drop` body is to be rejected rather than accepted
+  and inert (#345, required before release). Until that lands, do not write a type whose
+  correctness depends on its destructor firing.
+
+  Unaffected either way, because none of it needs the destructor to run: the `Copy`/`Drop`
+  exclusion, the eligibility rules, `T: Drop` bounds, and the move checker's refusal to
+  partially move a `Drop` type.
 - **`T[]` is now a non-owning, immutable, unconditionally-`Copy` borrowed view** (RFC-0126),
   resolving the "Dynamic `T[]` deliberately has no rule" gap above. Produced only by
   borrowing a `List<T>`, a `[T; N]`, or another slice; array literals with no expected type

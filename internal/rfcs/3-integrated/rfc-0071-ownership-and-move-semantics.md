@@ -365,6 +365,15 @@ descoping it pushes RFC-0119 and the blog's short-term commitment out another re
 > not apply to `Copy`: declaring it changes no runtime behaviour either way, since the
 > evaluator already duplicates every value — its observable effect is that `T: Copy` bounds
 > begin to resolve.
+>
+> **Gate fired 2026-07-31.** #292 moved to v0.13.0 along with the rest of the ownership
+> block (#293, #310, #328, #330, #338, #342), while #290 had already shipped in v0.12.0.
+> The conditional above is therefore live, and its remedy — rejecting `Drop` impls before
+> release rather than shipping them inert — is tracked as
+> [#345](https://codeberg.org/metel-lang/metel-core/issues/345), milestoned v0.12.0.
+> Discharging it the other way, by deciding that shipping `Drop` inert is acceptable after
+> all, is a legitimate choice but is an amendment to this section and should be recorded
+> here as one.
 
 ---
 
