@@ -146,6 +146,12 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   let again = s;             // previously rejected; the move cannot have happened here
   ```
 
+- **Writing to a moved place makes it valid again**, instead of counting as a use of it.
+  A write does not read its target, so `let moved = s; s = "again";` is accepted — it was
+  previously rejected, with or without a loop. Assigning a field works the same way
+  (`p.left = "c"` after `p.left` moved makes `p` whole again), while a write whose *base*
+  is gone is still an error, and replacing one field still does not revive a wholly moved
+  value. This matters most in a loop body, where move-then-replace is the idiomatic shape.
 - **A dereference is now a place.** The move checker can name `*p` and `(*p).f`, where it
   previously gave up on any expression under a `*`. Moving the same value out of a
   reference twice is caught rather than ignored, and diagnostics render such a place the

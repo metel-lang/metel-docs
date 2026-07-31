@@ -117,7 +117,46 @@ check unsound.
 
 What remains conservative is the join itself: a branch's moves are still unioned without
 asking whether that branch can be taken. Divergence is the only reachability fact the
-checker uses.
+checker uses. The visible cost is a loop bounded by its condition rather than by `break`:
+
+```metel
+while (i < 1) {        // runs once, but nothing proves that
+    i += 1;
+    let moved = s;     // reported as loop-carried
+}
+```
+
+Writing the exit as a `break` avoids it. A trip-count analysis for this shape would close
+the gap without a control-flow graph.
+
+### What loop checking misses
+
+Each of these was reproduced against the built interpreter.
+
+- **Calling a closure never consumes its captures** (metel-core#330), so a loop that calls
+  a closure capturing a non-`Copy` value on every iteration is accepted. Capturing at
+  creation *inside* a loop is caught, since that is an ordinary move. See "Confirmed
+  closure soundness hole" below — this is the same hole, seen from the loop side, and it
+  is the most significant thing loop checking does not catch.
+- **Widening stops after eight passes.** A move cascade needing more would lose what a
+  further pass would have found. Theoretical; the deepest case tested settles in one
+  extra pass.
+- **A generic body whose reconstruction fails is skipped** — see "Generic reconstruction
+  can fail open" above. Every loop inside such a body goes unchecked with it.
+- **Only the first violation is reported** (metel-core#338), so a loop body with several
+  loop-carried moves surfaces them one at a time.
+
+Writing to a moved place reinitializes it rather than counting as a use, so the idiomatic
+move-then-replace loop body is accepted:
+
+```metel
+var s = "hello";
+loop {
+    let moved = s;
+    s = "again";       // `s` is valid again from here
+    …
+}
+```
 
 ### Ownership RFC work remains incomplete
 
