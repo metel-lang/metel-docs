@@ -262,9 +262,43 @@ metel-core#252, closure capture lists, is related design work. This specific mov
 hole should receive its own implementation issue before the move checker is enabled by
 default.
 
+*Revised 2026-07-31:* that issue is metel-core#330, and it has been **deliberately
+deferred to v0.13.0** rather than fixed for v0.12.0. Two things came out of working the
+option space that change how step 1 above should be read.
+
+**Step 1 is not a matter of recovering a distinction — it does not exist.**
+`Type::Fun(Vec<Type>, Box<Type>)` carries parameters and a return type and nothing else,
+so a closure and a named function with the same signature have the same type. And at
+runtime `RuntimeCallable` has only `Closure` and `Intrinsic`: a named function is built as
+a closure value with a captured environment. "Distinguish plain function pointers from
+closures" therefore means *creating* that distinction at both levels, not reading one.
+RFC-0049 meets the same wall from the other side — a closure has no named type, so a
+programmer cannot write an impl for one.
+
+**Steps 2 and 3 are separable, and only step 2 is a regression.** Deriving `Copy` from
+captures (step 2) rejects `call(f); call(f)`, the half that #329 introduced. It does not
+reject `f(); f()`, because a call's callee is observed rather than consumed — that needs
+step 3, and step 3 is long-standing rather than new.
+
+The tempting middle path — tracking capture copyability on the *binding* as dataflow,
+without touching the type — was considered and rejected. It fixes the published repro
+while leaving the guarantee false wherever the closure crosses a call boundary, lands in a
+field, or is returned. A checker that is right on the example and wrong on the shape is a
+worse thing to ship under `--move-check` than a stated exclusion.
+
+The principled routes (a capability bit on the function type, or explicit capture lists)
+are RFC-0049 and RFC-0050, both drafts, and RFC-0050's `move` half waits on a successor to
+the refused RFC-0046. The blocker is a design decision, not implementation time. The full
+comparison is recorded on metel-core#330.
+
 ## Practical guidance
 
 Treat `--move-check` as valuable early enforcement, not yet as a proof of complete
 ownership safety. In particular, do not rely on reusing closures that capture non-`Copy`
 state, do not treat an unchecked-generic warning as harmless, and keep ownership-sensitive
 generic algorithms explicit about borrowing, copying, or cloning.
+
+Put more sharply, for v0.12.0: the checker enforces ownership of **values**, not of
+**closures**. A closure capturing a non-`Copy` value may be reused freely and calling one
+never consumes what it captured (metel-core#330, deferred to v0.13.0). Everything else it
+reports stands.
