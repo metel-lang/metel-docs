@@ -199,10 +199,10 @@ are `Copy` — as they are in most of the affected fixtures — a `T: Copy` boun
 callback today, which is what the sentence above already recommends. Reserve the callback
 for genuinely non-`Copy` elements whose type has no `Clone` impl.
 
-Note also that the borrowing form this section recommends is not currently writable when
-the callback body calls an aspect method on its `&T`: that does not resolve through a
-reference to a bounded type parameter (metel-core#334). Until that lands, such a body
-needs an explicit `(*x).method()`.
+*Revised 2026-07-31:* the borrowing form this section recommends is now writable
+directly. Calling an aspect method on a `&T` under a `T: Aspect` bound used to fail to
+resolve, so such a body needed an explicit `(*x).method()`; metel-core#334 fixed the
+auto-deref, and the workaround has been removed from the fixtures that carried it.
 
 ## Confirmed closure soundness hole
 
