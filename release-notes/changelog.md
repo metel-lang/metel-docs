@@ -86,6 +86,14 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   remains is that `Clone` exists as an aspect but has essentially no stdlib impls, so
   `T: Clone` is not usable as a bound for a primitive or `String` (#335). The
   move-check corpus has no unintentional violations left.
+- **Auto-deref now reaches through a reference in two places it previously missed.** An
+  array intrinsic resolves through `&T[]` and `&[T; N]` — `arr.len()` where `arr: &i64[]`
+  needed `(*arr).len()` before (#314) — and an aspect method resolves through `&T` under a
+  `T: Aspect` bound, so a read-only generic can borrow its parameter and still call methods
+  on it (#334). Both mattered more than their size suggests: the fix for any ownership
+  complaint is "take a reference instead", and these were the two places where doing so
+  then stopped you calling a method. Resolving through a shared reference does **not**
+  grant mutable access — a `&var self` method remains unreachable through `&T`.
 - Move checking now rejects consuming a non-`Copy` loop element obtained through a
   borrowed `T[]` view, and reusing a function value is no longer counted as a move.
   **That second rule is currently broader than the specification, and it loosens what
