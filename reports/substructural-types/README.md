@@ -48,6 +48,15 @@ document — read on for why that mattered enough to reorganize around.
    reopening the ambient-structural-matching failure mode the tier system exists to
    prevent. Pressure-tested, not settled — read after #8, as a challenge to the
    architecture #8 argues within rather than a continuation of it.
+10. [`affine-by-default-inversion.md`](affine-by-default-inversion.md) — the one that
+   argues with #1 rather than building on it: should affinity be **opt-in** on an
+   unrestricted default, with moves written explicitly, inverting RFC-0071? Establishes
+   that this would un-invert `linear-types.md` §1 back onto quantitative type theory's
+   ω-default background (collapsing the four-point lattice to three), that the usual
+   ergonomics motivation is not supported by Rust's own 2026 survey data, and that
+   Swift and Hylo — having taken opposite defaults — agree the deciding constraint is
+   *uniformity for generic code*, which the proposal as stated does not have. Does not
+   recommend adoption. Read after #1, whose §1–2 it would rewrite.
 
 Each is a **living document**: updated in place as understanding changes, not
 superseded by a new dated file every time something is revised. Substantive changes get

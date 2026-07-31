@@ -58,6 +58,13 @@ affine — at most once: weakening allowed (may drop; Drop::drop runs), no
 ω      — unrestricted: weakening and contraction both allowed; Copy fields
 ```
 
+*Challenged 2026-07-31.* [`affine-by-default-inversion.md`](affine-by-default-inversion.md)
+asks whether the inversion this section describes is the right way round at all — if
+affinity were opt-in on an ω default, the fourth point would not be needed and the
+standard three-point lattice would fit. It does not recommend the change (the deciding
+constraint turns out to be uniformity for generic code, not the default), but §6 there
+lists what this section and §2 would have to become if it were ever adopted.
+
 Ordered by how much the discipline permits: `1` is strictly more restrictive than
 `affine` (affine additionally allows silent dropping); `affine` is strictly more
 restrictive than `ω` (ω additionally allows duplication). `0` sits outside this ordering
