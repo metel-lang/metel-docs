@@ -265,21 +265,26 @@ generic parameter with the same bound.
 
 > **Available in v0.12.0, under `--move-check` only.** Move checking is off by default in this release.
 
-An ownership rule from RFC-0071 §1/§7 was violated. Five distinct situations share this
+An ownership rule from RFC-0071 §1/§7 was violated. Six distinct situations share this
 code, each with its own message:
 
 - a value used after it was moved;
 - a partially moved value used as a whole;
 - a partial move out of a type that implements `Drop`, which is never allowed;
 - a move out of an array element, which is banned outright;
+- a move of a non-`Copy` element out of a borrowed `T[]` view;
 - a `&var` binding moved by a use that is not a reborrow.
 
-Each message names the binding and the location of the move.
+Each message names the binding and the location of the move. When the move happened on an
+earlier iteration of an enclosing loop, the message says so — a loop-carried move is
+usually the *same* expression as the use, one iteration later, so naming only its location
+would point back at the line you are already reading.
 
 ```
 [T0019] type error in main.mtl at 30..40: use of moved value `p`: `p` was moved at main.mtl:30:14
 [T0019] type error in main.mtl at 12..20: cannot partially move value `h`: `h.name` belongs to a `Drop` type
 [T0019] type error in main.mtl at 8..14: cannot move from `xs[0]`: array element moves are not allowed
+[T0019] type error in main.mtl at 62..70: use of moved value `s`: `s` was moved here on an earlier iteration
 ```
 
 **Fix:** depending on the rule — borrow instead of moving (`&x`), clone the value, move the
