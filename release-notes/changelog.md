@@ -518,7 +518,7 @@ Standard library expansion and module system clarifications. Shipped from sprint
 
 **New language features:**
 - Function overloading — a module may declare multiple free functions with the same name, distinguished by parameter types. Resolution is exact-match only: argument types must equal a candidate's parameter types exactly, with no implicit numeric coercion participating in selection (bare numeric literals default before selection, so `f(42)` picks an `i64` overload). Overloaded functions must be non-generic with every parameter annotated; calls with no matching candidate list all available signatures in the error
-- Aspects can now be implemented for primitive types — `impl Display for i64 { … }` and the like typecheck and run; the standard library's `Display` and `From` implementations for the primitives are declared this way
+- Aspects can now be implemented for primitive types — `extend i64: Display { … }` and the like typecheck and run; the standard library's `Display` and `From` implementations for the primitives are declared this way
 - `native` declaration syntax for stdlib-only host-backed implementations — free functions, methods, and aspect methods can be marked `native` with an explicit binding key. Reserved for the standard library; using it in user code is a compile error
 
 **Standard library (breaking):**
@@ -770,7 +770,7 @@ Aspects and upgraded builtins. Shipped by Sprint 6 (`sprint/6`).
 
 **New language features:**
 - Aspect declarations — `aspect Foo { fun method(self) -> T; }`
-- `impl Aspect for Type` blocks with method dispatch via `.method()` syntax
+- `extend Type: Aspect` blocks with method dispatch via `.method()` syntax
 - `Iterable<T>` aspect — user-defined types usable in `for-in` loops
 - `From<S>` aspect — `as` cast desugars to `T::from(value)`; user-defined casts for any type pair
 - `Display` aspect — `.to_string()` on `i64`, `f64`, `boolean`, `String`; `print`/`println` polymorphic via Display
@@ -783,7 +783,7 @@ Aspects and upgraded builtins. Shipped by Sprint 6 (`sprint/6`).
 
 **Bug fixes:**
 - Keyword-prefix identifiers (`break_sum`, `return_value`, `let_x`) now parse correctly as identifiers
-- Multiple `impl From<X> for Y` blocks with different source types now dispatch independently
+- Multiple `extend Y: From<X>` blocks with different source types now dispatch independently
 
 ## v0.3.0
 
@@ -846,6 +846,6 @@ Initial language version. Implemented by the tree-walk interpreter.
 
 **Not included (v0.3.0+):**
 - User-defined generic functions and types (see [Generics](../reference/spec/types.md#generics))
-- User-defined aspects and `impl Aspect for Type` (see [Aspects](../reference/spec/declarations.md#aspects))
+- User-defined aspects and `extend Type: Aspect` (see [Aspects](../reference/spec/declarations.md#aspects))
 - `From`-based `?` coercion across different error types (see [The ? Operator](../reference/spec/functions.md#the--operator))
 - User-defined `Iterable<T>` implementations (see [For-In](../reference/spec/expressions.md#for-in))
