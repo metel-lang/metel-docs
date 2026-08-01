@@ -3,7 +3,7 @@ id: strategic-objectives
 title: "Strategic Objectives, Priorities, and Watch List"
 type: report
 status: active
-last_reviewed: '2026-07-24'
+last_reviewed: '2026-08-01'
 ---
 
 # Strategic Objectives, Priorities, and Watch List
@@ -135,8 +135,8 @@ below is the blog's own sequencing sentence, made checkable.
 
 | # | Priority | Design state | Engineering state |
 |---|---|---|---|
-| 1 | Records / views as the structural carrier | RFC-0115 **`4-implemented`** (#287), RFC-0116 `3-integrated` (**#288**), RFC-0118 `3-integrated` (**#289**), RFC-0117/0119/0120/0121 `0-draft` *(RFC-0090 superseded 07-24)* | **v0.12.0: #287, #288, #289 filed** |
-| 2 | Ownership enforcement and the borrow checker | RFC-0071 `2-accepted`, refreshed + audited 07-24; RFC-0122 `0-draft`, OQ1/OQ3 answered | **v0.12.0: #290–#293 filed; RFC-0122 to reach `2-accepted`** |
+| 1 | Records / views as the structural carrier | RFC-0115/0116/0118 **`4-implemented`** (#287/#288/#289), RFC-0117/0119/0120/0121 `0-draft`, untouched since the 07-24 split | **v0.12.0: #287/#288/#289 shipped** |
+| 2 | Ownership enforcement and the borrow checker | RFC-0071 **`3-integrated`**, `impl_status: in-progress`; RFC-0122 `0-draft`, missed its own 07-24 `2-accepted` bar | **v0.12.0: #290/#291 shipped + 19 hardening fixes; v0.13.0: #292/#293 + 6 more queued** |
 | 3 | Brands and context parameters | RFC-0076 `0-draft`; RFC-0113 `1-under-review` | not started, **no issue** |
 | 4 | Allocators — emergent synthesis, built last | RFC-0063/65/66/67/68/73/77 `2-accepted`, complete | deliberately not started |
 | 5 | The interpreter as a feedback instrument | n/a | **all 19 open issues** |
@@ -147,6 +147,19 @@ Priorities 1–4 hold every RFC the project calls foundational and, between them
 issues. Priority 5, which this document had never ranked at all until today, holds all of
 them. This is not the same claim as 07-20's Trigger 17 ("ergonomics churn substituted for the
 stated priority"); it is structural. The stated priorities and the tracker do not intersect.
+
+**Update, 2026-08-01: the gap this finding named has closed, for one milestone.**
+`v0.12.0` shipped 23 issues, all now closed, almost all against Priorities 1–2 — RFC-0071
+reached `3-integrated` and is substantially built (move checking, `Copy`/`Drop`, the
+reference-through-a-borrow rules), and RFC-0115/0116/0118 all reached `4-implemented`.
+`v0.13.0` already queues nine more Priority-2 items. Priority 5's own backlog is
+unchanged in size — the correct reading is not "the ranking pulled effort toward
+Priorities 1–2," it is "building RFC-0071 forced nineteen correctness fixes as a
+byproduct, and Priority 5 was simply not visited." See
+`strategic-overview-2026-08-01.md` for the full account, including where this reading
+needs to stay precise (the interpreter still deep-clones every value at runtime; only
+the static check is new) and where it fell short (RFC-0122 did not reach the
+`2-accepted` bar set for it the same day this finding was written).
 
 ### Release plan — v0.12.0 *(added 2026-07-24, after v0.11.0 shipped)*
 
@@ -291,6 +304,13 @@ question review is gated on — was not touched.** See
 `strategic-overview-2026-07-23.md` for the full account and the honest assessment of
 what this kind of session does and doesn't count as.
 
+**2026-08-01: RFC-0116 and RFC-0118 both reached `4-implemented`** (#288, #289),
+alongside RFC-0115 (#287) — real shipped code, not merely `3-integrated`. RFC-0116 in
+particular closes Trigger 24 in the strongest way available to it: drafted and shipped
+within the same week, well inside its own one-month falsifier. RFC-0117/0119/0120/0121
+are untouched, still `0-draft`; the entry point built cleanly, the rest of the
+decomposition has not yet been picked up. See `strategic-overview-2026-08-01.md`.
+
 ### Priority 2 — Ownership enforcement and the borrow checker
 
 Promoted to its own slot 2026-07-22. Previously this was one bullet inside the substrate list
@@ -313,6 +333,22 @@ larger unwritten hole than context parameters were before RFC-0113, and it is no
 
 The two halves sequence naturally: move checking makes ownership real and is specified
 already; borrowing needs a design document before it can be built.
+
+**2026-08-01: the first half moved, substantially.** RFC-0071 reached `3-integrated`,
+`impl_status: in-progress`, tracked at #291. `v0.12.0` shipped `Copy`/`Drop` aspects
+(#290) and move checking (#291) — loop-body fixed-point analysis, the `place`
+abstraction lifted to satisfy RFC-0071 §9b's standalone-reusable requirement, and the
+reference-through-a-borrow rules for both `&var self` (#347) and by-value `self`
+(#348) — plus nineteen correctness fixes found while building it. It remains opt-in
+(`--move-check`) and does not change the evaluator's own runtime semantics, which still
+deep-clone every value regardless of what the checker concludes; enabling it by default
+is itself queued (#310) in v0.13.0, alongside RFC-0071 parts 3–4 (#292 drop order,
+#293 partial moves). **The second half did not move at the rate this document's own
+07-24 bar required:** RFC-0122 gained real content that day (granularity and
+move-vs-borrow questions answered, a dependency direction inverted) and nothing
+substantive since, missing "reach `2-accepted` in v0.12.0." Not a crisis — RFC-0122 was
+always scoped as design-only for this release — but the lapse should be named rather
+than left silent. See `strategic-overview-2026-08-01.md`.
 
 ### Priority 3 — Brands and context parameters
 
@@ -587,6 +623,13 @@ of what was watched for and what actually happened is part of the point.
     checker keeps being cited as a known quantity by documents that have never specified it.
     This is the same shape as the context-parameter hole Trigger 18(b) tracked, one layer down
     and load-bearing for more.
+    **Partially addressed, 2026-07-24: RFC-0122 (Borrow Checking) was opened.** Its two
+    implementation-shaping questions were answered the same day. **Update, 2026-08-01:
+    it did not reach `2-accepted`**, the bar this document set for it in v0.12.0 — no
+    substantive change to the file since 07-24. Still open; the RFC exists now, but the
+    trigger's underlying worry (borrow checking cited as a known quantity without being
+    specified enough to build) is only partially retired. Watch whether v0.13.0 restates
+    a completion bar or lets it lapse a second time.
 20. ⬜ **New, 2026-07-22. Priorities 1–4 hold zero open issues; Priority 5 holds all nineteen.**
     Verified directly against the tracker: no issue references RFC-0071, 0076, 0089, 0090,
     0091, 0109, or 0113, and none of those RFCs carries an `impl_tracking` field. This is the
@@ -611,6 +654,15 @@ of what was watched for and what actually happened is part of the point.
     syntax fix), reaching the artifact under review without ever touching the issue
     tracker. That is not the falsifier — no tracked issue exists — but it is not
     identical to another day of pure `reports/`-only exploration either. See Trigger 22.
+    **✅ Closed, 2026-08-01 — not by one issue, by an entire milestone.** `v0.12.0`
+    shipped 23 issues, all now closed, almost all against Priorities 1–2: RFC-0071
+    reached `3-integrated` (#290/#291 plus nineteen hardening fixes found while building
+    them), RFC-0115/0116/0118 all reached `4-implemented` (#287/#288/#289). `v0.13.0`
+    already queues nine more Priority-2 items. This is the strongest resolution this
+    trigger's falsifier could have received — no stronger evidence exists short of a
+    full release. See `strategic-overview-2026-08-01.md` for the precise reading:
+    Priority 5's own backlog did not shrink either, so the mechanism was necessity
+    (bugs found while building), not the ranking pulling effort toward Priority 2.
 21. ⬜ **New, 2026-07-22.** Priority 5 is new and is the priority most likely to expand to fill
     the available effort, because its work is the most immediately satisfying — every issue in
     it is well-scoped, verifiable, and finishable in a session, which is precisely what the
@@ -618,6 +670,14 @@ of what was watched for and what actually happened is part of the point.
     naming it legitimises it and the ratio gets worse. If the next cycle closes several
     Priority 5 issues and opens none against 1–3, ranking it did nothing and the ordering
     should be treated as descriptive rather than directive.
+    **Refuted for this cycle, 2026-08-01 — but check the mechanism, not just the
+    count.** Priority 5's backlog is unchanged in size; nothing in it was closed this
+    week. But that is not evidence the ranking constrained anything — it is evidence
+    that this week's effort was pulled toward Priority 2 by necessity (nineteen
+    correctness bugs found while building RFC-0071), not chosen from a priority-ordered
+    list. Watch whether a future cycle without an RFC-0071-shaped forcing function
+    produces the same result, or whether this one only held because there was
+    something urgent enough to hold it.
 22. ⬜ **New, 2026-07-23. A middle state between "pure exploration" and "a tracked issue"
     showed up, which Trigger 20's binary framing didn't anticipate.** A full session's
     findings on Priority 1 became a direct amendment to RFC-0090 itself (a real bound-
@@ -640,6 +700,11 @@ of what was watched for and what actually happened is part of the point.
     change that the interpreter would have to implement to be conformant?** If yes, the
     middle state is a real waypoint. If the corpus can absorb every finding without that
     ever becoming true, it is a comfortable substitute for building.
+    **✅ Closed, 2026-08-01 — yes, unambiguously.** RFC-0071, RFC-0116, RFC-0118, and
+    RFC-0115 all produced real interpreter changes this week, not further RFC-text-only
+    findings. The middle state this trigger was watching for turned out to be a real
+    waypoint on the way to building, at least in this instance — not a comfortable
+    substitute for it. See `strategic-overview-2026-08-01.md`.
 23. ⬜ **New, 2026-07-23. An explicit unbundling decision, worth watching whether it
     holds.** A session's deepest exploration (`nominal-types-as-branded-rows.md` —
     every nominal type as `(brand, row)`, not just tier-3) turned out to bundle several
@@ -694,6 +759,11 @@ of what was watched for and what actually happened is part of the point.
     **RFC-0118 and RFC-0071 remain short of `3-integrated` and un-issued**, so v0.12.0 is
     two of four. The lesson recorded above stands unchanged and is the durable part: the
     tooling gate, not intent, is what produced all three artifacts.
+    **Update, 2026-08-01: all four caught up.** RFC-0118 and RFC-0071 both reached
+    `3-integrated` and beyond — RFC-0071 is now `impl_status: in-progress`
+    (tracked #291), and RFC-0116/0118 both reached `4-implemented` (#288, #289) the
+    same week. `v0.12.0` closed all 23 of its issues. The falsifier this trigger
+    named is now moot in the strongest possible way: not just tracked, but shipped.
 25. ⬜ **New, 2026-07-24. The split's whole promise is that RFC-0116 is buildable today —
     and that promise is now falsifiable in a way its predecessors were not.** Trigger 20's
     original recommended first issue ("the closed `record` type-former plus `HasField`")
@@ -707,6 +777,36 @@ of what was watched for and what actually happened is part of the point.
     plainly rather than crediting the improved structure. That is the falsifier; it is
     narrower and harder to evade than Trigger 20's, because the excuse of "blocked on
     something unratified" has been deliberately engineered away.
+    **✅ Closed, 2026-08-01 — RFC-0116 reached `4-implemented` within the same week
+    it was drafted**, weeks inside its own one-month falsifier. The decomposition's
+    promise held for its entry point; RFC-0117/0119/0120/0121 remain `0-draft` and
+    untouched, so the rest of the six-way split has not yet been tested the same way.
+26. ⬜ **New, 2026-08-01.** The standing meta-risk sentence (§1), quoted unchanged for
+    seven cycles specifically because it stayed entirely true, is now partially false:
+    "no move-semantics enforcement" no longer holds — `--move-check` is real and
+    tested. "The interpreter still deep-clones" still holds, exactly as before; the
+    checker is a static analysis layered on an evaluator whose runtime semantics have
+    not changed at all. Watch whether the next cycle rewrites that sentence with this
+    precision or lets an imprecise "move semantics: done" stand in for it — the
+    engineering-side version of exactly what Trigger 22 watched for on the design side.
+27. ⬜ **New, 2026-08-01.** RFC-0122 missed its own stated bar: "reach `2-accepted` in
+    v0.12.0, not merely accumulate prose" (written 2026-07-24, this document). It
+    accumulated real prose that day and nothing substantive since, and did not reach
+    `2-accepted`. Not urgent — the release always scoped it design-only — but a
+    self-imposed bar lapsing without comment is the pattern this document exists to
+    catch elsewhere (Triggers 14, 16). Watch whether v0.13.0 restates a bar for it
+    explicitly or lets it drift a second time.
+28. ⬜ **New, 2026-08-01.** A calibration data point, tracked here because it belongs
+    somewhere durable rather than only in the conversation that produced it: the
+    week's final PR (#348, by-value-`self`-through-a-reference) needed a full second
+    pass after adversarial review found three real defects in its first commit — a
+    silent bypass for non-place receivers, an under-counted multi-layer-reference
+    diagnostic, and a missing `Copy` gate that would have wrongly rejected legal code.
+    None cosmetic; none caught by the author's own first-pass verification. Not itself
+    a trigger about design/tracker alignment like the others here, but worth watching
+    whether this rate (three real defects per adversarially-reviewed PR) is typical or
+    was one unusually dense instance, since it bears on when a deeper personal
+    implementation review becomes warranted.
 
 ---
 
@@ -735,6 +835,7 @@ of what was watched for and what actually happened is part of the point.
 | 2026-07-22 | **Corrected the same day, on review:** the reorder below had recommended `ToRecord`/`FromRecord` as Priority 1's first tracked issue, following the blog's "short term" phrasing. It cannot be first. RFC-0090 §8 makes it tier 2 of three, converting *into* a `record { … }` type-former that does not exist yet — the conversion has no codomain until the record/row semantics are defined — and RFC-0090 §3's own recommended build order already puts the closed `record` type-former plus `HasField` at step 1, with `<row R>` open generics deferred to a separate decision. The derive half depends further on RFC-0093, still `0-draft`. Priority 1 now states the real order; §1 records the qualification the blog sentence needs, since §2 is measured against that sentence and a misreading of it propagated straight into the priorities; Trigger 20's recommended first issue corrected, keeping the note that even the "cheap falsifier" was mis-sized on first attempt — the substrate has no genuinely small entry point, which is part of why it keeps not being started. The five under-review RFCs' status notes were carrying the same wrong framing plus a stale Priority number; both fixed. | *(none)* |
 | 2026-07-23 | A full session of design work on Priority 1's records/views substrate, not a corpus-wide sweep. Real, verified findings throughout — `HasField`'s bound syntax never actually parsed (confirmed against `grammar.pest`) and is fixed as a direct amendment to RFC-0090 itself; `brand-kind-unification.md`'s OQ6 (open sixteen days) got a candidate answer; a new draft RFC (RFC-0114) closed RFC-0090's OQ10 using only already-implemented machinery; two of the session's own errors were caught and corrected within the same conversation. A more radical exploration (every nominal type as `(brand, row)`, not just tier-3) was pressure-tested and then deliberately **unbundled**: parts independent of its central thesis folded back now, the central thesis itself kept separate and explicitly not gating this priority's own review. Honest assessment, matching Trigger 17's precedent for recording process outcomes plainly: on-topic depth is not the same failure Trigger 17 caught, but it is still design extension rather than building, per §1's own standing risk — and **Trigger 6, the actual question review is gated on, was not touched**. Trigger 20's tracked-issue falsifier was still not tripped, for the seventh day running, though a real middle state (a direct RFC amendment with no tracked issue) showed up that its binary framing hadn't anticipated. Triggers 22/23 opened for that middle state and for whether the unbundling decision actually holds next cycle. | `strategic-overview-2026-07-23.md` |
 | 2026-07-24 | **RFC-0114 and RFC-0100 revised together, and the pairing was the point.** RFC-0114 carried stale syntax in three independent ways — freestanding `.{ … }` rows (superseded by `access-and-presence-rows.md` §3.5's receiver-based split the day before), and two *pre-RFC-0098* spellings (`extend Type: Aspect`, `&var`) despite the RFC post-dating that RFC's implementation by nine days. Correcting the examples exposed a real hole the stale syntax had hidden: **`construct`'s own body had no way to build a `Self`** — the first draft used the bare literal §2 abolishes, and the synthesized default `Ok(row)` did not typecheck as written. New §1.1 confines row-to-`Self` to `construct`/`construct_unchecked` and nowhere else, which also **resolved that RFC's open question 5** (hand-written `new` needs no separate enforcement, because no primitive remains available to it) and raised a new one (8: `extend` blocks have no visibility modifier, so canonical construction may hand every struct a public constructor unless private field labels are unwritable from outside — RFC-0090's question, not RFC-0114's). RFC-0100 adopted `=` for keyword arguments per the separator invariant, which **dissolves the collision it was reopened over** rather than answering it; §3 rewritten around the smaller `assign_expr` collision `=` trades into, with the superseded ascription analysis kept behind a fold. Trigger 14 updated — and deliberately *not* as a vindication: review surfaced a real problem and mis-diagnosed its cause, which is a different failure from accepting too early. **Second consecutive day that findings reached RFC text with no tracked issue filed** — exactly the middle state Trigger 22 was opened to watch, now recurring rather than isolated, and Trigger 20's falsifier is untripped for an eighth day. **Later the same day, on the user's decision, RFC-0090 dropped the `record` keyword from the anonymous type-former** (`{ x: f64 }` as a type, `{ x = 1.0 }` as a value), completing the adoption of `access-and-presence-rows.md` §3.5 — the keyword now does exactly one job, minting nominal identity at `record X { ... }`, which also let open question 8 be folded into §8's prose instead of contradicting it. The change has a real cost, recorded as new open question 13 rather than glossed: closed record types and row bounds are now spelled identically and told apart by grammatical position alone, and one bullet in §2 that asserted the old distinction was wrong the moment the keyword went and had to be corrected. ~141 uses of the old spelling remain across RFC-0091/0109/0089 and the design reports — deliberately not swept, and named in RFC-0090's own revision note so the gap is visible rather than discovered later. **Then, on the user's call, RFC-0100 was split** — the separator fix (`field_init`'s `:` → `=`, braces kept) extracted as new draft **RFC-0115**, leaving call-shaped construction and general keyword arguments in RFC-0100. The trigger for the split was the user's observation that construction could keep its brackets and change only the separator; working it through found that version stronger than what was in RFC-0100 on four independent counts (it aligns nominal literals with RFC-0090's just-settled `{ x = 1.0 }` anonymous records, making `Point { x = 1.0 }` literally a row plus a brand; it restores the construction/destructuring symmetry RFC-0100 §4 had apologized for; it carries **zero** grammar risk where both prior proposals carried a real collision; and it frees the invariant from an under-review RFC). **RFC-0100 is honestly weaker for the split and now says so** — it lost the invariant argument to RFC-0115. **RFC-0114 gained the most:** reworking §2 showed its RFC-0100 dependency was never real — a literal that desugars to `construct` is not a bypass — so it now has no blocking dependency on any under-review RFC, and its open question 2 resolved by dissolving its premise. Still no tracked issue filed; Trigger 20's falsifier untripped for an eighth day, now against a *larger* body of RFC text. **Finally, a notation change that fixed a real ambiguity rather than a preference:** inside projection braces a bare identifier could be either a field label or a row variable (`Handle.{ fd }` vs `Handle.{ R }`), separated only by case convention — and RFC-0101, which would make that convention normative, is `0-draft`. So the design was leaning on an unratified RFC to disambiguate something it never acknowledged as ambiguous. Fixed by adopting **`row` declares, `..` marks every use**: a row variable is `..R` at every use site, a bare identifier in type position is always a *type* variable. The same mechanism with the variable left unnamed (`T: { x: f64, .. }` = "at least x") **resolved open question 13 the same day it was opened** — the closed/open bound distinction now turns on a token instead of on grammatical position, and the closed *bound* reading, previously inexpressible, became writable. Propagated through RFC-0090/0091/0109 and both exploration docs; RFC-0109 checked and found already conformant. New open question 14 opened for row *operations* (`R without "token"`, `R + "auth"`), which still use the string-literal-in-type-position form retired for bounds on 07-23 and now have no specified precedence, arity, or grammar — **and resolved the same day, in new RFC-0090 §2.1, by deleting the operators rather than fixing them.** A prior-art pass (PureScript, Ur/Web, Haskell `row-types`, OCaml, Koka, TypeScript, Elm) found that **extension needs no syntax at all** — every row-typed language writes the new label *inside the row literal*, which for Metel is the spread tail it already has (`{ ..R, auth: String }`), and the string literal was only present because an infix operator had nowhere else to put the name. Only **removal** lacked a form, and it becomes a where-clause decomposition (`where R = { token: Token, ..Rest }`), following PureScript's `Prim.Row.Cons` rather than Ur/Web's `--`. Cost: one grammar addition, no label literal, no label kind, no operators; the equation also subsumes the bound it replaces, and `=` is the invariant-correct separator (it equates), matching the `assoc_binding` equation already in that channel. Elm — the one language that shipped row extension/restriction and then **withdrew both** — is recorded as the standing caution. **The pass also found a third unbacked construct nobody had noticed:** `drain_field<row R, name: Symbol, T>` invents a `Symbol` *kind* that exists nowhere (the corpus's only `Symbol` is RFC-0059's compiler-internal `SymbolId`), spells it in bound position where the grammar reads it as an aspect bound on a *type* variable — inconsistent with `<row R>`'s prefix-keyword pattern sitting in the same parameter list — and indexes with `s.[name]`, which `postfix` does not accept. Opened as RFC-0091 open question 4, deliberately **not** folded into the §2.1 resolution: that retires the label *literal*, but `drain_field` needs label *polymorphism*, a strictly stronger capability (a label kind, a label literal, an index-by-label form, and rules for all three). Named explicitly because if it resolves to "no", RFC-0109's Motivation needs editing — it cites the generic `drain_field` as the reusable half records give and Rust's view types cannot. **The cycle then ended by settling Trigger 6 and decomposing the cluster on that basis.** The question resolved not as yes-or-no but as *the dependency was accidental*: RFC-0089's floor was rewritten from Option B to `ToRecord` by its own same-day revision on 2026-07-09, which is exactly why the trigger could observe that "neither RFC states the conflict" — neither chose it. Per-field multiplicity was always meant to wait for records. **RFC-0090 superseded by six RFCs partitioned by dependency depth** (RFC-0116 Anonymous Record Types, 0117 Row Narrowing, 0118 Row Bounds, 0119 Record Conversions, 0120 Named Records, 0121 Open Rows); **RFC-0089/0091/0109 returned to `0-draft`**; RFC-0089 §3 marked as not the specified floor, with §1–2/§4–5 noted as the half that was independently acceptable all along and blocked only by sharing a document. No feature dropped, no design decision reversed — a re-partition, and PROCESS.md's own named pathology (RFC-0012's 18 open questions before its split; RFC-0090 had 14). **The largest consequence was unplanned:** dropping fiat-linearity from the records path removes the brand-carrying `ToRecord` exception and with it the brand dependency that came from fiat-linearity — the coupling's removal made the design simpler, which is the strongest evidence it was accidental. **Corrected hours later, in the same cycle:** this was first recorded as removing the cluster's *only* RFC-0076 dependency, which overstated it. A follow-on conversation about `FromRecord`'s relationship to `Construct` surfaced that **reassembly through a `&var` view needs provenance, not shape** — the compiler must know all the borrows belong to one struct instance — and that whether this is free depends on a question the corpus answers two ways: a view as a *borrow of a record* (RFC-0119 §2's own signature, one pointer, sound by construction) versus a *record of borrows* (`access-and-presence-rows.md` §3, which argues that reading is better, and under which `from_record_mut` is unsound without an identity check). An identity check means a brand, which means RFC-0076 returns and collides with tier 2's bare-ness. Recorded as RFC-0119 OQ8 with three ways out, the most promising being to drop by-reference conversion from tier 2 entirely and let RFC-0109's branded views own the borrowed case. Three further questions opened alongside it (RFC-0119 OQ5–7, OQ9; RFC-0114 OQ9–10), including a **direct contradiction between RFC-0114 §3 and RFC-0119 §2** that neither document had noticed. **RFC-0116 is untouched by all of it**, which is the one thing that matters for Trigger 24. **Then, on the user's call, `to_record_mut`/`from_record_mut` were dropped from tier 2 outright** — the third of RFC-0119 OQ8's own three options. The chronology carried the argument: `to_record_mut` was added 2026-07-08 with the commit message *"resolving tier 2's borrow gap"*, ten days before RFC-0109 built that mechanism properly as branded named views. It was what the design reached for before the right tool existed. **This dissolved three open questions at once** (OQ6's by-value/by-reference asymmetry, OQ7's direct contradiction with RFC-0114 §3, OQ8's provenance hole) rather than answering any of them, and put the tier boundary on a clean line: *by-value conversion is bare because it is by-value; borrowed access is branded because it must be.* Recorded honestly as **not pure redundancy removal** — the dropped construct also permitted moving a field *out* through a borrow, which views do not replace and nothing else in the cluster provides; Rust forbids it too, so it is defensible, but it is a capability lost rather than relocated, and RFC-0109 now carries the note. RFC-0114 §3 stands unamended and is now the only story for row completion. RFC-0071 (`2-accepted`, 0% implemented) remains, gating RFC-0117 onward but **not RFC-0116**, which is why the split is six-way. Trigger 24 opened as the falsifier: RFC-0116 is now the small, genuinely unblocked entry point, and if a month passes with no issue filed against it, the decomposition was a more sophisticated form of not starting. **One correction to record against this session's own work:** the `FromRecord` proposal was written up as *collapsing* it into `Construct` — one aspect instead of two — and a fatal-looking objection raised against that (universal `Construct` synthesis would make every struct tier 2, collapsing the tier boundary). **That was not the proposal.** The actual one keeps `FromRecord` a separate opt-in aspect and reuses only the constructor *call syntax* (`Handle({row})`) and `construct` as its *default logic* — capability and logic separated, tier gate untouched, objection inapplicable. RFC-0119 OQ5 and RFC-0114 OQ9 rewritten. A further claim built on the misreading is withdrawn with it: that the tier gate could become *visibility*, making RFC-0114 OQ8 and RFC-0116 OQ3 "the same question asked three ways." They are not; the visibility question stands on its own. Logged because the failure was in restating a proposal rather than in evaluating one, and the evaluation that followed was confident. **Both ideas were then deferred, on the user's call and correctly:** working them through showed each depends on something unsettled — the call-syntax proposal on RFC-0100 (`1-under-review`, reopened once) for what `Handle(r)` means positionally, and the marker/destructuring proposal on a struct pattern that does not exist in the grammar plus RFC-0109, itself now deferred. Neither is refused and neither gates RFC-0119, which is complete and reviewable without them; they would change the spelling and the derivation default, not the capability. Revisit once records are implemented, when there will be real usage to judge them against. **Net effect of the last four exchanges on the critical path: nil, by design** — every finding landed in RFC-0114/0119, and RFC-0116 was untouched throughout. | *(none)* |
+| 2026-08-01 | **The first cycle where Priority 1/2 engineering, not design prose or Priority 5, consumed nearly all of a review period.** `v0.12.0` shipped 23 issues (all closed): RFC-0071 reached `3-integrated`/`impl_status: in-progress` (#290 `Copy`/`Drop`, #291 move checking — loop fixed-point analysis, the `place` abstraction lifted to RFC-0071 §9b's standalone bar, reference-through-a-borrow rules for `&var self` and by-value `self`), plus nineteen correctness fixes found while building it (#296, #313, #314, #321, #334, #343, #345, #347, #348, among others). RFC-0115/0116/0118 all reached `4-implemented`. Triggers 20, 22, and 24 closed — not by a token issue each, but by the milestone itself; Trigger 24 in particular resolved inside its own one-month falsifier. Trigger 21 refuted for this cycle but with a caveat recorded precisely: Priority 5's backlog didn't shrink, which means the mechanism was necessity (bugs found while building), not the ranking pulling effort — worth re-testing without an RFC-0071-shaped forcing function present. Trigger 19 partially addressed (RFC-0122 exists, two real questions answered) but not resolved: it missed its own 07-24 bar of reaching `2-accepted` in v0.12.0, newly named as Trigger 27 rather than left silent. New Trigger 26 flags that the seven-cycle-old meta-risk sentence (§1) is now partially false and needs a precise rewrite, not a checkbox — move-semantics enforcement exists, but the interpreter's runtime still deep-clones every value regardless. New Trigger 28 records a calibration data point outside this document's usual scope: the week's final PR needed three real post-review corrections, none caught by the author's own first pass, relevant to a separately-tracked question about when a deeper implementation review is warranted. Priority 3 (brands, context parameters) untouched. One new, unranked draft (RFC-0127, associated functions on generic types) opened the same day, closing a gap found while investigating an adjacent question. `develop` sits 134 commits ahead of `main`/v0.11.0 with `v0.12.0`'s milestone fully closed but no tag cut yet. | `strategic-overview-2026-08-01.md` |
 
 ---
 
@@ -756,3 +857,6 @@ of what was watched for and what actually happened is part of the point.
 - `metel-core/AGENTS.md` — Codeberg Issues task-tracking design (Triggers 10, 20)
 - `strategic-overview-2026-07-23.md` — most recent dated snapshot, the single-priority,
   deep-session cycle behind Triggers 22/23 and Priority 1/3's 2026-07-23 updates
+- `strategic-overview-2026-08-01.md` — most recent dated snapshot, the first cycle
+  where Priority 1/2 engineering (not design prose) dominated the review period,
+  behind Triggers 20/21/22/24's closures and 26/27/28's openings
