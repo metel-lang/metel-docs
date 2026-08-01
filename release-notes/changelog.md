@@ -86,6 +86,24 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   remains is that `Clone` exists as an aspect but has essentially no stdlib impls, so
   `T: Clone` is not usable as a bound for a primitive or `String` (#335). The
   move-check corpus has no unintentional violations left.
+- **`extend` on a concrete structural target is now a real diagnostic, not an internal
+  error.** `extend i64[]: Area { … }`, `extend (i64, i64): Area { … }` and
+  `extend { w: i64 }: Area { … }` used to report `[I0001] internal error: generic impl
+  blocks not yet supported` — an internal error, from valid RFC-sanctioned source, whose
+  message named the wrong cause (the trigger was a non-nominal target, not generics).
+  They now report `T0003` naming the target kind and the form that does work:
+
+  ```
+  cannot `extend` a tuple type without type parameters: only the generic form is
+  implemented, so this block's methods could never be found. Write it as
+  `extend<A, B> (A, B): Aspect { … }`, or use a named struct
+  ```
+
+  The generic form is unaffected — `extend<T> T[]: Display { … }` registers and
+  dispatches as before, which is how the standard library declares its array impls.
+  Rejecting rather than accepting is deliberate: a concrete structural target has no
+  registry key, so the block would compile and its methods would never be found.
+
 - **Auto-deref now reaches through a reference in two places it previously missed.** An
   array intrinsic resolves through `&T[]` and `&[T; N]` — `arr.len()` where `arr: &i64[]`
   needed `(*arr).len()` before (#314) — and an aspect method resolves through `&T` under a
