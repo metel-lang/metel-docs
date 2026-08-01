@@ -124,6 +124,26 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   the identifier and non-identifier forms agree, and so do the concrete and generic paths.
   An owned receiver is unaffected: `var c = C { … }; c.bump()` still works, because owning
   a value and holding a shared reference to one are different things.
+- **A by-value `self` method is now rejected through any reference, at the first call.**
+  A reference only grants access, never ownership — but calling a method whose `self` is
+  by value through `&T` or `&var T` was accepted, and repeatable, and left the original
+  binding usable afterward:
+
+  ```metel
+  aspect Consume { fun eat(self) -> String; }
+
+  let b = Handle { fd = open("file.txt") };
+  let r = &b;
+  let first = r.eat();     // was accepted; moves *r without owning it
+  let second = r.eat();    // was accepted again
+  ```
+
+  Nothing objected because `&T` is `Copy` — consuming the receiver *place* (`r`) recorded
+  no move, and the value actually being moved was `*r`, which nothing checked. Rejected
+  regardless of how the reference reaches the call: the receiver's own binding, a field or
+  tuple element of reference type, an explicit `(*r).eat()`, or a type parameter
+  instantiated to a reference. `&self` and `&var self` methods are unaffected. See
+  RFC-0071 §7.1 (new).
 
   The diagnostic changes with it. This case reported `T0006 cannot assign to immutable
   binding`, which named the proxy rather than the problem; it now reads `cannot call

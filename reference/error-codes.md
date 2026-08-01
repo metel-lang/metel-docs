@@ -290,7 +290,9 @@ code, each with its own message:
 - a partial move out of a type that implements `Drop`, which is never allowed;
 - a move out of an array element, which is banned outright;
 - a move of a non-`Copy` element out of a borrowed `T[]` view;
-- a `&var` binding moved by a use that is not a reborrow.
+- a `&var` binding moved by a use that is not a reborrow;
+- a by-value `self` method called through a reference — a reference only grants access,
+  never ownership, so its pointee cannot be moved out (metel-core#348).
 
 Each message names the binding and the location of the move. When the move happened on an
 earlier iteration of an enclosing loop, the message says so — a loop-carried move is
@@ -302,6 +304,7 @@ would point back at the line you are already reading.
 [T0019] type error in main.mtl at 12..20: cannot partially move value `h`: `h.name` belongs to a `Drop` type
 [T0019] type error in main.mtl at 8..14: cannot move from `xs[0]`: array element moves are not allowed
 [T0019] type error in main.mtl at 62..70: use of moved value `s`: `s` was moved here on an earlier iteration
+[T0019] type error in main.mtl at 40..48: cannot move `(*r)` out of a reference: a by-value `self` method cannot be called through a reference
 ```
 
 **Fix:** depending on the rule — borrow instead of moving (`&x`), clone the value, move the
