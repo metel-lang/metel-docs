@@ -141,6 +141,24 @@ above it are.
   Bertholet's `static for` is recognised as comptime, making RFC-0092 the likely
   *implementation* of stage 2 rather than a rival to it.
 
+- **RFC-0127** *(draft, opened 2026-08-01)* — Associated Functions on Generic Types —
+  a no-receiver `fun` in an `extend` block is already declarable, checked, and callable as
+  `Counter::new()` on a **non-generic** type; the same declaration on a generic type
+  resolves to `T0003 unresolved path`. Opened because the gap is invisible from the design
+  side: **140 call sites across 31 files** assume it (`Rc::new` ×18, `BumpAlloc::scoped`
+  ×13, `List::new` ×6), and `stdlib/core.mtl` declares `List::new`/`List::from` which work
+  only because `List` is a builtin seeded directly into the scheme table — so the standard
+  library models an idiom user code cannot write. Cause is narrow: path resolution consults
+  `method_scheme_for`, a single-scheme table generic methods are not in, ten lines above an
+  enum-variant arm that already mints fresh type arguments the way this needs. The real
+  work is **OQ4**, selecting among several bounded impls (RFC-0036) with no receiver to
+  select on, which is why this is an RFC and not a bug report. Also carries the two
+  turbofish positions (`Tok::make::<i64>` names the function's parameters,
+  `Tok<i64>::make` the type's — only the first parses today) and notes `Aspect::method()`
+  as out of scope but not to be foreclosed. Related but non-overlapping: RFC-0044 settles
+  the three *receiver* forms and never names their absence; RFC-0114's `Construct` aspect
+  and RFC-0100's call-shaped construction both give construction without giving a *named*
+  alternative constructor.
 - **RFC-0126** *(implemented 2026-07-27, #317, split from RFC-0124)* — T[] as a Copy
   Borrowed View — extracts the one part of RFC-0124 that was already settled rather than
   leaving it waiting on RFC-0124's harder open questions. RFC-0054 (`4-implemented`) already
