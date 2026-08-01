@@ -243,7 +243,7 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
 **References:**
 - **`&<rvalue>` and `&var <rvalue>` no longer require binding the value to a name first**
   (temporary lifetime extension, matching Rust/C++: `foo(&Vec::new())`,
-  `foo(&mut Vec::new())`). A literal, a call result, a struct or enum construction, or any
+  `foo(&var Vec::new())`). A literal, a call result, a struct or enum construction, or any
   other non-addressable expression is materialized into a fresh, independent cell and
   referenced directly, for both forms — nothing outside the expression can ever alias that
   cell, so a mutable reference to it is always sound.
@@ -576,7 +576,7 @@ Post-inference elaboration pipeline. No new language surface. Shipped from sprin
 
 ## v0.8.0
 
-Sized numeric types, Char, List\<T\>, fixed-size arrays, turbofish, and fat-pointer `&mut`. Shipped from sprint/19.
+Sized numeric types, Char, List\<T\>, fixed-size arrays, turbofish, and fat-pointer `&var`. Shipped from sprint/19.
 
 **New language features:**
 - **Sized numeric types** — `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` (RFC-0007, METEL-124). Sized literal suffixes: `42i32`, `3.14f32`, `255u8`. All casts between sized types are explicit (`as`). Array indices must be `u64`.
@@ -586,17 +586,17 @@ Sized numeric types, Char, List\<T\>, fixed-size arrays, turbofish, and fat-poin
 - **`List<T>`** — standard growable-sequence type in `std::core`; replaces ad-hoc `array_push` usage; methods: `new`, `from`, `push`, `pop`, `len`, `get`, `as_slice` (RFC-0054)
 - **Fixed-size array type `[T; N]`** — compile-time-known length; repeat construction `[v; N]`; coerces to `T[]`; `.len()` method; array patterns on `[T; N]` (RFC-0053, METEL-135)
 - **Turbofish** — explicit type arguments at call sites: `f::<T>(args)`, `zip::<A, B>(as, bs)` (METEL-124)
-- **`&mut` for lvalue paths** — `&mut obj.field`, `&mut arr[i]`, and chains thereof produce a `*mut T` that writes back to the original storage location (RFC-0045, METEL-134)
+- **`&var` for lvalue paths** — `&var obj.field`, `&var arr[i]`, and chains thereof produce a `*mut T` that writes back to the original storage location (RFC-0045, METEL-134)
 
 **Bug fixes:**
 - Generic functions with multiple independent type parameters (e.g. `fold_left<T, A>`) no longer have their type parameters collapsed when a module-level constraint solve follows a single-parameter generic function (METEL-137)
 - Same-tier glob import conflicts (`import a::*` and `import b::*` both exporting the same name) no longer raise an error at import resolution; the error fires at the first use site of the ambiguous name (METEL-98)
-- `&mut x` on a non-`let mut` binding is now a type error (T0006); previously accepted silently, allowing immutable bindings to be mutated through a pointer (METEL-118)
-- Field assignment (`p.field = v`) on a non-`let mut` binding is now a type error (T0006); previously the field mutability check was missing, allowing struct fields to be mutated through an immutable binding (METEL-119)
+- `&var x` on a non-`var` binding is now a type error (T0006); previously accepted silently, allowing immutable bindings to be mutated through a pointer (METEL-118)
+- Field assignment (`p.field = v`) on a non-`var` binding is now a type error (T0006); previously the field mutability check was missing, allowing struct fields to be mutated through an immutable binding (METEL-119)
 
 **Breaking changes:**
 - `array_push` and `array_len` are removed as top-level built-in functions; use `List<T>` for mutation and `.len()` on arrays and lists
-- Code that previously relied on `&mut x` or `p.field = v` with a non-`let mut` binding will now fail typechecking
+- Code that previously relied on `&var x` or `p.field = v` with a non-`var` binding will now fail typechecking
 
 ## v0.7.0
 
@@ -605,11 +605,11 @@ Language quality, pointer semantics, closure stabilisation, and aspect bounds. S
 **Breaking changes:**
 - Anonymous closure expressions now use `(...) -> ... { ... }`; `fun(...)` is no longer accepted in expression position, and function types are written as `(T) -> U` (RFC-0041)
 - Struct fields are module-private by default; cross-module field access and construction now require `pub` on each exposed field (RFC-0032)
-- Mutable bindings now use `let mut`; standalone `mut x = value;` is no longer accepted, and `for` / `for-in` bindings use the same `let mut` form (RFC-0042)
+- Mutable bindings now use `var`; standalone `var x = value;` is no longer accepted, and `for` / `for-in` bindings use the same `var` form (RFC-0042)
 
 **New language features:**
-- **Explicit receiver semantics** — methods may declare `&self` (shared read) or `&mut self` (shared mutable) receivers; `&mut self` mutations are visible to the caller without a writeback convention (RFC-0044, METEL-112)
-- **Regular and mutable pointer types** — `&expr` and `&mut expr` produce `Pointer<T>` and `MutPointer<T>` values; assignment through `*ptr` and function-pointer auto-deref are supported (RFC-0043, METEL-111)
+- **Explicit receiver semantics** — methods may declare `&self` (shared read) or `&var self` (shared mutable) receivers; `&var self` mutations are visible to the caller without a writeback convention (RFC-0044, METEL-112)
+- **Regular and mutable pointer types** — `&expr` and `&var expr` produce `Pointer<T>` and `MutPointer<T>` values; assignment through `*ptr` and function-pointer auto-deref are supported (RFC-0043, METEL-111)
 - **Aspect bounds on generic type parameters** — functions, structs, and enums may now declare aspect bounds on their type parameters; bounds are enforced by the typechecker and violation is error `T0012` (RFC-0002, RFC-0034, RFC-0035, RFC-0040, METEL-57, METEL-60, METEL-67, METEL-84–93):
   - Inline single bound: `fun foo<T: Comparable>(x: T)`, `struct SortedList<T: Comparable>`
   - Inline multi-bound with `+`: `fun foo<T: Comparable + Printable>(x: T)` (RFC-0034)
@@ -625,7 +625,7 @@ Language quality, pointer semantics, closure stabilisation, and aspect bounds. S
 
 **Bug fixes:**
 - Computed index assignment (`arr[i + 1] = v`, `s.data[offset * 2] = v`) now works correctly; previously any computed index expression caused an internal error (METEL-106)
-- `&mut self` methods on nested struct fields now mutate in place (METEL-112)
+- `&var self` methods on nested struct fields now mutate in place (METEL-112)
 - `impl` methods with `T`-typed parameters on generic structs now resolve correctly in Pass 2 (METEL-92)
 - Bounded type parameter method dispatch correctly enforces arity and argument types (METEL-93)
 - `?` (error propagation) — routed through `From`-based coercion; typechecker emits T0007 when no `From` impl exists (METEL-80)
@@ -834,7 +834,7 @@ Initial language version. Implemented by the tree-walk interpreter.
 - Primitive types: `i64`, `f64`, `boolean`, `String`, `()`
 - Variables: `let` (immutable), `mut` (mutable), lexical scoping, `fun`/type hoisting
 - Functions: first-class values, closures with mutable capture, `?` operator (exact error type match only)
-- Structs: literals, field access, methods (`impl`), `mut self`, associated functions
+- Structs: literals, field access, methods (`impl`), `var self`, associated functions
 - Enums: unit and struct-like variants, `impl` blocks
 - Built-in generic types: `Perhaps<T>`, `Result<T, E>`, `Array<T>` / `T[]` (as special cases; user-defined generics are v0.3.0)
 - Exhaustive pattern matching: all pattern kinds (see [Pattern Kinds](../reference/spec/expressions.md#pattern-kinds))
