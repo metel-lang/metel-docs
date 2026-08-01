@@ -81,7 +81,7 @@ The `fun` keyword is still required for all named declarations at any scope:
 
 ```metel
 fun double(x: Int) -> Int { x * 2 }       // named — fun required
-impl Stack<T> { fun push(self, item: T) }  // named — fun required
+extend Stack<T> { fun push(self, item: T) }  // named — fun required
 ```
 
 `fun` in named position is never ambiguous with the new closure syntax.

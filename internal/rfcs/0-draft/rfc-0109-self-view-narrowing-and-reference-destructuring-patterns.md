@@ -325,7 +325,7 @@ operation in this cluster already relies on.
 ### 4.3 Self-view narrowing
 
 ```metel
-impl Ticketing {
+extend Ticketing {
     fun should_insert_ticket(self: &TicketView, idx: usize) -> bool {
         self.golden_tickets.matches(idx)
     }
@@ -440,7 +440,7 @@ each with its own independent `&`/`&mut` mode, checked pairwise-disjoint via §4
 view BarsView for Ticketing { bars }
 view TicketView for Ticketing { golden_tickets }
 
-impl Ticketing {
+extend Ticketing {
     fun redeem_and_log(self: (&mut BarsView, &TicketView)) {
         let (bars, tickets) = self;    // ordinary Pattern::Tuple destructure — §2
                                         // doesn't even need to introduce this, it's
@@ -477,7 +477,7 @@ worked examples are exactly this shape — `counter.increment()` vs.
 `make_counter().increment()` — extended here to a tuple self):
 
 ```metel
-impl Ticketing {
+extend Ticketing {
     // all-shared tuple: only ever needs &Ticketing, same row as an ordinary &self method
     fun summarize(self: (&TicketView, &BarsView)) -> String { ... }
 
@@ -532,7 +532,7 @@ view TicketView for Ticketing { golden_tickets }
 view BarsView for Ticketing { bars }
 view MetaView for Ticketing { metadata }
 
-impl Ticketing {
+extend Ticketing {
     fun reconcile(self: (&mut BarsView, &TicketView, &mut MetaView)) {
         let (bars, tickets, meta) = self;
         if tickets.golden_tickets.matches(0) {
@@ -561,7 +561,7 @@ in the tuple is caught by the same check, not a special case of it:
 view GoldenNameView for Ticketing { golden_tickets, metadata }   // overlaps both
                                                                    // TicketView and MetaView
 
-impl Ticketing {
+extend Ticketing {
     fun broken(self: (&TicketView, &GoldenNameView)) { ... }
     // ERROR: TicketView ({golden_tickets}) and GoldenNameView ({golden_tickets,
     // metadata}) are not disjoint — `golden_tickets` appears in both rows, so this
@@ -661,7 +661,7 @@ view TicketView for Ticketing { golden_tickets }
 view BarsView for Ticketing { bars }    // names a private field — fine here, this file
                                           // IS Ticketing's own declaring module
 
-impl Ticketing {
+extend Ticketing {
     fun should_insert_ticket(self: &TicketView, idx: usize) -> bool { ... }   // untouched
                                                                                  // by RFC-0032
 }

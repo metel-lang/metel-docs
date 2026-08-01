@@ -129,8 +129,8 @@ aspect Affine = !Copy + !Linear
 ```
 
 And, symmetrically to `linear struct`, a struct-only `affine struct` keyword would
-desugar to a *locking pair of negative impls* — `impl !Copy for X {} impl !Linear for
-X {}` — not a positive capability grant, since affine is an absence, not an addition.
+desugar to a *locking pair of negative impls* — `extend X: !Copy;` and
+`extend X: !Linear;` — not a positive capability grant, since affine is an absence, not an addition.
 That pair is more than documentation: RFC-0081's negative impls override any later
 conflicting impl via ordinary coherence, so `affine struct Handle { fd: i64 }` is a real,
 checked commitment that nothing elsewhere in the codebase can later add `impl Copy for

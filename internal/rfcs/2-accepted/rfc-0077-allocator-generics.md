@@ -70,7 +70,7 @@ struct Parser<A: Alloc> {
     pos:   u64,
 }
 
-impl<A: Alloc> Parser<A> {
+extend<A: Alloc> Parser<A> {
     fun new(@a: A, src: String) -> Parser<A> {
         Parser { input: @a src, pos: 0 }
     }
@@ -104,7 +104,7 @@ struct Pair<A: Alloc, B: Alloc> {
     right: @b Node,
 }
 
-impl<A: Alloc, B: Alloc> Pair<A, B> {
+extend<A: Alloc, B: Alloc> Pair<A, B> {
     fun left_ref<&s>(&s self) -> &s Node {
         &self.left
     }
@@ -118,8 +118,8 @@ RFC-0068 specifies that for `struct Foo(@a: BumpAlloc)`, `a` is implicitly in sc
 
 | Declaration | `impl` header | `a` in scope |
 |-------------|---------------|--------------|
-| `struct Foo(@a: BumpAlloc)` | `impl Foo { … }` | always implicit |
-| `struct Foo<A: Alloc>` | `impl<A: Alloc> Foo<A> { … }` | via `(@a: A)` parameters |
+| `struct Foo(@a: BumpAlloc)` | `extend Foo { … }` | always implicit |
+| `struct Foo<A: Alloc>` | `extend<A: Alloc> Foo<A> { … }` | via `(@a: A)` parameters |
 
 ---
 
@@ -150,7 +150,7 @@ struct Cache<A: Alloc> {
     data: @a HashMap<Key, Value>,
 }
 
-impl<A: Alloc> Cache<A> {
+extend<A: Alloc> Cache<A> {
     fun new(@a: A) -> Cache<A> {
         Cache { data: @a HashMap::new() }
     }

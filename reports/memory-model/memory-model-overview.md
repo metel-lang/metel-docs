@@ -387,7 +387,7 @@ lifetimes:
 - **`s`** — the duration of a particular borrow of the struct, introduced per-method.
 
 ```metel
-impl Parser {
+extend Parser {
     // s = borrow duration; r = Parser's lifetime (implicit, always in scope)
     fun push[s](self: &mut [s] Parser, node: AstNode) -> &[r] AstNode {
         let ptr = @[r] node;   // allocation requires &mut self
@@ -465,7 +465,7 @@ struct Request[own r] {
     headers: @[r] List<Header>,
 }
 
-impl Request {
+extend Request {
     fun parse[s](self: &mut [s] Request, raw: String) {
         let parts = raw.split(" ");
         self.method  = @[r] parts[0];

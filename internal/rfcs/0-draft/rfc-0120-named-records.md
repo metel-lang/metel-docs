@@ -34,7 +34,7 @@ RFC-0119 lets a struct convert to a record on demand. That covers the local
 drain-and-restore pattern, but the converted value is a *different* value with a different
 type, alive only while it is held. Three things need the row to be part of the type itself:
 
-- **Row-conditional impls** (`impl<row R: { token: Token, .. }> Session<..R>`) — resolution
+- **Row-conditional impls** (`extend<row R: { token: Token, .. }> Session<..R>`) — resolution
   matches the type's own row, with nothing to intercept.
 - **Direct row-bound satisfaction at impl-resolution time**, as opposed to a generic
   function accepting a converted value.

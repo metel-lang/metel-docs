@@ -353,13 +353,13 @@ exactly once — RFC-0090 §4's "builders, in the dual direction" claim:
 ```metel
 struct RequestBuilder<row R> { data: { host: String, ..R } }
 
-impl<row R: !{ auth: _ }> RequestBuilder<..R> {
+extend<row R: !{ auth: _ }> RequestBuilder<..R> {
     fun with_auth(self, token: String) -> RequestBuilder<{ ..R, auth: String }> {
         RequestBuilder { data: { ..self.data, auth = token } }
     }
 }
 
-impl<row R: { auth: String, .. }> RequestBuilder<..R> {
+extend<row R: { auth: String, .. }> RequestBuilder<..R> {
     fun send(self) -> Response { ... }
 }
 

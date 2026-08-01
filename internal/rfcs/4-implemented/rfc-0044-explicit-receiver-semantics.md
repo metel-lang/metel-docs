@@ -93,7 +93,7 @@ struct Counter {
     value: Int,
 }
 
-impl Counter {
+extend Counter {
     fun increment(self) -> Counter {
         self.value += 1;
         self
@@ -112,7 +112,7 @@ Value receivers are the right form when:
 `&self` provides read-only access to the original receiver.
 
 ```metel
-impl Point {
+extend Point {
     fun length(&self) -> Float {
         self.x * self.x + self.y * self.y
     }
@@ -132,7 +132,7 @@ This is the canonical receiver form for observers, queries, formatting, hashing,
 `&mut self` provides exclusive mutable access to the original receiver.
 
 ```metel
-impl Counter {
+extend Counter {
     fun increment(&mut self) {
         self.value += 1;
     }

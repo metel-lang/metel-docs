@@ -401,7 +401,7 @@ struct TraceHandler(@a: BumpAlloc) {
     count:   i64,
 }
 
-impl TraceHandler {
+extend TraceHandler {
     fun new() -> TraceHandler {
         TraceHandler { entries: @List::Nil {}, count: 0 }
     }
@@ -531,7 +531,7 @@ struct AstBuilder(@a: BumpAlloc) {
     nodes: @a List<AstNode>,
 }
 
-impl AstBuilder {
+extend AstBuilder {
     fun new() -> AstBuilder { AstBuilder { nodes: @List::Nil {} } }
 
     fun handle_emit(&mut self, node: AstNode, k: @Heap Continuation<(), ()>) {

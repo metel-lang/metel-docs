@@ -660,8 +660,8 @@ reuse.
 **Consequence beyond the bound-position gap.** This is not narrowly scoped to
 `HasField<"fd", i64>` — it is the spelling for every `HasField`-shaped construct in the
 corpus, including RFC-0090 §4's row-conditional-impl typestate examples
-(`impl<row R: HasField<"x", f64>> Session<R> { ... }` becomes
-`impl<row R: { x: f64, .. }> Session<..R> { ... }`).
+(`extend<row R: HasField<"x", f64>> Session<R> { ... }` becomes
+`extend<row R: { x: f64, .. }> Session<..R> { ... }`).
 
 ---
 

@@ -313,7 +313,7 @@ follow.
 struct RcToken<brand 'b> { _brand: PhantomBrand<'b> }
 struct RcCell<brand 'b, T> { value: T, _brand: PhantomBrand<'b> }
 
-impl<brand 'b, T> RcCell<'b, T> {
+extend<brand 'b, T> RcCell<'b, T> {
     fun borrow_mut<'s>(self: &'s RcCell<'b, T>, _token: &mut RcToken<'b>) -> &'s mut T {
         &mut self.value
     }
@@ -343,7 +343,7 @@ separates the permission from the handler state:
 struct HandlerToken<brand 'b, E> { _brand: PhantomBrand<'b> }
 struct HandlerCell<brand 'b, E, S> { state: S, _brand: PhantomBrand<'b> }
 
-impl<brand 'b> HandlerCell<'b, Logger, List<String>> {
+extend<brand 'b> HandlerCell<'b, Logger, List<String>> {
     fun record(self: &HandlerCell<'b, Logger, List<String>>, msg: String,
                _token: &mut HandlerToken<'b, Logger>) {
         self.state.push(msg);
@@ -456,7 +456,7 @@ to the mutex that issued it:
 struct Mutex<brand 'b, T> { ... }
 struct MutexGuard<brand 'b, T> { ... }   // same brand as the Mutex it locked
 
-impl<brand 'b, T> Mutex<'b, T> {
+extend<brand 'b, T> Mutex<'b, T> {
     fun lock(self: &'b Mutex<'b, T>) -> MutexGuard<'b, T> { ... }
 }
 

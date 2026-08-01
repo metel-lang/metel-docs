@@ -100,7 +100,7 @@ RequestBuilder<{ ..R, auth: String }>
 halves and state how they compose:
 
 ```metel
-impl<row R, row Rest> Session<..R>
+extend<row R, row Rest> Session<..R>
 where R = { token: Token, ..Rest }
 {
     fun authenticate(self) -> Session<..Rest> { ... }
@@ -127,11 +127,11 @@ confirm before citing as precedent.)
 ## 3. Typestate via row-conditional impls
 
 ```metel
-impl<row R, row Rest> Session<..R> where R = { token: Token, ..Rest } {
+extend<row R, row Rest> Session<..R> where R = { token: Token, ..Rest } {
     fun authenticate(self) -> Session<..Rest> { ... }
 }
 
-impl<row R: !{ token: _ }> Session<..R> {
+extend<row R: !{ token: _ }> Session<..R> {
     fun send_data(&self, bytes: Bytes) { ... }
 }
 ```

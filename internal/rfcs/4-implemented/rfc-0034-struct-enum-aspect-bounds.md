@@ -105,7 +105,7 @@ Inside the struct's own method bodies and `impl` blocks, the typechecker treats 
 ```metel
 struct SortedList<T: Comparable> { items: T[] }
 
-impl SortedList<T> {
+extend SortedList<T> {
     fun insert(self, item: T) {
         // T: Comparable is in scope — aspect methods on item are valid
     }

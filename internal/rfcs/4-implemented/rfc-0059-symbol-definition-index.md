@@ -71,7 +71,7 @@ Covered declaration kinds:
 | Type declaration `type T = …` | existing symbol allocation | `TypeDecl::name.span` |
 | Aspect declaration `aspect A { … }` | existing symbol allocation | `AspectDecl::name.span` |
 | `let` binding (top-level) | existing symbol allocation | `LetDecl::name.span` |
-| Impl method `impl T { fun m(…) }` | new: allocate `SymbolId` for each method | `FunDecl::name.span` inside impl |
+| Impl method `extend T { fun m(…) }` | new: allocate `SymbolId` for each method | `FunDecl::name.span` inside impl |
 | Aspect impl method | new: allocate `SymbolId` for each method | same |
 
 Inherent method and aspect method symbols are currently **not** allocated as

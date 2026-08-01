@@ -106,7 +106,7 @@ Inside any `impl Parser` block, `a` is implicitly in scope as the allocator bind
 Methods may use `@a` to allocate and `&r T` anchored to method parameters:
 
 ```metel
-impl Parser {
+extend Parser {
     fun new(source: String) -> Parser {
         Parser { source, nodes: @a List::Nil {} }
         //                      ^^ a in scope; allocates into the new arena
@@ -172,7 +172,7 @@ When a method has only the implicit allocator `a` in scope and no other allocato
 elision rule from RFC-0065 applies: bare `@` elides to `@a`.
 
 ```metel
-impl Parser {
+extend Parser {
     fun init(&mut self) {
         self.nodes = @List::Nil {};   // elides to @a List::Nil {}
     }

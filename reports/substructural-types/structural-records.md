@@ -200,11 +200,11 @@ RFC-0036's conditional impl blocks generalize directly from aspect conditions to
 row-shape conditions:
 
 ```metel
-impl<row R: HasField<"token", Token>> Session<R> {
+extend<row R: HasField<"token", Token>> Session<R> {
     fun authenticate(self) -> Session<R without "token"> { ... }
 }
 
-impl<row R: Lacks<"token">> Session<R> {
+extend<row R: Lacks<"token">> Session<R> {
     fun send_data(&self, bytes: Bytes) { ... }
 }
 ```
@@ -819,13 +819,13 @@ println("mag = ${magnitude(ScreenPos { x = 3.0, y = 4.0, z_index = 1 })}");
 ```metel
 struct Session<row R> { data: record { ..R } }
 
-impl<row R: HasField<"token", String>> Session<R> {
+extend<row R: HasField<"token", String>> Session<R> {
     // `R without "token"` is illustrative row-subtraction notation, not proposed
     // syntax; only the resulting bound shape is meant here
     fun authenticate(self) -> Session<R without "token"> { ... }
 }
 
-impl<row R: Lacks<"token">> Session<R> {
+extend<row R: Lacks<"token">> Session<R> {
     fun send_data(&self, bytes: String) {
         println("sending: ${bytes}");
     }
@@ -876,7 +876,7 @@ struct SortedPair derives ToRecord {   // ToRecord only — see below
     big: i32,
 }
 
-impl SortedPair {
+extend SortedPair {
     fun new(a: i32, b: i32) -> SortedPair {
         if a <= b { SortedPair { small: a, big: b } } else { SortedPair { small: b, big: a } }
     }
@@ -976,13 +976,13 @@ reusing the `R + "field"` notation §5 already introduced in prose:
 ```metel
 struct RequestBuilder<row R> { data: record { host: String, ..R } }
 
-impl<row R: Lacks<"auth">> RequestBuilder<R> {
+extend<row R: Lacks<"auth">> RequestBuilder<R> {
     fun with_auth(self, token: String) -> RequestBuilder<R + "auth"> {
         RequestBuilder { data: record { ..self.data, auth: token } }
     }
 }
 
-impl<row R: HasField<"auth", String>> RequestBuilder<R> {
+extend<row R: HasField<"auth", String>> RequestBuilder<R> {
     fun send(self) -> Response { ... }
 }
 

@@ -117,7 +117,7 @@ Bounds on generic functions defined inside `impl` blocks are enforced with the s
 ```metel
 struct SortedList<T: Comparable> { items: T[] }
 
-impl SortedList<T> {
+extend SortedList<T> {
     fun find<U: Display>(self, needle: U) -> boolean {
         // T: Comparable is in scope (from struct bound, RFC-0034)
         // U: Display is in scope (from this method's bound)

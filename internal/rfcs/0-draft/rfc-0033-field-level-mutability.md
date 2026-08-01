@@ -89,7 +89,7 @@ conn.port = 443;     // ERROR: field `port` is declared `let` and cannot be reas
 **`mut self` methods cannot reassign `let` fields:**
 
 ```metel
-impl Connection {
+extend Connection {
     fun reconnect(mut self) {
         self.retries += 1;        // OK
         self.host = "fallback";   // ERROR: field `host` is `let`

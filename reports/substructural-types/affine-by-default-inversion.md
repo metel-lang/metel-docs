@@ -261,8 +261,8 @@ The inversion is not confined to RFC-0071. It rewrites parts of `linear-types.md
   affinity becomes a **positive** capability and needs a real marker aspect that a type
   can implement, with the join rule deriving it structurally through fields.
 - **§2.1's `affine struct` sugar changes meaning.** It currently desugars to a *locking
-  pair of negative impls* (`impl !Copy` + `impl !Linear`), whose value is that RFC-0081
-  coherence prevents anyone later adding `impl Copy` and silently changing what moving
+  pair of negative impls* (`extend X: !Copy;` + `extend X: !Linear;`), whose value is that RFC-0081
+  coherence prevents anyone later adding `extend X: Copy` and silently changing what moving
   the type means. Under the inversion it becomes an ordinary positive grant, and that
   locking property has to be recovered some other way — or given up.
 - **The `Copy`/`Drop` exclusion (RFC-0071 §4) stops being a special case of the join
