@@ -62,8 +62,9 @@ distinct situation sharing one code:
 
 - a target that cannot carry the impl at all — `extend { … }: Drop` on an anonymous record;
 - a target with nowhere to register, so its methods could never be found — a tuple, an
-  anonymous record, a `fun` type, or an array without type parameters. Only
-  `extend<T> T[]: Aspect` is implemented today (metel-core#353);
+  anonymous record, a `fun` type, or an array whose element is not one of the impl's own
+  type parameters. Only `extend<T> T[]: Aspect` — the array's element spelled exactly as
+  one of the impl's own generics — is implemented today (metel-core#353);
 - a `drop` body, while destructor invocation is unimplemented (metel-core#292).
 
 ```
