@@ -119,16 +119,23 @@ compile-time discipline exists and is enforced; the runtime discipline it descri
 not yet exist to be enforced against.** No allocator, no borrow checker: both still
 completely true.
 
-**RFC-0122 missed the bar this document set for it, and that should be named rather than
+**RFC-0122 has not missed the bar this document set for it — `v0.12.0` has no tag cut
+yet — but it is behind the pace that bar implied, and that should be named rather than
 left to quietly not-recur.** "Reach `2-accepted` in v0.12.0, not merely accumulate prose"
 was written in this same document on 07-24. It accumulated prose — real prose, with two
-open questions answered — and did not reach `2-accepted`. This is not a crisis; RFC-0122
+open questions answered — and nothing substantive since. This is not a crisis; RFC-0122
 was explicitly scoped as design-only for v0.12.0, with no borrow checking shipping this
-release. But a self-imposed bar that quietly lapses without comment is exactly the
-pattern this document exists to catch when other documents do it (Trigger 16's RFC-0097
-frontmatter drift, Trigger 14's RFC-0099/0100 reversions). It should hold itself to the
-same standard: either restate the bar for v0.13.0 explicitly, or say plainly that it is
-now open-ended.
+release, and the bar remains reachable before the release is actually cut. But
+ten-plus days of no movement on a design-only deliverable, this close to a release
+whose milestone issues are otherwise fully closed, is exactly the kind of drift this
+document exists to catch when other documents show it (Trigger 16's RFC-0097
+frontmatter drift, Trigger 14's RFC-0099/0100 reversions) — it should hold itself to
+the same standard rather than assume there's ample runway left. **Correction, same
+day:** the first draft of this paragraph said the bar was "missed." It was not — that
+conflated the issue tracker's closed milestone with an actual release, which
+`git log origin/main..origin/develop` and the absence of a `v0.12.0` tag would have
+shown directly. Caught by the operator, not by this cycle's own verification pass,
+which is itself the more important fact to record.
 
 **A genuinely new data point for the "how vibecoded is this" question raised mid-week
 outside this document's own scope, but relevant to it:** the final PR of the week
@@ -194,12 +201,14 @@ accumulate rather than evaporate at the end of the conversation that produced th
    concludes). Watch whether the next cycle states that distinction precisely or lets
    an imprecise "move semantics: done" stand in its place — which would be the
    engineering-side version of exactly what Trigger 22 watches for on the design side.
-6. **New — RFC-0122 missed its self-imposed 07-24 bar ("reach `2-accepted` in
-   v0.12.0") and the lapse has not been named anywhere until this entry.** Not urgent —
-   the release always scoped it as design-only — but this document should hold its own
+6. **New — RFC-0122 is behind the pace of its self-imposed 07-24 bar ("reach
+   `2-accepted` in v0.12.0"), though not yet past it since `v0.12.0` has no tag cut —
+   and the drift has not been named anywhere until this entry.** Not urgent — the
+   release always scoped it as design-only — but this document should hold its own
    stated bars to the same standard it applies to RFC frontmatter drift elsewhere.
-   Watch whether v0.13.0 restates a bar for it explicitly or lets it drift further
-   unaddressed.
+   Watch whether it reaches `2-accepted` before the tag is cut, whether v0.13.0 restates
+   the bar explicitly instead, or whether it drifts further unaddressed. (Corrected
+   same day: originally stated as "missed"; it was not — caught by the operator.)
 7. **New — a calibration data point for the (separately tracked, outside this
    document) question of implementation trust.** #348's fix needed three real
    corrections after adversarial review, none caught by the author's own first pass.
@@ -214,7 +223,7 @@ accumulate rather than evaporate at the end of the conversation that produced th
 | # | Priority | Design state | Engineering state |
 |---|---|---|---|
 | 1 | Records / views as the structural carrier | RFC-0115/0116/0118 **`4-implemented`**; RFC-0117/0119/0120/0121 `0-draft`, untouched | **v0.12.0: #287/#288/#289 shipped** |
-| 2 | Ownership enforcement and the borrow checker | RFC-0071 **`3-integrated`**, `impl_status: in-progress`; RFC-0122 `0-draft`, missed its 07-24 `2-accepted` bar | **v0.12.0: #290/#291 shipped + 19 hardening fixes; v0.13.0: #292/#293 + 6 more queued** |
+| 2 | Ownership enforcement and the borrow checker | RFC-0071 **`3-integrated`**, `impl_status: in-progress`; RFC-0122 `0-draft`, behind the pace of its 07-24 `2-accepted` bar but not yet missed (`v0.12.0` unshipped) | **v0.12.0: #290/#291 shipped + 19 hardening fixes; v0.13.0: #292/#293 + 6 more queued** |
 | 3 | Brands and context parameters | RFC-0076 `0-draft`, RFC-0113 `1-under-review` — unchanged | not started, no issue |
 | 4 | Allocators — emergent synthesis, built last | 8 RFCs `2-accepted`, complete, unchanged | deliberately not started |
 | 5 | The interpreter as a feedback instrument | n/a | backlog unchanged in size (~15 open) |
@@ -229,7 +238,7 @@ accumulate rather than evaporate at the end of the conversation that produced th
   meta-risk (§1) this cycle's assessment is measured against
 - `internal/rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md` — the sole
   `3-integrated` RFC, and this cycle's central engineering result
-- `internal/rfcs/0-draft/rfc-0122-borrow-checking.md` — the missed 07-24 bar
+- `internal/rfcs/0-draft/rfc-0122-borrow-checking.md` — the 07-24 bar it is behind, not missed
 - `internal/rfcs/REGISTRY.md` — regenerated 2026-08-01, this cycle's corpus tally
 - `internal/rfcs/4-implemented/rfc-0116-anonymous-record-types.md`,
   `rfc-0118-row-bounds.md` — Priority 1's two new implemented RFCs
