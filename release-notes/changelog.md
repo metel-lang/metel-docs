@@ -99,10 +99,16 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   `extend<A, B> (A, B): Aspect { … }`, or use a named struct
   ```
 
-  The generic form is unaffected — `extend<T> T[]: Display { … }` registers and
-  dispatches as before, which is how the standard library declares its array impls.
-  Rejecting rather than accepting is deliberate: a concrete structural target has no
-  registry key, so the block would compile and its methods would never be found.
+  **A tuple or record target is rejected in the generic form too** (#353). That form
+  typechecks, and then the impl is invisible to both method dispatch and bound
+  satisfaction — `p.area()` fails to resolve and `(i64, i64)` does not satisfy
+  `T: Area`. So of the structural targets RFC-0061 grants, the generic **array** form
+  is the one that works: `extend<T> T[]: Display { … }` registers and dispatches as
+  before, which is how the standard library declares its array impls.
+
+  Rejecting rather than accepting is deliberate throughout: a block whose methods can
+  never be found would compile and do nothing. Nobody can be relying on the old
+  behaviour, because the old behaviour was that the impl had no effect.
 
 - **Auto-deref now reaches through a reference in two places it previously missed.** An
   array intrinsic resolves through `&T[]` and `&[T; N]` — `arr.len()` where `arr: &i64[]`
