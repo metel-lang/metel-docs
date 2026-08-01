@@ -17,15 +17,21 @@ impl_status: implemented
 
 > **Status — implemented (2026-07-14).** Issue #245 landed the structural impl machinery this RFC depends on. The earlier array auto-impl propagation subsection was rehomed to RFC-0096, so no remaining unimplemented dependency stays inside RFC-0061's own scope.
 
-> **Status — qualified (2026-08-01, metel-core#296).** Only the **generic** form of a
-> structural impl is registered. `extend<T> T[]: Display { … }` works and dispatches —
-> `array_target_generic_name` keys it on the impl's own type parameter. A **concrete**
-> structural target has no such key, so `extend i64[]: Display { … }`,
-> `extend (i64, i64): Display { … }` and `extend { w: i64 }: Display { … }` are now
-> rejected with `T0003` naming the generic form, rather than reaching an internal error
-> as they did before. They are rejected rather than accepted because a block whose
-> methods can never be found is the "compiles and does nothing" failure RFC-0071 §9c
-> exists to prevent. Registering monomorphic structural impls is unscheduled; RFC-0116 §3's
+> **Status — qualified (2026-08-01, metel-core#296 and #353).** Of the three structural
+> target kinds this RFC grants, **one is implemented**: `extend<T> T[]: Display { … }`
+> registers via `array_target_generic_name` and dispatches. Everything else is accepted by
+> the parser and then invisible to *both* method dispatch and bound satisfaction — a
+> concrete array target, and a tuple, record or `fun` target in **either** form. All of it
+> is now rejected with `T0003`, rather than reaching an internal error (the concrete case)
+> or compiling into a silent no-op (the generic tuple/record case).
+>
+> Rejected rather than accepted because a block whose methods can never be found is the
+> "compiles and does nothing" failure RFC-0071 §9c exists to prevent, and the same
+> judgement was applied to inert `Drop` impls in metel-core#345. It costs nothing: nobody
+> can depend on the current behaviour, because the current behaviour is that the impl has
+> no effect.
+>
+> Tuple and record dispatch is metel-core#353, deferred to v0.13.0. RFC-0116 §3's
 > local-aspect-impl-on-a-record bullet stays aspirational until it lands.
 
 ## Summary
