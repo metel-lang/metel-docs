@@ -37,7 +37,7 @@ target:
 >   elided signature.
 >
 > The practical consequence is the point: **this RFC is buildable without RFC-0067**, which
-> is `2-accepted`, unimplemented, and itself carrying stale syntax (nine `&mut` occurrences
+> is `2-accepted`, unimplemented, and itself carrying stale syntax (nine `&var` occurrences
 > predating RFC-0098, whose last update was 2026-07-10, four days before RFC-0098 shipped).
 > RFC-0067 should be treated as a dependent extension, and its acceptance re-examined
 > against these rules rather than assumed to constrain them.
@@ -204,7 +204,7 @@ finished proposal.
 - RFC-0067 (Lifetime Anchors), `2-accepted` — **a dependent, not a dependency.** Its `&r T`
   anchors name a validity scope for the cross-function cases elision cannot infer; they
   presuppose the rules here rather than supplying them. Supersedes RFC-0052 (Lifetime
-  System). Carries pre-RFC-0098 `&mut` spelling
+  System). Carries pre-RFC-0098 `&var` spelling
 - RFC-0071 (Ownership and Move Semantics), `2-accepted` — move and partial-move tracking,
   which this must agree with about places; scheduled for implementation in v0.12.0
 - RFC-0086 (Outlives-of-Bindings Sugar), `6-refused` — the only prior "borrow"-titled RFC;

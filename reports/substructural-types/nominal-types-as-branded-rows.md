@@ -83,7 +83,7 @@ records and row-conditional impls. One representation, one query.
 the distinction" — presence and access as two *roles* of a shared solver. This model is a
 cleaner unification than that: there is exactly **one operation, narrowing**, applied to
 either an owned value (a partial move: `Handle` → `Handle.{ fd }`, fields are gone) or a
-borrowed one (a view: `&mut Handle` → `record { fd: &mut i32 }`, fields are aliased
+borrowed one (a view: `&var Handle` → `record { fd: &var i32 }`, fields are aliased
 elsewhere). The distinction was never between two kinds of row — it was always about
 whether the thing being narrowed is owned or borrowed, the same axis that already
 distinguishes ordinary field access everywhere else in the language.
@@ -210,7 +210,7 @@ assignment widens it back, no conversion function involved anywhere — the same
 reachable through nothing more than ordinary code:
 
 ```metel
-fun mess_with_it(p: &mut SortedPair) {
+fun mess_with_it(p: &var SortedPair) {
     let old_small = p.small;   // move small out; p narrows to .{ big }
     p.small = 999_999;         // assign an arbitrary value back in; p widens to full SortedPair
     // no call to SortedPair::new, anywhere. invariant possibly broken.
@@ -563,7 +563,7 @@ levels deep, not something to cite as already true.
 ### 10.3 What doesn't depend on RFC-0071, and stays on solid ground
 
 **Views cost exactly what taking a reference already costs**, and this piece of the
-argument does not need the correction above: `&`/`&mut` with auto-deref (RFC-0067a) is
+argument does not need the correction above: `&`/`&var` with auto-deref (RFC-0067a) is
 genuinely implemented, confirmed earlier this session. A view is a small value holding
 references to specific fields — the same cost as any struct containing reference fields,
 which already exists in the shipped language, independent of anything in this document.

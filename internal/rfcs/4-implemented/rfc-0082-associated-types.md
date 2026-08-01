@@ -114,7 +114,7 @@ signatures. Inside an aspect block, the bare name `Target` is sugar for `Self::T
 ```metel
 aspect Iterator {
     type Item;
-    fun next(self: &mut Self) -> Perhaps<Item>;   // Item = Self::Item
+    fun next(self: &var Self) -> Perhaps<Item>;   // Item = Self::Item
 }
 
 aspect Deref {
@@ -132,7 +132,7 @@ An impl block must define all associated types declared by the aspect:
 ```metel
 extend Counter: Iterator {
     type Item = i64;
-    fun next(self: &mut Counter) -> Perhaps<i64> { ... }
+    fun next(self: &var Counter) -> Perhaps<i64> { ... }
 }
 ```
 

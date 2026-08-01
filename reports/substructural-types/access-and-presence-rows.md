@@ -65,7 +65,7 @@ gives a view's meaning as `(row: { golden_tickets: Token }, brand: brand_of(Tick
 move."
 
 **Its second mechanism is not.** RFC-0109's reference-destructuring patterns
-(`let &mut { a, b } = h;`) are, in the RFC's own words, "deliberately **not** built on
+(`let &var { a, b } = h;`) are, in the RFC's own words, "deliberately **not** built on
 RFC-0090's" machinery — they are ordinary sequential field borrows performed in one
 place. So RFC-0109 already contains one access-side mechanism that needs no presence
 rows at all, sitting beside one that is defined through them.
@@ -84,10 +84,10 @@ The obvious objection to §1: if access rows are presence rows whose labels are 
 to fields that exist on the referenced struct, why are they a separate concept at all?
 
 The strong form of that objection is a **desugaring**, and it mostly works. Read
-`&mut Handle.{fd, alloc}` as
+`&var Handle.{fd, alloc}` as
 
 ```metel
-record { fd: &mut i32, alloc: &mut Buffer }
+record { fd: &var i32, alloc: &var Buffer }
 ```
 
 — an ordinary presence row whose *field types* are references. This document's first draft
@@ -107,12 +107,12 @@ reading, obtained for free rather than by a special rule.
 **`Drop` and multiplicity.** The fields are references, and references carry no drop
 obligation, so RFC-0090 §5's field-composition rule computes "drops nothing" by itself. No
 derivation has to be suppressed for the access role. `Send`/`Sync`/`Linear` likewise
-compose to the right answers, because `&T`/`&mut T`'s own status is already right.
+compose to the right answers, because `&T`/`&var T`'s own status is already right.
 
 **Modes — and here the desugaring is an improvement on RFC-0109, not merely a
 simplification.** It puts the mode *inside* the row, in each field's type (`&T` versus
-`&mut T`). RFC-0109 puts it *outside*, on the view reference (`&TicketView` /
-`&mut TicketView`), which is exactly why it needs §4.9's tuple-of-views-with-independent-
+`&var T`). RFC-0109 puts it *outside*, on the view reference (`&TicketView` /
+`&var TicketView`), which is exactly why it needs §4.9's tuple-of-views-with-independent-
 modes as a separate construct to express mixed access. With the mode in the field type,
 mixed modes are just a record with mixed field types, and §4.9's construct is unnecessary.
 
@@ -126,7 +126,7 @@ keeps apart: reference-destructuring *produces* the record of borrows, and a nam
 ### 3.2 What survives
 
 **1. Call-site coercion — the one that matters.** For `h.should_insert_ticket()` to work
-with no call-site syntax, `&mut Handle` must coerce implicitly to
+with no call-site syntax, `&var Handle` must coerce implicitly to
 `record { golden_tickets: &Token }`. RFC-0090 §8 forbids precisely that: a struct "must
 never be silently accepted wherever a row-generic bound is expected — `.to_record()` has to
 appear in the source," because allowing it "would quietly re-widen tier 2 into tier 3
@@ -158,8 +158,8 @@ fields the body may read, so that *other* fields may have been moved out beforeh
 is an access constraint over an owned value, and nothing in the desugaring reaches it. §2's
 observation stands unchanged for this case, and it is the case §4 is really about.
 
-**4. Disjointness is proved elsewhere.** Constructing `record { a: &mut A, b: &mut B }` from
-one `&mut h` requires knowing `a` and `b` are disjoint paths. That is the borrow checker's
+**4. Disjointness is proved elsewhere.** Constructing `record { a: &var A, b: &var B }` from
+one `&var h` requires knowing `a` and `b` are disjoint paths. That is the borrow checker's
 obligation, not the row solver's — RFC-0109 defers it to "ordinary sequential field
 borrows" once RFC-0071's field-sensitive tracking exists. The desugaring makes the *result*
 typeable without making the *construction* checkable.
@@ -173,7 +173,7 @@ worth fixing. RFC-0090 states its width-subtyping guard twice, and the two disag
   `Drop`- or `Linear`-bearing forces explicit handling."
 - §5 rejects discarding a row remainder "without a guarantee everything in it is `Copy`."
 
-`&mut T` is **not `Copy`**, and also not `Drop`- or `Linear`-bearing. Forgetting one is
+`&var T` is **not `Copy`**, and also not `Drop`- or `Linear`-bearing. Forgetting one is
 entirely safe — it ends a borrow early. So the `Copy` guard is strictly stronger than the
 hazard used to justify it, and a row of borrows is exactly the case that separates them.
 The right guard is **"carries no drop obligation," not "`Copy`."**
@@ -198,7 +198,7 @@ But inherit-or-not is a false binary. The space:
 
 | | View type | Reuse across structs | Prevents collapse |
 |---|---|---|---|
-| **A** Bare | `record { fd: &mut i32 }` | ✓ free | ✗ |
+| **A** Bare | `record { fd: &var i32 }` | ✓ free | ✗ |
 | **B** Brand-rigid *(RFC-0109 today)* | `record {…} @ brand_of(Handle)` | ✗ | ✓ |
 | **C** Brand-polymorphic | `record {…} @ 'b`, generic in `'b` | ✓ | ✓ |
 | **D** Nominal constructor | `View<Handle, {fd}>` | ✓ via `View<S, R>` | ✓ |
@@ -404,7 +404,7 @@ precedent is therefore *not* needed here — a simpler answer was available.
 The framing this document proposes: **an access row is a statement about what a
 computation does, over a finite label set.** That is the same shape as an effect row.
 
-**Scope, after §3.** Where a view is a parameter — Rust's `&mut self.{statistics}`,
+**Scope, after §3.** Where a view is a parameter — Rust's `&var self.{statistics}`,
 RFC-0109's named views — the desugaring to a row of borrows already handles propagation
 without any of this: the callee's access is *its parameter type*, so it composes through
 calls the way ordinary types do. The effect framing earns its keep for the case the
@@ -414,7 +414,7 @@ actually open.
 
 | Mechanism | Reads as | Covered by §3's desugaring? |
 |---|---|---|
-| Rust's `fn process(&mut self { statistics })` | this function's field-access row is `{statistics}` | yes — parameter type |
+| Rust's `fn process(&var self { statistics })` | this function's field-access row is `{statistics}` | yes — parameter type |
 | RFC-0109's named view | a named access-row alias | yes — a named row of borrows |
 | Rust's *abstract fields* (trait members) | row variables over access rows | partly — needs a public projection |
 | RFC-0091 §1's `uses (fd)` | the destructor's access row | **no** — `self` is owned |
@@ -485,7 +485,7 @@ conversation were **wrong and are corrected here**.
 → [tracking issue #155938](https://github.com/rust-lang/rust/issues/155938), experimental
 as of April 2026.
 
-The design being implemented is `&mut Foo.{a}` — **fixed named field sets, no
+The design being implemented is `&var Foo.{a}` — **fixed named field sets, no
 polymorphism**. Row polymorphism is named as a possible future technique for field-set
 *inference*, not as part of the design. The [Notes on partial borrows](https://internals.rust-lang.org/t/notes-on-partial-borrows/20020)
 thread, read specifically looking for counterexamples, contains **no** motivating example
@@ -604,7 +604,7 @@ So the two halves are complementary, and the cluster already knows it:
 | Need | Mechanism | Rows? |
 |---|---|---|
 | Call a method while another field is in use, no call-site ceremony | named view / self-view narrowing | no |
-| Split one `&mut` into disjoint sub-borrows locally | reference-destructuring patterns | no |
+| Split one `&var` into disjoint sub-borrows locally | reference-destructuring patterns | no |
 | One `drain_field` reusable across every struct | row-polymorphic generic | **yes** |
 | Public API that doesn't leak private field names | abstract fields / view groups | naming, then maybe |
 | Reconstruct any `FromRecord` type from a partial record (RFC-0090 §8) | row-generic | **yes** |
@@ -629,7 +629,7 @@ moved.*
 **Concrete, and independent of anything else here:**
 
 1. **Fix RFC-0090's width-subtyping guard** (§3.3). §5 and §7 both guard on `Copy` while
-   justifying the guard by `Drop`/`Linear` hazards; `&mut T` is neither, and under the
+   justifying the guard by `Drop`/`Linear` hazards; `&var T` is neither, and under the
    `Copy` phrasing narrowing a row of borrows would be rejected. The guard should read
    "carries no drop obligation." Small, self-contained, and worth doing whether or not the
    rest of this document survives review.

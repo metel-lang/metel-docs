@@ -99,7 +99,7 @@ Inside an `unsafe` block, the linearity checker is relaxed — a linear value ma
 ```metel
 let buf = Buffer::alloc(1024);
 unsafe {
-    let raw: *mut Byte = &mut buf as *mut Byte;  // take pointer to linear value — forbidden in safe code
+    let raw: *mut Byte = &var buf as *mut Byte;  // take pointer to linear value — forbidden in safe code
     // buf is now accessible both through raw and through buf
     // programmer asserts only one path will free the backing memory
 }

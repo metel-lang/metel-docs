@@ -191,9 +191,9 @@ None load-bearing. Each of the three sections is independently reversible; none 
 ## References
 
 - RFC-0032 (Field-Level Visibility) — amended, §2 (`pub` → `public` on struct fields).
-- RFC-0042 (`let mut` for Mutable Bindings) — amended, §3 (binding-position `mut` → `var`).
-- RFC-0044 (Explicit Receiver Semantics) — amended, §3 (`&mut self` → `&var self`).
-- RFC-0067A (Reference Types) — amended, §3 (`&mut T` reference type and `&mut expr` address-of → `&var`).
+- RFC-0042 (`var` for Mutable Bindings) — amended, §3 (binding-position `mut` → `var`).
+- RFC-0044 (Explicit Receiver Semantics) — amended, §3 (`&var self` → `&var self`).
+- RFC-0067A (Reference Types) — amended, §3 (`&var T` reference type and `&var expr` address-of → `&var`).
 - RFC-0033 (Field-Level Mutability, draft) — not amended (not yet accepted), but should adopt `var` rather than `mut` when resumed.
 - RFC-0081 (Negative Impls) — impl-block reordering (§1) folds `!`-prefixed negative impls into the same `: Aspect` clause (`extend Type: !Aspect`), reusing the existing bound-negation token rather than adding a `without` keyword.
 - RFC-0034 (Struct-Enum-Aspect Bounds) — `aspect`'s own naming precedent this RFC continues in spirit.

@@ -69,7 +69,7 @@ type signatures use `brand 'b` from RFC-0076. Blocking: RFC-0076 Q1.
 | 0063 | Region Handles — `@[r] T`, bracket channel, sendability |
 | 0065 | Region Ergonomics — `@T` elision, call-site inference |
 | 0066 | Region Pointer Extraction — move-out semantics, `T: !Drop` constraint |
-| 0067 | Reference Types — `&T`, `&mut T` |
+| 0067 | Reference Types — `&T`, `&var T` |
 | 0068 | Struct-Owned Regions — `[own r]` |
 | 0069 | Sub-Region Typing — `SubRegion<R>`, `Outlives` (amended by RFC-0082) |
 | 0071 | Ownership and Move Semantics — affine types, `Clone`, `Drop` |
@@ -176,7 +176,7 @@ Begin implementing the borrow checker and region system against the accepted
 specification. Recommended order:
 
 1. Move semantics enforcement (RFC-0071) — affine types, no implicit copy
-2. Reference types and borrow checking (RFC-0067) — `&T`, `&mut T` lifetime rules
+2. Reference types and borrow checking (RFC-0067) — `&T`, `&var T` lifetime rules
 3. Region allocation (RFC-0063) — `@[r] T`, Heap and LocalHeap backed by real allocators
 4. `pub let` (RFC-0083) — three-file change; unblocks `heap`/`local_heap` in stdlib
 5. Fixed-size array syntax update (RFC-0084) — parser and spec change; mechanical

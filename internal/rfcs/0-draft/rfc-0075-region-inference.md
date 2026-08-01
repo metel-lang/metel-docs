@@ -42,7 +42,7 @@ The explicit form using RFC-0065 within a function body:
 ```metel
 fun process(nodes: &List<i64>) {
     AutoRegion::scoped([r]() -> {
-        let mut result: @[r] List<i64> = @[r] List::Nil {};
+        var result: @[r] List<i64> = @[r] List::Nil {};
         for n in nodes {
             result = @[r] List::Cons { head: *n, tail: result };
         }
@@ -55,7 +55,7 @@ With local inference (this RFC):
 
 ```metel
 fun process(nodes: &List<i64>) {
-    let mut result = List::Nil {};
+    var result = List::Nil {};
     for n in nodes {
         result = List::Cons { head: *n, tail: result };
     }
@@ -191,7 +191,7 @@ the value.
 
 ```metel
 fun sum_evens(input: &List<i64>) -> i64 {
-    let mut evens = List::Nil {};     // inferred AutoRegion: local
+    var evens = List::Nil {};     // inferred AutoRegion: local
     for n in input {
         if *n % 2 == 0 {
             evens = List::Cons { head: *n, tail: evens };
@@ -249,7 +249,7 @@ The fix: add an explicit region parameter.
 
 ```metel
 fun good_collect[r](input: &List<i64>) -> @[r] List<i64> {
-    let mut result: @[r] List<i64> = @[r] List::Nil {};
+    var result: @[r] List<i64> = @[r] List::Nil {};
     // ...
     result   // ok: result lives in caller-supplied region r
 }

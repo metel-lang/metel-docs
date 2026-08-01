@@ -26,7 +26,7 @@ struct Connection {
 }
 ```
 
-Today, declaring `mut conn: Connection` to allow `conn.retries += 1` also silently allows `conn.host = "evil.example"` — there is no way to prohibit the latter. The programmer must rely on convention, not enforcement.
+Today, declaring `var conn: Connection` to allow `conn.retries += 1` also silently allows `conn.host = "evil.example"` — there is no way to prohibit the latter. The programmer must rely on convention, not enforcement.
 
 This matters most for:
 
@@ -79,18 +79,18 @@ Plain fields (no annotation) behave exactly as today.
 **Assignment after construction is a compile error**, regardless of the mutability of the containing binding:
 
 ```metel
-mut conn = Connection { host = "db.local", port = 5432, retries = 0 };
+var conn = Connection { host = "db.local", port = 5432, retries = 0 };
 
-conn.retries += 1;   // OK — plain field, binding is mut
+conn.retries += 1;   // OK — plain field, binding is var
 conn.host = "other"; // ERROR: field `host` is declared `let` and cannot be reassigned
 conn.port = 443;     // ERROR: field `port` is declared `let` and cannot be reassigned
 ```
 
-**`mut self` methods cannot reassign `let` fields:**
+**`var self` methods cannot reassign `let` fields:**
 
 ```metel
 extend Connection {
-    fun reconnect(mut self) {
+    fun reconnect(var self) {
         self.retries += 1;        // OK
         self.host = "fallback";   // ERROR: field `host` is `let`
     }
@@ -127,7 +127,7 @@ pub struct Token {
     pub let kind: TokenKind,   // readable by anyone, never mutable
     pub let span: Span,        // readable by anyone, never mutable
         let id:   Int,         // module-private (RFC-0032), never mutable
-            pos:  Int,         // module-private, mutable if binding is mut
+            pos:  Int,         // module-private, mutable if binding is var
 }
 ```
 
@@ -188,7 +188,7 @@ Fields are immutable by default; `mut` opts into mutability:
 struct Connection {
     host:      String,     // immutable by default
     port:      Int,        // immutable by default
-    mut retries: Int,      // explicitly mutable
+    var retries: Int,      // explicitly mutable
 }
 ```
 
@@ -277,7 +277,7 @@ If Metel later adds compile-time constants at the struct level (e.g. associated 
 
 ### OQ-4 — Linting: suggest `let` for never-reassigned fields
 
-Should the compiler/linter suggest adding `let` to plain fields that are never mutated in any `mut self` method in the same module? This would be a quality-of-life lint, not a hard error. Out of scope for the spec but worth noting for tooling.
+Should the compiler/linter suggest adding `let` to plain fields that are never mutated in any `var self` method in the same module? This would be a quality-of-life lint, not a hard error. Out of scope for the spec but worth noting for tooling.
 
 ---
 

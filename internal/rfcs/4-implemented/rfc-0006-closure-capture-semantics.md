@@ -20,7 +20,7 @@ The PoC evaluator captures all free variables by cloning them at closure definit
 ```metel
 // Intended: inc and get both operate on the same counter.
 // Under clone capture: each holds its own copy — inc's mutations are invisible to get.
-let mut counter = 0;
+var counter = 0;
 let inc = () -> () { counter += 1; };
 let get = () -> Int { counter };
 ```
@@ -29,7 +29,7 @@ let get = () -> Int { counter };
 ```metel
 // Intended: calling double() updates the original.
 // Under clone capture: double works on a copy.
-let mut x = 5;
+var x = 5;
 let double = () -> () { x *= 2; };
 double();
 // x is still 5 here
@@ -58,8 +58,8 @@ Two axes define the problem:
 
 **Explicit pointer capture (RFC-0043 model):** value capture by default; reference capture requires the programmer to explicitly take a pointer before closing:
 ```metel
-let mut counter = 0;
-let p = &mut counter;
+var counter = 0;
+let p = &var counter;
 let inc = () -> () { *p += 1; };
 ```
 Aliasing is visible at the capture site. The loop variable problem cannot occur silently.
@@ -87,8 +87,8 @@ Rationale:
 To share mutable state between two closures, the programmer takes an explicit pointer before closing over it:
 
 ```metel
-let mut counter = 0;
-let p: *mut Int = &mut counter;
+var counter = 0;
+let p: *mut Int = &var counter;
 let inc = () -> () { *p += 1; };
 let get = () -> Int { *p };
 inc();
@@ -121,8 +121,8 @@ Example:
 
 ```metel
 fun make_counter() -> () -> Int {
-    let mut n = 0;
-    let p = &mut n;
+    var n = 0;
+    let p = &var n;
     return () -> Int {
         *p += 1;
         return *p;
@@ -314,7 +314,7 @@ Two syntactic forms:
 
 Shared mutable state is always wrapped in `Rc<RefCell<T>>` directly. No pointer types in the language — RFC-0043 is deferred or dropped.
 
-**Partially rejected.** `Rc<RefCell<T>>` is the right tool for heap-allocated shared ownership. However, it requires a standard library type to express what pointers express at the language level. RFC-0043's explicit `&` / `&mut` syntax is more ergonomic for the common case of sharing a stack-local value between closures in the same scope. Both mechanisms should coexist: `*T` for short-lived intra-scope sharing, `Rc<RefCell<T>>` for heap-allocated long-lived sharing.
+**Partially rejected.** `Rc<RefCell<T>>` is the right tool for heap-allocated shared ownership. However, it requires a standard library type to express what pointers express at the language level. RFC-0043's explicit `&` / `&var` syntax is more ergonomic for the common case of sharing a stack-local value between closures in the same scope. Both mechanisms should coexist: `*T` for short-lived intra-scope sharing, `Rc<RefCell<T>>` for heap-allocated long-lived sharing.
 
 ## Interaction with Upstream RFCs
 
@@ -357,7 +357,7 @@ The blocking dependency is RFC-0043 (regular pointers). Resolve RFC-0043 before 
 
 - Language spec: [`spec/functions.md#closures`](../../public/spec/functions.md#closures), [`spec/runtime.md#panics`](../../public/spec/runtime.md#panics)
 - RFC-0043: `docs/internal/rfcs/5-superseded/rfc-0043-regular-pointers.md` (superseded by RFC-0067a) — `*T`/`*mut T`, regular pointer semantics, and closure-sharing support
-- RFC-0044: `docs/internal/rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md` — explicit receiver forms, including `&mut self` for iterator-style mutation
+- RFC-0044: `docs/internal/rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md` — explicit receiver forms, including `&var self` for iterator-style mutation
 - RFC-0024: `docs/internal/rfcs/rfc-0024-linear-types.md` — linear values cannot be clone-captured; move capture (`move fun`) is required; linear values can be passed as explicit closure parameters
 - RFC-0025: `docs/internal/rfcs/rfc-0025-region-allocation.md` — `Region` handles are linear; move capture or explicit parameter passing required
 - RFC-0026: `docs/internal/rfcs/rfc-0026-unsafe-blocks.md` — inside an `unsafe fun` closure, the linear capture restriction is relaxed

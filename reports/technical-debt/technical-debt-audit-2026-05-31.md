@@ -84,8 +84,8 @@ The 2026-06-01 follow-up audit verified this with a temporary program:
 
 ```metel
 fun main() {
-    mut arr: Int[] = [1, 2, 3];
-    mut i = 0;
+    var arr: Int[] = [1, 2, 3];
+    var i = 0;
     arr[i + 1] = 9;
     assert(arr[1] == 9);
 }

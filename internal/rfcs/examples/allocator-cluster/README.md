@@ -31,7 +31,7 @@ model (see position report §5) and have moved to `6-refused/`.
 |---|---|---|
 | [`01-allocators-and-alloc-expressions.mtl`](01-allocators-and-alloc-expressions.mtl) | 0063 | `Alloc` aspect, stdlib allocators, `@a T`, `@a expr`, fallible allocation, allocator parameters, scoped creation, sendability |
 | [`02-elision-and-ergonomics.mtl`](02-elision-and-ergonomics.mtl) | 0065 | Allocator elision (`@`), lifetime-anchor elision rules 1–4, ordering bounds |
-| [`03-references-and-lifetime-anchors.mtl`](03-references-and-lifetime-anchors.mtl) | 0067 | `&T` / `&mut T`, `&r T` / `&r mut T`, address-of, auto-deref, coercion |
+| [`03-references-and-lifetime-anchors.mtl`](03-references-and-lifetime-anchors.mtl) | 0067 | `&T` / `&var T`, `&r T` / `&r var T`, address-of, auto-deref, coercion |
 | [`04-move-out-and-extraction.mtl`](04-move-out-and-extraction.mtl) | 0066, 0072 | Borrow-deref, move-out (`Heap` vs bulk-deallocating), `T: !Drop`, `T: Copy`, clone extraction |
 | [`05-struct-owned-allocators.mtl`](05-struct-owned-allocators.mtl) | 0068 | Primary-constructor allocator ownership, implicit scope in `impl`, two lifetimes, exclusive-access rule |
 | [`06-generic-allocators-and-variance.mtl`](06-generic-allocators-and-variance.mtl) | 0077 | `<A: Alloc>` bounds, generic `impl`/`aspect impl` headers, wellformedness, variance |

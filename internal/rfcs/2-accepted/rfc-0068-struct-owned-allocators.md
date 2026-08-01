@@ -112,7 +112,7 @@ extend Parser {
         //                      ^^ a in scope; allocates into the new arena
     }
 
-    fun push_node(&mut self, node: AstNode) -> &self AstNode {
+    fun push_node(&var self, node: AstNode) -> &self AstNode {
         let ptr = @a node;   // allocate into Parser's arena
         self.nodes = @a List::Cons { head: ptr, tail: self.nodes };
         &ptr
@@ -153,10 +153,10 @@ This mirrors Rust's two-lifetime method pattern (`&'this self` vs `'arena`).
 
 ## 5. Allocation requires exclusive access
 
-`@a expr` inside a method requires `&mut self`, since allocation mutates the arena:
+`@a expr` inside a method requires `&var self`, since allocation mutates the arena:
 
 ```metel
-fun push(&mut self, node: AstNode) -> &self AstNode { ... }   // ✓
+fun push(&var self, node: AstNode) -> &self AstNode { ... }   // ✓
 fun peek(&self) -> &self AstNode { ... }                       // ✓ — read-only
 fun push_shared(&self, node: AstNode) -> &self AstNode { ... } // ✗ — cannot allocate through shared borrow
 ```
@@ -173,7 +173,7 @@ elision rule from RFC-0065 applies: bare `@` elides to `@a`.
 
 ```metel
 extend Parser {
-    fun init(&mut self) {
+    fun init(&var self) {
         self.nodes = @List::Nil {};   // elides to @a List::Nil {}
     }
 }
@@ -199,4 +199,4 @@ extend Parser {
 
 - RFC-0063 (Allocator Handles) — allocator values; `@a expr`; sendability.
 - RFC-0065 (Allocator Ergonomics) — `@`-elision; two-or-more allocator discipline.
-- RFC-0067 (Lifetime Anchors) — `&r T` / `&r mut T`; `&self` denotation in return types.
+- RFC-0067 (Lifetime Anchors) — `&r T` / `&r var T`; `&self` denotation in return types.

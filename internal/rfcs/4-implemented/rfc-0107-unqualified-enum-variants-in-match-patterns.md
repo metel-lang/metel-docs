@@ -71,7 +71,7 @@ this doesn't need to change.
 
 **Correction (caught checking this design against the actual call chain, not just
 sketched in isolation):** an earlier draft of this section showed the resolution
-mutating the pattern node in place through `&mut Pattern`. That doesn't match the real
+mutating the pattern node in place through `&var Pattern`. That doesn't match the real
 signatures — `construct_pattern_bindings` takes `pattern: &Pattern` (shared), and its
 caller, `construct_match`, builds `TypedMatchArm` via `arm.pattern.clone()` from an
 `&MatchExpr` it never owns mutably (construction reads the source AST throughout, it

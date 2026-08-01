@@ -54,7 +54,7 @@ RFC-0067a's text, which turns out to overstate its own coverage (see RFC-0112):
 | `p.x = v` field write-through | works |
 | `xs[0] = v` index write-through through a reference | **fails** (`T0001`) |
 | `p = v` bare-identifier write-through | works |
-| `p = &var b` (repoint) | **fails** — `cannot unify i64 with &mut ?t18` |
+| `p = &var b` (repoint) | **fails** — `cannot unify i64 with &var ?t18` |
 | `let y: i64 = r` type-directed copy-out | works, including `&&i64` |
 | `return p` where the return type is `i64` | works |
 | `r + 1` binary operand | fails (`T0001`) |
@@ -113,14 +113,14 @@ Address-Of for Lvalue Paths, implemented) — the RFC that actually designed fat
 write-through — specifies it entirely in terms of `*p`/`*p = v`:
 
 ```metel
-let p: *mut Counter = &mut pair.counter;
+let p: *mut Counter = &var pair.counter;
 p.tick();           // pair.counter updated automatically
 ```
 
 RFC-0067a's rename traded the explicit spelling for implicit-only inference as a side
 effect of unifying `*T`/`&x` notation, not because the explicit spelling was judged
 wrong on its own terms. This RFC restores it as an available spelling on top of
-RFC-0067a's `&`/`&mut` notation — alongside the implicit mechanism, not instead of it.
+RFC-0067a's `&`/`&var` notation — alongside the implicit mechanism, not instead of it.
 
 ---
 
@@ -179,7 +179,7 @@ so this is the selector case Go keeps implicit, and it stays implicit here:
 **Correction to an earlier draft of this section, which claimed both halves were "kept,
 unchanged."** Field paths do work today, at arbitrary nesting (`o.i.v = 8` verified).
 Index paths through a reference **do not** — `fun f(xs: &var i64[]) { xs[0] = 9; }` fails
-today with `cannot unify &mut i64[] with ?t19[]`. So the index half is a new capability
+today with `cannot unify &var i64[] with ?t19[]`. So the index half is a new capability
 this RFC adds, with its own implementation cost and its own fixtures, not a preservation
 of existing behavior. It is kept in scope because Go's selector rule covers `p[i]` and
 splitting it out would leave the write side half-specified, but it must not be budgeted
@@ -195,8 +195,8 @@ assert(q.y == 99);
 ### 4.2 Retired: bare-identifier whole-value write-through
 
 **This is the one case that collides with repoint, and the one this RFC changes.**
-Today, assigning to a plain identifier `p` whose static type is `&mut T` (at any chain
-depth) writes through every `&mut` layer to the innermost `T`, unconditionally,
+Today, assigning to a plain identifier `p` whose static type is `&var T` (at any chain
+depth) writes through every `&var` layer to the innermost `T`, unconditionally,
 regardless of whether `p` itself is declared `let` or `var` — confirmed directly
 against a shipped fixture
 (`tests/integration/sources/evaluator/references/08_write_through_reference_chain.mtl`):
@@ -211,7 +211,7 @@ assert(n == 5);
 ```
 
 Because this rule is unconditional, there is currently no way to *repoint* a
-`var`-declared `&mut T` binding — `p = &var m;` is a type error today (the right side
+`var`-declared `&var T` binding — `p = &var m;` is a type error today (the right side
 is `&var i64`, not the `i64` write-through expects), even though `p` is `var` and every
 *other* type's `var` binding can be reassigned freely. Rust and Go both avoid this
 collision entirely by never having implicit write-through in the first place: bare
@@ -224,14 +224,14 @@ case in `Expr::Assign`'s handling of `AssignTarget::Ident` (`ctx.mark_write_thro
 
 - `p = v;` for a bare identifier `p` always means *rebind `p`* — legal exactly when `p`
   is declared `var`, the same rule every other type already follows. No special case
-  for `&mut T`-typed bindings.
+  for `&var T`-typed bindings.
 - `*p = v;` (§5) is the spelling for writing through a bare reference identifier.
 
 ```metel
 var a = 1;
 var b = 2;
-var p: &mut i64 = &mut a;
-p = &mut b;    // repoint — a type error today; legal after this RFC (p is var)
+var p: &var i64 = &var a;
+p = &var b;    // repoint — a type error today; legal after this RFC (p is var)
 *p = 5;        // write through — b becomes 5, a unchanged
 ```
 
@@ -319,7 +319,7 @@ AssignTarget::Deref(object, span) => {
 
 For field/index targets (§4.1), `*(obj.field) = v` and `obj.field = v` would likewise
 be synonyms — the same harmless redundancy already tolerated elsewhere in this design
-(`&mut T` implicitly coercing to `&T` while a narrower explicit annotation achieves the
+(`&var T` implicitly coercing to `&T` while a narrower explicit annotation achieves the
 same thing; §7 below, where `match *c { .. }` and RFC-0108's auto-transparent
 `match c { .. }` will coexist the same way). For a **bare identifier** target,
 `*p = v` is not redundant with anything after §4.2 — it is the only spelling that
@@ -329,7 +329,7 @@ writes through, since bare `p = v` now means repoint.
 
 ## 6. Interaction with RFC-0044 (Addressability)
 
-`*p` for `p: &mut T` is a new addressable *place* under RFC-0044 §9's existing rule,
+`*p` for `p: &var T` is a new addressable *place* under RFC-0044 §9's existing rule,
 the same way `p` itself already was — writing through it or taking `&(*p)` follow the
 existing addressability rule unchanged, not a new one. `&*p` (address-of a deref) is a
 legal reborrow once both operators exist; Metel has no borrow checker yet (RFC-0071,
@@ -358,13 +358,13 @@ writes. Neither RFC needs the other; sequencing is immaterial between them.
   scrutinees); nothing here proposes matching *through* an explicit `*` in pattern
   position.
 - **`Deref`/`DerefMut` as user-overloadable aspects.** `*` in this RFC only ever
-  applies to the two built-in reference types, `&T`/`&mut T`, exactly like RFC-0067a's
+  applies to the two built-in reference types, `&T`/`&var T`, exactly like RFC-0067a's
   own auto-deref. A user-overloadable version is a separate, larger RFC — RFC-0080 §2
   (under review) already drafts the aspects.
 
   One forward-compatibility note, since §5's write side is the part that would strain:
   `*p = v` is specified here as an `AssignTarget::Deref` producing a `TypedPlace::Deref`,
-  i.e. `*p` names a *place*. RFC-0080 §2.2's `fun deref_mut(self: &mut Self) -> &mut Target`
+  i.e. `*p` names a *place*. RFC-0080 §2.2's `fun deref_mut(self: &var Self) -> &var Target`
   returns a *value* of reference type. Those are not the same thing, and reconciling them
   is the known-hard part of user-overloadable deref (Rust has the same tension). Nothing
   here needs to solve it, but §5's write side should not be read as already covering
@@ -396,12 +396,12 @@ writes. Neither RFC needs the other; sequencing is immaterial between them.
   precedent from other languages (Go: declare-a-new-binding; Pascal/Ada: the *ordinary*
   assignment operator, with `=` reserved for equality) that a Metel reader would likely
   misread; and it leaves the underlying inconsistency in place (assignment to a
-  `&mut T`-typed binding still behaves unlike assignment to every other type) rather
+  `&var T`-typed binding still behaves unlike assignment to every other type) rather
   than resolving it.
 - **Keep bare-identifier write-through unconditional and disambiguate repoint by the
   right-hand side's type instead** (an RHS of type `T` writes through, an RHS of type
-  `&mut T` — matching `p`'s own declared type exactly — repoints; generalizes cleanly
-  to chains, where each layer of `&mut` is its own "rung"). No new syntax at all, and
+  `&var T` — matching `p`'s own declared type exactly — repoints; generalizes cleanly
+  to chains, where each layer of `&var` is its own "rung"). No new syntax at all, and
   consistent with §3a's own type-directed-copy precedent. Rejected: it makes the
   write-through/repoint distinction *less* visible than either the status quo or `:=`
   — a reader would need to know both `p`'s exact declared type and the right-hand
@@ -455,7 +455,7 @@ question, since the rewrite is mechanical (`p = v` → `*p = v`) and grep-and-fi
    does Metel's (not yet written) borrow-checker design make the distinction moot? Not
    resolved here — a forward pointer, the same deferral pattern RFC-0067a already used
    repeatedly for exclusivity *enforcement* versus notation.
-2. **Lint for redundant `*&x` / `*&mut x` / `*(obj.field)` where auto-deref alone
+2. **Lint for redundant `*&x` / `*&var x` / `*(obj.field)` where auto-deref alone
    would already do the same thing.** Harmless, not a type error, worth a style lint
    once Metel has a lint pass. Not blocking, and deliberately not a compiler error —
    §5 is explicit that this redundancy is intended for field/index targets, not a
@@ -498,7 +498,7 @@ two RFCs share no code — §5's parser/`AssignTarget` work does not touch `mayb
 **RFC-0045 (Mutable Address-Of for Lvalue Paths, implemented) — turned up the §4.1
 correction, already folded in.** Field-path write-through works today at arbitrary nesting;
 index-path write-through *through a reference* does not (`fun f(xs: &var i64[]) { xs[0] = 9; }`
-fails with `cannot unify &mut i64[] with ?t19[]`). This RFC therefore adds it rather than
+fails with `cannot unify &var i64[] with ?t19[]`). This RFC therefore adds it rather than
 preserving it. Caught here rather than at implementation time, which is what this stage is
 for.
 

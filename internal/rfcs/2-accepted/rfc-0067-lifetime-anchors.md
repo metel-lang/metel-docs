@@ -7,7 +7,7 @@ status: accepted
 ---
 
 > **Status — under review.** Rewritten 2026-07-05 for the split model. Split again
-> 2026-07-07: the plain `&T` / `&mut T` rename and auto-deref (the original RFC-0067's
+> 2026-07-07: the plain `&T` / `&var T` rename and auto-deref (the original RFC-0067's
 > §1/§3/§4/§7) had no dependency on affine types, the borrow checker, or allocators, and
 > has been accepted separately as **RFC-0067a** and sequenced into Cluster A. What remains
 > here — lifetime anchors, allocator-pointer (`@a T`) auto-deref and coercion, and move-out
@@ -23,7 +23,7 @@ status: accepted
 > RFC specifically. File renamed from `rfc-0067-reference-types.md` to
 > `rfc-0067-lifetime-anchors.md` to match.
 >
-> Depends on RFC-0067a (base `&T` / `&mut T`, which this RFC extends with anchors —
+> Depends on RFC-0067a (base `&T` / `&var T`, which this RFC extends with anchors —
 > no further reference-type syntax to invent), RFC-0063 (Allocator Handles), and RFC-0071
 > (Ownership and Move Semantics). Amends RFC-0044 (Explicit Receiver Semantics).
 >
@@ -57,7 +57,7 @@ status: accepted
 > implemented, rather than treated as constraining them.** It was accepted 2026-06-28,
 > before any checker was specified, so its anchor model was designed against an absence.
 >
-> **Also stale, found in the same pass:** nine occurrences of `&mut` / `&r mut`, predating
+> **Also stale, found in the same pass:** nine occurrences of `&var` / `&r var`, predating
 > RFC-0098 (`4-implemented` 2026-07-14, renaming the exclusive reference to `&var`). This
 > RFC's last update was 2026-07-10, four days earlier. Not corrected here — flagged so the
 > re-examination above covers it.
@@ -65,7 +65,7 @@ status: accepted
 ## Summary
 
 Specify **lifetime anchors** — the compile-time names that bound a borrow's validity scope —
-on top of the `&T` / `&mut T` reference types from RFC-0067a. A borrow `&r T` carries anchor
+on top of the `&T` / `&var T` reference types from RFC-0067a. A borrow `&r T` carries anchor
 `r`, a binding whose scope determines how long the borrow remains valid. Anchors are separate
 from allocators: the allocator says where a value lives; the lifetime anchor says how long a
 particular borrow of it is valid.
@@ -77,7 +77,7 @@ coerce to plain references, and how move-out from `@a T` is expressed.
 
 ## Motivation
 
-RFC-0043's `*T` / `*mut T` model (now RFC-0067a's `&T` / `&mut T`) accumulates friction when
+RFC-0043's `*T` / `*mut T` model (now RFC-0067a's `&T` / `&var T`) accumulates friction when
 combined with the allocator system. The extraction examples in RFC-0066 show it most clearly:
 
 ```metel
@@ -111,14 +111,14 @@ borrow's validity. The anchor appears directly after `&` in type position:
 
 ```metel
 &r T       // immutable borrow of T; valid while binding r is alive
-&r mut T   // mutable borrow of T; valid while binding r is alive
+&r var T   // mutable borrow of T; valid while binding r is alive
 ```
 
 The anchor groups with `&`; `mut` qualifies the reference after it. A borrow `&r T` does not
 know or care whether `T` was allocated in allocator `r` — `r` is a binding name, and the
 borrow is valid for exactly as long as `r` is in scope.
 
-**Anchors are type-level only.** In expression position, write `&val` and `&mut val` (RFC-0067a
+**Anchors are type-level only.** In expression position, write `&val` and `&var val` (RFC-0067a
 §2). The anchor is inferred from the expected type; explicit anchors never appear on
 expressions. This matches Rust's design: lifetimes annotate types, not terms.
 
@@ -161,7 +161,7 @@ anchor is the binding being borrowed:
 
 ```metel
 let r: &node T   = &node;      // shared borrow; anchor = `node` binding
-let m: &node mut T = &mut node; // exclusive borrow; anchor = `node` binding
+let m: &node var T = &var node; // exclusive borrow; anchor = `node` binding
 ```
 
 In practice the anchor is almost always elided and inferred from context. The explicit form
@@ -225,11 +225,11 @@ rules.
 
 ## References
 
-- RFC-0067a (Reference Types) — `&T` / `&mut T`, address-of, auto-deref, and the RFC-0043
+- RFC-0067a (Reference Types) — `&T` / `&var T`, address-of, auto-deref, and the RFC-0043
   supersession this RFC builds on. Split off 2026-07-07 as the allocator/borrow-checker
   independent slice of the original RFC-0067.
 - RFC-0043 (Regular Pointers) — superseded by RFC-0067a.
-- RFC-0044 (Explicit Receiver Semantics) — `&self` / `&mut self` receivers.
+- RFC-0044 (Explicit Receiver Semantics) — `&self` / `&var self` receivers.
 - RFC-0063 (Allocator Handles) — `@a T`; allocator-tagged owned pointers this RFC borrows
   from. §4's tag-only parameter is the owned-value counterpart to this RFC's borrow coercion
   (§2).

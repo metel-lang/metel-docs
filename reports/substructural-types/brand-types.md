@@ -34,7 +34,7 @@ mental model: typestate tracks *what*, brands track *which*, token-gated access 
 
 ## 2. Token-gated access is where this cluster actually meets `linear-types.md`
 
-RFC-0076's token-gated-access pattern (`Token<'b>` + branded cells + `&mut Token<'b>`
+RFC-0076's token-gated-access pattern (`Token<'b>` + branded cells + `&var Token<'b>`
 as the access key) is described in the RFC as "a non-`Copy`, non-`Clone` struct." That's
 correct but under-specified relative to `linear-types.md`'s multiplicity lattice —
 non-`Copy`-and-non-`Clone` is exactly the *affine* point on that lattice, not
@@ -49,7 +49,7 @@ want different points:
   `JoinToken` or absorbed into a `Linear` `spawn` handle is an open concurrency question —
   `structured-concurrency.md` §3; the lattice point is the same either way.)
 - **`RcToken<'b>` and `HandlerToken<'b, E>` only need to be affine.** Dropping either
-  one has no cleanup obligation attached — it just means no future `&mut token` can be
+  one has no cleanup obligation attached — it just means no future `&var token` can be
   produced, so the branded cells become permanently read-only (via `Rc` sharing) or the
   handler becomes permanently non-reentrant-lockable. Nothing leaks. Affine (droppable,
   non-duplicable) is the correct — and cheaper — commitment; reaching for `Linear` here

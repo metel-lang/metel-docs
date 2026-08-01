@@ -84,8 +84,8 @@ if it lands, the two reconcile as noted there.
 ## 2. By-value only: `to_record_mut`/`from_record_mut` are dropped
 
 **Decided 2026-07-24.** RFC-0090 §8 gave `ToRecord`/`FromRecord` a second, by-reference
-mode — `to_record_mut(&mut self) -> &mut { … }` and
-`from_record_mut(&mut { … }) -> &mut Self` — framed as a *mode* rather than a separate
+mode — `to_record_mut(&var self) -> &var { … }` and
+`from_record_mut(&var { … }) -> &var Self` — framed as a *mode* rather than a separate
 capability. **This RFC does not carry it.** Tier 2 is by-value: consume the struct, get a
 record, maybe rebuild later.
 
@@ -101,13 +101,13 @@ construct did two things, and only one of them is replaced:
 
 - **Borrowed access to a sub-row** — fully replaced by RFC-0109, and better: a named view is
   branded, so an unrelated same-shaped value cannot satisfy it, whereas a bare
-  `&mut { fd: i32 }` could.
+  `&var { fd: i32 }` could.
 - **Moving a field *out* through a borrow** (`let buf = move view.alloc;`) — **not
   replaced.** Views govern access, not consumption. Nothing in the remaining cluster lets
   you take ownership of one field while the rest stays borrowed.
 
 **That second capability is not obviously wanted, and it was the source of three separate
-problems.** Rust does not permit moving out of `&mut` either. Every open question this RFC
+problems.** Rust does not permit moving out of `&var` either. Every open question this RFC
 carried about provenance, about validation on reassembly, and about the by-value/by-reference
 asymmetry originated in that one construct — see the struck-through entries in Open
 Questions. Dropping it dissolves all three rather than answering them.
@@ -303,7 +303,7 @@ by-reference mode (§2).*
    third of its own three options.** The question was whether `from_record_mut` could know
    that all the borrows it reassembles belong to one struct instance — a real hole, since
    under the record-of-borrows reading (`access-and-presence-rows.md` §3) nothing prevented
-   `fd` borrowing one `Handle` and `alloc` another, producing a `&mut Handle` whose fields
+   `fd` borrowing one `Handle` and `alloc` another, producing a `&var Handle` whose fields
    live in different objects. Its three candidate resolutions were: (1) fix the view to be
    a borrow-of-a-record, (2) add a provenance brand, (3) drop by-reference conversion from
    tier 2 entirely. **(3) was taken.** Tier 2 no longer reassembles anything through a
@@ -326,7 +326,7 @@ by-reference mode (§2).*
    `Binding`, `EnumVariant`, `Tuple`, `Array`) and no `Struct` case, so `let { fd, alloc } =
    h;` does not parse today. RFC-0109 §2 says it needs that by-value form as a foundation
    for its reference-destructuring patterns; a `ToRecord`-gated destructuring supplies it,
-   and `let &mut { a, b } = h;` becomes the borrowed mode of the same operation.
+   and `let &var { a, b } = h;` becomes the borrowed mode of the same operation.
 
    **What needs answering:** destructuring binds fields to names, while `to_record()`
    yields a record *value* that can be passed onward — strictly more general. A marker-only

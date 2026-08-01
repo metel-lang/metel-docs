@@ -30,7 +30,7 @@ updated: '2026-07-24'
 >
 > **Revised again 2026-07-18, later still.** §4.8's "declare two views instead" escape
 > hatch is worked out concretely in new §4.9: `self` may be typed as a tuple of views
-> with independent `&`/`&mut` modes per slot, checked pairwise-disjoint via §4.4 and
+> with independent `&`/`&var` modes per slot, checked pairwise-disjoint via §4.4 and
 > unpacked in the body via ordinary `Pattern::Tuple` — no new grammar, no new
 > mutability axis, just composing mechanisms already specified elsewhere in this RFC.
 >
@@ -39,10 +39,10 @@ updated: '2026-07-24'
 > `{ … }`. The §4 revision note above is left quoting the original `self: &record { field:
 > Type }` spelling, since it is describing what the first draft said.
 >
-> **The finding, which is this RFC's problem more than any other's: `&mut { … }` now means
+> **The finding, which is this RFC's problem more than any other's: `&var { … }` now means
 > two different things in this document.** §3's reference-destructuring *pattern*
-> (`let &mut { golden_tickets, bars } = h;`) and a *type* naming a reference to an
-> anonymous record (`fun release(view: &mut { path: String })`, RFC-0091 §2.3) are now
+> (`let &var { golden_tickets, bars } = h;`) and a *type* naming a reference to an
+> anonymous record (`fun release(view: &var { path: String })`, RFC-0091 §2.3) are now
 > spelled alike. Pattern position and type position are disjoint nonterminals, so nothing
 > is ambiguous to the parser, and in practice the two read differently — a pattern lists
 > bare labels, a type gives each label a type. But this is a **third** instance of the
@@ -52,8 +52,8 @@ updated: '2026-07-24'
 > ever bites in practice, it bites here first.
 >
 > **Also 2026-07-24:** §Motivation quoted RFC-0091's `drain_field` return type as
-> `(T, &mut { R })`; RFC-0091 normalized that signature's row extension to the corpus's
-> normative `..R` spread tail the same day, so the quotation follows (`(T, &mut { ..R })`).
+> `(T, &var { R })`; RFC-0091 normalized that signature's row extension to the corpus's
+> normative `..R` spread tail the same day, so the quotation follows (`(T, &var { ..R })`).
 > No semantic change, and the point being made about `drain_field` — single-field,
 > asymmetric — is unaffected.
 >
@@ -75,7 +75,7 @@ updated: '2026-07-24'
 > 1. **One capability is dropped, not relocated.** `to_record_mut` plus narrowing allowed
 >    *moving a field out through a borrow* (`let buf = move view.alloc;`). Views govern
 >    access, not consumption, so nothing here replaces it. Rust forbids moving out of
->    `&mut` too, so this is defensible — but if it turns out to be wanted, this is the RFC
+>    `&var` too, so this is defensible — but if it turns out to be wanted, this is the RFC
 >    that would have to grow it, and §4.5's already-open interaction with partially-consumed
 >    residuals is where it would land.
 > 2. **The borrow-of-a-record versus record-of-borrows question moves here wholly.**
@@ -104,12 +104,12 @@ fields stay separately usable, without the caller writing any conversion:
   record: the same `(row, brand)` representation RFC-0090 §9 and RFC-0091 §2.2 already
   define for a struct's own internal shape, reused for a named, reusable sub-row tied
   to one specific struct. **Self-view narrowing** — an inherent method's `self`
-  parameter declared as `&TicketView`/`&mut TicketView` — is the primary application:
+  parameter declared as `&TicketView`/`&var TicketView` — is the primary application:
   checked by the compiler with no call-site syntax and no `ToRecord`/`FromRecord` tier
   opt-in required. `self` may also be a **tuple of views** with independently-moded
   slots (§4.9) for mixed-mode access, Metel's answer to Rust's `&{bars, mut
   golden_tickets} self`.
-- **Reference-destructuring patterns** — `let &mut { a, b } = h;` splits one `&mut`
+- **Reference-destructuring patterns** — `let &var { a, b } = h;` splits one `&var`
   borrow into disjoint per-field sub-borrows within a function body, for the ad hoc
   cases a named view isn't worth declaring.
 
@@ -152,7 +152,7 @@ Two more gaps, found by checking the actual source rather than assuming:
 - **Metel has no struct-destructuring pattern at all.** `Pattern` (`src/ast/mod.rs`)
   has exactly seven variants — `Wildcard`, `None`, `Literal`, `Binding`, `EnumVariant`,
   `Tuple`, `Array` — and no `Struct` case. `let Point { x, y } = p;` does not parse
-  today. A *reference*-destructuring pattern (`let &mut { x, y } = &mut p;`) would be
+  today. A *reference*-destructuring pattern (`let &var { x, y } = &var p;`) would be
   an odd, syntactically orphaned addition if the plain by-value form it mirrors doesn't
   exist — every other pattern kind in the enum supports both a bare and (per RFC-0108,
   once accepted) reference-transparent form. §2 below defines the minimal by-value
@@ -161,7 +161,7 @@ Two more gaps, found by checking the actual source rather than assuming:
   whichever RFC ends up as struct patterns' primary owner — RFC-0071 or a follow-up,
   not re-litigated here.
 - **RFC-0091's `drain_field` already gestures at this but only for one field at a
-  time**, and asymmetrically — `(T, &mut { ..R })` returns an *owned value* plus
+  time**, and asymmetrically — `(T, &var { ..R })` returns an *owned value* plus
   *one* remainder reference, not two symmetric live references over a genuine row
   partition. Rust's motivating case (read `bars` while mutating `golden_tickets`,
   neither owned/moved out, both alive) needs a real N-way split, not a single-field
@@ -228,18 +228,18 @@ re-derive:
 ## 3. Reference-destructuring patterns
 
 ```metel
-fun rebalance(h: &mut Handle) {
-    let &mut { golden_tickets, bars } = h;
-    // golden_tickets: &mut Token, bars: &mut Vec<Bar> — both live, disjoint borrows
+fun rebalance(h: &var Handle) {
+    let &var { golden_tickets, bars } = h;
+    // golden_tickets: &var Token, bars: &var Vec<Bar> — both live, disjoint borrows
     golden_tickets.redeem();
     bars.push(Bar::default());
 }
 ```
 
-`&mut { fields }` (and its shared counterpart `& { fields }`) is a pattern, not an
+`&var { fields }` (and its shared counterpart `& { fields }`) is a pattern, not an
 expression — it never produces an intermediate record value at all, it directly
-splits the incoming `&mut Handle`/`&Handle` into one reborrow per named field, each
-typed `&mut FieldType` / `&FieldType`. This is deliberately **not** built on RFC-0090's
+splits the incoming `&var Handle`/`&Handle` into one reborrow per named field, each
+typed `&var FieldType` / `&FieldType`. This is deliberately **not** built on RFC-0090's
 `to_record_mut()` — going through an intermediate `{...}` value would force a
 tier-2 `ToRecord`/`FromRecord` derive requirement onto every struct that wants to use
 this pattern, which is disproportionate to what the pattern actually needs (structural
@@ -251,16 +251,16 @@ disjoint fields would already be legal one at a time (`let a = &mut h.golden_tic
 let b = &mut h.bars;` — assumed sound once RFC-0071's field-sensitive move/borrow
 tracking exists, same as Rust's own baseline field-sensitivity). The pattern form
 doesn't grant new aliasing power; it grants doing several such borrows in one place
-without repeating `&mut h.` for each field, and — because RFC-0071 isn't implemented
+without repeating `&var h.` for each field, and — because RFC-0071 isn't implemented
 yet — nothing here can be more than a specification of intended behavior against that
 not-yet-real checker.
 
-Composes with §2 by dropping the leading `&`/`&mut`: `let { x, y } = &point;` for a
+Composes with §2 by dropping the leading `&`/`&var`: `let { x, y } = &point;` for a
 shared multi-field borrow is the same mechanism, immutable.
 
 **Once §4 exists, a named view is usually the better choice for anything reused across
-more than one call site** — `let v: &mut TicketView = h;` (§4.1's coercion) says the
-same thing as `let &mut { golden_tickets } = h;` but gives the shape a name, checked
+more than one call site** — `let v: &var TicketView = h;` (§4.1's coercion) says the
+same thing as `let &var { golden_tickets } = h;` but gives the shape a name, checked
 once at the `view` declaration instead of re-derived at every destructure site. This
 pattern form stays the right tool for genuinely ad hoc, one-off splits that don't merit
 declaring a type for.
@@ -298,8 +298,8 @@ The coercion this buys is symmetric and free, because it's ordinary row-shrink/g
 one fixed brand, not a bespoke conversion:
 
 ```metel
-fun example(h: &mut Ticketing) {
-    let v: &mut TicketView = h;   // row-shrink, same brand — no .to_record_mut() needed
+fun example(h: &var Ticketing) {
+    let v: &var TicketView = h;   // row-shrink, same brand — no .to_record_mut() needed
     v.golden_tickets.redeem();
 }
 ```
@@ -331,8 +331,8 @@ extend Ticketing {
     }
 }
 
-fun example(t: &mut Ticketing) {
-    let bars = &mut t.bars;
+fun example(t: &var Ticketing) {
+    let bars = &var t.bars;
     if t.should_insert_ticket(0) {      // legal: TicketView's row is disjoint from
                                           // `bars`, same brand as t — no ceremony here
         bars.push(Bar::default());
@@ -343,7 +343,7 @@ fun example(t: &mut Ticketing) {
 The caller writes nothing beyond an ordinary method call — `t.should_insert_ticket(0)`.
 No `.to_record()` appears anywhere; the promise lives entirely in
 `should_insert_ticket`'s own signature, checked once at its declaration, consulted by
-the checker at every call site the same way an ordinary `&self`/`&mut self` signature
+the checker at every call site the same way an ordinary `&self`/`&var self` signature
 already is. The call-site check itself is now: does `TicketView`'s row fit inside `t`'s
 currently-live row, same brand — see §4.5 for what "currently-live row" means when part
 of `t` has already been partially consumed.
@@ -418,7 +418,7 @@ further than RFC-0089 §3.1's already did.
 
 Rust's `&{bars, mut golden_tickets} self` mixes shared and exclusive access to
 different fields in one view. This RFC does not — a view is uniformly `&View` or `&mut
-View`, matching RFC-0044's existing all-or-nothing `&self` / `&mut self` split (Metel
+View`, matching RFC-0044's existing all-or-nothing `&self` / `&var self` split (Metel
 has no per-field mutability anywhere else in the language either). **Considered and
 declined for v1:** per-field mutability inside a view would need new grammar (`mut
 golden_tickets` inside a field list, meaning something different from the field's own
@@ -434,14 +434,14 @@ concretely in §4.9.
 ### 4.9 Mixed-mode methods: a tuple-of-views `self`
 
 Worked out, §4.8's escape hatch is: `self` may be declared as a **tuple of views**,
-each with its own independent `&`/`&mut` mode, checked pairwise-disjoint via §4.4.
+each with its own independent `&`/`&var` mode, checked pairwise-disjoint via §4.4.
 
 ```metel
 view BarsView for Ticketing { bars }
 view TicketView for Ticketing { golden_tickets }
 
 extend Ticketing {
-    fun redeem_and_log(self: (&mut BarsView, &TicketView)) {
+    fun redeem_and_log(self: (&var BarsView, &TicketView)) {
         let (bars, tickets) = self;    // ordinary Pattern::Tuple destructure — §2
                                         // doesn't even need to introduce this, it's
                                         // already in the AST
@@ -451,8 +451,8 @@ extend Ticketing {
     }
 }
 
-fun example(t: &mut Ticketing) {
-    t.redeem_and_log();   // ordinary call — no new syntax, same as any &mut self method
+fun example(t: &var Ticketing) {
+    t.redeem_and_log();   // ordinary call — no new syntax, same as any &var self method
 }
 ```
 
@@ -461,7 +461,7 @@ axis: ordinary tuple types, §4.4's disjointness check (generalized from a pair 
 however many views a tuple names — every pairwise combination among the N elements must
 be disjoint, a mechanical extension of the same rule, not a new one), and
 `Pattern::Tuple`, already in the AST, for unpacking `self` in the body. No new grammar
-for mixed modes: each tuple slot stays uniformly `&View` or `&mut View`, exactly what
+for mixed modes: each tuple slot stays uniformly `&View` or `&var View`, exactly what
 §4.8 requires of any single view — the mixing happens *across* slots, never within one.
 
 **Addressability follows the tightest slot — the same rule Rust's own reborrowing
@@ -481,17 +481,17 @@ extend Ticketing {
     // all-shared tuple: only ever needs &Ticketing, same row as an ordinary &self method
     fun summarize(self: (&TicketView, &BarsView)) -> String { ... }
 
-    // mixed tuple, from above: at least one &mut slot, needs &mut Ticketing
-    fun reconcile(self: (&mut BarsView, &TicketView, &mut MetaView)) { ... }
+    // mixed tuple, from above: at least one &var slot, needs &var Ticketing
+    fun reconcile(self: (&var BarsView, &TicketView, &var MetaView)) { ... }
 }
 ```
 
 Allowed:
 
 ```metel
-let mut t = Ticketing { golden_tickets = Token::new(), bars = vec![], metadata = Meta::new() };
-t.summarize();     // &Ticketing suffices — t is addressable, mut not required
-t.reconcile();     // t is mutably addressable, so the &mut-containing tuple is satisfied
+var t = Ticketing { golden_tickets = Token::new(), bars = vec![], metadata = Meta::new() };
+t.summarize();     // &Ticketing suffices — t is addressable, var not required
+t.reconcile();     // t is mutably addressable, so the &var-containing tuple is satisfied
 
 let shared: &Ticketing = &t;
 shared.summarize();   // all-shared tuple — an ordinary shared reference is enough
@@ -502,23 +502,23 @@ Disallowed:
 ```metel
 let shared: &Ticketing = &t;
 // shared.reconcile();
-// ERROR: reconcile's self contains &mut BarsView and &mut MetaView slots, which need
-// &mut Ticketing for the whole receiver — `shared` is only a shared reference, the
-// same failure as calling an ordinary &mut self method through a &T (RFC-0044 §9's
+// ERROR: reconcile's self contains &var BarsView and &var MetaView slots, which need
+// &var Ticketing for the whole receiver — `shared` is only a shared reference, the
+// same failure as calling an ordinary &var self method through a &T (RFC-0044 §9's
 // own `(&counter).increment()` case), just now triggered by one slot out of several
 // rather than the receiver's only mode.
 
 fun make_ticketing() -> Ticketing { ... }
 // make_ticketing().reconcile();
-// ERROR: an rvalue has no stable address to borrow &mut from — RFC-0044 §9's
+// ERROR: an rvalue has no stable address to borrow &var from — RFC-0044 §9's
 // `make_counter().increment()` case, unchanged by this RFC, and triggered here for
-// the same reason it's triggered for an ordinary &mut self call.
+// the same reason it's triggered for an ordinary &var self call.
 ```
 
-Whether `make_ticketing().summarize()` (all-shared tuple, no `&mut` slot) is allowed
+Whether `make_ticketing().summarize()` (all-shared tuple, no `&var` slot) is allowed
 depends entirely on whether an ordinary `&self` method may already be called on an
 rvalue — a question RFC-0044 §9 doesn't settle either (its own worked examples only
-cover `&mut self` on an rvalue). This RFC adds nothing to that question; the
+cover `&var self` on an rvalue). This RFC adds nothing to that question; the
 all-shared-tuple case inherits whatever RFC-0044 §9 already says, or eventually says,
 about `&self` there, unchanged.
 
@@ -533,7 +533,7 @@ view BarsView for Ticketing { bars }
 view MetaView for Ticketing { metadata }
 
 extend Ticketing {
-    fun reconcile(self: (&mut BarsView, &TicketView, &mut MetaView)) {
+    fun reconcile(self: (&var BarsView, &TicketView, &var MetaView)) {
         let (bars, tickets, meta) = self;
         if tickets.golden_tickets.matches(0) {
             bars.bars.push(Bar::default());
@@ -542,17 +542,17 @@ extend Ticketing {
     }
 }
 
-fun example(t: &mut Ticketing) {
+fun example(t: &var Ticketing) {
     t.reconcile();   // ordinary call
 }
 ```
 
 `self`'s three slots require checking all `C(3,2) = 3` pairs — `(BarsView, TicketView)`,
 `(BarsView, MetaView)`, `(TicketView, MetaView)` — each pairwise disjoint since `{bars}`,
-`{golden_tickets}`, `{metadata}` share no field. Two slots are `&mut` and one is `&`; by
+`{golden_tickets}`, `{metadata}` share no field. Two slots are `&var` and one is `&`; by
 the addressability rule above, the *tightest* slot governs, so `t.reconcile()` still
-only needs `&mut Ticketing` overall — the same single requirement as the two-view case,
-not one requirement per `&mut` slot.
+only needs `&var Ticketing` overall — the same single requirement as the two-view case,
+not one requirement per `&var` slot.
 
 **What the pairwise check rejects.** A fourth view whose row overlaps an existing one
 in the tuple is caught by the same check, not a special case of it:
@@ -579,8 +579,8 @@ instead of a local `let`** — worked out concretely, not just asserted, using �
 bare-field-list syntax rather than a named-view tuple type:
 
 ```metel
-fun reconcile_inline(t: &mut Ticketing) {
-    let &mut { bars, metadata } = t;   // §3's pattern — two disjoint mutable sub-borrows
+fun reconcile_inline(t: &var Ticketing) {
+    let &var { bars, metadata } = t;   // §3's pattern — two disjoint mutable sub-borrows
     if t.golden_tickets.matches(0) {   // `golden_tickets` was never named in the pattern,
                                         // so `t` itself stays usable to reach it directly —
                                         // ordinary field-sensitive borrowing (RFC-0071),
@@ -601,7 +601,7 @@ needed its own per-field mutability annotation (§4.8's concern for named views)
 field always has a live whole-value binding (`t`) to fall back on.
 
 **That fallback doesn't exist inside a self-view-narrowed method.** Once `self` is
-declared `(&mut BarsView, &TicketView, &mut MetaView)`, the method body never sees an
+declared `(&var BarsView, &TicketView, &var MetaView)`, the method body never sees an
 un-narrowed `Ticketing` at all — only the three declared slots (§4.10 enforces this by
 construction) — so there is no binding equivalent to `t` above to reach an
 un-destructured field through. This is the real reason §4.9's tuple form has to name
@@ -609,7 +609,7 @@ every field it touches, including the read-only ones, while §3's local pattern 
 one is checked against a value the function still holds in full; the other replaces
 that value's visibility entirely once inside the method.
 
-`self: (&mut BarsView, &TicketView)` and `let &mut { bars, metadata } = t;` (plus
+`self: (&var BarsView, &TicketView)` and `let &var { bars, metadata } = t;` (plus
 ordinary continued access to whatever's left over) describe the same underlying split;
 the difference is *where* it happens (implicitly at call entry, reusable by every
 caller vs. explicitly at one `let`, local to one function) and *how much has to be
@@ -634,7 +634,7 @@ For §4.9's tuple form, the same rule applies to the *union* of the tuple's rows
 one addition: an access through one slot's binding that only the *other* slot's row
 covers must also be rejected — `bars.golden_tickets` inside `redeem_and_log` above is
 an error even though `golden_tickets` is somewhere in scope (via `tickets`), because
-`bars`'s own declared type (`&mut BarsView`) doesn't include it. Each binding is
+`bars`'s own declared type (`&var BarsView`) doesn't include it. Each binding is
 checked against its own slot's row, not the union — the union only matters for deciding
 whether the *method as a whole* may exist against a given receiver.
 
@@ -688,7 +688,7 @@ coercion rule stops this:
 view BarsView for Ticketing { bars }   // legal here — bars is private, but this is
                                          // Ticketing's own module
 
-pub fun peek_bars(t: &mut Ticketing) -> &mut BarsView {
+pub fun peek_bars(t: &var Ticketing) -> &var BarsView {
     t   // ordinary row-shrink coercion (§4.1) — legal cross-module because peek_bars
         // itself is pub, independent of bars's own visibility
 }
@@ -696,7 +696,7 @@ pub fun peek_bars(t: &mut Ticketing) -> &mut BarsView {
 
 ```metel
 // caller.mln
-let v = peek_bars(&mut t);
+let v = peek_bars(&var t);
 v.bars.push(Bar::default());
 // must still be an error — `bars` is private to ticketing.mln, and returning a view
 // over it through a pub function must not become a way to launder that
@@ -719,10 +719,10 @@ than leaving it a vague cross-module concern.
 ## 5. Interaction with existing/adjacent RFCs
 
 - **RFC-0044 (Explicit Receiver Semantics, implemented)** — amended. The three
-  receiver forms (`self`, `&self`, `&mut self`) are unchanged; self-view narrowing adds
-  an optional named-view refinement *to* `&self`/`&mut self`, it does not introduce a
+  receiver forms (`self`, `&self`, `&var self`) are unchanged; self-view narrowing adds
+  an optional named-view refinement *to* `&self`/`&var self`, it does not introduce a
   fourth receiver kind. §4.9's tuple-of-views `self` extends §9's addressability table
-  by one row (a `&mut`-containing tuple requires `&mut` addressability of the whole
+  by one row (a `&var`-containing tuple requires `&var` addressability of the whole
   receiver) rather than replacing it. Precedent for amending RFC-0044 already exists
   (RFC-0067a).
 - **RFC-0090 (Structural Records)** — §4 reuses §9's `(row, brand)`
@@ -820,7 +820,7 @@ than leaving it a vague cross-module concern.
 6. **Whether a view's `for` target may itself be generic** (`view X for Container<T> {
    field }`) — not addressed; out of scope for this draft.
 7. **Whether tuple-of-views self-declarations (§4.9) should be allowed to nest, or mix
-   a named view with a raw field reference** (e.g. `self: (&mut BarsView, &Token)`
+   a named view with a raw field reference** (e.g. `self: (&var BarsView, &Token)`
    naming a field directly instead of via a one-field view) — not addressed; §4.9's
    worked example only shows named views in every slot.
 
@@ -833,7 +833,7 @@ than leaving it a vague cross-module concern.
 - RFC-0044 (Explicit Receiver Semantics, implemented) — the three receiver forms this
   RFC amends.
 - RFC-0067a (Reference Types, implemented) — precedent for amending RFC-0044; the
-  `&T`/`&mut T` vocabulary self-views and reference-destructuring patterns build on.
+  `&T`/`&var T` vocabulary self-views and reference-destructuring patterns build on.
 - RFC-0090 (Structural Records — Rows and Tiers) — §9's `(row, brand)`
   representation §4.1 reuses; §8's tier system and its existing fiat-`Linear` bare-vs-
   branded exception §4.7 mirrors; §8's tier-3 coherence-eligibility boundary §4.6

@@ -53,7 +53,7 @@ let add = (x: Int, y: Int) -> Int { x + y };
 items.map((x: Int) -> Int { x * 2 })
 
 // Capturing from outer scope
-mut count = 0;
+var count = 0;
 let inc = () -> { count += 1; };
 ```
 

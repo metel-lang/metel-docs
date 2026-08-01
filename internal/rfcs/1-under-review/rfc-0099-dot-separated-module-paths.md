@@ -21,7 +21,7 @@ Replace `::` with `.` for import paths, `export` paths, static/module paths, and
 
 `::` is one of the strongest Rust/C++ tells in Metel's surface syntax — nearly every other language with a module system spells the path separator `.` (Python, Java, JavaScript's `import`, Kotlin, Swift's dotted member/module access). Metel already uses `::` for three genuinely different things that happen to share a token: import/export paths (RFC-0030), enum-variant paths (`Colour::Blue`), and static/associated-function paths (`List::new()`). All three read as one visual family today; a dot-based rewrite should keep them reading as one family, not fragment them.
 
-The reason this isn't "just" a rename: RFC-0045 already committed `.` to a different, well-specified job — chained lvalue-path field/tuple/array access (`pair.counter`, `&mut pair.counter`). Reusing `.` for module paths means `List.new` and `list.new` (a value named `list` with a method `new`) both parse through the same token, and the grammar needs an actual rule for telling them apart, not just a substitution.
+The reason this isn't "just" a rename: RFC-0045 already committed `.` to a different, well-specified job — chained lvalue-path field/tuple/array access (`pair.counter`, `&var pair.counter`). Reusing `.` for module paths means `List.new` and `list.new` (a value named `list` with a method `new`) both parse through the same token, and the grammar needs an actual rule for telling them apart, not just a substitution.
 
 ---
 
@@ -154,7 +154,7 @@ about when each is required, is untouched; only turbofish's own token changes.
 
 ## 5. What doesn't change
 
-- RFC-0045's lvalue-path semantics (chained field/tuple/array access, `&mut` through a chain) — completely untouched; this RFC's disambiguation rule exists specifically so RFC-0045's job and this one's don't collide.
+- RFC-0045's lvalue-path semantics (chained field/tuple/array access, `&var` through a chain) — completely untouched; this RFC's disambiguation rule exists specifically so RFC-0045's job and this one's don't collide.
 - RFC-0030's module-to-file mapping, `import`/`export` semantics, glob imports, aliasing (`as`), and `std::core` auto-import — only the separator token changes.
 - Enum-variant pattern matching semantics (`enum_pattern` in the grammar) — only its spelling.
 

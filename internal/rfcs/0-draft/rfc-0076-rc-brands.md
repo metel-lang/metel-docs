@@ -39,10 +39,10 @@ are erased at compile time.
 
 Beyond simple identity, brands enable a general pattern — **token-gated access** —
 where a linear token `Token<'b>` holds the permission to access a set of branded
-resources, and `&mut Token<'b>` is the access key enforced by the standard borrow
+resources, and `&var Token<'b>` is the access key enforced by the standard borrow
 checker. This pattern applies to RC memory cells, effect handlers, concurrent fibers,
 and shared mutable state. In every case the soundness argument is the same: ordinary
-`&mut` exclusivity, no runtime check required.
+`&var` exclusivity, no runtime check required.
 
 ---
 
@@ -295,9 +295,9 @@ same brand. The pattern has three components:
 - A **token** `Token<'b>` — a non-`Copy`, non-`Clone` struct; holds no data, only
   the brand. Its linearity means exactly one live binding exists at any time.
 - **Cells** — resource holders of any kind, each parameterised by `'b`.
-- **`&mut Token<'b>`** — the access key. The borrow checker ensures only one
-  `&mut token` exists at a time, granting exclusive access to all same-brand cells.
-  No runtime check. Soundness is ordinary `&mut` exclusivity.
+- **`&var Token<'b>`** — the access key. The borrow checker ensures only one
+  `&var token` exists at a time, granting exclusive access to all same-brand cells.
+  No runtime check. Soundness is ordinary `&var` exclusivity.
 
 The three components are separate values. Cells may be freely aliased via `Rc<_>` or
 shared via `Arc<_>`; the token is the one value that cannot be aliased. Access to cell
@@ -314,8 +314,8 @@ struct RcToken<brand 'b> { _brand: PhantomBrand<'b> }
 struct RcCell<brand 'b, T> { value: T, _brand: PhantomBrand<'b> }
 
 extend<brand 'b, T> RcCell<'b, T> {
-    fun borrow_mut<'s>(self: &'s RcCell<'b, T>, _token: &mut RcToken<'b>) -> &'s mut T {
-        &mut self.value
+    fun borrow_mut<'s>(self: &'s RcCell<'b, T>, _token: &var RcToken<'b>) -> &'s var T {
+        &var self.value
     }
 }
 
@@ -324,8 +324,8 @@ brand 'b {
     let cell_a: Rc<RcCell<'b, I32>, 'b> = Rc::new(RcCell { value = 0, _brand = PhantomBrand });
     let alias_a = cell_a.clone();   // multiple RC owners — fine
 
-    cell_a.borrow_mut(&mut token).value = 42;
-    // alias_a is still live; soundness from &mut token, not from RC count
+    cell_a.borrow_mut(&var token).value = 42;
+    // alias_a is still live; soundness from &var token, not from RC count
 }
 ```
 
@@ -345,7 +345,7 @@ struct HandlerCell<brand 'b, E, S> { state: S, _brand: PhantomBrand<'b> }
 
 extend<brand 'b> HandlerCell<'b, Logger, List<String>> {
     fun record(self: &HandlerCell<'b, Logger, List<String>>, msg: String,
-               _token: &mut HandlerToken<'b, Logger>) {
+               _token: &var HandlerToken<'b, Logger>) {
         self.state.push(msg);
     }
 }
@@ -356,16 +356,16 @@ brand 'h {
         Rc::new(HandlerCell { state = List::new(), _brand = PhantomBrand });
 
     // Explicit dispatch to this specific handler:
-    handler.record("first message", &mut token);
-    handler.record("second message", &mut token);
+    handler.record("first message", &var token);
+    handler.record("second message", &var token);
 
     // handler.state contains ["first message", "second message"]
 }
 ```
 
-`&mut HandlerToken<'h, Logger>` is the proof that no other caller is currently
+`&var HandlerToken<'h, Logger>` is the proof that no other caller is currently
 accessing handler `'h`'s state. Non-reentrant handlers become statically
-non-reentrant: attempting to call `handler.record` while already holding `&mut token`
+non-reentrant: attempting to call `handler.record` while already holding `&var token`
 is a borrow error. See §Algebraic effects for how this integrates with `perform` dispatch.
 
 #### Structured concurrency — `JoinToken<'b>`
@@ -402,13 +402,13 @@ This is a forward-looking application. Full specification is contingent on RFC-0
 
 All three instantiations follow the same structure:
 
-| Resource | Token | Cells | `&mut token` grants |
+| Resource | Token | Cells | `&var token` grants |
 |---|---|---|---|
 | RC-aliased memory | `RcToken<'b>` | `Rc<T, 'b>` | Exclusive write to all `'b` cells |
 | Effect handler state | `HandlerToken<'b, E>` | `HandlerCell<'b, E, S>` | Exclusive write to handler state |
 | Concurrent fiber | `JoinToken<'b, T>` | Fiber-local values | Join and collect result |
 
-In every case: the token is unique, the cells are freely shareable, and `&mut token`
+In every case: the token is unique, the cells are freely shareable, and `&var token`
 is the access key enforced entirely by the existing borrow checker.
 
 ### Typestate
@@ -500,10 +500,10 @@ stack search.
 When a handler carries mutable state — accumulating results, tracking budgets — the
 token-gated access pattern from §Token-gated access applies directly. A
 `HandlerToken<'h, E>` is the proof of exclusive access to handler `'h`'s state; the
-`perform` desugaring passes this token to the handler cell, which requires `&mut token`
+`perform` desugaring passes this token to the handler cell, which requires `&var token`
 to mutate its state. Non-reentrant handlers (handlers that must not be called while
 already running) become statically non-reentrant: re-entrant calls would require a
-second `&mut HandlerToken<'h, E>`, which the borrow checker rejects.
+second `&var HandlerToken<'h, E>`, which the borrow checker rejects.
 
 Stateless handlers (those that only read or that produce fresh values on each invocation)
 need only `&HandlerToken<'h, E>` — shared read access, which supports multiple concurrent
@@ -549,11 +549,11 @@ dimension.
 |---|---|---|---|
 | Typestate (phantom state) | Yes | No | No |
 | Effect annotations (`^IO`) | Yes | No | No |
-| Capability objects | Partial | No | Via `&mut cap` |
+| Capability objects | Partial | No | Via `&var cap` |
 | Brands alone | No | Yes | No |
 | Brands + typestate | Yes | Yes | No |
-| Brands + capabilities | Yes | Yes | Via `&mut cap` |
-| Brands + token-gated access | No | Yes | Yes — `&mut token` over all `'b` cells |
+| Brands + capabilities | Yes | Yes | Via `&var cap` |
+| Brands + token-gated access | No | Yes | Yes — `&var token` over all `'b` cells |
 | Brands + typestate + token | Yes | Yes | Yes |
 
 The combinations compose without new primitives:

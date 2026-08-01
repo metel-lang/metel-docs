@@ -13,7 +13,7 @@ revives: "reports/substructural-types/archive/substructural-and-separation-types
 *Living document — updated in place, not a point-in-time snapshot.*
 
 *Exploration, not a decision. Revived from `archive/substructural-and-separation-types.md`
-§7–8. Syntax updated throughout: `*T`/`*mut T` → `&T`/`&mut T` (RFC-0067), `own T` → `@Heap T`.*
+§7–8. Syntax updated throughout: `*T`/`*mut T` → `&T`/`&var T` (RFC-0067), `own T` → `@Heap T`.*
 
 > **Updated 2026-07-07 — `||` dropped from the design.** The `||` fork-join combinator
 > (RFC-0064) has been **retracted**: it barely interacted with the rest of the language
@@ -197,12 +197,12 @@ The essential idea, for the record:
 - A **capture set** is the set of root variables a reference transitively reaches,
   computed as a side-channel during inference (`&y → {y}`, `&y.field → cap(y)`, closures
   union their captures).
-- **`split_at_mut`** consumes one `&mut [T]` and produces two `&mut [T]` halves with
+- **`split_at_mut`** consumes one `&var [T]` and produces two `&var [T]` halves with
   *distinct* root variables, so their write-capture sets are disjoint by construction.
 - **`sep{}`** would let a caller pass a disjointness proof across a call boundary that the
   callee's body then trusts.
 
-The only place this could return is a **liberalized `spawn`** (§6) that captures `&mut T`
+The only place this could return is a **liberalized `spawn`** (§6) that captures `&var T`
 under a proven-disjoint capture set instead of requiring `Send`. That is the sole future
 consumer; absent it, CSC is unmotivated, and building a general capture-set prover for a
 feature nothing uses would be exactly the kind of speculative machinery the wider design
@@ -213,13 +213,13 @@ effort has flagged as needing to wait for real demand
 
 ## 6. Liberalized `spawn` (also deferred) — the only future home for CSC
 
-A more permissive `spawn` could capture `&mut T` when the spawned fiber's write-capture
+A more permissive `spawn` could capture `&var T` when the spawned fiber's write-capture
 set is provably disjoint from the parent's at the spawn point:
 
 ```metel
-fun update_partitions(part_a: &pa mut [i64], part_b: &pb mut [i64]) {
-    let h = spawn { for (let x in part_b) { *x *= 2; } };  // captures &mut part_b
-    for (let x in part_a) { *x *= 2; }                     // parent uses &mut part_a
+fun update_partitions(part_a: &pa var [i64], part_b: &pb var [i64]) {
+    let h = spawn { for (let x in part_b) { *x *= 2; } };  // captures &var part_b
+    for (let x in part_a) { *x *= 2; }                     // parent uses &var part_a
     h.join();   // {part_a} ∩ {part_b} = ∅ throughout — safe
 }
 ```
@@ -256,7 +256,7 @@ by-disjoint-borrow.
    the one thing dropping `||` gave up. If real workloads want parallel map/reduce over
    arena data without heap round-trips, that is the signal to revive CSC (§5) + liberalized
    `spawn` (§6) — not before.
-3. **Liberalized `spawn` capturing `&mut T` under CSC (§6)** — a real capability increase
+3. **Liberalized `spawn` capturing `&var T` under CSC (§6)** — a real capability increase
    over RFC-0003's sendability-only rule; deferred with CSC.
 4. **`sep{}` surface syntax and inference cost** — untouched since the original
    exploration; only relevant if §5/§6 are ever revived.

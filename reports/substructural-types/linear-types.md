@@ -182,9 +182,9 @@ aliasing question above has an answer.
 **Update (2026-07-08): a candidate answer to the aliasing question now exists**, arrived
 at independently while designing `structural-records.md` §10's tier-2 `to_record_mut`/
 `from_record_mut` conversions. The answer: `p`'s type becomes the shrunk row (`&mut
-record { <remaining fields> }`), sound for an unremarkable reason — `&mut` already
+record { <remaining fields> }`), sound for an unremarkable reason — `&var` already
 guarantees no other live reference exists to observe the stale, pre-downgrade type, so no
-new aliasing machinery (a brand, a fork/join token) is needed beyond ordinary `&mut`
+new aliasing machinery (a brand, a fork/join token) is needed beyond ordinary `&var`
 exclusivity and structural row equality. This is promising, not proven: no formal
 soundness argument has been written down, only a worked mechanism plus several worked
 examples (`structural-records.md`'s `RcBox`, `FileHandle`, and `MaybeUninit`-style
@@ -262,7 +262,7 @@ decision between two different models.
    alone. Not ratified.
 5. The aliasing question for Option C — what type does a borrow taken before a
    downgrade have afterward — **has a candidate answer as of 2026-07-08** (§3's update:
-   the shrunk row type, justified by ordinary `&mut` exclusivity, from
+   the shrunk row type, justified by ordinary `&var` exclusivity, from
    `structural-records.md` §10's `to_record_mut`/`from_record_mut`). Not yet a proven
    soundness argument — still blocks treating Option C as ratified, but no longer blocks
    it for lack of *any* proposed answer.

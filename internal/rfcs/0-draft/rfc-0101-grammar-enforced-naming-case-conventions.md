@@ -62,10 +62,10 @@ throughout `stdlib/core.mtl`) is snake_case today and would need renaming.
 **Constants get their own row, resolving what was an open question in an earlier draft of this RFC.**
 Metel has no dedicated `const` declaration form — a module-level constant today is written as an ordinary
 `let` binding at the top level rather than inside a function body. The grammar already distinguishes
-immutable `let` from mutable `let mut` (`let_decl` vs. `let_mut_decl`), so "module-scope and immutable" is
+immutable `let` from mutable `var` (`let_decl` vs. `let_mut_decl`), so "module-scope and immutable" is
 a precise, already-checkable definition of "constant" without inventing any new declaration syntax: `let
 MAX_RETRIES = 5;` at module scope is a constant (SCREAMING_CASE); the exact same `let x = 5;` written
-inside a function body is an ordinary local binding (snake_case), and a module-level `let mut` is neither
+inside a function body is an ordinary local binding (snake_case), and a module-level `var` is neither
 a constant nor exempt from module-scope naming — it's just an unusual, mutable piece of module state, and
 stays snake_case like any other binding. No existing code needs renaming for this row either: there are
 currently zero module-level `let` bindings anywhere in `stdlib/` to begin with.
@@ -172,7 +172,7 @@ keyword collision.
 3. **Full migration checklist** (every `stdlib/core.mtl` function/method rename, every test-fixture call
    site) is real, tracked work once this RFC is accepted — not detailed line-by-line here, but flagged so
    it isn't underestimated relative to RFC-0098's much smaller single-collision audit.
-4. **Module-level mutable state naming** — a module-level `let mut` is neither a constant nor a `fun`
+4. **Module-level mutable state naming** — a module-level `var` is neither a constant nor a `fun`
    declaration; this RFC puts it in the snake_case bucket (§1) since it's still fundamentally a binding,
    but it's worth confirming that reads right in practice once real module-level mutable state exists to
    look at (there is none in `stdlib/` today).

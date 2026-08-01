@@ -30,7 +30,7 @@ and if so, how?
 ### 2.1 Ante does not solve the problem — it sidesteps it
 
 Ante's ownership system is based on directly-owned values. Ante's `uniq` is syntactic
-sugar for `&mut T` in Rust terms: an exclusive mutable reference to a value the current
+sugar for `&var T` in Rust terms: an exclusive mutable reference to a value the current
 scope uniquely owns. The keyword `uniq` annotates bindings, not types:
 
 ```ante
@@ -47,7 +47,7 @@ The distinction:
 
 | Ante concept | Metel analogue | Notes |
 |---|---|---|
-| `uniq Foo` | `&mut T` (uniquely owned) | Directly-owned mutable reference |
+| `uniq Foo` | `&var T` (uniquely owned) | Directly-owned mutable reference |
 | `shared Foo` | `Rc<T>` (immutable) | Non-sendable, non-atomic RC |
 | `shared mut Foo` | Not yet in Metel | Freely-mutable non-atomic RC |
 
@@ -72,7 +72,7 @@ These annotations do not apply to `shared`/`shared mut` values — the borrow se
 mechanism tracks *reference* provenance, not *ownership* provenance. It is relevant to
 Metel's borrow checker design but not to the RC mutation problem.
 
-**Conclusion:** Ante's `uniq` is Rust's `&mut T`. Ante's `shared mut` is freely-mutable
+**Conclusion:** Ante's `uniq` is Rust's `&var T`. Ante's `shared mut` is freely-mutable
 aliased RC without static exclusivity guarantees. Ante does not solve the RC exclusive
 access problem and does not provide a path to solving it.
 
@@ -85,20 +85,20 @@ different use case:
 
 | API | Signature | Condition checked | Behaviour on failure | Allocates |
 |---|---|---|---|---|
-| `Rc::get_mut` | `fn get_mut(this: &mut Rc<T>) -> Option<&mut T>` | `strong == 1 && weak == 0` | Returns `None` | Never |
-| `Rc::make_mut` | `fn make_mut(this: &mut Rc<T>) -> &mut T` | Always succeeds | Clones `T` (clone-on-write) | On alias |
+| `Rc::get_mut` | `fn get_mut(this: &var Rc<T>) -> Option<&var T>` | `strong == 1 && weak == 0` | Returns `None` | Never |
+| `Rc::make_mut` | `fn make_mut(this: &var Rc<T>) -> &var T` | Always succeeds | Clones `T` (clone-on-write) | On alias |
 | `Rc::try_unwrap` | `fn try_unwrap(this: Rc<T>) -> Result<T, Rc<T>>` | `strong == 1` | Returns original `Rc` | Never |
 
 Details:
 
 - **`get_mut`** — the conservative check. Requires no weak references (since a weak
-  pointer could be upgraded after the check). Requires `&mut Rc<T>` as the receiver
+  pointer could be upgraded after the check). Requires `&var Rc<T>` as the receiver
   to prevent concurrent access to the pointer within the same thread (same role as
-  Metel's `&mut Rc<T>`). Returns `Perhaps<&mut T>` that borrows from the `Rc`.
+  Metel's `&var Rc<T>`). Returns `Perhaps<&var T>` that borrows from the `Rc`.
   This is the model for Metel's `SharedPointer::get_mut`.
 
 - **`make_mut`** — the "I always need to mutate" API. If the RC is uniquely held,
-  returns the inner `&mut T` directly. If aliases exist, deep-clones `T` into a new
+  returns the inner `&var T` directly. If aliases exist, deep-clones `T` into a new
   allocation, replaces `this` with the new `Rc`, then returns a mutable reference to
   the new value. Caller pays for cloning only when needed. Useful for copy-on-write
   patterns. `T: Clone` required.
@@ -168,10 +168,10 @@ trying to prove that an RC-wrapped value has no aliases, GhostCell separates:
 - **Permission** — held by a branded token (`GhostToken<'brand>`), which has no data.
 - **Data** — held by cells (`GhostCell<'brand, T>`) that can be freely aliased via RC.
 
-To access a cell's data mutably, you need `&mut token`. Since the token is a single
-value, the standard borrow checker ensures only one `&mut token` exists at a time —
+To access a cell's data mutably, you need `&var token`. Since the token is a single
+value, the standard borrow checker ensures only one `&var token` exists at a time —
 which means only one mutable view of all same-brand cells at a time. Soundness comes
-from ordinary `&mut` exclusivity on the token, not from proving RC uniqueness.
+from ordinary `&var` exclusivity on the token, not from proving RC uniqueness.
 
 ```rust
 GhostToken::new(|token| {
@@ -211,7 +211,7 @@ the `'id` invariant lifetime is the brand. No runtime overhead whatsoever.
 
 ### 5.3 The coarse-grained caveat
 
-GhostCell's exclusive access is coarse-grained: `&mut token` grants access to **all**
+GhostCell's exclusive access is coarse-grained: `&var token` grants access to **all**
 cells sharing the same brand simultaneously. This is both a feature (one token = one
 lock) and a constraint (you cannot hold mutable access to cell A while immutably
 reading cell B of the same brand through a normal reference, because the type system
@@ -243,11 +243,11 @@ This is the same structure as `GhostToken::new`. The connection is direct:
 | `'brand` invariant lifetime | Brand parameter `b` (RFC-0076) |
 | `GhostToken<'brand>` | `RcToken<'b>` (linear token value) |
 | `GhostCell<'brand, T>` | `Rc<T, 'b>` — Rc struct carrying the brand |
-| `&mut token` grants exclusive access | `&mut RcToken<'b>` grants exclusive access to all `Rc<T, 'b>` cells |
+| `&var token` grants exclusive access | `&var RcToken<'b>` grants exclusive access to all `Rc<T, 'b>` cells |
 
 An `RcToken<'b>` would be a zero-size linear value (one live binding, no `Copy`). Holding
-`&mut RcToken<'b>` means holding the exclusive access right to all `Rc<T, 'b>`
-allocations. The borrow checker enforces this exactly as it does for any other `&mut`.
+`&var RcToken<'b>` means holding the exclusive access right to all `Rc<T, 'b>`
+allocations. The borrow checker enforces this exactly as it does for any other `&var`.
 
 ### 6.2 Reframing RFC-0074 §6 future work
 
@@ -261,14 +261,14 @@ whose exclusive borrow grants mutable access to all `Rc<T, 'b>` cells, regardles
 how many RC aliases exist.
 
 The new framing is:
-- **Formally sound** — soundness comes from `&mut RcToken<'b>` exclusivity, not from a
+- **Formally sound** — soundness comes from `&var RcToken<'b>` exclusivity, not from a
   fragile alias count proof.
 - **Zero runtime cost** — no `strong_count()` check.
 - **Composable with RFC-0076** — brands already exist; `RcToken` is a thin stdlib addition.
 - **More powerful** — it works when many RC aliases exist, not only when the count is one.
 
 The only cost relative to the original `unique` idea is that access is coarse-grained:
-`&mut token` covers all cells of the brand at once, not a single pointer in isolation.
+`&var token` covers all cells of the brand at once, not a single pointer in isolation.
 For most graph/tree manipulation patterns this is acceptable.
 
 ### 6.3 Required prerequisites
@@ -296,7 +296,7 @@ approach does not depend on tracking closure captures.
 | Rust `get_mut` | No | No (requires 0) | Yes | Sound, practical, the RFC-0074 baseline |
 | Rust `make_mut` | No | Yes (clone-on-write) | Yes (then clone) | Useful for COW; `T: Clone` required |
 | Pony `iso` | Yes | No | No | Aliasing tracked from creation; lost on first alias |
-| GhostCell / `RcToken<'b>` | Yes | Yes | No | Sound via `&mut token`; coarse-grained |
+| GhostCell / `RcToken<'b>` | Yes | Yes | No | Sound via `&var token`; coarse-grained |
 
 GhostCell is the only approach that achieves static exclusive mutable access to a
 value that has multiple RC aliases. It does so by transferring the exclusivity question

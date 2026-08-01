@@ -14,7 +14,7 @@ Metel will support three receiver forms:
 
 - `self` - value receiver
 - `&self` - shared reference receiver
-- `&mut self` - exclusive mutable reference receiver
+- `&var self` - exclusive mutable reference receiver
 
 This RFC settles:
 
@@ -39,13 +39,13 @@ Those remain future work and must stay compatible with RFC-0028.
 The current spec says:
 
 - methods use `self`
-- methods may declare `mut self`
-- `mut self` mutates only a local receiver copy and does not update the caller's binding in place
+- methods may declare `var self`
+- `var self` mutates only a local receiver copy and does not update the caller's binding in place
 
 That is workable for plain value-style APIs, but it breaks down for stateful protocols such as iterators. `Iterable<T>::next` is currently written as:
 
 ```metel
-fun next(&mut self) -> Perhaps<T>;
+fun next(&var self) -> Perhaps<T>;
 ```
 
 but a real iterator needs mutation of the underlying receiver state across calls. A local mutable copy is not enough.
@@ -56,7 +56,7 @@ The problem is broader than iterators:
 - closure and pointer RFCs need a stable story for receiver aliasing
 - future linear work needs a separate path for receiver ownership transfer
 
-The language therefore needs explicit receiver modes instead of overloading `mut self` to mean two different things.
+The language therefore needs explicit receiver modes instead of overloading `var self` to mean two different things.
 
 ---
 
@@ -69,7 +69,7 @@ Metel has three explicit receiver forms:
 ```metel
 self
 &self
-&mut self
+&var self
 ```
 
 Their meanings are:
@@ -78,9 +78,9 @@ Their meanings are:
 |---|---|
 | `self` | consume or copy the receiver value according to the ordinary value semantics of the type |
 | `&self` | borrow shared read-only access to the receiver for the duration of the call |
-| `&mut self` | borrow exclusive mutable access to the receiver for the duration of the call |
+| `&var self` | borrow exclusive mutable access to the receiver for the duration of the call |
 
-`mut self` is removed as a semantic form. Mutability of the local receiver binding is not the axis that matters; aliasing and update behavior are.
+`var self` is removed as a semantic form. Mutability of the local receiver binding is not the axis that matters; aliasing and update behavior are.
 
 ### 2. Value Receivers
 
@@ -129,17 +129,17 @@ This is the canonical receiver form for observers, queries, formatting, hashing,
 
 ### 4. Mutable Reference Receivers
 
-`&mut self` provides exclusive mutable access to the original receiver.
+`&var self` provides exclusive mutable access to the original receiver.
 
 ```metel
 extend Counter {
-    fun increment(&mut self) {
+    fun increment(&var self) {
         self.value += 1;
     }
 }
 ```
 
-A method with `&mut self`:
+A method with `&var self`:
 
 - may mutate the underlying receiver state in place
 - does not consume the receiver
@@ -155,7 +155,7 @@ Receiver form determines call-site requirements.
 |---|---|---|
 | `self` | ordinary method call on a value | `Type::method(receiver, ...)` |
 | `&self` | receiver must be addressable or already pointer-backed | method receives a shared reference view |
-| `&mut self` | receiver must be mutably addressable or already mutable-pointer-backed | method receives an exclusive mutable reference view |
+| `&var self` | receiver must be mutably addressable or already mutable-pointer-backed | method receives an exclusive mutable reference view |
 
 At the language level, dot-call syntax remains:
 
@@ -171,8 +171,8 @@ The receiver mode is determined by the method signature, not by syntax at the ca
 RFC-0043 introduces regular pointers and pointer auto-deref for field access and method calls. This RFC builds on that:
 
 - calling an `&self` method through `p: *T` is allowed
-- calling an `&mut self` method through `p: *mut T` is allowed
-- calling an `&mut self` method through `p: *T` is a type error
+- calling an `&var self` method through `p: *mut T` is allowed
+- calling an `&var self` method through `p: *T` is a type error
 
 Examples:
 
@@ -180,8 +180,8 @@ Examples:
 let p: *Counter = &counter;
 let n = p.current();      // ok if current uses &self
 
-let mp: *mut Counter = &mut counter;
-mp.increment();           // ok if increment uses &mut self
+let mp: *mut Counter = &var counter;
+mp.increment();           // ok if increment uses &var self
 ```
 
 This keeps the pointer RFC and receiver RFC aligned:
@@ -195,7 +195,7 @@ This keeps the pointer RFC and receiver RFC aligned:
 
 ```metel
 aspect Iterable<T> {
-    fun next(&mut self) -> Perhaps<T>;
+    fun next(&var self) -> Perhaps<T>;
 }
 ```
 
@@ -205,7 +205,7 @@ This is the correct future-compatible iterator contract:
 - the caller keeps the same iterator value
 - no copy-and-return dance is required
 
-This replaces the current `mut self` form for stateful iteration.
+This replaces the current `var self` form for stateful iteration.
 
 ### 8. Aspect Methods
 
@@ -217,7 +217,7 @@ aspect Display {
 }
 
 aspect Iterable<T> {
-    fun next(&mut self) -> Perhaps<T>;
+    fun next(&var self) -> Perhaps<T>;
 }
 ```
 
@@ -225,13 +225,13 @@ There is no separate receiver model for aspects.
 
 ### 9. Addressability Rules
 
-Calls requiring `&self` or `&mut self` need an addressable receiver source unless the receiver is already a pointer value with compatible mutability.
+Calls requiring `&self` or `&var self` need an addressable receiver source unless the receiver is already a pointer value with compatible mutability.
 
 Allowed examples:
 
 ```metel
-let mut counter = Counter { value = 0 };
-counter.increment();      // &mut self
+var counter = Counter { value = 0 };
+counter.increment();      // &var self
 
 let p: *Counter = &counter;
 p.current();              // &self
@@ -240,8 +240,8 @@ p.current();              // &self
 Disallowed examples:
 
 ```metel
-// make_counter().increment();   // error if increment requires &mut self
-// (&counter).increment();       // error if increment requires &mut self through read-only pointer
+// make_counter().increment();   // error if increment requires &var self
+// (&counter).increment();       // error if increment requires &var self through read-only pointer
 ```
 
 This keeps exclusive mutation tied to stable mutable storage.
@@ -252,7 +252,7 @@ This RFC is intentionally limited to ordinary receivers over non-linear values a
 
 It does not define:
 
-- `&self` or `&mut self` on linear receivers
+- `&self` or `&var self` on linear receivers
 - how linear values borrow through method receivers
 - whether linear methods need separate receiver syntax
 
@@ -266,11 +266,11 @@ This RFC implies the following rewrites:
 
 | Old form | New form |
 |---|---|
-| `fun f(mut self) { ... }` used only for local mutation | either `fun f(self) -> Self` or `fun f(&mut self)`, depending on intent |
-| `fun next(mut self) -> Perhaps<T>` | `fun next(&mut self) -> Perhaps<T>` |
+| `fun f(var self) { ... }` used only for local mutation | either `fun f(self) -> Self` or `fun f(&var self)`, depending on intent |
+| `fun next(var self) -> Perhaps<T>` | `fun next(&var self) -> Perhaps<T>` |
 | read-only methods using `self` only for observation | `fun f(&self) -> R` |
 
-The important migration decision is semantic, not mechanical: existing `mut self` methods must be classified as either:
+The important migration decision is semantic, not mechanical: existing `var self` methods must be classified as either:
 
 - value-transforming methods
 - in-place mutating methods
@@ -281,7 +281,7 @@ They are not the same thing and should no longer share syntax.
 
 ## Alternatives Considered
 
-### A. Keep `mut self` and reinterpret it as in-place mutation
+### A. Keep `var self` and reinterpret it as in-place mutation
 
 Rejected. That would silently change the meaning of existing code and keep the receiver model ambiguous. The language needs separate syntax for value receivers and reference receivers.
 
@@ -300,7 +300,7 @@ Rejected for mainstream APIs such as iterators. It is verbose, infects every cal
 Example:
 
 ```metel
-let p: *mut Counter = &mut counter;
+let p: *mut Counter = &var counter;
 p.increment();
 ```
 
@@ -310,7 +310,7 @@ Rejected. Pointer semantics should support explicit aliasing, not replace direct
 
 ## Resolved Decisions
 
-### D1 - `&self` and `&mut self` are introduced only in receiver position
+### D1 - `&self` and `&var self` are introduced only in receiver position
 
 This RFC introduces reference receivers without introducing general reference types across the rest of the language. That narrower surface is enough to fix method and iterator semantics now.
 

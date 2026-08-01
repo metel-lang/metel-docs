@@ -19,7 +19,7 @@ impl_status: implemented
 
 ## Summary
 
-Allow matching a `&T`/`&mut T` scrutinee directly against `T`'s ordinary patterns —
+Allow matching a `&T`/`&var T` scrutinee directly against `T`'s ordinary patterns —
 peeling reference layers before pattern resolution, the same way field access and
 method dispatch already do (RFC-0067a) — instead of failing outright with no
 workaround available.
@@ -64,7 +64,7 @@ its absence here feel like an oversight rather than a deliberate design choice:*
   is unconditionally `Type::Named(target_name, ..)` (or the primitive equivalent) —
   never wrapped in `Reference`/`MutReference` — so `fun name(&self) -> String { match
   self { Colour::Red => ..., .. } }` already works today, confirmed directly. The
-  receiver's `&`/`&mut`/by-value-ness is tracked separately (`ReceiverKind`, for
+  receiver's `&`/`&var`/by-value-ness is tracked separately (`ReceiverKind`, for
   mutability/borrow bookkeeping), completely independent of what type `self` is bound
   to for matching purposes.
 - **`for (item in &collection)` loop variables are already bound by the element's bare
@@ -76,7 +76,7 @@ its absence here feel like an oversight rather than a deliberate design choice:*
   itself was reached through a reference.
 
 So the *only* place reference-transparency is missing is the plain case: an ordinary
-`let`-bound or parameter-bound variable whose own declared type is `&T`/`&mut T`. This
+`let`-bound or parameter-bound variable whose own declared type is `&T`/`&var T`. This
 RFC regularizes that gap using the same principle (and, largely, the same existing
 helper functions) already used for the two contexts above and for RFC-0067a's field
 access / method dispatch auto-deref chain.
@@ -95,7 +95,7 @@ fn infer_match(m: &MatchExpr, ctx: &mut InferContext, ..) -> Result<InferType, M
 ```
 
 `peel_all_references` (`inference.rs`) already exists, already recurses through
-arbitrary nesting (`&&T`, `&mut &T`, ...), and is already used for exactly this purpose
+arbitrary nesting (`&&T`, `&var &T`, ...), and is already used for exactly this purpose
 at method-call receiver resolution. One call, at the single point `scrutinee_ty` is
 first obtained; every pattern kind (`Literal`, `EnumVariant`, `Tuple`, `Array`, ...)
 already receives `scrutinee_ty` by value from there, so none of `infer_pattern`'s

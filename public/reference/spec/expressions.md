@@ -411,7 +411,7 @@ Addressable places for both `&` and `&var` include named bindings (`x`), struct 
 > Neither `&expr` nor `&var expr` requires `expr` to be an addressable place anymore: a
 > literal, a call result, a struct or enum construction, or any other non-addressable
 > expression is materialized into a fresh, independent cell and referenced directly
-> (matching Rust and C++: `foo(&Vec::new())`, `foo(&mut Vec::new())` — both need no
+> (matching Rust and C++: `foo(&Vec::new())`, `foo(&var Vec::new())` — both need no
 > intermediate binding). Sound for both forms — nothing outside the expression can ever
 > alias the cell, so a mutable reference to it can never conflict with anything else.
 >

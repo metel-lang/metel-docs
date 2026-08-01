@@ -267,7 +267,7 @@ above it are.
   free." `self` may also be a tuple of independently-moded views (`self: (&mut
   BarsView, &TicketView)`, unpacked via ordinary `Pattern::Tuple`) for Rust's mixed
   shared/exclusive `&{bars, mut golden_tickets} self` case, with addressability
-  following the tightest slot. Plus `let &mut { a, b } = h;` for the ad hoc, one-off
+  following the tightest slot. Plus `let &var { a, b } = h;` for the ad hoc, one-off
   splits a named view isn't worth declaring for. Amends RFC-0044. Paper-only pending
   RFC-0071 (0% implemented,
   confirmed by source search) — inherits RFC-0091 §2.1's open aliasing question only for
@@ -391,7 +391,7 @@ number, a backwards RFC-0067a split direction).
   was split out and accepted separately. Renamed 2026-07-10 from "Lifetime Anchors and
   Allocator-Pointer References" (`rfc-0067-lifetime-anchors.md`) — the dropped half of
   the title duplicated RFC-0063/RFC-0066's own naming.
-- **RFC-0067a** *(implemented 2026-07-11)* — Reference Types — plain `&T`/`&mut T`,
+- **RFC-0067a** *(implemented 2026-07-11)* — Reference Types — plain `&T`/`&var T`,
   auto-deref. No allocator/borrow-checker dependency; already sequenced into Cluster A.
   Integrated into `public/reference/spec/types.md` and `expressions.md`; gained a new
   §3a (type-directed value-copy-out) resolving a gap found writing the worked examples.
@@ -575,8 +575,8 @@ implementation).
 
 - **RFC-0049** *(draft)* — `linear fun` Type System — unconsumed-scope-exit, `Drop`
   interaction, subtyping vs. plain `fun`.
-- **RFC-0050** *(draft)* — Closure Capture Lists — `&mut`/`move`/clone/`&` specifiers.
-  `&mut`/clone/`&` buildable now; `move` waits on a split-model successor to refused
+- **RFC-0050** *(draft)* — Closure Capture Lists — `&var`/`move`/clone/`&` specifiers.
+  `&var`/clone/`&` buildable now; `move` waits on a split-model successor to refused
   RFC-0046.
 - **RFC-0003** *(draft)* — Concurrency Model — fiber handles, channels, `select`,
   `Send`.
@@ -603,7 +603,7 @@ implementation).
   collision risk). Generalizes the existing `Perhaps::None`-only special case
   (`Pattern::None`) into a real mechanism; answers RFC-0101's Unresolved Question 1.
 - **RFC-0108** *(implemented 2026-07-21 — issue #278)* — Reference-Transparent Match Scrutinees —
-  matching a `&T`/`&mut T` value directly (`match c { Colour::Red => .., .. }` for
+  matching a `&T`/`&var T` value directly (`match c { Colour::Red => .., .. }` for
   `c: &Colour`) instead of the current `T0001 cannot unify &Colour with Colour`, with
   no workaround available today (`*expr` doesn't parse — Metel has no general deref
   expression). Extends RFC-0067a's field-access/method-dispatch auto-deref-chain
@@ -627,7 +627,7 @@ implementation).
   reads and for writing through (`*p = v`); auto-deref kept at *selectors only* (field
   access, field assign, method dispatch); bare assignment to a reference-typed identifier
   changed to mean rebind, which is what unlocks repointing — verified unrepresentable
-  today (`p = &var b` fails with `cannot unify i64 with &mut ?t18`). Demoted from
+  today (`p = &var b` fails with `cannot unify i64 with &var ?t18`). Demoted from
   `3-integrated` and its spec text backed out when the design changed to the Go model;
   read-side extensions split into RFC-0112. Also corrects its own earlier claim that
   index-path write-through was "kept unchanged" — it does not work through a reference
@@ -704,7 +704,7 @@ implementation).
   declarations (struct/enum/aspect/generic params) and enum variants, camelCase for
   `fun` declarations (free functions, methods, associated functions), SCREAMING_CASE for
   constants (module-level, immutable `let` bindings — no dedicated `const` keyword
-  needed, since the grammar already distinguishes `let` from `let mut`), snake_case for
+  needed, since the grammar already distinguishes `let` from `var`), snake_case for
   everything else that introduces a name (function-local `let` bindings, parameters,
   struct fields) — enforced as a real compile-time check (a post-parse AST pass, not
   literally embedded in `grammar.pest`), not just a style convention. PascalCase-types,
@@ -801,7 +801,7 @@ RFC-0037, RFC-0067A, RFC-0072, RFC-0078, RFC-0081, RFC-0082, RFC-0097,
 RFC-0102, RFC-0103.
 
 **Superseded:** RFC-0001 (→ later pointer work), RFC-0002 (aspect bound syntax),
-RFC-0043 (Regular Pointers, `*T`/`*mut T` → RFC-0067a's `&T`/`&mut T`; file was never
+RFC-0043 (Regular Pointers, `*T`/`*mut T` → RFC-0067a's `&T`/`&var T`; file was never
 moved out of `4-implemented/` despite RFC-0067a's own text saying so since
 2026-06-28 — caught and fixed 2026-07-20 while drafting RFC-0110),
 RFC-0009 (module system → RFC-0030), RFC-0012 (→ RFC-0092/0093/0094/0095), RFC-0013

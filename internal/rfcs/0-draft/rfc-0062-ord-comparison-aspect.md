@@ -226,7 +226,7 @@ bounds); the generic-method machinery to evaluate them landed in sprint 23.
 2. **Derivation.** Can `Eq`/`Ord` be auto-derived for user structs/enums
    (field/variant-wise), à la `#[derive(Ord)]`? Without derivation, user types
    must hand-write `cmp`. Likely a fast follow.
-3. **`sort` shape.** In-place `sort(&mut self)` vs returning `sorted(self) ->
+3. **`sort` shape.** In-place `sort(&var self)` vs returning `sorted(self) ->
    List<T>`; depends on the mutation story for `List`.
 4. **Operator desugaring.** Adopt option 2 (operators over `Eq`/`Ord`) and, if
    so, does that open user-defined operator overloading generally?

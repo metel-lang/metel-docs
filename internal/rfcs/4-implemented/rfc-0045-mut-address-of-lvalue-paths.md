@@ -7,34 +7,34 @@ status: implemented
 
 ## Summary
 
-Extend `&mut` to accept arbitrary addressable lvalue paths — struct field access, tuple element access, array indexing, and chains thereof — with true mutable reference semantics: writes through the pointer propagate back to the original storage location.
+Extend `&var` to accept arbitrary addressable lvalue paths — struct field access, tuple element access, array indexing, and chains thereof — with true mutable reference semantics: writes through the pointer propagate back to the original storage location.
 
-This is the `&mut` counterpart to RFC-0043 §5 and METEL-111, which extended `&` (read-only address-of) to lvalue paths.
+This is the `&var` counterpart to RFC-0043 §5 and METEL-111, which extended `&` (read-only address-of) to lvalue paths.
 
 ---
 
 ## Motivation
 
-RFC-0043 §5 defines addressability for both `&` and `&mut`:
+RFC-0043 §5 defines addressability for both `&` and `&var`:
 
 > The language guarantees addressability for:
 > - named bindings
 > - fields of addressable values
 > - indexed elements of addressable arrays
 
-METEL-111 implemented `&` for field, tuple, and array lvalue paths. `&mut` remains restricted to named bindings because the current storage model provides no stable shared location for sub-elements.
+METEL-111 implemented `&` for field, tuple, and array lvalue paths. `&var` remains restricted to named bindings because the current storage model provides no stable shared location for sub-elements.
 
-The restriction is artificial: users expect `&mut pair.counter` to produce a pointer through which mutations propagate back to `pair.counter`, exactly as `&mut x` does for a named binding. Forcing users to extract sub-elements into their own bindings first is boilerplate that defeats the ergonomic promise of lvalue paths.
+The restriction is artificial: users expect `&var pair.counter` to produce a pointer through which mutations propagate back to `pair.counter`, exactly as `&var x` does for a named binding. Forcing users to extract sub-elements into their own bindings first is boilerplate that defeats the ergonomic promise of lvalue paths.
 
 ```metel
 // Today: workaround required
-let mut c = pair.counter;
-let p: *mut Counter = &mut c;
+var c = pair.counter;
+let p: *mut Counter = &var c;
 p.tick();
 pair.counter = c;   // manual write-back
 
 // After this RFC
-let p: *mut Counter = &mut pair.counter;
+let p: *mut Counter = &var pair.counter;
 p.tick();           // pair.counter updated automatically
 ```
 
@@ -84,7 +84,7 @@ This does not require restructuring the `Value` enum for struct, tuple, or array
 
 ### Option B — Per-Field Rc Storage
 
-Change struct fields to `HashMap<String, Rc<RefCell<Value>>>` and tuple elements to `Vec<Rc<RefCell<Value>>>`. `&mut struct.field` then returns the existing `Rc` directly, matching the identity semantics of `&mut x` for named bindings.
+Change struct fields to `HashMap<String, Rc<RefCell<Value>>>` and tuple elements to `Vec<Rc<RefCell<Value>>>`. `&var struct.field` then returns the existing `Rc` directly, matching the identity semantics of `&var x` for named bindings.
 
 **Trade-off:** pervasive change to struct and tuple evaluation; every field read and write would need unwrapping.
 
@@ -92,7 +92,7 @@ Change struct fields to `HashMap<String, Rc<RefCell<Value>>>` and tuple elements
 
 A narrower version of Option B targeting only arrays: change `Vec<Value>` inside `Value::Array` to `Vec<Rc<RefCell<Value>>>`. Struct and tuple fields retain plain-value storage and use Option A.
 
-**Trade-off:** partial solution; structs and tuples still need Option A for `&mut`.
+**Trade-off:** partial solution; structs and tuples still need Option A for `&var`.
 
 ---
 
@@ -106,9 +106,9 @@ The `MutFieldPointer` variant should be invisible at the language level — it i
 
 ## Interactions
 
-- **RFC-0043 §5** — this RFC completes the addressability guarantee for `&mut`.
+- **RFC-0043 §5** — this RFC completes the addressability guarantee for `&var`.
 - **RFC-0028** — if Metel eventually introduces linear types, fat-pointer write-back must be compatible with ownership tracking. The path representation may need to carry ownership metadata.
-- **METEL-111** — the work item that implemented `&` for lvalue paths and deferred `&mut`.
+- **METEL-111** — the work item that implemented `&` for lvalue paths and deferred `&var`.
 
 ---
 

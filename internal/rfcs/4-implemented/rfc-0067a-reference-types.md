@@ -11,7 +11,7 @@ impl_status: implemented
 > **Status — accepted.** Split 2026-07-07 from the original RFC-0067 ("Reference Types"),
 > which bundled a syntax rename with two genuinely separate concerns: lifetime anchors
 > (borrow-checker core) and allocator-pointer (`@a T`) interaction. This RFC keeps only the
-> allocator/anchor-independent slice — `&T` / `&mut T` replacing `*T` / `*mut T`, and
+> allocator/anchor-independent slice — `&T` / `&var T` replacing `*T` / `*mut T`, and
 > auto-deref. It has no dependency on affine types, the borrow checker, or allocators, and
 > is accordingly accepted and sequenced into Cluster A (see
 > `reports/implementation/roadmap-2026-07-07.md`, Phase 1) rather than Phase 3.
@@ -50,14 +50,14 @@ impl_status: implemented
 > test exercised it — the pre-existing method-dispatch/field-access auto-deref itself,
 > whose own `deref_value`/receiver-resolution helpers turned out to only follow one
 > layer at runtime despite the type-checking side already being fully recursive) —
-> each needed a dedicated fix once a `&&T`/`&mut &mut T`-shaped test caught it.
+> each needed a dedicated fix once a `&&T`/`&var &var T`-shaped test caught it.
 
 > **Status — implemented (2026-07-11).**
 
 ## Summary
 
 Replace Metel's `*T` / `*mut T` pointer model (RFC-0043) with **reference types**: `&T`
-(shared immutable) and `&mut T` (exclusive mutable). Remove the explicit `*p` dereference
+(shared immutable) and `&var T` (exclusive mutable). Remove the explicit `*p` dereference
 operator — all value access is through auto-deref.
 
 This RFC does not include lifetime anchors (`&r T`) or any allocator-pointer (`@a T`)
@@ -67,12 +67,12 @@ interaction — see the remaining RFC-0067 for both.
 
 ## Motivation
 
-RFC-0043 uses `&x` / `&mut x` at the expression level to produce values of type `*T` /
+RFC-0043 uses `&x` / `&var x` at the expression level to produce values of type `*T` /
 `*mut T` — the sigil changes between expression position (`&`) and type position (`*`).
 This asymmetry is easy to typo around and gives address-of and its resulting type no visible
 relationship in source text.
 
-Renaming the type-position sigil to match — `&T` / `&mut T` — removes that asymmetry outright,
+Renaming the type-position sigil to match — `&T` / `&var T` — removes that asymmetry outright,
 and does so independently of anything else: it does not require lifetime anchors, allocators,
 or the borrow checker to be useful on its own. Two further benefits fall out immediately:
 
@@ -92,28 +92,28 @@ Metel has two reference types:
 
 ```metel
 &T       // shared immutable reference
-&mut T   // exclusive mutable reference
+&var T   // exclusive mutable reference
 ```
 
 These replace `*T` and `*mut T` from RFC-0043. Semantics are unchanged: both are non-owning
-aliases. `&T` allows multiple simultaneous readers; `&mut T` is exclusive — no other reference
+aliases. `&T` allows multiple simultaneous readers; `&var T` is exclusive — no other reference
 to the same location may exist while it is live. (Precise enforcement of exclusivity is the
 borrow checker's job, Phase 3, same as it was under RFC-0043 — this RFC changes notation, not
 enforcement.)
 
-`&mut T` coerces to `&T` implicitly. No other reference coercion is implicit.
+`&var T` coerces to `&T` implicitly. No other reference coercion is implicit.
 
 ---
 
 ## 2. Address-of
 
-The address-of operators `&` and `&mut` are syntactically unchanged at the expression level:
+The address-of operators `&` and `&var` are syntactically unchanged at the expression level:
 
 ```metel
 let x = 42;
 let r: &i64     = &x;      // shared reference to x
-let mut y = 42;
-let m: &mut i64 = &mut y;  // exclusive reference to y
+var y = 42;
+let m: &var i64 = &var y;  // exclusive reference to y
 ```
 
 Addressability rules from RFC-0043 §5 are preserved: only stable lvalues (named bindings,
@@ -128,7 +128,7 @@ There is no explicit dereference operator in safe code. All access goes through 
 1. **Field access** — `r.field` where `r: &T` dereferences to access `T.field`.
 2. **Method dispatch** — `r.method(args)` inserts the borrow required by the method's
    receiver.
-3. **Deref coercions** — `&T` or `&mut T` coerces to a less-capable reference when the
+3. **Deref coercions** — `&T` or `&var T` coerces to a less-capable reference when the
    expected type requires it.
 
 Auto-deref chains: a `&&T` will deref through both levels if needed. Chain depth is bounded by
@@ -152,7 +152,7 @@ and only when the referent's type actually permits copying.
 
 **Resolution: type-directed copy, the same pattern RFC-0066 §3a already established for
 allocator move-out, not a new mechanism.** A `let` binding whose own declared type `T`
-differs from its initializer's reference type (`&T` or `&mut T`) copies the referent,
+differs from its initializer's reference type (`&T` or `&var T`) copies the referent,
 provided `T: Copy`:
 
 ```metel
@@ -170,12 +170,12 @@ branch, and a `match` arm all resolve their result against a declared or expecte
 the exact same way a `let` binding does — any tail expression in one of those positions:
 
 ```metel
-fun bump(p: &mut i64) -> i64 {
+fun bump(p: &var i64) -> i64 {
     p += 1;
     p          // tail expression, no explicit `return` — copies out of p
 }
 
-fun read(p: &mut i64) -> i64 {
+fun read(p: &var i64) -> i64 {
     return p;  // same rule at `return`
 }
 ```
@@ -216,11 +216,11 @@ way, and code must go through `.clone()` or an owning path instead.
 | RFC-0043 | This RFC |
 |----------|----------|
 | `*T` | `&T` |
-| `*mut T` | `&mut T` |
+| `*mut T` | `&var T` |
 | `&x` → `*T` | `&x` → `&T` |
-| `&mut x` → `*mut T` | `&mut x` → `&mut T` |
+| `&var x` → `*mut T` | `&var x` → `&var T` |
 | `*p` explicit dereference | removed; auto-deref only |
-| `*mut T` coerces to `*T` | `&mut T` coerces to `&T` |
+| `*mut T` coerces to `*T` | `&var T` coerces to `&T` |
 
 RFC-0043 §6 (auto-deref for field access, method calls) is preserved. RFC-0043 §8 (no pointer
 arithmetic) carries over unchanged. Nullability via `Perhaps<*T>` becomes `Perhaps<&T>`.
@@ -239,10 +239,10 @@ expected type, with no explicit depth limit. Chain bounded by type structure.
 ## References
 
 - RFC-0043 (Regular Pointers) — superseded by this RFC.
-- RFC-0044 (Explicit Receiver Semantics) — `&self` / `&mut self` receivers are now consistent
-  with `&T` / `&mut T` as general reference types.
+- RFC-0044 (Explicit Receiver Semantics) — `&self` / `&var self` receivers are now consistent
+  with `&T` / `&var T` as general reference types.
 - RFC-0067 (the remaining document, now `2-accepted/`) — lifetime anchors (`&r T`, `<&r>`
   declarations, ordering bounds), allocator-pointer auto-deref/coercion, and move-out from
-  `@a T`. Builds directly on this RFC's `&T` / `&mut T` without changing their syntax.
+  `@a T`. Builds directly on this RFC's `&T` / `&var T` without changing their syntax.
 - `reports/implementation/roadmap-2026-07-07.md` — Phase 1 (Cluster A) placement of this RFC,
   versus Phase 3 for the remaining RFC-0067.

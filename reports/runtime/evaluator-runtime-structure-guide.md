@@ -188,7 +188,7 @@ structurally significant.
 
 - value `self`
 - `&self`
-- `&mut self`
+- `&var self`
 
 `signature` is metadata. It is useful for:
 

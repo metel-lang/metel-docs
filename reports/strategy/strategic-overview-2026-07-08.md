@@ -26,7 +26,7 @@ Three threads moved since July 6.
 
 **RFC-0067 split, cleanly, into an accepted slice and a narrowed remainder.** The
 reference-type/allocator-pointer RFC bundled genuinely independent content (plain
-`&T`/`&mut T`, address-of, auto-deref, superseding RFC-0043) with genuinely dependent
+`&T`/`&var T`, address-of, auto-deref, superseding RFC-0043) with genuinely dependent
 content (lifetime anchors, which are borrow-checker core; allocator-pointer access,
 which needs RFC-0063's `@a T`). Split into RFC-0067a (accepted, Cluster A — no ordering
 dependency on the rest of the allocator cluster) and a narrowed RFC-0067 (stays under
@@ -35,11 +35,11 @@ doesn't reference `Alloc` at all — RFC-0067a is that observation made concrete
 ratified.
 
 **RFC-0050 (Closure Capture Lists) substantially reworked**, moving from a syntax
-sketch to a fully-specified draft: four capture specifiers (`&mut`, `move`, bare-ident
+sketch to a fully-specified draft: four capture specifiers (`&var`, `move`, bare-ident
 clone, `&` read-only reference), an exhaustiveness requirement (once a capture list
 exists, every free variable must be enumerated — no partial/implicit mixing), a
 resolved scope for "free variable" (outer-scope locals only, explicitly excluding
-module-level items), and a build-order split (capture lists for `&mut`/clone/`&` are
+module-level items), and a build-order split (capture lists for `&var`/clone/`&` are
 buildable now against RFC-0067a directly; `move` captures wait on a split-model
 successor to the refused RFC-0046).
 
@@ -60,7 +60,7 @@ cluster settled on three tiers of increasing commitment: plain `struct` (unchang
 whole-value only), `derives ToRecord, FromRecord` (on-demand, explicit, zero-cost
 conversion to/from the struct's own row — including borrowed variants,
 `to_record_mut`/`from_record_mut`, added specifically to unify this tier with the
-cluster's earlier `&mut`-based drain/restore sketches), and a named-record kind (the
+cluster's earlier `&var`-based drain/restore sketches), and a named-record kind (the
 full `(row, brand)` representation, the only tier eligible for row-conditional impls).
 `ToRecord`/`FromRecord` are kept as two separate derivable aspects rather than merged,
 for a concrete reason: auto-derived `FromRecord` can silently bypass a constructor's
@@ -77,7 +77,7 @@ hits zero, keep the counters alive until weak also does — real implementations
 available (the problem dedicated crates exist to paper over with an abort-on-panic
 guard); piecewise `MaybeUninit`-style struct construction, including its panic-safety
 hazard; and a generic, reusable helper splitting a struct's fields into independent
-`&mut` views across a function boundary — precisely the motivating gap behind Rust's
+`&var` views across a function boundary — precisely the motivating gap behind Rust's
 own unshipped "view types" proposal. This is the kind of validation 07-06 could only
 gesture at ("solves a problem no mainstream language solves") — now with specific,
 checkable comparison points rather than a general claim.
@@ -85,7 +85,7 @@ checkable comparison points rather than a general claim.
 *Two loose ends closed, not carried forward.* `linear-types.md`'s Option C aliasing
 question — what type does a pre-downgrade borrow have afterward, blocking Option C
 since this cluster's inception — now has a candidate answer, arrived at as a side
-effect of designing the tier-2 conversions: the shrunk row type, sound because `&mut`
+effect of designing the tier-2 conversions: the shrunk row type, sound because `&var`
 already guarantees no other alias exists to observe the stale type. Promising, not
 proven — no soundness argument is written down, only a mechanism plus several examples
 that exercise it without incident. Separately, `structural-records.md`'s own internal

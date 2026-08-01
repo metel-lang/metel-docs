@@ -422,7 +422,7 @@ Futexes, semaphores, `pthread_t`, and similar OS-level constructs are used insid
 
 ## Interaction with RFC-0043 (Regular Pointers)
 
-RFC-0043 is implemented. The pointer surface (`*T`, `*mut T`, `&x`, `&mut x`, `*p`) is settled. RFC-0043 explicitly deferred the question of whether pointers are `Send` to the concurrency RFC. This RFC now resolves that:
+RFC-0043 is implemented. The pointer surface (`*T`, `*mut T`, `&x`, `&var x`, `*p`) is settled. RFC-0043 explicitly deferred the question of whether pointers are `Send` to the concurrency RFC. This RFC now resolves that:
 
 1. **`*T` and `*mut T` are not `Send`** — pointers are local-fiber tools. `*T` introduces aliasing to non-linear storage; allowing it to cross fiber boundaries without synchronisation would create data races. `*mut T` additionally allows writes — sharing it is the canonical data race.
 2. **`Perhaps<*T>` is not `Send`** — wrapping a non-`Send` type in `Perhaps` does not make it `Send`.

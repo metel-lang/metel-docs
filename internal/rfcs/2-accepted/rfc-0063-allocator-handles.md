@@ -89,7 +89,7 @@ This RFC specifies:
    an allocator tag without ever allocating through it;
 5. sendability rules.
 
-Lifetime anchor tracking (`&r T`, `&r mut T`) is specified in RFC-0067. Elision and
+Lifetime anchor tracking (`&r T`, `&r var T`) is specified in RFC-0067. Elision and
 call-site inference are in RFC-0065.
 
 ---
@@ -498,7 +498,7 @@ own ratification does not depend on their reaching accepted.
 - RFC-0066 (Allocated Value Extraction) — how to obtain `T` or `&T` from `@a T`;
   §3a specifies why extraction never happens implicitly at a plain-parameter call
   site, which is what makes the tag-only form necessary rather than redundant.
-- RFC-0067 (Lifetime Anchors) — lifetime anchors `&r T`, `&r mut T`; the split from
+- RFC-0067 (Lifetime Anchors) — lifetime anchors `&r T`, `&r var T`; the split from
   allocator lifetime.
 - RFC-0068 (Struct-Owned Allocators) — `struct Foo(@a: BumpAlloc)` primary constructor
   syntax for allocator ownership.

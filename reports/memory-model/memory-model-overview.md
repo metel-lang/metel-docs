@@ -134,7 +134,7 @@ Metel has three pointer/reference types with distinct roles:
 |---|---|---|---|
 | `@[r] T` | Region pointer — owned allocation | yes | if `[Heap]`/`[LocalHeap]` |
 | `&T` | Shared reference — non-exclusive borrow | no | no |
-| `&mut T` | Exclusive reference — mutable borrow | no | no |
+| `&var T` | Exclusive reference — mutable borrow | no | no |
 
 ### 2.1 Region pointers `@[r] T`
 
@@ -147,20 +147,20 @@ mutually exclusive with `Drop`; exactly one live owner exists at all times. Regi
 are non-`Copy` by construction — this is what makes region lifetime and disjointness
 guarantees sound.
 
-References (`&T`, `&mut T`) are orthogonal to allocation: they are temporary loans of an
+References (`&T`, `&var T`) are orthogonal to allocation: they are temporary loans of an
 already-allocated value, not owners of memory.
 
-### 2.2 Reference types `&T` and `&mut T`
+### 2.2 Reference types `&T` and `&var T`
 
-`&T` allows any number of simultaneous shared readers. `&mut T` is exclusive — no other
-reference to the same location may be live while it exists. `&mut T` coerces to `&T`.
+`&T` allows any number of simultaneous shared readers. `&var T` is exclusive — no other
+reference to the same location may be live while it exists. `&var T` coerces to `&T`.
 There is no explicit dereference operator; all value access is through auto-deref (§5).
 
 ### 2.3 Region-tagged borrows `&[r] T`
 
 When a region pointer is borrowed in a function signature, the double-sigil `& @[r] T` is
 noisy. `&[r] T` is accepted shorthand for `& @[r] T` — a shared borrow of a value in
-region `r`. Similarly `&mut [r] T` for exclusive borrows.
+region `r`. Similarly `&var [r] T` for exclusive borrows.
 
 `&[r] T` coerces to plain `&T` where the region tag is not needed. In signatures, `&[r]
 T` names the region for lifetime tracking; `&T` is what callers that don't need the tag
@@ -314,7 +314,7 @@ node.val = 2;              // auto-deref for write
 node.process(args);        // auto-deref for method dispatch
 
 let b: &Node     = &node;      // explicit shared borrow — &[r] Node, coerces to &Node
-let m: &mut Node = &mut node;  // explicit exclusive borrow
+let m: &var Node = &var node;  // explicit exclusive borrow
 ```
 
 There is no explicit dereference operator in safe code. Auto-deref applies in field access,
@@ -389,8 +389,8 @@ lifetimes:
 ```metel
 extend Parser {
     // s = borrow duration; r = Parser's lifetime (implicit, always in scope)
-    fun push[s](self: &mut [s] Parser, node: AstNode) -> &[r] AstNode {
-        let ptr = @[r] node;   // allocation requires &mut self
+    fun push[s](self: &var [s] Parser, node: AstNode) -> &[r] AstNode {
+        let ptr = @[r] node;   // allocation requires &var self
         &ptr                   // valid for r, not just s
     }
 
@@ -400,7 +400,7 @@ extend Parser {
 }
 ```
 
-Allocation into the owned region requires `&mut self`; shared `&[s] self` can read but not
+Allocation into the owned region requires `&var self`; shared `&[s] self` can read but not
 allocate.
 
 ---
@@ -449,7 +449,7 @@ Two pointers with distinct region tags name distinct arenas and therefore cannot
 This is a compile-time fact, not a runtime check. It is the foundation on which structured
 parallelism over region data can be built: a parallel combinator that keeps both branches
 inside the region's scope would be race-free purely from the borrow checker's ordinary
-`&mut` exclusivity rule, with no separation calculus required.
+`&var` exclusivity rule, with no separation calculus required.
 
 The `||` structured fork-join combinator that exploits this property is specified in
 RFC-0064, which is **deferred** until the core region cluster stabilises.
@@ -466,14 +466,14 @@ struct Request[own r] {
 }
 
 extend Request {
-    fun parse[s](self: &mut [s] Request, raw: String) {
+    fun parse[s](self: &var [s] Request, raw: String) {
         let parts = raw.split(" ");
         self.method  = @[r] parts[0];
         self.path    = @[r] parts[1];
         self.headers = @[r] List::Nil {};
     }
 
-    fun add_header[s](self: &mut [s] Request, line: String) {
+    fun add_header[s](self: &var [s] Request, line: String) {
         let h = @[r] Header::parse(line);   // allocated into Request's arena
         self.headers = @[r] List::Cons { head: h, tail: self.headers };
     }
@@ -485,7 +485,7 @@ extend Request {
 }
 
 fun handle(raw: String) -> Response {
-    let mut req = Request::new();
+    var req = Request::new();
     req.parse(raw);
     // req's arena (r) is automatically SubRegion of nothing here —
     // r lives as long as req lives on the stack

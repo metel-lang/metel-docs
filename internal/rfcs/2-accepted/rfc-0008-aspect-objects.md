@@ -45,7 +45,7 @@ a pointer. The natural form in Metel is a region pointer:
 ```metel
 @[r] dyn Display      // owned aspect object in region r
 &dyn Display          // shared reference to an aspect object
-&mut dyn Display      // exclusive reference to an aspect object
+&var dyn Display      // exclusive reference to an aspect object
 ```
 
 A value of concrete type `T` where `T: Aspect` may be coerced to `@[r] dyn Aspect`
@@ -83,7 +83,7 @@ Not every aspect can be used as `dyn Aspect`. An aspect is **object-safe** if al
 its methods satisfy the following rules:
 
 1. **Receiver rule**: the method's first parameter must be `self: &Self`,
-   `self: &mut Self`, or `self: @[r] Self` for some region `r`. A bare by-move
+   `self: &var Self`, or `self: @[r] Self` for some region `r`. A bare by-move
    receiver (`self: Self`) is not object-safe: moving a value requires knowing its
    size at compile time, but `dyn Aspect` is unsized. Methods with `Self` in any
    other position — return type, non-receiver parameters — are also not object-safe.
@@ -152,7 +152,7 @@ runtime:
 This requires the concrete type's size and drop function to be in the vtable. The
 compiler generates these entries for every coercion site.
 
-`&dyn Aspect` and `&mut dyn Aspect` are borrowed fat pointers. They do not own the
+`&dyn Aspect` and `&var dyn Aspect` are borrowed fat pointers. They do not own the
 value and do not drop it.
 
 ---

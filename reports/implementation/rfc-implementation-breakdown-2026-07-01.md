@@ -70,7 +70,7 @@ early and be designed for extension.
    span }`. Avoids three parallel bound/impl representations.
 5. **New borrow/allocator-checker pipeline stage** (between typecheck and evaluator): allocator-scope
    liveness (`@a T` tags vs allocator binding scope), lifetime anchor tracking (`&r T` valid while `r`
-   alive), borrow exclusivity (`&mut` vs `&`), wellformedness of nested allocator-tagged types,
+   alive), borrow exclusivity (`&var` vs `&`), wellformedness of nested allocator-tagged types,
    move/affine tracking. `Outlives` is **not** a constraint the checker solves — it is derived
    structurally from scope nesting. **Brand new — the largest single piece of work in the whole effort.**
 6. **Value-representation overhaul (RFC-0071 §1).** Replace deep-clone-on-bind with move-on-bind plus
@@ -130,11 +130,11 @@ it is derived from scope nesting by the checker.
 |---|---|---|---|---|
 | 1 | **0071** Ownership & move semantics — affine types, `Copy`/`Clone`/`Drop`, drop order with interleaved move-out | **L** | — | drives the value-repr overhaul (prereq 6) |
 | 2 | **0063** Allocator handles — `@a T`, value-channel allocator params `(@a: A)`, `Alloc` aspect, allocation expressions, **borrow-checker stage** (prereq 5) | **XL** | 0071 | introduces the new stage; `@a` tag is instance-level, unusual for the typechecker |
-| 3 | **0067** Reference types — `&r T`/`&r mut T`, lifetime anchors, auto-deref, deref coercions; **removes** `*T`/`*mut T`/`*p` | M | 0063 | **batch with 0066** |
+| 3 | **0067** Reference types — `&r T`/`&r var T`, lifetime anchors, auto-deref, deref coercions; **removes** `*T`/`*mut T`/`*p` | M | 0063 | **batch with 0066** |
 | 3 | **0066** Allocated value extraction — borrow-deref, move-out/copy-out, `T: !Drop` legality matrix | M | 0063, 0065, 0072 | batch with 0067 |
 | 4 | **0065** Allocator ergonomics — `@` elision (single allocator in scope), lifetime anchor elision (4 rules) | M | 0063, 0067 | |
 | 5 | **0068** Struct-owned allocators — `(@a: AllocType)` primary constructor, implicit `a` in impl scope, synthesized ctor/dtor | M/L | 0063, 0065, 0067 | `own` keyword dropped; no `Outlives` auto-derivation needed |
-| 6 | **0077** Allocator generics — `<A: Alloc>(@a: A)` impl headers, wellformedness (scope-nesting derived), variance for `@a T`/`&r T`/`&r mut T` | **L** | 0063, 0065, 0068 | wellformedness ↔ variance tension (§4.3) remains |
+| 6 | **0077** Allocator generics — `<A: Alloc>(@a: A)` impl headers, wellformedness (scope-nesting derived), variance for `@a T`/`&r T`/`&r var T` | **L** | 0063, 0065, 0068 | wellformedness ↔ variance tension (§4.3) remains |
 | 7 | **0073** AutoAlloc — strategy selection; ship the sound "heap-everything" fallback first | **L** | 0063, 0065, 0066, 0071, 0072 | under-specified (UQ1/2) |
 
 **Dependency graph (Cluster B):**

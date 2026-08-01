@@ -352,7 +352,7 @@ because this RFC is the right place to resolve it.
    impl" is the plausible answer, but it should be stated by whichever RFC actually
    specifies raw pointers' semantics, not assumed silently here.
 
-3. **`Linear` states no reference rule.** RFC-0089 §2 never says whether `&T`/`&mut T`
+3. **`Linear` states no reference rule.** RFC-0089 §2 never says whether `&T`/`&var T`
    is ever `Linear` for any `T`. Intuitively no — a reference borrows without owning
    the underlying multiplicity-1 resource, so multiplicity shouldn't transfer through
    a reference at all — but §2 of *this* RFC requires every auto-impl aspect to state

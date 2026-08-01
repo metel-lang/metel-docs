@@ -221,7 +221,7 @@ document for the reasoning behind each entry, not just the one-line summary here
   ratified.
 - The aliasing question for Option C (what type does a pre-downgrade borrow have
   afterward) — **a candidate answer exists as of 2026-07-08** (the shrunk row type,
-  justified by ordinary `&mut` exclusivity — `linear-types.md` §3,
+  justified by ordinary `&var` exclusivity — `linear-types.md` §3,
   `structural-records.md` §10). Promising, not proven; still blocks ratifying Option C.
 - `NonLinear<T>`'s exact surface syntax — unresolved.
 - Multiplicity polymorphism (`Guarded<T, Cap>`) — noted as a real later extension, not
@@ -256,7 +256,7 @@ document for the reasoning behind each entry, not just the one-line summary here
   conversion, kept as two separate aspects rather than merged, since auto-derived
   `FromRecord` can bypass constructor invariants a hand-written one wouldn't), and a
   named-record kind (`(row, brand)` intrinsically, the only tier eligible for
-  row-conditional impls). Borrowed (`&mut`) variants of the derive pair
+  row-conditional impls). Borrowed (`&var`) variants of the derive pair
   (`to_record_mut`/`from_record_mut`) are resolved — same two aspects, by-reference is a
   mode not a new capability — and unify tier 2 with this cluster's earlier borrowed
   drain/restore sketches. Still open: what syntactically marks the named-record tier,
@@ -313,7 +313,7 @@ structured-guarantee mechanism is reopened as premature to settle):
   restoring later? Only real workload demand should revive CSC + liberalized `spawn`.
 - ~~General CSC vs. narrow stdlib-primitive disjointness~~ / ~~RFC-0064's own open
   questions~~ — moot: `\|\|` dropped, CSC demoted to deferred.
-- Liberalized `spawn` capturing `&mut T` under capture-set disjointness, and `sep{}`
+- Liberalized `spawn` capturing `&var T` under capture-set disjointness, and `sep{}`
   surface syntax — both deferred with CSC; relevant only if in-place parallelism returns.
 
 **From `brand-kind-unification.md`:**

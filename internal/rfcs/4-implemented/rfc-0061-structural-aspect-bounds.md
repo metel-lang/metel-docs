@@ -267,7 +267,7 @@ aspect impls are specified in RFC-0050.
 3. **`Callable` formal definition.** The `Callable<A, B>` aspect is referenced in
    RFC-0008 (object safety) and this RFC (function pointer auto-impl) but has no
    formal aspect declaration. Its definition — including multi-argument forms and
-   the distinction between `&self`, `&mut self`, and by-move receivers — is deferred
+   the distinction between `&self`, `&var self`, and by-move receivers — is deferred
    to a follow-on stdlib RFC.
 
 4. **Multi-argument function types.** `fun(A, B) -> C` should implement

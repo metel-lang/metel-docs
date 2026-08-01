@@ -38,7 +38,7 @@ status: accepted
 `@a expr` allocates `T` into allocator `a`; extraction is the inverse. Given `ptr: @a T`,
 two families of operations are available:
 
-- **Borrow-deref** — obtain `&T` or `&mut T` without consuming `ptr`; works for any region
+- **Borrow-deref** — obtain `&T` or `&var T` without consuming `ptr`; works for any region
   kind and any `T`.
 - **Move-out** — obtain `T` by consuming `ptr`; always safe for `@Heap T`, constrained
   by `T`'s Drop status for scoped `@a T`.
@@ -67,11 +67,11 @@ It is unconditional — no restriction on region kind or `T`:
 let ptr = @a Node { val: 1, next: null };
 
 let v: &Node     = &ptr;     // shared borrow — &[r] Node, coerces to &Node
-let v: &mut Node = &mut ptr; // exclusive borrow
+let v: &var Node = &var ptr; // exclusive borrow
 // ptr is still live after the borrows expire
 ```
 
-The borrow checker enforces that no borrow outlives `ptr`, and that a `&mut` borrow is
+The borrow checker enforces that no borrow outlives `ptr`, and that a `&var` borrow is
 exclusive. No new rules are needed beyond the existing borrow semantics. Auto-deref handles
 field access and method dispatch through region pointers (RFC-0067 §2, allocator pointer
 access; base auto-deref rule is RFC-0067a §3).
@@ -287,7 +287,7 @@ encompasses the clone's use is valid.
 | Extraction form | `@Heap T` | `T: Copy` | `T: !Drop` | `T: Drop` |
 |---|---|---|---|---|
 | Borrow `&T` | `&ptr` | `&ptr` | `&ptr` | `&ptr` |
-| Borrow `&mut T` | `&mut ptr` | `&mut ptr` | `&mut ptr` | `&mut ptr` |
+| Borrow `&var T` | `&var ptr` | `&var ptr` | `&var ptr` | `&var ptr` |
 | Copy out | `ptr: T` | `ptr: T` | — | — |
 | Move out | `ptr: T` | — | `ptr: T` | not supported |
 | Type-directed move | `let x: T = ptr` | — | `let x: T = ptr` | not supported |
@@ -302,7 +302,7 @@ encompasses the clone's use is valid.
   extraction when ownership doesn't actually need to be storage-independent.
 - RFC-0065 (Allocator Ergonomics) §1a — elision for the tag-only form; distinguishes
   it from this RFC's plain, `@`-free `T`.
-- RFC-0067a (Reference Types) — `&T` / `&mut T`, base auto-deref.
+- RFC-0067a (Reference Types) — `&T` / `&var T`, base auto-deref.
 - RFC-0067 (Lifetime Anchors) — auto-deref through `@a T`
   specifically (§2); RFC-0067a split off from this RFC 2026-07-07 as the
   allocator/borrow-checker-independent slice.

@@ -105,7 +105,7 @@ superseded, 14 refused. `rfc.py check` and `index --check-drift` both report cle
 coherence (orphan rule, overlap, negative impls — real logic in `coherence.rs`,
 backing RFC-0060/0072/0081), associated types (RFC-0082, across
 `typechecker/{conversions,inference,mod}.rs`), structural aspect bounds (RFC-0061),
-conditional impls (RFC-0036), return-position `impl Aspect` (RFC-0037), `&T`/`&mut T`
+conditional impls (RFC-0036), return-position `impl Aspect` (RFC-0037), `&T`/`&var T`
 with auto-deref (RFC-0067a), bottom type `!` (RFC-0078), the module system, `List<T>`
 and fixed arrays, string interpolation, closures, `var` bindings, and the `extend`/
 `public`/`var` surface renames (RFC-0098). Confirmed **absent**, consistent with draft

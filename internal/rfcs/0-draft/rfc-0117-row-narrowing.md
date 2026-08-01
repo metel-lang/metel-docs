@@ -80,7 +80,7 @@ accepts is a genuinely different capability and belongs to RFC-0121.
   move — as opposed to a record narrowing to a record — depends on nominal types carrying
   rows at all, which is RFC-0120's question and, in its strong form, an open exploration
   (`reports/substructural-types/nominal-types-as-branded-rows.md`).
-- **Borrowed narrowing.** Narrowing a `&mut` view rather than an owned value is
+- **Borrowed narrowing.** Narrowing a `&var` view rather than an owned value is
   RFC-0119's by-reference mode and RFC-0109's views.
 - **Per-field multiplicity.** Deliberately out of scope for the whole records cluster
   until records are implemented — see this RFC's References.

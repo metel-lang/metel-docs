@@ -142,13 +142,13 @@ is inserted.
 
 ```metel
 aspect DerefMut: Deref {
-    fun deref_mut(self: &mut Self) -> &mut Target;
+    fun deref_mut(self: &var Self) -> &var Target;
 }
 ```
 
 `Deref` is a supertrait of `DerefMut`. Any `DerefMut` implementation must also provide
 a `Deref` implementation with the same `Target`. The compiler applies `DerefMut`
-coercions when `&mut U` is expected and `T: DerefMut<Target = U>`.
+coercions when `&var U` is expected and `T: DerefMut<Target = U>`.
 
 ### 2.3 Coercion rules
 
@@ -204,7 +204,7 @@ of whose fields are `Send`. Under closed-world coherence (RFC-0060):
 - Primitive types (`i64`, `u64`, `f64`, `boolean`, `String`, `!`, ...) are `Send`.
 - A struct or enum is `Send` if every field type is `Send`.
 - `&T` is `Send` if `T: Sync`.
-- `&mut T` is `Send` if `T: Send`.
+- `&var T` is `Send` if `T: Send`.
 
 No `@derive(Send)` annotation is needed; the compiler applies the rule automatically.
 
@@ -263,7 +263,7 @@ A type is `Sync` precisely when sharing a reference to it across fibers is safe.
 - Primitive types are `Sync`.
 - A struct or enum is `Sync` if every field type is `Sync`.
 - `&T` is `Sync` if `T: Sync`.
-- `&mut T` is `Sync` if `T: Sync`.
+- `&var T` is `Sync` if `T: Sync`.
 
 > See §3.2's 2026-07-11 note — RFC-0096 formalizes the shared mechanism this and
 > `Send`'s rule both instantiate.

@@ -362,7 +362,7 @@ tradeoffs, surveyed directly rather than from memory:
 
 ## 2. Lifetime anchor elision
 
-Explicit `<&r>` declarations and `&r T` / `&r mut T` annotations in signatures are
+Explicit `<&r>` declarations and `&r T` / `&r var T` annotations in signatures are
 needed only when the compiler cannot infer the anchor relationship. Four rules cover the
 common cases:
 
@@ -380,7 +380,7 @@ fun first_char(&Str) -> &Char
 // one input anchor → output uses the same anchor; no declaration needed
 ```
 
-**Rule 3 — `&self` / `&mut self` wins as the output anchor.**
+**Rule 3 — `&self` / `&var self` wins as the output anchor.**
 
 ```metel
 fun get(&self, key: &Key) -> &Val
@@ -457,7 +457,7 @@ the signature and the `&`-bearing positions that follow from it.
 - RFC-0066 (Allocated Value Extraction) — §3a: why a plain, `@`-free `T` never
   implicitly accepts an `@a T` argument, which is what distinguishes it from the
   elided tag-only form here.
-- RFC-0067 (Lifetime Anchors) — lifetime anchors, `&r T`, `&r mut T`, anchor elision rules.
+- RFC-0067 (Lifetime Anchors) — lifetime anchors, `&r T`, `&r var T`, anchor elision rules.
 - RFC-0050 (Closure Capture Lists) — closure grammar for `(@a) -> {}`.
 - RFC-0075 (Region Inference, draft/parked) — a different elision axis (local
   temporaries that never cross a function boundary need no `@` at all); §1b above

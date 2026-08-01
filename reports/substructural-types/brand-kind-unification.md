@@ -182,7 +182,7 @@ brand like any other.
   accompanying value — the `@`-sigil counterpart of a bare `'c`. It stops being a bespoke
   allocator feature and becomes one cell of a 2×N table (§4).
 - **Variance becomes per-role, not per-type.** RFC-0077 §4 specifies variance separately
-  for `@a T`, `&r T`, `&r mut T`. Under the unification, covariance-in-the-tag falls out
+  for `@a T`, `&r T`, `&r var T`. Under the unification, covariance-in-the-tag falls out
   of the role's relation algebra (nesting for `@`, outlives for `&`) rather than being
   restated for each type former.
 

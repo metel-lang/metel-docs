@@ -56,7 +56,7 @@ reference to its field, while `b` is used to replace the variant, the replacemen
 destroys the field while the reference derived from `a` is still live — a use-after-free.
 
 The safe approach is to verify, at the moment mutation is attempted, that no other
-owner exists. This RFC provides `get_mut` — a runtime check returning `Perhaps<&mut T>`.
+owner exists. This RFC provides `get_mut` — a runtime check returning `Perhaps<&var T>`.
 If the reference count is exactly one, no other owner exists and exclusive mutable
 access is safe. Otherwise `None` is returned and the caller handles the failure.
 
@@ -101,7 +101,7 @@ with unique ownership.
 ```metel
 aspect SharedPointer<T> {
     fun clone(self: &Self) -> Self
-    fun get_mut<'s>(self: &'s mut Self) -> Perhaps<&'s mut T>
+    fun get_mut<'s>(self: &'s var Self) -> Perhaps<&'s var T>
     fun try_unwrap(self: Self) -> Result<T, Self>
     fun strong_count(self: &Self) -> USize
 }
@@ -180,17 +180,17 @@ track their source binding, not the shared allocation.
 ### 2.4 `get_mut` — runtime-checked exclusive access
 
 ```metel
-fun get_mut<'s>(self: &'s mut Rc<T, 'b>) -> Perhaps<&'s mut T>
+fun get_mut<'s>(self: &'s var Rc<T, 'b>) -> Perhaps<&'s var T>
 ```
 
 `get_mut` checks `strong_count == 1`. If the count is one, no other owner exists and a
 mutable reference is returned. Otherwise `None` is returned.
 
-The receiver is `&mut Rc<T>`, which prevents concurrent borrows of the outer pointer
+The receiver is `&var Rc<T>`, which prevents concurrent borrows of the outer pointer
 within the same fiber, making the check sound.
 
 ```metel
-let mut node: Rc<Node> = Rc::new(Node { val = 1 });
+var node: Rc<Node> = Rc::new(Node { val = 1 });
 
 match node.get_mut() {
     Some(n) => n.val = 42,
@@ -265,7 +265,7 @@ destructor).
 ### 3.2 `get_mut` race safety
 
 `get_mut` on `Arc<T>` checks the atomic count. The check is inherently racy in the
-presence of concurrent clones from other fibers; requiring `&mut Arc<T>` as the
+presence of concurrent clones from other fibers; requiring `&var Arc<T>` as the
 receiver prevents concurrent access to the *outer pointer* within the same fiber and
 makes the check sound. A concurrent clone on another fiber that arrives after the check
 would have to produce a new `Arc` that is not the one being checked.
@@ -307,7 +307,7 @@ fun make_tree() -> Rc<Node> {
 ```metel
 enum Engine { StringTheory { core: @[Heap] Core }, Impulse { fuel: I32 } }
 
-let mut ship: Rc<Spaceship> = Rc::new(Spaceship { engine = Engine::StringTheory { ... } });
+var ship: Rc<Spaceship> = Rc::new(Spaceship { engine = Engine::StringTheory { ... } });
 
 match ship.get_mut() {
     Some(s) => s.engine = Engine::Impulse { fuel: 100 },
@@ -322,7 +322,7 @@ let config: Arc<Config> = Arc::new(Config::default());
 let config2 = config.clone();   // send to another fiber
 
 // after all other owners are dropped:
-let mut config = config;
+var config = config;
 match config.get_mut() {
     Some(cfg) => cfg.update(new_settings),
     None      => { /* still shared */ }
@@ -352,8 +352,8 @@ A purely static mechanism is desirable when it can be made formally sound.
 
 A sound alternative to proving the RC count is one: introduce a **linear token** whose
 exclusive borrow grants mutable access to all same-brand cells regardless of how many
-aliases exist. Soundness comes from `&mut token` exclusivity — the borrow checker
-enforces that only one `&mut token` exists at a time:
+aliases exist. Soundness comes from `&var token` exclusivity — the borrow checker
+enforces that only one `&var token` exists at a time:
 
 ```metel
 brand 'b {
@@ -361,12 +361,12 @@ brand 'b {
     let a: Rc<Node, 'b> = Rc::new_branded(Node { val = 1 });
     let alias = a.clone();   // multiple owners — fine
 
-    a.borrow_mut(&mut token).val = 42;
-    // alias is still live; soundness from &mut token, not from count
+    a.borrow_mut(&var token).val = 42;
+    // alias is still live; soundness from &var token, not from count
 }
 ```
 
-No `strong_count` check required. The coarse-grained tradeoff: `&mut token` covers all
+No `strong_count` check required. The coarse-grained tradeoff: `&var token` covers all
 `'b`-branded cells simultaneously. This is acceptable for most graph manipulation
 patterns.
 

@@ -41,7 +41,7 @@ updated: '2026-07-24'
 > (row-to-`Self` is admitted inside `construct`/`construct_unchecked` and nowhere else),
 > which also makes §1's synthesized default `Ok(row)` typecheck — it did not, as written.
 > Separately, the examples used two pre-RFC-0098 spellings (`extend Type: Aspect`,
-> `&mut`) despite this RFC post-dating that RFC's implementation by nine days; both are
+> `&var`) despite this RFC post-dating that RFC's implementation by nine days; both are
 > corrected to `extend Type: Aspect` and `&var`. A new Open Question 8 records a privacy
 > question §1.1 exposed and does not answer.
 >
@@ -493,7 +493,7 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
 10. ~~§3's automatic firing has no story for the borrowed case.~~ **Closed 2026-07-24, and
     §3 is the half that survived.** The contradiction was between §3 (any assignment
     completing a narrowed row is sugar for `construct()`) and RFC-0119's `from_record_mut`
-    path, which completed a row behind a `&mut` view and claimed nothing beyond structural
+    path, which completed a row behind a `&var` view and claimed nothing beyond structural
     row-matching needed checking. **RFC-0119 dropped its by-reference mode entirely**, as
     superseded by RFC-0109's named views, so the contradicting site no longer exists.
     Rebuilding a struct now always goes through `from_record` — that is, through

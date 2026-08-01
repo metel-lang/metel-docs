@@ -107,7 +107,7 @@ Concretely, for any RFC that changes the spelling of something already written d
   so a stale one is not cosmetic.
 - **Do not use a blind regex.** Three separate sweeps have now corrupted files this way:
   `fun clone(self: &T)` rewritten to `self = &T`, `type Item: Display` to `type Item =
-  Display`, and — during metel-core#298 itself — a parameter list `part_b: &pb mut [i64]`
+  Display`, and — during metel-core#298 itself — a parameter list `part_b: &pb var [i64]`
   rewritten as an initializer. A field separator and a type annotation are spelled alike;
   only context tells them apart. Scope by code-fence language too: a ```rust fence
   describing the interpreter's own AST must not be swept as if it were Metel.
@@ -229,7 +229,7 @@ explicit dereference operator without specifying how to read a plain value out o
 reference (fixed, extending RFC-0066 §3a's type-directed-binding pattern); RFC-0083's
 motivating example turned out to be obsolete under the ratified allocator design and was
 rewritten; and a pre-existing, unrelated contradiction between `types.md` and
-`expressions.md` over `&mut`-on-field-paths (RFC-0045, already implemented, was reflected
+`expressions.md` over `&var`-on-field-paths (RFC-0045, already implemented, was reflected
 in one file but not the other) was caught and fixed along the way. 6 RFCs remain in the
 backlog: RFC-0008, 0036, 0037, 0060, 0061, 0071. (RFC-0079 and RFC-0084 left the backlog
 by refusal rather than integration, same day — both had reverted to proposing nothing
@@ -260,7 +260,7 @@ syntax (`@[r] T`); RFC-0081 pointed to `#[derive(Send)]` and RFC-0012, both reti
 anywhere in the ratified design — marked historical-only rather than integrated, not
 silently carried forward as if still current. A pre-existing gap from the *previous*
 integration pass was also caught here: `declarations.md`'s "Receiver Forms" section
-still described `*T`/`*mut T` pointers, missed when RFC-0067a's `&T`/`&mut T` rename
+still described `*T`/`*mut T` pointers, missed when RFC-0067a's `&T`/`&var T` rename
 touched `types.md` and `expressions.md` but not this file.
 
 ## Working rules, adopted 2026-07-09

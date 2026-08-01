@@ -114,8 +114,8 @@ not a second, parallel "constant expression" concept living under plain `let`:
   just a new declaration kind `pub` can attach to.
 - **Import/export syntax is unchanged.** `import config::MAX_CONNECTIONS;` and
   `export config::MAX_CONNECTIONS;` work exactly as for any other `pub` item.
-- **There is no `pub comptime let mut`** — `comptime let` has no mutable form at all
-  (mirroring RFC-0083's "no `pub let mut`" rule, but for a stronger reason: comptime
+- **There is no `pub comptime var`** — `comptime let` has no mutable form at all
+  (mirroring RFC-0083's "no `pub var`" rule, but for a stronger reason: comptime
   bindings aren't mutable regardless of visibility).
 - **Ordinary (non-`pub`, non-`comptime`) module-level `let`/`mut` is untouched by this.**
   Their evaluation order remains unspecified — an implementation detail (evaluate
@@ -132,8 +132,8 @@ ordinary call site at runtime is still legal:
 
 ```metel
 comptime fun pow2(n: i64) -> i64 {
-    let mut result = 1;
-    let mut i = 0;
+    var result = 1;
+    var i = 0;
     while (i < n) { result *= 2; i += 1; }
     result
 }

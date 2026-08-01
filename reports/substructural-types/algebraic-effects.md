@@ -47,7 +47,7 @@ open question remains.
 Allocators are ordinary values, passed explicitly, that own allocation identity;
 `@a T` is "a `T` allocated by `a`," and `a`'s type (`Heap`, `LocalHeap`, `BumpAlloc`,
 a custom `Alloc` implementor) determines disjointness and sendability. Lifetime anchors
-are a separate, orthogonal concept: `&r T` and `&r mut T` are non-owning borrows whose
+are a separate, orthogonal concept: `&r T` and `&r var T` are non-owning borrows whose
 validity is bounded by the anchor `r` — never sendable, never escaping their anchor's
 scope. The two concepts used to be fused into one "region" tag; RFC-0066 (move-out
 from a region-allocated value while the region continues) is what forced them apart —
@@ -60,7 +60,7 @@ The rules that matter most for this analysis:
   `Drop::drop` if implemented, then recursively drops fields.
 - **Sendability (RFC-0063 §4/§5)**: `@Heap T` is sendable across fibers (iff `T: Send`);
   `@LocalHeap T` is thread-local; a scoped allocator's `@a T` (`BumpAlloc`, `AutoAlloc`)
-  is never sendable. References `&r T` and `&r mut T` are never sendable, regardless of
+  is never sendable. References `&r T` and `&r var T` are never sendable, regardless of
   anchor.
 - **Negative bounds (RFC-0072)**: `T: !Drop` is satisfied when no `Drop` impl exists for
   `T`. Move-out from a bulk-deallocating scoped arena requires `T: !Drop` (RFC-0066).
@@ -109,7 +109,7 @@ determines the continuation's sendability:
 | `@Heap T` (where `T: Send`), `Copy` values, primitives | yes, if nothing else prevents it |
 | `@LocalHeap T` | no — thread-local |
 | `@a T` (scoped allocator — `BumpAlloc`/`AutoAlloc`) | no — the allocator may be torn down before the fiber terminates |
-| `&r T`, `&r mut T` (any borrow, any anchor) | no — references are never sendable |
+| `&r T`, `&r var T` (any borrow, any anchor) | no — references are never sendable |
 
 This is not an approximation. The allocator's type (or the fact of being a borrow at
 all) encodes the exact relationship. There is no separate marker to reason about: the
@@ -129,18 +129,18 @@ The type system permits exactly the handlers that are safe.
 
 ---
 
-## 4. The `&r mut T` constraint: the real design tension
+## 4. The `&r var T` constraint: the real design tension
 
 This is the most important interaction in the model, and it comes entirely from
 RFC-0067.
 
-`&r mut T` is exclusive and non-sendable by construction. It is also non-escaping: the
-borrow checker guarantees no `&r mut T` outlives its anchor `r`. If a computation holds
-an active `&r mut T` borrow and performs an effect, the continuation captures that
+`&r var T` is exclusive and non-sendable by construction. It is also non-escaping: the
+borrow checker guarantees no `&r var T` outlives its anchor `r`. If a computation holds
+an active `&r var T` borrow and performs an effect, the continuation captures that
 borrow. Two properties follow immediately:
 
 1. The continuation is non-sendable — async handlers are ruled out.
-2. The original binding is inaccessible to the handler code: the `&r mut T` borrow is
+2. The original binding is inaccessible to the handler code: the `&r var T` borrow is
    outstanding, so the handler cannot touch the same location the suspended computation
    is borrowing.
 
@@ -151,14 +151,14 @@ long as the continuation is unresolved — the handler cannot re-borrow the loca
 original value cannot be moved, and no other code can access it mutably.
 
 **The constraint in concrete terms**: performing an effect while holding an active
-`&r mut T` borrow restricts the handler to synchronous resumption — receive the
+`&r var T` borrow restricts the handler to synchronous resumption — receive the
 continuation, call `resume`, and the borrow ends when the computation reaches the end
 of `r`'s scope. An async handler that stores the continuation for later would leave the
 borrow hanging indefinitely; the borrow checker prevents this by making the
 continuation non-escaping in any way that would outlive `r`.
 
 **The resolution**: well-designed effect handlers rarely need to suspend computations
-that hold active `&mut` borrows. An `IO` effect for printing holds no borrows. A
+that hold active `&var` borrows. An `IO` effect for printing holds no borrows. A
 `State` effect that reads and writes logical state holds logical state, not raw borrows
 into physical memory. The fix is to release the borrow before performing the effect — a
 natural refactoring the borrow checker guides you toward with a compile error that
@@ -214,7 +214,7 @@ struct TraceHandler(@a: BumpAlloc) {
 
 The owned allocator `a` is implicitly in scope inside `impl TraceHandler` — never
 re-declared on the impl header or on individual methods (05-struct-owned-allocators.mtl
-§3). Allocating into it requires `&mut self`; a shared `&self` borrow can read from it
+§3). Allocating into it requires `&var self`; a shared `&self` borrow can read from it
 but cannot allocate into it — the same exclusivity RFC-0063 §1 already requires.
 
 A returned borrow anchored to `self` — `&self List<String>` — is valid for the whole
@@ -241,7 +241,7 @@ fun build_ast(src: &String) -> @Heap List<AstNode> {
     // AstBuilder's own allocator `a` is created fresh when the struct is
     // constructed — no relationship to Heap needs deriving, because there is
     // no lifetime-outlives fact being tracked between the two allocators at all.
-    let mut builder = @Heap AstBuilder::new();
+    var builder = @Heap AstBuilder::new();
 
     handle parse_expr(src) {
         Parse::emit_node(node) => builder.handle_emit(node, k)
@@ -322,7 +322,7 @@ on its packaging.
 | Abort without resuming | `Continuation::drop` cascades to all captured values | RFC-0071 §3 |
 | Scoped-allocator data in frame | Continuation inherits the scoped tag → not sendable | RFC-0063 §4/§5 |
 | Cross-fiber async handlers | Legal only when all captured values are `@Heap`/`Copy` | RFC-0063 §4/§5 |
-| Active `&r mut T` borrow in frame | Non-sendable; original location inaccessible; synchronous only | RFC-0067 |
+| Active `&r var T` borrow in frame | Non-sendable; original location inaccessible; synchronous only | RFC-0067 |
 | Handler-local state allocation | `struct Handler(@a: BumpAlloc)` — arena freed with handler | RFC-0068 |
 | Nested handler allocators | Ordinary allocator composition — no `SubRegion`/`Outlives` needed (retracted) | — |
 | Move-out on resume | Type-directed move-out / ascription — standard extraction form | RFC-0066 |
@@ -338,7 +338,7 @@ that threads the handler through the call graph to the effect site. These are
 implementation work, not type-system work.
 
 **The one open question carried from the original report**: whether performing an
-effect while holding an active `&r mut T` borrow should be a compile error at the effect
+effect while holding an active `&r var T` borrow should be a compile error at the effect
 declaration site (a `^ clean` annotation), or whether the current implicit constraint —
 handlers receive non-sendable continuations and are restricted to synchronous
 resumption — is sufficient ergonomically. Both are sound; the question is
@@ -378,7 +378,7 @@ fun main() {
 
 // Test: fixed inputs, captured outputs — no real IO
 fun test_greet() {
-    let mut output: String = "";
+    var output: String = "";
 
     handle greet() {
         Console::print(msg) => { output = output + msg; resume(()) }
@@ -406,7 +406,7 @@ extend TraceHandler {
         TraceHandler { entries: @List::Nil {}, count: 0 }
     }
 
-    fun handle_log(&mut self, msg: String, k: @Heap Continuation<(), T>) -> T {
+    fun handle_log(&var self, msg: String, k: @Heap Continuation<(), T>) -> T {
         self.entries = @List::Cons { head: @msg, tail: self.entries };
         self.count  += 1;
         k.resume(())
@@ -418,7 +418,7 @@ extend TraceHandler {
 }
 
 fun handle_request(order_id: i64) {
-    let mut tracer = TraceHandler::new();
+    var tracer = TraceHandler::new();
 
     let result = handle process_order(order_id) {
         Trace::log(msg) => tracer.handle_log(msg, k)
@@ -464,30 +464,30 @@ fun config_strict(map: &HashMap<String, String>) -> Result<Config, String> {
 }
 ```
 
-### 11.4 The `&r mut T` constraint in practice
+### 11.4 The `&r var T` constraint in practice
 
 ```metel
 effect IO {
     fun print(s: String) -> ()
 }
 
-// Problem: &mut buf is active at the effect site — continuation captures the borrow.
-fun annotate_buffer_wrong(buf: &mut Buffer) ^ IO {
-    IO::print("writing to buffer");   // &mut buf active here
+// Problem: &var buf is active at the effect site — continuation captures the borrow.
+fun annotate_buffer_wrong(buf: &var Buffer) ^ IO {
+    IO::print("writing to buffer");   // &var buf active here
     buf.write("hello");
 }
 
 // Fix: release the borrow before the effect, re-borrow after.
-fun annotate_buffer(buf: &mut Buffer) ^ IO {
-    let msg = "writing ${buf.len()} bytes";   // read through &mut, then release
+fun annotate_buffer(buf: &var Buffer) ^ IO {
+    let msg = "writing ${buf.len()} bytes";   // read through &var, then release
     IO::print(msg);                            // no active borrow here
-    buf.write("hello");                        // &mut taken again after the effect site
+    buf.write("hello");                        // &var taken again after the effect site
 }
 ```
 
 If `annotate_buffer_wrong` is used with an async handler, the compiler rejects it — not
 because effects are involved, but because the continuation contains a non-sendable
-`&mut Buffer`. The error names the type.
+`&var Buffer`. The error names the type.
 
 ### 11.5 Sendability — heap data enables async handlers
 
@@ -534,7 +534,7 @@ struct AstBuilder(@a: BumpAlloc) {
 extend AstBuilder {
     fun new() -> AstBuilder { AstBuilder { nodes: @List::Nil {} } }
 
-    fun handle_emit(&mut self, node: AstNode, k: @Heap Continuation<(), ()>) {
+    fun handle_emit(&var self, node: AstNode, k: @Heap Continuation<(), ()>) {
         self.nodes = @List::Cons { head: @node, tail: self.nodes };
         k.resume(())
     }
@@ -550,7 +550,7 @@ See §7 for `build_ast`, the full function this handler is used from.
 | Testable IO | Effect as a seam — swap handlers to test without mocking frameworks |
 | Allocator-backed tracer | Struct-owned allocator for handler state; bulk-free on drop |
 | Short-circuit / abort | Not calling `resume` is valid; `Drop` cascades automatically |
-| `&r mut T` constraint | Release borrows before effect sites; compiler guides you |
+| `&r var T` constraint | Release borrows before effect sites; compiler guides you |
 | Sendable continuations | `@Heap`-only computations enable async/worker-pool handlers |
 | Nested handler allocators | Ordinary composition — no special sub-region machinery needed |
 

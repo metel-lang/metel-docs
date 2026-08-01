@@ -550,7 +550,7 @@ a second spelling for the same action (RFC-0050's exhaustiveness rule, RFC-0065'
 elision-is-never-silent principle).
 
 **`to_record_mut`/`from_record_mut` extend tier 2 to the borrowed case — and this is what
-actually unifies it with this cluster's earlier `&mut`-based drain/restore sketches.**
+actually unifies it with this cluster's earlier `&var`-based drain/restore sketches.**
 The by-value pair alone only covers "consume the whole struct, get a whole record, maybe
 build a new struct later." It does not cover "keep using `h.fd` while `h.alloc` is being
 drained," which is what every drain/restore example elsewhere in this document actually
@@ -558,20 +558,20 @@ needed — and until now, tier 2 had no answer for that case at all (§11 item 1
 directions come from the *same* two aspects, not new ones: `derives ToRecord` yields
 `to_record(self) -> record {...}` **and** `to_record_mut(&mut self) -> &mut record
 {...}`; `derives FromRecord` yields `from_record(record {...}) -> Self` **and**
-`from_record_mut(&mut record {...}) -> &mut Self`. By-value vs. by-reference is a mode,
+`from_record_mut(&var record {...}) -> &var Self`. By-value vs. by-reference is a mode,
 not a separate capability — only the `To`/`From` direction is worth keeping split, for
 the `SortedPair` reason above.
 
 ```metel
 struct Handle derives ToRecord, FromRecord { fd: i32, alloc: @a Buffer }
 
-fun drain(h: &mut Handle) -> (@a Buffer, &mut record { fd: i32 }) {
-    let view = h.to_record_mut();   // &mut record { fd: i32, alloc: @a Buffer } — reborrow, zero-cost
+fun drain(h: &var Handle) -> (@a Buffer, &var record { fd: i32 }) {
+    let view = h.to_record_mut();   // &var record { fd: i32, alloc: @a Buffer } — reborrow, zero-cost
     let buf = move view.alloc;       // ordinary row-shrink; view's type narrows to record { fd: i32 }
     (buf, view)
 }
 
-fun restore(view: &mut record { fd: i32 }, buf: @a Buffer) -> &mut Handle {
+fun restore(view: &var record { fd: i32 }, buf: @a Buffer) -> &var Handle {
     view.alloc = buf;                // ordinary row-grow; view's type widens back to the full row
     Handle::from_record_mut(view)    // trivial re-coercion — the row already matches Handle's in full
 }
@@ -579,7 +579,7 @@ fun restore(view: &mut record { fd: i32 }, buf: @a Buffer) -> &mut Handle {
 
 This is exactly the shape of the tier-3 `drain`/`restore` example further down, now
 available to *any* tier-2 struct — the only difference is the two explicit conversion
-calls bridging `&mut Handle` to `&mut record {...}` and back, in place of `Handle` being
+calls bridging `&var Handle` to `&var record {...}` and back, in place of `Handle` being
 intrinsically row-shaped. Soundness is the same reason the by-value pair is sound (§3's
 "same bits, new static type" — a reborrow, not a copy or allocation), and `restore`
 requires the row to have already grown back to `Handle`'s exact full shape by ordinary
@@ -587,8 +587,8 @@ field assignment *before* `from_record_mut` is reached, so there is nothing beyo
 structural row-matching to check — no separate obligation-tracking, consistent with how
 this cluster settled the "must the hole be refilled" question earlier: the type system
 enforces safety, not liveness. Nothing stops code from never calling `restore` and simply
-being stuck holding `&mut record { fd: i32 }` forever, unable to typecheck it back to
-`&mut Handle`.
+being stuck holding `&var record { fd: i32 }` forever, unable to typecheck it back to
+`&var Handle`.
 
 **This does not erode the tier 2 / tier 3 boundary.** Tier 3's one remaining, unique
 advantage is untouched: row-conditional impls (§5) and direct `HasField`/`Lacks` bound
@@ -728,7 +728,7 @@ disappear.
   `record {...}` is. Whether §6's restriction was really about brandless/anonymous
   records specifically, and simply doesn't transfer to tier 3, is unresolved here.
 - **Tier 2 as sketched is by-value only (consumes the whole struct, hands back a whole
-  struct).** It does not obviously cover the borrowed, `&mut`-based drain pattern from
+  struct).** It does not obviously cover the borrowed, `&var`-based drain pattern from
   this cluster's earlier sketches (keep using `h.fd` while `h.alloc` is drained) — that
   would need borrowed variants, something like `to_record_mut(&mut self) -> &mut record
   {...}`, not designed here.
@@ -778,7 +778,7 @@ disappear.
     objection assumed structural interchangeability, which tier 3's fixed brand (§9
     surviving claim 1) arguably avoids; unresolved whether the restriction was really
     about brandless records specifically.
-12. ~~Borrowed (`&mut`) variants of tier 2's conversions~~ — **Resolved 2026-07-08,
+12. ~~Borrowed (`&var`) variants of tier 2's conversions~~ — **Resolved 2026-07-08,
     §10**: `to_record_mut`/`from_record_mut`, provided by the same `ToRecord`/
     `FromRecord` aspects as their by-value counterparts (by-value vs. by-reference is a
     mode, not a separate capability). This is what unifies tier 2 with this cluster's
@@ -857,12 +857,12 @@ record Handle { fd: i32, alloc: @a Buffer }
 
 // Only new code, written from here on, can reach for the capability the upgrade
 // unlocked:
-fun drain(h: &mut Handle) -> (@a Buffer, &mut record { fd: i32 }) {
+fun drain(h: &var Handle) -> (@a Buffer, &var record { fd: i32 }) {
     let buf = move h.alloc;
     (buf, h)
 }
 
-fun restore(h: &mut record { fd: i32 }, buf: @a Buffer) -> &mut Handle {
+fun restore(h: &var record { fd: i32 }, buf: @a Buffer) -> &var Handle {
     h.alloc = buf;
     h
 }
@@ -947,7 +947,7 @@ struct FileHandle derives Linear, ToRecord, FromRecord {
     path: String,  // ordinary data, no consumption discipline
 }
 
-fun take_fd(h: &mut FileHandle) -> (RawFd, &mut record { path: String }) {
+fun take_fd(h: &var FileHandle) -> (RawFd, &var record { path: String }) {
     let view = h.to_record_mut();
     let fd = move view.fd;
     (fd, view)          // view's residual type, record { path: String }, is not Linear —
@@ -962,7 +962,7 @@ fun log_path(view: &record { path: String }) {
     // the caller's own parameter type already says so — checked once, at compile time.
 }
 
-fun release(view: &mut record { path: String }, fd: RawFd) -> &mut FileHandle {
+fun release(view: &var record { path: String }, fd: RawFd) -> &var FileHandle {
     view.fd = fd;
     FileHandle::from_record_mut(view)
 }
@@ -1032,9 +1032,9 @@ fn authenticate(session: &mut Session, token: String) {
 ```metel
 struct Session derives ToRecord, FromRecord { host: String, state: AuthState }
 
-fun authenticate(session: &mut Session, token: String) {
-    let view = session.to_record_mut();   // &mut record { host: String, state: AuthState }
-    let old_state = move view.state;       // view narrows to &mut record { host: String } —
+fun authenticate(session: &var Session, token: String) {
+    let view = session.to_record_mut();   // &var record { host: String, state: AuthState }
+    let old_state = move view.state;       // view narrows to &var record { host: String } —
                                             // `state` is genuinely absent here, not holding
                                             // a placeholder value of any kind
     let new_state = match old_state {
@@ -1098,11 +1098,11 @@ Every intermediate `partial` is a distinct, fully-valid, ordinary record type �
 uninitialized-memory state — so there is no window where a panic leaves anything to clean
 up by hand.
 
-**A generic, reusable helper that splits a struct's fields into independent `&mut`
+**A generic, reusable helper that splits a struct's fields into independent `&var`
 pieces, across a function boundary.** Rust's borrow checker's field-sensitivity is
-intra-procedural only — it can tell `&mut s.a` and `&mut s.b` are disjoint *within one
+intra-procedural only — it can tell `&var s.a` and `&var s.b` are disjoint *within one
 function body*, but there is no stable, safe, generic way to write a function that takes
-`&mut S` and *returns* two independently-usable disjoint field borrows, reusable across
+`&var S` and *returns* two independently-usable disjoint field borrows, reusable across
 different struct types. Real code either duplicates the splitting logic inline at every
 call site, or reaches for unsafe pointer-cast tricks to manufacture the two references
 and manually promise they don't alias. This is exactly the motivating gap behind Rust's
@@ -1110,8 +1110,8 @@ own (still unshipped, as of writing) "view types" proposal. With row polymorphis
 split is expressed generically once:
 
 ```metel
-fun drain_field<row R, name: Symbol, T>(s: &mut record { name: T, ..R })
-    -> (T, &mut record { ..R })
+fun drain_field<row R, name: Symbol, T>(s: &var record { name: T, ..R })
+    -> (T, &var record { ..R })
 {
     let v = move s.[name];
     (v, s)
@@ -1119,10 +1119,10 @@ fun drain_field<row R, name: Symbol, T>(s: &mut record { name: T, ..R })
 
 struct Handle derives ToRecord, FromRecord { fd: i32, alloc: @a Buffer }
 
-fun example(h: &mut Handle) {
+fun example(h: &var Handle) {
     let view = h.to_record_mut();
     let (buf, rest) = drain_field::<_, "alloc", @a Buffer>(view);
-    // `buf: @a Buffer` and `rest: &mut record { fd: i32 }` are independently usable —
+    // `buf: @a Buffer` and `rest: &var record { fd: i32 }` are independently usable —
     // `drain_field` was written once, generically, and works unmodified for any struct
     // that derives ToRecord/FromRecord, not just Handle
 }

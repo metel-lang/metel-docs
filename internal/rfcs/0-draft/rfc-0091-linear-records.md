@@ -43,7 +43,7 @@ updated: '2026-07-24'
 > **`HasField`/`Lacks` swept later the same day — see the final note below.**
 >
 > **Also revised 2026-07-24 — §5's `drain_field` row-extension notation normalized to
-> `..R`.** Its signature read `(s: &mut { name: T | R }) -> (T, &mut { R })`, using two
+> `..R`.** Its signature read `(s: &var { name: T | R }) -> (T, &var { R })`, using two
 > notations for row extension in one function and neither of them the corpus's normative
 > one. `| R` appeared **nowhere else in the corpus** except the copy of this same signature
 > in `reports/substructural-types/structural-records.md`, which this RFC was extracted from
@@ -108,7 +108,7 @@ mixed-multiplicity struct's binding type changes at the point of partial consump
 reflect exactly which fields remain, with no explicit conversion call needed, using
 RFC-0090's row/record machinery. Resolves the long-standing aliasing question that
 blocked Option C — what type does a borrow taken before the downgrade have afterward —
-with a candidate (not proven) answer: the shrunk row type, sound because `&mut` already
+with a candidate (not proven) answer: the shrunk row type, sound because `&var` already
 guarantees no other alias exists to observe the stale type. Also specifies a
 `Drop`-field-usage declaration (`uses (fd)`) that narrows RFC-0071 §7's blanket ban on
 partial moves out of `Drop` types to only the fields a `Drop` impl actually reads.
@@ -227,10 +227,10 @@ mixed-multiplicity fields.
 
 The long-standing blocker on Option C: if `p = &f` was taken before the downgrade, what
 type does `p` have afterward? **Candidate answer:** `p`'s type becomes the shrunk row
-(`&mut { <remaining fields> }`), sound for an unremarkable reason — `&mut`
+(`&var { <remaining fields> }`), sound for an unremarkable reason — `&var`
 already guarantees no other live reference exists to observe the stale, pre-downgrade
 type, so no new aliasing machinery (a brand, a fork/join token) is needed beyond
-ordinary `&mut` exclusivity and structural row equality.
+ordinary `&var` exclusivity and structural row equality.
 
 This is **promising, not proven**: no formal soundness argument has been written down,
 only a worked mechanism plus several worked examples (§3 below) that exercise it
@@ -323,7 +323,7 @@ multiplicity-`1` — no `@derive(Linear)` annotation is actually needed or meani
 shown for illustration only. `ToRecord`/`FromRecord` are the derivable ones.)
 
 ```metel
-fun take_fd(h: &mut FileHandle) -> (RawFd, &mut { path: String }) {
+fun take_fd(h: &var FileHandle) -> (RawFd, &var { path: String }) {
     let view = h.to_record_mut();
     let fd = move view.fd;
     (fd, view)          // view's residual type, { path: String }, is not Linear —
@@ -339,7 +339,7 @@ fun log_path(view: &{ path: String }) {
     // the caller's own parameter type already says so — checked once, at compile time.
 }
 
-fun release(view: &mut { path: String }, fd: RawFd) -> &mut FileHandle {
+fun release(view: &var { path: String }, fd: RawFd) -> &var FileHandle {
     view.fd = fd;
     FileHandle::from_record_mut(view)
 }
@@ -406,9 +406,9 @@ fn authenticate(session: &mut Session, token: String) {
 @derive(ToRecord, FromRecord)
 struct Session { host: String, state: AuthState }
 
-fun authenticate(session: &mut Session, token: String) {
-    let view = session.to_record_mut();   // &mut { host: String, state: AuthState }
-    let old_state = move view.state;       // view narrows to &mut { host: String } —
+fun authenticate(session: &var Session, token: String) {
+    let view = session.to_record_mut();   // &var { host: String, state: AuthState }
+    let old_state = move view.state;       // view narrows to &var { host: String } —
                                             // `state` is genuinely absent here, not holding
                                             // a placeholder value of any kind
     let new_state = match old_state {
@@ -466,15 +466,15 @@ fun build() -> BigConfig {
 }
 ```
 
-**A generic, reusable helper that splits a struct's fields into independent `&mut`
+**A generic, reusable helper that splits a struct's fields into independent `&var`
 pieces, across a function boundary.** Rust's borrow checker's field-sensitivity is
 intra-procedural only. Real code either duplicates the splitting logic inline at every
 call site, or reaches for unsafe pointer-cast tricks. This is exactly the motivating gap
 behind Rust's own (still unshipped, as of writing) "view types" proposal:
 
 ```metel
-fun drain_field<row R, name: Symbol, T>(s: &mut { name: T, ..R })
-    -> (T, &mut { ..R })
+fun drain_field<row R, name: Symbol, T>(s: &var { name: T, ..R })
+    -> (T, &var { ..R })
 {
     let v = move s.[name];
     (v, s)
@@ -483,10 +483,10 @@ fun drain_field<row R, name: Symbol, T>(s: &mut { name: T, ..R })
 @derive(ToRecord, FromRecord)
 struct Handle { fd: i32, alloc: @a Buffer }
 
-fun example(h: &mut Handle) {
+fun example(h: &var Handle) {
     let view = h.to_record_mut();
     let (buf, rest) = drain_field::<_, "alloc", @a Buffer>(view);
-    // `buf: @a Buffer` and `rest: &mut { fd: i32 }` are independently usable —
+    // `buf: @a Buffer` and `rest: &var { fd: i32 }` are independently usable —
     // `drain_field` was written once, generically, and works unmodified for any struct
     // that derives ToRecord/FromRecord, not just Handle
 }
@@ -508,7 +508,7 @@ fun example(h: &mut Handle) {
    only construct in the corpus that does:
 
    ```metel
-   fun drain_field<row R, name: Symbol, T>(s: &mut { name: T, ..R }) -> (T, &mut { ..R })
+   fun drain_field<row R, name: Symbol, T>(s: &var { name: T, ..R }) -> (T, &var { ..R })
    { let v = move s.[name]; (v, s) }
    ```
 

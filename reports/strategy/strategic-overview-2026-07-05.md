@@ -116,7 +116,7 @@ of the position report).
 semantics survive; the `@[r] T` syntax becomes `@a T`. The `T: !Drop` legality
 matrix is unchanged in substance.
 
-**RFC-0067 — Reference Types.** `&T`, `&mut T` survive. Borrow syntax becomes
+**RFC-0067 — Reference Types.** `&T`, `&var T` survive. Borrow syntax becomes
 `&r T` at use, `<&r>` at declaration. Auto-deref and deref coercions unchanged.
 
 **RFC-0068 — Struct-Owned Regions (now: Struct-Owned Allocators).** `[own r]`
@@ -251,7 +251,7 @@ The implementation begins the same way whether the ratification happens now or
 later. Start with:
 
 1. Move semantics enforcement (RFC-0071) — affine types, no implicit copy
-2. Reference types and borrow checking (RFC-0067) — `&T`, `&mut T`
+2. Reference types and borrow checking (RFC-0067) — `&T`, `&var T`
 3. Allocator layer (RFC-0063 rewritten) — `@a T`, `Alloc` aspect, `BumpAlloc`,
    `AutoAlloc` backed by real allocators
 4. `pub let` (RFC-0083) and array syntax (RFC-0084) — mechanical changes

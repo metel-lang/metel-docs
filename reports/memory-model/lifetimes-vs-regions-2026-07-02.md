@@ -23,9 +23,9 @@ settled; (9) syntactic channel reassignment: allocators move to the value channe
 `@` prefix (they are values), lifetime anchors move to the type-parameter channel `<>` with
 `&` prefix, `[]` freed for capture lists, multi-anchor form deferred.*
 
-*Updated 2026-07-05: mutable borrow syntax settled — `&r mut T` (anchor groups with `&`,
+*Updated 2026-07-05: mutable borrow syntax settled — `&r var T` (anchor groups with `&`,
 `mut` follows); anchors are type-level only, expression position always uses `&val` /
-`&mut val` with anchor inferred from context.*
+`&var val` with anchor inferred from context.*
 
 *Updated 2026-07-06: added §12, the storage preservation principle. Passing an owned
 `@a T` value to a plain, `@`-free `T` parameter without ascription was previously
@@ -106,15 +106,15 @@ The honest framing retracts that move and renames accordingly:
   @a Node<T>`. Elision applies when exactly one allocator is in scope; `@` alone suffices.
 - **Lifetime anchors are a separate, visible-but-elidable concept.** Every borrow carries
   a lifetime anchor — a binding whose scope bounds the borrow's validity. Anchors are
-  named directly after the `&` sigil in type position: `&r T` (immutable) and `&r mut T`
+  named directly after the `&` sigil in type position: `&r T` (immutable) and `&r var T`
   (mutable) — the anchor groups with `&`, and mutability qualifies the reference after.
   Because lifetime anchors are a form of compile-time parameter (like type parameters),
   they are declared in the **type-parameter channel** `<>` with the `&` prefix:
-  `fun foo<&r>(&r T) -> &r mut U`. There is no `'a`-style abstract variable — anchor
+  `fun foo<&r>(&r T) -> &r var U`. There is no `'a`-style abstract variable — anchor
   names are always binding names, concrete things in scope. Elision covers the common
   cases; explicit `<&r>` declarations appear only when the anchor relationship is
   ambiguous. **Anchors are a type-level concept only** — in expression position you
-  write `&val` and `&mut val`; the anchor is inferred from the expected type.
+  write `&val` and `&var val`; the anchor is inferred from the expected type.
 
 This is the blog's "best of Rust's lifetimes with Zig's Allocator model," taken literally
 and named correctly: allocators are values passed through the value channel; lifetime
@@ -212,7 +212,7 @@ single mis-framing, that is a strong signal the frame is correct.
   old `[own r]` / `[r]` bracket syntax.
 - **Scoped allocator closures** use the value channel naturally: `BumpAlloc::scoped((@a)
   -> { @a Node { val: 1 } })`. `@a` is a closure parameter. No special lambda syntax.
-- **`&self` on borrows** — `self` in `&self`/`&mut self` methods is a binding; `&self T`
+- **`&self` on borrows** — `self` in `&self`/`&var self` methods is a binding; `&self T`
   as a return type means "borrow valid while `self` is alive." Works without any explicit
   `<&self>` declaration because `self` is always in scope in method bodies.
 - **`[]` freed for capture lists.** Closures use `[x, y]` for capture lists without
@@ -242,10 +242,10 @@ At use sites, the sigil alone carries the meaning — no brackets needed:
 - `@a T` — value of type T allocated in allocator `a`
 - `@T` — same, allocator elided (one in scope)
 - `&r T` — immutable borrow of T anchored to binding `r`
-- `&r mut T` — mutable borrow of T anchored to `r`; anchor groups with `&`, `mut` follows
-- `&T` / `&mut T` — anchor elided (one input anchor, or `self` wins)
+- `&r var T` — mutable borrow of T anchored to `r`; anchor groups with `&`, `mut` follows
+- `&T` / `&var T` — anchor elided (one input anchor, or `self` wins)
 
-**Anchors are type-level only.** In expression position, write `&val` or `&mut val`;
+**Anchors are type-level only.** In expression position, write `&val` or `&var val`;
 the anchor is inferred from the expected type. Explicit anchor annotations never appear
 on expressions.
 
@@ -254,7 +254,7 @@ suffices. When a second allocator enters scope, both must be named.
 
 **Lifetime anchor elision rules:**
 1. Each elided `&` in input position gets a distinct fresh anchor
-2. If `&self`/`&mut self` is present, the elided output anchor is `self`'s anchor
+2. If `&self`/`&var self` is present, the elided output anchor is `self`'s anchor
 3. If exactly one input anchor exists, the elided output anchor is that anchor
 4. Otherwise — compile error, explicit `<&r>` declaration required
 
@@ -318,8 +318,8 @@ case, which is uncommon in practice. Deferral does not affect any other part of 
    `Send`. Borrows `&r T` never sendable — scopes are per-fiber. No `Sync` distinction
    needed.
 7. ~~**Lifetime anchor grammar**~~ — **Settled** (§7): `<&r>` declaration, `&r T`
-   (immutable) and `&r mut T` (mutable) at use; anchor groups with `&`, `mut` follows.
-   Anchors are type-level only — expression position always uses `&val` / `&mut val`,
+   (immutable) and `&r var T` (mutable) at use; anchor groups with `&`, `mut` follows.
+   Anchors are type-level only — expression position always uses `&val` / `&var val`,
    anchor inferred from expected type. Optional `@`/`&` prefix within `<>` when mixing
    kinds: required when declaration contains both type params and anchor params or
    anchors and ordering bounds. Elision rules as stated in §7. Ordering bounds:
