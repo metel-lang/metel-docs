@@ -17,18 +17,24 @@ have to be reconstructed by finding whichever dated file happens to be most rece
 reading its prose. Created 2026-07-09; **§1/§2 rewritten and the priorities reordered
 2026-07-22** — see the review log for what changed and why.*
 
-**How to use this document, each strategic-overview cycle:**
+**How to use this document, each strategic-overview cycle:** see `PROCESS.md` (this
+directory) for the full methodology — verification discipline, trigger append-only
+lifecycle and closure bar, and the dated overview's structural template. Summary:
 1. Check §3's open triggers against real progress since `last_reviewed`. Mark any that fired,
    with a one-line resolution note, or that got closed for other reasons.
 2. Update §2's priorities in place — not "restated unchanged," actually re-verified against
    current RFC/`REGISTRY.md` state **and against the issue tracker**, which is where the
-   claim "this is a priority" either is or isn't cashed out.
+   claim "this is a priority" either is or isn't cashed out. **Note the two parts of §2 are
+   updated differently**: the priorities *table* is overwritten each cycle (current state
+   only); the prose subsections beneath it are append-only, like §3's triggers — see
+   `PROCESS.md` §1.
 3. Add any new triggers this cycle surfaced.
 4. Append one line to §4's review log.
 5. Update `last_reviewed` above.
 6. *Then* write the dated narrative snapshot, if one is warranted — this document changing
-   is not itself always enough to justify a new dated file; see `PROCESS.md`'s note on
-   event-based rather than calendar-based triggers for that.
+   is not itself always enough to justify a new dated file; see `internal/rfcs/PROCESS.md`'s
+   note on event-based rather than calendar-based triggers for that, and this directory's
+   own `PROCESS.md` §5 for how triggering decisions stay human-prompted.
 
 ---
 
