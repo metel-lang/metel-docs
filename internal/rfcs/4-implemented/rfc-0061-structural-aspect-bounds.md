@@ -17,6 +17,17 @@ impl_status: implemented
 
 > **Status — implemented (2026-07-14).** Issue #245 landed the structural impl machinery this RFC depends on. The earlier array auto-impl propagation subsection was rehomed to RFC-0096, so no remaining unimplemented dependency stays inside RFC-0061's own scope.
 
+> **Status — qualified (2026-08-01, metel-core#296).** Only the **generic** form of a
+> structural impl is registered. `extend<T> T[]: Display { … }` works and dispatches —
+> `array_target_generic_name` keys it on the impl's own type parameter. A **concrete**
+> structural target has no such key, so `extend i64[]: Display { … }`,
+> `extend (i64, i64): Display { … }` and `extend { w: i64 }: Display { … }` are now
+> rejected with `T0003` naming the generic form, rather than reaching an internal error
+> as they did before. They are rejected rather than accepted because a block whose
+> methods can never be found is the "compiles and does nothing" failure RFC-0071 §9c
+> exists to prevent. Registering monomorphic structural impls is unscheduled; RFC-0116 §3's
+> local-aspect-impl-on-a-record bullet stays aspirational until it lands.
+
 ## Summary
 
 Aspect bounds on structural types — `T[]`, `(A, B)`, `fun(A) -> B` — cannot be
