@@ -30,7 +30,10 @@ moves of bindings and places through:
   generic functions, generic impl methods, aspect-bound calls, and associated-type
   bounds; and
 - ordinary closure capture: a free non-`Copy` root captured by a closure is treated as
-  moved at closure creation.
+  moved at closure creation; and
+- a by-value `self` method reached through any reference — rejected outright, at the first
+  call, regardless of whether the reference is the receiver's own binding, a projection of
+  one, or reached via an explicit deref or a generic bound (RFC-0071 §7.1, metel-core#348).
 
 Array rules are deliberately ownership-sensitive. Indexed element moves are rejected.
 A `[T; N]` `for-in` binding is treated as an owned element, while a `T[]` loop binding
@@ -96,6 +99,14 @@ The checker has a narrow `&var` reborrow rule, but it does not perform lifetime,
 aliasing, or escape analysis. It therefore cannot provide Rust-style guarantees about
 overlapping mutable references. Runtime `RefCell` behaviour remains the final guard for
 some mutable-reference mistakes.
+
+*Revised 2026-08-01:* rejecting a by-value method through a reference (metel-core#348,
+above) is deliberately **not** an exception to this. It needs no aliasing or lifetime
+analysis — a reference's own type already says it does not own its pointee, which the
+checker already knows from `Type::Reference`/`Type::MutReference` and the method's own
+declared receiver kind. Nothing about *which* other bindings might alias the same memory
+is involved. Borrow checking proper (RFC-0122) remains a distinct, larger analysis over
+the same places `place.rs` already exists to share.
 
 ### Control flow is conservative
 

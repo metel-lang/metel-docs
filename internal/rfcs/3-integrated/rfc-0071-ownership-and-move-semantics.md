@@ -317,6 +317,35 @@ let h = Handle { fd = open("file.txt"), tag = 1u64 };
 let fd = h.fd;   // compile error — Handle implements Drop; partial move not allowed
 ```
 
+### 7.1 Moving out of a reference
+
+*Added 2026-08-01 (metel-core#348).* A reference — `&T` or `&var T` — only ever grants
+**access** to the value it points at; it never grants ownership of it. Consequently, a
+non-`Copy` value reached through any reference cannot be moved out, in any position: not
+as a by-value function argument, not by assignment, and not as the receiver of a method
+whose `self` parameter is by value. This is the reference analogue of §7's own rule —
+partial moves are banned because a `Drop` type needs its whole value intact; moving out of
+a reference is banned because *no* type's value can be given up when this scope only
+borrows it.
+
+```metel
+aspect Consume { fun eat(self) -> String; }
+
+fun main() {
+    let b = Handle { fd = open("file.txt") };
+    let r = &b;
+    let taken = r.eat();   // compile error — `eat` takes `self` by value,
+                           // but `r` only borrows `b`
+}
+```
+
+The rule applies uniformly regardless of how the reference reached the call: whether it is
+the receiver's own binding (`r.eat()`), a field or tuple element of reference type
+(`pair.0.eat()`), an explicit dereference (`(*r).eat()`), or a type parameter instantiated
+to a reference (`fun twice<T: Consume>(x: &T)`). `&self` and `&var self` methods are
+unaffected — those already take the receiver by reference, so no ownership transfer is
+being asked for.
+
 ---
 
 ## 8. Interaction with the allocator system
