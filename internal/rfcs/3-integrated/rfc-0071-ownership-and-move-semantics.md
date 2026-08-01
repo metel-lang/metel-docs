@@ -321,12 +321,10 @@ let fd = h.fd;   // compile error — Handle implements Drop; partial move not a
 
 *Added 2026-08-01 (metel-core#348).* A reference — `&T` or `&var T` — only ever grants
 **access** to the value it points at; it never grants ownership of it. Consequently, a
-non-`Copy` value reached through any reference cannot be moved out, in any position: not
-as a by-value function argument, not by assignment, and not as the receiver of a method
-whose `self` parameter is by value. This is the reference analogue of §7's own rule —
-partial moves are banned because a `Drop` type needs its whole value intact; moving out of
-a reference is banned because *no* type's value can be given up when this scope only
-borrows it.
+non-`Copy` value reached through any reference cannot be moved out of it. This is the
+reference analogue of §7's own rule — partial moves are banned because a `Drop` type needs
+its whole value intact; moving out of a reference is banned because *no* type's value can
+be given up when this scope only borrows it.
 
 ```metel
 aspect Consume { fun eat(self) -> String; }
@@ -339,12 +337,22 @@ fun main() {
 }
 ```
 
-The rule applies uniformly regardless of how the reference reached the call: whether it is
-the receiver's own binding (`r.eat()`), a field or tuple element of reference type
-(`pair.0.eat()`), an explicit dereference (`(*r).eat()`), or a type parameter instantiated
-to a reference (`fun twice<T: Consume>(x: &T)`). `&self` and `&var self` methods are
-unaffected — those already take the receiver by reference, so no ownership transfer is
-being asked for.
+**Enforced scope, as of #348.** `--move-check` currently enforces this rule only at the
+method-receiver position — calling a by-value `self` method through a reference. Within
+that position the rule applies uniformly regardless of how the reference reached the call:
+whether it is the receiver's own binding (`r.eat()`), a field or tuple element of reference
+type (`pair.0.eat()`), an explicit dereference (`(*r).eat()`), or a type parameter
+instantiated to a reference (`fun twice<T: Consume>(x: &T)`). `&self` and `&var self`
+methods are unaffected — those already take the receiver by reference, so no ownership
+transfer is being asked for. A `Copy` pointee is also unaffected — reading a copy back out
+through a reference is exactly what `Copy` permits (§3a).
+
+General assignment (`let x: B = *r;`) and by-value argument passing (`f(*r)`) are **not**
+yet enforced — the rule above states the intended end state, not what is checked today.
+This mirrors §3a's own `T: Copy` gate on read-copy positions, which the interpreter does not
+yet check either. Both are the same class of gap: RFC-0071 is integrated for the method-
+receiver case only; extending enforcement to every position a value can be moved out of a
+reference is tracked as follow-up work, not yet filed as its own issue.
 
 ---
 

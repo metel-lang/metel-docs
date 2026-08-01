@@ -33,7 +33,11 @@ moves of bindings and places through:
   moved at closure creation; and
 - a by-value `self` method reached through any reference — rejected outright, at the first
   call, regardless of whether the reference is the receiver's own binding, a projection of
-  one, or reached via an explicit deref or a generic bound (RFC-0071 §7.1, metel-core#348).
+  one, reached via an explicit deref or a generic bound, or a call/`if`/`match`/cast result
+  with no nameable place at all, and regardless of how many layers of reference the
+  receiver's type has (`&&T` names every layer in the diagnostic). Unaffected when the
+  pointee's own type is `Copy` — reading a copy through a reference is exactly what `Copy`
+  permits (RFC-0071 §7.1/§3a, metel-core#348).
 
 Array rules are deliberately ownership-sensitive. Indexed element moves are rejected.
 A `[T; N]` `for-in` binding is treated as an owned element, while a `T[]` loop binding
@@ -107,6 +111,22 @@ checker already knows from `Type::Reference`/`Type::MutReference` and the method
 declared receiver kind. Nothing about *which* other bindings might alias the same memory
 is involved. Borrow checking proper (RFC-0122) remains a distinct, larger analysis over
 the same places `place.rs` already exists to share.
+
+*Revised 2026-08-01 (adversarial review):* the initial #348 commit missed two shapes —
+a non-place receiver (a call/`if`/`match`/cast result whose *type* is still a reference,
+which has no `Place` for the second signal to find) was silently accepted, and a
+multi-layer reference (`rr: &&B`) named only one `Deref` layer in its diagnostic
+regardless of how many the type actually had. Both are fixed: the non-place case now
+falls back to naming the moved value `<temporary>` rather than skipping the check, and
+`deref_layers` counts every layer from the receiver's own type rather than assuming one.
+The review also found the check itself lacked the `Copy` gate `illegal_move_kind` (the
+sibling unconditional-ban mechanism this reuses) already had, wrongly rejecting a
+`Copy` pointee's by-value method through a reference; fixed by gating on
+`is_copy(peel_type_references(receiver.ty()))` before rejecting, mirrored above. §7.1's
+own text has been narrowed to state its enforced scope is the method-receiver position
+only — general assignment and by-value argument passing through a reference are not yet
+checked, the same open gap as `maybe_read_copy`'s missing `Copy` check at read-copy
+positions (§3a).
 
 ### Control flow is conservative
 

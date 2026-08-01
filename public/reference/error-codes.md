@@ -282,7 +282,7 @@ generic parameter with the same bound.
 
 > **Available in v0.12.0, under `--move-check` only.** Move checking is off by default in this release.
 
-An ownership rule from RFC-0071 §1/§7 was violated. Six distinct situations share this
+An ownership rule from RFC-0071 §1/§7 was violated. Seven distinct situations share this
 code, each with its own message:
 
 - a value used after it was moved;
@@ -292,7 +292,9 @@ code, each with its own message:
 - a move of a non-`Copy` element out of a borrowed `T[]` view;
 - a `&var` binding moved by a use that is not a reborrow;
 - a by-value `self` method called through a reference — a reference only grants access,
-  never ownership, so its pointee cannot be moved out (metel-core#348).
+  never ownership, so its pointee cannot be moved out, unless the pointee's own type is
+  `Copy` (in which case the method reads a copy, exactly as `T: Copy` already permits at
+  read-copy positions per §3a) (metel-core#348).
 
 Each message names the binding and the location of the move. When the move happened on an
 earlier iteration of an enclosing loop, the message says so — a loop-carried move is

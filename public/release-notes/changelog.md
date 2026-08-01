@@ -150,6 +150,18 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   `&var self` method `bump` through a shared reference`. The array-method form of the same
   rule was reporting **`T0008`**, which is *non-exhaustive match* — a miscoding no fixture
   covered — and is now `T0006` like the other two.
+- **Two gaps in the by-value-through-a-reference check above, found by adversarial
+  review before this release shipped, are fixed.** A receiver with no nameable place at
+  all — the result of a call, an `if`, a `match`, or a cast, whose *type* is still a
+  reference — was silently accepted (`get_ref(&b).eat()`); it is now rejected the same
+  way, naming the moved value `<temporary>` when there is nothing else to call it. A
+  multi-layer reference (`rr: &&B`) named only one `Deref` in its diagnostic regardless of
+  how many the type actually had; the diagnostic now names every layer (`(*(*rr))`). A
+  third issue was a true gap, not a diagnostic nicety: the check had no `Copy` exemption at
+  all, so a `Copy` pointee's by-value method through a reference was wrongly rejected —
+  fixed by gating on the pointee's own `Copy`-ness, the same gate the sibling
+  `illegal_move_kind` mechanism already had.
+
 - Move checking now rejects consuming a non-`Copy` loop element obtained through a
   borrowed `T[]` view, and reusing a function value is no longer counted as a move.
   **That second rule is currently broader than the specification, and it loosens what
