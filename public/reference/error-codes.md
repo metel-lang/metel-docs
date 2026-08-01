@@ -47,7 +47,7 @@ A float literal cannot be represented as an `f64`.
 
 ## Type errors (T)
 
-### T0001 — Type mismatch
+### T0001 — Type mismatch, or an impl that is not allowed
 
 Two types that must be equal are not.
 
@@ -56,6 +56,22 @@ Two types that must be equal are not.
 ```
 
 **Fix:** ensure the expression produces the expected type. Add an explicit cast if widening (e.g. `x as f64`).
+
+The same code also covers an `extend` block the language does not permit, which is a
+distinct situation sharing one code:
+
+- a target that cannot carry the impl at all — `extend { … }: Drop` on an anonymous record;
+- a target with nowhere to register, so its methods could never be found — a tuple, an
+  anonymous record, a `fun` type, or an array without type parameters. Only
+  `extend<T> T[]: Aspect` is implemented today (metel-core#353);
+- a `drop` body, while destructor invocation is unimplemented (metel-core#292).
+
+```
+[T0001] type error in main.mtl at 3..9: cannot `extend` a tuple type: this block's methods could never be found (metel-core#353). To fix it, use a named struct
+```
+
+**Fix:** each message names the way forward — usually a named struct, or the generic form
+where one exists.
 
 ### T0002 — Annotation required
 
