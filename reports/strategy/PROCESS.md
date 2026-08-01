@@ -32,6 +32,20 @@ version of the same drift `PROCESS.md` (RFC side) exists to prevent, applied to 
 - **`strategic-overview-YYYY-MM-DD.md`** is the point-in-time narrative record. It is
   never edited after the fact except to fix an error found the same day (matching the
   same-day-correction pattern this series already uses inside single cycles).
+- **`OBJECTIVES.md` §0, added 2026-08-01, has the same split inside one section.** "At a
+  glance" is overwritten each cycle — a 5-8 line answer to "what are we doing and why,"
+  for someone operating at the architectural level who should not have to read
+  everything below it to find out. Its "Operator directives" subsection is append-only,
+  and is the **one place operator intent enters this process as a first-class input**
+  rather than being reconstructed after the fact from a decision made mid-conversation
+  about something unrelated (which is how it worked before 08-01 — real steering
+  moments like the RFC-0090/RFC-0100 splits only got recorded because the same agent
+  happened to write the next overview). **Log a directive the moment it's made, in any
+  conversation, not only during a cycle** — proactive capture, not only when the
+  operator explicitly says "log this as a directive." Every cycle checks §2's derived
+  priorities against this section explicitly and must **flag, not silently resolve**,
+  any place they disagree — the process synthesizes from the corpus, but the operator's
+  stated intent is not just one more input to be weighed against it.
 
 ## 2. Verification discipline — the load-bearing rule
 
@@ -93,6 +107,17 @@ reason; dated overviews hold themselves to the same bar.
   replicate without the same forcing function present next time.
 - **New triggers get the next sequential number**, appended after the last one, never
   renumbered. Cross-reference by number in the dated overview, not by paraphrase alone.
+- **Archive once genuinely stale, added 2026-08-01.** Once a trigger has been ✅/🟡
+  closed for at least two review cycles *and* is not the primary subject of an active
+  priority's own narrative section, move its full text (verbatim, unrenumbered) to
+  `triggers-archive.md` and leave a one-line stub in its place here pointing to it. This
+  is purely for scannability — nothing is deleted, and the append-only rule above still
+  applies inside the archive file itself. Precedent for the exception: Trigger 6 stayed
+  in `OBJECTIVES.md` despite being closed, because Priority 1's narrative section is
+  built around narrating it directly; moving it would sever that context. A trigger
+  closed *this* cycle or last cycle stays put regardless of length — "at least two
+  cycles" is deliberately conservative, so a trigger doesn't get archived before anyone
+  has had a chance to notice if its closure was premature.
 
 ## 4. The dated overview's structural template
 
@@ -134,6 +159,17 @@ kept identical across all ten cycles so the series is mechanically identifiable.
 Matches `OBJECTIVES.md`'s own "How to use this document" list; this expands each step
 with the verification discipline from §2:
 
+0. **Steering checkpoint, added 2026-08-01 — always runs, before any research or
+   re-verification starts.** State plainly, in a few sentences: what changed since
+   `last_reviewed` that's likely to matter, and where §2's priorities currently seem to
+   stand as a result. Then ask explicitly whether the operator wants to redirect before
+   the cycle proceeds — don't just proceed and let them correct the finished artifact
+   afterward, which is how every cycle before 08-01 worked and is strictly more
+   expensive to redo. This runs *every* cycle, even a quiet one with nothing contentious
+   to flag — the check itself is cheap, and skipping it on the cycles that look quiet is
+   exactly when an operator's actual redirect would be missed silently. If the operator
+   redirects, treat that redirect as a new entry in §0's Operator Directives before
+   continuing, not as a one-off instruction that only affects this cycle's prose.
 1. **Check §3's open triggers against real progress since `last_reviewed`**, verifying
    each against a primary source (§2 above), not against what the previous cycle's
    narrative implied would happen. Mark fired/closed with a dated, evidence-cited

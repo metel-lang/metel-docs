@@ -20,6 +20,9 @@ reading its prose. Created 2026-07-09; **§1/§2 rewritten and the priorities re
 **How to use this document, each strategic-overview cycle:** see `PROCESS.md` (this
 directory) for the full methodology — verification discipline, trigger append-only
 lifecycle and closure bar, and the dated overview's structural template. Summary:
+0. **Steering checkpoint, before anything else** — state what's changed and where §2
+   seems to stand as a result, and ask whether the operator wants to redirect before
+   proceeding. Runs every cycle, quiet ones included. See `PROCESS.md` §5.
 1. Check §3's open triggers against real progress since `last_reviewed`. Mark any that fired,
    with a one-line resolution note, or that got closed for other reasons.
 2. Update §2's priorities in place — not "restated unchanged," actually re-verified against
@@ -35,6 +38,41 @@ lifecycle and closure bar, and the dated overview's structural template. Summary
    is not itself always enough to justify a new dated file; see `internal/rfcs/PROCESS.md`'s
    note on event-based rather than calendar-based triggers for that, and this directory's
    own `PROCESS.md` §5 for how triggering decisions stay human-prompted.
+
+---
+
+## 0. At a glance
+
+*Added 2026-08-01, in response to the operator naming this document's own scalability
+problem: no single place answered "what are we doing and why" without reading the full
+history below. This section is **overwritten each cycle** — current state only, no
+history — unlike everything below it. For history, read §§1–4 and the dated overviews.*
+
+**Top priorities right now:** (1) Records/views — 3 of the 6-way RFC-0090 split
+(RFC-0115/0116/0118) shipped `4-implemented`; RFC-0117/0119/0120/0121 untouched,
+`0-draft`. (2) Ownership/borrow-checking — RFC-0071 `3-integrated`, substantially built
+and enforced opt-in via `--move-check`; RFC-0122 (borrow checking) still `0-draft`.
+(3) Brands/context parameters and (4) allocators: untouched, as designed.
+
+**Needs a decision from the operator, not just the agent:** RFC-0122 missed its own
+07-24 completion bar ("reach `2-accepted` in v0.12.0") — see Trigger 27. Does v0.13.0
+get a restated bar, or is this now open-ended?
+
+**Latest dated overview:** `strategic-overview-2026-08-01.md`. **Latest review:**
+2026-08-01 (see `last_reviewed` above).
+
+### Operator directives
+
+*Append-only, most-recent-first. Distinct from §2's derived priorities: this is where
+you state an explicit priority call or redirect directly, rather than it being
+reconstructed later from a decision made mid-conversation about something else (as
+happened, e.g., with the RFC-0090/RFC-0100 splits — real steering moments, only
+recorded after the fact by whichever cycle's writer noticed them). Every cycle checks
+§2 against this section and must flag, not silently resolve, any place they disagree.
+Logged proactively — any time an explicit steering call is made, in any conversation,
+not only during a strategic-overview cycle — per `PROCESS.md` §1.*
+
+*(none yet — this section is new as of 2026-08-01)*
 
 ---
 
@@ -481,12 +519,14 @@ superseded). Triggers 5 and 12 fired and resolved here.
 ## 3. Open triggers (watch list)
 
 Living checklist. Fired/resolved items stay listed with resolution, not deleted — the record
-of what was watched for and what actually happened is part of the point.
+of what was watched for and what actually happened is part of the point. **Once a
+trigger has been closed for at least two review cycles and isn't the subject of an
+active priority's own narrative section, it moves to `triggers-archive.md`** (verbatim,
+never renumbered) with a one-line stub left in its place here — see `PROCESS.md`. This
+keeps the active list scannable without losing the record.
 
-1. ✅ **Fired, 2026-07-09.** Re-reading RFC-0080 confirmed it did not naturally extend to
-   derive-as-codegen — `Clone`'s derive was one hardcoded example, and its Unresolved
-   Questions never mentioned a general mechanism. Directly caused the RFC-0012 →
-   RFC-0092/0093/0094/0095 split.
+1. ✅ **[Archived — see `triggers-archive.md`]** Fired 2026-07-09; caused the
+   RFC-0012 → RFC-0092/0093/0094/0095 split.
 2. ⬜ **Open.** If a real scenario forces the brand-kind-unification role-crossing matrix to
    resolve and reveals identity brands and allocator/lifetime brands are more separate than
    hoped → the substrate story weakens at exactly the point where it wants brands to carry
@@ -500,9 +540,8 @@ of what was watched for and what actually happened is part of the point.
    language shipping a similar structural-plus-linear combination first (the one external
    risk to the "worth pursuing" verdict); RFC-0039's independent prioritization; a concrete
    user-authored-allocator need that would promote the frontier layer. None resolved.
-5. ✅ **Fired and resolved, 2026-07-10.** The former Priority 1 moved. This trigger did its
-   job: it named the pattern that was actually happening (L3 activity masking L2 inaction)
-   and caused the check that led to ratification.
+5. ✅ **[Archived — see `triggers-archive.md`]** Fired and resolved 2026-07-10; caused
+   the former Priority 1 (allocator/lifetime cluster) to ratify.
 6. ✅ **Settled 2026-07-24 — the dependency was accidental, and the cluster is decomposed.**
    Working the question through produced a cleaner answer than "yes" or "no": the
    RFC-0089→RFC-0090 dependency was introduced by RFC-0089's *own same-day revision* on
@@ -543,13 +582,8 @@ of what was watched for and what actually happened is part of the point.
    undocumented process before it did? **Partially exercised 2026-07-21:** RFC-0111 and
    RFC-0113 were both created this window, and `INDEX.md` was checked first in both cases.
    Two data points, both by the same operator who wrote the rule — keep watching.
-8. 🟡 **Fired repeatedly; the mechanism works.** Twelve RFCs moved through `3-integrated` and
-   each surfaced a real problem while writing worked examples — RFC-0067a's missing
-   value-extraction rule, RFC-0083's obsolete motivating example, a pre-existing
-   `types.md`/`expressions.md` contradiction over `&var` field paths, RFC-0072's stale
-   bracket-channel examples, RFC-0081's dangling `#[derive]` reference, RFC-0082 amending a
-   retracted RFC's dead concept. Of the original backlog only RFC-0008 remains, still gated on
-   `dyn Aspect` having no consumer. Superseded as a watch item by Trigger 13.
+8. 🟡 **[Archived — see `triggers-archive.md`]** Fired repeatedly through 07-15; the
+   `3-integrated` worked-examples mechanism works. Superseded as a watch item by Trigger 13.
 9. ⬜ **Open.** Watch for the "interpreter is temporary" corollary (§1) being misapplied to
    justify skipping *feedback-trustworthiness* work under cover of "it's all throwaway
    anyway" — e.g. a real dispatch bug shrugged off instead of fixed. **Now directly operative:
@@ -562,13 +596,10 @@ of what was watched for and what actually happened is part of the point.
     non-maintainer, and whether the tooling added then gets reused rather than being a one-off.
     The blog's "open parts of the process to outside contributions" makes this a stated goal
     now, not just an internal hope.
-11. ✅ **Re-evaluated and closed, 2026-07-15.** The analogy to the former Priority 1 does not
-    hold: the frontier layer is demand-gated in both source documents, blocks only
-    user-authored custom allocators, and RFC-0026 needs a rewrite anyway. Signal retained in
-    Priority 6's form.
-12. ✅ **Fired and resolved, 2026-07-15.** The six RFCs at `3-integrated` all reached
-    `4-implemented` within four days — the fastest resolution any trigger here has had.
-    Cleanest evidence yet that naming a stall explicitly is what gets it moved.
+11. ✅ **[Archived — see `triggers-archive.md`]** Re-evaluated and closed 2026-07-15;
+    the former-Priority-1 analogy did not hold. Signal retained in Priority 6's form.
+12. ✅ **[Archived — see `triggers-archive.md`]** Fired and resolved 2026-07-15; six
+    RFCs at `3-integrated` reached `4-implemented` within four days.
 13. ⬜ **Open, 2026-07-15.** `3-integrated` has been empty since Trigger 12 resolved; recent
     RFCs (0098/0102/0103/0106/0111) went straight from accepted to implemented. Watch whether
     that's the new normal (worked-examples-then-immediate-build, collapsing the stall this
@@ -596,20 +627,10 @@ of what was watched for and what actually happened is part of the point.
     whether a cheap repeatable check ("does an open PR's branch still contain work not already
     on the target branch") gets added anywhere — this instance was only caught by an explicit
     pull-and-compare.
-16. ✅ **Fired and resolved same day, 2026-07-20.** RFC-0097's frontmatter claimed
-    `implemented` while `coherence.rs::outermost_id` had no deliberate branch for a bare
-    blanket-impl target. Resolved by landing the real check rather than downgrading the
-    frontmatter; zero regressions, since the fix only made an already-correct outcome
-    deliberate.
-17. ✅ **Opened 2026-07-20; answered 2026-07-21 — both, in that order.** Would the next cycle
-    move a higher-ranked priority, or would reference/deref ergonomics churn keep substituting
-    for it? It did both: RFC-0107/0108/0110 were implemented and RFC-0111 was opened *and*
-    implemented — all ergonomics, with records and allocators untouched — and then the cluster
-    was named and corrected within the same cycle, sweeping RFC-0089/0090/0091/0109 to review
-    and writing RFC-0113 from nothing. Recorded honestly rather than as a clean win: **the
-    correction happened because the trigger was read back, not because the priority was
-    followed.** Superseded going forward by Trigger 20, which measures the same thing without
-    depending on someone remembering to re-read this file.
+16. ✅ **[Archived — see `triggers-archive.md`]** Fired and resolved same day, 07-20:
+    RFC-0097 frontmatter/reality drift fixed by landing the real check.
+17. ✅ **[Archived — see `triggers-archive.md`]** Opened and answered 2026-07-20/21: both
+    ergonomics churn *and* a same-cycle self-correction happened. Superseded by Trigger 20.
 18. ⬜ **Open, 2026-07-20.** The allocator-decomposition hypothesis (Priority 4): can the
     cluster be rebuilt as (context parameter) + (allocator-instance brand) + (owned box) +
     (borrow-checked lifetime), leaving only the `Alloc` aspect and `@`-sugar as residue?
