@@ -62,7 +62,8 @@ gated on Metel acquiring a CFG/MIR it does not have.
 
 **RFC-0067 (Lifetime Anchors) also reverted to `1-under-review` on 2026-08-02** — its
 anchor model predates any specified checker and its "Unresolved questions: None" is
-replaced with five real ones (Trigger 29).
+replaced with five real ones (Trigger 29). **Now targeted at v0.15.0** (milestone created;
+#364 is the tracked artifact carrying it), behind RFC-0122 on the critical path.
 
 **Needs a decision from the operator, not just the agent:** whether RFC-0122 can
 realistically still clear `2-accepted` before the `v0.12.0` tag, given §2b.2 (specify the
@@ -83,6 +84,17 @@ recorded after the fact by whichever cycle's writer noticed them). Every cycle c
 §2 against this section and must flag, not silently resolve, any place they disagree.
 Logged proactively — any time an explicit steering call is made, in any conversation,
 not only during a strategic-overview cycle — per `PROCESS.md` §1.*
+
+**2026-08-02 — lifetime anchors (RFC-0067) are targeted at v0.15.0.** Milestone created;
+RFC-0067 carries `target: v0.15.0`; **#364** (the temporary reference-typed-struct-field
+ban, which implementing anchors lifts) is milestoned there and is the *only* tracked
+artifact carrying it — RFC-0067 itself gets no implementation issue until `3-integrated`,
+per `internal/rfcs/PROCESS.md`. Recorded with its critical path rather than as a bare
+date, because RFC-0067 is currently `1-under-review` with five open questions and sits
+behind RFC-0122, which is itself `1-under-review` with three blocking gaps: **RFC-0122
+settles → RFC-0067's questions resolve (chiefly whether §1's lexical anchor framing
+survives NLL) → accepted → integrated → implemented in v0.15.0, discharging #364.**
+If v0.15.0 arrives with #364 still open, that is the signal the chain stalled.
 
 **2026-08-02 — RFC-0067 (Lifetime Anchors) reverts to `1-under-review`.** Its own header
 already recorded that it was accepted 2026-06-28 "before any checker was specified, so its
