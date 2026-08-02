@@ -9,11 +9,6 @@ title: "Metel Language Changelog"
 **Released 2026-08-02.** The spec's `Since v0.12.0` / `Changed in v0.12.0` markers
 refer to this entry.
 
-**RFCs implemented:** RFC-0115 (Field Initializer Separator), RFC-0116 (Anonymous
-Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
-**RFC-0071 (Ownership and Move Semantics) is partially implemented** — see
-"Ownership" below for exactly which parts, and which are declared but inert.
-
 **Anonymous records:**
 - Closed, anonymous, exact-shape, structurally typed product types: `{ x: f64, y: f64 }`
   as a type, `{ x = 1.0, y = 2.0 }` as a value, and `Handle.{ fd }` to project a nominal
@@ -27,8 +22,8 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   record there in parentheses — `({ x = e })`; the diagnostic says so at the point of use.
 - Records satisfy `Send`/`Sync` by field composition, but carry no impl-based aspect.
   Inherent methods, non-local aspect impls, and a custom `Drop` on a record are rejected.
-- Deliberately not yet shipped: chained and pattern projection, narrowing, record
-  conversions, named records, and open rows. Each belongs to a later RFC.
+- Not yet available: chained and pattern projection, narrowing, record conversions, named
+  records, and open rows.
 
 **Row bounds:**
 - A bound may be a bare row, constraining a type parameter by the fields it carries rather
@@ -50,222 +45,59 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
 - A row bound on a parameter that is `record`-kinded in neither the parameter list nor the
   `where` clause is an error that names the fix.
 
-**Ownership — partially implemented, and partly inert:**
+**Ownership — partially available, and off by default:**
 - The `Copy` and `Drop` aspects are declared in the standard library. `Copy` is implemented
   for the twelve numeric primitives plus `boolean` and `Char`.
 - Structural rules: a tuple is `Copy` iff every element is, a fixed array iff its element
-  type is, `&T` is `Copy`, and `&var T` is not. **Dynamic `T[]` deliberately has no rule in
-  either direction** — the question belongs to sequence types, not to this release.
+  type is, `&T` is `Copy`, and `&var T` is not.
 - A struct may implement `Copy` only if every field is; an enum only if every payload in
   every variant is. The diagnostic names the offending field or payload.
-- `Copy` and `Drop` are mutually exclusive. This is rejected in either declaration order,
-  and also when two *overlapping conditional* impls would give one instantiation both.
-- **Move checking is implemented but off by default.** Pass `--move-check` to enable it.
+- `Copy` and `Drop` are mutually exclusive, rejected in either declaration order and also
+  when two overlapping conditional impls would give one instantiation both.
+- **Move checking is available but off by default.** Pass `--move-check` to enable it.
   Nothing in the language moves without that flag; the default remains copy-on-assign.
-- With move checking enabled, generic function bodies, generic impl method bodies, and
-  named let-polymorphic closure bodies are now reconstructed for analysis instead of being
-  skipped wholesale; generic bodies that still cannot be analysed produce compiler
-  warnings and remain counted in the move-check report. Generic impl methods are paired
-  with their own declared bounds even when nominal, structural-array, or cross-module
-  impls provide the same method name. Calls through a generic parameter's aspect bounds,
-  including methods with their own type parameters, are reconstructed and checked too.
-  Associated-type bounds now carry through that symbolic reconstruction (including
-  `Copy`), and warnings for bodies that remain unchecked include the reconstruction
-  failure instead of hiding it behind a generic message; ambiguous symbolic methods
-  name their candidate aspects. A generic body whose parameters use `impl Aspect` in a
-  nested position (`impl Printable[]`, a tuple or generic argument) is now checked as
-  well — such a body was previously skipped in full, because the mis-lowering fixed
-  above left an unlowered `impl Aspect` in the signature and the checker declined to
-  reconstruct it. That was a silent false-negative route for every move in the body,
-  not only for the parameter itself.
-- Pre-existing generic evaluator and typechecker coverage now states its ownership
-  contracts explicitly: read-only callbacks borrow, duplication and indexed extraction
-  require `Copy`, and filter/find fixtures clone through indexed borrows rather than
-  relying on `for-in` to produce owned elements from a borrowed `T[]`. The explicit clone
-  callback is a temporary fixture workaround: borrowed iteration is now enforced, so what
-  remains is that `Clone` exists as an aspect but has essentially no stdlib impls, so
-  `T: Clone` is not usable as a bound for a primitive or `String` (#335). The
-  move-check corpus has no unintentional violations left.
-- **`extend` on a concrete structural target is now a real diagnostic, not an internal
-  error.** `extend i64[]: Area { … }`, `extend (i64, i64): Area { … }` and
-  `extend { w: i64 }: Area { … }` used to report `[I0001] internal error: generic impl
-  blocks not yet supported` — an internal error, from valid RFC-sanctioned source, whose
-  message named the wrong cause (the trigger was a non-nominal target, not generics).
-  They now report `T0003` naming the target kind and the form that does work:
 
-  ```
-  cannot `extend` a tuple type without type parameters: only the generic form is
-  implemented, so this block's methods could never be found. Write it as
-  `extend<A, B> (A, B): Aspect { … }`, or use a named struct
-  ```
+  With it enabled:
+  - Loop bodies are analysed to a fixed point, so a move inside a loop is visible to the
+    next iteration. The diagnostic says which iteration it means:
+    `` `s` was moved here on an earlier iteration ``.
+  - A move on a path leaving through `break`, `continue`, or `return` no longer reaches
+    the code that follows it — removing a class of false positives, in and out of loops.
+  - Writing to a moved place makes it valid again rather than counting as a use of it, so
+    `let moved = s; s = "again";` is accepted. Assigning a field works the same way; a
+    write whose *base* is gone is still an error.
+  - A dereference is a place: `*p` and `(*p).f` can be named, and moving the same value
+    out of a reference twice is caught rather than ignored.
+  - Generic function bodies, generic impl methods, and named let-polymorphic closures are
+    analysed rather than skipped. Bodies that still cannot be analysed produce a warning
+    naming the reason instead of failing silently.
+  - A by-value `self` method is rejected when called through a reference, and a
+    `&var self` method is rejected through a shared reference, in every receiver form. A
+    reference grants access, never ownership. `&self` methods and owned receivers are
+    unaffected, as is a `Copy` pointee.
+  - Consuming a non-`Copy` element out of a borrowed `T[]` is rejected.
 
-  **A tuple or record target is rejected in the generic form too** (#353). That form
-  typechecks, and then the impl is invisible to both method dispatch and bound
-  satisfaction — `p.area()` fails to resolve and `(i64, i64)` does not satisfy
-  `T: Area`. So of the structural targets RFC-0061 grants, the generic **array** form
-  is the one that works: `extend<T> T[]: Display { … }` registers and dispatches as
-  before, which is how the standard library declares its array impls.
-
-  Rejecting rather than accepting is deliberate throughout: a block whose methods can
-  never be found would compile and do nothing. Nobody can be relying on the old
-  behaviour, because the old behaviour was that the impl had no effect.
-
-- **Auto-deref now reaches through a reference in two places it previously missed.** An
-  array intrinsic resolves through `&T[]` and `&[T; N]` — `arr.len()` where `arr: &i64[]`
-  needed `(*arr).len()` before (#314) — and an aspect method resolves through `&T` under a
-  `T: Aspect` bound, so a read-only generic can borrow its parameter and still call methods
-  on it (#334). Both mattered more than their size suggests: the fix for any ownership
-  complaint is "take a reference instead", and these were the two places where doing so
-  then stopped you calling a method.
-- **A `&var self` method is now rejected through a shared reference in every receiver
-  form.** The check previously asked whether the receiver's *binding* was writable, which
-  has no answer when the receiver is not a binding — `pair.0.bump()` reached through a
-  `&T` was accepted and did mutate. The rule is now about the reference chain itself, so
-  the identifier and non-identifier forms agree, and so do the concrete and generic paths.
-  An owned receiver is unaffected: `var c = C { … }; c.bump()` still works, because owning
-  a value and holding a shared reference to one are different things.
-- **A by-value `self` method is now rejected through any reference, at the first call.**
-  A reference only grants access, never ownership — but calling a method whose `self` is
-  by value through `&T` or `&var T` was accepted, and repeatable, and left the original
-  binding usable afterward:
-
-  ```metel
-  aspect Consume { fun eat(self) -> String; }
-
-  let b = Handle { fd = open("file.txt") };
-  let r = &b;
-  let first = r.eat();     // was accepted; moves *r without owning it
-  let second = r.eat();    // was accepted again
-  ```
-
-  Nothing objected because `&T` is `Copy` — consuming the receiver *place* (`r`) recorded
-  no move, and the value actually being moved was `*r`, which nothing checked. Rejected
-  regardless of how the reference reaches the call: the receiver's own binding, a field or
-  tuple element of reference type, an explicit `(*r).eat()`, or a type parameter
-  instantiated to a reference. `&self` and `&var self` methods are unaffected. See
-  RFC-0071 §7.1 (new).
-
-  The diagnostic changes with it. This case reported `T0006 cannot assign to immutable
-  binding`, which named the proxy rather than the problem; it now reads `cannot call
-  `&var self` method `bump` through a shared reference`. The array-method form of the same
-  rule was reporting **`T0008`**, which is *non-exhaustive match* — a miscoding no fixture
-  covered — and is now `T0006` like the other two.
-- **Two gaps in the by-value-through-a-reference check above, found by adversarial
-  review before this release shipped, are fixed.** A receiver with no nameable place at
-  all — the result of a call, an `if`, a `match`, or a cast, whose *type* is still a
-  reference — was silently accepted (`get_ref(&b).eat()`); it is now rejected the same
-  way, naming the moved value `<temporary>` when there is nothing else to call it. A
-  multi-layer reference (`rr: &&B`) named only one `Deref` in its diagnostic regardless of
-  how many the type actually had; the diagnostic now names every layer (`(*(*rr))`). A
-  third issue was a true gap, not a diagnostic nicety: the check had no `Copy` exemption at
-  all, so a `Copy` pointee's by-value method through a reference was wrongly rejected —
-  fixed by gating on the pointee's own `Copy`-ness, the same gate the sibling
-  `illegal_move_kind` mechanism already had.
-
-- Move checking now rejects consuming a non-`Copy` loop element obtained through a
-  borrowed `T[]` view, and reusing a function value is no longer counted as a move.
-  **That second rule is currently broader than the specification, and it loosens what
-  `--move-check` accepts.** It treats *every* function type as `Copy`, not only function
-  pointers, so this program is accepted where it was previously rejected with `T0019`:
+- **Known limitation: closures are not tracked as owners.** Every function type is treated
+  as `Copy`, so a closure that captures a non-`Copy` value can be reused freely, and
+  calling one never consumes what it captured:
 
   ```metel
   fun call(f: () -> String) -> String { f() }
 
   let s = "hello";
-  let f = () -> String { s };   // captures a non-`Copy` value
+  let f = () -> String { s };   // captures a non-Copy value
   let a = call(f);
-  let b = call(f);              // second use: no longer an error
+  let b = call(f);              // accepted, though `f` is once-callable
   ```
 
-  Invoking `f` consumes its captured `String`, so under affine ownership `f` is
-  once-callable and the second use must fail. Only function *pointers* are specified as
-  `Copy`; a closure's copyability should follow from its captures. Calling such a closure
-  twice *directly* (`f(); f()`) was already accepted before this release — that half is
-  older, since invoking a closure never updated its captures' moved state.
+  Treat `--move-check` in this release as checking ownership of *values*, not of closures.
+  This is a checker gap, not memory unsafety — the runtime deep-clones a closure's
+  environment at creation, so both calls produce a value. It is the reason move checking
+  is not yet the default.
 
-  This is an ownership-soundness gap in the checker, not memory unsafety: the runtime
-  deep-clones a closure's environment at creation, so both calls do produce a value. Move
-  checking is opt-in, so nothing changes unless you pass `--move-check`.
-
-  **Deliberately deferred to v0.13.0 (#330), so v0.12.0 ships with this exclusion
-  stated rather than with a fix rushed to meet the release.** Treat `--move-check` in
-  this release as checking ownership of *values*, not of closures: a closure that
-  captures a non-`Copy` value can be reused freely, and calling one never consumes what
-  it captured. Everything else the checker reports is unaffected.
-
-  The reason it is not a small fix is worth knowing. `Type::Fun` carries parameters and a
-  return type and nothing else, so a closure and a named function with the same signature
-  have the same type; and at runtime a named function is itself a closure value with a
-  captured environment. "Function pointers are `Copy`, closures are not" is therefore not
-  a distinction that exists and was lost — it does not exist at either level, and any fix
-  has to create it. The design alternatives are recorded on #330; the principled ones
-  depend on RFC-0049 and RFC-0050, which are drafts blocked on a successor to the refused
-  RFC-0046.
-
-  This gates making move checking the default (#310), which has moved to v0.13.0 with it.
-  The corpus migration #310 describes is finished — no fixture outside the deliberate
-  negative ones fails with checking on — so what is deferred is the flip and the guarantee
-  it would imply, not the work.
-- **Loop bodies are now analysed to a fixed point.** A move inside a loop body used to be
-  invisible to the next iteration: the body's exit state was unioned into the code *after*
-  the loop, but never fed back into the loop itself. So this was accepted:
-
-  ```metel
-  let s = "hello";
-  var i = 0;
-  loop {
-      i += 1;
-      let moved = s;         // moves `s` again on every iteration
-      if (i == 2) { break; }
-  }
-  ```
-
-  The body is now re-walked until the state entering it stops growing, for `loop`,
-  `while`, C-style `for`, and `for-in` alike — and a `while` condition is re-checked
-  against it too, so a move in the body is caught where the condition reads the binding
-  next time round. A loop-carried move is usually its own use, the same expression one
-  iteration later, so the diagnostic says which iteration it means:
-  `` `s` was moved here on an earlier iteration ``.
-- **A move on a path that leaves through `break`, `continue`, or `return` no longer
-  reaches the code that follows it.** Those moves are routed to where control actually
-  goes — out of the loop, or round it — instead of being joined into the fall-through
-  path. This is what lets the fixed point above accept `loop { let moved = s; break; }`,
-  and it also removes a pre-existing false positive outside loops entirely:
-
-  ```metel
-  let s = "hello";
-  if (done) {
-      let moved = s;
-      return;                // this path leaves
-  }
-  let again = s;             // previously rejected; the move cannot have happened here
-  ```
-
-- **Writing to a moved place makes it valid again**, instead of counting as a use of it.
-  A write does not read its target, so `let moved = s; s = "again";` is accepted — it was
-  previously rejected, with or without a loop. Assigning a field works the same way
-  (`p.left = "c"` after `p.left` moved makes `p` whole again), while a write whose *base*
-  is gone is still an error, and replacing one field still does not revive a wholly moved
-  value. This matters most in a loop body, where move-then-replace is the idiomatic shape.
-- **A dereference is now a place.** The move checker can name `*p` and `(*p).f`, where it
-  previously gave up on any expression under a `*`. Moving the same value out of a
-  reference twice is caught rather than ignored, and diagnostics render such a place the
-  way it is written: `` `(*p)` was moved at … ``.
-- `impl Aspect` is now lowered wherever it appears in a parameter annotation, not only as
-  the annotation's outermost type. Previously `impl Printable[]` parsed as a bound on the
-  *array* type instead of on its element; no aspect names an array type, so the bound was
-  vacuous — an array of a non-implementing element type was accepted, while a valid array
-  was rejected with a spurious "cannot infer receiver type" error. Nested occurrences in
-  generic arguments, tuples, records, references, function types, and associated-type
-  projections are lowered too, and each occurrence mints its own type parameter.
-- **The `Drop` aspect is declared, but destructor invocation is not in this release.**
-  Drop order and `drop` invocation moved to v0.13.0 with the rest of the ownership work
-  (#292).
-
-  **Writing a `drop` body is therefore rejected** (#345), rather than compiling into a
-  destructor that never runs — a feature that looks functional and silently does nothing.
-  RFC-0071 §9c recorded a release gate against exactly that, and it fired when #292 moved
-  to v0.13.0.
+- **The `Drop` aspect is declared, but destructors do not run in this release**, and
+  **writing a `drop` body is therefore rejected** rather than compiling into a destructor
+  that never fires:
 
   ```metel
   extend Handle: Drop {
@@ -273,106 +105,113 @@ Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
   }
 
   extend Handle: Drop {
-      fun drop(self) {}                    // fine — declares `Drop`, promises nothing
+      fun drop(self) {}                    // fine — declares Drop, promises nothing
   }
   ```
 
-  **Declaring a type `Drop` still works, and everything it means at the type level is
-  implemented.** An empty body claims nothing that is not delivered, and it still gets you
-  the `Copy`/`Drop` exclusion, the eligibility rules, `T: Drop` and `T: !Drop` bounds, the
-  ban on `Drop` for anonymous records, and the move checker's refusal to partially move a
-  `Drop` value. Only invocation is missing.
+  Declaring a type `Drop` still works and everything it means at the type level is
+  available: the `Copy`/`Drop` exclusion, the eligibility rules, `T: Drop` and `T: !Drop`
+  bounds, the ban on `Drop` for anonymous records, and the refusal to partially move a
+  `Drop` value. Only invocation is missing. If you have cleanup to run today, put it in an
+  ordinary method and call it. This applies to `std::core::Drop` specifically — a module's
+  own unrelated `Drop` aspect is unaffected.
 
-  If you have cleanup to run today, put it in an ordinary method and call it. The
-  restriction lifts when #292 lands, and it matches `std::core::Drop` by its declaring
-  module — a module's own unrelated `Drop` aspect is unaffected.
-- **`T[]` is now a non-owning, immutable, unconditionally-`Copy` borrowed view** (RFC-0126),
-  resolving the "Dynamic `T[]` deliberately has no rule" gap above. Produced only by
-  borrowing a `List<T>`, a `[T; N]`, or another slice; array literals with no expected type
-  default to `[T; N]` instead. `a[0] = 9` through a `T[]` no longer compiles — mutate via
-  `List<T>` or `[T; N]` instead. The existing `[T; N]` → `T[]` coercion (v0.8.0) means most
-  existing code needs no changes: it only fires at a genuinely unannotated literal.
-  `List<T>` gains `.set(i, value) -> Perhaps<T>` (overwrites in place, returning the
-  replaced value or `None` if out of bounds) to close the resulting gap — nothing let you
-  mutate a growable sequence's contents in place otherwise.
+- **`extend` on a concrete structural target is now a diagnostic rather than an internal
+  error.** `extend i64[]: Area { … }`, `extend (i64, i64): Area { … }` and
+  `extend { w: i64 }: Area { … }` report the target kind and the form that works:
+
+  ```
+  cannot `extend` a tuple type without type parameters: only the generic form is
+  implemented, so this block's methods could never be found. Write it as
+  `extend<A, B> (A, B): Aspect { … }`, or use a named struct
+  ```
+
+  A tuple or record target in the *generic* form is rejected too — it typechecked and then
+  was invisible to both dispatch and bound satisfaction. Of the structural targets, the
+  generic **array** form is the one that works: `extend<T> T[]: Display { … }` registers
+  and dispatches as before.
+
+- Auto-deref now reaches through a reference in two places it previously missed: an array
+  intrinsic resolves through `&T[]` and `&[T; N]` (`arr.len()` where `arr: &i64[]` needed
+  `(*arr).len()` before), and an aspect method resolves through `&T` under a `T: Aspect`
+  bound, so a read-only generic can borrow its parameter and still call methods on it.
+
+- `impl Aspect` is now lowered wherever it appears in a parameter annotation, not only as
+  the annotation's outermost type. `impl Printable[]` previously bound the *array* type
+  rather than its element, making the bound vacuous. Nested occurrences in generic
+  arguments, tuples, records, references, function types, and associated-type projections
+  are lowered too.
+
+**Arrays:**
+- **`T[]` is now a non-owning, immutable, unconditionally-`Copy` borrowed view.** Produced
+  only by borrowing a `List<T>`, a `[T; N]`, or another slice; array literals with no
+  expected type now default to `[T; N]`. The existing `[T; N]` → `T[]` coercion means most
+  code needs no change — it only differs at a genuinely unannotated literal.
+- `List<T>` gains `.set(i, value) -> Perhaps<T>`, overwriting in place and returning the
+  replaced value, or `None` if out of bounds.
 
 **References:**
 - **`&<rvalue>` and `&var <rvalue>` no longer require binding the value to a name first**
-  (temporary lifetime extension, matching Rust/C++: `foo(&Vec::new())`,
-  `foo(&var Vec::new())`). A literal, a call result, a struct or enum construction, or any
-  other non-addressable expression is materialized into a fresh, independent cell and
-  referenced directly, for both forms — nothing outside the expression can ever alias that
-  cell, so a mutable reference to it is always sound.
+  (`foo(&Vec::new())`, `foo(&var Vec::new())`). A literal, call result, or construction is
+  materialized into a fresh, independent cell and referenced directly. Nothing outside the
+  expression can alias that cell, so a mutable reference to it is always sound.
 
 **Breaking changes:**
 - **Field initializers use `=`, not `:`** — `Point { x = 1.0, y = 2.0 }`. This completes
-  the rule that `:` classifies and `=` defines, with no exceptions left. Field
-  *declarations* (`message: String`), enum variant declarations, and patterns are
-  unchanged and still use `:`.
+  the rule that `:` classifies and `=` defines. Field *declarations* (`message: String`),
+  enum variant declarations, and patterns are unchanged and still use `:`.
 
   Migration is mechanical but **must not be done with a regex.** Declarations, patterns
   and literals share brace syntax and co-occur on one line — `Perhaps::Some { value } =>
-  Perhaps::Some { value = f(value) }` has a pattern and a literal in a single expression,
-  and only the literal changes. Rewrite over parsed field-initializer spans.
+  Perhaps::Some { value = f(value) }` has a pattern and a literal in one expression, and
+  only the literal changes. Rewrite over parsed field-initializer spans.
+- **`a[0] = 9` through a `T[]` no longer compiles.** Mutate via `List<T>` or `[T; N]`.
 - **`record` is now a keyword** and can no longer be used as an identifier.
+- **`String` and `List<T>` read-only methods now take `&self` instead of `self`** —
+  `String`'s entire method surface, and `List<T>`'s `get`/`len`/`as_slice`/`map`/`filter`/
+  `fold`/`find`/`concat`. Only observable under `--move-check`, where calling two such
+  methods on one binding previously moved it on the first call.
 
 **Diagnostics:**
 - New error code [T0019](../reference/error-codes.md#t0019--use-of-moved-value), reported
   only under `--move-check`, with distinct wording per rule rather than one generic
   message: use after move, a partially moved value used as a whole, a partial move of a
-  `Drop` type, a banned array-element move, and a `&var` moved by a use that is not a
-  reborrow. Each names the binding and the source location of the move.
-- A malformed record projection is diagnosed directly, instead of being reported against a
-  synthesised type name that appears nowhere in the program.
+  `Drop` type, a banned array-element move, a `&var` moved by a use that is not a reborrow,
+  and a move out of a reference. Each names the binding and the location of the move.
+- Taking a `&var` reference through a shared reference reports `T0006` in every lvalue
+  form — `&var r.field` as well as `&var *r` — where one form previously reported a
+  non-exhaustive-match code.
+- A malformed record projection is diagnosed directly, instead of against a synthesised
+  type name that appears nowhere in the program.
 - A generic field type in a `Copy` eligibility error is rendered as written — `Inner<T>` —
   rather than leaking the inference variable behind it (`Inner<?t16>`).
 
 **Fixes:**
 - Undeclared type and aspect names in annotations and bounds are rejected at their
   declaration, including unused function signatures, unused struct/enum fields, and
-  `extend` clauses. Qualified names require an imported module handle, while imported
-  aliases, re-exports, generic parameters, and associated types retain their valid
-  annotation spellings. Diagnostics now name the unresolved type or aspect instead of
-  blaming a later unification or bound-satisfaction attempt (#295).
+  `extend` clauses. Diagnostics name the unresolved type or aspect instead of blaming a
+  later unification failure.
 - A record no longer satisfies an aspect bound vacuously; it must actually meet it.
-- `..` on a negative row bound is rejected rather than silently accepted, since "at least
-  these fields, negated" has no coherent reading.
+- `..` on a negative row bound is rejected, since "at least these fields, negated" has no
+  coherent reading.
 - `Copy` eligibility now sees conditional impls on generic field types, so
   `extend<T: Copy> Outer<T>: Copy` is accepted when `Outer`'s field is an `Inner<T>` that
-  is itself conditionally `Copy`. It was previously rejected outright.
-- `String` and `List<T>` methods that only read their receiver (`String`'s entire method
-  surface; `List<T>`'s `get`/`len`/`as_slice`/`map`/`filter`/`fold`/`find`/`concat`) now
-  take `&self` instead of `self`. Under `--move-check`, calling more than one such method
-  on the same binding previously moved it on the first call and rejected the second —
-  since neither type is `Copy`, this affected any program exercising the flag at all, not
-  just a handful of fixtures.
+  is itself conditionally `Copy`.
 - `return`, `break`, and `continue` nested inside an ordinary expression position no longer
-  crash the interpreter. RFC-0078 made them legal anywhere an expression is valid, but the
-  evaluator assumed every subexpression yields a value, so `1 + (return 7)`, `f(return 7)`,
-  `[return 7, 1]`, a struct-literal field, a `match` scrutinee, an `if` condition and a
-  `let` initializer each aborted the process rather than propagating the control flow. The
-  signal now propagates to the construct that owns it — the function boundary for `return`,
-  the innermost enclosing loop for `break`/`continue` (#321).
+  crash the interpreter. `1 + (return 7)`, `f(return 7)`, `[return 7, 1]`, a struct-literal
+  field, a `match` scrutinee, an `if` condition and a `let` initializer each aborted the
+  process; the signal now propagates to the construct that owns it.
 - Taking a reference to a field reached **through** a reference now works. Both `&r.a` and
-  `&(*r).a` (and the tuple, array, and nested equivalents) previously raised an internal
-  error; they now resolve to the same place, as do the `&var` forms through a `&var`
-  reference. Reading such a field always worked — only taking a reference to one did not.
-- `&var` through a **shared** reference is now rejected wherever it appears in an lvalue
-  path — `&var r.field`, not just the already-rejected `&var *r` — since a shared reference
-  never grants write access. It reports T0006, alongside the other forms of "taking a
-  mutable reference to something immutable" (#313).
+  `&(*r).a`, and the tuple, array, nested, and `&var` equivalents, previously raised an
+  internal error. Reading such a field always worked — only taking a reference to one did
+  not.
+- `Clone` exists as an aspect but has essentially no standard-library impls, so `T: Clone`
+  is not yet usable as a bound for a primitive or `String`.
 
 ## v0.11.0
 
 **Released 2026-07-24.** The spec's `Since v0.11.0` / `Changed in v0.11.0` markers
 refer to this entry.
-
-**RFCs implemented:** RFC-0107 (Unqualified Enum Variants in Match Patterns),
-RFC-0108 (Reference-Transparent Match Scrutinees), RFC-0110 (Explicit Dereference
-Operator), RFC-0111 (Unqualified Enum Variants in Expression Position),
-RFC-0097 (Orphan Rule for Blanket Impls) — the last of these was already accepted and
-marked implemented, but its rule for `extend<T: Bound> T: Aspect` was only satisfied by
-coincidence; the check is now deliberate.
 
 **Enum variants:**
 - A match arm may name a variant without its `Enum::` prefix when the scrutinee's
@@ -458,9 +297,9 @@ coincidence; the check is now deliberate.
   the registry's recorded type arguments, which for a still-generic impl are the impl's own
   parameter *names* rather than types, and construction searched only the concrete method
   environment, never the polymorphic one.
-- **An associated type's declared bound is registered on its projection.** RFC-0082 allows
-  `type Item: Display;`, but the placeholder minted for `Self::Item` never carried that
-  bound, so chaining directly onto a projection result — `c.get().to_string()` — failed with
+- **An associated type's declared bound is registered on its projection.** An aspect may
+  write `type Item: Display;`, but the placeholder minted for `Self::Item` never carried
+  that bound, so chaining directly onto a projection result — `c.get().to_string()` — failed with
   a spurious "cannot infer receiver type" (T0002).
 
 ## v0.10.0
@@ -535,7 +374,7 @@ coincidence; the check is now deliberate.
 
 ## v0.9.1
 
-Bug fixes. Shipped from sprint/24.
+Bug fixes.
 
 **Fixes:**
 - `print` and `println` now print any value whose type implements `Display`, dispatching the user's `to_string` — previously a struct or enum with a `Display` implementation typechecked but panicked at runtime, and had to be printed via an explicit `.to_string()`
@@ -546,7 +385,7 @@ Bug fixes. Shipped from sprint/24.
 
 ## v0.9.0
 
-The first presentable standard library. Shipped from sprint/23.
+The first presentable standard library.
 
 **Language:**
 - Methods on generic types now work end-to-end. Generic structs *and* generic enums can carry methods with their own type parameters (`fun map<U>(self, f: (T) -> U) -> Box<U>`), closures, and `match self`, and they dispatch correctly across module boundaries. This unblocks the standard library's methods on `Perhaps`, `Result`, and `List`
@@ -570,7 +409,7 @@ The first presentable standard library. Shipped from sprint/23.
 
 ## v0.8.3
 
-Standard library expansion and module system clarifications. Shipped from sprint/22.
+Standard library expansion and module system clarifications.
 
 **New language features:**
 - Function overloading — a module may declare multiple free functions with the same name, distinguished by parameter types. Resolution is exact-match only: argument types must equal a candidate's parameter types exactly, with no implicit numeric coercion participating in selection (bare numeric literals default before selection, so `f(42)` picks an `i64` overload). Overloaded functions must be non-generic with every parameter annotated; calls with no matching candidate list all available signatures in the error
@@ -595,7 +434,7 @@ Standard library expansion and module system clarifications. Shipped from sprint
 
 ## v0.8.2
 
-Generic function recursion and forward-reference fix. Shipped from sprint/21.
+Generic function recursion and forward-reference fix.
 
 **Bug fixes:**
 - Generic self-recursion now type-checks correctly; a generic function can refer to itself inside its own body without triggering `T0003 undefined name`
@@ -619,36 +458,35 @@ Generic function recursion and forward-reference fix. Shipped from sprint/21.
 
 ## v0.8.1
 
-Post-inference elaboration pipeline. No new language surface. Shipped from sprint/20.
+Post-inference elaboration pipeline. No new language surface.
 
 **Internal (interpreter architecture):**
-- **Elaboration pass** — a dedicated `elaborator` stage runs between the typechecker and evaluator and resolves every `MethodDispatch` call site to `Inherent` or `Aspect { aspect_id }` before evaluation begins. The evaluator now accepts `ElaboratedModuleGraph` (a newtype proof that elaboration has run) instead of `TypedModuleGraph` directly (METEL-151, ADR-0037).
-- **SymbolId infrastructure** — every top-level declaration is assigned a stable `SymbolId` by the name resolver at declaration site, and every import binding carries the same `SymbolId`. Builtin types and aspects have reserved IDs (1–99); user-defined symbols start at 1000 (METEL-172, METEL-104).
-- **SymbolId-keyed aspect dispatch** — `RuntimeAspectImpl` carries `aspect_id: Option<SymbolId>` alongside its string name. `RuntimeRegistry::get_aspect_method_by_id` matches on `aspect_id` first, eliminating cross-module name collisions where two unrelated aspects share a method name (METEL-152).
+- **Elaboration pass** — a dedicated `elaborator` stage runs between the typechecker and evaluator and resolves every `MethodDispatch` call site to `Inherent` or `Aspect { aspect_id }` before evaluation begins. The evaluator now accepts `ElaboratedModuleGraph` (a newtype proof that elaboration has run) instead of `TypedModuleGraph` directly.
+- **SymbolId infrastructure** — every top-level declaration is assigned a stable `SymbolId` by the name resolver at declaration site, and every import binding carries the same `SymbolId`. Builtin types and aspects have reserved IDs (1–99); user-defined symbols start at 1000.
+- **SymbolId-keyed aspect dispatch** — `RuntimeAspectImpl` carries `aspect_id: Option<SymbolId>` alongside its string name. `RuntimeRegistry::get_aspect_method_by_id` matches on `aspect_id` first, eliminating cross-module name collisions where two unrelated aspects share a method name.
 - **Ambiguous same-type aspect methods rejected** — if two distinct aspects define the same method name on the same receiver type, elaboration now rejects the call with `T0013` instead of silently picking one impl by traversal order.
-- **Environment documentation** — `TypeDefinitionRegistry` is annotated with its elaboration interface; `ElaboratedModuleGraph` carries a responsibilities table; `architecture.md`, `typechecker.md`, and `evaluator.md` are updated to reflect the new stage (METEL-154, METEL-156).
-- **ADR-0037** — records the elaboration boundary decision, the dispatch-map keying rationale, and the long-term constraint that `ElaboratedModuleGraph` is a viable future compiler IR intake point (METEL-157).
-- **Regression suite** — four new full-pipeline fixtures cover: polymorphic calls across modules, cross-module aspect dispatch, two aspects with the same method name on different receiver types, and inherent/aspect method coexistence (METEL-155).
+- **Environment documentation** — `TypeDefinitionRegistry` is annotated with its elaboration interface; `ElaboratedModuleGraph` carries a responsibilities table; `architecture.md`, `typechecker.md`, and `evaluator.md` are updated to reflect the new stage.
+- **Regression suite** — four new full-pipeline fixtures cover: polymorphic calls across modules, cross-module aspect dispatch, two aspects with the same method name on different receiver types, and inherent/aspect method coexistence.
 
 ## v0.8.0
 
-Sized numeric types, Char, List\<T\>, fixed-size arrays, turbofish, and fat-pointer `&var`. Shipped from sprint/19.
+Sized numeric types, Char, List\<T\>, fixed-size arrays, turbofish, and fat-pointer `&var`.
 
 **New language features:**
-- **Sized numeric types** — `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` (RFC-0007, METEL-124). Sized literal suffixes: `42i32`, `3.14f32`, `255u8`. All casts between sized types are explicit (`as`). Array indices must be `u64`.
+- **Sized numeric types** — `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64`. Sized literal suffixes: `42i32`, `3.14f32`, `255u8`. All casts between sized types are explicit (`as`). Array indices must be `u64`.
 - **Polymorphic numeric literals** — unsuffixed integer and float literals unify with whatever numeric type the context demands (let annotation, function parameter, struct field, return type, or the other operand in a binary expression). Without context they default to `i64` / `f64`. `mut` reassignment (`m = 99` where `m: i32`) also propagates the declared type to the literal. Negative minimum literals (`-128i8`, `-32768i16`, `-2147483648i32`) are accepted at the lexer level.
 - **Cross-sized numeric `From` impls** — all 90 pairwise casts among the 10 numeric types are supported via `as` (`i8 as u32`, `f32 as i64`, etc.). Previously only `i64 ↔ f64` was supported.
-- **`Char` type** — Unicode scalar value; single-quoted literals (`'a'`, `'\u{1F600}'`); `.to_u32()` and `Char::from_u32(n)` conversions; implements `Display` (RFC-0007)
-- **`List<T>`** — standard growable-sequence type in `std::core`; replaces ad-hoc `array_push` usage; methods: `new`, `from`, `push`, `pop`, `len`, `get`, `as_slice` (RFC-0054)
-- **Fixed-size array type `[T; N]`** — compile-time-known length; repeat construction `[v; N]`; coerces to `T[]`; `.len()` method; array patterns on `[T; N]` (RFC-0053, METEL-135)
-- **Turbofish** — explicit type arguments at call sites: `f::<T>(args)`, `zip::<A, B>(as, bs)` (METEL-124)
-- **`&var` for lvalue paths** — `&var obj.field`, `&var arr[i]`, and chains thereof produce a `*mut T` that writes back to the original storage location (RFC-0045, METEL-134)
+- **`Char` type** — Unicode scalar value; single-quoted literals (`'a'`, `'\u{1F600}'`); `.to_u32()` and `Char::from_u32(n)` conversions; implements `Display`
+- **`List<T>`** — standard growable-sequence type in `std::core`; replaces ad-hoc `array_push` usage; methods: `new`, `from`, `push`, `pop`, `len`, `get`, `as_slice`
+- **Fixed-size array type `[T; N]`** — compile-time-known length; repeat construction `[v; N]`; coerces to `T[]`; `.len()` method; array patterns on `[T; N]`
+- **Turbofish** — explicit type arguments at call sites: `f::<T>(args)`, `zip::<A, B>(as, bs)`
+- **`&var` for lvalue paths** — `&var obj.field`, `&var arr[i]`, and chains thereof produce a `*mut T` that writes back to the original storage location
 
 **Bug fixes:**
-- Generic functions with multiple independent type parameters (e.g. `fold_left<T, A>`) no longer have their type parameters collapsed when a module-level constraint solve follows a single-parameter generic function (METEL-137)
-- Same-tier glob import conflicts (`import a::*` and `import b::*` both exporting the same name) no longer raise an error at import resolution; the error fires at the first use site of the ambiguous name (METEL-98)
-- `&var x` on a non-`var` binding is now a type error (T0006); previously accepted silently, allowing immutable bindings to be mutated through a pointer (METEL-118)
-- Field assignment (`p.field = v`) on a non-`var` binding is now a type error (T0006); previously the field mutability check was missing, allowing struct fields to be mutated through an immutable binding (METEL-119)
+- Generic functions with multiple independent type parameters (e.g. `fold_left<T, A>`) no longer have their type parameters collapsed when a module-level constraint solve follows a single-parameter generic function
+- Same-tier glob import conflicts (`import a::*` and `import b::*` both exporting the same name) no longer raise an error at import resolution; the error fires at the first use site of the ambiguous name
+- `&var x` on a non-`var` binding is now a type error (T0006); previously accepted silently, allowing immutable bindings to be mutated through a pointer
+- Field assignment (`p.field = v`) on a non-`var` binding is now a type error (T0006); previously the field mutability check was missing, allowing struct fields to be mutated through an immutable binding
 
 **Breaking changes:**
 - `array_push` and `array_len` are removed as top-level built-in functions; use `List<T>` for mutation and `.len()` on arrays and lists
@@ -656,106 +494,106 @@ Sized numeric types, Char, List\<T\>, fixed-size arrays, turbofish, and fat-poin
 
 ## v0.7.0
 
-Language quality, pointer semantics, closure stabilisation, and aspect bounds. Shipped from sprint/17 and METEL-75–82 (hotfix batch).
+Language quality, pointer semantics, closure stabilisation, and aspect bounds.
 
 **Breaking changes:**
-- Anonymous closure expressions now use `(...) -> ... { ... }`; `fun(...)` is no longer accepted in expression position, and function types are written as `(T) -> U` (RFC-0041)
-- Struct fields are module-private by default; cross-module field access and construction now require `pub` on each exposed field (RFC-0032)
-- Mutable bindings now use `var`; standalone `var x = value;` is no longer accepted, and `for` / `for-in` bindings use the same `var` form (RFC-0042)
+- Anonymous closure expressions now use `(...) -> ... { ... }`; `fun(...)` is no longer accepted in expression position, and function types are written as `(T) -> U`
+- Struct fields are module-private by default; cross-module field access and construction now require `pub` on each exposed field
+- Mutable bindings now use `var`; standalone `var x = value;` is no longer accepted, and `for` / `for-in` bindings use the same `var` form
 
 **New language features:**
-- **Explicit receiver semantics** — methods may declare `&self` (shared read) or `&var self` (shared mutable) receivers; `&var self` mutations are visible to the caller without a writeback convention (RFC-0044, METEL-112)
-- **Regular and mutable pointer types** — `&expr` and `&var expr` produce `Pointer<T>` and `MutPointer<T>` values; assignment through `*ptr` and function-pointer auto-deref are supported (RFC-0043, METEL-111)
-- **Aspect bounds on generic type parameters** — functions, structs, and enums may now declare aspect bounds on their type parameters; bounds are enforced by the typechecker and violation is error `T0012` (RFC-0002, RFC-0034, RFC-0035, RFC-0040, METEL-57, METEL-60, METEL-67, METEL-84–93):
+- **Explicit receiver semantics** — methods may declare `&self` (shared read) or `&var self` (shared mutable) receivers; `&var self` mutations are visible to the caller without a writeback convention
+- **Regular and mutable pointer types** — `&expr` and `&var expr` produce `Pointer<T>` and `MutPointer<T>` values; assignment through `*ptr` and function-pointer auto-deref are supported
+- **Aspect bounds on generic type parameters** — functions, structs, and enums may now declare aspect bounds on their type parameters; bounds are enforced by the typechecker and violation is error `T0012`:
   - Inline single bound: `fun foo<T: Comparable>(x: T)`, `struct SortedList<T: Comparable>`
-  - Inline multi-bound with `+`: `fun foo<T: Comparable + Printable>(x: T)` (RFC-0034)
+  - Inline multi-bound with `+`: `fun foo<T: Comparable + Printable>(x: T)`
   - `where` clause: `fun foo<T>(x: T) where T: Comparable + Printable`
-  - `impl Aspect` anonymous parameters: `fun foo(x: impl Display)` (RFC-0035)
+  - `impl Aspect` anonymous parameters: `fun foo(x: impl Display)`
   - Aspect methods declared by a bound are available on the type parameter inside the function body
   - `T0012` is emitted at the call/construction site with span on the offending argument
-- **String interpolation** (`${expr}`) — string literals may contain `${…}` placeholders; each hole desugars to `.to_string()` concatenated with surrounding fragments via `+` (RFC-0010, METEL-81, METEL-82)
-- **String concatenation** — `String + String -> String` (METEL-78)
-- **Aspect default methods** — an aspect method may provide a default body; `impl` blocks may omit defaulted methods and inherit them automatically (METEL-77)
-- **`Self` in impl signatures** — `Self` may be used as a parameter or return type in `impl` method signatures (METEL-79)
-- **Match arm blocks** — match arm bodies may be a block in addition to a bare expression (RFC-0018, METEL-78)
+- **String interpolation** (`${expr}`) — string literals may contain `${…}` placeholders; each hole desugars to `.to_string()` concatenated with surrounding fragments via `+`
+- **String concatenation** — `String + String -> String`
+- **Aspect default methods** — an aspect method may provide a default body; `impl` blocks may omit defaulted methods and inherit them automatically
+- **`Self` in impl signatures** — `Self` may be used as a parameter or return type in `impl` method signatures
+- **Match arm blocks** — match arm bodies may be a block in addition to a bare expression
 
 **Bug fixes:**
-- Computed index assignment (`arr[i + 1] = v`, `s.data[offset * 2] = v`) now works correctly; previously any computed index expression caused an internal error (METEL-106)
-- `&var self` methods on nested struct fields now mutate in place (METEL-112)
-- `impl` methods with `T`-typed parameters on generic structs now resolve correctly in Pass 2 (METEL-92)
-- Bounded type parameter method dispatch correctly enforces arity and argument types (METEL-93)
-- `?` (error propagation) — routed through `From`-based coercion; typechecker emits T0007 when no `From` impl exists (METEL-80)
-- Generic functions returning an ascribed `None : Perhaps<T>` now correctly constrain the inferred return type (METEL-76)
+- Computed index assignment (`arr[i + 1] = v`, `s.data[offset * 2] = v`) now works correctly; previously any computed index expression caused an internal error
+- `&var self` methods on nested struct fields now mutate in place
+- `impl` methods with `T`-typed parameters on generic structs now resolve correctly in Pass 2
+- Bounded type parameter method dispatch correctly enforces arity and argument types
+- `?` (error propagation) — routed through `From`-based coercion; typechecker emits T0007 when no `From` impl exists
+- Generic functions returning an ascribed `None : Perhaps<T>` now correctly constrain the inferred return type
 
 **Tooling:**
-- CLI version is derived from `CARGO_PKG_VERSION` rather than a hardcoded string (METEL-100)
-- Source file extension corrected to `.mtl` throughout public docs (METEL-100)
-- `mod` and `use` removed from the reserved keyword list (METEL-75)
+- CLI version is derived from `CARGO_PKG_VERSION` rather than a hardcoded string
+- Source file extension corrected to `.mtl` throughout public docs
+- `mod` and `use` removed from the reserved keyword list
 
 **Spec clarifications:**
-- `pub` is not valid on top-level `let` or `mut` bindings (METEL-99)
+- `pub` is not valid on top-level `let` or `mut` bindings
 
 ## v0.6.4
 
-Module system technical debt. Shipped by Sprint 15 (`sprint/15`).
+Module system technical debt.
 
 **Internal improvements:**
-- `TypeDefinitionRegistry` is now used as the cross-module type accumulator in `check_graph`, replacing the `Vec<Decl>` approach that cloned raw AST nodes; cross-module struct field type references now resolve correctly even when the field type comes from an indirect dependency (ADR-0032, METEL-3)
-- `InferContext::new` accepts `imported_schemes` directly, enforcing the dual-registration invariant (inference + construction passes both see imported names) at the type level (ADR-0022, METEL-6)
-- `declared_names` map added to `ResolvedNames` during name resolution, replacing an O(n) AST scan in `build_import_schemes` for T0009/T0003 distinction (METEL-4)
-- `resolve_path_root` extracted to `src/module_paths.rs` as a single shared implementation for both `module_loader` and `name_resolver`; fixed a regression where the `Name` path root incorrectly doubled the module name segment (ADR-0023, METEL-7)
-- `StdPrelude::schemes()` / evaluator builtin parity assertion added as a compile-time-checked test (ADR-0027, METEL-5)
+- `TypeDefinitionRegistry` is now used as the cross-module type accumulator in `check_graph`, replacing the `Vec<Decl>` approach that cloned raw AST nodes; cross-module struct field type references now resolve correctly even when the field type comes from an indirect dependency
+- `InferContext::new` accepts `imported_schemes` directly, enforcing the dual-registration invariant (inference + construction passes both see imported names) at the type level
+- `declared_names` map added to `ResolvedNames` during name resolution, replacing an O(n) AST scan in `build_import_schemes` for T0009/T0003 distinction
+- `resolve_path_root` extracted to `src/module_paths.rs` as a single shared implementation for both `module_loader` and `name_resolver`; fixed a regression where the `Name` path root incorrectly doubled the module name segment
+- `StdPrelude::schemes()` / evaluator builtin parity assertion added as a compile-time-checked test
 
 **Compatibility:**
 - No language-visible changes.
 
 ## v0.6.3
 
-Module system — feature complete. Shipped by Sprint 14 (`sprint/14`).
+Module system — feature complete.
 
 **Bug fixes:**
-- `return` and `break` are now valid as bare match arm bodies without enclosing braces: `arm => return value` (#226)
-- Diamond module dependencies (same physical file reachable via two different logical paths) no longer fail with T0003; the name resolver now dereferences path aliases to their canonical form (#228)
+- `return` and `break` are now valid as bare match arm bodies without enclosing braces: `arm => return value`
+- Diamond module dependencies (same physical file reachable via two different logical paths) no longer fail with T0003; the name resolver now dereferences path aliases to their canonical form
 
 **Internal improvements:**
-- `?` operator desugared in a pre-pass (`path_normalizer::desugar_propagate_error`) rather than carried through inference and construction; `Expr::PropagateError` no longer exists after normalization (ADR-0030, #214)
-- `Type::Perhaps` and `Type::Result` convenience variants removed from the `Type` enum; both types are now represented uniformly as `Type::Named("Perhaps", ...)` and `Type::Named("Result", ...)` (#150)
-- Per-module isolated runtime environments validated with cross-module closure-capture and mutual-recursion tests (#189)
-- All aspect method dispatch key construction routed through `ImplMethodKey::to_env_key()`, eliminating ad-hoc format strings in the evaluator (#209)
+- `?` operator desugared in a pre-pass (`path_normalizer::desugar_propagate_error`) rather than carried through inference and construction; `Expr::PropagateError` no longer exists after normalization
+- `Type::Perhaps` and `Type::Result` convenience variants removed from the `Type` enum; both types are now represented uniformly as `Type::Named("Perhaps", ...)` and `Type::Named("Result", ...)`
+- Per-module isolated runtime environments validated with cross-module closure-capture and mutual-recursion tests
+- All aspect method dispatch key construction routed through `ImplMethodKey::to_env_key()`, eliminating ad-hoc format strings in the evaluator
 
 **Compatibility:**
-- No language-visible changes except the match arm body fix (#226), which is purely additive.
+- No language-visible changes except the match arm body fix, which is purely additive.
 
 ## v0.6.2
 
-Evaluator normalization. Shipped by Sprint 13 (`sprint/13`).
+Evaluator normalization.
 
 **Internal improvements:**
-- `Value::Perhaps` and `Value::Result` dedicated variants removed; all `Perhaps` and `Result` values now use the general `Value::Enum { name, variant, fields }` representation, eliminating special-case dispatch throughout the evaluator (ADR-0028, #205)
-- `evaluate_graph` now initialises each module in its own isolated `Environment` seeded with builtins and cross-linked via the `imported_names` table populated by `check_graph`; replaces the flat-merge strategy from v0.5.0 (ADR-0029, #210)
+- `Value::Perhaps` and `Value::Result` dedicated variants removed; all `Perhaps` and `Result` values now use the general `Value::Enum { name, variant, fields }` representation, eliminating special-case dispatch throughout the evaluator
+- `evaluate_graph` now initialises each module in its own isolated `Environment` seeded with builtins and cross-linked via the `imported_names` table populated by `check_graph`; replaces the flat-merge strategy from v0.5.0
 
 **Compatibility:**
 - No language-visible changes. All existing programs produce identical output.
 
 ## v0.6.1
 
-Type system cleanup and `std::core` virtual module. Shipped by Sprint 12 (`sprint/12`).
+Type system cleanup and `std::core` virtual module.
 
 **Internal improvements:**
-- Unified `TypeDefinitionRegistry` replaces four separate flat maps (`struct_env`, `method_env`, `enum_env`, aspect impls) in the type inference and construction passes; a single registry instance is now the source of truth for all type and impl data (#133)
+- Unified `TypeDefinitionRegistry` replaces four separate flat maps (`struct_env`, `method_env`, `enum_env`, aspect impls) in the type inference and construction passes; a single registry instance is now the source of truth for all type and impl data
 - `ImplMethodKey` enum replaces flat string concatenation for impl method dispatch keys in the evaluator
 - `StdPrelude::default()` is the single source of truth for all built-in function schemes, eliminating the previous divergence between the inference and construction registries
 
 **New language features:**
-- `std::core` virtual module: `Perhaps`, `Result`, `Display`, `Iterable`, `From`, and all built-in functions are available in every module without any explicit import (#201, #202)
-- Glob import tiers: the runtime auto-imports `std::core` at `Std` tier (lowest priority); user `import path::*` declarations use `User` tier and silently win over `Std` tier without a conflict error (#206)
+- `std::core` virtual module: `Perhaps`, `Result`, `Display`, `Iterable`, `From`, and all built-in functions are available in every module without any explicit import
+- Glob import tiers: the runtime auto-imports `std::core` at `Std` tier (lowest priority); user `import path::*` declarations use `User` tier and silently win over `Std` tier without a conflict error
 
 **Compatibility:**
 - All existing programs are unaffected; `std::core` names that were previously available globally continue to work without import statements
 
 ## v0.6.0
 
-Module semantics. Shipped by Sprint 11 (`sprint/11`).
+Module semantics.
 
 **Enforced module semantics (previously deferred from v0.5.0):**
 - Visibility enforcement: `pub` is required for a declaration to be importable; private items produce a compile-time error (T0009) when referenced from another module
@@ -768,7 +606,7 @@ Module semantics. Shipped by Sprint 11 (`sprint/11`).
 
 **Internal improvements:**
 - Name resolver wired into the type-checking pipeline (`load_root → resolve → normalize → check_graph → evaluate_graph`)
-- Flat-merge compatibility shim (ADR-0019) and last-segment fallback (ADR-0020) removed
+- Flat-merge compatibility shim and last-segment fallback removed
 - `root::`, `self::`, and `super::` path roots now compute correct module paths in both the loader and name resolver
 
 **Compatibility:**
@@ -777,7 +615,7 @@ Module semantics. Shipped by Sprint 11 (`sprint/11`).
 
 ## v0.5.0
 
-Module system. Shipped by Sprint 9 (`sprint/9`).
+Module system.
 
 **New language features:**
 - Multi-file programs: each `.mtl` file is a module; the module graph is built from `import` declarations
@@ -792,21 +630,21 @@ Module system. Shipped by Sprint 9 (`sprint/9`).
 - File-to-module mapping via `::` → `/` with no special cases
 
 **Shipped in v0.6.1:**
-- `std::core` auto-import and standard library core types (#150, #201, #202)
+- `std::core` auto-import and standard library core types
 
 **Compatibility:**
 - Single-file programs with no `import` or `export` declarations remain valid without modification
 
 ## v0.4.2
 
-Evaluator refactor, test restructure, and keyword cleanup. Shipped by Sprint 8 (`sprint/8`).
+Evaluator refactor, test restructure, and keyword cleanup.
 
 **Breaking changes:**
 - `Perhaps::Nope` renamed to `Perhaps::None`; the standalone `nope` keyword is now `None`
 
 ## v0.4.1
 
-Technical debt, bug fixes, and internal cleanup. Shipped by Sprint 7 (`sprint/7`).
+Technical debt, bug fixes, and internal cleanup.
 
 **Bug fixes:**
 - `TypeErrorCode::T0005` ("Invalid operand types") is now emitted for arithmetic operators (`+`, `-`, `*`, `/`, `%`) applied to non-numeric types (e.g. `true + false` is now a type error)
@@ -822,7 +660,7 @@ Technical debt, bug fixes, and internal cleanup. Shipped by Sprint 7 (`sprint/7`
 
 ## v0.4.0
 
-Aspects and upgraded builtins. Shipped by Sprint 6 (`sprint/6`).
+Aspects and upgraded builtins.
 
 **New language features:**
 - Aspect declarations — `aspect Foo { fun method(self) -> T; }`
@@ -843,14 +681,14 @@ Aspects and upgraded builtins. Shipped by Sprint 6 (`sprint/6`).
 
 ## v0.3.0
 
-Generics and type-inference improvements. Shipped by Sprint 5 (`sprint/5`).
+Generics and type-inference improvements.
 
 **New language features:**
 - User-defined generic functions — `fun id<T>(x: T) -> T` — monomorphised at each call site
 - User-defined generic structs — `struct Box<T> { value: T }`, `struct Pair<A, B> { ... }`
 - User-defined generic enums — `enum Maybe<T> { Some { value: T }, None {} }`
 - Let-polymorphism — unannotated `let`-bound closures are generalised to polymorphic schemes (`let id = fun(x) { x }` works at `i64`, `boolean`, and `String` in the same scope)
-- Braceless `if` body — `if (c) expr` and `if (c) a else b` (RFC-0022)
+- Braceless `if` body — `if (c) expr` and `if (c) a else b`
 - `struct` and `enum` declarations are allowed inside function bodies
 
 **Type-inference improvements:**
@@ -860,10 +698,10 @@ Generics and type-inference improvements. Shipped by Sprint 5 (`sprint/5`).
 
 ## v0.2.0
 
-Evaluator improvements, DX features, and language quality fixes. Shipped by Sprint 3 (`sprint/3`).
+Evaluator improvements, DX features, and language quality fixes.
 
 **New language features:**
-- Type ascription operator `:` — `[] : i64[]` guides type inference without runtime cost (RFC-0021)
+- Type ascription operator `:` — `[] : i64[]` guides type inference without runtime cost
 - Shorthand struct field initialisation — `Point { x, y }` desugars to `Point { x: x, y: y }`
 - Trailing commas allowed in function parameter lists and argument lists
 
