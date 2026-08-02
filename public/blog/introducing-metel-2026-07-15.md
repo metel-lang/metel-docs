@@ -15,7 +15,7 @@ Here's a taste of what that turned into:
 ```metel
 fun main() {
     let name = "Metel";
-    let answer: Perhaps<i64> = Perhaps::Some { value: 42 };
+    let answer: Perhaps<i64> = Perhaps::Some { value = 42 };
     println("${name} says the answer is ${answer.yolo()}");
 }
 ```
@@ -110,7 +110,7 @@ Two questions that many systems languages tie tightly together, Metel keeps apar
 **Allocators** make storage an explicit program-level choice. [Zig](https://ziglang.org/documentation/master/#Choosing-an-Allocator) and [Odin](https://odin-lang.org/docs/overview/#allocators) already make allocator-passing normal, and Rust has an experimental [`Allocator` API](https://doc.rust-lang.org/std/alloc/trait.Allocator.html). Metel's bet is that allocator identity should be visible in the language's own type and syntax rules, not only in library APIs, because allocator choice is often part of an invariant a value's type should preserve:
 
 ```metel
-let user = @Heap User { name: "Ada" };
+let user = @Heap User { name = "Ada" };
 
 fun identity(value: @Node) -> @Node { value }
 ```

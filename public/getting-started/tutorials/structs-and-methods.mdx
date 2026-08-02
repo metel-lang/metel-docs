@@ -21,8 +21,8 @@ Create an instance by naming every field:
 
 ```metel
 fun main() {
-    let origin = Point { x: 0.0, y: 0.0 };
-    let p = Point { x: 3.0, y: 4.0 };
+    let origin = Point { x = 0.0, y = 0.0 };
+    let p = Point { x = 3.0, y = 4.0 };
 
     println("x = ${p.x}, y = ${p.y}");
 }
@@ -60,7 +60,7 @@ extend Point {
 }
 
 fun main() {
-    let p = Point { x: 3.0, y: 4.0 };
+    let p = Point { x = 3.0, y = 4.0 };
     println(p.to_string());              // (3, 4)
     println(p.distance_from_origin());   // 25
 }
@@ -86,16 +86,16 @@ struct Point {
 
 extend Point {
     fun translate(self, dx: f64, dy: f64) -> Self {
-        return Point { x: self.x + dx, y: self.y + dy };
+        return Point { x = self.x + dx, y = self.y + dy };
     }
 
     fun scale(self, factor: f64) -> Self {
-        return Point { x: self.x * factor, y: self.y * factor };
+        return Point { x = self.x * factor, y = self.y * factor };
     }
 }
 
 fun main() {
-    let p = Point { x: 1.0, y: 2.0 };
+    let p = Point { x = 1.0, y = 2.0 };
     let moved = p.translate(3.0, 4.0);
     println("${moved.x}, ${moved.y}");   // 4, 6
 
@@ -131,8 +131,8 @@ Create enum values with `::`:
 ```metel
 fun main() {
     let dir = Direction::North;
-    let s = Shape::Circle { radius: 5.0 };
-    let r = Shape::Rectangle { width: 3.0, height: 4.0 };
+    let s = Shape::Circle { radius = 5.0 };
+    let r = Shape::Rectangle { width = 3.0, height = 4.0 };
 }
 ```
 
@@ -179,8 +179,8 @@ fun area(s: Shape) -> f64 {
 }
 
 fun main() {
-    let c = Shape::Circle { radius: 5.0 };
-    let r = Shape::Rectangle { width: 3.0, height: 4.0 };
+    let c = Shape::Circle { radius = 5.0 };
+    let r = Shape::Rectangle { width = 3.0, height = 4.0 };
 
     println("circle area: ${area(c)}");      // circle area: 78.53975
     println("rectangle area: ${area(r)}");   // rectangle area: 12
@@ -223,9 +223,9 @@ extend Shape {
 
 fun main() {
     let shapes = [
-        Shape::Circle { radius: 2.0 },
-        Shape::Rectangle { width: 5.0, height: 3.0 },
-        Shape::Circle { radius: 1.0 },
+        Shape::Circle { radius = 2.0 },
+        Shape::Rectangle { width = 5.0, height = 3.0 },
+        Shape::Circle { radius = 1.0 },
     ];
 
     var total_area = 0.0;
@@ -323,9 +323,9 @@ fun hand_value(hand: Card[]) -> i64 {
 
 fun main() {
     let hand = [
-        Card { suit: Suit::Hearts,   rank: Rank::Ace },
-        Card { suit: Suit::Spades,   rank: Rank::King },
-        Card { suit: Suit::Diamonds, rank: Rank::Number { value: 7 } },
+        Card { suit = Suit::Hearts,   rank = Rank::Ace },
+        Card { suit = Suit::Spades,   rank = Rank::King },
+        Card { suit = Suit::Diamonds, rank = Rank::Number { value = 7 } },
     ];
 
     for (let card in hand) {

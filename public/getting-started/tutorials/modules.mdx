@@ -34,7 +34,7 @@ public struct Token { public value: i64 }
 import lexer::Token;
 
 fun main() {
-    let t = Token { value: 42 };
+    let t = Token { value = 42 };
     println(t.value);   // 42
 }
 ```
@@ -104,7 +104,7 @@ Every module automatically has `std::core` in scope — that's why `Perhaps`, `R
 ```metel
 // No import needed — Perhaps is always in scope
 fun maybe_parse(s: String) -> Perhaps<i64> {
-    if (s == "1") { return Perhaps::Some { value: 1 }; }
+    if (s == "1") { return Perhaps::Some { value = 1 }; }
     return Perhaps::None;
 }
 ```
