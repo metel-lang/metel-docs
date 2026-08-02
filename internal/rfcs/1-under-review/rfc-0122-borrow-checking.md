@@ -3,7 +3,7 @@ id: rfc-0122
 title: "Borrow Checking"
 date: '2026-07-24'
 status: under-review
-target:
+target: v0.14.0
 updated: '2026-08-02'
 ---
 
@@ -53,6 +53,31 @@ updated: '2026-08-02'
 > **Status — accepted (2026-08-02).** All five design questions resolved: granularity and move-relationship (07-24), lexical-first, observability, and diagnostics (08-01 joint review). RFC-0071 SS9b's standalone place abstraction — this RFC's only structural blocker — discharged by #291.
 
 > **Status — under review (2026-08-02).** Acceptance 2026-08-01 was premature. An adversarial pass the same day found six gaps, three blocking: the outlives rule is named but unspecified; reference-typed struct fields defeat the anchors-are-a-dependent claim; and the lexical rule as written rejects sequential &var method calls. Third accepted-to-under-review reversion in the corpus (Trigger 14).
+
+> ## Targeted at v0.14.0
+>
+> *Set 2026-08-02 by operator decision, giving this RFC a concrete release for the first
+> time.* v0.14.0 sits between v0.13.0 (RFC-0071's remaining parts and move-checker
+> hardening) and **v0.15.0 (RFC-0067, Lifetime Anchors)** — an ordering that is forced,
+> not chosen: RFC-0067's own open questions cannot be answered until this RFC settles what
+> a validity scope is, and its §1 anchor model was written before any checker existed.
+>
+> **What must close first**, all in §2b: the outlives rule specified (§2b.2), the
+> stored-reference restriction implemented (§2b.3 / metel-core#364), closures (§2b.4),
+> reborrowing (§2b.5), and the `T[]` `Copy`-view interaction (§2b.6). §2b.1 is already
+> dissolved by §2.2's move to NLL.
+>
+> **No implementation issue exists for this RFC yet, deliberately** —
+> `internal/rfcs/PROCESS.md` allows one only from `3-integrated`, and this is
+> `1-under-review`. The v0.14.0 milestone therefore carries no work for this RFC today;
+> that is the expected state, not an oversight, and it changes the moment §2b closes and
+> this reaches `2-accepted` → `3-integrated`.
+>
+> **§3's rollout constraint still binds and interacts with the schedule:** borrow checking
+> ships opt-in behind `--borrow-check` and must **not** go default-on in the same release
+> as #310 (enable move checking by default, currently v0.13.0). With this RFC at v0.14.0
+> and #310 at v0.13.0 those are already in different releases, which satisfies the
+> constraint — worth stating so a later reshuffle does not silently break it.
 
 ## Summary
 

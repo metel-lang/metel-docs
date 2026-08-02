@@ -60,6 +60,11 @@ lexical to NLL** (§2.2, superseding the same day), which dissolves one of the t
 blockers outright; Polonius considered and recorded as a named future option (§2c),
 gated on Metel acquiring a CFG/MIR it does not have.
 
+**Release chain now set end to end:** v0.13.0 (RFC-0071 remainder + move-checker
+hardening) → **v0.14.0 RFC-0122 borrow checking** → **v0.15.0 RFC-0067 lifetime anchors**,
+which discharges #364. Both RFCs are `1-under-review`; neither has an implementation issue
+yet, deliberately (`PROCESS.md` allows one only from `3-integrated`).
+
 **RFC-0067 (Lifetime Anchors) also reverted to `1-under-review` on 2026-08-02** — its
 anchor model predates any specified checker and its "Unresolved questions: None" is
 replaced with five real ones (Trigger 29). **Now targeted at v0.15.0** (milestone created;
@@ -84,6 +89,17 @@ recorded after the fact by whichever cycle's writer noticed them). Every cycle c
 §2 against this section and must flag, not silently resolve, any place they disagree.
 Logged proactively — any time an explicit steering call is made, in any conversation,
 not only during a strategic-overview cycle — per `PROCESS.md` §1.*
+
+**2026-08-02 — RFC-0122 (Borrow Checking) is targeted at v0.14.0**, giving it a concrete
+release for the first time and completing the chain: v0.13.0 (RFC-0071 remainder,
+move-checker hardening) → **v0.14.0 borrow checking** → v0.15.0 lifetime anchors,
+discharging #364. The ordering is forced rather than chosen — RFC-0067's open questions
+cannot resolve until RFC-0122 settles what a validity scope is. No implementation issue
+exists for RFC-0122 yet and none should: it is `1-under-review`, and `PROCESS.md` allows
+one only from `3-integrated`. Re-anchors Trigger 27 on a checkable falsifier (v0.14.0
+shipping without borrow checking) rather than the now-unrealistic "before the v0.12.0
+tag". Also satisfies §3's constraint that borrow checking not go default-on in the same
+release as #310 (v0.13.0) — worth noting so a later reshuffle doesn't silently break it.
 
 **2026-08-02 — lifetime anchors (RFC-0067) are targeted at v0.15.0.** Milestone created;
 RFC-0067 carries `target: v0.15.0`; **#364** (the temporary reference-typed-struct-field
@@ -1001,6 +1017,16 @@ keeps the active list scannable without losing the record.
     real question and not a rhetorical one: §2b.2 (specify the outlives rule) and §2b.3
     (ban reference-typed struct fields, per the operator directive in §0) are both
     genuine design work, not editing.
+    **Re-anchored 2026-08-02: RFC-0122 now carries `target: v0.14.0`.** This trigger's
+    original falsifier — "reach `2-accepted` before the `v0.12.0` tag cuts" — is kept as
+    the record of what was promised, but it is superseded in practice: with
+    implementation targeted at v0.14.0 and v0.12.0 still untagged, acceptance realistically
+    needs to land during v0.13.0, not before a tag that may cut at any time. **The useful
+    falsifier is now the milestone itself**, which is checkable rather than
+    interpretive: *if v0.14.0 ships without borrow checking, or if v0.15.0 (RFC-0067,
+    lifetime anchors) arrives with RFC-0122 still un-integrated, this trigger fired.*
+    That also makes the trigger measure the thing that actually matters — the chain
+    RFC-0122 → RFC-0067 → #364 — rather than one RFC's stage transition in isolation.
 28. ⬜ **New, 2026-08-01.** A calibration data point, tracked here because it belongs
     somewhere durable rather than only in the conversation that produced it: the
     week's final PR (#348, by-value-`self`-through-a-reference) needed a full second

@@ -34,8 +34,9 @@ target: v0.15.0
 >
 > **The chain, each link genuinely blocking the next:**
 >
-> 1. **RFC-0122 (Borrow Checking) must settle first.** It is `1-under-review` with three
->    blocking gaps of its own (§2b) — the outlives rule is unspecified, and this RFC's
+> 1. **RFC-0122 (Borrow Checking) must settle first — it is targeted at v0.14.0**, the
+>    release immediately before this one, which is what makes v0.15.0 reachable at all. It
+>    is `1-under-review` with three blocking gaps of its own (§2b) — the outlives rule is unspecified, and this RFC's
 >    §1 was designed before any checker existed. Anchors *name* a validity scope; until
 >    RFC-0122 fixes what a validity scope is, question 1 below cannot be answered.
 > 2. **This RFC's five open questions resolve**, chiefly whether §1's lexical framing
