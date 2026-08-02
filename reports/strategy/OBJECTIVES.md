@@ -60,11 +60,11 @@ lexical to NLL** (§2.2, superseding the same day), which dissolves one of the t
 blockers outright; Polonius considered and recorded as a named future option (§2c),
 gated on Metel acquiring a CFG/MIR it does not have.
 
-**Needs a decision from the operator, not just the agent:** banning reference-typed
-struct fields (§0 directive, 2026-08-01) is a real language restriction with no tracked
-work behind it yet — it needs a migration check against the corpus and probably its own
-issue. Also open: whether RFC-0122 can realistically still clear `2-accepted` before the
-`v0.12.0` tag, given §2b.2/§2b.3 are design work rather than editing.
+**Needs a decision from the operator, not just the agent:** whether RFC-0122 can
+realistically still clear `2-accepted` before the `v0.12.0` tag, given §2b.2 (specify the
+outlives rule) is genuine design work. *(The stored-reference restriction is no longer
+open — reasoned, scoped, migration-checked, and tracked as #364 with its exit condition
+fixed to RFC-0067's implementation.)*
 
 **Latest dated overview:** `strategic-overview-2026-08-01.md`. **Latest review:**
 2026-08-01 (see `last_reviewed` above).
@@ -111,11 +111,17 @@ c.bump();`, a shape already passing in the test suite. **This is the third
 accepted→under-review reversion (after RFC-0099 and RFC-0100) — Trigger 14's falsifier,
 which asked exactly for a third.**
 
-**2026-08-01 — reference-typed struct fields (`struct Holder { r: &P }`) are to be
-banned for now**, rather than accepting that RFC-0067 is a dependency. Keeps the outlives
-rule scope-based and RFC-0122 genuinely independent of anchors, at the cost of a real
-language restriction that needs its own justification and its own tracked work. Revisit
-when anchors are actually implemented.
+**2026-08-01 — reference-typed struct fields (`struct Holder { r: &P }`) are banned as
+an explicitly temporary scaffold, with a defined exit.** Not a language design position:
+Metel does not intend to forbid structs holding references. The ban exists so borrow
+checking can be built without first designing and implementing lifetime anchors —
+rejecting a stored reference that outlives its referent requires relating two independent
+lifetimes, which no scope-based rule can do and which is precisely what an anchor is. Its
+removal is triggered by **one event and no other: RFC-0067 (Lifetime Anchors) being
+implemented.** Tracked end-to-end as **#364**, which owns both halves so the exit cannot
+be lost across releases; RFC-0067 carries the reciprocal pointer so implementing anchors
+surfaces the obligation. Reasoning in RFC-0122 §2d. **Migration cost verified as zero** —
+no reference-typed field exists anywhere in the corpus or stdlib.
 
 **2026-08-01 — RFC-0122 adopts lexical borrows first, not NLL.** Decided during a
 joint review of the RFC. Adopts the RFC's own standing lean rather than overriding it:

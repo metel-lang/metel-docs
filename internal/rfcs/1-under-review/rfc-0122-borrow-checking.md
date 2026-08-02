@@ -444,12 +444,10 @@ No scope-based rule can check this: the question is whether `Holder`'s referent 
 expresses. **Either reference-typed fields are banned, or RFC-0067 is a dependency for
 the outlives rule after all.**
 
-> **Operator decision, 2026-08-01: ban reference-typed struct fields for now**, keeping
-> the outlives rule scope-based and this RFC genuinely independent of RFC-0067. Recorded
-> in `reports/strategy/OBJECTIVES.md` §0. This is a real language restriction, not a
-> clarification — it needs its own justification, its own tracked work, and its own
-> migration check against the existing corpus, none of which this RFC provides yet.
-> Revisit once anchors are implemented.
+> **Operator decision, 2026-08-01: ban reference-typed struct fields — as an explicitly
+> temporary measure.** Full reasoning, scope, and the condition that lifts it are in
+> **§2d**, which also records the migration check this note originally said was missing.
+> Recorded in `reports/strategy/OBJECTIVES.md` §0.
 
 **4. Closures are absent entirely — zero mentions.** RFC-0071 specifies closure capture
 for moves (a free non-`Copy` root is treated as moved at closure creation). Borrow
@@ -473,6 +471,87 @@ copyable* sits awkwardly against a rule whose whole content is how many borrows 
 coexist: unlimited copies of a shared view are presumably fine, but the interaction with
 an exclusive borrow of the same backing storage is undefined here. This is the one gap
 that concerns already-implemented, already-shipped behaviour rather than future work.
+
+---
+
+## 2d. The reference-typed struct field restriction — temporary, and what lifts it
+
+*Added 2026-08-01, expanding §2b.3's one-line operator decision into a real
+justification with a tracked exit.*
+
+> **This is a temporary scaffold, not a language design position.** Metel does not
+> intend to forbid structs that hold references. The restriction exists for exactly one
+> reason — to let borrow checking be built and shipped without first designing and
+> implementing lifetime anchors — and **it is lifted the moment RFC-0067 (Lifetime
+> Anchors) is implemented.** Nothing else needs to happen for it to go.
+
+### The rule
+
+A `struct` or `enum` field may not have a reference type (`&T`, `&var T`), directly or
+nested inside a generic argument. Rejected at typechecking, not at borrow checking, so
+the restriction applies whether or not `--borrow-check` is on.
+
+```metel
+struct Holder { r: &P }        // rejected while this restriction stands
+struct Pair   { xs: List<&P> } // likewise — nesting does not evade it
+```
+
+### Why it exists
+
+**Because the alternative is that RFC-0122 cannot be built without RFC-0067 first.** The
+chain is short and each link is forced:
+
+1. §2b.3 showed a stored reference can outlive its referent today, silently
+   (`fun make() -> Holder { let local = …; return Holder { r = &local }; }` is accepted
+   and prints 42).
+2. Rejecting that requires relating **two independent lifetimes** — the struct's and its
+   referent's. No scope-based rule can do it: there is no enclosing scope that contains
+   both, which is precisely why local borrows are checkable without anchors and stored
+   ones are not.
+3. Relating two independent lifetimes is what an anchor *is*. So admitting stored
+   references makes RFC-0067 a hard dependency of the outlives rule.
+4. RFC-0067 is `2-accepted`, unimplemented, and carries pre-RFC-0098 syntax. Making it a
+   dependency means **no borrow checking of any kind ships until anchors are designed
+   through, implemented, and stabilised** — trading the ~90% of value that local borrow
+   checking delivers for a much larger, later deliverable.
+
+The restriction buys that ~90% now. It is the same trade RFC-0067's own text already
+implies when it says anchors "appear only when the relationship is ambiguous" — the
+ambiguous cases are the ones being deferred, not the common ones.
+
+### What it costs
+
+**Zero migration cost, verified rather than assumed** *(2026-08-01)*: an exhaustive scan
+of every `struct`/`enum` declaration body across `tests/integration/sources/**` and
+`stdlib/**` found **no** reference-typed field, in any shape — no direct `&T`, no
+`&var T`, none nested in a generic argument. Nothing in the corpus or the standard
+library has to change to adopt this.
+
+**Real expressive cost, deferred not denied.** Borrowed wrappers, view structs,
+reference-holding iterators, and anything shaped like Rust's `struct Iter<'a>` are
+unwritable while this stands. Two RFCs already want them and are already deferred for
+adjacent reasons — **RFC-0109** (Self-View Narrowing, `0-draft`) and **RFC-0119**'s
+dropped by-reference conversion mode. Neither is blocked *further* by this restriction,
+but both are downstream of the same missing capability, and whoever lifts it should check
+both.
+
+### What lifts it
+
+> **The restriction is removed when RFC-0067 (Lifetime Anchors) is implemented.** That is
+> the whole condition. It is not "when someone asks for it," not "when the borrow checker
+> is mature," and not subject to re-litigation on other grounds: anchors supply exactly
+> the missing capability (naming a validity scope so two independent lifetimes can be
+> related), and once they exist the justification above evaporates in full.
+
+**Tracked as metel-core#364**, which owns both halves — imposing the restriction and
+removing it — so the exit cannot be lost if the two land in different releases.
+RFC-0067's own text carries the reciprocal pointer, so that implementing anchors surfaces
+this obligation rather than depending on someone remembering it.
+
+**A caution for whoever lifts it.** Deleting the check is the easy half. The real work is
+that the outlives rule (§2b.2) was *specified* scope-based on the assumption stored
+references do not exist; admitting them means revisiting that specification, not merely
+relaxing an error. Treat §2b.2 and this section as a pair.
 
 ---
 

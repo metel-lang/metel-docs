@@ -6,6 +6,25 @@ updated: '2026-07-10'
 status: accepted
 ---
 
+> ## ⚠ Implementing this RFC carries an inherited obligation
+>
+> *Added 2026-08-01, from RFC-0122 §2d.*
+>
+> **A temporary language restriction exists solely because this RFC is unimplemented,
+> and implementing it is the event that removes the restriction.** Reference-typed
+> struct and enum fields (`struct Holder { r: &P }`) are rejected, because rejecting a
+> stored reference that outlives its referent requires relating **two independent
+> lifetimes**, and no scope-based rule can do that — an anchor is exactly the capability
+> that can. Rather than block all borrow checking on this RFC, RFC-0122 bans stored
+> references and checks local borrows without them.
+>
+> **So implementing anchors must also lift that ban**, and lifting it is more than
+> deleting a check: RFC-0122 §2b.2's outlives rule was *specified* scope-based on the
+> assumption stored references do not exist, and admitting them means revisiting that
+> specification. Both halves are tracked as **metel-core#364**. See RFC-0122 §2d for the
+> full reasoning; this pointer exists so the obligation surfaces here rather than
+> depending on someone remembering it.
+
 > **Status — under review.** Rewritten 2026-07-05 for the split model. Split again
 > 2026-07-07: the plain `&T` / `&var T` rename and auto-deref (the original RFC-0067's
 > §1/§3/§4/§7) had no dependency on affine types, the borrow checker, or allocators, and
