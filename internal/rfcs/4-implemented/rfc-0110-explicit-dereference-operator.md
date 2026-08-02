@@ -535,7 +535,7 @@ of reference type where §5 needs a *place*.
   unaffected.
 - RFC-0044 (Explicit Receiver Semantics, implemented) — §9 addressability; `*p` is a
   straightforward new addressable place under the existing rule (§6 above).
-- RFC-0067 (Lifetime Anchors, accepted) — §1's allocator-pointer borrow-deref (`&a
+- RFC-0067 (Lifetime Anchors, under review) — §1's allocator-pointer borrow-deref (`&a
   expr`) is the analogous but distinct mechanism for `@a T`; unaffected (§8).
 - RFC-0071 (Ownership and Move Semantics, accepted, 0% implemented) — the eventual
   home for exclusivity *enforcement*; this RFC only extends/restores notation, same

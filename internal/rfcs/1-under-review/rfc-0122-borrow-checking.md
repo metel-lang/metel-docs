@@ -38,9 +38,15 @@ updated: '2026-08-02'
 >   elided signature.
 >
 > The practical consequence is the point: **this RFC is buildable without RFC-0067**, which
-> is `2-accepted`, unimplemented, and itself carrying stale syntax (ten `&var` occurrences
-> predating RFC-0098, whose last update was 2026-07-10, four days before RFC-0098 shipped).
-> *(Count corrected 2026-08-01: the original said nine.)*
+> is `1-under-review` and unimplemented.
+> *(Corrected 2026-08-02. This sentence previously added "and itself carrying stale syntax
+> (nine — later 'corrected' to ten — `&var` occurrences predating RFC-0098)". **The claim
+> was false**: RFC-0098 renamed `mut`→`var`, so `&var` is the current spelling, and
+> metel-core#351's docs sweep had already converted RFC-0067's occurrences — it carries
+> zero `&mut`. Worth recording how the error survived: a reader re-verified the **count**
+> and shipped a correction to it without ever checking the **assertion** the count was
+> attached to. RFC-0067 did have real stale syntax — a `null` literal Metel has never had,
+> a bare `mut` in prose, and two retired `:` field separators — just not this.)*
 > RFC-0067 should be treated as a dependent extension, and its acceptance re-examined
 > against these rules rather than assumed to constrain them.
 

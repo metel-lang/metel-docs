@@ -2,8 +2,8 @@
 id: rfc-0067
 title: "Lifetime Anchors"
 date: '2026-06-28'
-updated: '2026-07-10'
-status: accepted
+updated: '2026-08-02'
+status: under-review
 ---
 
 > ## ⚠ Implementing this RFC carries an inherited obligation
@@ -76,10 +76,17 @@ status: accepted
 > implemented, rather than treated as constraining them.** It was accepted 2026-06-28,
 > before any checker was specified, so its anchor model was designed against an absence.
 >
-> **Also stale, found in the same pass:** nine occurrences of `&var` / `&r var`, predating
-> RFC-0098 (`4-implemented` 2026-07-14, renaming the exclusive reference to `&var`). This
-> RFC's last update was 2026-07-10, four days earlier. Not corrected here — flagged so the
-> re-examination above covers it.
+> ~~**Also stale, found in the same pass:** nine occurrences of `&var` / `&r var`,
+> predating RFC-0098…~~ **Withdrawn 2026-08-02 — this was corrected and the note outlived
+> it.** The docs-wide `mut`→`var` sweep (metel-core#351, 2026-08-01) converted every one;
+> this file now contains ten `&var` occurrences and **zero** `&mut`, i.e. the current
+> spelling throughout. RFC-0122's header repeated the claim and is corrected in the same
+> pass. *Recorded rather than deleted because of how it survived: a later reader verified
+> the **count** (nine → ten) without re-checking the **assertion** the count was attached
+> to, which is the exact failure `internal/rfcs/PROCESS.md`'s verification rule is meant
+> to prevent.*
+
+> **Status — under review (2026-08-02).** Accepted 2026-06-28 before any borrow checker was specified; its own header records that the anchor model was 'designed against an absence' and should be re-examined against RFC-0122's rules before implementation. RFC-0122 now specifies NLL liveness, per-field granularity, T0020 diagnostics, and a stored-reference ban whose removal this RFC triggers (#364) — none checked against SS1. 'Unresolved questions: None' replaced with five real ones.
 
 ## Summary
 
@@ -133,7 +140,7 @@ borrow's validity. The anchor appears directly after `&` in type position:
 &r var T   // mutable borrow of T; valid while binding r is alive
 ```
 
-The anchor groups with `&`; `mut` qualifies the reference after it. A borrow `&r T` does not
+The anchor groups with `&`; `var` qualifies the reference after it. A borrow `&r T` does not
 know or care whether `T` was allocated in allocator `r` — `r` is a binding name, and the
 borrow is valid for exactly as long as `r` is in scope.
 
@@ -168,7 +175,7 @@ fun pick<&s, &t: &s>(&s Str, &t Str) -> &t Str { ... }
 field access and method dispatch deref through the allocator pointer transparently.
 
 ```metel
-let node = @a Node { val: 1, next: null };
+let node = @a Node { val = 1, next = Perhaps::None };
 
 let v = node.val;      // auto-deref: @a Node → Node, read field
 node.val = 2;          // auto-deref: @a Node → Node, write field
@@ -215,7 +222,7 @@ operator), move-out is expressed via type context:
 is `@a T`, the compiler performs move-out implicitly:
 
 ```metel
-let ptr = @a Node { val: 1 };
+let ptr = @a Node { val = 1 };
 let node: Node = ptr;    // move-out: ptr consumed, Node returned
 ```
 
@@ -233,7 +240,46 @@ bulk-deallocating kinds) are specified in RFC-0066.
 
 ## Unresolved questions
 
-None.
+*Rewritten 2026-08-02. This section previously read "None," which was true when written
+(2026-06-28) and false from 2026-07-24 onward, when RFC-0122 first specified a checker.
+An anchor names a borrow's validity scope; **what a validity scope is, and how it is
+computed, is now decided by RFC-0122 rather than assumed by this RFC** — and none of
+those decisions existed when §1 was designed. Every question below is a place where §1
+made an assumption that a specified checker has since either settled differently or not
+yet settled at all.*
+
+**1. Does §1's anchor model survive NLL liveness?** RFC-0122 §2.2 specifies borrows live
+from creation to **last use**, not to end of scope. §1 defines an anchor as "a binding
+whose scope bounds the borrow's validity" and says a borrow "is valid for exactly as long
+as `r` is in scope" — which is a **lexical** statement. Under NLL a borrow can end well
+before its anchor's scope does. Either the anchor is a *bound* on validity rather than an
+equality (probably right, and §1's wording needs changing), or the two models genuinely
+disagree. **This is the load-bearing question; the others are downstream of it.**
+
+**2. What granularity does an anchor bind at?** RFC-0122 §2.1 settled conflict detection
+as per-field for statically-named fields and whole-value through a dynamic index. §1 is
+silent — `&r T` names a binding, not a place. Whether `&r p.x` and `&r p.y` are one anchor
+or two is unspecified and matters for exactly the disjoint-field borrows RFC-0109 wants.
+
+**3. Do anchors have anything to say at all, given the stored-reference ban?** RFC-0122
+§2d bans reference-typed struct fields **specifically because** relating two independent
+lifetimes needs anchors, and marks implementing this RFC as the event that lifts the ban
+(metel-core#364). So this RFC's most concrete consumer is a restriction that does not yet
+exist. §1 was written with no such consumer in view, and should be re-read asking whether
+its `<&r>` declaration form is what #364's lifting actually needs.
+
+**4. Is `<&r>` still the right declaration surface?** It does not parse today
+(`[P0001] expected generic_param`, verified 2026-08-02) so nothing constrains it yet. But
+RFC-0122's diagnostics (§2.5, `T0020`) name *bindings and their extending uses*, never an
+abstract region — if anchors are the user-facing spelling of the same concept, the two
+notations should be checked for agreement before either ships.
+
+**5. Does §1's lifetime-ordering bound (`<&s, &t: &s>`) have a checker to enforce it?**
+RFC-0122 specifies shared-XOR-exclusive and an outlives rule, but §2b.2 records that the
+outlives rule is *itself* unspecified. An ordering bound between two anchors is strictly
+more than either. Nothing in the corpus currently computes it.
+
+---
 
 **Closed — borrow coercion depth.** A borrow of `@a T` coerces to `&T` at coercion sites
 (function arguments, return expressions, annotated `let` bindings). No coercion is inserted in

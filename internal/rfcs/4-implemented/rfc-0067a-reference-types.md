@@ -27,7 +27,7 @@ impl_status: implemented
 >
 > The remaining scope of the original RFC-0067 — lifetime anchors (`&r T`, `<&r>`
 > declarations, ordering bounds), allocator-pointer auto-deref/coercion, and move-out from
-> `@a T` — stays at `internal/rfcs/2-accepted/rfc-0067-lifetime-anchors.md` under the
+> `@a T` — stays at `internal/rfcs/1-under-review/rfc-0067-lifetime-anchors.md` under the
 > same number, since every existing cross-reference to "RFC-0067" in the allocator-cluster
 > RFCs (0063/0065/0066/0068/0077) already refers to that anchor/allocator content
 > specifically, not to this rename. Supersedes RFC-0043 (Regular Pointers). Amends RFC-0044
@@ -241,7 +241,7 @@ expected type, with no explicit depth limit. Chain bounded by type structure.
 - RFC-0043 (Regular Pointers) — superseded by this RFC.
 - RFC-0044 (Explicit Receiver Semantics) — `&self` / `&var self` receivers are now consistent
   with `&T` / `&var T` as general reference types.
-- RFC-0067 (the remaining document, now `2-accepted/`) — lifetime anchors (`&r T`, `<&r>`
+- RFC-0067 (the remaining document, now `1-under-review/`) — lifetime anchors (`&r T`, `<&r>`
   declarations, ordering bounds), allocator-pointer auto-deref/coercion, and move-out from
   `@a T`. Builds directly on this RFC's `&T` / `&var T` without changing their syntax.
 - `reports/implementation/roadmap-2026-07-07.md` — Phase 1 (Cluster A) placement of this RFC,

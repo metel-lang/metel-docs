@@ -427,10 +427,20 @@ number, a backwards RFC-0067a split direction).
 - **RFC-0066** *(accepted)* — Allocated Value Extraction — individual drop/move-out; the
   RFC that triggered the whole cluster-wide split. Renamed from "Region Pointer
   Extraction" 2026-07-10 to match how every other RFC already referred to it.
-- **RFC-0067** *(accepted)* — Lifetime Anchors — the narrowed remainder after RFC-0067a
+- **RFC-0067** *(under review — reverted from accepted 2026-08-02)* — Lifetime Anchors — the narrowed remainder after RFC-0067a
   was split out and accepted separately. Renamed 2026-07-10 from "Lifetime Anchors and
   Allocator-Pointer References" (`rfc-0067-lifetime-anchors.md`) — the dropped half of
   the title duplicated RFC-0063/RFC-0066's own naming.
+  **Reverted 2026-08-02.** Accepted 2026-06-28 before any borrow checker was specified —
+  "designed against an absence" by its own header — and never re-examined in the nine days
+  since that risk was recorded. RFC-0122 has since specified NLL liveness, per-field
+  granularity, `T0020` diagnostics, and a stored-reference ban whose removal this RFC
+  triggers (#364), none checked against §1. "Unresolved questions: None" replaced with
+  five real ones, load-bearing being whether §1's lexical "valid for exactly as long as
+  `r` is in scope" survives NLL. Staleness fixed in the same pass: a `null` literal Metel
+  has never had, a bare `mut` in prose, two retired `:` separators, and a self-staleness
+  note that was itself obsolete. See `OBJECTIVES.md` Trigger 29 (staleness in place —
+  distinct from Trigger 14's premature acceptance).
 - **RFC-0067a** *(implemented 2026-07-11)* — Reference Types — plain `&T`/`&var T`,
   auto-deref. No allocator/borrow-checker dependency; already sequenced into Cluster A.
   Integrated into `public/reference/spec/types.md` and `expressions.md`; gained a new

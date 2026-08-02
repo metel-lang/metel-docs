@@ -60,6 +60,10 @@ lexical to NLL** (§2.2, superseding the same day), which dissolves one of the t
 blockers outright; Polonius considered and recorded as a named future option (§2c),
 gated on Metel acquiring a CFG/MIR it does not have.
 
+**RFC-0067 (Lifetime Anchors) also reverted to `1-under-review` on 2026-08-02** — its
+anchor model predates any specified checker and its "Unresolved questions: None" is
+replaced with five real ones (Trigger 29).
+
 **Needs a decision from the operator, not just the agent:** whether RFC-0122 can
 realistically still clear `2-accepted` before the `v0.12.0` tag, given §2b.2 (specify the
 outlives rule) is genuine design work. *(The stored-reference restriction is no longer
@@ -79,6 +83,20 @@ recorded after the fact by whichever cycle's writer noticed them). Every cycle c
 §2 against this section and must flag, not silently resolve, any place they disagree.
 Logged proactively — any time an explicit steering call is made, in any conversation,
 not only during a strategic-overview cycle — per `PROCESS.md` §1.*
+
+**2026-08-02 — RFC-0067 (Lifetime Anchors) reverts to `1-under-review`.** Its own header
+already recorded that it was accepted 2026-06-28 "before any checker was specified, so its
+anchor model was designed against an absence," and that it "should be re-examined against
+RFC-0122's rules before it is implemented." RFC-0122 has since specified NLL liveness,
+per-field granularity, `T0020` diagnostics, and a stored-reference ban whose *removal this
+RFC triggers* (#364) — none of it checked against §1. Its "Unresolved questions: None" is
+replaced with five real ones, the load-bearing one being whether §1's lexical framing
+("valid for exactly as long as `r` is in scope") survives NLL at all.
+
+**2026-08-02 — the incomplete RFC-0115 docs sweep is tracked as #366, not by reopening
+#298.** 52 `:` field-separator sites remain across 19 live documents; #298 shipped
+correctly for what it covered and rewriting its history would obscure that the gap is
+about *scope*, not correctness.
 
 **2026-08-01 — RFC-0122 specifies NLL (borrow dies at last use), superseding the
 earlier lexical-first decision.** The operator revisited the lexical call after the
@@ -982,6 +1000,25 @@ keeps the active list scannable without losing the record.
     whether this rate (three real defects per adversarially-reviewed PR) is typical or
     was one unusually dense instance, since it bears on when a deeper personal
     implementation review becomes warranted.
+29. ⬜ **New, 2026-08-02. Accepted RFCs go stale in place, and nothing re-examines them.**
+    RFC-0067 reverted to `1-under-review` five weeks after acceptance — **not** because
+    its bar was called too early (Trigger 14's mechanism), but because the corpus moved
+    underneath it: RFC-0122 specified a checker, and an RFC whose whole subject is
+    "naming a borrow's validity scope" had never been checked against the document that
+    now decides what a validity scope *is*. Its own header had recorded the risk
+    ("designed against an absence") on 2026-07-24 and nothing acted on it for nine days.
+    **This is a different failure from premature acceptance and should not be filed under
+    Trigger 14**: nothing was wrong when RFC-0067 was accepted. The gap is that
+    `2-accepted` has no re-examination step at all — an RFC can sit accepted while the
+    documents it depends on are rewritten around it, and only an unrelated review catches
+    it. Watch whether this recurs (the 8 remaining `2-accepted` RFCs are the population,
+    7 of them the allocator cluster, untouched since 2026-07-10), and whether anything
+    cheaper than "someone happens to read it" ever surfaces it.
+    **A second, corroborating instance surfaced the same day, in a different mechanism
+    but the same population:** the RFC-0115 docs sweep (#298) missed 52 sites, 26 of them
+    in that same allocator cluster, because the sweep followed attention rather than the
+    corpus. Tracked as #366. Two independent processes have now missed the same set of
+    documents for the same underlying reason — nobody is reading them.
 
 ---
 
@@ -1014,6 +1051,7 @@ keeps the active list scannable without losing the record.
 | 2026-08-01 (2nd) | **RFC-0122 (Borrow Checking) reviewed jointly with the operator and accepted**, clearing the v0.12.0 bar Trigger 27 had flagged, before the tag cut. Three remaining design questions resolved: **lexical borrows first** (asymmetric reversibility — lexical→NLL accepts strictly more and needs no migration; the reverse breaks valid programs), observability under a deep-cloning evaluator (answered by precedent: move checking found six real defects over the same runtime this release), and a specified `T0020` diagnostic format naming bindings and scope ends. Call-site argument aliasing (`both(&var x, &var x)`, verified accepted today) brought explicitly in scope — it is a checking question, not the naming question §1 had deferred to RFC-0067. New §3 costs corpus migration and requires opt-in rollout behind `--borrow-check`, not default-on alongside #310. **The unblocking fact was a stale premise, not effort:** RFC-0122's sole structural blocker (RFC-0071 §9b's standalone place abstraction) had already been discharged by #291 — verified directly at `src/place.rs`, 203 lines, crate root, every "move" mention doc-comment only. Staleness corrected (RFC-0071 cited as `2-accepted`, actually `3-integrated`; `&var` count nine→ten). Triggers 27 closed, 19 narrowed to "accepted is not implemented." **First cycle exercising §0's new Operator Directives log** — both decisions recorded there as they were made, not reconstructed afterward. | *(none — no dated snapshot; this is an artifact-level change, not a review cycle)* |
 | 2026-08-01 (3rd) | **RFC-0122's acceptance reverted the same day; Trigger 14 fired.** An adversarial pass immediately after acceptance found six gaps, three blocking, all verified against the built interpreter: the **outlives rule** — half the RFC's own stated scope, promised in its Summary — is specified nowhere and unenforced (`fun leak() -> &P { let local = …; return &local; }` is accepted); **reference-typed struct fields** (`struct Holder { r: &P }`) are constructible and can outlive their referent today, which defeats the RFC's central claim that RFC-0067's anchors are "a dependent, not a dependency," since no scope-based rule can relate two independent lifetimes; and **§2.2's lexical rule as written** ("live from creation to end of enclosing scope") rejects `c.bump(); c.bump();`, a shape already passing in `move_check`'s own suite — the temporary-vs-`let`-bound distinction Rust had pre-NLL was omitted. Also unaddressed: closures (zero mentions), reborrowing (listed in scope, specified nowhere), and RFC-0126's `Copy` `T[]` borrowed view (zero mentions, and already shipped in v0.12.0). Recorded as RFC-0122 §2b; RFC returned to `1-under-review`; Trigger 27 reopened with its falsifier unchanged. **Trigger 14's falsifier — "if a third RFC follows the same path" — is met (after RFC-0099, RFC-0100), and the shared mechanism is now identifiable:** all three accepting reviews checked the questions the RFC itself listed and treated that list as complete. `internal/rfcs/PROCESS.md` gains the cheap counter-check (re-read the Summary and Scope against the resolutions; anything promised but unpointable is an open question the RFC did not know it had). Operator directive: **ban reference-typed struct fields for now**, keeping the outlives rule scope-based — a real language restriction, not yet tracked. | *(none — same-day correction, not a review cycle)* |
 | 2026-08-01 (4th) | **RFC-0122's liveness model changed from lexical to NLL**, after the operator asked whether a Polonius-style checker was feasible from the start. It is not, cheaply, and the reason is structural rather than a preference: Polonius is Datalog indexed by **program points** and presupposes a CFG, which Metel has in no form — verified, the pipeline carries no MIR or IR and `move_check` walks the typed AST. **But NLL needs no CFG either**, because Metel's control flow is fully structured (zero `goto`/labels in `grammar.pest`), making the AST a reducible CFG over which AST-directed dataflow is equally powerful; `move_check`'s own 4357-line loop fixed-point is the in-repo proof. NLL additionally **dissolves §2b.1** (lexical's rejection of `c.bump(); c.bump();`) rather than patching it — no temporary-vs-`let`-bound exception needed, and needing an exception was evidence about the rule. **The earlier reversibility argument for lexical is withdrawn as weak**: it protects against breaking code you do not control, and Metel has one operator and a 732-fixture corpus, while lexical's cost is paid immediately and twice. §2.5's diagnostic format revised with it — the earlier version claimed a scope-end was expressible *only* under lexical and that NLL's "last use" was "materially harder to point at"; that was backwards and is corrected, since the extending use is a single span the analysis must compute anyway and it explains *why* the borrow lasted rather than merely where it stops. New §2c records Polonius as a named future option with an explicit revisit condition (Metel acquires a CFG/MIR for an unrelated reason — #259 is the live candidate — or problem case #3 becomes a recurring rejection), noting that its advantage concentrates in exactly the surface §2b.3's stored-reference ban narrows. | *(none — same-day, not a review cycle)* |
+| 2026-08-02 | **RFC-0067 (Lifetime Anchors) revisited and reverted to `1-under-review`; a second, larger docs-sweep gap found in the same pass.** Verified staleness in RFC-0067: a `null` literal Metel has never had (`[T0003] undefined name`), a bare `mut` in prose contradicting the `&r var T` block above it, two retired `:` field separators, and — the instructive one — **a description of its own staleness that was itself stale**: its note claiming "nine `&var` occurrences predating RFC-0098" was already fixed by #351's sweep, and RFC-0122 repeated the claim while a reader "corrected" the count nine→ten **without checking the assertion the count was attached to**. Both corrected, with the mechanism recorded rather than just the fact. "Unresolved questions: None" replaced with five real questions against RFC-0122's now-specified model, the load-bearing one being whether §1's lexical framing survives NLL. **Reverted on operator decision** — accepted 2026-06-28 before any checker existed, "designed against an absence" by its own header, and never re-examined in the nine days since that risk was written down. **Opened Trigger 29 rather than filing this under Trigger 14**: nothing was wrong when RFC-0067 was accepted, so this is *staleness in place*, not premature acceptance — `2-accepted` has no re-examination step at all. **Corroborated the same day by an unrelated mechanism**: #298's RFC-0115 `:`→`=` docs sweep missed **52 sites across 19 live documents**, 26 of them in the allocator cluster — the same population, unread for the same reason. Filed as **#366** (not a reopen of #298, which shipped correctly for its scope), including the prediction that #349 and #351 have the same gap, already confirmed once by RFC-0067's surviving `mut`. Two stale cross-references to RFC-0067's status caught by `rfc.py check` during the transition and fixed. | *(none — artifact-level, not a review cycle)* |
 
 ---
 
