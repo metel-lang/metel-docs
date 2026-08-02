@@ -230,6 +230,11 @@ above it are.
   claim; and §2.2's lexical rule as written rejects sequential `&var` method calls.
   Closures, reborrowing, and RFC-0126's `Copy` `T[]` view are unaddressed. Recorded as
   §2b. **Third `2-accepted`→`1-under-review` reversion in the corpus (Trigger 14 fired).**
+  **Liveness model changed lexical → NLL the same day (§2.2)**, after the operator asked
+  about Polonius: Polonius is Datalog over program points and presupposes a CFG Metel has
+  no form of, whereas NLL needs none — structured control flow makes the AST a reducible
+  CFG (`move_check` is the precedent). NLL also dissolves the lexical blocker outright.
+  §2c records Polonius as a named future option gated on Metel acquiring a CFG/MIR.
 
 - **RFC-0116** *(implemented in v0.12.0, was #288)* — Anonymous Record Types — the closed `{ x: f64 }` type-former,
   `{ x = 1.0 }` values, `Handle.{ fd }` projection, structural identity, and where records

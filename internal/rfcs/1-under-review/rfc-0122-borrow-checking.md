@@ -215,42 +215,51 @@ see exactly what argument produced it and attack that.
    latter because the destructor needs the whole value. A borrow ends and returns the value
    intact, so the destructor still sees everything. Nothing about `Drop` restricts borrow
    granularity.
-2. ~~Lexical or non-lexical?~~ **Resolved 2026-08-01: lexical first.** A borrow is live
-   from its creation to the end of the enclosing scope; non-lexical liveness (ending a
-   borrow at its last use) is a later, separately-decided tightening.
-
-   **The argument is asymmetric reversibility, and it is the whole reason to decide it
-   this way rather than by preference.** Lexical → non-lexical accepts *strictly more*
-   programs: every program a lexical checker admits, an NLL checker also admits. So the
-   later move is backward-compatible, needs no corpus migration, and breaks nothing.
-   The reverse — shipping NLL and later restricting to lexical — would reject
-   already-valid programs, which is a breaking change no release could absorb quietly.
-   Given genuine uncertainty about which is right, the option that can be changed later
-   for free is the one to take first.
+2. ~~Lexical or non-lexical?~~ **Resolved 2026-08-01: non-lexical (NLL) — a borrow is
+   live from its creation to its last use, not to the end of its scope.** *(This
+   supersedes a same-day resolution of "lexical first", withdrawn after the operator
+   asked whether a Polonius-style checker was feasible instead; the reasoning that
+   replaced it is below and the superseded argument is preserved at the end of this
+   item.)*
 
    ```metel
    let r = &var x;
-   r.v = 1;
-   // r is never used again, but under lexical rules it stays live
-   let s = &var x;   // REJECTED under lexical; would be ACCEPTED under NLL
+   r.v = 1;          // r's last use — the borrow ends here
+   let s = &var x;   // accepted: nothing of r is live
    ```
 
-   **This will reject ordinary code, and that cost is accepted knowingly, not
-   overlooked.** Rust shipped lexical borrows for years and moved to NLL precisely
-   because the false-rejection rate was a real ergonomic problem. Metel is choosing the
-   same starting point with the benefit of knowing where it leads — the escape hatch in
-   the interim is the one Rust users used, an explicit block to bound the borrow's
-   scope:
+   **Three reasons, in order of weight.**
 
-   ```metel
-   { let r = &var x; r.v = 1; }   // borrow ends with the block
-   let s = &var x;                // now fine under lexical rules
-   ```
+   **(a) It is reachable without building a CFG, which is the constraint that actually
+   decides this.** Metel's pipeline has no MIR and no IR of any kind; `move_check` walks
+   the typed AST. But Metel's control flow is **fully structured** — no `goto`, no
+   arbitrary labeled jumps (verified against `grammar.pest`) — so the AST is a reducible
+   CFG, and an AST-directed dataflow analysis has the same power as a CFG-based one over
+   it. `move_check` is the in-repo proof: 4357 lines, loop fixed-point analysis with
+   `LoopFrame`/`unwound_to`, entirely AST-directed. Last-use liveness is computable the
+   same way.
 
-   **RFC-0067's anchors are consistent with this and do not force it.** `&r T` names a
-   binding whose scope bounds the borrow, which reads lexically — but as the header
-   note establishes, anchors presuppose these rules rather than supplying them, so this
-   decision is not inherited from RFC-0067; it merely happens not to conflict with it.
+   **(b) It dissolves the failure §2b.1 records instead of patching it.** Under a lexical
+   rule, two sequential `&var self` method calls are two coexisting exclusive borrows —
+   and rescuing that requires importing Rust's pre-NLL temporary-vs-`let`-bound
+   distinction as an extra rule. Under last-use liveness the case never arises: the first
+   borrow's last use is inside the first call. **A rule needing no exception is better
+   evidence of being right than one needing an exception.**
+
+   **(c) It is what Rust actually ships.** Not a research position — the deployed default
+   since the 2018 edition, with a decade of evidence that lexical rejected too much
+   ordinary code to live with.
+
+   > **The superseded argument, kept because withdrawing it is part of the record.** The
+   > earlier resolution chose lexical on *asymmetric reversibility*: lexical → NLL accepts
+   > strictly more programs, so the later tightening is backward-compatible, while the
+   > reverse would reject already-valid code. That reasoning is sound in general and weak
+   > **here**. Reversibility buys protection against breaking code you do not control;
+   > Metel has one operator and a 732-fixture corpus. Meanwhile lexical's cost is paid
+   > immediately and twice — reject idiomatic code, migrate the corpus around the
+   > rejection, then un-migrate on the way to NLL. Rust's own lexical → NLL transition
+   > took years and an edition boundary; that is the cost the argument was treating as
+   > free.
 
    *Operator decision, recorded in `reports/strategy/OBJECTIVES.md` §0.*
 3. ~~What is the relationship to RFC-0071's move tracking — one analysis or two?~~
@@ -326,15 +335,16 @@ see exactly what argument produced it and attack that.
    ```text
    [T0020] type error in main.mtl:6:13: cannot borrow `x` as exclusive more than once
      `x` is already borrowed exclusively by `c`, created at main.mtl:5:13
-     that borrow stays live until the end of the enclosing scope (main.mtl:9:1)
-     help: end the first borrow sooner by scoping it — `{ let c = &var x; … }`
+     that borrow is still live because `c` is used again at main.mtl:9:20
+     help: the borrow ends after its last use — move that use before line 6, or
+           stop using `c` if it is no longer needed
    ```
 
    ```text
    [T0020] type error in main.mtl:7:5: cannot borrow `x` as exclusive while it is
    borrowed as shared
      `x` is borrowed as shared by `r`, created at main.mtl:6:13
-     that borrow stays live until the end of the enclosing scope (main.mtl:10:1)
+     that borrow is still live because `r` is used again at main.mtl:10:17
    ```
 
    ```text
@@ -343,13 +353,22 @@ see exactly what argument produced it and attack that.
      moving `b` would leave `r` referring to a value that no longer exists
    ```
 
-   Three properties are load-bearing and should be treated as normative, not as sample
+Three properties are load-bearing and should be treated as normative, not as sample
    prose: **(a)** the conflicting borrow is always attributed to *the binding that holds
-   it* (`c`, `r`), never to an anonymous region; **(b)** the reason a borrow is still
-   live is always stated as a **scope end with a line number**, which is only expressible
-   *because* §2.2 chose lexical — under NLL the honest answer is "its last use," a
-   materially harder thing to point at; **(c)** the `help:` line names the scoping escape
-   hatch, since under lexical rules that is the fix in the large majority of cases.
+   it* (`c`, `r`), never to an anonymous region; **(b)** the reason a borrow is still live
+   is always stated as **the later use that keeps it alive, with a line number** — under
+   §2.2's NLL model that use is exactly what extends the borrow, so pointing at it is both
+   honest and directly actionable; **(c)** the `help:` line names the concrete edit, which
+   under NLL is moving or removing the extending use rather than adding a scope.
+
+   *(Revised 2026-08-01 with §2.2's move from lexical to NLL. The earlier version stated
+   liveness as a **scope end**, and argued that was only expressible because the model was
+   lexical — under NLL "its last use" was called "a materially harder thing to point at."
+   That was backwards: the extending use is a single concrete span the analysis must
+   already compute to decide liveness at all, whereas a scope end tells the reader where
+   the borrow stops without telling them why it lasted that long. NLL's diagnostic is the
+   better one, not the harder one — recorded because the earlier claim was stated
+   confidently and was wrong.)*
 
    **A new error code is required: `T0020`.** T0019 is RFC-0071's move-checking code and
    covers seven distinct situations already; borrow conflicts are a different analysis
@@ -381,10 +400,15 @@ c.bump();   // second exclusive borrow of c → rejected
 That program is accepted today, and the identical shape is a **currently-passing case in
 `move_check`'s own test suite**. Rust's pre-NLL rule distinguished *temporary* borrows
 (ending at the end of the enclosing statement) from `let`-bound borrows (end of scope);
-§2.2 omitted that distinction entirely. **The fix is to state it** — a borrow bound to a
-name lives to the end of its binding's scope; a borrow created and consumed within a
-single statement ends with that statement — but until it is stated, §2.2 specifies a
-checker that rejects nearly all idiomatic mutation.
+§2.2 omitted that distinction entirely.
+
+> **✅ Dissolved 2026-08-01, not fixed — §2.2 now specifies NLL.** The proposed fix was
+> to import Rust's pre-NLL temporary-vs-`let`-bound rule as an extra clause. Moving to
+> last-use liveness removes the need for it: the first `c.bump()`'s borrow has its last
+> use inside that call, so it is dead before the second begins, with no special case for
+> temporaries anywhere. **That this gap existed at all is the strongest single argument
+> for NLL in this RFC** — the lexical model required an exception to describe ordinary
+> code correctly, and needing an exception is evidence about the rule.
 
 **2. The second headline rule is named and never specified.** The Summary promises two
 rules: shared-XOR-exclusive, *and* "a borrow must not outlive its referent." All five of
@@ -449,6 +473,62 @@ copyable* sits awkwardly against a rule whose whole content is how many borrows 
 coexist: unlimited copies of a shared view are presumably fine, but the interaction with
 an exclusive borrow of the same backing storage is undefined here. This is the one gap
 that concerns already-implemented, already-shipped behaviour rather than future work.
+
+---
+
+## 2c. Polonius, and why it is not the starting point
+
+*Added 2026-08-01, when the operator asked whether a Polonius-style checker could be
+built from the start rather than evolving into one. Recorded rather than left implicit so
+the choice is documented instead of silently foreclosed.*
+
+**What Polonius is.** A reformulation of borrow checking as Datalog over *loans* rather
+than as liveness over *lifetimes*. Where NLL asks "at this point, is this reference
+live," Polonius asks "at this point, which loans are in scope," deriving conflicts from
+relations like `loan_issued_at(Loan, Point)`, `loan_killed_at`, `origin_live_on_entry`,
+and `subset`. It is Rust's intended successor to NLL.
+
+**What it would buy.** Chiefly **NLL problem case #3**: a reference conditionally returned
+out of a `match`, where the borrow appears live on a path that never actually uses it.
+NLL rejects; Polonius accepts. Secondarily, a declarative rule set is easier to argue
+about and to test than hand-written dataflow.
+
+**Why it is not the starting point — the constraint is structural, not a preference.**
+Every Polonius relation is indexed by a **program point**, so the formulation presupposes
+a CFG. Metel has none: the pipeline runs parser → resolver → typechecker → `move_check` →
+elaborator → evaluator, with no MIR and no IR of any kind. **"Implement Polonius" is
+therefore not a borrow-checking decision — it is "build a MIR-like IR first,"** which is
+a compiler-architecture commitment. `OBJECTIVES.md` §1's corollary classifies exactly
+this ("clean IR shape") as *forward-structure budget* — work that pays off only if the
+current interpreter's internals persist past the compiler-direction decision, which that
+document explicitly defers.
+
+Two further facts weigh the same way:
+
+- **NLL is reachable without any of that**, because Metel's control flow is fully
+  structured (no `goto`, no arbitrary labeled jumps), making the AST a reducible CFG over
+  which AST-directed dataflow is equally powerful — see §2.2(a).
+- **Polonius's advantage concentrates in a surface this RFC is narrowing.** Problem case
+  #3 is about references flowing outward through conditional returns; §2b.3's operator
+  decision bans reference-typed struct fields, and the outlives rule (§2b.2) is
+  deliberately scope-based. The cases where Polonius beats NLL are exactly the ones being
+  deferred.
+
+**The condition that would justify revisiting**, stated so this is a decision with a
+falsifier rather than a permanent no:
+
+> Revisit Polonius when **either** (a) Metel grows a CFG or MIR for an unrelated reason —
+> #259's compiler-facing HIR is the live candidate — so the prerequisite is already paid
+> for, **or** (b) NLL problem case #3 shows up as a *recurring* rejection of code the
+> language wants to accept, rather than as a known theoretical limit. Absent both,
+> adopting Polonius means paying for an IR to buy a case Metel cannot currently write.
+
+**One caution on timing, recorded honestly.** Rust has worked on Polonius since 2018 and
+still has not made it the default, largely on performance. That is a strong signal about
+cost for a project whose interpreter `OBJECTIVES.md` describes as a temporary feedback
+instrument — but it is a signal about *Rust's* constraints (an enormous ecosystem, hard
+compile-time budgets), not proof it would be expensive here, and it should not be
+mistaken for a technical objection to the formulation itself.
 
 ---
 
