@@ -172,7 +172,19 @@ readers to skip warnings.
 
 ## Changelog
 
-Version entries live in `docs/public/release-notes/changelog.md`. Each entry lists RFCs implemented, features added, breaking changes (if any), and whether it includes spec changes.
+Version entries live in `docs/public/release-notes/changelog.md`. Each entry lists features added, breaking changes (if any), and whether it includes spec changes.
+
+**No process artifacts in the changelog.** *(Rule added 2026-08-02; the changelog was swept the same day.)* The "public/spec vs. internal/process boundary" above scoped only to `docs/public/reference/spec/`, so the changelog was never covered and had accumulated RFC ids, issue numbers, ADR ids, old task ids (`METEL-NNN`), and sprint branch names across nearly every entry. None of these mean anything to a language user, and **RFC numbers in particular are not public** — the RFC corpus is internal, so citing one points at nothing a reader can follow.
+
+The changelog answers three questions and nothing else:
+
+1. **What changed** in the language or standard library?
+2. **Does it break my code**, and what do I write instead?
+3. **What is the known limitation** I should plan around?
+
+Concretely, the changelog does **not** contain: RFC ids, issue or PR numbers, ADR ids, task-tracker ids, sprint or branch names, or a "RFCs implemented" header. Design rationale belongs in the RFC; migration guidance belongs here.
+
+**Keep entries proportionate.** A release entry describing user-visible change should read closer to 100–200 lines than 350. The v0.12.0 entry reached 358 lines largely by importing RFC-voice rationale ("rejecting rather than accepting is deliberate throughout") and internal archaeology about which error code a bug used to report. Cut both; keep the behaviour, the breaking change, and the workaround.
 
 Patch releases (`vX.Y.Z` with Z > 0) get a short entry listing only the interpreter changes — no spec section needed.
 
