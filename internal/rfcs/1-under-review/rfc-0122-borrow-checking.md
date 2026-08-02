@@ -2,7 +2,7 @@
 id: rfc-0122
 title: "Borrow Checking"
 date: '2026-07-24'
-status: accepted
+status: under-review
 target:
 updated: '2026-08-02'
 ---
@@ -45,6 +45,8 @@ updated: '2026-08-02'
 > against these rules rather than assumed to constrain them.
 
 > **Status — accepted (2026-08-02).** All five design questions resolved: granularity and move-relationship (07-24), lexical-first, observability, and diagnostics (08-01 joint review). RFC-0071 SS9b's standalone place abstraction — this RFC's only structural blocker — discharged by #291.
+
+> **Status — under review (2026-08-02).** Acceptance 2026-08-01 was premature. An adversarial pass the same day found six gaps, three blocking: the outlives rule is named but unspecified; reference-typed struct fields defeat the anchors-are-a-dependent claim; and the lexical rule as written rejects sequential &var method calls. Third accepted-to-under-review reversion in the corpus (Trigger 14).
 
 ## Summary
 
@@ -178,7 +180,10 @@ concerns are separable in the specification even where they interact in the impl
 ## 2. Design questions this RFC exists to settle
 
 **All five are resolved as of 2026-08-01** — questions 1 and 3 on 07-24, questions 2, 4
-and 5 in a joint review on 08-01. They are kept in question form, with their resolutions
+and 5 in a joint review on 08-01. **This was mistaken for completeness and it is not:
+see §2b for six further gaps that reverted this RFC's acceptance the same day.** §2.2's
+resolution in particular is *incomplete as written*, not merely joined by others — read
+§2b.1 alongside it. They are kept in question form, with their resolutions
 appended rather than rewritten into flat prose, because the reasoning that settled each
 one is the substance of this RFC; a reader who disagrees with a rule should be able to
 see exactly what argument produced it and attack that.
@@ -355,6 +360,98 @@ see exactly what argument produced it and attack that.
 
 ---
 
+## 2b. Blocking gaps found after the premature acceptance
+
+*Added 2026-08-01, immediately after this RFC was accepted and reverted the same day.
+All six were found by an adversarial pass asking "what does a borrow checker need that
+this does not have," and all six are verified against the built interpreter rather than
+reasoned about. They are numbered separately from §2 because §2's five questions were
+**the questions this RFC had asked itself**, and the lesson of the reversion is that that
+was not the same set as the questions it needed to answer.*
+
+**1. §2.2's lexical rule, as written, rejects ordinary code.** It says a borrow is live
+"from its creation to the end of the enclosing scope." Applied literally, each method
+call taking `&var self` creates a borrow that never ends:
+
+```metel
+c.bump();   // &var borrow of c, live to end of scope
+c.bump();   // second exclusive borrow of c → rejected
+```
+
+That program is accepted today, and the identical shape is a **currently-passing case in
+`move_check`'s own test suite**. Rust's pre-NLL rule distinguished *temporary* borrows
+(ending at the end of the enclosing statement) from `let`-bound borrows (end of scope);
+§2.2 omitted that distinction entirely. **The fix is to state it** — a borrow bound to a
+name lives to the end of its binding's scope; a borrow created and consumed within a
+single statement ends with that statement — but until it is stated, §2.2 specifies a
+checker that rejects nearly all idiomatic mutation.
+
+**2. The second headline rule is named and never specified.** The Summary promises two
+rules: shared-XOR-exclusive, *and* "a borrow must not outlive its referent." All five of
+§2's questions are about the first. The outlives rule has no granularity decision, no
+liveness model, no diagnostic, and no worked example. It is also unenforced:
+
+```metel
+fun leak() -> &P {
+    let local = P { v = 1 };
+    return &local;          // accepted today; prints 1
+}
+```
+
+**This is the larger half of the RFC's own stated scope, missing.** §1 lists "when a
+borrow is valid with respect to the scope of what it borrows" first among in-scope items.
+
+**3. Reference-typed struct fields defeat this RFC's central architectural claim.** The
+header argues at length that RFC-0067's anchors are "a dependent, not a dependency,"
+because shared-XOR-exclusive never needs a validity scope *named* and local outlives
+checking is scope-based. Both halves of that argument are about **local** borrows. Neither
+survives a stored reference:
+
+```metel
+struct Holder { r: &P }
+fun make() -> Holder {
+    let local = P { v = 42 };
+    return Holder { r = &local };   // accepted today; prints 42
+}
+```
+
+No scope-based rule can check this: the question is whether `Holder`'s referent outlives
+`Holder`, which relates two independent lifetimes and is exactly what an anchor
+expresses. **Either reference-typed fields are banned, or RFC-0067 is a dependency for
+the outlives rule after all.**
+
+> **Operator decision, 2026-08-01: ban reference-typed struct fields for now**, keeping
+> the outlives rule scope-based and this RFC genuinely independent of RFC-0067. Recorded
+> in `reports/strategy/OBJECTIVES.md` §0. This is a real language restriction, not a
+> clarification — it needs its own justification, its own tracked work, and its own
+> migration check against the existing corpus, none of which this RFC provides yet.
+> Revisit once anchors are implemented.
+
+**4. Closures are absent entirely — zero mentions.** RFC-0071 specifies closure capture
+for moves (a free non-`Copy` root is treated as moved at closure creation). Borrow
+checking needs the analogue: a closure capturing a place while a borrow of it is live.
+Accepted today:
+
+```metel
+var c = C { v = 0 };
+let r = &var c;
+let f = () -> i64 { c.v };   // captures c while r borrows it exclusively
+```
+
+**5. Reborrowing is listed in scope and specified nowhere.** §1 names it ("already
+surfaced by v0.11.0's `&*p` and by RFC-0067's coercions") and no other line in the RFC
+mentions it. Whether a reborrow suspends the original borrow, and for how long, is core
+machinery rather than a detail — it is what makes `&var` usable at all in practice.
+
+**6. RFC-0126's `T[]` Copy borrowed view is unaddressed — zero mentions — and it
+shipped.** v0.12.0 made `T[]` a `Copy` borrowed view (#317). A borrow that is *freely
+copyable* sits awkwardly against a rule whose whole content is how many borrows may
+coexist: unlimited copies of a shared view are presumably fine, but the interaction with
+an exclusive borrow of the same backing storage is undefined here. This is the one gap
+that concerns already-implemented, already-shipped behaviour rather than future work.
+
+---
+
 ## 3. Migration cost, and why it is a sequencing constraint
 
 *Added 2026-08-01. Nothing in the earlier draft costed this, and it is the largest
@@ -415,7 +512,26 @@ blocking an unrelated release.
 
 ## Decision
 
-**Outcome:** **Accepted 2026-08-01.** All five design questions in §2 are resolved and
+**Outcome:** **Reverted to `1-under-review`, 2026-08-01, the same day it was accepted.**
+The acceptance below was premature: an adversarial pass immediately afterward found six
+gaps (§2b), three of them blocking — an unspecified outlives rule, reference-typed struct
+fields defeating the anchors-are-a-dependent claim, and a lexical rule that as written
+rejects sequential `&var` method calls. `PROCESS.md`'s bar for `2-accepted` is "no open
+questions block it"; that was true of the five questions §2 asked and not of the RFC.
+
+**This is the corpus's third `2-accepted` → `1-under-review` reversion** (after RFC-0099
+and RFC-0100), which is precisely what `OBJECTIVES.md` Trigger 14 named as its falsifier:
+*"If a third RFC follows the same path, that's evidence `2-accepted`'s own bar is being
+called too early in practice."* It fired. Recorded there rather than only here.
+
+**The distinguishing feature of this instance, worth keeping:** RFC-0099 and RFC-0100
+were reverted during *integration*, by problems the accepting review had not surfaced.
+This one was reverted minutes after acceptance, by an adversarial pass on the same
+document in the same session — which is a cheaper failure, but a more embarrassing one,
+because nothing about the gaps required new information. §2b.2's dangling-reference repro
+is four lines.
+
+**Superseded acceptance rationale, kept for the record:** *Accepted 2026-08-01.* All five design questions in §2 are resolved and
 none blocks implementation. The headline rule (shared XOR exclusive), its granularity
 (per-field for statically-named fields, whole-value through a dynamic index), its
 liveness model (lexical), its relationship to move checking (two analyses, one shared

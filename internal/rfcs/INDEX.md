@@ -200,7 +200,7 @@ above it are.
   instance induction, and Haskell `row-types`' `Forall r c`; both derive it rather than
   making it primitive, which is open question 2.
 
-- **RFC-0122** *(accepted 2026-08-01; opened 2026-07-24)* — Borrow Checking — **headline rule: shared XOR
+- **RFC-0122** *(under review — accepted and reverted 2026-08-01; opened 2026-07-24)* — Borrow Checking — **headline rule: shared XOR
   exclusive** (any number of `&T` to a place, or exactly one `&var T`, never both), plus the
   outlives rule. Neither is stated anywhere in the corpus today, and `&var T` is called
   "exclusive" by the spec and RFC-0067a with nothing defining or enforcing it. **Depends only
@@ -222,6 +222,14 @@ above it are.
   this is now a second analysis over an existing representation rather than a rebuild.
   §3 requires it ship opt-in behind `--borrow-check` and **not** default-on in the same
   release as #310, to keep two corpus migrations out of one blast radius.
+  **Reverted to `1-under-review` the same day.** Six gaps found immediately after
+  acceptance, three blocking: the outlives rule — half the RFC's own stated scope — is
+  named in its Summary and specified nowhere (`return &local;` is accepted today);
+  reference-typed struct fields (`struct Holder { r: &P }`, constructible and able to
+  outlive their referent today) defeat the "anchors are a dependent, not a dependency"
+  claim; and §2.2's lexical rule as written rejects sequential `&var` method calls.
+  Closures, reborrowing, and RFC-0126's `Copy` `T[]` view are unaddressed. Recorded as
+  §2b. **Third `2-accepted`→`1-under-review` reversion in the corpus (Trigger 14 fired).**
 
 - **RFC-0116** *(implemented in v0.12.0, was #288)* — Anonymous Record Types — the closed `{ x: f64 }` type-former,
   `{ x = 1.0 }` values, `Handle.{ fd }` projection, structural identity, and where records

@@ -295,6 +295,20 @@ planning document with a technical soundness-checking gate, which is `3-integrat
 own concern (above), performed whenever a promotion is actually attempted, not deferred
 to wait for the next planning cycle.
 
+**Before accepting an RFC, re-read its own Summary and Scope against its resolutions,
+and ask what is promised there but specified nowhere.** *(Adopted 2026-08-01, after
+RFC-0122 became the corpus's third `2-accepted` → `1-under-review` reversion and fired
+`reports/strategy/OBJECTIVES.md` Trigger 14.)* All three reversions share one mechanism:
+the accepting review checked the questions **the RFC itself had listed** and treated that
+list as complete. `2-accepted`'s bar is *"no open question blocks it"* — a claim about the
+RFC — not *"every question the RFC asked is answered"*, which is a claim about its own
+checklist and is much weaker. RFC-0122 makes the difference legible: its §2 was an
+explicit five-item list, every item genuinely resolved, and the RFC was still missing
+half of its own stated scope — its Summary promised two headline rules and specified one.
+The check costs minutes: read the Summary, read §1's in-scope list, and for each item
+name where it is settled. Anything you cannot point at is an open question the RFC did
+not know it had.
+
 **Prune open questions inside RFC bodies harder.** Only genuinely blocking questions
 stay inline. RFC-0012 accumulated 18 open questions before being split — most weren't
 blocking anything, they just made the document read as permanently unfinished. If a

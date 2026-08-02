@@ -238,13 +238,18 @@ accumulate rather than evaporate at the end of the conversation that produced th
   meta-risk (§1) this cycle's assessment is measured against
 - `internal/rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md` — the sole
   `3-integrated` RFC, and this cycle's central engineering result
-- `internal/rfcs/2-accepted/rfc-0122-borrow-checking.md` — the 07-24 bar this cycle
+- `internal/rfcs/1-under-review/rfc-0122-borrow-checking.md` — the 07-24 bar this cycle
   flagged it as behind on. **Met later the same day**, after this overview was written:
   RFC-0122 reached `2-accepted` in a joint operator review once it emerged that its only
   structural blocker (RFC-0071 §9b's standalone place abstraction) had already been
-  discharged by #291. The assessment above stands as written — it was accurate when
-  written, and the stall it named was real; what it could not have known is that the
-  stall rested on a stale premise rather than on remaining work.
+  discharged by #291 — **and then reverted to `1-under-review` hours later**, when an
+  adversarial pass found six gaps (three blocking, §2b of that RFC): an unspecified
+  outlives rule, reference-typed struct fields defeating its anchors-are-a-dependent
+  claim, and a lexical rule that as written rejects sequential `&var` method calls. The
+  assessment above stands as written — the stall it named was real, and turned out to be
+  a stale premise rather than remaining work. What followed is a separate lesson, logged
+  against Trigger 14 rather than here: this became the corpus's **third**
+  `2-accepted`→`1-under-review` reversion, firing that trigger's falsifier.
 - `internal/rfcs/REGISTRY.md` — regenerated 2026-08-01, this cycle's corpus tally
 - `internal/rfcs/4-implemented/rfc-0116-anonymous-record-types.md`,
   `rfc-0118-row-bounds.md` — Priority 1's two new implemented RFCs
