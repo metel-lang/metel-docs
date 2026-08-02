@@ -115,6 +115,61 @@ complete lifecycle record; see `PROCESS.md`.
 
 ---
 
+## Release checklist
+
+*Added 2026-08-02, from the v0.12.0 pre-release review. This document previously defined
+the release **model** — tags, annotation style, changelog format — but not the **steps**,
+so every release re-derived them. Three of the five items below were genuinely undone at
+the point v0.12.0 was declared ready, and were found only because someone ran a review by
+hand.*
+
+Run in order. Everything before the tag happens on `develop`; the tag is applied to
+`main` after the release-prep commit merges.
+
+**1. Verify the tree.**
+- [ ] `cargo test --release` — all suites green
+- [ ] `cargo clippy --release --lib -- -W clippy::pedantic` — clean
+- [ ] `cargo fmt --check` — clean
+- [ ] `rfc.py check` — clean (also confirms `REGISTRY.md` is not stale)
+
+**2. Verify the release is actually complete.**
+- [ ] The version milestone has **zero open issues**
+- [ ] No RFC targeting this version is short of `4-implemented`, or the changelog says
+      explicitly which parts shipped and which did not
+- [ ] Any **release gate** recorded in an RFC (e.g. RFC-0071 §9c's "#290 must not ship
+      without #292") is discharged, and the discharge is written down in the RFC itself
+- [ ] `git ls-tree <ref> docs` resolves to a commit reachable from `metel-docs` `main`
+
+**3. Bump the version in every place it is written.** These are separate files and
+nothing cross-checks them:
+- [ ] `metel-interpreter/Cargo.toml` — `version = "X.Y.Z"`
+- [ ] `docs/public/reference/spec.md` — frontmatter `version: vX.Y.Z` (a `vX.Y.0` tag
+      means *spec + interpreter*, so the spec version is part of what is tagged)
+
+**4. Close out the changelog entry.**
+- [ ] Replace the in-progress line with the released form used by every prior entry:
+      `**Released YYYY-MM-DD.** The spec's `Since vX.Y.Z` / `Changed in vX.Y.Z` markers
+      refer to this entry.`
+- [ ] Confirm the entry names the RFCs implemented, features, and breaking changes
+
+**5. Normalise version markers *before* tagging — a tagged spec version is immutable.**
+- [ ] Every marker for this version uses the mandated `Since vX.Y.Z` form (see
+      "Annotation style" above), not ad-hoc wording. v0.12.0 shipped its review with
+      seven `Available in v0.12.0` sites against three `Since v0.12.0`; after a tag, the
+      only remedy is errata in the next version.
+
+**6. Tag.**
+- [ ] Release-prep commit merged to `develop`, then `develop` → `main`
+- [ ] Single tag `vX.Y.Z` on `main`
+
+**Also worth a look each time, though not gating:** stale "known issues" notes in
+`AGENTS.md` or elsewhere that describe problems since fixed. v0.12.0's review found
+`AGENTS.md` still warning that `spec.md` claimed `v0.7.0` and a reference-counting memory
+model, both corrected releases earlier. A warning that points at a non-problem trains
+readers to skip warnings.
+
+---
+
 ## Changelog
 
 Version entries live in `docs/public/release-notes/changelog.md`. Each entry lists RFCs implemented, features added, breaking changes (if any), and whether it includes spec changes.

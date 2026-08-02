@@ -407,7 +407,7 @@ Rules:
 
 Addressable places for both `&` and `&var` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), a dereference (`*p` — so `&*p` is a reborrow that shares the referent's storage), and chains thereof (`nested.outer.field`, `t.1.0`).
 
-> **Available in v0.12.0: `&<rvalue>` / `&var <rvalue>` — temporary lifetime extension.**
+> **Since v0.12.0: `&<rvalue>` / `&var <rvalue>` — temporary lifetime extension.**
 > Neither `&expr` nor `&var expr` requires `expr` to be an addressable place anymore: a
 > literal, a call result, a struct or enum construction, or any other non-addressable
 > expression is materialized into a fresh, independent cell and referenced directly

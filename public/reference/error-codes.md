@@ -280,7 +280,7 @@ generic parameter with the same bound.
 
 ### T0019 — Use of moved value
 
-> **Available in v0.12.0, under `--move-check` only.** Move checking is off by default in this release.
+> **Since v0.12.0, under `--move-check` only.** Move checking is off by default in this release.
 
 An ownership rule from RFC-0071 §1/§7 was violated. Seven distinct situations share this
 code, each with its own message:

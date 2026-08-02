@@ -167,7 +167,7 @@ in pipelines without explicit `match`:
 
 `List<T>` is the growable collection type in `std::core`, available unqualified.
 
-> **Available in v0.12.0: `.set(i, value)`.** Added alongside RFC-0126 — `T[]` becoming an
+> **Since v0.12.0: `.set(i, value)`.** Added alongside RFC-0126 — `T[]` becoming an
 > immutable borrowed view meant index-assignment through a slice stopped working, and
 > `List<T>` had no way to overwrite an element in place at all, so an in-place algorithm
 > (a bubble sort, for instance) had no expression until this existed.

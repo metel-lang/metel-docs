@@ -1,7 +1,7 @@
 ---
 title: "Metel Language Specification"
 type: spec
-version: v0.11.0
+version: v0.12.0
 created_date: '2026-05-16'
 ---
 
