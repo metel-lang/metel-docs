@@ -238,7 +238,13 @@ accumulate rather than evaporate at the end of the conversation that produced th
   meta-risk (§1) this cycle's assessment is measured against
 - `internal/rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md` — the sole
   `3-integrated` RFC, and this cycle's central engineering result
-- `internal/rfcs/0-draft/rfc-0122-borrow-checking.md` — the 07-24 bar it is behind, not missed
+- `internal/rfcs/2-accepted/rfc-0122-borrow-checking.md` — the 07-24 bar this cycle
+  flagged it as behind on. **Met later the same day**, after this overview was written:
+  RFC-0122 reached `2-accepted` in a joint operator review once it emerged that its only
+  structural blocker (RFC-0071 §9b's standalone place abstraction) had already been
+  discharged by #291. The assessment above stands as written — it was accurate when
+  written, and the stall it named was real; what it could not have known is that the
+  stall rested on a stale premise rather than on remaining work.
 - `internal/rfcs/REGISTRY.md` — regenerated 2026-08-01, this cycle's corpus tally
 - `internal/rfcs/4-implemented/rfc-0116-anonymous-record-types.md`,
   `rfc-0118-row-bounds.md` — Priority 1's two new implemented RFCs

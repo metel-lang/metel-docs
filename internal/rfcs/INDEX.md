@@ -200,7 +200,7 @@ above it are.
   instance induction, and Haskell `row-types`' `Forall r c`; both derive it rather than
   making it primitive, which is open question 2.
 
-- **RFC-0122** *(draft, opened 2026-07-24)* — Borrow Checking — **headline rule: shared XOR
+- **RFC-0122** *(accepted 2026-08-01; opened 2026-07-24)* — Borrow Checking — **headline rule: shared XOR
   exclusive** (any number of `&T` to a place, or exactly one `&var T`, never both), plus the
   outlives rule. Neither is stated anywhere in the corpus today, and `&var T` is called
   "exclusive" by the spec and RFC-0067a with nothing defining or enforcing it. **Depends only
@@ -212,7 +212,16 @@ above it are.
   checker has no RFC at all," true of a title search but understating RFC-0067, which is
   `2-accepted`, specifies anchors, and superseded RFC-0052. The missing piece is the
   checking rules, not the notation. Scheduled as **design-only** for v0.12.0, running
-  alongside RFC-0071's implementation rather than gating it.
+  alongside RFC-0071's implementation rather than gating it. **Accepted 2026-08-01** with
+  all five design questions resolved: per-field granularity, two analyses over one shared
+  place abstraction (07-24), and **lexical borrows first** — chosen for asymmetric
+  reversibility, since lexical→NLL accepts strictly more and needs no migration while the
+  reverse breaks valid programs — plus observability and a specified `T0020` diagnostic
+  format (08-01). **Its only structural blocker is discharged:** RFC-0071 §9b's standalone
+  place abstraction shipped in #291 (`src/place.rs`, crate root, analysis-neutral), so
+  this is now a second analysis over an existing representation rather than a rebuild.
+  §3 requires it ship opt-in behind `--borrow-check` and **not** default-on in the same
+  release as #310, to keep two corpus migrations out of one blast radius.
 
 - **RFC-0116** *(implemented in v0.12.0, was #288)* — Anonymous Record Types — the closed `{ x: f64 }` type-former,
   `{ x = 1.0 }` values, `Handle.{ fd }` projection, structural identity, and where records
