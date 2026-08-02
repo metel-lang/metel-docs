@@ -49,7 +49,7 @@ use their combinators:
 
 ```metel
 fun main() {
-    let maybe = Perhaps::Some { value: 21 };
+    let maybe = Perhaps::Some { value = 21 };
 
     // Transform inside the Perhaps, then supply a fallback.
     let doubled = maybe.map((x: i64) -> i64 { x * 2 }).unwrap_or(0); // 42
@@ -64,7 +64,7 @@ fun main() {
 the `Err` through untouched:
 
 ```metel
-let r: Result<i64, String> = Result::Ok { value: 10 };
+let r: Result<i64, String> = Result::Ok { value = 10 };
 let n = r.map((x: i64) -> i64 { x + 5 }).unwrap_or(0);  // 15
 ```
 

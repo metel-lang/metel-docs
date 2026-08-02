@@ -15,7 +15,7 @@ fun first<T>(items: T[]) -> Perhaps<T> {
     if (items.len() == 0) {
         return Perhaps::None;
     }
-    return Perhaps::Some { value: items[0u64] };
+    return Perhaps::Some { value = items[0u64] };
 }
 
 fun main() {
@@ -73,12 +73,12 @@ extend Stack<T> {
         if (self.items.len() == 0) {
             return Perhaps::None;
         }
-        return Perhaps::Some { value: self.items[(self.items.len() - 1) as u64] };
+        return Perhaps::Some { value = self.items[(self.items.len() - 1) as u64] };
     }
 }
 
 fun main() {
-    let numbers = Stack { items: [1, 2, 3] };
+    let numbers = Stack { items = [1, 2, 3] };
     match numbers.peek() {
         Perhaps::Some { value } => println(value),   // 3
         Perhaps::None => println("empty"),
@@ -97,7 +97,7 @@ struct Pair<A, B> {
 }
 
 fun main() {
-    let p = Pair { first: 1, second: "one" };
+    let p = Pair { first = 1, second = "one" };
     println("${p.first} / ${p.second}");   // 1 / one
 }
 ```

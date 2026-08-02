@@ -88,7 +88,7 @@ struct Counter {
 }
 
 fun main() {
-    var counter = Counter { value: 10 };
+    var counter = Counter { value = 10 };
     let field_ref: &var i64 = &var counter.value;
 
     field_ref += 5;
@@ -137,7 +137,7 @@ extend Counter {
 }
 
 fun main() {
-    var counter = Counter { value: 0 };
+    var counter = Counter { value = 0 };
     let r: &var Counter = &var counter;
 
     r.increment();
