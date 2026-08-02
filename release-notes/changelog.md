@@ -6,8 +6,8 @@ title: "Metel Language Changelog"
 
 ## v0.12.0
 
-**In progress on `develop` — not yet released.** The spec's `Available in v0.12.0` /
-`Changed in v0.12.0` markers refer to this entry.
+**Released 2026-08-02.** The spec's `Since v0.12.0` / `Changed in v0.12.0` markers
+refer to this entry.
 
 **RFCs implemented:** RFC-0115 (Field Initializer Separator), RFC-0116 (Anonymous
 Record Types), RFC-0118 (Row Bounds), RFC-0126 (`T[]` as a Copy Borrowed View).
