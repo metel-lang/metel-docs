@@ -62,6 +62,8 @@ fun main() {
 }
 ```
 
+An unannotated array literal like `["zero", "one", "two"]` has a fixed-size array type, `[String; 3]` here — see [Fixed-size arrays](#fixed-size-arrays) below for what that means and how it differs from `T[]`.
+
 :::tip
 Keep Index Types Honest
 
@@ -137,6 +139,18 @@ fun main() {
     println(first(values));   // 10
 }
 ```
+
+`T[]` and `[T; N]` are not interchangeable in both directions. `T[]` is a **borrowed, read-only view** — a pointer and a length, never an owner of its elements. It only ever comes from borrowing a `[T; N]`, a `List<T>`, or another slice, the way `first` above receives one; it is never what an array literal itself produces. `[T; N]`, by contrast, owns its elements and can be mutated directly:
+
+```metel
+fun main() {
+    var values: [i64; 3] = [10, 20, 30];
+    values[0u64] = 99;
+    println(values[0u64]);   // 99
+}
+```
+
+Mutating through a `T[]` (`xs[0u64] = 99` inside `first` above, for instance) is rejected at compile time — mutation is only available through `[T; N]` or `List<T>` directly. If you need a function to mutate the caller's array in place, take a mutable reference to it instead — `xs: &var [i64; 3]` — rather than `xs: i64[]`.
 
 ## Growable collections with `List<T>`
 
@@ -220,7 +234,8 @@ This is most useful when inference would otherwise be ambiguous, or when you wan
 - Metel v0.8.0 adds exact-width numeric types and makes `i64` and `f64` the default numeric forms in source examples.
 - Numeric conversions are explicit with `as`.
 - `Char` is a first-class scalar type, separate from `String`.
-- `[T; N]` represents fixed-size arrays and can match by shape.
+- `[T; N]` represents fixed-size arrays, owns its elements, can match by shape, and can be mutated directly. An unannotated array literal produces `[T; N]`.
+- `T[]` is a borrowed, read-only view — never what a literal produces, and never mutable through it.
 - `List<T>` is the growable collection type for push/pop-style workflows.
 - `::<...>` lets you provide explicit generic arguments when inference needs help.
 
