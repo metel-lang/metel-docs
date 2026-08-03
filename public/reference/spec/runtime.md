@@ -122,8 +122,8 @@ Strings are concatenated with the `+` operator.
 
 | Method / Function         | Signature                        | Description                                  |
 |---------------------------|----------------------------------|----------------------------------------------|
-| `.to_u32()`               | `() -> u32`                      | Unicode scalar value as a `u32`              |
-| `Char::from_u32(n)`       | `(u32) -> Perhaps<Char>`         | Construct from a code point; `None` if invalid |
+| `u32::from(c)`            | `(Char) -> u32`                  | Unicode scalar value as a `u32`              |
+| `Char::from(n)`           | `(u32) -> Char`                  | Construct from a code point; runtime error if not a valid scalar value |
 | `.to_string()`            | `() -> String`                   | Single-character string                      |
 
 ## Core Sum Types

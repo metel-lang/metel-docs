@@ -98,9 +98,13 @@ struct Pair<A, B> {
 
 fun main() {
     let p = Pair { first = 1, second = "one" };
-    println("${p.first} / ${p.second}");   // 1 / one
+    let first: i64 = p.first;
+    let second: String = p.second;
+    println("${first} / ${second}");   // 1 / one
 }
 ```
+
+Interpolating a generic field directly (`"${p.first}"`) does not yet work — copy it into a locally-typed binding first, as above.
 
 ## Generic enums
 

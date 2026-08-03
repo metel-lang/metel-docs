@@ -78,12 +78,12 @@ count = 99;               // 99 is i32
 ```metel
 fun main() {
     let c: Char = 'a';
-    let code: u32 = c.to_u32();
-    let back: Perhaps<Char> = Char::from_u32(code);
+    let code: u32 = u32::from(c);
+    let back: Char = Char::from(code);
 }
 ```
 
-`Char` is not `u32` and not a string — no implicit coercions exist. Use `c.to_u32()` to get the Unicode scalar value and `Char::from_u32(n)` (returns `Perhaps<Char>`) to construct from a code point.
+`Char` is not `u32` and not a string — no implicit coercions exist. Use `u32::from(c)` to get the Unicode scalar value and `Char::from(n)` to construct from a code point; `Char::from` raises a runtime error if `n` is not a valid Unicode scalar value.
 
 ## Type Inference
 
@@ -319,7 +319,7 @@ fun main() -> i64 {
     var value = 1;
     let p: &i64 = &value;
     let q: &var i64 = &var value;
-    q = p + 1;
+    *q = *p + 1;
     return q;
 }
 ```
@@ -358,7 +358,7 @@ struct Counter { value: i64 }
 fun main() -> i64 {
     var c = Counter { value = 0 };
     let p: &var i64 = &var c.value;
-    p = 42;
+    *p = 42;
     return c.value;   // 42
 }
 ```
@@ -389,7 +389,7 @@ result against a declared or expected type the same way a `let` binding does):
 
 ```metel
 fun bump(p: &var i64) -> i64 {
-    p += 1;
+    *p += 1;
     p          // tail expression, no explicit `return` — copies out of p
 }
 ```

@@ -88,13 +88,11 @@ You can convert between `Char` and its scalar value explicitly:
 ```metel
 fun main() {
     let c: Char = 'A';
-    let code: u32 = c.to_u32();
+    let code: u32 = u32::from(c);
     println(code);   // 65
 
-    match Char::from_u32(66) {
-        Perhaps::Some { value } => println(value),   // B
-        Perhaps::None => println("invalid code point"),
-    }
+    let back: Char = Char::from(66);
+    println(back);   // B
 }
 ```
 
