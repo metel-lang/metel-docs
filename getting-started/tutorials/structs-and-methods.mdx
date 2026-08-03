@@ -351,21 +351,33 @@ Structs and enums become more useful together: structs model stable records, enu
 
 ## Copying and moving values
 
-By default, assigning or passing a struct or enum value **moves** it — the source binding is
-conceptually spent, and the new binding is the only valid way to reach the value:
+By default, assigning or passing a struct or enum value **moves** it: the source binding is
+considered spent, and the new binding becomes the only valid way to reach the value. This is a
+rule the type checker tracks, not something that changes what actually runs — the interpreter
+always copies a value's representation on assignment regardless of move status, so `p` and `q`
+below hold independent storage either way, and mutating one never affects the other:
 
 ```metel
 struct Point { x: f64, y: f64 }
 
 fun main() {
     let p = Point { x = 1.0, y = 2.0 };
-    let q = p;   // moves p into q
+    let q = p;   // p is considered moved into q
     println("${q.x}, ${q.y}");
 }
 ```
 
-A type can opt out of this by declaring `Copy`, which makes assignment duplicate the value
-instead of moving it:
+:::caution
+Move Checking Is Off By Default In This Release
+
+Move status only matters if something actually enforces it. Pass `--move-check` on the command
+line to reject use of a moved-from binding — the example above would then reject reading `p`
+after moving it into `q`. Without that flag, using `p` afterward compiles and runs exactly as if
+the value had been copied, silently, since nothing is checking.
+:::
+
+A type can opt out of moving entirely by declaring `Copy`. This changes what the type checker
+considers valid, not the runtime behavior — the value was already being copied either way:
 
 ```metel
 struct Point { x: f64, y: f64 }
@@ -373,7 +385,7 @@ extend Point: Copy;
 
 fun main() {
     let p = Point { x = 1.0, y = 2.0 };
-    let q = p;   // copies — both remain usable
+    let q = p;   // Copy: reusing p afterward is always valid, checked or not
     println("${p.x}, ${q.x}");
 }
 ```
@@ -390,15 +402,6 @@ extend Resource: Drop {
 }
 ```
 
-:::caution
-Move Checking Is Off By Default In This Release
-
-The compiler tracks moves, but does not reject use of a moved-from binding unless you pass
-`--move-check` on the command line. Without it, a program like the first example above would
-still let you read `p` after moving it into `q`, silently. Passing `--move-check` turns that
-into a compile error instead.
-:::
-
 ## What you learned
 
 - `struct` defines a named record with typed fields; `extend` attaches methods to it.
@@ -406,8 +409,10 @@ into a compile error instead.
 - `enum` defines a type with named variants, each optionally carrying data.
 - `match` exhaustively handles every variant and destructures field data into local variables.
 - Both structs and enums support `extend` blocks in the same way.
-- Assignment moves by default; `Copy` opts a type out of that. `Drop` marks a type as needing
-  cleanup, though running that cleanup isn't implemented yet. `--move-check` opts into
+- Assignment moves by default — a rule the type checker tracks, not a change in what runs;
+  the interpreter always copies a value's representation regardless. `Copy` opts a type out
+  of the move rule entirely. `Drop` marks a type as needing cleanup, though running that
+  cleanup isn't implemented yet. `--move-check` is what actually enforces the move rule by
   rejecting use of moved-from bindings; it is off by default.
 
 Next: [Generics](generics) — parameterizing your own structs, enums, and functions over a type.
