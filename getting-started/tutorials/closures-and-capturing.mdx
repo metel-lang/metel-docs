@@ -77,7 +77,7 @@ fun main() {
     let r: &var i64 = &var count;
 
     let inc = () -> () {
-        r += 1;
+        *r += 1;
     };
 
     let get = () -> i64 {
@@ -131,7 +131,7 @@ fun main() {
 
     let is_even = (x: i64) -> boolean {
         if (x % 2 == 0) {
-            matched_ref += 1;
+            *matched_ref += 1;
             return true;
         }
         return false;

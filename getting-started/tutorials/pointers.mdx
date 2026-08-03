@@ -24,12 +24,12 @@ fun main() {
 
     var counter = 0;
     let write_ref: &var i64 = &var counter;
-    write_ref = 50;
+    *write_ref = 50;
     println(counter);   // 50
 }
 ```
 
-`&i64` is a shared reference to an `i64`. `&var i64` is an exclusive mutable reference to an `i64`.
+`&i64` is a shared reference to an `i64`. `&var i64` is an exclusive mutable reference to an `i64`. Writing through a reference uses the explicit dereference operator `*write_ref = ...` — plain assignment to the binding itself is rejected, since the binding is not what's being updated.
 
 :::tip
 Read This As Two Choices
@@ -60,11 +60,11 @@ fun main() {
     let cell: &var i64 = &var total;
 
     let add_one = () -> {
-        cell += 1;
+        *cell += 1;
     };
 
     let add_ten = () -> {
-        cell += 10;
+        *cell += 10;
     };
 
     add_one();
@@ -91,7 +91,7 @@ fun main() {
     var counter = Counter { value = 10 };
     let field_ref: &var i64 = &var counter.value;
 
-    field_ref += 5;
+    *field_ref += 5;
     println(counter.value);   // 15
 }
 ```
@@ -100,25 +100,25 @@ That same rule applies to nested paths. The write goes back to the original stor
 
 ## Reading and writing through references
 
-There is no explicit dereference operator. A value is read out of a reference when the expected type is the referent type:
+Reading is implicit: a value is copied out of a reference whenever the expected type is the referent type, with no operator needed. Writing is explicit: it always goes through the dereference operator, `*r = ...`:
 
 ```metel
 fun main() {
     var n = 1;
     let r: &var i64 = &var n;
 
-    r = 4;             // write-through
+    *r = 4;             // write-through
     let value: i64 = r; // type-directed read
     println(value);    // 4
 }
 ```
 
-A `let` binding that stores a `&var T` can still write through the reference. The binding itself is not being reassigned; the storage behind the reference is being updated.
+`*r = 4` writes through the reference to the storage it points at. Plain `r = 4` is rejected — the binding itself isn't reassignable, and reassigning it wouldn't be the write you want anyway. Reading has no such operator: `let value: i64 = r` copies the referent out because the expected type (`i64`) is already known at that position.
 
 :::note
 Explicit Where It Matters
 
-Metel makes aliasing visible with `&` and `&var`, but ordinary field access and method calls do not require a separate dereference operator.
+Metel makes aliasing visible with `&` and `&var`. Ordinary field access and method calls auto-dereference without needing `*`, and reading a plain value out of a reference is implicit too — but writing through a reference always requires `*r = ...`.
 :::
 
 ## Auto-deref for fields and methods
@@ -173,8 +173,8 @@ References are for explicit aliasing. If a feature depends on exactly-once owner
 
 - `&x` yields `&T`.
 - `&var x` yields `&var T`, and `&var` also works on addressable lvalue paths.
-- Writing to a `&var T` writes through to the referenced storage.
-- Reading a plain value out of a reference is type-directed; there is no `*p` operator.
+- Writing through a `&var T` requires the explicit dereference operator: `*r = value`.
+- Reading a plain value out of a reference is implicit and type-directed; no operator needed.
 - Fields, methods, and function-reference calls auto-dereference through reference layers.
 
 Next: [Closures and Capturing](closures-and-capturing) — first-class functions, captured values, and shared mutation.

@@ -476,7 +476,7 @@ Sized numeric types, Char, List\<T\>, fixed-size arrays, turbofish, and fat-poin
 - **Sized numeric types** — `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64`. Sized literal suffixes: `42i32`, `3.14f32`, `255u8`. All casts between sized types are explicit (`as`). Array indices must be `u64`.
 - **Polymorphic numeric literals** — unsuffixed integer and float literals unify with whatever numeric type the context demands (let annotation, function parameter, struct field, return type, or the other operand in a binary expression). Without context they default to `i64` / `f64`. `mut` reassignment (`m = 99` where `m: i32`) also propagates the declared type to the literal. Negative minimum literals (`-128i8`, `-32768i16`, `-2147483648i32`) are accepted at the lexer level.
 - **Cross-sized numeric `From` impls** — all 90 pairwise casts among the 10 numeric types are supported via `as` (`i8 as u32`, `f32 as i64`, etc.). Previously only `i64 ↔ f64` was supported.
-- **`Char` type** — Unicode scalar value; single-quoted literals (`'a'`, `'\u{1F600}'`); `.to_u32()` and `Char::from_u32(n)` conversions; implements `Display`
+- **`Char` type** — Unicode scalar value; single-quoted literals (`'a'`, `'\u{1F600}'`); `u32::from(c)` and `Char::from(n)` conversions; implements `Display`
 - **`List<T>`** — standard growable-sequence type in `std::core`; replaces ad-hoc `array_push` usage; methods: `new`, `from`, `push`, `pop`, `len`, `get`, `as_slice`
 - **Fixed-size array type `[T; N]`** — compile-time-known length; repeat construction `[v; N]`; coerces to `T[]`; `.len()` method; array patterns on `[T; N]`
 - **Turbofish** — explicit type arguments at call sites: `f::<T>(args)`, `zip::<A, B>(as, bs)`
