@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-08-02'
+generated_on: '2026-08-03'
 ---
 
 # RFC Registry
@@ -51,7 +51,7 @@ the curated thematic map.
 - **RFC-0120** — Named Records (`0-draft` ; internal/rfcs/0-draft/rfc-0120-named-records.md ; date 2026-07-24)
 - **RFC-0121** — Open Rows (`0-draft` ; internal/rfcs/0-draft/rfc-0121-open-rows.md ; date 2026-07-24)
 - **RFC-0123** — Field-Wise Row Constraints (`0-draft` ; internal/rfcs/0-draft/rfc-0123-field-wise-row-constraints.md ; date 2026-07-24)
-- **RFC-0124** — Sequence Types: Fixed Arrays, Slices, and the Growable List (`0-draft` ; internal/rfcs/0-draft/rfc-0124-sequence-types-fixed-arrays-slices-and-the-growable-list.md ; date 2026-07-25 ; updated 2026-07-27)
+- **RFC-0124** — Sequence Types: Fixed Arrays, Slices, and the Growable List (`0-draft` ; internal/rfcs/0-draft/rfc-0124-sequence-types-fixed-arrays-slices-and-the-growable-list.md ; date 2026-07-25 ; updated 2026-08-03)
 - **RFC-0125** — Variadic Generics (`0-draft` ; internal/rfcs/0-draft/rfc-0125-variadic-generics.md ; date 2026-07-25)
 - **RFC-0127** — Associated Functions on Generic Types (`0-draft` ; internal/rfcs/0-draft/rfc-0127-associated-functions-on-generic-types.md ; date 2026-08-01)
 
@@ -125,7 +125,7 @@ the curated thematic map.
 - **RFC-0115** — Field Initializer Separator (`4-implemented` ; internal/rfcs/4-implemented/rfc-0115-field-initializer-separator.md ; date 2026-07-24 ; updated 2026-07-24 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/287)
 - **RFC-0116** — Anonymous Record Types (`4-implemented` ; internal/rfcs/4-implemented/rfc-0116-anonymous-record-types.md ; date 2026-07-24 ; updated 2026-07-25 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/288)
 - **RFC-0118** — Row Bounds (`4-implemented` ; internal/rfcs/4-implemented/rfc-0118-row-bounds.md ; date 2026-07-24 ; updated 2026-07-25 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/289)
-- **RFC-0126** — T[] as a Copy Borrowed View (`4-implemented` ; internal/rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md ; date 2026-07-27 ; updated 2026-07-27 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/317)
+- **RFC-0126** — T[] as a Copy Borrowed View (`4-implemented` ; internal/rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md ; date 2026-07-27 ; updated 2026-08-03 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/317)
 
 ## Superseded (13)
 

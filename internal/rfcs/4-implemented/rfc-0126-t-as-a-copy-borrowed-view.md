@@ -4,7 +4,7 @@ title: "T[] as a Copy Borrowed View"
 date: '2026-07-27'
 status: implemented
 target: v0.12.0
-updated: '2026-07-27'
+updated: '2026-08-03'
 impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/317'
 impl_status: implemented
 ---
@@ -25,6 +25,18 @@ impl_status: implemented
 > **Status — integrated (2026-07-27).** Spec merged into types.md/declarations.md with Planned-for-v0.12.0 markers; worked examples against RFC-0053 (already-implemented coercion) and RFC-0071 (Copy/Drop/partial-move) found no unresolved soundness gap, but did surface that stdlib's existing T[]:Clone impl must be rewritten, recorded in Consequences
 
 > **Status — implemented (2026-07-27).** Implemented in metel-core#317, verified independently (640 integration + 122 unit tests, 0 clippy warnings, move-check-count confirms zero T[]-related violations remain)
+
+> **Corrected 2026-08-03.** This RFC's own References section (and RFC-0124's) cited
+> RFC-0067 (Lifetime Anchors) as `2-accepted`. Checked directly against
+> `internal/rfcs/1-under-review/rfc-0067-lifetime-anchors.md`: RFC-0067 was reverted to
+> `1-under-review` on 2026-08-02 — one day before this correction — with a newly-written
+> blocking chain (RFC-0122 must settle first, then RFC-0067's own five open questions)
+> before it can reach `3-integrated`; implementation is now targeted v0.15.0. This does
+> not change anything this RFC decided — confirming the RFC-0067 dependency was always
+> RFC-0124's to own, not this RFC's ("What this does not decide," above) — it only fixes
+> a stale citation so a reader following this RFC's own References does not act on an
+> already-superseded status. See RFC-0124's 2026-08-03 note for the fuller context this
+> correction is part of.
 
 ## Summary
 
@@ -304,8 +316,9 @@ intersection.
   sequencing.
 - RFC-0071 (Ownership and Move Semantics), `3-integrated` — §2's `Copy` rules are what this
   unblocks; §9 q3 is the `&T`-is-`Copy` precedent this RFC extends to views generally.
-- RFC-0067 (Lifetime Anchors), `2-accepted` — the likely dependency for slice validity,
-  confirmed by RFC-0124 rather than here.
+- RFC-0067 (Lifetime Anchors), `1-under-review` (reverted 2026-08-02; see correction note
+  above) — the likely dependency for slice validity, confirmed by RFC-0124 rather than
+  here.
 - RFC-0053 (Fixed-Size Arrays), `4-implemented` — already decided and already live: `[T; N]`
   coerces implicitly to `T[]`, including at generic call sites. This RFC's call-site migration
   cost rides on that coercion rather than needing a new one.

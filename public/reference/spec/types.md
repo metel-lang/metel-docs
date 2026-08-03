@@ -269,6 +269,10 @@ Arrays are usable in `for-in` loops.
 > 3];` above will keep working via `[T; N]`'s existing implicit coercion to `T[]` (RFC-0053),
 > not because the literal itself is a `T[]`.
 
+The three-way split between `T[]`, `[T; N]`, and `List<T>` below reflects the current
+design. The exact boundary between them — in particular, how a growable list's storage is
+allocated and grown — is not yet fully specified and may change in a future release.
+
 ## Fixed-size arrays
 
 `[T; N]` is an array type whose length `N` is a non-negative integer literal known at compile time.
@@ -307,6 +311,8 @@ fun sum(xs: [i64; 3]) -> i64 {
 > a `let`/`var` target, a function argument, a generic instantiation — so this does not by
 > itself require touching call sites that already pass a `[T; N]`-typed or explicitly
 > `T[]`-annotated value; it only changes what an *unannotated* literal's own type is.
+
+See the note under "Arrays" above — this split is not considered final.
 
 ## References
 
