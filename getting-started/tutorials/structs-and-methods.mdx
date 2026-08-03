@@ -349,6 +349,56 @@ This Is The Main Payoff Of ADTs
 Structs and enums become more useful together: structs model stable records, enums model alternatives, and `match` ties them into explicit control flow.
 :::
 
+## Copying and moving values
+
+By default, assigning or passing a struct or enum value **moves** it — the source binding is
+conceptually spent, and the new binding is the only valid way to reach the value:
+
+```metel
+struct Point { x: f64, y: f64 }
+
+fun main() {
+    let p = Point { x = 1.0, y = 2.0 };
+    let q = p;   // moves p into q
+    println("${q.x}, ${q.y}");
+}
+```
+
+A type can opt out of this by declaring `Copy`, which makes assignment duplicate the value
+instead of moving it:
+
+```metel
+struct Point { x: f64, y: f64 }
+extend Point: Copy;
+
+fun main() {
+    let p = Point { x = 1.0, y = 2.0 };
+    let q = p;   // copies — both remain usable
+    println("${p.x}, ${q.x}");
+}
+```
+
+A type can also declare `Drop`, marking it as needing cleanup when it goes out of scope. In
+this release, `Drop` only has type-level effects — it excludes the type from `Copy` and
+participates in move-checking rules — the `drop` method's body must still be empty; actually
+running cleanup code on drop is not implemented yet ([issue #292](https://codeberg.org/metel-lang/metel-core/issues/292)):
+
+```metel
+struct Resource { name: String }
+extend Resource: Drop {
+    fun drop(self) {}
+}
+```
+
+:::caution
+Move Checking Is Off By Default In This Release
+
+The compiler tracks moves, but does not reject use of a moved-from binding unless you pass
+`--move-check` on the command line. Without it, a program like the first example above would
+still let you read `p` after moving it into `q`, silently. Passing `--move-check` turns that
+into a compile error instead.
+:::
+
 ## What you learned
 
 - `struct` defines a named record with typed fields; `extend` attaches methods to it.
@@ -356,5 +406,8 @@ Structs and enums become more useful together: structs model stable records, enu
 - `enum` defines a type with named variants, each optionally carrying data.
 - `match` exhaustively handles every variant and destructures field data into local variables.
 - Both structs and enums support `extend` blocks in the same way.
+- Assignment moves by default; `Copy` opts a type out of that. `Drop` marks a type as needing
+  cleanup, though running that cleanup isn't implemented yet. `--move-check` opts into
+  rejecting use of moved-from bindings; it is off by default.
 
 Next: [Generics](generics) — parameterizing your own structs, enums, and functions over a type.
