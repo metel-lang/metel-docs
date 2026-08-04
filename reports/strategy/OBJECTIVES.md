@@ -90,6 +90,18 @@ recorded after the fact by whichever cycle's writer noticed them). Every cycle c
 Logged proactively — any time an explicit steering call is made, in any conversation,
 not only during a strategic-overview cycle — per `PROCESS.md` §1.*
 
+**2026-08-04 — course correction: stabilize the implementation before advancing the
+language surface.** The next release is **v0.12.1**, scoped to fixes, correctness
+improvements, and the project restructuring/migration work; it is not a vehicle for new
+language features. After that release, first settle function/closure typing and re-evaluate
+RFC-0050's closure capture-list design; then complete move checking and enable it by default.
+Only after that checker milestone, make the interpreter's runtime ownership model faithful:
+it must stop deep-cloning values at transfer boundaries. This is a tracked
+feedback-trustworthiness objective (#387), not optional evaluator cleanup or forward
+compiler structure work. The sequencing is deliberate: a deep-copying evaluator cannot
+reliably validate the ownership, borrow, drop, closure, or collection semantics that the
+preceding work claims to establish.
+
 **2026-08-02 — RFC-0122 (Borrow Checking) is targeted at v0.14.0**, giving it a concrete
 release for the first time and completing the chain: v0.13.0 (RFC-0071 remainder,
 move-checker hardening) → **v0.14.0 borrow checking** → v0.15.0 lifetime anchors,
@@ -601,6 +613,13 @@ that check. This is Trigger 18.
 has been in it. Naming it is not a promotion — it is ranked fifth deliberately — but leaving
 it unlisted meant the tracker and the priorities described two unrelated projects, and the
 gap could never be measured because one side of it wasn't written down.
+
+**Runtime ownership fidelity is an explicit objective.** After the move checker is complete
+and default-on, replace the evaluator's blanket deep cloning with ownership-faithful runtime
+value semantics (#387). This is required for the interpreter to remain a trustworthy feedback
+instrument: static ownership diagnostics cannot validate the language while evaluated values
+continue to be copied at binding, assignment, capture, and iteration boundaries. It is scoped
+to runtime semantic fidelity, not as a pretext for speculative compiler architecture.
 
 The §1 corollary supplies the filter, and it is the whole content of this priority:
 **trustworthiness work qualifies; forward-structure work does not.** Applied to what's
