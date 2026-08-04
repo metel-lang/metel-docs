@@ -1,0 +1,134 @@
+// RFC-0074 — Shared Pointers: Rc and Arc (still 0-draft)
+//
+// Rc<T> and Arc<T> are ordinary library structs, NOT `Alloc` implementors —
+// this was tried and rejected (see allocatable-region-split-analysis.md):
+// there is no "Rc handle" to pass through the value channel, clone is a
+// refcount bump rather than a move, and drop carries real logic on the
+// pointer itself. `SharedPointer<T>` is the standalone aspect capturing the
+// common interface.
+//
+// Status caveat: RFC-0074 is blocked on RFC-0076 (brand types) Q1 — the
+// formal struct signature is `Rc<T, brand 'b>` with a `PhantomBrand<'b>`
+// identity field, and that syntax is unresolved. In ordinary code the brand
+// is inferred and invisible, so everything below is written the way a
+// caller actually writes it — `Rc<T>` — without depending on the
+// unresolved brand-introduction mechanism. Also note: RFC-0074's own text
+// still shows `&*a` for borrowing through Deref; that predates RFC-0067
+// dropping the explicit `*` operator. `&a` (auto-deref, RFC-0067 §5) is
+// the current form and is what's used here.
+
+struct Node { val: i64 }
+
+// -----------------------------------------------------------------------
+// 1. The `SharedPointer` aspect
+// -----------------------------------------------------------------------
+
+aspect SharedPointer<T> {
+    fun clone(&self) -> Self;
+    fun get_mut<&s>(&s mut self) -> Perhaps<&s mut T>;
+    fun try_unwrap(self: Self) -> Result<T, Self>;
+    fun strong_count(&self) -> u64;
+}
+
+// Not a subtype of `Alloc` — the extension point for user-defined shared
+// pointer types (pool-managed RC, arena-backed RC with a shared control
+// block, intrusive reference counts) without special-casing.
+
+// -----------------------------------------------------------------------
+// 2. Allocation
+// -----------------------------------------------------------------------
+
+fun allocation_example() {
+    let a: Rc<Node> = Rc::new(Node { val: 1 });
+    // Rc::new allocates Node on the global heap, prepends a reference count
+    // initialised to one. There is no scope form — lifetime is governed by
+    // the reference count, not a lexical scope.
+}
+
+// -----------------------------------------------------------------------
+// 3. Clone — acquiring a second owner
+// -----------------------------------------------------------------------
+
+fun clone_example() {
+    let a: Rc<Node> = Rc::new(Node { val: 1 });
+    let b = a.clone();   // reference count: 2; a and b both own the same Node
+
+    let c = a;   // move: c is now the owner in a's place; count unchanged
+    println("b.val=${b.val} c.val=${c.val}");
+}
+
+// -----------------------------------------------------------------------
+// 4. Borrow — read access via `Deref`
+// -----------------------------------------------------------------------
+
+fun borrow_example() {
+    let a: Rc<Node> = Rc::new(Node { val: 1 });
+    let r: &Node = &a;   // auto-deref through Rc<Node>'s Deref<Target = Node>
+    println("val=${r.val}");
+    // the borrow expires when `a` goes out of scope or is moved; a borrow
+    // derived from a clone (e.g. `b = a.clone()`) tracks its own source
+    // binding, not the shared allocation
+}
+
+// -----------------------------------------------------------------------
+// 5. `get_mut` — runtime-checked exclusive access
+// -----------------------------------------------------------------------
+
+fun get_mut_example() {
+    let mut node: Rc<Node> = Rc::new(Node { val: 1 });
+
+    match node.get_mut() {
+        Perhaps::Some { value } => { value.val = 42; }
+        Perhaps::None => { println("other owners exist"); }
+    }
+}
+
+fun get_mut_with_other_owner_example() {
+    let mut node: Rc<Node> = Rc::new(Node { val: 1 });
+    let other = node.clone();   // strong_count == 2 now
+
+    match node.get_mut() {
+        Perhaps::Some { value } => { value.val = 42; }
+        Perhaps::None => { println("other owners exist — get_mut returned None"); }
+    }
+}
+
+// -----------------------------------------------------------------------
+// 6. `try_unwrap` — consuming extraction
+// -----------------------------------------------------------------------
+
+fun try_unwrap_example() {
+    let a: Rc<Node> = Rc::new(Node { val: 1 });
+
+    match a.try_unwrap() {
+        Result::Ok { value }  => { println("sole owner — extracted val=${value.val}"); }
+        Result::Err { error } => { println("other owners exist; got the Rc back"); }
+    }
+}
+
+// -----------------------------------------------------------------------
+// 7. Sendability
+// -----------------------------------------------------------------------
+//
+// `Rc<T>` is never sendable: the reference count is a non-atomic integer,
+// so cloning from one fiber while another drops it races. Negative impls
+// are required rather than relying on absence of a positive one — the
+// `Send` auto-impl (RFC-0080 §3.2) would otherwise grant `Send` to `Rc<T>`
+// via its integer refcount field, which is `Send` by value.
+//
+//   impl<T> !Send for Rc<T> {}
+//   impl<T> !Sync for Rc<T> {}
+//
+// `T`'s own sendability is irrelevant for `Rc` — the counter is the unsound
+// part. `Arc<T>` is the sendable counterpart: sendable when `T: Send + Sync`,
+// using an atomic reference count so cross-fiber clone/drop is race-free.
+
+fun main() -> i64 {
+    allocation_example();
+    clone_example();
+    borrow_example();
+    get_mut_example();
+    get_mut_with_other_owner_example();
+    try_unwrap_example();
+    0
+}

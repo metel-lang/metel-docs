@@ -1,0 +1,226 @@
+---
+id: rfc-0036
+title: "Conditional Impl Blocks"
+date: '2026-07-01'
+deferred_from: rfc-0034 (Q6)
+status: implemented
+updated: '2026-07-13'
+impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/241'
+impl_status: implemented
+---
+
+> **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence). Specifies
+> conditional `impl` blocks where an aspect implementation for a generic type is
+> valid only when the type's parameters satisfy additional bounds. Required by
+> RFC-0072 (Negative Bounds) §4 and by the region cluster's generic region bounds.
+
+> **Status — integrated (2026-07-13).** Conditional impl blocks integrated into declarations.md; fixed a stale T0013 collision (corrected to reuse T0012), deferred bare-parameter blanket impls to RFC-0097 explicitly, worked example checking interaction with equality-constrained bounds (RFC-0082)
+
+> **Status — implemented (2026-07-13).** Issue #241 merged into sprint/26 (commit f43392e): conditional impl blocks fully implemented -- registry/inference/construction bound-gated impl support, coherence disjointness checking including syntactic negation (RFC-0036 §3.1), use-site bound enforcement. 502 integration + 115 unit tests passing, clippy::pedantic clean.
+
+## Summary
+
+A conditional impl declares that a type implements an aspect only when its type
+parameters satisfy specified bounds. Without conditional impls, an aspect can only
+be implemented for a generic type unconditionally — which either forces the
+constraint onto the type definition itself (preventing construction with
+non-satisfying parameters) or leaves the impl absent entirely.
+
+```metel
+struct Pair<A, B> { first: A, second: B }
+
+extend Pair<A, B>: Printable where A: Printable, B: Printable {
+    fun print(self) { ... }
+}
+```
+
+`Pair<i64, String>` is `Printable`; `Pair<i64, SomeNonPrintableType>` is not —
+but both are constructable.
+
+---
+
+## 1. Syntax
+
+Conditional bounds are written in a `where` clause on the `impl` block, after the
+target type:
+
+```metel
+extend Type<T>: Aspect where T: Bound { ... }
+extend Type<T>: Aspect where T: Bound1, T: Bound2 { ... }
+extend Type<A, B>: Aspect where A: Bound1, B: Bound2 { ... }
+```
+
+Type parameters scoped to the impl block are written before the aspect name:
+
+```metel
+extend<T: Bound> Type<T>: Aspect { ... }
+```
+
+Both forms are equivalent. The `where` form is preferred for readability when bounds
+are numerous; the inline form is preferred for simple single-parameter cases.
+
+Negative bounds (RFC-0072) may appear in the `where` clause:
+
+```metel
+extend<T: !Drop> Container<T>: BulkDrop { ... }
+```
+
+---
+
+## 2. Semantics
+
+### 2.1 Use-site checking
+
+A conditional impl is applicable at a use site when all conditions in its `where`
+clause are satisfied by the concrete type arguments. The compiler checks the bounds
+at every point where the aspect is required — method call, bound check, impl
+selection — not at the impl declaration site.
+
+```metel
+fun print_pair<A: Printable, B: Printable>(p: Pair<A, B>) {
+    p.print();   // ok — conditional impl applies; A: Printable and B: Printable
+}
+
+fun use_pair(p: Pair<i64, SomeNonPrintable>) {
+    p.print();   // error — T0012: Pair<i64, SomeNonPrintable> does not implement Printable
+                 //         because SomeNonPrintable does not implement Printable
+}
+```
+
+### 2.2 Struct bounds and impl bounds are independent
+
+A struct may have unconditional bounds on its type parameters (from RFC-0034), and
+separately a conditional impl for an aspect. The struct bound governs construction;
+the impl bound governs whether the aspect applies at a given call site. They are
+checked independently.
+
+```metel
+struct SortedList<T: Comparable> { ... }
+
+extend<T: Comparable + Printable> SortedList<T>: Printable {
+    fun print(self) { ... }
+}
+```
+
+`SortedList<T>` always requires `T: Comparable` (unconditional, governs construction).
+The `Printable` impl additionally requires `T: Printable` (conditional, governs
+whether `.print()` is callable).
+
+### 2.3 Propagation through generic functions
+
+A generic function that holds a value of type `Container<T>` can propagate the
+conditional impl to its callers by including the relevant bound:
+
+```metel
+fun print_sorted<T: Comparable + Printable>(list: SortedList<T>) {
+    list.print();   // ok — T: Printable, so the conditional impl applies
+}
+```
+
+The function signature makes explicit which concrete instantiations are valid. The
+compiler does not infer which bounds are needed; the author must state them.
+
+---
+
+## 3. Coherence
+
+### 3.1 Overlap rule for conditional impls
+
+Two conditional impls of the same aspect for the same type are a coherence error if
+there exists any concrete instantiation for which both would apply (RFC-0060 §2).
+
+The compiler uses **syntactic negation** to determine disjointness: two conditional
+impls are accepted as non-conflicting only when one contains an explicit negative bound
+(RFC-0072) that directly negates a positive bound in the other. No inference beyond
+this direct negation check is performed.
+
+```metel
+// Accepted — T: !Copy directly negates T: Copy; provably disjoint
+extend<T: Copy> Wrapper<T>: Serialize { ... }
+extend<T: !Copy> Wrapper<T>: Serialize { ... }
+```
+
+```metel
+// Error T0015 — no direct negation between Clone and Display;
+// the compiler cannot prove these are disjoint
+extend<T: Clone> Wrapper<T>: Serialize { ... }
+extend<T: Display> Wrapper<T>: Serialize { ... }
+```
+
+To make the second example compile, the programmer must add an explicit negative bound
+to establish disjointness:
+
+```metel
+extend<T: Clone, T: !Display> Wrapper<T>: Serialize { ... }
+extend<T: Display> Wrapper<T>: Serialize { ... }
+```
+
+This rule is intentional: disjointness appears explicitly in the source code, making
+it visible and verifiable without running a constraint solver.
+
+### 3.2 Conditional and unconditional impls
+
+A conditional impl and an unconditional impl for the same type constructor are a
+coherence error, because the unconditional impl covers all instantiations including
+those the conditional impl would cover.
+
+### 3.3 Orphan rule
+
+Conditional impls are subject to the same orphan rule as unconditional impls
+(RFC-0060 §1): the aspect or the outermost type constructor must be local.
+
+**Bare-parameter blanket impls out of scope.** Every example in this RFC targets a
+genuinely named type (`Pair<A, B>`, `Container<T>`, `Wrapper<T>`) with a real,
+nameable outermost constructor. `extend<T: Bound> T: Aspect` — where the target is
+the impl's own bare generic parameter, with no struct or enum wrapping it — has no
+such constructor, so §3.3's orphan rule as stated doesn't say what "local" means for
+it. This shape is deferred to RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls,
+draft, not yet accepted), which resolves it as vacuously unsatisfiable on the
+type side (permitted only through the aspect side of the orphan rule). This RFC's own
+implementation does not need to support that shape.
+
+---
+
+## 4. Error Reporting
+
+A failed conditional impl bound is reported with a diagnostic that names the
+unsatisfied condition. This reuses **T0012** ("Aspect bound not satisfied") rather than
+a new code — a conditional impl's `where`-clause bound failing is the same class of
+error as an ordinary function bound failing (see RFC-0072's own precedent of reusing
+T0012 for the negative-bound direction rather than minting a new code); it does not
+warrant its own code, and `T0013` (this RFC's original text) was already claimed
+elsewhere (ambiguous aspect method/associated-type resolution) by the time this RFC
+was integrated — corrected here, not left stale.
+
+```
+T0012: Pair<i64, SomeNonPrintable> does not implement Printable
+       because SomeNonPrintable does not implement Printable
+       (required by: impl<A: Printable, B: Printable> Printable for Pair<A, B>)
+```
+
+The error chain traces from the call site through the conditional impl to the
+innermost unsatisfied bound.
+
+---
+
+## 5. Unresolved Questions
+
+1. **Where clause on `impl` blocks for non-generic types.** Whether a non-generic
+   type may have a conditional impl (e.g. `extend Foo: Aspect where SOME_CONST: Condition`)
+   is deferred. The primary use case for conditional impls is generic types.
+
+---
+
+## References
+
+- RFC-0034 — unconditional aspect bounds on struct/enum generic parameters;
+  this RFC deferred conditional impls (Q6).
+- RFC-0060 (Aspect Impl Coherence) — orphan rule and overlap detection; conditional
+  impls must satisfy both.
+- RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls, implemented) — this RFC's own
+  examples never show the target as a bare impl parameter (`for T` rather than
+  `for Type<T>`); RFC-0097 covers that case, which RFC-0080 §1.2 already uses.
+- RFC-0061 (Structural Aspect Bounds) — blanket impls for structural type constructors;
+  depends on the conditional impl mechanism defined here.
+- RFC-0072 (Negative Bounds) — negative bounds in `where` clauses of conditional
+  impls; §4 of RFC-0072 assumes this RFC.

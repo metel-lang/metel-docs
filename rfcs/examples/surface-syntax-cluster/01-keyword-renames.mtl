@@ -1,0 +1,99 @@
+// RFC-0098 — Surface Keyword Renames
+//
+// Three independent, purely lexical renames: impl-block spelling
+// (`impl` -> `extend`, aspect-implementing form reordered target-first with
+// a trailing `: Aspect` clause), `pub` -> `public`, `mut` -> `var`
+// (bindings, reference types, reference expressions, for-loop bindings).
+// Function/method names below stay snake_case, today's convention — RFC-0101
+// (camelCase for `fun` declarations) is a separate, still-draft proposal not
+// assumed here. Illustrative only — see the cluster README.
+
+public struct Token {
+    public value: String,
+    secret: String,
+}
+
+// Inherent impl (no aspect) — the `: Aspect` clause is simply omitted,
+// exactly mirroring today's optional `for` clause. No change in shape
+// from today's `impl Token { ... }` beyond the keyword itself.
+extend Token {
+    public fun new_token(value: String, secret: String) -> Token {
+        Token(value: value, secret: secret)   // RFC-0100 construction, see file 03
+    }
+
+    public fun value(&self) -> String {
+        self.value
+    }
+}
+
+aspect Display {
+    fun to_string(&self) -> String;
+}
+
+// Aspect impl — target first, then `: Aspect`.
+extend Token: Display {
+    fun to_string(&self) -> String {
+        self.value
+    }
+}
+
+// Negative impl — folds into the same `: Aspect` clause via the `!` prefix
+// already used for bound negation (`T: !Copy`); no separate `without`
+// keyword. `extend Type: !Aspect` reads as "Type does not implement Aspect."
+// Bodyless (RFC-0102) is mandatory here, not just sugar — a negative impl's
+// body is never meaningfully non-empty, so the old `extend Token: !Sendable
+// { }` spelling is retired outright, the same way RFC-0100 retired the old
+// struct-literal syntax rather than keeping two ways to say the same thing.
+aspect Sendable {
+    fun check_sendable(&self);
+}
+
+extend Token: !Sendable;
+
+// Generic impl — generic params keep their existing position, immediately
+// after `extend` (unchanged from `impl`'s own slot today).
+struct SortedList<T> {
+    items: T[],
+}
+
+aspect Printable {
+    fun print_all(&self) -> String;
+}
+
+extend<T: Display> SortedList<T>: Printable {
+    fun print_all(&self) -> String {
+        var result = "";
+        for (var i = 0; i < self.items.len(); i += 1) {
+            result = result + self.items[i as u64].to_string();
+        }
+        result
+    }
+}
+
+// Bare-parameter blanket impl (RFC-0097, already integrated) under the new
+// keyword spelling — the target is the impl's own generic parameter itself,
+// no wrapping struct/enum. Permitted here because `Printable` is declared
+// in this same module (RFC-0097 S2's orphan-rule fix: target-locality is
+// vacuously unsatisfiable for a bare parameter, so permission comes only
+// from the aspect side).
+extend<T: Display> T: Printable {
+    fun print_all(&self) -> String {
+        self.to_string()
+    }
+}
+
+// `mut` -> `var`, every position at once (RFC-0042/0044/0067A surface
+// syntax, semantics completely unchanged):
+fun demo_var() {
+    var count = 0;                       // was: let mut count = 0;
+    for (var i = 0; i < 10; i += 1) {     // was: for (let mut i = 0; ...)
+        count += 1;
+    }
+
+    var token = Token(value: "x", secret: "shh");
+    bump(&var token);                    // was: &mut token
+}
+
+fun bump(token: &var Token) {            // was: &mut Token
+    // ...
+}

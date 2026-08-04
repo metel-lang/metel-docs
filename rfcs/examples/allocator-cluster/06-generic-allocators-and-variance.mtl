@@ -1,0 +1,194 @@
+// RFC-0077 — Allocator Generics
+//
+// Four questions that arise together whenever generic code touches
+// allocators: `impl` headers over externally-allocated structs, generic
+// `Alloc` bounds, wellformedness of nested allocator-tagged types, and
+// variance. Illustrative only.
+
+struct Node { val: i64 }
+struct Container<&a> { ptr: @a Node }
+
+// -----------------------------------------------------------------------
+// 1. `impl` blocks with external allocator parameters
+// -----------------------------------------------------------------------
+//
+// A struct generic over its allocator carries the allocator as a type
+// parameter bound to `Alloc`, plus a corresponding value parameter. The
+// `impl` header repeats the type parameter.
+
+struct Parser<A: Alloc> {
+    input: @a String,
+    pos:   u64,
+}
+
+impl<A: Alloc> Parser<A> {
+    fun new(@a: A, src: String) -> Parser<A> {
+        Parser { input: @a src, pos: 0 }
+    }
+
+    fun remaining<&s>(&s self) -> &s String {
+        &self.input
+    }
+}
+
+// `aspect impl` follows the same header form — the allocator type parameter
+// is on the `aspect impl`, not on the aspect itself.
+aspect Describe {
+    fun fmt<&s>(&s self, buf: &mut Buf);
+}
+
+struct Buf { text: String }
+
+aspect impl<A: Alloc> Describe for Parser<A> {
+    fun fmt<&s>(&s self, buf: &mut Buf) {
+        buf.text = "Parser@${self.pos}";
+    }
+}
+
+// Multiple external allocators:
+struct Pair<A: Alloc, B: Alloc> {
+    left:  @a Node,
+    right: @b Node,
+}
+
+impl<A: Alloc, B: Alloc> Pair<A, B> {
+    fun left_ref<&s>(&s self) -> &s Node {
+        &self.left
+    }
+}
+
+// -----------------------------------------------------------------------
+// 2. Generic allocator bounds
+// -----------------------------------------------------------------------
+//
+// | Form                  | Constraint                          |
+// |------------------------|-------------------------------------|
+// | `(@a: BumpAlloc)`      | exactly `BumpAlloc`                  |
+// | `(@a: Heap)`           | exactly `Heap`                       |
+// | `<A: Alloc>(@a: A)`    | any type implementing `Alloc`        |
+
+fun alloc_copy<T: Clone, A: Alloc>(@a: A, val: T) -> @a T {
+    @a val.clone()
+}
+
+struct Cache<A: Alloc> {
+    data: @a HashMapStub,
+}
+
+// A stand-in for the (as yet unspecified — see the dependency audit)
+// `HashMap<K, V>` stdlib type; only used here to keep the shape of the
+// original RFC example.
+struct HashMapStub { size: i64 }
+
+impl<A: Alloc> Cache<A> {
+    fun new(@a: A) -> Cache<A> {
+        Cache { data: @a HashMapStub { size: 0 } }
+    }
+
+    fun get<&s>(&s self) -> &s HashMapStub {
+        &self.data
+    }
+}
+
+// `Cache` is polymorphic over the allocator kind: a caller using `BumpAlloc`
+// gets an arena-backed cache; a caller using `Heap` gets a heap-allocated one.
+
+// Allocator generics at the method level, since aspects themselves do not
+// carry allocator parameters:
+aspect Serialize {
+    fun serialize<A: Alloc>(@a: A, self: &Self) -> @a Node;
+}
+
+aspect impl Serialize for Node {
+    fun serialize<A: Alloc>(@a: A, self: &Self) -> @a Node {
+        @a Node { val: self.val }
+    }
+}
+
+// -----------------------------------------------------------------------
+// 3. Wellformedness of `@a T` when `T` contains allocator-tagged types
+// -----------------------------------------------------------------------
+//
+// `@a T` is well-formed iff, for every allocator tag `b` appearing in `T`,
+// `b`'s scope encloses `a`'s scope (`b` lives at least as long as `a`). The
+// borrow checker derives this from scope nesting — no explicit `Outlives`
+// constraint exists or is needed.
+
+fun wellformedness_examples() {
+    // Heap pointer stored in a scoped allocator — safe: Heap's scope
+    // encloses every scoped allocator.
+    BumpAlloc::scoped((@a) -> {
+        let heap_node: @Heap Node = @Heap Node { val: 1 };
+        let wrapper: @a @Heap Node = @a heap_node;
+    });
+
+    // Both allocations in the same allocator — trivially safe.
+    BumpAlloc::scoped((@a) -> {
+        let node: @a Node = @a Node { val: 1 };
+        let container: @a Container<&a> = @a Container { ptr: node };
+    });
+
+    // Rejected forms (kept as comments — these are supposed to fail):
+    //
+    //   BumpAlloc::scoped((@a) -> {
+    //       let scoped_node: @a Node = @a Node { val: 1 };
+    //       let bad: @Heap @a Node = @Heap scoped_node;
+    //       // error: `a`'s scope ends inside this closure; the heap
+    //       // allocation would outlive it.
+    //   });
+    //
+    //   BumpAlloc::scoped((@outer) -> {
+    //       BumpAlloc::scoped((@inner) -> {
+    //           let inner_node: @inner Node = @inner Node { val: 1 };
+    //           let bad: @outer @inner Node = @outer inner_node;
+    //           // error: `inner` drops before `outer`; `inner` does not
+    //           // enclose `outer`'s scope.
+    //       });
+    //   });
+}
+
+// Wellformedness is checked at each instantiation site when `T` is a type
+// parameter:
+fun wrap<T, A: Alloc>(@a: A, val: T) -> @a T { @a val }
+
+fun instantiation_examples() {
+    BumpAlloc::scoped((@a) -> {
+        let x = wrap(@a, 42u64);   // T = u64 — no allocator tags; trivially well-formed
+    });
+
+    BumpAlloc::scoped((@outer) -> {
+        BumpAlloc::scoped((@inner) -> {
+            let inner_node: @inner Node = @inner Node { val: 1 };
+            // let y = wrap(@outer, inner_node);
+            // error: T = @inner Node requires inner's scope to enclose
+            // outer's, but inner drops first.
+        });
+    });
+}
+
+// -----------------------------------------------------------------------
+// 4. Variance
+// -----------------------------------------------------------------------
+//
+// | Type          | Variance in allocator tag | Variance in `T` |
+// |----------------|----------------------------|-------------------|
+// | `@a T`         | covariant                  | covariant          |
+// | `&r T`         | covariant in anchor `r`     | covariant          |
+// | `&r mut T`     | covariant in anchor `r`     | invariant          |
+//
+// Covariance in the allocator tag: if `b` outlives `a`, `@b T` may be used
+// where `@a T` is expected — the guarantee is only strengthened. Invariance
+// in `T` for `&r mut T`: a mutable borrow permits both read and write, which
+// are contradictory requirements on substitutability except when the types
+// are identical.
+
+fun main() -> i64 {
+    wellformedness_examples();
+    instantiation_examples();
+
+    BumpAlloc::scoped((@a) -> {
+        let parser = Parser::new(@a, "1 + 2");
+        println("remaining: ${parser.remaining()}");
+    });
+    0
+}

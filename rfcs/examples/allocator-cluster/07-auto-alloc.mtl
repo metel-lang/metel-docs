@@ -1,0 +1,124 @@
+// RFC-0073 — AutoAlloc
+//
+// Every other stdlib allocator is a deliberate choice (bump arena, global
+// heap, thread-local heap). `AutoAlloc` makes none of those commitments: the
+// programmer expresses lifetime structure and ownership; the compiler picks
+// the backing strategy (stack, arena, heap, elision, or a mix) subject to a
+// fixed set of guarantees. Illustrative only.
+
+struct Node { val: i64 }
+struct HeavyValue { data: i64 }
+
+impl HeavyValue {
+    fun compute() -> HeavyValue {
+        HeavyValue { data: 42 }
+    }
+}
+
+// -----------------------------------------------------------------------
+// 1. `AutoAlloc` implements `Alloc`
+// -----------------------------------------------------------------------
+
+aspect Alloc {
+    type AllocationError;
+}
+
+impl Alloc for AutoAlloc {
+    type AllocationError = !;   // infallible — OOM panics
+}
+
+// -----------------------------------------------------------------------
+// 2. Creation — closure-scoped and variable-scoped, identical to BumpAlloc
+// -----------------------------------------------------------------------
+
+fun closure_scoped_example() {
+    AutoAlloc::scoped((@a) -> {
+        let x = @a HeavyValue::compute();
+        use_value(&x);
+    });
+}
+
+fun variable_scoped_example() {
+    let a = AutoAlloc::new();
+    let x = @a HeavyValue::compute();
+    use_value(&x);
+    drop(a);
+}
+
+fun use_value(v: &HeavyValue) {
+    println("data=${v.data}");
+}
+
+// -----------------------------------------------------------------------
+// 3. The compiler's latitude
+// -----------------------------------------------------------------------
+//
+// Within an AutoAlloc scope, the compiler may stack-allocate, arena-allocate,
+// heap-allocate, inline into a containing struct, elide entirely, or combine
+// strategies — all within a single scope. The choice is an implementation
+// detail; the programmer must not rely on any particular one.
+
+fun build_and_process() {
+    AutoAlloc::scoped((@a) -> {
+        let node = @a Node { val: 1 };   // maybe stack, maybe arena — unobservable
+        let doubled = @a Node { val: node.val * 2 };
+        process(&doubled);
+    });
+}
+
+fun process(n: &Node) {
+    println("val=${n.val}");
+}
+
+// -----------------------------------------------------------------------
+// 4. Guarantees
+// -----------------------------------------------------------------------
+//
+// - Soundness: every `@a T` is valid for the full declared scope of `a`.
+// - Drop completeness: every `T: Drop` allocated into `AutoAlloc` has its
+//   destructor called exactly once (move-out transfers the obligation, or
+//   the allocator's drop discharges it).
+// - Drop ordering: reverse-declaration order, consistent with RFC-0071 §5.
+// - Move-out safety: always safe for all `T`, including `T: Drop` — unlike
+//   `BumpAlloc`, which requires `T: !Drop` (RFC-0066 §2.2).
+// - Observational equivalence: replacing every `@a T` with `@Heap T`
+//   produces a program with identical observable behavior.
+// - Sendability: `@a T` is never sendable when `a` is an `AutoAlloc`
+//   binding, regardless of the backing strategy chosen.
+
+struct FileHandle { fd: i64 }
+impl Drop for FileHandle {
+    fun drop(self: FileHandle) {
+        println("closing fd ${self.fd}");
+    }
+}
+
+fun move_out_always_safe() {
+    AutoAlloc::scoped((@a) -> {
+        let ptr = @a FileHandle { fd: 3 };
+        let handle: FileHandle = ptr;   // legal even though FileHandle: Drop
+        println("moved out fd ${handle.fd}");
+        // FileHandle::drop runs here, at end of this closure's scope
+    });
+}
+
+// -----------------------------------------------------------------------
+// Stdlib allocator summary (RFC-0073)
+// -----------------------------------------------------------------------
+//
+// | Type       | Lifetime               | Decision  | Move-out       | Sendable |
+// |------------|-------------------------|-----------|----------------|----------|
+// | Heap       | Indefinite              | Programmer| Always safe    | Yes      |
+// | Arc        | Indefinite, atomic RC   | Programmer| Always safe    | Yes      |
+// | LocalHeap  | Indefinite, thread-local| Programmer| Always safe    | No       |
+// | Rc         | Indefinite, non-atomic  | Programmer| Always safe    | No       |
+// | AutoAlloc  | Scoped                  | Compiler  | Always safe    | No       |
+// | BumpAlloc  | Scoped, bump arena      | Programmer| T: !Drop only  | No       |
+
+fun main() -> i64 {
+    closure_scoped_example();
+    variable_scoped_example();
+    build_and_process();
+    move_out_always_safe();
+    0
+}

@@ -404,7 +404,7 @@ It never fires silently at a plain call site; `fun f(v: i64)` called as `f(r)` w
 `r: &i64` is a type error, not an implicit copy. Argument position has no declared type
 of its own for the rule to compare against, the same reason type-directed extraction of
 an allocated value never fires implicitly at a plain-parameter call site either
-(`internal/rfcs/2-accepted/rfc-0066-allocated-value-extraction.md` §3a — not yet
+(`public/rfcs/2-accepted/rfc-0066-allocated-value-extraction.md` §3a — not yet
 integrated, cited here only for the parallel).
 
 Chains through multiple reference layers the same way auto-deref does — reaching the

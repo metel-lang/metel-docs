@@ -536,7 +536,7 @@ bare-parameter blanket from another module can never pass the orphan check in th
 first place, and a concrete impl overlapping the blanket (e.g. a type implementing
 `Clone` directly while also being `Copy`) is caught by the existing concrete-vs-blanket
 overlap rule with no special case. See
-`internal/rfcs/4-implemented/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md`.
+`public/rfcs/4-implemented/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md`.
 
 **Worked example — interaction with equality-constrained bounds.** A conditional
 `extend` block's `where` clause accepts the same equality-constrained bound form
