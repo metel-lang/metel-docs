@@ -4,7 +4,7 @@ title: "Aspect Impl Coherence"
 date: '2026-07-01'
 status: implemented
 updated: '2026-07-14'
-impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/244'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/548'
 impl_status: implemented
 ---
 

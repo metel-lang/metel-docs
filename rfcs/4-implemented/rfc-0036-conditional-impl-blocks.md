@@ -5,7 +5,7 @@ date: '2026-07-01'
 deferred_from: rfc-0034 (Q6)
 status: implemented
 updated: '2026-07-13'
-impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/241'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/545'
 impl_status: implemented
 ---
 

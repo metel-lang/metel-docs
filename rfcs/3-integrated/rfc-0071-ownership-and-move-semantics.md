@@ -4,7 +4,7 @@ title: "Ownership and Move Semantics"
 date: '2026-06-28'
 status: integrated
 updated: '2026-07-26'
-impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/291'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/579'
 impl_status: in-progress
 ---
 
@@ -380,10 +380,10 @@ essentially unbuilt work with a real dependency order between the pieces:
 
 | issue | sections | depends on |
 |---|---|---|
-| [#290](https://codeberg.org/metel-lang/metel-core/issues/290) — `Copy` and `Drop` aspects | §2, §3, §4, §9 q3 | — |
-| [#291](https://codeberg.org/metel-lang/metel-core/issues/291) — move checking | §1 | #290 |
-| [#292](https://codeberg.org/metel-lang/metel-core/issues/292) — drop order and explicit drop | §5, §6 | #290, #291 |
-| [#293](https://codeberg.org/metel-lang/metel-core/issues/293) — partial moves | §7, §9a | #291 |
+| [#578](https://github.com/metel-lang/metel-core/issues/578) — `Copy` and `Drop` aspects | §2, §3, §4, §9 q3 | — |
+| [#579](https://github.com/metel-lang/metel-core/issues/579) — move checking | §1 | #578 |
+| [#261](https://github.com/metel-lang/metel-core/issues/261) — drop order and explicit drop | §5, §6 | #578, #579 |
+| [#262](https://github.com/metel-lang/metel-core/issues/262) — partial moves | §7, §9a | #579 |
 
 **§9b's place-abstraction requirement is stated in #291**, which is where it constrains the
 design. **§9a's rules for tuples, arrays and enum payloads are in #293.** #293 is also the
@@ -407,7 +407,7 @@ descoping it pushes RFC-0119 and the blog's short-term commitment out another re
 > block (#293, #310, #328, #330, #338, #342), while #290 had already shipped in v0.12.0.
 > The conditional above is therefore live, and its remedy — rejecting `Drop` impls before
 > release rather than shipping them inert — is tracked as
-> [#345](https://codeberg.org/metel-lang/metel-core/issues/345), milestoned v0.12.0.
+> [#601](https://github.com/metel-lang/metel-core/issues/601), milestoned v0.12.0.
 >
 > **Discharged 2026-07-31 (#345), by a narrower rejection than this section's wording.**
 > What is rejected is a `drop` **body**, not a `Drop` impl. Declaring

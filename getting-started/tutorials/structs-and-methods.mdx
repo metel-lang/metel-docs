@@ -393,7 +393,7 @@ fun main() {
 A type can also declare `Drop`, marking it as needing cleanup when it goes out of scope. In
 this release, `Drop` only has type-level effects — it excludes the type from `Copy` and
 participates in move-checking rules — the `drop` method's body must still be empty; actually
-running cleanup code on drop is not implemented yet ([issue #292](https://codeberg.org/metel-lang/metel-core/issues/292)):
+running cleanup code on drop is not implemented yet ([issue #261](https://github.com/metel-lang/metel-core/issues/261)):
 
 ```metel
 struct Resource { name: String }

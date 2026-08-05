@@ -5,7 +5,7 @@ date: '2026-07-24'
 status: implemented
 target:
 updated: '2026-07-25'
-impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/289'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/577'
 impl_status: implemented
 ---
 

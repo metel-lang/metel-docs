@@ -5,7 +5,7 @@ date: '2026-07-14'
 status: implemented
 target:
 updated: '2026-07-14'
-impl_tracking: 'https://codeberg.org/metel-lang/metel-core/pulls/273'
+impl_tracking: 'Codeberg PR #273 (private tracker archive)'
 impl_status: implemented
 ---
 
