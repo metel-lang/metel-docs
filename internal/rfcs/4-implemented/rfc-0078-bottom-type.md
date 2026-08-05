@@ -4,7 +4,7 @@ title: "Bottom Type — `!`"
 date: '2026-07-01'
 status: implemented
 updated: '2026-07-12'
-impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/234'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/538'
 impl_status: implemented
 ---
 

@@ -4,7 +4,7 @@ title: "Structural Aspect Bounds"
 date: '2026-07-01'
 status: implemented
 updated: '2026-07-14'
-impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/245'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/549'
 impl_status: implemented
 ---
 

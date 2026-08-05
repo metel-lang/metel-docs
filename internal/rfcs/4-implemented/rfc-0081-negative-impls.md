@@ -4,7 +4,7 @@ title: "Negative Impls"
 date: '2026-07-01'
 status: implemented
 updated: '2026-07-12'
-impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/264'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/552'
 impl_status: implemented
 ---
 

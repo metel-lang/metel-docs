@@ -4,7 +4,7 @@ title: "Associated Types"
 date: '2026-07-01'
 status: implemented
 updated: '2026-07-13'
-impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/242'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/546'
 impl_status: implemented
 ---
 

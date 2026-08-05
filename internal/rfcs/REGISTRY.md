@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-08-03'
+generated_on: '2026-08-05'
 ---
 
 # RFC Registry
@@ -76,7 +76,7 @@ the curated thematic map.
 
 ## Integrated (1)
 
-- **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; internal/rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl in-progress ; tracking https://codeberg.org/metel-lang/metel-core/issues/291)
+- **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; internal/rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/579)
 
 ## Implemented (46)
 
@@ -94,8 +94,8 @@ the curated thematic map.
 - **RFC-0032** — Field-Level Visibility (`4-implemented` ; internal/rfcs/4-implemented/rfc-0032-field-level-visibility.md ; date 2026-05-30)
 - **RFC-0034** — Aspect Bounds on Struct and Enum Generic Parameters (`4-implemented` ; internal/rfcs/4-implemented/rfc-0034-struct-enum-aspect-bounds.md ; date 2026-06-01)
 - **RFC-0035** — impl Aspect Anonymous Type Parameters (`4-implemented` ; internal/rfcs/4-implemented/rfc-0035-impl-aspect-anonymous-params.md ; date 2026-06-01)
-- **RFC-0036** — Conditional Impl Blocks (`4-implemented` ; internal/rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md ; date 2026-07-01 ; updated 2026-07-13 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/241)
-- **RFC-0037** — Return-Position impl Aspect (`4-implemented` ; internal/rfcs/4-implemented/rfc-0037-return-position-impl-aspect.md ; date 2026-07-01 ; updated 2026-07-13 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/240)
+- **RFC-0036** — Conditional Impl Blocks (`4-implemented` ; internal/rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md ; date 2026-07-01 ; updated 2026-07-13 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/545)
+- **RFC-0037** — Return-Position impl Aspect (`4-implemented` ; internal/rfcs/4-implemented/rfc-0037-return-position-impl-aspect.md ; date 2026-07-01 ; updated 2026-07-13 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/544)
 - **RFC-0040** — Aspect Bound Enforcement on Function Type Parameters (`4-implemented` ; internal/rfcs/4-implemented/rfc-0040-function-aspect-bound-enforcement.md ; date 2026-06-01)
 - **RFC-0041** — Lambda Syntax for Anonymous Functions (`4-implemented` ; internal/rfcs/4-implemented/rfc-0041-lambda-syntax.md ; date 2026-06-01)
 - **RFC-0042** — let mut for Mutable Bindings (`4-implemented` ; internal/rfcs/4-implemented/rfc-0042-let-mut-bindings.md ; date 2026-06-02)
@@ -106,26 +106,26 @@ the curated thematic map.
 - **RFC-0057** — Standard Library Layering and Host Module Boundary (`4-implemented` ; internal/rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md ; date 2026-06-06)
 - **RFC-0058** — SourceProvider Abstraction for the Module Loader (`4-implemented` ; internal/rfcs/4-implemented/rfc-0058-source-provider-abstraction.md ; date 2026-06-10)
 - **RFC-0059** — Symbol Definition Index in ResolvedNames (`4-implemented` ; internal/rfcs/4-implemented/rfc-0059-symbol-definition-index.md ; date 2026-06-10)
-- **RFC-0060** — Aspect Impl Coherence (`4-implemented` ; internal/rfcs/4-implemented/rfc-0060-aspect-impl-coherence.md ; date 2026-07-01 ; updated 2026-07-14 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/244)
-- **RFC-0061** — Structural Aspect Bounds (`4-implemented` ; internal/rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md ; date 2026-07-01 ; updated 2026-07-14 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/245)
-- **RFC-0067A** — Reference Types (`4-implemented` ; internal/rfcs/4-implemented/rfc-0067a-reference-types.md ; date 2026-06-28 ; updated 2026-07-11 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/236)
-- **RFC-0072** — Negative Bounds (`4-implemented` ; internal/rfcs/4-implemented/rfc-0072-negative-bounds.md ; date 2026-06-28 ; updated 2026-07-12 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/243)
-- **RFC-0078** — Bottom Type — `!` (`4-implemented` ; internal/rfcs/4-implemented/rfc-0078-bottom-type.md ; date 2026-07-01 ; updated 2026-07-12 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/234)
-- **RFC-0081** — Negative Impls (`4-implemented` ; internal/rfcs/4-implemented/rfc-0081-negative-impls.md ; date 2026-07-01 ; updated 2026-07-12 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/264)
-- **RFC-0082** — Associated Types (`4-implemented` ; internal/rfcs/4-implemented/rfc-0082-associated-types.md ; date 2026-07-01 ; updated 2026-07-13 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/242)
-- **RFC-0097** — Orphan Rule for Bare-Parameter Blanket Impls (`4-implemented` ; internal/rfcs/4-implemented/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md ; date 2026-07-11 ; updated 2026-07-14 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/269)
-- **RFC-0098** — Surface Keyword Renames (`4-implemented` ; internal/rfcs/4-implemented/rfc-0098-surface-keyword-renames.md ; date 2026-07-13 ; updated 2026-07-14 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/pulls/273)
-- **RFC-0102** — Bodyless Extend Blocks for Marker Aspects and Negative Impls (`4-implemented` ; internal/rfcs/4-implemented/rfc-0102-bodyless-extend-blocks-for-marker-aspects-and-negative-impls.md ; date 2026-07-14 ; updated 2026-07-14 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/pulls/273)
-- **RFC-0103** — Bodyless Aspect Declarations (`4-implemented` ; internal/rfcs/4-implemented/rfc-0103-bodyless-aspect-declarations.md ; date 2026-07-14 ; updated 2026-07-14 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/pulls/273)
+- **RFC-0060** — Aspect Impl Coherence (`4-implemented` ; internal/rfcs/4-implemented/rfc-0060-aspect-impl-coherence.md ; date 2026-07-01 ; updated 2026-07-14 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/548)
+- **RFC-0061** — Structural Aspect Bounds (`4-implemented` ; internal/rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md ; date 2026-07-01 ; updated 2026-07-14 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/549)
+- **RFC-0067A** — Reference Types (`4-implemented` ; internal/rfcs/4-implemented/rfc-0067a-reference-types.md ; date 2026-06-28 ; updated 2026-07-11 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/540)
+- **RFC-0072** — Negative Bounds (`4-implemented` ; internal/rfcs/4-implemented/rfc-0072-negative-bounds.md ; date 2026-06-28 ; updated 2026-07-12 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/547)
+- **RFC-0078** — Bottom Type — `!` (`4-implemented` ; internal/rfcs/4-implemented/rfc-0078-bottom-type.md ; date 2026-07-01 ; updated 2026-07-12 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/538)
+- **RFC-0081** — Negative Impls (`4-implemented` ; internal/rfcs/4-implemented/rfc-0081-negative-impls.md ; date 2026-07-01 ; updated 2026-07-12 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/552)
+- **RFC-0082** — Associated Types (`4-implemented` ; internal/rfcs/4-implemented/rfc-0082-associated-types.md ; date 2026-07-01 ; updated 2026-07-13 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/546)
+- **RFC-0097** — Orphan Rule for Bare-Parameter Blanket Impls (`4-implemented` ; internal/rfcs/4-implemented/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md ; date 2026-07-11 ; updated 2026-07-14 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/555)
+- **RFC-0098** — Surface Keyword Renames (`4-implemented` ; internal/rfcs/4-implemented/rfc-0098-surface-keyword-renames.md ; date 2026-07-13 ; updated 2026-07-14 ; impl implemented ; tracking Codeberg PR #273 (private tracker archive))
+- **RFC-0102** — Bodyless Extend Blocks for Marker Aspects and Negative Impls (`4-implemented` ; internal/rfcs/4-implemented/rfc-0102-bodyless-extend-blocks-for-marker-aspects-and-negative-impls.md ; date 2026-07-14 ; updated 2026-07-14 ; impl implemented ; tracking Codeberg PR #273 (private tracker archive))
+- **RFC-0103** — Bodyless Aspect Declarations (`4-implemented` ; internal/rfcs/4-implemented/rfc-0103-bodyless-aspect-declarations.md ; date 2026-07-14 ; updated 2026-07-14 ; impl implemented ; tracking Codeberg PR #273 (private tracker archive))
 - **RFC-0106** — Optional Braces for Empty Constructors (`4-implemented` ; internal/rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md ; date 2026-07-14 ; updated 2026-07-14 ; impl implemented)
-- **RFC-0107** — Unqualified Enum Variants in Match Patterns (`4-implemented` ; internal/rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md ; date 2026-07-17 ; updated 2026-07-21 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/278)
-- **RFC-0108** — Reference-Transparent Match Scrutinees (`4-implemented` ; internal/rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md ; date 2026-07-17 ; updated 2026-07-21 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/278)
-- **RFC-0110** — Explicit Dereference Operator (`4-implemented` ; internal/rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md ; date 2026-07-20 ; updated 2026-07-21 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/278)
-- **RFC-0111** — Unqualified Enum Variants in Expression Position (`4-implemented` ; internal/rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md ; date 2026-07-21 ; updated 2026-07-21 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/284)
-- **RFC-0115** — Field Initializer Separator (`4-implemented` ; internal/rfcs/4-implemented/rfc-0115-field-initializer-separator.md ; date 2026-07-24 ; updated 2026-07-24 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/287)
-- **RFC-0116** — Anonymous Record Types (`4-implemented` ; internal/rfcs/4-implemented/rfc-0116-anonymous-record-types.md ; date 2026-07-24 ; updated 2026-07-25 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/288)
-- **RFC-0118** — Row Bounds (`4-implemented` ; internal/rfcs/4-implemented/rfc-0118-row-bounds.md ; date 2026-07-24 ; updated 2026-07-25 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/289)
-- **RFC-0126** — T[] as a Copy Borrowed View (`4-implemented` ; internal/rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md ; date 2026-07-27 ; updated 2026-08-03 ; impl implemented ; tracking https://codeberg.org/metel-lang/metel-core/issues/317)
+- **RFC-0107** — Unqualified Enum Variants in Match Patterns (`4-implemented` ; internal/rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md ; date 2026-07-17 ; updated 2026-07-21 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/559)
+- **RFC-0108** — Reference-Transparent Match Scrutinees (`4-implemented` ; internal/rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md ; date 2026-07-17 ; updated 2026-07-21 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/559)
+- **RFC-0110** — Explicit Dereference Operator (`4-implemented` ; internal/rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md ; date 2026-07-20 ; updated 2026-07-21 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/559)
+- **RFC-0111** — Unqualified Enum Variants in Expression Position (`4-implemented` ; internal/rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md ; date 2026-07-21 ; updated 2026-07-21 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/572)
+- **RFC-0115** — Field Initializer Separator (`4-implemented` ; internal/rfcs/4-implemented/rfc-0115-field-initializer-separator.md ; date 2026-07-24 ; updated 2026-07-24 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/575)
+- **RFC-0116** — Anonymous Record Types (`4-implemented` ; internal/rfcs/4-implemented/rfc-0116-anonymous-record-types.md ; date 2026-07-24 ; updated 2026-07-25 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/576)
+- **RFC-0118** — Row Bounds (`4-implemented` ; internal/rfcs/4-implemented/rfc-0118-row-bounds.md ; date 2026-07-24 ; updated 2026-07-25 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/577)
+- **RFC-0126** — T[] as a Copy Borrowed View (`4-implemented` ; internal/rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md ; date 2026-07-27 ; updated 2026-08-03 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/593)
 
 ## Superseded (13)
 
@@ -140,7 +140,7 @@ the curated thematic map.
 - **RFC-0043** — Regular Pointers and Mutable Pointers (`5-superseded` ; internal/rfcs/5-superseded/rfc-0043-regular-pointers.md ; date 2026-06-02)
 - **RFC-0052** — Lifetime System (`5-superseded` ; internal/rfcs/5-superseded/rfc-0052-lifetime-system.md ; date 2026-06-05 ; updated 2026-07-17)
 - **RFC-0055** — Comptime (`5-superseded` ; internal/rfcs/5-superseded/rfc-0055-comptime.md ; date 2026-06-05 ; updated 2026-07-09)
-- **RFC-0083** — Public Value Exports (`5-superseded` ; internal/rfcs/5-superseded/rfc-0083-public-value-exports.md ; date 2026-07-01 ; updated 2026-07-12 ; impl not-started ; tracking https://codeberg.org/metel-lang/metel-core/issues/235)
+- **RFC-0083** — Public Value Exports (`5-superseded` ; internal/rfcs/5-superseded/rfc-0083-public-value-exports.md ; date 2026-07-01 ; updated 2026-07-12 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/539)
 - **RFC-0090** — Structural Records — Rows and Tiers (`5-superseded` ; internal/rfcs/5-superseded/rfc-0090-structural-records.md ; date 2026-07-09 ; updated 2026-07-24)
 
 ## Refused (14)

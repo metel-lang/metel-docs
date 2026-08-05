@@ -4,7 +4,7 @@ title: "Negative Bounds"
 date: '2026-06-28'
 status: implemented
 updated: '2026-07-12'
-impl_tracking: 'https://codeberg.org/metel-lang/metel-core/issues/243'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/547'
 impl_status: implemented
 ---
 
