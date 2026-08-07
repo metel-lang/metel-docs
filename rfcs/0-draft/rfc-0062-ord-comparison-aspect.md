@@ -9,8 +9,8 @@ updated: '2026-07-21'
 > **Status — draft, surveyed against the implementation 2026-07-21.** Partially shipped
 > ahead of this RFC and currently unusable for the case that matters; §"Current state"
 > below records exactly what exists. The equality half is also entangled with two
-> deliberately-open questions elsewhere (`==`'s operand rules, metel-core#279/#263; and
-> whether two references compare referents or identity, metel-core#282/#263), so this RFC
+> deliberately-open questions elsewhere (`==`'s operand rules, metel-core#561/#259; and
+> whether two references compare referents or identity, metel-core#567/#259), so this RFC
 > is **not** ready to implement as written.
 
 ## Summary
@@ -103,14 +103,14 @@ PartialEq` cannot be written today. Until that decision is taken, adding primiti
 impls would bake in the wrong answer at the point where it is most expensive to change —
 `std::core`'s public surface.
 
-**2. `==`'s operand rules are open.** metel-core#279 added a guard rejecting `==` on
+**2. `==`'s operand rules are open.** metel-core#561 added a guard rejecting `==` on
 anything other than the primitive scalars, `boolean`, `String` and `Char`, because it
 previously typechecked and then aborted at run time. That guard is deliberately
 *direction-neutral*: it does not decide whether `==` should eventually dispatch through
 this aspect (option 2 below), and it must not be relaxed by accident.
 
 **3. Reference equality is open.** Whether two references compare referents (Rust) or
-identity (Go) is unresolved — see the design note on metel-core#263. Any `Eq` impl covering
+identity (Go) is unresolved — see the design note on metel-core#259. Any `Eq` impl covering
 references would settle it silently.
 
 **None of these block the *ordering* half.** `Ord`, `Ordering`, and `min`/`max`/`clamp` do

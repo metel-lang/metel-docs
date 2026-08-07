@@ -261,8 +261,8 @@ brand 'r1 {
     let arena1 = BumpAlloc::new<'r1>();
     brand 'r2 {
         let arena2 = BumpAlloc::new<'r2>();
-        let x = @[arena1] Node { val: 1 };
-        let y = @[arena2] Node { val: 2 };
+        let x = @[arena1] Node { val = 1 };
+        let y = @[arena2] Node { val = 2 };
         // x: @arena1 Node — cannot be used where 'r2 is expected
     }
 }
@@ -629,7 +629,7 @@ naturally with the lifetime/borrow system.
    framing is "unforgeable *allocation-site* identity," so `&q.x` and `&q.y` share an
    allocation and would share a brand. Branded references therefore would *not* answer the
    "should two references be equal only when pointing at the same variable" question
-   (metel-core#263, deliberately open). Second, **ergonomics is the gating constraint**:
+   (metel-core#259, deliberately open). Second, **ergonomics is the gating constraint**:
    `Ref<T, 'b>` on the language's most-used type needs near-total brand elision — Rust's
    lifetime elision exists for exactly this — and that is the same verbosity objection
    already raised against the allocator annotations in RFC-0065. Establish elision before

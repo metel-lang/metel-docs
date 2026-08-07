@@ -52,8 +52,8 @@ A value of concrete type `T` where `T: Aspect` may be coerced to `@[r] dyn Aspec
 by allocating it in region `r`:
 
 ```metel
-let shape: @[r] dyn Shape = @[r] Circle { radius: 5.0 };
-let shape2: @[r] dyn Shape = @[r] Rectangle { w: 3.0, h: 4.0 };
+let shape: @[r] dyn Shape = @[r] Circle { radius = 5.0 };
+let shape2: @[r] dyn Shape = @[r] Rectangle { w = 3.0, h = 4.0 };
 ```
 
 ---
@@ -128,7 +128,7 @@ fun print_any(x: &dyn Display) {
     x.to_string();   // vtable call — resolved at runtime
 }
 
-let shape: @[r] dyn Shape = @[r] Circle { radius: 5.0 };
+let shape: @[r] dyn Shape = @[r] Circle { radius = 5.0 };
 print_any(&*shape);
 ```
 
@@ -185,8 +185,8 @@ values with different concrete types, all satisfying a common aspect:
 
 ```metel
 let shapes: List<@[r] dyn Shape> = List::new();
-shapes.push(@[r] Circle { radius: 5.0 });
-shapes.push(@[r] Rectangle { w: 3.0, h: 4.0 });
+shapes.push(@[r] Circle { radius = 5.0 });
+shapes.push(@[r] Rectangle { w = 3.0, h = 4.0 });
 
 for shape in shapes {
     println(shape.area());   // dispatched through vtable

@@ -98,7 +98,7 @@ must sweep prose, not only code.** RFC-0115 renamed the struct-literal field sep
 from `:` to `=` and migrated 566 sites across `stdlib/` and `tests/`. It never touched
 documentation, so for two months the RFCs, the reports and the public blog post kept
 teaching syntax that no longer compiled — and it cost real time when RFC-0071 §3's stale
-example was about to be copied into an implementation task (metel-core#298).
+example was about to be copied into an implementation task (metel-core#585).
 
 Concretely, for any RFC that changes the spelling of something already written down:
 
@@ -107,16 +107,16 @@ Concretely, for any RFC that changes the spelling of something already written d
   so a stale one is not cosmetic.
 - **Do not use a blind regex.** Three separate sweeps have now corrupted files this way:
   `fun clone(self: &T)` rewritten to `self = &T`, `type Item: Display` to `type Item =
-  Display`, and — during metel-core#298 itself — a parameter list `part_b: &pb var [i64]`
+  Display`, and — during metel-core#585 itself — a parameter list `part_b: &pb var [i64]`
   rewritten as an initializer. A field separator and a type annotation are spelled alike;
   only context tells them apart. Scope by code-fence language too: a ```rust fence
   describing the interpreter's own AST must not be swept as if it were Metel.
 - **Verify by compiling, not by reading.** Extract at least one complete example from the
-  swept prose and run it. That is what confirmed metel-core#298's sweep.
+  swept prose and run it. That is what confirmed metel-core#585's sweep.
 - **Watch for line endings.** At least one file in this repository is CRLF; a
   read/split/join in Python will silently rewrite every line of it.
 - **Decide the treatment of dated documents explicitly.** A published blog post is not
-  wrong *for its date*, but a reader today will copy what it shows. metel-core#298
+  wrong *for its date*, but a reader today will copy what it shows. metel-core#585
   corrected the syntax in place, on the grounds that a code sample is an instruction
   rather than a historical claim. Superseded and refused RFCs, and `reports/archive/`,
   were deliberately left alone — those are records of what was thought, not guidance.
@@ -236,7 +236,7 @@ by refusal rather than integration, same day — both had reverted to proposing 
 beyond what already exists.)
 
 **Updated 2026-07-11:** RFC-0060 (Aspect Impl Coherence) integrated on its own, ahead of
-implementing issue #238 (the coherence pipeline this RFC specifies) — deliberately, since
+implementing issue #542 (the coherence pipeline this RFC specifies) — deliberately, since
 every prior integration this pass had found a real problem, and this RFC cross-references
 two already-integrated RFCs (RFC-0072, RFC-0081) plus two still-unsettled ones (RFC-0036,
 RFC-0080). Merged into `declarations.md` as a new "Aspect Implementation Coherence"

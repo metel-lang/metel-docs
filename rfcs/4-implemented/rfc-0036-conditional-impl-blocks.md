@@ -16,7 +16,7 @@ impl_status: implemented
 
 > **Status — integrated (2026-07-13).** Conditional impl blocks integrated into declarations.md; fixed a stale T0013 collision (corrected to reuse T0012), deferred bare-parameter blanket impls to RFC-0097 explicitly, worked example checking interaction with equality-constrained bounds (RFC-0082)
 
-> **Status — implemented (2026-07-13).** Issue #241 merged into sprint/26 (commit f43392e): conditional impl blocks fully implemented -- registry/inference/construction bound-gated impl support, coherence disjointness checking including syntactic negation (RFC-0036 §3.1), use-site bound enforcement. 502 integration + 115 unit tests passing, clippy::pedantic clean.
+> **Status — implemented (2026-07-13).** Issue #545 merged into sprint/26 (commit f43392e): conditional impl blocks fully implemented -- registry/inference/construction bound-gated impl support, coherence disjointness checking including syntactic negation (RFC-0036 §3.1), use-site bound enforcement. 502 integration + 115 unit tests passing, clippy::pedantic clean.
 
 ## Summary
 

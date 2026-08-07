@@ -44,7 +44,7 @@ fun process(nodes: &List<i64>) {
     AutoRegion::scoped([r]() -> {
         var result: @[r] List<i64> = @[r] List::Nil {};
         for n in nodes {
-            result = @[r] List::Cons { head: *n, tail: result };
+            result = @[r] List::Cons { head = *n, tail = result };
         }
         analyze(&result);
     });
@@ -57,7 +57,7 @@ With local inference (this RFC):
 fun process(nodes: &List<i64>) {
     var result = List::Nil {};
     for n in nodes {
-        result = List::Cons { head: *n, tail: result };
+        result = List::Cons { head = *n, tail = result };
     }
     analyze(&result);
     // result dropped here; inferred AutoRegion ends here
@@ -194,7 +194,7 @@ fun sum_evens(input: &List<i64>) -> i64 {
     var evens = List::Nil {};     // inferred AutoRegion: local
     for n in input {
         if *n % 2 == 0 {
-            evens = List::Cons { head: *n, tail: evens };
+            evens = List::Cons { head = *n, tail = evens };
         }
     }
     fold_left(&evens, 0, |acc, n| acc + n)

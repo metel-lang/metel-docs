@@ -108,13 +108,13 @@ Methods may use `@a` to allocate and `&r T` anchored to method parameters:
 ```metel
 extend Parser {
     fun new(source: String) -> Parser {
-        Parser { source, nodes: @a List::Nil {} }
+        Parser { source, nodes = @a List::Nil {} }
         //                      ^^ a in scope; allocates into the new arena
     }
 
     fun push_node(&var self, node: AstNode) -> &self AstNode {
         let ptr = @a node;   // allocate into Parser's arena
-        self.nodes = @a List::Cons { head: ptr, tail: self.nodes };
+        self.nodes = @a List::Cons { head = ptr, tail = self.nodes };
         &ptr
     }
 

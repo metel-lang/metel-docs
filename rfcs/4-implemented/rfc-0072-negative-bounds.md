@@ -19,7 +19,7 @@ impl_status: implemented
 
 > **Status — integrated (2026-07-10).** Integrated into public/reference/spec/declarations.md: T: !Aspect negative bounds. RFC's own stale @[r] bracket-channel syntax fixed first.
 
-> **Status — implemented (2026-07-12).** Enforced at all call sites + literal construction; issue #243
+> **Status — implemented (2026-07-12).** Enforced at all call sites + literal construction; issue #547
 
 ## Summary
 
@@ -116,10 +116,10 @@ fun extract<T, A: Alloc>(@a: A, ptr: @a T) -> T { … }
 At the call site, the compiler verifies that the instantiated type satisfies the bound:
 
 ```metel
-let ptr: @a Point = @a Point { x: 1.0, y: 2.0 };
+let ptr: @a Point = @a Point { x = 1.0, y = 2.0 };
 extract(ptr);    // Point: !Drop ✓
 
-let ptr: @a Handle = @a Handle { fd: open("f") };
+let ptr: @a Handle = @a Handle { fd = open("f") };
 extract(ptr);    // compile error: Handle implements Drop; Handle: !Drop not satisfied
 ```
 

@@ -5,7 +5,7 @@ date: '2026-07-13'
 status: implemented
 target:
 updated: '2026-07-14'
-impl_tracking: 'Codeberg PR #273 (private tracker archive)'
+impl_tracking: 'archived Codeberg PR #273 (no GitHub counterpart per the 2026-08-04 migration policy; see internal/archive/codeberg-tracker/metel-core/comments/273.json)'
 impl_status: implemented
 ---
 

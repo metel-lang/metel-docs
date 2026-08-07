@@ -43,7 +43,7 @@ impl_status: implemented
 > a stronger clash than `as`'s two prior uses. Neither spelling is adopted; §3a records
 > why, so neither gets re-proposed without this reasoning attached.
 
-> **Status — implemented (2026-07-13).** Real projection resolution, equality constraints, impl-completeness, and §1.2 bare-name sugar all enforced; issue #242 (object safety, §6, remains blocked on RFC-0008)
+> **Status — implemented (2026-07-13).** Real projection resolution, equality constraints, impl-completeness, and §1.2 bare-name sugar all enforced; issue #546 (object safety, §6, remains blocked on RFC-0008)
 
 ## Summary
 

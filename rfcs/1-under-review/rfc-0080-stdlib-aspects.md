@@ -101,7 +101,7 @@ struct Point { x: f64, y: f64 }
 // Generated:
 extend Point: Clone {
     fun clone(self: &Point) -> Point {
-        Point { x: self.x.clone(), y: self.y.clone() }
+        Point { x = self.x.clone(), y = self.y.clone() }
     }
 }
 ```

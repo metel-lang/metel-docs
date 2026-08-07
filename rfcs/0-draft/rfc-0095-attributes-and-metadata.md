@@ -113,7 +113,7 @@ struct User {
 
 comptime fun derive_display(comptime T: type) {
     let fields = typeinfo(T).row;   // now carrying each field's @ attributes too
-    emit impl Display for T {
+    emit extend T: Display {
         fun to_string(self: &T) -> String {
             // ordinary comptime code: skip fields tagged @skip, and use
             // @rename's argument in place of the field's own name

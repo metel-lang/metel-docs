@@ -29,7 +29,7 @@ superseded_by: rfc-0092
 
 > **Status — integrated (2026-07-10).** Integrated into public/reference/spec/modules.md: pub let declarations, import/export. RFC's heap/local_heap motivating example rewritten (obsolete under the ratified allocator design; mechanism itself unaffected).
 
-> **Status — superseded (2026-07-12).** Folded into RFC-0092: pub value exports are 'pub' applied to 'comptime let', not a separate constant-expression concept RFC-0083 never actually specified. Codeberg issue #235 closed unimplemented. See RFC-0092 section 0a.
+> **Status — superseded (2026-07-12).** Folded into RFC-0092: pub value exports are 'pub' applied to 'comptime let', not a separate constant-expression concept RFC-0083 never actually specified. Codeberg issue #539 closed unimplemented. See RFC-0092 section 0a.
 
 ## Summary
 

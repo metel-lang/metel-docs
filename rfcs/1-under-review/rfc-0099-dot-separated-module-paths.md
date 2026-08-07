@@ -76,7 +76,7 @@ This does not survive the worked-example pass this RFC's own draft called for. A
 has, in expression position (not an import statement, where a keyword already disambiguates):
 
 ```metel
-let x = std::core::Perhaps::Some { value: 42 };
+let x = std::core::Perhaps::Some { value = 42 };
 ```
 
 Under the dot rename this is `std.core.Perhaps.Some { ... }` — leading segment `std` is lowercase. A

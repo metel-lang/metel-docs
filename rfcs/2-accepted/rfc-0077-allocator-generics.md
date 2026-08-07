@@ -72,7 +72,7 @@ struct Parser<A: Alloc> {
 
 extend<A: Alloc> Parser<A> {
     fun new(@a: A, src: String) -> Parser<A> {
-        Parser { input: @a src, pos: 0 }
+        Parser { input = @a src, pos = 0 }
     }
 
     fun remaining<&s>(&s self) -> &s String {
@@ -89,7 +89,7 @@ the instance. `a` appears in `@a String` in field types.
 `aspect impl` follows the same header form:
 
 ```metel
-aspect impl<A: Alloc> Display for Parser<A> {
+extend<A: Alloc> Parser<A>: Display {
     fun fmt<&s>(&s self, buf: &var Buf) { ... }
 }
 ```
@@ -152,7 +152,7 @@ struct Cache<A: Alloc> {
 
 extend<A: Alloc> Cache<A> {
     fun new(@a: A) -> Cache<A> {
-        Cache { data: @a HashMap::new() }
+        Cache { data = @a HashMap::new() }
     }
 
     fun get<&s>(&s self, key: &Key) -> Perhaps<&s Value> {
@@ -174,7 +174,7 @@ aspect Serialize {
     fun serialize<A: Alloc>(@a: A, self: &Self) -> @a Bytes;
 }
 
-aspect impl Serialize for Record {
+extend Record: Serialize {
     fun serialize<A: Alloc>(@a: A, self: &Self) -> @a Bytes {
         @a Bytes::encode(self)
     }
@@ -230,7 +230,7 @@ attached to it.
 
 ```metel
 BumpAlloc::scoped((@a) -> {
-    let heap_node: @Heap Node = @Heap Node { val: 1 };
+    let heap_node: @Heap Node = @Heap Node { val = 1 };
     let wrapper: @a @Heap Node = @a heap_node;
     // ✓ — Heap's scope encloses all scoped allocators
 });
@@ -240,7 +240,7 @@ BumpAlloc::scoped((@a) -> {
 
 ```metel
 BumpAlloc::scoped((@a) -> {
-    let scoped_node: @a Node = @a Node { val: 1 };
+    let scoped_node: @a Node = @a Node { val = 1 };
     let bad: @Heap @a Node = @Heap scoped_node;
     // ✗ — a's scope ends inside this closure; the heap allocation would outlive it
 });
@@ -251,7 +251,7 @@ BumpAlloc::scoped((@a) -> {
 ```metel
 BumpAlloc::scoped((@outer) -> {
     BumpAlloc::scoped((@inner) -> {
-        let inner_node: @inner Node = @inner Node { val: 1 };
+        let inner_node: @inner Node = @inner Node { val = 1 };
         let bad: @outer @inner Node = @outer inner_node;
         // ✗ — inner drops before outer; inner does not enclose outer's scope
     });
@@ -262,8 +262,8 @@ BumpAlloc::scoped((@outer) -> {
 
 ```metel
 BumpAlloc::scoped((@a) -> {
-    let node: @a Node = @a Node { val: 1 };
-    let container: @a Container = @a Container { ptr: node };
+    let node: @a Node = @a Node { val = 1 };
+    let container: @a Container = @a Container { ptr = node };
     // ✓ — same allocator, trivially safe
 });
 ```

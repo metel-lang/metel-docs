@@ -33,7 +33,7 @@ RFC that uses this pattern cites RFC-0080 §3.2 as precedent but none of them �
 RFC-0080 itself — specifies what this RFC settles:
 
 1. **How the compiler recognizes that a given aspect *is* auto-impl at all** (§1).
-   `AspectDecl` has no marker field for it (confirmed empty during issue #238's
+   `AspectDecl` has no marker field for it (confirmed empty during issue #542's
    implementation), and no RFC proposes adding one.
 2. **The structural-composition algorithm** (§2), stated once instead of three times:
    how "every field is `Send`" generalizes to structs, enums, arrays (RFC-0061 §5),
@@ -86,7 +86,7 @@ answer from three RFCs that each assumed someone else had written it down.
 An aspect is auto-impl because the compiler's own source recognizes its identity, the
 same way `i64`, `String`, and the rest of `SymbolTable`'s seeded entries are recognized
 as primitive types with no textual `struct`/`enum` declaration anywhere (confirmed
-during issue #238: primitives need no special-casing in coherence checking precisely
+during issue #542: primitives need no special-casing in coherence checking precisely
 *because* they're ordinary `(std::core, name) -> SymbolId` table entries, not because
 of any flag on the entry). Auto-impl aspects are the same kind of fact: `Send`, `Sync`,
 and `Linear` are auto-impl because the compiler's aspect-satisfaction check special-
@@ -432,7 +432,7 @@ because this RFC is the right place to resolve it.
 - RFC-0050 (Closure Capture Lists, draft) — independently derives the same
   captured-state `Send` rule this RFC's §6 names as a fourth, uncited instance of the
   pattern.
-- Issue #238 / `src/coherence.rs` — where the absence of an `AspectDecl` auto-impl
+- Issue #542 / `src/coherence.rs` — where the absence of an `AspectDecl` auto-impl
   marker was confirmed empty by direct inspection, motivating §1's design decision.
 - RFC-0090 (Structural Records) — §1's `HasField`/`Lacks` auto-derivation,
   the fifth document assuming this RFC's pattern, missed on the first drafting pass;

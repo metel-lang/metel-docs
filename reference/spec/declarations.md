@@ -435,6 +435,14 @@ fun main() {
 }
 ```
 
+**Aspect implementation method set.** An `extend Type: Aspect` block must define
+exactly the methods declared by `Aspect`: every declared method must be present unless it
+has a default body, and no additional methods are permitted. Put a type-specific method
+that is not part of the aspect in an inherent `extend Type { ... }` block; inherent and
+aspect implementations may coexist for the same type.
+
+> **Changed in v0.12.1.** An undeclared method in an aspect implementation is rejected.
+
 **Conditional extend blocks.** An aspect implementation for a
 generic type may be conditional on its own type parameters satisfying additional
 bounds, written in a `where` clause after the aspect clause (or inline, before the

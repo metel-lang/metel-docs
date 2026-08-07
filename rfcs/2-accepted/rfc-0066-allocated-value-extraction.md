@@ -64,7 +64,7 @@ Borrow-deref obtains a temporary loan of the value without consuming the region 
 It is unconditional — no restriction on region kind or `T`:
 
 ```metel
-let ptr = @a Node { val: 1, next: null };
+let ptr = @a Node { val = 1, next = null };
 
 let v: &Node     = &ptr;     // shared borrow — &[r] Node, coerces to &Node
 let v: &var Node = &var ptr; // exclusive borrow
@@ -122,7 +122,7 @@ A `Copy` type is extracted by copy, not move. The slot is not vacated; `ptr` rem
 valid:
 
 ```metel
-let ptr = @a Point { x: 1, y: 2 };
+let ptr = @a Point { x = 1, y = 2 };
 let p = ptr: Point;   // type ascription copies Point out — ptr still valid, slot intact
 ```
 
@@ -135,7 +135,7 @@ The slot is orphaned, but when the arena drops it reclaims raw memory without ca
 destructor. Nothing leaks; nothing runs twice:
 
 ```metel
-let ptr = @a Pair { a: 1, b: 2 };  // Pair has no Drop impl
+let ptr = @a Pair { a = 1, b = 2 };  // Pair has no Drop impl
 let p = ptr: Pair;                     // type ascription moves out — safe; slot orphaned
 // arena frees the raw memory on drop, no destructor to call
 ```
@@ -180,7 +180,7 @@ let node: Node = ptr;   // declared type drives move-out; ptr consumed
 including call sites and return expressions:
 
 ```metel
-let ptr = @a Node { val: 1, next: null };
+let ptr = @a Node { val = 1, next = null };
 let node = ptr: Node;         // ascription in expression position
 process(ptr: Node);           // move-out at call site
 ```
@@ -202,7 +202,7 @@ ascription at all —
 ```metel
 fun consume(val: Node) -> Node { val }
 
-let ptr = @a Node { val: 1 };
+let ptr = @a Node { val = 1 };
 consume(ptr);          // is this move-out, a type error, or something else?
 ```
 

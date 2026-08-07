@@ -64,11 +64,11 @@ distinct situation sharing one code:
 - a target with nowhere to register, so its methods could never be found — a tuple, an
   anonymous record, a `fun` type, or an array whose element is not one of the impl's own
   type parameters. Only `extend<T> T[]: Aspect` — the array's element spelled exactly as
-  one of the impl's own generics — is implemented today (metel-core#353);
-- a `drop` body, while destructor invocation is unimplemented (metel-core#292).
+  one of the impl's own generics — is implemented today;
+- a `drop` body, while destructor invocation is not yet implemented.
 
 ```
-[T0001] type error in main.mtl at 3..9: cannot `extend` a tuple type: this block's methods could never be found (metel-core#353). To fix it, use a named struct
+[T0001] type error in main.mtl at 3..9: cannot `extend` a tuple type: this block's methods could never be found. To fix it, use a named struct
 ```
 
 **Fix:** each message names the way forward — usually a named struct, or the generic form
@@ -294,7 +294,7 @@ code, each with its own message:
 - a by-value `self` method called through a reference — a reference only grants access,
   never ownership, so its pointee cannot be moved out, unless the pointee's own type is
   `Copy` (in which case the method reads a copy, exactly as `T: Copy` already permits at
-  read-copy positions per §3a) (metel-core#348).
+  read-copy positions per §3a).
 
 Each message names the binding and the location of the move. When the move happened on an
 earlier iteration of an enclosing loop, the message says so — a loop-carried move is
@@ -312,6 +312,60 @@ would point back at the line you are already reading.
 **Fix:** depending on the rule — borrow instead of moving (`&x`), clone the value, move the
 whole value rather than a field of a `Drop` type, or index-and-copy rather than moving an
 element out of an array.
+
+---
+
+### T0021 — `break`/`continue` with no enclosing loop
+
+`break` or `continue` appeared with no enclosing loop of any kind (`loop`, `while`, `for`,
+or `for-in`) to bind to. This includes a `break`/`continue` written inside a closure body
+— a closure is never considered to be "inside" whatever loop happens to lexically
+surround its definition, since the closure may be called long after that loop has exited,
+or from somewhere the loop never ran at all.
+
+```
+[T0021] type error in main.mtl:2:20: `break` used with no enclosing loop
+[T0021] type error in main.mtl:3:23: `continue` used with no enclosing loop
+```
+
+**Fix:** remove the keyword, or move it inside the loop it is meant to control. If it is
+meant to control a loop that encloses the *call site* of a closure rather than the
+closure's own definition, restructure the code — a closure cannot break or continue a
+loop it does not itself contain.
+
+---
+
+### T0022 — `impl Aspect` outside parameter or return position
+
+`impl Aspect` was written somewhere other than a function parameter's type or a
+function's return type — for example, a `let`/`var` annotation, a struct or enum
+variant field, a cast target (`x as impl P`), or a generic bound. Parameter position is
+lowered to a fresh bounded type parameter, and return position is RFC-0037's opaque
+return type; every other position is not part of this language version.
+
+```
+[T0022] type error in main.mtl:2:12: `impl Aspect` is only allowed in parameter or return position
+```
+
+**Fix:** name a concrete type instead, or restructure the code so the aspect bound is
+expressed through a parameter or return type.
+
+---
+
+### T0023 — Assignment through a non-owning view
+
+An index assignment targets a `T[]` value. Since RFC-0126, `T[]` is an unconditionally
+`Copy`, non-owning view — it never grants write access through its indices, independent
+of whether the binding holding it is `let` or `var`. This is a different failure shape
+than T0006 (all three of T0006's forms are about a `let` binding that declaring it `var`
+would fix); no annotation or binding-mutability change can fix this one.
+
+```
+[T0023] type error in main.mtl:3:5: cannot assign through `T[]`: array views are immutable; use `[T; N]` or `List<T>`
+```
+
+**Fix:** use `[T; N]` (a fixed-size array) or `List<T>` (a growable, owned collection)
+instead of `T[]` for storage that needs index-write access.
 
 ---
 
@@ -437,7 +491,7 @@ The `?` operator is applied to a value that is not a `Result`.
 > ever runs. `R0012` does not appear in the interpreter's `RuntimeErrorCode` enum
 > today and is unreachable in practice — kept here for the code number, not because
 > the described runtime error can currently occur. (Found while investigating
-> issue #232; not fixed as part of it, since removing a documented code is a
+> issue #536; not fixed as part of it, since removing a documented code is a
 > separate decision from the yolo/conversion-method work that issue tracked.)
 
 ### R0013 — Assertion failed
@@ -493,7 +547,7 @@ The interpreter reached an impossible state. This is a bug in the interpreter �
 [I0001] internal error: binop: unsupported operand types (typechecker should have caught this)
 ```
 
-**What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
+**What to do:** please file a bug report at [the Metel issue tracker](https://codeberg.org/metel-lang/metel/issues) with the source program that triggered this error.
 
 ### I0002 — Not implemented
 

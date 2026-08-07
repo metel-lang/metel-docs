@@ -355,7 +355,7 @@ struct RequestBuilder<row R> { data: { host: String, ..R } }
 
 extend<row R: !{ auth: _ }> RequestBuilder<..R> {
     fun with_auth(self, token: String) -> RequestBuilder<{ ..R, auth: String }> {
-        RequestBuilder { data: { ..self.data, auth = token } }
+        RequestBuilder { data = { ..self.data, auth = token } }
     }
 }
 

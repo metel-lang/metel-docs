@@ -131,7 +131,7 @@ let y = 3.14 as Int;      // conversion — truncates
 let z = 1 : Float;        // type error — Int is not Float; use `as` to convert
 ```
 
-The existing `as` implementation (currently limited to `Int as Float` and identity casts) is extended rather than removed. Full conversion coverage (including user-defined conversions via `From`) is tracked in #12.
+The existing `as` implementation (currently limited to `Int as Float` and identity casts) is extended rather than removed. Full conversion coverage (including user-defined conversions via `From`) is tracked in #294.
 
 ---
 

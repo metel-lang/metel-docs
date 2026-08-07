@@ -177,7 +177,7 @@ cannot express:
 `@a expr` allocates `expr` into allocator `a` and produces `@a T`:
 
 ```metel
-let node = @a Node { val: 1, next: null };
+let node = @a Node { val = 1, next = null };
 // node : @a Node
 ```
 
@@ -188,7 +188,7 @@ call; it may be elided to `@expr` when exactly one allocator is in scope (RFC-00
 `Result<@a T, E>`. The caller propagates with `?`:
 
 ```metel
-let node = @pool Node { val: 1 }?;
+let node = @pool Node { val = 1 }?;
 // pool::AllocationError = AllocationFailed
 ```
 
@@ -197,7 +197,7 @@ annotation, the right-hand side may be a bare `T` — the declared type drives a
 
 ```metel
 let node: @a Node = Node { val = 1, next = null };
-// equivalent to: let node = @a Node { val: 1, next: null }
+// equivalent to: let node = @a Node { val = 1, next = null }
 ```
 
 Type-directed allocation applies at the binding level only; nested sub-expressions
@@ -211,7 +211,7 @@ Allocators are values. They are passed as value parameters with the `@` prefix:
 
 ```metel
 fun build_node(@a: BumpAlloc, val: i64) -> @a Node {
-    @a Node { val, next: null }
+    @a Node { val, next = null }
 }
 ```
 
@@ -225,7 +225,7 @@ parameter bound to `Alloc`:
 
 ```metel
 fun build_node<A: Alloc>(@a: A, val: i64) -> @a Node {
-    @a Node { val, next: null }
+    @a Node { val, next = null }
 }
 ```
 
@@ -319,7 +319,7 @@ value channel; the arena is freed when the closure returns:
 
 ```metel
 BumpAlloc::scoped((@a) -> {
-    let node = @a Node { val: 1, next: null };
+    let node = @a Node { val = 1, next = null };
     process(&node);
 });   // arena freed here; any @a T still live is a borrow-check error
 ```
@@ -330,7 +330,7 @@ any live `@a T` at the point of drop:
 
 ```metel
 let a = BumpAlloc::new();
-let node = @a Node { val: 1, next: null };
+let node = @a Node { val = 1, next = null };
 process(&node);
 drop(a);   // error if node or any borrow of node is still live
 ```
@@ -353,7 +353,7 @@ struct Parser<&a> {
 }
 
 fun parse<&a>(@a: BumpAlloc, src: String) -> Parser<&a> {
-    Parser { input: @a src, pos: 0 }
+    Parser { input = @a src, pos = 0 }
 }
 ```
 

@@ -215,7 +215,7 @@ Both declarations are legal if they bind different local names (`collections`, `
 
 ### OQ-8 — `std::core`: what it contains, how it is imported, and shadowing
 
-RFC-0009 states that `Perhaps`, `Result`, `boolean`, `Int`, `Float`, and `String` "remain globally available in all programs regardless of module structure." Issue #150 proposes moving `Perhaps` and `Result` to a language core module. These two goals conflict: if the types are module-defined, they are no longer compiler built-ins in the traditional sense.
+RFC-0009 states that `Perhaps`, `Result`, `boolean`, `Int`, `Float`, and `String` "remain globally available in all programs regardless of module structure." Issue #455 proposes moving `Perhaps` and `Result` to a language core module. These two goals conflict: if the types are module-defined, they are no longer compiler built-ins in the traditional sense.
 
 **What actually gets special treatment in the interpreter.**
 
@@ -245,9 +245,9 @@ a == b  (a: Int, b: Int)   →   Int::Eq::eq(a, b)
 a < b   (a: Int, b: Int)   →   Int::Ord::compare(a, b) == Ordering::Less
 ```
 
-The aspect definition in `std::core` is the interface contract. The runtime lookup key is `TypeA::Aspect<TypeB>::method`. This creates a new class of compiler-special aspects — like `Display`, `Iterable`, and `From`, the operator aspects must always be in scope once operator desugaring is implemented because the compiler desugars operator expressions into calls to them. They belong in `std::core`, but implementing operator aspect dispatch remains scoped to RFC-0011 / issue #149.
+The aspect definition in `std::core` is the interface contract. The runtime lookup key is `TypeA::Aspect<TypeB>::method`. This creates a new class of compiler-special aspects — like `Display`, `Iterable`, and `From`, the operator aspects must always be in scope once operator desugaring is implemented because the compiler desugars operator expressions into calls to them. They belong in `std::core`, but implementing operator aspect dispatch remains scoped to RFC-0011 / issue #242.
 
-The planned operator aspects (drawing from RFC-0011 and issue #149):
+The planned operator aspects (drawing from RFC-0011 and issue #242):
 
 | Aspect | Operator(s) | Note |
 |---|---|---|

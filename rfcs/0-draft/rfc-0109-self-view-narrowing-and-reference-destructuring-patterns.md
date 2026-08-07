@@ -815,7 +815,7 @@ than leaving it a vague cross-module concern.
 5. **§2's by-value struct pattern is scoped to this RFC's own needs, not a full
    proposal.** Whether it should be split into its own RFC (matching this project's
    general preference for decomposing shared/foundational grammar work — see issue
-   #233's AST-generalization scoping) or folded permanently into RFC-0071's move
+   #537's AST-generalization scoping) or folded permanently into RFC-0071's move
    semantics is not decided.
 6. **Whether a view's `for` target may itself be generic** (`view X for Container<T> {
    field }`) — not addressed; out of scope for this draft.

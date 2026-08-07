@@ -13,7 +13,7 @@ Introduce a per-module `edition` directive that pins a source file to a specific
 
 ## Motivation
 
-The [versioning model](../versioning.md) explicitly permits breaking changes before v1.0. Without a mechanism for code to declare the edition it was written for, any breaking change requires every existing source file to be updated in lockstep. This is acceptable when all code lives in one project and the author can update everything, but it becomes untenable once:
+The versioning model explicitly permits breaking changes before v1.0. Without a mechanism for code to declare the edition it was written for, any breaking change requires every existing source file to be updated in lockstep. This is acceptable when all code lives in one project and the author can update everything, but it becomes untenable once:
 
 - the module system (RFC-0009) lands and programs span multiple files or packages authored by different people,
 - library code is distributed and cannot be updated by the consumer,

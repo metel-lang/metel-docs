@@ -73,7 +73,7 @@ impl_status: implemented
 
 > **Status — integrated (2026-07-24).** Anonymous Records section merged into public/reference/spec/types.md after Tuples; two availability markers. Cross-checked against RFC-0115/0118/0071/0114. Grammar feasibility verified by prototype (755 tests green, reverted).
 
-> **Status — implemented (2026-07-25).** Anonymous record types shipped in v0.12.0 (#288, merged e1c0492). Type-former, literals, punning, single projection in expression and type position, structural identity with canonical label sorting, exactness, patterns, Send/Sync composition, and the impl-rejection rules. Two limits recorded in the RFC rather than closed: no local-aspect impls on records (blocked on #296, which affects every structural target) and no impl-based aspect satisfaction at all as a consequence.
+> **Status — implemented (2026-07-25).** Anonymous record types shipped in v0.12.0 (#576, merged e1c0492). Type-former, literals, punning, single projection in expression and type position, structural identity with canonical label sorting, exactness, patterns, Send/Sync composition, and the impl-rejection rules. Two limits recorded in the RFC rather than closed: no local-aspect impls on records (blocked on #581, which affects every structural target) and no impl-based aspect satisfaction at all as a consequence.
 
 ## Summary
 
@@ -205,14 +205,14 @@ last-wins or first-wins rule — the map has no key for the collision to resolve
   > not.** `extend { w: i64 }: LocalAspect { … }` fails, and so do `extend (i64, i64):
   > LocalAspect` and `extend i64[]: LocalAspect`: RFC-0061's structural impl targets are
   > unimplemented for *every* structural type, not just records. Verified 2026-07-25 while
-  > reviewing #288 — all three produce the same error, so records inherit an existing gap
-  > rather than introducing one. Tracked as **#296**, which also covers the fact that the
+  > reviewing #576 — all three produce the same error, so records inherit an existing gap
+  > rather than introducing one. Tracked as **#581**, which also covers the fact that the
   > failure is an internal error rather than a diagnostic.
   >
   > **Consequence for records specifically:** this is the *only* impl-based capability §3
   > grants them, so as shipped a record can satisfy no impl-based aspect at all — not just
   > no stdlib one. The `Copy`/`Display` note in §2 describes the non-local half of that;
-  > this is the other half, and it closes when #296 does.
+  > this is the other half, and it closes when #581 does.
 - **Auto-derived aspects** — `Send` and `Sync` extend to records by the same
   field-composition rule already used for structs.
 

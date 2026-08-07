@@ -34,7 +34,7 @@ concern.
 
 ```metel
 AutoAlloc::scoped((@a) -> {
-    let node = @a Node { val: 1 };   // compiler allocates node however it sees fit
+    let node = @a Node { val = 1 };   // compiler allocates node however it sees fit
     let list = @a List::from([node]);
     process(&list);
 });   // compiler ensures all drop obligations are met before scope exits

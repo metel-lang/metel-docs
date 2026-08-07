@@ -48,11 +48,11 @@ let` initializers to be "constant expressions," a concept it never specified its
 it deferred that definition to RFC-0092, while RFC-0092 only carried the connection as
 a pending open question ("added 2026-07-11"). Neither RFC actually owned the
 restriction it depended on. Surfaced while deciding whether to implement Codeberg issue
-#235 (RFC-0083's tracking issue): implementing `pub let` as drafted would have meant
+#539 (RFC-0083's tracking issue): implementing `pub let` as drafted would have meant
 building a bespoke restricted evaluator now, then reconciling it against `comptime let`
 later once RFC-0092 lands. Resolved instead by folding RFC-0083 into RFC-0092 §0a:
 public value exports are `pub` applied to `comptime let`, not a parallel mechanism.
-Issue #235 closed unimplemented. RFC-0083 is now superseded
+Issue #539 closed unimplemented. RFC-0083 is now superseded
 (`5-superseded/rfc-0083-public-value-exports.md`); `public/reference/spec/modules.md`'s
 `pub let` section (added when RFC-0083 integrated) was reverted to its pre-integration
 wording ("public value exports are not supported in the current version"), since the
@@ -126,7 +126,7 @@ above it are.
 - **RFC-0125** *(draft, opened 2026-07-25)* — Variadic Generics — a type-parameter pack
   (`<..Ts>`) so one impl covers tuples of every arity: `extend<..Ts> (..Ts): Copy where all
   Ts: Copy;`. Supplies the design RFC-0061 §6 deferred as "no design exists", which
-  RFC-0096 §7 then inherited and #299 is now blocked on. **Bounds reuse RFC-0123's `all`
+  RFC-0096 §7 then inherited and #263 is now blocked on. **Bounds reuse RFC-0123's `all`
   quantifier** rather than inventing a second one — `all Ts: A` over an ordered pack is the
   same construct as `all R: A` over a row's fields, which makes RFC-0123 a likely dependency
   or a candidate for lifting the quantifier out. Proposes a **two-stage** design: packs plus
@@ -159,19 +159,19 @@ above it are.
   the three *receiver* forms and never names their absence; RFC-0114's `Construct` aspect
   and RFC-0100's call-shaped construction both give construction without giving a *named*
   alternative constructor.
-- **RFC-0126** *(implemented 2026-07-27, #317, split from RFC-0124)* — T[] as a Copy
+- **RFC-0126** *(implemented 2026-07-27, #593, split from RFC-0124)* — T[] as a Copy
   Borrowed View — extracts the one part of RFC-0124 that was already settled rather than
   leaving it waiting on RFC-0124's harder open questions. RFC-0054 (`4-implemented`) already
   declared `T[]` "the immutable/read-only array type"; this RFC takes that at face value:
   `T[]` is a non-owning, immutable, unconditionally-`Copy` view produced only by borrowing,
-  and array literals retype to `[T; N]`. **Opened because #290 and #291 were blocked on
-  exactly this question** — #291's move checker had no rule for `T[]` beyond "not `Copy`",
-  which is why six of #310's fixture-migration corpus were stuck on nothing but this.
+  and array literals retype to `[T; N]`. **Opened because #578 and #579 were blocked on
+  exactly this question** — #579's move checker had no rule for `T[]` beyond "not `Copy`",
+  which is why six of #267's fixture-migration corpus were stuck on nothing but this.
   Adversarial review (per PROCESS.md) checked both named attack vectors directly against
   the codebase — neither landed — and surfaced a third: literal retyping would break every
   corpus-wide call site passing an unannotated array to a `T[]`-parameterized function (92
   of them), unless `[T; N]` coerces to `T[]` implicitly. Already solved, live, by RFC-0053.
-  Implementation (#317) surfaced two more real findings beyond the RFC text itself: forcing
+  Implementation (#593) surfaced two more real findings beyond the RFC text itself: forcing
   index-assignment to actually validate exposed a pre-existing bug where generic-struct
   field assignment discarded its type arguments and anonymous records had no arm at all
   (both fixed); and `int_01_statistics.mtl`'s bubble sort needed a real algorithm change,
@@ -184,9 +184,9 @@ above it are.
   Arrays, Slices, and the Growable List — now covers only what RFC-0126 split off left open:
   whether a mutable slice exists and how it is spelled, the exact dependency on RFC-0067's
   lifetime anchors (a precondition for this RFC's own acceptance, independent of RFC-0126),
-  whether `[T; N]`'s `Copy` rule needs const generics to leave its hardcoded case (#299,
+  whether `[T; N]`'s `Copy` rule needs const generics to leave its hardcoded case (#263,
   orthogonal to `T[]`'s role), `Value::Array`'s evaluator representation, and release
-  sequencing against #291. None of these block RFC-0126 landing on its own.
+  sequencing against #579. None of these block RFC-0126 landing on its own.
 
 - **RFC-0123** *(draft, opened 2026-07-24)* — Field-Wise Row Constraints — a constraint
   applying an aspect to **every field of a row** rather than to the row's type
@@ -218,10 +218,10 @@ above it are.
   reversibility, since lexical→NLL accepts strictly more and needs no migration while the
   reverse breaks valid programs — plus observability and a specified `T0020` diagnostic
   format (08-01). **Its only structural blocker is discharged:** RFC-0071 §9b's standalone
-  place abstraction shipped in #291 (`src/place.rs`, crate root, analysis-neutral), so
+  place abstraction shipped in #579 (`src/place.rs`, crate root, analysis-neutral), so
   this is now a second analysis over an existing representation rather than a rebuild.
   §3 requires it ship opt-in behind `--borrow-check` and **not** default-on in the same
-  release as #310, to keep two corpus migrations out of one blast radius.
+  release as #267, to keep two corpus migrations out of one blast radius.
   **Reverted to `1-under-review` the same day.** Six gaps found immediately after
   acceptance, three blocking: the outlives rule — half the RFC's own stated scope — is
   named in its Summary and specified nowhere (`return &local;` is accepted today);
@@ -236,7 +236,7 @@ above it are.
   CFG (`move_check` is the precedent). NLL also dissolves the lexical blocker outright.
   §2c records Polonius as a named future option gated on Metel acquiring a CFG/MIR.
 
-- **RFC-0116** *(implemented in v0.12.0, was #288)* — Anonymous Record Types — the closed `{ x: f64 }` type-former,
+- **RFC-0116** *(implemented in v0.12.0, was #576)* — Anonymous Record Types — the closed `{ x: f64 }` type-former,
   `{ x = 1.0 }` values, `Handle.{ fd }` projection, structural identity, and where records
   are usable (no inherent impls, no non-local aspect impls, no custom `Drop`, not an
   allocator). Also carries RFC-0090 §6's declined "records as the universal foundation"
@@ -246,7 +246,7 @@ above it are.
   the closed 2^*N* subset lattice, no row variables and no unification. Depends on
   RFC-0116 and on **RFC-0071** (`3-integrated`, 0% implemented), which is why it is separate
   from RFC-0116 rather than bundled with it.
-- **RFC-0118** *(implemented in v0.12.0, was #289)* — Row Bounds — `<record T: { x: f64, .. }>` and `!{ token }`,
+- **RFC-0118** *(implemented in v0.12.0, was #577)* — Row Bounds — `<record T: { x: f64, .. }>` and `!{ token }`,
   replacing the `HasField`/`Lacks` family that never parsed. The trailing `..` is an
   anonymous row variable and is what makes a bound *open*; without it the bound is closed,
   a reading that previously could not be written at all. Explains why implicit structural
@@ -352,7 +352,7 @@ above it are.
   compiler-intrinsic list, not a declaration-level marker) and the shared
   structural-composition algorithm that RFC-0080 §3.2/§4.2 and RFC-0089 §2 each
   independently invoke as "the auto-impl pattern" without either owning it. Opened
-  2026-07-11 while implementing issue #238 (Aspect Impl Coherence pipeline), which
+  2026-07-11 while implementing issue #542 (Aspect Impl Coherence pipeline), which
   confirmed `AspectDecl` carries no such marker today. Fleshed out same day: §3
   covers generic types (an auto-impl on a generic struct/enum is an implicit
   RFC-0036 conditional impl, never evaluated eagerly); §4 corrects a plausible
@@ -435,7 +435,7 @@ number, a backwards RFC-0067a split direction).
   "designed against an absence" by its own header — and never re-examined in the nine days
   since that risk was recorded. RFC-0122 has since specified NLL liveness, per-field
   granularity, `T0020` diagnostics, and a stored-reference ban whose removal this RFC
-  triggers (#364), none checked against §1. "Unresolved questions: None" replaced with
+  triggers (#274), none checked against §1. "Unresolved questions: None" replaced with
   five real ones, load-bearing being whether §1's lexical "valid for exactly as long as
   `r` is in scope" survives NLL. Staleness fixed in the same pass: a `null` literal Metel
   has never had, a bare `mut` in prose, two retired `:` separators, and a self-staleness
@@ -445,7 +445,7 @@ number, a backwards RFC-0067a split direction).
   auto-deref. No allocator/borrow-checker dependency; already sequenced into Cluster A.
   Integrated into `public/reference/spec/types.md` and `expressions.md`; gained a new
   §3a (type-directed value-copy-out) resolving a gap found writing the worked examples.
-  Implemented in `metel-core` (issue #236); §3a amended the same day to state that
+  Implemented in `metel-core` (issue #540); §3a amended the same day to state that
   read-copy fires at `return`/`break`/tail-expression positions too (not just `let`/
   ascription) and that read-copy, write-through, and auto-deref all chain through
   multiple reference layers — both found only once the implementation's own regression
@@ -467,9 +467,28 @@ number, a backwards RFC-0067a split direction).
 
 The load-bearing accepted RFCs everything else cites. One open item as of 2026-07-11
 (RFC-0097, below) — a narrow gap found by scrutiny, not a design problem with the
-cluster itself. **Resolved 2026-07-13**: RFC-0097 integrated (issue #269 tracks
+cluster itself. **Resolved 2026-07-13**: RFC-0097 integrated (issue #555 tracks
 implementation).
 
+- **RFC-0129** *(draft, opened 2026-08-05)* — Aspect Method Generic Constraint
+  Conformance — defines the substitutability relation between an aspect method's generic
+  constraints and its implementation: an implementation may accept a wider domain but
+  cannot narrow it. Covers record kind, aspect and row bounds, and associated-type
+  equality bindings; open questions delimit the entailment engine rather than assuming
+  constraint spelling equality is semantic equality. Distinct from RFC-0036's
+  conditional-impl selection and RFC-0118's row-bound satisfaction.
+
+- **RFC-0130** *(draft, opened 2026-08-06)* — extends Aspect: Renaming `impl
+  Aspect` for Consistency with `extend` — renames the anonymous-type-parameter
+  (RFC-0035) and return-position (RFC-0037) `impl Aspect` keyword to `extends
+  Aspect`, closing the one spot RFC-0098's own Rust-tell sweep (`impl`→`extend`,
+  `pub`→`public`, `mut`→`var`) left untouched: the block form already reads
+  `extend Type: Aspect { ... }`, but the anonymous/opaque-type form still says
+  `impl Aspect`, spelling the same underlying claim two unrelated ways depending
+  on grammatical position. Pure lexical rename — RFC-0035/0037's desugaring,
+  independence, and opacity rules are unchanged, as is the T0022 restriction
+  (metel-core#240/#622, landed the same day) on where `impl Aspect` is legal at
+  all. Explicitly does not touch RFC-0038's still-reserved `dyn Aspect`.
 - **RFC-0008** — Aspect Objects — `dyn Aspect`, vtable dispatch.
 - **RFC-0061** *(implemented 2026-07-14, was integrated 2026-07-13)* — Structural
   Aspect Bounds — `T[]`/tuples/function-type bounds. Depends on RFC-0060 and
@@ -478,7 +497,7 @@ implementation).
   right after Aspect Implementation Coherence. Integration also surfaced three real
   groundwork bugs in the interpreter's structural-impl path (non-named impl-target
   crashes, array method-dispatch gating, and structural-target registration being
-  skipped entirely), all fixed as part of issue #245 rather than left implicit. The
+  skipped entirely), all fixed as part of issue #549 rather than left implicit. The
   initial integrated draft had carried array auto-impl propagation as §5, but that
   dependency has now been rehomed to RFC-0096, leaving RFC-0061 to own structural
   impl lookup/bounds and explicit `std::core` structural impls only.
@@ -494,7 +513,7 @@ implementation).
   RFC-0097 (now implemented) — every example in this RFC targets a
   genuinely named type. Worked
   example checks composition with RFC-0082's equality-constrained bounds (both are the
-  same `Bound` structure, so no new machinery needed). Implemented (issue #241):
+  same `Bound` structure, so no new machinery needed). Implemented (issue #545):
   registry/inference/construction bound-gated impl support, coherence disjointness
   detection (including syntactic negation, §3.1), use-site bound enforcement at every
   point the aspect is required. Independent review found and fixed a real gap the
@@ -507,7 +526,7 @@ implementation).
   `!Aspect` bounds — it does, at every level (inline, `where`-clause, and impl-level
   polarity). This resolves the "priority over blanket impls"/"blanket-impl-aware
   discharge" blockers noted in RFC-0060, RFC-0072, and RFC-0081's own entries below —
-  #244 (2026-07-13) landed that remaining work; see those RFCs' own entries.
+  #548 (2026-07-13) landed that remaining work; see those RFCs' own entries.
 - **RFC-0037** *(implemented 2026-07-13, was integrated 2026-07-13)* — Return-Position
   `impl Aspect` — opaque, monomorphised-per-function return types. Integrated into
   `public/reference/spec/declarations.md` right after the parameter-position `impl
@@ -515,7 +534,7 @@ implementation).
   Types): a function returning `impl Container` still resolves `Container::Item`
   correctly through the caller's method calls, since the opaque type is a real
   concrete type internally, erased only from the caller's naming surface. Implemented
-  (issue #240): per-quantified-var opaque metadata, linked/unlinked discrimination,
+  (issue #544): per-quantified-var opaque metadata, linked/unlinked discrimination,
   definition-time bound checking, and real opacity enforcement (T0018) checked
   incrementally per-constraint rather than once at the end of solving (see ADR-0044 —
   the end-of-solve version can't tell a legitimate `impl Aspect`-to-`impl Aspect`
@@ -529,8 +548,8 @@ implementation).
   `public/reference/spec/declarations.md` as a new section; also surfaced a real,
   unrelated docs bug while integrating (RFC-0033's recommended error code T0014 was
   already claimed by this RFC's own orphan-rule error, so RFC-0033 was corrected
-  rather than silently colliding). Implemented across issues #238, #243, #264, and
-  #244: orphan-rule enforcement, concrete and blanket-aware overlap detection,
+  rather than silently colliding). Implemented across issues #542, #547, #552, and
+  #548: orphan-rule enforcement, concrete and blanket-aware overlap detection,
   blanket-impl-aware closed-world negative-bound discharge, and negative-impl
   priority over blanket positives. RFC-0096 still owns the separate auto-impl
   mechanism itself, but that is no longer part of RFC-0060's unimplemented surface.
@@ -551,7 +570,7 @@ implementation).
   generic parameter" — it happened to return `None` for one by incidental
   name-resolution failure (a bare generic parameter name is never registered in
   `names.symbols`), not by a deliberate check, the same fragile-by-accident pattern
-  #241 and #245 each had to fix for their own target shapes. Landed the real check:
+  #545 and #549 each had to fix for their own target shapes. Landed the real check:
   `outermost_id` now takes the enclosing impl's own generic parameter names and
   explicitly returns `None` for a bare `Named(name, [])` matching one of them,
   before ever falling through to name resolution — same observable behavior, now
@@ -565,23 +584,23 @@ implementation).
 - **RFC-0072** *(implemented 2026-07-12, was integrated 2026-07-10)* — Negative Bounds
   — `T: !Aspect`. Integrated into `public/reference/spec/declarations.md`; its own
   stale bracket-channel allocator examples (`@[r] T`) fixed first. Implemented (issue
-  #243): enforcement at all four function-call-expression branches plus generic
+  #547): enforcement at all four function-call-expression branches plus generic
   struct/enum literal construction, by inverting the same lookup the positive-bound
-  check already uses (this also means negative impls, RFC-0081/#264, are correctly
+  check already uses (this also means negative impls, RFC-0081/#552, are correctly
   consulted for free). §2.3 Copy-implies-!Drop implemented as a narrow, name-literal
   override, per the RFC's own "do not generalize" wording. **Update 2026-07-13:**
-  that shared lookup was `impl_aspect_env_has` at the time #243 landed — since
-  corrected, while implementing RFC-0036/#241, to `type_satisfies_aspect`, which also
+  that shared lookup was `impl_aspect_env_has` at the time #547 landed — since
+  corrected, while implementing RFC-0036/#545, to `type_satisfies_aspect`, which also
   consults conditional impls (`impl_aspect_env_has` alone can't see those, so a
   negative bound against a conditionally-implementing type was being evaluated
   incorrectly until this fix). Blanket-impl-aware discharge (RFC-0060 §3's fuller
-  closed-world form) was blocked on RFC-0036/#241; that dependency has now landed,
-  unblocking it. **Update 2026-07-13 (later):** #244 landed the discharge/priority
-  logic itself — the `TODO(#241)` comments at each check site are resolved.
+  closed-world form) was blocked on RFC-0036/#545; that dependency has now landed,
+  unblocking it. **Update 2026-07-13 (later):** #548 landed the discharge/priority
+  logic itself — the `TODO(#545)` comments at each check site are resolved.
 - **RFC-0078** *(implemented 2026-07-12)* — Bottom Type `!` — subtyping, coercion, match
   exhaustiveness, inhabited-singleton coercion, `-> !` returns. Integrated into
   `public/reference/spec/types.md`; §4.2's stale pre-split allocator syntax fixed first.
-  Implemented in metel-core sprint/25 (issue #234): `!` surface syntax (grammar),
+  Implemented in metel-core sprint/25 (issue #538): `!` surface syntax (grammar),
   `panic(msg)` native, general uninhabited-variant exhaustiveness (subsuming
   `Result<T, !>` as the general rule's special case rather than a hardcoded one),
   inhabited-singleton coercion, and `-> !` divergence checking. §4.2 (allocator
@@ -589,25 +608,25 @@ implementation).
   not yet implemented.
 - **RFC-0081** *(implemented 2026-07-12, was integrated 2026-07-10)* — Negative
   Impls — `extend Type: !Aspect;`. Syntax, finality (conflict with a concrete
-  positive impl), and the orphan rule are implemented and tested (issue #264).
-  Negative-bound consultation (SS2.3) is now implemented too (issue #243,
+  positive impl), and the orphan rule are implemented and tested (issue #552).
+  Negative-bound consultation (SS2.3) is now implemented too (issue #547,
   RFC-0072/2026-07-12): `T: !Aspect` checking inverts the same
   `impl_aspect_env_has` lookup (since corrected to `type_satisfies_aspect`, see
   RFC-0072's entry above), which already excludes negative impls, so this
   composes correctly with no extra work. Priority over blanket impls (SS2.1) was
-  a property of RFC-0036 (issue #241) — that RFC is now implemented (2026-07-13),
+  a property of RFC-0036 (issue #545) — that RFC is now implemented (2026-07-13),
   and `register_aspect_impl` already refuses to register a negative impl as
-  positive, so this composes correctly. **Update 2026-07-13 (later):** #244 landed
+  positive, so this composes correctly. **Update 2026-07-13 (later):** #548 landed
   the dedicated priority check itself (a `neg_impl_env` registry table consulted by
   `type_satisfies_aspect` before either positive path) — a concrete negative impl now
   overrides a blanket positive impl for its exact instantiation, without disturbing
-  the existing negative-vs-concrete-positive conflict rule (§2.2/#264, confirmed by
+  the existing negative-vs-concrete-positive conflict rule (§2.2/#552, confirmed by
   a regression this fix initially introduced and then corrected).
 - **RFC-0082** *(implemented 2026-07-13, was integrated 2026-07-10)* — Associated
   Types. Integrated into `public/reference/spec/declarations.md`; stale
   `Region`/`@[r]` naming corrected to `Alloc`/`@a`, and §7 (amending retracted
   RFC-0069's `SubRegion`) marked historical-only rather than integrated. Implemented
-  (issue #242): §1/§1.1/§1.2 declaration + bound enforcement + bare-name sugar
+  (issue #546): §1/§1.1/§1.2 declaration + bound enforcement + bare-name sugar
   (in both directions — explicit `T::AssocType` and an aspect's own bare-name
   method signatures, for concrete impls and generic dispatch alike), §2 impl
   completeness (new error code T0017), §3/§3a real projection resolution with
@@ -619,7 +638,7 @@ implementation).
   initializers, a concept it never specified — deferred to RFC-0092, which only had it
   as an open question. Folded into RFC-0092 §0a instead of implementing as drafted; see
   the RFC-0083 fold note above. `modules.md`'s `pub let` section reverted to
-  pre-integration wording. Codeberg issue #235 (tracking) closed unimplemented.
+  pre-integration wording. Codeberg issue #539 (tracking) closed unimplemented.
 
 ## Linear closures / concurrency
 
@@ -647,12 +666,16 @@ implementation).
 - **RFC-0027** — C FFI.
 - **RFC-0033** — Field-Level Mutability — additive `let` field annotation.
 - **RFC-0038** — `impl Aspect` in Struct Fields / Existential Types.
-- **RFC-0107** *(implemented 2026-07-21 — issue #278)* — Unqualified Enum Variants in Match
+- **RFC-0128** *(draft, opened 2026-08-04)* — Exportable Overload Sets and
+  Shadow-versus-Extend Semantics — same-name module functions form one overload set;
+  exports/imports preserve whole sets; lexical bindings shadow whole sets; and `extend`
+  methods remain aspect dispatch rather than free-function overloads.
+- **RFC-0107** *(implemented 2026-07-21 — issue #559)* — Unqualified Enum Variants in Match
   Patterns — `Red` instead of `Colour::Red` in a match arm, resolved type-directed
   against the scrutinee's known enum (not a lexical-scope import, so no cross-enum
   collision risk). Generalizes the existing `Perhaps::None`-only special case
   (`Pattern::None`) into a real mechanism; answers RFC-0101's Unresolved Question 1.
-- **RFC-0108** *(implemented 2026-07-21 — issue #278)* — Reference-Transparent Match Scrutinees —
+- **RFC-0108** *(implemented 2026-07-21 — issue #559)* — Reference-Transparent Match Scrutinees —
   matching a `&T`/`&var T` value directly (`match c { Colour::Red => .., .. }` for
   `c: &Colour`) instead of the current `T0001 cannot unify &Colour with Colour`, with
   no workaround available today (`*expr` doesn't parse — Metel has no general deref
@@ -660,7 +683,7 @@ implementation).
   principle to match scrutinees, the one place it's currently missing — `self` inside
   method bodies and `for`-loop element bindings already get this transparency via their
   own separate, narrower mechanisms. Sibling to RFC-0107 (§2 there), not overlapping.
-- **RFC-0111** *(implemented 2026-07-21 — issue #284)* — Unqualified Enum Variants in Expression
+- **RFC-0111** *(implemented 2026-07-21 — issue #572)* — Unqualified Enum Variants in Expression
   Position — the expression-position half of RFC-0107, and the follow-up RFC-0107 §5
   explicitly left open. Bare `Red` / `Some { value: 5 }` / `None` resolved type-directed
   against the *expected* type (`let c: Colour = Red;`, return position, monomorphic call
@@ -672,7 +695,7 @@ implementation).
   request came from actually points at scope import (`use Colour::*`), weighed and
   declined in §2.1 for consistency with RFC-0107's already-shipped choice. Real work is
   in Pass 1, which has no expected-type parameter at all.
-- **RFC-0110** *(implemented 2026-07-21 — issue #278)* —
+- **RFC-0110** *(implemented 2026-07-21 — issue #559)* —
   Explicit Dereference Operator — **the Go half** of what was one RFC. Unary `*expr` for
   reads and for writing through (`*p = v`); auto-deref kept at *selectors only* (field
   access, field assign, method dispatch); bare assignment to a reference-typed identifier
@@ -695,7 +718,7 @@ implementation).
   where RFC-0110's "what does `&i64 == &i64` do?" open question actually led: nowhere near
   auto-deref — `==` has no operand check at all, so it typechecks and then aborts at runtime
   for references, structs, enums (including `Perhaps`), arrays, tuples and unit. Filed as
-  issue #279; aspect-dispatch design fix at #263 / RFC-0062.
+  issue #561; aspect-dispatch design fix at #259 / RFC-0062.
 - **RFC-0098** *(implemented)* — Surface Keyword Renames — `extend Type` /
   `extend Type: Aspect` (reordered target-first, Swift precedent — not `impl X with Y`
   as first drafted), `pub` → `public`, `mut` → `var` (bindings, reference types, and
@@ -735,7 +758,7 @@ implementation).
   rather than kept as a second spelling, following RFC-0042's precedent — **though that
   case is weaker since the split**, which moved the invariant argument to RFC-0115.
   Opened 2026-07-13, accepted 2026-07-14.
-- **RFC-0115** *(implemented 2026-07-24 in `develop`, ships v0.12.0, #287)* — Field Initializer Separator — `field_init` changes from
+- **RFC-0115** *(implemented 2026-07-24 in `develop`, ships v0.12.0, #575)* — Field Initializer Separator — `field_init` changes from
   `ident ":" expr` to `ident "=" expr`, so `Point { x = 1.0, y = 2.0 }`. **Split out of
   RFC-0100 on 2026-07-24**, which had bundled this with call-shaped construction; that
   made a settled, dependency-free question hostage to a contested one, with "the

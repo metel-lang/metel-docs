@@ -17,7 +17,7 @@ impl_status: implemented
 
 > **Status — implemented (2026-07-21).** Pass 1 defers a bare identifier only when `has_variant_named` says some enum declares it, never using that index to pick an enum; Pass 2 resolves against `expected_ty` at two hooks, both placed after the binding lookup and the struct-literal branch so §1.2's binding-wins and the integrate-stage unit-struct-wins rule hold. `Literal::None` and `none_lit` are gone entirely — zero occurrences remain — and `None`/`Some`/`Ok`/`Err` all route through the general mechanism. 797 tests green, including the 51 existing fixtures using `None`. Fixtures: `evaluator/enums/41_unqualified_variant_constructors.mtl` plus negatives for no-expected-type and unit-struct-wins.
 
-> **Known limitation, inherited not introduced (2026-07-21).** A bare variant inside an *uncalled* closure body is silently accepted: `let f = () -> { Red };` compiles. This is not specific to this RFC — `let f = () -> { [] };` behaves identically and predates it. An uncalled generic closure's body is never constructed, so no Pass 2 resolution runs over it and any deferred-resolution construct escapes. Filed as metel-core#285. §3.1's goal of preserving the `T0003` typo diagnostic is met everywhere else: a name no enum declares still errors in Pass 1, and a bare variant in any reachable position still errors.
+> **Known limitation, inherited not introduced (2026-07-21).** A bare variant inside an *uncalled* closure body is silently accepted: `let f = () -> { Red };` compiles. This is not specific to this RFC — `let f = () -> { [] };` behaves identically and predates it. An uncalled generic closure's body is never constructed, so no Pass 2 resolution runs over it and any deferred-resolution construct escapes. Filed as metel-core#573. §3.1's goal of preserving the `T0003` typo diagnostic is met everywhere else: a name no enum declares still errors in Pass 1, and a bare variant in any reachable position still errors.
 
 ## Summary
 
@@ -338,7 +338,7 @@ implementation.
 
 One case has appeared since this RFC was drafted and is worth stating, though it needs no
 decision: **an inference-derived expected type** (RFC-0112 §3's category 6, which came into
-existence with metel-core#281 — a closure body is now constructed against its own inferred
+existence with metel-core#565 — a closure body is now constructed against its own inferred
 return type). Inside `let f = () -> { Red };` there is no authored type for `Red` to resolve
 against, so §1.4 applies unchanged and the bare form simply does not resolve. Consistent
 with the rest of the design; recorded so it is not rediscovered as a surprise.

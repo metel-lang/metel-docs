@@ -381,7 +381,7 @@ fun main() -> i64 {
 
 > **Availability:** Since v0.10.0.
 
-References provide explicit aliasing for non-linear values.
+References provide explicit aliasing.
 
 ```metel
 fun main() -> i64 {

@@ -20,8 +20,8 @@ fun find(arr: Int[], target: Int) -> Perhaps<Int> {
 }
 
 fun divide(a: Float, b: Float) -> Result<Float, String> {
-    return Result::Err { error: "division by zero" };   // E0002 — cannot infer type
-    return Result::Ok { value: a / b };                 // fine — T resolved from field
+    return Result::Err { error = "division by zero" };   // E0002 — cannot infer type
+    return Result::Ok { value = a / b };                 // fine — T resolved from field
 }
 ```
 

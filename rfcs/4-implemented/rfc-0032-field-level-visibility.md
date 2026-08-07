@@ -95,7 +95,7 @@ pub struct Token {
 }
 
 pub fun Token::new(kind: TokenKind, span: Span) -> Token {
-    Token { kind, span, offset: span.start }
+    Token { kind, span, offset = span.start }
 }
 ```
 
@@ -248,7 +248,7 @@ The earliest sensible target is the sprint that first adds library types with pr
 
 - Language spec: `docs/public/spec/modules.md` — Visibility section
 - Implementation report: `metel-interpreter/docs/module-system-report.md` §7.4 (Field-level visibility)
-- GitHub issue: #158
+- GitHub issue: #468
 - Rust reference: [Visibility and Privacy](https://doc.rust-lang.org/reference/visibility-and-privacy.html)
 - Swift: [Access Control](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/accesscontrol/)
 - OCaml: [Private Types](https://ocaml.org/manual/5.1/privatetypes.html)

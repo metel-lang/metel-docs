@@ -61,7 +61,7 @@ registers it as that aspect's deriver:
 @derive(Clone)
 comptime fun derive_clone(comptime T: type) {
     let fields = typeinfo(T).row;
-    emit impl Clone for T { ... }
+    emit extend T: Clone { ... }
 }
 ```
 
@@ -89,7 +89,7 @@ module, with no special compiler support beyond the registration lookup itself.
 @derive(Clone)
 comptime fun derive_clone(comptime T: type) {
     let fields = typeinfo(T).row;   // T's row, reified as a comptime value
-    emit impl Clone for T {
+    emit extend T: Clone {
         fun clone(self: &T) -> T {
             // built field-by-field from `fields` by ordinary comptime code —
             // a loop generating a constructor expression, not a macro template

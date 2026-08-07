@@ -94,10 +94,10 @@ five distinct kinds of thing, not one:
    (1315, 1324, 1342). Machinery, not a statement of anyone's intent.
 5. **Inherited** — block tail (1030), array elements, `if`/`match` arms: these carry
    whatever the parent had.
-6. **Inference-derived** *(added 2026-07-21, after metel-core#281)* — a closure body is now
+6. **Inference-derived** *(added 2026-07-21, after metel-core#565)* — a closure body is now
    constructed against the closure's own return type, and for an *unannotated* closure that
    type comes from pass 1's inference rather than from anything an author wrote. Before
-   #281 this supplier did not exist: `body_expected` was `None` whenever the closure had no
+   #565 this supplier did not exist: `body_expected` was `None` whenever the closure had no
    `-> T`, because pass 2 had no access to the inferred type at all.
 
    This is a genuinely new kind, not a re-labelling of category 1. The type is real and
@@ -328,9 +328,9 @@ unification while same-type-on-both-sides reaches an evaluator whose `==` arms c
 the numeric scalars, `Boolean`, `Str` and `Char`. This is not reference-specific: structs,
 enums (including `Perhaps`), arrays, tuples and unit all behave the same way.
 
-**Filed as issue #279**, with the design fix (routing `==` through the `Eq` aspect that
+**Filed as issue #561**, with the design fix (routing `==` through the `Eq` aspect that
 already exists at `stdlib/core.mtl:194` and already works via `.eq()` method dispatch)
-tracked separately at #263 / RFC-0062. Neither is this RFC's business, and neither is
+tracked separately at #259 / RFC-0062. Neither is this RFC's business, and neither is
 RFC-0110's — auto-deref has nothing to do with it, and the bug predates both. Recorded here
 only so the trail from RFC-0110's open question to its answer is not lost.
 
@@ -370,14 +370,14 @@ only so the trail from RFC-0110's open question to its answer is not lost.
    start firing in arms. Not proposed here; flagged so it is a decision rather than a
    surprise.
 3. ~~**`Eq`/`Ne` on references.**~~ Answered and moved out — see §4.2. It is a general
-   `==` typechecking hole, not a reference or auto-deref question; issue #279, with the
-   aspect-dispatch design fix at #263 / RFC-0062.
+   `==` typechecking hole, not a reference or auto-deref question; issue #561, with the
+   aspect-dispatch design fix at #259 / RFC-0062.
 4. ~~**The solve-order dependency — fix it, or write it into the rule?**~~ **Resolved
    2026-07-21: fixed.** See §1.0. The peel test now runs against the substituted type, so
    §1's rule is positional in fact and not only on paper.
 5. **Does read-copy fire on the inference-derived expected type (category 6)?** The safe
    default, consistent with the rest of §1, is no — it is not authored by anyone. But this
-   category only came into existence with metel-core#281 and has had no design attention.
+   category only came into existence with metel-core#565 and has had no design attention.
    §1's rule as written already excludes it (it fires *iff* category 1), so the answer is
    "no" by construction; what is unresolved is whether that is the intended answer or an
    accident of how the rule was phrased before the category existed.

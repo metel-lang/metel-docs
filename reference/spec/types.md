@@ -218,11 +218,14 @@ owner:
   user code, so teardown logic belongs to nominal types only.
 
 > **Not available in v0.12.0: implementing a local aspect for a record.** `extend { w: i64 }:
-> MyAspect { … }` does not work. This is not specific to records — `extend` on a tuple or an
-> array target fails the same way; implementations for structural types are not built yet.
-> Until they are, **a record satisfies no aspect that requires an implementation**, so a
-> record cannot be printed, compared, or passed where any such bound is required.
-> Auto-derived aspects are unaffected. Tracked as issue #296.
+> MyAspect { … }` does not work. This is not specific to records — `extend` on a tuple
+> target fails the same way; implementations for these two structural types are not built
+> yet. **Arrays are the exception:** `extend<T> T[]: MyAspect { … }` is supported, per the
+> orphan-rule carve-out for structural type constructors — see
+> [Declarations — Structural Aspect Bounds](declarations.md#structural-aspect-bounds).
+> Until a record or tuple target is supported, **a record satisfies no aspect that requires
+> an implementation**, so a record cannot be printed, compared, or passed where any such
+> bound is required. Auto-derived aspects are unaffected. Tracked as issue #581.
 
 ### Projection
 
@@ -318,7 +321,7 @@ See the note under "Arrays" above — this split is not considered final.
 
 > **Availability:** Since v0.10.0.
 
-Reference types provide explicit aliasing for non-linear values.
+Reference types provide explicit aliasing.
 
 ```metel
 fun main() -> i64 {
@@ -353,8 +356,6 @@ access — field reads/writes, indexing, method dispatch, reading a plain value 
 through auto-deref and type-directed copy; an explicit dereference operator `*p` is also
 available (v0.11.0) for reading through a reference and for writing through a
 `&var T` (`*p = v`). See [Expressions — References](expressions.md#references).
-
-References are only for non-linear aliasing. They cannot target linear values.
 
 `&var` accepts arbitrary addressable lvalue paths — struct fields, tuple elements, array elements, and chains thereof. Writes through the resulting `&var T` propagate back to the original storage location:
 
@@ -660,36 +661,27 @@ magnitude({ x = 3.0, y = 4.0 });   // a record — satisfies the bound
 magnitude(some_point);             // a struct — does not
 ```
 
-To give a nominal type row behaviour, **declare it as a record** — that is the primary
-route, not conversion:
-
-```metel
-record Point { x: f64, y: f64 }    // satisfies row bounds directly
-struct Point { x: f64, y: f64 }    // does not
-```
-
-Converting an existing struct (`some_point.to_record()`) is the escape hatch for types you
-do not control, not the ordinary path.
+Nominal structs do not satisfy row bounds. **Named records are planned, not implemented**;
+they would provide a nominal record kind. See [RFC-0120: Named Records](../../rfcs/0-draft/rfc-0120-named-records.md).
 
 ### Why row capability is opt-in
 
-A nominal type's API is what it **declares**. A record's API is what it **contains**.
+A nominal type's API is what it **declares**. An anonymous record's API is what it
+**contains**.
 
 Once a type satisfies row bounds, its field names and types are part of its public interface,
 whether the author intended that or not. Renaming a field breaks every caller who wrote a
 bound mentioning it; adding one can make the type accidentally satisfy a bound its author
 never heard of. On a `struct`, a field rename is an internal change.
 
-That is why structural capability is opt-in rather than automatic, and why a `struct` is not
-simply a less capable `record`. The two trade against each other:
+That is why structural capability is opt-in rather than automatic:
 
 | | encapsulation | structural flexibility |
 |---|---|---|
 | `struct` | layout is private; the API is what you declare | none |
-| `record X` | layout **is** the API | full |
 
-Most types want the first. A type whose *shape* is genuinely the contract — a coordinate
-pair, a configuration fragment — wants the second, and says so by declaring `record`.
+Most types want the first. A value whose *shape* is genuinely the contract — a coordinate
+pair or a configuration fragment — can use an anonymous record.
 
 ### What satisfies which bound
 
@@ -702,13 +694,12 @@ by choosing the `record` kind. Nothing is implicit in either direction.
 | `struct` | yes, with an impl | yes, with an impl | **no** |
 | `enum` | yes, with an impl | yes, with an impl | **no** — sums, not products |
 | anonymous record | **no** — see below | yes, with an impl | yes |
-| `record X` (named) | yes, with an impl | yes, with an impl | yes |
 
 An anonymous record has no owning module, so the orphan rule permits an implementation only
 for an aspect local to the implementing module. Every standard-library aspect is non-local,
 which means no anonymous record is `Display` and `println("${r}")` does not work on one.
 Auto-derived aspects are unaffected — `Send` and `Sync` are computed from field composition
-rather than declared. A named record has an owning module and does not have this limit.
+rather than declared.
 
 ### Implementing an aspect for a record
 

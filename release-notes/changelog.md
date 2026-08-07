@@ -4,6 +4,19 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.12.1
+
+**In progress on `develop` — not yet released.**
+
+**Documentation:**
+- Corrected the public reference to distinguish implemented anonymous records and
+  references from planned named records and linear values.
+
+**Aspect implementations:**
+- An aspect implementation must now contain exactly the methods its aspect declares;
+  extra type-specific methods belong in an inherent `extend` block. Missing required
+  aspect methods now report the aspect-bound error code instead of undefined-name.
+
 ## v0.12.0
 
 **Released 2026-08-03.** The spec's `Since v0.12.0` / `Changed in v0.12.0` markers

@@ -19,7 +19,7 @@ impl_status: implemented
 
 > **Status — accepted (2026-07-21).** Go model settled: explicit unary * for reads and writes, auto-deref at selectors only, bare assignment rebinds (unlocking repoint). Read-side extensions live in RFC-0112 and are not a dependency. Index-path write-through ships here as an addition; repointing does not wait for RFC-0071. Remaining open questions (&*p borrow interaction, redundant-deref lint) are both explicitly non-blocking.
 
-> **Status — integrated (2026-07-21).** Merged into expressions.md (Dereference) + types.md: explicit * for reads and writes, auto-deref at selectors only, bare assignment rebinds, field and index write-through implicit. Worked examples cross-checked against RFC-0107/0108/0112/0045/0044; RFC-0045 gave the index write-through correction, RFC-0044 surfaced metel-core#280.
+> **Status — integrated (2026-07-21).** Merged into expressions.md (Dereference) + types.md: explicit * for reads and writes, auto-deref at selectors only, bare assignment rebinds, field and index write-through implicit. Worked examples cross-checked against RFC-0107/0108/0112/0045/0044; RFC-0045 gave the index write-through correction, RFC-0044 surfaced metel-core#563.
 
 > **Status — implemented (2026-07-21).** `*` needed no typechecker or evaluator change for reads — `UnaryOp::Deref` was already fully handled and merely unreachable from surface syntax; writes got `AssignTarget::Deref` lowering to the existing `TypedPlace::Deref`. Migration touched 13 fixtures, not the 3 Migration predicted (it deferred the sweep to implementation time); all mechanical except the two chain fixtures, where one-star-per-layer is a real semantic change. `08_write_through_reference_chain` was rewritten to cover repointing through a chain, which the old peel-every-layer rule made impossible. Dead `write_through_assigns` plumbing removed. 773 tests green.
 
@@ -506,10 +506,10 @@ for.
 absorbed.** §6 says `*p` is a new addressable place and `&*p` is a legal reborrow. But
 address-of a non-lvalue currently aborts with `[I0001] internal error` rather than a
 diagnostic, and there is no static addressability check anywhere in the typechecker — so
-`&*p` failing would fail *badly*. Filed as metel-core#280 with the finding that the check is
+`&*p` failing would fail *badly*. Filed as metel-core#563 with the finding that the check is
 static-determinable (the evaluator decides purely on typed-AST shape). Not a blocker for
 this RFC — `*p` for a reference-typed `p` is always addressable — but §5's write side should
-land after #280, not before, so that a malformed `*expr = v` produces a real error.
+land after #563, not before, so that a malformed `*expr = v` produces a real error.
 
 **Not cross-checked, deliberately:** RFC-0080's `Deref`/`DerefMut` aspects (under review).
 §8 scopes user-overloadable deref out entirely, and §8's forward-compatibility note already

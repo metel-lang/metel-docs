@@ -45,9 +45,9 @@ as `[T; N]`). What that RFC left open, and what this one is now scoped to:
 |---|---|
 | Is there a mutable slice, and how is it spelled? | open — §Open Questions 1 |
 | Exact dependency on RFC-0067's lifetime anchors | open — §Open Questions 2 |
-| Does `[T; N]: Copy` need const generics to leave the typechecker's hardcoded case (#299)? | open — §Open Questions 3 |
+| Does `[T; N]: Copy` need const generics to leave the typechecker's hardcoded case (#263)? | open — §Open Questions 3 |
 | `Value::Array`'s evaluator representation | open — §Open Questions 4 |
-| Release sequencing against #291 and #310 | open — §Open Questions 5 |
+| Release sequencing against #579 and #267 | open — §Open Questions 5 |
 | Can `List<T>` ever be built from `[T; N]`/`T[]` alone, or is native backing structurally permanent? | open, deliberately unresolved here — §Open Questions 6 |
 
 ---
@@ -107,15 +107,15 @@ allocation, never the batch/geometric-growth allocation this table shows every c
 3. **Does `[T; N]` need const-generic `N`?** Today only literal arities parse — measured
    2026-07-25, `extend<T: Copy> [T; 2]: Copy;` works and `[T; N]` does not. Without const
    generics, "fixed arrays are `Copy` when their elements are" cannot be written in stdlib
-   and stays hardcoded (#299), the same situation #296 and RFC-0061 describe for structural
+   and stays hardcoded (#263), the same situation #581 and RFC-0061 describe for structural
    impls. Unaffected by RFC-0126, which changes `T[]`'s role, not `[T; N]`'s.
 4. **Is `Value::Array`'s `Rc<RefCell<Vec>>` representation retained?** A borrowed slice needs
    no refcounting. Keeping it may simplify the tree-walking evaluator, at the cost of
    representing something the type system would no longer admit once RFC-0126 lands.
-5. **Which release, and in what order against #291/#310?** RFC-0126's migration argues for
-   landing early (it unblocks six of #310's fixtures directly); the dependency on RFC-0067
+5. **Which release, and in what order against #579/#267?** RFC-0126's migration argues for
+   landing early (it unblocks six of #267's fixtures directly); the dependency on RFC-0067
    (Open Question 2 above) argues for later, at least for a mutable-slice variant. The
-   sequencing decision that matters is against **#291**, since move checking is what would
+   sequencing decision that matters is against **#579**, since move checking is what would
    otherwise bake in the pre-RFC-0126 model permanently.
 6. **Can `List<T>` ever be implemented in Metel source from `[T; N]` and `T[]` alone, or
    does — and will — it always require a native primitive?** Not answerable today, and not
@@ -170,7 +170,7 @@ allocation, never the batch/geometric-growth allocation this table shows every c
 
 ## References
 
-- **RFC-0126 (T[] as a Copy Borrowed View), `4-implemented` (#317)** — split from this RFC;
+- **RFC-0126 (T[] as a Copy Borrowed View), `4-implemented` (#593)** — split from this RFC;
   the role assignment, prior art, and migration-cost estimate live there. Its implementation
   is concrete evidence for this RFC's own Open Question 1 below: `int_01_statistics.mtl`'s
   bubble sort needed a real algorithm rewrite, not just a retype, because no mutable-slice
@@ -194,8 +194,8 @@ allocation, never the batch/geometric-growth allocation this table shows every c
   layer exists for custom allocators at all). Cited here only as the nearest existing
   design a batch/buffer-allocation primitive would need to extend — see Open
   Question 6(c).
-- Issues #291 (sequencing, Open Question 5), #296 (structural impls, related to Open
-  Question 3 via the `[T; N]` blanket), #299 (`[T; N]`'s hardcoded `Copy` rule, Open
+- Issues #579 (sequencing, Open Question 5), #581 (structural impls, related to Open
+  Question 3 via the `[T; N]` blanket), #263 (`[T; N]`'s hardcoded `Copy` rule, Open
   Question 3).
 
 ---

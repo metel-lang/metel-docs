@@ -13,11 +13,11 @@ impl_status: implemented
 > structural types — arrays (`T[]`), tuples, and function types — and how `std::core`
 > provides blanket impls for structural type constructors.
 
-> **Status — integrated (2026-07-13).** Integrated ahead of implementing issue #245. Confirmed no error-code collision (T0012 reuse, consistent with RFC-0036's precedent). Confirmed via direct source testing that #233/#241 did NOT leave structural impls in a safe not-yet-implemented state as this RFC's dependents assumed -- three independent hard-crash/skip bugs block any structural impl today (inference.rs's unconditional internal error for any non-Named impl target, a hardcoded array-method dispatch gate, and registry.rs silently skipping structural targets during registration) -- flagged as groundwork issue #245 must fix first, not a gap in this RFC's own content. A first integration draft also carried array auto-impl propagation as §5, but that was later rehomed to RFC-0096 so this RFC only owns structural impl lookup/bounds and the explicit std::core structural impl surface.
+> **Status — integrated (2026-07-13).** Integrated ahead of implementing issue #549. Confirmed no error-code collision (T0012 reuse, consistent with RFC-0036's precedent). Confirmed via direct source testing that #537/#545 did NOT leave structural impls in a safe not-yet-implemented state as this RFC's dependents assumed -- three independent hard-crash/skip bugs block any structural impl today (inference.rs's unconditional internal error for any non-Named impl target, a hardcoded array-method dispatch gate, and registry.rs silently skipping structural targets during registration) -- flagged as groundwork issue #549 must fix first, not a gap in this RFC's own content. A first integration draft also carried array auto-impl propagation as §5, but that was later rehomed to RFC-0096 so this RFC only owns structural impl lookup/bounds and the explicit std::core structural impl surface.
 
-> **Status — implemented (2026-07-14).** Issue #245 landed the structural impl machinery this RFC depends on. The earlier array auto-impl propagation subsection was rehomed to RFC-0096, so no remaining unimplemented dependency stays inside RFC-0061's own scope.
+> **Status — implemented (2026-07-14).** Issue #549 landed the structural impl machinery this RFC depends on. The earlier array auto-impl propagation subsection was rehomed to RFC-0096, so no remaining unimplemented dependency stays inside RFC-0061's own scope.
 
-> **Status — qualified (2026-08-01, metel-core#296 and #353).** Of the three structural
+> **Status — qualified (2026-08-01, metel-core#581 and #239).** Of the three structural
 > target kinds this RFC grants, **one is implemented**: `extend<T> T[]: Display { … }`
 > registers via `array_target_generic_name` and dispatches. Everything else is accepted by
 > the parser and then invisible to *both* method dispatch and bound satisfaction — a
@@ -27,11 +27,11 @@ impl_status: implemented
 >
 > Rejected rather than accepted because a block whose methods can never be found is the
 > "compiles and does nothing" failure RFC-0071 §9c exists to prevent, and the same
-> judgement was applied to inert `Drop` impls in metel-core#345. It costs nothing: nobody
+> judgement was applied to inert `Drop` impls in metel-core#601. It costs nothing: nobody
 > can depend on the current behaviour, because the current behaviour is that the impl has
 > no effect.
 >
-> Tuple and record dispatch is metel-core#353, deferred to v0.13.0. RFC-0116 §3's
+> Tuple and record dispatch is metel-core#239, deferred to v0.13.0. RFC-0116 §3's
 > local-aspect-impl-on-a-record bullet stays aspirational until it lands.
 
 ## Summary
@@ -227,7 +227,7 @@ types without a declaration at the user level:
 
 ```metel
 // auto-provided by the compiler for every function pointer type
-impl Callable<A, B> for fun(A) -> B {
+extend fun(A) -> B: Callable<A, B> {
     fun call(self: &fun(A) -> B, arg: A) -> B { (*self)(arg) }
 }
 ```

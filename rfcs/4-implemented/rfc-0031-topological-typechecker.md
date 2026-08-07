@@ -175,7 +175,7 @@ The typechecker looks up `resolved` for name resolution and uses `original.join(
 
 ### Type-checking loop
 
-`check_graph` takes a `StdPrelude` parameter (#188) which seeds `GlobalExports` with `std::` and `core` schemes before the per-module loop begins. All other modules have been loaded by the file loader, which errors on any missing file (#186). Together these two invariants guarantee that every import in every `LoadedModule` has a corresponding `GlobalExports` entry by the time scope construction starts. A missing entry at that point is an internal error, not a user error.
+`check_graph` takes a `StdPrelude` parameter (#497) which seeds `GlobalExports` with `std::` and `core` schemes before the per-module loop begins. All other modules have been loaded by the file loader, which errors on any missing file (#495). Together these two invariants guarantee that every import in every `LoadedModule` has a corresponding `GlobalExports` entry by the time scope construction starts. A missing entry at that point is an internal error, not a user error.
 
 ### GlobalExports structure
 
@@ -224,7 +224,7 @@ Each module produces a `ModuleExports` bundle accumulated into `GlobalExports`. 
 
 When a name is absent from `pub_schemes`, the typechecker looks it up in the source module's `program.decls` (available in the `NormalizedModuleGraph` already in scope) to distinguish T0009 from T0003. This requires no extra data in `ModuleExports` and the lookup cost is O(declarations) on error paths only.
 
-Before inference runs, all `pub`-marked declarations in M are validated to have explicit type annotations (#187, error code `T0010`). This ensures exported schemes are fully concrete and consumable by downstream modules without cross-module type inference.
+Before inference runs, all `pub`-marked declarations in M are validated to have explicit type annotations (#496, error code `T0010`). This ensures exported schemes are fully concrete and consumable by downstream modules without cross-module type inference.
 
 ### Private-item error: `T0009`
 
@@ -250,48 +250,48 @@ note: use an explicit import to disambiguate: `import parser::Token`
 
 ## Migration Path
 
-1. Implement `check_graph` (returns `TypedModuleGraph`) with `StdPrelude` parameter; define `TypedModule`/`TypedModuleGraph` types; add topological order `debug_assert!` to `load_root` (Issue #172, #188).
-2. Implement `evaluate_graph` alongside the existing `evaluate` (Issue #183).
-3. Make missing module files a hard load error; `std::` remains loader-transparent (Issue #186).
-4. Wire `ResolvedNames` from the `ModuleGraph` into each module's inference scope (Issue #173).
-5. Implement the path normalization pass `src/path_normalizer.rs` (Issue #185).
-6. Enforce `pub_surface` in glob and named imports; introduce `T0009` (Issues #174, #176).
-7. Require explicit type annotations on `pub` declarations; introduce `T0010` (Issue #187).
-8. Add alias resolution (Issue #175).
-9. Add conflict detection (Issue #177).
-10. Add re-export propagation with visibility constraint — only `pub` names in source may be re-exported (Issue #178).
-11. Migrate CLI binary to new pipeline (Issue #184).
-12. Remove the flat-merge `load_program`, `check(Program)`, `evaluate(TypedProgram)`, and all ADR-0019/ADR-0020 fallback code (Issue #179).
-13. Update spec and changelog; mark RFC-0030 incorporated (Issue #180).
-14. Per-module runtime context in evaluator — deferred to v0.7.0 (Issue #189).
+1. Implement `check_graph` (returns `TypedModuleGraph`) with `StdPrelude` parameter; define `TypedModule`/`TypedModuleGraph` types; add topological order `debug_assert!` to `load_root` (Issue #481, #497).
+2. Implement `evaluate_graph` alongside the existing `evaluate` (Issue #492).
+3. Make missing module files a hard load error; `std::` remains loader-transparent (Issue #495).
+4. Wire `ResolvedNames` from the `ModuleGraph` into each module's inference scope (Issue #482).
+5. Implement the path normalization pass `src/path_normalizer.rs` (Issue #494).
+6. Enforce `pub_surface` in glob and named imports; introduce `T0009` (Issues #483, #485).
+7. Require explicit type annotations on `pub` declarations; introduce `T0010` (Issue #496).
+8. Add alias resolution (Issue #484).
+9. Add conflict detection (Issue #486).
+10. Add re-export propagation with visibility constraint — only `pub` names in source may be re-exported (Issue #487).
+11. Migrate CLI binary to new pipeline (Issue #493).
+12. Remove the flat-merge `load_program`, `check(Program)`, `evaluate(TypedProgram)`, and all ADR-0019/ADR-0020 fallback code (Issue #488).
+13. Update spec and changelog; mark RFC-0030 incorporated (Issue #489).
+14. Per-module runtime context in evaluator — deferred to v0.7.0 (Issue #498).
 
 ## Resolved Questions
 
-1. **Output shape:** `check_graph` returns `TypedModuleGraph`. The evaluator is updated in the same sprint. The flat `TypedProgram` path is deleted when the migration is complete (Issue #179).
+1. **Output shape:** `check_graph` returns `TypedModuleGraph`. The evaluator is updated in the same sprint. The flat `TypedProgram` path is deleted when the migration is complete (Issue #488).
 
 2. **Private-item error code:** New code `T0009` — "name is private in module X". Using `T0003` ("undefined name") would be misleading since the name is known to the typechecker.
 
-3. **Qualified path expressions in code:** Handled by the path normalization pass (#185), not by the typechecker. Qualified `Expr::Path` nodes are replaced with `Expr::ResolvedPath { resolved, original }` — `resolved` is the bare name used for lookup, `original` is the full qualified form used in error messages. This is explicit in the AST type rather than relying on span text, which would be fragile for inferred-type error messages where no span exists for the type itself.
+3. **Qualified path expressions in code:** Handled by the path normalization pass (#494), not by the typechecker. Qualified `Expr::Path` nodes are replaced with `Expr::ResolvedPath { resolved, original }` — `resolved` is the bare name used for lookup, `original` is the full qualified form used in error messages. This is explicit in the AST type rather than relying on span text, which would be fragile for inferred-type error messages where no span exists for the type itself.
 
-4. **Silent-skip for unresolvable imports:** Removed. The loader (#186) errors on missing files; `std::` modules are pre-loaded by the typechecker. There is no legitimate case where an import silently produces nothing — every import either resolves or is an error.
+4. **Silent-skip for unresolvable imports:** Removed. The loader (#495) errors on missing files; `std::` modules are pre-loaded by the typechecker. There is no legitimate case where an import silently produces nothing — every import either resolves or is an error.
 
-5. **Std pre-loading informality:** `check_graph` takes an explicit `StdPrelude` parameter (#188) with `StdPrelude::default()` and `StdPrelude::empty()` constructors. Tests that do not need std pass `StdPrelude::empty()` for isolation.
+5. **Std pre-loading informality:** `check_graph` takes an explicit `StdPrelude` parameter (#497) with `StdPrelude::default()` and `StdPrelude::empty()` constructors. Tests that do not need std pass `StdPrelude::empty()` for isolation.
 
 6. **Alias + normalizer interaction:** When `import mod::name as alias` is in scope, `mod::name` as an expression rewrites to `ResolvedPath { resolved: "alias", original: ["mod", "name"] }`. Writing `name` bare with no import for it is a normalizer error, not a silent rewrite.
 
-7. **Unannotated pub declarations:** `pub` declarations without explicit type annotations produce `T0010` before inference runs (#187). This enforces the no-cross-module-inference invariant at the point where it would otherwise silently produce incomplete exported schemes.
+7. **Unannotated pub declarations:** `pub` declarations without explicit type annotations produce `T0010` before inference runs (#496). This enforces the no-cross-module-inference invariant at the point where it would otherwise silently produce incomplete exported schemes.
 
-8. **Re-export of private names:** A `pub import` may only re-export a name that is `pub` in the source module. Attempting to re-export a private name is `T0009` (#178). This prevents visibility leaks through facade modules.
+8. **Re-export of private names:** A `pub import` may only re-export a name that is `pub` in the source module. Attempting to re-export a private name is `T0009` (#487). This prevents visibility leaks through facade modules.
 
-9. **Topological ordering implicit:** `ModuleGraph::modules` is documented as a topological ordering guarantee, and `load_root` adds a `debug_assert!` that validates it at construction time (#172).
+9. **Topological ordering implicit:** `ModuleGraph::modules` is documented as a topological ordering guarantee, and `load_root` adds a `debug_assert!` that validates it at construction time (#481).
 
-10. **Evaluator flat runtime:** Acknowledged as a known deferral. `evaluate_graph` concatenates `TypedDecl` lists in v0.6.0. Per-module runtime context is tracked in #189 for v0.7.0.
+10. **Evaluator flat runtime:** Acknowledged as a known deferral. `evaluate_graph` concatenates `TypedDecl` lists in v0.6.0. Per-module runtime context is tracked in #498 for v0.7.0.
 
-11. **GlobalExports collisions:** No key collisions are possible — each module path is unique in the graph (loader deduplicates by canonical file path). Name collisions across imports are handled at the consumer level via `ScopedEnv` / `Binding`. Import conflict error code is `T0011` (#177).
+11. **GlobalExports collisions:** No key collisions are possible — each module path is unique in the graph (loader deduplicates by canonical file path). Name collisions across imports are handled at the consumer level via `ScopedEnv` / `Binding`. Import conflict error code is `T0011` (#486).
 
-13. **T0009 vs T0003 detection:** `ModuleExports` stores only `pub` items. When a name is absent from `pub_schemes`, the typechecker looks it up in the source module's `program.decls` (available in the `NormalizedModuleGraph`) to distinguish T0009 ("private") from T0003 ("absent"). No redundant `all_declared_names` field is needed; the lookup is O(declarations) on error paths only (#191).
+13. **T0009 vs T0003 detection:** `ModuleExports` stores only `pub` items. When a name is absent from `pub_schemes`, the typechecker looks it up in the source module's `program.decls` (available in the `NormalizedModuleGraph`) to distinguish T0009 ("private") from T0003 ("absent"). No redundant `all_declared_names` field is needed; the lookup is O(declarations) on error paths only (#500).
 
-12. **Qualified path error messages:** The normalizer produces `Expr::ResolvedPath { resolved, original }`. The typechecker uses `resolved` for lookup and `original.join("::")` for error messages — explicit in the type, survives inferred-type errors where no source span exists (#185).
+12. **Qualified path error messages:** The normalizer produces `Expr::ResolvedPath { resolved, original }`. The typechecker uses `resolved` for lookup and `original.join("::")` for error messages — explicit in the type, survives inferred-type errors where no source span exists (#494).
 
 ---
 

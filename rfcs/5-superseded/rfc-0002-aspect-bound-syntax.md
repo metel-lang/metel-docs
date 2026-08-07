@@ -403,10 +403,10 @@ Rationale:
 
 ## References
 
-- Language spec: [`spec/declarations.md#aspects`](../../public/spec/declarations.md#aspects), [`spec/types.md#generics`](../../public/spec/types.md#generics)
+- Language spec: [`spec/declarations.md#aspects`](../../reference/spec/declarations.md#aspects), [`spec/types.md#generics`](../../reference/spec/types.md#generics)
 - RFC-0001: `docs/public/rfcs/rfc-0001-pointer-syntax.md` (`&` operator — tension with Option B)
-- v0.3: #5–#10 (type variables, generics, monomorphization)
-- v0.4: #11–#13 (aspects and method dispatch)
+- v0.3: #282–#290 (type variables, generics, monomorphization)
+- v0.4: #292–#296 (aspects and method dispatch)
 - AST: `src/ast/mod.rs` — `GenericParam`, `TraitDecl`, `TraitMethod`
 
 ---

@@ -77,7 +77,7 @@ impl_status: implemented
 
 > **Status — integrated (2026-07-24).** Row bounds merged into public/reference/spec/types.md under Generics; three availability markers. Cross-checked against RFC-0116/0115/0071 and RFC-0121 (which inherits the impl-coherence and module-relative questions). Grammar verified by prototype.
 
-> **Amended 2026-07-25, while assessing implementation readiness (#289).** Three changes,
+> **Amended 2026-07-25, while assessing implementation readiness (#577).** Three changes,
 > all to §1/§2 and the grammar delta; the semantics of what satisfies a bound (§3) are
 > untouched.
 >
@@ -101,7 +101,7 @@ impl_status: implemented
 > The last two came out of challenges during the readiness review rather than from my own
 > cross-check, which is the more useful fact to record.
 
-> **Status — implemented (2026-07-25).** Row bounds shipped in v0.12.0 (#289, merged 24b858e). Open/closed bounds, the trailing .., label-only fields, negative bounds as per-field absence, the record kind marker at the parameter or in a where clause, and the bound-less <record T> form. The type-position wildcard was withdrawn during implementation. Useful over record literals only until RFC-0119 lands conversions; the RFC records that.
+> **Status — implemented (2026-07-25).** Row bounds shipped in v0.12.0 (#577, merged 24b858e). Open/closed bounds, the trailing .., label-only fields, negative bounds as per-field absence, the record kind marker at the parameter or in a where clause, and the bound-less <record T> form. The type-position wildcard was withdrawn during implementation. Useful over record literals only until RFC-0119 lands conversions; the RFC records that.
 
 ## Summary
 

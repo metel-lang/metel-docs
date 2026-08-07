@@ -200,7 +200,7 @@ let result = select {
 
 ```metel
 let result = select {
-    v <- data_ch             => Perhaps::Some { value: v },
+    v <- data_ch             => Perhaps::Some { value = v },
     _ <- Chan::timeout(5_s)  => nope,
 }
 ```

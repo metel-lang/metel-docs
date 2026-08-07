@@ -15,7 +15,7 @@ impl_status: implemented
 > no live alternative. What remains genuinely open — a mutable-slice spelling, the exact
 > RFC-0067 lifetime-anchor dependency, `[T; N]` const generics, evaluator representation,
 > and release sequencing — stays with RFC-0124, which this RFC does not attempt to resolve.
-> Filed now because #290 and #291 are blocked on exactly this question, and #310's fixture
+> Filed now because #578 and #579 are blocked on exactly this question, and #267's fixture
 > migration has six fixtures whose only obstacle is it.
 
 > **Status — under review (2026-07-27).** Split from RFC-0124 already stating the settled decision; adversarial review performed same day
@@ -24,7 +24,7 @@ impl_status: implemented
 
 > **Status — integrated (2026-07-27).** Spec merged into types.md/declarations.md with Planned-for-v0.12.0 markers; worked examples against RFC-0053 (already-implemented coercion) and RFC-0071 (Copy/Drop/partial-move) found no unresolved soundness gap, but did surface that stdlib's existing T[]:Clone impl must be rewritten, recorded in Consequences
 
-> **Status — implemented (2026-07-27).** Implemented in metel-core#317, verified independently (640 integration + 122 unit tests, 0 clippy warnings, move-check-count confirms zero T[]-related violations remain)
+> **Status — implemented (2026-07-27).** Implemented in metel-core#593, verified independently (640 integration + 122 unit tests, 0 clippy warnings, move-check-count confirms zero T[]-related violations remain)
 
 > **Corrected 2026-08-03.** This RFC's own References section (and RFC-0124's) cited
 > RFC-0067 (Lifetime Anchors) as `2-accepted`. Checked directly against
@@ -56,7 +56,7 @@ be true for this part to be right.
 ### The immediate blocker
 
 RFC-0071 §2 makes fixed-size arrays `Copy` when their elements are. Implementing that
-(issue #290) requires answering whether `T[]` is `Copy`, and the question is currently
+(issue #578) requires answering whether `T[]` is `Copy`, and the question is currently
 undecidable from the RFC record alone:
 
 - As a *view*, `T[]` should be `Copy` — a shared reference is `Copy` in every language that
@@ -67,7 +67,7 @@ undecidable from the RFC record alone:
 
 RFC-0054 (`4-implemented`) already answered this: it assigned growth to `List<T>` and
 declared `T[]` "the immutable/read-only array type," a view. The implementation never
-followed — `T[]` is mutable, owns its buffer, and is deep-copied on every binding. #290
+followed — `T[]` is mutable, owns its buffer, and is deep-copied on every binding. #578
 cannot write a `Copy` rule for `T[]` that survives until that gap closes.
 
 ### Measured state, 2026-07-25 (carried over from RFC-0124)
@@ -95,10 +95,10 @@ literal-retyping migration (`T[]` → `[T; N]` at every array-literal site) is t
 here, not the mutability rule — and it is a type change the compiler finds by refusing to
 build, not a silent behavioral change, which is the safer direction of migration error.
 
-### Why this unblocks more than #290
+### Why this unblocks more than #578
 
-**#291's move checking** currently has no rule for `T[]` at all beyond "not `Copy`," which is
-why six fixtures in #310's corpus migration are stuck: they reuse an array binding in ways
+**#579's move checking** currently has no rule for `T[]` at all beyond "not `Copy`," which is
+why six fixtures in #267's corpus migration are stuck: they reuse an array binding in ways
 that are only illegal under the current owning-buffer model. Once `T[]` is a view, those
 fixtures need no source changes — the violations disappear because the premise that made
 them violations is gone.
@@ -157,7 +157,7 @@ duplicable has no coherent place — which is exactly the corner `T[]` occupies 
 ### Array literals retype to `[T; N]`
 
 `[1, 2, 3]` produces `[i64; 3]`, not `T[]`: a literal has a statically known length and owns
-its elements, which is the fixed-array case, already `Copy` when `T` is (RFC-0071 §2, #290).
+its elements, which is the fixed-array case, already `Copy` when `T` is (RFC-0071 §2, #578).
 Slices arise only from borrowing.
 
 ### The migration this implies is already solved, by RFC-0053, at every expected-type position
@@ -216,11 +216,11 @@ dependency (Open Question 2 there), not a new gap this RFC introduces.
 - The exact dependency on RFC-0067's lifetime anchors for slice validity — RFC-0124 still
   owns confirming that relationship before its own acceptance.
 - Whether `[T; N]`'s `Copy` rule needs const generics to leave the typechecker's hardcoded
-  special case (#299) — orthogonal to this RFC, since `[T; N]`'s `Copy`-when-`T`-is-`Copy`
+  special case (#263) — orthogonal to this RFC, since `[T; N]`'s `Copy`-when-`T`-is-`Copy`
   rule is unchanged by anything here.
 - `Value::Array`'s evaluator representation (`Rc<RefCell<Vec>>` today) — an implementation
   choice, not a type-system one.
-- Release sequencing against #291 and #310 — a scheduling question, addressed by whoever
+- Release sequencing against #579 and #267 — a scheduling question, addressed by whoever
   actually lands this, not by this document.
 
 ---
@@ -228,14 +228,14 @@ dependency (Open Question 2 there), not a new gap this RFC introduces.
 ## Consequences
 
 **RFC-0071's `Copy` table becomes writable for `T[]`.** `[T; N]` is `Copy` when `T` is
-(unchanged); `T[]` is `Copy` unconditionally as a view; `List<T>` never is. #290's blocked
+(unchanged); `T[]` is `Copy` unconditionally as a view; `List<T>` never is. #578's blocked
 question is answered.
 
-**#310's six deferred fixtures need no source changes.** Their violations were reports that
+**#267's six deferred fixtures need no source changes.** Their violations were reports that
 an array binding was reused in a way the owning-buffer model forbids; under the view model,
 reuse of a `Copy` value is legal by construction.
 
-**#291's move checking gains a real rule for `T[]`** instead of the current default
+**#579's move checking gains a real rule for `T[]`** instead of the current default
 (everything not explicitly `Copy` is affine), closing the gap that made those six fixtures
 look like defects in the corpus rather than in the rule.
 
@@ -275,7 +275,7 @@ rediscovered as a bug after implementation lands.
 
 **Deep-copy-on-binding is not removed by this RFC.** The evaluator may keep cloning after
 this lands; that remains true regardless of `T[]`'s `Copy` status, since the evaluator does
-not yet act on the `Copy`/move distinction at all (RFC-0071 #291's own scope note: move
+not yet act on the `Copy`/move distinction at all (RFC-0071 #579's own scope note: move
 checking is a static pass, clone-elision is later, separate work). This RFC removes the
 type-level argument that `T[]` cannot be a view — it does not itself make the runtime faster.
 
@@ -322,8 +322,8 @@ intersection.
 - RFC-0053 (Fixed-Size Arrays), `4-implemented` — already decided and already live: `[T; N]`
   coerces implicitly to `T[]`, including at generic call sites. This RFC's call-site migration
   cost rides on that coercion rather than needing a new one.
-- Issues #290 (blocked on this question), #291 (move checking has no `T[]` rule without
-  this), #310 (six fixtures blocked on this specifically), #299 (`[T; N]`'s own hardcoded
+- Issues #578 (blocked on this question), #579 (move checking has no `T[]` rule without
+  this), #267 (six fixtures blocked on this specifically), #263 (`[T; N]`'s own hardcoded
   `Copy` rule, unaffected by this RFC).
 
 ---
@@ -379,4 +379,4 @@ produced only by borrowing; array literals type as `[T; N]`. No open questions o
 remain — both named attack vectors in the adversarial review above were checked directly
 against the codebase and neither lands, and the migration-cost concern the review itself
 surfaced (call-site and `let`-binding retyping) is already solved, live, by RFC-0053.
-**Target:** v0.12.0 — the same milestone as #290, #291, and #310, which this RFC unblocks.
+**Target:** v0.12.0 — the same milestone as #578, #579, and #267, which this RFC unblocks.

@@ -29,7 +29,7 @@ target:
 > **RFC-0083 folded in, 2026-07-12.** RFC-0083 (Public Value Exports, `pub let`) had
 > reached `3-integrated` on the strength of a "constant expression" concept it never
 > specified — it deferred that definition to this RFC while this RFC only existed as a
-> pending cross-RFC question (§0 below, "added 2026-07-11"). Codeberg issue #235 (its
+> pending cross-RFC question (§0 below, "added 2026-07-11"). Codeberg issue #539 (its
 > implementation tracking) was closed without implementing RFC-0083 as drafted, since
 > doing so would have meant building a bespoke restricted evaluator now, then
 > reconciling it against `comptime let` later. §0a below resolves the pending question
@@ -224,7 +224,7 @@ fun first<T: Clone>(arr: T[]) -> Perhaps<T> {
     // at this definition, exactly as RFC-0061's bound checker already does today —
     // not deferred to whichever call site happens to instantiate T
     if (array_len(arr) == 0) { return None; }
-    return Perhaps::Some { value: arr[0] };
+    return Perhaps::Some { value = arr[0] };
 }
 ```
 
@@ -251,11 +251,11 @@ for:
 
 ```metel
 enum TypeInfo {
-    Struct { row: Row },
-    Enum { variants: (name: Symbol, fields: Row)[] },
-    Int { bits: i64, signed: boolean },
-    Float { bits: i64 },
-    Pointer { target: type },
+    Struct { row = Row },
+    Enum { variants = (name: Symbol, fields: Row)[] },
+    Int { bits = i64, signed = boolean },
+    Float { bits = i64 },
+    Pointer { target = type },
     // ...
 }
 ```
@@ -430,7 +430,7 @@ sequencing question for whoever schedules the work, not resolved here.
 - RFC-0053 (Fixed-Size Array Type) / RFC-0084 (Fixed-Size Array Syntax) — `[T; N]`'s `N`
   is the concrete motivating case for `comptime let` (§0)
 - RFC-0083 (Public Value Exports, superseded) — original `pub let` design; folded into
-  §0a 2026-07-12, its Codeberg tracking issue (#235) closed unimplemented in favor of
+  §0a 2026-07-12, its Codeberg tracking issue (#539) closed unimplemented in favor of
   this RFC's `pub comptime let` mechanism
 - Prior art: Zig `comptime`, `@typeInfo`, `comptime T: type`
 

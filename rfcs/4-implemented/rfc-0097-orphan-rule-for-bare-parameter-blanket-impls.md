@@ -231,4 +231,4 @@ with no bare-parameter-specific handling needed.
 ## Decision
 
 **Outcome:** Accepted
-**Target:** v0.10.0 (sprint-26, issue #269)
+**Target:** v0.10.0 (sprint-26, issue #555)

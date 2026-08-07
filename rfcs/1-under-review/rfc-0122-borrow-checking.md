@@ -42,7 +42,7 @@ updated: '2026-08-02'
 > *(Corrected 2026-08-02. This sentence previously added "and itself carrying stale syntax
 > (nine — later 'corrected' to ten — `&var` occurrences predating RFC-0098)". **The claim
 > was false**: RFC-0098 renamed `mut`→`var`, so `&var` is the current spelling, and
-> metel-core#351's docs sweep had already converted RFC-0067's occurrences — it carries
+> metel-core#604's docs sweep had already converted RFC-0067's occurrences — it carries
 > zero `&mut`. Worth recording how the error survived: a reader re-verified the **count**
 > and shipped a correction to it without ever checking the **assertion** the count was
 > attached to. RFC-0067 did have real stale syntax — a `null` literal Metel has never had,
@@ -50,7 +50,7 @@ updated: '2026-08-02'
 > RFC-0067 should be treated as a dependent extension, and its acceptance re-examined
 > against these rules rather than assumed to constrain them.
 
-> **Status — accepted (2026-08-02).** All five design questions resolved: granularity and move-relationship (07-24), lexical-first, observability, and diagnostics (08-01 joint review). RFC-0071 SS9b's standalone place abstraction — this RFC's only structural blocker — discharged by #291.
+> **Status — accepted (2026-08-02).** All five design questions resolved: granularity and move-relationship (07-24), lexical-first, observability, and diagnostics (08-01 joint review). RFC-0071 SS9b's standalone place abstraction — this RFC's only structural blocker — discharged by #579.
 
 > **Status — under review (2026-08-02).** Acceptance 2026-08-01 was premature. An adversarial pass the same day found six gaps, three blocking: the outlives rule is named but unspecified; reference-typed struct fields defeat the anchors-are-a-dependent claim; and the lexical rule as written rejects sequential &var method calls. Third accepted-to-under-review reversion in the corpus (Trigger 14).
 
@@ -63,7 +63,7 @@ updated: '2026-08-02'
 > a validity scope is, and its §1 anchor model was written before any checker existed.
 >
 > **What must close first**, all in §2b: the outlives rule specified (§2b.2), the
-> stored-reference restriction implemented (§2b.3 / metel-core#364), closures (§2b.4),
+> stored-reference restriction implemented (§2b.3 / metel-core#274), closures (§2b.4),
 > reborrowing (§2b.5), and the `T[]` `Copy`-view interaction (§2b.6). §2b.1 is already
 > dissolved by §2.2's move to NLL.
 >
@@ -75,8 +75,8 @@ updated: '2026-08-02'
 >
 > **§3's rollout constraint still binds and interacts with the schedule:** borrow checking
 > ships opt-in behind `--borrow-check` and must **not** go default-on in the same release
-> as #310 (enable move checking by default, currently v0.13.0). With this RFC at v0.14.0
-> and #310 at v0.13.0 those are already in different releases, which satisfies the
+> as #267 (enable move checking by default, currently v0.13.0). With this RFC at v0.14.0
+> and #267 at v0.13.0 those are already in different releases, which satisfies the
 > constraint — worth stating so a later reshuffle does not silently break it.
 
 ## Summary
@@ -313,7 +313,7 @@ see exactly what argument produced it and attack that.
    component with no move-specific assumptions.* Given that, splitting the two across
    releases is safe, and the argument for pulling this RFC into v0.12.0 falls away.
 
-   **✅ Discharged 2026-08-01 by #291, verified directly against the interpreter.** The
+   **✅ Discharged 2026-08-01 by #579, verified directly against the interpreter.** The
    place abstraction lives at `metel-interpreter/src/place.rs` — crate root, not inside
    `move_check` — is 203 lines, and carries no move-specific state: every mention of
    "move" in the file is module documentation explaining *why* it is analysis-neutral
@@ -348,7 +348,7 @@ see exactly what argument produced it and attack that.
    **There is now empirical precedent, which did not exist when this question was
    written.** RFC-0071's move checking shipped in v0.12.0 as an opt-in analysis over
    this same cloning evaluator, and found six real defects the runtime had been
-   masking (#296, #313, #334, #343, #347, #348). A static checker over a
+   masking (#581, #591, #598, #600, #347, #602). A static checker over a
    value-semantics runtime is not a theoretical exercise here; it has already paid.
 
    **The honest limit, per `OBJECTIVES.md`'s feedback-trustworthiness budget:** this
@@ -497,7 +497,7 @@ mentions it. Whether a reborrow suspends the original borrow, and for how long, 
 machinery rather than a detail — it is what makes `&var` usable at all in practice.
 
 **6. RFC-0126's `T[]` Copy borrowed view is unaddressed — zero mentions — and it
-shipped.** v0.12.0 made `T[]` a `Copy` borrowed view (#317). A borrow that is *freely
+shipped.** v0.12.0 made `T[]` a `Copy` borrowed view (#593). A borrow that is *freely
 copyable* sits awkwardly against a rule whose whole content is how many borrows may
 coexist: unlimited copies of a shared view are presumably fine, but the interaction with
 an exclusive borrow of the same backing storage is undefined here. This is the one gap
@@ -574,7 +574,7 @@ both.
 > the missing capability (naming a validity scope so two independent lifetimes can be
 > related), and once they exist the justification above evaporates in full.
 
-**Tracked as metel-core#364**, which owns both halves — imposing the restriction and
+**Tracked as metel-core#274**, which owns both halves — imposing the restriction and
 removing it — so the exit cannot be lost if the two land in different releases.
 RFC-0067's own text carries the reciprocal pointer, so that implementing anchors surfaces
 this obligation rather than depending on someone remembering it.
@@ -619,7 +619,7 @@ Two further facts weigh the same way:
   structured (no `goto`, no arbitrary labeled jumps), making the AST a reducible CFG over
   which AST-directed dataflow is equally powerful — see §2.2(a).
 - **Polonius's advantage concentrates in a surface this RFC is narrowing.** Problem case
-  #3 is about references flowing outward through conditional returns; §2b.3's operator
+  #280 is about references flowing outward through conditional returns; §2b.3's operator
   decision bans reference-typed struct fields, and the outlives rule (§2b.2) is
   deliberately scope-based. The cases where Polonius beats NLL are exactly the ones being
   deferred.
@@ -628,7 +628,7 @@ Two further facts weigh the same way:
 falsifier rather than a permanent no:
 
 > Revisit Polonius when **either** (a) Metel grows a CFG or MIR for an unrelated reason —
-> #259's compiler-facing HIR is the live candidate — so the prerequisite is already paid
+> #255's compiler-facing HIR is the live candidate — so the prerequisite is already paid
 > for, **or** (b) NLL problem case #3 shows up as a *recurring* rejection of code the
 > language wants to accept, rather than as a known theoretical limit. Absent both,
 > adopting Polonius means paying for an IR to buy a case Metel cannot currently write.
@@ -648,7 +648,7 @@ mistaken for a technical objection to the formulation itself.
 practical risk to implementing the rules above.*
 
 **Shared-XOR-exclusive will invalidate existing Metel programs, including this
-project's own fixture corpus.** The evidence is direct and recent: RFC-0071's #348 added
+project's own fixture corpus.** The evidence is direct and recent: RFC-0071's #602 added
 *one* narrow rule — a by-value `self` method may not be called through a reference — and
 that alone required migrating five corpus fixtures that had been relying on the gap. A
 rule as broad as "at most one `&var` per place, and never alongside a `&`" touches far
@@ -656,7 +656,7 @@ more surface, and the three programs in the Summary above are all currently-pass
 shapes that would stop compiling.
 
 **The constraint this creates: do not enable borrow checking by default in the same
-release as #310.** #310 (enable move checking by default) is already queued for
+release as #267.** #267 (enable move checking by default) is already queued for
 v0.13.0, and it carries its own corpus migration. Landing both defaults together would
 make a failing fixture ambiguous between two new analyses, and would put two unrelated
 migrations in one release's blast radius.
@@ -668,9 +668,9 @@ migrations in one release's blast radius.
    it, and the analysis becomes testable against real programs immediately.
 2. The corpus migrates incrementally, under that flag, as its own tracked work.
 3. Only then does enabling-by-default become a separate, independently-schedulable
-   decision — and in a different release from #310's.
+   decision — and in a different release from #267's.
 
-This is not a concession to expedience. Opt-in is what allowed #291's move checker to be
+This is not a concession to expedience. Opt-in is what allowed #579's move checker to be
 built, reviewed, and hardened against six real defects across v0.12.0 without ever
 blocking an unrelated release.
 
@@ -687,9 +687,9 @@ blocking an unrelated release.
 - RFC-0071 (Ownership and Move Semantics), **`3-integrated`, `impl_status: in-progress`**
   — move and partial-move tracking, which this must agree with about places. *(Updated
   2026-08-01: was cited as `2-accepted`/"scheduled for implementation in v0.12.0"; parts
-  1–2 shipped in v0.12.0 as #290/#291, and **§9b's place-abstraction requirement — the
-  only thing this RFC asked of it — is discharged**, see §2 question 3. Parts 3–4 (#292
-  drop order, #293 partial moves) are queued for v0.13.0.)*
+  1–2 shipped in v0.12.0 as #578/#579, and **§9b's place-abstraction requirement — the
+  only thing this RFC asked of it — is discharged**, see §2 question 3. Parts 3–4 (#261
+  drop order, #262 partial moves) are queued for v0.13.0.)*
 - RFC-0086 (Outlives-of-Bindings Sugar), `6-refused` — the only prior "borrow"-titled RFC;
   refused, and its refusal is not evidence against this one
 - `reports/strategy/OBJECTIVES.md` — Trigger 19, and §1's diagnostics claim
@@ -727,7 +727,7 @@ none blocks implementation. The headline rule (shared XOR exclusive), its granul
 liveness model (lexical), its relationship to move checking (two analyses, one shared
 place abstraction), its diagnostic format (`T0020`, naming bindings and scope ends), and
 its rollout constraint (§3: opt-in behind `--borrow-check`, not default-on alongside
-#310) are all settled.
+#267) are all settled.
 
 **What acceptance does *not* claim.** No borrow checking ships in v0.12.0 — this RFC was
 always scoped design-only for that release, and its acceptance changes nothing about
@@ -737,8 +737,8 @@ Integration (`3-integrated`) additionally requires merging these rules into
 integrated, and — per `PROCESS.md` — a tracked implementation issue, neither of which
 exists yet.
 
-**Target:** implementation not yet scheduled. RFC-0071's remaining parts (#292 drop
-order, #293 partial moves) are v0.13.0 and share this RFC's place abstraction; whether
+**Target:** implementation not yet scheduled. RFC-0071's remaining parts (#261 drop
+order, #262 partial moves) are v0.13.0 and share this RFC's place abstraction; whether
 borrow checking lands alongside them or after is a scheduling decision for the release
 that picks it up, constrained only by §3's requirement that it not go default-on in
-the same release as #310.
+the same release as #267.

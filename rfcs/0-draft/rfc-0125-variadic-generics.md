@@ -50,9 +50,9 @@ option being unspecified.
 
 ### It is now blocking concrete work
 
-Issue #299 tracks moving `Copy` for tuples and fixed arrays out of the typechecker, where
-#290 is about to hardcode them, and into `stdlib/`. Its tuple half is blocked on exactly
-this: even once structural impl targets work (#296), *what to write* remains undecided. A
+Issue #263 tracks moving `Copy` for tuples and fixed arrays out of the typechecker, where
+#578 is about to hardcode them, and into `stdlib/`. Its tuple half is blocked on exactly
+this: even once structural impl targets work (#581), *what to write* remains undecided. A
 variadic impl is one line; per-arity is twelve near-identical blocks that must be kept in
 sync across `Copy`, `Display`, `Eq`, `Clone`, `Send`, `Sync` — six aspects × twelve arities.
 
@@ -221,7 +221,7 @@ The aspects that need tuple impls split cleanly, and the split should drive scop
 **Stage 1 — packs, `(..Ts)`, and `all` bounds. No body expansion.**
 
 This is enough for `extend<..Ts> (..Ts): Copy where all Ts: Copy;` and the same for
-`Send`/`Sync`/`Linear` — which is precisely what #299 and RFC-0096 are blocked on. It needs
+`Send`/`Sync`/`Linear` — which is precisely what #263 and RFC-0096 are blocked on. It needs
 no way to *iterate* a pack, only to constrain it, and it is where the whole design's risk is
 lowest.
 
@@ -280,8 +280,8 @@ copies would be *written*, not generated, and would be duplicated per aspect —
 `Copy`, `Send`, `Sync`, `Linear`, `Display`, `Eq`, `Clone` is seven × twelve = 84 blocks that
 must stay consistent. It also caps arity arbitrarily, which C++ and Swift users do hit.
 
-**For:** it needs no new language feature at all, and would unblock #299's tuple half
-immediately once #296 lands.
+**For:** it needs no new language feature at all, and would unblock #263's tuple half
+immediately once #581 lands.
 
 **But note what makes Metel's position different from Rust's.** Rust chose this route and
 sustains it because `macro_rules!` generates the twelve copies from one source of truth.
@@ -315,7 +315,7 @@ be decided explicitly rather than by default.
    be chosen to fit.
 5. **Do fixed arrays want the same treatment?** `[T; N]` needs const generics (RFC-0053
    deferred them; no RFC exists), which is a *value* pack rather than a type pack. Related,
-   deliberately out of scope, and tracked for arrays in #299.
+   deliberately out of scope, and tracked for arrays in #263.
 6. **Arity limits.** Should a pack be bounded in practice (diagnostics, compile time), and
    does an unbounded pack interact badly with monomorphisation?
 
@@ -335,8 +335,8 @@ be decided explicitly rather than by default.
   spelling §2.1 inherits.
 - RFC-0053 (Fixed-Size Arrays), `4-implemented` — defers const generics, the value-pack
   sibling question.
-- Issues #299 (blocked on this for tuples), #296 (structural impl targets must work first),
-  #290 (hardcodes tuple `Copy` in the meantime).
+- Issues #263 (blocked on this for tuples), #581 (structural impl targets must work first),
+  #578 (hardcodes tuple `Copy` in the meantime).
 - **Rust lang-team design note on variadic generics** —
   <https://github.com/rust-lang/lang-team/blob/main/src/design_notes/variadic_generics.md> —
   aggregates the EddyB, Cramertj, Fredpointzero and Bertholet drafts, the tuple-layout

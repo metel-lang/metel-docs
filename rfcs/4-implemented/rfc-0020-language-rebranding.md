@@ -44,14 +44,14 @@ aspect Comparable {
     fun compare(other: Self) -> Int;
 }
 
-impl Comparable for Point { ... }
+extend Point: Comparable { ... }
 
 // After
 aspect Comparable {
     fun compare(other: Self) -> Int;
 }
 
-impl Comparable for Point { ... }
+extend Point: Comparable { ... }
 ```
 
 **Rationale:** `aspect` is thematically grounded (an aspect of the wind, a facet of a surface facing the wind) and distinct enough from Rust's `aspect` to signal semantic differences. It is also unambiguous — unlike `face`, `vane`, or `current`, it does not collide with common field names or control-flow vocabulary.

@@ -23,8 +23,8 @@ match flag { true => [] : Int[], ... } // empty literal in match arm
 
 Since RFC-0021 was incorporated, two issues have been filed that address the inference gaps these examples actually expose:
 
-- **#114** — `construct_match` does not propagate `expected_ty` into arm bodies, unlike `if`. Fix: thread `expected_ty` through `construct_match`.
-- **#115** — `construct_call` does not propagate callee parameter types into argument construction. Fix: resolve callee type first, use param types as `expected_ty` for arguments.
+- **#400** — `construct_match` does not propagate `expected_ty` into arm bodies, unlike `if`. Fix: thread `expected_ty` through `construct_match`.
+- **#401** — `construct_call` does not propagate callee parameter types into argument construction. Fix: resolve callee type first, use param types as `expected_ty` for arguments.
 
 Once both fixes land, the cases above no longer require ascription. The `let`-binding alternative becomes available in all remaining situations, though sometimes at the cost of a throwaway name or a block wrapper.
 
@@ -32,7 +32,7 @@ Once both fixes land, the cases above no longer require ascription. The `let`-bi
 
 ## The Narrowed Question
 
-After #114 and #115 are resolved, type ascription shifts from *sometimes required* to *always optional*. It remains useful as a style tool — annotating an expression's type at the use site rather than on a binding — but it is no longer a necessity for correctness.
+After #400 and #401 are resolved, type ascription shifts from *sometimes required* to *always optional*. It remains useful as a style tool — annotating an expression's type at the use site rather than on a binding — but it is no longer a necessity for correctness.
 
 The question becomes: does the ergonomic benefit justify the operator's presence in the language?
 
@@ -84,13 +84,13 @@ empty::<String>()      // turbofish — also fine, slightly more syntactic weigh
 
 | Case | `let` binding | Ascription | Turbofish |
 |---|---|---|---|
-| Empty array in argument position (after #115) | not needed | not needed | not needed |
-| Empty array in match arm (after #114) | block + let | `: T[]` | n/a |
+| Empty array in argument position (after #401) | not needed | not needed | not needed |
+| Empty array in match arm (after #400) | block + let | `: T[]` | n/a |
 | Ambiguous result of generic call | `let x: T[] = f()` | `f() : T[]` | `f::<T>()` |
 | Two independent generic type params at call site | two `let` bindings | per-argument `: T` | `f::<A, B>(...)` |
 | Restrict binding to less general type | `let x: T = expr` | `expr : T` | n/a |
 
-The cell "not needed" in the first row reflects that after #115, inference flows from the callee into arguments, so no annotation is required.
+The cell "not needed" in the first row reflects that after #401, inference flows from the callee into arguments, so no annotation is required.
 
 ---
 
@@ -110,7 +110,7 @@ Turbofish is added for generic calls. Ascription is removed. Cases that ascripti
 
 **D — Neither — rely on `let` bindings and inference**
 
-Both operators are absent. All disambiguation is done via `let` bindings or improved inference. After #114 and #115, this covers most practical cases. The remaining gaps (complex generic calls, match arm disambiguation of non-trivial expressions) require hoisting bindings.
+Both operators are absent. All disambiguation is done via `let` bindings or improved inference. After #400 and #401, this covers most practical cases. The remaining gaps (complex generic calls, match arm disambiguation of non-trivial expressions) require hoisting bindings.
 
 ---
 
@@ -139,6 +139,6 @@ Both operators are retained. Ascription (`expr : T`) handles result-type annotat
 ## References
 
 - RFC-0021: Type Ascription Syntax (`rfc-0021-type-ascription.md`)
-- Issue #114: propagate `expected_ty` into match arm bodies
-- Issue #115: propagate callee param types into argument construction
+- Issue #400: propagate `expected_ty` into match arm bodies
+- Issue #401: propagate callee param types into argument construction
 - `docs/public/spec/types.md` § Type Ascription — current spec entry with known-limitation links

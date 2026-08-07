@@ -22,7 +22,7 @@ target: v0.15.0
 > **So implementing anchors must also lift that ban**, and lifting it is more than
 > deleting a check: RFC-0122 §2b.2's outlives rule was *specified* scope-based on the
 > assumption stored references do not exist, and admitting them means revisiting that
-> specification. Both halves are tracked as **metel-core#364**. See RFC-0122 §2d for the
+> specification. Both halves are tracked as **metel-core#274**. See RFC-0122 §2d for the
 > full reasoning; this pointer exists so the obligation surfaces here rather than
 > depending on someone remembering it.
 
@@ -45,13 +45,13 @@ target: v0.15.0
 > 3. **`2-accepted` → `3-integrated`**, which per `public/rfcs/PROCESS.md` is also the
 >    first point an implementation issue may be filed — so **no tracked implementation
 >    work exists for this RFC yet, deliberately**, and none should be created before then.
-> 4. **Implementation, in v0.15.0**, which also discharges **metel-core#364** — the
+> 4. **Implementation, in v0.15.0**, which also discharges **metel-core#274** — the
 >    temporary reference-typed-struct-field ban, milestoned to v0.15.0 alongside this,
 >    exists solely because this RFC is unimplemented and is lifted by implementing it.
 >
-> **The one tracked artifact carrying the v0.15.0 milestone today is #364**, not this
-> RFC, because #364 is a concrete interpreter change and this is still a design document.
-> If v0.15.0 arrives and #364 is still open, that is the signal that this chain stalled.
+> **The one tracked artifact carrying the v0.15.0 milestone today is #274**, not this
+> RFC, because #274 is a concrete interpreter change and this is still a design document.
+> If v0.15.0 arrives and #274 is still open, that is the signal that this chain stalled.
 
 > **Status — under review.** Rewritten 2026-07-05 for the split model. Split again
 > 2026-07-07: the plain `&T` / `&var T` rename and auto-deref (the original RFC-0067's
@@ -106,7 +106,7 @@ target: v0.15.0
 >
 > ~~**Also stale, found in the same pass:** nine occurrences of `&var` / `&r var`,
 > predating RFC-0098…~~ **Withdrawn 2026-08-02 — this was corrected and the note outlived
-> it.** The docs-wide `mut`→`var` sweep (metel-core#351, 2026-08-01) converted every one;
+> it.** The docs-wide `mut`→`var` sweep (metel-core#604, 2026-08-01) converted every one;
 > this file now contains ten `&var` occurrences and **zero** `&mut`, i.e. the current
 > spelling throughout. RFC-0122's header repeated the claim and is corrected in the same
 > pass. *Recorded rather than deleted because of how it survived: a later reader verified
@@ -114,7 +114,7 @@ target: v0.15.0
 > to, which is the exact failure `public/rfcs/PROCESS.md`'s verification rule is meant
 > to prevent.*
 
-> **Status — under review (2026-08-02).** Accepted 2026-06-28 before any borrow checker was specified; its own header records that the anchor model was 'designed against an absence' and should be re-examined against RFC-0122's rules before implementation. RFC-0122 now specifies NLL liveness, per-field granularity, T0020 diagnostics, and a stored-reference ban whose removal this RFC triggers (#364) — none checked against SS1. 'Unresolved questions: None' replaced with five real ones.
+> **Status — under review (2026-08-02).** Accepted 2026-06-28 before any borrow checker was specified; its own header records that the anchor model was 'designed against an absence' and should be re-examined against RFC-0122's rules before implementation. RFC-0122 now specifies NLL liveness, per-field granularity, T0020 diagnostics, and a stored-reference ban whose removal this RFC triggers (#274) — none checked against SS1. 'Unresolved questions: None' replaced with five real ones.
 
 ## Summary
 
@@ -292,9 +292,9 @@ or two is unspecified and matters for exactly the disjoint-field borrows RFC-010
 **3. Do anchors have anything to say at all, given the stored-reference ban?** RFC-0122
 §2d bans reference-typed struct fields **specifically because** relating two independent
 lifetimes needs anchors, and marks implementing this RFC as the event that lifts the ban
-(metel-core#364). So this RFC's most concrete consumer is a restriction that does not yet
+(metel-core#274). So this RFC's most concrete consumer is a restriction that does not yet
 exist. §1 was written with no such consumer in view, and should be re-read asking whether
-its `<&r>` declaration form is what #364's lifting actually needs.
+its `<&r>` declaration form is what #274's lifting actually needs.
 
 **4. Is `<&r>` still the right declaration surface?** It does not parse today
 (`[P0001] expected generic_param`, verified 2026-08-02) so nothing constrains it yet. But

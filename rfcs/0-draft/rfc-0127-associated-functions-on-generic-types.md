@@ -215,7 +215,7 @@ Deliberately thin — the design questions above dominate the cost.
    after `method_scheme_for` misses, instantiating the target's type parameters fresh, the
    way the enum-variant arm below it already does for its own parameters.
 2. Mirror it in `typechecker/construction.rs`, whose `unresolved path` site is the
-   construction-pass twin. **Both** sites need it — RFC-0127's own siblings #314 and #334
+   construction-pass twin. **Both** sites need it — RFC-0127's own siblings #592 and #598
    were each one half of a two-site rule where only one side had been updated, so this is a
    known failure mode in this area.
 3. Variant selection per OQ4, which is where the real work is.

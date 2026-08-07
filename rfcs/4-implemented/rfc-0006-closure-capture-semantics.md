@@ -355,7 +355,7 @@ The blocking dependency is RFC-0043 (regular pointers). Resolve RFC-0043 before 
 
 ## References
 
-- Language spec: [`spec/functions.md#closures`](../../public/spec/functions.md#closures), [`spec/runtime.md#panics`](../../public/spec/runtime.md#panics)
+- Language spec: [`spec/functions.md#closures`](../../reference/spec/functions.md#closures), [`spec/runtime.md#panics`](../../reference/spec/runtime.md#panics)
 - RFC-0043: `docs/public/rfcs/5-superseded/rfc-0043-regular-pointers.md` (superseded by RFC-0067a) — `*T`/`*mut T`, regular pointer semantics, and closure-sharing support
 - RFC-0044: `docs/public/rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md` — explicit receiver forms, including `&var self` for iterator-style mutation
 - RFC-0024: `docs/public/rfcs/rfc-0024-linear-types.md` — linear values cannot be clone-captured; move capture (`move fun`) is required; linear values can be passed as explicit closure parameters

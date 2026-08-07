@@ -21,7 +21,7 @@ impl_status: implemented
 
 > **Status — integrated (2026-07-10).** Integrated into public/reference/spec/types.md: ! subtyping, coercion, match exhaustiveness, inhabited-singleton coercion, and -> ! return type. RFC's own stale @[r] allocator syntax fixed first.
 
-> **Status — implemented (2026-07-12).** Implemented in metel-core sprint/25 (issue #234): ! surface syntax, subtyping/coercion, uninhabited-variant exhaustiveness, inhabited-singleton coercion, -> ! divergence checking.
+> **Status — implemented (2026-07-12).** Implemented in metel-core sprint/25 (issue #538): ! surface syntax, subtyping/coercion, uninhabited-variant exhaustiveness, inhabited-singleton coercion, -> ! divergence checking.
 
 ## Summary
 
@@ -134,7 +134,7 @@ enum Wrapper<T> {
     Absent  { _: ! },
 }
 
-fun infallible() -> Wrapper<i64> { Wrapper::Present { value: 42 } }
+fun infallible() -> Wrapper<i64> { Wrapper::Present { value = 42 } }
 
 let x: i64 = infallible();  // implicit coercion via inhabited-singleton rule
 ```
@@ -168,7 +168,7 @@ be used wherever `T` is expected with no explicit match:
 
 ```metel
 fun infallible() -> Result<i64, !> {
-    Result::Ok { value: 42 }
+    Result::Ok { value = 42 }
 }
 
 fun main() -> i64 {

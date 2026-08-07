@@ -96,7 +96,7 @@ impl_status: in-progress
 > so on the page is better than letting a reader infer exclusivity from the word "exclusive"
 > two pages away.
 
-> **Status — integrated (2026-07-24).** New spec page ownership.md covering sections 1-7; four availability markers; Contents table updated. Found and fixed two spec contradictions: the 'reference counting, no ownership semantics required' design principle, and a v0.7.0 version stamp. Tracked as #290-#293; #291 (move checking) is canonical.
+> **Status — integrated (2026-07-24).** New spec page ownership.md covering sections 1-7; four availability markers; Contents table updated. Found and fixed two spec contradictions: the 'reference counting, no ownership semantics required' design principle, and a v0.7.0 version stamp. Tracked as #290-#262; #579 (move checking) is canonical.
 
 ## Summary
 
@@ -186,10 +186,10 @@ let z = x;   // copy again — x is still valid
 >   primitive is a valid `extend` target today.
 > - **Fixed-size arrays and tuples must be built into the checker for now**, and should carry
 >   a comment saying so. `extend (A, B): Copy` on a concrete tuple raises an internal error
->   (#296), and the generic form `extend<A: Copy, B: Copy> (A, B): Copy;` is *accepted but
+>   (#581), and the generic form `extend<A: Copy, B: Copy> (A, B): Copy;` is *accepted but
 >   never satisfies* — a silent no-op, which is worse. `[T; N]` would need a const-generic
 >   arity that does not exist; only literal arities parse. **The migration out of the
->   typechecker is tracked as #299**, which records what must exist first: #296 plus
+>   typechecker is tracked as #263**, which records what must exist first: #581 plus
 >   RFC-0061 §6's deferred per-arity decision for tuples, and a const-generics RFC (none
 >   exists; RFC-0053 defers to it) plus RFC-0124 for arrays.
 > - **Do not write `extend<T: Copy> T[]: Copy;`.** It works today and is *wrong*: `T[]` is
@@ -319,7 +319,7 @@ let fd = h.fd;   // compile error — Handle implements Drop; partial move not a
 
 ### 7.1 Moving out of a reference
 
-*Added 2026-08-01 (metel-core#348).* A reference — `&T` or `&var T` — only ever grants
+*Added 2026-08-01 (metel-core#602).* A reference — `&T` or `&var T` — only ever grants
 **access** to the value it points at; it never grants ownership of it. Consequently, a
 non-`Copy` value reached through any reference cannot be moved out of it. This is the
 reference analogue of §7's own rule — partial moves are banned because a `Drop` type needs
@@ -337,7 +337,7 @@ fun main() {
 }
 ```
 
-**Enforced scope, as of #348.** `--move-check` currently enforces this rule only at the
+**Enforced scope, as of #602.** `--move-check` currently enforces this rule only at the
 method-receiver position — calling a by-value `self` method through a reference. Within
 that position the rule applies uniformly regardless of how the reference reached the call:
 whether it is the receiver's own binding (`r.eat()`), a field or tuple element of reference
@@ -385,31 +385,31 @@ essentially unbuilt work with a real dependency order between the pieces:
 | [#261](https://github.com/metel-lang/metel-core/issues/261) — drop order and explicit drop | §5, §6 | #578, #579 |
 | [#262](https://github.com/metel-lang/metel-core/issues/262) — partial moves | §7, §9a | #579 |
 
-**§9b's place-abstraction requirement is stated in #291**, which is where it constrains the
-design. **§9a's rules for tuples, arrays and enum payloads are in #293.** #293 is also the
+**§9b's place-abstraction requirement is stated in #579**, which is where it constrains the
+design. **§9a's rules for tuples, arrays and enum payloads are in #262.** #262 is also the
 one v0.13.0 depends on — RFC-0117 is built on field-granularity partial-move tracking, so
 descoping it pushes RFC-0119 and the blog's short-term commitment out another release.
 
-> **Release gate: #290 must not ship without #292.** *(Recorded 2026-07-25.)* #290 declares
-> the `Drop` aspect and enforces its eligibility rules, but destructor *invocation* is #292.
+> **Release gate: #578 must not ship without #261.** *(Recorded 2026-07-25.)* #578 declares
+> the `Drop` aspect and enforces its eligibility rules, but destructor *invocation* is #261.
 > Between them, `extend Handle: Drop { fun drop(self) { … } }` compiles and the destructor
 > **never runs** — a feature that looks functional and silently does nothing, which is the
 > failure mode this project has already hit twice elsewhere.
 >
 > This is acceptable only because both issues target **v0.12.0**, so the gap exists on
-> `develop` and never in a release. **If #292 slips out of v0.12.0, #290 must gain a
+> `develop` and never in a release. **If #261 slips out of v0.12.0, #578 must gain a
 > rejection for `Drop` impls before release** rather than shipping them inert. The same does
 > not apply to `Copy`: declaring it changes no runtime behaviour either way, since the
 > evaluator already duplicates every value — its observable effect is that `T: Copy` bounds
 > begin to resolve.
 >
-> **Gate fired 2026-07-31.** #292 moved to v0.13.0 along with the rest of the ownership
-> block (#293, #310, #328, #330, #338, #342), while #290 had already shipped in v0.12.0.
+> **Gate fired 2026-07-31.** #261 moved to v0.13.0 along with the rest of the ownership
+> block (#262, #267, #268, #269, #271, #273), while #578 had already shipped in v0.12.0.
 > The conditional above is therefore live, and its remedy — rejecting `Drop` impls before
 > release rather than shipping them inert — is tracked as
 > [#601](https://github.com/metel-lang/metel-core/issues/601), milestoned v0.12.0.
 >
-> **Discharged 2026-07-31 (#345), by a narrower rejection than this section's wording.**
+> **Discharged 2026-07-31 (#601), by a narrower rejection than this section's wording.**
 > What is rejected is a `drop` **body**, not a `Drop` impl. Declaring
 > `extend T: Drop { fun drop(self) {} }` remains legal.
 >
@@ -424,7 +424,7 @@ descoping it pushes RFC-0119 and the blog's short-term commitment out another re
 > because it wants the type-level effect and not a destructor.
 >
 > So the rule is: an empty body claims nothing that is not delivered; a body with
-> statements in it does. The restriction lifts with #292.
+> statements in it does. The restriction lifts with #261.
 
 ---
 
@@ -573,8 +573,8 @@ RFC correctly says nothing about it. Only §1's scope sentence needed widening, 
 5. ~~Does passing an exclusive reference consume it?~~ **Resolved 2026-07-26 — an interim
    rule, deliberately narrower than RFC-0122's eventual one.** Question 3 above says an
    exclusive reference "moves *or reborrows*" and then specifies only the move. That gap
-   became load-bearing the moment `&var T: !Copy` was implemented (#290): with move checking
-   (#291), every use of an exclusive reference is a move, and this — which compiles today —
+   became load-bearing the moment `&var T: !Copy` was implemented (#578): with move checking
+   (#579), every use of an exclusive reference is a move, and this — which compiles today —
    would stop compiling:
 
    ```metel

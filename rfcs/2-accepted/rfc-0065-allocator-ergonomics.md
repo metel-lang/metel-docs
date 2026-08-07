@@ -83,8 +83,8 @@ If exactly one allocator is in scope, the name after `@` may be dropped:
 
 ```metel
 BumpAlloc::scoped((@a) -> {
-    let x = @Node { val: 1 };     // @a Node — `a` is the sole allocator
-    let y = @List::Cons { head: x, tail: @List::Nil {} };
+    let x = @Node { val = 1 };     // @a Node — `a` is the sole allocator
+    let y = @List::Cons { head = x, tail = @List::Nil {} };
 });
 ```
 
@@ -97,7 +97,7 @@ fun build_node(@a: BumpAlloc, val: i64) -> @Node { ... }
 //                                          ^^^^^ == @a Node
 
 // expression position
-let node = @Node { val: 1 };   // == @a Node { val: 1 }
+let node = @Node { val = 1 };   // == @a Node { val = 1 }
 ```
 
 **Type-directed candidate filtering.** "In scope," for elision purposes, means *in
@@ -154,7 +154,7 @@ genuinely **declared** two lexical scopes out, not just importable:
 ```metel
 fun process(@h: Heap, items: List<i64>) {
     BumpAlloc::scoped((@a) -> {
-        let x = @Node { val: 1 };   // bare allocation expression — no signature
+        let x = @Node { val = 1 };   // bare allocation expression — no signature
                                      // constrains a required type here
     });
 }
@@ -185,7 +185,7 @@ full stop; there is no implicit "closer one wins" rule.
 ```metel
 fun process(@h: Heap, items: List<i64>) {
     BumpAlloc::scoped((@a) -> {
-        let x = @a Node { val: 1 };   // explicit: h and a are both bare-Alloc
+        let x = @a Node { val = 1 };   // explicit: h and a are both bare-Alloc
                                         // candidates here; name the one you mean
     });
 }
@@ -290,7 +290,7 @@ candidate in scope. This section closes that gap:
 > the same way `<@a>` (§1a) never occupies a value-argument slot at all.
 
 ```metel
-fun build_node(@a: BumpAlloc, val: i64) -> @a Node { @a Node { val, next: null } }
+fun build_node(@a: BumpAlloc, val: i64) -> @a Node { @a Node { val, next = null } }
 
 fun process(@h: Heap, items: List<i64>) {
     BumpAlloc::scoped((@a) -> {

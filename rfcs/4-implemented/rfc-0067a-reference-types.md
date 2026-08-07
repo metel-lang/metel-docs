@@ -35,7 +35,7 @@ impl_status: implemented
 
 > **Status — integrated (2026-07-10).** Integrated into public/reference/spec/types.md and expressions.md: &T/&mut T reference types replace *T/*mut T, auto-deref, and a new type-directed value-copy-out rule resolving a gap found while writing worked examples (RFC amended, see its own status note).
 
-> **Amended 2026-07-11, after implementation (issue #236).** §3a's own text named only
+> **Amended 2026-07-11, after implementation (issue #540).** §3a's own text named only
 > `let`/`mut` bindings and explicit ascription as read-copy sites — implementing it
 > surfaced that the same rule also has to fire at `return`, `break`, and (since a
 > function/method/closure body, an `if`/`else` branch, and a `match` arm all resolve
