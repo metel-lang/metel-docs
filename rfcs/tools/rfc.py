@@ -36,10 +36,12 @@ Subcommands:
                                        and the spec actually references the RFC.
                                        Also flags any stale "Not yet implemented"
                                        callout left behind for an RFC that's already
-                                       4-implemented, and any inline "RFC-NNNN (...,
+                                       4-implemented, any inline "RFC-NNNN (...,
                                        status)" citation anywhere in the repo whose
                                        cited status no longer matches that RFC's
-                                       actual current stage. Read-only.
+                                       actual current stage, and any reference to a
+                                       retired issue-tracker host (impl_tracking or
+                                       a live link anywhere in the repo). Read-only.
   index --check-drift                  Check whether generated REGISTRY.md matches
                                        the current RFC corpus exactly, and whether
                                        the curated INDEX.md mentions every current
@@ -65,6 +67,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 RFCS_DIR = REPO_ROOT / "rfcs"
 INDEX_PATH = RFCS_DIR / "INDEX.md"
 REGISTRY_PATH = RFCS_DIR / "REGISTRY.md"
+
+# The project's canonical issue tracker, and hosts it has fully retired. Mirrors
+# metel-docs-internal/public/rfcs/tools/rfc.py's check of the same name — added
+# 2026-08-06 after this repo's own error-codes.md was found carrying a live dead
+# link to the retired host. Append to RETIRED_HOSTS, don't replace, if the
+# project ever moves host again.
+CANONICAL_ISSUE_HOST = "github.com/metel-lang/metel-core"
+RETIRED_HOSTS = ["codeberg.org"]
 
 STAGES = {
     "draft": "0-draft",
@@ -584,6 +594,39 @@ def registry_drift_problem():
     return None
 
 
+def retired_host_references():
+    """Flag references to a retired host (RETIRED_HOSTS) in two places: any RFC's
+    impl_tracking field (structured, checked directly against parsed frontmatter),
+    and any live URL in this repo's body text — this whole repo is the exported
+    public surface, unlike metel-docs-internal, which additionally excludes its
+    own reports/ and internal/ (narrative/archive, not live content; see that
+    repo's copy of this function). Zero network calls; pure text matching."""
+    problems = []
+    for path in find_rfc_files():
+        fm, _ = parse_file(path)
+        tracking = fm.get("impl_tracking", "")
+        if tracking and any(h in tracking for h in RETIRED_HOSTS):
+            rel = str(path.relative_to(REPO_ROOT))
+            problems.append(
+                f"{rel}: impl_tracking references a retired host ({tracking}) — "
+                f"canonical host is {CANONICAL_ISSUE_HOST}"
+            )
+    for f in sorted(REPO_ROOT.rglob("*.md")):
+        if ".git" in f.parts:
+            continue
+        rel = str(f.relative_to(REPO_ROOT))
+        try:
+            _, body = parse_file(f)
+        except (UnicodeDecodeError, OSError):
+            continue
+        for lineno, line in enumerate(body.splitlines(), start=1):
+            for h in RETIRED_HOSTS:
+                if h in line:
+                    problems.append(f"{rel}:{lineno}: references a retired host ({h}): {line.strip()[:120]}")
+                    break
+    return problems
+
+
 def index_mentioned_rfc_ids(text):
     ids = set()
     for m in re.finditer(r"RFC-(\d+[a-z]?)", text, flags=re.IGNORECASE):
@@ -758,6 +801,7 @@ def cmd_check(args=None):
                 )
 
     problems.extend(status_citation_problems(id_to_stage))
+    problems.extend(retired_host_references())
 
     for f in REPO_ROOT.rglob("*.md"):
         if ".git" in f.parts:
