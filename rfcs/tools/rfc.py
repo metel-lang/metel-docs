@@ -36,10 +36,12 @@ Subcommands:
                                        and the spec actually references the RFC.
                                        Also flags any stale "Not yet implemented"
                                        callout left behind for an RFC that's already
-                                       4-implemented, and any inline "RFC-NNNN (...,
+                                       4-implemented, any inline "RFC-NNNN (...,
                                        status)" citation anywhere in the repo whose
                                        cited status no longer matches that RFC's
-                                       actual current stage. Read-only.
+                                       actual current stage, and any reference to a
+                                       retired issue-tracker host (impl_tracking or
+                                       a live link under public/). Read-only.
   index --check-drift                  Check whether generated REGISTRY.md matches
                                        the current RFC corpus exactly, and whether
                                        the curated INDEX.md mentions every current
@@ -48,16 +50,34 @@ Subcommands:
                                        the current RFC corpus.
   index --suggest-placement <rfc-id>   Suggest which INDEX.md cluster section an
                                        RFC's content is most similar to. Read-only.
+  cycle-prep [--diff]                  One-shot pre-cycle report for
+                                       reports/strategy/PROCESS.md §5 step 0:
+                                       REGISTRY.md drift, retired-host references,
+                                       RFC `updated:` vs. git-log staleness, and
+                                       (best-effort, needs GITHUB_TOKEN/GH_TOKEN)
+                                       open-milestone issue counts — one script
+                                       run replacing dozens of one-file/one-issue
+                                       lookups. `--diff` also compares against
+                                       reports/strategy/.cycle-snapshot.json (the
+                                       prior run's state) and prints only what
+                                       changed, before overwriting it with the
+                                       current state. Mostly read-only — only
+                                       writes the snapshot file.
 
-No dependencies beyond the Python 3 standard library.
+No dependencies beyond the Python 3 standard library. `cycle-prep`'s milestone
+check needs network access and a token; everything else is fully offline.
 """
 
 import argparse
 import datetime
+import json
 import math
+import os
 import re
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from collections import Counter
 from pathlib import Path
 
@@ -65,6 +85,18 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 RFCS_DIR = REPO_ROOT / "public" / "rfcs"
 INDEX_PATH = RFCS_DIR / "INDEX.md"
 REGISTRY_PATH = RFCS_DIR / "REGISTRY.md"
+STRATEGY_DIR = REPO_ROOT / "reports" / "strategy"
+SNAPSHOT_PATH = STRATEGY_DIR / ".cycle-snapshot.json"
+
+# The project's canonical issue tracker, and hosts it has fully retired. A
+# reference to a retired host is either a dead link (public/-facing content) or
+# an unresolvable/misleading identifier (impl_tracking) — added 2026-08-06 after
+# the migration's own reference-rewrite missed impl_tracking backfill on several
+# RFCs and one public spec page's live bug-report link (see
+# `retired_host_references()` below). Append to RETIRED_HOSTS, don't replace, if
+# the project ever moves host again — old retirements stay worth flagging.
+CANONICAL_ISSUE_HOST = "github.com/metel-lang/metel-core"
+RETIRED_HOSTS = ["codeberg.org"]
 
 STAGES = {
     "draft": "0-draft",
@@ -594,6 +626,116 @@ def registry_drift_problem():
     return None
 
 
+def retired_host_references():
+    """Flag references to a retired host (RETIRED_HOSTS) in two places: any RFC's
+    impl_tracking field (structured, checked directly against parsed frontmatter —
+    this field must always resolve, so any non-canonical host is unambiguously
+    wrong), and any live URL in `public/`'s body text (the exported/published
+    surface a reader could actually click — `reports/` and `internal/` are
+    deliberately excluded, since `reports/strategy/`'s dated overviews and
+    OBJECTIVES.md legitimately discuss a retired host in past-tense narrative, and
+    `internal/archive/` is an intentional historical snapshot, not live content —
+    see `public/rfcs/PROCESS.md`'s "dated documents" rule for the same distinction
+    applied to code samples). Zero network calls; pure text matching, so this runs
+    on every `check`, not just `cycle-prep`."""
+    problems = []
+    for path in find_rfc_files():
+        fm, _ = parse_file(path)
+        tracking = fm.get("impl_tracking", "")
+        if tracking and any(h in tracking for h in RETIRED_HOSTS):
+            rel = str(path.relative_to(REPO_ROOT))
+            problems.append(
+                f"{rel}: impl_tracking references a retired host ({tracking}) — "
+                f"canonical host is {CANONICAL_ISSUE_HOST}"
+            )
+    for f in sorted((REPO_ROOT / "public").rglob("*.md")):
+        rel = str(f.relative_to(REPO_ROOT))
+        try:
+            _, body = parse_file(f)
+        except (UnicodeDecodeError, OSError):
+            continue
+        for lineno, line in enumerate(body.splitlines(), start=1):
+            for h in RETIRED_HOSTS:
+                if h in line:
+                    problems.append(f"{rel}:{lineno}: references a retired host ({h}): {line.strip()[:120]}")
+                    break
+    return problems
+
+
+def rfc_git_staleness(records):
+    """Best-effort, informational only (never added to `check`'s hard-fail list):
+    for each RFC with an `updated` frontmatter date, compare it against git's own
+    last-touch date for that file. A mismatch isn't necessarily wrong — a
+    repo-wide sweep (a rename, a reference-rewrite pass) touches a file without
+    its content meaningfully changing — but it is exactly the shape of drift
+    Trigger 16 caught in RFC-0097, so a reader deserves to see the disagreement
+    rather than trust `updated:` on faith. Skipped silently if git is
+    unavailable.
+
+    **Known limitation, honestly unresolved rather than papered over (2026-08-06):**
+    this repo's last month includes two real mass-sweep events (the GitHub
+    migration's ~307 path rewrites, the reference-rot fix's 659 substitutions
+    across 77 files) that touch nearly the whole corpus without representing a
+    design change — this function can't yet distinguish "content meaningfully
+    changed" from "swept as part of an unrelated repo-wide edit," so on this
+    corpus, as of this writing, it flags roughly half of all RFCs. `cmd_cycle_prep`
+    caps how many rows it prints for exactly this reason. Filed as `OBJECTIVES.md`
+    §2a Pending Recommendation 2 rather than shipped as if solved — a
+    commit-message- or content-diff-based filter is the likely fix, not yet built."""
+    rows = []
+    for rec in records:
+        if not rec.get("updated"):
+            continue
+        try:
+            out = subprocess.run(
+                ["git", "log", "-1", "--format=%ad", "--date=short", "--", str(rec["path"])],
+                check=True, cwd=REPO_ROOT, capture_output=True, text=True,
+            )
+        except (subprocess.CalledProcessError, OSError):
+            continue
+        last_touch = out.stdout.strip()
+        if last_touch and last_touch != rec["updated"]:
+            rows.append((rec["id"], rec["updated"], last_touch))
+    return rows
+
+
+def fetch_open_milestones(owner="metel-lang", repo="metel-core"):
+    """Best-effort GitHub REST call for open milestones and their issue counts —
+    a single request replaces resolving priority-relevant issues one at a time
+    (the shape of most of a manual cycle's tool-call cost). Needs GITHUB_TOKEN or
+    GH_TOKEN in the environment; returns (milestones, None) on success or
+    (None, reason) on any failure, network or auth — never raises, per §2's
+    discipline that an unverifiable claim should say so rather than silently
+    omit itself."""
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if not token:
+        return None, "no GITHUB_TOKEN/GH_TOKEN in environment — issue-tracker state not checked"
+    url = f"https://api.github.com/repos/{owner}/{repo}/milestones?state=open&per_page=100"
+    req = urllib.request.Request(
+        url,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "rfc.py-cycle-prep",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError) as e:
+        return None, f"GitHub API request failed ({e}) — issue-tracker state not checked"
+    milestones = [
+        {
+            "title": m.get("title", ""),
+            "open_issues": m.get("open_issues", 0),
+            "closed_issues": m.get("closed_issues", 0),
+            "html_url": m.get("html_url", ""),
+        }
+        for m in data
+    ]
+    return milestones, None
+
+
 def index_mentioned_rfc_ids(text):
     ids = set()
     for m in re.finditer(r"RFC-(\d+[a-z]?)", text, flags=re.IGNORECASE):
@@ -768,6 +910,7 @@ def cmd_check(args=None):
                 )
 
     problems.extend(status_citation_problems(id_to_stage))
+    problems.extend(retired_host_references())
 
     for f in REPO_ROOT.rglob("*.md"):
         if ".git" in f.parts:
@@ -899,6 +1042,128 @@ def parse_index_clusters(text):
 
 
 # --------------------------------------------------------------------------
+# cycle-prep — one consolidated pre-cycle report, replacing dozens of
+# one-file/one-issue lookups with a single script run. See
+# reports/strategy/PROCESS.md §5 step 0.
+# --------------------------------------------------------------------------
+
+def build_cycle_state(records):
+    """The state `cycle-prep --diff` compares across runs. Deliberately narrow:
+    only what's cheap and deterministic to compute (RFC stage/impl_status,
+    REGISTRY.md's own counts, how many retired-host problems exist) — not an
+    attempt to encode priorities or triggers, which need judgment and stay the
+    reasoner's job, not this snapshot's."""
+    by_stage_counts = Counter(r["stage"] for r in records)
+    return {
+        "generated_on": today(),
+        "rfcs": {
+            r["id"]: {"stage": r["stage"], "impl_status": r["impl_status"]}
+            for r in records
+        },
+        "stage_counts": dict(by_stage_counts),
+        "retired_host_problem_count": len(retired_host_references()),
+    }
+
+
+def diff_cycle_state(old, new):
+    """Small, dense delta lines — not a generic dict-diff dump. Only reports
+    what changed, matching the same "verify only what's flagged" principle the
+    rest of cycle-prep exists to serve."""
+    lines = []
+    old_rfcs, new_rfcs = old.get("rfcs", {}), new.get("rfcs", {})
+    for rid in sorted(set(old_rfcs) | set(new_rfcs), key=rfc_sort_key):
+        o, n = old_rfcs.get(rid), new_rfcs.get(rid)
+        if o is None:
+            lines.append(f"  + {rid}: new ({n['stage']})")
+        elif n is None:
+            lines.append(f"  - {rid}: removed (was {o['stage']})")
+        elif o != n:
+            lines.append(
+                f"  ~ {rid}: stage {o['stage']!r}→{n['stage']!r}, "
+                f"impl_status {o['impl_status']!r}→{n['impl_status']!r}"
+            )
+    old_counts, new_counts = old.get("stage_counts", {}), new.get("stage_counts", {})
+    for stage in sorted(set(old_counts) | set(new_counts)):
+        if old_counts.get(stage, 0) != new_counts.get(stage, 0):
+            lines.append(f"  stage_counts[{stage}]: {old_counts.get(stage, 0)} → {new_counts.get(stage, 0)}")
+    old_rh, new_rh = old.get("retired_host_problem_count", 0), new.get("retired_host_problem_count", 0)
+    if old_rh != new_rh:
+        lines.append(f"  retired_host_problem_count: {old_rh} → {new_rh}")
+    return lines
+
+
+def cmd_cycle_prep(args):
+    records = collect_rfc_records()
+
+    print(f"cycle-prep — {today()}")
+    print()
+
+    print("## REGISTRY.md")
+    reg_problem = registry_drift_problem()
+    print(f"  {reg_problem}" if reg_problem else "  fresh, no drift")
+    print()
+
+    print("## Retired-host references (impl_tracking + public/ live links)")
+    rh_problems = retired_host_references()
+    if rh_problems:
+        for p in rh_problems:
+            print(f"  - {p}")
+    else:
+        print("  none found")
+    print()
+
+    print("## RFC `updated:` vs. git-log staleness (informational — verify, don't assume wrong)")
+    staleness = rfc_git_staleness(records)
+    if staleness:
+        print(
+            f"  {len(staleness)} mismatch(es) — known noisy on this corpus (mass-sweep commits "
+            f"touch files without a real design change; see Pending Recommendation 2). Showing 5:"
+        )
+        for rid, updated, last_touch in staleness[:5]:
+            print(f"    - {rid}: frontmatter says {updated!r}, git log's last touch is {last_touch!r}")
+        if len(staleness) > 5:
+            print(f"    ... and {len(staleness) - 5} more (not a reliable signal yet — see the caveat above)")
+    else:
+        print("  none found")
+    print()
+
+    print("## Open milestones (metel-lang/metel-core)")
+    milestones, err = fetch_open_milestones()
+    if err:
+        print(f"  skipped: {err}")
+    elif not milestones:
+        print("  none open")
+    else:
+        for m in milestones:
+            print(f"  - {m['title']}: {m['open_issues']} open, {m['closed_issues']} closed — {m['html_url']}")
+    print()
+
+    new_state = build_cycle_state(records)
+    if args.diff:
+        print("## Diff against previous snapshot")
+        if SNAPSHOT_PATH.exists():
+            try:
+                old_state = json.loads(SNAPSHOT_PATH.read_text())
+            except (json.JSONDecodeError, OSError) as e:
+                print(f"  could not read previous snapshot ({e}) — treating this run as the new baseline")
+                old_state = None
+            if old_state is not None:
+                delta = diff_cycle_state(old_state, new_state)
+                if delta:
+                    for line in delta:
+                        print(line)
+                else:
+                    print("  no change since last snapshot")
+        else:
+            print("  no previous snapshot — this run is the new baseline")
+        print()
+
+    STRATEGY_DIR.mkdir(parents=True, exist_ok=True)
+    SNAPSHOT_PATH.write_text(json.dumps(new_state, indent=2, sort_keys=True) + "\n")
+    print(f"snapshot written: {SNAPSHOT_PATH.relative_to(REPO_ROOT)}")
+
+
+# --------------------------------------------------------------------------
 # CLI
 # --------------------------------------------------------------------------
 
@@ -939,6 +1204,10 @@ def main():
     p_index.add_argument("--rebuild-registry", action="store_true")
     p_index.add_argument("--suggest-placement", metavar="RFC_ID")
     p_index.set_defaults(func=cmd_index)
+
+    p_cycle = sub.add_parser("cycle-prep", help="One-shot pre-cycle report for a strategic-overview cycle")
+    p_cycle.add_argument("--diff", action="store_true", help="Also diff against reports/strategy/.cycle-snapshot.json")
+    p_cycle.set_defaults(func=cmd_cycle_prep)
 
     args = parser.parse_args()
     args.func(args)

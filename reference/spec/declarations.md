@@ -80,6 +80,7 @@ fun main() -> i64 {
 
 An inner function remains scoped to its own block. For example, `helper();` is valid inside `inner()`, but calling `helper();` from `outer()` is a type error.
 
+<!-- doc-example: expect-fail reason="demonstrates that helper() is not visible from outer() -- the type error is the point" -->
 ```metel
 fun outer() {
     fun inner() {
@@ -303,8 +304,12 @@ enum Shape {
 fun main() -> i64 {
     let dir = Direction::North;
     let s = Shape::Circle { radius = 5.0 };
+    let area = match s {
+        Shape::Circle { radius }           => radius * radius * 3.14159,
+        Shape::Rectangle { width, height } => width * height,
+    };
     match dir {
-        Direction::North => s.radius as i64,
+        Direction::North => area as i64,
         Direction::South => 0,
         Direction::East => 0,
         Direction::West => 0,
@@ -339,8 +344,12 @@ enum Shape {
 fun main() -> i64 {
     let dir = Direction::North;
     let s = Shape::Circle { radius = 5.0 };
+    let area = match s {
+        Shape::Circle { radius }           => radius * radius * 3.14159,
+        Shape::Rectangle { width, height } => width * height,
+    };
     match dir {
-        Direction::North => s.radius as i64,
+        Direction::North => area as i64,
         Direction::South => 0,
         Direction::East => 0,
         Direction::West => 0,

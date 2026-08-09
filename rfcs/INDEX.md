@@ -666,6 +666,17 @@ implementation).
 - **RFC-0027** — C FFI.
 - **RFC-0033** — Field-Level Mutability — additive `let` field annotation.
 - **RFC-0038** — `impl Aspect` in Struct Fields / Existential Types.
+- **RFC-0131** *(draft, opened 2026-08-09)* — Hoist `let`/`var` Bindings to the Top of
+  Their Containing Block — `fun` declarations are already hoisted (visible regardless of
+  declaration order); `let`/`var` are explicitly sequential-only, an asymmetry that
+  became a real constraint fixing metel-core#656/#658 (a nested `fun`'s eager,
+  order-independent build had to be restricted to blocks with no `let`/`var` at all, to
+  avoid the eager build serving a stale, pre-execution snapshot of one). Sketches three
+  designs — TDZ-style hoisting with same-block redeclaration banned, full dynamic
+  hoisting needing resolve-by-declaration-identity, or narrowing `fun` hoisting further
+  via a free-variable check instead — without yet choosing one; the current shadowing
+  example (`let x=1; fun get_x(){x}; let x=2;` — `get_x` must still see the first `x`)
+  is the concrete case any design has to survive.
 - **RFC-0128** *(draft, opened 2026-08-04)* — Exportable Overload Sets and
   Shadow-versus-Extend Semantics — same-name module functions form one overload set;
   exports/imports preserve whole sets; lexical bindings shadow whole sets; and `extend`

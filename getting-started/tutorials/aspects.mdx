@@ -54,6 +54,7 @@ Every Method Named In The Aspect Must Appear
 
 A generic function with an unconstrained type parameter can only move values of that type around — it cannot call any method on them, because the compiler has no idea what `T` will be. Writing `T: Printable` tells the compiler exactly which methods are guaranteed to exist:
 
+<!-- doc-example: skip reason="uses Point/Printable from the earlier block in this section" -->
 ```metel
 fun print_all<T: Printable>(items: T[]) {
     for (let item in items) {
@@ -186,4 +187,4 @@ This tutorial covers the everyday 80%: declaring an aspect, implementing it, bou
 - An aspect method with a body is a default — implementors may omit it.
 - `Self` refers to the concrete implementing type at the call site.
 
-Next: [References](pointers) — address-of, write-through references, and shared mutable state.
+Next: [Records and Row Bounds](records) — the other product type, structural typing, and constraining a generic parameter by the fields it carries instead of by an aspect.

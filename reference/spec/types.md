@@ -225,7 +225,7 @@ owner:
 > [Declarations — Structural Aspect Bounds](declarations.md#structural-aspect-bounds).
 > Until a record or tuple target is supported, **a record satisfies no aspect that requires
 > an implementation**, so a record cannot be printed, compared, or passed where any such
-> bound is required. Auto-derived aspects are unaffected. Tracked as issue #581.
+> bound is required. Auto-derived aspects are unaffected.
 
 ### Projection
 
@@ -489,6 +489,7 @@ fun main() -> i64 {
 
 Ascription fails at compile time if the inferred type of the sub-expression cannot be unified with the ascribed type. For example, `1 : String` is invalid. Use `as` to convert between types; use `:` only when the value already has the target type.
 
+<!-- doc-example: expect-fail reason="demonstrates an ascription failure -- the type error is the point" -->
 ```metel
 fun main() -> i64 {
     let y = 1 : String;
@@ -544,6 +545,7 @@ fun main() -> i64 {
 
 Without such context, ambiguous literals remain a type error. For example, `let x = None;` does not provide enough information to infer the element type.
 
+<!-- doc-example: expect-fail reason="demonstrates an ambiguous None -- the type error is the point" -->
 ```metel
 fun main() -> i64 {
     let x = None;
@@ -605,8 +607,8 @@ fun main() -> i64 {
 A bound written as a row accepts any type carrying at least the listed fields:
 
 ```metel
-fun magnitude<record T: { x: f64, y: f64, .. }>(p: T) -> f64 {
-    (p.x * p.x + p.y * p.y).sqrt()
+fun squared_magnitude<record T: { x: f64, y: f64, .. }>(p: T) -> f64 {
+    p.x * p.x + p.y * p.y
 }
 ```
 
@@ -617,6 +619,11 @@ presence is what makes the bound *open*:
 fun g<record T: { x: f64 }>(p: T)        // closed: T's row is exactly `x`
 fun h<record T: { x: f64, .. }>(p: T)    // open:  T has at least `x`
 ```
+
+> **Remaining gap:** an open bound only makes the fields it lists accessible from inside
+> the function body — there's no way yet to read a field it does *not* name, even from a
+> record that happens to carry it at the call site. That would need a record-pattern rest
+> form (`{ x, .. }`), which doesn't exist yet.
 
 **A field may omit its type** to constrain the label only — `{ x }` means "carries an `x`,
 whatever its type":
@@ -657,12 +664,15 @@ fun labels<record T>(x: T) -> Symbol[]   // any record; no constraint on its fie
 ```
 
 ```metel
-magnitude({ x = 3.0, y = 4.0 });   // a record — satisfies the bound
-magnitude(some_point);             // a struct — does not
+squared_magnitude({ x = 3.0, y = 4.0 });   // a record — satisfies the bound
+squared_magnitude(some_point);             // a struct — does not
 ```
 
 Nominal structs do not satisfy row bounds. **Named records are planned, not implemented**;
-they would provide a nominal record kind. See [RFC-0120: Named Records](../../rfcs/0-draft/rfc-0120-named-records.md).
+they would provide a nominal record kind. See `public/rfcs/0-draft/rfc-0120-named-records.md`
+(RFC-0120: Named Records) — a plain path mention rather than a link while `rfcs/` is
+excluded from the website (see metel-website's `docusaurus.config.ts`), so this doesn't
+become a broken link once RFCs sync through.
 
 ### Why row capability is opt-in
 
@@ -711,12 +721,17 @@ extend<row R: { x: f64, .. }> { ..R }: MyAspect { … }         // every row of 
 extend<row R> { ..R }: MyAspect { … }                         // every row
 ```
 
-The first applies to exactly one structural type and is permitted when the aspect is local.
-The second and third require row variables and are not available in v0.12.0. The second also
-needs overlap checking between row bounds — two shape-conditional implementations can be
-*incomparable* rather than one being more specific, so they must be disjoint. The third
-additionally needs a way to require an aspect of every field in the row, which does not yet
-exist.
+**None of the three are available in v0.12.0** — this contradicted the "Not available in
+v0.12.0" callout above until corrected here; confirmed directly, `extend { x: f64, y: f64 }:
+MyAspect { … }` still fails with the same "cannot `extend` an anonymous record type" rejection
+tuples and records both hit. The first form is the one this design intends to land first —
+exactly one structural type, permitted once the aspect is local — but it is not implemented
+yet, unlike the equivalent one-concrete-target form for arrays (`extend<T> T[]: Aspect`,
+already supported). The second and third additionally require row variables, which don't
+exist at all yet. The second also needs overlap checking between row bounds — two
+shape-conditional implementations can be *incomparable* rather than one being more specific,
+so they must be disjoint. The third additionally needs a way to require an aspect of every
+field in the row, which does not yet exist either.
 
 ## Never Type
 
@@ -819,7 +834,7 @@ fun main() -> i64 {
 ```metel
 fun main() -> i64 {
     let result: Perhaps<i64> = None;
-    let value: Perhaps<i64> = 42;
+    let value: Perhaps<i64> = Some { value = 42 };
     match value {
         Perhaps::Some { value } => value,
         Perhaps::None => match result {

@@ -52,6 +52,12 @@ impl_status: implemented
 > layer at runtime despite the type-checking side already being fully recursive) —
 > each needed a dedicated fix once a `&&T`/`&var &var T`-shaped test caught it.
 
+> **Amended 2026-08-08 (metel-core#649).** §3a's `T: Copy` gate was specified from the
+> start but never actually enforced — RFC-0071 integrated in v0.12.0, and read-copy kept
+> firing unconditionally for two more releases, silently copying non-`Copy` values. Now
+> a hard, always-on type error (`T0024`), not gated behind `--move-check`. See §3a's own
+> updated text.
+>
 > **Status — implemented (2026-07-11).**
 
 ## Summary
@@ -202,12 +208,14 @@ let rr: &&i64 = &r;
 let x: i64 = rr;   // copies through both layers of the chain
 ```
 
-**The `T: Copy` gate depends on RFC-0071, itself accepted but not yet integrated or
-implemented.** Until RFC-0071's affine/Copy model lands, the current interpreter has no
-move semantics at all (everything is deep-cloned on bind), so this rule applies
-universally today — every type behaves as `Copy` in the present implementation. Once
-RFC-0071 is integrated, the gate becomes real: a non-`Copy` `T` cannot be produced this
-way, and code must go through `.clone()` or an owning path instead.
+**The `T: Copy` gate is enforced, as of metel-core#649 (2026-08-08).** RFC-0071
+integrated in v0.12.0, but the gate itself went unimplemented for two more releases —
+read-copy fired unconditionally regardless of whether the referent was actually `Copy`,
+silently duplicating non-`Copy` values with no move and no clone. A non-`Copy` `T`
+cannot be produced this way now: attempting it is a hard, always-on type error
+(`T0024`), not gated behind `--move-check`, since this is a type-safety question rather
+than the affine-ownership-discipline migration `--move-check` stays opt-in for. Code
+must go through `.clone()` or an owning path instead.
 
 ---
 

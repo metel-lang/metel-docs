@@ -305,6 +305,7 @@ The braceless form desugars to a single-expression block. Three restrictions app
        return 4;
    }
    ```
+   <!-- doc-example: expect-fail reason="demonstrates the forbidden dangling-else case -- the parse error is the point" -->
    ```metel
    fun main() {
        let a = true;
@@ -481,7 +482,7 @@ fun main() -> i64 {
     let qp: &var Point = &var q;
     qp.y = 99;        // field write-through — no `*` needed
     var xs = [1, 2, 3];
-    let xp: &var i64[] = &var xs;
+    let xp: &var [i64; 3] = &var xs;
     xp[0] = 9;        // index write-through — no `*` needed
     return q.y + xs[0];
 }

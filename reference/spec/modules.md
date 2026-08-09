@@ -90,7 +90,7 @@ fun main() -> i64 {
 
 // src/parser.mtl
 public struct Token {
-    value: i64,
+    public value: i64,
 }
 ```
 
@@ -100,14 +100,12 @@ public struct Token {
 
 ```metel
 // src/main.mtl
-import parser::{Ast, Token};
-import root::lexer::Token as Tok;
 import parser::*;
-import std::core;
+import root::lexer::Token as Tok;
 
 fun main() -> i64 {
     let ast = Ast { token = Token { value = 1 } };
-    let tok: Tok = core::dbg(Token { value = 2 });
+    let tok: Tok = dbg(Tok { value = 2 });
     return ast.token.value + tok.value + parse(ast.token);
 }
 
@@ -118,12 +116,18 @@ export lexer::Token;
 
 // src/parser/ast.mtl
 import super::lexer::Token;
-public struct Ast { token: Token }
+public struct Ast { public token: Token }
 public fun parse(token: Token) -> i64 { token.value }
 
 // src/lexer.mtl
-public struct Token { value: i64 }
+public struct Token { public value: i64 }
 ```
+
+`import parser::*;` brings in `Ast`, `parse`, and the re-exported `Token` all at
+once; `Tok` — an alias for that same `Token`, reached via a second,
+`root`-qualified import — works as both a type annotation and a struct
+constructor, and unifies with the un-aliased name since both name the same
+declaration.
 
 Import forms:
 
@@ -140,6 +144,7 @@ Import forms:
 
 `export` re-exports names from submodules into the current module's public API:
 
+<!-- doc-example: skip reason="syntax illustration only -- ast/lexer/ParseError aren't real files here" -->
 ```metel
 // parser.mtl — facade module for the parser namespace
 export ast::Ast;

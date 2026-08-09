@@ -8,14 +8,142 @@ title: "Metel Language Changelog"
 
 **In progress on `develop` — not yet released.**
 
+**Negative aspect bounds:**
+- A negative bound (`T: !Aspect`) is now enforced for every structural type — tuples,
+  fixed-size arrays, and references — not just named types and primitives. A `Copy`
+  tuple, array, or reference previously satisfied `T: !Copy` silently, since the check
+  never ran for anything without a nominal or primitive type name.
+
+**Aspect implementations:**
+- An aspect implementation must contain exactly the methods its aspect declares; extra
+  type-specific methods belong in an inherent `extend` block. Missing required aspect
+  methods now report the aspect-bound error code instead of undefined-name.
+- An aspect implementation's methods must also match the aspect's declared signature —
+  arity, parameter types, and return type. A mismatch is now rejected instead of
+  silently accepted.
+
+**`impl Aspect` position:**
+- `impl Aspect` written anywhere other than a function parameter or return type — a
+  `let`/`var` annotation, a struct or enum field, a cast target — is now rejected
+  instead of silently becoming a phantom nominal type and surfacing later as an
+  unrelated, confusing unification failure.
+
+**Loop control flow:**
+- `break`/`continue` with no enclosing loop is now rejected at compile time instead of
+  reaching the evaluator as an internal error. This also closes a live miscompilation:
+  a `break`/`continue` inside a closure body no longer escapes past the closure's own
+  call boundary to terminate whatever loop happens to be running when the closure is
+  called.
+
+**Nested function hoisting:**
+- A nested `fun` declaration can now be called before its own textual declaration
+  point within the same block, and two nested `fun`s can call each other regardless
+  of declaration order — matching the spec's documented hoisting semantics, which the
+  typechecker already accepted but the evaluator did not enforce. Previously this
+  failed at runtime with `undefined variable` naming the nested function itself, even
+  on a program that typechecked cleanly; top-level functions were never affected,
+  only ones nested inside a block.
+
+**Generic diagnostics:**
+- A generic struct field's type, when recoverable from an unsuffixed numeric literal
+  (e.g. `Pair { first = 1, .. }.first`), is now correctly propagated to method-call and
+  string-concatenation dispatch. This previously failed with "cannot infer receiver
+  type" even though the same value's type was already recoverable through arithmetic or
+  an explicit annotation.
+- Diagnostics that named a raw internal type variable (`?t18`) now show the type's own
+  declared generic parameter name where one exists — for struct, enum, function, and
+  method generics alike — falling back to a stable, message-local placeholder (`?1`,
+  `?2`, ...) rather than an id that changed whenever unrelated code elsewhere in the
+  file did.
+
+**Row bounds:**
+- `p.x` now resolves through an abstract, row-bounded generic type parameter
+  (`<record T: { x: f64, .. }>`) for any field the bound explicitly lists, open or
+  closed, on both the read and write sides. This previously fell through to a generic
+  "add a type annotation" error that no annotation could actually fix. Reading a field
+  an open bound does *not* list is still unsupported; tracked as
+  [metel-core#646](https://github.com/metel-lang/metel-core/issues/646).
+
+**Move checking:**
+- `--move-check` now rejects moving a value out of a reference at every position, not
+  just a by-value `self` method call (#602's original scope). General assignment
+  (`let x: B = *r;`), by-value argument passing (`f(*r)`), and a plain field read
+  through a reference receiver with no explicit `*` at all (`self.field` inside a
+  `&self` method, `r.field` for any reference-typed `r`) are all covered now, uniformly.
+  A reference only ever grants access, never ownership; a `Copy` pointee is unaffected.
+  Reading a reference directly into a differently-typed local (`let x: T = r;`, with no
+  field, index, or `*` at all) was a distinct gap, fixed separately — see "Read-copy"
+  below.
+
+**Primitive `extend` targets:**
+- `Self` as a return type now works on a primitive `extend` target (`extend i64 { fun
+  identity(&self) -> Self { ... } }`) — previously this failed to compile with a
+  confusing "cannot unify i64 with i64", since `self`'s parameter type and the `Self`
+  return annotation resolved to two different internal representations of the same
+  primitive. `String` now implements `Clone`, the fix this was blocking.
+
+**Read-copy:**
+- Reading a non-`Copy` value out of a reference via read-copy (`let x: T = r;`,
+  `return`/`break`, a tail expression, or explicit ascription, where `T` differs from
+  `r`'s reference type) is now a hard, always-on type error (new code `T0024`) instead
+  of silently duplicating the value. RFC-0067a §3a specified this `Copy` requirement
+  from the start; it was never actually implemented. Unlike the move-checking bullet
+  above, this is enforced unconditionally — it isn't gated behind `--move-check`, since
+  it's a type-safety question rather than an ownership-discipline migration.
+
+**Array views:**
+- Index assignment through `T[]` (an immutable, non-owning array view) is now its own
+  error code rather than being classified as "annotation required" — the type is
+  already fully known at the point of assignment, and no annotation could have fixed
+  it.
+
+**Module system:**
+- A `root`/`self`/`super`-qualified path is now valid in type-annotation position, not
+  just as an import path or a value/constructor expression — matching the spec's claim
+  that fully-qualified paths are valid anywhere a name is expected. Previously such an
+  annotation failed outright with `unknown type`.
+- A module reachable only through another module's `export` declaration — with no
+  `import` anywhere pulling it in directly — is now actually loaded. The module graph
+  builder previously followed only `import` declarations, even though `export` shares
+  the identical path syntax, so a module reachable solely via re-export was never
+  parsed at all; even a direct `import` bypassing the re-export failed with
+  `unknown struct`/`unknown enum`/`name does not exist`.
+- A bare or `self`-rooted path written inside a non-root module (`parser.mtl`) now
+  resolves against that module's own submodule directory (`parser/`) first, when a
+  matching file exists there, falling back to the previous sibling-relative
+  resolution otherwise. `parser.mtl` can now `export`/`import` its own
+  `parser/ast.mtl` submodule with a bare `ast::Ast` or `self::ast::Ast`, not only a
+  fully `root`-qualified path.
+- An import alias (`import path::Name as Alias;`) now works as a type annotation and
+  as a struct-literal constructor, not just as an ordinary value — previously only
+  the original, un-aliased name worked in either position, even though the alias
+  worked everywhere else.
+- A glob-imported re-export (`import facade::*;`, where `facade` re-exports a name
+  from elsewhere via `export`) is now correctly bound at runtime. It previously
+  typechecked — visibility already counted a re-export as part of the providing
+  module's public surface — but failed at runtime with `undefined variable`; an
+  explicit, non-glob import of the identical re-export worked correctly. The same gap
+  existed, and is fixed the same way, for a re-exported type referenced through a
+  glob import.
+
+**String interpolation:**
+- A string literal nested inside a `${...}` interpolation (e.g.
+  `"${if (true) { "yes" } else { "no" }}"`) now parses correctly. The outer string's
+  own lexing previously terminated at the first unescaped quote inside the
+  interpolation, with no awareness that the quote belonged to a nested string,
+  misparsing everything that followed it.
+
+**Diagnostic and value formatting:**
+- A mutable reference now prints as `&var` in diagnostics and value output, not `&mut`
+  — a spelling the language does not have.
+
 **Documentation:**
 - Corrected the public reference to distinguish implemented anonymous records and
   references from planned named records and linear values.
-
-**Aspect implementations:**
-- An aspect implementation must now contain exactly the methods its aspect declares;
-  extra type-specific methods belong in an inherent `extend` block. Missing required
-  aspect methods now report the aspect-bound error code instead of undefined-name.
+- Corrected `spec/types.md`'s claim that `extend` on an array target fails the same way
+  it does for tuples and records — it doesn't; arrays support a local aspect `extend`
+  (RFC-0061), matching `spec/declarations.md`. Only the array claim was stale; the
+  tuple and record claims were accurate.
 
 ## v0.12.0
 

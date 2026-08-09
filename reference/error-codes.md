@@ -291,10 +291,12 @@ code, each with its own message:
 - a move out of an array element, which is banned outright;
 - a move of a non-`Copy` element out of a borrowed `T[]` view;
 - a `&var` binding moved by a use that is not a reborrow;
-- a by-value `self` method called through a reference — a reference only grants access,
-  never ownership, so its pointee cannot be moved out, unless the pointee's own type is
-  `Copy` (in which case the method reads a copy, exactly as `T: Copy` already permits at
-  read-copy positions per §3a).
+- a value moved out of a reference — by calling a by-value `self` method through it,
+  in general assignment or by-value argument position, or by reading a field through it
+  with no explicit `*` at all. A reference only grants access, never ownership, so its
+  pointee cannot be moved out this way, unless the pointee's own type is `Copy` (in which
+  case the read is a copy, exactly as `T: Copy` already permits at read-copy positions
+  per §3a).
 
 Each message names the binding and the location of the move. When the move happened on an
 earlier iteration of an enclosing loop, the message says so — a loop-carried move is
@@ -306,7 +308,7 @@ would point back at the line you are already reading.
 [T0019] type error in main.mtl at 12..20: cannot partially move value `h`: `h.name` belongs to a `Drop` type
 [T0019] type error in main.mtl at 8..14: cannot move from `xs[0]`: array element moves are not allowed
 [T0019] type error in main.mtl at 62..70: use of moved value `s`: `s` was moved here on an earlier iteration
-[T0019] type error in main.mtl at 40..48: cannot move `(*r)` out of a reference: a by-value `self` method cannot be called through a reference
+[T0019] type error in main.mtl at 40..48: cannot move `(*r)` out of a reference: a reference only grants access to the value it points at, never ownership of it
 ```
 
 **Fix:** depending on the rule — borrow instead of moving (`&x`), clone the value, move the
@@ -366,6 +368,41 @@ would fix); no annotation or binding-mutability change can fix this one.
 
 **Fix:** use `[T; N]` (a fixed-size array) or `List<T>` (a growable, owned collection)
 instead of `T[]` for storage that needs index-write access.
+
+---
+
+### T0024 — Read-copy of a non-`Copy` value out of a reference
+
+> **Since v0.12.1.**
+
+RFC-0067a §3a's "read-copy": a `let`/`mut` binding, `return`/`break` value, tail
+expression, or explicit ascription (`expr: T`) whose own declared type differs from
+its initializer's reference type (`&U`/`&var U`) implicitly copies the referent out —
+but only when `U` is `Copy`. A reference only grants access, never ownership, so
+reading a non-`Copy` value out this way would silently duplicate it with no move and
+no explicit clone.
+
+```metel
+struct NotCopy { v: String }
+
+fun main() {
+    let owned = NotCopy { v = "x" };
+    let r: &NotCopy = &owned;
+    let copy: NotCopy = r;   // T0024 — NotCopy is not Copy
+}
+```
+
+```
+[T0024] type error in main.mtl:6:5: cannot copy `NotCopy` out of a reference: `NotCopy` does not implement `Copy`
+       hint: use `.clone()` if `NotCopy` implements `Clone`, or restructure to take ownership instead
+```
+
+Checked once against the fully-dereferenced type at the end of a reference chain, not
+each intermediate layer — `let x: i64 = rr;` where `rr: &&i64` is unaffected, since
+`i64` is `Copy` regardless of how many reference layers it's read through.
+
+**Fix:** call `.clone()` if the type implements `Clone`, or restructure the code to
+take ownership of the value directly instead of reading it through a reference.
 
 ---
 
@@ -547,7 +584,7 @@ The interpreter reached an impossible state. This is a bug in the interpreter �
 [I0001] internal error: binop: unsupported operand types (typechecker should have caught this)
 ```
 
-**What to do:** please file a bug report at [the Metel issue tracker](https://codeberg.org/metel-lang/metel/issues) with the source program that triggered this error.
+**What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
 
 ### I0002 — Not implemented
 

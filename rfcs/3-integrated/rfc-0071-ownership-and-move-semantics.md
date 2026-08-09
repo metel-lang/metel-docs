@@ -337,22 +337,32 @@ fun main() {
 }
 ```
 
-**Enforced scope, as of #602.** `--move-check` currently enforces this rule only at the
-method-receiver position — calling a by-value `self` method through a reference. Within
-that position the rule applies uniformly regardless of how the reference reached the call:
-whether it is the receiver's own binding (`r.eat()`), a field or tuple element of reference
-type (`pair.0.eat()`), an explicit dereference (`(*r).eat()`), or a type parameter
-instantiated to a reference (`fun twice<T: Consume>(x: &T)`). `&self` and `&var self`
-methods are unaffected — those already take the receiver by reference, so no ownership
-transfer is being asked for. A `Copy` pointee is also unaffected — reading a copy back out
-through a reference is exactly what `Copy` permits (§3a).
+**Enforced scope, as of #602 and #648.** `--move-check` enforces this rule at the
+method-receiver position — calling a by-value `self` method through a reference — and,
+as of #648, at every other position a value can be moved from: general assignment
+(`let x: B = *r;`), by-value argument passing (`f(*r)`), and a plain field read through a
+reference receiver with no explicit `*` at all (`self.field` inside a `&self` method,
+`r.field` for any reference-typed `r`). All of these share one mechanism
+(`illegal_move_kind`'s per-projection walk, banning the step that reads across a
+reference boundary), so the rule applies uniformly regardless of how the reference is
+reached: the receiver's own binding (`r.eat()`), a field or tuple element of reference
+type (`pair.0.eat()`), an explicit dereference (`(*r).eat()`), a type parameter
+instantiated to a reference (`fun twice<T: Consume>(x: &T)`), or an *interior*
+reference-typed field crossed via auto-deref (`outer.inner.payload.eat()` where
+`inner: &Middle`). `&self` and `&var self` methods are unaffected when they only ever
+*read* through the receiver — those already take it by reference, so no ownership
+transfer is being asked for. A `Copy` pointee is also unaffected — reading a copy back
+out through a reference is exactly what `Copy` permits (RFC-0067a §3a).
 
-General assignment (`let x: B = *r;`) and by-value argument passing (`f(*r)`) are **not**
-yet enforced — the rule above states the intended end state, not what is checked today.
-This mirrors §3a's own `T: Copy` gate on read-copy positions, which the interpreter does not
-yet check either. Both are the same class of gap: RFC-0071 is integrated for the method-
-receiver case only; extending enforcement to every position a value can be moved out of a
-reference is tracked as follow-up work, not yet filed as its own issue.
+**A related gap, deliberately not covered by #648, is now closed separately**:
+RFC-0067a's own §3a `T: Copy` gate on read-copy positions — `let x: T = r;`, binding a
+reference directly to a differently-typed local with no field/index/deref projection at
+all — was structurally distinct from everything #648 fixed (`illegal_move_kind`'s
+per-projection walk never runs for a zero-projection place, so it couldn't reach this
+case) and stayed unenforced after #648 landed. Fixed by
+[metel-core#649](https://github.com/metel-lang/metel-core/issues/649), as a hard,
+always-on type error (`T0024`) in the typechecker itself rather than under
+`--move-check` — see RFC-0067a §3a.
 
 ---
 

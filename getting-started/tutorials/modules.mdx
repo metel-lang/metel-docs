@@ -1,5 +1,5 @@
 ---
-sidebar_position: 11
+sidebar_position: 12
 ---
 
 # Tutorial: Modules
@@ -29,6 +29,7 @@ The file you pass to the toolchain is the root module, addressed as `root::` fro
 public struct Token { public value: i64 }
 ```
 
+<!-- doc-example: skip reason="two-file example (src/lexer.mtl + src/main.mtl) — not runnable as a single file" -->
 ```metel
 // src/main.mtl
 import lexer::Token;

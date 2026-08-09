@@ -1,0 +1,145 @@
+---
+sidebar_position: 8
+---
+
+# Tutorial: Records and Row Bounds
+
+A struct is a named product type — you write its shape once, at its declaration, and every value of it carries that name. A record is the other kind of product type: no name, no declaration site. Its shape *is* the type. Two unrelated pieces of code that both write `{ x: f64, y: f64 }` are talking about exactly the same type, without ever agreeing on it in advance.
+
+## Anonymous records
+
+A record is written in bare braces, with no keyword:
+
+```metel
+fun main() {
+    let p: { x: f64, y: f64 } = { x = 1.0, y = 2.0 };
+    println("${p.x}, ${p.y}");   // 1, 2
+}
+```
+
+`{ x: f64, y: f64 }` is the type; `{ x = 1.0, y = 2.0 }` is a value of it. Field declarations classify and take `:`; field initializers define and take `=` — the same distinction `let x: i64 = 1` already draws.
+
+**A record type is exact.** `{ x: f64 }` is inhabited only by records with exactly that field and nothing else — a value of `{ x: f64, y: f64 }` is not a value of `{ x: f64 }`. Records are never implicitly widened or narrowed.
+
+**Records are structurally typed, and field order doesn't matter.** `{ x: i64, y: i64 }` and `{ y: i64, x: i64 }` are the same type; `{ x = 1, y = 2 }` and `{ y = 2, x = 1 }` are indistinguishable values of it. A record is a set of labelled fields, not an ordered one. Repeating a label (`{ x: i64, x: f64 }`) is a compile error.
+
+## Punning and the block ambiguity
+
+When a local variable already has the field's name, `= value` can be omitted, exactly as in a struct literal:
+
+```metel
+fun main() {
+    let x = 1.0;
+    let y = 2.0;
+    let p = { x, y };   // { x: f64, y: f64 }
+    println("${p.x}");
+}
+```
+
+Punning has a sharp edge worth knowing before it surprises you. `{ }` is also block syntax — and in a position that admits both a block and an expression, a *single*-field bare record is read as a block instead:
+
+```metel
+fun sign(n: i64) -> i64 {
+    if (n < 0) { -1 } else { n }
+}
+
+fun describe(x: i64) {
+    if (x == 0) { x } else { x * 2 }   // fine — these are blocks, not records
+}
+```
+
+```metel
+fun main() {
+    let x = 1;
+    let r = { x };       // a record — { let ... }/`=`/call-argument position only admits an expression
+    println(r.x);        // 1
+}
+```
+
+```metel
+fun main() {
+    let x = 1;
+    // In a position that also admits a block (an if/else or match arm, a
+    // function/closure/loop body), `{ x }` is a block whose result is `x` —
+    // not a one-field record.
+    let result = if (true) { x } else { 0 };
+    println(result);   // 1 — an i64, not a record
+}
+```
+
+A multi-field literal is never ambiguous — `{ x = 1, y = 2 }` cannot be parsed as a block, so it needs no special treatment. Force a single-field record in a block-admitting position by parenthesizing it: `({ x })`.
+
+## Where records can (and can't) go
+
+Records are ordinary values everywhere a struct is: parameters, returns, `let`/`var` bindings, struct or enum fields, generic arguments, pattern matches, and tagged or borrowed positions (`@a { x: f64 }`, `&r { x: f64 }`). `Send` and `Sync` extend to them by the same field-composition rule structs use.
+
+Three things a record cannot do, all for the same reason — it has no nominal owner to hang them on:
+
+- **No inherent methods.** Two unrelated modules could otherwise write conflicting methods for the same shape with no principled way to pick one.
+- **No aspect implementation at all yet — local or not.** The design allows a local aspect to be implemented for one concrete row (`extend { x: f64 }: MyAspect { ... }`), but this isn't built yet — confirmed directly, it's rejected the same way a tuple target is. No record satisfies `Display`, `Eq`, or any other aspect today, so `println("${r}")` does not work on a bare record.
+- **No custom `Drop`.** `Drop` is a standard-library aspect, and never local to ordinary user code.
+
+## Row bounds
+
+A row bound constrains a generic type parameter by the fields it carries, rather than by an aspect it implements. `record` is a required marker — it says the bound describes a record's row, not an aspect named `{ x: f64 }` (which wouldn't parse as an aspect name anyway); a bare `<T: { x: f64 }>` is a compile error:
+
+```metel
+fun get_x<record T: { x: f64 }>(p: T) -> f64 {
+    return p.x;
+}
+
+fun main() {
+    println(get_x({ x = 3.0 }));   // 3
+}
+```
+
+`get_x` accepts any record whose row is *exactly* `{ x: f64 }` — a **closed** bound (no trailing `..`). Dot-access to a field listed in the bound works exactly the way it does on a concrete record value.
+
+**The trailing `..` makes a bound open** — satisfied by a record with the listed fields and possibly more, rather than exactly them:
+
+```metel
+fun squared_magnitude<record T: { x: f64, y: f64, .. }>(p: T) -> f64 {
+    return p.x * p.x + p.y * p.y;
+}
+
+fun main() {
+    println(squared_magnitude({ x = 3.0, y = 4.0 }));            // 25
+    println(squared_magnitude({ x = 3.0, y = 4.0, z = 1.0 }));   // 25 — the extra field is fine
+}
+```
+
+An open bound is the more natural shape for a function that only cares about a few fields and shouldn't reject a caller's record just because it also carries others. Dot-access works here too, for any field the bound actually names — `p.x` and `p.y` both work above because both are listed in `T`'s bound.
+
+What still doesn't work: reaching a field that *isn't* listed in the bound, even on a record that happens to carry it at the call site (`z` above, for instance). An open bound only makes the fields it names accessible from inside the function — there's no way yet to read an unnamed "rest," since that needs a record-pattern rest form (`{ x, .. }`) that doesn't exist. Tracked as [metel-core#646](https://github.com/metel-lang/metel-core/issues/646).
+
+A row bound is satisfied only by a record, never by a struct, even one with matching field names:
+
+<!-- doc-example: skip reason="uses get_x from the earlier block in this section" -->
+```metel
+struct Point { x: f64 }
+
+fun main() {
+    get_x({ x = 3.0 });          // a record — satisfies the bound
+    // get_x(Point { x = 3.0 });   // a struct — does not; won't compile
+}
+```
+
+`<record T>` alone, with no braces at all, means "any record, whatever its fields" — the only way to write an unconstrained record bound, since `{ .. }` by itself isn't accepted.
+
+Two shorter forms worth knowing, each used less often than the plain open/closed case above:
+
+- A field can omit its type to constrain the label alone: `<record T: { x, .. }>` means "has an `x` of some type," without saying which — `p.x` still works, just with an inferred, otherwise-unconstrained type.
+- Negation (`!`) is the *complement* of the positive bound, the same way `T: !Copy` means "does not implement `Copy`": `<record T: !{ token }>` means "carries no field named `token` at all."
+
+## What's next for records
+
+This tutorial covers records as they exist today: anonymous, structural, and row-bounded — including an honest look at the one row-bounds gap that remains (reading an open bound's unnamed "rest" field, [metel-core#646](https://github.com/metel-lang/metel-core/issues/646)) rather than glossing over it. Beyond that, a few more things the reference spec describes but aren't built yet: **named records** (a nominal record kind, tracked by RFC-0120), **any aspect implementation for a record at all** (the design's local-only form isn't implemented, see above), and **row-variable-conditional aspect impls** (`extend<row R: { .. }> { ..R }: Aspect { ... }`, which would let one implementation cover every record matching a shape). Chained and pattern projection through a record are also not yet available. See the [Types reference](../../reference/spec/types#anonymous-records) for the full, current picture.
+
+## What you learned
+
+- `{ x: f64, y: f64 }` is a record type; `{ x = 1.0, y = 2.0 }` is a value of it — structurally typed, exact, and field-order-insensitive.
+- A bare single-field `{ x }` is a block, not a record, anywhere a block is also admitted; parenthesize to force a record.
+- A record cannot yet implement any aspect, has no inherent methods, and no custom `Drop`.
+- `<record T: { x: f64 }>` bounds a generic parameter by the fields it must carry; the trailing `..` makes it open rather than closed, and only a record — never a struct — can satisfy it. Dot-access works for any field the bound lists, open or closed; an open bound just can't yet expose a field it doesn't name.
+
+Next: [References](pointers) — address-of, write-through references, and shared mutable state.

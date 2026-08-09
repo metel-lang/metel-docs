@@ -90,6 +90,7 @@ while their backing memory is still valid.
 Moving a field out of a struct leaves the containing value **partially moved**. The remaining
 fields stay accessible; the value as a whole does not.
 
+<!-- doc-example: skip reason="uses Buffer from the earlier block in this doc" -->
 ```metel
 struct Pair { a: Buffer, b: i64 }
 
@@ -134,6 +135,8 @@ therefore moved on use, with one exception:
 > call. Every other use moves.**
 
 ```metel
+struct Counter { n: i64 }
+
 fun bump(r: &var Counter) { }
 
 fun main() {
