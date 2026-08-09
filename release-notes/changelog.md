@@ -6,7 +6,7 @@ title: "Metel Language Changelog"
 
 ## v0.12.1
 
-**In progress on `develop` — not yet released.**
+**Released 2026-08-09.** Interpreter-only patch release — no spec changes.
 
 **Negative aspect bounds:**
 - A negative bound (`T: !Aspect`) is now enforced for every structural type — tuples,
@@ -61,12 +61,11 @@ title: "Metel Language Changelog"
   (`<record T: { x: f64, .. }>`) for any field the bound explicitly lists, open or
   closed, on both the read and write sides. This previously fell through to a generic
   "add a type annotation" error that no annotation could actually fix. Reading a field
-  an open bound does *not* list is still unsupported; tracked as
-  [metel-core#646](https://github.com/metel-lang/metel-core/issues/646).
+  an open bound does *not* list is still unsupported.
 
 **Move checking:**
 - `--move-check` now rejects moving a value out of a reference at every position, not
-  just a by-value `self` method call (#602's original scope). General assignment
+  just a by-value `self` method call, its original scope. General assignment
   (`let x: B = *r;`), by-value argument passing (`f(*r)`), and a plain field read
   through a reference receiver with no explicit `*` at all (`self.field` inside a
   `&self` method, `r.field` for any reference-typed `r`) are all covered now, uniformly.
@@ -86,8 +85,8 @@ title: "Metel Language Changelog"
 - Reading a non-`Copy` value out of a reference via read-copy (`let x: T = r;`,
   `return`/`break`, a tail expression, or explicit ascription, where `T` differs from
   `r`'s reference type) is now a hard, always-on type error (new code `T0024`) instead
-  of silently duplicating the value. RFC-0067a §3a specified this `Copy` requirement
-  from the start; it was never actually implemented. Unlike the move-checking bullet
+  of silently duplicating the value. This `Copy` requirement was part of the reference
+  design from the start; it was never actually implemented. Unlike the move-checking bullet
   above, this is enforced unconditionally — it isn't gated behind `--move-check`, since
   it's a type-safety question rather than an ownership-discipline migration.
 
@@ -136,13 +135,18 @@ title: "Metel Language Changelog"
 **Diagnostic and value formatting:**
 - A mutable reference now prints as `&var` in diagnostics and value output, not `&mut`
   — a spelling the language does not have.
+- A diagnostic message no longer embeds an issue-tracker number. The one place this
+  happened — the `extend` rejection for a structural target — is fully actionable
+  without it, and a tracking number in a string a user might paste into a bug report
+  is exactly the kind of thing that goes stale silently once the number stops meaning
+  what it meant when the message was written.
 
 **Documentation:**
 - Corrected the public reference to distinguish implemented anonymous records and
   references from planned named records and linear values.
 - Corrected `spec/types.md`'s claim that `extend` on an array target fails the same way
-  it does for tuples and records — it doesn't; arrays support a local aspect `extend`
-  (RFC-0061), matching `spec/declarations.md`. Only the array claim was stale; the
+  it does for tuples and records — it doesn't; arrays support a local aspect `extend`,
+  matching `spec/declarations.md`. Only the array claim was stale; the
   tuple and record claims were accurate.
 
 ## v0.12.0
