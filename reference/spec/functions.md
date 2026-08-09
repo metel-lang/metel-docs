@@ -119,7 +119,7 @@ fun main() -> i64 {
 
 Turbofish is most useful when two or more independent type parameters must be pinned at the call site — for example, a `zip` function that pairs elements from arrays of different types:
 
-<!-- doc-example: skip reason="elided body (/* ... */) — illustrates the signature only, not runnable" -->
+<!-- doc-example: skip reason="elided body -- illustrates the signature only, not runnable" -->
 ```metel
 fun zip<A, B>(a: A[], b: B[]) -> (A, B)[] { /* ... */ }
 
