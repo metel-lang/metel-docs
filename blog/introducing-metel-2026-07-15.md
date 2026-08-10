@@ -15,7 +15,7 @@ Here's a taste of what that turned into:
 ```metel
 fun main() {
     let name = "Metel";
-    let answer: Perhaps<i64> = Perhaps::Some { value = 42 };
+    let answer: Perhaps<i64> = Some { value = 42 };
     println("${name} says the answer is ${answer.yolo()}");
 }
 ```
@@ -82,6 +82,9 @@ struct Person { name: String }
 
 extend Person: Greet {
     fun greet(&self) -> String { "Hello, ${self.name}!" }
+}
+
+extend Person {
     fun rename(&var self, new_name: String) { self.name = new_name; }
 }
 
