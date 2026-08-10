@@ -13,22 +13,22 @@ A type parameter in angle brackets after the function name can be used anywhere 
 ```metel
 fun first<T>(items: T[]) -> Perhaps<T> {
     if (items.len() == 0) {
-        return Perhaps::None;
+        return None;
     }
-    return Perhaps::Some { value = items[0u64] };
+    return Some { value = items[0u64] };
 }
 
 fun main() {
     let names = ["Ada", "Alan", "Grace"];
     match first(names) {
-        Perhaps::Some { value } => println(value),   // Ada
-        Perhaps::None => println("empty"),
+        Some { value } => println(value),   // Ada
+        None => println("empty"),
     }
 
     let empty: i64[] = [];
     match first(empty) {
-        Perhaps::Some { value } => println(value),
-        Perhaps::None => println("empty"),           // empty
+        Some { value } => println(value),
+        None => println("empty"),           // empty
     }
 }
 ```
@@ -71,17 +71,17 @@ struct Stack<T> {
 extend Stack<T> {
     fun peek(self) -> Perhaps<T> {
         if (self.items.len() == 0) {
-            return Perhaps::None;
+            return None;
         }
-        return Perhaps::Some { value = self.items[(self.items.len() - 1) as u64] };
+        return Some { value = self.items[(self.items.len() - 1) as u64] };
     }
 }
 
 fun main() {
     let numbers = Stack { items = [1, 2, 3] };
     match numbers.peek() {
-        Perhaps::Some { value } => println(value),   // 3
-        Perhaps::None => println("empty"),
+        Some { value } => println(value),   // 3
+        None => println("empty"),
     }
 }
 ```

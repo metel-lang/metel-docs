@@ -105,8 +105,8 @@ Every module automatically has `std::core` in scope — that's why `Perhaps`, `R
 ```metel
 // No import needed — Perhaps is always in scope
 fun maybe_parse(s: String) -> Perhaps<i64> {
-    if (s == "1") { return Perhaps::Some { value = 1 }; }
-    return Perhaps::None;
+    if (s == "1") { return Some { value = 1 }; }
+    return None;
 }
 ```
 

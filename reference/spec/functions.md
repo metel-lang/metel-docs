@@ -143,20 +143,20 @@ Inside a function returning `Result<T, E>`, `?` propagates errors early:
 ```metel
 fun parse_int(s: String) -> Result<i64, String> {
     if (s == "21") {
-        return Result::Ok { value = 21 };
+        return Ok { value = 21 };
     }
-    return Result::Err { error = "not a number" };
+    return Err { error = "not a number" };
 }
 
 fun parse_and_double(s: String) -> Result<i64, String> {
     let n = parse_int(s)?;   // returns Err early if parse_int fails
-    return Result::Ok { value = n * 2 };
+    return Ok { value = n * 2 };
 }
 
 fun main() -> i64 {
     match parse_and_double("21") {
-        Result::Ok { value } => value,
-        Result::Err { error } => 0,
+        Ok { value } => value,
+        Err { error } => 0,
     }
 }
 ```

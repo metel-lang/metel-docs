@@ -152,16 +152,16 @@ enum Direction {
 
 fun describe(d: Direction) -> String {
     match d {
-        Direction::North => "heading north",
-        Direction::South => "heading south",
-        Direction::East  => "heading east",
-        Direction::West  => "heading west",
+        North => "heading north",
+        South => "heading south",
+        East  => "heading east",
+        West  => "heading west",
     }
 }
 
 fun main() {
-    println(describe(Direction::North));   // heading north
-    println(describe(Direction::West));    // heading west
+    println(describe(North));   // heading north
+    println(describe(West));    // heading west
 }
 ```
 
@@ -175,8 +175,8 @@ enum Shape {
 
 fun area(s: Shape) -> f64 {
     match s {
-        Shape::Circle { radius } => 3.14159 * radius * radius,
-        Shape::Rectangle { width, height } => width * height,
+        Circle { radius } => 3.14159 * radius * radius,
+        Rectangle { width, height } => width * height,
     }
 }
 
@@ -210,15 +210,15 @@ enum Shape {
 extend Shape {
     fun area(self) -> f64 {
         match self {
-            Shape::Circle { radius } => 3.14159 * radius * radius,
-            Shape::Rectangle { width, height } => width * height,
+            Circle { radius } => 3.14159 * radius * radius,
+            Rectangle { width, height } => width * height,
         }
     }
 
     fun describe(self) -> String {
         match self {
-            Shape::Circle { radius } => "circle with radius ${radius}",
-            Shape::Rectangle { width, height } => "rectangle ${width}×${height}",
+            Circle { radius } => "circle with radius ${radius}",
+            Rectangle { width, height } => "rectangle ${width}×${height}",
         }
     }
 }
@@ -275,10 +275,10 @@ struct Card {
 extend Suit {
     fun to_string(self) -> String {
         match self {
-            Suit::Clubs    => "Clubs",
-            Suit::Diamonds => "Diamonds",
-            Suit::Hearts   => "Hearts",
-            Suit::Spades   => "Spades",
+            Clubs    => "Clubs",
+            Diamonds => "Diamonds",
+            Hearts   => "Hearts",
+            Spades   => "Spades",
         }
     }
 }
@@ -286,21 +286,21 @@ extend Suit {
 extend Rank {
     fun to_string(self) -> String {
         match self {
-            Rank::Number { value } => value.to_string(),
-            Rank::Jack  => "Jack",
-            Rank::Queen => "Queen",
-            Rank::King  => "King",
-            Rank::Ace   => "Ace",
+            Number { value } => value.to_string(),
+            Jack  => "Jack",
+            Queen => "Queen",
+            King  => "King",
+            Ace   => "Ace",
         }
     }
 
     fun point_value(self) -> i64 {
         match self {
-            Rank::Number { value } => value,
-            Rank::Jack  => 10,
-            Rank::Queen => 10,
-            Rank::King  => 10,
-            Rank::Ace   => 11,
+            Number { value } => value,
+            Jack  => 10,
+            Queen => 10,
+            King  => 10,
+            Ace   => 11,
         }
     }
 }
@@ -325,9 +325,9 @@ fun hand_value(hand: Card[]) -> i64 {
 
 fun main() {
     let hand = [
-        Card { suit = Suit::Hearts,   rank = Rank::Ace },
-        Card { suit = Suit::Spades,   rank = Rank::King },
-        Card { suit = Suit::Diamonds, rank = Rank::Number { value = 7 } },
+        Card { suit = Hearts,   rank = Ace },
+        Card { suit = Spades,   rank = King },
+        Card { suit = Diamonds, rank = Number { value = 7 } },
     ];
 
     for (let card in hand) {

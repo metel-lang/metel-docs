@@ -305,14 +305,14 @@ fun main() -> i64 {
     let dir = Direction::North;
     let s = Shape::Circle { radius = 5.0 };
     let area = match s {
-        Shape::Circle { radius }           => radius * radius * 3.14159,
-        Shape::Rectangle { width, height } => width * height,
+        Circle { radius }           => radius * radius * 3.14159,
+        Rectangle { width, height } => width * height,
     };
     match dir {
-        Direction::North => area as i64,
-        Direction::South => 0,
-        Direction::East => 0,
-        Direction::West => 0,
+        North => area as i64,
+        South => 0,
+        East => 0,
+        West => 0,
     }
 }
 ```
@@ -345,14 +345,14 @@ fun main() -> i64 {
     let dir = Direction::North;
     let s = Shape::Circle { radius = 5.0 };
     let area = match s {
-        Shape::Circle { radius }           => radius * radius * 3.14159,
-        Shape::Rectangle { width, height } => width * height,
+        Circle { radius }           => radius * radius * 3.14159,
+        Rectangle { width, height } => width * height,
     };
     match dir {
-        Direction::North => area as i64,
-        Direction::South => 0,
-        Direction::East => 0,
-        Direction::West => 0,
+        North => area as i64,
+        South => 0,
+        East => 0,
+        West => 0,
     }
 }
 ```
@@ -370,8 +370,8 @@ enum Shape {
 extend Shape {
     fun area(self) -> f64 {
         match self {
-            Shape::Circle { radius } => 3.14159 * radius * radius,
-            Shape::Rectangle { width, height } => width * height,
+            Circle { radius } => 3.14159 * radius * radius,
+            Rectangle { width, height } => width * height,
         }
     }
 }
@@ -615,7 +615,7 @@ orphan rule does not apply because there is no authored impl site.
 
 ### Structural Aspect Bounds
 
-Arrays (`T[]`), tuples (`(A, B)`, …), and function types (`fun(A) -> B`) are
+Arrays (`T[]`), tuples (`(A, B)`, …), and function types (`(A) -> B`) are
 **structural types** — built into the language rather than declared by a user, with no
 name that can serve as an impl target the ordinary way. For the orphan rule (above),
 structural type constructors are treated as belonging to `std::core`: a user module
@@ -650,7 +650,9 @@ arrays, each conditional on the element type satisfying the same bound (element-
 `to_string`/join, element-wise clone into new backing storage, and element-wise
 equality respectively). These cannot be overridden by user code (orphan rule).
 `List<T>` is a separate nominal struct; its impls coexist independently of the array
-impls. `Ord` and `Hash` array impls are not provided in this language version.
+impls. `Ord` (RFC-0062, still `0-draft`) and `Hash` (not yet proposed) array impls are
+not provided in this language version — neither aspect exists in `std::core` at all yet,
+for arrays or otherwise.
 
 > **Since v0.12.0 (RFC-0126): `T[]`'s `Clone` impl is replaced, not just
 > reconditioned.** Once `T[]` owns nothing, "element-wise clone into new backing storage" is
@@ -662,7 +664,7 @@ impls. `Ord` and `Hash` array impls are not provided in this language version.
 
 **Tuples** are deferred pending a decision on per-arity boilerplate vs. variadic generics — until then, tuples fail aspect bounds the same way arrays do without a matching impl (`(i64, String)` does not implement `Display`, with a hint to use a named struct instead).
 
-**Function types.** `fun(A) -> B` is a function pointer (word-sized, no captured state) — distinct from closures. Every function type auto-provides `Callable<A, B>` (its formal aspect declaration is deferred to a follow-on stdlib RFC) and, from `std::core`, `Copy`/`Clone`/`Send`/`Sync` (all trivially true for a stateless code pointer). `Display`, `Eq`, `Ord`, `Hash`, and `Drop` are not implemented for function types — there is no canonical string form, function equality is undecidable in general, and there is no state to drop.
+**Function types.** A plain function and a closure share one type, `(A) -> B` (see [Functions — First-Class Functions](functions.md#first-class-functions)) — there is no separate `fun(A) -> B` function-pointer type or syntax; `fun(A) -> B` is a parse error. `Callable<A, B>` does not exist in `std::core` yet — despite being referenced elsewhere as the aspect a function type would formally satisfy, writing a bound or `impl Callable<A, B>` against it is a compile error (`T0003`, unknown aspect) today. A `(A) -> B` value behaves like `Copy` under `--move-check` (reusing one after copying it into another binding is accepted), but there is no working `Clone`: `.clone()` on a `(A) -> B` receiver fails to typecheck (`T0002`, cannot infer receiver type) regardless of annotation. `Display`, `Eq`, `Ord`, `Hash`, `Send`, `Sync`, and `Drop` are not implemented for function types either — there is no canonical string form, function equality is undecidable in general, `Send`/`Sync` aren't implemented for any type yet (RFC-0080, still `1-under-review`), and there is no state to drop.
 
 **Array auto-impl propagation.** `T[]: Send`, `T[]: Sync`, and `T[]: Drop` are not
 provided in this language version.
@@ -878,19 +880,32 @@ Each `impl Aspect` occurrence in a signature is a **fresh, independent** type va
 **Return-position `impl Aspect`.** A function may return `impl Aspect` instead of a named type. The caller sees an opaque type known only to satisfy `Aspect` — no boxing, no heap allocation, no vtable, since the concrete type is fixed by the function's own body:
 
 ```metel
-fun make_adder(n: i64) -> impl Callable<i64, i64> {
-    fun(x: i64) -> i64 { x + n }
+aspect Printable {
+    fun print(self);
+}
+
+struct Adder { n: i64 }
+
+extend Adder: Printable {
+    fun print(self) {
+        println("adds ${self.n}");
+    }
+}
+
+fun make_adder(n: i64) -> impl Printable {
+    Adder { n = n }
 }
 
 let add5 = make_adder(5);
-add5(10);   // 15 — callable, but its concrete type is not nameable
+add5.print();   // adds 5 — printable, but its concrete type is not nameable
 ```
 
 A function returning `impl Aspect` must produce the **same concrete type on every code path** — the compiler resolves one fixed type per function definition, not per call:
 
+<!-- doc-example: expect-fail reason="branches return different concrete types -- the whole point" -->
 ```metel
 fun bad(flag: boolean) -> impl Display {
-    if flag { 42 } else { "hello" }   // error: branches return different concrete types
+    if (flag) { 42 } else { "hello" }   // error: branches return different concrete types
 }
 ```
 

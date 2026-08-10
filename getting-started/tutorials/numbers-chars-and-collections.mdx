@@ -166,8 +166,8 @@ fun main() {
     println(queue.len());   // 3
 
     match queue.pop() {
-        Perhaps::Some { value } => println("last stage: ${value}"),
-        Perhaps::None => println("queue was empty"),
+        Some { value } => println("last stage: ${value}"),
+        None => println("queue was empty"),
     }
 }
 ```
@@ -180,8 +180,8 @@ fun main() {
     nums.push(4);
 
     match nums.get(1) {
-        Perhaps::Some { value } => println(value),   // 2
-        Perhaps::None => println("missing"),
+        Some { value } => println(value),   // 2
+        None => println("missing"),
     }
 }
 ```

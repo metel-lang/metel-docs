@@ -439,7 +439,7 @@ fun main() {
     xs.push(2);
     xs.push(3);
     println(xs.len().to_string());   // 3
-    let last = xs.pop();             // Perhaps::Some { value = 3 }
+    let last = xs.pop();             // Some { value = 3 }
 }
 ```
 
@@ -517,7 +517,7 @@ fun make_row(use_default: boolean, fallback: i64[]) -> i64[] {
 
 fun first_or_default(items: i64[], fallback: Perhaps<i64>) -> i64 {
     return match fallback {
-        Perhaps::Some { value } => value,
+        Some { value } => value,
         None => if (items.len() > 0) { items[0] } else { 0 },
     };
 }
@@ -537,8 +537,8 @@ fun main() -> i64 {
     let arr = [] : i64[];
     let value = None : Perhaps<i64>;
     match value {
-        Perhaps::Some { value } => value + arr.len(),
-        Perhaps::None => arr.len(),
+        Some { value } => value + arr.len(),
+        None => arr.len(),
     }
 }
 ```
@@ -588,14 +588,14 @@ fun first<T>(arr: T[]) -> Perhaps<T> {
     if (arr.len() == 0) {
         return None;
     }
-    return Perhaps::Some { value = arr[0] };
+    return Some { value = arr[0] };
 }
 
 fun main() -> i64 {
     let stack = Stack { items = [1, 2, 3] };
     match first(stack.items) {
-        Perhaps::Some { value } => value,
-        Perhaps::None => 0,
+        Some { value } => value,
+        None => 0,
     }
 }
 ```
@@ -825,8 +825,8 @@ The type of `None` is `Perhaps<T>` for some `T` that must be determinable from c
 fun main() -> i64 {
     let x: Perhaps<i64> = None;
     match x {
-        Perhaps::Some { value } => value,
-        Perhaps::None => 0,
+        Some { value } => value,
+        None => 0,
     }
 }
 ```
@@ -836,10 +836,10 @@ fun main() -> i64 {
     let result: Perhaps<i64> = None;
     let value: Perhaps<i64> = Some { value = 42 };
     match value {
-        Perhaps::Some { value } => value,
-        Perhaps::None => match result {
-            Perhaps::Some { value } => value,
-            Perhaps::None => 0,
+        Some { value } => value,
+        None => match result {
+            Some { value } => value,
+            None => 0,
         },
     }
 }
@@ -854,15 +854,15 @@ struct User {
 
 fun find_user(id: i64) -> Perhaps<User> {
     if (id == 1) {
-        return Perhaps::Some { value = User { id = 1 } };
+        return Some { value = User { id = 1 } };
     }
     return None;
 }
 
 fun main() -> i64 {
     match find_user(1) {
-        Perhaps::Some { value } => value.id,
-        Perhaps::None => 0,
+        Some { value } => value.id,
+        None => 0,
     }
 }
 ```
@@ -876,7 +876,7 @@ struct User {
 
 fun find_user(id: i64) -> Perhaps<User> {
     if (id == 1) {
-        return Perhaps::Some { value = User { id = 1 } };
+        return Some { value = User { id = 1 } };
     }
     return None;
 }
@@ -894,15 +894,15 @@ fun main() -> i64 {
 ```metel
 fun divide(a: f64, b: f64) -> Result<f64, String> {
     if (b == 0.0) {
-        return Result::Err { error = "division by zero" };
+        return Err { error = "division by zero" };
     }
-    return Result::Ok { value = a / b };
+    return Ok { value = a / b };
 }
 
 fun main() -> i64 {
     match divide(8.0, 2.0) {
-        Result::Ok { value } => value as i64,
-        Result::Err { error } => 0,
+        Ok { value } => value as i64,
+        Err { error } => 0,
     }
 }
 ```

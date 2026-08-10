@@ -64,11 +64,9 @@ import utils::greet;
 fun main() {
     greet("world");
 }
-```
 
-```metel
 // src/utils.mtl
-public fun greet(name: String) {
+public fun greet(name: String) -> () {
     println("hello, " + name);
 }
 ```

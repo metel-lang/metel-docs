@@ -54,7 +54,7 @@ fun main() {
     // Transform inside the Perhaps, then supply a fallback.
     let doubled = maybe.map((x: i64) -> i64 { x * 2 }).unwrap_or(0); // 42
 
-    let nothing: Perhaps<i64> = Perhaps::None;
+    let nothing: Perhaps<i64> = None;
     println(nothing.is_none());            // true
     println(nothing.unwrap_or(7));         // 7
 }
@@ -64,7 +64,7 @@ fun main() {
 the `Err` through untouched:
 
 ```metel
-let r: Result<i64, String> = Result::Ok { value = 10 };
+let r: Result<i64, String> = Ok { value = 10 };
 let n = r.map((x: i64) -> i64 { x + 5 }).unwrap_or(0);  // 15
 ```
 
@@ -86,7 +86,7 @@ fun main() {
     println(String::join(["a", "b", "c"], "-")); // "a-b-c"
 
     match "hello".index_of("l") {
-        Perhaps::Some { value } => println(value),  // 2
+        Some { value } => println(value),  // 2
         _ => println("not found"),
     }
 }
@@ -102,8 +102,8 @@ import std::fs::{write_string, read_to_string};
 
 fun main() {
     match write_string("/tmp/greeting.txt", "hello") {
-        Result::Ok { value } => {},
-        Result::Err { error } => println(error.to_string()),
+        Ok { value } => {},
+        Err { error } => println(error.to_string()),
     }
 
     let contents = read_to_string("/tmp/greeting.txt").unwrap_or("");
@@ -125,7 +125,7 @@ import std::env::get;
 
 fun main() {
     match get("HOME") {
-        Perhaps::Some { value } => println(value),
+        Some { value } => println(value),
         _ => println("HOME is not set"),
     }
 }
@@ -139,8 +139,8 @@ import std::process::run;
 
 fun main() {
     match run("echo", ["hello", "world"]) {
-        Result::Ok { value } => println(value.stdout),
-        Result::Err { error } => println(error.to_string()),
+        Ok { value } => println(value.stdout),
+        Err { error } => println(error.to_string()),
     }
 }
 ```

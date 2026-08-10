@@ -33,10 +33,10 @@ fun first_over(threshold: i64, values: i64[]) -> Perhaps<i64> {
     var i: u64 = 0;
     loop {
         if ((i as i64) >= values.len()) {
-            break Perhaps::None;
+            break None;
         }
         if (values[i] > threshold) {
-            break Perhaps::Some { value = values[i] };
+            break Some { value = values[i] };
         }
         i += 1;
     }
@@ -45,8 +45,8 @@ fun first_over(threshold: i64, values: i64[]) -> Perhaps<i64> {
 fun main() {
     let result = first_over(6, [3, 1, 7, 2, 9, 4]);
     match result {
-        Perhaps::Some { value } => println("first over 6: ${value}"),   // 7
-        Perhaps::None => println("none found"),
+        Some { value } => println("first over 6: ${value}"),   // 7
+        None => println("none found"),
     }
 }
 ```
@@ -65,24 +65,24 @@ fun find(haystack: String[], needle: String) -> Perhaps<i64> {
     var i = 0;
     for (let s in haystack) {
         if (s == needle) {
-            return Perhaps::Some { value = i };
+            return Some { value = i };
         }
         i += 1;
     }
-    return Perhaps::None;
+    return None;
 }
 
 fun main() {
     let fruits = ["apple", "banana", "cherry"];
 
     match find(fruits, "banana") {
-        Perhaps::Some { value } => println("found at index ${value}"),   // 1
-        Perhaps::None => println("not found"),
+        Some { value } => println("found at index ${value}"),   // 1
+        None => println("not found"),
     }
 
     match find(fruits, "mango") {
-        Perhaps::Some { value } => println("found at index ${value}"),
-        Perhaps::None => println("not found"),                               // not found
+        Some { value } => println("found at index ${value}"),
+        None => println("not found"),                               // not found
     }
 }
 ```
@@ -119,14 +119,14 @@ struct ParseError {
 
 fun parse_positive(s: String) -> Result<i64, ParseError> {
     if (s == "") {
-        return Result::Err { error = ParseError { message = "input is empty" } };
+        return Err { error = ParseError { message = "input is empty" } };
     }
     // In a real program, you'd parse the string here.
     // For this example, accept only "42".
     if (s == "42") {
-        return Result::Ok { value = 42 };
+        return Ok { value = 42 };
     }
-    return Result::Err { error = ParseError { message = "not a valid positive integer: ${s}" } };
+    return Err { error = ParseError { message = "not a valid positive integer: ${s}" } };
 }
 
 fun main() {
@@ -134,8 +134,8 @@ fun main() {
 
     for (let input in inputs) {
         match parse_positive(input) {
-            Result::Ok { value } => println("ok: ${value}"),
-            Result::Err { error } => println("error: ${error.message}"),
+            Ok { value } => println("ok: ${value}"),
+            Err { error } => println("error: ${error.message}"),
         }
     }
 }
@@ -160,26 +160,26 @@ struct ParseError {
 
 fun parse_positive(s: String) -> Result<i64, ParseError> {
     if (s == "") {
-        return Result::Err { error = ParseError { message = "empty input" } };
+        return Err { error = ParseError { message = "empty input" } };
     }
-    if (s == "42") { return Result::Ok { value = 42 }; }
-    if (s == "7")  { return Result::Ok { value = 7 };  }
-    return Result::Err { error = ParseError { message = "unrecognised: ${s}" } };
+    if (s == "42") { return Ok { value = 42 }; }
+    if (s == "7")  { return Ok { value = 7 };  }
+    return Err { error = ParseError { message = "unrecognised: ${s}" } };
 }
 
 fun double_parse(s: String) -> Result<i64, ParseError> {
     let n = parse_positive(s)?;   // returns Err immediately if parse fails
-    return Result::Ok { value = n * 2 };
+    return Ok { value = n * 2 };
 }
 
 fun main() {
     match double_parse("42") {
-        Result::Ok { value } => println("doubled: ${value}"),   // 84
-        Result::Err { error } => println("failed: ${error.message}"),
+        Ok { value } => println("doubled: ${value}"),   // 84
+        Err { error } => println("failed: ${error.message}"),
     }
     match double_parse("nope") {
-        Result::Ok { value } => println("doubled: ${value}"),
-        Result::Err { error } => println("failed: ${error.message}"),   // unrecognised: nope
+        Ok { value } => println("doubled: ${value}"),
+        Err { error } => println("failed: ${error.message}"),   // unrecognised: nope
     }
 }
 ```
@@ -215,30 +215,30 @@ extend AppError: From<ParseError> {
 }
 
 fun read_data(path: String) -> Result<String, IoError> {
-    if (path == "data.txt") { Result::Ok  { value = "42" } }
-    else { Result::Err { error = IoError { msg = "file not found: ${path}" } } }
+    if (path == "data.txt") { Ok  { value = "42" } }
+    else { Err { error = IoError { msg = "file not found: ${path}" } } }
 }
 
 fun parse_number(s: String) -> Result<i64, ParseError> {
-    if (s == "42") { Result::Ok  { value = 42 } }
-    else { Result::Err { error = ParseError { msg = "not a number: ${s}" } } }
+    if (s == "42") { Ok  { value = 42 } }
+    else { Err { error = ParseError { msg = "not a number: ${s}" } } }
 }
 
 // Both ? calls coerce their error type to AppError via From
 fun load_and_parse(path: String) -> Result<i64, AppError> {
     let raw = read_data(path)?;
     let n   = parse_number(raw)?;
-    Result::Ok { value = n }
+    Ok { value = n }
 }
 
 fun main() {
     match load_and_parse("data.txt") {
-        Result::Ok { value } => println("loaded: ${value}"),   // loaded: 42
-        Result::Err { error } => println("failed: ${error.msg}"),
+        Ok { value } => println("loaded: ${value}"),   // loaded: 42
+        Err { error } => println("failed: ${error.msg}"),
     }
     match load_and_parse("missing.txt") {
-        Result::Ok { value } => println("loaded: ${value}"),
-        Result::Err { error } => println("failed: ${error.msg}"),   // failed: io: file not found: missing.txt
+        Ok { value } => println("loaded: ${value}"),
+        Err { error } => println("failed: ${error.msg}"),   // failed: io: file not found: missing.txt
     }
 }
 ```
@@ -296,30 +296,30 @@ struct ValidationError { field: String, reason: String }
 
 fun validate_name(name: String) -> Result<String, ValidationError> {
     if (name.len() == 0) {
-        return Result::Err { error = ValidationError {
+        return Err { error = ValidationError {
             field = "name",
             reason = "must not be empty",
         }};
     }
     if (name.len() > 32) {
-        return Result::Err { error = ValidationError {
+        return Err { error = ValidationError {
             field = "name",
             reason = "must be 32 characters or fewer",
         }};
     }
-    Result::Ok { value = name }
+    Ok { value = name }
 }
 
 fun validate_age(raw: String) -> Result<i64, ValidationError> {
     // Simplified: only accept a handful of values for this example.
     match raw {
-        "17" => Result::Err { error = ValidationError {
+        "17" => Err { error = ValidationError {
             field = "age",
             reason = "must be 18 or older",
         }},
-        "25" => Result::Ok { value = 25 },
-        "30" => Result::Ok { value = 30 },
-        _ => Result::Err { error = ValidationError {
+        "25" => Ok { value = 25 },
+        "30" => Ok { value = 30 },
+        _ => Err { error = ValidationError {
             field = "age",
             reason = "unrecognised value",
         }},
@@ -334,7 +334,7 @@ struct User {
 fun validate_user(name: String, age_str: String) -> Result<User, ValidationError> {
     let valid_name = validate_name(name)?;
     let valid_age  = validate_age(age_str)?;
-    Result::Ok { value = User { name = valid_name, age = valid_age } }
+    Ok { value = User { name = valid_name, age = valid_age } }
 }
 
 fun main() {
@@ -349,9 +349,9 @@ fun main() {
         let name = attempt.0;
         let age  = attempt.1;
         match validate_user(name, age) {
-            Result::Ok { value } =>
+            Ok { value } =>
                 println("ok: ${value.name}, age ${value.age}"),
-            Result::Err { error } =>
+            Err { error } =>
                 println("invalid ${error.field}: ${error.reason}"),
         }
     }

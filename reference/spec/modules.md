@@ -176,14 +176,14 @@ Every module automatically has `std::core` glob-imported at the lowest priority 
 ```metel
 // No import needed — Perhaps and Result are always in scope
 fun maybe_parse(s: String) -> Perhaps<i64> {
-    if (s == "1") { return Perhaps::Some { value = 1 }; }
+    if (s == "1") { return Some { value = 1 }; }
     return None;
 }
 
 fun main() -> i64 {
     match maybe_parse("1") {
-        Perhaps::Some { value } => value,
-        Perhaps::None => 0,
+        Some { value } => value,
+        None => 0,
     }
 }
 ```
