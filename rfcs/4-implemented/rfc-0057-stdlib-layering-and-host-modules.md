@@ -3,6 +3,10 @@ id: rfc-0057
 title: "Standard Library Layering and Host Module Boundary"
 date: '2026-06-06'
 revised: '2026-06-11'
+coverage:
+  "5": { kind: untestable, reason: "std::math is not implemented: importing it still reports unresolved path T0003." }
+  "8": { kind: untestable, reason: "std::process and its proposed shell-free run API are not implemented, so no fixture can exercise this scope." }
+  "11": { kind: untestable, reason: "Networking is explicitly deferred to a future RFC and this section specifies no present behavior." }
 ---
 
 ## Summary
@@ -150,6 +154,8 @@ are out of scope for the first cut.
 
 ### 5. `std::math` is the one ordinary library module
 
+> **Coverage: untestable** (see frontmatter). `std::math` has not been implemented.
+
 `std::math` is the single non-prelude, non-host module in the first cut. It is
 an ordinary library namespace — not auto-imported; programs import it
 explicitly.
@@ -192,6 +198,8 @@ Read-only APIs are in scope for the first release. Mutating the host process
 environment, such as `set_var` or `remove_var`, is deferred.
 
 ### 8. Initial scope of `std::process`
+
+> **Coverage: untestable** (see frontmatter). `std::process` has not been implemented.
 
 `std::process` covers command-line arguments and subprocess execution.
 
@@ -262,6 +270,8 @@ The exact representation of `OsError` is deferred. It may begin as an opaque
 runtime-backed type.
 
 ### 11. Networking is deferred
+
+> **Coverage: untestable** (see frontmatter). Networking is reserved for a future RFC.
 
 Networking is not part of the first standard-library milestone.
 

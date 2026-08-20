@@ -7,6 +7,11 @@ target:
 updated: '2026-07-21'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/572'
 impl_status: implemented
+coverage:
+  "2.1": { kind: untestable, reason: "This is rationale for rejecting scope-based glob imports, not a specified language behavior." }
+  "2.2": { kind: untestable, reason: "This is rationale for rejecting a reverse-index resolution mechanism, not fixture-observable behavior." }
+  "2.3": { kind: untestable, reason: "This is rationale for rejecting leading-dot syntax, not a specified language behavior." }
+  "2.4": { kind: untestable, reason: "This is rationale for rejecting the status quo, not a separate behavioral rule." }
 ---
 
 > **Status — under review (2026-07-21).** Substantiated proposal with a verified implementation sketch. All three original open questions resolved against the implementation (2026-07-21): no param_hints widening is needed, method args and struct fields already carry hints, Result's Ok/Err falls out free. Dependency on RFC-0112 removed as a consequence.
@@ -199,6 +204,8 @@ See §3.2.
 
 ### 2.1 Scope-based glob import (`use Colour::*`) — the actual Rust design
 
+> **Coverage: untestable** (see frontmatter). Rejected-design rationale only.
+
 Bring an enum's variants into lexical scope explicitly; bare `Red` then resolves by
 ordinary name lookup with no expected type needed anywhere. `None` stops being special by
 being prelude-imported, exactly as in Rust.
@@ -224,12 +231,16 @@ build it, it does not rule it out.
 
 ### 2.2 A reverse variant→enum index as the resolution mechanism
 
+> **Coverage: untestable** (see frontmatter). Rejected-design rationale only.
+
 RFC-0107 §1.4 anticipated that expression position "would need exactly that reverse index."
 Rejected as a *resolution* mechanism for the reason in §1.4 (action at a distance), but see
 §3.1 — the index is still built, in a much weaker role where it never decides which enum a
 name belongs to.
 
 ### 2.3 Leading-dot syntax (`.red`, Swift-style)
+
+> **Coverage: untestable** (see frontmatter). Rejected-design rationale only.
 
 Swift spells the type-directed form with a leading dot precisely so it is syntactically
 marked as "resolve me against the expected type." This would eliminate §1.2's asymmetry
@@ -242,6 +253,8 @@ an ordinary variant so much as give it a new special spelling. It also does not 
 with RFC-0107, which chose the undotted form for patterns.
 
 ### 2.4 Do nothing — keep `Literal::None`
+
+> **Coverage: untestable** (see frontmatter). Rejected-design rationale only.
 
 The status quo works. Rejected: it permanently privileges one builtin enum over every
 user-defined one, and RFC-0107 has already paid most of the conceptual cost of the general

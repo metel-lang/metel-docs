@@ -6,6 +6,11 @@ status: integrated
 updated: '2026-07-26'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/579'
 impl_status: in-progress
+coverage:
+  "5": { kind: untestable, reason: "Destructor invocation and drop order are not implemented yet; non-empty Drop bodies are intentionally rejected until implementation issue #261 is complete." }
+  "6": { kind: untestable, reason: "The explicit drop function depends on destructor invocation, which is not implemented yet (issue #261)." }
+  "9b": { kind: untestable, reason: "This is an internal architectural requirement for a reusable future borrow-checking place abstraction, not language behavior." }
+  "9c": { kind: untestable, reason: "This section is implementation-tracking process content only." }
 ---
 
 > **Status — accepted.** Establishes the foundational ownership model for Metel
@@ -253,6 +258,8 @@ All `Copy` types satisfy `T: !Drop` by this mutual exclusion rule — `Copy` imp
 
 ## 5. Drop order
 
+> **Coverage: untestable** (see frontmatter). Destructor invocation is not implemented yet.
+
 Within a scope, values are dropped in **reverse declaration order** — the last-declared
 value is dropped first:
 
@@ -283,6 +290,8 @@ are unreachable before the bulk free, preventing use-after-free at the drop site
 ---
 
 ## 6. Explicit drop
+
+> **Coverage: untestable** (see frontmatter). Explicit dropping depends on unimplemented destructor invocation.
 
 A value may be dropped before the end of its scope with the free function `drop`:
 
@@ -384,6 +393,8 @@ allocator lifetime guarantees sound:
 
 ## 9c. Implementation tracking
 
+> **Coverage: untestable** (see frontmatter). This is issue-tracking content, not fixture-observable behavior.
+
 *Filed 2026-07-24, against milestone `v0.12.0`.* Four issues rather than the one per RFC
 `AGENTS.md` prescribes — a deliberate exception, because this RFC is seven sections of
 essentially unbuilt work with a real dependency order between the pieces:
@@ -439,6 +450,8 @@ descoping it pushes RFC-0119 and the blog's short-term commitment out another re
 ---
 
 ## 9b. Implementation requirement inherited from RFC-0122
+
+> **Coverage: untestable** (see frontmatter). This is an internal reusable-place architecture requirement.
 
 *Added 2026-07-24, from answering RFC-0122's open question 3.*
 

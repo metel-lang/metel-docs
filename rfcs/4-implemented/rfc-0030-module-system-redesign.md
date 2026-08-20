@@ -232,3 +232,89 @@ None — all questions from RFC-0009 and RFC-0029 are either resolved by this RF
 The Rust-inspired `mod` + `use` two-step was the primary ergonomic shortcoming of RFC-0009. Collapsing both into `import` eliminates the pattern without adding complexity elsewhere. `export` as an explicit re-export keyword is cleaner than `pub use`. Dropping `name/mod.mln` removes a Rust convention with no independent motivation.
 
 The removal of module-level visibility (`pub mod`) is the most significant simplification. Item-level `pub` is sufficient for v0.5.0; path-level module privacy can be added later if the need arises in practice.
+
+## Coverage Checklist (added 2026-08-19, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims
+(expanded 2026-08-19: added item 12, missed in the original pass),
+as headed sections for ADR-0049 citation purposes only. The document above is
+unchanged and remains the historical record. Deliberately excludes claims that
+aren't independently observable from a program's behavior -- implementation
+strategy, design rationale, or internal architecture discussion belongs in the
+RFC's own prose, not here.
+
+### 1. Import both loads a module and introduces selected names
+
+An `import` declaration loads the referenced module and brings its selected public
+names into the importing module's scope. Named, grouped, aliased, glob, and
+module-handle imports are accepted forms.
+
+### 2. Export re-exports names through a module's public API
+
+An `export` declaration makes a name from a submodule available through the
+current module, including under an alias. Importers may use that re-export as if
+the name were declared directly by the facade module.
+
+### 3. Module paths map directly to .mtl source paths
+
+`::` path segments resolve to directories and `.mtl` files, so `a::b::Thing`
+resolves through `a/b.mtl`. A facade `name.mtl` may coexist with `name/`; no
+special `name/mod.mtl` entry file is used.
+
+### 4. Only public items are accessible across a module boundary
+
+Declarations are module-private unless marked `public`; modules themselves have
+no separate visibility modifier. An import or qualified reference to a private
+item is rejected with the visibility error `T0009`.
+
+### 5. Header imports and exports precede declarations
+
+At file scope, `import` and `export` declarations may be interleaved but must
+come before ordinary declarations. They are not valid inside blocks.
+
+### 6. Module roots and qualified paths resolve in source code
+
+`root::`, `std::`, `self::`, and `super::` are supported path roots in their
+valid contexts, and fully qualified paths may be used wherever a name is expected.
+`super::` from the root module is rejected.
+
+### 7. Import conflicts follow explicit and glob priority rules
+
+Two explicit imports of the same local name are an immediate `T0011` error.
+Explicit imports and local declarations win over glob imports, while a name from
+two user glob imports is rejected only if it is used ambiguously.
+
+### 8. Circular and missing imports are load errors
+
+An import cycle is rejected with its dependency chain, and an import whose module
+file is absent is an error rather than a silently ignored dependency.
+
+### 9. A bare export also loads its referenced module
+
+An `export path::Name;` with no corresponding `import` of `path` still resolves
+and loads `path`'s module file into the graph. (Resolved 2026-08-19,
+metel-core#749/#664: this RFC's original text claimed the opposite --
+"`export` declarations are processed after the graph is fully loaded. They do
+not affect which files are loaded" -- but that design was found to be a real
+bug, not a stated intent worth keeping: without loading the export's target,
+a name reachable only through a re-export resolved nowhere in the compiled
+program, so the re-export itself was permanently broken. Fixed deliberately in
+metel-core#664 -- `export` and `import` now build the module graph together.
+`docs/public/reference/spec/modules.md`'s "Module Graph Loading" section,
+which repeated this RFC's original claim, is corrected to match.)
+
+### 10. Single-file programs remain valid
+
+A `.mtl` program with no `import` or `export` declarations runs as a complete
+single-module program.
+
+### 11. std::core names are available in every module
+
+Every module receives the `std::core` surface at the lowest import-priority tier.
+An explicit import or a local declaration takes precedence over an auto-imported
+name.
+
+### 12. Legacy `mod` and `use` declarations are rejected
+
+The former module declarations `mod`, `use`, and `pub use` are not valid Metel
+syntax; imports and re-exports use `import` and `export` instead.

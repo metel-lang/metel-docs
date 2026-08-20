@@ -122,3 +122,33 @@ The `MutFieldPointer` variant should be invisible at the language level — it i
 
 **Outcome:** Accepted — Option A (fat pointer)  
 **Target:** *(unscheduled)*
+
+## Coverage Checklist (added 2026-08-19, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
+as headed sections for ADR-0049 citation purposes only. The document above is
+unchanged and remains the historical record. Deliberately excludes claims that
+aren't independently observable from a program's behavior -- implementation
+strategy, design rationale, or internal architecture discussion belongs in the
+RFC's own prose, not here.
+
+### 1. `&var` may take the address of a struct field
+
+Taking `&var value.field` produces a mutable reference to that field. Assignment
+or compound assignment through the reference updates the original struct field.
+
+### 2. `&var` may take the address of a tuple element
+
+Taking `&var value.0` produces a mutable reference to that tuple element.
+Writing through it changes that element without changing the other elements.
+
+### 3. `&var` may take the address of an array element
+
+Taking `&var values[index]` produces a mutable reference to the indexed element.
+Writes through the reference are visible through subsequent indexing of the array.
+
+### 4. `&var` supports chained lvalue paths
+
+A mutable reference may be taken to a nested field or other chain of addressable
+projections, such as `&var rect.bottom_right.x`. Updating it propagates to the
+leaf storage location in the original value.

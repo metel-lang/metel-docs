@@ -2,6 +2,11 @@
 id: rfc-0021
 title: "Type Ascription Syntax"
 date: '2026-05-23'
+coverage:
+  "1": { spec: "spec.types.type-ascription.legality-1" }
+  "2": { spec: "spec.types.type-ascription.legality-2" }
+  "3": { spec: "spec.types.type-casting.dynamics-1" }
+  "4": { spec: "spec.types.type-ascription.legality-3" }
 ---
 
 ## Summary
@@ -159,3 +164,32 @@ No new grammar rule is strictly required — `cast_expr` can be renamed `asc_exp
 **Target:** v0.2
 
 Shipped in v0.2.0. `:` is the type ascription operator in expression position; `as` is preserved as the explicit runtime conversion operator. The two operators are cleanly distinct: `:` is a compile-time inference hint with no runtime cost; `as` is a deliberate runtime conversion. `1 : Float` is a type error; `1 as Float` is a conversion. Chained ascription is not supported (`?` grammar form — at most one `:` per expression).
+
+## Coverage Checklist (added 2026-08-19, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
+as headed sections for ADR-0049 citation purposes only. The document above is
+unchanged and remains the historical record. Deliberately excludes claims that
+aren't independently observable from a program's behavior -- implementation
+strategy, design rationale, or internal architecture discussion belongs in the
+RFC's own prose, not here.
+
+### 1. Colon ascribes a type to an expression
+
+`expr : T` constrains the expression to type `T` and supplies `T` as expected type to
+the expression, including in argument position. It is a compile-time operation with no
+runtime conversion or cost.
+
+### 2. An ascribed type must unify with the expression's type
+
+An ascription is rejected when the expression cannot have the ascribed type. In
+particular, `1 : Float` is a type error rather than a numeric conversion.
+
+### 3. As remains the explicit runtime conversion operator
+
+`expr as T` performs an explicit runtime conversion when a conversion from the expression
+type to `T` is defined, and remains distinct from `: T` ascription.
+
+### 4. An expression permits at most one type ascription
+
+Chained ascriptions such as `x : A : B` are a parse error.

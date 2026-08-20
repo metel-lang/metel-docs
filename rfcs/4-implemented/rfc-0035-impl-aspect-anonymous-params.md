@@ -177,3 +177,45 @@ The lowering pass eliminates all `ImplAspect` nodes before the typechecker runs,
 **Target:** v0.7.0
 
 All resolved questions above are the final decisions. Implementation tracked in METEL-57 (AST lowering pass, error message metadata, T0012 enforcement with source spelling).
+
+## Coverage Checklist (added 2026-08-19, not part of the original RFC; expanded 2026-08-19: added items 5 and 6, missed in the original pass)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
+as headed sections for ADR-0049 citation purposes only. The document above is
+unchanged and remains the historical record. Deliberately excludes claims that
+aren't independently observable from a program's behavior -- implementation
+strategy, design rationale, or internal architecture discussion belongs in the
+RFC's own prose, not here.
+
+### 1. A parameter may use an anonymous `impl Aspect` bound
+
+A function parameter type may be written as `impl Printable`, requiring each
+argument at that position to implement `Printable`. The shorthand may also be
+used inside the parameter's composite type, such as `impl Printable[]`.
+
+### 2. Each `impl Aspect` occurrence is an independent type variable
+
+Two parameters with the same anonymous bound may receive different concrete
+types, provided each type satisfies that bound. A named type parameter remains
+the way to require two parameters to have the same concrete type.
+
+### 3. Anonymous bounds may coexist with named type parameters
+
+A function signature may combine ordinary named generic parameters with one or
+more `impl Aspect` parameter types. An anonymous bound does not constrain an
+otherwise unrelated named parameter.
+
+### 4. An unsatisfied anonymous bound is a type error
+
+Calling a function with an argument whose type does not implement the required
+aspect is rejected, and the diagnostic identifies the required aspect rather
+than an implementation-generated type-variable name.
+
+### 5. Anonymous bounds are rejected in struct-field annotations
+
+`impl Aspect` remains invalid in a struct-field annotation. Return-position
+anonymous bounds are governed by the later RFC-0037 instead.
+
+### 6. Anonymous bounds are rejected in local binding annotations
+
+`impl Aspect` remains invalid in a local binding annotation.

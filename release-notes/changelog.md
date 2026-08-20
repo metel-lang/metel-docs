@@ -4,6 +4,27 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.13.0
+
+*In progress on `develop` — not yet released.*
+
+**Fixes:**
+- An array literal with no expected type now defaults to `T[]` (a borrowed view), not
+  `[T; N]` (a sized array) — matching the reading recorded on RFC-0053's qualified status
+  (2026-08-12) but not implemented until now. Fixes `println([1, 2, 3])`, which
+  `declarations.md`'s own worked example claimed compiled but didn't (`metel-core#715`).
+  An array literal with an explicit `[T; N]` or `T[]` annotation, or one whose type is
+  otherwise propagated (a `let` annotation, a struct field, a function parameter), is
+  unaffected — this changes only the no-annotation fallback.
+- A generic method's own bound (`fun describe<U: Aspect>(self, x: U)`), declared inside
+  an `extend` block, is now recognized and enforced. Previously it was silently dropped
+  whenever the target itself had no generics of its own: calling a bound-required
+  method on the parameter from inside the method's own body failed with a confusing
+  `cannot infer receiver type` error even though the bound was declared right there, and
+  — separately — an argument that didn't actually satisfy the bound was never rejected
+  at the call site at all, only failing later as an internal error when the method body
+  was reconstructed at call time (`metel-core#746`).
+
 ## v0.12.1
 
 **Released 2026-08-09.** Interpreter-only patch release — no spec changes.

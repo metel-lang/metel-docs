@@ -261,3 +261,58 @@ The earliest sensible target is the sprint that first adds library types with pr
 **Target:** *(pending milestone assignment)*
 
 The field-visibility design and its remaining language-shape questions are resolved. Follow-up work is spec alignment and later implementation planning.
+
+## Coverage Checklist (added 2026-08-19, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims
+(expanded 2026-08-19: added item 8, missed in the original pass),
+as headed sections for ADR-0049 citation purposes only. The document above is
+unchanged and remains the historical record. Deliberately excludes claims that
+aren't independently observable from a program's behavior -- implementation
+strategy, design rationale, or internal architecture discussion belongs in the
+RFC's own prose, not here.
+
+### 1. Struct fields are module-private unless declared public
+
+Field visibility is independent of the enclosing struct's visibility. A `public`
+field of a public struct may be accessed from another module, while an unmarked
+field may not.
+
+### 2. Private fields cannot be read or assigned across modules
+
+Reading or assigning a private field outside its declaring module is rejected with
+the private-field visibility error `T0009`. The declaring module retains access to
+all of its fields.
+
+### 3. External construction requires every named field to be visible
+
+Constructing a struct literal outside its declaring module is rejected if it names
+any private field. A module-local constructor or helper may construct the value
+instead.
+
+### 4. External patterns may not name private fields
+
+A pattern outside the declaring module cannot explicitly bind a private field and
+must use `..` to omit private fields. A pattern in the declaring module may name
+all fields.
+
+### 5. Private fields prevent externally exhaustive named-field patterns
+
+An external named-field pattern for a struct with private fields must include `..`;
+otherwise it is not a permitted exhaustive representation of that struct.
+
+### 6. Field visibility also applies to linear structs and enum struct variants
+
+Named fields of linear structs and enum struct variants use the same public/private
+rules as ordinary struct fields. Public enum tuple-variant positions remain exposed
+as part of their positional variant shape.
+
+### 7. Public fields on a private struct do not expose the struct externally
+
+Marking a field `public` does not make its enclosing private struct nameable from
+another module, so that field remains inaccessible through the private type.
+
+### 8. A public field on a private struct produces a warning
+
+The compiler warns when a field is declared `public` on a struct that is not
+public, because the field cannot be accessed across a module boundary.

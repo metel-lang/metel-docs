@@ -180,13 +180,32 @@ above it are.
   for RFC-0124's still-open "is there a mutable slice" question (Open Question 1), not just
   a theoretical one.
 
-- **RFC-0124** *(draft, opened 2026-07-25, narrowed 2026-07-27)* — Sequence Types: Fixed
-  Arrays, Slices, and the Growable List — now covers only what RFC-0126 split off left open:
-  whether a mutable slice exists and how it is spelled, the exact dependency on RFC-0067's
-  lifetime anchors (a precondition for this RFC's own acceptance, independent of RFC-0126),
-  whether `[T; N]`'s `Copy` rule needs const generics to leave its hardcoded case (#263,
-  orthogonal to `T[]`'s role), `Value::Array`'s evaluator representation, and release
-  sequencing against #579. None of these block RFC-0126 landing on its own.
+- **RFC-0124** *(draft, opened 2026-07-25, narrowed 2026-07-27, OQ6 split out 2026-08-13)*
+  — Sequence Types: Fixed Arrays, Slices, and the Growable List — **now the slice half
+  only.** Covers: whether a mutable slice exists and how it is spelled (OQ1), and the exact
+  dependency on RFC-0067's lifetime anchors (OQ2 — a stated precondition for this RFC's own
+  acceptance). Its other three questions have all left: OQ3 (does `[T; N]`'s `Copy` rule
+  need const generics) is **answered by citation** to RFC-0128 §3; OQ4 (`Value::Array`'s
+  representation) is being decided in `metel-core#277`, which owns the change; OQ6 (can
+  `List<T>` be written in Metel source) moved to **RFC-0133**. What is left has a *known*
+  unblock point — RFC-0067 settling, ~v0.15.0 — where before it had none, which is the
+  whole point of the split. Title's "and the Growable List" retained as history.
+
+- **RFC-0133** *(draft, opened 2026-08-13, split from RFC-0124 OQ6)* — From-Metel List: the
+  Runtime-Sized Buffer Gap — can `List<T>` ever be implemented in Metel source, or is
+  native/Rust backing structurally permanent? **Proposes no design, deliberately.** Records
+  the five prerequisites in dependency order, and its load-bearing finding is an *absence*:
+  two of the five — a runtime-sized buffer-allocation primitive in the design, and one in
+  the evaluator — **have no owning RFC at all.** That is what makes this indefinite rather
+  than distant: no document to wait on, no milestone that could contain it. RFC-0063 is
+  routinely cited as where `List`'s buffer comes from and, checked directly, is not (single-
+  value allocation only; its own §9 calls `Alloc.alloc`'s signature "undecided and
+  unspecified"). Two mutually exclusive things would close it: an RFC specifying batch/
+  buffer allocation, or an explicit decision that native backing is permanent rather than
+  default — the latter being cheaper, legitimate, and currently unstated anywhere. Tracked
+  by `metel-core#276` (retargeted from RFC-0124, and unmilestoned to match its own body).
+  Its OQ1 asks the question nothing else does: whether a from-Metel `List` is actually
+  *wanted*.
 
 - **RFC-0123** *(draft, opened 2026-07-24)* — Field-Wise Row Constraints — a constraint
   applying an aspect to **every field of a row** rather than to the row's type
@@ -339,10 +358,28 @@ above it are.
   RFC-0096's auto-impl pattern, RFC-0093's comptime derive, or needs its own mechanism —
   RFC-0082 explicitly declined general default associated types, for reasons that may or
   may not transfer to this narrower, whole-impl case.
+- **RFC-0132** — Comptime Execution Model — `comptime let`/`fun`/`if`, `pub comptime let`
+  (public value exports), and **comptime-known non-type generic parameters**
+  (`comptime N: u64`) — i.e. the const generics RFC-0053 deferred to "a future RFC," now
+  with an actual home. Split out of RFC-0092 §0/§0a on 2026-08-13, acting on an escape
+  hatch RFC-0092's own Timing Recommendation had written down 35 days earlier and nobody
+  could act on because §0 had no independently schedulable identity. **This is now the
+  dependency root of the whole cluster** — RFC-0092 depends on it, not the reverse.
+  Unblocks three things that were all waiting on the same content without anyone
+  connecting them: `metel-core#263`'s hardcoded `[T; N]: Copy` arm, RFC-0124's Open
+  Question 3 (now answered by citation), and RFC-0083's public value exports (waiting
+  since 2026-07-12). Its OQ1/OQ2 (comptime recursion, comptime allocation) are inherited
+  from RFC-0092 OQ6/OQ7 but are **blocking here where they were not there** — you cannot
+  ship `comptime fun`/`comptime let` without answering them. §3.1 deliberately spells the
+  parameter `comptime N: u64` rather than RFC-0053's guessed `<const N: u64>`; §3.4
+  excludes computed arities (`[T; N + 1]`) as a *named* deferral rather than another
+  unnamed future RFC.
 - **RFC-0092** — Comptime Core — `type`-as-value, `typeinfo`, single-declaration
-  `emit`, plus (as of the RFC-0055 reconciliation) the base `comptime let`/`fun`/`if`
-  execution model, plus (as of the RFC-0083 fold, 2026-07-12) `pub` on `comptime let`
-  for public value exports (§0a). Dependency root of 0093/0094.
+  `emit`. **§0/§0a (the base execution model and `pub comptime let`) split out to
+  RFC-0128 on 2026-08-13** — retained in place, marked non-normative, because the
+  RFC-0055/RFC-0083 reconciliation history recorded in them is part of how this RFC
+  reached its shape. Still the dependency root of 0093/0094; now itself depends on
+  RFC-0128.
 - **RFC-0093** — Derive Registration — `@derive(Aspect)` as request + registration.
   Depends on RFC-0092. RFC-0080's `Clone` derive depends on this. Answers RFC-0055's
   aspect-inspection open question. Deliberately excludes auto-impl aspects
@@ -646,7 +683,30 @@ implementation).
   interaction, subtyping vs. plain `fun`.
 - **RFC-0050** *(draft)* — Closure Capture Lists — `&var`/`move`/clone/`&` specifiers.
   `&var`/clone/`&` buildable now; `move` waits on a split-model successor to refused
-  RFC-0046.
+  RFC-0046 — RFC-0134 is a candidate, scoped narrower (affine, not linear).
+- **RFC-0134** *(under-review as of 2026-08-14, opened 2026-08-13)* — Closure Call
+  Capability — the type-level
+  distinction `metel-core#269` needs (does calling a closure consume a non-`Copy`
+  capture) to make move checking sound for closures, blocking `metel-core#267`
+  (enable move checking by default). Scoped as an affine question, deliberately not
+  waiting on RFC-0028's linear-types tower the way RFC-0050's `move` half does — affine
+  is now a recorded decision with a stated reopening condition, not an open question.
+  Carries **two** multiplicity fields on `Type::Fun` (call, and by-value-use — the
+  latter is §1's `Copy` rule, which has nowhere else to live since captures aren't in
+  the type). §3 specifies exact-match multiplicity unification, with subtyping deferred
+  as a strict later widening. **Not proposed for acceptance yet:** the by-value-use
+  field's interaction with the two name-literal `Copy` implications — RFC-0072 §2.3's
+  `Copy` ⟹ `!Drop` and RFC-0080's `Copy` ⟹ `Clone` — is unspecified.
+- **RFC-0135** *(draft, opened 2026-08-13)* — Multiplicity for Ordinary Types — companion
+  to RFC-0134, not a dependency of it. Reframes `Copy` as `many` applied to a type's
+  by-value-use operation rather than a closure's call operation — same axis RFC-0134
+  already uses, named there (§5) but designed here. For named types (`struct`/`enum`)
+  this replaces `extend TypeName: Copy;` with a declaration-site `once`/`many` qualifier;
+  for structural types there is no single mechanism to rename — records can never be
+  `Copy` today (RFC-0071/RFC-0123), tuples have no impls at all (RFC-0061 §6), and only
+  function pointers have a working one (RFC-0061 §7.2). Interacts with **RFC-0071**
+  (Ownership and Move Semantics, affine-by-default foundation — see Aspect system core,
+  below) more than with RFC-0134 itself.
 - **RFC-0003** *(draft)* — Concurrency Model — fiber handles, channels, `select`,
   `Send`.
 

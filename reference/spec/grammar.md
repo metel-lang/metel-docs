@@ -62,7 +62,7 @@ Statement          → ExpressionStatement
                    | ContinueStatement
 
 ExpressionStatement → Expression ";"
-Block               → "{" Declaration* "}"
+Block               → "{" Declaration* Expression? "}"
 IfStatement         → "if" "(" Expression ")" Block ( "else" ( IfStatement | Block ) )?
 WhileStatement      → "while" "(" Expression ")" Block
 ForStatement        → "for" "(" ForInit Expression? ";" Expression? ")" Block
@@ -103,7 +103,7 @@ PrimaryExpression  → INT | FLOAT | STRING | "true" | "false" | "None" | "()"
 
 Path               → ( "root" | "std" | "self" | "super" | IDENTIFIER ) ( "::" IDENTIFIER )*
 StructLiteral      → Path "{" FieldInit ( "," FieldInit )* ","? "}"
-FieldInit          → IDENTIFIER ( ":" Expression )?
+FieldInit          → IDENTIFIER ( "=" Expression )?
 
 MatchExpression    → "match" Expression "{" MatchArm ( "," MatchArm )* ","? "}"
 MatchArm           → Pattern ( "if" Expression )? "=>" Expression

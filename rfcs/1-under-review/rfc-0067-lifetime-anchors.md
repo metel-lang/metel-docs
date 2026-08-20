@@ -2,9 +2,9 @@
 id: rfc-0067
 title: "Lifetime Anchors"
 date: '2026-06-28'
-updated: '2026-08-02'
+updated: '2026-08-10'
 status: under-review
-target: v0.15.0
+target: v0.16.0
 ---
 
 > ## ⚠ Implementing this RFC carries an inherited obligation

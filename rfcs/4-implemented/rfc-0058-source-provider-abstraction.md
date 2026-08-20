@@ -4,6 +4,8 @@ title: "SourceProvider Abstraction for the Module Loader"
 date: '2026-06-10'
 status: implemented
 spec_status: pending
+coverage:
+  "*": { kind: untestable, reason: "This RFC specifies Rust module-loader interfaces and provider backends only; it defines no independently observable Metel-language behavior." }
 ---
 
 ## Summary

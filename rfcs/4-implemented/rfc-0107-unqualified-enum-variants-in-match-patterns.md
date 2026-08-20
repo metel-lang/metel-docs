@@ -7,6 +7,9 @@ target:
 updated: '2026-07-21'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/559'
 impl_status: implemented
+coverage:
+  "1.4": { kind: untestable, reason: "The section records the compiler registry index that the implementation deliberately does not need." }
+  "5": { kind: elsewhere, reason: "Expression-position variants were deliberately split to RFC-0111 and its fixture coverage.", ref: "docs/public/rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md" }
 ---
 
 > **Status — under review (2026-07-20).** Thorough draft; sole open question (shadowing lint) has an explicit non-blocking 'ship silent' recommendation. Reviewing with the enum/reference cluster.
@@ -172,6 +175,9 @@ check against.
 
 ### 1.4 `enum_info`'s missing reverse index
 
+> **Coverage: untestable** (see frontmatter). This is a compiler-internal data-structure
+> decision, not observable language behavior.
+
 `TypeDefinitionRegistry::enum_info(name: &str) -> Option<&EnumInfo>` is keyed forward,
 by enum name — exactly what §1.1/§1.2 need, since the scrutinee's enum name is already
 known before the variant-name lookup happens. No reverse (variant name → declaring
@@ -238,6 +244,9 @@ value) is unaffected; only the pattern-position AST node is retired.
 ---
 
 ## 5. Out of scope
+
+> **Coverage: elsewhere** (see frontmatter). The later expression-position feature is
+> covered by RFC-0111's fixtures, not by this pattern-only RFC.
 
 **Bare variant names in expression position** (`let c: Colour = Red;`, mirroring
 `Colour::Red`) is a related but separate question, deliberately not addressed here.

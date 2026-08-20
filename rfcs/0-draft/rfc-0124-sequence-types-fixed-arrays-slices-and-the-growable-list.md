@@ -7,6 +7,26 @@ target:
 updated: '2026-08-03'
 ---
 
+> **Open Question 6 split out to RFC-0133, 2026-08-13 — and that is what unblocks this
+> RFC.** This document bundled two questions with fundamentally different tractability.
+> OQ1/OQ2/OQ4/OQ5 (mutable-slice spelling, the RFC-0067 dependency, `Value::Array`'s
+> representation, sequencing) all become actionable at a **known point** — when RFC-0067
+> settles, targeted ~v0.15.0. OQ6 (can `List<T>` be written in Metel source) has **no
+> known path**: two of its five prerequisites have no owning RFC at all. Carrying both
+> meant this RFC could neither be accepted — OQ2 is a stated precondition for its own
+> acceptance — nor scheduled, since OQ6 had no schedulable content. It sat `0-draft` and
+> untargeted from 2026-07-25 as a direct result.
+>
+> **This RFC's remaining scope is the slice half**, and its path is now clear rather than
+> indefinite: settle OQ2's RFC-0067 dependency (the acceptance precondition), then OQ1's
+> mutable-slice spelling. OQ3 is answered by citation (RFC-0132 §3); OQ4 is being decided
+> in `metel-core#277`, which owns the representation change. The title's "and the Growable
+> List" is retained as history — that half now lives in RFC-0133.
+>
+> Same split performed on RFC-0092 → RFC-0132 the same day, and on RFC-0012 →
+> RFC-0092/0093/0094/0095 before that. Third instance of one pattern: a tractable piece
+> trapped in a document with an intractable piece does not get worked on.
+
 > **Marked temporary and incomplete, 2026-08-03.** Nothing in the RFC record before this
 > note stated, in so many words, that Metel's current three-way sequence-type split
 > (`[T; N]` / `T[]` / `List<T>`) is temporary or incomplete — the closest is this RFC
@@ -45,10 +65,10 @@ as `[T; N]`). What that RFC left open, and what this one is now scoped to:
 |---|---|
 | Is there a mutable slice, and how is it spelled? | open — §Open Questions 1 |
 | Exact dependency on RFC-0067's lifetime anchors | open — §Open Questions 2 |
-| Does `[T; N]: Copy` need const generics to leave the typechecker's hardcoded case (#263)? | open — §Open Questions 3 |
+| Does `[T; N]: Copy` need const generics to leave the typechecker's hardcoded case (#263)? | **answered 2026-08-13 by RFC-0132 §3** — §Open Questions 3 |
 | `Value::Array`'s evaluator representation | open — §Open Questions 4 |
 | Release sequencing against #579 and #267 | open — §Open Questions 5 |
-| Can `List<T>` ever be built from `[T; N]`/`T[]` alone, or is native backing structurally permanent? | open, deliberately unresolved here — §Open Questions 6 |
+| Can `List<T>` ever be built from `[T; N]`/`T[]` alone, or is native backing structurally permanent? | **moved to RFC-0133, 2026-08-13** — no longer this RFC's |
 
 ---
 
@@ -109,6 +129,21 @@ allocation, never the batch/geometric-growth allocation this table shows every c
    generics, "fixed arrays are `Copy` when their elements are" cannot be written in stdlib
    and stays hardcoded (#263), the same situation #581 and RFC-0061 describe for structural
    impls. Unaffected by RFC-0126, which changes `T[]`'s role, not `[T; N]`'s.
+   **Answered by reference, 2026-08-13 — yes, and the mechanism now has an RFC.**
+   **RFC-0132 §3** (Comptime Execution Model) specifies comptime-known non-type generic
+   parameters — `extend<T: Copy, comptime N: u64> [T; N]: Copy;` — which is exactly what
+   this question asks for and what RFC-0053 deferred to "a future RFC." This question
+   therefore resolves by citation rather than needing design work here. Two caveats worth
+   carrying: RFC-0132 §3.1 spells it `comptime N: u64`, **not** RFC-0053's guessed
+   `<const N: u64>` (deliberate — Metel takes Zig's staging model, so `comptime` and
+   `const` would be two words for one concept); and RFC-0132 §3.4 excludes computed
+   arities (`[T; N + 1]`), which nothing in this RFC needs. See also RFC-0132 OQ5, which
+   asked whether the array half of #263 is genuinely unblocked by §3 alone or also needs
+   RFC-0061's structural-impl machinery — checked against the built interpreter and found
+   already fixed (GitHub #581 and #239, not the stale Codeberg "#296/#353" this sentence
+   itself cited until this correction), narrowing but not fully closing that risk. RFC-0132
+   OQ6 is the dependency in the reverse direction: if this
+   RFC revisits `[T; N]`'s role more broadly, §3 should follow that rather than precede it.
 4. **Is `Value::Array`'s `Rc<RefCell<Vec>>` representation retained?** A borrowed slice needs
    no refcounting. Keeping it may simplify the tree-walking evaluator, at the cost of
    representing something the type system would no longer admit once RFC-0126 lands.
@@ -117,54 +152,29 @@ allocation, never the batch/geometric-growth allocation this table shows every c
    (Open Question 2 above) argues for later, at least for a mutable-slice variant. The
    sequencing decision that matters is against **#579**, since move checking is what would
    otherwise bake in the pre-RFC-0126 model permanently.
-6. **Can `List<T>` ever be implemented in Metel source from `[T; N]` and `T[]` alone, or
-   does — and will — it always require a native primitive?** Not answerable today, and not
-   close. Five gaps stack in dependency order, nearest-to-solvable first:
-   a. `[T; N]`'s `N` is a compile-time literal at every layer of the stack — grammar
-      (`decimal_int = @{ ASCII_DIGIT+ }`, `grammar.pest:311,328`), parser (bakes a Rust
-      `u64` into the AST, `parser/mod.rs:2634-2651`), type representation
-      (`Type::SizedArray(Box<Type>, u64)`, `types/mod.rs:28`). This is not an engineering
-      gap that more work closes: RFC-0053 explicitly rejects runtime-sized arrays as
-      "analogous to VLAs in C99, widely considered a design mistake" (rfc-0053:122), and
-      even RFC-0092's future `comptime let` (itself deferred, unimplemented) would only
-      make `N` a *named compile-time* constant, never a value read at runtime the way a
-      growing `push` needs. **`[T; N]` can never be the buffer a growable `List` grows
-      into**, regardless of how far const-generics work (Open Question 3 above) ever goes
-      — that question and this one are independent, not sequential.
-   b. Since RFC-0126 (`4-implemented`, target v0.12.0), `T[]` is unconditionally `Copy`,
-      non-owning, and immutable *by design* — "a view is `Copy` precisely because it owns
-      nothing" (rfc-0126:124-126) — structurally incapable of ever being an owning,
-      growable buffer. Neither existing array type can be `List`'s backing storage.
-   c. **No runtime-sized buffer-allocation primitive exists in Metel's design, even on
-      paper — corrected here 2026-08-03.** RFC-0063 (Allocator Handles, `2-accepted`) is
-      the RFC most often cited, including previously by this RFC's own References section
-      below, as "where `List`'s buffer comes from." Checked directly: RFC-0063 never
-      mentions `List` (zero matches), and its entire specified surface (`@a T`, `@a expr`,
-      §1-§8) is single-value allocation only. Its own §9 items 3-4 state, in its own words,
-      that the `Alloc` aspect's `alloc` method signature is **"undecided and unspecified,"**
-      and that **"no lower-level primitive layer... exists"** for authoring a custom
-      allocator at all — let alone one capable of the batch/geometric-growth allocation
-      every comparable growable container in Metel's neighbourhood needs internally (see
-      the Prior art section above). `reports/strategy/OBJECTIVES.md`'s own tracking table
-      lists allocators' engineering state, project-wide, as "deliberately not started."
-   d. Confirmed independently from the runtime side: no `native_array_with_capacity` /
-      `alloc_n`-shaped primitive exists anywhere in `builtins.rs` today. `List::new()`
-      always starts empty and grows one element at a time via Rust's own `Vec::push`
-      reallocation — invisible to, and uncontrollable by, Metel source.
-   e. Even with (a)-(d) solved, a from-Metel `List<T>` would need RFC-0067's lifetime
-      anchors, to prove a borrowed `T[]` taken from it cannot outlive the buffer — and
-      RFC-0067 is not close: reverted 2026-08-02 from `2-accepted` back to
-      `1-under-review`, now blocked on RFC-0122 (Borrow Checking, itself `1-under-review`,
-      target v0.14.0) settling first, then RFC-0067's own five open questions, before it
-      can even reach `3-integrated`. Implementation is targeted v0.15.0 at the earliest,
-      and RFC-0067's own header states that no tracked implementation work exists for it
-      yet, deliberately, and none should be created before then.
-   **None of (a)-(e) is this RFC's to resolve.** (a)-(b) are settled elsewhere and
-   permanent; (c)-(d) have no owning RFC at all — that absence is itself the finding, not
-   a citation to make; (e) is owned by RFC-0067/RFC-0122. Recorded here, left to whichever
-   later RFC actually proposes a from-Metel `List`, so that "is the current three-way
-   split final" has one place a future reader finds the honest answer, rather than
-   reconstructing it by chasing five RFCs and two source trees.
+6. **~~Can `List<T>` ever be implemented in Metel source from `[T; N]` and `T[]` alone?~~
+   Moved to RFC-0133 (From-Metel List: the Runtime-Sized Buffer Gap), 2026-08-13.**
+   RFC-0133 is normative and carries the full finding: the five prerequisites in
+   dependency order, the prior-art table on what every comparable growable container is
+   built on, and the ownership summary — of which the load-bearing part is that **two of
+   the five prerequisites (a runtime-sized buffer-allocation primitive in the design, and
+   one in the evaluator) have no owning RFC at all.** That absence is what makes the
+   question indefinite rather than merely distant, and it is why it was holding this RFC
+   hostage: there is no document to wait on and no milestone that could contain it.
+
+   Deliberately **not** duplicated here. The content was 45 lines of source-verified
+   findings (file:line citations into `grammar.pest`, `parser/mod.rs`, `types/mod.rs`,
+   `builtins.rs`); keeping a second copy in a second `0-draft` document is precisely the
+   staleness this corpus has been bitten by repeatedly — see `PROCESS.md` on RFC-0067's
+   "description of its own staleness that was itself stale." One copy, in RFC-0133.
+
+   Two things worth keeping visible from it, because they bear on *this* RFC's remaining
+   questions rather than RFC-0133's: **(1)** `[T; N]` can never be a growable buffer
+   regardless of const generics, so Open Question 3's resolution (RFC-0132 §3) does not
+   move RFC-0133 at all — the two were always independent, not sequential; **(2)** `T[]`
+   is structurally incapable of it too, since RFC-0126 made it an unconditionally `Copy`,
+   non-owning view. Neither existing array type can back a growable list, which is why
+   RFC-0133 needs a new primitive rather than a new combination of existing ones.
 
 ---
 

@@ -7,6 +7,8 @@ target:
 updated: '2026-07-21'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/559'
 impl_status: implemented
+coverage:
+  "8": { kind: untestable, reason: "This section only records excluded future design work and does not specify behavior for the implemented dereference operator." }
 ---
 
 > **Status — under review (2026-07-20).** Thorough draft; open questions (&*p borrow-checker interaction, redundant-deref lint, Eq/Ne peeling) are all non-blocking or implementation-time. Reviewing with the enum/reference cluster.
@@ -352,6 +354,8 @@ writes. Neither RFC needs the other; sequencing is immaterial between them.
 ---
 
 ## 8. Out of scope
+
+> **Coverage: untestable** (see frontmatter). This section describes excluded future work only.
 
 - **Deref *patterns*** (a `*pat` pattern-position sigil). This RFC is expression-level
   only. RFC-0108 already solves the one pattern-position gap that mattered (match

@@ -7,6 +7,9 @@ target:
 updated: '2026-07-14'
 impl_tracking: 'archived Codeberg PR #273 (no GitHub counterpart per the 2026-08-04 migration policy; see internal/archive/codeberg-tracker/metel-core/comments/273.json)'
 impl_status: implemented
+coverage:
+  "1": { spec: "spec.declarations.aspects.bodyless-aspect-declarations.legality-1" }
+  "2": { spec: "spec.declarations.aspects.bodyless-aspect-declarations.legality-1" }
 ---
 
 > **Status — accepted (2026-07-14).** Scope narrowed on split: this RFC now covers bodyless aspect declarations only. The struct/enum-embedded aspect-list proposal that previously lived here has been extracted into deferred RFC-0105. No open questions block the remaining bodyless-declaration feature.

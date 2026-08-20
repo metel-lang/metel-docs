@@ -3,6 +3,9 @@ id: rfc-0023
 title: "Type Ascription vs Turbofish — Call-Site Type Annotation Review"
 date: '2026-05-23'
 status: implemented
+coverage:
+  "1": { spec: "spec.types.type-ascription.legality-1" }
+  "2": { spec: "spec.functions.turbofish.legality-1" }
 ---
 
 ## Summary
@@ -142,3 +145,23 @@ Both operators are retained. Ascription (`expr : T`) handles result-type annotat
 - Issue #400: propagate `expected_ty` into match arm bodies
 - Issue #401: propagate callee param types into argument construction
 - `docs/public/spec/types.md` § Type Ascription — current spec entry with known-limitation links
+
+## Coverage Checklist (added 2026-08-19, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
+as headed sections for ADR-0049 citation purposes only. The document above is
+unchanged and remains the historical record. Deliberately excludes claims that
+aren't independently observable from a program's behavior -- implementation
+strategy, design rationale, or internal architecture discussion belongs in the
+RFC's own prose, not here.
+
+### 1. Type ascription constrains an expression without converting it
+
+`expression : Type` is accepted only when the expression's inferred type unifies
+with `Type`; it is a compile-time constraint and does not perform a runtime conversion.
+
+### 2. Turbofish supplies explicit generic call type arguments
+
+A generic call may use `name::<T, U>(arguments)` to supply its type arguments
+explicitly, including multiple independent arguments. The supplied arguments must
+match the callee's generic parameter requirements.

@@ -43,6 +43,11 @@ A float literal cannot be represented as an `f64`.
 
 **Fix:** use a value within the `f64` range (~±1.8 × 10³⁰⁸).
 
+> **Note:** neither route to this message is currently reachable. The grammar has no
+> exponent notation, so `1e9999` above is actually `P0001`; a literal long enough to
+> overflow `f64` in plain decimal notation silently saturates to infinity instead of
+> erroring.
+
 ---
 
 ## Type errors (T)
@@ -382,6 +387,7 @@ but only when `U` is `Copy`. A reference only grants access, never ownership, so
 reading a non-`Copy` value out this way would silently duplicate it with no move and
 no explicit clone.
 
+<!-- doc-example: expect-fail reason="demonstrates T0024 -- the whole point of this entry" -->
 ```metel
 struct NotCopy { v: String }
 
@@ -423,10 +429,13 @@ Execution requires a `main` function but none was found.
 `main` exists but is generic or is not a function.
 
 ```
-[R0002] runtime error in main.mtl at 0..0: main() is generic — not supported in v0.1
+[R0002] runtime error in main.mtl at 0..0: main() body could not be typed
 ```
 
 **Fix:** `main` must be a concrete, non-generic function with no parameters.
+
+> **Note:** also raised for a generic closure invoked with no call-site type context,
+> with a different message — this entry covers the `main` case only.
 
 ### R0003 — Undefined variable at runtime
 
@@ -455,6 +464,11 @@ A tuple element is accessed by an index that does not exist.
 ```
 
 **Fix:** tuple indices are fixed at compile time; verify the index against the tuple's declared length.
+
+> **Note:** not confirmed reachable from ordinary source. A tuple index is always a
+> literal token, never a computed expression, so an out-of-range index was caught as
+> `T0003` statically in every construction tried. Unlike `P0003` above, the raise site
+> is real code — just unconfirmed.
 
 ### R0006 — Non-exhaustive match at runtime
 
@@ -504,13 +518,15 @@ A call expression (`f(...)`) is applied to a value that is not a function or clo
 
 ### R0011 — Invalid for-in iterator
 
-A `for x in expr` loop where `expr` does not evaluate to an `Array` or `Range`.
+A `for x in expr` loop where `expr` does not evaluate to an `Array`, a `Range`, or a type
+implementing `Iterable`.
 
 ```
 [R0011] runtime error in main.mtl at 1..20: for-in: expected Array or Range
 ```
 
-**Fix:** ensure the iterable is an array literal, a range (`a..b`), or a variable of those types.
+**Fix:** ensure the iterable is an array literal, a range (`a..b`), a value of those types,
+or a type with its own `Iterable` implementation (see `expressions.md`, "for-in").
 
 ### R0012 — Error propagation on non-Result value
 

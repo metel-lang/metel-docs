@@ -112,6 +112,21 @@ fun main() -> i64 {
 }
 ```
 
+<details open>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.type-inference.legality-1}
+
+An expression in `return` position is typechecked against the enclosing function or
+method's declared return type, which supplies its expected type.
+
+##### Legality Rule {#spec.types.type-inference.legality-2}
+
+An expression in `break` position is typechecked against its enclosing `loop`'s value
+type, independently of the enclosing function's return type.
+
+</details>
+
 ## Tuples
 
 Tuples are lightweight anonymous product types.
@@ -497,6 +512,26 @@ fun main() -> i64 {
 }
 ```
 
+<details open>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.type-ascription.legality-1}
+
+`expr : T` constrains `expr` to type `T` and supplies `T` as its expected type; it performs
+no runtime conversion.
+
+##### Legality Rule {#spec.types.type-ascription.legality-2}
+
+An ascription is valid only when the expression's type unifies with the ascribed type;
+otherwise it is a type error.
+
+##### Legality Rule {#spec.types.type-ascription.legality-3}
+
+An expression may contain at most one type ascription; a second `:` in the same ascription
+position is a parse error.
+
+</details>
+
 ### When ascription helps
 
 Type inference uses surrounding expected types. That expected type can come from a `let` annotation, a function return type, a callee's parameter types, or the surrounding expression context.
@@ -572,6 +607,16 @@ fun main() {
 All pairwise casts among `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64` are supported. Narrowing integer casts wrap (two's-complement truncation). f64-to-integer casts truncate toward zero.
 
 Because `as` desugars to `From`, user-defined types become castable by implementing `From<SourceType>` for the target type.
+
+<details open>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.types.type-casting.dynamics-1}
+
+`expr as T` evaluates an explicit numeric conversion of `expr` to `T` and produces a value
+of type `T`.
+
+</details>
 
 ## Generics
 
@@ -886,6 +931,16 @@ fun main() -> i64 {
     return user.id;
 }
 ```
+
+<details open>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.perhaps-t.legality-1}
+
+`None` is the empty variant of `Perhaps<T>` and is valid only where the expected type
+determines `T`; `Perhaps::None` is valid wherever the qualified variant is named.
+
+</details>
 
 ## `Result<T, E>`
 

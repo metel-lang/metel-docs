@@ -380,3 +380,30 @@ remain — both named attack vectors in the adversarial review above were checke
 against the codebase and neither lands, and the migration-cost concern the review itself
 surfaced (call-site and `let`-binding retyping) is already solved, live, by RFC-0053.
 **Target:** v0.12.0 — the same milestone as #578, #579, and #267, which this RFC unblocks.
+
+---
+
+## Coverage Checklist (added 2026-08-18, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct normative claims, as headed sections for
+ADR-0049 citation purposes only. The document above is unchanged and remains the
+historical record.
+
+### 1. `T[]` is `Copy` unconditionally
+
+Regardless of the element type — a `T[]` binding may be used again after being read or
+passed elsewhere, the same way any `Copy` value can.
+
+### 2. `T[]` has no `Drop` and owns nothing
+
+A struct field of type `T[]` may be read more than once even when the struct itself
+implements `Drop`.
+
+### 3. An array literal types as `[T; N]`, not `T[]`
+
+`[1, 2, 3]` is `[i64; 3]`.
+
+### 4. A `[T; N]` coerces implicitly to `T[]`, never the reverse
+
+At any position expecting `T[]` — an annotated `let`/`var` binding, or a generic
+function's `T[]`-typed parameter.

@@ -3,8 +3,8 @@ id: rfc-0122
 title: "Borrow Checking"
 date: '2026-07-24'
 status: under-review
-target: v0.14.0
-updated: '2026-08-02'
+target: v0.15.0
+updated: '2026-08-10'
 ---
 
 > **Opened 2026-07-24** against `OBJECTIVES.md` Trigger 19, which has tracked the borrow

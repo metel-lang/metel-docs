@@ -168,3 +168,46 @@ let x = arr[i];        // ok
 | D7 | Array indexing type | `u64`. Direct indexing is intentionally low-level; higher-level collections provide ergonomic access. |
 | D8 | `Byte` vs `u8` | Deferred. Only `u8` shipped in the implemented surface of this RFC. |
 | D9 | Unsuffixed integer literal type | Polymorphic: the literal `42` takes on any integer type demanded by its context. Falls back to `i64` when context leaves the type unconstrained. Suffixed forms (`42i32`, `42u8`) are always exactly typed. Same rule for float literals: `3.14` is polymorphic over float types, defaulting to `f64`. |
+
+## Coverage Checklist (added 2026-08-19, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
+as headed sections for ADR-0049 citation purposes only. The document above is
+unchanged and remains the historical record. Deliberately excludes claims that
+aren't independently observable from a program's behavior -- implementation
+strategy, design rationale, or internal architecture discussion belongs in the
+RFC's own prose, not here.
+
+### 1. Exact-width numeric primitive types are available
+
+The signed integer types are `i8`, `i16`, `i32`, and `i64`; the unsigned types are
+`u8`, `u16`, `u32`, and `u64`; and the floating-point types are `f32` and `f64`.
+`Int`, `Float`, and `Byte` are not aliases introduced by this RFC.
+
+### 2. Char is a distinct Unicode scalar type
+
+`Char` represents a Unicode scalar value and is distinct from both `u32` and `u8`.
+
+### 3. Numeric conversions require an explicit as cast
+
+Conversion between different numeric types uses `as`; numeric types do not otherwise
+coerce implicitly. `as?` is not provided by this RFC.
+
+### 4. Integer and float overflow follow their defined build-mode semantics
+
+Integer overflow panics in debug builds and wraps in release builds for every supported
+integer type. Floating-point overflow follows IEEE 754 behavior in both build modes.
+
+### 5. Direct array indexing requires a u64 index
+
+The index expression for `T[]` and `[T; N]` has type `u64`; an `i64` index must be
+explicitly cast to `u64` (`expr as u64`), even for a plain `i64`-typed variable —
+this RFC's `[T]`-slice spelling of the dynamically-sized array type was superseded
+by RFC-0126's `T[]`, but the u64-index requirement this RFC introduced still holds
+for both current array forms.
+
+### 6. Unsuffixed numeric literals are context-polymorphic
+
+An unsuffixed integer literal takes the integer type required by context and defaults to
+`i64` when unconstrained; an unsuffixed float behaves analogously and defaults to `f64`.
+Suffixed numeric literals always have their stated type.

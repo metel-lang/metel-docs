@@ -7,6 +7,10 @@ target:
 updated: '2026-07-24'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/575'
 impl_status: implemented
+coverage:
+  "1": { spec: "spec.declarations.structs.instantiation-and-field-access.legality-1" }
+  "2": { spec: "spec.declarations.structs.instantiation-and-field-access.dynamics-1" }
+  "3": { kind: untestable, reason: "migration sizing, rewrite-process guidance, release scheduling, and no-alias policy are not fixture-observable" }
 ---
 
 > **New RFC, split out of RFC-0100 on 2026-07-24.** RFC-0100 bundled two things: a
@@ -176,6 +180,9 @@ either.
 bare `x`, then the literal fails on `==`).
 
 ## 3. Migration
+
+> **Coverage: untestable** (see frontmatter). This is migration sizing, rewrite-process
+> guidance, release scheduling, and no-alias policy rather than fixture-observable behavior.
 
 No semantics change and no AST shape change — `FieldInit` keeps its existing shape; only
 the token the parser expects between label and value moves.

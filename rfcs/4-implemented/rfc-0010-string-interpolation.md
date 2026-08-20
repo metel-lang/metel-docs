@@ -5,6 +5,50 @@ title: "String Interpolation"
 date: '2026-05-31'
 ---
 
+> **Status — qualified (2026-08-12, metel-core#704 and #705).** This RFC's own §Open
+> Questions never settled how much of `expr` is reachable inside `${...}` — it says
+> "an ordinary expression tree" and left it there. Because `${...}` re-parses its
+> content as a bare `Rule::expr`, that silently pulled in `if`/`match`/`loop` and
+> immediately-invoked closures, which means a loop, a mutation, or a println can run
+> as a side effect of building a string (#704 confirms this concretely, not
+> hypothetically). **Ruled intentional, not a defect:** restricting `${...}` to
+> "calls only" would break existing idiomatic usage this corpus already depends on
+> (`"${if (c) { "yes" } else { "no" }}"`, in `lexical.md`'s own worked example), for a
+> purity guarantee the rest of the language doesn't otherwise make — Metel has no
+> effect-tracking or purity system elsewhere for a narrower `${...}` grammar to be
+> consistent with. This puts Metel's interpolation with Kotlin's/Swift's/C#'s
+> full-expression model rather than Rust's macro-based one — and unlike Rust, Metel
+> has a first-class string literal grammar rule to attach this to, so the macro
+> workaround Rust needs doesn't apply here. `lexical.md` should state this
+> explicitly (full-expression scope, deliberate, with a worked example showing a
+> side effect firing) rather than leaving it only empirically discoverable, per
+> #704's own acceptance criteria. This ruling does not touch #705, a straightforward
+> parser bug (leading whitespace inside `${...}` breaks keyword-led expressions)
+> that needs fixing regardless of scope.
+
+> **Correction to the above, same day (2026-08-12).** "Metel has no effect-tracking or
+> purity system elsewhere for a narrower `${...}` grammar to be consistent with" is not
+> quite true — `reports/substructural-types/algebraic-effects.md` is an actively
+> maintained design report (`status: active`, last synced 2026-07-23) for exactly such a
+> system, not implemented or RFC'd yet, but real design work, not a hypothetical. Its own
+> §11.1 example already interpolates inside an effect handler
+> (`Console::print("Hello, ${name}!")`) without ever asking whether the interpolated
+> content itself may perform an effect. Under this RFC's full-expression ruling above, it
+> may: `"${Console::read_line()}"` lowers (per this RFC's own "before typechecking" rule)
+> to an ordinary nested call, so effect-row inference sees it correctly and there is no
+> *soundness* gap. The tension is with this RFC's own §Semantics claim that interpolation
+> is "a compile-time convenience only; no runtime formatting engine is introduced" — once
+> `${...}` can embed an effect performance, evaluating a string literal becomes a
+> potential *suspension point* (the enclosing computation can hand control to an
+> arbitrary handler, mid-string-construction, and the handler may never resume it or may
+> resume it from another fiber). That is a real runtime consequence, not a compile-time
+> convenience, and it was not on the table when "compile-time convenience only" was
+> written because no effect system existed to make it possible. Not re-litigating the
+> full-expression ruling here — effects are still a report, not an RFC, so nothing is
+> settled enough to force a decision — but recorded in `algebraic-effects.md` itself
+> (§15, Open Question 7) as one of the things that needs settling before effect syntax
+> moves from proposed to an actual RFC, per that document's own Open Question 4 pattern.
+
 ## Summary
 
 Add string interpolation to string literals using `${expr}` placeholders, with semantics defined entirely in terms of string concatenation and `.to_string()`. This RFC depends on `+` being defined for `String + String -> String`; interpolation is just syntax sugar over that operator.
@@ -129,3 +173,37 @@ Implement after string `+` is available. If `+` is deferred, this RFC should rem
 - Current literal grammar: `metel-interpreter/src/grammar.pest`
 - Existing string handling in the interpreter: `metel-interpreter/src/parser/mod.rs`
 
+## Coverage Checklist (added 2026-08-19, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
+as headed sections for ADR-0049 citation purposes only. The document above is
+unchanged and remains the historical record. Deliberately excludes claims that
+aren't independently observable from a program's behavior -- implementation
+strategy, design rationale, or internal architecture discussion belongs in the
+RFC's own prose, not here.
+
+### 1. String literals may contain expression interpolations
+
+Normal string literals may contain `${expr}` placeholders, while literals without a
+placeholder retain ordinary `String` literal behavior. The expression position accepts
+the language's full expression grammar, including expressions with side effects.
+
+### 2. Interpolation produces a String by rendering each embedded value
+
+An interpolated literal has type `String`. Each embedded expression must be renderable
+through `Display` / `.to_string()` before it is combined with the literal text.
+
+### 3. Interpolated expressions evaluate once in source order
+
+Each placeholder expression is evaluated exactly once, from left to right, as the
+interpolated string is constructed.
+
+### 4. Interpolation uses ordinary string concatenation semantics
+
+Interpolation is equivalent to combining literal segments and rendered expressions with
+`String + String -> String`; it does not introduce separate runtime formatting behavior.
+
+### 5. Escaped interpolation openers remain literal text
+
+Within an interpolated string literal, `\${` emits the literal characters `${`, and `\\`
+emits a literal backslash.

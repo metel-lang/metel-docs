@@ -11,6 +11,15 @@ implementation-guidance section was added covering how to build captures so stru
 and brand types don't force a rewrite later. See Timing Recommendation and Implementation
 Guidance below.*
 
+> **A draft successor exists, 2026-08-13.** RFC-0134 (Closure Call Capability) proposes an
+> answer to the type-level question this RFC's `move` half depends on — but scoped narrower
+> than what the Timing Recommendation below anticipated: it treats "does calling a closure
+> consume a capture" as an ordinary affine question, not a linear one, specifically to avoid
+> waiting on the rest of the linear-types tower. Whether that narrower framing is actually
+> sufficient for `move` capture syntax to build on, or whether `move` still needs the fuller
+> linear-typed answer this section describes, is RFC-0134's own Open Question 1 — not
+> resolved by either document yet.
+
 *Updated again 2026-07-07: capture lists are now exhaustive. A bare `ident` specifier captures
 by value (clone), and once a closure has a capture list at all, every free variable it references
 must appear in it — no more silent, unlisted clone captures alongside explicit `&var`/`move`
@@ -301,6 +310,8 @@ forces a rewrite of closure capture when they land:
 - RFC-0046: Linear Closure Capture — **refused** (`6-refused/`); specified `move`'s semantics
   (`linear fun` type, consume-at-capture) against the old unified `Region` model. A split-model
   successor is needed before `move` capture can be implemented — see Timing Recommendation above.
+- RFC-0134: Closure Call Capability (`1-under-review`) — a candidate successor, scoped to the affine
+  (not linear) version of the capability question; see the header note above.
 - RFC-0063: Allocator Handles (`1-under-review`, retitled from "Region Handles" in the 2026-07-05
   split-model rewrite) — no longer uses bracket syntax for allocator parameters; see Historical
   section above.

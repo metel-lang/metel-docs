@@ -4,6 +4,11 @@ title: "let mut for Mutable Bindings"
 date: '2026-06-02'
 status: implemented
 spec_status: done
+coverage:
+  "1": { spec: "spec.declarations.variables.immutable-bindings.legality-1" }
+  "2": { spec: "spec.declarations.variables.mutable-bindings.legality-1" }
+  "3": { spec: "spec.expressions.control-flow.for.legality-1" }
+  "4": { spec: "spec.expressions.control-flow.for-in.dynamics-1" }
 ---
 
 ## Summary
@@ -192,3 +197,34 @@ The parser may lower `let mut` into the existing mutable-declaration node shape 
 **Target:** *(pending milestone assignment)*
 
 The user-visible syntax and migration behavior are resolved here. Remaining work is implementation and follow-through in examples, tests, and the spec.
+
+## Coverage Checklist (added 2026-08-19, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
+as headed sections for ADR-0049 citation purposes only. The document above is
+unchanged and remains the historical record. Deliberately excludes claims that
+aren't independently observable from a program's behavior -- implementation
+strategy, design rationale, or internal architecture discussion belongs in the
+RFC's own prose, not here.
+
+### 1. `let` creates an immutable binding
+
+A `let` binding must be initialized and cannot be assigned after initialization.
+Its type annotation is optional when the initializer supplies a type.
+
+### 2. `var` creates a mutable binding
+
+The current mutable-binding spelling is `var name = value;`. A `var` binding may
+be reassigned after initialization; the historical `let mut` and standalone
+`mut` declaration spellings are not current binding syntax.
+
+### 3. C-style `for` initializers accept mutable bindings
+
+A C-style loop may declare its counter with `var`, and that loop-local binding
+may be reassigned by its step expression or loop body.
+
+### 4. A `for`-in binding may be mutable without mutating its source element
+
+`for (var item in values)` permits reassignment of `item` for that iteration.
+Changing the loop-local binding does not write the replacement back into
+`values`.

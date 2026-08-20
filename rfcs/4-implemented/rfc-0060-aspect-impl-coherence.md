@@ -6,6 +6,8 @@ status: implemented
 updated: '2026-07-14'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/548'
 impl_status: implemented
+coverage:
+  "4": { kind: blocked, reason: "depends on RFC-0096's auto-impl mechanism, still 0-draft", ref: "rfc-0096" }
 ---
 
 > **Status — accepted.** No dependencies on other under-review RFCs; this RFC
@@ -112,6 +114,9 @@ override definitive: there are no future impls that could re-grant the aspect.
 ---
 
 ## 4. Auto-Impl Participation in Coherence
+
+> **Coverage: blocked** (see frontmatter). Depends on RFC-0096's auto-impl mechanism,
+> still `0-draft`.
 
 This RFC does not define which aspects are auto-impl aspects or the structural rule
 by which one is derived for a type. That mechanism belongs to RFC-0096.

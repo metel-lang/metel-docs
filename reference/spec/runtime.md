@@ -19,8 +19,6 @@ These are available in every module without any `import` declaration (provided b
 |-------------------|--------------------------------------|------------------------------------------|
 | `print`           | `<T>(v: T)`                          | Print to stdout, no newline              |
 | `println`         | `<T>(v: T)`                          | Print to stdout with newline             |
-| `string_len`      | `(s: String) -> i64`                 | Number of characters in a string        |
-| `string_concat`   | `(a: String, b: String) -> String`   | Concatenate two strings                 |
 | `clock`           | `() -> i64`                          | Unix timestamp in milliseconds          |
 | `assert`          | `(cond: boolean)`                    | Panic with `"assertion failed"` if `cond` is `false` |
 | `assert`          | `(cond: boolean, msg: String)`       | Overload: panic with `msg` if `cond` is `false` |
@@ -186,7 +184,7 @@ in pipelines without explicit `match`:
 | `.filter(pred)`      | `((T) -> boolean) -> List<T>`      | The elements satisfying `pred`               |
 | `.fold(init, f)`     | `<A>(A, (A, T) -> A) -> A`         | Reduce to a single value, left to right      |
 | `.find(pred)`        | `((T) -> boolean) -> Perhaps<T>`   | The first element satisfying `pred`          |
-| `.concat(other)`     | `(List<T>) -> List<T>`             | This list's elements followed by `other`'s   |
+| `.concat(other)`     | `(&List<T>) -> List<T>`            | This list's elements followed by `other`'s   |
 
 ## OsError
 

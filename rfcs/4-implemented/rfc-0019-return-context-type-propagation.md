@@ -2,6 +2,9 @@
 id: rfc-0019
 title: "Return Context Type Propagation"
 date: '2026-05-22'
+coverage:
+  "1": { spec: "spec.types.type-inference.legality-1" }
+  "2": { spec: "spec.types.type-inference.legality-2" }
 ---
 
 ## Summary
@@ -131,3 +134,23 @@ Small, isolated fix with no design risk. No new language surface. Implement befo
 **Target:** v0.2
 
 Pure bug fix — no design question, implementation matches existing Pass 1 pattern exactly.
+
+## Coverage Checklist (added 2026-08-19, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
+as headed sections for ADR-0049 citation purposes only. The document above is
+unchanged and remains the historical record. Deliberately excludes claims that
+aren't independently observable from a program's behavior -- implementation
+strategy, design rationale, or internal architecture discussion belongs in the
+RFC's own prose, not here.
+
+### 1. Return values receive the enclosing function's expected type
+
+An expression in `return` position is typechecked against the enclosing function or
+method's declared return type. This permits otherwise under-constrained return values
+when that annotation determines their type.
+
+### 2. Break values receive the enclosing loop's expected type
+
+An expression in `break` position is typechecked against the value type of its enclosing
+`loop`, independently of the enclosing function's return type.

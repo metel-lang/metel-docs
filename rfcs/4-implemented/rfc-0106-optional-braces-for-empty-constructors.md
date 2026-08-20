@@ -6,6 +6,10 @@ status: implemented
 target:
 updated: '2026-07-14'
 impl_status: implemented
+coverage:
+  "1": { spec: "spec.declarations.structs.instantiation-and-field-access.dynamics-2" }
+  "2": { spec: "spec.declarations.enums.dynamics-1" }
+  "3": { spec: "spec.declarations.enums.instantiation.legality-1" }
 ---
 
 > **Status — accepted (2026-07-14).** Narrow scope only: zero-field structs may omit
@@ -83,3 +87,28 @@ No new runtime behavior is intended here. This is surface-syntax normalization:
   of that struct
 - the parser should also accept the braced spelling for zero-field enum variants,
   matching the bare-path form that already works today
+
+## Coverage Checklist (added 2026-08-19, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
+as headed sections for ADR-0049 citation purposes only. The document above is
+unchanged and remains the historical record. Deliberately excludes claims that
+aren't independently observable from a program's behavior -- implementation
+strategy, design rationale, or internal architecture discussion belongs in the
+RFC's own prose, not here.
+
+### 1. Zero-field struct constructor forms
+
+For a zero-field struct, both the bare type name and the braced form construct
+the value: `Empty` and `Empty {}` are equivalent expressions.
+
+### 2. Zero-field enum-variant constructor forms
+
+For a zero-field enum variant, both the bare qualified path and the braced form
+construct the variant: `Type::Variant` and `Type::Variant {}` are equivalent
+expressions.
+
+### 3. Non-empty constructors retain field syntax
+
+A struct or enum variant with fields cannot omit its constructor fields. A bare
+non-empty struct name is resolved as a name rather than as construction.

@@ -2,6 +2,11 @@
 id: rfc-0018
 title: "Match Arm Blocks"
 date: '2026-05-22'
+coverage:
+  "1": { spec: "spec.expressions.pattern-matching.legality-1" }
+  "2": { spec: "spec.expressions.pattern-matching.legality-1" }
+  "3": { spec: "spec.expressions.pattern-matching.dynamics-1" }
+  "4": { spec: "spec.expressions.pattern-matching.legality-2" }
 ---
 
 ## Summary
@@ -111,3 +116,27 @@ Small, self-contained change. No design risk. Implement alongside other v0.2 gra
 **Target:** v0.2
 
 Unambiguous fix — match arms are the only body-bearing construct in the language that does not accept a block. All other constructs (`if`, `loop`, `fun`, closures, `while`, `for`) use `block`. The design follows the existing pattern exactly.
+
+---
+
+## Coverage Checklist (added 2026-08-18, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct normative claims, as headed sections for
+ADR-0049 citation purposes only. The document above is unchanged and remains the
+historical record.
+
+### 1. A match arm body may be a block
+
+`{ stmts* expr? }`, not only a single expression.
+
+### 2. A single-expression arm remains valid
+
+The two forms may be mixed within one `match`.
+
+### 3. A block arm's tail value is the arm's result
+
+Matching `if`/`loop`/`fun`/closure body semantics.
+
+### 4. Pattern bindings remain visible throughout the block body
+
+Not only at the arm's head.

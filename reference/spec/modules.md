@@ -165,7 +165,7 @@ fun main() -> i64 {
 | `public` | Marks a declaration in this file as externally accessible |
 | `export path::Name;` | Re-exports a name from a submodule into this module's public API |
 
-`export` declarations are processed after the module graph is fully loaded; they do not affect which files are loaded.
+Since v0.12.1 (metel-core#664), a bare `export path::Name;` also loads `path`'s module file, exactly as an `import` of the same path would — otherwise a name reachable *only* through a re-export, with no `import` anywhere pulling its module in directly, would never actually resolve: it would exist nowhere in the compiled program for the re-export to point at. `export` and `import` therefore build the module graph together; an `export` is not merely a post-load renaming step over files `import` already loaded.
 
 ## std::core Auto-Import
 
@@ -245,20 +245,36 @@ Within a module, all names defined in that module are accessible without qualifi
 
 Modules do not have their own visibility annotation. Module-level access control is handled entirely by `public` on individual items.
 
+<details open>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.modules.visibility.legality-1}
+
+Only declarations marked `public` are accessible from outside their declaring module; a
+public struct field is accessible outside that module only when the field itself is public.
+
+</details>
+
 ## Circular Imports
 
 Circular imports are a compile error. The error message includes the full import chain.
 
 ## Module Graph Loading
 
-The module graph is built from `import` declarations:
+The module graph is built from both `import` and `export` declarations — a re-export
+needs its target module loaded exactly as much as an ordinary import does, since a
+name that resolves nowhere can't be re-exported (metel-core#664):
 
 1. The root file is parsed.
-2. All `import` declarations are collected; each is resolved to a file path via the `::` → `/` mapping.
+2. All `import` and `export` declarations are collected; each is resolved to a file
+   path via the `::` → `/` mapping.
 3. Each referenced file is loaded recursively; cycles are detected and rejected.
-4. Only files reachable via at least one `import` declaration are loaded.
+4. Only files reachable via at least one `import` or `export` declaration are loaded.
 
-`export` declarations do not affect which files are loaded.
+An `export` still differs from an `import` in what it does with the resolved name —
+`import` brings it into local scope, `export` re-exports it through the current
+module's public API without making it locally visible — but both equally decide
+*which files enter the module graph at all*.
 
 ## Single-File Compatibility
 

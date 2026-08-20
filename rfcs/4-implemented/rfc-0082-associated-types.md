@@ -6,6 +6,11 @@ status: implemented
 updated: '2026-07-13'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/546'
 impl_status: implemented
+coverage:
+  "5": { kind: untestable, reason: "This section explains the design distinction and rejected generic-aspect model; it specifies no additional behavior beyond associated-type uniqueness already covered elsewhere." }
+  "6": { kind: blocked, reason: "Aspect objects are not implemented; object safety is blocked on accepted RFC-0008.", ref: "docs/public/rfcs/2-accepted/rfc-0008-aspect-objects.md" }
+  "7": { kind: untestable, reason: "This is explicitly historical material for retracted RFC-0069 and is not part of the ratified design." }
+  "8": { kind: untestable, reason: "Standalone type aliases are explicitly deferred to a future RFC." }
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence). Formally
@@ -269,6 +274,8 @@ fun f<T: Deref<Target = Node> + Iterator<Item = i64>>(x: &T) { ... }
 
 ## 5. Associated Types vs Generic Type Parameters on the Aspect
 
+> **Coverage: untestable** (see frontmatter). This is design rationale, not a separate language rule.
+
 The key distinction: an associated type is uniquely determined by the implementing type.
 A type `T` has exactly one `Deref::Target` — the compiler can infer it from `T`. A
 generic type parameter on the aspect would allow multiple impls per type:
@@ -293,6 +300,8 @@ type arguments (e.g., `From<T>` in other languages — a type may be `From<i64>`
 
 ## 6. Object Safety
 
+> **Coverage: blocked** (see frontmatter). Aspect objects await RFC-0008.
+
 RFC-0008 §3 specifies that an aspect with associated types is object-safe only if no
 method signature references the associated type directly. This RFC is the normative
 basis for that rule.
@@ -309,6 +318,8 @@ not surface `AllocationError` in their vtable signatures. The return type of the
 ---
 
 ## 7. Amendment to RFC-0069 — SubRegion (historical — RFC-0069 retracted, not integrated)
+
+> **Coverage: untestable** (see frontmatter). This section is historical only.
 
 **This section no longer describes anything in the ratified design.** RFC-0069 was
 retracted as part of the 2026-07-05 allocator/lifetime split; `SubRegion` does not exist
@@ -350,6 +361,8 @@ RFC-0069 is unchanged.
 ---
 
 ## 8. Standalone Type Aliases
+
+> **Coverage: untestable** (see frontmatter). Standalone aliases are deferred.
 
 Standalone type aliases — `type Alias = ConcreteType;` at module level — are a distinct
 feature. They have no aspect, no impl, and no associated type mechanism. They are

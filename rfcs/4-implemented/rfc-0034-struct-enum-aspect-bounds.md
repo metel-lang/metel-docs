@@ -253,3 +253,40 @@ pub struct EnumDecl {
 **Target:** v0.7.0
 
 All resolved questions above are the final decisions. Implementation tracked in METEL-57 (T0012 error code, impl_aspect_env lookup) and METEL-60 (grammar, AST, parser, typechecker enforcement, bound propagation).
+
+## Coverage Checklist (added 2026-08-19, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
+as headed sections for ADR-0049 citation purposes only. The document above is
+unchanged and remains the historical record. Deliberately excludes claims that
+aren't independently observable from a program's behavior -- implementation
+strategy, design rationale, or internal architecture discussion belongs in the
+RFC's own prose, not here.
+
+### 1. Struct and enum parameters accept inline and where-clause aspect bounds
+
+Generic struct and enum parameters may declare aspect bounds inline, in a `where`
+clause, or in both places. `+` combines multiple bounds, and equivalent bounds from
+the two forms are combined for the same parameter.
+
+### 2. Bounded construction rejects an unsatisfied concrete type argument
+
+Constructing a bounded struct or enum with a concrete type that lacks any required
+aspect is rejected with `T0012`, at the offending type argument at the construction
+site.
+
+### 3. A bounded type parameter exposes its bound inside inherent extends
+
+An `extend Struct<T>` block inherits the struct's declared bounds, so methods in
+that block may use the corresponding aspect operations on `T` without restating
+the bound.
+
+### 4. Aspect implementation extends inherit the struct's bounds
+
+An `extend Struct<T>: AspectName` block also has the struct's declared bounds in
+scope without a duplicate declaration.
+
+### 5. Matching a bounded struct or enum preserves its parameter bounds
+
+Within a match arm for a value of a bounded struct or enum type, the type parameter's
+declared aspect bounds remain available to the arm body.

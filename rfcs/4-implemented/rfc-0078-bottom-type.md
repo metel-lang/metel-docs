@@ -6,6 +6,8 @@ status: implemented
 updated: '2026-07-12'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/538'
 impl_status: implemented
+coverage:
+  "4.2": { kind: untestable, reason: "Allocator expressions and the AllocationError mechanism are not implemented in the interpreter, so this collapse rule cannot be exercised." }
 ---
 
 > **Status — accepted.** Depends on RFC-0071 (Ownership and Move Semantics).
@@ -190,6 +192,8 @@ fun use_result(r: Result<i64, !>) -> i64 {
 ```
 
 ### 4.2 `AllocationError = !` (RFC-0063)
+
+> **Coverage: untestable** (see frontmatter). Allocator expressions are not implemented in the interpreter.
 
 RFC-0063 gives each allocator a `type AllocationError`. When an allocator sets
 `AllocationError = !` (as all stdlib allocators do), the `@a expr` allocation

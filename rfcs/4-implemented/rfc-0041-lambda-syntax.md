@@ -124,3 +124,41 @@ This RFC adopts `(T) -> U` in type position as well as expression position. `fun
 **Target:** *(pending milestone assignment)*
 
 The syntax and migration questions above are resolved in this RFC. Remaining work is spec alignment and later implementation planning.
+
+## Coverage Checklist (added 2026-08-19, not part of the original RFC; expanded 2026-08-19: split former item 5 into items 5 and 6)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
+as headed sections for ADR-0049 citation purposes only. The document above is
+unchanged and remains the historical record. Deliberately excludes claims that
+aren't independently observable from a program's behavior -- implementation
+strategy, design rationale, or internal architecture discussion belongs in the
+RFC's own prose, not here.
+
+### 1. Anonymous functions use parenthesized parameters followed by `->`
+
+A closure expression is written `(params) -> { body }`, with parameter and
+return types supplied or inferred as context permits. It may be passed directly
+as an argument or capture names from its enclosing scope.
+
+### 2. The arrow distinguishes a closure from a grouped expression
+
+`(x) -> { ... }` is a closure, while `(x)` remains a grouped expression. A
+parameter list followed directly by a block, without `->`, is not closure syntax.
+
+### 3. Zero-argument closures use `() -> { ... }`
+
+The empty parameter list is still followed by `->`; a bare block is not an
+anonymous function.
+
+### 4. Function types use `(T) -> U` syntax
+
+Closure values can be annotated or accepted by parameters using function types
+such as `(i64) -> i64`, including zero-argument function types.
+
+### 5. Named functions still require `fun`
+
+`fun name(...) { ... }` remains the declaration form for named functions.
+
+### 6. The former anonymous `fun(...)` form is rejected
+
+The former `fun(...) { ... }` anonymous-function spelling is rejected.

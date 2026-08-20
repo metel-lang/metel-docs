@@ -310,7 +310,7 @@ enum Engine { StringTheory { core: @[Heap] Core }, Impulse { fuel: I32 } }
 var ship: Rc<Spaceship> = Rc::new(Spaceship { engine = Engine::StringTheory { ... } });
 
 match ship.get_mut() {
-    Some(s) => s.engine = Engine::Impulse { fuel: 100 },
+    Some(s) => s.engine = Engine::Impulse { fuel = 100 },
     None    => panic("unexpected alias"),
 }
 ```

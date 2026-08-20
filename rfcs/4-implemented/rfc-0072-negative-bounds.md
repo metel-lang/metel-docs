@@ -6,6 +6,8 @@ status: implemented
 updated: '2026-07-12'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/547'
 impl_status: implemented
+coverage:
+  "5.2": { kind: untestable, reason: "The section deliberately defers Self-negative bounds rather than specifying observable behavior." }
 ---
 
 > **Status — accepted.** Introduces `T: !Aspect` as a bound that is
@@ -204,6 +206,9 @@ distinct: negative bounds are use-site constraints; negative impls are impl-site
 declarations that affect what the negative bound check finds.
 
 ### 5.2 Negative bounds on the `Self` type within impl blocks
+
+> **Coverage: untestable** (see frontmatter). This section deliberately defers the
+> feature and therefore specifies no observable behavior for a fixture to exercise.
 
 Within an impl block, placing a negative bound on `Self` (e.g. to provide a method only
 when the type does not implement some aspect) interacts with aspect coherence (RFC-0060) in

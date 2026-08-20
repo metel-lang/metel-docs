@@ -315,6 +315,37 @@ blocking anything, they just made the document read as permanently unfinished. I
 question isn't load-bearing for acceptance, it either gets resolved, cut, or moved
 somewhere it won't be re-read on every pass.
 
+**A mix of blocker *kinds* across one RFC's open questions is a split signal, not just a
+long list (adopted 2026-08-13).** The rule above prunes a list that's too long; this one
+is about a list that's short but incoherent — questions that read as equally open while
+actually needing entirely different things to resolve. Three kinds recur:
+
+- **Settleable now** — a design decision nobody has made, with everything needed to make
+  it already in hand.
+- **Blocked on a dated dependency** — resolves when another named, in-flight RFC settles.
+- **Blocked on nothing that exists** — no RFC, issue, or design owns the prerequisite at
+  all; there is no document to wait on and no milestone that could contain it.
+
+A document mixing these cannot be accepted *or* scheduled as one unit: the "blocked on
+nothing" question can block acceptance (it's still an open question) while having no
+content anyone could put on a roadmap, and the "settleable now" question sits captive
+behind it regardless of being ready to go. This happened three times before it was named:
+RFC-0012 → RFC-0092/0093/0094/0095 (2026-07-09, the original prompt for this document's
+own "check `INDEX.md`" rule); RFC-0092 → RFC-0132, where §0's base execution model sat
+next to `type`-as-value/reflection for 35 days after RFC-0092 itself had written down the
+option to ship §0 alone and nobody could act on it, because it had no independently
+schedulable identity; and RFC-0124 → RFC-0133, same day, where a mutable-slice question
+blocked on RFC-0067 (a known, dated dependency) sat beside "can `List<T>` ever be written
+in Metel source," which needs two prerequisites that have no owning RFC at all — the
+document could not be accepted (the second question is a stated acceptance precondition)
+or scheduled (it has nothing schedulable), so it sat `0-draft` and untargeted for 19 days
+as one unit. **The check, applied when an RFC's open-questions list stops shrinking**: for
+each question, name what actually closes it — a decision, a named RFC, or nothing that
+exists yet. If the answers span more than one kind, that is the split, not another prune
+pass. Split RFCs record the connection explicitly (a status blockquote citing what moved
+where and why), the same way `3-integrated`'s exit criteria already require for spec
+sweeps — a split is not a reason to lose the trail between the two documents.
+
 **Brief design review adversarially (adopted 2026-07-26).** Whoever reviews an RFC — for
 `1-under-review`, for acceptance, or for `3-integrated`'s worked-example soundness hunt —
 is asked to **break the design, and told which decisions to attack**, not asked whether it
@@ -447,6 +478,32 @@ of this process that don't need judgment:
   renamed region → allocator (RFC-0066, RFC-0068) — `check` doesn't catch stale titles
   itself, that was found by reading the cluster before ratifying it. `rfc.py check`
   reports clean as of 2026-07-10.
+
+  **Added 2026-08-19 (ADR-0049 §5/§7), CI-enforced:** `check` also runs the coverage
+  ratchet against `COVERAGE-BASELINE.json` — every `implemented`/`integrated` RFC's
+  currently-uncovered normative sections are compared against what the baseline already
+  grandfathered in when it was last written, and `check` fails if any RFC has gained an
+  uncovered section on top of that. This is the piece the per-transition gate
+  (`transition --to implemented` below) can't provide on its own: that gate only fires
+  once, at the moment an RFC crosses into `implemented`; it says nothing about an RFC
+  that was already there and has since regressed (a citation quietly deleted, a fixture
+  disabled). Wired into metel-core's `rfc-check` CI job (`.github/workflows/ci.yml`),
+  which already ran `rfc.py check` for the structural checks above — no new job, this
+  gate rides the existing one. metel-docs-internal's own CI runs `rfc.py check` too
+  (new job, same workflow pattern as `check-examples.yml`), where it correctly degrades
+  to the informational skip ADR-0049 §6 describes, since `metel-interpreter/tests` isn't
+  reachable from a bare docs-internal checkout — real enforcement only happens where the
+  fixture corpus actually lives, in metel-core's CI.
+
+  **Added 2026-08-20 (ADR-0050 §5/§8):** `check`'s coverage summary now also reports
+  spec-anchoring migration progress — per RFC, how many of its covered normative sections
+  are spec-anchored (`coverage.spec` frontmatter link + a citing `spec =` fixture, both
+  required) versus still covered only by a direct `rfc =`/prose citation, plus a
+  corpus-wide `spec-anchoring migration (ADR-0050 §8): N/M citable normative sections
+  spec-anchored (X%)` line. Tracks the migration ADR-0050 §8 sequences (pre-integration
+  citations stay `rfc =`; a `3-integrated` RFC's existing citations move to `spec =` as a
+  condition of that transition) without needing a separate report — same coverage-summary
+  output `check` already prints, extended rather than duplicated.
 - `rfc.py index --rebuild-registry` — regenerates `REGISTRY.md` from the current RFC
   corpus. This is the exact state inventory, meant to be machine-trustworthy.
 - `rfc.py index --check-drift` — checks whether generated `REGISTRY.md` still matches the
@@ -456,6 +513,13 @@ of this process that don't need judgment:
   `INDEX.md` cluster section's combined text; suggests where it belongs rather than
   deciding it. Verified against three existing placements (RFC-0091, RFC-0074, RFC-0003)
   and agreed with the manual choice in all three.
+- `rfc.py index --write-coverage-baseline` (added 2026-08-19, ADR-0049 §7) — regenerates
+  `COVERAGE-BASELINE.json` from the current per-RFC coverage state. Run this after
+  deliberately widening a gap (a new typed exemption, a fixture intentionally retired) so
+  `check`'s ratchet stops treating the new state as a regression — not something to run
+  reflexively whenever `check` fails; a fresh, uncommitted-elsewhere gap should get a
+  fixture or an exemption instead, the same judgment call the per-transition gate already
+  demands. Needs `metel-interpreter/tests` reachable, same as `check`'s coverage summary.
 
 None of this replaces the `3-integrated` phase's actual judgment work (is the design
 sound, do the worked examples really stress-test the interaction) — it only makes the

@@ -3,9 +3,11 @@ id: rfc-0061
 title: "Structural Aspect Bounds"
 date: '2026-07-01'
 status: implemented
-updated: '2026-07-14'
+updated: '2026-08-14'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/549'
 impl_status: implemented
+coverage:
+  "4.1": { kind: blocked, reason: "The Ord array impl is blocked on draft RFC-0062; the Hash half is likewise deferred but has no dedicated RFC yet.", ref: "docs/public/rfcs/0-draft/rfc-0062-ord-comparison-aspect.md" }
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence) and
@@ -33,6 +35,81 @@ impl_status: implemented
 >
 > Tuple and record dispatch is metel-core#239, deferred to v0.13.0. RFC-0116 §3's
 > local-aspect-impl-on-a-record bullet stays aspirational until it lands.
+
+> **Status — corrected (2026-08-14, found while drafting RFC-0134).** §7.4 below claims
+> closures "have distinct anonymous types... generated per-closure-site," distinguishing
+> them from `fun(A) -> B`. That does not match the implementation and never did — checked
+> directly against `metel-frontend/src/types/mod.rs`: `Type` has exactly one function-type
+> variant, `Fun(Vec<Type>, Box<Type>)`, with no separate closure case and no
+> per-closure-site tag anywhere in the enum. `RuntimeCallable` has only `Closure` and
+> `Intrinsic`, not a third closure-specific kind either. A closure and a named function
+> pointer of matching signature are the same `Type::Fun` value, distinguished (if at all)
+> only by an empty vs. non-empty capture list at the value level, never by type. §7.4's
+> text below is left as originally written for the historical record; read "distinct
+> anonymous types" as this RFC's own uncorrected assumption, inherited from RFC-0050/
+> RFC-0049's framing at the time this RFC was integrated, not a description of anything
+> that was ever built. RFC-0134 (Closure Call Capability) §4 is the document that depends
+> on "no distinct closure type" and is where this was found; nothing in §§1-6 of this RFC
+> (array/tuple structural impls) is affected.
+
+> **Status — superseded in part (2026-08-14): §1.1's array model is out of date.** §1.1
+> below describes `T[]` as a **sized, owned** sequence — "a fat struct carrying a pointer
+> to element storage, a length, and a capacity" — and concludes "because it owns its
+> element storage, `T[]` is never `Copy`." **RFC-0126 (`T[]` as a Copy Borrowed View,
+> `4-implemented`, shipped in metel-core#593, v0.12.0) replaced that model**: `T[]` is a
+> non-owning, immutable *view*, and is `Copy` **unconditionally** — including when the
+> element type is not `Copy`, since a view of a `T` holds a location rather than a `T`.
+> The implementation matches RFC-0126, not §1.1: `infer_type_satisfies_aspect`
+> (`typeinference/mod.rs`) returns `true` for `Copy` on `InferType::Array` with no
+> condition on the element type, and the behaviour is observable —
+>
+> ```metel
+> let a = [1, 2, 3];
+> let b = a;
+> println(a[0]);   // accepted under --move-check; prints 1
+> ```
+>
+> — where the same shape on a non-`Copy` named struct is correctly rejected with `T0019`.
+> Read §1.1's representation paragraph and its `Copy` conclusion as describing the model
+> RFC-0126 superseded. §§2-6's structural-impl lookup rules are unaffected: they concern
+> which impls can be *written* and *found* for array targets, which RFC-0126 does not
+> change. Neither RFC previously cited the other; RFC-0126 is now in References below.
+> (Found while checking RFC-0134 §1's premise that `Type::Fun`'s unconditional `Copy` was
+> a lone anomaly — `InferType::Array` has the same shape, but by design rather than by
+> regression. Separately, that both live as hardcoded typechecker rules rather than
+> stdlib impls is already tracked as metel-core#263.)
+
+> **Status — §7.2 is not implemented (2026-08-14).** §7 below states that every function
+> type automatically implements `Callable` (§7.1) and that `Copy`, `Clone`, `Send`, and
+> `Sync` are provided for function pointers by `std::core` with no user declaration
+> needed (§7.2's table). **None of that is in the implementation.** Function types satisfy
+> *no* aspects: `infer_type_satisfies_aspect` (`typeinference/mod.rs`) answers every
+> aspect query for them with `false`, via an arm whose own comment states the intent —
+> `InferType::Var(_) | InferType::Never | InferType::Fun(_, _) => false`, *"`Never` and
+> `Fun` implement nothing."* Confirmed against the release binary for a named function and
+> a closure alike:
+>
+> ```
+> [T0012] `(i64) -> i64` does not implement `Copy` (required by `needs_copy`)
+> [T0012] `(i64) -> i64` does not implement `Clone` (required by `needs_clone`)
+> [T0012] `() -> String` does not implement `Copy` (required by `needs_copy`)
+> ```
+>
+> This is the same category as the §7.4 correction above — specification that was never
+> built — but with a wider blast radius, since §7.2's table is what RFC-0134 §1 originally
+> cited as corroboration for "a named function pointer is trivially `Copy`." That claim
+> remains true of the *move checker*, which special-cases `Type::Fun` to `Copy` in
+> `is_copy` and bypasses the aspect system entirely; it is false of aspect-bound
+> satisfaction. RFC-0134's Open Questions section now records the resulting two-notions-of-
+> `Copy` split in detail. Note the 2026-08-01 status block above already found the
+> *impl-registration* side of `fun` targets inert (rejected with `T0003`); this note
+> records that the `std::core`-provided side of §7 is equally absent. §§1-6 are unaffected.
+> **Tracked as metel-core#739**, which owns closing the gap — including whether §7.2's
+> table is implemented as specified or amended, and whether §7.1's `Callable<A, B>`
+> auto-impl (which RFC-0008's `dyn Callable<A, B>` depends on) is built or explicitly
+> deferred. Related: metel-core#702 is the architectural root cause (model non-record
+> structural types as regular types), and metel-core#263 tracks moving the analogous
+> hardcoded tuple/fixed-array `Copy` rules into the stdlib.
 
 ## Summary
 
@@ -159,6 +236,8 @@ These impls are in `std::core` and cannot be overridden by user code (orphan rul
 coexist.
 
 ### 4.1 Deferred standard impls
+
+> **Coverage: blocked** (see frontmatter). `Ord` awaits RFC-0062; `Hash` has no aspect RFC yet.
 
 The following blanket impls are natural but deferred pending their aspect definitions:
 
@@ -314,3 +393,9 @@ aspect impls are specified in RFC-0050.
 - RFC-0008 (Aspect Objects) — `Callable<A, B>` object safety; `dyn Callable<A, B>`.
 - RFC-0054 — `List<T>` as a nominal struct; `List<T>` impls are separate from array
   impls and coexist.
+- RFC-0126 (`T[]` as a Copy Borrowed View, `4-implemented`) — replaced §1.1's owning-buffer
+  array model with a non-owning view that is `Copy` unconditionally; see the 2026-08-14
+  partial-supersession note above.
+- RFC-0134 (Closure Call Capability, under-review) — the RFC whose §4 investigation found
+  §7.4's "distinct anonymous types" claim below doesn't match the implementation; see
+  the 2026-08-14 correction note above.

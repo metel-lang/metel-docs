@@ -301,3 +301,62 @@ note: use an explicit import to disambiguate: `import parser::Token`
 **Target:** v0.6.0
 
 Option A (multi-pass with shared scheme registry) implemented and shipped in v0.6.0. `check_graph` returns a `TypedModuleGraph`; the flat `load_program` / `check(Program)` path and all ADR-0019/ADR-0020 compatibility shims were removed in the same sprint. All 13 resolved questions above reflect the final implementation choices.
+
+## Coverage Checklist (added 2026-08-19, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
+as headed sections for ADR-0049 citation purposes only. The document above is
+unchanged and remains the historical record. Deliberately excludes claims that
+aren't independently observable from a program's behavior -- implementation
+strategy, design rationale, or internal architecture discussion belongs in the
+RFC's own prose, not here.
+
+### 1. A module sees only its own declarations and imported names
+
+Names declared in another module do not become visible merely because that module
+is loaded. A consumer must import a public name (or otherwise use a valid qualified
+path) before it can use that name.
+
+### 2. Private imported names report a visibility error
+
+Referencing a declaration that exists in the source module but is not `public`
+is rejected as `T0009`, rather than being reported as an undefined name.
+
+### 3. Public declarations require explicit type annotations
+
+A public declaration without the required explicit parameter or return/field type
+annotation is rejected with `T0010`; private declarations retain ordinary local
+inference behavior.
+
+### 4. Imported aliases are the local binding for qualified references
+
+When a name is imported as an alias, the alias is usable as a value, type, or
+constructor as appropriate. A qualified reference to the imported source name
+resolves to that local alias, while an unimported bare source name is rejected.
+
+### 5. Qualified paths preserve normal name-resolution behavior
+
+Valid qualified paths resolve to their imported declaration for type checking and
+execution. A qualified path that cannot be resolved is rejected before it can be
+treated as an arbitrary bare-name fallback.
+
+### 6. Conflicting imports are diagnosed according to their binding kind
+
+Two explicit imports that bind the same local name are rejected immediately with
+`T0011`. A collision between user glob imports is diagnosed only when the ambiguous
+name is referenced, and an explicit import disambiguates a glob-provided name.
+
+### 7. Cross-module public APIs do not infer type variables across the boundary
+
+An importer consumes the declared type of a public item rather than completing an
+unannotated public API through cross-module inference.
+
+### 8. An unresolved imported module is a load error
+
+Every import must resolve to a loadable module (with standard-library modules
+provided by the prelude). An import does not silently contribute an empty scope.
+
+### 9. A re-export cannot expose a private source item
+
+Re-exporting a name is permitted only when that name is public in its source
+module. Attempting to re-export a private source declaration reports `T0009`.

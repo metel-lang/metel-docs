@@ -4,6 +4,11 @@ title: "Closure Capture Semantics and Cross-Closure Reference Sharing"
 date: '2026-05-21'
 status: implemented
 spec_status: done
+coverage:
+  "1": { spec: "spec.functions.closures.dynamics-1" }
+  "2": { spec: "spec.functions.closures.dynamics-2" }
+  "3": { spec: "spec.functions.closures.dynamics-3" }
+  "4": { spec: "spec.functions.closures.dynamics-4" }
 ---
 
 ## Summary
@@ -371,3 +376,35 @@ The blocking dependency is RFC-0043 (regular pointers). Resolve RFC-0043 before 
 **Target:** *(pending milestone assignment)*
 
 Metel adopts clone-by-value closure capture as the default model. Shared mutable closure state is explicit and pointer-based, escaping closures extend the lifetime of reachable non-linear captured storage, and open/closed upvalues are the preferred long-term implementation strategy.
+
+---
+
+## Coverage Checklist (added 2026-08-18, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims, as
+headed sections for ADR-0049 citation purposes only. The document above is unchanged and
+remains the historical record. Deliberately excludes claims that aren't independently
+observable from a program's behavior: the choice between eager boxing and open/closed
+upvalues is an implementation strategy, not a language guarantee; "a single capture model
+is sufficient" and "`Rc<RefCell<T>>` is an implementation detail, not surface syntax" are
+design rationale, not claims a fixture can assert against.
+
+### 1. A closure captures each free variable by value at definition time
+
+Mutating the outer binding afterward does not change what the closure already captured.
+
+### 2. A closure's mutation of a captured-by-value binding stays local to it
+
+Not visible to the enclosing scope, and not visible to another closure that captured the
+same free variable independently.
+
+### 3. Two closures may share mutable state only via an explicit shared pointer
+
+Both capturing the same `&var` pointer — writes through one are visible through the
+other.
+
+### 4. An escaping closure keeps reachable captured non-linear storage alive
+
+A closure that escapes its defining function while holding a captured pointer to a
+still-reachable non-linear local keeps that storage alive and correctly mutable after the
+defining function returns.

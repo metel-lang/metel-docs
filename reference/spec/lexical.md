@@ -26,11 +26,10 @@ By convention:
 ## Keywords
 
 ```
-and       as        aspect    break     continue  else      enum
-export    extend    false     for       fun       if        impl
-import    let       loop      match     or        public    return
-root      self      std       struct    super     true      var
-where     while
+as        aspect    break     continue  else      enum      export
+extend    false     for       fun       if        impl      import
+let       loop      match     public    return    root      self
+std       struct    super     true      var       where     while
 ```
 
 ## Literals
@@ -153,7 +152,7 @@ let full = "hello" + ", " + "world";   // "hello, world"
 | Arithmetic      | `+`  `-`  `*`  `/`  `%`                       |
 | Compound assign | `+=`  `-=`  `*=`  `/=`  `%=`                  |
 | Comparison      | `==`  `!=`  `<`  `<=`  `>`  `>=`              |
-| Logical         | `&&`  `\|\|`  `!`  (`and` / `or` as aliases)  |
+| Logical         | `&&`  `\|\|`  `!`                             |
 | Assignment      | `=`                                           |
 | Error prop      | `?`                                           |
 | Type cast       | `as`                                          |

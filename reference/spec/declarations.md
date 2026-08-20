@@ -27,6 +27,15 @@ fun main() -> i64 {
 
 All three forms require `var`.
 
+<details open>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.variables.immutable-bindings.legality-1}
+
+A `let` binding must be initialized and cannot be assigned after initialization.
+
+</details>
+
 ### Mutable Bindings
 
 ```metel
@@ -39,6 +48,16 @@ fun main() -> i64 {
 ```
 
 `var` bindings can be reassigned and also must be initialized at declaration. Compound assignment operators `+=`, `-=`, `*=`, `/=`, `%=` are supported.
+
+<details open>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.variables.mutable-bindings.legality-1}
+
+A `var` binding must be initialized and may be assigned after initialization; `var` is the
+mutable binding spelling.
+
+</details>
 
 ### Scoping and Shadowing
 
@@ -162,7 +181,8 @@ fun main() -> i64 {
 }
 ```
 
-When a local variable has the same name as a field, the `= value` part can be omitted (**shorthand field init**):
+When a local variable has the same name as a field, the `= value` part can be omitted
+([**shorthand field init**](#spec.declarations.structs.instantiation-and-field-access.legality-1)):
 
 ```metel
 struct Point {
@@ -180,7 +200,8 @@ fun main() -> i64 {
 
 Shorthand and explicit fields may be mixed freely within one literal.
 
-Zero-field structs may omit braces entirely. These two forms are equivalent:
+Zero-field structs [may omit braces entirely](#spec.declarations.structs.instantiation-and-field-access.legality-2).
+These two forms are [equivalent](#spec.declarations.structs.instantiation-and-field-access.dynamics-2):
 
 ```metel
 struct Empty {}
@@ -188,6 +209,39 @@ struct Empty {}
 let a = Empty;
 let b = Empty {};
 ```
+
+<details open>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.structs.instantiation-and-field-access.legality-1}
+
+A struct-literal field initializer is `ident`, optionally followed by `= expr`. When `=
+expr` is present, `ident` names the field and `expr` its value. When omitted, `ident` must
+name both the field and a local binding in scope at the literal (shorthand/punning field
+init). Shorthand and explicit fields may be freely mixed within one struct literal.
+(ADR-0050 pilot: migrated from RFC-0115 §1, `2026-08-20`.)
+
+##### Dynamic Semantics {#spec.declarations.structs.instantiation-and-field-access.dynamics-1}
+
+A shorthand field `ident` in a struct literal evaluates identically to the explicit form
+`ident = ident`: the field takes the value of the local binding named `ident` that is in
+scope at the literal. (ADR-0050 pilot: migrated from RFC-0115 §2, `2026-08-20`.)
+
+##### Legality Rule {#spec.declarations.structs.instantiation-and-field-access.legality-2}
+
+A zero-field struct may be constructed either as its bare type name or with empty braces.
+
+##### Dynamic Semantics {#spec.declarations.structs.instantiation-and-field-access.dynamics-2}
+
+For a zero-field struct, the bare and empty-brace constructor forms evaluate to the same
+struct value.
+
+##### Legality Rule {#spec.declarations.structs.instantiation-and-field-access.legality-3}
+
+A struct with fields cannot omit its constructor fields; its bare type name is resolved as a
+name rather than as a constructor expression.
+
+</details>
 
 ### Methods
 
@@ -275,6 +329,16 @@ fun main() -> i64 {
 }
 ```
 
+<details open>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.structs.receiver-forms.legality-1}
+
+`&var self` is the mutable-reference receiver spelling and requires a mutable addressable
+receiver or an `&var T` reference at the call site.
+
+</details>
+
 ### Generic Structs
 
 ```metel
@@ -331,6 +395,21 @@ let x = Flag::On;
 let y = Flag::On {};
 ```
 
+<details open>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.enums.legality-1}
+
+A zero-field enum variant may be constructed either as its qualified path or with empty
+braces.
+
+##### Dynamic Semantics {#spec.declarations.enums.dynamics-1}
+
+For a zero-field enum variant, the bare and empty-brace constructor forms evaluate to the
+same variant value.
+
+</details>
+
 ### Instantiation
 
 ```metel
@@ -356,6 +435,15 @@ fun main() -> i64 {
     }
 }
 ```
+
+<details open>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.enums.instantiation.legality-1}
+
+A struct-like enum variant with fields cannot omit its constructor fields.
+
+</details>
 
 ### Methods on Enums
 
@@ -415,6 +503,16 @@ empty already: zero methods and zero associated types. This is pure sugar for
 The shorter spelling does **not** promise that the aspect stays empty forever. If a
 later revision adds a method or associated type, the declaration simply switches back
 to the braced form.
+
+<details open>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.aspects.bodyless-aspect-declarations.legality-1}
+
+An aspect declaration may use `;` instead of a braced body only when it declares zero
+methods and zero associated types.
+
+</details>
 
 ### Implementing an Aspect
 
@@ -574,6 +672,16 @@ This composes without any new mechanism: the conditional block's bound-checking 
 section) and the equality-constraint-checking Associated Types already specifies are
 the same call-site check, run once per bound in the `where` clause, regardless of
 which kind of aspect the bound names.
+
+<details open>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-1}
+
+An inherent implementation is written `extend Type { ... }`; an aspect implementation is
+written `extend Type: Aspect { ... }`, and both forms may coexist for the same type.
+
+</details>
 
 ### Aspect Implementation Coherence
 

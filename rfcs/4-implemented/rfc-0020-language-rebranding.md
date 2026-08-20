@@ -2,6 +2,9 @@
 id: rfc-0020
 title: "Language Keyword Rebranding"
 date: '2026-05-23'
+coverage:
+  "1": { spec: "spec.types.perhaps-t.legality-1" }
+  "3": { kind: untestable, reason: "reserves inactive future module syntax; no module-system mechanism exists yet" }
 ---
 
 ## Summary
@@ -61,6 +64,9 @@ extend Point: Comparable { ... }
 ---
 
 ### 3. `harness` — reserved for the module system
+
+> **Coverage: untestable** (see frontmatter). This reserves inactive future module
+> syntax; the module-system mechanism does not exist yet.
 
 `harness` is reserved as the module declaration keyword, to be activated when the module system (RFC-0009) is implemented.
 

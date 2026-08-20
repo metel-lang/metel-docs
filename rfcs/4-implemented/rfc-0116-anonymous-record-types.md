@@ -7,6 +7,8 @@ target:
 updated: '2026-07-25'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/576'
 impl_status: implemented
+coverage:
+  "5": { kind: untestable, reason: "The section is a non-functional design rationale for declining an alternative type-system foundation." }
 ---
 
 > **Extracted from RFC-0090 (Structural Records — Rows and Tiers) on 2026-07-24**, which
@@ -271,6 +273,9 @@ which would have made the design depend on RFC-0101 (`0-draft`) to disambiguate.
 variables are written `..R` and belong to RFC-0121.
 
 ## 5. Considered and declined: a fully record-based type system
+
+> **Coverage: untestable** (see frontmatter). This section records a design decision,
+> not independently observable language behavior.
 
 Whether records should stop being an *addition* alongside nominal types and become the
 foundation everything reduces to — nominal types as sugar over an underlying record.

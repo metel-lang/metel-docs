@@ -4,6 +4,8 @@ title: "Explicit Receiver Semantics"
 date: '2026-06-02'
 status: implemented
 spec_status: done
+coverage:
+  "10": { kind: untestable, reason: "This section defers a future linear-receiver model and specifies no current fixture-observable behavior." }
 ---
 
 ## Summary
@@ -247,6 +249,8 @@ Disallowed examples:
 This keeps exclusive mutation tied to stable mutable storage.
 
 ### 10. Compatibility with Future Linear Work
+
+> **Coverage: untestable** (see frontmatter). This section only reserves future linear-receiver design space.
 
 This RFC is intentionally limited to ordinary receivers over non-linear values and future-compatible reference views in receiver position.
 

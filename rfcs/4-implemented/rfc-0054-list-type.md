@@ -80,3 +80,43 @@ All open questions are resolved or explicitly deferred.
 | `Display` impl for `List<T>` where `T: Display` | **Deferred** — needs derived aspects or a manual impl; not blocking |
 | `List::with_capacity(n: i64)` constructor | **Deferred** — irrelevant for the tree-walking interpreter; relevant for compiled output |
 | Index operator `list[i]` | **Moved to RFC-0011** — design of the `Index` aspect (panic vs `Perhaps<T>`) tracked there |
+
+## Coverage Checklist (added 2026-08-19, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims
+(expanded 2026-08-19: added item 6, missed in the original pass),
+as headed sections for ADR-0049 citation purposes only. The document above is
+unchanged and remains the historical record. Deliberately excludes claims that
+aren't independently observable from a program's behavior -- implementation
+strategy, design rationale, or internal architecture discussion belongs in the
+RFC's own prose, not here.
+
+### 1. List construction
+
+`List::new()` creates an empty `List<T>`. `List::from(source)` constructs a
+`List<T>` from a `T[]` source.
+
+### 2. List mutation
+
+`push` appends an element to a mutable list. `pop` removes and returns its last
+element as `Perhaps<T>`, returning `Perhaps::None` when the list is empty.
+
+### 3. List length
+
+`len` reports the number of elements currently in a list, including changes
+made by `push` and `pop`.
+
+### 4. Bounds-checked list access
+
+`get(index)` returns `Perhaps::Some` for an in-bounds element and
+`Perhaps::None` for an out-of-bounds index.
+
+### 5. Explicit array views
+
+`as_slice()` exposes a list's contents as `T[]`. A `List<T>` is distinct from
+`T[]` and is not implicitly accepted where a `T[]` is required.
+
+### 6. List::from copies its source
+
+`List::from(source)` copies the elements of its `T[]` source, so later mutation
+of the resulting list does not change that source.

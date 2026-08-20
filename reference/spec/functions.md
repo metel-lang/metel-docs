@@ -102,6 +102,32 @@ fun main() -> i64 {
 }
 ```
 
+<details open>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.functions.closures.dynamics-1}
+
+When a closure is created, each captured free variable is captured by value in the
+closure's environment.
+
+##### Dynamic Semantics {#spec.functions.closures.dynamics-2}
+
+Mutating a captured-by-value binding changes the closure's captured value, not the
+enclosing binding.
+
+##### Dynamic Semantics {#spec.functions.closures.dynamics-3}
+
+Closures that capture the same explicit reference observe the same referent; writes through
+that reference by one closure are visible through the others.
+
+##### Dynamic Semantics {#spec.functions.closures.dynamics-4}
+
+A closure that escapes its defining function while holding a captured pointer to a
+still-reachable non-linear local keeps that storage alive and correctly mutable after the
+defining function returns.
+
+</details>
+
 ## Turbofish
 
 > **Availability:** Since v0.8.0.
@@ -133,6 +159,16 @@ Type ascription (`: T`) remains available for annotating the result type. Turbof
 ```metel
 let result = parse::<i64>("42") : Perhaps<i64>;
 ```
+
+<details open>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.functions.turbofish.legality-1}
+
+A generic call may supply explicit type arguments with `name::<T, U>(arguments)`. Each
+supplied argument must satisfy the corresponding generic parameter's requirements.
+
+</details>
 
 ## The ? Operator
 

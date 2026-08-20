@@ -7,6 +7,10 @@ target:
 updated: '2026-07-14'
 impl_tracking: 'archived Codeberg PR #273 (no GitHub counterpart per the 2026-08-04 migration policy; see internal/archive/codeberg-tracker/metel-core/comments/273.json)'
 impl_status: implemented
+coverage:
+  "1": { spec: "spec.declarations.aspects.implementing-an-aspect.legality-1" }
+  "2": { spec: "spec.modules.visibility.legality-1" }
+  "3": { spec: "spec.declarations.variables.mutable-bindings.legality-1" }
 ---
 
 > **Status — accepted (2026-07-14).** Reviewed and revised: extend Type / extend Type: Aspect (Swift-precedent, settles the inherent-impl gap an earlier with/without draft left open), negative impls folded into the same clause via the existing bound-negation !, identifier-collision audit noted for implementation. No open questions block it.

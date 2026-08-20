@@ -37,6 +37,21 @@ target:
 > parallel concept. RFC-0083 is superseded by this RFC —
 > `public/rfcs/5-superseded/rfc-0083-public-value-exports.md`.
 
+> **§0/§0a split out to RFC-0132, 2026-08-13.** The base execution model
+> (`comptime let`, `pub comptime let`, `comptime fun`, `comptime if`) is now
+> **RFC-0132 (Comptime Execution Model)**, acting on this RFC's own Timing
+> Recommendation below ("the base `comptime let` mechanism … could in principle ship
+> ahead of the rest of this RFC — that's a sequencing question for whoever schedules the
+> work"). That sequencing question went unanswered for 35 days while `metel-core#263`
+> stayed blocked on it. **This RFC now depends on RFC-0132** and retains only
+> `type`-as-value (§1), `typeinfo` reflection (§2), and `emit` (§3) — the parts that
+> genuinely still wait on RFC-0093's derive mechanism. §0/§0a below are kept in place,
+> struck through in substance rather than deleted, so this RFC still reads continuously
+> and so the RFC-0055/RFC-0083 reconciliation history recorded in them is not lost;
+> **RFC-0132 is normative for their content.** Open Question 9's finding (that §1's
+> unification generalizes to non-type comptime values, answering RFC-0053's deferred
+> const generics) is likewise now RFC-0132 §3's, not this RFC's.
+
 ## Summary
 
 Establishes `comptime` — Zig's model directly: compile-time execution of ordinary
@@ -47,6 +62,9 @@ side effect of compile-time evaluation. This RFC specifies only the single-decla
 form of `emit` (sufficient for aspect derivation, RFC-0093); the generalization to
 multiple declarations and expression-position splicing (needed for macro-like
 metaprogramming, not for derive) is RFC-0094's concern.
+
+**The base execution model these three build on — `comptime let`/`fun`/`if` — is
+RFC-0132, split out 2026-08-13 (see the note above). This RFC assumes it.**
 
 ---
 
@@ -63,6 +81,12 @@ the same evaluator runs it.
 ---
 
 ## 0. Execution model: `comptime let`, `comptime fun`, `comptime if`
+
+> **Moved to RFC-0132, 2026-08-13 — read that RFC for the normative version.** This
+> section and §0a are retained here (not deleted) because the RFC-0055 and RFC-0083
+> reconciliation history recorded in them is part of how this RFC reached its current
+> shape, and because §1-§3 below still read against this material. Any change to the
+> execution model belongs in RFC-0132 now, not here.
 
 Before `type`-as-value (§1) or reflection (§2) mean anything, comptime needs a base
 execution model — folded in here from RFC-0055, which specified this ground first and
@@ -362,18 +386,22 @@ specified (ordering, visibility, attributes).
    set), deferring `Enum`/`Int`/`Pointer`/... arms until something actually needs them?
    Or does the sum type need to be specified in full before any of it ships, to avoid a
    breaking change to `TypeInfo` later?
-6. **Recursion and termination for `comptime fun`** (inherited from RFC-0055 OQ-1).
-   Should Metel allow recursive comptime functions with a compiler-enforced depth
-   limit (Zig's approach), or forbid comptime recursion entirely (forcing comptime
-   loops to cover all cases, at the cost of some recursively-natural programs being
-   inexpressible as comptime)? Neither this RFC nor RFC-0055 settles this.
-7. **Comptime and allocation** (inherited from RFC-0055 OQ-2). Can comptime functions
-   allocate at all? §0 asserts comptime needs "its own scratch storage, distinct from
-   `@a T`'s runtime allocators" without specifying what that storage is or how it's
-   bounded — does comptime get its own dedicated allocator kind, or is heap-shaped
-   allocation simply disallowed in comptime functions, with only stack-like/scratch
-   values permitted?
-8. **Comptime error messages.** When a comptime computation fails (division by zero,
+6. **~~Recursion and termination for `comptime fun`~~ — moved to RFC-0132 OQ1
+   (2026-08-13).** Blocking there, where it was not here: `comptime fun` cannot ship
+   without it, and RFC-0132 is what ships `comptime fun`.
+7. **~~Comptime and allocation~~ — moved to RFC-0132 OQ2 (2026-08-13).** Same reason:
+   `comptime let SIN_TABLE: [f64; 256]` constructs a compile-time array, so this must be
+   answered by whichever RFC ships `comptime let`, which is now RFC-0132.
+8. **~~Does §1's unification generalize to non-type comptime values?~~ — answered, and
+   the answer moved to RFC-0132 §3 (2026-08-13).** Yes: nothing in §1's argument depends
+   on the comptime value being a `type`, so a `comptime N: u64` generic parameter is the
+   same mechanism, and that is exactly RFC-0053's deferred const generics. Opened as this
+   RFC's OQ9 on 2026-08-12 and resolved by splitting rather than by answering in place —
+   RFC-0132 §3 specifies it, §3.1 records the deliberate `comptime N: u64` vs. RFC-0053's
+   guessed `<const N: u64>` spelling divergence, and §3.4 defers computed arities
+   (`[T; N + 1]`) to a *named* question rather than to an unnamed future RFC. Kept here
+   as a stub because Open Question 4 below still refers to it.
+9. **Comptime error messages.** When a comptime computation fails (division by zero,
    an assertion, an unsupported type reaching `comptime if`), the error must report the
    original comptime call site, not the internals of whatever comptime function was
    evaluating — otherwise error quality regresses badly relative to ordinary runtime
@@ -406,10 +434,24 @@ costly in practice, the base `comptime let` mechanism (§0/§0a only, not `type`
 or reflection) could in principle ship ahead of the rest of this RFC — that's a
 sequencing question for whoever schedules the work, not resolved here.
 
+**Resolved 2026-08-13: it did prove too costly, and the escape hatch above has been
+taken.** The wait was not just RFC-0083's — `metel-core#263`'s hardcoded `[T; N]: Copy`
+arm and RFC-0124's Open Question 3 were waiting on the same §0 content, and nobody
+noticed for 35 days because §0 had no independently schedulable identity. Split out as
+**RFC-0132 (Comptime Execution Model)**. This paragraph is kept unedited above as the
+record that the option was written down before it was needed; the lesson worth carrying
+is that naming an escape hatch is not the same as anyone being able to act on it — a
+sequencing option filed inside the document it would split needs an owner or a trigger,
+or it sits unused exactly as long as this one did.
+
 ---
 
 ## References
 
+- **RFC-0132 (Comptime Execution Model), `0-draft`** — split from this RFC's §0/§0a on
+  2026-08-13; normative for `comptime let`/`fun`/`if`, `pub comptime let`, and
+  comptime-known non-type generic parameters (RFC-0053's deferred const generics). **This
+  RFC depends on it.**
 - Language spec: `public/reference/spec/types.md` ("Generics" section — no current
   notion of `type`-as-value)
 - RFC-0090 (Structural Records — Rows and Tiers) — row concept reused by `typeinfo`'s
