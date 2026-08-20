@@ -89,6 +89,16 @@ The type checker cannot infer a type without an explicit annotation.
 
 **Fix:** annotate the binding: `let x: i64 = ...`.
 
+The same code also covers dereferencing (`*expr`) an operand that isn't a reference type at
+all — not an inference gap, but sharing the code with the annotation case above since both
+are "the checker has nothing to work with here":
+
+```
+[T0002] type error in main.mtl at 5..10: cannot dereference non-pointer type `i64`
+```
+
+**Fix:** remove the `*`, or check that the operand actually has reference type (`&T` / `&var T`).
+
 ### T0003 — Undefined name
 
 A name is used but not defined in the current scope.

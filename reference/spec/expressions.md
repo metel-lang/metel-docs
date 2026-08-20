@@ -507,7 +507,7 @@ shared `&` grants no write access ([T0006](../error-codes.md#t0006--assignment-t
 
 `*expr` dereferences a `&T`/`&var T`. As an expression it reads the referent; as an
 assignment target, `*p = v` writes through a `&var T`. Applying `*` to a non-reference is
-a type error ([T0002](../error-codes.md#t0002--cannot-infer-type)).
+a type error ([T0002](../error-codes.md#t0002--annotation-required)).
 
 Auto-deref covers **selectors only** — field access, indexing, and method dispatch, where
 the target of the operation is unambiguous. Everywhere else, reading through a reference
