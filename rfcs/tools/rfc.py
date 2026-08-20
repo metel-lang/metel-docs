@@ -60,6 +60,14 @@ Subcommands:
                                        metel-interpreter/tests reachable (see
                                        ADR-0049 §6), same as `check`'s own
                                        coverage summary.
+  index --write-spec-origins           Regenerate every rigor block's origins
+                                       backlink (ADR-0050 §3a) in
+                                       public/reference/spec/*.md from the
+                                       RFCs currently linking to it via
+                                       `coverage.spec` frontmatter. Reads only
+                                       RFC frontmatter and the spec files --
+                                       no fixture corpus needed, unlike
+                                       --write-coverage-baseline.
   cycle-prep [--diff]                  One-shot pre-cycle report for
                                        reports/strategy/PROCESS.md §5 step 0:
                                        REGISTRY.md drift, retired-host references,
@@ -551,6 +559,209 @@ PATH_REF_RE = re.compile(r"public/rfcs/[0-6]-[a-z-]+/rfc-[\w.-]+\.md")
 
 SPEC_DIR = REPO_ROOT / "public" / "reference" / "spec"
 VALID_IMPL_STATUS = {"not-started", "in-progress", "implemented"}
+
+# ADR-0050 §3a: a rigor block's generated backlink to the RFC(s) that
+# established it, delimited so `index --write-spec-origins` can rewrite
+# exactly its own slot without touching anything hand-authored around it.
+SPEC_BLOCK_HEADING_RE = re.compile(
+    r"^##### (?:Legality Rule|Dynamic Semantics) \{#(?P<id>spec\.[a-z0-9.-]+)\}\s*$"
+)
+ORIGINS_MARKER_START = "<!-- rfc.py:origins:start -->"
+ORIGINS_MARKER_END = "<!-- rfc.py:origins:end -->"
+
+# A rigor block's generated backlink to the fixture(s) that test it (ADR-0050
+# §5's spec-id -> fixture check, made visible in the rendered spec). The
+# fixture corpus lives in metel-interpreter/tests -- metel-core, a different
+# repo from this one -- so this can't be a relative path the way the origins
+# link is; it points at metel-core's default branch, not a pinned commit, so
+# a renamed/moved fixture just goes stale until the next
+# --write-spec-origins regenerates it, the same self-healing --check-drift
+# already gives the origins slot, rather than freezing a link that's
+# correct-forever but points at dead history.
+FIXTURES_MARKER_START = "<!-- rfc.py:fixtures:start -->"
+FIXTURES_MARKER_END = "<!-- rfc.py:fixtures:end -->"
+METEL_CORE_GITHUB_BLOB = "https://github.com/metel-lang/metel-core/blob/main"
+
+
+def compute_spec_origins_from_rfcs():
+    """{spec_id: [rid, ...]} sorted by rfc_sort_key -- ADR-0050 §3a's inverted
+    RFC-to-spec-id mapping. Reads RFC frontmatter only, not the fixture
+    corpus (unlike scan_coverage_corpus/per_rfc_coverage) -- origins
+    generation only needs to know which RFC currently claims a spec-id, not
+    whether that claim also has a citing fixture, so it works from a bare
+    docs-internal checkout with no ADR-0049 §6 reachability question at all."""
+    origins = {}
+    for f in find_rfc_files():
+        rid = rfc_id_from_filename(f)
+        if rid is None:
+            continue
+        links = parse_coverage_spec_links(frontmatter_raw_text(f))
+        for _section, spec_id in links.items():
+            origins.setdefault(spec_id, set()).add(rid)
+    return {
+        spec_id: sorted(rids, key=rfc_sort_key) for spec_id, rids in origins.items()
+    }
+
+
+def origins_block_text(spec_path, rids):
+    """The exact content between the origin markers for one rigor block, or
+    "" if it has no origins yet -- a normal, valid state (pre-RFC spec
+    content, ADR-0050's own Context section names this as real), rendered as
+    no slot at all rather than a fabricated "not yet linked" placeholder."""
+    if not rids:
+        return ""
+    links = []
+    for rid in rids:
+        rfc_path = find_path_for_id(rid)
+        if rfc_path is None:
+            continue
+        rel = os.path.relpath(rfc_path, start=spec_path.parent)
+        links.append(f"[{rid}]({rel})")
+    if not links:
+        return ""
+    return f"_Referenced by: {', '.join(links)}_"
+
+
+def fixtures_block_text(toml_paths, core_root):
+    """The exact content between the fixtures markers for one rigor block, or
+    "" if no fixture cites it yet -- as valid a state as an RFC with no
+    fixture yet (ADR-0050's own Context section names this as real),
+    rendered as no slot at all rather than a fabricated "untested"
+    placeholder."""
+    if not toml_paths:
+        return ""
+    links = []
+    for p in sorted(set(toml_paths)):
+        try:
+            rel = p.resolve().relative_to(core_root.resolve())
+        except ValueError:
+            continue
+        links.append(f"[{p.name}]({METEL_CORE_GITHUB_BLOB}/{rel.as_posix()})")
+    if not links:
+        return ""
+    return f"_Tested by: {', '.join(links)}_"
+
+
+def regenerate_backlinks_in_text(text, spec_path, origins_by_id, fixtures_by_id, core_root):
+    """Rewrites every rigor block's origins slot and (when reachable) its
+    fixtures slot in `text` to match `origins_by_id`/`fixtures_by_id`,
+    leaving everything else byte-identical. Idempotent -- an existing marker
+    pair (stale or current) is always removed and a fresh one (or none, if
+    that slot is now empty) is appended, so running this twice in a row on
+    already-current content produces no further change.
+
+    fixtures_by_id is None when metel-interpreter/tests isn't reachable
+    (ADR-0049 §6): an existing fixtures slot is then carried over exactly as
+    it already reads, since unreachability says nothing about whether that
+    content is still accurate -- only a fixture-reachable run may add,
+    change, or remove it. origins_by_id is never None; it only needs this
+    repo's own RFC frontmatter, so it's always regenerated."""
+    lines = text.split("\n")
+    out = []
+    i, n = 0, len(lines)
+    while i < n:
+        line = lines[i]
+        out.append(line)
+        m = SPEC_BLOCK_HEADING_RE.match(line)
+        if not m:
+            i += 1
+            continue
+        spec_id = m.group("id")
+        i += 1
+        body = []
+        existing_fixtures_content = None
+        while i < n:
+            nxt = lines[i]
+            if SPEC_BLOCK_HEADING_RE.match(nxt) or nxt.strip() == "</details>":
+                break
+            if nxt.strip() == ORIGINS_MARKER_START:
+                i += 1
+                while i < n and lines[i].strip() != ORIGINS_MARKER_END:
+                    i += 1
+                i += 1  # consume the end marker itself
+                continue
+            if nxt.strip() == FIXTURES_MARKER_START:
+                i += 1
+                slot = []
+                while i < n and lines[i].strip() != FIXTURES_MARKER_END:
+                    slot.append(lines[i])
+                    i += 1
+                i += 1  # consume the end marker itself
+                existing_fixtures_content = "\n".join(slot).strip()
+                continue
+            body.append(nxt)
+            i += 1
+        while body and body[-1].strip() == "":
+            body.pop()
+        out.extend(body)
+
+        origins_content = origins_block_text(spec_path, origins_by_id.get(spec_id, []))
+        if origins_content:
+            out.append("")
+            out.append(ORIGINS_MARKER_START)
+            out.append(origins_content)
+            out.append(ORIGINS_MARKER_END)
+
+        if fixtures_by_id is None:
+            fixtures_content = existing_fixtures_content
+        else:
+            fixtures_content = fixtures_block_text(fixtures_by_id.get(spec_id, []), core_root)
+        if fixtures_content:
+            out.append("")
+            out.append(FIXTURES_MARKER_START)
+            out.append(fixtures_content)
+            out.append(FIXTURES_MARKER_END)
+
+        out.append("")
+    return "\n".join(out)
+
+
+def write_spec_origins():
+    """rfc.py index --write-spec-origins (ADR-0050 §3a). Regenerates every
+    rigor block's RFC-origins backlink unconditionally, and its fixture
+    backlink too when metel-interpreter/tests is reachable (ADR-0049 §6) --
+    run from a bare docs-internal checkout, only the origins slot is
+    touched. Returns the list of spec files actually changed."""
+    origins_by_id = compute_spec_origins_from_rfcs()
+    tests_dir = metel_core_tests_dir()
+    fixtures_by_id = scan_spec_citations(tests_dir) if tests_dir is not None else None
+    core_root = tests_dir.parent.parent if tests_dir is not None else None
+    changed = []
+    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+        text = spec_path.read_text()
+        new_text = regenerate_backlinks_in_text(
+            text, spec_path, origins_by_id, fixtures_by_id, core_root
+        )
+        if new_text != text:
+            spec_path.write_text(new_text)
+            changed.append(spec_path)
+    return changed
+
+
+def spec_origins_drift_problems():
+    """ADR-0050 §3a, the --check-drift half: which spec files' backlink
+    slots no longer match what --write-spec-origins would produce -- a hand
+    edit, an RFC's coverage.spec link changing, or a fixture's spec=
+    citation changing, without regenerating after. Fixture-slot drift can
+    only be checked when metel-interpreter/tests is reachable (ADR-0049
+    §6); from a bare docs-internal checkout this validates the origins slot
+    only, same as before fixtures backlinks existed."""
+    origins_by_id = compute_spec_origins_from_rfcs()
+    tests_dir = metel_core_tests_dir()
+    fixtures_by_id = scan_spec_citations(tests_dir) if tests_dir is not None else None
+    core_root = tests_dir.parent.parent if tests_dir is not None else None
+    problems = []
+    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+        text = spec_path.read_text()
+        if (
+            regenerate_backlinks_in_text(text, spec_path, origins_by_id, fixtures_by_id, core_root)
+            != text
+        ):
+            problems.append(
+                f"{spec_path.relative_to(REPO_ROOT)}: origins/fixtures backlinks are stale -- "
+                f"run `rfc.py index --write-spec-origins`"
+            )
+    return problems
 
 
 def collect_rfc_records():
@@ -1576,6 +1787,8 @@ def cmd_index(args):
                 + ", ".join(r.upper() for r in missing)
             )
 
+        problems.extend(spec_origins_drift_problems())
+
         if problems:
             print("index drift found:")
             for p in problems:
@@ -1648,9 +1861,20 @@ def cmd_index(args):
         )
         return
 
+    if args.write_spec_origins:
+        changed = write_spec_origins()
+        if changed:
+            print(
+                f"Wrote origins backlinks in {len(changed)} spec file(s): "
+                + ", ".join(str(p.relative_to(REPO_ROOT)) for p in changed)
+            )
+        else:
+            print("Spec origins backlinks already current -- nothing to write.")
+        return
+
     error(
         "index requires --check-drift, --rebuild-registry, --suggest-placement RFC-ID, "
-        "or --write-coverage-baseline"
+        "--write-coverage-baseline, or --write-spec-origins"
     )
 
 
@@ -1842,6 +2066,7 @@ def main():
     p_index.add_argument("--rebuild-registry", action="store_true")
     p_index.add_argument("--suggest-placement", metavar="RFC_ID")
     p_index.add_argument("--write-coverage-baseline", action="store_true")
+    p_index.add_argument("--write-spec-origins", action="store_true")
     p_index.set_defaults(func=cmd_index)
 
     p_cycle = sub.add_parser("cycle-prep", help="One-shot pre-cycle report for a strategic-overview cycle")

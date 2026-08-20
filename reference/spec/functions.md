@@ -110,21 +110,37 @@ fun main() -> i64 {
 When a closure is created, each captured free variable is captured by value in the
 closure's environment.
 
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_
+<!-- rfc.py:origins:end -->
+
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-2}
 
 Mutating a captured-by-value binding changes the closure's captured value, not the
 enclosing binding.
+
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_
+<!-- rfc.py:origins:end -->
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-3}
 
 Closures that capture the same explicit reference observe the same referent; writes through
 that reference by one closure are visible through the others.
 
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_
+<!-- rfc.py:origins:end -->
+
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-4}
 
 A closure that escapes its defining function while holding a captured pointer to a
 still-reachable non-linear local keeps that storage alive and correctly mutable after the
 defining function returns.
+
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_
+<!-- rfc.py:origins:end -->
 
 </details>
 
@@ -167,6 +183,10 @@ let result = parse::<i64>("42") : Perhaps<i64>;
 
 A generic call may supply explicit type arguments with `name::<T, U>(arguments)`. Each
 supplied argument must satisfy the corresponding generic parameter's requirements.
+
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_
+<!-- rfc.py:origins:end -->
 
 </details>
 

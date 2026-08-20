@@ -34,6 +34,10 @@ All three forms require `var`.
 
 A `let` binding must be initialized and cannot be assigned after initialization.
 
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md)_
+<!-- rfc.py:origins:end -->
+
 </details>
 
 ### Mutable Bindings
@@ -56,6 +60,10 @@ fun main() -> i64 {
 
 A `var` binding must be initialized and may be assigned after initialization; `var` is the
 mutable binding spelling.
+
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_
+<!-- rfc.py:origins:end -->
 
 </details>
 
@@ -221,11 +229,27 @@ name both the field and a local binding in scope at the literal (shorthand/punni
 init). Shorthand and explicit fields may be freely mixed within one struct literal.
 (ADR-0050 pilot: migrated from RFC-0115 §1, `2026-08-20`.)
 
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+_Tested by: [43_shorthand_field.toml](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/43_shorthand_field.toml)_
+<!-- rfc.py:fixtures:end -->
+
 ##### Dynamic Semantics {#spec.declarations.structs.instantiation-and-field-access.dynamics-1}
 
 A shorthand field `ident` in a struct literal evaluates identically to the explicit form
 `ident = ident`: the field takes the value of the local binding named `ident` that is in
 scope at the literal. (ADR-0050 pilot: migrated from RFC-0115 §2, `2026-08-20`.)
+
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+_Tested by: [43_shorthand_field.toml](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/43_shorthand_field.toml)_
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.structs.instantiation-and-field-access.legality-2}
 
@@ -235,6 +259,10 @@ A zero-field struct may be constructed either as its bare type name or with empt
 
 For a zero-field struct, the bare and empty-brace constructor forms evaluate to the same
 struct value.
+
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_
+<!-- rfc.py:origins:end -->
 
 ##### Legality Rule {#spec.declarations.structs.instantiation-and-field-access.legality-3}
 
@@ -408,6 +436,10 @@ braces.
 For a zero-field enum variant, the bare and empty-brace constructor forms evaluate to the
 same variant value.
 
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_
+<!-- rfc.py:origins:end -->
+
 </details>
 
 ### Instantiation
@@ -442,6 +474,10 @@ fun main() -> i64 {
 ##### Legality Rule {#spec.declarations.enums.instantiation.legality-1}
 
 A struct-like enum variant with fields cannot omit its constructor fields.
+
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_
+<!-- rfc.py:origins:end -->
 
 </details>
 
@@ -511,6 +547,10 @@ to the braced form.
 
 An aspect declaration may use `;` instead of a braced body only when it declares zero
 methods and zero associated types.
+
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0103](../../rfcs/4-implemented/rfc-0103-bodyless-aspect-declarations.md)_
+<!-- rfc.py:origins:end -->
 
 </details>
 
@@ -680,6 +720,10 @@ which kind of aspect the bound names.
 
 An inherent implementation is written `extend Type { ... }`; an aspect implementation is
 written `extend Type: Aspect { ... }`, and both forms may coexist for the same type.
+
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_
+<!-- rfc.py:origins:end -->
 
 </details>
 

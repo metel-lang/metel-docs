@@ -120,10 +120,18 @@ fun main() -> i64 {
 An expression in `return` position is typechecked against the enclosing function or
 method's declared return type, which supplies its expected type.
 
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0019](../../rfcs/4-implemented/rfc-0019-return-context-type-propagation.md)_
+<!-- rfc.py:origins:end -->
+
 ##### Legality Rule {#spec.types.type-inference.legality-2}
 
 An expression in `break` position is typechecked against its enclosing `loop`'s value
 type, independently of the enclosing function's return type.
+
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0019](../../rfcs/4-implemented/rfc-0019-return-context-type-propagation.md)_
+<!-- rfc.py:origins:end -->
 
 </details>
 
@@ -520,15 +528,27 @@ fun main() -> i64 {
 `expr : T` constrains `expr` to type `T` and supplies `T` as its expected type; it performs
 no runtime conversion.
 
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md), [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_
+<!-- rfc.py:origins:end -->
+
 ##### Legality Rule {#spec.types.type-ascription.legality-2}
 
 An ascription is valid only when the expression's type unifies with the ascribed type;
 otherwise it is a type error.
 
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md)_
+<!-- rfc.py:origins:end -->
+
 ##### Legality Rule {#spec.types.type-ascription.legality-3}
 
 An expression may contain at most one type ascription; a second `:` in the same ascription
 position is a parse error.
+
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md)_
+<!-- rfc.py:origins:end -->
 
 </details>
 
@@ -615,6 +635,10 @@ Because `as` desugars to `From`, user-defined types become castable by implement
 
 `expr as T` evaluates an explicit numeric conversion of `expr` to `T` and produces a value
 of type `T`.
+
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md)_
+<!-- rfc.py:origins:end -->
 
 </details>
 
@@ -939,6 +963,10 @@ fun main() -> i64 {
 
 `None` is the empty variant of `Perhaps<T>` and is valid only where the expected type
 determines `T`; `Perhaps::None` is valid wherever the qualified variant is named.
+
+<!-- rfc.py:origins:start -->
+_Referenced by: [rfc-0020](../../rfcs/4-implemented/rfc-0020-language-rebranding.md)_
+<!-- rfc.py:origins:end -->
 
 </details>
 
