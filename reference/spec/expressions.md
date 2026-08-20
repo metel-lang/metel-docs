@@ -431,6 +431,10 @@ fun main() -> i64 {
 A `for-in` binding may be declared with `var`, making that iteration's loop-local binding
 mutable.
 
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md)_</span>
+<!-- rfc.py:origins:end -->
+
 ##### Dynamic Semantics {#spec.expressions.control-flow.for-in.dynamics-1}
 
 Reassigning a `var` `for-in` binding changes only that iteration's loop-local binding and

@@ -10,6 +10,9 @@ coverage:
   "1": { spec: "spec.declarations.structs.instantiation-and-field-access.dynamics-2" }
   "2": { spec: "spec.declarations.enums.dynamics-1" }
   "3": { spec: "spec.declarations.enums.instantiation.legality-1" }
+  "4": { spec: "spec.declarations.structs.instantiation-and-field-access.legality-2" }
+  "5": { spec: "spec.declarations.structs.instantiation-and-field-access.legality-3" }
+  "6": { spec: "spec.declarations.enums.legality-1" }
 ---
 
 > **Status — accepted (2026-07-14).** Narrow scope only: zero-field structs may omit
@@ -112,3 +115,20 @@ expressions.
 
 A struct or enum variant with fields cannot omit its constructor fields. A bare
 non-empty struct name is resolved as a name rather than as construction.
+
+### 4. Zero-field struct legality
+
+For a zero-field struct, both the bare type name and the braced form are valid
+constructor expressions -- distinct from claim 1's dynamics half (that the two forms
+are *equivalent*), this is the legality half: that both forms are accepted at all.
+
+### 5. Non-empty struct constructors retain field syntax
+
+A struct with fields cannot omit its constructor fields; its bare type name is
+resolved as an ordinary name, not a constructor expression. The struct-side half of
+claim 3, which cites only the enum-variant side.
+
+### 6. Zero-field enum-variant legality
+
+For a zero-field enum variant, both the qualified path and the braced form are valid
+constructor expressions -- the legality half of claim 2, mirroring claim 4 for enums.

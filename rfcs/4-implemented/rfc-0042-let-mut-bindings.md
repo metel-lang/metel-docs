@@ -9,6 +9,7 @@ coverage:
   "2": { spec: "spec.declarations.variables.mutable-bindings.legality-1" }
   "3": { spec: "spec.expressions.control-flow.for.legality-1" }
   "4": { spec: "spec.expressions.control-flow.for-in.dynamics-1" }
+  "5": { spec: "spec.expressions.control-flow.for-in.legality-1" }
 ---
 
 ## Summary
@@ -228,3 +229,9 @@ may be reassigned by its step expression or loop body.
 `for (var item in values)` permits reassignment of `item` for that iteration.
 Changing the loop-local binding does not write the replacement back into
 `values`.
+
+### 5. A `for`-in binding may be declared with `var`
+
+A `for`-in loop's binding may be introduced with `var`, distinct from claim 4's
+dynamics half (that reassigning it doesn't write back to the source): this is the
+legality half, that `var` is accepted there at all.

@@ -6,6 +6,7 @@ status: implemented
 spec_status: done
 coverage:
   "10": { kind: untestable, reason: "This section defers a future linear-receiver model and specifies no current fixture-observable behavior." }
+  "4": { spec: "spec.declarations.structs.receiver-forms.legality-1" }
 ---
 
 ## Summary

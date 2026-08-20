@@ -255,6 +255,10 @@ scope at the literal. (ADR-0050 pilot: migrated from RFC-0115 §2, `2026-08-20`.
 
 A zero-field struct may be constructed either as its bare type name or with empty braces.
 
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
+<!-- rfc.py:origins:end -->
+
 ##### Dynamic Semantics {#spec.declarations.structs.instantiation-and-field-access.dynamics-2}
 
 For a zero-field struct, the bare and empty-brace constructor forms evaluate to the same
@@ -268,6 +272,10 @@ struct value.
 
 A struct with fields cannot omit its constructor fields; its bare type name is resolved as a
 name rather than as a constructor expression.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
+<!-- rfc.py:origins:end -->
 
 </details>
 
@@ -365,6 +373,10 @@ fun main() -> i64 {
 `&var self` is the mutable-reference receiver spelling and requires a mutable addressable
 receiver or an `&var T` reference at the call site.
 
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
+<!-- rfc.py:origins:end -->
+
 </details>
 
 ### Generic Structs
@@ -430,6 +442,10 @@ let y = Flag::On {};
 
 A zero-field enum variant may be constructed either as its qualified path or with empty
 braces.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
+<!-- rfc.py:origins:end -->
 
 ##### Dynamic Semantics {#spec.declarations.enums.dynamics-1}
 
