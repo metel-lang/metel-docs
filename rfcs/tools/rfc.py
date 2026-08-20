@@ -633,16 +633,22 @@ def fixtures_block_text(toml_paths, core_root):
     "" if no fixture cites it yet -- as valid a state as an RFC with no
     fixture yet (ADR-0050's own Context section names this as real),
     rendered as no slot at all rather than a fabricated "untested"
-    placeholder."""
+    placeholder. Links to each fixture's .mtl (the actual Metel source a
+    reader would want to read), not its .toml sidecar (the `spec =`
+    citation lives there, but that's metadata about the test, not the test
+    itself)."""
     if not toml_paths:
         return ""
     links = []
     for p in sorted(set(toml_paths)):
+        mtl_path = _sidecar_mtl_path(p)
+        if not mtl_path.is_file():
+            continue
         try:
-            rel = p.resolve().relative_to(core_root.resolve())
+            rel = mtl_path.resolve().relative_to(core_root.resolve())
         except ValueError:
             continue
-        links.append(f"[{p.name}]({METEL_CORE_GITHUB_BLOB}/{rel.as_posix()})")
+        links.append(f"[{mtl_path.name}]({METEL_CORE_GITHUB_BLOB}/{rel.as_posix()})")
     if not links:
         return ""
     # See origins_block_text's comment: inline <span>, not a block tag, so

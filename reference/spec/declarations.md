@@ -234,7 +234,7 @@ init). Shorthand and explicit fields may be freely mixed within one struct liter
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [43_shorthand_field.toml](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/43_shorthand_field.toml)_</span>
+<span class="rigor-backlink">_Tested by: [43_shorthand_field.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/43_shorthand_field.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.declarations.structs.instantiation-and-field-access.dynamics-1}
@@ -248,7 +248,7 @@ scope at the literal. (ADR-0050 pilot: migrated from RFC-0115 §2, `2026-08-20`.
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [43_shorthand_field.toml](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/43_shorthand_field.toml)_</span>
+<span class="rigor-backlink">_Tested by: [43_shorthand_field.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/43_shorthand_field.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.structs.instantiation-and-field-access.legality-2}
