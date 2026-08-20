@@ -211,7 +211,7 @@ Conflict rules:
 
 ## Visibility
 
-Declarations are module-private by default. A declaration is accessible from outside its module only if it is annotated with `public`.
+Declarations are module-private by default. [A declaration is accessible from outside its module only if it is annotated with `public`](#spec.modules.visibility.legality-1).
 
 ```metel
 public struct Token { public kind: i64, span: i64 }
@@ -230,7 +230,7 @@ fun main() -> i64 {
 
 `public` is valid on `struct`, `enum`, `fun`, and `aspect` declarations. Top-level `let` and `var` bindings are always module-private; public value exports are not supported in the current version.
 
-Struct field visibility is independent from the struct's own visibility. Fields are module-private by default; add `public` on each field that should be accessible outside the declaring module.
+Struct field visibility is independent from the struct's own visibility. Fields are module-private by default; [add `public` on each field that should be accessible outside the declaring module](#spec.modules.visibility.legality-1).
 
 ```metel
 public struct Token {

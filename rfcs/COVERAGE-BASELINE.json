@@ -1,22 +1,56 @@
 {
-  "rfc-0032": [
-    "4",
-    "5",
-    "6",
-    "7"
-  ],
-  "rfc-0034": [
-    "5"
-  ],
-  "rfc-0040": [
-    "7"
-  ],
-  "rfc-0042": [
-    "5"
-  ],
-  "rfc-0106": [
-    "4",
-    "5",
-    "6"
+  "rfc": {
+    "rfc-0032": [
+      "4",
+      "5",
+      "6",
+      "7"
+    ],
+    "rfc-0034": [
+      "5"
+    ],
+    "rfc-0040": [
+      "7"
+    ],
+    "rfc-0042": [
+      "5"
+    ],
+    "rfc-0106": [
+      "4",
+      "5",
+      "6"
+    ]
+  },
+  "spec": [
+    "spec.declarations.aspects.bodyless-aspect-declarations.legality-1",
+    "spec.declarations.aspects.implementing-an-aspect.legality-1",
+    "spec.declarations.enums.dynamics-1",
+    "spec.declarations.enums.instantiation.legality-1",
+    "spec.declarations.enums.legality-1",
+    "spec.declarations.structs.instantiation-and-field-access.dynamics-2",
+    "spec.declarations.structs.instantiation-and-field-access.legality-2",
+    "spec.declarations.structs.instantiation-and-field-access.legality-3",
+    "spec.declarations.structs.receiver-forms.legality-1",
+    "spec.declarations.variables.immutable-bindings.legality-1",
+    "spec.declarations.variables.mutable-bindings.legality-1",
+    "spec.expressions.control-flow.for-in.dynamics-1",
+    "spec.expressions.control-flow.for-in.legality-1",
+    "spec.expressions.control-flow.for.legality-1",
+    "spec.expressions.pattern-matching.dynamics-1",
+    "spec.expressions.pattern-matching.legality-1",
+    "spec.expressions.pattern-matching.legality-2",
+    "spec.functions.closures.dynamics-1",
+    "spec.functions.closures.dynamics-2",
+    "spec.functions.closures.dynamics-3",
+    "spec.functions.closures.dynamics-4",
+    "spec.functions.turbofish.legality-1",
+    "spec.modules.visibility.legality-1",
+    "spec.types.perhaps-t.legality-1",
+    "spec.types.type-ascription.legality-1",
+    "spec.types.type-ascription.legality-2",
+    "spec.types.type-ascription.legality-3",
+    "spec.types.type-casting.dynamics-1",
+    "spec.types.type-inference.legality-1",
+    "spec.types.type-inference.legality-2"
   ]
 }

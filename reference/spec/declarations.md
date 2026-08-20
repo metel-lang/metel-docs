@@ -19,7 +19,7 @@ fun main() -> i64 {
 }
 ```
 
-`let` bindings cannot be reassigned and must always be initialized. Mutability lives entirely on the binding — a `let` binding is immutable regardless of what value it holds. This means:
+`let` bindings [cannot be reassigned and must always be initialized](#spec.declarations.variables.immutable-bindings.legality-1). Mutability lives entirely on the binding — a `let` binding is immutable regardless of what value it holds. This means:
 
 - `x = newValue` is rejected (reassignment)
 - `x.field = value` is rejected (field assignment through an immutable binding)
@@ -51,7 +51,7 @@ fun main() -> i64 {
 }
 ```
 
-`var` bindings can be reassigned and also must be initialized at declaration. Compound assignment operators `+=`, `-=`, `*=`, `/=`, `%=` are supported.
+`var` bindings [can be reassigned and also must be initialized at declaration](#spec.declarations.variables.mutable-bindings.legality-1). Compound assignment operators `+=`, `-=`, `*=`, `/=`, `%=` are supported.
 
 <details>
 <summary>Formal rules</summary>
@@ -342,8 +342,8 @@ extend Counter {
 }
 ```
 
-Calls requiring `&var self` need a mutable addressable receiver or a `&var T`
-reference. Calls requiring `&self` may use an addressable receiver or a `&T` / `&var T`
+Calls requiring `&var self` [need a mutable addressable receiver or a `&var T`
+reference](#spec.declarations.structs.receiver-forms.legality-1). Calls requiring `&self` may use an addressable receiver or a `&T` / `&var T`
 reference (RFC-0067a — missed when that RFC integrated `*T`/`*mut T` → `&T`/`&var T`
 elsewhere; caught while integrating this batch).
 
@@ -423,8 +423,8 @@ fun main() -> i64 {
 
 Variants may be unit (no data) or struct-like (named fields).
 
-When a struct-like variant's field set is empty, both constructor spellings are
-accepted:
+When a struct-like variant's field set is empty, [both constructor spellings are
+accepted](#spec.declarations.enums.legality-1):
 
 ```metel
 enum Flag {
@@ -548,8 +548,8 @@ fun main() -> i64 {
 aspect Copy2;
 ```
 
-An aspect declaration may end with `;` instead of a braced body when the body would be
-empty already: zero methods and zero associated types. This is pure sugar for
+An aspect declaration [may end with `;` instead of a braced body when the body would be
+empty already: zero methods and zero associated types](#spec.declarations.aspects.bodyless-aspect-declarations.legality-1). This is pure sugar for
 `aspect Copy2 { }`.
 
 The shorter spelling does **not** promise that the aspect stays empty forever. If a
@@ -601,8 +601,8 @@ fun main() {
 **Aspect implementation method set.** An `extend Type: Aspect` block must define
 exactly the methods declared by `Aspect`: every declared method must be present unless it
 has a default body, and no additional methods are permitted. Put a type-specific method
-that is not part of the aspect in an inherent `extend Type { ... }` block; inherent and
-aspect implementations may coexist for the same type.
+that is not part of the aspect in an inherent `extend Type { ... }` block; [inherent and
+aspect implementations may coexist for the same type](#spec.declarations.aspects.implementing-an-aspect.legality-1).
 
 > **Changed in v0.12.1.** An undeclared method in an aspect implementation is rejected.
 

@@ -14,7 +14,7 @@ fun main() -> i64 {
 }
 ```
 
-Each arm body can be any expression, or a block. `return`/`break`/`continue` are
+[Each arm body can be any expression, or a block](#spec.expressions.pattern-matching.legality-1). `return`/`break`/`continue` are
 themselves expressions of type `!` (see [Break, Continue, and Return](#break-continue-and-return)
 below), so a bare arm body like `1 => return 10` needs no special grammar case —
 it's just an ordinary expression arm, like any other:
@@ -50,7 +50,7 @@ fun main() -> i64 {
 }
 ```
 
-Arms with blocks follow the same rules as function bodies: the block's tail expression (if present) is the arm's value; a block with no tail produces `Unit`.
+Arms with blocks follow the same rules as function bodies: [the block's tail expression (if present) is the arm's value; a block with no tail produces `Unit`](#spec.expressions.pattern-matching.dynamics-1).
 
 ```metel
 enum Shape {
@@ -395,8 +395,8 @@ receives type `T`. `T[]`, `[T; N]` (array and fixed-size array), and `Range` (pr
 `..` and `..=`) implement `Iterable<T>` by default. A `T[]` loop binding denotes an
 element of an immutable borrowed view: with move checking enabled, a non-`Copy` binding
 may be read or borrowed but not consumed. User-defined types can be made iterable by
-implementing `Iterable<T>`. The loop binding is immutable by default and may be made
-loop-locally mutable with `var`:
+implementing `Iterable<T>`. The loop binding is immutable by default and [may be made
+loop-locally mutable with `var`](#spec.expressions.control-flow.for-in.legality-1):
 
 ```metel
 aspect Iterable<T> {

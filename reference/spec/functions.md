@@ -68,7 +68,7 @@ fun main() -> i64 {
 }
 ```
 
-Closures capture variables from their enclosing scope by value. A captured variable is copied into the closure environment when the closure is created:
+Closures [capture variables from their enclosing scope by value](#spec.functions.closures.dynamics-1). A captured variable is copied into the closure environment when the closure is created:
 
 ```metel
 fun main() -> i64 {
@@ -88,8 +88,8 @@ and the enclosing binding may not be used again. To keep using the original, cap
 reference instead — a shared reference is `Copy`, so capturing one copies the reference and
 leaves the referent alone.
 
-Shared mutable closure state is explicit. If multiple closures must observe and update the
-same storage, the program captures a reference:
+Shared mutable closure state is explicit. If [multiple closures must observe and update the
+same storage, the program captures a reference](#spec.functions.closures.dynamics-3):
 
 ```metel
 fun main() -> i64 {
@@ -148,7 +148,7 @@ defining function returns.
 
 > **Availability:** Since v0.8.0.
 
-When a generic function's type parameters cannot be inferred from the arguments, they can be specified explicitly with turbofish syntax: `name::<T, U>(args)`.
+When a generic function's type parameters cannot be inferred from the arguments, they [can be specified explicitly with turbofish syntax: `name::<T, U>(args)`](#spec.functions.turbofish.legality-1).
 
 ```metel
 fun identity<T>(x: T) -> T { x }

@@ -496,7 +496,7 @@ fun main() {
 
 > **Availability:** Since v0.2.0.
 
-The `:` operator asserts that an expression has a given type without performing any runtime conversion. It is a pure type-inference hint — no code is emitted at runtime.
+The `:` operator [asserts that an expression has a given type without performing any runtime conversion](#spec.types.type-ascription.legality-1). It is a pure type-inference hint — no code is emitted at runtime.
 
 Type ascription is mainly an ergonomics feature. Most code should type-check from
 its surrounding context alone; `:` is for the cases where spelling out the intended
@@ -510,7 +510,7 @@ fun main() -> i64 {
 }
 ```
 
-Ascription fails at compile time if the inferred type of the sub-expression cannot be unified with the ascribed type. For example, `1 : String` is invalid. Use `as` to convert between types; use `:` only when the value already has the target type.
+[Ascription fails at compile time if the inferred type of the sub-expression cannot be unified with the ascribed type](#spec.types.type-ascription.legality-2). For example, `1 : String` is invalid. Use `as` to convert between types; use `:` only when the value already has the target type.
 
 <!-- doc-example: expect-fail reason="demonstrates an ascription failure -- the type error is the point" -->
 ```metel
@@ -610,7 +610,7 @@ fun main() -> i64 {
 
 ## Type Casting
 
-The `as` operator casts between any two numeric primitive types. It desugars to a call to the `From` aspect and is infallible — the result is the target type directly.
+The `as` operator [casts between any two numeric primitive types](#spec.types.type-casting.dynamics-1). It desugars to a call to the `From` aspect and is infallible — the result is the target type directly.
 
 ```metel
 fun main() {
@@ -884,7 +884,7 @@ A `-> !` function containing a reachable `return` is a type error.
 
 `Perhaps<T>` is the built-in optional type. There is no null — all absence is expressed via `Perhaps<T>`.
 
-The type of `None` is `Perhaps<T>` for some `T` that must be determinable from context. If no context constrains `T` — for example, a bare `let x = None` with no annotation and no subsequent use that pins the element type — the program is a type error. An explicit annotation is required in that case:
+[The type of `None` is `Perhaps<T>` for some `T` that must be determinable from context](#spec.types.perhaps-t.legality-1). If no context constrains `T` — for example, a bare `let x = None` with no annotation and no subsequent use that pins the element type — the program is a type error. An explicit annotation is required in that case:
 
 > **Changed in v0.11.0 (RFC-0111): `None` and `Some` are ordinary variants of `Perhaps<T>`, not literals.**
 

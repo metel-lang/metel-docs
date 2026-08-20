@@ -583,6 +583,23 @@ FIXTURES_MARKER_END = "<!-- rfc.py:fixtures:end -->"
 METEL_CORE_GITHUB_BLOB = "https://github.com/metel-lang/metel-core/blob/main"
 
 
+def all_spec_block_ids():
+    """Every Legality Rule / Dynamic Semantics id across the spec corpus,
+    sorted. The one place that enumerates the spec side directly rather than
+    starting from an RFC or a fixture -- every other coverage check in this
+    file is keyed off `rfc_sections`/`per_rfc_coverage` and so can only ever
+    ask "is this RFC's claim covered", never "does this spec block have
+    anything pointing at it at all". A block an RFC never claims (a real,
+    valid state -- not every rule needs one) still has to have a fixture."""
+    ids = set()
+    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+        for line in spec_path.read_text().split("\n"):
+            m = SPEC_BLOCK_HEADING_RE.match(line)
+            if m:
+                ids.add(m.group("id"))
+    return sorted(ids)
+
+
 def compute_spec_origins_from_rfcs():
     """{spec_id: [rid, ...]} sorted by rfc_sort_key -- ADR-0050 §3a's inverted
     RFC-to-spec-id mapping. Reads RFC frontmatter only, not the fixture
@@ -1435,17 +1452,21 @@ def load_coverage_baseline():
         return None
 
 
-def build_coverage_baseline_json(coverage_by_rfc):
-    """{rid: [uncovered section ids]} for every RFC with at least one gap --
-    fully-covered RFCs and "*" whole-RFC exemptions (always zero-gap by
-    construction) are simply absent, keeping the file's diff focused on what's
-    actually being grandfathered in rather than restating every RFC that
-    already needs nothing."""
-    baseline = {
+def build_coverage_baseline_json(coverage_by_rfc, spec_ids_without_fixture=()):
+    """`{"rfc": {rid: [uncovered section ids]}, "spec": [spec ids with no
+    citing fixture]}`. Two independent gaps, two independent directions
+    (ADR-0050 §5): "rfc" is an RFC's own claim going uncovered; "spec" is a
+    spec block -- whether or not any RFC claims it at all -- going untested.
+    Fully-covered RFCs and "*" whole-RFC exemptions are simply absent from
+    "rfc" (always zero-gap by construction), keeping the file's diff focused
+    on what's actually being grandfathered in rather than restating every
+    RFC that already needs nothing."""
+    rfc_gaps = {
         rid: sorted(uncovered)
         for rid, (_sections, uncovered, _kind, _spec_anchored, _rfc_only) in coverage_by_rfc.items()
         if uncovered
     }
+    baseline = {"rfc": rfc_gaps, "spec": sorted(spec_ids_without_fixture)}
     return json.dumps(baseline, indent=2, sort_keys=True) + "\n"
 
 
@@ -1616,6 +1637,12 @@ def coverage_check_problems():
         rfc_sections, rfc_coverage_fm, rfc_coverage_spec, rfc_stage, sidecar, prose, spec_citations
     )
     baseline = load_coverage_baseline()
+    # Back-compat with the pre-spec-check baseline shape (a bare {rid: [...]}
+    # dict, no "rfc"/"spec" nesting): fall back to treating the whole loaded
+    # value as the rfc-gaps mapping, same as before this existed.
+    rfc_baseline = (
+        baseline.get("rfc", baseline) if isinstance(baseline, dict) else None
+    )
     info = []
     total_spec_anchored, total_rfc_only = 0, 0
     for rid, (sections, uncovered, whole_kind, spec_anchored, rfc_only) in coverage_by_rfc.items():
@@ -1640,8 +1667,8 @@ def coverage_check_problems():
             + (f" -- uncovered: {', '.join(sorted(uncovered))}" if uncovered else "")
             + migration_note
         )
-        if baseline is not None:
-            new_gaps = uncovered - set(baseline.get(rid, []))
+        if rfc_baseline is not None:
+            new_gaps = uncovered - set(rfc_baseline.get(rid, []))
             if new_gaps:
                 problems.append(
                     f"{rid}: coverage regressed against public/rfcs/COVERAGE-BASELINE.json "
@@ -1661,6 +1688,39 @@ def coverage_check_problems():
                 f"citable normative sections spec-anchored ({pct:.0f}%); "
                 f"{total_rfc_only} still on a direct `rfc =`/prose citation"
             )
+
+    # 6. Every spec block needs a fixture, independent of whether any RFC
+    #    claims it (a real, valid state -- not every rule needs one, but
+    #    every one needs a test). per_rfc_coverage above can't see this: it's
+    #    keyed off rfc_sections, so a spec block no RFC cites never enters
+    #    that loop at all. Same baseline-ratchet shape as the RFC-side check
+    #    (5b) -- a gap already grandfathered in doesn't fail every run, a new
+    #    one does.
+    all_ids = all_spec_block_ids()
+    untested = sorted(sid for sid in all_ids if not spec_citations.get(sid))
+    if all_ids:
+        info.append(
+            f"spec blocks with a citing fixture: {len(all_ids) - len(untested)}/{len(all_ids)}"
+            + (f" -- untested: {', '.join(untested)}" if untested else "")
+        )
+    # "spec" is only meaningful in the new, nested baseline shape -- a
+    # pre-existing flat {rid: [...]} baseline has no such key and no
+    # spec-side ratchet was ever recorded, so treat that the same as no
+    # baseline file at all (skip the ratchet) rather than reading an absent
+    # key as an empty, already-clean baseline.
+    spec_baseline = baseline.get("spec") if isinstance(baseline, dict) and "rfc" in baseline else None
+    if spec_baseline is not None:
+        new_untested = set(untested) - set(spec_baseline)
+        if new_untested:
+            problems.append(
+                "spec blocks newly missing a citing fixture, against "
+                "public/rfcs/COVERAGE-BASELINE.json: "
+                + ", ".join(sorted(new_untested))
+                + ". Cite one (`spec = [...]` sidecar key); if the gap is deliberate and "
+                "already tracked elsewhere, update the baseline instead: "
+                "`rfc.py index --write-coverage-baseline`"
+            )
+
     return problems, info
 
 
@@ -1863,7 +1923,10 @@ def cmd_index(args):
         coverage_by_rfc = per_rfc_coverage(
             rfc_sections, rfc_coverage_fm, rfc_coverage_spec, rfc_stage, sidecar, prose, spec_citations
         )
-        COVERAGE_BASELINE_PATH.write_text(build_coverage_baseline_json(coverage_by_rfc))
+        untested = [sid for sid in all_spec_block_ids() if not spec_citations.get(sid)]
+        COVERAGE_BASELINE_PATH.write_text(
+            build_coverage_baseline_json(coverage_by_rfc, untested)
+        )
         gap_count = sum(
             1
             for _s, uncovered, kind, _spec_anchored, _rfc_only in coverage_by_rfc.values()
@@ -1871,7 +1934,8 @@ def cmd_index(args):
         )
         print(
             f"Wrote {COVERAGE_BASELINE_PATH.relative_to(REPO_ROOT)} "
-            f"({gap_count} RFC(s) with a recorded gap)"
+            f"({gap_count} RFC(s) with a recorded gap, {len(untested)} spec block(s) "
+            f"with no citing fixture)"
         )
         return
 
