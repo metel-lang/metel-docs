@@ -619,7 +619,13 @@ def origins_block_text(spec_path, rids):
         links.append(f"[{rid}]({rel})")
     if not links:
         return ""
-    return f"_Referenced by: {', '.join(links)}_"
+    # An inline <span>, not a block-level tag: CommonMark only stops parsing
+    # markdown inside raw HTML for a handful of block-starting patterns (a
+    # bare <p>/<div>/etc. alone, or followed only by whitespace, on its own
+    # line) -- this line has real content after the opening tag, so it never
+    # qualifies, and the [rid](rel) links above still parse normally inside
+    # it. Website styling (src/theme/Details, custom.css) targets the class.
+    return f'<span class="rigor-backlink">_Referenced by: {", ".join(links)}_</span>'
 
 
 def fixtures_block_text(toml_paths, core_root):
@@ -639,7 +645,9 @@ def fixtures_block_text(toml_paths, core_root):
         links.append(f"[{p.name}]({METEL_CORE_GITHUB_BLOB}/{rel.as_posix()})")
     if not links:
         return ""
-    return f"_Tested by: {', '.join(links)}_"
+    # See origins_block_text's comment: inline <span>, not a block tag, so
+    # the [name](url) links above still parse as markdown inside it.
+    return f'<span class="rigor-backlink">_Tested by: {", ".join(links)}_</span>'
 
 
 def regenerate_backlinks_in_text(text, spec_path, origins_by_id, fixtures_by_id, core_root):

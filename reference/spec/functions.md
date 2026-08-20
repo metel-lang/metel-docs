@@ -111,7 +111,7 @@ When a closure is created, each captured free variable is captured by value in t
 closure's environment.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
 <!-- rfc.py:origins:end -->
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-2}
@@ -120,7 +120,7 @@ Mutating a captured-by-value binding changes the closure's captured value, not t
 enclosing binding.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
 <!-- rfc.py:origins:end -->
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-3}
@@ -129,7 +129,7 @@ Closures that capture the same explicit reference observe the same referent; wri
 that reference by one closure are visible through the others.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
 <!-- rfc.py:origins:end -->
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-4}
@@ -139,7 +139,7 @@ still-reachable non-linear local keeps that storage alive and correctly mutable 
 defining function returns.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
 <!-- rfc.py:origins:end -->
 
 </details>
@@ -185,7 +185,7 @@ A generic call may supply explicit type arguments with `name::<T, U>(arguments)`
 supplied argument must satisfy the corresponding generic parameter's requirements.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_</span>
 <!-- rfc.py:origins:end -->
 
 </details>

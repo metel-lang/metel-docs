@@ -121,7 +121,7 @@ An expression in `return` position is typechecked against the enclosing function
 method's declared return type, which supplies its expected type.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0019](../../rfcs/4-implemented/rfc-0019-return-context-type-propagation.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0019](../../rfcs/4-implemented/rfc-0019-return-context-type-propagation.md)_</span>
 <!-- rfc.py:origins:end -->
 
 ##### Legality Rule {#spec.types.type-inference.legality-2}
@@ -130,7 +130,7 @@ An expression in `break` position is typechecked against its enclosing `loop`'s 
 type, independently of the enclosing function's return type.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0019](../../rfcs/4-implemented/rfc-0019-return-context-type-propagation.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0019](../../rfcs/4-implemented/rfc-0019-return-context-type-propagation.md)_</span>
 <!-- rfc.py:origins:end -->
 
 </details>
@@ -529,7 +529,7 @@ fun main() -> i64 {
 no runtime conversion.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md), [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md), [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_</span>
 <!-- rfc.py:origins:end -->
 
 ##### Legality Rule {#spec.types.type-ascription.legality-2}
@@ -538,7 +538,7 @@ An ascription is valid only when the expression's type unifies with the ascribed
 otherwise it is a type error.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md)_</span>
 <!-- rfc.py:origins:end -->
 
 ##### Legality Rule {#spec.types.type-ascription.legality-3}
@@ -547,7 +547,7 @@ An expression may contain at most one type ascription; a second `:` in the same 
 position is a parse error.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md)_</span>
 <!-- rfc.py:origins:end -->
 
 </details>
@@ -637,7 +637,7 @@ Because `as` desugars to `From`, user-defined types become castable by implement
 of type `T`.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md)_</span>
 <!-- rfc.py:origins:end -->
 
 </details>
@@ -965,7 +965,7 @@ fun main() -> i64 {
 determines `T`; `Perhaps::None` is valid wherever the qualified variant is named.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0020](../../rfcs/4-implemented/rfc-0020-language-rebranding.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0020](../../rfcs/4-implemented/rfc-0020-language-rebranding.md)_</span>
 <!-- rfc.py:origins:end -->
 
 </details>

@@ -80,7 +80,7 @@ A match arm body may be either a single expression or a block, and both forms ma
 the same `match` expression.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_</span>
 <!-- rfc.py:origins:end -->
 
 ##### Dynamic Semantics {#spec.expressions.pattern-matching.dynamics-1}
@@ -89,7 +89,7 @@ A block arm evaluates its statements and then its tail expression, if any; that 
 arm's result, while a block with no tail produces `()`.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_</span>
 <!-- rfc.py:origins:end -->
 
 ##### Legality Rule {#spec.expressions.pattern-matching.legality-2}
@@ -97,7 +97,7 @@ _Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md
 Bindings introduced by an arm's pattern are in scope throughout that arm's block body.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_</span>
 <!-- rfc.py:origins:end -->
 
 </details>
@@ -381,7 +381,7 @@ A C-style `for` initializer may declare a mutable loop-local binding with `var`;
 binding may be reassigned by the loop body or step expression.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md)_</span>
 <!-- rfc.py:origins:end -->
 
 </details>
@@ -437,7 +437,7 @@ Reassigning a `var` `for-in` binding changes only that iteration's loop-local bi
 does not write the replacement value back into the iterated source.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md)_</span>
 <!-- rfc.py:origins:end -->
 
 </details>

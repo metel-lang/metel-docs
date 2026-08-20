@@ -254,7 +254,7 @@ Only declarations marked `public` are accessible from outside their declaring mo
 public struct field is accessible outside that module only when the field itself is public.
 
 <!-- rfc.py:origins:start -->
-_Referenced by: [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_
+<span class="rigor-backlink">_Referenced by: [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
 <!-- rfc.py:origins:end -->
 
 </details>
