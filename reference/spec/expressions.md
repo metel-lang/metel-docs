@@ -71,7 +71,7 @@ fun main() -> i64 {
 }
 ```
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.expressions.pattern-matching.legality-1}
@@ -372,7 +372,7 @@ fun main() -> i64 {
 }
 ```
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.expressions.control-flow.for.legality-1}
@@ -423,7 +423,7 @@ fun main() -> i64 {
 }
 ```
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.expressions.control-flow.for-in.legality-1}

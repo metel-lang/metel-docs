@@ -102,7 +102,7 @@ fun main() -> i64 {
 }
 ```
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-1}
@@ -176,7 +176,7 @@ Type ascription (`: T`) remains available for annotating the result type. Turbof
 let result = parse::<i64>("42") : Perhaps<i64>;
 ```
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.functions.turbofish.legality-1}

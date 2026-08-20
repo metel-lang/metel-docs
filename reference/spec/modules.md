@@ -245,7 +245,7 @@ Within a module, all names defined in that module are accessible without qualifi
 
 Modules do not have their own visibility annotation. Module-level access control is handled entirely by `public` on individual items.
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.modules.visibility.legality-1}

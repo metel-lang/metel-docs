@@ -112,7 +112,7 @@ fun main() -> i64 {
 }
 ```
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.types.type-inference.legality-1}
@@ -520,7 +520,7 @@ fun main() -> i64 {
 }
 ```
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.types.type-ascription.legality-1}
@@ -628,7 +628,7 @@ All pairwise casts among `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `
 
 Because `as` desugars to `From`, user-defined types become castable by implementing `From<SourceType>` for the target type.
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Dynamic Semantics {#spec.types.type-casting.dynamics-1}
@@ -956,7 +956,7 @@ fun main() -> i64 {
 }
 ```
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.types.perhaps-t.legality-1}

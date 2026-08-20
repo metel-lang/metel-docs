@@ -27,7 +27,7 @@ fun main() -> i64 {
 
 All three forms require `var`.
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.declarations.variables.immutable-bindings.legality-1}
@@ -53,7 +53,7 @@ fun main() -> i64 {
 
 `var` bindings can be reassigned and also must be initialized at declaration. Compound assignment operators `+=`, `-=`, `*=`, `/=`, `%=` are supported.
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.declarations.variables.mutable-bindings.legality-1}
@@ -218,7 +218,7 @@ let a = Empty;
 let b = Empty {};
 ```
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.declarations.structs.instantiation-and-field-access.legality-1}
@@ -357,7 +357,7 @@ fun main() -> i64 {
 }
 ```
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.declarations.structs.receiver-forms.legality-1}
@@ -423,7 +423,7 @@ let x = Flag::On;
 let y = Flag::On {};
 ```
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.declarations.enums.legality-1}
@@ -468,7 +468,7 @@ fun main() -> i64 {
 }
 ```
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.declarations.enums.instantiation.legality-1}
@@ -540,7 +540,7 @@ The shorter spelling does **not** promise that the aspect stays empty forever. I
 later revision adds a method or associated type, the declaration simply switches back
 to the braced form.
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.declarations.aspects.bodyless-aspect-declarations.legality-1}
@@ -713,7 +713,7 @@ section) and the equality-constraint-checking Associated Types already specifies
 the same call-site check, run once per bound in the `where` clause, regardless of
 which kind of aspect the bound names.
 
-<details open>
+<details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-1}
