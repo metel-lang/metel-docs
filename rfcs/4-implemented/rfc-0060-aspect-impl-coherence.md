@@ -7,7 +7,12 @@ updated: '2026-07-14'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/548'
 impl_status: implemented
 coverage:
+  "1": { spec: "spec.declarations.aspects.aspect-implementation-coherence.legality-5" }
+  "2": { spec: "spec.declarations.aspects.aspect-implementation-coherence.legality-6" }
+  "3": { spec: "spec.declarations.aspects.aspect-implementation-coherence.legality-7" }
   "4": { kind: blocked, reason: "depends on RFC-0096's auto-impl mechanism, still 0-draft", ref: "rfc-0096" }
+  "5": { spec: "spec.declarations.aspects.negative-impls.legality-2" }
+  "6": { spec: "spec.declarations.aspects.aspect-implementation-coherence.legality-5" }
 ---
 
 > **Status — accepted.** No dependencies on other under-review RFCs; this RFC

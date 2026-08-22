@@ -4,6 +4,13 @@ title: "impl Aspect Anonymous Type Parameters"
 date: '2026-06-01'
 status: implemented
 supersedes: rfc-0002 (partial)
+coverage:
+  "1": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-1" }
+  "2": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-2" }
+  "3": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-3" }
+  "4": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-4" }
+  "5": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-5" }
+  "6": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-6" }
 ---
 
 ## Summary
@@ -181,7 +188,7 @@ All resolved questions above are the final decisions. Implementation tracked in 
 ## Coverage Checklist (added 2026-08-19, not part of the original RFC; expanded 2026-08-19: added items 5 and 6, missed in the original pass)
 
 Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
-as headed sections for ADR-0049 citation purposes only. The document above is
+as headed sections for citation purposes only. The document above is
 unchanged and remains the historical record. Deliberately excludes claims that
 aren't independently observable from a program's behavior -- implementation
 strategy, design rationale, or internal architecture discussion belongs in the

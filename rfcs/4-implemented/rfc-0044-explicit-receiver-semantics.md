@@ -6,7 +6,15 @@ status: implemented
 spec_status: done
 coverage:
   "10": { kind: untestable, reason: "This section defers a future linear-receiver model and specifies no current fixture-observable behavior." }
+  "1": { spec: "spec.declarations.structs.receiver-forms.legality-2" }
+  "2": { spec: "spec.declarations.structs.receiver-forms.dynamics-1" }
+  "3": { spec: "spec.declarations.structs.receiver-forms.legality-3" }
   "4": { spec: "spec.declarations.structs.receiver-forms.legality-1" }
+  "5": { spec: "spec.declarations.structs.receiver-forms.legality-4" }
+  "6": { spec: "spec.declarations.structs.receiver-forms.legality-6" }
+  "7": { spec: "spec.declarations.structs.receiver-forms.legality-5" }
+  "8": { spec: "spec.declarations.structs.receiver-forms.legality-7" }
+  "9": { spec: "spec.declarations.structs.receiver-forms.legality-1" }
 ---
 
 ## Summary

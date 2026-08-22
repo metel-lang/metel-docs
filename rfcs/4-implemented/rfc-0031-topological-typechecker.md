@@ -2,11 +2,21 @@
 id: rfc-0031
 title: "Topological Per-Module Typechecking"
 date: '2026-05-28'
+coverage:
+  "1": { spec: "spec.modules.imports.legality-1" }
+  "2": { spec: "spec.modules.visibility.legality-1" }
+  "3": { spec: "spec.modules.visibility.legality-2" }
+  "4": { spec: "spec.modules.imports.legality-2" }
+  "5": { spec: "spec.modules.imports.legality-3" }
+  "6": { spec: "spec.modules.import-conflicts.legality-4" }
+  "7": { spec: "spec.modules.visibility.legality-2" }
+  "8": { spec: "spec.modules.module-graph-loading.legality-1" }
+  "9": { spec: "spec.modules.re-exports.legality-1" }
 ---
 
 ## Summary
 
-Replace the flat-merge typechecker (ADR-0019) with a topological multi-pass typechecker that processes each module against its own declared scope. This is an internal architecture RFC — no language-visible syntax changes.
+Replace the flat-merge typechecker with a topological multi-pass typechecker that processes each module against its own declared scope. This is an internal architecture RFC — no language-visible syntax changes.
 
 ---
 :
@@ -14,12 +24,12 @@ Replace the flat-merge typechecker (ADR-0019) with a topological multi-pass type
 
 ## Motivation
 
-The v0.5.0 module loader builds a `ModuleGraph` in topological order (dependencies before dependents), but the typechecker ignores this structure. It receives a flat `Program` that concatenates every module's declarations and type-checks them all in a single pass (ADR-0019). This flat merge:
+The v0.5.0 module loader builds a `ModuleGraph` in topological order (dependencies before dependents), but the typechecker ignores this structure. It receives a flat `Program` that concatenates every module's declarations and type-checks them all in a single pass. This flat merge:
 
 - Prevents visibility enforcement — every declaration is globally visible regardless of `pub`
 - Prevents import-scoped resolution — `import mod::name` has no effect on what names are in scope
 - Prevents conflict detection — two modules exporting the same name silently collide
-- Requires the last-segment fallback hack (ADR-0020) to resolve qualified paths
+- Requires the last-segment fallback hack to resolve qualified paths
 
 The v0.6.0 module-semantic sprint must replace the flat merge with a topological multi-pass typechecker that processes each module against its own declared scope.
 
@@ -28,7 +38,7 @@ The v0.6.0 module-semantic sprint must replace the flat merge with a topological
 1. The typechecker receives a `ModuleGraph` (already in topological order) instead of a flat `Program`.
 2. Each module is typechecked in isolation: only names in scope (from its imports and its own declarations) are visible.
 3. A module's `pub` declarations become available to downstream modules after it is checked.
-4. The flat merge (`module_loader::load_program`) and last-segment fallback (`ADR-0020`) are removed.
+4. The flat merge (`module_loader::load_program`) and last-segment fallback are removed.
 5. Qualified path expressions in code (`root::mod::Name`, `self::name`) are resolved to bare local bindings before typechecking, in a dedicated normalization pass.
 
 ## Non-Goals
@@ -261,7 +271,7 @@ note: use an explicit import to disambiguate: `import parser::Token`
 9. Add conflict detection (Issue #486).
 10. Add re-export propagation with visibility constraint — only `pub` names in source may be re-exported (Issue #487).
 11. Migrate CLI binary to new pipeline (Issue #493).
-12. Remove the flat-merge `load_program`, `check(Program)`, `evaluate(TypedProgram)`, and all ADR-0019/ADR-0020 fallback code (Issue #488).
+12. Remove the flat-merge `load_program`, `check(Program)`, `evaluate(TypedProgram)`, and all legacy fallback code (Issue #488).
 13. Update spec and changelog; mark RFC-0030 incorporated (Issue #489).
 14. Per-module runtime context in evaluator — deferred to v0.7.0 (Issue #498).
 
@@ -300,12 +310,12 @@ note: use an explicit import to disambiguate: `import parser::Token`
 **Outcome:** Accepted  
 **Target:** v0.6.0
 
-Option A (multi-pass with shared scheme registry) implemented and shipped in v0.6.0. `check_graph` returns a `TypedModuleGraph`; the flat `load_program` / `check(Program)` path and all ADR-0019/ADR-0020 compatibility shims were removed in the same sprint. All 13 resolved questions above reflect the final implementation choices.
+Option A (multi-pass with shared scheme registry) implemented and shipped in v0.6.0. `check_graph` returns a `TypedModuleGraph`; the flat `load_program` / `check(Program)` path and all legacy compatibility shims were removed in the same sprint. All 13 resolved questions above reflect the final implementation choices.
 
 ## Coverage Checklist (added 2026-08-19, not part of the original RFC)
 
 Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
-as headed sections for ADR-0049 citation purposes only. The document above is
+as headed sections for citation purposes only. The document above is
 unchanged and remains the historical record. Deliberately excludes claims that
 aren't independently observable from a program's behavior -- implementation
 strategy, design rationale, or internal architecture discussion belongs in the

@@ -2,6 +2,19 @@
 id: rfc-0030
 title: "Module System Redesign"
 date: '2026-05-28'
+coverage:
+  "1": { spec: "spec.modules.imports.legality-4" }
+  "2": { spec: "spec.modules.re-exports.legality-2" }
+  "3": { spec: "spec.modules.file-to-module-mapping.legality-1" }
+  "4": { spec: "spec.modules.visibility.legality-1" }
+  "5": { spec: "spec.modules.file-header-ordering.legality-1" }
+  "6": { spec: "spec.modules.paths.legality-1" }
+  "7": { spec: "spec.modules.import-conflicts.legality-4" }
+  "8": { spec: "spec.modules.module-graph-loading.legality-2" }
+  "9": { spec: "spec.modules.module-graph-loading.legality-2" }
+  "10": { spec: "spec.modules.single-file-compatibility.legality-1" }
+  "11": { spec: "spec.modules.std-core-auto-import.legality-1" }
+  "12": { spec: "spec.modules.removed-module-keywords.legality-1" }
 ---
 
 ## Summary
@@ -237,7 +250,7 @@ The removal of module-level visibility (`pub mod`) is the most significant simpl
 
 Retroactive breakdown of this RFC's distinct, fixture-testable normative claims
 (expanded 2026-08-19: added item 12, missed in the original pass),
-as headed sections for ADR-0049 citation purposes only. The document above is
+as headed sections for citation purposes only. The document above is
 unchanged and remains the historical record. Deliberately excludes claims that
 aren't independently observable from a program's behavior -- implementation
 strategy, design rationale, or internal architecture discussion belongs in the

@@ -7,6 +7,16 @@ updated: '2026-07-12'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/547'
 impl_status: implemented
 coverage:
+  "1": { spec: "spec.declarations.aspects.negative-bounds.legality-1" }
+  "2": { spec: "spec.declarations.aspects.negative-bounds.legality-2" }
+  "2.1": { spec: "spec.declarations.aspects.negative-bounds.legality-3" }
+  "2.2": { spec: "spec.declarations.aspects.negative-bounds.legality-4" }
+  "2.3": { spec: "spec.declarations.aspects.negative-bounds.legality-5" }
+  "2.4": { spec: "spec.declarations.aspects.negative-bounds.legality-6" }
+  "3": { spec: "spec.declarations.aspects.negative-bounds.legality-7" }
+  "4": { spec: "spec.declarations.aspects.negative-bounds.legality-8" }
+  "5": { spec: "spec.declarations.aspects.negative-bounds.legality-9" }
+  "5.1": { spec: "spec.declarations.aspects.negative-bounds.legality-10" }
   "5.2": { kind: untestable, reason: "The section deliberately defers Self-negative bounds rather than specifying observable behavior." }
 ---
 

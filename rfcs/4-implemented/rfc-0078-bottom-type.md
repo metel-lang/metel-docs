@@ -7,7 +7,20 @@ updated: '2026-07-12'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/538'
 impl_status: implemented
 coverage:
+  "1": { spec: "spec.types.never-type.legality-1" }
+  "1.1": { spec: "spec.types.never-type.legality-2" }
+  "1.2": { spec: "spec.types.never-type.legality-3" }
+  "2": { spec: "spec.types.never-type.dynamics-1" }
+  "3": { spec: "spec.types.never-type.legality-4" }
+  "3.1": { spec: "spec.types.never-type.legality-5" }
+  "3.2": { spec: "spec.types.never-type.legality-6" }
+  "3.3": { spec: "spec.types.never-type.legality-7" }
+  "3.4": { spec: "spec.types.never-type.dynamics-2" }
+  "4": { spec: "spec.types.never-type.legality-8" }
+  "4.1": { spec: "spec.types.never-type.legality-9" }
   "4.2": { kind: untestable, reason: "Allocator expressions and the AllocationError mechanism are not implemented in the interpreter, so this collapse rule cannot be exercised." }
+  "5": { spec: "spec.types.never-type.legality-10" }
+  "6": { spec: "spec.types.never-type.legality-11" }
 ---
 
 > **Status — accepted.** Depends on RFC-0071 (Ownership and Move Semantics).

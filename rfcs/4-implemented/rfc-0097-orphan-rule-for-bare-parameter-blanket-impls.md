@@ -3,6 +3,11 @@ id: rfc-0097
 title: "Orphan Rule for Bare-Parameter Blanket Impls"
 date: '2026-07-11'
 status: implemented
+coverage:
+  "1": { spec: "spec.declarations.aspects.aspect-implementation-coherence.legality-1" }
+  "2": { spec: "spec.declarations.aspects.aspect-implementation-coherence.legality-2" }
+  "3": { spec: "spec.declarations.aspects.aspect-implementation-coherence.legality-3" }
+  "4": { spec: "spec.declarations.aspects.aspect-implementation-coherence.legality-4" }
 target:
 updated: '2026-07-14'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/555'

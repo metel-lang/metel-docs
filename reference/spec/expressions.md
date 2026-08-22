@@ -83,6 +83,10 @@ the same `match` expression.
 <span class="rigor-backlink">_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_</span>
 <!-- rfc.py:origins:end -->
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage7_02_match_arm_blocks.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/functions/stage7_02_match_arm_blocks.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Dynamic Semantics {#spec.expressions.pattern-matching.dynamics-1}
 
 A block arm evaluates its statements and then its tail expression, if any; that tail is the
@@ -92,6 +96,10 @@ arm's result, while a block with no tail produces `()`.
 <span class="rigor-backlink">_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_</span>
 <!-- rfc.py:origins:end -->
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage7_02_match_arm_blocks.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/functions/stage7_02_match_arm_blocks.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Legality Rule {#spec.expressions.pattern-matching.legality-2}
 
 Bindings introduced by an arm's pattern are in scope throughout that arm's block body.
@@ -99,6 +107,10 @@ Bindings introduced by an arm's pattern are in scope throughout that arm's block
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage7_02_match_arm_blocks.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/functions/stage7_02_match_arm_blocks.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -201,6 +213,63 @@ closure with no declared return type. `None` without a determinable type keeps i
 [T0002](../error-codes.md#t0002--annotation-required) "add a type annotation" diagnostic
 rather than degrading to T0003.
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.expressions.unqualified-variant-constructors.legality-1}
+
+A bare no-field or fieldful enum variant is valid in expression position when the
+expected type determines its enum and no binding or declaration of that name is in scope.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [41_unqualified_variant_constructors.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/enums/41_unqualified_variant_constructors.mtl), [42_variant_deferral_resolves.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/enums/42_variant_deferral_resolves.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.unqualified-variant-constructors.legality-2}
+
+An in-scope binding of the same name takes precedence over a bare enum variant in
+expression position.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [41_unqualified_variant_constructors.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/enums/41_unqualified_variant_constructors.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.unqualified-variant-constructors.legality-3}
+
+Expected types from an annotation, return type, monomorphic call parameter, or
+struct-literal field may direct bare-variant resolution.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [41_unqualified_variant_constructors.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/enums/41_unqualified_variant_constructors.mtl), [42_variant_deferral_resolves.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/enums/42_variant_deferral_resolves.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.unqualified-variant-constructors.legality-4}
+
+Without an expected enum type, a bare variant does not resolve by searching other enums;
+the program must qualify or ascribe it.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage6_neg_12_unresolved_variant_deferral.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/enums/stage6_neg_12_unresolved_variant_deferral.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ### Unqualified variant patterns
 
 > **Since v0.11.0 (RFC-0107).**
@@ -277,6 +346,200 @@ fun name(c: &Colour) -> String {
 }
 ```
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.expressions.pattern-matching.unqualified-variant-patterns.legality-1}
+
+A no-field enum variant may be written as a bare match pattern when it is a variant of
+the scrutinee's known enum type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [40_unqualified_variant_patterns.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/enums/40_unqualified_variant_patterns.mtl), [10_match_through_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/10_match_through_reference.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.pattern-matching.unqualified-variant-patterns.legality-2}
+
+A fieldful enum variant may likewise omit its enum prefix in a match pattern.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [40_unqualified_variant_patterns.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/enums/40_unqualified_variant_patterns.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.pattern-matching.unqualified-variant-patterns.legality-3}
+
+Bare-variant pattern resolution is directed only by the scrutinee's concrete enum type;
+when that type is not a known enum, the identifier remains an ordinary binding.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [40_unqualified_variant_patterns.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/enums/40_unqualified_variant_patterns.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.pattern-matching.unqualified-variant-patterns.legality-4}
+
+A bare variant tag is not a catch-all binding and therefore does not satisfy match
+exhaustiveness for the enum's other variants.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_17_bare_variant_is_not_catchall.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/enums/neg_17_bare_variant_is_not_catchall.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.pattern-matching.unqualified-variant-patterns.legality-5}
+
+When a bare identifier exactly names a no-field variant of the scrutinee enum, it is the
+variant rather than a fresh binding; `_` or another name is required for a catch-all.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [40_unqualified_variant_patterns.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/enums/40_unqualified_variant_patterns.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.pattern-matching.unqualified-variant-patterns.legality-6}
+
+The fully qualified enum-variant pattern remains valid wherever its bare spelling is
+valid.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [40_unqualified_variant_patterns.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/enums/40_unqualified_variant_patterns.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.pattern-matching.unqualified-variant-patterns.legality-7}
+
+`None` in pattern position is resolved by the ordinary unqualified-variant rule for a
+`Perhaps<T>` scrutinee.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [40_unqualified_variant_patterns.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/enums/40_unqualified_variant_patterns.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.pattern-matching.matching-through-a-reference.legality-1}
+
+A `&T`, `&var T`, or nested-reference scrutinee is accepted against the ordinary
+patterns of its referent type `T`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [10_match_through_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/10_match_through_reference.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.pattern-matching.matching-through-a-reference.legality-2}
+
+Type checking a match uses the reference-peeled scrutinee type when checking its
+patterns.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [10_match_through_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/10_match_through_reference.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.pattern-matching.matching-through-a-reference.legality-3}
+
+Exhaustiveness checking a match uses the reference-peeled scrutinee type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [10_match_through_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/10_match_through_reference.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.expressions.pattern-matching.matching-through-a-reference.dynamics-1}
+
+At runtime, matching through a reference compares the patterns with the fully dereferenced
+scrutinee value.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [10_match_through_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/10_match_through_reference.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.expressions.pattern-matching.matching-through-a-reference.dynamics-2}
+
+Bindings introduced while matching through a reference copy values from the peeled
+referent under the ordinary type-directed copy rule.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [10_match_through_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/10_match_through_reference.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.expressions.pattern-matching.matching-through-a-reference.dynamics-3}
+
+For a reference scrutinee, `match reference` and `match *reference` compare patterns
+against the same referent value.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0110](../../rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [11_explicit_deref.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/11_explicit_deref.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.pattern-matching.matching-through-a-reference.legality-4}
+
+Reference peeling happens before unqualified-variant resolution, so a bare variant is
+resolved against the referent's enum type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [10_match_through_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/10_match_through_reference.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.pattern-matching.matching-through-a-reference.legality-5}
+
+Reference transparency is limited to the match-scrutinee position and does not change
+the types required in call arguments or other non-match contexts.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_13_reference_scrutinee_peel_does_not_generalize_to_call_args.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/enums/neg_13_reference_scrutinee_peel_does_not_generalize_to_call_args.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ---
 
 ## Control Flow
@@ -346,6 +609,74 @@ The braceless form desugars to a single-expression block. Three restrictions app
    ```
 3. **No semicolon between braceless arms.** Write `if (c) a else b;`, not `if (c) a; else b;` — the `;` terminates the statement before the `else`.
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.expressions.control-flow.if-else.legality-1}
+
+An `if` branch may be a single braceless expression.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0022](../../rfcs/4-implemented/rfc-0022-braceless-if-body-syntax.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [47_braceless_if.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/control_flow/47_braceless_if.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.control-flow.if-else.legality-2}
+
+A braceless `if` without `else` has type `Unit` and may occur wherever a `Unit`-typed
+expression is accepted.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0022](../../rfcs/4-implemented/rfc-0022-braceless-if-body-syntax.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [88_braceless_if_no_else_in_expression_position.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/control_flow/88_braceless_if_no_else_in_expression_position.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.control-flow.if-else.legality-3}
+
+A braceless `if`-`else` is an expression when its two branches have the same type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0022](../../rfcs/4-implemented/rfc-0022-braceless-if-body-syntax.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [47_braceless_if.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/control_flow/47_braceless_if.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.control-flow.if-else.legality-4}
+
+A braceless outer branch cannot contain an inner `if`-`else`; braces are required to
+avoid dangling-`else` ambiguity.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0022](../../rfcs/4-implemented/rfc-0022-braceless-if-body-syntax.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_19_braceless_if_dangling_else.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/control_flow/neg_19_braceless_if_dangling_else.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.control-flow.if-else.legality-5}
+
+The `then` and `else` branches of an `if`-`else` must use the same body style: both
+braced or both braceless.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0022](../../rfcs/4-implemented/rfc-0022-braceless-if-body-syntax.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_20_braceless_if_mixed_arms.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/control_flow/neg_20_braceless_if_mixed_arms.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ### While
 
 ```metel
@@ -381,8 +712,12 @@ A C-style `for` initializer may declare a mutable loop-local binding with `var`;
 binding may be reassigned by the loop body or step expression.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [16_for_loop.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/control_flow/16_for_loop.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -390,7 +725,7 @@ binding may be reassigned by the loop body or step expression.
 
 > **Availability:** Array and range iteration since v0.1.0. User-defined `Iterable<T>` implementations since v0.4.0.
 
-`for-in` works on any type implementing the `Iterable<T>` aspect. The loop variable
+[`for-in` works on any type implementing the `Iterable<T>` aspect](runtime.md#spec.runtime.built-in-aspects.iterable-t.legality-1). The loop variable
 receives type `T`. `T[]`, `[T; N]` (array and fixed-size array), and `Range` (produced by
 `..` and `..=`) implement `Iterable<T>` by default. A `T[]` loop binding denotes an
 element of an immutable borrowed view: with move checking enabled, a non-`Copy` binding
@@ -432,8 +767,12 @@ A `for-in` binding may be declared with `var`, making that iteration's loop-loca
 mutable.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [17_for_in.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/control_flow/17_for_in.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.expressions.control-flow.for-in.dynamics-1}
 
@@ -441,8 +780,12 @@ Reassigning a `var` `for-in` binding changes only that iteration's loop-local bi
 does not write the replacement value back into the iterated source.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [17_for_in.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/control_flow/17_for_in.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -494,12 +837,69 @@ Addressable places for both `&` and `&var` include named bindings (`x`), struct 
 > }
 > ```
 
-`&var` requires the operand to be a `var` binding — applying it to a plain `let` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)). `&var` on a lvalue path (`&var s.field`, `&var arr[i]`) produces a true exclusive reference with write-back semantics, matching `&var` on a named binding exactly — writes through it propagate to the original storage location (RFC-0045, already implemented; this section previously described `&var struct.field` as a non-propagating snapshot, which was the *pre*-RFC-0045 behavior and had never been updated to match). `&` on a field or element also aliases the original storage through the same path machinery, so later writes to the binding remain visible through the shared reference; it is still read-only, so writing through `&T` remains rejected. Reborrowing preserves this: `&*r` shares whatever storage `r` names, and reborrowing a `&var T` as `&T` downgrades to shared. The reverse is rejected — `&var *r` where `r: &T` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)), since a shared reference never grants write access.
+`&var` requires the operand to be a `var` binding — applying it to a plain `let` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)). `&var` on a lvalue path ([a struct field](#spec.expressions.references.dynamics-1), [tuple element](#spec.expressions.references.dynamics-2), [array element](#spec.expressions.references.dynamics-3), or [chain of projections](#spec.expressions.references.dynamics-4)) produces a true exclusive reference with write-back semantics, matching `&var` on a named binding exactly — writes through it propagate to the original storage location (RFC-0045, already implemented; this section previously described `&var struct.field` as a non-propagating snapshot, which was the *pre*-RFC-0045 behavior and had never been updated to match). `&` on a field or element also aliases the original storage through the same path machinery, so later writes to the binding remain visible through the shared reference; it is still read-only, so writing through `&T` remains rejected. Reborrowing preserves this: `&*r` shares whatever storage `r` names, and reborrowing a `&var T` as `&T` downgrades to shared. The reverse is rejected — `&var *r` where `r: &T` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)), since a shared reference never grants write access.
 
 Tuple elements are assignable like struct fields and array elements — `t.0 = v`, `t.0 += v`,
 and nested or chained forms (`s.pair.0`, `t.1.0`), including through a `&var` reference. An
 out-of-range index is a type error ([T0003](../error-codes.md#t0003--undefined-name)), and a
 shared `&` grants no write access ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)).
+
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.expressions.references.dynamics-1}
+
+Evaluating `&var value.field` creates an exclusive reference to that field. A write through
+the reference updates the corresponding field in `value`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0045](../../rfcs/4-implemented/rfc-0045-mut-address-of-lvalue-paths.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [14_mut_field_pointer.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/14_mut_field_pointer.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.expressions.references.dynamics-2}
+
+Evaluating `&var value.n` creates an exclusive reference to tuple element `n`. A write
+through the reference updates that element and leaves the other tuple elements unchanged.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0045](../../rfcs/4-implemented/rfc-0045-mut-address-of-lvalue-paths.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [14_mut_field_pointer.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/14_mut_field_pointer.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.expressions.references.dynamics-3}
+
+Evaluating `&var values[index]` creates an exclusive reference to the selected array
+element. A write through the reference is observable through subsequent indexing.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0045](../../rfcs/4-implemented/rfc-0045-mut-address-of-lvalue-paths.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [14_mut_field_pointer.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/14_mut_field_pointer.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.expressions.references.dynamics-4}
+
+Evaluating `&var` over a chain of addressable projections creates an exclusive reference
+to the chain's leaf storage. A write through the reference updates that original leaf.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0045](../../rfcs/4-implemented/rfc-0045-mut-address-of-lvalue-paths.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [14_mut_field_pointer.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/14_mut_field_pointer.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
 
 #### Dereference
 
@@ -626,9 +1026,133 @@ fun main() -> i64 {
 
 Indexing, argument passing, and assignment remain ordinary reference operations — none of them are the value-extraction case (see `types.md`), so none require type-directed copy.
 
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.expressions.references.dynamics-5}
+
+Evaluating `&place` or `&var place` produces, respectively, a shared or exclusive
+reference to the addressed storage; an exclusive reference can write through to that
+same storage.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0067a](../../rfcs/4-implemented/rfc-0067a-reference-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [04_write_through_thin_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/04_write_through_thin_reference.mtl), [14_mut_field_pointer.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/14_mut_field_pointer.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.expressions.references.dynamics-6}
+
+Field access, field assignment, method dispatch, and calls through a reference
+auto-dereference through every reference layer necessary to reach their receiver.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0067a](../../rfcs/4-implemented/rfc-0067a-reference-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [09_auto_deref_field_access_through_chain.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/09_auto_deref_field_access_through_chain.mtl), [14_mut_field_pointer.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/14_mut_field_pointer.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.references.legality-1}
+
+The unary `*` operator requires a shared or exclusive reference operand. Applying it to a
+non-reference is a `T0002` type error.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0110](../../rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_12_deref_non_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/neg_12_deref_non_reference.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.references.legality-2}
+
+Writing through `*place` requires an `&var T` reference; a shared `&T` never grants
+write access.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0110](../../rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [08_write_through_reference_chain.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/08_write_through_reference_chain.mtl), [11_explicit_deref.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/11_explicit_deref.mtl), [neg_11_write_through_shared_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/neg_11_write_through_shared_reference.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.expressions.references.dynamics-7}
+
+Evaluating `*reference` reads its referent. Explicit dereference is available in every
+expression position, while selector operations retain their ordinary auto-dereference.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0110](../../rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [11_explicit_deref.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/11_explicit_deref.mtl), [neg_06_no_read_copy_at_call_argument.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/neg_06_no_read_copy_at_call_argument.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.expressions.references.dynamics-8}
+
+Each leading `*` reads or writes through exactly one reference layer. A bare assignment
+to a reference-typed binding instead rebinds that binding when it is mutable.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0110](../../rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [08_write_through_reference_chain.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/08_write_through_reference_chain.mtl), [11_explicit_deref.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/11_explicit_deref.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.expressions.references.dynamics-9}
+
+An assignment through a dereference writes the referenced storage; after a mutable
+reference binding is rebound, a later dereference writes the new referent.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0110](../../rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [08_write_through_reference_chain.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/08_write_through_reference_chain.mtl), [11_explicit_deref.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/11_explicit_deref.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.expressions.references.dynamics-10}
+
+Field and index assignment through a reference remains implicit because those targets
+are unambiguous selectors; `*(object.field) = value` and `object.field = value` have the
+same write effect.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0110](../../rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [11_explicit_deref.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/11_explicit_deref.mtl), [87_tuple_assign_paths.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/87_tuple_assign_paths.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.expressions.references.dynamics-11}
+
+Taking `&*reference` or `&var *reference` reborrows the storage named by the dereference;
+an exclusive reborrow may write that same storage.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0110](../../rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [06_addressable_places.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/addressability/06_addressable_places.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ### Loop
 
-`loop` creates an infinite loop. It is the only loop form that can produce a value:
+[`loop` creates an infinite loop](types.md#spec.types.never-type.dynamics-1). It is the only loop form that can produce a value:
 
 ```metel
 fun main() -> i64 {
@@ -641,14 +1165,14 @@ fun main() -> i64 {
 
 **Typing rules:**
 
-- `loop { break expr; }` has type `T` where `expr: T`. All `break` arms must produce the same type.
+- `loop { break expr; }` has type `T` where `expr: T`. All `break` arms must produce the same type; a `break` expression is [typechecked against its enclosing loop value type](types.md#spec.types.type-inference.legality-2).
 - `loop { }` — a loop with no reachable `break` — has type `!` (Never). See [Never Type](types.md#never-type).
 
 ### Break, Continue, and Return
 
 > **Availability:** Since v0.10.0.
 
-`return`, `break`, and `continue` are expressions of type `!` (Never — see
+[`return`, `break`, and `continue` are expressions of type `!`](types.md#spec.types.never-type.dynamics-1) (Never — see
 [Never Type](types.md#never-type)), not statements. Since `!` is a subtype of
 every type, they're valid anywhere an expression is valid — a block tail with
 no trailing `;`, a braceless `if`-arm, a match-arm body, or nested inside
@@ -685,10 +1209,10 @@ fun nested(c: boolean) -> i64 {
 }
 ```
 
-`break` exits the innermost loop; `break expr` exits a `loop` and produces
+[`break` exits the innermost loop](#spec.expressions.control-flow.break-continue-and-return.dynamics-1); `break expr` exits a `loop` and produces
 `expr` as the loop's value (`break` with no value produces `Unit`).
-`continue` skips to the next iteration of the innermost loop. `return`/
-`return expr` returns from the enclosing function, using the function's
+[`continue` skips to the next iteration of the innermost loop](#spec.expressions.control-flow.break-continue-and-return.dynamics-2). `return`/
+`return expr` [returns from the enclosing function](#spec.expressions.control-flow.break-continue-and-return.dynamics-3), using the function's
 declared return type (or `Unit`, if omitted):
 
 ```metel
@@ -705,3 +1229,23 @@ fun main() -> i64 {
     return returns_value();
 }
 ```
+
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.expressions.control-flow.break-continue-and-return.dynamics-1}
+
+`break` transfers control out of the innermost enclosing loop. In a value-producing
+`loop`, `break expr` supplies that loop's result and bare `break` supplies `()`.
+
+##### Dynamic Semantics {#spec.expressions.control-flow.break-continue-and-return.dynamics-2}
+
+`continue` abandons the current iteration of the innermost enclosing loop and begins its
+next iteration.
+
+##### Dynamic Semantics {#spec.expressions.control-flow.break-continue-and-return.dynamics-3}
+
+`return expr` transfers control out of the enclosing function with `expr` as its result;
+bare `return` returns `()`.
+
+</details>

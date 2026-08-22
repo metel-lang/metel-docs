@@ -38,6 +38,140 @@ A `let` binding must be initialized and cannot be assigned after initialization.
 <span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md)_</span>
 <!-- rfc.py:origins:end -->
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage4_neg_05_compound_assign_to_let.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/functions/stage4_neg_05_compound_assign_to_let.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-2}
+
+A conditional aspect implementation may state its bounds inline on its type parameters or
+in a `where` clause; the two spellings are equivalent.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [69_conditional_impl_inline_bound.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/69_conditional_impl_inline_bound.mtl), [69b_conditional_impl_where_clause.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/69b_conditional_impl_where_clause.mtl), [80_conditional_impl_defines_assoc_type.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/80_conditional_impl_defines_assoc_type.mtl), [81_generic_struct_iterable_for_in.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/81_generic_struct_iterable_for_in.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-3}
+
+A conditional aspect implementation applies only to instantiations whose type arguments
+satisfy every bound stated by that implementation.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [69_conditional_impl_inline_bound.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/69_conditional_impl_inline_bound.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-4}
+
+Conditional implementation bounds are checked whenever the aspect is required, including
+method dispatch, bound satisfaction, and implementation selection.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [69_conditional_impl_inline_bound.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/69_conditional_impl_inline_bound.mtl), [69b_conditional_impl_where_clause.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/69b_conditional_impl_where_clause.mtl), [75_conditional_impl_dispatch_runtime.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/75_conditional_impl_dispatch_runtime.mtl), [80_conditional_impl_defines_assoc_type.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/80_conditional_impl_defines_assoc_type.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/conditional_impl_cross_module_merge/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/conditional_impl_cross_module_merge_neg/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-5}
+
+A type's declaration bounds and an aspect implementation's conditional bounds are
+independent; satisfying one does not satisfy the other.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage17_01_conditional_impl_inline_bound_satisfied.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage17_01_conditional_impl_inline_bound_satisfied.mtl), [stage17_02_conditional_impl_where_clause_satisfied.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage17_02_conditional_impl_where_clause_satisfied.mtl), [stage17_03_conditional_impl_two_params_both_satisfied.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage17_03_conditional_impl_two_params_both_satisfied.mtl), [stage17_05_conditional_impl_bound_satisfied_through_unrelated_generic_fun.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage17_05_conditional_impl_bound_satisfied_through_unrelated_generic_fun.mtl), [stage17_neg_03_conditional_impl_bound_not_satisfied_through_unrelated_generic_fun.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage17_neg_03_conditional_impl_bound_not_satisfied_through_unrelated_generic_fun.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-6}
+
+A generic function using a conditional implementation must state the required bounds on
+its own type parameters; those bounds are not inferred from the function body.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage17_04_conditional_impl_propagation_through_generic_function.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage17_04_conditional_impl_propagation_through_generic_function.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-7}
+
+Conditional implementations participate in the ordinary coherence and orphan-rule checks.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/conditional_vs_unconditional_impl_conflict/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-8}
+
+Two conditional implementations of the same aspect and target are disjoint only when an
+explicit negative bound in one directly negates a positive bound in the other; otherwise
+an overlapping pair is rejected with `T0015`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/conditional_impl_explicit_negation_added_accepted/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/conditional_impl_negation_disjoint_accepted/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/conditional_impl_negation_disjoint_accepted_for_structural_target/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-9}
+
+A conditional and an unconditional implementation of the same aspect for the same target
+conflict, because the unconditional implementation covers every conditional instantiation.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/conditional_vs_unconditional_impl_conflict/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-10}
+
+A conditional implementation is subject to the orphan rule: either its aspect or its
+target's outermost constructor must be local to the implementing module.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/conditional_impl_orphan_violation/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-11}
+
+When a conditional implementation's bound is unsatisfied, the compiler reports `T0012`
+and identifies the unsatisfied condition.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage17_neg_01_conditional_impl_bound_not_satisfied.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage17_neg_01_conditional_impl_bound_not_satisfied.mtl), [stage17_neg_02_conditional_impl_multi_bound_one_violated.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage17_neg_02_conditional_impl_multi_bound_one_violated.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 </details>
 
 ### Mutable Bindings
@@ -65,15 +199,19 @@ mutable binding spelling.
 <span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
 <!-- rfc.py:origins:end -->
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [16_for_loop.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/control_flow/16_for_loop.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 </details>
 
 ### Scoping and Shadowing
 
-Variables are lexically scoped. Each block `{ }` introduces a new scope. Inner scopes can shadow outer variables.
+Variables are [lexically scoped](#spec.declarations.variables.scoping-and-shadowing.legality-1). Each block `{ }` introduces a new scope. Inner scopes can shadow outer variables.
 
-`let` and `var` declarations are sequential — a binding is visible only from its declaration point to the end of its containing block.
+`let` and `var` declarations are [sequential](#spec.declarations.variables.scoping-and-shadowing.legality-2) — a binding is visible only from its declaration point to the end of its containing block.
 
-`fun` declarations are hoisted to the top of their containing block. All `fun` declarations in a block are mutually visible to each other and to all other statements in that block, regardless of declaration order. This enables forward references and mutual recursion at any nesting level.
+`fun` declarations are [hoisted to the top of their containing block](#spec.declarations.variables.scoping-and-shadowing.legality-3). All `fun` declarations in a block are mutually visible to each other and to all other statements in that block, regardless of declaration order. This enables forward references and mutual recursion at any nesting level.
 
 Hoisting is block-local: a `fun` declared in an inner block is not visible in the outer block. Normal lexical scoping applies across block boundaries — inner blocks see outer declarations, outer blocks do not see inner declarations.
 
@@ -123,7 +261,7 @@ fun main() {
 }
 ```
 
-Top-level `struct` and `enum` declarations are hoisted to program scope — they may be
+Top-level `struct` and `enum` declarations are [hoisted to program scope](#spec.declarations.variables.scoping-and-shadowing.legality-4) — they may be
 referenced before their declaration appears in the source.
 
 Types declared inside a function body are local to that body from their declaration
@@ -155,6 +293,33 @@ fun main() -> i64 {
 ```
 
 Top-level `extend` blocks follow the same declaration-order rule as the types they extend.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-1}
+
+Each block introduces a lexical scope. A declaration in an inner scope may shadow an outer
+declaration, and the outer declaration is not visible outside its own scope.
+
+##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-2}
+
+A `let` or `var` binding is in scope from its declaration through the end of its containing
+block, but not before its declaration.
+
+##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-3}
+
+Function declarations are visible throughout their containing block regardless of source
+order, including to other functions in that block; this hoisting does not extend out of an
+inner block.
+
+##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-4}
+
+Top-level struct and enum declarations are visible throughout the program regardless of
+source order. A type declared inside a function is visible only from its declaration through
+that function body.
+
+</details>
 
 ---
 
@@ -227,7 +392,6 @@ A struct-literal field initializer is `ident`, optionally followed by `= expr`. 
 expr` is present, `ident` names the field and `expr` its value. When omitted, `ident` must
 name both the field and a local binding in scope at the literal (shorthand/punning field
 init). Shorthand and explicit fields may be freely mixed within one struct literal.
-(ADR-0050 pilot: migrated from RFC-0115 §1, `2026-08-20`.)
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_</span>
@@ -241,7 +405,7 @@ init). Shorthand and explicit fields may be freely mixed within one struct liter
 
 A shorthand field `ident` in a struct literal evaluates identically to the explicit form
 `ident = ident`: the field takes the value of the local binding named `ident` that is in
-scope at the literal. (ADR-0050 pilot: migrated from RFC-0115 §2, `2026-08-20`.)
+scope at the literal.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_</span>
@@ -259,6 +423,10 @@ A zero-field struct may be constructed either as its bare type name or with empt
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
 <!-- rfc.py:origins:end -->
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [89_empty_constructor_forms.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/89_empty_constructor_forms.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Dynamic Semantics {#spec.declarations.structs.instantiation-and-field-access.dynamics-2}
 
 For a zero-field struct, the bare and empty-brace constructor forms evaluate to the same
@@ -268,6 +436,10 @@ struct value.
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
 <!-- rfc.py:origins:end -->
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [89_empty_constructor_forms.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/89_empty_constructor_forms.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Legality Rule {#spec.declarations.structs.instantiation-and-field-access.legality-3}
 
 A struct with fields cannot omit its constructor fields; its bare type name is resolved as a
@@ -276,6 +448,10 @@ name rather than as a constructor expression.
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage5_neg_42_non_empty_struct_requires_fields.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/stage5_neg_42_non_empty_struct_requires_fields.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -374,8 +550,108 @@ fun main() -> i64 {
 receiver or an `&var T` reference at the call site.
 
 <!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md), [rfc-0067a](../../rfcs/4-implemented/rfc-0067a-reference-types.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [67_receiver_references.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/67_receiver_references.mtl), [68_receiver_all_forms.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/68_receiver_all_forms.mtl), [69_nested_field_mut_receiver.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/69_nested_field_mut_receiver.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.structs.receiver-forms.legality-2}
+
+Methods may use `self`, `&self`, or `&var self` as their receiver.
+
+<!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [67_receiver_references.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/67_receiver_references.mtl), [stage20_02_mut_aspect_method_through_mut_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage20_02_mut_aspect_method_through_mut_reference.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.declarations.structs.receiver-forms.dynamics-1}
+
+A value receiver receives the ordinary passed value, so a method that returns a changed
+value leaves the caller's original binding unchanged.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [100_value_receiver_keeps_value_semantics.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/100_value_receiver_keeps_value_semantics.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.structs.receiver-forms.legality-3}
+
+An `&self` receiver reads the original receiver storage without consuming it.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [67_receiver_references.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/67_receiver_references.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.declarations.structs.receiver-forms.dynamics-2}
+
+An `&var self` receiver mutates the original receiver storage in place without consuming
+the receiver.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [67_receiver_references.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/67_receiver_references.mtl), [69_nested_field_mut_receiver.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/69_nested_field_mut_receiver.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.structs.receiver-forms.legality-4}
+
+Dot-call syntax selects the receiver behavior declared in the method signature; callers
+do not supply a distinct receiver-mode syntax.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [67_receiver_references.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/67_receiver_references.mtl), [69_nested_field_mut_receiver.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/69_nested_field_mut_receiver.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.structs.receiver-forms.legality-5}
+
+An `Iterable<T>` implementation declares `next` with an `&var self` receiver so repeated
+calls can advance the same iterator value.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [59_iterable_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/59_iterable_aspect.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.structs.receiver-forms.legality-6}
+
+An `&var self` method may be called through an `&var T` reference.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage20_02_mut_aspect_method_through_mut_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage20_02_mut_aspect_method_through_mut_reference.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.structs.receiver-forms.legality-7}
+
+An aspect method may declare an `&var self` receiver, including `Iterable<T>::next`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [59_iterable_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/59_iterable_aspect.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -447,6 +723,10 @@ braces.
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
 <!-- rfc.py:origins:end -->
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [89_empty_constructor_forms.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/89_empty_constructor_forms.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Dynamic Semantics {#spec.declarations.enums.dynamics-1}
 
 For a zero-field enum variant, the bare and empty-brace constructor forms evaluate to the
@@ -455,6 +735,10 @@ same variant value.
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [89_empty_constructor_forms.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/89_empty_constructor_forms.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -494,6 +778,10 @@ A struct-like enum variant with fields cannot omit its constructor fields.
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage6_neg_13_non_empty_variant_requires_fields.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/enums/stage6_neg_13_non_empty_variant_requires_fields.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -542,6 +830,24 @@ fun main() -> i64 {
 }
 ```
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.aspects.legality-1}
+
+An aspect declaration is introduced with the `aspect` keyword. Its braced body declares
+the methods and associated types that implementing types must provide.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0020](../../rfcs/4-implemented/rfc-0020-language-rebranding.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [06_traits.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/06_traits.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ### Bodyless Aspect Declarations
 
 ```metel
@@ -561,12 +867,18 @@ to the braced form.
 
 ##### Legality Rule {#spec.declarations.aspects.bodyless-aspect-declarations.legality-1}
 
-An aspect declaration may use `;` instead of a braced body only when it declares zero
-methods and zero associated types.
+An aspect declaration with `;` in place of a braced body is exactly equivalent to `{ }` —
+an aspect with zero methods and zero associated types. The bodyless production has no
+syntax to carry a method or associated type, so this is pure notational sugar, not a
+conditional exemption to check against a body that could otherwise be non-empty.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0103](../../rfcs/4-implemented/rfc-0103-bodyless-aspect-declarations.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/imported_annotation_names_are_valid/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -741,6 +1053,10 @@ written `extend Type: Aspect { ... }`, and both forms may coexist for the same t
 <span class="rigor-backlink">_Referenced by: [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
 <!-- rfc.py:origins:end -->
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [75_inherent_alongside_aspect_impl.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/75_inherent_alongside_aspect_impl.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/negative_impl_overrides_blanket_impl_permitted/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 </details>
 
 ### Aspect Implementation Coherence
@@ -780,6 +1096,110 @@ orphan rule does not apply because there is no authored impl site.
 **Negative impl priority.** See Negative Impls, below, for the mechanism itself; the priority order coherence establishes is: an explicit negative impl beats an auto-impl or blanket positive impl for the same type, but an explicit positive impl and an explicit negative impl for the same concrete type is itself a `T0015` coherence error, not a priority question.
 
 **What this deliberately doesn't cover.** Coherence here is scoped to a single program's module graph — a future package system, compiling packages separately, needs its own cross-package coherence model, not addressed here. Rejected alternatives (a global overlap check without the orphan rule, last-impl-wins ordering, an open-world assumption, specialisation) are recorded in the RFC, not repeated here — each fails a property this design keeps: coherence errors are local and order-independent, and overlapping impls are always illegal rather than resolved by specificity.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.aspects.aspect-implementation-coherence.legality-5}
+
+An authored `extend Type: Aspect` is rejected with `T0014` when neither the aspect nor
+the target type's outermost constructor is local to the implementing module.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0060](../../rfcs/4-implemented/rfc-0060-aspect-impl-coherence.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/orphan_impl_cross_module_violation/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-implementation-coherence.legality-6}
+
+Two positive implementations of the same aspect are rejected with `T0015` when a concrete
+instantiation is covered by both implementations, including when a blanket implementation
+covers an explicit concrete target.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0060](../../rfcs/4-implemented/rfc-0060-aspect-impl-coherence.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_25_negative_impl_conflicts_with_concrete_positive_impl.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/neg_25_negative_impl_conflicts_with_concrete_positive_impl.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/blanket_vs_concrete_impl_conflict/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/conditional_impl_negation_disjoint_accepted_for_structural_target/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/conflicting_impl_same_target/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-implementation-coherence.legality-7}
+
+A negative aspect bound is satisfied only when no reachable concrete or blanket
+implementation of that aspect applies to the argument type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0060](../../rfcs/4-implemented/rfc-0060-aspect-impl-coherence.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [68_negative_bound_parses_and_is_unenforced.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/68_negative_bound_parses_and_is_unenforced.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.aspects.aspect-implementation-coherence.legality-1}
+
+A bare-parameter blanket implementation is an `extend` whose target is one of its own
+generic parameters with no wrapping type constructor, such as `extend<T: Bound> T: Aspect`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0097](../../rfcs/4-implemented/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/bare_parameter_blanket_local_aspect_permitted/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-implementation-coherence.legality-2}
+
+A bare-parameter target is local to no module. Such an implementation is legal only
+when its aspect is local to the implementing module; target locality can never satisfy
+the orphan rule for this form.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0097](../../rfcs/4-implemented/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/bare_parameter_blanket_foreign_aspect_is_orphan/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/bare_parameter_blanket_local_aspect_permitted/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-implementation-coherence.legality-3}
+
+Two bare-parameter blanket implementations of the same aspect conflict when an
+instantiation can satisfy both bound sets, under the ordinary overlap rule; no
+bare-parameter-specific overlap rule applies.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0097](../../rfcs/4-implemented/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_26_bare_parameter_blanket_overlap.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_26_bare_parameter_blanket_overlap.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-implementation-coherence.legality-4}
+
+The bare-parameter rule applies only when the target is the parameter itself. Named
+and structural targets remain subject to their ordinary orphan-rule locality rules.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0097](../../rfcs/4-implemented/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_23_structural_blanket_impl_orphan_violation.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/neg_23_structural_blanket_impl_orphan_violation.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
 
 ### Structural Aspect Bounds
 
@@ -836,6 +1256,152 @@ for arrays or otherwise.
 
 **Array auto-impl propagation.** `T[]: Send`, `T[]: Sync`, and `T[]: Drop` are not
 provided in this language version.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.structural-aspect-bounds.legality-1}
+
+Structural type constructors are owned by `std::core` for orphan-rule purposes; outside
+`std::core`, an implementation for one is legal only when the aspect is local.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_23_structural_blanket_impl_orphan_violation.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/neg_23_structural_blanket_impl_orphan_violation.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/conditional_impl_negation_disjoint_accepted_for_structural_target/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.structural-aspect-bounds.legality-2}
+
+`std::core` may declare conditional implementations for structural constructors; a
+generic structural target is registered and dispatched subject to its stated bounds.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [79_nested_array_display_structural_impl.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/79_nested_array_display_structural_impl.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/conditional_impl_negation_disjoint_accepted_for_structural_target/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/generic_negative_impl_blocks_positive_bound_for_structural_target/main.mtl), [stage19_08_extend_generic_structural_targets_work.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage19_08_extend_generic_structural_targets_work.mtl), [stage19_neg_07_extend_concrete_array_target.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage19_neg_07_extend_concrete_array_target.mtl), [stage19_neg_07_extend_concrete_fun_target.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage19_neg_07_extend_concrete_fun_target.mtl), [stage19_neg_07_extend_concrete_record_target.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage19_neg_07_extend_concrete_record_target.mtl), [stage19_neg_07_extend_concrete_tuple_target.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage19_neg_07_extend_concrete_tuple_target.mtl), [stage19_neg_03_structural_array_element_bound_required.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage19_neg_03_structural_array_element_bound_required.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.structural-aspect-bounds.legality-3}
+
+Without an applicable structural implementation, using a structural type where an aspect
+bound is required is rejected with `T0012`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage19_neg_03_structural_array_element_bound_required.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage19_neg_03_structural_array_element_bound_required.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.structural-aspect-bounds.legality-4}
+
+`std::core` provides `Display` and `Eq` for `T[]` when `T` satisfies the same aspect;
+these implementations cannot be overridden by user code.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [79_nested_array_display_structural_impl.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/79_nested_array_display_structural_impl.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.structural-aspect-bounds.legality-5}
+
+Array marker-aspect propagation is not part of structural implementation lookup.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [76_array_display_structural_impl.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/76_array_display_structural_impl.mtl), [77_array_clone_structural_impl.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/77_array_clone_structural_impl.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.structural-aspect-bounds.legality-6}
+
+Tuple types have no standard blanket aspect implementations and therefore fail aspect
+bounds unless a separately specified implementation applies.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage3_05_tuple_array_suffix.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/stage3_05_tuple_array_suffix.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.structural-aspect-bounds.legality-7}
+
+Function values have the ordinary function type `(A) -> B`; there is no separate
+function-pointer type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [41_function_values_are_copy.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/41_function_values_are_copy.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.structural-aspect-bounds.legality-8}
+
+`Callable<A, B>` is not available in `std::core`, so function types do not currently
+satisfy a `Callable<A, B>` bound.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [41_function_values_are_copy.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/41_function_values_are_copy.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.structural-aspect-bounds.legality-9}
+
+Function values are copyable for move checking, but do not satisfy aspect bounds such as
+`Copy` or `Clone`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [41_function_values_are_copy.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/41_function_values_are_copy.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.structural-aspect-bounds.legality-10}
+
+Function types do not implement `Display`, `Eq`, `Ord`, `Hash`, `Send`, `Sync`, or `Drop`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage19_neg_04_structural_function_eq_bound_required.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage19_neg_04_structural_function_eq_bound_required.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.structural-aspect-bounds.legality-11}
+
+Closures and plain functions share the same function type; captures distinguish closure
+values at runtime rather than introducing a distinct closure type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [07_closure_capture_of_non_copy_value.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/07_closure_capture_of_non_copy_value.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
 
 ### Associated Types
 
@@ -937,11 +1503,108 @@ type that differs per implementation.
 Negative bounds on projections such as `where T::Target: !Copy` are not specified in
 this language version.
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.aspects.associated-types.legality-1}
+
+An associated type declared with `type Name;` is part of the aspect interface and must
+be defined by each implementation of that aspect.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0082](../../rfcs/4-implemented/rfc-0082-associated-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [71_associated_type_basic.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/71_associated_type_basic.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.associated-types.legality-2}
+
+If an associated-type declaration has a bound, the concrete type supplied by every
+implementation must satisfy that bound.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0082](../../rfcs/4-implemented/rfc-0082-associated-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage13_02_impl_provides_all_assoc_types.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage13_02_impl_provides_all_assoc_types.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.associated-types.legality-3}
+
+Within an aspect or its implementation, a bare associated-type name denotes the
+corresponding `Self::Name` projection and may be used in method signatures.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0082](../../rfcs/4-implemented/rfc-0082-associated-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [74_projection_call_site_resolution.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/74_projection_call_site_resolution.mtl), [75_bare_name_sugar_in_default_method.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/75_bare_name_sugar_in_default_method.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.associated-types.legality-4}
+
+An implementation must define every associated type declared by its aspect; its
+definition fixes that projection to the implementation's concrete type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0082](../../rfcs/4-implemented/rfc-0082-associated-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [71_associated_type_basic.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/71_associated_type_basic.mtl), [80_conditional_impl_defines_assoc_type.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/80_conditional_impl_defines_assoc_type.mtl), [stage13_02_impl_provides_all_assoc_types.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage13_02_impl_provides_all_assoc_types.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.associated-types.legality-5}
+
+A projection `T::AssocType` is valid only when the required `T: Aspect` bound is in
+scope, and resolves to that implementation's associated type at an instantiation.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0082](../../rfcs/4-implemented/rfc-0082-associated-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [74_projection_call_site_resolution.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/74_projection_call_site_resolution.mtl), [80_conditional_impl_defines_assoc_type.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/80_conditional_impl_defines_assoc_type.mtl), [stage13_01_projection_in_return_type.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage13_01_projection_in_return_type.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.associated-types.legality-6}
+
+A bare projection whose name is declared by more than one of `T`'s bound aspects is
+ambiguous and is rejected.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0082](../../rfcs/4-implemented/rfc-0082-associated-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage13_neg_12_ambiguous_associated_projection.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage13_neg_12_ambiguous_associated_projection.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.associated-types.legality-7}
+
+An equality constraint such as `Aspect<AssocType = U>` pins the associated type to its
+right-hand type; a fresh type parameter may therefore name an otherwise ambiguous
+associated type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0082](../../rfcs/4-implemented/rfc-0082-associated-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage13_04_equality_constraint_pins_type.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage13_04_equality_constraint_pins_type.mtl), [stage13_10_equality_constraint_mismatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage13_10_equality_constraint_mismatch.mtl), [stage13_12_fresh_parameter_associated_type_disambiguation.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage13_12_fresh_parameter_associated_type_disambiguation.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ### Default Methods
 
 > **Availability:** Since v0.7.0.
 
-An aspect method may supply a default body. An `extend` block may omit any method that
+An aspect method may [supply a default body](#spec.declarations.aspects.default-methods.dynamics-1). An `extend` block may omit any method that
 has a default; the aspect's implementation is inherited automatically.
 
 ```metel
@@ -970,12 +1633,26 @@ fun main() {
 }
 ```
 
-A method without a default body must be provided by every `extend` block; omitting it
+A method without a default body [must be provided by every `extend` block](#spec.declarations.aspects.default-methods.legality-1); omitting it
 is a compile-time error.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.declarations.aspects.default-methods.dynamics-1}
+
+An aspect method with a body is a default implementation. An implementing `extend` block
+that omits it inherits and dispatches to that body.
+
+##### Legality Rule {#spec.declarations.aspects.default-methods.legality-1}
+
+An implementing `extend` block must provide every aspect method that has no default body.
+
+</details>
 
 ### The Self Type
 
-`Self` inside an aspect or an `extend` block refers to the concrete implementing type.
+[`Self` inside an aspect or an `extend` block refers to the concrete implementing type](#spec.declarations.aspects.the-self-type.legality-1).
 
 In an aspect definition, `Self` is the implementing type at the call site:
 
@@ -1004,6 +1681,16 @@ extend Point {
     }
 }
 ```
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.aspects.the-self-type.legality-1}
+
+Within an aspect declaration, `Self` denotes the type implementing that aspect. Within an
+`extend` block, it denotes the block's target type.
+
+</details>
 
 ### Aspect Bounds on Function Type Parameters
 
@@ -1110,6 +1797,243 @@ This composes for free: the opaque return type is a real concrete type internall
 parameter and return type, and multiple aspect bounds in return position are not part
 of this language version.
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-1}
+
+In a function parameter type, `impl Aspect` introduces an anonymous type parameter that
+must satisfy `Aspect`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0035](../../rfcs/4-implemented/rfc-0035-impl-aspect-anonymous-params.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage12_03_impl_aspect_param.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage12_03_impl_aspect_param.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-2}
+
+Each parameter-position `impl Aspect` occurrence introduces an independent anonymous type
+parameter. Reusing one concrete type across parameters requires a named type parameter.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0035](../../rfcs/4-implemented/rfc-0035-impl-aspect-anonymous-params.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage12_04_impl_aspect_independent.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage12_04_impl_aspect_independent.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-3}
+
+Anonymous `impl Aspect` parameter types may coexist with named type parameters; neither
+constrains the other unless the signature states a relation between them.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0035](../../rfcs/4-implemented/rfc-0035-impl-aspect-anonymous-params.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage14_03_impl_aspect_plus_where.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage14_03_impl_aspect_plus_where.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-4}
+
+Every argument passed to an `impl Aspect` parameter must implement the declared aspect;
+an argument that does not is a `T0012` type error.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0035](../../rfcs/4-implemented/rfc-0035-impl-aspect-anonymous-params.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage12_neg_02_impl_aspect_bound_not_satisfied.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage12_neg_02_impl_aspect_bound_not_satisfied.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-5}
+
+`impl Aspect` is rejected in a struct-field type annotation.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0035](../../rfcs/4-implemented/rfc-0035-impl-aspect-anonymous-params.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage18_neg_10_impl_aspect_struct_field_array.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage18_neg_10_impl_aspect_struct_field_array.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-6}
+
+`impl Aspect` is rejected in a local binding type annotation.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0035](../../rfcs/4-implemented/rfc-0035-impl-aspect-anonymous-params.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage18_neg_08_impl_aspect_local_let_array.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage18_neg_08_impl_aspect_local_let_array.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-7}
+
+At a generic-function call, each concrete type argument must satisfy every declared
+aspect bound; inferred type arguments are checked by the same rule.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0040](../../rfcs/4-implemented/rfc-0040-function-aspect-bound-enforcement.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage12_01_fun_bound_satisfied.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage12_01_fun_bound_satisfied.mtl), [stage12_neg_01_fun_bound_not_satisfied.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage12_neg_01_fun_bound_not_satisfied.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-8}
+
+A type argument that does not satisfy a function type parameter's aspect bound is a
+`T0012` error reported at the offending call-site argument.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0040](../../rfcs/4-implemented/rfc-0040-function-aspect-bound-enforcement.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage12_neg_01_fun_bound_not_satisfied.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage12_neg_01_fun_bound_not_satisfied.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-9}
+
+Within a generic function body, a bounded type parameter has the methods declared by
+each of its bound aspects available; methods outside those bounds are rejected.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0040](../../rfcs/4-implemented/rfc-0040-function-aspect-bound-enforcement.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage14_02_body_dispatch_all_bounds.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage14_02_body_dispatch_all_bounds.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-10}
+
+Inline `+` bounds, `where`-clause bounds, and a combination of the two have identical
+semantics after their bounds are merged for each type parameter.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0040](../../rfcs/4-implemented/rfc-0040-function-aspect-bound-enforcement.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage14_02_body_dispatch_all_bounds.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage14_02_body_dispatch_all_bounds.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-11}
+
+Every bound in a multiple-bound list is independently required at a call site.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0040](../../rfcs/4-implemented/rfc-0040-function-aspect-bound-enforcement.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage14_02_body_dispatch_all_bounds.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage14_02_body_dispatch_all_bounds.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-12}
+
+The bound checks for a parameter introduced by `impl Aspect` are the same as for an
+equivalent named type parameter.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0040](../../rfcs/4-implemented/rfc-0040-function-aspect-bound-enforcement.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage14_03_impl_aspect_plus_where.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage14_03_impl_aspect_plus_where.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-13}
+
+Generic methods in an `extend` block enforce their own bounds, while bounds on the
+enclosing type remain available in the method body.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0040](../../rfcs/4-implemented/rfc-0040-function-aspect-bound-enforcement.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage14_11_impl_method_own_generic_bound.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage14_11_impl_method_own_generic_bound.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-14}
+
+A return-position `impl Aspect` has one concrete type for every path through its function
+body; branches that produce different concrete types are rejected.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0037](../../rfcs/4-implemented/rfc-0037-return-position-impl-aspect.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage18_neg_01_return_impl_aspect_divergent_branches.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage18_neg_01_return_impl_aspect_divergent_branches.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-15}
+
+Each return-position `impl Aspect` occurrence is an independent opaque type. An
+`impl Aspect` return may be inferred equal to an `impl Aspect` parameter when the body
+returns that parameter directly.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0037](../../rfcs/4-implemented/rfc-0037-return-position-impl-aspect.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage18_04_return_impl_aspect_linked_to_param.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage18_04_return_impl_aspect_linked_to_param.mtl), [stage18_06_return_impl_aspect_tuple_independent.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage18_06_return_impl_aspect_tuple_independent.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-16}
+
+A caller may use only the declared aspect interface of a return-position `impl Aspect`;
+the caller may not name or cast its hidden concrete type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0037](../../rfcs/4-implemented/rfc-0037-return-position-impl-aspect.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage18_neg_03_return_impl_aspect_caller_cannot_name.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage18_neg_03_return_impl_aspect_caller_cannot_name.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.dynamics-1}
+
+Calls to the same `impl Aspect`-returning function produce values of the same opaque
+type, and aspect methods declared for that return bound dispatch on those values.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0037](../../rfcs/4-implemented/rfc-0037-return-position-impl-aspect.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage18_01_return_impl_aspect_basic.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage18_01_return_impl_aspect_basic.mtl), [stage18_02_return_impl_aspect_method_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage18_02_return_impl_aspect_method_dispatch.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.dynamics-2}
+
+Return-position `impl Aspect` values follow the ordinary ownership behavior of their
+concrete type; opacity changes what callers can name, not the value's ownership.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0037](../../rfcs/4-implemented/rfc-0037-return-position-impl-aspect.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage18_01_return_impl_aspect_basic.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage18_01_return_impl_aspect_basic.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ---
 
 ### Negative Bounds
@@ -1142,6 +2066,141 @@ fields still drop normally through the ordinary per-field chain.
 > bounds are a use-site constraint; negative impls are a definition-site declaration
 > that affects what the negative-bound check finds. See Aspect Implementation
 > Coherence, above, for exactly which impls are reachable in the first place.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.aspects.negative-bounds.legality-1}
+
+A negative bound is written `T: !Aspect` and may appear wherever a positive aspect bound
+may appear; it binds tightly to the aspect name.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [68_negative_bound_parses_and_is_unenforced.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/68_negative_bound_parses_and_is_unenforced.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.negative-bounds.legality-2}
+
+`T: !Aspect` is satisfied precisely when no reachable positive implementation of `Aspect`
+applies to `T`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [68_negative_bound_parses_and_is_unenforced.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/68_negative_bound_parses_and_is_unenforced.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.negative-bounds.legality-3}
+
+For a concrete type, negative-bound satisfaction is determined by the reachable
+implementations of the negated aspect.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [68_negative_bound_parses_and_is_unenforced.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/68_negative_bound_parses_and_is_unenforced.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.negative-bounds.legality-4}
+
+A generic type parameter does not satisfy a negative bound unless that bound is stated
+and its eventual instantiation satisfies it.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage16_neg_01_negative_bound_violated.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage16_neg_01_negative_bound_violated.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.negative-bounds.legality-5}
+
+Every type satisfying `Copy` also satisfies `!Drop`; no type may satisfy both `Copy` and
+`Drop`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage16_03_copy_implies_not_drop.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage16_03_copy_implies_not_drop.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.negative-bounds.legality-6}
+
+`T: !Drop` concerns `T`'s own `Drop` implementation, not whether any of its fields
+implement `Drop`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage16_10_compound_negative_bound_ignores_fields.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage16_10_compound_negative_bound_ignores_fields.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.negative-bounds.legality-7}
+
+Negative bounds are permitted in `where` clauses and are equivalent there to inline
+negative bounds.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage16_07_where_clause_negative_bound.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage16_07_where_clause_negative_bound.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.negative-bounds.legality-8}
+
+A negative bound on a conditional implementation is checked at each instantiation on the
+same terms as a positive conditional bound.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage16_neg_06_struct_negative_bound_violated_via_conditional_impl.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage16_neg_06_struct_negative_bound_violated_via_conditional_impl.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.negative-bounds.legality-9}
+
+Negative bounds are use-site constraints and do not themselves declare that a type lacks
+an aspect implementation.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/generic_negative_impl_overrides_blanket_positive/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.negative-bounds.legality-10}
+
+Explicit negative implementations are a distinct definition-site mechanism that affects
+which implementations negative-bound checking finds.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/generic_negative_impl_overrides_blanket_positive/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
 
 ### Negative Impls
 
@@ -1192,6 +2251,118 @@ above) — a negative impl is permitted only when the aspect or the type is loca
 the current module or stdlib. A positive and a negative impl for the same concrete
 type is `T0015`, the same coherence error two conflicting positive impls produce.
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.aspects.negative-impls.legality-1}
+
+A bodyless positive `extend Type: Aspect;` is legal exactly when the corresponding empty
+braced implementation is legal: the aspect has no required methods and no associated type
+requiring a binding.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0102](../../rfcs/4-implemented/rfc-0102-bodyless-extend-blocks-for-marker-aspects-and-negative-impls.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [94_copy_aspect_accepts_structural_and_nominal.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/94_copy_aspect_accepts_structural_and_nominal.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.declarations.aspects.negative-impls.dynamics-1}
+
+A bodyless single-aspect `extend` has the same declaration semantics as the corresponding
+empty braced implementation; it introduces no bodyless-specific validation category.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0102](../../rfcs/4-implemented/rfc-0102-bodyless-extend-blocks-for-marker-aspects-and-negative-impls.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [82_bodyless_multi_aspect_extend.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/82_bodyless_multi_aspect_extend.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.negative-impls.legality-2}
+
+An explicit negative implementation overrides an applicable blanket positive
+implementation for its concrete target, while an explicit positive and explicit negative
+implementation for that same target are rejected with `T0015`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0060](../../rfcs/4-implemented/rfc-0060-aspect-impl-coherence.md), [rfc-0081](../../rfcs/4-implemented/rfc-0081-negative-impls.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_25_negative_impl_conflicts_with_concrete_positive_impl.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/neg_25_negative_impl_conflicts_with_concrete_positive_impl.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.negative-impls.legality-3}
+
+A negative implementation must use the bodyless spelling `extend Type: !Aspect;`; the
+braced spelling is rejected.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0102](../../rfcs/4-implemented/rfc-0102-bodyless-extend-blocks-for-marker-aspects-and-negative-impls.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_07_negative_extend_requires_bodyless_form.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/neg_07_negative_extend_requires_bodyless_form.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.declarations.aspects.negative-impls.dynamics-2}
+
+A bodyless multi-aspect `extend Type: A, B, !C;` is equivalent to independent bodyless
+single-aspect declarations for `A`, `B`, and `!C`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0102](../../rfcs/4-implemented/rfc-0102-bodyless-extend-blocks-for-marker-aspects-and-negative-impls.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [82_bodyless_multi_aspect_extend.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/82_bodyless_multi_aspect_extend.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.negative-impls.legality-4}
+
+A negative implementation is a bodyless declaration of non-implementation: it provides no
+required or default aspect methods, and may name a generic or concrete target.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0081](../../rfcs/4-implemented/rfc-0081-negative-impls.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [70_negative_impl_parses.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/70_negative_impl_parses.mtl), [73_negative_impl_not_required_to_provide_methods.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/73_negative_impl_not_required_to_provide_methods.mtl), [neg_24_negative_impl_does_not_inherit_default_methods.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/neg_24_negative_impl_does_not_inherit_default_methods.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.negative-impls.legality-5}
+
+An explicit negative implementation overrides an applicable blanket positive implementation
+for its target and satisfies a corresponding negative bound; it applies only to that target,
+not to another nominal type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0081](../../rfcs/4-implemented/rfc-0081-negative-impls.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/generic_negative_impl_blocks_positive_bound/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/generic_negative_impl_blocks_positive_bound_for_structural_target/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/generic_negative_impl_overrides_blanket_positive/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/negative_impl_does_not_inherit/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.negative-impls.legality-6}
+
+Negative implementations obey the ordinary orphan rule: the aspect or the target's outermost
+constructor must be local to the module containing the `extend` declaration.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0081](../../rfcs/4-implemented/rfc-0081-negative-impls.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/negative_impl_orphan_violation/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ---
 
 ### Aspect Bounds on Struct and Enum Type Parameters
@@ -1227,18 +2398,97 @@ struct Cache<K, V> where K: Hashable + Comparable { entries: Pair<K, V>[] }
 
 The bound is an invariant of the type, not of the binding site. It propagates wherever a value of that type is used. See Conditional Impl Blocks, above, for how this interacts with an aspect impl's own additional bounds.
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-struct-and-enum-type-parameters.legality-1}
+
+A generic struct or enum parameter may carry aspect bounds inline, in a `where` clause,
+or in both forms. `+` joins multiple bounds, and bounds from the two forms on the same
+parameter are combined.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0034](../../rfcs/4-implemented/rfc-0034-struct-enum-aspect-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage13_03_inline_and_where_merged.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage13_03_inline_and_where_merged.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-struct-and-enum-type-parameters.legality-2}
+
+Constructing a bounded struct or enum with a concrete type argument that does not
+satisfy every declared aspect bound is rejected with `T0012` at that type argument.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0034](../../rfcs/4-implemented/rfc-0034-struct-enum-aspect-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage14_neg_04_enum_construction_bound_violated.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage14_neg_04_enum_construction_bound_violated.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-struct-and-enum-type-parameters.legality-3}
+
+An inherent `extend Struct<T>` inherits the declared aspect bounds of `Struct<T>`; its
+methods may use those aspect operations on `T` without restating the bounds.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0034](../../rfcs/4-implemented/rfc-0034-struct-enum-aspect-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage14_10_impl_method_with_bounded_type_param.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage14_10_impl_method_with_bounded_type_param.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-struct-and-enum-type-parameters.legality-4}
+
+An aspect implementation `extend Struct<T>: Aspect` likewise inherits `Struct<T>`'s
+declared aspect bounds without a duplicate declaration.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0034](../../rfcs/4-implemented/rfc-0034-struct-enum-aspect-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [rfc0034_aspect_extend_and_match_bound.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/rfc0034_aspect_extend_and_match_bound.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ---
 
 ### Static Dispatch Only
 
-All aspect dispatch in Metel is **static** (monomorphised at compile time). There are no vtables, no heap allocation, and no runtime type erasure for aspects.
+All aspect dispatch in Metel is [**static** (monomorphised at compile time)](#spec.declarations.aspects.static-dispatch-only.dynamics-1). There are no vtables, no heap allocation, and no runtime type erasure for aspects.
 
 Method resolution must also be **unambiguous** at compile time. If the same receiver
 type implements two different aspects that both define the same method name, a call
-like `value.method()` is rejected with `T0013` rather than resolved by declaration order.
+like `value.method()` is [rejected with `T0013`](#spec.declarations.aspects.static-dispatch-only.legality-1) rather than resolved by declaration order.
 
 `dyn Aspect` (runtime-dispatched existential types with vtable-based dispatch) is not
 part of this language version. All polymorphism goes through generic type parameters
 with aspect bounds.
 
 Aspect objects (`dyn Aspect`) are not part of the language. All polymorphism is via generics (static dispatch).
+
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.declarations.aspects.static-dispatch-only.dynamics-1}
+
+Aspect method calls are resolved statically for their concrete type arguments; aspect
+values use neither runtime type erasure nor vtable dispatch.
+
+<!-- rfc.py:exemption kind="untestable" reason="Whether the compiler uses monomorphisation rather than vtables is a compilation-strategy property, not behavior an .mtl fixture can observe." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — untestable: Whether the compiler uses monomorphisation rather than vtables is a compilation-strategy property, not behavior an .mtl fixture can observe._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.aspects.static-dispatch-only.legality-1}
+
+If applicable aspects for the same receiver type provide the same method name, an unqualified
+dot call is ambiguous and is rejected with `T0013`.
+
+</details>

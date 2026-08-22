@@ -202,7 +202,7 @@ The user-visible syntax and migration behavior are resolved here. Remaining work
 ## Coverage Checklist (added 2026-08-19, not part of the original RFC)
 
 Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
-as headed sections for ADR-0049 citation purposes only. The document above is
+as headed sections for citation purposes only. The document above is
 unchanged and remains the historical record. Deliberately excludes claims that
 aren't independently observable from a program's behavior -- implementation
 strategy, design rationale, or internal architecture discussion belongs in the

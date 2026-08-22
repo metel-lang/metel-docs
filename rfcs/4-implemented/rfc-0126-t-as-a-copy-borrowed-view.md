@@ -7,6 +7,11 @@ target: v0.12.0
 updated: '2026-08-03'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/593'
 impl_status: implemented
+coverage:
+  "1": { spec: "spec.types.arrays.legality-1" }
+  "2": { spec: "spec.types.arrays.legality-1" }
+  "3": { spec: "spec.types.fixed-size-arrays.legality-1" }
+  "4": { spec: "spec.types.fixed-size-arrays.legality-2" }
 ---
 
 > **Status — draft (2026-07-27).** Split out of RFC-0124 when the role assignment itself
@@ -386,7 +391,7 @@ surfaced (call-site and `let`-binding retyping) is already solved, live, by RFC-
 ## Coverage Checklist (added 2026-08-18, not part of the original RFC)
 
 Retroactive breakdown of this RFC's distinct normative claims, as headed sections for
-ADR-0049 citation purposes only. The document above is unchanged and remains the
+citation purposes only. The document above is unchanged and remains the
 historical record.
 
 ### 1. `T[]` is `Copy` unconditionally

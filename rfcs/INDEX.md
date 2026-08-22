@@ -573,8 +573,8 @@ implementation).
   concrete type internally, erased only from the caller's naming surface. Implemented
   (issue #544): per-quantified-var opaque metadata, linked/unlinked discrimination,
   definition-time bound checking, and real opacity enforcement (T0018) checked
-  incrementally per-constraint rather than once at the end of solving (see ADR-0044 —
-  the end-of-solve version can't tell a legitimate `impl Aspect`-to-`impl Aspect`
+  incrementally per-constraint rather than once at the end of solving (the
+  end-of-solve version can't tell a legitimate `impl Aspect`-to-`impl Aspect`
   pass-through apart from an actual violation). Independent review found and fixed a
   real `TypeVar`-generator bug that aliased independent opaque-returning calls once
   three or more appeared in one scope, and that the opacity check itself had been

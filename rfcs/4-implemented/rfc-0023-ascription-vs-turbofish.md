@@ -5,7 +5,8 @@ date: '2026-05-23'
 status: implemented
 coverage:
   "1": { spec: "spec.types.type-ascription.legality-1" }
-  "2": { spec: "spec.functions.turbofish.legality-1" }
+  "2.1": { spec: "spec.functions.turbofish.legality-1" }
+  "2.2": { spec: "spec.functions.turbofish.legality-2" }
 ---
 
 ## Summary
@@ -149,7 +150,7 @@ Both operators are retained. Ascription (`expr : T`) handles result-type annotat
 ## Coverage Checklist (added 2026-08-19, not part of the original RFC)
 
 Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
-as headed sections for ADR-0049 citation purposes only. The document above is
+as headed sections for citation purposes only. The document above is
 unchanged and remains the historical record. Deliberately excludes claims that
 aren't independently observable from a program's behavior -- implementation
 strategy, design rationale, or internal architecture discussion belongs in the
@@ -160,8 +161,22 @@ RFC's own prose, not here.
 `expression : Type` is accepted only when the expression's inferred type unifies
 with `Type`; it is a compile-time constraint and does not perform a runtime conversion.
 
-### 2. Turbofish supplies explicit generic call type arguments
+**Turbofish supplies explicit generic call type arguments** — split into 2.1/2.2 below
+(2026-08-21) rather than left as one claim, since a generic call may use
+`name::<T, U>(arguments)` to supply its type arguments explicitly, including multiple
+independent arguments, and the two halves below are independently wrong-able and, as it
+turned out, independently *true*: 2.2's specific enforcement is not yet implemented
+(metel-core#401), which one merged claim would have hidden behind 2.1's already-passing
+fixture. (Not its own numbered section: a bare intro paragraph, not a claim of its own,
+the same way this checklist's own opening paragraph isn't section "0".)
 
-A generic call may use `name::<T, U>(arguments)` to supply its type arguments
-explicitly, including multiple independent arguments. The supplied arguments must
-match the callee's generic parameter requirements.
+### 2.1 Turbofish pins each named type parameter, checked against its own bounds
+
+`name::<T, U>(arguments)` pins each named type parameter to the given type;
+a pinned type must satisfy that parameter's own bounds (e.g. `T: Display`).
+
+### 2.2 A pinned type parameter's arguments must unify with it
+
+The call's arguments must unify with their pinned types exactly as they would
+with an inferred one -- a mismatched argument is rejected, not silently
+accepted.

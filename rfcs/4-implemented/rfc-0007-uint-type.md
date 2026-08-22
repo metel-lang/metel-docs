@@ -3,6 +3,13 @@ id: rfc-0007
 title: "Compiler-Compatible Primitive Type System"
 date: '2026-05-21'
 status: implemented
+coverage:
+  "1": { spec: "spec.types.sized-numeric-types.legality-1" }
+  "2": { spec: "spec.types.char.legality-1" }
+  "3": { spec: "spec.types.sized-numeric-types.legality-2" }
+  "4": { spec: "spec.types.sized-numeric-types.dynamics-1" }
+  "5": { spec: "spec.types.arrays.legality-2" }
+  "6": { spec: "spec.types.sized-numeric-types.legality-3" }
 ---
 
 ## Summary
@@ -172,7 +179,7 @@ let x = arr[i];        // ok
 ## Coverage Checklist (added 2026-08-19, not part of the original RFC)
 
 Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
-as headed sections for ADR-0049 citation purposes only. The document above is
+as headed sections for citation purposes only. The document above is
 unchanged and remains the historical record. Deliberately excludes claims that
 aren't independently observable from a program's behavior -- implementation
 strategy, design rationale, or internal architecture discussion belongs in the

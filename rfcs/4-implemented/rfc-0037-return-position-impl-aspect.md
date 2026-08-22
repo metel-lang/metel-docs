@@ -7,6 +7,16 @@ status: implemented
 updated: '2026-07-13'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/544'
 impl_status: implemented
+coverage:
+  "1": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.dynamics-1" }
+  "1.1": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-14" }
+  "1.2": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-16" }
+  "1.3": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-15" }
+  "2": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-15" }
+  "3": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.dynamics-2" }
+  "4": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.dynamics-1" }
+  "4.1": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-14" }
+  "4.2": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-16" }
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence). Specifies
@@ -16,7 +26,7 @@ impl_status: implemented
 
 > **Status — integrated (2026-07-13).** Return-position impl Aspect integrated into declarations.md; worked example checking interaction with associated types (RFC-0082)
 
-> **Status — implemented (2026-07-13).** Implemented (issue #544): `TypeScheme.opaque_returns` per-quantified-var metadata, linked/unlinked discrimination at definition time (RFC-0037 §1.1's divergent-branches and generic-linkage cases), definition-time aspect-bound checking, and real opacity enforcement at use sites (a caller cannot name the concrete type, cast it, or pass it to a non-generic concrete parameter — T0018). Independent review found and fixed two real bugs the implementation's own testing missed: a `TypeVar`-generator bug that aliased independent opaque-returning calls once three or more appeared in the same scope (a disposable generator snapshotted the live counter without ever advancing it), and the opacity-enforcement mechanism itself being entirely disconnected (the validation function existed but was never called). See ADR-0044 for the validation strategy and why an end-of-solve single check (the first approach tried) can't distinguish a legitimate `impl Aspect`-to-`impl Aspect` pass-through from an actual violation.
+> **Status — implemented (2026-07-13).** Implemented (issue #544): `TypeScheme.opaque_returns` per-quantified-var metadata, linked/unlinked discrimination at definition time (RFC-0037 §1.1's divergent-branches and generic-linkage cases), definition-time aspect-bound checking, and real opacity enforcement at use sites (a caller cannot name the concrete type, cast it, or pass it to a non-generic concrete parameter — T0018). Independent review found and fixed two real bugs the implementation's own testing missed: a `TypeVar`-generator bug that aliased independent opaque-returning calls once three or more appeared in the same scope (a disposable generator snapshotted the live counter without ever advancing it), and the opacity-enforcement mechanism itself being entirely disconnected (the validation function existed but was never called). Validated incrementally per-constraint rather than as a single end-of-solve check (the first approach tried) — that first approach can't distinguish a legitimate `impl Aspect`-to-`impl Aspect` pass-through from an actual violation.
 
 ## Summary
 

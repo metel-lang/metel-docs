@@ -8,6 +8,16 @@ updated: '2026-07-21'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/559'
 impl_status: implemented
 coverage:
+  "1": { spec: "spec.expressions.references.dynamics-7" }
+  "1a": { spec: "spec.expressions.references.dynamics-8" }
+  "2": { spec: "spec.expressions.references.dynamics-7" }
+  "3": { spec: "spec.expressions.references.legality-1" }
+  "4": { spec: "spec.expressions.references.dynamics-8" }
+  "4.1": { spec: "spec.expressions.references.dynamics-10" }
+  "4.2": { spec: "spec.expressions.references.dynamics-9" }
+  "5": { spec: "spec.expressions.references.legality-2" }
+  "6": { spec: "spec.expressions.references.dynamics-11" }
+  "7": { spec: "spec.expressions.pattern-matching.matching-through-a-reference.dynamics-3" }
   "8": { kind: untestable, reason: "This section only records excluded future design work and does not specify behavior for the implemented dereference operator." }
 ---
 

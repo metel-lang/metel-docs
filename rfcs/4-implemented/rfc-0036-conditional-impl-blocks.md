@@ -7,6 +7,17 @@ status: implemented
 updated: '2026-07-13'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/545'
 impl_status: implemented
+coverage:
+  "1": { spec: "spec.declarations.aspects.implementing-an-aspect.legality-2" }
+  "2": { spec: "spec.declarations.aspects.implementing-an-aspect.legality-3" }
+  "2.1": { spec: "spec.declarations.aspects.implementing-an-aspect.legality-4" }
+  "2.2": { spec: "spec.declarations.aspects.implementing-an-aspect.legality-5" }
+  "2.3": { spec: "spec.declarations.aspects.implementing-an-aspect.legality-6" }
+  "3": { spec: "spec.declarations.aspects.implementing-an-aspect.legality-7" }
+  "3.1": { spec: "spec.declarations.aspects.implementing-an-aspect.legality-8" }
+  "3.2": { spec: "spec.declarations.aspects.implementing-an-aspect.legality-9" }
+  "3.3": { spec: "spec.declarations.aspects.implementing-an-aspect.legality-10" }
+  "4": { spec: "spec.declarations.aspects.implementing-an-aspect.legality-11" }
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence). Specifies

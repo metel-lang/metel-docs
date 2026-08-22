@@ -216,7 +216,7 @@ Everything in RFC-0030 and the current module spec is unchanged:
    Until RFC-0092 is accepted, legal initialisers are restricted to literals and
    struct constructors over other constant expressions.
 
-2. **Added 2026-07-11, surfaced while implementing ADR-0042's symbol-id work
+2. **Added 2026-07-11, surfaced while implementing symbol-id resolution work
    (metel-core).** This RFC's constant-expression restriction (item 1) already implies
    `pub let` values are evaluated order-independently — a constant expression can't
    observe execution order. That's real static/const-like machinery Metel doesn't have
@@ -228,7 +228,7 @@ Everything in RFC-0030 and the current module spec is unchanged:
    bindings. Their evaluation order is unspecified by this RFC or any other — the
    interpreter's current behavior (evaluate top-to-bottom in declaration order;
    referencing one before its line executes is a runtime error) is an implementation
-   detail, not a ratified decision, and is left as-is by the ADR-0042 work rather than
+   detail, not a ratified decision, and is left as-is by that work rather than
    resolved as a side effect of it.
 
 ---

@@ -2,7 +2,7 @@
 
 ## Panics
 
-A panic is a hard, unrecoverable runtime error. It prints a message and exits the process with a non-zero status. Panics cannot be caught.
+A panic is a [hard, unrecoverable runtime error](#spec.runtime.panics.dynamics-1). It prints a message and exits the process with a non-zero status. Panics cannot be caught.
 
 Panics are triggered by:
 - `.yolo()` on `None` or an `Err`
@@ -10,6 +10,17 @@ Panics are triggered by:
 - Integer division by zero
 - `assert(false)` or `assert(false, msg)`
 - `panic(msg)`, called directly
+
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.runtime.panics.dynamics-1}
+
+A panic prints its message, terminates the process with a non-zero status, and cannot be
+caught. Calling `panic`, a failing `assert`, `.yolo()` on an absent or error variant,
+out-of-bounds array access, and integer division by zero trigger a panic.
+
+</details>
 
 ## Built-in Functions
 
@@ -25,19 +36,45 @@ These are available in every module without any `import` declaration (provided b
 | `dbg`             | `<T>(v: T) -> T`                     | Print `[dbg] <value>` to stderr and return the value unchanged |
 | `panic`           | `(msg: String) -> !`                 | Panic unconditionally with `msg` (RFC-0078) |
 
-`assert` is overloaded — the two-argument form carries the panic message.
+`assert` is overloaded — [the two-argument form carries the panic message](#spec.runtime.built-in-functions.dynamics-2).
 
-`panic`'s return type `!` coerces to whatever type its calling context expects — see [Never Type](types.md#never-type).
+`panic`'s return type `!` [coerces to whatever type its calling context expects](types.md#spec.types.never-type.legality-2) — see [Never Type](types.md#never-type).
 
-`print` and `println` require their argument to implement `Display`
+`print` and `println` [require their argument to implement `Display`](#spec.runtime.built-in-functions.legality-1)
 (`print<T: Display>`): passing a struct or enum with no `Display`
 implementation is a compile-time error. A value whose type implements `Display`
-is printed through that implementation's `to_string` — user structs and enums,
+is [printed through that implementation's `to_string`](#spec.runtime.built-in-functions.dynamics-1) — user structs and enums,
 not only the built-in primitives.
 
 String length is a method, not a free function: `"hello".len()` returns the
 number of characters (Unicode scalar values). Strings are concatenated with
 the `+` operator.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.runtime.built-in-functions.legality-1}
+
+`print` and `println` accept only values whose type implements `Display`.
+
+##### Dynamic Semantics {#spec.runtime.built-in-functions.dynamics-1}
+
+`print` writes a `Display` value's `to_string` result to stdout without a newline; `println`
+writes the same result followed by a newline.
+
+##### Dynamic Semantics {#spec.runtime.built-in-functions.dynamics-2}
+
+`assert(false)` panics with `"assertion failed"`; `assert(false, msg)` panics with `msg`.
+
+##### Dynamic Semantics {#spec.runtime.built-in-functions.dynamics-3}
+
+`dbg(v)` writes its debug rendering to stderr and evaluates to `v` unchanged.
+
+##### Dynamic Semantics {#spec.runtime.built-in-functions.dynamics-4}
+
+`clock()` returns the current Unix timestamp in milliseconds.
+
+</details>
 
 ## Built-in Aspects
 
@@ -51,7 +88,17 @@ aspect Display {
 }
 ```
 
-`i64`, `f64`, `boolean`, `String`, and `Char` implement `Display`. `.to_string()` returns the canonical string representation. `print` and `println` accept any `Display` type.
+[`i64`, `f64`, `boolean`, `String`, and `Char` implement `Display`](#spec.runtime.built-in-aspects.display.legality-1). `.to_string()` returns the canonical string representation. `print` and `println` accept any `Display` type.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.runtime.built-in-aspects.display.legality-1}
+
+`i64`, `f64`, `boolean`, `String`, and `Char` have built-in `Display` implementations whose
+`to_string` methods return their canonical string representations.
+
+</details>
 
 ### Iterable\<T\>
 
@@ -61,7 +108,17 @@ aspect Iterable<T> {
 }
 ```
 
-`T[]` (array) and `Range` (from `..` / `..=`) implement `Iterable<T>`. User-defined types may implement it to be usable in `for-in`.
+[`T[]` (array) and `Range` (from `..` / `..=`) implement `Iterable<T>`](#spec.runtime.built-in-aspects.iterable-t.legality-1). User-defined types may implement it to be usable in `for-in`.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.runtime.built-in-aspects.iterable-t.legality-1}
+
+Arrays and ranges implement `Iterable<T>`; a user-defined type is usable in `for-in` only
+when it implements that aspect.
+
+</details>
 
 ### From\<S\>
 
@@ -71,7 +128,17 @@ aspect From<S> {
 }
 ```
 
-`i64` implements `From<f64>` (truncating cast) and `f64` implements `From<i64>`. The `as` operator desugars to `T::from(value)`. User-defined types may implement `From<S>` to enable `as` casts and `?` error coercion.
+[`i64` implements `From<f64>` (truncating cast) and `f64` implements `From<i64>`](#spec.runtime.built-in-aspects.from-s.legality-1). The [`as` operator desugars to `T::from(value)`](types.md#spec.types.type-casting.dynamics-1). User-defined types may implement `From<S>` to enable `as` casts and `?` error coercion.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.runtime.built-in-aspects.from-s.legality-1}
+
+`i64` implements `From<f64>` and `f64` implements `From<i64>`; user-defined `From<S>`
+implementations make their target type available for `as` casts and `?` error coercion.
+
+</details>
 
 ## String Methods
 > Utilities since v0.9.0. All index-based operations count **Unicode scalar
@@ -105,6 +172,25 @@ aspect From<S> {
 
 Strings are concatenated with the `+` operator.
 
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.runtime.string-methods.dynamics-1}
+
+String utility methods operate on Unicode scalar values; index-based operations are total,
+clamping a slice boundary and returning `None` for an absent character or search result
+rather than panicking.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [85_string_methods.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/85_string_methods.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 
 ## Array Methods
 
@@ -114,15 +200,35 @@ Strings are concatenated with the `+` operator.
 |-----------|-----------------|------------------------------------|
 | `.len()`  | `() -> i64`     | Number of elements                 |
 
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.runtime.array-methods.dynamics-1}
+
+Calling `.len()` on either `T[]` or `[T; N]` returns its number of elements.
+
+</details>
+
 ## Char Methods
 
 > **Availability:** Since v0.8.0.
 
 | Method / Function         | Signature                        | Description                                  |
 |---------------------------|----------------------------------|----------------------------------------------|
-| `u32::from(c)`            | `(Char) -> u32`                  | Unicode scalar value as a `u32`              |
-| `Char::from(n)`           | `(u32) -> Char`                  | Construct from a code point; runtime error if not a valid scalar value |
+| [`u32::from(c)`](#spec.runtime.char-methods.dynamics-1)            | `(Char) -> u32`                  | Unicode scalar value as a `u32`              |
+| [`Char::from(n)`](#spec.runtime.char-methods.dynamics-1)           | `(u32) -> Char`                  | Construct from a code point; runtime error if not a valid scalar value |
 | `.to_string()`            | `() -> String`                   | Single-character string                      |
+
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.runtime.char-methods.dynamics-1}
+
+`u32::from(c)` returns `c`'s Unicode scalar value, and `Char::from(n)` returns the matching
+character or raises a runtime error when `n` is not a valid Unicode scalar value. A character's
+`to_string()` result is its one-character string.
+
+</details>
 
 ## Core Sum Types
 
@@ -159,6 +265,25 @@ in pipelines without explicit `match`:
 | `.map_err(f)`        | `<F>((E) -> F) -> Result<T, F>`    | Transform the error value, passing `Ok` through |
 | `.ok()`              | `() -> Perhaps<T>`                 | `Ok` becomes `Some`; `Err` becomes `None`, discarding the error |
 
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.runtime.core-sum-types.dynamics-1}
+
+The listed `Perhaps<T>` and `Result<T, E>` combinators operate on their corresponding sum
+variants: transforms preserve the non-selected variant, and predicates report which variant
+is present.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [83_perhaps_result_methods.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/83_perhaps_result_methods.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ## List\<T\>
 
 > **Availability:** Since v0.9.0.
@@ -186,6 +311,37 @@ in pipelines without explicit `match`:
 | `.find(pred)`        | `((T) -> boolean) -> Perhaps<T>`   | The first element satisfying `pred`          |
 | `.concat(other)`     | `(&List<T>) -> List<T>`            | This list's elements followed by `other`'s   |
 
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.runtime.list-t.dynamics-2}
+
+`List<T>` collection and iteration methods are methods of `List<T>` in `std::core`, not
+free functions in separate collection or iteration modules.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [84_list_methods.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/84_list_methods.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.runtime.list-t.dynamics-1}
+
+`List::from(source)` copies the elements of `source`, so mutating the resulting list
+does not mutate that source.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0054](../../rfcs/4-implemented/rfc-0054-list-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [86_list_from_copies_source.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/86_list_from_copies_source.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ## OsError
 
 > **Availability:** Since v0.9.0.
@@ -197,6 +353,24 @@ implements `Display`.
 | Method        | Signature       | Description                          |
 |---------------|-----------------|--------------------------------------|
 | `.message()`  | `() -> String`  | The human-readable error description |
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.runtime.oserror.legality-1}
+
+Host-backed fallible APIs use `OsError`, rather than `String`, as their error type; `OsError`
+is available from `std::core` and implements `Display`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/std_fs_host_module/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
 
 ## Standard Library Modules
 
@@ -212,6 +386,24 @@ Read-only process environment inspection.
 |--------------|---------------------------------|-----------------------------------------------|
 | `get(name)`  | `(String) -> Perhaps<String>`   | The value of an environment variable, or `None` |
 | `vars()`     | `() -> EnvVar[]`                | All environment variables (`EnvVar { name, value }`) |
+
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.runtime.standard-library-modules.std-env.dynamics-1}
+
+`std::env` exposes read-only process-environment inspection through `get` and `vars`; it is
+an explicitly imported host-backed module, not part of the automatic prelude.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/std_env_host_module/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
 
 ### std::fs
 
@@ -230,6 +422,24 @@ Text-oriented file operations. Fallible operations return `Result<_, OsError>`.
 | `remove_dir(path)`          | `(String) -> Result<(), OsError>`               | Remove an empty directory            |
 | `remove_dir_all(path)`      | `(String) -> Result<(), OsError>`               | Remove a directory and its contents  |
 
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.runtime.standard-library-modules.std-fs.dynamics-1}
+
+`std::fs` is an explicitly imported host-backed module whose text-oriented file operations
+have the signatures listed above and report fallible outcomes as `Result<_, OsError>`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/std_fs_host_module/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ### std::process
 
 Command-line arguments and shell-free synchronous subprocess execution.
@@ -243,3 +453,14 @@ Command-line arguments and shell-free synchronous subprocess execution.
 expansion never apply. A non-zero exit status is a successful `Ok` result, not
 an error; only a failure to launch the command is an `Err`. The result type is
 `ProcessOutput { status: i64, stdout: String, stderr: String }`.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.runtime.standard-library-modules.std-process.dynamics-1}
+
+`std::process::run` launches `command` directly with `args`, without shell parsing. A launched
+program returns `Ok(ProcessOutput)` even for a non-zero exit status; only failure to launch
+returns `Err(OsError)`.
+
+</details>

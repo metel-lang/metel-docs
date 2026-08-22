@@ -122,7 +122,7 @@ Unambiguous fix — match arms are the only body-bearing construct in the langua
 ## Coverage Checklist (added 2026-08-18, not part of the original RFC)
 
 Retroactive breakdown of this RFC's distinct normative claims, as headed sections for
-ADR-0049 citation purposes only. The document above is unchanged and remains the
+citation purposes only. The document above is unchanged and remains the
 historical record.
 
 ### 1. A match arm body may be a block

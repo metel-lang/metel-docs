@@ -382,7 +382,7 @@ Metel adopts clone-by-value closure capture as the default model. Shared mutable
 ## Coverage Checklist (added 2026-08-18, not part of the original RFC)
 
 Retroactive breakdown of this RFC's distinct, fixture-testable normative claims, as
-headed sections for ADR-0049 citation purposes only. The document above is unchanged and
+headed sections for citation purposes only. The document above is unchanged and
 remains the historical record. Deliberately excludes claims that aren't independently
 observable from a program's behavior: the choice between eager boxing and open/closed
 upvalues is an implementation strategy, not a language guarantee; "a single capture model

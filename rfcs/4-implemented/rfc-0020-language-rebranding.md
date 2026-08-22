@@ -4,6 +4,7 @@ title: "Language Keyword Rebranding"
 date: '2026-05-23'
 coverage:
   "1": { spec: "spec.types.perhaps-t.legality-1" }
+  "2": { spec: "spec.declarations.aspects.legality-1" }
   "3": { kind: untestable, reason: "reserves inactive future module syntax; no module-system mechanism exists yet" }
 ---
 

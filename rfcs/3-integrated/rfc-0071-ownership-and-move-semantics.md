@@ -7,8 +7,16 @@ updated: '2026-07-26'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/579'
 impl_status: in-progress
 coverage:
+  "1": { spec: "spec.ownership.values-move-by-default.legality-1" }
+  "2": { spec: "spec.ownership.copy.legality-1" }
+  "3": { spec: "spec.ownership.drop.legality-1" }
+  "4": { spec: "spec.ownership.copy-and-drop-are-mutually-exclusive.legality-1" }
   "5": { kind: untestable, reason: "Destructor invocation and drop order are not implemented yet; non-empty Drop bodies are intentionally rejected until implementation issue #261 is complete." }
   "6": { kind: untestable, reason: "The explicit drop function depends on destructor invocation, which is not implemented yet (issue #261)." }
+  "7": { spec: "spec.ownership.partial-moves.legality-1" }
+  "7.1": { spec: "spec.ownership.references-and-moves.legality-1" }
+  "8": { spec: "spec.types.arrays.legality-1" }
+  "9a": { spec: "spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-1" }
   "9b": { kind: untestable, reason: "This is an internal architectural requirement for a reusable future borrow-checking place abstraction, not language behavior." }
   "9c": { kind: untestable, reason: "This section is implementation-tracking process content only." }
 ---

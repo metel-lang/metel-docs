@@ -301,7 +301,6 @@ Complete the PoC evaluator. Resolve the RFC after the PoC ships. Grammar/AST/typ
 ## References
 
 - Language Spec: [`spec/types.md`](../../reference/spec/types.md) (type system), [`spec/declarations.md`](../../reference/spec/declarations.md) (variables, structs, enums)
-- ADR-0001: `architecture/decisions/adr-0001-typeregistry-structure-and-location.md` (TypeRegistry — will need Pointer handling for v0.3)
 - Typechecker impl-notes: `metel-interpreter/docs/typechecker.md`
 - RFC-0024: `docs/public/rfcs/rfc-0024-linear-types.md` — `&x` on linear values is a type error (see Conflict 2 in cluster report). The `&T` read reference conflict is resolved: RFC-0024 uses `@T` / `@x`; `&x` unambiguously means address-of throughout the language (cluster D1, resolved)
 - RFC-0025: `docs/public/rfcs/rfc-0025-region-allocation.md` — pointer-into-region lifetime problem; scope/callback solution avoids need for lifetime annotations

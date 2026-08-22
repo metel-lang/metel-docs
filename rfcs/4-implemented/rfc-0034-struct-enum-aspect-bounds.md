@@ -4,6 +4,12 @@ id: rfc-0034
 title: "Aspect Bounds on Struct and Enum Generic Parameters"
 date: '2026-06-01'
 supersedes: rfc-0002 (partial)
+coverage:
+  "1": { spec: "spec.declarations.aspects.aspect-bounds-on-struct-and-enum-type-parameters.legality-1" }
+  "2": { spec: "spec.declarations.aspects.aspect-bounds-on-struct-and-enum-type-parameters.legality-2" }
+  "3": { spec: "spec.declarations.aspects.aspect-bounds-on-struct-and-enum-type-parameters.legality-3" }
+  "4": { spec: "spec.declarations.aspects.aspect-bounds-on-struct-and-enum-type-parameters.legality-4" }
+  "5": { kind: blocked, reason: "A plain, non-generic, non-linear nominal struct can't be pattern-matched via a record pattern at all yet -- match n { { value } => value } on struct Num { value: i64 } fails T0001 (cannot unify Num with { value: ... }). Bare record patterns currently only unify against anonymous/structural record types, not named struct declarations, so this claim can't be exercised regardless of whether bound propagation itself works -- the prerequisite match form doesn't exist for named structs.", ref: "metel-core#755" }
 ---
 
 ## Summary
@@ -257,7 +263,7 @@ All resolved questions above are the final decisions. Implementation tracked in 
 ## Coverage Checklist (added 2026-08-19, not part of the original RFC)
 
 Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
-as headed sections for ADR-0049 citation purposes only. The document above is
+as headed sections for citation purposes only. The document above is
 unchanged and remains the historical record. Deliberately excludes claims that
 aren't independently observable from a program's behavior -- implementation
 strategy, design rationale, or internal architecture discussion belongs in the

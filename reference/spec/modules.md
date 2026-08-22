@@ -37,6 +37,24 @@ src/
 
 `parser.mtl` is the facade. Files in `parser/` form the namespace. There is no `name/mod.mtl` convention.
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.modules.file-to-module-mapping.legality-1}
+
+Each non-prelude module path maps directly to its `.mtl` file path. A facade file and
+the same-named directory are distinct paths; `name/mod.mtl` has no special meaning.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_loading/facade_module_alongside_directory/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ## File Header Ordering
 
 At file scope, `import` and `export` declarations must precede all other declarations:
@@ -46,6 +64,24 @@ At file scope, `import` and `export` declarations must precede all other declara
 ```
 
 `import` and `export` are not valid inside blocks.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.modules.file-header-ordering.legality-1}
+
+At file scope, imports and exports may be interleaved but must precede ordinary
+declarations; neither declaration form is valid in a block.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [rfc0030_import_after_declaration.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/rfc0030_import_after_declaration.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
 
 ## Paths
 
@@ -94,6 +130,25 @@ public struct Token {
 }
 ```
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.modules.paths.legality-1}
+
+`root`, `std`, `self`, and `super` resolve as path roots in their valid module
+contexts. A qualified path is valid wherever its resolved name is valid; `super` is
+invalid in the root module.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_loading/accepts_root_self_super_std_and_child_roots_in_non_root_modules/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ## Imports
 
 `import` loads the referenced module file and declares which names from it are in scope for the current module:
@@ -140,6 +195,63 @@ Import forms:
 | `import path::*;` | imports all public names from the module |
 | `import path::module;` | imports `module` as a module handle; `module::item` is then valid |
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.modules.imports.legality-1}
+
+A module may use its own declarations and public declarations brought into scope by an
+import. Loading another module alone does not make that module's names available.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/explicit_named_import_function_call/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.imports.legality-2}
+
+An aliased import binds only its alias locally. The alias may be used wherever the
+imported declaration's kind permits, including as a value, type, or constructor.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/alias_import_original_name_not_in_scope/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/alias_import_usable_as_type_annotation_and_constructor/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.imports.legality-3}
+
+A qualified use resolves through an imported binding; an unresolved qualified path is a
+name-resolution error and is not retried as an arbitrary bare name.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/qualified_call_normalized_to_bare_name/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.imports.legality-4}
+
+An import loads its referenced module and introduces the selected public names or module
+handle into the importing module's scope.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/explicit_named_import_function_call/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ## Re-exports
 
 `export` re-exports names from submodules into the current module's public API:
@@ -157,6 +269,37 @@ fun main() -> i64 {
 ```
 
 `export` and `import` share the same path and tree syntax. Re-exported names are indistinguishable from names defined directly in the re-exporting module.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.modules.re-exports.legality-1}
+
+A re-export may expose only a declaration that is public in its source module. Re-exporting
+a private source declaration is a `T0009` visibility error.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/rfc0031_reexport_private_item_is_t0009/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.re-exports.legality-2}
+
+A re-export makes a public source declaration available through the current module's
+public API, including under an alias; importers may use it as a declaration of the facade.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/facade_re_exports_item_and_consumer_can_use_it/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
 
 `public` and `export` serve different roles:
 
@@ -192,6 +335,24 @@ You can still write `import std::core::Perhaps;` or `import std::core::*;` expli
 
 `std::core` is a **virtual module** — it has no physical `.mtl` file and cannot be listed or enumerated. Its contents are seeded by the runtime.
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.modules.std-core-auto-import.legality-1}
+
+Every module has the `std::core` names available without an import; the same names may also
+be named through their explicit `std::core::` paths.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md), [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [int_08_std_core_paths.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/integration/int_08_std_core_paths.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/std_core_builtins_available_in_each_module_without_import/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ## Import Conflicts
 
 Two explicit imports that bind the same local name in the same module are a compile-time error at the second import.
@@ -208,6 +369,51 @@ Conflict rules:
 - Explicit imports beat all glob imports.
 - A `User` glob silently wins over a `Std` glob for the same name (no error).
 - Two `User` globs exporting the same name are a conflict error (T0011) only if that name is actually referenced.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.modules.import-conflicts.legality-1}
+
+Two explicit imports that bind the same local name are rejected with `T0011` at import
+time.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/two_explicit_imports_same_local_name_is_t0011/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.import-conflicts.legality-2}
+
+A collision between two user glob imports is rejected with `T0011` only when code refers
+to the ambiguous name.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/two_glob_imports_same_name_is_t0011/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.import-conflicts.legality-3}
+
+An explicit import takes precedence over a glob-imported binding of the same name.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/explicit_import_wins_over_glob_same_name/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.import-conflicts.legality-4}
+
+Import conflicts follow their binding kind: duplicate explicit imports fail immediately,
+ambiguous user-glob names fail when referenced, and an explicit import disambiguates a
+glob-provided name.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md), [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/explicit_import_wins_over_glob_same_name/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/two_explicit_imports_same_local_name_is_t0011/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/two_glob_imports_same_name_is_t0011/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
 
 ## Visibility
 
@@ -254,14 +460,32 @@ Only declarations marked `public` are accessible from outside their declaring mo
 public struct field is accessible outside that module only when the field itself is public.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md), [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md), [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/importing_private_item_is_t0009/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/mixed_visibility_struct_allows_public_field_access_across_modules/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.visibility.legality-2}
+
+A public function declaration must carry the explicit type annotations required for its
+public API; an omitted required annotation is `T0010`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/pub_fun_without_return_type_is_t0010/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
 ## Circular Imports
 
-Circular imports are a compile error. The error message includes the full import chain.
+[Circular imports are a compile error](#spec.modules.module-graph-loading.legality-2). The
+error message includes the full import chain.
 
 ## Module Graph Loading
 
@@ -280,6 +504,77 @@ An `export` still differs from an `import` in what it does with the resolved nam
 module's public API without making it locally visible — but both equally decide
 *which files enter the module graph at all*.
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.modules.module-graph-loading.legality-1}
+
+Every non-prelude import must resolve to a loadable module. A missing module is a load
+error rather than an import that contributes an empty scope.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_loading/import_nonexistent_module_is_a_load_error/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.module-graph-loading.legality-2}
+
+Imports and re-exports both contribute module-graph edges. Missing modules and circular
+dependencies are load errors, and a bare re-export loads its target module.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_loading/import_nonexistent_module_is_a_load_error/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_loading/rejects_circular_module_graph/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/rfc0030_bare_export_loads_module/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ## Single-File Compatibility
 
 A `.mtl` file with no `import` or `export` declarations is a complete program. Existing single-file programs remain valid without modification.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.modules.single-file-compatibility.legality-1}
+
+A source file with no import or export declarations is a complete single-module program.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_loading/single_file_program_loads_without_modules/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
+## Removed Module Keywords
+
+`mod`, `use`, and `pub use` are not module declarations in Metel. Module loading and
+re-export use `import` and `export`.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.modules.removed-module-keywords.legality-1}
+
+`mod`, `use`, and `pub use` are rejected by the grammar; module declarations use
+`import` and `export` instead.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [rfc0030_legacy_mod_use_rejected.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/rfc0030_legacy_mod_use_rejected.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>

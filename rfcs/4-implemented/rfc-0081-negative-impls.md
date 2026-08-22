@@ -6,6 +6,16 @@ status: implemented
 updated: '2026-07-12'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/552'
 impl_status: implemented
+coverage:
+  "1": { spec: "spec.declarations.aspects.negative-impls.legality-4" }
+  "2": { spec: "spec.declarations.aspects.negative-impls.legality-5" }
+  "2.1": { spec: "spec.declarations.aspects.negative-impls.legality-5" }
+  "2.2": { spec: "spec.declarations.aspects.negative-impls.legality-2" }
+  "2.3": { spec: "spec.declarations.aspects.negative-impls.legality-5" }
+  "2.4": { spec: "spec.declarations.aspects.negative-impls.legality-5" }
+  "3": { spec: "spec.declarations.aspects.negative-impls.legality-6" }
+  "4": { spec: "spec.declarations.aspects.negative-impls.legality-5" }
+  "5": { spec: "spec.declarations.aspects.negative-impls.legality-5" }
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence) and

@@ -11,6 +11,10 @@ coverage:
   "1": { spec: "spec.declarations.aspects.implementing-an-aspect.legality-1" }
   "2": { spec: "spec.modules.visibility.legality-1" }
   "3": { spec: "spec.declarations.variables.mutable-bindings.legality-1" }
+  "3.1": { spec: "spec.expressions.control-flow.for.legality-1" }
+  "3.2": { spec: "spec.expressions.control-flow.for-in.legality-1" }
+  "3.3": { spec: "spec.expressions.control-flow.for-in.dynamics-1" }
+  "3.4": { spec: "spec.declarations.structs.receiver-forms.legality-1" }
 ---
 
 > **Status — accepted (2026-07-14).** Reviewed and revised: extend Type / extend Type: Aspect (Swift-precedent, settles the inherent-impl gap an earlier with/without draft left open), negative impls folded into the same clause via the existing bound-negation !, identifier-collision audit noted for implementation. No open questions block it.
@@ -209,3 +213,31 @@ None load-bearing. Each of the three sections is independently reversible; none 
 
 **Outcome:** *(pending)*
 **Target:** *(set when accepted)*
+
+## Coverage Checklist (added 2026-08-21, not part of the original RFC)
+
+Retroactive breakdown of this RFC's distinct, fixture-testable normative claims, as
+headed sub-sections of §3 for spec/fixture citation purposes only. The document
+above is unchanged and remains the historical record. Scoped to §3 (the `mut` → `var`
+rename) because §1 and §2 already cite cleanly at their own top-level section number;
+§3 alone bundles four independently-observable spelling claims into one section, which
+otherwise forces one citation to speak for all four.
+
+### 3.1 The C-style `for` initializer's mutable-binding keyword is `var`
+
+Same construct RFC-0042 established as `let mut`; this RFC renames only the token.
+
+### 3.2 The `for-in` loop's mutable-binding keyword is `var`
+
+Same construct RFC-0042 established as `let mut`; this RFC renames only the token.
+
+### 3.3 A `for-in` loop's `var`-bound loop variable still does not write back to the iterated source
+
+The rename touches only the keyword `mut` → `var`; RFC-0042's original no-write-back
+guarantee for the loop-local binding is unchanged by it.
+
+### 3.4 An exclusive-reference receiver is spelled `&var self`, not `&mut self`
+
+Same three receiver forms RFC-0044 established (value, `&self`, `&mut self`); this RFC
+renames only the third form's token, together with RFC-0067A's `&var T` reference-type
+spelling.

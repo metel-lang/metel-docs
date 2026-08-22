@@ -40,7 +40,7 @@ std       struct    super     true      var       where     while
 1_000_000
 ```
 
-A suffix pins the literal to a specific sized type:
+A suffix [pins the literal to a specific sized type](#spec.lexical.literals.legality-1):
 
 ```metel
 42i32       // i32
@@ -48,7 +48,7 @@ A suffix pins the literal to a specific sized type:
 1_000i64    // i64
 ```
 
-An unsuffixed integer literal defaults to `i64` when no context constrains its type.
+An unsuffixed integer literal [defaults to `i64`](types.md#spec.types.sized-numeric-types.legality-3) when no context constrains its type.
 
 **Floats:**
 ```metel
@@ -63,11 +63,11 @@ A suffix pins the literal to a specific sized float type:
 2.0f64      // f64
 ```
 
-An unsuffixed float literal defaults to `f64` when no context constrains its type.
+An unsuffixed float literal [defaults to `f64`](types.md#spec.types.sized-numeric-types.legality-3) when no context constrains its type.
 
-Integer and float are distinct types and do not implicitly coerce.
+Integer and float are [distinct types and do not implicitly coerce](#spec.lexical.literals.legality-3).
 
-**Polymorphic literal coercion.** When the surrounding context provides a numeric type — a `let` annotation, a function parameter type, a struct field type, or a return type — an unsuffixed literal adopts that type automatically:
+**Polymorphic literal coercion.** When the surrounding context provides a numeric type — a `let` annotation, a function parameter type, a struct field type, or a return type — an unsuffixed literal [adopts that type automatically](types.md#spec.types.sized-numeric-types.legality-3):
 
 ```metel
 let x: i32  = 10;       // 10 is i32
@@ -102,7 +102,7 @@ assert(x > 5);          // 5 adopts i32
 '\u{1F600}'
 ```
 
-The type of a character literal is `Char`.
+The type of a character literal [is `Char`](#spec.lexical.literals.legality-5).
 
 > **Availability:** `Char` since v0.8.0.
 
@@ -138,6 +138,75 @@ let x = "${if (true) { "yes" } else { "no" }}";
 ```metel
 let full = "hello" + ", " + "world";   // "hello, world"
 ```
+
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.lexical.literals.dynamics-1}
+
+A string literal may contain `${expr}` placeholders; each placeholder's expression is
+rendered to text and the result is a `String`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0010](../../rfcs/4-implemented/rfc-0010-string-interpolation.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [38_builtins.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/38_builtins.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.lexical.literals.dynamics-2}
+
+Placeholder expressions are evaluated once each, in source order.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0010](../../rfcs/4-implemented/rfc-0010-string-interpolation.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [86_interpolation_evaluation_order.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/86_interpolation_evaluation_order.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.lexical.literals.dynamics-3}
+
+Interpolation combines literal fragments and rendered placeholder values using ordinary
+string-concatenation semantics.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0010](../../rfcs/4-implemented/rfc-0010-string-interpolation.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [38_builtins.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/38_builtins.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.lexical.literals.dynamics-4}
+
+Within a string literal, `\${` produces the literal characters `${`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0010](../../rfcs/4-implemented/rfc-0010-string-interpolation.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [38_builtins.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/38_builtins.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.lexical.literals.legality-1}
+
+An integer literal with an integer suffix has the suffix's sized integer type; a float
+literal with a float suffix has the suffix's sized float type.
+
+##### Legality Rule {#spec.lexical.literals.legality-3}
+
+An integer literal and a float literal do not implicitly coerce between integer and float
+types.
+
+##### Legality Rule {#spec.lexical.literals.legality-5}
+
+A character literal has type `Char`.
+
+</details>
 
 > **Availability:** Since v0.7.0.
 

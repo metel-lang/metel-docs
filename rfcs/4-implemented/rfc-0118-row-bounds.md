@@ -7,6 +7,12 @@ target:
 updated: '2026-07-25'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/577'
 impl_status: implemented
+coverage:
+  "1": { spec: "spec.types.generics.row-bounds.legality-1" }
+  "2": { spec: "spec.types.generics.row-bounds.legality-2" }
+  "2a": { spec: "spec.types.generics.row-bounds.legality-3" }
+  "3": { spec: "spec.types.generics.row-bounds.legality-4" }
+  "4": { spec: "spec.types.generics.row-bounds.legality-5" }
 ---
 
 > **Extracted from RFC-0090 on 2026-07-24** (superseded; see RFC-0116's header for the

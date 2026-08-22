@@ -37,7 +37,7 @@ need comparison:
 - `std::math`: `min(a, b)`, `max(a, b)`, `clamp(x, lo, hi)` over any ordered
   type. Implemented monomorphically they would be `min(i64, i64)` /
   `min(f64, f64)` overloads, but overload sets do not flow through imports
-  (ADR-0038, METEL-188), so a `std::math::min` overload pair is not importable.
+  (METEL-188), so a `std::math::min` overload pair is not importable.
   A single generic `fun min<T: Ord>(a: T, b: T) -> T` is importable and correct.
 - `List<T>`: `contains(value)` needs `Eq`; `sort()`, `min()`, `max()` need
   `Ord`. These were deliberately deferred from METEL-160 pending this aspect.
@@ -161,7 +161,7 @@ build on `cmp`.
 already compare: the numeric types, `boolean`, `Char`, and `String`. These are
 host-backed (`native(@std.core.cmp)` / `native(@std.core.eq)`), formatted by the
 runtime value the same way the `Display`/`From` impls already are (one key, the
-host switches on the runtime value — ADR-0039).
+host switches on the runtime value).
 
 ### Relationship to the built-in operators
 
@@ -261,8 +261,7 @@ bounds); the generic-method machinery to evaluate them landed in sprint 23.
 
 ## References
 
-- ADR-0038 (overload resolution; why overloads are not exportable), METEL-188
-- ADR-0039 (native bindings, value-driven host keys)
+- METEL-188 (overload resolution; why overloads are not exportable)
 - RFC-0057 (stdlib layering; `std::math` scope), METEL-163
 - RFC-0061 (structural aspect bounds; blanket-impl coherence)
 - Rust `Ord`/`PartialOrd`/`Eq`/`PartialEq`; Haskell `Ord`/`Eq`

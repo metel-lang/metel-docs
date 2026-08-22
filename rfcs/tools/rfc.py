@@ -582,6 +582,42 @@ FIXTURES_MARKER_START = "<!-- rfc.py:fixtures:start -->"
 FIXTURES_MARKER_END = "<!-- rfc.py:fixtures:end -->"
 METEL_CORE_GITHUB_BLOB = "https://github.com/metel-lang/metel-core/blob/main"
 
+# A rigor block's fixture-coverage exemption (ADR-0050 §6, extended to the
+# spec-id surface -- same three kinds ADR-0049 §3 already validates for RFC
+# sections: untestable/blocked/elsewhere). Unlike origins/fixtures, this is
+# hand-authored, not derived from another file -- there is no corpus to scan
+# that would tell a tool "this claim can't be tested". A person decides that
+# and writes the one-line trigger; `--write-spec-origins` then generates the
+# rendered sentence from it, same one-source-of-truth relationship origins
+# has to RFC frontmatter, just sourced from a per-block marker instead of a
+# cross-file scan. The trigger line itself is never rewritten or removed by
+# regeneration -- only the :rendered: slot it produces is.
+#
+# Deliberately does NOT let a rigor block describe present-day buggy
+# behavior as if it were the rule: a block always states the accepted
+# design, and a gap between that design and what's actually implemented
+# gets a `blocked` (or, if genuinely unfixable, `untestable`) exemption
+# instead -- the same discipline that keeps a fixture from ever being
+# fabricated just to satisfy the coverage mandate (ADR-0050 §6's own
+# reasoning), applied to prose instead of tests.
+SPEC_EXEMPTION_TRIGGER_RE = re.compile(
+    r'^<!--\s*rfc\.py:exemption\s+(?P<attrs>.+?)\s*-->$'
+)
+SPEC_EXEMPTION_ATTR_RE = re.compile(r'(\w+)="([^"]*)"')
+SPEC_EXEMPTION_RENDERED_START = "<!-- rfc.py:exemption:rendered:start -->"
+SPEC_EXEMPTION_RENDERED_END = "<!-- rfc.py:exemption:rendered:end -->"
+# Valid kinds are COVERAGE_VALID_KINDS (defined further below, alongside
+# ADR-0049 §3's RFC-level exemption) -- same vocabulary, not a second scheme.
+# Referenced by name at point of use rather than aliased here, since this
+# constant is defined before COVERAGE_VALID_KINDS in the file.
+
+# A `blocked` exemption's `ref` when it names a GitHub issue rather than an
+# RFC id -- e.g. "metel-core#775". Deliberately narrower than a bare `\d+`:
+# requires the `owner-less repo#number` shape this corpus's own exemptions
+# already use, so a `ref` that's just a stray word or a URL doesn't get
+# mistaken for one and sent to fetch_issue_state for nothing.
+SPEC_EXEMPTION_ISSUE_REF_RE = re.compile(r'^(?P<repo>[a-zA-Z0-9_.-]+)#(?P<num>\d+)$')
+
 
 def all_spec_block_ids():
     """Every Legality Rule / Dynamic Semantics id across the spec corpus,
@@ -645,6 +681,121 @@ def origins_block_text(spec_path, rids):
     return f'<span class="rigor-backlink">_Referenced by: {", ".join(links)}_</span>'
 
 
+def exemption_block_text(kind, ref, reason):
+    """The exact content between a rigor block's exemption :rendered: markers,
+    generated from its hand-authored trigger (kind/ref/reason) -- the same
+    one-source-of-truth relationship origins_block_text has to RFC
+    frontmatter, just sourced from a per-block marker instead of a
+    cross-file scan. Renders even a malformed kind/ref (visible on the page
+    is more useful than silently dropped -- `check` flags the malformed
+    attributes separately)."""
+    if kind == "blocked":
+        label = f"blocked on {ref}" if ref else "blocked (no `ref` given)"
+    elif kind == "elsewhere":
+        label = f"tested elsewhere ({ref})" if ref else "tested elsewhere (no `ref` given)"
+    elif kind == "untestable":
+        label = "untestable"
+    else:
+        label = kind or "exempt"
+    return f'<span class="rigor-backlink">_Exempt from fixture coverage — {label}: {reason}_</span>'
+
+
+def scan_spec_exemptions():
+    """{spec_id: (kind, ref, reason, spec_path, lineno)} -- every rigor
+    block's hand-authored `<!-- rfc.py:exemption ... -->` trigger, read
+    directly (never the generated :rendered: span, which just mirrors it).
+    A block with no trigger has no entry here -- the normal, common case
+    (most rules have a real fixture), not a gap needing a placeholder."""
+    exemptions = {}
+    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+        lines = spec_path.read_text().split("\n")
+        for idx, line in enumerate(lines):
+            m = SPEC_BLOCK_HEADING_RE.match(line)
+            if not m:
+                continue
+            spec_id = m.group("id")
+            j = idx + 1
+            while j < len(lines):
+                nxt = lines[j]
+                if SPEC_BLOCK_HEADING_RE.match(nxt) or nxt.strip() == "</details>":
+                    break
+                tm = SPEC_EXEMPTION_TRIGGER_RE.match(nxt.strip())
+                if tm:
+                    attrs = dict(SPEC_EXEMPTION_ATTR_RE.findall(tm.group("attrs")))
+                    exemptions[spec_id] = (
+                        attrs.get("kind", ""),
+                        attrs.get("ref", ""),
+                        attrs.get("reason", ""),
+                        spec_path.relative_to(REPO_ROOT),
+                        j + 1,
+                    )
+                    break
+                j += 1
+    return exemptions
+
+
+def spec_exemption_problems():
+    """Validates every rigor block's hand-authored exemption trigger --
+    kind/ref/reason well-formedness, and (best-effort) whether a `blocked`
+    ref has actually resolved: an RFC ref checked locally against RFC stage
+    (scan_rfc_metadata, no network), an issue ref (`repo#N`) checked live
+    against the GitHub API (fetch_issue_state). Deliberately independent of
+    coverage_check_problems()'s fixture-corpus reachability gate -- none of
+    this needs metel-interpreter/tests, so cmd_check() runs it
+    unconditionally, and it's the one piece of exemption validation that
+    actually fires from a bare docs-internal checkout, not only from inside
+    metel-core. A network failure or rate limit degrades to skipping that one
+    ref's live check silently, never to a problem -- only a *confirmed*
+    closed issue is one; a check this could ever fail on infrastructure
+    flakiness alone would defeat the whole point of exempting something
+    deliberately."""
+    problems = []
+    exemptions = scan_spec_exemptions()
+    if not exemptions:
+        return problems
+    all_ids = set(all_spec_block_ids())
+    _sections, _fm, _inline, _spec_links, rfc_stage = scan_rfc_metadata()
+    for sid, (kind, ref, reason, epath, elineno) in exemptions.items():
+        if sid not in all_ids:
+            continue
+        if kind not in COVERAGE_VALID_KINDS:
+            problems.append(
+                f"{epath}:{elineno}: exemption for `{sid}` has kind={kind!r}, "
+                f"not one of {sorted(COVERAGE_VALID_KINDS)}"
+            )
+            continue
+        if kind in ("blocked", "elsewhere") and not ref:
+            problems.append(
+                f"{epath}:{elineno}: exemption for `{sid}` (kind={kind}) needs a `ref` attribute"
+            )
+        if not reason:
+            problems.append(f"{epath}:{elineno}: exemption for `{sid}` has no `reason`")
+        if kind != "blocked" or not ref:
+            continue
+        if re.match(r"rfc-\d{4}$", ref, re.IGNORECASE):
+            ref_id = ref.lower()
+            if ref_id not in rfc_stage:
+                problems.append(f"{epath}:{elineno}: exemption for `{sid}` is blocked on `{ref}`, which doesn't exist")
+            elif rfc_stage[ref_id] == "implemented":
+                problems.append(
+                    f"{epath}:{elineno}: exemption for `{sid}` is blocked on `{ref}`, which is now "
+                    f"4-implemented -- verify the blocker actually closed, and cite a real fixture if so"
+                )
+            continue
+        m = SPEC_EXEMPTION_ISSUE_REF_RE.match(ref)
+        if not m:
+            continue  # free-form ref (a URL, a bare description) -- nothing to check live
+        state, err = fetch_issue_state("metel-lang", m.group("repo"), m.group("num"))
+        if err is not None:
+            continue  # best-effort -- unreachable/rate-limited network never fails the build
+        if state == "closed":
+            problems.append(
+                f"{epath}:{elineno}: exemption for `{sid}` is blocked on `{ref}`, which is now "
+                f"closed -- verify the blocker actually resolved this claim, and cite a real fixture if so"
+            )
+    return problems
+
+
 def fixtures_block_text(toml_paths, core_root):
     """The exact content between the fixtures markers for one rigor block, or
     "" if no fixture cites it yet -- as valid a state as an RFC with no
@@ -701,6 +852,7 @@ def regenerate_backlinks_in_text(text, spec_path, origins_by_id, fixtures_by_id,
         i += 1
         body = []
         existing_fixtures_content = None
+        exemption_trigger = None  # (kind, ref, reason), from the hand-authored line, if present
         while i < n:
             nxt = lines[i]
             if SPEC_BLOCK_HEADING_RE.match(nxt) or nxt.strip() == "</details>":
@@ -720,7 +872,20 @@ def regenerate_backlinks_in_text(text, spec_path, origins_by_id, fixtures_by_id,
                 i += 1  # consume the end marker itself
                 existing_fixtures_content = "\n".join(slot).strip()
                 continue
-            body.append(nxt)
+            if nxt.strip() == SPEC_EXEMPTION_RENDERED_START:
+                # Generated purely from the trigger line -- always dropped and
+                # rebuilt fresh below, same as origins/fixtures, never carried
+                # over verbatim the way an unreachable fixtures slot is.
+                i += 1
+                while i < n and lines[i].strip() != SPEC_EXEMPTION_RENDERED_END:
+                    i += 1
+                i += 1  # consume the end marker itself
+                continue
+            tm = SPEC_EXEMPTION_TRIGGER_RE.match(nxt.strip())
+            if tm:
+                attrs = dict(SPEC_EXEMPTION_ATTR_RE.findall(tm.group("attrs")))
+                exemption_trigger = (attrs.get("kind", ""), attrs.get("ref", ""), attrs.get("reason", ""))
+            body.append(nxt)  # the trigger line itself is hand-authored -- kept, never rewritten
             i += 1
         while body and body[-1].strip() == "":
             body.pop()
@@ -732,6 +897,12 @@ def regenerate_backlinks_in_text(text, spec_path, origins_by_id, fixtures_by_id,
             out.append(ORIGINS_MARKER_START)
             out.append(origins_content)
             out.append(ORIGINS_MARKER_END)
+
+        if exemption_trigger is not None:
+            out.append("")
+            out.append(SPEC_EXEMPTION_RENDERED_START)
+            out.append(exemption_block_text(*exemption_trigger))
+            out.append(SPEC_EXEMPTION_RENDERED_END)
 
         if fixtures_by_id is None:
             fixtures_content = existing_fixtures_content
@@ -843,9 +1014,9 @@ def build_registry_text(records=None):
         "**Every `implemented`/`integrated` RFC listed below is checked by CI, on every "
         "push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` "
         "job; degrades to an informational skip when run from a bare docs-internal "
-        "checkout, see ADR-0049 §6) fails if any RFC's uncovered normative sections grow "
+        "checkout) fails if any RFC's uncovered normative sections grow "
         "past what `public/rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is "
-        "the retroactive half of ADR-0049's coverage mandate (§7); the forward-looking half "
+        "the retroactive half of the coverage mandate; the forward-looking half "
         "is `rfc.py transition --to implemented` itself refusing to run over an uncovered "
         "section.",
         "",
@@ -1023,6 +1194,35 @@ def fetch_open_milestones(owner="metel-lang", repo="metel-core"):
         for m in data
     ]
     return milestones, None
+
+
+def fetch_issue_state(owner, repo, number):
+    """Best-effort GitHub REST call for one issue's state -- (state, None) on
+    success, (None, reason) on any failure, network or auth -- never raises.
+    Unlike fetch_open_milestones, no token is required: a single-issue GET on
+    a public repo is anonymous-readable, so a `blocked` exemption's issue ref
+    (spec_exemption_problems, below) gets checked in CI with zero secret
+    configuration on either side (metel-docs-internal's bare job included --
+    this needs no fixture corpus, so it isn't gated behind METEL_CORE_ROOT the
+    way fixture-coverage counting is). GITHUB_TOKEN/GH_TOKEN, when present, is
+    used only to raise the request above the much lower unauthenticated rate
+    limit -- same reasoning fetch_open_milestones already uses, just not a
+    hard requirement here since the target data is public either way."""
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    url = f"https://api.github.com/repos/{owner}/{repo}/issues/{number}"
+    headers = {"Accept": "application/vnd.github+json", "User-Agent": "rfc.py-check"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError) as e:
+        return None, f"GitHub API request failed ({e})"
+    state = data.get("state")
+    if state is None:
+        return None, "response had no `state` field"
+    return state, None
 
 
 def index_mentioned_rfc_ids(text):
@@ -1342,18 +1542,14 @@ def _sidecar_mtl_path(toml_path):
     )
 
 
-def scan_coverage_corpus():
-    """ADR-0049. The corpus-wide scan `coverage_check_problems()` and the
-    `--write-coverage-baseline` writer both need: every RFC's normative
-    sections, its `coverage` frontmatter/inline exemptions and stage, plus the
-    fixture corpus's sidecar/prose citations. Factored out so the two only
-    disagree about what they *do* with this, never about how it's gathered.
-    None (not an error) when metel-interpreter/tests isn't reachable -- see
-    ADR-0049 §6; callers degrade independently from there."""
-    tests_dir = metel_core_tests_dir()
-    if tests_dir is None:
-        return None
-
+def scan_rfc_metadata():
+    """Every RFC's stage, normative sections, and `coverage` frontmatter --
+    everything scan_coverage_corpus() needs from the RFC side, but with none
+    of its fixture-corpus dependency. Always available, even from a bare
+    docs-internal checkout with no metel-interpreter/tests in reach -- so a
+    check that only needs the RFC/spec side (spec_exemption_problems, below)
+    doesn't have to wait on METEL_CORE_ROOT the way fixture-coverage counting
+    genuinely does."""
     rfc_sections, rfc_coverage_fm, rfc_coverage_inline, rfc_coverage_spec, rfc_stage = (
         {}, {}, {}, {}, {},
     )
@@ -1368,7 +1564,24 @@ def scan_coverage_corpus():
         rfc_coverage_fm[rid] = parse_coverage_frontmatter(frontmatter_raw_text(text))
         rfc_coverage_inline[rid] = parse_inline_coverage(body)
         rfc_coverage_spec[rid] = parse_coverage_spec_links(frontmatter_raw_text(text))
+    return rfc_sections, rfc_coverage_fm, rfc_coverage_inline, rfc_coverage_spec, rfc_stage
 
+
+def scan_coverage_corpus():
+    """ADR-0049. The corpus-wide scan `coverage_check_problems()` and the
+    `--write-coverage-baseline` writer both need: everything
+    scan_rfc_metadata() provides, plus the fixture corpus's sidecar/prose
+    citations. Factored out so the two only disagree about what they *do*
+    with this, never about how it's gathered. None (not an error) when
+    metel-interpreter/tests isn't reachable -- see ADR-0049 §6; callers
+    degrade independently from there."""
+    tests_dir = metel_core_tests_dir()
+    if tests_dir is None:
+        return None
+
+    rfc_sections, rfc_coverage_fm, rfc_coverage_inline, rfc_coverage_spec, rfc_stage = (
+        scan_rfc_metadata()
+    )
     sidecar, prose = scan_fixture_citations(tests_dir)
     spec_citations = scan_spec_citations(tests_dir)
     return (
@@ -1684,7 +1897,7 @@ def coverage_check_problems():
         if migratable:
             pct = 100 * total_spec_anchored / migratable
             info.append(
-                f"spec-anchoring migration (ADR-0050 §8): {total_spec_anchored}/{migratable} "
+                f"spec-anchoring migration: {total_spec_anchored}/{migratable} "
                 f"citable normative sections spec-anchored ({pct:.0f}%); "
                 f"{total_rfc_only} still on a direct `rfc =`/prose citation"
             )
@@ -1696,13 +1909,38 @@ def coverage_check_problems():
     #    that loop at all. Same baseline-ratchet shape as the RFC-side check
     #    (5b) -- a gap already grandfathered in doesn't fail every run, a new
     #    one does.
+    #
+    #    6a. A block can carry a typed exemption instead (ADR-0050 §6,
+    #    reattached to a spec id -- same untestable/blocked/elsewhere
+    #    vocabulary ADR-0049 §3 already validates for RFC sections). An
+    #    exempted block is removed from `untested` the same way a real
+    #    fixture would remove it, but reported in its own visible line
+    #    rather than folded silently into "covered" -- the same reason
+    #    `untestable` stays a visible list on the RFC side. Exemption
+    #    *validity* (kind/ref/reason well-formedness, whether a blocker has
+    #    resolved) is checked by spec_exemption_problems() instead of here --
+    #    that check needs none of this function's fixture-corpus dependency,
+    #    so it runs unconditionally from cmd_check(), not only when
+    #    METEL_CORE_ROOT is reachable.
     all_ids = all_spec_block_ids()
-    untested = sorted(sid for sid in all_ids if not spec_citations.get(sid))
+    exemptions = scan_spec_exemptions()
+    untested = sorted(
+        sid for sid in all_ids if not spec_citations.get(sid) and sid not in exemptions
+    )
     if all_ids:
+        cited_n = sum(1 for sid in all_ids if spec_citations.get(sid))
         info.append(
-            f"spec blocks with a citing fixture: {len(all_ids) - len(untested)}/{len(all_ids)}"
+            f"spec blocks with a citing fixture: {cited_n}/{len(all_ids)}"
             + (f" -- untested: {', '.join(untested)}" if untested else "")
         )
+        exempt_ids = sorted(sid for sid in exemptions if sid in all_ids)
+        if exempt_ids:
+            kind_counts = Counter(exemptions[sid][0] for sid in exempt_ids)
+            breakdown = ", ".join(f"{c} {k}" for k, c in sorted(kind_counts.items()))
+            detail = "; ".join(f"{sid} ({exemptions[sid][0]}: {exemptions[sid][2]})" for sid in exempt_ids)
+            info.append(
+                f"spec blocks exempt from fixture coverage: {len(exempt_ids)} ({breakdown}) -- {detail}"
+            )
     # "spec" is only meaningful in the new, nested baseline shape -- a
     # pre-existing flat {rid: [...]} baseline has no such key and no
     # spec-side ratchet was ever recorded, so treat that the same as no
@@ -1819,6 +2057,10 @@ def cmd_check(args=None):
                 + ", ".join(r.upper() for r in missing)
             )
 
+    # Runs unconditionally, unlike coverage_check_problems() below -- exemption
+    # validity needs no fixture corpus, so it isn't gated behind METEL_CORE_ROOT.
+    problems.extend(spec_exemption_problems())
+
     coverage_problems, coverage_info = coverage_check_problems()
     problems.extend(coverage_problems)
 
@@ -1923,7 +2165,11 @@ def cmd_index(args):
         coverage_by_rfc = per_rfc_coverage(
             rfc_sections, rfc_coverage_fm, rfc_coverage_spec, rfc_stage, sidecar, prose, spec_citations
         )
-        untested = [sid for sid in all_spec_block_ids() if not spec_citations.get(sid)]
+        exemptions = scan_spec_exemptions()
+        untested = [
+            sid for sid in all_spec_block_ids()
+            if not spec_citations.get(sid) and sid not in exemptions
+        ]
         COVERAGE_BASELINE_PATH.write_text(
             build_coverage_baseline_json(coverage_by_rfc, untested)
         )

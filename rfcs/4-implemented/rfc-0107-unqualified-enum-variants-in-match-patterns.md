@@ -8,7 +8,14 @@ updated: '2026-07-21'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/559'
 impl_status: implemented
 coverage:
+  "1": { spec: "spec.expressions.pattern-matching.unqualified-variant-patterns.legality-1" }
+  "1.1": { spec: "spec.expressions.pattern-matching.unqualified-variant-patterns.legality-1" }
+  "1.2": { spec: "spec.expressions.pattern-matching.unqualified-variant-patterns.legality-2" }
+  "1.3": { spec: "spec.expressions.pattern-matching.unqualified-variant-patterns.legality-3" }
   "1.4": { kind: untestable, reason: "The section records the compiler registry index that the implementation deliberately does not need." }
+  "2": { spec: "spec.expressions.pattern-matching.unqualified-variant-patterns.legality-4" }
+  "3": { spec: "spec.expressions.pattern-matching.unqualified-variant-patterns.legality-5" }
+  "4": { spec: "spec.expressions.pattern-matching.unqualified-variant-patterns.legality-7" }
   "5": { kind: elsewhere, reason: "Expression-position variants were deliberately split to RFC-0111 and its fixture coverage.", ref: "docs/public/rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md" }
 ---
 

@@ -7,7 +7,19 @@ updated: '2026-08-14'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/549'
 impl_status: implemented
 coverage:
+  "1": { spec: "spec.declarations.structural-aspect-bounds.legality-1" }
+  "1.1": { spec: "spec.types.arrays.legality-1" }
+  "2": { spec: "spec.declarations.structural-aspect-bounds.legality-2" }
+  "3": { spec: "spec.declarations.structural-aspect-bounds.legality-3" }
+  "4": { spec: "spec.declarations.structural-aspect-bounds.legality-4" }
   "4.1": { kind: blocked, reason: "The Ord array impl is blocked on draft RFC-0062; the Hash half is likewise deferred but has no dedicated RFC yet.", ref: "docs/public/rfcs/0-draft/rfc-0062-ord-comparison-aspect.md" }
+  "5": { spec: "spec.declarations.structural-aspect-bounds.legality-5" }
+  "6": { spec: "spec.declarations.structural-aspect-bounds.legality-6" }
+  "7": { spec: "spec.declarations.structural-aspect-bounds.legality-7" }
+  "7.1": { spec: "spec.declarations.structural-aspect-bounds.legality-8" }
+  "7.2": { spec: "spec.declarations.structural-aspect-bounds.legality-9" }
+  "7.3": { spec: "spec.declarations.structural-aspect-bounds.legality-10" }
+  "7.4": { spec: "spec.declarations.structural-aspect-bounds.legality-11" }
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence) and

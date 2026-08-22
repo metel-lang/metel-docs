@@ -8,7 +8,12 @@ updated: '2026-07-25'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/576'
 impl_status: implemented
 coverage:
+  "1": { spec: "spec.types.anonymous-records.dynamics-1" }
+  "2": { spec: "spec.types.anonymous-records.dynamics-1" }
+  "3": { spec: "spec.types.anonymous-records.legality-1" }
+  "4": { spec: "spec.types.anonymous-records.dynamics-2" }
   "5": { kind: untestable, reason: "The section is a non-functional design rationale for declining an alternative type-system foundation." }
+  "6": { spec: "spec.types.anonymous-records.legality-3" }
 ---
 
 > **Extracted from RFC-0090 (Structural Records — Rows and Tiers) on 2026-07-24**, which

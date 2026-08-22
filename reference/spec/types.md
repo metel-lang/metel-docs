@@ -48,7 +48,7 @@ Metel provides exact-width numeric types for low-level and systems programming. 
 
 Sized literals use a suffix: `42i32`, `3.14f32`, `255u8`. All casts between sized numeric types are explicit (`as`). Array indices must be `u64`; indexing with an `i64` requires an explicit `as u64` cast.
 
-**Unsuffixed literals are polymorphic.** When the expected type is known from context (annotation, function parameter, struct field, return type, or the other operand in arithmetic/comparison), an unsuffixed numeric literal adopts that type automatically. When no context is available, the literal defaults to `i64` (integer) or `f64` (float).
+**Unsuffixed literals are polymorphic.** When the expected type is known from context (annotation, function parameter, struct field, return type, or the other operand in arithmetic/comparison), an unsuffixed numeric literal [adopts that type automatically](#spec.types.sized-numeric-types.legality-3). When no context is available, the literal defaults to `i64` (integer) or `f64` (float).
 
 ```metel
 let a: i32 = 10;          // 10 is i32
@@ -69,6 +69,62 @@ var count: i32 = 0;
 count = 99;               // 99 is i32
 ```
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.sized-numeric-types.legality-1}
+
+The exact-width numeric primitive types are `i8`, `i16`, `i32`, `i64`, `u8`, `u16`,
+`u32`, `u64`, `f32`, and `f64`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0007](../../rfcs/4-implemented/rfc-0007-uint-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [82_sized_numeric_types.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/82_sized_numeric_types.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.sized-numeric-types.legality-2}
+
+Conversion between numeric types is written with an explicit `as` cast.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0007](../../rfcs/4-implemented/rfc-0007-uint-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [82_sized_numeric_types.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/82_sized_numeric_types.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.sized-numeric-types.legality-3}
+
+An unsuffixed numeric literal adopts the numeric type supplied by context; without
+context, integer literals default to `i64` and floating-point literals to `f64`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0007](../../rfcs/4-implemented/rfc-0007-uint-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [04_polymorphic_literals.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/literals/04_polymorphic_literals.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.types.sized-numeric-types.dynamics-1}
+
+In debug builds, integer overflow panics; in release builds it wraps. Floating-point
+overflow follows IEEE 754 behavior in both build modes.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0007](../../rfcs/4-implemented/rfc-0007-uint-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [11_overflow_panics.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/arithmetic/11_overflow_panics.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ## Char
 
 > **Availability:** Since v0.8.0.
@@ -83,7 +139,28 @@ fun main() {
 }
 ```
 
-`Char` is not `u32` and not a string — no implicit coercions exist. Use `u32::from(c)` to get the Unicode scalar value and `Char::from(n)` to construct from a code point; `Char::from` raises a runtime error if `n` is not a valid Unicode scalar value.
+`Char` is not `u32` and not a string — no implicit coercions exist. Use
+[`u32::from(c)`](runtime.md#spec.runtime.char-methods.dynamics-1) to get the Unicode
+scalar value and [`Char::from(n)`](runtime.md#spec.runtime.char-methods.dynamics-1) to
+construct from a code point; `Char::from` raises a runtime error if `n` is not a valid
+Unicode scalar value.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.char.legality-1}
+
+`Char` is a distinct Unicode-scalar type, not an alias for `u32` or `u8`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0007](../../rfcs/4-implemented/rfc-0007-uint-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [81_char.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/81_char.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
 
 ## Type Inference
 
@@ -124,6 +201,10 @@ method's declared return type, which supplies its expected type.
 <span class="rigor-backlink">_Referenced by: [rfc-0019](../../rfcs/4-implemented/rfc-0019-return-context-type-propagation.md)_</span>
 <!-- rfc.py:origins:end -->
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage7_01_return_type_propagation.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/functions/stage7_01_return_type_propagation.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Legality Rule {#spec.types.type-inference.legality-2}
 
 An expression in `break` position is typechecked against its enclosing `loop`'s value
@@ -132,6 +213,10 @@ type, independently of the enclosing function's return type.
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0019](../../rfcs/4-implemented/rfc-0019-return-context-type-propagation.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage7_01_return_type_propagation.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/functions/stage7_01_return_type_propagation.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -147,7 +232,7 @@ fun main() -> i64 {
 }
 ```
 
-Positional field access uses `.0`, `.1`, etc.:
+Positional field access [uses zero-based selectors `.0`, `.1`, etc.](#spec.types.tuples.legality-1):
 
 ```metel
 fun main() -> i64 {
@@ -172,6 +257,16 @@ fun main() -> i64 {
     }
 }
 ```
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.tuples.legality-1}
+
+A tuple's elements are addressed by zero-based positional selectors. A selector is valid
+only for an element in the tuple's declared arity.
+
+</details>
 
 ## Anonymous Records
 
@@ -263,6 +358,63 @@ A bare identifier inside projection braces is always a **field label**, never a 
 row variable. Chained projection (`S.{ a }.{ b }`) and projection in pattern position are not
 accepted.
 
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.types.anonymous-records.dynamics-1}
+
+Record identity is structural: records with the same labelled fields and field types are
+the same type regardless of declaration-free spelling order.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0116](../../rfcs/4-implemented/rfc-0116-anonymous-record-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [91_anonymous_records_extra.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/91_anonymous_records_extra.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.anonymous-records.legality-1}
+
+An anonymous record cannot satisfy an impl-based aspect bound, because no implementation
+for a record target is available.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0116](../../rfcs/4-implemented/rfc-0116-anonymous-record-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage5_neg_19_record_does_not_satisfy_aspect_bound.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/stage5_neg_19_record_does_not_satisfy_aspect_bound.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.types.anonymous-records.dynamics-2}
+
+Projection `Handle.{ fd, mode }` yields the record made from precisely the named fields of
+the nominal receiver type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0116](../../rfcs/4-implemented/rfc-0116-anonymous-record-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [91_anonymous_records_extra.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/91_anonymous_records_extra.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.anonymous-records.legality-3}
+
+An anonymous record is rejected as an inherent-implementation target, as the target of a
+non-local aspect implementation, and as the target of a custom `Drop` implementation.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0116](../../rfcs/4-implemented/rfc-0116-anonymous-record-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage5_neg_11_anonymous_record_inherent_method.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/stage5_neg_11_anonymous_record_inherent_method.mtl), [stage5_neg_12_anonymous_record_drop.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/stage5_neg_12_anonymous_record_drop.mtl), [stage5_neg_13_anonymous_record_nonlocal_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/stage5_neg_13_anonymous_record_nonlocal_aspect.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ## Arrays
 
 `Array<T>` is the built-in ordered sequence type. The shorthand `T[]` is preferred.
@@ -275,7 +427,7 @@ fun main() -> i64 {
 }
 ```
 
-Index access uses `[]` with an `i64` index. Out-of-bounds access causes a panic.
+Index access uses `[]` with a `u64` index. Out-of-bounds access causes a panic.
 
 ```metel
 fun main() -> i64 {
@@ -298,6 +450,36 @@ Arrays are usable in `for-in` loops.
 The three-way split between `T[]`, `[T; N]`, and `List<T>` below reflects the current
 design. The exact boundary between them — in particular, how a growable list's storage is
 allocated and grown — is not yet fully specified and may change in a future release.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.arrays.legality-1}
+
+`T[]` is an unconditionally-`Copy`, non-owning borrowed view. It has no `Drop`; using a
+view does not move the underlying elements out of the view.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md), [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md), [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [76_array_display_structural_impl.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/76_array_display_structural_impl.mtl), [77_array_clone_structural_impl.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/77_array_clone_structural_impl.mtl), [39_borrowed_array_for_in_cannot_move_noncopy.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/39_borrowed_array_for_in_cannot_move_noncopy.mtl), [40_borrowed_array_for_in_copy_is_valid.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/40_borrowed_array_for_in_copy_is_valid.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.arrays.legality-2}
+
+An array index expression must have type `u64`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0007](../../rfcs/4-implemented/rfc-0007-uint-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_04_array_negative_index.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/neg_04_array_negative_index.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
 
 ## Fixed-size arrays
 
@@ -339,6 +521,140 @@ fun sum(xs: [i64; 3]) -> i64 {
 > `T[]`-annotated value; it only changes what an *unannotated* literal's own type is.
 
 See the note under "Arrays" above — this split is not considered final.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.fixed-size-arrays.legality-1}
+
+An array literal has fixed-size-array type `[T; N]`, not `T[]`, where `N` is its literal
+element count.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage3_04_sized_arrays.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/stage3_04_sized_arrays.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.fixed-size-arrays.legality-2}
+
+`[T; N]` implicitly coerces to `T[]` wherever `T[]` is expected. The reverse coercion
+is not permitted.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md), [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [40_borrowed_array_for_in_copy_is_valid.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/40_borrowed_array_for_in_copy_is_valid.mtl), [stage3_04_sized_arrays.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/stage3_04_sized_arrays.mtl), [stage3_neg_10_sized_array_dynamic_to_fixed.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/stage3_neg_10_sized_array_dynamic_to_fixed.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.fixed-size-arrays.legality-3}
+
+`[T; N]` is a fixed-size-array type only when `N` is a non-negative integer literal;
+the element type and literal length both participate in type identity, including for
+`[T; 0]`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [13_sized_array_extended.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/13_sized_array_extended.mtl), [stage3_04_sized_arrays.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/stage3_04_sized_arrays.mtl), [stage3_neg_07_sized_array_n_mismatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/stage3_neg_07_sized_array_n_mismatch.mtl), [stage3_neg_08_sized_array_elem_mismatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/stage3_neg_08_sized_array_elem_mismatch.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.types.fixed-size-arrays.dynamics-1}
+
+A repeat array expression `[expr; N]` evaluates `expr` once, then clones that result to
+produce all `N` elements.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [fixed_array_repeat_evaluates_once.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/fixed_array_repeat_evaluates_once.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.fixed-size-arrays.legality-4}
+
+Where `[T; N]` is expected, an array literal is accepted only when it contains exactly
+`N` elements of type `T`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage3_04_sized_arrays.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/stage3_04_sized_arrays.mtl), [stage3_neg_07_sized_array_n_mismatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/stage3_neg_07_sized_array_n_mismatch.mtl), [stage3_neg_08_sized_array_elem_mismatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/stage3_neg_08_sized_array_elem_mismatch.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.fixed-size-arrays.legality-5}
+
+A fixed-size array type `[T; N]` is valid as a struct field type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [45_lvalue_paths.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/45_lvalue_paths.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.fixed-size-arrays.legality-6}
+
+A fixed-size array may have another fixed-size array as its element type, such as
+`[[i64; 2]; 2]`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [fixed_array_nested.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/fixed_array_nested.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.fixed-size-arrays.legality-7}
+
+An exact array pattern for a `[T; N]` value must have a compatible element count; a
+different exact count is rejected.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [12_sized_array.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/12_sized_array.mtl), [13_sized_array_extended.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/13_sized_array_extended.mtl), [stage3_neg_09_sized_array_pattern_undercount.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/stage3_neg_09_sized_array_pattern_undercount.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.fixed-size-arrays.legality-8}
+
+The length in `[T; N]` is an integer literal, not a named generic type parameter or an
+arbitrary runtime expression.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_sized_array_named_length.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/neg_sized_array_named_length.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.fixed-size-arrays.legality-9}
+
+Every literal index into `[T; 0]` is statically rejected because it is out of bounds.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage3_neg_11_sized_array_zero_literal_index.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/stage3_neg_11_sized_array_zero_literal_index.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
 
 ## References
 
@@ -395,6 +711,24 @@ fun main() -> i64 {
 
 > **Availability:** `&var` for lvalue paths since v0.10.0.
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.references.legality-1}
+
+An `&var T` reference may be used where `&T` is expected; an `&T` reference may not be
+used where `&var T` is expected.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0067a](../../rfcs/4-implemented/rfc-0067a-reference-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [05_mut_reference_coerces_to_shared.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/05_mut_reference_coerces_to_shared.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ### Reading a value out of a reference
 
 No field, no method, no operator — just the plain value a reference points to. This
@@ -449,6 +783,26 @@ every type** — the interpreter has no move semantics today (everything is deep
 bind), so there is no non-`Copy` type yet to exclude. Once ownership is integrated, a
 non-`Copy` `T` cannot be produced this way.
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.references.reading-a-value-out-of-a-reference.legality-1}
+
+Where a declared or expected non-reference type is known, a reference expression may
+copy out its referent through every reference layer only when the referent is `Copy`.
+This applies to bindings, ascriptions, returns, breaks, and tail expressions, but not
+to an un-ascribed call argument.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0067a](../../rfcs/4-implemented/rfc-0067a-reference-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [01_read_copy_at_return.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/01_read_copy_at_return.mtl), [02_read_copy_at_tail_expression.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/02_read_copy_at_tail_expression.mtl), [03_read_copy_at_loop_break.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/03_read_copy_at_loop_break.mtl), [07_read_copy_through_reference_chain.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/07_read_copy_through_reference_chain.mtl), [13_read_copy_from_call_result.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/13_read_copy_from_call_result.mtl), [neg_06_no_read_copy_at_call_argument.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/neg_06_no_read_copy_at_call_argument.mtl), [neg_14_read_copy_of_non_copy_value_at_let_is_rejected.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/references/neg_14_read_copy_of_non_copy_value_at_let_is_rejected.mtl), [14_mut_field_pointer.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/14_mut_field_pointer.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ## List\<T\>
 
 > **Availability:** Since v0.8.0.
@@ -492,6 +846,75 @@ fun main() {
 > stays a live view for as long as it is used — still bounded by `self`'s lifetime, not
 > copied away from it.
 
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.types.list-t.dynamics-1}
+
+`List::new()` creates an empty list, and `List::from(source)` creates a list containing
+the elements of `source`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0054](../../rfcs/4-implemented/rfc-0054-list-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [38_builtins.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/38_builtins.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.types.list-t.dynamics-2}
+
+`push` appends an element; `pop` removes and returns the last element, or `None` for an
+empty list.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0054](../../rfcs/4-implemented/rfc-0054-list-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [38_builtins.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/38_builtins.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.types.list-t.dynamics-3}
+
+`len` reports the list's current number of elements, including changes made by `push`
+and `pop`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0054](../../rfcs/4-implemented/rfc-0054-list-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [38_builtins.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/38_builtins.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.types.list-t.dynamics-4}
+
+`get(i)` returns `Some` for an in-bounds element and `None` when `i` is out of bounds.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0054](../../rfcs/4-implemented/rfc-0054-list-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [38_builtins.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/38_builtins.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.list-t.legality-1}
+
+A `List<T>` is distinct from `T[]`; obtaining its array view requires an explicit
+`.as_slice()` call.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0054](../../rfcs/4-implemented/rfc-0054-list-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [38_builtins.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/38_builtins.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ## Type Ascription
 
 > **Availability:** Since v0.2.0.
@@ -532,6 +955,10 @@ no runtime conversion.
 <span class="rigor-backlink">_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md), [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_</span>
 <!-- rfc.py:origins:end -->
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage8_04_type_ascription.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_04_type_ascription.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Legality Rule {#spec.types.type-ascription.legality-2}
 
 An ascription is valid only when the expression's type unifies with the ascribed type;
@@ -541,6 +968,10 @@ otherwise it is a type error.
 <span class="rigor-backlink">_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md)_</span>
 <!-- rfc.py:origins:end -->
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage8_neg_02_ascribe_type_mismatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Legality Rule {#spec.types.type-ascription.legality-3}
 
 An expression may contain at most one type ascription; a second `:` in the same ascription
@@ -549,6 +980,10 @@ position is a parse error.
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage8_neg_08_chained_type_ascription.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_08_chained_type_ascription.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -610,7 +1045,7 @@ fun main() -> i64 {
 
 ## Type Casting
 
-The `as` operator [casts between any two numeric primitive types](#spec.types.type-casting.dynamics-1). It desugars to a call to the `From` aspect and is infallible — the result is the target type directly.
+The `as` operator [performs an explicit conversion from `expr`'s type to `T`](#spec.types.type-casting.dynamics-1). It desugars to a call to the `From` aspect and is infallible — the result is the target type directly.
 
 ```metel
 fun main() {
@@ -633,12 +1068,17 @@ Because `as` desugars to `From`, user-defined types become castable by implement
 
 ##### Dynamic Semantics {#spec.types.type-casting.dynamics-1}
 
-`expr as T` evaluates an explicit numeric conversion of `expr` to `T` and produces a value
-of type `T`.
+`expr as T` evaluates an explicit conversion of `expr` to `T` via `From<S>::from` (where
+`S` is `expr`'s type) and produces a value of type `T`. Not restricted to numeric types —
+any type with an applicable `From<S>` implementation is a valid cast target.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage8_04_type_ascription.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_04_type_ascription.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -802,6 +1242,76 @@ shape-conditional implementations can be *incomparable* rather than one being mo
 so they must be disjoint. The third additionally needs a way to require an aspect of every
 field in the row, which does not yet exist either.
 
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.generics.row-bounds.legality-1}
+
+A row bound requires `record` on its type parameter, either at the parameter declaration
+or in a `where` constraint; `record` without a row bound is also a legal any-record bound.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0118](../../rfcs/4-implemented/rfc-0118-row-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [93_row_bounds.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/93_row_bounds.mtl), [record_bound_inline_and_where_clause_combined.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/record_bound_inline_and_where_clause_combined.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.generics.row-bounds.legality-2}
+
+A negative row bound is satisfied only when none of its named fields match; it accepts no
+trailing `..` and a negative bound in a `where` clause is enforced like an inline one.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0118](../../rfcs/4-implemented/rfc-0118-row-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [negative_row_bound_rejects_open.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/negative_row_bound_rejects_open.mtl), [neg_row_bound_where_clause_rejects_forbidden_field.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/neg_row_bound_where_clause_rejects_forbidden_field.mtl), [record_bound_inline_and_where_clause_combined.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/record_bound_inline_and_where_clause_combined.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.generics.row-bounds.legality-3}
+
+A field in a row bound may omit its type, constraining the field label while accepting any
+field type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0118](../../rfcs/4-implemented/rfc-0118-row-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [93_row_bounds.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/93_row_bounds.mtl), [record_bound_inline_and_where_clause_combined.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/record_bound_inline_and_where_clause_combined.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.generics.row-bounds.legality-4}
+
+Only a record satisfies a row bound; a nominal struct is rejected even when it has matching
+fields.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0118](../../rfcs/4-implemented/rfc-0118-row-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage5_neg_26_row_bound_struct_rejected.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/stage5_neg_26_row_bound_struct_rejected.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.generics.row-bounds.legality-5}
+
+Brace syntax after a parameter or `let` annotation denotes an exact record type, while the
+same syntax in a generic parameter or `where` constraint denotes a row bound.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0118](../../rfcs/4-implemented/rfc-0118-row-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [95_record_type_vs_row_bound_by_position.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/95_record_type_vs_row_bound_by_position.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ## Never Type
 
 > **Availability:** Since v0.10.0.
@@ -879,6 +1389,177 @@ fun abort(msg: String) -> ! {
 ```
 
 A `-> !` function containing a reachable `return` is a type error.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.never-type.legality-1}
+
+`!` is uninhabited: no terminating expression can construct a value of that type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [never_01_uninhabited_variant_exhaustive.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/never_01_uninhabited_variant_exhaustive.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-2}
+
+`!` is a subtype of every type, and an expression of type `!` implicitly coerces to any
+expected type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [never_04_panic_coerces.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/never_04_panic_coerces.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-3}
+
+Code made unreachable by a diverging expression remains typechecked in its surrounding
+type context.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [never_03_unreachable_arm_allowed.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/never_03_unreachable_arm_allowed.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.types.never-type.dynamics-1}
+
+`return`, `panic`, a non-breaking `loop`, and value-position `break` or `continue`
+diverge and have type `!`; an enclosing expression cannot produce a value after such a
+subexpression diverges.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_panic.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/never/neg_panic.mtl), [never_04_panic_coerces.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/never_04_panic_coerces.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-4}
+
+Match exhaustiveness excludes impossible scrutinee values and uninhabited variants.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [uninhabited_match.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/never/uninhabited_match.mtl), [never_01_uninhabited_variant_exhaustive.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/never_01_uninhabited_variant_exhaustive.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-5}
+
+A match whose scrutinee has type `!` is exhaustive with no arms.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [uninhabited_match.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/never/uninhabited_match.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-6}
+
+An enum variant containing a `!` payload is uninhabited; its match arm may be omitted or,
+if written, is unreachable but not rejected.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [uninhabited_match.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/never/uninhabited_match.mtl), [never_01_uninhabited_variant_exhaustive.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/never_01_uninhabited_variant_exhaustive.mtl), [never_03_unreachable_arm_allowed.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/never_03_unreachable_arm_allowed.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-7}
+
+An enum with exactly one inhabited, single-field variant implicitly coerces to that
+field's type; zero-field or multi-field inhabited variants do not receive this coercion.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [singleton_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/never/singleton_coercion.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.types.never-type.dynamics-2}
+
+When every arm of a match diverges, the match expression has type `!`.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [never_04_panic_coerces.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/never_04_panic_coerces.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-8}
+
+`Result<T, !>` has an uninhabited `Err` variant and therefore only an `Ok` value can be
+constructed.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [singleton_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/never/singleton_coercion.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-9}
+
+`Result<T, !>` satisfies the inhabited-singleton coercion rule and a match omitting `Err`
+is exhaustive.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [never_02_result_never_err_exhaustive.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/never_02_result_never_err_exhaustive.mtl), [never_03_unreachable_arm_allowed.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/never_03_unreachable_arm_allowed.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-10}
+
+`Perhaps<!>` has only its zero-field `None` variant inhabited; it does not coerce to a
+field type.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [never_08_perhaps_never_exhaustive.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/never_08_perhaps_never_exhaustive.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-11}
+
+A function declared `-> !` is legal only when every reachable control-flow path diverges;
+a reachable ordinary return is a type error.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [never_05_ret_never_diverges_ok.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/never_05_ret_never_diverges_ok.mtl), [never_07_panic_semicolon_diverges.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/never_07_panic_semicolon_diverges.mtl), [never_neg_01_ret_never_reachable_return.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/never_neg_01_ret_never_reachable_return.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
 
 ## `Perhaps<T>`
 
@@ -965,8 +1646,12 @@ fun main() -> i64 {
 determines `T`; `Perhaps::None` is valid wherever the qualified variant is named.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0020](../../rfcs/4-implemented/rfc-0020-language-rebranding.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0020](../../rfcs/4-implemented/rfc-0020-language-rebranding.md), [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [39_perhaps.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/enums/39_perhaps.mtl), [41_unqualified_variant_constructors.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/enums/41_unqualified_variant_constructors.mtl), [42_variant_deferral_resolves.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/enums/42_variant_deferral_resolves.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -990,6 +1675,8 @@ fun main() -> i64 {
 }
 ```
 
-Use `match` to handle both cases, or `?` to propagate errors.
+Use `match` to handle both cases, or [`?`](functions.md#spec.functions.the-operator.dynamics-2)
+to propagate errors.
 
-`.yolo()` also works on `Result<T, E>`, panicking on `Err`.
+[`.yolo()`](runtime.md#spec.runtime.panics.dynamics-1) also works on `Result<T, E>`,
+panicking on `Err`.

@@ -4,6 +4,14 @@ id: rfc-0040
 title: "Aspect Bound Enforcement on Function Type Parameters"
 date: '2026-06-01'
 supersedes: rfc-0002 (enforcement)
+coverage:
+  "1": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-7" }
+  "2": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-8" }
+  "3": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-9" }
+  "4": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-10" }
+  "5": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-11" }
+  "6": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-12" }
+  "7": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-13" }
 ---
 
 ## Summary

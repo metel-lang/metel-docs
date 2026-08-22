@@ -8,10 +8,19 @@ updated: '2026-07-21'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/572'
 impl_status: implemented
 coverage:
+  "1": { spec: "spec.expressions.unqualified-variant-constructors.legality-1" }
+  "1.1": { spec: "spec.types.perhaps-t.legality-1" }
+  "1.2": { spec: "spec.expressions.unqualified-variant-constructors.legality-2" }
+  "1.3": { spec: "spec.expressions.unqualified-variant-constructors.legality-3" }
+  "1.4": { spec: "spec.expressions.unqualified-variant-constructors.legality-4" }
   "2.1": { kind: untestable, reason: "This is rationale for rejecting scope-based glob imports, not a specified language behavior." }
   "2.2": { kind: untestable, reason: "This is rationale for rejecting a reverse-index resolution mechanism, not fixture-observable behavior." }
   "2.3": { kind: untestable, reason: "This is rationale for rejecting leading-dot syntax, not a specified language behavior." }
   "2.4": { kind: untestable, reason: "This is rationale for rejecting the status quo, not a separate behavioral rule." }
+  "3": { spec: "spec.expressions.unqualified-variant-constructors.legality-1" }
+  "3.1": { spec: "spec.expressions.unqualified-variant-constructors.legality-4" }
+  "3.2": { spec: "spec.types.perhaps-t.legality-1" }
+  "3.3": { spec: "spec.expressions.unqualified-variant-constructors.legality-1" }
 ---
 
 > **Status — under review (2026-07-21).** Substantiated proposal with a verified implementation sketch. All three original open questions resolved against the implementation (2026-07-21): no param_hints widening is needed, method args and struct fields already carry hints, Result's Ok/Err falls out free. Dependency on RFC-0112 removed as a consequence.

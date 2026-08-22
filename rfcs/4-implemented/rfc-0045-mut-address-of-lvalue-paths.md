@@ -3,6 +3,11 @@ id: rfc-0045
 title: "Mutable Address-Of for Lvalue Paths"
 date: '2026-06-02'
 status: implemented
+coverage:
+  "1": { spec: "spec.expressions.references.dynamics-1" }
+  "2": { spec: "spec.expressions.references.dynamics-2" }
+  "3": { spec: "spec.expressions.references.dynamics-3" }
+  "4": { spec: "spec.expressions.references.dynamics-4" }
 ---
 
 ## Summary
@@ -126,7 +131,7 @@ The `MutFieldPointer` variant should be invisible at the language level — it i
 ## Coverage Checklist (added 2026-08-19, not part of the original RFC)
 
 Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
-as headed sections for ADR-0049 citation purposes only. The document above is
+as headed sections for citation purposes only. The document above is
 unchanged and remains the historical record. Deliberately excludes claims that
 aren't independently observable from a program's behavior -- implementation
 strategy, design rationale, or internal architecture discussion belongs in the

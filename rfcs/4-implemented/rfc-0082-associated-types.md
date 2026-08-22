@@ -7,6 +7,13 @@ updated: '2026-07-13'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/546'
 impl_status: implemented
 coverage:
+  "1": { spec: "spec.declarations.aspects.associated-types.legality-1" }
+  "1.1": { spec: "spec.declarations.aspects.associated-types.legality-2" }
+  "1.2": { spec: "spec.declarations.aspects.associated-types.legality-3" }
+  "2": { spec: "spec.declarations.aspects.associated-types.legality-4" }
+  "3": { spec: "spec.declarations.aspects.associated-types.legality-5" }
+  "3a": { spec: "spec.declarations.aspects.associated-types.legality-6" }
+  "4": { spec: "spec.declarations.aspects.associated-types.legality-7" }
   "5": { kind: untestable, reason: "This section explains the design distinction and rejected generic-aspect model; it specifies no additional behavior beyond associated-type uniqueness already covered elsewhere." }
   "6": { kind: blocked, reason: "Aspect objects are not implemented; object safety is blocked on accepted RFC-0008.", ref: "docs/public/rfcs/2-accepted/rfc-0008-aspect-objects.md" }
   "7": { kind: untestable, reason: "This is explicitly historical material for retracted RFC-0069 and is not part of the ratified design." }

@@ -4,8 +4,16 @@ title: "Standard Library Layering and Host Module Boundary"
 date: '2026-06-06'
 revised: '2026-06-11'
 coverage:
+  "1": { spec: "spec.modules.std-core-auto-import.legality-1" }
+  "2": { spec: "spec.runtime.core-sum-types.dynamics-1" }
+  "3": { spec: "spec.runtime.list-t.dynamics-2" }
+  "4": { spec: "spec.runtime.string-methods.dynamics-1" }
   "5": { kind: untestable, reason: "std::math is not implemented: importing it still reports unresolved path T0003." }
+  "6": { spec: "spec.runtime.standard-library-modules.std-env.dynamics-1" }
+  "7": { spec: "spec.runtime.standard-library-modules.std-env.dynamics-1" }
   "8": { kind: untestable, reason: "std::process and its proposed shell-free run API are not implemented, so no fixture can exercise this scope." }
+  "9": { spec: "spec.runtime.standard-library-modules.std-fs.dynamics-1" }
+  "10": { spec: "spec.runtime.oserror.legality-1" }
   "11": { kind: untestable, reason: "Networking is explicitly deferred to a future RFC and this section specifies no present behavior." }
 ---
 
@@ -63,8 +71,8 @@ accordingly: one numeric module (`std::math`) plus the three host modules.
 ### 1. `std::core` is the language-adjacent prelude
 
 `std::core` is the implicit, always-available core module, auto-imported into
-every module. It is a real embedded module compiled into the binary (see
-ADR-0039), not a virtual injection. It is not a general-purpose kitchen-sink.
+every module. It is a real embedded module compiled into the binary,
+not a virtual injection. It is not a general-purpose kitchen-sink.
 
 The following items belong in `std::core`:
 
@@ -315,8 +323,8 @@ Examples:
 ## Staging
 
 Prerequisites already landed: System F elaboration (sprint 20) and the
-real-embedded-`std::core` pipeline with native declarations (sprint 22,
-ADR-0039). The first stdlib implementation pass is therefore built on the
+real-embedded-`std::core` pipeline with native declarations (sprint 22).
+The first stdlib implementation pass is therefore built on the
 post-elaboration architecture, as the original draft required.
 
 Recommended implementation order:
@@ -352,8 +360,5 @@ Recommended implementation order:
 
 ## References
 
-- ADR-0039: `architecture/decisions/adr-0039-native-bindings-embedded-stdcore.md`
-  (native bindings, embedded `std::core`; supersedes ADR-0027)
-- ADR-0038: `architecture/decisions/adr-0038-overload-resolution-symbolid-dispatch.md`
 - RFC-0054: `docs/public/rfcs/4-implemented/rfc-0054-list-type.md`
 - Public spec entry point: `docs/public/reference/spec.md`

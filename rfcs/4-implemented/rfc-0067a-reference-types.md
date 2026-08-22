@@ -6,6 +6,12 @@ updated: '2026-07-11'
 status: implemented
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/540'
 impl_status: implemented
+coverage:
+  "1": { spec: "spec.declarations.structs.receiver-forms.legality-1" }
+  "2": { spec: "spec.expressions.references.dynamics-5" }
+  "3": { spec: "spec.expressions.references.dynamics-6" }
+  "3a": { spec: "spec.types.references.reading-a-value-out-of-a-reference.legality-1" }
+  "4": { spec: "spec.types.references.legality-1" }
 ---
 
 > **Status — accepted.** Split 2026-07-07 from the original RFC-0067 ("Reference Types"),

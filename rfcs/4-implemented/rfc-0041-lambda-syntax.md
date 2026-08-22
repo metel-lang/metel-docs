@@ -4,6 +4,13 @@ spec_status: done
 id: rfc-0041
 title: "Lambda Syntax for Anonymous Functions"
 date: '2026-06-01'
+coverage:
+  "1": { spec: "spec.functions.closures.legality-1" }
+  "2": { spec: "spec.functions.closures.legality-2" }
+  "3": { spec: "spec.functions.closures.legality-3" }
+  "4": { spec: "spec.functions.first-class-functions.legality-1" }
+  "5": { spec: "spec.functions.named-function-declarations.legality-1" }
+  "6": { spec: "spec.functions.closures.legality-4" }
 ---
 
 ## Summary
@@ -128,7 +135,7 @@ The syntax and migration questions above are resolved in this RFC. Remaining wor
 ## Coverage Checklist (added 2026-08-19, not part of the original RFC; expanded 2026-08-19: split former item 5 into items 5 and 6)
 
 Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
-as headed sections for ADR-0049 citation purposes only. The document above is
+as headed sections for citation purposes only. The document above is
 unchanged and remains the historical record. Deliberately excludes claims that
 aren't independently observable from a program's behavior -- implementation
 strategy, design rationale, or internal architecture discussion belongs in the

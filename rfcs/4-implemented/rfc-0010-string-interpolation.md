@@ -3,6 +3,12 @@ status: implemented
 id: rfc-0010
 title: "String Interpolation"
 date: '2026-05-31'
+coverage:
+  "1": { spec: "spec.lexical.literals.dynamics-1" }
+  "2": { spec: "spec.lexical.literals.dynamics-1" }
+  "3": { spec: "spec.lexical.literals.dynamics-2" }
+  "4": { spec: "spec.lexical.literals.dynamics-3" }
+  "5": { spec: "spec.lexical.literals.dynamics-4" }
 ---
 
 > **Status — qualified (2026-08-12, metel-core#704 and #705).** This RFC's own §Open
@@ -176,7 +182,7 @@ Implement after string `+` is available. If `+` is deferred, this RFC should rem
 ## Coverage Checklist (added 2026-08-19, not part of the original RFC)
 
 Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
-as headed sections for ADR-0049 citation purposes only. The document above is
+as headed sections for citation purposes only. The document above is
 unchanged and remains the historical record. Deliberately excludes claims that
 aren't independently observable from a program's behavior -- implementation
 strategy, design rationale, or internal architecture discussion belongs in the

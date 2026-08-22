@@ -7,6 +7,12 @@ target:
 updated: '2026-07-14'
 impl_tracking: 'archived Codeberg PR #273 (no GitHub counterpart per the 2026-08-04 migration policy; see internal/archive/codeberg-tracker/metel-core/comments/273.json)'
 impl_status: implemented
+coverage:
+  "1": { spec: "spec.declarations.aspects.negative-impls.legality-1" }
+  "2": { spec: "spec.declarations.aspects.negative-impls.dynamics-1" }
+  "3": { spec: "spec.declarations.aspects.negative-impls.legality-3" }
+  "4": { spec: "spec.declarations.aspects.negative-impls.legality-1" }
+  "5": { spec: "spec.declarations.aspects.negative-impls.dynamics-2" }
 ---
 
 > **Status — accepted (2026-07-14).** Reviewed and revised: extended to a comma-separated multi-aspect list (S5), and the negative-impl braces spelling retired outright (bodyless is now mandatory, not just sugar), matching this project's own precedent (RFC-0100, RFC-0042) for retiring a strictly-superseded old spelling. No open questions block it.

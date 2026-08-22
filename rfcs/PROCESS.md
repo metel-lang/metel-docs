@@ -479,7 +479,7 @@ of this process that don't need judgment:
   itself, that was found by reading the cluster before ratifying it. `rfc.py check`
   reports clean as of 2026-07-10.
 
-  **Added 2026-08-19 (ADR-0049 §5/§7), CI-enforced:** `check` also runs the coverage
+  **Added 2026-08-19, CI-enforced:** `check` also runs the coverage
   ratchet against `COVERAGE-BASELINE.json` — every `implemented`/`integrated` RFC's
   currently-uncovered normative sections are compared against what the baseline already
   grandfathered in when it was last written, and `check` fails if any RFC has gained an
@@ -491,16 +491,16 @@ of this process that don't need judgment:
   which already ran `rfc.py check` for the structural checks above — no new job, this
   gate rides the existing one. metel-docs-internal's own CI runs `rfc.py check` too
   (new job, same workflow pattern as `check-examples.yml`), where it correctly degrades
-  to the informational skip ADR-0049 §6 describes, since `metel-interpreter/tests` isn't
+  to an informational skip, since `metel-interpreter/tests` isn't
   reachable from a bare docs-internal checkout — real enforcement only happens where the
   fixture corpus actually lives, in metel-core's CI.
 
-  **Added 2026-08-20 (ADR-0050 §5/§8):** `check`'s coverage summary now also reports
+  **Added 2026-08-20:** `check`'s coverage summary now also reports
   spec-anchoring migration progress — per RFC, how many of its covered normative sections
   are spec-anchored (`coverage.spec` frontmatter link + a citing `spec =` fixture, both
   required) versus still covered only by a direct `rfc =`/prose citation, plus a
-  corpus-wide `spec-anchoring migration (ADR-0050 §8): N/M citable normative sections
-  spec-anchored (X%)` line. Tracks the migration ADR-0050 §8 sequences (pre-integration
+  corpus-wide `spec-anchoring migration: N/M citable normative sections
+  spec-anchored (X%)` line. Tracks the migration sequence (pre-integration
   citations stay `rfc =`; a `3-integrated` RFC's existing citations move to `spec =` as a
   condition of that transition) without needing a separate report — same coverage-summary
   output `check` already prints, extended rather than duplicated.
@@ -513,7 +513,7 @@ of this process that don't need judgment:
   `INDEX.md` cluster section's combined text; suggests where it belongs rather than
   deciding it. Verified against three existing placements (RFC-0091, RFC-0074, RFC-0003)
   and agreed with the manual choice in all three.
-- `rfc.py index --write-coverage-baseline` (added 2026-08-19, ADR-0049 §7) — regenerates
+- `rfc.py index --write-coverage-baseline` (added 2026-08-19) — regenerates
   `COVERAGE-BASELINE.json` from the current per-RFC coverage state. Run this after
   deliberately widening a gap (a new typed exemption, a fixture intentionally retired) so
   `check`'s ratchet stops treating the new state as a regression — not something to run

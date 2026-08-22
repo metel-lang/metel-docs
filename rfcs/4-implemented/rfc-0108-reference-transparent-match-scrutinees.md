@@ -7,6 +7,14 @@ target:
 updated: '2026-07-21'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/559'
 impl_status: implemented
+coverage:
+  "1": { spec: "spec.expressions.pattern-matching.matching-through-a-reference.legality-1" }
+  "1.1": { spec: "spec.expressions.pattern-matching.matching-through-a-reference.legality-2" }
+  "1.2": { spec: "spec.expressions.pattern-matching.matching-through-a-reference.legality-3" }
+  "1.3": { spec: "spec.expressions.pattern-matching.matching-through-a-reference.dynamics-1" }
+  "1.4": { spec: "spec.expressions.pattern-matching.matching-through-a-reference.dynamics-2" }
+  "2": { spec: "spec.expressions.pattern-matching.matching-through-a-reference.legality-4" }
+  "3": { spec: "spec.expressions.pattern-matching.matching-through-a-reference.legality-5" }
 ---
 
 > **Status — under review (2026-07-20).** Thorough draft with resolved worked examples; open questions (exhaustiveness wording, 0107 sequencing) are non-blocking recommendations. Reviewing as part of the enum/reference cluster (0107/0108/0110).

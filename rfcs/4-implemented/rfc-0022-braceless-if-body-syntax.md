@@ -2,6 +2,12 @@
 id: rfc-0022
 title: "Braceless if body syntax"
 date: '2026-05-23'
+coverage:
+  "1": { spec: "spec.expressions.control-flow.if-else.legality-1" }
+  "2": { spec: "spec.expressions.control-flow.if-else.legality-2" }
+  "3": { spec: "spec.expressions.control-flow.if-else.legality-3" }
+  "4": { spec: "spec.expressions.control-flow.if-else.legality-4" }
+  "5": { spec: "spec.expressions.control-flow.if-else.legality-5" }
 ---
 
 ## Summary
@@ -98,7 +104,7 @@ Target v0.3. This is a pure syntax extension with no type system or evaluator im
 2026-08-19: item 2 restated to match verified behavior, see metel-core#750)
 
 Retroactive breakdown of this RFC's distinct, fixture-testable normative claims,
-as headed sections for ADR-0049 citation purposes only. The document above is
+as headed sections for citation purposes only. The document above is
 unchanged and remains the historical record. Deliberately excludes claims that
 aren't independently observable from a program's behavior -- implementation
 strategy, design rationale, or internal architecture discussion belongs in the

@@ -2,6 +2,13 @@
 id: rfc-0054
 title: "Standard List<T> Type"
 date: '2026-06-05'
+coverage:
+  "1": { spec: "spec.types.list-t.dynamics-1" }
+  "2": { spec: "spec.types.list-t.dynamics-2" }
+  "3": { spec: "spec.types.list-t.dynamics-3" }
+  "4": { spec: "spec.types.list-t.dynamics-4" }
+  "5": { spec: "spec.types.list-t.legality-1" }
+  "6": { spec: "spec.runtime.list-t.dynamics-1" }
 ---
 
 ## Summary
@@ -85,7 +92,7 @@ All open questions are resolved or explicitly deferred.
 
 Retroactive breakdown of this RFC's distinct, fixture-testable normative claims
 (expanded 2026-08-19: added item 6, missed in the original pass),
-as headed sections for ADR-0049 citation purposes only. The document above is
+as headed sections for citation purposes only. The document above is
 unchanged and remains the historical record. Deliberately excludes claims that
 aren't independently observable from a program's behavior -- implementation
 strategy, design rationale, or internal architecture discussion belongs in the

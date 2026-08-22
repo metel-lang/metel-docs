@@ -4,6 +4,11 @@ title: "Field-Level Visibility"
 date: '2026-05-30'
 status: implemented
 spec_status: done
+coverage:
+  "1": { spec: "spec.modules.visibility.legality-1" }
+  "4": { kind: blocked, reason: "Depends on a `..` rest pattern for struct field patterns, which doesn't exist in the grammar (record_pattern has no rest form).", ref: "metel-core#753" }
+  "5": { kind: blocked, reason: "Same `..` rest-pattern gap as §4 -- an external named-field pattern's exhaustiveness requirement can't be tested without it existing at all.", ref: "metel-core#753" }
+  "7": { kind: blocked, reason: "check_field_visibility only checks the field's own visibility marker, never the enclosing struct's -- a public field on a private struct is actually reachable across modules once a value is obtained some other way, contradicting this claim. Confirmed independently of the pattern-matching gap (#753); the mechanism this needs already works, the enforcement itself is missing.", ref: "metel-core#776" }
 ---
 
 ## Summary
@@ -118,6 +123,19 @@ Pattern matching **within** the declaring module has no restrictions — all fie
 Exhaustiveness checking: a struct with any private fields cannot be exhaustively matched by an external pattern that does not use `..`. The compiler must enforce this.
 
 ### `linear struct` and `linear enum`
+
+> **Correction (2026-08-22).** `linear struct`/`linear enum` never materialized as a
+> language construct. The `linear` keyword traces to RFC-0024 (Linear Types); metel-core#753
+> flagged real ambiguity over whether that lineage was merely unimplemented or dropped
+> outright, given that RFC-0024's superseding RFC (RFC-0028, refused) carries a note that
+> its "foundation layer... linear types... stands and may be implemented." Resolved by RFC-0071
+> (Ownership and Move Semantics) itself, whose own References section settles it: *"RFC-0024
+> (Linear Types, superseded) — prior exploration of linear/affine ownership in Metel; this
+> RFC is the settled formulation of the same core idea."* RFC-0071's accepted, implemented
+> `Copy`/`Drop` aspect model is that settled formulation — not a `linear` type qualifier.
+> There is no `linear` keyword anywhere in the current grammar, and none is planned under
+> this design. This section is retained as historical record of the RFC's original
+> assumptions, not as a description of implementable behavior.
 
 The same rules apply to `linear struct`. Linear types are still constructable from outside only if all fields are `pub`, or via a public constructor function.
 
@@ -266,7 +284,7 @@ The field-visibility design and its remaining language-shape questions are resol
 
 Retroactive breakdown of this RFC's distinct, fixture-testable normative claims
 (expanded 2026-08-19: added item 8, missed in the original pass),
-as headed sections for ADR-0049 citation purposes only. The document above is
+as headed sections for citation purposes only. The document above is
 unchanged and remains the historical record. Deliberately excludes claims that
 aren't independently observable from a program's behavior -- implementation
 strategy, design rationale, or internal architecture discussion belongs in the
@@ -301,11 +319,16 @@ all fields.
 An external named-field pattern for a struct with private fields must include `..`;
 otherwise it is not a permitted exhaustive representation of that struct.
 
-### 6. Field visibility also applies to linear structs and enum struct variants
+### 6. Field visibility also applies to enum struct variants
 
-Named fields of linear structs and enum struct variants use the same public/private
-rules as ordinary struct fields. Public enum tuple-variant positions remain exposed
-as part of their positional variant shape.
+Named fields of enum struct variants use the same public/private rules as ordinary
+struct fields. Public enum tuple-variant positions remain exposed as part of their
+positional variant shape.
+
+> **Note (2026-08-22):** this item originally also claimed the same for `linear
+> struct`/`linear enum`, which don't exist in the language — see the correction on the
+> RFC's own "`linear struct` and `linear enum`" section above. Dropped from this item;
+> it is not part of what remains to be tested here.
 
 ### 7. Public fields on a private struct do not expose the struct externally
 
