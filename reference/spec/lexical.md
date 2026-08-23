@@ -197,14 +197,26 @@ Within a string literal, `\${` produces the literal characters `${`.
 An integer literal with an integer suffix has the suffix's sized integer type; a float
 literal with a float suffix has the suffix's sized float type.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [02_sized_int_literals.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/literals/02_sized_int_literals.mtl), [03_sized_float_literals.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/literals/03_sized_float_literals.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Legality Rule {#spec.lexical.literals.legality-3}
 
 An integer literal and a float literal do not implicitly coerce between integer and float
 types.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage3_neg_12_suffixed_integer_not_float.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/types/stage3_neg_12_suffixed_integer_not_float.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Legality Rule {#spec.lexical.literals.legality-5}
 
 A character literal has type `Char`.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [81_char.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/81_char.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 

@@ -266,6 +266,10 @@ fun main() -> i64 {
 A tuple's elements are addressed by zero-based positional selectors. A selector is valid
 only for an element in the tuple's declared arity.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [09_tuple.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/09_tuple.mtl), [neg_09_tuple_oob.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/neg_09_tuple_oob.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 </details>
 
 ## Anonymous Records

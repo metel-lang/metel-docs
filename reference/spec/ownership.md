@@ -297,6 +297,10 @@ whole afterward is rejected as a use of a partially moved value. Moving a field 
 change the record's static type — there is no narrower record type for the residual
 value, only per-field move tracking.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [71_record_field_moved_independently.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/71_record_field_moved_independently.mtl), [72_record_used_as_whole_after_field_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/72_record_used_as_whole_after_field_move.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 </details>
 
 ## References and moves

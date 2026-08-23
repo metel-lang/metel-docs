@@ -302,10 +302,18 @@ Top-level `extend` blocks follow the same declaration-order rule as the types th
 Each block introduces a lexical scope. A declaration in an inner scope may shadow an outer
 declaration, and the outer declaration is not visible outside its own scope.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [20_scoping.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/functions/20_scoping.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-2}
 
 A `let` or `var` binding is in scope from its declaration through the end of its containing
 block, but not before its declaration.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_03_binding_not_visible_before_declaration.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/functions/neg_03_binding_not_visible_before_declaration.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-3}
 
@@ -313,11 +321,19 @@ Function declarations are visible throughout their containing block regardless o
 order, including to other functions in that block; this hoisting does not extend out of an
 inner block.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [79_nested_fun_forward_ref_in_let_initializer.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/functions/79_nested_fun_forward_ref_in_let_initializer.mtl), [07_forward_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/functions/07_forward_reference.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-4}
 
 Top-level struct and enum declarations are visible throughout the program regardless of
 source order. A type declared inside a function is visible only from its declaration through
 that function body.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [46_local_struct_scope.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/46_local_struct_scope.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -1644,9 +1660,17 @@ is a compile-time error.
 An aspect method with a body is a default implementation. An implementing `extend` block
 that omits it inherits and dispatches to that body.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage12_01_default_methods.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Legality Rule {#spec.declarations.aspects.default-methods.legality-1}
 
 An implementing `extend` block must provide every aspect method that has no default body.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage12_neg_01_missing_required_with_defaults.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_neg_01_missing_required_with_defaults.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -1689,6 +1713,10 @@ extend Point {
 
 Within an aspect declaration, `Self` denotes the type implementing that aspect. Within an
 `extend` block, it denotes the block's target type.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage5_03_self_method_signatures.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/stage5_03_self_method_signatures.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -2490,5 +2518,9 @@ values use neither runtime type erasure nor vtable dispatch.
 
 If applicable aspects for the same receiver type provide the same method name, an unqualified
 dot call is ambiguous and is rejected with `T0013`.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/same_type_aspect_method_collision_is_t0013/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>

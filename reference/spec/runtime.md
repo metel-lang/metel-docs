@@ -20,6 +20,10 @@ A panic prints its message, terminates the process with a non-zero status, and c
 caught. Calling `panic`, a failing `assert`, `.yolo()` on an absent or error variant,
 out-of-bounds array access, and integer division by zero trigger a panic.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_panic.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/never/neg_panic.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 </details>
 
 ## Built-in Functions
@@ -57,22 +61,42 @@ the `+` operator.
 
 `print` and `println` accept only values whose type implements `Display`.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage8_neg_02_println_requires_display.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_println_requires_display.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Dynamic Semantics {#spec.runtime.built-in-functions.dynamics-1}
 
 `print` writes a `Display` value's `to_string` result to stdout without a newline; `println`
 writes the same result followed by a newline.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [77_println_user_display.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/functions/77_println_user_display.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Dynamic Semantics {#spec.runtime.built-in-functions.dynamics-2}
 
 `assert(false)` panics with `"assertion failed"`; `assert(false, msg)` panics with `msg`.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [80_assert_panic_messages.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/80_assert_panic_messages.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.runtime.built-in-functions.dynamics-3}
 
 `dbg(v)` writes its debug rendering to stderr and evaluates to `v` unchanged.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [dbg_builtin.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/dbg_builtin.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Dynamic Semantics {#spec.runtime.built-in-functions.dynamics-4}
 
 `clock()` returns the current Unix timestamp in milliseconds.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [81_clock_is_unix_milliseconds.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/81_clock_is_unix_milliseconds.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -98,6 +122,10 @@ aspect Display {
 `i64`, `f64`, `boolean`, `String`, and `Char` have built-in `Display` implementations whose
 `to_string` methods return their canonical string representations.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [38_builtins.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/38_builtins.mtl), [82_embedded_core_impls.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/82_embedded_core_impls.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 </details>
 
 ### Iterable\<T\>
@@ -118,6 +146,10 @@ aspect Iterable<T> {
 Arrays and ranges implement `Iterable<T>`; a user-defined type is usable in `for-in` only
 when it implements that aspect.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [59_iterable_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/59_iterable_aspect.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 </details>
 
 ### From\<S\>
@@ -137,6 +169,10 @@ aspect From<S> {
 
 `i64` implements `From<f64>` and `f64` implements `From<i64>`; user-defined `From<S>`
 implementations make their target type available for `as` casts and `?` error coercion.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [82_embedded_core_impls.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/82_embedded_core_impls.mtl), [61_propagate_error_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/error_handling/61_propagate_error_coercion.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -207,6 +243,10 @@ rather than panicking.
 
 Calling `.len()` on either `T[]` or `[T; N]` returns its number of elements.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [13_sized_array_extended.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/types/13_sized_array_extended.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 </details>
 
 ## Char Methods
@@ -227,6 +267,10 @@ Calling `.len()` on either `T[]` or `[T; N]` returns its number of elements.
 `u32::from(c)` returns `c`'s Unicode scalar value, and `Char::from(n)` returns the matching
 character or raises a runtime error when `n` is not a valid Unicode scalar value. A character's
 `to_string()` result is its one-character string.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [81_char.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/builtins/81_char.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -462,5 +506,9 @@ an error; only a failure to launch the command is an `Err`. The result type is
 `std::process::run` launches `command` directly with `args`, without shell parsing. A launched
 program returns `Ok(ProcessOutput)` even for a non-zero exit status; only failure to launch
 returns `Err(OsError)`.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/std_process_host_module/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>

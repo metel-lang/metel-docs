@@ -1238,14 +1238,26 @@ fun main() -> i64 {
 `break` transfers control out of the innermost enclosing loop. In a value-producing
 `loop`, `break expr` supplies that loop's result and bare `break` supplies `()`.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [13_loop.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/control_flow/13_loop.mtl), [91_nested_break_propagation.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/control_flow/91_nested_break_propagation.mtl), [stage6_09_nested_loop_break.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/control_flow/stage6_09_nested_loop_break.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Dynamic Semantics {#spec.expressions.control-flow.break-continue-and-return.dynamics-2}
 
 `continue` abandons the current iteration of the innermost enclosing loop and begins its
 next iteration.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [13_loop.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/control_flow/13_loop.mtl), [stage6_10_loop_control_statements.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/control_flow/stage6_10_loop_control_statements.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Dynamic Semantics {#spec.expressions.control-flow.break-continue-and-return.dynamics-3}
 
 `return expr` transfers control out of the enclosing function with `expr` as its result;
 bare `return` returns `()`.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [81_return_exits_early_and_bare_return_is_unit.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/functions/81_return_exits_early_and_bare_return_is_unit.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
