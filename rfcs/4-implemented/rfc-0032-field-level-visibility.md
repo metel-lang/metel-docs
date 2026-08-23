@@ -6,9 +6,13 @@ status: implemented
 spec_status: done
 coverage:
   "1": { spec: "spec.modules.visibility.legality-1" }
+  "2": { spec: "spec.modules.visibility.legality-3" }
+  "3": { spec: "spec.modules.visibility.legality-4" }
   "4": { kind: blocked, reason: "Depends on a `..` rest pattern for struct field patterns, which doesn't exist in the grammar (record_pattern has no rest form).", ref: "metel-core#753" }
   "5": { kind: blocked, reason: "Same `..` rest-pattern gap as §4 -- an external named-field pattern's exhaustiveness requirement can't be tested without it existing at all.", ref: "metel-core#753" }
+  "6": { spec: "spec.modules.visibility.legality-6" }
   "7": { kind: blocked, reason: "check_field_visibility only checks the field's own visibility marker, never the enclosing struct's -- a public field on a private struct is actually reachable across modules once a value is obtained some other way, contradicting this claim. Confirmed independently of the pattern-matching gap (#753); the mechanism this needs already works, the enforcement itself is missing.", ref: "metel-core#776" }
+  "8": { spec: "spec.modules.visibility.legality-5" }
 ---
 
 ## Summary

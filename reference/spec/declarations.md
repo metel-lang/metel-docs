@@ -713,7 +713,9 @@ fun main() -> i64 {
 }
 ```
 
-Variants may be unit (no data) or struct-like (named fields).
+Variants may be unit (no data) or struct-like (named fields). A struct-like variant's
+named fields follow the [same `public`/private visibility rules as an ordinary
+struct's](modules.md#spec.modules.visibility.legality-6).
 
 When a struct-like variant's field set is empty, [both constructor spellings are
 accepted](#spec.declarations.enums.legality-1):
