@@ -72,4 +72,4 @@ Consistent with the eventual LLVM compiler architecture. Builds the right mental
 ## References
 
 - Architecture: [../architecture.md](../architecture.md)
-- Spec: [docs/public/spec.md](../../../docs/public/spec.md)
+- Spec: [reference/spec.md](../../reference/spec.md)

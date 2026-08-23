@@ -148,4 +148,4 @@ Type error codes: E0001–E0008. Runtime panics (`.yolo()` on `nope`, out-of-bou
 | Type Checker | [typechecker.md](https://github.com/metel-lang/metel-core/blob/main/metel-frontend/docs/typechecker.md) *(metel-core, not this repo)* |
 | Evaluator | [evaluator.md](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/docs/evaluator.md) *(metel-core, not this repo)* |
 | Testing | [testing.md](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/docs/testing.md) *(metel-core, not this repo)* |
-| Design decisions | [`decisions/`](decisions/) |
+| Design decisions | `decisions/` (51 ADRs; start from [ADR-0004](decisions/adr-0004-interpreter-architecture.md) above if new here) |
