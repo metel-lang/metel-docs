@@ -121,6 +121,10 @@ A struct-literal field initializer is `ident`, optionally followed by `= expr`. 
 <span class="rigor-backlink">_Referenced by: [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_</span>
 <!-- rfc.py:origins:end -->
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [43_shorthand_field.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/43_shorthand_field.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Dynamic Semantics {#spec.declarations.structs.instantiation-and-field-access.dynamics-1}
 
 A shorthand field `ident` in a struct literal evaluates identically to `ident = ident`. ...
@@ -128,6 +132,10 @@ A shorthand field `ident` in a struct literal evaluates identically to `ident = 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [43_shorthand_field.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/43_shorthand_field.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 

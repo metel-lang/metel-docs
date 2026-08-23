@@ -35,9 +35,17 @@ expression introducer.
 Function parameter and return-type annotations may be omitted when their types can be
 inferred from context.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [80_named_function_inferred_signature.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/functions/80_named_function_inferred_signature.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Dynamic Semantics {#spec.functions.named-function-declarations.dynamics-1}
 
 A function with no return annotation and no `return expr;` returns `()`.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [18_return.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/functions/18_return.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -72,6 +80,10 @@ fun main() -> i64 {
 
 A function declared in an `extend` block without a `self`, `&self`, or `&var self`
 parameter is an associated function and is called through its target type with `::`.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/elaboration_inherent_and_aspect_coexist/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -117,6 +129,10 @@ Function and closure types use `(ParameterTypes) -> ReturnType`; the former
 
 Named functions and closures are values of their function type and may be bound, passed
 as arguments, and returned as results.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [03_functions_and_closures.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/03_functions_and_closures.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -389,20 +405,36 @@ value is a type error (`T0001`) rather than an early `None` return.
 The `?` operator requires a `Result<T, E>` operand; applying it to `Perhaps<T>` or any
 other type is a type error.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage6_neg_05_error_propagation_non_result.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/error_handling/stage6_neg_05_error_propagation_non_result.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Legality Rule {#spec.functions.the-operator.legality-2}
 
 The enclosing function's return type must be `Result<U, E2>`, and the operand error
 type `E1` must equal `E2` or satisfy `E2: From<E1>`.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage6_neg_06_error_propagation_mismatched_types.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/error_handling/stage6_neg_06_error_propagation_mismatched_types.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.functions.the-operator.dynamics-1}
 
 Evaluating `Ok { value }?` produces `value` and evaluation continues in the enclosing
 function.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [34_propagate_error.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/error_handling/34_propagate_error.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Dynamic Semantics {#spec.functions.the-operator.dynamics-2}
 
 Evaluating `Err { error }?` immediately returns `Err { error }` from the enclosing
 function; when the error types differ, the returned error is `E2::from(error)`.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [61_propagate_error_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/error_handling/61_propagate_error_coercion.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -447,14 +479,26 @@ type means the function returns `()`.
 Only a declaration in the `std` namespace may use the `native` modifier; a `native`
 declaration in a user module is rejected.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [native_outside_std.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/native_outside_std.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Legality Rule {#spec.functions.native-functions-standard-library-only.legality-2}
 
 A native declaration has a dotted `@` host-binding key and no Metel body: it ends with
 `;`.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [native_decl.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/native_decl.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Legality Rule {#spec.functions.native-functions-standard-library-only.legality-3}
 
 Every native-function parameter has an explicit type annotation. An omitted return type
 denotes `()`.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [native_decl.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/native_decl.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
