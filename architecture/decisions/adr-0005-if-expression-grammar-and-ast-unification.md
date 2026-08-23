@@ -210,4 +210,4 @@ Files changed (task 0008):
 ## References
 
 - Task 0002 — Stage 2: Control Flow (where the limitation was discovered; v0.1, complete)
-- Spec: [Declarations](../../../docs/public/spec/declarations.md), [Expressions](../../../docs/public/spec/expressions.md)
+- Spec: [Declarations](../../reference/spec/declarations.md), [Expressions](../../reference/spec/expressions.md)

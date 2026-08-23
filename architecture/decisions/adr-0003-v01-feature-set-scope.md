@@ -16,7 +16,7 @@ The guiding question for every candidate feature was: *"If we implement this now
 
 We scoped v0.1 to the features already fully designed in the spec, plus a small set of roadmap items whose design was settled enough to commit to without risk of future breakage. Everything else was explicitly deferred.
 
-**Included:** the full spec as it stood at this date — primitives, variables, functions, closures, structs, enums, aspects, pattern matching, arrays, tuples, `Perhaps<T>`, `Result<T,E>`, `?`, `as`/`From`, `loop`/`break`/`continue`, compound assignment, associated functions, `mut self`, closure type signatures, panics, and the built-in functions. See [docs/public/spec.md](../../../docs/public/spec.md) for the authoritative description of each.
+**Included:** the full spec as it stood at this date — primitives, variables, functions, closures, structs, enums, aspects, pattern matching, arrays, tuples, `Perhaps<T>`, `Result<T,E>`, `?`, `as`/`From`, `loop`/`break`/`continue`, compound assignment, associated functions, `mut self`, closure type signatures, panics, and the built-in functions. See [reference/spec.md](../../reference/spec.md) for the authoritative description of each.
 
 **Deferred:** module system, visibility, `UInt`, string interpolation, aspect objects, derived aspects, operator overloading aspects, `?` error coercion, `List<T>`, and integer overflow semantics. These are tracked in `Backlog.md`.
 
@@ -33,5 +33,6 @@ A secondary criterion was additive safety: deferred features can all be added la
 
 ## References
 
-- Spec: [docs/public/spec.md](../../../docs/public/spec.md)
-- Deferred features: [docs/public/rfcs/](../../../docs/public/rfcs/) (RFC stubs for all deferred items)
+- Spec: [reference/spec.md](../../reference/spec.md)
+- Deferred features: `rfcs/` (RFC stubs for all deferred items — most are still at an
+  earlier lifecycle stage than what's published on the site; no single link covers them)

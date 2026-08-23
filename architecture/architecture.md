@@ -1,8 +1,9 @@
 # Interpreter Architecture
 
 > Rationale for the tree-walk approach: [ADR-0004](decisions/adr-0004-interpreter-architecture.md)
-> (ADR-0051, amended 2026-08-23 — this file moved here from `metel-docs-internal`
-> alongside the ADRs it links to, so the link above is local again)
+> (ADR-0051, amended again — this whole file and `decisions/` are excluded from the
+> metel-website build; still public and readable directly on GitHub in `metel-docs`,
+> where relative links like the one above resolve fine on their own)
 
 ## Pipeline
 
@@ -148,4 +149,4 @@ Type error codes: E0001–E0008. Runtime panics (`.yolo()` on `nope`, out-of-bou
 | Type Checker | [typechecker.md](https://github.com/metel-lang/metel-core/blob/main/metel-frontend/docs/typechecker.md) *(metel-core, not this repo)* |
 | Evaluator | [evaluator.md](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/docs/evaluator.md) *(metel-core, not this repo)* |
 | Testing | [testing.md](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/docs/testing.md) *(metel-core, not this repo)* |
-| Design decisions | [`decisions/`](decisions/) |
+| Design decisions | `decisions/` (51 ADRs; start from [ADR-0004](decisions/adr-0004-interpreter-architecture.md) above if new here) |

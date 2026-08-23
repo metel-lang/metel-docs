@@ -138,7 +138,7 @@ let (substitution, scheme_env) = infer(&program, &mut ctx)?;
 let typed_program = construct(&program, &substitution, &scheme_env)?;
 ```
 
-Function hoisting (spec [Scoping and Shadowing](../../../docs/public/spec/declarations.md#scoping-and-shadowing)) is handled in Pass 1 only: at each block entry, the inference walk scans the block's direct `FunDecl`s and registers them with fresh type variables before visiting any other statement. Pass 2 needs no hoisting — all types are resolved and lookups go through `SchemeEnv`/`Substitution` regardless of declaration order.
+Function hoisting (spec [Scoping and Shadowing](../../reference/spec/declarations.md#scoping-and-shadowing)) is handled in Pass 1 only: at each block entry, the inference walk scans the block's direct `FunDecl`s and registers them with fresh type variables before visiting any other statement. Pass 2 needs no hoisting — all types are resolved and lookups go through `SchemeEnv`/`Substitution` regardless of declaration order.
 
 Option C over Option A because it requires no `NodeId` fields on AST nodes — a significant structural change to the AST with no other benefit. Over Option B because it requires no skeleton tree (a third tree-shaped representation alongside the untyped AST and `TypedAST`). The "re-runs inference logic" cost is lower than it appears: Pass 2 applies structural type rules to already-concrete types, which is trivial compared to Pass 1's constraint solving.
 
