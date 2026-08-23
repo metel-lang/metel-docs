@@ -202,6 +202,16 @@ honest single status). Concretely:
   `--tracking <tracking task/URL>` — the same discipline as Rust's rule that no feature
   ships behind `#![feature(x)]` without an open tracking issue, enforced mechanically
   rather than left to memory.
+- **Every existing `rfc =`/prose fixture citation must migrate to a `spec =` id before
+  entering `3-integrated` (ADR-0050 §8, added 2026-08-23).** `rfc.py transition <id>
+  --to integrated` refuses to run if any of the RFC's sections are still cited the old
+  way — restructure the relevant spec content into Legality Rule/Dynamic Semantics
+  blocks, add `coverage.spec` frontmatter links, and update each citing fixture's
+  sidecar key in the same change, not as a follow-up sweep (a follow-up sweep is exactly
+  what metel-core#769 had to clear by hand, one RFC late). `rfc.py check` separately
+  flags any `rfc =`-only section it finds on an already-integrated-or-later RFC as a
+  hard failure, so a citation reverted or re-added the old way after this gate passes
+  doesn't go unnoticed either.
 - **Exactly one, added 2026-08-23.** `impl_tracking` was always a single field, but
   nothing stopped the *actual* tracking from being spread across several independent
   top-level issues anyway — RFC-0071 shipped as four ("N/4") issues (`#578`-`#579`

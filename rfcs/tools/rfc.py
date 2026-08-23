@@ -477,6 +477,38 @@ def cmd_transition(args):
             )
         extra_fm["impl_tracking"] = args.tracking
         extra_fm["impl_status"] = "not-started"
+        # ADR-0050 §8: fixture-citation migration gate. An RFC entering
+        # `integrated` is having its claims restructured into spec
+        # Legality Rule/Dynamic Semantics blocks in the same change --
+        # every existing direct `rfc =`/prose fixture citation for it must
+        # be migrated to a `spec =` id then, not left for a later sweep
+        # (that's exactly the backlog metel-core#769 had to clear by hand).
+        # Refuses rather than degrading when the corpus is unreachable,
+        # same as the --to implemented gate below (ADR-0049 §5/§6) --
+        # "unknown" must not be treated as "pass" for a gate that actually
+        # blocks a transition.
+        tests_dir = metel_core_tests_dir()
+        if tests_dir is None:
+            error(
+                "cannot verify fixture-citation migration: metel-interpreter/tests is "
+                "not reachable from here (see ADR-0049 §6). Run this from a metel-core "
+                "checkout with docs/ embedded as its submodule, or set "
+                "METEL_CORE_ROOT to point at one."
+            )
+        sidecar, prose = scan_fixture_citations(tests_dir)
+        leftover = sorted(
+            ({s for s, _ in sidecar.get(rid, [])} | {s for s, _ in prose.get(rid, [])})
+            - {None}
+        )
+        if leftover:
+            error(
+                f"{rid.upper()} still has direct `rfc =`/prose fixture citations for "
+                f"section(s) {', '.join(leftover)} (ADR-0050 §8) — every citation must "
+                f"migrate to a `spec =` id before this RFC enters integrated. Restructure "
+                f"the relevant spec content into Legality Rule/Dynamic Semantics blocks, "
+                f"add `coverage.spec` frontmatter links for each section, and update the "
+                f"citing fixtures' sidecar key from `rfc =` to `spec =`."
+            )
     elif args.tracking:
         extra_fm["impl_tracking"] = args.tracking
     if args.to == "implemented":
@@ -1834,6 +1866,23 @@ def coverage_check_problems():
             )
         total_spec_anchored += len(spec_anchored)
         total_rfc_only += len(rfc_only)
+        if rfc_only:
+            # ADR-0050 §8's other half of the migration gate: --to integrated
+            # (cmd_transition) only stops a *new* un-migrated citation from
+            # entering at the moment of transition; this is what catches one
+            # added or reintroduced afterward -- a fixture reverted to
+            # `rfc =`, or a new fixture citing an already-integrated RFC the
+            # old way instead of picking up its spec = id. Every RFC in this
+            # loop is already integrated or implemented (per_rfc_coverage's
+            # own filter above), so rfc_only here is never "not yet
+            # migrated, in progress" -- it's always a regression.
+            problems.append(
+                f"{rid}: {len(rfc_only)} section(s) still cited via direct "
+                f"`rfc =`/prose instead of `spec =` ({', '.join(sorted(rfc_only))}) -- "
+                f"ADR-0050 §8 requires migration complete once an RFC reaches "
+                f"integrated. Add the missing `coverage.spec` frontmatter link(s) and "
+                f"update the citing fixture(s)' sidecar key from `rfc =` to `spec =`."
+            )
         info.append(
             f"  {rid}: {covered_n}/{len(sections)} normative sections covered"
             + (f" -- uncovered: {', '.join(sorted(uncovered))}" if uncovered else "")
