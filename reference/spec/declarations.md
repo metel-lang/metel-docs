@@ -2237,8 +2237,8 @@ with `extend Type: !Aspect;` — body always empty, since a negative impl is a
 declaration of non-implementation, not a definition of behavior:
 
 ```metel
-extend<T, brand 'b> Rc<T, 'b>: !Send;
-extend<T, brand 'b> Rc<T, 'b>: !Sync;
+extend<T> Rc<T>: !Send;
+extend<T> Rc<T>: !Sync;
 ```
 
 More generally, a bodyless `extend` block is permitted whenever the body would be empty

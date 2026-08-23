@@ -278,7 +278,7 @@ that reference by one closure are visible through the others.
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-4}
 
 A closure that escapes its defining function while holding a captured pointer to a
-still-reachable non-linear local keeps that storage alive and correctly mutable after the
+still-reachable local keeps that storage alive and correctly mutable after the
 defining function returns.
 
 <!-- rfc.py:origins:start -->
