@@ -2,13 +2,26 @@
 id: rfc-0120
 title: "Named Records"
 date: '2026-07-24'
-status: draft
+status: under-review
+tracking: 'https://github.com/metel-lang/metel-core/issues/791'
 target:
+updated: '2026-08-23'
 ---
 
 > **Extracted from RFC-0090 §8 (tier 3) and §9 on 2026-07-24** (superseded; see RFC-0116's
-> header for the split rationale). Depends on RFC-0116 (Anonymous Record Types) and
-> RFC-0119 (Record Conversions).
+> header for the split rationale). Depends on RFC-0116 (Anonymous Record Types).
+
+> **Correction, 2026-08-23: RFC-0119 removed from the dependency list above.** It was
+> inherited from the original six-way split's dependency-*ordering* (RFC-0116 through
+> RFC-0121, numbered by review convenience), not a real technical requirement — this
+> RFC's own §1 says so directly: *"A tier-3 type gets tier 2's conversions for free:
+> `to_record`/`from_record` on a type that already **is** `(row, brand)` are the
+> identity coercion, nothing to derive separately."* Tier 2 (RFC-0119) and tier 3 (this
+> RFC) are parallel paths for different commitments, not a sequence — see §2's framing.
+> RFC-0119 also carries a real, open-ended blocker of its own (its derive convenience
+> depends on RFC-0093, `0-draft`, no target) that this RFC has no reason to inherit.
+
+> **Status — under review (2026-08-23).** Committed to v0.13.0, tracking issue #791 filed 2026-08-22
 
 ## Summary
 
@@ -48,7 +61,7 @@ type, alive only while it is held. Three things need the row to be part of the t
 | Tier | Declaration | Row access | Impl-eligible |
 |---|---|---|---|
 | 1 | `struct` | none | — |
-| 2 | `struct` + `@derive(ToRecord, FromRecord)` | explicit, temporary, per-call | no |
+| 2 | `struct` + `#derive(ToRecord, FromRecord)` | explicit, temporary, per-call | no |
 | 3 | `record` | intrinsic, permanent | yes |
 
 **Why not collapse 2 into 3.** Anyone wanting a single local drain/restore in one function
@@ -92,7 +105,7 @@ it contains (RFC-0118 §3). Two consequences the framing above misses:
   change to anyone bounded on it. Before it, it was refactoring.
 
 So `struct` → `record` should be read as *publishing a contract*, not as *enabling a
-feature*. Tier 2 (`@derive(ToRecord, FromRecord)`, RFC-0119) exists precisely for the author
+feature*. Tier 2 (`#derive(ToRecord, FromRecord)`, RFC-0119) exists precisely for the author
 who wants row operations **locally** without making that commitment: it grants conversion and
 withholds bound satisfaction, so the layout stays private. **That is what the tier 2 / tier 3
 boundary is actually for** — §1 above describes it in terms of impl-resolution mechanics,
@@ -169,7 +182,8 @@ answered.
   the upgrade path) and §9 (identity-tag reuse) — the source
 - RFC-0116 (Anonymous Record Types) — the anonymous former this is the nominal counterpart
   to; §5 there declined the records-as-foundation reframing this RFC's §3 narrows
-- RFC-0119 (Record Conversions) — tier 2, which this is defined against
+- RFC-0119 (Record Conversions) — tier 2, which this is defined against; **not a
+  dependency** (2026-08-23 correction, see header)
 - RFC-0121 (Open Rows) — row-conditional impls, the capability §1 says tier 3 exists for
 - `reports/substructural-types/brand-kind-unification.md` §8 — the single-identity-kind
   proposal §3 reuses

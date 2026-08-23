@@ -162,7 +162,7 @@ independently; RFC-0081 is a separate acceptance.
    a negative impl would be unusual and its interaction with method resolution is
    unclear.
 
-2. **Negative impls and derived aspects.** Whether `@derive(Send)` on a type that has
+2. **Negative impls and derived aspects.** Whether `#derive(Send)` on a type that has
    a negative impl in scope is a compile error or silently loses is deferred to
    RFC-0093 (Derive Registration). (Originally deferred to RFC-0012, which was split
    into RFC-0092/0093/0094/0095 on 2026-07-09; this question belongs with derive

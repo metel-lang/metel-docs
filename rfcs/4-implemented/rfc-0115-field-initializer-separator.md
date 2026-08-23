@@ -30,7 +30,7 @@ coverage:
 
 > **Status — under review (2026-07-24).** Pulled into v0.12.0 alongside RFC-0116: shipping RFC-0116's { x = 1.0 } anonymous records without this would release the nominal/anonymous separator mismatch that this RFC exists to remove.
 
-> **Status — accepted (2026-07-24).** OQ3 resolved by direct verification: the parser never sees the separator (zero parser changes needed), punning is unaffected, no fixture uses = inside a literal brace, and no negative test pins the : spelling. OQ1 is inherited unchanged from the current syntax; OQ2 is delegated to colon-classifies-equals-defines.md by construction. Neither blocks.
+> **Status — accepted (2026-07-24).** OQ3 resolved by direct verification: the parser never sees the separator (zero parser changes needed), punning is unaffected, no fixture uses = inside a literal brace, and no negative test pins the : spelling. OQ1 is inherited unchanged from the current syntax; OQ2 is delegated to colon-classifies-equals-labels-walrus-binds.md by construction. Neither blocks.
 
 > **Status — integrated 2026-07-24, targeting v0.12.0.** `field_init`'s change is merged
 > into `public/reference/spec/`: 41 struct- and enum-literal sites across six spec files
@@ -99,7 +99,7 @@ the entire grammar where `:` introduces a value, so this single edit completes t
 
 ## Motivation
 
-`reports/syntax/colon-classifies-equals-defines.md` audits every `:` and `=` site in
+`reports/syntax/colon-classifies-equals-labels-walrus-binds.md` audits every `:` and `=` site in
 `grammar.pest` against one rule:
 
 > **`:` classifies. `=` defines or equates.**
@@ -262,7 +262,7 @@ spellings during a migration window is not proposed.
    inherits it** — the same surprise exists today with `:`, unchanged by the separator. It
    is recorded here because it is the strongest argument for RFC-0100's call-shaped
    construction, and splitting the RFCs should not make it easier to lose track of.
-2. **Should the invariant itself be normative?** `colon-classifies-equals-defines.md` is a
+2. **Should the invariant itself be normative?** `colon-classifies-equals-labels-walrus-binds.md` is a
    report and binds nothing. This RFC applies it to one site; whether the *rule* should be
    ratified so it settles future syntax questions by default is that document's own open
    question 1, not decided here.
@@ -290,14 +290,14 @@ spellings during a migration window is not proposed.
 rather than leaving a reader to infer it. Question 1 is *inherited, not created* — the
 data-versus-computation tension exists identically today with `:`, so this RFC does not
 change it in either direction. Question 2 is delegated by construction: whether the
-separator invariant should be normative is `colon-classifies-equals-defines.md`'s own open
+separator invariant should be normative is `colon-classifies-equals-labels-walrus-binds.md`'s own open
 question, and this RFC applies the invariant to one site whatever that document decides.
 
 ---
 
 ## References
 
-- `reports/syntax/colon-classifies-equals-defines.md` — the invariant, the fourteen-site
+- `reports/syntax/colon-classifies-equals-labels-walrus-binds.md` — the invariant, the fourteen-site
   grammar audit, and the open question 4 ("what if RFC-0100 is refused?") this split
   answers
 - `public/rfcs/1-under-review/rfc-0100-constructor-call-construction.md` — the parent

@@ -441,7 +441,19 @@ def fix_referrers(old_rel, new_rel):
     new_str = str(new_rel)
     changed = []
     for f in REPO_ROOT.rglob("*.md"):
-        if ".git" in f.parts:
+        # Same historical-record exemption as status_citation_problems, and for the
+        # same reason (found 2026-08-23 rewriting reports/strategy/cycles/2026-08-01/
+        # cycle.md's own citation of RFC-0127's path *at that date* to match today's
+        # location): a dated snapshot's citation of a path is correct for when it was
+        # written, and rewriting it to match the present corrupts the record rather
+        # than fixing it.
+        if (
+            ".git" in f.parts
+            or "archive" in f.parts
+            or "5-superseded" in f.parts
+            or "6-refused" in f.parts
+            or "cycles" in f.parts
+        ):
             continue
         try:
             text = f.read_text()
@@ -456,7 +468,18 @@ def fix_referrers(old_rel, new_rel):
 def cmd_transition(args):
     rid = normalize_id(args.rfc_id)
     extra_fm = {}
-    if args.to == "integrated":
+    if args.to == "under-review":
+        if not args.tracking:
+            error(
+                "transitioning to 'under-review' requires --tracking <tracking task/URL> — "
+                "an RFC entering under-review needs a linked tracking issue in the same "
+                "change (see PROCESS.md's 2026-08-23 addition). --tracking sets the "
+                "'tracking' field, distinct from 'impl_tracking' (set later, at "
+                "'integrated' onward) since a design-settlement issue and an "
+                "implementation issue are usually not the same issue."
+            )
+        extra_fm["tracking"] = args.tracking
+    elif args.to == "integrated":
         if not args.tracking:
             error(
                 "transitioning to 'integrated' requires --tracking <tracking task/URL> — "
@@ -1305,8 +1328,21 @@ def status_citation_problems(id_to_stage):
     for f in REPO_ROOT.rglob("*.md"):
         # "archive" dirs (reports/**/archive/) hold dated, superseded snapshots —
         # citing an RFC's then-current status there is historically correct, not
-        # stale, and must not be "fixed" to match the present.
-        if ".git" in f.parts or "archive" in f.parts or f == REGISTRY_PATH:
+        # stale, and must not be "fixed" to match the present. RFCs sitting in
+        # 5-superseded/ or 6-refused/ themselves are the same case one level up:
+        # found 2026-08-23 when moving RFC-0092 to under-review broke two citations
+        # inside superseded RFC-0083, written when RFC-0092 really was draft and
+        # never meant to track its subject's later movement. reports/strategy/cycles/
+        # dated snapshots are the same case again — proactively exempted alongside
+        # fix_referrers' identical exemption, added the same day for the same reason.
+        if (
+            ".git" in f.parts
+            or "archive" in f.parts
+            or "5-superseded" in f.parts
+            or "6-refused" in f.parts
+            or "cycles" in f.parts
+            or f == REGISTRY_PATH
+        ):
             continue
         try:
             lines = f.read_text().splitlines()
@@ -1995,6 +2031,14 @@ def cmd_check(args=None):
 
         impl_status = fm.get("impl_status")
         impl_tracking = fm.get("impl_tracking")
+        if expected_status == "under-review" and not fm.get("tracking"):
+            # Hard-enforced, retroactively: an RFC entering under-review needs a
+            # linked tracking issue in the same change (PROCESS.md, 2026-08-23).
+            # Unlike impl_status's grandfather clause below, this one has no
+            # exemption for RFCs that reached under-review before the rule existed —
+            # backfilled 2026-08-23 for all pre-existing cases found.
+            problems.append(f"{rel}: missing tracking (required from under-review onward)")
+
         if expected_status == "integrated":
             # Hard-enforced: nothing enters 3-integrated without these (PROCESS.md).
             if not impl_tracking:
@@ -2032,7 +2076,16 @@ def cmd_check(args=None):
     problems.extend(retired_host_references())
 
     for f in REPO_ROOT.rglob("*.md"):
-        if ".git" in f.parts:
+        # Same historical-record exemption as status_citation_problems/fix_referrers,
+        # same day, same root cause: a dated snapshot citing an RFC's path as it was
+        # when written is correct, not dangling, even after that RFC moves stage.
+        if (
+            ".git" in f.parts
+            or "archive" in f.parts
+            or "5-superseded" in f.parts
+            or "6-refused" in f.parts
+            or "cycles" in f.parts
+        ):
             continue
         try:
             text = f.read_text()
@@ -2367,7 +2420,7 @@ def main():
     p_trans.add_argument("rfc_id")
     p_trans.add_argument("--to", required=True, choices=list(STAGES))
     p_trans.add_argument("-r", "--reason", default="", help="One-line reason, used in the inserted status note")
-    p_trans.add_argument("--tracking", default="", help="Tracking task/URL — required when --to integrated")
+    p_trans.add_argument("--tracking", default="", help="Tracking task/URL — required when --to under-review or --to integrated")
     p_trans.set_defaults(func=cmd_transition)
 
     p_impl = sub.add_parser("impl-status", help="Update impl_status on an integrated/implemented RFC")

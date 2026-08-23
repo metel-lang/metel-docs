@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-08-21'
+generated_on: '2026-08-23'
 ---
 
 # RFC Registry
@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `public/rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**134 RFCs total.** 46 draft, 7 under review, 7 accepted, 1 integrated (61 live), 46 implemented, 13 superseded, 14 refused (73 settled).
+**135 RFCs total.** 33 draft, 20 under review, 8 accepted, 1 integrated (62 live), 46 implemented, 13 superseded, 14 refused (73 settled).
 
-## Draft (46)
+## Draft (33)
 
 - **RFC-0003** — Concurrency Model (`0-draft` ; public/rfcs/0-draft/rfc-0003-concurrency-model.md ; date 2026-05-20)
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; public/rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
@@ -30,15 +30,12 @@ the curated thematic map.
 - **RFC-0038** — impl Aspect in Struct Fields and Existential Types (`0-draft` ; public/rfcs/0-draft/rfc-0038-impl-aspect-struct-fields.md ; date 2026-06-01)
 - **RFC-0039** — aspect Alias Syntax (`0-draft` ; public/rfcs/0-draft/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01)
 - **RFC-0049** — `linear fun` Type System (`0-draft` ; public/rfcs/0-draft/rfc-0049-linear-fun-type-system.md ; date 2026-06-04)
-- **RFC-0050** — Closure Capture Lists (`0-draft` ; public/rfcs/0-draft/rfc-0050-closure-capture-lists.md ; date 2026-06-03)
 - **RFC-0062** — Ord / Eq Comparison Aspects (`0-draft` ; public/rfcs/0-draft/rfc-0062-ord-comparison-aspect.md ; date 2026-06-11 ; updated 2026-07-21)
 - **RFC-0074** — Shared Pointers — Rc and Arc (`0-draft` ; public/rfcs/0-draft/rfc-0074-shared-ownership.md ; date 2026-06-30)
 - **RFC-0075** — Region Inference — Local AutoRegion (`0-draft` ; public/rfcs/0-draft/rfc-0075-region-inference.md ; date 2026-07-01)
 - **RFC-0076** — Brand Types (`0-draft` ; public/rfcs/0-draft/rfc-0076-rc-brands.md ; date 2026-06-29)
 - **RFC-0089** — Linear Types (`0-draft` ; public/rfcs/0-draft/rfc-0089-linear-types.md ; date 2026-07-09 ; updated 2026-07-24)
 - **RFC-0091** — Linear Records (`0-draft` ; public/rfcs/0-draft/rfc-0091-linear-records.md ; date 2026-07-09 ; updated 2026-07-24)
-- **RFC-0092** — Comptime Core — Type-as-Value, Reflection, and Emit (`0-draft` ; public/rfcs/0-draft/rfc-0092-comptime-core.md ; date 2026-07-09)
-- **RFC-0093** — Derive Registration — @derive(Aspect) as Request and Registration (`0-draft` ; public/rfcs/0-draft/rfc-0093-derive-registration.md ; date 2026-07-09)
 - **RFC-0094** — Comptime Metaprogramming — Generalized Emit, Comptime-Callable Parsing, Diagnostics (`0-draft` ; public/rfcs/0-draft/rfc-0094-comptime-metaprogramming.md ; date 2026-07-09)
 - **RFC-0095** — Attributes and Metadata (`0-draft` ; public/rfcs/0-draft/rfc-0095-attributes-and-metadata.md ; date 2026-07-09)
 - **RFC-0096** — Auto-Impl Aspects — Compiler-Recognized Structural Aspects (`0-draft` ; public/rfcs/0-draft/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md ; date 2026-07-11)
@@ -48,33 +45,36 @@ the curated thematic map.
 - **RFC-0109** — Self-View Narrowing and Reference-Destructuring Patterns (`0-draft` ; public/rfcs/0-draft/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md ; date 2026-07-18 ; updated 2026-07-24)
 - **RFC-0112** — Auto-Deref Scope and Expected-Type Provenance (`0-draft` ; public/rfcs/0-draft/rfc-0112-auto-deref-scope-and-expected-type-provenance.md ; date 2026-07-21)
 - **RFC-0114** — Constructor Aspect and Canonical Construction (`0-draft` ; public/rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md ; date 2026-07-23 ; updated 2026-07-24)
-- **RFC-0117** — Row Narrowing (`0-draft` ; public/rfcs/0-draft/rfc-0117-row-narrowing.md ; date 2026-07-24)
-- **RFC-0119** — Record Conversions (`0-draft` ; public/rfcs/0-draft/rfc-0119-record-conversions.md ; date 2026-07-24)
-- **RFC-0120** — Named Records (`0-draft` ; public/rfcs/0-draft/rfc-0120-named-records.md ; date 2026-07-24)
-- **RFC-0121** — Open Rows (`0-draft` ; public/rfcs/0-draft/rfc-0121-open-rows.md ; date 2026-07-24)
-- **RFC-0123** — Field-Wise Row Constraints (`0-draft` ; public/rfcs/0-draft/rfc-0123-field-wise-row-constraints.md ; date 2026-07-24)
 - **RFC-0124** — Sequence Types: Fixed Arrays, Slices, and the Growable List (`0-draft` ; public/rfcs/0-draft/rfc-0124-sequence-types-fixed-arrays-slices-and-the-growable-list.md ; date 2026-07-25 ; updated 2026-08-03)
-- **RFC-0125** — Variadic Generics (`0-draft` ; public/rfcs/0-draft/rfc-0125-variadic-generics.md ; date 2026-07-25)
-- **RFC-0127** — Associated Functions on Generic Types (`0-draft` ; public/rfcs/0-draft/rfc-0127-associated-functions-on-generic-types.md ; date 2026-08-01)
 - **RFC-0128** — Exportable overload sets and shadow-versus-extend semantics (`0-draft` ; public/rfcs/0-draft/rfc-0128-exportable-overload-sets-and-shadow-versus-extend-semantics.md ; date 2026-08-04)
-- **RFC-0129** — Aspect Method Generic Constraint Conformance (`0-draft` ; public/rfcs/0-draft/rfc-0129-aspect-method-generic-constraint-conformance.md ; date 2026-08-05)
-- **RFC-0130** — extends Aspect: Renaming impl Aspect for Consistency with extend (`0-draft` ; public/rfcs/0-draft/rfc-0130-extends-aspect-renaming-impl-aspect-for-consistency-with-extend.md ; date 2026-08-06)
 - **RFC-0131** — Hoist let/var Bindings to the Top of Their Containing Block (`0-draft` ; public/rfcs/0-draft/rfc-0131-hoist-let-var-bindings-to-the-top-of-their-containing-block.md ; date 2026-08-09)
-- **RFC-0132** — Comptime Execution Model — comptime let, comptime fun, comptime if (`0-draft` ; public/rfcs/0-draft/rfc-0132-comptime-execution-model-comptime-let-comptime-fun-comptime-if.md ; date 2026-08-13)
 - **RFC-0133** — From-Metel List: the Runtime-Sized Buffer Gap (`0-draft` ; public/rfcs/0-draft/rfc-0133-from-metel-list-the-runtime-sized-buffer-gap.md ; date 2026-08-13)
 - **RFC-0135** — Multiplicity for Ordinary Types (`0-draft` ; public/rfcs/0-draft/rfc-0135-multiplicity-for-ordinary-types.md ; date 2026-08-13)
 
-## Under Review (7)
+## Under Review (20)
 
-- **RFC-0067** — Lifetime Anchors (`1-under-review` ; public/rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-08-10)
-- **RFC-0080** — Standard Library Aspects — Clone, Deref, Send, Sync (`1-under-review` ; public/rfcs/1-under-review/rfc-0080-stdlib-aspects.md ; date 2026-07-01 ; updated 2026-07-09)
-- **RFC-0099** — Dot-Separated Module Paths (`1-under-review` ; public/rfcs/1-under-review/rfc-0099-dot-separated-module-paths.md ; date 2026-07-13 ; updated 2026-07-14)
-- **RFC-0100** — Constructor-Call Construction (`1-under-review` ; public/rfcs/1-under-review/rfc-0100-constructor-call-construction.md ; date 2026-07-13 ; updated 2026-07-24)
-- **RFC-0113** — Context Parameters (`1-under-review` ; public/rfcs/1-under-review/rfc-0113-context-parameters.md ; date 2026-07-21 ; updated 2026-07-21)
-- **RFC-0122** — Borrow Checking (`1-under-review` ; public/rfcs/1-under-review/rfc-0122-borrow-checking.md ; date 2026-07-24 ; updated 2026-08-10)
-- **RFC-0134** — Closure Call Capability (`1-under-review` ; public/rfcs/1-under-review/rfc-0134-closure-call-capability.md ; date 2026-08-13 ; updated 2026-08-15)
+- **RFC-0050** — Closure Capture Lists (`1-under-review` ; public/rfcs/1-under-review/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-08-23)
+- **RFC-0067** — Lifetime Anchors (`1-under-review` ; public/rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-08-23)
+- **RFC-0080** — Standard Library Aspects — Clone, Deref, Send, Sync (`1-under-review` ; public/rfcs/1-under-review/rfc-0080-stdlib-aspects.md ; date 2026-07-01 ; updated 2026-08-23)
+- **RFC-0092** — Comptime Core — Type-as-Value, Reflection, and Emit (`1-under-review` ; public/rfcs/1-under-review/rfc-0092-comptime-core.md ; date 2026-07-09 ; updated 2026-08-23)
+- **RFC-0093** — Derive Registration — #derive(Aspect) as Request and Registration (`1-under-review` ; public/rfcs/1-under-review/rfc-0093-derive-registration.md ; date 2026-07-09 ; updated 2026-08-23)
+- **RFC-0099** — Dot-Separated Module Paths (`1-under-review` ; public/rfcs/1-under-review/rfc-0099-dot-separated-module-paths.md ; date 2026-07-13 ; updated 2026-08-23)
+- **RFC-0100** — Constructor-Call Construction (`1-under-review` ; public/rfcs/1-under-review/rfc-0100-constructor-call-construction.md ; date 2026-07-13 ; updated 2026-08-23)
+- **RFC-0113** — Context Parameters (`1-under-review` ; public/rfcs/1-under-review/rfc-0113-context-parameters.md ; date 2026-07-21 ; updated 2026-08-23)
+- **RFC-0117** — Row Narrowing (`1-under-review` ; public/rfcs/1-under-review/rfc-0117-row-narrowing.md ; date 2026-07-24 ; updated 2026-08-23)
+- **RFC-0119** — Record Conversions (`1-under-review` ; public/rfcs/1-under-review/rfc-0119-record-conversions.md ; date 2026-07-24 ; updated 2026-08-23)
+- **RFC-0120** — Named Records (`1-under-review` ; public/rfcs/1-under-review/rfc-0120-named-records.md ; date 2026-07-24 ; updated 2026-08-23)
+- **RFC-0121** — Open Rows (`1-under-review` ; public/rfcs/1-under-review/rfc-0121-open-rows.md ; date 2026-07-24 ; updated 2026-08-23)
+- **RFC-0122** — Borrow Checking (`1-under-review` ; public/rfcs/1-under-review/rfc-0122-borrow-checking.md ; date 2026-07-24 ; updated 2026-08-23)
+- **RFC-0123** — Field-Wise Row Constraints (`1-under-review` ; public/rfcs/1-under-review/rfc-0123-field-wise-row-constraints.md ; date 2026-07-24 ; updated 2026-08-23)
+- **RFC-0125** — Variadic Generics (`1-under-review` ; public/rfcs/1-under-review/rfc-0125-variadic-generics.md ; date 2026-07-25 ; updated 2026-08-23)
+- **RFC-0127** — Associated Functions on Generic Types (`1-under-review` ; public/rfcs/1-under-review/rfc-0127-associated-functions-on-generic-types.md ; date 2026-08-01 ; updated 2026-08-23)
+- **RFC-0129** — Aspect Method Generic Constraint Conformance (`1-under-review` ; public/rfcs/1-under-review/rfc-0129-aspect-method-generic-constraint-conformance.md ; date 2026-08-05 ; updated 2026-08-23)
+- **RFC-0132** — Comptime Execution Model — comptime let, comptime fun, comptime if (`1-under-review` ; public/rfcs/1-under-review/rfc-0132-comptime-execution-model-comptime-let-comptime-fun-comptime-if.md ; date 2026-08-13 ; updated 2026-08-23)
+- **RFC-0134** — Closure Call Capability (`1-under-review` ; public/rfcs/1-under-review/rfc-0134-closure-call-capability.md ; date 2026-08-13 ; updated 2026-08-23)
+- **RFC-0136** — Walrus for Kept Bindings (`1-under-review` ; public/rfcs/1-under-review/rfc-0136-walrus-for-kept-bindings.md ; date 2026-08-23 ; updated 2026-08-23)
 
-## Accepted (7)
+## Accepted (8)
 
 - **RFC-0008** — Aspect Objects (`2-accepted` ; public/rfcs/2-accepted/rfc-0008-aspect-objects.md ; date 2026-07-01)
 - **RFC-0063** — Allocator Handles (`2-accepted` ; public/rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
@@ -83,10 +83,11 @@ the curated thematic map.
 - **RFC-0068** — Struct-Owned Allocators (`2-accepted` ; public/rfcs/2-accepted/rfc-0068-struct-owned-allocators.md ; date 2026-06-28 ; updated 2026-07-10)
 - **RFC-0073** — AutoAlloc (`2-accepted` ; public/rfcs/2-accepted/rfc-0073-auto-alloc.md ; date 2026-06-29 ; updated 2026-07-10)
 - **RFC-0077** — Allocator Generics (`2-accepted` ; public/rfcs/2-accepted/rfc-0077-allocator-generics.md ; date 2026-06-29 ; updated 2026-07-10)
+- **RFC-0130** — extends Aspect: Renaming impl Aspect for Consistency with extend (`2-accepted` ; public/rfcs/2-accepted/rfc-0130-extends-aspect-renaming-impl-aspect-for-consistency-with-extend.md ; date 2026-08-06 ; updated 2026-08-23)
 
 ## Integrated (1)
 
-- **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; public/rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/579)
+- **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; public/rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 
 ## Implemented (46)
 

@@ -2,10 +2,17 @@
 id: rfc-0067
 title: "Lifetime Anchors"
 date: '2026-06-28'
-updated: '2026-08-10'
+updated: '2026-08-23'
 status: under-review
 target: v0.16.0
+tracking: 'https://github.com/metel-lang/metel-core/issues/274'
 ---
+
+> **Tracking added retroactively (2026-08-23).** This RFC reached under-review before
+> the tracking-issue requirement existed (PROCESS.md, 2026-08-23). Already had a real
+> tracking issue in its own text throughout — metel-core#274, which owns both halves
+> (the stored-reference restriction and its RFC-0122 companion) — just not recorded in
+> frontmatter. Backfilled, no change in substance.
 
 > ## ⚠ Implementing this RFC carries an inherited obligation
 >

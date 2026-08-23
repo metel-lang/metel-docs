@@ -2,9 +2,13 @@
 id: rfc-0125
 title: "Variadic Generics"
 date: '2026-07-25'
-status: draft
+status: under-review
+tracking: 'https://github.com/metel-lang/metel-core/issues/794'
 target:
+updated: '2026-08-23'
 ---
+
+> **Status — under review (2026-08-23).** Committed to v0.14.0, tracking issue #794 filed 2026-08-22
 
 ## Summary
 

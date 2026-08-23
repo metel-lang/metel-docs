@@ -4,8 +4,13 @@ title: "Context Parameters"
 date: '2026-07-21'
 status: under-review
 target:
-updated: '2026-07-21'
+updated: '2026-08-23'
+tracking: 'https://github.com/metel-lang/metel-core/issues/808'
 ---
+
+> **Tracking added retroactively (2026-08-23).** This RFC reached under-review before
+> the tracking-issue requirement existed (PROCESS.md, 2026-08-23); filed metel-core#808
+> (design-settlement, no code — all five open questions below).
 
 > **Status — under review (2026-07-21).** Fills the substrate hole OBJECTIVES.md named as the largest unwritten one (Priority 3 since the 2026-07-22 reorder). Substantiated proposal with declaration, provision and resolution specified, grounded in RFC-0065's four elision rules and its reverted depth-shadowing attempt. Five open questions remain, chiefly syntax and whether contexts propagate through intermediate frames. Reviewing with the records/views cluster it shares a substrate with.
 

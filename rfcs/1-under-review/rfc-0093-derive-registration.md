@@ -1,9 +1,11 @@
 ---
 id: rfc-0093
-title: "Derive Registration — @derive(Aspect) as Request and Registration"
+title: "Derive Registration — #derive(Aspect) as Request and Registration"
 date: '2026-07-09'
-status: draft
+status: under-review
 target:
+updated: '2026-08-23'
+tracking: 'https://github.com/metel-lang/metel-core/issues/799'
 ---
 
 > **New RFC, split out 2026-07-09** from RFC-0012 (Attributes, Metadata, Macros, and
@@ -17,23 +19,33 @@ target:
 > **Answers RFC-0055's Open Question 4** ("can comptime code inspect whether a type
 > implements an aspect... could replace some uses of conditional `impl` blocks"),
 > discovered 2026-07-09 via `INDEX.md` after this RFC was already drafted — §1's
-> `@derive(Aspect)` registration is a more precise answer than RFC-0055's own
+> `#derive(Aspect)` registration is a more precise answer than RFC-0055's own
 > `comptime has_aspect(T, Aspect)` sketch, since it resolves to a specific registered
 > comptime function rather than a boolean query. RFC-0055 is superseded by RFC-0092
 > primarily, with this RFC covering its OQ-4 specifically.
 
+> **Status — under review (2026-08-23).** Design-settlement issue #799 filed 2026-08-23 -- named as the real blocker behind RFC-0119 leaving v0.13.0 (Trigger 40)
+
+> **Sigil update, 2026-08-23, later the same day.** This RFC's attribute mechanism
+> moves from `@derive(...)` to `#derive(...)` — RFC-0095 found `@` was already claimed
+> by the accepted allocator cluster (RFC-0063/0065, `2-accepted`), not free as
+> originally assumed. §3's "`#[...]` Rust-style attributes" Alternatives entry is
+> rewritten accordingly, since its original argument (rejecting `#` for `@`) is now
+> backwards; every other `@derive`/`@` mention throughout is a mechanical sigil update
+> with no change in substance.
+
 ## Summary
 
-Specifies the mechanism `derives`/`@derive(Aspect)` resolves through: nothing in prior
+Specifies the mechanism `derives`/`#derive(Aspect)` resolves through: nothing in prior
 exploration ever specified how a derive request at a struct or enum's declaration finds
-the *specific* comptime function that implements it. `@derive(Aspect)`, attached to the
+the *specific* comptime function that implements it. `#derive(Aspect)`, attached to the
 comptime function that implements the derive, registers it as that aspect's deriver.
 The same spelling is used for both request (attached to a struct/enum) and registration
 (attached to a comptime function), disambiguated purely by attachment target — mirroring
 Rust's `#[derive]`/`#[proc_macro_derive]` split, but with one shared spelling instead of
 two.
 
-Also settles the call-site surface syntax as `@derive(Aspect, ...)` — an attribute on
+Also settles the call-site surface syntax as `#derive(Aspect, ...)` — an attribute on
 the struct/enum itself — over a `derives` keyword-clause, since nothing about the
 registration mechanism requires a new keyword, and the attribute form keeps a struct's
 own declaration line uncrowded and is closer to what Rust users already expect.
@@ -54,25 +66,25 @@ which no prior document specifies.
 
 ## 1. Resolving a derive request to a comptime function
 
-`@derive(Aspect)`, attached to the comptime function that implements the derive,
+`#derive(Aspect)`, attached to the comptime function that implements the derive,
 registers it as that aspect's deriver:
 
 ```metel
-@derive(Clone)
+#derive(Clone)
 comptime fun derive_clone(comptime T: type) {
     let fields = typeinfo(T).row;
     emit extend T: Clone { ... }
 }
 ```
 
-`@derive(Clone) struct Point { x: f64, y: f64 }` then resolves by looking up whichever
+`#derive(Clone) struct Point { x: f64, y: f64 }` then resolves by looking up whichever
 comptime function is registered for `Clone` — exactly how Rust's own `#[derive(Clone)]`
 isn't magic either: it resolves via `#[proc_macro_derive(Clone)]` on the macro's own
 implementing function, in a compiler-visible table keyed by name.
 
-The same `@derive(Aspect)` spelling is used in both places above, disambiguated purely
+The same `#derive(Aspect)` spelling is used in both places above, disambiguated purely
 by what kind of declaration it is attached to — a struct/enum means "derive this for
-me," a `comptime fun` means "I implement this" — the same way `@inline` only makes
+me," a `comptime fun` means "I implement this" — the same way `#inline` only makes
 sense attached to a function. This is a real design choice, not an assumed one: Rust
 deliberately uses two different attribute names (`derive` vs. `proc_macro_derive`) to
 keep the two roles unambiguous at the syntax level; reusing one spelling for both here
@@ -80,13 +92,13 @@ trades a small amount of that separation for one fewer concept to learn.
 
 This gives an "open/extensible" derive mechanism an actual implementation: a
 third-party library makes its own aspect derivable by writing
-`@derive(MyAspect) comptime fun derive_my_aspect(comptime T: type) { ... }` in its own
+`#derive(MyAspect) comptime fun derive_my_aspect(comptime T: type) { ... }` in its own
 module, with no special compiler support beyond the registration lookup itself.
 
 ### Worked example
 
 ```metel
-@derive(Clone)
+#derive(Clone)
 comptime fun derive_clone(comptime T: type) {
     let fields = typeinfo(T).row;   // T's row, reified as a comptime value
     emit extend T: Clone {
@@ -98,8 +110,8 @@ comptime fun derive_clone(comptime T: type) {
 }
 ```
 
-Surface syntax at the call site is `@derive(Clone) struct Point { x: f64, y: f64 }`,
-resolving via the registration `@derive(Clone)` attaches to `derive_clone`'s own
+Surface syntax at the call site is `#derive(Clone) struct Point { x: f64, y: f64 }`,
+resolving via the registration `#derive(Clone)` attaches to `derive_clone`'s own
 declaration above. Closed-list ergonomics today — the standard library provides and
 registers the initial derivable set (§2) — with an open path to user-defined derivable
 aspects later: a third party registers its own aspect the same way, with no syntax
@@ -121,7 +133,7 @@ change required when that lands.
 (and this RFC's own predecessor, RFC-0012) incorrectly treated `Linear` as
 derive-as-codegen alongside `Clone`/`Eq`/`Display`. Per RFC-0089 §2, `Linear` is an
 **auto-impl aspect**, structurally identical in category to `Send`/`Sync` (RFC-0080
-§3.2's rule) — no `@derive(Linear)` annotation is needed or meaningful; the compiler
+§3.2's rule) — no `#derive(Linear)` annotation is needed or meaningful; the compiler
 grants it automatically to any type with a multiplicity-`1` field. This RFC corrects
 that error by omitting `Linear` from the table above.
 
@@ -132,23 +144,23 @@ that error by omitting `Linear` from the table above.
 ### Compiler-built-in derive (no comptime, no macro system)
 
 Derive is a closed set of structurally derivable aspects known to the compiler, with no
-user extensibility. Its own original call-site syntax, `@derive(Aspect, ...)`, is in
+user extensibility. Its own original call-site syntax, `#derive(Aspect, ...)`, is in
 fact the syntax adopted here — just resolving through the comptime registration
 mechanism above rather than a hardcoded compiler list.
 
 ### Attribute macros (procedural macros)
 
-`@derive(Aspect)` expands to an `impl` block generated by a macro associated with
+`#derive(Aspect)` expands to an `impl` block generated by a macro associated with
 `Aspect` — Rust's model. Fully extensible, but procedural macros are notoriously
 complex to write and maintain, and require a full macro system (token streams, hygiene)
 as a prerequisite. This RFC reaches the same extensibility by running ordinary staged
 code over reflected values instead of syntax — while keeping this alternative's own
-`@derive(Aspect)` call-site spelling, since nothing about its con (macro complexity) was
+`#derive(Aspect)` call-site spelling, since nothing about its con (macro complexity) was
 actually about that syntax.
 
 ### Derive as a language keyword (`derives`), closed
 
-Derive expressed with a `derives` keyword rather than the `@` attribute system:
+Derive expressed with a `derives` keyword rather than the `#` attribute system:
 
 ```metel
 struct Point derives Eq, Ord, Display { x: Float, y: Float }
@@ -160,17 +172,23 @@ con (no extensibility) is exactly what §1's comptime registration mechanism sol
 its syntax could in principle ride along on top of that mechanism — but `derives` as a
 trailing clause crowds a struct's declaration line (competing for space with generic
 parameters and row-conditional bounds before the opening brace) in a way
-`@derive(Aspect, ...)` as a leading attribute does not, and `@derive(...)` is closer to
+`#derive(Aspect, ...)` as a leading attribute does not, and `#derive(...)` is closer to
 what Rust users already expect. `derives` is therefore dropped, not merely superseded
 by something that happens to look the same.
 
-### `#[...]` Rust-style attributes
+### `#[...]` Rust-style, bracketed attributes
 
-Familiar to Rust programmers but visually ambiguous with comments (`#`). Rejected in
-favour of `@` (RFC-0095). The final adopted form, `@derive(Clone)`, ends up
-structurally close to `#[derive(Clone)]`, differing only in the sigil, not the overall
-shape — the objection was always to `#` specifically, not to attaching derive
-information via an attribute-like form.
+Familiar to Rust programmers. Originally rejected (in the pre-2026-08-23 form of this
+section) in favour of `@`, on the objection that `#` is visually associated with
+comments in several other languages. **Reversed 2026-08-23**, along with RFC-0095's own
+sigil choice: `@` turned out not to be free — it is the accepted allocator cluster's
+sigil (RFC-0063/0065, `2-accepted`) — so the comment-association objection to `#` was
+re-weighed against the cost of a real sigil collision and found the lesser cost. The
+adopted form, `#derive(Clone)`, is bare (no brackets), not Rust's literal `#[derive(Clone)]`:
+Metel's attributes already stack one per line with no surrounding ambiguity for
+brackets to resolve, so RFC-0095 §1 drops them. See RFC-0095's own Alternatives
+Considered for the full accounting, including why `~`, `^`, backtick, and `$` were each
+checked and set aside.
 
 ---
 
@@ -183,28 +201,28 @@ information via an attribute-like form.
    examples before the mechanism can be specified precisely. (Inherited from RFC-0092's
    Open Question 2, specific to derive's use of `emit`.)
 
-2. **Registration coherence for `@derive(Aspect)`.** Can two different comptime
-   functions both carry `@derive(Clone)`? An orphan-rule-shaped question, sibling to
+2. **Registration coherence for `#derive(Aspect)`.** Can two different comptime
+   functions both carry `#derive(Clone)`? An orphan-rule-shaped question, sibling to
    Open Question 1's `emit`-soundness question. Most likely resolution is a hard
    compile error on conflicting registration, matching RFC-0060's coherence discipline
    for impls, but this is asserted, not specified.
 
-3. **Who may register for a given aspect.** Can any library register `@derive(Clone)`
+3. **Who may register for a given aspect.** Can any library register `#derive(Clone)`
    for the stdlib's own `Clone`, or only `Clone`'s defining module — the same
    orphan-rule question RFC-0060 already answers for impls, now needed for derive
    *registration* specifically.
 
-4. **Required signature shape.** A function tagged `@derive(Aspect)` presumably must
+4. **Required signature shape.** A function tagged `#derive(Aspect)` presumably must
    match a fixed signature (`comptime fun(comptime T: type)`, or a variant accepting
    configuration per Open Question 5) — checked by the compiler, the way Rust's
    `#[proc_macro_derive]` functions must match a fixed `TokenStream -> TokenStream`
    shape. Not yet specified.
 
-5. **`@derive(Aspect(...))` arguments vs. separate `@` attributes for derive
+5. **`#derive(Aspect(...))` arguments vs. separate `#` attributes for derive
    configuration.** Should a derive function's own configuration (e.g. a rename
-   convention for every field at once) travel as arguments nested inside `@derive(...)`
-   itself (`@derive(Serialize(rename_all = "camelCase"))`), or always as separate
-   per-field/per-type `@` attributes read via `typeinfo` (RFC-0095 §"Attributes as
+   convention for every field at once) travel as arguments nested inside `#derive(...)`
+   itself (`#derive(Serialize(rename_all = "camelCase"))`), or always as separate
+   per-field/per-type `#` attributes read via `typeinfo` (RFC-0095 §"Attributes as
    comptime-visible metadata")? Rust uses the latter pattern exclusively; both are
    coherent, and this RFC does not yet pick one. Connects directly to Open Question 4
    (the registered function's signature would need to accept whichever form is
@@ -225,7 +243,7 @@ information via an attribute-like form.
 
 ## Timing Recommendation
 
-Deferred to **v0.5+**, alongside RFC-0092. `@derive(Clone)`'s registration function
+Deferred to **v0.5+**, alongside RFC-0092. `#derive(Clone)`'s registration function
 (RFC-0080's `derive_clone`) cannot be written until RFC-0092's `type`-as-value and
 `typeinfo` exist.
 
@@ -236,7 +254,7 @@ Deferred to **v0.5+**, alongside RFC-0092. `@derive(Clone)`'s registration funct
 - RFC-0092 (Comptime Core) — `type`-as-value, `typeinfo`, single-declaration `emit`
   this RFC's registration mechanism is built from
 - RFC-0080 (Standard Library Aspects) — `Clone`'s derive is the concrete first test
-  case; its `@derive(Clone)` example depends on this RFC
+  case; its `#derive(Clone)` example depends on this RFC
 - RFC-0089 (Linear Types) — §2's correction (`Linear` is auto-impl, not derive-as-
   codegen)
 - RFC-0096 (Auto-Impl Aspects, draft) — owns the auto-impl category (§2) this RFC

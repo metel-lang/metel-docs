@@ -160,10 +160,22 @@ while their backing memory is still valid.
 When a scope ends, its still-owned values are dropped in reverse declaration order. A value
 moved to another owner is dropped by that owner instead.
 
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Destructor invocation and drop order are not implemented yet -- non-empty Drop bodies are intentionally rejected until implementation issue #261 (drop order and explicit drop, RFC-0071 3/4) lands. Verified directly: the interpreter has no drop-at-scope-end mechanism to observe order against." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#261: Destructor invocation and drop order are not implemented yet -- non-empty Drop bodies are intentionally rejected until implementation issue #261 (drop order and explicit drop, RFC-0071 3/4) lands. Verified directly: the interpreter has no drop-at-scope-end mechanism to observe order against._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
 ##### Dynamic Semantics {#spec.ownership.drop-order.dynamics-2}
 
 Dropping a value with a `Drop` implementation invokes `drop(self)` before recursively dropping
 its fields; a struct's fields are dropped before an allocator it owns is freed.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Same root gap as drop-order.dynamics-1: destructor invocation is not implemented, so drop(self)-before-fields ordering cannot be observed. #261 also separately tracks the allocator-ordering half." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#261: Same root gap as drop-order.dynamics-1: destructor invocation is not implemented, so drop(self)-before-fields ordering cannot be observed. #261 also separately tracks the allocator-ordering half._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 </details>
 
@@ -179,9 +191,21 @@ its fields; a struct's fields are dropped before an allocator it owns is freed.
 
 After `drop(x)` consumes a non-`Copy` binding, that binding may not be used again.
 
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Explicit drop(x) is not implemented -- drop is not a built-in name today (verified directly: it produces a T0003 undefined-name error), so this use-after-drop rejection cannot be observed. Tracked by #261, which also depends on move tracking (#579)." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#261: Explicit drop(x) is not implemented -- drop is not a built-in name today (verified directly: it produces a T0003 undefined-name error), so this use-after-drop rejection cannot be observed. Tracked by #261, which also depends on move tracking (#579)._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
 ##### Dynamic Semantics {#spec.ownership.explicit-drop.dynamics-1}
 
 `drop(x)` consumes `x` and invokes its destructor when its type implements `Drop`.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Same root gap as explicit-drop.legality-1: drop is not a built-in yet, so this dynamic-semantics claim cannot be exercised." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#261: Same root gap as explicit-drop.legality-1: drop is not a built-in yet, so this dynamic-semantics claim cannot be exercised._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 </details>
 
@@ -242,7 +266,7 @@ A field of a `Drop` type may not be moved out.
 |---|---|
 | struct fields | yes, at field granularity |
 | tuple elements | yes — positional fields are statically named |
-| record fields | [yes, and the residual takes a narrower record type](#spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-2) |
+| record fields | [yes, at field granularity](#spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-2) |
 | enum payloads | no — matching a variant and moving its payload consumes the enum wholly |
 | array elements | **no** |
 
@@ -267,8 +291,11 @@ array elements may not be moved out; and a non-`Copy` closure capture moves its 
 
 ##### Legality Rule {#spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-2}
 
-Record fields may be moved independently; after such a move, the residual record has the
-remaining fields' narrower record type.
+Record fields may be moved independently, at field granularity like struct fields; a
+moved field's siblings remain individually accessible, but using the record value as a
+whole afterward is rejected as a use of a partially moved value. Moving a field does not
+change the record's static type — there is no narrower record type for the residual
+value, only per-field move tracking.
 
 </details>
 

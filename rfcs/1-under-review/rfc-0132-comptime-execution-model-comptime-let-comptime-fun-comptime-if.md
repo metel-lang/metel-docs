@@ -2,8 +2,10 @@
 id: rfc-0132
 title: "Comptime Execution Model — comptime let, comptime fun, comptime if"
 date: '2026-08-13'
-status: draft
+status: under-review
+tracking: 'https://github.com/metel-lang/metel-core/issues/726'
 target:
+updated: '2026-08-23'
 ---
 
 > **New RFC, split out 2026-08-13 from RFC-0092 (Comptime Core).** RFC-0092 itself
@@ -47,6 +49,8 @@ target:
 > a **Codeberg** issue number — the exact trap Open Question 5 below independently caught
 > for a different pair of numbers in this same file, missed here on the first pass. The
 > real GitHub issue is **#539**, fixed at the same time this document moved paths.
+
+> **Status — under review (2026-08-23).** Design-settlement issue #726 has targeted v0.13.0 since 2026-08-13 -- real planned engagement predating this rule, applied retroactively
 
 ## Summary
 
@@ -242,7 +246,7 @@ fun word_size() -> i64 {
 }
 ```
 
-This is the mechanism RFC-0095 Open Question 4 speculates might subsume `@cfg`; RFC-0055
+This is the mechanism RFC-0095 Open Question 4 speculates might subsume `#cfg`; RFC-0055
 reached the same conclusion independently. Both converging is treated as confidence in
 the answer, not as work to reconcile.
 

@@ -4,8 +4,15 @@ title: "Borrow Checking"
 date: '2026-07-24'
 status: under-review
 target: v0.15.0
-updated: '2026-08-10'
+updated: '2026-08-23'
+tracking: 'https://github.com/metel-lang/metel-core/issues/274'
 ---
+
+> **Tracking added retroactively (2026-08-23).** This RFC reached under-review before
+> the tracking-issue requirement existed (PROCESS.md, 2026-08-23). Already had a real
+> tracking issue in its own text throughout — "Tracked as metel-core#274," which owns
+> both halves alongside RFC-0067 — just not recorded in frontmatter. Backfilled, no
+> change in substance.
 
 > **Opened 2026-07-24** against `OBJECTIVES.md` Trigger 19, which has tracked the borrow
 > checker as "carrying more architectural weight than any other undocumented thing in the

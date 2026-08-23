@@ -126,7 +126,7 @@ in a position where nothing else can appear. `record` survives only as RFC-0120'
 *declaration* keyword, where it mints nominal identity.
 
 **`:` in the type, `=` in the value**, per the separator invariant in
-`reports/syntax/colon-classifies-equals-defines.md`: `:` classifies (`x` *has type* `f64`),
+`reports/syntax/colon-classifies-equals-labels-walrus-binds.md`: `:` classifies (`x` *has type* `f64`),
 `=` defines (`x` *is* `1.0`). This is also what makes a nominal struct literal, under
 RFC-0115, read as this form plus a brand: `Point { x = 1.0 }` is `{ x = 1.0 }` with a name
 in front.
@@ -403,7 +403,7 @@ Carried from RFC-0090, narrowed to what this RFC owns.
   this RFC
 - `reports/substructural-types/access-and-presence-rows.md` §3.5 — the row-former syntax
   derivation, including why the dot survives only for projection
-- `reports/syntax/colon-classifies-equals-defines.md` — the `:` classifies / `=` defines
+- `reports/syntax/colon-classifies-equals-labels-walrus-binds.md` — the `:` classifies / `=` defines
   invariant fixing the type/value separators
 - RFC-0115 (Field Initializer Separator) — makes a nominal struct literal read as this form
   plus a brand; independent in both directions

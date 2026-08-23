@@ -136,7 +136,7 @@ RFC-0080 §3.2's auto-impl rule (the same structural-composition mechanism that 
 directly rather than being a bespoke case — RFC-0096 (2026-07-11) is where that
 mechanism is now formalized once, generically, since this citation and RFC-0080 §3.2's
 own text were the two places it was previously only informally assumed. **No
-`@derive(Linear)` annotation is needed or meaningful** — this is category 1 (auto-trait
+`#derive(Linear)` annotation is needed or meaningful** — this is category 1 (auto-trait
 structural composition), not category 2 (derive-as-codegen); it should never appear in
 a derivable-aspects list alongside `Clone`/`Eq`/`Display` (RFC-0093 §"Derivable Aspects"
 corrects an earlier draft's error on exactly this point). `extend X: !Linear;`
@@ -235,7 +235,7 @@ because that narrowing is already part of what makes RFC-0090's `{ … }` type-f
 type-former at all (§2-3 there), not a new mechanism invented for this case:
 
 ```metel
-@derive(ToRecord, FromRecord)
+#derive(ToRecord, FromRecord)
 struct File { fd: i64, path: String }
 
 fun close(f: File) -> String {

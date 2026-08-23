@@ -2,9 +2,13 @@
 id: rfc-0129
 title: "Aspect Method Generic Constraint Conformance"
 date: '2026-08-05'
-status: draft
+status: under-review
 target:
+updated: '2026-08-23'
+tracking: 'https://github.com/metel-lang/metel-core/issues/617'
 ---
+
+> **Status — under review (2026-08-23).** Real substantiated proposal (entailment table, primary proposal) but 6 open open questions block acceptance -- OQ1-6 none resolved. Its own References section already names #617 as the implementation follow-up
 
 ## Summary
 

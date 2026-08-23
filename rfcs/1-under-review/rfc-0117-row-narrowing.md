@@ -2,8 +2,10 @@
 id: rfc-0117
 title: "Row Narrowing"
 date: '2026-07-24'
-status: draft
+status: under-review
+tracking: 'https://github.com/metel-lang/metel-core/issues/789'
 target:
+updated: '2026-08-23'
 ---
 
 > **Extracted from RFC-0090 on 2026-07-24** (superseded; see RFC-0116's header for why the
@@ -15,6 +17,8 @@ target:
 > dependency on already-accepted work, not a ratification blocker on a draft, but it is
 > the reason this is a separate RFC from RFC-0116 rather than bundled with it: the
 > type-former is buildable today and this is not.
+
+> **Status — under review (2026-08-23).** Committed to v0.13.0, tracking issue #789 filed 2026-08-22 -- real dependency-chain engagement, not a calendar promotion
 
 ## Summary
 

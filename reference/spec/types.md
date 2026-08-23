@@ -1178,7 +1178,7 @@ squared_magnitude(some_point);             // a struct — does not
 ```
 
 Nominal structs do not satisfy row bounds. **Named records are planned, not implemented**;
-they would provide a nominal record kind. See `public/rfcs/0-draft/rfc-0120-named-records.md`
+they would provide a nominal record kind. See `public/rfcs/1-under-review/rfc-0120-named-records.md`
 (RFC-0120: Named Records) — a plain path mention rather than a link while `rfcs/` is
 excluded from the website (see metel-website's `docusaurus.config.ts`), so this doesn't
 become a broken link once RFCs sync through.

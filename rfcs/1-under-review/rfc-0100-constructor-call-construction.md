@@ -4,8 +4,15 @@ title: "Constructor-Call Construction"
 date: '2026-07-13'
 status: under-review
 target:
-updated: '2026-07-24'
+updated: '2026-08-23'
+tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 ---
+
+> **Tracking added retroactively (2026-08-23).** This RFC reached under-review before
+> the tracking-issue requirement existed (PROCESS.md, 2026-08-23); filed metel-core#807
+> (design-settlement, no code — notes the interaction with RFC-0136, which resolves
+> this RFC's own "is losing `f(x = 1)` acceptable" question as a side effect if it
+> lands first).
 
 > **Split 2026-07-24, later the same day.** The separator half of this RFC — changing
 > `field_init` from `ident ":" expr` to `ident "=" expr` — is extracted into
@@ -22,7 +29,7 @@ updated: '2026-07-24'
 > dissolved, not answered on its own terms.** The ascription collision that motivated
 > reopening was a consequence of spelling keyword arguments `name: value`, not of keyword
 > arguments as a feature. Under the separator invariant `:` classifies, `=` defines
-> (`reports/syntax/colon-classifies-equals-defines.md`), keyword arguments are spelled
+> (`reports/syntax/colon-classifies-equals-labels-walrus-binds.md`), keyword arguments are spelled
 > `name = value`, and the collision cannot arise: keyword binding and type ascription use
 > different tokens. §1, §2, §3 and §6 are revised to `=` throughout; §3 is rewritten to
 > state the smaller collision `=` trades into (with `assign_expr`, not `asc_expr`) rather
@@ -69,7 +76,7 @@ let t = Token(value = "x".to_string(), secret = "shh".to_string());
 
 **`=`, not `:`, and for a reason that is not aesthetic.** A keyword argument binds a value
 to a name — it *defines*, it does not *classify* — so it takes `=` under the separator
-invariant `reports/syntax/colon-classifies-equals-defines.md` audits the grammar against
+invariant `reports/syntax/colon-classifies-equals-labels-walrus-binds.md` audits the grammar against
 (`:` classifies: `x: T`, `T: Bound`; `=` defines or equates: `let x = e`,
 `type X = Concrete`, `Deref<Target = Node>`). **The invariant applies to keyword arguments
 on its own merits, independently of RFC-0115** — a keyword argument would take `=` whether
@@ -288,7 +295,7 @@ are now known to be separator-independent, so this revision does not reopen them
 
 - RFC-0023 (Type Ascription vs Turbofish) — the `expr: Type` production the `:` spelling collided with
   (§3, superseded half). **Under `=` this RFC does not touch RFC-0023 in any position.**
-- `reports/syntax/colon-classifies-equals-defines.md` — the separator invariant `=` is adopted from (§1),
+- `reports/syntax/colon-classifies-equals-labels-walrus-binds.md` — the separator invariant `=` is adopted from (§1),
   and its fourteen-site grammar audit. Its recommendation that this RFC switch separators is now split
   across two RFCs: keyword arguments here, `field_init` in RFC-0115.
 - RFC-0115 (Field Initializer Separator) — the separator half of this RFC, split out 2026-07-24. Keeps

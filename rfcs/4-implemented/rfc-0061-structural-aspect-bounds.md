@@ -389,8 +389,8 @@ aspect impls are specified in RFC-0050.
 
 - RFC-0036 (Conditional Impl Blocks) — the conditional impl syntax used for
   structural blanket impls.
-- RFC-0050 (Closure Capture Lists, draft) — closure types and their aspect impls;
-  distinct from function pointer types.
+- RFC-0050 (Closure Capture Lists, under-review as of 2026-08-23) — closure types and
+  their aspect impls; distinct from function pointer types.
 - RFC-0060 (Aspect Impl Coherence) — orphan rule; structural constructors owned by
   `std::core`; overlap detection.
 - RFC-0062 (Ord Comparison Aspect, draft) — prerequisite for `extend<T: Ord> T[]: Ord`.

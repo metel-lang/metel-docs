@@ -2,8 +2,10 @@
 id: rfc-0123
 title: "Field-Wise Row Constraints"
 date: '2026-07-24'
-status: draft
+status: under-review
+tracking: 'https://github.com/metel-lang/metel-core/issues/793'
 target:
+updated: '2026-08-23'
 ---
 
 > **Opened 2026-07-24, unifying three questions the corpus was carrying separately without
@@ -18,6 +20,8 @@ target:
 > RFC-0121: that RFC is already carrying row variables, row algebra, typestate, and the
 > width-subtyping problem, and this cluster's repeated lesson is that large RFCs accumulate
 > contradictions faster than they get read.
+
+> **Status — under review (2026-08-23).** Committed to v0.14.0, tracking issue #793 filed 2026-08-22
 
 ## Summary
 

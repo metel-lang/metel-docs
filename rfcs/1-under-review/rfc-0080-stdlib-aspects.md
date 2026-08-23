@@ -2,8 +2,16 @@
 id: rfc-0080
 title: "Standard Library Aspects — Clone, Deref, Send, Sync"
 date: '2026-07-01'
-updated: '2026-07-09'
+updated: '2026-08-23'
+status: under-review
+tracking: 'https://github.com/metel-lang/metel-core/issues/805'
 ---
+
+> **Tracking added retroactively (2026-08-23).** This RFC reached under-review before
+> the tracking-issue requirement existed (PROCESS.md, 2026-08-23); filed metel-core#805
+> (design-settlement, blocked on RFC-0093's derive mechanism, same v0.13.1 comptime/
+> derive foundation chain split out 2026-08-23). Also backfilled the missing `status`
+> frontmatter field itself, absent until now.
 
 > **Status — under review.** Moved back from accepted 2026-07-09: §1.3 specified
 > derive using `#[derive(Clone)]`, a syntax RFC-0012 (Attributes, Metadata, Macros, and
@@ -19,7 +27,8 @@ updated: '2026-07-09'
 > not last the day: RFC-0012 §9 retired the `derives` keyword entirely in favour of
 > `@derive(Aspect, ...)`, an attribute on the struct/enum itself, reused (disambiguated
 > by attachment target) to also register the comptime function that implements a given
-> aspect's derive. §1.3 now uses `@derive(Clone)`.
+> aspect's derive. §1.3 now uses `@derive(Clone)` — since revised again, see the
+> 2026-08-23 update below: the attribute sigil itself moved from `@` to `#`.
 >
 > **Update (2026-07-09, later still):** RFC-0012 was itself split into four smaller
 > RFCs and superseded (`public/rfcs/5-superseded/rfc-0012-derived-aspects.md`). The
@@ -32,6 +41,17 @@ updated: '2026-07-09'
 > not to affect `Clone`'s specific derive (they concern the general mechanism, not this
 > RFC's four aspects, which do not depend on which path implements derive). Depends on
 > RFC-0071 (Ownership and Move Semantics) and RFC-0060 (Aspect Impl Coherence).
+>
+> **Status update, 2026-08-23:** RFC-0093 moved `0-draft` → `1-under-review`, tracking
+> issue `#799` filed for its design settlement (its own dependency on RFC-0092's
+> `type`-as-value/`typeinfo`/`emit`, still `0-draft`, is the deeper blocker). Still
+> unaccepted — this doesn't change the re-promotion condition above, just its status
+> label.
+>
+> **Sigil update, 2026-08-23, later the same day:** the attribute mechanism's sigil
+> itself moved from `@` to `#` (RFC-0095, found to collide with the accepted allocator
+> cluster's own `@`). §1.3 below now uses `#derive(Clone)`; the dated notes above are
+> left as written, recording what was true on their own dates.
 > Formally specifies four aspects that are assumed pre-existing across the
 > accepted and under-review region RFC cluster (RFC-0063–0079) but have never been
 > defined. The sendability aspects (`Send`, `Sync`) rely on closed-world coherence from
@@ -95,7 +115,7 @@ buffer, deep-copying a list, incrementing a reference count. The distinction bet
 derived impl calls `.clone()` on each field and assembles the result:
 
 ```metel
-@derive(Clone)
+#derive(Clone)
 struct Point { x: f64, y: f64 }
 
 // Generated:
@@ -206,7 +226,7 @@ of whose fields are `Send`. Under closed-world coherence (RFC-0060):
 - `&T` is `Send` if `T: Sync`.
 - `&var T` is `Send` if `T: Send`.
 
-No `@derive(Send)` annotation is needed; the compiler applies the rule automatically.
+No `#derive(Send)` annotation is needed; the compiler applies the rule automatically.
 
 > **Note (2026-07-11):** this rule is `Send`'s own instance of a shared mechanism —
 > how the compiler recognizes an aspect as auto-impl at all, and the general
@@ -340,6 +360,7 @@ does not depend on RFC-0003 and may be accepted independently.
   `Deref` impls for `Rc` and `Arc`; `get_mut` and `try_unwrap` as the mutation API.
 - RFC-0003 (Concurrency Model, draft) — fiber boundary crossing; consumer of `Send`
   and `Sync` bounds.
-- RFC-0093 (Derive Registration, draft) — governs the derive syntax/mechanism `Clone`'s
-  §1.3 depends on; this RFC's move back to under-review pending that resolution.
-  (Superseded RFC-0012, which originally specified this, on 2026-07-09.)
+- RFC-0093 (Derive Registration, under-review as of 2026-08-23) — governs the derive
+  syntax/mechanism `Clone`'s §1.3 depends on; this RFC's move back to under-review
+  pending that resolution. (Superseded RFC-0012, which originally specified this, on
+  2026-07-09.)

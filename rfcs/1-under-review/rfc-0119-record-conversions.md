@@ -2,8 +2,10 @@
 id: rfc-0119
 title: "Record Conversions"
 date: '2026-07-24'
-status: draft
+status: under-review
+tracking: 'https://github.com/metel-lang/metel-core/issues/790'
 target:
+updated: '2026-08-23'
 ---
 
 > **Extracted from RFC-0090 §8 (tier 2) on 2026-07-24** (superseded; see RFC-0116's header
@@ -20,13 +22,25 @@ target:
 > `0-draft`)** — and, after §2, for a structural reason rather than by omission: tier 2
 > never handles a borrow, so it never needs to establish which object one came from.
 
+> **Status — under review (2026-08-23).** Tracking issue #790 filed 2026-08-22.
+> **Moved out of v0.13.0 the next day**, once RFC-0120 was found not to actually depend
+> on this RFC (RFC-0120's own header carried a stale dependency inherited from the
+> original split's ordering, not a real requirement — see RFC-0120's 2026-08-23
+> correction). Unplaced rather than pushed to a later milestone number: this RFC's real
+> blocker is RFC-0093 (comptime derive, `1-under-review` as of 2026-08-23, `#799`, no
+> target) — the same "don't force it
+> into a milestone it doesn't fit" treatment RFC-0124 already got for its own RFC-0067
+> dependency. OQ1 still holds: the hand-writable form needs no derive at all, so nothing
+> here is refused, just not scheduled while its practical value (the `#derive(...)`
+> convenience every example in this RFC actually uses) is on an open-ended wait.
+
 ## Summary
 
 Two derivable aspects, `ToRecord` and `FromRecord`, converting between a nominal struct and
 a record of its fields:
 
 ```metel
-@derive(ToRecord, FromRecord)
+#derive(ToRecord, FromRecord)
 struct Handle { fd: i32, alloc: @a Buffer }
 
 let r  = h.to_record();            // { fd: i32, alloc: @a Buffer } — same bits, new static type
@@ -172,10 +186,10 @@ fiat-linearity — at the point per-field multiplicity is taken up again.
 
 ## Open Questions
 
-1. **Is `@derive` available?** Whether these conversions are auto-*derivable* (versus always
+1. **Is `#derive` available?** Whether these conversions are auto-*derivable* (versus always
    hand-written) depends on RFC-0093's comptime derive mechanism, which is `0-draft`. This
    RFC requires only that `ToRecord`/`FromRecord` exist as ordinary, hand-writable aspects
-   with these signatures; the `@derive(…)` convenience is additive.
+   with these signatures; the `#derive(…)` convenience is additive.
 2. **Does `from_record` need a guard against bypassing constructor invariants?** §1 states
    the risk and the convention (don't derive it on such a type). RFC-0114 proposes a real
    mechanism. Whether this RFC should require RFC-0114, recommend it, or stay silent is

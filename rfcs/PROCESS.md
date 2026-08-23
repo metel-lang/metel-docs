@@ -61,6 +61,70 @@ to check for conflicts yet, but see "Before opening a new RFC" below.
 engagement has happened, but real open questions remain that block acceptance. RFCs move
 here when they've earned it, not on a schedule.
 
+**Additional trigger, added 2026-08-23 — starting to interact with development *is*
+earning it.** The rule above was written against a different failure (promoting a draft
+just because time passed, with no real work behind it) and reads, taken alone, like it
+could also block the case this adds: an RFC gets a real, planned point of contact with
+engineering — most concretely, its design settlement or implementation becomes committed
+to a specific release milestone — before anyone has written a word of review prose.
+Found live, 2026-08-22: four records-cluster RFCs (0117/0119/0120/0121) had sat `0-draft`
+for 29 days with zero tracking of any kind, then were committed straight to `v0.13.0`/
+`v0.14.0` and given real tracking issues without a status change to match — the issue
+existed, the milestone existed, the RFC's own lifecycle stage still said "nobody's
+looked at this yet." Filing a tracking issue against a specific release, with a real
+dependency-chain analysis behind it (what does this RFC need before it, what does it
+block after), *is* the substantiated engagement the original rule asks for — it just
+isn't drafting the RFC's own prose. Concretely:
+
+- **The moment an RFC's design settlement or implementation is committed to a specific
+  release** (a milestone assignment, not a vague future intention) **, two things happen
+  in the same change:** the RFC transitions to `1-under-review`, and a tracking issue is
+  created and linked to that milestone, if one doesn't already exist.
+- **This does not lower the bar `2-accepted` still requires.** Landing in
+  `1-under-review` this way says "this is now real, scheduled work," not "the design
+  questions are answered" — those still block acceptance exactly as before.
+- Applied retroactively the same day to close the gap it was written against: RFC-0117,
+  RFC-0119, RFC-0120, RFC-0121, RFC-0123, RFC-0125 (all committed to `v0.13.0`/`v0.14.0`
+  2026-08-22), and RFC-0132 (comptime — its own design-settlement issue, `#726`, had
+  targeted `v0.13.0` since 2026-08-13, nine days before anyone moved its status to match).
+
+**Addition, added 2026-08-23 — "linked" means the RFC's own frontmatter says so, not just
+that an issue happens to exist somewhere.** The rule above talked about a tracking issue
+existing; it didn't say a reader of the RFC file itself could find it, and the first
+batch of RFCs moved under it (above) initially couldn't — the issues existed on GitHub,
+the RFCs didn't point at them. Fixed the same day it was noticed, not left for a future
+correction to catch, matching this document's own discipline of not letting a gap sit
+once seen. Mechanism:
+
+- **`1-under-review` gets its own `tracking:` frontmatter field**, deliberately not
+  reusing `impl_tracking` — a design-settlement issue and an implementation issue are
+  usually not the same issue (RFC-0132's `#726` is explicitly design-only; real
+  implementation issues get filed separately, once accepted), and conflating them under
+  one field name would make a reader guess which kind of issue they're looking at.
+  `impl_status`/`impl_tracking` stay exactly as before, added at `3-integrated` onward.
+- **`rfc.py transition <id> --to under-review` now requires `--tracking <task/URL>`**,
+  mechanically enforced the same way `--to integrated` already required it — not left to
+  memory a second time, having just found it *was* left to memory the first time.
+- ~~**Not retroactively required of RFCs already `1-under-review` before this
+  addition** — matching the same non-retroactive scoping this document already uses for
+  `impl_status`/`impl_tracking`. RFC-0067 and RFC-0122 predate this and have no natural
+  single tracking issue to point at (both are still pure design work, no implementation
+  issue filed yet); `rfc.py check` does not require `tracking` from them.~~
+  **Reversed 2026-08-23, same day.** Wrong on its own claim: RFC-0067 and RFC-0122 both
+  *did* have a natural single tracking issue the whole time — `metel-core#274`, cited in
+  each RFC's own prose ("Tracked as metel-core#274") but never wired into frontmatter,
+  exactly the gap this addition exists to close. Auditing all 20 `1-under-review` RFCs
+  turned up seven predating the field (RFC-0050, RFC-0067, RFC-0080, RFC-0099, RFC-0100,
+  RFC-0113, RFC-0122, RFC-0134 — RFC-0050 already backfilled earlier the same day with
+  `#803`), not just the two named above. Two (RFC-0067, RFC-0122) pointed at an existing
+  issue (`#274`); RFC-0134 pointed at `#269` (the issue its own text says it exists to
+  satisfy); the remaining four (RFC-0080, RFC-0099, RFC-0100, RFC-0113) had none and got
+  fresh design-settlement issues (`#805`-`#808`). `rfc.py check` now hard-requires
+  `tracking` from every `1-under-review` RFC with **no grandfather exemption** — unlike
+  `impl_status`/`impl_tracking`'s genuinely-optional-for-old-RFCs scoping, a missing
+  tracking issue is exactly the kind of gap that sits silently until someone asks, which
+  is what happened here. Applies retroactively, not just going forward.
+
 **2-accepted.** The design is settled: no more open questions block it, alternatives have
 been weighed and one chosen. This is where RFC lifecycle has stopped, historically, for
 anything not yet implemented — 14 RFCs sat here with no further gate before
@@ -135,6 +199,19 @@ honest single status). Concretely:
   `--tracking <tracking task/URL>` — the same discipline as Rust's rule that no feature
   ships behind `#![feature(x)]` without an open tracking issue, enforced mechanically
   rather than left to memory.
+- **Exactly one, added 2026-08-23.** `impl_tracking` was always a single field, but
+  nothing stopped the *actual* tracking from being spread across several independent
+  top-level issues anyway — RFC-0071 shipped as four ("N/4") issues (`#578`-`#579`
+  closed, `#261`-`#262` still open), and `impl_tracking` pointed at `#579`, one of the
+  closed ones, while the RFC as a whole stayed only partially implemented. Not malicious,
+  just what happens when the convention only names the field and not the issue count
+  behind it. Going forward: one implementation tracking issue per RFC, full stop. If the
+  work genuinely has several independent, separately-schedulable parts (as RFC-0071's
+  did), the tracking issue is an umbrella — a checklist linking each real sub-issue, kept
+  current as they open and close — not a peer issue that happens to be first. `--tracking`
+  always points at that one issue, never at whichever part happened to be filed first.
+  RFC-0071 itself corrected the same day: `#795` is now its sole tracking issue,
+  `impl_tracking` repointed at it, `#578/#579/#261/#262` all cross-linked to it.
 - **Every RFC frontmatter gains two fields once integrated:** `impl_status`
   (`not-started` / `in-progress` / `implemented`) and `impl_tracking` (the task link).
   These are the RFC's own Swift-Evolution-style status field — a reader of the RFC sees
@@ -198,7 +275,9 @@ says what it means but never said when to flip it — three rules, settled along
   `impl_tracking` points at whichever issue is understood to be that last one (or a
   parent/tracking issue covering all of them) — not just the first issue opened.
   Transitioning on partial coverage would claim the spec and interpreter agree when they
-  don't yet.
+  don't yet. **2026-08-23:** this scenario shouldn't recur under the "exactly one"
+  tracking rule above — with a single umbrella issue from the start, there is no "last
+  one" to identify after the fact, since `impl_tracking` never pointed anywhere else.
 - **A bug found later in already-`4-implemented` behavior does not roll the stage back.**
   File it as an ordinary bug issue and fix forward. `4-implemented` is a statement about
   a point in time — spec and interpreter agreed when this was declared — not a live

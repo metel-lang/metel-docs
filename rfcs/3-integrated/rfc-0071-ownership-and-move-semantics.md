@@ -4,7 +4,7 @@ title: "Ownership and Move Semantics"
 date: '2026-06-28'
 status: integrated
 updated: '2026-07-26'
-impl_tracking: 'https://github.com/metel-lang/metel-core/issues/579'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/795'
 impl_status: in-progress
 coverage:
   "1": { spec: "spec.ownership.values-move-by-default.legality-1" }
@@ -598,8 +598,9 @@ RFC correctly says nothing about it. Only §1's scope sentence needed widening, 
    "*cloned* into the closure environment", which is accurate for the current
    everything-clones interpreter and wrong once this RFC is enforced. Now "copied", with a
    `Planned for v0.12.0` marker stating the move rule for non-`Copy` captures.
-   RFC-0050 (Closure Capture Lists, `0-draft`) may later add explicit capture modes; it is not
-   needed for the default, which follows from by-value capture plus affine ownership.
+   RFC-0050 (Closure Capture Lists, `1-under-review` as of 2026-08-23) may later add explicit
+   capture modes; it is not needed for the default, which follows from by-value capture plus
+   affine ownership.
 
 5. ~~Does passing an exclusive reference consume it?~~ **Resolved 2026-07-26 — an interim
    rule, deliberately narrower than RFC-0122's eventual one.** Question 3 above says an

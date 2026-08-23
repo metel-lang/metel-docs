@@ -33,8 +33,8 @@ since 2026-06-05) had gone undiscovered through this session's entire RFC-0092/0
 model (`comptime let`, `comptime fun`'s restrictions, `comptime if`) was real and
 missing from RFC-0092 — folded into RFC-0092 §0. Its recursion/allocation/error-message
 open questions are now RFC-0092 Open Questions 6-8. Its aspect-inspection question
-(OQ-4) is answered more precisely by RFC-0093's `@derive(Aspect)` registration. Its
-`@cfg`-collapses-into-`comptime if` observation independently corroborates RFC-0095's
+(OQ-4) is answered more precisely by RFC-0093's `#derive(Aspect)` registration. Its
+`#cfg`-collapses-into-`comptime if` observation independently corroborates RFC-0095's
 Open Question 4 rather than needing merging into it. RFC-0055 is now superseded
 (`5-superseded/rfc-0055-comptime.md`) — kept as the first concrete proof that
 `INDEX.md` and the check-before-opening-a-new-RFC rule (`PROCESS.md`) earn their keep.
@@ -380,7 +380,7 @@ above it are.
   RFC-0055/RFC-0083 reconciliation history recorded in them is part of how this RFC
   reached its shape. Still the dependency root of 0093/0094; now itself depends on
   RFC-0128.
-- **RFC-0093** — Derive Registration — `@derive(Aspect)` as request + registration.
+- **RFC-0093** — Derive Registration — `#derive(Aspect)` as request + registration.
   Depends on RFC-0092. RFC-0080's `Clone` derive depends on this. Answers RFC-0055's
   aspect-inspection open question. Deliberately excludes auto-impl aspects
   (`Send`/`Sync`/`Linear`) from its scope — see RFC-0096.
@@ -836,7 +836,7 @@ implementation).
   invariant gets a permanent exception" as the downside if RFC-0100 never landed.
   `field_init` is the *only* site in the grammar where `:` introduces a value, so this
   one-token change completes the `:` classifies / `=` defines invariant
-  (`reports/syntax/colon-classifies-equals-defines.md`) with no exceptions left. Braces,
+  (`reports/syntax/colon-classifies-equals-labels-walrus-binds.md`) with no exceptions left. Braces,
   punning (`Point { x }`), and pattern destructuring all unchanged. Carries no grammar
   risk, unlike both of RFC-0100's separator proposals — `field_init` matches
   `ident ~ "="` directly, so the label never routes through `expr` and nothing can shadow
@@ -844,6 +844,20 @@ implementation).
   RFC-0090's settled anonymous record values, making `Point { x = 1.0 }` literally
   `{ x = 1.0 }` plus a brand — the relationship RFC-0090 tier 3 claims holds
   semantically, now visible in the syntax.
+- **RFC-0136** *(under review, opened 2026-08-23)* — Walrus for Kept Bindings — extends
+  the classify/define invariant with a third token: `let`/`var` declarations, plain
+  reassignment, and `type X = Concrete` all currently spell "define" with `=`, the same
+  token `field_init`, `assoc_binding`, and RFC-0100's not-yet-live keyword arguments use
+  for a value or type consumed once at the site and not kept as a name. Splits on
+  whether the introduced name is *kept* (referenceable after the statement — moves to
+  `:=`) or *not kept* (a label — stays `=`). Four grammar rules change: `let_decl`,
+  `let_mut_decl`, `assign_op` (plain `=` only), `assoc_type_def`; resolves RFC-0100's
+  `f(x = 1)`/`assign_expr` collision as a side effect, since plain `=` can no longer
+  parse as assignment inside an argument position at all. Largest syntax-migration
+  surface proposed to date — every `let` and plain reassignment in the corpus. Open:
+  whether compound assignment operators (`+=` etc.) move too; coordination with
+  RFC-0132's `comptime let`. Declaration-side default parameter values explicitly out of
+  scope. See `reports/syntax/colon-classifies-equals-labels-walrus-binds.md`.
 - **RFC-0101** *(draft)* — Grammar-Enforced Naming Case Conventions — PascalCase for type
   declarations (struct/enum/aspect/generic params) and enum variants, camelCase for
   `fun` declarations (free functions, methods, associated functions), SCREAMING_CASE for

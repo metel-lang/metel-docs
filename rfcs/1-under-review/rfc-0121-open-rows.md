@@ -2,8 +2,10 @@
 id: rfc-0121
 title: "Open Rows"
 date: '2026-07-24'
-status: draft
+status: under-review
+tracking: 'https://github.com/metel-lang/metel-core/issues/792'
 target:
+updated: '2026-08-23'
 ---
 
 > **Extracted from RFC-0090 §2 (open half), §4 and §7 on 2026-07-24** (superseded; see
@@ -38,6 +40,8 @@ target:
 > That is a real and large difference, and it is the whole justification for shipping bounds
 > first — but it means bounds are the cheap path to a fraction of this RFC, not a peer
 > feature.
+
+> **Status — under review (2026-08-23).** Committed to v0.14.0, tracking issue #792 filed 2026-08-22
 
 ## Summary
 

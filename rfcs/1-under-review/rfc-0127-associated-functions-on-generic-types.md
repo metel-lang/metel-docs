@@ -2,9 +2,13 @@
 id: rfc-0127
 title: "Associated Functions on Generic Types"
 date: '2026-08-01'
-status: draft
+status: under-review
 target:
+updated: '2026-08-23'
+tracking: 'https://github.com/metel-lang/metel-core/issues/802'
 ---
+
+> **Status — under review (2026-08-23).** Design-settlement issue #802 filed 2026-08-23 -- 5 real open questions, OQ4 genuinely hard per the RFC's own words. Milestoned v0.13.0: urgent (140 call sites already assume it), groups with #617's generics/typechecker work
 
 ## Summary
 

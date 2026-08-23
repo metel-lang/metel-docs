@@ -311,7 +311,7 @@ fun close_and_report(c: Connection) -> ConnStats {
 ### Tier 2's `to_record_mut`/`from_record_mut`: static absence, not a runtime check
 
 ```metel
-@derive(Linear, ToRecord, FromRecord)
+#derive(Linear, ToRecord, FromRecord)
 struct FileHandle {
     fd: RawFd,     // the reason FileHandle as a whole is Linear
     path: String,  // ordinary data, no consumption discipline
@@ -319,7 +319,7 @@ struct FileHandle {
 ```
 
 (`Linear` here is RFC-0089's auto-impl aspect, granted structurally because `fd` is
-multiplicity-`1` — no `@derive(Linear)` annotation is actually needed or meaningful;
+multiplicity-`1` — no `#derive(Linear)` annotation is actually needed or meaningful;
 shown for illustration only. `ToRecord`/`FromRecord` are the derivable ones.)
 
 ```metel
@@ -403,7 +403,7 @@ fn authenticate(session: &mut Session, token: String) {
 ```
 
 ```metel
-@derive(ToRecord, FromRecord)
+#derive(ToRecord, FromRecord)
 struct Session { host: String, state: AuthState }
 
 fun authenticate(session: &var Session, token: String) {
@@ -449,7 +449,7 @@ fn build() -> BigConfig {
 ```
 
 ```metel
-@derive(ToRecord, FromRecord)
+#derive(ToRecord, FromRecord)
 struct BigConfig { a: A, b: B, c: C }
 
 fun build() -> BigConfig {
@@ -480,7 +480,7 @@ fun drain_field<row R, name: Symbol, T>(s: &var { name: T, ..R })
     (v, s)
 }
 
-@derive(ToRecord, FromRecord)
+#derive(ToRecord, FromRecord)
 struct Handle { fd: i32, alloc: @a Buffer }
 
 fun example(h: &var Handle) {

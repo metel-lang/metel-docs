@@ -49,7 +49,7 @@ superseded_by: rfc-0116, rfc-0117, rfc-0118, rfc-0119, rfc-0120, rfc-0121
 >
 > **Revised 2026-07-24 — the `record` keyword is dropped from anonymous records.** The
 > anonymous type-former is now bare braces: `{ x: f64, y: f64 }` as a type, `{ x = 1.0,
-> y = 2.0 }` as a value (the `=` per `reports/syntax/colon-classifies-equals-defines.md`,
+> y = 2.0 }` as a value (the `=` per `reports/syntax/colon-classifies-equals-labels-walrus-binds.md`,
 > adopted the same day by RFC-0100 for keyword arguments and RFC-0114 for record values).
 > This completes the adoption of `reports/substructural-types/access-and-presence-rows.md`
 > §3.5, whose rule is that the row-former carries a prefix **only where there is a receiver
@@ -303,7 +303,7 @@ strongest available evidence that the operator is the optional part.
   implies `R: { token: Token, .. }`, so the impl above needs no separate bound — it is
   strictly more informative, since it also names what is left.
 - **`=` is the correct separator, not a coincidence.** It *equates* two rows, per
-  `reports/syntax/colon-classifies-equals-defines.md`. It is also the same shape as
+  `reports/syntax/colon-classifies-equals-labels-walrus-binds.md`. It is also the same shape as
   `assoc_binding` (`Deref<Target = Node>`), an equation that already lives in this exact
   channel — so this is a second instance of an existing pattern, not a new one.
 - **No label kind is required.** The alternative — an Ur/Web-style `R -- #token` with a

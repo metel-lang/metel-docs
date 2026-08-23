@@ -2,9 +2,12 @@
 id: rfc-0130
 title: "extends Aspect: Renaming impl Aspect for Consistency with extend"
 date: '2026-08-06'
-status: draft
+status: accepted
 target:
+updated: '2026-08-23'
 ---
+
+> **Status — accepted (2026-08-23).** Design settled -- own Unresolved Questions section: none load-bearing, pure lexical rename with a precedented migration process (RFC-0098). No remaining open question blocks it
 
 ## Summary
 
@@ -218,5 +221,6 @@ The only real work is the sweep itself, not any remaining design decision.
 
 ## Decision
 
-**Outcome:** *(pending)*
-**Target:** *(set when accepted)*
+**Outcome:** Accepted, 2026-08-23 — no open question blocks it; a pure lexical rename
+with a precedented migration process (RFC-0098).
+**Target:** v0.13.0. Tracking issue: `metel-core#801`.

@@ -2,8 +2,10 @@
 id: rfc-0092
 title: "Comptime Core — Type-as-Value, Reflection, and Emit"
 date: '2026-07-09'
-status: draft
+status: under-review
 target:
+updated: '2026-08-23'
+tracking: 'https://github.com/metel-lang/metel-core/issues/800'
 ---
 
 > **New RFC, split out 2026-07-09** from RFC-0012 (Attributes, Metadata, Macros, and
@@ -20,9 +22,9 @@ target:
 > general restrictions (no I/O, no non-comptime calls, a recursion limit), and
 > `comptime if`. §0 below folds that content in. RFC-0055's own Open Question 4 ("can
 > comptime code inspect whether a type implements an aspect... could replace some uses
-> of conditional `impl` blocks") is answered more precisely by RFC-0093's `@derive`
+> of conditional `impl` blocks") is answered more precisely by RFC-0093's `#derive`
 > registration than by RFC-0055's own sketch. RFC-0055 is now superseded by this RFC
-> (plus RFC-0093 for OQ-4 and RFC-0095 for the `comptime if`/`@cfg` overlap RFC-0055's
+> (plus RFC-0093 for OQ-4 and RFC-0095 for the `comptime if`/`#cfg` overlap RFC-0055's
 > design already anticipated without RFC-0095 knowing it) —
 > `public/rfcs/5-superseded/rfc-0055-comptime.md`.
 >
@@ -52,6 +54,8 @@ target:
 > unification generalizes to non-type comptime values, answering RFC-0053's deferred
 > const generics) is likewise now RFC-0132 §3's, not this RFC's.
 
+> **Status — under review (2026-08-23).** Design-settlement issue #800 filed 2026-08-23 -- surfaced as RFC-0093's real blocker while filing #799
+
 ## Summary
 
 Establishes `comptime` — Zig's model directly: compile-time execution of ordinary
@@ -70,7 +74,7 @@ RFC-0132, split out 2026-08-13 (see the note above). This RFC assumes it.**
 
 ## Motivation
 
-Every mechanism this RFC and its siblings specify — `@derive(Aspect)` registration
+Every mechanism this RFC and its siblings specify — `#derive(Aspect)` registration
 (RFC-0093), comptime-callable parsing (RFC-0094) — assumes a derive/compile-time-
 execution mechanism that no prior document specifies. Zig's answer avoids the two
 failure modes of Rust's alternative (a closed, compiler-hardcoded derive list; a
@@ -169,7 +173,7 @@ Restrictions, inherited from RFC-0055: no I/O builtins (`print`, `println`); no 
 allocation via runtime allocators (comptime needs its own scratch storage, distinct
 from `@a T`'s runtime allocators — see Open Question 6); no calls to non-comptime
 functions; no recursion beyond a compiler-enforced depth limit (Open Question 5).
-`@derive(Aspect)`-tagged functions (RFC-0093) and `emit` (§3) are comptime functions in
+`#derive(Aspect)`-tagged functions (RFC-0093) and `emit` (§3) are comptime functions in
 this sense, with `emit` as an additional capability layered on top, not a different
 execution model.
 
@@ -185,7 +189,7 @@ fun word_size() -> i64 {
 ```
 
 This is the mechanism RFC-0095's Open Question 4 already speculates might subsume
-`@cfg` — RFC-0055 had already reached the same conclusion independently
+`#cfg` — RFC-0055 had already reached the same conclusion independently
 ("conditional boolean conditions fold cleanly into the generated code with no
 overhead"), without RFC-0095 knowing RFC-0055 existed. Both RFCs converging on the same
 answer from opposite starting points is worth treating as *more* confidence in it, not
@@ -302,7 +306,7 @@ This reuse is not free, and surfaces two gaps neither RFC currently resolves:
   `Clone` or `Display` needs a stable field order, not whatever order a set happens to
   iterate in); visibility, to decide whether a comptime function defined outside a
   type's module should see its private fields at all; and each field's `@` attributes
-  (RFC-0095), for a derive function to act on `@skip`/`@rename(...)` and similar
+  (RFC-0095), for a derive function to act on `#skip`/`#rename(...)` and similar
   per-field metadata. Whether this means extending the row concept itself with this
   metadata, or defining a reflection-only superset of it, is open.
 

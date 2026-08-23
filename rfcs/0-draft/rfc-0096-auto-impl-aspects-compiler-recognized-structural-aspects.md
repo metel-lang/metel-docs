@@ -13,7 +13,7 @@ target:
 > that pattern *is* as a general mechanism; RFC-0061 §5 assumes the same rule propagates
 > through arrays without saying where it's defined; RFC-0093 explicitly *excludes*
 > auto-impl aspects from its own scope (§2: "`Linear` does not belong on this list...
-> no `@derive(Linear)` annotation is needed or meaningful"). This RFC is the missing
+> no `#derive(Linear)` annotation is needed or meaningful"). This RFC is the missing
 > piece those four all assume exists.
 >
 > **Correction (2026-07-11, later the same day):** §1's original text claimed the
@@ -28,7 +28,7 @@ target:
 
 Three aspects — `Send`, `Sync` (RFC-0080), and `Linear` (RFC-0089, draft) — are
 **auto-impl**: the compiler grants them to a type automatically, based on the type's
-structure, with no `impl` block and no `@derive` annotation written anywhere. Every
+structure, with no `impl` block and no `#derive` annotation written anywhere. Every
 RFC that uses this pattern cites RFC-0080 §3.2 as precedent but none of them — including
 RFC-0080 itself — specifies what this RFC settles:
 
@@ -107,7 +107,7 @@ forgot to fix:
   doesn't reopen this bullet's point, since it isn't a counterexample to "fixed
   marker aspects stay closed" — it was never in that category.)
 - RFC-0093 already provides the extensible path for "I want this generated
-  structurally": `@derive(Aspect)`, resolved through a registered comptime function.
+  structurally": `#derive(Aspect)`, resolved through a registered comptime function.
   A hypothetical user-defined auto-impl aspect would have no comptime function to
   register against — auto-impl doesn't ask permission at any use site, it always
   applies — so it cannot be expressed through RFC-0093's mechanism even in principle.
@@ -269,7 +269,7 @@ defined, by construction.
 ## 6. What this doesn't cover
 
 - **A general "derive this structurally" mechanism for user aspects.** That's
-  RFC-0093 (`@derive(Aspect)`), a distinct, separately-invoked mechanism. See §1 for
+  RFC-0093 (`#derive(Aspect)`), a distinct, separately-invoked mechanism. See §1 for
   why the two don't merge.
 - **Adding a fourth *fixed marker* auto-impl aspect (beyond `Send`/`Sync`/`Linear`).**
   This RFC establishes where such a proposal would live (compiler-recognized identity
@@ -298,7 +298,7 @@ defined, by construction.
 
 RFC-0090 §1 calls `HasField<"name", T>`/`Lacks<"name">` "an extension of RFC-0080's
 auto-impl pattern: one marker aspect *family* instead of one aspect, same machinery."
-That's right in spirit — no `impl`, no `@derive`, structural satisfaction — but wrong
+That's right in spirit — no `impl`, no `#derive`, structural satisfaction — but wrong
 in one respect worth naming precisely: it is not "the same machinery" as §2's
 algorithm, and treating it as a fourth instance of §1's closed list would be a
 category error in the other direction from `Drop`'s (§4).
@@ -414,7 +414,7 @@ because this RFC is the right place to resolve it.
 - RFC-0089 (Linear Types) — `Linear` as the third auto-impl aspect (§2); the
   citation that made the missing shared definition visible. Does not state a
   reference rule (Unresolved Question 3).
-- RFC-0093 (Derive Registration) — the user-invoked `@derive(Aspect)` mechanism this
+- RFC-0093 (Derive Registration) — the user-invoked `#derive(Aspect)` mechanism this
   RFC deliberately does not merge with; §2's correction of `Linear`'s earlier
   mis-classification motivates this RFC's §1.
 - RFC-0061 (Structural Aspect Bounds) — array propagation of `Send`/`Sync` (§5.1-5.2,
@@ -429,9 +429,9 @@ because this RFC is the right place to resolve it.
   RFC relies on directly to explain auto-impl for generic types.
 - RFC-0071 (Ownership and Move Semantics) — §3's "Drop is opt-in, fields still drop
   recursively" rule, the basis for this RFC's §4 correction.
-- RFC-0050 (Closure Capture Lists, draft) — independently derives the same
-  captured-state `Send` rule this RFC's §6 names as a fourth, uncited instance of the
-  pattern.
+- RFC-0050 (Closure Capture Lists, under-review as of 2026-08-23) — independently derives
+  the same captured-state `Send` rule this RFC's §6 names as a fourth, uncited instance of
+  the pattern.
 - Issue #542 / `src/coherence.rs` — where the absence of an `AspectDecl` auto-impl
   marker was confirmed empty by direct inspection, motivating §1's design decision.
 - RFC-0090 (Structural Records) — §1's `HasField`/`Lacks` auto-derivation,

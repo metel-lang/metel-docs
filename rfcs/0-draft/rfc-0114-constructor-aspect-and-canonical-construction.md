@@ -34,7 +34,7 @@ updated: '2026-07-24'
 > where a receiver is projected from (`Handle.{ fd }`), and this RFC's rows are all
 > freestanding. They are restated here in RFC-0090's normative `record { … }` former (§1),
 > with record *values* separated by `=` per
-> `reports/syntax/colon-classifies-equals-defines.md` and RFC-0100 §1 — the same invariant,
+> `reports/syntax/colon-classifies-equals-labels-walrus-binds.md` and RFC-0100 §1 — the same invariant,
 > same day, in both RFCs. Correcting the examples surfaced a real gap the stale syntax had
 > been hiding: **`construct`'s own body cannot construct a `Self`** without either
 > recursing into itself or using the bare literal §2 abolishes. §1.1 settles that
@@ -533,7 +533,7 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
   split out of RFC-0100 the same day; keeps brace literals and changes only `field_init`'s
   `:` to `=`, which is what makes `SortedPair { small = 3, big = 1 }` desugar so directly
   to `SortedPair::construct({ small = 3, big = 1 })` (§2). Also not a dependency
-- `reports/syntax/colon-classifies-equals-defines.md` — the `:` classifies / `=` defines
+- `reports/syntax/colon-classifies-equals-labels-walrus-binds.md` — the `:` classifies / `=` defines
   invariant that fixes the separator in this RFC's record values and RFC-0100's keyword
   arguments identically
 - `reports/substructural-types/access-and-presence-rows.md` §3.5 — the settled row-former
@@ -543,7 +543,7 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
   and `&var`, the spellings this RFC's examples were corrected to on 2026-07-24
 - `public/rfcs/0-draft/rfc-0026-unsafe-blocks.md` — the foundation for
   `ConstructUnchecked`; `0-draft`, deferred, with a stale dependency note (§6)
-- `public/rfcs/0-draft/rfc-0093-derive-registration.md` — the comptime-derive
+- `public/rfcs/1-under-review/rfc-0093-derive-registration.md` — the comptime-derive
   mechanism possibly relevant to `Construct`'s default (open question 3)
 - `reports/substructural-types/structural-records.md` — the piecewise-`MaybeUninit`
   worked example §3 generalizes

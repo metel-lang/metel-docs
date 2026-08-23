@@ -2,6 +2,9 @@
 id: rfc-0050
 title: "Closure Capture Lists"
 date: '2026-06-03'
+status: under-review
+updated: '2026-08-23'
+tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 ---
 
 *Updated 2026-07-07 against the split model: the bracket-syntax conflict with region/allocator
@@ -15,10 +18,33 @@ Guidance below.*
 > answer to the type-level question this RFC's `move` half depends on — but scoped narrower
 > than what the Timing Recommendation below anticipated: it treats "does calling a closure
 > consume a capture" as an ordinary affine question, not a linear one, specifically to avoid
-> waiting on the rest of the linear-types tower. Whether that narrower framing is actually
-> sufficient for `move` capture syntax to build on, or whether `move` still needs the fuller
-> linear-typed answer this section describes, is RFC-0134's own Open Question 1 — not
-> resolved by either document yet.
+> waiting on the rest of the linear-types tower.
+
+> **Correction, 2026-08-23: the "Open Question 1" cited above no longer exists as an open
+> item, and the answer it settled cuts against this section's own framing, not just past
+> it.** RFC-0134 reached `1-under-review` and its Open Questions section now reads "None
+> blocking" — the affine-vs-linear choice was resolved as **"Decision: affine `once`, not
+> linear"**, with a stated reopening condition, not left open for this RFC to answer. That
+> decision is a real mismatch with this section's own text, not a gap in it: `move`'s
+> design here is written throughout in terms of a **linear** binding and a `linear
+> fun(...) -> T` closure type (see the `Semantics` subsection below), the exact vocabulary
+> RFC-0046 used and RFC-0134 explicitly declined to adopt. This also lines up with a
+> separate, independently-reached finding from the same day (the RFC-0032 fix,
+> `metel-docs-internal`): `linear struct`/`linear enum` never materialized as a language
+> construct at all — RFC-0071 (accepted, implemented) is the settled ownership model, and
+> it is affine (`Copy`/`Drop` aspects), not linear. Two unrelated investigations landing on
+> the same conclusion the same day is worth treating as real signal, not coincidence.
+>
+> **What this likely means, stated as a finding for whoever resolves it, not decided
+> here:** `move ident` plausibly needs nothing more than ordinary affine move-into-closure
+> (already-implemented RFC-0071 semantics — the outer binding is consumed, using it after
+> is a compile error, exactly as written below) plus RFC-0134's `call_multiplicity` axis,
+> inferred from whether the closure body consumes the moved-in capture, to determine
+> whether the resulting closure is call-once (`once`) or reusable (`many`) — replacing
+> "has type `linear fun(...) -> T`: it must be called exactly once" with "has
+> `call_multiplicity: once`, per RFC-0134 §2, if its body consumes the capture." That is a
+> real rewrite of this subsection's substance, not a status update, so it is recorded here
+> as what the evidence points to rather than applied to the text below.
 
 *Updated again 2026-07-07: capture lists are now exhaustive. A bare `ident` specifier captures
 by value (clone), and once a closure has a capture list at all, every free variable it references
@@ -32,6 +58,8 @@ are now included — see the Semantics section. "Free variable," for exhaustiven
 clarified to mean outer-scope local bindings only; references to module-level functions,
 constants, types, and aspects are name resolution, not capture, and never need to appear in the
 list.*
+
+> **Status — under review (2026-08-23).** Zero remaining open questions in its own ledger -- all 6 Resolved Questions checked. Split readiness: &var/&/clone ready per its own Suggested Order; move blocked on a real design question (linear framing vs. RFC-0134's affine decision), not just timing -- #803
 
 ## Summary
 

@@ -4,8 +4,16 @@ title: "Closure Call Capability"
 date: '2026-08-13'
 status: under-review
 target:
-updated: '2026-08-15'
+updated: '2026-08-23'
+tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 ---
+
+> **Tracking added retroactively (2026-08-23).** This RFC reached under-review before
+> the tracking-issue requirement existed (PROCESS.md, 2026-08-23). Already had a real
+> tracking issue in its own text throughout — this RFC proposes the type-level
+> distinction metel-core#269 needs; #269 names itself as a precondition for #267
+> (move checking on by default) — just not recorded in frontmatter. Backfilled, no
+> change in substance.
 
 > **Scoped deliberately narrow.** This is not a revival of RFC-0046 (refused) or a
 > substitute for RFC-0049 (draft, built on RFC-0046's now-refused foundation). It

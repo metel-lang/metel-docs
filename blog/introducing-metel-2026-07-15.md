@@ -142,7 +142,7 @@ Purely structural systems are powerful — [TypeScript](https://www.typescriptla
 What I want to explore in Metel is narrower: **ordinary nominal types, plus an explicit structural `record` view** when the checker needs to reason about fields. The bridge would be opt-in — a nominal type can derive `ToRecord` to expose its fields as a structural row, and `FromRecord` to allow reconstruction from the full row again:
 
 ```metel
-@derive(ToRecord, FromRecord)
+#derive(ToRecord, FromRecord)
 struct Handle {
     fd: i32,
     label: String,
@@ -158,7 +158,7 @@ Those two aspects are deliberately separate: types with constructor-checked inva
 The real use case is **partial consumption** — a program needs to say: this field is gone, these fields are still here.
 
 ```metel
-@derive(ToRecord, FromRecord)
+#derive(ToRecord, FromRecord)
 struct RcBox<T> {
     strong: AtomicUsize,
     weak: AtomicUsize,

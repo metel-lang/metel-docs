@@ -4,8 +4,13 @@ title: "Dot-Separated Module Paths"
 date: '2026-07-13'
 status: under-review
 target:
-updated: '2026-07-14'
+updated: '2026-08-23'
+tracking: 'https://github.com/metel-lang/metel-core/issues/806'
 ---
+
+> **Tracking added retroactively (2026-08-23).** This RFC reached under-review before
+> the tracking-issue requirement existed (PROCESS.md, 2026-08-23); filed metel-core#806
+> (design-settlement, no code — full-dot vs. narrower context-limited alternative).
 
 > **Status — under review (2026-07-14).** Reopened after acceptance to reconsider the readability cost of using `.` everywhere. The fully-dotted proposal remains one option, but a narrower context-limited dotted-path alternative has been added for comparison before any integration work proceeds.
 
