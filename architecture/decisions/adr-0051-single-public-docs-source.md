@@ -51,6 +51,25 @@ updated: '2026-08-23'
 > same change (`metel-core`'s `AGENTS.md`/`README.md`/`cut-release.md`,
 > `metel-docs-internal`'s own `README.md`/`architecture/architecture.md`).
 
+> **Amended 2026-08-23, closing the loop on the previous amendment —
+> `architecture/architecture.md` also moves to `metel-docs`, so `architecture/` no
+> longer exists in `metel-docs-internal` at all.** The previous amendment kept this one
+> file private on the reasoning that it "wasn't raised as a problem the way the ADRs
+> were" — asked directly whether that was still defensible, and it wasn't: the same two
+> facts that moved the ADRs apply to it unchanged. Checked directly, again: no
+> credentials, no private roadmap reasoning, and (new check this pass) no links into
+> `internal/` or `reports/` from within the file itself, so nothing about the move
+> creates a public→private dangling reference. `metel-docs-internal` now holds exactly
+> `internal/` and `reports/` — what the original Decision below said before the
+> `architecture/` gap was ever found, reached for real this time rather than asserted.
+> Found and fixed in the same pass, unrelated to the move itself: the file's own
+> `typechecker.md`/`evaluator.md`/`testing.md` table links were bare relative paths that
+> never resolved to anything in this repo (those files live in `metel-core`, under
+> `metel-frontend/docs/` and `metel-interpreter/docs/`) — now absolute links to
+> `metel-core`. Every reference updated in the same change (`metel-core`'s
+> `AGENTS.md`/`README.md`/`cut-release.md`/`start-issue.md`, `metel-docs-internal`'s own
+> `README.md`).
+
 ## Context
 
 Today's chain: `metel-docs-internal` (private) holds `internal/`, `public/`, and
@@ -90,8 +109,9 @@ GitHub enforces for one a script has to keep enforcing correctly forever. But st
 duplicating the public content across that boundary:
 
 - `metel-docs-internal` drops `public/` entirely. **Amended 2026-08-23: it also drops
-  `architecture/decisions/`** (the ADRs — moved to `metel-docs`, see the amendment note
-  above; `architecture/architecture.md` itself stays). What's left, `internal/` and
+  `architecture/` in full** — first `architecture/decisions/` (the ADRs), then
+  `architecture/architecture.md` too (see both amendment notes above); the directory no
+  longer exists in `metel-docs-internal` at all. What's left, `internal/` and
   `reports/`, really is the whole of what its own tooling or contributors need private
   — this time checked directly against the actual top-level directory listing, not
   just asserted. `metel-docs-internal` is not renamed; the name has been accurate the
