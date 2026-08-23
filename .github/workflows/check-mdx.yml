@@ -1,0 +1,48 @@
+name: Check MDX compiles
+
+# Builds tools/mdx-check-site (a minimal Docusaurus scaffold, see its own README.md)
+# against the content this PR proposes, on every PR -- so a doc change that would
+# break metel-website's real build is caught here, immediately, instead of only at
+# release time.
+#
+# Found the hard way cutting v0.12.1: check-examples.yml verifies that the Metel
+# *code* inside a fence runs; it has no idea whether the *document* around it is
+# valid input to the thing that actually renders it. Two bugs slipped through as a
+# result and were invisible until metel-website actually tried to build a release.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  check-mdx:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/mdx-check-site
+    steps:
+      - uses: actions/checkout@v4
+
+      # See tools/mdx-check-site/README.md for why getting-started/reference/
+      # release-notes go under versioned_docs/ specifically, not docs/ directly.
+      - name: Copy this PR's content into the check site
+        run: |
+          set -e
+          mkdir -p versioned_docs/version-0.0.0-check docs/blog
+          cp -r ../../getting-started ../../reference ../../release-notes \
+              versioned_docs/version-0.0.0-check/
+          cp -r ../../blog/. docs/blog/
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: tools/mdx-check-site/package.json
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build

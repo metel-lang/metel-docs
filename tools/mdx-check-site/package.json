@@ -1,0 +1,20 @@
+{
+  "name": "mdx-check-site",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "docusaurus build"
+  },
+  "dependencies": {
+    "@docusaurus/core": "3.10.1",
+    "@docusaurus/faster": "3.10.1",
+    "@docusaurus/preset-classic": "3.10.1",
+    "@docusaurus/utils": "3.10.1",
+    "@mdx-js/react": "^3.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "engines": {
+    "node": ">=20.0"
+  }
+}

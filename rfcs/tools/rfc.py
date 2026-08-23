@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""RFC lifecycle tool for metel-docs. See public/rfcs/PROCESS.md.
+"""RFC lifecycle tool for metel-docs. See rfcs/PROCESS.md.
 
 Subcommands:
   new <title> [-d description]        Create a new draft RFC, next free number,
@@ -18,7 +18,7 @@ Subcommands:
                                        `--to implemented` sets
                                        `impl_status: implemented`, and refuses to run
                                        while a "Not yet implemented" callout for this
-                                       RFC still exists under public/reference/spec/.
+                                       RFC still exists under reference/spec/.
   impl-status <rfc-id> --set <status> [--tracking LINK]
                                        Update `impl_status` (not-started /
                                        in-progress / implemented) on an RFC
@@ -41,16 +41,16 @@ Subcommands:
                                        cited status no longer matches that RFC's
                                        actual current stage, and any reference to a
                                        retired issue-tracker host (impl_tracking or
-                                       a live link under public/). Read-only.
+                                       a live link under ). Read-only.
   index --check-drift                  Check whether generated REGISTRY.md matches
                                        the current RFC corpus exactly, and whether
                                        the curated INDEX.md mentions every current
                                        RFC at least once. Read-only.
-  index --rebuild-registry             Regenerate public/rfcs/REGISTRY.md from
+  index --rebuild-registry             Regenerate rfcs/REGISTRY.md from
                                        the current RFC corpus.
   index --suggest-placement <rfc-id>   Suggest which INDEX.md cluster section an
                                        RFC's content is most similar to. Read-only.
-  index --write-coverage-baseline      Regenerate public/rfcs/COVERAGE-BASELINE.json
+  index --write-coverage-baseline      Regenerate rfcs/COVERAGE-BASELINE.json
                                        (ADR-0049 §7) from the current per-RFC
                                        coverage state -- the snapshot `check`'s
                                        coverage ratchet compares against. Run
@@ -62,28 +62,19 @@ Subcommands:
                                        coverage summary.
   index --write-spec-origins           Regenerate every rigor block's origins
                                        backlink (ADR-0050 §3a) in
-                                       public/reference/spec/*.md from the
+                                       reference/spec/*.md from the
                                        RFCs currently linking to it via
                                        `coverage.spec` frontmatter. Reads only
                                        RFC frontmatter and the spec files --
                                        no fixture corpus needed, unlike
                                        --write-coverage-baseline.
-  cycle-prep [--diff]                  One-shot pre-cycle report for
-                                       reports/strategy/PROCESS.md §5 step 0:
-                                       REGISTRY.md drift, retired-host references,
-                                       RFC `updated:` vs. git-log staleness, and
-                                       (best-effort, needs GITHUB_TOKEN/GH_TOKEN)
-                                       open-milestone issue counts — one script
-                                       run replacing dozens of one-file/one-issue
-                                       lookups. `--diff` also compares against
-                                       reports/strategy/.cycle-snapshot.json (the
-                                       prior run's state) and prints only what
-                                       changed, before overwriting it with the
-                                       current state. Mostly read-only — only
-                                       writes the snapshot file.
 
-No dependencies beyond the Python 3 standard library. `cycle-prep`'s milestone
-check needs network access and a token; everything else is fully offline.
+`cycle-prep` moved out of this tool (ADR-0051, step 2) — its inputs were all
+public but its output (a private planning snapshot) belonged with
+reports/strategy/, not with the corpus this script itself is moving to
+metel-docs. See reports/strategy/tools/rfc_cycle_prep.py.
+
+No dependencies beyond the Python 3 standard library.
 """
 
 import argparse
@@ -99,16 +90,14 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-RFCS_DIR = REPO_ROOT / "public" / "rfcs"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+RFCS_DIR = REPO_ROOT / "rfcs"
 INDEX_PATH = RFCS_DIR / "INDEX.md"
 REGISTRY_PATH = RFCS_DIR / "REGISTRY.md"
 COVERAGE_BASELINE_PATH = RFCS_DIR / "COVERAGE-BASELINE.json"
-STRATEGY_DIR = REPO_ROOT / "reports" / "strategy"
-SNAPSHOT_PATH = STRATEGY_DIR / ".cycle-snapshot.json"
 
 # The project's canonical issue tracker, and hosts it has fully retired. A
-# reference to a retired host is either a dead link (public/-facing content) or
+# reference to a retired host is either a dead link (published, live content) or
 # an unresolvable/misleading identifier (impl_tracking) — added 2026-08-06 after
 # the migration's own reference-rewrite missed impl_tracking backfill on several
 # RFCs and one public spec page's live bug-report link (see
@@ -395,7 +384,7 @@ target:
     path.write_text(template)
     rebuild_registry()
     print(f"Created {path.relative_to(REPO_ROOT)}")
-    print("Reminder: public/rfcs/INDEX.md needs a new entry for this RFC.")
+    print("Reminder: rfcs/INDEX.md needs a new entry for this RFC.")
 
 
 # --------------------------------------------------------------------------
@@ -432,7 +421,7 @@ def do_transition(rid, to_stage, reason, extra_fm=None):
         print("Fixed path references in:")
         for c in changed:
             print(f"  {c}")
-    print("Reminder: public/rfcs/INDEX.md may need updating for this RFC's new status.")
+    print("Reminder: rfcs/INDEX.md may need updating for this RFC's new status.")
     return new_path
 
 
@@ -502,7 +491,7 @@ def cmd_transition(args):
             lines = "\n".join(f"  {p}:{lineno}: {text}" for p, lineno, text in hits)
             error(
                 f"{rid.upper()} still has a 'Not yet implemented' callout under "
-                f"public/reference/spec/ — delete it (it's a required one-liner, safe "
+                f"reference/spec/ — delete it (it's a required one-liner, safe "
                 f"to remove outright, see PROCESS.md) before transitioning to "
                 f"implemented:\n{lines}"
             )
@@ -577,10 +566,10 @@ def cmd_supersede(args):
 # --------------------------------------------------------------------------
 
 # [a-z-]+ not [a-z]+: stage dir names like "1-under-review" have more than one hyphen.
-PATH_REF_RE = re.compile(r"public/rfcs/[0-6]-[a-z-]+/rfc-[\w.-]+\.md")
+PATH_REF_RE = re.compile(r"rfcs/[0-6]-[a-z-]+/rfc-[\w.-]+\.md")
 
 
-SPEC_DIR = REPO_ROOT / "public" / "reference" / "spec"
+SPEC_DIR = REPO_ROOT / "reference" / "spec"
 VALID_IMPL_STATUS = {"not-started", "in-progress", "implemented"}
 
 # ADR-0050 §3a: a rigor block's generated backlink to the RFC(s) that
@@ -1030,7 +1019,7 @@ def build_registry_text(records=None):
         "",
         "# RFC Registry",
         "",
-        "This file is generated by `public/rfcs/tools/rfc.py index --rebuild-registry`.",
+        "This file is generated by `rfcs/tools/rfc.py index --rebuild-registry`.",
         "Do not edit it by hand. It is the authoritative RFC state inventory; `INDEX.md` is",
         "the curated thematic map.",
         "",
@@ -1038,7 +1027,7 @@ def build_registry_text(records=None):
         "push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` "
         "job; degrades to an informational skip when run from a bare docs-internal "
         "checkout) fails if any RFC's uncovered normative sections grow "
-        "past what `public/rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is "
+        "past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is "
         "the retroactive half of the coverage mandate; the forward-looking half "
         "is `rfc.py transition --to implemented` itself refusing to run over an uncovered "
         "section.",
@@ -1102,10 +1091,10 @@ def _without_generated_on_stamp(text):
 def registry_drift_problem():
     expected = build_registry_text()
     if not REGISTRY_PATH.exists():
-        return "public/rfcs/REGISTRY.md is missing — run `rfc.py index --rebuild-registry`"
+        return "rfcs/REGISTRY.md is missing — run `rfc.py index --rebuild-registry`"
     actual = REGISTRY_PATH.read_text()
     if _without_generated_on_stamp(actual) != _without_generated_on_stamp(expected):
-        return "public/rfcs/REGISTRY.md is stale or hand-edited — run `rfc.py index --rebuild-registry`"
+        return "rfcs/REGISTRY.md is stale or hand-edited — run `rfc.py index --rebuild-registry`"
     return None
 
 
@@ -1113,14 +1102,17 @@ def retired_host_references():
     """Flag references to a retired host (RETIRED_HOSTS) in two places: any RFC's
     impl_tracking field (structured, checked directly against parsed frontmatter —
     this field must always resolve, so any non-canonical host is unambiguously
-    wrong), and any live URL in `public/`'s body text (the exported/published
-    surface a reader could actually click — `reports/` and `internal/` are
-    deliberately excluded, since `reports/strategy/`'s dated overviews and
-    OBJECTIVES.md legitimately discuss a retired host in past-tense narrative, and
-    `internal/archive/` is an intentional historical snapshot, not live content —
-    see `public/rfcs/PROCESS.md`'s "dated documents" rule for the same distinction
-    applied to code samples). Zero network calls; pure text matching, so this runs
-    on every `check`, not just `cycle-prep`."""
+    wrong), and any live URL anywhere in this repo's body text — this whole repo
+    is the exported/published surface a reader could actually click (ADR-0051:
+    metel-docs holds nothing else, unlike metel-docs-internal's old `public/`
+    subtree, which needed `reports/`/`internal/` excluded for exactly this
+    reason — that exclusion no longer applies or exists here). Zero network
+    calls; pure text matching, so this runs on every `check`. (A duplicate of
+    this function also runs from metel-docs-internal's
+    reports/strategy/tools/rfc_cycle_prep.py — ADR-0051 step 2 — kept in sync by
+    hand; see that file's module docstring. That copy still excludes
+    `reports/`/`internal/`, since it also reads metel-docs-internal directly
+    when pointed at a pre-migration checkout.)"""
     problems = []
     for path in find_rfc_files():
         fm, _ = parse_file(path)
@@ -1131,7 +1123,7 @@ def retired_host_references():
                 f"{rel}: impl_tracking references a retired host ({tracking}) — "
                 f"canonical host is {CANONICAL_ISSUE_HOST}"
             )
-    for f in sorted((REPO_ROOT / "public").rglob("*.md")):
+    for f in sorted(REPO_ROOT.rglob("*.md")):
         rel = str(f.relative_to(REPO_ROOT))
         try:
             _, body = parse_file(f)
@@ -1145,92 +1137,23 @@ def retired_host_references():
     return problems
 
 
-def rfc_git_staleness(records):
-    """Best-effort, informational only (never added to `check`'s hard-fail list):
-    for each RFC with an `updated` frontmatter date, compare it against git's own
-    last-touch date for that file. A mismatch isn't necessarily wrong — a
-    repo-wide sweep (a rename, a reference-rewrite pass) touches a file without
-    its content meaningfully changing — but it is exactly the shape of drift
-    Trigger 16 caught in RFC-0097, so a reader deserves to see the disagreement
-    rather than trust `updated:` on faith. Skipped silently if git is
-    unavailable.
-
-    **Known limitation, honestly unresolved rather than papered over (2026-08-06):**
-    this repo's last month includes two real mass-sweep events (the GitHub
-    migration's ~307 path rewrites, the reference-rot fix's 659 substitutions
-    across 77 files) that touch nearly the whole corpus without representing a
-    design change — this function can't yet distinguish "content meaningfully
-    changed" from "swept as part of an unrelated repo-wide edit," so on this
-    corpus, as of this writing, it flags roughly half of all RFCs. `cmd_cycle_prep`
-    caps how many rows it prints for exactly this reason. Filed as `OBJECTIVES.md`
-    §2a Pending Recommendation 2 rather than shipped as if solved — a
-    commit-message- or content-diff-based filter is the likely fix, not yet built."""
-    rows = []
-    for rec in records:
-        if not rec.get("updated"):
-            continue
-        try:
-            out = subprocess.run(
-                ["git", "log", "-1", "--format=%ad", "--date=short", "--", str(rec["path"])],
-                check=True, cwd=REPO_ROOT, capture_output=True, text=True,
-            )
-        except (subprocess.CalledProcessError, OSError):
-            continue
-        last_touch = out.stdout.strip()
-        if last_touch and last_touch != rec["updated"]:
-            rows.append((rec["id"], rec["updated"], last_touch))
-    return rows
-
-
-def fetch_open_milestones(owner="metel-lang", repo="metel-core"):
-    """Best-effort GitHub REST call for open milestones and their issue counts —
-    a single request replaces resolving priority-relevant issues one at a time
-    (the shape of most of a manual cycle's tool-call cost). Needs GITHUB_TOKEN or
-    GH_TOKEN in the environment; returns (milestones, None) on success or
-    (None, reason) on any failure, network or auth — never raises, per §2's
-    discipline that an unverifiable claim should say so rather than silently
-    omit itself."""
-    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
-    if not token:
-        return None, "no GITHUB_TOKEN/GH_TOKEN in environment — issue-tracker state not checked"
-    url = f"https://api.github.com/repos/{owner}/{repo}/milestones?state=open&per_page=100"
-    req = urllib.request.Request(
-        url,
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "rfc.py-cycle-prep",
-        },
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read())
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError) as e:
-        return None, f"GitHub API request failed ({e}) — issue-tracker state not checked"
-    milestones = [
-        {
-            "title": m.get("title", ""),
-            "open_issues": m.get("open_issues", 0),
-            "closed_issues": m.get("closed_issues", 0),
-            "html_url": m.get("html_url", ""),
-        }
-        for m in data
-    ]
-    return milestones, None
+# rfc_git_staleness() and fetch_open_milestones() moved to
+# reports/strategy/tools/rfc_cycle_prep.py (ADR-0051 step 2) — cycle-prep was
+# their only caller in this file.
 
 
 def fetch_issue_state(owner, repo, number):
     """Best-effort GitHub REST call for one issue's state -- (state, None) on
     success, (None, reason) on any failure, network or auth -- never raises.
-    Unlike fetch_open_milestones, no token is required: a single-issue GET on
-    a public repo is anonymous-readable, so a `blocked` exemption's issue ref
-    (spec_exemption_problems, below) gets checked in CI with zero secret
+    Unlike a milestone-listing call, no token is required: a single-issue GET
+    on a public repo is anonymous-readable, so a `blocked` exemption's issue
+    ref (spec_exemption_problems, below) gets checked in CI with zero secret
     configuration on either side (metel-docs-internal's bare job included --
     this needs no fixture corpus, so it isn't gated behind METEL_CORE_ROOT the
     way fixture-coverage counting is). GITHUB_TOKEN/GH_TOKEN, when present, is
     used only to raise the request above the much lower unauthenticated rate
-    limit -- same reasoning fetch_open_milestones already uses, just not a
-    hard requirement here since the target data is public either way."""
+    limit, not a hard requirement here since the target data is public either
+    way."""
     token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
     url = f"https://api.github.com/repos/{owner}/{repo}/issues/{number}"
     headers = {"Accept": "application/vnd.github+json", "User-Agent": "rfc.py-check"}
@@ -1256,7 +1179,7 @@ def index_mentioned_rfc_ids(text):
 
 
 def spec_mentions(rid):
-    """Does anything under public/reference/spec/ reference this RFC id? Case-insensitive
+    """Does anything under reference/spec/ reference this RFC id? Case-insensitive
     — callouts sometimes cite a lowercase file path (rfc-0067a-...md) rather than the
     RFC-0067a prose form, and both should count."""
     if not SPEC_DIR.is_dir():
@@ -1275,9 +1198,9 @@ NOT_IMPLEMENTED_RE = re.compile(r"not yet implemented", re.IGNORECASE)
 
 
 def spec_not_implemented_refs(rid):
-    """Lines under public/reference/spec/ that read as a "Not yet implemented" callout
+    """Lines under reference/spec/ that read as a "Not yet implemented" callout
     *for this specific RFC* — the phrase appears on the line, and the line's own
-    `public/rfcs/.../rfc-....md` path reference (not just any RFC number mentioned in
+    `rfcs/.../rfc-....md` path reference (not just any RFC number mentioned in
     passing, e.g. background context about an older, unrelated RFC) resolves to this id.
     These callouts are required to be one-liners (PROCESS.md) specifically so this check
     (and a human deleting one by hand) never has to figure out where a multi-line
@@ -1920,7 +1843,7 @@ def coverage_check_problems():
             new_gaps = uncovered - set(rfc_baseline.get(rid, []))
             if new_gaps:
                 problems.append(
-                    f"{rid}: coverage regressed against public/rfcs/COVERAGE-BASELINE.json "
+                    f"{rid}: coverage regressed against rfcs/COVERAGE-BASELINE.json "
                     f"-- newly uncovered: {', '.join(sorted(new_gaps))}. Cite a fixture "
                     f"(`options.rfc` sidecar key) or add a `coverage` frontmatter exemption "
                     f"for each; if the gap is deliberate and already tracked elsewhere (e.g. "
@@ -1988,7 +1911,7 @@ def coverage_check_problems():
         if new_untested:
             problems.append(
                 "spec blocks newly missing a citing fixture, against "
-                "public/rfcs/COVERAGE-BASELINE.json: "
+                "rfcs/COVERAGE-BASELINE.json: "
                 + ", ".join(sorted(new_untested))
                 + ". Cite one (`spec = [...]` sidecar key); if the gap is deliberate and "
                 "already tracked elsewhere, update the baseline instead: "
@@ -2054,7 +1977,7 @@ def cmd_check(args=None):
                 )
             if not spec_mentions(rid):
                 problems.append(
-                    f"{rel}: no reference to {rid.upper()} found under public/reference/spec/ — "
+                    f"{rel}: no reference to {rid.upper()} found under reference/spec/ — "
                     "was it actually integrated into the spec text?"
                 )
         elif expected_status == "implemented" and impl_status is not None:
@@ -2106,7 +2029,7 @@ def cmd_check(args=None):
         missing = sorted(current_ids - mentioned, key=rfc_sort_key)
         if missing:
             problems.append(
-                "public/rfcs/INDEX.md is missing RFC mentions for: "
+                "rfcs/INDEX.md is missing RFC mentions for: "
                 + ", ".join(r.upper() for r in missing)
             )
 
@@ -2152,7 +2075,7 @@ def cmd_index(args):
         missing = sorted(current_ids - mentioned, key=rfc_sort_key)
         if missing:
             problems.append(
-                "public/rfcs/INDEX.md is missing RFC mentions for: "
+                "rfcs/INDEX.md is missing RFC mentions for: "
                 + ", ".join(r.upper() for r in missing)
             )
 
@@ -2281,128 +2204,6 @@ def parse_index_clusters(text):
 
 
 # --------------------------------------------------------------------------
-# cycle-prep — one consolidated pre-cycle report, replacing dozens of
-# one-file/one-issue lookups with a single script run. See
-# reports/strategy/PROCESS.md §5 step 0.
-# --------------------------------------------------------------------------
-
-def build_cycle_state(records):
-    """The state `cycle-prep --diff` compares across runs. Deliberately narrow:
-    only what's cheap and deterministic to compute (RFC stage/impl_status,
-    REGISTRY.md's own counts, how many retired-host problems exist) — not an
-    attempt to encode priorities or triggers, which need judgment and stay the
-    reasoner's job, not this snapshot's."""
-    by_stage_counts = Counter(r["stage"] for r in records)
-    return {
-        "generated_on": today(),
-        "rfcs": {
-            r["id"]: {"stage": r["stage"], "impl_status": r["impl_status"]}
-            for r in records
-        },
-        "stage_counts": dict(by_stage_counts),
-        "retired_host_problem_count": len(retired_host_references()),
-    }
-
-
-def diff_cycle_state(old, new):
-    """Small, dense delta lines — not a generic dict-diff dump. Only reports
-    what changed, matching the same "verify only what's flagged" principle the
-    rest of cycle-prep exists to serve."""
-    lines = []
-    old_rfcs, new_rfcs = old.get("rfcs", {}), new.get("rfcs", {})
-    for rid in sorted(set(old_rfcs) | set(new_rfcs), key=rfc_sort_key):
-        o, n = old_rfcs.get(rid), new_rfcs.get(rid)
-        if o is None:
-            lines.append(f"  + {rid}: new ({n['stage']})")
-        elif n is None:
-            lines.append(f"  - {rid}: removed (was {o['stage']})")
-        elif o != n:
-            lines.append(
-                f"  ~ {rid}: stage {o['stage']!r}→{n['stage']!r}, "
-                f"impl_status {o['impl_status']!r}→{n['impl_status']!r}"
-            )
-    old_counts, new_counts = old.get("stage_counts", {}), new.get("stage_counts", {})
-    for stage in sorted(set(old_counts) | set(new_counts)):
-        if old_counts.get(stage, 0) != new_counts.get(stage, 0):
-            lines.append(f"  stage_counts[{stage}]: {old_counts.get(stage, 0)} → {new_counts.get(stage, 0)}")
-    old_rh, new_rh = old.get("retired_host_problem_count", 0), new.get("retired_host_problem_count", 0)
-    if old_rh != new_rh:
-        lines.append(f"  retired_host_problem_count: {old_rh} → {new_rh}")
-    return lines
-
-
-def cmd_cycle_prep(args):
-    records = collect_rfc_records()
-
-    print(f"cycle-prep — {today()}")
-    print()
-
-    print("## REGISTRY.md")
-    reg_problem = registry_drift_problem()
-    print(f"  {reg_problem}" if reg_problem else "  fresh, no drift")
-    print()
-
-    print("## Retired-host references (impl_tracking + public/ live links)")
-    rh_problems = retired_host_references()
-    if rh_problems:
-        for p in rh_problems:
-            print(f"  - {p}")
-    else:
-        print("  none found")
-    print()
-
-    print("## RFC `updated:` vs. git-log staleness (informational — verify, don't assume wrong)")
-    staleness = rfc_git_staleness(records)
-    if staleness:
-        print(
-            f"  {len(staleness)} mismatch(es) — known noisy on this corpus (mass-sweep commits "
-            f"touch files without a real design change; see Pending Recommendation 2). Showing 5:"
-        )
-        for rid, updated, last_touch in staleness[:5]:
-            print(f"    - {rid}: frontmatter says {updated!r}, git log's last touch is {last_touch!r}")
-        if len(staleness) > 5:
-            print(f"    ... and {len(staleness) - 5} more (not a reliable signal yet — see the caveat above)")
-    else:
-        print("  none found")
-    print()
-
-    print("## Open milestones (metel-lang/metel-core)")
-    milestones, err = fetch_open_milestones()
-    if err:
-        print(f"  skipped: {err}")
-    elif not milestones:
-        print("  none open")
-    else:
-        for m in milestones:
-            print(f"  - {m['title']}: {m['open_issues']} open, {m['closed_issues']} closed — {m['html_url']}")
-    print()
-
-    new_state = build_cycle_state(records)
-    if args.diff:
-        print("## Diff against previous snapshot")
-        if SNAPSHOT_PATH.exists():
-            try:
-                old_state = json.loads(SNAPSHOT_PATH.read_text())
-            except (json.JSONDecodeError, OSError) as e:
-                print(f"  could not read previous snapshot ({e}) — treating this run as the new baseline")
-                old_state = None
-            if old_state is not None:
-                delta = diff_cycle_state(old_state, new_state)
-                if delta:
-                    for line in delta:
-                        print(line)
-                else:
-                    print("  no change since last snapshot")
-        else:
-            print("  no previous snapshot — this run is the new baseline")
-        print()
-
-    STRATEGY_DIR.mkdir(parents=True, exist_ok=True)
-    SNAPSHOT_PATH.write_text(json.dumps(new_state, indent=2, sort_keys=True) + "\n")
-    print(f"snapshot written: {SNAPSHOT_PATH.relative_to(REPO_ROOT)}")
-
-
-# --------------------------------------------------------------------------
 # CLI
 # --------------------------------------------------------------------------
 
@@ -2445,10 +2246,6 @@ def main():
     p_index.add_argument("--write-coverage-baseline", action="store_true")
     p_index.add_argument("--write-spec-origins", action="store_true")
     p_index.set_defaults(func=cmd_index)
-
-    p_cycle = sub.add_parser("cycle-prep", help="One-shot pre-cycle report for a strategic-overview cycle")
-    p_cycle.add_argument("--diff", action="store_true", help="Also diff against reports/strategy/.cycle-snapshot.json")
-    p_cycle.set_defaults(func=cmd_cycle_prep)
 
     args = parser.parse_args()
     result = args.func(args)

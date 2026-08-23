@@ -1,0 +1,51 @@
+name: RFC check
+
+# rfc.py check (rfcs/tools/rfc.py) validates RFC frontmatter/status
+# consistency, generated REGISTRY.md/INDEX.md drift, dangling path references,
+# and (ADR-0049) the RFC-section/fixture-coverage ratchet against
+# COVERAGE-BASELINE.json. Runs here too, not only in metel-core's own
+# `rfc-check` CI job, so a structural problem introduced directly in this repo
+# (a bad frontmatter edit, a stale REGISTRY.md, an unmentioned RFC in
+# INDEX.md) is caught on this repo's own PR, immediately -- rather than
+# waiting for metel-core's `docs` submodule pointer to next move and surface
+# it there instead.
+#
+# The coverage ratchet itself degrades to an informational skip here
+# (ADR-0049 §6) -- metel-interpreter/tests lives in metel-core, one level up
+# from this repo when it's embedded there as a submodule; a bare
+# docs-internal checkout structurally can't reach it. Real coverage
+# enforcement happens in metel-core's own `rfc-check` CI job, where the
+# fixture corpus actually lives -- not a gap in this job, the split
+# ADR-0049 §6 explicitly designed and documents.
+#
+# A rigor block's `blocked` exemption (ADR-0050 §6) *does* get checked here,
+# fixture corpus or not: whether its `ref` names an RFC is validated locally,
+# and whether it names a GitHub issue (`repo#N`, e.g. `metel-core#775`) is
+# checked live against the issues API -- a closed blocker with nobody
+# re-triaging it fails this job. Needs no secret: a single-issue GET on a
+# public repo is anonymous-readable. GITHUB_TOKEN below only raises the
+# request above the unauthenticated rate limit; the check degrades to
+# skipping (not failing) that one ref if the request can't be made at all, so
+# a network hiccup here never fails a PR over something this job can't
+# actually verify.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  rfc-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: rfc.py check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 rfcs/tools/rfc.py check
