@@ -14,7 +14,7 @@ in the same sitting: RFC-0055 sat undiscovered in draft for five weeks while RFC
 independently reinvented a large part of it, and RFC-0063 — this project's own concrete
 precedent for the failure `3-integrated` exists to catch.
 
-**Correction, 2026-07-10: "nothing written down" above was wrong.** `internal/versioning.md`
+**Correction, 2026-07-10: "nothing written down" above was wrong.** `metel-docs-internal/internal/versioning.md`
 (2026-05-21) already had a written RFC-lifecycle section — 6 stages, a `spec_status:
 pending/done` field tracking spec-sync — that nobody checked against when this document
 was created, so it went un-reconciled for a full day while this document and
@@ -136,7 +136,7 @@ that let RFC-0063's history happen: a design can
 be accepted on paper and still be wrong in ways nobody notices until it's checked against
 everything else that's also accepted, or in flight alongside it.
 
-**3-integrated *(new)*.** The RFC's content is incorporated into `public/reference/spec/`
+**3-integrated *(new)*.** The RFC's content is incorporated into `reference/spec/`
 — not just cross-referenced from RFC text, actually merged into the language reference —
 and detailed worked examples are written combining this RFC's feature with other
 already-integrated features, specifically hunting for soundness gaps at the
@@ -166,9 +166,12 @@ example was about to be copied into an implementation task (metel-core#585).
 
 Concretely, for any RFC that changes the spelling of something already written down:
 
-- **Sweep `public/rfcs/`, `reports/` and `public/` in the same change as the code
-  migration**, not as a follow-up. Prose examples are what implementers reach for first,
-  so a stale one is not cosmetic.
+- **Sweep this whole repo, and `metel-docs-internal`'s `reports/`, in the same change as
+  the code migration** (ADR-0051: this repo holds the RFCs and the rest of the exported
+  surface; `reports/` — the strategy corpus, substructural-types notes, and similar
+  design exploration — stays in `metel-docs-internal`, a separate repo, so the sweep now
+  spans two repos rather than two directories in one), not as a follow-up. Prose examples
+  are what implementers reach for first, so a stale one is not cosmetic.
 - **Do not use a blind regex.** Three separate sweeps have now corrupted files this way:
   `fun clone(self: &T)` rewritten to `self = &T`, `type Item: Display` to `type Item =
   Display`, and — during metel-core#585 itself — a parameter list `part_b: &pb var [i64]`
@@ -182,7 +185,7 @@ Concretely, for any RFC that changes the spelling of something already written d
 - **Decide the treatment of dated documents explicitly.** A published blog post is not
   wrong *for its date*, but a reader today will copy what it shows. metel-core#585
   corrected the syntax in place, on the grounds that a code sample is an instruction
-  rather than a historical claim. Superseded and refused RFCs, and `reports/archive/`,
+  rather than a historical claim. Superseded and refused RFCs, and `metel-docs-internal/reports/archive/`,
   were deliberately left alone — those are records of what was thought, not guidance.
 
 **Additional exit criteria, added 2026-07-10 — implementation-tracking, not just spec
@@ -219,7 +222,7 @@ honest single status). Concretely:
   actually do this yet" (`impl_status`) without cross-referencing a second system.
   `rfc.py impl-status <id> --set in-progress|implemented` updates it as work proceeds;
   `rfc.py transition <id> --to implemented` sets it to `implemented` automatically.
-- **Inline markers in `public/reference/spec/*.md` are required, not optional, at every
+- **Inline markers in `reference/spec/*.md` are required, not optional, at every
   section the RFC touches** — they are **public availability markers first**, with a
   narrow exception for future-facing features: a `Planned for vX.Y.Z` marker may also
   include the RFC id so implementation drift can still be tracked against a stable
@@ -286,7 +289,7 @@ says what it means but never said when to flip it — three rules, settled along
 
 **5-superseded / 6-refused.** Terminal states, reachable from any stage. Superseded RFCs
 keep a pointer to what replaced them; refused RFCs are kept as historical record with
-the refusal reason. Living reports (`reports/substructural-types/*.md` and similar) are
+the refusal reason. Living reports (`metel-docs-internal/reports/substructural-types/*.md` and similar) are
 not superseded when an RFC is extracted from them — they remain the exploratory source
 material, cross-referenced from the RFC, per the existing convention.
 
@@ -300,7 +303,7 @@ once — it's a real backlog, sized honestly, to be worked through over time rat
 blocking anything immediately.
 
 **Updated 2026-07-10:** RFC-0067a, RFC-0078, and RFC-0083 became the first three to move
-through it — merged into `public/reference/spec/` (`types.md`, `expressions.md`,
+through it — merged into `reference/spec/` (`types.md`, `expressions.md`,
 `modules.md`), each gaining `impl_status`/`impl_tracking` and a linked tracking task. All
 three surfaced real problems while writing the worked examples this stage requires,
 confirming the stage does what it was built for: RFC-0067a's own text removed the
@@ -331,7 +334,7 @@ rather than silently left to collide. 5 RFCs remain in the backlog: RFC-0008, 00
 
 **Updated again, same day:** RFC-0072 (Negative Bounds), RFC-0081 (Negative Impls), and
 RFC-0082 (Associated Types) followed RFC-0067a/0078/0083 into `3-integrated` — merged
-into `public/reference/spec/declarations.md`. All three needed real fixes first, not
+into `reference/spec/declarations.md`. All three needed real fixes first, not
 just formalities: RFC-0072's own examples still used pre-split bracket-channel allocator
 syntax (`@[r] T`); RFC-0081 pointed to `#[derive(Send)]` and RFC-0012, both retired
 (now `@derive`/RFC-0093); RFC-0082 still named the allocator aspect `Region` and used
@@ -351,7 +354,7 @@ against it first. This is the single highest-leverage rule here — it's what wo
 prevented the concrete, expensive failure that prompted this whole document.
 
 **Every dated strategic-overview snapshot does a triage pass, not just narration, and
-reads from/writes back to `reports/strategy/OBJECTIVES.md`.** Explicitly call out stale
+reads from/writes back to `metel-docs-internal/reports/strategy/OBJECTIVES.md`.** Explicitly call out stale
 drafts, dangling dependency pointers (e.g. an RFC still depending on something
 now-refused), and mergeable/supersedable RFCs each cycle — not just what moved, but what
 should move and hasn't. Before writing one: `OBJECTIVES.md` did not exist before
@@ -377,7 +380,7 @@ to wait for the next planning cycle.
 **Before accepting an RFC, re-read its own Summary and Scope against its resolutions,
 and ask what is promised there but specified nowhere.** *(Adopted 2026-08-01, after
 RFC-0122 became the corpus's third `2-accepted` → `1-under-review` reversion and fired
-`reports/strategy/OBJECTIVES.md` Trigger 14.)* All three reversions share one mechanism:
+`metel-docs-internal/reports/strategy/OBJECTIVES.md` Trigger 14.)* All three reversions share one mechanism:
 the accepting review checked the questions **the RFC itself had listed** and treated that
 list as complete. `2-accepted`'s bar is *"no open question blocks it"* — a claim about the
 RFC — not *"every question the RFC asked is answered"*, which is a claim about its own
@@ -444,8 +447,8 @@ the two should stay recognisably the same discipline.
 
 ## Specification rules, adopted 2026-07-14
 
-These rules govern what belongs in `public/reference/spec.md` and
-`public/reference/spec/*.md` once RFC content is integrated.
+These rules govern what belongs in `reference/spec.md` and
+`reference/spec/*.md` once RFC content is integrated.
 
 **The spec is normative; RFCs are design history.** The public spec states what the
 language is. RFCs explain how a design was reached, what alternatives were rejected,
@@ -494,7 +497,7 @@ state to normalize.** Either the implementation is fixed to match the spec, or t
 is corrected deliberately in the same work. The public spec must not drift into
 describing a half-remembered or aspirational language.
 
-**The spec entry point must match the section files.** `public/reference/spec.md`
+**The spec entry point must match the section files.** `reference/spec.md`
 cannot describe an older language model than the detailed sections it links to. When a
 cluster materially changes the language model, the top-level overview needs the same
 update pass, not a deferred "later" cleanup.
@@ -504,7 +507,7 @@ update pass, not a deferred "later" cleanup.
 1. Check `INDEX.md`'s thematic groupings for anything adjacent.
 2. Check `REGISTRY.md` for the exact current corpus and status/path inventory.
 3. If nothing turns up there but the topic feels like it should have prior art, grep
-   `public/rfcs/` directly — the registry is exact, but the right adjacent RFC may
+   `rfcs/` directly — the registry is exact, but the right adjacent RFC may
    still sit in a cluster you weren't expecting.
 4. If a real overlap is found, reconcile it as part of the same piece of work, not as a
    follow-up — an unreconciled overlap discovered later costs more than a few extra
@@ -512,7 +515,7 @@ update pass, not a deferred "later" cleanup.
 
 ## Tooling
 
-`public/rfcs/tools/rfc.py` (stdlib-only Python, no dependencies) mechanizes the parts
+`rfcs/tools/rfc.py` (stdlib-only Python, no dependencies) mechanizes the parts
 of this process that don't need judgment:
 
 - `rfc.py new "Title" -d "description"` — creates a draft with the next free number,
@@ -535,12 +538,12 @@ of this process that don't need judgment:
   not write the reconciliation content (what carried forward, what didn't) — that still
   needs a human, or an agent, to actually think about it. Rebuilds `REGISTRY.md`.
 - `rfc.py check` — validates frontmatter status matches directory, no duplicate RFC
-  ids, no dangling `public/rfcs/N-stage/rfc-....md` path references anywhere in the
+  ids, no dangling `rfcs/N-stage/rfc-....md` path references anywhere in the
   repo, that generated `REGISTRY.md` matches the current RFC corpus exactly, that the
   curated `INDEX.md` mentions every current RFC at least once, and (since 2026-07-10,
   not retroactive — see above) that any RFC at
   `3-integrated` has `impl_tracking` set, `impl_status` set to a valid value and not
-  already `implemented`, and that `public/reference/spec/` references the RFC at all;
+  already `implemented`, and that `reference/spec/` references the RFC at all;
   an RFC at `4-implemented` with `impl_status` present is checked for consistency
   (`implemented`) but not required to have the field at all. Read-only. Running it
   against this repo for the first time found, and a follow-up fixed, 21 pre-existing

@@ -1,0 +1,73 @@
+name: Check doc examples
+
+# Moved here from metel-docs-internal (ADR-0051 step 3) -- this repo also
+# runs check-mdx.yml and rfc-check.yml, ported the same way. Runs the checker
+# metel-core builds (tools/check_doc_examples.py) against the *current* docs
+# content on every PR, using the latest published metel-core release binary
+# -- so a broken
+# example is caught the moment it's introduced here, rather than waiting for
+# metel-core's `docs` submodule pointer to next move and pick it up. Does not
+# check README.md; that file lives in metel-core, and its own `doc-examples`
+# CI job covers it.
+#
+# The paths below are the *directories* getting-started and reference, not
+# their `tutorials`/`spec` subdirectories, plus `blog`. The narrower paths
+# this job used until now silently excluded three files that read as ordinary
+# working Metel: getting-started/quickstart.mdx and intro.mdx (siblings of
+# `tutorials/`, not inside it), reference/error-codes.md (a sibling of
+# `spec/`), and blog/ wasn't listed at all. Two real, uncompilable examples
+# reached production through exactly that gap -- quickstart's `public fun
+# greet` missing its `-> ()` return type, and the blog post declaring a
+# non-aspect method inside `extend Person: Greet` -- both found by hand,
+# neither reachable by this job as it was configured (metel-core#693).
+#
+# release-notes/ and rfcs/ are deliberately excluded, not overlooked: both
+# exist to document rejected, superseded, or not-yet-built syntax that cannot
+# compile by design. See metel-core's PROCESSES.md
+# § "What is deliberately not checked".
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  check-examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Both the release binary asset and tools/check_doc_examples.py are
+      # public reads on metel-core -- the built-in GITHUB_TOKEN covers both,
+      # no new secret to provision.
+      - name: Download the latest metel-core release binary
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download --repo metel-lang/metel-core --pattern 'metel-linux-x86_64' --output metel
+          chmod +x metel
+
+      # Fetched fresh every run rather than vendored, so this job always
+      # checks against metel-core's current script with nothing to keep in
+      # sync by hand. From develop specifically, not the default branch
+      # (main) -- main only moves at release time, so a script fix merged
+      # today wouldn't reach this job for up to a full release cycle
+      # otherwise, defeating "current" entirely. Found the hard way: every
+      # check_doc_examples.py fix landed this session was invisible to this
+      # exact job until now.
+      - name: Fetch the checker script from metel-core
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api "repos/metel-lang/metel-core/contents/tools/check_doc_examples.py?ref=develop" --jq '.content' | base64 -d > check_doc_examples.py
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: check doc examples
+        run: |
+          python3 check_doc_examples.py --binary ./metel \
+            getting-started \
+            blog \
+            reference

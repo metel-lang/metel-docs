@@ -1,0 +1,8 @@
+node_modules/
+build/
+.docusaurus/
+# Populated by CI (or manually, see README.md) by copying *'s content
+# dirs in -- not checked in, since it's a duplicate of what's already tracked
+# at .
+docs/
+versioned_docs/
