@@ -445,7 +445,16 @@ public struct Token {
 }
 ```
 
-From outside the declaring module, `Token` is nameable, `token.kind` is accessible, and `token.span` is a visibility error. Constructing `Token` directly also requires visibility to every named field, so private fields force construction through module-local helpers or constructors.
+From outside the declaring module, `Token` is nameable, `token.kind` is accessible, and
+[reading or assigning `token.span` is a `T0009` visibility error](#spec.modules.visibility.legality-3);
+the declaring module retains access to all of its own fields.
+[Constructing `Token` directly outside its declaring module also requires visibility to
+every named field](#spec.modules.visibility.legality-4), so private fields force
+construction through module-local helpers or constructors instead. Marking a field
+`public` on a struct that is not itself `public` doesn't expose that field to any other
+module — [the compiler warns on this combination](#spec.modules.visibility.legality-5),
+since the field can never actually be reached across a module boundary through a private
+type.
 
 Within a module, all names defined in that module are accessible without qualification, including private names.
 
@@ -478,6 +487,62 @@ public API; an omitted required annotation is `T0010`.
 
 <!-- rfc.py:fixtures:start -->
 <span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/pub_fun_without_return_type_is_t0010/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.visibility.legality-3}
+
+Reading or assigning a private struct field from outside its declaring module is
+rejected with `T0009`. The declaring module retains access to all of its own fields,
+including private ones.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/private_struct_field_access_across_modules_is_t0009/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/private_struct_field_assignment_across_modules_is_t0009/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/private_struct_fields_remain_accessible_inside_declaring_module/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.visibility.legality-4}
+
+Constructing a struct literal outside its declaring module is rejected with `T0009` if
+it names any private field. A module-local constructor or helper function may still
+construct the value.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/private_struct_field_construction_across_modules_is_t0009/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.visibility.legality-5}
+
+Declaring a field `public` on a struct that is not itself `public` produces a compiler
+warning: the field cannot be reached across a module boundary through a private type,
+so the `public` marker on it has no effect from outside the declaring module.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [public_field_on_private_struct_warns.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/public_field_on_private_struct_warns.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.visibility.legality-6}
+
+Named fields of an enum struct-like variant follow the same visibility rules as an
+ordinary struct's fields: constructing a variant literal outside the enum's declaring
+module and naming a private field is rejected with `T0009`, the same as for a struct.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/private_enum_variant_field_construction_across_modules_is_t0009/main.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 </details>
