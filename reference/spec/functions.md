@@ -109,6 +109,14 @@ fun main() -> i64 {
 
 The type of a function or closure is written as `(ParamTypes) -> ReturnType`.
 
+> **Generic functions are call-only.** A named function declared with its own
+> `<T>` generics (`fun identity<T>(x: T) -> T { ... }`) has no value form —
+> it may be called directly (`identity(3)`, `identity::<i64>(3)`), but not
+> bound, passed as an argument, or returned. This is a scope carve-out on the
+> claim above, not covered by it; see
+> [RFC-0138](../../rfcs/0-draft/rfc-0138-generic-functions-as-first-class-values.md)
+> for the proposal to close this gap (metel-core#736).
+
 <details>
 <summary>Formal rules</summary>
 
@@ -127,11 +135,13 @@ Function and closure types use `(ParameterTypes) -> ReturnType`; the former
 
 ##### Legality Rule {#spec.functions.first-class-functions.legality-2}
 
-Named functions and closures are values of their function type and may be bound, passed
-as arguments, and returned as results.
+A non-generic named function and a closure are values of their function type and may be
+bound, passed as arguments, and returned as results. A generic named function (declared
+with its own `<T>` generics) is call-only: referencing it in any other expression
+position is `T0003`.
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [03_functions_and_closures.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/03_functions_and_closures.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [03_functions_and_closures.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/03_functions_and_closures.mtl), [stage10_neg_04_generic_function_bare_reference_is_call_only.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage10_neg_04_generic_function_bare_reference_is_call_only.mtl), [stage10_neg_05_generic_function_higher_order_argument_is_call_only.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage10_neg_05_generic_function_higher_order_argument_is_call_only.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 </details>
