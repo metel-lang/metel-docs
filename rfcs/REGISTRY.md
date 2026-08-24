@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-08-23'
+generated_on: '2026-08-24'
 ---
 
 # RFC Registry
@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**135 RFCs total.** 33 draft, 20 under review, 8 accepted, 1 integrated (62 live), 46 implemented, 13 superseded, 14 refused (73 settled).
+**136 RFCs total.** 34 draft, 20 under review, 8 accepted, 1 integrated (63 live), 46 implemented, 13 superseded, 14 refused (73 settled).
 
-## Draft (33)
+## Draft (34)
 
 - **RFC-0003** — Concurrency Model (`0-draft` ; rfcs/0-draft/rfc-0003-concurrency-model.md ; date 2026-05-20)
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
@@ -50,6 +50,7 @@ the curated thematic map.
 - **RFC-0131** — Hoist let/var Bindings to the Top of Their Containing Block (`0-draft` ; rfcs/0-draft/rfc-0131-hoist-let-var-bindings-to-the-top-of-their-containing-block.md ; date 2026-08-09)
 - **RFC-0133** — From-Metel List: the Runtime-Sized Buffer Gap (`0-draft` ; rfcs/0-draft/rfc-0133-from-metel-list-the-runtime-sized-buffer-gap.md ; date 2026-08-13)
 - **RFC-0135** — Multiplicity for Ordinary Types (`0-draft` ; rfcs/0-draft/rfc-0135-multiplicity-for-ordinary-types.md ; date 2026-08-13)
+- **RFC-0137** — Nominal Types as Branded Rows (`0-draft` ; rfcs/0-draft/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24)
 
 ## Under Review (20)
 
