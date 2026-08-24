@@ -345,15 +345,13 @@ bounds (e.g. `T: Display`).
 The call's arguments must unify with their pinned types exactly as they would with an
 inferred one.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#775" reason="Argument unification against an explicitly pinned type parameter is not yet implemented: instantiate_scheme_with_turbofish never receives the call's actual argument types, unlike the non-turbofish instantiate_scheme_for_call path, so e.g. identity::<i64>('hello') is currently accepted rather than rejected. Not the same gap as (closed) metel-core#401/#449, which is about ambiguous-literal resolution via the callee's parameter type, not turbofish-specific unification -- verified #401's own fix works (find(None) resolves) while this gap reproduces independently. No fixture can assert this rule until #775 lands." -->
-
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_</span>
 <!-- rfc.py:origins:end -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#775: Argument unification against an explicitly pinned type parameter is not yet implemented: instantiate_scheme_with_turbofish never receives the call's actual argument types, unlike the non-turbofish instantiate_scheme_for_call path, so e.g. identity::<i64>('hello') is currently accepted rather than rejected. Not the same gap as (closed) metel-core#401/#449, which is about ambiguous-literal resolution via the callee's parameter type, not turbofish-specific unification -- verified #401's own fix works (find(None) resolves) while this gap reproduces independently. No fixture can assert this rule until #775 lands._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [turbofish_argument_type_mismatch_is_t0001.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/turbofish_argument_type_mismatch_is_t0001.mtl), [turbofish_pinned_type_unifies_with_unsuffixed_literal.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/turbofish_pinned_type_unifies_with_unsuffixed_literal.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
