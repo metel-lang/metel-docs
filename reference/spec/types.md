@@ -362,6 +362,11 @@ A bare identifier inside projection braces is always a **field label**, never a 
 row variable. Chained projection (`S.{ a }.{ b }`) and projection in pattern position are not
 accepted.
 
+Inside an `extend` block, `Self.{ fd }` projects `Self`'s own row exactly as
+`Handle.{ fd }` would project `Handle`'s — `Self` resolves to the enclosing block's
+target type here the same way it does everywhere else the target's name can stand in
+for it.
+
 <details>
 <summary>Formal rules</summary>
 
@@ -401,7 +406,7 @@ the nominal receiver type.
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [91_anonymous_records_extra.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/91_anonymous_records_extra.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [101_self_record_projection_resolves.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/101_self_record_projection_resolves.mtl), [91_anonymous_records_extra.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/91_anonymous_records_extra.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.types.anonymous-records.legality-3}
