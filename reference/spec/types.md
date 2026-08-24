@@ -406,7 +406,7 @@ the nominal receiver type.
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [101_self_record_projection_resolves.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/101_self_record_projection_resolves.mtl), [91_anonymous_records_extra.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/91_anonymous_records_extra.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [101_self_record_projection_resolves.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/101_self_record_projection_resolves.mtl), [102_self_record_projection_in_body_let_annotation.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/102_self_record_projection_in_body_let_annotation.mtl), [91_anonymous_records_extra.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/91_anonymous_records_extra.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.types.anonymous-records.legality-3}

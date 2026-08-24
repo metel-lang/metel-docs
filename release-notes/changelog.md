@@ -30,25 +30,20 @@ title: "Metel Language Changelog"
   `..` or not.
 
 **Fixes:**
-- `Self::AssocType` now resolves inside an `extend` block's own method signature and
-  body, the same as the bare-name sugar (`Item` alone) RFC-0082 §1.2 says it's
-  equivalent to — the spelled-out form previously fell through to an "unknown type"
-  error, and the signature-conformance check against the aspect's own declaration
-  independently resolved the two spellings to different placeholder types, rejecting
-  a correct implementation as a signature mismatch (`metel-core#740`, part A).
-  Separately, a generic function returning a projection (`fun unwrap<T: Container>(c:
-  &T) -> T::Item`) now infers correctly from the call's argument alone — previously
-  this only worked when the caller also checked the result against an expected type,
-  since the projection's placeholder was recorded in a per-function log window that
-  started *after* the return-type annotation announcing it had already run, losing it
-  entirely for schemes with no other generic (`metel-core#740`, part B).
-- `Self` now resolves inside a record projection (`Self.{ field }`) the same way it
-  already does as a plain type in the same position (`extend Handle { fun f(h: Self)
-  ... }` already worked; `extend Handle { fun f(h: Self.{ fd }) ... }` didn't) —
-  fixed at both the layer that reports it (an eager pre-inference validity pass with
-  no route from `Self` back to the enclosing block's target name) and, once that
-  stopped masking it, a second, independent gap in the real signature resolution used
-  for both passes (`metel-core#774`).
+- `Self::AssocType` and `Self.{ field }` now resolve inside an `extend` block's own
+  method signature *and* body, everywhere an ordinary bound generic parameter's own
+  projections already do — including a body-internal `let x: Self::Item = ...;`,
+  which previously had no route to resolve `Self` at all, and a generic function
+  returning a projection (`fun unwrap<T: Container>(c: &T) -> T::Item`), which
+  previously only inferred correctly when the caller also checked the result against
+  an expected type (`metel-core#740`, `metel-core#774`). Architecturally, `Self` is
+  now bound as the impl-block method's own type parameter for the whole of its
+  inference, pinned to the concrete target type, rather than re-resolved ad hoc at
+  each position that happens to need it — the previous, narrower fix (which covered
+  only param/return-type position) kept surfacing the same class of gap one call site
+  at a time. Investigating this also found and fixed a real, `Self`-independent bug:
+  `let x: T::AssocType = ...;` for an *ordinary* bound generic `T` inside a generic
+  function's own body never resolved either, for the same underlying reason.
 - An array literal with no expected type now defaults to `T[]` (a borrowed view), not
   `[T; N]` (a sized array) — matching the reading recorded on RFC-0053's qualified status
   (2026-08-12) but not implemented until now. Fixes `println([1, 2, 3])`, which
