@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**136 RFCs total.** 34 draft, 20 under review, 8 accepted, 1 integrated (63 live), 46 implemented, 13 superseded, 14 refused (73 settled).
+**136 RFCs total.** 33 draft, 21 under review, 8 accepted, 1 integrated (63 live), 46 implemented, 13 superseded, 14 refused (73 settled).
 
-## Draft (34)
+## Draft (33)
 
 - **RFC-0003** — Concurrency Model (`0-draft` ; rfcs/0-draft/rfc-0003-concurrency-model.md ; date 2026-05-20)
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
@@ -50,9 +50,8 @@ the curated thematic map.
 - **RFC-0131** — Hoist let/var Bindings to the Top of Their Containing Block (`0-draft` ; rfcs/0-draft/rfc-0131-hoist-let-var-bindings-to-the-top-of-their-containing-block.md ; date 2026-08-09)
 - **RFC-0133** — From-Metel List: the Runtime-Sized Buffer Gap (`0-draft` ; rfcs/0-draft/rfc-0133-from-metel-list-the-runtime-sized-buffer-gap.md ; date 2026-08-13)
 - **RFC-0135** — Multiplicity for Ordinary Types (`0-draft` ; rfcs/0-draft/rfc-0135-multiplicity-for-ordinary-types.md ; date 2026-08-13)
-- **RFC-0137** — Nominal Types as Branded Rows (`0-draft` ; rfcs/0-draft/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24)
 
-## Under Review (20)
+## Under Review (21)
 
 - **RFC-0050** — Closure Capture Lists (`1-under-review` ; rfcs/1-under-review/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-08-23)
 - **RFC-0067** — Lifetime Anchors (`1-under-review` ; rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-08-23)
@@ -74,6 +73,7 @@ the curated thematic map.
 - **RFC-0132** — Comptime Execution Model — comptime let, comptime fun, comptime if (`1-under-review` ; rfcs/1-under-review/rfc-0132-comptime-execution-model-comptime-let-comptime-fun-comptime-if.md ; date 2026-08-13 ; updated 2026-08-23)
 - **RFC-0134** — Closure Call Capability (`1-under-review` ; rfcs/1-under-review/rfc-0134-closure-call-capability.md ; date 2026-08-13 ; updated 2026-08-23)
 - **RFC-0136** — Walrus for Kept Bindings (`1-under-review` ; rfcs/1-under-review/rfc-0136-walrus-for-kept-bindings.md ; date 2026-08-23 ; updated 2026-08-23)
+- **RFC-0137** — Nominal Types as Branded Rows (`1-under-review` ; rfcs/1-under-review/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-24)
 
 ## Accepted (8)
 
