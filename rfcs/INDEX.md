@@ -518,6 +518,20 @@ number, a backwards RFC-0067a split direction).
   dropped.
 - **RFC-0077** *(accepted)* — Allocator Generics — `<A: Alloc>` impl headers, variance
   for `@a T`.
+- **RFC-0139** *(draft, opened 2026-08-24 — not ready for review, see its own Open
+  Questions)* — Garbage-Collected Allocators and Allocator-Determined Pointer Types —
+  a GC allocator (global/thread-local singletons + instantiable local arenas) as a case
+  of the existing `Alloc` interface, not a new primitive, via a second, generic,
+  defaulted associated type (`Alloc::Pointer<T>`) letting each allocator determine what
+  `@a expr` produces. Addresses Rust's cyclic-data-structure/`Weak`-discipline
+  shortcoming directly — a genuinely different problem from RFC-0074's shared-mutation
+  concern, easy to conflate since both involve `Rc`-shaped values. Needs two extensions
+  RFC-0082 explicitly declined (defaulted + generic associated types); this RFC's own
+  investigation into RFC-0060's coherence rules suggests that's more tractable than
+  RFC-0082's one-line dismissal implied, but doesn't claim to have resolved it. Formalizes
+  `reports/substructural-types/gc-allocator-and-cyclic-structures.md`
+  (metel-docs-internal) at the same, still-exploratory maturity — drafted for a tracked,
+  numbered home and a milestoned issue, not because the design is settled.
 - **RFC-0074** *(draft)* — Shared Pointers (Rc/Arc) — blocked on RFC-0076 (brand
   introduction mechanism unresolved).
 - **RFC-0075** *(draft, parked)* — Region Inference — deliberately deferred until
