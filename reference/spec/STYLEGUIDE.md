@@ -213,7 +213,7 @@ A block doesn't need a fixture if it carries a typed exemption instead — one
 hand-authored trigger line, right after the block's own prose:
 
 ```markdown
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#775" reason="Argument unification against an explicitly pinned type parameter is not yet implemented: instantiate_scheme_with_turbofish never receives the call's actual argument types." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#753" reason="Depends on a `..` rest pattern for struct field patterns, which doesn't exist in the grammar (record_pattern has no rest form)." -->
 ```
 
 - `kind` — `untestable` (permanent, structural: no program could ever violate it),
@@ -221,7 +221,7 @@ hand-authored trigger line, right after the block's own prose:
   but not via an `.mtl` fixture — e.g. a Rust unit test).
 - `reason` — required, free text.
 - `ref` — required for `blocked`/`elsewhere`: an RFC id (`rfc-0121`) or a GitHub issue
-  (`metel-core#775`). A `blocked` ref gets checked: an RFC-shaped one locally against its
+  (`metel-core#753`). A `blocked` ref gets checked: an RFC-shaped one locally against its
   current stage, an issue-shaped one live against the GitHub API (no secret required — a
   public repo's single-issue GET is anonymous-readable). A confirmed-closed blocker fails
   `rfc.py check`.

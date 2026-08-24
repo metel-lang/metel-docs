@@ -24,6 +24,14 @@ title: "Metel Language Changelog"
   — separately — an argument that didn't actually satisfy the bound was never rejected
   at the call site at all, only failing later as an internal error when the method body
   was reconstructed at call time (`metel-core#746`).
+- A call with an explicit turbofish type argument (`identity::<i64>(x)`) now rejects an
+  argument that doesn't actually match the pinned type, the same way an inferred call
+  already does. Previously the pinned type was never checked against the arguments at
+  all — `identity::<i64>("hello")` compiled and ran, silently keeping the string value
+  untouched instead of reporting a type error (`metel-core#775`). An unsuffixed numeric
+  literal passed to a turbofish call is unaffected — it still adopts the pinned type
+  (`clamp::<i32>(5, 0, 10)` still works); this changes only genuinely mismatched
+  arguments.
 
 ## v0.12.1
 
