@@ -469,14 +469,18 @@ Modules do not have their own visibility annotation. Module-level access control
 ##### Legality Rule {#spec.modules.visibility.legality-1}
 
 Only declarations marked `public` are accessible from outside their declaring module; a
-public struct field is accessible outside that module only when the field itself is public.
+struct field is accessible outside that module only when both the field itself and its
+enclosing struct are public. A `public` field on a struct that is not itself `public`
+never becomes reachable across a module boundary, regardless of how a value of that
+struct's type was obtained (e.g. returned from a public function that never names the
+struct type itself).
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md), [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md), [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/importing_private_item_is_t0009/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/mixed_visibility_struct_allows_public_field_access_across_modules/main.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/importing_private_item_is_t0009/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/mixed_visibility_struct_allows_public_field_access_across_modules/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/public_field_on_private_struct_across_modules_is_t0009/main.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.modules.visibility.legality-2}
@@ -531,7 +535,7 @@ so the `public` marker on it has no effect from outside the declaring module.
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [public_field_on_private_struct_warns.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/public_field_on_private_struct_warns.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/public_field_on_private_struct_across_modules_is_t0009/main.mtl), [public_field_on_private_struct_warns.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/public_field_on_private_struct_warns.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.modules.visibility.legality-6}
