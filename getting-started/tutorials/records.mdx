@@ -110,7 +110,17 @@ fun main() {
 
 An open bound is the more natural shape for a function that only cares about a few fields and shouldn't reject a caller's record just because it also carries others. Dot-access works here too, for any field the bound actually names — `p.x` and `p.y` both work above because both are listed in `T`'s bound.
 
-What still doesn't work: reaching a field that *isn't* listed in the bound, even on a record that happens to carry it at the call site (`z` above, for instance). An open bound only makes the fields it names accessible from inside the function — there's no way yet to read an unnamed "rest," since that needs a record-pattern rest form (`{ x, .. }`) that doesn't exist. Tracked as [metel-core#646](https://github.com/metel-lang/metel-core/issues/646).
+A field that *isn't* listed in the bound still can't be reached by name — `p.z` above still doesn't work, even though the second call's record actually carries a `z`. But a record pattern's `{ x, .. }` rest form now lets a match arm read the listed fields and discard whatever else is there, without needing to name it:
+
+```metel
+fun describe<record T: { x: f64, .. }>(p: T) -> String {
+    match p {
+        { x, .. } => "x is ${x}, plus whatever else the caller passed",
+    }
+}
+```
+
+The `..` is required here — an open bound's full field set isn't known at this point, so a pattern that doesn't end in `..` can never be exhaustive against it.
 
 A row bound is satisfied only by a record, never by a struct, even one with matching field names:
 
@@ -133,7 +143,7 @@ Two shorter forms worth knowing, each used less often than the plain open/closed
 
 ## What's next for records
 
-This tutorial covers records as they exist today: anonymous, structural, and row-bounded — including an honest look at the one row-bounds gap that remains (reading an open bound's unnamed "rest" field, [metel-core#646](https://github.com/metel-lang/metel-core/issues/646)) rather than glossing over it. Beyond that, a few more things the reference spec describes but aren't built yet: **named records** (a nominal record kind, tracked by RFC-0120), **any aspect implementation for a record at all** (the design's local-only form isn't implemented, see above), and **row-variable-conditional aspect impls** (`extend<row R: { .. }> { ..R }: Aspect { ... }`, which would let one implementation cover every record matching a shape). Chained and pattern projection through a record are also not yet available. See the [Types reference](../../reference/spec/types#anonymous-records) for the full, current picture.
+This tutorial covers records as they exist today: anonymous, structural, and row-bounded. A few things the reference spec describes but aren't built yet: **named records** (a nominal record kind, tracked by RFC-0120), **any aspect implementation for a record at all** (the design's local-only form isn't implemented, see above), and **row-variable-conditional aspect impls** (`extend<row R: { .. }> { ..R }: Aspect { ... }`, which would let one implementation cover every record matching a shape). Chained and pattern projection through a record are also not yet available. See the [Types reference](../../reference/spec/types#anonymous-records) for the full, current picture.
 
 ## What you learned
 
