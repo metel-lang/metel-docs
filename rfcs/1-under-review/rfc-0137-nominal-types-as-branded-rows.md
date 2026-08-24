@@ -2,8 +2,10 @@
 id: rfc-0137
 title: "Nominal Types as Branded Rows"
 date: '2026-08-24'
-status: draft
+status: under-review
 target:
+updated: '2026-08-24'
+tracking: 'https://github.com/metel-lang/metel-core/issues/827'
 ---
 
 > **New RFC, formalizing the central thesis of
@@ -38,6 +40,8 @@ target:
 > six-way split's source document; §9 there sketched representation-sharing without the
 > narrowing-on-move consequence this RFC adds, already noted as this document's own
 > starting point.
+
+> **Status — under review (2026-08-24).** Committed to v0.13.0 (issue #827, milestoned 2026-08-24); discharges RFC-0117 §3's own dependency and answers RFC-0120's Open Question 5
 
 ## Summary
 
