@@ -2484,6 +2484,20 @@ declared aspect bounds without a duplicate declaration.
 <span class="rigor-backlink">_Tested by: [rfc0034_aspect_extend_and_match_bound.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/rfc0034_aspect_extend_and_match_bound.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-struct-and-enum-type-parameters.legality-5}
+
+A match arm's body, when matching a value of a bounded struct or enum type, has that
+type parameter's declared aspect bounds available the same way any other use site does —
+no re-declaration needed.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0034](../../rfcs/4-implemented/rfc-0034-struct-enum-aspect-bounds.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [struct_pattern_preserves_generic_bound_in_arm_body.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/struct_pattern_preserves_generic_bound_in_arm_body.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 </details>
 
 ---

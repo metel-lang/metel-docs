@@ -454,7 +454,10 @@ construction through module-local helpers or constructors instead. Marking a fie
 `public` on a struct that is not itself `public` doesn't expose that field to any other
 module — [the compiler warns on this combination](#spec.modules.visibility.legality-5),
 since the field can never actually be reached across a module boundary through a private
-type.
+type. [Pattern-matching `Token` outside its declaring module follows the same rule as
+construction](#spec.modules.visibility.legality-7) — a private field may not be named in
+the pattern; a `..` rest pattern (see [Struct patterns](expressions.md#struct-patterns))
+must be used to omit it instead.
 
 Within a module, all names defined in that module are accessible without qualification, including private names.
 
@@ -543,6 +546,20 @@ module and naming a private field is rejected with `T0009`, the same as for a st
 
 <!-- rfc.py:fixtures:start -->
 <span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/private_enum_variant_field_construction_across_modules_is_t0009/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.visibility.legality-7}
+
+Naming a private field in a struct pattern from outside the struct's declaring module is
+rejected with `T0009`. The pattern must either omit that field with a trailing `..`, or
+be written inside the declaring module, where private fields remain nameable.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/struct_pattern_names_private_field_across_modules_is_t0009/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/module_semantics/struct_pattern_rest_omits_private_field_across_modules/main.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 </details>
