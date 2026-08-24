@@ -4,6 +4,7 @@ title: "Garbage-Collected Allocators and Allocator-Determined Pointer Types"
 date: '2026-08-24'
 status: draft
 target:
+tracking: 'https://github.com/metel-lang/metel-core/issues/831'
 ---
 
 ## Summary

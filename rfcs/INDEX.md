@@ -531,7 +531,10 @@ number, a backwards RFC-0067a split direction).
   RFC-0082's one-line dismissal implied, but doesn't claim to have resolved it. Formalizes
   `reports/substructural-types/gc-allocator-and-cyclic-structures.md`
   (metel-docs-internal) at the same, still-exploratory maturity — drafted for a tracked,
-  numbered home and a milestoned issue, not because the design is settled.
+  numbered home and a milestoned issue, not because the design is settled. Tracked by
+  metel-core#831, milestoned v0.17.0 (the furthest-out existing milestone, matching
+  allocators' Priority 4/"built last" position, not a claim about v0.17.0's own planned
+  scope).
 - **RFC-0074** *(draft)* — Shared Pointers (Rc/Arc) — blocked on RFC-0076 (brand
   introduction mechanism unresolved).
 - **RFC-0075** *(draft, parked)* — Region Inference — deliberately deferred until
