@@ -123,6 +123,7 @@ Bindings introduced by an arm's pattern are in scope throughout that arm's block
 | Literal | `0`, `"hi"`, `true` | exact value |
 | Enum variant | `Direction::North`, `North` | unit variant (qualified or, since v0.11.0, bare) |
 | Enum with fields | `Shape::Circle { radius }`, `Circle { radius }` | variant, binds fields |
+| Struct | `Point { x, y }`, `Token { kind, .. }` | struct, binds named fields |
 | Tuple | `(a, b)` | tuple, binds elements |
 | Guard | `n if n < 0` | binding + boolean condition |
 
@@ -309,6 +310,66 @@ before. A bare identifier that exactly names a no-field variant of the scrutinee
 *always* the variant, never a fresh binding — use `_` or a differently-named binding for a
 catch-all. The fully-qualified form (`Colour::Red`) remains valid everywhere; qualification
 is optional, not removed.
+
+### Struct patterns
+
+> **Since v0.13.0.**
+
+A named struct's fields may be destructured directly in a match arm, the same
+bare-field syntax a struct literal uses:
+
+```metel
+struct Point { x: i64, y: i64 }
+
+fun magnitude_squared(p: Point) -> i64 {
+    match p {
+        Point { x, y } => x * x + y * y,
+    }
+}
+```
+
+[Naming every field is required unless the pattern ends in `..`](#spec.expressions.struct-patterns.legality-1), which
+matches the struct against any value of that type regardless of the fields it doesn't
+name:
+
+```metel
+struct Token { kind: i64, span: i64, offset: i64 }
+
+fun kind_and_span(t: Token) -> i64 {
+    match t {
+        Token { kind, span, .. } => kind + span,
+    }
+}
+```
+
+A field's own visibility applies the same way it does to ordinary field access — see
+[Visibility](modules.md#visibility). An external pattern (outside the struct's declaring
+module) that names a private field is a `T0009` visibility error; the field must be
+omitted, which requires `..`.
+
+A struct pattern's sub-patterns are always plain field bindings — there is no
+`field: subpattern` form for matching a field's own value against something other than a
+bare name. An unguarded struct-pattern arm is exhaustive for its struct type on its own:
+a struct has exactly one shape, so naming every field (or every field plus `..`) always
+covers it.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.expressions.struct-patterns.legality-1}
+
+A struct pattern with no trailing `..` must name every field of the struct; one that
+ends in `..` may name any subset, including none.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [struct_pattern_matches_all_fields.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/struct_pattern_matches_all_fields.mtl), [struct_pattern_missing_field_without_rest_is_t0001.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/struct_pattern_missing_field_without_rest_is_t0001.mtl), [struct_pattern_rest_omits_remaining_fields.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/struct_pattern_rest_omits_remaining_fields.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
 
 ### Matching through a reference
 

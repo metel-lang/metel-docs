@@ -8,6 +8,20 @@ title: "Metel Language Changelog"
 
 *In progress on `develop` — not yet released.*
 
+**Struct pattern matching:**
+- A named struct can now be matched with a struct pattern (`Point { x, y }`,
+  `Token { kind, span, .. }`) — RFC-0032 §4/§5 and RFC-0034 §5's own worked examples used
+  this syntax, but no form of it actually worked: a bare `{ field }` record pattern only
+  ever unified against an anonymous/structural record type, never a named struct
+  declaration, so matching one failed with `T0001` regardless of field names
+  (`metel-core#753`, `metel-core#755`). A struct pattern binds each named field to a
+  local of the same name; a trailing `..` omits the rest, and is required whenever the
+  pattern doesn't name every field. Outside the struct's declaring module, naming a
+  private field in the pattern is rejected with `T0009`, the same as construction — `..`
+  must be used to skip it instead. Field sub-patterns (`Point { x: 0, y }`) are not part
+  of this — only bare field-name bindings are supported, matching what the grammar
+  actually accepts.
+
 **Fixes:**
 - An array literal with no expected type now defaults to `T[]` (a borrowed view), not
   `[T; N]` (a sized array) — matching the reading recorded on RFC-0053's qualified status
