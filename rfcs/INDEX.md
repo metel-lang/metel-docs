@@ -745,6 +745,9 @@ implementation).
   instead of independently re-deriving it. See `reports/substructural-types/
   structured-concurrency.md` (metel-docs-internal) for the actively-maintained
   continuation of this RFC's open questions (the join-guarantee mechanism specifically).
+  Tracked by metel-core#832, milestoned v0.17.0 (no clear near-term slot in the
+  strategy document's current priorities, not a claim about v0.17.0's own planned
+  scope).
 
 ## Small, mostly standalone syntax/ergonomics items
 

@@ -4,6 +4,7 @@ title: "Concurrency Model"
 date: '2026-05-20'
 updated: '2026-08-24'
 status: draft
+tracking: 'https://github.com/metel-lang/metel-core/issues/832'
 ---
 
 > **Status — corrected 2026-08-24.** This RFC's own "Decision" section previously said
