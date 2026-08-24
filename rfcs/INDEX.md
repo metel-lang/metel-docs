@@ -766,6 +766,19 @@ implementation).
   Shadow-versus-Extend Semantics — same-name module functions form one overload set;
   exports/imports preserve whole sets; lexical bindings shadow whole sets; and `extend`
   methods remain aspect dispatch rather than free-function overloads.
+- **RFC-0138** *(draft, opened 2026-08-24)* — Generic Functions as First-Class Values —
+  `functions.md`'s unqualified first-class-functions claim doesn't hold for a
+  `<T>`-declared named function today: no value form at all, in any position, fully
+  instantiated or not (metel-core#736). Proposes extending the existing closure
+  let-polymorphism mechanism (deferred `scheme_env` instantiation, currently gated on
+  the RHS being a syntactic closure literal) to also recognize a bare reference to an
+  already-declared generic function. Traces the actual failure to the construction pass
+  specifically (`ConstructCtx::lookup` deliberately excludes generic schemes from its
+  own env, by the same design the closure case already uses) — inference itself already
+  resolves a bare reference via `poly_env` auto-instantiation, it just doesn't
+  re-generalize the alias binding, a latent gap this RFC also closes. #736 itself is
+  being resolved in the interim by scoping `functions.md`'s claim down with an explicit
+  carve-out, pending this RFC's acceptance.
 - **RFC-0107** *(implemented 2026-07-21 — issue #559)* — Unqualified Enum Variants in Match
   Patterns — `Red` instead of `Colour::Red` in a match arm, resolved type-directed
   against the scrutinee's known enum (not a lexical-scope import, so no cross-enum
