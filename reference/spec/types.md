@@ -1133,10 +1133,53 @@ fun g<record T: { x: f64 }>(p: T)        // closed: T's row is exactly `x`
 fun h<record T: { x: f64, .. }>(p: T)    // open:  T has at least `x`
 ```
 
-> **Remaining gap:** an open bound only makes the fields it lists accessible from inside
-> the function body — there's no way yet to read a field it does *not* name, even from a
-> record that happens to carry it at the call site. That would need a record-pattern rest
-> form (`{ x, .. }`), which doesn't exist yet.
+A record pattern's own trailing `..` reads the bound's listed fields the same way
+[field access](#spec.types.generics.row-bounds.legality-6) does, and — unlike field access
+— can discard the rest of an open bound's unlisted fields rather than being unable to name
+them at all:
+
+```metel
+fun describe<record T: { x: f64, .. }>(p: T) -> String {
+    match p {
+        { x, .. } => "x is ${x}, plus whatever else the caller passed",
+    }
+}
+```
+
+**The `..` is required to match an open bound at all** — its full field set isn't known
+here, so a pattern that doesn't end in `..` can never be exhaustive:
+
+```metel
+fun bad<record T: { x: f64, .. }>(p: T) -> f64 {
+    match p {
+        { x } => x,   // error: open bound's field set isn't known here; add `..`
+    }
+}
+```
+
+A closed bound's fields *are* fully known, so `..` there is optional sugar rather than a
+requirement — a pattern matching a closed bound must still name every field the bound
+lists unless it uses `..`:
+
+```metel
+fun get_x<record T: { x: f64, y: f64 }>(p: T) -> f64 {
+    match p {
+        { x, y } => x,       // OK: every field of the closed bound is named
+        // { x } => x,       // error: `y` isn't named and there's no `..`
+    }
+}
+```
+
+Naming a field the bound doesn't list is still rejected, `..` or not — the pattern's rest
+form discards *unnamed* fields, not fields the bound never promised are there:
+
+```metel
+fun bad2<record T: { x: f64, .. }>(p: T) -> f64 {
+    match p {
+        { x, z, .. } => x,   // error: no field `z` on the bound
+    }
+}
+```
 
 **A field may omit its type** to constrain the label only — `{ x }` means "carries an `x`,
 whatever its type":
@@ -1312,6 +1355,28 @@ same syntax in a generic parameter or `where` constraint denotes a row bound.
 
 <!-- rfc.py:fixtures:start -->
 <span class="rigor-backlink">_Tested by: [95_record_type_vs_row_bound_by_position.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/95_record_type_vs_row_bound_by_position.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.generics.row-bounds.legality-6}
+
+A field a row bound lists is accessible via field access (`p.x`) from inside the function
+body; a field the bound doesn't list is not, even when a caller's concrete argument
+happens to carry it.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [94_row_bound_field_access.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/94_row_bound_field_access.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.generics.row-bounds.legality-7}
+
+A record pattern's trailing `..` binds only the fields it names against a row-bounded
+type parameter and discards the rest, the same as it does against a named struct. It is
+required to match an open bound at all, since the bound's full field set isn't known;
+for a closed bound it is optional, but the pattern must otherwise name every field the
+bound lists. Naming a field the bound doesn't list is rejected regardless of `..`.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [96_row_bound_rest_pattern.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/96_row_bound_rest_pattern.mtl), [row_bound_pattern_missing_field_without_rest_is_t0001.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/row_bound_pattern_missing_field_without_rest_is_t0001.mtl), [row_bound_pattern_names_field_outside_bound_is_t0003.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/row_bound_pattern_names_field_outside_bound_is_t0003.mtl), [row_bound_pattern_without_rest_on_open_bound_is_t0001.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/row_bound_pattern_without_rest_on_open_bound_is_t0001.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 </details>

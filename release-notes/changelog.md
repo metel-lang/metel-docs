@@ -21,6 +21,13 @@ title: "Metel Language Changelog"
   must be used to skip it instead. Field sub-patterns (`Point { x: 0, y }`) are not part
   of this — only bare field-name bindings are supported, matching what the grammar
   actually accepts.
+- A record pattern's trailing `..` (`{ x, .. }`) now works against a row-bounded generic
+  type parameter (`<record T: { x: f64, .. }>`), reading the fields it names and
+  discarding the rest — closing the one gap #645 left open (`metel-core#646`). It's
+  required to match an open bound at all, since the bound's full field set isn't known;
+  for a closed bound it's optional sugar, but the pattern must still name every field the
+  bound lists without it. Naming a field the bound doesn't list is still rejected,
+  `..` or not.
 
 **Fixes:**
 - An array literal with no expected type now defaults to `T[]` (a borrowed view), not
