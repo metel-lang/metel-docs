@@ -2,19 +2,41 @@
 id: rfc-0003
 title: "Concurrency Model"
 date: '2026-05-20'
+updated: '2026-08-24'
+status: draft
 ---
+
+> **Status — corrected 2026-08-24.** This RFC's own "Decision" section previously said
+> "Outcome: Accepted" despite the file sitting in `0-draft/`, with no `status:`
+> frontmatter field to catch the mismatch. It also hadn't been touched since it was
+> written (2026-05-20) while nearly everything it depends on moved underneath it:
+> RFC-0001 (pointer syntax), RFC-0002 (aspect bound syntax), and RFC-0025 (region
+> allocation) are now superseded/refused; RFC-0028 (memory and linear types), which
+> this RFC leaned on for "the linearity checker enforces `Fiber<T>` must be joined or
+> detached," is **refused** with no replacement RFC — linearity exists today only as
+> exploration (`linear-types.md`, metel-docs-internal), not a numbered proposal; RFC-0043
+> (regular pointers, `*T`/`*mut T`) is **superseded** by RFC-0067a's `&T`/`&var T`. This
+> pass: rewrites the pointer/reference syntax throughout, reworks the `Send`/`Sync`
+> tables around the current reference *and* allocator-tag model (RFC-0063 §7's `@a T`
+> sendability rule didn't exist when this was written), shrinks the `Arc<T>` section to
+> point at RFC-0074 as the actual source of record instead of re-deriving it
+> independently (avoiding the exact kind of two-document drift this correction pass is
+> fixing), marks the join-guarantee mechanism as the leading sketch rather than a
+> settled fact (matching `structured-concurrency.md` §3's later, more careful framing,
+> which found this genuinely unresolved), and sets an honest `status: draft`. Found
+> while checking whether an RFC already existed for a runtime-configurability proposal
+> before drafting a new one — it did, in a form simpler than what was being proposed,
+> which is folded in below (§ Runtime and primitive layers) rather than duplicated.
 
 ## Summary
 
-Define Metel's concurrency model: fiber handles with linear ownership, typed channels as the primary communication primitive, a `select` expression for multiplexing, and a `Send` marker aspect to prevent data races. Concurrency syntax (`spawn`, `<-`, `->`, `select`) desugars to aspect implementations on standard library types, consistent with Metel's general philosophy that syntax sugar maps to aspect method calls. Fibers are first-class values with linear handles — fire-and-forget is possible but must be explicit via `.detach()`.
+Define Metel's concurrency model: fiber handles with linear ownership, typed channels as the primary communication primitive, a `select` expression for multiplexing, and a `Send` marker aspect to prevent data races. Concurrency syntax (`spawn`, `<-`, `->`, `select`) desugars to aspect implementations on standard library types, consistent with Metel's general philosophy that syntax sugar maps to aspect method calls. Fibers are first-class values, intended to be linearly held — fire-and-forget is possible but must be explicit via `.detach()` (see "Fiber handles and linearity" for what's actually settled about this versus sketched).
 
 The stdlib ships a default M:N green-thread runtime. Third-party runtimes can replace it by providing their own types that implement the same four concurrency aspects. No syntax changes are required in user code — `spawn { }`, `ch <- v`, `<- ch`, and `select { }` all continue to work unchanged regardless of which runtime is active.
 
 ---
 
 ## Motivation
-
-Metel's current spec has no concurrency primitives. Adding them now, before the pointer RFC (RFC-0001) is finalised, is important because the two designs are coupled: `*mut T` in a concurrent setting creates data races unless the type system or runtime prevents them. Resolving the concurrency model first lets RFC-0001 make the right choices about pointer transferability.
 
 The three problems concurrency must address:
 
@@ -52,6 +74,8 @@ use myruntime::Chan;
 ```
 
 All spawn sites and channel operations throughout the code resolve to the third-party runtime through normal type inference, without touching body-level syntax. Projects that never switch runtimes see no API seam at all.
+
+**This is a whole-crate, compile-time choice, not a scoped one** — worth being explicit about, since it's easy to read "pluggable" as finer-grained than it is. Two different runtimes coexisting within one compiled program (e.g. a deterministic single-threaded runtime for a test module alongside the real M:N scheduler everywhere else) isn't directly expressible by this mechanism alone; the closest available answer today is splitting into separate crates/modules that each pick their own alias and compose at a boundary. Whether finer-grained, scoped swapping is ever wanted is an open question — see "Open Questions."
 
 ### No function colouring
 
@@ -95,14 +119,14 @@ The standard library types `Fiber<T>`, `Chan<T>`, `SendChan<T>`, `RecvChan<T>` i
 
 ### Fiber handles and linearity
 
-`spawn { expr }` returns a `Fiber<T>` handle. `Fiber<T>` is a **linear type** — it must be explicitly consumed. This makes accidental fire-and-forget of a meaningful fiber a compile error:
+`spawn { expr }` returns a `Fiber<T>` handle, intended to require explicit consumption — accidental fire-and-forget of a meaningful fiber should be a compile error:
 
 ```metel
 let f: Fiber<Int> = spawn { compute() };
 let result = f.join();   // blocks until done, consumes handle
 ```
 
-**Explicit fire-and-forget** is allowed via `.detach()`, which consumes the handle and releases the linearity constraint:
+**Explicit fire-and-forget** is allowed via `.detach()`, which consumes the handle:
 
 ```metel
 spawn { log_event(data) }.detach();   // explicit discard
@@ -114,7 +138,20 @@ A bare `spawn { }` statement (without binding) implicitly calls `.detach()`:
 spawn { log_event(data) };   // sugar for .detach() — intentional, not accidental
 ```
 
-The two uses are distinct at the type level. Holding a `Fiber<T>` and never joining or detaching it is a compile error, caught by the linearity checker (RFC-0028).
+**What this RFC does not settle: which mechanism actually enforces "must consume."**
+The original version of this section asserted `Fiber<T>` "is a **linear type**" and cited
+"the linearity checker (RFC-0028)" as what makes forgetting to join or detach a compile
+error. RFC-0028 is refused, and no replacement RFC for linearity exists — `linear-types.md`
+(metel-docs-internal) is exploration, not a numbered proposal, and its own open questions
+include exactly this: `structured-concurrency.md` §3 treats "which mechanism carries the
+must-join guarantee" as the central open concurrency question, reopened 2026-07-07 as
+premature to decide, listing three real candidates (a `Linear` `spawn` handle — the
+leading one, once `linear-types.md`'s `Linear` aspect exists; a standalone
+`fork`/`JoinToken<'b>`; or an affine handle with no static guarantee at all, i.e.
+abandonment silently allowed). Read the code above as the intended *shape* of the API
+(`.join()`/`.detach()` as the two discharge methods), not as a settled claim about what
+enforces using one of them. See `structured-concurrency.md` §3 for the live version of
+this question.
 
 **Panic isolation:** Because fibers have handles, a fiber's panic does not terminate the program. The panic is captured as an error value in the handle's result. `f.join()` returns `Result<T, Panic>` rather than `T`. A detached fiber that panics has no handle — its panic terminates the program (Go model), since there is no owner to report to. This gives a clean semantic distinction: owned fibers are isolated; detached fibers are program-terminating on panic.
 
@@ -246,12 +283,11 @@ aspect Send {}
 | `Perhaps<T>` where `T: Send` | yes | automatic |
 | `Chan<T>` where `T: Send` | yes | channels cross fiber boundaries by design |
 | `Fiber<T>` where `T: Send` | yes | handles are `Send` |
-| `*T` | **no** | aliased read could race with concurrent write |
-| `*mut T` | **no** | shared mutable access — data race |
+| `&T`, `&var T` | **no** | references are never sendable, regardless of anchor (RFC-0067) |
+| `@a T` | iff `a: Send` and `T: Send` | allocator-tag rule (RFC-0063 §7) — `@Heap T` is `Send` when `T: Send`; `@LocalHeap T`/`@a T` for any scoped or custom allocator is not |
 | `Mutex<T>` where `T: Send` | yes | mutex is the synchronisation mechanism |
-| Linear types where all fields are `Send` | yes | linear values move, never alias |
 
-Deriving `Send` is automatic for most types — the programmer does not annotate it. Only types containing `*T` or `*mut T` are not `Send` by default.
+Deriving `Send` is automatic for most types — the programmer does not annotate it. A type is non-`Send` if it contains a reference (`&T`/`&var T`) or a non-`Heap`-tagged allocator pointer.
 
 ---
 
@@ -263,62 +299,35 @@ Deriving `Send` is automatic for most types — the programmer does not annotate
 aspect Sync {}
 ```
 
-The precise relationship: `T: Sync` means that holding multiple read pointers (`*T`) to the same value simultaneously across fibers is race-free. This is a stronger property than `Send` (which governs ownership transfer) — `Sync` governs concurrent access.
+The precise relationship: `T: Sync` means that holding multiple `&T` references to the same value simultaneously across fibers is race-free. This is a stronger property than `Send` (which governs ownership transfer) — `Sync` governs concurrent access.
 
 | Type | `Sync`? | Reason |
 |------|---------|--------|
 | `Int`, `Float`, `boolean`, `String` | yes | immutable value semantics — concurrent reads are safe |
 | Structs with all-`Sync` fields | yes | automatic |
 | Enums with all-`Sync` variants | yes | automatic |
-| `*T` | **no** | no lifetime guarantee — pointee may be dropped or mutated through another alias |
-| `*mut T` | **no** | concurrent writes through different aliases = data race |
+| `&T`, `&var T` | **no** | a borrow's own validity is scope-bound; concurrent access through it is a separate question this RFC does not settle beyond marking it unsafe by default |
 | `Mutex<T>` where `T: Send` | yes | access is serialized by the lock |
-| `RwLock<T>` where `T: Send + Sync` | yes | multiple readers serialized by the lock |
+| `RwLock<T>` where `T: Send` | yes | multiple readers serialized by the lock |
 | `Atomic<Int>`, `Atomic<boolean>` | yes | atomics are safe for concurrent access by design |
 | `Chan<T>` where `T: Send` | yes | channels have internal synchronisation |
-| `Arc<T>` where `T: Send + Sync` | yes | reference-counted; no interior mutability |
-| Linear types where all fields are `Sync` | yes | linear values move and never alias |
+| `Arc<T>` where `T: Send + Sync` | yes | see RFC-0074 — reference-counted, no interior mutability without an explicit cell |
 
-`Sync` is not usually written explicitly. It is derived automatically when all fields are `Sync`, and violated only when a type contains `*T`, `*mut T`, or interior-mutability primitives without synchronisation.
+`Sync` is not usually written explicitly. It is derived automatically when all fields are `Sync`.
 
 ---
 
-### `Arc<T>` — shared ownership across fibers
+### Shared ownership across fibers — see RFC-0074
 
-`Arc<T>` is a reference-counted shared pointer. It is the standard mechanism for sharing a large immutable value (lookup table, config object, compiled structure) across multiple fibers without cloning it into each one.
+The original version of this section independently re-derived `Arc<T>`'s design (properties, a `Send`/`Sync` bound table, a "prohibition on linear types" rule, lifetime/drop behavior). That's now specified in its own RFC (RFC-0074, `Rc<T, brand 'b>`/`Arc<T, brand 'b>`, contingent on RFC-0076 brands) — duplicating it here risks exactly the drift this correction pass exists to fix, so this section is intentionally shrunk to a pointer rather than kept as an independent copy.
+
+What's still specific to *this* RFC, not RFC-0074's concern: `Arc<T>` is the standard mechanism for sharing a value across fiber boundaries (as opposed to across aliases generally); `Arc<T>: Send` requires `T: Send + Sync` for the same reason any cross-fiber transfer does.
 
 ```metel
 let config = Arc::new(load_config());
 let c1 = Arc::clone(&config);
-let c2 = Arc::clone(&config);
-
 spawn { use_config(c1) };
-spawn { use_config(c2) };
 ```
-
-**Properties:**
-
-- `Arc<T>` is not linear — it can be cloned freely to produce additional handles to the same allocation.
-- `Arc<T>: Send` when `T: Send + Sync`. The `Send` bound ensures the value was safe to move into the `Arc`; the `Sync` bound ensures concurrent reads through multiple `Arc` handles are race-free.
-- `Arc<T>: Sync` when `T: Send + Sync`.
-- `Arc<T>` provides read-only access to the inner value. There is no `Arc::get_mut` in the general case — interior mutability requires `Arc<Mutex<T>>` or `Arc<RwLock<T>>`.
-
-**Shared mutation pattern:**
-
-```metel
-let shared = Arc::new(Mutex::new(Counter::new()));
-let s1 = Arc::clone(&shared);
-let s2 = Arc::clone(&shared);
-
-spawn { s1.lock().increment() };
-spawn { s2.lock().increment() };
-```
-
-**Prohibition on linear types:**
-
-`Arc<LinearT>` is a type error. A linear value must be owned by exactly one party — reference-counting it would allow multiple owners and defeat the linearity guarantee.
-
-**Lifetime:** when the last `Arc<T>` handle is dropped, the inner value is freed. Reference counting is atomic — `Arc<T>` handles may be dropped from different fibers.
 
 ---
 
@@ -362,7 +371,7 @@ use myruntime::Fiber;    // replaces stdlib Fiber<T>
 use myruntime::Chan;     // replaces stdlib Chan<T>
 ```
 
-All `spawn { }` expressions whose inferred return type flows to `Fiber<T>` now resolve to `myruntime::Fiber<T>`. No call-site changes are needed.
+All `spawn { }` expressions whose inferred return type flows to `Fiber<T>` now resolve to `myruntime::Fiber<T>`. No call-site changes are needed. This is a **compile-time, whole-crate** choice — see the Design Philosophy section's note above, and "Open Questions" for whether finer granularity is ever wanted.
 
 **What a runtime is free to decide.** The aspects define the *interface*, not the implementation. A custom runtime can use:
 - A different scheduling strategy (work-stealing, cooperative-only, single-threaded event loop)
@@ -406,47 +415,42 @@ Futexes, semaphores, `pthread_t`, and similar OS-level constructs are used insid
 
 | Type | Purpose |
 |------|---------|
-| `Fiber<T>` | Lightweight M:N-scheduled fiber handle (linear) |
-| `Thread<T>` | 1:1 OS thread handle (linear) |
+| `Fiber<T>` | Lightweight M:N-scheduled fiber handle |
+| `Thread<T>` | 1:1 OS thread handle |
 | `Chan<T>` | Typed bidirectional channel |
 | `SendChan<T>` | Write-only channel view |
 | `RecvChan<T>` | Read-only channel view |
 | `Mutex<T>` | Exclusive mutable access. `.lock()` returns a guard; released on drop |
 | `RwLock<T>` | Shared read / exclusive write |
 | `Atomic<Int>`, `Atomic<boolean>` | Lock-free integer and boolean operations |
-| `Arc<T>` | Reference-counted shared ownership. `Send + Sync` when `T: Send + Sync` |
+| `Arc<T>` | Reference-counted shared ownership — see RFC-0074 |
 
-`Mutex<T>` and `RwLock<T>` are `Send` because they wrap the synchronisation mechanism around the value. Internally they use `*mut T` inside `unsafe`, but the public API is safe.
+`Mutex<T>` and `RwLock<T>` are `Send` because they wrap the synchronisation mechanism around the value. Internally they use `&var T` inside `unsafe`, but the public API is safe.
 
 ---
 
-## Interaction with RFC-0043 (Regular Pointers)
+## Interaction with reference types (RFC-0067a) and allocators (RFC-0063)
 
-RFC-0043 is implemented. The pointer surface (`*T`, `*mut T`, `&x`, `&var x`, `*p`) is settled. RFC-0043 explicitly deferred the question of whether pointers are `Send` to the concurrency RFC. This RFC now resolves that:
+The original version of this section resolved `*T`/`*mut T`'s `Send` status against RFC-0043, which is now superseded by RFC-0067a's `&T`/`&var T`. Restated against the current model:
 
-1. **`*T` and `*mut T` are not `Send`** — pointers are local-fiber tools. `*T` introduces aliasing to non-linear storage; allowing it to cross fiber boundaries without synchronisation would create data races. `*mut T` additionally allows writes — sharing it is the canonical data race.
-2. **`Perhaps<*T>` is not `Send`** — wrapping a non-`Send` type in `Perhaps` does not make it `Send`.
-3. **`*mut T` coerces to `*T`** (RFC-0043 §4) — this coercion is unaffected by concurrency rules. Neither end of the coercion is `Send`.
-4. **Auto-deref** (RFC-0043 §6) applies to field access, method dispatch, and function pointer calls — unaffected by `Send`.
-5. **Pointer equality** (RFC-0043, equality section) is identity equality — unaffected by `Send`.
+1. **`&T` and `&var T` are not `Send`** — references are never sendable, regardless of anchor (RFC-0067 §1, once accepted; the rule is unconditional today regardless). A reference is a local-fiber tool; allowing it to cross fiber boundaries would create data races or dangle past its anchor's scope.
+2. **`Perhaps<&T>` is not `Send`** — wrapping a non-`Send` type in `Perhaps` does not make it `Send`.
+3. **`@a T`'s sendability is the allocator-tag rule** (RFC-0063 §7), not a blanket reference rule: `@Heap T` is `Send` when `T: Send`; every scoped or custom allocator's `@a T` is not.
+4. **Auto-deref** (RFC-0067a §3) applies to field access, method dispatch, and function calls through `@a T` — unaffected by `Send`.
 
-The `Send`-non-`Send` boundary for pointer types is now fully settled by this RFC. RFC-0043's compatibility constraint ("future concurrency or lifetime model must account for that aliasing explicitly") is satisfied by the `Send` marker aspect defined here.
+The `Send`/non-`Send` boundary for references and allocator pointers is fully settled by the current RFC-0063/RFC-0067a model; this RFC does not need to independently resolve it, unlike its original version, which predated both and tried to.
 
 ### Known future tension: scoped concurrency
 
-The `*T: !Send` rule is unconditional. This forecloses one specific future pattern: **scoped fibers** — fibers whose lifetime is bounded by a lexical scope, making it provably safe to send references into the enclosing stack frame without copying. Rust achieves this via `std::thread::scope`, where `&'a T` borrows are tied to the scope's lifetime and become sendable within it.
+The `&T: !Send` rule is unconditional. This forecloses one specific future pattern: **scoped fibers** — fibers whose lifetime is bounded by a lexical scope, making it provably safe to send references into the enclosing stack frame without copying. Rust achieves this via `std::thread::scope`, where `&'a T` borrows are tied to the scope's lifetime and become sendable within it.
 
-If Metel later wants scoped fibers that borrow from the enclosing scope, the unconditional `*T: !Send` rule would block naively sending `*T` into them. The clean resolution — consistent with Metel's direction of separate reference types (`@T` for linear read references, future `&'a T` for lifetime-tracked references) — is a dedicated `ScopedFiber<'scope, T>` handle type whose lifetime the borrow checker can reason about, rather than making `*T` conditionally `Send`. This keeps `*T` semantics simple and stable.
-
-This is not a current concern but should be considered when designing the lifetime system (RFC-0028) and when `Fiber<T>` is formalised.
+If Metel later wants scoped fibers that borrow from the enclosing scope, the unconditional `&T: !Send` rule would block naively sending `&T` into them. The clean resolution — consistent with Metel's existing separation of allocator identity (`@a`) from borrow validity (`&r`, RFC-0067) — is a dedicated `ScopedFiber<'scope, T>` handle type whose lifetime the borrow checker can reason about, rather than making `&T` conditionally `Send`. This keeps `&T` semantics simple and stable. Not a current concern.
 
 ---
 
-## Interaction with RFC-0028 (Memory and Linear Types)
+## Interaction with linearity — genuinely unresolved, see the note in "Fiber handles and linearity"
 
-- `Fiber<T>` and `Thread<T>` are linear types. The linearity checker (RFC-0028) enforces that handles must be joined or detached.
-- Linear types are `Send` if all their fields are `Send` — channel send is a natural consumption point for linear values.
-- `Mutex<LinearT>` and `Arc<LinearT>` are forbidden — a linear value cannot be shared.
+The original version of this section cited RFC-0028 as the linearity checker enforcing `Fiber<T>`/`Thread<T>` must be joined or detached. RFC-0028 is refused. This is not restated as settled fact — see the note above and `structured-concurrency.md` §3 for the actual, live state of this question. What survives independent of which mechanism wins: `Mutex<LinearT>` and `Arc<LinearT>` should remain forbidden once `Linear` exists as a real aspect (a linear value cannot be soundly shared), and channel send remains a natural consumption point for a linear value regardless of how the fiber-handle question resolves.
 
 ---
 
@@ -454,7 +458,7 @@ This is not a current concern but should be considered when designing the lifeti
 
 ### `async`/`await`
 
-Functions are coloured: async functions must be called with `await`. Solves structured concurrency naturally but introduces the "what colour is my function?" problem. Rejected — function colouring conflicts with Metel's goal of concurrency that is transparent syntactically.
+Functions are coloured: async functions must be called with `await`. Solves structured concurrency naturally but introduces the "what colour is my function?" problem. Rejected — function colouring conflicts with Metel's goal of concurrency that is transparent syntactically. (This choice is also what lets Metel's later algebraic-effects work, `algebraic-effects.md` §2, express suspension as an ordinary affine continuation value rather than a syntactic mode — not a consideration available when this RFC was first written, but consistent with it in hindsight.)
 
 ### Actor model
 
@@ -462,48 +466,54 @@ Isolated processes communicating only via message passing. Eliminates data races
 
 ### Fire-and-forget only (original Go model)
 
-No fiber handles. Simple but makes accidental resource leaks undetectable at compile time. Rejected in favour of linear handles, which make intentional fire-and-forget explicit (`.detach()`) and accidental omission a compile error.
+No fiber handles. Simple but makes accidental resource leaks undetectable at compile time. The intent (not yet a settled mechanism — see above) is linear-or-similar handles, which make intentional fire-and-forget explicit (`.detach()`) and accidental omission a compile error.
 
 ---
 
-## Resolved Questions
+## Open Questions
 
-| # | Question | Decision |
-|---|----------|----------|
-| Q1 | Blocking vs. try-receive | `Receivable` defines both: `recv` (blocking) and `try_recv` (non-blocking). `<- ch` desugars to `recv`; `try_recv` is called explicitly. |
-| Q2 | Fiber names and observability | Deferred to a tooling RFC. No syntax change. |
-| Q3 | `Arc<T>` and `Sync` | Both defined. `Sync` is a marker aspect for concurrent-read safety. `Arc<T>: Send + Sync` when `T: Send + Sync`. `Arc<LinearT>` is forbidden. |
-| Q4 | Detached fiber panic policy | Detached fibers terminate the program on panic (no handle to report to). Owned fibers capture panics in `Result<T, Panic>` from `.join()`. |
-| Q5 | Custom runtime support | Third-party runtimes are supported by implementing `Spawnable`, `Sendable`, `Receivable`, and `Selectable` on their own types. Users switch runtimes via a type alias at the crate root; no syntax changes are needed anywhere else. The stdlib runtime is the default but is not privileged. |
+*Rewritten 2026-08-24. Several items in the original "Resolved Questions" table asserted more than this RFC's current dependencies actually support; restated honestly below rather than left as claimed resolutions.*
 
----
-
-## Timing Recommendation
-
-Do not implement concurrency primitives in the current PoC evaluator. The evaluator uses `Rc<RefCell<Value>>` — single-threaded. Fibers require `Arc<Mutex<Value>>` or a redesigned runtime. The PoC's purpose is to validate the core language.
-
-**Minimum action from this RFC:** update the spec overview to name concurrency as a first-class design principle, note that language-native fibers and channels are planned, and record the aspect-desugaring model so that implementation choices in the PoC do not conflict with it.
-
-**Implementation target:** Scoped after core language is stable. `Arc<T>` and `Sync` are defined in this RFC.
+1. **Which mechanism enforces "a `Fiber<T>` must be joined or detached"?** (See "Fiber handles and linearity.") Not resolved — this RFC's original dependency (RFC-0028) is refused. `structured-concurrency.md` §3 tracks the live version of this question; not duplicated here.
+2. **Is the crate-wide-only granularity of runtime switching (§ Design Philosophy, § Custom runtime implementations) sufficient, or is a finer-grained, scoped mechanism wanted** — e.g. two different runtimes coexisting in one compiled program? The type-alias mechanism specified here needs nothing beyond ordinary type inference and works today; a scoped alternative would most plausibly be expressed via context parameters (RFC-0113, `1-under-review`) threading a runtime value implicitly through a call tree the way an allocator already is — genuinely new machinery with a real prerequisite, not a refinement of what's here. No concrete use case has been named that the crate-wide mechanism can't already serve by splitting into separate crates/modules; this stays open rather than assumed necessary.
+3. **Whether the scheduler should ever be expressible as an effect handler** (the OCaml 5 model: `spawn`/channel operations as effect operations with a default handler, swappable by installing a different one) rather than a value or a type alias. This RFC predates the algebraic-effects exploration entirely (`algebraic-effects.md`, metel-docs-internal) and takes no position on it. `algebraic-effects.md` §9 already found that performing an effect inside a spawned fiber composes correctly through the ordinary sendability rules with no special-casing — effects and fibers are already independently sound — so this question is about a possible *additional*, deeper unification, not a prerequisite for anything specified here.
+4. Fiber names and observability — deferred to a tooling RFC. No syntax change proposed here.
+5. `Sync`'s relationship to `&T`/`&var T` concurrent access beyond "references are unsafe by default" is not fully worked out — RFC-0067's own liveness/NLL interaction (still under review) likely bears on this and hasn't been checked against it.
 
 ---
 
 ## References
 
 - Language spec: `docs/public/spec.md`
-- RFC-0043: regular pointers (implemented) — `*T`/`*mut T` syntax settled; `Send` status resolved by this RFC
-- RFC-0044: explicit receiver semantics (implemented)
-- RFC-0002: aspect bound syntax — `Send` as marker aspect; fiber capture bounds
-- RFC-0028: memory and linear types — `Fiber<T>` linearity; linear types and `Send`
-- RFC-0025: region allocation — `Region` is not `Send`
-- RFC-0026: unsafe blocks — `unsafe_send` bypasses `Send` for lock-free stdlib internals
-- Go specification: goroutines and select statements
-- Go memory model
+- RFC-0063 (Allocator Handles) — `@a T` sendability rule (§7), replacing this RFC's
+  original independent pointer-`Send` derivation.
+- RFC-0067 (Lifetime Anchors, under review) / RFC-0067a (Reference Types, implemented) —
+  `&T`/`&var T`, replacing the `*T`/`*mut T` syntax this RFC originally specified
+  against (RFC-0043, now superseded).
+- RFC-0074 (Shared Ownership, draft) — `Arc<T>`'s actual specification; this RFC no
+  longer independently re-derives it.
+- `reports/substructural-types/structured-concurrency.md` (metel-docs-internal) — the
+  actively-maintained continuation of this RFC's fiber/channel model: the `||`
+  combinator this RFC never mentions (added and later retracted after this RFC was
+  written), the live join-guarantee question, and the runtime-configurability
+  discussion Open Question 2 above summarizes.
+- `reports/substructural-types/linear-types.md` (metel-docs-internal) — where
+  linearity now lives, since RFC-0028 (this RFC's original dependency) is refused.
+- RFC-0044 (Explicit Receiver Semantics, implemented).
+- RFC-0026 (Unsafe Blocks, draft, unimplemented) — `unsafe`-only OS-primitive access.
+- Go specification: goroutines and select statements.
+- Go memory model.
 
 ---
 
 ## Decision
 
-**Outcome:** Accepted
+**Outcome:** *(pending — draft, not settled; see Open Questions)*
 
-Fiber/channel model, `Send`/`Sync` marker aspects, `Arc<T>`, `Mutex<T>`, and `select { }` are all settled. Implementation deferred until after the core language is stable.
+The fiber/channel model, aspect-based desugaring, `select { }`, and the crate-wide
+pluggable-runtime mechanism remain the leading design and need no further syntax work
+to stay consistent with the rest of the corpus as of this correction. What's actually
+unresolved is narrower than the shape of the API: which mechanism enforces the
+must-join guarantee (Open Question 1), and whether finer-grained runtime configurability
+is ever wanted (Open Question 2). Implementation was deferred pending core-language
+stability when this was written and that recommendation still holds.

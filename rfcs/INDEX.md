@@ -732,8 +732,19 @@ implementation).
   function pointers have a working one (RFC-0061 §7.2). Interacts with **RFC-0071**
   (Ownership and Move Semantics, affine-by-default foundation — see Aspect system core,
   below) more than with RFC-0134 itself.
-- **RFC-0003** *(draft)* — Concurrency Model — fiber handles, channels, `select`,
-  `Send`.
+- **RFC-0003** *(draft, corrected 2026-08-24)* — Concurrency Model — fiber handles,
+  channels, `select`, `Send`/`Sync`, aspect-based desugaring (`Spawnable`/`Sendable`/
+  `Receivable`/`Selectable`), and a crate-wide pluggable-runtime mechanism (swap the
+  scheduler via a type alias at the crate root, resolved by ordinary type inference).
+  Corrected 2026-08-24: its own "Decision" section claimed "Accepted" despite sitting in
+  `0-draft/`; several of its dependencies (RFC-0001, RFC-0002, RFC-0025, RFC-0028,
+  RFC-0043) are now superseded or refused, including the one it leaned on for "the
+  linearity checker enforces fiber handles must be joined or detached" (RFC-0028,
+  refused, no replacement RFC exists). Pointer/reference syntax updated throughout
+  (`*T`/`*mut T` → `&T`/`&var T`); the `Arc<T>` section shrunk to point at RFC-0074
+  instead of independently re-deriving it. See `reports/substructural-types/
+  structured-concurrency.md` (metel-docs-internal) for the actively-maintained
+  continuation of this RFC's open questions (the join-guarantee mechanism specifically).
 
 ## Small, mostly standalone syntax/ergonomics items
 
