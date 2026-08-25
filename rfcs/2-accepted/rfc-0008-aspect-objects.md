@@ -4,10 +4,28 @@ title: "Aspect Objects"
 date: '2026-07-01'
 ---
 
-> **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence). Specifies
-> `dyn Aspect` as the mechanism for runtime polymorphism: values whose concrete type
-> is erased at compile time and dispatch happens through a vtable. Complements
-> RFC-0037 (return-position `impl Aspect`), which provides compile-time opaque types.
+> **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence, `4-implemented`).
+> Specifies `dyn Aspect` as the mechanism for runtime polymorphism: values whose
+> concrete type is erased at compile time and dispatch happens through a vtable.
+> Complements RFC-0037 (return-position `impl Aspect`), which provides compile-time
+> opaque types.
+
+> **Staged, 2026-08-25 — see §10.** This RFC's design was written entirely in terms of
+> RFC-0063's `@[r]` allocator-handle syntax, which was `2-accepted` at the time and is
+> still not integrated or implemented today — checked directly against
+> `metel-frontend/src/grammar.pest` on `develop`: neither `@[` allocator-handle syntax
+> nor the `dyn` keyword itself exists in the grammar yet. That made the whole RFC read
+> as blocked on RFC-0063. It isn't, for everything except the explicitly
+> allocator-tagged form: the interpreter already has a working implicit heap
+> (`Rc<RefCell<Value>>`, used today by `Array`/`Reference`/`MutReference` with no
+> `@[r]` annotation anywhere) and an existing fat-pointer pattern (`FieldReference`,
+> RFC-0045) that the vtable representation below can reuse directly. §10 splits this
+> RFC into **Stage A** (`dyn Aspect` against the interpreter's existing implicit
+> allocation — no RFC-0063 dependency, implementable now) and **Stage B** (the
+> explicit `@[r] dyn Aspect` region-tagged form specified throughout §1-§9 below —
+> genuinely blocked on RFC-0063). Nothing in §1-§9's *design* changes; §10 is a
+> staging plan for delivering it, proposed and **not yet reviewed** — see Unresolved
+> Question 5.
 
 ## Summary
 
@@ -30,6 +48,9 @@ concrete type varies at runtime (runtime dispatch, allocation required).
 ---
 
 ## 1. Syntax
+
+*As specified below, this is Stage B syntax — see §10. Stage A drops the `@[r]`
+prefix entirely and is otherwise identical; §10.1 gives Stage A's own examples.*
 
 An aspect object type is written `dyn Aspect`:
 
@@ -75,6 +96,13 @@ The vtable contains:
 Fat pointers have the size of two pointers. They are not `Copy` — they follow the
 ownership rules of their inner type.
 
+**Stage A, added 2026-08-25:** the data pointer's target isn't specifically an RFC-0063
+region — it's wherever the interpreter already places a value that has to outlive its
+stack frame or be referenced heterogeneously, which today means `Rc<RefCell<Value>>`
+(`metel-interpreter/src/evaluator/mod.rs`, already used by `Array`/`Reference`/
+`MutReference`). Stage A's vtable pointer is the same compiler-generated table either
+way; only what the data pointer targets differs between stages. See §10.2.
+
 ---
 
 ## 3. Object Safety
@@ -117,6 +145,11 @@ Standard library object-safety:
 - `Deref` — **not** object-safe (associated type `Target` in method signature)
 - `Send`, `Sync` — marker aspects with no methods; object-safe but rarely used as `dyn`
 
+**Stage A, added 2026-08-25:** object safety is a purely static, per-aspect check —
+it has no dependency on allocation strategy at all, so this section is identical in
+both stages without modification. It's the one piece of this RFC that was never
+actually gated on RFC-0063 in the first place.
+
 ---
 
 ## 4. Method Dispatch
@@ -140,6 +173,12 @@ Vtable entries are function pointers; dispatch is an indirect call through the v
 pointer in the fat pointer. This is the same cost as a virtual call in C++ or a
 method call through an interface in Go.
 
+**Stage A, added 2026-08-25:** vtable generation and the dispatch call itself don't
+reference the data pointer's target at all — a vtable is static, compiler-generated
+data, and dispatch is "read the vtable pointer, index into it, call." Nothing here
+distinguishes Stage A from Stage B; the two stages differ only in §2 (what the data
+pointer points at) and §6 (how the coercion writes it there).
+
 ---
 
 ## 5. Ownership and Drop
@@ -154,6 +193,15 @@ compiler generates these entries for every coercion site.
 
 `&dyn Aspect` and `&var dyn Aspect` are borrowed fat pointers. They do not own the
 value and do not drop it.
+
+**Stage A, added 2026-08-25:** ownership and drop timing for an owned Stage-A
+`dyn Aspect` follow whatever RFC-0071 already governs for an ordinary owned struct
+value today (`3-integrated`, move-check implemented behind `--move-check`) — moved,
+not `Copy`, dropped when the owning binding goes out of scope. Step 2 above becomes
+"released however the interpreter already reclaims an `Rc<RefCell<Value>>` with no
+remaining owners" instead of "deallocated in region `r`," since there is no region to
+deallocate from yet. Nothing about *when* drop fires changes between stages, only
+what the deallocation step at the end of it does.
 
 ---
 
@@ -176,6 +224,12 @@ let x: &dyn Display = &n;
 The coercion is implicit when the target type is `dyn Aspect` and the source type
 implements the aspect. No explicit cast is required.
 
+**Stage A, added 2026-08-25:** the reference-coercion example above already needs
+nothing from RFC-0063 — it's Stage A syntax as written, today. The owned-coercion
+examples become, in Stage A, `let x: dyn Display = 42;` / `let y: dyn Display =
+"hello";` — same implicit-coercion rule, just without an allocator tag to write. See
+§10.1 for the full syntax table.
+
 ---
 
 ## 7. Heterogeneous Collections
@@ -195,6 +249,11 @@ for shape in shapes {
 
 Each element of the list is a fat pointer to a different concrete type. The list is
 homogeneous at the pointer level (`@[r] dyn Shape`) and heterogeneous at the value level.
+
+**Stage A, added 2026-08-25:** `List<dyn Shape>` (no allocator tag) is the Stage A
+form — `List<T>` itself already works today with no `@[r]` dependency of its own, so
+this section's motivating example is, if anything, the *easiest* one to de-risk from
+RFC-0063 rather than the hardest.
 
 ---
 
@@ -234,6 +293,107 @@ accepting `&dyn Aspect` has a single compiled form that dispatches at runtime.
    and how they interact with separate compilation, is an implementation question
    deferred to the compiler RFC.
 
+5. **Added 2026-08-25 — does the project adopt the Stage A / Stage B split in §10,
+   and is Stage A's representation choice (§2, §5) the right one? Not yet reviewed.**
+   §10 proposes implementing `dyn Aspect` now, against the interpreter's existing
+   implicit heap, deferring only the explicit `@[r]`-tagged form to whenever RFC-0063
+   lands — rather than waiting for RFC-0063 to build the whole RFC in one shot, which
+   is what this RFC's text implied by construction (every example uses `@[r]`) without
+   ever stating it as a decision. Recommendation: adopt it — nothing in §1-§9's actual
+   *design* (object safety, vtable shape, dispatch, drop timing) changes, and Stage A
+   is a strict subset of what Stage B needs anyway, so there is no rework risk, only a
+   sequencing choice. But this hasn't had an adversarial pass the way this corpus's
+   other staging/reversion decisions have (see RFC-0137, RFC-0122) — filed as an open
+   question rather than silently treated as already settled.
+
+---
+
+## 10. Implementation staging (added 2026-08-25)
+
+*Proposed, not yet reviewed — see Unresolved Question 5. Nothing below changes §1-§9's
+design; it separates what needs RFC-0063 from what doesn't, so the parts that don't can
+be implemented without waiting.*
+
+This RFC was written 2026-07-01 entirely in terms of RFC-0063's `@[r]` allocator-handle
+syntax, because RFC-0063 was already `2-accepted` at the time and was the available
+allocation vocabulary to write examples against. Checked directly, as of 2026-08-25:
+RFC-0063 (and the rest of the allocator cluster — RFC-0065, RFC-0066, RFC-0068,
+RFC-0073, RFC-0077) is still `2-accepted`, not integrated or implemented; neither `@[`
+allocator-handle syntax nor the `dyn` keyword appears in `metel-frontend/src/grammar.pest`
+on `develop`; and there is no `vtable` machinery anywhere in `metel-core` today
+(`grep -r vtable` across the whole repository returns nothing). Taken at face value,
+that reads as this entire RFC being blocked on RFC-0063.
+
+**It isn't**, for everything except the explicitly region-tagged form. The interpreter's
+actual `Value` representation (`metel-interpreter/src/evaluator/mod.rs`) already has
+what §2's fat pointer needs, independent of RFC-0063:
+
+- **A working implicit heap.** `Array(Rc<RefCell<Vec<Value>>>)`, `Reference(Rc<RefCell<Value>>)`,
+  `MutReference(Rc<RefCell<Value>>)` — ordinary values are already heap-indirected via
+  `Rc<RefCell<_>>` today, with no `@[r]` annotation anywhere in the surface syntax that
+  produces them. Struct and List values don't wait on RFC-0063; they already use this.
+- **An existing fat-pointer pattern**, for an unrelated purpose: `FieldReference { root:
+  Rc<RefCell<Value>>, path: Vec<PathSegment> }` (RFC-0045) is already a root-pointer-plus-
+  metadata pair the runtime builds values around — the general shape §2 needs (data
+  pointer + vtable pointer) is not new to this codebase.
+- **Dispatch-key infrastructure already wired in.** `Struct`/`Enum` already carry
+  `type_id: Option<SymbolId>` for method resolution, and RFC-0060 (which determines
+  which `(T, Aspect)` pairs get a vtable — §4 above) is `4-implemented`.
+- **Ownership/move semantics for ordinary heap values already partially work.**
+  RFC-0071 is `3-integrated`, move-check implemented (behind `--move-check`) —
+  independent of RFC-0063, which is specifically about *explicit, swappable allocator
+  strategy* (bump vs. GC vs. custom arena), not a prerequisite for "owned value, moved
+  not copied, dropped when it goes out of scope" to exist at all.
+- **The borrowed forms need nothing further.** `&dyn Aspect`/`&var dyn Aspect` are
+  ordinary references to an already-existing value; RFC-0067a (references) is
+  `4-implemented`.
+
+### 10.1 Stage A syntax
+
+Identical to §1, minus the allocator tag:
+
+```metel
+dyn Display
+dyn Callable<i64, i64>
+dyn Region
+
+let shape: dyn Shape = Circle { radius = 5.0 };     // owned, implicit placement
+let shape2: dyn Shape = Rectangle { w = 3.0, h = 4.0 };
+
+let n: i64 = 42;
+let x: &dyn Display = &n;                            // borrowed — same as Stage B
+
+let shapes: List<dyn Shape> = List::new();
+shapes.push(Circle { radius = 5.0 });
+shapes.push(Rectangle { w = 3.0, h = 4.0 });
+```
+
+Stage B adds `@[r]` back in front of every owned form above, once RFC-0063 exists to
+give `r` something to name — additive syntax, not a breaking change to Stage A code,
+the same way RFC-0063 is meant to let any implicitly-allocated value in the language
+opt into explicit allocator control, not something specific to `dyn Aspect`.
+
+### 10.2 What actually differs between the stages
+
+Only two things, both confined to representation, neither touching §1-§9's design:
+
+| | Stage A | Stage B |
+|---|---|---|
+| Data pointer target (§2) | `Rc<RefCell<Value>>`, the interpreter's existing implicit heap | A value allocated in an explicit region `r` (RFC-0063) |
+| Deallocation on drop (§5) | However the interpreter already reclaims an `Rc<RefCell<Value>>` with no remaining owners | Deallocated from region `r` |
+
+Object safety (§3), vtable generation and dispatch (§4), the coercion rule (§6), and
+heterogeneous collections (§7) are unchanged by which stage is active — none of them
+reference the data pointer's target at all.
+
+### 10.3 Sequencing
+
+Stage A is a strict subset of what Stage B needs: every piece of machinery Stage A
+requires (object safety checking, vtable generation, the coercion rule, fat-pointer
+dispatch) is also required by Stage B, unchanged. Building Stage A first is not
+throwaway work gated on a later rewrite — it's the same implementation, minus the
+allocator-tag parsing and region-target wiring that RFC-0063 would add on top.
+
 ---
 
 ## References
@@ -241,8 +401,16 @@ accepting `&dyn Aspect` has a single compiled form that dispatches at runtime.
 - RFC-0035 — parameter-position `impl Aspect`; static dispatch counterpart.
 - RFC-0037 (Return-Position impl Aspect) — return-type static dispatch; use `dyn`
   instead when different concrete types may be returned at runtime.
-- RFC-0060 (Aspect Impl Coherence) — coherence rules determine which `(T, Aspect)`
-  pairs have vtables generated.
-- RFC-0071 (Ownership and Move Semantics) — drop and move semantics of fat pointers.
-- RFC-0063 (Region Handles) — region allocation used to store concrete values behind
-  `@[r] dyn Aspect`.
+- RFC-0060 (Aspect Impl Coherence, `4-implemented`) — coherence rules determine which
+  `(T, Aspect)` pairs have vtables generated.
+- RFC-0071 (Ownership and Move Semantics, `3-integrated`, move-check implemented behind
+  `--move-check`) — drop and move semantics of fat pointers; Stage A's owned form rides
+  on this directly, independent of RFC-0063.
+- RFC-0063 (Allocator Handles, `2-accepted`, not integrated or implemented) — region
+  allocation used to store concrete values behind `@[r] dyn Aspect`. **As of 2026-08-25
+  (§10): a Stage-B-only dependency, not a blocker on this RFC as a whole.**
+- RFC-0067a (References, `4-implemented`) — the borrowed forms (`&dyn Aspect`,
+  `&var dyn Aspect`) need nothing beyond this.
+- RFC-0045 (Mutable Address-Of for Lvalue Paths, `4-implemented`) — the existing
+  fat-pointer pattern (`FieldReference`) §10 points to as precedent for §2's
+  representation.
