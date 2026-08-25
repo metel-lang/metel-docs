@@ -2,7 +2,7 @@
 id: rfc-0137
 title: "Nominal Types as Branded Rows"
 date: '2026-08-24'
-status: under-review
+status: accepted
 target:
 updated: '2026-08-25'
 tracking: 'https://github.com/metel-lang/metel-core/issues/827'
@@ -48,6 +48,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/827'
 > field of an ordinary struct earns it a named record's structural-matching eligibility.
 > It doesn't, by design — the example makes the divergence concrete rather than leaving
 > §3's prose claim untested against a reader's own attempt to break it.
+
+> **Status — accepted (2026-08-25).** All four Open Questions closed or determined not to block acceptance; design settled.
 
 ## Summary
 
@@ -265,11 +267,20 @@ under the assumption that no representation exists for "which fields remain" on 
 rewriting at the source when this RFC is accepted, not carve-out language layered on top
 of it.
 
-One genuine piece of remaining complexity: if a destructor calls a helper method, the
-required field set must compose *transitively* across that call — real,
-call-graph-level work, closer to effect inference than ordinary type-checking. It still
-bottoms out in one fixed set per `Drop` impl; it is harder to *compute*, not a different
-kind of mechanism, and is recorded as an open question rather than solved here.
+**If a destructor calls a helper method, the required field set composes transitively
+(resolved 2026-08-25 — see Open Questions #2 for the full reasoning):** the required
+set for a `Drop` impl is the union of the fields the destructor body reads directly and,
+recursively, the required sets of every `self`-method it calls. This is a fixed point
+over one type's own finite method set — the recursion follows only calls to `self`'s own
+methods (a call passing some other struct's value reasons against *that* struct's own,
+independently-computed set, not this one's), and ordinary visited-set tracking during
+the union handles mutual recursion between two of the type's own helpers the same way
+any fixed-point computation over a finite graph does. Real call-graph-level work, closer
+to effect inference than ordinary type-checking, and harder to *compute* than the
+direct-read case — but no longer a different, undesigned kind of mechanism, and it still
+bottoms out in exactly one fixed, concrete set per `Drop` impl, checked the same way §5's
+opening paragraph already describes. Dynamic dispatch through `dyn Aspect` is out of
+scope for this composition, same as it is for the rest of this RFC (§8).
 
 ## 6. Widening, and the constructor-invariant risk
 
@@ -367,6 +378,13 @@ need a corresponding revision if this RFC is accepted:
   being visible.
 - **RFC-0071 (Ownership and Move Semantics), §7.** Superseded, not narrowed by an
   exception — see §5 above.
+- **RFC-0119 (Record Conversions), added 2026-08-25 (Open Questions #3).** `.to_record()`
+  is currently described against "the record" for a struct, written before residual
+  types existed to make that ambiguous between the type's full declared row and self's
+  *current* row — under RFC-0071 alone those were always the same value. Under this RFC
+  they diverge; the answer is self's current row, consistent with §1 there's own framing
+  of `to_record()` as "reading fields out." RFC-0119 needs a short clarifying addition
+  stating this — not a new capability, a distinction its text never had to draw before.
 
 This RFC depends on RFC-0116 (the record type-former narrowing produces values of) and,
 for widening to be considered safe, on RFC-0114 (Constructor Aspect) landing first —
@@ -391,25 +409,78 @@ see §6.
 
 ## Open Questions
 
-1. **Does the zero-runtime-cost property actually hold once RFC-0071 is built, not just
-   as stated design?** §8's claim for narrowing and `Drop` dispatch rests on RFC-0071's
+*Resolved 2026-08-25, working toward acceptance. `PROCESS.md`'s bar for `2-accepted` is
+"no more open questions block it" — each item below is closed, or its reason for not
+blocking acceptance is stated, rather than left open by default. Original text kept,
+resolution appended, per this corpus's append-only convention for exactly this
+situation.*
+
+1. ~~Does the zero-runtime-cost property actually hold once RFC-0071 is built, not just
+   as stated design? §8's claim for narrowing and `Drop` dispatch rests on RFC-0071's
    own stated design (static bookkeeping) rather than on anything currently
-   implemented. Cannot be validated further until RFC-0071 exists to check against.
-2. **Transitivity of `Drop`'s required-field-set through helper-method calls.** §5's
+   implemented. Cannot be validated further until RFC-0071 exists to check against.~~
+   **Does not block acceptance, 2026-08-25.** This is a verification question, not a
+   design one — the design itself (assume RFC-0071's own stated static-bookkeeping
+   property) is fully specified and not in doubt; what's pending is empirical
+   confirmation once RFC-0071 actually exists to check against. That's squarely
+   `4-implemented` territory ("Built against the integrated spec... spec and
+   interpreter agree"), the same gate every other RFC resting on an unimplemented
+   dependency's stated design already goes through — not a special case unique to this
+   RFC's own acceptance.
+2. ~~Transitivity of `Drop`'s required-field-set through helper-method calls. §5's
    fixed-set analysis is exact for a destructor body that reads fields directly; a
    destructor calling a helper method needs the required set to compose across that
-   call, which is real, call-graph-level work not designed here.
-3. **Does `.to_record()` (RFC-0119) behave correctly on an already-narrowed residual?**
+   call, which is real, call-graph-level work not designed here.~~
+   **Resolved 2026-08-25.** The required set for a `Drop` impl is the union of (a)
+   fields the destructor body reads directly, and (b), recursively, the required sets
+   of every `self`-method it calls. This terminates: it is a fixed point over one
+   type's own finite method set (a struct has finitely many methods, and the recursion
+   only ever follows calls to `self`'s own methods, not into other types' — a call
+   receiving some other struct's value is a call against *that* struct's own,
+   separately-computed required set, not part of this one's fixed point). Ordinary
+   mutual recursion between two of the type's own helper methods still terminates the
+   same way any fixed-point computation over a finite graph does — visited-set
+   tracking during the union, not a new kind of analysis. Dynamic dispatch through
+   `dyn Aspect` remains outside this (already flagged separately in §8, deferred with
+   RFC-0008 itself). This is harder to *compute* than the direct-read case — real
+   call-graph work, still not ordinary type-checking — but it is no longer undesigned;
+   §5 is updated to state it.
+3. ~~Does `.to_record()` (RFC-0119) behave correctly on an already-narrowed residual?
    `handle_narrowed.to_record()`, after some field was already moved out, would produce
    an even-smaller anonymous record than the type's full declared row. Plausible, not
-   examined against RFC-0119's own text anywhere.
-4. **Coherence priority when a value could match both a brand-keyed impl and a
-   row-keyed blanket impl.** Under brand-scoped visibility (§3), this can only arise for
-   a struct that has opted into RFC-0120's `record` kind — a plain struct's row is never
-   visible to a row-conditional impl at all — but the priority rule itself
-   (more-specific-wins is the obvious default) is not specified anywhere. Same question
-   RFC-0090 §9 and RFC-0118's own Open Question 4 already carry, seen from a third
-   angle.
+   examined against RFC-0119's own text anywhere.~~
+   **Resolved 2026-08-25, checked directly against RFC-0119.** RFC-0119 §§1–4 describe
+   `to_record()` as producing *the* record for a `#derive(ToRecord)` struct, written
+   before residual types existed to make "the record" ambiguous between "the type's
+   full declared row" and "self's current row" — under RFC-0071 alone those were
+   always the same value, so the text never had to distinguish them. Under this RFC
+   they diverge, and the consistent answer is **self's current row**: `.to_record()`
+   is defined per §1 there as "reading fields out," and reading out exactly the fields
+   a residual currently has is what that operation already means for a whole value —
+   narrowing doesn't add a new capability to `to_record()`, it just means "current
+   row" and "full declared row" are no longer synonyms it could get away with
+   conflating silently. `handle_narrowed.to_record()` therefore produces the smaller
+   record matching `handle_narrowed`'s own row, consistent with §3's "no implicit
+   coercion" stance (nothing is silently widened or narrowed further by the call
+   itself — it reflects exactly the row already there). RFC-0119 needs a small
+   clarifying addition stating this explicitly, since its current text has no
+   vocabulary for "current row" distinct from "declared row" at all; tracked as part
+   of this RFC's sibling-RFC updates (see "Relationship to existing RFCs").
+4. ~~Coherence priority when a value could match both a brand-keyed impl and a
+   row-keyed blanket impl. Under brand-scoped visibility (§3), this can only arise for
+   a struct that has opted into RFC-0120's `record` kind — a plain struct's row is
+   never visible to a row-conditional impl at all — but the priority rule itself
+   (more-specific-wins is the obvious default) is not specified anywhere. Same
+   question RFC-0090 §9 and RFC-0118's own Open Question 4 already carry, seen from a
+   third angle.~~
+   **Does not block acceptance, 2026-08-25.** This RFC does not introduce a new
+   instance of the question or make an existing one worse — it is the same
+   corpus-wide open item RFC-0090 §9 and RFC-0118's own Open Question 4 already carry,
+   and RFC-0118 is `4-implemented` today with this exact question still open,
+   establishing direct precedent that it doesn't gate acceptance or implementation
+   elsewhere in the corpus. No reason for this RFC to be held to a stricter bar than
+   RFC-0118 already was for the identical question. Stays open, tracked where it
+   already was tracked, not duplicated into a fifth place.
 
 ---
 
@@ -431,7 +502,8 @@ see §6.
   nominal struct does not satisfy a row bound, the same principle §3 here extends to a
   struct's own projected type
 - RFC-0119 (Record Conversions, under review) — tier 2, `#derive(ToRecord, FromRecord)`; §3
-  above confirms this RFC leaves that tier's brand-stripping behavior unchanged
+  above confirms this RFC leaves that tier's brand-stripping behavior unchanged; needs a
+  small clarifying addition per Open Questions #3 / "Relationship to existing RFCs"
 - RFC-0120 (Named Records, under review) — tier 3, the opt-in `record` kind this RFC's §3
   reconciles with rather than replaces
 - RFC-0071 (Ownership and Move Semantics, `3-integrated`, partial-move tracking not yet
@@ -446,5 +518,11 @@ see §6.
 
 ## Decision
 
-**Outcome:** *(pending)*
-**Target:** *(set when accepted)*
+**Outcome:** Accepted (2026-08-25). Every `struct` is `(brand, row)`; narrowing is a
+type-level consequence of partial move (RFC-0071) and of explicit projection
+(RFC-0116 §4); brand eligibility for structural matching stays exactly as opt-in as
+RFC-0120's three-tier model already has it, unaffected by row content at any width.
+All four Open Questions closed or determined not to block acceptance (see that
+section). RFC-0117, RFC-0119, RFC-0120, and RFC-0071 §7 each need the corresponding
+revision named in "Relationship to existing RFCs."
+**Target:** v0.13.0 (tracked by metel-core#827)
