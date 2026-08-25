@@ -261,7 +261,7 @@ above it are.
   allocator). Also carries RFC-0090 §6's declined "records as the universal foundation"
   reframing. **Depends on nothing** — the only piece of the cluster buildable today, and
   the reason the split is six-way.
-- **RFC-0137** *(accepted 2026-08-25)* — Nominal Types as Branded Rows — formalizes
+- **RFC-0137** *(under review — reverted from accepted 2026-08-25, same day)* — Nominal Types as Branded Rows — formalizes
   `reports/substructural-types/nominal-types-as-branded-rows.md`'s central thesis, left
   deliberately unfolded by that document's own Open Question 7 so it would not gate this
   cluster's nearer review. Proposes that **every** `struct`, not only RFC-0120's opt-in
@@ -287,7 +287,8 @@ above it are.
   RFC-0116 and on **RFC-0071** (`3-integrated`, 0% implemented), which is why it is separate
   from RFC-0116 rather than bundled with it. **Its own §3 nominal-type exclusion is now
   addressed by RFC-0137**, which should be folded in as its supplying dependency once
-  reviewed.
+  RFC-0137 is (re-)accepted — reverted to under-review 2026-08-25 the same day it was
+  accepted, pending its own Open Questions 5-6.
 - **RFC-0118** *(implemented in v0.12.0, was #577)* — Row Bounds — `<record T: { x: f64, .. }>` and `!{ token }`,
   replacing the `HasField`/`Lacks` family that never parsed. The trailing `..` is an
   anonymous row variable and is what makes a bound *open*; without it the bound is closed,
@@ -307,7 +308,9 @@ above it are.
   intrinsically; the tier table, the non-breaking upgrade path, and RFC-0090 §9's
   identity-tag reuse. Depends on RFC-0116, RFC-0119. **Its own Open Question 5** (does a
   narrowed named record keep its brand) **is answered by RFC-0137** for the general case
-  — every struct's brand is preserved through narrowing, not only tier-3's.
+  — every struct's brand is preserved through narrowing, not only tier-3's — pending
+  RFC-0137's own re-acceptance (reverted to under-review 2026-08-25 the same day it was
+  accepted).
 - **RFC-0121** *(under review)* — Open Rows — `<row R>` / `..R`, row algebra (extension is a
   literal, removal is a where-clause decomposition), row-conditional typestate, and the
   width-subtyping-versus-ownership problem. **The expensive half**, and the only piece
