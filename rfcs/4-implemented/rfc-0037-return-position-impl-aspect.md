@@ -151,7 +151,7 @@ A function returning `impl Aspect` must return the same concrete type on all cod
 paths. If the function needs to return different types based on runtime conditions,
 it must either:
 - Use a concrete enum that wraps both possibilities and implements the aspect.
-- Use an aspect object (`@[r] dyn Aspect`, RFC-0008) for true runtime polymorphism.
+- Use an aspect object (`dyn Aspect`, RFC-0008; `@[r] dyn Aspect` once RFC-0141 lands) for true runtime polymorphism.
 
 ### 4.2 Opaque type is not nameable
 
