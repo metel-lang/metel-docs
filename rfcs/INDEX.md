@@ -765,6 +765,22 @@ implementation).
   Tracked by metel-core#832, milestoned v0.17.0 (no clear near-term slot in the
   strategy document's current priorities, not a claim about v0.17.0's own planned
   scope).
+- **RFC-0140** *(under review, opened 2026-08-25)* — Algebraic Effects — `effect`
+  declarations desugar to aspects, `handle` desugars to an aspect impl wired through the
+  call stack as an implicit bracket parameter; the suspended computation is a first-class
+  `@Heap Continuation<V, R>`, affine and one-shot by ordinary ownership rules with no
+  effect-specific mechanism. Formalizes `reports/substructural-types/algebraic-
+  effects.md` (metel-docs-internal, `status: active`). Most of the safety story falls
+  out of RFC-0071 (affine ownership/`Drop`)/RFC-0063 (allocator-tag sendability) applied
+  to one new value type; the real tensions are RFC-0067's `&r var T` borrows captured in
+  a continuation (restricts async handlers to synchronous resumption), a new
+  linear-value-at-effect-site check `linear-types.md` doesn't have yet, and RFC-0010's
+  `${...}` full-expression scope making string interpolation an undeclared
+  effect-performance site. Carries two pre-registered `2-accepted` blockers from the
+  source report's own header: Koka's `fun`/`ctl`/`final ctl` split (this design currently
+  allocates a continuation for every operation uniformly) and the interpolation question
+  above. Tracked by metel-core#834, milestoned v0.18.0 (new milestone, created
+  specifically for this RFC — the furthest-out existing milestone was v0.17.0).
 
 ## Small, mostly standalone syntax/ergonomics items
 
