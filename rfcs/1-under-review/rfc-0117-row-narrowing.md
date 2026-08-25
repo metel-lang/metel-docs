@@ -84,13 +84,17 @@ accepts is a genuinely different capability and belongs to RFC-0121.
   move — as opposed to a record narrowing to a record — depends on nominal types carrying
   rows at all, which is RFC-0120's question and, in its strong form, an open exploration
   (`reports/substructural-types/nominal-types-as-branded-rows.md`).~~ **Dependency
-  discharged, 2026-08-25 — RFC-0137 (Nominal Types as Branded Rows, accepted) answers
-  this directly:** every `struct` carries `(brand, row)` unconditionally, and narrows to
-  `Handle.{ fd }` on partial move by exactly this RFC's own mechanism, at the same
-  brand. This RFC's own scope should now be understood as extending to nominal
+  discharged, 2026-08-25 — RFC-0137 (Nominal Types as Branded Rows, then accepted)
+  answers this directly:** every `struct` carries `(brand, row)` unconditionally, and
+  narrows to `Handle.{ fd }` on partial move by exactly this RFC's own mechanism, at the
+  same brand. This RFC's own scope should now be understood as extending to nominal
   narrowing via RFC-0137 as the supplying dependency, not excluding it — full
   nominal-type worked examples in this RFC's own "Proposed Design" are a real follow-up
   this correction does not itself perform, left for this RFC's own review to take up.
+  **Caveat, 2026-08-25 same day: RFC-0137 was reverted to `1-under-review` the same
+  day it was accepted** (its own Open Questions 5-6, opened on reversion). The design
+  reasoning above is unchanged, but "discharged" overstates it while RFC-0137 itself is
+  not accepted — treat this dependency as pending RFC-0137's re-acceptance, not closed.
 - **Borrowed narrowing.** Narrowing a `&var` view rather than an owned value is
   RFC-0119's by-reference mode and RFC-0109's views.
 - **Per-field multiplicity.** Deliberately out of scope for the whole records cluster
@@ -144,9 +148,10 @@ accepts is a genuinely different capability and belongs to RFC-0121.
   completing a row fires `construct` rather than a bare write
 - `reports/substructural-types/nominal-types-as-branded-rows.md` §4 — the `Drop`-dispatch
   leak that arises when narrowing is extended to nominal types
-- RFC-0137 (Nominal Types as Branded Rows, `2-accepted`) — supplies nominal-type
-  narrowing directly, discharging §3's own stated dependency; resolves Open Questions
-  1 and 2 above
+- RFC-0137 (Nominal Types as Branded Rows, `1-under-review` — reverted from
+  `2-accepted` 2026-08-25, same day) — supplies nominal-type narrowing directly once
+  (re-)accepted; §3's own stated dependency is pending on that, not yet discharged;
+  would resolve Open Questions 1 and 2 above
 - `public/rfcs/0-draft/rfc-0089-linear-types.md`,
   `public/rfcs/0-draft/rfc-0091-linear-records.md` — per-field multiplicity, deliberately
   deferred until records are implemented
