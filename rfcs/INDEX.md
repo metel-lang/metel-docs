@@ -571,7 +571,20 @@ implementation).
   independence, and opacity rules are unchanged, as is the T0022 restriction
   (metel-core#240/#622, landed the same day) on where `impl Aspect` is legal at
   all. Explicitly does not touch RFC-0038's still-reserved `dyn Aspect`.
-- **RFC-0008** — Aspect Objects — `dyn Aspect`, vtable dispatch.
+- **RFC-0008** — Aspect Objects — `dyn Aspect`, vtable dispatch, object safety.
+  **Split 2026-08-25**: originally written entirely against RFC-0063's `@[r]`
+  allocator-handle syntax (`2-accepted` at draft time, still not integrated or
+  implemented) — read as blocked on RFC-0063 in its entirety, when only the
+  region-tagged owned form actually is. This RFC now covers `dyn Aspect` against the
+  interpreter's existing implicit allocation (`Rc<RefCell<Value>>`, already used by
+  `Array`/`Reference`/`MutReference` with no allocator annotation) — object safety,
+  vtable dispatch, coercion, ownership/drop, heterogeneous collections. Depends only
+  on RFC-0060 (`4-implemented`). Implementable now.
+- **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted`, split
+  from RFC-0008 2026-08-25) — the `@[r] dyn Aspect` region-tagged extension: same
+  design RFC-0008 originally specified for the owned form, now depending on RFC-0063
+  (Allocator Handles, `2-accepted`, not integrated or implemented) instead of on
+  nothing. Blocked on RFC-0063 reaching real implementation.
 - **RFC-0061** *(implemented 2026-07-14, was integrated 2026-07-13)* — Structural
   Aspect Bounds — `T[]`/tuples/function-type bounds. Depends on RFC-0060 and
   RFC-0036; both were in place before implementation. Integrated into
