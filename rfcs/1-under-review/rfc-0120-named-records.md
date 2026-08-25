@@ -58,11 +58,18 @@ type, alive only while it is held. Three things need the row to be part of the t
 
 ## 1. Three tiers, and why the boundary sits here
 
-| Tier | Declaration | Row access | Impl-eligible |
+**Restated 2026-08-25 against RFC-0137 (Nominal Types as Branded Rows, accepted).**
+RFC-0137 established that *every* struct carries `(brand, row)` unconditionally, not
+only tier 3 — so tier 1's "row access: none" cell below is no longer accurate as
+originally worded. What actually distinguishes the tiers, per RFC-0137 §3, is never
+"having a row" (universal) but *whether that row is visible to structural matching* —
+the table's substance is unchanged, only the tier-1 cell's wording:
+
+| Tier | Declaration | Row visible to structural matching | Impl-eligible |
 |---|---|---|---|
-| 1 | `struct` | none | — |
-| 2 | `struct` + `#derive(ToRecord, FromRecord)` | explicit, temporary, per-call | no |
-| 3 | `record` | intrinsic, permanent | yes |
+| 1 | `struct` | no — has a row (RFC-0137), never exposed to matching | — |
+| 2 | `struct` + `#derive(ToRecord, FromRecord)` | no — `.to_record()`'s output is brand-stripped and bare, a separate value, not the struct's own row becoming visible | no |
+| 3 | `record` | yes — intrinsic, permanent | yes |
 
 **Why not collapse 2 into 3.** Anyone wanting a single local drain/restore in one function
 would otherwise have to accept the coherence-priority and private-field-leakage exposure
@@ -170,9 +177,16 @@ answered.
    of that kind — rather than something that merely resembles it — is argued in that
    document's §8 and not proven. Note this RFC does **not** depend on RFC-0076's runtime
    checking machinery.
-5. **Does a narrowed named record keep its brand?** Presumably yes — that is the point of
+5. ~~Does a narrowed named record keep its brand? Presumably yes — that is the point of
    §1's third bullet — but the rule is unstated, and it decides whether
-   `Handle.{ fd }` is still a `Handle` for impl-resolution purposes.
+   `Handle.{ fd }` is still a `Handle` for impl-resolution purposes.~~ **Answered,
+   2026-08-25 — RFC-0137 §2/§3 (accepted).** Yes, for the general case, not just
+   tier 3: narrowing preserves the brand unconditionally for every struct, and
+   visibility to structural matching (§1's restated table above) is scoped to the
+   brand, fixed at declaration, inherited unchanged by every narrowing. A narrowed
+   `record` stays impl-eligible for exactly the same reason a narrowed plain `struct`
+   stays ineligible — the row content changed, the brand's own eligibility flag did
+   not.
 
 ---
 
@@ -189,6 +203,9 @@ answered.
   proposal §3 reuses
 - `reports/substructural-types/nominal-types-as-branded-rows.md` — the stronger thesis §4
   deliberately does not adopt, and §4's `Drop`-dispatch leak
+- RFC-0137 (Nominal Types as Branded Rows, `2-accepted`, 2026-08-25) — the exploration
+  above, formalized: adopts the stronger thesis for every struct, answers Open
+  Question 5, and is what §1's table above is now restated against
 - RFC-0076 (Brand Types) — related but **not a dependency**; see OQ4
 
 ---

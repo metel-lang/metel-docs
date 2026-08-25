@@ -154,6 +154,21 @@ structure at impl-resolution time, which no amount of explicit conversion machin
 only the record produced by `.to_record()` is, and that record is a separate owned value,
 not a window onto the struct.
 
+**Added 2026-08-25 — `.to_record()` on an already-narrowed residual (RFC-0137, accepted).**
+This RFC's text above describes `to_record()` against "the record" for a `#derive`-ing
+struct, written before RFC-0137 gave residual types a way to exist — under move-tracking
+alone (RFC-0071), a struct's declared row and its current row were always the same value,
+so nothing here ever had to distinguish them. Under RFC-0137 they can diverge: a residual
+like `Handle.{ fd }` (after `name` was moved out) has a smaller current row than `Handle`'s
+full declared one. The consistent answer, not a new capability: `to_record()` produces a
+record matching **self's current row**, whatever it presently is — this is exactly what
+"reading fields out" (this RFC's own framing above) already meant for a whole, unnarrowed
+value, and narrowing doesn't add anything `to_record()` has to newly account for beyond
+which fields happen to be there when it's called. `handle_narrowed.to_record()` therefore
+produces `{ fd: i64 }`, not `Handle`'s full `{ fd: i64, name: String }` — no implicit
+widening or further narrowing at the call, consistent with §3's own no-implicit-coercion
+stance.
+
 ## 5. The brand exception, and why it is not here
 
 RFC-0090 §8 carried an exception: a struct declared `Linear` **by fiat** (RFC-0089 §2.1 —
@@ -363,6 +378,8 @@ by-reference mode (§2).*
   brand exception, deferred until records are implemented
 - `public/rfcs/0-draft/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md`
   — deferred; works around §3's no-implicit-coercion rule for method receivers specifically
+- RFC-0137 (Nominal Types as Branded Rows, `2-accepted`) — the source of "current row"
+  as a concept distinct from "declared row," per §4's 2026-08-25 addition
 
 ---
 

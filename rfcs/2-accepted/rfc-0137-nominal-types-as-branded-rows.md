@@ -261,11 +261,19 @@ user-facing structural matching, and applies to every struct implementing `Drop`
 regardless of tier.
 
 **RFC-0071 §7's blanket rule — "a struct implementing `Drop` may not be partially
-moved" — is superseded by this section, not narrowed by an exception.** §7 was written
-under the assumption that no representation exists for "which fields remain" on a
-`Drop`-implementing struct; under this RFC one always does, so the rule as stated needs
-rewriting at the source when this RFC is accepted, not carve-out language layered on top
-of it.
+moved" — is superseded *in design* by this section, not narrowed by an exception.**
+§7 was written under the assumption that no representation exists for "which fields
+remain" on a `Drop`-implementing struct; under this RFC one always does. **This is a
+design supersession, not yet an implementation one, and the difference matters here
+specifically** (corrected 2026-08-25, see §8): RFC-0071 §7's ban is real, tested, and
+enforced today via `--move-check` (off by default, not yet the ordinary typechecking
+path) — it is not an empty gap this RFC quietly fills. Until this RFC's own row-bounded
+mechanism is actually implemented, `--move-check` continues to reject *every* partial
+move of a `Drop` type unconditionally, exactly as RFC-0071 §7 states, regardless of this
+RFC's acceptance. RFC-0071 §7's own text is annotated with a forward-looking note
+(RFC-0137, once implemented) rather than rewritten as already-superseded, since it is
+`3-integrated` — its text is expected to describe the compiler's actual current
+behavior, and today that behavior is still the unconditional ban.
 
 **If a destructor calls a helper method, the required field set composes transitively
 (resolved 2026-08-25 — see Open Questions #2 for the full reasoning):** the required
@@ -343,12 +351,28 @@ compile-time-only dispatch, cost nothing at runtime depends on move-tracking bei
 implemented as **static** bookkeeping — the row a type-checker fiction, a struct's
 memory layout never changing at runtime, a moved-out field's memory sitting inert until
 the whole value is eventually torn down by ordinary per-field drop. That is RFC-0071's
-own stated design. It is not, today, its *status*: RFC-0071 is `3-integrated` but its
-partial-move tracking is not implemented (confirmed directly — no such mechanism exists
-in the interpreter). This RFC's zero-runtime-cost claim for narrowing and `Drop`
-dispatch is therefore a design argument resting on RFC-0071's stated design, not a
-demonstrated property, and cannot be validated by inspection until RFC-0071 is actually
-built.
+own stated design.
+
+**Corrected 2026-08-25 — this section previously overstated the gap.** It claimed
+"RFC-0071's partial-move tracking is not implemented... no such mechanism exists in the
+interpreter." Checked directly against the actual codebase before accepting this RFC:
+move-check (`metel-frontend/src/move_check/`) is complete and already enforces
+RFC-0071 §7's unconditional partial-move-with-`Drop` ban today
+(`MoveViolationKind::PartialMoveOfDropType`, real tests), but **off by default** — gated
+behind `--move-check`, with a separately-tracked default-on migration planned (the
+existing corpus is written in a style affine ownership rejects). So the mechanism this
+RFC's zero-runtime-cost claim rests on is not an empty gap to be validated once
+something gets built; it is real, tested, opt-in-enforced behavior today, running the
+*old*, stricter rule §5 proposes replacing. What is actually still true, restated
+precisely: this RFC's own row-bounded replacement (§5) — residual types, per-impl
+required-field-set computation — has no implementation of its own at all, and a
+`--move-check` user hits RFC-0071 §7's unconditional ban exactly as before until that
+implementation lands and actively relaxes it. The zero-runtime-cost claim for
+*narrowing itself* still rests on RFC-0071's stated static-bookkeeping design as
+described above (unaffected by this correction — narrowing's own tracking, as opposed
+to the `Drop`-ban specifically, genuinely is unimplemented); only the `Drop`-ban half of
+this section's original claim was factually wrong, not the runtime-cost argument as a
+whole.
 
 One case is flagged rather than resolved: dynamic dispatch through `dyn Aspect`
 (RFC-0008, deferred, no consumer yet) could need an actual runtime row representation if
@@ -376,8 +400,9 @@ need a corresponding revision if this RFC is accepted:
   this RFC) but "that row being visible to structural matching" — RFC-0120 remains the
   RFC that governs the *opt-in*, this RFC supplies the *representation* it opts into
   being visible.
-- **RFC-0071 (Ownership and Move Semantics), §7.** Superseded, not narrowed by an
-  exception — see §5 above.
+- **RFC-0071 (Ownership and Move Semantics), §7.** Superseded *in design*, not narrowed
+  by an exception — see §5 above, corrected 2026-08-25: §7's ban is real, tested,
+  `--move-check`-enforced behavior today, not an implementation gap this RFC fills.
 - **RFC-0119 (Record Conversions), added 2026-08-25 (Open Questions #3).** `.to_record()`
   is currently described against "the record" for a struct, written before residual
   types existed to make that ambiguous between the type's full declared row and self's
