@@ -190,6 +190,11 @@ problem this rule says nothing about (Open Question 2 below): "more specific win
 obvious reading between two row conditions unless one is provably a subset of the other's
 satisfying set, which is not assumed here and stays open.
 
+**Owning implementation issue:** metel-core#833, filed 2026-08-25 ahead of this RFC's own
+acceptance so the decision has a tracked home rather than living only as RFC text. Gated on
+this RFC reaching `2-accepted` (tracked by #792) — there is nothing to prioritize against
+until row-conditional impls exist.
+
 ## 4. Costs, stated as costs
 
 - **Row-kinded variables and row unification** are a genuinely new piece of the
@@ -254,6 +259,7 @@ satisfying set, which is not assumed here and stays open.
    brand-keyed impl wins: brand-exact dispatch is checked first, and a match there
    short-circuits row-conditional resolution rather than conflicting with it under
    RFC-0060 §2. Row-vs-row coherence (open question 2 above) is unaffected and stays open.
+   Owning implementation issue: metel-core#833.
 
 ---
 

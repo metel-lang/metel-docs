@@ -516,6 +516,7 @@ situation.*
    impl its current row would otherwise also satisfy, regardless of narrowing —
    consistent with §3's own rule that brand eligibility for structural matching
    never varies with row content. See RFC-0121 §3 for the full rule and its scope.
+   Owning implementation issue: metel-core#833.
 
 ---
 

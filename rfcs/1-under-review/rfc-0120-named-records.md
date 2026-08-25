@@ -171,7 +171,8 @@ answered.
    brand-exact dispatch is checked before row-conditional resolution is attempted, so a
    match there short-circuits it rather than conflicting with it under RFC-0060 §2. For
    tier 3 specifically: a `record` with its own nominal impl of an aspect dispatches to
-   that impl over any row-conditional impl its row also satisfies.
+   that impl over any row-conditional impl its row also satisfies. Owning implementation
+   issue: metel-core#833.
 3. **Does RFC-0116 §3's allocator-type restriction transfer to tier 3?** That restriction
    assumed structural interchangeability, which a fixed brand arguably removes — a named
    record has per-instance identity in a way an anonymous one does not. Unresolved.

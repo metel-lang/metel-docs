@@ -808,6 +808,7 @@ this idea, specified in RFC-0091, not here.
    in this superseded document, only for historical traceability — this RFC's own design
    was carried forward piecemeal into RFC-0116 through RFC-0121, and this is the resolution
    of the question those successors inherited from it as RFC-0118 OQ4 and RFC-0137 OQ4.
+   Owning implementation issue: metel-core#833.
 7. **Private-field leakage into cross-module structural matching (§9)** — no mechanism
    for the public-only row projection is designed yet.
 8. ~~What syntactically marks tier 3, the named record kind?~~ **Resolved 2026-07-23,

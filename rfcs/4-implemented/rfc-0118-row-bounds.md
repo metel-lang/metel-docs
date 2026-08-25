@@ -505,7 +505,7 @@ position admits both readings.
    row-conditional resolution is attempted, so a match there short-circuits it rather than
    conflicting with it under RFC-0060 §2. Recorded here for traceability; this RFC's own
    `4-implemented` status and shipped behavior are unaffected, since a bound alone still
-   selects nothing.
+   selects nothing. Owning implementation issue: metel-core#833.
 5. **How does row-membership checking relate to RFC-0096's auto-impl algorithm?**
    RFC-0096 §7 worked out that `HasField`-style satisfaction is *existential*, not the
    universal recursion `Send`/`Sync`/`Linear` use, so it does not fit that algorithm. The
