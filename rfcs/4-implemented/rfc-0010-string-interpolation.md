@@ -55,6 +55,13 @@ coverage:
 > (§15, Open Question 7) as one of the things that needs settling before effect syntax
 > moves from proposed to an actual RFC, per that document's own Open Question 4 pattern.
 
+> **#704's last open item closed, 2026-08-25.** `lexical.md` now states the
+> full-expression ruling explicitly, with a worked example verified directly against
+> the interpreter (`target/debug/metel`) showing a side effect firing mid-interpolation
+> before the enclosing `println` call's own argument finishes evaluating. #704 closed.
+> #705 (leading whitespace inside `${...}` breaking keyword-led expressions) is
+> unaffected and remains open on its own.
+
 ## Summary
 
 Add string interpolation to string literals using `${expr}` placeholders, with semantics defined entirely in terms of string concatenation and `.to_string()`. This RFC depends on `+` being defined for `String + String -> String`; interpolation is just syntax sugar over that operator.
