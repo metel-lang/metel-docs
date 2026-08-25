@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**139 RFCs total.** 35 draft, 22 under review, 8 accepted, 1 integrated (66 live), 46 implemented, 13 superseded, 14 refused (73 settled).
+**140 RFCs total.** 35 draft, 22 under review, 9 accepted, 1 integrated (67 live), 46 implemented, 13 superseded, 14 refused (73 settled).
 
 ## Draft (35)
 
@@ -78,7 +78,7 @@ the curated thematic map.
 - **RFC-0137** — Nominal Types as Branded Rows (`1-under-review` ; rfcs/1-under-review/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-25)
 - **RFC-0140** — Algebraic Effects (`1-under-review` ; rfcs/1-under-review/rfc-0140-algebraic-effects.md ; date 2026-08-25 ; updated 2026-08-25)
 
-## Accepted (8)
+## Accepted (9)
 
 - **RFC-0008** — Aspect Objects (`2-accepted` ; rfcs/2-accepted/rfc-0008-aspect-objects.md ; date 2026-07-01)
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
@@ -88,6 +88,7 @@ the curated thematic map.
 - **RFC-0073** — AutoAlloc (`2-accepted` ; rfcs/2-accepted/rfc-0073-auto-alloc.md ; date 2026-06-29 ; updated 2026-07-10)
 - **RFC-0077** — Allocator Generics (`2-accepted` ; rfcs/2-accepted/rfc-0077-allocator-generics.md ; date 2026-06-29 ; updated 2026-07-10)
 - **RFC-0130** — extends Aspect: Renaming impl Aspect for Consistency with extend (`2-accepted` ; rfcs/2-accepted/rfc-0130-extends-aspect-renaming-impl-aspect-for-consistency-with-extend.md ; date 2026-08-06 ; updated 2026-08-23)
+- **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 
 ## Integrated (1)
 
