@@ -5,7 +5,7 @@ date: '2026-07-24'
 status: under-review
 tracking: 'https://github.com/metel-lang/metel-core/issues/791'
 target:
-updated: '2026-08-23'
+updated: '2026-08-25'
 ---
 
 > **Extracted from RFC-0090 §8 (tier 3) and §9 on 2026-07-24** (superseded; see RFC-0116's
@@ -163,10 +163,15 @@ answered.
    `nominal-types-as-branded-rows.md` §4.1–4.3 proposes body-inferred, row-bounded dispatch
    and argues it needs a fixed field-set plus a subset check rather than general row
    machinery — plausible, not adopted here.
-2. **Brand-versus-row coherence priority.** An ordinary `extend Point: Display` is
+2. ~~**Brand-versus-row coherence priority.** An ordinary `extend Point: Display` is
    brand-keyed; a row-conditional impl is row-keyed. If a value matches both, which wins?
    More-specific-wins is the obvious default and is written down nowhere.
-   *(From RFC-0090 OQ6; RFC-0118 OQ4 is the same question seen from bound position.)*
+   *(From RFC-0090 OQ6; RFC-0118 OQ4 is the same question seen from bound position.)*~~
+   **Resolved, 2026-08-25 — RFC-0121 §3 (under review).** The brand-keyed impl wins:
+   brand-exact dispatch is checked before row-conditional resolution is attempted, so a
+   match there short-circuits it rather than conflicting with it under RFC-0060 §2. For
+   tier 3 specifically: a `record` with its own nominal impl of an aspect dispatches to
+   that impl over any row-conditional impl its row also satisfies.
 3. **Does RFC-0116 §3's allocator-type restriction transfer to tier 3?** That restriction
    assumed structural interchangeability, which a fixed brand arguably removes — a named
    record has per-instance identity in a way an anonymous one does not. Unresolved.
@@ -198,7 +203,8 @@ answered.
   to; §5 there declined the records-as-foundation reframing this RFC's §3 narrows
 - RFC-0119 (Record Conversions) — tier 2, which this is defined against; **not a
   dependency** (2026-08-23 correction, see header)
-- RFC-0121 (Open Rows) — row-conditional impls, the capability §1 says tier 3 exists for
+- RFC-0121 (Open Rows) — row-conditional impls, the capability §1 says tier 3 exists for;
+  §3 there resolves Open Question 2 above (2026-08-25)
 - `reports/substructural-types/brand-kind-unification.md` §8 — the single-identity-kind
   proposal §3 reuses
 - `reports/substructural-types/nominal-types-as-branded-rows.md` — the stronger thesis §4

@@ -507,6 +507,16 @@ situation.*
    RFC-0118 already was for the identical question. Stays open, tracked where it
    already was tracked, not duplicated into a fifth place.
 
+   **Actually resolved, same day, once RFC-0121 §3 was written.** The brand-keyed
+   impl wins: brand-exact dispatch is checked before row-conditional resolution is
+   attempted, so a match there short-circuits it rather than conflicting with it
+   under RFC-0060 §2. For this RFC specifically, that means: a `struct` that has
+   opted into RFC-0120's `record` kind and also has its own nominal impl of an
+   aspect is dispatched to that nominal impl in preference to any row-conditional
+   impl its current row would otherwise also satisfy, regardless of narrowing —
+   consistent with §3's own rule that brand eligibility for structural matching
+   never varies with row content. See RFC-0121 §3 for the full rule and its scope.
+
 ---
 
 ## References
@@ -531,6 +541,8 @@ situation.*
   small clarifying addition per Open Questions #3 / "Relationship to existing RFCs"
 - RFC-0120 (Named Records, under review) — tier 3, the opt-in `record` kind this RFC's §3
   reconciles with rather than replaces
+- RFC-0121 (Open Rows, under review) §3 — resolves Open Question 4 (2026-08-25):
+  brand-keyed impls take priority over row-conditional ones
 - RFC-0071 (Ownership and Move Semantics, `3-integrated`, partial-move tracking not yet
   implemented) — §7's blanket partial-move-with-`Drop` ban this RFC's §5 supersedes;
   also the move-tracking foundation §2 and §8 depend on

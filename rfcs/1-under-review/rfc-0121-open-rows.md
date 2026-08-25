@@ -5,7 +5,7 @@ date: '2026-07-24'
 status: under-review
 tracking: 'https://github.com/metel-lang/metel-core/issues/792'
 target:
-updated: '2026-08-23'
+updated: '2026-08-25'
 ---
 
 > **Extracted from RFC-0090 §2 (open half), §4 and §7 on 2026-07-24** (superseded; see
@@ -41,7 +41,10 @@ updated: '2026-08-23'
 > first — but it means bounds are the cheap path to a fraction of this RFC, not a peer
 > feature.
 
-> **Status — under review (2026-08-23).** Committed to v0.14.0, tracking issue #792 filed 2026-08-22
+> **Status — under review (2026-08-25).** Committed to v0.14.0, tracking issue #792 filed
+> 2026-08-22. §3 gained a new normative rule 2026-08-25 (brand-keyed impls take priority
+> over row-conditional ones), resolving the corpus-wide brand-vs-row coherence question
+> carried since RFC-0090 OQ6.
 
 ## Summary
 
@@ -155,6 +158,38 @@ simpler and well-precedented. Making the row-conditional form canonical pulls op
 generics, row-conditional coherence and §4's width-subtyping rule onto the critical path,
 which is a point in the phantom form's favour, though not treated as decisive.
 
+**Priority against brand-keyed impls, resolved 2026-08-25.** The moment this RFC lets an
+impl be written against a row (`extend<row R: { x: f64, y: f64, .. }> T: Display`), it
+creates the first real instance of a question the corpus has carried since RFC-0090 §9
+without a written answer: an ordinary nominal impl (`extend Point: Display`) is keyed on
+brand identity, this RFC's row-conditional impl is keyed on shape, and if a concrete value's
+brand has an impl *and* its row matches a row-conditional impl of the same aspect, nothing
+says which one resolution picks. Read literally, RFC-0060 §2's overlap rule — "two impls of
+the same aspect conflict when there exists any concrete type instantiation that both would
+cover" — is unconditional and carries no specificity exception for this pair: an
+`extend Point: Display` sitting alongside a row-conditional `Display` impl whose row `Point`
+satisfies would, taken at face value, be rejected outright as a `T0015` conflict the moment
+both existed in the same crate. That is not what anyone building typestate or a `Display`
+impl against a matching row expects, and it would make row-conditional impls unusable
+alongside any nominal impl of the same aspect.
+
+**The rule:** the brand-keyed impl wins. Resolution checks brand-exact dispatch first; a
+match there is selected directly, without evaluating whether a row-conditional impl of the
+same aspect also matches the value's row, and RFC-0060 §2's overlap check does not fire
+between the two — the row-conditional impl simply never gets asked. This is a genuine new
+carve-out to RFC-0060 §2, not a restatement of RFC-0060 §5 (Negative Impl Priority), which is
+a narrower and unrelated rule about a negative impl versus a blanket positive impl of the
+same aspect. The carve-out is scoped to exactly one shape — one brand-keyed impl versus one
+row-conditional impl of the same aspect, for a value whose brand has the former — and leaves
+RFC-0060 §2's ordinary concrete-vs-concrete and blanket-vs-blanket overlap detection
+untouched.
+
+**What this does not resolve.** Two row-conditional impls that can both match the same
+under-constrained row variable — one gated on presence, one on absence — are a different
+problem this rule says nothing about (Open Question 2 below): "more specific wins" has no
+obvious reading between two row conditions unless one is provably a subset of the other's
+satisfying set, which is not assumed here and stays open.
+
 ## 4. Costs, stated as costs
 
 - **Row-kinded variables and row unification** are a genuinely new piece of the
@@ -211,6 +246,14 @@ which is a point in the phantom form's favour, though not treated as decisive.
    label literal, an index-by-label form, and rules for all three. §2's decomposition
    retires the need for a label *literal*, not for label *polymorphism*. Tracked against
    the deferred RFC-0091, where the one construct needing it lives.
+7. ~~**Brand-versus-row impl coherence priority.** An ordinary `extend Point: Display` is
+   brand-keyed; a row-conditional impl (§3) is row-keyed. If a value matches both, which
+   wins? *(From RFC-0090 OQ6/§9; RFC-0118 OQ4 and RFC-0137 OQ4 are the same question seen
+   from bound position and narrowing position respectively; RFC-0120 OQ2 restates it.)*~~
+   **Resolved 2026-08-25 — see "Priority against brand-keyed impls" in §3 above.** The
+   brand-keyed impl wins: brand-exact dispatch is checked first, and a match there
+   short-circuits row-conditional resolution rather than conflicting with it under
+   RFC-0060 §2. Row-vs-row coherence (open question 2 above) is unaffected and stays open.
 
 ---
 
@@ -222,11 +265,17 @@ which is a point in the phantom form's favour, though not treated as decisive.
 - RFC-0120 (Named Records) — the tier that makes row-conditional impls resolvable at all
 - RFC-0036 (Conditional Impl Blocks) — what §3's row-conditional impls generalize
 - RFC-0060 (Aspect Impl Coherence), RFC-0061 (Structural Aspect Bounds) — the coherence
-  checking OQ2 must extend
+  checking OQ2 must extend; §3's "Priority against brand-keyed impls" is a new carve-out
+  to RFC-0060 §2's overlap rule specifically, distinct from §5's unrelated negative-impl
+  priority rule
 - `reports/substructural-types/brand-types.md` — the phantom-parameter typestate
   alternative in §3 and OQ4
 - `reports/substructural-types/access-and-presence-rows.md` §4 — Koka effect rows, and why
   effect rows and field rows are the same open-row shape
+- `public/rfcs/5-superseded/rfc-0090-structural-records.md` OQ6/§9, RFC-0118 (Row Bounds,
+  `4-implemented`) OQ4, RFC-0120 (Named Records) OQ2, RFC-0137 (Nominal Types as Branded
+  Rows, `2-accepted`) OQ4 — the corpus-wide open item resolved in §3 above; each updated
+  2026-08-25 to point back here
 
 ---
 
