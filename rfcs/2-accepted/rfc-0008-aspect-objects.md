@@ -28,6 +28,15 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/837'
 > document, cleanly, since it needed a real, separate dependency this RFC's own core
 > doesn't share.
 
+> **Remaining Unresolved Questions answered, 2026-08-25 — proposed, not yet
+> reviewed.** UQ1/UQ2 (multi-aspect bounds, including `dyn Aspect + Send`): resolved
+> to at most one method-bearing aspect plus any number of marker aspects — see §9.
+> UQ4 (vtable caching): resolved for the current interpreter, piggybacking on
+> RFC-0060's already-`4-implemented` coherence pass — see §9. Both are genuine design
+> decisions, not restatements, and haven't had an adversarial pass; flagged rather
+> than silently folded into the accepted design, matching how the Stage A/B split
+> itself was flagged when it landed.
+
 ## Summary
 
 Static dispatch (generics + monomorphisation) requires the concrete type to be known
@@ -106,6 +115,13 @@ There's an existing fat-pointer pattern in the interpreter already, for an unrel
 purpose: `FieldReference { root: Rc<RefCell<Value>>, path: Vec<PathSegment> }`
 (RFC-0045) — a root-pointer-plus-metadata pair the runtime already builds values
 around, precedent for the shape above.
+
+**Vtable generation reuses RFC-0060's coherence output (§9 UQ4, resolved
+2026-08-25).** The coherence pass (`metel-frontend/src/coherence.rs`,
+`4-implemented`) already builds `by_aspect: HashMap<SymbolId, Vec<CollectedImpl>>`,
+and each `CollectedImpl` already carries `method_names` and the target type's
+canonical key. A vtable for `(T, Aspect)` is generated from the matching
+already-coherence-checked `CollectedImpl`, not discovered separately.
 
 ---
 
@@ -269,23 +285,82 @@ accepting `&dyn Aspect` has a single compiled form that dispatches at runtime.
 
 ## 9. Unresolved Questions
 
-1. **Multi-aspect bounds.** Whether `dyn Aspect1 + Aspect2` is supported — a fat
+1. ~~**Multi-aspect bounds.** Whether `dyn Aspect1 + Aspect2` is supported — a fat
    pointer to a value implementing both aspects — is deferred. The vtable would
    need to contain entries for both aspects. The syntax and vtable layout for
-   multi-aspect objects is non-trivial.
+   multi-aspect objects is non-trivial.~~
 
-2. **`dyn Aspect + Send`.** Whether marker aspects (`Send`, `Sync`) may appear in
+   **Resolved 2026-08-25 — proposed, not yet reviewed.** Supported in exactly one
+   shape: **at most one method-bearing ("principal") aspect, plus any number of
+   marker aspects**, written `dyn Aspect + Marker1 + Marker2 + ...`. A **marker
+   aspect** is any object-safe aspect declaring zero methods — mechanically
+   checkable (§3 already calls out `Send`/`Sync` as examples; the rule generalizes
+   to any user-defined zero-method aspect, not a hardcoded list).
+
+   Why this shape and not general `Aspect1 + Aspect2`: two method-bearing aspects
+   would need either two independent vtables or one jointly-laid-out vtable —
+   real additional complexity, not a detail this resolution glosses over. A marker
+   aspect contributes **zero** vtable entries, so the restriction avoids that
+   complexity by construction: exactly one vtable is ever generated (the
+   principal aspect's, per §2/§4, unchanged), and each marker bound is a purely
+   static check at the coercion site — same mechanism as object-safety checking,
+   nothing added to the runtime representation. Consequences that follow directly:
+
+   - `dyn Aspect + Marker` is representationally identical to plain `dyn Aspect` —
+     same fat pointer, same vtable — so it widens implicitly to `dyn Aspect`
+     wherever needed (dropping a marker guarantee is always safe).
+   - `+` is order-independent: `dyn Display + Send` and `dyn Send + Display` name
+     the same type.
+   - Two method-bearing aspects on one `dyn` type (`dyn Display + Debug`) stays
+     unsupported — decided against, not left pending. An aspect author needing
+     both today declares a new aspect whose methods cover what's needed and
+     implements it directly (real duplication, no delegation to the individual
+     `Display`/`Debug` impls); ergonomic composition sugar for that is RFC-0104
+     (Multi-Aspect Extend Blocks with Shared Bodies, `0-draft`), a separate,
+     already-tracked question this resolution doesn't reopen.
+
+2. ~~**`dyn Aspect + Send`.** Whether marker aspects (`Send`, `Sync`) may appear in
    `dyn` bounds — e.g., `dyn Display + Send` to express a sendable aspect
-   object — is deferred to UQ1.
+   object — is deferred to UQ1.~~
+
+   **Resolved 2026-08-25, as a direct instance of UQ1's answer.** `Send`/`Sync`
+   are marker aspects (§3), so `dyn Display + Send` is exactly the general rule
+   above with `Send` as one of the (any number of) trailing marker aspects — no
+   special case needed beyond UQ1's own resolution.
 
 3. **Moved to RFC-0141, 2026-08-25.** Whether `dyn Aspect` may appear inside a
    branded allocator type — e.g., `@[Rc<'b>] dyn Aspect` — is specific to the
    region-tagged form and doesn't apply until that form exists; tracked there
    instead of here.
 
-4. **Vtable caching.** Whether vtables are generated per-crate or per-coercion-site,
+4. ~~**Vtable caching.** Whether vtables are generated per-crate or per-coercion-site,
    and how they interact with separate compilation, is an implementation question
-   deferred to the compiler RFC.
+   deferred to the compiler RFC.~~
+
+   **Resolved 2026-08-25 for the current interpreter — proposed, not yet
+   reviewed; the separately-compiled-backend case stays genuinely deferred.**
+   Vtable generation is lazy and memoized, keyed by `(concrete type's SymbolId,
+   aspect's SymbolId)` — the same identity pair RFC-0060's coherence pass
+   (`metel-frontend/src/coherence.rs`, `4-implemented`) already groups impls by
+   (`by_aspect: HashMap<SymbolId, Vec<CollectedImpl>>`, each `CollectedImpl`
+   already carrying `method_names` and the target type's canonical key). A
+   vtable for `(T, Aspect)` is materialized the first time that pair is actually
+   coerced to `dyn Aspect` anywhere in the program, from the matching
+   already-coherence-checked impl, and cached for the rest of the run — not
+   regenerated per coercion site. See §2.
+
+   "Per-crate" doesn't currently apply: Metel today has no separately-compiled,
+   separately-linked compilation units — a program (or module graph) is
+   coherence-checked as one pass, and vtable generation piggybacks directly on
+   that pass's output rather than needing its own discovery mechanism. This
+   answers the question for the interpreter as it exists today; it does not
+   answer vtable ABI stability across a future ahead-of-time or
+   separately-compiled backend, which stays deferred to a compiler RFC — a real
+   question, but one with no consumer today, the same standard RFC-0141's own
+   dependency on RFC-0063 is held to. If a compiler RFC is ever written, this
+   resolution (lazy + memoized, piggybacking on coherence output) is what needs
+   re-examining for cross-unit consistency, not something to re-derive from
+   scratch.
 
 ---
 
