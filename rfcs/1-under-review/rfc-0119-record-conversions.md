@@ -154,7 +154,10 @@ structure at impl-resolution time, which no amount of explicit conversion machin
 only the record produced by `.to_record()` is, and that record is a separate owned value,
 not a window onto the struct.
 
-**Added 2026-08-25 — `.to_record()` on an already-narrowed residual (RFC-0137, accepted).**
+**Added 2026-08-25 — `.to_record()` on an already-narrowed residual (RFC-0137, then
+accepted; reverted to `1-under-review` the same day — RFC-0137's own Open Questions
+5-6, opened on reversion, don't touch this reasoning directly, but the design below is
+pending RFC-0137's re-acceptance, not settled).**
 This RFC's text above describes `to_record()` against "the record" for a `#derive`-ing
 struct, written before RFC-0137 gave residual types a way to exist — under move-tracking
 alone (RFC-0071), a struct's declared row and its current row were always the same value,
@@ -378,8 +381,10 @@ by-reference mode (§2).*
   brand exception, deferred until records are implemented
 - `public/rfcs/0-draft/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md`
   — deferred; works around §3's no-implicit-coercion rule for method receivers specifically
-- RFC-0137 (Nominal Types as Branded Rows, `2-accepted`) — the source of "current row"
-  as a concept distinct from "declared row," per §4's 2026-08-25 addition
+- RFC-0137 (Nominal Types as Branded Rows, `1-under-review` — reverted from
+  `2-accepted` 2026-08-25, same day) — the source of "current row" as a concept
+  distinct from "declared row," per §4's 2026-08-25 addition; that addition's design
+  is unaffected by the reversion but pending RFC-0137's re-acceptance
 
 ---
 
