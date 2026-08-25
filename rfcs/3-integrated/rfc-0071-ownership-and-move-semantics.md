@@ -334,6 +334,14 @@ let h = Handle { fd = open("file.txt"), tag = 1u64 };
 let fd = h.fd;   // compile error — Handle implements Drop; partial move not allowed
 ```
 
+> **Planned to be relaxed (RFC-0137, `2-accepted`, not yet implemented).** RFC-0137
+> (Nominal Types as Branded Rows) supersedes this unconditional ban *in design* with
+> row-bounded `Drop` dispatch — a struct's own row makes it possible to check whether a
+> given residual still has every field a specific `Drop` impl actually reads, rather
+> than rejecting every partial move outright. This is a design supersession only: the
+> rule above is what `--move-check` enforces today, and continues to enforce
+> unconditionally, until RFC-0137's own row-bounded mechanism is actually built.
+
 ### 7.1 Moving out of a reference
 
 *Added 2026-08-01 (metel-core#602).* A reference — `&T` or `&var T` — only ever grants
@@ -661,3 +669,6 @@ RFC correctly says nothing about it. Only §1's scope sentence needed widening, 
   this RFC.
 - RFC-0068 (Struct-Owned Allocators) — drop ordering in §5 of this RFC governs when
   struct fields become unreachable relative to arena freeing.
+- RFC-0137 (Nominal Types as Branded Rows, `2-accepted`, added 2026-08-25) — supersedes
+  §7's unconditional partial-move-with-`Drop` ban *in design* with row-bounded dispatch;
+  not yet reflected in `--move-check`'s actual enforcement, see §7's own callout.

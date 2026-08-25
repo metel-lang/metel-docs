@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**139 RFCs total.** 35 draft, 22 under review, 8 accepted, 1 integrated (66 live), 46 implemented, 13 superseded, 14 refused (73 settled).
+**139 RFCs total.** 35 draft, 21 under review, 9 accepted, 1 integrated (66 live), 46 implemented, 13 superseded, 14 refused (73 settled).
 
 ## Draft (35)
 
@@ -53,7 +53,7 @@ the curated thematic map.
 - **RFC-0138** — Generic Functions as First-Class Values (`0-draft` ; rfcs/0-draft/rfc-0138-generic-functions-as-first-class-values.md ; date 2026-08-24)
 - **RFC-0139** — Garbage-Collected Allocators and Allocator-Determined Pointer Types (`0-draft` ; rfcs/0-draft/rfc-0139-garbage-collected-allocators-and-allocator-determined-pointer-types.md ; date 2026-08-24)
 
-## Under Review (22)
+## Under Review (21)
 
 - **RFC-0050** — Closure Capture Lists (`1-under-review` ; rfcs/1-under-review/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-08-23)
 - **RFC-0067** — Lifetime Anchors (`1-under-review` ; rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-08-23)
@@ -65,8 +65,8 @@ the curated thematic map.
 - **RFC-0113** — Context Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0113-context-parameters.md ; date 2026-07-21 ; updated 2026-08-23)
 - **RFC-0117** — Row Narrowing (`1-under-review` ; rfcs/1-under-review/rfc-0117-row-narrowing.md ; date 2026-07-24 ; updated 2026-08-23)
 - **RFC-0119** — Record Conversions (`1-under-review` ; rfcs/1-under-review/rfc-0119-record-conversions.md ; date 2026-07-24 ; updated 2026-08-23)
-- **RFC-0120** — Named Records (`1-under-review` ; rfcs/1-under-review/rfc-0120-named-records.md ; date 2026-07-24 ; updated 2026-08-23)
-- **RFC-0121** — Open Rows (`1-under-review` ; rfcs/1-under-review/rfc-0121-open-rows.md ; date 2026-07-24 ; updated 2026-08-23)
+- **RFC-0120** — Named Records (`1-under-review` ; rfcs/1-under-review/rfc-0120-named-records.md ; date 2026-07-24 ; updated 2026-08-25)
+- **RFC-0121** — Open Rows (`1-under-review` ; rfcs/1-under-review/rfc-0121-open-rows.md ; date 2026-07-24 ; updated 2026-08-25)
 - **RFC-0122** — Borrow Checking (`1-under-review` ; rfcs/1-under-review/rfc-0122-borrow-checking.md ; date 2026-07-24 ; updated 2026-08-23)
 - **RFC-0123** — Field-Wise Row Constraints (`1-under-review` ; rfcs/1-under-review/rfc-0123-field-wise-row-constraints.md ; date 2026-07-24 ; updated 2026-08-23)
 - **RFC-0125** — Variadic Generics (`1-under-review` ; rfcs/1-under-review/rfc-0125-variadic-generics.md ; date 2026-07-25 ; updated 2026-08-23)
@@ -75,10 +75,9 @@ the curated thematic map.
 - **RFC-0132** — Comptime Execution Model — comptime let, comptime fun, comptime if (`1-under-review` ; rfcs/1-under-review/rfc-0132-comptime-execution-model-comptime-let-comptime-fun-comptime-if.md ; date 2026-08-13 ; updated 2026-08-23)
 - **RFC-0134** — Closure Call Capability (`1-under-review` ; rfcs/1-under-review/rfc-0134-closure-call-capability.md ; date 2026-08-13 ; updated 2026-08-23)
 - **RFC-0136** — Walrus for Kept Bindings (`1-under-review` ; rfcs/1-under-review/rfc-0136-walrus-for-kept-bindings.md ; date 2026-08-23 ; updated 2026-08-25)
-- **RFC-0137** — Nominal Types as Branded Rows (`1-under-review` ; rfcs/1-under-review/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-25)
 - **RFC-0140** — Algebraic Effects (`1-under-review` ; rfcs/1-under-review/rfc-0140-algebraic-effects.md ; date 2026-08-25 ; updated 2026-08-25)
 
-## Accepted (8)
+## Accepted (9)
 
 - **RFC-0008** — Aspect Objects (`2-accepted` ; rfcs/2-accepted/rfc-0008-aspect-objects.md ; date 2026-07-01)
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
@@ -88,6 +87,7 @@ the curated thematic map.
 - **RFC-0073** — AutoAlloc (`2-accepted` ; rfcs/2-accepted/rfc-0073-auto-alloc.md ; date 2026-06-29 ; updated 2026-07-10)
 - **RFC-0077** — Allocator Generics (`2-accepted` ; rfcs/2-accepted/rfc-0077-allocator-generics.md ; date 2026-06-29 ; updated 2026-07-10)
 - **RFC-0130** — extends Aspect: Renaming impl Aspect for Consistency with extend (`2-accepted` ; rfcs/2-accepted/rfc-0130-extends-aspect-renaming-impl-aspect-for-consistency-with-extend.md ; date 2026-08-06 ; updated 2026-08-23)
+- **RFC-0137** — Nominal Types as Branded Rows (`2-accepted` ; rfcs/2-accepted/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-25)
 
 ## Integrated (1)
 
@@ -139,7 +139,7 @@ the curated thematic map.
 - **RFC-0111** — Unqualified Enum Variants in Expression Position (`4-implemented` ; rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md ; date 2026-07-21 ; updated 2026-07-21 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/572)
 - **RFC-0115** — Field Initializer Separator (`4-implemented` ; rfcs/4-implemented/rfc-0115-field-initializer-separator.md ; date 2026-07-24 ; updated 2026-07-24 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/575)
 - **RFC-0116** — Anonymous Record Types (`4-implemented` ; rfcs/4-implemented/rfc-0116-anonymous-record-types.md ; date 2026-07-24 ; updated 2026-07-25 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/576)
-- **RFC-0118** — Row Bounds (`4-implemented` ; rfcs/4-implemented/rfc-0118-row-bounds.md ; date 2026-07-24 ; updated 2026-07-25 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/577)
+- **RFC-0118** — Row Bounds (`4-implemented` ; rfcs/4-implemented/rfc-0118-row-bounds.md ; date 2026-07-24 ; updated 2026-08-25 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/577)
 - **RFC-0126** — T[] as a Copy Borrowed View (`4-implemented` ; rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md ; date 2026-07-27 ; updated 2026-08-03 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/593)
 
 ## Superseded (13)

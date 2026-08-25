@@ -5,7 +5,7 @@ date: '2026-07-24'
 status: under-review
 tracking: 'https://github.com/metel-lang/metel-core/issues/791'
 target:
-updated: '2026-08-23'
+updated: '2026-08-25'
 ---
 
 > **Extracted from RFC-0090 §8 (tier 3) and §9 on 2026-07-24** (superseded; see RFC-0116's
@@ -58,11 +58,18 @@ type, alive only while it is held. Three things need the row to be part of the t
 
 ## 1. Three tiers, and why the boundary sits here
 
-| Tier | Declaration | Row access | Impl-eligible |
+**Restated 2026-08-25 against RFC-0137 (Nominal Types as Branded Rows, accepted).**
+RFC-0137 established that *every* struct carries `(brand, row)` unconditionally, not
+only tier 3 — so tier 1's "row access: none" cell below is no longer accurate as
+originally worded. What actually distinguishes the tiers, per RFC-0137 §3, is never
+"having a row" (universal) but *whether that row is visible to structural matching* —
+the table's substance is unchanged, only the tier-1 cell's wording:
+
+| Tier | Declaration | Row visible to structural matching | Impl-eligible |
 |---|---|---|---|
-| 1 | `struct` | none | — |
-| 2 | `struct` + `#derive(ToRecord, FromRecord)` | explicit, temporary, per-call | no |
-| 3 | `record` | intrinsic, permanent | yes |
+| 1 | `struct` | no — has a row (RFC-0137), never exposed to matching | — |
+| 2 | `struct` + `#derive(ToRecord, FromRecord)` | no — `.to_record()`'s output is brand-stripped and bare, a separate value, not the struct's own row becoming visible | no |
+| 3 | `record` | yes — intrinsic, permanent | yes |
 
 **Why not collapse 2 into 3.** Anyone wanting a single local drain/restore in one function
 would otherwise have to accept the coherence-priority and private-field-leakage exposure
@@ -156,10 +163,16 @@ answered.
    `nominal-types-as-branded-rows.md` §4.1–4.3 proposes body-inferred, row-bounded dispatch
    and argues it needs a fixed field-set plus a subset check rather than general row
    machinery — plausible, not adopted here.
-2. **Brand-versus-row coherence priority.** An ordinary `extend Point: Display` is
+2. ~~**Brand-versus-row coherence priority.** An ordinary `extend Point: Display` is
    brand-keyed; a row-conditional impl is row-keyed. If a value matches both, which wins?
    More-specific-wins is the obvious default and is written down nowhere.
-   *(From RFC-0090 OQ6; RFC-0118 OQ4 is the same question seen from bound position.)*
+   *(From RFC-0090 OQ6; RFC-0118 OQ4 is the same question seen from bound position.)*~~
+   **Resolved, 2026-08-25 — RFC-0121 §3 (under review).** The brand-keyed impl wins:
+   brand-exact dispatch is checked before row-conditional resolution is attempted, so a
+   match there short-circuits it rather than conflicting with it under RFC-0060 §2. For
+   tier 3 specifically: a `record` with its own nominal impl of an aspect dispatches to
+   that impl over any row-conditional impl its row also satisfies. Owning implementation
+   issue: metel-core#833.
 3. **Does RFC-0116 §3's allocator-type restriction transfer to tier 3?** That restriction
    assumed structural interchangeability, which a fixed brand arguably removes — a named
    record has per-instance identity in a way an anonymous one does not. Unresolved.
@@ -170,9 +183,16 @@ answered.
    of that kind — rather than something that merely resembles it — is argued in that
    document's §8 and not proven. Note this RFC does **not** depend on RFC-0076's runtime
    checking machinery.
-5. **Does a narrowed named record keep its brand?** Presumably yes — that is the point of
+5. ~~Does a narrowed named record keep its brand? Presumably yes — that is the point of
    §1's third bullet — but the rule is unstated, and it decides whether
-   `Handle.{ fd }` is still a `Handle` for impl-resolution purposes.
+   `Handle.{ fd }` is still a `Handle` for impl-resolution purposes.~~ **Answered,
+   2026-08-25 — RFC-0137 §2/§3 (accepted).** Yes, for the general case, not just
+   tier 3: narrowing preserves the brand unconditionally for every struct, and
+   visibility to structural matching (§1's restated table above) is scoped to the
+   brand, fixed at declaration, inherited unchanged by every narrowing. A narrowed
+   `record` stays impl-eligible for exactly the same reason a narrowed plain `struct`
+   stays ineligible — the row content changed, the brand's own eligibility flag did
+   not.
 
 ---
 
@@ -184,11 +204,15 @@ answered.
   to; §5 there declined the records-as-foundation reframing this RFC's §3 narrows
 - RFC-0119 (Record Conversions) — tier 2, which this is defined against; **not a
   dependency** (2026-08-23 correction, see header)
-- RFC-0121 (Open Rows) — row-conditional impls, the capability §1 says tier 3 exists for
+- RFC-0121 (Open Rows) — row-conditional impls, the capability §1 says tier 3 exists for;
+  §3 there resolves Open Question 2 above (2026-08-25)
 - `reports/substructural-types/brand-kind-unification.md` §8 — the single-identity-kind
   proposal §3 reuses
 - `reports/substructural-types/nominal-types-as-branded-rows.md` — the stronger thesis §4
   deliberately does not adopt, and §4's `Drop`-dispatch leak
+- RFC-0137 (Nominal Types as Branded Rows, `2-accepted`, 2026-08-25) — the exploration
+  above, formalized: adopts the stronger thesis for every struct, answers Open
+  Question 5, and is what §1's table above is now restated against
 - RFC-0076 (Brand Types) — related but **not a dependency**; see OQ4
 
 ---

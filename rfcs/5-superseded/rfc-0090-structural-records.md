@@ -799,8 +799,16 @@ this idea, specified in RFC-0091, not here.
 5. **Phantom-type-parameter typestate (`brand-types.md`) vs. row-conditional-impl
    typestate (§4) — which is canonical, or do both stay, and for which cases?** Not
    resolved — too early to decide.
-6. **Brand-vs-row impl coherence priority (§9)** — no specificity rule between
-   brand-keyed and row-keyed blanket impls is written down.
+6. ~~**Brand-vs-row impl coherence priority (§9)** — no specificity rule between
+   brand-keyed and row-keyed blanket impls is written down.~~ **Resolved, 2026-08-25 —
+   RFC-0121 §3 (under review), the RFC that finally carries this document's own
+   row-conditional-impl proposal (§4) forward.** The brand-keyed impl wins: brand-exact
+   dispatch is checked before row-conditional resolution is attempted, so a match there
+   short-circuits it rather than conflicting with it under RFC-0060 §2. Recorded here,
+   in this superseded document, only for historical traceability — this RFC's own design
+   was carried forward piecemeal into RFC-0116 through RFC-0121, and this is the resolution
+   of the question those successors inherited from it as RFC-0118 OQ4 and RFC-0137 OQ4.
+   Owning implementation issue: metel-core#833.
 7. **Private-field leakage into cross-module structural matching (§9)** — no mechanism
    for the public-only row projection is designed yet.
 8. ~~What syntactically marks tier 3, the named record kind?~~ **Resolved 2026-07-23,

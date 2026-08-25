@@ -261,7 +261,7 @@ above it are.
   allocator). Also carries RFC-0090 §6's declined "records as the universal foundation"
   reframing. **Depends on nothing** — the only piece of the cluster buildable today, and
   the reason the split is six-way.
-- **RFC-0137** *(under review, opened 2026-08-24)* — Nominal Types as Branded Rows — formalizes
+- **RFC-0137** *(accepted 2026-08-25)* — Nominal Types as Branded Rows — formalizes
   `reports/substructural-types/nominal-types-as-branded-rows.md`'s central thesis, left
   deliberately unfolded by that document's own Open Question 7 so it would not gate this
   cluster's nearer review. Proposes that **every** `struct`, not only RFC-0120's opt-in
@@ -282,7 +282,7 @@ above it are.
   zero-runtime-cost claim for narrowing and `Drop` dispatch is a design argument, not a
   demonstrated property — contingent on RFC-0071 actually being built, which it is not
   today (`3-integrated`, partial-move tracking confirmed absent from the interpreter).
-- **RFC-0117** *(draft)* — Row Narrowing — moving a field out narrows the record's type;
+- **RFC-0117** *(under review)* — Row Narrowing — moving a field out narrows the record's type;
   the closed 2^*N* subset lattice, no row variables and no unification. Depends on
   RFC-0116 and on **RFC-0071** (`3-integrated`, 0% implemented), which is why it is separate
   from RFC-0116 rather than bundled with it. **Its own §3 nominal-type exclusion is now
@@ -294,7 +294,7 @@ above it are.
   a reading that previously could not be written at all. Explains why implicit structural
   satisfaction is safe here specifically (a bound grants no capability over the type
   itself). Depends on RFC-0116.
-- **RFC-0119** *(draft)* — Record Conversions — tier 2 `ToRecord`/`FromRecord`, kept as
+- **RFC-0119** *(under review)* — Record Conversions — tier 2 `ToRecord`/`FromRecord`, kept as
   separate aspects for the serde reason. **By value only**: RFC-0090 §8's
   `to_record_mut`/`from_record_mut` are dropped as superseded by RFC-0109's named views
   (added 2026-07-08 to "resolve tier 2's borrow gap", ten days before RFC-0109 built that
@@ -303,12 +303,12 @@ above it are.
   handles a borrow, so it never needs to establish which object one came from — and put
   the tier boundary on a clean line: *by-value conversion is bare; borrowed access is
   branded because it must be.* Depends on RFC-0116, RFC-0117.
-- **RFC-0120** *(draft)* — Named Records — tier 3 `record X { }` carrying `(row, brand)`
+- **RFC-0120** *(under review)* — Named Records — tier 3 `record X { }` carrying `(row, brand)`
   intrinsically; the tier table, the non-breaking upgrade path, and RFC-0090 §9's
   identity-tag reuse. Depends on RFC-0116, RFC-0119. **Its own Open Question 5** (does a
   narrowed named record keep its brand) **is answered by RFC-0137** for the general case
   — every struct's brand is preserved through narrowing, not only tier-3's.
-- **RFC-0121** *(draft)* — Open Rows — `<row R>` / `..R`, row algebra (extension is a
+- **RFC-0121** *(under review)* — Open Rows — `<row R>` / `..R`, row algebra (extension is a
   literal, removal is a where-clause decomposition), row-conditional typestate, and the
   width-subtyping-versus-ownership problem. **The expensive half**, and the only piece
   introducing a row kind or row unification. Depends on RFC-0118, RFC-0120.

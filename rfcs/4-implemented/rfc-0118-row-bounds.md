@@ -4,7 +4,7 @@ title: "Row Bounds"
 date: '2026-07-24'
 status: implemented
 target:
-updated: '2026-07-25'
+updated: '2026-08-25'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/577'
 impl_status: implemented
 coverage:
@@ -108,6 +108,12 @@ coverage:
 > cross-check, which is the more useful fact to record.
 
 > **Status — implemented (2026-07-25).** Row bounds shipped in v0.12.0 (#577, merged 24b858e). Open/closed bounds, the trailing .., label-only fields, negative bounds as per-field absence, the record kind marker at the parameter or in a where clause, and the bound-less <record T> form. The type-position wildcard was withdrawn during implementation. Useful over record literals only until RFC-0119 lands conversions; the RFC records that.
+
+> **Status note, 2026-08-25 — Open Question 4 resolved without a shipped-behavior change.**
+> The brand-vs-row coherence question OQ4 deferred to RFC-0121 above is now answered there
+> (RFC-0121 §3, `1-under-review`): the brand-keyed impl wins over a row-conditional one.
+> This RFC's own implemented behavior is unaffected — a bound alone still selects nothing —
+> so no code or spec change follows here; see Open Questions below for the resolution text.
 
 ## Summary
 
@@ -486,14 +492,20 @@ position admits both readings.
    `to_record()` produce for a struct with private fields, and who may call it? That is a
    question about a *conversion*, which is a capability, which is what the tier system
    actually governs. *(From RFC-0090 OQ7, via RFC-0116 OQ3, now RFC-0119's.)*
-4. **Coherence between structural and nominal impl selection** — **real, but not reachable
+4. ~~**Coherence between structural and nominal impl selection** — **real, but not reachable
    in v0.12.0, and therefore not blocking.** An ordinary `extend Point: Display` is keyed on
    nominal identity; RFC-0121's row-conditional impls are keyed on shape, and if a value
    matched both there would be no written rule for which wins. **That collision needs impls
    keyed on rows, which is RFC-0121 and is not in this release** — this RFC contributes
    bounds only, and a bound selects nothing. Re-checked rather than assumed: nothing in
    RFC-0116 or this RFC lets an impl be written against a row. Deferred to RFC-0121, where
-   open question 3 above also lands. *(From RFC-0090 OQ6.)*
+   open question 3 above also lands. *(From RFC-0090 OQ6.)*~~ **Resolved 2026-08-25 —
+   RFC-0121 §3** (now `1-under-review`, the release this question was deferred to having
+   arrived): the brand-keyed impl wins. Brand-exact dispatch is checked before
+   row-conditional resolution is attempted, so a match there short-circuits it rather than
+   conflicting with it under RFC-0060 §2. Recorded here for traceability; this RFC's own
+   `4-implemented` status and shipped behavior are unaffected, since a bound alone still
+   selects nothing. Owning implementation issue: metel-core#833.
 5. **How does row-membership checking relate to RFC-0096's auto-impl algorithm?**
    RFC-0096 §7 worked out that `HasField`-style satisfaction is *existential*, not the
    universal recursion `Send`/`Sync`/`Linear` use, so it does not fit that algorithm. The
@@ -506,7 +518,8 @@ position admits both readings.
 
 - `public/rfcs/5-superseded/rfc-0090-structural-records.md` §1, §2, §7 — the source
 - RFC-0116 (Anonymous Record Types) — the row syntax reused in bound position
-- RFC-0121 (Open Rows) — `..R`, the named form of §1's anonymous `..`
+- RFC-0121 (Open Rows, `1-under-review`) — `..R`, the named form of §1's anonymous `..`;
+  §3 there resolves this RFC's own Open Question 4 (2026-08-25)
 - RFC-0096 (Auto-Impl Aspects) §7 — works out precisely how row-membership differs from
   the `Send`/`Sync`/`Linear` auto-impl algorithm, and flags the same coherence gap
 - RFC-0080 (Standard Library Aspects) — the auto-impl pattern this extends structurally

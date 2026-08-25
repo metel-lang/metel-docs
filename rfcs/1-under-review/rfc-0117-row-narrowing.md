@@ -80,10 +80,17 @@ accepts is a genuinely different capability and belongs to RFC-0121.
   question narrowing does not: whether the reassembled value satisfies whatever invariant
   its type was built with. That is RFC-0114's (`Construct`), which specifies that row
   completion fires a constructor rather than being a bare write.
-- **Narrowing a *nominal* type.** Whether `Handle` narrows to `Handle.{ fd }` on partial
+- ~~**Narrowing a *nominal* type.** Whether `Handle` narrows to `Handle.{ fd }` on partial
   move — as opposed to a record narrowing to a record — depends on nominal types carrying
   rows at all, which is RFC-0120's question and, in its strong form, an open exploration
-  (`reports/substructural-types/nominal-types-as-branded-rows.md`).
+  (`reports/substructural-types/nominal-types-as-branded-rows.md`).~~ **Dependency
+  discharged, 2026-08-25 — RFC-0137 (Nominal Types as Branded Rows, accepted) answers
+  this directly:** every `struct` carries `(brand, row)` unconditionally, and narrows to
+  `Handle.{ fd }` on partial move by exactly this RFC's own mechanism, at the same
+  brand. This RFC's own scope should now be understood as extending to nominal
+  narrowing via RFC-0137 as the supplying dependency, not excluding it — full
+  nominal-type worked examples in this RFC's own "Proposed Design" are a real follow-up
+  this correction does not itself perform, left for this RFC's own review to take up.
 - **Borrowed narrowing.** Narrowing a `&var` view rather than an owned value is
   RFC-0119's by-reference mode and RFC-0109's views.
 - **Per-field multiplicity.** Deliberately out of scope for the whole records cluster
@@ -93,18 +100,33 @@ accepts is a genuinely different capability and belongs to RFC-0121.
 
 ## Open Questions
 
-1. **What is the interaction with `Drop`?** If a record type could carry custom teardown
+1. ~~What is the interaction with `Drop`? If a record type could carry custom teardown
    this would be the hard case — a narrowed residual reaching end of scope with the
    destructor's required fields already gone. RFC-0116 §3 forbids custom `Drop` on
-   records outright, so **for records this question does not arise.** It arises the moment
+   records outright, so for records this question does not arise. It arises the moment
    narrowing is extended to nominal types (RFC-0120), and a concrete leak example is
    worked through in `reports/substructural-types/nominal-types-as-branded-rows.md` §4.
-   Recorded here so the extension does not inherit the exemption silently.
-2. **Does narrowing interact correctly with RFC-0071 §7's blanket ban on partial moves out
-   of `Drop`-implementing types?** RFC-0071 bans them wholesale; a narrowing-aware design
+   Recorded here so the extension does not inherit the exemption silently.~~ **Resolved,
+   2026-08-25 — RFC-0137 §5.** Dispatch is row-bounded: the compiler computes, once per
+   `Drop` impl, a fixed concrete set of fields the destructor reads (including
+   transitively through helper-method calls, per RFC-0137 §5's 2026-08-25 update), and
+   the destructor fires against any residual whose row is a superset of that set. No
+   leak — the destructor is never skipped for lacking a field it never reads.
+2. ~~Does narrowing interact correctly with RFC-0071 §7's blanket ban on partial moves out
+   of `Drop`-implementing types? RFC-0071 bans them wholesale; a narrowing-aware design
    might narrow the ban to the fields a destructor actually reads. That refinement was
    drafted in RFC-0091 §1 (`uses (fd)`), which is now deferred. Whether the ban simply
-   applies as written, or needs revisiting for records, is unresolved.
+   applies as written, or needs revisiting for records, is unresolved.~~ **Resolved in
+   design, 2026-08-25 — not yet in the implementation.** RFC-0071 §7's blanket ban is
+   superseded *in design*, not narrowed by an exception, by RFC-0137 §5's row-bounded
+   dispatch — the exact refinement this question anticipated (narrow the ban to the
+   fields a destructor actually reads), specified concretely rather than left to
+   RFC-0091's now-deferred `uses (fd)` mechanism. **Corrected the same day**: RFC-0071
+   §7's ban is not an unimplemented gap RFC-0137 fills — it is real, tested,
+   `--move-check`-enforced behavior today (off by default; a separate default-on
+   migration is tracked). Until RFC-0137's own row-bounded mechanism is actually built,
+   `--move-check` continues to reject every partial move of a `Drop` type
+   unconditionally, exactly as RFC-0071 §7 states.
 3. **Is the 2^*N* claim actually the right bound in the presence of nesting?** A record
    whose field is itself a record has residuals in both dimensions. Believed fine —
    narrowing is per-value, not recursive — but not checked.
@@ -122,6 +144,9 @@ accepts is a genuinely different capability and belongs to RFC-0121.
   completing a row fires `construct` rather than a bare write
 - `reports/substructural-types/nominal-types-as-branded-rows.md` §4 — the `Drop`-dispatch
   leak that arises when narrowing is extended to nominal types
+- RFC-0137 (Nominal Types as Branded Rows, `2-accepted`) — supplies nominal-type
+  narrowing directly, discharging §3's own stated dependency; resolves Open Questions
+  1 and 2 above
 - `public/rfcs/0-draft/rfc-0089-linear-types.md`,
   `public/rfcs/0-draft/rfc-0091-linear-records.md` — per-field multiplicity, deliberately
   deferred until records are implemented
