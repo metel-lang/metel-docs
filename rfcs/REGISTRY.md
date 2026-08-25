@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**139 RFCs total.** 35 draft, 21 under review, 9 accepted, 1 integrated (66 live), 46 implemented, 13 superseded, 14 refused (73 settled).
+**139 RFCs total.** 35 draft, 22 under review, 8 accepted, 1 integrated (66 live), 46 implemented, 13 superseded, 14 refused (73 settled).
 
 ## Draft (35)
 
@@ -53,7 +53,7 @@ the curated thematic map.
 - **RFC-0138** — Generic Functions as First-Class Values (`0-draft` ; rfcs/0-draft/rfc-0138-generic-functions-as-first-class-values.md ; date 2026-08-24)
 - **RFC-0139** — Garbage-Collected Allocators and Allocator-Determined Pointer Types (`0-draft` ; rfcs/0-draft/rfc-0139-garbage-collected-allocators-and-allocator-determined-pointer-types.md ; date 2026-08-24)
 
-## Under Review (21)
+## Under Review (22)
 
 - **RFC-0050** — Closure Capture Lists (`1-under-review` ; rfcs/1-under-review/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-08-23)
 - **RFC-0067** — Lifetime Anchors (`1-under-review` ; rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-08-23)
@@ -75,9 +75,10 @@ the curated thematic map.
 - **RFC-0132** — Comptime Execution Model — comptime let, comptime fun, comptime if (`1-under-review` ; rfcs/1-under-review/rfc-0132-comptime-execution-model-comptime-let-comptime-fun-comptime-if.md ; date 2026-08-13 ; updated 2026-08-23)
 - **RFC-0134** — Closure Call Capability (`1-under-review` ; rfcs/1-under-review/rfc-0134-closure-call-capability.md ; date 2026-08-13 ; updated 2026-08-23)
 - **RFC-0136** — Walrus for Kept Bindings (`1-under-review` ; rfcs/1-under-review/rfc-0136-walrus-for-kept-bindings.md ; date 2026-08-23 ; updated 2026-08-25)
+- **RFC-0137** — Nominal Types as Branded Rows (`1-under-review` ; rfcs/1-under-review/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-25)
 - **RFC-0140** — Algebraic Effects (`1-under-review` ; rfcs/1-under-review/rfc-0140-algebraic-effects.md ; date 2026-08-25 ; updated 2026-08-25)
 
-## Accepted (9)
+## Accepted (8)
 
 - **RFC-0008** — Aspect Objects (`2-accepted` ; rfcs/2-accepted/rfc-0008-aspect-objects.md ; date 2026-07-01)
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
@@ -87,7 +88,6 @@ the curated thematic map.
 - **RFC-0073** — AutoAlloc (`2-accepted` ; rfcs/2-accepted/rfc-0073-auto-alloc.md ; date 2026-06-29 ; updated 2026-07-10)
 - **RFC-0077** — Allocator Generics (`2-accepted` ; rfcs/2-accepted/rfc-0077-allocator-generics.md ; date 2026-06-29 ; updated 2026-07-10)
 - **RFC-0130** — extends Aspect: Renaming impl Aspect for Consistency with extend (`2-accepted` ; rfcs/2-accepted/rfc-0130-extends-aspect-renaming-impl-aspect-for-consistency-with-extend.md ; date 2026-08-06 ; updated 2026-08-23)
-- **RFC-0137** — Nominal Types as Branded Rows (`2-accepted` ; rfcs/2-accepted/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-25)
 
 ## Integrated (1)
 

@@ -2,7 +2,7 @@
 id: rfc-0137
 title: "Nominal Types as Branded Rows"
 date: '2026-08-24'
-status: accepted
+status: under-review
 target:
 updated: '2026-08-25'
 tracking: 'https://github.com/metel-lang/metel-core/issues/827'
@@ -50,6 +50,22 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/827'
 > §3's prose claim untested against a reader's own attempt to break it.
 
 > **Status — accepted (2026-08-25).** All four Open Questions closed or determined not to block acceptance; design settled.
+
+> **Status — under review (2026-08-25), same day.** Acceptance was premature. A
+> follow-up review found: the References section stated RFC-0071's partial-move
+> tracking as "not yet implemented," directly contradicting §8's own same-day
+> correction that move-check exists and is tested, off by default — fixed in this
+> revision, not itself a design gap. Two genuine design gaps, not covered by any of the
+> four Open Questions this RFC had asked itself: §6's widening semantics are
+> unspecified operationally (the SortedPair counter-example assumes assignment into a
+> narrowed field succeeds, which the rest of §6 never reconciles with "not yet safe to
+> enable automatically"), and §7's generic-struct treatment never addresses a `Drop`
+> impl conditional on a generic parameter's own `Drop`-ness. `PROCESS.md`'s bar for
+> `2-accepted` is "no open questions block it"; that was true of the four questions
+> "Open Questions" asked and not of the RFC — see new Open Questions 5-8 below.
+> **This is the corpus's fourth `2-accepted` → `1-under-review` reversion** (after
+> RFC-0099, RFC-0100, RFC-0122) — recorded in `OBJECTIVES.md` Trigger 14 as well as
+> here.
 
 ## Summary
 
@@ -288,7 +304,9 @@ to effect inference than ordinary type-checking, and harder to *compute* than th
 direct-read case — but no longer a different, undesigned kind of mechanism, and it still
 bottoms out in exactly one fixed, concrete set per `Drop` impl, checked the same way §5's
 opening paragraph already describes. Dynamic dispatch through `dyn Aspect` is out of
-scope for this composition, same as it is for the rest of this RFC (§8).
+scope for this composition, same as it is for the rest of this RFC (§8). **Not addressed:
+a `Drop` impl conditional on a generic parameter's own `Drop`-ness — see Open Question
+6.**
 
 ## 6. Widening, and the constructor-invariant risk
 
@@ -320,6 +338,15 @@ narrowing (the read side) is presented on its own, and widening a residual back 
 exactly as constrained as ordinary field mutation is today — this RFC neither loosens
 nor tightens that.
 
+**Not actually specified: what "left exactly as constrained as ordinary field mutation
+is today" means operationally once a residual's static type has genuinely narrowed
+(see Open Question 5).** The `mess_with_it` example above assumes `p.small = 999_999`
+*succeeds*, which is only meaningful if either the assignment automatically widens
+`p`'s type back to `SortedPair` (the very thing this section says isn't safe to enable
+yet), or the compiler accepts the assignment while leaving `p`'s static type unchanged
+at `.{ big }` — a third possibility, itself unaddressed, that would need its own
+soundness argument. This RFC does not currently commit to any of the three.
+
 ## 7. Generic structs
 
 Which fields a struct declares is fixed at declaration and does not vary with a generic
@@ -337,6 +364,13 @@ generic impl (`extend<T> Pair<T>: Drop { … }`) already has to cover every
 instantiation with one match, matches every mainstream generic-nominal type system, and
 is grounded in `brand-kind-unification.md` §8's freshness property: a generic type's
 introduction event is its one declaration, never one per instantiation.
+
+**Not addressed: a `Drop` impl conditional on `T` itself (see Open Question 6).** Every
+claim above is about a `Drop` impl whose applicability and required-field-set are
+independent of `T`. A conditional impl (`extend<T: Drop> Pair<T>: Drop { … }`, or a
+destructor body that only reads a given field when `T: Drop`) is a different shape this
+section does not reach — whether the required-field-set computation, or `Drop`-dispatch
+eligibility itself, needs to vary with `T`'s own bounds is open.
 
 ## 8. Cost
 
@@ -372,12 +406,14 @@ implementation lands and actively relaxes it. The zero-runtime-cost claim for
 described above (unaffected by this correction — narrowing's own tracking, as opposed
 to the `Drop`-ban specifically, genuinely is unimplemented); only the `Drop`-ban half of
 this section's original claim was factually wrong, not the runtime-cost argument as a
-whole.
+whole. **This correction was not fully propagated: the References section still stated
+the old, wrong claim until this revision (2026-08-25) — see Decision.**
 
 One case is flagged rather than resolved: dynamic dispatch through `dyn Aspect`
 (RFC-0008, deferred, no consumer yet) could need an actual runtime row representation if
 a call site cannot statically know the concrete residual shape behind a trait object.
-Not a live concern while RFC-0008 stays deferred, but worth a note rather than silence.
+Not a live concern while RFC-0008 stays deferred, but worth a note rather than silence —
+see Open Question 8 for the tracking gap this leaves.
 
 ---
 
@@ -415,6 +451,11 @@ This RFC depends on RFC-0116 (the record type-former narrowing produces values o
 for widening to be considered safe, on RFC-0114 (Constructor Aspect) landing first —
 see §6.
 
+**These revisions are held pending re-acceptance.** RFC-0117 and RFC-0120 were already
+updated 2026-08-25 to cite this RFC while it was (briefly) `2-accepted`; those citations
+now overstate this RFC's current stage and are being corrected back to `1-under-review`
+in the same change that reverts this document.
+
 ---
 
 ## Out of Scope
@@ -434,9 +475,11 @@ see §6.
 
 ## Open Questions
 
-*Resolved 2026-08-25, working toward acceptance. `PROCESS.md`'s bar for `2-accepted` is
-"no more open questions block it" — each item below is closed, or its reason for not
-blocking acceptance is stated, rather than left open by default. Original text kept,
+*Items 1-4 resolved 2026-08-25, working toward what was then acceptance — see Decision
+for why that didn't hold. Items 5-8 opened the same day, by the follow-up review that
+reverted it. `PROCESS.md`'s bar for `2-accepted` is "no more open questions block it" —
+each item below is closed, or its reason for not blocking acceptance is stated, rather
+than left open by default, except items 5-8, genuinely open. Original text kept,
 resolution appended, per this corpus's append-only convention for exactly this
 situation.*
 
@@ -469,7 +512,8 @@ situation.*
    `dyn Aspect` remains outside this (already flagged separately in §8, deferred with
    RFC-0008 itself). This is harder to *compute* than the direct-read case — real
    call-graph work, still not ordinary type-checking — but it is no longer undesigned;
-   §5 is updated to state it.
+   §5 is updated to state it. **Does not cover a `Drop` impl conditional on a generic
+   parameter's own `Drop`-ness — see Open Question 6, opened 2026-08-25.**
 3. ~~Does `.to_record()` (RFC-0119) behave correctly on an already-narrowed residual?
    `handle_narrowed.to_record()`, after some field was already moved out, would produce
    an even-smaller anonymous record than the type's full declared row. Plausible, not
@@ -516,7 +560,53 @@ situation.*
    impl its current row would otherwise also satisfy, regardless of narrowing —
    consistent with §3's own rule that brand eligibility for structural matching
    never varies with row content. See RFC-0121 §3 for the full rule and its scope.
-   Owning implementation issue: metel-core#833.
+   Owning implementation issue: metel-core#833. **Caveat, noted 2026-08-25 on
+   reversion:** this resolution's own soundness rests on RFC-0121 §3's text, and
+   RFC-0121 itself is `1-under-review`, not accepted — if RFC-0121 §3 changes before
+   RFC-0121 lands, this resolution goes stale silently. No tracking link currently
+   forces a re-check; left as-is rather than opening a fifth question for a
+   dependency-staleness risk this RFC shares with most of the corpus (see OQ1's own
+   precedent), but worth naming plainly.
+
+5. **§6's widening semantics are operationally unspecified. Blocks re-acceptance,
+   2026-08-25.** §6 says narrowing (the read side) ships on its own and that widening
+   is deferred until RFC-0114 lands, "neither loosened nor tightened" from today's
+   behavior. But §6's own `SortedPair`/`mess_with_it` counter-example assumes
+   `p.small = 999_999` *succeeds* after narrowing — which is only coherent under one of
+   three readings, and the RFC does not commit to any of them: (a) the assignment
+   automatically widens `p`'s type back to `SortedPair` (this is the "automatic
+   widening" §6 explicitly says isn't safe to enable yet — contradicting the premise
+   that it's deferred); (b) the assignment type-errors because `small` is absent from
+   `p`'s current row `.{ big }` (a real new constraint ordinary field mutation has
+   never had before this RFC, not stated anywhere as a consequence); or (c) the
+   assignment is accepted but `p`'s static type stays `.{ big }` regardless (leaving
+   the type-checker's belief about `p`'s row diverging from its actual runtime
+   fields — its own soundness argument, not given). #836 (the implementation issue)
+   cannot proceed past this point without an explicit choice.
+6. **`Drop` impls conditional on a generic parameter's own `Drop`-ness are unaddressed.
+   Blocks re-acceptance, 2026-08-25.** §5's required-field-set computation (Open
+   Question 2) and §7's generic-struct treatment are each written assuming a `Drop`
+   impl's applicability and required set never depend on the struct's own generic
+   parameter `T`. A conditional impl (`extend<T: Drop> Pair<T>: Drop { … }`, or a
+   destructor body that only reads a given field when `T: Drop`) is a different shape
+   neither section reaches — whether the required-field-set computation, or
+   `Drop`-dispatch eligibility itself, needs to vary with `T`'s own bounds is open.
+7. **No diagnostic specified for §3's full-width-projection rejection. Does not block
+   re-acceptance — settleable at implementation time, tracked as an #836 acceptance
+   criterion.** §3's own prose calls the full-width-projection case "easy to doubt"
+   and adds a worked example specifically because a review question expected it to
+   typecheck. That is a strong signal real users will hit the same confusion, with
+   only a generic type-mismatch to go on unless the compiler names the tier-1-vs-tier-3
+   distinction explicitly. Nothing here or in §3 discusses what that diagnostic should
+   say.
+8. **No forcing function to revisit §5's `dyn Aspect` carve-out if RFC-0008 ever lands.
+   Does not block re-acceptance — RFC-0008 has no consumer today.** §5 and §8 both
+   flag dynamic dispatch through `dyn Aspect` as out of scope for the `Drop`
+   required-field-set computation "while RFC-0008 stays deferred," but nothing links
+   the two documents. If RFC-0008 is later implemented, nothing in either RFC would
+   surface that this RFC's §5 soundness story needs re-examining. Worth a
+   cross-reference from RFC-0008's own eventual implementation checklist, once one
+   exists, so this isn't rediscovered from scratch.
 
 ---
 
@@ -543,10 +633,14 @@ situation.*
 - RFC-0120 (Named Records, under review) — tier 3, the opt-in `record` kind this RFC's §3
   reconciles with rather than replaces
 - RFC-0121 (Open Rows, under review) §3 — resolves Open Question 4 (2026-08-25):
-  brand-keyed impls take priority over row-conditional ones
-- RFC-0071 (Ownership and Move Semantics, `3-integrated`, partial-move tracking not yet
-  implemented) — §7's blanket partial-move-with-`Drop` ban this RFC's §5 supersedes;
-  also the move-tracking foundation §2 and §8 depend on
+  brand-keyed impls take priority over row-conditional ones; that resolution's own
+  soundness is contingent on RFC-0121 itself being accepted (see Open Question 4's
+  caveat, added 2026-08-25)
+- RFC-0071 (Ownership and Move Semantics, `3-integrated`) — §7's blanket
+  partial-move-with-`Drop` ban this RFC's §5 supersedes *in design only*; §7's ban is
+  real, tested, `--move-check`-enforced behavior today (move-check itself is
+  implemented, gated off by default — corrected 2026-08-25, see §8); also the
+  move-tracking foundation §2 and §8 depend on
 - RFC-0114 (Constructor Aspect and Canonical Construction, draft) — the fix for §6's
   constructor-invariant bypass risk, a dependency for widening specifically
 - RFC-0089 / RFC-0091 (Linear Types / Linear Records, draft, deferred) — per-field
@@ -556,11 +650,36 @@ situation.*
 
 ## Decision
 
-**Outcome:** Accepted (2026-08-25). Every `struct` is `(brand, row)`; narrowing is a
-type-level consequence of partial move (RFC-0071) and of explicit projection
-(RFC-0116 §4); brand eligibility for structural matching stays exactly as opt-in as
-RFC-0120's three-tier model already has it, unaffected by row content at any width.
-All four Open Questions closed or determined not to block acceptance (see that
-section). RFC-0117, RFC-0119, RFC-0120, and RFC-0071 §7 each need the corresponding
-revision named in "Relationship to existing RFCs."
+**Outcome:** **Reverted to `1-under-review`, 2026-08-25, the same day it was accepted.**
+A follow-up review found the References section's own RFC-0071 status line
+contradicted §8's same-day correction (fixed in this revision — a text bug, not a
+design gap on its own), and two genuine design gaps not covered by the four Open
+Questions this RFC had asked itself: §6's widening semantics are unspecified
+operationally (Open Question 5), and §7's generic-struct treatment doesn't address a
+`Drop` impl conditional on a generic parameter's own `Drop`-ness (Open Question 6).
+`PROCESS.md`'s bar for `2-accepted` is "no open questions block it"; that was true of
+the four questions "Open Questions" asked and not of the RFC.
+
+**This is the corpus's fourth `2-accepted` → `1-under-review` reversion** (after
+RFC-0099, RFC-0100, RFC-0122), continuing exactly what `OBJECTIVES.md` Trigger 14
+named as its falsifier at the third: *"If a third RFC follows the same path, that's
+evidence `2-accepted`'s own bar is being called too early in practice."* A fourth
+occurrence is not new evidence for the same conclusion so much as confirmation it
+wasn't a one-off. Recorded in `OBJECTIVES.md` as well as here.
+
+**Superseded acceptance rationale, kept for the record:** *Accepted 2026-08-25.* Every
+`struct` is `(brand, row)`; narrowing is a type-level consequence of partial move
+(RFC-0071) and of explicit projection (RFC-0116 §4); brand eligibility for structural
+matching stays exactly as opt-in as RFC-0120's three-tier model already has it,
+unaffected by row content at any width. All four Open Questions closed or determined
+not to block acceptance (see that section). RFC-0117, RFC-0119, RFC-0120, and
+RFC-0071 §7 each need the corresponding revision named in "Relationship to existing
+RFCs."
+
+**What acceptance did not claim, and still doesn't.** No part of this RFC ships in
+v0.13.0 by virtue of the (reverted) acceptance alone. metel-core#836, the
+implementation issue filed against it, is now blocked pending resettlement of Open
+Questions 5 and 6 — its own "implementation-ready, no outstanding blocker" status line
+no longer holds and needs updating.
+
 **Target:** v0.13.0 (tracked by metel-core#827)
