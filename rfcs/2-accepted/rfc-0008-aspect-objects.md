@@ -28,14 +28,14 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/837'
 > document, cleanly, since it needed a real, separate dependency this RFC's own core
 > doesn't share.
 
-> **Remaining Unresolved Questions answered, 2026-08-25 — proposed, not yet
-> reviewed.** UQ1/UQ2 (multi-aspect bounds, including `dyn Aspect + Send`): resolved
-> to at most one method-bearing aspect plus any number of marker aspects — see §9.
-> UQ4 (vtable caching): resolved for the current interpreter, piggybacking on
-> RFC-0060's already-`4-implemented` coherence pass — see §9. Both are genuine design
-> decisions, not restatements, and haven't had an adversarial pass; flagged rather
-> than silently folded into the accepted design, matching how the Stage A/B split
-> itself was flagged when it landed.
+> **Remaining Unresolved Questions answered and confirmed, 2026-08-25.** UQ1/UQ2
+> (multi-aspect bounds, including `dyn Aspect + Send`): resolved to at most one
+> method-bearing aspect plus any number of marker aspects — see §9. UQ4 (vtable
+> caching): resolved for the current interpreter, piggybacking on RFC-0060's
+> already-`4-implemented` coherence pass — see §9. Both were proposed and flagged as
+> unreviewed when first written, then confirmed the same day (see §9's own alternatives
+> analysis for UQ1 — accepting general multi-aspect bounds unconditionally was
+> evaluated and rejected on cost, not left unconsidered).
 
 ## Summary
 
@@ -290,7 +290,7 @@ accepting `&dyn Aspect` has a single compiled form that dispatches at runtime.
    need to contain entries for both aspects. The syntax and vtable layout for
    multi-aspect objects is non-trivial.~~
 
-   **Resolved 2026-08-25 — proposed, not yet reviewed.** Supported in exactly one
+   **Resolved and confirmed 2026-08-25.** Supported in exactly one
    shape: **at most one method-bearing ("principal") aspect, plus any number of
    marker aspects**, written `dyn Aspect + Marker1 + Marker2 + ...`. A **marker
    aspect** is any object-safe aspect declaring zero methods — mechanically
@@ -319,6 +319,55 @@ accepting `&dyn Aspect` has a single compiled form that dispatches at runtime.
      (Multi-Aspect Extend Blocks with Shared Bodies, `0-draft`), a separate,
      already-tracked question this resolution doesn't reopen.
 
+   **Cost of accepting general multi-aspect bounds unconditionally, evaluated and
+   rejected 2026-08-25.** A fat pointer today is 2 words (data + one vtable, §2).
+   Calling methods from two method-bearing aspects through one pointer needs either
+   a second vtable pointer or a vtable that covers both aspects at once — no third
+   option. Two implementation strategies exist, and both cost more than this
+   resolution's restriction:
+
+   - **One combined vtable per `(T, {aspect set})`.** Keeps the pointer at 2 words,
+     but: vtable generation is no longer one-per-`(T, Aspect)`, it's one per-`(T,
+     specific *set* of aspects)` — a codebase using `dyn A+B`, `dyn A+C`, `dyn
+     A+B+C` for the same `T` needs three separate combined vtables, not one reused
+     three ways, and nothing bounds how long a `+`-list can be. `dyn A+B` and `dyn
+     B+A` must be the same type, requiring a canonicalization step (sort/intern the
+     aspect set) before vtable lookup — new compiler machinery, not an extension of
+     the existing one. Widening breaks: narrowing `dyn A+B+C` to `dyn A+B` is free
+     under the accepted resolution (same representation, drop a static check); under
+     combined vtables it isn't, unless the compiler also generated the `{A,B}`
+     vtable separately, or guarantees every subset-vtable is a layout prefix of
+     every superset-vtable that contains it — a real constraint on vtable layout
+     that doesn't exist today and would need its own design and enforcement. And a
+     method-name collision across the combined set (`A` and `B` both declaring
+     `describe`) needs a genuinely new disambiguation rule for `dyn` dispatch —
+     Metel's coherence pass already detects this collision for *static* dispatch
+     (`CollectedImpl.method_names`, "the cross-aspect ambiguous-method check," issue
+     #272), but "which vtable slot does a dynamic call resolve to" is unanswered by
+     that check and unaddressed by §3 as written.
+   - **The pointer itself grows** (`data + vtable_A + vtable_B + ...`, N+1 words).
+     Avoids combined-vtable generation — each aspect's already-existing
+     single-aspect vtable is reused as-is — but breaks §2's flat statement that fat
+     pointers are always 2 words: `dyn Aspect` becomes variably-sized *depending on
+     its own bound list*, and every piece of generic code passing a `dyn`-typed
+     value around has to become generic over pointer width too. Same method-name
+     collision problem, unresolved by the representation choice.
+
+   **Neither has a working reference implementation to check the design against.**
+   Rust deliberately doesn't support this — `dyn Display + Debug` doesn't compile —
+   for close to these exact reasons, and multi-principal trait objects have stayed
+   unstable there for years specifically because the vtable-layout questions above
+   don't have a settled answer even in the language most likely to have solved them
+   already. Accepting it unconditionally in Metel would not be reproducing a proven
+   design the way the restriction above does (it's Rust's own answer); it would be
+   original design work with no precedent to verify against. If this is ever revisited,
+   the combined-vtable strategy is the less costly of the two — it preserves the
+   2-word invariant, which matters more broadly than its generation cost does, and
+   that cost is bounded by what a program actually coerces, the same "only what's
+   used gets generated" property vtables already have; the growing-pointer strategy's
+   variable width would leak into generic-code ABI in a way that's much harder to
+   contain later.
+
 2. ~~**`dyn Aspect + Send`.** Whether marker aspects (`Send`, `Sync`) may appear in
    `dyn` bounds — e.g., `dyn Display + Send` to express a sendable aspect
    object — is deferred to UQ1.~~
@@ -337,8 +386,8 @@ accepting `&dyn Aspect` has a single compiled form that dispatches at runtime.
    and how they interact with separate compilation, is an implementation question
    deferred to the compiler RFC.~~
 
-   **Resolved 2026-08-25 for the current interpreter — proposed, not yet
-   reviewed; the separately-compiled-backend case stays genuinely deferred.**
+   **Resolved and confirmed 2026-08-25 for the current interpreter; the
+   separately-compiled-backend case stays genuinely deferred.**
    Vtable generation is lazy and memoized, keyed by `(concrete type's SymbolId,
    aspect's SymbolId)` — the same identity pair RFC-0060's coherence pass
    (`metel-frontend/src/coherence.rs`, `4-implemented`) already groups impls by
