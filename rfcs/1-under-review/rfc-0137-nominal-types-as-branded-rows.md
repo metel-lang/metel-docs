@@ -4,7 +4,7 @@ title: "Nominal Types as Branded Rows"
 date: '2026-08-24'
 status: under-review
 target:
-updated: '2026-08-24'
+updated: '2026-08-25'
 tracking: 'https://github.com/metel-lang/metel-core/issues/827'
 ---
 
@@ -42,6 +42,12 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/827'
 > starting point.
 
 > **Status — under review (2026-08-24).** Committed to v0.13.0 (issue #827, milestoned 2026-08-24); discharges RFC-0117 §3's own dependency and answers RFC-0120's Open Question 5
+>
+> **Updated 2026-08-25.** Added a worked example to §3 (a `struct` fully projected next
+> to a same-shaped `record`) after a review question asked whether projecting every
+> field of an ordinary struct earns it a named record's structural-matching eligibility.
+> It doesn't, by design — the example makes the divergence concrete rather than leaving
+> §3's prose claim untested against a reader's own attempt to break it.
 
 ## Summary
 
@@ -160,6 +166,41 @@ This is a restatement of RFC-0120's existing three-tier table, not a fourth tier
 changes is that tier 1 is described as "brand not visible to matching" rather than "no
 row at all." A plain struct's *mechanism* for representing its row becomes uniform with
 every other tier; its *eligibility* does not move.
+
+### Worked example: full-width projection does not earn what `record` earns
+
+The property above is easy to state and easy to doubt — "a residual's row content is
+irrelevant to eligibility" sounds like it should have an exception at the point where
+the residual's row is *complete*. It doesn't. Same fields, same row, one nominal type
+declared `struct` and one declared `record` (RFC-0120):
+
+```metel
+struct Handle { fd: i64, name: String }
+record NamedHandle { fd: i64, name: String }   // RFC-0120 — different declaration, different brand
+
+fun wants_a_record<record T: { fd: i64, name: String, .. }>(t: T) -> i64 { t.fd }
+
+fun main() {
+    let h = Handle { fd = 3, name = "x" };
+    let r = NamedHandle { fd = 3, name = "x" };
+
+    wants_a_record(r);            // OK — NamedHandle opted in at declaration
+    wants_a_record(h.{ fd, name }); // REJECTED — every field named, still not a record
+}
+```
+
+`h.{ fd, name }` names every field `Handle` has. Its row, at that point, is *identical*
+in content to `r`'s. It is still rejected, for exactly the reason §"Resolution" states:
+eligibility was fixed the moment `struct Handle` was declared, not `record NamedHandle`,
+and projection — at any width, including full width — narrows or restates a row without
+ever touching that flag. The two values are structurally indistinguishable and nominally
+worlds apart; that gap is the entire point of RFC-0120's `record` keyword being an
+explicit, one-way opt-in — RFC-0120 itself states plainly that "the upgrade is a
+one-way door," `struct`-to-`record` only, precisely because declaring `record`
+publishes the type's fields as public interface in a way a `struct` never does —
+rather than something reachable by manipulating an ordinary struct's projection
+syntax. If `h.{ fd, name }` satisfied the bound, declaring `record` would buy nothing
+a `struct` didn't already have for free.
 
 ## 4. Passing a residual to a function
 
