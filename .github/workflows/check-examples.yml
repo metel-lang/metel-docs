@@ -3,12 +3,21 @@ name: Check doc examples
 # Moved here from metel-docs-internal (ADR-0051 step 3) -- this repo also
 # runs check-mdx.yml and rfc-check.yml, ported the same way. Runs the checker
 # metel-core builds (tools/check_doc_examples.py) against the *current* docs
-# content on every PR, using the latest published metel-core release binary
-# -- so a broken
-# example is caught the moment it's introduced here, rather than waiting for
-# metel-core's `docs` submodule pointer to next move and pick it up. Does not
-# check README.md; that file lives in metel-core, and its own `doc-examples`
-# CI job covers it.
+# content on every PR -- so a broken example is caught the moment it's
+# introduced here, rather than waiting for metel-core's `docs` submodule
+# pointer to next move and pick it up. Does not check README.md; that file
+# lives in metel-core, and its own `doc-examples` CI job covers it.
+#
+# metel-core#696: downloads metel-core's rolling `develop-latest`
+# pre-release, not the latest *stable* release. AGENTS.md's Branch Workflow
+# requires documenting a language-visible change the moment it lands on
+# `develop`; checking against the last stable release meant a feature
+# documented the day it merged couldn't be checked for real until the next
+# release shipped, with no way to express "valid on develop, not yet
+# released" short of a permanent skip/expect-fail marker. metel-core's own
+# `publish-develop-binary` job (ci.yml) rebuilds and republishes
+# `develop-latest` on every push to `develop`, so this job's own CI cost is
+# unchanged -- still a download, not a build.
 #
 # The paths below are the *directories* getting-started and reference, not
 # their `tutorials`/`spec` subdirectories, plus `blog`. The narrower paths
@@ -38,14 +47,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Both the release binary asset and tools/check_doc_examples.py are
-      # public reads on metel-core -- the built-in GITHUB_TOKEN covers both,
-      # no new secret to provision.
-      - name: Download the latest metel-core release binary
+      # Both the develop-latest pre-release asset and tools/check_doc_examples.py
+      # are public reads on metel-core -- the built-in GITHUB_TOKEN covers
+      # both, no new secret to provision. Explicit `develop-latest` tag,
+      # not the bare form -- `gh release download` with no tag argument
+      # resolves to the latest *stable, non-prerelease* release and would
+      # silently skip this one.
+      - name: Download metel-core's develop-latest binary
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download --repo metel-lang/metel-core --pattern 'metel-linux-x86_64' --output metel
+          gh release download develop-latest --repo metel-lang/metel-core --pattern 'metel-linux-x86_64' --output metel
           chmod +x metel
 
       # Fetched fresh every run rather than vendored, so this job always
