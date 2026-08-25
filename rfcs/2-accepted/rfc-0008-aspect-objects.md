@@ -2,6 +2,7 @@
 id: rfc-0008
 title: "Aspect Objects"
 date: '2026-07-01'
+tracking: 'https://github.com/metel-lang/metel-core/issues/837'
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence, `4-implemented`).
@@ -314,4 +315,4 @@ depends on RFC-0063). Nothing about the accepted design changed in the split —
 section already described `dyn Aspect` against the interpreter's existing implicit
 allocation; only the region-tagged extension moved out, since it needed a real,
 separate dependency this RFC's own core doesn't share.
-**Target:** Implementable now — see the implementation-tracking issue.
+**Target:** metel-core#837.
