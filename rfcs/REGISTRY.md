@@ -87,7 +87,7 @@ the curated thematic map.
 - **RFC-0073** — AutoAlloc (`2-accepted` ; rfcs/2-accepted/rfc-0073-auto-alloc.md ; date 2026-06-29 ; updated 2026-07-10)
 - **RFC-0077** — Allocator Generics (`2-accepted` ; rfcs/2-accepted/rfc-0077-allocator-generics.md ; date 2026-06-29 ; updated 2026-07-10)
 - **RFC-0130** — extends Aspect: Renaming impl Aspect for Consistency with extend (`2-accepted` ; rfcs/2-accepted/rfc-0130-extends-aspect-renaming-impl-aspect-for-consistency-with-extend.md ; date 2026-08-06 ; updated 2026-08-23)
-- **RFC-0137** — Nominal Types as Branded Rows (`2-accepted` ; rfcs/2-accepted/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-25)
+- **RFC-0137** — Nominal Types as Branded Rows (`1-under-review` ; rfcs/1-under-review/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-25)
 
 ## Integrated (1)
 
