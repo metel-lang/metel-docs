@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-08-24'
+generated_on: '2026-08-25'
 ---
 
 # RFC Registry
@@ -17,7 +17,7 @@ the curated thematic map.
 
 ## Draft (34)
 
-- **RFC-0003** — Concurrency Model (`0-draft` ; rfcs/0-draft/rfc-0003-concurrency-model.md ; date 2026-05-20)
+- **RFC-0003** — Concurrency Model (`0-draft` ; rfcs/0-draft/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-24)
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
 - **RFC-0011** — Operator Overloading Aspects (`0-draft` ; rfcs/0-draft/rfc-0011-operator-overloading.md ; date 2026-05-21)
