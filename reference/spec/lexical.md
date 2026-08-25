@@ -133,6 +133,51 @@ The expression inside `${…}` may be any expression whose type implements the `
 let x = "${if (true) { "yes" } else { "no" }}";
 ```
 
+**"Any expression" is deliberate, and includes control flow, closures, and side effects.**
+Because `${…}` re-parses its content as an ordinary expression, and `if`/`match`/`loop` and
+immediately-invoked closures are all ordinary expressions, a `${…}` placeholder is not
+limited to "format an already-computed value" — a loop, a mutation, or a call with an
+observable effect can run as a side effect of constructing the string. This is a deliberate
+design choice ([metel-core#704](https://github.com/metel-lang/metel-core/issues/704)),
+not an oversight: restricting `${…}` to calls only would break idiomatic usage this corpus
+already depends on (the `if`/`else` example above), for a purity guarantee the rest of the
+language does not otherwise make today. This puts Metel's interpolation with Kotlin's,
+Swift's, and C#'s full-expression model rather than Rust's macro-based one — Rust needs
+`format!` to be a macro because it has no string-literal grammar rule of its own to attach
+interpolation to; Metel does, so no macro workaround is needed.
+
+> This is not necessarily permanent. Once an effect system exists, whether an
+> effect-performing call should be allowed inside `${…}` is an open design question —
+> not a soundness one, since effect-row inference sees the fully lowered form regardless
+> of whether the effectful call sits inside a literal or not, but a discoverability one: a
+> `${…}` site reads as data, and nothing marks it as a place a computation can suspend and
+> hand control to a handler. Two narrower restrictions (comptime-only, place-expressions-only)
+> are already ruled out against the current corpus; an effect-axis restriction specifically —
+> `${…}` may not perform an effect — is the only one that would remain viable, and it is
+> only expressible once an effect system lands, so today's full-expression scope holds by
+> default until then. See `algebraic-effects.md` §15 and Open Question 7 (active design
+> report, not yet an RFC).
+
+```metel
+fun side_effect() -> i64 {
+    println("side effect!");
+    7
+}
+
+fun main() {
+    println("start ${side_effect()} end");
+}
+// prints:
+//   side effect!
+//   start 7 end
+```
+
+The call inside `${…}` runs — and its own `println` fires — while the outer string is still
+being constructed, before `println("start ${side_effect()} end")`'s own argument is even
+fully evaluated. Per the Dynamic Semantics rules below, each placeholder's expression is
+evaluated exactly once, in source order, with the same evaluation semantics as anywhere
+else `expr` is legal.
+
 **String concatenation.** Two `String` values may be joined with `+`:
 
 ```metel
