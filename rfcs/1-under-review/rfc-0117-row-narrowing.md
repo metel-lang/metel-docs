@@ -84,7 +84,7 @@ accepts is a genuinely different capability and belongs to RFC-0121.
   move — as opposed to a record narrowing to a record — depends on nominal types carrying
   rows at all, which is RFC-0120's question and, in its strong form, an open exploration
   (`reports/substructural-types/nominal-types-as-branded-rows.md`).~~ **Dependency
-  discharged, 2026-08-25 — RFC-0137 (Nominal Types as Branded Rows, then accepted)
+  discharged, 2026-08-25 — RFC-0137 (Nominal Types as Branded Rows)
   answers this directly:** every `struct` carries `(brand, row)` unconditionally, and
   narrows to `Handle.{ fd }` on partial move by exactly this RFC's own mechanism, at the
   same brand. This RFC's own scope should now be understood as extending to nominal
