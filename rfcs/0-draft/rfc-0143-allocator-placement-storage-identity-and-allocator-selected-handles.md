@@ -13,9 +13,10 @@ target:
 >
 > **Working syntax premise.** RFC-0093 and RFC-0095 currently spell metadata with `#`;
 > they originally used `@` and changed because the accepted allocator cluster already
-> claimed it. This RFC assumes that removing `@` from allocation permits those RFCs to
-> restore it. It does not amend them by itself; their matching update must occur before
-> this RFC can leave draft.
+> claimed it. This RFC instead gives the shared sigil directional roles: prefix `@`
+> attaches metadata to what follows, while postfix `@` attaches storage identity to the
+> type that precedes it. It does not amend RFC-0093/0095 by itself; their matching update
+> must occur before this RFC can leave draft.
 
 ## Summary
 
@@ -24,29 +25,29 @@ coherent proposal written against the language that exists now. It preserves the
 cluster's central result: a concrete allocator *instance*, not merely its type, has a
 static identity that can appear in types and prove scope, disjointness, and
 sendability properties. It no longer assumes that every allocator produces one
-affine owning-pointer shape, and it no longer uses `@`, under the working premise that
-the comptime/metadata proposal will restore that spelling.
+affine owning-pointer shape. It moves allocation out of the prefix-`@` channel, under
+the working premise that the comptime/metadata proposal will restore that spelling.
 
 The proposed explicit surface is:
 
 ```metel
-fun build<T, A: Alloc>(alloc arena: A, value: T) -> at arena T {
+fun build<T, A: Alloc>(alloc arena: A, value: T) -> T@arena {
     place arena value
 }
 
-fun preserve<storage s, T>(value: at s T) -> at s T {
+fun preserve<storage s, T>(value: T@s) -> T@s {
     value
 }
 ```
 
 `alloc arena: A` binds an ordinary runtime allocator value and its static storage
-identity together. `place arena expr` asks that allocator to place a value. `at arena
-T` is the allocator-selected handle type produced by that operation; it is a type
+identity together. `place arena expr` asks that allocator to place a value. `T@arena`
+is the allocator-selected handle type produced by that operation; it is a type
 projection, not a promise that the result is affine, uniquely owned, pointer-shaped,
 or movable-out. `<storage s>` is the compile-time-only preservation form: it can name
 an already-established placement but grants no capability to allocate.
 
-For `Heap`, `LocalHeap`, `BumpAlloc`, and `AutoAlloc`, `at a T` has the accepted
+For `Heap`, `LocalHeap`, `BumpAlloc`, and `AutoAlloc`, `T@a` has the accepted
 cluster's unique affine semantics. A tracing allocator may instead select a copyable
 `Gc` handle, and another allocator may select another family, without changing the
 placement expression. Handle capabilities, rather than the fact of allocation alone,
@@ -76,8 +77,9 @@ The allocator cluster uses it in types, expressions, parameter declarations, gen
 declarations, closure parameters, call arguments, and elided forms. The grammars can
 be disambiguated, but two unrelated sublanguages would compete for the language's
 most visually prominent marker. Removing it here dissolves the stated reason for that
-change; a companion revision may restore metadata/comptime `@` without ambiguity over
-which cluster moved first.
+change. Postfix placement dissolves the specific prefix collision: a companion
+revision may restore metadata/comptime `@` while the direction of the sigil identifies
+which attachment is meant.
 
 Second, RFC-0076's brand work and RFC-0137's branded-row model make static identity a
 general language concern. An allocator instance still needs an identity, but it no
@@ -119,7 +121,7 @@ They are the inputs to this document, not accidental duplicates.
 |---|---|
 | Allocators are ordinary runtime values implementing `Alloc` | Preserved (§3) |
 | Each allocator instance has a distinct static identity | Preserved (§2) |
-| `@a T` is one universal affine owning-pointer type | Replaced by allocator-selected `at a T` (§4) |
+| `@a T` is one universal affine owning-pointer type | Replaced by allocator-selected `T@a` (§4) |
 | `@a expr` selects explicit placement | Replaced by `place a expr` (§5) |
 | `(@a: A)` binds capability and tag together | Replaced by `alloc a: A` (§2.2) |
 | `<@a>` relays a tag without a runtime handle | Replaced by `<storage a>` (§2.3) |
@@ -173,11 +175,11 @@ identity. Two different `BumpAlloc` instances therefore remain distinct:
 let a = BumpAlloc::new();
 let b = BumpAlloc::new();
 
-let x: at a Node = place a Node { value = 1 };
-let y: at b Node = place b Node { value = 2 };
+let x: Node@a = place a Node { value = 1 };
+let y: Node@b = place b Node { value = 2 };
 ```
 
-`at a Node` and `at b Node` are not equal merely because both allocators have type
+`Node@a` and `Node@b` are not equal merely because both allocators have type
 `BumpAlloc`. The identities are generative, cannot be forged from text, and cannot be
 compared or converted at runtime. They are erased when no selected handle
 representation needs them at runtime.
@@ -191,13 +193,13 @@ In a parameter list, the contextual modifier `alloc` states that the binding is 
 an ordinary value and the source of a storage identity:
 
 ```metel
-fun build<T, A: Alloc>(alloc a: A, value: T) -> at a T {
+fun build<T, A: Alloc>(alloc a: A, value: T) -> T@a {
     place a value
 }
 ```
 
 Within the body, `a` may be used as an ordinary value and through `Alloc` methods. In
-`at a T`, the same spelling denotes its static identity. The caller passes an ordinary
+`T@a`, the same spelling denotes its static identity. The caller passes an ordinary
 allocator value; the callee's identity is substituted with the identity of that
 argument, rather than freshly generated on every call.
 
@@ -219,7 +221,7 @@ changing an existing function's type.
 Code that only preserves a placement does not need the runtime allocator:
 
 ```metel
-fun identity<storage s, T>(value: at s T) -> at s T {
+fun identity<storage s, T>(value: T@s) -> T@s {
     value
 }
 ```
@@ -251,10 +253,10 @@ aspect Alloc {
 `Handle<T>` is a generic associated type. It describes the ownership and runtime
 representation family selected by an allocator kind. The compiler additionally
 indexes each produced handle by the identity of the allocator binding used at the
-placement site; `at a T` is the surface projection of that complete type.
+placement site; `T@a` is the surface projection of that complete type.
 
 `AllocationError = !` declares placement infallible. The compiler collapses
-`Result<at a T, !>` to `at a T`, preserving RFC-0063's rule.
+`Result<T@a, !>` to `T@a`, preserving RFC-0063's rule.
 
 `place a expr` is a language operation governed by `Alloc`, not specified as a simple
 method desugaring. A method-only desugaring cannot express the binding identity in the
@@ -280,9 +282,9 @@ The standard unique families support shared and exclusive borrowing, transparent
 field/method access, affine move tracking, and allocator-dependent extraction. `Gc`
 handles support shared access and copying but do not become affine merely because they
 came from `place`. Generic code requiring an operation must state the corresponding
-handle/aspect bound or operate only parametrically on `at s T`.
+handle/aspect bound or operate only parametrically on `T@s`.
 
-For the standard unique families, `at a T: Send` exactly when the selected handle is
+For the standard unique families, `T@a: Send` exactly when the selected handle is
 sendable, the allocator identity may cross the boundary, and `T: Send`. `Heap` meets
 the allocator condition; `LocalHeap`, `BumpAlloc`, and `AutoAlloc` do not. A custom
 family's `Send`/`Sync` rules are structural aspect rules, not a second annotation on
@@ -307,15 +309,15 @@ built above them.
 
 The exact user-authorable spelling of these raw operations depends on RFC-0026's
 unsafe primitive layer. That dependency blocks custom allocator implementation, not
-the static meaning of `at`/`place` or use of compiler-provided standard allocators.
+the static meaning of postfix `@`/`place` or use of compiler-provided standard allocators.
 Unlike RFC-0063, this document nevertheless specifies the required capability now, so
 RFC-0133 has a concrete allocator contract to depend on rather than an unnamed gap.
 
 ---
 
-## 4. Placement types: `at a T`
+## 4. Placement types: `T@a`
 
-`at a T` is the type produced by placing a `T` in allocator `a`. It combines:
+`T@a` is the type produced by placing a `T` in allocator `a`. It combines:
 
 - `a`'s rigid storage identity;
 - the allocator kind's `Handle<T>` family;
@@ -325,9 +327,9 @@ It is not a universal runtime wrapper. The compiler normalizes it after the allo
 kind is known:
 
 ```text
-at Heap T       -> unique heap handle carrying Heap identity
-at arena T      -> unique arena handle carrying arena identity
-at global_gc T  -> copyable traced handle carrying GlobalGc identity
+T@Heap       -> unique heap handle carrying Heap identity
+T@arena      -> unique arena handle carrying arena identity
+T@global_gc  -> copyable traced handle carrying GlobalGc identity
 ```
 
 The source projection remains useful in generic signatures because it says exactly
@@ -336,7 +338,7 @@ or hard-coding its representation.
 
 ### 4.1 Same type, different instances
 
-`at a T` and `at b T` are distinct when `a` and `b` are distinct storage identities.
+`T@a` and `T@b` are distinct when `a` and `b` are distinct storage identities.
 For storage families that prohibit cross-arena references, this is a static
 disjointness witness. A manual `a.collect()` may therefore collect only `a`'s traced
 arena without scanning `b`, subject to RFC-0139's root and inter-arena-edge rules.
@@ -347,12 +349,46 @@ The storage identity remains part of the static type for as long as the handle i
 live. It is not silently erased on field storage, argument passing, or return. Explicit
 extraction or an allocator-family-specific erasure operation is required to remove it.
 
-### 4.3 Syntax category
+### 4.3 Syntax category and direction
 
-`at` is contextual in this proposal. It starts a placement type only where a type may
-begin and when followed by a storage identity and another type. It does not reserve
-ordinary identifiers containing `at`, conflict with metadata `@name`, or consume the
-array, generic, or lifetime-anchor channels.
+Postfix `@` is accepted only after a complete type and is followed by one storage
+identity name. Prefix `@` remains available to metadata/comptime. The position makes
+the attachment target explicit:
+
+```metel
+@derive(Clone)             // metadata attaches to the following declaration
+struct Node<storage a> {
+    next: Perhaps<Node@a>, // storage identity attaches to the preceding type
+}
+```
+
+Storage identities are binding names such as `a`, `Heap`, or `LocalHeap`, not arbitrary
+field-access expressions. This keeps `T@a.field` unambiguous: it parses as `(T@a).field`
+where such a type member operation is legal, never as `T@(a.field)`.
+
+Whitespace is not significant, but the formatter emits `T@a`, with no spaces, so the
+placement reads as one qualified type. Metadata remains visually prefix-shaped:
+`@derive(Clone)` rather than `@ derive(Clone)`.
+
+### 4.4 Precedence, references, and nesting
+
+Postfix placement binds to the preceding type before reference prefixes are applied:
+
+```metel
+&Node@a       == &(Node@a)
+&var Node@a   == &var (Node@a)
+(&Node)@a     // a reference value itself placed in a
+```
+
+Chained postfix placement is legal but parentheses are required because visual order
+is the reverse of the old prefix form:
+
+```metel
+(Node@inner)@outer
+```
+
+This is an outer placement containing a handle into `inner`. Bare `Node@inner@outer`
+is rejected rather than assigned an associativity readers must remember.
 
 ---
 
@@ -362,7 +398,7 @@ array, generic, or lifetime-anchor channels.
 value. For `expr: T`, its type is:
 
 ```text
-Result<at a T, A::AllocationError>
+Result<T@a, A::AllocationError>
 ```
 
 with the `!` collapse from §3.1. If evaluation of `expr` fails or transfers control,
@@ -379,7 +415,7 @@ let fallible = place pool Node { value = 2 }?;
 `Heap` and `LocalHeap` are always nameable:
 
 ```metel
-let durable: at Heap Node = place Heap Node { value = 1 };
+let durable: Node@Heap = place Heap Node { value = 1 };
 ```
 
 They enter an elision candidate set only when explicitly provided as a capability in
@@ -394,8 +430,8 @@ Multiple allocator parameters remain ordinary ordered parameters:
 fun transfer<T, A: Alloc, B: Alloc>(
     alloc src: A,
     alloc dst: B,
-    value: at src T,
-) -> at dst T {
+    value: T@src,
+) -> T@dst {
     place dst (value: T)
 }
 ```
@@ -407,12 +443,12 @@ The destination must be explicit when more than one compatible allocator is in s
 At a `let` binding only, an expected placement type may supply the operation:
 
 ```metel
-let node: at arena Node = Node { value = 1 };
+let node: Node@arena = Node { value = 1 };
 ```
 
 This is equivalent to `let node = place arena Node { value = 1 };`. Nested expressions
 and ordinary function arguments never allocate merely because an expected type is
-`at a T`; they require `place` or an explicit binding. This preserves the old
+`T@a`; they require `place` or an explicit binding. This preserves the old
 cluster's storage-transparency boundary.
 
 ---
@@ -483,12 +519,12 @@ Both obey the selected handle family's extraction capability and the rules above
 
 ### 7.5 No hidden extraction across calls
 
-Given `consume(value: Node)`, `consume(ptr)` is a type error when `ptr: at a Node`.
+Given `consume(value: Node)`, `consume(ptr)` is a type error when `ptr: Node@a`.
 The caller must write `consume(ptr: Node)` or bind an extracted `Node` first. A
 function that only relays placement instead writes:
 
 ```metel
-fun consume<storage s>(value: at s Node) -> at s Node { value }
+fun consume<storage s>(value: Node@s) -> Node@s { value }
 ```
 
 This keeps callability from depending invisibly on the caller's allocator and drop
@@ -500,7 +536,7 @@ When `T: Clone`, code may clone through a borrowed pointee and place the result 
 chosen destination:
 
 ```metel
-let copy: at Heap Config = place Heap src.clone();
+let copy: Config@Heap = place Heap src.clone();
 ```
 
 The source remains live. A future convenience such as `clone_into` is a standard
@@ -519,12 +555,14 @@ an allocator.
 When exactly one compatible allocator capability is in scope:
 
 ```metel
-fun build(alloc arena: BumpAlloc, value: Node) -> at Node {
+fun build(alloc arena: BumpAlloc, value: Node) -> Node@_ {
     place value
 }
 ```
 
-The return type means `at arena Node`; the body means `place arena value`.
+The return type means `Node@arena`; the body means `place arena value`. The `_` is
+required: bare trailing `Node@` is rejected as incomplete syntax, while plain `Node`
+continues to mean storage-independent ownership.
 Type-directed filtering first uses any concrete required allocator type. If the
 position is generic over `A: Alloc`, every compatible allocator remains a candidate.
 
@@ -546,18 +584,18 @@ Introducing a nested allocator therefore cannot silently retarget existing place
 
 ### 8.3 Storage-only elision
 
-When no runtime allocator capability is in scope, `at T` introduces or propagates an
+When no runtime allocator capability is in scope, `T@_` introduces or propagates an
 elided `<storage s>` identity:
 
 ```metel
-fun identity(value: at Node) -> at Node { value }
+fun identity(value: Node@_) -> Node@_ { value }
 ```
 
 A single input identity propagates to the output. Separate input positions receive
 separate identities unless an explicit `<storage s>` relates them:
 
 ```metel
-fun same<storage s>(x: at s Node, y: at s Node) -> at s Node { x }
+fun same<storage s>(x: Node@s, y: Node@s) -> Node@s { x }
 ```
 
 Elision never produces plain `T` and never performs extraction.
@@ -593,7 +631,7 @@ BumpAlloc::scoped((alloc arena) -> {
 });
 ```
 
-The allocator cannot be destroyed while any `at arena T` handle or derived borrow is
+The allocator cannot be destroyed while any `T@arena` handle or derived borrow is
 live. Variable-scoped construction obeys the same rule at explicit `drop(arena)` and
 at scope exit.
 
@@ -603,7 +641,7 @@ A type that preserves caller-owned storage declares a storage identity explicitl
 
 ```metel
 struct Parser<storage arena> {
-    input: at arena String,
+    input: String@arena,
     pos: u64,
 }
 
@@ -624,7 +662,7 @@ In a struct primary constructor, `alloc` means the value owns the allocator:
 
 ```metel
 struct Cache(alloc arena: BumpAlloc) {
-    entries: at arena HashMap<Key, Value>,
+    entries: HashMap<Key, Value>@arena,
 }
 ```
 
@@ -694,7 +732,7 @@ Multiple external identities are declared independently. Ordinary allocator type
 parameters retain ordinary aspect bounds:
 
 ```metel
-fun copy_into<T: Clone, A: Alloc>(alloc dst: A, value: &T) -> at dst T {
+fun copy_into<T: Clone, A: Alloc>(alloc dst: A, value: &T) -> T@dst {
     place dst value.clone()
 }
 ```
@@ -704,11 +742,11 @@ allocates. The method declares them:
 
 ```metel
 aspect Serialize {
-    fun serialize<A: Alloc>(alloc dst: A, self: &Self) -> at dst Bytes;
+    fun serialize<A: Alloc>(alloc dst: A, self: &Self) -> Bytes@dst;
 }
 
 extend Record: Serialize {
-    fun serialize<A: Alloc>(alloc dst: A, self: &Self) -> at dst Bytes {
+    fun serialize<A: Alloc>(alloc dst: A, self: &Self) -> Bytes@dst {
         place dst Bytes::encode(self)
     }
 }
@@ -750,15 +788,15 @@ policy rather than type-system guarantees.
 
 ### 11.1 Nested placements
 
-`at a T` is well-formed only if every storage identity contained by `T` lives at least
+`T@a` is well-formed only if every storage identity contained by `T` lives at least
 as long as the placement in `a`. Equivalently, for each `b` occurring in `T`, `b`'s
 scope must enclose the live range of the `a` placement.
 
 ```metel
 BumpAlloc::scoped((alloc outer) -> {
     BumpAlloc::scoped((alloc inner) -> {
-        let x: at inner Node = place inner Node { value = 1 };
-        let bad: at outer (at inner Node) = place outer x;
+        let x: Node@inner = place inner Node { value = 1 };
+        let bad: (Node@inner)@outer = place outer x;
         // error: inner may end before the outer placement
     });
 });
@@ -776,7 +814,7 @@ prove insufficient.
 
 ### 11.3 Variance
 
-The standard unique `at a T` family is covariant in a storage scope and in `T`: a
+The standard unique `T@a` family is covariant in a storage scope and in `T`: a
 longer-lived identity may satisfy a shorter guarantee, and structurally longer-lived
 identities inside `T` strengthen the guarantee. `&r var T` remains invariant in `T`
 under RFC-0067.
@@ -793,7 +831,7 @@ variance rules are specified.
 An explicitly placed owned aspect object uses the same projection and operation:
 
 ```metel
-let shape: at arena (dyn Shape) =
+let shape: (dyn Shape)@arena =
     place arena Circle { radius = 5.0 };
 ```
 
@@ -803,7 +841,7 @@ data placement and selected ownership family differ. Borrowed `&dyn Shape` and `
 dyn Shape` are unchanged.
 
 ```metel
-let shapes: List<at arena (dyn Shape)> = List::new();
+let shapes: List<(dyn Shape)@arena> = List::new();
 shapes.push(place arena Circle { radius = 5.0 });
 shapes.push(place arena Rectangle { width = 3.0, height = 4.0 });
 ```
@@ -820,7 +858,7 @@ Diagnostics name source bindings and capabilities rather than exposing compiler-
 brand identifiers:
 
 ```text
-error: value of type `at arena Node` outlives allocator `arena`
+error: value of type `Node@arena` outlives allocator `arena`
   | `arena` is dropped here while `node` is still live
 ```
 
@@ -842,45 +880,59 @@ error: cannot move `Config: Drop` out of bulk allocator `arena`
 
 ## 14. Alternatives considered
 
-### 14.1 Replace `@` with another sigil
+### 14.1 Keep allocation in the prefix-sigil channel
 
-`^a T`, `~a T`, or `$a T` could preserve the accepted grammar mechanically. This is
-the smallest textual change, but it preserves the larger semantic problem: the syntax
-still presents every allocation as one owning-pointer family. It also spends another
-scarce punctuation mark on a subsystem whose concepts now have ordinary names.
+`^a T`, `~a T`, `$a T`, or the original `@a T` could preserve the accepted grammar
+mechanically. This is the smallest textual change, but metadata and placement either
+compete in the same prefix channel or the language spends another scarce punctuation
+mark. Postfix `T@a` retains the compact sigil while separating the grammatical roles.
 
 ### 14.2 `alloc a T` for both type and expression
 
 Using one keyword in both positions most closely mirrors `@a T`/`@a expr`. It becomes
 difficult to distinguish the allocator capability declaration, placement operation,
-and resulting type in dense generic code. `alloc` for the capability binder, `place`
-for the operation, and `at` for the relationship assign each word one role.
+and resulting type in dense generic code. `alloc` names the capability binder,
+`place` names the operation, and postfix `@` compactly names the resulting relationship.
 
-### 14.3 Explicit pointer families only
+### 14.3 Postfix placement expressions
+
+Perfect type/expression symmetry would spell placement itself as `expr@a`:
+
+```metel
+let node: Node@arena = Node { value = 1 }@arena;
+```
+
+This makes `expr@a: T@a` compact, but hides an effectful, fallible operation at the end
+of an arbitrarily large expression and creates a second precedence surface around
+field access and `?`. The primary proposal therefore uses postfix `@` only in types
+and keeps the effect conspicuous as `place a expr`. This is a deliberate loss of the
+old type/expression glyph symmetry, not an omission.
+
+### 14.4 Explicit pointer families only
 
 The language could expose `ArenaBox<T, 'a>`, `HeapBox<T>`, and `Gc<T, 'g>` directly and
 use ordinary `.alloc` calls. This cleanly separates ownership families but loses the
 accepted design's representation-independent statement "preserve exactly the caller's
 storage." Generic code would need higher-kinded type parameters or repeated bounds for
-every family. `at s T` retains that abstraction as a projection while allowing the
+every family. `T@s` retains that abstraction as a projection while allowing the
 normalized family to differ.
 
-### 14.4 Path-dependent types
+### 14.5 Path-dependent types
 
-`a::Pointer<T>` is a compact alternative to `at a T` and naturally suggests instance
+`a::Pointer<T>` is a compact alternative to `T@a` and naturally suggests instance
 identity. It requires general path-dependent associated types, makes an allocator value
 look like a namespace, and leaves the identity-only `<storage s>` case without a
 runtime path. This RFC chooses a narrow placement projection instead of committing the
 whole language to path-dependent members.
 
-### 14.5 Brands written explicitly everywhere
+### 14.6 Brands written explicitly everywhere
 
 An explicit form such as `A::Pointer<T, 'a>` is semantically adequate. It forces users
 to thread allocator type `A`, value `a`, and brand `'a` as three names for one ordinary
 case. `alloc a: A` deliberately binds capability and identity together; the identity
 may lower to the general brand mechanism without exposing that duplication.
 
-### 14.6 Ordinary method calls only
+### 14.7 Ordinary method calls only
 
 `a.alloc(value)` cannot on its own express expected-type-directed aspect-object
 coercion, type-directed placement at bindings, or the identity-indexed result without
@@ -913,10 +965,10 @@ they close when the corresponding RFCs settle.
 
 ### 15.2 Settleable design questions
 
-1. **Surface spelling.** Confirm `alloc a: A`, `at a T`, `place a expr`, and
+1. **Surface spelling.** Confirm `alloc a: A`, `T@a`, `place a expr`, and
    `<storage a>`, or select one of §14's spellings before promotion to under-review.
 2. **Projection normalization.** Decide whether compiler diagnostics normally retain
-   `at a T` or display the allocator's normalized handle family when known.
+   `T@a` or display the allocator's normalized handle family when known.
 3. **Local binding inference.** §2.2 permits a local `let arena = BumpAlloc::new()` to
    introduce identity without `alloc`; confirm that this convenience does not make an
    impl added later alter source meaning.
@@ -941,10 +993,10 @@ Before this RFC may reach `2-accepted`, worked examples must cover at least:
 - ambiguity between outer and inner allocators, with no depth-based shadowing;
 - a struct owning its allocator and rejecting allocation through shared `&self`;
 - `AutoAlloc` selecting two different backing strategies without changing behavior;
-- a `Gc` handle proving `at a T` does not imply affine ownership;
+- a `Gc` handle proving `T@a` does not imply affine ownership;
 - a runtime-sized buffer growing across relocation while initialized elements remain
   owned and dropped exactly once;
-- a heterogeneous `List<at a (dyn Aspect)>`;
+- a heterogeneous `List<(dyn Aspect)@a>`;
 - interaction with context-parameter omission after RFC-0113 settles.
 
 This list is part of the proposal because the previous cluster was internally
