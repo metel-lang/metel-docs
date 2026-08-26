@@ -673,7 +673,7 @@ implementation).
   against both existing fixtures
   (`bare_parameter_blanket_foreign_aspect_is_orphan`,
   `bare_parameter_blanket_local_aspect_permitted`) plus the full suite (546
-  integration + 119 unit tests, `cargo clippy --release --lib -- -W
+  integration + 119 unit tests, `cargo clippy --release --lib — -W
   clippy::pedantic` clean) — zero regressions, since the change only narrows an
   already-`None`-producing path to be explicit rather than changing any outcome.
 - **RFC-0072** *(implemented 2026-07-12, was integrated 2026-07-10)* — Negative Bounds
@@ -802,7 +802,18 @@ implementation).
 
 - **RFC-0004** — `main()` return type — should it return `Result`?
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
-- **RFC-0014** — Panic Recovery.
+- **RFC-0014** — Panic Recovery. General, reactive question: can a running program
+  catch a panic after it fires. See RFC-0142, its proactive sibling.
+- **RFC-0142** — Division by Zero and Checked Arithmetic Ergonomics. Written
+  retroactively 2026-08-25: division/remainder by zero panics unconditionally today
+  (metel-interpreter/src/evaluator/lvalue.rs), never decided by an RFC. Surveys eight
+  languages' prior art and lays out six options (status quo, a Perhaps-returning
+  checked_div, a NonZero<T> wrapper type making division total by construction, a
+  fully Result-returning /, deferring to RFC-0014, or a lint) without pre-selecting
+  one — options-first by design, see its own Decision section. Also records, as a
+  separate already-decided-but-violated question, that integer overflow panics in
+  both debug and release contrary to RFC-0007 D3's release-wraps decision
+  (metel-core#838).
 - **RFC-0015** — Unwrap Syntax — `.yolo()` vs. a keyword (resolved in practice: `.yolo()`
   is already implemented as a method, though as an interpreter special case rather than
   real dispatch — RFC-0079, which formalized this, was refused 2026-07-10 as redundant
