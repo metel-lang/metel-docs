@@ -461,6 +461,21 @@ to match (`rfc-0066-allocated-value-extraction.md`, `rfc-0068-struct-owned-alloc
 plus a few stale cross-reference bugs (a self-contradictory syntax note, a wrong section
 number, a backwards RFC-0067a split direction).
 
+- **RFC-0143** *(draft, opened 2026-08-26)* — Allocator Placement, Storage Identity,
+  and Allocator-Selected Handles — a deliberate consolidated replacement candidate for
+  the accepted-but-unimplemented allocator surface in RFC-0063/0065/0066/0068/0073/0077
+  plus RFC-0141. Preserves instance identity, storage-only preservation, extraction,
+  owned allocators, `AutoAlloc`, generic well-formedness, elision, and explicit `dyn`
+  placement, while reopening the surface under the working proposal to restore `@` to
+  metadata and now that the rest of the language has acquired brands, context
+  parameters, and tracing-GC work.
+  Primary spelling is `alloc a: A` + `at a T` + `place a expr` + `<storage a>`; the
+  semantic change is larger than that spelling: `at a T` projects the handle family
+  selected by `a`, so allocation no longer implies one universal affine pointer shape.
+  Also closes RFC-0133's unnamed allocator-substrate gap at the semantic level by
+  requiring allocate/grow/shrink/release block operations, with their user-authorable
+  unsafe spelling blocked on RFC-0026. The older accepted RFCs remain unchanged and
+  authoritative unless this draft is eventually accepted and supersedes them.
 - **RFC-0063** *(accepted)* — Allocator Handles — the allocator half of the old "region
   handles" premise. Central to the whole cluster.
 - **RFC-0065** *(accepted, amended 2026-07-20)* — Allocator and Lifetime Ergonomics —
