@@ -1,97 +1,13 @@
 {
   "rfc": {
-    "rfc-0023": [
-      "2.2"
-    ],
-    "rfc-0032": [
-      "4",
-      "5",
-      "6",
-      "7"
-    ],
-    "rfc-0034": [
-      "5"
-    ],
-    "rfc-0040": [
-      "7"
-    ],
-    "rfc-0042": [
-      "5"
-    ],
-    "rfc-0106": [
+    "rfc-0137": [
+      "1",
+      "2",
+      "3",
       "4",
       "5",
       "6"
     ]
   },
-  "spec": [
-    "spec.declarations.aspects.bodyless-aspect-declarations.legality-1",
-    "spec.declarations.aspects.default-methods.dynamics-1",
-    "spec.declarations.aspects.default-methods.legality-1",
-    "spec.declarations.aspects.implementing-an-aspect.legality-1",
-    "spec.declarations.aspects.static-dispatch-only.legality-1",
-    "spec.declarations.aspects.the-self-type.legality-1",
-    "spec.declarations.enums.dynamics-1",
-    "spec.declarations.enums.instantiation.legality-1",
-    "spec.declarations.enums.legality-1",
-    "spec.declarations.structs.instantiation-and-field-access.dynamics-2",
-    "spec.declarations.structs.instantiation-and-field-access.legality-2",
-    "spec.declarations.structs.instantiation-and-field-access.legality-3",
-    "spec.declarations.structs.receiver-forms.legality-1",
-    "spec.declarations.variables.immutable-bindings.legality-1",
-    "spec.declarations.variables.mutable-bindings.legality-1",
-    "spec.declarations.variables.scoping-and-shadowing.legality-1",
-    "spec.declarations.variables.scoping-and-shadowing.legality-2",
-    "spec.declarations.variables.scoping-and-shadowing.legality-3",
-    "spec.declarations.variables.scoping-and-shadowing.legality-4",
-    "spec.expressions.control-flow.break-continue-and-return.dynamics-1",
-    "spec.expressions.control-flow.break-continue-and-return.dynamics-2",
-    "spec.expressions.control-flow.break-continue-and-return.dynamics-3",
-    "spec.expressions.control-flow.for-in.dynamics-1",
-    "spec.expressions.control-flow.for-in.legality-1",
-    "spec.expressions.control-flow.for.legality-1",
-    "spec.expressions.pattern-matching.dynamics-1",
-    "spec.expressions.pattern-matching.legality-1",
-    "spec.expressions.pattern-matching.legality-2",
-    "spec.functions.associated-functions.legality-1",
-    "spec.functions.closures.dynamics-1",
-    "spec.functions.closures.dynamics-2",
-    "spec.functions.closures.dynamics-3",
-    "spec.functions.closures.dynamics-4",
-    "spec.functions.first-class-functions.legality-2",
-    "spec.functions.named-function-declarations.dynamics-1",
-    "spec.functions.named-function-declarations.legality-2",
-    "spec.functions.native-functions-standard-library-only.legality-1",
-    "spec.functions.native-functions-standard-library-only.legality-2",
-    "spec.functions.native-functions-standard-library-only.legality-3",
-    "spec.functions.the-operator.dynamics-1",
-    "spec.functions.the-operator.dynamics-2",
-    "spec.functions.the-operator.legality-1",
-    "spec.functions.the-operator.legality-2",
-    "spec.functions.turbofish.legality-1",
-    "spec.lexical.literals.legality-1",
-    "spec.lexical.literals.legality-3",
-    "spec.lexical.literals.legality-5",
-    "spec.modules.visibility.legality-1",
-    "spec.runtime.array-methods.dynamics-1",
-    "spec.runtime.built-in-aspects.display.legality-1",
-    "spec.runtime.built-in-aspects.from-s.legality-1",
-    "spec.runtime.built-in-aspects.iterable-t.legality-1",
-    "spec.runtime.built-in-functions.dynamics-1",
-    "spec.runtime.built-in-functions.dynamics-2",
-    "spec.runtime.built-in-functions.dynamics-3",
-    "spec.runtime.built-in-functions.dynamics-4",
-    "spec.runtime.built-in-functions.legality-1",
-    "spec.runtime.char-methods.dynamics-1",
-    "spec.runtime.panics.dynamics-1",
-    "spec.runtime.standard-library-modules.std-process.dynamics-1",
-    "spec.types.perhaps-t.legality-1",
-    "spec.types.tuples.legality-1",
-    "spec.types.type-ascription.legality-1",
-    "spec.types.type-ascription.legality-2",
-    "spec.types.type-ascription.legality-3",
-    "spec.types.type-casting.dynamics-1",
-    "spec.types.type-inference.legality-1",
-    "spec.types.type-inference.legality-2"
-  ]
+  "spec": []
 }

@@ -442,7 +442,7 @@ accepting `&dyn Aspect` has a single compiled form that dispatches at runtime.
   fat-pointer pattern (`FieldReference`) §2 points to as precedent.
 - RFC-0141 (Aspect Objects: Explicit Allocator Placement) — the `@[r] dyn Aspect`
   region-tagged extension, split out 2026-08-25; depends on this RFC and RFC-0063.
-- RFC-0137 (Nominal Types as Branded Rows, `2-accepted`) — added 2026-08-27: a
+- RFC-0137 (Nominal Types as Branded Rows, `3-integrated`) — added 2026-08-27: a
   narrowed residual's row could otherwise reach §5's coercion-to-`dyn Aspect` boundary
   with no static check against its `Drop` impl's required field set; §5 above states
   the resulting checkpoint.

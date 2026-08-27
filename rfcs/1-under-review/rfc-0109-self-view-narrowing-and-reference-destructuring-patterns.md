@@ -377,7 +377,7 @@ is needed, belongs in RFC-0137.**
   receiver kind. §6's tuple-of-views `self` extends §9's addressability table by one
   row rather than replacing it. Precedent for amending RFC-0044 already exists
   (RFC-0067a).
-- **RFC-0137 (Nominal Types as Branded Rows, `2-accepted`)** — supplies
+- **RFC-0137 (Nominal Types as Branded Rows, `3-integrated`)** — supplies
   everything §1-§3 above used to derive independently: the `(brand, row)`
   representation, the eligibility gate, residual-typed parameters, and the subset
   lattice. This RFC now depends on RFC-0137 directly rather than on the superseded
@@ -471,7 +471,7 @@ is needed, belongs in RFC-0137.**
   RFC amends.
 - RFC-0067a (Reference Types, implemented) — precedent for amending RFC-0044; the
   `&T`/`&var T` vocabulary self-views build on.
-- RFC-0137 (Nominal Types as Branded Rows, `2-accepted`) — supplies the
+- RFC-0137 (Nominal Types as Branded Rows, `3-integrated`) — supplies the
   representation, eligibility gate, residual-parameter typing, and subset lattice
   §1-§3 above build directly on, superseding this RFC's original citations of
   RFC-0090 §9 / RFC-0091 §2.2 for the same ideas.

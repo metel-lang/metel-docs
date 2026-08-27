@@ -261,8 +261,9 @@ above it are.
   allocator). Also carries RFC-0090 §6's declined "records as the universal foundation"
   reframing. **Depends on nothing** — the only piece of the cluster buildable today, and
   the reason the split is six-way.
-- **RFC-0137** *(accepted 2026-08-27 — re-accepted after a same-day 2026-08-25
-  revert; issue #827)* — Nominal Types as Branded Rows — formalizes
+- **RFC-0137** *(integrated 2026-08-27 — merged into reference/spec/ownership.md and
+  types.md, all as "Planned for v0.13.0"; tracked by metel-core#836)* — Nominal Types
+  as Branded Rows — formalizes
   `reports/substructural-types/nominal-types-as-branded-rows.md`'s central thesis, left
   deliberately unfolded by that document's own Open Question 7 so it would not gate this
   cluster's nearer review. Proposes that **every** `struct`, not only RFC-0120's opt-in
@@ -279,9 +280,10 @@ above it are.
   by exception. **Discharges RFC-0117 §3's own stated dependency** ("narrowing a nominal
   type… depends on nominal types carrying rows at all") and answers **RFC-0120's Open
   Question 5** ("does a narrowed named record keep its brand") for the general case. Its
-  own zero-runtime-cost claim for narrowing and `Drop` dispatch is a design argument, not
-  a demonstrated property — contingent on RFC-0071 actually being built, which it is not
-  today (`3-integrated`, partial-move tracking confirmed absent from the interpreter).
+  own zero-runtime-cost claim for narrowing and `Drop` dispatch rests on RFC-0071's own
+  static-bookkeeping design — verified directly: move-check (`--move-check`, off by
+  default) is real, tested code implementing exactly that design, so the claim holds
+  against what's actually built, not just against a stated intention.
   **The 2026-08-25 revert's two gaps (widening semantics, conditional-`Drop`-over-`T`)
   are resolved as of 2026-08-27** — the widening resolution required a real correction
   mid-review: narrowing/widening only ever applies to an owned binding, never through a
@@ -296,7 +298,13 @@ above it are.
   worked example added this session; RFC-0119's `.to_record()` addition and RFC-0120's
   three-tier table restatement were both already made 2026-08-25, confirmed by
   re-checking rather than trusted from this RFC's own earlier (wrong) "not yet done"
-  notes.
+  notes. **Integrated 2026-08-27**: `ownership.md` gains Narrowing, Passing a residual
+  to a function, Drop dispatch against a narrowed residual, and Widening subsections;
+  `types.md`'s row-bound table gains a representational reframe. Every new rule is
+  `blocked`-exempted against metel-core#836 — nothing here is implemented yet, only
+  designed and spec-anchored. Cross-checked against RFC-0071 (`3-integrated`),
+  RFC-0116/RFC-0118 (implemented), and RFC-0008 (`2-accepted`, the `dyn Aspect`
+  coercion checkpoint) — no new soundness gap found.
 - **RFC-0117** *(under review, revised 2026-08-27 for RFC-0137)* — Row Narrowing —
   moving a field out narrows the record's type — or a nominal struct's, via RFC-0137's
   brand-preserving narrowing, folded in as of this revision — to the closed 2^*N*
