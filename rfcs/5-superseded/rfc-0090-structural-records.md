@@ -588,7 +588,8 @@ struct Handle { fd: i32, alloc: @a Buffer }
 
 fun drain(h: &mut Handle) -> (@a Buffer, &mut { fd: i32 }) {
     let view = h.to_record_mut();   // &mut { fd: i32, alloc: @a Buffer } — reborrow, zero-cost
-    let buf = move view.alloc;       // ordinary row-shrink; view's type narrows to { fd: i32 }
+    let buf = view.alloc;            // no `move` keyword exists in this grammar;
+                                      // ordinary row-shrink; view's type narrows to { fd: i32 }
     (buf, view)
 }
 
@@ -951,7 +952,7 @@ fun close_it(h: Handle) { /* uses h.fd, h.alloc as a whole */ }
 record Handle { fd: i32, alloc: @a Buffer }
 
 fun drain(h: &mut Handle) -> (@a Buffer, &mut { fd: i32 }) {
-    let buf = move h.alloc;
+    let buf = h.alloc;   // no `move` keyword exists in this grammar
     (buf, h)
 }
 

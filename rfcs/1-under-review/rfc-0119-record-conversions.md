@@ -116,9 +116,13 @@ construct did two things, and only one of them is replaced:
 - **Borrowed access to a sub-row** — fully replaced by RFC-0109, and better: a named view is
   branded, so an unrelated same-shaped value cannot satisfy it, whereas a bare
   `&var { fd: i32 }` could.
-- **Moving a field *out* through a borrow** (`let buf = move view.alloc;`) — **not
-  replaced.** Views govern access, not consumption. Nothing in the remaining cluster lets
-  you take ownership of one field while the rest stays borrowed.
+- **Moving a field *out* through a borrow** (`let buf = view.alloc;` — moving a non-Copy
+  field out is implicit, there is no `move` keyword) — **not replaced.** Views govern
+  access, not consumption. Nothing in the remaining cluster lets you take ownership of
+  one field while the rest stays borrowed. (This was never actually reachable in the
+  first place: RFC-0071 §7.1 bans moving a non-`Copy` field out through any reference,
+  `&var` included — the dropped construct's field-consumption story was aspirational
+  even before it was removed.)
 
 **That second capability is not obviously wanted, and it was the source of three separate
 problems.** Rust does not permit moving out of `&var` either. Every open question this RFC

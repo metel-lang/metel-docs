@@ -4,10 +4,17 @@ title: "Ownership and Move Semantics"
 
 # Ownership and Move Semantics
 
-> **Planned for v0.12.0 (RFC-0071): values move by default; `Copy` and `Drop` are opt-in aspects.**
+> **Availability:** Since v0.12.0 (RFC-0071), behind the `--move-check` flag — not the
+> default typechecking path.
 
-Nothing on this page is enforced by the current interpreter, which copies every value. The
-rules below describe the model v0.12.0 introduces.
+Every rule on this page is enforced, and every rule below with a fixture citation is
+genuinely checked against the real interpreter — but only when `--move-check` is passed.
+Without it, using a value after it's moved is not rejected: the interpreter behaves as
+if every value were `Copy` (verified directly — a binding reused after being moved into
+another still resolves, and mutating the new binding does not affect the old one). This
+is an off-by-default opt-in, not a description of a future model: the existing corpus is
+written in a style affine ownership rejects, so the flag stays off by default until a
+separate, tracked migration addresses that.
 
 ## Values move by default
 
@@ -235,6 +242,13 @@ under the same rules.
 **A type implementing `Drop` may not be partially moved** — its destructor requires the whole
 value.
 
+Reassigning a moved-out field restores that field's own accessibility, and — once every
+field ever moved out of a value has been reassigned — [restores the value's whole-value
+status too](#spec.ownership.partial-moves.legality-3): the compiler tracks *which* fields
+are currently missing, not merely whether the value was ever partially moved. Reassigning
+only some of several moved-out fields leaves the value partially moved until the rest are
+reassigned too.
+
 <details>
 <summary>Formal rules</summary>
 
@@ -259,9 +273,21 @@ A field of a `Drop` type may not be moved out.
 <span class="rigor-backlink">_Tested by: [03_partial_move_of_drop_type.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/03_partial_move_of_drop_type.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
+##### Legality Rule {#spec.ownership.partial-moves.legality-3}
+
+Assigning a value to a field that was moved out restores that field's own accessibility.
+Once every field ever moved out of a value has been reassigned this way, the value's
+whole-value status is restored too, and it may be used as a whole again; reassigning only
+some of several moved-out fields is not enough.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [51_field_reassignment_after_partial_move_is_valid.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/51_field_reassignment_after_partial_move_is_valid.mtl), [73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 </details>
 
-> **Planned for v0.12.0 (RFC-0071): a `Drop` type may still be partially *borrowed*; only moving out is restricted.**
+> **Availability:** Since v0.12.0 (RFC-0071), behind `--move-check`. A `Drop` type may
+> still be partially *borrowed*; only moving out is restricted.
 
 > **Planned for v0.13.0 (RFC-0137): legality-2's ban is superseded in design by
 > row-bounded `Drop` dispatch — see "Drop dispatch against a narrowed residual" below.
@@ -509,9 +535,10 @@ value's current row does not satisfy that type's `Drop` impl's required field se
 
 ### Widening
 
-Reassigning a moved-out field already restores the containing value's whole-value status
-today, for every struct regardless of `Drop` — this is existing, unconditional
-`--move-check` behavior, not itself part of RFC-0137.
+Reassigning a moved-out field [already restores the containing value's whole-value
+status today](#spec.ownership.partial-moves.legality-3), for every struct regardless of
+`Drop` — this is existing, unconditional `--move-check` behavior, not itself part of
+RFC-0137.
 
 > **Planned for v0.13.0 (RFC-0137, metel-core#858): once narrowing gives the residual a
 > named type (above), reassigning a moved-out field also widens that type back
@@ -552,9 +579,9 @@ type to include that field, at the same brand.
 `&var T` is **not** `Copy` — an exclusive reference must stay unique to be exclusive. It is
 therefore moved on use, with one exception:
 
-> **Planned for v0.12.0 (RFC-0071): passing a `&var T` as an argument to a parameter of type
-> `&var T` reborrows it rather than moving it — the original binding remains usable after the
-> call. Every other use moves.**
+> **Availability:** Since v0.12.0 (RFC-0071), behind `--move-check`. Passing a `&var T`
+> as an argument to a parameter of type `&var T` reborrows it rather than moving it —
+> the original binding remains usable after the call. Every other use moves.
 
 ```metel
 struct Counter { n: i64 }
