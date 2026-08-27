@@ -379,7 +379,7 @@ by-reference mode (§2).*
 - RFC-0076 (Brand Types) — **not a dependency of this RFC**; see §5
 - `public/rfcs/0-draft/rfc-0089-linear-types.md` §2.1, §3.1 — fiat-linearity and the
   brand exception, deferred until records are implemented
-- `public/rfcs/0-draft/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md`
+- `rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md` (RFC-0109, `1-under-review`)
   — deferred; works around §3's no-implicit-coercion rule for method receivers specifically
 - RFC-0137 (Nominal Types as Branded Rows, `1-under-review` — reverted from
   `2-accepted` 2026-08-25, same day) — the source of "current row" as a concept
