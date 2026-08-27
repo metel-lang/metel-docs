@@ -291,10 +291,12 @@ above it are.
   constructor-invariant-bypass risk). A third gap, sharper than originally framed once
   RFC-0008 moved to `2-accepted`, was also closed: coercion to `dyn Aspect` needed its
   own required-set checkpoint before erasure discards a residual's row, cross-referenced
-  on RFC-0008's own side too. **Still pending, per its own "Relationship to existing
-  RFCs" commitments**: RFC-0117 and RFC-0120 each still need the revision named there —
-  not yet made. (RFC-0119's own clarifying addition, checked 2026-08-27, was already
-  made 2026-08-25.)
+  on RFC-0008's own side too. **All three sibling revisions its "Relationship to
+  existing RFCs" commits to are complete as of 2026-08-27**: RFC-0117's nominal-type
+  worked example added this session; RFC-0119's `.to_record()` addition and RFC-0120's
+  three-tier table restatement were both already made 2026-08-25, confirmed by
+  re-checking rather than trusted from this RFC's own earlier (wrong) "not yet done"
+  notes.
 - **RFC-0117** *(under review, revised 2026-08-27 for RFC-0137)* — Row Narrowing —
   moving a field out narrows the record's type — or a nominal struct's, via RFC-0137's
   brand-preserving narrowing, folded in as of this revision — to the closed 2^*N*
@@ -323,8 +325,9 @@ above it are.
   identity-tag reuse. Depends on RFC-0116, RFC-0119. **Its own Open Question 5** (does a
   narrowed named record keep its brand) **is answered by RFC-0137** (`2-accepted`
   2026-08-27) for the general case — every struct's brand is preserved through
-  narrowing, not only tier-3's — restating its own three-tier table in RFC-0137's terms
-  is still pending, not yet done.
+  narrowing, not only tier-3's. Its own three-tier table (§1) was already restated in
+  RFC-0137's terms 2026-08-25 — confirmed 2026-08-27 by re-checking, after an earlier
+  note here wrongly claimed it was still pending without verifying first.
 - **RFC-0121** *(under review)* — Open Rows — `<row R>` / `..R`, row algebra (extension is a
   literal, removal is a where-clause decomposition), row-conditional typestate, and the
   width-subtyping-versus-ownership problem. **The expensive half**, and the only piece

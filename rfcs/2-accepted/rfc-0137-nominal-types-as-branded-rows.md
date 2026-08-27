@@ -498,13 +498,16 @@ need a corresponding revision if this RFC is accepted:
   keyword exists), the same mistake this RFC's own §2/§4 examples had before this
   revision. Broader corpus sweep for the same mistake tracked separately,
   metel-core#854 — not attempted here.
-- **RFC-0120 (Named Records), not yet done.** Its own Open Question 5 — "does a
-  narrowed named record keep its brand… the rule is unstated" — is answered here for
-  the general case: yes, universally, for every struct, not only tier-3 `record`
-  declarations. RFC-0120's three-tier table (§1 there) still needs restating in the
-  terms §3 above uses: what a `record` declaration adds is not "having a row" (every
-  struct already has one under this RFC) but "that row being visible to structural
-  matching" — RFC-0120 remains the RFC that governs the *opt-in*, this RFC supplies
+- **RFC-0120 (Named Records), revision already made.** Its own Open Question 5 —
+  "does a narrowed named record keep its brand… the rule is unstated" — is answered
+  here for the general case: yes, universally, for every struct, not only tier-3
+  `record` declarations. **Checked 2026-08-27: RFC-0120's three-tier table (§1 there)
+  was already restated in the terms §3 above uses**, dated 2026-08-25 — predating
+  this RFC's own re-acceptance, and RFC-0120's own Open Question 5 closing note was
+  wrong to claim it was still pending (corrected there too). What a `record`
+  declaration adds is not "having a row" (every struct already has one under this
+  RFC) but "that row being visible to structural matching" — RFC-0120 remains the RFC
+  that governs the *opt-in*, this RFC supplies
   the *representation* it opts into being visible.
 - **RFC-0071 (Ownership and Move Semantics), §7.** Superseded *in design*, not narrowed
   by an exception — see §5 above, corrected 2026-08-25: §7's ban is real, tested,
@@ -529,8 +532,12 @@ this RFC.
 RFC-0117 and RFC-0120 were already updated 2026-08-25 to cite this RFC while it was
 (briefly) `2-accepted`; those citations then overstated this RFC's stage and were
 corrected back to `1-under-review` in the same change that reverted this document.
-**As of 2026-08-27, this RFC is `2-accepted` again — RFC-0117's own revision is now
-made (§1's nominal-type example); RFC-0120's is still pending.**
+**As of 2026-08-27, this RFC is `2-accepted` again.** RFC-0117's own revision is now
+made (§1's nominal-type example); RFC-0120's was already made 2026-08-25 (its own §1
+table restatement), confirmed by re-checking rather than trusted from an earlier,
+inaccurate "not yet done" note written here without re-checking first. RFC-0119's
+addition was likewise already made 2026-08-25 — see "Relationship to existing RFCs"
+above. All three sibling revisions this RFC commits to are complete.
 
 ---
 
