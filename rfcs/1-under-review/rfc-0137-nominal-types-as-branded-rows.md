@@ -507,9 +507,11 @@ need a corresponding revision if this RFC is accepted:
   of `to_record()` as "reading fields out." RFC-0119 needs a short clarifying addition
   stating this — not a new capability, a distinction its text never had to draw before.
 
-This RFC depends on RFC-0116 (the record type-former narrowing produces values of) and,
-for widening to be considered safe, on RFC-0114 (Constructor Aspect) landing first —
-see §6.
+This RFC depends on RFC-0116 (the record type-former narrowing produces values of).
+**Updated 2026-08-27:** no longer depends on RFC-0114 (Constructor Aspect) landing
+first for widening — see §6's Open Question 5 resolution. RFC-0114 remains the fix for
+the constructor-invariant-bypass risk itself, which predates and is independent of
+this RFC.
 
 **These revisions are held pending re-acceptance.** RFC-0117 and RFC-0120 were already
 updated 2026-08-25 to cite this RFC while it was (briefly) `2-accepted`; those citations
