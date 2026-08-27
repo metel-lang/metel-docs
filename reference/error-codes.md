@@ -490,13 +490,19 @@ A `match` expression reached its end without any arm matching. This indicates a 
 
 ### R0007 — Arithmetic error
 
-Integer division or remainder by zero.
+Integer division or remainder by zero, **or** integer overflow on `+`, `-`, `*`, or
+`/` (RFC-0007 D3, amended 2026-08-26 — panics unconditionally in every build; there
+is no debug/release distinction). Floating-point arithmetic never raises this code —
+float overflow and division by zero follow IEEE 754 (`inf`/`-inf`/`NaN`), never a
+panic.
 
 ```
 [R0007] runtime error in main.mtl at 8..13: division by zero
+[R0007] runtime error in main.mtl at 4..11: integer overflow
 ```
 
-**Fix:** guard with a zero check before dividing.
+**Fix:** guard with a zero check before dividing, or ensure operands stay in range
+before an operation that could overflow.
 
 ### R0008 — Field not found
 
