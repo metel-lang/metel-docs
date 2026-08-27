@@ -292,8 +292,9 @@ above it are.
   RFC-0008 moved to `2-accepted`, was also closed: coercion to `dyn Aspect` needed its
   own required-set checkpoint before erasure discards a residual's row, cross-referenced
   on RFC-0008's own side too. **Still pending, per its own "Relationship to existing
-  RFCs" commitments**: RFC-0117, RFC-0119, and RFC-0120 each still need the revision
-  named there — not yet made.
+  RFCs" commitments**: RFC-0117 and RFC-0120 each still need the revision named there —
+  not yet made. (RFC-0119's own clarifying addition, checked 2026-08-27, was already
+  made 2026-08-25.)
 - **RFC-0117** *(under review)* — Row Narrowing — moving a field out narrows the record's type;
   the closed 2^*N* subset lattice, no row variables and no unification. Depends on
   RFC-0116 and on **RFC-0071** (`3-integrated`, 0% implemented), which is why it is separate

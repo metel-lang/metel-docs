@@ -501,13 +501,15 @@ need a corresponding revision if this RFC is accepted:
 - **RFC-0071 (Ownership and Move Semantics), §7.** Superseded *in design*, not narrowed
   by an exception — see §5 above, corrected 2026-08-25: §7's ban is real, tested,
   `--move-check`-enforced behavior today, not an implementation gap this RFC fills.
-- **RFC-0119 (Record Conversions), added 2026-08-25 (Open Questions #3).** `.to_record()`
-  is currently described against "the record" for a struct, written before residual
-  types existed to make that ambiguous between the type's full declared row and self's
-  *current* row — under RFC-0071 alone those were always the same value. Under this RFC
-  they diverge; the answer is self's current row, consistent with §1 there's own framing
-  of `to_record()` as "reading fields out." RFC-0119 needs a short clarifying addition
-  stating this — not a new capability, a distinction its text never had to draw before.
+- **RFC-0119 (Record Conversions), added 2026-08-25 (Open Questions #3), revision
+  already made.** `.to_record()` is described against "the record" for a struct,
+  written before residual types existed to make that ambiguous between the type's full
+  declared row and self's *current* row — under RFC-0071 alone those were always the
+  same value. Under this RFC they diverge; the answer is self's current row, consistent
+  with §1 there's own framing of `to_record()` as "reading fields out." **Checked
+  2026-08-27: RFC-0119 §4 already carries this clarifying addition** (dated
+  2026-08-25, predating this RFC's own re-acceptance) — not a new capability, a
+  distinction its text never had to draw before. Nothing further needed here.
 
 This RFC depends on RFC-0116 (the record type-former narrowing produces values of).
 **Updated 2026-08-27:** no longer depends on RFC-0114 (Constructor Aspect) landing
