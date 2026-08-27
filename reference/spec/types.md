@@ -1262,11 +1262,14 @@ Both bound kinds are opted into; they differ only in *granularity*. An **aspect*
 opted into per aspect, by writing an implementation. A **row** bound is opted into per type,
 by choosing the `record` kind. Nothing is implicit in either direction.
 
-> **Planned for v0.13.0 (RFC-0137): a `struct`'s "no" below is a visibility gate, not the
-> absence of a row.** Every struct is represented internally as `(brand, row)`
-> (see [Ownership — Narrowing](ownership.md#narrowing)); what the table's "no" states is
-> that a plain struct's row is never *visible* to row-bound satisfaction, regardless of
-> narrowing — the same observable outcome as today, restated on a different mechanism.
+> **Available now (RFC-0137, metel-core#857): a `struct`'s "no" below is a visibility
+> gate, not the absence of a row.** Every struct is represented internally as
+> `(brand, row)` (see [Ownership — Narrowing](ownership.md#narrowing)); what the table's
+> "no" states is that a plain struct's row is never *visible* to row-bound satisfaction,
+> regardless of narrowing or projection — including at full width, where the row's
+> content is identical to a same-shaped record's — the same observable outcome as
+> before, now restated on the branded-row mechanism itself rather than merely predicted
+> of it.
 
 | | non-local aspect (`Display`) | local aspect | row bound |
 |---|---|---|---|
@@ -1354,7 +1357,7 @@ fields.
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [stage5_neg_26_row_bound_struct_rejected.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/stage5_neg_26_row_bound_struct_rejected.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [neg_44_full_width_projection_still_rejected_by_row_bound.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_44_full_width_projection_still_rejected_by_row_bound.mtl), [stage5_neg_26_row_bound_struct_rejected.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/stage5_neg_26_row_bound_struct_rejected.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.types.generics.row-bounds.legality-5}
