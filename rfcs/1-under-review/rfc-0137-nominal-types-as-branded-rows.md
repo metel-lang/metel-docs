@@ -304,9 +304,42 @@ to effect inference than ordinary type-checking, and harder to *compute* than th
 direct-read case — but no longer a different, undesigned kind of mechanism, and it still
 bottoms out in exactly one fixed, concrete set per `Drop` impl, checked the same way §5's
 opening paragraph already describes. Dynamic dispatch through `dyn Aspect` is out of
-scope for this composition, same as it is for the rest of this RFC (§8). **Not addressed:
-a `Drop` impl conditional on a generic parameter's own `Drop`-ness — see Open Question
-6.**
+scope for this composition — **except at the one checkpoint below, added because
+RFC-0008 is no longer a document with no consumer.**
+
+**Coercion to `dyn Aspect` is a required-set checkpoint (resolved 2026-08-27 — see Open
+Question 8).** RFC-0008 (Aspect Objects, `2-accepted`) §2 gives every `dyn Aspect` fat
+pointer a drop-pointer to the concrete type's `Drop` destructor whenever the concrete
+type implements `Drop` — regardless of which aspect the object is principally coerced
+to. Once erased, the row information this RFC's row-bounded dispatch relies on is gone,
+so the check has to happen *before* erasure, at the coercion site itself, or a residual
+narrower than a `Drop` impl's required set could be coerced to `dyn Aspect` and later
+dropped through the vtable against a value missing a field its own destructor reads —
+the same hazard §5's opening paragraph exists to prevent, reached through a path it
+doesn't cover on its own. The fix is not a new mechanism: coercing a value of a
+`Drop`-implementing type to any `dyn Aspect` is exactly the same required-set check §4's
+function-call boundary already performs, applied at one more site where the concrete
+type and its current row are both still statically known. A residual whose current row
+does not satisfy that type's `Drop` impl's required set is rejected at the coercion
+site, the same way an exact-row mismatch is already rejected at a call boundary.
+RFC-0008 §5/§9 need a cross-reference to this checkpoint, since neither currently
+mentions narrowing at all.
+
+**Still not addressed: a `Drop` impl conditional on a generic parameter's own
+`Drop`-ness (see Open Question 6).** §5's required-field-set computation is purely
+syntactic (which fields a destructor body's own text reads) and §7 establishes that a
+struct's declared fields never vary with a generic parameter `T`, so the computation
+itself needs no change for a conditional impl like
+`extend<T: Drop> Pair<T>: Drop { … }`. What remains open is whether the compiler ever
+needs to reason about a generic `Drop` impl's applicability *before* `T` is concrete —
+this RFC assumes it does not, since #736's implementation confirmed Metel's generic
+function bodies are checked per call site with `T` already substituted, not once
+abstractly. That assumption is stated, not verified: drop-insertion itself (`#261`) is
+not implemented yet, so there is nothing to check it against the way the widening
+resolution above was checked directly. Does not block re-acceptance — the same
+"verification pending implementation" treatment already given to Open Question 1 — but
+is a real bet on drop-insertion sharing typechecking's per-call-site timing, not a
+confirmed fact.
 
 ## 6. Widening, and the constructor-invariant risk
 
@@ -332,20 +365,23 @@ scoping narrowly to one conversion function, since move-then-reassign becomes
 structurally identical to what a hand-written `from_record`-style conversion already
 does. **This RFC does not solve it** — RFC-0114 (Constructor Aspect and Canonical
 Construction) is the proposed fix, routing every value of a nominal type through one
-`construct`/`construct_unchecked` path, fresh or reassembled. This RFC depends on
-RFC-0114 landing before automatic widening can be considered safe to enable; until then,
-narrowing (the read side) is presented on its own, and widening a residual back is left
-exactly as constrained as ordinary field mutation is today — this RFC neither loosens
-nor tightens that.
+`construct`/`construct_unchecked` path, fresh or reassembled.
 
-**Not actually specified: what "left exactly as constrained as ordinary field mutation
-is today" means operationally once a residual's static type has genuinely narrowed
-(see Open Question 5).** The `mess_with_it` example above assumes `p.small = 999_999`
-*succeeds*, which is only meaningful if either the assignment automatically widens
-`p`'s type back to `SortedPair` (the very thing this section says isn't safe to enable
-yet), or the compiler accepts the assignment while leaving `p`'s static type unchanged
-at `.{ big }` — a third possibility, itself unaddressed, that would need its own
-soundness argument. This RFC does not currently commit to any of the three.
+**Widening on reassignment is automatic (resolved 2026-08-27 — see Open Question 5):**
+`p.small = 999_999` in the example above restores `p`'s type to full `SortedPair`. This
+is not a new capability this RFC has to authorize — verified directly against the
+current interpreter (`--move-check`), reassigning a moved-out field already,
+unconditionally, restores the containing value's whole-value status today, for every
+struct, `Drop` or not; passing it by value where the callee expects the complete type
+succeeds immediately afterward. This RFC's residual-type formalization is naming a type
+for what the move-checker's existing reinitialization-on-reassignment behavior already
+produces, not inventing a new mechanism — that existing behavior itself is undocumented
+in RFC-0071/the spec, a gap independent of this RFC, worth its own fix but not blocking
+here. The invariant-bypass risk stays exactly what it already is without any row
+machinery involved (verified directly: `SortedPair::new(1, 10)` followed by
+`p.small = 999_999` today already produces `small=999999, big=10`, no error) — narrowing
+and widening neither create nor worsen it. RFC-0114 remains the real fix for the
+invariant-bypass problem itself; nothing here depends on RFC-0114 landing first.
 
 ## 7. Generic structs
 
@@ -365,12 +401,13 @@ instantiation with one match, matches every mainstream generic-nominal type syst
 is grounded in `brand-kind-unification.md` §8's freshness property: a generic type's
 introduction event is its one declaration, never one per instantiation.
 
-**Not addressed: a `Drop` impl conditional on `T` itself (see Open Question 6).** Every
-claim above is about a `Drop` impl whose applicability and required-field-set are
-independent of `T`. A conditional impl (`extend<T: Drop> Pair<T>: Drop { … }`, or a
-destructor body that only reads a given field when `T: Drop`) is a different shape this
-section does not reach — whether the required-field-set computation, or `Drop`-dispatch
-eligibility itself, needs to vary with `T`'s own bounds is open.
+**A `Drop` impl conditional on `T` itself (Open Question 6): field-set computation is
+unaffected, applicability-timing is a stated assumption, not yet verified.** Every claim
+above is about a `Drop` impl whose applicability and required-field-set are independent
+of `T`. A conditional impl (`extend<T: Drop> Pair<T>: Drop { … }`, or a destructor body
+that only reads a given field when `T: Drop`) doesn't change the required-field-set
+computation itself — see §5's own resolution of Open Question 6 for the full reasoning
+and its caveat.
 
 ## 8. Cost
 
@@ -409,11 +446,13 @@ this section's original claim was factually wrong, not the runtime-cost argument
 whole. **This correction was not fully propagated: the References section still stated
 the old, wrong claim until this revision (2026-08-25) — see Decision.**
 
-One case is flagged rather than resolved: dynamic dispatch through `dyn Aspect`
-(RFC-0008, deferred, no consumer yet) could need an actual runtime row representation if
-a call site cannot statically know the concrete residual shape behind a trait object.
-Not a live concern while RFC-0008 stays deferred, but worth a note rather than silence —
-see Open Question 8 for the tracking gap this leaves.
+One case needed resolving, not just flagging: dynamic dispatch through `dyn Aspect`
+(RFC-0008, `2-accepted`) could otherwise let a residual narrower than a `Drop` impl's
+required set reach a scope-exit drop with no static row information left to check
+against, once erased. §5's own new coercion-site checkpoint closes this without needing
+an actual runtime row representation — the check runs before erasure, while the
+concrete type and its row are both still statically known. See Open Question 8 for the
+resolution.
 
 ---
 
@@ -477,11 +516,11 @@ in the same change that reverts this document.
 
 *Items 1-4 resolved 2026-08-25, working toward what was then acceptance — see Decision
 for why that didn't hold. Items 5-8 opened the same day, by the follow-up review that
-reverted it. `PROCESS.md`'s bar for `2-accepted` is "no more open questions block it" —
-each item below is closed, or its reason for not blocking acceptance is stated, rather
-than left open by default, except items 5-8, genuinely open. Original text kept,
-resolution appended, per this corpus's append-only convention for exactly this
-situation.*
+reverted it, and items 5, 6, 8 resolved 2026-08-27. `PROCESS.md`'s bar for `2-accepted`
+is "no more open questions block it" — each item below is closed, or its reason for not
+blocking acceptance is stated, rather than left open by default; only item 7 remains
+genuinely open, and was never blocking. Original text kept, resolution appended, per
+this corpus's append-only convention for exactly this situation.*
 
 1. ~~Does the zero-runtime-cost property actually hold once RFC-0071 is built, not just
    as stated design? §8's claim for narrowing and `Drop` dispatch rests on RFC-0071's
@@ -568,8 +607,8 @@ situation.*
    dependency-staleness risk this RFC shares with most of the corpus (see OQ1's own
    precedent), but worth naming plainly.
 
-5. **§6's widening semantics are operationally unspecified. Blocks re-acceptance,
-   2026-08-25.** §6 says narrowing (the read side) ships on its own and that widening
+5. ~~§6's widening semantics are operationally unspecified. Blocks re-acceptance,
+   2026-08-25.~~ §6 says narrowing (the read side) ships on its own and that widening
    is deferred until RFC-0114 lands, "neither loosened nor tightened" from today's
    behavior. But §6's own `SortedPair`/`mess_with_it` counter-example assumes
    `p.small = 999_999` *succeeds* after narrowing — which is only coherent under one of
@@ -583,14 +622,38 @@ situation.*
    the type-checker's belief about `p`'s row diverging from its actual runtime
    fields — its own soundness argument, not given). #836 (the implementation issue)
    cannot proceed past this point without an explicit choice.
-6. **`Drop` impls conditional on a generic parameter's own `Drop`-ness are unaddressed.
-   Blocks re-acceptance, 2026-08-25.** §5's required-field-set computation (Open
+   **Resolved 2026-08-27, verified directly against the interpreter — reading (a).**
+   `p.small = 999_999` auto-widens `p` back to `SortedPair`. This is not a new
+   capability requiring RFC-0114 first: run today, `--move-check` already treats a
+   reassigned moved-out field as fully restoring the containing value's whole-value
+   status, for every struct regardless of `Drop`, and `SortedPair::new(1, 10)` followed
+   by `p.small = 999_999` already produces `small=999999, big=10` with no error, zero
+   row machinery involved, exactly as §6's own "not a new hole" paragraph already
+   argued. Readings (b) and (c) would have made narrowing strictly more restrictive
+   than plain mutation already is, for a risk this RFC doesn't create. See §6's own
+   updated text for the full argument. RFC-0114 remains the fix for the underlying
+   invariant-bypass problem; this RFC no longer depends on it landing first.
+6. ~~`Drop` impls conditional on a generic parameter's own `Drop`-ness are unaddressed.
+   Blocks re-acceptance, 2026-08-25.~~ §5's required-field-set computation (Open
    Question 2) and §7's generic-struct treatment are each written assuming a `Drop`
    impl's applicability and required set never depend on the struct's own generic
    parameter `T`. A conditional impl (`extend<T: Drop> Pair<T>: Drop { … }`, or a
    destructor body that only reads a given field when `T: Drop`) is a different shape
    neither section reaches — whether the required-field-set computation, or
    `Drop`-dispatch eligibility itself, needs to vary with `T`'s own bounds is open.
+   **Resolved as a stated assumption, 2026-08-27 — does not block re-acceptance.** The
+   required-field-set computation itself needs no change: it is purely syntactic
+   (which fields a destructor body's text reads), and §7 already establishes a
+   struct's declared fields never vary with `T`. What remained genuinely open —
+   whether the compiler ever needs to reason about a conditional `Drop` impl's
+   applicability before `T` is concrete — is resolved as a stated design assumption:
+   it does not, because metel-core#736's implementation confirmed Metel's generic
+   function bodies are checked per call site with `T` already substituted, never once
+   abstractly. Not empirically verifiable the way Open Question 5 was — drop-insertion
+   itself (`#261`) isn't implemented yet — so this is a real bet stated plainly, not a
+   confirmed fact; given the same "verification pending implementation" treatment as
+   Open Question 1, since it rests on an unimplemented dependency's own timing model
+   rather than on anything currently checkable.
 7. **No diagnostic specified for §3's full-width-projection rejection. Does not block
    re-acceptance — settleable at implementation time, tracked as an #836 acceptance
    criterion.** §3's own prose calls the full-width-projection case "easy to doubt"
@@ -599,14 +662,26 @@ situation.*
    only a generic type-mismatch to go on unless the compiler names the tier-1-vs-tier-3
    distinction explicitly. Nothing here or in §3 discusses what that diagnostic should
    say.
-8. **No forcing function to revisit §5's `dyn Aspect` carve-out if RFC-0008 ever lands.
-   Does not block re-acceptance — RFC-0008 has no consumer today.** §5 and §8 both
+8. ~~No forcing function to revisit §5's `dyn Aspect` carve-out if RFC-0008 ever lands.
+   Does not block re-acceptance — RFC-0008 has no consumer today.~~ §5 and §8 both
    flag dynamic dispatch through `dyn Aspect` as out of scope for the `Drop`
    required-field-set computation "while RFC-0008 stays deferred," but nothing links
    the two documents. If RFC-0008 is later implemented, nothing in either RFC would
    surface that this RFC's §5 soundness story needs re-examining. Worth a
    cross-reference from RFC-0008's own eventual implementation checklist, once one
    exists, so this isn't rediscovered from scratch.
+   **No longer hypothetical, 2026-08-27 — RFC-0008 is `2-accepted`, tracked
+   (metel-core#837), not dormant.** Traced the actual interaction rather than just
+   cross-referencing it: RFC-0008 §2 gives every `dyn Aspect` fat pointer a drop-pointer
+   whenever the concrete type implements `Drop`, regardless of principal aspect, and
+   erasure discards the row information §5's required-set check depends on — so a
+   residual narrower than a `Drop` impl's required set could be coerced to `dyn Aspect`
+   and later dropped through the vtable against a value missing a field its own
+   destructor reads. Resolved by adding coercion-to-`dyn Aspect` as one more
+   required-set checkpoint, the same check §4's call-boundary already performs, applied
+   at the one remaining site where the concrete type and its current row are both still
+   statically known before erasure. See §5's own new subsection for the full rule.
+   RFC-0008 §5/§9 need the matching cross-reference; not yet made there.
 
 ---
 
@@ -641,8 +716,14 @@ situation.*
   real, tested, `--move-check`-enforced behavior today (move-check itself is
   implemented, gated off by default — corrected 2026-08-25, see §8); also the
   move-tracking foundation §2 and §8 depend on
-- RFC-0114 (Constructor Aspect and Canonical Construction, draft) — the fix for §6's
-  constructor-invariant bypass risk, a dependency for widening specifically
+- RFC-0114 (Constructor Aspect and Canonical Construction, draft) — the fix for the
+  pre-existing constructor-invariant bypass risk §6 discusses; not a dependency for
+  widening itself since Open Question 5's resolution (2026-08-27), only for closing
+  the bypass risk that predates and is independent of this RFC
+- RFC-0008 (Aspect Objects, `2-accepted`, tracked metel-core#837) — §5's new
+  coercion-to-`dyn Aspect` checkpoint (Open Question 8, resolved 2026-08-27) is a real
+  dependency now that RFC-0008 has an active tracking issue, not the dormant document
+  this RFC originally treated it as
 - RFC-0089 / RFC-0091 (Linear Types / Linear Records, draft, deferred) — per-field
   multiplicity, deliberately out of scope here (see Out of Scope)
 
@@ -666,6 +747,24 @@ named as its falsifier at the third: *"If a third RFC follows the same path, tha
 evidence `2-accepted`'s own bar is being called too early in practice."* A fourth
 occurrence is not new evidence for the same conclusion so much as confirmation it
 wasn't a one-off. Recorded in `OBJECTIVES.md` as well as here.
+
+**Both blocking questions resolved, 2026-08-27.** Open Question 5 (§6's widening
+semantics) resolved by direct verification against the interpreter, not just
+argument — reassigning a moved-out field already, unconditionally, restores the
+containing value's whole-value status today, and the invariant-bypass risk narrowing
+was thought to newly enable is confirmed pre-existing and unchanged. Open Question 6
+(`Drop` impls conditional on `T`) resolved as a stated design assumption, not a
+verified fact — the required-field-set computation itself needs no change, and
+applicability-timing is assumed to resolve per call site with `T` concrete, consistent
+with metel-core#736's confirmed typechecking behavior, but unverifiable until
+drop-insertion (`#261`) exists. A third gap, sharper than Open Question 8's original
+framing, surfaced while re-examining it now that RFC-0008 is `2-accepted` rather than
+dormant: coercion to `dyn Aspect` could erase a residual's row before a required-set
+check ever ran against it. Resolved with a new checkpoint in §5, the same mechanism
+§4's call boundary already uses. `PROCESS.md`'s bar for `2-accepted` is now met by
+this RFC's own Open Questions again; whether to re-attempt the transition is a
+decision for whoever runs `rfc.py transition rfc-0137 --to accepted` next, not made
+by this revision alone.
 
 **Superseded acceptance rationale, kept for the record:** *Accepted 2026-08-25.* Every
 `struct` is `(brand, row)`; narrowing is a type-level consequence of partial move

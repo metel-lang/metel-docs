@@ -209,6 +209,20 @@ runtime:
    deallocating from an explicit region instead; nothing about *when* drop fires
    changes).
 
+**Coercing a value to `dyn Aspect` is a checked boundary, added 2026-08-27 (RFC-0137
+§5, Open Question 8).** Every `dyn Aspect` fat pointer for a `Drop`-implementing
+concrete type carries the drop-pointer above regardless of which aspect it's
+principally coerced to — but if RFC-0137 (Nominal Types as Branded Rows, `1-under-
+review`) lands, that concrete type may have a *narrower-than-declared* row at the
+coercion site (a residual, produced by partial move). Erasure discards that row
+information; nothing here re-derives it once the value is behind a fat pointer. The
+coercion site itself must therefore verify the value's current row satisfies the
+concrete type's `Drop` impl's required field set (RFC-0137 §5) *before* erasing it,
+rejecting the coercion otherwise — the same check RFC-0137 §4's function-call boundary
+already performs, applied here as one more site where the concrete type and its row
+are both still statically known. Not yet a live concern: RFC-0137's own narrowing
+mechanism isn't implemented, so no residual can reach a coercion site today regardless.
+
 This requires the concrete type's size and drop function to be in the vtable. The
 compiler generates these entries for every coercion site.
 
@@ -428,6 +442,10 @@ accepting `&dyn Aspect` has a single compiled form that dispatches at runtime.
   fat-pointer pattern (`FieldReference`) §2 points to as precedent.
 - RFC-0141 (Aspect Objects: Explicit Allocator Placement) — the `@[r] dyn Aspect`
   region-tagged extension, split out 2026-08-25; depends on this RFC and RFC-0063.
+- RFC-0137 (Nominal Types as Branded Rows, `1-under-review`) — added 2026-08-27: a
+  narrowed residual's row could otherwise reach §5's coercion-to-`dyn Aspect` boundary
+  with no static check against its `Drop` impl's required field set; §5 above states
+  the resulting checkpoint.
 
 ---
 
