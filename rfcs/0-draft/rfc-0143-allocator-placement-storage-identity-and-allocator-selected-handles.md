@@ -28,24 +28,36 @@ sendability properties. It no longer assumes that every allocator produces one
 affine owning-pointer shape. It moves allocation out of the prefix-`@` channel, under
 the working premise that the comptime/metadata proposal will restore that spelling.
 
-The proposed explicit surface is:
+The proposed common surface is:
 
 ```metel
-fun build<T, A: Alloc>(alloc arena: A, value: T) -> T@arena {
-    place arena value
+fun build<T, A: Alloc>(arena: A, value: T) -> T@arena {
+    place value
 }
 
-fun preserve<storage s, T>(value: T@s) -> T@s {
+fun preserve<T>(value: T@_) -> T@_ {
     value
 }
 ```
 
-`alloc arena: A` binds an ordinary runtime allocator value and its static storage
-identity together. `place arena expr` asks that allocator to place a value. `T@arena`
-is the allocator-selected handle type produced by that operation; it is a type
-projection, not a promise that the result is affine, uniquely owned, pointer-shaped,
-or movable-out. `<storage s>` is the compile-time-only preservation form: it can name
-an already-established placement but grants no capability to allocate.
+The verbose forms are ambiguity controls, not the everyday baseline:
+
+| Purpose | Common form | Explicit form |
+|---|---|---|
+| Allocator parameter | `a: A` where `A: Alloc` | same |
+| Placement type | `T@a` | same |
+| Placement operation | `place expr` | `place a expr` |
+| Preserve one unknown identity | `T@_` | `<storage s>` with `T@s` |
+| Struct-owned allocator | `alloc a: A` | same |
+
+Any stable binding whose type implements `Alloc` is both an ordinary runtime
+allocator value and a static storage identity. `place expr` uses the unique allocator
+determined by its expected `T@a` type or surrounding scope; `place a expr` remains the
+explicit form when needed. `T@a` is the allocator-selected handle type produced by
+that operation, not a promise that the result is affine, uniquely owned,
+pointer-shaped, or movable-out. `T@_` preserves or infers one storage identity;
+`<storage s>` is written only when multiple positions must explicitly share an
+identity without carrying its runtime allocator capability.
 
 For `Heap`, `LocalHeap`, `BumpAlloc`, and `AutoAlloc`, `T@a` has the accepted
 cluster's unique affine semantics. A tracing allocator may instead select a copyable
@@ -123,8 +135,8 @@ They are the inputs to this document, not accidental duplicates.
 | Each allocator instance has a distinct static identity | Preserved (§2) |
 | `@a T` is one universal affine owning-pointer type | Replaced by allocator-selected `T@a` (§4) |
 | `@a expr` selects explicit placement | Replaced by `place a expr` (§5) |
-| `(@a: A)` binds capability and tag together | Replaced by `alloc a: A` (§2.2) |
-| `<@a>` relays a tag without a runtime handle | Replaced by `<storage a>` (§2.3) |
+| `(@a: A)` binds capability and tag together | Replaced by ordinary `a: A` where `A: Alloc`; `T@a` makes dependent use explicit (§2.2) |
+| `<@a>` relays a tag without a runtime handle | Replaced by `T@_` in the common case and `<storage a>` for explicit relationships (§2.3, §8.3) |
 | Allocator names may be elided only when resolution is unique | Preserved (§8) |
 | Allocator arguments may be omitted at uniquely resolved calls | Delegated to general context parameters (§8.4) |
 | Borrowing through an allocated handle is transparent | Preserved for handles providing borrow access (§6) |
@@ -187,14 +199,14 @@ representation needs them at runtime.
 Static allocators such as `Heap` and `LocalHeap` have stable global identities named
 by those bindings. They do not create fresh identities at each use.
 
-### 2.2 Capability binders: `alloc a: A`
+### 2.2 Ordinary allocator bindings carry identity
 
-In a parameter list, the contextual modifier `alloc` states that the binding is both
-an ordinary value and the source of a storage identity:
+Any stable local, parameter, static, or closure binding whose type implements `Alloc`
+may be named after postfix `@`. No parameter modifier is required:
 
 ```metel
-fun build<T, A: Alloc>(alloc a: A, value: T) -> T@a {
-    place a value
+fun build<T, A: Alloc>(a: A, value: T) -> T@a {
+    place value
 }
 ```
 
@@ -203,37 +215,40 @@ Within the body, `a` may be used as an ordinary value and through `Alloc` method
 allocator value; the callee's identity is substituted with the identity of that
 argument, rather than freshly generated on every call.
 
-Local construction infers the modifier when the initializer's static type implements
-`Alloc`, though writing it remains legal:
+This does not make adding an `Alloc` implementation silently change an existing public
+signature: dependent use is introduced only when source explicitly writes `T@a`, and
+bare `place` must still resolve uniquely. Local construction works the same way:
 
 ```metel
 let arena = BumpAlloc::new();
-let explicit = place arena Node { value = 1 };
+let node: Node@arena = place Node { value = 1 };
 ```
 
-An ordinary parameter `a: A` where `A: Alloc` does not implicitly become usable in
-type position. Public signatures must write `alloc a: A`; this keeps the dependent
-part of the signature visible and prevents adding an `Alloc` impl from silently
-changing an existing function's type.
+The `alloc` keyword is therefore not an ordinary parameter marker. It is retained only
+in a struct primary constructor, where it means the struct creates and owns that
+allocator (§9.3)—additional semantics an ordinary parameter or field does not carry.
 
 ### 2.3 Identity without capability: `<storage s>`
 
-Code that only preserves a placement does not need the runtime allocator:
+Code that preserves a single placement normally uses identity elision and does not
+need the runtime allocator:
 
 ```metel
-fun identity<storage s, T>(value: T@s) -> T@s {
+fun identity<T>(value: T@_) -> T@_ {
     value
 }
 ```
 
-`storage s` is a compile-time-only identity parameter. It occupies no runtime
-argument slot, has no `Alloc` bound, and permits `s` only in type relationships. The
-body may not evaluate `place s expr`, call allocation methods through `s`, collect an
-arena, or otherwise exercise an allocator capability.
+The single input identity propagates to the output under §8.3. Explicit `storage s` is
+a compile-time-only identity parameter used when several positions must be related. It
+occupies no runtime argument slot, has no `Alloc` bound, and permits `s` only in type
+relationships. The body may not evaluate `place s expr`, call allocation methods
+through `s`, collect an arena, or otherwise exercise an allocator capability.
 
-This is categorically different from `alloc a: A`: the latter carries both capability
-and identity; the former carries identity only. It preserves RFC-0063's tag-only
-parameter without tying it to punctuation or pretending a runtime value exists.
+This is categorically different from an ordinary `a: A` where `A: Alloc`: the latter
+carries both capability and identity; `<storage s>` carries identity only. It
+preserves RFC-0063's tag-only parameter without making it a tax on the common
+single-input case.
 
 ---
 
@@ -258,11 +273,11 @@ placement site; `T@a` is the surface projection of that complete type.
 `AllocationError = !` declares placement infallible. The compiler collapses
 `Result<T@a, !>` to `T@a`, preserving RFC-0063's rule.
 
-`place a expr` is a language operation governed by `Alloc`, not specified as a simple
-method desugaring. A method-only desugaring cannot express the binding identity in the
-result without adding general value-dependent associated-type projection. An
-implementation may lower it to a compiler-known `Alloc` entry point, but that is not
-observable source semantics.
+`place expr` and its explicit `place a expr` form are language operations governed by
+`Alloc`, not specified as simple method desugarings. A method-only desugaring cannot
+express the binding identity in the result without adding general value-dependent
+associated-type projection. An implementation may lower them to a compiler-known
+`Alloc` entry point, but that is not observable source semantics.
 
 ### 3.2 Handle capabilities
 
@@ -304,8 +319,8 @@ compiler intrinsic:
 
 The operations return `AllocationError`, never manufacture initialized `T` values,
 and require proof that layout, provenance, initialized ranges, and destruction
-obligations are respected. `place a expr` is the safe, initialized single-value layer
-built above them.
+obligations are respected. `place expr`/`place a expr` is the safe, initialized
+single-value layer built above them.
 
 The exact user-authorable spelling of these raw operations depends on RFC-0026's
 unsafe primitive layer. That dependency blocks custom allocator implementation, not
@@ -392,10 +407,13 @@ is rejected rather than assigned an associativity readers must remember.
 
 ---
 
-## 5. Placement expressions: `place a expr`
+## 5. Placement expressions: `place expr` and `place a expr`
 
-`place a expr` evaluates `expr` first, then asks `a` to place the resulting initialized
-value. For `expr: T`, its type is:
+`place expr` evaluates `expr` first, then asks the uniquely determined allocator to
+place the resulting initialized value. The allocator is resolved first from an
+expected `T@a` type and otherwise by §8's unique-candidate rule. `place a expr` is the
+fully explicit form and is required when inference is ambiguous. For `expr: T`, the
+result type is:
 
 ```text
 Result<T@a, A::AllocationError>
@@ -406,7 +424,11 @@ no placement occurs. If allocation fails after `expr` has been evaluated, the va
 dropped normally before the error is returned.
 
 ```metel
-let node = place arena Node { value = 1, next = None };
+fun make_node(value: i64) -> Node@Heap {
+    place Node { value, next = None }
+}
+
+let node: Node@arena = place Node { value = 1, next = None };
 let fallible = place pool Node { value = 2 }?;
 ```
 
@@ -415,7 +437,7 @@ let fallible = place pool Node { value = 2 }?;
 `Heap` and `LocalHeap` are always nameable:
 
 ```metel
-let durable: Node@Heap = place Heap Node { value = 1 };
+let durable: Node@Heap = place Node { value = 1 };
 ```
 
 They enter an elision candidate set only when explicitly provided as a capability in
@@ -428,8 +450,8 @@ Multiple allocator parameters remain ordinary ordered parameters:
 
 ```metel
 fun transfer<T, A: Alloc, B: Alloc>(
-    alloc src: A,
-    alloc dst: B,
+    src: A,
+    dst: B,
     value: T@src,
 ) -> T@dst {
     place dst (value: T)
@@ -536,7 +558,7 @@ When `T: Clone`, code may clone through a borrowed pointee and place the result 
 chosen destination:
 
 ```metel
-let copy: Config@Heap = place Heap src.clone();
+let copy: Config@Heap = place src.clone();
 ```
 
 The source remains live. A future convenience such as `clone_into` is a standard
@@ -555,7 +577,7 @@ an allocator.
 When exactly one compatible allocator capability is in scope:
 
 ```metel
-fun build(alloc arena: BumpAlloc, value: Node) -> Node@_ {
+fun build(arena: BumpAlloc, value: Node) -> Node@_ {
     place value
 }
 ```
@@ -573,8 +595,8 @@ placement expression with no concrete expected allocator kind. The compiler does
 choose the inner binding by depth:
 
 ```metel
-fun process(alloc heap: Heap) {
-    BumpAlloc::scoped((alloc arena) -> {
+fun process(heap: Heap) {
+    BumpAlloc::scoped((arena) -> {
         let x = place arena Node { value = 1 }; // name required
     });
 }
@@ -622,11 +644,12 @@ resolution independently unique.
 
 ### 9.1 Scoped construction
 
-Closure-scoped allocators expose an `alloc` parameter:
+Closure-scoped allocators expose an ordinary parameter whose known `Alloc` type gives
+it storage identity:
 
 ```metel
-BumpAlloc::scoped((alloc arena) -> {
-    let node = place arena Node { value = 1 };
+BumpAlloc::scoped((arena) -> {
+    let node = place Node { value = 1 };
     process(&node);
 });
 ```
@@ -646,8 +669,8 @@ struct Parser<storage arena> {
 }
 
 extend<storage arena> Parser<arena> {
-    fun new<A: Alloc>(alloc a: A, src: String) -> Parser<a> {
-        Parser { input = place a src, pos = 0 }
+    fun new<A: Alloc>(a: A, src: String) -> Parser<a> {
+        Parser { input = place src, pos = 0 }
     }
 }
 ```
@@ -676,7 +699,7 @@ because allocation mutates allocator state:
 ```metel
 extend Cache {
     fun insert(&var self, value: Value) {
-        let stored = place arena value;
+        let stored: Value@arena = place value;
         self.entries.insert(stored);
     }
 }
@@ -732,8 +755,8 @@ Multiple external identities are declared independently. Ordinary allocator type
 parameters retain ordinary aspect bounds:
 
 ```metel
-fun copy_into<T: Clone, A: Alloc>(alloc dst: A, value: &T) -> T@dst {
-    place dst value.clone()
+fun copy_into<T: Clone, A: Alloc>(dst: A, value: &T) -> T@dst {
+    place value.clone()
 }
 ```
 
@@ -742,12 +765,12 @@ allocates. The method declares them:
 
 ```metel
 aspect Serialize {
-    fun serialize<A: Alloc>(alloc dst: A, self: &Self) -> Bytes@dst;
+    fun serialize<A: Alloc>(dst: A, self: &Self) -> Bytes@dst;
 }
 
 extend Record: Serialize {
-    fun serialize<A: Alloc>(alloc dst: A, self: &Self) -> Bytes@dst {
-        place dst Bytes::encode(self)
+    fun serialize<A: Alloc>(dst: A, self: &Self) -> Bytes@dst {
+        place Bytes::encode(self)
     }
 }
 ```
@@ -793,10 +816,10 @@ as long as the placement in `a`. Equivalently, for each `b` occurring in `T`, `b
 scope must enclose the live range of the `a` placement.
 
 ```metel
-BumpAlloc::scoped((alloc outer) -> {
-    BumpAlloc::scoped((alloc inner) -> {
-        let x: Node@inner = place inner Node { value = 1 };
-        let bad: (Node@inner)@outer = place outer x;
+BumpAlloc::scoped((outer) -> {
+    BumpAlloc::scoped((inner) -> {
+        let x: Node@inner = place Node { value = 1 };
+        let bad: (Node@inner)@outer = place x;
         // error: inner may end before the outer placement
     });
 });
@@ -832,7 +855,7 @@ An explicitly placed owned aspect object uses the same projection and operation:
 
 ```metel
 let shape: (dyn Shape)@arena =
-    place arena Circle { radius = 5.0 };
+    place Circle { radius = 5.0 };
 ```
 
 The expected `dyn Shape` type causes object coercion and allocation of the concrete
@@ -842,8 +865,8 @@ dyn Shape` are unchanged.
 
 ```metel
 let shapes: List<(dyn Shape)@arena> = List::new();
-shapes.push(place arena Circle { radius = 5.0 });
-shapes.push(place arena Rectangle { width = 3.0, height = 4.0 });
+shapes.push(place Circle { radius = 5.0 });
+shapes.push(place Rectangle { width = 3.0, height = 4.0 });
 ```
 
 For a unique family, drop invokes the concrete destructor through the vtable and then
@@ -889,10 +912,12 @@ mark. Postfix `T@a` retains the compact sigil while separating the grammatical r
 
 ### 14.2 `alloc a T` for both type and expression
 
-Using one keyword in both positions most closely mirrors `@a T`/`@a expr`. It becomes
-difficult to distinguish the allocator capability declaration, placement operation,
-and resulting type in dense generic code. `alloc` names the capability binder,
-`place` names the operation, and postfix `@` compactly names the resulting relationship.
+Using one keyword in type, expression, and ordinary parameter positions most closely
+mirrors `@a T`/`@a expr`. It makes every allocator-aware function pay for information
+already present in `A: Alloc` and `T@a`, and it becomes difficult to distinguish the
+capability, operation, and resulting type in dense generic code. The primary proposal
+uses ordinary parameters, `place` for the operation, postfix `@` for the type
+relationship, and reserves `alloc` for the distinct struct-ownership operation.
 
 ### 14.3 Postfix placement expressions
 
@@ -929,8 +954,9 @@ whole language to path-dependent members.
 
 An explicit form such as `A::Pointer<T, 'a>` is semantically adequate. It forces users
 to thread allocator type `A`, value `a`, and brand `'a` as three names for one ordinary
-case. `alloc a: A` deliberately binds capability and identity together; the identity
-may lower to the general brand mechanism without exposing that duplication.
+case. An ordinary `a: A` plus explicit use in `T@a` binds capability and identity
+together; the identity may lower to the general brand mechanism without exposing that
+duplication.
 
 ### 14.7 Ordinary method calls only
 
@@ -965,13 +991,15 @@ they close when the corresponding RFCs settle.
 
 ### 15.2 Settleable design questions
 
-1. **Surface spelling.** Confirm `alloc a: A`, `T@a`, `place a expr`, and
-   `<storage a>`, or select one of §14's spellings before promotion to under-review.
+1. **Surface spelling.** Confirm ordinary allocator parameters, `T@a`, inferred
+   `place expr`, explicit `place a expr`, `T@_`, ownership-only `alloc a: A`, and
+   relational `<storage a>`, or select one of §14's spellings before promotion to
+   under-review.
 2. **Projection normalization.** Decide whether compiler diagnostics normally retain
    `T@a` or display the allocator's normalized handle family when known.
-3. **Local binding inference.** §2.2 permits a local `let arena = BumpAlloc::new()` to
-   introduce identity without `alloc`; confirm that this convenience does not make an
-   impl added later alter source meaning.
+3. **Stable identity paths.** §2.2 admits locals, parameters, statics, and closure
+   parameters. Confirm whether a final immutable field path may ever be stable enough
+   to appear after `@`, or keep identities restricted to direct binding names.
 4. **Multiple struct-owned allocators.** The model permits them; decide whether the
    first grammar does too or deliberately restricts the feature pending a use case.
 5. **Allocator-polymorphic owned structs.** Decide whether

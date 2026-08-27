@@ -491,8 +491,10 @@ number, a backwards RFC-0067a split direction).
   placement, while reopening the surface under the working proposal to restore `@` to
   metadata and now that the rest of the language has acquired brands, context
   parameters, and tracing-GC work.
-  Primary spelling is `alloc a: A` + `T@a` + `place a expr` + `<storage a>`; the
-  semantic change is larger than that spelling: `T@a` projects the handle family
+  Primary spelling is ordinary `a: A` + `T@a` + inferred `place expr`, with
+  `place a expr` and `<storage a>` reserved for ambiguity/explicit relationships;
+  `alloc a: A` remains only for struct-owned allocators. The semantic change is larger
+  than that spelling: `T@a` projects the handle family
   selected by `a`, so allocation no longer implies one universal affine pointer shape.
   Also closes RFC-0133's unnamed allocator-substrate gap at the semantic level by
   requiring allocate/grow/shrink/release block operations, with their user-authorable
