@@ -112,8 +112,10 @@ context, integer literals default to `i64` and floating-point literals to `f64`.
 
 ##### Dynamic Semantics {#spec.types.sized-numeric-types.dynamics-1}
 
-In debug builds, integer overflow panics; in release builds it wraps. Floating-point
-overflow follows IEEE 754 behavior in both build modes.
+Integer overflow panics, unconditionally — Metel has no debug/release build-mode
+distinction of its own (the interpreter takes no such flag), so this applies the
+same way regardless of how the interpreter binary happens to have been compiled.
+Floating-point overflow follows IEEE 754 behavior.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0007](../../rfcs/4-implemented/rfc-0007-uint-type.md)_</span>
