@@ -3,7 +3,7 @@ id: rfc-0140
 title: "Algebraic Effects"
 date: '2026-08-25'
 status: under-review
-target:
+target: v0.18.0
 updated: '2026-08-25'
 tracking: 'https://github.com/metel-lang/metel-core/issues/834'
 ---
@@ -389,7 +389,7 @@ else in this design is an existing rule applied to one new value type, not a new
   a compile error" resolution rule. Not a dependency in the blocking sense — this RFC does
   not require RFC-0113 to reach any particular stage first — but the two should stay
   reconciled; see Open Question 6.
-- **RFC-0076 (RC Brands, `0-draft`)** — sketches `HandlerToken<'b, E>` for handler-state
+- **RFC-0076 (RC Brands, `1-under-review`)** — sketches `HandlerToken<'b, E>` for handler-state
   exclusivity and O(1) brand-directed dispatch against an earlier form of this design; not
   yet reconciled with this RFC's own evidence-passing discussion (§10) in either direction
   — Open Question 3.
@@ -397,7 +397,7 @@ else in this design is an existing rule applied to one new value type, not a new
   — §9 depends on the `Linear` multiplicity model these define; the linear-value-at-
   effect-site check (§9, Open Question 2) is real work belonging to both documents and is
   specified in neither yet.
-- **RFC-0003 (Concurrency Model, `0-draft`)** and `structured-concurrency.md` (report) —
+- **RFC-0003 (Concurrency Model, `1-under-review`)** and `structured-concurrency.md` (report) —
   §8's fiber-boundary interaction depends on `spawn`/`Chan<T>` as specified there; this RFC
   takes no position on the open `JoinHandle`-vs-`JoinToken` question RFC-0003 itself
   carries.
@@ -501,9 +501,9 @@ review might reasonably decide don't block acceptance.*
 - RFC-0072 (Negative Bounds, `4-implemented`) — `T: !Drop`
 - RFC-0010 (String Interpolation, `4-implemented`) — §12's undeclared-effect-site finding
 - RFC-0113 (Context Parameters, `1-under-review`) — §11's labeling discipline
-- RFC-0076 (RC Brands, `0-draft`) — Open Question 3's `HandlerToken<'b, E>` sketch
+- RFC-0076 (RC Brands, `1-under-review`) — Open Question 3's `HandlerToken<'b, E>` sketch
 - RFC-0091 (Linear Records, `0-draft`) — §9's dependency, alongside `linear-types.md`
-- RFC-0003 (Concurrency Model, `0-draft`) — §8's `spawn`/`Chan<T>` boundary
+- RFC-0003 (Concurrency Model, `1-under-review`) — §8's `spawn`/`Chan<T>` boundary
 - RFC-0064 (Fork-Join Parallelism, `6-refused`) — superseded by the model RFC-0003 and
   `structured-concurrency.md` now specify; §8 no longer depends on it
 - RFC-0122 (Borrow Checking, `1-under-review`) — enforces the `&r var T` non-escaping

@@ -319,7 +319,7 @@ Both conditions are required: `Sync` of `T` because any fiber may read through `
 
 ## 6. Relationship to RFC-0003
 
-RFC-0003 (Concurrency Model, draft) specifies the fiber API and the rules for crossing
+RFC-0003 (Concurrency Model, under review) specifies the fiber API and the rules for crossing
 fiber boundaries. `Send` and `Sync` are the type-system vocabulary those rules are
 written in. This RFC provides the vocabulary; RFC-0003 provides the grammar. This RFC
 does not depend on RFC-0003 and may be accepted independently.
@@ -358,7 +358,7 @@ does not depend on RFC-0003 and may be accepted independently.
   semantics; `Clone` as the explicit duplication primitive.
 - RFC-0074 (Shared Pointers) — `Rc<T>: !Send`, `!Sync`; `Arc<T>: Send + Sync`;
   `Deref` impls for `Rc` and `Arc`; `get_mut` and `try_unwrap` as the mutation API.
-- RFC-0003 (Concurrency Model, draft) — fiber boundary crossing; consumer of `Send`
+- RFC-0003 (Concurrency Model, under review) — fiber boundary crossing; consumer of `Send`
   and `Sync` bounds.
 - RFC-0093 (Derive Registration, under-review as of 2026-08-23) — governs the derive
   syntax/mechanism `Clone`'s §1.3 depends on; this RFC's move back to under-review

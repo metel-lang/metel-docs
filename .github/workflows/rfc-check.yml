@@ -1,7 +1,8 @@
 name: RFC check
 
 # rfc.py check (rfcs/tools/rfc.py) validates RFC frontmatter/status
-# consistency, generated REGISTRY.md/INDEX.md drift, dangling path references,
+# consistency, scheduled RFC trackers versus lifecycle stage, generated
+# REGISTRY.md/INDEX.md drift, dangling path references,
 # and (ADR-0049) the RFC-section/fixture-coverage ratchet against
 # COVERAGE-BASELINE.json. Runs here too, not only in metel-core's own
 # `rfc-check` CI job, so a structural problem introduced directly in this repo
@@ -9,6 +10,10 @@ name: RFC check
 # INDEX.md) is caught on this repo's own PR, immediately -- rather than
 # waiting for metel-core's `docs` submodule pointer to next move and surface
 # it there instead.
+#
+# The scheduled-tracker check uses GITHUB_TOKEN below and fails closed if its
+# authenticated API request cannot run: lifecycle consistency with release
+# milestones is a merge gate, not advisory network-derived context.
 #
 # The coverage ratchet itself degrades to an informational skip here
 # (ADR-0049 §6) -- metel-interpreter/tests lives in metel-core, one level up
@@ -44,6 +49,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
+
+      - name: RFC tool regression tests
+        run: python3 -m unittest rfcs/tools/test_rfc.py
 
       - name: rfc.py check
         env:

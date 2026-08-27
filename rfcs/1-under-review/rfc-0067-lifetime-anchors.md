@@ -4,15 +4,13 @@ title: "Lifetime Anchors"
 date: '2026-06-28'
 updated: '2026-08-23'
 status: under-review
-target: v0.16.0
-tracking: 'https://github.com/metel-lang/metel-core/issues/274'
+target: v0.17.0
+tracking: 'https://github.com/metel-lang/metel-core/issues/848'
 ---
 
-> **Tracking added retroactively (2026-08-23).** This RFC reached under-review before
-> the tracking-issue requirement existed (PROCESS.md, 2026-08-23). Already had a real
-> tracking issue in its own text throughout — metel-core#274, which owns both halves
-> (the stored-reference restriction and its RFC-0122 companion) — just not recorded in
-> frontmatter. Backfilled, no change in substance.
+> **Tracking corrected 2026-08-27.** metel-core#848 owns this RFC's reconciliation and
+> implementation. metel-core#274 remains the concrete restriction/exit issue and closes
+> only after anchors safely admit stored references.
 
 > ## ⚠ Implementing this RFC carries an inherited obligation
 >
@@ -33,32 +31,31 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/274'
 > full reasoning; this pointer exists so the obligation surfaces here rather than
 > depending on someone remembering it.
 
-> ## Targeted at v0.15.0 — and what has to happen first
+> ## Targeted at v0.17.0 — and what has to happen first
 >
-> *Set 2026-08-02 by operator decision. Recorded here with its critical path because a
+> *Renumbered 2026-08-27 after two intervening milestones were inserted. Recorded here
+> with its critical path because a
 > target on an RFC that is `1-under-review` with five open questions is a plan, not a
 > schedule, and stating only the date would hide that.*
 >
 > **The chain, each link genuinely blocking the next:**
 >
-> 1. **RFC-0122 (Borrow Checking) must settle first — it is targeted at v0.14.0**, the
->    release immediately before this one, which is what makes v0.15.0 reachable at all. It
+> 1. **RFC-0122 (Borrow Checking) must settle first — it is targeted at v0.16.0**, the
+>    release immediately before this one, which is what makes v0.17.0 reachable at all. It
 >    is `1-under-review` with three blocking gaps of its own (§2b) — the outlives rule is unspecified, and this RFC's
 >    §1 was designed before any checker existed. Anchors *name* a validity scope; until
 >    RFC-0122 fixes what a validity scope is, question 1 below cannot be answered.
 > 2. **This RFC's five open questions resolve**, chiefly whether §1's lexical framing
 >    ("valid for exactly as long as `r` is in scope") survives RFC-0122 §2.2's NLL
 >    last-use liveness. That is a real design question, not editing.
-> 3. **`2-accepted` → `3-integrated`**, which per `public/rfcs/PROCESS.md` is also the
->    first point an implementation issue may be filed — so **no tracked implementation
->    work exists for this RFC yet, deliberately**, and none should be created before then.
-> 4. **Implementation, in v0.15.0**, which also discharges **metel-core#274** — the
->    temporary reference-typed-struct-field ban, milestoned to v0.15.0 alongside this,
+> 3. **`2-accepted` → `3-integrated`**, after which metel-core#848's implementation
+>    checklist becomes actionable rather than design planning.
+> 4. **Implementation, in v0.17.0**, which also discharges **metel-core#274** — the
+>    temporary reference-typed-struct-field ban, milestoned to v0.17.0 alongside this,
 >    exists solely because this RFC is unimplemented and is lifted by implementing it.
 >
-> **The one tracked artifact carrying the v0.15.0 milestone today is #274**, not this
-> RFC, because #274 is a concrete interpreter change and this is still a design document.
-> If v0.15.0 arrives and #274 is still open, that is the signal that this chain stalled.
+> **Tracking is split deliberately:** #848 owns this RFC; #274 owns the temporary ban
+> and its removal. If v0.17.0 arrives with either still open, the chain has stalled.
 
 > **Status — under review.** Rewritten 2026-07-05 for the split model. Split again
 > 2026-07-07: the plain `&T` / `&var T` rename and auto-deref (the original RFC-0067's

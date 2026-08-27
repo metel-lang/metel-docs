@@ -2,8 +2,8 @@
 id: rfc-0003
 title: "Concurrency Model"
 date: '2026-05-20'
-updated: '2026-08-24'
-status: draft
+updated: '2026-08-27'
+status: under-review
 tracking: 'https://github.com/metel-lang/metel-core/issues/832'
 ---
 
@@ -24,10 +24,13 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/832'
 > independently (avoiding the exact kind of two-document drift this correction pass is
 > fixing), marks the join-guarantee mechanism as the leading sketch rather than a
 > settled fact (matching `structured-concurrency.md` §3's later, more careful framing,
-> which found this genuinely unresolved), and sets an honest `status: draft`. Found
+> which found this genuinely unresolved), and set an honest `status: draft` at that
+> time. Scheduling moved it to under review on 2026-08-27. Found
 > while checking whether an RFC already existed for a runtime-configurability proposal
 > before drafting a new one — it did, in a form simpler than what was being proposed,
 > which is folded in below (§ Runtime and primitive layers) rather than duplicated.
+
+> **Status — under review (2026-08-27).** Scheduled for v0.18.0 design settlement under metel-core#832
 
 ## Summary
 

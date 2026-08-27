@@ -92,7 +92,7 @@ was found and reconciled, and where this session did most of its work.
 > re-partition.
 >
 > **The largest single consequence, after two corrections:** the records cluster has **no
-> dependency on RFC-0076 (Brand Types, `0-draft`)**. That claim was first made when
+> dependency on RFC-0076 (Brand Types, `1-under-review`)**. That claim was first made when
 > fiat-linearity was deferred, **withdrawn** hours later as overstated (it held only for
 > by-value conversion; the by-reference mode looked likely to reinstate a brand through
 > reassembly provenance), and then **restored on different grounds** when RFC-0119 dropped
@@ -188,7 +188,7 @@ above it are.
   need const generics) is **answered by citation** to RFC-0128 §3; OQ4 (`Value::Array`'s
   representation) is being decided in `metel-core#277`, which owns the change; OQ6 (can
   `List<T>` be written in Metel source) moved to **RFC-0133**. What is left has a *known*
-  unblock point — RFC-0067 settling, ~v0.15.0 — where before it had none, which is the
+  unblock point — RFC-0067 settling in v0.17.0 — where before it had none, which is the
   whole point of the split. Title's "and the Growable List" retained as history.
 
 - **RFC-0133** *(draft, opened 2026-08-13, split from RFC-0124 OQ6)* — From-Metel List: the
@@ -254,6 +254,10 @@ above it are.
   no form of, whereas NLL needs none — structured control flow makes the AST a reducible
   CFG (`move_check` is the precedent). NLL also dissolves the lexical blocker outright.
   §2c records Polonius as a named future option gated on Metel acquiring a CFG/MIR.
+  **Current scheduling, 2026-08-27:** dedicated tracker metel-core#847 owns review and
+  opt-in implementation in v0.16.0. The temporary stored-reference restriction remains
+  metel-core#274; RFC-0067 and its removal are downstream in v0.17.0 under
+  metel-core#848.
 
 - **RFC-0116** *(implemented in v0.12.0, was #576)* — Anonymous Record Types — the closed `{ x: f64 }` type-former,
   `{ x = 1.0 }` values, `Handle.{ fd }` projection, structural identity, and where records
@@ -446,7 +450,7 @@ above it are.
   contingent on RFC-0076), the same answer this corpus already worked out for
   aliased mutation generally, rather than gating a raw mutable static behind
   `unsafe` (which doesn't exist in Metel — RFC-0026 deferred). **Deliberately
-  written against RFC-0143 (`0-draft`) rather than the currently-accepted
+  written against RFC-0143 (`1-under-review`) rather than the currently-accepted
   allocator cluster it proposes to supersede** — real dependency risk, named
   explicitly in §6, not hidden.
 - **RFC-0092** — Comptime Core — `type`-as-value, `typeinfo`, single-declaration
@@ -508,7 +512,7 @@ to match (`rfc-0066-allocated-value-extraction.md`, `rfc-0068-struct-owned-alloc
 plus a few stale cross-reference bugs (a self-contradictory syntax note, a wrong section
 number, a backwards RFC-0067a split direction).
 
-- **RFC-0143** *(draft, opened 2026-08-26)* — Allocator Placement, Storage Identity,
+- **RFC-0143** *(under review, opened 2026-08-26; scheduled 2026-08-27)* — Allocator Placement, Storage Identity,
   and Allocator-Selected Handles — a deliberate consolidated replacement candidate for
   the accepted-but-unimplemented allocator surface in RFC-0063/0065/0066/0068/0073/0077
   plus RFC-0141. Preserves instance identity, storage-only preservation, extraction,
@@ -521,10 +525,17 @@ number, a backwards RFC-0067a split direction).
   `alloc a: A` remains only for struct-owned allocators. The semantic change is larger
   than that spelling: `T@a` projects the handle family
   selected by `a`, so allocation no longer implies one universal affine pointer shape.
+  GC handle rows are explicitly provisional: static identity proves allocation
+  disjointness but not absence of cross-arena reachability, and RFC-0139 must settle
+  complete roots, incoming edges, affine contents/finalization, and concurrency before
+  this RFC can promise standard GC behavior.
   Also closes RFC-0133's unnamed allocator-substrate gap at the semantic level by
   requiring allocate/grow/shrink/release block operations, with their user-authorable
   unsafe spelling blocked on RFC-0026. The older accepted RFCs remain unchanged and
-  authoritative unless this draft is eventually accepted and supersedes them.
+  authoritative unless this draft is eventually accepted and supersedes them. Tracked
+  by metel-core#850 in v0.19.0; metel-core#851 owns the generic associated handle-family
+  prerequisite. Tracing GC is downstream in v0.20.0 rather than part of the allocator
+  foundation milestone.
 - **RFC-0063** *(accepted)* — Allocator Handles — the allocator half of the old "region
   handles" premise. Central to the whole cluster.
 - **RFC-0065** *(accepted, amended 2026-07-20)* — Allocator and Lifetime Ergonomics —
@@ -585,7 +596,7 @@ number, a backwards RFC-0067a split direction).
   dropped.
 - **RFC-0077** *(accepted)* — Allocator Generics — `<A: Alloc>` impl headers, variance
   for `@a T`.
-- **RFC-0139** *(draft, opened 2026-08-24 — not ready for review, see its own Open
+- **RFC-0139** *(under review, opened 2026-08-24 — not ready for acceptance, see its own
   Questions)* — Garbage-Collected Allocators and Allocator-Determined Pointer Types —
   a GC allocator (global/thread-local singletons + instantiable local arenas) as a case
   of the existing `Alloc` interface, not a new primitive, via a second, generic,
@@ -598,15 +609,19 @@ number, a backwards RFC-0067a split direction).
   RFC-0082's one-line dismissal implied, but doesn't claim to have resolved it. Formalizes
   `reports/substructural-types/gc-allocator-and-cyclic-structures.md`
   (metel-docs-internal) at the same, still-exploratory maturity — drafted for a tracked,
-  numbered home and a milestoned issue, not because the design is settled. Tracked by
-  metel-core#831, milestoned v0.17.0 (the furthest-out existing milestone, matching
-  allocators' Priority 4/"built last" position, not a claim about v0.17.0's own planned
-  scope).
+  numbered home and a milestoned issue, not because the design is settled. Its
+  2026-08-27 soundness review makes four matters explicit blockers before review:
+  complete root-location discovery beyond borrow liveness, cross-arena-edge handling
+  for subset collection, affine-content/finalization rules, and a concurrency contract
+  before `GlobalGc` can be `Send`/`Sync`. Tracked by
+  metel-core#831, now a design-settlement issue in v0.20.0 after RFC-0143's v0.19.0
+  allocator foundation. Its first implementation target is local, non-moving and
+  non-sendable; `GlobalGc` remains downstream of the concurrency contract.
 - **RFC-0074** *(draft)* — Shared Pointers (Rc/Arc) — blocked on RFC-0076 (brand
   introduction mechanism unresolved).
 - **RFC-0075** *(draft, parked)* — Region Inference — deliberately deferred until
   real annotation-burden data exists.
-- **RFC-0076** *(draft)* — Brand Types — phantom identity parameters; RFC-0074 and
+- **RFC-0076** *(under review, scheduled 2026-08-27)* — Brand Types — phantom identity parameters; RFC-0074 and
   RFC-0090's tier-3 `(row, brand)` idea both depend on this.
 
 ## Aspect system core (accepted — the stable foundation)
@@ -829,7 +844,7 @@ implementation).
   function pointers have a working one (RFC-0061 §7.2). Interacts with **RFC-0071**
   (Ownership and Move Semantics, affine-by-default foundation — see Aspect system core,
   below) more than with RFC-0134 itself.
-- **RFC-0003** *(draft, corrected 2026-08-24)* — Concurrency Model — fiber handles,
+- **RFC-0003** *(under review, corrected 2026-08-24; scheduled 2026-08-27)* — Concurrency Model — fiber handles,
   channels, `select`, `Send`/`Sync`, aspect-based desugaring (`Spawnable`/`Sendable`/
   `Receivable`/`Selectable`), and a crate-wide pluggable-runtime mechanism (swap the
   scheduler via a type alias at the crate root, resolved by ordinary type inference).
@@ -842,9 +857,9 @@ implementation).
   instead of independently re-deriving it. See `reports/substructural-types/
   structured-concurrency.md` (metel-docs-internal) for the actively-maintained
   continuation of this RFC's open questions (the join-guarantee mechanism specifically).
-  Tracked by metel-core#832, milestoned v0.17.0 (no clear near-term slot in the
-  strategy document's current priorities, not a claim about v0.17.0's own planned
-  scope).
+  Tracked by metel-core#832 in v0.18.0 for design settlement after the v0.17.0
+  ownership/lifetime substrate. `GlobalGc` is downstream; local non-sendable GC does
+  not wait for the concurrency RFC.
 - **RFC-0140** *(under review, opened 2026-08-25)* — Algebraic Effects — `effect`
   declarations desugar to aspects, `handle` desugars to an aspect impl wired through the
   call stack as an implicit bracket parameter; the suspended computation is a first-class

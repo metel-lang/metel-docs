@@ -14,7 +14,7 @@ status: draft
 > rather than folded into RFC-0132, since it's a genuinely separate capability RFC-
 > 0132 was never scoped to cover.
 >
-> **Written against RFC-0143 (`0-draft`), not the currently-accepted allocator
+> **Written against RFC-0143 (`1-under-review`), not the currently-accepted allocator
 > cluster it proposes to replace.** RFC-0143 already has the exact primitive this
 > RFC needs — `Heap` as a "static allocator... with a stable global identity" — more
 > precisely than the accepted-but-unimplemented RFC-0063/RFC-0141 cluster does. This
@@ -246,7 +246,7 @@ case).
    cross-module initialization order needs its own rule.
 2. **The interior-mutability wrapper's exact shape (§4)** — this RFC states that
    mutation must go through something `RcToken`-shaped, not what that something's
-   full API is. Real design work, contingent on RFC-0076 (Brand Types, `0-draft`)
+   full API is. Real design work, contingent on RFC-0076 (Brand Types, `1-under-review`)
    and on `RcToken` graduating from exploration report to an actual RFC.
 3. **Whether `static`'s storage identity needs its own named concept, or `Heap`'s
    is sufficient as stated in §2** — this RFC's working answer is "sufficient,"
@@ -268,15 +268,15 @@ case).
   mechanism this RFC is deliberately not overlapping with; §5 states the
   distinction precisely.
 - RFC-0143 (Allocator Placement, Storage Identity, and Allocator-Selected Handles,
-  `0-draft`) — supplies `Heap`'s process-scoped storage identity §2 builds on
+  `1-under-review`) — supplies `Heap`'s process-scoped storage identity §2 builds on
   directly; §6 states the dependency risk this creates.
 - RFC-0063 / RFC-0141 (currently accepted, proposed for supersession by RFC-0143)
   — the allocator cluster this RFC deliberately did not write against; see §6.
-- RFC-0076 (Brand Types, `0-draft`) — `RcToken`'s own dependency, inherited by §4.
+- RFC-0076 (Brand Types, `1-under-review`) — `RcToken`'s own dependency, inherited by §4.
 - `reports/substructural-types/shared-ownership-survey-2026-06-29.md` —
   `RcToken<'b>`, the interior-mutability precedent §4 reuses rather than inventing
   a second mechanism.
-- RFC-0139 (Garbage-Collected Allocators, `0-draft`) — considered and set aside for
+- RFC-0139 (Garbage-Collected Allocators, `1-under-review`) — considered and set aside for
   the immutable case (Alternatives Considered); may become relevant if the mutable
   case's design changes.
 - RFC-0026 (Unsafe Blocks, deferred) — the alternative path for a raw mutable

@@ -2,10 +2,22 @@
 id: rfc-0139
 title: "Garbage-Collected Allocators and Allocator-Determined Pointer Types"
 date: '2026-08-24'
-status: draft
-target:
+status: under-review
+target: v0.20.0
 tracking: 'https://github.com/metel-lang/metel-core/issues/831'
+updated: '2026-08-27'
 ---
+
+> **Soundness review update, 2026-08-27.** Four issues in this proposal are promotion
+> blockers, not implementation details: complete root-location discovery, cross-arena
+> edges during subset collection, reclamation of GC objects containing affine
+> resources, and the concurrency contract implied by a sendable `GlobalGc`. This RFC
+> must not move to accepted until it gives each issue a normative rule and an
+> implementable enforcement strategy. The earlier claims that borrow liveness alone is
+> a precise root set and that tag disjointness alone permits subset collection are
+> withdrawn below.
+
+> **Status — under review (2026-08-27).** Scheduled for v0.20.0 local-GC design settlement under metel-core#831
 
 ## Summary
 
@@ -14,15 +26,18 @@ existing allocator interface rather than a new primitive, addressing Rust's
 cyclic-data-structure shortcoming directly. Proposes generalizing the `Alloc` aspect
 with a second, generic, defaulted associated type (`Pointer<T>`) so each allocator
 determines what an allocation expression produces — `@a T` for the affine kinds,
-unchanged, `Gc<T>` for a GC arena — and reuses the borrow checker's own move/drop
-liveness analysis as a precise GC root set. Requires defaulted and generic associated
-types, both explicitly declined by RFC-0082 for lack of a use case; this is that use
-case.
+unchanged, `Gc<T>` for a GC arena. Borrow liveness may contribute to keeping transient
+dereferences alive, but it is not a complete root-location mechanism: the collector
+must separately locate every live copied handle. Requires defaulted and generic
+associated types, both explicitly declined by RFC-0082 for lack of a use case; this is
+that use case.
 
-This RFC is **not** ready for review. It is drafted at the same maturity as the
+This RFC is **not** ready for acceptance. It entered review because scheduled design
+settlement is itself the process trigger; it remains at the same maturity as the
 exploration it formalizes (`reports/substructural-types/gc-allocator-and-cyclic-
 structures.md`, metel-docs-internal): real open questions remain unresolved, named
-explicitly in "Open Questions" rather than glossed over. It exists so the design has a
+explicitly in "Promotion blockers and open questions" rather than glossed over. It
+exists so the design has a
 tracked, numbered home and a milestoned issue rather than living only in a
 conversation transcript.
 
@@ -69,7 +84,7 @@ allocator-specific residue. This RFC's central bet is that a GC allocator is *no
 case the decomposition needs a fifth primitive for — it's a case that needs the
 allocator to determine a *different* result shape for the same `@a expr` sugar, not a
 different primitive. Whether that bet survives implementation is this RFC's open
-question, not a settled premise (see "Open Questions").
+question, not a settled premise (see "Promotion blockers and open questions").
 
 ---
 
@@ -77,8 +92,9 @@ question, not a settled premise (see "Open Questions").
 
 ### 1. Three arena kinds
 
-- **`GlobalGc`** — one process-wide arena, always nameable (parallel to `Heap`),
-  sendable.
+- **`GlobalGc`** — one process-wide arena, always nameable (parallel to `Heap`). It is
+  not specified as `Send` or `Sync` until §9's synchronization and mutation contract is
+  settled.
 - **`LocalGc`** — one per thread, always nameable (parallel to `LocalHeap`), not
   sendable.
 - **`GcRegion::new()`** — independently instantiable, multiple live at once (parallel
@@ -131,11 +147,12 @@ tagging mechanism, so no second, parallel type-parameter scheme is needed on top
 
 ### 3. Manual, scoped collection
 
-Falls directly out of the tag-disjointness fact the allocator model already proves for
-an unrelated reason (RFC-0063 §2: "`@a T` and `@b T` with `a ≠ b` are provably
-non-aliasing"). `g1.collect()` cannot touch `g2`'s live objects for the same reason two
-region pointers with distinct tags already provably cannot alias — not a new
-mechanism, a direct reuse of an existing proof.
+Storage tags prove that objects allocated in `g1` and `g2` are distinct. They do **not**
+prove that an object in `g2` contains no handle into `g1`. Consequently, tag
+disjointness alone does not make subset collection sound. `g1.collect()` is permitted
+only under one of §7's normative cross-arena-edge policies; until one is selected,
+scoped collection is a design goal rather than an established consequence of the
+allocator model.
 
 ```metel
 // Illustrative.
@@ -180,20 +197,87 @@ GC-specific) and relies on `Copy`/`Drop`'s existing mutual exclusion (RFC-0071) 
 than a new special case — a `Gc<T>` handle correctly has no per-handle `Drop`, since
 reclamation timing is the tracer's decision, not any individual handle's.
 
+`Copy` is feasible only if the compiler/runtime can still enumerate every live copy at
+a collection safepoint. Exemption from affine move tracking removes one possible source
+of that information; it does not remove the collector's obligation to find roots.
+
 ### 6. Root-finding via the borrow checker
 
-A stored `Gc<T>` handle is found by the tracer regardless of where it's been copied to
-— that's §5's whole point. A *transient dereference* (a short-lived `&Node` obtained
-from a `Gc<T>` handle) is not itself a stored handle, and needs a root set the same way
-every tracing GC does — normally built via compiler-generated stack maps purpose-built
-for the collector. This RFC proposes reusing infrastructure that already has to exist
-for an unrelated reason: RFC-0071's move/drop analysis already computes, precisely,
-which stack slots hold live borrows and for how long. If `collect()` can query that
-directly, the collector gets root-set precision from infrastructure built for move/drop
-correctness, not a from-scratch stack-map builder — a genuine Metel-specific advantage
-over a conservative or hand-rolled collector, contingent on the query actually being
-buildable against the real move-check implementation (unverified — see "Open
-Questions").
+At every collection safepoint, the runtime must discover all roots that can reach the
+collected arena. This includes live `Gc<T>` copies in registers, stack slots,
+aggregates, globals/statics, and objects in other storage, plus transient `&T`/`&var T`
+values derived from GC handles. Heap tracing discovers edges only after these roots are
+known; it does not explain how register and stack roots are found.
+
+RFC-0071's move/drop and borrow-liveness analysis can establish the extent of transient
+borrows and can prevent a moving collector from relocating an object behind a live
+borrow. It cannot by itself enumerate all `Gc<T>: Copy` values, because those copies are
+deliberately exempt from affine move tracking. A sound design must select and specify at
+least one complete mechanism, such as:
+
+- compiler-emitted stack/register maps at restricted safepoints;
+- an explicit or compiler-maintained shadow-root stack whose API prevents unregistered
+  handles from surviving a safepoint; or
+- conservative stack/register scanning, while dropping any claim of precise roots and
+  specifying its interaction with pointer representation and movement.
+
+The chosen mechanism must cover optimized code, spills, aggregates, globals, foreign
+calls, and suspension/captured continuations. A non-moving collector avoids pinning and
+pointer-update obligations but not root discovery. A moving collector additionally
+needs relocation metadata and a rule that pins or rejects movement behind every live
+derived borrow.
+
+### 7. Cross-arena edges and subset collection
+
+Before `g1.collect()` can collect without scanning every other arena, the language must
+choose one of the following policies or an equivalently complete one:
+
+1. reject handles from `g1` when storing into objects whose storage identity is not
+   `g1` (including globals and non-GC storage);
+2. record every incoming cross-arena edge in a remembered set/write barrier and scan
+   that set as roots of `g1`; or
+3. scan every storage domain that may contain an incoming edge.
+
+The policy must cover edges introduced through interior mutation, generic containers,
+erased/dynamic values, and unsafe or foreign interfaces. Distinct storage identities
+remain useful for stating the policy, but non-aliasing is not non-reachability. Subset
+collection is a promotion-blocking claim until the edge rule is normative and tested.
+
+### 8. Affine contents, destruction, and finalization
+
+A traced object may become unreachable without an explicit affine owner performing its
+drop. Therefore `Gc<T>` cannot be admitted for arbitrary `T` merely because the handle
+itself is `Copy`. Before acceptance, this RFC must choose and enforce one of these semantic
+boundaries:
+
+- require a bound that excludes `Drop`/affine contents from the transitive object graph;
+- provide a finalization protocol that runs each required destructor exactly once and
+  specifies ordering, resurrection, cycles, panics/aborts, and collection reentrancy;
+  or
+- require affine resources to live behind a separately owned handle whose lifetime is
+  not determined by GC reachability.
+
+“Wrap it in GC too” is insufficient for files, locks, unique heap allocations, and
+other resources whose correctness depends on deterministic release. This rule belongs
+at placement/type-checking boundaries and must apply through fields, rows, generic type
+parameters, aspect objects, and captured continuations.
+
+### 9. `GlobalGc`, concurrency, and `Send`/`Sync`
+
+A process-wide arena is not automatically safe to access from multiple threads. If a
+`GlobalGc` handle is `Send` or `Sync`, the design must specify how dereference,
+mutation, root publication, and collection synchronize. A complete contract must say
+whether collection stops participating threads, whether writes require barriers, which
+operations are atomic, where safepoints occur, and what happens when a thread is in
+foreign code or holds a derived borrow.
+
+Merely making its handles `!Send + !Sync` is insufficient if every thread can
+independently access the same process-wide singleton. Until that contract exists,
+`GlobalGc` is a reserved design row, not an available safe standard allocator. A
+resolution may instead remove it, restrict the entire arena to one statically
+designated thread, or specify safe shared access. Concurrent or stop-the-world
+collection algorithms may remain implementation choices only after the observable
+safety contract is fixed.
 
 ---
 
@@ -232,45 +316,62 @@ Questions").
 
 ## Out of Scope
 
-- The tracer's actual algorithm and runtime implementation — real, unbuilt runtime
-  work, the same category of gap as the effects system's unbuilt continuation-capture
-  mechanism (`algebraic-effects.md` §8, metel-docs-internal). This RFC specifies the
-  type-level surface a tracer would need to satisfy, not the tracer itself.
-- A concurrent/shared collector for a *sendable* GC arena. `GlobalGc`'s sendability in
-  this RFC means "one arena, no thread affinity requiring no cross-thread
-  synchronization" — not "safe for concurrent tracing while multiple fibers mutate it."
-  A genuinely concurrent collector is a materially harder implementation problem, not
-  assumed solved here.
-- Rank-2 polymorphism, effect-handler interaction, or any connection to the separate
-  algebraic-effects/structured-concurrency design threads — this RFC is scoped to
-  allocation and reclamation only.
+- The tracer's concrete algorithm and performance policy (mark/sweep versus copying,
+  generations, compaction heuristics, and pause targets). Root completeness,
+  cross-arena-edge handling, finalization restrictions, and concurrency safety are
+  **not** out of scope because the public type and collection operations are unsound
+  without them.
+- A particular concurrent collector implementation. The safety contract required for
+  `GlobalGc: Send + Sync` remains in scope even if the first implementation is
+  stop-the-world or keeps `GlobalGc` thread-bound.
+- Rank-2 polymorphism and the semantics of effect handling themselves. However, any
+  selected root protocol must still enumerate GC handles held in suspended
+  continuations once those continuations exist.
 
 ---
 
-## Open Questions
+## Promotion blockers and open questions
 
-1. **Does `Gc<T>` actually hold as `Copy`?** (§5) The central hypothesis this whole
-   design rests on. Not verified against a real implementation.
-2. **`collect()`'s exact signature.** (§6) Coarse (`&var g`, sound and cheap today,
-   blocks on any outstanding borrow anywhere in the arena — mirrors the diagnostic
-   already shown for `drop(a)` on a `BumpAlloc`, RFC-0063 §5) vs. precise (a per-borrow
-   root scan against the borrow checker's live-borrow set at an arbitrary program
-   point — more valuable, real unbuilt analysis work, not proven buildable against the
-   actual move-check implementation). Leaning coarse-first; not decided.
+### Soundness blockers
+
+The following are mandatory before this RFC may move to `2-accepted`. Deferring
+them to implementation or leaving them as algorithm choices is not acceptable:
+
+1. **Complete root-location protocol.** Select one of §6's mechanisms, specify its
+   safepoints and optimizer/FFI/continuation obligations, and demonstrate that live
+   copied handles and derived borrows cannot be omitted.
+2. **Cross-arena-edge policy.** Select and enforce one of §7's policies. Until then,
+   subset collection must not appear as a safe operation or claimed consequence of
+   static identity.
+3. **Affine-content/finalization boundary.** State the admissibility bound or complete
+   finalization semantics from §8, including transitive generic contents and cycles.
+4. **Concurrency and sendability contract.** Remove/defer `GlobalGc`, prove the whole
+   arena is confined to one designated thread, or specify and validate §9's shared
+   synchronization contract. `!Send + !Sync` handles alone do not confine an
+   independently nameable process-wide singleton.
+
+### Other design questions
+
+1. **Does `Gc<T>` hold as `Copy` under the selected root protocol?** (§5) Copyable
+   traced handles have prior implementation precedent, but Metel must verify its own
+   representation, safepoints, mutation rules, and compiler lowering.
+2. **`collect()`'s exact signature.** (§6) A coarse `&var g` may block derived borrows
+   of that arena, but it still does not locate independent copied handles. Decide the
+   signature only after the root protocol is selected.
 3. **The `Alloc::Pointer<T>` mechanism itself is unverified against real associated-type
    default semantics.** RFC-0082's declined-defaults reasoning (§9 there) is worked
    through in "Relationship to existing RFCs" above but not formally resolved as an
    amendment to that RFC. This is the load-bearing prerequisite the rest of this RFC
    depends on; until it's actually written up and checked, everything downstream of it
    is provisional.
-4. **Coherence with the affine world at a `Gc<T>`-reachable struct's boundary.** Can
-   such a struct contain an affine-owned `@Heap U` field directly? Likely "no, unless
-   `U` is itself `Copy` or re-wrapped as its own `Gc<U>`," mirroring the existing rule
-   for any `Copy` struct — not yet stated as an explicit rule.
+4. **Surface expression of §8's affine-content boundary.** Decide whether this is a
+   negative `Drop`/affinity bound, a transitive trace-safety aspect, or a finalizer
+   capability. Re-wrapping an affine resource in another `Gc` is not a solution because
+   it leaves the same nondeterministic-destruction obligation one level deeper.
 5. **`brand-kind-unification.md`'s role-crossing matrix** (metel-docs-internal) does
    not yet enumerate the specific crossing `GcRegion`'s tag reuse (§1) depends on.
-6. **Sendability for a genuinely shared GC arena** — deliberately out of scope (see
-   above), but the question of whether it's ever wanted at all is unexamined.
+6. **Whether `GlobalGc` should ever be sendable.** This is a product/design choice;
+   if yes, the associated safety contract is nevertheless a soundness blocker above.
 7. **Whether "manual trigger" (§3) is ever more than a single synchronous `.collect()`
    call** — incremental/generational controls are not examined.
 
@@ -289,10 +390,20 @@ Questions").
 - `reports/memory-model/memory-model-overview.md` (metel-docs-internal) — corrected
   2026-08-24 for staleness found while drafting this RFC; the accurate current source
   for the allocator model this RFC builds on.
+- `reports/strategy/research-novelty-audit-2026-07-16.md`, reassessment dated
+  2026-08-27 (metel-docs-internal) — prior-art and soundness review that identified the
+  four promotion blockers incorporated above.
+- `gc-arena` — copyable branded GC handles and independently collectible arenas:
+  <https://github.com/kyren/gc-arena>.
+- `zerogc` — explicit safepoints and borrow-checker-assisted roots:
+  <https://docs.rs/zerogc>.
+- Hughes and Marr, “Garbage Collection for Rust: The Finalizer Frontier” — survey of
+  rooting/finalization constraints in Rust GC designs: <https://doi.org/10.1145/3763179>.
 
 ---
 
 ## Decision
 
-**Outcome:** *(pending — not ready for review; see Open Questions)*
+**Outcome:** *(pending — under review, not ready for acceptance; see Promotion blockers and open
+questions)*
 **Target:** *(set when accepted)*

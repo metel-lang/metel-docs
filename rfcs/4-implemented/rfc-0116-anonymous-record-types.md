@@ -28,7 +28,7 @@ coverage:
 > **This is the piece of the cluster with no dependencies at all**, and the reason the
 > split is six-way rather than three-way: it can be accepted and implemented today,
 > without RFC-0071 (Ownership and Move Semantics, `2-accepted`, 0% implemented), without
-> RFC-0076 (Brand Types, `0-draft`), and without any row-kind or row-unification
+> RFC-0076 (Brand Types, `1-under-review`), and without any row-kind or row-unification
 > machinery. Everything else in the cluster sits behind one of those.
 
 > **Status — under review (2026-07-24).** Scheduled for v0.12.0 as the records entry point: no dependency on RFC-0071, RFC-0076, or any row kind.

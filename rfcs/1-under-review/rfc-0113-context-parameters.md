@@ -3,7 +3,7 @@ id: rfc-0113
 title: "Context Parameters"
 date: '2026-07-21'
 status: under-review
-target:
+target: v0.13.1
 updated: '2026-08-23'
 tracking: 'https://github.com/metel-lang/metel-core/issues/808'
 ---
@@ -316,7 +316,7 @@ other — which is evidence for the decomposition thesis rather than an extra ru
   context parameters do and do not replace.
 - RFC-0065 (Allocator Ergonomics, accepted) — §1/§1a/§1b, the four elision rules this
   generalizes; its 2026-07-20 second pass is the reverted-shadowing precedent behind §3.1.
-- RFC-0076 (Brand Types, draft) — the capability-token pattern whose invented `given`
+- RFC-0076 (Brand Types, under review) — the capability-token pattern whose invented `given`
   keyword this replaces (§5).
 - RFC-0075 (withdrawn) — inter-function inference; the line §1.1 declines to cross.
 - Kotlin KEEP-0367 (context parameters, stable 2.4) — the named-parameter design this

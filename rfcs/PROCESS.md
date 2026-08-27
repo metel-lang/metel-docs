@@ -549,7 +549,10 @@ of this process that don't need judgment:
   needs a human, or an agent, to actually think about it. Rebuilds `REGISTRY.md`.
 - `rfc.py check` — validates frontmatter status matches directory, no duplicate RFC
   ids, no dangling `rfcs/N-stage/rfc-....md` path references anywhere in the
-  repo, that generated `REGISTRY.md` matches the current RFC corpus exactly, that the
+  repo, that a draft has no tracking metadata, and (via GitHub when reachable) that no
+  open, milestoned issue whose title begins `RFC-NNNN` points at an RFC still in
+  `0-draft` (authenticated CI fails closed if that lookup cannot run); that generated
+  `REGISTRY.md` matches the current RFC corpus exactly; that the
   curated `INDEX.md` mentions every current RFC at least once, and (since 2026-07-10,
   not retroactive — see above) that any RFC at
   `3-integrated` has `impl_tracking` set, `impl_status` set to a valid value and not

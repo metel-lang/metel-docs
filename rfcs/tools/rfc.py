@@ -41,7 +41,10 @@ Subcommands:
                                        cited status no longer matches that RFC's
                                        actual current stage, and any reference to a
                                        retired issue-tracker host (impl_tracking or
-                                       a live link under ). Read-only.
+                                       a live link under ). Also rejects a draft that
+                                       carries tracking metadata and, best-effort via
+                                       GitHub, any draft named by an open, milestoned
+                                       `RFC-NNNN...` tracking issue. Read-only.
   index --check-drift                  Check whether generated REGISTRY.md matches
                                        the current RFC corpus exactly, and whether
                                        the curated INDEX.md mentions every current
@@ -662,6 +665,13 @@ SPEC_EXEMPTION_RENDERED_END = "<!-- rfc.py:exemption:rendered:end -->"
 # mistaken for one and sent to fetch_issue_state for nothing.
 SPEC_EXEMPTION_ISSUE_REF_RE = re.compile(r'^(?P<repo>[a-zA-Z0-9_.-]+)#(?P<num>\d+)$')
 
+# An issue beginning with an RFC id is an explicit tracker for that RFC. Merely
+# mentioning an RFC later in a title/body is deliberately insufficient: dependency,
+# regression, and documentation issues routinely cite RFCs without tracking their
+# settlement or implementation. Combined with a milestone and an open issue, this is
+# the issue-tracker half of PROCESS.md's "scheduled work => under review" trigger.
+RFC_TRACKER_TITLE_RE = re.compile(r'^\s*RFC-(?P<num>\d{1,4})(?P<suffix>[a-z]?)\b', re.IGNORECASE)
+
 
 def all_spec_block_ids():
     """Every Legality Rule / Dynamic Semantics id across the spec corpus,
@@ -1201,6 +1211,76 @@ def fetch_issue_state(owner, repo, number):
     if state is None:
         return None, "response had no `state` field"
     return state, None
+
+
+def fetch_open_milestoned_rfc_trackers(owner="metel-lang", repo="metel-core"):
+    """Return explicit RFC trackers among the repository's scheduled open issues.
+
+    This is the reverse check frontmatter alone cannot provide: an issue can be
+    created and milestoned before anybody edits the RFC. Titles must *begin* with an
+    RFC id, which avoids treating an issue that merely cites a dependency or reports
+    a conformance bug as that RFC's lifecycle tracker.
+
+    The GitHub issues endpoint includes pull requests, so those are excluded. Results
+    are paginated rather than silently checking only the newest 100 scheduled issues.
+    Like fetch_issue_state(), network/API failure is reported to the caller instead
+    of raising; structural checks remain usable offline.
+    """
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    headers = {"Accept": "application/vnd.github+json", "User-Agent": "rfc.py-check"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    trackers = []
+    page = 1
+    while True:
+        url = (
+            f"https://api.github.com/repos/{owner}/{repo}/issues"
+            f"?state=open&milestone=*&per_page=100&page={page}"
+        )
+        req = urllib.request.Request(url, headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                issues = json.loads(resp.read())
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError) as e:
+            return None, f"GitHub API request failed ({e})"
+        if not isinstance(issues, list):
+            return None, "GitHub API response was not an issue list"
+
+        for issue in issues:
+            if issue.get("pull_request") or not issue.get("milestone"):
+                continue
+            match = RFC_TRACKER_TITLE_RE.match(issue.get("title", ""))
+            if not match:
+                continue
+            trackers.append({
+                "rfc_id": normalize_id(match.group("num") + match.group("suffix")),
+                "number": issue.get("number"),
+                "title": issue.get("title", ""),
+                "milestone": issue["milestone"].get("title", ""),
+                "url": issue.get("html_url", ""),
+            })
+
+        if len(issues) < 100:
+            break
+        page += 1
+    return trackers, None
+
+
+def scheduled_draft_problems(id_to_stage, trackers):
+    """Flag scheduled RFC trackers whose RFC has not entered review."""
+    problems = []
+    for tracker in trackers:
+        rid = tracker["rfc_id"]
+        if id_to_stage.get(rid) != "draft":
+            continue
+        problems.append(
+            f"{rid.upper()} is still in 0-draft but open issue #{tracker['number']} "
+            f"is committed to milestone '{tracker['milestone']}' ({tracker['url']}) — "
+            f"PROCESS.md requires the RFC to transition to 1-under-review and link "
+            f"the tracker in the same change"
+        )
+    return problems
 
 
 def index_mentioned_rfc_ids(text):
@@ -2003,6 +2083,14 @@ def cmd_check(args=None):
 
         impl_status = fm.get("impl_status")
         impl_tracking = fm.get("impl_tracking")
+        if expected_status == "draft" and (fm.get("tracking") or impl_tracking):
+            fields = ", ".join(
+                name for name in ("tracking", "impl_tracking") if fm.get(name)
+            )
+            problems.append(
+                f"{rel}: draft has {fields} metadata — tracked work must transition "
+                f"to 1-under-review (PROCESS.md)"
+            )
         if expected_status == "under-review" and not fm.get("tracking"):
             # Hard-enforced, retroactively: an RFC entering under-review needs a
             # linked tracking issue in the same change (PROCESS.md, 2026-08-23).
@@ -2043,6 +2131,21 @@ def cmd_check(args=None):
                     f"{spec_path}:{lineno}: stale 'Not yet implemented' callout for "
                     f"{rid.upper()}, which is already 4-implemented — delete this line: {text}"
                 )
+
+    trackers, tracker_error = fetch_open_milestoned_rfc_trackers()
+    if tracker_error:
+        tracker_info = "scheduled RFC tracker check skipped: " + tracker_error
+        if os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN"):
+            problems.append(
+                "scheduled RFC tracker check failed despite a configured GitHub "
+                f"token — refusing to pass without verifying milestones: {tracker_error}"
+            )
+    else:
+        tracker_info = (
+            f"scheduled RFC tracker check: {len(trackers)} open milestoned "
+            f"RFC tracker(s) checked"
+        )
+        problems.extend(scheduled_draft_problems(id_to_stage, trackers))
 
     problems.extend(status_citation_problems(id_to_stage))
     problems.extend(retired_host_references())
@@ -2097,6 +2200,7 @@ def cmd_check(args=None):
         print("check: no problems found.")
     for line in coverage_info:
         print(line)
+    print(tracker_info)
     return problems
 
 

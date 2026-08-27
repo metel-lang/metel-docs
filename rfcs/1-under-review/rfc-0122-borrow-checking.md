@@ -3,16 +3,14 @@ id: rfc-0122
 title: "Borrow Checking"
 date: '2026-07-24'
 status: under-review
-target: v0.15.0
+target: v0.16.0
 updated: '2026-08-23'
-tracking: 'https://github.com/metel-lang/metel-core/issues/274'
+tracking: 'https://github.com/metel-lang/metel-core/issues/847'
 ---
 
-> **Tracking added retroactively (2026-08-23).** This RFC reached under-review before
-> the tracking-issue requirement existed (PROCESS.md, 2026-08-23). Already had a real
-> tracking issue in its own text throughout — "Tracked as metel-core#274," which owns
-> both halves alongside RFC-0067 — just not recorded in frontmatter. Backfilled, no
-> change in substance.
+> **Tracking corrected 2026-08-27.** metel-core#847 now owns this RFC's design and
+> opt-in implementation. metel-core#274 owns only the temporary stored-reference
+> restriction and its removal after RFC-0067; it is not the borrow-checker umbrella.
 
 > **Opened 2026-07-24** against `OBJECTIVES.md` Trigger 19, which has tracked the borrow
 > checker as "carrying more architectural weight than any other undocumented thing in the
@@ -61,29 +59,27 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/274'
 
 > **Status — under review (2026-08-02).** Acceptance 2026-08-01 was premature. An adversarial pass the same day found six gaps, three blocking: the outlives rule is named but unspecified; reference-typed struct fields defeat the anchors-are-a-dependent claim; and the lexical rule as written rejects sequential &var method calls. Third accepted-to-under-review reversion in the corpus (Trigger 14).
 
-> ## Targeted at v0.14.0
+> ## Targeted at v0.16.0
 >
-> *Set 2026-08-02 by operator decision, giving this RFC a concrete release for the first
-> time.* v0.14.0 sits between v0.13.0 (RFC-0071's remaining parts and move-checker
-> hardening) and **v0.15.0 (RFC-0067, Lifetime Anchors)** — an ordering that is forced,
-> not chosen: RFC-0067's own open questions cannot be answered until this RFC settles what
-> a validity scope is, and its §1 anchor model was written before any checker existed.
+> *Corrected 2026-08-27 after the open/variadic and cleanup milestones shifted the
+> sequence.* v0.16.0 contains this RFC alone as a language feature: borrow checking
+> ships opt-in before **v0.17.0 (ownership completion and RFC-0067 Lifetime Anchors)**.
+> The ordering is forced: anchors cannot settle what they bound until this RFC defines
+> validity and outlives, while local borrowing does not require stored-reference anchors.
 >
 > **What must close first**, all in §2b: the outlives rule specified (§2b.2), the
 > stored-reference restriction implemented (§2b.3 / metel-core#274), closures (§2b.4),
 > reborrowing (§2b.5), and the `T[]` `Copy`-view interaction (§2b.6). §2b.1 is already
 > dissolved by §2.2's move to NLL.
 >
-> **No implementation issue exists for this RFC yet, deliberately** —
-> `public/rfcs/PROCESS.md` allows one only from `3-integrated`, and this is
-> `1-under-review`. The v0.14.0 milestone therefore carries no work for this RFC today;
-> that is the expected state, not an oversight, and it changes the moment §2b closes and
-> this reaches `2-accepted` → `3-integrated`.
+> **Tracking and implementation ownership:** metel-core#847 carries design settlement
+> and the opt-in implementation checklist. Reaching acceptance/integration remains a
+> prerequisite to claiming the implementation is complete.
 >
 > **§3's rollout constraint still binds and interacts with the schedule:** borrow checking
 > ships opt-in behind `--borrow-check` and must **not** go default-on in the same release
-> as #267 (enable move checking by default, currently v0.13.0). With this RFC at v0.14.0
-> and #267 at v0.13.0 those are already in different releases, which satisfies the
+> as #267 (enable move checking by default, currently v0.17.0). With this RFC at v0.16.0
+> and #267 at v0.17.0 those are in different releases, which satisfies the
 > constraint — worth stating so a later reshuffle does not silently break it.
 
 ## Summary

@@ -3,6 +3,7 @@ id: rfc-0142
 title: "Division by Zero and Checked Arithmetic Ergonomics"
 date: '2026-08-25'
 status: under-review
+target: v0.18.0
 updated: '2026-08-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/841'
 ---

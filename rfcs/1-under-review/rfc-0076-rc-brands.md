@@ -2,13 +2,18 @@
 id: rfc-0076
 title: "Brand Types"
 date: '2026-06-29'
+status: under-review
+target: v0.17.0
+tracking: 'https://github.com/metel-lang/metel-core/issues/849'
+updated: '2026-08-27'
 ---
 
-> **Status — draft.** Depends on RFC-0063 (Allocator Handles), RFC-0071 (Ownership and
+> **Draft basis.** Depends on RFC-0063 (Allocator Handles), RFC-0071 (Ownership and
 > Move Semantics), RFC-0072 (Negative Bounds). Introduces brands as a general
 > language feature: phantom type parameters that carry unforgeable allocation-site
 > identity. `Rc` and `Arc` (RFC-0074) using brands for precise alias analysis is one
-> application among several.
+> application among several. Scheduling moved the RFC to under review on 2026-08-27;
+> these dependencies and unresolved questions still block acceptance.
 
 > **Drift audit — 2026-07-21.** Fixed mechanically: RFC-0063's title (`Region Handles` →
 > `Allocator Handles`), its retired `@[r] T` bracket syntax (now `@a T`), and the
@@ -17,6 +22,8 @@ date: '2026-06-29'
 > abandoned triple-duty premise and needs re-derivation (see the note there). Added:
 > Unresolved Question on binding-site brands, raised while asking whether `&T` could become
 > `Ref<T, 'b>`.
+
+> **Status — under review (2026-08-27).** Scheduled for v0.17.0 identity-substrate work under metel-core#849
 
 ## Summary
 

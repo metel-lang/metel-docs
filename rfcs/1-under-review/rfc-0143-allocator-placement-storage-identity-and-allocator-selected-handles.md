@@ -2,21 +2,33 @@
 id: rfc-0143
 title: "Allocator Placement, Storage Identity, and Allocator-Selected Handles"
 date: '2026-08-26'
-status: draft
-target:
+status: under-review
+target: v0.19.0
+tracking: 'https://github.com/metel-lang/metel-core/issues/850'
+updated: '2026-08-27'
 ---
 
 > **Deliberate overlap, 2026-08-26.** This RFC was opened after checking the curated
 > allocator cluster, the exact registry, and the RFC corpus directly. It is a proposed
 > consolidation of accepted RFCs that are intentionally not implemented, not an
-> undiscovered competing design. None of them changes status while this RFC is a draft.
+> undiscovered competing design. None of them changes status merely because this RFC is
+> now under review.
 >
 > **Working syntax premise.** RFC-0093 and RFC-0095 currently spell metadata with `#`;
 > they originally used `@` and changed because the accepted allocator cluster already
 > claimed it. This RFC instead gives the shared sigil directional roles: prefix `@`
 > attaches metadata to what follows, while postfix `@` attaches storage identity to the
 > type that precedes it. It does not amend RFC-0093/0095 by itself; their matching update
-> must occur before this RFC can leave draft.
+> must occur before this RFC can be accepted.
+>
+> **GC soundness boundary, 2026-08-27.** Allocator-selected handles are a general
+> abstraction; they do not prove that every proposed handle family is sound. The GC
+> rows in this RFC are provisional examples and inherit RFC-0139's promotion blockers:
+> complete roots, cross-arena edges, affine contents/finalization, and concurrency.
+> This RFC may advance with the abstract handle-family mechanism, but it must not make
+> standard-GC or subset-collection guarantees until RFC-0139 resolves those blockers.
+
+> **Status — under review (2026-08-27).** Scheduled for v0.19.0 allocator-foundation design settlement under metel-core#850
 
 ## Summary
 
@@ -305,6 +317,13 @@ the allocator condition; `LocalHeap`, `BumpAlloc`, and `AutoAlloc` do not. A cus
 family's `Send`/`Sync` rules are structural aspect rules, not a second annotation on
 the placement expression.
 
+An allocator implementation may declare only capabilities whose safety invariants it
+can enforce. In particular, selecting a copyable handle does not excuse complete root
+tracking; distinct storage identities do not exclude cross-storage references; and a
+`Send`/`Sync` handle requires a synchronization contract for every operation reachable
+through it. Capability declarations are unsafe implementation obligations, not facts
+inferred from the shape of `Handle<T>`.
+
 ### 3.3 Raw storage and runtime-sized buffers
 
 The accepted cluster leaves `Alloc.alloc` unspecified and consequently cannot support
@@ -355,8 +374,12 @@ or hard-coding its representation.
 
 `T@a` and `T@b` are distinct when `a` and `b` are distinct storage identities.
 For storage families that prohibit cross-arena references, this is a static
-disjointness witness. A manual `a.collect()` may therefore collect only `a`'s traced
-arena without scanning `b`, subject to RFC-0139's root and inter-arena-edge rules.
+disjointness witness. It proves that the allocations do not alias; it does not prove
+that an object in `b` cannot contain a handle into `a`. A manual `a.collect()` may
+avoid scanning `b` only if the handle family statically rejects that edge or maintains
+an incoming-edge/remembered-set protocol satisfying RFC-0139. Otherwise `b` must be
+scanned as a possible root source. No subset-collection guarantee follows from storage
+identity alone.
 
 ### 4.2 Identity permanence
 
@@ -785,11 +808,15 @@ extend Record: Serialize {
 | `LocalHeap` | unique affine | thread | not `Send` | all `T` |
 | `BumpAlloc` | unique affine | binding | not `Send` by default | `T: Copy` or `T: !Drop` |
 | `AutoAlloc` | unique affine | binding | not `Send` by default | all `T` |
-| `GlobalGc` | traced copyable | process | subject to RFC-0139 | no pointee move-out |
+| `GlobalGc` | traced copyable | process | not established; RFC-0139 blocker | no pointee move-out |
 | `LocalGc` | traced copyable | thread | not `Send` | no pointee move-out |
 | `GcRegion` | traced copyable | binding | not `Send` by default | no pointee move-out |
 
-GC rows are interface commitments only; their collection semantics remain RFC-0139.
+GC rows are provisional interface examples only, not standard-library commitments.
+Their root discovery, cross-arena-edge, finalization/admissibility, movement/pinning,
+and concurrency semantics remain RFC-0139. In particular, this RFC does not establish
+that `GlobalGc` is `Send` or `Sync`, that arbitrary `T` may be placed in a traced
+family, or that a traced arena can be collected independently.
 
 `AutoAlloc` guarantees validity for its declared scope, complete destruction of live
 `Drop` values, reverse-declaration drop order where observable, safe move-out for its
@@ -969,8 +996,9 @@ but `place` is the language-visible operation.
 
 ## 15. Acceptance dependencies and open questions
 
-This RFC is intentionally a draft. Its primary proposal is concrete; the following
-items must be closed before review can claim the replacement is complete.
+This RFC is intentionally unsettled despite being under review. Its primary proposal
+is concrete; the following items must be closed before acceptance can claim the
+replacement is complete.
 
 ### 15.1 Acceptance dependencies
 
@@ -985,6 +1013,10 @@ items must be closed before review can claim the replacement is complete.
    safety depends.
 5. Generic associated handle families must either extend RFC-0082 or be specified in
    a focused prerequisite RFC.
+6. Any standard GC allocator rows retained in §10 require RFC-0139 to resolve its four
+   promotion-blocking soundness questions. This dependency does not block accepting
+   allocator-selected handle families in the abstract if all GC rows and guarantees
+   remain deferred.
 
 These dependencies are named rather than restated as heterogeneous open questions;
 they close when the corresponding RFCs settle.
@@ -1022,6 +1054,14 @@ Before this RFC may reach `2-accepted`, worked examples must cover at least:
 - a struct owning its allocator and rejecting allocation through shared `&self`;
 - `AutoAlloc` selecting two different backing strategies without changing behavior;
 - a `Gc` handle proving `T@a` does not imply affine ownership;
+- a copied traced handle surviving in an optimized local, aggregate, global, and
+  suspended continuation across a safepoint;
+- a cross-arena edge demonstrating either static rejection, remembered-set rooting, or
+  required scanning during subset collection;
+- attempted traced placement of a value containing an affine `Drop` resource,
+  demonstrating the RFC-0139 admissibility or finalization rule;
+- cross-thread `GlobalGc` publication, mutation, derived borrowing, and collection if
+  `GlobalGc` is ever declared `Send` or `Sync`;
 - a runtime-sized buffer growing across relocation while initialized elements remain
   owned and dropped exactly once;
 - a heterogeneous `List<(dyn Aspect)@a>`;

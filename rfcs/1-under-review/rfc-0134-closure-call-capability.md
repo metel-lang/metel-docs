@@ -3,7 +3,7 @@ id: rfc-0134
 title: "Closure Call Capability"
 date: '2026-08-13'
 status: under-review
-target:
+target: v0.13.0
 updated: '2026-08-23'
 tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 ---
