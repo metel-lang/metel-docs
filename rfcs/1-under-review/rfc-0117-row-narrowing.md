@@ -93,8 +93,9 @@ accepts is a genuinely different capability and belongs to RFC-0121.
   this correction does not itself perform, left for this RFC's own review to take up.
   **Caveat, 2026-08-25 same day: RFC-0137 was reverted to `1-under-review` the same
   day it was accepted** (its own Open Questions 5-6, opened on reversion). The design
-  reasoning above is unchanged, but "discharged" overstates it while RFC-0137 itself is
-  not accepted — treat this dependency as pending RFC-0137's re-acceptance, not closed.
+  reasoning above is unchanged. **RFC-0137 was re-accepted 2026-08-27**, all four Open
+  Questions closed — this dependency can now be folded in as described above, not yet
+  done.
 - **Borrowed narrowing.** Narrowing a `&var` view rather than an owned value is
   RFC-0119's by-reference mode and RFC-0109's views.
 - **Per-field multiplicity.** Deliberately out of scope for the whole records cluster
@@ -148,10 +149,10 @@ accepts is a genuinely different capability and belongs to RFC-0121.
   completing a row fires `construct` rather than a bare write
 - `reports/substructural-types/nominal-types-as-branded-rows.md` §4 — the `Drop`-dispatch
   leak that arises when narrowing is extended to nominal types
-- RFC-0137 (Nominal Types as Branded Rows, `1-under-review` — reverted from
-  `2-accepted` 2026-08-25, same day) — supplies nominal-type narrowing directly once
-  (re-)accepted; §3's own stated dependency is pending on that, not yet discharged;
-  would resolve Open Questions 1 and 2 above
+- RFC-0137 (Nominal Types as Branded Rows, `2-accepted` 2026-08-27 — re-accepted
+  after a same-day 2026-08-25 revert) — supplies nominal-type narrowing directly;
+  §3's own stated dependency can now be folded in, not yet done; would resolve Open
+  Questions 1 and 2 above
 - `public/rfcs/0-draft/rfc-0089-linear-types.md`,
   `public/rfcs/0-draft/rfc-0091-linear-records.md` — per-field multiplicity, deliberately
   deferred until records are implemented
