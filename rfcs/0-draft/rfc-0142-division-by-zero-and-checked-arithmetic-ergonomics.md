@@ -76,32 +76,33 @@ is no alternative to "avoid triggering it in the first place."
 
 ---
 
-## 2. The overflow divergence (not this RFC's subject — recorded, not re-decided)
+## 2. The overflow divergence (resolved 2026-08-26, not this RFC's subject)
 
 RFC-0007 (Compiler-Compatible Primitive Type System, `4-implemented`, integrated into
-the spec) settled overflow explicitly, as decision D3:
+the spec) originally settled overflow, as decision D3, with a debug-panics/
+release-wraps split matching Rust's build-profile model. The shipped interpreter
+never implemented the release-wraps half — `eval_binop` calls `checked_add`/
+`checked_sub`/`checked_mul`/`checked_div` unconditionally, with no build-mode branch
+anywhere, so overflow panicked in every build from the feature's introduction.
 
-> **In debug builds**: integer overflow panics... **In release builds**: integer
-> overflow wraps (two's complement wrapping for signed, modular arithmetic for
-> unsigned)... This matches the Rust model... Float overflow follows IEEE 754
-> semantics (infinity / NaN) in both build modes — no panicking.
+**Resolved, not by this RFC**: D3 is amended rather than the implementation changed.
+Metel has no debug/release build-mode concept for the *programs it runs* at all (the
+`metel` interpreter's full CLI surface is `file`, `--debug-ast`, `--move-check` — no
+`--release`) — the split was borrowed from Rust's own build-profile model without
+Metel having an equivalent to borrow it *onto*. Building one solely to give overflow
+two behaviors was judged not worth it. D3 now reads: integer overflow panics
+unconditionally, in every build; float overflow's IEEE-754 half was already correct
+and is unchanged. See RFC-0007's own "Overflow Semantics" section (corrected
+2026-08-26) and `reference/spec/types.md`'s `spec.types.sized-numeric-types.dynamics-1`
+for the normative text. `error-codes.md`'s R0007 entry, previously silent about
+overflow entirely, now documents both triggers. metel-core#838 tracked this; closed
+by the correction — no implementation change was needed, since the implementation
+was right all along.
 
-RFC-0013 (Integer Overflow Behaviour) was superseded by this decision and is
-`5-superseded`. The float half of D3 matches what §1 found in `eval_binop` exactly.
-**The integer half does not**: `eval_binop` calls `checked_add`/`checked_sub`/
-`checked_mul`/`checked_div` unconditionally, with no build-mode branch anywhere —
-overflow panics in *both* debug and release, contradicting D3's "wrap in release"
-half. RFC-0007 also notes: *"Explicit `wrapping_add` / `checked_add` variants are
-deferred to the standard library RFC"* — no such stdlib surface exists today either
-(confirmed against `core.mtl`: `i64` etc. have only `Copy`, `Display`, `From`).
-
-This is a bug against an already-ratified decision, not an open design question this
-RFC should re-litigate. Tracked as metel-core#838 — fix the implementation to match
-D3, or bring a case back to amend D3 itself if experience says "always panic" (what's
-actually shipped) is preferable to the debug/release split. Out of scope here either
-way; §4's options below are about the *zero-divisor* case only, which D3 never
-addressed (division by zero is not an overflow condition — there is no "wrapped"
-answer for `x / 0` the way there is for `i64::MAX + 1`).
+This was always a bug against an already-ratified decision, not an open design
+question — §4's options below are, and remain, about the *zero-divisor* case only,
+which D3 never addressed either way (division by zero is not an overflow condition —
+there is no "wrapped" answer for `x / 0` the way there is for `i64::MAX + 1`).
 
 ---
 
@@ -369,11 +370,11 @@ but a materially larger question than this RFC's scope.
    `@divTrunc`/`@divExact` naming rather than Rust's overload-by-divisor-type)?
    Affects discoverability and whether a call site's panic-safety is legible without
    checking the divisor's declared type.
-3. **The RFC-0007 D3 implementation divergence (§2)**: fix the implementation to
+3. ~~The RFC-0007 D3 implementation divergence (§2): fix the implementation to
    match the ratified debug-panics/release-wraps decision, or bring evidence back to
-   amend D3 itself? Not this RFC's call to make **for division** — that's what §5's
-   options are for — but the overflow question needs *an* explicit decision
-   somewhere, and currently has neither.
+   amend D3 itself?~~ **Resolved 2026-08-26 — D3 amended, not the implementation.**
+   No debug/release build-mode concept exists for Metel programs at all; building one
+   solely for this was judged not worth it. See §2.
 4. **Does `Perhaps<NonZero<T>>::yolo()` for a compile-time-provable-nonzero literal
    need to exist as an ergonomic escape hatch**, or does §5.3's literal-inference
    proposal make that path unnecessary in practice? Only matters if literal inference
