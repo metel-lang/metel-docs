@@ -1077,6 +1077,138 @@ written `extend Type: Aspect { ... }`, and both forms may coexist for the same t
 
 </details>
 
+### `dyn Aspect`
+
+> **Available now (RFC-0008, metel-core#865): syntax, type representation, and
+> object safety.** Actually *constructing* a value as `dyn Aspect` (coercion)
+> and dispatching a method call through one are not yet implemented — see
+> metel-core#863.
+
+`dyn Aspect` is an aspect object: a value whose concrete type is erased, with
+dispatch happening through a vtable at runtime. It complements `impl Aspect`
+(compile-time-fixed, zero-overhead) with the opposite trade-off — the concrete
+type may vary at runtime, at the cost of an indirect call and a pointer's
+worth of space:
+
+```metel
+fun show(x: &dyn Display) -> i64 { 0 }
+fun holds_two(x: &var dyn Display) -> i64 { 0 }
+fun many(x: dyn Display[]) -> i64 { 0 }
+
+fun main() -> i64 { 0 }
+```
+
+Unlike `impl Aspect` — sugar for a fresh generic parameter, legal only in
+parameter or return position — `dyn Aspect` is a real, existential type. It
+may appear anywhere an ordinary type can: a `let` binding's annotation, a
+struct field, a return type, behind `&`/`&var`, or as an array element.
+
+**Not every aspect can be used this way.** An aspect is *object-safe* only if
+every one of its methods can be dispatched through a vtable — see [Object
+safety](#object-safety) below. A non-object-safe aspect is still fully usable
+with `impl Aspect` (static dispatch); it just cannot appear in `dyn` position.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.aspects.dyn-aspect.legality-1}
+
+`dyn Aspect` names a real, visible aspect — the same resolution `impl Aspect`
+already uses — and is legal in any type position, with no restriction to
+parameter or return position. An aspect object cannot be an `extend` target:
+there is no one concrete type to register an impl against.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [dyn_aspect_type_in_various_positions.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/dyn_aspect_type_in_various_positions.mtl), [dyn_aspect_with_type_args.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/dyn_aspect_with_type_args.mtl), [neg_31_dyn_aspect_unknown_aspect_name.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_31_dyn_aspect_unknown_aspect_name.mtl), [neg_32_extend_dyn_aspect_target_rejected.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_32_extend_dyn_aspect_target_rejected.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
+#### Object safety
+
+An aspect is object-safe only if every one of its methods satisfies three
+rules:
+
+1. **Receiver rule.** The method's first parameter must be `self: &Self` or
+   `self: &var Self`. A bare by-move receiver (`self: Self`), or no receiver
+   at all (an associated function), is not object-safe — moving a value or
+   locating an instance both need information `dyn Aspect`'s erasure has
+   already discarded. `Self` appearing anywhere else in the signature — a
+   non-receiver parameter, the return type — is also not object-safe.
+2. **No generic methods.** A method with its own type parameters cannot be
+   dispatched through a vtable, because the vtable entry would need to be
+   generated per instantiation. Such a method is excluded from the vtable —
+   this does not by itself disqualify the rest of the aspect.
+3. **No associated types in signature.** A method whose signature references
+   one of the aspect's own associated types makes that method's vtable entry
+   depend on the concrete impl's binding for it, which erasure has discarded.
+
+```metel
+aspect Shape {
+    fun area(&self) -> f64;   // object-safe: &self receiver, no Self, no assoc types
+}
+
+fun accepts_shape(x: dyn Shape) -> i64 { 0 }
+
+fun main() -> i64 { 0 }
+```
+
+<!-- doc-example: expect-fail reason="Clone is not object-safe -- clone returns Self, the entire point of this example" -->
+```metel
+// `Clone::clone` returns `Self` -- not object-safe.
+fun rejected(x: dyn Clone) -> i64 { 0 }
+```
+
+`std::core::Drop` is a deliberate exception to rule 1: its one method,
+`fun drop(self);`, takes `self` by value. `drop` is never dispatched through
+the ordinary per-method vtable at all — it fires through the vtable's own
+dedicated drop slot, which needs no receiver-shape guarantee the way an
+ordinarily-dispatched call does, so rule 1 does not apply to it.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.aspects.dyn-aspect.legality-2}
+
+A method's first parameter must be `self: &Self` or `self: &var Self` to be
+object-safe; a by-move receiver, no receiver at all, or `Self` in any other
+signature position, is not.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_27_dyn_aspect_returns_self_not_object_safe.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_27_dyn_aspect_returns_self_not_object_safe.mtl), [neg_29_dyn_aspect_self_by_value_receiver_not_object_safe.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_29_dyn_aspect_self_by_value_receiver_not_object_safe.mtl), [neg_30_dyn_aspect_no_receiver_not_object_safe.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_30_dyn_aspect_no_receiver_not_object_safe.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.dyn-aspect.legality-3}
+
+A method with its own generic parameters is excluded from the vtable without
+disqualifying the rest of the aspect — including when it is the aspect's
+*only* method, the same way a zero-method marker aspect is object-safe.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [dyn_aspect_generic_method_excluded_not_disqualifying.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/dyn_aspect_generic_method_excluded_not_disqualifying.mtl), [dyn_aspect_only_generic_method_is_vacuously_safe.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/dyn_aspect_only_generic_method_is_vacuously_safe.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.dyn-aspect.legality-4}
+
+A method whose signature references one of the aspect's own associated types
+is not object-safe.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_28_dyn_aspect_associated_type_in_signature_not_object_safe.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_28_dyn_aspect_associated_type_in_signature_not_object_safe.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.dyn-aspect.legality-5}
+
+`std::core::Drop`'s `drop(self)` is object-safe despite its by-move receiver:
+it dispatches through the vtable's dedicated drop slot, not ordinary method
+dispatch, so the receiver rule does not apply to it.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [dyn_drop_is_object_safe.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/dyn_drop_is_object_safe.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
 ### Aspect Implementation Coherence
 
 Every `(aspect, type)` pair has at most one implementation visible to the program, independent of module load order. Two rules make this checkable without a whole-program scan.

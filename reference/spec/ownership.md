@@ -525,10 +525,10 @@ row is a superset of the impl's required field set.
 Coercing a value of a `Drop`-implementing type to `dyn Aspect` is rejected when the
 value's current row does not satisfy that type's `Drop` impl's required field set.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Depends on row-bounded Drop dispatch (above, RFC-0137 slice 2, metel-core#858) and additionally on dyn Aspect (RFC-0008, 2-accepted, not integrated) reaching real syntax -- dyn doesn't exist in the grammar at all today. Do not attempt this checkpoint until RFC-0008 has landed enough to have something to coerce into." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Depends on row-bounded Drop dispatch (above, RFC-0137 slice 2, metel-core#858) and additionally on dyn Aspect actually being constructible: dyn Aspect syntax and object safety are real now (RFC-0008 slice 1, metel-core#865), but coercing a value to one -- the step this checkpoint needs something to run against -- is metel-core#863's job, not yet implemented. Do not attempt this checkpoint until #863 lands." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Depends on row-bounded Drop dispatch (above, RFC-0137 slice 2, metel-core#858) and additionally on dyn Aspect (RFC-0008, 2-accepted, not integrated) reaching real syntax -- dyn doesn't exist in the grammar at all today. Do not attempt this checkpoint until RFC-0008 has landed enough to have something to coerce into._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Depends on row-bounded Drop dispatch (above, RFC-0137 slice 2, metel-core#858) and additionally on dyn Aspect actually being constructible: dyn Aspect syntax and object safety are real now (RFC-0008 slice 1, metel-core#865), but coercing a value to one -- the step this checkpoint needs something to run against -- is metel-core#863's job, not yet implemented. Do not attempt this checkpoint until #863 lands._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>
