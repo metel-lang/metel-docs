@@ -126,13 +126,40 @@ This operator did not ship as part of RFC-0007's implementation.
 
 ## Overflow Semantics
 
-**In debug builds**: integer overflow panics. This applies to all implemented integer types (`i8` through `i64`, `u8` through `u64`).
+**Original decision (2026-05-21):** panic in debug builds, wrap in release builds
+(two's complement wrapping for signed, modular arithmetic for unsigned) — matching
+the Rust model, on the rationale that overflow is almost always a bug worth catching
+early in debug, while release avoids the overhead of the check once inputs are
+validated.
 
-**In release builds**: integer overflow wraps (two's complement wrapping for signed, modular arithmetic for unsigned).
+**Corrected 2026-08-26 — this was never actually implemented, and won't be.** The
+shipped interpreter panics on overflow unconditionally
+(`metel-interpreter/src/evaluator/lvalue.rs::eval_binop`, `checked_add`/
+`checked_sub`/`checked_mul`/`checked_div` with no `cfg`/`debug_assertions` branch
+anywhere) — this was true from the feature's introduction, not a regression. The
+divergence went unnoticed this long because the one fixture backing this claim
+(`11_overflow_panics.mtl`) only asserts that overflow panics, which is true in both
+build modes as actually shipped — nothing ever asserted the release-wraps half, so
+nothing ever could have caught the gap.
 
-This matches the Rust model. The rationale: overflow is almost always a bug; panicking in debug catches it early. Wrapping in release avoids the overhead of overflow checks in production code where the programmer has already validated inputs.
+The debug/release model was borrowed directly from Rust's own build-profile split,
+which makes sense for Rust: `cargo build` vs. `cargo build --release` is a genuine,
+well-defined distinction for the *same* program. It doesn't transfer cleanly to
+Metel: the `metel` interpreter takes no `--release` flag, has no debug/release
+concept for the *programs it runs* at all (checked directly — `metel-interpreter/
+src/main.rs`'s full CLI surface is `file`, `--debug-ast`, `--move-check`), and the
+only "build mode" that could apply is how the interpreter *binary itself* happened
+to be compiled — invisible and uncontrollable from a `.mtl` program or its author.
+Implementing D3 as originally written would mean introducing an entire debug/release
+execution-mode concept for Metel programs, with no purpose beyond this one decision.
+That's a real, standalone feature, not a detail — and not one worth building solely
+to give overflow two behaviors instead of one. **D3 is amended: integer overflow
+panics unconditionally, in every build. Float overflow's half of D3 (IEEE 754, no
+panicking) was correct as shipped and is unchanged.**
 
-Float overflow follows IEEE 754 semantics (infinity / NaN) in both build modes — no panicking.
+See `reference/spec/types.md`'s `spec.types.sized-numeric-types.dynamics-1` for the
+corrected normative text. metel-core#838 tracked this; closed by this correction —
+no implementation change was needed, since the implementation was right all along.
 
 ---
 
@@ -153,7 +180,7 @@ let x = arr[i];        // ok
 
 ## Relationship to other work
 
-- **RFC-0013 (Int overflow semantics)**: subsumed by this RFC. The overflow decision (panic/debug, wrap/release) applies to all integer types.
+- **RFC-0013 (Int overflow semantics)**: subsumed by this RFC. The overflow decision (panics unconditionally, every build, per D3 as amended 2026-08-26) applies to all integer types.
 - **METEL-123 (System F elaboration)**: the System F IR requires typed literals and explicit coercions at every node. This RFC defines the type vocabulary that makes that possible. The two pieces of work must be designed in coordination.
 
 ---
@@ -168,7 +195,7 @@ let x = arr[i];        // ok
 |---|----------|----------|
 | D1 | Naming convention | Exact-width lowercase numeric types (`i8`–`i64`, `u8`–`u64`, `f32`, `f64`) shipped. `Char` shipped as a distinct primitive type. The proposed ergonomic aliases `Int`, `Float`, and `Byte` were deferred. |
 | D2 | `Int` and `Float` retention | Deferred. The implemented surface uses `i64` and `f64` directly. |
-| D3 | Overflow semantics | Panic in debug, wrapping in release. Applies to all integer types. Float follows IEEE 754. |
+| D3 | Overflow semantics | ~~Panic in debug, wrapping in release.~~ **Amended 2026-08-26: panics unconditionally, every build — see "Overflow Semantics" above.** Applies to all integer types. Float follows IEEE 754 (unchanged). |
 | D4 | Casting operator | `as` remained the language's explicit cast operator. RFC-0007 extended its use to the shipped exact-width numeric conversions; it did not introduce `as`. |
 | D5 | Fallible narrowing | Deferred. `as?` was discussed but did not ship in the implemented surface of this RFC. |
 | D6 | Array model | `[T]` slices and `[T; N]` fixed arrays. `Array[T]` desugars to `[T]`. No heap allocation in the type. |
