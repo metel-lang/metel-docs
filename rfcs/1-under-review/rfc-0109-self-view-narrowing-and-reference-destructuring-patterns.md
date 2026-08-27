@@ -397,7 +397,7 @@ is needed, belongs in RFC-0137.**
   behind `--move-check`)** — both mechanisms in this RFC are inert without
   RFC-0071's field-sensitive borrow tracking being the default path; see the status
   note at the top.
-- **RFC-0144 (Reference-Destructuring Patterns, `0-draft`, split from this RFC)** —
+- **RFC-0144 (Reference-Destructuring Patterns, `1-under-review`, split from this RFC)** —
   the ad hoc, one-off counterpart; §1 above states the relationship precisely.
 - **RFC-0108 (Reference-Transparent Match Scrutinees)** — no direct dependency,
   noted for consistency with RFC-0144's own note.
@@ -488,7 +488,7 @@ is needed, belongs in RFC-0137.**
 - RFC-0071 (Ownership and Move Semantics, `3-integrated`, move-check implemented
   behind `--move-check`) — the field-sensitive move/borrow tracking both mechanisms
   in this RFC assume exists.
-- RFC-0144 (Reference-Destructuring Patterns, `0-draft`, split from this RFC) — the
+- RFC-0144 (Reference-Destructuring Patterns, `1-under-review`, split from this RFC) — the
   ad hoc, one-off counterpart to named views.
 - RFC-0108 (Reference-Transparent Match Scrutinees) — adjacent pattern-position
   work, noted for consistency.
