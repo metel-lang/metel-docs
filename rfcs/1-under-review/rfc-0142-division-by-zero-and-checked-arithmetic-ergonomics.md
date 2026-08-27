@@ -23,7 +23,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/841'
 > even though their available *answers* differ in an important, concrete way (§5).
 > Options are presented for both — none pre-selected. See "Decision."
 
-> **Status — under review (2026-08-27).** Committed to v0.13.0 (issue #841, milestoned 2026-08-27); RFC-0142 must be accepted, integrated, and implemented before std::math (#254) is implemented.
+> **Status — under review (2026-08-27).** Committed to v0.18.0 (issue #841, milestoned 2026-08-27, moved 2026-08-27 from v0.13.0 to a further, emptier milestone); RFC-0142 must be accepted, integrated, and implemented before std::math (#254, also moved to v0.18.0) is implemented.
 
 ## Summary
 
