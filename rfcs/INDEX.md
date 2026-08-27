@@ -410,9 +410,23 @@ above it are.
   parameter `comptime N: u64` rather than RFC-0053's guessed `<const N: u64>`; §3.4
   excludes computed arities (`[T; N + 1]`) as a *named* deferral rather than another
   unnamed future RFC.
+- **RFC-0145** *(draft, opened 2026-08-27)* — Static Storage Duration — `static X: T
+  = expr;`, the `static` half of issue #840's title that RFC-0132 doesn't cover:
+  a real, single, process-lifetime *address*, not a compile-time-substituted
+  *value*. Reuses `Heap`'s already-designed process-scoped storage identity
+  (RFC-0143 §2.1/§10) for the immutable case — no new storage-duration concept
+  needed, since unique-affine ownership already permits unlimited shared borrows.
+  No bare `static var`: mutation requires an interior-mutability wrapper reusing
+  `RcToken<'b>` (`reports/substructural-types/shared-ownership-survey-2026-06-29.md`,
+  contingent on RFC-0076), the same answer this corpus already worked out for
+  aliased mutation generally, rather than gating a raw mutable static behind
+  `unsafe` (which doesn't exist in Metel — RFC-0026 deferred). **Deliberately
+  written against RFC-0143 (`0-draft`) rather than the currently-accepted
+  allocator cluster it proposes to supersede** — real dependency risk, named
+  explicitly in §6, not hidden.
 - **RFC-0092** — Comptime Core — `type`-as-value, `typeinfo`, single-declaration
   `emit`. **§0/§0a (the base execution model and `pub comptime let`) split out to
-  RFC-0128 on 2026-08-13** — retained in place, marked non-normative, because the
+  RFC-0132 on 2026-08-13** — retained in place, marked non-normative, because the
   RFC-0055/RFC-0083 reconciliation history recorded in them is part of how this RFC
   reached its shape. Still the dependency root of 0093/0094; now itself depends on
   RFC-0128.
