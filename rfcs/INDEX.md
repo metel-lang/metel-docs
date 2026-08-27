@@ -291,15 +291,20 @@ above it are.
   constructor-invariant-bypass risk). A third gap, sharper than originally framed once
   RFC-0008 moved to `2-accepted`, was also closed: coercion to `dyn Aspect` needed its
   own required-set checkpoint before erasure discards a residual's row, cross-referenced
-  on RFC-0008's own side too. **Still pending, per its own "Relationship to existing
-  RFCs" commitments**: RFC-0117, RFC-0119, and RFC-0120 each still need the revision
-  named there — not yet made.
-- **RFC-0117** *(under review)* — Row Narrowing — moving a field out narrows the record's type;
-  the closed 2^*N* subset lattice, no row variables and no unification. Depends on
-  RFC-0116 and on **RFC-0071** (`3-integrated`, 0% implemented), which is why it is separate
-  from RFC-0116 rather than bundled with it. **Its own §3 nominal-type exclusion is
-  addressed by RFC-0137** (`2-accepted` 2026-08-27), which should be folded in as its
-  supplying dependency — not yet done.
+  on RFC-0008's own side too. **All three sibling revisions its "Relationship to
+  existing RFCs" commits to are complete as of 2026-08-27**: RFC-0117's nominal-type
+  worked example added this session; RFC-0119's `.to_record()` addition and RFC-0120's
+  three-tier table restatement were both already made 2026-08-25, confirmed by
+  re-checking rather than trusted from this RFC's own earlier (wrong) "not yet done"
+  notes.
+- **RFC-0117** *(under review, revised 2026-08-27 for RFC-0137)* — Row Narrowing —
+  moving a field out narrows the record's type — or a nominal struct's, via RFC-0137's
+  brand-preserving narrowing, folded in as of this revision — to the closed 2^*N*
+  subset lattice, no row variables and no unification. Depends on RFC-0116 and on
+  **RFC-0071** (`3-integrated`; partial-move tracking real and tested behind
+  `--move-check`, off by default). Also fixed: worked examples using a `move x.y`
+  syntax that doesn't parse — moving a non-`Copy` field out is implicit, no `move`
+  keyword exists (verified directly, metel-core#854).
 - **RFC-0118** *(implemented in v0.12.0, was #577)* — Row Bounds — `<record T: { x: f64, .. }>` and `!{ token }`,
   replacing the `HasField`/`Lacks` family that never parsed. The trailing `..` is an
   anonymous row variable and is what makes a bound *open*; without it the bound is closed,
@@ -320,8 +325,9 @@ above it are.
   identity-tag reuse. Depends on RFC-0116, RFC-0119. **Its own Open Question 5** (does a
   narrowed named record keep its brand) **is answered by RFC-0137** (`2-accepted`
   2026-08-27) for the general case — every struct's brand is preserved through
-  narrowing, not only tier-3's — restating its own three-tier table in RFC-0137's terms
-  is still pending, not yet done.
+  narrowing, not only tier-3's. Its own three-tier table (§1) was already restated in
+  RFC-0137's terms 2026-08-25 — confirmed 2026-08-27 by re-checking, after an earlier
+  note here wrongly claimed it was still pending without verifying first.
 - **RFC-0121** *(under review)* — Open Rows — `<row R>` / `..R`, row algebra (extension is a
   literal, removal is a where-clause decomposition), row-conditional typestate, and the
   width-subtyping-versus-ownership problem. **The expensive half**, and the only piece

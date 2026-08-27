@@ -196,9 +196,10 @@ answered.
    not. **Caveat, 2026-08-25 same day: RFC-0137 was reverted to `1-under-review` the
    same day it was accepted** (its own Open Questions 5-6, opened on reversion, don't
    touch §2/§3's brand-preservation claim directly). **RFC-0137 was re-accepted
-   2026-08-27**, all four Open Questions closed — this tier-1 table restatement and
-   this answer now stand on an accepted dependency, though the restatement itself
-   still needs to actually happen, not yet done.
+   2026-08-27**, all four Open Questions closed. **Checked 2026-08-27: the table
+   restatement itself was already made the same day as this answer (§1 above,
+   "Restated 2026-08-25") — the previous close of this note was wrong to say it was
+   still pending.** Nothing further needed here.
 
 ---
 
