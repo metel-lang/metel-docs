@@ -2,12 +2,12 @@
 id: rfc-0138
 title: "Generic Functions as First-Class Values"
 date: '2026-08-24'
-status: integrated
+status: implemented
 target:
 updated: '2026-08-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/736'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/736'
-impl_status: in-progress
+impl_status: implemented
 coverage:
   "1": { spec: "spec.functions.first-class-functions.legality-2" }
   "2": { kind: untestable, reason: "Internal representation choice (which TypedExpr node backs a bare reference) -- not itself specified, observable behavior." }
@@ -21,6 +21,8 @@ coverage:
 > **Status — accepted (2026-08-27).** Design proven by implementation: all four open questions resolved (see Implementation Notes), full acceptance-criteria coverage (bare reference + higher-order argument, top-level + nested) shipped with passing regression fixtures in metel-core#844.
 
 > **Status — integrated (2026-08-27).** Merged into spec.functions.first-class-functions.legality-2, checked against the rest of the currently-integrated spec; no soundness gap found.
+
+> **Status — implemented (2026-08-27).** metel-core#844 merged to develop; 869+ workspace tests green, clippy/fmt clean. Out-of-scope boundaries (rank-2, standalone turbofish value form) now documented in the spec and covered by regression fixtures (metel-core#845 filed separately for an unrelated pre-existing gap found while adding one of them).
 
 ## Summary
 

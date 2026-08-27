@@ -889,7 +889,7 @@ implementation).
   Shadow-versus-Extend Semantics — same-name module functions form one overload set;
   exports/imports preserve whole sets; lexical bindings shadow whole sets; and `extend`
   methods remain aspect dispatch rather than free-function overloads.
-- **RFC-0138** *(integrated 2026-08-27 — impl_status in-progress, metel-core#736)* —
+- **RFC-0138** *(implemented 2026-08-27 — metel-core#736/#844)* —
   Generic Functions as First-Class Values — `functions.md`'s unqualified
   first-class-functions claim didn't hold for a `<T>`-declared named function: no
   value form at all, in any position, fully instantiated or not. Extends the
@@ -902,8 +902,9 @@ implementation).
   is concrete instantiates directly against the expected type, no new runtime
   representation needed. Scoped to a bare reference and a higher-order argument, for
   both top-level and nested generic functions — rank-2 positions and a standalone
-  turbofish-without-call value form stay out of scope. Implemented in
-  metel-core#844, merging against v0.13.0.
+  turbofish-without-call value form stay documented as out of scope
+  (`spec.functions.turbofish.legality-3`), each covered by its own negative
+  fixture. Shipped in v0.13.0, metel-core#844.
 - **RFC-0107** *(implemented 2026-07-21 — issue #559)* — Unqualified Enum Variants in Match
   Patterns — `Red` instead of `Colour::Red` in a match arm, resolved type-directed
   against the scrutinee's known enum (not a lexical-scope import, so no cross-enum
