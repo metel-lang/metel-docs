@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**142 RFCs total.** 36 draft, 23 under review, 9 accepted, 1 integrated (69 live), 46 implemented, 13 superseded, 14 refused (73 settled).
+**143 RFCs total.** 37 draft, 23 under review, 9 accepted, 1 integrated (70 live), 46 implemented, 13 superseded, 14 refused (73 settled).
 
-## Draft (36)
+## Draft (37)
 
 - **RFC-0003** — Concurrency Model (`0-draft` ; rfcs/0-draft/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-24)
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
@@ -42,7 +42,7 @@ the curated thematic map.
 - **RFC-0101** — Grammar-Enforced Naming Case Conventions (`0-draft` ; rfcs/0-draft/rfc-0101-grammar-enforced-naming-case-conventions.md ; date 2026-07-14 ; updated 2026-07-17)
 - **RFC-0104** — Multi-Aspect Extend Blocks with Shared Bodies (`0-draft` ; rfcs/0-draft/rfc-0104-multi-aspect-extend-blocks-with-shared-bodies.md ; date 2026-07-14)
 - **RFC-0105** — Struct-Embedded Aspect Lists (`0-draft` ; rfcs/0-draft/rfc-0105-struct-embedded-aspect-lists.md ; date 2026-07-14 ; updated 2026-07-14)
-- **RFC-0109** — Self-View Narrowing and Reference-Destructuring Patterns (`0-draft` ; rfcs/0-draft/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md ; date 2026-07-18 ; updated 2026-07-24)
+- **RFC-0109** — Self-View Narrowing (`0-draft` ; rfcs/0-draft/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md ; date 2026-07-18 ; updated 2026-08-27)
 - **RFC-0112** — Auto-Deref Scope and Expected-Type Provenance (`0-draft` ; rfcs/0-draft/rfc-0112-auto-deref-scope-and-expected-type-provenance.md ; date 2026-07-21)
 - **RFC-0114** — Constructor Aspect and Canonical Construction (`0-draft` ; rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md ; date 2026-07-23 ; updated 2026-07-24)
 - **RFC-0124** — Sequence Types: Fixed Arrays, Slices, and the Growable List (`0-draft` ; rfcs/0-draft/rfc-0124-sequence-types-fixed-arrays-slices-and-the-growable-list.md ; date 2026-07-25 ; updated 2026-08-03)
@@ -53,6 +53,7 @@ the curated thematic map.
 - **RFC-0138** — Generic Functions as First-Class Values (`0-draft` ; rfcs/0-draft/rfc-0138-generic-functions-as-first-class-values.md ; date 2026-08-24)
 - **RFC-0139** — Garbage-Collected Allocators and Allocator-Determined Pointer Types (`0-draft` ; rfcs/0-draft/rfc-0139-garbage-collected-allocators-and-allocator-determined-pointer-types.md ; date 2026-08-24)
 - **RFC-0143** — Allocator Placement, Storage Identity, and Allocator-Selected Handles (`0-draft` ; rfcs/0-draft/rfc-0143-allocator-placement-storage-identity-and-allocator-selected-handles.md ; date 2026-08-26)
+- **RFC-0144** — Reference-Destructuring Patterns (`0-draft` ; rfcs/0-draft/rfc-0144-reference-destructuring-patterns.md ; date 2026-08-27)
 
 ## Under Review (23)
 
