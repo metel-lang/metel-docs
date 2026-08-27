@@ -2,10 +2,21 @@
 id: rfc-0137
 title: "Nominal Types as Branded Rows"
 date: '2026-08-24'
-status: accepted
+status: integrated
 target:
 updated: '2026-08-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/827'
+coverage:
+  "1": { spec: "spec.ownership.narrowing.legality-1" }
+  "2": { spec: "spec.ownership.narrowing.legality-1" }
+  "3": { spec: "spec.ownership.narrowing.legality-2" }
+  "4": { spec: "spec.ownership.passing-a-residual-to-a-function.legality-1" }
+  "5": { spec: "spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-1" }
+  "6": { spec: "spec.ownership.widening.dynamics-1" }
+  "7": { kind: untestable, reason: "Generic-struct consequence of §1/§2's brand-preservation claims (already spec-anchored there), not an independent testable claim of its own." }
+  "8": { kind: untestable, reason: "Cost/performance argument, not fixture-observable behavior -- same treatment as spec.declarations.aspects.static-dispatch-only.dynamics-1." }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/836'
+impl_status: not-started
 ---
 
 > **New RFC, formalizing the central thesis of
@@ -68,6 +79,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/827'
 > here.
 
 > **Status — accepted (2026-08-27).** All four Open Questions closed or determined not to block acceptance, this time verified directly against the interpreter rather than argued from prose alone (Open Questions 5, 6, 8 resolved 2026-08-27, see that section). Open Question 5 in particular was caught and corrected mid-review: the first resolution pass wrongly generalized an owned-binding finding to the reference-parameter shape Sec6's own example used; checked separately, narrowing through a reference is already unreachable under RFC-0071 Sec7.1, independent of this RFC.
+
+> **Status — integrated (2026-08-27).** Merged into reference/spec/ownership.md (Narrowing, Passing a residual to a function, Drop dispatch against a narrowed residual, Widening subsections) and reference/spec/types.md (What satisfies which bound reframe). Everything marked Planned for v0.13.0 with blocked fixture-coverage exemptions -- nothing in RFC-0137 is implemented yet. Cross-checked against RFC-0071 (3-integrated), RFC-0116/RFC-0118 (implemented), and RFC-0008 (2-accepted, the dyn Aspect coercion checkpoint) -- no new soundness gap found beyond what RFC-0137's own text already identifies.
 
 ## Summary
 
