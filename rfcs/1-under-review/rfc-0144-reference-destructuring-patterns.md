@@ -212,7 +212,7 @@ RFC-0109 stands on for its own mechanism.
 
 ## 5. Interaction with adjacent RFCs
 
-- **RFC-0137 (Nominal Types as Branded Rows, `1-under-review`)** — both forms narrow
+- **RFC-0137 (Nominal Types as Branded Rows, `2-accepted`)** — both forms narrow
   the scrutinee's residual type exactly as §2 there already specifies for a partial
   move or projection; this RFC adds no new narrowing rule, only a new *statement
   shape* that triggers the existing one for several fields simultaneously instead of
@@ -275,7 +275,7 @@ RFC-0109 stands on for its own mechanism.
 - RFC-0109 (Self-View Narrowing, `1-under-review`) —
   the sibling this RFC was split from; the named/reusable counterpart to this ad hoc
   mechanism.
-- RFC-0137 (Nominal Types as Branded Rows, `1-under-review`) — the narrowing
+- RFC-0137 (Nominal Types as Branded Rows, `2-accepted`) — the narrowing
   semantics both statement forms trigger; this RFC adds no narrowing rule of its
   own, only the statement shape that invokes it for several fields at once.
 - RFC-0071 (Ownership and Move Semantics, `3-integrated`, move-check implemented

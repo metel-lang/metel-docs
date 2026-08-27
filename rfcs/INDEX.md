@@ -261,7 +261,8 @@ above it are.
   allocator). Also carries RFC-0090 §6's declined "records as the universal foundation"
   reframing. **Depends on nothing** — the only piece of the cluster buildable today, and
   the reason the split is six-way.
-- **RFC-0137** *(under review — reverted from accepted 2026-08-25, same day)* — Nominal Types as Branded Rows — formalizes
+- **RFC-0137** *(accepted 2026-08-27 — re-accepted after a same-day 2026-08-25
+  revert; issue #827)* — Nominal Types as Branded Rows — formalizes
   `reports/substructural-types/nominal-types-as-branded-rows.md`'s central thesis, left
   deliberately unfolded by that document's own Open Question 7 so it would not gate this
   cluster's nearer review. Proposes that **every** `struct`, not only RFC-0120's opt-in
@@ -275,20 +276,30 @@ above it are.
   structural matching" (stays exactly as opt-in as RFC-0120 already gates it — a
   restatement of the existing three tiers, not a fourth one). Supersedes RFC-0071 §7's
   blanket partial-move-with-`Drop` ban with row-bounded dispatch instead of narrowing it
-  by exception; depends on RFC-0114 landing before automatic widening is safe to enable.
-  **Discharges RFC-0117 §3's own stated dependency** ("narrowing a nominal type…
-  depends on nominal types carrying rows at all") and answers **RFC-0120's Open Question
-  5** ("does a narrowed named record keep its brand") for the general case. Its own
-  zero-runtime-cost claim for narrowing and `Drop` dispatch is a design argument, not a
-  demonstrated property — contingent on RFC-0071 actually being built, which it is not
+  by exception. **Discharges RFC-0117 §3's own stated dependency** ("narrowing a nominal
+  type… depends on nominal types carrying rows at all") and answers **RFC-0120's Open
+  Question 5** ("does a narrowed named record keep its brand") for the general case. Its
+  own zero-runtime-cost claim for narrowing and `Drop` dispatch is a design argument, not
+  a demonstrated property — contingent on RFC-0071 actually being built, which it is not
   today (`3-integrated`, partial-move tracking confirmed absent from the interpreter).
+  **The 2026-08-25 revert's two gaps (widening semantics, conditional-`Drop`-over-`T`)
+  are resolved as of 2026-08-27** — the widening resolution required a real correction
+  mid-review: narrowing/widening only ever applies to an owned binding, never through a
+  reference, since RFC-0071 §7.1 already bans moving a non-`Copy` field out through any
+  reference regardless of this RFC. No longer depends on RFC-0114 for widening itself
+  (RFC-0114 remains the fix for the pre-existing, RFC-0137-independent
+  constructor-invariant-bypass risk). A third gap, sharper than originally framed once
+  RFC-0008 moved to `2-accepted`, was also closed: coercion to `dyn Aspect` needed its
+  own required-set checkpoint before erasure discards a residual's row, cross-referenced
+  on RFC-0008's own side too. **Still pending, per its own "Relationship to existing
+  RFCs" commitments**: RFC-0117, RFC-0119, and RFC-0120 each still need the revision
+  named there — not yet made.
 - **RFC-0117** *(under review)* — Row Narrowing — moving a field out narrows the record's type;
   the closed 2^*N* subset lattice, no row variables and no unification. Depends on
   RFC-0116 and on **RFC-0071** (`3-integrated`, 0% implemented), which is why it is separate
-  from RFC-0116 rather than bundled with it. **Its own §3 nominal-type exclusion is now
-  addressed by RFC-0137**, which should be folded in as its supplying dependency once
-  RFC-0137 is (re-)accepted — reverted to under-review 2026-08-25 the same day it was
-  accepted, pending its own Open Questions 5-6.
+  from RFC-0116 rather than bundled with it. **Its own §3 nominal-type exclusion is
+  addressed by RFC-0137** (`2-accepted` 2026-08-27), which should be folded in as its
+  supplying dependency — not yet done.
 - **RFC-0118** *(implemented in v0.12.0, was #577)* — Row Bounds — `<record T: { x: f64, .. }>` and `!{ token }`,
   replacing the `HasField`/`Lacks` family that never parsed. The trailing `..` is an
   anonymous row variable and is what makes a bound *open*; without it the bound is closed,
@@ -307,10 +318,10 @@ above it are.
 - **RFC-0120** *(under review)* — Named Records — tier 3 `record X { }` carrying `(row, brand)`
   intrinsically; the tier table, the non-breaking upgrade path, and RFC-0090 §9's
   identity-tag reuse. Depends on RFC-0116, RFC-0119. **Its own Open Question 5** (does a
-  narrowed named record keep its brand) **is answered by RFC-0137** for the general case
-  — every struct's brand is preserved through narrowing, not only tier-3's — pending
-  RFC-0137's own re-acceptance (reverted to under-review 2026-08-25 the same day it was
-  accepted).
+  narrowed named record keep its brand) **is answered by RFC-0137** (`2-accepted`
+  2026-08-27) for the general case — every struct's brand is preserved through
+  narrowing, not only tier-3's — restating its own three-tier table in RFC-0137's terms
+  is still pending, not yet done.
 - **RFC-0121** *(under review)* — Open Rows — `<row R>` / `..R`, row algebra (extension is a
   literal, removal is a where-clause decomposition), row-conditional typestate, and the
   width-subtyping-versus-ownership problem. **The expensive half**, and the only piece
