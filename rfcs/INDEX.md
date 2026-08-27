@@ -340,28 +340,36 @@ above it are.
   cluster's review.
 - **RFC-0091** — Linear Records — per-field multiplicity, automatic-downgrade partial
   consumption, the `uses(fd)` Drop mechanism. Depends on RFC-0089 + RFC-0090.
-- **RFC-0109** *(draft, opened 2026-07-18, revised same day)* — Self-View Narrowing and
-  Reference-Destructuring Patterns — closes the gap found comparing RFC-0090's records
-  against Rust's (unshipped) view-types proposal. Canonical mechanism (as of the
-  revision): named **views** — `view TicketView for Ticketing { golden_tickets }` — are
-  *branded* records, reusing RFC-0090 §9 / RFC-0091 §2.2's `(row, brand)` representation
-  rather than an anonymous one. `self: &TicketView` lets an inherent method declare
-  which sub-row it touches with zero call-site syntax (unlike `to_record_mut()`); brand
-  equality is what stops a view from ever satisfying a bound RFC-0090 §8 didn't intend
-  it to (no reopening of "no implicit coercion"). Framed as a second instance of
-  RFC-0089 §3.1's existing bare-vs-branded tier-2 exception, not a new carve-out, and
-  deliberately kept out of coherence/impl-resolution so it never becomes tier 3 "for
-  free." `self` may also be a tuple of independently-moded views (`self: (&mut
-  BarsView, &TicketView)`, unpacked via ordinary `Pattern::Tuple`) for Rust's mixed
-  shared/exclusive `&{bars, mut golden_tickets} self` case, with addressability
-  following the tightest slot. Plus `let &var { a, b } = h;` for the ad hoc, one-off
-  splits a named view isn't worth declaring for. Amends RFC-0044. Paper-only pending
-  RFC-0071 (0% implemented,
-  confirmed by source search) — inherits RFC-0091 §2.1's open aliasing question only for
-  the already-partially-consumed-residual case, not the common intact-struct case. Also
-  defines the minimal by-value struct-destructuring pattern Metel currently lacks
-  entirely (`Pattern` in `src/ast/mod.rs` has no `Struct` variant), since the reference
-  form needs one to exist.
+- **RFC-0109** *(draft, opened 2026-07-18, reconciled against RFC-0137 2026-08-27)* —
+  Self-View Narrowing — closes the gap found comparing the records cluster against
+  Rust's (unshipped) view-types proposal: a named **view** —
+  `view TicketView for Ticketing { golden_tickets }` — is a **name for an RFC-0137
+  residual type** (`Ticketing.{ golden_tickets }`), not a separate mechanism that
+  happens to reuse the same `(brand, row)` representation. `self: &TicketView` is
+  RFC-0137 §4's residual-typed-parameter rule, spelled through the alias — zero
+  call-site syntax, no tier opt-in, no reopening "no implicit coercion." `self` may
+  also be a tuple of independently-moded views (`self: (&var BarsView, &TicketView)`,
+  unpacked via ordinary `Pattern::Tuple`) for Rust's mixed shared/exclusive
+  `&{bars, mut golden_tickets} self` case — the one piece of this RFC that's genuinely
+  new machinery rather than inherited from RFC-0137. Paper-only pending RFC-0071's
+  move-check (implemented, off by default behind `--move-check` — corrected
+  2026-08-27, the same stale "0% implemented" claim RFC-0137 §8 had). Split
+  2026-08-27: reference-destructuring patterns (the ad hoc `&var { a, b } = h;` case)
+  moved to RFC-0144, and the by-value struct-pattern prerequisite this RFC originally
+  defined turned out to be moot — `Pattern::Struct`/`Pattern::Record` were already
+  implemented by RFC-0032/RFC-0034/RFC-0107. Amends RFC-0044.
+- **RFC-0144** *(draft, opened 2026-08-27, split from RFC-0109)* — Reference-
+  Destructuring Patterns — the ad hoc, one-off counterpart to RFC-0109's named views:
+  `&var { golden_tickets, bars } = h;` (mutable, `h` already `&var`-typed) and
+  `{ x, y } = &point;` (shared, reference taken on the right-hand side of a plain
+  value) split a struct reference into disjoint per-field sub-references in one
+  statement, narrowing the original per RFC-0137 §2. Corrects RFC-0109's original
+  `let &var { … } = h;` spelling — `let` in Metel binds one bare identifier only, and
+  this was never valid syntax. Needs a new AST kind, `Pattern::RefDestructure`, since
+  neither `Pattern::Struct` (any binding mode, doesn't narrow the scrutinee) nor
+  `Pattern::Record` (explicitly reserved for genuine `Type::Record`, "never a named
+  struct") fits; resolved type-directed the same way a bare `EnumVariant` already
+  resolves to `Pattern::Struct`. Paper-only pending RFC-0071, same footing as RFC-0109.
 - **RFC-0114** *(draft, opened 2026-07-23)* — Constructor Aspect and Canonical
   Construction — split out of `reports/substructural-types/nominal-types-as-branded-rows.md`
   §6, which found that automatic row-narrowing/widening reopens RFC-0090's open question
