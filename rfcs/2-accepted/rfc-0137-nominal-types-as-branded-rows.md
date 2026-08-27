@@ -137,7 +137,10 @@ struct Handle { fd: i64, name: String }
 
 fun main() {
     let h = Handle { fd = 3, name = "x" };
-    let n = move h.name;   // h : Handle.{ fd } from this point on
+    let n = h.name;   // h : Handle.{ fd } from this point on -- moving a non-Copy
+                       // field out is implicit, no `move` keyword exists (verified
+                       // 2026-08-27: `move h.name` is a parse error, not a spelling
+                       // this grammar has ever had)
 }
 ```
 
@@ -149,9 +152,9 @@ the subset lattice, bounded by 2^*N* and trivial at realistic struct sizes; ther
 row variable and no unification involved in computing it.
 
 **A struct's own field projection expression (RFC-0116 §4) produces exactly the same
-residual type as a partial move does.** `h.{ fd }` and `move h.name` (leaving only `fd`)
-both yield `Handle.{ fd }` — projection is narrowing performed explicitly on a copy of
-the reference, rather than as a side effect of consuming the original.
+residual type as a partial move does.** `h.{ fd }` and `h.name` moved out (leaving only
+`fd`) both yield `Handle.{ fd }` — projection is narrowing performed explicitly on a copy
+of the reference, rather than as a side effect of consuming the original.
 
 ## 3. Eligibility: the brand is universal, visibility to structural matching is not
 
@@ -248,7 +251,7 @@ opts into RFC-0120's `record` kind.
 
 **A caller must match the parameter's row exactly; there is no implicit truncation at
 the call boundary.** Passing `Handle.{ fd, name }` where `Handle.{ fd }` is expected
-requires the caller to narrow itself first (`let n = move handle.name;`, or the
+requires the caller to narrow itself first (`let n = handle.name;`, or the
 equivalent projection `handle.{ fd }`) — the call never silently discards `name` on the
 caller's behalf. This matches RFC-0119 §3's existing "no implicit coercion at call
 sites" stance, applied one level down: narrowing only ever happens through the caller's
@@ -484,20 +487,25 @@ resolution.
 This RFC changes the foundation two under-review RFCs are currently written against, and both
 need a corresponding revision if this RFC is accepted:
 
-- **RFC-0117 (Row Narrowing).** §3 there currently states "narrowing a nominal type…
-  depends on nominal types carrying rows at all, which is RFC-0120's question" — under
-  this RFC, every struct carries a row unconditionally, so that dependency is
-  discharged here rather than by RFC-0120, and RFC-0117's own scope should be extended
-  from records-narrowing-to-records to cover nominal narrowing directly, with this RFC
-  named as the supplying dependency.
-- **RFC-0120 (Named Records).** Its own Open Question 5 — "does a narrowed named record
-  keep its brand… the rule is unstated" — is answered here for the general case: yes,
-  universally, for every struct, not only tier-3 `record` declarations. RFC-0120's
-  three-tier table (§1 there) needs restating in the terms §3 above uses: what a
-  `record` declaration adds is not "having a row" (every struct already has one under
-  this RFC) but "that row being visible to structural matching" — RFC-0120 remains the
-  RFC that governs the *opt-in*, this RFC supplies the *representation* it opts into
-  being visible.
+- **RFC-0117 (Row Narrowing), revision made 2026-08-27.** §3 there used to state
+  "narrowing a nominal type… depends on nominal types carrying rows at all, which is
+  RFC-0120's question" — under this RFC, every struct carries a row unconditionally,
+  so that dependency is discharged here rather than by RFC-0120. RFC-0117's own §1 now
+  carries a nominal-type worked example alongside its original record one, and its
+  Summary/§3/References all point at this RFC as the supplying dependency. Also fixed
+  in the same pass: RFC-0117's worked examples used a `move x.y` syntax that does not
+  parse (verified directly — moving a non-Copy field out is implicit, no `move`
+  keyword exists), the same mistake this RFC's own §2/§4 examples had before this
+  revision. Broader corpus sweep for the same mistake tracked separately,
+  metel-core#854 — not attempted here.
+- **RFC-0120 (Named Records), not yet done.** Its own Open Question 5 — "does a
+  narrowed named record keep its brand… the rule is unstated" — is answered here for
+  the general case: yes, universally, for every struct, not only tier-3 `record`
+  declarations. RFC-0120's three-tier table (§1 there) still needs restating in the
+  terms §3 above uses: what a `record` declaration adds is not "having a row" (every
+  struct already has one under this RFC) but "that row being visible to structural
+  matching" — RFC-0120 remains the RFC that governs the *opt-in*, this RFC supplies
+  the *representation* it opts into being visible.
 - **RFC-0071 (Ownership and Move Semantics), §7.** Superseded *in design*, not narrowed
   by an exception — see §5 above, corrected 2026-08-25: §7's ban is real, tested,
   `--move-check`-enforced behavior today, not an implementation gap this RFC fills.
@@ -517,10 +525,12 @@ first for widening — see §6's Open Question 5 resolution. RFC-0114 remains th
 the constructor-invariant-bypass risk itself, which predates and is independent of
 this RFC.
 
-**These revisions are held pending re-acceptance.** RFC-0117 and RFC-0120 were already
-updated 2026-08-25 to cite this RFC while it was (briefly) `2-accepted`; those citations
-now overstate this RFC's current stage and are being corrected back to `1-under-review`
-in the same change that reverts this document.
+**These revisions were held pending re-acceptance, as of the 2026-08-25 revert.**
+RFC-0117 and RFC-0120 were already updated 2026-08-25 to cite this RFC while it was
+(briefly) `2-accepted`; those citations then overstated this RFC's stage and were
+corrected back to `1-under-review` in the same change that reverted this document.
+**As of 2026-08-27, this RFC is `2-accepted` again — RFC-0117's own revision is now
+made (§1's nominal-type example); RFC-0120's is still pending.**
 
 ---
 
@@ -734,8 +744,8 @@ this corpus's append-only convention for exactly this situation.*
 - RFC-0116 (Anonymous Record Types, implemented) — the record type-former narrowing
   produces values of; §4 there is the projection expression this RFC's narrowing
   matches exactly
-- RFC-0117 (Row Narrowing, under review) — specifies narrowing for records; this RFC supplies
-  the nominal-type dependency §3 there currently defers
+- RFC-0117 (Row Narrowing, under review) — specifies narrowing for records; this RFC
+  supplies the nominal-type dependency §3 there used to defer, folded in 2026-08-27
 - RFC-0118 (Row Bounds, implemented) — `<record T: { … }>`; already establishes that a
   nominal struct does not satisfy a row bound, the same principle §3 here extends to a
   struct's own projected type

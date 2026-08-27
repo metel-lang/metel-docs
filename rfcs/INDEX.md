@@ -295,12 +295,14 @@ above it are.
   RFCs" commitments**: RFC-0117 and RFC-0120 each still need the revision named there —
   not yet made. (RFC-0119's own clarifying addition, checked 2026-08-27, was already
   made 2026-08-25.)
-- **RFC-0117** *(under review)* — Row Narrowing — moving a field out narrows the record's type;
-  the closed 2^*N* subset lattice, no row variables and no unification. Depends on
-  RFC-0116 and on **RFC-0071** (`3-integrated`, 0% implemented), which is why it is separate
-  from RFC-0116 rather than bundled with it. **Its own §3 nominal-type exclusion is
-  addressed by RFC-0137** (`2-accepted` 2026-08-27), which should be folded in as its
-  supplying dependency — not yet done.
+- **RFC-0117** *(under review, revised 2026-08-27 for RFC-0137)* — Row Narrowing —
+  moving a field out narrows the record's type — or a nominal struct's, via RFC-0137's
+  brand-preserving narrowing, folded in as of this revision — to the closed 2^*N*
+  subset lattice, no row variables and no unification. Depends on RFC-0116 and on
+  **RFC-0071** (`3-integrated`; partial-move tracking real and tested behind
+  `--move-check`, off by default). Also fixed: worked examples using a `move x.y`
+  syntax that doesn't parse — moving a non-`Copy` field out is implicit, no `move`
+  keyword exists (verified directly, metel-core#854).
 - **RFC-0118** *(implemented in v0.12.0, was #577)* — Row Bounds — `<record T: { x: f64, .. }>` and `!{ token }`,
   replacing the `HasField`/`Lacks` family that never parsed. The trailing `..` is an
   anonymous row variable and is what makes a bound *open*; without it the bound is closed,

@@ -12,11 +12,14 @@ updated: '2026-08-23'
 > split happened and what the six pieces are).
 >
 > **Depends on RFC-0116 (Anonymous Record Types) and on RFC-0071 (Ownership and Move
-> Semantics).** RFC-0071 is `2-accepted` but **0% implemented** — confirmed by direct grep
-> of the interpreter for borrow/move-tracking infrastructure. That is a sequencing
-> dependency on already-accepted work, not a ratification blocker on a draft, but it is
-> the reason this is a separate RFC from RFC-0116 rather than bundled with it: the
-> type-former is buildable today and this is not.
+> Semantics).** RFC-0071 was `2-accepted` but **0% implemented** at the time this note
+> was written — confirmed by direct grep of the interpreter for borrow/move-tracking
+> infrastructure. That was a sequencing dependency on already-accepted work, not a
+> ratification blocker on a draft, but it was the reason this is a separate RFC from
+> RFC-0116 rather than bundled with it: the type-former was buildable and this was not.
+> **Corrected 2026-08-27: RFC-0071 is now `3-integrated`, and partial-move tracking is
+> real, tested code (`--move-check`, gated off by default) — verified directly, not
+> "0% implemented" any longer.**
 
 > **Status — under review (2026-08-23).** Committed to v0.13.0, tracking issue #789 filed 2026-08-22 -- real dependency-chain engagement, not a calendar promotion
 
@@ -30,6 +33,9 @@ narrower record type.
 No row variables and no unification are involved. For a closed record over *N* fields the
 space of possible residuals is the subset lattice, bounded by 2^*N* and trivial at
 realistic struct sizes.
+
+**The same rule applies to a nominal struct's own row, not only an anonymous record's**
+(RFC-0137, `2-accepted`) — see §1's own worked example.
 
 ---
 
@@ -52,7 +58,8 @@ per-field multiplicity, which is deferred until records are implemented).
 
 ```metel
 let r = { fd = 3, path = "/tmp/x" };   // { fd: i64, path: String }
-let p = move r.path;                    // r : { fd: i64 }
+let p = r.path;                         // r : { fd: i64 } -- moving a non-Copy field
+                                         // out is implicit, no separate `move` syntax
 ```
 
 Narrowing is a **type-level consequence of an ordinary partial move**, not a separate
@@ -62,6 +69,24 @@ that causes it.
 **The residual is an ordinary value.** It can be bound, passed, returned, dropped, and
 narrowed again. It is not a special "partially moved" state that must be repaired before
 use.
+
+**The same rule applies uniformly to a nominal type's own row, not only to an anonymous
+record's (dependency discharged, see §3 below).**
+
+```metel
+struct Handle { fd: i64, name: String }
+
+fun main() {
+    let h = Handle { fd = 3, name = "x" };
+    let n = h.name;   // h : Handle.{ fd } from this point on, same brand as Handle
+}
+```
+
+`Handle.{ fd }` is a real, ordinary value of the *same brand* as `Handle` — not a
+coincidentally-shaped anonymous record. RFC-0137 (Nominal Types as Branded Rows,
+`2-accepted`) supplies the `(brand, row)` representation this depends on; the rule
+itself, the subset-lattice bound, and "the residual is an ordinary value" all apply
+exactly as stated above, for either kind.
 
 ## 2. Why this needs no row machinery
 
@@ -94,8 +119,11 @@ accepts is a genuinely different capability and belongs to RFC-0121.
   **Caveat, 2026-08-25 same day: RFC-0137 was reverted to `1-under-review` the same
   day it was accepted** (its own Open Questions 5-6, opened on reversion). The design
   reasoning above is unchanged. **RFC-0137 was re-accepted 2026-08-27**, all four Open
-  Questions closed — this dependency can now be folded in as described above, not yet
-  done.
+  Questions closed. **Follow-up performed, 2026-08-27: §1 above now carries the
+  nominal-type worked example this note called for.** This item no longer belongs
+  under "what this RFC does not cover" — kept here, not moved, per this corpus's
+  append-only convention, but nominal narrowing is now within this RFC's own stated
+  scope, not excluded from it.
 - **Borrowed narrowing.** Narrowing a `&var` view rather than an owned value is
   RFC-0119's by-reference mode and RFC-0109's views.
 - **Per-field multiplicity.** Deliberately out of scope for the whole records cluster
@@ -143,16 +171,17 @@ accepts is a genuinely different capability and belongs to RFC-0121.
 - `public/rfcs/5-superseded/rfc-0090-structural-records.md` §3 step 1 — the source, which
   bundled narrowing with the type-former
 - RFC-0116 (Anonymous Record Types) — the type-former this narrows
-- RFC-0071 (Ownership and Move Semantics) — `2-accepted`, 0% implemented; supplies the
-  move tracking this rule is a type-level consequence of
+- RFC-0071 (Ownership and Move Semantics, `3-integrated`) — supplies the move
+  tracking this rule is a type-level consequence of; partial-move tracking itself is
+  gated behind `--move-check`, off by default
 - RFC-0114 (Constructor Aspect and Canonical Construction) — the inverse operation:
   completing a row fires `construct` rather than a bare write
 - `reports/substructural-types/nominal-types-as-branded-rows.md` §4 — the `Drop`-dispatch
   leak that arises when narrowing is extended to nominal types
 - RFC-0137 (Nominal Types as Branded Rows, `2-accepted` 2026-08-27 — re-accepted
   after a same-day 2026-08-25 revert) — supplies nominal-type narrowing directly;
-  §3's own stated dependency can now be folded in, not yet done; would resolve Open
-  Questions 1 and 2 above
+  §3's own stated dependency folded in 2026-08-27 (§1's nominal-type worked example);
+  resolves Open Questions 1 and 2 above
 - `public/rfcs/0-draft/rfc-0089-linear-types.md`,
   `public/rfcs/0-draft/rfc-0091-linear-records.md` — per-field multiplicity, deliberately
   deferred until records are implemented
