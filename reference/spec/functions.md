@@ -111,18 +111,20 @@ The type of a function or closure is written as `(ParamTypes) -> ReturnType`.
 
 A named function declared with its own `<T>` generics (`fun identity<T>(x: T) -> T
 { ... }`) may always be called directly (`identity(3)`, `identity::<i64>(3)`).
-Referencing it in a position where nothing pins down a concrete instantiation —
-including a parameter position that is itself still generic in the callee — is
-`T0003`.
 
-> **Planned for v0.13.0 (RFC-0138):** a generic named function may also be bound
+> **Changed in v0.13.0 (RFC-0138):** a generic named function may also be bound
 > with a bare, unannotated `let` (the binding itself stays polymorphic, so its own
 > later uses may each instantiate it differently — `let alias = identity;
 > alias(3); alias("x");`), or passed as a higher-order argument whose receiving
 > parameter position is itself concrete (`apply(identity, 3)`, where `apply`'s own
-> parameter is `(i64) -> i64`, not itself generic). Not planned: a parameter
-> position that's itself still generic in the callee (rank-2), or a standalone
-> `identity::<i64>` value form without a following call.
+> parameter is `(i64) -> i64`, not itself generic).
+
+Referencing it in a position where nothing pins down a concrete instantiation —
+a parameter position that is itself still generic in the callee (rank-2), or an
+expression position with no expected type and no enclosing `let` — is still
+`T0003`. There is also no standalone instantiation-without-calling value form:
+`identity::<i64>` not immediately followed by a call is a parse error, not a
+type error — see [Turbofish](#spec.functions.turbofish.legality-3).
 
 <details>
 <summary>Formal rules</summary>
@@ -144,21 +146,24 @@ Function and closure types use `(ParameterTypes) -> ReturnType`; the former
 
 A non-generic named function and a closure are values of their function type and may be
 bound, passed as arguments, and returned as results. A generic named function (declared
-with its own `<T>` generics) may be called directly. Referencing it in any other
-position where nothing pins down a concrete instantiation is `T0003`.
+with its own `<T>` generics) may be called directly.
 
-> **Planned for v0.13.0 (RFC-0138):** also legal — bound with a bare, unannotated
+> **Changed in v0.13.0 (RFC-0138):** also legal — bound with a bare, unannotated
 > `let` (staying polymorphic across that binding's own later uses, the same as an
 > unannotated closure literal), or passed as a higher-order argument whose
 > receiving parameter position is itself concrete (one instantiation, at that one
 > call site).
 
+Referencing it in any other position where nothing pins down a concrete
+instantiation — including a parameter position that is itself still generic in
+the callee — is `T0003`.
+
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0138](../../rfcs/3-integrated/rfc-0138-generic-functions-as-first-class-values.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0138](../../rfcs/4-implemented/rfc-0138-generic-functions-as-first-class-values.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [101_generic_fn_bare_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/generics/101_generic_fn_bare_reference.mtl), [102_generic_fn_reference_reused_at_multiple_types.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/generics/102_generic_fn_reference_reused_at_multiple_types.mtl), [103_generic_fn_higher_order_argument.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/generics/103_generic_fn_higher_order_argument.mtl), [104_generic_fn_nested_bare_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/generics/104_generic_fn_nested_bare_reference.mtl), [03_functions_and_closures.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/03_functions_and_closures.mtl), [stage10_10_generic_function_bare_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage10_10_generic_function_bare_reference.mtl), [stage10_11_generic_function_higher_order_argument.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage10_11_generic_function_higher_order_argument.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [101_generic_fn_bare_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/generics/101_generic_fn_bare_reference.mtl), [102_generic_fn_reference_reused_at_multiple_types.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/generics/102_generic_fn_reference_reused_at_multiple_types.mtl), [103_generic_fn_higher_order_argument.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/generics/103_generic_fn_higher_order_argument.mtl), [104_generic_fn_nested_bare_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/generics/104_generic_fn_nested_bare_reference.mtl), [03_functions_and_closures.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/03_functions_and_closures.mtl), [stage10_10_generic_function_bare_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage10_10_generic_function_bare_reference.mtl), [stage10_11_generic_function_higher_order_argument.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage10_11_generic_function_higher_order_argument.mtl), [stage10_neg_06_generic_function_rank2_still_call_only.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage10_neg_06_generic_function_rank2_still_call_only.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 </details>
@@ -378,6 +383,16 @@ inferred one.
 
 <!-- rfc.py:fixtures:start -->
 <span class="rigor-backlink">_Tested by: [turbofish_argument_type_mismatch_is_t0001.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/turbofish_argument_type_mismatch_is_t0001.mtl), [turbofish_pinned_type_unifies_with_unsuffixed_literal.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/turbofish_pinned_type_unifies_with_unsuffixed_literal.mtl), [turbofish_return_and_ascription_param_in_same_call.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/turbofish_return_and_ascription_param_in_same_call.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.functions.turbofish.legality-3}
+
+Turbofish is a call-postfix production, fused to the immediately following call's
+parentheses. There is no standalone instantiation-without-calling value form:
+`name::<T>` not immediately followed by `(arguments)` is a parse error.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [generic_function_turbofish_without_call_is_parse_error.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/generic_function_turbofish_without_call_is_parse_error.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 </details>
