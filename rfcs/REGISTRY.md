@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-08-26'
+generated_on: '2026-08-27'
 ---
 
 # RFC Registry
@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**142 RFCs total.** 37 draft, 22 under review, 9 accepted, 1 integrated (69 live), 46 implemented, 13 superseded, 14 refused (73 settled).
+**142 RFCs total.** 36 draft, 23 under review, 9 accepted, 1 integrated (69 live), 46 implemented, 13 superseded, 14 refused (73 settled).
 
-## Draft (37)
+## Draft (36)
 
 - **RFC-0003** — Concurrency Model (`0-draft` ; rfcs/0-draft/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-24)
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
@@ -52,10 +52,9 @@ the curated thematic map.
 - **RFC-0135** — Multiplicity for Ordinary Types (`0-draft` ; rfcs/0-draft/rfc-0135-multiplicity-for-ordinary-types.md ; date 2026-08-13)
 - **RFC-0138** — Generic Functions as First-Class Values (`0-draft` ; rfcs/0-draft/rfc-0138-generic-functions-as-first-class-values.md ; date 2026-08-24)
 - **RFC-0139** — Garbage-Collected Allocators and Allocator-Determined Pointer Types (`0-draft` ; rfcs/0-draft/rfc-0139-garbage-collected-allocators-and-allocator-determined-pointer-types.md ; date 2026-08-24)
-- **RFC-0142** — Division by Zero and Checked Arithmetic Ergonomics (`0-draft` ; rfcs/0-draft/rfc-0142-division-by-zero-and-checked-arithmetic-ergonomics.md ; date 2026-08-25)
 - **RFC-0143** — Allocator Placement, Storage Identity, and Allocator-Selected Handles (`0-draft` ; rfcs/0-draft/rfc-0143-allocator-placement-storage-identity-and-allocator-selected-handles.md ; date 2026-08-26)
 
-## Under Review (22)
+## Under Review (23)
 
 - **RFC-0050** — Closure Capture Lists (`1-under-review` ; rfcs/1-under-review/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-08-23)
 - **RFC-0067** — Lifetime Anchors (`1-under-review` ; rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-08-23)
@@ -79,6 +78,7 @@ the curated thematic map.
 - **RFC-0136** — Walrus for Kept Bindings (`1-under-review` ; rfcs/1-under-review/rfc-0136-walrus-for-kept-bindings.md ; date 2026-08-23 ; updated 2026-08-25)
 - **RFC-0137** — Nominal Types as Branded Rows (`1-under-review` ; rfcs/1-under-review/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-25)
 - **RFC-0140** — Algebraic Effects (`1-under-review` ; rfcs/1-under-review/rfc-0140-algebraic-effects.md ; date 2026-08-25 ; updated 2026-08-25)
+- **RFC-0142** — Division by Zero and Checked Arithmetic Ergonomics (`1-under-review` ; rfcs/1-under-review/rfc-0142-division-by-zero-and-checked-arithmetic-ergonomics.md ; date 2026-08-25 ; updated 2026-08-27)
 
 ## Accepted (9)
 
