@@ -325,7 +325,8 @@ shown for illustration only. `ToRecord`/`FromRecord` are the derivable ones.)
 ```metel
 fun take_fd(h: &var FileHandle) -> (RawFd, &var { path: String }) {
     let view = h.to_record_mut();
-    let fd = move view.fd;
+    let fd = view.fd;   // moving a non-Copy field out is implicit, no `move` keyword
+                         // exists in this grammar
     (fd, view)          // view's residual type, { path: String }, is not Linear —
                          // RFC-0090 §5's field-composition rule applies to records
                          // exactly as it does to structs, and `path` alone carries no
@@ -408,7 +409,9 @@ struct Session { host: String, state: AuthState }
 
 fun authenticate(session: &var Session, token: String) {
     let view = session.to_record_mut();   // &var { host: String, state: AuthState }
-    let old_state = move view.state;       // view narrows to &var { host: String } —
+    let old_state = view.state;            // no `move` keyword exists -- moving a
+                                            // non-Copy field out is implicit; view
+                                            // narrows to &var { host: String } —
                                             // `state` is genuinely absent here, not holding
                                             // a placeholder value of any kind
     let new_state = match old_state {
@@ -476,7 +479,9 @@ behind Rust's own (still unshipped, as of writing) "view types" proposal:
 fun drain_field<row R, name: Symbol, T>(s: &var { name: T, ..R })
     -> (T, &var { ..R })
 {
-    let v = move s.[name];
+    let v = s.[name];   // no `move` keyword exists -- moving a non-Copy field out is
+                         // implicit. This signature has other problems too, unrelated
+                         // to `move`: see Open Question 4 below.
     (v, s)
 }
 
@@ -509,10 +514,12 @@ fun example(h: &var Handle) {
 
    ```metel
    fun drain_field<row R, name: Symbol, T>(s: &var { name: T, ..R }) -> (T, &var { ..R })
-   { let v = move s.[name]; (v, s) }
+   { let v = s.[name]; (v, s) }
    ```
 
-   **Three separate things here do not exist**, checked directly against `grammar.pest`:
+   **Four separate things here do not exist**, checked directly against `grammar.pest`
+   (a fourth found 2026-08-27, re-auditing this passage for metel-core#854 — the original
+   three-item audit missed it):
 
    - **`Symbol` is not a kind.** The only `Symbol` in the corpus is RFC-0059's
      compiler-internal `SymbolId`, unrelated. Nothing defines a label kind.
@@ -526,6 +533,9 @@ fun example(h: &var Handle) {
    - **`s.[name]` does not parse.** `postfix` accepts `.0`, `.ident`, `.ident(…)`,
      `[expr]` and `?`. There is no `.[` form, and bare `[expr]` is the runtime index
      operator, not a compile-time label projection.
+   - **There is no `move` keyword either.** (Elsewhere in this cluster's corpus too —
+     see metel-core#854.) Moving a non-`Copy` value out is implicit; `let v = s.[name];`
+     alone would be the move, if `s.[name]` parsed at all.
 
    **This is not settled by RFC-0090 §2.1's resolution of row algebra, and the distinction
    matters.** That resolution retires the need for a label *literal* — extension writes

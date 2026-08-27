@@ -241,9 +241,12 @@ struct File { fd: i64, path: String }
 fun close(f: File) -> String {
     let r = f.to_record();       // { fd: i64, path: String }
     sys_close(r.fd);
-    let path = move r.path;      // r narrows to { fd: i64 } — but `fd`'s
-                                  // obligation was already satisfied by sys_close
-                                  // above; nothing further needs to happen to it
+    let path = r.path;           // moving a non-Copy field out is implicit, no `move`
+                                  // keyword exists (verified directly against
+                                  // grammar.pest); r narrows to { fd: i64 } — but
+                                  // `fd`'s obligation was already satisfied by
+                                  // sys_close above; nothing further needs to happen
+                                  // to it
     path
 }
 ```
