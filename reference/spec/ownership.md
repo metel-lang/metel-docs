@@ -312,38 +312,51 @@ value, only per-field move tracking.
 
 ### Narrowing
 
-> **Planned for v0.13.0 (RFC-0137).** Every `struct` is represented, for type-checking
-> purposes, as a fixed nominal identity (its **brand**, minted once at declaration) paired
-> with its current **row** — the set of fields still present. Nothing below is built yet;
-> see the exemption note on each rule.
+Every `struct` is represented, for type-checking purposes, as a fixed nominal identity
+(its **brand**, minted once at declaration) paired with its current **row** — the set of
+fields still present.
 
-Moving a field out of a struct narrows the value's *type* to a row with that field
-removed, at the same brand — not just a change in what the compiler internally tracks
-about it:
+**Available now (RFC-0137, metel-core#857): a struct's own field projection is
+branded.** `h.{ fd }` — reading fields out on a copy of the reference, not consuming the
+original — produces a residual of `h`'s own brand, not a same-shaped anonymous record:
 
 ```metel
 struct Handle { fd: i64, name: String }
 
-fun main() {
-    let h = Handle { fd = 3, name = "x" };
-    let n = h.name;   // h : Handle.{ fd } from this point on
+extend Handle {
+    fun describe(h: Self.{ fd }) -> i64 { h.fd }
+}
+
+fun main() -> i64 {
+    let handle = Handle { fd = 3, name = "x" };
+    return Handle::describe(handle.{ fd });   // OK -- branded Handle.{ fd }
+    // Handle::describe({ fd = 3 })            // rejected -- no brand, T0001
 }
 ```
+
+A projection naming *every* field the struct declares normalizes back to the plain
+struct type instead of staying a distinct residual — `h.{ fd, name }` here is just
+`Handle`, still rejected by a row bound the same way a bare `Handle` value already is.
+
+> **Planned for v0.13.0 (RFC-0137, metel-core#858): moving a field out of a struct will
+> also narrow the value's *type*** to a row with that field removed, at the same brand
+> — not just a change in what the compiler internally tracks about it, the way a partial
+> move works today (see [Partial moves](#partial-moves) above). `h.name` (partial move)
+> will then produce exactly the residual type `h.{ fd }` (projection) already produces
+> today — the two becoming the same mechanism, reached two ways.
 
 The residual is an ordinary value: it can be bound, passed, returned, dropped, and
 narrowed again. For a struct over *N* fields, the space of residual shapes is the subset
 lattice, bounded by 2^*N* — there is no row variable and no unification involved in
-computing it. A struct's own field projection (`h.{ fd }`) produces exactly the same
-residual type as the equivalent partial move, performed explicitly on a copy of the
-reference rather than as a side effect of consuming the original.
+computing it.
 
 **A residual's row is never visible to structural matching, regardless of its width.**
 This is unchanged from today's rule that only a `record` (not a `struct`) satisfies a
-[row bound](types.md#spec.types.generics.row-bounds.legality-4) — narrowing changes a
-struct's row, never its brand, and eligibility for structural matching is scoped to the
-brand alone, fixed at declaration. A struct value narrowed down to every one of its own
-fields is still, unambiguously, that struct — not a same-shaped anonymous record, and not
-a `record`-declared type of the same shape.
+[row bound](types.md#spec.types.generics.row-bounds.legality-4) — eligibility for
+structural matching is scoped to the brand alone, fixed at declaration, never to row
+content. A struct value narrowed down to every one of its own fields is still,
+unambiguously, that struct — not a same-shaped anonymous record, and not a
+`record`-declared type of the same shape.
 
 <details>
 <summary>Formal rules</summary>
@@ -353,15 +366,14 @@ a `record`-declared type of the same shape.
 Moving a field out of a struct value narrows that value's type to a row with the moved
 field removed, at the same brand.
 
-
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#836" reason="RFC-0137's row-bounded representation is not implemented -- a partial move today changes only compiler-internal move-tracking state, never the value's static type. Verified directly: `let h = Handle {...}; let n = h.name;` leaves `h`'s inferred type unchanged." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Move-triggered narrowing is not implemented -- a partial move today changes only compiler-internal move-tracking state, never the value's static type. Verified directly: `let h = Handle {...}; let n = h.name;` leaves `h`'s inferred type unchanged. Projection-triggered narrowing (`h.{ fd }`) is implemented -- see legality-2 -- this rule is specifically about the move-triggered form, RFC-0137 slice 2 (metel-core#858)." -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#836: RFC-0137's row-bounded representation is not implemented -- a partial move today changes only compiler-internal move-tracking state, never the value's static type. Verified directly: `let h = Handle {...}; let n = h.name;` leaves `h`'s inferred type unchanged._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Move-triggered narrowing is not implemented -- a partial move today changes only compiler-internal move-tracking state, never the value's static type. Verified directly: `let h = Handle {...}; let n = h.name;` leaves `h`'s inferred type unchanged. Projection-triggered narrowing (`h.{ fd }`) is implemented -- see legality-2 -- this rule is specifically about the move-triggered form, RFC-0137 slice 2 (metel-core#858)._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.narrowing.legality-2}
@@ -369,32 +381,32 @@ field removed, at the same brand.
 A residual's row is never visible to structural matching; only its brand, fixed at
 declaration, determines eligibility, regardless of how narrow or wide the current row is.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#836" reason="Depends on the residual-type representation above existing at all; not implemented." -->
-
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#836: Depends on the residual-type representation above existing at all; not implemented._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_43_bare_record_rejected_by_branded_projection_param.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_43_bare_record_rejected_by_branded_projection_param.mtl), [neg_45_residual_never_satisfies_row_bound.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_45_residual_never_satisfies_row_bound.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.ownership.narrowing.dynamics-1}
 
 A struct's own field projection expression produces exactly the same residual type as the
 equivalent partial move.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#836" reason="Depends on the residual-type representation above existing at all; not implemented." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="The projection half is implemented (see legality-2); the partial-move half is not (see legality-1), so the equivalence this rule states cannot yet be exercised -- there is no move-produced residual to compare against." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#836: Depends on the residual-type representation above existing at all; not implemented._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: The projection half is implemented (see legality-2); the partial-move half is not (see legality-1), so the equivalence this rule states cannot yet be exercised -- there is no move-produced residual to compare against._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>
 
 ### Passing a residual to a function
 
-> **Planned for v0.13.0 (RFC-0137).**
+> **Available now (RFC-0137, metel-core#857), for a projection-produced residual.**
+> Once move-triggered narrowing lands (metel-core#858), a residual reached that way is
+> passed exactly the same way — nothing here is specific to how the residual arose.
 
 A parameter naming a struct's own projected type (`Handle.{ fd }`, or `Self.{ fd }`
 inside `Handle`'s own `extend` block) is ordinary type-matching, available to every
@@ -425,22 +437,21 @@ the caller to narrow itself first; the call never silently discards `name`.
 A function parameter may name a struct's own projected type; a caller's argument must
 match that row exactly, with no implicit narrowing at the call site.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#836" reason="Depends on residual types existing at all; not implemented." -->
-
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#836: Depends on residual types existing at all; not implemented._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [103_branded_record_projection_accepts_real_projection.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/103_branded_record_projection_accepts_real_projection.mtl), [neg_43_bare_record_rejected_by_branded_projection_param.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_43_bare_record_rejected_by_branded_projection_param.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
 ### Drop dispatch against a narrowed residual
 
-> **Planned for v0.13.0 (RFC-0137).** Supersedes the `Drop`-type partial-move ban above
-> *in design*; until implemented, that ban is enforced exactly as stated.
+> **Planned for v0.13.0 (RFC-0137, metel-core#858).** Supersedes the `Drop`-type
+> partial-move ban above *in design*; until implemented, that ban is enforced exactly as
+> stated.
 
 A struct implementing `Drop` whose destructor reads a field that has since been narrowed
 away must not silently skip the destructor's work. Dispatch is **row-bounded**: for a
@@ -462,14 +473,14 @@ after.
 A `Drop` impl's required field set is the union of the fields its destructor body reads
 directly and, recursively, the required sets of every `self`-method it calls.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#836" reason="Row-bounded Drop dispatch is not implemented; RFC-0071's unconditional partial-move-with-Drop ban is still enforced today (behind --move-check, off by default)." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Row-bounded Drop dispatch is not implemented (RFC-0137 slice 2); RFC-0071's unconditional partial-move-with-Drop ban is still enforced today (behind --move-check, off by default)." -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#836: Row-bounded Drop dispatch is not implemented; RFC-0071's unconditional partial-move-with-Drop ban is still enforced today (behind --move-check, off by default)._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Row-bounded Drop dispatch is not implemented (RFC-0137 slice 2); RFC-0071's unconditional partial-move-with-Drop ban is still enforced today (behind --move-check, off by default)._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Dynamic Semantics {#spec.ownership.drop-dispatch-against-a-narrowed-residual.dynamics-1}
@@ -477,10 +488,10 @@ directly and, recursively, the required sets of every `self`-method it calls.
 A `Drop` impl's destructor fires against any residual of the correct brand whose current
 row is a superset of the impl's required field set.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#836" reason="Depends on the legality rule above; not implemented." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Depends on the legality rule above; not implemented." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#836: Depends on the legality rule above; not implemented._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Depends on the legality rule above; not implemented._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-2}
@@ -488,10 +499,10 @@ row is a superset of the impl's required field set.
 Coercing a value of a `Drop`-implementing type to `dyn Aspect` is rejected when the
 value's current row does not satisfy that type's `Drop` impl's required field set.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#836" reason="Depends on both row-bounded Drop dispatch and dyn Aspect (RFC-0008, 2-accepted, not integrated) existing; neither is implemented." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Depends on row-bounded Drop dispatch (above, RFC-0137 slice 2, metel-core#858) and additionally on dyn Aspect (RFC-0008, 2-accepted, not integrated) reaching real syntax -- dyn doesn't exist in the grammar at all today. Do not attempt this checkpoint until RFC-0008 has landed enough to have something to coerce into." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#836: Depends on both row-bounded Drop dispatch and dyn Aspect (RFC-0008, 2-accepted, not integrated) existing; neither is implemented._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Depends on row-bounded Drop dispatch (above, RFC-0137 slice 2, metel-core#858) and additionally on dyn Aspect (RFC-0008, 2-accepted, not integrated) reaching real syntax -- dyn doesn't exist in the grammar at all today. Do not attempt this checkpoint until RFC-0008 has landed enough to have something to coerce into._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>
@@ -502,8 +513,9 @@ Reassigning a moved-out field already restores the containing value's whole-valu
 today, for every struct regardless of `Drop` — this is existing, unconditional
 `--move-check` behavior, not itself part of RFC-0137.
 
-> **Planned for v0.13.0 (RFC-0137): once narrowing gives the residual a named type
-> (above), reassigning a moved-out field also widens that type back automatically** —
+> **Planned for v0.13.0 (RFC-0137, metel-core#858): once narrowing gives the residual a
+> named type (above), reassigning a moved-out field also widens that type back
+> automatically** —
 > `Handle.{ fd }` becomes `Handle` again once `name` is reassigned. This is not a new
 > capability requiring any other RFC first: it is the residual-type formalization
 > naming what reassignment's existing whole-value-restoring behavior already produces.
@@ -521,14 +533,14 @@ today, for every struct regardless of `Drop` — this is existing, unconditional
 Assigning a value to a field missing from a residual's current row widens the residual's
 type to include that field, at the same brand.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#836" reason="Depends on residual types existing at all; not implemented." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Residual types themselves exist now (RFC-0137 slice 1, metel-core#857) but only as produced by a struct's own field projection (h.{ fd }); move-triggered narrowing does not yet exist to produce one from a partial move, and automatic widening on reassignment is not implemented either. Verified directly: reassigning a field after a projection-produced residual has no effect on that residual binding's own type, since the projection is a value computed once, not a live view of the original binding." -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#836: Depends on residual types existing at all; not implemented._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Residual types themselves exist now (RFC-0137 slice 1, metel-core#857) but only as produced by a struct's own field projection (h.{ fd }); move-triggered narrowing does not yet exist to produce one from a partial move, and automatic widening on reassignment is not implemented either. Verified directly: reassigning a field after a projection-produced residual has no effect on that residual binding's own type, since the projection is a value computed once, not a live view of the original binding._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>

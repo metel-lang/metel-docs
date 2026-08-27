@@ -16,7 +16,7 @@ coverage:
   "7": { kind: untestable, reason: "Generic-struct consequence of §1/§2's brand-preservation claims (already spec-anchored there), not an independent testable claim of its own." }
   "8": { kind: untestable, reason: "Cost/performance argument, not fixture-observable behavior -- same treatment as spec.declarations.aspects.static-dispatch-only.dynamics-1." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/836'
-impl_status: not-started
+impl_status: in-progress
 ---
 
 > **New RFC, formalizing the central thesis of
