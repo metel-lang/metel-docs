@@ -340,7 +340,7 @@ above it are.
   cluster's review.
 - **RFC-0091** — Linear Records — per-field multiplicity, automatic-downgrade partial
   consumption, the `uses(fd)` Drop mechanism. Depends on RFC-0089 + RFC-0090.
-- **RFC-0109** *(draft, opened 2026-07-18, reconciled against RFC-0137 2026-08-27)* —
+- **RFC-0109** *(under review 2026-08-27, opened 2026-07-18, reconciled against RFC-0137 2026-08-27)* —
   Self-View Narrowing — closes the gap found comparing the records cluster against
   Rust's (unshipped) view-types proposal: a named **view** —
   `view TicketView for Ticketing { golden_tickets }` — is a **name for an RFC-0137
@@ -358,7 +358,7 @@ above it are.
   moved to RFC-0144, and the by-value struct-pattern prerequisite this RFC originally
   defined turned out to be moot — `Pattern::Struct`/`Pattern::Record` were already
   implemented by RFC-0032/RFC-0034/RFC-0107. Amends RFC-0044.
-- **RFC-0144** *(draft, opened 2026-08-27, split from RFC-0109)* — Reference-
+- **RFC-0144** *(under review 2026-08-27, opened 2026-08-27, split from RFC-0109)* — Reference-
   Destructuring Patterns — the ad hoc, one-off counterpart to RFC-0109's named views:
   `&var { golden_tickets, bars } = h;` (mutable, `h` already `&var`-typed) and
   `{ x, y } = &point;` (shared, reference taken on the right-hand side of a plain
