@@ -195,10 +195,10 @@ answered.
    stays ineligible — the row content changed, the brand's own eligibility flag did
    not. **Caveat, 2026-08-25 same day: RFC-0137 was reverted to `1-under-review` the
    same day it was accepted** (its own Open Questions 5-6, opened on reversion, don't
-   touch §2/§3's brand-preservation claim directly — but the answer above is only as
-   settled as RFC-0137 itself is, which is to say not yet re-accepted). This tier-1
-   table restatement and this answer both stand as the intended design pending
-   RFC-0137's re-acceptance, not as a closed question.
+   touch §2/§3's brand-preservation claim directly). **RFC-0137 was re-accepted
+   2026-08-27**, all four Open Questions closed — this tier-1 table restatement and
+   this answer now stand on an accepted dependency, though the restatement itself
+   still needs to actually happen, not yet done.
 
 ---
 
@@ -216,8 +216,8 @@ answered.
   proposal §3 reuses
 - `reports/substructural-types/nominal-types-as-branded-rows.md` — the stronger thesis §4
   deliberately does not adopt, and §4's `Drop`-dispatch leak
-- RFC-0137 (Nominal Types as Branded Rows, `1-under-review` — reverted from
-  `2-accepted` 2026-08-25, same day) — the exploration
+- RFC-0137 (Nominal Types as Branded Rows, `2-accepted` 2026-08-27 — re-accepted
+  after a same-day 2026-08-25 revert) — the exploration
   above, formalized: adopts the stronger thesis for every struct, answers Open
   Question 5, and is what §1's table above is now restated against
 - RFC-0076 (Brand Types) — related but **not a dependency**; see OQ4

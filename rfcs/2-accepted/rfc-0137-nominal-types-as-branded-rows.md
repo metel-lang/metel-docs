@@ -2,9 +2,9 @@
 id: rfc-0137
 title: "Nominal Types as Branded Rows"
 date: '2026-08-24'
-status: under-review
+status: accepted
 target:
-updated: '2026-08-25'
+updated: '2026-08-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/827'
 ---
 
@@ -66,6 +66,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/827'
 > **This is the corpus's fourth `2-accepted` → `1-under-review` reversion** (after
 > RFC-0099, RFC-0100, RFC-0122) — recorded in `OBJECTIVES.md` Trigger 14 as well as
 > here.
+
+> **Status — accepted (2026-08-27).** All four Open Questions closed or determined not to block acceptance, this time verified directly against the interpreter rather than argued from prose alone (Open Questions 5, 6, 8 resolved 2026-08-27, see that section). Open Question 5 in particular was caught and corrected mid-review: the first resolution pass wrongly generalized an owned-binding finding to the reference-parameter shape Sec6's own example used; checked separately, narrowing through a reference is already unreachable under RFC-0071 Sec7.1, independent of this RFC.
 
 ## Summary
 

@@ -334,8 +334,9 @@ let h = Handle { fd = open("file.txt"), tag = 1u64 };
 let fd = h.fd;   // compile error — Handle implements Drop; partial move not allowed
 ```
 
-> **Planned to be relaxed (RFC-0137, `1-under-review` as of 2026-08-25 — briefly
-> `2-accepted` the same day, then reverted; not yet implemented either way).** RFC-0137
+> **Planned to be relaxed (RFC-0137, `2-accepted` as of 2026-08-27 — briefly
+> `2-accepted` on 2026-08-25 too, reverted the same day, then re-accepted; not yet
+> integrated or implemented).** RFC-0137
 > (Nominal Types as Branded Rows) supersedes this unconditional ban *in design* with
 > row-bounded `Drop` dispatch — a struct's own row makes it possible to check whether a
 > given residual still has every field a specific `Drop` impl actually reads, rather
@@ -670,7 +671,7 @@ RFC correctly says nothing about it. Only §1's scope sentence needed widening, 
   this RFC.
 - RFC-0068 (Struct-Owned Allocators) — drop ordering in §5 of this RFC governs when
   struct fields become unreachable relative to arena freeing.
-- RFC-0137 (Nominal Types as Branded Rows, `1-under-review` — reverted from
-  `2-accepted` 2026-08-25, same day; added 2026-08-25) — supersedes
+- RFC-0137 (Nominal Types as Branded Rows, `2-accepted` 2026-08-27 — reverted from
+  `2-accepted` 2026-08-25, same day, then re-accepted; added 2026-08-25) — supersedes
   §7's unconditional partial-move-with-`Drop` ban *in design* with row-bounded dispatch;
   not yet reflected in `--move-check`'s actual enforcement, see §7's own callout.
