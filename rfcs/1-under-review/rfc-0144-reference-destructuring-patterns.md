@@ -217,7 +217,7 @@ RFC-0109 stands on for its own mechanism.
   move or projection; this RFC adds no new narrowing rule, only a new *statement
   shape* that triggers the existing one for several fields simultaneously instead of
   one at a time.
-- **RFC-0109 (Self-View Narrowing, sibling — split from the same original draft)** —
+- **RFC-0109 (Self-View Narrowing, `1-under-review`, sibling — split from the same original draft)** —
   the named, reusable counterpart to this ad hoc, one-off mechanism; §1 above states
   the relationship precisely.
 - **RFC-0032 (Field-Level Visibility, implemented)** — a `RefDestructure` pattern's
@@ -272,7 +272,7 @@ RFC-0109 stands on for its own mechanism.
 
 ## References
 
-- RFC-0109 (Self-View Narrowing and Reference-Destructuring Patterns, `0-draft`) —
+- RFC-0109 (Self-View Narrowing, `1-under-review`) —
   the sibling this RFC was split from; the named/reusable counterpart to this ad hoc
   mechanism.
 - RFC-0137 (Nominal Types as Branded Rows, `1-under-review`) — the narrowing
