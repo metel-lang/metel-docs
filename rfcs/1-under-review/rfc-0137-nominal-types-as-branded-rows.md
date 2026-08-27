@@ -349,14 +349,33 @@ fully automatic, an invariant a struct's constructor enforces can be bypassed th
 nothing more than ordinary field mutation:
 
 ```metel
-struct SortedPair { small: i32, big: i32 }   // invariant: small <= big, enforced by SortedPair::new
+struct SortedPair { small: Box, big: Box }   // invariant: small.value <= big.value, enforced by SortedPair::new
 
-fun mess_with_it(p: &var SortedPair) {
+fun main() {
+    var p = SortedPair::new(Box { value = 1 }, Box { value = 10 });
     let old_small = p.small;   // p narrows to .{ big }
-    p.small = 999_999;         // p widens back to full SortedPair -- no call to `new`,
-                                // invariant possibly broken
+    p.small = Box { value = 999_999 };   // p widens back to full SortedPair -- no call
+                                          // to `new`, invariant possibly broken
 }
 ```
+
+**Narrowing and widening only ever apply to an owned binding, never through a
+reference (verified directly, not assumed).** The example above uses an owned `var p`,
+not a `&var SortedPair` parameter, and a non-`Copy` field (`Box`, not `i32`) —
+deliberately, not for simplicity. An earlier draft of this example used `p: &var
+SortedPair` with `i32` fields; that version was wrong on two counts, caught only once
+checked directly against the interpreter rather than argued from the RFC's own prose:
+`i32` is `Copy`, so `let old_small = p.small;` would be a copy, not a move — nothing
+narrows under this RFC's own definition ("narrowing is a type-level consequence of an
+ordinary partial move") — and moving a non-`Copy` field out through *any* reference,
+`&var` included, is already rejected today, unconditionally, by RFC-0071 §7.1 ("a
+non-`Copy` value reached through any reference cannot be moved out of it") —
+confirmed directly: `--move-check` reports `T0019: cannot move p.a out of a reference:
+a reference only grants access to the value it points at, never ownership of it` for
+exactly this shape. So narrowing through a reference isn't a soundness question this
+RFC has to answer — it's already unreachable, for the same reason moving anything
+non-`Copy` out through a reference always has been. Nothing here proposes relaxing
+RFC-0071 §7.1; every residual this RFC produces is reached from an owned binding.
 
 This is not a new hole this RFC introduces — plain mutable-field reassignment already
 bypasses a struct's own constructor today, with zero row machinery involved. What
@@ -367,21 +386,23 @@ does. **This RFC does not solve it** — RFC-0114 (Constructor Aspect and Canoni
 Construction) is the proposed fix, routing every value of a nominal type through one
 `construct`/`construct_unchecked` path, fresh or reassembled.
 
-**Widening on reassignment is automatic (resolved 2026-08-27 — see Open Question 5):**
-`p.small = 999_999` in the example above restores `p`'s type to full `SortedPair`. This
-is not a new capability this RFC has to authorize — verified directly against the
-current interpreter (`--move-check`), reassigning a moved-out field already,
-unconditionally, restores the containing value's whole-value status today, for every
-struct, `Drop` or not; passing it by value where the callee expects the complete type
-succeeds immediately afterward. This RFC's residual-type formalization is naming a type
-for what the move-checker's existing reinitialization-on-reassignment behavior already
-produces, not inventing a new mechanism — that existing behavior itself is undocumented
-in RFC-0071/the spec, a gap independent of this RFC, worth its own fix but not blocking
-here. The invariant-bypass risk stays exactly what it already is without any row
-machinery involved (verified directly: `SortedPair::new(1, 10)` followed by
-`p.small = 999_999` today already produces `small=999999, big=10`, no error) — narrowing
-and widening neither create nor worsen it. RFC-0114 remains the real fix for the
-invariant-bypass problem itself; nothing here depends on RFC-0114 landing first.
+**Widening on reassignment is automatic for an owned binding (resolved 2026-08-27 —
+see Open Question 5):** `p.small = Box { value = 999_999 };` in the corrected example
+above restores `p`'s type to full `SortedPair`. This is not a new capability this RFC
+has to authorize — verified directly against the current interpreter (`--move-check`),
+reassigning a moved-out field of an *owned* binding already, unconditionally, restores
+the containing value's whole-value status today, for every struct, `Drop` or not;
+passing it by value where the callee expects the complete type succeeds immediately
+afterward. This RFC's residual-type formalization is naming a type for what the
+move-checker's existing reinitialization-on-reassignment behavior already produces for
+owned bindings, not inventing a new mechanism — that existing behavior itself is
+undocumented in RFC-0071/the spec, a gap independent of this RFC, worth its own fix but
+not blocking here. The invariant-bypass risk stays exactly what it already is without
+any row machinery involved (verified directly, owned-binding case: `SortedPair::new`
+followed by direct field reassignment today already bypasses the constructor's
+invariant with no error) — narrowing and widening neither create nor worsen it. RFC-0114
+remains the real fix for the invariant-bypass problem itself; nothing here depends on
+RFC-0114 landing first.
 
 ## 7. Generic structs
 
@@ -622,16 +643,26 @@ this corpus's append-only convention for exactly this situation.*
    the type-checker's belief about `p`'s row diverging from its actual runtime
    fields — its own soundness argument, not given). #836 (the implementation issue)
    cannot proceed past this point without an explicit choice.
-   **Resolved 2026-08-27, verified directly against the interpreter — reading (a).**
-   `p.small = 999_999` auto-widens `p` back to `SortedPair`. This is not a new
-   capability requiring RFC-0114 first: run today, `--move-check` already treats a
-   reassigned moved-out field as fully restoring the containing value's whole-value
-   status, for every struct regardless of `Drop`, and `SortedPair::new(1, 10)` followed
-   by `p.small = 999_999` already produces `small=999999, big=10` with no error, zero
-   row machinery involved, exactly as §6's own "not a new hole" paragraph already
-   argued. Readings (b) and (c) would have made narrowing strictly more restrictive
-   than plain mutation already is, for a risk this RFC doesn't create. See §6's own
-   updated text for the full argument. RFC-0114 remains the fix for the underlying
+   **Resolved 2026-08-27, verified directly against the interpreter — reading (a), for
+   an owned binding only.** `mess_with_it`'s own example, as originally written, does
+   not actually exercise the question it was posed to answer: `p: &var SortedPair`
+   with `i32` fields never narrows at all (`i32` is `Copy`, so `let old_small =
+   p.small;` is a copy, not the move narrowing is defined in terms of), and — checked
+   directly, not assumed — narrowing a non-`Copy` field through *any* reference is
+   already rejected today by RFC-0071 §7.1 regardless of this RFC
+   (`--move-check` reports `T0019: cannot move p.a out of a reference` for exactly
+   that shape). So the reference case isn't a soundness question this RFC has to
+   answer; it's already unreachable. §6's example is corrected to an owned binding
+   with a non-`Copy` field, which *does* narrow, and for that case: `p.small =
+   Box { value = 999_999 };` auto-widens `p` back to `SortedPair`, verified directly —
+   `--move-check` already treats a reassigned moved-out field of an owned binding as
+   fully restoring the containing value's whole-value status today, for every struct
+   regardless of `Drop`, and the constructor-invariant bypass already happens with no
+   error, zero row machinery involved, exactly as §6's own "not a new hole" paragraph
+   argued — just not for the example originally used to argue it. Readings (b) and (c)
+   would have made narrowing strictly more restrictive than plain mutation already is,
+   for a risk this RFC doesn't create. See §6's own updated text for the full argument
+   and the corrected example. RFC-0114 remains the fix for the underlying
    invariant-bypass problem; this RFC no longer depends on it landing first.
 6. ~~`Drop` impls conditional on a generic parameter's own `Drop`-ness are unaddressed.
    Blocks re-acceptance, 2026-08-25.~~ §5's required-field-set computation (Open
@@ -750,9 +781,17 @@ wasn't a one-off. Recorded in `OBJECTIVES.md` as well as here.
 
 **Both blocking questions resolved, 2026-08-27.** Open Question 5 (§6's widening
 semantics) resolved by direct verification against the interpreter, not just
-argument — reassigning a moved-out field already, unconditionally, restores the
-containing value's whole-value status today, and the invariant-bypass risk narrowing
-was thought to newly enable is confirmed pre-existing and unchanged. Open Question 6
+argument — for an *owned* binding, reassigning a moved-out field already,
+unconditionally, restores the containing value's whole-value status today, and the
+invariant-bypass risk narrowing was thought to newly enable is confirmed pre-existing
+and unchanged. Narrowing through a reference, the shape §6's own original example
+actually used, turned out to be a non-question rather than a verified one: caught only
+once checked directly, `&var`-reached narrowing either doesn't narrow at all (`Copy`
+fields) or is already rejected today by RFC-0071 §7.1 regardless of this RFC
+(non-`Copy` fields) — an initial resolution pass generalized the owned-binding finding
+to the reference case without checking it separately, which was wrong; §6's example is
+corrected to the owned-binding shape that actually exercises the mechanism. Open
+Question 6
 (`Drop` impls conditional on `T`) resolved as a stated design assumption, not a
 verified fact — the required-field-set computation itself needs no change, and
 applicability-timing is assumed to resolve per call site with `T` concrete, consistent
