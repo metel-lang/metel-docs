@@ -67,6 +67,18 @@ title: "Metel Language Changelog"
   literal passed to a turbofish call is unaffected — it still adopts the pinned type
   (`clamp::<i32>(5, 0, 10)` still works); this changes only genuinely mismatched
   arguments.
+- A generic function can now be referenced as a value, not just called directly —
+  bound with a bare, unannotated `let` (`let alias = identity;`, staying polymorphic
+  across that binding's own later uses, the same guarantee an unannotated closure
+  literal already had), and passed as a higher-order argument whose receiving
+  parameter position is itself concrete (`apply(identity, 3)`). Works identically for
+  a nested generic function, not just a top-level one. Previously any non-call
+  reference to a generic function was rejected outright, contradicting
+  `functions.md`'s unqualified first-class-functions claim (`metel-core#736`,
+  RFC-0138). Referencing one where nothing pins down a concrete instantiation —
+  passed to a parameter that is itself still generic in the callee, or with no
+  expected type at all outside a `let` — is still rejected; RFC-0138 tracks that
+  remaining gap.
 
 ## v0.12.1
 

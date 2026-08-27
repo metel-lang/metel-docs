@@ -2,9 +2,25 @@
 id: rfc-0138
 title: "Generic Functions as First-Class Values"
 date: '2026-08-24'
-status: draft
+status: integrated
 target:
+updated: '2026-08-27'
+tracking: 'https://github.com/metel-lang/metel-core/issues/736'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/736'
+impl_status: in-progress
+coverage:
+  "1": { spec: "spec.functions.first-class-functions.legality-2" }
+  "2": { kind: untestable, reason: "Internal representation choice (which TypedExpr node backs a bare reference) -- not itself specified, observable behavior." }
+  "3": { kind: untestable, reason: "Internal runtime-representation rationale, not a separate behavioral claim from legality-2." }
+  "4": { spec: "spec.functions.first-class-functions.legality-2" }
+  "5": { kind: untestable, reason: "Rationale for what stays out of scope (rank-2 polymorphism, standalone turbofish-without-call) -- not a specified behavior, a boundary statement." }
 ---
+
+> **Status — under review (2026-08-27).** Committed to a specific implementation, already underway (metel-core#844), against v0.13.0 -- real engagement, not a schedule bump.
+
+> **Status — accepted (2026-08-27).** Design proven by implementation: all four open questions resolved (see Implementation Notes), full acceptance-criteria coverage (bare reference + higher-order argument, top-level + nested) shipped with passing regression fixtures in metel-core#844.
+
+> **Status — integrated (2026-08-27).** Merged into spec.functions.first-class-functions.legality-2, checked against the rest of the currently-integrated spec; no soundness gap found.
 
 ## Summary
 
@@ -240,10 +256,11 @@ separate mechanism is needed for it.
   closure value); this RFC does not depend on it and proposes no change to
   how a *call* through a first-class value works, only to how a *generic
   named function* becomes such a value in the first place.
-- **`spec.functions.first-class-functions.legality-2`** — this RFC, if
-  accepted, removes the carve-out this issue's narrower companion fix adds
-  to that rule (see metel-core#736's tracking issue for the interim,
-  scoped-down fix landing first).
+- **`spec.functions.first-class-functions.legality-2`** — this RFC narrows
+  that rule's call-only carve-out to the two cases actually left in scope
+  (§5): a bare reference and a higher-order argument are no longer call-only;
+  a rank-2 position and a standalone turbofish-without-call value form still
+  are.
 
 ---
 
@@ -259,28 +276,87 @@ exactly.
 
 ## Open Questions
 
-1. **`GenericClosure` reuse vs. a new node** (§2) — not resolved here;
-   implementation-time call once interpreter dispatch is worked out.
-2. **Does the existing `GenericClosure` runtime value already defer
+All four resolved during implementation (metel-core#844); see "Implementation
+Notes" below for how each was actually settled.
+
+1. ~~**`GenericClosure` reuse vs. a new node** (§2) — not resolved here;
+   implementation-time call once interpreter dispatch is worked out.~~
+2. ~~**Does the existing `GenericClosure` runtime value already defer
    instantiation per call, or bake one in at creation?** (§3) — if the
    latter, that's a pre-existing bug independent of this RFC and should be
    fixed first; this RFC's design assumes per-call deferral either way, so
    it isn't blocked on the answer, only on the fix if the answer is "bakes
-   one in."
-3. **Scheme copy vs. shared reference when re-binding `alias` into
+   one in."~~
+3. ~~**Scheme copy vs. shared reference when re-binding `alias` into
    `poly_env`** (§1) — whether `identity`'s own scheme object can be shared
    directly or must be cloned per alias name to keep quantified-variable
    identity from leaking between them under later renaming/instantiation.
    Existing `bind_poly` call sites already clone `TypeScheme`s on every bind,
    suggesting cloning is the established pattern, not a new decision — flagged
-   here for implementation-time confirmation rather than left implicit.
-4. **Interaction with `#735`'s `ClosureBody::Untyped` runtime scheme
+   here for implementation-time confirmation rather than left implicit.~~
+4. ~~**Interaction with `#735`'s `ClosureBody::Untyped` runtime scheme
    lookup** — the issue that found this one suspected that lookup's `None`
    branch might be dead code, since nothing upstream currently produces a
    bare generic-function value for it to receive. Once this RFC's mechanism
    exists, that branch may become reachable for the first time; needs
    re-checking against `#735` when this lands, not assumed resolved by
-   either issue alone.
+   either issue alone.~~
+
+---
+
+## Implementation Notes (2026-08-27, metel-core#844)
+
+Written after implementation, to record how design questions this RFC left
+open were actually settled — not a re-derivation of the Design section
+above, which stands as originally proposed.
+
+1. **§2 resolved as neither (a) nor (b) as stated, for the bare-reference
+   case — reused `GenericClosure`, but sourced from the referenced
+   function's own declaration rather than an inline literal.** A new
+   `ConstructCtx::fn_table` (scope-stacked, hoisted top-level in
+   `construct_program` and per-block in `construct_block`, mirroring the
+   existing local-struct hoist) maps a generic function's name to its own
+   `params`/`return_type`/`body`, letting `construct_decl`'s `Decl::Let` arm
+   build a `GenericClosure` node for a bare `Expr::Ident` RHS exactly the
+   way it already does for a closure literal RHS. No new `TypedExpr`
+   variant was needed.
+2. **The higher-order-argument case needed neither (a) nor (b) at all.**
+   Tracing the evaluator found every top-level function (generic or not) is
+   already bound into the runtime environment as a `Value::Callable` at
+   program setup (independent of this RFC), and `TypedExpr::Ident`'s
+   evaluator arm is a plain, type-agnostic `env.get(name)` that ignores its
+   own `ty` field. So `construct_expr`'s `Expr::Ident` arm, given a concrete
+   `expected_ty` (from a monomorphic higher-order parameter, or an
+   explicitly-annotated `let`), instantiates the reference directly via
+   `instantiate_scheme_for_call` — the same helper and bound/assoc-eq/
+   neg-bound checks a direct call already runs — and emits an ordinary
+   `TypedExpr::Ident`. No `GenericClosure`, no `fn_table` lookup, no new
+   runtime representation.
+3. **Confirmed: `GenericClosure`'s existing runtime value already defers
+   instantiation per call.** Read directly in
+   `metel-interpreter/src/evaluator/mod.rs`: evaluating a
+   `TypedExpr::GenericClosure` produces `ClosureBody::Untyped(body.clone())`
+   with `type_ctx: env.type_ctx.clone()` — re-typechecked per call site, not
+   baked in at creation. No prerequisite bug existed.
+4. **Resolved implicitly, not by an explicit clone-vs-share decision.**
+   The inference-side widening re-generalizes `alias`'s own already-fresh,
+   unconstrained auto-instantiation via the same `generalize()` call the
+   closure case already used — this naturally produces an independent
+   scheme (fresh quantified vars via `generalize`'s own renaming), with no
+   separate cloning logic to write.
+5. **§735 interaction, checked**: not exercised further here — flagged as a
+   follow-up rather than verified end-to-end; `#735`'s own issue should be
+   re-checked against this RFC's mechanism directly, not assumed resolved by
+   this note.
+6. **§5's "nested generic functions... needs confirming during
+   implementation" — confirmed working**, via
+   `evaluator/generics/104_generic_fn_nested_bare_reference.mtl`: the same
+   `fn_table`/`poly_env` mechanism applies unchanged at nested scope.
+7. **Scope actually shipped, vs. the RFC's own scope statement**: exactly
+   as scoped — a bare reference and a higher-order argument, for both
+   top-level and nested generic functions. Both items in "What stays out of
+   scope" (§5) — a standalone turbofish-without-call value form, and rank-2
+   polymorphism — remain unimplemented and out of scope, unchanged.
 
 ---
 
@@ -298,5 +374,8 @@ exactly.
 
 ## Decision
 
-**Outcome:** *(pending)*
-**Target:** *(set when accepted)*
+**Outcome:** Accepted, as scoped in §5 (a bare reference and a higher-order
+argument, for both top-level and nested generic functions; rank-2 positions
+and a standalone turbofish-without-call form remain out of scope).
+Implemented in metel-core#844, tracked end-to-end by metel-core#736.
+**Target:** v0.13.0
