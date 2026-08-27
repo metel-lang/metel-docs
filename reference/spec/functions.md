@@ -109,13 +109,21 @@ fun main() -> i64 {
 
 The type of a function or closure is written as `(ParamTypes) -> ReturnType`.
 
-> **Generic functions are call-only.** A named function declared with its own
-> `<T>` generics (`fun identity<T>(x: T) -> T { ... }`) has no value form —
-> it may be called directly (`identity(3)`, `identity::<i64>(3)`), but not
-> bound, passed as an argument, or returned. This is a scope carve-out on the
-> claim above, not covered by it; see
-> [RFC-0138](../../rfcs/0-draft/rfc-0138-generic-functions-as-first-class-values.md)
-> for the proposal to close this gap (metel-core#736).
+> **A generic function's value form is instantiated per use, not per binding.**
+> A named function declared with its own `<T>` generics
+> (`fun identity<T>(x: T) -> T { ... }`) may be called directly
+> (`identity(3)`, `identity::<i64>(3)`), bound with a bare `let` — the
+> binding itself stays polymorphic, so its own later uses may each
+> instantiate it differently (`let alias = identity; alias(3); alias("x");`)
+> — or passed as a higher-order argument whose receiving parameter position
+> is itself concrete (`apply(identity, 3)`, where `apply`'s own parameter is
+> `(i64) -> i64`, not itself generic). It still has no value form where
+> nothing at the reference site pins down a concrete instantiation — passed
+> to a parameter that is itself still generic in the callee (rank-2), or
+> named in an expression position with no expected type and no enclosing
+> `let` (`return identity;`, `identity::<i64>` without a following call).
+> See [RFC-0138](../../rfcs/0-draft/rfc-0138-generic-functions-as-first-class-values.md)
+> for the remaining gap (metel-core#736).
 
 <details>
 <summary>Formal rules</summary>
@@ -137,11 +145,15 @@ Function and closure types use `(ParameterTypes) -> ReturnType`; the former
 
 A non-generic named function and a closure are values of their function type and may be
 bound, passed as arguments, and returned as results. A generic named function (declared
-with its own `<T>` generics) is call-only: referencing it in any other expression
-position is `T0003`.
+with its own `<T>` generics) may be called directly, bound with a bare, unannotated
+`let` (staying polymorphic across that binding's own later uses, the same as an
+unannotated closure literal), or passed as a higher-order argument whose receiving
+parameter position is itself concrete (one instantiation, at that one call site).
+Referencing it in a position where nothing pins down a concrete instantiation —
+including a parameter position that is itself still generic in the callee — is `T0003`.
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [03_functions_and_closures.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/03_functions_and_closures.mtl), [stage10_neg_04_generic_function_bare_reference_is_call_only.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage10_neg_04_generic_function_bare_reference_is_call_only.mtl), [stage10_neg_05_generic_function_higher_order_argument_is_call_only.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage10_neg_05_generic_function_higher_order_argument_is_call_only.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [03_functions_and_closures.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/03_functions_and_closures.mtl), [stage10_10_generic_function_bare_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage10_10_generic_function_bare_reference.mtl), [stage10_11_generic_function_higher_order_argument.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage10_11_generic_function_higher_order_argument.mtl), [101_generic_fn_bare_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/generics/101_generic_fn_bare_reference.mtl), [102_generic_fn_reference_reused_at_multiple_types.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/generics/102_generic_fn_reference_reused_at_multiple_types.mtl), [103_generic_fn_higher_order_argument.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/generics/103_generic_fn_higher_order_argument.mtl), [104_generic_fn_nested_bare_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/generics/104_generic_fn_nested_bare_reference.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 </details>
