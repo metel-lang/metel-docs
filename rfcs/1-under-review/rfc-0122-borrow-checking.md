@@ -702,7 +702,7 @@ blocking an unrelated release.
 - `reports/strategy/OBJECTIVES.md` — Trigger 19, and §1's diagnostics claim
 - `reports/substructural-types/allocators-as-emergent-synthesis.md` — the decomposition
   that makes this load-bearing for Priority 4
-- `public/rfcs/0-draft/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md`
+- `rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md` (RFC-0109, `1-under-review`)
   — deferred; its borrowed-view questions depend on the outcome here
 
 ---

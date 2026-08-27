@@ -2,7 +2,8 @@
 id: rfc-0144
 title: "Reference-Destructuring Patterns"
 date: '2026-08-27'
-status: draft
+status: under-review
+tracking: 'https://github.com/metel-lang/metel-core/issues/843'
 ---
 
 > **Split from RFC-0109 (Self-View Narrowing and Reference-Destructuring Patterns),
@@ -34,6 +35,8 @@ status: draft
 > RFC-0032/RFC-0034/RFC-0107 sometime after RFC-0109 was drafted. This RFC needs no
 > prerequisite by-value pattern work at all as a result — it builds directly on what's
 > already shipped, plus one new pattern kind (§3).
+
+> **Status — under review (2026-08-27).** Committed to v0.14.0 (issue #843, milestoned 2026-08-27), same milestone as sibling RFC-0109 (metel-core#842).
 
 ## Summary
 
@@ -214,7 +217,7 @@ RFC-0109 stands on for its own mechanism.
   move or projection; this RFC adds no new narrowing rule, only a new *statement
   shape* that triggers the existing one for several fields simultaneously instead of
   one at a time.
-- **RFC-0109 (Self-View Narrowing, sibling — split from the same original draft)** —
+- **RFC-0109 (Self-View Narrowing, `1-under-review`, sibling — split from the same original draft)** —
   the named, reusable counterpart to this ad hoc, one-off mechanism; §1 above states
   the relationship precisely.
 - **RFC-0032 (Field-Level Visibility, implemented)** — a `RefDestructure` pattern's
@@ -269,7 +272,7 @@ RFC-0109 stands on for its own mechanism.
 
 ## References
 
-- RFC-0109 (Self-View Narrowing and Reference-Destructuring Patterns, `0-draft`) —
+- RFC-0109 (Self-View Narrowing, `1-under-review`) —
   the sibling this RFC was split from; the named/reusable counterpart to this ad hoc
   mechanism.
 - RFC-0137 (Nominal Types as Branded Rows, `1-under-review`) — the narrowing

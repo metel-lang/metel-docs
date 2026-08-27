@@ -2,9 +2,10 @@
 id: rfc-0109
 title: "Self-View Narrowing"
 date: '2026-07-18'
-status: draft
+status: under-review
 target:
 updated: '2026-08-27'
+tracking: 'https://github.com/metel-lang/metel-core/issues/842'
 ---
 
 > **Paper-only territory, more so than most drafts in this cluster.** This RFC's
@@ -64,6 +65,8 @@ updated: '2026-08-27'
 > mechanism that happens to reuse the same representation.** §4 is rewritten
 > around this; several of the original draft's own Open Questions dissolve as a
 > direct consequence rather than being separately resolved.
+
+> **Status — under review (2026-08-27).** Committed to v0.14.0 (issue #842, milestoned 2026-08-27) — one release after RFC-0137's own (v0.13.0, metel-core#827), since this RFC's foundation is now RFC-0137's specifics directly, not just its theme.
 
 ## Summary
 
@@ -394,7 +397,7 @@ is needed, belongs in RFC-0137.**
   behind `--move-check`)** — both mechanisms in this RFC are inert without
   RFC-0071's field-sensitive borrow tracking being the default path; see the status
   note at the top.
-- **RFC-0144 (Reference-Destructuring Patterns, `0-draft`, split from this RFC)** —
+- **RFC-0144 (Reference-Destructuring Patterns, `1-under-review`, split from this RFC)** —
   the ad hoc, one-off counterpart; §1 above states the relationship precisely.
 - **RFC-0108 (Reference-Transparent Match Scrutinees)** — no direct dependency,
   noted for consistency with RFC-0144's own note.
@@ -485,7 +488,7 @@ is needed, belongs in RFC-0137.**
 - RFC-0071 (Ownership and Move Semantics, `3-integrated`, move-check implemented
   behind `--move-check`) — the field-sensitive move/borrow tracking both mechanisms
   in this RFC assume exists.
-- RFC-0144 (Reference-Destructuring Patterns, `0-draft`, split from this RFC) — the
+- RFC-0144 (Reference-Destructuring Patterns, `1-under-review`, split from this RFC) — the
   ad hoc, one-off counterpart to named views.
 - RFC-0108 (Reference-Transparent Match Scrutinees) — adjacent pattern-position
   work, noted for consistency.
