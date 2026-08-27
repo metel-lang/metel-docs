@@ -37,6 +37,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/837'
 > analysis for UQ1 — accepting general multi-aspect bounds unconditionally was
 > evaluated and rejected on cost, not left unconsidered).
 
+> **`Drop`'s object-safety exception removed, 2026-08-27.** `Drop::drop` now
+> takes `self: &var Self` (RFC-0071), satisfying rule 1 by the ordinary case
+> — no exception needed. See §3.
+
 ## Summary
 
 Static dispatch (generics + monomorphisation) requires the concrete type to be known
@@ -162,7 +166,9 @@ error: aspect Clone is not object-safe
 Standard library object-safety:
 - `Display` — object-safe (`to_string` takes `&Self`, returns `String`)
 - `Callable<A, B>` — object-safe
-- `Drop` — object-safe (the vtable carries a drop function pointer; `drop` is not called through normal dispatch but through the vtable's drop slot, which the runtime invokes with the concrete type's size)
+- `Drop` — object-safe (`drop` takes `self: &var Self`, RFC-0071). The
+  vtable's drop function pointer (§2/§5) is separate per-type metadata every
+  `dyn Aspect` vtable carries, unrelated to object safety.
 - `Clone` — **not** object-safe (`clone` returns `Self`)
 - `Deref` — **not** object-safe (associated type `Target` in method signature)
 - `Send`, `Sync` — marker aspects with no methods; object-safe but rarely used as `dyn`

@@ -1159,11 +1159,9 @@ fun main() -> i64 { 0 }
 fun rejected(x: dyn Clone) -> i64 { 0 }
 ```
 
-`std::core::Drop` is a deliberate exception to rule 1: its one method,
-`fun drop(self);`, takes `self` by value. `drop` is never dispatched through
-the ordinary per-method vtable at all — it fires through the vtable's own
-dedicated drop slot, which needs no receiver-shape guarantee the way an
-ordinarily-dispatched call does, so rule 1 does not apply to it.
+`std::core::Drop` needs no exception to rule 1: its one method is declared
+`fun drop(&var self);` (RFC-0071), an ordinary `&var Self` receiver — `dyn
+Drop` is object-safe the same way `dyn Shape` above is.
 
 <details>
 <summary>Formal rules</summary>
@@ -1175,7 +1173,7 @@ object-safe; a by-move receiver, no receiver at all, or `Self` in any other
 signature position, is not.
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [neg_27_dyn_aspect_returns_self_not_object_safe.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_27_dyn_aspect_returns_self_not_object_safe.mtl), [neg_29_dyn_aspect_self_by_value_receiver_not_object_safe.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_29_dyn_aspect_self_by_value_receiver_not_object_safe.mtl), [neg_30_dyn_aspect_no_receiver_not_object_safe.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_30_dyn_aspect_no_receiver_not_object_safe.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [dyn_drop_is_object_safe.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/dyn_drop_is_object_safe.mtl), [neg_27_dyn_aspect_returns_self_not_object_safe.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_27_dyn_aspect_returns_self_not_object_safe.mtl), [neg_29_dyn_aspect_self_by_value_receiver_not_object_safe.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_29_dyn_aspect_self_by_value_receiver_not_object_safe.mtl), [neg_30_dyn_aspect_no_receiver_not_object_safe.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_30_dyn_aspect_no_receiver_not_object_safe.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.aspects.dyn-aspect.legality-3}
@@ -1195,16 +1193,6 @@ is not object-safe.
 
 <!-- rfc.py:fixtures:start -->
 <span class="rigor-backlink">_Tested by: [neg_28_dyn_aspect_associated_type_in_signature_not_object_safe.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_28_dyn_aspect_associated_type_in_signature_not_object_safe.mtl)_</span>
-<!-- rfc.py:fixtures:end -->
-
-##### Legality Rule {#spec.declarations.aspects.dyn-aspect.legality-5}
-
-`std::core::Drop`'s `drop(self)` is object-safe despite its by-move receiver:
-it dispatches through the vtable's dedicated drop slot, not ordinary method
-dispatch, so the receiver rule does not apply to it.
-
-<!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [dyn_drop_is_object_safe.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/dyn_drop_is_object_safe.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 </details>
