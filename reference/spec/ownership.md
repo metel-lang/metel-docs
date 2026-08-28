@@ -99,12 +99,14 @@ A declared `Copy` implementation is legal only when every struct field or enum p
 struct Handle { fd: i64 }
 
 extend Handle: Drop {
-    fun drop(self) { close_fd(self.fd); }
+    fun drop(&var self) { close_fd(self.fd); }
 }
 ```
 
 `Drop` is opt in. A type without a `Drop` implementation is reclaimed by recursively dropping
 its fields.
+
+> **Changed in v0.13.0 (RFC-0071):** `drop` takes `self: &var Self`, not `self` by value.
 
 <details>
 <summary>Formal rules</summary>

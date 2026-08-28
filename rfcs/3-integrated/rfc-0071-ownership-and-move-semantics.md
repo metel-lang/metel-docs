@@ -111,6 +111,11 @@ coverage:
 
 > **Status — integrated (2026-07-24).** New spec page ownership.md covering sections 1-7; four availability markers; Contents table updated. Found and fixed two spec contradictions: the 'reference counting, no ownership semantics required' design principle, and a v0.7.0 version stamp. Tracked as #290-#262; #579 (move checking) is canonical.
 
+> **Revised 2026-08-27: `Drop::drop` takes `self: &var Self`, not `self` by
+> value.** §3's declaration and worked example updated from `fun drop(self)` to
+> `fun drop(&var self)`. No behavior change for a shipped program — destructor
+> invocation itself is still unimplemented (#261).
+
 ## Summary
 
 Metel values are **affine by default**: a non-`Copy` value has exactly one owner at any
@@ -233,7 +238,7 @@ dropped — either by going out of scope or by an explicit `drop` call (§6).
 struct Handle { fd: u64 }
 
 extend Handle: Drop {
-    fun drop(self) {
+    fun drop(&var self) {
         close_fd(self.fd);
     }
 }
