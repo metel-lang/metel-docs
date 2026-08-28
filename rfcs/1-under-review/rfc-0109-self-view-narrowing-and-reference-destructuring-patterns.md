@@ -67,7 +67,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/842'
 > direct consequence rather than being separately resolved.
 
 > **Status — under review (2026-08-27).** Committed to v0.14.0 (issue #842, milestoned 2026-08-27) — one release after RFC-0137's own (v0.13.0, metel-core#827), since this RFC's foundation is now RFC-0137's specifics directly, not just its theme.
-> **Moved to v0.13.0, 2026-08-28.** RFC-0137 §5 was amended so that a `Drop` impl's required field set is *declared on the `drop` receiver type* rather than inferred from the body. The fixed form of that receiver — `fun drop(&var self: Self.{ fd })` — is precisely this RFC's residual-typed-receiver mechanism (§2), so RFC-0137's own v0.13.0 slice-2 work (row-bounded `Drop` dispatch, metel-core#858) now depends on this RFC. Same milestone as RFC-0137; #842 re-milestoned accordingly. The parametric form (`fun drop<row R>(...)`) stays a later addition via RFC-0146 → RFC-0121.
+> **Moved to v0.13.0, 2026-08-28.** RFC-0137 §5 was amended so that a `Drop` impl's required field set is *declared on the `drop` receiver type* rather than inferred from the body. The fixed form of that receiver — `fun drop(&var self: Self.{ fd })`, specified by **RFC-0147 (Projection-Receiver Destructors)** — is precisely this RFC's residual-typed-receiver mechanism (§2), so RFC-0137's own v0.13.0 slice-2 work (row-bounded `Drop` dispatch, metel-core#858) now depends on RFC-0147 → this RFC. Same milestone as RFC-0137; #842 re-milestoned accordingly. The row-parametric form is **RFC-0148**, a later addition via RFC-0146 → RFC-0121, not on this milestone.
 
 ## Summary
 

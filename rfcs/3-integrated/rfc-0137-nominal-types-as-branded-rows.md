@@ -281,17 +281,19 @@ that gate.
 
 > **Amended 2026-08-28.** The required field set is no longer *inferred from the
 > destructor body*. It is **declared on the `drop` method's receiver type** — a narrowed
-> receiver (`fun drop(&var self: Self.{ fd })`, via an RFC-0109 named view, or
-> `fun drop<row R>(&var self: Self.R) where R: { fd, .. }`, via RFC-0146/RFC-0147) states
-> exactly which fields teardown requires; a plain `fun drop(&var self)` requires the
+> receiver states exactly which fields teardown requires, in one of two forms:
+> `fun drop(&var self: Self.{ fd })` (fixed field projection, via an RFC-0109 named view;
+> **RFC-0147**) or `fun drop<row R>(&var self: Self.R) where R: { fd, .. }` (lower-bounded
+> row parameter, via RFC-0146; **RFC-0148**). A plain `fun drop(&var self)` requires the
 > whole row. The 2026-08-25 resolution of Open Question 2 (a fixed point over
 > `self`-method calls) is superseded — there is no body-derived set to compose.
 > Rationale: a computed set makes adding a field read anywhere in a destructor or its
 > helpers silently change which partial moves are legal *elsewhere in the program*; a
 > declared set is a stable contract, checked against the body, and is exactly what the
 > `dyn Aspect` coercion checkpoint below already needs. Matches RFC-0071's own stance
-> that `Copy` is declared, not derived. Full design in RFC-0147; tracked on
-> `metel-core#827`, implementation on `metel-core#858`.
+> that `Copy` is declared, not derived. Rationale and the fixed form: RFC-0147; the
+> parametric form: RFC-0148. Tracked on `metel-core#827`, implementation on
+> `metel-core#858`.
 
 A struct implementing `Drop` whose destructor needs a field that has since been narrowed
 away must not silently skip the destructor's work. Dispatch is **row-bounded**: a `Drop`
@@ -546,22 +548,24 @@ need a corresponding revision if this RFC is accepted:
 - **RFC-0071 (Ownership and Move Semantics), §7.** Superseded *in design*, not narrowed
   by an exception — see §5 above, corrected 2026-08-25: §7's ban is real, tested,
   `--move-check`-enforced behavior today, not an implementation gap this RFC fills.
-- **RFC-0146 / RFC-0147 / RFC-0109 — new dependency for §5's narrowed `Drop` forms,
-  added 2026-08-28.** §5's `Drop` required set is now *declared on the `drop` receiver
-  type*, not inferred from the body — which trades the old body-analysis (self-contained,
-  no external RFC needed) for a dependency on receiver-projection syntax this RFC does
-  not itself define:
-  - The **fixed form** `fun drop(&var self: Self.{ fd })` **depends on RFC-0109
-    (Self-View Narrowing)** — its residual-typed `self` receiver (§2 there). This is the
-    *minimum* dependency: without it there is no narrowed `drop` receiver at all, and §5
-    reduces to RFC-0071 §7's blanket ban. RFC-0109's implementation issue (metel-core#842)
-    is on v0.13.0, same as this RFC.
-  - The **parametric form** `fun drop<row R>(&var self: Self.R) where R: { fd, .. }`
-    **depends on RFC-0146 (Row-Polymorphic Self-Views) → RFC-0121 (Open Rows)** for the
-    `<row R>` kind — which §5's opening paragraph otherwise explicitly does *not* need.
-    This form is a later addition, not required for v0.13.0.
-  - **RFC-0147 (Generic-Projection Destructors)** carries the `drop`-specific rule and
-    the rationale for the amendment. §5's own text is the normative statement.
+- **RFC-0147 / RFC-0148 / RFC-0109 / RFC-0146 — new dependency for §5's narrowed `Drop`
+  forms, added 2026-08-28.** §5's `Drop` required set is now *declared on the `drop`
+  receiver type*, not inferred from the body — which trades the old body-analysis
+  (self-contained, no external RFC needed) for a dependency on receiver-projection syntax
+  this RFC does not itself define. The two receiver forms are separate RFCs, each
+  depending only on the feature RFC it needs:
+  - **RFC-0147 (Projection-Receiver Destructors)** — the fixed form
+    `fun drop(&var self: Self.{ fd })`. **Depends on RFC-0109 (Self-View Narrowing)** for
+    the residual-typed `self` receiver (§2 there). This is the *minimum* dependency:
+    without it there is no narrowed `drop` receiver at all, and §5 reduces to RFC-0071
+    §7's blanket ban. RFC-0147 carries the `drop`-specific rules and the rationale for
+    this amendment; §5's own text is the normative statement. On v0.13.0 with this RFC
+    and RFC-0109 (metel-core#842).
+  - **RFC-0148 (Row-Parametric Destructors)** — the form
+    `fun drop<row R>(&var self: Self.R) where R: { fd, .. }`. **Depends on RFC-0146
+    (Row-Polymorphic Self-Views) → RFC-0121 (Open Rows)** for the `<row R>` kind — which
+    §5's opening paragraph otherwise explicitly does *not* need. A later addition, not
+    required for v0.13.0.
   See §5's "Amended 2026-08-28" callout and Open Question 2's supersession note.
 - **RFC-0119 (Record Conversions), added 2026-08-25 (Open Questions #3), revision
   already made.** `.to_record()` is described against "the record" for a struct,
@@ -579,11 +583,11 @@ first for widening — see §6's Open Question 5 resolution. RFC-0114 remains th
 the constructor-invariant-bypass risk itself, which predates and is independent of
 this RFC.
 **Updated 2026-08-28:** §5's amended row-bounded `Drop` dispatch depends on
-**RFC-0109** (for the fixed `fun drop(&var self: Self.{ fd })` receiver form — the
-minimum, and on v0.13.0 with this RFC) and, for the parametric `fun drop<row R>(…)`
-form only, on **RFC-0146 → RFC-0121** (a later addition). The rest of this RFC —
-narrowing, widening, passing a residual, eligibility — has no such dependency; only
-§5's narrowed-receiver forms do. See the RFC-0146/0147/0109 bullet above.
+**RFC-0147 → RFC-0109** (for the fixed `fun drop(&var self: Self.{ fd })` receiver form —
+the minimum, and on v0.13.0 with this RFC) and, for the parametric `fun drop<row R>(…)`
+form only, on **RFC-0148 → RFC-0146 → RFC-0121** (a later addition). The rest of this
+RFC — narrowing, widening, passing a residual, eligibility — has no such dependency;
+only §5's narrowed-receiver forms do. See the RFC-0147/0148 bullet above.
 
 **These revisions were held pending re-acceptance, as of the 2026-08-25 revert.**
 RFC-0117 and RFC-0120 were already updated 2026-08-25 to cite this RFC while it was
@@ -660,10 +664,11 @@ this corpus's append-only convention for exactly this situation.*
    Self.R) where R: { … , .. }`), so there is no body-derived set for a helper call to
    compose into. A `self`-method call is instead checked locally against `drop`'s
    declared receiver row, using the callee's own declared receiver contract. §5's
-   opening and its helper-method paragraph are rewritten accordingly. Rationale and full
-   design: RFC-0147 (Generic-Projection Destructors); the fixed, non-parametric form
-   needs only RFC-0109's named views. This changes where the set comes from, not the
-   dispatch rule (residual row ⊇ required set) or the `dyn Aspect` checkpoint.
+   opening and its helper-method paragraph are rewritten accordingly. Rationale and the
+   fixed form: RFC-0147 (Projection-Receiver Destructors), which needs only RFC-0109's
+   named views; the parametric `fun drop<row R>(…)` form: RFC-0148 (Row-Parametric
+   Destructors), which needs RFC-0146 → RFC-0121. This changes where the set comes from,
+   not the dispatch rule (residual row ⊇ required set) or the `dyn Aspect` checkpoint.
 3. ~~Does `.to_record()` (RFC-0119) behave correctly on an already-narrowed residual?
    `handle_narrowed.to_record()`, after some field was already moved out, would produce
    an even-smaller anonymous record than the type's full declared row. Plausible, not
@@ -909,8 +914,9 @@ field set is the residual row the `drop` method's receiver is declared with, and
 moot. The dispatch rule (residual row ⊇ required set) and the `dyn Aspect` coercion
 checkpoint are unchanged. Rationale — a computed set makes a field read anywhere in a
 destructor or its helpers silently change which partial moves are legal elsewhere; a
-declared set is a stable contract — and full design are in RFC-0147 (Generic-Projection
-Destructors); the non-parametric form needs only RFC-0109's named views. Recorded on
+declared set is a stable contract — and the design lives in RFC-0147 (Projection-Receiver
+Destructors, fixed form + rationale, needs RFC-0109) and RFC-0148 (Row-Parametric
+Destructors, `fun drop<row R>(…)` form, needs RFC-0146 → RFC-0121). Recorded on
 `metel-core#827`; `metel-core#858` (implementation) and `metel-core#836` acceptance
 criteria updated to match.
 
