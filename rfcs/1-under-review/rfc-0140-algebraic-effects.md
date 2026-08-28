@@ -297,12 +297,13 @@ rule. It is specifically an access row (handlers are invoked by reference,
 through the context row; handler state itself stays an ordinary owned value inside the
 handler struct.
 
-**Does not reopen the `Drop`-transitivity problem.** `Drop::drop` has no written signature,
-so its required field set must be *inferred* from the body (a genuinely hard,
-call-graph-level problem elsewhere in this cluster). Effect-performing functions do not
-share this: `^{IO}` is *declared* on every function by construction, so checking a caller's
-context row against a callee's declared effect row is ordinary row-subset type-checking,
-not inference over a call graph.
+**Does not reopen the `Drop`-transitivity problem.** Effect-performing functions carry
+`^{IO}` *declared* on every function by construction, so checking a caller's context row
+against a callee's declared effect row is ordinary row-subset type-checking, not
+inference over a call graph. (Updated 2026-08-28: `Drop::drop`'s required field set was
+itself changed from a body inference to a *declared* `drop`-receiver row — RFC-0137 §5's
+amendment, RFC-0146/RFC-0147 — so both cases are now declared rows checked the same
+ordinary way, rather than one being the hard inference case.)
 
 This reframes how effect-row propagation *could* be checked (reuse of already-specified row
 machinery) rather than proposing new syntax or a new checking algorithm. It does not touch

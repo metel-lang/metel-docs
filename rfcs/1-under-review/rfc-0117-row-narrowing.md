@@ -145,6 +145,11 @@ accepts is a genuinely different capability and belongs to RFC-0121.
    transitively through helper-method calls, per RFC-0137 §5's 2026-08-25 update), and
    the destructor fires against any residual whose row is a superset of that set. No
    leak — the destructor is never skipped for lacking a field it never reads.
+   **Updated 2026-08-28.** RFC-0137 §5 was amended: the required set is no longer
+   computed from the body but *declared on the `drop` receiver type* (RFC-0109 named
+   view, or RFC-0146/RFC-0147's `Self.R`). The row-bounded dispatch rule (residual ⊇
+   required set) and the no-leak property are unchanged; only where the set comes from
+   changed.
 2. ~~Does narrowing interact correctly with RFC-0071 §7's blanket ban on partial moves out
    of `Drop`-implementing types? RFC-0071 bans them wholesale; a narrowing-aware design
    might narrow the ban to the fields a destructor actually reads. That refinement was
