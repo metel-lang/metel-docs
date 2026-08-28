@@ -279,17 +279,41 @@ that gate.
 
 ## 5. `Drop` dispatch against a narrowed residual
 
-A struct implementing `Drop` whose destructor reads a field that has since been narrowed
-away must not silently skip the destructor's work. Dispatch is **row-bounded**: for a
-given `Drop` impl, the compiler computes — once, from the impl body, at compile time — a
-fixed, concrete set of fields the destructor actually reads (conservatively, the union
-across every branch of a conditional body). The destructor fires against *any* residual
-of the correct brand whose current row is a superset of that fixed set, regardless of
-what else has already been moved out.
+> **Amended 2026-08-28.** The required field set is no longer *inferred from the
+> destructor body*. It is **declared on the `drop` method's receiver type** — a narrowed
+> receiver (`fun drop(&var self: Self.{ fd })`, via an RFC-0109 named view, or
+> `fun drop<row R>(&var self: Self.R) where R: { fd, .. }`, via RFC-0146/RFC-0147) states
+> exactly which fields teardown requires; a plain `fun drop(&var self)` requires the
+> whole row. The 2026-08-25 resolution of Open Question 2 (a fixed point over
+> `self`-method calls) is superseded — there is no body-derived set to compose.
+> Rationale: a computed set makes adding a field read anywhere in a destructor or its
+> helpers silently change which partial moves are legal *elsewhere in the program*; a
+> declared set is a stable contract, checked against the body, and is exactly what the
+> `dyn Aspect` coercion checkpoint below already needs. Matches RFC-0071's own stance
+> that `Copy` is declared, not derived. Full design in RFC-0147; tracked on
+> `metel-core#827`, implementation on `metel-core#858`.
 
-This needs nothing beyond an ordinary subset check against a value already known,
-concretely, at compile time — not a row *variable*, and not RFC-0121's deferred `<row
-R>` machinery. It is unrelated to §3's eligibility gate: `Drop` dispatch is the compiler
+A struct implementing `Drop` whose destructor needs a field that has since been narrowed
+away must not silently skip the destructor's work. Dispatch is **row-bounded**: a `Drop`
+impl's **required field set is the residual row its `drop` method's receiver is declared
+with** — the fields named in `fun drop(&var self: Self.{ … })`, or in the `where` clause
+of `fun drop<row R>(&var self: Self.R) where R: { … , .. }`. A `drop` method whose
+receiver is the bare `&var self` requires the struct's whole row, and no partial move of
+such a type is permitted (RFC-0071 §7, unchanged). The destructor fires against *any*
+residual of the correct brand whose current row is a superset of that declared set,
+regardless of what else has already been moved out.
+
+The destructor body is checked *against* the declared receiver row: every `self.<field>`
+it reads or writes must be in that row, and every `self`-method it calls must have a
+receiver row the declared row satisfies. This is a local containment check — per access,
+per call, each helper stating its own receiver contract in its own signature — not a
+whole-call-graph analysis and not a fixed point.
+
+This needs nothing beyond an ordinary subset check against a row already known,
+concretely, at compile time — not a row *variable* in the checker's own reasoning, and
+not RFC-0121's row *algebra*. (The `<row R>` *parameter* form of the declared receiver
+is RFC-0146's; even there the checker only ever performs a subset check against a
+concrete row.) It is unrelated to §3's eligibility gate: `Drop` dispatch is the compiler
 checking one type's own impl against its own residual, internal bookkeeping rather than
 user-facing structural matching, and applies to every struct implementing `Drop`
 regardless of tier.
@@ -309,21 +333,17 @@ RFC's acceptance. RFC-0071 §7's own text is annotated with a forward-looking no
 `3-integrated` — its text is expected to describe the compiler's actual current
 behavior, and today that behavior is still the unconditional ban.
 
-**If a destructor calls a helper method, the required field set composes transitively
-(resolved 2026-08-25 — see Open Questions #2 for the full reasoning):** the required
-set for a `Drop` impl is the union of the fields the destructor body reads directly and,
-recursively, the required sets of every `self`-method it calls. This is a fixed point
-over one type's own finite method set — the recursion follows only calls to `self`'s own
-methods (a call passing some other struct's value reasons against *that* struct's own,
-independently-computed set, not this one's), and ordinary visited-set tracking during
-the union handles mutual recursion between two of the type's own helpers the same way
-any fixed-point computation over a finite graph does. Real call-graph-level work, closer
-to effect inference than ordinary type-checking, and harder to *compute* than the
-direct-read case — but no longer a different, undesigned kind of mechanism, and it still
-bottoms out in exactly one fixed, concrete set per `Drop` impl, checked the same way §5's
-opening paragraph already describes. Dynamic dispatch through `dyn Aspect` is out of
-scope for this composition — **except at the one checkpoint below, added because
-RFC-0008 is no longer a document with no consumer.**
+**Helper-method calls need no transitive required-set computation (amended 2026-08-28,
+superseding Open Question 2's 2026-08-25 resolution).** Because the required set is
+declared on the `drop` receiver rather than derived from what the body reads, a
+destructor that calls `self.cleanup()` does not grow its required set by whatever
+`cleanup` touches. Instead, the body check rejects the call unless `cleanup`'s *own*
+declared receiver row is satisfied by `drop`'s declared receiver row — a local check at
+that one call site, using a contract `cleanup` already carries. No fixed point, no
+call-graph walk, no visited-set bookkeeping. A `cleanup` that needs the whole `Self` is
+simply uncallable from a `drop` that declared a narrowed receiver, which is the correct
+outcome. Dynamic dispatch through `dyn Aspect` is still out of scope for the body check
+— **except at the one checkpoint below.**
 
 **Coercion to `dyn Aspect` is a required-set checkpoint (resolved 2026-08-27 — see Open
 Question 8).** RFC-0008 (Aspect Objects, `2-accepted`) §2 gives every `dyn Aspect` fat
@@ -331,33 +351,34 @@ pointer a drop-pointer to the concrete type's `Drop` destructor whenever the con
 type implements `Drop` — regardless of which aspect the object is principally coerced
 to. Once erased, the row information this RFC's row-bounded dispatch relies on is gone,
 so the check has to happen *before* erasure, at the coercion site itself, or a residual
-narrower than a `Drop` impl's required set could be coerced to `dyn Aspect` and later
-dropped through the vtable against a value missing a field its own destructor reads —
-the same hazard §5's opening paragraph exists to prevent, reached through a path it
-doesn't cover on its own. The fix is not a new mechanism: coercing a value of a
+narrower than a `Drop` impl's declared required set could be coerced to `dyn Aspect` and
+later dropped through the vtable against a value missing a field its own destructor
+requires — the same hazard §5's opening paragraph exists to prevent, reached through a
+path it doesn't cover on its own. The fix is not a new mechanism: coercing a value of a
 `Drop`-implementing type to any `dyn Aspect` is exactly the same required-set check §4's
-function-call boundary already performs, applied at one more site where the concrete
-type and its current row are both still statically known. A residual whose current row
-does not satisfy that type's `Drop` impl's required set is rejected at the coercion
-site, the same way an exact-row mismatch is already rejected at a call boundary.
+function-call boundary already performs — and the required set is the `drop` receiver's
+declared row — applied at one more site where the concrete type and its current row are
+both still statically known. A residual whose current row does not satisfy that type's
+`Drop` impl's declared required set is rejected at the coercion site, the same way an
+exact-row mismatch is already rejected at a call boundary.
 RFC-0008 §5/§9 need a cross-reference to this checkpoint, since neither currently
 mentions narrowing at all.
 
 **Still not addressed: a `Drop` impl conditional on a generic parameter's own
-`Drop`-ness (see Open Question 6).** §5's required-field-set computation is purely
-syntactic (which fields a destructor body's own text reads) and §7 establishes that a
-struct's declared fields never vary with a generic parameter `T`, so the computation
-itself needs no change for a conditional impl like
-`extend<T: Drop> Pair<T>: Drop { … }`. What remains open is whether the compiler ever
-needs to reason about a generic `Drop` impl's applicability *before* `T` is concrete —
-this RFC assumes it does not, since #736's implementation confirmed Metel's generic
-function bodies are checked per call site with `T` already substituted, not once
-abstractly. That assumption is stated, not verified: drop-insertion itself (`#261`) is
-not implemented yet, so there is nothing to check it against the way the widening
-resolution above was checked directly. Does not block re-acceptance — the same
-"verification pending implementation" treatment already given to Open Question 1 — but
-is a real bet on drop-insertion sharing typechecking's per-call-site timing, not a
-confirmed fact.
+`Drop`-ness (see Open Question 6).** Under the 2026-08-28 amendment the required set is a
+syntactic field list on the `drop` signature, and §7 establishes that a struct's
+declared fields never vary with a generic parameter `T`, so a conditional impl like
+`extend<T: Drop> Pair<T>: Drop { … }` cannot make the *required set* depend on `T`
+either — the declared receiver row is written in field names, not in `T`. What remains
+open is whether the compiler ever needs to reason about a generic `Drop` impl's
+*applicability* *before* `T` is concrete — this RFC assumes it does not, since #736's
+implementation confirmed Metel's generic function bodies are checked per call site with
+`T` already substituted, not once abstractly. That assumption is stated, not verified:
+drop-insertion itself (`#261`) is not implemented yet, so there is nothing to check it
+against the way the widening resolution above was checked directly. Does not block
+re-acceptance — the same "verification pending implementation" treatment already given to
+Open Question 1 — but is a real bet on drop-insertion sharing typechecking's
+per-call-site timing, not a confirmed fact.
 
 ## 6. Widening, and the constructor-invariant risk
 
@@ -429,8 +450,8 @@ parameter — only the field's *type* does. Narrowing a generic struct's value t
 needs nothing beyond what generic field access already provides: `Pair<T> { a: T, b: T
 }` narrows to `Pair<T>.{ b }` (with `b: T` still symbolic) the same way `pair.a`'s type
 is already tracked symbolically pre-monomorphization. `Drop`'s row-bounded dispatch
-(§5) composes the same way — which field a destructor body touches never depends on
-`T`, so the required set stays fixed across every instantiation.
+(§5) composes the same way — a `drop` impl's declared receiver row is written in field
+names, never in `T`, so the required set stays fixed across every instantiation.
 
 **A generic struct's brand is tied to its declaration, not to any one instantiation.**
 `Pair<i64>` and `Pair<String>` share one brand; what differs between them is captured
@@ -440,13 +461,13 @@ instantiation with one match, matches every mainstream generic-nominal type syst
 is grounded in `brand-kind-unification.md` §8's freshness property: a generic type's
 introduction event is its one declaration, never one per instantiation.
 
-**A `Drop` impl conditional on `T` itself (Open Question 6): field-set computation is
+**A `Drop` impl conditional on `T` itself (Open Question 6): the required set is
 unaffected, applicability-timing is a stated assumption, not yet verified.** Every claim
-above is about a `Drop` impl whose applicability and required-field-set are independent
-of `T`. A conditional impl (`extend<T: Drop> Pair<T>: Drop { … }`, or a destructor body
-that only reads a given field when `T: Drop`) doesn't change the required-field-set
-computation itself — see §5's own resolution of Open Question 6 for the full reasoning
-and its caveat.
+above is about a `Drop` impl whose applicability and required set are independent of `T`.
+Since the 2026-08-28 amendment the required set is the `drop` receiver's declared row —
+field names, never `T` — so a conditional impl (`extend<T: Drop> Pair<T>: Drop { … }`)
+cannot make it vary with `T`. See §5's own resolution of Open Question 6 for the
+applicability-timing caveat.
 
 ## 8. Cost
 
@@ -474,10 +495,10 @@ existing corpus is written in a style affine ownership rejects). So the mechanis
 RFC's zero-runtime-cost claim rests on is not an empty gap to be validated once
 something gets built; it is real, tested, opt-in-enforced behavior today, running the
 *old*, stricter rule §5 proposes replacing. What is actually still true, restated
-precisely: this RFC's own row-bounded replacement (§5) — residual types, per-impl
-required-field-set computation — has no implementation of its own at all, and a
-`--move-check` user hits RFC-0071 §7's unconditional ban exactly as before until that
-implementation lands and actively relaxes it. The zero-runtime-cost claim for
+precisely: this RFC's own row-bounded replacement (§5) — residual types, a per-impl
+required field set declared on the `drop` receiver — has no implementation of its own at
+all, and a `--move-check` user hits RFC-0071 §7's unconditional ban exactly as before
+until that implementation lands and actively relaxes it. The zero-runtime-cost claim for
 *narrowing itself* still rests on RFC-0071's stated static-bookkeeping design as
 described above (unaffected by this correction — narrowing's own tracking, as opposed
 to the `Drop`-ban specifically, genuinely is unimplemented); only the `Drop`-ban half of
@@ -525,6 +546,13 @@ need a corresponding revision if this RFC is accepted:
 - **RFC-0071 (Ownership and Move Semantics), §7.** Superseded *in design*, not narrowed
   by an exception — see §5 above, corrected 2026-08-25: §7's ban is real, tested,
   `--move-check`-enforced behavior today, not an implementation gap this RFC fills.
+- **RFC-0146 / RFC-0147 / RFC-0109, added 2026-08-28.** §5's `Drop` required set is now
+  *declared on the `drop` receiver type*, not inferred from the body. RFC-0109 (Self-View
+  Narrowing) supplies the fixed named-view receiver form; RFC-0146 (Row-Polymorphic
+  Self-Views) supplies the parametric `Self.R` form; RFC-0147 (Generic-Projection
+  Destructors) carries the `drop`-specific rule and rationale. §5's own text is the
+  normative statement; those RFCs own the receiver syntax and the design argument. See
+  §5's "Amended 2026-08-28" callout and Open Question 2's supersession note.
 - **RFC-0119 (Record Conversions), added 2026-08-25 (Open Questions #3), revision
   already made.** `.to_record()` is described against "the record" for a struct,
   written before residual types existed to make that ambiguous between the type's full
@@ -610,6 +638,16 @@ this corpus's append-only convention for exactly this situation.*
    call-graph work, still not ordinary type-checking — but it is no longer undesigned;
    §5 is updated to state it. **Does not cover a `Drop` impl conditional on a generic
    parameter's own `Drop`-ness — see Open Question 6, opened 2026-08-25.**
+   **Superseded 2026-08-28 — moot, not re-resolved.** The required set is no longer
+   derived from the destructor body at all; it is declared on the `drop` method's
+   receiver type (`fun drop(&var self: Self.{ … })` or `fun drop<row R>(&var self:
+   Self.R) where R: { … , .. }`), so there is no body-derived set for a helper call to
+   compose into. A `self`-method call is instead checked locally against `drop`'s
+   declared receiver row, using the callee's own declared receiver contract. §5's
+   opening and its helper-method paragraph are rewritten accordingly. Rationale and full
+   design: RFC-0147 (Generic-Projection Destructors); the fixed, non-parametric form
+   needs only RFC-0109's named views. This changes where the set comes from, not the
+   dispatch rule (residual row ⊇ required set) or the `dyn Aspect` checkpoint.
 3. ~~Does `.to_record()` (RFC-0119) behave correctly on an already-narrowed residual?
    `handle_narrowed.to_record()`, after some field was already moved out, would produce
    an even-smaller anonymous record than the type's full declared row. Plausible, not
@@ -721,6 +759,11 @@ this corpus's append-only convention for exactly this situation.*
    confirmed fact; given the same "verification pending implementation" treatment as
    Open Question 1, since it rests on an unimplemented dependency's own timing model
    rather than on anything currently checkable.
+   **Unchanged by the 2026-08-28 amendment.** With the required set now a declared field
+   list on the `drop` receiver rather than a body analysis, "the required set cannot
+   depend on `T`" is even more directly true — the receiver row is written in field
+   names. The still-open part (applicability reasoning before `T` is concrete) is
+   independent of how the required set is sourced and stands as stated.
 7. **No diagnostic specified for §3's full-width-projection rejection. Does not block
    re-acceptance — settleable at implementation time, tracked as an #836 acceptance
    criterion.** §3's own prose calls the full-width-projection case "easy to doubt"
@@ -840,6 +883,20 @@ check ever ran against it. Resolved with a new checkpoint in §5, the same mecha
 this RFC's own Open Questions again; whether to re-attempt the transition is a
 decision for whoever runs `rfc.py transition rfc-0137 --to accepted` next, not made
 by this revision alone.
+
+**§5 amended 2026-08-28 — `Drop` required set declared on the `drop` receiver, not
+inferred from the body.** A design change to `3-integrated` content, made in lockstep
+with the matching `reference/spec/ownership.md` edit
+(`spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-1`): the required
+field set is the residual row the `drop` method's receiver is declared with, and the
+2026-08-25 fixed-point-over-`self`-methods resolution of Open Question 2 is superseded as
+moot. The dispatch rule (residual row ⊇ required set) and the `dyn Aspect` coercion
+checkpoint are unchanged. Rationale — a computed set makes a field read anywhere in a
+destructor or its helpers silently change which partial moves are legal elsewhere; a
+declared set is a stable contract — and full design are in RFC-0147 (Generic-Projection
+Destructors); the non-parametric form needs only RFC-0109's named views. Recorded on
+`metel-core#827`; `metel-core#858` (implementation) and `metel-core#836` acceptance
+criteria updated to match.
 
 **Superseded acceptance rationale, kept for the record:** *Accepted 2026-08-25.* Every
 `struct` is `(brand, row)`; narrowing is a type-level consequence of partial move

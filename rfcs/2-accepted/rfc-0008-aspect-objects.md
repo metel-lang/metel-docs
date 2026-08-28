@@ -223,10 +223,11 @@ review`) lands, that concrete type may have a *narrower-than-declared* row at th
 coercion site (a residual, produced by partial move). Erasure discards that row
 information; nothing here re-derives it once the value is behind a fat pointer. The
 coercion site itself must therefore verify the value's current row satisfies the
-concrete type's `Drop` impl's required field set (RFC-0137 §5) *before* erasing it,
-rejecting the coercion otherwise — the same check RFC-0137 §4's function-call boundary
-already performs, applied here as one more site where the concrete type and its row
-are both still statically known. Not yet a live concern: RFC-0137's own narrowing
+concrete type's `Drop` impl's required field set (RFC-0137 §5 — since its 2026-08-28
+amendment, the residual row declared on the `drop` method's receiver) *before* erasing
+it, rejecting the coercion otherwise — the same check RFC-0137 §4's function-call
+boundary already performs, applied here as one more site where the concrete type and its
+row are both still statically known. Not yet a live concern: RFC-0137's own narrowing
 mechanism isn't implemented, so no residual can reach a coercion site today regardless.
 
 This requires the concrete type's size and drop function to be in the vtable. The

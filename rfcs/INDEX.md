@@ -309,6 +309,11 @@ above it are.
   designed and spec-anchored. Cross-checked against RFC-0071 (`3-integrated`),
   RFC-0116/RFC-0118 (implemented), and RFC-0008 (`2-accepted`, the `dyn Aspect`
   coercion checkpoint) — no new soundness gap found.
+  **§5 amended 2026-08-28** (with the matching `ownership.md` edit): the `Drop` required
+  field set is *declared on the `drop` receiver type*, not inferred from the body — Open
+  Question 2's 2026-08-25 fixed-point resolution is superseded as moot. Dispatch rule and
+  `dyn Aspect` checkpoint unchanged. Design and rationale in RFC-0147; fixed form via
+  RFC-0109 named views, parametric form via RFC-0146.
 - **RFC-0117** *(under review, revised 2026-08-27 for RFC-0137)* — Row Narrowing —
   moving a field out narrows the record's type — or a nominal struct's, via RFC-0137's
   brand-preserving narrowing, folded in as of this revision — to the closed 2^*N*
@@ -435,20 +440,25 @@ above it are.
   representation, RFC-0109's residual-typed-receiver form, and either RFC-0121's
   acceptance or a carved-out minimal lower-bounded-row-variable slice (Open Question 1).
   Sibling `<row R>` consumer to RFC-0123 (per-field aspect bounds, orthogonal). Opened
-  from a design discussion on the integrated "Drop dispatch against a narrowed residual"
-  spec section / `metel-core#858`; the enabling mechanism for RFC-0147.
-- **RFC-0147** *(under review, opened 2026-08-28)* — Generic-Projection Destructors — `Drop::drop`
-  may declare its receiver as a lower-bounded row parameter (`fun drop<row R>(&var self:
-  Self.R) where R: { fd, .. }`), making the destructor's required field set a declared
-  contract instead of the body-computed set the integrated spec derives (union of direct
-  reads + a fixed point over `self`-method calls). Gives `drop` three authoring forms —
-  whole `self`, fixed residual (RFC-0109), parametric residual (this RFC) — over one
-  unchanged dispatch rule (`residual row ⊇ required set`) and the unchanged `dyn Aspect`
-  coercion checkpoint, which the declared bound feeds directly. **An alternative
-  declaration surface, not a new rule:** removes the fixed-point computation and the
-  action-at-a-distance of body inference, and makes narrowing-tolerance an explicit
-  opt-in (the `Copy`-is-declared-not-derived argument, applied to teardown). Depends on
-  RFC-0146. Nothing in `metel-core#858` is blocked on it.
+  from a design discussion on the "Drop dispatch against a narrowed residual" spec
+  section / `metel-core#858`; the enabling mechanism for RFC-0147's parametric form, and
+  the reason RFC-0137 §5's `Drop` required set is now declared on the `drop` receiver
+  rather than inferred from its body (§5 amended 2026-08-28).
+- **RFC-0147** *(under review, opened 2026-08-28)* — Generic-Projection Destructors — the
+  parametric `<row R>` form of RFC-0137 §5's declared-receiver `Drop` required set, plus
+  the `drop`-specific rules and the rationale for that §5 amendment (2026-08-28). §5 no
+  longer computes a `Drop` impl's required field set from the destructor body (a fixed
+  point over `self`-method calls, resolved 2026-08-25, now superseded) — it is **declared
+  on the `drop` receiver**: `fun drop(&var self)` (whole row), `fun drop(&var self:
+  Self.{ fd })` (RFC-0109 named view), or `fun drop<row R>(&var self: Self.R) where R: {
+  fd, .. }` (this RFC). One unchanged dispatch rule (`residual row ⊇ required set`) and
+  the unchanged `dyn Aspect` coercion checkpoint underneath. Rationale: a computed set
+  makes a field read anywhere in a destructor or its helpers silently change which
+  partial moves are legal elsewhere; a declared set is a stable contract, and is exactly
+  what the coercion checkpoint needs (`Copy`-is-declared-not-derived, applied to
+  teardown). Depends on RFC-0146; the fixed form needs only RFC-0109 + the amended §5.
+  RFC-0137 §5 / `reference/spec/ownership.md` amended in lockstep; `metel-core#858` and
+  #836 updated to match.
 - **RFC-0132** — Comptime Execution Model — `comptime let`/`fun`/`if`, `pub comptime let`
   (public value exports), and **comptime-known non-type generic parameters**
   (`comptime N: u64`) — i.e. the const generics RFC-0053 deferred to "a future RFC," now

@@ -481,12 +481,17 @@ match that row exactly, with no implicit narrowing at the call site.
 > partial-move ban above *in design*; until implemented, that ban is enforced exactly as
 > stated.
 
-A struct implementing `Drop` whose destructor reads a field that has since been narrowed
-away must not silently skip the destructor's work. Dispatch is **row-bounded**: for a
-given `Drop` impl, the compiler computes once, at compile time, the fixed set of fields
-the destructor's body reads — directly, or transitively through `self`-methods it calls.
-The destructor fires against any residual of the correct brand whose current row is a
-superset of that fixed set, regardless of what else has already been moved out.
+A struct implementing `Drop` whose destructor needs a field that has since been narrowed
+away must not silently skip the destructor's work. Dispatch is **row-bounded**: a `Drop`
+impl's required field set is the residual row its `drop` method's receiver is declared
+with — the fields named in a projected receiver (`fun drop(&var self: Self.{ fd })`) or
+in its `where` clause (`fun drop<row R>(&var self: Self.R) where R: { fd, .. }`). A `drop`
+method whose receiver is the bare `&var self` requires the struct's whole row, and no
+partial move of such a type is permitted. The destructor fires against any residual of
+the correct brand whose current row is a superset of that declared set, regardless of
+what else has already been moved out. The destructor body is checked against its declared
+receiver row: it may name only fields in that row, and may call only `self`-methods whose
+own declared receiver row that row satisfies.
 
 Coercing a value of a `Drop`-implementing type to `dyn Aspect` is one more checkpoint for
 the same required set — the row information the check depends on is discarded once the
@@ -498,8 +503,10 @@ after.
 
 ##### Legality Rule {#spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-1}
 
-A `Drop` impl's required field set is the union of the fields its destructor body reads
-directly and, recursively, the required sets of every `self`-method it calls.
+A `Drop` impl's required field set is the residual row its `drop` method's receiver is
+declared with; a `drop` method with a bare `&var self` receiver requires the struct's
+whole declared row. The destructor body may read or write only fields in that row, and
+may call only `self`-methods whose own declared receiver row is satisfied by it.
 
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Row-bounded Drop dispatch is not implemented (RFC-0137 slice 2); RFC-0071's unconditional partial-move-with-Drop ban is still enforced today (behind --move-check, off by default)." -->
 

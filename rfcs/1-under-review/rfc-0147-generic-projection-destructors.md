@@ -9,27 +9,31 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/887'
 ---
 
 > **New RFC, opened 2026-08-28 alongside RFC-0146 out of a design discussion on the
-> integrated spec's "Drop dispatch against a narrowed residual" section
+> "Drop dispatch against a narrowed residual" spec section
 > (`reference/spec/ownership.md`, from RFC-0137) and `metel-core#858`.** RFC-0146
 > (Row-Polymorphic Self-Views) is the general mechanism — a lower-bounded row parameter
-> in receiver position. This RFC is its one concrete application: letting `Drop::drop`
-> declare its required field set on its signature instead of the compiler computing it
-> from the destructor body.
+> in receiver position. This RFC is its one concrete application: `Drop::drop`.
 >
-> **Framing: an alternative declaration surface, not a new rule.** The integrated spec
-> already fixes row-bounded `Drop` dispatch and *computes* the required set — including,
-> as of 2026-08-25, transitively through `self`-method calls
-> (`spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-1`). This RFC adds
-> a way to *state* that set instead, and keeps the dispatch rule
-> (`…dynamics-1`) and the `dyn Aspect` coercion checkpoint (`…legality-2`) untouched.
-> Nothing in `metel-core#858` is blocked on this RFC; it can follow slice 2 by a release
-> or more.
+> **This RFC and the 2026-08-28 amendment to RFC-0137 §5 are one design change.**
+> RFC-0137 §5 (and its integrated
+> `spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-1`) previously
+> *computed* a `Drop` impl's required field set from the destructor body — a fixed point
+> over `self`-method calls, resolved 2026-08-25. That was amended: **the required set is
+> now declared on the `drop` receiver type.** RFC-0109 (Self-View Narrowing) supplies the
+> fixed named-view form of that receiver; this RFC supplies the parametric `<row R>` form
+> and carries the `drop`-specific rules (body check, move-check relaxation, `dyn Aspect`
+> checkpoint, one-impl-per-type) and the rationale for the change. The dispatch rule
+> (residual row ⊇ required set) and the `dyn Aspect` checkpoint (`…legality-2`) are
+> unchanged. Nothing in `metel-core#858` is blocked on *this* RFC — the fixed form needs
+> only RFC-0109 + the amended §5 — but the `Drop` half of #858 should not implement the
+> old body-computed set.
 >
 > **Overlap check (`rfc.py new` similarity + `INDEX.md` + `REGISTRY.md`):**
 > - **RFC-0146** owns the `<row R>` receiver mechanism this RFC specializes to `drop`.
 >   Hard dependency.
-> - **RFC-0137 (`3-integrated`)** / `reference/spec/ownership.md` own the dispatch
->   *rule*; this RFC changes only where the required set comes from.
+> - **RFC-0137 (`3-integrated`) §5** / `reference/spec/ownership.md` own the dispatch
+>   *rule*, amended 2026-08-28 to the declared-receiver required set this RFC's
+>   parametric form plugs into.
 > - **RFC-0072 (Negative Bounds, implemented)** — `!Drop`; unaffected by which form a
 >   `Drop` impl is authored in (§2).
 > - **RFC-0049 (`linear fun` Type System, draft)** — flagged by similarity for touching
@@ -39,7 +43,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/887'
 >   the `dyn Aspect` drop-pointer and the coercion checkpoint this RFC's declared bound
 >   feeds.
 
-> **Status — under review (2026-08-28).** Substantiated primary proposal (three-form ladder over the integrated dispatch rule, worked examples) with explicit blocking open questions; additive to the integrated 'Drop dispatch against a narrowed residual' rule. Tracking: metel-core#887.
+> **Status — under review (2026-08-28).** Substantiated primary proposal (parametric `<row R>` form of RFC-0137 §5's declared-receiver `Drop` required set, three-form ladder, worked examples) with explicit blocking open questions. Paired with the 2026-08-28 amendment to RFC-0137 §5. Tracking: metel-core#887.
 
 ## Summary
 
@@ -59,7 +63,7 @@ removes `fd` is rejected. The required field set is `{ fd }` because the signatu
 *says so* — the compiler does not read the body to find out, and does not compute a
 fixed point over `self`-method calls.
 
-`Drop::drop` then has three authoring forms, one dispatch rule underneath:
+`Drop::drop` has three authoring forms, one dispatch rule underneath:
 
 | Form | Required field set | Partial move of a `Drop` value |
 |---|---|---|
@@ -67,24 +71,25 @@ fixed point over `self`-method calls.
 | `fun drop(&var self: Self.{ fd })` *(via RFC-0109 named view)* | `{ fd }`, exact | allowed iff residual ⊇ `{ fd }` |
 | `fun drop<row R>(&var self: Self.R) where R: { fd, .. }` *(this RFC)* | `{ fd }`, lower bound | allowed iff residual ⊇ `{ fd }` |
 
-The dispatch rule — **residual row ⊇ required set** — is the integrated spec's
+The dispatch rule — **residual row ⊇ required set** — is the spec's
 (`spec.ownership.drop-dispatch-against-a-narrowed-residual.dynamics-1`), identical for
-all three. Only the *source* of the required set differs: the whole row / a fixed
-residual / a declared lower bound. The spec's body-computed set is a fourth source of
-the same set, and the default when a `drop` impl uses neither projection form.
+all three. The only difference between the forms is how the required set is spelled:
+the whole row (default), a fixed residual, or a lower-bounded row parameter. There is no
+body-derived set — RFC-0137 §5's amendment of 2026-08-28 removed it.
 
 ---
 
 ## Motivation
 
-The integrated spec computes a `Drop` impl's required field set by static analysis of
-the destructor body: "the union of the fields its destructor body reads directly and,
-recursively, the required sets of every `self`-method it calls"
-(`…legality-1`). That is real call-graph work — a fixed point over one type's own method
-set, "closer to effect inference than ordinary type-checking" (RFC-0137 §5).
+Until 2026-08-28, RFC-0137 §5 (and its integrated `…legality-1`) computed a `Drop`
+impl's required field set by static analysis of the destructor body: "the union of the
+fields its destructor body reads directly and, recursively, the required sets of every
+`self`-method it calls". That is real call-graph work — a fixed point over one type's
+own method set, "closer to effect inference than ordinary type-checking" (RFC-0137 §5,
+as it then read).
 
-Making the required set a **declared contract** on the `drop` signature is an
-alternative with three properties the computed form does not have:
+RFC-0137 §5 was amended to make the required set a **declared contract** on the `drop`
+signature instead. Three properties the computed form did not have motivated the change:
 
 1. **No fixed-point computation.** Each helper method the destructor calls states its
    own receiver lower bound (RFC-0146 §2). Composition is a local containment check per
@@ -191,22 +196,23 @@ that question's "verification pending `#261`" status unchanged.
 
 ## 5. Relationship to the integrated spec
 
-`reference/spec/ownership.md`'s "Drop dispatch against a narrowed residual" stays the
-normative section. This RFC is an **alternative declaration surface** for the required
-set that section defines:
+`reference/spec/ownership.md`'s "Drop dispatch against a narrowed residual" is the
+normative section, amended 2026-08-28 in lockstep with RFC-0137 §5 to state the
+declared-receiver required set. This RFC does not change that rule; it defines the
+**parametric `<row R>` form** of the declared receiver and the `drop`-specific details
+the spec section states only briefly.
 
-- If slice 2 (`metel-core#858`) ships the body-computed form first, this RFC later adds
-  `drop<row R>` as an opt-in form. The dispatch rule and the coercion checkpoint do not
-  change, so it is a pure addition — no migration, no behavior change for existing
-  `Drop` impls.
-- The spec's transitive-`self`-method composition (`…legality-1`) stays as the rule for
-  a destructor authored in form 1 with a non-empty body. A destructor in the parametric
-  form declares its bound instead of having it computed; the two must agree where both
-  could be computed (the declared bound must be ⊇ what the body would require), which the
-  §2 body check already enforces.
-- `reference/spec/ownership.md` should gain a one-line forward pointer to this RFC at
-  that section when this RFC is accepted, the way the section already forward-points the
-  `dyn Aspect` checkpoint.
+- The fixed form (`fun drop(&var self: Self.{ fd })`, RFC-0109 named view) needs no
+  `row` kind and is implementable with the amended §5 alone. The `Drop` half of slice 2
+  (`metel-core#858`) should implement *that*, not the old body-computed set. This RFC's
+  parametric form is a later addition on top, gated on RFC-0146.
+- There is **no body-computed set** to reconcile against: RFC-0137 §5's amendment
+  removed it, and Open Question 2's 2026-08-25 fixed-point resolution is marked
+  superseded there. A destructor's body is checked *against* its declared receiver row
+  (§2), not mined for one.
+- `reference/spec/ownership.md` may gain a one-line forward pointer to this RFC for the
+  parametric spelling once this RFC is accepted; the fixed-form rule is already in the
+  section.
 
 ---
 
@@ -236,13 +242,13 @@ set that section defines:
    folded into the parametric form as sugar once both are available. Mirrors RFC-0146
    Open Question 5.
 3. **`reject_inert_destructor` interaction.** Today (`metel-core#292`/`#261`) a non-empty
-   `drop` body is rejected outright, so no destructor reads any field and every computed
-   required set is trivially empty. Under that gate, `drop<row R> where R: { fd, .. }`
-   with an *empty* body is still checkable and meaningful — the *bound* is the contract —
-   which lets `metel-core#858`'s reject-path test be written before destructor
-   invocation lands: `drop<row R>(&var self: Self.R) where R: { fd, name, .. } {}` then
-   `let n = h.name;` is still rejected. Confirm this is the intended interaction and the
-   gate is otherwise unchanged until `#261`.
+   `drop` body is rejected outright. The declared-receiver required set does not depend
+   on the body, so `drop<row R> where R: { fd, .. }` with an *empty* body is still
+   checkable and meaningful — the *bound* is the contract — which lets `metel-core#858`'s
+   reject-path test be written before destructor invocation lands:
+   `drop<row R>(&var self: Self.R) where R: { fd, name, .. } {}` then `let n = h.name;`
+   is still rejected. Confirm this is the intended interaction and the gate is otherwise
+   unchanged until `#261`.
 4. **Grammar for a generic `Drop` impl's two `where` clauses.** `extend<T: Bound>
    Pair<T>: Drop` already has a type `where`; `drop<row R> where R: { … }` adds a row
    `where`. One combined clause or two — pick one.
@@ -255,14 +261,15 @@ set that section defines:
 ## References
 
 - `reference/spec/ownership.md` — "Drop dispatch against a narrowed residual"
-  (`…legality-1` computed required set, `…dynamics-1` dispatch rule, `…legality-2` `dyn
-  Aspect` coercion checkpoint); "`Drop`", "`Copy` and `Drop` are mutually exclusive",
-  "Partial moves", "Widening"
+  (`…legality-1` declared-receiver required set, `…dynamics-1` dispatch rule,
+  `…legality-2` `dyn Aspect` coercion checkpoint); "`Drop`", "`Copy` and `Drop` are
+  mutually exclusive", "Partial moves", "Widening"
 - RFC-0146 (Row-Polymorphic Self-Views, `1-under-review`) — the receiver-row mechanism
   this RFC specializes to `drop`; hard dependency
-- RFC-0137 (Nominal Types as Branded Rows, `3-integrated`) — §5 (design history for the
-  spec section above), §7 (generic structs), Open Question 6 (generic-conditional
-  `Drop`, inherited unresolved)
+- RFC-0137 (Nominal Types as Branded Rows, `3-integrated`) — §5 (amended 2026-08-28 to
+  the declared-receiver required set this RFC's parametric form plugs into; Open
+  Question 2 superseded there), §7 (generic structs), Open Question 6
+  (generic-conditional `Drop`, inherited unresolved)
 - RFC-0071 (Ownership and Move Semantics, `3-integrated`, partial-move tracking not yet
   implemented, `metel-core#858`) — §7 blanket partial-move-with-`Drop` ban (superseded
   in design by the spec section), `Copy`/`Drop` exclusion

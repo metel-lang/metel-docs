@@ -103,11 +103,11 @@ None of these expresses the actual contract: *at least `{ fd }`, brand preserved
 rest is none of this method's business.* A lower-bounded row parameter expresses
 precisely that, and nothing more.
 
-The same gap is what makes the integrated spec's row-bounded `Drop` dispatch *infer* a
-destructor's required field set from its body (`spec.ownership.drop-dispatch-against-a-
-narrowed-residual.legality-1`: "the union of the fields its destructor body reads
-directly and, recursively, the required sets of every `self`-method it calls"). A
-declared lower bound is an alternative to that inference — see RFC-0147.
+Closing the same gap for `Drop` is exactly what RFC-0137 §5's row-bounded dispatch was
+amended to do on 2026-08-28: a `Drop` impl's required field set is now *declared on the
+`drop` receiver* (`spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-1`),
+not inferred from the body. This RFC's `Self.R` is the parametric form of that declared
+receiver; the fixed form is RFC-0109's named views. See RFC-0147.
 
 ---
 
