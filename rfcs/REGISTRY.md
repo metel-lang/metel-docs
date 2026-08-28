@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**146 RFCs total.** 31 draft, 30 under review, 9 accepted, 2 integrated (72 live), 47 implemented, 13 superseded, 14 refused (74 settled).
+**147 RFCs total.** 31 draft, 31 under review, 9 accepted, 2 integrated (73 live), 47 implemented, 13 superseded, 14 refused (74 settled).
 
 ## Draft (31)
 
@@ -49,7 +49,7 @@ the curated thematic map.
 - **RFC-0135** — Multiplicity for Ordinary Types (`0-draft` ; rfcs/0-draft/rfc-0135-multiplicity-for-ordinary-types.md ; date 2026-08-13)
 - **RFC-0145** — Static Storage Duration (`0-draft` ; rfcs/0-draft/rfc-0145-static-storage-duration.md ; date 2026-08-27)
 
-## Under Review (30)
+## Under Review (31)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0050** — Closure Capture Lists (`1-under-review` ; rfcs/1-under-review/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-08-23)
@@ -80,7 +80,8 @@ the curated thematic map.
 - **RFC-0143** — Allocator Placement, Storage Identity, and Allocator-Selected Handles (`1-under-review` ; rfcs/1-under-review/rfc-0143-allocator-placement-storage-identity-and-allocator-selected-handles.md ; date 2026-08-26 ; updated 2026-08-27)
 - **RFC-0144** — Reference-Destructuring Patterns (`1-under-review` ; rfcs/1-under-review/rfc-0144-reference-destructuring-patterns.md ; date 2026-08-27)
 - **RFC-0146** — Row-Polymorphic Self-Views (`1-under-review` ; rfcs/1-under-review/rfc-0146-row-polymorphic-self-views.md ; date 2026-08-28 ; updated 2026-08-28)
-- **RFC-0147** — Generic-Projection Destructors (`1-under-review` ; rfcs/1-under-review/rfc-0147-generic-projection-destructors.md ; date 2026-08-28 ; updated 2026-08-28)
+- **RFC-0147** — Projection-Receiver Destructors (`1-under-review` ; rfcs/1-under-review/rfc-0147-projection-receiver-destructors.md ; date 2026-08-28 ; updated 2026-08-28)
+- **RFC-0148** — Row-Parametric Destructors (`1-under-review` ; rfcs/1-under-review/rfc-0148-row-parametric-destructors.md ; date 2026-08-28 ; updated 2026-08-28)
 
 ## Accepted (9)
 

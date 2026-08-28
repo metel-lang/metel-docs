@@ -547,10 +547,10 @@ by an open lower bound (`fun drop<row R>(&var self: Self.R) where R: { a, b, .. 
 fields named by that declaration are the impl's required field set (legality-1). A bare
 `&var self` names every field.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Row-bounded Drop dispatch is not implemented (RFC-0137 slice 2, metel-core#858); the narrowed drop-receiver forms additionally depend on their own not-yet-integrated syntax (RFC-0109 named views for the fixed form; RFC-0146 for the row-parameter form). Until then a drop receiver is always the whole value and the required set is always the whole row." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Row-bounded Drop dispatch is not implemented (RFC-0137 slice 2, metel-core#858); the narrowed drop-receiver forms additionally depend on their own not-yet-integrated syntax (RFC-0109 named views for the fixed projection form, RFC-0147; RFC-0146 for the row-parameter form, RFC-0148). Until then a drop receiver is always the whole value and the required set is always the whole row." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Row-bounded Drop dispatch is not implemented (RFC-0137 slice 2, metel-core#858); the narrowed drop-receiver forms additionally depend on their own not-yet-integrated syntax (RFC-0109 named views for the fixed form; RFC-0146 for the row-parameter form). Until then a drop receiver is always the whole value and the required set is always the whole row._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Row-bounded Drop dispatch is not implemented (RFC-0137 slice 2, metel-core#858); the narrowed drop-receiver forms additionally depend on their own not-yet-integrated syntax (RFC-0109 named views for the fixed projection form, RFC-0147; RFC-0146 for the row-parameter form, RFC-0148). Until then a drop receiver is always the whole value and the required set is always the whole row._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-4}

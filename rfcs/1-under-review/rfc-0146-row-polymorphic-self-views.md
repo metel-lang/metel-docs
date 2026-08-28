@@ -13,8 +13,9 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/886'
 > from RFC-0137) and `metel-core#858` (row-bounded `Drop` dispatch, RFC-0137 slice 2).**
 > That discussion identified two distinct missing constructs — a *named row variable in
 > receiver position* (`Self.R`), and a *destructor parameterized over which residual it
-> runs against* (`drop<row R>`). This is the first; RFC-0147 (Generic-Projection
-> Destructors) is the second and depends on this one.
+> runs against* (`drop<row R>`). This is the first; RFC-0148 (Row-Parametric Destructors)
+> is the second and depends on this one. (RFC-0147, Projection-Receiver Destructors,
+> covers the *fixed* projected `drop` receiver and depends on RFC-0109, not on this RFC.)
 >
 > **Overlap check (`rfc.py new` similarity + `INDEX.md` records cluster + `REGISTRY.md`):**
 > - **RFC-0121 (Open Rows, `1-under-review`, `metel-core#792`)** owns the `row` kind,
@@ -46,7 +47,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/886'
 >   against a narrowed residual"). Cited as normative spec, with RFC-0137 as design
 >   history.
 
-> **Status — under review (2026-08-28).** Substantiated primary proposal (concrete syntax, static semantics, worked examples) with explicit blocking open questions; design engagement underway, on a concrete downstream path (RFC-0147). Tracking: metel-core#886.
+> **Status — under review (2026-08-28).** Substantiated primary proposal (concrete syntax, static semantics, worked examples) with explicit blocking open questions; design engagement underway, on a concrete downstream path (RFC-0148, Row-Parametric Destructors). Tracking: metel-core#886.
 
 ## Summary
 
@@ -69,7 +70,7 @@ lower bound, and becomes callable on the full struct, on `Self.{ fd, name }`, on
 residual receiver (RFC-0109) already costs.
 
 This is RFC-0121's `<row R>` kind applied in exactly one position (the receiver), under
-exactly one shape (a lower bound). It is the enabling mechanism behind RFC-0147's
+exactly one shape (a lower bound). It is the enabling mechanism behind RFC-0148's
 `drop<row R>`.
 
 ---
@@ -107,7 +108,7 @@ Closing the same gap for `Drop` is exactly what RFC-0137 §5's row-bounded dispa
 amended to do on 2026-08-28: a `Drop` impl's required field set is now *declared on the
 `drop` receiver* (`spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-1`),
 not inferred from the body. This RFC's `Self.R` is the parametric form of that declared
-receiver; the fixed form is RFC-0109's named views. See RFC-0147.
+receiver (RFC-0148); the fixed form is RFC-0109's named views (RFC-0147).
 
 ---
 
@@ -255,7 +256,7 @@ Deliberately excluded, all RFC-0121 (or RFC-0114) territory:
   RFC-0114's `construct` path.
 - **Row parameters on free functions or non-receiver parameters.** Plausible and
   probably wanted eventually; deferred so this RFC stays scoped to the one position
-  RFC-0147 needs.
+  RFC-0148 needs.
 
 If RFC-0121 is accepted first, this RFC becomes a short "`row R` in receiver position,
 lower-bounded, erased" application of it. If this RFC is wanted sooner, it carves out
@@ -300,7 +301,7 @@ RFC-0121's own status blockquote when it happens.
 5. **Relationship to RFC-0109's named views.** A named view is a fixed residual with a
    reusable name; `Self.R` is a parametric residual with a bound. Confirm they compose
    (a `where R: V`-style bound naming a view as the lower bound?) or stay deliberately
-   separate spellings, and which one RFC-0147 builds on.
+   separate spellings, and which of RFC-0147 / RFC-0148 builds on which.
 
 ---
 
@@ -325,8 +326,10 @@ RFC-0121's own status blockquote when it happens.
 - RFC-0044 (Explicit Receiver Semantics, implemented) — receiver forms `&self` / `&var self`
 - RFC-0071 (Ownership and Move Semantics, `3-integrated`, partial-move tracking not yet
   implemented, `metel-core#858`) — the move-tracking foundation residuals depend on
-- RFC-0147 (Generic-Projection Destructors, `1-under-review`) — the `Drop`-specific
-  application this RFC exists to enable
+- RFC-0148 (Row-Parametric Destructors, `1-under-review`) — the `Drop`-specific
+  application this RFC exists to enable (the parametric `fun drop<row R>(...)` form)
+- RFC-0147 (Projection-Receiver Destructors, `1-under-review`) — the sibling *fixed*
+  `drop` receiver form; depends on RFC-0109, not on this RFC
 - `metel-core#858` — RFC-0137 slice 2 (move-triggered narrowing/widening, row-bounded
   `Drop` dispatch); the implementation context that prompted this RFC
 - `metel-core#261` — RFC-0071 (3/4): drop order and explicit drop; destructor invocation,
