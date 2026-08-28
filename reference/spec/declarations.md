@@ -1079,10 +1079,10 @@ written `extend Type: Aspect { ... }`, and both forms may coexist for the same t
 
 ### `dyn Aspect`
 
-> **Available now (RFC-0008, metel-core#865, metel-core#863): syntax, type
-> representation, object safety, coercion, and dispatch.**
-> `List<dyn Aspect>` heterogeneous collections are not yet implemented — see
-> metel-core#864.
+> **Available now (RFC-0008, metel-core#865, metel-core#863, metel-core#864):
+> syntax, type representation, object safety, coercion (including behind
+> `&`/`&var`, at every position below), dispatch, and `List<dyn Aspect>`
+> heterogeneous collections.**
 
 `dyn Aspect` is an aspect object: a value whose concrete type is erased, with
 dispatch happening through a vtable at runtime. It complements `impl Aspect`
@@ -1241,12 +1241,21 @@ fun main() -> i64 {
 
 ##### Legality Rule {#spec.declarations.aspects.dyn-aspect.legality-6}
 
-A concrete value coerces to `dyn Aspect` implicitly at a binding, argument, or
-return-value position — owned or behind `&`/`&var` — when its type implements
-the aspect; rejected with `T0012` when it does not.
+A concrete value coerces to `dyn Aspect` implicitly at a binding, `var`
+reassignment, function or method argument, return value, `break` value,
+`(expr : Type)` ascription, struct-literal field, or array-literal element
+position — owned or behind `&`/`&var` — when its type implements the aspect;
+rejected with `T0012` when it does not.
+
+A *heterogeneous* array literal — different concrete element types coerced
+to `dyn Aspect` within one `[...]` expression — is not yet accepted; each
+element must currently share one concrete type before coercion (the common
+case, a single concrete source, works). `List<dyn Aspect>` (see
+[Heterogeneous Collections](#heterogeneous-collections) below) is the
+working way to hold different concrete types together.
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [90_dyn_aspect_owned_coercion_and_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/90_dyn_aspect_owned_coercion_and_dispatch.mtl), [91_dyn_aspect_borrowed_reference_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/91_dyn_aspect_borrowed_reference_dispatch.mtl), [95_dyn_aspect_argument_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/95_dyn_aspect_argument_coercion.mtl), [neg_33_dyn_aspect_coercion_target_type_does_not_implement_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_33_dyn_aspect_coercion_target_type_does_not_implement_aspect.mtl), [neg_34_dyn_aspect_argument_coercion_target_type_does_not_implement_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_34_dyn_aspect_argument_coercion_target_type_does_not_implement_aspect.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [100_dyn_aspect_reassignment_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/100_dyn_aspect_reassignment_coercion.mtl), [101_dyn_aspect_array_literal_element_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/101_dyn_aspect_array_literal_element_coercion.mtl), [102_dyn_aspect_return_position_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/102_dyn_aspect_return_position_coercion.mtl), [103_dyn_aspect_break_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/103_dyn_aspect_break_coercion.mtl), [104_dyn_aspect_ascription_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/104_dyn_aspect_ascription_coercion.mtl), [105_dyn_aspect_generic_aspect_return_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/105_dyn_aspect_generic_aspect_return_coercion.mtl), [106_dyn_aspect_reference_to_already_dyn_value.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/106_dyn_aspect_reference_to_already_dyn_value.mtl), [90_dyn_aspect_owned_coercion_and_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/90_dyn_aspect_owned_coercion_and_dispatch.mtl), [91_dyn_aspect_borrowed_reference_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/91_dyn_aspect_borrowed_reference_dispatch.mtl), [95_dyn_aspect_argument_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/95_dyn_aspect_argument_coercion.mtl), [96_dyn_aspect_list_heterogeneous_collection.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/96_dyn_aspect_list_heterogeneous_collection.mtl), [97_dyn_aspect_by_reference_argument_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/97_dyn_aspect_by_reference_argument_coercion.mtl), [98_dyn_aspect_by_mut_reference_argument_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/98_dyn_aspect_by_mut_reference_argument_coercion.mtl), [99_dyn_aspect_struct_field_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/99_dyn_aspect_struct_field_coercion.mtl), [neg_33_dyn_aspect_coercion_target_type_does_not_implement_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_33_dyn_aspect_coercion_target_type_does_not_implement_aspect.mtl), [neg_34_dyn_aspect_argument_coercion_target_type_does_not_implement_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_34_dyn_aspect_argument_coercion_target_type_does_not_implement_aspect.mtl), [neg_35_dyn_aspect_list_push_target_type_does_not_implement_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_35_dyn_aspect_list_push_target_type_does_not_implement_aspect.mtl), [neg_36_dyn_aspect_by_reference_argument_target_type_does_not_implement_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_36_dyn_aspect_by_reference_argument_target_type_does_not_implement_aspect.mtl), [neg_37_dyn_aspect_by_mut_reference_argument_target_type_does_not_implement_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_37_dyn_aspect_by_mut_reference_argument_target_type_does_not_implement_aspect.mtl), [neg_38_dyn_aspect_struct_field_target_type_does_not_implement_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_38_dyn_aspect_struct_field_target_type_does_not_implement_aspect.mtl), [neg_39_dyn_aspect_reassignment_target_type_does_not_implement_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_39_dyn_aspect_reassignment_target_type_does_not_implement_aspect.mtl), [neg_40_dyn_aspect_array_literal_element_target_type_does_not_implement_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_40_dyn_aspect_array_literal_element_target_type_does_not_implement_aspect.mtl), [neg_41_dyn_aspect_return_position_target_type_does_not_implement_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_41_dyn_aspect_return_position_target_type_does_not_implement_aspect.mtl), [neg_42_dyn_aspect_break_target_type_does_not_implement_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_42_dyn_aspect_break_target_type_does_not_implement_aspect.mtl), [neg_43_dyn_aspect_ascription_target_type_does_not_implement_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_43_dyn_aspect_ascription_target_type_does_not_implement_aspect.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 </details>
@@ -1293,10 +1302,52 @@ provides for the aspect, independent of any other value coerced to the same
 `dyn Aspect` type elsewhere in the program.
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [90_dyn_aspect_owned_coercion_and_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/90_dyn_aspect_owned_coercion_and_dispatch.mtl), [91_dyn_aspect_borrowed_reference_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/91_dyn_aspect_borrowed_reference_dispatch.mtl), [92_dyn_aspect_multiple_concrete_types_dispatch_independently.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/92_dyn_aspect_multiple_concrete_types_dispatch_independently.mtl), [93_dyn_aspect_mutable_receiver_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/93_dyn_aspect_mutable_receiver_dispatch.mtl), [94_dyn_aspect_generic_aspect_type_args.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/94_dyn_aspect_generic_aspect_type_args.mtl), [95_dyn_aspect_argument_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/95_dyn_aspect_argument_coercion.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [100_dyn_aspect_reassignment_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/100_dyn_aspect_reassignment_coercion.mtl), [101_dyn_aspect_array_literal_element_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/101_dyn_aspect_array_literal_element_coercion.mtl), [102_dyn_aspect_return_position_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/102_dyn_aspect_return_position_coercion.mtl), [103_dyn_aspect_break_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/103_dyn_aspect_break_coercion.mtl), [104_dyn_aspect_ascription_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/104_dyn_aspect_ascription_coercion.mtl), [105_dyn_aspect_generic_aspect_return_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/105_dyn_aspect_generic_aspect_return_coercion.mtl), [106_dyn_aspect_reference_to_already_dyn_value.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/106_dyn_aspect_reference_to_already_dyn_value.mtl), [90_dyn_aspect_owned_coercion_and_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/90_dyn_aspect_owned_coercion_and_dispatch.mtl), [91_dyn_aspect_borrowed_reference_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/91_dyn_aspect_borrowed_reference_dispatch.mtl), [92_dyn_aspect_multiple_concrete_types_dispatch_independently.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/92_dyn_aspect_multiple_concrete_types_dispatch_independently.mtl), [93_dyn_aspect_mutable_receiver_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/93_dyn_aspect_mutable_receiver_dispatch.mtl), [94_dyn_aspect_generic_aspect_type_args.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/94_dyn_aspect_generic_aspect_type_args.mtl), [95_dyn_aspect_argument_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/95_dyn_aspect_argument_coercion.mtl), [96_dyn_aspect_list_heterogeneous_collection.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/96_dyn_aspect_list_heterogeneous_collection.mtl), [97_dyn_aspect_by_reference_argument_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/97_dyn_aspect_by_reference_argument_coercion.mtl), [98_dyn_aspect_by_mut_reference_argument_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/98_dyn_aspect_by_mut_reference_argument_coercion.mtl), [99_dyn_aspect_struct_field_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/99_dyn_aspect_struct_field_coercion.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 </details>
+
+#### Heterogeneous Collections
+
+`List<dyn Aspect>` holds values of different concrete types together, each
+satisfying a common aspect (RFC-0008 §7). `push`'s argument coerces to the
+list's own `dyn Aspect` element type the same way any other argument
+position does (see [Coercion](#coercion) above), and each element then
+dispatches independently (see [Dispatch](#dispatch) above):
+
+```metel
+aspect Shape {
+    fun area(&self) -> f64;
+}
+
+struct Circle { radius: f64 }
+struct Rectangle { w: f64, h: f64 }
+
+extend Circle: Shape {
+    fun area(&self) -> f64 { 3.14159 * self.radius * self.radius }
+}
+
+extend Rectangle: Shape {
+    fun area(&self) -> f64 { self.w * self.h }
+}
+
+fun main() -> i64 {
+    var shapes: List<dyn Shape> = List::new();
+    shapes.push(Circle { radius = 2.0 });
+    shapes.push(Rectangle { w = 3.0, h = 4.0 });
+    for (shape in shapes.as_slice()) {
+        // each dispatches to its own concrete `area()`
+    }
+    0
+}
+```
+
+A concrete type that does not implement the aspect is rejected at the
+`push` call site itself, the same as any other argument-position coercion.
+
+`List<T>` does not implement `Iterable<T>` for any `T` today, unrelated to
+`dyn Aspect` — iterate via `.as_slice()` above, the same idiom `List<T>`'s
+own methods (`map`/`filter`/`fold`/…) already use internally.
 
 ### Aspect Implementation Coherence
 
