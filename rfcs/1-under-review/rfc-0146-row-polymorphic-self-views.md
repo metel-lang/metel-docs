@@ -2,8 +2,10 @@
 id: rfc-0146
 title: "Row-Polymorphic Self-Views"
 date: '2026-08-28'
-status: draft
+status: under-review
 target:
+updated: '2026-08-28'
+tracking: 'https://github.com/metel-lang/metel-core/issues/886'
 ---
 
 > **New RFC, opened 2026-08-28 out of a design discussion on the integrated spec's
@@ -43,6 +45,8 @@ target:
 >   ("Partial moves", "Narrowing", "Passing a residual to a function", "Drop dispatch
 >   against a narrowed residual"). Cited as normative spec, with RFC-0137 as design
 >   history.
+
+> **Status — under review (2026-08-28).** Substantiated primary proposal (concrete syntax, static semantics, worked examples) with explicit blocking open questions; design engagement underway, on a concrete downstream path (RFC-0147). Tracking: metel-core#886.
 
 ## Summary
 
@@ -321,8 +325,8 @@ RFC-0121's own status blockquote when it happens.
 - RFC-0044 (Explicit Receiver Semantics, implemented) — receiver forms `&self` / `&var self`
 - RFC-0071 (Ownership and Move Semantics, `3-integrated`, partial-move tracking not yet
   implemented, `metel-core#858`) — the move-tracking foundation residuals depend on
-- RFC-0147 (Generic-Projection Destructors, draft) — the `Drop`-specific application this
-  RFC exists to enable
+- RFC-0147 (Generic-Projection Destructors, `1-under-review`) — the `Drop`-specific
+  application this RFC exists to enable
 - `metel-core#858` — RFC-0137 slice 2 (move-triggered narrowing/widening, row-bounded
   `Drop` dispatch); the implementation context that prompted this RFC
 - `metel-core#261` — RFC-0071 (3/4): drop order and explicit drop; destructor invocation,

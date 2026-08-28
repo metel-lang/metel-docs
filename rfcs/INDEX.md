@@ -423,7 +423,7 @@ above it are.
   RFC-0096's auto-impl pattern, RFC-0093's comptime derive, or needs its own mechanism —
   RFC-0082 explicitly declined general default associated types, for reasons that may or
   may not transfer to this narrower, whole-impl case.
-- **RFC-0146** *(draft, opened 2026-08-28)* — Row-Polymorphic Self-Views — a method may
+- **RFC-0146** *(under review, opened 2026-08-28)* — Row-Polymorphic Self-Views — a method may
   bind its receiver to a lower-bounded row parameter (`fun m<row R>(&self: Self.R) where
   R: { fd, .. }`), so one body type-checks once against the lower bound and is callable
   on any residual of `Self` at least that wide, brand preserved. `R` is compile-time-only
@@ -437,7 +437,7 @@ above it are.
   Sibling `<row R>` consumer to RFC-0123 (per-field aspect bounds, orthogonal). Opened
   from a design discussion on the integrated "Drop dispatch against a narrowed residual"
   spec section / `metel-core#858`; the enabling mechanism for RFC-0147.
-- **RFC-0147** *(draft, opened 2026-08-28)* — Generic-Projection Destructors — `Drop::drop`
+- **RFC-0147** *(under review, opened 2026-08-28)* — Generic-Projection Destructors — `Drop::drop`
   may declare its receiver as a lower-bounded row parameter (`fun drop<row R>(&var self:
   Self.R) where R: { fd, .. }`), making the destructor's required field set a declared
   contract instead of the body-computed set the integrated spec derives (union of direct
