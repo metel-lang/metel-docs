@@ -2,9 +2,10 @@
 id: rfc-0139
 title: "Row-Polymorphic Self-Views"
 date: '2026-08-28'
-status: draft
+status: under-review
 target:
 updated: '2026-08-28'
+tracking: 'https://github.com/metel-lang/metel-core/issues/883'
 ---
 
 > **New RFC, opened 2026-08-28 out of a design discussion on RFC-0137 §5 /
@@ -34,6 +35,8 @@ updated: '2026-08-28'
 > - **RFC-0118 (Row Bounds, implemented)** already establishes `{ fd, .. }` open-bound
 >   syntax and that the trailing `..` is what makes a bound open. This RFC reuses that
 >   spelling for the `where` clause verbatim.
+
+> **Status — under review (2026-08-28).** Substantiated primary proposal with concrete syntax, static semantics, worked examples, and explicit blocking open questions; design engagement underway. Tracking: metel-core#883.
 
 ## Summary
 
@@ -296,7 +299,7 @@ in RFC-0121's own status blockquote when it happens.
 - RFC-0067a (Reference Forms, implemented) — receiver modes `&self` / `&var self`
 - RFC-0071 (Ownership and Move Semantics, `3-integrated`, partial-move tracking not yet
   implemented) — the move-tracking foundation residuals depend on
-- RFC-0140 (Generic-Projection Destructors, draft) — the `Drop`-specific application this
+- RFC-0140 (Generic-Projection Destructors, under review) — the `Drop`-specific application this
   RFC exists to enable
 - `metel-core#858` — RFC-0137 slice 2 implementation issue (row-bounded `Drop` dispatch),
   the discussion that prompted this RFC

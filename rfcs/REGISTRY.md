@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**139 RFCs total.** 36 draft, 21 under review, 8 accepted, 1 integrated (66 live), 46 implemented, 13 superseded, 14 refused (73 settled).
+**139 RFCs total.** 34 draft, 23 under review, 8 accepted, 1 integrated (66 live), 46 implemented, 13 superseded, 14 refused (73 settled).
 
-## Draft (36)
+## Draft (34)
 
 - **RFC-0003** — Concurrency Model (`0-draft` ; rfcs/0-draft/rfc-0003-concurrency-model.md ; date 2026-05-20)
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
@@ -51,10 +51,8 @@ the curated thematic map.
 - **RFC-0133** — From-Metel List: the Runtime-Sized Buffer Gap (`0-draft` ; rfcs/0-draft/rfc-0133-from-metel-list-the-runtime-sized-buffer-gap.md ; date 2026-08-13)
 - **RFC-0135** — Multiplicity for Ordinary Types (`0-draft` ; rfcs/0-draft/rfc-0135-multiplicity-for-ordinary-types.md ; date 2026-08-13)
 - **RFC-0138** — Generic Functions as First-Class Values (`0-draft` ; rfcs/0-draft/rfc-0138-generic-functions-as-first-class-values.md ; date 2026-08-24)
-- **RFC-0139** — Row-Polymorphic Self-Views (`0-draft` ; rfcs/0-draft/rfc-0139-row-polymorphic-self-views.md ; date 2026-08-28 ; updated 2026-08-28)
-- **RFC-0140** — Generic-Projection Destructors (`0-draft` ; rfcs/0-draft/rfc-0140-generic-projection-destructors.md ; date 2026-08-28 ; updated 2026-08-28)
 
-## Under Review (21)
+## Under Review (23)
 
 - **RFC-0050** — Closure Capture Lists (`1-under-review` ; rfcs/1-under-review/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-08-23)
 - **RFC-0067** — Lifetime Anchors (`1-under-review` ; rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-08-23)
@@ -77,6 +75,8 @@ the curated thematic map.
 - **RFC-0134** — Closure Call Capability (`1-under-review` ; rfcs/1-under-review/rfc-0134-closure-call-capability.md ; date 2026-08-13 ; updated 2026-08-23)
 - **RFC-0136** — Walrus for Kept Bindings (`1-under-review` ; rfcs/1-under-review/rfc-0136-walrus-for-kept-bindings.md ; date 2026-08-23 ; updated 2026-08-23)
 - **RFC-0137** — Nominal Types as Branded Rows (`1-under-review` ; rfcs/1-under-review/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-24)
+- **RFC-0139** — Row-Polymorphic Self-Views (`1-under-review` ; rfcs/1-under-review/rfc-0139-row-polymorphic-self-views.md ; date 2026-08-28 ; updated 2026-08-28)
+- **RFC-0140** — Generic-Projection Destructors (`1-under-review` ; rfcs/1-under-review/rfc-0140-generic-projection-destructors.md ; date 2026-08-28 ; updated 2026-08-28)
 
 ## Accepted (8)
 

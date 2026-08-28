@@ -2,9 +2,10 @@
 id: rfc-0140
 title: "Generic-Projection Destructors"
 date: '2026-08-28'
-status: draft
+status: under-review
 target:
 updated: '2026-08-28'
+tracking: 'https://github.com/metel-lang/metel-core/issues/884'
 ---
 
 > **New RFC, opened 2026-08-28 alongside RFC-0139 out of the same design discussion on
@@ -30,6 +31,8 @@ updated: '2026-08-28'
 > - **RFC-0109** owns the fixed-projection receiver form, which is the middle rung of the
 >   three-form ladder below.
 > - **RFC-0121** is the row-kind dependency, reached transitively through RFC-0139.
+
+> **Status — under review (2026-08-28).** Substantiated primary proposal (three-form ladder, unchanged move-check rule, worked examples) with explicit blocking open questions; additive to RFC-0137 §5. Tracking: metel-core#884.
 
 ## Summary
 
@@ -225,7 +228,7 @@ section already defines:
 
 ## References
 
-- RFC-0139 (Row-Polymorphic Self-Views, draft) — the receiver-row mechanism this RFC
+- RFC-0139 (Row-Polymorphic Self-Views, under review) — the receiver-row mechanism this RFC
   specializes to `drop`; hard dependency
 - RFC-0137 (Nominal Types as Branded Rows, under review) — §5 row-bounded `Drop`
   dispatch (the rule this RFC re-sources), §7 generic structs, Open Question 2 (dissolved
