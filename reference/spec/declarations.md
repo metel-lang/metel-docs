@@ -1079,10 +1079,10 @@ written `extend Type: Aspect { ... }`, and both forms may coexist for the same t
 
 ### `dyn Aspect`
 
-> **Available now (RFC-0008, metel-core#865): syntax, type representation, and
-> object safety.** Actually *constructing* a value as `dyn Aspect` (coercion)
-> and dispatching a method call through one are not yet implemented — see
-> metel-core#863.
+> **Available now (RFC-0008, metel-core#865, metel-core#863): syntax, type
+> representation, object safety, coercion, and dispatch.**
+> `List<dyn Aspect>` heterogeneous collections are not yet implemented — see
+> metel-core#864.
 
 `dyn Aspect` is an aspect object: a value whose concrete type is erased, with
 dispatch happening through a vtable at runtime. It complements `impl Aspect`
@@ -1193,6 +1193,107 @@ is not object-safe.
 
 <!-- rfc.py:fixtures:start -->
 <span class="rigor-backlink">_Tested by: [neg_28_dyn_aspect_associated_type_in_signature_not_object_safe.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_28_dyn_aspect_associated_type_in_signature_not_object_safe.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
+#### Coercion
+
+A value of concrete type `T` coerces to `dyn Aspect` implicitly wherever a
+`dyn Aspect`-typed value is expected — a `let`/`mut` binding, a function
+argument, a return value — when `T` implements `Aspect`. No explicit cast is
+needed, and the same coercion applies behind `&`/`&var`:
+
+```metel
+aspect Shape {
+    fun area(&self) -> f64;
+}
+
+struct Circle { radius: f64 }
+
+extend Circle: Shape {
+    fun area(&self) -> f64 { 3.14159 * self.radius * self.radius }
+}
+
+fun main() -> i64 {
+    let shape: dyn Shape = Circle { radius = 2.0 };
+    let circle = Circle { radius = 1.0 };
+    let borrowed: &dyn Shape = &circle;
+    0
+}
+```
+
+A concrete type that does not implement the target aspect is rejected at the
+coercion site itself — a compile-time error, not a deferred runtime failure:
+
+<!-- doc-example: expect-fail reason="Rock does not implement Display -- the coercion is rejected at the let site, not deferred to runtime" -->
+```metel
+struct Rock { }
+
+fun main() -> i64 {
+    let x: dyn Display = Rock { };
+    0
+}
+```
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.aspects.dyn-aspect.legality-6}
+
+A concrete value coerces to `dyn Aspect` implicitly at a binding, argument, or
+return-value position — owned or behind `&`/`&var` — when its type implements
+the aspect; rejected with `T0012` when it does not.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [90_dyn_aspect_owned_coercion_and_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/90_dyn_aspect_owned_coercion_and_dispatch.mtl), [91_dyn_aspect_borrowed_reference_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/91_dyn_aspect_borrowed_reference_dispatch.mtl), [95_dyn_aspect_argument_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/95_dyn_aspect_argument_coercion.mtl), [neg_33_dyn_aspect_coercion_target_type_does_not_implement_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_33_dyn_aspect_coercion_target_type_does_not_implement_aspect.mtl), [neg_34_dyn_aspect_argument_coercion_target_type_does_not_implement_aspect.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_34_dyn_aspect_argument_coercion_target_type_does_not_implement_aspect.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
+#### Dispatch
+
+Calling a method on a `dyn Aspect` value — owned, `&`, or `&var` — resolves at
+runtime to the wrapped concrete value's own implementation of the aspect.
+Different concrete values behind the same `dyn Aspect` type dispatch
+independently, including through mutation (`&var self`) on an owned binding:
+
+```metel
+aspect Shape {
+    fun area(&self) -> f64;
+}
+
+struct Circle { radius: f64 }
+struct Rectangle { w: f64, h: f64 }
+
+extend Circle: Shape {
+    fun area(&self) -> f64 { 3.14159 * self.radius * self.radius }
+}
+
+extend Rectangle: Shape {
+    fun area(&self) -> f64 { self.w * self.h }
+}
+
+fun main() -> i64 {
+    let a: dyn Shape = Circle { radius = 2.0 };
+    let b: dyn Shape = Rectangle { w = 3.0, h = 4.0 };
+    // `a.area()` and `b.area()` each dispatch to their own concrete impl.
+    0
+}
+```
+
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.declarations.aspects.dyn-aspect.dynamics-1}
+
+A method call through a `dyn Aspect` value — owned, `&`, or `&var` — resolves
+at runtime to the implementation the wrapped concrete value's own type
+provides for the aspect, independent of any other value coerced to the same
+`dyn Aspect` type elsewhere in the program.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [90_dyn_aspect_owned_coercion_and_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/90_dyn_aspect_owned_coercion_and_dispatch.mtl), [91_dyn_aspect_borrowed_reference_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/91_dyn_aspect_borrowed_reference_dispatch.mtl), [92_dyn_aspect_multiple_concrete_types_dispatch_independently.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/92_dyn_aspect_multiple_concrete_types_dispatch_independently.mtl), [93_dyn_aspect_mutable_receiver_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/93_dyn_aspect_mutable_receiver_dispatch.mtl), [94_dyn_aspect_generic_aspect_type_args.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/94_dyn_aspect_generic_aspect_type_args.mtl), [95_dyn_aspect_argument_coercion.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/aspects/95_dyn_aspect_argument_coercion.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 </details>
