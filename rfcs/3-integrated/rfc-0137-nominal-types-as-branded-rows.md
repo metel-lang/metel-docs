@@ -546,13 +546,23 @@ need a corresponding revision if this RFC is accepted:
 - **RFC-0071 (Ownership and Move Semantics), §7.** Superseded *in design*, not narrowed
   by an exception — see §5 above, corrected 2026-08-25: §7's ban is real, tested,
   `--move-check`-enforced behavior today, not an implementation gap this RFC fills.
-- **RFC-0146 / RFC-0147 / RFC-0109, added 2026-08-28.** §5's `Drop` required set is now
-  *declared on the `drop` receiver type*, not inferred from the body. RFC-0109 (Self-View
-  Narrowing) supplies the fixed named-view receiver form; RFC-0146 (Row-Polymorphic
-  Self-Views) supplies the parametric `Self.R` form; RFC-0147 (Generic-Projection
-  Destructors) carries the `drop`-specific rule and rationale. §5's own text is the
-  normative statement; those RFCs own the receiver syntax and the design argument. See
-  §5's "Amended 2026-08-28" callout and Open Question 2's supersession note.
+- **RFC-0146 / RFC-0147 / RFC-0109 — new dependency for §5's narrowed `Drop` forms,
+  added 2026-08-28.** §5's `Drop` required set is now *declared on the `drop` receiver
+  type*, not inferred from the body — which trades the old body-analysis (self-contained,
+  no external RFC needed) for a dependency on receiver-projection syntax this RFC does
+  not itself define:
+  - The **fixed form** `fun drop(&var self: Self.{ fd })` **depends on RFC-0109
+    (Self-View Narrowing)** — its residual-typed `self` receiver (§2 there). This is the
+    *minimum* dependency: without it there is no narrowed `drop` receiver at all, and §5
+    reduces to RFC-0071 §7's blanket ban. RFC-0109's implementation issue (metel-core#842)
+    is on v0.13.0, same as this RFC.
+  - The **parametric form** `fun drop<row R>(&var self: Self.R) where R: { fd, .. }`
+    **depends on RFC-0146 (Row-Polymorphic Self-Views) → RFC-0121 (Open Rows)** for the
+    `<row R>` kind — which §5's opening paragraph otherwise explicitly does *not* need.
+    This form is a later addition, not required for v0.13.0.
+  - **RFC-0147 (Generic-Projection Destructors)** carries the `drop`-specific rule and
+    the rationale for the amendment. §5's own text is the normative statement.
+  See §5's "Amended 2026-08-28" callout and Open Question 2's supersession note.
 - **RFC-0119 (Record Conversions), added 2026-08-25 (Open Questions #3), revision
   already made.** `.to_record()` is described against "the record" for a struct,
   written before residual types existed to make that ambiguous between the type's full
@@ -568,6 +578,12 @@ This RFC depends on RFC-0116 (the record type-former narrowing produces values o
 first for widening — see §6's Open Question 5 resolution. RFC-0114 remains the fix for
 the constructor-invariant-bypass risk itself, which predates and is independent of
 this RFC.
+**Updated 2026-08-28:** §5's amended row-bounded `Drop` dispatch depends on
+**RFC-0109** (for the fixed `fun drop(&var self: Self.{ fd })` receiver form — the
+minimum, and on v0.13.0 with this RFC) and, for the parametric `fun drop<row R>(…)`
+form only, on **RFC-0146 → RFC-0121** (a later addition). The rest of this RFC —
+narrowing, widening, passing a residual, eligibility — has no such dependency; only
+§5's narrowed-receiver forms do. See the RFC-0146/0147/0109 bullet above.
 
 **These revisions were held pending re-acceptance, as of the 2026-08-25 revert.**
 RFC-0117 and RFC-0120 were already updated 2026-08-25 to cite this RFC while it was
