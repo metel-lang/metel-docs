@@ -2,8 +2,10 @@
 id: rfc-0147
 title: "Generic-Projection Destructors"
 date: '2026-08-28'
-status: draft
+status: under-review
 target:
+updated: '2026-08-28'
+tracking: 'https://github.com/metel-lang/metel-core/issues/887'
 ---
 
 > **New RFC, opened 2026-08-28 alongside RFC-0146 out of a design discussion on the
@@ -36,6 +38,8 @@ target:
 > - **RFC-0008 (Aspect Objects, `2-accepted`; slice 1 implemented, `metel-core#865`)** —
 >   the `dyn Aspect` drop-pointer and the coercion checkpoint this RFC's declared bound
 >   feeds.
+
+> **Status — under review (2026-08-28).** Substantiated primary proposal (three-form ladder over the integrated dispatch rule, worked examples) with explicit blocking open questions; additive to the integrated 'Drop dispatch against a narrowed residual' rule. Tracking: metel-core#887.
 
 ## Summary
 
@@ -254,8 +258,8 @@ set that section defines:
   (`…legality-1` computed required set, `…dynamics-1` dispatch rule, `…legality-2` `dyn
   Aspect` coercion checkpoint); "`Drop`", "`Copy` and `Drop` are mutually exclusive",
   "Partial moves", "Widening"
-- RFC-0146 (Row-Polymorphic Self-Views, draft) — the receiver-row mechanism this RFC
-  specializes to `drop`; hard dependency
+- RFC-0146 (Row-Polymorphic Self-Views, `1-under-review`) — the receiver-row mechanism
+  this RFC specializes to `drop`; hard dependency
 - RFC-0137 (Nominal Types as Branded Rows, `3-integrated`) — §5 (design history for the
   spec section above), §7 (generic structs), Open Question 6 (generic-conditional
   `Drop`, inherited unresolved)
