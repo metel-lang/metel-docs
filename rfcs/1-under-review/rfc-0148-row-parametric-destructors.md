@@ -132,8 +132,9 @@ is inherited unresolved, exactly as in RFC-0147 §3.
 ## Open Questions
 
 1. **Depends on RFC-0146 → RFC-0121.** *(Blocked on a dated dependency.)* This RFC cannot
-   be accepted before RFC-0146 is, and RFC-0146 before RFC-0121 (or its carve-out). Not
-   on the v0.13.0 path — RFC-0147's fixed form covers v0.13.0.
+   be accepted before RFC-0146 is, and RFC-0146 before RFC-0121 (v0.14.0) or its
+   carve-out. So this form is v0.15.0 at the earliest — RFC-0147's fixed form covers the
+   `Drop` narrowed-receiver need in v0.14.0.
 2. **Does this subsume RFC-0147's fixed form?** A fixed `Self.{ fd }` receiver is
    `Self.R where R: { fd }` with an exact (no `..`) bound and `R` unused. Decide whether
    the fixed spelling stays permanently (it needs no `row` kind, ships a release earlier)
@@ -161,7 +162,7 @@ is inherited unresolved, exactly as in RFC-0147 §3.
 - RFC-0118 (Row Bounds, implemented) — the `{ …, .. }` open-bound spelling the `where`
   clause reuses
 - `metel-core#858` — RFC-0137 slice 2; **not** blocked on this RFC (RFC-0147's fixed form
-  covers its v0.13.0 scope)
+  covers the `Drop` narrowed-receiver need, in v0.14.0)
 - `metel-core#261` — destructor invocation; must land before any `drop` body runs
 
 ---
