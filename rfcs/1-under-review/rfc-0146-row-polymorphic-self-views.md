@@ -47,7 +47,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/886'
 >   against a narrowed residual"). Cited as normative spec, with RFC-0137 as design
 >   history.
 
-> **Status — under review (2026-08-28).** Substantiated primary proposal (concrete syntax, static semantics, worked examples) with explicit blocking open questions; design engagement underway, on a concrete downstream path (RFC-0148, Row-Parametric Destructors). Committed to **v0.14.0** (issue #886), alongside RFC-0121, RFC-0123, and RFC-0109 — the row/view frontier. That milestone implies Open Question 1 resolves toward the carve-out (the minimal lower-bounded-row-variable slice landing with RFC-0121), not waiting for all of RFC-0121; if it must wait for full RFC-0121 this slips to v0.15.0+. Tracking: metel-core#886.
+> **Status — under review (2026-08-28).** Substantiated primary proposal (concrete syntax, static semantics, worked examples) with explicit blocking open questions; design engagement underway, on a concrete downstream path (RFC-0148, Row-Parametric Destructors). Committed to **v0.15.0** (issue #886) — deliberately a release behind the row/view frontier (RFC-0121, RFC-0123, RFC-0109 at v0.14.0), so it can depend on *full* RFC-0121 rather than needing the Open Question 1 carve-out. Downstream RFC-0148 then lands v0.16.0+. Tracking: metel-core#886.
 
 ## Summary
 
@@ -285,11 +285,9 @@ RFC-0121's own status blockquote when it happens.
    the `row` kind and lower-bounded row unification. RFC-0121 owns both but also carries
    the expensive algebra and is not accepted. Decide whether RFC-0146 extracts the
    minimal slice (and RFC-0121 is revised to depend on it) or is scheduled strictly
-   after RFC-0121's acceptance. **The v0.14.0 milestone assignment (issue #886) presumes
-   the carve-out**: RFC-0146 and RFC-0121 are the same release, so RFC-0146 takes only
-   the minimal lower-bounded-row-variable primitive and RFC-0121 keeps the algebra. If
-   review concludes RFC-0146 must wait for full RFC-0121, this RFC re-milestones to
-   v0.15.0+ and the presumption is recorded as wrong here.
+   after RFC-0121's acceptance. **The v0.15.0 milestone (issue #886) puts this a release
+   after RFC-0121 (v0.14.0)**, so the default is "wait for full RFC-0121" and the
+   carve-out becomes an optimisation to pull RFC-0146 forward, not a requirement.
 2. **Parse boundary.** RFC-0121 §1 chose `row R`; this RFC follows it (`<row R>`).
    Confirm no ambiguity in a method carrying both `<T>` and `<row R>`, and that
    `Self.R` in receiver position never collides with a `T.field` associated-type-style
