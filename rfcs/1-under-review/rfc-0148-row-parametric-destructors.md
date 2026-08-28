@@ -133,8 +133,8 @@ is inherited unresolved, exactly as in RFC-0147 §3.
 
 1. **Depends on RFC-0146 → RFC-0121.** *(Blocked on a dated dependency.)* This RFC cannot
    be accepted before RFC-0146 is, and RFC-0146 before RFC-0121 (v0.14.0) or its
-   carve-out. So this form is v0.15.0 at the earliest — RFC-0147's fixed form covers the
-   `Drop` narrowed-receiver need in v0.14.0.
+   carve-out. RFC-0146 is v0.15.0, so this form is **v0.16.0 at the earliest** —
+   RFC-0147's fixed form covers the `Drop` narrowed-receiver need in v0.14.0.
 2. **Does this subsume RFC-0147's fixed form?** A fixed `Self.{ fd }` receiver is
    `Self.R where R: { fd }` with an exact (no `..`) bound and `R` unused. Decide whether
    the fixed spelling stays permanently (it needs no `row` kind, ships a release earlier)
