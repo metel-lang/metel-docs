@@ -423,6 +423,32 @@ above it are.
   RFC-0096's auto-impl pattern, RFC-0093's comptime derive, or needs its own mechanism —
   RFC-0082 explicitly declined general default associated types, for reasons that may or
   may not transfer to this narrower, whole-impl case.
+- **RFC-0146** *(draft, opened 2026-08-28)* — Row-Polymorphic Self-Views — a method may
+  bind its receiver to a lower-bounded row parameter (`fun m<row R>(&self: Self.R) where
+  R: { fd, .. }`), so one body type-checks once against the lower bound and is callable
+  on any residual of `Self` at least that wide, brand preserved. `R` is compile-time-only
+  and erased — no monomorphization; runtime cost identical to an RFC-0109 named-view
+  receiver. This is RFC-0121's `<row R>` kind scoped to exactly one position (the
+  receiver) and one shape (a lower bound), with none of the row algebra or
+  row-conditional impls. Generalizes RFC-0109's *fixed* named residual (`self: &V` =
+  `self: &S.{ a }`) to a *parametric* one. Depends on RFC-0137's integrated
+  representation, RFC-0109's residual-typed-receiver form, and either RFC-0121's
+  acceptance or a carved-out minimal lower-bounded-row-variable slice (Open Question 1).
+  Sibling `<row R>` consumer to RFC-0123 (per-field aspect bounds, orthogonal). Opened
+  from a design discussion on the integrated "Drop dispatch against a narrowed residual"
+  spec section / `metel-core#858`; the enabling mechanism for RFC-0147.
+- **RFC-0147** *(draft, opened 2026-08-28)* — Generic-Projection Destructors — `Drop::drop`
+  may declare its receiver as a lower-bounded row parameter (`fun drop<row R>(&var self:
+  Self.R) where R: { fd, .. }`), making the destructor's required field set a declared
+  contract instead of the body-computed set the integrated spec derives (union of direct
+  reads + a fixed point over `self`-method calls). Gives `drop` three authoring forms —
+  whole `self`, fixed residual (RFC-0109), parametric residual (this RFC) — over one
+  unchanged dispatch rule (`residual row ⊇ required set`) and the unchanged `dyn Aspect`
+  coercion checkpoint, which the declared bound feeds directly. **An alternative
+  declaration surface, not a new rule:** removes the fixed-point computation and the
+  action-at-a-distance of body inference, and makes narrowing-tolerance an explicit
+  opt-in (the `Copy`-is-declared-not-derived argument, applied to teardown). Depends on
+  RFC-0146. Nothing in `metel-core#858` is blocked on it.
 - **RFC-0132** — Comptime Execution Model — `comptime let`/`fun`/`if`, `pub comptime let`
   (public value exports), and **comptime-known non-type generic parameters**
   (`comptime N: u64`) — i.e. the const generics RFC-0053 deferred to "a future RFC," now

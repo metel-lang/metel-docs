@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-08-27'
+generated_on: '2026-08-28'
 ---
 
 # RFC Registry
@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**144 RFCs total.** 31 draft, 28 under review, 9 accepted, 2 integrated (70 live), 47 implemented, 13 superseded, 14 refused (74 settled).
+**146 RFCs total.** 33 draft, 28 under review, 9 accepted, 2 integrated (72 live), 47 implemented, 13 superseded, 14 refused (74 settled).
 
-## Draft (31)
+## Draft (33)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -48,6 +48,8 @@ the curated thematic map.
 - **RFC-0133** — From-Metel List: the Runtime-Sized Buffer Gap (`0-draft` ; rfcs/0-draft/rfc-0133-from-metel-list-the-runtime-sized-buffer-gap.md ; date 2026-08-13)
 - **RFC-0135** — Multiplicity for Ordinary Types (`0-draft` ; rfcs/0-draft/rfc-0135-multiplicity-for-ordinary-types.md ; date 2026-08-13)
 - **RFC-0145** — Static Storage Duration (`0-draft` ; rfcs/0-draft/rfc-0145-static-storage-duration.md ; date 2026-08-27)
+- **RFC-0146** — Row-Polymorphic Self-Views (`0-draft` ; rfcs/0-draft/rfc-0146-row-polymorphic-self-views.md ; date 2026-08-28)
+- **RFC-0147** — Generic-Projection Destructors (`0-draft` ; rfcs/0-draft/rfc-0147-generic-projection-destructors.md ; date 2026-08-28)
 
 ## Under Review (28)
 
