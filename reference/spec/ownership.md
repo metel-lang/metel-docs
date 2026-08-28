@@ -291,7 +291,7 @@ some of several moved-out fields is not enough.
 > **Availability:** Since v0.12.0 (RFC-0071), behind `--move-check`. A `Drop` type may
 > still be partially *borrowed*; only moving out is restricted.
 
-> **Planned for v0.13.0 (RFC-0137): legality-2's ban is superseded in design by
+> **Planned for v0.14.0 (RFC-0137 §5): legality-2's ban is superseded in design by
 > row-bounded `Drop` dispatch — see "Drop dispatch against a narrowed residual" below.
 > Until that mechanism is built, this ban is enforced exactly as stated, unconditionally.**
 
@@ -477,9 +477,9 @@ match that row exactly, with no implicit narrowing at the call site.
 
 ### Drop dispatch against a narrowed residual
 
-> **Planned for v0.13.0 (RFC-0137, metel-core#858).** Supersedes the `Drop`-type
-> partial-move ban above *in design*; until implemented, that ban is enforced exactly as
-> stated.
+> **Planned for v0.14.0 (RFC-0137 §5, metel-core#858).** Needs the narrowed `drop`
+> receiver (RFC-0109); supersedes the `Drop`-type partial-move ban above *in design*,
+> and until implemented that ban is enforced exactly as stated.
 
 A struct implementing `Drop` whose destructor needs a field that has since been narrowed
 away must not silently skip the destructor's work. Dispatch is **row-bounded**: a `Drop`

@@ -27,7 +27,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/887'
 > on RFC-0146 → RFC-0121 rather than on RFC-0109.
 >
 > **Overlap check (`rfc.py new` similarity + `INDEX.md` + `REGISTRY.md`):**
-> - **RFC-0109 (Self-View Narrowing, `1-under-review`, `metel-core#842`, v0.13.0)** —
+> - **RFC-0109 (Self-View Narrowing, `1-under-review`, `metel-core#842`, v0.14.0)** —
 >   supplies the residual-typed `self` receiver (`view V for S { a }`, `self: &V` =
 >   `self: &S.{ a }`, and the anonymous `self: &S.{ a }` form). **Hard dependency.**
 > - **RFC-0137 (`3-integrated`) §5** / `reference/spec/ownership.md` own the dispatch
@@ -41,7 +41,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/887'
 >   the `dyn Aspect` drop-pointer and the coercion checkpoint this RFC's declared set
 >   feeds.
 
-> **Status — under review (2026-08-28).** Substantiated primary proposal (fixed-projection form of RFC-0137 §5's declared-receiver `Drop` required set, the `drop`-specific rules, worked examples) with explicit blocking open questions. Paired with the 2026-08-28 amendment to RFC-0137 §5. On the v0.13.0 path with RFC-0109 and RFC-0137. Tracking: metel-core#887.
+> **Status — under review (2026-08-28).** Substantiated primary proposal (fixed-projection form of RFC-0137 §5's declared-receiver `Drop` required set, the `drop`-specific rules, worked examples) with explicit blocking open questions. Paired with the 2026-08-28 amendment to RFC-0137 §5. On **v0.14.0** with its dependency RFC-0109 (RFC-0137's own branded-rows representation is v0.13.0; §5's narrowed forms wait for RFC-0109). Tracking: metel-core#887.
 
 ## Summary
 
@@ -189,9 +189,10 @@ receiver, and carries the rationale for the amendment.
   It shares this RFC's §2 rules verbatim; the only difference is that the required set is
   a parameterized lower bound rather than a fixed list. RFC-0148 depends on RFC-0146 →
   RFC-0121; this RFC does not.
-- The `Drop` half of RFC-0137 slice 2 (`metel-core#858`) implements **this** form for
-  v0.13.0 — depends on RFC-0109 (`metel-core#842`), same milestone. It must **not**
-  implement the old body-computed required set.
+- The `Drop` half of RFC-0137 slice 2 (`metel-core#858`) implements **this** form —
+  depends on RFC-0109 (`metel-core#842`, **v0.14.0**), so it lands in v0.14.0, one
+  release after RFC-0137's branded-rows representation. It must **not** implement the old
+  body-computed required set.
 
 ---
 
@@ -211,11 +212,11 @@ receiver, and carries the rationale for the amendment.
 ## Open Questions
 
 1. **Depends on RFC-0109.** *(Blocked on a dated dependency.)* This RFC cannot be
-   accepted before RFC-0109's residual-typed `self` receiver is settled. Both are on
-   v0.13.0 (`metel-core#842` / `metel-core#827`).
+   accepted before RFC-0109's residual-typed `self` receiver is settled. RFC-0109
+   (`metel-core#842`) is on v0.14.0; this RFC follows it there.
 2. **Does RFC-0148 subsume this form?** A fixed projection is a `Self.R` with `R` never
    otherwise mentioned and an exact-width `where` clause. Keeping the fixed spelling as
-   its own form has value: it needs no `row` kind and can ship in v0.13.0 while RFC-0148
+   its own form has value: it needs no `row` kind and can ship in v0.14.0 while RFC-0148
    waits on RFC-0121. Decide whether both spellings coexist permanently or the fixed one
    becomes sugar once RFC-0148 lands. Mirrors RFC-0146 Open Question 5.
 3. **`reject_inert_destructor` interaction.** Today (`metel-core#292`/`#261`) a non-empty
@@ -239,7 +240,7 @@ receiver, and carries the rationale for the amendment.
   `…legality-4` body containment check, `…dynamics-1` dispatch rule, `…legality-2` `dyn
   Aspect` coercion checkpoint); "`Drop`", "`Copy` and `Drop` are mutually exclusive",
   "Partial moves", "Widening"
-- RFC-0109 (Self-View Narrowing, `1-under-review`, `metel-core#842`, v0.13.0) — the
+- RFC-0109 (Self-View Narrowing, `1-under-review`, `metel-core#842`, v0.14.0) — the
   residual-typed `self` receiver; **hard dependency**
 - RFC-0137 (Nominal Types as Branded Rows, `3-integrated`) — §5 (amended 2026-08-28 to
   the declared-receiver required set this RFC's fixed form plugs into; Open Question 2
@@ -256,7 +257,7 @@ receiver, and carries the rationale for the amendment.
 - RFC-0008 (Aspect Objects, `2-accepted`; slice 1 `metel-core#865`, coercion
   `metel-core#863`) — the `dyn Aspect` drop-pointer and coercion checkpoint
 - `metel-core#858` — RFC-0137 slice 2 (move-triggered narrowing/widening, row-bounded
-  `Drop` dispatch); implements this form for v0.13.0
+  `Drop` dispatch); implements this form for v0.14.0
 - `metel-core#261` — RFC-0071 (3/4): drop order and explicit drop; destructor invocation
   must land before any `drop` body runs
 - `metel-core#292` — the `reject_inert_destructor` gate (non-empty `drop` bodies rejected
