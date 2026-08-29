@@ -315,14 +315,28 @@ above it are.
   `dyn Aspect` checkpoint unchanged. Fixed projected receiver form + rationale: RFC-0147
   (via RFC-0109, v0.14.0 — one release after this RFC's own representation); row-parametric
   form: RFC-0148 (via RFC-0146 → RFC-0121; RFC-0146 + RFC-0148 share v0.14.1, after RFC-0121's v0.14.0).
-- **RFC-0117** *(under review, revised 2026-08-27 for RFC-0137)* — Row Narrowing —
+- **RFC-0117** *(under review, revised 2026-08-29 pre-acceptance)* — Row Narrowing —
   moving a field out narrows the record's type — or a nominal struct's, via RFC-0137's
-  brand-preserving narrowing, folded in as of this revision — to the closed 2^*N*
-  subset lattice, no row variables and no unification. Depends on RFC-0116 and on
-  **RFC-0071** (`3-integrated`; partial-move tracking real and tested behind
-  `--move-check`, off by default). Also fixed: worked examples using a `move x.y`
-  syntax that doesn't parse — moving a non-`Copy` field out is implicit, no `move`
-  keyword exists (verified directly, metel-core#854).
+  brand-preserving narrowing — to the closed 2^*N* subset lattice, no row variables and
+  no unification. Depends on RFC-0116 and on **RFC-0071** (`3-integrated`; partial-move
+  tracking real and tested behind `--move-check`, off by default). **All three open
+  questions resolved 2026-08-29:** OQ1/OQ2 via RFC-0137 §5's row-bounded `Drop` dispatch;
+  **OQ3 resolved by scoping this RFC to *flat* narrowing** — a record-typed field is
+  moved as a unit, the residual's row never carries a narrower type for a field it
+  still holds, so `R` never recurses and the bound stays 2^*N*. Nested (recursive)
+  narrowing — `o.inner.a` narrowing `o.inner` in place — is split to **RFC-0150**. Also
+  fixed earlier: `move x.y` worked examples that don't parse (metel-core#854).
+- **RFC-0150** *(under review, opened 2026-08-29)* — Nested Row Narrowing — the recursive
+  extension of RFC-0117: a nested partial move (`o.inner.a`) narrows the inner field's
+  type *in place*, so `o : Outer.{ inner: Inner.{ b }, tag }`. Split from RFC-0117's
+  pre-acceptance review, which established this needs machinery RFC-0117 avoids: a type
+  grammar for a branded row whose field type differs from the declaration, recursive
+  `(brand, field-map)` identity, tuple-field residuals (RFC-0071 §9a tracks tuple
+  elements like struct fields), **recursive `Drop` receiver shapes** rather than a flat
+  required-field set, and control-flow-join rules for path-dependent nested residuals.
+  Depends on RFC-0117, RFC-0137 (`3-integrated`), and **RFC-0147/0148**'s narrowed
+  `drop`-receiver syntax, so it is scheduled after them (provisionally v0.14.1,
+  metel-core#900).
 - **RFC-0118** *(implemented in v0.12.0, was #577)* — Row Bounds — `<record T: { x: f64, .. }>` and `!{ token }`,
   replacing the `HasField`/`Lacks` family that never parsed. The trailing `..` is an
   anonymous row variable and is what makes a bound *open*; without it the bound is closed,

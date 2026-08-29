@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**148 RFCs total.** 30 draft, 32 under review, 9 accepted, 2 integrated (73 live), 48 implemented, 13 superseded, 14 refused (75 settled).
+**149 RFCs total.** 30 draft, 33 under review, 9 accepted, 2 integrated (74 live), 48 implemented, 13 superseded, 14 refused (75 settled).
 
 ## Draft (30)
 
@@ -48,7 +48,7 @@ the curated thematic map.
 - **RFC-0133** — From-Metel List: the Runtime-Sized Buffer Gap (`0-draft` ; rfcs/0-draft/rfc-0133-from-metel-list-the-runtime-sized-buffer-gap.md ; date 2026-08-13)
 - **RFC-0145** — Static Storage Duration (`0-draft` ; rfcs/0-draft/rfc-0145-static-storage-duration.md ; date 2026-08-27)
 
-## Under Review (32)
+## Under Review (33)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0050** — Closure Capture Lists (`1-under-review` ; rfcs/1-under-review/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-08-23)
@@ -82,6 +82,7 @@ the curated thematic map.
 - **RFC-0147** — Projection-Receiver Destructors (`1-under-review` ; rfcs/1-under-review/rfc-0147-projection-receiver-destructors.md ; date 2026-08-28 ; updated 2026-08-28)
 - **RFC-0148** — Row-Parametric Destructors (`1-under-review` ; rfcs/1-under-review/rfc-0148-row-parametric-destructors.md ; date 2026-08-28 ; updated 2026-08-28)
 - **RFC-0149** — Aspect Method Constraint Domain Inclusion (`1-under-review` ; rfcs/1-under-review/rfc-0149-aspect-method-constraint-domain-inclusion.md ; date 2026-08-29 ; updated 2026-08-29)
+- **RFC-0150** — Nested Row Narrowing (`1-under-review` ; rfcs/1-under-review/rfc-0150-nested-row-narrowing.md ; date 2026-08-29 ; updated 2026-08-29)
 
 ## Accepted (9)
 

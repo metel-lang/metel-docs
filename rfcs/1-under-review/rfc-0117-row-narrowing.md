@@ -22,6 +22,16 @@ updated: '2026-08-23'
 > "0% implemented" any longer.**
 
 > **Status — under review (2026-08-23).** Committed to v0.13.0, tracking issue #789 filed 2026-08-22 -- real dependency-chain engagement, not a calendar promotion
+>
+> **Updated 2026-08-29 (pre-acceptance review).** Open Question 3 resolved: **this RFC
+> covers flat narrowing only** — moving a whole field out, at any depth the field is
+> reached, removes that one label. A record-typed field is moved as a **unit**. Narrowing
+> a field *of* a record-typed field in place (`o.inner.a`, leaving `o : Outer.{ inner:
+> Inner.{ b }, tag }`) needs a recursive residual type system — new type grammar for a
+> branded row whose field type differs from the declaration, tuple residuals, and
+> recursive `Drop` receiver shapes — none of which exist yet. That is **RFC-0150 (Nested
+> Row Narrowing)**, targeted with RFC-0147/0148. RFC-0137 references corrected to
+> `3-integrated`. All three open questions now resolved.
 
 ## Summary
 
@@ -35,7 +45,7 @@ space of possible residuals is the subset lattice, bounded by 2^*N* and trivial 
 realistic struct sizes.
 
 **The same rule applies to a nominal struct's own row, not only an anonymous record's**
-(RFC-0137, `2-accepted`) — see §1's own worked example.
+(RFC-0137, `3-integrated`) — see §1's own worked example.
 
 ---
 
@@ -70,6 +80,13 @@ that causes it.
 narrowed again. It is not a special "partially moved" state that must be repaired before
 use.
 
+**Narrowing is path-sensitive, following RFC-0071's move tracking.** The residual type at
+a program point is determined by the set of fields moved on *every* path reaching it: a
+field moved on one arm of an `if` (and not the other) is conservatively treated as moved
+after the join, and a move carried around a loop participates in the same fixpoint the
+move checker already computes. Narrowing adds no new control-flow analysis — it is the
+type-level reading of the move state RFC-0071 already tracks per binding.
+
 **The same rule applies uniformly to a nominal type's own row, not only to an anonymous
 record's (dependency discharged, see §3 below).**
 
@@ -84,16 +101,24 @@ fun main() {
 
 `Handle.{ fd }` is a real, ordinary value of the *same brand* as `Handle` — not a
 coincidentally-shaped anonymous record. RFC-0137 (Nominal Types as Branded Rows,
-`2-accepted`) supplies the `(brand, row)` representation this depends on; the rule
+`3-integrated`) supplies the `(brand, row)` representation this depends on; the rule
 itself, the subset-lattice bound, and "the residual is an ordinary value" all apply
 exactly as stated above, for either kind.
+
+**A record-typed field is moved as a unit.** `let i = o.inner` removes the whole `inner`
+label, giving `o : Outer.{ tag }` — the residual's row never carries a *narrower* type
+for a field it still holds. Narrowing a field *of* `inner` in place is nested narrowing,
+deferred to RFC-0150 (§3).
 
 ## 2. Why this needs no row machinery
 
 A closed record over *N* fields has at most 2^*N* residual shapes, all of them concrete
 record types that RFC-0116 can already express. Narrowing computes one concrete type from
-another concrete type by removing a label. There is no unification variable, no row kind,
-and no inference problem.
+another concrete type by removing a label. A field is either present at its declared type
+or gone — a record-typed field is one label, not a sub-lattice — so there is no
+unification variable, no row kind, and no inference problem. (Recursing into a
+record-typed field, which *would* make the residual space a product of sub-lattices and
+needs residual field types the type grammar does not yet express, is RFC-0150.)
 
 This is the load-bearing reason narrowing is specified here rather than in RFC-0121: it
 looks like row polymorphism and is not. Abstracting over *which* residual a function
@@ -124,6 +149,15 @@ accepts is a genuinely different capability and belongs to RFC-0121.
   under "what this RFC does not cover" — kept here, not moved, per this corpus's
   append-only convention, but nominal narrowing is now within this RFC's own stated
   scope, not excluded from it.
+- **Nested narrowing.** Narrowing a field *of* a record-typed field in place
+  (`o.inner.a`, so `o : Outer.{ inner: Inner.{ b }, tag }`) — as opposed to moving the
+  whole `inner` field as a unit — is **RFC-0150 (Nested Row Narrowing)**. It needs a
+  recursive residual type system this RFC deliberately avoids: a type grammar for a
+  branded row whose field type differs from the declaration, residual types for tuple
+  fields (RFC-0071 §9a tracks tuple elements like struct fields), recursive `Drop`
+  receiver shapes rather than a flat required-field set, and control-flow-join rules for
+  path-dependent nested residuals. RFC-0150 is targeted alongside RFC-0147/0148, whose
+  narrowed `drop` receiver forms it depends on.
 - **Borrowed narrowing.** Narrowing a `&var` view rather than an owned value is
   RFC-0119's by-reference mode and RFC-0109's views.
 - **Per-field multiplicity.** Deliberately out of scope for the whole records cluster
@@ -165,9 +199,19 @@ accepts is a genuinely different capability and belongs to RFC-0121.
    migration is tracked). Until RFC-0137's own row-bounded mechanism is actually built,
    `--move-check` continues to reject every partial move of a `Drop` type
    unconditionally, exactly as RFC-0071 §7 states.
-3. **Is the 2^*N* claim actually the right bound in the presence of nesting?** A record
+3. ~~**Is the 2^*N* claim actually the right bound in the presence of nesting?** A record
    whose field is itself a record has residuals in both dimensions. Believed fine —
-   narrowing is per-value, not recursive — but not checked.
+   narrowing is per-value, not recursive — but not checked.~~ **Resolved 2026-08-29 —
+   this RFC is flat; nesting does not arise.** A record-typed field is moved as a **unit**
+   (`let i = o.inner` → `o : Outer.{ tag }`); a residual's row never carries a narrower
+   type for a field it still holds. So the bound is exactly `2^N` over the value's own
+   fields, and `R` never recurses. The moved-out `inner` is then its own value with its
+   own independent `2^M` lattice — no interaction, no product. **Recursive (nested)
+   narrowing** — `o.inner.a` narrowing `o.inner`'s type in place — is a real capability
+   but a separate one: it needs residual field types the type grammar does not express, a
+   residual form for tuple-typed fields, recursive `Drop` receiver shapes, and join rules
+   for path-dependent nested residuals. It is **RFC-0150 (Nested Row Narrowing)**, §3,
+   targeted with RFC-0147/0148.
 
 ---
 
@@ -183,10 +227,14 @@ accepts is a genuinely different capability and belongs to RFC-0121.
   completing a row fires `construct` rather than a bare write
 - `reports/substructural-types/nominal-types-as-branded-rows.md` §4 — the `Drop`-dispatch
   leak that arises when narrowing is extended to nominal types
-- RFC-0137 (Nominal Types as Branded Rows, `2-accepted` 2026-08-27 — re-accepted
-  after a same-day 2026-08-25 revert) — supplies nominal-type narrowing directly;
-  §3's own stated dependency folded in 2026-08-27 (§1's nominal-type worked example);
-  resolves Open Questions 1 and 2 above
+- RFC-0137 (Nominal Types as Branded Rows, `3-integrated`) — supplies nominal-type
+  narrowing directly and the branded `(brand, row)` representation; §3's own stated
+  dependency folded in 2026-08-27 (§1's nominal-type worked example); its §5 row-bounded
+  `Drop` dispatch resolves Open Questions 1 and 2
+- RFC-0150 (Nested Row Narrowing) — the recursive extension: narrowing a field of a
+  record-typed field in place. Depends on this RFC and on RFC-0147/0148's narrowed
+  `drop` receiver forms; carries the residual-type-grammar, tuple-residual, and
+  control-flow-join questions this RFC leaves out (Open Question 3, §3)
 - `public/rfcs/0-draft/rfc-0089-linear-types.md`,
   `public/rfcs/0-draft/rfc-0091-linear-records.md` — per-field multiplicity, deliberately
   deferred until records are implemented
