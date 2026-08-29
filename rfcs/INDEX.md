@@ -694,14 +694,19 @@ implementation).
   Conformance — defines the substitutability relation between an aspect method's generic
   constraints and its implementation: an implementation may accept a wider domain but
   cannot narrow it (`D_aspect ⊆ D_impl`). Covers record kind, aspect and row bounds, and
-  associated-type equality bindings. **All 6 open questions resolved 2026-08-29:** the
-  entailment relation is a *closed* set of directed rules (conjunction elimination,
-  `Copy ⊢ !Drop`, an 18-row open/closed/label-only/negative row table, associated-type
-  identity), amended only by a normative RFC — never a registry closure; unsatisfiable
-  constraint conjunctions are rejected at their own declaration so conformance never sees
-  an empty domain; aspect-method `where` clauses stay normalize-only (syntax split to
-  metel-core#896); deferred entailment extensions to metel-core#895. Committed to
-  **v0.13.0** via metel-core#617 (retitled "review, accept, and implement"). Distinct
+  associated-type equality bindings. **All 6 open questions resolved 2026-08-29, then
+  revised the same day after an adversarial review:** the entailment relation is a
+  *bounded* rule set (conjunction elimination, `Copy ⊢ !Drop`, an open/closed/label-only/
+  negative row table with multi-label decomposition, associated-type identity) **plus a
+  `P ⊢ A` rule per reachable conditional/blanket `extend<G: P> G: A`** — read from the
+  same bounded set negative-bound satisfaction uses, not an unbounded closure and not
+  `type_satisfies_aspect`. Unsatisfiable constraint conjunctions are rejected at their
+  own declaration (widened conflict set: `A ∧ !A`, `Copy ∧ Drop`, blanket-derived
+  `A ∧ !B`, any positive row + violating negative, `{ l: A } ∧ { l: B }`, contradictory
+  `Assoc = X` / `Assoc = Y`) so conformance never sees an empty domain. `where` clauses
+  stay normalize-only (syntax → metel-core#896); deferred entailment extensions →
+  metel-core#895. Committed to **v0.13.0** via metel-core#617 (retitled). **Needs a fresh
+  acceptance review of the widened conflict set and the reachable-blanket rule.** Distinct
   from RFC-0036's conditional-impl selection and RFC-0118's row-bound satisfaction.
 
 - **RFC-0130** *(draft, opened 2026-08-06)* — extends Aspect: Renaming `impl
