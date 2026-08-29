@@ -29,7 +29,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/888'
 >   (amended 2026-08-28); unchanged by this RFC.
 > - **RFC-0109** — not a dependency of this RFC (it is RFC-0147's).
 
-> **Status — under review (2026-08-28).** Split from RFC-0147 2026-08-28; substantiated proposal (row-parametric drop receiver, deltas from RFC-0147 spelled out, worked example) with explicit blocking open questions. Tracking: metel-core#888.
+> **Status — under review (2026-08-28).** Split from RFC-0147 2026-08-28; substantiated proposal (row-parametric drop receiver, deltas from RFC-0147 spelled out, worked example) with explicit blocking open questions. Committed to **v0.14.1** (issue #888) — the "row-polymorphism consumers" point release, shared with its dependency RFC-0146, after RFC-0121's v0.14.0. Tracking: metel-core#888.
 
 ## Summary
 
@@ -132,8 +132,8 @@ is inherited unresolved, exactly as in RFC-0147 §3.
 ## Open Questions
 
 1. **Depends on RFC-0146 → RFC-0121.** *(Blocked on a dated dependency.)* This RFC cannot
-   be accepted before RFC-0146 is, and RFC-0146 before RFC-0121 (v0.14.0) or its
-   carve-out. RFC-0146 is v0.15.0, so this form is **v0.16.0 at the earliest** —
+   be accepted before RFC-0146 is, and RFC-0146 before RFC-0121 (v0.14.0). Both this RFC
+   and RFC-0146 are milestoned **v0.14.1**, the point release after RFC-0121's v0.14.0;
    RFC-0147's fixed form covers the `Drop` narrowed-receiver need in v0.14.0.
 2. **Does this subsume RFC-0147's fixed form?** A fixed `Self.{ fd }` receiver is
    `Self.R where R: { fd }` with an exact (no `..`) bound and `R` unused. Decide whether
