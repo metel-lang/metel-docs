@@ -2,10 +2,16 @@
 id: rfc-0117
 title: "Row Narrowing"
 date: '2026-07-24'
-status: under-review
+status: integrated
 tracking: 'https://github.com/metel-lang/metel-core/issues/789'
 target: v0.13.0
-updated: '2026-08-23'
+updated: '2026-08-29'
+coverage:
+  "1": { spec: "spec.ownership.narrowing.legality-1" }
+  "2": { spec: "spec.ownership.narrowing.legality-2" }
+  "3": { kind: untestable, reason: "Scope-boundary section: enumerates capabilities owned by other RFCs (widening -> RFC-0114, nested narrowing -> RFC-0150, borrowed narrowing -> RFC-0119/0109, per-field multiplicity -> RFC-0089/0091). No rule of its own to test." }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/789'
+impl_status: not-started
 ---
 
 > **Extracted from RFC-0090 on 2026-07-24** (superseded; see RFC-0116's header for why the
@@ -32,6 +38,10 @@ updated: '2026-08-23'
 > recursive `Drop` receiver shapes — none of which exist yet. That is **RFC-0150 (Nested
 > Row Narrowing)**, targeted with RFC-0147/0148. RFC-0137 references corrected to
 > `3-integrated`. All three open questions now resolved.
+
+> **Status — accepted (2026-08-29).** Flat row narrowing: moving a field out narrows the value's type to the 2^N subset lattice, no row variables; path-sensitive via RFC-0071's existing move tracking. All three open questions resolved (OQ1/OQ2 via RFC-0137 §5, OQ3 by scoping to flat -- nested narrowing is RFC-0150). Pre-acceptance Codex review clean for the flat case.
+
+> **Status — integrated (2026-08-29).** Flat row narrowing integrated into reference/spec/ownership.md#narrowing (legality-1/legality-2, co-origin with RFC-0137), blocked-exempt on metel-core#858 pending move-triggered narrowing. Nested narrowing is RFC-0150.
 
 ## Summary
 
@@ -243,5 +253,12 @@ accepts is a genuinely different capability and belongs to RFC-0121.
 
 ## Decision
 
-**Outcome:** *(pending)*
-**Target:** *(set when accepted)*
+**Outcome:** **Accepted and integrated 2026-08-29.** Flat row narrowing: moving a field
+out narrows the value's type to the closed 2^*N* subset lattice, at the same brand for a
+struct; path-sensitive via RFC-0071's existing move tracking. All three open questions
+resolved — OQ1/OQ2 via RFC-0137 §5's row-bounded `Drop` dispatch, OQ3 by scoping this RFC
+to flat narrowing (nested/recursive narrowing is RFC-0150). Integrated into
+`reference/spec/ownership.md#narrowing` (`spec.ownership.narrowing.legality-1`/`legality-2`,
+co-origin with RFC-0137), blocked-exempt on metel-core#858 pending move-triggered
+narrowing.
+**Target:** v0.13.0, via metel-core#789.

@@ -37,7 +37,7 @@ impl_status: in-progress
 > `rfc.py new`'s overlap check flagged RFC-0120, RFC-0116, RFC-0089, RFC-0117, RFC-0090 —
 > checked each: RFC-0116 (Anonymous Record Types, implemented) owns the record
 > *type-former* this RFC narrows nominal values into, and is a dependency, not an
-> overlap. RFC-0117 (Row Narrowing, under review) specifies narrowing for records and
+> overlap. RFC-0117 (Row Narrowing, integrated) specifies narrowing for records and
 > explicitly defers narrowing a *nominal* type as out of its own scope (§3: "depends on
 > nominal types carrying rows at all") — this RFC is that missing dependency, not a
 > restatement. RFC-0120 (Named Records, under review) proposes an **opt-in** third declaration
@@ -831,7 +831,7 @@ this corpus's append-only convention for exactly this situation.*
 - RFC-0116 (Anonymous Record Types, implemented) — the record type-former narrowing
   produces values of; §4 there is the projection expression this RFC's narrowing
   matches exactly
-- RFC-0117 (Row Narrowing, under review) — specifies narrowing for records; this RFC
+- RFC-0117 (Row Narrowing, integrated) — specifies narrowing for records; this RFC
   supplies the nominal-type dependency §3 there used to defer, folded in 2026-08-27
 - RFC-0118 (Row Bounds, implemented) — `<record T: { … }>`; already establishes that a
   nominal struct does not satisfy a row bound, the same principle §3 here extends to a
