@@ -272,6 +272,40 @@ this RFC.
 
 ---
 
+## Relationship to frontend monomorphization (metel-core#288)
+
+*Added 2026-08-29. Cross-reference only — no design change here.*
+
+§3's `comptime N: u64` parameters and ordinary `<T>` type parameters are **two axes of
+the same instantiation problem**: to lower a `comptime N` function the compiler must know
+the concrete `N` values it is called with, exactly as it must know the concrete types a
+`<T>` function is called with. RFC-0092 §1 already frames `<T>` generics as
+comptime-staging sugar, which makes this one mechanism, not two.
+
+**metel-core#288 ("Frontend monomorphization for compiler-facing typed IR")** builds that
+mechanism: a frontend pass that collects concrete generic instantiations across the whole
+program (a worklist over concrete call sites) and produces concrete typed specializations
+with stable identities, replacing the interpreter's current runtime generic-body
+reconstruction. It is milestoned v0.20.1, one point release ahead of the compiler
+foundation (metel-core#859) it feeds.
+
+Consequences for this RFC:
+
+- **#288's instantiation-collection pass must cover `comptime N: u64` parameters, not
+  only type parameters** — otherwise §3 retrofits a second, parallel instantiation
+  collector. Whichever lands first should be designed with the other's axis in mind.
+- **#288 does not gate this RFC.** §3's *static* rules — the `comptime N` spelling
+  (§3.1), the admissible-instantiation set (§3.2), definition-site bound checking (§3.3)
+  — are independent of how instantiations are collected for lowering, and the tree-walk
+  interpreter already instantiates generics per call (via runtime reconstruction) without
+  #288. This is a "co-design the shared pass" note, not a dependency edge.
+- The **no-arithmetic-in-type-position** deferral (§3.4) keeps the `comptime N` axis a
+  finite set of concrete `u64` values per function, i.e. the same shape as the type-param
+  axis — which is what makes one collector viable. Admitting `[T; N + 1]` later would
+  reopen this.
+
+---
+
 ## Open Questions
 
 1. **Recursion and termination for `comptime fun`** *(inherited from RFC-0092 OQ6 /
@@ -402,6 +436,9 @@ this RFC.
 - **RFC-0093 (Derive Registration) / RFC-0094 (Comptime Metaprogramming)** — depend on
   RFC-0092's half, not on this one directly.
 - `metel-core#263` — the hardcoded `[T; N]: Copy` arm this RFC's §3 exists to retire.
+- `metel-core#288` (Frontend monomorphization, v0.20.1) — the instantiation-collection
+  pass §3's `comptime N` axis shares with type-parameter monomorphization; see
+  "Relationship to frontend monomorphization" above. Co-design, not a dependency edge.
 - `reports/strategy/OBJECTIVES.md` Trigger 30 — the strategy-level record of why this
   split is happening now rather than whenever RFC-0092 was next visited.
 - Prior art: Zig `comptime` (staging model, `comptime` parameters); Rust const generics
