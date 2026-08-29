@@ -337,6 +337,15 @@ above it are.
   Depends on RFC-0117, RFC-0137 (`3-integrated`), and **RFC-0147/0148**'s narrowed
   `drop`-receiver syntax, so it is scheduled after them (provisionally v0.14.1,
   metel-core#900).
+- **RFC-0151** *(draft, opened 2026-08-29)* — Tuples as Numeric-Label Rows — make
+  `(A, B)` sugar for the anonymous record `{ 0: A, 1: B }` (a closed row with integer
+  labels, numerically ordered), so there is one structural product former. The `(…)`
+  surface syntax and `t.0` access stay; `Type::Tuple` goes away. Narrowing (RFC-0117),
+  row bounds (RFC-0118), branding (RFC-0137), and the `Copy` / `Ord` derivations then
+  apply to tuples with no second column — and RFC-0150's tuple-residual open question
+  and RFC-0125's pack-into-tuple calculus dissolve. Open: `()` vs `Unit`, whether
+  mixed integer/identifier-label rows are allowed, migration staging. Sequence before
+  RFC-0125 (v0.14.0).
 - **RFC-0118** *(implemented in v0.12.0, was #577)* — Row Bounds — `<record T: { x: f64, .. }>` and `!{ token }`,
   replacing the `HasField`/`Lacks` family that never parsed. The trailing `..` is an
   anonymous row variable and is what makes a bound *open*; without it the bound is closed,
