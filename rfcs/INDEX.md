@@ -690,11 +690,11 @@ The load-bearing accepted RFCs everything else cites. One open item as of 2026-0
 cluster itself. **Resolved 2026-07-13**: RFC-0097 integrated (issue #555 tracks
 implementation).
 
-- **RFC-0129** *(integrated 2026-08-29, opened 2026-08-05)* — Aspect Method Generic Constraint
+- **RFC-0129** *(implemented 2026-08-29, opened 2026-08-05)* — Aspect Method Generic Constraint
   Conformance — the substitutability relation between an aspect method's generic
-  constraints and its implementation. Integrated into `reference/spec/declarations.md`
-  (`implementing-an-aspect` legality-12–14), blocked-exempt on metel-core#617 pending
-  implementation. **Cut to a minimal, sound interim on 2026-08-29:**
+  constraints and its implementation. Implemented in metel-core#897 (#617) and integrated
+  into `reference/spec/declarations.md` (`implementing-an-aspect` legality-12–14).
+  **Cut to a minimal, sound interim on 2026-08-29:**
   after normalization (alpha-renaming, bound reordering, deduplication, inline-vs-`where`
   placement) the implementation method's generic-constraint conjunction must be
   **structurally equal** to the aspect method's, with `GenericParam.is_record` included so
