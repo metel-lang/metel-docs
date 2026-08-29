@@ -691,27 +691,41 @@ cluster itself. **Resolved 2026-07-13**: RFC-0097 integrated (issue #555 tracks
 implementation).
 
 - **RFC-0129** *(under review 2026-08-23, opened 2026-08-05)* — Aspect Method Generic Constraint
-  Conformance — defines the substitutability relation between an aspect method's generic
-  constraints and its implementation: an implementation may accept a wider domain but
-  cannot narrow it (`D_aspect ⊆ D_impl`). Covers record kind, aspect and row bounds, and
-  associated-type equality bindings. **All 6 open questions resolved 2026-08-29, then
-  revised across two adversarial review rounds:** the entailment relation is a *bounded,
-  sound-but-incomplete* rule set (conjunction elimination, `Copy ⊢ !Drop`, an
-  open/closed/label-only/negative row table with multi-label decomposition — a closed row
-  is a singleton domain entailing each contained typed-open atom — and associated-type
-  identity); it does **not** call `type_satisfies_aspect` and, at first implementation,
-  does **not** derive entailments from reachable blanket impls (round 2 broke the interim
-  `P ⊢ A` rule — unsound against an explicit negative impl, under-specified for
-  multi-premise / constructor targets — so blanket-derived entailment *and* blanket-only
-  empty-domain detection are **deferred to metel-core#895**, with a conservative wrong-no
-  / tracked vacuous-conformance gap until then). Unsatisfiable conjunctions are otherwise
-  rejected at the declaration: `A ∧ !A`, `Copy ∧ Drop`, any positive row + same-label
-  violating negative, `{ l: A } ∧ { l: B }`, `Assoc = X ∧ Assoc = Y` with `X`/`Y` proven
-  distinct concrete types, and `record T` + non-local aspect impossible for records.
-  `where` clauses stay normalize-only (syntax → metel-core#896). Committed to **v0.13.0**
-  via metel-core#617 (retitled). **Needs a fresh acceptance review confirming the #895
-  retreat is acceptable for v0.13.0.** Distinct
-  from RFC-0036's conditional-impl selection and RFC-0118's row-bound satisfaction.
+  Conformance — the substitutability relation between an aspect method's generic
+  constraints and its implementation. **Cut to a minimal, sound interim on 2026-08-29:**
+  after normalization (alpha-renaming, bound reordering, deduplication, inline-vs-`where`
+  placement) the implementation method's generic-constraint conjunction must be
+  **structurally equal** to the aspect method's, with `GenericParam.is_record` included so
+  `<T>` ↔ `<record T>` is caught in both directions. That fixes the metel-core#616
+  unsoundness (accepting `<T>` → `<record T>`) while conservatively rejecting safe
+  *widening* (`<record T>` → `<T>`, `T: Copy` → `<T>`, `T: Ord` → `T: PartialOrd`) as a
+  wrong-no. Keeps §1 (specialize `Self` / aspect args / associated types, then require
+  receiver / parameter / result equality) and §4 (narrowing is a `T0012` on the `extend`
+  method declaration; the method is not registered for dispatch). Committed to **v0.13.0**
+  via metel-core#617. `where` clauses on aspect-method *declarations* stay out (syntax →
+  metel-core#896). **Domain inclusion (`D_aspect ⊆ D_impl`), the entailment engine, the
+  row-bound table, empty-domain rejection, and the phase-ordering rule moved to RFC-0149.**
+  Distinct from RFC-0036's conditional-impl selection and RFC-0118's row-bound satisfaction.
+
+- **RFC-0149** *(under review, opened 2026-08-29)* — Aspect Method Constraint Domain
+  Inclusion — carved from RFC-0129 to hold the part that needs real design. Replaces
+  RFC-0129's structural equality with **domain inclusion**: an implementation may *weaken*
+  generic constraints but never *strengthen* them, proven by a bounded, coherence-aware
+  entailment relation `⊢`. `⊢` consults **reachable blanket / conditional `extend` impls**
+  — deriving `T: Ord ⊢ T: PartialOrd` from the blanket, with RFC-0060/RFC-0081
+  negative-impl priority (disabled for an aspect if *any* reachable `extend X: !A`), full
+  premise-conjunction extraction, bare-parameter targets only, and a terminating
+  fixed-point chaining walk (RFC-0137's Drop-dispatch shape). Also settles what RFC-0129
+  deferred: the complete open/closed/label-only/negative **row-bound entailment table**;
+  **empty/contradictory-domain rejection** at a method declaration, including the
+  blanket-derived empty domains (`Copy ∧ !Tag` under a reachable `Copy: Tag` blanket)
+  RFC-0129 cannot detect; one **associated-type equality implication** step (amends
+  RFC-0082 with projection normalization); and a **phase-ordering rule** — which checks
+  run at aspect declaration vs. per specialized `extend`, so `Self`- and
+  associated-type-dependent conflicts fail at the `extend`, not too coarsely at the
+  aspect. Absorbs the whole of metel-core#895, whose tracker is rescoped to this RFC.
+  Scheduled for **v0.15.0**. Depends in spirit on RFC-0080 blanket impls (v0.13.1) and
+  RFC-0121 open rows (v0.14.0).
 
 - **RFC-0130** *(draft, opened 2026-08-06)* — extends Aspect: Renaming `impl
   Aspect` for Consistency with `extend` — renames the anonymous-type-parameter
