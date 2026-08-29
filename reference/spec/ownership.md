@@ -376,7 +376,17 @@ struct type instead of staying a distinct residual — `h.{ fd, name }` here is 
 The residual is an ordinary value: it can be bound, passed, returned, dropped, and
 narrowed again. For a struct over *N* fields, the space of residual shapes is the subset
 lattice, bounded by 2^*N* — there is no row variable and no unification involved in
-computing it.
+computing it. The same rule applies to an anonymous `record`'s row: moving a field out
+yields the record type with that label removed (there is no brand clause for an anonymous
+record). A record-typed field is moved as a **unit** — a residual's row never carries a
+*narrower* type for a field it still holds; narrowing a field of a field in place is
+[RFC-0150](../../rfcs/1-under-review/rfc-0150-nested-row-narrowing.md)'s.
+
+Narrowing is **path-sensitive**: the residual type at a program point reflects the fields
+moved on every path reaching it, exactly as move tracking already computes — a field
+moved on one arm of an `if` is conservatively moved after the join, and a loop-carried
+move participates in the same fixpoint. Narrowing adds no control-flow analysis of its
+own; it is the type-level reading of the move state.
 
 **A residual's row is never visible to structural matching, regardless of its width.**
 This is unchanged from today's rule that only a `record` (not a `struct`) satisfies a
@@ -392,12 +402,16 @@ unambiguously, that struct — not a same-shaped anonymous record, and not a
 ##### Legality Rule {#spec.ownership.narrowing.legality-1}
 
 Moving a field out of a struct value narrows that value's type to a row with the moved
-field removed, at the same brand.
+field removed, at the same brand; for an anonymous `record` value, to the record type
+with that label removed. A record-typed field is moved as a whole — the residual never
+holds a field at a narrower type. Narrowing is path-sensitive: the residual type at a
+program point reflects the fields moved on every path reaching it, joined conservatively
+at merge points and through loop fixpoints, exactly as move tracking computes.
 
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Move-triggered narrowing is not implemented -- a partial move today changes only compiler-internal move-tracking state, never the value's static type. Verified directly: `let h = Handle {...}; let n = h.name;` leaves `h`'s inferred type unchanged. Projection-triggered narrowing (`h.{ fd }`) is implemented -- see legality-2 -- this rule is specifically about the move-triggered form, RFC-0137 slice 2 (metel-core#858)." -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0117](../../rfcs/3-integrated/rfc-0117-row-narrowing.md), [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
@@ -410,7 +424,7 @@ A residual's row is never visible to structural matching; only its brand, fixed 
 declaration, determines eligibility, regardless of how narrow or wide the current row is.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0117](../../rfcs/3-integrated/rfc-0117-row-narrowing.md), [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

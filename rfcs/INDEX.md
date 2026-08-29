@@ -315,17 +315,17 @@ above it are.
   `dyn Aspect` checkpoint unchanged. Fixed projected receiver form + rationale: RFC-0147
   (via RFC-0109, v0.14.0 — one release after this RFC's own representation); row-parametric
   form: RFC-0148 (via RFC-0146 → RFC-0121; RFC-0146 + RFC-0148 share v0.14.1, after RFC-0121's v0.14.0).
-- **RFC-0117** *(under review, revised 2026-08-29 pre-acceptance)* — Row Narrowing —
-  moving a field out narrows the record's type — or a nominal struct's, via RFC-0137's
-  brand-preserving narrowing — to the closed 2^*N* subset lattice, no row variables and
-  no unification. Depends on RFC-0116 and on **RFC-0071** (`3-integrated`; partial-move
-  tracking real and tested behind `--move-check`, off by default). **All three open
-  questions resolved 2026-08-29:** OQ1/OQ2 via RFC-0137 §5's row-bounded `Drop` dispatch;
-  **OQ3 resolved by scoping this RFC to *flat* narrowing** — a record-typed field is
-  moved as a unit, the residual's row never carries a narrower type for a field it
+- **RFC-0117** *(integrated 2026-08-29 — merged into reference/spec/ownership.md#narrowing,
+  co-origin with RFC-0137; blocked-exempt on metel-core#858 pending move-triggered
+  narrowing)* — Row Narrowing — moving a field out narrows the record's type — or a
+  nominal struct's, via RFC-0137's brand-preserving narrowing — to the closed 2^*N*
+  subset lattice, no row variables and no unification; path-sensitive via RFC-0071's
+  existing move tracking. Depends on RFC-0116 and on **RFC-0071** (`3-integrated`).
+  **All three open questions resolved 2026-08-29:** OQ1/OQ2 via RFC-0137 §5's row-bounded
+  `Drop` dispatch; **OQ3 by scoping this RFC to *flat* narrowing** — a record-typed field
+  is moved as a unit, the residual's row never carries a narrower type for a field it
   still holds, so `R` never recurses and the bound stays 2^*N*. Nested (recursive)
-  narrowing — `o.inner.a` narrowing `o.inner` in place — is split to **RFC-0150**. Also
-  fixed earlier: `move x.y` worked examples that don't parse (metel-core#854).
+  narrowing — `o.inner.a` narrowing `o.inner` in place — is split to **RFC-0150**.
 - **RFC-0150** *(under review, opened 2026-08-29)* — Nested Row Narrowing — the recursive
   extension of RFC-0117: a nested partial move (`o.inner.a`) narrows the inner field's
   type *in place*, so `o : Outer.{ inner: Inner.{ b }, tag }`. Split from RFC-0117's
