@@ -893,7 +893,7 @@ implementation).
   as a strict later widening. **Not proposed for acceptance yet:** the by-value-use
   field's interaction with the two name-literal `Copy` implications — RFC-0072 §2.3's
   `Copy` ⟹ `!Drop` and RFC-0080's `Copy` ⟹ `Clone` — is unspecified.
-- **RFC-0135** *(draft, opened 2026-08-13)* — Multiplicity for Ordinary Types — companion
+- **RFC-0135** *(under review 2026-08-29, opened 2026-08-13)* — Multiplicity for Ordinary Types — companion
   to RFC-0134, not a dependency of it. Reframes `Copy` as `many` applied to a type's
   by-value-use operation rather than a closure's call operation — same axis RFC-0134
   already uses, named there (§5) but designed here. For named types (`struct`/`enum`)
@@ -902,7 +902,10 @@ implementation).
   `Copy` today (RFC-0071/RFC-0123), tuples have no impls at all (RFC-0061 §6), and only
   function pointers have a working one (RFC-0061 §7.2). Interacts with **RFC-0071**
   (Ownership and Move Semantics, affine-by-default foundation — see Aspect system core,
-  below) more than with RFC-0134 itself.
+  below) more than with RFC-0134 itself. **Milestoned v0.17.0** (metel-core#892) —
+  alongside "coherent Copy and closure capabilities" and #702/#263's structural-types
+  Copy cleanup, which §3 describes but does not fix. Acceptance blocker: Open Question 3
+  (migration — breaking rename vs. permanent alias vs. deprecation window).
 - **RFC-0003** *(under review, corrected 2026-08-24; scheduled 2026-08-27)* — Concurrency Model — fiber handles,
   channels, `select`, `Send`/`Sync`, aspect-based desugaring (`Spawnable`/`Sendable`/
   `Receivable`/`Selectable`), and a crate-wide pluggable-runtime mechanism (swap the

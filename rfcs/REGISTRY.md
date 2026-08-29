@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-08-28'
+generated_on: '2026-08-29'
 ---
 
 # RFC Registry
@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**147 RFCs total.** 31 draft, 31 under review, 9 accepted, 2 integrated (73 live), 47 implemented, 13 superseded, 14 refused (74 settled).
+**147 RFCs total.** 30 draft, 32 under review, 9 accepted, 2 integrated (73 live), 47 implemented, 13 superseded, 14 refused (74 settled).
 
-## Draft (31)
+## Draft (30)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -46,10 +46,9 @@ the curated thematic map.
 - **RFC-0128** — Exportable overload sets and shadow-versus-extend semantics (`0-draft` ; rfcs/0-draft/rfc-0128-exportable-overload-sets-and-shadow-versus-extend-semantics.md ; date 2026-08-04)
 - **RFC-0131** — Hoist let/var Bindings to the Top of Their Containing Block (`0-draft` ; rfcs/0-draft/rfc-0131-hoist-let-var-bindings-to-the-top-of-their-containing-block.md ; date 2026-08-09)
 - **RFC-0133** — From-Metel List: the Runtime-Sized Buffer Gap (`0-draft` ; rfcs/0-draft/rfc-0133-from-metel-list-the-runtime-sized-buffer-gap.md ; date 2026-08-13)
-- **RFC-0135** — Multiplicity for Ordinary Types (`0-draft` ; rfcs/0-draft/rfc-0135-multiplicity-for-ordinary-types.md ; date 2026-08-13)
 - **RFC-0145** — Static Storage Duration (`0-draft` ; rfcs/0-draft/rfc-0145-static-storage-duration.md ; date 2026-08-27)
 
-## Under Review (31)
+## Under Review (32)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0050** — Closure Capture Lists (`1-under-review` ; rfcs/1-under-review/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-08-23)
@@ -73,6 +72,7 @@ the curated thematic map.
 - **RFC-0129** — Aspect Method Generic Constraint Conformance (`1-under-review` ; rfcs/1-under-review/rfc-0129-aspect-method-generic-constraint-conformance.md ; date 2026-08-05 ; updated 2026-08-23)
 - **RFC-0132** — Comptime Execution Model — comptime let, comptime fun, comptime if (`1-under-review` ; rfcs/1-under-review/rfc-0132-comptime-execution-model-comptime-let-comptime-fun-comptime-if.md ; date 2026-08-13 ; updated 2026-08-23)
 - **RFC-0134** — Closure Call Capability (`1-under-review` ; rfcs/1-under-review/rfc-0134-closure-call-capability.md ; date 2026-08-13 ; updated 2026-08-23)
+- **RFC-0135** — Multiplicity for Ordinary Types (`1-under-review` ; rfcs/1-under-review/rfc-0135-multiplicity-for-ordinary-types.md ; date 2026-08-13 ; updated 2026-08-29)
 - **RFC-0136** — Walrus for Kept Bindings (`1-under-review` ; rfcs/1-under-review/rfc-0136-walrus-for-kept-bindings.md ; date 2026-08-23 ; updated 2026-08-25)
 - **RFC-0139** — Garbage-Collected Allocators and Allocator-Determined Pointer Types (`1-under-review` ; rfcs/1-under-review/rfc-0139-garbage-collected-allocators-and-allocator-determined-pointer-types.md ; date 2026-08-24 ; updated 2026-08-27)
 - **RFC-0140** — Algebraic Effects (`1-under-review` ; rfcs/1-under-review/rfc-0140-algebraic-effects.md ; date 2026-08-25 ; updated 2026-08-25)
