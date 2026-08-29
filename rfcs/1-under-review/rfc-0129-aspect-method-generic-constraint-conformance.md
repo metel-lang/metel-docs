@@ -136,14 +136,28 @@ constraints are compared.
 
 After §1 specialization and §3 normalization to canonical conjunctive form, the
 implementation method conforms iff its generic-constraint conjunction is
-**identical** to the aspect method's:
+**identical** to the aspect method's. Identity is over **resolved canonical
+atoms** — every aspect, type, associated-type, and row-label reference stands for
+the entity name resolution and §1 specialization bind it to, never its source
+spelling. Two atoms that print the same but resolve to different entities (an
+aspect `Printable` that is `a::Printable` on the aspect side and `b::Printable`
+on the `extend` side) are **not** identical.
 
-- the same record-kind requirement on each corresponding generic parameter
-  (`GenericParam.is_record` is part of the comparison — this is the
-  metel-core#616 fix);
-- the same set of positive and negative aspect bounds;
-- the same set of row bounds;
-- the same set of associated-type equality bindings.
+The atoms compared, per corresponding generic parameter:
+
+- the same **record-kind requirement**. `GenericParam.is_record` is part of the
+  comparison (the metel-core#616 fix); §3 first folds a `where`-clause record
+  marker into that flag, so the binder and `where` spellings compare equal.
+- the same set of positive and negative **aspect bounds**, by resolved aspect
+  identity and resolved type arguments.
+- the same set of **row bounds**, by resolved label and resolved field type.
+- the same set of **associated-type equality bindings**. A binding is identified
+  by its **resolved projection key** — `(resolved aspect, associated-type name)`
+  applied to the parameter — and two bindings are the same iff their projection
+  keys are equal *and* their right-hand sides are equal under normal type
+  equality after §1 specialization (alias expansion included). A binding whose
+  projection or right-hand side is still unresolved, or resolves differently on
+  the two sides, is **not** the same binding.
 
 Adding a constraint (strengthening) and removing one (weakening) are **both**
 rejected. Weakening is sound in principle — RFC-0149 will accept it — but is a
@@ -168,14 +182,23 @@ extend Holder: AnyValue {
 
 ### 3. Normalize source spelling before checking equality
 
-The following do not change a method's admissible domain and must not affect
+Normalization first **resolves and specializes**: every identifier in a bound is
+replaced by the entity it resolves to in its own scope, and §1's `Self` /
+aspect-argument / associated-type substitution is applied. The §2 equality check
+runs on the result — it never compares raw identifiers or pretty-printed text.
+
+The following then do not change a method's admissible domain and must not affect
 conformance:
 
 - alpha-renaming method generic parameters (`T` versus `U`);
 - reordering independent conjunctive bounds;
-- duplicate bounds; and
+- duplicate bounds;
 - placing a constraint inline or in a method `where` clause, where that syntax is
-  available.
+  available; and
+- writing the record kind at the generic binder (`<record T>`) versus in a
+  `where` clause. RFC-0118 record-kinds the parameter from either position;
+  canonicalization computes the effective `GenericParam.is_record` from both
+  before §2 compares it.
 
 The comparison is over the whole generic parameter tuple, not one independent
 list per parameter. A bound may mention another method generic parameter, for
@@ -196,8 +219,9 @@ aspect declares `T` with no bound, implementation requires `T: Copy`
 A rejected weakening should additionally point at RFC-0149:
 
 ```text
-`Holder::keep` narrows nothing but weakens generic parameter `T`
-(`record T` → `T`); constraint weakening is not accepted until RFC-0149.
+`Holder::keep` weakens generic parameter `T` (`record T` → `T`); constraint
+weakening is not supported in v0.13.0. See the RFC-0149 proposal for the planned
+domain-inclusion rule.
 ```
 
 ## Alternatives considered
