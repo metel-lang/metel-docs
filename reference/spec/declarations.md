@@ -180,15 +180,13 @@ the aspect signature is specialized with the `extend` block's target type for
 specialization the receiver form, ordinary parameter count and types, and result
 type must be equal; method generic-parameter names compare alpha-equivalently.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#617" reason="Aspect-method signature conformance (RFC-0129) is not implemented; the pre-existing comparator checks method-name completeness only. Tracked by metel-core#617." -->
-
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0129](../../rfcs/3-integrated/rfc-0129-aspect-method-generic-constraint-conformance.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0129](../../rfcs/4-implemented/rfc-0129-aspect-method-generic-constraint-conformance.md)_</span>
 <!-- rfc.py:origins:end -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#617: Aspect-method signature conformance (RFC-0129) is not implemented; the pre-existing comparator checks method-name completeness only. Tracked by metel-core#617._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage21_neg_02_concrete_aspect_impl_signature_mismatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage21_neg_02_concrete_aspect_impl_signature_mismatch.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-13}
 
@@ -203,15 +201,13 @@ bounds, the set of row bounds, and the set of associated-type equality bindings
 (each identified by its resolved projection key and right-hand-side type after
 specialization). Neither weakening nor strengthening a constraint conforms.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#617" reason="Generic-constraint conformance (RFC-0129) is not implemented -- the pre-existing comparator does not compare method-generic constraints and omits GenericParam.is_record. Tracked by metel-core#617." -->
-
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0129](../../rfcs/3-integrated/rfc-0129-aspect-method-generic-constraint-conformance.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0129](../../rfcs/4-implemented/rfc-0129-aspect-method-generic-constraint-conformance.md)_</span>
 <!-- rfc.py:origins:end -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#617: Generic-constraint conformance (RFC-0129) is not implemented -- the pre-existing comparator does not compare method-generic constraints and omits GenericParam.is_record. Tracked by metel-core#617._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage21_10_aspect_impl_generic_constraints_identical.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage21_10_aspect_impl_generic_constraints_identical.mtl), [stage21_11_aspect_impl_generic_constraints_alpha_rename_and_reorder.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage21_11_aspect_impl_generic_constraints_alpha_rename_and_reorder.mtl), [stage21_12_aspect_impl_generic_constraint_in_where_clause.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage21_12_aspect_impl_generic_constraint_in_where_clause.mtl), [stage21_neg_06_aspect_impl_adds_generic_bound.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage21_neg_06_aspect_impl_adds_generic_bound.mtl), [stage21_neg_07_aspect_impl_adds_record_kind.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage21_neg_07_aspect_impl_adds_record_kind.mtl), [stage21_neg_08_aspect_impl_drops_generic_bound_conservative_wrong_no.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage21_neg_08_aspect_impl_drops_generic_bound_conservative_wrong_no.mtl), [stage21_neg_09_aspect_impl_drops_record_kind_conservative_wrong_no.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage21_neg_09_aspect_impl_drops_record_kind_conservative_wrong_no.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-14}
 
@@ -220,15 +216,13 @@ An implementation method whose signature (legality-12) or generic constraints
 reported with `T0012`. Such a method does not satisfy the aspect and does not
 contribute to aspect-method dispatch.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#617" reason="Depends on the conformance checks above (RFC-0129, not implemented); there is no non-conformance to diagnose yet. Tracked by metel-core#617." -->
-
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0129](../../rfcs/3-integrated/rfc-0129-aspect-method-generic-constraint-conformance.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0129](../../rfcs/4-implemented/rfc-0129-aspect-method-generic-constraint-conformance.md)_</span>
 <!-- rfc.py:origins:end -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#617: Depends on the conformance checks above (RFC-0129, not implemented); there is no non-conformance to diagnose yet. Tracked by metel-core#617._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [stage21_neg_06_aspect_impl_adds_generic_bound.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/aspects/stage21_neg_06_aspect_impl_adds_generic_bound.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -1021,10 +1015,10 @@ extend Holder: AnyValue {
 }
 ```
 
-> **Planned for v0.13.0 (RFC-0129).** Generic-constraint conformance is not
-> enforced yet; today's comparator checks method-name completeness only. Allowing
-> an implementation to *weaken* a constraint (admissible-domain inclusion) is a
-> later addition, RFC-0149.
+> Letting an implementation *weaken* a constraint — admissible-domain inclusion,
+> e.g. accepting `<record T>` in the aspect against a plain `<T>` implementation —
+> is a later addition, RFC-0149. Until it lands, a widening is rejected here as a
+> conservative wrong-no.
 
 **Conditional extend blocks.** An aspect implementation for a
 generic type may be conditional on its own type parameters satisfying additional
