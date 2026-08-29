@@ -9,7 +9,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/617'
 ---
 
 > **Status — under review (2026-08-23).** Real substantiated proposal (entailment table, primary proposal) but 6 open open questions block acceptance -- OQ1-6 none resolved. Its own References section already names #617 as the implementation follow-up.
-> **Update 2026-08-29:** OQ1-6 resolved (see that section), then revised the same day after an adversarial review that found three empty-domain shapes OQ6's first pass missed (blanket-derived `Copy + !Tag`, contradictory associated-type equalities, open/label-only positive row + violating negative) and one over-strict rule in OQ1 (forbidding reachable-blanket consultation). All addressed in-place. OQ2/OQ3's deferred extensions: metel-core#895; OQ5's `where`-syntax piece: metel-core#896. Committed to **v0.13.0** via metel-core#617. **Needs a fresh acceptance review of the widened OQ6 conflict set and the reachable-blanket rule** before `2-accepted`.
+> **Update 2026-08-29:** OQ1-6 resolved, then revised across two adversarial review rounds. Round 1 widened OQ6's conflict set and relaxed OQ1 (adding an interim "reachable-blanket" entailment rule). Round 2 broke that rule — unsound against an explicit negative impl, under-specified for multi-premise / constructor-target blankets — plus a wrong-no in the multi-label row decomposition. **Current position:** blanket-derived entailment *and* blanket-derived empty-domain detection are **deferred to metel-core#895**; the first implementation uses only the tabled rules (a conservative wrong-no for blanket-only weakenings; a tracked vacuous-conformance gap for blanket-only empty domains). Row decomposition corrected (closed row = singleton domain entailing each contained typed-open atom); associated-type disequality is proven-concrete, not syntactic; record-kind + non-local-aspect added to the conflict set. OQ2/OQ3 deferred extensions: #895; OQ5 `where`-syntax: #896. Committed to **v0.13.0** via metel-core#617. **A fresh acceptance review should confirm the #895 retreat is acceptable for v0.13.0** and re-check the non-blanket conflict shapes.
 
 ## Summary
 
@@ -210,28 +210,28 @@ An omitted requirement is always entailed. In particular, an associated-type equ
 be omitted by the implementation, while an implementation may not add one. The `Copy` to
 `!Drop` row follows RFC-0071's normative mutual-exclusion rule.
 
-### A bounded rule set, not an unbounded closure (resolves Open Question 1)
+### A bounded, deliberately incomplete proof relation (resolves Open Question 1)
 
 The entailment relation `⊢` is a **bounded set of directed rules**, defined here and
 extended only by a normative RFC that introduces a new implication (with fixtures). It is
-**not** an unbounded transitive closure, and the comparator must never call
-`type_satisfies_aspect(concrete_type, aspect)` — that answers "does concrete type `X`
-satisfy aspect `A`", a different question from "does constraint `P` entail constraint
-`Q`".
+a **sound but deliberately incomplete** proof of `D_aspect ⊆ D_impl`: the semantic
+inclusion may hold in cases these rules do not derive, and those are **conservatively
+rejected** (a wrong-no), not accepted.
 
-**It does, however, read the same bounded set of reachable impl facts that negative-bound
-satisfaction already consults** (RFC-0072 / RFC-0081): a conditional or blanket
-implementation `extend<G: P> G: A { … }` reachable in the current module graph
-contributes the rule `P(T) ⊢ A(T)` — an implementation may weaken `T: A` to `T: P` when a
-reachable blanket makes every `P` also an `A`. This is not a closure computation: the
-rule set is the tabled rules below plus one `premise ⊢ head` rule per reachable
-conditional/blanket impl, each read directly, no chaining beyond one hop into another
-tabled rule. *(Revised 2026-08-29 after an adversarial review — the original text forbade
-consulting reachable impls entirely, which both rejected the safe weakening above and let
-a registry-derived empty domain past the Open Question 6 check.)*
+The comparator must never call `type_satisfies_aspect(concrete_type, aspect)` — that
+answers "does concrete type `X` satisfy aspect `A`", a different question from "does
+constraint `P` entail constraint `Q`" — and, **for first implementation, must not derive
+entailments from reachable blanket/conditional impls at all** *(retreated 2026-08-29
+after a second adversarial review — the interim rule `extend<G: P> G: A ⇒ (P ⊢ A)` was
+unsound against an explicit negative impl `extend X: !A` overriding the blanket
+(RFC-0060/RFC-0081), and under-specified for multi-premise (`extend<G: P + Q> G: A`) and
+constructor-target (`extend<G: P> Box<G>: A`) blankets. A weakening that holds only
+because of a reachable blanket is a wrong-no here; blanket-derived entailment, done
+soundly with negative-impl priority, is deferred to `metel-core#895`)*.
 
-`D_aspect ⊆ D_impl` holds iff, after §1 specialization and §3 normalization to canonical
-conjunctive form, **every atom of `D_impl`'s conjunction** is either
+After §1 specialization and §3 normalization to canonical conjunctive form, the
+comparator **accepts `D_aspect ⊆ D_impl` when** every atom of `D_impl`'s conjunction is
+either
 
 1. syntactically present in `D_aspect`'s conjunction (identity), or
 2. the head of a rule whose premises are all present in `D_aspect`'s conjunction.
@@ -240,18 +240,16 @@ The rule set, complete for first implementation:
 
 - **Conjunction elimination** — `P ∧ Q ⊢ P`; `P ∧ Q ⊢ Q`. (This is what makes "an
   omitted requirement is entailed" a rule rather than a special case.)
-- **`Copy(T) ⊢ !Drop(T)`** — RFC-0071 §4, the only *tabled* positive-aspect ⇒
-  negative-aspect rule.
-- **Reachable-blanket rules** — `P(T) ⊢ A(T)` for each reachable conditional/blanket
-  `extend<G: P> G: A`, as above.
+- **`Copy(T) ⊢ !Drop(T)`** — RFC-0071 §4, the only positive-aspect ⇒ negative-aspect rule.
 - **Row rules** — the row table below, after multi-label decomposition.
 - **Identity for associated-type equality** — `Deref<Target = U>(T) ⊢ Deref<Target = U>(T)`
   after specialization; and, by conjunction elimination, `⊢ Deref(T)`. No rule derives one
   equality from another (Open Question 3).
 
-No transitive search beyond one hop; no rule that inspects concrete types not present as
-constraint atoms (Open Question 2). An `impl` atom that is neither present nor a rule head
-is **not entailed** — the narrowing is rejected (§4).
+No transitive search, no chaining; no rule that inspects concrete types not present as
+constraint atoms (Open Question 2); no reachable-impl consultation for entailment
+(deferred, above). An `impl` atom that is neither present nor a rule head is **not
+entailed** — the narrowing is rejected (§4).
 
 ### Row-bound entailment (resolves Open Question 4)
 
@@ -265,16 +263,22 @@ adversarial review — the table below is stated per single label, and Open Ques
 completeness claim needs the multi-label forms reduced to it, not left implicit):*
 
 - `{ a: A, b: B, .. }` → `{ a: A, .. } ∧ { b: B, .. }`
-- `{ a: A, b: B }` (closed) stays one atom — closedness is a property of the whole row,
-  not decomposable — and compares only against another closed bound over the same label
-  set, or against per-label negative/label-only atoms it provably satisfies or violates.
 - `!{ a, b }` → `!{ a } ∧ !{ b }`
 - `!{ a: A, b: B }` → `!{ a: A } ∧ !{ b: B }`
 - `{ a, b, .. }` (label-only) → `{ a, .. } ∧ { b, .. }`
+- `{ a: A, b: B }` (closed) stays one atom on the **aspect** side — closedness is a
+  property of the whole row, not decomposable — but a closed aspect bound is a singleton
+  domain `{ the row `{ a: A, b: B }` }`, so it entails **every impl atom that single row
+  satisfies**: each contained typed-open atom (`{ a: A, .. }`, `{ b: B, .. }`), each
+  contained label-only atom (`{ a, .. }`), and each negative atom the row does not
+  violate (`!{ c }` for `c ∉ {a, b}`, `!{ a: X }` for `X ≠ A`). It matches a closed impl
+  bound only when that bound is the identical row. *(This per-label-open case was
+  missing in the first revision — `record T: { x: f64, y: f64 } ⊢ record T: { x: f64, .. }`
+  is a safe weakening and must be provable.)*
 
 Each resulting atom is then checked by the table. So `!{ secret, token } ⊢ !{ secret }`
-(drop an atom, conjunction elimination), and `!{ x: f64, y: i64 } ⊢ !{ x: f64 }`
-likewise.
+(drop an atom, conjunction elimination), `!{ x: f64, y: i64 } ⊢ !{ x: f64 }` likewise,
+and closed `{ x: f64, y: f64 } ⊢ open `{ x: f64, .. }` (the singleton row has `x: f64`).
 
 | Aspect row bound | Implementation row bound | Result | Reason |
 |---|---|---|---|
@@ -328,33 +332,40 @@ as unsound.
 
 ## Open questions
 
-*All six resolved 2026-08-29, then revised the same day after an adversarial review
-(original text kept, resolutions appended and marked where the review moved them, per the
-append-only convention). The review found three empty-domain shapes Open Question 6's
-first resolution missed and one over-strict rule in Open Question 1; both are addressed
-in-place below and in "Entailment basis and cases". A fresh acceptance review should
-re-check the widened Open Question 6 conflict set and the reachable-blanket rule against
-RFC-0072 / RFC-0081's own reachable-impl semantics. Items 2 and 3 name deferred
-extensions with owning trackers (`metel-core#895`) rather than leaving them open.*
+*All six resolved 2026-08-29, then revised twice the same day after two adversarial
+review rounds (original text kept, resolutions appended and marked where each review
+moved them, per the append-only convention). Round 1 found three empty-domain shapes
+Open Question 6's first pass missed and an over-strict Open Question 1 rule; the interim
+fix added a "reachable-blanket" entailment rule. Round 2 broke that rule (unsound against
+an explicit negative impl; under-specified for multi-premise and constructor-target
+blankets) and a wrong-no in the multi-label row decomposition. **Current position:**
+blanket-derived entailment — and blanket-derived empty-domain detection — are **deferred
+to `metel-core#895`**; the first implementation uses only the tabled rules, accepting a
+conservative wrong-no when a weakening holds only via a reachable blanket. Items 2, 3,
+and now the blanket cases have that owning tracker. A fresh acceptance review should
+confirm the retreat is acceptable for v0.13.0 and re-check the row decomposition and the
+widened non-blanket conflict shapes.*
 
 1. **Entailment implementation and extensibility.** The implementation must include
    language-defined implications such as `Copy => !Drop`; it must not inherit them
    incidentally from `type_satisfies_aspect` or the aspect registry. Decide the specified
    representation and extension point for this proof relation as new accepted RFCs add
    implications.
-   **Resolved 2026-08-29, revised same day after an adversarial review.** The relation is
-   a **bounded set of directed rules** — conjunction elimination, `Copy(T) ⊢ !Drop(T)`,
-   the row table with multi-label decomposition, associated-type identity, **plus one
-   `P(T) ⊢ A(T)` rule per reachable conditional/blanket `extend<G: P> G: A`** — defined in
-   "A bounded rule set, not an unbounded closure" above. Extended only by a normative RFC
-   that introduces a new *tabled* implication (with fixtures); the reachable-blanket rules
-   are program-dependent, read from the same bounded set negative-bound satisfaction
-   already consults (RFC-0072 / RFC-0081), **not** an unbounded closure and **not**
-   `type_satisfies_aspect(concrete_type, aspect)`. An `impl` atom that is neither present
-   in the aspect conjunction nor a rule head is not entailed. *(The first version forbade
-   reachable-impl consultation entirely; that rejected a safe `T: A ⇒ T: P` weakening
-   behind a reachable blanket and let a blanket-derived empty domain past Open Question
-   6's check.)*
+   **Resolved 2026-08-29, revised twice the same day after two adversarial reviews.** The
+   relation is a **bounded, sound-but-incomplete** set of directed rules — conjunction
+   elimination, `Copy(T) ⊢ !Drop(T)`, the row table with multi-label decomposition,
+   associated-type identity — defined in "A bounded, deliberately incomplete proof
+   relation" above. Extended only by a normative RFC that introduces a new implication
+   (with fixtures). The comparator does **not** call
+   `type_satisfies_aspect(concrete_type, aspect)` and, for first implementation, does
+   **not** derive entailments from reachable blanket/conditional impls: round 1 said "no
+   registry at all" was too strict (a `T: A ⇒ T: P` weakening valid only via a reachable
+   `extend<G: P> G: A` is safe); round 2 showed the interim `P ⊢ A` rule was unsound
+   against an explicit `extend X: !A` (RFC-0060/RFC-0081) and under-specified for
+   `extend<G: P + Q> G: A` and `extend<G: P> Box<G>: A`. Net: blanket-derived entailment
+   is a wrong-no at first implementation, deferred — done soundly, with negative-impl
+   priority, full-premise-conjunction extraction, and bare-parameter targets only — to
+   `metel-core#895`.
 2. **Negative and mixed bounds.** The table requires positive/negative row implication
    where incompatible field types make a negative predicate follow. Specify the remaining
    mixed-conjunction implications required at first implementation and which are
@@ -362,14 +373,14 @@ extensions with owning trackers (`metel-core#895`) rather than leaving them open
    **Resolved 2026-08-29.** Required at first implementation: (a) the row table's
    positive/closed ⇒ negative rows above (a label carries one type; a closed row has no
    other labels), with `!{ a, b, … }` decomposed to `!{ a } ∧ !{ b } ∧ …` first; (b)
-   `Copy(T) ⊢ !Drop(T)` and the reachable-blanket rules `P ⊢ A` from Open Question 1's
-   resolution; (c) atom-wise checking of mixed conjunctions — each `impl` atom (positive
-   or negative) is proved independently against the aspect conjunction, with no cross-atom
-   inference beyond one hop. **Conservatively rejected** until a normative RFC extends the
-   table: implications not expressible as a single reachable `extend<G: P> G: A` blanket
-   (multi-premise chains, implications from associated-type relations), and negative-row
-   implications outside the per-label type-conflict and decomposition cases above.
-   Deferred-extension tracker: `metel-core#895`.
+   `Copy(T) ⊢ !Drop(T)`; (c) atom-wise checking of mixed conjunctions — each `impl` atom
+   (positive or negative) is proved independently against the aspect conjunction, with no
+   cross-atom inference. **Conservatively rejected** until a normative RFC extends the
+   relation: any implication requiring reasoning about concrete types not present as atoms
+   (blanket-derived `Ord ⇒ PartialOrd` and the like — see Open Question 1's retreat),
+   implications from associated-type relations, and negative-row implications outside the
+   per-label type-conflict and decomposition cases above. Deferred-extension tracker:
+   `metel-core#895`.
 3. **Associated-type equality implication.** Dropping an equality requirement is already
    permitted by domain inclusion. Decide whether an aspect contract can entail another
    equality through a declared associated-type relation; that needs projection
@@ -385,10 +396,13 @@ extensions with owning trackers (`metel-core#895`) rather than leaving them open
 4. **Row-bound inclusion with closed rows.** The direction is clear for open rows, but the
    exact relation among closed bounds, label-only fields, negative row bounds, and
    differently typed labels needs a complete table and fixtures before acceptance.
-   **Resolved 2026-08-29, multi-label case added same day after an adversarial review.**
-   The table is "Row-bound entailment (resolves Open Question 4)" in "Entailment basis and
-   cases" above — the multi-label normalization step (`{ a, b, .. }` and `!{ a, b }` split
-   to per-label atoms) followed by the single-label table (open/closed, label-only,
+   **Resolved 2026-08-29, multi-label case added and corrected the same day across two
+   adversarial reviews.** The table is "Row-bound entailment (resolves Open Question 4)"
+   in "Entailment basis and cases" above — the multi-label normalization step (`{ a, b, .. }`
+   and `!{ a, b }` split to per-label atoms; a closed aspect row treated as a singleton
+   domain that entails each contained typed-open / label-only / non-violated-negative
+   atom — round 2 found the first pass omitted the typed-open case, a wrong-no) followed
+   by the single-label table (open/closed, label-only,
    negative, both directions), each row with a required fixture (a positive test for
    `yes`, a `T0012` at the `extend` method declaration for `no`). *(The first version
    tabled only single-label forms and claimed completeness; multi-field negative bounds
@@ -408,33 +422,44 @@ extensions with owning trackers (`metel-core#895`) rather than leaving them open
    `T: Copy + Drop`, its domain is empty and therefore is a subset of every implementation
    domain. Decide whether such constraints are rejected when declared or whether vacuous
    conformance is intentional and diagnosed separately.
-   **Resolved 2026-08-29 — reject at the declaration; conflict set widened same day after
-   an adversarial review.** A method (aspect or `extend`) whose generic-constraint
-   conjunction is unsatisfiable is a type error **at that method's own declaration**,
-   independent of conformance — an uninhabited signature is a bug regardless of who
-   implements it, and vacuous `∅ ⊆ D_impl` conformance would let any implementation
-   "satisfy" a nonsense aspect method and let an implementation silently narrow to
-   nothing. Unsatisfiability is detected against the **same bounded relation read for
-   conflict instead of implication**, over these shapes:
+   **Resolved 2026-08-29 — reject at the declaration; conflict set revised twice the same
+   day across two adversarial reviews.** A method (aspect or `extend`) whose
+   generic-constraint conjunction is unsatisfiable is a type error **at that method's own
+   declaration**, independent of conformance — an uninhabited signature is a bug
+   regardless of who implements it, and vacuous `∅ ⊆ D_impl` conformance would let any
+   implementation "satisfy" a nonsense aspect method. Unsatisfiability is detected over a
+   **closed set of syntactic conflict shapes**:
 
    - `A(T) ∧ !A(T)` for the same aspect; `Copy(T) ∧ Drop(T)` (RFC-0071 §4).
-   - `A(T) ∧ !B(T)` where a reachable conditional/blanket `extend<G: A> G: B` makes every
-     `A` a `B` — so `A ∧ !B` is empty. (This is Open Question 1's reachable-blanket rule
-     read for conflict; without it, `fun f<T: Copy + !Tag>` with a reachable
-     `extend<T: Copy> T: Tag` slips through.)
    - a **positive row bound of any kind** — open `{ l: A, .. }`, closed `{ l: A }`, or
-     label-only `{ l, .. }` — conjoined with a negative bound it violates: `!{ l }`, or
-     `!{ l: A }` when the positive bound pins `l` to `A`. (Generalizes the first version's
-     "a *closed* row conjoined with…", which missed `{ x: f64, .. } ∧ !{ x }`.)
+     label-only `{ l, .. }` — conjoined with a negative bound over the **same label** that
+     it violates: `!{ l }`, or `!{ l: A }` when the positive bound pins `l` to `A`.
+     (Round 1's version said only "a *closed* row conjoined with…", missing
+     `{ x: f64, .. } ∧ !{ x }`.)
    - a closed row conjoined with a positive-field atom it lacks; `{ l: A } ∧ { l: B }`
-     with `A ≠ B` (same label, two types).
-   - two associated-type equality atoms `Assoc = X` and `Assoc = Y` with `X ≠ Y` for the
-     same `(T, Aspect, Assoc)` projection — an associated type is uniquely fixed per
-     implementing type (RFC-0082), so the conjunction is empty.
+     with `A ≠ B` provably distinct concrete types.
+   - two associated-type equality atoms `Assoc = X` and `Assoc = Y` for the same
+     `(T, Aspect, Assoc)` projection where `X` and `Y` are **provably distinct concrete
+     types after §1 specialization** — an associated type is uniquely fixed per
+     implementing type (RFC-0082). Two equalities whose right-hand sides are distinct
+     *method generic parameters* (`Deref<Target = U> ∧ Deref<Target = V>`) are **not** a
+     conflict: they constrain `U = V` and are satisfiable. *(Round 2 finding — the first
+     pass read `X ≠ Y` syntactically.)*
+   - a `record T` requirement conjoined with a positive aspect bound `T: A` where `A` is
+     non-local and no reachable impl makes any anonymous record an `A` — nominal structs
+     do not satisfy the row bound and records cannot satisfy `A`, so the domain is empty.
+     Scoped to the current module graph (a *local* aspect with a reachable record impl is
+     satisfiable). *(Round 2 finding.)*
+
+   **Not detected at first implementation** *(round 2 retreat)*: an empty domain that
+   arises **only** via a reachable blanket — e.g. `T: Copy + !Tag` given a reachable
+   `extend<T: Copy> T: Tag` with no negative override. Detecting this soundly needs the
+   same negative-impl-priority reasoning the deferred blanket-entailment rule needs;
+   both go to `metel-core#895`. Until then, such a declaration is accepted and any
+   implementation conforms vacuously — a known, tracked limitation, not silent.
 
    A contradiction outside these shapes is conservatively **accepted** rather than risk a
    false positive, matching the "small explicit relation, no theorem prover" stance.
-   Conformance checking therefore never sees an empty domain.
 
 ## References
 
@@ -461,7 +486,9 @@ extensions with owning trackers (`metel-core#895`) rather than leaving them open
 
 ## Decision
 
-**Outcome:** *(pending — Open Questions 1–6 resolved 2026-08-29 and revised the same day
-after an adversarial review; a fresh acceptance review of the widened OQ6 conflict set
-and the reachable-blanket rule is the remaining gate.)*
+**Outcome:** *(pending — Open Questions 1–6 resolved 2026-08-29, revised across two
+adversarial review rounds; blanket-derived entailment and blanket-only empty-domain
+detection retreated to `metel-core#895`. The remaining gate is an acceptance review
+confirming that retreat is acceptable for v0.13.0 and re-checking the non-blanket
+conflict shapes and the row decomposition.)*
 **Target:** *(set when accepted; committed to v0.13.0 via metel-core#617.)*

@@ -695,18 +695,22 @@ implementation).
   constraints and its implementation: an implementation may accept a wider domain but
   cannot narrow it (`D_aspect ⊆ D_impl`). Covers record kind, aspect and row bounds, and
   associated-type equality bindings. **All 6 open questions resolved 2026-08-29, then
-  revised the same day after an adversarial review:** the entailment relation is a
-  *bounded* rule set (conjunction elimination, `Copy ⊢ !Drop`, an open/closed/label-only/
-  negative row table with multi-label decomposition, associated-type identity) **plus a
-  `P ⊢ A` rule per reachable conditional/blanket `extend<G: P> G: A`** — read from the
-  same bounded set negative-bound satisfaction uses, not an unbounded closure and not
-  `type_satisfies_aspect`. Unsatisfiable constraint conjunctions are rejected at their
-  own declaration (widened conflict set: `A ∧ !A`, `Copy ∧ Drop`, blanket-derived
-  `A ∧ !B`, any positive row + violating negative, `{ l: A } ∧ { l: B }`, contradictory
-  `Assoc = X` / `Assoc = Y`) so conformance never sees an empty domain. `where` clauses
-  stay normalize-only (syntax → metel-core#896); deferred entailment extensions →
-  metel-core#895. Committed to **v0.13.0** via metel-core#617 (retitled). **Needs a fresh
-  acceptance review of the widened conflict set and the reachable-blanket rule.** Distinct
+  revised across two adversarial review rounds:** the entailment relation is a *bounded,
+  sound-but-incomplete* rule set (conjunction elimination, `Copy ⊢ !Drop`, an
+  open/closed/label-only/negative row table with multi-label decomposition — a closed row
+  is a singleton domain entailing each contained typed-open atom — and associated-type
+  identity); it does **not** call `type_satisfies_aspect` and, at first implementation,
+  does **not** derive entailments from reachable blanket impls (round 2 broke the interim
+  `P ⊢ A` rule — unsound against an explicit negative impl, under-specified for
+  multi-premise / constructor targets — so blanket-derived entailment *and* blanket-only
+  empty-domain detection are **deferred to metel-core#895**, with a conservative wrong-no
+  / tracked vacuous-conformance gap until then). Unsatisfiable conjunctions are otherwise
+  rejected at the declaration: `A ∧ !A`, `Copy ∧ Drop`, any positive row + same-label
+  violating negative, `{ l: A } ∧ { l: B }`, `Assoc = X ∧ Assoc = Y` with `X`/`Y` proven
+  distinct concrete types, and `record T` + non-local aspect impossible for records.
+  `where` clauses stay normalize-only (syntax → metel-core#896). Committed to **v0.13.0**
+  via metel-core#617 (retitled). **Needs a fresh acceptance review confirming the #895
+  retreat is acceptable for v0.13.0.** Distinct
   from RFC-0036's conditional-impl selection and RFC-0118's row-bound satisfaction.
 
 - **RFC-0130** *(draft, opened 2026-08-06)* — extends Aspect: Renaming `impl
