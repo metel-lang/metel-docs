@@ -208,8 +208,9 @@ then `P₁(T) ∧ P₂(T) ∧ … ∧ Pₙ(T) ⊢ A(T)`, provided:
   constructor target does not license `Pᵢ(T) ⊢ A(T)` for an arbitrary `T`.
 - **Full premise conjunction.** *Every* bound `Pᵢ` on `G` — inline and `where`,
   including further row and associated-type bounds — must appear in `D_aspect`'s
-  conjunction (each `Pᵢ` itself checked by `⊢`, recursively, under §7's depth
-  bound). A partial premise match does not fire the rule.
+  conjunction (each `Pᵢ` itself checked by `⊢`, recursively; the *Bounded
+  chaining* paragraph below bounds that recursion). A partial premise match does
+  not fire the rule.
 - **Negative-impl priority (coherence).** The rule is **disabled for aspect `A`
   entirely** if the reachable-impl set contains *any* negative impl of `A` —
   `extend X: !A` or a conditional `extend<…> Y: !A` (RFC-0060/RFC-0081). A
