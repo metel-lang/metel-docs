@@ -542,20 +542,16 @@ def cmd_transition(args):
                 "checkout with docs/ embedded as its submodule, or set "
                 "METEL_CORE_ROOT to point at one."
             )
-        current_path = find_path_for_id(rid)
-        _, body = parse_file(current_path)
-        sections = set(rfc_normative_sections(body))
-        sidecar, prose = scan_fixture_citations(tests_dir)
-        cited = {s for s, _ in sidecar.get(rid, [])} | {s for s, _ in prose.get(rid, [])}
-        cited.discard(None)
-        exempted = set(parse_coverage_frontmatter(frontmatter_raw_text(current_path)))
-        uncovered = sections - cited - exempted
+        uncovered = uncovered_sections_for_implemented(
+            rid, tests_dir, find_path_for_id(rid)
+        )
         if uncovered:
             error(
                 f"{rid.upper()} has normative sections with neither a qualifying "
                 f"fixture nor a coverage exemption: {', '.join(sorted(uncovered))} "
-                f"(ADR-0049) — cite a fixture (`options.rfc` sidecar key) or add a "
-                f"typed `coverage` frontmatter entry for each"
+                f"(ADR-0049/ADR-0050) — cite a fixture (an `options.rfc` sidecar "
+                f"key, or an `options.spec` key linked from a `coverage` "
+                f"frontmatter entry) or add a typed `coverage` entry for each"
             )
     do_transition(rid, args.to, args.reason, extra_fm=extra_fm or None)
     rebuild_registry()
@@ -1611,6 +1607,35 @@ def _sidecar_mtl_path(toml_path):
         if toml_path.name == "test.toml"
         else toml_path.with_suffix(".mtl")
     )
+
+
+def uncovered_sections_for_implemented(rid, tests_dir, rfc_path):
+    """The `--to implemented` fixture-coverage gate (ADR-0049 §5/§6): normative
+    sections of `rid` covered by *nothing*. A section counts as covered by any
+    of -- matching what `check`'s per_rfc_coverage() accepts:
+
+    - an `options.rfc` sidecar or prose `RFC-NNNN§N` citation (ADR-0049 §1);
+    - an `options.spec` fixture behind a `coverage: { "N": { spec: ... } }`
+      frontmatter link whose spec id actually has a citing fixture (ADR-0050 §5);
+    - a typed `coverage` exemption entry.
+
+    Kept as a pure function (no `error()`, no I/O beyond the paths it's handed)
+    so it's unit-testable without a live repo.
+    """
+    fm_text = frontmatter_raw_text(rfc_path)
+    _, body = parse_file(rfc_path)
+    sections = set(rfc_normative_sections(body))
+    sidecar, prose = scan_fixture_citations(tests_dir)
+    cited = {s for s, _ in sidecar.get(rid, [])} | {s for s, _ in prose.get(rid, [])}
+    cited.discard(None)
+    spec_citations = scan_spec_citations(tests_dir)
+    spec_anchored = {
+        section
+        for section, spec_id in parse_coverage_spec_links(fm_text).items()
+        if spec_citations.get(spec_id)
+    }
+    exempted = set(parse_coverage_frontmatter(fm_text))
+    return sections - cited - spec_anchored - exempted
 
 
 def scan_rfc_metadata():
