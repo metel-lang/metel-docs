@@ -690,13 +690,19 @@ The load-bearing accepted RFCs everything else cites. One open item as of 2026-0
 cluster itself. **Resolved 2026-07-13**: RFC-0097 integrated (issue #555 tracks
 implementation).
 
-- **RFC-0129** *(draft, opened 2026-08-05)* — Aspect Method Generic Constraint
+- **RFC-0129** *(under review 2026-08-23, opened 2026-08-05)* — Aspect Method Generic Constraint
   Conformance — defines the substitutability relation between an aspect method's generic
   constraints and its implementation: an implementation may accept a wider domain but
-  cannot narrow it. Covers record kind, aspect and row bounds, and associated-type
-  equality bindings; open questions delimit the entailment engine rather than assuming
-  constraint spelling equality is semantic equality. Distinct from RFC-0036's
-  conditional-impl selection and RFC-0118's row-bound satisfaction.
+  cannot narrow it (`D_aspect ⊆ D_impl`). Covers record kind, aspect and row bounds, and
+  associated-type equality bindings. **All 6 open questions resolved 2026-08-29:** the
+  entailment relation is a *closed* set of directed rules (conjunction elimination,
+  `Copy ⊢ !Drop`, an 18-row open/closed/label-only/negative row table, associated-type
+  identity), amended only by a normative RFC — never a registry closure; unsatisfiable
+  constraint conjunctions are rejected at their own declaration so conformance never sees
+  an empty domain; aspect-method `where` clauses stay normalize-only (syntax split to
+  metel-core#896); deferred entailment extensions to metel-core#895. Committed to
+  **v0.13.0** via metel-core#617 (retitled "review, accept, and implement"). Distinct
+  from RFC-0036's conditional-impl selection and RFC-0118's row-bound satisfaction.
 
 - **RFC-0130** *(draft, opened 2026-08-06)* — extends Aspect: Renaming `impl
   Aspect` for Consistency with `extend` — renames the anonymous-type-parameter

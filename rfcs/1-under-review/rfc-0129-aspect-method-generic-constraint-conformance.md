@@ -8,7 +8,8 @@ updated: '2026-08-23'
 tracking: 'https://github.com/metel-lang/metel-core/issues/617'
 ---
 
-> **Status — under review (2026-08-23).** Real substantiated proposal (entailment table, primary proposal) but 6 open open questions block acceptance -- OQ1-6 none resolved. Its own References section already names #617 as the implementation follow-up
+> **Status — under review (2026-08-23).** Real substantiated proposal (entailment table, primary proposal) but 6 open open questions block acceptance -- OQ1-6 none resolved. Its own References section already names #617 as the implementation follow-up.
+> **Update 2026-08-29:** OQ1-6 all resolved (see that section); OQ2/OQ3's deferred extensions have owning trackers (metel-core#895), OQ5's `where`-syntax piece is metel-core#896. Committed to **v0.13.0** via metel-core#617 (retitled "RFC-0129: ... review, accept, and implement"). Ready for an acceptance review.
 
 ## Summary
 
@@ -207,8 +208,70 @@ The intended baseline is:
 
 An omitted requirement is always entailed. In particular, an associated-type equality may
 be omitted by the implementation, while an implementation may not add one. The `Copy` to
-`!Drop` row follows RFC-0071's normative mutual-exclusion rule. Projection-derived
-equalities and the full negative-row calculus remain open questions below.
+`!Drop` row follows RFC-0071's normative mutual-exclusion rule.
+
+### The relation is a closed table, not a registry closure (resolves Open Question 1)
+
+The entailment relation `⊢` is a **closed set of directed rules**, defined here and
+amended only by a normative RFC that introduces a new implication (with fixtures). It is
+**not** computed by closure over the aspect registry, and the comparator must not call
+`type_satisfies_aspect` — that answers "does concrete type `X` satisfy aspect `A`", a
+different question from "does constraint `P` entail constraint `Q`".
+
+`D_aspect ⊆ D_impl` holds iff, after §1 specialization and §3 normalization to canonical
+conjunctive form, **every atom of `D_impl`'s conjunction** is either
+
+1. syntactically present in `D_aspect`'s conjunction (identity), or
+2. the head of a rule whose premises are all present in `D_aspect`'s conjunction.
+
+The rule set, complete for first implementation:
+
+- **Conjunction elimination** — `P ∧ Q ⊢ P`; `P ∧ Q ⊢ Q`. (This is what makes "an
+  omitted requirement is entailed" a rule rather than a special case.)
+- **`Copy(T) ⊢ !Drop(T)`** — RFC-0071 §4, the only positive-aspect ⇒ negative-aspect rule.
+- **Row rules** — the closed table below.
+- **Identity for associated-type equality** — `Deref<Target = U>(T) ⊢ Deref<Target = U>(T)`
+  after specialization; and, by conjunction elimination, `⊢ Deref(T)`. No rule derives one
+  equality from another (Open Question 3).
+
+No transitive search beyond chaining these rules; no rule that inspects concrete types not
+already present as constraint atoms (Open Question 2). An `impl` atom that is neither
+present nor a rule head is **not entailed** — the narrowing is rejected (§4).
+
+### Row-bound entailment (resolves Open Question 4)
+
+Row-bound forms (RFC-0118): open `{ l: T, .. }` ("has at least"), closed `{ l: T }`
+("has exactly"), label-only `{ l, .. }` ("has `l` at any type"), negative `!{ l }` /
+`!{ l: T }`. Each denotes a set of concrete rows; `bound_a ⊢ bound_i` iff
+`Dom(bound_a) ⊆ Dom(bound_i)`.
+
+| Aspect row bound | Implementation row bound | Result | Reason |
+|---|---|---|---|
+| open `{ x: f64, y: f64, .. }` | open `{ x: f64, .. }` | yes | fewer required fields on the impl side |
+| open `{ x: f64, .. }` | open `{ x: f64, y: f64, .. }` | no | aspect admits rows lacking `y` |
+| closed `{ x: f64 }` | open `{ x: f64, .. }` | yes | the one closed row satisfies the open bound |
+| open `{ x: f64, .. }` | closed `{ x: f64 }` | no | aspect admits `{ x: f64, z: … }` |
+| closed `{ x: f64, y: f64 }` | closed `{ x: f64 }` | no | distinct exact rows; disjoint domains |
+| closed `{ x: f64 }` | closed `{ x: f64 }` | yes | identical |
+| closed `{ x: f64 }` | `!{ y }` (any `y ≠ x`) | yes | the closed row has no `y` |
+| closed `{ x: f64 }` | `!{ x: g }` (`g ≠ f64`) | yes | the closed row's `x` is `f64`, not `g` |
+| open `{ x: i64, .. }` | `!{ x: f64 }` | yes | a label has one type — `x: i64` ⇒ not `x: f64` |
+| open `{ x: f64, .. }` | `!{ y }` | no | aspect admits rows that also carry `y` |
+| open `{ x: f64, .. }` | label-only `{ x, .. }` | yes | requiring `x: f64` ⊆ requiring `x: _` |
+| label-only `{ x, .. }` | open `{ x: f64, .. }` | no | aspect admits `x: i64` |
+| label-only `{ x, .. }` | label-only `{ x, .. }` | yes | identical |
+| `!{ x }` | `!{ x }` | yes | identical |
+| `!{ x }` | `!{ x: f64 }` | yes | "no `x` at all" ⊆ "no `x` at `f64`" |
+| `!{ x: f64 }` | `!{ x }` | no | aspect admits `x: i64`, which has label `x` |
+| no row bound | any row bound | no | aspect admits every row |
+| any row bound | no row bound | yes | conjunction elimination |
+
+Rule of thumb: **open⇒open follows the field-subset direction**; **a closed aspect bound
+is a singleton domain** that entails any impl bound that single row satisfies; **a closed
+impl bound is entailed only from an identical closed aspect bound**; **a negative impl
+bound is entailed from a positive/closed aspect bound that provably cannot carry that
+label (or that label at that type)**. Fixtures: one per row, positive for `yes`, a
+`T0012` at the `extend` method declaration for `no`.
 
 ## Alternatives considered
 
@@ -234,31 +297,81 @@ as unsound.
 
 ## Open questions
 
+*All six resolved 2026-08-29 (original text kept, resolution appended, per the
+append-only convention). None now block `2-accepted`. Items 2 and 3 name deferred
+extensions with owning trackers rather than leaving them open.*
+
 1. **Entailment implementation and extensibility.** The implementation must include
    language-defined implications such as `Copy => !Drop`; it must not inherit them
    incidentally from `type_satisfies_aspect` or the aspect registry. Decide the specified
    representation and extension point for this proof relation as new accepted RFCs add
    implications.
+   **Resolved 2026-08-29.** The relation is a **closed set of directed rules** —
+   conjunction elimination, `Copy(T) ⊢ !Drop(T)`, the row table, and associated-type
+   identity — defined in "The relation is a closed table, not a registry closure" above
+   and amended **only** by a normative RFC that introduces a new implication (with
+   fixtures). The comparator reads the table; it never calls `type_satisfies_aspect` and
+   never closes over the registry. An `impl` atom that is neither present in the aspect
+   conjunction nor a rule head is not entailed.
 2. **Negative and mixed bounds.** The table requires positive/negative row implication
    where incompatible field types make a negative predicate follow. Specify the remaining
    mixed-conjunction implications required at first implementation and which are
    conservatively rejected until a later RFC extends the proof relation.
+   **Resolved 2026-08-29.** Required at first implementation: (a) the row table's
+   positive/closed ⇒ negative rows above (a label carries one type; a closed row has no
+   other labels); (b) `Copy(T) ⊢ !Drop(T)` as the sole positive-aspect ⇒ negative-aspect
+   rule; (c) atom-wise checking of mixed conjunctions — each `impl` atom (positive or
+   negative) is proved independently against the aspect conjunction, with no cross-atom
+   inference beyond the listed rules. **Conservatively rejected** until a normative RFC
+   extends the table: any implication that would require reasoning about concrete types
+   not present as atoms (e.g. blanket-derived `Ord ⇒ PartialOrd`), and negative-row
+   implications outside the label/type-conflict cases tabled above. Deferred-extension
+   tracker: `metel-core#895`.
 3. **Associated-type equality implication.** Dropping an equality requirement is already
    permitted by domain inclusion. Decide whether an aspect contract can entail another
    equality through a declared associated-type relation; that needs projection
    normalization not presently specified for generic declaration comparison.
+   **Resolved 2026-08-29 — identical or omitted only.** The only associated-type rules
+   are: an equality present identically on both sides after §1 specialization is entailed;
+   an equality omitted by the implementation is entailed (conjunction elimination); an
+   equality **added** by the implementation is rejected. Deriving one equality *from
+   another* through a declared associated-type relation (projection normalization —
+   computing `T::X` via the aspect's own associated-type definitions) is **not** in this
+   RFC and such a difference is conservatively rejected. Deferred to a future RFC amending
+   RFC-0082; tracker `metel-core#895`.
 4. **Row-bound inclusion with closed rows.** The direction is clear for open rows, but the
    exact relation among closed bounds, label-only fields, negative row bounds, and
    differently typed labels needs a complete table and fixtures before acceptance.
+   **Resolved 2026-08-29.** The complete table is "Row-bound entailment (resolves Open
+   Question 4)" in "Entailment basis and cases" above — 18 rows covering open/closed,
+   label-only, and negative bounds in both directions, each with a required fixture (a
+   positive test for `yes`, a `T0012` at the `extend` method declaration for `no`).
 5. **Method `where` clauses on aspect declarations.** Implementation methods already have a
    `where` clause representation; aspect-method declarations currently store only inline
    generic parameters. Decide whether this RFC merely normalizes the forms already
    accepted, or also extends aspect method syntax to accept `where` clauses. The latter is
    syntax work and should not be smuggled in as a comparator detail.
+   **Resolved 2026-08-29 — normalize-only.** This RFC does not add `where` clauses to
+   aspect-method declarations (explicit Non-Goal: no new generic-constraint syntax). §3's
+   canonicalization already flattens inline and `where` placement to one conjunctive form,
+   so an implementation method that *does* use a `where` clause compares correctly against
+   an aspect method's inline-only bounds. Extending aspect-method syntax to accept `where`
+   is separate syntax work, tracked at `metel-core#896`, and does not gate this RFC.
 6. **Contradictory domains.** If a declaration admits contradictory constraints such as
    `T: Copy + Drop`, its domain is empty and therefore is a subset of every implementation
    domain. Decide whether such constraints are rejected when declared or whether vacuous
    conformance is intentional and diagnosed separately.
+   **Resolved 2026-08-29 — reject at the declaration.** A method (aspect or `extend`)
+   whose generic-constraint conjunction is unsatisfiable is a type error **at that
+   method's own declaration**, independent of conformance — an uninhabited signature is a
+   bug regardless of who implements it, and vacuous `∅ ⊆ D_impl` conformance would let any
+   implementation "satisfy" a nonsense aspect method and let an implementation silently
+   narrow to nothing. Unsatisfiability is detected against the **same closed table read
+   for conflict instead of implication**: `A ∧ !A`, `Copy ∧ Drop` (RFC-0071), a closed row
+   conjoined with a positive field it lacks or a negative bound it violates, `{ l: A } ∧
+   { l: B }` with `A ≠ B`. A contradiction outside that closed set is conservatively
+   **accepted** rather than risk a false positive, matching the "small explicit relation,
+   no theorem prover" stance. Conformance checking therefore never sees an empty domain.
 
 ## References
 
@@ -274,11 +387,17 @@ as unsound.
 - RFC-0121 — open rows and row-conditional implementations; out of scope, but its row
   relations constrain the future entailment design.
 - metel-core#541 — aspect implementation method-set and signature conformance repair.
-- metel-core#617 — implementation follow-up for generic constraint-domain conformance.
+- metel-core#617 — this RFC's review-accept-implement tracking issue (v0.13.0).
+- metel-core#895 — deferred entailment-relation extensions (Open Questions 2 and 3):
+  concrete-type-derived implications, negative-row calculus beyond the tabled cases, and
+  projection-derived associated-type equality.
+- metel-core#896 — `where` clauses on aspect-method declarations (Open Question 5's
+  syntax piece, deliberately not in this RFC).
 
 ---
 
 ## Decision
 
-**Outcome:** *(pending)*
-**Target:** *(set when accepted)*
+**Outcome:** *(pending — Open Questions 1–6 resolved 2026-08-29; ready for an acceptance
+review.)*
+**Target:** *(set when accepted; committed to v0.13.0 via metel-core#617.)*
