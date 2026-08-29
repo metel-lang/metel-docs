@@ -495,7 +495,9 @@ above it are.
   ship `comptime fun`/`comptime let` without answering them. §3.1 deliberately spells the
   parameter `comptime N: u64` rather than RFC-0053's guessed `<const N: u64>`; §3.4
   excludes computed arities (`[T; N + 1]`) as a *named* deferral rather than another
-  unnamed future RFC.
+  unnamed future RFC. **Cross-ref added 2026-08-29:** §3's `comptime N` axis and
+  type-parameter instantiation are one problem — `metel-core#288`'s frontend
+  monomorphization pass (v0.20.1) should collect both; co-design, not a dependency.
 - **RFC-0145** *(draft, opened 2026-08-27)* — Static Storage Duration — `static X: T
   = expr;`, the `static` half of issue #840's title that RFC-0132 doesn't cover:
   a real, single, process-lifetime *address*, not a compile-time-substituted
