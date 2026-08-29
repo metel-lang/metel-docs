@@ -2,8 +2,10 @@
 id: rfc-0135
 title: "Multiplicity for Ordinary Types"
 date: '2026-08-13'
-status: draft
+status: under-review
 target:
+updated: '2026-08-29'
+tracking: 'https://github.com/metel-lang/metel-core/issues/892'
 ---
 
 > **Companion to RFC-0134, not a dependency of it.** RFC-0134 (Closure Call Capability,
@@ -29,6 +31,8 @@ target:
 > `Copy` instead of gaining unified vocabulary. But the two documents now describe the
 > same representation for closures, so a divergence between them would be a real
 > inconsistency rather than a difference of framing.
+
+> **Status — under review (2026-08-29).** Concrete primary proposal (declaration-site once/many qualifier replacing extend: Copy, §1-4) with blocking open questions (migration strategy). Companion to RFC-0134 (#269) -- shared closure representation should be reviewed as a pair. Committed to v0.17.0. Tracking: metel-core#892.
 
 ## Summary
 
