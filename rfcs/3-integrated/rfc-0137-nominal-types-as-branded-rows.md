@@ -565,8 +565,9 @@ need a corresponding revision if this RFC is accepted:
   - **RFC-0148 (Row-Parametric Destructors)** — the form
     `fun drop<row R>(&var self: Self.R) where R: { fd, .. }`. **Depends on RFC-0146
     (Row-Polymorphic Self-Views) → RFC-0121 (Open Rows)** for the `<row R>` kind — which
-    §5's opening paragraph otherwise explicitly does *not* need. A later addition still
-    (RFC-0146 is v0.15.0; this form is v0.16.0+).
+    §5's opening paragraph otherwise explicitly does *not* need. A later addition still —
+    RFC-0146 and RFC-0148 share the v0.14.1 "row-polymorphism consumers" point release,
+    after RFC-0121's v0.14.0.
   See §5's "Amended 2026-08-28" callout and Open Question 2's supersession note.
 - **RFC-0119 (Record Conversions), added 2026-08-25 (Open Questions #3), revision
   already made.** `.to_record()` is described against "the record" for a struct,
@@ -587,7 +588,7 @@ this RFC.
 **RFC-0147 → RFC-0109** (for the fixed `fun drop(&var self: Self.{ fd })` receiver form —
 the minimum; both land in **v0.14.0**, one release after this RFC's own branded-rows
 representation) and, for the parametric `fun drop<row R>(…)` form only, on **RFC-0148 →
-RFC-0146 → RFC-0121** (later still; RFC-0146 is v0.15.0, so v0.16.0+). The rest of this RFC — narrowing,
+RFC-0146 → RFC-0121** (later still; RFC-0146 and RFC-0148 share v0.14.1, after RFC-0121's v0.14.0). The rest of this RFC — narrowing,
 widening, passing a residual, eligibility — has no such dependency and stays v0.13.0;
 only §5's narrowed-receiver forms slip. See the RFC-0147/0148 bullet above.
 
