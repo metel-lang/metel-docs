@@ -383,7 +383,7 @@ is needed, belongs in RFC-0137.**
   representation, the eligibility gate, residual-typed parameters, and the subset
   lattice. This RFC now depends on RFC-0137 directly rather than on the superseded
   RFC-0090/RFC-0091 vocabulary it originally cited for the same ideas.
-- **RFC-0120 (Named Records, `1-under-review`)** — a named view stays outside
+- **RFC-0120 (Named Records, `2-accepted`)** — a named view stays outside
   RFC-0120's tier system entirely (§1, §4) — it's a name for a plain struct's own
   residual, not an opt-in named-record declaration; the two mechanisms don't
   overlap despite superficially similar syntax (`view X for T { … }` vs. `record X {
@@ -476,7 +476,7 @@ is needed, belongs in RFC-0137.**
   representation, eligibility gate, residual-parameter typing, and subset lattice
   §1-§3 above build directly on, superseding this RFC's original citations of
   RFC-0090 §9 / RFC-0091 §2.2 for the same ideas.
-- RFC-0120 (Named Records, `1-under-review`) — the tier system a named view stays
+- RFC-0120 (Named Records, `2-accepted`) — the tier system a named view stays
   deliberately outside of (§1, §4).
 - RFC-0091 (Linear Records, `0-draft`) — §2.1's open aliasing question, partially
   inherited by §7.

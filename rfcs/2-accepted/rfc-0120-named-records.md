@@ -2,7 +2,7 @@
 id: rfc-0120
 title: "Named Records"
 date: '2026-07-24'
-status: under-review
+status: accepted
 tracking: 'https://github.com/metel-lang/metel-core/issues/791'
 target: v0.13.0
 updated: '2026-08-30'
@@ -46,6 +46,8 @@ updated: '2026-08-30'
 > (field visibility, numeric labels) and §6 (generic named records) were added the same
 > day to close gaps the review found.
 
+> **Status — accepted (2026-08-30).** Named records: the declared row is structurally visible for row bounds and row-conditional impl resolution where a plain struct's is not (Summary). All open questions resolved (OQ1 design settled by RFC-0137 §5 with a recorded v0.13 whole-row-receiver restriction; OQ2/4/5 via RFC-0121/RFC-0137; OQ3 = same eligibility as struct). §1 guardrail reviewed and holds: tier 1 and tier 3 are opposite capability commitments, tier 2 is a scoped lossy bridge. Spec-rule pass deferred to integration.
+
 ## Summary
 
 A third declaration kind alongside `struct`, `enum` and `aspect`:
@@ -74,14 +76,23 @@ bit.
 
 RFC-0119 lets a struct convert to a record on demand. That covers the local
 drain-and-restore pattern, but the converted value is a *different* value with a different
-type, alive only while it is held. Three things need the row to be part of the type itself:
+type, brand-stripped, alive only while it is held.
 
-- **Row-conditional impls** (`extend<row R: { token: Token, .. }> Session<..R>`) — resolution
-  matches the type's own row, with nothing to intercept.
-- **Direct row-bound satisfaction at impl-resolution time**, as opposed to a generic
-  function accepting a converted value.
-- **A residual that keeps its identity.** A narrowed `Handle` that is still recognisably a
-  `Handle`, rather than a bare row that any same-shaped value would also inhabit.
+**After RFC-0137, `record`'s job is precisely one capability: the declared row is visible
+to impl resolution.** That is the Summary's one bit, and it takes two forms that RFC-0118
+OQ4 already notes are the same question from two positions:
+
+- **Row-conditional impls** (`extend<row R: { token: Token, .. }> Session<..R>`) —
+  resolution matches the type's *own* declared row, so `Session` gains or loses methods as
+  its row narrows. Tier 2 cannot express this at all: an impl on the converted anonymous
+  value is brandless and matches every same-shaped value, not `Session`.
+- **Direct row-bound satisfaction** — a `Session` value itself satisfies
+  `<record T: { token, .. }>`, brand intact, rather than a caller having to pass
+  `session.to_record()` and lose the identity.
+
+*(The third motivation this section once listed — "a residual that keeps its identity" —
+is now universal, not tier-3-only: RFC-0137 preserves the brand through narrowing for
+every `struct`. It is no longer a reason to reach for `record`; §4 records the change.)*
 
 ---
 
@@ -110,6 +121,32 @@ row-conditional impls — paying for machinery never asked for. Tier 2 grants th
 **The guardrail this depends on:** each tier must correspond to a distinct *capability
 requirement* — "no row access" / "temporary, explicit, non-impl-eligible" / "permanent,
 impl-eligible" — never offered as interchangeable ways to do the same thing.
+
+**Acceptance review of the guardrail, 2026-08-30.** It holds. There are two *fundamental*
+capabilities, and they are opposite commitments:
+
+- **Tier 1 (`struct`) — a private row.** Layout is encapsulated; field renames are
+  refactoring; nothing outside the module is structurally coupled to the shape.
+- **Tier 3 (`record`) — a published structural row.** The declared row participates in
+  impl resolution (Motivation), which is *unavailable* at tier 1 by any amount of extra
+  code — the resolver does not look at a `struct`'s row, deliberately (RFC-0137 §3, to
+  keep structural eligibility from going ambient). And it is a one-way door: §2's cost.
+
+  Tier 1 → tier 3 is not "the same thing done differently"; it is choosing the opposite
+  side of an encapsulation trade.
+
+**Tier 2 is a scoped bridge, not a co-equal third capability.** `#derive(ToRecord,
+FromRecord)` grants a *local, explicit, lossy* row view (a brand-stripped copy) without
+moving the type off tier 1. It is genuinely distinct from tier 3 for the use case that
+matters — a row-conditional impl on the *nominal* type is impossible via tier 2, because
+the converted value has no brand — so it is not an interchangeable way to get what
+`record` gets. It is best read as tier 1 plus an escape hatch, priced (a copy, brand
+loss, non-impl-eligible), for the author who needs a row operation once and not a
+contract.
+
+So the guardrail's three points are real: tier 1 and tier 3 are distinct *and opposite*
+capability requirements; tier 2 is distinct-by-limitation from tier 3 and additive over
+tier 1. No two are interchangeable.
 
 A tier-3 type gets tier 2's conversions for free: `to_record`/`from_record` on a type that
 already *is* `(row, brand)` are the identity coercion, nothing to derive separately.
@@ -355,13 +392,16 @@ parameterized row.
 
 ## Decision
 
-**Outcome:** *(pending — no blocking open question remains as of 2026-08-30, after an
-adversarial review pass. OQ2 / OQ5 resolved earlier (RFC-0121 §3, RFC-0137 §2/§3); OQ1's
-design is settled by RFC-0137 §5 with a recorded v0.13 whole-row-receiver restriction
-(§2, OQ1) rather than an open question; OQ3 answered as "same eligibility as `struct`";
-OQ4 inherited from RFC-0137. §5 fixes field visibility (all fields public) and defers
-numeric labels to RFC-0151; §6 states the generic rule. The core claim is one bit — a
-`record` brand is structurally visible where a `struct`'s is not (Summary) — and the
-remaining gate is an acceptance review of §1's guardrail that this is a genuine capability
-requirement, plus the §8-style spec-rule pass done at integration.)*
-**Target:** *(set when accepted; committed to v0.13.0 via metel-core#791.)*
+**Outcome:** **Ready for acceptance, 2026-08-30.** No blocking open question remains after
+the adversarial review pass: OQ2 / OQ5 resolved earlier (RFC-0121 §3, RFC-0137 §2/§3);
+OQ1's design is settled by RFC-0137 §5 with a recorded v0.13 whole-row-receiver
+restriction (§2, OQ1); OQ3 answered as "same allocator eligibility as `struct`"; OQ4
+inherited from RFC-0137. §5 fixes field visibility (all fields public) and defers numeric
+labels to RFC-0151; §6 states the generic rule. **The §1 guardrail was reviewed and
+holds** — tier 1 (private row) and tier 3 (published structural row) are distinct and
+opposite capability requirements, and tier 2 is distinct-by-limitation from tier 3 and
+additive over tier 1; none is an interchangeable way to do another's job. The only work
+left is the spec-rule pass (coverage frontmatter + Legality Rule blocks for declaration
+grammar, structural-visibility eligibility, row-bound/impl dispatch, upgrade behaviour)
+done at the `3-integrated` transition, as for RFC-0117 and RFC-0129.
+**Target:** v0.13.0, via metel-core#791.
