@@ -17,6 +17,15 @@ coverage:
 
 Replace the `fun(...) -> { }` syntax for anonymous functions (closures) with a lighter `(...) -> { }` form, dropping the `fun` keyword. The `fun` keyword remains required for named function declarations. The corresponding closure type annotation changes from `fun(T) -> U` to `(T) -> U`.
 
+> **Correction 2026-08-30 — the `(...)` surface choice is being revised, not the goal.**
+> Dropping `fun` was right, but `(...)` collides with grouping, call syntax, and — once
+> RFC-0151 makes `(A, B)` a record type — genuinely ambiguously with tuple/record types
+> (`(A, B) -> C` cannot say two-args-versus-one-record). **RFC-0154 (Pipe Notation for
+> Closures and Function Types)** moves the closure literal and the function type to
+> `|...|` (`|x, y| body`, `|A, B| -> C`), keeping this RFC's lightness while freeing
+> `(...)`. This RFC's semantics — anonymous functions, capture, the `fun`-only-for-named
+> rule — are unchanged.
+
 ---
 
 ## Motivation
