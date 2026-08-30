@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**152 RFCs total.** 31 draft, 34 under review, 9 accepted, 3 integrated (77 live), 48 implemented, 13 superseded, 14 refused (75 settled).
+**152 RFCs total.** 31 draft, 33 under review, 10 accepted, 3 integrated (77 live), 48 implemented, 13 superseded, 14 refused (75 settled).
 
 ## Draft (31)
 
@@ -49,7 +49,7 @@ the curated thematic map.
 - **RFC-0145** — Static Storage Duration (`0-draft` ; rfcs/0-draft/rfc-0145-static-storage-duration.md ; date 2026-08-27)
 - **RFC-0151** — Tuples as Numeric-Label Rows (`0-draft` ; rfcs/0-draft/rfc-0151-tuples-as-numeric-label-rows.md ; date 2026-08-29)
 
-## Under Review (34)
+## Under Review (33)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0050** — Closure Capture Lists (`1-under-review` ; rfcs/1-under-review/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-08-23)
@@ -63,7 +63,6 @@ the curated thematic map.
 - **RFC-0109** — Self-View Narrowing (`1-under-review` ; rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md ; date 2026-07-18 ; updated 2026-08-27)
 - **RFC-0113** — Context Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0113-context-parameters.md ; date 2026-07-21 ; updated 2026-08-23)
 - **RFC-0119** — Record Conversions (`1-under-review` ; rfcs/1-under-review/rfc-0119-record-conversions.md ; date 2026-07-24 ; updated 2026-08-23)
-- **RFC-0120** — Named Records (`1-under-review` ; rfcs/1-under-review/rfc-0120-named-records.md ; date 2026-07-24 ; updated 2026-08-25)
 - **RFC-0121** — Open Rows (`1-under-review` ; rfcs/1-under-review/rfc-0121-open-rows.md ; date 2026-07-24 ; updated 2026-08-25)
 - **RFC-0122** — Borrow Checking (`1-under-review` ; rfcs/1-under-review/rfc-0122-borrow-checking.md ; date 2026-07-24 ; updated 2026-08-23)
 - **RFC-0123** — Field-Wise Row Constraints (`1-under-review` ; rfcs/1-under-review/rfc-0123-field-wise-row-constraints.md ; date 2026-07-24 ; updated 2026-08-23)
@@ -86,7 +85,7 @@ the curated thematic map.
 - **RFC-0152** — Function-Type Multiplicity Widening (`1-under-review` ; rfcs/1-under-review/rfc-0152-function-type-multiplicity-widening.md ; date 2026-08-30 ; updated 2026-08-30)
 - **RFC-0153** — Closure Mutation Axis (`1-under-review` ; rfcs/1-under-review/rfc-0153-closure-mutation-axis.md ; date 2026-08-30 ; updated 2026-08-30)
 
-## Accepted (9)
+## Accepted (10)
 
 - **RFC-0008** — Aspect Objects (`2-accepted` ; rfcs/2-accepted/rfc-0008-aspect-objects.md ; date 2026-07-01)
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
@@ -95,6 +94,7 @@ the curated thematic map.
 - **RFC-0068** — Struct-Owned Allocators (`2-accepted` ; rfcs/2-accepted/rfc-0068-struct-owned-allocators.md ; date 2026-06-28 ; updated 2026-07-10)
 - **RFC-0073** — AutoAlloc (`2-accepted` ; rfcs/2-accepted/rfc-0073-auto-alloc.md ; date 2026-06-29 ; updated 2026-07-10)
 - **RFC-0077** — Allocator Generics (`2-accepted` ; rfcs/2-accepted/rfc-0077-allocator-generics.md ; date 2026-06-29 ; updated 2026-07-10)
+- **RFC-0120** — Named Records (`2-accepted` ; rfcs/2-accepted/rfc-0120-named-records.md ; date 2026-07-24 ; updated 2026-08-30)
 - **RFC-0130** — extends Aspect: Renaming impl Aspect for Consistency with extend (`2-accepted` ; rfcs/2-accepted/rfc-0130-extends-aspect-renaming-impl-aspect-for-consistency-with-extend.md ; date 2026-08-06 ; updated 2026-08-23)
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 

@@ -361,14 +361,22 @@ above it are.
   handles a borrow, so it never needs to establish which object one came from — and put
   the tier boundary on a clean line: *by-value conversion is bare; borrowed access is
   branded because it must be.* Depends on RFC-0116, RFC-0117.
-- **RFC-0120** *(under review)* — Named Records — tier 3 `record X { }` carrying `(row, brand)`
-  intrinsically; the tier table, the non-breaking upgrade path, and RFC-0090 §9's
-  identity-tag reuse. Depends on RFC-0116, RFC-0119. **Its own Open Question 5** (does a
-  narrowed named record keep its brand) **is answered by RFC-0137** (`2-accepted`
-  2026-08-27) for the general case — every struct's brand is preserved through
-  narrowing, not only tier-3's. Its own three-tier table (§1) was already restated in
-  RFC-0137's terms 2026-08-25 — confirmed 2026-08-27 by re-checking, after an earlier
-  note here wrongly claimed it was still pending without verifying first.
+- **RFC-0120** *(accepted 2026-08-30)* — Named Records — tier 3 `record X { }`. **One
+  capability, post-RFC-0137:** `record X` is `struct X` in every respect except that its
+  declaration brand is *structurally visible*, so its declared row satisfies row bounds
+  (RFC-0118) and is matched by row-conditional impl resolution (RFC-0121) — which a plain
+  `struct`'s brand deliberately is not (RFC-0137 §3). Depends on RFC-0116 only.
+  **All open questions resolved (2026-08-30 sweep + adversarial review):** OQ2/OQ5 via
+  RFC-0121 §3 / RFC-0137 §2/§3; OQ1's design settled by RFC-0137 §5's row-bounded `Drop`
+  dispatch with a recorded v0.13 restriction (a `record` with custom `Drop` takes a
+  whole-row `&var self` until RFC-0109/0147/0148's narrowed-receiver syntax lands); OQ3 =
+  "same allocator eligibility as `struct`"; OQ4 inherited from RFC-0137. New §5 (all
+  record fields public; numeric labels → RFC-0151) and §6 (generic named records).
+  **§1 guardrail reviewed and holds** — tier 1 (private row) and tier 3 (published
+  structural row) are opposite capability commitments; tier 2 (`#derive(ToRecord)`) is a
+  scoped, lossy, brand-stripping bridge, incapable of a row-conditional impl on the
+  nominal type. Spec-rule pass (coverage frontmatter + Legality blocks) deferred to the
+  `3-integrated` transition. Tracker metel-core#791 (v0.13.0).
 - **RFC-0121** *(under review)* — Open Rows — `<row R>` / `..R`, row algebra (extension is a
   literal, removal is a where-clause decomposition), row-conditional typestate, and the
   width-subtyping-versus-ownership problem. **The expensive half**, and the only piece
