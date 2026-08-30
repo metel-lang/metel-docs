@@ -215,7 +215,7 @@ RFCs, one confirming the unification and one in tension with it.
 **Monomorphization is already assumed, not a retrofit.** RFC-0008 (Aspect Objects,
 accepted) draws its entire dynamic-dispatch proposal as a contrast against an existing
 default: "Static dispatch (generics + monomorphisation) requires the concrete type to
-be known at compile time... a function accepting `impl Aspect` is monomorphised per
+be known at compile time... a function accepting `extends Aspect` is monomorphised per
 caller type." That is exactly what comptime-parameter semantics produce: a distinct,
 compile-time-known `T` triggers a fresh evaluation of the function body specialized to
 that `T`, i.e. monomorphization, by construction, with no separate codegen step to
