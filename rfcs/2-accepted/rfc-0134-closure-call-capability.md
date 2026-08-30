@@ -2,7 +2,7 @@
 id: rfc-0134
 title: "Closure Call Capability"
 date: '2026-08-13'
-status: under-review
+status: accepted
 target: v0.13.0
 updated: '2026-08-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/269'
@@ -35,10 +35,15 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 
 > **Status — under review (2026-08-15).** Blockers 1/2/4 from the earlier acceptance check resolved in-document: §3's unification fork decided (exact match first, subtyping deferred), the Summary's false Copy/Drop-are-structurally-derived justification withdrawn and replaced with the receiver-kind argument §2 already used, and the affine-vs-linear open question converted to a decision with a stated reopening condition.
 >
-> **Updated 2026-08-30 (acceptance review).** Two changes and two open items:
-> - The stale note that once sat here — "not proposed for acceptance, `use_multiplicity` vs the two name-literal `Copy` implications is unspecified" — is **resolved**: Open Questions §"Resolved: `use_multiplicity` disturbs neither `Copy` implication" limits this RFC to the *move-checking* notion of `Copy` and assigns the aspect-registry split to metel-core#739; RFC-0061 now carries the matching correction. Not a blocker.
-> - §3a (the `fun(T) -> U` grammar proposal added 2026-08-29) is **removed** — the base function-type spelling is a corpus-wide question, now **RFC-0154 (Pipe Notation for Closures and Function Types)**, which proposes `|T| -> U`. This RFC's `once`/`many` qualifier prefixes whatever RFC-0154 settles; examples here use the current `(T) -> U`.
-> - **Open (from the 2026-08-30 review):** §3 asserts a directional reading ("a `many` value satisfies a `once` slot") *and* an exact-match unification rule, which contradict — under exact match a `once fun` parameter rejects an ordinary `many` closure, making the `once` promise-qualifier unusable in its main case. Resolving this needs RFC-0152's first-order widening as a co-requirement, or a v0.13 descope of §3 to inference + the `many` qualifier only. Plus: §2's inference predicate and the "calling a `once fun` consumes the callee" operational rule need spec-precise statements. **Not proposed for acceptance until these are settled.**
+> **Updated 2026-08-30 (acceptance review).** Resolved:
+> - The stale note that once sat here — "not proposed for acceptance, `use_multiplicity` vs the two name-literal `Copy` implications is unspecified" — is **resolved**: Open Questions §"Resolved: `use_multiplicity` disturbs neither `Copy` implication" limits this RFC to the *move-checking* notion of `Copy` and assigns the aspect-registry split to metel-core#739; RFC-0061 carries the matching correction.
+> - §3a (the `fun(T) -> U` grammar proposal added 2026-08-29) is **removed** — the base function-type spelling is a corpus-wide question, now **RFC-0154 (Pipe Notation for Closures and Function Types)**. This RFC's `once`/`many` qualifier prefixes whatever RFC-0154 settles; examples here use the current `(T) -> U`.
+> - §3's "exact match first, subtyping deferred" decision is **replaced** with **first-order directional matching** (`many` satisfies `once`), which is what makes the `once` qualifier usable as a promise. Its first-order form is **RFC-0152 (Function-Type Multiplicity Widening)** and this RFC now **depends on RFC-0152's first-order half — the two accept together**. RFC-0152 keeps only the higher-order (contravariant) positions and the full-lattice question, neither of which this RFC needs.
+> - §2's inference predicate and the "calling a `once` closure consumes the callee value" operational rule are now stated spec-precisely (§2).
+>
+> Proposed for acceptance alongside RFC-0152.
+
+> **Status — accepted (2026-08-30).** Acceptance review (2026-08-30): 2026-08-15 blockers resolved in-document; use_multiplicity/Copy concern scoped to move-checking Copy only (aspect split -> metel-core#739); base function-type spelling split out to RFC-0154; exact-match multiplicity proposal withdrawn as unusable and replaced with first-order directional matching delivered by RFC-0152 (co-requirement, accepted together); S2 inference predicate and once-call-site consumption rule stated spec-precisely.
 
 ## Summary
 
@@ -271,6 +276,34 @@ checker's model; a second call is rejected as a use of an already-moved value, w
 diagnostic naming the capture (not just the closure), matching `T0019`'s existing shape
 for every other moved-value case.
 
+**Formal predicate, stated precisely.** The analysis runs *after* type checking, over
+the *same* control-flow graph the move checker already builds for the closure body — not
+a second traversal with its own rules. A non-`Copy` capture `c` is classified
+**consumed** exactly when the existing move checker, run on that CFG, would register a
+move out of the capture place `c` (equivalently, the field-projection modeling `c` on
+the closure's own place — see the diagnostic-shape note below) on **some path from entry
+that reaches the consuming statement**. "Reaches" is *syntactic-conservative*: a path
+counts if it exists in the CFG, with no constant-folding of branch conditions and no
+dead-code pruning beyond what the move checker already performs for ordinary bodies. A
+capture consumed only on a path the move checker itself already proves unreachable is
+therefore not classified consumed — but nothing weaker than that is assumed. If *any*
+conservatively-reachable path consumes `c`, the closure is `once`; it is `many` only if
+*every* such path leaves *every* non-`Copy` capture un-consumed. This is deliberately
+the same conservative-reachability standard the move checker uses for `T0019` today, so
+the two analyses cannot disagree about whether a given place is moved.
+
+**Operational rule at the call site.** Calling a `once` closure **consumes the callee
+place at the call expression itself**, before the call's arguments and body are checked
+or evaluated. That is the primary state transition: after `f()` where
+`f: once (…) -> …`, the binding `f` is moved, and any later use of `f` — including a
+*recursive or re-entrant* call reached from within the first call's own dynamic extent —
+is rejected as use of a moved value by the ordinary moved-value rule. The per-capture
+projection ("field or element `c` was moved at …") is *diagnostic refinement* layered on
+top: it tells the reader which capture forced the closure to be `once`, but the closure
+value becoming unusable does not depend on the checker first attributing the move to a
+specific capture. A `many` call consumes nothing and routes through `observe_expr`,
+exactly as a `&self` method call does.
+
 No new syntax is needed for this — nothing here requires RFC-0050's `move` specifier (or
 any capture-list syntax at all) to exist first. That is what makes this independent of
 RFC-0050's own stated dependency.
@@ -402,33 +435,38 @@ simply adding a field:
   has to be recorded and discharged later, which is constraint solving alongside
   unification rather than a comparison inside it.
 
-**Decision: exact match first, subtyping deferred.** This RFC specifies the **exact-match**
-rule — `once` unifies only with `once`, `many` only with `many`, and a mismatch is a hard
-type error. Concretely, the `Fun`/`Fun` case gains a multiplicity comparison alongside its
-existing arity check, and nothing else about the unifier changes: it stays symmetric,
-there is no contravariance to implement, and there are no deferred constraints to solve,
-because there is no direction to get wrong.
+**Decision: first-order directional matching, delivered with RFC-0152.** A function
+value of call multiplicity `m` satisfies a required multiplicity `r` when `m` is at
+least as permissive as `r` — `many` satisfies both `once` and `many`; `once` satisfies
+only `once`. This is exactly the direction §1/§2 already imply, and it is what makes the
+`once` qualifier a *usable* promise: a library that writes `f: once (T) -> U` accepts
+every callback a caller might have — a bare function, a reusable closure, or a genuinely
+call-once closure — because all of them satisfy "will be called at most once."
 
-The alternative — collecting multiplicity constraints during inference and solving them
-separately, with contravariance at parameter positions, which is effectively what Rust
-does for its own closure traits — is **deliberately not adopted here**. It is the better
-end state and this RFC expects it to arrive eventually; it is out of scope because it
-touches the shape of inference itself rather than one match arm, and the soundness hole
-this RFC exists to close does not need it.
+An earlier draft of this section proposed shipping **exact match** (`once` only with
+`once`) first and deferring the direction. That was withdrawn 2026-08-30: exact match
+makes the `once` qualifier reject the common case (a `many` closure passed to a `once`
+slot) and so unusable for its primary purpose — the "promise" case this section is about.
+Exact match remains fine for a `many` *requirement* (`map`'s `f: many (T) -> U` accepts
+any `many` closure), but that half never needed a direction.
 
-The cost of deciding this way is real and worth naming precisely: exact match rejects
-programs that ought to compile. The sharpest case is the one §4 records below — a
-plain named function, `many` on both axes, will not satisfy a parameter declared
-`once (T) -> U`, even though something callable any number of times trivially satisfies
-"callable at most once." Callers hitting this write the qualifier explicitly, which is
-always available (§3's explicit form) and never ambiguous.
+The directional rule is a **subtyping** relation, not something a symmetric unifier
+expresses, so its first-order form is specified in **RFC-0152 (Function-Type Multiplicity
+Widening)** and this RFC **depends on RFC-0152's first-order half** — the two are accepted
+together. First-order here means: a function-typed *argument* passed directly to a
+function-typed *parameter*, and a function-typed *return*. That covers every case in this
+RFC's own examples and stdlib signatures.
 
-This ordering is safe in the one way that matters for a released language: exact match is
-strictly *stricter* than the subtyping rule, so every program accepted under exact match
-is still accepted after subtyping lands. Relaxing later is a pure widening of what
-compiles and strands nothing written against the stricter rule. The reverse ordering —
-shipping subtyping and retreating to exact match — would be a breaking change, which is
-the actual argument for taking the strict option first rather than merely the cheap one.
+**What RFC-0152 keeps as its own open work, not required here:** the *higher-order*
+positions — a function type nested inside another function type's parameter, where the
+direction flips again (contravariance) — and whether the relation should become a full
+`Type::Fun` subtype lattice the whole checker reasons over. RFC-0134 needs neither; a
+first-order coercion at argument / ascription / return sites is enough to close the
+soundness hole and make the qualifier honest.
+
+This is safe as a release ordering: the first-order rule is *stricter* than the eventual
+higher-order/lattice form, so every program it accepts stays accepted as RFC-0152's
+scope grows. Nothing written against it is stranded.
 
 **Inference alone isn't enough once a signature is a promise, not just an
 implementation detail — this is a real gap, not a stylistic one.** A pure-inference
@@ -449,11 +487,12 @@ real syntax, and it is deliberately an *addition* to the default above, not a
 replacement for it:
 
 - **Present:** the written qualifier *is* the required multiplicity — part of the
-  function's declared signature, checked by the same ordinary unification the inferred
-  case already uses, but never re-derived from the body. `public fun map<U>(&self,
-  f: many (T) -> U) -> List<U>` keeps meaning "callable any number of times" even if a
-  future refactor of `map`'s own implementation happened to only need one call — exactly
-  matching Rust's `F: Fn` staying `F: Fn` regardless of what the current body does.
+  function's declared signature, checked by the same first-order directional matching
+  (RFC-0152) the inferred case uses, but never re-derived from the body. `public fun
+  map<U>(&self, f: many (T) -> U) -> List<U>` keeps meaning "callable any number of
+  times" even if a future refactor of `map`'s own implementation happened to only need
+  one call — exactly matching Rust's `F: Fn` staying `F: Fn` regardless of what the
+  current body does.
 - **Absent, body present:** falls back to the inference above, unchanged from the first
   draft of this section — the common case stays annotation-free.
 - **Absent, no body to infer from at all** — a `native(...)` declaration, or an aspect
@@ -600,11 +639,11 @@ once it's out, so is the reason for a nominal split:
   closure is expected is `many` on both axes for free — not a special case checked
   against the type, the same zero-captures fact computed once and reused. (A prior draft
   of this RFC carried this as its own separate Open Question, pending §4 being settled;
-  it wasn't a second question, it was this one asked twice.) Note this is where §3's
-  subtyping question bites hardest in practice: with exact-match unification (§3's
-  fallback), a `many`-on-both-axes function value would *not* satisfy a parameter
-  declared `once (T) -> U`, even though it trivially can be called at most once. That is
-  the ergonomic cost §3 names, made concrete.
+  it wasn't a second question, it was this one asked twice.) Such a value satisfies a
+  parameter declared `once (T) -> U` — `many` is usable wherever `once` is wanted, per
+  §3's first-order directional matching (RFC-0152). An earlier draft of this RFC, when
+  it still proposed exact-match unification, listed the opposite as an ergonomic cost;
+  that cost is what adopting RFC-0152's first-order rule removes.
 
 **This directly conflicts with RFC-0061 §7.4's description, worth flagging rather than
 silently overriding.** RFC-0061 (`4-implemented`) states closures "have distinct
@@ -728,9 +767,10 @@ genuinely out of scope here.
 **None blocking.** Every question this RFC opened with has been answered from existing
 code or settled as a decision — where the marker lives, the diagnostic shape for a second
 call, builtin higher-order callbacks (§2, §3, §4), how multiplicity mismatches are
-actually rejected (§3's exact-match decision), and whether §4's `use_multiplicity` field
-disturbs the two implications keyed on the name `Copy` (resolved immediately below). One
-item is recorded as a **decision with a stated reopening condition**, not as an open
+rejected (§3's first-order directional matching, with RFC-0152), and whether §4's
+`use_multiplicity` field disturbs the two implications keyed on the name `Copy` (resolved
+immediately below). One item is recorded as a **decision with a stated reopening
+condition**, not as an open
 question, per PROCESS.md's rule that a question blocked on nothing that exists can block
 acceptance indefinitely while having nothing anyone could schedule.
 
@@ -935,5 +975,12 @@ re-examining, because the trade-off it was made against will have changed.
 
 ## Decision
 
-**Outcome:** *(pending)*
-**Target:** *(set when accepted)*
+**Outcome:** *(proposed for acceptance alongside RFC-0152, 2026-08-30. The
+2026-08-15 blockers are resolved in-document; the 2026-08-30 acceptance review
+resolved the `use_multiplicity`/`Copy` concern (Open Questions — this RFC touches
+only the move-checking notion of `Copy`; the aspect-registry split is
+metel-core#739), split the base-spelling question out to RFC-0154, replaced §3's
+exact-match proposal with first-order directional matching, and stated §2's
+inference predicate and call-site consumption rule spec-precisely. RFC-0134
+depends on **RFC-0152's first-order half**; the two move to `accepted` together.)*
+**Target:** v0.13.0 (metel-core#269).
