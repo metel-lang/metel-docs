@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-08-29'
+generated_on: '2026-08-30'
 ---
 
 # RFC Registry
@@ -63,7 +63,7 @@ the curated thematic map.
 - **RFC-0109** — Self-View Narrowing (`1-under-review` ; rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md ; date 2026-07-18 ; updated 2026-08-27)
 - **RFC-0113** — Context Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0113-context-parameters.md ; date 2026-07-21 ; updated 2026-08-23)
 - **RFC-0119** — Record Conversions (`1-under-review` ; rfcs/1-under-review/rfc-0119-record-conversions.md ; date 2026-07-24 ; updated 2026-08-23)
-- **RFC-0120** — Named Records (`1-under-review` ; rfcs/1-under-review/rfc-0120-named-records.md ; date 2026-07-24 ; updated 2026-08-25)
+- **RFC-0120** — Named Records (`1-under-review` ; rfcs/1-under-review/rfc-0120-named-records.md ; date 2026-07-24 ; updated 2026-08-30)
 - **RFC-0121** — Open Rows (`1-under-review` ; rfcs/1-under-review/rfc-0121-open-rows.md ; date 2026-07-24 ; updated 2026-08-25)
 - **RFC-0122** — Borrow Checking (`1-under-review` ; rfcs/1-under-review/rfc-0122-borrow-checking.md ; date 2026-07-24 ; updated 2026-08-23)
 - **RFC-0123** — Field-Wise Row Constraints (`1-under-review` ; rfcs/1-under-review/rfc-0123-field-wise-row-constraints.md ; date 2026-07-24 ; updated 2026-08-23)

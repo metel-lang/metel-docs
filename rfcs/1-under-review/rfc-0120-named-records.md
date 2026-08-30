@@ -5,7 +5,7 @@ date: '2026-07-24'
 status: under-review
 tracking: 'https://github.com/metel-lang/metel-core/issues/791'
 target: v0.13.0
-updated: '2026-08-25'
+updated: '2026-08-30'
 ---
 
 > **Extracted from RFC-0090 §8 (tier 3) and §9 on 2026-07-24** (superseded; see RFC-0116's
@@ -23,17 +23,28 @@ updated: '2026-08-25'
 
 > **Status — under review (2026-08-23).** Committed to v0.13.0, tracking issue #791 filed 2026-08-22
 >
-> **Open-question sweep, 2026-08-30.** RFC-0137 (Nominal Types as Branded Rows) is now
-> `3-integrated`, and it resolves or absorbs the three open questions that were still
-> live: OQ1 (`Drop` dispatch against a narrowed named record) is answered by RFC-0137 §5's
-> row-bounded dispatch, the same rule that closed RFC-0117's identical question and is now
-> spec text (`spec.ownership.drop-dispatch-against-a-narrowed-residual`); OQ3's
-> "does the anonymous-record allocator restriction transfer" loses its premise, because a
-> `record` brand *is* the per-instance declaration identity RFC-0116 §3 said an anonymous
-> record lacks; OQ4's "same brand kind as RFC-0076's" is now RFC-0137's committed model
-> for every struct brand, which a `record` brand simply is. **No blocking open question
-> remains** — see each item below. §1's table was already restated against RFC-0137
-> (2026-08-25); §4's "deliberately not folded in" note is likewise now historical.
+> **Open-question sweep, 2026-08-30** (and tightened the same day after an adversarial
+> review). RFC-0137 (Nominal Types as Branded Rows) is now `3-integrated`, and it resolves
+> or absorbs the three open questions that were still live:
+>
+> - **OQ1** (`Drop` dispatch against a narrowed named record) — the *design* is settled by
+>   RFC-0137 §5's row-bounded dispatch, the same rule that closed RFC-0117's identical
+>   question, now spec text. But the narrowed `drop`-receiver *spelling* it relies on
+>   (RFC-0109/0147/0148) is not integrated, so §2 makes a v0.13 scoping decision: a
+>   `record` with custom `Drop` uses a whole-row `&var self` receiver — no narrowed
+>   receiver, no partial move of it — until that syntax lands. Not an open design
+>   question; a recorded restriction.
+> - **OQ3** — a `record` brand *is* the per-instance declaration identity RFC-0116 §3
+>   said an anonymous record lacks, so that specific objection does not transfer; a named
+>   record has the same allocator-type eligibility as a `struct`, subject to the allocator
+>   cluster's own not-yet-specified custom-`Alloc` story (RFC-0063).
+> - **OQ4** — "same brand kind as RFC-0076's" is now RFC-0137's committed model for every
+>   struct brand, which a `record` brand simply is.
+>
+> **No blocking open question remains.** §1's table was already restated against RFC-0137
+> (2026-08-25); §4's "deliberately not folded in" note is likewise now historical. §5
+> (field visibility, numeric labels) and §6 (generic named records) were added the same
+> day to close gaps the review found.
 
 ## Summary
 
@@ -48,8 +59,14 @@ That is the one capability RFC-0119's conversions cannot supply at any cost: row
 impls are resolved by the type system matching a type's own declared row at
 impl-resolution time, and there is no call site for a derived conversion to intercept.
 
-`record` is now the keyword's only job — RFC-0116 dropped it from the anonymous former, so
-it does exactly one thing: mint a nominal type that is row-shaped.
+**Normatively: `record X { … }` is identical to `struct X { … }` in every respect —
+name, brand, identity, construction, field access, coherence — except one: a `record`'s
+declaration brand is *structurally visible*, so its own declared row satisfies row bounds
+(RFC-0118) and is matched by row-conditional impl resolution (RFC-0121). A plain
+`struct`'s brand is not (RFC-0137 §3).** Everything else in this RFC follows from that one
+bit.
+
+`record` is now the keyword's only job — RFC-0116 dropped it from the anonymous former.
 
 ---
 
@@ -85,9 +102,10 @@ the table's substance is unchanged, only the tier-1 cell's wording:
 | 3 | `record` | yes — intrinsic, permanent | yes |
 
 **Why not collapse 2 into 3.** Anyone wanting a single local drain/restore in one function
-would otherwise have to accept the coherence-priority and private-field-leakage exposure
-(§3) that only matters for types with row-conditional impls — paying for machinery never
-asked for.
+would otherwise have to publish the whole row as public API (§2, §5 — every `record` field
+is public) and accept the coherence-priority rules that only matter for types with
+row-conditional impls — paying for machinery never asked for. Tier 2 grants the row
+*operation* while keeping the layout private.
 
 **The guardrail this depends on:** each tier must correspond to a distinct *capability
 requirement* — "no row access" / "temporary, explicit, non-impl-eligible" / "permanent,
@@ -102,9 +120,19 @@ already *is* `(row, brand)` are the identity coercion, nothing to derive separat
 
 - The nominal name and identity are unchanged — aspect impls, orphan-rule coherence and
   generic instantiation all key off the same identity as before.
-- Construction and field-access syntax are unchanged.
+- Construction and field-access syntax are unchanged. `record X { … }` construction is
+  ordinary nominal (struct-literal) construction — this RFC introduces **no**
+  anonymous-row-to-`X` coercion and does not make "a row becomes `Self`" a privileged
+  operation. If RFC-0114 (`Construct`) later routes *all* nominal construction through a
+  constructor, `record` follows that change uniformly with `struct`; it is not singled
+  out.
 - Whole-value use sites keep typechecking exactly as before, against the record's full row.
 - Row tracking costs nothing at runtime for whole-value-only callers.
+- **Custom `Drop` on the upgraded type keeps a whole-row `&var self` receiver.** The
+  narrowed-receiver forms (RFC-0109/0147/0148) that would let a destructor read a strict
+  subset are not integrated yet (Open Question 1), so until they are, a `record` with
+  custom `Drop` may not partially-move `self`, exactly as RFC-0071 §7 already requires for
+  any `Drop` type.
 
 **One honest caveat: "non-breaking" means "doesn't break existing callers," not "changes
 nothing observable."** The conversion does newly make row-conditional generic functions and
@@ -173,6 +201,41 @@ The `Drop`-dispatch problem this section flagged — *how does custom `Drop` dis
 against a narrowed residual?* — is answered: Open Question 1 above, via RFC-0137 §5's
 row-bounded dispatch, now spec text.
 
+## 5. Field visibility, and numeric labels
+
+**Every field of a `record` is public.** A field-visibility modifier (`private`, or a
+non-`public` field where the module default is private) on a `record` declaration is a
+compile error. This is not a restriction so much as what the declaration *means*: §2
+already establishes that `record X` publishes its row as the type's interface — "a
+record's API is what it contains" (RFC-0118 §3). A partially-private row would make a
+bound like `<record T: { token, .. }>` either a privacy oracle (it reveals whether a
+field the caller can't name exists) or a bound over a label the caller cannot access;
+neither is coherent. An author who wants a private field wants a `struct` (tier 1) or
+tier 2's local, brand-stripped conversion.
+
+**Numeric field labels are deferred to RFC-0151.** If `(A, B)` becomes the numeric-label
+row `{ 0: A, 1: B }` (RFC-0151, `0-draft`), whether `record R { 0: i64 }` is a legal
+declaration is that RFC's call, to be made before it is accepted. Either way it does not
+threaten `record`: a `record` always carries a brand, so even `record R { 0: i64, 1:
+String }` and the brandless tuple `(i64, String)` of the same shape stay distinct types —
+the tuple never satisfies a `record`-kinded bound and `R` never matches a bound written
+for a bare tuple.
+
+## 6. Generic named records
+
+`record` composes with type parameters exactly as `struct` does: `record Session<T> {
+token: T, log: List<String> }` declares the row `{ token: T, log: List<String> }` with
+`T` symbolic, and each instantiation substitutes as for a struct's fields — `Session<Api>`
+has the row `{ token: Api, .. }`.
+
+Row-conditional impl resolution is checked **under the impl's own substitution**, against
+the instantiated row. An `extend<row R: { token: Api, .. }> Session<..R>` matches
+`Session<Api>` and not `Session<i64>`; an `extend<T> ...` impl written over an unbound
+`token: T` matches every instantiation. This is the same rule RFC-0137 applies to a
+generic brand's symbolic field types (including a `Drop` impl's required set), so `record`
+introduces no new generic behavior — only the visibility bit of §Summary, applied to the
+parameterized row.
+
 ---
 
 ## Open Questions
@@ -192,8 +255,19 @@ row-bounded dispatch, now spec text.
    `nominal-types-as-branded-rows.md` §4 describes cannot occur: a partial move that would
    leave the residual below the declared required set is rejected at that point
    (spec `…legality-1`), so the destructor is never reached with a field it reads already
-   gone. Implementation is gated on metel-core#858 (row-bounded Drop dispatch), the same
-   gate RFC-0117's rule sits behind.
+   gone.
+
+   **v0.13 scope, not an open design question.** The spec's own `…legality-3` records that
+   the *narrowed* `drop`-receiver spelling this relies on — `&var self: Self.{ a, b }` or
+   a row-parameter receiver — depends on RFC-0109/0147/0148, none of which is integrated;
+   *"until then a drop receiver is always the whole value and the required set is always
+   the whole row."* So for v0.13, a `record` with custom `Drop` takes a whole-row
+   `&var self` and may not partially-move it (§2), which is exactly RFC-0071 §7's existing
+   rule for every `Drop` type. The narrowed case — a destructor that reads only a subset,
+   run against a residual — is fully specified in the design and becomes reachable for
+   `record` the moment the receiver syntax lands, with no further decision needed here.
+   Implementation is gated on metel-core#858 (row-bounded Drop dispatch), the same gate
+   RFC-0117's rule sits behind.
 2. ~~**Brand-versus-row coherence priority.** An ordinary `extend Point: Display` is
    brand-keyed; a row-conditional impl is row-keyed. If a value matches both, which wins?
    More-specific-wins is the obvious default and is written down nowhere.
@@ -207,15 +281,18 @@ row-bounded dispatch, now spec text.
 3. **Does RFC-0116 §3's allocator-type restriction transfer to tier 3?** That restriction
    assumed structural interchangeability, which a fixed brand arguably removes — a named
    record has per-instance identity in a way an anonymous one does not. ~~Unresolved.~~
-   *(From RFC-0090 OQ9.)* **Premise removed 2026-08-30 — RFC-0137 (`3-integrated`).**
-   RFC-0116 §3's own stated reason an anonymous record cannot be an allocator is that
+   *(From RFC-0090 OQ9.)* **Answered 2026-08-30 — same eligibility as `struct`.**
+   RFC-0116 §3's stated reason an anonymous record cannot be an allocator is that
    *"allocator identity is per-instance (RFC-0063 §2)"* and an anonymous record has no
-   such identity. A `record` brand **is** exactly that per-instance declaration identity
-   (RFC-0137 §2/§3; OQ5), so the restriction's rationale does not carry to tier 3 — a
-   named record is, on this axis, a `struct`. Whether a `record` may then *actually* serve
-   as an allocator type is a question for the allocator cluster (RFC-0063 disjointness,
-   RFC-0143), not for this RFC's acceptance; it is no longer an open design gap here, just
-   a deferral to where allocator identity is specified.
+   such identity. A `record` brand **is** that per-instance declaration identity
+   (RFC-0137 §2/§3; OQ5), so that specific objection does not transfer: **a named record's
+   allocator-type eligibility is exactly a `struct`'s** — no better, no worse. What that
+   eligibility actually *is* — whether any nominal type may implement `Alloc`, how the
+   disjointness rules apply — is unspecified in the allocator cluster itself (RFC-0063
+   defers custom-`Alloc` authoring; RFC-0143 is unwritten), and `record` neither needs nor
+   pre-empts that answer. So: not an open design gap for *this* RFC, and not a special
+   restriction on `record`; it inherits `struct`'s answer whenever the allocator cluster
+   gives one.
 4. **Is the brand here the same kind as RFC-0076's?** §3 asserts implementer economy by
    reusing `brand-kind-unification.md`'s single identity kind. Whether a
    declaration-minted, compile-time-only, one-introduction tag really is a degenerate case
@@ -260,8 +337,10 @@ row-bounded dispatch, now spec text.
   §3 there resolves Open Question 2 above (2026-08-25)
 - `reports/substructural-types/brand-kind-unification.md` §8 — the single-identity-kind
   proposal §3 reuses
-- `reports/substructural-types/nominal-types-as-branded-rows.md` — the stronger thesis §4
-  deliberately does not adopt, and §4's `Drop`-dispatch leak
+- `reports/substructural-types/nominal-types-as-branded-rows.md` — the exploration whose
+  strong thesis §4 kept separate at the time; that thesis is now RFC-0137 (`3-integrated`)
+  and §4 is updated to say so. Its §4.1–4.3 `Drop`-dispatch leak analysis is what RFC-0137
+  §5's row-bounded dispatch answers (Open Question 1)
 - RFC-0137 (Nominal Types as Branded Rows, `3-integrated`) — the exploration above,
   formalized and merged into `reference/spec/ownership.md`: adopts the stronger thesis for
   every struct, and its §2/§3/§5 resolve Open Questions 5, 1, and the premise of 3; §1's
@@ -276,10 +355,13 @@ row-bounded dispatch, now spec text.
 
 ## Decision
 
-**Outcome:** *(pending — but no blocking open question remains as of 2026-08-30. OQ2 and
-OQ5 were resolved earlier (RFC-0121 §3, RFC-0137 §2/§3); OQ1, OQ3, and OQ4 are resolved
-or reduced to a non-blocking deferral by RFC-0137 reaching `3-integrated` — see the
-open-question sweep in the header. The remaining gate is an acceptance review confirming
-tier 3 is a distinct capability requirement (§1's guardrail) and that `record` still
-earns its place on top of RFC-0137's every-struct-is-branded-row model — §4.)*
+**Outcome:** *(pending — no blocking open question remains as of 2026-08-30, after an
+adversarial review pass. OQ2 / OQ5 resolved earlier (RFC-0121 §3, RFC-0137 §2/§3); OQ1's
+design is settled by RFC-0137 §5 with a recorded v0.13 whole-row-receiver restriction
+(§2, OQ1) rather than an open question; OQ3 answered as "same eligibility as `struct`";
+OQ4 inherited from RFC-0137. §5 fixes field visibility (all fields public) and defers
+numeric labels to RFC-0151; §6 states the generic rule. The core claim is one bit — a
+`record` brand is structurally visible where a `struct`'s is not (Summary) — and the
+remaining gate is an acceptance review of §1's guardrail that this is a genuine capability
+requirement, plus the §8-style spec-rule pass done at integration.)*
 **Target:** *(set when accepted; committed to v0.13.0 via metel-core#791.)*
