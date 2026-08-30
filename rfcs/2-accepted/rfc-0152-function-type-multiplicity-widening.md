@@ -2,34 +2,51 @@
 id: rfc-0152
 title: "Function-Type Multiplicity Widening"
 date: '2026-08-30'
-status: under-review
-target:
+status: accepted
+target: v0.13.0
 updated: '2026-08-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/901'
 ---
 
-> **Deferred from RFC-0134 §3.** RFC-0134 decides multiplicity unification is
-> **exact match** for its first implementation — `many fun(T) -> U` does *not*
-> satisfy a slot that asks for `once fun(T) -> U`, "even though something callable
-> any number of times trivially satisfies" a call-once requirement (§3, §4). It
-> names this as a real ergonomic cost and calls the fix "a strict later
-> widening." This RFC is that widening.
+> **Split into two halves (2026-08-30 revision).** RFC-0134 originally proposed
+> **exact-match** multiplicity unification and named this widening "a strict later
+> widening." That exact-match proposal was **withdrawn** on 2026-08-30 — it made
+> the `once` qualifier unusable in practice (§3, §4 of RFC-0134). The
+> **first-order directional rule** of this RFC (§1, §3 here — `many`-call satisfies
+> a `once`-call slot, `Copy` satisfies non-`Copy`, at argument / ascription /
+> return sites) is now a **co-requirement of RFC-0134: the two are accepted
+> together**, because RFC-0134's `once` qualifier is not sound-and-usable without
+> it. What stays with this RFC as its own later question is the **higher-order /
+> contravariant** case (§2's nested-function-type direction, Open Question 2) and
+> whether the relation should **become a real `Type::Fun` subtype lattice** the
+> whole type system reasons over (§4, Open Question 1).
 
-> **Status — under review (2026-08-30).** Deferred from RFC-0134 §3: replace exact-match multiplicity unification with a one-directional widening (many-call satisfies once-call, Copy satisfies non-Copy).
+> **Status — first-order half accepted with RFC-0134 (2026-08-30); higher-order
+> variance + subtype-lattice question remain open in this RFC.**
+
+> **Status — accepted (2026-08-30).** First-order directional rule (S1, S3) accepted as a co-requirement of RFC-0134 (2026-08-30): RFC-0134's once qualifier is not sound-and-usable without many-satisfies-once at argument/ascription/return sites, and RFC-0134's exact-match alternative was withdrawn. Higher-order/contravariant case (S2, OQ2) and the Type::Fun subtype-lattice question (S4, OQ1) stay open in this RFC and block neither.
 
 ## Summary
 
-Replace RFC-0134's exact-match unification of function-type multiplicities with a
-**one-directional widening**: a function value may be used where a *less
-permissive* multiplicity is expected, but not a more permissive one. A
-`many`-call function satisfies a `once`-call slot; a `Copy` function value
-satisfies a non-`Copy` slot. The reverse is rejected, exactly as it is under
-exact match today.
+Function-type multiplicities compose by **one-directional widening**: a function
+value may be used where a *less permissive* multiplicity is expected, but not a
+more permissive one. A `many`-call function satisfies a `once`-call slot; a
+`Copy` function value satisfies a non-`Copy` slot. The reverse is rejected.
+
+**First-order half (§1, §3) — co-requirement of RFC-0134, accepted together.**
+The directional rule at argument, `let`/field ascription, struct-field-init, and
+return sites is what makes `once fun(T) -> U` usable as an honest upper bound in a
+signature without forcing every caller to hand-narrow a perfectly good `many`
+closure. RFC-0134's `once` qualifier is not sound-and-usable without it, so it is
+not deferred: the two RFCs move to `accepted` in the same step.
+
+**Higher-order half — stays open in this RFC.** The direction for a function type
+nested inside another function type's argument (contravariant; §2, Open Question
+2) and whether this coercion should become a general `Type::Fun` subtype lattice
+(§4, Open Question 1) are this RFC's remaining work and do not block RFC-0134.
 
 This is the function-type analogue of the coercions the language already has —
-`&var T` where `&T` is expected, a `Copy` value where a move is expected — and it
-is what makes `once fun(T) -> U` usable as an honest upper bound in a signature
-without forcing every caller to hand-narrow a perfectly good `many` closure.
+`&var T` where `&T` is expected, a `Copy` value where a move is expected.
 
 ## Motivation
 
@@ -138,15 +155,23 @@ rule in the field model this RFC and RFC-0134 actually use.
 3. **Diagnostics.** When `once fun` is passed where `many fun` is required, the
    error should say "this function may only be called once" and point at the
    inferred `once` and the requiring signature — not a bare unification failure.
-4. **Timing vs RFC-0134.** Land together (RFC-0134 accepts with widening built
-   in), or strictly after (RFC-0134 ships exact-match, this relaxes it)? RFC-0134
-   is written for the latter; confirm that is still the intent.
+4. **Timing vs RFC-0134.** *Resolved 2026-08-30 — land together.* RFC-0134's
+   exact-match proposal was withdrawn as unusable; the first-order rule here (§1,
+   §3) is a co-requirement and moves to `accepted` in the same step as RFC-0134.
+   RFC-0134's prose has been updated to match (its §3 "Decision" now cites this
+   rule rather than deferring it). Only the higher-order half (OQ2) and the
+   subtype-lattice question (OQ1) remain deferred, and they are this RFC's, not
+   RFC-0134's.
 
 ## References
 
-- **RFC-0134 (Closure Call Capability)** — §3 defers this widening; §4's
+- **RFC-0134 (Closure Call Capability)** — co-requirement. §3's "Decision" cites
+  this RFC's first-order rule as the multiplicity-matching semantics; §4's
   `call_multiplicity` / `use_multiplicity` fields on `Type::Fun` are what it
-  orders. §3a's `fun(T) -> U` spelling is assumed.
+  orders.
+- **RFC-0154 (Pipe Notation for Closures and Function Types)** — the base
+  function-type spelling (`|A, B| -> C`); examples here still use the current
+  `(T) -> U` and are spelling-agnostic.
 - **RFC-0153 (Closure Mutation Axis)** — the third axis this relation will also
   order, on the same direction.
 - **RFC-0135 (Multiplicity for Ordinary Types)** — `Copy` as `many` for by-value
@@ -161,8 +186,12 @@ rule in the field model this RFC and RFC-0134 actually use.
 
 ## Decision
 
-**Outcome:** *(pending — draft, opened 2026-08-30, deferred from RFC-0134 §3. The
-first-order relation (§1) is straightforward; the open questions are higher-order
-variance, whether the `use` axis adds anything over ordinary `Copy` coercion, and
-whether this lands with or after RFC-0134.)*
-**Target:** *(set when accepted; with or just after RFC-0134.)*
+**Outcome:** *(first-order half — §1, §3 — proposed for acceptance alongside
+RFC-0134, 2026-08-30. It is a co-requirement: RFC-0134's `once` qualifier is
+unusable without the `many`-satisfies-`once` direction, and RFC-0134's exact-match
+alternative was withdrawn. The higher-order / contravariant case (§2, Open
+Question 2) and the "become a real `Type::Fun` subtype lattice" question (§4, Open
+Question 1) stay open in this RFC and do not block acceptance of the first-order
+half or of RFC-0134.)*
+**Target:** *(first-order half tracks RFC-0134's milestone. Higher-order half set
+when that question is settled.)*
