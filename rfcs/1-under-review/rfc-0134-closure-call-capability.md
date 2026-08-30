@@ -34,6 +34,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 > stated reopening condition.
 
 > **Status — under review (2026-08-15).** Blockers 1/2/4 from the acceptance check resolved in-document: §3's unification fork decided (exact match first, subtyping deferred as a strict later widening), the Summary's false Copy/Drop-are-structurally-derived justification withdrawn and replaced with the receiver-kind argument §2 already used, and the affine-vs-linear open question converted to a decision with a stated reopening condition. Not proposed for acceptance: §4's use_multiplicity field is new and its interaction with the two name-literal Copy implications (RFC-0072 §2.3 Copy=>!Drop, RFC-0080 Copy=>Clone) is unspecified.
+>
+> **Updated 2026-08-29.** Added §3a: change the base function-type spelling from `(T) -> U` to `fun(T) -> U`. A one-token grammar change, no semantic effect. It removes the `tuple_type` / `fun_type` PEG-ordering fragility, aligns the grammar with RFC-0061 §7.4's already-written `fun(A) -> B` prose, and — with RFC-0151 (tuples as numeric-label rows) — is what lets `fun(A, B) -> C` (two args) and `fun((A, B)) -> C` (one record arg) be told apart. `once`/`many` compose as a prefix: `once fun(T) -> U`.
 
 ## Summary
 
@@ -519,8 +521,60 @@ closure argument gets during the probe, and how the inferred requirement then at
 to `map`'s own scheme for real call sites to check against) are not worked out here.
 Unlike before this section had an explicit form, this is no longer a blocking unknown:
 if the inferred path proves difficult to implement soundly for generic bodies, `map`'s
-own stdlib signature can simply be written `f: many (T) -> U` and skip inference for
+own stdlib signature can simply be written `f: many fun(T) -> U` and skip inference for
 this case entirely, at the cost of one explicit word in one stdlib source file.
+
+### 3a. Base spelling: `fun(T) -> U`, not `(T) -> U`
+
+§3 adds a qualifier to the function type; getting the base spelling right is part of the
+same syntax surface, so it is proposed here.
+
+**Change the function-type grammar from `(T, U) -> V` to `fun(T, U) -> V`.** Concretely,
+`fun_type` gains a leading `fun` keyword:
+
+```
+fun_type = { "fun" ~ "(" ~ type_list? ~ ")" ~ "->" ~ type_expr }
+```
+
+The `()` unit type, `(A, B)` tuple/record type, and `(e)` grouping are untouched. This
+is a spelling change, not a semantic one — `Type::Fun` and everything built on it are
+unaffected.
+
+**Why:**
+
+- **Disambiguation.** Today `fun_type` and `tuple_type` share the `(` prefix and are
+  told apart only by backtracking past the `)` to look for `->`. `fun(...)` and `(...)`
+  are disjoint prefixes; `fun_type` no longer has to be PEG-ordered ahead of
+  `tuple_type`, and the two never compete.
+- **RFC-0151 makes the ambiguity real, not just fragile.** Once `(A, B)` is the record
+  type `{ 0: A, 1: B }` (RFC-0151, Tuples as Numeric-Label Rows), `(A, B) -> C` is
+  genuinely ambiguous: a function of *two* arguments, or a function of *one* record
+  argument? `fun(A, B) -> C` is the two-argument type; `fun((A, B)) -> C` is the
+  one-record-argument type. The current grammar cannot write that distinction at all.
+- **It reads like what it is** — a function type parallels the `fun` declaration
+  keyword, the same way `dyn Aspect` and `impl Aspect` lead with their keyword.
+- **It aligns the grammar with the spec.** RFC-0061 §7.4 (`4-implemented`) already
+  *writes* function-pointer types as `fun(A) -> B` in prose (quoted in §4 below); the
+  implementation just never matched. This closes that gap rather than widening it —
+  and RFC-0061 §7.4's correction note, which §4 already says this RFC's outcome
+  requires, can adopt the spelling at the same time.
+
+**Composition with §3's qualifier.** The qualifier precedes the keyword:
+`once fun(T) -> U` / `many fun(T) -> U` — "a `fun` callable once / any number of times".
+§4's reserved mutation-axis qualifier composes the same way, as an independent prefix,
+per §3's forward-compatibility constraint.
+
+**Shorthand in this document.** Sections above and below write `(T) -> U` for brevity
+where the exact spelling is not the point; under this proposal every such occurrence is
+`fun(T) -> U`, with any `once`/`many` qualifier before the `fun`.
+
+**Migration.** The corpus using `(T) -> U` in type position is small — function-typed
+parameters, a handful of `let` ascriptions, a few stdlib higher-order signatures.
+Recommended: a hard switch with a one-pass corpus sweep, no transitional dual-accept.
+The bare `(T) -> U` form has no other meaning to preserve, a dual-accept window would
+keep the exact `tuple_type` / `fun_type` PEG-ordering fragility this change exists to
+remove, and the sweep is mechanical (`grep` for `) ->` in type position). This is a
+spelling change with no runtime effect, so no compatibility surface leaves the compiler.
 
 ### 4. Where the marker lives in the type system: one multiplicity per operation, one type
 
@@ -873,6 +927,11 @@ re-examining, because the trade-off it was made against will have changed.
   now the same representation §4 arrives at independently: `use_multiplicity` is
   RFC-0135's "`Copy` is `many` for by-value use," applied to closures. Not a hard
   dependency — see §5.
+- **RFC-0151 (Tuples as Numeric-Label Rows), `0-draft`** — §3a's motivation: once
+  `(A, B)` is the record type `{ 0: A, 1: B }`, `(A, B) -> C` is ambiguous between a
+  two-argument function and a one-record-argument function, and `fun(...)` is what
+  disambiguates. §3a's grammar change is worth landing whether or not RFC-0151 does;
+  RFC-0151 turns "fragile" into "ambiguous."
 - `metel-core#269` — "Model closure move capability separately from function pointers,"
   the issue this RFC exists to unblock; its own tracking states the blocker is a design
   decision, not implementation time.

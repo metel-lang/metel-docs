@@ -337,6 +337,15 @@ above it are.
   Depends on RFC-0117, RFC-0137 (`3-integrated`), and **RFC-0147/0148**'s narrowed
   `drop`-receiver syntax, so it is scheduled after them (provisionally v0.14.1,
   metel-core#900).
+- **RFC-0151** *(draft, opened 2026-08-29)* — Tuples as Numeric-Label Rows — make
+  `(A, B)` sugar for the anonymous record `{ 0: A, 1: B }` (a closed row with integer
+  labels, numerically ordered), so there is one structural product former. The `(…)`
+  surface syntax and `t.0` access stay; `Type::Tuple` goes away. Narrowing (RFC-0117),
+  row bounds (RFC-0118), branding (RFC-0137), and the `Copy` / `Ord` derivations then
+  apply to tuples with no second column — and RFC-0150's tuple-residual open question
+  and RFC-0125's pack-into-tuple calculus dissolve. Open: `()` vs `Unit`, whether
+  mixed integer/identifier-label rows are allowed, migration staging. Sequence before
+  RFC-0125 (v0.14.0).
 - **RFC-0118** *(implemented in v0.12.0, was #577)* — Row Bounds — `<record T: { x: f64, .. }>` and `!{ token }`,
   replacing the `HasField`/`Lacks` family that never parsed. The trailing `..` is an
   anonymous row variable and is what makes a bound *open*; without it the bound is closed,
@@ -935,9 +944,14 @@ implementation).
   Carries **two** multiplicity fields on `Type::Fun` (call, and by-value-use — the
   latter is §1's `Copy` rule, which has nowhere else to live since captures aren't in
   the type). §3 specifies exact-match multiplicity unification, with subtyping deferred
-  as a strict later widening. **Not proposed for acceptance yet:** the by-value-use
-  field's interaction with the two name-literal `Copy` implications — RFC-0072 §2.3's
-  `Copy` ⟹ `!Drop` and RFC-0080's `Copy` ⟹ `Clone` — is unspecified.
+  as a strict later widening. **§3a (added 2026-08-29):** change the base function-type
+  spelling from `(T) -> U` to `fun(T) -> U` — a one-token grammar change, no semantic
+  effect, removing the `tuple_type`/`fun_type` PEG-ordering fragility, matching RFC-0061
+  §7.4's already-written `fun(A) -> B` prose, and (with RFC-0151) disambiguating
+  `fun(A, B) -> C` (two args) from `fun((A, B)) -> C` (one record arg). **Not proposed
+  for acceptance yet:** the by-value-use field's interaction with the two name-literal
+  `Copy` implications — RFC-0072 §2.3's `Copy` ⟹ `!Drop` and RFC-0080's `Copy` ⟹
+  `Clone` — is unspecified.
 - **RFC-0135** *(under review 2026-08-29, opened 2026-08-13)* — Multiplicity for Ordinary Types — companion
   to RFC-0134, not a dependency of it. Reframes `Copy` as `many` applied to a type's
   by-value-use operation rather than a closure's call operation — same axis RFC-0134
