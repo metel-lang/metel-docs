@@ -3,6 +3,21 @@ id: rfc-0008
 title: "Aspect Objects"
 date: '2026-07-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/837'
+coverage:
+  "1": { spec: "spec.declarations.aspects.dyn-aspect.legality-1" }
+  "2": { kind: untestable, reason: "The fat-pointer / vtable representation (data + vtable pointer pair; vtable contents) is a compiler-internal strategy, not behaviour an .mtl fixture can observe -- same treatment as spec.declarations.aspects.static-dispatch-only.dynamics-1." }
+  "3": { spec: "spec.declarations.aspects.dyn-aspect.legality-2" }
+  "3a": { spec: "spec.declarations.aspects.dyn-aspect.legality-3" }
+  "3b": { spec: "spec.declarations.aspects.dyn-aspect.legality-4" }
+  "4": { spec: "spec.declarations.aspects.dyn-aspect.dynamics-1" }
+  "5": { kind: blocked, reason: "Section 5's own rules -- an owned dyn Aspect running the concrete type's Drop via the vtable drop-pointer, and the RFC-0137 section-5 check that a value's residual row satisfies its Drop impl's required set before erasure -- cannot be exercised yet: destructor invocation is unimplemented (non-empty Drop bodies are rejected, metel-core#261) and RFC-0137 narrowing that could put a residual at a coercion site is unimplemented (metel-core#858). Ownership/move timing and the borrowed-forms-do-not-drop rule are RFC-0071's, spec-anchored there.", ref: "metel-core#261" }
+  "6": { spec: "spec.declarations.aspects.dyn-aspect.legality-6" }
+  "7": { spec: "spec.declarations.aspects.dyn-aspect.legality-6" }
+  "8": { kind: untestable, reason: "A comparison table contrasting dyn Aspect with impl Aspect (RFC-0035/0037); every row restates a property specified and tested in sections 3/4/6 here or in impl Aspect's own spec. No independent rule to test." }
+status: implemented
+updated: '2026-08-30'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/837'
+impl_status: implemented
 ---
 
 > **Status — accepted.** Depends on RFC-0060 (Aspect Impl Coherence, `4-implemented`).
@@ -40,6 +55,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/837'
 > **`Drop`'s object-safety exception removed, 2026-08-27.** `Drop::drop` now
 > takes `self: &var Self` (RFC-0071), satisfying rule 1 by the ordinary case
 > — no exception needed. See §3.
+
+> **Status — integrated (2026-08-30).** Retroactive: dyn Aspect syntax, object safety, representation, coercion, dispatch, and List<dyn Aspect> were spec'd into reference/spec/declarations.md and implemented (metel-core#865/#863/#864, all closed 2026-08-28), but RFC-0008 was never moved past 2-accepted. Adding coverage.spec links for sections 1-8 and running it through the lifecycle.
+
+> **Status — implemented (2026-08-30).** Retroactive: dyn Aspect is fully implemented and fixture-covered (metel-core#837/#865/#863/#864, all closed 2026-08-28); spec rules in reference/spec/declarations.md carry citing fixtures for every dyn-aspect legality/dynamics anchor. RFC had been stranded at 2-accepted.
 
 ## Summary
 
@@ -129,31 +148,20 @@ already-coherence-checked `CollectedImpl`, not discovered separately.
 
 ---
 
-## 3. Object Safety
+## 3. Object Safety — the receiver rule
 
 Not every aspect can be used as `dyn Aspect`. An aspect is **object-safe** if all
-its methods satisfy the following rules:
+its methods satisfy the rules in this section and §3a/§3b.
 
-1. **Receiver rule**: the method's first parameter must be `self: &Self`,
-   `self: &var Self`, or `self: @[r] Self` for some region `r` (this third form is
-   dormant until RFC-0141's syntax exists to write it — no method can match it
-   today, which narrows what's checked, not what's correct). A bare by-move
-   receiver (`self: Self`) is not object-safe: moving a value requires knowing its
-   size at compile time, but `dyn Aspect` is unsized. Methods with `Self` in any
-   other position — return type, non-receiver parameters — are also not object-safe.
+**Receiver rule**: the method's first parameter must be `self: &Self`,
+`self: &var Self`, or `self: @[r] Self` for some region `r` (this third form is
+dormant until RFC-0141's syntax exists to write it — no method can match it
+today, which narrows what's checked, not what's correct). A bare by-move
+receiver (`self: Self`) is not object-safe: moving a value requires knowing its
+size at compile time, but `dyn Aspect` is unsized. Methods with `Self` in any
+other position — return type, non-receiver parameters — are also not object-safe.
 
-2. **No generic type parameters on methods**: a method with its own type parameters
-   (`fun map<U>(...)`) cannot be dispatched through a vtable because the vtable
-   entry would need to be generated per `U`. Such methods are excluded from the
-   vtable; the aspect may still be object-safe if the non-generic methods are
-   sufficient.
-
-3. **No associated types in method signatures**: associated types (e.g.
-   `Deref::Target`) that appear in method signatures make the vtable entry
-   type-depend on the concrete impl. Aspects with associated types are object-safe
-   only if no method signature references the associated type.
-
-An aspect that violates these rules may be used with `impl Aspect` (static dispatch)
+An aspect that violates this rule (or §3a/§3b) may be used with `impl Aspect` (static dispatch)
 but not as `dyn Aspect`. The compiler reports an error if a non-object-safe aspect
 appears in `dyn` position:
 
@@ -175,6 +183,26 @@ Standard library object-safety:
 
 Object safety is a purely static, per-aspect check with no dependency on allocation
 strategy — this section is unaffected by the split into RFC-0141.
+
+---
+
+## 3a. Object Safety — no generic type parameters on methods
+
+**No generic type parameters on methods**: a method with its own type parameters
+(`fun map<U>(...)`) cannot be dispatched through a vtable because the vtable
+entry would need to be generated per `U`. Such methods are excluded from the
+vtable; the aspect may still be object-safe if the non-generic methods are
+sufficient — including when the generic method is the aspect's *only* method, the
+same way a zero-method marker aspect is object-safe.
+
+---
+
+## 3b. Object Safety — no associated types in method signatures
+
+**No associated types in method signatures**: associated types (e.g.
+`Deref::Target`) that appear in method signatures make the vtable entry
+type-depend on the concrete impl. Aspects with associated types are object-safe
+only if no method signature references the associated type.
 
 ---
 
