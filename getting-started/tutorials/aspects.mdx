@@ -89,10 +89,10 @@ fun announce2<T>(value: T) where T: Printable + Loud {
 }
 ```
 
-For a type parameter that appears once and isn't referenced elsewhere, `impl Aspect` is a shorthand that skips naming the parameter at all:
+For a type parameter that appears once and isn't referenced elsewhere, `extends Aspect` is a shorthand that skips naming the parameter at all:
 
 ```metel
-fun print_all(items: impl Printable[]) { ... }
+fun print_all(items: extends Printable[]) { ... }
 // equivalent to: fun print_all<T: Printable>(items: T[]) { ... }
 ```
 
