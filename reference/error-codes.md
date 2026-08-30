@@ -280,15 +280,15 @@ associated types must define all of them.
 
 ### T0018 — Naming the concrete type of an opaque return value
 
-A function returning `impl Aspect` (RFC-0037) hides its concrete return type. Using the
+A function returning `extends Aspect` (RFC-0037) hides its concrete return type. Using the
 result in a position that pins it to a specific type — annotating it, or unifying it with a
 concrete type — defeats that, and is rejected.
 
 ```
-[T0018] type error in main.mtl at 1..40: cannot name the concrete type of an opaque `impl Aspect` return value; use `impl Aspect` or a generic bound instead (resolved to `i64`)
+[T0018] type error in main.mtl at 1..40: cannot name the concrete type of an opaque `extends Aspect` return value; use `extends Aspect` or a generic bound instead (resolved to `i64`)
 ```
 
-**Fix:** keep the value opaque — annotate it as `impl Aspect` too, or accept it through a
+**Fix:** keep the value opaque — annotate it as `extends Aspect` too, or accept it through a
 generic parameter with the same bound.
 
 ---
@@ -352,16 +352,16 @@ loop it does not itself contain.
 
 ---
 
-### T0022 — `impl Aspect` outside parameter or return position
+### T0022 — `extends Aspect` outside parameter or return position
 
-`impl Aspect` was written somewhere other than a function parameter's type or a
+`extends Aspect` was written somewhere other than a function parameter's type or a
 function's return type — for example, a `let`/`var` annotation, a struct or enum
-variant field, a cast target (`x as impl P`), or a generic bound. Parameter position is
+variant field, a cast target (`x as extends P`), or a generic bound. Parameter position is
 lowered to a fresh bounded type parameter, and return position is RFC-0037's opaque
 return type; every other position is not part of this language version.
 
 ```
-[T0022] type error in main.mtl:2:12: `impl Aspect` is only allowed in parameter or return position
+[T0022] type error in main.mtl:2:12: `extends Aspect` is only allowed in parameter or return position
 ```
 
 **Fix:** name a concrete type instead, or restructure the code so the aspect bound is
