@@ -198,9 +198,10 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 1. **Qualifier spelling** (§2): `mut fun` vs `var fun` vs something else, and
    confirming order-insensitivity with `once`/`many` is actually implemented
    rather than just grammar-allowed.
-2. **Interaction with RFC-0152's widening for higher-order positions** — a
-   function type carrying a `mutation` field inside another function type's
-   argument compounds RFC-0152 Open Question 2; resolve them together.
+2. **Interaction with higher-order variance** — a function type carrying a
+   `mutation` field inside another function type's argument compounds the
+   contravariant-nesting question, which is **RFC-0155** (split out of RFC-0152
+   on 2026-08-30); resolve them together.
 3. **`Send`/`Sync` derivation** — should this RFC also specify that a `reading`
    closure over `Send`/`Sync` captures is `Send`/`Sync` and a `mutating` one is
    not, or leave that to RFC-0096 and only provide the fact it needs?

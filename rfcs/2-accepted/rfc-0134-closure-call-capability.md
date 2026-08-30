@@ -38,7 +38,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 > **Updated 2026-08-30 (acceptance review).** Resolved:
 > - The stale note that once sat here — "not proposed for acceptance, `use_multiplicity` vs the two name-literal `Copy` implications is unspecified" — is **resolved**: Open Questions §"Resolved: `use_multiplicity` disturbs neither `Copy` implication" limits this RFC to the *move-checking* notion of `Copy` and assigns the aspect-registry split to metel-core#739; RFC-0061 carries the matching correction.
 > - §3a (the `fun(T) -> U` grammar proposal added 2026-08-29) is **removed** — the base function-type spelling is a corpus-wide question, now **RFC-0154 (Pipe Notation for Closures and Function Types)**. This RFC's `once`/`many` qualifier prefixes whatever RFC-0154 settles; examples here use the current `(T) -> U`.
-> - §3's "exact match first, subtyping deferred" decision is **replaced** with **first-order directional matching** (`many` satisfies `once`), which is what makes the `once` qualifier usable as a promise. Its first-order form is **RFC-0152 (Function-Type Multiplicity Widening)** and this RFC now **depends on RFC-0152's first-order half — the two accept together**. RFC-0152 keeps only the higher-order (contravariant) positions and the full-lattice question, neither of which this RFC needs.
+> - §3's "exact match first, subtyping deferred" decision is **replaced** with **first-order directional matching** (`many` satisfies `once`), which is what makes the `once` qualifier usable as a promise. It is delivered by **RFC-0152 (Function-Type Multiplicity Widening)** and this RFC **depends on RFC-0152 — the two accept together**. The higher-order (contravariant) positions and the full-lattice question, neither of which this RFC needs, were split out of RFC-0152 into **RFC-0155** on 2026-08-30.
 > - §2's inference predicate and the "calling a `once` closure consumes the callee value" operational rule are now stated spec-precisely (§2).
 >
 > Proposed for acceptance alongside RFC-0152.
@@ -457,16 +457,18 @@ together. First-order here means: a function-typed *argument* passed directly to
 function-typed *parameter*, and a function-typed *return*. That covers every case in this
 RFC's own examples and stdlib signatures.
 
-**What RFC-0152 keeps as its own open work, not required here:** the *higher-order*
-positions — a function type nested inside another function type's parameter, where the
-direction flips again (contravariance) — and whether the relation should become a full
-`Type::Fun` subtype lattice the whole checker reasons over. RFC-0134 needs neither; a
-first-order coercion at argument / ascription / return sites is enough to close the
-soundness hole and make the qualifier honest.
+**What is deferred, not required here:** the *higher-order* positions — a function type
+nested inside another function type's parameter, where the direction flips again
+(contravariance) — and whether the relation should become a full `Type::Fun` subtype
+lattice the whole checker reasons over. Both were split out of RFC-0152 into **RFC-0155
+(Higher-Order Function-Type Multiplicity Variance)** on 2026-08-30, so RFC-0152 itself
+carries no open blocking question. RFC-0134 needs neither; a first-order coercion at
+argument / ascription / return sites is enough to close the soundness hole and make the
+qualifier honest.
 
 This is safe as a release ordering: the first-order rule is *stricter* than the eventual
-higher-order/lattice form, so every program it accepts stays accepted as RFC-0152's
-scope grows. Nothing written against it is stranded.
+higher-order/lattice form, so every program it accepts stays accepted as RFC-0155's
+scope is settled. Nothing written against it is stranded.
 
 **Inference alone isn't enough once a signature is a promise, not just an
 implementation detail — this is a real gap, not a stylistic one.** A pure-inference
@@ -934,9 +936,12 @@ re-examining, because the trade-off it was made against will have changed.
 - **RFC-0154 (Pipe Notation for Closures and Function Types), `1-under-review`** — owns
   the base function-type spelling. §3a was split into it 2026-08-30; this RFC's
   `once`/`many` qualifier prefixes whatever RFC-0154 settles (`|T| -> U` as proposed).
-- **RFC-0152 (Function-Type Multiplicity Widening), `1-under-review`** — the directional
-  "`many` satisfies `once`" rule §3 needs to be coherent; the 2026-08-30 review makes its
-  first-order half a likely co-requirement for accepting this RFC.
+- **RFC-0152 (Function-Type Multiplicity Widening), `2-accepted`** — the directional
+  "`many` satisfies `once`" rule §3 needs to be coherent. Accepted 2026-08-30 as a
+  co-requirement of this RFC.
+- **RFC-0155 (Higher-Order Function-Type Multiplicity Variance), `0-draft`** — the
+  contravariant-nesting and subtype-lattice questions split out of RFC-0152 the same
+  day; not needed by this RFC.
 - **RFC-0153 (Closure Mutation Axis), `1-under-review`** — §4's reserved third
   `Type::Fun` field, and the `mut` qualifier that composes with `once`/`many`.
 - **RFC-0151 (Tuples as Numeric-Label Rows), `0-draft`** — the reason the current
