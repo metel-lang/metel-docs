@@ -67,9 +67,9 @@ aspect SortableAndPrintable = Sortable + Printable  // alias of an alias
 
 **Proposal: Yes.** `struct SortedList<T: Sortable>` is valid and expands to `T: Comparable + Display + Clone`. The struct's bounds are enforced at construction as per RFC-0034.
 
-### Q5 — Interaction with `impl Aspect` (RFC-0035)
+### Q5 — Interaction with `extends Aspect` (RFC-0035, spelling per RFC-0130)
 
-**Proposal:** `fun foo(x: impl Sortable)` is valid and desugars to a type variable with all component bounds. The error message when the bound is not satisfied should name `Sortable` (not expand it to the components), so the user sees the alias name they wrote.
+**Proposal:** `fun foo(x: extends Sortable)` is valid and desugars to a type variable with all component bounds. The error message when the bound is not satisfied should name `Sortable` (not expand it to the components), so the user sees the alias name they wrote.
 
 ---
 

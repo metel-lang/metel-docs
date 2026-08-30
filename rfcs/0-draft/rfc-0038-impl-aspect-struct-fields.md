@@ -6,6 +6,13 @@ date: '2026-06-01'
 deferred_from: rfc-0035 (Q4)
 ---
 
+> **Spelling note (2026-08-30).** The anonymous parameter/return-position keyword
+> is now `extends Aspect`, not `impl Aspect` (RFC-0130, `3-integrated`). This RFC
+> keeps the `impl Aspect` spelling below as the historical name of the feature it
+> discusses; a future revision that picks this design up should read every
+> `impl Aspect` here as `extends Aspect`. RFC-0130 does not change what this RFC
+> proposes — only the surface keyword for the parameter-position form.
+
 ## Summary
 
 Design `impl Aspect` (spelled `dyn Aspect` to distinguish from parameter-position sugar) in struct fields, enabling existential types with vtable-based dispatch. RFC-0035 restricted `impl Aspect` to parameter position and deferred struct fields. This RFC designs existential types.

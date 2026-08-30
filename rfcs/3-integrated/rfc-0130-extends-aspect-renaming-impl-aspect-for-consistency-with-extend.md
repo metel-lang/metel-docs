@@ -2,12 +2,18 @@
 id: rfc-0130
 title: "extends Aspect: Renaming impl Aspect for Consistency with extend"
 date: '2026-08-06'
-status: accepted
-target:
-updated: '2026-08-23'
+status: integrated
+target: v0.13.0
+updated: '2026-08-30'
+coverage:
+  "1": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-1" }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/801'
+impl_status: not-started
 ---
 
 > **Status — accepted (2026-08-23).** Design settled -- own Unresolved Questions section: none load-bearing, pure lexical rename with a precedented migration process (RFC-0098). No remaining open question blocks it
+
+> **Status — integrated (2026-08-30).** Renamed anonymous type-position impl Aspect to extends Aspect throughout reference/spec/declarations.md (dyn Aspect complement prose, the shorthand subsection, and spec.declarations.aspects.aspect-bounds-on-function-type-parameters legality-1/2/3/4/5/6/12/14/15/16 + dynamics-1/2). RFC-0130 is a co-origin of those rules alongside RFC-0035/0037; the block form extend Type: Aspect is untouched.
 
 ## Summary
 
@@ -57,7 +63,7 @@ it's in the diagnostic text shipping right now.
 
 ---
 
-## Proposal
+## 1. The rename: `impl Aspect` → `extends Aspect`
 
 ### Keyword
 

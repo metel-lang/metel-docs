@@ -1169,7 +1169,7 @@ written `extend Type: Aspect { ... }`, and both forms may coexist for the same t
 > heterogeneous collections.**
 
 `dyn Aspect` is an aspect object: a value whose concrete type is erased, with
-dispatch happening through a vtable at runtime. It complements `impl Aspect`
+dispatch happening through a vtable at runtime. It complements `extends Aspect`
 (compile-time-fixed, zero-overhead) with the opposite trade-off — the concrete
 type may vary at runtime, at the cost of an indirect call and a pointer's
 worth of space:
@@ -1182,7 +1182,7 @@ fun many(x: dyn Display[]) -> i64 { 0 }
 fun main() -> i64 { 0 }
 ```
 
-Unlike `impl Aspect` — sugar for a fresh generic parameter, legal only in
+Unlike `extends Aspect` — sugar for a fresh generic parameter, legal only in
 parameter or return position — `dyn Aspect` is a real, existential type. It
 may appear anywhere an ordinary type can: a `let` binding's annotation, a
 struct field, a return type, behind `&`/`&var`, or as an array element.
@@ -1190,14 +1190,14 @@ struct field, a return type, behind `&`/`&var`, or as an array element.
 **Not every aspect can be used this way.** An aspect is *object-safe* only if
 every one of its methods can be dispatched through a vtable — see [Object
 safety](#object-safety) below. A non-object-safe aspect is still fully usable
-with `impl Aspect` (static dispatch); it just cannot appear in `dyn` position.
+with `extends Aspect` (static dispatch); it just cannot appear in `dyn` position.
 
 <details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.declarations.aspects.dyn-aspect.legality-1}
 
-`dyn Aspect` names a real, visible aspect — the same resolution `impl Aspect`
+`dyn Aspect` names a real, visible aspect — the same resolution `extends Aspect`
 already uses — and is legal in any type position, with no restriction to
 parameter or return position. An aspect object cannot be an `extend` target:
 there is no one concrete type to register an impl against.
@@ -1654,7 +1654,7 @@ for arrays or otherwise.
 
 **Tuples** are deferred pending a decision on per-arity boilerplate vs. variadic generics — until then, tuples fail aspect bounds the same way arrays do without a matching impl (`(i64, String)` does not implement `Display`, with a hint to use a named struct instead).
 
-**Function types.** A plain function and a closure share one type, `(A) -> B` (see [Functions — First-Class Functions](functions.md#first-class-functions)) — there is no separate `fun(A) -> B` function-pointer type or syntax; `fun(A) -> B` is a parse error. `Callable<A, B>` does not exist in `std::core` yet — despite being referenced elsewhere as the aspect a function type would formally satisfy, writing a bound or `impl Callable<A, B>` against it is a compile error (`T0003`, unknown aspect) today. A `(A) -> B` value behaves like `Copy` under `--move-check` (reusing one after copying it into another binding is accepted), but there is no working `Clone`: `.clone()` on a `(A) -> B` receiver fails to typecheck (`T0002`, cannot infer receiver type) regardless of annotation. `Display`, `Eq`, `Ord`, `Hash`, `Send`, `Sync`, and `Drop` are not implemented for function types either — there is no canonical string form, function equality is undecidable in general, `Send`/`Sync` aren't implemented for any type yet (RFC-0080, still `1-under-review`), and there is no state to drop.
+**Function types.** A plain function and a closure share one type, `(A) -> B` (see [Functions — First-Class Functions](functions.md#first-class-functions)) — there is no separate `fun(A) -> B` function-pointer type or syntax; `fun(A) -> B` is a parse error. `Callable<A, B>` does not exist in `std::core` yet — despite being referenced elsewhere as the aspect a function type would formally satisfy, writing a bound or `extends Callable<A, B>` against it is a compile error (`T0003`, unknown aspect) today. A `(A) -> B` value behaves like `Copy` under `--move-check` (reusing one after copying it into another binding is accepted), but there is no working `Clone`: `.clone()` on a `(A) -> B` receiver fails to typecheck (`T0002`, cannot infer receiver type) regardless of annotation. `Display`, `Eq`, `Ord`, `Hash`, `Send`, `Sync`, and `Drop` are not implemented for function types either — there is no canonical string form, function equality is undecidable in general, `Send`/`Sync` aren't implemented for any type yet (RFC-0080, still `1-under-review`), and there is no state to drop.
 
 **Array auto-impl propagation.** `T[]: Send`, `T[]: Sync`, and `T[]: Drop` are not
 provided in this language version.
@@ -2136,17 +2136,17 @@ fun process<T: Comparable>(x: T) where T: Printable { ... }
 
 All three forms above have identical semantics. The recommended style is inline `+` for short bound lists and `where` clause for longer or multi-parameter constraints.
 
-**`impl Aspect` shorthand.** For type parameters used only once in a signature and not referenced elsewhere, the anonymous shorthand `impl Aspect` may be used directly in parameter position:
+**`extends Aspect` shorthand.** For type parameters used only once in a signature and not referenced elsewhere, the anonymous shorthand `extends Aspect` may be used directly in parameter position:
 
 ```metel
-fun print_all(items: impl Printable[]) { ... }
+fun print_all(items: extends Printable[]) { ... }
 // equivalent to:
 fun print_all<_T: Printable>(items: _T[]) { ... }
 ```
 
-Each `impl Aspect` occurrence in a signature is a **fresh, independent** type variable. To constrain two parameters to the same type, use a named type parameter.
+Each `extends Aspect` occurrence in a signature is a **fresh, independent** type variable. To constrain two parameters to the same type, use a named type parameter.
 
-**Return-position `impl Aspect`.** A function may return `impl Aspect` instead of a named type. The caller sees an opaque type known only to satisfy `Aspect` — no boxing, no heap allocation, no vtable, since the concrete type is fixed by the function's own body:
+**Return-position `extends Aspect`.** A function may return `extends Aspect` instead of a named type. The caller sees an opaque type known only to satisfy `Aspect` — no boxing, no heap allocation, no vtable, since the concrete type is fixed by the function's own body:
 
 ```metel
 aspect Printable {
@@ -2161,7 +2161,7 @@ extend Adder: Printable {
     }
 }
 
-fun make_adder(n: i64) -> impl Printable {
+fun make_adder(n: i64) -> extends Printable {
     Adder { n = n }
 }
 
@@ -2169,33 +2169,33 @@ let add5 = make_adder(5);
 add5.print();   // adds 5 — printable, but its concrete type is not nameable
 ```
 
-A function returning `impl Aspect` must produce the **same concrete type on every code path** — the compiler resolves one fixed type per function definition, not per call:
+A function returning `extends Aspect` must produce the **same concrete type on every code path** — the compiler resolves one fixed type per function definition, not per call:
 
 <!-- doc-example: expect-fail reason="branches return different concrete types -- the whole point" -->
 ```metel
-fun bad(flag: boolean) -> impl Display {
+fun bad(flag: boolean) -> extends Display {
     if (flag) { 42 } else { "hello" }   // error: branches return different concrete types
 }
 ```
 
-Two calls to the same function return values of the same opaque type; two *different* `impl Aspect`-returning functions never share an opaque type even if their concrete implementations coincide. Each occurrence of `impl Aspect` in a signature is independent (as in parameter position, above) — a function with both an `impl Aspect` parameter and return type may return the parameter directly, in which case ordinary type inference unifies the two independent type variables:
+Two calls to the same function return values of the same opaque type; two *different* `extends Aspect`-returning functions never share an opaque type even if their concrete implementations coincide. Each occurrence of `extends Aspect` in a signature is independent (as in parameter position, above) — a function with both an `extends Aspect` parameter and return type may return the parameter directly, in which case ordinary type inference unifies the two independent type variables:
 
 ```metel
-fun transform(x: impl Display) -> impl Display {
+fun transform(x: extends Display) -> extends Display {
     x   // return type inferred to be the same concrete type as x's
 }
 ```
 
 The caller may call any method the declared aspect provides, store the value, and pass it to anything accepting the same opaque type or aspect bound — but may not name the concrete type, cast it, or call methods outside the aspect even if the concrete type has them. Ownership (ownership/`Copy`/`Drop`, not yet integrated — RFC-0071) applies to the concrete type normally; the caller cannot observe which impls it has beyond the declared aspect bound.
 
-**Worked example — interaction with associated types.** A function may return `impl Aspect` where `Aspect` declares an associated type; the caller can still use the aspect's own methods to produce values of that associated type, and those values type-check normally, even though the caller cannot name the opaque type itself:
+**Worked example — interaction with associated types.** A function may return `extends Aspect` where `Aspect` declares an associated type; the caller can still use the aspect's own methods to produce values of that associated type, and those values type-check normally, even though the caller cannot name the opaque type itself:
 
 ```metel
 aspect Container { type Item: Display; fun get(self) -> Item; }
 struct IntBox { value: i64 }
 extend IntBox: Container { type Item = i64; fun get(self) -> i64 { self.value } }
 
-fun make_box(n: i64) -> impl Container {
+fun make_box(n: i64) -> extends Container {
     IntBox { value = n }
 }
 
@@ -2207,7 +2207,7 @@ let v: i64 = make_box(42).get();   // resolves through Container's Item binding 
 
 This composes for free: the opaque return type is a real concrete type internally (erased only from the caller's *naming* surface, not from the typechecker's own bookkeeping), so associated-type resolution runs exactly as it does for a named type.
 
-`impl Aspect` in struct fields, aspect aliases, named linkage between an `impl Aspect`
+`extends Aspect` in struct fields, aspect aliases, named linkage between an `extends Aspect`
 parameter and return type, and multiple aspect bounds in return position are not part
 of this language version.
 
@@ -2216,11 +2216,11 @@ of this language version.
 
 ##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-1}
 
-In a function parameter type, `impl Aspect` introduces an anonymous type parameter that
+In a function parameter type, `extends Aspect` introduces an anonymous type parameter that
 must satisfy `Aspect`.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0035](../../rfcs/4-implemented/rfc-0035-impl-aspect-anonymous-params.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0035](../../rfcs/4-implemented/rfc-0035-impl-aspect-anonymous-params.md), [rfc-0130](../../rfcs/3-integrated/rfc-0130-extends-aspect-renaming-impl-aspect-for-consistency-with-extend.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -2229,7 +2229,7 @@ must satisfy `Aspect`.
 
 ##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-2}
 
-Each parameter-position `impl Aspect` occurrence introduces an independent anonymous type
+Each parameter-position `extends Aspect` occurrence introduces an independent anonymous type
 parameter. Reusing one concrete type across parameters requires a named type parameter.
 
 <!-- rfc.py:origins:start -->
@@ -2242,7 +2242,7 @@ parameter. Reusing one concrete type across parameters requires a named type par
 
 ##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-3}
 
-Anonymous `impl Aspect` parameter types may coexist with named type parameters; neither
+Anonymous `extends Aspect` parameter types may coexist with named type parameters; neither
 constrains the other unless the signature states a relation between them.
 
 <!-- rfc.py:origins:start -->
@@ -2255,7 +2255,7 @@ constrains the other unless the signature states a relation between them.
 
 ##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-4}
 
-Every argument passed to an `impl Aspect` parameter must implement the declared aspect;
+Every argument passed to an `extends Aspect` parameter must implement the declared aspect;
 an argument that does not is a `T0012` type error.
 
 <!-- rfc.py:origins:start -->
@@ -2268,7 +2268,7 @@ an argument that does not is a `T0012` type error.
 
 ##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-5}
 
-`impl Aspect` is rejected in a struct-field type annotation.
+`extends Aspect` is rejected in a struct-field type annotation.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0035](../../rfcs/4-implemented/rfc-0035-impl-aspect-anonymous-params.md)_</span>
@@ -2280,7 +2280,7 @@ an argument that does not is a `T0012` type error.
 
 ##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-6}
 
-`impl Aspect` is rejected in a local binding type annotation.
+`extends Aspect` is rejected in a local binding type annotation.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0035](../../rfcs/4-implemented/rfc-0035-impl-aspect-anonymous-params.md)_</span>
@@ -2356,7 +2356,7 @@ Every bound in a multiple-bound list is independently required at a call site.
 
 ##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-12}
 
-The bound checks for a parameter introduced by `impl Aspect` are the same as for an
+The bound checks for a parameter introduced by `extends Aspect` are the same as for an
 equivalent named type parameter.
 
 <!-- rfc.py:origins:start -->
@@ -2382,7 +2382,7 @@ enclosing type remain available in the method body.
 
 ##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-14}
 
-A return-position `impl Aspect` has one concrete type for every path through its function
+A return-position `extends Aspect` has one concrete type for every path through its function
 body; branches that produce different concrete types are rejected.
 
 <!-- rfc.py:origins:start -->
@@ -2395,8 +2395,8 @@ body; branches that produce different concrete types are rejected.
 
 ##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-15}
 
-Each return-position `impl Aspect` occurrence is an independent opaque type. An
-`impl Aspect` return may be inferred equal to an `impl Aspect` parameter when the body
+Each return-position `extends Aspect` occurrence is an independent opaque type. An
+`extends Aspect` return may be inferred equal to an `extends Aspect` parameter when the body
 returns that parameter directly.
 
 <!-- rfc.py:origins:start -->
@@ -2409,7 +2409,7 @@ returns that parameter directly.
 
 ##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-16}
 
-A caller may use only the declared aspect interface of a return-position `impl Aspect`;
+A caller may use only the declared aspect interface of a return-position `extends Aspect`;
 the caller may not name or cast its hidden concrete type.
 
 <!-- rfc.py:origins:start -->
@@ -2422,7 +2422,7 @@ the caller may not name or cast its hidden concrete type.
 
 ##### Dynamic Semantics {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.dynamics-1}
 
-Calls to the same `impl Aspect`-returning function produce values of the same opaque
+Calls to the same `extends Aspect`-returning function produce values of the same opaque
 type, and aspect methods declared for that return bound dispatch on those values.
 
 <!-- rfc.py:origins:start -->
@@ -2435,7 +2435,7 @@ type, and aspect methods declared for that return bound dispatch on those values
 
 ##### Dynamic Semantics {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.dynamics-2}
 
-Return-position `impl Aspect` values follow the ordinary ownership behavior of their
+Return-position `extends Aspect` values follow the ordinary ownership behavior of their
 concrete type; opacity changes what callers can name, not the value's ownership.
 
 <!-- rfc.py:origins:start -->

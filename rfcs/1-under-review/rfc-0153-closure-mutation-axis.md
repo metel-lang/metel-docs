@@ -161,7 +161,7 @@ the natural home: they ride along on `dyn Callable<A, R>` the way `Send` rides o
 `Type::Fun` does not have today (RFC-0134 §1) and a coherence carve-out so those
 impls never conflict. And `dyn Callable` reintroduces the vtable and boxing that
 `Type::Fun`'s flat `(code ptr, env ptr)` representation deliberately avoids, while
-a generic `impl Callable` parameter monomorphizes. RFC-0134's field model changes
+a generic `extends Callable` parameter monomorphizes. RFC-0134's field model changes
 one enum variant and two read sites (`is_copy`, the move checker) to close a
 specific `--move-check` soundness hole; the marker-aspect model is the larger
 "closures are structural types with capability aspects" redesign, which belongs

@@ -760,17 +760,22 @@ implementation).
   Scheduled for **v0.15.0**. Depends in spirit on RFC-0080 blanket impls (v0.13.1) and
   RFC-0121 open rows (v0.14.0).
 
-- **RFC-0130** *(draft, opened 2026-08-06)* — extends Aspect: Renaming `impl
+- **RFC-0130** *(integrated 2026-08-30, accepted 2026-08-23, opened 2026-08-06)* —
+  extends Aspect: Renaming `impl
   Aspect` for Consistency with `extend` — renames the anonymous-type-parameter
   (RFC-0035) and return-position (RFC-0037) `impl Aspect` keyword to `extends
   Aspect`, closing the one spot RFC-0098's own Rust-tell sweep (`impl`→`extend`,
   `pub`→`public`, `mut`→`var`) left untouched: the block form already reads
-  `extend Type: Aspect { ... }`, but the anonymous/opaque-type form still says
+  `extend Type: Aspect { ... }`, but the anonymous/opaque-type form still said
   `impl Aspect`, spelling the same underlying claim two unrelated ways depending
   on grammatical position. Pure lexical rename — RFC-0035/0037's desugaring,
   independence, and opacity rules are unchanged, as is the T0022 restriction
-  (metel-core#240/#622, landed the same day) on where `impl Aspect` is legal at
-  all. Explicitly does not touch RFC-0038's still-reserved `dyn Aspect`.
+  (metel-core#240/#622) on where the shorthand is legal at all. Explicitly does
+  not touch RFC-0038's still-reserved `dyn Aspect`. Integrated:
+  `reference/spec/declarations.md`'s `impl Aspect` shorthand subsection and the
+  `spec.declarations.aspects.aspect-bounds-on-function-type-parameters` rules now
+  spell it `extends Aspect`, RFC-0130 co-origin with RFC-0035/0037. Target
+  v0.13.0 (metel-core#801); implementation next.
 - **RFC-0008** *(implemented 2026-08-30 — retroactive; shipped metel-core#865/#863/#864,
   all closed 2026-08-28, but the RFC had been left at `2-accepted`)* — Aspect Objects —
   `dyn Aspect`, vtable dispatch, object safety.
