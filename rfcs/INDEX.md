@@ -951,15 +951,16 @@ implementation).
   is now a recorded decision with a stated reopening condition, not an open question.
   Carries **two** multiplicity fields on `Type::Fun` (call, and by-value-use — the
   latter is §1's `Copy` rule, which has nowhere else to live since captures aren't in
-  the type). §3 specifies exact-match multiplicity unification, with subtyping deferred
-  as a strict later widening. **§3a (added 2026-08-29):** change the base function-type
-  spelling from `(T) -> U` to `fun(T) -> U` — a one-token grammar change, no semantic
-  effect, removing the `tuple_type`/`fun_type` PEG-ordering fragility, matching RFC-0061
-  §7.4's already-written `fun(A) -> B` prose, and (with RFC-0151) disambiguating
-  `fun(A, B) -> C` (two args) from `fun((A, B)) -> C` (one record arg). **Not proposed
-  for acceptance yet:** the by-value-use field's interaction with the two name-literal
-  `Copy` implications — RFC-0072 §2.3's `Copy` ⟹ `!Drop` and RFC-0080's `Copy` ⟹
-  `Clone` — is unspecified.
+  the type). §3 specifies exact-match multiplicity unification, with subtyping deferred to
+  **RFC-0152**. §3's `once`/`many` qualifier prefixes the base function-type spelling,
+  which is **RFC-0154**'s concern (`§3a` was split there 2026-08-30). **Acceptance review
+  2026-08-30:** the stale "`use_multiplicity` vs the two `Copy` implications" note is
+  resolved (Open Questions — this RFC touches only move-checking `Copy`; the aspect split
+  is metel-core#739). **Still not proposed for acceptance:** §3 asserts both a directional
+  reading (a `many` value satisfies a `once` slot) and exact-match unification, which
+  contradict — resolving it needs RFC-0152's first-order widening as a co-requirement or a
+  descope; §2's inference predicate and the "calling a `once fun` consumes the callee"
+  rule also need spec-precise statements.
 - **RFC-0135** *(under review 2026-08-29, opened 2026-08-13)* — Multiplicity for Ordinary Types — companion
   to RFC-0134, not a dependency of it. Reframes `Copy` as `many` applied to a type's
   by-value-use operation rather than a closure's call operation — same axis RFC-0134
@@ -995,6 +996,17 @@ implementation).
   under which RFC-0152's widening dissolves into bound-subsetting; recommended as the
   opt-in `dyn` view alongside the flat field model, and a direct input to metel-core#893.
   Milestoned v0.17.0 (metel-core#902).
+- **RFC-0154** *(under review, opened 2026-08-30)* — Pipe Notation for Closures and
+  Function Types — split from RFC-0134 §3a. Replaces `(...)` for both the closure literal
+  and the function type with `|...|`: `|x, y| body` (block or bare expression, optional
+  param/return types) and `|A, B| -> C`. RFC-0041 (`4-implemented`) was right to drop the
+  `fun` keyword but chose `(...)`, which collides with grouping, calls, and — once
+  RFC-0151 makes `(A, B)` a record type — genuinely ambiguously with tuple/record types.
+  `|...|` keeps RFC-0041's lightness, frees `(...)`, and makes the literal and its
+  annotation share a shape. `once`/`many` (RFC-0134) and `mut` (RFC-0153) prefix the `|`.
+  Open: the `|` disambiguation rule (`|| expr` vs `a || b`), whether `->` is mandatory in
+  the type, bare-expression bodies. RFC-0041 gets a correction note. Tracker
+  metel-core#903 (v0.14.0); rejects RFC-0134 §3a's `fun(T) -> U` as a revert of RFC-0041.
 - **RFC-0003** *(under review, corrected 2026-08-24; scheduled 2026-08-27)* — Concurrency Model — fiber handles,
   channels, `select`, `Send`/`Sync`, aspect-based desugaring (`Spawnable`/`Sendable`/
   `Receivable`/`Selectable`), and a crate-wide pluggable-runtime mechanism (swap the
