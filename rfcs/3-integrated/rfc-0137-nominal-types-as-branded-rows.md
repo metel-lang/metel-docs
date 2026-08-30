@@ -80,7 +80,7 @@ impl_status: in-progress
 
 > **Status — accepted (2026-08-27).** All four Open Questions closed or determined not to block acceptance, this time verified directly against the interpreter rather than argued from prose alone (Open Questions 5, 6, 8 resolved 2026-08-27, see that section). Open Question 5 in particular was caught and corrected mid-review: the first resolution pass wrongly generalized an owned-binding finding to the reference-parameter shape Sec6's own example used; checked separately, narrowing through a reference is already unreachable under RFC-0071 Sec7.1, independent of this RFC.
 
-> **Status — integrated (2026-08-27).** Merged into reference/spec/ownership.md (Narrowing, Passing a residual to a function, Drop dispatch against a narrowed residual, Widening subsections) and reference/spec/types.md (What satisfies which bound reframe). Everything marked Planned for v0.13.0 with blocked fixture-coverage exemptions -- nothing in RFC-0137 is implemented yet. Cross-checked against RFC-0071 (3-integrated), RFC-0116/RFC-0118 (implemented), and RFC-0008 (2-accepted, the dyn Aspect coercion checkpoint) -- no new soundness gap found beyond what RFC-0137's own text already identifies.
+> **Status — integrated (2026-08-27).** Merged into reference/spec/ownership.md (Narrowing, Passing a residual to a function, Drop dispatch against a narrowed residual, Widening subsections) and reference/spec/types.md (What satisfies which bound reframe). Everything marked Planned for v0.13.0 with blocked fixture-coverage exemptions -- nothing in RFC-0137 is implemented yet. Cross-checked against RFC-0071 (3-integrated), RFC-0116/RFC-0118 (implemented), and RFC-0008 (implemented, the dyn Aspect coercion checkpoint) -- no new soundness gap found beyond what RFC-0137's own text already identifies.
 
 ## Summary
 
@@ -348,7 +348,7 @@ outcome. Dynamic dispatch through `dyn Aspect` is still out of scope for the bod
 — **except at the one checkpoint below.**
 
 **Coercion to `dyn Aspect` is a required-set checkpoint (resolved 2026-08-27 — see Open
-Question 8).** RFC-0008 (Aspect Objects, `2-accepted`) §2 gives every `dyn Aspect` fat
+Question 8).** RFC-0008 (Aspect Objects, `4-implemented`) §2 gives every `dyn Aspect` fat
 pointer a drop-pointer to the concrete type's `Drop` destructor whenever the concrete
 type implements `Drop` — regardless of which aspect the object is principally coerced
 to. Once erased, the row information this RFC's row-bounded dispatch relies on is gone,
@@ -509,7 +509,7 @@ whole. **This correction was not fully propagated: the References section still 
 the old, wrong claim until this revision (2026-08-25) — see Decision.**
 
 One case needed resolving, not just flagging: dynamic dispatch through `dyn Aspect`
-(RFC-0008, `2-accepted`) could otherwise let a residual narrower than a `Drop` impl's
+(RFC-0008, `4-implemented`) could otherwise let a residual narrower than a `Drop` impl's
 required set reach a scope-exit drop with no static row information left to check
 against, once erased. §5's own new coercion-site checkpoint closes this without needing
 an actual runtime row representation — the check runs before erasure, while the
@@ -854,7 +854,7 @@ this corpus's append-only convention for exactly this situation.*
   pre-existing constructor-invariant bypass risk §6 discusses; not a dependency for
   widening itself since Open Question 5's resolution (2026-08-27), only for closing
   the bypass risk that predates and is independent of this RFC
-- RFC-0008 (Aspect Objects, `2-accepted`, tracked metel-core#837) — §5's new
+- RFC-0008 (Aspect Objects, `4-implemented`, tracked metel-core#837) — §5's new
   coercion-to-`dyn Aspect` checkpoint (Open Question 8, resolved 2026-08-27) is a real
   dependency now that RFC-0008 has an active tracking issue, not the dormant document
   this RFC originally treated it as

@@ -547,10 +547,10 @@ row is a superset of the impl's required field set.
 Coercing a value of a `Drop`-implementing type to `dyn Aspect` is rejected when the
 value's current row does not satisfy that type's `Drop` impl's required field set.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Depends on row-bounded Drop dispatch (above, RFC-0137 slice 2, metel-core#858) and additionally on dyn Aspect actually being constructible: dyn Aspect syntax and object safety are real now (RFC-0008 slice 1, metel-core#865), but coercing a value to one -- the step this checkpoint needs something to run against -- is metel-core#863's job, not yet implemented. Do not attempt this checkpoint until #863 lands." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Depends on row-bounded Drop dispatch (above, RFC-0137 slice 2, metel-core#858). dyn Aspect itself is fully implemented now (RFC-0008, metel-core#865/#863/#864, closed 2026-08-28) -- syntax, object safety, and coercion of a value to one -- so the erasure side of this checkpoint is real; what is still missing is the narrowed residual to run it against, which is metel-core#858's job. Do not attempt this checkpoint until #858 lands." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Depends on row-bounded Drop dispatch (above, RFC-0137 slice 2, metel-core#858) and additionally on dyn Aspect actually being constructible: dyn Aspect syntax and object safety are real now (RFC-0008 slice 1, metel-core#865), but coercing a value to one -- the step this checkpoint needs something to run against -- is metel-core#863's job, not yet implemented. Do not attempt this checkpoint until #863 lands._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Depends on row-bounded Drop dispatch (above, RFC-0137 slice 2, metel-core#858). dyn Aspect itself is fully implemented now (RFC-0008, metel-core#865/#863/#864, closed 2026-08-28) -- syntax, object safety, and coercion of a value to one -- so the erasure side of this checkpoint is real; what is still missing is the narrowed residual to run it against, which is metel-core#858's job. Do not attempt this checkpoint until #858 lands._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-3}

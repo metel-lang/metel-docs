@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**154 RFCs total.** 31 draft, 33 under review, 12 accepted, 3 integrated (79 live), 48 implemented, 13 superseded, 14 refused (75 settled).
+**154 RFCs total.** 31 draft, 33 under review, 11 accepted, 3 integrated (78 live), 49 implemented, 13 superseded, 14 refused (76 settled).
 
 ## Draft (31)
 
@@ -85,9 +85,8 @@ the curated thematic map.
 - **RFC-0154** — Pipe Notation for Closures and Function Types (`1-under-review` ; rfcs/1-under-review/rfc-0154-pipe-notation-for-closures-and-function-types.md ; date 2026-08-30 ; updated 2026-08-30)
 - **RFC-0155** — Higher-Order Function-Type Multiplicity Variance (`1-under-review` ; rfcs/1-under-review/rfc-0155-higher-order-function-type-multiplicity-variance.md ; date 2026-08-30 ; updated 2026-08-30)
 
-## Accepted (12)
+## Accepted (11)
 
-- **RFC-0008** — Aspect Objects (`2-accepted` ; rfcs/2-accepted/rfc-0008-aspect-objects.md ; date 2026-07-01)
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
 - **RFC-0065** — Allocator and Lifetime Ergonomics (`2-accepted` ; rfcs/2-accepted/rfc-0065-allocator-ergonomics.md ; date 2026-06-27 ; updated 2026-07-20)
 - **RFC-0066** — Allocated Value Extraction (`2-accepted` ; rfcs/2-accepted/rfc-0066-allocated-value-extraction.md ; date 2026-06-27 ; updated 2026-07-10)
@@ -106,10 +105,11 @@ the curated thematic map.
 - **RFC-0117** — Row Narrowing (`3-integrated` ; rfcs/3-integrated/rfc-0117-row-narrowing.md ; date 2026-07-24 ; updated 2026-08-29 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/789)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/836)
 
-## Implemented (48)
+## Implemented (49)
 
 - **RFC-0006** — Closure Capture Semantics and Cross-Closure Reference Sharing (`4-implemented` ; rfcs/4-implemented/rfc-0006-closure-capture-semantics.md ; date 2026-05-21)
 - **RFC-0007** — Compiler-Compatible Primitive Type System (`4-implemented` ; rfcs/4-implemented/rfc-0007-uint-type.md ; date 2026-05-21)
+- **RFC-0008** — Aspect Objects (`4-implemented` ; rfcs/4-implemented/rfc-0008-aspect-objects.md ; date 2026-07-01 ; updated 2026-08-30 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/837)
 - **RFC-0010** — String Interpolation (`4-implemented` ; rfcs/4-implemented/rfc-0010-string-interpolation.md ; date 2026-05-31)
 - **RFC-0018** — Match Arm Blocks (`4-implemented` ; rfcs/4-implemented/rfc-0018-match-arm-blocks.md ; date 2026-05-22)
 - **RFC-0019** — Return Context Type Propagation (`4-implemented` ; rfcs/4-implemented/rfc-0019-return-context-type-propagation.md ; date 2026-05-22)

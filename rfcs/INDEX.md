@@ -771,15 +771,20 @@ implementation).
   independence, and opacity rules are unchanged, as is the T0022 restriction
   (metel-core#240/#622, landed the same day) on where `impl Aspect` is legal at
   all. Explicitly does not touch RFC-0038's still-reserved `dyn Aspect`.
-- **RFC-0008** — Aspect Objects — `dyn Aspect`, vtable dispatch, object safety.
+- **RFC-0008** *(implemented 2026-08-30 — retroactive; shipped metel-core#865/#863/#864,
+  all closed 2026-08-28, but the RFC had been left at `2-accepted`)* — Aspect Objects —
+  `dyn Aspect`, vtable dispatch, object safety.
   **Split 2026-08-25**: originally written entirely against RFC-0063's `@[r]`
-  allocator-handle syntax (`2-accepted` at draft time, still not integrated or
-  implemented) — read as blocked on RFC-0063 in its entirety, when only the
-  region-tagged owned form actually is. This RFC now covers `dyn Aspect` against the
+  allocator-handle syntax — read as blocked on RFC-0063 in its entirety, when only the
+  region-tagged owned form actually is. This RFC covers `dyn Aspect` against the
   interpreter's existing implicit allocation (`Rc<RefCell<Value>>`, already used by
   `Array`/`Reference`/`MutReference` with no allocator annotation) — object safety,
   vtable dispatch, coercion, ownership/drop, heterogeneous collections. Depends only
-  on RFC-0060 (`4-implemented`). Implementable now.
+  on RFC-0060 (`4-implemented`). Integrated into `reference/spec/declarations.md`'s
+  `dyn Aspect` section (`spec.declarations.aspects.dyn-aspect.legality-1..6`,
+  `.dynamics-1`); coverage frontmatter added for §§1–8 as part of the retroactive
+  lifecycle walk. §3 was split into §3/§3a/§3b so each object-safety rule anchors its
+  own spec Legality Rule.
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted`, split
   from RFC-0008 2026-08-25) — the `@[r] dyn Aspect` region-tagged extension: same
   design RFC-0008 originally specified for the owned form, now depending on RFC-0063
@@ -926,8 +931,11 @@ implementation).
   method signatures, for concrete impls and generic dispatch alike), §2 impl
   completeness (new error code T0017), §3/§3a real projection resolution with
   ambiguity detection (T0013), §4 equality constraints
-  (`Aspect<AssocType = Concrete>`). §6 object safety remains unimplemented —
-  blocked on RFC-0008 (`dyn Aspect`), which has no consumer yet.
+  (`Aspect<AssocType = Concrete>`). §6 object safety was blocked on RFC-0008
+  (`dyn Aspect`); RFC-0008 is `4-implemented` as of 2026-08-30, and the
+  associated-type object-safety rule now lives in
+  `spec.declarations.aspects.dyn-aspect.legality-4` (RFC-0008 §3b), tested by
+  `neg_28_dyn_aspect_associated_type_in_signature_not_object_safe.mtl`.
 - **RFC-0083** *(superseded 2026-07-12, was integrated 2026-07-10)* — Public Value
   Exports (`pub let`). Reached `3-integrated` requiring "constant expression"
   initializers, a concept it never specified — deferred to RFC-0092, which only had it

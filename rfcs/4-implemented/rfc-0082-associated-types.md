@@ -15,7 +15,7 @@ coverage:
   "3a": { spec: "spec.declarations.aspects.associated-types.legality-6" }
   "4": { spec: "spec.declarations.aspects.associated-types.legality-7" }
   "5": { kind: untestable, reason: "This section explains the design distinction and rejected generic-aspect model; it specifies no additional behavior beyond associated-type uniqueness already covered elsewhere." }
-  "6": { kind: blocked, reason: "Aspect objects are not implemented; object safety is blocked on accepted RFC-0008.", ref: "docs/public/rfcs/2-accepted/rfc-0008-aspect-objects.md" }
+  "6": { spec: "spec.declarations.aspects.dyn-aspect.legality-4" }
   "7": { kind: untestable, reason: "This is explicitly historical material for retracted RFC-0069 and is not part of the ratified design." }
   "8": { kind: untestable, reason: "Standalone type aliases are explicitly deferred to a future RFC." }
 ---
@@ -307,11 +307,11 @@ type arguments (e.g., `From<T>` in other languages — a type may be `From<i64>`
 
 ## 6. Object Safety
 
-> **Coverage: blocked** (see frontmatter). Aspect objects await RFC-0008.
-
-RFC-0008 §3 specifies that an aspect with associated types is object-safe only if no
+RFC-0008 §3b specifies that an aspect with associated types is object-safe only if no
 method signature references the associated type directly. This RFC is the normative
-basis for that rule.
+basis for that rule; it is spec-anchored at
+`spec.declarations.aspects.dyn-aspect.legality-4` (co-origin with RFC-0008) and
+implemented as of 2026-08-30 (RFC-0008, metel-core#865).
 
 `Deref` is **not** object-safe: `deref` returns `&Target`, which varies per impl.
 A vtable entry for `deref` cannot encode a type that differs per implementor — the
