@@ -104,6 +104,14 @@ Whether it should *become* a real subtyping relation later (for e.g. abstracting
 over "any function at least this permissive") is explicitly out of scope and
 belongs with RFC-0121-style row/structural polymorphism if anywhere.
 
+If the multiplicity axes were instead **marker aspects** on a per-closure
+anonymous type (`Callable<A, R>` + orthogonal `CallMany` / `CallShared`, sketched
+in RFC-0153's Alternatives section), this whole RFC dissolves: widening becomes
+ordinary bound satisfaction — a slot requiring marker set `M` accepts any value
+whose markers `⊇ M`. That is the cleaner end state for the erased (`dyn`) case
+and is an input to metel-core#893; it does not remove the need for *some* widening
+rule in the field model this RFC and RFC-0134 actually use.
+
 ## Non-Goals
 
 - The mutation axis — RFC-0153. When it lands, it joins this relation as a third

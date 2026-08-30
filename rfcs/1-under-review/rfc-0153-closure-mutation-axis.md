@@ -114,6 +114,75 @@ RFC-0134 §4 makes the case for axes over a hierarchy: the four states are all
 meaningful and independently reachable, so `mutation` is a separate binary field,
 not a third point on the `call` axis.
 
+## Alternatives considered
+
+### Independent marker aspects instead of fields on `Type::Fun`
+
+The two axes this RFC and RFC-0134 carry as fields could instead be **orthogonal
+marker aspects** on a per-closure anonymous type. This is a real fork worth
+recording, and it is the better shape for the *erased* case (`dyn`, RFC-0061
+§7.1 / metel-core#893), so the two are complementary rather than exclusive.
+
+The decomposition:
+
+- **`Callable<Args, Ret>`** — the base aspect. Declares `call`. Every callable
+  value implements it.
+- **`CallMany`** — orthogonal marker: `call` is repeatable. Absent ⟹ call-once,
+  and the checker enforces a single call (RFC-0134 §2's rule).
+- **`CallShared`** — orthogonal marker: `call` needs only `&` access to captures.
+  Absent ⟹ `call` takes `&var self` (this RFC's `mutating`).
+- **`Copy`** — the existing value-duplication aspect. This *is* RFC-0134's `use`
+  axis, already an independent marker; nothing new.
+
+A closure literal gets a synthesized `extend`: `Callable` always, plus whichever
+of `CallMany` / `CallShared` / `Copy` its body analysis licenses — the same
+analysis this RFC and RFC-0134 §2 already specify, emitting impls instead of
+setting fields. Four states (eight with `Copy`), each independently reachable and
+*nameable*, which Rust's `Fn : FnMut : FnOnce` chain cannot do (it cannot
+distinguish "mutates then consumes" from "just consumes," nor express a `&self`
+closure that is nonetheless call-once).
+
+**Widening falls out** (this is RFC-0152 dissolving into an ordinary bound). With
+markers named so that **present = more permissive** — hence `CallShared`, not
+`CallMut`; the reading closure is the permissive one — widening is
+**capability superset**: a slot requiring marker set `M` accepts any value whose
+markers `⊇ M`. No bespoke coercion rule; RFC-0152 becomes "the required bound is
+a subset of the value's."
+
+**Fit with the existing aspect machinery.** `CallMany` / `CallShared` are
+structurally derived and never user-declared — the same profile as `Send` /
+`Sync` / `Linear`. Making them **auto-impl aspects** (RFC-0096's closed set) is
+the natural home: they ride along on `dyn Callable<A, R>` the way `Send` rides on
+`dyn Aspect`, and they stay out of the coherence/orphan machinery a per-closure
+`extend` block would otherwise stress.
+
+**Why this RFC does not adopt it as the baseline.** It still needs per-closure
+**anonymous types with synthesized impls** — a representational change
+`Type::Fun` does not have today (RFC-0134 §1) and a coherence carve-out so those
+impls never conflict. And `dyn Callable` reintroduces the vtable and boxing that
+`Type::Fun`'s flat `(code ptr, env ptr)` representation deliberately avoids, while
+a generic `impl Callable` parameter monomorphizes. RFC-0134's field model changes
+one enum variant and two read sites (`is_copy`, the move checker) to close a
+specific `--move-check` soundness hole; the marker-aspect model is the larger
+"closures are structural types with capability aspects" redesign, which belongs
+with metel-core#893 and metel-core#702.
+
+**Recommended synthesis.** Keep `Type::Fun` flat with the multiplicity fields as
+the **default** representation (fast, static, no vtable — RFC-0134, this RFC), and
+expose `Callable<Args, Ret>` + `CallMany` / `CallShared` as an **opt-in aspect
+view** for the object-safe / type-erased case. Both are computed from the same
+body analysis and kept in agreement: the field values decide which markers the
+`dyn` form carries. This is Rust's own split — concrete closure types with
+`Fn*` impls, `dyn Fn` opt-in — and it composes with RFC-0151 (`Args` a
+numeric-label row).
+
+**Open caveats if pursued:** marker polarity/naming must be locked so "more
+markers = more permissive" holds uniformly (else the superset rule needs a case
+split); `Callable::call`'s receiver kind is refined by `CallShared` (`&self` when
+present, `&var self` when absent), which the object-safety / vtable rules
+(RFC-0008) must accept; and whether `dyn` permits multiple non-auto aspects at
+all — the auto-impl route above sidesteps this but ties the markers to RFC-0096.
+
 ## Non-Goals
 
 - Changing RFC-0006's by-value capture model. A `mutating` closure still captured
@@ -154,9 +223,16 @@ not a third point on the `call` axis.
 - **RFC-0067a (Reference Types)** — the exclusive-`&var` rule §3's call-site
   soundness reuses.
 - **RFC-0050 (Closure Capture Lists)** — capture syntax, independently timed.
-- **RFC-0096 (Auto-Impl Aspects)** — `Send`/`Sync`/`Linear`; Open Question 3.
+- **RFC-0096 (Auto-Impl Aspects)** — `Send`/`Sync`/`Linear`; Open Question 3, and
+  the natural home for `CallMany` / `CallShared` in the Alternatives section.
 - **RFC-0135 (Multiplicity for Ordinary Types)** — the axis vocabulary applied
   beyond closures.
+- **RFC-0061 §7.1 / metel-core#893** — the `Callable<A, B>` aspect for function
+  types and `dyn Callable`; the Alternatives section's marker-aspect decomposition
+  is a direct input to it.
+- **RFC-0008 (Aspect Objects)** — `dyn Aspect`; the Alternatives section's
+  `dyn Callable + CallMany` composition and the `CallShared`-refined receiver kind
+  depend on its object-safety rules.
 
 ---
 

@@ -981,7 +981,12 @@ implementation).
   RFC-0134 §2 uses; explicit `mut fun(T) -> U` / `once mut fun(T) -> U` for the promise
   case. A `mutating` call takes `&var self` on the closure (no overlapping calls); a
   `mutating` closure is not `Copy`. Open: qualifier spelling, `Send`/`Sync` ownership,
-  `&var`-capture-without-write precision, timing. Milestoned v0.17.0 (metel-core#902).
+  `&var`-capture-without-write precision, timing. Carries an Alternatives section:
+  the two axes as **independent marker aspects** (`Callable<A,R>` + orthogonal
+  `CallMany` / `CallShared`, auto-impl per RFC-0096) on a per-closure anonymous type —
+  under which RFC-0152's widening dissolves into bound-subsetting; recommended as the
+  opt-in `dyn` view alongside the flat field model, and a direct input to metel-core#893.
+  Milestoned v0.17.0 (metel-core#902).
 - **RFC-0003** *(under review, corrected 2026-08-24; scheduled 2026-08-27)* — Concurrency Model — fiber handles,
   channels, `select`, `Send`/`Sync`, aspect-based desugaring (`Spawnable`/`Sendable`/
   `Receivable`/`Selectable`), and a crate-wide pluggable-runtime mechanism (swap the
