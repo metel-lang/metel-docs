@@ -935,9 +935,14 @@ implementation).
   Carries **two** multiplicity fields on `Type::Fun` (call, and by-value-use — the
   latter is §1's `Copy` rule, which has nowhere else to live since captures aren't in
   the type). §3 specifies exact-match multiplicity unification, with subtyping deferred
-  as a strict later widening. **Not proposed for acceptance yet:** the by-value-use
-  field's interaction with the two name-literal `Copy` implications — RFC-0072 §2.3's
-  `Copy` ⟹ `!Drop` and RFC-0080's `Copy` ⟹ `Clone` — is unspecified.
+  as a strict later widening. **§3a (added 2026-08-29):** change the base function-type
+  spelling from `(T) -> U` to `fun(T) -> U` — a one-token grammar change, no semantic
+  effect, removing the `tuple_type`/`fun_type` PEG-ordering fragility, matching RFC-0061
+  §7.4's already-written `fun(A) -> B` prose, and (with RFC-0151) disambiguating
+  `fun(A, B) -> C` (two args) from `fun((A, B)) -> C` (one record arg). **Not proposed
+  for acceptance yet:** the by-value-use field's interaction with the two name-literal
+  `Copy` implications — RFC-0072 §2.3's `Copy` ⟹ `!Drop` and RFC-0080's `Copy` ⟹
+  `Clone` — is unspecified.
 - **RFC-0135** *(under review 2026-08-29, opened 2026-08-13)* — Multiplicity for Ordinary Types — companion
   to RFC-0134, not a dependency of it. Reframes `Copy` as `many` applied to a type's
   by-value-use operation rather than a closure's call operation — same axis RFC-0134
