@@ -13,8 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**151 RFCs total.** 30 draft, 34 under review, 9 accepted, 3 integrated (76 live), 48 implemented, 13 superseded, 14 refused (75 settled).
-
+**152 RFCs total.** 31 draft, 34 under review, 9 accepted, 3 integrated (77 live), 48 implemented, 13 superseded, 14 refused (75 settled).
 
 ## Draft (31)
 
