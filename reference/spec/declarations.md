@@ -2220,7 +2220,7 @@ In a function parameter type, `extends Aspect` introduces an anonymous type para
 must satisfy `Aspect`.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0035](../../rfcs/4-implemented/rfc-0035-impl-aspect-anonymous-params.md), [rfc-0130](../../rfcs/3-integrated/rfc-0130-extends-aspect-renaming-impl-aspect-for-consistency-with-extend.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0035](../../rfcs/4-implemented/rfc-0035-impl-aspect-anonymous-params.md), [rfc-0130](../../rfcs/4-implemented/rfc-0130-extends-aspect-renaming-impl-aspect-for-consistency-with-extend.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

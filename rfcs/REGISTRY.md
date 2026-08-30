@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**154 RFCs total.** 31 draft, 33 under review, 10 accepted, 4 integrated (78 live), 49 implemented, 13 superseded, 14 refused (76 settled).
+**154 RFCs total.** 31 draft, 33 under review, 10 accepted, 3 integrated (77 live), 50 implemented, 13 superseded, 14 refused (77 settled).
 
 ## Draft (31)
 
@@ -98,14 +98,13 @@ the curated thematic map.
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 - **RFC-0152** — Function-Type Multiplicity Widening (`2-accepted` ; rfcs/2-accepted/rfc-0152-function-type-multiplicity-widening.md ; date 2026-08-30 ; updated 2026-08-30)
 
-## Integrated (4)
+## Integrated (3)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 - **RFC-0117** — Row Narrowing (`3-integrated` ; rfcs/3-integrated/rfc-0117-row-narrowing.md ; date 2026-07-24 ; updated 2026-08-29 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/789)
-- **RFC-0130** — extends Aspect: Renaming impl Aspect for Consistency with extend (`3-integrated` ; rfcs/3-integrated/rfc-0130-extends-aspect-renaming-impl-aspect-for-consistency-with-extend.md ; date 2026-08-06 ; updated 2026-08-30 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/801)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/836)
 
-## Implemented (49)
+## Implemented (50)
 
 - **RFC-0006** — Closure Capture Semantics and Cross-Closure Reference Sharing (`4-implemented` ; rfcs/4-implemented/rfc-0006-closure-capture-semantics.md ; date 2026-05-21)
 - **RFC-0007** — Compiler-Compatible Primitive Type System (`4-implemented` ; rfcs/4-implemented/rfc-0007-uint-type.md ; date 2026-05-21)
@@ -155,6 +154,7 @@ the curated thematic map.
 - **RFC-0118** — Row Bounds (`4-implemented` ; rfcs/4-implemented/rfc-0118-row-bounds.md ; date 2026-07-24 ; updated 2026-08-25 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/577)
 - **RFC-0126** — T[] as a Copy Borrowed View (`4-implemented` ; rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md ; date 2026-07-27 ; updated 2026-08-03 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/593)
 - **RFC-0129** — Aspect Method Generic Constraint Conformance (`4-implemented` ; rfcs/4-implemented/rfc-0129-aspect-method-generic-constraint-conformance.md ; date 2026-08-05 ; updated 2026-08-29 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/617)
+- **RFC-0130** — extends Aspect: Renaming impl Aspect for Consistency with extend (`4-implemented` ; rfcs/4-implemented/rfc-0130-extends-aspect-renaming-impl-aspect-for-consistency-with-extend.md ; date 2026-08-06 ; updated 2026-08-30 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/801)
 - **RFC-0138** — Generic Functions as First-Class Values (`4-implemented` ; rfcs/4-implemented/rfc-0138-generic-functions-as-first-class-values.md ; date 2026-08-24 ; updated 2026-08-27 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/736)
 
 ## Superseded (13)
