@@ -976,17 +976,27 @@ implementation).
   alongside "coherent Copy and closure capabilities" and #702/#263's structural-types
   Copy cleanup, which §3 describes but does not fix. Acceptance blocker: Open Question 3
   (migration — breaking rename vs. permanent alias vs. deprecation window).
-- **RFC-0152** *(first-order half accepted 2026-08-30 with RFC-0134; opened 2026-08-30)* —
+- **RFC-0152** *(accepted 2026-08-30 with RFC-0134; opened 2026-08-30)* —
   Function-Type Multiplicity Widening — a one-directional coercion: a function value is
   usable where a *less* permissive multiplicity is expected (`many` call → `once` call
-  slot; `Copy` → non-`Copy`), never the reverse. **First-order half (§1, §3)** — the
-  coercion at argument / ascription / return sites — is a **co-requirement of RFC-0134**:
-  RFC-0134's `once` qualifier is not sound-and-usable without it, and RFC-0134's
-  exact-match alternative was withdrawn. That half moves to `accepted` with RFC-0134.
-  **Still open in this RFC:** the higher-order / contravariant case (a function type
-  nested in another function type's argument; OQ2) and whether the coercion should become
-  a general `Type::Fun` subtype lattice (OQ1). Not a `Type::Fun` subtype lattice today;
-  struct fields stay invariant. Tracker metel-core#901.
+  slot; `Copy` → non-`Copy`), never the reverse, at **first-order sites** (argument /
+  ascription / struct-field-init / return). A **co-requirement of RFC-0134**: RFC-0134's
+  `once` qualifier is not sound-and-usable without it, and RFC-0134's exact-match
+  alternative was withdrawn — the two transition together. Scoped clean: the
+  higher-order / contravariant case and the `Type::Fun` subtype-lattice question were
+  split out to **RFC-0155** the same day, so the two remaining Open Questions are
+  spec-refinements, not gates. Below the first level of nesting an exact match is
+  required (a sound under-approximation); struct fields stay invariant. Target v0.13.0;
+  tracker metel-core#901.
+- **RFC-0155** *(under review, opened 2026-08-30)* — Higher-Order Function-Type
+  Multiplicity Variance — everything split out of RFC-0152 so its first-order half could
+  be accepted clean: the **contravariant** direction for a function type nested inside
+  another function type (or a permanent first-order cap), and whether the coercion should
+  be generalised into a real `Type::Fun` subtype lattice (`⊤`/`⊥` function types, variance
+  annotations, bounded quantification) — with the **marker-aspect model** (`Callable<A,R>`
+  + `CallMany` / `CallShared`, from RFC-0153's Alternatives) as the third option, under
+  which the area dissolves into aspect-bound subsetting. Not urgent: RFC-0152's cap is
+  sound, so nothing is unsound while this is open. Tracker metel-core#904 (v0.17.0).
 - **RFC-0153** *(under review, opened 2026-08-30)* — Closure Mutation Axis — the third
   `Type::Fun` field RFC-0134 §4 reserves and §5 constrains (compose with `once`/`many`
   as an independent prefix). Records whether invoking a closure needs *exclusive*
