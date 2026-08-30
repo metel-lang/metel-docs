@@ -942,25 +942,27 @@ implementation).
 - **RFC-0050** *(draft)* — Closure Capture Lists — `&var`/`move`/clone/`&` specifiers.
   `&var`/clone/`&` buildable now; `move` waits on a split-model successor to refused
   RFC-0046 — RFC-0134 is a candidate, scoped narrower (affine, not linear).
-- **RFC-0134** *(under-review as of 2026-08-14, opened 2026-08-13)* — Closure Call
+- **RFC-0134** *(accepted 2026-08-30, opened 2026-08-13)* — Closure Call
   Capability — the type-level
   distinction `metel-core#269` needs (does calling a closure consume a non-`Copy`
   capture) to make move checking sound for closures, blocking `metel-core#267`
   (enable move checking by default). Scoped as an affine question, deliberately not
   waiting on RFC-0028's linear-types tower the way RFC-0050's `move` half does — affine
-  is now a recorded decision with a stated reopening condition, not an open question.
+  is a recorded decision with a stated reopening condition, not an open question.
   Carries **two** multiplicity fields on `Type::Fun` (call, and by-value-use — the
   latter is §1's `Copy` rule, which has nowhere else to live since captures aren't in
-  the type). §3 specifies exact-match multiplicity unification, with subtyping deferred to
-  **RFC-0152**. §3's `once`/`many` qualifier prefixes the base function-type spelling,
-  which is **RFC-0154**'s concern (`§3a` was split there 2026-08-30). **Acceptance review
-  2026-08-30:** the stale "`use_multiplicity` vs the two `Copy` implications" note is
-  resolved (Open Questions — this RFC touches only move-checking `Copy`; the aspect split
-  is metel-core#739). **Still not proposed for acceptance:** §3 asserts both a directional
-  reading (a `many` value satisfies a `once` slot) and exact-match unification, which
-  contradict — resolving it needs RFC-0152's first-order widening as a co-requirement or a
-  descope; §2's inference predicate and the "calling a `once fun` consumes the callee"
-  rule also need spec-precise statements.
+  the type). §3's `once`/`many` qualifier prefixes the base function-type spelling,
+  which is **RFC-0154**'s concern (`§3a` split there 2026-08-30). **Accepted alongside
+  RFC-0152 (co-requirement):** the exact-match multiplicity proposal was withdrawn as
+  unusable and replaced with **first-order directional matching** (a `many` value
+  satisfies a `once` slot at argument / ascription / return sites), whose first-order
+  form is RFC-0152; RFC-0134 depends on that half and the two move to `accepted`
+  together. The stale "`use_multiplicity` vs the two `Copy` implications" note is
+  resolved (this RFC touches only move-checking `Copy`; the aspect split is
+  metel-core#739); §2's inference predicate (runs on the move checker's own CFG;
+  conservative reachability) and the "calling a `once` closure consumes the callee place
+  at the call expression" operational rule are now stated spec-precisely. Target
+  v0.13.0 (metel-core#269).
 - **RFC-0135** *(under review 2026-08-29, opened 2026-08-13)* — Multiplicity for Ordinary Types — companion
   to RFC-0134, not a dependency of it. Reframes `Copy` as `many` applied to a type's
   by-value-use operation rather than a closure's call operation — same axis RFC-0134
@@ -974,15 +976,17 @@ implementation).
   alongside "coherent Copy and closure capabilities" and #702/#263's structural-types
   Copy cleanup, which §3 describes but does not fix. Acceptance blocker: Open Question 3
   (migration — breaking rename vs. permanent alias vs. deprecation window).
-- **RFC-0152** *(under review, opened 2026-08-30)* — Function-Type Multiplicity Widening —
-  the "strict later widening" RFC-0134 §3 defers. RFC-0134 ships exact-match unification
-  (`many fun(T) -> U` does *not* satisfy a `once fun(T) -> U` slot); this replaces that
-  with a one-directional coercion — a function value is usable where a *less* permissive
-  multiplicity is expected (`many` call → `once` call slot; `Copy` → non-`Copy`), never
-  the reverse. A coercion at argument / ascription / return sites, not a `Type::Fun`
-  subtype lattice; struct fields stay invariant. Open: higher-order variance, whether the
-  `Copy`-axis row adds anything over ordinary `Copy`-where-move, timing vs RFC-0134.
-  Milestoned v0.17.0 (metel-core#901).
+- **RFC-0152** *(first-order half accepted 2026-08-30 with RFC-0134; opened 2026-08-30)* —
+  Function-Type Multiplicity Widening — a one-directional coercion: a function value is
+  usable where a *less* permissive multiplicity is expected (`many` call → `once` call
+  slot; `Copy` → non-`Copy`), never the reverse. **First-order half (§1, §3)** — the
+  coercion at argument / ascription / return sites — is a **co-requirement of RFC-0134**:
+  RFC-0134's `once` qualifier is not sound-and-usable without it, and RFC-0134's
+  exact-match alternative was withdrawn. That half moves to `accepted` with RFC-0134.
+  **Still open in this RFC:** the higher-order / contravariant case (a function type
+  nested in another function type's argument; OQ2) and whether the coercion should become
+  a general `Type::Fun` subtype lattice (OQ1). Not a `Type::Fun` subtype lattice today;
+  struct fields stay invariant. Tracker metel-core#901.
 - **RFC-0153** *(under review, opened 2026-08-30)* — Closure Mutation Axis — the third
   `Type::Fun` field RFC-0134 §4 reserves and §5 constrains (compose with `once`/`many`
   as an independent prefix). Records whether invoking a closure needs *exclusive*

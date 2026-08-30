@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**153 RFCs total.** 31 draft, 34 under review, 10 accepted, 3 integrated (78 live), 48 implemented, 13 superseded, 14 refused (75 settled).
+**153 RFCs total.** 31 draft, 32 under review, 12 accepted, 3 integrated (78 live), 48 implemented, 13 superseded, 14 refused (75 settled).
 
 ## Draft (31)
 
@@ -49,7 +49,7 @@ the curated thematic map.
 - **RFC-0145** — Static Storage Duration (`0-draft` ; rfcs/0-draft/rfc-0145-static-storage-duration.md ; date 2026-08-27)
 - **RFC-0151** — Tuples as Numeric-Label Rows (`0-draft` ; rfcs/0-draft/rfc-0151-tuples-as-numeric-label-rows.md ; date 2026-08-29)
 
-## Under Review (34)
+## Under Review (32)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0050** — Closure Capture Lists (`1-under-review` ; rfcs/1-under-review/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-08-23)
@@ -69,7 +69,6 @@ the curated thematic map.
 - **RFC-0125** — Variadic Generics (`1-under-review` ; rfcs/1-under-review/rfc-0125-variadic-generics.md ; date 2026-07-25 ; updated 2026-08-23)
 - **RFC-0127** — Associated Functions on Generic Types (`1-under-review` ; rfcs/1-under-review/rfc-0127-associated-functions-on-generic-types.md ; date 2026-08-01 ; updated 2026-08-23)
 - **RFC-0132** — Comptime Execution Model — comptime let, comptime fun, comptime if (`1-under-review` ; rfcs/1-under-review/rfc-0132-comptime-execution-model-comptime-let-comptime-fun-comptime-if.md ; date 2026-08-13 ; updated 2026-08-23)
-- **RFC-0134** — Closure Call Capability (`1-under-review` ; rfcs/1-under-review/rfc-0134-closure-call-capability.md ; date 2026-08-13 ; updated 2026-08-30)
 - **RFC-0135** — Multiplicity for Ordinary Types (`1-under-review` ; rfcs/1-under-review/rfc-0135-multiplicity-for-ordinary-types.md ; date 2026-08-13 ; updated 2026-08-29)
 - **RFC-0136** — Walrus for Kept Bindings (`1-under-review` ; rfcs/1-under-review/rfc-0136-walrus-for-kept-bindings.md ; date 2026-08-23 ; updated 2026-08-25)
 - **RFC-0139** — Garbage-Collected Allocators and Allocator-Determined Pointer Types (`1-under-review` ; rfcs/1-under-review/rfc-0139-garbage-collected-allocators-and-allocator-determined-pointer-types.md ; date 2026-08-24 ; updated 2026-08-27)
@@ -82,11 +81,10 @@ the curated thematic map.
 - **RFC-0148** — Row-Parametric Destructors (`1-under-review` ; rfcs/1-under-review/rfc-0148-row-parametric-destructors.md ; date 2026-08-28 ; updated 2026-08-28)
 - **RFC-0149** — Aspect Method Constraint Domain Inclusion (`1-under-review` ; rfcs/1-under-review/rfc-0149-aspect-method-constraint-domain-inclusion.md ; date 2026-08-29 ; updated 2026-08-29)
 - **RFC-0150** — Nested Row Narrowing (`1-under-review` ; rfcs/1-under-review/rfc-0150-nested-row-narrowing.md ; date 2026-08-29 ; updated 2026-08-29)
-- **RFC-0152** — Function-Type Multiplicity Widening (`1-under-review` ; rfcs/1-under-review/rfc-0152-function-type-multiplicity-widening.md ; date 2026-08-30 ; updated 2026-08-30)
 - **RFC-0153** — Closure Mutation Axis (`1-under-review` ; rfcs/1-under-review/rfc-0153-closure-mutation-axis.md ; date 2026-08-30 ; updated 2026-08-30)
 - **RFC-0154** — Pipe Notation for Closures and Function Types (`1-under-review` ; rfcs/1-under-review/rfc-0154-pipe-notation-for-closures-and-function-types.md ; date 2026-08-30 ; updated 2026-08-30)
 
-## Accepted (10)
+## Accepted (12)
 
 - **RFC-0008** — Aspect Objects (`2-accepted` ; rfcs/2-accepted/rfc-0008-aspect-objects.md ; date 2026-07-01)
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
@@ -97,7 +95,9 @@ the curated thematic map.
 - **RFC-0077** — Allocator Generics (`2-accepted` ; rfcs/2-accepted/rfc-0077-allocator-generics.md ; date 2026-06-29 ; updated 2026-07-10)
 - **RFC-0120** — Named Records (`2-accepted` ; rfcs/2-accepted/rfc-0120-named-records.md ; date 2026-07-24 ; updated 2026-08-30)
 - **RFC-0130** — extends Aspect: Renaming impl Aspect for Consistency with extend (`2-accepted` ; rfcs/2-accepted/rfc-0130-extends-aspect-renaming-impl-aspect-for-consistency-with-extend.md ; date 2026-08-06 ; updated 2026-08-23)
+- **RFC-0134** — Closure Call Capability (`2-accepted` ; rfcs/2-accepted/rfc-0134-closure-call-capability.md ; date 2026-08-13 ; updated 2026-08-30)
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
+- **RFC-0152** — Function-Type Multiplicity Widening (`2-accepted` ; rfcs/2-accepted/rfc-0152-function-type-multiplicity-widening.md ; date 2026-08-30 ; updated 2026-08-30)
 
 ## Integrated (3)
 

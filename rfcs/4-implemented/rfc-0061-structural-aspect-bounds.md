@@ -408,6 +408,6 @@ aspect impls are specified in RFC-0050.
 - RFC-0126 (`T[]` as a Copy Borrowed View, `4-implemented`) — replaced §1.1's owning-buffer
   array model with a non-owning view that is `Copy` unconditionally; see the 2026-08-14
   partial-supersession note above.
-- RFC-0134 (Closure Call Capability, under-review) — the RFC whose §4 investigation found
+- RFC-0134 (Closure Call Capability, accepted) — the RFC whose §4 investigation found
   §7.4's "distinct anonymous types" claim below doesn't match the implementation; see
   the 2026-08-14 correction note above.
