@@ -22,6 +22,18 @@ updated: '2026-08-25'
 > depends on RFC-0093, `0-draft`, no target) that this RFC has no reason to inherit.
 
 > **Status — under review (2026-08-23).** Committed to v0.13.0, tracking issue #791 filed 2026-08-22
+>
+> **Open-question sweep, 2026-08-30.** RFC-0137 (Nominal Types as Branded Rows) is now
+> `3-integrated`, and it resolves or absorbs the three open questions that were still
+> live: OQ1 (`Drop` dispatch against a narrowed named record) is answered by RFC-0137 §5's
+> row-bounded dispatch, the same rule that closed RFC-0117's identical question and is now
+> spec text (`spec.ownership.drop-dispatch-against-a-narrowed-residual`); OQ3's
+> "does the anonymous-record allocator restriction transfer" loses its premise, because a
+> `record` brand *is* the per-instance declaration identity RFC-0116 §3 said an anonymous
+> record lacks; OQ4's "same brand kind as RFC-0076's" is now RFC-0137's committed model
+> for every struct brand, which a `record` brand simply is. **No blocking open question
+> remains** — see each item below. §1's table was already restated against RFC-0137
+> (2026-08-25); §4's "deliberately not folded in" note is likewise now historical.
 
 ## Summary
 
@@ -143,27 +155,45 @@ objection stands) or primitives.
 ## 4. What this RFC does not claim
 
 The strong thesis — that **every** nominal type, not just an opt-in `record`, is
-`(brand, row)` under the hood, with the row degrading on partial move — is a live
-exploration in `reports/substructural-types/nominal-types-as-branded-rows.md` and is
-**deliberately not folded in here.** It is a genuinely different architecture: it would make
-row-shapedness the default rather than a tier, which contradicts §1's entire framing. Kept
-separate so this RFC can be accepted or refused on its own terms.
+`(brand, row)` under the hood, with the row degrading on partial move — was a live
+exploration in `reports/substructural-types/nominal-types-as-branded-rows.md` when this
+section was written, deliberately not folded in so this RFC could be accepted on its own
+terms.
 
-That document also raises a real problem this RFC inherits the moment narrowing is extended
-to nominal types: **how does custom `Drop` dispatch against a narrowed residual?** Its §4
-gives a concrete leak under the naive reading. RFC-0116 §3 forbids custom `Drop` on
-anonymous records, so the question does not arise there — it arises here, and is not
-answered.
+**Updated 2026-08-30: that thesis is now RFC-0137 (`3-integrated`).** Every `struct`
+carries `(brand, row)`, and the row narrows on partial move (RFC-0117, also integrated).
+This does **not** collapse §1's tiers — RFC-0137's row is never visible to structural
+matching (that is exactly its §1 restriction), so a plain `struct` stays impl-ineligible.
+What `record` still adds on top of RFC-0137 is precisely §1's tier-3 cell: the row is
+**visible to structural matching and impl-eligible** for row-conditional impls. That
+capability is not in RFC-0137 and is why this RFC still has a job; §1's table already
+carries the "Restated 2026-08-25 against RFC-0137" note reconciling the wording.
+
+The `Drop`-dispatch problem this section flagged — *how does custom `Drop` dispatch
+against a narrowed residual?* — is answered: Open Question 1 above, via RFC-0137 §5's
+row-bounded dispatch, now spec text.
 
 ---
 
 ## Open Questions
 
-1. **`Drop` dispatch against a narrowed named record** (§4). A custom destructor plus a
+1. ~~**`Drop` dispatch against a narrowed named record** (§4). A custom destructor plus a
    residual missing the fields it reads is a leak under the obvious rule.
    `nominal-types-as-branded-rows.md` §4.1–4.3 proposes body-inferred, row-bounded dispatch
    and argues it needs a fixed field-set plus a subset check rather than general row
-   machinery — plausible, not adopted here.
+   machinery — plausible, not adopted here.~~ **Resolved 2026-08-30 — RFC-0137 §5
+   (`3-integrated`).** Dispatch is row-bounded: a `Drop` impl's required field set is the
+   residual row its `drop` receiver is *declared* as (RFC-0137 §5 as amended 2026-08-28 —
+   declared, not body-inferred), and the destructor fires against any residual of that
+   brand whose current row is a superset of it. A `record` with custom `Drop` is a nominal
+   type, so this applies to it directly — it is the identical question RFC-0117 carried as
+   *its* OQ1, closed the same way, and now spec text at
+   `spec.ownership.drop-dispatch-against-a-narrowed-residual`. The leak
+   `nominal-types-as-branded-rows.md` §4 describes cannot occur: a partial move that would
+   leave the residual below the declared required set is rejected at that point
+   (spec `…legality-1`), so the destructor is never reached with a field it reads already
+   gone. Implementation is gated on metel-core#858 (row-bounded Drop dispatch), the same
+   gate RFC-0117's rule sits behind.
 2. ~~**Brand-versus-row coherence priority.** An ordinary `extend Point: Display` is
    brand-keyed; a row-conditional impl is row-keyed. If a value matches both, which wins?
    More-specific-wins is the obvious default and is written down nowhere.
@@ -176,14 +206,29 @@ answered.
    issue: metel-core#833.
 3. **Does RFC-0116 §3's allocator-type restriction transfer to tier 3?** That restriction
    assumed structural interchangeability, which a fixed brand arguably removes — a named
-   record has per-instance identity in a way an anonymous one does not. Unresolved.
-   *(From RFC-0090 OQ9.)*
+   record has per-instance identity in a way an anonymous one does not. ~~Unresolved.~~
+   *(From RFC-0090 OQ9.)* **Premise removed 2026-08-30 — RFC-0137 (`3-integrated`).**
+   RFC-0116 §3's own stated reason an anonymous record cannot be an allocator is that
+   *"allocator identity is per-instance (RFC-0063 §2)"* and an anonymous record has no
+   such identity. A `record` brand **is** exactly that per-instance declaration identity
+   (RFC-0137 §2/§3; OQ5), so the restriction's rationale does not carry to tier 3 — a
+   named record is, on this axis, a `struct`. Whether a `record` may then *actually* serve
+   as an allocator type is a question for the allocator cluster (RFC-0063 disjointness,
+   RFC-0143), not for this RFC's acceptance; it is no longer an open design gap here, just
+   a deferral to where allocator identity is specified.
 4. **Is the brand here the same kind as RFC-0076's?** §3 asserts implementer economy by
    reusing `brand-kind-unification.md`'s single identity kind. Whether a
    declaration-minted, compile-time-only, one-introduction tag really is a degenerate case
    of that kind — rather than something that merely resembles it — is argued in that
    document's §8 and not proven. Note this RFC does **not** depend on RFC-0076's runtime
-   checking machinery.
+   checking machinery. ~~Unresolved.~~ **Resolved by inheritance 2026-08-30 — RFC-0137
+   (`3-integrated`).** RFC-0137 §1 commits the language to treating *every* struct's
+   declaration brand as "a fourth surface use of `brand-kind-unification.md` §8's single
+   identity kind, not a new concept." A `record` brand is a `struct` brand — §2's upgrade
+   path keeps "the nominal name and identity … unchanged" — so this is no longer a
+   question this RFC settles or is blocked on: it rides on RFC-0137's integrated model.
+   The residual "argued, not proven" concern belongs to `brand-kind-unification.md` /
+   RFC-0076, not to accepting `record`.
 5. ~~Does a narrowed named record keep its brand? Presumably yes — that is the point of
    §1's third bullet — but the rule is unstated, and it decides whether
    `Handle.{ fd }` is still a `Handle` for impl-resolution purposes.~~ **Answered,
@@ -217,15 +262,24 @@ answered.
   proposal §3 reuses
 - `reports/substructural-types/nominal-types-as-branded-rows.md` — the stronger thesis §4
   deliberately does not adopt, and §4's `Drop`-dispatch leak
-- RFC-0137 (Nominal Types as Branded Rows, `2-accepted` 2026-08-27 — re-accepted
-  after a same-day 2026-08-25 revert) — the exploration
-  above, formalized: adopts the stronger thesis for every struct, answers Open
-  Question 5, and is what §1's table above is now restated against
-- RFC-0076 (Brand Types) — related but **not a dependency**; see OQ4
+- RFC-0137 (Nominal Types as Branded Rows, `3-integrated`) — the exploration above,
+  formalized and merged into `reference/spec/ownership.md`: adopts the stronger thesis for
+  every struct, and its §2/§3/§5 resolve Open Questions 5, 1, and the premise of 3; §1's
+  table above is restated against it. `record` still adds tier-3's row-visibility and
+  impl-eligibility on top (§4)
+- RFC-0117 (Row Narrowing, `3-integrated`) — the narrowing rule a `record` residual
+  follows; carried the identical `Drop`-dispatch question (its OQ1) closed the same way
+- RFC-0076 (RC Brands, `1-under-review`) — related but **not a dependency**; OQ4's
+  "same identity kind" concern is now RFC-0137's, not this RFC's
 
 ---
 
 ## Decision
 
-**Outcome:** *(pending)*
-**Target:** *(set when accepted)*
+**Outcome:** *(pending — but no blocking open question remains as of 2026-08-30. OQ2 and
+OQ5 were resolved earlier (RFC-0121 §3, RFC-0137 §2/§3); OQ1, OQ3, and OQ4 are resolved
+or reduced to a non-blocking deferral by RFC-0137 reaching `3-integrated` — see the
+open-question sweep in the header. The remaining gate is an acceptance review confirming
+tier 3 is a distinct capability requirement (§1's guardrail) and that `record` still
+earns its place on top of RFC-0137's every-struct-is-branded-row model — §4.)*
+**Target:** *(set when accepted; committed to v0.13.0 via metel-core#791.)*
