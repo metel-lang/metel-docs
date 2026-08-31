@@ -41,7 +41,9 @@ of implicit copy, the doubled vocabulary of the two-aspect split, the `Copy`/`Dr
 cliff, the model's existing non-uniformity across named vs. structural types, and the
 capture-default inconsistency — and the alternatives, from "keep it, rename via RFC-0135"
 through "move-by-default with explicit duplication" to "implicit copy only for a closed
-primitive set." It recommends a direction and names what each direction would cost.
+primitive set." A prior-art survey (Rust, C++, Swift, C#, Hylo, and the Go /
+uniqueness-typed / pure-functional families) grounds the comparison. It recommends a
+direction and names what each direction would cost.
 
 ---
 
@@ -222,7 +224,11 @@ already the design. This would:
 
 ## Recommended direction
 
-Stated as a recommendation for review to push on, not a decision:
+Stated as a recommendation for review to push on, not a decision. The Prior art survey
+below is the main evidence base: no language that started from an explicit model has
+moved toward more implicitness, the fully-open end (C++, Go) is uniformly regretted, and
+for D5 every surveyed language moves into a closure by inference or an expression, never
+a per-capture keyword.
 
 1. **Do not ship RFC-0135 as a pure rename first.** Renaming `Copy` → `many` before this
    analysis concludes bakes A1 + B1 into the vocabulary and makes P1/P2 a second rename.
@@ -231,13 +237,13 @@ Stated as a recommendation for review to push on, not a decision:
 2. **Lean toward P1 (closed implicit set + single explicit duplication operation).** It
    removes the three drawbacks that are actually costs rather than unfamiliarity (D1, D2,
    D3), it is the smallest step that does so, and it makes D4 a definition rather than a
-   fragmentation. P2 is cleaner still but pays too much ergonomically; P0 pays nothing
-   and fixes nothing.
+   fragmentation. P2 (Hylo's shipped model) is cleaner still but pays more ergonomically
+   than Metel's audience is likely to accept; P0 pays nothing and fixes nothing.
 3. **Adopt the D5 capture-default change (`let y := x` semantics for by-value capture)**
    regardless of the Axis-A/B outcome, behind an edition gate, and require an explicit
    capture list at the point a capture would move. This settles RFC-0050's deferred
-   question in the "no keyword" direction and makes closures consistent with the rest of
-   the language.
+   question in the "no keyword" direction (matching C++ init-capture and Rust's
+   `move(expr)` direction) and makes closures consistent with the rest of the language.
 
 If P1 is adopted, the follow-up work is: a keyword/marker for the closed implicit set and
 its eligibility rule (successor RFC); collapsing `Clone` into a single duplication aspect
@@ -281,6 +287,153 @@ RFC-0050).
 
 ---
 
+## Prior art
+
+How six language families answer the two questions this RFC poses — (A) does *by-value
+use* silently duplicate, and (B) are "cheap implicit copy" and "explicit deep copy" one
+concept or two — plus how each moves a value into a closure (the D5 angle). Sources are
+listed at the end of this section.
+
+### Rust — the model Metel inherited
+
+`Copy` (implicit, marker aspect, bitwise, opt-in via `derive`/`impl`, every field must be
+`Copy`, mutually exclusive with `Drop`) plus `Clone` (explicit `.clone()`, with a blanket
+`impl<T: Copy> Clone for T`). This is D1+D2+D3 verbatim — Metel took the whole shape.
+
+Known friction in Rust, from its own discussions:
+
+- **`.clone()` noise** around `Rc`/`Arc`, where the call is semantically "make another
+  handle to the same thing," not "duplicate the data" — the two are spelled identically.
+- **The D1 hazard is real and lived-with**: adding a non-`Copy` field to a type silently
+  flips every by-value use from copy to move, with errors at the use sites.
+- **Direction of travel is toward *more* explicitness, not less.** The 2024–2026
+  "ergonomic ref-counting" work (RFC 3680) proposes `use ||` closures and `move(expr)`
+  *expressions* for precise capture control, plus a `Share`/`Claim`-style trait marking
+  "clone that produces an alias." The stated conclusion after review: *"make explicit
+  code ergonomic, not make everything implicit … some applications genuinely need to
+  track where aliases are created."*
+- **Closures** capture by inference (shared ref / unique ref / move, whichever the body
+  needs); `move ||` forces by-value capture of *everything*. Note that non-`Copy` values
+  the body consumes are *already* moved in without any keyword — `move ||` exists to
+  override the inference for values that would otherwise be borrowed, which is not the
+  situation Metel's clone-by-default closures are in.
+
+Relevance to Metel: the language closest to ours has concluded that capture wants
+*visible, precise* control — which supports RFC-0050's capture **list** — while its
+mechanism for *moving into* a closure is either inference or an expression form, never a
+per-capture keyword. That is exactly RFC-0050's `move`-specifier drop and this RFC's
+recommendation 3.
+
+### C++ — open implicit copy with user-defined hooks, no cost signal
+
+Every class is copyable by default via an implicitly generated member-wise copy
+constructor; the author may write their own or `= delete` it. Move (C++11) was added as
+an *optimization of* copy, not a distinct concept. The Rule of Three/Five documents that
+the five special members are coupled: declaring one suppresses or deletes others, and
+"if moves are deleted, the compiler falls back to copy, potentially surprising users."
+
+There is **no marker at all** distinguishing a cheap copy from an allocating one — the
+cost is invisible at every call site, strictly worse than Rust's `Copy`/`Clone` split.
+C++ is the endpoint Metel should not drift toward, and the strongest single piece of
+evidence for D1.
+
+Lambda capture lists (`[x, &y, w = std::move(z)]`) are explicit and close to exhaustive.
+Moving a value into a C++ lambda is done with an **init-capture expression**
+(`w = std::move(z)`), not a capture keyword — again the expression form, corroborating
+recommendation 3.
+
+### Swift — value/reference at the declaration; copies hidden, cost hidden by COW
+
+`struct`/`enum` are value types (copied on assignment and at parameter boundaries);
+`class` is a reference type. The copy is implicit and unmarked. Swift's answer to the
+cost half of D1 is **copy-on-write**: `Array`, `String`, `Dictionary` and hand-written
+value types wrap a reference-typed box and only physically copy on first mutation. So the
+cost is paid lazily rather than made visible.
+
+`~Copyable` (SE-0390, Swift 5.9, 2023) lets a type opt *out* of copyability. Swift's own
+rationale: for a `Copyable` type "the distinction between borrowing and consuming
+operations is largely hidden from the programmer, since Swift will implicitly insert
+copies," and for a non-copyable one that distinction "becomes an important part of the
+API contract." That is D1 stated from the other side — copyability is precisely what buys
+the ability to *not* think about borrow-vs-consume.
+
+Capture lists (`[weak self]`, `[x]`) are explicit but **not exhaustive** — unlisted
+variables are still captured.
+
+Relevance: Swift demonstrates the "value vs. reference at the type" alternative, and shows
+that hiding implicit-copy cost comfortably requires COW machinery — a runtime mechanism
+Metel's model does not have and RFC-0157 is not proposing to add.
+
+### C# — value/reference at the declaration, and *no* cost mitigation
+
+`struct` (value, bitwise/member-wise copy on assignment and argument passing) vs `class`
+(reference). Like Swift without copy-on-write. Silent `struct` copies are a documented
+footgun (mutable structs, hidden defensive copies), and the standard guidance is
+"keep structs small and immutable." Confirms that an open value-type category with
+neither a cost signal nor COW needs external discipline rules to be safe.
+
+### Hylo (formerly Val) — mutable value semantics, implicit copy *forbidden*
+
+Every type is a value type; **implicit copies do not exist**. Duplicating a value is an
+explicit `x.copy()` call (the same shape as Rust's `.clone()`), and the language
+"avoids hidden costs such as implicit copies and therefore avoids heavy dependence on an
+optimizer for basic performance." Parameter passing uses explicit conventions
+(`let` / `inout` / `sink` / `set`) rather than reference types, so every access a
+function can make to a parameter is visible in its signature.
+
+This is RFC-0157's **P2** endpoint, shipped and internally coherent in a systems-oriented
+research language. The cost it pays is annotation burden and `.copy()` on small values;
+Hylo absorbs much of that through its borrow/`sink` conventions. Evidence that P2 is
+*achievable*; the open question is whether its ergonomics fit Metel's intended audience.
+
+### Others, briefly
+
+- **Go** — `struct` values copy shallowly on assignment and at call boundaries with no
+  user hook and no marker (the `sync.Mutex`-copied-by-value bug class). "Implicit copy,
+  zero control": the position no one defends.
+- **Clean (uniqueness types), Pony (reference capabilities), Vale (region borrowing)** —
+  sidestep duplication by governing *aliasing* instead: a value is either uniquely owned
+  (safe to mutate/consume) or shared (immutable). Metel's affine model (RFC-0071) already
+  sits in this family, which is why "who else can see this value" is largely a *settled*
+  axis for Metel and "is duplication implicit" can be reasoned about separately.
+- **Haskell / ML / pure-functional** — immutability + GC means duplication is never
+  observable; there is no `Copy`/`Clone` concept to design. Noted only to place the
+  problem: it is specific to the mutable-value-semantics design point Metel has chosen.
+
+### What the survey suggests for Metel
+
+1. **The fully-open, fully-implicit end (C++, Go) is uniformly regretted.** The
+   value-category-without-a-cost-signal middle (C#) is only safe with discipline rules.
+   The two models people are actually comfortable with are Swift's
+   implicit-copy-plus-COW (needs runtime COW Metel lacks) and Hylo's
+   no-implicit-copy-plus-conventions (P2).
+2. **No language that started explicit has moved toward more implicitness.** Rust, our
+   closest relative, is moving the other way. This weighs against **P0** and toward
+   **P1/P2**.
+3. **For D5 specifically:** every surveyed language that can move a value into a closure
+   does so by inference or by an *expression* (`std::move`, `move(expr)`), never a
+   dedicated per-capture keyword. This independently corroborates RFC-0050's removal of
+   its `move` specifier and recommendation 3.
+4. **Capture *lists* are common and un-regretted** (C++, Swift, Rust's direction).
+   RFC-0050's list survives the comparison cleanly; only the `move` specifier *inside*
+   it lacked prior-art support.
+
+### Sources
+
+- Rust `Copy`/`Clone`: the standard library reference. Ergonomic ref-counting / `use`
+  closures / `move(expr)`: <https://rust-lang.github.io/rust-project-goals/2025h2/ergonomic-rc.html>,
+  <https://blog.rust-lang.org/2025/11/19/project-goals-update-october-2025/>, RFC 3680.
+- Swift `~Copyable`: SE-0390
+  <https://github.com/swiftlang/swift-evolution/blob/main/proposals/0390-noncopyable-structs-and-enums.md>;
+  value vs. reference types <https://www.swift.org/documentation/articles/value-and-reference-types.html>.
+- C++ Rule of Three/Five: e.g. <https://leimao.github.io/blog/CPP-Rule-of-Five/>; init-capture
+  in the C++ standard ([expr.prim.lambda]).
+- C# structs: <https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/structs>.
+- Hylo: <https://hylo-lang.org/introduction/>; move semantics comparison
+  <https://lukas-prokop.at/articles/2024-11-29-move-semantics-in-rust-cpp-and-hylo>.
+
+---
+
 ## Open Questions
 
 1. **Is P1's closed implicit set defensible, and what defines membership?** Scalars and
@@ -307,10 +460,11 @@ RFC-0050).
    default (D5) are separable. If D5 is the only part with a blocked consumer (RFC-0050),
    a reviewer may want D5 split into its own fast-tracked RFC and the model critique left
    as a longer-horizon document. Recorded as a real option, not resisted.
-7. **Prior art beyond Rust.** Swift (value vs. reference types at the declaration), C#
-   (`struct`/`class`), C++ (copy constructors, `= delete`), Val/Hylo (mutable value
-   semantics, no implicit copy) — a proper survey of how each handles the D1 hazard and
-   the duplication-cost distinction belongs here before a direction is locked.
+7. **Prior art beyond Rust. ✓ Addressed** — see the Prior art section above (Rust, C++,
+   Swift, C#, Hylo, plus Go / uniqueness-typed / pure-functional families). Its four
+   conclusions feed the Recommended direction; what remains open is which of P1 / P2 the
+   survey's evidence best supports for Metel's specific audience, which is Open Question 1's
+   territory, not a gap in the survey.
 
 ---
 
