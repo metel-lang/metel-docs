@@ -997,33 +997,34 @@ implementation).
   below) more than with RFC-0134 itself. **Milestoned v0.17.0** (metel-core#892) —
   alongside "coherent Copy and closure capabilities" and #702/#263's structural-types
   Copy cleanup, which §3 describes but does not fix. Acceptance blocker: Open Question 3
-  (migration — breaking rename vs. permanent alias vs. deprecation window).
+  (migration — breaking rename vs. permanent alias vs. deprecation window). **RFC-0157
+  recommends the `Copy` → `many` rename not proceed** (throws away the most transferable
+  Rust term for an internal-consistency gain); RFC-0135's disposition — refuse, narrow to
+  de-cruft, or fold into RFC-0158 — is a call for its own review.
 - **RFC-0157** *(draft, opened 2026-08-31)* — Copy and Clone Model Re-analysis — the
-  trade-off study never written for `Copy`/`Clone`. Where RFC-0135 renames `Copy` to
-  `many` *assuming* the model, this questions the model: implicit copy's use-site
-  invisibility and API-stability hazard (D1), the two-aspect `Copy`/`Clone` split (D2),
-  `Copy`/`Drop` mutual exclusion (D3, RFC-0071 §4), the six-mechanism non-uniformity
-  across named vs. structural types (D4), and — the part with a blocked consumer —
-  RFC-0006's clone-by-default closure capture contradicting RFC-0071 move semantics (D5).
-  Surveys positions P0 (status quo + RFC-0135 rename) → P1 (closed implicit set + one
-  explicit `dup`) → P2 (no implicit copy); **recommends not shipping RFC-0135 as a rename
-  first**, leaning P1, plus adopting `let y := x` semantics for by-value capture behind an
-  edition gate (which settles RFC-0050's deferred ownership-transfer-capture question as
-  "no keyword"). Analysis/direction only — concrete changes spin out. Open Q6: D5 may
-  split into its own fast-tracked RFC since RFC-0050 (#803) is its only blocked consumer.
+  trade-off study never written for `Copy`/`Clone`. Frames drawbacks D1 (implicit copy's
+  use-site invisibility + API-stability hazard), D2 (two-aspect split), D3 (`Copy`/`Drop`
+  exclusion, RFC-0071 §4), D4 (six-mechanism non-uniformity), D5 (RFC-0006 clone-by-default
+  capture vs. RFC-0071 move semantics); design space P0 → P1 (closed implicit set) → P2
+  (no implicit copy) → P3 (unify on `once`/`many`), with a Rust/C++/Swift/C#/Hylo prior-art
+  survey. **Recommendation:** the two halves aren't equally worth diverging on — Rust's
+  regular-value `Copy`/`Clone` is settled and the strongest transferable intuition, so
+  keep it (no rename, no P1/P2/P3, accept D1); the *only* value-side changes are the
+  `Clone`/`Share` split (RFC-0158) and relaxing the `Copy`+`Drop` ban (D3). Rust's closure
+  story is unfinished, so the divergence budget goes there: by-value capture follows the
+  `let y := x` rule (D5, settles RFC-0050's deferred question as "no keyword"), and keep
+  iterating on the RFC-0134/0152/0153/0050 cluster. Analysis/direction only.
 - **RFC-0158** *(draft, opened 2026-08-31)* — Share and Clone: Separating Aliasing from
-  Duplication — split out of RFC-0157's "Axis B, second cut." `.clone()` today means two
-  things: `vec.clone()` (independent value) and `rc.clone()` (RFC-0076 brand-preserving —
-  another handle to the *same cell*), one aspect, identical spelling; RFC-0080's own §1.1
-  ("independent") contradicts its §1.2 ("incrementing a reference count"). Splits `Clone`
-  into **`Dup`** (`fun dup(self: &Self) -> Self`, independent — what §1.1 describes) and
-  **`Share`** (`fun share(self: &Self) -> Self`, another handle, handle-category types
-  only — `Rc`/`Arc`, never blanket-derived, never implied by `Copy`). Makes "did I just
-  create an alias" visible at the call site — the fact RFC-0076 brands encode in the
-  type. Recommends removing `Clone` (mechanical migration, receiver-type-decidable) behind
-  an edition gate. **Orthogonal** to RFC-0157's implicit-copy axis and to RFC-0135; not a
-  prerequisite for or of either; adoptable on its own. Amends RFC-0080 §1; RFC-0074/0076
-  `Rc`/`Arc` implement `Share`. Mirrors Rust's `Claim`/`Share` direction.
+  Duplication — split out of RFC-0157's "Axis B, second cut," then narrowed to **purely
+  additive**. `.clone()` is specified two ways: RFC-0080 §1.1 ("independent owned value")
+  vs. §1.2 ("incrementing a reference count") — and `rc.clone()` (RFC-0076 brand-preserving,
+  same cell) is the latter. Keeps `Copy` and `Clone` unchanged; tightens `Clone` to mean
+  independent duplication only; adds a new **`Share`** aspect (`fun share(self: &Self) ->
+  Self`, another handle to the same state; handle-category types only — `Rc`/`Arc`, never
+  blanket, never implied). `vec.clone()` untouched; `rc.clone()` → `rc.share()` (plain
+  cutover — `Rc` is `0-draft`). No rename, no implicit-copy change, no `#derive` change.
+  Amends RFC-0080 §1; RFC-0074/0076 `Rc`/`Arc` implement `Share`. Mirrors Rust's
+  `Claim`/`Share` direction; one of the two value-side changes RFC-0157 endorses.
 - **RFC-0152** *(accepted 2026-08-30 with RFC-0134; opened 2026-08-30)* —
   Function-Type Multiplicity Widening — a one-directional coercion: a function value is
   usable where a *less* permissive multiplicity is expected (`many` call → `once` call
