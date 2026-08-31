@@ -9,6 +9,18 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/701'
 ---
 
 > **Status — under review (2026-08-31).** Single substantiated proposal: parenthesize the match scrutinee to match if/while/for. No load-bearing open questions; tuple-scrutinee interaction resolved by reusing tuple_or_paren. Mechanical sweep, RFC-0130/0136 precedent.
+>
+> **Codex adversarial review round 1 (2026-08-31) folded in.** Two findings, both fixed
+> without changing the design: (1) the grammar as first written (`"match" ~
+> tuple_or_paren`) silently rejected `match () { … }` — `()` is `unit_lit`, not
+> `tuple_or_paren` — so the rule is now `"match" ~ (unit_lit | tuple_or_paren)`; (2) the
+> migration said an *AST-driven* rewriter could leave `match (x)` alone, but `match x`
+> and `match (x)` have identical ASTs (single-element `( e )` collapses to `e`), so the
+> sweep is specified as a pest-pair + source-span rewriter (the actual `walrus_migrate.rs`
+> model) that inspects the raw source between `match` and `{`. Non-findings: cast / field
+> access / call / `if` / nested `match` / range / struct-literal / closure scrutinees,
+> and `return`/`break`/`let`-position `match`, all parse fine both bare and wrapped; no
+> `) {` ambiguity; `spec.expressions.pattern-matching.legality-3` is free.
 
 ## Summary
 
@@ -58,20 +70,29 @@ place rather than spreading a third breaking parse change across a later version
 `match`'s scrutinee must be parenthesized. The grammar rule becomes:
 
 ```pest
-match_expr = { "match" ~ tuple_or_paren ~ "{" ~ (match_arm ~ ("," ~ match_arm)* ~ ","?)? ~ "}" }
+match_scrutinee = _{ unit_lit | tuple_or_paren }
+match_expr      = { "match" ~ match_scrutinee ~ "{" ~ (match_arm ~ ("," ~ match_arm)* ~ ","?)? ~ "}" }
 ```
 
-`tuple_or_paren` is the existing production:
+where the two alternatives are existing productions:
 
 ```pest
+unit_lit       = @{ "()" }
 tuple_or_paren = { "(" ~ expr ~ ("," ~ expr)+ ~ ")" | "(" ~ expr ~ ")" }
 ```
 
-Reusing it rather than writing a fresh `"(" ~ expr ~ ")"` is deliberate — it is what
-keeps a **tuple scrutinee** working. `match (a, b) { (0, 0) => … }` is common and valid
-today; under a naive `"(" ~ expr ~ ")"` rule the parser would consume `(`, match `a` as
-`expr`, then fail on the `,`. With `tuple_or_paren`, the scrutinee's own parentheses
-double as the required ones, exactly as they do today.
+Two deliberate points in this rule:
+
+- **`tuple_or_paren`, not a fresh `"(" ~ expr ~ ")"`.** This is what keeps a **tuple
+  scrutinee** working. `match (a, b) { (0, 0) => … }` is common and valid today; under a
+  naive `"(" ~ expr ~ ")"` rule the parser would consume `(`, match `a` as `expr`, then
+  fail on the `,`. With `tuple_or_paren`, the scrutinee's own parentheses double as the
+  required ones, exactly as they do today.
+- **`unit_lit` alternative.** `()` is a `unit_lit` primary, not a `tuple_or_paren`
+  (`tuple_or_paren` has no zero-element form). `match () { … }` parses today, so without
+  this alternative the rule would silently reject an already-parenthesized scrutinee —
+  self-contradicting the plain-language rule. A unit scrutinee is degenerate but legal,
+  and `()` already satisfies "must be parenthesized"; it stays valid, unchanged.
 
 **What stays valid (no source change needed):**
 
@@ -81,6 +102,7 @@ double as the required ones, exactly as they do today.
 | `match (a, b) { … }` | tuple scrutinee — the tuple's parentheses are the required ones |
 | `match (f(x)) { … }` | any expression, parenthesized |
 | `match ((a, b)) { … }` | still accepted; inner parens are the tuple, outer are redundant grouping |
+| `match () { … }` | unit scrutinee — `()` is already parenthesized (`unit_lit`) |
 
 **What becomes a parse error:**
 
@@ -92,10 +114,13 @@ double as the required ones, exactly as they do today.
 
 Nothing else about `match` moves. The scrutinee is still an arbitrary expression, still
 type-checked the same way, still reference-peeled per RFC-0108, still the resolution
-context for bare-variant patterns per RFC-0107. The `MatchExpr` AST node is unchanged;
-the parser unwraps `tuple_or_paren` to recover the scrutinee expression (a single inner
-`expr`, or a synthesized tuple expression for the 2+-element form) exactly as it already
-does everywhere `tuple_or_paren` appears.
+context for bare-variant patterns per RFC-0107. The `MatchExpr` AST node is **byte-for-byte
+unchanged**: today's `parse_tuple_or_paren` already collapses a single-element
+`( e )` to just `e` (the grouping node is dropped), and builds a tuple expression for the
+2+-element form — so `match x` and `match (x)` produce *identical* ASTs today (only the
+scrutinee's source span differs), and `match (a, b)` already yields a tuple-expression
+scrutinee. The parser change is purely which pest rule wraps the scrutinee tokens; the
+expression handed to the typechecker is exactly what it is now.
 
 ### Diagnostic
 
@@ -113,11 +138,18 @@ recovery hint on the generic `P0001` is an implementation detail for metel-core#
 places. Per `PROCESS.md`'s "changes existing syntax" exit criteria, the sweep lands in
 the same change as the grammar flip, not as a follow-up:
 
-- **Scope the rewrite to `match` keyword sites**, not a blind regex. An AST-driven
-  rewriter (the RFC-0136 `walrus_migrate.rs` precedent) is the right tool: parse under
-  the old grammar, find every `match_expr`, and wrap the scrutinee span in parentheses
-  unless it is already a `tuple_or_paren`. This correctly leaves `match (a, b) { … }`
-  and `match (x) { … }` alone and only touches the bare forms.
+- **Scope the rewrite to `match` keyword sites**, not a blind regex — and operate on the
+  **concrete parse tree (pest pairs) + source byte offsets**, not the typed AST. This is
+  the RFC-0136 `walrus_migrate.rs` model precisely: `walrus_migrate.rs` walked pest
+  pairs and spliced at byte offsets, it did *not* use the typed AST. The typed AST here
+  cannot drive the rewrite: `match x` and `match (x)` produce identical ASTs (see §1), so
+  an AST-only tool has no way to tell an already-parenthesized scrutinee from a bare one
+  and would double-wrap `match (x)` into `match ((x))`. Instead: parse under the old
+  grammar, and for each `match_expr` pair, inspect the raw source between the `match`
+  token and the opening `{` — if it is already a single balanced `( … )` (or `()`), leave
+  it; otherwise splice `(` and `)` around the scrutinee's own span. Double-wrapping is
+  harmless if the balance check is ever imperfect (`match ((x))` is valid), so the tool
+  errs toward wrapping.
 - **Sweep prose, not only code.** Every `` ```metel `` block showing a bare `match` in
   `reference/spec/` (≈30 sites in `expressions.md` and `types.md` alone), `getting-started/`,
   `docs/blog/`, and the `rfcs/` examples the parser can reach. Rust snippets and other
@@ -151,7 +183,8 @@ origin:
 ##### Legality Rule {#spec.expressions.pattern-matching.legality-3}
 
 A `match` expression's scrutinee must be enclosed in parentheses; the bare form
-`match x { … }` is a parse error. A tuple scrutinee's own parentheses satisfy this.
+`match x { … }` is a parse error. A tuple scrutinee's own parentheses satisfy this, as
+does the unit literal `()`.
 ```
 
 `coverage` frontmatter maps this RFC's §1 to `spec.expressions.pattern-matching.legality-3`,
@@ -172,8 +205,9 @@ cited by the negative fixture above and by any positive `match (…)` fixture.
 - **Accept both spellings forever**, treating the parens as optional sugar. That is the
   status quo; it is the thing being removed. An optional-delimiter rule is precisely
   the kind of "two ways to write one thing" the surface-syntax cleanups exist to close.
-- **Fresh `"(" ~ expr ~ ")"` rule** instead of reusing `tuple_or_paren`. Rejected: it
-  breaks `match (a, b) { … }` tuple scrutinees, as shown in §1.
+- **Fresh `"(" ~ expr ~ ")"` rule** instead of `unit_lit | tuple_or_paren`. Rejected: it
+  breaks `match (a, b) { … }` tuple scrutinees *and* `match () { … }` unit scrutinees,
+  both valid today, as shown in §1.
 
 ---
 
