@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**155 RFCs total.** 31 draft, 33 under review, 10 accepted, 3 integrated (77 live), 51 implemented, 13 superseded, 14 refused (78 settled).
+**155 RFCs total.** 31 draft, 32 under review, 10 accepted, 4 integrated (77 live), 51 implemented, 13 superseded, 14 refused (78 settled).
 
 ## Draft (31)
 
@@ -49,7 +49,7 @@ the curated thematic map.
 - **RFC-0145** — Static Storage Duration (`0-draft` ; rfcs/0-draft/rfc-0145-static-storage-duration.md ; date 2026-08-27)
 - **RFC-0151** — Tuples as Numeric-Label Rows (`0-draft` ; rfcs/0-draft/rfc-0151-tuples-as-numeric-label-rows.md ; date 2026-08-29)
 
-## Under Review (33)
+## Under Review (32)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0050** — Closure Capture Lists (`1-under-review` ; rfcs/1-under-review/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-08-23)
@@ -83,7 +83,6 @@ the curated thematic map.
 - **RFC-0153** — Closure Mutation Axis (`1-under-review` ; rfcs/1-under-review/rfc-0153-closure-mutation-axis.md ; date 2026-08-30 ; updated 2026-08-30)
 - **RFC-0154** — Pipe Notation for Closures and Function Types (`1-under-review` ; rfcs/1-under-review/rfc-0154-pipe-notation-for-closures-and-function-types.md ; date 2026-08-30 ; updated 2026-08-30)
 - **RFC-0155** — Higher-Order Function-Type Multiplicity Variance (`1-under-review` ; rfcs/1-under-review/rfc-0155-higher-order-function-type-multiplicity-variance.md ; date 2026-08-30 ; updated 2026-08-30)
-- **RFC-0156** — Parenthesize match Scrutinee (`1-under-review` ; rfcs/1-under-review/rfc-0156-parenthesize-match-scrutinee.md ; date 2026-08-31 ; updated 2026-08-31)
 
 ## Accepted (10)
 
@@ -98,11 +97,12 @@ the curated thematic map.
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 - **RFC-0152** — Function-Type Multiplicity Widening (`2-accepted` ; rfcs/2-accepted/rfc-0152-function-type-multiplicity-widening.md ; date 2026-08-30 ; updated 2026-08-30)
 
-## Integrated (3)
+## Integrated (4)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 - **RFC-0117** — Row Narrowing (`3-integrated` ; rfcs/3-integrated/rfc-0117-row-narrowing.md ; date 2026-07-24 ; updated 2026-08-29 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/789)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/836)
+- **RFC-0156** — Parenthesize match Scrutinee (`3-integrated` ; rfcs/3-integrated/rfc-0156-parenthesize-match-scrutinee.md ; date 2026-08-31 ; updated 2026-08-31 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/701)
 
 ## Implemented (51)
 

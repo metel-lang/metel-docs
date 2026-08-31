@@ -2,10 +2,14 @@
 id: rfc-0156
 title: "Parenthesize match Scrutinee"
 date: '2026-08-31'
-target:
-status: under-review
+target: v0.13.0
+status: integrated
 updated: '2026-08-31'
 tracking: 'https://github.com/metel-lang/metel-core/issues/701'
+coverage:
+  "1": { spec: "spec.expressions.pattern-matching.legality-3" }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/701'
+impl_status: not-started
 ---
 
 > **Status — under review (2026-08-31).** Single substantiated proposal: parenthesize the match scrutinee to match if/while/for. No load-bearing open questions; tuple-scrutinee interaction resolved by reusing tuple_or_paren. Mechanical sweep, RFC-0130/0136 precedent.
@@ -21,6 +25,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/701'
 > access / call / `if` / nested `match` / range / struct-literal / closure scrutinees,
 > and `return`/`break`/`let`-position `match`, all parse fine both bare and wrapped; no
 > `) {` ambiguity; `spec.expressions.pattern-matching.legality-3` is free.
+
+> **Status — accepted (2026-08-31).** Single-rule surface normalization; one Codex adversarial-review round folded in (unit_lit alternative; pest-pair rewriter). No open question blocks it. Precedent RFC-0098/0130/0136.
+
+> **Status — integrated (2026-08-31).** Added spec.expressions.pattern-matching.legality-3 (scrutinee must be parenthesized); RFC-0156 is its origin. Grammar flip + corpus sweep + citing fixture land in metel-core#701.
 
 ## Summary
 
@@ -213,9 +221,9 @@ cited by the negative fixture above and by any positive `match (…)` fixture.
 
 ## Unresolved Questions
 
-None load-bearing. The design surface is a single grammar rule; the tuple-scrutinee
-interaction is resolved in §1 by reusing `tuple_or_paren`. The only real work is the
-sweep, which has three recent precedents (RFC-0098, RFC-0130, RFC-0136).
+None load-bearing. The design surface is a single grammar rule; the tuple- and
+unit-scrutinee interactions are resolved in §1 (`unit_lit | tuple_or_paren`). The only
+real work is the sweep, which has three recent precedents (RFC-0098, RFC-0130, RFC-0136).
 
 ---
 
@@ -242,5 +250,8 @@ sweep, which has three recent precedents (RFC-0098, RFC-0130, RFC-0136).
 
 ## Decision
 
-**Outcome:** *(pending)*
-**Target:** *(set when accepted)*
+**Outcome:** Accepted 2026-08-31, after one Codex adversarial-review round (two
+non-design findings folded in: the `unit_lit` alternative, and a pest-pair rather than
+AST-driven rewriter). No open question blocks it — a single-rule surface normalization
+with a precedented migration process (RFC-0098 / RFC-0130 / RFC-0136).
+**Target:** v0.13.0. Tracking issue: `metel-core#701`.

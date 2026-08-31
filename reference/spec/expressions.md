@@ -112,6 +112,16 @@ Bindings introduced by an arm's pattern are in scope throughout that arm's block
 <span class="rigor-backlink">_Tested by: [stage7_02_match_arm_blocks.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/functions/stage7_02_match_arm_blocks.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
+##### Legality Rule {#spec.expressions.pattern-matching.legality-3}
+
+A `match` expression's scrutinee must be enclosed in parentheses — `match (x) { … }`.
+The bare form `match x { … }` is a parse error. A tuple scrutinee's own parentheses
+satisfy this (`match (a, b) { … }`), as does the unit literal (`match () { … }`).
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0156](../../rfcs/3-integrated/rfc-0156-parenthesize-match-scrutinee.md)_</span>
+<!-- rfc.py:origins:end -->
+
 </details>
 
 ### Pattern Kinds
