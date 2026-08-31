@@ -9,7 +9,7 @@ updated: '2026-08-31'
 ---
 
 > **Updated 2026-08-31 — `comptime let` / `pub comptime let` and `var` in examples now
-> use `:=`.** RFC-0136 (Walrus for Kept Bindings, `2-accepted`) makes `:=` the separator
+> use `:=`.** RFC-0136 (Walrus for Kept Bindings, `4-implemented`) makes `:=` the separator
 > for every kept binding; `comptime let` is `let`-family, so it takes `:=` (type
 > annotation stays `:`; compound ops like `*=`/`+=` stay `=`). RFC-0132 spells it that
 > way from the start so it never needs a second migration — see §1. This RFC does not
