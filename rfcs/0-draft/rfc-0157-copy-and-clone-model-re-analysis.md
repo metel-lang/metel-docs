@@ -198,7 +198,96 @@ Two orthogonal axes.
   largest ergonomic regression (`x.dup()` on integers) unless softened; likely too far
   for a systems-adjacent language, listed for completeness and as the honest endpoint.
 - **P3 — Unify on multiplicity and go past RFC-0135.** B3 + an Axis-A decision. Requires
-  RFC-0135 to land first and then extends it from "rename" to "the model."
+  RFC-0134 / RFC-0135 / RFC-0152 landed and mutually coherent first, then extends
+  RFC-0135 from "rename `Copy` to `many`" to "one multiplicity mechanism for every
+  consume-or-not operation, with `Copy` and `Clone` both dissolved into it." Detailed
+  below.
+
+### P3 in detail — unifying on multiplicity
+
+RFC-0135 renames `Copy` to `many` for one operation (by-value use) and stops there,
+explicitly keeping `Clone` as a separate aspect and closure-multiplicity as a separate
+"home" (RFC-0135 §4). P3 asks what taking the reframe all the way looks like.
+
+**One concept, parameterised by operation.** Every operation that either consumes a value
+or leaves it usable gets a multiplicity. `once` = performing it consumes the value/place;
+`many` = repeatable. `once` (affine) is the default everywhere; `many` is opt-in and must
+be justified — structurally (every field is `many` for that operation) or by a
+language-provided blanket.
+
+| operation | `once` | `many` | today's name for the distinction |
+|---|---|---|---|
+| **use** — assign / pass / return by value | using consumes it | usable repeatedly | `Copy` vs non-`Copy` |
+| **call** a closure | a call consumes a capture | callable repeatedly | RFC-0134 `call_multiplicity` |
+| **mut-call** a closure | needs exclusive access to call | — | RFC-0153 |
+| **receiver** on a method | `self` (by-value) method | `&self` method | already implicit, unnamed |
+
+RFC-0134 §2 already draws the closure-`many` / receiver-kind connection; RFC-0135 adds
+the *use* row. P3 is: treat all rows as one mechanism with an operation parameter, rather
+than same word / separate homes.
+
+**What changes past RFC-0135:**
+
+1. **The name `Copy` is gone, not re-spelled.** No `Copy` aspect in the namespace;
+   `is_copy(T)` becomes `use_multiplicity(T) == many`. Diagnostics read "`T` is `once`
+   (move-only); used after move here" rather than "`T` is not `Copy`".
+2. **`Clone` folds into a single duplication operation.** Today `Clone` is a distinct
+   aspect with a blanket `extend<T: Copy> T: Clone`. Under P3 there is one `Dup` aspect,
+   one method: `x.dup()` yields a second owned value regardless of `x`'s use-multiplicity
+   — the trivial bitwise path for a `many`-use type, user code (possibly allocating) for a
+   `once`-use type. Whether a given `.dup()` is *cheap* is a documented property (or a
+   `@[trivial_dup]`-style attribute), not a second aspect identity. The `Copy`-is-free /
+   `Clone`-may-cost distinction survives as a fact about the type, not as two names.
+3. **Widening is one rule.** RFC-0152's "a `many` value satisfies a `once` slot at
+   first-order sites" becomes the only variance rule, applied uniformly to closures and
+   ordinary types instead of stated twice. `dup`-ability stays orthogonal — not part of
+   the subtype lattice.
+
+**The fork inside P3 — Axis A still has to be answered.** Does by-value use of a `many`
+type *silently duplicate*?
+
+- **P3a** — yes; today's `Copy` behavior with new vocabulary. The D1 hazard is unchanged.
+- **P3b** — no; `many` means "`.dup()` is available and cheap," but by-value use still
+  *moves*, and duplication is always a written `.dup()`. This is P2 with a guaranteed
+  cheap path.
+
+The multiplicity framing is what makes P3b coherent where `Copy`/`Clone` cannot express
+it: *"this operation is repeatable"* and *"the compiler will silently repeat it for you"*
+become **separable bits**. `once`/`many` governs legality (may this be used twice?); a
+separate, smaller *implicit-insertion* flag — granted only to a closed primitive set —
+governs whether the compiler inserts the duplication. That pairing is **P1's substance
+expressed in P3's vocabulary**: P3b + "auto-insertion only for scalars/`bool`/`char`/unit"
+is P1, reached from the other direction.
+
+**D3 dissolves under P3b.** `Copy` excludes `Drop` today because auto-duplication plus a
+per-instance destructor means an ambiguous or doubled drop. If `many` types *move* on
+by-value use (P3b), every value has exactly one owner and a `Drop` type can be
+`.dup()`-able with no contradiction — the exclusion is an artifact of auto-insertion, not
+of `many` itself.
+
+**Costs and caveats specific to P3:**
+
+- **Vocabulary.** `once`/`many` is unfamiliar outside this RFC cluster (RFC-0135 OQ4),
+  and P3 spends it everywhere, including in diagnostics beginners hit early.
+- **Field proliferation on `Type::Fun`.** call-multiplicity (RFC-0134), mut-call
+  (RFC-0153), the closure's own use-multiplicity (RFC-0134 §1), and dup-cheapness are
+  four axes on one type. Real over-abstraction risk; needs a stop rule for which
+  operations get a formal multiplicity and which stay documentation.
+- **"One mechanism" is partly aspirational.** RFC-0135 §4's distinction holds under P3
+  too: closure multiplicity is *per-expression* (a `Type::Fun` field, because two
+  closures with the same signature can differ) while named-type multiplicity is
+  *per-declaration* (a nominal fact). P3 unifies the *concept* and the *spelling*, not
+  the representation — it is one idea with two storage forms, and the RFC should say so
+  rather than overclaim.
+- **Sequencing.** P3 cannot be evaluated until RFC-0134 (accepted), RFC-0135, and
+  RFC-0152 are landed and known to compose; it is the latest-horizon option here.
+
+**Why P3 is listed but not recommended.** It is the most coherent destination if the
+`once`/`many` vocabulary proves itself through RFC-0134/0135/0152 in practice. But it is
+a large type-system generalization to commit to before that vocabulary has any shipped
+mileage, and its concrete user-visible payoff (P3b) is the same as P1's with more
+machinery behind it. The Recommended direction treats P1 as the target and P3 as "the
+shape to keep P1 compatible with," not a thing to build now.
 
 ### Closure-capture default (the D5 sub-question)
 
@@ -238,7 +327,11 @@ a per-capture keyword.
    removes the three drawbacks that are actually costs rather than unfamiliarity (D1, D2,
    D3), it is the smallest step that does so, and it makes D4 a definition rather than a
    fragmentation. P2 (Hylo's shipped model) is cleaner still but pays more ergonomically
-   than Metel's audience is likely to accept; P0 pays nothing and fixes nothing.
+   than Metel's audience is likely to accept; P0 pays nothing and fixes nothing. Treat
+   **P3** (§P3 in detail) as the shape P1 should stay compatible with — its P3b variant
+   *is* P1 in `once`/`many` vocabulary — not as separate work to schedule: committing to
+   an operation-parameterised multiplicity generalization before RFC-0134/0135/0152 have
+   shipped mileage is premature.
 3. **Adopt the D5 capture-default change (`let y := x` semantics for by-value capture)**
    regardless of the Axis-A/B outcome, behind an edition gate, and require an explicit
    capture list at the point a capture would move. This settles RFC-0050's deferred
