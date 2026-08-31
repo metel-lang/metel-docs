@@ -41,7 +41,7 @@ plain `=` spelling is a parse error (RFC-0136).
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [stage4_neg_05_compound_assign_to_let.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/functions/stage4_neg_05_compound_assign_to_let.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [neg_14_legacy_equals_binding_separator.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/neg_14_legacy_equals_binding_separator.mtl), [stage4_neg_05_compound_assign_to_let.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/functions/stage4_neg_05_compound_assign_to_let.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-2}
@@ -256,7 +256,7 @@ keep `=`. The bare `=` spelling for a `var` initializer or reassignment is a par
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [16_for_loop.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/control_flow/16_for_loop.mtl), [neg_14_legacy_equals_binding_separator.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/neg_14_legacy_equals_binding_separator.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [16_for_loop.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/control_flow/16_for_loop.mtl), [neg_14_legacy_equals_binding_separator.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/neg_14_legacy_equals_binding_separator.mtl), [neg_15_legacy_equals_reassignment.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/neg_15_legacy_equals_reassignment.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 </details>
