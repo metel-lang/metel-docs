@@ -955,19 +955,20 @@ implementation).
 - **RFC-0049** *(draft)* — `linear fun` Type System — unconsumed-scope-exit, `Drop`
   interaction, subtyping vs. plain `fun`.
 - **RFC-0050** *(under review; correction pass 2026-08-31)* — Closure Capture Lists —
-  `[&var count, &config, move buf, prefix]` prefix on a closure literal, exhaustive once
-  present, four specifiers (`&var`/`&` by reference, `move` = ordinary affine move
-  (RFC-0071), bare = clone). `&var`/`&`/clone half is unblocked on RFC-0067a (`4-implemented`)
-  and buildable now; the `move` half was rewritten off `linear fun` — a `move`-capturing
-  closure is `once`/`many` per **RFC-0134 §2's `call_multiplicity`**, not a distinct type —
-  and is blocked only on RFC-0134 landing, not RFC-0028's linear-types tower. `[...]`
-  composes ahead of RFC-0154's base literal spelling.
+  `[&var count, &config, prefix]` prefix on a closure literal, exhaustive once present,
+  **three** specifiers (`&var`/`&` by reference, bare = clone / explicit RFC-0006 default).
+  Whole RFC unblocked on RFC-0067a (`4-implemented`) and buildable now — nothing pending.
+  The `move` specifier was **dropped** 2026-08-31: an affine move needs no keyword elsewhere
+  in Metel (RFC-0071), and whether closure capture is the exception means revisiting
+  RFC-0006's clone-by-default model and the `Copy`/`Clone` design under it (adjacent:
+  RFC-0135). Ownership-transfer capture is deferred to that future RFC; no longer depends on
+  RFC-0134. `[...]` composes ahead of RFC-0154's base literal spelling.
 - **RFC-0134** *(accepted 2026-08-30, opened 2026-08-13)* — Closure Call
   Capability — the type-level
   distinction `metel-core#269` needs (does calling a closure consume a non-`Copy`
   capture) to make move checking sound for closures, blocking `metel-core#267`
   (enable move checking by default). Scoped as an affine question, deliberately not
-  waiting on RFC-0028's linear-types tower the way RFC-0050's `move` half does — affine
+  waiting on RFC-0028's linear-types tower — affine
   is a recorded decision with a stated reopening condition, not an open question.
   Carries **two** multiplicity fields on `Type::Fun` (call, and by-value-use — the
   latter is §1's `Copy` rule, which has nowhere else to live since captures aren't in
@@ -1406,7 +1407,8 @@ exports → RFC-0092 §0a; see fold note above).
 **Refused:** RFC-0025, RFC-0028, RFC-0046, RFC-0047, RFC-0048, RFC-0051, RFC-0056,
 RFC-0064, RFC-0069, RFC-0079, RFC-0084, RFC-0085, RFC-0086, RFC-0087 —
 mostly the earlier region/lifetime model iterations that didn't survive the 2026-07-05
-split, plus RFC-0046 (linear closure capture, blocking RFC-0050's `move` half), plus
+split, plus RFC-0046 (linear closure capture — its `move`-capture idea was carried by
+RFC-0050 for a while, then dropped there 2026-08-31; not a live successor), plus
 RFC-0064 (structured fork-join `||`, retracted 2026-07-07 — its one guarantee, a fiber
 cannot be silently abandoned, relocated onto `JoinHandle<T>` from `spawn`), plus
 RFC-0084 (refused 2026-07-10 — reverted in place to reaffirm RFC-0053's
