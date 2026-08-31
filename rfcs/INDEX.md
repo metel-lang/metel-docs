@@ -954,16 +954,19 @@ implementation).
 
 - **RFC-0049** *(draft)* — `linear fun` Type System — unconsumed-scope-exit, `Drop`
   interaction, subtyping vs. plain `fun`.
-- **RFC-0050** *(under review; correction pass 2026-08-31)* — Closure Capture Lists —
-  `[&var count, &config, prefix]` prefix on a closure literal, exhaustive once present,
-  **three** specifiers (`&var`/`&` by reference, bare = clone / explicit RFC-0006 default).
-  Whole RFC unblocked on RFC-0067a (`4-implemented`) and buildable now — nothing pending.
-  The `move` specifier was **dropped** 2026-08-31: an affine move needs no keyword elsewhere
-  in Metel (RFC-0071), and whether closure capture is the exception means revisiting
-  RFC-0006's clone-by-default model and the `Copy`/`Clone` design under it. Ownership-transfer
-  capture is deferred to **RFC-0157** (Copy/Clone Model Re-analysis), opened out of this
-  pass; no longer depends on RFC-0134. `[...]` composes ahead of RFC-0154's base literal
-  spelling.
+- **RFC-0050** *(under review; correction pass + amendment 2026-08-31; **v0.13.0**, #803)* —
+  Closure Capture Lists — `[&var count, &config, buf, prefix.clone()]` prefix on a closure
+  literal. Specifiers: `&var`/`&` by reference; **bare `ident` = by-value** (copy for
+  `Copy`, **affine move** for non-`Copy` — `let y := x` semantics); `[ident.clone()]` for
+  an explicit independent copy. The list is **semantically required** whenever a closure
+  captures a free non-`Copy` local or captures by `&`/`&var`; omissible only for
+  `Copy`-only / no-free-variable closures. Exhaustive once present. The `move` specifier
+  was dropped 2026-08-31 (an affine move needs no keyword) and ownership-transfer capture
+  then folded back in as bare `[buf]` for non-`Copy` — no keyword, per **RFC-0157 D5**,
+  which this RFC now adopts and rides the `--edition` gate of. Milestoned **v0.13.0**
+  alongside RFC-0134 (#269) / RFC-0152 (#901) — capture lists and call capability are one
+  feature area; still `1-under-review`, needs `accepted`. `[...]` composes ahead of
+  RFC-0154's base literal spelling.
 - **RFC-0134** *(accepted 2026-08-30, opened 2026-08-13)* — Closure Call
   Capability — the type-level
   distinction `metel-core#269` needs (does calling a closure consume a non-`Copy`
@@ -981,10 +984,16 @@ implementation).
   form is RFC-0152; RFC-0134 depends on that half and the two move to `accepted`
   together. The stale "`use_multiplicity` vs the two `Copy` implications" note is
   resolved (this RFC touches only move-checking `Copy`; the aspect split is
-  metel-core#739); §2's inference predicate (runs on the move checker's own CFG;
+  metel-core#739); §2's predicate (runs on the move checker's own CFG;
   conservative reachability) and the "calling a `once` closure consumes the callee place
-  at the call expression" operational rule are now stated spec-precisely. Target
-  v0.13.0 (metel-core#269).
+  at the call expression" operational rule are now stated spec-precisely.
+  **Amended 2026-08-31:** `many` is the **default**, `once` is always written; §2 is now a
+  *check* against that default (a `many`/unqualified closure that moves a non-`Copy`
+  capture is an error at the definition site), and §3's inference-of-required-multiplicity
+  machinery — including the unresolved generic-body path and the bodyless-decl special
+  case — is **dropped** (the default covers them). Net simplification; RFC-0152
+  co-requirement and v0.13.0 target unchanged. Pairs with RFC-0050's v0.13.0 amendment.
+  Target v0.13.0 (metel-core#269).
 - **RFC-0135** *(under review 2026-08-29, opened 2026-08-13)* — Multiplicity for Ordinary Types — companion
   to RFC-0134, not a dependency of it. Reframes `Copy` as `many` applied to a type's
   by-value-use operation rather than a closure's call operation — same axis RFC-0134

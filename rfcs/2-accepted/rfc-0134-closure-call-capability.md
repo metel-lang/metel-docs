@@ -4,7 +4,7 @@ title: "Closure Call Capability"
 date: '2026-08-13'
 status: accepted
 target: v0.13.0
-updated: '2026-08-30'
+updated: '2026-08-31'
 tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 ---
 
@@ -56,6 +56,38 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 > to everything here. Also notes RFC-0050 has since dropped its `move` specifier, so this
 > RFC is no longer a dependency *of* RFC-0050 — its own soundness-hole motivation stands
 > alone.
+
+> **Amendment (2026-08-31) — `many` is the default; multiplicity is verified, not
+> inferred.** A refinement decided alongside RFC-0050's v0.13.0 amendment. It *simplifies*
+> this RFC; nothing about the soundness fix, `Type::Fun`'s fields (§4), affine `once` (§5),
+> or the RFC-0152 co-requirement changes, and the v0.13.0 target is unaffected.
+>
+> - **Omitting the qualifier means `many`**, everywhere a function type is written — not
+>   "infer from the body." `once` is always written explicitly.
+> - **§2 becomes a *check*, not a source.** The CFG consumption analysis still runs, but
+>   now to *verify* the declared/default multiplicity: a `many` (or unqualified) closure
+>   whose body moves a non-`Copy` capture out is a **compile error at the definition
+>   site** — "consumes captured `s`; annotate `once (…) -> …` or don't move it" — exactly
+>   as a body returning the wrong type is an error against a declared return type.
+> - **§3 loses its hardest, least-specified piece.** A parameter / return / field of
+>   function type is `many`-required by default; `once` when written. The mechanism for
+>   *inferring* a parameter's required multiplicity from the enclosing (possibly generic)
+>   body — the `construct_generic_body_for_move` symbolic-instantiation path §3 admits is
+>   "not worked out here" — is **dropped**. So is §3's "qualifier required for a bodyless
+>   `native`/aspect-method decl" special case: the `many` default covers it (write `once`
+>   if the impl genuinely accepts call-once callbacks).
+> - **§3's promise-drift gap stops existing.** §3 worried an edited body could silently
+>   strengthen a required multiplicity and break callers. Under a fixed `many` default it
+>   can't: a parameter is `many`-required from the start, a `once`-passing caller was never
+>   allowed, and accepting `once` is only ever a written choice. Drift can make a rule
+>   stricter (a visible compile error the author sees), never silently weaker.
+> - **RFC-0152 still needed:** `many` satisfies a `once` slot (first-order directional
+>   matching) is unchanged and still co-required.
+> - **Reads with RFC-0050's amendment:** the by-value non-`Copy` capture RFC-0050 now
+>   spells `[s]` is exactly the capture §2's check inspects for consumption.
+>
+> §2 and §3 below keep their analysis and examples; read "inferred" there as "checked
+> against the `many` default (or the written `once`)."
 
 ## Summary
 
@@ -267,7 +299,12 @@ lands in a struct field, or is returned. That argument applies verbatim to `Copy
 this section simply had not noticed it applies to itself. **§4's type shape is corrected
 accordingly** — see there.
 
-### 2. Whether *calling* consumes is inferred from the body
+### 2. Whether *calling* consumes is checked against the declared/default multiplicity
+
+> **Amended 2026-08-31 (see top).** This section originally *inferred* the closure's
+> multiplicity from its body. It now *verifies* it: the default is `many`, `once` is
+> written, and the analysis below runs to reject a `many`/unqualified closure whose body
+> consumes a non-`Copy` capture. The predicate and diagnostic shape are unchanged.
 
 For a closure whose captures are already established as non-`Copy` (via §1), the checker
 needs to know whether invoking it can move one of those captures out. Proposed: **infer
@@ -399,7 +436,17 @@ already broken independent of this RFC, there is no body to analyze for this cas
 #736 lands — this RFC's guarantee does not yet extend to a generic function used this
 way, and shouldn't be assumed to until that dependency is resolved.
 
-### 3. A parameter's required multiplicity: inferred by default, explicit when it needs to be a promise
+### 3. A parameter's required multiplicity: `many` by default, `once` when written
+
+> **Amended 2026-08-31 (see top).** A function-typed parameter / return / field is
+> **`many`-required by default**, `once` only when the qualifier is written. The
+> inference-of-required-multiplicity machinery this section develops — including the
+> generic-body `construct_generic_body_for_move` difficulty it flags as unresolved, and
+> the "qualifier required for a bodyless decl" rule — is **superseded**: the default
+> covers those cases. What remains live below: the *reasons* an explicit `once`/`many` is
+> a promise not a re-derivation (still true), the qualifier's grammar and placement, and
+> its checking via RFC-0152's first-order directional matching. Read the inference
+> passages as historical context for why the default is `many` rather than `once`.
 
 §2 infers a closure *literal's* own multiplicity from what its body does to its own
 captures. A separate question surfaced while working through what was Open Question 3 in
