@@ -2,10 +2,14 @@
 id: rfc-0136
 title: "Walrus for Kept Bindings"
 date: '2026-08-23'
-status: accepted
-target:
+status: implemented
+target: v0.13.1
 updated: '2026-08-31'
 tracking: 'https://github.com/metel-lang/metel-core/issues/804'
+coverage:
+  "1": { spec: "spec.declarations.variables.mutable-bindings.legality-1" }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/804'
+impl_status: implemented
 ---
 
 > **Status — under review (2026-08-23).** Design-complete three-way split, formalized from reports/syntax/colon-classifies-equals-labels-walrus-binds.md's design discussion; open questions remain (compound ops, RFC-0132 coordination, migration strategy) so under-review, not accepted.
@@ -40,6 +44,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/804'
 > "RFC-0132 still on `=`" notes are gone (RFC-0132 now uses `:=`).
 
 > **Status — accepted (2026-08-31).** Design settled after two adversarial-review rounds (2026-08-31): all five open questions resolved, the normative invariant rescoped to separator sites, the assoc_type_def/assoc_binding split argued, migration ordering spelled, PROCESS.md review-gate added. Implementation is metel-core#804.
+
+> **Status — integrated (2026-08-31).** Split the binding/initializer/definition separator: := introduces a kept binding, = labels a one-shot value/type. Co-origin of spec.declarations.variables.immutable-bindings.legality-1 and mutable-bindings.legality-1; spec swept to := alongside the grammar flip in metel-core#910.
+
+> **Status — implemented (2026-08-31).** Implemented in metel-core#910: grammar `:=` flip for `let_decl` / `let_mut_decl` / `assoc_type_def` and the plain `assign_op` alternative, parser, an AST-driven corpus rewrite (653 fixtures + stdlib + inline-Metel raw strings), the `neg_14` / `neg_15` hard-switch guards asserting the old `=` spelling is now a parse error, and the `reference/spec/` sweep to `:=` with RFC-0136 co-origined onto the immutable- and mutable-binding legality rules. All five CI checks (test / clippy / fmt / doc examples / rfc-check) green; PR #910 open against `develop`, docs PR #71 against `main`.
 
 ## Summary
 
@@ -92,7 +100,7 @@ RFC-0100 ships (or alongside it) avoids that.
 
 ---
 
-## Proposal
+## 1. The `:=` separator
 
 > **`:` classifies. `=` labels — a value or type consumed at the construction or call
 > site, not kept as a name. `:=` binds — a name that outlives the expression it appears
@@ -438,7 +446,10 @@ unchanged from the original; the review rounds rescoped the invariant to separat
 sites, argued the `assoc_type_def`/`assoc_binding` distinction, spelled the migration
 ordering, and added a PROCESS.md review-gate for future separator sites.
 
-Not for `3-integrated` ahead of implementation: RFC-0136 changes base syntax, so the
-spec sweep to `:=` and the grammar flip land together in metel-core#804 — spec
-integration follows the implementation, not the acceptance (the RFC-0130 pattern).
-**Target:** v0.13.1 (metel-core#804).
+RFC-0136 changes base syntax, so the spec sweep to `:=` and the grammar flip landed
+together (the RFC-0130 pattern): `2-accepted` → `3-integrated` → `4-implemented` all on
+2026-08-31, once metel-core#910 was CI-green. Integration co-origined RFC-0136 onto
+`spec.declarations.variables.immutable-bindings.legality-1` and
+`mutable-bindings.legality-1` and swept `reference/spec/` to `:=`; implementation flipped
+the grammar and rewrote the fixture/stdlib/doc corpus AST-first, with `neg_14` / `neg_15`
+guarding the hard switch. **Target:** v0.13.1 (metel-core#910, docs #71).
