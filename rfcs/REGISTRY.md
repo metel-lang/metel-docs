@@ -68,7 +68,7 @@ the curated thematic map.
 - **RFC-0123** — Field-Wise Row Constraints (`1-under-review` ; rfcs/1-under-review/rfc-0123-field-wise-row-constraints.md ; date 2026-07-24 ; updated 2026-08-23)
 - **RFC-0125** — Variadic Generics (`1-under-review` ; rfcs/1-under-review/rfc-0125-variadic-generics.md ; date 2026-07-25 ; updated 2026-08-23)
 - **RFC-0127** — Associated Functions on Generic Types (`1-under-review` ; rfcs/1-under-review/rfc-0127-associated-functions-on-generic-types.md ; date 2026-08-01 ; updated 2026-08-23)
-- **RFC-0132** — Comptime Execution Model — comptime let, comptime fun, comptime if (`1-under-review` ; rfcs/1-under-review/rfc-0132-comptime-execution-model-comptime-let-comptime-fun-comptime-if.md ; date 2026-08-13 ; updated 2026-08-23)
+- **RFC-0132** — Comptime Execution Model — comptime let, comptime fun, comptime if (`1-under-review` ; rfcs/1-under-review/rfc-0132-comptime-execution-model-comptime-let-comptime-fun-comptime-if.md ; date 2026-08-13 ; updated 2026-08-31)
 - **RFC-0135** — Multiplicity for Ordinary Types (`1-under-review` ; rfcs/1-under-review/rfc-0135-multiplicity-for-ordinary-types.md ; date 2026-08-13 ; updated 2026-08-29)
 - **RFC-0139** — Garbage-Collected Allocators and Allocator-Determined Pointer Types (`1-under-review` ; rfcs/1-under-review/rfc-0139-garbage-collected-allocators-and-allocator-determined-pointer-types.md ; date 2026-08-24 ; updated 2026-08-27)
 - **RFC-0140** — Algebraic Effects (`1-under-review` ; rfcs/1-under-review/rfc-0140-algebraic-effects.md ; date 2026-08-25 ; updated 2026-08-25)

@@ -5,8 +5,15 @@ date: '2026-08-13'
 status: under-review
 tracking: 'https://github.com/metel-lang/metel-core/issues/726'
 target:
-updated: '2026-08-23'
+updated: '2026-08-31'
 ---
+
+> **Updated 2026-08-31 — `comptime let` / `pub comptime let` and `var` in examples now
+> use `:=`.** RFC-0136 (Walrus for Kept Bindings, `2-accepted`) makes `:=` the separator
+> for every kept binding; `comptime let` is `let`-family, so it takes `:=` (type
+> annotation stays `:`; compound ops like `*=`/`+=` stay `=`). RFC-0132 spells it that
+> way from the start so it never needs a second migration — see §1. This RFC does not
+> re-decide the separator.
 
 > **New RFC, split out 2026-08-13 from RFC-0092 (Comptime Core).** RFC-0092 itself
 > anticipated this split in its own Timing Recommendation — "the base `comptime let`
@@ -103,13 +110,20 @@ on `typeinfo` and `emit`.
 A binding whose initializer is evaluated at compile time:
 
 ```metel
-comptime let MAX_CONNECTIONS: i64 = 1024;
-comptime let BUFFER_SIZE: i64 = MAX_CONNECTIONS * 64;
+comptime let MAX_CONNECTIONS: i64 := 1024;
+comptime let BUFFER_SIZE: i64 := MAX_CONNECTIONS * 64;
 ```
+
+The initializer separator is **`:=`**, not `=`. `comptime let` is `let`-family, so it
+introduces a kept binding and falls under RFC-0136's normative invariant — a kept
+binding uses `:=`, a one-shot label uses `=`. The type annotation stays `:` (ascription,
+unchanged). This RFC does not re-decide the separator; it just spells `comptime let`
+consistently with it from the start, so `comptime let` never has to be migrated a
+second time (RFC-0136 §"The invariant"; metel-core#726, #804).
 
 Motivating cases inherited from RFC-0055: derived constants (a buffer size computed from
 a protocol limit, rather than duplicated or computed at runtime), and compile-time lookup
-tables (`comptime let SIN_TABLE: [f64; 256] = ...`) — zero runtime cost, since the value
+tables (`comptime let SIN_TABLE: [f64; 256] := ...`) — zero runtime cost, since the value
 is fully computed before any generated code runs.
 
 `comptime let` has **no mutable form**. There is no `comptime var`, at any visibility —
@@ -121,8 +135,8 @@ comptime bindings are not mutable regardless of whether they are exported.
 
 ```metel
 // config.mtl
-pub comptime let MAX_CONNECTIONS: u64 = 1024;
-pub comptime let DEFAULT_TIMEOUT_MS: u64 = 5000;
+pub comptime let MAX_CONNECTIONS: u64 := 1024;
+pub comptime let DEFAULT_TIMEOUT_MS: u64 := 5000;
 
 // importer
 import config::MAX_CONNECTIONS;
@@ -213,13 +227,13 @@ still legal:
 
 ```metel
 comptime fun pow2(n: i64) -> i64 {
-    var result = 1;
-    var i = 0;
-    while (i < n) { result *= 2; i += 1; }
+    var result := 1;
+    var i := 0;
+    while (i < n) { result *= 2; i += 1; }   // compound ops stay `=` (RFC-0136 §OQ1)
     result
 }
 
-comptime let PAGE_SIZE: i64 = pow2(12);   // 4096, computed at compile time
+comptime let PAGE_SIZE: i64 := pow2(12);   // 4096, computed at compile time
 ```
 
 Restrictions, inherited from RFC-0055: no I/O builtins (`print`, `println`); no heap
@@ -239,7 +253,7 @@ A conditional whose condition is a comptime-known value is resolved at compile t
 untaken branch is never type-checked or emitted:
 
 ```metel
-comptime let IS_64BIT: boolean = target_pointer_width() == 64;
+comptime let IS_64BIT: boolean := target_pointer_width() == 64;
 
 fun word_size() -> i64 {
     comptime if (IS_64BIT) { 8 } else { 4 }
@@ -328,8 +342,8 @@ Consequences for this RFC:
    case, and it arrives for free whether or not anyone designs it:
 
    ```metel
-   comptime let VERSION: String = "0.13.0";
-   comptime let BANNER: String = "metel v${VERSION}";   // interpolation, at comptime
+   comptime let VERSION: String := "0.13.0";
+   comptime let BANNER: String := "metel v${VERSION}";   // interpolation, at comptime
    ```
 
    This needs **no new syntax and no new RFC** — RFC-0010 lowers interpolation to `+` and
