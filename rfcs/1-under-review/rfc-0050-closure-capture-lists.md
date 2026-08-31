@@ -19,7 +19,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 >   default itself (RFC-0006's "deep-clone every free variable") and, under it, the
 >   `Copy`/`Clone` model Metel adopted from Rust without a written trade-off analysis.
 >   That is a larger design question than this RFC — opened as **RFC-0157 (Copy and
->   Clone Model Re-analysis, `0-draft`)**, alongside the adjacent RFC-0135. This RFC now
+>   Clone Model Re-analysis, `1-under-review`)**, alongside the adjacent RFC-0135. This RFC now
 >   covers only `&var` / `&` reference captures and the explicit spelling of today's
 >   implicit clone capture; **ownership-transfer capture is explicitly out of scope**,
 >   deferred to RFC-0157. Consequence: nothing in this RFC is blocked on RFC-0134 or
@@ -278,7 +278,7 @@ may well be right, but it is an argument about the **closure-capture default its
 RFC-0006's "deep-clone every free variable," which predates settled move semantics — and
 about the `Copy`/`Clone` model Metel took from Rust without a written trade-off analysis.
 Both are larger than this RFC and are the subject of **RFC-0157 (Copy and Clone Model
-Re-analysis, `0-draft`)**, alongside the adjacent RFC-0135. Ownership-transfer capture is
+Re-analysis, `1-under-review`)**, alongside the adjacent RFC-0135. Ownership-transfer capture is
 therefore deferred to RFC-0157; this one is scoped to `&var`/`&`/clone, which stand on
 their own and depend only on RFC-0067a. (RFC-0157's current recommendation would settle
 this as "no specifier — bare capture of a non-`Copy` value *is* the move"; that is a
@@ -411,7 +411,7 @@ forces a rewrite of closure capture when they land:
   defines the current clone-by-default capture behavior this RFC's bare `ident` specifier
   spells explicitly. Whether that default should change (so a non-`Copy` value moves rather
   than clones, or fails) is **RFC-0157**'s question, not this RFC's.
-- RFC-0157: Copy and Clone Model Re-analysis (`0-draft`, opened 2026-08-31) — the RFC this
+- RFC-0157: Copy and Clone Model Re-analysis (`1-under-review`, opened 2026-08-31, #918) — the RFC this
   one defers ownership-transfer capture to. Analyzes whether closure capture by value should
   mean move (consistent with `let y := x`) or clone (RFC-0006 today); its recommendation is
   the former, behind an edition gate, which would settle this RFC's out-of-scope note as

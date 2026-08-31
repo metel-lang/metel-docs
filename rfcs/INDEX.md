@@ -1001,7 +1001,7 @@ implementation).
   recommends the `Copy` → `many` rename not proceed** (throws away the most transferable
   Rust term for an internal-consistency gain); RFC-0135's disposition — refuse, narrow to
   de-cruft, or fold into RFC-0158 — is a call for its own review.
-- **RFC-0157** *(draft, opened 2026-08-31)* — Copy and Clone Model Re-analysis — the
+- **RFC-0157** *(under review, opened 2026-08-31; #918)* — Copy and Clone Model Re-analysis — the
   trade-off study never written for `Copy`/`Clone`. Frames drawbacks D1 (implicit copy's
   use-site invisibility + API-stability hazard), D2 (two-aspect split), D3 (`Copy`/`Drop`
   exclusion, RFC-0071 §4), D4 (six-mechanism non-uniformity), D5 (RFC-0006 clone-by-default
@@ -1014,7 +1014,7 @@ implementation).
   story is unfinished, so the divergence budget goes there: by-value capture follows the
   `let y := x` rule (D5, settles RFC-0050's deferred question as "no keyword"), and keep
   iterating on the RFC-0134/0152/0153/0050 cluster. Analysis/direction only.
-- **RFC-0158** *(draft, opened 2026-08-31)* — Share and Clone: Separating Aliasing from
+- **RFC-0158** *(under review, opened 2026-08-31; #919)* — Share and Clone: Separating Aliasing from
   Duplication — split out of RFC-0157's "Axis B, second cut," then narrowed to **purely
   additive**. `.clone()` is specified two ways: RFC-0080 §1.1 ("independent owned value")
   vs. §1.2 ("incrementing a reference count") — and `rc.clone()` (RFC-0076 brand-preserving,

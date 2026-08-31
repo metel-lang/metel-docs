@@ -45,6 +45,18 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 
 > **Status — accepted (2026-08-30).** Acceptance review (2026-08-30): 2026-08-15 blockers resolved in-document; use_multiplicity/Copy concern scoped to move-checking Copy only (aspect split -> metel-core#739); base function-type spelling split out to RFC-0154; exact-match multiplicity proposal withdrawn as unusable and replaced with first-order directional matching delivered by RFC-0152 (co-requirement, accepted together); S2 inference predicate and once-call-site consumption rule stated spec-precisely.
 
+> **Cross-reference refresh (2026-08-31).** No substantive change. Stale stage citations
+> updated (RFC-0050, RFC-0135, RFC-0155 are all `1-under-review`, were `0-draft`). Two
+> RFCs opened since acceptance are added to References and to §5's final bullet:
+> **RFC-0157** (Copy and Clone Model Re-analysis) — recommends the regular-value `Copy`
+> model stay as Rust has it, i.e. RFC-0135's `Copy → many` rename should *not* land, which
+> §5 already anticipated (`use_multiplicity` is forced by §1's storage gap regardless of
+> the name); its "D5" would change RFC-0006's capture default, orthogonal to §2. And
+> **RFC-0158** (Share and Clone) — an additive `Share` aspect for `Rc`/`Arc`, orthogonal
+> to everything here. Also notes RFC-0050 has since dropped its `move` specifier, so this
+> RFC is no longer a dependency *of* RFC-0050 — its own soundness-hole motivation stands
+> alone.
+
 ## Summary
 
 Give the type system a way to know whether *calling* a closure can consume one of its
@@ -762,6 +774,17 @@ genuinely out of scope here.
   representation, and if RFC-0135 is refused, §1's second field stays and simply keeps
   the name `Copy` rather than gaining the unified vocabulary.
 
+  **Update (2026-08-31):** **RFC-0157 (Copy and Clone Model Re-analysis, `1-under-review`)**
+  recommends exactly that outcome — `Copy` keeps its name on ordinary types, no
+  `Copy → many` rename; `once`/`many` stays internal vocabulary plus §3's function-type
+  qualifier. Under that recommendation `use_multiplicity` is read as an internal
+  `Type::Fun` field carrying the move checker's `Copy` answer for closures, not as
+  adopting RFC-0135's ordinary-type reframing. Nothing in this RFC changes either way —
+  the field is forced by §1's storage gap regardless of what ordinary-type `Copy` ends up
+  called. RFC-0157 also proposes (its "D5") changing RFC-0006's capture *default* from
+  clone to move/copy-per-value-rule; that is orthogonal to §2 — the call-consumption
+  question is identical however a capture arrived inside the closure.
+
 ---
 
 ## Open Questions
@@ -903,10 +926,14 @@ re-examining, because the trade-off it was made against will have changed.
   RFC-0049 is otherwise about questions (unconsumed-closure `Drop`, linear subtyping)
   this RFC treats as out of scope under an affine rather than linear discipline. May
   need its own re-scoping once this RFC's outcome is known — not resolved here.
-- **RFC-0050 (Closure Capture Lists), `0-draft`** — actively maintained against the
-  current model. Its `move` specifier explicitly depends on "a split-model successor to
-  RFC-0046"; this RFC is written to be that successor for the capability question only.
-  RFC-0050's own capture-list syntax is untouched and independently timed.
+- **RFC-0050 (Closure Capture Lists), `1-under-review`** — actively maintained against the
+  current model. It formerly carried a `move` capture specifier that "needs a split-model
+  successor to RFC-0046"; this RFC was written to be that successor for the capability
+  question. RFC-0050 has since **dropped the `move` specifier** (2026-08-31) and deferred
+  ownership-transfer capture to RFC-0157, so RFC-0134 no longer has RFC-0050 as a
+  downstream consumer — but this RFC's own motivation (the `f(); f()` soundness repro)
+  never depended on RFC-0050. RFC-0050's `&var`/`&`/clone capture-list syntax is untouched
+  and independently timed.
 - **RFC-0061 (Structural Aspect Bounds), `4-implemented`** — specifies `Copy`/`Clone`/
   `Send`/`Sync`/`Callable` for bare function pointers (§7) as `std::core`-provided
   blanket impls — a specification this RFC's own investigation found is **not
@@ -929,17 +956,27 @@ re-examining, because the trade-off it was made against will have changed.
   checked against this: closures have no declaration site for an author to express
   resource intent through, so inference is the only available source, making them
   consistent with RFC-0071's rationale rather than an exception to it.
-- **RFC-0135 (Multiplicity for Ordinary Types), `0-draft`** — §5's deferred idea, and
-  now the same representation §4 arrives at independently: `use_multiplicity` is
-  RFC-0135's "`Copy` is `many` for by-value use," applied to closures. Not a hard
-  dependency — see §5.
+- **RFC-0135 (Multiplicity for Ordinary Types), `1-under-review`** — §5's deferred idea;
+  §4's `use_multiplicity` describes the same representation (`Copy` as `many` for
+  by-value use, applied to closures). Not a hard dependency — see §5. **RFC-0157
+  recommends RFC-0135's `Copy → many` rename not proceed**; that does not affect this
+  RFC (see §5's 2026-08-31 update).
+- **RFC-0157 (Copy and Clone Model Re-analysis), `1-under-review`** — the trade-off study
+  for the regular-value `Copy`/`Clone` model. Recommends no divergence there (keep `Copy`
+  as Rust has it, no rename) and spending divergence budget on closures — of which this
+  RFC is the main existing example. Its "D5" would change RFC-0006's capture default
+  (clone → move/copy). Neither affects anything here; see §5's 2026-08-31 update.
+- **RFC-0158 (Share and Clone: Separating Aliasing from Duplication), `1-under-review`** —
+  splits an aliasing `Share` aspect out of `Clone` for `Rc`/`Arc`. Orthogonal to closure
+  multiplicity; listed because it, RFC-0135, and §4/§5 all touch the `Copy`/`Clone`/
+  multiplicity area.
 - **RFC-0154 (Pipe Notation for Closures and Function Types), `1-under-review`** — owns
   the base function-type spelling. §3a was split into it 2026-08-30; this RFC's
   `once`/`many` qualifier prefixes whatever RFC-0154 settles (`|T| -> U` as proposed).
 - **RFC-0152 (Function-Type Multiplicity Widening), `2-accepted`** — the directional
   "`many` satisfies `once`" rule §3 needs to be coherent. Accepted 2026-08-30 as a
   co-requirement of this RFC.
-- **RFC-0155 (Higher-Order Function-Type Multiplicity Variance), `0-draft`** — the
+- **RFC-0155 (Higher-Order Function-Type Multiplicity Variance), `1-under-review`** — the
   contravariant-nesting and subtype-lattice questions split out of RFC-0152 the same
   day; not needed by this RFC.
 - **RFC-0153 (Closure Mutation Axis), `1-under-review`** — §4's reserved third
