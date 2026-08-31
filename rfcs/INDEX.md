@@ -1011,6 +1011,19 @@ implementation).
   edition gate (which settles RFC-0050's deferred ownership-transfer-capture question as
   "no keyword"). Analysis/direction only — concrete changes spin out. Open Q6: D5 may
   split into its own fast-tracked RFC since RFC-0050 (#803) is its only blocked consumer.
+- **RFC-0158** *(draft, opened 2026-08-31)* — Share and Clone: Separating Aliasing from
+  Duplication — split out of RFC-0157's "Axis B, second cut." `.clone()` today means two
+  things: `vec.clone()` (independent value) and `rc.clone()` (RFC-0076 brand-preserving —
+  another handle to the *same cell*), one aspect, identical spelling; RFC-0080's own §1.1
+  ("independent") contradicts its §1.2 ("incrementing a reference count"). Splits `Clone`
+  into **`Dup`** (`fun dup(self: &Self) -> Self`, independent — what §1.1 describes) and
+  **`Share`** (`fun share(self: &Self) -> Self`, another handle, handle-category types
+  only — `Rc`/`Arc`, never blanket-derived, never implied by `Copy`). Makes "did I just
+  create an alias" visible at the call site — the fact RFC-0076 brands encode in the
+  type. Recommends removing `Clone` (mechanical migration, receiver-type-decidable) behind
+  an edition gate. **Orthogonal** to RFC-0157's implicit-copy axis and to RFC-0135; not a
+  prerequisite for or of either; adoptable on its own. Amends RFC-0080 §1; RFC-0074/0076
+  `Rc`/`Arc` implement `Share`. Mirrors Rust's `Claim`/`Share` direction.
 - **RFC-0152** *(accepted 2026-08-30 with RFC-0134; opened 2026-08-30)* —
   Function-Type Multiplicity Widening — a one-directional coercion: a function value is
   usable where a *less* permissive multiplicity is expected (`many` call → `once` call

@@ -38,14 +38,13 @@ Metel's value-duplication model is inherited, not designed:
 
 This RFC surveys the drawbacks of that model — the invisibility and API-stability hazard
 of implicit copy, the two-aspect `Copy`/`Clone` split (which is also cut along the wrong
-line: by cost, not by whether the result aliases), the `Copy`/`Drop` cliff, the model's
-existing non-uniformity across named vs. structural types, and the capture-default
-inconsistency — and the alternatives, from "keep it, rename via RFC-0135" through
-"move-by-default with explicit duplication" to "implicit copy only for a closed primitive
-set," plus an orthogonal `Dup`-vs-`Share` split adoptable on its own. A prior-art survey
-(Rust, C++, Swift, C#, Hylo, and the Go / uniqueness-typed / pure-functional families)
-grounds the comparison. It recommends a direction and names what each direction would
-cost.
+line: by cost, not by whether the result aliases — pursued separately in **RFC-0158**),
+the `Copy`/`Drop` cliff, the model's existing non-uniformity across named vs. structural
+types, and the capture-default inconsistency — and the alternatives, from "keep it,
+rename via RFC-0135" through "move-by-default with explicit duplication" to "implicit copy
+only for a closed primitive set." A prior-art survey (Rust, C++, Swift, C#, Hylo, and the
+Go / uniqueness-typed / pure-functional families) grounds the comparison. It recommends a
+direction and names what each direction would cost.
 
 ---
 
@@ -99,7 +98,8 @@ duplication operation whose cost is a property of the type. A second observation
 split Metel *does* draw (by cost) hides a more useful one it *doesn't* (by meaning) —
 `vec.clone()` produces an independent value, `rc.clone()` (RFC-0076: brand-preserving,
 "same cell") produces another owner of shared state, and both go through the one `Clone`
-aspect with identical spelling. See Axis B's second cut, below.
+aspect with identical spelling. That split is **RFC-0158**'s subject (see Axis B, second
+cut); it is orthogonal to the rest of this RFC.
 
 **D3 — `Copy` excludes `Drop`.** RFC-0071 §4 bans a type from being both `Copy` and
 `Drop` (enforced in `coherence.rs` via `impls_actually_overlap`). This is inherited from
@@ -187,32 +187,17 @@ Two orthogonal axes.
   `once` = move-only; an explicit `dup()` bridges `once` → owned copy. `Clone`
   disappears into "`dup()` on a `once` type."
 
-### Axis B, second cut — `Dup` (duplicate data) vs `Share` (alias a handle)
+### Axis B, second cut — duplication vs. aliasing (→ RFC-0158)
 
 B1/B2/B3 cut Axis B by **cost** (cheap vs expensive). There is an orthogonal cut by
-**meaning**: does the operation yield an independent second value, or another
-owner/handle of the same underlying state?
-
-Metel conflates the two today. `vec.clone()` (deep, independent) and `rc.clone()`
-(RFC-0076: brand-preserving — the result carries the same brand, i.e. "same cell", and is
-another RC owner) are spelled identically and both go through the `Clone` aspect
-(RFC-0080). The brand system tracks the aliasing relationship *in the types*; the surface
-syntax hides it. Rust hits the same wall and is addressing it — the `Claim`/`Share`
-direction in the ergonomic-ref-counting work (see Prior art).
-
-- **B-share. Split the operations.** A `Dup` aspect (`x.dup()` → an independent value; the
-  "one duplication concept" of B2/B3) and a distinct `Share`/`Alias` aspect (`h.share()` →
-  another handle to shared state), the latter implemented only by handle-category types
-  (`Rc`/`Arc`, brand-carrying — RFC-0074/RFC-0076). `h.share()` at a call site *says*
-  "aliasing now exists"; `x.dup()` says it does not.
-
-This is orthogonal to B1/B2/B3, to Axis A, and to P0–P3: any of them can additionally
-split `Share` from `Dup`, and the split can be adopted **on its own** as the smallest
-change that improves legibility around `Rc` without touching the implicit-copy question
-at all. Cost: a second aspect after all (but now naming genuinely different operations,
-not a cost gradient); a rule for which types get `Share` (ties to the value-vs-handle
-category question and to RFC-0076 brands); and a migration for the `.clone()` name, which
-either goes away or becomes an alias for one of the two.
+**meaning**: `vec.clone()` yields an independent value, `rc.clone()` (RFC-0076:
+brand-preserving — same cell) yields another handle to shared state, and both go through
+one `Clone` aspect with identical spelling. Splitting them into `Dup` (independent) and
+`Share` (aliasing, handle-category types only) is orthogonal to everything else in this
+RFC — Axis A, B1/B2/B3, and P0–P3 all compose with it — and can be adopted on its own.
+It is therefore tracked separately as **RFC-0158 (Share and Clone: Separating Aliasing
+from Duplication)**, split out of this section 2026-08-31. It is not a prerequisite for,
+or of, anything here.
 
 ### Combined positions worth naming
 
@@ -372,10 +357,10 @@ a per-capture keyword.
    `move(expr)` direction) and makes closures consistent with the rest of the language.
 
 If P1 is adopted, the follow-up work is: a keyword/marker for the closed implicit set and
-its eligibility rule (successor RFC); collapsing `Clone` into a single duplication aspect
-(amend RFC-0080); restating structural-type duplication in the new terms (amend or
-supersede RFC-0135); the capture-default edition change (amend RFC-0006, unblock
-RFC-0050).
+its eligibility rule (successor RFC); folding `Clone` into a single `Dup` operation (amend
+RFC-0080 — and reconcile with RFC-0158, which renames `Clone`→`Dup` for its own reason);
+restating structural-type duplication in the new terms (amend or supersede RFC-0135); the
+capture-default edition change (amend RFC-0006, unblock RFC-0050).
 
 ---
 
@@ -402,14 +387,15 @@ RFC-0050).
   foundation this RFC measures the model against. §4 (Copy/Drop exclusion) is the D3
   target. Not proposing to reopen affine-by-default itself.
 - **RFC-0080 (Stdlib Aspects — Clone…, `1-under-review`)** — owns the `Clone` aspect;
-  B2/B3 would fold it into a single `Dup`, and the B-share cut would split it into
-  `Dup` + `Share`. If P0 wins, RFC-0080 is unaffected.
-- **RFC-0074 (Shared Ownership, `0-draft`) / RFC-0076 (Rc Brands, `1-under-review`)** —
-  the `Rc`/`Arc` handle types and the brand machinery that already distinguishes "aliases
-  the same cell" from "independent" *in the types*. The B-share cut (Axis B, second cut)
-  is the surface-syntax counterpart: give aliasing its own verb (`share()`) so it is
-  visible at the call site, not only in the brand. Adoptable independently of the
-  implicit-copy question.
+  B2/B3 would fold it into a single `Dup`. If P0 wins, RFC-0080 is unaffected. The
+  duplication-vs-aliasing split of `Clone` is **RFC-0158**'s, not this RFC's.
+- **RFC-0158 (Share and Clone: Separating Aliasing from Duplication, `0-draft`)** — split
+  out of this RFC's "Axis B, second cut" 2026-08-31. Orthogonal: it composes with any
+  Axis-A/B outcome and any of P0–P3, and is neither a prerequisite for nor of this RFC.
+- **RFC-0074 (Shared Pointers — Rc and Arc, `0-draft`) / RFC-0076 (Rc Brands,
+  `1-under-review`)** — the `Rc`/`Arc` handle types and the brand machinery that already
+  distinguishes "aliases the same cell" from "independent" *in the types*. RFC-0158 gives
+  that distinction a surface verb; this RFC does not touch it.
 - **RFC-0123 (Field-Wise Row Constraints, `1-under-review`)** — the named fix path for "records
   can never be `Copy`." Whatever this RFC concludes about structural types should be
   reconciled with RFC-0123 rather than duplicating it.
@@ -598,13 +584,10 @@ Hylo absorbs much of that through its borrow/`sink` conventions. Evidence that P
    conclusions feed the Recommended direction; what remains open is which of P1 / P2 the
    survey's evidence best supports for Metel's specific audience, which is Open Question 1's
    territory, not a gap in the survey.
-8. **Should the `Dup` / `Share` split (Axis B, second cut) be pursued, and on what
-   timeline?** It is adoptable independently of everything else here and has a concrete
-   beneficiary (legibility around `Rc`/`Arc`, RFC-0074/RFC-0076). Open: whether `Share`
-   is a distinct aspect or a `Dup` sub-case; which types may implement it (handle-category
-   only, and how that category is defined); whether `.clone()` is removed or aliased; and
-   whether this belongs in this RFC, in RFC-0080, or in a small standalone RFC. Like D5
-   (Open Question 6), it may be the part worth splitting out and moving first.
+8. **The `Dup` / `Share` split. → Moved to RFC-0158** (Share and Clone: Separating
+   Aliasing from Duplication), split out of Axis B's second cut 2026-08-31. Its open
+   questions — `Share` as a distinct aspect vs. a `Dup` sub-case, the handle-category
+   definition, `.clone()` removal vs. alias, where it lands — are tracked there.
 
 ---
 
