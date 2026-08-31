@@ -10,7 +10,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/804'
 
 > **Status — under review (2026-08-23).** Design-complete three-way split, formalized from reports/syntax/colon-classifies-equals-labels-walrus-binds.md's design discussion; open questions remain (compound ops, RFC-0132 coordination, migration strategy) so under-review, not accepted.
 >
-> **Updated 2026-08-31.** Two Open Questions closed. **#1 (compound operators):** resolved — `+= -= *= /= %=` stay unchanged; only *plain* `=` moves to `:=`. **#5 (pattern-position field renaming, metel-core#706):** moved out of scope — the separator and argument order for a pattern field-rename production belong to #706 (which needs rewriting against the kept/not-kept classification), not to this RFC, which blocks on none of it. Remaining open: RFC-0132 coordination (#2) and migration mechanics (#4).
+> **Updated 2026-08-31.** Three Open Questions closed. **#1 (compound operators):** resolved — `+= -= *= /= %=` stay unchanged; only *plain* `=` moves to `:=`. **#2 (RFC-0132 `comptime let`):** moved out of scope — `comptime let` is `let`-family so RFC-0136's classification applies (`:=`), but the syntax is RFC-0132's to introduce and spell that way from the start; this RFC does not block on it. **#5 (pattern-position field renaming, metel-core#706):** moved out of scope — separator and argument order belong to #706 (which needs rewriting against the kept/not-kept classification). **Only open question left: #4 (migration mechanics)** — corpus sizing, rewrite strategy, and the transition-alias decision, which is genuinely this RFC's own to settle.
 >
 > **Updated 2026-08-25, corrected same day.** Added Open Question 5 and a new audit-table
 > row: metel-core#706 proposes pattern-position field renaming (`{ field = local_name }`)
@@ -200,11 +200,14 @@ readers already know, not a return to a majority convention.
    a novel operator family to signal something the form already guarantees. Only
    *plain* `=` is genuinely ambiguous between reassignment and a field/label site
    (`Point { x = 1.0 }` vs `total = total + 1`), and only plain `=` moves to `:=`.
-2. **Comptime interaction.** RFC-0132 (Comptime Execution Model), still `1-under-review`,
-   defines `comptime let` / `pub comptime let` syntax. Those are `let`-family declarations
-   and would need `:=` under this proposal exactly like ordinary `let`. Worth settling
-   together with RFC-0132 rather than shipping it first and migrating a second time
-   shortly after — a coordination point, not a blocker either direction.
+2. ~~**Comptime interaction (RFC-0132).**~~ *Moved out of scope 2026-08-31 — RFC-0132's
+   to handle, not this RFC's.* `comptime let` / `pub comptime let` are `let`-family
+   declarations, so RFC-0136's classification puts them squarely under `:=` — a kept
+   binding is a kept binding regardless of a `comptime` prefix. But `comptime let` is
+   RFC-0132's syntax to introduce, so RFC-0132 spells it `comptime <name> := <expr>`
+   from the start, consistent with this principle. RFC-0136 does not block on RFC-0132
+   and does not restate its grammar; the classification above is the only input it
+   owes.
 3. **Enum discriminants.** `enum E { A = 1 }` is field-init-shaped under this proposal:
    the discriminant value `1` is a label consumed at the declaration, `A` itself is
    already the kept name (introduced by the variant syntax, not by this `=`). Stays `=`.
@@ -254,7 +257,10 @@ kept/not-kept answer not decided here. Left for a future RFC.
   precedent in migration shape and scale (a parser-driven corpus rewrite, no transition
   alias), though smaller in surface than this proposal
 - `public/rfcs/1-under-review/rfc-0132-comptime-execution-model-comptime-let-comptime-fun-comptime-if.md` — `comptime let`
-  syntax; the coordination point named in Open Questions #2
+  syntax; **out of scope for this RFC** (Open Questions #2). `comptime let` is
+  `let`-family, so RFC-0136's classification puts it under `:=`; RFC-0132 introduces
+  that syntax and is responsible for spelling it `comptime <name> := <expr>` from the
+  start. RFC-0136 does not block on it.
 - `reports/substructural-types/access-and-presence-rows.md` §3.5 — the record-syntax
   question the classify/define invariant originally generalized from
 - metel-core#706 — proposes pattern-position field renaming with `=`; **out of scope
