@@ -80,11 +80,11 @@ confirmed, reproduced soundness hole, accepted by the release interpreter with
 fun call(f: () -> String) -> String { f() }
 
 fun main() {
-    let s = "hello";
-    let f = () -> String { s };
+    let s := "hello";
+    let f := () -> String { s };
 
-    let first = call(f);
-    let second = call(f); // accepted, although `f` consumes captured `s`
+    let first := call(f);
+    let second := call(f); // accepted, although `f` consumes captured `s`
 }
 ```
 

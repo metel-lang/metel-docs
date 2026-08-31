@@ -18,7 +18,7 @@ All Metel errors carry a code. Codes are prefixed by phase:
 The source text does not match the Metel grammar.
 
 ```
-[P0001] parse error in main.mtl at 12..18 (`let x = ;`): expected expression
+[P0001] parse error in main.mtl at 12..19 (`let x := ;`): expected expression
 ```
 
 **Fix:** correct the syntax at the indicated position.
@@ -402,9 +402,9 @@ no explicit clone.
 struct NotCopy { v: String }
 
 fun main() {
-    let owned = NotCopy { v = "x" };
-    let r: &NotCopy = &owned;
-    let copy: NotCopy = r;   // T0024 — NotCopy is not Copy
+    let owned := NotCopy { v = "x" };
+    let r: &NotCopy := &owned;
+    let copy: NotCopy := r;   // T0024 — NotCopy is not Copy
 }
 ```
 

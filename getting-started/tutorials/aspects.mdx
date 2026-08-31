@@ -37,7 +37,7 @@ extend Point: Printable {
 }
 
 fun main() {
-    let p = Point { x = 1.0, y = 2.0 };
+    let p := Point { x = 1.0, y = 2.0 };
     p.print();   // (1, 2)
 }
 ```
@@ -63,7 +63,7 @@ fun print_all<T: Printable>(items: T[]) {
 }
 
 fun main() {
-    let points = [Point { x = 0.0, y = 0.0 }, Point { x = 3.0, y = 4.0 }];
+    let points := [Point { x = 0.0, y = 0.0 }, Point { x = 3.0, y = 4.0 }];
     print_all(points);
 }
 ```
@@ -121,7 +121,7 @@ extend Person: Greet {
 }
 
 fun main() {
-    let p = Person { name = "Ada" };
+    let p := Person { name = "Ada" };
     println(p.greet());   // Hello, Ada
 }
 ```
@@ -167,7 +167,7 @@ extend AppError: From<IoError> {
 }
 
 fun main() {
-    let err = AppError::from(IoError { msg = "disk full" });
+    let err := AppError::from(IoError { msg = "disk full" });
     println(err.msg);   // io: disk full
 }
 ```

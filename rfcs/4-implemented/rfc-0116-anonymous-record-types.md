@@ -151,9 +151,9 @@ expression `x = 1`. This is **deterministic, not ambiguous** — the block alway
 it means the spec's own punning example works only because it sits in `let`-RHS position:
 
 ```metel
-let p = { x, y };                     // record: let-RHS is a pure expression position
+let p := { x, y };                     // record: let-RHS is a pure expression position
 fun f() -> { x: i64 } { ({ x = 1 }) } // record: parenthesized to force expression position
-fun g() -> { x: i64 } { x = 1 }       // NOT a record — block whose tail is `x = 1`
+fun g() -> { x: i64 } { x := 1 }       // NOT a record — block whose tail is `x = 1`
 ```
 
 Punning and single-field record literals are records in **pure-expression** positions

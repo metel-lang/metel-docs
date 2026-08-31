@@ -84,7 +84,7 @@ lifetime tracking.
 
 ```metel
 extend AutoAlloc: Alloc {
-    type AllocationError = !;
+    type AllocationError := !;
 }
 ```
 

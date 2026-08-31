@@ -19,7 +19,7 @@ the type's path already works — for a **non-generic** type:
 struct Counter { n: i64 }
 extend Counter { fun new() -> Counter { return Counter { n = 0 }; } }
 
-let c = Counter::new();          // works today
+let c := Counter::new();          // works today
 ```
 
 The same declaration on a **generic** type parses, typechecks and is unreachable:
@@ -28,7 +28,7 @@ The same declaration on a **generic** type parses, typechecks and is unreachable
 struct Tok<T> { v: T }
 extend<T> Tok<T> { fun make(v: T) -> Tok<T> { return Tok { v = v }; } }
 
-let t = Tok::make(7);            // [T0003] unresolved path `Tok::make`
+let t := Tok::make(7);            // [T0003] unresolved path `Tok::make`
 ```
 
 This RFC closes that gap. It is a small feature with a large blast radius: the design
@@ -126,7 +126,7 @@ extend<T> Tok<T> {
     fun make(v: T) -> Tok<T> { return Tok { v = v }; }
 }
 
-let t = Tok::make(7);            // t : Tok<i64>
+let t := Tok::make(7);            // t : Tok<i64>
 ```
 
 The type's own parameters are **instantiated fresh at the call site** and solved by
@@ -158,7 +158,7 @@ questions, and is out of scope.
 
 ```metel
 extend<T> Tok<T> { fun empty() -> i64 { return 0; } }
-let n = Tok::empty();            // T appears nowhere
+let n := Tok::empty();            // T appears nowhere
 ```
 
 `T` is unconstrained. Options: reject with "cannot infer type arguments for `Tok`, annotate

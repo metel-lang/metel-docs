@@ -151,7 +151,7 @@ enum Wrapper<T> {
 
 fun infallible() -> Wrapper<i64> { Wrapper::Present { value = 42 } }
 
-let x: i64 = infallible();  // implicit coercion via inhabited-singleton rule
+let x: i64 := infallible();  // implicit coercion via inhabited-singleton rule
 ```
 
 If the single inhabited variant has zero fields or more than one field, the rule does
@@ -187,7 +187,7 @@ fun infallible() -> Result<i64, !> {
 }
 
 fun main() -> i64 {
-    let x: i64 = infallible();  // implicit coercion — no match needed
+    let x: i64 := infallible();  // implicit coercion — no match needed
     x
 }
 ```

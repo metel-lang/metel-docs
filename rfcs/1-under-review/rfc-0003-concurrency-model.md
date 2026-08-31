@@ -166,8 +166,8 @@ this question.
 `Chan<T>` is a typed, bidirectional, first-class channel. Both unbuffered and buffered variants exist:
 
 ```metel
-let ch: Chan<Int> = Chan::new();          // unbuffered
-let ch: Chan<Int> = Chan::buffered(16);   // buffered
+let ch: Chan<Int> := Chan::new();          // unbuffered
+let ch: Chan<Int> := Chan::buffered(16);   // buffered
 ```
 
 **Directional subtypes** fall out naturally from the aspect model: `SendChan<T>` implements `Sendable<T>` only; `RecvChan<T>` implements `Receivable<T>` only; `Chan<T>` implements both. The typechecker enforces directionality through aspect resolution — no special language syntax required.
@@ -213,7 +213,7 @@ while let Perhaps::Some { value: x } = <- ch {
 **Non-blocking receive** — `ch.try_recv()`:
 
 ```metel
-let x = ch.try_recv();   // desugars to Receivable::try_recv(&ch) -> Perhaps<Int>
+let x := ch.try_recv();   // desugars to Receivable::try_recv(&ch) -> Perhaps<Int>
                          // returns nope immediately if no value is ready
 ```
 
@@ -264,7 +264,7 @@ fun detach(self: Fiber<T>)                      // fire-and-forget, consumes han
 Joining a collection of fibers:
 
 ```metel
-let results = [f1, f2, f3].map(Fiber::join);
+let results := [f1, f2, f3].map(Fiber::join);
 ```
 
 `WaitGroup` is not a language primitive — it is a library pattern built on top of fiber handles and channels for cases where the number of fibers is dynamic.

@@ -39,10 +39,10 @@ If a program does not run, reduce it back to a tiny `main` like this first. It g
 
 ```metel
 fun main() {
-    let x = 42;
-    let greeting = "hello";
-    let ratio = 1.5;
-    let flag = true;
+    let x := 42;
+    let greeting := "hello";
+    let ratio := 1.5;
+    let flag := true;
 
     println(x);
     println(greeting);
@@ -65,9 +65,9 @@ Annotations are optional but you can write them after the binding name with `:`:
 
 ```metel
 fun main() {
-    let x: i64 = 42;
-    let greeting: String = "hello";
-    let ratio: f64 = 1.5;
+    let x: i64 := 42;
+    let greeting: String := "hello";
+    let ratio: f64 := 1.5;
 }
 ```
 
@@ -79,9 +79,9 @@ Write annotations when they make the intent clearer, or when you want the compil
 
 ```metel
 fun main() {
-    var count = 0;
-    count = count + 1;
-    count = count + 1;
+    var count := 0;
+    count := count + 1;
+    count := count + 1;
     println(count);   // 2
 }
 ```
@@ -90,7 +90,7 @@ fun main() {
 
 ```metel
 fun main() {
-    var total = 10;
+    var total := 10;
     total += 5;
     total -= 2;
     total *= 3;
@@ -106,8 +106,8 @@ Strings are double-quoted UTF-8 values. Concatenate them with `+`, or embed expr
 
 ```metel
 fun main() {
-    let name = "Ada";
-    let score = 98;
+    let name := "Ada";
+    let score := 98;
     println("Player ${name} scored ${score} points.");   // Player Ada scored 98 points.
 }
 ```

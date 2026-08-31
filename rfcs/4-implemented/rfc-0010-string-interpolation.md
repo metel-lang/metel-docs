@@ -81,9 +81,9 @@ Metel currently has the pieces needed for ergonomic text rendering, but they are
 Today, users must write nested concatenation by hand:
 
 ```metel
-let name = "Ada";
-let count = 3;
-let msg = string_concat("hello, ", string_concat(name, string_concat(" (", string_concat(count.to_string(), ")"))));
+let name := "Ada";
+let count := 3;
+let msg := string_concat("hello, ", string_concat(name, string_concat(" (", string_concat(count.to_string(), ")"))));
 ```
 
 That is verbose, fragile, and hard to read once the number of interpolated values grows. The language needs a direct expression form for mixed literal/text/value output.
@@ -97,10 +97,10 @@ This RFC deliberately makes interpolation depend on `+` for strings instead of i
 Allow `${expr}` inside normal string literals:
 
 ```metel
-let name = "Ada";
-let count = 3;
+let name := "Ada";
+let count := 3;
 
-let msg = "hello, ${name}; count=${count}";
+let msg := "hello, ${name}; count=${count}";
 ```
 
 Interpolation is only supported inside string literals. A plain string with no placeholders remains a normal `String` literal.
@@ -112,7 +112,7 @@ Interpolation lowers to a chain of string concatenations. Each embedded expressi
 The example above desugars to:
 
 ```metel
-let msg =
+let msg :=
     "hello, " +
     name.to_string() +
     "; count=" +
@@ -131,7 +131,7 @@ This implies:
 String interpolation is not a standalone feature. It is defined in terms of string concatenation, so the language must first support:
 
 ```metel
-let s = "hello, " + "world";
+let s := "hello, " + "world";
 ```
 
 Once `+` is available for `String + String -> String`, interpolation is just parser sugar that expands to nested `+` expressions and `.to_string()` calls.

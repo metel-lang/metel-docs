@@ -141,7 +141,7 @@ Path roots are unchanged from RFC-0029:
 Fully-qualified paths are valid anywhere a name is expected without a preceding `import`:
 
 ```metel
-let p: root::parser::Ast = root::parser::Ast::new();
+let p: root::parser::Ast := root::parser::Ast::new();
 ```
 
 `import` is a local binding convenience, not the only access mechanism.

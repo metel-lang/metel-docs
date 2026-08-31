@@ -6,7 +6,7 @@
 
 ```metel
 fun main() -> i64 {
-    let value = 1;
+    let value := 1;
     match value {
         1 => 10,
         _ => 0,
@@ -40,8 +40,8 @@ fun main() -> i64 {
 
 ```metel
 fun main() -> i64 {
-    let x = 1;
-    let label = match x {
+    let x := 1;
+    let label := match x {
         0 => "zero",
         1 => "one",
         _ => "other",
@@ -59,10 +59,10 @@ enum Shape {
 }
 
 fun main() -> i64 {
-    let shape = Shape::Circle { radius = 3.0 };
-    let desc: String = match shape {
+    let shape := Shape::Circle { radius = 3.0 };
+    let desc: String := match shape {
         Shape::Circle { radius } => {
-            let area = radius * radius;
+            let area := radius * radius;
             (area as i64).to_string()
         },
         Shape::Rectangle { width, height } => "rectangle",
@@ -137,22 +137,22 @@ enum Shape {
 }
 
 fun main() -> i64 {
-    let shape = Shape::Rectangle { width = 4.0, height = 2.0 };
-    let x = -3;
-    let point: (i64, i64) = (0, 7);
+    let shape := Shape::Rectangle { width = 4.0, height = 2.0 };
+    let x := -3;
+    let point: (i64, i64) := (0, 7);
 
-    let a = match shape {
+    let a := match shape {
         Shape::Circle { radius } => radius as i64,
         Shape::Rectangle { width, height } => width as i64,
     };
 
-    let b = match x {
+    let b := match x {
         0          => 0,
         n if n < 0 => 1,
         _          => 2,
     };
 
-    let c = match point {
+    let c := match point {
         (0, 0) => 0,
         (x, 0) => x,
         (0, y) => y,
@@ -179,10 +179,10 @@ fun paint(c: Colour) { }
 fun favourite() -> Colour { Green }        // return type supplies the expected type
 
 fun main() {
-    let c: Colour = Red;                   // annotation supplies it
+    let c: Colour := Red;                   // annotation supplies it
     paint(Blue);                           // parameter type supplies it
-    let p: Perhaps<i64> = Some { value = 5 };
-    let q: Perhaps<i64> = None;            // `None` is an ordinary variant, not a literal
+    let p: Perhaps<i64> := Some { value = 5 };
+    let q: Perhaps<i64> := None;            // `None` is an ordinary variant, not a literal
 }
 ```
 
@@ -609,8 +609,8 @@ the types required in call arguments or other non-match contexts.
 
 ```metel
 fun main() -> i64 {
-    let condition = false;
-    let other = true;
+    let condition := false;
+    let other := true;
     if (condition) {
         return 1;
     } else if (other) {
@@ -625,8 +625,8 @@ fun main() -> i64 {
 
 ```metel
 fun main() -> i64 {
-    let x = 1;
-    let label = if (x > 0) { "positive" } else { "non-positive" };
+    let x := 1;
+    let label := if (x > 0) { "positive" } else { "non-positive" };
     return label.len();
 }
 ```
@@ -637,12 +637,12 @@ fun main() -> i64 {
 fun print_state() { }
 
 fun main() -> i64 {
-    let debug = true;
-    let flag = false;
-    let value_a = 10;
-    let value_b = 20;
+    let debug := true;
+    let flag := false;
+    let value_a := 10;
+    let value_b := 20;
     if (debug) print_state();
-    let x = if (flag) value_a else value_b;
+    let x := if (flag) value_a else value_b;
     return x;
 }
 ```
@@ -653,8 +653,8 @@ The braceless form desugars to a single-expression block. Three restrictions app
 2. **Dangling-else is forbidden.** If the outer body is braceless, the body expression must not itself be an `if–else`. Use braces on the outer body to resolve the ambiguity.
    ```metel
    fun main() -> i64 {
-       let a = true;
-       let b = false;
+       let a := true;
+       let b := false;
        if (a) if (b) { return 1; }
        if (a) { if (b) { return 2; } else { return 3; } }
        return 4;
@@ -663,8 +663,8 @@ The braceless form desugars to a single-expression block. Three restrictions app
    <!-- doc-example: expect-fail reason="demonstrates the forbidden dangling-else case -- the parse error is the point" -->
    ```metel
    fun main() {
-       let a = true;
-       let b = false;
+       let a := true;
+       let b := false;
        if (a) if (b) { return; } else { return; }
    }
    ```
@@ -742,8 +742,8 @@ braced or both braceless.
 
 ```metel
 fun main() -> i64 {
-    var n = 3;
-    var total = 0;
+    var n := 3;
+    var total := 0;
     while (n > 0) {
         total += n;
         n -= 1;
@@ -756,8 +756,8 @@ fun main() -> i64 {
 
 ```metel
 fun main() -> i64 {
-    var total = 0;
-    for (var i = 0; i < 4; i += 1) {
+    var total := 0;
+    for (var i := 0; i < 4; i += 1) {
         total += i;
     }
     return total;
@@ -806,8 +806,8 @@ fun main() -> i64 {
 
 ```metel
 fun main() -> i64 {
-    let collection = [1, 2, 3];
-    var total = 0;
+    let collection := [1, 2, 3];
+    var total := 0;
     for (let item in collection) { total += item; }
     for (var item in collection) {
         item += 1;
@@ -858,9 +858,9 @@ References provide explicit aliasing.
 
 ```metel
 fun main() -> i64 {
-    var n = 1;
-    let p: &var i64 = &var n;
-    *p = 4;   // write-through: mutate the referent via explicit deref
+    var n := 1;
+    let p: &var i64 := &var n;
+    *p := 4;   // write-through: mutate the referent via explicit deref
     return p; // type-directed copy: reads the value out at `return`
 }
 ```
@@ -890,10 +890,10 @@ Addressable places for both `&` and `&var` include named bindings (`x`), struct 
 >
 > ```metel
 > fun takes_ref(l: &List<i64>) -> i64 { l.len() }
-> fun bump(x: &var i64) -> i64 { *x = *x + 1; *x }
+> fun bump(x: &var i64) -> i64 { *x := *x + 1; *x }
 > fun main() -> i64 {
->     let a = takes_ref(&List::from([1, 2, 3]));   // no `let` needed for the argument
->     let b = bump(&var 41);                        // &var works on a temporary too
+>     let a := takes_ref(&List::from([1, 2, 3]));   // no `let` needed for the argument
+>     let b := bump(&var 41);                        // &var works on a temporary too
 >     return a + b;
 > }
 > ```
@@ -978,10 +978,10 @@ is spelled explicitly:
 fun add(x: i64, y: i64) -> i64 { x + y }
 
 fun main() -> i64 {
-    let a = 3;
-    let b = 4;
-    let p: &i64 = &a;
-    let q: &i64 = &b;
+    let a := 3;
+    let b := 4;
+    let p: &i64 := &a;
+    let q: &i64 := &b;
     return add(*p, *q) + (*p + *q);   // explicit: call arguments and operands
 }
 ```
@@ -991,11 +991,11 @@ Bare assignment to a reference-typed binding rebinds it rather than writing thro
 
 ```metel
 fun main() -> i64 {
-    var a = 1;
-    var b = 2;
-    var p: &var i64 = &var a;
-    p = &var b;   // repoint: p now refers to b (p is `var`) — a stays 1
-    *p = 5;       // write-through: b becomes 5
+    var a := 1;
+    var b := 2;
+    var p: &var i64 := &var a;
+    p := &var b;   // repoint: p now refers to b (p is `var`) — a stays 1
+    *p := 5;       // write-through: b becomes 5
     return a + b; // 1 + 5
 }
 ```
@@ -1007,12 +1007,12 @@ Field- and index-path targets keep writing through with no `*` needed — `s.fie
 struct Point { x: i64, y: i64 }
 
 fun main() -> i64 {
-    var q = Point { x = 5, y = 7 };
-    let qp: &var Point = &var q;
-    qp.y = 99;        // field write-through — no `*` needed
-    var xs = [1, 2, 3];
-    let xp: &var [i64; 3] = &var xs;
-    xp[0] = 9;        // index write-through — no `*` needed
+    var q := Point { x = 5, y = 7 };
+    let qp: &var Point := &var q;
+    qp.y := 99;        // field write-through — no `*` needed
+    var xs := [1, 2, 3];
+    let xp: &var [i64; 3] := &var xs;
+    xp[0] := 9;        // index write-through — no `*` needed
     return q.y + xs[0];
 }
 ```
@@ -1035,10 +1035,10 @@ extend Counter {
 }
 
 fun main() -> i64 {
-    var counter = Counter { value = 0 };
-    let p: &var Counter = &var counter;
+    var counter := Counter { value = 0 };
+    let p: &var Counter := &var counter;
     p.increment();    // auto-deref: equivalent to accessing through the reference directly
-    p.value = 1;      // auto-deref field assign; the reference binding need not be var
+    p.value := 1;      // auto-deref field assign; the reference binding need not be var
     return p.value;   // auto-deref field read
 }
 ```
@@ -1047,8 +1047,8 @@ Function references (`&() -> T` and `&var () -> T`) are callable directly, the s
 
 ```metel
 fun main() -> i64 {
-    let f = () -> { return 42; };
-    let r: &() -> i64 = &f;
+    let f := () -> { return 42; };
+    let r: &() -> i64 := &f;
     return r();       // auto-deref: calls through the reference directly
 }
 ```
@@ -1077,9 +1077,9 @@ extend Counter {
 }
 
 fun main() -> i64 {
-    var c = Counter { value = 0 };
-    let p: &var Counter = &var c;
-    let rr: &&var Counter = &p;
+    var c := Counter { value = 0 };
+    let p: &var Counter := &var c;
+    let rr: &&var Counter := &p;
     rr.increment();   // auto-deref through both layers
     return rr.value;  // likewise for a field read
 }
@@ -1217,7 +1217,7 @@ an exclusive reborrow may write that same storage.
 
 ```metel
 fun main() -> i64 {
-    let result = loop {
+    let result := loop {
         break 42;
     };
     return result;
@@ -1247,9 +1247,9 @@ fun pick(ok: boolean) -> i64 {
 }
 
 fun compute() -> i64 {
-    var i = 0;
+    var i := 0;
     loop {
-        i = i + 1;
+        i := i + 1;
         if (i == 5) {
             break i * 10   // loop-body tail, no trailing `;`
         }
@@ -1265,7 +1265,7 @@ fun classify(value: i64) -> i64 {
 }
 
 fun nested(c: boolean) -> i64 {
-    let x = if (c) return 99 else 0;   // nested expression position
+    let x := if (c) return 99 else 0;   // nested expression position
     x
 }
 ```

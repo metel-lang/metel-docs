@@ -28,10 +28,10 @@ The `Perhaps` type's empty variant is renamed from `nope` (or `Perhaps::Nope`) t
 
 ```metel
 // Before
-let x: Perhaps<Int> = nope;
+let x: Perhaps<Int> := nope;
 
 // After
-let x: Perhaps<Int> = None;
+let x: Perhaps<Int> := None;
 ```
 
 **Rationale:** `None` is the near-universal spelling for an absent optional value (Python, Swift, Kotlin, ML family). `nope` is memorable but teaches the wrong habit and surprises every developer familiar with typed languages.

@@ -59,19 +59,19 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 Today:
 ```metel
 struct IntBox { value: i64 }
-let b = IntBox { value = 42 };
+let b := IntBox { value = 42 };
 
 struct Token { public value: String, secret: String }
-let t = Token { value = "x".to_string(), secret = "shh".to_string() };
+let t := Token { value = "x".to_string(), secret = "shh".to_string() };
 ```
 
 Proposed:
 ```metel
 struct IntBox { value: i64 }
-let b = IntBox(value = 42);
+let b := IntBox(value := 42);
 
 struct Token { public value: String, secret: String }
-let t = Token(value = "x".to_string(), secret = "shh".to_string());
+let t := Token(value := "x".to_string(), secret := "shh".to_string());
 ```
 
 **`=`, not `:`, and for a reason that is not aesthetic.** A keyword argument binds a value

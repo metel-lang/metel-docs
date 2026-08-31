@@ -98,8 +98,8 @@ more than ordinary code, once narrowing and widening are both automatic and stru
 
 ```metel
 fun mess_with_it(p: &var SortedPair) {
-    let old_small = p.small;   // move small out; p narrows to SortedPair.{ big }
-    p.small = 999_999;         // assign an arbitrary value back in; p widens to full SortedPair
+    let old_small := p.small;   // move small out; p narrows to SortedPair.{ big }
+    p.small := 999_999;         // assign an arbitrary value back in; p widens to full SortedPair
     // no call to SortedPair::new, anywhere. invariant possibly broken.
 }
 ```

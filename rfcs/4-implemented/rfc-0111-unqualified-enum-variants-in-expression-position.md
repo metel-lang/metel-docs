@@ -115,13 +115,13 @@ and this RFC changes only qualification, not brace rules.
 ```metel
 enum Colour { Red, Green, Blue }
 
-let c: Colour = Red;                     // §1.1 — let annotation supplies E
+let c: Colour := Red;                     // §1.1 — let annotation supplies E
 fun favourite() -> Colour { Green }      // return type supplies E
 fun paint(c: Colour) { }
 paint(Blue);                             // parameter type supplies E (§1.3 caveat)
 
-let p: Perhaps<i64> = Some { value = 5 };
-let q: Perhaps<i64> = None;              // `None` via the general mechanism
+let p: Perhaps<i64> := Some { value = 5 };
+let q: Perhaps<i64> := None;              // `None` via the general mechanism
 ```
 
 If any of the three conditions fails, nothing changes: the identifier is resolved exactly
@@ -400,8 +400,8 @@ struct Red { }
 enum C { Red }
 
 fun main() {
-    let s = Red;        // resolves to the unit struct — works today
-    let c: C = Red;     // T0001: cannot unify Red with C
+    let s := Red;        // resolves to the unit struct — works today
+    let c: C := Red;     // T0001: cannot unify Red with C
 }
 ```
 
