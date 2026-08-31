@@ -1240,7 +1240,7 @@ implementation).
   RFC-0090's settled anonymous record values, making `Point { x = 1.0 }` literally
   `{ x = 1.0 }` plus a brand — the relationship RFC-0090 tier 3 claims holds
   semantically, now visible in the syntax.
-- **RFC-0136** *(under review, opened 2026-08-23)* — Walrus for Kept Bindings — extends
+- **RFC-0136** *(accepted 2026-08-31, opened 2026-08-23)* — Walrus for Kept Bindings — extends
   the classify/define invariant with a third token: `let`/`var` declarations, plain
   reassignment, and `type X = Concrete` all currently spell "define" with `=`, the same
   token `field_init`, `assoc_binding`, and RFC-0100's not-yet-live keyword arguments use
@@ -1250,10 +1250,15 @@ implementation).
   `let_mut_decl`, `assign_op` (plain `=` only), `assoc_type_def`; resolves RFC-0100's
   `f(x = 1)`/`assign_expr` collision as a side effect, since plain `=` can no longer
   parse as assignment inside an argument position at all. Largest syntax-migration
-  surface proposed to date — every `let` and plain reassignment in the corpus. Open:
-  whether compound assignment operators (`+=` etc.) move too; coordination with
-  RFC-0132's `comptime let`. Declaration-side default parameter values explicitly out of
-  scope. See `reports/syntax/colon-classifies-equals-labels-walrus-binds.md`.
+  surface proposed to date — every `let` and plain reassignment in the corpus.
+  **All five open questions closed 2026-08-31:** compound operators (`+=` etc.) stay
+  `=`; migration is a hard switch with no transition alias and one parser-driven corpus
+  sweep (no public users, so the in-repo tree is the whole surface — RFC-0042/RFC-0098
+  precedent); `comptime let` (RFC-0132) and pattern field renaming (metel-core#706) take
+  only the kept/not-kept classification and settle the syntax themselves; enum
+  discriminants stay `=`. Declaration-side default parameter values explicitly out of
+  scope. Target v0.13.1 (metel-core#804). See
+  `reports/syntax/colon-classifies-equals-labels-walrus-binds.md`.
 - **RFC-0101** *(draft)* — Grammar-Enforced Naming Case Conventions — PascalCase for type
   declarations (struct/enum/aspect/generic params) and enum variants, camelCase for
   `fun` declarations (free functions, methods, associated functions), SCREAMING_CASE for
