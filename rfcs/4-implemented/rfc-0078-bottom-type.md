@@ -197,7 +197,7 @@ the compiler warns that it is unreachable:
 
 ```metel
 fun use_result(r: Result<i64, !>) -> i64 {
-    match r {
+    match (r) {
         Result::Ok { value } => value,
         // Err arm omitted — exhaustive; Err is uninhabited
     }

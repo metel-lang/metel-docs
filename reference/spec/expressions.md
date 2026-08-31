@@ -7,7 +7,7 @@
 ```metel
 fun main() -> i64 {
     let value := 1;
-    match value {
+    match (value) {
         1 => 10,
         _ => 0,
     }
@@ -23,7 +23,7 @@ it's just an ordinary expression arm, like any other:
 // Match arm body forms start here.
 fun classify(value: i64) -> i64 {
     loop {
-        break match value {
+        break match (value) {
             0 => 0,
             1 => return 10,
             _ => { 20 },
@@ -41,7 +41,7 @@ fun main() -> i64 {
 ```metel
 fun main() -> i64 {
     let x := 1;
-    let label := match x {
+    let label := match (x) {
         0 => "zero",
         1 => "one",
         _ => "other",
@@ -60,7 +60,7 @@ enum Shape {
 
 fun main() -> i64 {
     let shape := Shape::Circle { radius = 3.0 };
-    let desc: String := match shape {
+    let desc: String := match (shape) {
         Shape::Circle { radius } => {
             let area := radius * radius;
             (area as i64).to_string()
@@ -151,18 +151,18 @@ fun main() -> i64 {
     let x := -3;
     let point: (i64, i64) := (0, 7);
 
-    let a := match shape {
+    let a := match (shape) {
         Shape::Circle { radius } => radius as i64,
         Shape::Rectangle { width, height } => width as i64,
     };
 
-    let b := match x {
+    let b := match (x) {
         0          => 0,
         n if n < 0 => 1,
         _          => 2,
     };
 
-    let c := match point {
+    let c := match (point) {
         (0, 0) => 0,
         (x, 0) => x,
         (0, y) => y,
@@ -294,7 +294,7 @@ of variant names — so there is no cross-enum collision to resolve:
 enum Colour { Red, Green, Blue }
 
 fun name(c: Colour) -> String {
-    match c {
+    match (c) {
         Red   => "red",
         Green => "green",
         Blue  => "blue",
@@ -306,7 +306,7 @@ Fieldful variants may also be written bare:
 
 ```metel
 fun unwrap_or_zero(v: Perhaps<i64>) -> i64 {
-    match v {
+    match (v) {
         Some { value } => value,
         None           => 0,
     }
@@ -332,7 +332,7 @@ bare-field syntax a struct literal uses:
 struct Point { x: i64, y: i64 }
 
 fun magnitude_squared(p: Point) -> i64 {
-    match p {
+    match (p) {
         Point { x, y } => x * x + y * y,
     }
 }
@@ -346,7 +346,7 @@ name:
 struct Token { kind: i64, span: i64, offset: i64 }
 
 fun kind_and_span(t: Token) -> i64 {
-    match t {
+    match (t) {
         Token { kind, span, .. } => kind + span,
     }
 }
@@ -393,7 +393,7 @@ access and method dispatch already auto-dereference:
 enum Colour { Red, Green, Blue }
 
 fun name(c: &Colour) -> String {
-    match c {
+    match (c) {
         Colour::Red   => "red",
         Colour::Green => "green",
         Colour::Blue  => "blue",
@@ -409,7 +409,7 @@ variant resolves against the referent's enum:
 
 ```metel
 fun name(c: &Colour) -> String {
-    match c {
+    match (c) {
         Red   => "red",     // c is peeled &Colour -> Colour, then Red resolves against Colour
         Green => "green",
         Blue  => "blue",
@@ -1267,7 +1267,7 @@ fun compute() -> i64 {
 }
 
 fun classify(value: i64) -> i64 {
-    match value {
+    match (value) {
         0 => 0,
         1 => return 10,   // match-arm body, same as any other expression arm
         _ => 20,

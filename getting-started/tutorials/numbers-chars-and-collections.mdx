@@ -120,7 +120,7 @@ They also participate in pattern matching:
 
 ```metel
 fun describe_triplet(xs: [i64; 3]) -> String {
-    match xs {
+    match (xs) {
         [0, 0, 0] => "all zero",
         [a, b, c] => "sum = ${(a + b + c).to_string()}",
     }
@@ -165,7 +165,7 @@ fun main() {
 
     println(queue.len());   // 3
 
-    match queue.pop() {
+    match (queue.pop()) {
         Some { value } => println("last stage: ${value}"),
         None => println("queue was empty"),
     }
@@ -179,7 +179,7 @@ fun main() {
     var nums := List::from([1, 2, 3]);
     nums.push(4);
 
-    match nums.get(1) {
+    match (nums.get(1)) {
         Some { value } => println(value),   // 2
         None => println("missing"),
     }

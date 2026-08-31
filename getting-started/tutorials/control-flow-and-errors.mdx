@@ -44,7 +44,7 @@ fun first_over(threshold: i64, values: i64[]) -> Perhaps<i64> {
 
 fun main() {
     let result := first_over(6, [3, 1, 7, 2, 9, 4]);
-    match result {
+    match (result) {
         Some { value } => println("first over 6: ${value}"),   // 7
         None => println("none found"),
     }
@@ -75,12 +75,12 @@ fun find(haystack: String[], needle: String) -> Perhaps<i64> {
 fun main() {
     let fruits := ["apple", "banana", "cherry"];
 
-    match find(fruits, "banana") {
+    match (find(fruits, "banana")) {
         Some { value } => println("found at index ${value}"),   // 1
         None => println("not found"),
     }
 
-    match find(fruits, "mango") {
+    match (find(fruits, "mango")) {
         Some { value } => println("found at index ${value}"),
         None => println("not found"),                               // not found
     }
@@ -133,7 +133,7 @@ fun main() {
     let inputs := ["42", "", "hello", "42"];
 
     for (let input in inputs) {
-        match parse_positive(input) {
+        match (parse_positive(input)) {
             Ok { value } => println("ok: ${value}"),
             Err { error } => println("error: ${error.message}"),
         }
@@ -173,11 +173,11 @@ fun double_parse(s: String) -> Result<i64, ParseError> {
 }
 
 fun main() {
-    match double_parse("42") {
+    match (double_parse("42")) {
         Ok { value } => println("doubled: ${value}"),   // 84
         Err { error } => println("failed: ${error.message}"),
     }
-    match double_parse("nope") {
+    match (double_parse("nope")) {
         Ok { value } => println("doubled: ${value}"),
         Err { error } => println("failed: ${error.message}"),   // unrecognised: nope
     }
@@ -232,11 +232,11 @@ fun load_and_parse(path: String) -> Result<i64, AppError> {
 }
 
 fun main() {
-    match load_and_parse("data.txt") {
+    match (load_and_parse("data.txt")) {
         Ok { value } => println("loaded: ${value}"),   // loaded: 42
         Err { error } => println("failed: ${error.msg}"),
     }
-    match load_and_parse("missing.txt") {
+    match (load_and_parse("missing.txt")) {
         Ok { value } => println("loaded: ${value}"),
         Err { error } => println("failed: ${error.msg}"),   // failed: io: file not found: missing.txt
     }
@@ -251,7 +251,7 @@ A `match` arm can have a guard — a condition that must also be true for the ar
 
 ```metel
 fun classify(n: i64) -> String {
-    match n {
+    match (n) {
         0                => "zero",
         n if n < 0       => "negative",
         n if n % 2 == 0  => "positive even",
@@ -278,7 +278,7 @@ Output:
 
 ```metel
 fun describe(point: (i64, i64)) -> String {
-    match point {
+    match (point) {
         (0, 0) => "origin",
         (x, 0) => "on the x-axis at ${x}",
         (0, y) => "on the y-axis at ${y}",
@@ -312,7 +312,7 @@ fun validate_name(name: String) -> Result<String, ValidationError> {
 
 fun validate_age(raw: String) -> Result<i64, ValidationError> {
     // Simplified: only accept a handful of values for this example.
-    match raw {
+    match (raw) {
         "17" => Err { error = ValidationError {
             field = "age",
             reason = "must be 18 or older",
@@ -348,7 +348,7 @@ fun main() {
     for (let attempt in attempts) {
         let name := attempt.0;
         let age  := attempt.1;
-        match validate_user(name, age) {
+        match (validate_user(name, age)) {
             Ok { value } =>
                 println("ok: ${value.name}, age ${value.age}"),
             Err { error } =>

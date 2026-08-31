@@ -417,7 +417,7 @@ fun parse_and_double(s: String) -> Result<i64, String> {
 }
 
 fun main() -> i64 {
-    match parse_and_double("21") {
+    match (parse_and_double("21")) {
         Ok { value } => value,
         Err { error } => 0,
     }

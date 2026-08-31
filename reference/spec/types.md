@@ -252,7 +252,7 @@ Tuples can be destructured in `match`:
 ```metel
 fun main() -> i64 {
     let coord: (i64, i64) := (10, 0);
-    match coord {
+    match (coord) {
         (0, y) => y,
         (x, 0) => x,
         (x, y) => x + y,
@@ -515,7 +515,7 @@ Indexing and `for-in` work identically to `T[]`. Array patterns match sized arra
 
 ```metel
 fun sum(xs: [i64; 3]) -> i64 {
-    match xs {
+    match (xs) {
         [a, b, c] => a + b + c,   // exact-count pattern on [T; 3]
     }
 }
@@ -1010,14 +1010,14 @@ fun zip_lengths(a: i64[], b: String[]) -> i64 {
 }
 
 fun make_row(use_default: boolean, fallback: i64[]) -> i64[] {
-    return match use_default {
+    return match (use_default) {
         true  => [],
         false => fallback,
     };
 }
 
 fun first_or_default(items: i64[], fallback: Perhaps<i64>) -> i64 {
-    return match fallback {
+    return match (fallback) {
         Some { value } => value,
         None => if (items.len() > 0) { items[0] } else { 0 },
     };
@@ -1037,7 +1037,7 @@ Ascription is still useful when no surrounding context fixes the type:
 fun main() -> i64 {
     let arr := [] : i64[];
     let value := None : Perhaps<i64>;
-    match value {
+    match (value) {
         Some { value } => value + arr.len(),
         None => arr.len(),
     }
@@ -1113,7 +1113,7 @@ fun first<T>(arr: T[]) -> Perhaps<T> {
 
 fun main() -> i64 {
     let stack := Stack { items = [1, 2, 3] };
-    match first(stack.items) {
+    match (first(stack.items)) {
         Some { value } => value,
         None => 0,
     }
@@ -1147,7 +1147,7 @@ them at all:
 
 ```metel
 fun describe<record T: { x: f64, .. }>(p: T) -> String {
-    match p {
+    match (p) {
         { x, .. } => "x is ${x}, plus whatever else the caller passed",
     }
 }
@@ -1158,7 +1158,7 @@ here, so a pattern that doesn't end in `..` can never be exhaustive:
 
 ```metel
 fun bad<record T: { x: f64, .. }>(p: T) -> f64 {
-    match p {
+    match (p) {
         { x } => x,   // error: open bound's field set isn't known here; add `..`
     }
 }
@@ -1170,7 +1170,7 @@ lists unless it uses `..`:
 
 ```metel
 fun get_x<record T: { x: f64, y: f64 }>(p: T) -> f64 {
-    match p {
+    match (p) {
         { x, y } => x,       // OK: every field of the closed bound is named
         // { x } => x,       // error: `y` isn't named and there's no `..`
     }
@@ -1182,7 +1182,7 @@ form discards *unnamed* fields, not fields the bound never promised are there:
 
 ```metel
 fun bad2<record T: { x: f64, .. }>(p: T) -> f64 {
-    match p {
+    match (p) {
         { x, z, .. } => x,   // error: no field `z` on the bound
     }
 }
@@ -1436,7 +1436,7 @@ enum Foo {
 }
 
 fun handle(f: Foo) -> i64 {
-    match f {
+    match (f) {
         Foo::A { x } => x,
         // Foo::B omitted — exhaustive; B is uninhabited
     }
@@ -1659,7 +1659,7 @@ a reachable ordinary return is a type error.
 ```metel
 fun main() -> i64 {
     let x: Perhaps<i64> := None;
-    match x {
+    match (x) {
         Some { value } => value,
         None => 0,
     }
@@ -1670,9 +1670,9 @@ fun main() -> i64 {
 fun main() -> i64 {
     let result: Perhaps<i64> := None;
     let value: Perhaps<i64> := Some { value = 42 };
-    match value {
+    match (value) {
         Some { value } => value,
-        None => match result {
+        None => match (result) {
             Some { value } => value,
             None => 0,
         },
@@ -1695,7 +1695,7 @@ fun find_user(id: i64) -> Perhaps<User> {
 }
 
 fun main() -> i64 {
-    match find_user(1) {
+    match (find_user(1)) {
         Some { value } => value.id,
         None => 0,
     }
@@ -1753,7 +1753,7 @@ fun divide(a: f64, b: f64) -> Result<f64, String> {
 }
 
 fun main() -> i64 {
-    match divide(8.0, 2.0) {
+    match (divide(8.0, 2.0)) {
         Ok { value } => value as i64,
         Err { error } => 0,
     }

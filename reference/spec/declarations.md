@@ -756,11 +756,11 @@ enum Shape {
 fun main() -> i64 {
     let dir := Direction::North;
     let s := Shape::Circle { radius = 5.0 };
-    let area := match s {
+    let area := match (s) {
         Circle { radius }           => radius * radius * 3.14159,
         Rectangle { width, height } => width * height,
     };
-    match dir {
+    match (dir) {
         North => area as i64,
         South => 0,
         East => 0,
@@ -829,11 +829,11 @@ enum Shape {
 fun main() -> i64 {
     let dir := Direction::North;
     let s := Shape::Circle { radius = 5.0 };
-    let area := match s {
+    let area := match (s) {
         Circle { radius }           => radius * radius * 3.14159,
         Rectangle { width, height } => width * height,
     };
-    match dir {
+    match (dir) {
         North => area as i64,
         South => 0,
         East => 0,
@@ -871,7 +871,7 @@ enum Shape {
 
 extend Shape {
     fun area(self) -> f64 {
-        match self {
+        match (self) {
             Circle { radius } => 3.14159 * radius * radius,
             Rectangle { width, height } => width * height,
         }
