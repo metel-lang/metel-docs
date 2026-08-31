@@ -119,7 +119,7 @@ The bare form `match x { … }` is a parse error. A tuple scrutinee's own parent
 satisfy this (`match (a, b) { … }`), as does the unit literal (`match () { … }`).
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0156](../../rfcs/3-integrated/rfc-0156-parenthesize-match-scrutinee.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0156](../../rfcs/4-implemented/rfc-0156-parenthesize-match-scrutinee.md)_</span>
 <!-- rfc.py:origins:end -->
 
 </details>

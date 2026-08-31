@@ -3,13 +3,13 @@ id: rfc-0156
 title: "Parenthesize match Scrutinee"
 date: '2026-08-31'
 target: v0.13.0
-status: integrated
+status: implemented
 updated: '2026-08-31'
 tracking: 'https://github.com/metel-lang/metel-core/issues/701'
 coverage:
   "1": { spec: "spec.expressions.pattern-matching.legality-3" }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/701'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-08-31).** Single substantiated proposal: parenthesize the match scrutinee to match if/while/for. No load-bearing open questions; tuple-scrutinee interaction resolved by reusing tuple_or_paren. Mechanical sweep, RFC-0130/0136 precedent.
@@ -29,6 +29,8 @@ impl_status: not-started
 > **Status — accepted (2026-08-31).** Single-rule surface normalization; one Codex adversarial-review round folded in (unit_lit alternative; pest-pair rewriter). No open question blocks it. Precedent RFC-0098/0130/0136.
 
 > **Status — integrated (2026-08-31).** Added spec.expressions.pattern-matching.legality-3 (scrutinee must be parenthesized); RFC-0156 is its origin. Grammar flip + corpus sweep + citing fixture land in metel-core#701.
+
+> **Status — implemented (2026-08-31).** Shipped in metel-core#912 (merged to develop 2026-08-31): grammar match_scrutinee = _{ unit_lit | tuple_or_paren }, the match_paren_migrate pest-pair rewriter, 93 swept fixtures + stdlib + move_check, neg_16 hard-switch guard + match_scrutinee_parenthesized. All CI green.
 
 ## Summary
 

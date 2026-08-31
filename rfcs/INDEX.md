@@ -1357,8 +1357,8 @@ implementation).
   rule: if two named aspects in the same list declare a method with the identical
   name, the whole combination is rejected outright rather than guessing or
   introducing a qualified-declaration syntax. Depends on RFC-0102. Opened 2026-07-14.
-- **RFC-0156** *(integrated 2026-08-31; accepted same day after one Codex
-  adversarial-review round; opened 2026-08-31)* — Parenthesize `match` Scrutinee —
+- **RFC-0156** *(implemented 2026-08-31; accepted, integrated, and shipped the same day
+  after one Codex adversarial-review round; opened 2026-08-31)* — Parenthesize `match` Scrutinee —
   require `match (x) { … }` and make the bare `match x { … }` a parse error, aligning
   `match` with `if` / `while` / `for` / `for`-in, which all already require the
   parentheses (`match` accepts them today only incidentally). Pure surface syntax:
@@ -1367,8 +1367,9 @@ implementation).
   `"match" ~ (unit_lit | tuple_or_paren) ~ "{" ~ …` — the `tuple_or_paren` alternative
   keeps tuple scrutinees (`match (a, b) { … }`) working, the `unit_lit` alternative keeps
   `match () { … }` (both found in review). Integration added
-  `spec.expressions.pattern-matching.legality-3`. Grammar flip + mechanical corpus sweep
-  (pest-pair + source-span rewriter) + `neg_*` hard-switch guard land in metel-core#701,
+  `spec.expressions.pattern-matching.legality-3`. Shipped in metel-core#912: grammar flip
+  + mechanical corpus sweep (pest-pair + source-span rewriter, 93 fixtures + stdlib +
+  spec/tutorials) + `neg_16` hard-switch guard + `match_scrutinee_parenthesized`.
   v0.13.0.
 
 ---
