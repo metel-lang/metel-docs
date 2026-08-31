@@ -3,9 +3,39 @@ id: rfc-0050
 title: "Closure Capture Lists"
 date: '2026-06-03'
 status: under-review
+target: v0.13.0
 updated: '2026-08-31'
 tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 ---
+
+> **Amendment, 2026-08-31 (second pass) — capture semantics settled; targeted at v0.13.0.**
+> The earlier correction pass (below) dropped the `move` specifier and deferred
+> ownership-transfer capture to RFC-0157. RFC-0157's D5 has since been settled in the
+> direction this RFC needs, so the deferral is lifted and folded in here:
+>
+> - **A capture list is semantically required** whenever a closure captures a free
+>   non-`Copy` local binding, or captures anything by `&` / `&var`. It stays *omissible*
+>   only when the closure captures nothing, or captures only `Copy` bindings by value
+>   (where "by value" is a copy and so carries no risk). This makes RFC-0006's implicit
+>   deep-clone default unreachable for non-`Copy` captures — you can no longer clone a
+>   `Vec` into a closure by accident.
+> - **Bare `ident` is by-value capture:** a copy for a `Copy` binding, an **affine move**
+>   for a non-`Copy` binding (the outer binding is consumed — `let y := x` semantics,
+>   RFC-0157 D5). An explicit independent copy is written `[ident.clone()]` (RFC-0080's
+>   `Clone`). This is the change from "bare `ident` = clone" in the correction-pass text
+>   below.
+> - **Ownership-transfer capture is therefore back in scope, and still needs no keyword:**
+>   `[buf]` for a non-`Copy` `buf` moves it in. That is exactly the "an affine move takes
+>   no keyword" reasoning that removed the `move` specifier — now realized rather than
+>   deferred. The "out of scope" / "deferred to RFC-0157" wording everywhere below this
+>   note, and the *conclusion* (not the history) of the "A `move ident` specifier"
+>   alternative, are superseded by this bullet.
+> - **Pairs with RFC-0134's same-day amendment** (`many` by default, explicit `once`): a
+>   listed by-value non-`Copy` capture is what RFC-0134 §2's consumption check inspects.
+> - **Timing.** Rides RFC-0157's D5 `--edition` gate (the RFC-0006 default change).
+>   Milestoned **v0.13.0** (#803) alongside RFC-0134 (#269) and RFC-0152 (#901) — closure
+>   capture lists and closure call capability are one feature area. Still `1-under-review`;
+>   needs to reach `accepted` to match the rest of that milestone.
 
 > **Correction pass, 2026-08-31.** Two changes: the `move` specifier is **dropped**
 > from this RFC, and stale syntax is refreshed.
@@ -22,9 +52,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 >   Clone Model Re-analysis, `1-under-review`)**, alongside the adjacent RFC-0135. This RFC now
 >   covers only `&var` / `&` reference captures and the explicit spelling of today's
 >   implicit clone capture; **ownership-transfer capture is explicitly out of scope**,
->   deferred to RFC-0157. Consequence: nothing in this RFC is blocked on RFC-0134 or
->   RFC-0028 any more — its only prerequisite is RFC-0067a (`4-implemented`), so the
->   whole RFC is implementable now.
+>   deferred to RFC-0157. *(Lifted by the amendment above: RFC-0157's D5 is settled,
+>   ownership-transfer capture is bare `[ident]` for non-`Copy`, back in scope.)*
+>   Consequence: nothing in this RFC is blocked on RFC-0134 or
+>   RFC-0028 any more — its only prerequisite is RFC-0067a (`4-implemented`).
 > - **Syntax refresh.** `&mut` → `&var` in the grammar; `*mut T`/`*T` → `&var T`/`&T`
 >   throughout Semantics (RFC-0067a (`4-implemented`), supersedes RFC-0043); `=`
 >   initializers → `:=` in every example (RFC-0136, implemented). Dangling "see
@@ -91,13 +122,27 @@ clarified to mean outer-scope local bindings only; references to module-level fu
 constants, types, and aspects are name resolution, not capture, and never need to appear in the
 list.*
 
-> **Status — under review (2026-08-23; correction pass 2026-08-31, see frontmatter note).** Zero remaining open questions in its own ledger -- all 6 Resolved Questions checked. `move` specifier dropped 2026-08-31 (ownership-transfer capture deferred to a future RFC); the RFC is now `&var`/`&`/clone only and unblocked on RFC-0067a (`4-implemented`) -- #803
+> **Status — under review (2026-08-23; correction pass + amendment 2026-08-31, see frontmatter notes).** Six Resolved Questions checked. Amended 2026-08-31: capture list required for non-`Copy`/by-ref captures; bare `ident` is by-value (move for non-`Copy`); ownership-transfer capture folded back in (no keyword). Milestoned **v0.13.0** with RFC-0134 (#269) / RFC-0152 (#901); rides RFC-0157's D5 `--edition` gate. Needs to reach `accepted`. -- #803
 
 ## Summary
 
-Add an optional capture list syntax to closure expressions. The capture list supports three specifiers: `&var ident` captures a binding by mutable reference, enabling a closure to mutate outer-scope state without a separate `&var` reference binding; `&ident` captures a binding by read-only reference, avoiding a clone for values that are only read; bare `ident` captures by value (clone). All three may appear in the same list. Once a closure has a capture list at all, it must be exhaustive — every free variable the closure body references, where "free variable" means an outer-scope local binding (not a module-level function, constant, type, or aspect), must appear in it. All captures are explicit at the closure definition site.
+Add a capture list syntax to closure expressions, with three specifiers: `&var ident`
+captures by mutable reference; `&ident` captures by read-only reference; **bare `ident`
+captures by value** — a copy for a `Copy` binding, an affine **move** for a non-`Copy`
+binding (the outer binding is consumed), with `[ident.clone()]` for an explicit
+independent copy. All three may appear in one list.
 
-**Out of scope:** *ownership-transfer* capture — moving a binding into a closure so the closure owns it and the outer binding is consumed. An early draft of this RFC had a `move ident` specifier for it; it was dropped (see the frontmatter note and Alternatives) because an affine move needs no keyword elsewhere in Metel, and deciding whether closure capture is the exception requires revisiting RFC-0006's clone-by-default capture model and the `Copy`/`Clone` design underneath it — a separate RFC. Until then, a non-`Copy`, non-`Clone` binding still cannot be captured at all, exactly as today.
+The list is **required** whenever the closure captures a free non-`Copy` local, or
+captures by `&` / `&var`; it is omissible only when the closure captures nothing or
+captures only `Copy` bindings by value. Once present, it is **exhaustive** — every free
+variable the body references, where "free variable" means an outer-scope local binding
+(not a module-level function, constant, type, or aspect), must appear. Captures are
+explicit at the definition site.
+
+Ownership-transfer capture — moving a binding into a closure — is covered: it is bare
+`[ident]` for a non-`Copy` binding, needing no keyword (an affine move takes none
+elsewhere in Metel either). This rides RFC-0157's D5 `--edition` gate; see the frontmatter
+amendment.
 
 ---
 
@@ -127,20 +172,30 @@ A capture list allows the programmer to declare the mutable capture at the closu
 
 ## Proposal
 
-Extend the closure expression syntax with an optional capture list placed before the parameter list:
+Extend the closure expression syntax with a capture list placed before the parameter list:
 
 ```
 closure_expr  = capture_list? "(" params ")" "->" return_type? block
 capture_list  = "[" capture_item ("," capture_item)* "]"
-capture_item  = "&var" ident | "&" ident | ident
+capture_item  = "&var" ident | "&" ident | ident | ident "." "clone" "(" ")"
 ```
+
+The `capture_list?` is syntactically optional but **semantically required** unless every
+free variable the body references is a `Copy` binding captured by value (or there are no
+free variables) — see "When the list is required" below.
 
 *(The base closure-literal spelling — `(params) -> ret block` vs. RFC-0154's proposed
 `|params| body` — is RFC-0154's to settle. The `[captures]` prefix composes ahead of
 whichever it is: `[&var count] |req| { … }` under RFC-0154, `[&var count] (req: Request)
 -> Response { … }` today. Examples below use the current form.)*
 
-`&var ident` captures a binding by mutable reference. `&ident` captures a binding by read-only reference — the value is not cloned, but the closure may not write through it. A bare `ident` captures by value (clone) — the same behavior closures have always had for unlisted bindings, just now written explicitly. All three specifiers may appear in the same list: `[&var count, &config, log_prefix]`. There is no specifier for moving a binding into the closure (see Summary, "Out of scope").
+`&var ident` captures a binding by mutable reference. `&ident` captures a binding by
+read-only reference — no copy, and the closure may not write through it. **Bare `ident`
+captures by value:** a copy for a `Copy` binding, an affine **move** for a non-`Copy`
+binding — the outer binding is consumed at closure creation, exactly as `let y := x`
+consumes `x`. `[ident.clone()]` captures an explicit independent copy of a `Clone`
+binding, leaving the outer binding usable. All specifiers may appear in one list:
+`[&var count, &config, buf, prefix.clone()]`.
 
 Bindings named with `&var` in the capture list are captured by mutable reference rather than by value. Inside the closure body they are used with ordinary read and assignment syntax — no explicit dereference required:
 
@@ -173,21 +228,36 @@ fun main() {
 }
 ```
 
-If a closure has no capture list at all, every free variable it references continues to be captured by value (deep clone) implicitly — the RFC-0006 default, unchanged for the common case where nothing needs `&var` or `&`. (A closure that references a non-`Copy`, non-`Clone` binding — with or without a list — is an error today, independent of this RFC: there is nothing to clone, and this RFC adds no way to move such a value in. `&`/`&var` cover the read and mutate cases; ownership transfer is the deferred question in the Summary.)
+### When the list is required
 
-If a closure *does* have a capture list, that list must be exhaustive: every free variable the closure body references must appear in it, with the specifier matching how it's used. "Free variable" means an outer-scope **local binding** — a `let` binding or function/closure parameter visible in the lexical scope enclosing the closure. It does not include references to module-level functions, constants, types, or aspects: those are resolved by ordinary name resolution regardless of any capture list, and never need to appear in it, since nothing about them is being captured from a stack frame. A closure mixing a mutable capture with an otherwise-ordinary clone capture now looks like:
+A closure may omit the capture list only if **every** free variable it references is a
+`Copy` binding captured by value (a copy — semantically free), or it has no free variables
+at all. Those closures keep the RFC-0006 implicit path unchanged.
+
+The list is **required** the moment the closure references a free non-`Copy` local, or
+needs `&` / `&var` for any capture. A non-`Copy` free variable referenced with no list is
+a compile error: *"closure captures non-`Copy` `s`; add a capture list — `[s]` to move it
+in, `[&s]` / `[&var s]` to borrow, `[s.clone()]` to copy."* This makes RFC-0006's implicit
+deep-clone unreachable for non-`Copy` values — nothing is cloned into a closure without
+`.clone()` written at the capture site.
+
+(A non-`Copy`, non-`Clone` binding can now enter a closure: `[s]` moves it in. That is the
+change from the pre-amendment text, where such a binding could not be captured at all.)
+
+If a closure *does* have a capture list, that list must be exhaustive: every free variable the closure body references must appear in it, with the specifier matching how it's used. "Free variable" means an outer-scope **local binding** — a `let` binding or function/closure parameter visible in the lexical scope enclosing the closure. It does not include references to module-level functions, constants, types, or aspects: those are resolved by ordinary name resolution regardless of any capture list, and never need to appear in it, since nothing about them is being captured from a stack frame. A closure mixing a mutable-reference capture with a by-value capture now looks like:
 
 ```metel
 fun main() {
     var count := 0;
-    let log_prefix := "counter: ";
+    let log_prefix := "counter: ";        // String — non-Copy
 
-    let inc := [&var count, log_prefix] () -> () {
+    let inc := [&var count, &log_prefix] () -> () {
         count += 1;
         print(log_prefix + count.to_string());   // `print` is a module-level function, not a free variable
     };
 
     inc();
+    inc();                                  // `log_prefix` borrowed, still usable here
 }
 ```
 
@@ -205,20 +275,25 @@ Referencing a free local binding that is not in the list — of any kind, includ
 - Inside the closure body, reads of the binding are automatically routed through the stored reference. The programmer never sees an explicit dereference, and cannot write through it — assigning to a `&`-captured binding inside the closure body is a compile error, the same rule that applies to any `&T` value outside a closure.
 - Unlike `&var`, the outer binding does not need to be declared `var` — `&ident` is valid for any addressable binding, matching `&x`'s existing rules outside of closures (RFC-0067a).
 
-**Ownership-transfer captures — out of scope:**
-- There is no specifier for moving a binding into the closure so the closure owns it and the outer binding is consumed. An early draft had `move ident` for this.
-- It was dropped because an affine move needs no keyword anywhere else in Metel (`let y := x;`, `f(x)` both consume `x` unmarked, RFC-0071), so a `move` capture word only makes sense if closure capture is a deliberate exception — and settling that means revisiting RFC-0006's clone-by-default capture model and the `Copy`/`Clone` design under it. That is a separate RFC; see the frontmatter note, Alternatives, and Timing Recommendation.
-- Until that RFC: a non-`Copy`, non-`Clone` binding cannot be captured by a closure at all, and a `Clone` binding is always deep-cloned in (never moved). This is exactly today's behavior — this RFC neither improves nor regresses it.
+**Bare `ident` (by-value) captures:**
+- At closure creation time, each bare `ident` capture takes the binding **by value**: a
+  copy if the binding is `Copy`, an **affine move** if it is not — the outer binding is
+  consumed and using it after closure creation is a compile error, exactly as `let y :=
+  x;` consumes `x` (RFC-0071). No implicit clone: a non-`Copy` value is moved, never
+  duplicated, unless `.clone()` is written.
+- A `once`-vs-`many` consequence: a closure whose body *moves* a bare-captured non-`Copy`
+  binding out is call-once — see RFC-0134 §2, which inspects exactly these captures.
 
-**Bare `ident` (clone) captures:**
-- At closure creation time, each bare `ident` capture deep-clones the named binding into the closure's captured environment — identical to today's implicit RFC-0006 capture, just named explicitly.
-- Any binding whose value is cloneable (`Copy`, or `Clone`) and which the closure body reads without mutating through it can use this form; `&ident` is usually preferable for large values purely to avoid the clone, but both are legal.
+**`ident.clone()` (explicit copy) captures:**
+- At closure creation time, `[ident.clone()]` evaluates `ident.clone()` and stores the
+  resulting independent value in the environment. The outer binding stays usable. Requires
+  `ident`'s type to be `Clone` (RFC-0080).
+- This is the only way to duplicate a non-`Copy` value into a closure; it is deliberately
+  the explicit, visible form.
 
-**All three:**
+**All specifiers:**
 - A binding may not appear more than once across the capture list (no dual capture of the same name under different kinds).
-- **Exhaustiveness.** A closure with no capture list retains the RFC-0006 default: every free local binding is implicitly clone-captured. A closure *with* a capture list must enumerate every free local binding it references — there is no partial mode where some captures are explicit and others are silently implicit. Module-level functions, constants, types, and aspects are never "free variables" for this rule (see Proposal); only outer-scope `let` bindings and parameters count. This closes a gap in the original design, where `[&var count]` could coexist with other, unlisted clone-captured variables in the same closure; see Implementation Guidance for why this matters beyond ergonomics.
-
-If a future RFC adds an ownership-transfer specifier, it slots into the same exhaustive list as a fourth capture kind with no change to this rule.
+- **Exhaustiveness.** A closure with a capture list must enumerate every free local binding it references — there is no partial mode where some captures are explicit and others are silently implicit. Module-level functions, constants, types, and aspects are never "free variables" for this rule (see Proposal); only outer-scope `let` bindings and parameters count. A listless closure is permitted only in the `Copy`-only / no-free-variables case (see "When the list is required"), where there is nothing whose capture kind could surprise a reader; see Implementation Guidance for why this matters beyond ergonomics.
 
 ---
 
@@ -258,6 +333,12 @@ Syntactically simple but does not work under the current capture semantics — t
 Allow closures to detect at analysis time that a captured binding is assigned and automatically capture it by reference. Rejected: breaks the design principle that mutation is always explicit in Metel, and makes closure behaviour harder to reason about from the definition site alone.
 
 ### A `move ident` specifier for ownership-transfer capture
+
+> **Conclusion superseded by the 2026-08-31 amendment.** Ownership-transfer capture is
+> now in scope — as bare `[ident]` for a non-`Copy` binding, which *is* an affine move and
+> needs no keyword, exactly as this section concludes. What changed is only that RFC-0157's
+> D5 is now settled, so "deferred to RFC-0157" below reads as "adopted from RFC-0157's D5."
+> The history and the no-keyword argument stand.
 
 *In the RFC from 2026-06 through the first 2026-08-31 correction draft; removed 2026-08-31.*
 The list had a fourth specifier, `move ident`, to move a binding into the closure so the
@@ -344,26 +425,24 @@ and sequenced into Cluster A, removing the mechanical-rename concern below entir
 captures can target RFC-0067a's syntax directly instead of today's `*mut T`/`*T`, with no
 rename step to schedule around.*
 
-*Retargeted 2026-08-31 (second pass): the `move` specifier is dropped from this RFC
-(see the frontmatter note and Alternatives), so there is no longer a blocked half to
-sequence. What remains — `&var`/`&`/clone — has one prerequisite, RFC-0067a, which is
-`4-implemented`. The RFC is implementable now, in full, with nothing pending.*
+*Retargeted 2026-08-31 (third pass): the frontmatter amendment folds ownership-transfer
+capture back in (bare `[ident]` for non-`Copy` = move, no keyword). The whole RFC is now
+one feature with one timing story, milestoned **v0.13.0** (#803) alongside RFC-0134 (#269)
+and RFC-0152 (#901).*
 
-**`&var`, `&`, and bare `ident` (clone) captures** — the whole of this RFC — have no
-dependency on linear types, allocators, brands, RFC-0134, or RFC-0028. Their only
-prerequisite is RFC-0067a (`4-implemented`, Cluster A — `&T`/`&var T` with no anchors, no
-allocator interaction). Bare `ident` has no reference representation at all. Implementable
-now.
+**`&var`, `&`, and `Copy`-only listless captures** have no dependency beyond RFC-0067a
+(`4-implemented`) and are implementable immediately.
 
-**Ownership-transfer capture** is deferred to **RFC-0157 (Copy and Clone Model
-Re-analysis, `0-draft`)**, which settles the closure-capture default (RFC-0006's
-clone-by-default) and the `Copy`/`Clone` model under it. That RFC — not this one — is
-where an ownership-transfer specifier, if any, is designed. RFC-0046 (`6-refused/`), which
-specified the old `move` in `linear fun` / exactly-once terms against the unified `Region`
-model, is not the framing to inherit.
+**Bare `ident` by-value capture of a non-`Copy` binding** (the move case) rides RFC-0157's
+D5 `--edition` gate — the change to RFC-0006's implicit deep-clone default. RFC-0157 is
+`1-under-review` (#918); its D5 recommendation is settled in this direction, and this RFC's
+grammar and Semantics assume it. If D5's edition mechanism slips, the move case slips with
+it; the `&var`/`&`/`Copy` part does not. RFC-0046 (`6-refused/`), which specified the old
+`move` in `linear fun` / exactly-once terms, is not the framing inherited — an affine move
+takes no keyword, which is why bare `[ident]` suffices.
 
-**Suggested order:** implement this RFC (`&var`/`&`/clone) now against RFC-0067a. Revisit
-ownership-transfer capture once RFC-0157 concludes.
+**Suggested order:** land RFC-0157 D5 + this RFC together for v0.13.0, sequenced with
+RFC-0134 (#269) — capture lists and call capability are one review.
 
 ---
 
