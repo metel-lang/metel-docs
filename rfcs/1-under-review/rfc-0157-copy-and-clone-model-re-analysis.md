@@ -389,6 +389,13 @@ less settled intuition to leverage there and more room to do better. So:
    edition gate; require an explicit capture list at the point a capture would move. This
    settles RFC-0050's deferred question as "no keyword," and makes closures *conform to
    the value model* rather than the reverse.
+
+   *Concrete shape (2026-08-31): **RFC-0050** adopts this — capture list required for a
+   non-`Copy`/by-ref capture, bare `[s]` = move for non-`Copy`, `[s.clone()]` for an
+   explicit copy — and is milestoned **v0.13.0** (#803) with RFC-0134 (#269) / RFC-0152
+   (#901). **RFC-0134** takes the matching amendment: `many` by default, `once` written
+   explicitly, §2 becomes a check against that default. D5 rides these two; it is no longer
+   an abstract recommendation.*
 5. **Keep investing in the closure-capability cluster** (RFC-0134 `call_multiplicity`,
    RFC-0152 widening, RFC-0153 mutation axis, RFC-0050 capture lists). "Does calling this
    closure consume a capture" is the one irreducibly closure-specific concept with no
