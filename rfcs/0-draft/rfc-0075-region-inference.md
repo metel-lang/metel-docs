@@ -209,7 +209,7 @@ function. No annotation is needed.
 
 ```metel
 fun emit_binop(op: Op, lhs: Expr, rhs: Expr) -> Bytecode {
-    let node = BinopNode { op, lhs, rhs };   // inferred AutoRegion
+    let node := BinopNode { op, lhs, rhs };   // inferred AutoRegion
     node.emit()
     // node dropped after emit() returns
 }
@@ -239,7 +239,7 @@ The returned `Response` lives in the caller's explicit region `r`. The intermedi
 
 ```metel
 fun bad_collect(input: &List<i64>) -> List<i64> {
-    let result = List::Nil {};   // inferred AutoRegion
+    let result := List::Nil {};   // inferred AutoRegion
     // ...
     result   // error: cannot return value from inferred AutoRegion
 }

@@ -12,7 +12,7 @@ A record is written in bare braces, with no keyword:
 
 ```metel
 fun main() {
-    let p: { x: f64, y: f64 } = { x = 1.0, y = 2.0 };
+    let p: { x: f64, y: f64 } := { x = 1.0, y = 2.0 };
     println("${p.x}, ${p.y}");   // 1, 2
 }
 ```
@@ -29,9 +29,9 @@ When a local variable already has the field's name, `= value` can be omitted, ex
 
 ```metel
 fun main() {
-    let x = 1.0;
-    let y = 2.0;
-    let p = { x, y };   // { x: f64, y: f64 }
+    let x := 1.0;
+    let y := 2.0;
+    let p := { x, y };   // { x: f64, y: f64 }
     println("${p.x}");
 }
 ```
@@ -50,19 +50,19 @@ fun describe(x: i64) {
 
 ```metel
 fun main() {
-    let x = 1;
-    let r = { x };       // a record — { let ... }/`=`/call-argument position only admits an expression
+    let x := 1;
+    let r := { x };       // a record — { let ... }/`=`/call-argument position only admits an expression
     println(r.x);        // 1
 }
 ```
 
 ```metel
 fun main() {
-    let x = 1;
+    let x := 1;
     // In a position that also admits a block (an if/else or match arm, a
     // function/closure/loop body), `{ x }` is a block whose result is `x` —
     // not a one-field record.
-    let result = if (true) { x } else { 0 };
+    let result := if (true) { x } else { 0 };
     println(result);   // 1 — an i64, not a record
 }
 ```

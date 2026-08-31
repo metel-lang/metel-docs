@@ -119,7 +119,7 @@ Bare `{ ... }` remains a block expression, not a closure shorthand. Zero-argumen
 Return-type omission does not remove the arrow. The canonical inferred-return form is:
 
 ```metel
-let double = (x: Int) -> { x * 2 };
+let double := (x: Int) -> { x * 2 };
 ```
 
 `(params) { body }` is not introduced as closure syntax.

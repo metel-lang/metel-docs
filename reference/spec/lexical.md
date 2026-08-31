@@ -70,22 +70,22 @@ Integer and float are [distinct types and do not implicitly coerce](#spec.lexica
 **Polymorphic literal coercion.** When the surrounding context provides a numeric type — a `let` annotation, a function parameter type, a struct field type, or a return type — an unsuffixed literal [adopts that type automatically](types.md#spec.types.sized-numeric-types.legality-3):
 
 ```metel
-let x: i32  = 10;       // 10 is i32
-let y: u8   = 255;      // 255 is u8
-let z: f32  = 3.14;     // 3.14 is f32
+let x: i32  := 10;       // 10 is i32
+let y: u8   := 255;      // 255 is u8
+let z: f32  := 3.14;     // 3.14 is f32
 
 fun add(a: i32, b: i32) -> i32 { a + b }
-let r = add(1, 2);      // 1 and 2 are i32
+let r := add(1, 2);      // 1 and 2 are i32
 
 struct Pixel { r: u8, g: u8, b: u8 }
-let p = Pixel { r = 255, g = 128, b = 0 };  // fields are u8
+let p := Pixel { r = 255, g = 128, b = 0 };  // fields are u8
 ```
 
 Arithmetic and comparison operators propagate the type from a sized operand to an unsuffixed sibling:
 
 ```metel
-let x: i32 = 10i32;
-let y = x + 5;          // 5 adopts i32; y is i32
+let x: i32 := 10i32;
+let y := x + 5;          // 5 adopts i32; y is i32
 assert(x > 5);          // 5 adopts i32
 ```
 
@@ -119,10 +119,10 @@ The type of a character literal [is `Char`](#spec.lexical.literals.legality-5).
 **String interpolation.** A string literal may contain one or more `${expr}` placeholders:
 
 ```metel
-let name = "world";
-let msg = "hello, ${name}!";       // "hello, world!"
-let n = 42;
-let s  = "n=${n}";                 // "n=42"
+let name := "world";
+let msg := "hello, ${name}!";       // "hello, world!"
+let n := 42;
+let s  := "n=${n}";                 // "n=42"
 ```
 
 > **Availability:** Since v0.7.0.
@@ -130,7 +130,7 @@ let s  = "n=${n}";                 // "n=42"
 The expression inside `${…}` may be any expression whose type implements the `Display` aspect (i.e. has a `.to_string()` method). The placeholder desugars to `.to_string()` concatenated with the surrounding literal fragments using `+`. String literals may appear inside `${…}`:
 
 ```metel
-let x = "${if (true) { "yes" } else { "no" }}";
+let x := "${if (true) { "yes" } else { "no" }}";
 ```
 
 **"Any expression" is deliberate, and includes control flow, closures, and side effects.**
@@ -181,7 +181,7 @@ else `expr` is legal.
 **String concatenation.** Two `String` values may be joined with `+`:
 
 ```metel
-let full = "hello" + ", " + "world";   // "hello, world"
+let full := "hello" + ", " + "world";   // "hello, world"
 ```
 
 <details>

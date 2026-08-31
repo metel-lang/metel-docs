@@ -131,7 +131,7 @@ to that one field) — nothing about the representation is new; only the name is
 
 ```metel
 fun example(h: &var Ticketing) {
-    let v: &var TicketView = h;   // RFC-0137 §2's narrowing, spelled through the alias
+    let v: &var TicketView := h;   // RFC-0137 §2's narrowing, spelled through the alias
     v.golden_tickets.redeem();
 }
 ```

@@ -51,22 +51,22 @@ Sized literals use a suffix: `42i32`, `3.14f32`, `255u8`. All casts between size
 **Unsuffixed literals are polymorphic.** When the expected type is known from context (annotation, function parameter, struct field, return type, or the other operand in arithmetic/comparison), an unsuffixed numeric literal [adopts that type automatically](#spec.types.sized-numeric-types.legality-3). When no context is available, the literal defaults to `i64` (integer) or `f64` (float).
 
 ```metel
-let a: i32 = 10;          // 10 is i32
-let b: u8  = 255;         // 255 is u8
-let c: f32 = 1.5;         // 1.5 is f32
+let a: i32 := 10;          // 10 is i32
+let b: u8  := 255;         // 255 is u8
+let c: f32 := 1.5;         // 1.5 is f32
 
 fun scale(x: f32, factor: f32) -> f32 { x * factor }
-let r = scale(2.0, 3.0);  // both literals are f32
+let r := scale(2.0, 3.0);  // both literals are f32
 
-let x: i32 = 10i32;
-let y = x + 5;            // 5 adopts i32 from x; y is i32
+let x: i32 := 10i32;
+let y := x + 5;            // 5 adopts i32 from x; y is i32
 ```
 
-This also applies to `var` reassignment — the right-hand side of `m = expr` adopts `m`'s declared type:
+This also applies to `var` reassignment — the right-hand side of `m := expr` adopts `m`'s declared type:
 
 ```metel
-var count: i32 = 0;
-count = 99;               // 99 is i32
+var count: i32 := 0;
+count := 99;               // 99 is i32
 ```
 
 <details>
@@ -135,9 +135,9 @@ Floating-point overflow follows IEEE 754 behavior.
 
 ```metel
 fun main() {
-    let c: Char = 'a';
-    let code: u32 = u32::from(c);
-    let back: Char = Char::from(code);
+    let c: Char := 'a';
+    let code: u32 := u32::from(c);
+    let back: Char := Char::from(code);
 }
 ```
 
@@ -183,10 +183,10 @@ fun add_annotated(a: i64, b: i64) -> i64 { a + b }
 fun add_inferred(a, b) { a + b }
 
 fun main() -> i64 {
-    let x = 42;           // inferred: i64
-    let name = "Vlad";    // inferred: String
-    let y: f64 = 3.14;  // explicit annotation (optional here)
-    let total = add_annotated(x, 1) + add_inferred(2, 3);
+    let x := 42;           // inferred: i64
+    let name := "Vlad";    // inferred: String
+    let y: f64 := 3.14;  // explicit annotation (optional here)
+    let total := add_annotated(x, 1) + add_inferred(2, 3);
     if (name == "Vlad") { total + (y as i64) } else { 0 }
 }
 ```
@@ -228,8 +228,8 @@ Tuples are lightweight anonymous product types.
 
 ```metel
 fun main() -> i64 {
-    let coord: (i64, i64) = (10, 20);
-    let triple: (String, i64, boolean) = ("yes", 42, true);
+    let coord: (i64, i64) := (10, 20);
+    let triple: (String, i64, boolean) := ("yes", 42, true);
     return coord.0 + triple.1;
 }
 ```
@@ -238,9 +238,9 @@ Positional field access [uses zero-based selectors `.0`, `.1`, etc.](#spec.types
 
 ```metel
 fun main() -> i64 {
-    let coord: (i64, i64) = (10, 20);
-    let x = coord.0;
-    let y = coord.1;
+    let coord: (i64, i64) := (10, 20);
+    let x := coord.0;
+    let y := coord.1;
     return x + y;
 }
 ```
@@ -251,7 +251,7 @@ Tuples can be destructured in `match`:
 
 ```metel
 fun main() -> i64 {
-    let coord: (i64, i64) = (10, 0);
+    let coord: (i64, i64) := (10, 0);
     match coord {
         (0, y) => y,
         (x, 0) => x,
@@ -308,9 +308,9 @@ a struct literal:
 
 ```metel
 fun main() {
-    let x = 1.0;
-    let y = 2.0;
-    let p = { x, y };       // { x: f64, y: f64 }
+    let x := 1.0;
+    let y := 2.0;
+    let p := { x, y };       // { x: f64, y: f64 }
     println("${p.x}");
 }
 ```
@@ -432,8 +432,8 @@ non-local aspect implementation, and as the target of a custom `Drop` implementa
 
 ```metel
 fun main() -> i64 {
-    let nums: i64[] = [1, 2, 3];
-    let names: Array<String> = ["alice", "bob"];
+    let nums: i64[] := [1, 2, 3];
+    let names: Array<String> := ["alice", "bob"];
     if (names.len() == 2) { nums[0] } else { 0 }
 }
 ```
@@ -442,8 +442,8 @@ Index access uses `[]` with a `u64` index. Out-of-bounds access causes a panic.
 
 ```metel
 fun main() -> i64 {
-    let nums: i64[] = [1, 2, 3];
-    let first = nums[0];
+    let nums: i64[] := [1, 2, 3];
+    let first := nums[0];
     return first;
 }
 ```
@@ -500,14 +500,14 @@ An array index expression must have type `u64`.
 ```metel
 fun main() {
     // Repeat construction: every element is the same value.
-    let zeros: [i64; 3] = [0; 3];
+    let zeros: [i64; 3] := [0; 3];
 
     // Literal construction with an explicit sized type.
-    let ones: [i64; 3] = [1, 2, 3];
+    let ones: [i64; 3] := [1, 2, 3];
 
     // Coerces to T[] when a T[] is expected.
     fun first(xs: i64[]) -> i64 { xs[0] }
-    let v = first(ones);          // [i64; 3] → i64[]
+    let v := first(ones);          // [i64; 3] → i64[]
 }
 ```
 
@@ -675,10 +675,10 @@ Reference types provide explicit aliasing.
 
 ```metel
 fun main() -> i64 {
-    var value = 1;
-    let p: &i64 = &value;
-    let q: &var i64 = &var value;
-    *q = *p + 1;
+    var value := 1;
+    let p: &i64 := &value;
+    let q: &var i64 := &var value;
+    *q := *p + 1;
     return q;
 }
 ```
@@ -713,9 +713,9 @@ available (v0.11.0) for reading through a reference and for writing through a
 struct Counter { value: i64 }
 
 fun main() -> i64 {
-    var c = Counter { value = 0 };
-    let p: &var i64 = &var c.value;
-    *p = 42;
+    var c := Counter { value = 0 };
+    let p: &var i64 := &var c.value;
+    *p := 42;
     return c.value;   // 42
 }
 ```
@@ -748,9 +748,9 @@ the referent's type permits copying:
 
 ```metel
 fun main() -> i64 {
-    let x = 42;
-    let r: &i64 = &x;
-    let y: i64 = r;   // type-directed copy: y's declared type differs from r's
+    let x := 42;
+    let r: &i64 := &x;
+    let y: i64 := r;   // type-directed copy: y's declared type differs from r's
     return y;
 }
 ```
@@ -781,10 +781,10 @@ declared type may require copying out of more than one layer:
 
 ```metel
 fun main() -> i64 {
-    let x = 42;
-    let r: &i64 = &x;
-    let rr: &&i64 = &r;
-    let y: i64 = rr;   // copies through both layers of the chain
+    let x := 42;
+    let r: &i64 := &x;
+    let rr: &&i64 := &r;
+    let y: i64 := rr;   // copies through both layers of the chain
     return y;
 }
 ```
@@ -822,12 +822,12 @@ to an un-ascribed call argument.
 
 ```metel
 fun main() {
-    var xs: List<i64> = List::new();
+    var xs: List<i64> := List::new();
     xs.push(1);
     xs.push(2);
     xs.push(3);
     println(xs.len().to_string());   // 3
-    let last = xs.pop();             // Some { value = 3 }
+    let last := xs.pop();             // Some { value = 3 }
 }
 ```
 
@@ -938,8 +938,8 @@ type inline is clearer than introducing a separate annotated binding.
 
 ```metel
 fun main() -> i64 {
-    let xs = [] : i64[];
-    let x  = 1 : i64;
+    let xs := [] : i64[];
+    let x  := 1 : i64;
     if (xs.len() == 0) { x } else { 0 }
 }
 ```
@@ -949,7 +949,7 @@ fun main() -> i64 {
 <!-- doc-example: expect-fail reason="demonstrates an ascription failure -- the type error is the point" -->
 ```metel
 fun main() -> i64 {
-    let y = 1 : String;
+    let y := 1 : String;
     return 0;
 }
 ```
@@ -1024,9 +1024,9 @@ fun first_or_default(items: i64[], fallback: Perhaps<i64>) -> i64 {
 }
 
 fun main() -> i64 {
-    let total = zip_lengths([], ["a", "b"]);
-    let row = make_row(true, [1, 2, 3]);
-    let first = first_or_default([1, 2, 3], None);
+    let total := zip_lengths([], ["a", "b"]);
+    let row := make_row(true, [1, 2, 3]);
+    let first := first_or_default([1, 2, 3], None);
     return total + row.len() + first;
 }
 ```
@@ -1035,8 +1035,8 @@ Ascription is still useful when no surrounding context fixes the type:
 
 ```metel
 fun main() -> i64 {
-    let arr = [] : i64[];
-    let value = None : Perhaps<i64>;
+    let arr := [] : i64[];
+    let value := None : Perhaps<i64>;
     match value {
         Some { value } => value + arr.len(),
         None => arr.len(),
@@ -1049,7 +1049,7 @@ Without such context, ambiguous literals remain a type error. For example, `let 
 <!-- doc-example: expect-fail reason="demonstrates an ambiguous None -- the type error is the point" -->
 ```metel
 fun main() -> i64 {
-    let x = None;
+    let x := None;
     return 0;
 }
 ```
@@ -1060,13 +1060,13 @@ The `as` operator [performs an explicit conversion from `expr`'s type to `T`](#s
 
 ```metel
 fun main() {
-    let x: i32 = 1000i32;
-    let b: i8  = x as i8;    // wraps: 1000 mod 256 → -24
-    let f: f32 = x as f32;   // 1000.0f32
-    let u: u64 = x as u64;   // 1000u64
+    let x: i32 := 1000i32;
+    let b: i8  := x as i8;    // wraps: 1000 mod 256 → -24
+    let f: f32 := x as f32;   // 1000.0f32
+    let u: u64 := x as u64;   // 1000u64
 
-    let pi: f64 = 3.14;
-    let n: i32  = pi as i32; // truncates toward zero → 3
+    let pi: f64 := 3.14;
+    let n: i32  := pi as i32; // truncates toward zero → 3
 }
 ```
 
@@ -1112,7 +1112,7 @@ fun first<T>(arr: T[]) -> Perhaps<T> {
 }
 
 fun main() -> i64 {
-    let stack = Stack { items = [1, 2, 3] };
+    let stack := Stack { items = [1, 2, 3] };
     match first(stack.items) {
         Some { value } => value,
         None => 0,
@@ -1406,7 +1406,7 @@ constructed. A `loop` with no reachable `break` has type `!`:
 
 ```metel
 fun main() -> i64 {
-    let result: i64 = loop { break 42; };
+    let result: i64 := loop { break 42; };
     return result;
 }
 ```
@@ -1456,7 +1456,7 @@ enum Wrapper<T> {
 fun infallible() -> Wrapper<i64> { Wrapper::Present { value = 42 } }
 
 fun main() -> i64 {
-    let x: i64 = infallible();  // implicit coercion via the inhabited-singleton rule
+    let x: i64 := infallible();  // implicit coercion via the inhabited-singleton rule
     return x;
 }
 ```
@@ -1658,7 +1658,7 @@ a reachable ordinary return is a type error.
 
 ```metel
 fun main() -> i64 {
-    let x: Perhaps<i64> = None;
+    let x: Perhaps<i64> := None;
     match x {
         Some { value } => value,
         None => 0,
@@ -1668,8 +1668,8 @@ fun main() -> i64 {
 
 ```metel
 fun main() -> i64 {
-    let result: Perhaps<i64> = None;
-    let value: Perhaps<i64> = Some { value = 42 };
+    let result: Perhaps<i64> := None;
+    let value: Perhaps<i64> := Some { value = 42 };
     match value {
         Some { value } => value,
         None => match result {
@@ -1717,7 +1717,7 @@ fun find_user(id: i64) -> Perhaps<User> {
 }
 
 fun main() -> i64 {
-    let user = find_user(1).yolo();
+    let user := find_user(1).yolo();
     return user.id;
 }
 ```

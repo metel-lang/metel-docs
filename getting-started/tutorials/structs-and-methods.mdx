@@ -22,8 +22,8 @@ Create an instance by naming every field:
 {/* doc-example: skip reason="uses Point from the earlier block in this section" */}
 ```metel
 fun main() {
-    let origin = Point { x = 0.0, y = 0.0 };
-    let p = Point { x = 3.0, y = 4.0 };
+    let origin := Point { x = 0.0, y = 0.0 };
+    let p := Point { x = 3.0, y = 4.0 };
 
     println("x = ${p.x}, y = ${p.y}");
 }
@@ -49,8 +49,8 @@ struct Point {
 
 extend Point {
     fun distance_from_origin(self) -> f64 {
-        let x2 = self.x * self.x;
-        let y2 = self.y * self.y;
+        let x2 := self.x * self.x;
+        let y2 := self.y * self.y;
         // Metel has no sqrt builtin yet — return the squared distance
         return x2 + y2;
     }
@@ -61,7 +61,7 @@ extend Point {
 }
 
 fun main() {
-    let p = Point { x = 3.0, y = 4.0 };
+    let p := Point { x = 3.0, y = 4.0 };
     println(p.to_string());              // (3, 4)
     println(p.distance_from_origin());   // 25
 }
@@ -96,11 +96,11 @@ extend Point {
 }
 
 fun main() {
-    let p = Point { x = 1.0, y = 2.0 };
-    let moved = p.translate(3.0, 4.0);
+    let p := Point { x = 1.0, y = 2.0 };
+    let moved := p.translate(3.0, 4.0);
     println("${moved.x}, ${moved.y}");   // 4, 6
 
-    let big = moved.scale(2.0);
+    let big := moved.scale(2.0);
     println("${big.x}, ${big.y}");       // 8, 12
 }
 ```
@@ -132,9 +132,9 @@ Create enum values with `::`:
 {/* doc-example: skip reason="uses Direction/Shape from the earlier block in this section" */}
 ```metel
 fun main() {
-    let dir = Direction::North;
-    let s = Shape::Circle { radius = 5.0 };
-    let r = Shape::Rectangle { width = 3.0, height = 4.0 };
+    let dir := Direction::North;
+    let s := Shape::Circle { radius = 5.0 };
+    let r := Shape::Rectangle { width = 3.0, height = 4.0 };
 }
 ```
 
@@ -181,8 +181,8 @@ fun area(s: Shape) -> f64 {
 }
 
 fun main() {
-    let c = Shape::Circle { radius = 5.0 };
-    let r = Shape::Rectangle { width = 3.0, height = 4.0 };
+    let c := Shape::Circle { radius = 5.0 };
+    let r := Shape::Rectangle { width = 3.0, height = 4.0 };
 
     println("circle area: ${area(c)}");      // circle area: 78.53975
     println("rectangle area: ${area(r)}");   // rectangle area: 12
@@ -224,13 +224,13 @@ extend Shape {
 }
 
 fun main() {
-    let shapes = [
+    let shapes := [
         Shape::Circle { radius = 2.0 },
         Shape::Rectangle { width = 5.0, height = 3.0 },
         Shape::Circle { radius = 1.0 },
     ];
 
-    var total_area = 0.0;
+    var total_area := 0.0;
     for (let s in shapes) {
         println("${s.describe()} — area ${s.area()}");
         total_area += s.area();
@@ -316,7 +316,7 @@ extend Card {
 }
 
 fun hand_value(hand: Card[]) -> i64 {
-    var total = 0;
+    var total := 0;
     for (let card in hand) {
         total += card.value();
     }
@@ -324,7 +324,7 @@ fun hand_value(hand: Card[]) -> i64 {
 }
 
 fun main() {
-    let hand = [
+    let hand := [
         Card { suit = Hearts,   rank = Ace },
         Card { suit = Spades,   rank = King },
         Card { suit = Diamonds, rank = Number { value = 7 } },
@@ -363,8 +363,8 @@ below hold independent storage either way, and mutating one never affects the ot
 struct Point { x: f64, y: f64 }
 
 fun main() {
-    let p = Point { x = 1.0, y = 2.0 };
-    let q = p;   // p is considered moved into q
+    let p := Point { x = 1.0, y = 2.0 };
+    let q := p;   // p is considered moved into q
     println("${q.x}, ${q.y}");
 }
 ```
@@ -386,8 +386,8 @@ struct Point { x: f64, y: f64 }
 extend Point: Copy;
 
 fun main() {
-    let p = Point { x = 1.0, y = 2.0 };
-    let q = p;   // Copy: reusing p afterward is always valid, checked or not
+    let p := Point { x = 1.0, y = 2.0 };
+    let q := p;   // Copy: reusing p afterward is always valid, checked or not
     println("${p.x}, ${q.x}");
 }
 ```

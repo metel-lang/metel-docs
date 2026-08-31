@@ -104,9 +104,9 @@ Two concrete forms:
 The `as` keyword was already part of the language before this RFC. Within the implemented scope of RFC-0007, `as` continues to be the explicit cast operator for cross-sized numeric conversions:
 
 ```metel
-let x: i32 = 42;
-let y: i64 = x as i64;   // widening: explicit
-let z: i32 = y as i32;   // narrowing: explicit, may lose information
+let x: i32 := 42;
+let y: i64 := x as i64;   // widening: explicit
+let z: i32 := y as i32;   // narrowing: explicit, may lose information
 ```
 
 `*mut T` coerces to `*T` implicitly (per RFC-0043). All other coercions between numeric types are explicit.
@@ -168,9 +168,9 @@ no implementation change was needed, since the implementation was right all alon
 The direct index type for `[T]` and `[T; N]` is `u64`. Negative values are statically rejected at the index site.
 
 ```metel
-let arr: [i64; 4] = [1, 2, 3, 4];
-let i: u64 = 2;
-let x = arr[i];        // ok
+let arr: [i64; 4] := [1, 2, 3, 4];
+let i: u64 := 2;
+let x := arr[i];        // ok
 // let y = arr[-1];    // type error: negative literal is not u64
 ```
 

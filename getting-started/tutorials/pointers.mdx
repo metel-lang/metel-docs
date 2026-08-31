@@ -17,14 +17,14 @@ The file is still named `pointers.mdx` for link stability, but the current langu
 
 ```metel
 fun main() {
-    let value = 42;
-    let read_ref: &i64 = &value;
-    let current: i64 = read_ref;
+    let value := 42;
+    let read_ref: &i64 := &value;
+    let current: i64 := read_ref;
     println(current);   // 42
 
-    var counter = 0;
-    let write_ref: &var i64 = &var counter;
-    *write_ref = 50;
+    var counter := 0;
+    let write_ref: &var i64 := &var counter;
+    *write_ref := 50;
     println(counter);   // 50
 }
 ```
@@ -56,14 +56,14 @@ References are useful when multiple parts of a program need to talk about the sa
 
 ```metel
 fun main() {
-    var total = 0;
-    let cell: &var i64 = &var total;
+    var total := 0;
+    let cell: &var i64 := &var total;
 
-    let add_one = () -> {
+    let add_one := () -> {
         *cell += 1;
     };
 
-    let add_ten = () -> {
+    let add_ten := () -> {
         *cell += 10;
     };
 
@@ -88,8 +88,8 @@ struct Counter {
 }
 
 fun main() {
-    var counter = Counter { value = 10 };
-    let field_ref: &var i64 = &var counter.value;
+    var counter := Counter { value = 10 };
+    let field_ref: &var i64 := &var counter.value;
 
     *field_ref += 5;
     println(counter.value);   // 15
@@ -104,11 +104,11 @@ Reading is implicit: a value is copied out of a reference whenever the expected 
 
 ```metel
 fun main() {
-    var n = 1;
-    let r: &var i64 = &var n;
+    var n := 1;
+    let r: &var i64 := &var n;
 
-    *r = 4;             // write-through
-    let value: i64 = r; // type-directed read
+    *r := 4;             // write-through
+    let value: i64 := r; // type-directed read
     println(value);    // 4
 }
 ```
@@ -137,8 +137,8 @@ extend Counter {
 }
 
 fun main() {
-    var counter = Counter { value = 0 };
-    let r: &var Counter = &var counter;
+    var counter := Counter { value = 0 };
+    let r: &var Counter := &var counter;
 
     r.increment();
     println(r.value);   // 1
@@ -153,8 +153,8 @@ References to closures or functions can be called directly:
 
 ```metel
 fun main() {
-    let f = () -> i64 { return 42; };
-    let r: &() -> i64 = &f;
+    let f := () -> i64 { return 42; };
+    let r: &() -> i64 := &f;
     println(r());   // 42
 }
 ```

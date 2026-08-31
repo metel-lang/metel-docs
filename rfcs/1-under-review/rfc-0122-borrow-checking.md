@@ -110,10 +110,10 @@ doing load-bearing work as a bare adjective.
 *duplicated* — but not two being created independently:
 
 ```metel
-let a = &var x;
-let b = a;         // rejected: !Copy, so `a` was moved
-let c = &var x;
-let d = &var x;    // nothing in RFC-0071 forbids this
+let a := &var x;
+let b := a;         // rejected: !Copy, so `a` was moved
+let c := &var x;
+let d := &var x;    // nothing in RFC-0071 forbids this
 ```
 
 Ownership answers "how many owners". `Copy` answers "may this be duplicated". Neither answers
@@ -128,19 +128,19 @@ makes this a soundness rule rather than a hygiene one:
 ```metel
 struct P { v: i64 }
 
-fun both(a: &var P, b: &var P) { a.v = 10; b.v = 20; }
+fun both(a: &var P, b: &var P) { a.v := 10; b.v := 20; }
 
 // (1) two exclusive borrows of one place — accepted
-var x = P { v = 1 };
-let c = &var x;
-let d = &var x;
+var x := P { v = 1 };
+let c := &var x;
+let d := &var x;
 
 // (2) the same, aliased across a call boundary — accepted, prints 20
 both(&var x, &var x);
 
 // (3) the owner writes through an outstanding exclusive borrow — accepted, prints 99
-let r = &var x;
-x.v = 99;
+let r := &var x;
+x.v := 99;
 println(r.v.to_string());
 ```
 
@@ -451,7 +451,7 @@ liveness model, no diagnostic, and no worked example. It is also unenforced:
 
 ```metel
 fun leak() -> &P {
-    let local = P { v = 1 };
+    let local := P { v = 1 };
     return &local;          // accepted today; prints 1
 }
 ```
@@ -468,7 +468,7 @@ survives a stored reference:
 ```metel
 struct Holder { r: &P }
 fun make() -> Holder {
-    let local = P { v = 42 };
+    let local := P { v = 42 };
     return Holder { r = &local };   // accepted today; prints 42
 }
 ```
@@ -489,9 +489,9 @@ checking needs the analogue: a closure capturing a place while a borrow of it is
 Accepted today:
 
 ```metel
-var c = C { v = 0 };
-let r = &var c;
-let f = () -> i64 { c.v };   // captures c while r borrows it exclusively
+var c := C { v = 0 };
+let r := &var c;
+let f := () -> i64 { c.v };   // captures c while r borrows it exclusively
 ```
 
 **5. Reborrowing is listed in scope and specified nowhere.** §1 names it ("already

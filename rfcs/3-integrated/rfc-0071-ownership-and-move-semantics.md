@@ -151,8 +151,8 @@ When a value of a non-`Copy` type is assigned, passed as an argument, or returne
 binding is invalid and may not be used.
 
 ```metel
-let x = Node { val = 1 };
-let y = x;          // x is moved into y; x is now invalid
+let x := Node { val = 1 };
+let y := x;          // x is moved into y; x is now invalid
 process(y);         // y is moved into process; y is now invalid
 ```
 
@@ -182,9 +182,9 @@ position, a copy of its bits is made and the original remains valid. No ownershi
 occurs.
 
 ```metel
-let x: i64 = 42;
-let y = x;   // copy — x is still valid
-let z = x;   // copy again — x is still valid
+let x: i64 := 42;
+let y := x;   // copy — x is still valid
+let z := x;   // copy again — x is still valid
 ```
 
 `Copy` is opt-in. The following are `Copy` by default:
@@ -309,7 +309,7 @@ are unreachable before the bulk free, preventing use-after-free at the drop site
 A value may be dropped before the end of its scope with the free function `drop`:
 
 ```metel
-let handle = Handle { fd = open("file.txt") };
+let handle := Handle { fd = open("file.txt") };
 use_handle(&handle);
 drop(handle);   // destructor runs here; handle is invalid from this point
 ```
@@ -335,8 +335,8 @@ A struct implementing `Drop` may not be partially moved — the destructor requi
 to the complete value. The compiler rejects partial moves of `Drop` types:
 
 ```metel
-let h = Handle { fd = open("file.txt"), tag = 1u64 };
-let fd = h.fd;   // compile error — Handle implements Drop; partial move not allowed
+let h := Handle { fd = open("file.txt"), tag = 1u64 };
+let fd := h.fd;   // compile error — Handle implements Drop; partial move not allowed
 ```
 
 > **Planned to be relaxed (RFC-0137, `2-accepted` as of 2026-08-27 — briefly
@@ -362,9 +362,9 @@ be given up when this scope only borrows it.
 aspect Consume { fun eat(self) -> String; }
 
 fun main() {
-    let b = Handle { fd = open("file.txt") };
-    let r = &b;
-    let taken = r.eat();   // compile error — `eat` takes `self` by value,
+    let b := Handle { fd = open("file.txt") };
+    let r := &b;
+    let taken := r.eat();   // compile error — `eat` takes `self` by value,
                            // but `r` only borrows `b`
 }
 ```
@@ -512,7 +512,7 @@ its `T: Copy` gate to "RFC-0071's affine/Copy model," and this RFC never mention
 so the two documents point at each other. The consequence if `&T` is affine:
 
 ```metel
-let r = &x;
+let r := &x;
 f(r);
 g(r);        // error — r was moved into f?
 ```

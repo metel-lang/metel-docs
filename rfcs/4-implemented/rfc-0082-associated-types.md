@@ -351,7 +351,7 @@ struct SubRegion<R: Region> {
 }
 
 extend<R: Region> SubRegion<R>: Region {
-    type AllocationError = !;
+    type AllocationError := !;
 }
 
 extend<R: Region> SubRegion<R>: Outlives<R> {}

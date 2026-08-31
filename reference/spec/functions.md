@@ -68,7 +68,7 @@ extend Point {
 }
 
 fun main() -> i64 {
-    let p = Point::new(1.0, 2.0);
+    let p := Point::new(1.0, 2.0);
     return p.x as i64;
 }
 ```
@@ -101,8 +101,8 @@ fun apply(f: (i64) -> i64, x: i64) -> i64 {
 }
 
 fun main() -> i64 {
-    let f = add;
-    let inc = (x: i64) -> i64 { return x + 1; };
+    let f := add;
+    let inc := (x: i64) -> i64 { return x + 1; };
     return f(1, 2) + apply(inc, 4);
 }
 ```
@@ -174,7 +174,7 @@ Anonymous functions are [written with the `(...) -> ... { ... }` form](#spec.fun
 
 ```metel
 fun main() -> i64 {
-    let double = (x: i64) -> i64 { return x * 2; };
+    let double := (x: i64) -> i64 { return x * 2; };
     return double(5);
 }
 ```
@@ -183,8 +183,8 @@ Closures [capture variables from their enclosing scope by value](#spec.functions
 
 ```metel
 fun main() -> i64 {
-    var count = 0;
-    let inc = () -> { count += 1; };
+    var count := 0;
+    let inc := () -> { count += 1; };
     inc();
     inc();
     return count;   // still 0
@@ -204,9 +204,9 @@ same storage, the program captures a reference](#spec.functions.closures.dynamic
 
 ```metel
 fun main() -> i64 {
-    var count = 0;
-    let p: &var i64 = &var count;
-    let inc = () -> { *p += 1; };
+    var count := 0;
+    let p: &var i64 := &var count;
+    let inc := () -> { *p += 1; };
     inc();
     inc();
     return *p;
@@ -333,7 +333,7 @@ When a generic function's type parameters cannot be inferred from the arguments,
 fun identity<T>(x: T) -> T { x }
 
 fun main() -> i64 {
-    let x = identity::<i64>(42);
+    let x := identity::<i64>(42);
     return x;
 }
 ```
@@ -345,14 +345,14 @@ Turbofish is most useful when two or more independent type parameters must be pi
 fun zip<A, B>(a: A[], b: B[]) -> (A, B)[] { /* ... */ }
 
 fun main() {
-    let pairs = zip::<i64, String>([1, 2], ["a", "b"]);
+    let pairs := zip::<i64, String>([1, 2], ["a", "b"]);
 }
 ```
 
 Type ascription (`: T`) remains available for annotating the result type. Turbofish and ascription can be used together:
 
 ```metel
-let result = parse::<i64>("42") : Perhaps<i64>;
+let result := parse::<i64>("42") : Perhaps<i64>;
 ```
 
 <details>
@@ -412,7 +412,7 @@ fun parse_int(s: String) -> Result<i64, String> {
 }
 
 fun parse_and_double(s: String) -> Result<i64, String> {
-    let n = parse_int(s)?;   // returns Err early if parse_int fails
+    let n := parse_int(s)?;   // returns Err early if parse_int fails
     return Ok { value = n * 2 };
 }
 

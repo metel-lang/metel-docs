@@ -177,8 +177,8 @@ brand. This is the **allocation-site brand** mechanism. A type opts in by declar
 brand parameter that the compiler fills with a fresh brand per call site:
 
 ```metel
-let a: Rc<Node> = Rc::new(Node { val = 1 });   // a: Rc<Node, '_>, brand inferred as fresh
-let b: Rc<Node> = Rc::new(Node { val = 2 });   // b: Rc<Node, '_>, different fresh brand
+let a: Rc<Node> := Rc::new(Node { val = 1 });   // a: Rc<Node, '_>, brand inferred as fresh
+let b: Rc<Node> := Rc::new(Node { val = 2 });   // b: Rc<Node, '_>, different fresh brand
 ```
 
 The compiler desugars this as if each construction were wrapped in a `brand` block:
@@ -230,9 +230,9 @@ error messages:
 
 ```metel
 // Written — no brand annotations:
-let a = Rc::new(Node { val = 1 });
-let b = a.clone();               // compiler infers b has same brand as a
-let c = Rc::new(Node { val = 2 });   // compiler infers fresh brand for c
+let a := Rc::new(Node { val = 1 });
+let b := a.clone();               // compiler infers b has same brand as a
+let c := Rc::new(Node { val = 2 });   // compiler infers fresh brand for c
 ```
 
 Brands appear in error messages only when relevant to the reported issue.
@@ -249,9 +249,9 @@ excludes same-brand bindings (aliases of the same cell) and allows different-bra
 bindings (independent cells).
 
 ```metel
-let a = Rc::new(Node { val = 1 });   // a: Rc<Node, 'a>
-let b = a.clone();                   // b: Rc<Node, 'a> — same cell
-let c = Rc::new(Node { val = 2 });   // c: Rc<Node, 'c> — different cell
+let a := Rc::new(Node { val = 1 });   // a: Rc<Node, 'a>
+let b := a.clone();                   // b: Rc<Node, 'a> — same cell
+let c := Rc::new(Node { val = 2 });   // c: Rc<Node, 'c> — different cell
 
 // NotCapturing<Rc<Node, 'a>> excludes b (same brand), allows c (different brand)
 // Future: RcToken<'a> gates exclusive write access to the 'a cell (RFC-0074 §6.1)

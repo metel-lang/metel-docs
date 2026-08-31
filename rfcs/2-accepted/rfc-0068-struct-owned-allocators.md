@@ -86,7 +86,7 @@ Construction creates the arena implicitly. No explicit allocator handle is passe
 the caller:
 
 ```metel
-let parser = Parser::new(source);
+let parser := Parser::new(source);
 ```
 
 The allocator is created as part of the `Parser` value. The compiler synthesises the

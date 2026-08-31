@@ -57,11 +57,11 @@ one block, each declaration shadowing the previous one from its own point forwar
 
 ```metel
 fun main() {
-    let x = 1;
+    let x := 1;
     fun get_x() -> i64 { x }
-    let a = get_x();   // a = 1
-    let x = 2;
-    let b = get_x();   // b = 1 -- get_x captured the FIRST x, unaffected by the shadow
+    let a := get_x();   // a = 1
+    let x := 2;
+    let b := get_x();   // b = 1 -- get_x captured the FIRST x, unaffected by the shadow
     println("a=${a} b=${b}");
 }
 ```
