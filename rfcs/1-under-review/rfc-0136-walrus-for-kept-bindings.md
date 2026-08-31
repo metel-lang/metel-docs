@@ -4,11 +4,13 @@ title: "Walrus for Kept Bindings"
 date: '2026-08-23'
 status: under-review
 target:
-updated: '2026-08-25'
+updated: '2026-08-31'
 tracking: 'https://github.com/metel-lang/metel-core/issues/804'
 ---
 
 > **Status — under review (2026-08-23).** Design-complete three-way split, formalized from reports/syntax/colon-classifies-equals-labels-walrus-binds.md's design discussion; open questions remain (compound ops, RFC-0132 coordination, migration strategy) so under-review, not accepted.
+>
+> **Updated 2026-08-31.** Two Open Questions closed. **#1 (compound operators):** resolved — `+= -= *= /= %=` stay unchanged; only *plain* `=` moves to `:=`. **#5 (pattern-position field renaming, metel-core#706):** moved out of scope — the separator and argument order for a pattern field-rename production belong to #706 (which needs rewriting against the kept/not-kept classification), not to this RFC, which blocks on none of it. Remaining open: RFC-0132 coordination (#2) and migration mechanics (#4).
 >
 > **Updated 2026-08-25, corrected same day.** Added Open Question 5 and a new audit-table
 > row: metel-core#706 proposes pattern-position field renaming (`{ field = local_name }`)
@@ -94,17 +96,19 @@ Every `:`/`=` site in `metel-frontend/src/grammar.pest`, current as of this RFC:
 | 101 | `generic_param` | `T: bound_list` | n/a | unchanged |
 | 117 | `assoc_binding` | `Item = type_expr` | **not kept** — label, not referenceable after | stays `=` |
 | 119 | `where_constraint` | `T: bound_list` | n/a | unchanged |
-| 160 | `assign_op` | `= expr` | **kept** — name already exists, continues to | `:= expr` (compound ops — see Open Questions) |
+| 160 | `assign_op` (plain `=` only) | `= expr` | **kept** — name already exists, continues to | `:= expr` |
+| 160 | `assign_op` (compound `+= -= *= /= %=`) | `+= expr` etc. | **kept**, but self-evident from the token | unchanged — see Open Questions #1 |
 | 178 | `asc_expr` | `expr ":" type_expr` | n/a | unchanged |
 | 260 | `field_init` | `ident ("=" expr)?` | **not kept** — consumed at construction | stays `=` |
 | *(RFC-0100, proposed)* | `keyword_arg` | `ident "=" expr` | **not kept** — consumed at the call | stays `=` |
-| *(metel-core#706, proposed)* | `record_pattern`/`enum_pattern` field rename | no production exists today — proposed `field = local_name` | **kept** — `local_name` is a fresh binding, usable through the rest of the arm/block, exactly like a `let` name | should be `local_name := field`, not `field = local_name` — see Open Questions #5 |
+| *(metel-core#706, proposed)* | `record_pattern`/`enum_pattern` field rename | no production exists today — proposed `field = local_name` | **kept** — `local_name` is a fresh binding, usable through the rest of the arm/block, exactly like a `let` name | *out of scope for this RFC* — #706's own decision, informed by the kept/not-kept classification (see Open Questions #5) |
 
-Five rules change: `let_decl`, `let_mut_decl`, `assign_op` (plain `=` only — see Open
-Questions #1), `assoc_type_def`, and metel-core#706's proposed pattern-field-rename
-production (not yet merged — see Open Questions #5). Everything else in the fourteen-site
-audit is already where this principle would put it, including RFC-0100's not-yet-live
-`keyword_arg`, which needs no change under this proposal.
+Four rules change: `let_decl`, `let_mut_decl`, `assign_op` (**plain `=` only** — the
+compound operators `+= -= *= /= %=` stay unchanged, Open Questions #1), and
+`assoc_type_def`. Everything else in the fourteen-site audit is already where this
+principle would put it, including RFC-0100's not-yet-live `keyword_arg`, which needs no
+change under this proposal. Pattern-position field renaming (metel-core#706) is a
+separate proposal and not one of the four — see Open Questions #5.
 
 ### Worked examples
 
@@ -188,10 +192,14 @@ readers already know, not a return to a majority convention.
 ## Open Questions
 
 1. **Do compound assignment operators (`+=`, `-=`, `*=`, `/=`, `%=`) move too?**
-   `assign_op` bundles plain `=` with the compound forms. This RFC's audit only reasons
-   about plain `=` — whether the compound operators also gain a `:` prefix (`+:=`), stay
-   exactly as they are (arguable: they inherently presuppose the name already exists, so
-   the kept/not-kept signal may be redundant there), or something else, is not decided.
+   *Resolved 2026-08-31 — they stay exactly as they are.* A compound operator is
+   only ever legal against a name that already exists and persists (`x += 1` is
+   meaningless otherwise), so it is unambiguously a kept-binding operation on its
+   face — the `:=`/`=` distinction carries no information a reader doesn't already
+   have from the `+=` token itself. Prefixing them (`+:=`) would add keystrokes and
+   a novel operator family to signal something the form already guarantees. Only
+   *plain* `=` is genuinely ambiguous between reassignment and a field/label site
+   (`Point { x = 1.0 }` vs `total = total + 1`), and only plain `=` moves to `:=`.
 2. **Comptime interaction.** RFC-0132 (Comptime Execution Model), still `1-under-review`,
    defines `comptime let` / `pub comptime let` syntax. Those are `let`-family declarations
    and would need `:=` under this proposal exactly like ordinary `let`. Worth settling
@@ -211,40 +219,19 @@ readers already know, not a return to a majority convention.
    worth deciding explicitly rather than defaulting to it) are not resolved in this
    document.
 
-5. **(Added 2026-08-25, corrected same day) Pattern-position field renaming
-   (metel-core#706) proposes `=`, but the kept/not-kept principle says `:=` — and the
-   *order* matters as much as the token.** #706 proposes a new grammar production —
-   `EnumVariant { field = local_name }` / `RecordType { field = local_name }` — currently
-   a genuine parse error (no production exists for pattern field-renaming at all), citing
-   `field_init`'s `=` as precedent: "`field = local_name` reads consistently with
-   field-init's `x = 1`." That precedent doesn't hold under this RFC's own audit:
-   `field_init`'s `x` is a label consumed once at construction, never referenceable again;
-   `local_name` in a pattern is a fresh binding, used throughout the rest of the match arm
-   or block — the defining property of *kept*, identical in kind to a `let` binding, not to
-   a field-init label.
-
-   This first pass corrected the token (`=` → `:=`) but kept the field-first ordering
-   (`field := local_name`), which turns out to be its own inconsistency: every other
-   `:=` site in this RFC's audit puts the *kept* name on the left — `x` in `x: T := e`,
-   `X` in `type X := type_expr`, the reassigned name in plain `:= expr`. `field` is not
-   the kept name here; `local_name` is. `field := local_name` reads, by the convention
-   this RFC establishes everywhere else, as introducing `field` as a binding — backwards
-   from what the syntax actually does. The internally consistent spelling is
-   **`local_name := field`**, kept name first, matching every other row in the table.
-
-   This is not free — worth being direct about the cost, not just the correction. Rust's
-   own field-renaming pattern syntax (`Circle { radius: r }`, #706's own cited precedent
-   for why this is intuitive to reach for) is field-first. `local_name := field` breaks
-   that specific muscle-memory match in exchange for internal consistency with the rest
-   of this RFC's own left-to-right convention. Both properties are real; this RFC does
-   not privilege one over the other and leaves the choice open rather than picking one
-   silently.
-
-   Not yet resolved between the two issues — #706 is still under review as of this RFC's
-   own update, and this RFC has not itself been decided — but it needs settling as one
-   decision, not two independent ones that could land inconsistently (#706 shipping `=`
-   before this RFC is decided would add a fifteenth exception the day after this RFC
-   closes the fourteen-site audit).
+5. ~~**Pattern-position field renaming (metel-core#706).**~~ *Moved out of scope
+   2026-08-31 — this is not RFC-0136's to decide.* Pattern-position field renaming
+   is its own feature with its own owner (metel-core#706 / whatever RFC supersedes
+   it), and the separator and argument order for `{ field ? local_name }` belong to
+   that proposal, not this one. RFC-0136 only supplies the classification: a
+   pattern's `local_name` is a **kept** binding — a fresh name used through the rest
+   of the arm or block, identical in kind to a `let` name, not to a `field_init`
+   label consumed once at construction — so #706's cited "reads like `field_init`'s
+   `x = 1`" precedent does not apply, and the kept/not-kept convention points at
+   `:=`, kept name on the left (`local_name := field`), matching every other `:=`
+   row in the audit. That is *input* to #706, which needs rewriting against it;
+   RFC-0136 does not block on the outcome and adds no pattern-rename production of
+   its own. The audit table's `metel-core#706` row is annotated to the same effect.
 
 **Explicitly out of scope:** declaration-side default parameter values (hypothetical `fun
 f(x: T = e)`). Raised once during the discussion that produced this RFC and set aside — a
@@ -270,9 +257,11 @@ kept/not-kept answer not decided here. Left for a future RFC.
   syntax; the coordination point named in Open Questions #2
 - `reports/substructural-types/access-and-presence-rows.md` §3.5 — the record-syntax
   question the classify/define invariant originally generalized from
-- metel-core#706 — proposes pattern-position field renaming with `=`; the coordination
-  point named in Open Questions #5, since the correct separator under this RFC's own
-  principle is `:=`
+- metel-core#706 — proposes pattern-position field renaming with `=`; **out of scope
+  for this RFC** (Open Questions #5). RFC-0136 supplies only the kept/not-kept
+  classification (`local_name` in a pattern is a kept binding, so `=` on the
+  `field_init` precedent does not apply); the separator and argument order are #706's to
+  settle, and #706 needs rewriting against that classification.
 
 ---
 
