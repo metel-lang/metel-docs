@@ -1240,30 +1240,35 @@ implementation).
   RFC-0090's settled anonymous record values, making `Point { x = 1.0 }` literally
   `{ x = 1.0 }` plus a brand — the relationship RFC-0090 tier 3 claims holds
   semantically, now visible in the syntax.
-- **RFC-0136** *(accepted 2026-08-31 — re-accepted the same day after an adversarial review; opened 2026-08-23)* — Walrus for Kept Bindings — extends
+- **RFC-0136** *(under review — open questions resolved and two Codex adversarial-review rounds applied 2026-08-31, held for a fresh acceptance decision; opened 2026-08-23)* — Walrus for Kept Bindings — extends
   the classify/define invariant with a third token: `let`/`var` declarations, plain
   reassignment, and associated-type *definition* (`type Item = i64` in an impl) all
   currently spell "define" with `=`, the same
   token `field_init`, `assoc_binding`, and RFC-0100's not-yet-live keyword arguments use
-  for a value or type consumed once at the site and not kept as a name. Splits on
-  whether the introduced name is *kept* (referenceable after the statement — moves to
-  `:=`) or *not kept* (a label — stays `=`), stated as a **normative invariant** so
-  future kept-binding sites (standalone `type` aliases, `comptime let`, pattern field
-  renaming) inherit `:=` without re-litigation. Grammar edits: `let_decl`/`let_mut_decl`
-  and `assign_op`'s plain-`=` alternative → `:=`, plus `assoc_type_def`; resolves
-  RFC-0100's `f(x = 1)`/`assign_expr` collision as a side effect, since plain `=` can no
-  longer parse as assignment inside an argument position. Largest syntax-migration
-  surface proposed to date — every `let` and plain reassignment in the corpus.
-  **All five open questions closed 2026-08-31:** compound operators (`+=` etc.) stay
-  `=` (in-place update of existing storage — the token already signals it); migration is
-  a hard switch with **no transition alias** (no public users) and an **AST-level**
-  rewrite governed by PROCESS.md's existing "changes existing syntax" checklist, plan
-  tracked at metel-core#804; `comptime let` (RFC-0132) and pattern field renaming
-  (metel-core#706) take the `:=` separator from the invariant and settle their own
-  productions; enum discriminants stay `=`. The Codex review that sent back the first
-  acceptance changed none of the design — it tightened the migration spec and the audit
-  and forced the invariant to be stated normatively. Declaration-side default parameter values explicitly out of
-  scope. Target v0.13.1 (metel-core#804). See
+  for a value or type consumed once at the site and not kept as a name. A **normative
+  invariant** (rescoped after review to *separator sites that choose between `=` and
+  `:=`* — not every binder; `param`/`generic_param`/`for`-in/pattern bindings have no
+  separator and are untouched) puts `:=` on a separator that introduces a *kept* name
+  (referenceable later in the same scope/body/arm), with the kept name on `:=`'s left;
+  `=` stays on one-shot labels. Future separator sites (standalone `type` aliases,
+  `comptime let`, pattern field renaming, default params) inherit that choice; PROCESS.md
+  gains a review-gate for it. Grammar edits: `let_decl`/`let_mut_decl` and `assign_op`'s
+  plain-`=` alternative → `:=`, plus `assoc_type_def` (a distinguishing paragraph argues
+  why it moves but the use-site `assoc_binding` does not). Resolves RFC-0100's
+  `f(x = 1)`/`assign_expr` collision as a side effect. Largest syntax-migration surface
+  proposed to date — every `let` and plain reassignment in the corpus.
+  **All five open questions resolved 2026-08-31:** compound operators (`+=` etc.) stay
+  `=`; migration is a hard switch with **no transition alias** (no public users) and an
+  **AST-level** rewrite whose ordering is spelled in OQ#4 and whose corpus scope defers
+  to PROCESS.md's "changes existing syntax" checklist, tracked at metel-core#804;
+  `comptime let` (RFC-0132, examples updated) and pattern field renaming (metel-core#706)
+  take the `=`/`:=` choice and operand order from the invariant; enum discriminants stay
+  `=`. **Two Codex adversarial-review rounds** were folded in — the kept/not-kept design
+  is unchanged; round 2 rescoped the over-broad invariant, argued the
+  `assoc_type_def`/`assoc_binding` split, and spelled the migration ordering. Held at
+  `1-under-review` for a fresh acceptance decision. Declaration-side default parameter
+  values are a separator site under the invariant (`x: T := e`) but the production is a
+  future RFC's. Target v0.13.1 (metel-core#804). See
   `reports/syntax/colon-classifies-equals-labels-walrus-binds.md`.
 - **RFC-0101** *(draft)* — Grammar-Enforced Naming Case Conventions — PascalCase for type
   declarations (struct/enum/aspect/generic params) and enum variants, camelCase for

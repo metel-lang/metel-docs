@@ -188,6 +188,18 @@ Concretely, for any RFC that changes the spelling of something already written d
   rather than a historical claim. Superseded and refused RFCs, and `metel-docs-internal/reports/archive/`,
   were deliberately left alone — those are records of what was thought, not guidance.
 
+**Additional acceptance-review check, added 2026-08-31 — a new binding/initializer
+separator must match RFC-0136's invariant.** RFC-0136 ("Walrus for Kept Bindings")
+establishes a normative rule: a grammar site that uses a **separator between a name and
+an initializer, definition, or renamed source** picks `:=` when it introduces a *kept*
+name (referenceable later in the same scope/body/arm) and `=` when it labels a one-shot
+value/type, with the kept name on `:=`'s left. Any RFC that adds such a site — a new
+declaration form, a `comptime`/`const`-style binding, pattern-position renaming, a
+standalone `type` alias — inherits that choice; it does not re-decide it. The
+acceptance review of such an RFC must state which token it uses and why, checked against
+RFC-0136's invariant. Landing a separator site on the wrong token is a `2-accepted`
+blocker (it would reopen RFC-0136's audit after that RFC's migration closed it).
+
 **Additional exit criteria, added 2026-07-10 — implementation-tracking, not just spec
 text.** Landing in the spec is exactly the moment a real gap opens between "what the spec
 says" and "what the interpreter does," and nothing before this tracked that gap

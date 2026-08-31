@@ -2,7 +2,7 @@
 id: rfc-0136
 title: "Walrus for Kept Bindings"
 date: '2026-08-23'
-status: accepted
+status: under-review
 target:
 updated: '2026-08-31'
 tracking: 'https://github.com/metel-lang/metel-core/issues/804'
@@ -14,23 +14,30 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/804'
 > row for metel-core#706's proposed pattern-position field renaming (superseded by the
 > normative invariant and the reworked OQ#5 below).
 
-> **Status — accepted (2026-08-31).** The five open questions are resolved.
-> **#1** compound operators (`+= -= *= /= %=`) stay `=` — they update an assignable place
-> that already holds a value, so the token already signals it; only *plain* `=` moves to
-> `:=`. **#3** enum discriminants stay `=` (the `1` is a label; the variant name is the
-> kept name). **#4** hard switch, no transition alias (no public users), AST-level
-> rewrite governed by PROCESS.md's existing "changes existing syntax" checklist — plan
-> is #804's. **#2 (`comptime let`)** and **#5 (pattern field renaming)**: the *separator*
-> is settled by the new **normative invariant** (§Proposal) — a kept binding uses `:=` —
-> and the *productions* belong to RFC-0132 and metel-core#706. Nothing blocks acceptance.
+> **Updated 2026-08-31 — open questions resolved; two adversarial-review rounds applied;
+> still `1-under-review` pending a fresh acceptance decision.**
 >
-> This is a re-acceptance. A first "accepted" transition earlier the same day was sent
-> back by an adversarial review (Codex): the migration plan was thinner than PROCESS.md
-> requires, worked examples used a standalone `type X = …` form the grammar does not
-> have, OQ#1's rationale said "name" where it meant "assignable place," and the audit
-> over-claimed completeness. All fixed in this revision — the kept/not-kept design is
-> unchanged; the migration spec and the audit are tighter, and the invariant is now
-> stated normatively so future kept-binding sites inherit `:=` without re-litigation.
+> The five open questions are closed: **#1** compound operators (`+= -= *= /= %=`) stay
+> `=`; **#3** enum discriminants stay `=`; **#4** hard switch, no transition alias, an
+> AST-level rewrite whose sequence is spelled in OQ#4 and whose corpus scope defers to
+> PROCESS.md's syntax-change checklist; **#2** (`comptime let`) and **#5** (pattern
+> field renaming) take the `:=` separator from the **normative invariant** (§Proposal),
+> which also fixes that `:=` introduces the *kept* name — RFC-0132 and metel-core#706
+> own only the rest of their productions.
+>
+> Two Codex adversarial reviews (2026-08-31) were folded in. Round 1: standalone
+> `type X = …` examples the grammar lacks; a too-thin migration plan; an audit that
+> over-claimed completeness; OQ#1 rationale said "name" for "assignable place". Round 2:
+> the normative invariant, as first written, over-reached — it would have governed
+> `param`, `generic_param`, `for`-in, and pattern bindings, which have no `=`/`:=` and
+> which the audit itself leaves unchanged. Round-2 fixes: the invariant is scoped to
+> **initializer / definition / rename separator sites that choose between `=` and `:=`**
+> (not "every kept name"); a normative paragraph now argues the `assoc_type_def` vs
+> `assoc_binding` distinction the RFC rests on; OQ#5 states the invariant fixes both
+> separator and which side carries the kept name; the audit's `assign_op` row matches
+> the grammar (`unary_expr` LHS, parser-restricted); OQ#4 spells the migration ordering;
+> PROCESS.md gains an acceptance-review check for new binding-separator sites; the stale
+> "RFC-0132 still on `=`" notes are gone (RFC-0132 now uses `:=`).
 
 ## Summary
 
@@ -100,22 +107,39 @@ RFC-0100 ships (or alongside it) avoids that.
 
 ### The invariant (normative)
 
-> **A site that introduces a *kept* binding — a name referenceable after the statement
-> it appears in — uses `:=`. A site that consumes a name, value, or type as a one-shot
-> label — not referenceable afterward — uses `=`. `:` is unchanged everywhere.**
+**Scope.** This invariant governs exactly one kind of grammar site: one that uses a
+**separator token — `=` or `:=` — between a name/target and an initializer, definition,
+or renamed source.** It does *not* govern binders that have no such separator (a
+function `param`, a `generic_param`, a `for`-in loop variable, a bare pattern binding
+in a `match` arm — those introduce a name with no `=`/`:=` at all and are untouched by
+this RFC), and it does *not* govern `:` classifier sites (`x: T`, `T: Bound`), which
+are unchanged everywhere.
 
-This binds sites that do not exist in the grammar yet. When a future RFC adds any of
-the following, each introduces a kept binding and therefore uses `:=`:
+> **Within that scope: a separator that introduces a *kept* name — one referenceable
+> from a later point in the same lexical scope, body, or match arm — is `:=`. A
+> separator that labels a value or type consumed once at the construction, call, or
+> bound site — no name introduced — is `=`.**
 
-- **standalone `type` aliases** (`type Meters := f64;` — RFC-0082 deferred these);
+The kept name is the operand on `:=`'s left: `x` in `x := e`, `Item` in
+`type Item := T`, the reassigned target in `place := e`. A production that needs a
+kept-name-plus-source pairing (pattern-position renaming) puts the introduced local on
+`:=`'s left too.
+
+**This binds separator sites that do not exist in the grammar yet.** When a future RFC
+adds one, it picks `=` vs `:=` by the rule above, not afresh:
+
+- **standalone `type` aliases** (`type Meters := f64;` — RFC-0082 deferred these) —
+  introduces a kept name, so `:=`;
 - **`comptime let` / `pub comptime let`** (RFC-0132) — `let`-family, so `:=`;
 - **pattern-position field renaming** (metel-core#706) — the renamed `local_name` is a
-  fresh binding used through the rest of the arm or block, so `:=`.
+  kept binding, so `:=`, with `local_name` on the left.
 
-Those RFCs own their own productions and, where applicable, argument order; they do
-**not** get to re-decide the separator. If one of them lands before this RFC's
-migration, it must land on `:=`, not `=` — landing on `=` and migrating afterward is
-the exact double-touch this RFC exists to avoid.
+Those RFCs own the rest of their productions (the surrounding syntax, the argument
+grammar); they inherit only the `=`/`:=` choice and the kept-name-on-the-left rule.
+`rfcs/PROCESS.md`'s acceptance-review checklist (updated alongside this RFC) makes that
+inheritance a review-gate item, so a future RFC landing a separator site on the wrong
+token is caught at acceptance rather than after this RFC's migration has closed the
+audit.
 
 ### The audit
 
@@ -131,14 +155,14 @@ and move; the rule names are the stable reference.
 | Rule(s) | Form today | Kept? | Proposed |
 |---|---|---|---|
 | `let_decl`, `let_mut_decl` | `x: T = e` | **kept** | `x: T := e` |
-| `assign_op` — plain `=` (`"=" ~ !"="`) | `place = e` (`place` is a name, field, index, or deref) | **kept** — reassigns an existing binding, still live after | `place := e` |
-| `assign_op` — compound (`+= -= *= /= %=`) | `place += e` etc. | **kept**, and self-evident from the token — see Open Questions #1 | **unchanged** |
-| `assoc_type_def` (inside `extend`/`aspect` braces) | `type Item = type_expr;` | **kept** — `Item` is nameable afterward as `Type::Item` and inside the block | `type Item := type_expr;` |
+| `assign_op` — plain `=` (`"=" ~ !"="`) | `lhs = e` — grammar LHS is `unary_expr`, which the parser then restricts to an assign target (a name, field or tuple access, index, or deref) and rejects otherwise | **kept** — reassigns an existing binding, still live after | `lhs := e` |
+| `assign_op` — compound (`+= -= *= /= %=`) | `lhs += e` etc. | **kept**, and self-evident from the token — see Open Questions #1 | **unchanged** |
+| `assoc_type_def` (inside `extend`/`aspect` braces) | `type Item = type_expr;` | **kept** — introduces `Item` into the impl's namespace; nameable afterward (bare `Item` in the block, `Type::Item` outside). See "Definition vs. binding" below. | `type Item := type_expr;` |
 | `assoc_binding` (at a use site, `Deref<Target = Node>`) | `Target = type_expr` | **not kept** — a label selecting an associated type; not a name | **unchanged** (`=`) |
 | `field_init` (`Point { x = 1.0 }`) | `ident ("=" expr)?` | **not kept** — consumed at construction | **unchanged** (`=`) |
 | `keyword_arg` *(RFC-0100, not yet live)* | `ident "=" expr` | **not kept** — consumed at the call | **unchanged** (`=`) — no change needed |
 | `struct_field` / `record_type_field` / `row_field` / `param` / `generic_param` / `where_constraint` / `assoc_type_decl` / `asc_expr` / `extend`'s aspect list | `ident ":" type_or_bound` | n/a — `:` classifies | **unchanged** |
-| *pattern field rename* *(metel-core#706, no production yet)* | proposed `field = local_name` | **kept** — `local_name` is a fresh binding, live through the rest of the arm/block | *out of scope for this RFC* — #706's production and argument order, but `:=` per the normative invariant (Open Questions #5) |
+| *pattern field rename* *(metel-core#706, no production yet)* | proposed `field = local_name` | **kept** — `local_name` is a fresh binding, live through the rest of the arm/block | `local_name := field` — separator and kept-name-on-the-left fixed by the normative invariant; the rest of the production is #706's (Open Questions #5) |
 | *standalone `type` alias* *(no production yet — RFC-0082 deferred)* | — | **kept** | `:=` when a future RFC adds it (normative invariant) — not introduced here |
 
 **What changes:** the `let`-family (`let_decl`, `let_mut_decl`), `assign_op`'s plain-`=`
@@ -147,6 +171,30 @@ alternative (`"=" ~ !"="`), and `assoc_type_def` — each `=` in those becomes `
 already where this principle would put it, including RFC-0100's not-yet-live
 `keyword_arg`. Compound `assign_op` and pattern-position field renaming are explicitly
 *not* among the changes — see Open Questions #1 and #5.
+
+#### Definition vs. binding: why `assoc_type_def` moves but `assoc_binding` does not
+
+These two look alike — both are `Name = type_expr` and both mention an aspect's
+associated type — so the split has to be stated, not assumed.
+
+`type Item = i64;` inside `extend Counter: Iterator { … }` is a **declaration**: it
+adds `Item` as a member of that impl's namespace. After it, `Item` resolves — bare
+inside the block, and as `Counter::Item` anywhere the impl is visible (RFC-0082 §3's
+projection). A later method in the same impl can write `-> Item`, a caller can write
+`Counter::Item`. The `=` introduces a name that outlives its own line. That is the
+defining property of *kept*, and it is why this site takes `:=`.
+
+`Deref<Target = Node>` at a use site is an **equality constraint on an existing slot**:
+`Target` is not being introduced here — it is the name of an associated type the aspect
+`Deref` already declared, and `Target = Node` says "the instantiation I am talking about
+has `Target` equal to `Node`." Nothing is nameable afterward that was not nameable
+before; `Target` is a label picking out a pre-existing slot, exactly like a struct
+field label in `Point { x = 1.0 }`. That is *not kept*, and it stays `=`.
+
+The test that separates them: **does the `=` add a name to a scope, or select an
+already-declared one?** Add → `:=`. Select → `=`. `assoc_type_decl`
+(`type Item: Display;` — the aspect *declaring* the associated type) is the other
+half of the pair and uses `:`, because it classifies rather than defines.
 
 ### Worked examples
 
@@ -245,20 +293,23 @@ readers already know, not a return to a majority convention.
    reassignment and a field/label site (`Point { x = 1.0 }` vs `total = total + 1`),
    and only plain `=` moves to `:=`.
 
-   *Accepted seam:* `let x := 0; x += 1;` uses two different token shapes for one
-   variable's lifecycle — `:=` to introduce, `+=` to update. This is deliberate and
-   fine: `:=` marks *introduction of a kept name*, `+=` marks *update of existing
-   storage*, and the two are genuinely different operations. `x := x + 1` (the plain
-   reassignment form) is still available for anyone who wants one token shape
-   throughout.
+   *Cost, stated plainly:* `var sum := 0; … sum += x` and `var i := 0; … i += 1` are
+   the **common** shape for a mutable accumulator or counter, not an edge case, and
+   under this proposal they use two token shapes for one variable's lifecycle — `:=` to
+   introduce, `+=` to update. This is a real readability cost and it is accepted on
+   purpose: the two *are* different operations (introduce a kept name vs. update
+   existing storage), the `+=` token already carries the "existing storage" signal
+   unambiguously, and the alternatives are worse — `+:=` invents an operator family to
+   restate what `+=` already says, and moving `+=` to `:=` (`+:=` → back to `+=`… there
+   is no clean spelling) buys nothing. Anyone who wants one token shape throughout can
+   write `sum := sum + x`.
 2. ~~**Comptime interaction (RFC-0132).**~~ *Moved out of scope 2026-08-31 — RFC-0132's
    to handle, not this RFC's.* `comptime let` / `pub comptime let` are `let`-family
    declarations, so they fall under the **normative invariant** above: a kept binding
    uses `:=`, `comptime` prefix or not. RFC-0132 owns that production and is bound to
    spell it `comptime <name> := <expr>`; if RFC-0132 lands before this RFC's migration,
-   it lands on `:=`, not on `=` with a follow-up. *(RFC-0132's current draft examples
-   still show `comptime let ... = ...`; that is stale against this invariant and is
-   RFC-0132's to correct, tracked at metel-core#726.)* RFC-0136 does not block on
+   it lands on `:=`, not on `=` with a follow-up. *(RFC-0132's examples were updated to
+   `:=` alongside this revision — see metel-core#726.)* RFC-0136 does not block on
    RFC-0132.
 3. **Enum discriminants.** `enum E { A = 1 }` is field-init-shaped under this proposal:
    the discriminant value `1` is a label consumed at the declaration, `A` itself is
@@ -297,27 +348,51 @@ readers already know, not a return to a majority convention.
    reassignment position becomes a parse error the moment `:=` lands, and a `neg_*`
    fixture guards that (the RFC-0130 pattern).
 
-   Corpus sizing and the mechanical rewriter are #804's to build — a finite, one-shot,
-   in-repo job against a checklist that already exists — not a design question this
-   document needs to answer.
+   **Ordering, because the grammar break is hard.** Old `=` in a declaration or
+   reassignment position stops parsing the instant `:=` lands, so the repo is
+   uncompilable in any state where the grammar has flipped but the corpus has not. The
+   sequence, all in one PR:
 
-5. ~~**Pattern-position field renaming (metel-core#706).**~~ *Separator settled by the
-   normative invariant 2026-08-31; production and argument order are #706's.* A
-   pattern's `local_name` is a **kept** binding — a fresh name live through the rest of
-   the arm or block, identical in kind to a `let` name, not a `field_init` label — so
-   by the invariant above it uses **`:=`**, and #706's cited "reads like `field_init`'s
-   `x = 1`" precedent does not apply. That much is not negotiable and does not wait on
-   #706. What is #706's to decide: the grammar production itself, and the argument order
-   — `local_name := field` (kept name on the left, matching every other `:=` row) versus
-   `field := local_name` (matching Rust's field-first `Circle { radius: r }`); both have
-   a real cost and this RFC does not pick between them. If #706 lands before this RFC's
-   migration it lands on `:=`. RFC-0136 adds no pattern-rename production of its own.
+   1. build the AST rewriter and run it under the **old** grammar over the whole
+      in-repo surface (fixtures, `stdlib/`, `reference/spec/`, `getting-started/`,
+      `blog/`, all RFCs, `metel-docs-internal/reports/`), producing the migrated tree;
+   2. flip grammar + parser + `reference/spec/`'s prose rules **together**;
+   3. run the full test suite and `tools/check_doc_examples.py` — plus at least one
+      example hand-extracted from swept prose and compiled — on the migrated tree;
+   4. add the `neg_*` fixture(s) that assert the old `=` forms are now `T0…` parse
+      errors (the RFC-0130 pattern, adapted: this is a replacement, not an addition, so
+      the negative fixtures are the proof the old spelling is gone, not merely
+      unpreferred).
+
+   Corpus sizing and the rewriter are #804's to build against that sequence — not a
+   design question this document needs to answer.
+
+5. ~~**Pattern-position field renaming (metel-core#706).**~~ *Separator and operand
+   order settled by the normative invariant 2026-08-31; the rest of the production is
+   #706's.* A pattern's `local_name` is a **kept** binding — a fresh name live through
+   the rest of the arm or block, identical in kind to a `let` name, not a `field_init`
+   label — so #706's cited "reads like `field_init`'s `x = 1`" precedent does not
+   apply. The invariant therefore fixes two things, not one:
+
+   - the **separator** is `:=`, not `=`;
+   - the **kept name is on `:=`'s left** — `local_name := field`, not
+     `field := local_name`. This is the same rule as every other `:=` row (`x` in
+     `x := e`, `Item` in `type Item := T`). `field := local_name` would put the
+     *source* field on the binding side and read as introducing `field`, backwards from
+     what the syntax does; it is not on the table.
+
+   What is #706's to decide: the surrounding grammar production (where in a
+   `record_pattern` / `enum_pattern` the `local_name := field` clause sits, how it
+   composes with `..` rest patterns and nested patterns). If #706 lands before this
+   RFC's migration it lands on `:=` with the operand order above. RFC-0136 adds no
+   pattern-rename production of its own.
 
 **Explicitly out of scope:** declaration-side default parameter values (hypothetical `fun
-f(x: T = e)`). Raised once during the discussion that produced this RFC and set aside — a
-different syntactic position from the call-site keyword-arg case this RFC addresses (`x`
-there is a parameter declaration with a type and a default, not a label), with its own
-kept/not-kept answer not decided here. Left for a future RFC.
+f(x: T = e)`). No such production exists today. When one is proposed it is a separator
+site under the normative invariant — `x` is a kept name (live through the body), so the
+invariant points at `x: T := e` — but the surrounding production, and whether Metel
+wants default parameters at all, are a future RFC's, not decided here. Flagged so that
+future RFC does not treat the separator as an open choice.
 
 ---
 
@@ -335,29 +410,31 @@ kept/not-kept answer not decided here. Left for a future RFC.
   alias), though smaller in surface than this proposal
 - `public/rfcs/1-under-review/rfc-0132-comptime-execution-model-comptime-let-comptime-fun-comptime-if.md` — `comptime let`
   syntax. `comptime let` is `let`-family, so the **normative invariant** (§Proposal)
-  puts it under `:=`; RFC-0132 owns the production and is bound to spell it
-  `comptime <name> := <expr>`. Its current draft examples still show `= …` — stale
-  against the invariant, RFC-0132's to fix (metel-core#726). RFC-0136 does not block
-  on it. (Open Questions #2.)
+  puts it under `:=`; RFC-0132 owns the production. Its examples were updated to `:=`
+  alongside this revision (metel-core#726). RFC-0136 does not block on it.
+  (Open Questions #2.)
 - `reports/substructural-types/access-and-presence-rows.md` §3.5 — the record-syntax
   question the classify/define invariant originally generalized from
-- metel-core#706 — proposes pattern-position field renaming with `=`. The **separator**
-  is fixed by the normative invariant (a pattern's renamed name is a kept binding →
-  `:=`); the **production and argument order** are #706's to settle, and #706 needs
-  rewriting against the invariant. RFC-0136 adds no pattern-rename production.
-  (Open Questions #5.)
+- metel-core#706 — proposes pattern-position field renaming with `=`. The **separator
+  and operand order** are fixed by the normative invariant — `local_name := field`, kept
+  name on the left; the rest of the production (where the clause sits, composition with
+  rest/nested patterns) is #706's, and #706 needs rewriting against the invariant.
+  RFC-0136 adds no pattern-rename production. (Open Questions #5.)
 
 ---
 
 ## Decision
 
-**Outcome:** Accepted 2026-08-31 (re-accepted after an adversarial review the same day —
-see the status note). All five open questions are closed: #1 (compound operators stay
-`=`) and #4 (hard switch, no alias, AST-level rewrite governed by PROCESS.md's existing
-syntax-change checklist) are resolved here; #3 (enum discriminants) is answered inline;
-the *separator* for #2 (`comptime let`) and #5 (pattern field renaming) is fixed by the
-normative invariant, and their *productions* are RFC-0132's and metel-core#706's. The
-kept/not-kept design was not changed by the review — the migration spec and the audit
-were tightened and the invariant made normative. The migration itself is a finite
-in-repo job tracked by metel-core#804.
+**Outcome:** *(pending — `1-under-review`.)* The five open questions are resolved: #1
+(compound operators stay `=`), #3 (enum discriminants stay `=`), and #4 (hard switch, no
+alias, AST-level rewrite with the ordering spelled in OQ#4 and the corpus scope deferred
+to PROCESS.md's syntax-change checklist) are settled here; #2 (`comptime let`) and #5
+(pattern field renaming) take the `=`/`:=` choice, and the kept-name-on-the-left rule,
+from the normative invariant, with RFC-0132 and metel-core#706 owning the rest of their
+productions. Two Codex adversarial-review rounds have been folded in (see the status
+note); the kept/not-kept design is unchanged, but the invariant was rescoped so it no
+longer over-reaches separatorless binders, the `assoc_type_def`/`assoc_binding`
+distinction is now argued rather than asserted, the migration ordering is spelled, and
+PROCESS.md gained a review-gate for future separator sites. Held at `1-under-review` for
+a fresh acceptance decision rather than a same-session re-transition.
 **Target:** v0.13.1 (metel-core#804).
