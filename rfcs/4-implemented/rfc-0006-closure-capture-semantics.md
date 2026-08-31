@@ -25,17 +25,17 @@ The PoC evaluator captures all free variables by cloning them at closure definit
 ```metel
 // Intended: inc and get both operate on the same counter.
 // Under clone capture: each holds its own copy — inc's mutations are invisible to get.
-var counter = 0;
-let inc = () -> () { counter += 1; };
-let get = () -> Int { counter };
+var counter := 0;
+let inc := () -> () { counter += 1; };
+let get := () -> Int { counter };
 ```
 
 **Mutation visible to the enclosing scope:**
 ```metel
 // Intended: calling double() updates the original.
 // Under clone capture: double works on a copy.
-var x = 5;
-let double = () -> () { x *= 2; };
+var x := 5;
+let double := () -> () { x *= 2; };
 double();
 // x is still 5 here
 ```
@@ -63,9 +63,9 @@ Two axes define the problem:
 
 **Explicit pointer capture (RFC-0043 model):** value capture by default; reference capture requires the programmer to explicitly take a pointer before closing:
 ```metel
-var counter = 0;
-let p = &var counter;
-let inc = () -> () { *p += 1; };
+var counter := 0;
+let p := &var counter;
+let inc := () -> () { *p += 1; };
 ```
 Aliasing is visible at the capture site. The loop variable problem cannot occur silently.
 
@@ -126,8 +126,8 @@ Example:
 
 ```metel
 fun make_counter() -> () -> Int {
-    var n = 0;
-    let p = &var n;
+    var n := 0;
+    let p := &var n;
     return () -> Int {
         *p += 1;
         return *p;

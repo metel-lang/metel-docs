@@ -79,11 +79,11 @@ Plain fields (no annotation) behave exactly as today.
 **Assignment after construction is a compile error**, regardless of the mutability of the containing binding:
 
 ```metel
-var conn = Connection { host = "db.local", port = 5432, retries = 0 };
+var conn := Connection { host = "db.local", port = 5432, retries = 0 };
 
 conn.retries += 1;   // OK — plain field, binding is var
-conn.host = "other"; // ERROR: field `host` is declared `let` and cannot be reassigned
-conn.port = 443;     // ERROR: field `port` is declared `let` and cannot be reassigned
+conn.host := "other"; // ERROR: field `host` is declared `let` and cannot be reassigned
+conn.port := 443;     // ERROR: field `port` is declared `let` and cannot be reassigned
 ```
 
 **`var self` methods cannot reassign `let` fields:**
@@ -100,7 +100,7 @@ extend Connection {
 **Construction is the only assignment point.** All fields — `let` and plain — are assigned exactly once in the struct literal:
 
 ```metel
-let conn = Connection { host = "db.local", port = 5432, retries = 0 };
+let conn := Connection { host = "db.local", port = 5432, retries = 0 };
 ```
 
 There is no `init`-block or deferred assignment syntax. `let` fields must be provided in the struct literal at construction time; they cannot be left uninitialised and filled in later.

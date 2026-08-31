@@ -53,7 +53,7 @@ Every standard-library aspect is non-local. The consequence, which RFC-0116 stat
 restriction for but never draws:
 
 ```metel
-let p = { x = 1.0, y = 2.0 };
+let p := { x = 1.0, y = 2.0 };
 println("${p}");                  // no `Display` for any record, ever
 ```
 
@@ -79,8 +79,8 @@ auto-derived — RFC-0096's auto-impl set is a closed list of exactly three (`Se
 Since RFC-0116 §3 bans non-local aspect impls for records, and `Copy` is standard-library:
 
 ```metel
-let a = { x = 1, y = 2 };
-let b = a;        // a MOVES. Every record is affine, forever.
+let a := { x = 1, y = 2 };
+let b := a;        // a MOVES. Every record is affine, forever.
 ```
 
 `{ x: i64, y: i64 }` is exactly the shape a reader expects to copy freely, so this is a

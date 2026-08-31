@@ -28,8 +28,8 @@ struct Buffer { data: i64[] }
 fun consume(b: Buffer) -> i64 { b.data.len() }
 
 fun main() {
-    let a = Buffer { data = [1, 2, 3] };
-    let b = a;          // a is moved into b
+    let a := Buffer { data = [1, 2, 3] };
+    let b := a;          // a is moved into b
     // let n = a.data;  // error: `a` was moved
     consume(b);         // b is moved into consume
     // consume(b);      // error: `b` was moved
@@ -231,9 +231,9 @@ fields stay accessible; the value as a whole does not.
 struct Pair { a: Buffer, b: i64 }
 
 fun main() {
-    let p = Pair { a = Buffer { data = [1] }, b = 42 };
-    let x = p.a;        // p.a moved out; p is partially moved
-    let y = p.b;        // still fine — p.b was not moved
+    let p := Pair { a = Buffer { data = [1] }, b = 42 };
+    let x := p.a;        // p.a moved out; p is partially moved
+    let y := p.b;        // still fine — p.b was not moved
     // consume_pair(p); // error: `p` cannot be used as a whole
 }
 ```
@@ -356,7 +356,7 @@ extend Handle {
 }
 
 fun main() -> i64 {
-    let handle = Handle { fd = 3, name = "x" };
+    let handle := Handle { fd = 3, name = "x" };
     return Handle::describe(handle.{ fd });   // OK -- branded Handle.{ fd }
     // Handle::describe({ fd = 3 })            // rejected -- no brand, T0001
 }
@@ -462,7 +462,7 @@ extend Handle {
 }
 
 fun main() {
-    let handle = Handle { fd = 3, name = "x" };
+    let handle := Handle { fd = 3, name = "x" };
     Handle::describe(handle.{ fd });
 }
 ```
@@ -639,12 +639,12 @@ struct Counter { n: i64 }
 fun bump(r: &var Counter) { }
 
 fun main() {
-    var c = Counter { n = 0 };
-    let r = &var c;
+    var c := Counter { n = 0 };
+    let r := &var c;
     bump(r);
     bump(r);      // fine — each call reborrows
 
-    let q = r;    // moves: plain binding is not a reborrow
+    let q := r;    // moves: plain binding is not a reborrow
     // bump(r);   // error: `r` was moved into `q`
 }
 ```

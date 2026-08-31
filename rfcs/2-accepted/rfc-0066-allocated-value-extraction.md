@@ -173,7 +173,7 @@ Move-out is expressed in two equivalent forms:
 side is `@a T`, move-out is implicit:
 
 ```metel
-let node: Node = ptr;   // declared type drives move-out; ptr consumed
+let node: Node := ptr;   // declared type drives move-out; ptr consumed
 ```
 
 **Type ascription** — the ascription operator drives move-out in any expression position,
@@ -226,7 +226,7 @@ is rejected; the caller must write one of:
 
 ```metel
 consume(ptr: Node);          // explicit ascription — extracts, subject to §2's rules
-let v: Node = ptr;
+let v: Node := ptr;
 consume(v);                  // same extraction, spelled at the binding
 ```
 

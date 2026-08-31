@@ -66,7 +66,7 @@ extend IntBox {
 }
 
 extend IntBox: Container {
-    type Item = i64;
+    type Item := i64;
     fun get(&self) -> i64 { return self.value; }
 }
 ```

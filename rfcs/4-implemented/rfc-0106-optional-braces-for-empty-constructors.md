@@ -70,16 +70,16 @@ bracket elision for constructors that actually carry data.
 ```metel
 struct Empty {}
 
-let a = Empty;
-let b = Empty {};
+let a := Empty;
+let b := Empty {};
 
 enum Flag {
     On {},
     Off,
 }
 
-let x = Flag::On;
-let y = Flag::On {};
+let x := Flag::On;
+let y := Flag::On {};
 ```
 
 ## Implementation Notes

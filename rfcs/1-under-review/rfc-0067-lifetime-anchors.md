@@ -261,7 +261,7 @@ let node: Node = ptr;    // move-out: ptr consumed, Node returned
 **Type ascription** — drives move-out in any expression position:
 
 ```metel
-let node = ptr: Node;       // ascription in let — ptr consumed
+let node := ptr: Node;       // ascription in let — ptr consumed
 process(ptr: Node);         // ascription at call site — ptr consumed
 ```
 

@@ -18,7 +18,7 @@ fun clamp(value: i64, lo: i64, hi: i64) -> i64 {
 fun main() {
     println(clamp(15, 5, 10));   // 10
 
-    var sum = 0;
+    var sum := 0;
     for (let i in 1..=10) {   // ..= is inclusive; .. is exclusive
         sum += i;
     }
@@ -30,7 +30,7 @@ fun main() {
 
 ```metel
 fun first_over(threshold: i64, values: i64[]) -> Perhaps<i64> {
-    var i: u64 = 0;
+    var i: u64 := 0;
     loop {
         if ((i as i64) >= values.len()) {
             break None;
@@ -43,7 +43,7 @@ fun first_over(threshold: i64, values: i64[]) -> Perhaps<i64> {
 }
 
 fun main() {
-    let result = first_over(6, [3, 1, 7, 2, 9, 4]);
+    let result := first_over(6, [3, 1, 7, 2, 9, 4]);
     match result {
         Some { value } => println("first over 6: ${value}"),   // 7
         None => println("none found"),
@@ -62,7 +62,7 @@ Use it whenever a function can legitimately return nothing (a search that finds 
 
 ```metel
 fun find(haystack: String[], needle: String) -> Perhaps<i64> {
-    var i = 0;
+    var i := 0;
     for (let s in haystack) {
         if (s == needle) {
             return Some { value = i };
@@ -73,7 +73,7 @@ fun find(haystack: String[], needle: String) -> Perhaps<i64> {
 }
 
 fun main() {
-    let fruits = ["apple", "banana", "cherry"];
+    let fruits := ["apple", "banana", "cherry"];
 
     match find(fruits, "banana") {
         Some { value } => println("found at index ${value}"),   // 1
@@ -91,8 +91,8 @@ fun main() {
 
 ```metel
 fun main() {
-    let result = Perhaps::Some { value = 42 };
-    let n = result.yolo();    // panics if None
+    let result := Perhaps::Some { value = 42 };
+    let n := result.yolo();    // panics if None
 println(n);               // 42
 }
 ```
@@ -130,7 +130,7 @@ fun parse_positive(s: String) -> Result<i64, ParseError> {
 }
 
 fun main() {
-    let inputs = ["42", "", "hello", "42"];
+    let inputs := ["42", "", "hello", "42"];
 
     for (let input in inputs) {
         match parse_positive(input) {
@@ -168,7 +168,7 @@ fun parse_positive(s: String) -> Result<i64, ParseError> {
 }
 
 fun double_parse(s: String) -> Result<i64, ParseError> {
-    let n = parse_positive(s)?;   // returns Err immediately if parse fails
+    let n := parse_positive(s)?;   // returns Err immediately if parse fails
     return Ok { value = n * 2 };
 }
 
@@ -226,8 +226,8 @@ fun parse_number(s: String) -> Result<i64, ParseError> {
 
 // Both ? calls coerce their error type to AppError via From
 fun load_and_parse(path: String) -> Result<i64, AppError> {
-    let raw = read_data(path)?;
-    let n   = parse_number(raw)?;
+    let raw := read_data(path)?;
+    let n   := parse_number(raw)?;
     Ok { value = n }
 }
 
@@ -332,13 +332,13 @@ struct User {
 }
 
 fun validate_user(name: String, age_str: String) -> Result<User, ValidationError> {
-    let valid_name = validate_name(name)?;
-    let valid_age  = validate_age(age_str)?;
+    let valid_name := validate_name(name)?;
+    let valid_age  := validate_age(age_str)?;
     Ok { value = User { name = valid_name, age = valid_age } }
 }
 
 fun main() {
-    let attempts = [
+    let attempts := [
         ("Ada",  "25"),
         ("",     "30"),
         ("Alan", "17"),
@@ -346,8 +346,8 @@ fun main() {
     ];
 
     for (let attempt in attempts) {
-        let name = attempt.0;
-        let age  = attempt.1;
+        let name := attempt.0;
+        let age  := attempt.1;
         match validate_user(name, age) {
             Ok { value } =>
                 println("ok: ${value.name}, age ${value.age}"),

@@ -45,7 +45,7 @@ function.
 fun identity<T>(x: T) -> T { return x; }
 
 fun main() -> i64 {
-    let alias = identity;     // T0003 undefined name -- `identity` plainly exists
+    let alias := identity;     // T0003 undefined name -- `identity` plainly exists
     return alias(3);
 }
 ```

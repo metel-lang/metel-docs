@@ -149,8 +149,8 @@ field removed, at the same brand:
 struct Handle { fd: i64, name: String }
 
 fun main() {
-    let h = Handle { fd = 3, name = "x" };
-    let n = h.name;   // h : Handle.{ fd } from this point on -- moving a non-Copy
+    let h := Handle { fd = 3, name = "x" };
+    let n := h.name;   // h : Handle.{ fd } from this point on -- moving a non-Copy
                        // field out is implicit, no `move` keyword exists (verified
                        // 2026-08-27: `move h.name` is a parse error, not a spelling
                        // this grammar has ever had)
@@ -251,7 +251,7 @@ extend Handle {
 }
 
 fun main() {
-    let handle = Handle { fd = 3, name = "x" };
+    let handle := Handle { fd = 3, name = "x" };
     Handle::describe(handle.{ fd });   // ordinary type-matching: the parameter names
                                         // exactly this shape, at this brand
 }
@@ -393,9 +393,9 @@ nothing more than ordinary field mutation:
 struct SortedPair { small: Box, big: Box }   // invariant: small.value <= big.value, enforced by SortedPair::new
 
 fun main() {
-    var p = SortedPair::new(Box { value = 1 }, Box { value = 10 });
-    let old_small = p.small;   // p narrows to .{ big }
-    p.small = Box { value = 999_999 };   // p widens back to full SortedPair -- no call
+    var p := SortedPair::new(Box { value = 1 }, Box { value = 10 });
+    let old_small := p.small;   // p narrows to .{ big }
+    p.small := Box { value = 999_999 };   // p widens back to full SortedPair -- no call
                                           // to `new`, invariant possibly broken
 }
 ```

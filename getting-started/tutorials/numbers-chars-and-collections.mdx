@@ -16,9 +16,9 @@ Metel uses explicit numeric types. The most common defaults are `i64` for intege
 
 ```metel
 fun main() {
-    let red: u8 = 255;
-    let samples: i32 = 2048;
-    let ratio: f32 = 0.5;
+    let red: u8 := 255;
+    let samples: i32 := 2048;
+    let ratio: f32 := 0.5;
 
     println("red   = ${red}");
     println("count = ${samples}");
@@ -30,11 +30,11 @@ Unsuffixed numeric literals adopt the type the surrounding context requires:
 
 ```metel
 fun main() {
-    let port: u16 = 8080;
-    let gain: f32 = 1.25;
-    var retries: i32 = 0;
+    let port: u16 := 8080;
+    let gain: f32 := 1.25;
+    var retries: i32 := 0;
 
-    retries = 3;   // 3 is inferred as i32 from the binding
+    retries := 3;   // 3 is inferred as i32 from the binding
 }
 ```
 
@@ -46,8 +46,8 @@ Metel does not perform implicit numeric conversions. Use `as` when you want to c
 
 ```metel
 fun main() {
-    let width: u16 = 640;
-    let area_hint: i64 = width as i64 * 2;
+    let width: u16 := 640;
+    let area_hint: i64 := width as i64 * 2;
     println(area_hint);   // 1280
 }
 ```
@@ -56,8 +56,8 @@ This is especially relevant for indices. Array indexing requires `u64`:
 
 ```metel
 fun main() {
-    let items = ["zero", "one", "two"];
-    let idx: u64 = 1;
+    let items := ["zero", "one", "two"];
+    let idx: u64 := 1;
     println(items[idx]);   // one
 }
 ```
@@ -76,9 +76,9 @@ If a value represents a position into an array, declare it as `u64` early instea
 
 ```metel
 fun main() {
-    let initial: Char = 'M';
-    let newline: Char = '\n';
-    let smile: Char = '\u{1F600}';
+    let initial: Char := 'M';
+    let newline: Char := '\n';
+    let smile: Char := '\u{1F600}';
 
     println(initial);
     println(smile);
@@ -89,11 +89,11 @@ You can convert between `Char` and its scalar value explicitly:
 
 ```metel
 fun main() {
-    let c: Char = 'A';
-    let code: u32 = u32::from(c);
+    let c: Char := 'A';
+    let code: u32 := u32::from(c);
     println(code);   // 65
 
-    let back: Char = Char::from(66);
+    let back: Char := Char::from(66);
     println(back);   // B
 }
 ```
@@ -106,8 +106,8 @@ fun main() {
 
 ```metel
 fun main() {
-    let rgb: [u8; 3] = [255, 160, 64];
-    let zeros: [i32; 4] = [0; 4];
+    let rgb: [u8; 3] := [255, 160, 64];
+    let zeros: [i32; 4] := [0; 4];
 
     println(rgb.len());     // 3
     println(zeros[2u64]);   // 0
@@ -135,7 +135,7 @@ fun first(xs: i64[]) -> i64 {
 }
 
 fun main() {
-    let values: [i64; 3] = [10, 20, 30];
+    let values: [i64; 3] := [10, 20, 30];
     println(first(values));   // 10
 }
 ```
@@ -144,8 +144,8 @@ fun main() {
 
 ```metel
 fun main() {
-    var values: [i64; 3] = [10, 20, 30];
-    values[0u64] = 99;
+    var values: [i64; 3] := [10, 20, 30];
+    values[0u64] := 99;
     println(values[0u64]);   // 99
 }
 ```
@@ -158,7 +158,7 @@ Use `T[]` and `[T; N]` for array-style data. Use `List<T>` when the collection n
 
 ```metel
 fun main() {
-    var queue: List<String> = List::new();
+    var queue: List<String> := List::new();
     queue.push("parse");
     queue.push("typecheck");
     queue.push("evaluate");
@@ -176,7 +176,7 @@ fun main() {
 
 ```metel
 fun main() {
-    var nums = List::from([1, 2, 3]);
+    var nums := List::from([1, 2, 3]);
     nums.push(4);
 
     match nums.get(1) {
@@ -190,7 +190,7 @@ If another function expects an immutable array view, call `.as_slice()`:
 
 ```metel
 fun total(xs: i64[]) -> i64 {
-    var sum = 0;
+    var sum := 0;
     for (let x in xs) {
         sum += x;
     }
@@ -198,7 +198,7 @@ fun total(xs: i64[]) -> i64 {
 }
 
 fun main() {
-    let nums = List::from([5, 10, 15]);
+    let nums := List::from([5, 10, 15]);
     println(total(nums.as_slice()));   // 30
 }
 ```
@@ -219,8 +219,8 @@ fun identity<T>(value: T) -> T {
 }
 
 fun main() {
-    let x = identity::<i64>(42);
-    let y = identity::<String>("hello");
+    let x := identity::<i64>(42);
+    let y := identity::<String>("hello");
 
     println(x);
     println(y);

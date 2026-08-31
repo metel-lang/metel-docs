@@ -198,9 +198,9 @@ splitting it out would leave the write side half-specified, but it must not be b
 as free.
 
 ```metel
-var q = Point { x = 5, y = 7 };
-let qptr: &var Point = &var q;
-qptr.y = 99;      // auto-deref field write — unambiguous, unaffected by this RFC
+var q := Point { x = 5, y = 7 };
+let qptr: &var Point := &var q;
+qptr.y := 99;      // auto-deref field write — unambiguous, unaffected by this RFC
 assert(q.y == 99);
 ```
 
@@ -214,11 +214,11 @@ against a shipped fixture
 (`tests/integration/sources/evaluator/references/08_write_through_reference_chain.mtl`):
 
 ```metel
-var n = 1;
-var p: &var i64 = &var n;
-let pp: &var &var i64 = &var p;
+var n := 1;
+var p: &var i64 := &var n;
+let pp: &var &var i64 := &var p;
 
-pp = 5;        // today: writes n, through both layers
+pp := 5;        // today: writes n, through both layers
 assert(n == 5);
 ```
 
@@ -240,11 +240,11 @@ case in `Expr::Assign`'s handling of `AssignTarget::Ident` (`ctx.mark_write_thro
 - `*p = v;` (§5) is the spelling for writing through a bare reference identifier.
 
 ```metel
-var a = 1;
-var b = 2;
-var p: &var i64 = &var a;
-p = &var b;    // repoint — a type error today; legal after this RFC (p is var)
-*p = 5;        // write through — b becomes 5, a unchanged
+var a := 1;
+var b := 2;
+var p: &var i64 := &var a;
+p := &var b;    // repoint — a type error today; legal after this RFC (p is var)
+*p := 5;        // write through — b becomes 5, a unchanged
 ```
 
 §4.1's field/index write-through is untouched by this change — `resolve_field_assign_root`
@@ -290,9 +290,9 @@ evaluator change is needed for reads** beyond removing the now-inaccurate commen
 implicit copy-out already fires, as a redundant but always-available spelling:
 
 ```metel
-let sum = *p + *q;    // the only spelling for binary operands under the Go model
+let sum := *p + *q;    // the only spelling for binary operands under the Go model
 f(*r);                // the only spelling for call arguments under the Go model
-let y: i64 = *r;      // redundant with today's copy-out, and legal either way
+let y: i64 := *r;      // redundant with today's copy-out, and legal either way
 ```
 
 **Writes** get one new `ast::AssignTarget` variant, mirroring the existing write-through

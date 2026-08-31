@@ -172,7 +172,7 @@ At the language level, dot-call syntax remains:
 
 ```metel
 counter.increment();
-let n = counter.current();
+let n := counter.current();
 ```
 
 The receiver mode is determined by the method signature, not by syntax at the call site.

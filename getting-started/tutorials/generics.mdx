@@ -19,13 +19,13 @@ fun first<T>(items: T[]) -> Perhaps<T> {
 }
 
 fun main() {
-    let names = ["Ada", "Alan", "Grace"];
+    let names := ["Ada", "Alan", "Grace"];
     match first(names) {
         Some { value } => println(value),   // Ada
         None => println("empty"),
     }
 
-    let empty: i64[] = [];
+    let empty: i64[] := [];
     match first(empty) {
         Some { value } => println(value),
         None => println("empty"),           // empty
@@ -51,8 +51,8 @@ fun swap<A, B>(pair: (A, B)) -> (B, A) {
 }
 
 fun main() {
-    let p = (1, "one");
-    let q = swap(p);
+    let p := (1, "one");
+    let q := swap(p);
     println("${q.0}, ${q.1}");   // one, 1
 }
 ```
@@ -78,7 +78,7 @@ extend Stack<T> {
 }
 
 fun main() {
-    let numbers = Stack { items = [1, 2, 3] };
+    let numbers := Stack { items = [1, 2, 3] };
     match numbers.peek() {
         Some { value } => println(value),   // 3
         None => println("empty"),
@@ -97,9 +97,9 @@ struct Pair<A, B> {
 }
 
 fun main() {
-    let p = Pair { first = 1, second = "one" };
-    let first: i64 = p.first;
-    let second: String = p.second;
+    let p := Pair { first = 1, second = "one" };
+    let first: i64 := p.first;
+    let second: String := p.second;
     println("${first} / ${second}");   // 1 / one
 }
 ```

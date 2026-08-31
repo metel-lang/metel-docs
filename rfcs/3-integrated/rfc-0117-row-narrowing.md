@@ -77,8 +77,8 @@ per-field multiplicity, which is deferred until records are implemented).
 ## 1. The rule
 
 ```metel
-let r = { fd = 3, path = "/tmp/x" };   // { fd: i64, path: String }
-let p = r.path;                         // r : { fd: i64 } -- moving a non-Copy field
+let r := { fd = 3, path = "/tmp/x" };   // { fd: i64, path: String }
+let p := r.path;                         // r : { fd: i64 } -- moving a non-Copy field
                                          // out is implicit, no separate `move` syntax
 ```
 
@@ -104,8 +104,8 @@ record's (dependency discharged, see §3 below).**
 struct Handle { fd: i64, name: String }
 
 fun main() {
-    let h = Handle { fd = 3, name = "x" };
-    let n = h.name;   // h : Handle.{ fd } from this point on, same brand as Handle
+    let h := Handle { fd = 3, name = "x" };
+    let n := h.name;   // h : Handle.{ fd } from this point on, same brand as Handle
 }
 ```
 

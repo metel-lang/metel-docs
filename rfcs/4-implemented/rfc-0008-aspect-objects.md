@@ -106,8 +106,8 @@ named — once RFC-0063 exists to give `r` something to name.)
 A value of concrete type `T` where `T: Aspect` may be coerced to `dyn Aspect`:
 
 ```metel
-let shape: dyn Shape = Circle { radius = 5.0 };
-let shape2: dyn Shape = Rectangle { w = 3.0, h = 4.0 };
+let shape: dyn Shape := Circle { radius = 5.0 };
+let shape2: dyn Shape := Rectangle { w = 3.0, h = 4.0 };
 ```
 
 ---
@@ -215,7 +215,7 @@ fun print_any(x: &dyn Display) {
     x.to_string();   // vtable call — resolved at runtime
 }
 
-let shape: dyn Shape = Circle { radius = 5.0 };
+let shape: dyn Shape := Circle { radius = 5.0 };
 print_any(&shape);
 ```
 
@@ -276,15 +276,15 @@ value and do not drop it.
 A concrete value is coerced to an aspect object at the binding site:
 
 ```metel
-let x: dyn Display = 42;         // i64 coerced to dyn Display
-let y: dyn Display = "hello";    // String coerced to dyn Display
+let x: dyn Display := 42;         // i64 coerced to dyn Display
+let y: dyn Display := "hello";    // String coerced to dyn Display
 ```
 
 A reference to a concrete value is coerced to a borrowed aspect object:
 
 ```metel
-let n: i64 = 42;
-let x: &dyn Display = &n;
+let n: i64 := 42;
+let x: &dyn Display := &n;
 ```
 
 The coercion is implicit when the target type is `dyn Aspect` and the source type

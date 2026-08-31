@@ -12,8 +12,8 @@ spelling set introduced by RFC-0098.
 
 ```metel
 fun main() -> i64 {
-    let x = 42;
-    let name: String = "Vlad";
+    let x := 42;
+    let name: String := "Vlad";
     if (name == "Vlad") { return x; }
     return 0;
 }
@@ -21,7 +21,7 @@ fun main() -> i64 {
 
 `let` bindings [cannot be reassigned and must always be initialized](#spec.declarations.variables.immutable-bindings.legality-1). Mutability lives entirely on the binding — a `let` binding is immutable regardless of what value it holds. This means:
 
-- `x = newValue` is rejected (reassignment)
+- `x := newValue` is rejected (reassignment)
 - `x.field = value` is rejected (field assignment through an immutable binding)
 - `&var x` is rejected (taking a mutable reference to an immutable binding)
 
@@ -230,8 +230,8 @@ contribute to aspect-method dispatch.
 
 ```metel
 fun main() -> i64 {
-    var counter = 0;
-    counter = counter + 1;
+    var counter := 0;
+    counter := counter + 1;
     counter += 1;
     return counter;
 }
@@ -334,12 +334,12 @@ fun inner() {
         x: f64,
         y: f64,
     }
-    let p = LocalPoint { x = 1.0, y = 2.0 };
+    let p := LocalPoint { x = 1.0, y = 2.0 };
 }
 
 fun main() -> i64 {
     inner();
-    let p = make_point();
+    let p := make_point();
     return p.x as i64;
 }
 ```
@@ -400,7 +400,7 @@ struct Point {
 }
 
 fun main() -> i64 {
-    let p = Point { x = 1.0, y = 2.0 };
+    let p := Point { x = 1.0, y = 2.0 };
     return p.y as i64;
 }
 ```
@@ -416,8 +416,8 @@ struct Point {
 }
 
 fun main() -> i64 {
-    let p = Point { x = 1.0, y = 2.0 };
-    let x = p.x;
+    let p := Point { x = 1.0, y = 2.0 };
+    let x := p.x;
     return x as i64;
 }
 ```
@@ -432,9 +432,9 @@ struct Point {
 }
 
 fun main() -> i64 {
-    let x = 1.0;
-    let y = 2.0;
-    let p = Point { x, y };
+    let x := 1.0;
+    let y := 2.0;
+    let p := Point { x, y };
     return p.x as i64;
 }
 ```
@@ -447,8 +447,8 @@ These two forms are [equivalent](#spec.declarations.structs.instantiation-and-fi
 ```metel
 struct Empty {}
 
-let a = Empty;
-let b = Empty {};
+let a := Empty;
+let b := Empty {};
 ```
 
 <details>
@@ -533,16 +533,16 @@ struct Point {
 
 extend Point {
     fun distance(self, other: Point) -> f64 {
-        let dx = self.x - other.x;
-        let dy = self.y - other.y;
+        let dx := self.x - other.x;
+        let dy := self.y - other.y;
         return dx * dx + dy * dy;   // squared distance
     }
 }
 
 fun main() -> i64 {
-    let p = Point { x = 1.0, y = 2.0 };
-    let q = Point { x = 4.0, y = 6.0 };
-    let d = p.distance(q);
+    let p := Point { x = 1.0, y = 2.0 };
+    let q := Point { x = 4.0, y = 6.0 };
+    let d := p.distance(q);
     return d as i64;
 }
 ```
@@ -603,7 +603,7 @@ extend Counter {
 }
 
 fun main() -> i64 {
-    var c = Counter { value = 1 };
+    var c := Counter { value = 1 };
     c.increment();
     return c.value;
 }
@@ -732,7 +732,7 @@ struct Pair<A, B> {
 }
 
 fun main() -> i64 {
-    let p = Pair { first = 1, second = true };
+    let p := Pair { first = 1, second = true };
     return p.first;
 }
 ```
@@ -750,9 +750,9 @@ enum Shape {
 }
 
 fun main() -> i64 {
-    let dir = Direction::North;
-    let s = Shape::Circle { radius = 5.0 };
-    let area = match s {
+    let dir := Direction::North;
+    let s := Shape::Circle { radius = 5.0 };
+    let area := match s {
         Circle { radius }           => radius * radius * 3.14159,
         Rectangle { width, height } => width * height,
     };
@@ -777,8 +777,8 @@ enum Flag {
     On {},
 }
 
-let x = Flag::On;
-let y = Flag::On {};
+let x := Flag::On;
+let y := Flag::On {};
 ```
 
 <details>
@@ -823,9 +823,9 @@ enum Shape {
 }
 
 fun main() -> i64 {
-    let dir = Direction::North;
-    let s = Shape::Circle { radius = 5.0 };
-    let area = match s {
+    let dir := Direction::North;
+    let s := Shape::Circle { radius = 5.0 };
+    let area := match s {
         Circle { radius }           => radius * radius * 3.14159,
         Rectangle { width, height } => width * height,
     };
@@ -875,7 +875,7 @@ extend Shape {
 }
 
 fun main() -> i64 {
-    let s = Shape::Circle { radius = 5.0 };
+    let s := Shape::Circle { radius = 5.0 };
     return s.area() as i64;
 }
 ```
@@ -975,7 +975,7 @@ extend Point: Printable {
 }
 
 fun main() {
-    let p = Point { x = 1.0, y = 2.0 };
+    let p := Point { x = 1.0, y = 2.0 };
     p.print();
 }
 ```
@@ -1316,9 +1316,9 @@ extend Circle: Shape {
 }
 
 fun main() -> i64 {
-    let shape: dyn Shape = Circle { radius = 2.0 };
-    let circle = Circle { radius = 1.0 };
-    let borrowed: &dyn Shape = &circle;
+    let shape: dyn Shape := Circle { radius = 2.0 };
+    let circle := Circle { radius = 1.0 };
+    let borrowed: &dyn Shape := &circle;
     0
 }
 ```
@@ -1331,7 +1331,7 @@ coercion site itself — a compile-time error, not a deferred runtime failure:
 struct Rock { }
 
 fun main() -> i64 {
-    let x: dyn Display = Rock { };
+    let x: dyn Display := Rock { };
     0
 }
 ```
@@ -1392,8 +1392,8 @@ extend Rectangle: Shape {
 }
 
 fun main() -> i64 {
-    let a: dyn Shape = Circle { radius = 2.0 };
-    let b: dyn Shape = Rectangle { w = 3.0, h = 4.0 };
+    let a: dyn Shape := Circle { radius = 2.0 };
+    let b: dyn Shape := Rectangle { w = 3.0, h = 4.0 };
     // `a.area()` and `b.area()` each dispatch to their own concrete impl.
     0
 }
@@ -1444,7 +1444,7 @@ extend Rectangle: Shape {
 }
 
 fun main() -> i64 {
-    var shapes: List<dyn Shape> = List::new();
+    var shapes: List<dyn Shape> := List::new();
     shapes.push(Circle { radius = 2.0 });
     shapes.push(Rectangle { w = 3.0, h = 4.0 });
     for (shape in shapes.as_slice()) {
@@ -2030,7 +2030,7 @@ extend Person: Greet {
 }
 
 fun main() {
-    let p = Person { name = "Ada" };
+    let p := Person { name = "Ada" };
     println(p.greet());   // Hello, Ada
 }
 ```
@@ -2165,7 +2165,7 @@ fun make_adder(n: i64) -> extends Printable {
     Adder { n = n }
 }
 
-let add5 = make_adder(5);
+let add5 := make_adder(5);
 add5.print();   // adds 5 — printable, but its concrete type is not nameable
 ```
 
@@ -2193,13 +2193,13 @@ The caller may call any method the declared aspect provides, store the value, an
 ```metel
 aspect Container { type Item: Display; fun get(self) -> Item; }
 struct IntBox { value: i64 }
-extend IntBox: Container { type Item = i64; fun get(self) -> i64 { self.value } }
+extend IntBox: Container { type Item := i64; fun get(self) -> i64 { self.value } }
 
 fun make_box(n: i64) -> extends Container {
     IntBox { value = n }
 }
 
-let v: i64 = make_box(42).get();   // resolves through Container's Item binding for
+let v: i64 := make_box(42).get();   // resolves through Container's Item binding for
                                     // IntBox, the same associated-type mechanism
                                     // Associated Types (above) specifies -- the
                                     // caller never names IntBox, only Container.

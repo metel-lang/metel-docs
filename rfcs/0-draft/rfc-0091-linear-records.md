@@ -324,8 +324,8 @@ shown for illustration only. `ToRecord`/`FromRecord` are the derivable ones.)
 
 ```metel
 fun take_fd(h: &var FileHandle) -> (RawFd, &var { path: String }) {
-    let view = h.to_record_mut();
-    let fd = view.fd;   // moving a non-Copy field out is implicit, no `move` keyword
+    let view := h.to_record_mut();
+    let fd := view.fd;   // moving a non-Copy field out is implicit, no `move` keyword
                          // exists in this grammar
     (fd, view)          // view's residual type, { path: String }, is not Linear —
                          // RFC-0090 §5's field-composition rule applies to records
@@ -341,7 +341,7 @@ fun log_path(view: &{ path: String }) {
 }
 
 fun release(view: &var { path: String }, fd: RawFd) -> &var FileHandle {
-    view.fd = fd;
+    view.fd := fd;
     FileHandle::from_record_mut(view)
 }
 ```

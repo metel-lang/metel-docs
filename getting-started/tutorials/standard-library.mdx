@@ -17,11 +17,11 @@ with `map`, `filter`, and `fold`:
 
 ```metel
 fun main() {
-    let nums = List::from([1, 2, 3, 4, 5]);
+    let nums := List::from([1, 2, 3, 4, 5]);
 
-    let doubled = nums.map((x: i64) -> i64 { x * 2 });
-    let evens   = nums.filter((x: i64) -> boolean { x % 2 == 0 });
-    let sum     = nums.fold(0i64, (acc: i64, x: i64) -> i64 { acc + x });
+    let doubled := nums.map((x: i64) -> i64 { x * 2 });
+    let evens   := nums.filter((x: i64) -> boolean { x % 2 == 0 });
+    let sum     := nums.fold(0i64, (acc: i64, x: i64) -> i64 { acc + x });
 
     println(sum);            // 15
     println(evens.len());    // 2
@@ -32,7 +32,7 @@ fun main() {
 `map` may change the element type, and the transforms chain:
 
 ```metel
-let total = List::from([1, 2, 3, 4])
+let total := List::from([1, 2, 3, 4])
     .filter((x: i64) -> boolean { x % 2 == 1 })
     .map((x: i64) -> i64 { x * 10 })
     .fold(0i64, (a: i64, x: i64) -> i64 { a + x });   // 40
@@ -49,12 +49,12 @@ use their combinators:
 
 ```metel
 fun main() {
-    let maybe = Perhaps::Some { value = 21 };
+    let maybe := Perhaps::Some { value = 21 };
 
     // Transform inside the Perhaps, then supply a fallback.
-    let doubled = maybe.map((x: i64) -> i64 { x * 2 }).unwrap_or(0); // 42
+    let doubled := maybe.map((x: i64) -> i64 { x * 2 }).unwrap_or(0); // 42
 
-    let nothing: Perhaps<i64> = None;
+    let nothing: Perhaps<i64> := None;
     println(nothing.is_none());            // true
     println(nothing.unwrap_or(7));         // 7
 }
@@ -64,8 +64,8 @@ fun main() {
 the `Err` through untouched:
 
 ```metel
-let r: Result<i64, String> = Ok { value = 10 };
-let n = r.map((x: i64) -> i64 { x + 5 }).unwrap_or(0);  // 15
+let r: Result<i64, String> := Ok { value = 10 };
+let n := r.map((x: i64) -> i64 { x + 5 }).unwrap_or(0);  // 15
 ```
 
 ## Strings
@@ -76,7 +76,7 @@ clamps or returns `None` instead of panicking:
 
 ```metel
 fun main() {
-    let line = "  Hello, World  ";
+    let line := "  Hello, World  ";
 
     println(line.trim());                  // "Hello, World"
     println("abc".to_upper());             // "ABC"
@@ -106,7 +106,7 @@ fun main() {
         Err { error } => println(error.to_string()),
     }
 
-    let contents = read_to_string("/tmp/greeting.txt").unwrap_or("");
+    let contents := read_to_string("/tmp/greeting.txt").unwrap_or("");
     println(contents);   // hello
 }
 ```

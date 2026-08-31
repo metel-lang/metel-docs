@@ -339,7 +339,7 @@ The type-safe candidate. A wrapper type per integer type (or one generic
 `NonZero<T: Integer>`), constructed fallibly:
 
 ```metel
-let n: Perhaps<NonZero<i64>> = NonZero::new(user_input);
+let n: Perhaps<NonZero<i64>> := NonZero::new(user_input);
 ```
 
 `a / b` where `b: NonZero<T>` becomes a **total function** — panic-free by

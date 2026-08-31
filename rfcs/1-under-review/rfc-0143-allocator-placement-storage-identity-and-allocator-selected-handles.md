@@ -531,7 +531,7 @@ own operations; in particular, copying a `Gc` handle is not extraction of its po
 When `T: Copy`, ascription copies the pointee and leaves the handle and placement live:
 
 ```metel
-let point = ptr: Point;
+let point := ptr: Point;
 ```
 
 ### 7.2 Individually released placement
@@ -556,8 +556,8 @@ does not make move-out safe and is not part of the safe surface.
 The two forms are:
 
 ```metel
-let node = ptr: Node;
-let node: Node = ptr;
+let node := ptr: Node;
+let node: Node := ptr;
 ```
 
 Both obey the selected handle family's extraction capability and the rules above.

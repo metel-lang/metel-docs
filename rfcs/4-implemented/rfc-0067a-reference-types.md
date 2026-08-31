@@ -122,10 +122,10 @@ enforcement.)
 The address-of operators `&` and `&var` are syntactically unchanged at the expression level:
 
 ```metel
-let x = 42;
-let r: &i64     = &x;      // shared reference to x
-var y = 42;
-let m: &var i64 = &var y;  // exclusive reference to y
+let x := 42;
+let r: &i64     := &x;      // shared reference to x
+var y := 42;
+let m: &var i64 := &var y;  // exclusive reference to y
 ```
 
 Addressability rules from RFC-0043 §5 are preserved: only stable lvalues (named bindings,
@@ -168,9 +168,9 @@ differs from its initializer's reference type (`&T` or `&var T`) copies the refe
 provided `T: Copy`:
 
 ```metel
-let x = 42;
-let r: &i64 = &x;
-let y: i64 = r;   // type-directed copy — r's type differs from y's declared type
+let x := 42;
+let r: &i64 := &x;
+let y: i64 := r;   // type-directed copy — r's type differs from y's declared type
 ```
 
 **This fires at every position where a declared or expected type is already known, not
@@ -200,7 +200,7 @@ ascription (`r: T`) fires the copy in any expression position, including call si
 matching RFC-0066 §3's two forms exactly:
 
 ```metel
-let copy = r: i64;        // ascription in expression position
+let copy := r: i64;        // ascription in expression position
 process(r: i64);          // ascription at call site
 ```
 
@@ -208,10 +208,10 @@ Chains through multiple reference layers the same way §3's auto-deref does — 
 the declared type may require copying out of more than one layer:
 
 ```metel
-let n = 42;
-let r: &i64 = &n;
-let rr: &&i64 = &r;
-let x: i64 = rr;   // copies through both layers of the chain
+let n := 42;
+let r: &i64 := &n;
+let rr: &&i64 := &r;
+let x: i64 := rr;   // copies through both layers of the chain
 ```
 
 **The `T: Copy` gate is enforced, as of metel-core#649 (2026-08-08).** RFC-0071

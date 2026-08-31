@@ -186,7 +186,7 @@ unrelated to anything this RFC changes:
 ```metel
 // (a) the annotated let-binding — the corpus's dominant style
 fun main() {
-    let nums: i64[] = [1, 2, 3];   // literal coerces at the binding itself
+    let nums: i64[] := [1, 2, 3];   // literal coerces at the binding itself
     assert(nums.len() == 3);
 }
 ```
@@ -194,12 +194,12 @@ fun main() {
 ```metel
 // (b) an unannotated value passed where T[] is expected — the generic-call-argument case
 fun sum<T>(arr: T[]) -> i64 {
-    var total = 0;
+    var total := 0;
     for (x in arr) { total += 1; }
     total
 }
 fun main() {
-    let fixed: [i64; 3] = [1, 2, 3];
+    let fixed: [i64; 3] := [1, 2, 3];
     assert(sum(fixed) == 3);   // coerces at the call, today, before this RFC exists
 }
 ```
@@ -256,7 +256,7 @@ found while writing this RFC's spec-integration worked examples (`declarations.m
 ```metel
 extend<T: Clone> T[]: Clone {
     fun clone(&self) -> Self {
-        var out: List<T> = List::new();
+        var out: List<T> := List::new();
         for (item in self) { out.push(item.clone()); }
         return out.as_slice();   // <- a view into a local that is about to go out of scope
     }
@@ -295,9 +295,9 @@ struct Wrapper { data: i64[], tag: String }
 extend Wrapper: Drop { fun drop(self) {} }
 
 fun main() {
-    let w = Wrapper { data = [1, 2, 3], tag = "x" };
-    let d = w.data;
-    let d2 = w.data;   // today: T0019, use of moved value `w.data`
+    let w := Wrapper { data = [1, 2, 3], tag = "x" };
+    let d := w.data;
+    let d2 := w.data;   // today: T0019, use of moved value `w.data`
 }
 ```
 
