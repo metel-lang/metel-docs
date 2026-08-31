@@ -954,9 +954,14 @@ implementation).
 
 - **RFC-0049** *(draft)* — `linear fun` Type System — unconsumed-scope-exit, `Drop`
   interaction, subtyping vs. plain `fun`.
-- **RFC-0050** *(draft)* — Closure Capture Lists — `&var`/`move`/clone/`&` specifiers.
-  `&var`/clone/`&` buildable now; `move` waits on a split-model successor to refused
-  RFC-0046 — RFC-0134 is a candidate, scoped narrower (affine, not linear).
+- **RFC-0050** *(under review; correction pass 2026-08-31)* — Closure Capture Lists —
+  `[&var count, &config, move buf, prefix]` prefix on a closure literal, exhaustive once
+  present, four specifiers (`&var`/`&` by reference, `move` = ordinary affine move
+  (RFC-0071), bare = clone). `&var`/`&`/clone half is unblocked on RFC-0067a (`4-implemented`)
+  and buildable now; the `move` half was rewritten off `linear fun` — a `move`-capturing
+  closure is `once`/`many` per **RFC-0134 §2's `call_multiplicity`**, not a distinct type —
+  and is blocked only on RFC-0134 landing, not RFC-0028's linear-types tower. `[...]`
+  composes ahead of RFC-0154's base literal spelling.
 - **RFC-0134** *(accepted 2026-08-30, opened 2026-08-13)* — Closure Call
   Capability — the type-level
   distinction `metel-core#269` needs (does calling a closure consume a non-`Copy`

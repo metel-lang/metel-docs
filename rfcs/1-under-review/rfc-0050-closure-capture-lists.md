@@ -3,9 +3,33 @@ id: rfc-0050
 title: "Closure Capture Lists"
 date: '2026-06-03'
 status: under-review
-updated: '2026-08-23'
+updated: '2026-08-31'
 tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 ---
+
+> **Correction pass, 2026-08-31.** Applied the rewrite the 2026-08-23 note below said
+> was needed but recorded rather than performed, plus a syntax refresh:
+>
+> - **`move` half rewritten off `linear`.** `move` no longer produces a `linear
+>   fun(...) -> T` "must be called exactly once" closure. It is ordinary affine
+>   move-into-closure (RFC-0071, settled and implemented): the outer binding is
+>   consumed at capture, and the resulting closure is call-once (`once`) or reusable
+>   (`many`) per **RFC-0134 §2's `call_multiplicity`**, decided by whether the body
+>   consumes the moved-in capture. "Linear values cannot be clone-captured" becomes
+>   "a non-`Copy` binding the body uses must be `move`, `&`, or `&var` — not bare
+>   clone." Timing Recommendation retargeted: `move` is blocked on **RFC-0134**
+>   (`2-accepted`), not on "the rest of the linear-types tower."
+> - **Syntax refresh.** `&mut` → `&var` in the grammar; `*mut T`/`*T` → `&var T`/`&T`
+>   throughout Semantics (RFC-0067a (`4-implemented`), supersedes RFC-0043); `=`
+>   initializers → `:=` in every example (RFC-0136, implemented). Dangling "see
+>   RFC-0046" (`6-refused`) pointers for `move` semantics removed.
+> - **Cross-refs.** RFC-0134 is `2-accepted` (was cited as `1-under-review`). Added a
+>   note on composing the `[captures]` prefix with RFC-0154's function-literal
+>   spelling.
+>
+> No change to the `&var`/`&`/clone design, the exhaustiveness rule, or any Resolved
+> Question. The `&var`/`&`/clone half is unblocked on RFC-0067a and ready per the
+> Suggested Order; only `move` still waits (now on RFC-0134).
 
 *Updated 2026-07-07 against the split model: the bracket-syntax conflict with region/allocator
 parameters no longer applies (RFC-0063/0065 dropped bracket syntax for allocators); the `&var`
@@ -59,24 +83,26 @@ clarified to mean outer-scope local bindings only; references to module-level fu
 constants, types, and aspects are name resolution, not capture, and never need to appear in the
 list.*
 
-> **Status — under review (2026-08-23).** Zero remaining open questions in its own ledger -- all 6 Resolved Questions checked. Split readiness: &var/&/clone ready per its own Suggested Order; move blocked on a real design question (linear framing vs. RFC-0134's affine decision), not just timing -- #803
+> **Status — under review (2026-08-23; correction pass 2026-08-31, see frontmatter note).** Zero remaining open questions in its own ledger -- all 6 Resolved Questions checked. Split readiness: &var/&/clone ready per its own Suggested Order (unblocked on RFC-0067a); move blocked on RFC-0134 landing (`2-accepted`) -- #803
 
 ## Summary
 
-Add an optional capture list syntax to closure expressions. The capture list supports four specifiers: `&var ident` captures a non-linear binding by mutable reference, enabling a closure to mutate outer-scope state without a separate `*mut` binding; `&ident` captures a non-linear binding by read-only reference, avoiding a clone for values that are only read; `move ident` transfers ownership of a linear binding into the closure (RFC-0046 — refused; a split-model successor is needed, see Timing Recommendation); bare `ident` captures by value (clone). All four may appear in the same list. Once a closure has a capture list at all, it must be exhaustive — every free variable the closure body references, where "free variable" means an outer-scope local binding (not a module-level function, constant, type, or aspect), must appear in it. All captures are explicit at the closure definition site.
+Add an optional capture list syntax to closure expressions. The capture list supports four specifiers: `&var ident` captures a binding by mutable reference, enabling a closure to mutate outer-scope state without a separate `&var` reference binding; `&ident` captures a binding by read-only reference, avoiding a clone for values that are only read; `move ident` transfers ownership of a non-`Copy` binding into the closure (ordinary affine move — RFC-0071); bare `ident` captures by value (clone). All four may appear in the same list. Once a closure has a capture list at all, it must be exhaustive — every free variable the closure body references, where "free variable" means an outer-scope local binding (not a module-level function, constant, type, or aspect), must appear in it. All captures are explicit at the closure definition site.
+
+A closure with a `move` capture is call-once (`once`) or reusable (`many`) per RFC-0134 §2's `call_multiplicity`, decided by whether the body consumes the moved-in capture — not a distinct `linear fun` type. See Semantics and the Timing Recommendation.
 
 ---
 
 ## Motivation
 
-Closures in Metel currently capture all outer bindings by value (deep clone at creation time). To share mutable state between a closure and its enclosing scope, the programmer must explicitly declare a `*mut` pointer in the outer scope before the closure is defined:
+Closures in Metel currently capture all outer bindings by value (deep clone at creation time). To share mutable state between a closure and its enclosing scope, the programmer must explicitly declare a `&var` reference binding in the outer scope before the closure is defined:
 
 ```metel
 fun main() {
-    var count = 0;
-    let p: *mut Int = &var count;   // extra binding required
+    var count := 0;
+    let p: &var i64 := &var count;   // extra binding required
 
-    let inc = () -> () { *p += 1; };
+    let inc := () -> () { *p += 1; };
     inc();
     inc();
     // count is now 2
@@ -85,7 +111,7 @@ fun main() {
 
 This pattern works but carries a cost: `p` is a binding whose sole purpose is to outlive the closure capture window. It adds a name to the scope that has no semantic value beyond enabling the share, and it distances the expression of intent (mutation of `count`) from the place where it matters — the closure definition.
 
-An attempt to take `&var count` inside the closure body does not work — the closure's captured environment is a deep clone, so the pointer targets the copy, not the original binding. This is a non-obvious gotcha that the current documentation has to explain at length. Tests 72–74 in `tests/evaluator/sources/closures/` confirm and document this behaviour.
+An attempt to take `&var count` inside the closure body does not work — the closure's captured environment is a deep clone, so the reference targets the copy, not the original binding. This is a non-obvious gotcha that the current documentation has to explain at length. Tests 72–74 in `tests/evaluator/sources/closures/` confirm and document this behaviour.
 
 A capture list allows the programmer to declare the mutable capture at the closure site, eliminating the extra binding and making the intent legible without sacrificing explicitness.
 
@@ -96,20 +122,25 @@ A capture list allows the programmer to declare the mutable capture at the closu
 Extend the closure expression syntax with an optional capture list placed before the parameter list:
 
 ```
-closure_expr  = capture_list? "(" params ")" "->" return_type block
+closure_expr  = capture_list? "(" params ")" "->" return_type? block
 capture_list  = "[" capture_item ("," capture_item)* "]"
-capture_item  = "&mut" ident | "&" ident | "move" ident | ident
+capture_item  = "&var" ident | "&" ident | "move" ident | ident
 ```
 
-`&var ident` captures a non-linear binding by mutable reference. `&ident` captures a non-linear binding by read-only reference — the value is not cloned, but the closure may not write through it. `move ident` transfers ownership of a linear binding into the closure (see RFC-0046). A bare `ident` captures by value (clone) — the same behavior closures have always had for unlisted bindings, just now written explicitly. All four specifiers may appear in the same list: `[&var count, &config, move buf, log_prefix]`.
+*(The base closure-literal spelling — `(params) -> ret block` vs. RFC-0154's proposed
+`|params| body` — is RFC-0154's to settle. The `[captures]` prefix composes ahead of
+whichever it is: `[&var count] |req| { … }` under RFC-0154, `[&var count] (req: Request)
+-> Response { … }` today. Examples below use the current form.)*
 
-Bindings named with `&var` in the capture list are captured by mutable reference rather than by value. Inside the closure body they are used with ordinary read and assignment syntax — no pointer dereference required:
+`&var ident` captures a binding by mutable reference. `&ident` captures a binding by read-only reference — the value is not cloned, but the closure may not write through it. `move ident` transfers ownership of a binding into the closure by an ordinary affine move (RFC-0071); it is how a non-`Copy` value that the body will consume gets into a closure. A bare `ident` captures by value (clone) — the same behavior closures have always had for unlisted bindings, just now written explicitly. All four specifiers may appear in the same list: `[&var count, &config, move buf, log_prefix]`.
+
+Bindings named with `&var` in the capture list are captured by mutable reference rather than by value. Inside the closure body they are used with ordinary read and assignment syntax — no explicit dereference required:
 
 ```metel
 fun main() {
-    var count = 0;
+    var count := 0;
 
-    let inc = [&var count] () -> () {
+    let inc := [&var count] () -> () {
         count += 1;
     };
 
@@ -123,9 +154,9 @@ fun main() {
 
 ```metel
 fun main() {
-    let config: Config = Config::load();   // large struct, read-only in the closure below
+    let config: Config := Config::load();   // large struct, read-only in the closure below
 
-    let handle = [&config] (req: Request) -> Response {
+    let handle := [&config] (req: Request) -> Response {
         route(req, config)   // reads through the reference; no clone at closure-creation time
     };
 
@@ -134,16 +165,16 @@ fun main() {
 }
 ```
 
-If a closure has no capture list at all, every free variable it references continues to be captured by value (deep clone) implicitly — the RFC-0006 default, unchanged for the common case where nothing needs `&var`, `&`, or `move`.
+If a closure has no capture list at all, every free variable it references continues to be captured by value (deep clone) implicitly — the RFC-0006 default, unchanged for the common case where nothing needs `&var`, `&`, or `move`. (A closure with no list that references a non-`Copy`, non-`Clone` binding is already an error today, independent of this RFC — there is nothing to clone; such a binding is exactly the case `move` or `&`/`&var` exists for.)
 
 If a closure *does* have a capture list, that list must be exhaustive: every free variable the closure body references must appear in it, with the specifier matching how it's used. "Free variable" means an outer-scope **local binding** — a `let` binding or function/closure parameter visible in the lexical scope enclosing the closure. It does not include references to module-level functions, constants, types, or aspects: those are resolved by ordinary name resolution regardless of any capture list, and never need to appear in it, since nothing about them is being captured from a stack frame. A closure mixing a mutable capture with an otherwise-ordinary clone capture now looks like:
 
 ```metel
 fun main() {
-    var count = 0;
-    let log_prefix = "counter: ";
+    var count := 0;
+    let log_prefix := "counter: ";
 
-    let inc = [&var count, log_prefix] () -> () {
+    let inc := [&var count, log_prefix] () -> () {
         count += 1;
         print(log_prefix + count.to_string());   // `print` is a module-level function, not a free variable
     };
@@ -157,23 +188,24 @@ Referencing a free local binding that is not in the list — of any kind, includ
 ### Semantics
 
 **`&var` captures:**
-- At closure creation time, each `&var ident` capture takes the address of the named binding (equivalent to `&var ident`) and stores the resulting `*mut T` in the closure's captured environment.
-- Inside the closure body, reads and writes of the binding are automatically routed through the stored pointer. The programmer never sees the pointer explicitly.
-- The outer binding must be declared `var`. Attempting to capture a non-mutable binding via `&var` is a compile error.
+- At closure creation time, each `&var ident` capture takes `&var ident` and stores the resulting `&var T` in the closure's captured environment.
+- Inside the closure body, reads and writes of the binding are automatically routed through the stored reference. The programmer never sees an explicit dereference.
+- The outer binding must be declared `var`. Attempting to capture a non-`var` binding via `&var` is a compile error.
 
 **`&` (read-only reference) captures:**
-- At closure creation time, each `&ident` capture takes the address of the named binding (equivalent to `&ident`) and stores the resulting `*T` in the closure's captured environment. No clone occurs.
-- Inside the closure body, reads of the binding are automatically routed through the stored pointer. The programmer never sees the pointer explicitly, and cannot write through it — assigning to a `&`-captured binding inside the closure body is a compile error, the same rule that applies to any `*T` value outside a closure.
-- Unlike `&var`, the outer binding does not need to be declared `var` — `&ident` is valid for any addressable non-linear binding, matching `&x`'s existing rules outside of closures (RFC-0043).
+- At closure creation time, each `&ident` capture takes `&ident` and stores the resulting `&T` in the closure's captured environment. No clone occurs.
+- Inside the closure body, reads of the binding are automatically routed through the stored reference. The programmer never sees an explicit dereference, and cannot write through it — assigning to a `&`-captured binding inside the closure body is a compile error, the same rule that applies to any `&T` value outside a closure.
+- Unlike `&var`, the outer binding does not need to be declared `var` — `&ident` is valid for any addressable binding, matching `&x`'s existing rules outside of closures (RFC-0067a).
 
 **`move` captures:**
-- At closure creation time, each `move ident` capture transfers ownership of the named linear binding into the closure's environment. The outer binding is consumed at closure creation — using it after is a compile error.
-- A closure with any `move` capture has type `linear fun(...) -> T`: it must be called exactly once (see RFC-0046).
-- Linear bindings referenced in the closure body that are not listed with `move` are a type error — linear values cannot be clone-captured.
+- At closure creation time, each `move ident` capture transfers ownership of the named binding into the closure's environment. This is an **ordinary affine move** (RFC-0071, settled and implemented): the outer binding is consumed at closure creation, and using it after is a compile error — the same rule as `let y := x;` for any non-`Copy` `x`.
+- A closure with any `move` capture is **not** a distinct `linear fun` type. Its call-count capability — `once` (call-once) or `many` (reusable) — is determined by **RFC-0134 §2's `call_multiplicity`**: if some conservatively-reachable path through the body consumes a moved-in (or bare-clone) non-`Copy` capture, the closure is `once` and a second call is rejected as use of a moved value; otherwise it is `many`. A `move`d capture that the body only *reads* leaves the closure `many`.
+- A non-`Copy` binding the closure body references and that is **not** listed with `move`, `&`, or `&var` is a compile error — a non-`Copy` value cannot be bare-clone-captured (there is nothing to clone). It is not "linear"; it is ordinary affine, and `move`/`&`/`&var` is how a closure takes it.
+- `move` capture is **not** implementable until RFC-0134 lands (`2-accepted`); it supplies the `call_multiplicity` axis above. See the Timing Recommendation.
 
 **Bare `ident` (clone) captures:**
 - At closure creation time, each bare `ident` capture deep-clones the named binding into the closure's captured environment — identical to today's implicit RFC-0006 capture, just named explicitly.
-- Any non-linear binding the closure body reads (without mutating through it or moving it) can use this form; `&ident` is usually preferable for large values purely to avoid the clone, but both are legal.
+- Any binding whose value is cloneable (`Copy`, or `Clone`) and which the closure body reads without mutating through it or moving it can use this form; `&ident` is usually preferable for large values purely to avoid the clone, but both are legal.
 
 **All four:**
 - A binding may not appear more than once across the capture list (no dual capture of the same name under different kinds).
@@ -204,13 +236,13 @@ Question 4 below is re-resolved rather than left open.
 
 ## Alternatives Considered
 
-### Keep requiring an outer `*mut` pointer (status quo)
+### Keep requiring an outer `&var` reference binding (status quo)
 
 Works today. Verbose, non-obvious, and puts a semantically empty binding in the outer scope. Rejected as the permanent answer given the ergonomic cost.
 
 ### Allow `&var ident` inside the closure body
 
-Syntactically simple but does not work under the current capture semantics — the closure holds a deep-cloned copy, so the internal pointer targets the copy, not the original. Making it work would require abandoning deep-clone capture entirely or adding a special case that distinguishes "address-of a captured binding" from "address-of a local binding", both of which are more invasive than a capture list.
+Syntactically simple but does not work under the current capture semantics — the closure holds a deep-cloned copy, so the internal reference targets the copy, not the original. Making it work would require abandoning deep-clone capture entirely or adding a special case that distinguishes "address-of a captured binding" from "address-of a local binding", both of which are more invasive than a capture list.
 
 ### Implicit mutable capture
 
@@ -236,9 +268,9 @@ case, and a trustworthy field list wherever a capture list exists.
 
 1. **Lifetime of the mutable reference. ✓ Resolved** — In the interpreter, the outer binding's storage is heap-backed so there is no unsoundness. Under a future compiler, a closure holding `&var` (or `&`) to a stack binding must not outlive that binding. Precise enforcement defers to the borrow checker. No interpreter-level restriction is imposed now.
 
-2. **Interaction with concurrency. ✓ Resolved** — `*mut T` and `*T` (or, targeting RFC-0067a, `&var T` and `&T`) are not `Send` (RFC-0003's `Send` marker aspect; the original citation of RFC-0028 no longer applies — that RFC is refused). A closure is `Send` only if all its captured values are `Send`. Any `[&var x]` or `[&x]` closure is therefore automatically non-`Send` — no new rule needed; falls out of the existing model. Once the remaining RFC-0067 lands and adds lifetime anchors (`&r var T`/`&r T`), this should be restated in terms of whatever `Send` rule RFC-0067/RFC-0074 give anchored references — not yet specified, tracked as a residual, not a blocker.
+2. **Interaction with concurrency. ✓ Resolved** — `&var T` and `&T` (RFC-0067a) are not `Send` (RFC-0003's `Send` marker aspect; the original citation of RFC-0028 no longer applies — that RFC is refused). A closure is `Send` only if all its captured values are `Send`. Any `[&var x]` or `[&x]` closure is therefore automatically non-`Send` — no new rule needed; falls out of the existing model. Once RFC-0067 lands and adds lifetime anchors (`&r var T`/`&r T`), this should be restated in terms of whatever `Send` rule RFC-0067/RFC-0074 give anchored references — not yet specified, tracked as a residual, not a blocker.
 
-3. **Multiple closures capturing the same binding. ✓ Resolved** — Two closures with `[&var x]` both hold a mutable pointer to `x`. This is safe in the single-threaded interpreter (sequential calls; aliased mutation is not concurrent). Under the borrow checker, at most one live mutable reference at a time (or many live `&x` read-only references, exclusive of any `&var x`) will be enforced. Document now; restrict later.
+3. **Multiple closures capturing the same binding. ✓ Resolved** — Two closures with `[&var x]` both hold a mutable reference to `x`. This is safe in the single-threaded interpreter (sequential calls; aliased mutation is not concurrent). Under the borrow checker, at most one live mutable reference at a time (or many live `&x` read-only references, exclusive of any `&var x`) will be enforced. Document now; restrict later.
 
 4. **Syntax. ✓ Re-resolved** — `[&var x]` was confirmed jointly with RFC-0046. RFC-0063's
    pre-split "Region Handles" draft briefly introduced `[region]` in the same position,
@@ -251,9 +283,9 @@ case, and a trustworthy field list wherever a capture list exists.
    grounds that clone capture "already handles the immutable case adequately." Adopted instead:
    clone capture handles correctness but not cost — a large read-only value captured by many
    closures pays a full deep clone per closure for no reason, symmetric to why `&var` was added
-   over the `*mut` workaround in the first place. `&ident` closes that gap using exactly the
-   existing `&x` → `*T` rule (RFC-0043); no new addressing mechanism was needed, only exposing it
-   as a capture-list specifier.
+   over the `&var` reference-binding workaround in the first place. `&ident` closes that gap using
+   exactly the existing `&x` → `&T` rule (RFC-0067a); no new addressing mechanism was needed,
+   only exposing it as a capture-list specifier.
 
 6. **Scope of "free variable" for exhaustiveness. ✓ Resolved (2026-07-07)** — Only outer-scope
    local bindings (`let` bindings and parameters visible in the closure's enclosing lexical
@@ -276,25 +308,27 @@ and sequenced into Cluster A, removing the mechanical-rename concern below entir
 captures can target RFC-0067a's syntax directly instead of today's `*mut T`/`*T`, with no
 rename step to schedule around.*
 
+*Retargeted 2026-08-31: `move`'s blocker is now RFC-0134 (`2-accepted`), not "the
+linear-types tower." RFC-0134 decoupled the "does calling a closure consume a capture"
+question from linear types by answering it as an ordinary affine one — so `move` needs
+only RFC-0071 (settled) + RFC-0134's `call_multiplicity`, both concrete, not RFC-0028's
+tower.*
+
 **`&var`, `&`, and bare `ident` (clone) captures** have no dependency on linear types,
-allocators, or brands. Their only prerequisites are RFC-0043 (superseded by RFC-0067a) or, once it
-lands, RFC-0067a (accepted, Cluster A — `&T`/`&var T` with no anchors, no allocator
-interaction). Target RFC-0067a's syntax rather than RFC-0043's `*mut T`/`*T` if sequencing this
-RFC after it; both are implementable in the same Cluster-A timeframe, so there's no reason to
-prefer one over the other except avoiding a later rename. Bare `ident` has no pointer
-representation to rename at all, in either case.
+allocators, brands, or RFC-0134. Their only prerequisite is RFC-0067a (`4-implemented`,
+Cluster A — `&T`/`&var T` with no anchors, no allocator interaction). Bare `ident` has no
+reference representation at all. These three are implementable now.
 
-**`move` captures** remain blocked. RFC-0046, which specified `move`'s semantics (`linear fun`,
-consume-at-capture, single-call safety), is refused — not merely on hold — because it was
-written entirely in terms of the old unified `Region` model (cites RFC-0025, RFC-0028,
-RFC-0051, all now in `6-refused/`). `move` capture needs a split-model successor to RFC-0046
-before it can be implemented. That successor is not yet written and is properly a Stage B
-concern (see `reports/implementation/roadmap-2026-07-07.md`), alongside the rest of the
-linear-types tower.
+**`move` captures** are blocked only on **RFC-0134 (`2-accepted`)** landing. RFC-0046,
+which originally specified `move` in `linear fun` / exactly-once terms against the old
+unified `Region` model, is refused (`6-refused/`); its framing is not the one to inherit.
+The replacement is small and already accepted in outline: `move` is an ordinary affine
+move into the captured-environment aggregate (RFC-0071), and RFC-0134 §2's
+`call_multiplicity` decides whether the resulting closure is `once` or `many`. Nothing in
+`move` waits on RFC-0028's linear-types tower.
 
-**Suggested order:** implement the `&var`/`&`/clone three of this RFC now, targeting RFC-0067a's
-`&T`/`&var T`; implement `move` once a split-model successor to RFC-0046 exists and linear types
-have a settled design.
+**Suggested order:** implement `&var`/`&`/clone now against RFC-0067a; implement `move`
+once RFC-0134 lands.
 
 ---
 
@@ -320,33 +354,40 @@ forces a rewrite of closure capture when they land:
   types, not as bespoke closure logic. A `[&var count]` or future `[move buf]` closure is then
   covered automatically because its captured environment *is* an aggregate, with nothing
   closure-specific to revisit if brand-kind unification later generalizes escape checking.
-- **`move` and linear consumption, when Stage B lands.** Implement "is this closure `linear
-  fun`" as a derived fact — the captured-environment aggregate has an outstanding unconsumed
-  linear field — using the same per-field consumption mechanism adopted for partial consumption
-  of a linear struct (RFC-0063 §9 item 5's eventual resolution). This treats linear closure
-  capture and linear struct partial-consumption as one mechanism applied to two syntactic forms,
-  rather than two features designed separately that later need reconciling.
+- **`move` and `call_multiplicity`, when RFC-0134 lands.** Do not implement a distinct
+  `linear fun` type. RFC-0134 §2's `call_multiplicity` (`once`/`many`) is derived from the
+  captured-environment aggregate: the closure is `once` iff some conservatively-reachable
+  path through the body moves a non-`Copy` field of that aggregate out. This is the same
+  move-tracking the checker already runs on any body, applied to the closure's capture
+  aggregate as its place — closure `move` capture and ordinary partial move of a struct
+  become one mechanism on two syntactic forms, not two features to reconcile later.
 
 ---
 
 ## References
 
 - Language spec: `docs/public/spec.md`
-- RFC-0041: Lambda Syntax for Anonymous Functions
-- RFC-0043: Regular Pointers and Mutable Pointers
+- RFC-0041: Lambda Syntax for Anonymous Functions — the base closure-literal spelling
+- RFC-0154: Pipe Notation for Closures and Function Types (`1-under-review`) — proposes
+  `|x| body` for the literal; the `[captures]` prefix composes ahead of whichever base
+  spelling settles
+- RFC-0043: Regular Pointers and Mutable Pointers — **superseded by RFC-0067a**
 - Closure capture tests: `tests/evaluator/sources/closures/72_closure_internal_ptr_no_outer_effect.mtl`, `73_closure_direct_assign_no_outer_effect.mtl`, `74_closure_external_ptr_affects_outer.mtl`
-- RFC-0046: Linear Closure Capture — **refused** (`6-refused/`); specified `move`'s semantics
-  (`linear fun` type, consume-at-capture) against the old unified `Region` model. A split-model
-  successor is needed before `move` capture can be implemented — see Timing Recommendation above.
-- RFC-0134: Closure Call Capability (`1-under-review`) — a candidate successor, scoped to the affine
-  (not linear) version of the capability question; see the header note above.
-- RFC-0063: Allocator Handles (`1-under-review`, retitled from "Region Handles" in the 2026-07-05
+- RFC-0046: Linear Closure Capture — **refused** (`6-refused/`); specified `move` in
+  `linear fun` / exactly-once terms against the old unified `Region` model. Not the framing
+  to inherit — RFC-0134 (affine) is the successor.
+- RFC-0134: Closure Call Capability (`2-accepted`, 2026-08-30) — supplies `call_multiplicity`
+  (`once`/`many`), the affine (not linear) answer this RFC's `move` half needs. `move` is
+  blocked on it landing; see Timing Recommendation.
+- RFC-0071: Ownership and Move Semantics (`3-integrated`) — the settled affine ownership
+  model; `move` capture is an ordinary move into the captured-environment aggregate under it.
+- RFC-0063: Allocator Handles (`2-accepted`, retitled from "Region Handles" in the 2026-07-05
   split-model rewrite) — no longer uses bracket syntax for allocator parameters; see Historical
   section above.
-- RFC-0065: Allocator Ergonomics (`1-under-review`, retitled from "Region Ergonomics") — no
+- RFC-0065: Allocator Ergonomics (`2-accepted`, retitled from "Region Ergonomics") — no
   longer affects this RFC's bracket syntax.
-- RFC-0067a: Reference Types (`2-accepted`, split from RFC-0067 2026-07-07) — supersedes
-  RFC-0043's `*mut T`/`*T` with `&var T`/`&T`; no anchors, no dependency on this RFC's timing.
+- RFC-0067a: Reference Types (`4-implemented`, split from RFC-0067 2026-07-07) — supersedes
+  RFC-0043's `*mut T`/`*T` with `&var T`/`&T`; the only prerequisite for the `&var`/`&`/clone half.
 - RFC-0067: Lifetime Anchors (`1-under-review`) — adds
   `&r var T`/`&r T` on top of RFC-0067a; see Timing Recommendation above for sequencing.
 - `reports/implementation/roadmap-2026-07-07.md` — phased sequencing this RFC's two halves fit
