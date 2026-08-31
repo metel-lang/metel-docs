@@ -2,7 +2,7 @@
 id: rfc-0136
 title: "Walrus for Kept Bindings"
 date: '2026-08-23'
-status: under-review
+status: accepted
 target:
 updated: '2026-08-31'
 tracking: 'https://github.com/metel-lang/metel-core/issues/804'
@@ -38,6 +38,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/804'
 > the grammar (`unary_expr` LHS, parser-restricted); OQ#4 spells the migration ordering;
 > PROCESS.md gains an acceptance-review check for new binding-separator sites; the stale
 > "RFC-0132 still on `=`" notes are gone (RFC-0132 now uses `:=`).
+
+> **Status — accepted (2026-08-31).** Design settled after two adversarial-review rounds (2026-08-31): all five open questions resolved, the normative invariant rescoped to separator sites, the assoc_type_def/assoc_binding split argued, migration ordering spelled, PROCESS.md review-gate added. Implementation is metel-core#804.
 
 ## Summary
 
@@ -425,16 +427,18 @@ future RFC does not treat the separator as an open choice.
 
 ## Decision
 
-**Outcome:** *(pending — `1-under-review`.)* The five open questions are resolved: #1
-(compound operators stay `=`), #3 (enum discriminants stay `=`), and #4 (hard switch, no
-alias, AST-level rewrite with the ordering spelled in OQ#4 and the corpus scope deferred
-to PROCESS.md's syntax-change checklist) are settled here; #2 (`comptime let`) and #5
-(pattern field renaming) take the `=`/`:=` choice, and the kept-name-on-the-left rule,
-from the normative invariant, with RFC-0132 and metel-core#706 owning the rest of their
-productions. Two Codex adversarial-review rounds have been folded in (see the status
-note); the kept/not-kept design is unchanged, but the invariant was rescoped so it no
-longer over-reaches separatorless binders, the `assoc_type_def`/`assoc_binding`
-distinction is now argued rather than asserted, the migration ordering is spelled, and
-PROCESS.md gained a review-gate for future separator sites. Held at `1-under-review` for
-a fresh acceptance decision rather than a same-session re-transition.
+**Outcome:** Accepted 2026-08-31, after two Codex adversarial-review rounds. The five
+open questions are resolved: #1 (compound operators stay `=`), #3 (enum discriminants
+stay `=`), and #4 (hard switch, no alias, AST-level rewrite with the ordering spelled in
+OQ#4, corpus scope deferred to PROCESS.md's syntax-change checklist) are settled here;
+#2 (`comptime let`) and #5 (pattern field renaming) take the `=`/`:=` choice and the
+kept-name-on-`:=`'s-left rule from the normative invariant, with RFC-0132 and
+metel-core#706 owning the rest of their productions. The kept/not-kept design is
+unchanged from the original; the review rounds rescoped the invariant to separator
+sites, argued the `assoc_type_def`/`assoc_binding` distinction, spelled the migration
+ordering, and added a PROCESS.md review-gate for future separator sites.
+
+Not for `3-integrated` ahead of implementation: RFC-0136 changes base syntax, so the
+spec sweep to `:=` and the grammar flip land together in metel-core#804 — spec
+integration follows the implementation, not the acceptance (the RFC-0130 pattern).
 **Target:** v0.13.1 (metel-core#804).

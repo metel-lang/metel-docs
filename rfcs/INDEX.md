@@ -1240,7 +1240,7 @@ implementation).
   RFC-0090's settled anonymous record values, making `Point { x = 1.0 }` literally
   `{ x = 1.0 }` plus a brand — the relationship RFC-0090 tier 3 claims holds
   semantically, now visible in the syntax.
-- **RFC-0136** *(under review — open questions resolved and two Codex adversarial-review rounds applied 2026-08-31, held for a fresh acceptance decision; opened 2026-08-23)* — Walrus for Kept Bindings — extends
+- **RFC-0136** *(accepted 2026-08-31 after two Codex adversarial-review rounds; opened 2026-08-23)* — Walrus for Kept Bindings — extends
   the classify/define invariant with a third token: `let`/`var` declarations, plain
   reassignment, and associated-type *definition* (`type Item = i64` in an impl) all
   currently spell "define" with `=`, the same
