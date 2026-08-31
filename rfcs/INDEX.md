@@ -1055,14 +1055,20 @@ implementation).
   + `CallMany` / `CallShared`, from RFC-0153's Alternatives) as the third option, under
   which the area dissolves into aspect-bound subsetting. Not urgent: RFC-0152's cap is
   sound, so nothing is unsound while this is open. Tracker metel-core#904 (v0.17.0).
-- **RFC-0153** *(under review, opened 2026-08-30)* — Closure Mutation Axis — the third
-  `Type::Fun` field RFC-0134 §4 reserves and §5 constrains (compose with `once`/`many`
-  as an independent prefix). Records whether invoking a closure needs *exclusive*
-  (`&var`) access to a capture — Rust's `FnMut`. Inferred from the body by the same pass
-  RFC-0134 §2 uses; explicit `mut fun(T) -> U` / `once mut fun(T) -> U` for the promise
-  case. A `mutating` call takes `&var self` on the closure (no overlapping calls); a
-  `mutating` closure is not `Copy`. Open: qualifier spelling, `Send`/`Sync` ownership,
-  `&var`-capture-without-write precision, timing. Carries an Alternatives section:
+- **RFC-0153** *(under review, opened 2026-08-30; widened 2026-08-31; #902, milestone v0.17.0 — amendment recommends pulling to **v0.13.1**)* —
+  Closure Mutation Axis — the third `Type::Fun` field RFC-0134 §4 reserves and §5
+  constrains (compose with `once`/`many` as an independent prefix). Records whether
+  invoking a closure needs *exclusive* (`&var`) access to a capture — Rust's `FnMut`.
+  **`reading` is a fixed default (RFC-0134-style verify-not-infer), `mut` is written.**
+  A `mutating` call takes `&var self` on the closure (no overlapping calls); a `mutating`
+  closure is not `Copy`. **Widened 2026-08-31:** it also reverses RFC-0006's per-call
+  environment re-clone for `mutating` closures — their by-value captures are **written
+  back** so mutation persists across calls (the returnable counter / `move ||` + `FnMut`
+  case, which the closure model otherwise cannot express — RFC-0134 §5). Edition-gated
+  like RFC-0157's D5; sequenced after RFC-0134/RFC-0152. Field is *not* reserved in
+  v0.13.0 — RFC-0134 §4 makes adding it later cheap. Open: qualifier spelling (`mut` vs
+  `var fun`), `Send`/`Sync` ownership, `&var`-capture-without-write precision, v0.13.1
+  vs v0.14.0. Carries an Alternatives section:
   the two axes as **independent marker aspects** (`Callable<A,R>` + orthogonal
   `CallMany` / `CallShared`, auto-impl per RFC-0096) on a per-closure anonymous type —
   under which RFC-0152's widening dissolves into bound-subsetting; recommended as the

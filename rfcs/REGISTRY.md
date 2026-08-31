@@ -80,7 +80,7 @@ the curated thematic map.
 - **RFC-0148** — Row-Parametric Destructors (`1-under-review` ; rfcs/1-under-review/rfc-0148-row-parametric-destructors.md ; date 2026-08-28 ; updated 2026-08-28)
 - **RFC-0149** — Aspect Method Constraint Domain Inclusion (`1-under-review` ; rfcs/1-under-review/rfc-0149-aspect-method-constraint-domain-inclusion.md ; date 2026-08-29 ; updated 2026-08-29)
 - **RFC-0150** — Nested Row Narrowing (`1-under-review` ; rfcs/1-under-review/rfc-0150-nested-row-narrowing.md ; date 2026-08-29 ; updated 2026-08-29)
-- **RFC-0153** — Closure Mutation Axis (`1-under-review` ; rfcs/1-under-review/rfc-0153-closure-mutation-axis.md ; date 2026-08-30 ; updated 2026-08-30)
+- **RFC-0153** — Closure Mutation Axis (`1-under-review` ; rfcs/1-under-review/rfc-0153-closure-mutation-axis.md ; date 2026-08-30 ; updated 2026-08-31)
 - **RFC-0154** — Pipe Notation for Closures and Function Types (`1-under-review` ; rfcs/1-under-review/rfc-0154-pipe-notation-for-closures-and-function-types.md ; date 2026-08-30 ; updated 2026-08-30)
 - **RFC-0155** — Higher-Order Function-Type Multiplicity Variance (`1-under-review` ; rfcs/1-under-review/rfc-0155-higher-order-function-type-multiplicity-variance.md ; date 2026-08-30 ; updated 2026-08-30)
 - **RFC-0157** — Copy and Clone Model Re-analysis (`1-under-review` ; rfcs/1-under-review/rfc-0157-copy-and-clone-model-re-analysis.md ; date 2026-08-31 ; updated 2026-08-31)

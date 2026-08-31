@@ -3,10 +3,42 @@ id: rfc-0153
 title: "Closure Mutation Axis"
 date: '2026-08-30'
 status: under-review
-target:
-updated: '2026-08-30'
+target: v0.13.1
+updated: '2026-08-31'
 tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 ---
+
+> **Amendment, 2026-08-31 — folded into the closure-model work; scope widened to the
+> case that makes the axis worth having.** Three changes, all consequences of decisions
+> taken this cycle on RFC-0134 / RFC-0050 / RFC-0157:
+>
+> - **`reading` is a fixed default, not inferred** — matching RFC-0134's 2026-08-31
+>   amendment (`many` default, `once` written). `mutating` is always written (`mut`); the
+>   body analysis below runs to *verify* it — a `reading`/unqualified closure whose body
+>   mutates a capture is a compile error at the definition site ("mutates captured `x`;
+>   annotate `mut …` or don't mutate it"). §1's "inferred" language should be read that way.
+> - **Two cases, not one.** *(a)* Mutating **outer** state through a `&var`-captured
+>   reference (`[&var count] mut () -> () { count += 1 }`) — persists today, because the
+>   captured reference survives RFC-0006's per-call environment re-clone; this RFC only
+>   adds the no-overlapping-calls rule. *(b)* Mutating a **by-value / owned** capture so
+>   the mutation persists across calls — the returnable counter / accumulator / memoizer,
+>   Rust's `move ||` + `FnMut`. That is the expressiveness gap the closure model otherwise
+>   leaves open (see RFC-0134 §5's "no mechanism for retaining private mutated state").
+> - **Non-Goal #1 is reversed for case (b).** A `mutating` closure's by-value captures are
+>   **written back** into its environment instead of re-cloned-and-discarded per call.
+>   This is a change to RFC-0006's runtime capture model, the same weight and the same
+>   `--edition` gate as RFC-0157's D5; a `reading` closure keeps today's clone semantics
+>   (nothing mutates, so the difference is unobservable). Scoped this way, `mutating` stops
+>   being a type-level fact with no runtime effect.
+> - **Timing.** This amendment **recommends pulling the RFC forward to v0.13.1** (from its
+>   current v0.17.0 milestone, #902), landing whole — the `call_mutation` field, the `mut`
+>   qualifier, the §3 exclusive-access rule, and §1a's write-back — right after RFC-0134,
+>   RFC-0152, and the RFC-0006/D5 edition change, so the closure model ships complete
+>   rather than with a known `FnMut`-shaped hole for four minor versions. RFC-0134 §4
+>   already frames adding the field as a cheap, anticipated change, so it is *not*
+>   reserved in v0.13.0 — v0.13.0's `Type::Fun` stays at two fields and every function
+>   type is `reading` implicitly until this lands. The milestone move itself is a
+>   release-planning call; `target:` here reflects the recommendation.
 
 > **Deferred from RFC-0134 §4/§5.** RFC-0134 models a closure's capability as
 > independent per-operation multiplicity axes on `Type::Fun` — `call_multiplicity`
@@ -27,10 +59,10 @@ capture — needing `&var` access to it for the duration of the call — or only
 it? A closure whose body assigns to, or takes `&var` of, a by-value capture is
 *call-mutating*; one that only reads its captures is *call-reading*.
 
-Like RFC-0134's other axes it is **inferred from the body** by default, with an
-explicit qualifier for a signature that must promise more than its current body
-needs. It is orthogonal to `call_multiplicity`: `many` × mutating is `FnMut`,
-`once` × mutating is a closure that mutates then consumes, `many` × reading is
+Like RFC-0134's other axes (as amended 2026-08-31), **`reading` is a fixed default
+and `mutating` is written** (`mut`); the body analysis *verifies* the declared value
+rather than sourcing it. It is orthogonal to `call_multiplicity`: `many` × mutating is
+`FnMut`, `once` × mutating is a closure that mutates then consumes, `many` × reading is
 the plain `Fn` case, `once` × reading consumes without mutating first.
 
 ## Motivation
@@ -67,12 +99,37 @@ Type::Fun(params, ret, call_multiplicity, use_multiplicity, call_mutation)
 more-permissive value (a reading closure is usable wherever a mutating one is
 asked for; RFC-0152's widening direction, unchanged).
 
-Inferred at the closure's creation site, where captures and body are both
-available, the same pass RFC-0134 §2 uses:
+Checked at the closure's creation site, where captures and body are both available,
+by the same pass RFC-0134 §2 uses — as a *verification* of the declared/default value:
 
 - A body that assigns to a by-value capture, takes `&var` of one, or calls a
-  `&var self` / `&var`-parameter method or function on one → `mutating`.
-- A body that only reads captures (including taking `&` of them) → `reading`.
+  `&var self` / `&var`-parameter method or function on one **is `mutating`**; if the
+  closure was not written `mut` (or defaulted `reading`), that is a compile error, with
+  the fix being to add `mut` or to stop mutating.
+- A body that only reads captures (including taking `&` of them) is `reading` and needs
+  no annotation.
+
+### 1a. Runtime model — what `mutating` actually does
+
+RFC-0006 evaluates a call as `call_env = closure.captured.clone()` and never writes the
+result back, so a mutation to a by-value capture is discarded when the call returns. That
+makes `mutating` on a by-value capture a type-level fact with no runtime effect — useless.
+This RFC fixes that:
+
+- **`reading` closure:** unchanged — per-call clone of the captured environment, nothing
+  written back. Since the body does not mutate, this is unobservable.
+- **`mutating` closure:** its by-value captures are **written back** into the closure's
+  stored environment at the end of each call, so mutation *persists across calls*. The
+  closure now holds private mutable state — a returnable counter / accumulator / memoizer,
+  Rust's `move ||` + `FnMut`. Captures held by `&var` reference already persist (through
+  the outer cell); this only adds persistence for the *owned* captures.
+- This is a change to RFC-0006 (`4-implemented`), edition-gated exactly like RFC-0157's
+  D5 change to the capture default. Behind the old edition, a `mut` closure is a
+  parse/type error; behind the new one it has the write-back semantics above.
+
+The exclusive-access rule in §3 is what keeps the write-back sound: a `mutating` call
+takes `&var self` on the closure, so no two calls (including reentrant ones) can be
+mid-write-back at once.
 
 ### 2. Qualifier
 
@@ -113,6 +170,23 @@ Spelling is Open Question 1 — `mut` reuses Metel's mutation vocabulary (`&var`
 RFC-0134 §4 makes the case for axes over a hierarchy: the four states are all
 meaningful and independently reachable, so `mutation` is a separate binary field,
 not a third point on the `call` axis.
+
+The `many` × `mutating` cell is the one the rest of the closure model cannot express
+without this RFC (see RFC-0134 §5). Worked:
+
+```metel
+fun make_counter() -> mut () -> i64 {
+    let mut n := 0;
+    [n] mut () -> i64 { n := n + 1; n }   // `n` moved in; writes persist (§1a); closure returnable
+}
+
+fun main() {
+    let mut c := make_counter();
+    assert(c() == 1);
+    assert(c() == 2);   // state lives inside `c`
+    // `c` is `many mut` — not `Copy` (§3); no two calls overlap
+}
+```
 
 ## Alternatives considered
 
@@ -185,10 +259,14 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 
 ## Non-Goals
 
-- Changing RFC-0006's by-value capture model. A `mutating` closure still captured
-  its target by value at creation; the axis is about what the *call* does to that
-  captured value, not how it got there.
-- Capture-list syntax (`move`, `&var` specifiers) — RFC-0050, independently timed.
+- ~~Changing RFC-0006's by-value capture model.~~ **Reversed by the 2026-08-31
+  amendment for the `mutating` case only** (see §1a): a `mutating` closure's by-value
+  captures are written back so mutation persists across calls. A `reading` closure is
+  unchanged. *How* a capture gets into the closure is still RFC-0050/RFC-0157's concern,
+  not this RFC's — this RFC governs only what a `mutating` *call* does to an
+  already-captured value and whether that survives the call.
+- Capture-list syntax (`&var` / bare specifiers) — RFC-0050, sequenced together for
+  v0.13.0 (field) / v0.13.1 (`mut` + persistence) but a separate document.
 - `Drop`-for-closures / unconsumed-closure cleanup — RFC-0134 §5 rules it out and
   this RFC does not reopen it.
 - Multiplicity for ordinary types — RFC-0135.
@@ -208,8 +286,12 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 4. **`&var`-capture without mutation.** A body that takes `&var` of a capture but
    never writes through it — `mutating` (conservative, matches the borrow) or
    `reading` (precise, matches the effect)? Leaning conservative.
-5. **Timing.** After RFC-0134 and RFC-0152, or can it land with RFC-0134 as a
-   third field from the start? RFC-0134 §4 reserves the field either way.
+5. **Timing.** The 2026-08-31 amendment recommends landing the whole RFC together at
+   **v0.13.1**, after RFC-0134, RFC-0152, and the RFC-0006/D5 edition change — a
+   pull-forward from the current v0.17.0 milestone (#902), so the closure model ships
+   without a known `FnMut`-shaped hole. Not reserved in v0.13.0 (RFC-0134 §4 makes adding
+   the field cheap later). **Open:** whether release planning takes the v0.17.0 → v0.13.1
+   move, or v0.14.0 with the rest of the edition machinery.
 
 ## References
 
@@ -219,11 +301,16 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
   spelling assumed.
 - **RFC-0152 (Function-Type Multiplicity Widening)** — the widening relation this
   axis joins, same `reading`-permits-`mutating` direction.
-- **RFC-0006 (Closure Capture Semantics)** — the by-value capture model this does
-  not change.
+- **RFC-0006 (Closure Capture Semantics), `4-implemented`** — the per-call environment
+  re-clone that §1a changes for `mutating` closures (write-back), edition-gated.
 - **RFC-0067a (Reference Types)** — the exclusive-`&var` rule §3's call-site
   soundness reuses.
-- **RFC-0050 (Closure Capture Lists)** — capture syntax, independently timed.
+- **RFC-0050 (Closure Capture Lists), `1-under-review` (v0.13.0)** — as amended
+  2026-08-31: capture list required for non-`Copy`/by-ref captures, bare `[n]` = by-value
+  move. §1a's write-back applies to exactly those bare by-value captures. Sequenced with
+  this RFC.
+- **RFC-0157 (Copy and Clone Model Re-analysis), `1-under-review`** — its D5 edition
+  gate (change to RFC-0006's capture default) is the same gate §1a's write-back rides.
 - **RFC-0096 (Auto-Impl Aspects)** — `Send`/`Sync`/`Linear`; Open Question 3, and
   the natural home for `CallMany` / `CallShared` in the Alternatives section.
 - **RFC-0135 (Multiplicity for Ordinary Types)** — the axis vocabulary applied
@@ -239,8 +326,10 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 
 ## Decision
 
-**Outcome:** *(pending — draft, opened 2026-08-30, deferred from RFC-0134 §4/§5.
-The axis and its inference mirror RFC-0134's `call_multiplicity`; open points are
-the qualifier spelling, whether to also own the `Send`/`Sync` consequence, and
-whether it lands with RFC-0134 or after it and RFC-0152.)*
-**Target:** *(set when accepted; after or with RFC-0134.)*
+**Outcome:** *(pending — `1-under-review`, opened 2026-08-30, deferred from RFC-0134
+§4/§5, widened 2026-08-31 to cover encapsulated persistent state (§1a) — the case that
+makes the axis worth having. Targets v0.13.1 (#902), whole RFC together, after RFC-0134
+and the RFC-0006/D5 edition change. Open points: qualifier spelling (`mut` vs `var fun`),
+whether to own the `Send`/`Sync` consequence, `&var`-capture-without-write precision, and
+confirming the v0.13.1 milestone vs. v0.14.0.)*
+**Target:** v0.13.1 (#902).
