@@ -114,7 +114,7 @@ A field that *isn't* listed in the bound still can't be reached by name — `p.z
 
 ```metel
 fun describe<record T: { x: f64, .. }>(p: T) -> String {
-    match p {
+    match (p) {
         { x, .. } => "x is ${x}, plus whatever else the caller passed",
     }
 }

@@ -324,7 +324,7 @@ fun maybe_parse(s: String) -> Perhaps<i64> {
 }
 
 fun main() -> i64 {
-    match maybe_parse("1") {
+    match (maybe_parse("1")) {
         Some { value } => value,
         None => 0,
     }

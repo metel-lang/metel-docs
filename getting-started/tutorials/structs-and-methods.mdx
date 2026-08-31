@@ -151,7 +151,7 @@ enum Direction {
 }
 
 fun describe(d: Direction) -> String {
-    match d {
+    match (d) {
         North => "heading north",
         South => "heading south",
         East  => "heading east",
@@ -174,7 +174,7 @@ enum Shape {
 }
 
 fun area(s: Shape) -> f64 {
-    match s {
+    match (s) {
         Circle { radius } => 3.14159 * radius * radius,
         Rectangle { width, height } => width * height,
     }
@@ -209,14 +209,14 @@ enum Shape {
 
 extend Shape {
     fun area(self) -> f64 {
-        match self {
+        match (self) {
             Circle { radius } => 3.14159 * radius * radius,
             Rectangle { width, height } => width * height,
         }
     }
 
     fun describe(self) -> String {
-        match self {
+        match (self) {
             Circle { radius } => "circle with radius ${radius}",
             Rectangle { width, height } => "rectangle ${width}×${height}",
         }
@@ -274,7 +274,7 @@ struct Card {
 
 extend Suit {
     fun to_string(self) -> String {
-        match self {
+        match (self) {
             Clubs    => "Clubs",
             Diamonds => "Diamonds",
             Hearts   => "Hearts",
@@ -285,7 +285,7 @@ extend Suit {
 
 extend Rank {
     fun to_string(self) -> String {
-        match self {
+        match (self) {
             Number { value } => value.to_string(),
             Jack  => "Jack",
             Queen => "Queen",
@@ -295,7 +295,7 @@ extend Rank {
     }
 
     fun point_value(self) -> i64 {
-        match self {
+        match (self) {
             Number { value } => value,
             Jack  => 10,
             Queen => 10,

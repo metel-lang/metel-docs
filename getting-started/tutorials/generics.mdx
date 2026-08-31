@@ -20,13 +20,13 @@ fun first<T>(items: T[]) -> Perhaps<T> {
 
 fun main() {
     let names := ["Ada", "Alan", "Grace"];
-    match first(names) {
+    match (first(names)) {
         Some { value } => println(value),   // Ada
         None => println("empty"),
     }
 
     let empty: i64[] := [];
-    match first(empty) {
+    match (first(empty)) {
         Some { value } => println(value),
         None => println("empty"),           // empty
     }
@@ -79,7 +79,7 @@ extend Stack<T> {
 
 fun main() {
     let numbers := Stack { items = [1, 2, 3] };
-    match numbers.peek() {
+    match (numbers.peek()) {
         Some { value } => println(value),   // 3
         None => println("empty"),
     }

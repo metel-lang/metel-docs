@@ -8,12 +8,7 @@
       "2",
       "5",
       "6"
-    ],
-    "rfc-0156": [
-      "1"
     ]
   },
-  "spec": [
-    "spec.expressions.pattern-matching.legality-3"
-  ]
+  "spec": []
 }

@@ -140,7 +140,7 @@ Struct and enum bounds are visible inside match arm bodies. The bound is an inva
 
 ```metel
 fun process<T: Comparable>(list: SortedList<T>) {
-    match list {
+    match (list) {
         SortedList { items } => {
             // T: Comparable is available — no need to re-declare
         }

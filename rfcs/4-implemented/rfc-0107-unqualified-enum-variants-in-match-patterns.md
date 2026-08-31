@@ -50,7 +50,7 @@ and neither does any variant of a user-defined enum:
 enum Colour { Red, Green, Blue }
 
 fun name(c: Colour) -> String {
-    match c {
+    match (c) {
         Colour::Red => "red",
         Colour::Green => "green",
         Colour::Blue => "blue",

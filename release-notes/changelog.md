@@ -29,6 +29,15 @@ title: "Metel Language Changelog"
   bound lists without it. Naming a field the bound doesn't list is still rejected,
   `..` or not.
 
+**Syntax (breaking):**
+- A `match` expression's scrutinee must now be parenthesized — `match (x) { … }` — the
+  same as `if` / `while` / `for` / `for`-in, all of which already required it. The bare
+  `match x { … }` form is a parse error (RFC-0156, `metel-core#701`). A tuple scrutinee's
+  own parentheses satisfy the requirement (`match (a, b) { … }` is unchanged), as does the
+  unit literal (`match () { … }`). Every `match` in the spec, tutorials, stdlib, and
+  fixture corpus was migrated in the same change with an AST-driven rewriter; only the
+  bare form was touched.
+
 **Fixes:**
 - `Self::AssocType` and `Self.{ field }` now resolve inside an `extend` block's own
   method signature *and* body, everywhere an ordinary bound generic parameter's own
