@@ -2,7 +2,7 @@
 id: rfc-0136
 title: "Walrus for Kept Bindings"
 date: '2026-08-23'
-status: under-review
+status: accepted
 target:
 updated: '2026-08-31'
 tracking: 'https://github.com/metel-lang/metel-core/issues/804'
@@ -10,7 +10,17 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/804'
 
 > **Status — under review (2026-08-23).** Design-complete three-way split, formalized from reports/syntax/colon-classifies-equals-labels-walrus-binds.md's design discussion; open questions remain (compound ops, RFC-0132 coordination, migration strategy) so under-review, not accepted.
 >
-> **Updated 2026-08-31.** Three Open Questions closed. **#1 (compound operators):** resolved — `+= -= *= /= %=` stay unchanged; only *plain* `=` moves to `:=`. **#2 (RFC-0132 `comptime let`):** moved out of scope — `comptime let` is `let`-family so RFC-0136's classification applies (`:=`), but the syntax is RFC-0132's to introduce and spell that way from the start; this RFC does not block on it. **#5 (pattern-position field renaming, metel-core#706):** moved out of scope — separator and argument order belong to #706 (which needs rewriting against the kept/not-kept classification). **Only open question left: #4 (migration mechanics)** — corpus sizing, rewrite strategy, and the transition-alias decision, which is genuinely this RFC's own to settle.
+> **Updated 2026-08-31 — all open questions closed; proposed for acceptance.**
+> **#1 (compound operators):** `+= -= *= /= %=` stay unchanged; only *plain* `=` moves
+> to `:=`. **#2 (RFC-0132 `comptime let`):** out of scope — `comptime let` is
+> `let`-family so the classification applies (`:=`), but the syntax is RFC-0132's to
+> introduce and spell that way from the start. **#4 (migration mechanics):** hard
+> switch, no transition alias, one parser-driven sweep of the in-repo corpus — Metel
+> has no public users, so once fixtures + spec + active RFCs are migrated in the same
+> change there is nothing an alias would protect (RFC-0042 §D1 / RFC-0098 precedent).
+> **#5 (pattern field renaming, metel-core#706):** out of scope — #706's to settle
+> against the kept/not-kept classification. #3 (enum discriminants) was already answered
+> inline (stays `=`). Nothing blocks acceptance.
 >
 > **Updated 2026-08-25, corrected same day.** Added Open Question 5 and a new audit-table
 > row: metel-core#706 proposes pattern-position field renaming (`{ field = local_name }`)
@@ -20,6 +30,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/804'
 > `field`, is what's kept. The internally consistent spelling is `local_name := field`.
 > Found while reviewing #706 directly; the ordering fix found by the reviewer, not caught
 > here first.
+
+> **Status — accepted (2026-08-31).** All five open questions closed (2026-08-31): #1 compound operators stay =; #4 hard switch with no transition alias and one parser-driven corpus sweep (no public users, so nothing outside the repo to protect); #2 comptime let and #5 pattern field renaming handed to RFC-0132 and metel-core#706 with only the kept/not-kept classification; #3 enum discriminants answered inline. Design settled.
 
 ## Summary
 
@@ -212,15 +224,31 @@ readers already know, not a return to a majority convention.
    the discriminant value `1` is a label consumed at the declaration, `A` itself is
    already the kept name (introduced by the variant syntax, not by this `=`). Stays `=`.
    Included here for completeness, not because it is contested.
-4. **Migration mechanics.** RFC-0115's field-initializer migration (573 literal sites, a
-   parser-driven rewrite rather than a regex sweep, because declarations/patterns/literals
-   share brace syntax) is the closest precedent in scale, but this RFC's surface is
-   considerably larger (every `let` and every plain reassignment in the corpus, not just
-   struct literals). Sizing against the current corpus, choosing a rewrite strategy, and a
-   transition-alias decision (RFC-0042 §D1 and RFC-0098 both shipped renames with **no**
-   transition alias; whether that precedent should hold here, given the surface size, is
-   worth deciding explicitly rather than defaulting to it) are not resolved in this
-   document.
+4. **Migration mechanics.** *Resolved 2026-08-31 — hard switch, no transition alias,
+   one atomic sweep.*
+
+   The transition-alias question turns on who bears the cost of a hard break, and the
+   answer is: nobody outside this repository. Metel has no public users and no external
+   corpus. Once the in-repo surface — every `.mtl` fixture, `reference/spec/`'s examples,
+   and every in-flight RFC's worked examples — is migrated **in the same change** that
+   makes `:=` the grammar, there is nothing left that a compatibility alias would
+   protect. This is the RFC-0042 §D1 / RFC-0098 precedent (renames shipped with no
+   alias), and the "surface size" caveat that made it worth re-deciding here does not
+   change the calculus — a larger sweep is more edits, not more risk, when every edit is
+   in a tree the same PR owns.
+
+   **Strategy: parser-driven rewrite, like RFC-0115.** A blind `s/=/:=/` is unsafe for
+   the same class of reason RFC-0115 hit with braces — plain `=` in statement position
+   has to be told apart from `==`, from `=` inside a struct/record literal or an
+   `assoc_binding`, and from a future keyword-arg `=`. `let`/`var`/`type` declarations
+   are keyword-anchored and trivially rewritten; plain reassignment needs the parser to
+   confirm it is an `assign_op` at statement position before touching the token. The
+   sweep runs once, over fixtures + spec + active RFCs together, and old `=` in a
+   declaration or reassignment position becomes a parse error the moment it lands (a
+   `neg_*` fixture guards that, the RFC-0130 pattern).
+
+   Corpus sizing is then just an implementation detail for #804 — a finite,
+   one-shot, in-repo job — not a design question this document needs to answer.
 
 5. ~~**Pattern-position field renaming (metel-core#706).**~~ *Moved out of scope
    2026-08-31 — this is not RFC-0136's to decide.* Pattern-position field renaming
@@ -273,5 +301,10 @@ kept/not-kept answer not decided here. Left for a future RFC.
 
 ## Decision
 
-**Outcome:** *(pending)*
-**Target:** *(set when accepted)*
+**Outcome:** Proposed for acceptance, 2026-08-31. All five open questions are
+closed: #1 (compound operators stay `=`) and #4 (hard switch, no alias, one
+parser-driven sweep) resolved in this document; #2 (`comptime let`) and #5
+(pattern field renaming) moved to their owning proposals (RFC-0132, metel-core#706)
+with only the kept/not-kept classification handed over; #3 (enum discriminants)
+answered inline. The migration is a finite in-repo job tracked by metel-core#804.
+**Target:** v0.13.1 (metel-core#804).
