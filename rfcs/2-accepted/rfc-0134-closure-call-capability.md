@@ -88,6 +88,13 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 >
 > §2 and §3 below keep their analysis and examples; read "inferred" there as "checked
 > against the `many` default (or the written `once`)."
+>
+> Separately, **§4's reserved mutation axis is now a live design** — RFC-0153 (Closure
+> Mutation Axis), widened 2026-08-31 and targeting **v0.13.1**. It adds the third
+> `Type::Fun` field *and* changes RFC-0006's runtime so a `mutating` closure's by-value
+> captures persist across calls (Rust's `move ||` + `FnMut`). This RFC still ships two
+> fields for v0.13.0; every function type is `reading` until RFC-0153 lands. §4 and §5
+> below are updated to point at it.
 
 ## Summary
 
@@ -661,14 +668,16 @@ a nominally separate closure type:
   non-`Copy` capture is `many` on the call axis while being `once` on this one. An
   earlier draft of this section listed only the call axis here and treated §1's rule as
   feeding into it; that was wrong, and §1 now records why (the storage gap).
-- **A mutation-capability axis — reserved, not populated.** OCaml's counterpart is its
-  separate `uniqueness` (aliasing) axis. Nothing in Metel today needs a value here:
-  RFC-0006's explicit-pointer capture model means a closure never holds private mutable
-  state across calls (see Prior Art, above — `call_env = closure.captured.clone()` on
-  every call, nothing written back). Kept structurally separate, and unpopulated rather
-  than removed, specifically so a hypothetical future `FnMut`-shaped capability would be
-  a *value on this second axis* — never a third value stacked onto the call-count axis
-  the way Rust's `FnMut` sits between `Fn` and `FnOnce`.
+- **A mutation-capability axis — `reading` / `mutating`.** OCaml's counterpart is its
+  separate `uniqueness` (aliasing) axis. **Now designed as RFC-0153 (Closure Mutation
+  Axis)**, targeting v0.13.1 — no longer merely reserved. This RFC ships `Type::Fun` with
+  its own two fields for v0.13.0; RFC-0153 adds the third (`call_mutation`) — a cheap
+  later change per "the field model changes one enum variant" below. RFC-0153 also takes
+  the runtime consequence: a `mutating` closure's by-value captures are written back
+  across calls (reversing the per-call re-clone-and-discard quoted in Prior Art), which
+  is what finally lets a Metel closure hold private mutable state — Rust's `move ||` +
+  `FnMut`. Kept a separate binary field, never a third value stacked onto the call-count
+  axis the way Rust's `FnMut` sits between `Fn` and `FnOnce`.
 
 **No distinct closure type is needed to carry any of these axes.** An earlier draft of this
 section left that as an open choice, inherited from RFC-0049's "step 1" (distinguish
@@ -791,11 +800,14 @@ genuinely out of scope here.
   claim than what RFC-0046/0049/0050's `move` half were reaching for, not a shortcut
   through the same claim.
 - **No capture-list syntax.** RFC-0050 owns that, independently timed, per its own text.
-- **No `FnMut`-shaped middle tier.** Not ruled out — §4 reserves a mutation axis for
-  exactly this — but nothing in the current runtime needs it: Metel closures re-clone
-  their captured environment on every call (Prior Art, above) and have no mechanism for
-  retaining private mutated state across calls, so there is no reachable case today
-  this RFC's own repro-driven scope would need to cover.
+- **No `FnMut`-shaped capability *in this RFC*.** §4's mutation axis carries it, and it
+  is now a real design — **RFC-0153 (Closure Mutation Axis)**, targeting v0.13.1 — not a
+  reservation. RFC-0153 also takes on the runtime change it needs: a `mutating` closure's
+  by-value captures are written back across calls, so a Metel closure can hold private
+  mutable state (a returnable counter / accumulator), which is not possible today (the
+  per-call re-clone quoted in Prior Art discards it). This RFC neither ships nor blocks
+  that; v0.13.0's `Type::Fun` keeps two fields and every function type is `reading`
+  implicitly until RFC-0153 lands.
 - **No unification of `Copy` with `once`/`many` for ordinary (non-closure) types.** The
   two turn out to be the same underlying question, not just an analogy: `Copy` is what
   `many` means when the operation being asked about is "by-value use" instead of
@@ -1026,8 +1038,11 @@ re-examining, because the trade-off it was made against will have changed.
 - **RFC-0155 (Higher-Order Function-Type Multiplicity Variance), `1-under-review`** — the
   contravariant-nesting and subtype-lattice questions split out of RFC-0152 the same
   day; not needed by this RFC.
-- **RFC-0153 (Closure Mutation Axis), `1-under-review`** — §4's reserved third
-  `Type::Fun` field, and the `mut` qualifier that composes with `once`/`many`.
+- **RFC-0153 (Closure Mutation Axis), `1-under-review` (v0.13.1)** — §4's third
+  `Type::Fun` field (`call_mutation`) and the `mut` qualifier that composes with
+  `once`/`many`. Widened 2026-08-31 to also change RFC-0006's runtime so a `mutating`
+  closure's by-value captures persist across calls (the `FnMut` / private-state case).
+  The field ships `reading`-only with this RFC in v0.13.0; RFC-0153 fills it in v0.13.1.
 - **RFC-0151 (Tuples as Numeric-Label Rows), `0-draft`** — the reason the current
   `(T) -> U` function-type spelling is genuinely ambiguous, not just fragile (once
   `(A, B)` is a record type). Motivates RFC-0154.
