@@ -32,7 +32,9 @@ All three forms require `var`.
 
 ##### Legality Rule {#spec.declarations.variables.immutable-bindings.legality-1}
 
-A `let` binding must be initialized and cannot be assigned after initialization.
+A `let` binding must be initialized with the `:=` separator and cannot be assigned
+after initialization. `:=` is the sole separator that introduces a kept binding; the
+plain `=` spelling is a parse error (RFC-0136).
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md)_</span>
@@ -245,14 +247,16 @@ fun main() -> i64 {
 ##### Legality Rule {#spec.declarations.variables.mutable-bindings.legality-1}
 
 A `var` binding must be initialized and may be assigned after initialization; `var` is the
-mutable binding spelling.
+mutable binding spelling. Both the initializer and a subsequent plain reassignment use the
+`:=` separator (RFC-0136); the compound assignment operators `+=`, `-=`, `*=`, `/=`, `%=`
+keep `=`. The bare `=` spelling for a `var` initializer or reassignment is a parse error.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md), [rfc-0136](../../rfcs/4-implemented/rfc-0136-walrus-for-kept-bindings.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [16_for_loop.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/control_flow/16_for_loop.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [16_for_loop.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/control_flow/16_for_loop.mtl), [neg_14_legacy_equals_binding_separator.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/neg_14_legacy_equals_binding_separator.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 </details>
@@ -2224,7 +2228,7 @@ must satisfy `Aspect`.
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [stage12_03_impl_aspect_param.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage12_03_impl_aspect_param.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [neg_13_legacy_impl_aspect_type_position.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/neg_13_legacy_impl_aspect_type_position.mtl), [stage12_03_impl_aspect_param.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage12_03_impl_aspect_param.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-2}

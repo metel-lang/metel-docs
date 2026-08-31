@@ -1240,7 +1240,7 @@ implementation).
   RFC-0090's settled anonymous record values, making `Point { x = 1.0 }` literally
   `{ x = 1.0 }` plus a brand — the relationship RFC-0090 tier 3 claims holds
   semantically, now visible in the syntax.
-- **RFC-0136** *(accepted 2026-08-31 after two Codex adversarial-review rounds; opened 2026-08-23)* — Walrus for Kept Bindings — extends
+- **RFC-0136** *(implemented 2026-08-31; accepted, integrated, and shipped the same day after two Codex adversarial-review rounds; opened 2026-08-23)* — Walrus for Kept Bindings — extends
   the classify/define invariant with a third token: `let`/`var` declarations, plain
   reassignment, and associated-type *definition* (`type Item = i64` in an impl) all
   currently spell "define" with `=`, the same
@@ -1265,10 +1265,12 @@ implementation).
   take the `=`/`:=` choice and operand order from the invariant; enum discriminants stay
   `=`. **Two Codex adversarial-review rounds** were folded in — the kept/not-kept design
   is unchanged; round 2 rescoped the over-broad invariant, argued the
-  `assoc_type_def`/`assoc_binding` split, and spelled the migration ordering. Held at
-  `1-under-review` for a fresh acceptance decision. Declaration-side default parameter
+  `assoc_type_def`/`assoc_binding` split, and spelled the migration ordering. Shipped in
+  metel-core#910 (grammar flip + AST-driven corpus rewrite + `neg_14`/`neg_15` hard-switch
+  guards) with `reference/spec/` swept to `:=` and RFC-0136 co-origined onto the immutable-
+  and mutable-binding legality rules. Declaration-side default parameter
   values are a separator site under the invariant (`x: T := e`) but the production is a
-  future RFC's. Target v0.13.1 (metel-core#804). See
+  future RFC's. Target v0.13.1 (metel-core#910). See
   `reports/syntax/colon-classifies-equals-labels-walrus-binds.md`.
 - **RFC-0101** *(draft)* — Grammar-Enforced Naming Case Conventions — PascalCase for type
   declarations (struct/enum/aspect/generic params) and enum variants, camelCase for
