@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-08-30'
+generated_on: '2026-08-31'
 ---
 
 # RFC Registry
@@ -70,7 +70,7 @@ the curated thematic map.
 - **RFC-0127** — Associated Functions on Generic Types (`1-under-review` ; rfcs/1-under-review/rfc-0127-associated-functions-on-generic-types.md ; date 2026-08-01 ; updated 2026-08-23)
 - **RFC-0132** — Comptime Execution Model — comptime let, comptime fun, comptime if (`1-under-review` ; rfcs/1-under-review/rfc-0132-comptime-execution-model-comptime-let-comptime-fun-comptime-if.md ; date 2026-08-13 ; updated 2026-08-23)
 - **RFC-0135** — Multiplicity for Ordinary Types (`1-under-review` ; rfcs/1-under-review/rfc-0135-multiplicity-for-ordinary-types.md ; date 2026-08-13 ; updated 2026-08-29)
-- **RFC-0136** — Walrus for Kept Bindings (`1-under-review` ; rfcs/1-under-review/rfc-0136-walrus-for-kept-bindings.md ; date 2026-08-23 ; updated 2026-08-25)
+- **RFC-0136** — Walrus for Kept Bindings (`1-under-review` ; rfcs/1-under-review/rfc-0136-walrus-for-kept-bindings.md ; date 2026-08-23 ; updated 2026-08-31)
 - **RFC-0139** — Garbage-Collected Allocators and Allocator-Determined Pointer Types (`1-under-review` ; rfcs/1-under-review/rfc-0139-garbage-collected-allocators-and-allocator-determined-pointer-types.md ; date 2026-08-24 ; updated 2026-08-27)
 - **RFC-0140** — Algebraic Effects (`1-under-review` ; rfcs/1-under-review/rfc-0140-algebraic-effects.md ; date 2026-08-25 ; updated 2026-08-25)
 - **RFC-0142** — Division by Zero and Checked Arithmetic Ergonomics (`1-under-review` ; rfcs/1-under-review/rfc-0142-division-by-zero-and-checked-arithmetic-ergonomics.md ; date 2026-08-25 ; updated 2026-08-27)
