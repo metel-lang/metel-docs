@@ -1240,23 +1240,29 @@ implementation).
   RFC-0090's settled anonymous record values, making `Point { x = 1.0 }` literally
   `{ x = 1.0 }` plus a brand — the relationship RFC-0090 tier 3 claims holds
   semantically, now visible in the syntax.
-- **RFC-0136** *(accepted 2026-08-31, opened 2026-08-23)* — Walrus for Kept Bindings — extends
+- **RFC-0136** *(accepted 2026-08-31 — re-accepted the same day after an adversarial review; opened 2026-08-23)* — Walrus for Kept Bindings — extends
   the classify/define invariant with a third token: `let`/`var` declarations, plain
-  reassignment, and `type X = Concrete` all currently spell "define" with `=`, the same
+  reassignment, and associated-type *definition* (`type Item = i64` in an impl) all
+  currently spell "define" with `=`, the same
   token `field_init`, `assoc_binding`, and RFC-0100's not-yet-live keyword arguments use
   for a value or type consumed once at the site and not kept as a name. Splits on
   whether the introduced name is *kept* (referenceable after the statement — moves to
-  `:=`) or *not kept* (a label — stays `=`). Four grammar rules change: `let_decl`,
-  `let_mut_decl`, `assign_op` (plain `=` only), `assoc_type_def`; resolves RFC-0100's
-  `f(x = 1)`/`assign_expr` collision as a side effect, since plain `=` can no longer
-  parse as assignment inside an argument position at all. Largest syntax-migration
+  `:=`) or *not kept* (a label — stays `=`), stated as a **normative invariant** so
+  future kept-binding sites (standalone `type` aliases, `comptime let`, pattern field
+  renaming) inherit `:=` without re-litigation. Grammar edits: `let_decl`/`let_mut_decl`
+  and `assign_op`'s plain-`=` alternative → `:=`, plus `assoc_type_def`; resolves
+  RFC-0100's `f(x = 1)`/`assign_expr` collision as a side effect, since plain `=` can no
+  longer parse as assignment inside an argument position. Largest syntax-migration
   surface proposed to date — every `let` and plain reassignment in the corpus.
   **All five open questions closed 2026-08-31:** compound operators (`+=` etc.) stay
-  `=`; migration is a hard switch with no transition alias and one parser-driven corpus
-  sweep (no public users, so the in-repo tree is the whole surface — RFC-0042/RFC-0098
-  precedent); `comptime let` (RFC-0132) and pattern field renaming (metel-core#706) take
-  only the kept/not-kept classification and settle the syntax themselves; enum
-  discriminants stay `=`. Declaration-side default parameter values explicitly out of
+  `=` (in-place update of existing storage — the token already signals it); migration is
+  a hard switch with **no transition alias** (no public users) and an **AST-level**
+  rewrite governed by PROCESS.md's existing "changes existing syntax" checklist, plan
+  tracked at metel-core#804; `comptime let` (RFC-0132) and pattern field renaming
+  (metel-core#706) take the `:=` separator from the invariant and settle their own
+  productions; enum discriminants stay `=`. The Codex review that sent back the first
+  acceptance changed none of the design — it tightened the migration spec and the audit
+  and forced the invariant to be stated normatively. Declaration-side default parameter values explicitly out of
   scope. Target v0.13.1 (metel-core#804). See
   `reports/syntax/colon-classifies-equals-labels-walrus-binds.md`.
 - **RFC-0101** *(draft)* — Grammar-Enforced Naming Case Conventions — PascalCase for type
