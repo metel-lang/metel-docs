@@ -2,8 +2,10 @@
 id: rfc-0158
 title: "Share and Clone: Separating Aliasing from Duplication"
 date: '2026-08-31'
-status: draft
+status: under-review
 target:
+updated: '2026-08-31'
+tracking: 'https://github.com/metel-lang/metel-core/issues/919'
 ---
 
 > **Split out of RFC-0157 (Copy and Clone Model Re-analysis), 2026-08-31, then narrowed
@@ -13,6 +15,8 @@ target:
 > **not** rename anything and does **not** touch implicit-copy behavior. It adds one
 > narrow aspect, `Share`, and tightens what `Clone` is allowed to mean, so that "did I
 > just create an alias" stops being invisible at `Rc`/`Arc` call sites.
+
+> **Status — under review (2026-08-31).** purely-additive Share aspect; ready for review alongside RFC-0157
 
 ## Summary
 
@@ -138,7 +142,7 @@ use sites; `Drop` rules; `Send`/`Sync` (`Rc: !Send` so `Rc::share` stays thread-
 
 ## Relationship to existing RFCs
 
-- **RFC-0157 (Copy and Clone Model Re-analysis, `0-draft`)** — parent. RFC-0157's
+- **RFC-0157 (Copy and Clone Model Re-analysis, `1-under-review`)** — parent. RFC-0157's
   recommendation is "no divergence on the regular-value model"; this RFC is one of the two
   artifact removals it does endorse (the other being relaxing the `Copy`+`Drop` ban).
   Orthogonal to RFC-0157's P0/P1/P2/P3 and to RFC-0135.

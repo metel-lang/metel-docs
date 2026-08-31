@@ -2,8 +2,10 @@
 id: rfc-0157
 title: "Copy and Clone Model Re-analysis"
 date: '2026-08-31'
-status: draft
+status: under-review
 target:
+updated: '2026-08-31'
+tracking: 'https://github.com/metel-lang/metel-core/issues/918'
 ---
 
 > **This RFC is analysis and direction-setting, not a language change.** It exists to
@@ -21,6 +23,8 @@ target:
 > a deliberate exception turns on the closure-capture default (RFC-0006's clone-by-default)
 > and the `Copy`/`Clone` model under it. RFC-0050 dropped `move` and deferred
 > ownership-transfer capture to "a future RFC that settles the default." This is that RFC.
+
+> **Status — under review (2026-08-31).** analysis RFC ready for review; recommendation settled (no value-model divergence; invest in closures)
 
 ## Summary
 
@@ -425,7 +429,7 @@ change (amend RFC-0006, unblock RFC-0050); a disposition for RFC-0135.
 - **RFC-0080 (Stdlib Aspects — Clone…, `1-under-review`)** — owns the `Clone` aspect.
   RFC-0158 amends its §1 (tighten `Clone` to independent-duplication-only; add `Share`).
   This RFC's recommended direction leaves `Clone` otherwise untouched.
-- **RFC-0158 (Share and Clone: Separating Aliasing from Duplication, `0-draft`)** — split
+- **RFC-0158 (Share and Clone: Separating Aliasing from Duplication, `1-under-review`)** — split
   out of this RFC's "Axis B, second cut" 2026-08-31, then narrowed to purely additive: a
   new `Share` aspect beside `Copy`/`Clone`, no rename. One of the two regular-value changes
   this RFC's Recommended direction endorses. Orthogonal to P0–P3.
