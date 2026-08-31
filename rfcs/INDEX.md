@@ -1357,16 +1357,19 @@ implementation).
   rule: if two named aspects in the same list declare a method with the identical
   name, the whole combination is rejected outright rather than guessing or
   introducing a qualified-declaration syntax. Depends on RFC-0102. Opened 2026-07-14.
-- **RFC-0156** *(under review, opened 2026-08-31)* — Parenthesize `match` Scrutinee —
+- **RFC-0156** *(integrated 2026-08-31; accepted same day after one Codex
+  adversarial-review round; opened 2026-08-31)* — Parenthesize `match` Scrutinee —
   require `match (x) { … }` and make the bare `match x { … }` a parse error, aligning
   `match` with `if` / `while` / `for` / `for`-in, which all already require the
-  parentheses (`match` accepts them today only incidentally, via `tuple_or_paren`). Pure
-  surface syntax: matching, exhaustiveness, arm typing, RFC-0108 reference-transparent
-  scrutinees, RFC-0107 bare-variant patterns, RFC-0018 arm blocks all untouched. Grammar
-  becomes `"match" ~ tuple_or_paren ~ "{" ~ …` — reusing `tuple_or_paren` rather than a
-  fresh `"(" ~ expr ~ ")"` is what keeps tuple scrutinees (`match (a, b) { … }`) working.
-  Mechanical corpus sweep + `neg_*` hard-switch guard, same process as RFC-0130 /
-  RFC-0136, folded into v0.13. Tracking metel-core#701.
+  parentheses (`match` accepts them today only incidentally). Pure surface syntax:
+  matching, exhaustiveness, arm typing, RFC-0108 reference-transparent scrutinees,
+  RFC-0107 bare-variant patterns, RFC-0018 arm blocks all untouched. Grammar becomes
+  `"match" ~ (unit_lit | tuple_or_paren) ~ "{" ~ …` — the `tuple_or_paren` alternative
+  keeps tuple scrutinees (`match (a, b) { … }`) working, the `unit_lit` alternative keeps
+  `match () { … }` (both found in review). Integration added
+  `spec.expressions.pattern-matching.legality-3`. Grammar flip + mechanical corpus sweep
+  (pest-pair + source-span rewriter) + `neg_*` hard-switch guard land in metel-core#701,
+  v0.13.0.
 
 ---
 
