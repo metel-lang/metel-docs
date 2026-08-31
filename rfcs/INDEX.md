@@ -960,9 +960,10 @@ implementation).
   Whole RFC unblocked on RFC-0067a (`4-implemented`) and buildable now — nothing pending.
   The `move` specifier was **dropped** 2026-08-31: an affine move needs no keyword elsewhere
   in Metel (RFC-0071), and whether closure capture is the exception means revisiting
-  RFC-0006's clone-by-default model and the `Copy`/`Clone` design under it (adjacent:
-  RFC-0135). Ownership-transfer capture is deferred to that future RFC; no longer depends on
-  RFC-0134. `[...]` composes ahead of RFC-0154's base literal spelling.
+  RFC-0006's clone-by-default model and the `Copy`/`Clone` design under it. Ownership-transfer
+  capture is deferred to **RFC-0157** (Copy/Clone Model Re-analysis), opened out of this
+  pass; no longer depends on RFC-0134. `[...]` composes ahead of RFC-0154's base literal
+  spelling.
 - **RFC-0134** *(accepted 2026-08-30, opened 2026-08-13)* — Closure Call
   Capability — the type-level
   distinction `metel-core#269` needs (does calling a closure consume a non-`Copy`
@@ -997,6 +998,19 @@ implementation).
   alongside "coherent Copy and closure capabilities" and #702/#263's structural-types
   Copy cleanup, which §3 describes but does not fix. Acceptance blocker: Open Question 3
   (migration — breaking rename vs. permanent alias vs. deprecation window).
+- **RFC-0157** *(draft, opened 2026-08-31)* — Copy and Clone Model Re-analysis — the
+  trade-off study never written for `Copy`/`Clone`. Where RFC-0135 renames `Copy` to
+  `many` *assuming* the model, this questions the model: implicit copy's use-site
+  invisibility and API-stability hazard (D1), the two-aspect `Copy`/`Clone` split (D2),
+  `Copy`/`Drop` mutual exclusion (D3, RFC-0071 §4), the six-mechanism non-uniformity
+  across named vs. structural types (D4), and — the part with a blocked consumer —
+  RFC-0006's clone-by-default closure capture contradicting RFC-0071 move semantics (D5).
+  Surveys positions P0 (status quo + RFC-0135 rename) → P1 (closed implicit set + one
+  explicit `dup`) → P2 (no implicit copy); **recommends not shipping RFC-0135 as a rename
+  first**, leaning P1, plus adopting `let y := x` semantics for by-value capture behind an
+  edition gate (which settles RFC-0050's deferred ownership-transfer-capture question as
+  "no keyword"). Analysis/direction only — concrete changes spin out. Open Q6: D5 may
+  split into its own fast-tracked RFC since RFC-0050 (#803) is its only blocked consumer.
 - **RFC-0152** *(accepted 2026-08-30 with RFC-0134; opened 2026-08-30)* —
   Function-Type Multiplicity Widening — a one-directional coercion: a function value is
   usable where a *less* permissive multiplicity is expected (`many` call → `once` call

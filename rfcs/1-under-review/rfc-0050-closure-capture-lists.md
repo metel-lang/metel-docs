@@ -18,11 +18,11 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 >   *special* — and deciding whether it is means revisiting the closure-capture
 >   default itself (RFC-0006's "deep-clone every free variable") and, under it, the
 >   `Copy`/`Clone` model Metel adopted from Rust without a written trade-off analysis.
->   That is a larger design question than this RFC, and it has adjacent work already
->   in flight (RFC-0135, Multiplicity for Ordinary Types). This RFC now covers only
->   `&var` / `&` reference captures and the explicit spelling of today's implicit
->   clone capture; **ownership-transfer capture is explicitly out of scope**, deferred
->   to that future RFC. Consequence: nothing in this RFC is blocked on RFC-0134 or
+>   That is a larger design question than this RFC — opened as **RFC-0157 (Copy and
+>   Clone Model Re-analysis, `0-draft`)**, alongside the adjacent RFC-0135. This RFC now
+>   covers only `&var` / `&` reference captures and the explicit spelling of today's
+>   implicit clone capture; **ownership-transfer capture is explicitly out of scope**,
+>   deferred to RFC-0157. Consequence: nothing in this RFC is blocked on RFC-0134 or
 >   RFC-0028 any more — its only prerequisite is RFC-0067a (`4-implemented`), so the
 >   whole RFC is implementable now.
 > - **Syntax refresh.** `&mut` → `&var` in the grammar; `*mut T`/`*T` → `&var T`/`&T`
@@ -277,10 +277,12 @@ deserves a marker (the same principle that rejects *Implicit mutable capture* ab
 may well be right, but it is an argument about the **closure-capture default itself** —
 RFC-0006's "deep-clone every free variable," which predates settled move semantics — and
 about the `Copy`/`Clone` model Metel took from Rust without a written trade-off analysis.
-Both are larger than this RFC. Adjacent work is already open (RFC-0135, Multiplicity for
-Ordinary Types). Ownership-transfer capture is therefore deferred to a future RFC that
-settles the default; this one is scoped to `&var`/`&`/clone, which stand on their own and
-depend only on RFC-0067a.
+Both are larger than this RFC and are the subject of **RFC-0157 (Copy and Clone Model
+Re-analysis, `0-draft`)**, alongside the adjacent RFC-0135. Ownership-transfer capture is
+therefore deferred to RFC-0157; this one is scoped to `&var`/`&`/clone, which stand on
+their own and depend only on RFC-0067a. (RFC-0157's current recommendation would settle
+this as "no specifier — bare capture of a non-`Copy` value *is* the move"; that is a
+recommendation under review, not yet a decision.)
 
 ### Exhaustive capture lists
 
@@ -353,14 +355,15 @@ prerequisite is RFC-0067a (`4-implemented`, Cluster A — `&T`/`&var T` with no 
 allocator interaction). Bare `ident` has no reference representation at all. Implementable
 now.
 
-**Ownership-transfer capture** is deferred to a future RFC that first settles the
-closure-capture default (RFC-0006's clone-by-default) and the `Copy`/`Clone` model under
-it. That RFC — not this one — is where an ownership-transfer specifier, if any, is
-designed. RFC-0046 (`6-refused/`), which specified the old `move` in `linear fun` /
-exactly-once terms against the unified `Region` model, is not the framing to inherit.
+**Ownership-transfer capture** is deferred to **RFC-0157 (Copy and Clone Model
+Re-analysis, `0-draft`)**, which settles the closure-capture default (RFC-0006's
+clone-by-default) and the `Copy`/`Clone` model under it. That RFC — not this one — is
+where an ownership-transfer specifier, if any, is designed. RFC-0046 (`6-refused/`), which
+specified the old `move` in `linear fun` / exactly-once terms against the unified `Region`
+model, is not the framing to inherit.
 
 **Suggested order:** implement this RFC (`&var`/`&`/clone) now against RFC-0067a. Revisit
-ownership-transfer capture when the capture-default RFC exists.
+ownership-transfer capture once RFC-0157 concludes.
 
 ---
 
@@ -407,18 +410,22 @@ forces a rewrite of closure capture when they land:
 - RFC-0006: Closure Capture Semantics and Cross-Closure Reference Sharing (`4-implemented`) —
   defines the current clone-by-default capture behavior this RFC's bare `ident` specifier
   spells explicitly. Whether that default should change (so a non-`Copy` value moves rather
-  than clones, or fails) is the question a future ownership-transfer-capture RFC must settle;
-  out of scope here.
+  than clones, or fails) is **RFC-0157**'s question, not this RFC's.
+- RFC-0157: Copy and Clone Model Re-analysis (`0-draft`, opened 2026-08-31) — the RFC this
+  one defers ownership-transfer capture to. Analyzes whether closure capture by value should
+  mean move (consistent with `let y := x`) or clone (RFC-0006 today); its recommendation is
+  the former, behind an edition gate, which would settle this RFC's out-of-scope note as
+  "no specifier needed."
 - RFC-0046: Linear Closure Capture — **refused** (`6-refused/`); specified a `move` capture in
   `linear fun` / exactly-once terms against the old unified `Region` model. Not the framing to
   inherit. Listed only to note that this RFC's dropped `move` specifier is *not* a revival of it.
 - RFC-0134: Closure Call Capability (`2-accepted`, 2026-08-30) — `call_multiplicity`
   (`once`/`many`), the affine answer to "does calling a closure consume a capture." **No longer
-  a dependency of this RFC** (the `move` specifier that needed it is dropped); relevant to the
-  future ownership-transfer-capture RFC.
+  a dependency of this RFC** (the `move` specifier that needed it is dropped); relevant to
+  RFC-0157.
 - RFC-0135: Multiplicity for Ordinary Types (`1-under-review`, #892) — reframes `Copy` as
-  `many` for by-value use; the adjacent work on the `Copy`/`Clone` model that a
-  capture-default RFC would build on.
+  `many` for by-value use; adjacent to RFC-0157 (RFC-0157 questions the model RFC-0135
+  renames).
 - RFC-0071: Ownership and Move Semantics (`3-integrated`) — the settled affine ownership
   model. An affine move takes no keyword under it, which is why this RFC has no `move`
   specifier.
