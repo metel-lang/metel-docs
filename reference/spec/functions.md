@@ -283,11 +283,11 @@ not re-cloned per call](#spec.functions.closures.dynamics-5).
 ```metel
 fun make_counter() -> mut () -> i64 {
     let n := 0;
-    [n] mut () -> i64 { n := n + 1; n }   // `n` moved in; writes persist
+    [n] mut () -> i64 { n += 1; n }   // `n` moved in; writes persist
 }
 
 fun main() -> i64 {
-    let mut c := make_counter();
+    let c := make_counter();   // an owned binding is enough for a `mutating` call (legality-10)
     c();
     c()   // returns 2 — state lives in `c`'s environment
 }

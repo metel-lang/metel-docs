@@ -145,7 +145,7 @@ lives there for the closure's lifetime. On that base:
     inline aggregate is **bit-copied** with the rest of the closure value and the copies
     then diverge, exactly as copying a struct with a counter field would. This is a
     *trivial* copy (no allocation, no indirection); a `[n] mut` closure with `n: i64` is
-    `Copy` and `let mut d := c;` gives `d` an independent counter. Any representation that
+    `Copy` and `let d := c;` gives `d` an independent counter. Any representation that
     would require non-trivial copy (a heap cell, an `Rc`) is by construction non-`Copy` —
     it necessarily captured a non-`Copy` value — so the "two `Copy` owners aliasing one
     mutable backing" state cannot arise.
@@ -432,16 +432,16 @@ without this RFC (see RFC-0134 §5). Worked:
 
 ```metel
 fun make_counter() -> mut () -> i64 {
-    let mut n := 0;
+    let n := 0;
     [n] mut () -> i64 { n := n + 1; n }   // `n` moved in; writes persist (§1a); closure returnable
 }
 
 fun main() {
-    let mut c := make_counter();
+    let c := make_counter();   // an owned binding is enough for a `mutating` call (§3)
     assert(c() == 1);
     assert(c() == 2);   // state lives inside `c`'s environment cell
     // `c` is `many mut`. Here `n: i64` is Copy, so `c` is also Copy (§3, RFC-0134 §1):
-    // `let mut d := c;` gives an independent counter. Calls still can't overlap.
+    // `let d := c;` gives an independent counter. Calls still can't overlap.
 }
 ```
 
@@ -464,7 +464,7 @@ list is required and the closure is non-`Copy`. Aliasing is explicit inside the 
 
 ```metel
 let rc := Rc::new(Node { value: 1 });
-let mut bump := [rc] mut () -> Rc<Node> {
+let bump := [rc] mut () -> Rc<Node> {
     rc := rc.share();   // explicit new handle; write-back (§1a) stores it in the env
     rc
 };
