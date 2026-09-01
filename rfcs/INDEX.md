@@ -589,7 +589,7 @@ above it are.
 - **RFC-0039** — `aspect` Alias Syntax — vehicle for RFC-0089's `Affine` alias
   (`!Copy + !Linear`). Small, standalone. Names compound *bounds* — disjoint from
   **RFC-0160**, which names *types*.
-- **RFC-0160** *(draft, opened 2026-09-01)* — Type Aliases — module-level `public? type
+- **RFC-0160** *(under review, opened 2026-09-01; #921)* — Type Aliases — module-level `public? type
   Name = T;`, optionally parameterised, **transparent** (structural synonym, no nominal
   identity, RFC-0152 widening flows through). Fills a real gap: `type Name = T` today
   exists only as an associated type in aspect scope (RFC-0082); RFC-0039 aliases bounds,
