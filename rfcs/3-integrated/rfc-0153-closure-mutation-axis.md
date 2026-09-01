@@ -9,7 +9,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 coverage:
   "1": { spec: "spec.functions.closures.legality-8" }
   "1a": { spec: "spec.functions.closures.dynamics-7" }
-  "2": { kind: untestable, reason: "Qualifier-keyword choice (`mut`); the closure-literal grammar it feeds is spec-anchored at legality-5." }
+  "2": { spec: "spec.functions.closures.legality-24" }
   "3": { spec: "spec.functions.closures.legality-10" }
   "3a": { spec: "spec.functions.closures.dynamics-9" }
   "4": { spec: "spec.functions.closures.dynamics-8" }
@@ -28,7 +28,7 @@ phrase). It records whether calling a closure needs *exclusive* (`&var`) access 
 capture — Rust's `FnMut`.
 
 
-> **Status — integrated (2026-09-01).** Closure cluster spec-integrated (Legality 8/10, Dynamics 7/8/9); coverage.spec frontmatter added; fixtures blocked on metel-core#925. Shape: ADR-0052.
+> **Status — integrated (2026-09-01).** Closure cluster spec-integrated (Legality 8/10/24/25, Dynamics 7/8/9/13/15); coverage.spec frontmatter added; fixtures blocked on metel-core#925. Shape: ADR-0052.
 
 ## Summary
 
@@ -170,29 +170,36 @@ lives there for the closure's lifetime. On that base:
     invocation (metel-core#292); until then a non-trivial captured `Drop` value behaves as
     everywhere else in the language (empty `drop` bodies only). The **rule** — what gets
     dropped and in what order — is fixed here and does not wait on #292.
-  - **Early exit.** Write-back is **in place, not transactional.** One unwind/return
-    cleanup path handles all of: ending the §3 exclusive borrow, clearing the §3 in-call
-    flag, and running/marking the partial-move `Drop` bookkeeping for any capture the body
-    moved out before exiting. These are **not independent cleanup paths** — an
-    implementation runs them in one RAII/`finally` frame so they cannot disagree about
-    what state the aggregate is in. The distinction is which axis governs:
-    - **Plain `mut` (not `once`):** the call does not consume the closure (§3). If the
-      body exits via `panic` / a propagated error (`?`) / any non-normal `Signal`, the
-      mutations that ran are visible in the cell, the exclusive borrow ends and the
-      in-call flag clears with the unwind, and the closure remains **callable in a
-      valid-but-partial state** — exactly as a `&var self` method that panicked
-      mid-mutation leaves its receiver. No rollback.
+  - **Early exit.** Write-back is **in place, not transactional.** One cleanup path,
+    running as the closure's call frame returns, handles all of: ending the §3 exclusive
+    borrow, clearing the §3 in-call flag, and running/marking the partial-move `Drop`
+    bookkeeping for any capture the body moved out before exiting. These are **not
+    independent cleanup paths** — an implementation runs them in one RAII/`finally` frame
+    so they cannot disagree about what state the aggregate is in.
+
+    "Early exit" here means the mid-call exits Metel actually has and a caller can observe:
+    a `?`-propagated `Err` or an early `return` in the body, both of which travel up as an
+    ordinary `Signal` through normal call-frame returns. It does **not** mean `panic`: a
+    panic is a hard, uncatchable, process-terminating error (`spec/runtime.md`
+    `spec.runtime.panics.dynamics-1`), so there is no later program point at which the
+    closure's post-exit state could be inspected — "still callable afterward" is not a
+    reachable question. The distinction that remains is which axis governs an observable
+    early exit:
+    - **Plain `mut` (not `once`):** the call does not consume the closure (§3). When the
+      body exits early via `?` / `return`, the mutations that already ran are visible in
+      the environment cell, the exclusive borrow and the in-call flag are released as the
+      frame returns, and the closure stays **callable in a valid-but-partial state** —
+      exactly as a `&var self` method that returned early mid-mutation leaves its
+      receiver. No rollback.
     - **`once` or `once mut`:** the `once` axis consumed the callee place *at the call
       expression*, before the body ran (RFC-0134 §2). So the closure is a moved value
-      whether the body returned normally or panicked, and a later use is the ordinary
-      moved-value error. There is no "still callable after panic" question — `once`
-      already answered it. The environment aggregate may hold a partial or moved-out
-      state; that is unobservable *as closure state* — the closure cannot be called
-      again — but the aggregate's **still-owned fields are still dropped** when the moved
-      closure value goes out of scope, per "Captured `Drop`" above (drop of a
-      partially-moved aggregate drops only the fields that were not moved out). (If the
-      panic is caught, the moved-out *outer* bindings the `once` call consumed are
-      handled by RFC-0134 §2's existing rules, unchanged.)
+      however the body returned — normally or early — and a later use is the ordinary
+      moved-value error. There is no "still callable" question; `once` already answered
+      it. The environment aggregate may hold a partial or moved-out state; that is
+      unobservable *as closure state* — the closure cannot be called again — but the
+      aggregate's **still-owned fields are still dropped** when the moved closure value
+      goes out of scope, per "Captured `Drop`" above (drop of a partially-moved aggregate
+      drops only the fields that were not moved out).
 - This is a change to RFC-0006 (`4-implemented`), landing with RFC-0157's D5 change to the
   capture default as **one hard change** at v0.13.0 — **no edition gate**: Metel has no
   public users, so the `mut` keyword, the write-back semantics, and the fixture corpus all
@@ -274,10 +281,12 @@ borrowed exclusively"). Before RFC-0122, v0.13.0 splits into two cases:
   in a structure the body reaches, an aliasing `&var` binding, etc.; a closure cannot name
   its own `let` binding, so never directly). **Guarded at runtime.** Every `mutating`
   closure value carries a one-bit "in-call" flag: set on entry to a `mutating` call,
-  checked on entry, cleared on the single unwind/return cleanup path (§1a "Early exit" —
-  the same path that finalises partial-mutation and partial-move `Drop` bookkeeping, not a
-  second independent one); a reentrant call finds it set and **panics**
-  (`"re-entrant call to a mutating closure"`). One bit per closure value, one branch per
+  checked on entry, cleared on the single call-frame-return cleanup path (§1a "Early exit"
+  — the same path that finalises partial-mutation and partial-move `Drop` bookkeeping, not
+  a second independent one); a reentrant call finds it set and raises a hard,
+  process-terminating error (`"re-entrant call to a mutating closure"`) — the same
+  uncatchable class as a failed `assert` (`spec/runtime.md`), chosen deliberately as the
+  pre-RFC-0122 reject mechanism. One bit per closure value, one branch per
   `mutating` call — the `RefCell`-style guard. Kept after RFC-0122 lands as a
   defence-in-depth backstop (in a `--borrow-check`-clean program it can never fire).
 - **Distinct closure values aliasing one place** — two different `mutating` closures, or a
