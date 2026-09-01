@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**159 RFCs total.** 32 draft, 35 under review, 10 accepted, 3 integrated (80 live), 52 implemented, 13 superseded, 14 refused (79 settled).
+**159 RFCs total.** 31 draft, 36 under review, 10 accepted, 3 integrated (80 live), 52 implemented, 13 superseded, 14 refused (79 settled).
 
-## Draft (32)
+## Draft (31)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -48,9 +48,8 @@ the curated thematic map.
 - **RFC-0133** — From-Metel List: the Runtime-Sized Buffer Gap (`0-draft` ; rfcs/0-draft/rfc-0133-from-metel-list-the-runtime-sized-buffer-gap.md ; date 2026-08-13)
 - **RFC-0145** — Static Storage Duration (`0-draft` ; rfcs/0-draft/rfc-0145-static-storage-duration.md ; date 2026-08-27)
 - **RFC-0151** — Tuples as Numeric-Label Rows (`0-draft` ; rfcs/0-draft/rfc-0151-tuples-as-numeric-label-rows.md ; date 2026-08-29)
-- **RFC-0160** — Type Aliases (`0-draft` ; rfcs/0-draft/rfc-0160-type-aliases.md ; date 2026-09-01)
 
-## Under Review (35)
+## Under Review (36)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0050** — Closure Capture Lists (`1-under-review` ; rfcs/1-under-review/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-08-31)
@@ -87,6 +86,7 @@ the curated thematic map.
 - **RFC-0157** — Copy and Clone Model Re-analysis (`1-under-review` ; rfcs/1-under-review/rfc-0157-copy-and-clone-model-re-analysis.md ; date 2026-08-31 ; updated 2026-08-31)
 - **RFC-0158** — Share and Clone: Separating Aliasing from Duplication (`1-under-review` ; rfcs/1-under-review/rfc-0158-share-and-clone-separating-aliasing-from-duplication.md ; date 2026-08-31 ; updated 2026-08-31)
 - **RFC-0159** — Abstract Regions and a Dedicated Identity Channel (`1-under-review` ; rfcs/1-under-review/rfc-0159-abstract-regions-and-a-dedicated-identity-channel.md ; date 2026-09-01 ; updated 2026-09-01)
+- **RFC-0160** — Type Aliases (`1-under-review` ; rfcs/1-under-review/rfc-0160-type-aliases.md ; date 2026-09-01 ; updated 2026-09-01)
 
 ## Accepted (10)
 
