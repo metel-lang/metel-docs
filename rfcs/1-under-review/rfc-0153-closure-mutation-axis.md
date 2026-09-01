@@ -152,7 +152,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 > - **In-call flag details:** part of the closure value's representation (not the env
 >   aggregate, not `Copy` state — a `bool` stays trivially copyable; a copy always starts
 >   idle); cleared on the **single** unwind/return path that also does partial-move `Drop`
->   bookkeeping; runs in the comptime evaluator too (compile-time panic on reentrancy).
+>   bookkeeping; runs in the comptime evaluator too (a compile-time *diagnostic* — not a
+>   panic — on reentrancy).
 > - **`Callable` wording corrected:** the `dyn <Aspect>` *syntax* is unchanged; there is
 >   just no predeclared / stdlib `Callable`, so `dyn Callable<…>` is unknown-aspect
 >   `T0003` unless the program declares one. Not reserved.
@@ -164,6 +165,25 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 >   read-only → switch to `[&x]`).
 > - **RFC-0006** body + `spec/functions.md` now carry section-level "historical / not yet
 >   updated" fences, not just a top note.
+
+> **Adversarial-review fixes, 2026-09-01 (sixth pass):**
+> - **Widened `reading`→`mut` call dispatch specified** — call lowering branches on the
+>   closure *value's* own `call_mutation`, not the slot type; a widened `reading` value
+>   takes the plain call path (no exclusive borrow, no flag — it carries none). §3, §1a,
+>   and RFC-0152 aligned.
+> - **RFC-0050 `[&var count]` examples** now carry `mut` (they contradicted RFC-0153's
+>   "`mut` is always written"); RFC-0050 states the requirement explicitly.
+> - **"nothing the interim rule accepts is newly rejected" was backwards** — corrected in
+>   §3 and RFC-0122 §2e: the interim rule has no false positives but *does* accept
+>   programs RFC-0122 later rejects (the accepted-but-ill-formed gap; corpus must not rely
+>   on it).
+> - **RFC-0006** → `spec_status: pending` + `amended_by: rfc-0157, rfc-0050, rfc-0153`;
+>   the amendment note now carries the `dynamics-1..4` anchor disposition; `spec/functions.md`
+>   update is a tracked deliverable on the impl PR.
+> - **`Copy` `mutating` ≠ shared `mutating`** — explicit note + test item (two-fiber copy
+>   gives independent counters, not shared state).
+> - **comptime reentrancy** is a compile-time *diagnostic* (source span), not a "panic".
+> - RFC-0008's "reserved" wording for `Callable` dropped (it is not reserved).
 
 ## Summary
 
@@ -285,12 +305,15 @@ lives there for the closure's lifetime. On that base:
     it necessarily captured a non-`Copy` value — so the "two `Copy` owners aliasing one
     mutable backing" state cannot arise.
   - **The §3 in-call flag is part of the closure value's representation** (it sits beside
-    the environment aggregate, not inside it). It is **not** part of `use_multiplicity` /
-    `Copy` reasoning — a `bool` is trivially copyable, so a `[n: i64] mut` closure stays
-    `Copy`. A copy is only reachable when the source is not mid-call (the source is
-    exclusively borrowed for the whole of its own `mutating` call), so the flag is always
-    `false` at the moment of copy and the copy therefore starts idle. No "copied a set
-    flag" observable exists.
+    the environment aggregate, not inside it) and is present **only on closure values
+    whose `call_mutation` is `mutating`** — a `reading` closure value carries no `in_call`
+    field, which is why §3's call dispatch branches on the value's `call_mutation` and a
+    widened `reading`-in-a-`mut`-slot value is never asked for a flag it doesn't have. It
+    is **not** part of `use_multiplicity` / `Copy` reasoning — a `bool` is trivially
+    copyable, so a `[n: i64] mut` closure stays `Copy`. A copy is only reachable when the
+    source is not mid-call (the source is exclusively borrowed for the whole of its own
+    `mutating` call), so the flag is always `false` at the moment of copy and the copy
+    starts idle. No "copied a set flag" observable exists.
   - **Captured `Drop`.** A closure value **owns its by-value captures**; when the closure
     value is dropped, its environment aggregate is dropped — fields in capture-list order,
     exactly as a struct's fields (RFC-0071). RFC-0134 §5's "no `Drop`-for-closures" means
@@ -444,11 +467,14 @@ is left to RFC-0122; a program that violates only those parts is accepted-but-il
 by this section (the fixture corpus must not rely on it — see RFC-0050 "Migration"), the
 same status as RFC-0050's `[&var x]` borrow-freeze. **Same-closure-value reentrancy is not
 in that gap** — the in-call flag catches it at runtime. **Aliased-capture reentrancy is**
-in the gap (distinct closure values, one place — above). When RFC-0122 lands the interim
-static rule is deleted; the full `&var self` receiver rule (stated above) subsumes it, and
-since the interim rule rejects a strict subset of what the full rule rejects, nothing it
-accepted is newly rejected. **RFC-0122 §2e catalogues this** alongside the other interim
-borrow-shaped stopgaps.
+in the gap (distinct closure values, one place — above). The interim rule is **weaker**
+than the full `&var self` receiver rule (it rejects less): so it never rejects a program
+the full rule would accept — nothing written against it is stranded when RFC-0122 lands —
+but it *does* accept programs RFC-0122 later rejects (`T0020`), and those are exactly the
+accepted-but-ill-formed gap above. That is intended, not a contradiction; the corpus
+constraint is what keeps it from mattering. When RFC-0122 lands the interim static rule is
+deleted and the full rule (stated above) takes over. **RFC-0122 §2e catalogues this**
+alongside the other interim borrow-shaped stopgaps.
 
 **Other axes and type-level interactions.**
 
@@ -462,13 +488,26 @@ borrow-shaped stopgaps.
   non-`Copy` capture, and such a closure is already non-`Copy` by §1. `&var T` and `&T`:
   `&T` is `Copy`, `&var T` is **not** (mirroring `&`/`&mut`), so a `[&var x]` capture
   makes the closure non-`Copy` through §1 with no special case — see RFC-0134 §1's note.
-- **Widening `reading` → `mutating` slot (RFC-0152) is type-level only.** A `reading`
-  value passed to a `mut (T) -> U` parameter keeps its actual runtime behavior; the slot
-  type only bounds how the callee may use it. Widening happens only at first-order
-  by-value / owned positions (argument, return, ascription, struct-field init), so the
-  callee always has the value by value or `&var` and can call it under the same
-  exclusive-borrow rule with no penalty and no latent capability tracking. The reverse —
-  a `mutating` value into a `reading` slot — is rejected.
+- **Widening `reading` → `mutating` slot (RFC-0152) is type-level only, and call dispatch
+  is on the *value*, not the slot.** A `reading` value passed to a `mut (T) -> U`
+  parameter keeps its actual runtime behavior. **Call lowering branches on the closure
+  value's own `call_mutation`** (carried on every runtime closure value, from `Type::Fun`
+  — RFC-0134 §1), **not on the static slot type**:
+  - a value whose `call_mutation` is `mutating` → the exclusive-borrow path + the in-call
+    flag set/check (this section, above);
+  - a value whose `call_mutation` is `reading` → the plain call path, **no flag touched,
+    no exclusive borrow** — even when the *slot* it arrived through is typed `mut (…)`.
+    (A `reading` closure genuinely cannot alias-mutate, so nothing is lost by not
+    guarding it; and it carries no `in_call` field to read — see §1a "the flag is only on
+    `mutating` closure values".)
+
+  So a widened `reading` value in a `mut` slot is called exactly as it would be through a
+  `reading` slot; the slot type only bounds what the callee is *allowed to assume* (it may
+  treat `f` as needing `&var self`), not what actually happens. Widening happens only at
+  first-order by-value / owned positions (argument, return, ascription, struct-field
+  init), so the callee always holds the value by value or `&var` and this dispatch is
+  always well-defined. The reverse — a `mutating` value into a `reading` slot — is
+  rejected.
 
 - **`Send` / `Sync` — defer to the aggregate rule; one closure-specific fact.** A closure
   value's `Send`/`Sync` is the **ordinary aggregate rule over its captures**, applied to
@@ -549,9 +588,18 @@ fun main() {
 }
 ```
 
+**`Copy` `mutating` ≠ shared `mutating`.** Copying a `Copy` `mutating` closure — including
+sending it to two fibers (`spawn(c); spawn(c);`) — gives each site its **own** environment
+aggregate and its **own** idle in-call flag; the counters advance independently. This is
+*not* shared mutation and needs no `Sync` (`c` is `Send` by copy). It is the same
+"`Copy` means an independent value" the language has everywhere, but the `mut` keyword can
+prime a "shared state" expectation, so it is a documented test-and-doc item (#902).
+
 A closure that captures a *non-`Copy`* value by value (`[buf] mut (e) -> () { buf.push(e); }`)
 is non-`Copy` by RFC-0134 §1 — so there is exactly one owner and the "two owners mutate
-the same backing" case cannot arise.
+the same backing" case cannot arise. To *share* mutable state across fibers, capture
+`[&var shared]` (or an `Rc`-like handle) — the closure is then non-`Copy` and `!Sync`, and
+the sharing is explicit.
 
 **Capturing an `Rc` / `Share` handle (RFC-0158).** `[rc]` on an `Rc<T>` capture *moves
 the handle in* — `Rc` is non-`Copy` (it is `Share`, not `Copy`, under RFC-0158), so the
@@ -673,10 +721,13 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
   the comptime evaluator is the same interpreter, so `mut` write-back (§1a), `once`
   consumption, **and the §3 in-call flag** all run on the same code path — a `comptime`
   `[n] mut () -> i64` counter advances between `comptime` calls exactly as a runtime one
-  does, and a `comptime` reentrant `mutating` call is a **compile-time error** carrying
-  the same `"re-entrant call to a mutating closure"` message, not unguarded recursion. No
-  separate const-closure model, and no relaxation of §3's exclusive-place rule. That the
-  flag path is shared is a delivery-test item on #902.
+  does. A `comptime` reentrant `mutating` call surfaces as a **compile-time evaluation
+  diagnostic** (a proper error with a source span, the comptime analogue of the runtime
+  panic — the same `"re-entrant call to a mutating closure"` condition, reported through
+  whatever mechanism comptime-evaluation failures already use; **not** an evaluator panic
+  and **not** unguarded recursion). No separate const-closure model, and no relaxation of
+  §3's exclusive-place rule. That the flag path is shared between the two evaluators is a
+  delivery-test item on #902.
 - Multiplicity for ordinary types — RFC-0135.
 - **`.clone()` / `.share()` on a closure value** — closures are outside the aspect system
   (RFC-0134's Open-Questions finding: `InferType::Fun` implements nothing; RFC-0158 does

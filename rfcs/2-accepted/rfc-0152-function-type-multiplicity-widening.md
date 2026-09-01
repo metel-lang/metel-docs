@@ -108,10 +108,17 @@ multiplicity field rather than by a `Type::Fun`-is-always-`Copy` special case
 more-permissive value (a `reading` closure is safe wherever a `mutating` one is asked
 for). Widening it is **type-level only, with no callability penalty**. A `reading` value
 that flows into a `mut (T) -> U` slot keeps its actual runtime behavior; the slot type
-only tells the *callee* it may need exclusive access per call. Because every widening
-site in §2 is a first-order by-value / owned position, the callee already holds the value
-by value or `&var` and calls it under RFC-0153 §3's place-consumption rule with no extra
-tracking. The callee never observes that the value was "really" `reading`.
+only tells the *callee* it may treat `f` as needing exclusive access per call. Because
+every widening site in §2 is a first-order by-value / owned position, the callee already
+holds the value by value or `&var`.
+
+**Runtime dispatch is on the value's own `call_mutation`, not the slot type** (RFC-0153
+§3): a widened `reading` value is invoked on the plain call path — no exclusive borrow,
+no in-call flag (it carries none) — exactly as through a `reading` slot. The callee
+cannot observe the value's `reading`-ness *through the type system or any API* — that is
+what "one-way precision loss" means — but the interpreter also simply does not perform
+the `mutating`-call bookkeeping for a value that does not need it. The two statements are
+consistent: the type is widened, the runtime is not.
 
 ### 2. Where it applies
 
