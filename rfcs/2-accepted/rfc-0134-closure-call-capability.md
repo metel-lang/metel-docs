@@ -132,6 +132,12 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 > - **`dyn Callable` erasure moved out of the cluster** — RFC-0153 §3's interim erasure
 >   default is withdrawn into **RFC-0161 (Callable Object Contract)**, target v0.13.1.
 >   v0.13.0 ships the flat `Type::Fun` model monomorphic.
+> - **RFC-0157's D5 is decided (2026-09-01, language owner) — the closure-capture default
+>   is `move`.** The historical notes below that call it a *recommendation* predate this.
+>   D5 also removes RFC-0006's per-call `call_env = captured.clone()` re-clone (§4's
+>   "Runtime interaction" note): the environment is moved in once, read in place by a
+>   `reading` closure and mutated in place by a `mutating` one (RFC-0153 §1a). Orthogonal
+>   to §2's consumption analysis, which is unchanged.
 
 ## Summary
 

@@ -101,6 +101,13 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 > - **`mut` env cell = the RFC-0050 capture aggregate**, not a wrapper around it — escape
 >   / brand checking sees the same field types (§1a, and RFC-0050 Implementation Guidance).
 
+> **D5 decided, 2026-09-01 (language owner) — the closure-capture default is `move`.**
+> RFC-0157's D5 is no longer a recommendation. It removes RFC-0006's per-call
+> `call_env = captured.clone()` re-clone for **every** closure, so §1a's single moved-in
+> environment aggregate is now the *universal* runtime model, not a `mutating`-only
+> special case: a `reading` closure reads it in place, a `mutating` one also mutates it in
+> place. §1a is rewritten accordingly.
+
 ## Summary
 
 Add a **mutation axis** to `Type::Fun`: does invoking the closure mutate a
@@ -160,19 +167,28 @@ by the same pass RFC-0134 §2 uses — as a *verification* of the declared/defau
 
 ### 1a. Runtime model — what `mutating` actually does
 
-RFC-0006 evaluates a call as `call_env = closure.captured.clone()` and never writes the
-result back, so a mutation to a by-value capture is discarded when the call returns. That
-makes `mutating` on a by-value capture a type-level fact with no runtime effect — useless.
-This RFC fixes that:
+RFC-0006 evaluated a call as `call_env = closure.captured.clone()` and never wrote the
+result back, so a mutation to a by-value capture was discarded when the call returned.
+That made `mutating` on a by-value capture a type-level fact with no runtime effect —
+useless.
 
-- **`reading` closure:** unchanged — per-call clone of the captured environment, nothing
-  written back. Since the body does not mutate, this is unobservable.
-- **`mutating` closure:** its owned (by-value) captures live in **one mutable environment
-  cell held by the closure value itself** — not re-snapshotted per call. Each call
-  operates on that cell in place, so mutation *persists across calls*. The closure holds
-  private mutable state: a returnable counter / accumulator / memoizer, Rust's `move ||` +
-  `FnMut`. Captures held by `&var` reference already persist (through the outer cell);
-  this makes the *owned* captures behave the same way.
+**RFC-0157's D5 (decided 2026-09-01 — the closure-capture default is `move`) removes the
+per-call re-clone for *every* closure**, not just `mutating` ones: the captured
+environment is moved into the closure's environment aggregate **once**, at creation, and
+lives there for the closure's lifetime. On that base:
+
+- **`reading` closure:** reads its moved-in environment aggregate **in place** — no
+  per-call clone (there is no `Clone` bound to require and nothing to gain; a moved-in
+  non-`Copy` value could not be re-cloned anyway). Since the body does not mutate, no
+  write-back question arises. This is a behaviour change from RFC-0006 but an unobservable
+  one for well-typed `reading` closures — it only removes wasted deep-clones (RFC-0050
+  RQ5).
+- **`mutating` closure:** the same single moved-in aggregate, additionally **mutated in
+  place** — assignments to a by-value capture, and `&var` taken of one, land in the
+  aggregate and *persist across calls*. The closure holds private mutable state: a
+  returnable counter / accumulator / memoizer, Rust's `move ||` + `FnMut`. Captures held
+  by `&var` reference already persist (through the outer cell); this makes the *owned*
+  captures behave the same way.
   - **Storage and movement.** The environment cell is **one inline owned aggregate that
     is part of the closure value** — the same aggregate RFC-0050's Implementation Guidance
     describes for captures, held owned-and-mutable rather than re-cloned per call, *not* a

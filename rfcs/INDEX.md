@@ -997,7 +997,9 @@ implementation).
   `Copy`-only / no-free-variable closures. Exhaustive once present. The `move` specifier
   was dropped 2026-08-31 (an affine move needs no keyword) and ownership-transfer capture
   then folded back in as bare `[buf]` for non-`Copy` — no keyword, per **RFC-0157 D5**,
-  which this RFC now adopts and rides the `--edition` gate of. Milestoned **v0.13.0**
+  **now decided (2026-09-01, language owner): the closure-capture default is `move`** —
+  which also removes RFC-0006's per-call environment re-clone (env moved in once,
+  read/mutated in place). One hard change, no `--edition` gate. Milestoned **v0.13.0**
   alongside RFC-0134 (#269) / RFC-0152 (#901) — capture lists and call capability are one
   feature area; still `1-under-review`, needs `accepted`. `[...]` composes ahead of
   RFC-0154's base literal spelling.
@@ -1056,9 +1058,13 @@ implementation).
   regular-value `Copy`/`Clone` is settled and the strongest transferable intuition, so
   keep it (no rename, no P1/P2/P3, accept D1); the *only* value-side changes are the
   `Clone`/`Share` split (RFC-0158) and relaxing the `Copy`+`Drop` ban (D3). Rust's closure
-  story is unfinished, so the divergence budget goes there: by-value capture follows the
-  `let y := x` rule (D5, settles RFC-0050's deferred question as "no keyword"), and keep
-  iterating on the RFC-0134/0152/0153/0050 cluster. Analysis/direction only.
+  story is unfinished, so the divergence budget goes there. **D5 DECIDED (2026-09-01,
+  language owner): the closure-capture default is `move`** — by-value capture follows the
+  `let y := x` rule (settles RFC-0050's deferred question as "no keyword"), a capture list
+  is required the moment a move would occur (OQ4), and RFC-0006's per-call environment
+  re-clone is removed with it (env moved in once, read/mutated in place). D5's mechanism
+  is RFC-0050 (#803) + the RFC-0134 amendment (#269), v0.13.0. The rest of the RFC (Axes
+  A/B, P1–P3, D1–D4) stays analysis/direction, still under review.
 - **RFC-0158** *(under review, opened 2026-08-31; #919)* — Share and Clone: Separating Aliasing from
   Duplication — split out of RFC-0157's "Axis B, second cut," then narrowed to **purely
   additive**. `.clone()` is specified two ways: RFC-0080 §1.1 ("independent owned value")

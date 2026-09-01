@@ -8,13 +8,16 @@ updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/918'
 ---
 
-> **This RFC is analysis and direction-setting, not a language change.** It exists to
-> record a trade-off study that was never written down: Metel took `Copy`/`Clone` and
-> implicit-copy semantics from Rust, and the closure-capture default from a pre-ownership
-> PoC, and no RFC has since asked whether that whole shape is the one Metel wants. Nothing
+> **This RFC is analysis and direction-setting** — with **one exception**: **D5 (the
+> closure-capture default) has been decided** (2026-09-01, language owner) — the default
+> is `move`, and RFC-0050 / the RFC-0134 amendment carry it to v0.13.0 (see the note
+> below the status line, and the Decision section). Everything else here is a trade-off
+> study that was never written down: Metel took `Copy`/`Clone` and implicit-copy
+> semantics from Rust, and the closure-capture default from a pre-ownership PoC, and no
+> RFC has since asked whether that whole shape is the one Metel wants. Outside D5, nothing
 > below is asserted as decided — every design choice that isn't already shipped behavior
-> is an Open Question. Concrete mechanism changes, if any survive review, spin out into
-> successor RFCs or amendments to RFC-0080 / RFC-0006, named in the Recommended direction.
+> is an Open Question, and concrete mechanism changes spin out into successor RFCs or
+> amendments to RFC-0080 / RFC-0006, named in the Recommended direction.
 
 > **Origin, 2026-08-31.** Opened out of the RFC-0050 (Closure Capture Lists) correction
 > pass. RFC-0050 had a `move` capture specifier; reframing it off `linear` reduced it to
@@ -25,6 +28,21 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/918'
 > ownership-transfer capture to "a future RFC that settles the default." This is that RFC.
 
 > **Status — under review (2026-08-31).** analysis RFC ready for review; recommendation settled (no value-model divergence; invest in closures)
+
+> **Decision on D5 (2026-09-01, language owner) — the closure-capture default is
+> `move`.** RFC-0006's clone-every-free-variable default is replaced: a by-value capture
+> of a non-`Copy` free variable **moves** it into the closure (consuming the outer
+> binding), a `Copy` one is copied, a `Clone`-not-`Copy` one is an error unless
+> `.clone()`d at the capture site — `let y := x` semantics, uniformly. A capture list is
+> required the moment a move would occur (Open Question 4 resolved in favour of RFC-0050's
+> exhaustiveness philosophy). Because the value is moved in **once**, RFC-0006's per-call
+> `call_env = captured.clone()` re-clone is also gone — a `reading` closure reads its
+> moved-in environment aggregate in place; a `mutating` one mutates it in place (RFC-0153
+> §1a); the two now share one representation. **Scope of this decision:** D5 only — the
+> mechanism lives in **RFC-0050** (`1-under-review`, #803, v0.13.0) and the amendment to
+> **RFC-0134** (`2-accepted`, #269). The rest of this RFC — Axes A/B, P1–P3, the D1–D4
+> critique — stays analysis under review, and the recommendation there is unchanged: **no
+> regular-value model divergence.** See the Decision section.
 
 ## Summary
 
@@ -325,7 +343,11 @@ mileage, and its concrete user-visible payoff (P3b) is the same as P1's with mor
 machinery behind it. The Recommended direction treats P1 as the target and P3 as "the
 shape to keep P1 compatible with," not a thing to build now.
 
-### Closure-capture default (the D5 sub-question)
+### Closure-capture default (the D5 sub-question) — ✓ DECIDED: move
+
+**Decided 2026-09-01 (language owner): the closure-capture default is `move`.** The
+paragraph below stated the change as a proposal; it is now the rule. RFC-0050 and the
+RFC-0134 amendment carry it; it lands v0.13.0.
 
 Independent of Axes A/B, RFC-0006's default can be restated as: **by-value capture uses
 the same rule as by-value use in a block.** Under RFC-0071 that means a non-`Copy` free
@@ -333,24 +355,31 @@ variable is *moved* into the closure (consumed in the enclosing scope), a `Copy`
 copied, and a `Clone`-not-`Copy` one is an error unless explicitly `.clone()`d at the
 capture site — exactly `let y := x` semantics. Cross-closure sharing and
 mutate-the-outer-binding stay on explicit references (RFC-0050's `&`/`&var`), which is
-already the design. This would:
+already the design. This:
 
-- make ownership-transfer capture need no keyword (settling RFC-0050's deferred question
+- makes ownership-transfer capture need no keyword (settling RFC-0050's deferred question
   as "no specifier — bare capture of a non-`Copy` value is the move");
-- change an observable default (a closure that captures `s: String` today leaves `s`
-  usable; under this it consumes `s`) — a breaking change, but Metel has no public users,
-  so it is applied wholesale with the interpreter's own fixture corpus updated in the same
+- changes an observable default (a closure that captured `s: String` under RFC-0006 left
+  `s` usable; now it consumes `s`) — a breaking change, but Metel has no public users, so
+  it is applied wholesale with the interpreter's own fixture corpus updated in the same
   change, not behind an `--edition` gate;
-- need a decision on whether an unannotated closure should *ever* implicitly move, or
-  whether an explicit capture list is required the moment a move would happen (the
+- **removes RFC-0006's per-call `call_env = captured.clone()` re-clone** — the value is
+  moved in once, so there is nothing to re-clone per call; a `reading` closure reads the
+  moved-in aggregate in place, a `mutating` one mutates it in place (RFC-0153 §1a). This
+  also settles RFC-0050 RQ5's "large read-only value deep-cloned per call for no reason."
+- **resolves Open Question 4 the strict way:** an explicit capture list is required the
+  moment a move would happen — no *implicit* move of a non-`Copy` capture — following the
   "explicit at the definition site" principle RFC-0050 and the *Implicit mutable capture*
-  rejection both lean on).
+  rejection both lean on. An unannotated closure only ever captures `Copy` values (by
+  copy) or nothing.
 
 ---
 
 ## Recommended direction
 
-Stated as a recommendation for review to push on, not a decision.
+Stated as a recommendation for review to push on, not a decision — **except item 4 (D5),
+which was decided on 2026-09-01 by the language owner: the closure-capture default is
+`move`.** The rest stands as recommendation.
 
 The frame that organizes it: **where should Metel spend divergence budget — the
 regular-value duplication model, or closures?** These are not equally worth diverging on.
@@ -383,21 +412,25 @@ less settled intuition to leverage there and more room to do better. So:
 
 **Closures — this is where divergence pays.**
 
-4. **Adopt the D5 capture-default change: by-value capture follows the regular-value rule
-   (`let y := x`).** Capture `s: String` → move; capture `n: i64` → copy; `.clone()` at
-   the capture site for an explicit independent copy. RFC-0006's clone-every-free-variable
-   default is the artifact — Rust closures already move non-`Copy` captures. Applied as
-   **one hard change** (Metel has no public users; no `--edition` gate — the interpreter's
-   fixture corpus is updated in the same change); require an explicit capture list at the
-   point a capture would move. This settles RFC-0050's deferred question as "no keyword,"
-   and makes closures *conform to the value model* rather than the reverse.
+4. **✓ DECIDED (2026-09-01, language owner) — the D5 capture-default change: by-value
+   capture follows the regular-value rule (`let y := x`).** Capture `s: String` → move;
+   capture `n: i64` → copy; `.clone()` at the capture site for an explicit independent
+   copy. RFC-0006's clone-every-free-variable default is the artifact — Rust closures
+   already move non-`Copy` captures. Applied as **one hard change** (Metel has no public
+   users; no `--edition` gate — the interpreter's fixture corpus is updated in the same
+   change); an explicit capture list is required at the point a capture would move (Open
+   Question 4, resolved in favour of the stricter rule). This settles RFC-0050's deferred
+   question as "no keyword," and makes closures *conform to the value model* rather than
+   the reverse. **Consequence for the runtime model:** the captured environment is moved
+   in **once**, so RFC-0006's per-call `call_env = captured.clone()` re-clone is removed
+   too — a `reading` closure reads its moved-in environment aggregate in place, a
+   `mutating` one mutates it in place (RFC-0153 §1a), one representation for both.
 
-   *Concrete shape (2026-08-31): **RFC-0050** adopts this — capture list required for a
-   non-`Copy`/by-ref capture, bare `[s]` = move for non-`Copy`, `[s.clone()]` for an
-   explicit copy — and is milestoned **v0.13.0** (#803) with RFC-0134 (#269) / RFC-0152
-   (#901). **RFC-0134** takes the matching amendment: `many` by default, `once` written
-   explicitly, §2 becomes a check against that default. D5 rides these two; it is no longer
-   an abstract recommendation.*
+   *Mechanism: **RFC-0050** carries it — capture list required for a non-`Copy`/by-ref
+   capture, bare `[s]` = move for non-`Copy`, `[s.clone()]` for an explicit copy —
+   milestoned **v0.13.0** (#803) with RFC-0134 (#269) / RFC-0152 (#901). **RFC-0134**
+   takes the matching amendment: `many` by default, `once` written explicitly, §2 becomes
+   a check against that default. D5 is decided; these two RFCs implement it.*
 5. **Keep investing in the closure-capability cluster** (RFC-0134 `call_multiplicity`,
    RFC-0152 widening, RFC-0153 mutation axis, RFC-0050 capture lists). "Does calling this
    closure consume a capture" is the one irreducibly closure-specific concept with no
@@ -628,19 +661,26 @@ Hylo absorbs much of that through its borrow/`sink` conventions. Evidence that P
    edition system is not on this path). It is a hard change with the interpreter's `.mtl`
    fixtures updated in the same PR. What remains: measure how many fixtures / stdlib
    closures rely on capture-by-clone leaving the outer binding usable, so the sweep can be
-   sized — but it is a one-time internal edit, not a migration tool.
-4. **Should an unannotated closure ever implicitly move a capture, or must a capture list
-   be present the moment a move would occur?** The stricter rule is more predictable and
-   matches RFC-0050's exhaustiveness philosophy; the looser rule is less boilerplate for
-   the common "make a closure that owns this and return it" case.
+   sized — but it is a one-time internal edit, not a migration tool. **D5 itself is
+   decided (2026-09-01, language owner — the default is `move`); this question is now just
+   the sizing of the sweep, a delivery task on RFC-0050 #803.**
+4. **✓ RESOLVED (2026-09-01) — a capture list must be present the moment a move would
+   occur.** An unannotated closure never *implicitly* moves a non-`Copy` capture; it
+   captures only `Copy` values (by copy) or nothing. The stricter rule won for
+   predictability and consistency with RFC-0050's exhaustiveness philosophy and the
+   *Implicit mutable capture* rejection. The "less boilerplate for make-and-return" case
+   is served by writing the one-item list `[x]`, which is also where `once` gets written.
 5. **Disposition of RFC-0135.** The Recommended direction says the `Copy` → `many` rename
    should not proceed. That leaves RFC-0135 with little: does it get refused, narrowed to
    a de-cruft-only cleanup (the `#derive` coupling, generic-`Copy` tidy), or folded into
    RFC-0158? A call for RFC-0135's own review, informed by this one.
 6. **Is this too large for one RFC?** The model critique (Axes A/B) and the capture
-   default (D5) are separable. If D5 is the only part with a blocked consumer (RFC-0050),
-   a reviewer may want D5 split into its own fast-tracked RFC and the model critique left
-   as a longer-horizon document. Recorded as a real option, not resisted.
+   default (D5) are separable. D5 has now been **decided independently** (2026-09-01,
+   language owner) and its mechanism lives in RFC-0050 / the RFC-0134 amendment — so the
+   separation happened in practice without a formal split: this RFC records the D5
+   decision and rationale, RFC-0050 implements it, and the model critique (Axes A/B,
+   P1–P3, D1–D4) remains here as the longer-horizon analysis, still under review with the
+   "no regular-value divergence" recommendation. A formal split is no longer needed.
 7. **Prior art beyond Rust. ✓ Addressed** — see the Prior art section above (Rust, C++,
    Swift, C#, Hylo, plus Go / uniqueness-typed / pure-functional families). Its
    conclusions feed the Recommended direction.
@@ -652,5 +692,20 @@ Hylo absorbs much of that through its borrow/`sink` conventions. Evidence that P
 
 ## Decision
 
-**Outcome:** *(pending)*
-**Target:** *(set when accepted)*
+**D5 (closure-capture default) — DECIDED 2026-09-01 (language owner): the default is
+`move`.** A by-value capture of a non-`Copy` free variable moves it into the closure
+(consuming the outer binding); a `Copy` one is copied; a `Clone`-not-`Copy` one is an
+error unless `.clone()`d at the capture site — `let y := x` semantics. A capture list is
+required the moment a move would occur (Open Question 4). The per-call environment
+re-clone (RFC-0006) is removed with it: the environment is moved in once and read/mutated
+in place. Mechanism and rollout: **RFC-0050** (#803) and the **RFC-0134** amendment
+(#269), landing v0.13.0 as one hard change (no `--edition` gate). RFC-0006 (`4-implemented`)
+is amended to match through the normal review path.
+
+**The rest of this RFC — pending.** Axes A/B, P1–P3, and the D1–D4 critique remain
+analysis under review. The recommendation there stands and is *not* decided here: **no
+regular-value `Copy`/`Clone` model change**, RFC-0135's `Copy → many` rename recommended
+against, RFC-0158 (`Share`) and the D3 relaxation the only endorsed value-side moves.
+
+**Target:** D5 → v0.13.0 (via RFC-0050 #803 / RFC-0134 #269). This RFC as a whole: *(set
+when accepted)*.
