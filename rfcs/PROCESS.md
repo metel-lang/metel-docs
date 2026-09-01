@@ -467,6 +467,30 @@ invented objection costs a real amendment cycle to disprove. This is the design-
 instance of the same practice `metel-core`'s `AGENTS.md` specifies for branch review, and
 the two should stay recognisably the same discipline.
 
+**An RFC body is a living design document of the *current* design, not its history
+(adopted 2026-09-01).** Do not accumulate dated amendment notes, "adversarial-review
+fixes, pass N" blocks, "still `1-under-review` / needs to reach accepted" status-tracking,
+or superseded-bullet trails inside RFC text. When a review or a decision changes the
+design, **edit the body to say the new thing** and delete the old — git history and the
+Decision section carry how it got there; a reader on pass 7 should see one coherent
+design, not an archaeology of six. The `rfc.py`-inserted status blockquote from the most
+recent transition is the one status marker that stays; earlier ones are pruned on the
+next edit. A split records its trail in a single status blockquote (existing rule above),
+not a running log. *(Adopted after the v0.13.0 closure cluster — RFC-0050/0134/0152/0153/
+0157 — accreted ~six stacked review-log blocks per file over seven passes, which a
+readiness review then had to disentangle from the actual rules.)*
+
+**Implementation detail belongs in an ADR, not the RFC (adopted 2026-09-01).** RFCs in
+this project are language-design documents: what the language does and why, in terms a
+user or a spec reader needs. Runtime data-structure shapes, checker phase wiring, enum
+match-site enumerations, error-code allocations, migration/sweep recipes — these are how
+the design is built, they change independently of the design, and they do not survive
+contact with the codebase unamended. An RFC may carry a **short Implementation Guidance
+section** (a paragraph or two: constraints the representation must not foreclose, a
+pointer to the ADR), but the detail lives in `architecture/decisions/`. When acceptance
+review finds the RFC is sound but "not ready for the implementation PR," the deliverable
+is usually an ADR, not more RFC text.
+
 ## Specification rules, adopted 2026-07-14
 
 These rules govern what belongs in `reference/spec.md` and
