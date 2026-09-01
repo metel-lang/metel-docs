@@ -57,13 +57,13 @@ References are useful when multiple parts of a program need to talk about the sa
 ```metel
 fun main() {
     var total := 0;
-    let cell: &var i64 := &var total;
+    var cell: &var i64 := &var total;
 
-    let add_one := () -> {
+    var add_one := [&var cell] var () -> {
         *cell += 1;
     };
 
-    let add_ten := () -> {
+    var add_ten := [&var cell] var () -> {
         *cell += 10;
     };
 

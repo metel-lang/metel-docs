@@ -180,7 +180,7 @@ above it are.
   for RFC-0124's still-open "is there a mutable slice" question (Open Question 1), not just
   a theoretical one.
 
-- **RFC-0124** *(draft, opened 2026-07-25, narrowed 2026-07-27, OQ6 split out 2026-08-13)*
+- **RFC-0124** *(under review, opened 2026-07-25, narrowed 2026-07-27, OQ6 split out 2026-08-13)*
   — Sequence Types: Fixed Arrays, Slices, and the Growable List — **now the slice half
   only.** Covers: whether a mutable slice exists and how it is spelled (OQ1), and the exact
   dependency on RFC-0067's lifetime anchors (OQ2 — a stated precondition for this RFC's own
@@ -1220,7 +1220,7 @@ implementation).
 - **RFC-0027** — C FFI.
 - **RFC-0033** — Field-Level Mutability — additive `let` field annotation.
 - **RFC-0038** — `impl Aspect` in Struct Fields / Existential Types.
-- **RFC-0131** *(draft, opened 2026-08-09)* — Hoist `let`/`var` Bindings to the Top of
+- **RFC-0131** *(under review, opened 2026-08-09)* — Hoist `let`/`var` Bindings to the Top of
   Their Containing Block — `fun` declarations are already hoisted (visible regardless of
   declaration order); `let`/`var` are explicitly sequential-only, an asymmetry that
   became a real constraint fixing metel-core#656/#658 (a nested `fun`'s eager,

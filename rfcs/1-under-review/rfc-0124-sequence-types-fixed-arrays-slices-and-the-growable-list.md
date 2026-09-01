@@ -2,9 +2,10 @@
 id: rfc-0124
 title: "Sequence Types: Fixed Arrays, Slices, and the Growable List"
 date: '2026-07-25'
-status: draft
+status: under-review
 target:
-updated: '2026-08-03'
+updated: '2026-09-01'
+tracking: 'https://github.com/metel-lang/metel-core/issues/932'
 ---
 
 > **Open Question 6 split out to RFC-0133, 2026-08-13 — and that is what unblocks this
@@ -54,6 +55,8 @@ updated: '2026-08-03'
 > now covers only what RFC-0126 does not decide: a mutable-slice spelling, the exact RFC-0067
 > lifetime-anchor dependency, `[T; N]` const generics, evaluator representation, and release
 > sequencing. Read RFC-0126 first — this document assumes its decision.
+
+> **Status — under review (2026-09-01).**
 
 ## Summary
 

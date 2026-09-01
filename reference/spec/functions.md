@@ -191,6 +191,7 @@ fun main() -> i64 {
 A closure that reads an outer binding *captures* it. A **capture list** `[…]` before the
 parameter list names each captured binding with a specifier:
 
+<!-- doc-example: skip reason="illustrative handler types and helpers are deliberately elided" -->
 ```metel
 fun main() {
     var count := 0;

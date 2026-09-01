@@ -51,7 +51,7 @@ A closure can use bindings from the surrounding scope:
 ```metel
 fun main() {
     let suffix := "!";
-    let excite := (word: String) -> String {
+    let excite := [suffix.clone()] once (word: String) -> String {
         return word + suffix;
     };
 
@@ -74,14 +74,14 @@ Closures capture by value. If you want shared mutable state across closures, mak
 ```metel
 fun main() {
     var count := 0;
-    let r: &var i64 := &var count;
+    var r: &var i64 := &var count;
 
-    let inc := () -> () {
+    var inc := [&var r] var () -> () {
         *r += 1;
     };
 
-    let get := () -> i64 {
-        r
+    let get := [&r] () -> i64 {
+        *r
     };
 
     inc();
@@ -127,9 +127,9 @@ Here a closure tracks how many items matched a filter:
 fun main() {
     let values := [1, 2, 3, 4, 5, 6];
     var matched := 0;
-    let matched_ref: &var i64 := &var matched;
+    var matched_ref: &var i64 := &var matched;
 
-    let is_even := (x: i64) -> boolean {
+    var is_even := [&var matched_ref] var (x: i64) -> boolean {
         if (x % 2 == 0) {
             *matched_ref += 1;
             return true;

@@ -427,7 +427,7 @@ Consequences for this RFC:
    that was itself stale") and the same class `metel-core#725` proposes tooling for. Any
    `#NNN` in a pre-migration document should be treated as a Codeberg number until
    verified.
-6. **Sequencing against RFC-0124.** RFC-0124 (Sequence Types, `0-draft`) may change what
+6. **Sequencing against RFC-0124.** RFC-0124 (Sequence Types, `1-under-review`) may change what
    `[T; N]` and `T[]` *are*. Its OQ3 is answered by §3, but if RFC-0124 revisits
    `[T; N]`'s role more broadly, §3's parameter mechanism should follow that decision
    rather than precede it — the same warning #263 already gives ("any array work here
