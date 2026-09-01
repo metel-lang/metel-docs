@@ -248,14 +248,27 @@ prefix (`[captures] once? var? (params)`, fixed order — RFC-0050) use `var`.
 
 ### 3. Call-site soundness
 
-**A `mutating` closure's synthesized `call` takes `&var self`.** That is the whole rule.
-A `mutating` call needs *exclusive* access to the closure value for the call's duration —
-because §1a mutates the environment aggregate in place, and two overlapping or reentrant
-calls would alias `&var` to that aggregate — and "exclusive access to a receiver for a
-call's duration" is precisely what a `&var self` method already means. So `call_mutation
-= mutating` selects the `&var self` receiver for `call`. This section **states the rule in
-full**; RFC-0122 (Borrow Checker) is where it is *statically enforced*, and RFC-0122 §2f
-carries a matching clause so the two do not drift.
+**A `mutating` closure's synthesized `call` takes `&var self`.** That is the whole rule,
+and it holds *uniformly* — for a closure that mutates its own by-value captures (§1a
+write-back) and for one that only drives mutation through a `&var` it captured. The
+justification differs slightly between the two but the rule does not:
+
+- **`[x] var` (by-value capture, write-back):** the call literally mutates the closure
+  value's own environment aggregate in place (§1a); two overlapping or reentrant calls
+  would alias `&var` to that aggregate. "Exclusive access to a receiver for a call's
+  duration" is exactly what `&var self` means.
+- **`[&var x] var` (reference capture):** the call does **not** mutate the closure value —
+  the stored `&var` pointer is unchanged — but the closure *is a means to mutation*: it
+  carries `&var x` and calling it exercises that capability. It takes `&var self` for the
+  same reason `&var x` requires `x` to be `var` even though forming the reference mutates
+  nothing: `var` at the binding site is the marker that the value there carries mutation
+  capability, and the reader is owed that marker at every call that can cause a mutation
+  somewhere. (This also keeps §3a's single reentrancy story — the in-call flag — applying
+  to both.)
+
+So `call_mutation = mutating` selects the `&var self` receiver for `call` in all cases.
+This section **states the rule in full**; RFC-0122 (Borrow Checker) is where it is
+*statically enforced*, and RFC-0122 §2f carries a matching clause so the two do not drift.
 
 **Callee eligibility (the `&var self` receiver rule, stated here).** A `mutating` call
 `e(args)` requires `e` to denote a place the caller can exclusively borrow for the call's
@@ -264,9 +277,9 @@ dynamic extent:
 - an **owned `var` binding** (`var c := …`) — eligible. An owned *non-`var`* (`let`)
   binding is **not**: a `mutating` call is a `&var self`-shaped borrow of the callee, and
   Metel's existing rule already forbids a `&var self` method call (and `&var x`) on a
-  `let` binding — `var` is the readability signal that the value at this name can change
-  between statements, and a `mutating` call changes it. `var` on the binding is required
-  for the same reason it is on a struct whose `&var self` method you call in a loop.
+  `let` binding. `var` at the binding site is the reader-facing marker that calling this
+  value can cause a mutation — of its own state, or through a `&var` it carries (see the
+  two bullets above) — the same marker `var x` gives before you write `&var x`.
 - an **owned temporary** (`make_counter()()`, a block-expression result `({ f })()`, any
   other rvalue) — eligible: a temporary has exactly one owner and is unreachable after the
   enclosing statement, so it is trivially exclusive, and there is no binding to mark `var`.
