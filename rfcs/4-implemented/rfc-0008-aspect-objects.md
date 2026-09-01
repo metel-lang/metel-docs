@@ -182,7 +182,8 @@ error: aspect Clone is not object-safe
 
 Standard library object-safety:
 - `Display` — object-safe (`to_string` takes `&Self`, returns `String`)
-- `Callable<A, B>` — *(reserved; not implemented — RFC-0161)* would be object-safe
+- `Callable<A, B>` — *(not implemented; no stdlib `Callable` aspect exists — deferred to
+  RFC-0161, which owns its object-safety story)* would be object-safe
 - `Drop` — object-safe (`drop` takes `self: &var Self`, RFC-0071). The
   vtable's drop function pointer (§2/§5) is separate per-type metadata every
   `dyn Aspect` vtable carries, unrelated to object safety.

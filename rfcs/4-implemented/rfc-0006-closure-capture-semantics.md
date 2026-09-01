@@ -3,7 +3,8 @@ id: rfc-0006
 title: "Closure Capture Semantics and Cross-Closure Reference Sharing"
 date: '2026-05-21'
 status: implemented
-spec_status: done
+spec_status: pending
+amended_by: rfc-0157, rfc-0050, rfc-0153
 coverage:
   "1": { spec: "spec.functions.closures.dynamics-1" }
   "2": { spec: "spec.functions.closures.dynamics-2" }
@@ -32,6 +33,28 @@ Define how closures capture values from their enclosing scope and what mechanism
 >   that part is unchanged.
 > - Lands v0.13.0 as one hard change, no `--edition` gate (Metel has no public users); the
 >   interpreter's fixture corpus is updated in the same PR.
+>
+> **Authority.** As of this amendment the normative source for closure capture is
+> **RFC-0157 D5 + RFC-0050 + RFC-0153** (frontmatter `amended_by`). This RFC's Proposal
+> and Resolved Decisions below are historical. `spec_status` is set to `pending`: the
+> reference `spec/functions.md` "Closures" section and the four coverage anchors are
+> rewritten **in the cluster's implementation PR**, not before — nothing is implemented
+> against the stale text, so there is no ambiguity about which document wins, only a
+> scheduled mechanical sync.
+>
+> **Disposition of the four `spec.functions.closures.dynamics-*` anchors** (for that PR):
+> - **dynamics-1** (capture "by value") — reworded: by-value capture of a non-`Copy`
+>   binding is a **move**; `Copy` is copied; a capture list is required when a move or a
+>   `&`/`&var` capture happens.
+> - **dynamics-2** (mutation of a by-value capture is discarded) — **superseded**: under a
+>   `mut` closure the write persists in the closure's own environment across calls
+>   (RFC-0153 §1a). Fixtures asserting "resets every call" are rewritten.
+> - **dynamics-3** (shared state via captured reference) — survives semantically; the
+>   surface moves from `*T` / `*mut T` pointer capture to RFC-0050's `[&x]` / `[&var x]`
+>   capture-list forms.
+> - **dynamics-4** (escaping closure keeps captured storage reachable) — survives for an
+>   owned/moved capture; the `[&x]` / `[&var x]` reference-capture case is bounded by
+>   RFC-0050 RQ1's borrow-freeze and RFC-0122 / RFC-0067 (anchors) once they land.
 >
 > Everything below is the *superseded* permanent-semantics proposal, kept for history.
 
