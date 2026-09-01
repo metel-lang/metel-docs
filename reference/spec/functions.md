@@ -476,9 +476,12 @@ A `mutating` call `e(args)` requires `e` to denote a place the caller can exclus
 borrow for the call's duration — the ordinary `&var self` receiver rule: an owned `var`
 binding, an owned temporary, an exclusive (`&var` / owning) projection off one, or a
 `&var` parameter. An owned but non-`var` (`let`) binding is **not** eligible, exactly as a
-`&var self` struct method may not be called on a `let` binding. A shared-`&` callee — a
-`&Self` / `&self` receiver, a place reached through a `&` step, or an `&`-captured closure
-— is a compile error.
+`&var self` struct method may not be called on a `let` binding. This holds for every
+`mutating` closure — one that mutates its own by-value captures, and one that only drives
+mutation through a captured `&var`: `var` at the binding site is the marker that calling
+the value can cause a mutation, the same marker `var x` gives before `&var x` is taken. A
+shared-`&` callee — a `&Self` / `&self` receiver, a place reached through a `&` step, or
+an `&`-captured closure — is a compile error.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/3-integrated/rfc-0153-closure-mutation-axis.md)_</span>
