@@ -988,7 +988,7 @@ implementation).
 
 - **RFC-0049** *(draft)* — `linear fun` Type System — unconsumed-scope-exit, `Drop`
   interaction, subtyping vs. plain `fun`.
-- **RFC-0050** *(under review; correction pass + amendment 2026-08-31; **v0.13.0**, #803)* —
+- **RFC-0050** *(**accepted 2026-09-01**; v0.13.0, #803)* —
   Closure Capture Lists — `[&var count, &config, buf, prefix.clone()]` prefix on a closure
   literal. Specifiers: `&var`/`&` by reference; **bare `ident` = by-value** (copy for
   `Copy`, **affine move** for non-`Copy` — `let y := x` semantics); `[ident.clone()]` for
@@ -999,9 +999,9 @@ implementation).
   then folded back in as bare `[buf]` for non-`Copy` — no keyword, per **RFC-0157 D5**,
   **now decided (2026-09-01, language owner): the closure-capture default is `move`** —
   which also removes RFC-0006's per-call environment re-clone (env moved in once,
-  read/mutated in place). One hard change, no `--edition` gate. Milestoned **v0.13.0**
-  alongside RFC-0134 (#269) / RFC-0152 (#901) — capture lists and call capability are one
-  feature area; still `1-under-review`, needs `accepted`. `[...]` composes ahead of
+  read/mutated in place). One hard change, no `--edition` gate. **Accepted 2026-09-01**
+  with RFC-0153, as one v0.13.0 feature area with RFC-0134 (#269) / RFC-0152 (#901); six
+  adversarial-review passes applied, all seven Resolved Questions closed. `[...]` composes ahead of
   RFC-0154's base literal spelling.
 - **RFC-0134** *(accepted 2026-08-30, opened 2026-08-13)* — Closure Call
   Capability — the type-level
@@ -1097,7 +1097,7 @@ implementation).
   + `CallMany` / `CallShared`, from RFC-0153's Alternatives) as the third option, under
   which the area dissolves into aspect-bound subsetting. Not urgent: RFC-0152's cap is
   sound, so nothing is unsound while this is open. Tracker metel-core#904 (v0.17.0).
-- **RFC-0153** *(under review, opened 2026-08-30; widened + pulled to **v0.13.0** 2026-08-31; #902, milestone moved from v0.17.0)* —
+- **RFC-0153** *(**accepted 2026-09-01**; v0.13.0, #902; widened + pulled from v0.17.0 on 2026-08-31)* —
   Closure Mutation Axis — the third `Type::Fun` field RFC-0134 §4 reserves and §5
   constrains (compose with `once`/`many` as an independent prefix). Records whether
   invoking a closure needs *exclusive* (`&var`) access to a capture — Rust's `FnMut`.
@@ -1113,9 +1113,10 @@ implementation).
   RFC-0157's D5 (no edition gate — Metel has no public users); sequenced after
   RFC-0134/RFC-0152. **Co-lands with RFC-0134 in v0.13.0** — `call_mutation` ships in
   `Type::Fun` alongside RFC-0134's two fields, so the type carries all three multiplicity
-  axes at once. To hold v0.13.0 it needs review → accepted and Open Question 1 (qualifier
-  spelling — `mut` vs `var fun`) closed; other open points: `Send`/`Sync` ownership,
-  `&var`-capture-without-write precision. **`dyn Callable` erasure is no longer in
+  axes at once. **Accepted 2026-09-01** with RFC-0050; Open Question 1 closed — the
+  qualifier keyword is **`mut`**. Six adversarial-review passes applied; `[&var x]` ⇒
+  `mutating`; a permanent runtime in-call flag + interim static rule cover reentrancy /
+  callee-eligibility before RFC-0122 (§2f). **`dyn Callable` erasure is no longer in
   scope** — it moved to **RFC-0161** (v0.13.1) so the v0.13.0 cluster ships monomorphic.
   Carries an Alternatives section: the two axes as **independent marker aspects**
   (`Callable<A,R>` + orthogonal `CallMany` / `CallShared`, auto-impl per RFC-0096) on a

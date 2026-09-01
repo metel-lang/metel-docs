@@ -2,7 +2,7 @@
 id: rfc-0050
 title: "Closure Capture Lists"
 date: '2026-06-03'
-status: under-review
+status: accepted
 target: v0.13.0
 updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/803'
@@ -17,7 +17,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 > was "settled in the direction this RFC needs" is now a decision. It also removes
 > RFC-0006's per-call environment re-clone — the captured environment is moved in once and
 > read (or, for a `mutating` closure, mutated — RFC-0153 §1a) in place. Precondition (1)
-> in "Migration" below is met; only RFC-0050/RFC-0153 reaching `accepted` remains.
+> in "Migration" below is met. **RFC-0050 and RFC-0153 reached `2-accepted` on 2026-09-01** (see the Status note above) — the cluster is fully accepted bar RFC-0157 as a whole (its D5 is decided).
 >
 > - **A capture list is semantically required** whenever a closure captures a free
 >   non-`Copy` local binding, or captures anything by `&` / `&var`. It stays *omissible*
@@ -41,8 +41,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 > - **Timing.** Lands with RFC-0157's D5 (the RFC-0006 default change) as **one hard
 >   change** — see "Migration (no edition gate)" below. Milestoned **v0.13.0** (#803)
 >   alongside RFC-0134 (#269) and RFC-0152 (#901) — closure capture lists and closure call
->   capability are one feature area. Still `1-under-review`; needs to reach `accepted` to
->   match the rest of that milestone.
+>   capability are one feature area. *(Reached `2-accepted` on 2026-09-01 — see the Status
+>   note above; this line was written while it was `1-under-review`.)*
 
 > **Adversarial-review fixes, 2026-09-01** (two passes, cross-RFC review of the v0.13.0
 > cluster):
@@ -166,6 +166,8 @@ constants, types, and aspects are name resolution, not capture, and never need t
 list.*
 
 > **Status — under review (2026-08-23; correction pass + amendment 2026-08-31, see frontmatter notes).** Six Resolved Questions checked. Amended 2026-08-31: capture list required for non-`Copy`/by-ref captures; bare `ident` is by-value (move for non-`Copy`); ownership-transfer capture folded back in (no keyword). Milestoned **v0.13.0** with RFC-0134 (#269) / RFC-0152 (#901); lands with RFC-0157's D5 as one hard change (no edition gate). Needs to reach `accepted`. -- #803
+
+> **Status — accepted (2026-09-01).** Closure capture lists — capture semantics settled across the v0.13.0 cluster (move-by-default per RFC-0157 D5, required list for non-Copy/&/&var, bare [s]=move, [&var x]=>mut); six adversarial-review passes applied; all Resolved Questions closed. Co-accepts with RFC-0153; RFC-0122 §2f/§2e carry the enforcement/interim split.
 
 ## Summary
 
@@ -677,14 +679,13 @@ expected-behavior fixture: doing so would bake a wrong "accepted" result into th
 that RFC-0122 then has to break. Such programs are only valid to add as
 `expected-error` fixtures once RFC-0122 lands.
 
-**"One hard change" is one implementation PR, but not one RFC stage yet.** RFC-0134 and
-RFC-0152 are `2-accepted`; RFC-0050, RFC-0153, and RFC-0157 are `1-under-review`.
-**RFC-0157's D5 is now decided** (2026-09-01, language owner — the closure-capture default
-is `move`), so precondition (1) is met. The single implementation PR is now contingent
-only on: (2) RFC-0050 and RFC-0153 reaching `accepted`; then (3) `Type::Fun` gains all
-three multiplicity fields, the capture-list grammar, the `once`/`mut` qualifiers, the §1a
-write-back, the removal of RFC-0006's per-call re-clone, and the corpus sweep, together.
-Until (2), "one hard change" is the *plan*, not a settled cross-RFC fact.
+**"One hard change" is one implementation PR.** RFC-0134, RFC-0152, **RFC-0050, and
+RFC-0153 are all `2-accepted`** (RFC-0050 / RFC-0153 accepted 2026-09-01); RFC-0157 stays
+`1-under-review` but its D5 is decided (2026-09-01, language owner — the closure-capture
+default is `move`). The cross-RFC preconditions are met; the single implementation PR
+delivers `Type::Fun`'s three multiplicity fields, the capture-list grammar, the
+`once`/`mut` qualifiers, the §1a write-back, the removal of RFC-0006's per-call re-clone,
+the `spec/functions.md` + RFC-0006 body sync, and the corpus sweep, together.
 
 ---
 
@@ -774,7 +775,12 @@ forces a rewrite of closure capture when they land:
 
 ## Decision
 
-**Outcome:** *(pending)*
-**Target:** *(set when accepted)*
-
-*(Decision rationale goes here when the RFC is evaluated.)*
+**Outcome: Accepted 2026-09-01**, co-accepted with RFC-0153, as the closure-capture half
+of the v0.13.0 closure cluster. Capture semantics are settled: move-by-default (RFC-0157
+D5), a capture list required the moment a non-`Copy` move or an `&`/`&var` capture occurs,
+bare `[s]` = move for non-`Copy`, `[s.clone()]` for an explicit copy, `[&var x]` ⇒
+`mutating` (`mut` written). Six adversarial-review passes applied; all seven Resolved
+Questions closed. `[]` syntax carries RQ4's recorded RFC-0159 contention (fallback:
+`capture(...)` / `|caps|`) — not a blocker, RFC-0159 defers to this RFC. Interim
+borrow-rule enforcement and the pre-RFC-0122 window are catalogued in RFC-0122 §2e/§2f.
+**Target:** v0.13.0 (#803) — one implementation PR with RFC-0134 / RFC-0152 / RFC-0153.
