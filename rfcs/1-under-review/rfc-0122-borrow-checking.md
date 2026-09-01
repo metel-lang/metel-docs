@@ -612,13 +612,22 @@ revisit — instead of each stopgap being discoverable only from the RFC that in
 it. This section is normative about the teardown: landing `--borrow-check` **must** remove
 each stopgap's own front-end check and let the general rule take over.*
 
-**Common shape.** Every entry is (a) **sound** — it rejects a subset of what
-shared-XOR-exclusive rejects, never a superset; (b) written so this RFC's rules
-**subsume** it — nothing accepted under the stopgap is rejected once the real checker
-runs. Enforcement in v0.13.0 varies by entry: some are unenforced at runtime (the
-evaluator still deep-clones, §2 question 4) and rely on the fixture-corpus caution;
-one (reentrancy, item 3) is enforced by a runtime flag. The "accepted but ill-formed"
-label applies only to the unenforced parts.
+**Common shape.** Every entry is **weaker than** the full shared-XOR-exclusive rule — it
+rejects a *subset* of what the full checker rejects. Two consequences, and the second is
+the one earlier drafts of this section stated backwards:
+
+- **(a) No false positives.** The stopgap never rejects a program the full checker
+  accepts, so nothing written against a stopgap is stranded when `--borrow-check` lands.
+- **(b) It *does* accept programs the full checker rejects.** Those become `T0020` on
+  landing. That is the "accepted but ill-formed" gap — expected, not a contradiction —
+  and the fixture-corpus constraint on each entry is what keeps it from mattering (no
+  expected-behaviour fixture may exercise it).
+
+Enforcement in v0.13.0 varies: most entries are unenforced at runtime (the evaluator
+still deep-clones, §2 question 4); one — **same-closure-value** reentrancy, item 3 — is
+enforced by a runtime flag and is *not* in the gap. Landing `--borrow-check` **must**
+remove each stopgap's own front-end check and let the general rule take over (the runtime
+flag stays as defence-in-depth).
 
 ### 1. `&var T` reborrow-in-argument-position — RFC-0071 §9 question 5 *(shipped v0.12.0)*
 
@@ -665,9 +674,10 @@ rule is stated in RFC-0153 §3 and matched by §2f below. Two v0.13.0 stopgaps:
   projection whose visible steps are owning/`&var`, or a `&var` parameter. What it cannot
   check — that no *other* borrow of the place is live across the call, that a projection's
   dynamic base is unaliased — is deferred to this RFC; a program violating only those
-  parts is accepted-but-ill-formed (fixture-corpus caution as in item 2). This is a
-  **strict subset** of §2f's rule, so nothing it accepts is newly rejected. Deleted on
-  landing.
+  parts is accepted-but-ill-formed (fixture-corpus caution as in item 2). Per the
+  "Common shape" above: the interim rule never rejects what §2f accepts (no false
+  positives), but it *does* accept some programs §2f rejects — those become `T0020` on
+  landing. Deleted on landing.
 - **Runtime in-call flag (not a stopgap — permanent).** Every `mutating` closure value
   carries a one-bit "in-call" flag, set on entry to a `mutating` call, checked on entry,
   cleared on exit/unwind; a reentrant call panics. It enforces **same-closure-value**

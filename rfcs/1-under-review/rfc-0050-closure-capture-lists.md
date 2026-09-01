@@ -257,13 +257,13 @@ consumes `x`. `[ident.clone()]` captures an explicit independent copy of a `Clon
 binding, leaving the outer binding usable. All specifiers may appear in one list:
 `[&var count, &config, buf, prefix.clone()]`.
 
-Bindings named with `&var` in the capture list are captured by mutable reference rather than by value. Inside the closure body they are used with ordinary read and assignment syntax — no explicit dereference required:
+Bindings named with `&var` in the capture list are captured by mutable reference rather than by value. Inside the closure body they are used with ordinary read and assignment syntax — no explicit dereference required. **A `&var` capture makes the closure `mutating` (RFC-0153 §1), so the literal must be written `mut`** — a `[&var …]` closure without `mut` is a compile error (*"a `&var` capture makes this closure `mut`; write `[&var count] mut (…)`, or capture `[&count]` if the body only reads `count`"*). The `&var` capture is not itself the written signal; the `mut` keyword is.
 
 ```metel
 fun main() {
     var count := 0;
 
-    let inc := [&var count] () -> () {
+    let inc := [&var count] mut () -> () {
         count += 1;
     };
 
@@ -352,7 +352,7 @@ fun main() {
     var count := 0;
     let log_prefix := "counter: ";        // String — non-Copy
 
-    let inc := [&var count, &log_prefix] () -> () {
+    let inc := [&var count, &log_prefix] mut () -> () {   // `mut` — the body assigns `count` via a `&var` capture
         count += 1;
         print(log_prefix + count.to_string());   // `print` is a module-level function, not a free variable
     };
@@ -653,7 +653,19 @@ change meaning or type under D5 + RFC-0153):
    through `&var self`, and **cannot be passed to a `reading` (`() -> T`) callback slot**.
    The fix is `[&x]` (shared capture) — which stays `reading` and widens normally. The
    sweep must find every `&var`-capturing closure whose body has no write / `&var`-use of
-   that capture and switch it to `[&x]`.
+   that capture and switch it to `[&x]`. *Measured against the current corpus (pass 6):
+   literal `[&var x]` sites today are 0 (the syntax has not landed), but ~6 read-only
+   "reader" closures in the pointer-sharing fixtures (`67`/`68`/`69`/`70`×2/`75` under
+   `evaluator/functions` + `evaluator/closures`) fall in this class once ported — they go
+   to `[&x]`, not `[&var x] mut`.*
+
+**Blast radius of the "Nested closures" interim rejection** (an inner `[&s]` / `[&var s]`
+that borrows an outer *by-value* capture). *Measured (pass 6): 2 nested-closure candidate
+sites in the whole corpus, neither the affected shape — current impact ≈ 0.* The
+expressive cost is future: a `make_reader(buf) -> () -> i64 { [buf] () { let l := [&buf]
+() { buf.len() }; l() } }` shape with a **non-`Clone`, non-`Copy`** `buf` has no local
+workaround in v0.13.0 (`[buf]` in the inner moves and forces the outer `once`). RFC-0122
+lifts the rejection with an NLL local-reborrow check.
 
 **The corpus sweep must exclude programs that rely on the not-yet-enforced borrow-freeze
 (Resolved Question 1).** RFC-0122 is not part of v0.13.0, so the interpreter will *run*
