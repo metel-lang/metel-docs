@@ -26,20 +26,21 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 >   leaves open (see RFC-0134 §5's "no mechanism for retaining private mutated state").
 > - **Non-Goal #1 is reversed for case (b).** A `mutating` closure's by-value captures are
 >   **written back** into its environment instead of re-cloned-and-discarded per call.
->   This is a change to RFC-0006's runtime capture model, the same weight and the same
->   `--edition` gate as RFC-0157's D5; a `reading` closure keeps today's clone semantics
->   (nothing mutates, so the difference is unobservable). Scoped this way, `mutating` stops
->   being a type-level fact with no runtime effect.
+>   This is a change to RFC-0006's runtime capture model, the same weight as RFC-0157's D5
+>   and landing with it as one hard change (no edition gate — Metel has no public users);
+>   a `reading` closure keeps today's clone semantics (nothing mutates, so the difference
+>   is unobservable). Scoped this way, `mutating` stops being a type-level fact with no
+>   runtime effect.
 > - **Timing — v0.13.0** (#902, milestone moved from v0.17.0 on 2026-08-31 at the language
 >   owner's direction). The whole RFC lands with the rest of the closure-model cluster —
 >   the `call_mutation` field, the `mut` qualifier, the §3 exclusive-access rule, and
 >   §1a's write-back — so the closure model ships **complete**, with no known
 >   `FnMut`-shaped hole. `call_mutation` co-lands with RFC-0134's two fields, giving
 >   `Type::Fun` its three multiplicity fields in one go rather than a v0.13.0→later
->   representational change. Sequenced after RFC-0134 / RFC-0152 and on the same
->   `--edition` gate as RFC-0157's D5 (the RFC-0006 capture-model change). **Still
->   `1-under-review`:** for v0.13.0 it needs review → accepted, and Open Question 1
->   (qualifier spelling) has to close.
+>   representational change. Sequenced after RFC-0134 / RFC-0152 and landing with
+>   RFC-0157's D5 (the RFC-0006 capture-model change) as one hard change — **no edition
+>   gate** (see RFC-0050's "Migration (no edition gate)"). **Still `1-under-review`:** for
+>   v0.13.0 it needs review → accepted, and Open Question 1 (qualifier spelling) has to close.
 
 > **Deferred from RFC-0134 §4/§5.** RFC-0134 models a closure's capability as
 > independent per-operation multiplicity axes on `Type::Fun` — `call_multiplicity`
@@ -152,11 +153,10 @@ This RFC fixes that:
     valid-but-partial state, exactly as a `&var self` method that panicked mid-mutation
     leaves its receiver. Callers that need atomicity guard it themselves; this RFC does
     not add rollback.
-- This is a change to RFC-0006 (`4-implemented`), edition-gated exactly like RFC-0157's
-  D5 change to the capture default. Behind the old edition, `mut` is not a keyword in
-  function-type position and a mutating body under an implicit by-value capture is the
-  existing "cannot mutate a copy" error; behind the new edition it has the semantics
-  above.
+- This is a change to RFC-0006 (`4-implemented`), landing with RFC-0157's D5 change to the
+  capture default as **one hard change** at v0.13.0 — **no edition gate**: Metel has no
+  public users, so the `mut` keyword, the write-back semantics, and the fixture corpus all
+  move together (see RFC-0050's "Migration (no edition gate)").
 
 §3's exclusive-access rule is what keeps this sound: a `mutating` call holds the closure
 exclusively for its duration, so no two calls — including reentrant ones — are ever
@@ -361,7 +361,8 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
    `reading` (precise, matches the effect)? Leaning conservative.
 5. **Timing. ✓ v0.13.0** (2026-08-31, #902 moved from v0.17.0). Whole RFC lands with
    RFC-0134 / RFC-0152 and the closure-model cluster; `call_mutation` co-lands with
-   RFC-0134's two `Type::Fun` fields. On the same `--edition` gate as RFC-0157's D5.
+   RFC-0134's two `Type::Fun` fields. Lands with RFC-0157's D5 as one hard change — no
+   edition gate (Metel has no public users; RFC-0050's "Migration (no edition gate)").
    What this needs to hold v0.13.0: review → accepted, and Open Question 1 closed.
 
 ## References
@@ -373,15 +374,16 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 - **RFC-0152 (Function-Type Multiplicity Widening)** — the widening relation this
   axis joins, same `reading`-permits-`mutating` direction.
 - **RFC-0006 (Closure Capture Semantics), `4-implemented`** — the per-call environment
-  re-clone that §1a changes for `mutating` closures (write-back), edition-gated.
+  re-clone that §1a changes for `mutating` closures (write-back), as a hard change.
 - **RFC-0067a (Reference Types)** — the exclusive-`&var` rule §3's call-site
   soundness reuses.
 - **RFC-0050 (Closure Capture Lists), `1-under-review` (v0.13.0)** — as amended
   2026-08-31: capture list required for non-`Copy`/by-ref captures, bare `[n]` = by-value
   move. §1a's write-back applies to exactly those bare by-value captures. Sequenced with
   this RFC.
-- **RFC-0157 (Copy and Clone Model Re-analysis), `1-under-review`** — its D5 edition
-  gate (change to RFC-0006's capture default) is the same gate §1a's write-back rides.
+- **RFC-0157 (Copy and Clone Model Re-analysis), `1-under-review`** — its D5 (change to
+  RFC-0006's capture default) lands together with §1a's write-back as one hard change; no
+  edition gate.
 - **RFC-0096 (Auto-Impl Aspects)** — `Send`/`Sync`/`Linear`; Open Question 3, and
   the natural home for `CallMany` / `CallShared` in the Alternatives section.
 - **RFC-0135 (Multiplicity for Ordinary Types)** — the axis vocabulary applied
