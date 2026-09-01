@@ -272,8 +272,7 @@ shared-`&` callee. [Overlapping and reentrant `mutating` calls on the same closu
 are rejected](#spec.functions.closures.dynamics-9). If a `mut` call exits early via `?` or
 `return`, [its partial mutations persist and the closure stays
 callable](#spec.functions.closures.dynamics-13); a `panic` is uncatchable and ends the
-process, so no post-exit state is observable. Closures created and called at `comptime`
-[obey the same axes](#spec.functions.closures.dynamics-15).
+process, so no post-exit state is observable.
 
 ### Capture semantics
 
@@ -733,17 +732,6 @@ that field or result is a `mut` value that callers must invoke under exclusive a
 ([legality-10](#spec.functions.closures.legality-10)), even though the underlying closure
 never mutates. The coercion is one-way — there is no automatic re-narrowing back to
 `reading`.
-
-##### Dynamic Semantics {#spec.functions.closures.dynamics-15}
-
-A closure may be created and called at `comptime`. Write-back
-([dynamics-7](#spec.functions.closures.dynamics-7)), `once` consumption
-([dynamics-10](#spec.functions.closures.dynamics-10)), and the reentrancy guard
-([dynamics-9](#spec.functions.closures.dynamics-9)) run on the same evaluator, so a
-`comptime` `[n] mut () -> i64` counter advances between `comptime` calls exactly as a
-runtime one does. A `comptime` reentrant `mutating` call is reported as a compile-time
-evaluation diagnostic with a source span — the comptime analogue of the runtime error,
-not an evaluator panic.
 
 </details>
 

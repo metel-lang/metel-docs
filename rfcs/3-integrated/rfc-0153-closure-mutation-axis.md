@@ -28,7 +28,7 @@ phrase). It records whether calling a closure needs *exclusive* (`&var`) access 
 capture — Rust's `FnMut`.
 
 
-> **Status — integrated (2026-09-01).** Closure cluster spec-integrated (Legality 8/10/24/25, Dynamics 7/8/9/13/15); coverage.spec frontmatter added; fixtures blocked on metel-core#925. Shape: ADR-0052.
+> **Status — integrated (2026-09-01).** Closure cluster spec-integrated (Legality 8/10/24/25, Dynamics 7/8/9/13); coverage.spec frontmatter added; fixtures blocked on metel-core#925. Shape: ADR-0052.
 
 ## Summary
 
@@ -574,17 +574,14 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
   `Type::Fun` *types* (used by the unifier) is a type relation and says nothing about
   value equality; two closures of the same type with different captures are simply not
   comparable. No closure-identity or by-address comparison is introduced.
-- **`comptime` / `const` closures.** A closure may be created and called at `comptime`;
-  the comptime evaluator is the same interpreter, so `mut` write-back (§1a), `once`
-  consumption, **and the §3 in-call flag** all run on the same code path — a `comptime`
-  `[n] mut () -> i64` counter advances between `comptime` calls exactly as a runtime one
-  does. A `comptime` reentrant `mutating` call surfaces as a **compile-time evaluation
-  diagnostic** (a proper error with a source span, the comptime analogue of the runtime
-  panic — the same `"re-entrant call to a mutating closure"` condition, reported through
-  whatever mechanism comptime-evaluation failures already use; **not** an evaluator panic
-  and **not** unguarded recursion). No separate const-closure model, and no relaxation of
-  §3's exclusive-place rule. That the flag path is shared between the two evaluators is a
-  delivery-test item on #902.
+- **`comptime` / `const` closures.** `comptime` is a separate, not-yet-implemented effort
+  (RFC-0092, RFC-0132); this RFC does not specify its semantics. The design intent, for
+  when it lands: the comptime evaluator is the same interpreter, so `mut` write-back
+  (§1a), `once` consumption, and the §3 in-call flag carry over unchanged on the same code
+  path, with no separate const-closure model and no relaxation of §3's exclusive-place
+  rule. A `comptime` reentrant `mutating` call would surface as a compile-time evaluation
+  diagnostic rather than a runtime abort. Nothing here is spec-integrated until `comptime`
+  itself is.
 - Multiplicity for ordinary types — RFC-0135.
 - **`.clone()` / `.share()` on a closure value** — closures are outside the aspect system
   (RFC-0134's Open-Questions finding: `InferType::Fun` implements nothing; RFC-0158 does
