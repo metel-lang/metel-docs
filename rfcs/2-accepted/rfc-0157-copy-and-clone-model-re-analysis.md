@@ -8,39 +8,15 @@ updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/918'
 ---
 
-> **Scope note (2026-09-01).** This RFC began as "Copy and Clone Model Re-analysis",
-> covering both the regular-value `Copy`/`Clone` model and the closure-capture default
-> ("D5"). **D5 is decided** and this RFC now carries *only* that: the closure-capture
-> default is **`move`**, part of the v0.13.0 closure cluster (RFC-0050 / RFC-0134 /
-> RFC-0153). The regular-value model critique, the P0–P3 design space, the prior-art
-> survey, and the open questions D5 did not touch were **extracted to RFC-0162 (Copy and
-> Clone Model — Regular-Value Design Space)** so they stay trackable on their own,
-> longer-horizon timeline.
 
-> **Origin, 2026-08-31.** Opened out of the RFC-0050 (Closure Capture Lists) correction
-> pass. RFC-0050 had a `move` capture specifier; reframing it off `linear` reduced it to
-> "do an ordinary affine move at the capture site," at which point it had no reason to be
-> a keyword — an affine move takes none anywhere else in Metel. Whether closure capture is
-> a deliberate exception turns on the closure-capture default (RFC-0006's clone-by-default)
-> and the `Copy`/`Clone` model under it. RFC-0050 dropped `move` and deferred
-> ownership-transfer capture to "a future RFC that settles the default." This is that RFC.
+> **Status — accepted 2026-09-01**, as part of the v0.13.0 closure cluster (RFC-0050 /
+> RFC-0134 / RFC-0152 / RFC-0153 / RFC-0157). Implementation shape: **ADR-0052**.
 
-> **Decision on D5 (2026-09-01, language owner) — the closure-capture default is
-> `move`.** RFC-0006's clone-every-free-variable default is replaced: a by-value capture
-> of a non-`Copy` free variable **moves** it into the closure (consuming the outer
-> binding), a `Copy` one is copied, a `Clone`-not-`Copy` one is an error unless
-> `.clone()`d at the capture site — `let y := x` semantics, uniformly. A capture list is
-> required the moment a move would occur (Open Question 4 resolved in favour of RFC-0050's
-> exhaustiveness philosophy). Because the value is moved in **once**, RFC-0006's per-call
-> `call_env = captured.clone()` re-clone is also gone — a `reading` closure reads its
-> moved-in environment aggregate in place; a `mutating` one mutates it in place (RFC-0153
-> §1a); the two now share one representation. **Scope of this decision:** D5 only — the
-> mechanism lives in **RFC-0050** (`2-accepted`, #803, v0.13.0) and the amendment to
-> **RFC-0134** (`2-accepted`, #269). The regular-value `Copy`/`Clone` critique (Axes A/B,
-> P1–P3, D1–D4) moved to **RFC-0162** on 2026-09-01, where its recommendation — **no
-> regular-value model divergence** — stays under review. See the Decision section.
-
-> **Status — accepted (2026-09-01).** Scope reduced 2026-09-01 to the D5 decision — the closure-capture default is move — accepted as part of the v0.13.0 closure cluster (RFC-0050 / RFC-0134 / RFC-0152 / RFC-0153). The regular-value Copy/Clone model critique and design space were extracted to RFC-0162 (1-under-review, longer-horizon).
+> **Scope.** This RFC carries one decision — **D5, the closure-capture default is
+> `move`** — and its rationale. It began as a broader "Copy and Clone Model Re-analysis";
+> the regular-value `Copy`/`Clone` model critique, the P0–P3 design space, and the
+> prior-art survey are now **RFC-0162** (`1-under-review`, v0.17.0), so this document is
+> D5-only.
 
 ## Summary
 
@@ -120,23 +96,11 @@ follow-ups (RFC-0158 `Clone`/`Share`, the D3 relaxation, an RFC-0135 disposition
 
 ## Open Questions
 
-3. **Corpus-sweep scope for the D5 capture-default change. ✓ Not an edition question**
-   (2026-09-01 — Metel has no public users, so there is no `--edition` gate; RFC-0017's
-   edition system is not on this path). It is a hard change with the interpreter's `.mtl`
-   fixtures updated in the same PR. What remains: measure how many fixtures / stdlib
-   closures rely on capture-by-clone leaving the outer binding usable, so the sweep can be
-   sized — but it is a one-time internal edit, not a migration tool. **D5 itself is
-   decided (2026-09-01, language owner — the default is `move`); this question is now just
-   the sizing of the sweep, a delivery task on RFC-0050 #803.**
-4. **✓ RESOLVED (2026-09-01) — a capture list must be present the moment a move would
-   occur.** An unannotated closure never *implicitly* moves a non-`Copy` capture; it
-   captures only `Copy` values (by copy) or nothing. The stricter rule won for
-   predictability and consistency with RFC-0050's exhaustiveness philosophy and the
-   *Implicit mutable capture* rejection. The "less boilerplate for make-and-return" case
-   is served by writing the one-item list `[x]`, which is also where `once` gets written.
-
-*(The regular-value open questions — D1 severity, D3 soundness, RFC-0135 disposition —
-are RFC-0162's.)*
+None. A capture list is required the moment a move would occur — no *implicit* move of a
+non-`Copy` capture (the stricter rule, for predictability and consistency with RFC-0050's
+exhaustiveness). The corpus-sweep sizing is a delivery task on RFC-0050 #803 / ADR-0052,
+not an open design question. The regular-value `Copy`/`Clone` questions (D1 severity, D3
+soundness, RFC-0135 disposition) are **RFC-0162**'s.
 
 ---
 

@@ -8,185 +8,16 @@ updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 ---
 
-> **Amendment, 2026-08-31 — folded into the closure-model work; scope widened to the
-> case that makes the axis worth having.** Three changes, all consequences of decisions
-> taken this cycle on RFC-0134 / RFC-0050 / RFC-0157:
->
-> - **`reading` is a fixed default, not inferred** — matching RFC-0134's 2026-08-31
->   amendment (`many` default, `once` written). `mutating` is always written (`mut`); the
->   body analysis below runs to *verify* it — a `reading`/unqualified closure whose body
->   mutates a capture is a compile error at the definition site ("mutates captured `x`;
->   annotate `mut …` or don't mutate it"). §1's "inferred" language should be read that way.
-> - **Two cases, not one.** *(a)* Mutating **outer** state through a `&var`-captured
->   reference (`[&var count] mut () -> () { count += 1 }`) — persists today, because the
->   captured reference survives RFC-0006's per-call environment re-clone; this RFC only
->   adds the no-overlapping-calls rule. *(b)* Mutating a **by-value / owned** capture so
->   the mutation persists across calls — the returnable counter / accumulator / memoizer,
->   Rust's `move ||` + `FnMut`. That is the expressiveness gap the closure model otherwise
->   leaves open (see RFC-0134 §5's "no mechanism for retaining private mutated state").
-> - **Non-Goal #1 is reversed for case (b).** A `mutating` closure's by-value captures are
->   **written back** into its environment instead of re-cloned-and-discarded per call.
->   This is a change to RFC-0006's runtime capture model, the same weight as RFC-0157's D5
->   and landing with it as one hard change (no edition gate — Metel has no public users).
->   *(Superseded 2026-09-01: D5's decision removes the per-call `captured.clone()` for a
->   `reading` closure too — it now also reads its moved-in aggregate in place. §1a is the
->   current text; this bullet is kept for history.)* Scoped this way, `mutating` stops
->   being a type-level fact with no runtime effect.
-> - **Timing — v0.13.0** (#902, milestone moved from v0.17.0 on 2026-08-31 at the language
->   owner's direction). The whole RFC lands with the rest of the closure-model cluster —
->   the `call_mutation` field, the `mut` qualifier, the §3 exclusive-access rule, and
->   §1a's write-back — so the closure model ships **complete**, with no known
->   `FnMut`-shaped hole. `call_mutation` co-lands with RFC-0134's two fields, giving
->   `Type::Fun` its three multiplicity fields in one go rather than a v0.13.0→later
->   representational change. Sequenced after RFC-0134 / RFC-0152 and landing with
->   RFC-0157's D5 (the RFC-0006 capture-model change) as one hard change — **no edition
->   gate** (see RFC-0050's "Migration (no edition gate)"). *(Reached `2-accepted` on
->   2026-09-01 — Status note above; Open Question 1's qualifier keyword closed as `mut`.
->   This line was written while it was `1-under-review`.)*
+> **Status — accepted 2026-09-01**, co-accepted with RFC-0050 as the mutation-axis half
+> of the v0.13.0 closure cluster (RFC-0134 / RFC-0152 / RFC-0050 / RFC-0153 / RFC-0157).
+> Implementation shape: **ADR-0052**.
 
-> **Deferred from RFC-0134 §4/§5.** RFC-0134 models a closure's capability as
-> independent per-operation multiplicity axes on `Type::Fun` — `call_multiplicity`
-> (does invoking consume a capture) and `use_multiplicity` (is the value `Copy`).
-> §4 reserves "a third field of the same kind, on the same rationale, whenever
-> something needs it," and §5 states a forward-compatibility constraint for it
-> without designing it: it must compose with `once`/`many` as an **independent,
-> order-insensitive prefix**, not a fused phrase. This RFC is that third axis:
-> whether calling the closure needs *exclusive* (`&var`) access to a capture,
-> i.e. Rust's `FnMut`.
+This RFC adds the third multiplicity field to `Type::Fun`, alongside RFC-0134's
+`call_multiplicity` and `use_multiplicity`. RFC-0134 §4 reserved it and §5 constrained it
+(compose with `once`/`many` as an independent, order-insensitive prefix, not a fused
+phrase). It records whether calling a closure needs *exclusive* (`&var`) access to a
+capture — Rust's `FnMut`.
 
-> **Status — under review (2026-08-30).** Deferred from RFC-0134 §4/§5: the reserved third Type::Fun axis -- whether a call needs exclusive (&var) access to a capture, i.e. FnMut.
-
-> **Adversarial-review fixes, 2026-09-01** (two passes, cross-RFC review of the v0.13.0
-> cluster):
-> - **§3's "a `mutating` closure is not `Copy`" is withdrawn** — it contradicted RFC-0134
->   §1 and was too strong. `use_multiplicity` stays exactly RFC-0134 §1 (Copy iff every
->   capture is Copy); `call_mutation` is fully independent. All 2×2×2 field combinations
->   are well-formed (§4). `&T` is `Copy`, `&var T` is not.
-> - **§3: a `mutating` call is `&var self`-shaped** (pass 2 corrected pass 1's
->   consumes-and-rebinds over-reach) — it needs *exclusive* access to the closure value
->   for the call's duration and does **not** consume it. *(Pass 2 added "the callee must be
->   an lvalue place; a temporary is a compile error" — the temporary half was wrong and is
->   withdrawn by the 2026-09-01 follow-up below; a temporary is trivially exclusive.)*
->   `once mut` composes the axes independently — the `once` axis consumes at the call
->   expression, the `mut` borrow is then moot.
-> - **§1a's early-exit rule** split by axis: plain `mut` + panic → callable, partial
->   mutation visible; `once`/`once mut` + panic → moved value (RFC-0134 §2), no
->   "still callable" question.
-> - **§1a storage model** unchanged: one environment cell owned by the closure value,
->   moves with it, copied for a `Copy` closure.
-> - **§3 gains an interim `Send`/`Sync` rule** (`mutating` ⇒ not `Sync`; `Send` follows
->   captures) and a **`dyn` erasure default** (bare `dyn Callable` = most-restrictive;
->   `+ CallMany`/`+ CallShared`/`+ Copy` widen).
-> - `.clone()` on a closure is a non-goal (closures are outside the aspect system).
-
-> **Adversarial-review fixes, 2026-09-01 (third pass)** — cluster-wide re-review:
-> - **`dyn Callable` erasure is removed from this RFC.** The pass-2 "`dyn` erasure
->   default" (§3) rested on unbuilt machinery (RFC-0096 auto-impl aspects; RFC-0061
->   §7.1's never-built `Callable`; RFC-0008 object-safety of a by-value `self` receiver).
->   It moves to its own RFC — **RFC-0161 (Callable Object Contract)**, target v0.13.1.
->   For v0.13.0 the closure model ships **monomorphic**: a closure is only ever a concrete
->   `Type::Fun`. The `Callable` aspect was never built either (pass 4, 2026-09-01), so
->   there is no `where F: Callable` bound in v0.13.0 — higher-order functions take a
->   concrete function type. Writing `dyn Callable<…>` is a v0.13.0 compile error. See §3.
-> - **§1a nails the environment representation.** The `mutating` closure's environment is
->   **one inline owned aggregate that is part of the closure value** — bit-copied with it,
->   moved with it, never behind a shared pointer. Returnability (`make_counter`) is the
->   inline value being moved out, not heap/`Rc` indirection. A closure is `Copy` iff that
->   inline copy is trivial (every capture `Copy`, RFC-0134 §1); any representation that
->   would need indirection is non-`Copy`.
-> - **Captured `Drop` values now have a rule** (§1a "Captured `Drop`"). RFC-0134 §5's "no
->   `Drop`-for-closures" bans a user `drop(&var self)` *on a closure*; it never exempted a
->   closure's captured values from being dropped. They are dropped when the closure value
->   is dropped, in capture-list order, like struct fields (RFC-0071); a `once`-consumed or
->   partially-moved-out env drops only its still-owned fields. Execution waits on #292;
->   the rule does not.
-> - **Closure equality / ordering, comptime** — added as Non-Goals (closures satisfy no
->   aspects, so `==` / `<` on them does not type-check; comptime creation and call use the
->   same interpreter and the same axis semantics).
-> - **`mut` env cell = the RFC-0050 capture aggregate**, not a wrapper around it — escape
->   / brand checking sees the same field types (§1a, and RFC-0050 Implementation Guidance).
-> - **§3 reframed (2026-09-01, follow-up) — no closure-specific place calculus.** The
->   pass-2 "callee must be an lvalue place; a temporary is a compile error" was two things
->   at once: a real soundness property (the call needs *exclusive* access to the closure
->   value) and a mis-statement (a temporary *is* exclusive — one owner, gone after the
->   statement). §3 now says: **`mutating` makes the synthesized `call` take `&var self`**,
->   with the same callee-eligibility as any `&var self` method — closures add no case the
->   borrow checker doesn't already handle. *(Pass 4 then made §3 state that rule in full
->   rather than only pointing at RFC-0122.)* A **minimal interim static rule** covers the
->   pre-RFC-0122 window: reject only a **shared-`&` callee**; owned bindings, owned
->   temporaries, exclusive projections, and `&var` parameters all pass.
-
-> **D5 decided, 2026-09-01 (language owner) — the closure-capture default is `move`.**
-> RFC-0157's D5 is no longer a recommendation. It removes RFC-0006's per-call
-> `call_env = captured.clone()` re-clone for **every** closure, so §1a's single moved-in
-> environment aggregate is now the *universal* runtime model, not a `mutating`-only
-> special case: a `reading` closure reads it in place, a `mutating` one also mutates it in
-> place. §1a is rewritten accordingly. **RFC-0006 (`4-implemented`) carries a matching
-> amendment note.**
-
-> **Adversarial-review fixes, 2026-09-01 (fourth pass):**
-> - **§3 now states the `&var self` receiver rule in full** (callee eligibility: owned
->   binding / owned temporary / exclusive projection / `&var` param; shared-`&` callee
->   rejected) rather than pointing at RFC-0122 as though the rule were written there.
->   RFC-0122 §2f gains a matching clause; RFC-0122 is cited for *enforcement*.
-> - **Reentrancy is now enforced in v0.13.0** by a runtime in-call flag on every
->   `mutating` closure value (reentrant call → panic). Not removed when RFC-0122 lands —
->   defence in depth. Makes RFC-0122 §2e's "subset" claim true.
-> - **`Send`/`Sync`:** the "`[&var n]` / `[&n]` closures are never `Send`" claim is
->   **withdrawn** — closure `Send`/`Sync` is the aggregate rule over captures, `&T` / `&var
->   T` per RFC-0080. Only `mutating` ⇒ `!Sync` remains, interim pending RFC-0096.
-> - **`[&var x]` capture ⇒ `mutating`** regardless of body (Open Question 4 closed,
->   conservative). Use `[&x]` for a read-only reference capture.
-> - **`Callable` aspect / `dyn Callable` deferred in full to RFC-0161** — never built
->   (RFC-0061 §7.1 / RFC-0008). v0.13.0: no `where F: Callable` bound, higher-order
->   functions take concrete function types, `dyn Callable<…>` is a compile error. RFC-0008
->   and RFC-0061's stale passages get "not implemented" annotations.
-
-> **Adversarial-review fixes, 2026-09-01 (fifth pass):**
-> - **Reentrancy claim narrowed.** The in-call flag catches **same-closure-value**
->   reentrancy only. *Aliased-capture* reentrancy — two distinct `mutating` closures (or a
->   `Copy` closure + its copy) each holding `[&var x]` to one `x` — is **not** caught; it
->   is in the same unenforced `[&var x]` borrow-freeze gap (RFC-0050 RQ1), closed by
->   RFC-0122. §3, RFC-0122 §2e/§2f updated.
-> - **`[&var x]` still needs `mut` written** — `[&var x] () -> i64 { x }` is an error
->   ("add `mut` or use `[&x]`"); the `&var` capture is not itself the written signal.
-> - **In-call flag details:** part of the closure value's representation (not the env
->   aggregate, not `Copy` state — a `bool` stays trivially copyable; a copy always starts
->   idle); cleared on the **single** unwind/return path that also does partial-move `Drop`
->   bookkeeping; runs in the comptime evaluator too (a compile-time *diagnostic* — not a
->   panic — on reentrancy).
-> - **`Callable` wording corrected:** the `dyn <Aspect>` *syntax* is unchanged; there is
->   just no predeclared / stdlib `Callable`, so `dyn Callable<…>` is unknown-aspect
->   `T0003` unless the program declares one. Not reserved.
-> - **`mutating` ⇒ `!Sync` owner:** RFC-0153 §3 owns the rule now; it *migrates* to
->   RFC-0096 once RFC-0096 models closure mutation (it does not yet).
-> - **Nested closure borrowing an enclosing by-value capture** — RFC-0050 rejects it in
->   the v0.13.0 interim (local-reborrow-into-enclosing-env; RFC-0122 replaces the
->   rejection with an NLL check). RFC-0050 Migration gains class 3 (`&var` capture used
->   read-only → switch to `[&x]`).
-> - **RFC-0006** body + `spec/functions.md` now carry section-level "historical / not yet
->   updated" fences, not just a top note.
-
-> **Adversarial-review fixes, 2026-09-01 (sixth pass):**
-> - **Widened `reading`→`mut` call dispatch specified** — call lowering branches on the
->   closure *value's* own `call_mutation`, not the slot type; a widened `reading` value
->   takes the plain call path (no exclusive borrow, no flag — it carries none). §3, §1a,
->   and RFC-0152 aligned.
-> - **RFC-0050 `[&var count]` examples** now carry `mut` (they contradicted RFC-0153's
->   "`mut` is always written"); RFC-0050 states the requirement explicitly.
-> - **"nothing the interim rule accepts is newly rejected" was backwards** — corrected in
->   §3 and RFC-0122 §2e: the interim rule has no false positives but *does* accept
->   programs RFC-0122 later rejects (the accepted-but-ill-formed gap; corpus must not rely
->   on it).
-> - **RFC-0006** → `spec_status: pending` + `amended_by: rfc-0157, rfc-0050, rfc-0153`;
->   the amendment note now carries the `dynamics-1..4` anchor disposition; `spec/functions.md`
->   update is a tracked deliverable on the impl PR.
-> - **`Copy` `mutating` ≠ shared `mutating`** — explicit note + test item (two-fiber copy
->   gives independent counters, not shared state).
-> - **comptime reentrancy** is a compile-time *diagnostic* (source span), not a "panic".
-> - RFC-0008's "reserved" wording for `Callable` dropped (it is not reserved).
-
-> **Status — accepted (2026-09-01).** Closure mutation axis — call_mutation is the third Type::Fun field, co-lands with RFC-0134's two in v0.13.0. reading default / mut written; a mutating call is a &var self-shaped exclusive borrow (RFC-0122 §2f enforces, interim rule + runtime in-call flag for the pre-RFC-0122 window); [&var x] => mutating; move-once environment with write-back (RFC-0157 D5). Six adversarial-review passes applied; Open Question 1 (qualifier keyword = mut) closed. Co-accepts with RFC-0050.
 
 ## Summary
 
@@ -195,11 +26,11 @@ capture — needing `&var` access to it for the duration of the call — or only
 it? A closure whose body assigns to, or takes `&var` of, a by-value capture is
 *call-mutating*; one that only reads its captures is *call-reading*.
 
-Like RFC-0134's other axes (as amended 2026-08-31), **`reading` is a fixed default
-and `mutating` is written** (`mut`); the body analysis *verifies* the declared value
-rather than sourcing it. It is orthogonal to `call_multiplicity`: `many` × mutating is
-`FnMut`, `once` × mutating is a closure that mutates then consumes, `many` × reading is
-the plain `Fn` case, `once` × reading consumes without mutating first.
+Like RFC-0134's other axes, **`reading` is a fixed default and `mutating` is written**
+(`mut`); the body analysis *verifies* the declared value rather than sourcing it. It is
+orthogonal to `call_multiplicity`: `many` × mutating is `FnMut`, `once` × mutating is a
+closure that mutates then consumes, `many` × reading is the plain `Fn` case, `once` ×
+reading consumes without mutating first.
 
 ## Motivation
 
@@ -408,8 +239,7 @@ dynamic extent:
 - an **owned binding** (`c`) — eligible;
 - an **owned temporary** (`make_counter()()`, a block-expression result `({ f })()`, any
   other rvalue) — eligible: a temporary has exactly one owner and is unreachable after the
-  enclosing statement, so it is trivially exclusive. *(This RFC's pass-2 text said "a
-  temporary is a compile error" — that half was wrong and is withdrawn.)*
+  enclosing statement, so it is trivially exclusive.
 - an **exclusive projection** off an owned or `&var` base — `b.handler`, `arr[i]`, `*p` —
   where **every** step of the path is reached through owning or `&var` access; eligible;
 - a **`&var` parameter** or a place reached through one by exclusive projection —
@@ -755,11 +585,11 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
    contravariant-nesting question, which is **RFC-0155** (split out of RFC-0152
    on 2026-08-30). RFC-0152's first-order rule is sound on its own (nothing is unsound
    while RFC-0155 is open), so this does not block acceptance; resolve with RFC-0155.
-3. **`Send`/`Sync` derivation. ✓ Resolved (2026-09-01, pass 4).** Deferred to the
+3. **`Send`/`Sync` derivation. ✓ Resolved.** Deferred to the
    ordinary aggregate rule over captures (RFC-0080 owns `&T` / `&var T`); this RFC
    restates none of it. The one closure-specific fact — a `mutating` closure is `!Sync` —
    is an interim statement pending RFC-0096 (§3, catalogued in RFC-0122 §2e).
-4. **`&var`-capture without mutation. ✓ Resolved (2026-09-01, pass 4): conservative.** A
+4. **`&var`-capture without mutation. ✓ Resolved: conservative.** A
    `[&var x]` capture is `mutating` regardless of the body — it takes exclusive capability
    over `x` for the closure's lifetime. For a read-only reference capture, use `[&x]`
    (shared). See §1.
@@ -821,16 +651,25 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 
 ---
 
+## Implementation Guidance
+
+Runtime shape (closure value representation, the `call_mutation` / `in_call` fields, the
+`Type::Fun` match-site set, `capture_clone` removal, error/runtime codes, the always-on
+vs `--move-check` decision, and the migration sweep) is **ADR-0052**. This RFC does not
+carry it — the one constraint the design places on the representation is that a `Copy`
+`mutating` closure's copies must hold *independent* environment state (§1a, §4).
+
+---
+
 ## Decision
 
-**Outcome: Accepted 2026-09-01**, co-accepted with RFC-0050, as the mutation-axis half of
-the v0.13.0 closure cluster. `call_mutation` is the third `Type::Fun` field, co-landing
-with RFC-0134's two. `reading` default / `mut` written; a `mutating` call is a `&var
-self`-shaped exclusive borrow of the callee place (RFC-0122 §2f enforces statically; an
-interim static rule + a permanent runtime in-call flag cover the pre-RFC-0122 window);
-`[&var x]` ⇒ `mutating`; a move-once environment aggregate with write-back that persists
-across calls (RFC-0157 D5). Six adversarial-review passes applied. Open Question 1 closed
-— the qualifier keyword is **`mut`**. Non-blocking residuals: higher-order variance
-(RFC-0155), and the `mutating` ⇒ `!Sync` fact migrating to RFC-0096 when it models closure
-mutation.
-**Target:** v0.13.0 (#902) — one implementation PR with RFC-0134 / RFC-0152 / RFC-0050.
+**Accepted 2026-09-01**, co-accepted with RFC-0050, as the mutation-axis half of the
+v0.13.0 closure cluster. `call_mutation` is the third `Type::Fun` field. `reading` default
+/ `mut` written; a `mutating` call is a `&var self`-shaped exclusive borrow of the callee
+place; `[&var x]` ⇒ `mutating`; a move-once environment aggregate with write-back that
+persists across calls. The qualifier keyword is **`mut`**. Non-blocking residuals:
+higher-order variance (RFC-0155), and the `mutating` ⇒ `!Sync` fact migrating to RFC-0096
+when it models closure mutation.
+
+**Target:** v0.13.0 (#902) — one implementation PR with RFC-0134 / RFC-0152 / RFC-0050 /
+RFC-0157; shape per ADR-0052.
