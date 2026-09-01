@@ -303,7 +303,7 @@ for the closure value's whole lifetime. [Captured owned values are dropped when 
 closure value is dropped](#spec.functions.closures.dynamics-11), in capture-list order.
 
 Closures [satisfy no aspects](#spec.functions.closures.legality-12): `==`, `<`, `.clone()`,
-`.share()`, and other aspect-gated operations on closure values do not type-check. [A
+and other aspect-gated operations on closure values do not type-check. [A
 closure's `Send` / `Sync` follows the aggregate rule over its
 captures](#spec.functions.closures.legality-14); a `mutating` closure is not `Sync`.
 
@@ -492,11 +492,15 @@ checker lands.
 ##### Legality Rule {#spec.functions.closures.legality-12}
 
 A closure value satisfies no aspects. `==`, `<`, and other aspect-gated operations applied
-to a closure value are a compile error (aspect not satisfied). `c.clone()` and `c.share()`
-likewise do not type-check — a closure has no `Clone` or `Share` impl; the only way to
-duplicate a closure value is the ordinary by-value copy available when it is `Copy`
+to a closure value are a compile error (aspect not satisfied). `c.clone()` likewise does
+not type-check — a closure has no `Clone` impl; the only way to duplicate a closure value
+is the ordinary by-value copy available when it is `Copy`
 ([legality-20](#spec.functions.closures.legality-20)). Structural equality of two function
 *types* is a type relation and does not make their values comparable.
+
+> A `Share` aspect and `.share()` method don't exist in the language yet (RFC-0158,
+> `1-under-review`); once they do, a closure has no `Share` impl either, by the same
+> aspect-exemption rule — but that is RFC-0158's claim to spec-integrate, not this one's.
 
 ##### Legality Rule {#spec.functions.closures.legality-13}
 
