@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**159 RFCs total.** 31 draft, 36 under review, 10 accepted, 3 integrated (80 live), 52 implemented, 13 superseded, 14 refused (79 settled).
+**159 RFCs total.** 30 draft, 37 under review, 10 accepted, 3 integrated (80 live), 52 implemented, 13 superseded, 14 refused (79 settled).
 
-## Draft (31)
+## Draft (30)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -27,7 +27,6 @@ the curated thematic map.
 - **RFC-0027** — C FFI (`0-draft` ; rfcs/0-draft/rfc-0027-c-ffi.md ; date 2026-05-24)
 - **RFC-0033** — Field-Level Mutability (`0-draft` ; rfcs/0-draft/rfc-0033-field-level-mutability.md ; date 2026-05-30)
 - **RFC-0038** — impl Aspect in Struct Fields and Existential Types (`0-draft` ; rfcs/0-draft/rfc-0038-impl-aspect-struct-fields.md ; date 2026-06-01)
-- **RFC-0039** — aspect Alias Syntax (`0-draft` ; rfcs/0-draft/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01)
 - **RFC-0049** — `linear fun` Type System (`0-draft` ; rfcs/0-draft/rfc-0049-linear-fun-type-system.md ; date 2026-06-04)
 - **RFC-0062** — Ord / Eq Comparison Aspects (`0-draft` ; rfcs/0-draft/rfc-0062-ord-comparison-aspect.md ; date 2026-06-11 ; updated 2026-07-21)
 - **RFC-0074** — Shared Pointers — Rc and Arc (`0-draft` ; rfcs/0-draft/rfc-0074-shared-ownership.md ; date 2026-06-30)
@@ -49,9 +48,10 @@ the curated thematic map.
 - **RFC-0145** — Static Storage Duration (`0-draft` ; rfcs/0-draft/rfc-0145-static-storage-duration.md ; date 2026-08-27)
 - **RFC-0151** — Tuples as Numeric-Label Rows (`0-draft` ; rfcs/0-draft/rfc-0151-tuples-as-numeric-label-rows.md ; date 2026-08-29)
 
-## Under Review (36)
+## Under Review (37)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
+- **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
 - **RFC-0050** — Closure Capture Lists (`1-under-review` ; rfcs/1-under-review/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-08-31)
 - **RFC-0067** — Lifetime Anchors (`1-under-review` ; rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-08-23)
 - **RFC-0076** — Brand Types (`1-under-review` ; rfcs/1-under-review/rfc-0076-rc-brands.md ; date 2026-06-29 ; updated 2026-08-27)
