@@ -586,9 +586,13 @@ above it are.
   RFC-0062's actual signatures.
 - **RFC-0011** — Operator Overloading Aspects — operator desugaring. RFC-0093 notes
   derived `Eq`/`Ord` depend on this.
-- **RFC-0039** — `aspect` Alias Syntax — vehicle for RFC-0089's `Affine` alias
-  (`!Copy + !Linear`). Small, standalone. Names compound *bounds* — disjoint from
-  **RFC-0160**, which names *types*.
+- **RFC-0039** *(under review, opened 2026-06-01; #922)* — `aspect` Alias Syntax —
+  `aspect Sortable = Comparable + Display + Clone`, a transparent shorthand for compound
+  bounds (not a new aspect requiring its own impl); alias-of-alias allowed, cycles error;
+  usable as a struct/enum bound and with `extends Aspect`; diagnostics name the alias.
+  Vehicle for RFC-0089's `Affine` alias (`!Copy + !Linear`). Small, standalone. Names
+  compound *bounds* — disjoint from **RFC-0160**, which names *types*. Five OQs, each with
+  a recommended answer in the RFC.
 - **RFC-0160** *(under review, opened 2026-09-01; #921)* — Type Aliases — module-level `public? type
   Name = T;`, optionally parameterised, **transparent** (structural synonym, no nominal
   identity, RFC-0152 widening flows through). Fills a real gap: `type Name = T` today

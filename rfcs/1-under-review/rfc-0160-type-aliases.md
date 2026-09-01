@@ -168,7 +168,7 @@ summary, for aliases:
 
 ## Relationship to existing RFCs
 
-- **RFC-0039 (aspect Alias Syntax, `0-draft`)** — complementary and disjoint: RFC-0039
+- **RFC-0039 (aspect Alias Syntax, `1-under-review`)** — complementary and disjoint: RFC-0039
   names compound *bounds* (`aspect X = A + B`), this names *types* (`type X = T`).
   RFC-0039 Q1 Option C briefly floated `type Alias = A & B & C` as a bound-alias *syntax*;
   that is not this feature. Diagnostics-name-the-alias (RFC-0039 Q5) is adopted here too.
