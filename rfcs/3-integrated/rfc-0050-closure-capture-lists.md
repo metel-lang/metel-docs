@@ -2,10 +2,18 @@
 id: rfc-0050
 title: "Closure Capture Lists"
 date: '2026-06-03'
-status: accepted
+status: integrated
 target: v0.13.0
 updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/803'
+coverage:
+  "1": { spec: "spec.functions.closures.legality-5" }
+  "2": { spec: "spec.functions.closures.legality-6" }
+  "3": { spec: "spec.functions.closures.legality-11" }
+  "4": { spec: "spec.functions.closures.legality-8" }
+  "5": { spec: "spec.functions.closures.legality-13" }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/925'
+impl_status: not-started
 ---
 
 
@@ -13,6 +21,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 > v0.13.0 closure cluster (RFC-0134 / RFC-0152 / RFC-0050 / RFC-0153 / RFC-0157).
 > Enforcement of the borrow-shaped Resolved Questions is RFC-0122's (§2e/§2f); the
 > pre-RFC-0122 interim window is catalogued there. Implementation shape: **ADR-0052**.
+
+> **Status — integrated (2026-09-01).** Closure cluster spec-integrated (Legality 5/6/8/11/13); coverage.spec frontmatter added; fixtures blocked on metel-core#925. Shape: ADR-0052.
 
 ## Summary
 
@@ -61,6 +71,8 @@ A capture list allows the programmer to declare the mutable capture at the closu
 ---
 
 ## Proposal
+
+### 1. Capture-list grammar
 
 Extend the closure expression syntax with a capture list placed before the parameter list:
 
@@ -135,7 +147,7 @@ fun main() {
 }
 ```
 
-### When the list is required
+### 2. When the list is required
 
 A closure may omit the capture list only if **every** free variable it references is a
 `Copy` binding captured by value (a copy — semantically free), or it has no free variables
@@ -210,6 +222,8 @@ fun main() {
 
 Referencing a free local binding that is not in the list — of any kind, including ones that would only need clone capture — is a compile error once the closure has a capture list at all. References to module-level items are unaffected.
 
+### 3. Nested closures
+
 **Nested closures.** A capture-list item may name a binding that is itself a capture of an
 *enclosing* closure — from the inner closure's point of view it is still an outer-scope
 local. Rules:
@@ -237,7 +251,7 @@ local. Rules:
   capture (not a by-value one) by the same reference kind is fine — the reference is
   copied/reborrowed by the ordinary rule, nothing points into the outer aggregate.
 
-### Checking order
+### 4. Checking order
 
 A closure literal is resolved in a fixed order; the first stage that fails is the reported
 error, and later stages are suppressed for that closure:
@@ -261,7 +275,7 @@ independent; a body that both consumes and mutates without the qualifiers gets b
 errors, and each offers its own real alternatives — "add `once`, or stop moving the
 capture" / "add `mut`, or stop mutating it" — not a single prescribed `once mut`.
 
-### Semantics
+### 5. Semantics
 
 **`&var` captures:**
 - At closure creation time, each `&var ident` capture takes `&var ident` and stores the resulting `&var T` in the closure's captured environment.

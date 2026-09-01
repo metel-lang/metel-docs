@@ -9,7 +9,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/924'
 ---
 
 > **Extracted from RFC-0157 on 2026-09-01.** RFC-0157 kept the D5 decision (closure-capture
-> default = `move`) and is `2-accepted` with the v0.13.0 closure cluster; this RFC carries the
+> default = `move`) and is `3-integrated` with the v0.13.0 closure cluster; this RFC carries the
 > longer-horizon regular-value `Copy`/`Clone` model critique, design space, prior-art survey,
 > and open questions that D5 did not touch, so they remain trackable.
 
@@ -26,7 +26,7 @@ recommendation.
 **It is extracted from RFC-0157** (2026-09-01). RFC-0157 began as "Copy and Clone Model
 Re-analysis" covering both the regular-value model *and* the closure-capture default (its
 "D5"). D5 was decided — the closure-capture default is `move` — and RFC-0157 is now the
-record of that decision, `2-accepted` as part of the v0.13.0 closure cluster. The
+record of that decision, `3-integrated` as part of the v0.13.0 closure cluster. The
 regular-value questions D5 did not touch — D1–D4, the P0–P3 design space, and the open
 questions about whether Rust's model is the right one for Metel — have no v0.13.0
 consumer and live here so they stay trackable. **Milestoned v0.17.0**, the "coherent
@@ -287,7 +287,7 @@ of `many` itself.
   *per-declaration* (a nominal fact). P3 unifies the *concept* and the *spelling*, not
   the representation — it is one idea with two storage forms, and the RFC should say so
   rather than overclaim.
-- **Sequencing.** P3 cannot be evaluated until RFC-0134 (accepted), RFC-0135, and
+- **Sequencing.** P3 cannot be evaluated until RFC-0134 (integrated), RFC-0135, and
   RFC-0152 are landed and known to compose; it is the latest-horizon option here.
 
 **Why P3 is listed but not recommended.** It is the most coherent destination if the
@@ -331,7 +331,7 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
 
 ## Relationship to existing RFCs
 
-- **RFC-0157 (Copy and Clone Model Re-analysis, `2-accepted`)** — the parent. Carries D5
+- **RFC-0157 (Closure Capture Default (Move), `3-integrated`)** — the parent. Carries D5
   (closure-capture default = `move`, decided) and the closure-cluster relationship; this
   RFC carries the regular-value model critique and design space it split off.
 - **RFC-0135 (Multiplicity for Ordinary Types, `1-under-review`, #892)** — overlaps most.

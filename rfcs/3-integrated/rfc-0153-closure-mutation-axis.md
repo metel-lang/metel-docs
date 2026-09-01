@@ -2,10 +2,19 @@
 id: rfc-0153
 title: "Closure Mutation Axis"
 date: '2026-08-30'
-status: accepted
+status: integrated
 target: v0.13.0
 updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/902'
+coverage:
+  "1": { spec: "spec.functions.closures.legality-8" }
+  "1a": { spec: "spec.functions.closures.dynamics-7" }
+  "2": { kind: untestable, reason: "Qualifier-keyword choice (`mut`); the closure-literal grammar it feeds is spec-anchored at legality-5." }
+  "3": { spec: "spec.functions.closures.legality-10" }
+  "3a": { spec: "spec.functions.closures.dynamics-9" }
+  "4": { spec: "spec.functions.closures.dynamics-8" }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/925'
+impl_status: not-started
 ---
 
 > **Status — accepted 2026-09-01**, co-accepted with RFC-0050 as the mutation-axis half
@@ -18,6 +27,8 @@ This RFC adds the third multiplicity field to `Type::Fun`, alongside RFC-0134's
 phrase). It records whether calling a closure needs *exclusive* (`&var`) access to a
 capture — Rust's `FnMut`.
 
+
+> **Status — integrated (2026-09-01).** Closure cluster spec-integrated (Legality 8/10, Dynamics 7/8/9); coverage.spec frontmatter added; fixtures blocked on metel-core#925. Shape: ADR-0052.
 
 ## Summary
 
@@ -253,7 +264,9 @@ For the call's dynamic extent the place is exclusively borrowed exactly as `&var
 borrows a method receiver: no other read, write, `&`, or `&var` of the place may be live
 across the call, and **two `mutating` calls on the same place cannot overlap**.
 
-**Reentrancy.** A second `mutating` call reached from *inside* a still-live one re-enters
+### 3a. Reentrancy
+
+A second `mutating` call reached from *inside* a still-live one re-enters
 the exclusive borrow. RFC-0122 rejects **every** form statically (`T0020`-shaped "already
 borrowed exclusively"). Before RFC-0122, v0.13.0 splits into two cases:
 

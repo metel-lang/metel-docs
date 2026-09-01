@@ -170,7 +170,7 @@ the callee — is `T0003`.
 
 ## Closures
 
-Anonymous functions are [written with the `(...) -> ... { ... }` form](#spec.functions.closures.legality-1):
+Anonymous functions are [written with the `[captures]? once? mut? (params) -> ret? { body }` form](#spec.functions.closures.legality-1):
 
 ```metel
 fun main() -> i64 {
@@ -179,59 +179,120 @@ fun main() -> i64 {
 }
 ```
 
-Closures [capture variables from their enclosing scope by value](#spec.functions.closures.dynamics-1). A captured variable is copied into the closure environment when the closure is created:
+> **Planned for v0.13.0 (RFC-0050 / RFC-0134 / RFC-0152 / RFC-0153 / RFC-0157).** The
+> capture list, the `once` / `mut` qualifiers, move-by-default capture, the per-call
+> re-clone removal, and the mutation axis are specified here but not yet in the
+> interpreter. Until they land, closures capture by value (deep clone), no capture list is
+> required, and there is no `once` / `mut` verification. The `coverage` entries for the
+> new rules are `blocked` on that implementation.
+
+### Capture lists
+
+A closure that reads an outer binding *captures* it. A **capture list** `[…]` before the
+parameter list names each captured binding with a specifier:
 
 ```metel
-fun main() -> i64 {
+fun main() {
     var count := 0;
-    let inc := () -> { count += 1; };
-    inc();
-    inc();
-    return count;   // still 0
+    let cfg := Config::load();          // non-Copy, read-only in the closure
+    let name := "log";                  // non-Copy, moved in
+
+    let handler := [&var count, &cfg, name] mut (req: Request) -> Response {
+        count += 1;
+        route(req, cfg, name)
+    };
 }
 ```
 
-> **Changing in v0.13.0 — closure capture cluster (RFC-0157 D5 / RFC-0050 / RFC-0153 /
-> RFC-0134).** This section is **not yet updated** for those. Under the cluster: by-value
-> capture of a non-`Copy` binding is a **move** (not a clone), an explicit **capture list**
-> `[…]` is required whenever a move or a `&`/`&var` capture happens, a closure that
-> assigns to a capture must be written `mut` and its writes **persist across calls** in the
-> closure's own environment, and the per-call environment re-clone is removed. The example
-> above still holds for the *outer* `count` (the closure has its own copy), but the literal
-> would need `[count] mut () -> { count += 1; }`. The prose below (pointer-syntax sharing)
-> is likewise superseded by `[&x]` / `[&var x]` capture-list forms. Updated here when the
-> cluster's implementation PR lands.
+- `[&var x]` captures `x` by **exclusive reference**; the body may read and write it.
+- `[&x]` captures `x` by **shared reference**; the body may only read it.
+- `[x]` captures `x` **by value** — a copy for a `Copy` binding, a **move** for a non-`Copy`
+  one (the outer binding is consumed).
+- `[x.clone()]` captures an explicit independent copy of a `Clone` binding, leaving the
+  outer binding usable.
 
-> **Planned for v0.12.0 (RFC-0071): a captured value of a non-`Copy` type is *moved* into the closure, not copied — the original binding is invalid afterwards.**
+The list is [**required** whenever the closure references a free non-`Copy` local, or
+captures anything by `&` / `&var`](#spec.functions.closures.legality-6); it is omissible
+only when every free variable is a `Copy` binding captured by value, or there are none.
+When present it is [**exhaustive**](#spec.functions.closures.legality-7): every free
+local binding the body references must appear. Module-level functions, constants, types,
+and aspects are not captures and never appear in the list.
 
-Capture is by value, so a `Copy` type is copied and the original stays usable. Once move
-semantics are enforced, a non-`Copy` capture transfers ownership: the closure owns the value
-and the enclosing binding may not be used again. To keep using the original, capture a
-reference instead — a shared reference is `Copy`, so capturing one copies the reference and
-leaves the referent alone.
+A `&var` capture requires the outer binding to be [declared `var`](#spec.functions.closures.legality-13),
+and a closure literal [cannot reference its own `let` binding](#spec.functions.closures.legality-13).
+[An inner closure may not capture an *enclosing* closure's by-value capture by `&` /
+`&var`](#spec.functions.closures.legality-11).
 
-Shared mutable closure state is explicit. If [multiple closures must observe and update the
-same storage, the program captures a reference](#spec.functions.closures.dynamics-3):
+### Call multiplicity and the mutation axis
+
+A closure's function type carries two written qualifiers besides its parameter and return
+types:
+
+- **`once`** — invoking the closure consumes one of its captures. Written when the body
+  moves a capture out (returns it, or passes it by value to something that takes
+  ownership). [Omitting it when the body consumes a capture is an error](#spec.functions.closures.legality-8);
+  the default is *many* (reusable).
+- **`mut`** — invoking the closure mutates a capture. Written when the body assigns to a
+  by-value capture or takes `&var` of one, and [always when the closure captures `[&var x]`](#spec.functions.closures.legality-8),
+  regardless of what the body does through it. The default is *reading*.
+
+The two qualifiers are order-insensitive as a *type* spelling; in a closure *literal* the
+[fixed order is `[captures] once? mut? (params)`](#spec.functions.closures.legality-5).
+
+[A function value may be used where a *less permissive* multiplicity is
+expected](#spec.functions.closures.legality-9) — a *many* value satisfies a `once` slot, a
+*reading* value satisfies a `mut` slot, a `Copy` value satisfies a non-`Copy` slot — at
+first-order argument, ascription, field-init, and return positions. The reverse is
+rejected. A conditional's type is the least-permissive of its arms, each arm widening to
+it.
+
+[A `mutating` call needs exclusive access to the closure value for the call's
+duration](#spec.functions.closures.legality-10): the callee must be an owned binding, an
+owned temporary, an exclusive projection off one, or a `&var` parameter — not a
+shared-`&` callee. [Overlapping and reentrant `mutating` calls on the same closure value
+are rejected](#spec.functions.closures.dynamics-9).
+
+### Capture semantics
+
+[By-value capture of a non-`Copy` binding moves it into the closure at creation, consuming
+the outer binding; a `Copy` binding is copied; the captured environment is built once and
+not re-cloned per call](#spec.functions.closures.dynamics-5).
 
 ```metel
+fun make_counter() -> mut () -> i64 {
+    let n := 0;
+    [n] mut () -> i64 { n := n + 1; n }   // `n` moved in; writes persist
+}
+
 fun main() -> i64 {
-    var count := 0;
-    let p: &var i64 := &var count;
-    let inc := () -> { *p += 1; };
-    inc();
-    inc();
-    return *p;
+    let mut c := make_counter();
+    c();
+    c()   // returns 2 — state lives in `c`'s environment
 }
 ```
+
+[A `mutating` closure's writes to its captures persist across
+calls](#spec.functions.closures.dynamics-7); a `reading` closure reads its environment in
+place. [Copying a `Copy` `mutating` closure gives the copy independent environment
+state](#spec.functions.closures.dynamics-8) — the copies do not share a counter.
+
+A `[&x]` / `[&var x]` capture stores a reference in the environment; the borrow is held
+for the closure value's whole lifetime. [Captured owned values are dropped when the
+closure value is dropped](#spec.functions.closures.dynamics-11), in capture-list order.
+
+Closures [satisfy no aspects](#spec.functions.closures.legality-12): `==`, `<`, and other
+aspect-gated operations on closure values do not type-check. [A closure's `Send` / `Sync`
+follows the aggregate rule over its captures](#spec.functions.closures.legality-14); a
+`mutating` closure is not `Sync`.
 
 <details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.functions.closures.legality-1}
 
-An anonymous function is written as a parenthesized parameter list, followed by `->`, an
-optional return type annotation, and a body block. It may appear wherever an expression is
-accepted.
+An anonymous function is written as an optional capture list `[…]`, optional `once` and/or
+`mut` qualifiers, a parenthesized parameter list, `->`, an optional return type
+annotation, and a body block. It may appear wherever an expression is accepted.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md)_</span>
@@ -279,13 +340,138 @@ The former anonymous `fun(parameters) -> return_type { body }` spelling is rejec
 <span class="rigor-backlink">_Tested by: [neg_11_old_fun_closure_syntax_in_expression_position.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/neg_11_old_fun_closure_syntax_in_expression_position.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
-##### Dynamic Semantics {#spec.functions.closures.dynamics-1}
+##### Legality Rule {#spec.functions.closures.legality-5}
 
-When a closure is created, each captured free variable is captured by value in the
-closure's environment.
+A capture list is `[` followed by zero or more comma-separated capture items and `]`. A
+capture item is `&var ident`, `&ident`, `ident`, or `ident.clone()`. In a closure
+*literal* the prefixes appear in the fixed order capture list, then `once`, then `mut`,
+then the parameter list; `mut once` and a qualifier before the capture list are parse
+errors. As a *function type* spelling, `once` and `mut` are order-insensitive.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/3-integrated/rfc-0050-closure-capture-lists.md)_</span>
+<!-- rfc.py:origins:end -->
+
+##### Legality Rule {#spec.functions.closures.legality-6}
+
+A closure must carry a capture list if its body references a free non-`Copy` local
+binding, or captures any binding by `&` or `&var`. Referencing a free non-`Copy` local
+with no capture list is a compile error. A closure whose only free variables are `Copy`
+bindings used by value, or which has no free variables, may omit the list.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/3-integrated/rfc-0050-closure-capture-lists.md)_</span>
+<!-- rfc.py:origins:end -->
+
+##### Legality Rule {#spec.functions.closures.legality-7}
+
+When a closure has a capture list, every free local binding its body references must
+appear in the list, with a specifier consistent with how the body uses it. A referenced
+free local absent from a non-empty list is a compile error. Module-level functions,
+constants, types, and aspects are resolved by ordinary name resolution and are never
+capture items.
+
+##### Legality Rule {#spec.functions.closures.legality-8}
+
+`once` and `mut` are written qualifiers, verified against the body at the closure's
+creation site. A closure whose body moves a non-`Copy` capture out, written without
+`once`, is a compile error. A closure whose body assigns to a by-value capture or takes
+`&var` of one, or which captures any binding by `[&var …]`, written without `mut`, is a
+compile error. The message names the offending capture and the fix (add the qualifier, or
+stop the operation / capture `[&x]` instead).
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/3-integrated/rfc-0050-closure-capture-lists.md), [rfc-0134](../../rfcs/3-integrated/rfc-0134-closure-call-capability.md), [rfc-0153](../../rfcs/3-integrated/rfc-0153-closure-mutation-axis.md)_</span>
+<!-- rfc.py:origins:end -->
+
+##### Legality Rule {#spec.functions.closures.legality-9}
+
+A function value of call multiplicity `m`, mutation `u`, and `Copy`-ness `c` satisfies a
+slot requiring `m'`, `u'`, `c'` when `m` is at least as permissive as `m'` (*many* ≥
+`once`), `u` at least as permissive as `u'` (*reading* ≥ `mut`), and `c` at least as
+permissive as `c'` (`Copy` ≥ non-`Copy`). The reverse — a less permissive value into a
+more permissive slot — is rejected.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/3-integrated/rfc-0134-closure-call-capability.md), [rfc-0152](../../rfcs/3-integrated/rfc-0152-function-type-multiplicity-widening.md)_</span>
+<!-- rfc.py:origins:end -->
+
+##### Legality Rule {#spec.functions.closures.legality-15}
+
+The satisfaction rule of legality-9 applies at first-order positions only: a function-typed
+argument passed to a function-typed parameter, a `let` / field ascription, a struct-field
+initializer, and a return. Below the first level of function-type nesting an exact match is
+required.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0152](../../rfcs/3-integrated/rfc-0152-function-type-multiplicity-widening.md)_</span>
+<!-- rfc.py:origins:end -->
+
+##### Legality Rule {#spec.functions.closures.legality-16}
+
+A conditional or `match` expression whose arms are function-typed has, as its type, the
+least-permissive arm type under legality-9's order, and each arm is widened to it. A
+diverging (`!`-typed) arm does not contribute. A join that would require *narrowing* an
+arm is the ordinary type mismatch.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0152](../../rfcs/3-integrated/rfc-0152-function-type-multiplicity-widening.md)_</span>
+<!-- rfc.py:origins:end -->
+
+##### Legality Rule {#spec.functions.closures.legality-10}
+
+A `mutating` call `e(args)` requires `e` to denote a place the caller can exclusively
+borrow for the call's duration: an owned binding, an owned temporary, an exclusive
+(`&var` / owning) projection off one, or a `&var` parameter. A shared-`&` callee — a
+`&Self` / `&self` receiver, a place reached through a `&` step, or an `&`-captured closure
+— is a compile error.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/3-integrated/rfc-0153-closure-mutation-axis.md)_</span>
+<!-- rfc.py:origins:end -->
+
+##### Legality Rule {#spec.functions.closures.legality-11}
+
+An inner closure may not capture, by `&` or `&var`, a binding that is a by-value capture
+of an enclosing closure. It may capture such a binding by value (`[s]`, which moves it out
+of the enclosing closure's environment). This restriction is lifted when the borrow
+checker lands.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/3-integrated/rfc-0050-closure-capture-lists.md)_</span>
+<!-- rfc.py:origins:end -->
+
+##### Legality Rule {#spec.functions.closures.legality-12}
+
+A closure value satisfies no aspects. `==`, `<`, and other aspect-gated operations applied
+to a closure value are a compile error (aspect not satisfied). Structural equality of two
+function *types* is a type relation and does not make their values comparable.
+
+##### Legality Rule {#spec.functions.closures.legality-13}
+
+A `[&var ident]` capture requires `ident` to be a `var` binding; capturing a non-`var`
+binding by `&var` is a compile error. A closure literal cannot reference its own `let`
+binding — the name is not in scope inside its own initializer.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/3-integrated/rfc-0050-closure-capture-lists.md)_</span>
+<!-- rfc.py:origins:end -->
+
+##### Legality Rule {#spec.functions.closures.legality-14}
+
+A closure value is `Send` (respectively `Sync`) when every one of its captures is `Send`
+(respectively `Sync`), applying the reference rules for `&T` / `&var T` captures. A
+`mutating` closure value is additionally not `Sync`.
+
+##### Dynamic Semantics {#spec.functions.closures.dynamics-1}
+
+When a closure is created, each free variable named in its capture list (or, for a
+listless closure, each free `Copy` variable) is placed into the closure's environment
+according to its specifier: `[x]` moves a non-`Copy` value / copies a `Copy` value,
+`[x.clone()]` stores an independent copy, `[&x]` / `[&var x]` store a reference.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md), [rfc-0134](../../rfcs/3-integrated/rfc-0134-closure-call-capability.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -294,8 +480,9 @@ closure's environment.
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-2}
 
-Mutating a captured-by-value binding changes the closure's captured value, not the
-enclosing binding.
+A `reading` closure does not modify its environment; a `mutating` closure modifies it in
+place. In neither case does a write inside the closure body affect an *outer* binding that
+was captured by value — the closure operates on its own environment copy.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
@@ -307,8 +494,9 @@ enclosing binding.
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-3}
 
-Closures that capture the same explicit reference observe the same referent; writes through
-that reference by one closure are visible through the others.
+Closures that capture the same binding by `[&x]` / `[&var x]`, or that capture the same
+reference value, observe the same referent; a write through an exclusive reference by one
+closure is visible through the others.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
@@ -320,9 +508,10 @@ that reference by one closure are visible through the others.
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-4}
 
-A closure that escapes its defining function while holding a captured pointer to a
-still-reachable local keeps that storage alive and correctly mutable after the
-defining function returns.
+A closure that escapes its defining function while holding a captured owned value keeps
+that value alive; the environment travels with the closure value. A closure holding a
+captured *reference* cannot outlive the referent (checked by the borrow checker when it
+lands; unenforced before then).
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
@@ -331,6 +520,65 @@ defining function returns.
 <!-- rfc.py:fixtures:start -->
 <span class="rigor-backlink">_Tested by: [69_nice_closure_abuse.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/functions/69_nice_closure_abuse.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.functions.closures.dynamics-5}
+
+Capturing a non-`Copy` binding by value (`[x]`) moves it: the outer binding is consumed at
+closure creation and using it afterward is a moved-value error. A `Copy` binding captured
+by value is copied and the outer binding stays usable. `[x.clone()]` produces an
+independent copy and leaves the outer binding usable regardless of `Copy`-ness. The
+captured environment is constructed once, when the closure value is created; a call does
+not re-clone it — each call operates on the same environment held by the closure value.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0157](../../rfcs/3-integrated/rfc-0157-copy-and-clone-model-re-analysis.md)_</span>
+<!-- rfc.py:origins:end -->
+
+##### Dynamic Semantics {#spec.functions.closures.dynamics-7}
+
+A `mutating` closure's assignments to its by-value captures are retained in its
+environment and are visible to subsequent calls of the same closure value — the closure
+holds private mutable state.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/3-integrated/rfc-0153-closure-mutation-axis.md)_</span>
+<!-- rfc.py:origins:end -->
+
+##### Dynamic Semantics {#spec.functions.closures.dynamics-8}
+
+Copying a closure value whose captures are all `Copy` copies its environment. The copies
+have independent environment state: a `mutating` call on one does not affect the other.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/3-integrated/rfc-0153-closure-mutation-axis.md)_</span>
+<!-- rfc.py:origins:end -->
+
+##### Dynamic Semantics {#spec.functions.closures.dynamics-9}
+
+For the dynamic extent of a `mutating` call the callee place is exclusively borrowed. A
+second `mutating` call on the same closure value reached from inside the first — directly
+or through a structure the body can reach — is rejected: before the borrow checker lands,
+as a runtime error; after, as a static borrow conflict.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/3-integrated/rfc-0153-closure-mutation-axis.md)_</span>
+<!-- rfc.py:origins:end -->
+
+##### Dynamic Semantics {#spec.functions.closures.dynamics-10}
+
+A `once` call consumes the callee at the call expression, before the body runs. Any later
+use of that closure value is a moved-value error, whether the body returned normally or
+exited early.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/3-integrated/rfc-0134-closure-call-capability.md)_</span>
+<!-- rfc.py:origins:end -->
+
+##### Dynamic Semantics {#spec.functions.closures.dynamics-11}
+
+When a closure value is dropped, its environment is dropped: each owned capture is dropped
+in capture-list order, as a struct's fields are. A `once`-consumed or partially-moved
+environment drops only its still-owned captures.
 
 </details>
 
