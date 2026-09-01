@@ -8,7 +8,7 @@ updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/918'
 coverage:
   "1": { spec: "spec.functions.closures.dynamics-5" }
-impl_tracking: 'https://github.com/metel-lang/metel-core/issues/925'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/930'
 impl_status: not-started
 ---
 
