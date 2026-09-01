@@ -62,7 +62,7 @@ the curated thematic map.
 - **RFC-0113** — Context Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0113-context-parameters.md ; date 2026-07-21 ; updated 2026-08-23)
 - **RFC-0119** — Record Conversions (`1-under-review` ; rfcs/1-under-review/rfc-0119-record-conversions.md ; date 2026-07-24 ; updated 2026-08-23)
 - **RFC-0121** — Open Rows (`1-under-review` ; rfcs/1-under-review/rfc-0121-open-rows.md ; date 2026-07-24 ; updated 2026-08-25)
-- **RFC-0122** — Borrow Checking (`1-under-review` ; rfcs/1-under-review/rfc-0122-borrow-checking.md ; date 2026-07-24 ; updated 2026-08-23)
+- **RFC-0122** — Borrow Checking (`1-under-review` ; rfcs/1-under-review/rfc-0122-borrow-checking.md ; date 2026-07-24 ; updated 2026-09-01)
 - **RFC-0123** — Field-Wise Row Constraints (`1-under-review` ; rfcs/1-under-review/rfc-0123-field-wise-row-constraints.md ; date 2026-07-24 ; updated 2026-08-23)
 - **RFC-0124** — Sequence Types: Fixed Arrays, Slices, and the Growable List (`1-under-review` ; rfcs/1-under-review/rfc-0124-sequence-types-fixed-arrays-slices-and-the-growable-list.md ; date 2026-07-25 ; updated 2026-09-01)
 - **RFC-0125** — Variadic Generics (`1-under-review` ; rfcs/1-under-review/rfc-0125-variadic-generics.md ; date 2026-07-25 ; updated 2026-08-23)
