@@ -4,9 +4,15 @@ title: "Function-Type Multiplicity Widening"
 date: '2026-08-30'
 status: accepted
 target: v0.13.0
-updated: '2026-08-30'
+updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/901'
 ---
+
+> **Adversarial-review fixes, 2026-09-01** (cross-RFC review of the v0.13.0 closure
+> cluster): §1 gains a **`mutation` axis** row (`reading` widens to a `mutating` slot,
+> RFC-0153) with an explicit "type-level only, no callability penalty" clause; §3 notes
+> how widening composes with RFC-0134's `many`-default / expected-type-supplies-the-
+> qualifier amendment. No change to the accepted first-order relation.
 
 > **Status — accepted 2026-08-30, as a co-requirement of RFC-0134.** RFC-0134
 > originally proposed **exact-match** multiplicity unification and named this
@@ -79,6 +85,8 @@ as `G`'s:
 | call | `x` | `x` | yes |
 | use (`Copy`-ness) | `many` (Copy) | `once` (non-Copy) | yes |
 | use | `once` | `many` | **no** |
+| mutation (RFC-0153) | `reading` | `mutating` | yes |
+| mutation | `mutating` | `reading` | **no** |
 
 Parameter and return types must still match on arity, argument types, and result
 type as they do today; only the multiplicity fields gain the ordering. The `use`
@@ -86,6 +94,15 @@ axis widening is not new behavior — a `Copy` value is already usable where a m
 is expected — this RFC just states it holds for function values through the
 multiplicity field rather than by a `Type::Fun`-is-always-`Copy` special case
 (which RFC-0134 §1 removes).
+
+**The `mutation` axis** row is added 2026-09-01 with RFC-0153's co-land: `reading` is the
+more-permissive value (a `reading` closure is safe wherever a `mutating` one is asked
+for). Widening it is **type-level only, with no callability penalty**. A `reading` value
+that flows into a `mut (T) -> U` slot keeps its actual runtime behavior; the slot type
+only tells the *callee* it may need exclusive access per call. Because every widening
+site in §2 is a first-order by-value / owned position, the callee already holds the value
+by value or `&var` and calls it under RFC-0153 §3's place-consumption rule with no extra
+tracking. The callee never observes that the value was "really" `reading`.
 
 ### 2. Where it applies
 
@@ -110,6 +127,14 @@ then lets it flow into any equal-or-less-permissive slot. Inference never needs
 to *guess* a narrower multiplicity to make a call site work — it infers the true
 one and widening does the rest. A `once`-body closure still cannot reach a `many`
 slot, because it genuinely is not callable twice; that rejection is preserved.
+
+*Amended 2026-09-01, following RFC-0134's `many`-default amendment:* a closure literal's
+own type is `many` / `reading` by default, or whatever a written qualifier or an
+**expected type** supplies (RFC-0134 §2's 2026-09-01 amendment — an ascribed / return /
+field slot supplies the qualifier, the literal is not default-`many`-then-failed). Widening
+then applies to that resulting *value* type wherever it and the slot still differ. So the
+two mechanisms compose: expected-type checking first fixes the literal's type; widening
+covers any remaining permissiveness gap.
 
 ### 4. Not a general subtype lattice
 
