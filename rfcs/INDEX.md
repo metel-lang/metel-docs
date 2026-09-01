@@ -180,7 +180,7 @@ above it are.
   for RFC-0124's still-open "is there a mutable slice" question (Open Question 1), not just
   a theoretical one.
 
-- **RFC-0124** *(draft, opened 2026-07-25, narrowed 2026-07-27, OQ6 split out 2026-08-13)*
+- **RFC-0124** *(under-review 2026-09-01, #932; opened 2026-07-25, narrowed 2026-07-27, OQ6 split out 2026-08-13)*
   — Sequence Types: Fixed Arrays, Slices, and the Growable List — **now the slice half
   only.** Covers: whether a mutable slice exists and how it is spelled (OQ1), and the exact
   dependency on RFC-0067's lifetime anchors (OQ2 — a stated precondition for this RFC's own
