@@ -768,9 +768,9 @@ grounds:
   types satisfy no aspects at all (`InferType::Fun(_, _) => false`, `typeinference/mod.rs`
   — "`Never` and `Fun` implement nothing"), so the propagation the earlier bullet assumed
   cannot happen. Second, and more decisively, **destructors do not run for any type yet**:
-  `metel-core#292` is unimplemented, and the compiler actively rejects a non-empty `drop`
+  `metel-core#261` is unimplemented, and the compiler actively rejects a non-empty `drop`
   body with `T0001` — *"a `drop` body cannot run yet: destructor invocation is not
-  implemented (metel-core#292), so this cleanup would silently never happen. Leave the
+  implemented (metel-core#261), so this cleanup would silently never happen. Leave the
   body empty to declare the type `Drop` for its type-level effects."* `Drop` today is
   purely type-level: `Copy` exclusion, `!Drop` bounds, and the partial-move ban. So
   affine `once` does not forgo a working guarantee — it declines to add an
@@ -784,7 +784,7 @@ grounds:
 code that exercises affine `once` and produces a bug that forced consumption would have
 caught. Note this condition is now *stronger* than when it was first written, since the
 `Drop`-already-catches-it escape clause it originally carried turned out not to exist:
-once `metel-core#292` lands and destructors actually run, this decision is worth
+once `metel-core#261` lands and destructors actually run, this decision is worth
 re-examining, because the trade-off it was made against will have changed.
 
 ---
@@ -875,10 +875,10 @@ re-examining, because the trade-off it was made against will have changed.
   its two-part proposal on.
 - `metel-core#716`, `metel-core#717` — unrelated fixes landed this cycle, cited only for
   §3's `construct_generic_body`/generic-body-construction connection.
-- `metel-core#292` — destructor invocation is not implemented; `drop` bodies never run
+- `metel-core#261` — destructor invocation is not implemented; `drop` bodies never run
   and a non-empty one is rejected outright, so `Drop` is purely type-level today. The
   affine-`once` decision's cost is measured against this, and the decision is worth
-  re-examining once #292 lands.
+  re-examining once #261 lands.
 - `metel-core#739` — "Function types satisfy no aspects, so RFC-0061 §7 is unimplemented
   and move checking compensates with a hardcoded `Copy` special case," filed from this
   RFC's Open Questions investigation. Owns the two-notions-of-`Copy` split this RFC
