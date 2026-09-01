@@ -122,7 +122,7 @@ Bindings named with `&var` in the capture list are captured by mutable reference
 fun main() {
     var count := 0;
 
-    let inc := [&var count] var () -> () {
+    var inc := [&var count] var () -> () {   // `var inc`: a `var` closure needs a `var` callee binding
         count += 1;
     };
 
@@ -210,7 +210,7 @@ fun main() {
     var count := 0;
     let log_prefix := "counter: ";        // String — non-Copy
 
-    let inc := [&var count, &log_prefix] var () -> () {   // `var` — the body assigns `count` via a `&var` capture
+    var inc := [&var count, &log_prefix] var () -> () {   // `var` qualifier — the body assigns `count` via a `&var` capture; `var inc` — a `var` closure needs a `var` callee binding
         count += 1;
         print(log_prefix + count.to_string());   // `print` is a module-level function, not a free variable
     };
