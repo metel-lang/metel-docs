@@ -122,6 +122,10 @@ satisfy this (`match (a, b) { … }`), as does the unit literal (`match () { …
 <span class="rigor-backlink">_Referenced by: [rfc-0156](../../rfcs/4-implemented/rfc-0156-parenthesize-match-scrutinee.md)_</span>
 <!-- rfc.py:origins:end -->
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [match_scrutinee_parenthesized.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/match_scrutinee_parenthesized.mtl), [neg_16_bare_match_scrutinee.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/neg_16_bare_match_scrutinee.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 </details>
 
 ### Pattern Kinds

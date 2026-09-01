@@ -429,7 +429,7 @@ because this RFC is the right place to resolve it.
   RFC relies on directly to explain auto-impl for generic types.
 - RFC-0071 (Ownership and Move Semantics) — §3's "Drop is opt-in, fields still drop
   recursively" rule, the basis for this RFC's §4 correction.
-- RFC-0050 (Closure Capture Lists, `2-accepted` as of 2026-09-01) — independently derives
+- RFC-0050 (Closure Capture Lists, `3-integrated` as of 2026-09-01) — independently derives
   the same captured-state `Send` rule this RFC's §6 names as a fourth, uncited instance of
   the pattern.
 - Issue #542 / `src/coherence.rs` — where the absence of an `AspectDecl` auto-impl

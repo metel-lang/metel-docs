@@ -2,10 +2,14 @@
 id: rfc-0157
 title: "Closure Capture Default (Move)"
 date: '2026-08-31'
-status: accepted
+status: integrated
 target: v0.13.0
 updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/918'
+coverage:
+  "1": { spec: "spec.functions.closures.dynamics-5" }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/925'
+impl_status: not-started
 ---
 
 
@@ -17,6 +21,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/918'
 > the regular-value `Copy`/`Clone` model critique, the P0–P3 design space, and the
 > prior-art survey are now **RFC-0162** (`1-under-review`, v0.17.0), so this document is
 > D5-only.
+
+> **Status — integrated (2026-09-01).** Closure cluster spec-integrated (Dynamics 5 = D5); coverage.spec frontmatter added; fixtures blocked on metel-core#925. Shape: ADR-0052.
 
 ## Summary
 
@@ -33,7 +39,7 @@ RFC-0050's need for any ownership-transfer specifier, and removes RFC-0006's per
 environment re-clone. It lands with the v0.13.0 closure cluster as one hard change (no
 `--edition` gate — Metel has no public users).
 
-## The closure-capture default (D5) — ✓ DECIDED: move
+## 1. The closure-capture default (D5)
 
 RFC-0006's default can be restated as: **by-value capture uses
 the same rule as by-value use in a block.** Under RFC-0071 that means a non-`Copy` free
@@ -81,13 +87,13 @@ follow-ups (RFC-0158 `Clone`/`Share`, the D3 relaxation, an RFC-0135 disposition
   extracted sibling. Carries D1–D4, the P0–P3 design space, the prior-art survey, and the
   "keep Rust's regular-value model" recommendation with its open questions. No v0.13.0
   consumer.
-- **RFC-0050 (Closure Capture Lists, `2-accepted`, #803)** — carries the surface rule:
+- **RFC-0050 (Closure Capture Lists, `3-integrated`, #803)** — carries the surface rule:
   capture list required for a non-`Copy`/by-ref capture, bare `[s]` = move for non-`Copy`,
   `[s.clone()]` for an explicit copy. D5 settled RFC-0050's deferred ownership-transfer
   question as "no keyword."
-- **RFC-0134 (Closure Call Capability, `2-accepted`, #269)** — the matching amendment:
+- **RFC-0134 (Closure Call Capability, `3-integrated`, #269)** — the matching amendment:
   `many` by default, `once` written explicitly, §2 a check against that default.
-- **RFC-0153 (Closure Mutation Axis, `2-accepted`, #902)** — §1a's move-once environment
+- **RFC-0153 (Closure Mutation Axis, `3-integrated`, #902)** — §1a's move-once environment
   with write-back is the runtime side of "the per-call re-clone is removed".
 - **RFC-0006 (Closure Capture Semantics, `4-implemented`)** — the default this RFC
   changes; amended (see above).
