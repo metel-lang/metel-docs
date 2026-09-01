@@ -97,7 +97,7 @@ multiplicity field rather than by a `Type::Fun`-is-always-`Copy` special case
 **The `mutation` axis** row is added 2026-09-01 with RFC-0153's co-land: `reading` is the
 more-permissive value (a `reading` closure is safe wherever a `mutating` one is asked
 for). Widening it is **type-level only, with no callability penalty**. A `reading` value
-that flows into a `mut (T) -> U` slot keeps its actual runtime behavior; the slot type
+that flows into a `var (T) -> U` slot keeps its actual runtime behavior; the slot type
 only tells the *callee* it may treat `f` as needing exclusive access per call. Because
 every widening site in §2 is a first-order by-value / owned position, the callee already
 holds the value by value or `&var`.
@@ -117,15 +117,15 @@ consistent: the type is widened, the runtime is not.
   the value flows into the annotated type. **This is a coercion into the field's declared
   (invariant) type, not a relaxation of the field's variance** — the two statements below
   are consistent. It is a deliberate, one-way **precision loss**: a `reading` closure
-  stored into a `mut`-typed field is thereafter *observed* as `mut`, so every later read
-  of that field yields a `mut` value that callers must invoke under exclusive access even
+  stored into a `var`-typed field is thereafter *observed* as `var`, so every later read
+  of that field yields a `var` value that callers must invoke under exclusive access even
   though the underlying closure never mutates. Sound, but the author chose the field's
   type; there is no automatic re-narrowing.
 - **Return position** — the callee produces the value the caller named a type
   for; a callee that returns a *more* permissive function than promised is fine,
   so the direction is unchanged (`many` return satisfies a `once` return slot). Same
-  precision-loss caveat: a `fun … -> mut () -> U` that returns a `reading` closure hands
-  the caller a `mut` value.
+  precision-loss caveat: a `fun … -> var () -> U` that returns a `reading` closure hands
+  the caller a `var` value.
 - **Struct fields** stay invariant, like every other field type — see the ascription
   bullet for how init nonetheless coerces into that invariant type.
 - **A function type nested inside another function type** — *out of scope here.*

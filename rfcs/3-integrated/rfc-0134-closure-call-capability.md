@@ -159,7 +159,7 @@ three tiers — see below.
 Rust closure's captured environment *is* its own private, persistent storage —
 `move || { counter += 1; counter }` mutates a field that survives between calls, because
 nothing re-clones it. Metel's runtime does re-clone it: `call_runtime_callable`
-(`metel-interpreter/src/evaluator/call.rs`) does `let mut call_env =
+(`metel-interpreter/src/evaluator/call.rs`) does `let var call_env =
 closure.captured.clone();` on every call, from the closure's original captured
 snapshot, which is never written back to. A Metel closure cannot retain mutated state
 across repeated calls to itself today — not as an oversight, but because RFC-0006
@@ -213,7 +213,7 @@ no special case. `[x.clone()]` (RFC-0050) captures an owned value, `Copy` iff th
 is. This means the mutation axis (RFC-0153) needs no separate "a `mutating` closure is not
 `Copy`" rule — a closure that mutates outer state holds a `&var` capture and is non-`Copy`
 here; a closure that mutates an owned non-`Copy` capture is non-`Copy` here; a closure
-that mutates an owned `Copy` capture (`[n] mut { n += 1 }`, `n: i64`) *is* `Copy`, and
+that mutates an owned `Copy` capture (`[n] var { n += 1 }`, `n: i64`) *is* `Copy`, and
 soundly so (each copy gets its own counter). RFC-0153 §3's earlier "not `Copy`" rule is
 withdrawn accordingly.
 
@@ -561,7 +561,7 @@ Type::Fun(Vec<Type>, Box<Type>, call_multiplicity, use_multiplicity, call_mutati
 - `use_multiplicity` — §1's axis. Is the closure *value itself* `Copy`? Equivalently:
   is the by-value-use operation on it `once` or `many`?
 - `call_mutation` — RFC-0153's axis. Does *invoking* mutate a capture (needing `&var`
-  access for the call)? `reading` unless written `mut`.
+  access for the call)? `reading` unless written `var`.
 
 These are the same axis asked about two different operations, which is precisely
 RFC-0135's reframing (`Copy` is `many` answered for by-value use). Both are computed the
@@ -857,7 +857,7 @@ re-examining, because the trade-off it was made against will have changed.
   contravariant-nesting and subtype-lattice questions split out of RFC-0152 the same
   day; not needed by this RFC.
 - **RFC-0153 (Closure Mutation Axis), `2-accepted` (v0.13.0, #902)** — §4's third
-  `Type::Fun` field (`call_mutation`) and the `mut` qualifier that composes with
+  `Type::Fun` field (`call_mutation`) and the `var` qualifier that composes with
   `once`/`many`. Widened 2026-08-31 to also change RFC-0006's runtime so a `mutating`
   closure's by-value captures persist across calls (the `FnMut` / private-state case).
   **Co-lands with this RFC in v0.13.0** — the shipped `Type::Fun` carries all three
