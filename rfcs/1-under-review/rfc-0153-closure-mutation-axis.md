@@ -76,6 +76,31 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 >   `+ CallMany`/`+ CallShared`/`+ Copy` widen).
 > - `.clone()` on a closure is a non-goal (closures are outside the aspect system).
 
+> **Adversarial-review fixes, 2026-09-01 (third pass)** — cluster-wide re-review:
+> - **`dyn Callable` erasure is removed from this RFC.** The pass-2 "`dyn` erasure
+>   default" (§3) rested on unbuilt machinery (RFC-0096 auto-impl aspects; RFC-0061
+>   §7.1's never-built `Callable`; RFC-0008 object-safety of a by-value `self` receiver).
+>   It moves to its own RFC — **RFC-0161 (Callable Object Contract)**, target v0.13.1.
+>   For v0.13.0 the closure model ships **monomorphic**: a closure is only ever a concrete
+>   `Type::Fun` or a generic `extends Callable` parameter that monomorphizes.
+> - **§1a nails the environment representation.** The `mutating` closure's environment is
+>   **one inline owned aggregate that is part of the closure value** — bit-copied with it,
+>   moved with it, never behind a shared pointer. Returnability (`make_counter`) is the
+>   inline value being moved out, not heap/`Rc` indirection. A closure is `Copy` iff that
+>   inline copy is trivial (every capture `Copy`, RFC-0134 §1); any representation that
+>   would need indirection is non-`Copy`.
+> - **Captured `Drop` values now have a rule** (§1a "Captured `Drop`"). RFC-0134 §5's "no
+>   `Drop`-for-closures" bans a user `drop(&var self)` *on a closure*; it never exempted a
+>   closure's captured values from being dropped. They are dropped when the closure value
+>   is dropped, in capture-list order, like struct fields (RFC-0071); a `once`-consumed or
+>   partially-moved-out env drops only its still-owned fields. Execution waits on #292;
+>   the rule does not.
+> - **Closure equality / ordering, comptime** — added as Non-Goals (closures satisfy no
+>   aspects, so `==` / `<` on them does not type-check; comptime creation and call use the
+>   same interpreter and the same axis semantics).
+> - **`mut` env cell = the RFC-0050 capture aggregate**, not a wrapper around it — escape
+>   / brand checking sees the same field types (§1a, and RFC-0050 Implementation Guidance).
+
 ## Summary
 
 Add a **mutation axis** to `Type::Fun`: does invoking the closure mutate a
@@ -148,13 +173,35 @@ This RFC fixes that:
   private mutable state: a returnable counter / accumulator / memoizer, Rust's `move ||` +
   `FnMut`. Captures held by `&var` reference already persist (through the outer cell);
   this makes the *owned* captures behave the same way.
-  - **Storage and movement.** The environment cell is part of the closure value and moves
-    with it — assigning the closure to a new binding, passing it by value, or returning it
-    (`make_counter`) transfers ownership of the cell; the write-back target travels with
-    the closure and stays valid. It is not shared: there is at most one live owner (§3).
-    Copying the closure value (only possible when its `use_multiplicity` is `many` — see
-    §3) copies the cell, and the copies then diverge, exactly as copying any struct with a
-    counter field would.
+  - **Storage and movement.** The environment cell is **one inline owned aggregate that
+    is part of the closure value** — the same aggregate RFC-0050's Implementation Guidance
+    describes for captures, held owned-and-mutable rather than re-cloned per call, *not* a
+    wrapper around it and *not* behind a shared pointer. It moves with the closure value:
+    assigning the closure to a new binding, passing it by value, or returning it
+    (`make_counter`) moves the inline aggregate out with the rest of the closure value;
+    the write-back target travels with the closure and stays valid. Returnability is that
+    move, **not** heap/`Rc` indirection — there is no separate allocation to alias. There
+    is at most one live owner (§3).
+  - **`Copy` and the cell.** Copying the closure value is possible only when its
+    `use_multiplicity` is `many` — every capture `Copy`, RFC-0134 §1 — in which case the
+    inline aggregate is **bit-copied** with the rest of the closure value and the copies
+    then diverge, exactly as copying a struct with a counter field would. This is a
+    *trivial* copy (no allocation, no indirection); a `[n] mut` closure with `n: i64` is
+    `Copy` and `let mut d := c;` gives `d` an independent counter. Any representation that
+    would require non-trivial copy (a heap cell, an `Rc`) is by construction non-`Copy` —
+    it necessarily captured a non-`Copy` value — so the "two `Copy` owners aliasing one
+    mutable backing" state cannot arise.
+  - **Captured `Drop`.** A closure value **owns its by-value captures**; when the closure
+    value is dropped, its environment aggregate is dropped — fields in capture-list order,
+    exactly as a struct's fields (RFC-0071). RFC-0134 §5's "no `Drop`-for-closures" means
+    a closure has no user `drop(&var self)` of its own; it does **not** exempt captured
+    values from being dropped. A `once`-consumed closure: the moved-out value is dropped
+    at the end of the scope that consumed it, per ordinary move rules; if the body moved
+    *some* captures out and left others, only the still-owned fields are dropped (ordinary
+    partial-move drop). Actually *running* destructors waits on RFC-0071 destructor
+    invocation (metel-core#292); until then a non-trivial captured `Drop` value behaves as
+    everywhere else in the language (empty `drop` bodies only). The **rule** — what gets
+    dropped and in what order — is fixed here and does not wait on #292.
   - **Early exit.** Write-back is **in place, not transactional.** The distinction is
     which axis governs:
     - **Plain `mut` (not `once`):** the call does not consume the closure (§3). If the
@@ -166,8 +213,11 @@ This RFC fixes that:
       expression*, before the body ran (RFC-0134 §2). So the closure is a moved value
       whether the body returned normally or panicked, and a later use is the ordinary
       moved-value error. There is no "still callable after panic" question — `once`
-      already answered it. The environment cell may hold a partial or moved-out state;
-      that is unobservable precisely because the closure cannot be called again. (If the
+      already answered it. The environment aggregate may hold a partial or moved-out
+      state; that is unobservable *as closure state* — the closure cannot be called
+      again — but the aggregate's **still-owned fields are still dropped** when the moved
+      closure value goes out of scope, per "Captured `Drop`" above (drop of a
+      partially-moved aggregate drops only the fields that were not moved out). (If the
       panic is caught, the moved-out *outer* bindings the `once` call consumed are
       handled by RFC-0134 §2's existing rules, unchanged.)
 - This is a change to RFC-0006 (`4-implemented`), landing with RFC-0157's D5 change to the
@@ -189,12 +239,23 @@ RFC-0134 §5's constraint:
 
 ```
 mut fun(T) -> U            // reading is the default; `mut` marks mutating
-once mut fun(T) -> U       // consumes and mutates; order-insensitive with `once`
-mut once fun(T) -> U       // same type
+once mut fun(T) -> U       // consumes and mutates
+mut once fun(T) -> U       // the same TYPE — the two qualifiers are order-insensitive
+                           //   as type spelling (RFC-0134 §5)
 ```
 
-Spelling is Open Question 1 — `mut` reuses Metel's mutation vocabulary (`&var`,
-`var` bindings) but `var fun` may read better; deciding this is part of this RFC.
+**Type spelling vs. literal prefix.** The qualifiers are order-insensitive *as a type
+spelling* — `once mut fun(T) -> U` and `mut once fun(T) -> U` denote the identical
+`Type::Fun` — matching RFC-0134 §5's "independent, order-insensitive prefix" constraint.
+A **closure literal**, by contrast, has a single fixed prefix order, set by RFC-0050:
+`[captures] once? mut? (params) -> ret block`. So `[c] mut once () -> T { … }` is a
+*parse* error even though `mut once fun(T) -> U` is a valid type; write `[c] once mut
+() -> T { … }`. RFC-0050 is the normative source for the literal grammar; this RFC's
+examples use that order.
+
+Spelling of the qualifier keyword itself is Open Question 1 — `mut` reuses Metel's
+mutation vocabulary (`&var`, `var` bindings) but `var fun` may read better; deciding this
+is part of this RFC. Whichever wins, both the type spelling and the literal prefix use it.
 
 ### 3. Call-site soundness
 
@@ -251,23 +312,32 @@ Spelling is Open Question 1 — `mut` reuses Metel's mutation vocabulary (`&var`
   - A **`mutating` closure value is not `Sync`.** Two fibers sharing `&` to it would each
     need the exclusive per-call borrow of §3 at once — the race the axis exists to
     prevent. (A `reading` closure over `Sync` captures is `Sync`.)
-  - A closure is **`Send` iff every capture is `Send`** — the ordinary aggregate rule.
-    For a `mutating` closure this means `Send` transfers sole ownership of the environment
-    cell to the receiving fiber, which is sound (there is one owner, §1a). A `Copy`
-    `mutating` closure sent by copy gives the receiver an independent cell, also sound.
+  - A closure is **`Send` iff every capture is `Send`** — the ordinary aggregate rule,
+    applied to the inline environment aggregate (§1a). Spelled out for the cases that
+    matter here: `&var T` and `&T` are **not `Send`** (RFC-0050 RQ2), so a closure
+    capturing `[&var n]` or `[&n]` — of *outer* state — is **never `Send`**, and in
+    particular a `[&var n] mut` closure is never `Send`; the reader does not have to
+    re-derive this. A `[n] mut` closure over an *owned* `n` is `Send` iff `n` is: `Send`
+    then transfers sole ownership of the inline aggregate to the receiving fiber, which is
+    sound (one owner, §1a), and if `n` is itself `Drop` the sending fiber has moved it, so
+    only the receiving fiber drops it (ordinary move — no double drop). A `Copy`
+    `mutating` closure sent by copy gives the receiver an independent aggregate, also
+    sound.
   RFC-0096 may restate these through the general marker-aspect machinery later; until then
-  these two lines are the rule.
+  these lines are the rule.
 
-- **Type erasure (`dyn`).** The flat 3-field `Type::Fun` degrades to `dyn
-  Callable<Args, Ret>` (RFC-0061 §7.1 / metel-core#893) by carrying each field as an
-  auto-marker bound — `CallMany` (call axis `many`), `CallShared` (mutation axis
-  `reading`), and `Copy`. A bare `dyn Callable<A, R>` with **no** marker bounds is the
-  most-restrictive form: call-once, exclusive-access, non-`Copy`. `+ CallMany` /
-  `+ CallShared` / `+ Copy` widen it, per RFC-0152's superset direction. So `store(f: dyn
-  Callable<(), i64>)` given a `once` `f` gets a value it may call **once**; to call it
-  repeatedly `store` must take `dyn Callable<(), i64> + CallMany`. This is the default so
-  the erased case is not undefined; the full `dyn Callable` design is metel-core#893's and
-  is a non-goal here (see Alternatives).
+- **Type erasure (`dyn`) — out of scope for v0.13.0; see RFC-0161.** An earlier draft of
+  this section carried an interim "`dyn Callable` erasure default" (bare `dyn Callable` =
+  most-restrictive; `+ CallMany` / `+ CallShared` / `+ Copy` widen). The third adversarial
+  review (2026-09-01) flagged it as a normative rule resting on unbuilt machinery:
+  RFC-0096 (auto-impl aspects) is `0-draft`, RFC-0061 §7.1's `Callable` was never built,
+  and RFC-0008 rejects the by-value `self` receiver a `once` erased call needs. Rather
+  than ship a forward reference the cluster cannot satisfy, `dyn Callable` is **removed
+  from v0.13.0 scope** and designed properly in **RFC-0161 (Callable Object Contract)**,
+  target v0.13.1 (sequenced after RFC-0096). For v0.13.0 a closure is used only
+  monomorphically — a concrete `Type::Fun`, or a generic `extends Callable` parameter
+  that monomorphizes — and the marker-aspect view remains the Alternatives sketch that
+  RFC-0161 takes as its starting point.
 
 ### 4. Relationship to the 2×2 (×2)
 
@@ -310,6 +380,24 @@ fun main() {
 A closure that captures a *non-`Copy`* value by value (`[buf] mut (e) -> () { buf.push(e); }`)
 is non-`Copy` by RFC-0134 §1 — so there is exactly one owner and the "two owners mutate
 the same backing" case cannot arise.
+
+**Capturing an `Rc` / `Share` handle (RFC-0158).** `[rc]` on an `Rc<T>` capture *moves
+the handle in* — `Rc` is non-`Copy` (it is `Share`, not `Copy`, under RFC-0158), so the
+list is required and the closure is non-`Copy`. Aliasing is explicit inside the body:
+
+```metel
+let rc := Rc::new(Node { value: 1 });
+let mut bump := [rc] mut () -> Rc<Node> {
+    rc := rc.share();   // explicit new handle; write-back (§1a) stores it in the env
+    rc
+};
+```
+
+`rc.share()` is an ordinary method call on a *captured* value; the write-back rule of
+§1a persists the reassigned handle in the environment aggregate exactly as it would any
+other `mut` reassignment. This is unrelated to the "`.share()` **on a closure value**"
+non-goal below — that non-goal is about a closure having no `Share` impl of its own, not
+about what a closure body may call on its captures.
 
 ## Alternatives considered
 
@@ -391,7 +479,24 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 - Capture-list syntax (`&var` / bare specifiers) — RFC-0050, a separate document, but
   sequenced into the same v0.13.0 closure-model cluster.
 - `Drop`-for-closures / unconsumed-closure cleanup — RFC-0134 §5 rules it out and
-  this RFC does not reopen it.
+  this RFC does not reopen it. **Distinct from "captured `Drop` values,"** which §1a
+  *does* specify (the closure owns its captures and drops them like struct fields); the
+  non-goal is only a closure having a user `drop(&var self)` of its own.
+- **`dyn Callable` / type-erased callables — RFC-0161** (v0.13.1). The pass-2 interim
+  `dyn` erasure default is withdrawn (§3); v0.13.0 is monomorphic.
+- **Closure equality / ordering.** `Type::Fun` values satisfy **no aspects** (RFC-0134's
+  Open-Questions finding: `InferType::Fun` implements nothing), including `Eq` / `Ord`,
+  so `a == b` / `a < b` on closure values does **not** type-check — it is an aspect-not-
+  satisfied error, the same as `==` on any non-`Eq` type. Structural equality of two
+  `Type::Fun` *types* (used by the unifier) is a type relation and says nothing about
+  value equality; two closures of the same type with different captures are simply not
+  comparable. No closure-identity or by-address comparison is introduced.
+- **`comptime` / `const` closures.** A closure may be created and called at `comptime`;
+  the comptime evaluator is the same interpreter, so `mut` write-back (§1a) and `once`
+  consumption have the same semantics there — a `comptime` `[n] mut () -> i64` counter
+  advances between `comptime` calls exactly as a runtime one does. No separate
+  const-closure model, and no relaxation: a `comptime` call still obeys §3's
+  exclusive-place rule.
 - Multiplicity for ordinary types — RFC-0135.
 - **`.clone()` / `.share()` on a closure value** — closures are outside the aspect system
   (RFC-0134's Open-Questions finding: `InferType::Fun` implements nothing; RFC-0158 does
@@ -452,6 +557,13 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 - **RFC-0008 (Aspect Objects)** — `dyn Aspect`; the Alternatives section's
   `dyn Callable + CallMany` composition and the `CallShared`-refined receiver kind
   depend on its object-safety rules.
+- **RFC-0161 (Callable Object Contract), `1-under-review` (v0.13.1)** — the home of the
+  `dyn Callable` design that §3's pass-2 interim default was withdrawn into; takes this
+  RFC's Alternatives section as its starting point.
+- **RFC-0158 (Share and Clone)** — `Rc` is `Share`, not `Copy`, so an `[rc]` capture
+  makes the closure non-`Copy`; the §4 worked example of a captured `Share` handle.
+- **RFC-0071 (Destructors)** — the field-order drop rule §1a's "Captured `Drop`"
+  reuses; its invocation is metel-core#292, which gates *execution* not the rule.
 
 ---
 

@@ -1096,22 +1096,36 @@ implementation).
   constrains (compose with `once`/`many` as an independent prefix). Records whether
   invoking a closure needs *exclusive* (`&var`) access to a capture — Rust's `FnMut`.
   **`reading` is a fixed default (RFC-0134-style verify-not-infer), `mut` is written.**
-  A `mutating` call takes `&var self` on the closure (no overlapping calls); a `mutating`
-  closure is not `Copy`. **Widened 2026-08-31:** it also reverses RFC-0006's per-call
-  environment re-clone for `mutating` closures — their by-value captures are **written
-  back** so mutation persists across calls (the returnable counter / `move ||` + `FnMut`
-  case, which the closure model otherwise cannot express — RFC-0134 §5). Edition-gated
-  like RFC-0157's D5; sequenced after RFC-0134/RFC-0152. **Co-lands with RFC-0134 in
-  v0.13.0** — `call_mutation` ships in `Type::Fun` alongside RFC-0134's two fields, so the
-  type carries all three multiplicity axes at once. To hold v0.13.0 it needs review →
-  accepted and Open Question 1 (qualifier spelling — `mut` vs `var fun`) closed; other
-  open points: `Send`/`Sync` ownership, `&var`-capture-without-write precision. Carries
-  an Alternatives section:
-  the two axes as **independent marker aspects** (`Callable<A,R>` + orthogonal
-  `CallMany` / `CallShared`, auto-impl per RFC-0096) on a per-closure anonymous type —
-  under which RFC-0152's widening dissolves into bound-subsetting; recommended as the
-  opt-in `dyn` view alongside the flat field model, and a direct input to metel-core#893.
-  Milestoned v0.17.0 (metel-core#902).
+  A `mutating` call is an **exclusive borrow of the callee lvalue place** for the call's
+  duration (`&var self`-shaped, **not** a consume; no overlapping/reentrant calls);
+  `use_multiplicity` (`Copy`-ness) is fully independent — all 2×2×2 field combinations are
+  well-formed. **Widened 2026-08-31:** it also reverses RFC-0006's per-call
+  environment re-clone for `mutating` closures — their by-value captures live in **one
+  inline environment cell held by the closure value** and are **written back** so mutation
+  persists across calls (the returnable counter / `move ||` + `FnMut` case, which the
+  closure model otherwise cannot express — RFC-0134 §5). Lands as one hard change with
+  RFC-0157's D5 (no edition gate — Metel has no public users); sequenced after
+  RFC-0134/RFC-0152. **Co-lands with RFC-0134 in v0.13.0** — `call_mutation` ships in
+  `Type::Fun` alongside RFC-0134's two fields, so the type carries all three multiplicity
+  axes at once. To hold v0.13.0 it needs review → accepted and Open Question 1 (qualifier
+  spelling — `mut` vs `var fun`) closed; other open points: `Send`/`Sync` ownership,
+  `&var`-capture-without-write precision. **`dyn Callable` erasure is no longer in
+  scope** — it moved to **RFC-0161** (v0.13.1) so the v0.13.0 cluster ships monomorphic.
+  Carries an Alternatives section: the two axes as **independent marker aspects**
+  (`Callable<A,R>` + orthogonal `CallMany` / `CallShared`, auto-impl per RFC-0096) on a
+  per-closure anonymous type — under which RFC-0152's widening dissolves into
+  bound-subsetting; that is now RFC-0161's design space. Tracker metel-core#902 (v0.13.0).
+- **RFC-0161** *(under review, opened 2026-09-01; #923)* — Callable Object Contract
+  (`dyn Callable`) — extracted from the v0.13.0 closure cluster during the third
+  adversarial review. The flat 3-field `Type::Fun` model ships at v0.13.0 monomorphic;
+  type-erased `dyn Callable<Args, Ret>` is deferred here to **v0.13.1** rather than
+  shipping a normative default resting on unbuilt machinery (RFC-0096 auto-impl aspects,
+  RFC-0061 §7.1's never-built `Callable`, RFC-0008 object-safety of a by-value `self`
+  receiver). Designs: the `Callable` aspect (compiler-synthesized), receiver kind
+  selected per axis (`&self` / `&var self` / by-value `self`), `CallMany` / `CallShared` /
+  `Copy` markers with **subset-widening** (present = more permissive), and erased
+  single-call state (move-out-of-box vs runtime poison flag). Two design OQs gate
+  acceptance. Depends on RFC-0096 (hence v0.13.1). Tracker metel-core#923.
 - **RFC-0154** *(under review, opened 2026-08-30)* — Pipe Notation for Closures and
   Function Types — split from RFC-0134 §3a. Replaces `(...)` for both the closure literal
   and the function type with `|...|`: `|x, y| body` (block or bare expression, optional

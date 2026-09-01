@@ -122,6 +122,17 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 >   (RFC-0153 §3, corrected pass 2 — not a consume), and does not compose with `once` by
 >   "rebinding".
 
+> **Adversarial-review fixes, 2026-09-01 (third pass):**
+> - **§3's inference machinery is now hard-fenced, not just its three bullets.** The
+>   whole "infer a parameter's required multiplicity from the enclosing body" development
+>   — the body walk, the "not ordinary unification" analysis, and the
+>   `construct_generic_body_for_move` generic-body paragraph — is marked non-normative
+>   with a fence at the point the model diverges. `many`-by-default / `once`-when-written
+>   is the entire rule; no generic-body probe is involved.
+> - **`dyn Callable` erasure moved out of the cluster** — RFC-0153 §3's interim erasure
+>   default is withdrawn into **RFC-0161 (Callable Object Contract)**, target v0.13.1.
+>   v0.13.0 ships the flat `Type::Fun` model monomorphic.
+
 ## Summary
 
 Give the type system a way to know whether *calling* a closure can consume one of its
@@ -557,14 +568,26 @@ it twice inside `call_twice`'s own body already assumes `f` survives its first c
 Checking `call_twice` in isolation (as the type-checker does, once, not per call site)
 means this has to be decided from `call_twice`'s own body.
 
-**Default: infer it the same way as §2.** Walk the function's own body for how many
-times it invokes the parameter — a call reachable inside a loop counts as "possibly more
-than once," since the loop's own trip count isn't visible to this analysis and has to be
-treated conservatively. Zero-or-one reachable calls puts no requirement on the caller:
-both `once` and `many` values satisfy "called at most once." More than one reachable
-call requires the caller to supply `many`. Passing a `once` value where the required
-multiplicity is `many` is a type mismatch, using the same direction §1/§2 already imply
-(`many` satisfies anywhere `once` is required; `once` does not satisfy a `many`
+> **⚠ Everything from here to the end of §3 that describes *inferring* a parameter's
+> required multiplicity from the enclosing body — the walk below, the
+> "not ordinary unification" analysis, and the `construct_generic_body_for_move`
+> generic-body paragraph near the end of the section — is NOT normative.** It is the
+> pre-amendment model. Under the 2026-08-31 amendment the required multiplicity is simply
+> **`many` by default, `once` when written**; there is no body walk, no generic-body
+> probe, no symbolic multiplicity for a placeholder closure argument. What stays live in
+> the rest of §3: the *reasons* an explicit `once` / `many` is a stable promise rather
+> than a re-derivation, the qualifier's grammar and placement, and its checking via
+> RFC-0152's first-order directional matching. Read the inference passages as historical
+> rationale for why the default is `many`.
+
+**Default (historical model): infer it the same way as §2.** Walk the function's own body
+for how many times it invokes the parameter — a call reachable inside a loop counts as
+"possibly more than once," since the loop's own trip count isn't visible to this analysis
+and has to be treated conservatively. Zero-or-one reachable calls puts no requirement on
+the caller: both `once` and `many` values satisfy "called at most once." More than one
+reachable call requires the caller to supply `many`. Passing a `once` value where the
+required multiplicity is `many` is a type mismatch, using the same direction §1/§2 already
+imply (`many` satisfies anywhere `once` is required; `once` does not satisfy a `many`
 requirement).
 
 **That rejection is not "ordinary unification," and this RFC should not claim it is.** An
@@ -710,23 +733,22 @@ native-callback-dispatch exemption to reason about, because there isn't a native
 callback dispatch path in the current stdlib at all (checked: no `native(...)`
 declaration anywhere in `core.mtl` takes a closure-typed parameter).
 
-The remaining real difficulty, for the *inferred* path specifically, is `map` being
+> **⚠ Historical — the generic-body inference difficulty below does not exist under the
+> `many` default.** Kept only to record why the pre-amendment inferred path was hard.
+> There is no `construct_generic_body_for_move` involvement in required-multiplicity
+> determination: `map`'s `f` is `many`-required because it is unqualified, full stop.
+
+The remaining real difficulty, for the *inferred* path specifically, was `map` being
 *generic*: its body isn't a concrete `TypedBlock` until constructed per call site
 (`FunBody::Generic`), so it isn't Metel-source the move-checker can walk directly the
-way it walks `call_twice`'s body. This is not a new problem this RFC introduces —
+way it walks `call_twice`'s body. This was not a new problem this RFC introduced —
 the move-checker already solves it today, for reasons unrelated to closures, via a
 symbolic-instantiation pass (`construct_generic_body_for_move` / `generic_sample_args`
-in `move_check/mod.rs`): `map`'s body gets constructed once against placeholder types
-and checked against *that*, rather than needing a fully generic analysis or one pass per
-real call site. Making that same pass also infer a required multiplicity for
-closure-typed parameters looks like it fits the existing architecture rather than
-needing a new one — but the exact mechanics (what symbolic multiplicity a placeholder
-closure argument gets during the probe, and how the inferred requirement then attaches
-to `map`'s own scheme for real call sites to check against) are not worked out here.
-Unlike before this section had an explicit form, this is no longer a blocking unknown:
-if the inferred path proves difficult to implement soundly for generic bodies, `map`'s
-own stdlib signature can simply be written `f: many fun(T) -> U` and skip inference for
-this case entirely, at the cost of one explicit word in one stdlib source file.
+in `move_check/mod.rs`). Making that same pass *also* infer a required multiplicity for
+closure-typed parameters would have fit the existing architecture, but the exact
+mechanics were never worked out — and under the `many` default they never need to be:
+`map`'s stdlib signature is `f: many (T) -> U` (written, or equivalently the default),
+and no generic-body probe is involved in the multiplicity determination at all.
 
 ### 3a. Base function-type spelling — see RFC-0154
 
