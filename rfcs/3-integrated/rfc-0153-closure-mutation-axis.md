@@ -458,23 +458,28 @@ the same backing" case cannot arise. To *share* mutable state across fibers, cap
 `[&var shared]` (or an `Rc`-like handle) — the closure is then non-`Copy` and `!Sync`, and
 the sharing is explicit.
 
-**Capturing an `Rc` / `Share` handle (RFC-0158).** `[rc]` on an `Rc<T>` capture *moves
-the handle in* — `Rc` is non-`Copy` (it is `Share`, not `Copy`, under RFC-0158), so the
-list is required and the closure is non-`Copy`. Aliasing is explicit inside the body:
+**Capturing an `Rc` / `Share` handle — forward-looking, not part of v0.13.0's surface.**
+Neither `Rc` (target type, still `0-draft`) nor `Share`/`.share()` (RFC-0158,
+`1-under-review`) exist in the language yet, so nothing below is executable Metel today
+and none of it is a v0.13.0 claim — this RFC does not depend on either landing. The point
+worth recording ahead of them: this RFC's write-back rule (§1a) needs no special case for
+a handle-type capture. `[rc]` moves whatever `rc` is *by value*, the same as any other
+by-value capture; if `rc`'s type is non-`Copy` (a handle type under RFC-0158 would be —
+`Share`, not `Copy`), the capture list is required and the closure is non-`Copy`, by the
+ordinary rules already stated. A `mut` body reassigning its captured `rc` (to a fresh
+handle, however that's spelled once RFC-0158 lands) persists the reassignment in the
+environment aggregate exactly as any other `mut` reassignment — no closure-specific
+handle-aliasing behavior is introduced. Illustrative sketch only, not a code sample to run:
 
-```metel
-let rc := Rc::new(Node { value: 1 });
-let bump := [rc] mut () -> Rc<Node> {
-    rc := rc.share();   // explicit new handle; write-back (§1a) stores it in the env
-    rc
-};
+```
+// once Rc / RFC-0158 land:
+let rc := Rc::new(Node { … });
+let bump := [rc] mut () -> Rc<Node> { rc := rc.share(); rc };
 ```
 
-`rc.share()` is an ordinary method call on a *captured* value; the write-back rule of
-§1a persists the reassigned handle in the environment aggregate exactly as it would any
-other `mut` reassignment. This is unrelated to the "`.share()` **on a closure value**"
-non-goal below — that non-goal is about a closure having no `Share` impl of its own, not
-about what a closure body may call on its captures.
+This is unrelated to the "`.share()` **on a closure value**" non-goal below — that
+non-goal is about a closure having no `Share` impl of its own, not about what a closure
+body may call on its captures.
 
 ## Alternatives considered
 
