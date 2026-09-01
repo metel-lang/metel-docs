@@ -39,12 +39,16 @@ that default is designed properly, targeting **v0.13.1**.
 **The `Callable` aspect itself is deferred here — not just `dyn Callable`.** The fourth
 adversarial review (2026-09-01) confirmed `Callable<A, B>` and its auto-impl for function
 types were never built (RFC-0061 §7.1 and RFC-0008 now carry "not implemented"
-annotations pointing here). So at **v0.13.0 there is no `Callable` aspect at all**: a
-closure is only ever a concrete `Type::Fun`, a generic parameter cannot be bounded `where
-F: Callable<…>` (a higher-order function takes a concrete function type — how the stdlib
-combinators already work), and `dyn Callable<…>` / `&dyn Callable<…>` / `Box<dyn
-Callable<…>>` do not parse. This RFC owns the aspect, its auto-impl, the object form, and
-the marker refinements, in full, from v0.13.1.
+annotations pointing here). So at **v0.13.0 there is no predeclared / stdlib `Callable`
+aspect**: a closure is only ever a concrete `Type::Fun`, a generic parameter cannot be
+bounded `where F: Callable<…>` against a standard aspect (a higher-order function takes a
+concrete function type — how the stdlib combinators already work), and abstracting over
+"any callable representation" is not expressible. The `dyn <Aspect>` *syntax* is
+unchanged (RFC-0008); `dyn Callable<…>` just resolves to an unknown aspect (`T0003`)
+unless the program declares one itself, and `Callable` is not reserved in v0.13.0. This
+RFC introduces the real aspect, its auto-impl, the object form, and the marker
+refinements, in full, from v0.13.1 — at which point any user-defined `Callable` collides
+and must be renamed.
 
 ## Motivation
 

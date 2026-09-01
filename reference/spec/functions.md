@@ -191,6 +191,17 @@ fun main() -> i64 {
 }
 ```
 
+> **Changing in v0.13.0 — closure capture cluster (RFC-0157 D5 / RFC-0050 / RFC-0153 /
+> RFC-0134).** This section is **not yet updated** for those. Under the cluster: by-value
+> capture of a non-`Copy` binding is a **move** (not a clone), an explicit **capture list**
+> `[…]` is required whenever a move or a `&`/`&var` capture happens, a closure that
+> assigns to a capture must be written `mut` and its writes **persist across calls** in the
+> closure's own environment, and the per-call environment re-clone is removed. The example
+> above still holds for the *outer* `count` (the closure has its own copy), but the literal
+> would need `[count] mut () -> { count += 1; }`. The prose below (pointer-syntax sharing)
+> is likewise superseded by `[&x]` / `[&var x]` capture-list forms. Updated here when the
+> cluster's implementation PR lands.
+
 > **Planned for v0.12.0 (RFC-0071): a captured value of a non-`Copy` type is *moved* into the closure, not copied — the original binding is invalid afterwards.**
 
 Capture is by value, so a `Copy` type is copied and the original stays usable. Once move

@@ -98,6 +98,16 @@ With a reference-counted container (`Rc<RefCell<T>>`): possible — both closure
 
 ## Proposal
 
+> **⚠ Historical from here to "Interaction with Upstream RFCs".** The 2026-09-01 amendment
+> (top of this RFC) supersedes this section. What **survives**: the *idea* that closures
+> have one capture rule plus explicit reference/`Rc` capture for sharing — but the capture
+> rule is now **move** (`let y := x`), not clone, and reference sharing is RFC-0050's
+> `[&x]` / `[&var x]` capture-list forms (and explicit `Rc` capture), not "clone a `*mut T`
+> pointer". The per-call `captured.clone()` is gone. What **does not survive**: "value
+> capture (clone) … becomes the permanent default", the `*mut Int` / `Rc<RefCell<T>>`
+> cloned-pointer mechanism as *the* aliasing story, and the Resolved Decision below that
+> records clone-by-default. Read the rest as the design context the amendment replaced.
+
 ### Default: value capture (clone)
 
 Closures capture by value. At definition time, every free variable that appears in the closure body is cloned into the closure's environment. This is the current PoC behaviour and becomes the permanent default.
@@ -351,6 +361,14 @@ Shared mutable state is always wrapped in `Rc<RefCell<T>>` directly. No pointer 
 ---
 
 ## Resolved Decisions
+
+> **⚠ Decision 1 is superseded by RFC-0157 D5 (2026-09-01)** — the default is **move**,
+> not clone; see the amendment at the top. Decisions 2–4 stand in spirit (closures extend
+> the lifetime of captured owned storage; concurrency transfer is elsewhere; runtime
+> storage strategy is not the contract) but their *pointer-syntax* framing is replaced by
+> RFC-0050's `[&x]` / `[&var x]` capture-list forms. The reference `spec/functions.md`
+> section this RFC's coverage links to is updated in the same staged change as the D5
+> implementation PR — until then it lags this note.
 
 1. **A single closure capture model is sufficient**
 

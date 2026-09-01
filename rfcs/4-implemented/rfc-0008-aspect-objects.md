@@ -95,7 +95,9 @@ dyn Region
 > Specified here and in RFC-0061 §7.1, never built. Deferred in full to **RFC-0161
 > (Callable Object Contract), v0.13.1**, which also owns its object-safety story (the
 > line in "Standard library object-safety" below is a reservation, not a shipped fact).
-> In v0.13.0, `dyn Callable<…>` does not parse. Every other `dyn Aspect` in this RFC is
+> The `dyn <Aspect>` syntax itself is unchanged — in v0.13.0 there is simply no stdlib
+> `Callable` aspect, so `dyn Callable<…>` is an unknown-aspect error unless the program
+> declares its own; `Callable` is not reserved. Every other `dyn Aspect` in this RFC is
 > unaffected.
 
 `dyn Aspect` is an unsized type — it has no compile-time size. It must appear behind
