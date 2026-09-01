@@ -338,8 +338,9 @@ already the design. This would:
 - make ownership-transfer capture need no keyword (settling RFC-0050's deferred question
   as "no specifier — bare capture of a non-`Copy` value is the move");
 - change an observable default (a closure that captures `s: String` today leaves `s`
-  usable; under this it consumes `s`), so it is a breaking change requiring the
-  edition/migration treatment RFC-0017 or a `--edition` gate provides;
+  usable; under this it consumes `s`) — a breaking change, but Metel has no public users,
+  so it is applied wholesale with the interpreter's own fixture corpus updated in the same
+  change, not behind an `--edition` gate;
 - need a decision on whether an unannotated closure should *ever* implicitly move, or
   whether an explicit capture list is required the moment a move would happen (the
   "explicit at the definition site" principle RFC-0050 and the *Implicit mutable capture*
@@ -385,10 +386,11 @@ less settled intuition to leverage there and more room to do better. So:
 4. **Adopt the D5 capture-default change: by-value capture follows the regular-value rule
    (`let y := x`).** Capture `s: String` → move; capture `n: i64` → copy; `.clone()` at
    the capture site for an explicit independent copy. RFC-0006's clone-every-free-variable
-   default is the artifact — Rust closures already move non-`Copy` captures. Behind an
-   edition gate; require an explicit capture list at the point a capture would move. This
-   settles RFC-0050's deferred question as "no keyword," and makes closures *conform to
-   the value model* rather than the reverse.
+   default is the artifact — Rust closures already move non-`Copy` captures. Applied as
+   **one hard change** (Metel has no public users; no `--edition` gate — the interpreter's
+   fixture corpus is updated in the same change); require an explicit capture list at the
+   point a capture would move. This settles RFC-0050's deferred question as "no keyword,"
+   and makes closures *conform to the value model* rather than the reverse.
 
    *Concrete shape (2026-08-31): **RFC-0050** adopts this — capture list required for a
    non-`Copy`/by-ref capture, bare `[s]` = move for non-`Copy`, `[s.clone()]` for an
@@ -403,8 +405,9 @@ less settled intuition to leverage there and more room to do better. So:
    `FnOnce`.
 
 Follow-up work under this direction: RFC-0158 (`Clone`/`Share`); the D3 relaxation
-(amend RFC-0071 §4 / `coherence.rs`, pending the soundness argument); the D5 edition
-change (amend RFC-0006, unblock RFC-0050); a disposition for RFC-0135.
+(amend RFC-0071 §4 / `coherence.rs`, pending the soundness argument); the D5 capture-model
+change (amend RFC-0006, unblock RFC-0050 — one hard change, no edition gate, fixture
+corpus updated in the same PR); a disposition for RFC-0135.
 
 ---
 
@@ -429,7 +432,8 @@ change (amend RFC-0006, unblock RFC-0050); a disposition for RFC-0135.
   specifier at all.
 - **RFC-0006 (Closure Capture Semantics, `4-implemented`)** — the D5 change amends it.
   It is `4-implemented`, so this touches settled spec text and must go through the normal
-  review/accepted/integrated path plus an edition/migration story before any code moves.
+  review/accepted/integrated path; the code change itself is wholesale (no public users,
+  no `--edition` gate) with the fixture corpus updated alongside.
 - **RFC-0071 (Ownership and Move Semantics, `3-integrated`)** — the settled affine
   foundation this RFC measures the model against. §4 (Copy/Drop exclusion) is the D3
   target. Not proposing to reopen affine-by-default itself.
@@ -619,10 +623,12 @@ Hylo absorbs much of that through its borrow/`sink` conventions. Evidence that P
    user code including whatever the destructor pairs with, `Drop` runs once per real value
    — may be perfectly sound. Needs a soundness argument checked against `--move-check`'s
    design. This is the one D-item the recommendation proposes to act on beyond RFC-0158.
-3. **Edition/migration cost of the D5 capture-default change.** How many fixtures and
-   stdlib closures actually rely on capture-by-clone leaving the outer binding usable?
-   Measure before committing. Is `RFC-0017`'s edition system far enough along to gate it,
-   or does this wait on that?
+3. **Corpus-sweep scope for the D5 capture-default change. ✓ Not an edition question**
+   (2026-09-01 — Metel has no public users, so there is no `--edition` gate; RFC-0017's
+   edition system is not on this path). It is a hard change with the interpreter's `.mtl`
+   fixtures updated in the same PR. What remains: measure how many fixtures / stdlib
+   closures rely on capture-by-clone leaving the outer binding usable, so the sweep can be
+   sized — but it is a one-time internal edit, not a migration tool.
 4. **Should an unannotated closure ever implicitly move a capture, or must a capture list
    be present the moment a move would occur?** The stricter rule is more predictable and
    matches RFC-0050's exhaustiveness philosophy; the looser rule is less boilerplate for

@@ -32,10 +32,11 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 >   alternative, are superseded by this bullet.
 > - **Pairs with RFC-0134's same-day amendment** (`many` by default, explicit `once`): a
 >   listed by-value non-`Copy` capture is what RFC-0134 §2's consumption check inspects.
-> - **Timing.** Rides RFC-0157's D5 `--edition` gate (the RFC-0006 default change).
->   Milestoned **v0.13.0** (#803) alongside RFC-0134 (#269) and RFC-0152 (#901) — closure
->   capture lists and closure call capability are one feature area. Still `1-under-review`;
->   needs to reach `accepted` to match the rest of that milestone.
+> - **Timing.** Lands with RFC-0157's D5 (the RFC-0006 default change) as **one hard
+>   change** — see "Migration (no edition gate)" below. Milestoned **v0.13.0** (#803)
+>   alongside RFC-0134 (#269) and RFC-0152 (#901) — closure capture lists and closure call
+>   capability are one feature area. Still `1-under-review`; needs to reach `accepted` to
+>   match the rest of that milestone.
 
 > **Adversarial-review fixes, 2026-09-01** (cross-RFC review of the v0.13.0 cluster). New
 > in "When the list is required": bare `[s]` for non-`Copy` `s` often forces `once`;
@@ -130,7 +131,7 @@ clarified to mean outer-scope local bindings only; references to module-level fu
 constants, types, and aspects are name resolution, not capture, and never need to appear in the
 list.*
 
-> **Status — under review (2026-08-23; correction pass + amendment 2026-08-31, see frontmatter notes).** Six Resolved Questions checked. Amended 2026-08-31: capture list required for non-`Copy`/by-ref captures; bare `ident` is by-value (move for non-`Copy`); ownership-transfer capture folded back in (no keyword). Milestoned **v0.13.0** with RFC-0134 (#269) / RFC-0152 (#901); rides RFC-0157's D5 `--edition` gate. Needs to reach `accepted`. -- #803
+> **Status — under review (2026-08-23; correction pass + amendment 2026-08-31, see frontmatter notes).** Six Resolved Questions checked. Amended 2026-08-31: capture list required for non-`Copy`/by-ref captures; bare `ident` is by-value (move for non-`Copy`); ownership-transfer capture folded back in (no keyword). Milestoned **v0.13.0** with RFC-0134 (#269) / RFC-0152 (#901); lands with RFC-0157's D5 as one hard change (no edition gate). Needs to reach `accepted`. -- #803
 
 ## Summary
 
@@ -149,8 +150,8 @@ explicit at the definition site.
 
 Ownership-transfer capture — moving a binding into a closure — is covered: it is bare
 `[ident]` for a non-`Copy` binding, needing no keyword (an affine move takes none
-elsewhere in Metel either). This rides RFC-0157's D5 `--edition` gate; see the frontmatter
-amendment.
+elsewhere in Metel either). This lands with RFC-0157's D5 as one hard change; see
+"Migration (no edition gate)".
 
 ---
 
@@ -502,36 +503,29 @@ and RFC-0152 (#901).*
 **`&var`, `&`, and `Copy`-only listless captures** have no dependency beyond RFC-0067a
 (`4-implemented`) and are implementable immediately.
 
-**Bare `ident` by-value capture of a non-`Copy` binding** (the move case) rides RFC-0157's
-D5 `--edition` gate — the change to RFC-0006's implicit deep-clone default. RFC-0157 is
-`1-under-review` (#918); its D5 recommendation is settled in this direction, and this RFC's
-grammar and Semantics assume it. If D5's edition mechanism slips, the move case slips with
-it; the `&var`/`&`/`Copy` part does not. RFC-0046 (`6-refused/`), which specified the old
-`move` in `linear fun` / exactly-once terms, is not the framing inherited — an affine move
-takes no keyword, which is why bare `[ident]` suffices.
+**Bare `ident` by-value capture of a non-`Copy` binding** (the move case) is the change to
+RFC-0006's implicit deep-clone default — RFC-0157's D5. RFC-0157 is `1-under-review`
+(#918); its D5 recommendation is settled in this direction, and this RFC's grammar and
+Semantics assume it. RFC-0046 (`6-refused/`), which specified the old `move` in `linear
+fun` / exactly-once terms, is not the framing inherited — an affine move takes no keyword,
+which is why bare `[ident]` suffices.
 
 **Suggested order:** land RFC-0157 D5 + this RFC together for v0.13.0, sequenced with
 RFC-0134 (#269) — capture lists and call capability are one review.
 
-### Edition behavior (added 2026-09-01)
+### Migration (no edition gate)
 
-The whole closure cluster — this RFC's required-list rule and bare-`[s]`-is-move, RFC-0153
-§1a's write-back, RFC-0134's `once`/`many` verification, and RFC-0157's D5 capture default
-— is a **single edition boundary**. The rule for each is the same:
+*Amended 2026-09-01: the earlier "edition boundary" framing is dropped.* **Metel has no
+public users and no `--edition` tooling.** The whole closure cluster — this RFC's
+required-list rule and bare-`[s]`-is-move, RFC-0153 §1a's write-back, RFC-0134's
+`once`/`many` verification, RFC-0157's D5 capture default — lands as **one hard change** at
+v0.13.0. There is no old/new edition, no fixer, no mixed mode.
 
-- **Old edition:** unchanged. Closures capture by deep clone (RFC-0006); a closure call is
-  not move-checked; the capture-list grammar (`[…]`), the `once` / `many` / `mut`
-  qualifiers, and `[x.clone()]` are **parse errors** — they are new syntax, not
-  old-semantics no-ops. Existing v0.12 code compiles exactly as before.
-- **New edition:** the cluster's rules as specified across the four RFCs.
-
-There is **no mixed mode** (new syntax with old semantics, or vice versa) — a file is one
-edition. Migration from old to new is tool-assisted and, for a closure that captured a
-non-`Copy` value it then returns, is the multi-step change the review noted (`() -> String
-{ s }` → *add a capture list* → `[s]` is a move → the body consumes it → *add `once`*).
-That is one-time migration friction, handled by the edition fixer, not a silent behavior
-change to existing code. The fixer's exact rewrites are a `--edition` tooling deliverable,
-not specified here.
+Migration is entirely internal: the interpreter's own `.mtl` fixture corpus is updated in
+the same change. Where a fixture captured a non-`Copy` value it then returns, that is the
+multi-step rewrite the review noted (`() -> String { s }` → add `[s]` → the body consumes
+it → add `once`), applied by hand to the corpus, not shipped as a user tool. Nothing about
+`--edition` is a deliverable here.
 
 ---
 
@@ -582,8 +576,8 @@ forces a rewrite of closure capture when they land:
 - RFC-0157: Copy and Clone Model Re-analysis (`1-under-review`, opened 2026-08-31, #918) — the RFC this
   one defers ownership-transfer capture to. Analyzes whether closure capture by value should
   mean move (consistent with `let y := x`) or clone (RFC-0006 today); its recommendation is
-  the former, behind an edition gate, which would settle this RFC's out-of-scope note as
-  "no specifier needed."
+  the former, as a hard change (Metel has no public users; no edition gate), which settles
+  this RFC's out-of-scope note as "no specifier needed."
 - RFC-0046: Linear Closure Capture — **refused** (`6-refused/`); specified a `move` capture in
   `linear fun` / exactly-once terms against the old unified `Region` model. Not the framing to
   inherit. Listed only to note that this RFC's dropped `move` specifier is *not* a revival of it.
