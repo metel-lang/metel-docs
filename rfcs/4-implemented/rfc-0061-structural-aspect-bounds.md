@@ -312,6 +312,16 @@ captured state. It is distinct from closures, which are covered by RFC-0050.
 
 ### 7.1 `Callable`
 
+> **Not implemented — deferred to RFC-0161 (2026-09-01).** The `Callable<A, B>` aspect,
+> its auto-impl for function types, and `dyn Callable<A, B>` were **specified here and in
+> RFC-0008 but never built** (verified against the interpreter: no `Callable` impl for
+> function types, no `dyn Callable` coercion). The whole concept — aspect, object form,
+> and the marker-aspect refinements the v0.13.0 closure cluster once sketched — is now
+> owned in full by **RFC-0161 (Callable Object Contract), v0.13.1**. In v0.13.0 a closure
+> or function value is only ever a concrete function type; there is no `Callable` bound
+> and `dyn Callable<…>` does not parse. This subsection is retained as the original
+> reservation RFC-0161 builds on.
+
 Every function type `fun(A) -> B` automatically implements `Callable<A, B>` — the
 aspect for callable values. The compiler provides this impl for all function pointer
 types without a declaration at the user level:

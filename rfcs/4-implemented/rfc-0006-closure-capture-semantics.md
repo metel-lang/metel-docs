@@ -15,6 +15,26 @@ coverage:
 
 Define how closures capture values from their enclosing scope and what mechanisms exist for two closures to share the same mutable value. The current PoC uses clone-at-definition capture everywhere; this RFC establishes the intended permanent semantics.
 
+> **Amendment 2026-09-01 — superseded by RFC-0157 D5 (language owner decision) + the
+> v0.13.0 closure cluster.** The "clone-at-definition, permanent default" this RFC
+> establishes is **replaced**:
+> - **By-value capture is a `move`, not a deep clone** — a non-`Copy` free variable is
+>   moved into the closure (consuming the outer binding), a `Copy` one is copied, a
+>   `Clone`-not-`Copy` one is an error unless `.clone()`d at the capture site (`let y := x`
+>   semantics). RFC-0050 (Closure Capture Lists) carries the surface rule; a capture list
+>   is required the moment a move would occur.
+> - **The per-call `call_env = closure.captured.clone()` re-clone is removed** for *every*
+>   closure. The captured environment is moved into one aggregate once, at creation; a
+>   `reading` closure reads it in place, a `mutating` one mutates it in place with
+>   write-back that persists across calls (RFC-0153 §1a).
+> - **Cross-closure sharing** stays on explicit references (RFC-0050's `[&x]` / `[&var x]`)
+>   or explicit `Rc` capture, exactly as the "Sharing state" section below already says —
+>   that part is unchanged.
+> - Lands v0.13.0 as one hard change, no `--edition` gate (Metel has no public users); the
+>   interpreter's fixture corpus is updated in the same PR.
+>
+> Everything below is the *superseded* permanent-semantics proposal, kept for history.
+
 ---
 
 ## Motivation
