@@ -11,6 +11,7 @@
       "1"
     ],
     "rfc-0134": [
+      "1",
       "2",
       "3",
       "5"
@@ -29,6 +30,7 @@
     "rfc-0153": [
       "1",
       "1a",
+      "2",
       "3",
       "3a",
       "4"
@@ -40,6 +42,10 @@
   "spec": [
     "spec.functions.closures.dynamics-10",
     "spec.functions.closures.dynamics-11",
+    "spec.functions.closures.dynamics-12",
+    "spec.functions.closures.dynamics-13",
+    "spec.functions.closures.dynamics-14",
+    "spec.functions.closures.dynamics-15",
     "spec.functions.closures.dynamics-5",
     "spec.functions.closures.dynamics-7",
     "spec.functions.closures.dynamics-8",
@@ -51,6 +57,15 @@
     "spec.functions.closures.legality-14",
     "spec.functions.closures.legality-15",
     "spec.functions.closures.legality-16",
+    "spec.functions.closures.legality-17",
+    "spec.functions.closures.legality-18",
+    "spec.functions.closures.legality-19",
+    "spec.functions.closures.legality-20",
+    "spec.functions.closures.legality-21",
+    "spec.functions.closures.legality-22",
+    "spec.functions.closures.legality-23",
+    "spec.functions.closures.legality-24",
+    "spec.functions.closures.legality-25",
     "spec.functions.closures.legality-5",
     "spec.functions.closures.legality-6",
     "spec.functions.closures.legality-7",

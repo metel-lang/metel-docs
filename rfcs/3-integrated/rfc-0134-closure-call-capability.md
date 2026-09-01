@@ -7,7 +7,7 @@ target: v0.13.0
 updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 coverage:
-  "1": { spec: "spec.functions.closures.dynamics-1" }
+  "1": { spec: "spec.functions.closures.legality-20" }
   "2": { spec: "spec.functions.closures.legality-8" }
   "3": { spec: "spec.functions.closures.legality-9" }
   "3a": { kind: untestable, reason: "Base function-type spelling — deferred to RFC-0154; no rule of its own here." }
@@ -35,7 +35,7 @@ by default, `once` only when written** (§3): the CFG consumption analysis of §
 body moves a non-`Copy` capture out is a compile error at the definition site. `many`
 satisfies a `once` slot by first-order directional matching, delivered by RFC-0152.
 
-> **Status — integrated (2026-09-01).** Closure cluster spec-integrated: reference/spec/functions.md Closures section rewritten as Legality Rules 1-16 / Dynamic Semantics 1-11; coverage.spec frontmatter added; fixtures blocked on implementation (metel-core#925). Shape: ADR-0052.
+> **Status — integrated (2026-09-01).** Closure cluster spec-integrated: reference/spec/functions.md Closures section rewritten as Legality Rules 1-25 / Dynamic Semantics 1-15; this RFC's sections anchor at Legality 8/9/20 and Dynamics 10; coverage.spec frontmatter added; fixtures blocked on implementation (metel-core#925). Shape: ADR-0052.
 
 ## Summary
 
