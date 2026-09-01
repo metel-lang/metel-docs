@@ -144,13 +144,13 @@ be used here.
 
 | Condition | Code | Message shape |
 |---|---|---|
-| non-`Copy` free variable referenced with no capture list | `T0021` | *"closure captures non-`Copy` `s`; add a capture list — `[s]` to move it in, `[&s]` / `[&var s]` to borrow, `[s.clone()]` to copy"* |
-| capture list present but not exhaustive / specifier mismatch | `T0021` | *"`s` is captured but not listed"* / *"`s` is listed `[&s]` but the body writes it"* |
-| body consumes a by-value capture, closure not written `once` | `T0022` | *"this closure moves captured `s` out; write `[s] once (…)`"* |
-| body mutates a capture / `[&var x]` capture, closure not written `var` | `T0023` | *"a `&var` capture makes this closure `var`; write `[…] var (…)`, or capture `[&x]` if the body only reads it"* |
-| `mutating` closure called through a shared `&` | `T0024` | *"a `var` closure cannot be called through a shared reference; it needs exclusive access"* |
-| inner closure borrows an enclosing closure's by-value capture | `T0025` | *"cannot borrow into an enclosing closure's environment yet; bind a copy, or wait for the borrow checker (RFC-0122)"* |
-| re-entrant call to a `mutating` closure (runtime) | `R0007` | *"re-entrant call to a mutating closure"* — a runtime error / diagnostic, not a static one; the comptime evaluator surfaces it as a compile-time diagnostic with a source span (RFC-0153 Non-Goals) |
+| non-`Copy` free variable referenced with no capture list | `T0026` | *"closure captures non-`Copy` `s`; add a capture list — `[s]` to move it in, `[&s]` / `[&var s]` to borrow, `[s.clone()]` to copy"* |
+| capture list present but not exhaustive / specifier mismatch | `T0026` | *"`s` is captured but not listed"* / *"`s` is listed `[&s]` but the body writes it"* |
+| body consumes a by-value capture, closure not written `once` | `T0027` | *"this closure moves captured `s` out; write `[s] once (…)`"* |
+| body mutates a capture / `[&var x]` capture, closure not written `var` | `T0028` | *"a `&var` capture makes this closure `var`; write `[…] var (…)`, or capture `[&x]` if the body only reads it"* |
+| `mutating` closure called through a shared `&` | `T0029` | *"a `var` closure cannot be called through a shared reference; it needs exclusive access"* |
+| inner closure borrows an enclosing closure's by-value capture | `T0030` | *"cannot borrow into an enclosing closure's environment yet; bind a copy, or wait for the borrow checker (RFC-0122)"* |
+| re-entrant call to a `mutating` closure (runtime) | `R0016` | *"re-entrant call to a mutating closure"* — a runtime error / diagnostic, not a static one; the comptime evaluator surfaces it as a compile-time diagnostic with a source span (RFC-0153 Non-Goals) |
 
 Exact numbers are a delivery detail; the constraint is a **contiguous block, distinct
 from `T0019`/`T0020`**, registered in `public/reference/error-codes.md` at integration
@@ -164,7 +164,7 @@ for the one PR:
 - **Class 1 — capture-then-still-use.** A closure literal capturing a non-`Copy` local,
   followed by a later use of that local in the same scope. Not fully grep-able (needs
   scope analysis); the practical proxy is: run the always-on checks against the corpus,
-  every `T0021`/`use-after-move` in a fixture that previously passed is a class-1 site.
+  every `T0026`/`use-after-move` in a fixture that previously passed is a class-1 site.
   Fix: `[s.clone()]` or reorder.
 - **Class 2 — mutate-a-per-call-clone.** `grep -rn` for closure bodies with an assignment
   to a free local (`ident := ` / `ident +=` / `ident.field :=` where `ident` is not a

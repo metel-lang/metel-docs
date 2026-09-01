@@ -422,6 +422,26 @@ take ownership of the value directly instead of reading it through a reference.
 
 ---
 
+### T0026–T0030 — Closure capability errors
+
+> **Planned for v0.13.0.**
+
+The closure cluster reserves this contiguous block:
+
+| Code | Meaning |
+| --- | --- |
+| T0026 | A capture list is required, incomplete, or uses an incompatible capture form. |
+| T0027 | A closure body consumes a capture but the literal/type is not `once`. |
+| T0028 | A closure body mutates a capture, or uses `[&var x]`, but is not `var`. |
+| T0029 | A `var` closure is called through a shared reference. |
+| T0030 | An inner closure borrows an enclosing closure's by-value capture. |
+
+**Fix:** use the capture list and `once` / `var` capability required by the closure
+body; T0029 requires an owned or exclusive callee, and T0030 requires restructuring
+until RFC-0122 supplies the necessary borrow analysis.
+
+---
+
 ## Runtime errors (R)
 
 ### R0001 — No `main` function defined
@@ -603,6 +623,15 @@ handle the expected case instead.
 **Fix:** this is not a bug in the interpreter — `panic` is meant for logic
 errors that should never occur in correct code. Handle the expected case with
 ordinary control flow instead of reaching the `panic` call.
+
+### R0016 — Re-entrant mutating closure call
+
+> **Planned for v0.13.0.**
+
+A `var` closure tried to call the same closure value again before its current invocation
+finished. This is an uncatchable assertion-class runtime error.
+
+**Fix:** restructure the callback/control flow so a mutating closure is not re-entered.
 
 ---
 
