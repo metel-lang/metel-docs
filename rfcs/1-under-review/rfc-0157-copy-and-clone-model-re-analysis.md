@@ -39,7 +39,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/918'
 > `call_env = captured.clone()` re-clone is also gone — a `reading` closure reads its
 > moved-in environment aggregate in place; a `mutating` one mutates it in place (RFC-0153
 > §1a); the two now share one representation. **Scope of this decision:** D5 only — the
-> mechanism lives in **RFC-0050** (`1-under-review`, #803, v0.13.0) and the amendment to
+> mechanism lives in **RFC-0050** (`2-accepted`, #803, v0.13.0) and the amendment to
 > **RFC-0134** (`2-accepted`, #269). The rest of this RFC — Axes A/B, P1–P3, the D1–D4
 > critique — stays analysis under review, and the recommendation there is unchanged: **no
 > regular-value model divergence.** See the Decision section.
@@ -458,7 +458,7 @@ corpus updated in the same PR); a disposition for RFC-0135.
   Its `call_multiplicity` axis (does *calling* a closure consume a capture) is orthogonal
   to *by-value-use* duplication; a change here would at most re-spell the `use_multiplicity`
   field RFC-0134 §4 already carries.
-- **RFC-0050 (Closure Capture Lists, `1-under-review`, #803)** — the immediate
+- **RFC-0050 (Closure Capture Lists, `2-accepted`, #803)** — the immediate
   beneficiary. RFC-0050 deliberately dropped its `move` specifier and deferred
   ownership-transfer capture to this RFC. Recommended direction 4 (D5) settles it: with
   by-value capture obeying the `let y := x` rule, RFC-0050 needs no ownership-transfer

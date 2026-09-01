@@ -869,10 +869,10 @@ blocking an unrelated release.
   drop order, #262 partial moves) are queued for v0.13.0.)*
 - RFC-0086 (Outlives-of-Bindings Sugar), `6-refused` — the only prior "borrow"-titled RFC;
   refused, and its refusal is not evidence against this one
-- RFC-0050 (Closure Capture Lists), `1-under-review` (v0.13.0) — its Resolved Questions
+- RFC-0050 (Closure Capture Lists), `2-accepted` (v0.13.0) — its Resolved Questions
   1 & 3 state the `[&var x]` / `[&x]` capture borrow-freeze rule and defer enforcement
   here; catalogued in §2e
-- RFC-0153 (Closure Mutation Axis), `1-under-review` (v0.13.0) — its §3 defers
+- RFC-0153 (Closure Mutation Axis), `2-accepted` (v0.13.0) — its §3 defers
   `mutating`-callee eligibility to this RFC's `&var self` receiver rule and carries an
   interim check for the v0.13.0 window; catalogued in §2e
 - `reports/strategy/OBJECTIVES.md` — Trigger 19, and §1's diagnostics claim

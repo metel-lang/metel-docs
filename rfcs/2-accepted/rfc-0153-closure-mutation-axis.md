@@ -2,7 +2,7 @@
 id: rfc-0153
 title: "Closure Mutation Axis"
 date: '2026-08-30'
-status: under-review
+status: accepted
 target: v0.13.0
 updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/902'
@@ -40,8 +40,9 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 >   `Type::Fun` its three multiplicity fields in one go rather than a v0.13.0→later
 >   representational change. Sequenced after RFC-0134 / RFC-0152 and landing with
 >   RFC-0157's D5 (the RFC-0006 capture-model change) as one hard change — **no edition
->   gate** (see RFC-0050's "Migration (no edition gate)"). **Still `1-under-review`:** for
->   v0.13.0 it needs review → accepted, and Open Question 1 (qualifier spelling) has to close.
+>   gate** (see RFC-0050's "Migration (no edition gate)"). *(Reached `2-accepted` on
+>   2026-09-01 — Status note above; Open Question 1's qualifier keyword closed as `mut`.
+>   This line was written while it was `1-under-review`.)*
 
 > **Deferred from RFC-0134 §4/§5.** RFC-0134 models a closure's capability as
 > independent per-operation multiplicity axes on `Type::Fun` — `call_multiplicity`
@@ -184,6 +185,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 >   gives independent counters, not shared state).
 > - **comptime reentrancy** is a compile-time *diagnostic* (source span), not a "panic".
 > - RFC-0008's "reserved" wording for `Callable` dropped (it is not reserved).
+
+> **Status — accepted (2026-09-01).** Closure mutation axis — call_mutation is the third Type::Fun field, co-lands with RFC-0134's two in v0.13.0. reading default / mut written; a mutating call is a &var self-shaped exclusive borrow (RFC-0122 §2f enforces, interim rule + runtime in-call flag for the pre-RFC-0122 window); [&var x] => mutating; move-once environment with write-back (RFC-0157 D5). Six adversarial-review passes applied; Open Question 1 (qualifier keyword = mut) closed. Co-accepts with RFC-0050.
 
 ## Summary
 
@@ -381,9 +384,11 @@ A **closure literal**, by contrast, has a single fixed prefix order, set by RFC-
 () -> T { … }`. RFC-0050 is the normative source for the literal grammar; this RFC's
 examples use that order.
 
-Spelling of the qualifier keyword itself is Open Question 1 — `mut` reuses Metel's
-mutation vocabulary (`&var`, `var` bindings) but `var fun` may read better; deciding this
-is part of this RFC. Whichever wins, both the type spelling and the literal prefix use it.
+**The qualifier keyword is `mut`** (Open Question 1 — closed 2026-09-01 with acceptance).
+It reuses Metel's existing mutation vocabulary (`&var`, `var` bindings); `var fun` was
+considered and set aside — every RFC in the cluster and RFC-0050's grammar already spell
+it `mut`, and a second mutation keyword earns nothing. Both the type spelling and the
+literal prefix use `mut`.
 
 ### 3. Call-site soundness
 
@@ -740,13 +745,16 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 
 ## Open Questions
 
-1. **Qualifier spelling** (§2): `mut fun` vs `var fun` vs something else, and
-   confirming order-insensitivity with `once`/`many` is actually implemented
-   rather than just grammar-allowed.
-2. **Interaction with higher-order variance** — a function type carrying a
+1. **Qualifier spelling** (§2). **✓ Resolved 2026-09-01 (with acceptance): the keyword is
+   `mut`.** `var fun` was set aside — the whole cluster and RFC-0050's grammar already
+   spell it `mut`, and a second mutation keyword earns nothing. Order-insensitivity of
+   `once` / `mut` as a *type* spelling is confirmed (RFC-0134 §5); the *literal* prefix is
+   the fixed `[captures] once? mut?` order (RFC-0050), which the implementation enforces.
+2. **Interaction with higher-order variance — not blocking.** A function type carrying a
    `mutation` field inside another function type's argument compounds the
    contravariant-nesting question, which is **RFC-0155** (split out of RFC-0152
-   on 2026-08-30); resolve them together.
+   on 2026-08-30). RFC-0152's first-order rule is sound on its own (nothing is unsound
+   while RFC-0155 is open), so this does not block acceptance; resolve with RFC-0155.
 3. **`Send`/`Sync` derivation. ✓ Resolved (2026-09-01, pass 4).** Deferred to the
    ordinary aggregate rule over captures (RFC-0080 owns `&T` / `&var T`); this RFC
    restates none of it. The one closure-specific fact — a `mutating` closure is `!Sync` —
@@ -765,7 +773,7 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
    RFC-0134 / RFC-0152 and the closure-model cluster; `call_mutation` co-lands with
    RFC-0134's two `Type::Fun` fields. Lands with RFC-0157's D5 as one hard change — no
    edition gate (Metel has no public users; RFC-0050's "Migration (no edition gate)").
-   What this needs to hold v0.13.0: review → accepted, and Open Question 1 closed.
+   **✓ Accepted 2026-09-01, with RFC-0050; Open Question 1 closed (`mut`).**
 
 ## References
 
@@ -782,7 +790,7 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 - **RFC-0122 (Borrow Checker)** — §3 delegates `mutating`-callee eligibility to its
   `&var self`-receiver rules; closures add no new case. The §3 interim rule is a stopgap
   for the v0.13.0 window before RFC-0122 lands and is deleted when it does.
-- **RFC-0050 (Closure Capture Lists), `1-under-review` (v0.13.0)** — as amended
+- **RFC-0050 (Closure Capture Lists), `2-accepted` (v0.13.0)** — as amended
   2026-08-31: capture list required for non-`Copy`/by-ref captures, bare `[n]` = by-value
   move. §1a's write-back applies to exactly those bare by-value captures. Sequenced with
   this RFC.
@@ -815,10 +823,14 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 
 ## Decision
 
-**Outcome:** *(pending — `1-under-review`, opened 2026-08-30, deferred from RFC-0134
-§4/§5, widened 2026-08-31 to cover encapsulated persistent state (§1a) — the case that
-makes the axis worth having. Milestone moved to v0.13.0 (#902) so the closure model ships
-complete; lands whole, with RFC-0134 / RFC-0152. Needs review → accepted and Open
-Question 1 (qualifier spelling) closed to hold v0.13.0. Other open points: `Send`/`Sync`
-ownership, `&var`-capture-without-write precision.)*
-**Target:** v0.13.0 (#902).
+**Outcome: Accepted 2026-09-01**, co-accepted with RFC-0050, as the mutation-axis half of
+the v0.13.0 closure cluster. `call_mutation` is the third `Type::Fun` field, co-landing
+with RFC-0134's two. `reading` default / `mut` written; a `mutating` call is a `&var
+self`-shaped exclusive borrow of the callee place (RFC-0122 §2f enforces statically; an
+interim static rule + a permanent runtime in-call flag cover the pre-RFC-0122 window);
+`[&var x]` ⇒ `mutating`; a move-once environment aggregate with write-back that persists
+across calls (RFC-0157 D5). Six adversarial-review passes applied. Open Question 1 closed
+— the qualifier keyword is **`mut`**. Non-blocking residuals: higher-order variance
+(RFC-0155), and the `mutating` ⇒ `!Sync` fact migrating to RFC-0096 when it models closure
+mutation.
+**Target:** v0.13.0 (#902) — one implementation PR with RFC-0134 / RFC-0152 / RFC-0050.
