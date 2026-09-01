@@ -91,22 +91,22 @@ fixed order — **capture list, then multiplicity/mutation qualifiers, then the 
 spelling**:
 
 ```
-[captures]  once? mut?  ( params ) -> ret  block          // current spelling
-[captures]  once? mut?  | params | -> ret? block          // under RFC-0154
+[captures]  once? var?  ( params ) -> ret  block          // current spelling
+[captures]  once? var?  | params | -> ret? block          // under RFC-0154
 ```
 
-e.g. `[s, &cfg] once mut (req: Request) -> Response { … }`. The capture list is
+e.g. `[s, &cfg] once var (req: Request) -> Response { … }`. The capture list is
 outermost because it describes the *environment*, which is conceptually prior to the
-callable's signature; `once` / `mut` (RFC-0134 / RFC-0153) qualify the signature; the
+callable's signature; `once` / `var` (RFC-0134 / RFC-0153) qualify the signature; the
 pipe/paren params come last. RFC-0154 settles only the `(params)` ↔ `|params|` half; the
 `[captures] qualifiers …` prefix composes ahead of whichever it picks.
 
 **Literal order is fixed; type-spelling order is not.** In a closure *literal* the two
-qualifiers appear in exactly the order `once? mut?` — `[c] mut once () -> T { … }` is a
-parse error. Order-insensitivity of `once` / `mut` (RFC-0134 §5, RFC-0153 §2) is a
-property of the *function type* spelling only: `once mut (T) -> U` and `mut once (T) -> U`
+qualifiers appear in exactly the order `once? var?` — `[c] var once () -> T { … }` is a
+parse error. Order-insensitivity of `once` / `var` (RFC-0134 §5, RFC-0153 §2) is a
+property of the *function type* spelling only: `once var (T) -> U` and `var once (T) -> U`
 denote the identical `Type::Fun`. This RFC is the normative source for the literal
-grammar; RFC-0153 §2's `mut once fun(T) -> U` line is a type, not a literal prefix.
+grammar; RFC-0153 §2's `var once fun(T) -> U` line is a type, not a literal prefix.
 
 `&var ident` captures a binding by mutable reference. `&ident` captures a binding by
 read-only reference — no copy, and the closure may not write through it. **Bare `ident`
@@ -116,13 +116,13 @@ consumes `x`. `[ident.clone()]` captures an explicit independent copy of a `Clon
 binding, leaving the outer binding usable. All specifiers may appear in one list:
 `[&var count, &config, buf, prefix.clone()]`.
 
-Bindings named with `&var` in the capture list are captured by mutable reference rather than by value. Inside the closure body they are used with ordinary read and assignment syntax — no explicit dereference required. **A `&var` capture makes the closure `mutating` (RFC-0153 §1), so the literal must be written `mut`** — a `[&var …]` closure without `mut` is a compile error (*"a `&var` capture makes this closure `mut`; write `[&var count] mut (…)`, or capture `[&count]` if the body only reads `count`"*). The `&var` capture is not itself the written signal; the `mut` keyword is.
+Bindings named with `&var` in the capture list are captured by mutable reference rather than by value. Inside the closure body they are used with ordinary read and assignment syntax — no explicit dereference required. **A `&var` capture makes the closure `mutating` (RFC-0153 §1), so the literal must be written `var`** — a `[&var …]` closure without `var` is a compile error (*"a `&var` capture makes this closure `var`; write `[&var count] var (…)`, or capture `[&count]` if the body only reads `count`"*). The `&var` capture is not itself the written signal; the `var` keyword is.
 
 ```metel
 fun main() {
     var count := 0;
 
-    let inc := [&var count] mut () -> () {
+    let inc := [&var count] var () -> () {
         count += 1;
     };
 
@@ -210,7 +210,7 @@ fun main() {
     var count := 0;
     let log_prefix := "counter: ";        // String — non-Copy
 
-    let inc := [&var count, &log_prefix] mut () -> () {   // `mut` — the body assigns `count` via a `&var` capture
+    let inc := [&var count, &log_prefix] var () -> () {   // `var` — the body assigns `count` via a `&var` capture
         count += 1;
         print(log_prefix + count.to_string());   // `print` is a module-level function, not a free variable
     };
@@ -273,7 +273,7 @@ Because stages 3–4 reason about *classified* captures, a capture-classificatio
 (stage 1) is always reported before a multiplicity or mutation failure. Stages 3 and 4 are
 independent; a body that both consumes and mutates without the qualifiers gets both
 errors, and each offers its own real alternatives — "add `once`, or stop moving the
-capture" / "add `mut`, or stop mutating it" — not a single prescribed `once mut`.
+capture" / "add `var`, or stop mutating it" — not a single prescribed `once var`.
 
 ### 5. Semantics
 
@@ -440,7 +440,7 @@ Three behaviour-change classes the corpus sweep must find, all legal under RFC-0
    `[s.clone()]` or reorder. The common case.
 2. **Mutate a per-call clone** — `let bump := () -> Int { x := x + 1; x };` returned `1`
    every call under RFC-0006 (writing a throwaway clone); under D5 + RFC-0153 it needs
-   `[x] mut` and the write-back makes it a stateful counter. A semantic change, reviewed
+   `[x] var` and the write-back makes it a stateful counter. A semantic change, reviewed
    by hand — `[x.clone()]` per call if the reset was the intent.
 3. **`&var` capture used read-only** — a `[&var x]` closure whose body only reads `x` is
    now `mutating` / `!Sync` / non-widening; switch it to `[&x]`.
@@ -498,7 +498,7 @@ aggregate, held owned-and-mutable rather than re-cloned. Full runtime shape, the
 - RFC-0065: Allocator Ergonomics (`2-accepted`, retitled from "Region Ergonomics") — no
   longer affects this RFC's bracket syntax.
 - RFC-0067a: Reference Types (`4-implemented`, split from RFC-0067 2026-07-07) — supersedes
-  RFC-0043's `*mut T`/`*T` with `&var T`/`&T`; the only prerequisite for this RFC.
+  RFC-0043's `*var T`/`*T` with `&var T`/`&T`; the only prerequisite for this RFC.
 - RFC-0067: Lifetime Anchors (`1-under-review`) — adds
   `&r var T`/`&r T` on top of RFC-0067a — a residual, not a blocker.
 - `reports/implementation/roadmap-2026-07-07.md` — phased sequencing this RFC fits into.
@@ -512,7 +512,7 @@ aggregate, held owned-and-mutable rather than re-cloned. Full runtime shape, the
 v0.13.0 closure cluster. Capture semantics are settled: move-by-default (RFC-0157 D5), a
 capture list required the moment a non-`Copy` move or an `&`/`&var` capture occurs, bare
 `[s]` = move for non-`Copy`, `[s.clone()]` for an explicit copy, `[&var x]` ⇒ `mutating`
-(`mut` written). All seven Resolved Questions closed. `[]` syntax carries RQ4's recorded
+(`var` written). All seven Resolved Questions closed. `[]` syntax carries RQ4's recorded
 RFC-0159 contention (fallback: `capture(...)` / `|caps|`) — not a blocker; RFC-0159 defers
 to this RFC. Interim borrow-rule enforcement and the pre-RFC-0122 window are catalogued in
 RFC-0122 §2e/§2f.

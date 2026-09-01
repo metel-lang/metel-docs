@@ -170,7 +170,7 @@ the callee — is `T0003`.
 
 ## Closures
 
-Anonymous functions are [written with the `[captures]? once? mut? (params) -> ret? { body }` form](#spec.functions.closures.legality-1):
+Anonymous functions are [written with the `[captures]? once? var? (params) -> ret? { body }` form](#spec.functions.closures.legality-1):
 
 ```metel
 fun main() -> i64 {
@@ -180,10 +180,10 @@ fun main() -> i64 {
 ```
 
 > **Planned for v0.13.0 (RFC-0050 / RFC-0134 / RFC-0152 / RFC-0153 / RFC-0157).** The
-> capture list, the `once` / `mut` qualifiers, move-by-default capture, the per-call
+> capture list, the `once` / `var` qualifiers, move-by-default capture, the per-call
 > re-clone removal, and the mutation axis are specified here but not yet in the
 > interpreter. Until they land, closures capture by value (deep clone), no capture list is
-> required, and there is no `once` / `mut` verification. The `coverage` entries for the
+> required, and there is no `once` / `var` verification. The `coverage` entries for the
 > new rules are `blocked` on that implementation.
 
 ### Capture lists
@@ -197,7 +197,7 @@ fun main() {
     let cfg := Config::load();          // non-Copy, read-only in the closure
     let name := "log";                  // non-Copy, moved in
 
-    let handler := [&var count, &cfg, name] mut (req: Request) -> Response {
+    let handler := [&var count, &cfg, name] var (req: Request) -> Response {
         count += 1;
         route(req, cfg, name)
     };
@@ -240,27 +240,27 @@ types:
   moves a capture out (returns it, or passes it by value to something that takes
   ownership). [Omitting it when the body consumes a capture is an error](#spec.functions.closures.legality-8);
   the default is *many* (reusable).
-- **`mut`** — invoking the closure mutates a capture. Written when the body assigns to a
+- **`var`** — invoking the closure mutates a capture. Written when the body assigns to a
   by-value capture, takes `&var` of one, or calls a `&var self` method on one, and
   [always when the closure captures `[&var x]`](#spec.functions.closures.legality-25),
   regardless of what the body does through it. The default is *reading*.
 
 The two qualifiers are [order-insensitive as a *type* spelling](#spec.functions.closures.legality-24);
-in a closure *literal* the [fixed order is `[captures] once? mut? (params)`](#spec.functions.closures.legality-23).
-An unqualified literal in a typed position takes [its `once` / `mut` from the expected
+in a closure *literal* the [fixed order is `[captures] once? var? (params)`](#spec.functions.closures.legality-23).
+An unqualified literal in a typed position takes [its `once` / `var` from the expected
 type](#spec.functions.closures.legality-18) rather than defaulting and then failing.
 Verification runs in a [fixed stage order — capture classification, then `use_multiplicity`,
-then `once`, then `mut`](#spec.functions.closures.legality-19); the two axes are checked
+then `once`, then `var`](#spec.functions.closures.legality-19); the two axes are checked
 independently.
 
 [A function value may be used where a *less permissive* multiplicity is
 expected](#spec.functions.closures.legality-9) — a *many* value satisfies a `once` slot, a
-*reading* value satisfies a `mut` slot, a `Copy` value satisfies a non-`Copy` slot — at
+*reading* value satisfies a `var` slot, a `Copy` value satisfies a non-`Copy` slot — at
 first-order argument, ascription, field-init, and return positions. The reverse is
 rejected. A conditional's type is the least-permissive of its arms, each arm widening to
 it. [Widening changes only the static type](#spec.functions.closures.dynamics-12): a
-widened `reading` value keeps its plain call behaviour, and a `mut`-typed field that holds
-one is [thereafter observed `mut`, with no re-narrowing](#spec.functions.closures.dynamics-14).
+widened `reading` value keeps its plain call behaviour, and a `var`-typed field that holds
+one is [thereafter observed `var`, with no re-narrowing](#spec.functions.closures.dynamics-14).
 
 Whether a closure value is [`Copy` is exactly whether every capture is
 `Copy`](#spec.functions.closures.legality-20); a `Copy` closure is necessarily *many*.
@@ -269,7 +269,7 @@ Whether a closure value is [`Copy` is exactly whether every capture is
 duration](#spec.functions.closures.legality-10): the callee must be an owned binding, an
 owned temporary, an exclusive projection off one, or a `&var` parameter — not a
 shared-`&` callee. [Overlapping and reentrant `mutating` calls on the same closure value
-are rejected](#spec.functions.closures.dynamics-9). If a `mut` call exits early via `?` or
+are rejected](#spec.functions.closures.dynamics-9). If a `var` call exits early via `?` or
 `return`, [its partial mutations persist and the closure stays
 callable](#spec.functions.closures.dynamics-13); a `panic` is uncatchable and ends the
 process, so no post-exit state is observable.
@@ -281,9 +281,9 @@ the outer binding; a `Copy` binding is copied; the captured environment is built
 not re-cloned per call](#spec.functions.closures.dynamics-5).
 
 ```metel
-fun make_counter() -> mut () -> i64 {
+fun make_counter() -> var () -> i64 {
     let n := 0;
-    [n] mut () -> i64 { n += 1; n }   // `n` moved in; writes persist
+    [n] var () -> i64 { n += 1; n }   // `n` moved in; writes persist
 }
 
 fun main() -> i64 {
@@ -313,7 +313,7 @@ captures](#spec.functions.closures.legality-14); a `mutating` closure is not `Sy
 ##### Legality Rule {#spec.functions.closures.legality-1}
 
 An anonymous function is written as an optional capture list `[…]`, optional `once` and/or
-`mut` qualifiers, a parenthesized parameter list, `->`, an optional return type
+`var` qualifiers, a parenthesized parameter list, `->`, an optional return type
 annotation, and a body block. It may appear wherever an expression is accepted.
 
 <!-- rfc.py:origins:start -->
@@ -377,14 +377,14 @@ order rules are [legality-24](#spec.functions.closures.legality-24).
 ##### Legality Rule {#spec.functions.closures.legality-23}
 
 In a closure *literal* the prefixes appear in one fixed order: capture list, then `once`,
-then `mut`, then the parameter list. `mut once`, a qualifier before the capture list, and
+then `var`, then the parameter list. `var once`, a qualifier before the capture list, and
 a capture list placed after a qualifier are parse errors — even though the corresponding
 function *type* spelling is order-insensitive ([legality-24](#spec.functions.closures.legality-24)).
 
 ##### Legality Rule {#spec.functions.closures.legality-24}
 
-As a function *type* spelling the `once` and `mut` qualifiers are order-insensitive:
-`once mut fun(T) -> U` and `mut once fun(T) -> U` denote the identical `Type::Fun`. The
+As a function *type* spelling the `once` and `var` qualifiers are order-insensitive:
+`once var fun(T) -> U` and `var once fun(T) -> U` denote the identical `Type::Fun`. The
 fixed order of [legality-23](#spec.functions.closures.legality-23) is a grammar rule for
 closure *literals* only.
 
@@ -425,11 +425,11 @@ capture).
 
 ##### Legality Rule {#spec.functions.closures.legality-25}
 
-`mut` is a written qualifier, verified against the body at the closure's creation site;
+`var` is a written qualifier, verified against the body at the closure's creation site;
 the default is *reading*. A closure whose body assigns to a by-value capture, takes `&var`
 of one, or calls a `&var self` method on one — and always a closure that captures any
-binding `[&var …]`, regardless of what the body does through it — written without `mut`,
-is a compile error naming the offending capture and the fix (add `mut`, stop the mutation,
+binding `[&var …]`, regardless of what the body does through it — written without `var`,
+is a compile error naming the offending capture and the fix (add `var`, stop the mutation,
 or capture `[&x]` instead).
 
 <!-- rfc.py:origins:start -->
@@ -440,7 +440,7 @@ or capture `[&x]` instead).
 
 A function value of call multiplicity `m`, mutation `u`, and `Copy`-ness `c` satisfies a
 slot requiring `m'`, `u'`, `c'` when `m` is at least as permissive as `m'` (*many* ≥
-`once`), `u` at least as permissive as `u'` (*reading* ≥ `mut`), and `c` at least as
+`once`), `u` at least as permissive as `u'` (*reading* ≥ `var`), and `c` at least as
 permissive as `c'` (`Copy` ≥ non-`Copy`). The reverse — a less permissive value into a
 more permissive slot — is rejected.
 
@@ -533,7 +533,7 @@ consumes nothing.
 
 An unqualified closure literal in a position with an expected function type — a `let` or
 parameter ascription, a struct-field initializer, a return, or the tail expression of a
-typed block — is checked against that type's `once` / `mut` qualifiers rather than taking
+typed block — is checked against that type's `once` / `var` qualifiers rather than taking
 the *many* / *reading* default and then failing. When the expected type does not fix a
 qualifier (an unresolved inference variable, or a bare generic parameter), the literal
 takes the default and [legality-9](#spec.functions.closures.legality-9) widening resolves
@@ -545,7 +545,7 @@ A closure literal is resolved in a fixed stage order: (1) capture classification
 free variables the body references, each one's `Copy`-ness, whether a list is required,
 and, when a list is present, exhaustiveness and specifier-matches-use; (2)
 `use_multiplicity` ([legality-20](#spec.functions.closures.legality-20)); (3) `once`
-verification ([legality-8](#spec.functions.closures.legality-8)); (4) `mut` verification
+verification ([legality-8](#spec.functions.closures.legality-8)); (4) `var` verification
 ([legality-25](#spec.functions.closures.legality-25)). The first failing stage is the
 reported error; later stages are suppressed for that closure. Stages 3 and 4 are
 independent — a body that both consumes and mutates without the qualifiers is reported
@@ -713,7 +713,7 @@ environment drops only its still-owned captures.
 
 Multiplicity widening ([legality-9](#spec.functions.closures.legality-9)) changes only the
 static type at the slot, never the closure value's runtime behaviour. A `reading` closure
-value widened into a `mut`-typed slot is still invoked by the plain, non-exclusive call
+value widened into a `var`-typed slot is still invoked by the plain, non-exclusive call
 path and consults no in-call flag, because call lowering branches on the closure value's
 own mutation axis, not on the slot type. A `many` value in a `once` slot is likewise not
 consumed by the call.
@@ -725,20 +725,20 @@ can observe: a `?`-propagated `Err` or an early `return` in the body, travelling
 ordinary signal through normal call-frame returns. A `panic` is not one of these — it is
 hard, uncatchable, and terminates the process ([runtime.md](runtime.md#spec.runtime.panics.dynamics-1)),
 so no later program point can observe the closure's post-exit state. On an observable early
-exit from a plain `mut` (not `once`) call, the mutations that already ran are visible in
+exit from a plain `var` (not `once`) call, the mutations that already ran are visible in
 the environment, the exclusive borrow and the in-call flag are released as the frame
 returns, and the closure stays callable in a valid-but-partial state — as a `&var self`
 method that returned early mid-mutation leaves its receiver. There is no rollback. A `once`
-/ `once mut` closure was already consumed at the call expression
+/ `once var` closure was already consumed at the call expression
 ([dynamics-10](#spec.functions.closures.dynamics-10)), so it is a moved value however the
 body exited; its environment's still-owned fields are still dropped when the value goes out
 of scope.
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-14}
 
-Storing a `reading` closure into a `mut`-typed field, or returning it where a `mut`
-function type is named, yields a value thereafter *observed* as `mut`: every later read of
-that field or result is a `mut` value that callers must invoke under exclusive access
+Storing a `reading` closure into a `var`-typed field, or returning it where a `var`
+function type is named, yields a value thereafter *observed* as `var`: every later read of
+that field or result is a `var` value that callers must invoke under exclusive access
 ([legality-10](#spec.functions.closures.legality-10)), even though the underlying closure
 never mutates. The coercion is one-way — there is no automatic re-narrowing back to
 `reading`.
