@@ -9,8 +9,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 coverage:
   "1": { spec: "spec.functions.closures.legality-5" }
   "2": { spec: "spec.functions.closures.legality-6" }
-  "3": { spec: "spec.functions.closures.legality-11" }
-  "4": { spec: "spec.functions.closures.legality-8" }
+  "3": { spec: "spec.functions.closures.legality-22" }
+  "4": { spec: "spec.functions.closures.legality-19" }
   "5": { spec: "spec.functions.closures.legality-13" }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/925'
 impl_status: not-started
@@ -22,7 +22,7 @@ impl_status: not-started
 > Enforcement of the borrow-shaped Resolved Questions is RFC-0122's (§2e/§2f); the
 > pre-RFC-0122 interim window is catalogued there. Implementation shape: **ADR-0052**.
 
-> **Status — integrated (2026-09-01).** Closure cluster spec-integrated (Legality 5/6/8/11/13); coverage.spec frontmatter added; fixtures blocked on metel-core#925. Shape: ADR-0052.
+> **Status — integrated (2026-09-01).** Closure cluster spec-integrated (Legality 5/6/13/19/22, with 11/17/21/23 as sub-rules); coverage.spec frontmatter added; fixtures blocked on metel-core#925. Shape: ADR-0052.
 
 ## Summary
 

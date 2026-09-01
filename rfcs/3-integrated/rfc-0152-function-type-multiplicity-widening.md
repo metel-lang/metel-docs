@@ -28,7 +28,7 @@ impl_status: not-started
 > an exact match — a sound under-approximation.
 
 
-> **Status — integrated (2026-09-01).** Closure cluster spec-integrated (Legality 9/15/16); coverage.spec frontmatter added; fixtures blocked on metel-core#925. Shape: ADR-0052.
+> **Status — integrated (2026-09-01).** Closure cluster spec-integrated (Legality 9/15/16; §2's precision-loss and §3's expected-type interaction also anchor at Dynamics 12/14 and Legality 18); coverage.spec frontmatter added; fixtures blocked on metel-core#925. Shape: ADR-0052.
 
 ## Summary
 
