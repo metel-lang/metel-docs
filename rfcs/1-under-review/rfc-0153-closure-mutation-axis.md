@@ -326,7 +326,8 @@ window — like RFC-0050's `[&var x]` borrow-freeze, a reentrant `mutating` call
 ill-formed by this section but the interpreter (single-threaded, sequential) will run it;
 the fixture corpus must not rely on that (see RFC-0050 "Migration"). When RFC-0122 lands,
 the interim rule is deleted and the `&var self` receiver rule subsumes it — strictly
-more precise, so nothing accepted by the interim rule is later rejected.
+more precise, so nothing accepted by the interim rule is later rejected. **RFC-0122 §2e
+catalogues this rule** alongside the other interim borrow-shaped stopgaps it tears down.
 
 **A dynamic alternative, if it is ever needed.** If `mutating` closures turn out to want
 free use through shared structures (a `List<mut () -> ()>` called during iteration, a
