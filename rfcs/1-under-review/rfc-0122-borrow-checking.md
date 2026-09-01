@@ -670,18 +670,22 @@ rule is stated in RFC-0153 §3 and matched by §2f below. Two v0.13.0 stopgaps:
   landing.
 - **Runtime in-call flag (not a stopgap — permanent).** Every `mutating` closure value
   carries a one-bit "in-call" flag, set on entry to a `mutating` call, checked on entry,
-  cleared on exit/unwind; a reentrant call panics. This *enforces* the no-reentrancy
-  property in v0.13.0 (so reentrancy is **not** in the "accepted-but-ill-formed" gap), and
-  it is **kept** after this RFC lands as defence-in-depth alongside the static check.
+  cleared on exit/unwind; a reentrant call panics. It enforces **same-closure-value**
+  reentrancy only — that case is **not** in the "accepted-but-ill-formed" gap. It does
+  **not** catch *aliased-capture* reentrancy (two distinct `mutating` closures, or a
+  `Copy` closure and its copy, each holding `[&var x]` to one `x`, one calling the other
+  mid-call) — that is **in the gap**, the same unenforced `[&var x]` freeze as item 2,
+  and this RFC closes it statically (§2f). The flag is **kept** after this RFC lands as
+  defence-in-depth.
 
-### 4. `mutating` closure is `!Sync` — RFC-0153 §3 *(teardown owner: RFC-0096, not this RFC)*
+### 4. `mutating` closure is `!Sync` — RFC-0153 §3 *(rule owned by RFC-0153 now; migrates to RFC-0096)*
 
 A `mutating` closure value is not `Sync` (two fibers each needing the exclusive per-call
-borrow). RFC-0153 defers all other closure `Send`/`Sync` to the aggregate rule over
-captures + RFC-0080's reference rules; this one fact is closure-specific and stated
-interim **pending RFC-0096** (auto-impl marker aspects), which is where marker-aspect
-derivation for closures belongs. Listed here so the fact has a home; its teardown is
-RFC-0096's, not `--borrow-check`'s.
+borrow). RFC-0153 defers all *other* closure `Send`/`Sync` to the aggregate rule over
+captures + RFC-0080's reference rules; this one fact is closure-specific. **RFC-0153 §3 is
+its normative source today** — RFC-0096 does not yet model closure mutation. When RFC-0096
+grows a closure-mutation hook the rule migrates there; listed here so the migration is
+tracked, not to assert RFC-0096 already owns it. Not a `--borrow-check` teardown.
 
 ### 5. Returned closure capturing a method receiver — RFC-0050 *(teardown owner: RFC-0067)*
 
@@ -705,8 +709,14 @@ it; implementing anchors does. See §2d.
 cluster (RFC-0050, RFC-0153) states the rules it needs in its own text and cites this RFC
 for enforcement; this section carries the matching clauses so the two do not drift, and
 closes §2b.4 for the cases the cluster exercises. General closure borrow checking beyond
-these (borrows that flow through nested closures, closures stored in reference-typed
-fields — barred by §2d anyway) remains future work.*
+these — a borrow that flows *through* a returned closure (needs anchors, §2d bars the
+struct-field route anyway), and **an inner closure that borrows (`[&x]` / `[&var x]`) a
+by-value capture of an enclosing closure** — remains future work. That last case is a
+**local reborrow into the enclosing closure's environment aggregate**: sound iff the inner
+closure is strictly local to one activation and dies before the outer body touches the
+capture again (an NLL judgement), unsound if it escapes. RFC-0050 **rejects it outright in
+the v0.13.0 interim** (its "Nested closures" rules); this RFC's implementation replaces
+that rejection with the NLL local-reborrow check.*
 
 1. **A by-value capture is a move at closure creation** (RFC-0157 D5 / RFC-0050). The
    move checker (RFC-0071) already treats a captured non-`Copy` free root as moved at the
@@ -728,8 +738,9 @@ fields — barred by §2d anyway) remains future work.*
    projection off one, or a `&var` parameter — **not** a shared-`&` callee. Across the
    call no other read, write, `&`, or `&var` of the place may be live, and two `mutating`
    calls on one place cannot overlap. A reentrant `mutating` call re-enters the borrow and
-   is rejected (`T0020` "already borrowed exclusively"); in v0.13.0 the runtime in-call
-   flag (§2e item 3) also catches it.
+   is rejected (`T0020` "already borrowed exclusively") — this covers **both** the
+   same-closure-value case and the aliased-`[&var x]`-capture case that v0.13.0's runtime
+   in-call flag (§2e item 3) can only catch for the former.
 
 4. **A `once` call consumes the callee place** at the call expression (RFC-0134 §2); it is
    a move, checked by the move checker, and composes with (3) for `once mut` — the move

@@ -379,6 +379,17 @@ local. Rules:
   the outer body runs and constructs the inner closure, whether or not the inner closure
   is ever called. `[&s]` / `[&var s]` in the inner does not affect the outer's
   multiplicity (it only borrows).
+- **An inner `[&s]` / `[&var s]` that borrows an outer *by-value* capture is an interim
+  rejection in v0.13.0** — *"cannot borrow into an enclosing closure's environment yet;
+  bind a copy, or wait for the borrow checker (RFC-0122)."* The inner closure would hold a
+  reference into the outer closure's environment aggregate, live for the inner's whole
+  lifetime; whether that is a sound local reborrow (the inner is strictly local to one
+  activation and dies before the outer touches `s` again) or an escaping alias is exactly
+  the NLL question RFC-0122 answers and this RFC cannot. Conservative rejection now; lifted
+  to a checked local-reborrow rule when RFC-0122 lands (RFC-0122 §2f notes this as its
+  one closure gap, §2e catalogues it). Borrowing an outer `[&s]` / `[&var s]` *reference*
+  capture (not a by-value one) by the same reference kind is fine — the reference is
+  copied/reborrowed by the ordinary rule, nothing points into the outer aggregate.
 
 ### Checking order
 
@@ -622,8 +633,8 @@ multi-step rewrite the review noted (`() -> String { s }` → add `[s]` → the 
 it → add `once`), applied by hand to the corpus, not shipped as a user tool. Nothing about
 `--edition` is a deliverable here.
 
-**Two behaviour-change classes the sweep must find** (both legal under RFC-0006, both
-change meaning under D5):
+**Three behaviour-change classes the sweep must find** (all legal under RFC-0006, all
+change meaning or type under D5 + RFC-0153):
 
 1. **Capture-then-still-use** — `let f := () -> Int { len(s) }; let n := s.len();` was fine
    (`f` held a clone). Now `[s]` moves `s`, so the later `s.len()` is a use-after-move;
@@ -636,6 +647,13 @@ change meaning under D5):
    `1`, `2`, `3`. The behaviour is different, not just the syntax; any fixture relying on
    the old "resets every call" reading has to be rewritten to capture `[x.clone()]` per
    call if that was actually the intent, or accept the counter semantics.
+3. **`&var` capture used read-only** — a closure that captured `&var x` for capability or
+   habit but whose body only *reads* `x`. Under RFC-0153's conservative rule that closure
+   is now `mutating` (must be written `[&var x] mut (…)`), is `!Sync`, must be called
+   through `&var self`, and **cannot be passed to a `reading` (`() -> T`) callback slot**.
+   The fix is `[&x]` (shared capture) — which stays `reading` and widens normally. The
+   sweep must find every `&var`-capturing closure whose body has no write / `&var`-use of
+   that capture and switch it to `[&x]`.
 
 **The corpus sweep must exclude programs that rely on the not-yet-enforced borrow-freeze
 (Resolved Question 1).** RFC-0122 is not part of v0.13.0, so the interpreter will *run*
