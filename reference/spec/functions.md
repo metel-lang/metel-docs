@@ -287,7 +287,7 @@ fun make_counter() -> mut () -> i64 {
 }
 
 fun main() -> i64 {
-    let c := make_counter();   // an owned binding is enough for a `mutating` call (legality-10)
+    var c := make_counter();   // `var`: a `mutating` call is a `&var self`-shaped borrow of `c` (legality-10)
     c();
     c()   // returns 2 — state lives in `c`'s environment
 }
@@ -473,8 +473,10 @@ arm is the ordinary type mismatch.
 ##### Legality Rule {#spec.functions.closures.legality-10}
 
 A `mutating` call `e(args)` requires `e` to denote a place the caller can exclusively
-borrow for the call's duration: an owned binding, an owned temporary, an exclusive
-(`&var` / owning) projection off one, or a `&var` parameter. A shared-`&` callee — a
+borrow for the call's duration — the ordinary `&var self` receiver rule: an owned `var`
+binding, an owned temporary, an exclusive (`&var` / owning) projection off one, or a
+`&var` parameter. An owned but non-`var` (`let`) binding is **not** eligible, exactly as a
+`&var self` struct method may not be called on a `let` binding. A shared-`&` callee — a
 `&Self` / `&self` receiver, a place reached through a `&` step, or an `&`-captured closure
 — is a compile error.
 

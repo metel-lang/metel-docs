@@ -145,7 +145,7 @@ lives there for the closure's lifetime. On that base:
     inline aggregate is **bit-copied** with the rest of the closure value and the copies
     then diverge, exactly as copying a struct with a counter field would. This is a
     *trivial* copy (no allocation, no indirection); a `[n] mut` closure with `n: i64` is
-    `Copy` and `let d := c;` gives `d` an independent counter. Any representation that
+    `Copy` and `var d := c;` gives `d` an independent counter. Any representation that
     would require non-trivial copy (a heap cell, an `Rc`) is by construction non-`Copy` —
     it necessarily captured a non-`Copy` value — so the "two `Copy` owners aliasing one
     mutable backing" state cannot arise.
@@ -254,10 +254,15 @@ carries a matching clause so the two do not drift.
 `e(args)` requires `e` to denote a place the caller can exclusively borrow for the call's
 dynamic extent:
 
-- an **owned binding** (`c`) — eligible;
+- an **owned `var` binding** (`var c := …`) — eligible. An owned *non-`var`* (`let`)
+  binding is **not**: a `mutating` call is a `&var self`-shaped borrow of the callee, and
+  Metel's existing rule already forbids a `&var self` method call (and `&var x`) on a
+  `let` binding — `var` is the readability signal that the value at this name can change
+  between statements, and a `mutating` call changes it. `var` on the binding is required
+  for the same reason it is on a struct whose `&var self` method you call in a loop.
 - an **owned temporary** (`make_counter()()`, a block-expression result `({ f })()`, any
   other rvalue) — eligible: a temporary has exactly one owner and is unreachable after the
-  enclosing statement, so it is trivially exclusive.
+  enclosing statement, so it is trivially exclusive, and there is no binding to mark `var`.
 - an **exclusive projection** off an owned or `&var` base — `b.handler`, `arr[i]`, `*p` —
   where **every** step of the path is reached through owning or `&var` access; eligible;
 - a **`&var` parameter** or a place reached through one by exclusive projection —
@@ -437,11 +442,11 @@ fun make_counter() -> mut () -> i64 {
 }
 
 fun main() {
-    let c := make_counter();   // an owned binding is enough for a `mutating` call (§3)
+    var c := make_counter();   // `var`: each `c()` is a `&var self`-shaped borrow of `c` (§3)
     assert(c() == 1);
     assert(c() == 2);   // state lives inside `c`'s environment cell
     // `c` is `many mut`. Here `n: i64` is Copy, so `c` is also Copy (§3, RFC-0134 §1):
-    // `let d := c;` gives an independent counter. Calls still can't overlap.
+    // `var d := c;` gives an independent counter. Calls still can't overlap.
 }
 ```
 
@@ -474,7 +479,7 @@ handle-aliasing behavior is introduced. Illustrative sketch only, not a code sam
 ```
 // once Rc / RFC-0158 land:
 let rc := Rc::new(Node { … });
-let bump := [rc] mut () -> Rc<Node> { rc := rc.share(); rc };
+var bump := [rc] mut () -> Rc<Node> { rc := rc.share(); rc };
 ```
 
 This is unrelated to the "`.share()` **on a closure value**" non-goal below — that
