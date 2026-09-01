@@ -60,12 +60,13 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 >   §1 and was too strong. `use_multiplicity` stays exactly RFC-0134 §1 (Copy iff every
 >   capture is Copy); `call_mutation` is fully independent. All 2×2×2 field combinations
 >   are well-formed (§4). `&T` is `Copy`, `&var T` is not.
-> - **§3 is now a precise place rule** (pass 2 corrected pass 1's over-reach): a `mutating`
->   call is an **exclusive borrow of the callee place for the call's duration**, `&var
->   self`-shaped — it does **not** consume the closure. The callee must be an lvalue place
->   (binding or a projection off one via exclusive access); a temporary (`make_counter()()`)
->   or a shared-`&` callee is a compile error. `once mut` composes the axes independently —
->   the `once` axis consumes at the call expression, the `mut` borrow is then moot.
+> - **§3: a `mutating` call is `&var self`-shaped** (pass 2 corrected pass 1's
+>   consumes-and-rebinds over-reach) — it needs *exclusive* access to the closure value
+>   for the call's duration and does **not** consume it. *(Pass 2 added "the callee must be
+>   an lvalue place; a temporary is a compile error" — the temporary half was wrong and is
+>   withdrawn by the 2026-09-01 follow-up below; a temporary is trivially exclusive.)*
+>   `once mut` composes the axes independently — the `once` axis consumes at the call
+>   expression, the `mut` borrow is then moot.
 > - **§1a's early-exit rule** split by axis: plain `mut` + panic → callable, partial
 >   mutation visible; `once`/`once mut` + panic → moved value (RFC-0134 §2), no
 >   "still callable" question.
@@ -100,6 +101,17 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 >   same interpreter and the same axis semantics).
 > - **`mut` env cell = the RFC-0050 capture aggregate**, not a wrapper around it — escape
 >   / brand checking sees the same field types (§1a, and RFC-0050 Implementation Guidance).
+> - **§3 reframed (2026-09-01, follow-up) — no closure-specific place calculus.** The
+>   pass-2 "callee must be an lvalue place; a temporary is a compile error" was two things
+>   at once: a real soundness property (the call needs *exclusive* access to the closure
+>   value) and a mis-statement (a temporary *is* exclusive — one owner, gone after the
+>   statement). §3 now says: **`mutating` makes the synthesized `call` take `&var self`**,
+>   and the callee-exclusivity rules are **RFC-0122's `&var self` receiver rules**, not a
+>   new calculus this RFC invents — closures add no case the borrow checker doesn't
+>   already handle for `&var self` methods (temporaries, projections, auto-deref, `&var`
+>   parameters, `dyn`). A **minimal interim rule** covers the pre-RFC-0122 window: reject
+>   only a **shared-`&` callee**; owned bindings, owned temporaries, exclusive projections,
+>   and `&var` parameters all pass.
 
 > **D5 decided, 2026-09-01 (language owner) — the closure-capture default is `move`.**
 > RFC-0157's D5 is no longer a recommendation. It removes RFC-0006's per-call
@@ -241,10 +253,10 @@ lives there for the closure's lifetime. On that base:
   public users, so the `mut` keyword, the write-back semantics, and the fixture corpus all
   move together (see RFC-0050's "Migration (no edition gate)").
 
-§3's exclusive-borrow rule is what keeps the write-back sound: for a plain `mut` closure
-the place is exclusively borrowed for each call's duration, so no two calls — reentrant
-included — are ever mid-mutation on the same cell at once; for `once mut` the `once`
-consumption makes a second call impossible outright.
+§3's `&var self` receiver is what keeps the write-back sound: for a plain `mut` closure
+the closure value is exclusively borrowed for each call's duration, so no two calls —
+reentrant included — are ever mid-mutation on the same aggregate at once; for `once mut`
+the `once` consumption makes a second call impossible outright.
 
 ### 2. Qualifier
 
@@ -275,36 +287,55 @@ is part of this RFC. Whichever wins, both the type spelling and the literal pref
 
 ### 3. Call-site soundness
 
-- **A `mutating` call is an exclusive borrow of the callee place for the call's
-  duration.** Stated precisely (this replaces the earlier "consumes-and-rebinds"
-  wording, which over-reached):
+**A `mutating` closure's synthesized `call` takes `&var self`.** That is the whole rule.
+A `mutating` call needs *exclusive* access to the closure value for the call's duration —
+because §1a mutates the environment aggregate in place, and two overlapping or reentrant
+calls would alias `&var` to that aggregate — and "exclusive access to a receiver for a
+call's duration" is precisely what a `&var self` method already means. So `call_mutation
+= mutating` selects the `&var self` receiver for `call`, and **everything else is
+inherited, not invented here**:
 
-  1. **The callee must be an lvalue place** — a binding, or a projection off one
-     (`b.handler`, `arr[i]`, `*p`) — whose base is reached through exclusive (`&var` /
-     owning) access all the way down. Calling a `mutating` closure that is a **temporary**
-     (`make_counter()()`, a call result, a literal) is a compile error: *"a `mut` closure
-     must be called through a place — bind it (`let mut c := …; c()`)."* Calling one
-     through a shared `&` — a `&Self` receiver, `(&b).handler()`, an `&`-captured closure
-     — is a compile error for the same reason.
-  2. **For the call's dynamic extent the place is exclusively borrowed**, exactly as a
-     `&var self` method borrows its receiver. So: two `mutating` calls on the same place
-     cannot overlap; a reentrant `mutating` call reached from inside the first call is
-     rejected (`T0003`-shaped "already exclusively borrowed"); no other read or write of
-     the place, and no `&`/`&var` to it, may be live across the call.
-  3. **The call does not consume the place** (unlike a `once` call). After it returns the
-     closure is still bound, still callable, with its environment in whatever state §1a's
-     write-back left it. `mut` is `&var self`-shaped, not `self`-shaped.
+- **Callee eligibility is RFC-0122's `&var self` rule**, unchanged. The borrow checker
+  already decides, for every `&var self` method call, whether the receiver expression can
+  be exclusively borrowed: an owned binding — yes; an owned **temporary**
+  (`make_counter()()`) — yes, it has exactly one owner and is unreachable after the
+  statement; an exclusive (`&var` / owning) **projection** off one (`b.handler`,
+  `arr[i]`, `*p`) — yes; a `&var` **parameter** — yes; a **shared-`&`** receiver (`&Self`,
+  `(&b).handler()`, an `&`-captured closure) — **no**. A `mutating` `call` gets the same
+  answers with no closure-specific `place(expr)` classification to design. This RFC's
+  pass-2 text said "the callee must be an lvalue place; a temporary is a compile error" —
+  the second half was wrong (a temporary is trivially exclusive) and is withdrawn.
+- **Overlap and reentrancy** fall out of the same borrow: two `mutating` calls on one
+  closure value cannot be live at once, and a reentrant `mutating` call reached from
+  inside the first is rejected (`T0003`-shaped "already exclusively borrowed"). No other
+  read, write, or `&`/`&var` of the closure value may be live across the call.
+- **The call does not consume the closure** (unlike a `once` call). After it returns the
+  closure is still bound and still callable, its environment in whatever state §1a left
+  it. `mut` is `&var self`-shaped, not `self`-shaped.
+- **`once mut`** composes the two axes independently: the `once` axis consumes the callee
+  *at the call expression, before the body runs* (RFC-0134 §2), so any later use is a
+  moved-value error regardless of the body; the `mut` exclusive borrow is then moot —
+  there is no valid second call for it to guard.
 
-  - **`once mut` composes the two axes independently.** The `once` axis consumes the
-    callee place *at the call expression, before the body runs* (RFC-0134 §2). The `mut`
-    axis's exclusive borrow is then moot — there is no valid second call for it to guard.
-    So a `once mut` call: place consumed at the call expression → any later use of the
-    closure is a moved-value error, regardless of what the body did or whether it
-    panicked (see §1a "Early exit").
-  - **On `self`.** Metel closures have no written `self`; "`&var self`" is the borrow
-    shape, not literal syntax. Point 1's place/exclusivity check is a small addition to
-    the move checker (it already tracks exclusive borrows for `&var self` methods), not a
-    new receiver-kind concept for callables.
+**Interim rule for the pre-RFC-0122 window.** v0.13.0 ships before the borrow checker, so
+for one release the interpreter runs `mutating` calls with no `&var self`-receiver
+analysis behind them. Until RFC-0122 lands, the front-end enforces the cheap sound
+subset: **reject a shared-`&` callee**; accept an owned binding, an owned temporary, an
+exclusive projection off one, or a `&var` parameter. Reentrancy is *not* caught in this
+window — like RFC-0050's `[&var x]` borrow-freeze, a reentrant `mutating` call is
+ill-formed by this section but the interpreter (single-threaded, sequential) will run it;
+the fixture corpus must not rely on that (see RFC-0050 "Migration"). When RFC-0122 lands,
+the interim rule is deleted and the `&var self` receiver rule subsumes it — strictly
+more precise, so nothing accepted by the interim rule is later rejected.
+
+**A dynamic alternative, if it is ever needed.** If `mutating` closures turn out to want
+free use through shared structures (a `List<mut () -> ()>` called during iteration, a
+handler field reached through `&Self`), the exclusive-borrow requirement can be met
+*dynamically* instead: give the closure value a runtime "borrowed" flag, set-and-checked
+per `mutating` call, with overlap/reentrancy a panic rather than a compile error — Rust's
+`RefCell<F>` + `FnMut` fallback. This trades the static guarantee for a flag bit and a
+runtime check and is **not** proposed for v0.13.0, but it is the natural extension point,
+and RFC-0161's erased `dyn Callable` will likely need exactly it.
 - **`use_multiplicity` is unchanged by this axis.** A closure's `Copy`-ness is exactly
   RFC-0134 §1 — `many` iff every capture is `Copy` — and `call_mutation` does **not**
   override it. The earlier "a `mutating` closure is not `Copy`" rule is **withdrawn**: it
@@ -538,6 +569,12 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 4. **`&var`-capture without mutation.** A body that takes `&var` of a capture but
    never writes through it — `mutating` (conservative, matches the borrow) or
    `reading` (precise, matches the effect)? Leaning conservative.
+6. **`mutating`-callee eligibility — static, dynamic, or both?** §3 delegates to
+   RFC-0122's `&var self` rules (static) with an interim cheap subset for v0.13.0. Open:
+   whether Metel also wants the *dynamic* path (a runtime borrow flag on the closure
+   value, overlap = panic) so `mutating` closures can be called freely through shared
+   structures / `dyn Callable`. Not needed for v0.13.0; likely needed by RFC-0161. Decide
+   with RFC-0161.
 5. **Timing. ✓ v0.13.0** (2026-08-31, #902 moved from v0.17.0). Whole RFC lands with
    RFC-0134 / RFC-0152 and the closure-model cluster; `call_mutation` co-lands with
    RFC-0134's two `Type::Fun` fields. Lands with RFC-0157's D5 as one hard change — no
@@ -556,6 +593,9 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
   re-clone that §1a changes for `mutating` closures (write-back), as a hard change.
 - **RFC-0067a (Reference Types)** — the exclusive-`&var` rule §3's call-site
   soundness reuses.
+- **RFC-0122 (Borrow Checker)** — §3 delegates `mutating`-callee eligibility to its
+  `&var self`-receiver rules; closures add no new case. The §3 interim rule is a stopgap
+  for the v0.13.0 window before RFC-0122 lands and is deleted when it does.
 - **RFC-0050 (Closure Capture Lists), `1-under-review` (v0.13.0)** — as amended
   2026-08-31: capture list required for non-`Copy`/by-ref captures, bare `[n]` = by-value
   move. §1a's write-back applies to exactly those bare by-value captures. Sequenced with
