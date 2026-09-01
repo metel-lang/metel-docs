@@ -38,13 +38,23 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 >   capability are one feature area. Still `1-under-review`; needs to reach `accepted` to
 >   match the rest of that milestone.
 
-> **Adversarial-review fixes, 2026-09-01** (cross-RFC review of the v0.13.0 cluster). New
-> in "When the list is required": bare `[s]` for non-`Copy` `s` often forces `once`;
-> unknown-`Copy`-ness of a generic `T` is treated as non-`Copy` conservatively (capture
-> kind fixed at the definition site, no per-monomorphisation change); a closure literal
-> cannot reference its own `let` binding. New "Nested closures" rule (an inner `[s]` of an
-> enclosing capture makes the *outer* closure `once`) and a "Checking order" subsection
-> (capture classification before multiplicity/mutation verification).
+> **Adversarial-review fixes, 2026-09-01** (two passes, cross-RFC review of the v0.13.0
+> cluster):
+> - "When the list is required": bare `[s]` for non-`Copy` `s` often forces `once`;
+>   a generic `T` is non-`Copy` unless `T: Copy` is a declared bound (capture kind and
+>   `once`/`many` both fixed at the definition site — see RFC-0134 §2); a closure literal
+>   cannot reference its own `let` binding.
+> - **Full prefix order** stated: `[captures] once? mut? (params) -> ret block`.
+> - **Nested closures** (3 rules): the outer must list `s`; an inner `[s]` can't move out
+>   of an outer `[&s]`; evaluating the inner literal performs the capture, so an inner
+>   `[s]` makes the *outer* closure `once` even if the inner is never called.
+> - **Checking order** subsection: capture classification (with `Copy` from declared
+>   bounds, no solver call) → `use` → `call` → `mutation`; stages 3/4 independent, each
+>   offering its own fix rather than a forced `once mut`.
+> - **Resolved Question 1/3** sharpened from "no restriction now" to a stated
+>   borrow-duration rule (a `[&var x]` / `[&x]` capture holds the borrow for the closure's
+>   lifetime; the outer binding is borrow-frozen accordingly; interpreter enforcement
+>   lands with RFC-0122).
 
 > **Correction pass, 2026-08-31.** Two changes: the `move` specifier is **dropped**
 > from this RFC, and stale syntax is refreshed.
@@ -193,10 +203,21 @@ The `capture_list?` is syntactically optional but **semantically required** unle
 free variable the body references is a `Copy` binding captured by value (or there are no
 free variables) — see "When the list is required" below.
 
-*(The base closure-literal spelling — `(params) -> ret block` vs. RFC-0154's proposed
-`|params| body` — is RFC-0154's to settle. The `[captures]` prefix composes ahead of
-whichever it is: `[&var count] |req| { … }` under RFC-0154, `[&var count] (req: Request)
--> Response { … }` today. Examples below use the current form.)*
+**Full prefix order** *(added 2026-09-01)*. A closure literal's prefixes appear in a
+fixed order — **capture list, then multiplicity/mutation qualifiers, then the parameter
+spelling**:
+
+```
+[captures]  once? mut?  ( params ) -> ret  block          // current spelling
+[captures]  once? mut?  | params | -> ret? block          // under RFC-0154
+```
+
+e.g. `[s, &cfg] once mut (req: Request) -> Response { … }`. The capture list is
+outermost because it describes the *environment*, which is conceptually prior to the
+callable's signature; `once` / `mut` (RFC-0134 / RFC-0153, order-insensitive with each
+other) qualify the signature; the pipe/paren params come last. RFC-0154 settles only the
+`(params)` ↔ `|params|` half; the `[captures] qualifiers …` prefix composes ahead of
+whichever it picks.
 
 `&var ident` captures a binding by mutable reference. `&ident` captures a binding by
 read-only reference — no copy, and the closure may not write through it. **Bare `ident`
@@ -294,13 +315,19 @@ Referencing a free local binding that is not in the list — of any kind, includ
 
 **Nested closures.** A capture-list item may name a binding that is itself a capture of an
 *enclosing* closure — from the inner closure's point of view it is still an outer-scope
-local. Its capture kind participates in the **enclosing** closure's multiplicity: if the
-inner closure captures `[s]` (by value) an enclosing-closure capture `s`, calling the
-outer closure moves `s` out of the outer closure's own environment into the inner one, so
-the outer closure is `once` by RFC-0134 §2 — the same "body moves a by-value capture"
-rule, where the "body" is the outer closure and the "move" is the inner closure's
-capture. `[&s]` / `[&var s]` of an enclosing capture does not affect the outer closure's
-multiplicity.
+local. Rules:
+
+- **The outer closure must list `s` in its own capture list** — it is a free variable of
+  the outer body (the inner literal reads it), so the outer's exhaustiveness rule applies
+  normally.
+- **`[s]` (by-value) in the inner requires the outer to hold `s` by value** (`[s]`). You
+  cannot move out of an `[&s]` / `[&var s]` borrow — an inner `[s]` naming an outer `[&s]`
+  capture is a compile error (`move out of borrowed content`).
+- **Evaluating the inner literal performs the capture.** So an inner `[s]` that moves an
+  outer-held `s` makes the **outer** closure `once` by RFC-0134 §2 — the move happens when
+  the outer body runs and constructs the inner closure, whether or not the inner closure
+  is ever called. `[&s]` / `[&var s]` in the inner does not affect the outer's
+  multiplicity (it only borrows).
 
 ### Checking order
 
@@ -310,17 +337,21 @@ error, and later stages are suppressed for that closure:
 1. **Capture classification** — which free variables the body references, whether each is
    `Copy`, whether a list is required, and (if a list is present) exhaustiveness and
    specifier-matches-use. The "add a capture list" / "not in the list" errors are here.
+   Deciding a free variable's `Copy`-ness needs its type to be known, which it is by this
+   point (classification runs after type checking); for a type parameter `T` it consults
+   the **declared bounds** (`T: Copy` present or not — no solver invocation), matching
+   RFC-0134 §2's definition-site rule.
 2. **`use_multiplicity`** — derived from the capture set (RFC-0134 §1).
 3. **`call_multiplicity` verification** — the body vs. the declared/default/expected
-   `many` (RFC-0134 §2). The "unqualified closure consumes a capture; add `once`" error is
-   here.
+   `many` (RFC-0134 §2). The "unqualified closure consumes a capture" error is here.
 4. **`call_mutation` verification** — the body vs. the declared/default/expected `reading`
-   (RFC-0153). The "unqualified closure mutates a capture; add `mut`" error is here.
+   (RFC-0153). The "unqualified closure mutates a capture" error is here.
 
 Because stages 3–4 reason about *classified* captures, a capture-classification failure
 (stage 1) is always reported before a multiplicity or mutation failure. Stages 3 and 4 are
-independent; if a body both consumes and mutates a capture without the qualifiers, both
-errors are reported.
+independent; a body that both consumes and mutates without the qualifiers gets both
+errors, and each offers its own real alternatives — "add `once`, or stop moving the
+capture" / "add `mut`, or stop mutating it" — not a single prescribed `once mut`.
 
 ### Semantics
 
@@ -442,11 +473,11 @@ case, and a trustworthy field list wherever a capture list exists.
 
 ## Resolved Questions
 
-1. **Lifetime of the mutable reference. ✓ Resolved** — In the interpreter, the outer binding's storage is heap-backed so there is no unsoundness. Under a future compiler, a closure holding `&var` (or `&`) to a stack binding must not outlive that binding. Precise enforcement defers to the borrow checker. No interpreter-level restriction is imposed now.
+1. **Lifetime and exclusivity of a `&`/`&var` capture. ✓ Resolved; the *rule* is stated now, enforcement lands with RFC-0122.** *(Sharpened 2026-09-01, adversarial review — the earlier "no restriction is imposed now" was too loose to be a spec.)* A `[&var x]` / `[&x]` capture takes the borrow at closure creation and **holds it for the closure value's whole lifetime** — from creation to the closure's last use / drop. For that whole span the outer binding `x` is borrowed exactly as `let r := &var x;` / `let r := &x;` would borrow it: while a `[&var x]` closure is live, any other read or write of `x` — `x += 10` between creating the closure and calling it, another `[&var x]` / `[&x]` closure, a bare `&x` — is a borrow-conflict error; while a `[&x]` closure is live, `x` may be read but not written or `&var`-borrowed. This is not a new rule, only the ordinary reference-borrow rule applied to the capture. The **interpreter does not enforce it yet** (heap-backed storage means no memory unsoundness in the meantime); enforcement arrives with the borrow checker (RFC-0122), and until then a program that violates it is accepted but ill-formed by this rule.
 
 2. **Interaction with concurrency. ✓ Resolved** — `&var T` and `&T` (RFC-0067a) are not `Send` (RFC-0003's `Send` marker aspect; the original citation of RFC-0028 no longer applies — that RFC is refused). A closure is `Send` only if all its captured values are `Send`. Any `[&var x]` or `[&x]` closure is therefore automatically non-`Send` — no new rule needed; falls out of the existing model. Once RFC-0067 lands and adds lifetime anchors (`&r var T`/`&r T`), this should be restated in terms of whatever `Send` rule RFC-0067/RFC-0074 give anchored references — not yet specified, tracked as a residual, not a blocker.
 
-3. **Multiple closures capturing the same binding. ✓ Resolved** — Two closures with `[&var x]` both hold a mutable reference to `x`. This is safe in the single-threaded interpreter (sequential calls; aliased mutation is not concurrent). Under the borrow checker, at most one live mutable reference at a time (or many live `&x` read-only references, exclusive of any `&var x`) will be enforced. Document now; restrict later.
+3. **Multiple closures capturing the same binding. ✓ Resolved** — folds into Resolved Question 1: two live `[&var x]` closures are two live `&var x` borrows, which conflict; `[&x]` closures may coexist with each other but not with a `[&var x]` closure or a write to `x`. The interpreter accepts aliased `[&var x]` today (single-threaded, sequential calls — no memory unsoundness); RFC-0122 enforces the rule.
 
 4. **Syntax. ⚠ Re-resolved, with one live contention.** `[&var x]` was confirmed jointly
    with RFC-0046. RFC-0063's pre-split "Region Handles" draft briefly introduced
@@ -526,6 +557,14 @@ the same change. Where a fixture captured a non-`Copy` value it then returns, th
 multi-step rewrite the review noted (`() -> String { s }` → add `[s]` → the body consumes
 it → add `once`), applied by hand to the corpus, not shipped as a user tool. Nothing about
 `--edition` is a deliverable here.
+
+**"One hard change" is one implementation PR, but not one RFC stage yet.** RFC-0134 and
+RFC-0152 are `2-accepted`; RFC-0050, RFC-0153, and RFC-0157 are `1-under-review` and
+RFC-0157's D5 is a recommendation, not a decision. The single implementation PR is
+contingent on: (1) RFC-0157's D5 being decided; (2) RFC-0050 and RFC-0153 reaching
+`accepted`; then (3) `Type::Fun` gains all three multiplicity fields, the capture-list
+grammar, the `once`/`mut` qualifiers, the §1a write-back, and the corpus sweep, together.
+Until (1)–(2), "one hard change" is the *plan*, not a settled cross-RFC fact.
 
 ---
 

@@ -83,7 +83,7 @@ the curated thematic map.
 - **RFC-0153** — Closure Mutation Axis (`1-under-review` ; rfcs/1-under-review/rfc-0153-closure-mutation-axis.md ; date 2026-08-30 ; updated 2026-09-01)
 - **RFC-0154** — Pipe Notation for Closures and Function Types (`1-under-review` ; rfcs/1-under-review/rfc-0154-pipe-notation-for-closures-and-function-types.md ; date 2026-08-30 ; updated 2026-08-30)
 - **RFC-0155** — Higher-Order Function-Type Multiplicity Variance (`1-under-review` ; rfcs/1-under-review/rfc-0155-higher-order-function-type-multiplicity-variance.md ; date 2026-08-30 ; updated 2026-08-30)
-- **RFC-0157** — Copy and Clone Model Re-analysis (`1-under-review` ; rfcs/1-under-review/rfc-0157-copy-and-clone-model-re-analysis.md ; date 2026-08-31 ; updated 2026-08-31)
+- **RFC-0157** — Copy and Clone Model Re-analysis (`1-under-review` ; rfcs/1-under-review/rfc-0157-copy-and-clone-model-re-analysis.md ; date 2026-08-31 ; updated 2026-09-01)
 - **RFC-0158** — Share and Clone: Separating Aliasing from Duplication (`1-under-review` ; rfcs/1-under-review/rfc-0158-share-and-clone-separating-aliasing-from-duplication.md ; date 2026-08-31 ; updated 2026-08-31)
 - **RFC-0159** — Abstract Regions and a Dedicated Identity Channel (`1-under-review` ; rfcs/1-under-review/rfc-0159-abstract-regions-and-a-dedicated-identity-channel.md ; date 2026-09-01 ; updated 2026-09-01)
 - **RFC-0160** — Type Aliases (`1-under-review` ; rfcs/1-under-review/rfc-0160-type-aliases.md ; date 2026-09-01 ; updated 2026-09-01)
