@@ -3,7 +3,7 @@ id: rfc-0162
 title: "Copy and Clone Model — Regular-Value Design Space"
 date: '2026-09-01'
 status: under-review
-target:
+target: v0.17.0
 updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/924'
 ---
@@ -13,7 +13,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/924'
 > longer-horizon regular-value `Copy`/`Clone` model critique, design space, prior-art survey,
 > and open questions that D5 did not touch, so they remain trackable.
 
-> **Status — under review (2026-09-01).** Extracted from RFC-0157 on 2026-09-01: the regular-value Copy/Clone model critique, P0-P3 design space, prior-art survey, and open questions D5 did not touch. Longer-horizon, no v0.13.0 consumer.
+> **Status — under review (2026-09-01).** Extracted from RFC-0157 on 2026-09-01: the regular-value Copy/Clone model critique, P0-P3 design space, prior-art survey, and open questions D5 did not touch. **Milestoned v0.17.0** — the "coherent Copy and closure capabilities" release, alongside RFC-0135 and RFC-0155.
 
 ## Summary
 
@@ -28,8 +28,14 @@ Re-analysis" covering both the regular-value model *and* the closure-capture def
 "D5"). D5 was decided — the closure-capture default is `move` — and RFC-0157 is now the
 record of that decision, `2-accepted` as part of the v0.13.0 closure cluster. The
 regular-value questions D5 did not touch — D1–D4, the P0–P3 design space, and the open
-questions about whether Rust's model is the right one for Metel — are longer-horizon,
-have no v0.13.0 consumer, and live here so they stay trackable.
+questions about whether Rust's model is the right one for Metel — have no v0.13.0
+consumer and live here so they stay trackable. **Milestoned v0.17.0**, the "coherent
+Copy and closure capabilities" release, alongside **RFC-0135** (`Copy → many`) and
+**RFC-0155** — a reviewer opening that release's Copy-model work sees the analysis and
+the proposals together. Its actionable outcomes map onto that milestone: the D3
+relaxation (amends RFC-0071 §4, if OQ2's soundness argument holds), the RFC-0135
+disposition (OQ5 — RFC-0135's own v0.17.0 review), and D4 (structural-types Copy
+cleanup, #702/#263, already v0.17.0).
 
 **Recommendation (carried from RFC-0157):** on regular values, *keep Rust's model* — no
 rename (not to `many`, not to `Dup`), no P1/P2/P3, accept D1 as Rust has it. The only
@@ -535,8 +541,9 @@ split — RFC-0158. The closure-capture default — RFC-0157, decided.)*
 
 **Outcome:** *(pending — analysis / direction-setting, `1-under-review`. Extracted from
 RFC-0157 on 2026-09-01 so the regular-value questions stay trackable after RFC-0157's D5
-was decided and accepted. No v0.13.0 consumer; the three Open Questions above carry
-reopening/advancing conditions. The recommendation — no regular-value model change — is
-for review to endorse or contest.)*
-**Target:** *(none — not milestoned; longer-horizon.)*
+was decided and accepted. The three Open Questions above carry reopening/advancing
+conditions. The recommendation — no regular-value model change — is for review to endorse
+or contest.)*
+**Target:** v0.17.0 (metel-core#924) — the "coherent Copy and closure capabilities"
+release, alongside RFC-0135 / RFC-0155. Nothing here blocks v0.13.0.
 
