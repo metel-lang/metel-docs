@@ -8,37 +8,18 @@ updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/901'
 ---
 
-> **Adversarial-review fixes, 2026-09-01** (two passes, cross-RFC review of the v0.13.0
-> closure cluster): §1 gains a **`mutation` axis** row (`reading` widens to a `mutating`
-> slot, RFC-0153) with a "type-level only, no callability penalty" clause; §2 spells out
-> that ascription / field-init / return widening is a **one-way precision loss** into the
-> declared (invariant) type — a `reading` closure in a `mut` field is thereafter observed
-> `mut`; §3 adds the `if`/`match` **join rule** (least-permissive arm, each arm widens to
-> it) and that a typed block's tail expression supplies the qualifier. No change to the
-> accepted first-order relation.
->
-> **Third pass, 2026-09-01:** §3's join rule now covers three edge cases — an arm whose
-> multiplicity is an unresolved inference variable (recorded as a constraint, not
-> forced), a nested `if`/`match` tail (inner join first; expected type flows inward), and
-> a diverging (`!`) arm (does not contribute to the GLB). Still no change to the
-> first-order relation.
 
-> **Status — accepted 2026-08-30, as a co-requirement of RFC-0134.** RFC-0134
-> originally proposed **exact-match** multiplicity unification and named this
-> widening "a strict later widening." That exact-match proposal was **withdrawn** —
-> it made the `once` qualifier unusable in practice (§3, §4 of RFC-0134) — so the
-> directional rule here is not deferred: RFC-0134's `once` qualifier is not
-> sound-and-usable without it, and the two RFCs move to `accepted` together.
->
-> **Scoped to the first-order case.** This RFC covers a function-typed value
-> flowing into a function-typed **argument, `let`/field ascription, or return**
-> slot. The *contravariant* direction when a function type is nested inside another
-> function type, and the question of whether this coercion should become a general
-> `Type::Fun` subtype lattice, were split out to **RFC-0155 (Higher-Order
-> Function-Type Multiplicity Variance)** on 2026-08-30 so this RFC could be
-> accepted without an open tail. Until RFC-0155 resolves, a multiplicity mismatch
-> below the first level of nesting requires an exact match — a sound
-> under-approximation.
+> **Status — accepted 2026-08-30**, as a co-requirement of RFC-0134 (the two move to
+> `accepted` together). Part of the v0.13.0 closure cluster. RFC-0134 originally proposed
+> exact-match multiplicity unification; that was withdrawn as unusable, so this directional
+> rule is required, not deferred.
+
+> **Scoped to the first-order case.** A function-typed value flowing into a function-typed
+> **argument, `let`/field ascription, or return** slot. The contravariant direction for a
+> function type nested inside another, and whether this should become a general `Type::Fun`
+> subtype lattice, are **RFC-0155**'s. Below the first level of nesting this RFC requires
+> an exact match — a sound under-approximation.
+
 
 ## Summary
 
@@ -153,7 +134,7 @@ to *guess* a narrower multiplicity to make a call site work — it infers the tr
 one and widening does the rest. A `once`-body closure still cannot reach a `many`
 slot, because it genuinely is not callable twice; that rejection is preserved.
 
-*Amended 2026-09-01, following RFC-0134's `many`-default amendment:* a closure literal's
+Following RFC-0134's `many`-default rule, a closure literal's
 own type is `many` / `reading` by default, or whatever a written qualifier or an
 **expected type** supplies (RFC-0134 §2's 2026-09-01 amendment — an ascribed / return /
 field slot, *including a typed block's tail expression*, supplies the qualifier; the

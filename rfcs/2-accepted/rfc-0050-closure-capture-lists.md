@@ -8,166 +8,11 @@ updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 ---
 
-> **Amendment, 2026-08-31 (second pass) — capture semantics settled; targeted at v0.13.0.**
-> The earlier correction pass (below) dropped the `move` specifier and deferred
-> ownership-transfer capture to RFC-0157. RFC-0157's D5 has since been settled in the
-> direction this RFC needs, so the deferral is lifted and folded in here:
->
-> **D5 decided 2026-09-01 (language owner): the closure-capture default is `move`.** What
-> was "settled in the direction this RFC needs" is now a decision. It also removes
-> RFC-0006's per-call environment re-clone — the captured environment is moved in once and
-> read (or, for a `mutating` closure, mutated — RFC-0153 §1a) in place. Precondition (1)
-> in "Migration" below is met. **RFC-0050 and RFC-0153 reached `2-accepted` on 2026-09-01** (see the Status note above) — the cluster is fully accepted bar RFC-0157 as a whole (its D5 is decided).
->
-> - **A capture list is semantically required** whenever a closure captures a free
->   non-`Copy` local binding, or captures anything by `&` / `&var`. It stays *omissible*
->   only when the closure captures nothing, or captures only `Copy` bindings by value
->   (where "by value" is a copy and so carries no risk). This makes RFC-0006's implicit
->   deep-clone default unreachable for non-`Copy` captures — you can no longer clone a
->   `Vec` into a closure by accident.
-> - **Bare `ident` is by-value capture:** a copy for a `Copy` binding, an **affine move**
->   for a non-`Copy` binding (the outer binding is consumed — `let y := x` semantics,
->   RFC-0157 D5). An explicit independent copy is written `[ident.clone()]` (RFC-0080's
->   `Clone`). This is the change from "bare `ident` = clone" in the correction-pass text
->   below.
-> - **Ownership-transfer capture is therefore back in scope, and still needs no keyword:**
->   `[buf]` for a non-`Copy` `buf` moves it in. That is exactly the "an affine move takes
->   no keyword" reasoning that removed the `move` specifier — now realized rather than
->   deferred. The "out of scope" / "deferred to RFC-0157" wording everywhere below this
->   note, and the *conclusion* (not the history) of the "A `move ident` specifier"
->   alternative, are superseded by this bullet.
-> - **Pairs with RFC-0134's same-day amendment** (`many` by default, explicit `once`): a
->   listed by-value non-`Copy` capture is what RFC-0134 §2's consumption check inspects.
-> - **Timing.** Lands with RFC-0157's D5 (the RFC-0006 default change) as **one hard
->   change** — see "Migration (no edition gate)" below. Milestoned **v0.13.0** (#803)
->   alongside RFC-0134 (#269) and RFC-0152 (#901) — closure capture lists and closure call
->   capability are one feature area. *(Reached `2-accepted` on 2026-09-01 — see the Status
->   note above; this line was written while it was `1-under-review`.)*
 
-> **Adversarial-review fixes, 2026-09-01** (two passes, cross-RFC review of the v0.13.0
-> cluster):
-> - "When the list is required": bare `[s]` for non-`Copy` `s` often forces `once`;
->   a generic `T` is non-`Copy` unless `T: Copy` is a declared bound (capture kind and
->   `once`/`many` both fixed at the definition site — see RFC-0134 §2); a closure literal
->   cannot reference its own `let` binding.
-> - **Full prefix order** stated: `[captures] once? mut? (params) -> ret block`.
-> - **Nested closures** (3 rules): the outer must list `s`; an inner `[s]` can't move out
->   of an outer `[&s]`; evaluating the inner literal performs the capture, so an inner
->   `[s]` makes the *outer* closure `once` even if the inner is never called.
-> - **Checking order** subsection: capture classification (with `Copy` from declared
->   bounds, no solver call) → `use` → `call` → `mutation`; stages 3/4 independent, each
->   offering its own fix rather than a forced `once mut`.
-> - **Resolved Question 1/3** sharpened from "no restriction now" to a stated
->   borrow-duration rule (a `[&var x]` / `[&x]` capture holds the borrow for the closure's
->   lifetime; the outer binding is borrow-frozen accordingly; interpreter enforcement
->   lands with RFC-0122).
-
-> **Adversarial-review fixes, 2026-09-01 (third pass):**
-> - **Capturing `self` in a method** — new subsection under "When the list is required":
->   `self` is an ordinary receiver binding, so it is a free variable for a nested closure;
->   `&Self` is `Copy` (listless capture copies the handle), `&var Self` is not (list
->   required); the captured receiver borrow cannot outlive the method call, so a closure
->   escaping the method while holding it is rejected by the same escape check as any other
->   captured reference until lifetime anchors (RFC-0067/0159) exist.
-> - **Closure equality** — Resolved Question added: closure values satisfy no aspects
->   (RFC-0134), so `==` / `<` on them does not type-check.
-> - **Prefix order** — clarified that the fixed `[captures] once? mut?` order is the
->   *literal* grammar; the qualifiers are order-insensitive only as a *type* spelling
->   (RFC-0134 §5, RFC-0153 §2).
-> - **Migration** — the v0.13.0 fixture corpus must exclude programs that rely on the
->   not-yet-enforced `[&var x]` borrow-freeze (Resolved Q1), so no wrong accepted
->   behavior is baked in before RFC-0122.
-> - **Implementation Guidance** — the RFC-0153 §1a mutable env cell *is* the capture
->   aggregate, not a wrapper; escape / brand checking sees the same field types.
-
-> **Correction pass, 2026-08-31.** Two changes: the `move` specifier is **dropped**
-> from this RFC, and stale syntax is refreshed.
->
-> - **`move` specifier removed.** The first draft of this pass reframed `move` off
->   `linear` as "an ordinary affine move into the closure." Followed through, that
->   reframing removes the specifier's reason to exist: an ordinary affine move has
->   **no keyword** anywhere else in Metel (`let y := x;` consumes `x` with no marker,
->   RFC-0071). A dedicated `move` capture word is only coherent if capture-by-move is
->   *special* — and deciding whether it is means revisiting the closure-capture
->   default itself (RFC-0006's "deep-clone every free variable") and, under it, the
->   `Copy`/`Clone` model Metel adopted from Rust without a written trade-off analysis.
->   That is a larger design question than this RFC — opened as **RFC-0157 (Copy and
->   Clone Model Re-analysis, `1-under-review`)**, alongside the adjacent RFC-0135. This RFC now
->   covers only `&var` / `&` reference captures and the explicit spelling of today's
->   implicit clone capture; **ownership-transfer capture is explicitly out of scope**,
->   deferred to RFC-0157. *(Lifted by the amendment above: RFC-0157's D5 is settled,
->   ownership-transfer capture is bare `[ident]` for non-`Copy`, back in scope.)*
->   Consequence: nothing in this RFC is blocked on RFC-0134 or
->   RFC-0028 any more — its only prerequisite is RFC-0067a (`4-implemented`).
-> - **Syntax refresh.** `&mut` → `&var` in the grammar; `*mut T`/`*T` → `&var T`/`&T`
->   throughout Semantics (RFC-0067a (`4-implemented`), supersedes RFC-0043); `=`
->   initializers → `:=` in every example (RFC-0136, implemented). Dangling "see
->   RFC-0046" (`6-refused`) pointers removed.
-> - **Cross-refs.** Added a note on composing the `[captures]` prefix with RFC-0154's
->   function-literal spelling.
->
-> No change to the `&var`/`&`/clone design, the exhaustiveness rule, or any Resolved
-> Question.
->
-> **The header notes below about `move`'s design — linear vs. affine, an RFC-0046
-> successor, RFC-0134 as the blocker — are all superseded by the above: `move` is not
-> part of this RFC. They are kept for history.**
-
-*Updated 2026-07-07 against the split model: the bracket-syntax conflict with region/allocator
-parameters no longer applies (RFC-0063/0065 dropped bracket syntax for allocators); the `&var`
-and `move` halves now have independent timing, since only `move` depends on linear types; and an
-implementation-guidance section was added covering how to build captures so structural records
-and brand types don't force a rewrite later. See Timing Recommendation and Implementation
-Guidance below.*
-
-> **A draft successor exists, 2026-08-13.** RFC-0134 (Closure Call Capability) proposes an
-> answer to the type-level question this RFC's `move` half depends on — but scoped narrower
-> than what the Timing Recommendation below anticipated: it treats "does calling a closure
-> consume a capture" as an ordinary affine question, not a linear one, specifically to avoid
-> waiting on the rest of the linear-types tower.
-
-> **Correction, 2026-08-23: the "Open Question 1" cited above no longer exists as an open
-> item, and the answer it settled cuts against this section's own framing, not just past
-> it.** RFC-0134 reached `1-under-review` and its Open Questions section now reads "None
-> blocking" — the affine-vs-linear choice was resolved as **"Decision: affine `once`, not
-> linear"**, with a stated reopening condition, not left open for this RFC to answer. That
-> decision is a real mismatch with this section's own text, not a gap in it: `move`'s
-> design here is written throughout in terms of a **linear** binding and a `linear
-> fun(...) -> T` closure type (see the `Semantics` subsection below), the exact vocabulary
-> RFC-0046 used and RFC-0134 explicitly declined to adopt. This also lines up with a
-> separate, independently-reached finding from the same day (the RFC-0032 fix,
-> `metel-docs-internal`): `linear struct`/`linear enum` never materialized as a language
-> construct at all — RFC-0071 (accepted, implemented) is the settled ownership model, and
-> it is affine (`Copy`/`Drop` aspects), not linear. Two unrelated investigations landing on
-> the same conclusion the same day is worth treating as real signal, not coincidence.
->
-> **What this likely means, stated as a finding for whoever resolves it, not decided
-> here:** `move ident` plausibly needs nothing more than ordinary affine move-into-closure
-> (already-implemented RFC-0071 semantics — the outer binding is consumed, using it after
-> is a compile error, exactly as written below) plus RFC-0134's `call_multiplicity` axis,
-> inferred from whether the closure body consumes the moved-in capture, to determine
-> whether the resulting closure is call-once (`once`) or reusable (`many`) — replacing
-> "has type `linear fun(...) -> T`: it must be called exactly once" with "has
-> `call_multiplicity: once`, per RFC-0134 §2, if its body consumes the capture." That is a
-> real rewrite of this subsection's substance, not a status update, so it is recorded here
-> as what the evidence points to rather than applied to the text below.
-
-*Updated again 2026-07-07: capture lists are now exhaustive. A bare `ident` specifier captures
-by value (clone), and once a closure has a capture list at all, every free variable it references
-must appear in it — no more silent, unlisted clone captures alongside explicit `&var`/`move`
-items. This was previously deferred (see the old "Exhaustive capture lists" alternative, now
-adopted below) and is what makes the capture list a complete, checkable field list for the
-closure's captured-environment aggregate — see Implementation Guidance.*
-
-*Updated a third time 2026-07-07: read-only reference captures (`&ident`), previously deferred,
-are now included — see the Semantics section. "Free variable," for exhaustiveness purposes, is
-clarified to mean outer-scope local bindings only; references to module-level functions,
-constants, types, and aspects are name resolution, not capture, and never need to appear in the
-list.*
-
-> **Status — under review (2026-08-23; correction pass + amendment 2026-08-31, see frontmatter notes).** Six Resolved Questions checked. Amended 2026-08-31: capture list required for non-`Copy`/by-ref captures; bare `ident` is by-value (move for non-`Copy`); ownership-transfer capture folded back in (no keyword). Milestoned **v0.13.0** with RFC-0134 (#269) / RFC-0152 (#901); lands with RFC-0157's D5 as one hard change (no edition gate). Needs to reach `accepted`. -- #803
-
-> **Status — accepted (2026-09-01).** Closure capture lists — capture semantics settled across the v0.13.0 cluster (move-by-default per RFC-0157 D5, required list for non-Copy/&/&var, bare [s]=move, [&var x]=>mut); six adversarial-review passes applied; all Resolved Questions closed. Co-accepts with RFC-0153; RFC-0122 §2f/§2e carry the enforcement/interim split.
+> **Status — accepted 2026-09-01**, co-accepted with RFC-0153 as the capture half of the
+> v0.13.0 closure cluster (RFC-0134 / RFC-0152 / RFC-0050 / RFC-0153 / RFC-0157).
+> Enforcement of the borrow-shaped Resolved Questions is RFC-0122's (§2e/§2f); the
+> pre-RFC-0122 interim window is catalogued there. Implementation shape: **ADR-0052**.
 
 ## Summary
 
@@ -187,7 +32,7 @@ explicit at the definition site.
 Ownership-transfer capture — moving a binding into a closure — is covered: it is bare
 `[ident]` for a non-`Copy` binding, needing no keyword (an affine move takes none
 elsewhere in Metel either). This lands with RFC-0157's D5 as one hard change; see
-"Migration (no edition gate)".
+"Migration" below.
 
 ---
 
@@ -229,7 +74,7 @@ The `capture_list?` is syntactically optional but **semantically required** unle
 free variable the body references is a `Copy` binding captured by value (or there are no
 free variables) — see "When the list is required" below.
 
-**Full prefix order** *(added 2026-09-01)*. A closure literal's prefixes appear in a
+**Full prefix order.** A closure literal's prefixes appear in a
 fixed order — **capture list, then multiplicity/mutation qualifiers, then the parameter
 spelling**:
 
@@ -303,8 +148,7 @@ in, `[&s]` / `[&var s]` to borrow, `[s.clone()]` to copy."* This makes RFC-0006'
 deep-clone unreachable for non-`Copy` values — nothing is cloned into a closure without
 `.clone()` written at the capture site.
 
-(A non-`Copy`, non-`Clone` binding can now enter a closure: `[s]` moves it in. That is the
-change from the pre-amendment text, where such a binding could not be captured at all.)
+(A non-`Copy`, non-`Clone` binding can enter a closure: `[s]` moves it in.)
 
 **Bare `[s]` for a non-`Copy` `s` often forces `once`.** `[s]` is a by-value *move* into
 the environment; if the body then moves `s` out — returns it, passes it by value to
@@ -343,7 +187,7 @@ apply — there is no special "receiver capture" form:
   Question 1 applies: it is held for the closure's whole lifetime, and the closure
   therefore **cannot outlive `m`'s call**. Returning such a closure from `m` — `fun m(&self)
   -> (() -> i64) { || self.x }` — is the ordinary "captured reference escapes its
-  scope" error (Implementation Guidance's escape check), not a new rule. It becomes
+  scope" error (the escape check over the capture aggregate), not a new rule. It becomes
   expressible only when lifetime anchors (RFC-0067 / RFC-0159) let `m` tie the closure's
   region to `self`'s; until then it is rejected.
 
@@ -451,27 +295,6 @@ capture" / "add `mut`, or stop mutating it" — not a single prescribed `once mu
 
 ---
 
-## Historical: Conflict with Region Syntax (resolved, no longer applicable)
-
-*This section described a real conflict against the pre-split "Region Handles" version of
-RFC-0063, which used `[region]` bracket syntax for region parameters on closures. It is kept
-here for the record; it no longer applies to the current design.*
-
-The original concern: RFC-0063/0065 appeared to introduce allocator/region parameters on
-closures using the same bracket position this RFC uses for capture lists (`[region]()` vs.
-`[&var count]()`), which would have been ambiguous or required one of three disambiguation
-schemes (sequential brackets, a unified bracket, or moving captures to a `capture(...)`
-keyword form).
-
-**Resolution:** RFC-0063's 2026-07-05 rewrite (the "split model," retitled "Allocator
-Handles") dropped the bracket channel for allocator parameters entirely — RFC-0065 §1a notes
-the change explicitly as `@[r]` → `@`. Allocator/tag parameters are now written with the `@`
-prefix directly on the type or value channel, not with `[...]`. `[...]` is therefore
-unambiguously reserved for capture lists; no disambiguation scheme is needed, and Resolved
-Question 4 below is re-resolved rather than left open.
-
----
-
 ## Alternatives Considered
 
 ### Keep requiring an outer `&var` reference binding (status quo)
@@ -537,15 +360,15 @@ case, and a trustworthy field list wherever a capture list exists.
 
 ## Resolved Questions
 
-1. **Lifetime and exclusivity of a `&`/`&var` capture. ✓ Resolved; the *rule* is stated now, enforcement lands with RFC-0122.** *(Sharpened 2026-09-01, adversarial review — the earlier "no restriction is imposed now" was too loose to be a spec.)* A `[&var x]` / `[&x]` capture takes the borrow at closure creation and **holds it for the closure value's whole lifetime** — from creation to the closure's last use / drop. For that whole span the outer binding `x` is borrowed exactly as `let r := &var x;` / `let r := &x;` would borrow it: while a `[&var x]` closure is live, any other read or write of `x` — `x += 10` between creating the closure and calling it, another `[&var x]` / `[&x]` closure, a bare `&x` — is a borrow-conflict error; while a `[&x]` closure is live, `x` may be read but not written or `&var`-borrowed. This is not a new rule, only the ordinary reference-borrow rule applied to the capture. The **interpreter does not enforce it yet** (heap-backed storage means no memory unsoundness in the meantime); enforcement arrives with the borrow checker (RFC-0122), and until then a program that violates it is accepted but ill-formed by this rule. **RFC-0122 §2e catalogues this as one of the interim rules it subsumes** — including the fixture-corpus constraint below.
+1. **Lifetime and exclusivity of a `&`/`&var` capture. ✓ Resolved; the *rule* is stated now, enforcement lands with RFC-0122.** A `[&var x]` / `[&x]` capture takes the borrow at closure creation and **holds it for the closure value's whole lifetime** — from creation to the closure's last use / drop. For that whole span the outer binding `x` is borrowed exactly as `let r := &var x;` / `let r := &x;` would borrow it: while a `[&var x]` closure is live, any other read or write of `x` — `x += 10` between creating the closure and calling it, another `[&var x]` / `[&x]` closure, a bare `&x` — is a borrow-conflict error; while a `[&x]` closure is live, `x` may be read but not written or `&var`-borrowed. This is not a new rule, only the ordinary reference-borrow rule applied to the capture. The **interpreter does not enforce it yet** (heap-backed storage means no memory unsoundness in the meantime); enforcement arrives with the borrow checker (RFC-0122), and until then a program that violates it is accepted but ill-formed by this rule. **RFC-0122 §2e catalogues this as one of the interim rules it subsumes** — including the fixture-corpus constraint below.
 
-2. **Interaction with concurrency. ✓ Resolved (refined 2026-09-01, pass 4)** — a closure's `Send`/`Sync` is the **ordinary aggregate rule over its captures**, and a `&T` / `&var T` capture follows **RFC-0080**'s reference rules (`&T: Send if T: Sync`; `&var T: Send if T: Send`; likewise `Sync`). This RFC does not restate or strengthen those — the earlier flat "any `[&var x]` / `[&x]` closure is non-`Send`" was too strong (a `[&n]` capture of `n: i64` is `&i64: Send`, so that closure *is* `Send`). RFC-0153 carries the one closure-specific fact — a `mutating` closure is `!Sync` — as an interim statement pending RFC-0096. Once RFC-0067 adds lifetime anchors (`&r var T` / `&r T`), the reference `Send` rules gain an anchor dimension (RFC-0067/RFC-0074) — a residual, not a blocker.
+2. **Interaction with concurrency. ✓ Resolved** — a closure's `Send`/`Sync` is the **ordinary aggregate rule over its captures**, and a `&T` / `&var T` capture follows **RFC-0080**'s reference rules (`&T: Send if T: Sync`; `&var T: Send if T: Send`; likewise `Sync`). This RFC does not restate or strengthen those — the earlier flat "any `[&var x]` / `[&x]` closure is non-`Send`" was too strong (a `[&n]` capture of `n: i64` is `&i64: Send`, so that closure *is* `Send`). RFC-0153 carries the one closure-specific fact — a `mutating` closure is `!Sync` — as an interim statement pending RFC-0096. Once RFC-0067 adds lifetime anchors (`&r var T` / `&r T`), the reference `Send` rules gain an anchor dimension (RFC-0067/RFC-0074) — a residual, not a blocker.
 
 3. **Multiple closures capturing the same binding. ✓ Resolved** — folds into Resolved Question 1: two live `[&var x]` closures are two live `&var x` borrows, which conflict; `[&x]` closures may coexist with each other but not with a `[&var x]` closure or a write to `x`. The interpreter accepts aliased `[&var x]` today (single-threaded, sequential calls — no memory unsoundness); RFC-0122 enforces the rule.
 
 4. **Syntax. ⚠ Re-resolved, with one live contention.** `[&var x]` was confirmed jointly
    with RFC-0046. RFC-0063's pre-split "Region Handles" draft briefly introduced
-   `[region]` in the same position (see the Historical section above), but the split-model
+   `[region]` in the same position (historical, no longer applicable), but the split-model
    rewrite of RFC-0063/0065 dropped bracket syntax for allocator parameters (`@[r]` → `@`)
    before this RFC reached implementation, and `reports/memory-model/lifetimes-vs-regions-2026-07-02.md`
    §7 explicitly freed `[]` for capture lists.
@@ -575,7 +398,7 @@ case, and a trustworthy field list wherever a capture list exists.
    name resolution and are never subject to the capture list or its exhaustiveness rule — nothing
    about them is being captured from a stack frame, so there is nothing for the list to enumerate.
 
-7. **Closure equality and ordering. ✓ Resolved (2026-09-01, adversarial review).** Two
+7. **Closure equality and ordering. ✓ Resolved.** Two
    closure values are **not comparable**. `Type::Fun` satisfies no aspects at all
    (RFC-0134's Open-Questions finding: `InferType::Fun` implements nothing), `Eq` / `Ord`
    included, so `a == b` / `a < b` on closures is an aspect-not-satisfied type error — the
@@ -587,146 +410,42 @@ case, and a trustworthy field list wherever a capture list exists.
 
 ---
 
-## Timing Recommendation
+## Migration
 
-*Superseded 2026-07-07: the original recommendation below tied the entire RFC — including
-`&var`/`&`/clone captures, which have no linear dependency — to linear types landing first,
-because it was written jointly with RFC-0046 before the split model existed. `move` now has
-independent timing from the other three.*
+Metel has no public users and no `--edition` tooling. The whole closure cluster — this
+RFC's required-list rule and bare-`[s]`-is-move, RFC-0153 §1a's write-back, RFC-0134's
+`once`/`many` verification, RFC-0157's D5 capture default, and the removal of RFC-0006's
+per-call environment re-clone — lands as **one implementation PR** at v0.13.0. There is
+no old/new edition and no fixer; the interpreter's own `.mtl` fixture corpus is updated
+in the same change.
 
-*Updated again 2026-07-07: RFC-0067 has since been split. Its allocator/borrow-checker
-independent slice — the plain `&T`/`&var T` rename — is now accepted separately as **RFC-0067a**
-and sequenced into Cluster A, removing the mechanical-rename concern below entirely: `&var`/`&`
-captures can target RFC-0067a's syntax directly instead of today's `*mut T`/`*T`, with no
-rename step to schedule around.*
-
-*Retargeted 2026-08-31 (third pass): the frontmatter amendment folds ownership-transfer
-capture back in (bare `[ident]` for non-`Copy` = move, no keyword). The whole RFC is now
-one feature with one timing story, milestoned **v0.13.0** (#803) alongside RFC-0134 (#269)
-and RFC-0152 (#901).*
-
-**`&var`, `&`, and `Copy`-only listless captures** have no dependency beyond RFC-0067a
-(`4-implemented`) and are implementable immediately.
-
-**Bare `ident` by-value capture of a non-`Copy` binding** (the move case) is the change to
-RFC-0006's implicit deep-clone default — RFC-0157's D5, **decided 2026-09-01 (language
-owner): the closure-capture default is `move`.** This RFC's grammar and Semantics carry
-it. The decision also removes RFC-0006's per-call `call_env = captured.clone()` re-clone:
-the environment is moved in once and read (or, for a `mutating` closure, mutated —
-RFC-0153 §1a) in place. RFC-0046 (`6-refused/`), which specified the old `move` in `linear
-fun` / exactly-once terms, is not the framing inherited — an affine move takes no keyword,
-which is why bare `[ident]` suffices.
-
-**Suggested order:** land RFC-0157 D5 + this RFC together for v0.13.0, sequenced with
-RFC-0134 (#269) — capture lists and call capability are one review.
-
-### Migration (no edition gate)
-
-*Amended 2026-09-01: the earlier "edition boundary" framing is dropped.* **Metel has no
-public users and no `--edition` tooling.** The whole closure cluster — this RFC's
-required-list rule and bare-`[s]`-is-move, RFC-0153 §1a's write-back, RFC-0134's
-`once`/`many` verification, RFC-0157's D5 capture default (**decided 2026-09-01: `move`**),
-and the removal of RFC-0006's per-call environment re-clone — lands as **one hard change**
-at v0.13.0. There is no old/new edition, no fixer, no mixed mode.
-
-Migration is entirely internal: the interpreter's own `.mtl` fixture corpus is updated in
-the same change. Where a fixture captured a non-`Copy` value it then returns, that is the
-multi-step rewrite the review noted (`() -> String { s }` → add `[s]` → the body consumes
-it → add `once`), applied by hand to the corpus, not shipped as a user tool. Nothing about
-`--edition` is a deliverable here.
-
-**Three behaviour-change classes the sweep must find** (all legal under RFC-0006, all
-change meaning or type under D5 + RFC-0153):
+Three behaviour-change classes the corpus sweep must find, all legal under RFC-0006:
 
 1. **Capture-then-still-use** — `let f := () -> Int { len(s) }; let n := s.len();` was fine
-   (`f` held a clone). Now `[s]` moves `s`, so the later `s.len()` is a use-after-move;
-   the fix is `[s.clone()]` or reordering. This is the common case.
-2. **Mutate a private per-call clone** — under RFC-0006 a closure body could write to a
-   capture because it was writing to that call's throwaway clone:
-   `let bump := () -> Int { x := x + 1; x };` — each call returned `1` and outer `x` never
-   moved. Under D5 + RFC-0153 this is `[x] mut () -> Int { x := x + 1; x }` (or an error
-   demanding `mut`), and the write-back makes it a **stateful counter** — `bump()` returns
-   `1`, `2`, `3`. The behaviour is different, not just the syntax; any fixture relying on
-   the old "resets every call" reading has to be rewritten to capture `[x.clone()]` per
-   call if that was actually the intent, or accept the counter semantics.
-3. **`&var` capture used read-only** — a closure that captured `&var x` for capability or
-   habit but whose body only *reads* `x`. Under RFC-0153's conservative rule that closure
-   is now `mutating` (must be written `[&var x] mut (…)`), is `!Sync`, must be called
-   through `&var self`, and **cannot be passed to a `reading` (`() -> T`) callback slot**.
-   The fix is `[&x]` (shared capture) — which stays `reading` and widens normally. The
-   sweep must find every `&var`-capturing closure whose body has no write / `&var`-use of
-   that capture and switch it to `[&x]`. *Measured against the current corpus (pass 6):
-   literal `[&var x]` sites today are 0 (the syntax has not landed), but ~6 read-only
-   "reader" closures in the pointer-sharing fixtures (`67`/`68`/`69`/`70`×2/`75` under
-   `evaluator/functions` + `evaluator/closures`) fall in this class once ported — they go
-   to `[&x]`, not `[&var x] mut`.*
+   (`f` held a clone); now `[s]` moves `s`, so the later use is use-after-move. Fix:
+   `[s.clone()]` or reorder. The common case.
+2. **Mutate a per-call clone** — `let bump := () -> Int { x := x + 1; x };` returned `1`
+   every call under RFC-0006 (writing a throwaway clone); under D5 + RFC-0153 it needs
+   `[x] mut` and the write-back makes it a stateful counter. A semantic change, reviewed
+   by hand — `[x.clone()]` per call if the reset was the intent.
+3. **`&var` capture used read-only** — a `[&var x]` closure whose body only reads `x` is
+   now `mutating` / `!Sync` / non-widening; switch it to `[&x]`.
 
-**Blast radius of the "Nested closures" interim rejection** (an inner `[&s]` / `[&var s]`
-that borrows an outer *by-value* capture). *Measured (pass 6): 2 nested-closure candidate
-sites in the whole corpus, neither the affected shape — current impact ≈ 0.* The
-expressive cost is future: a `make_reader(buf) -> () -> i64 { [buf] () { let l := [&buf]
-() { buf.len() }; l() } }` shape with a **non-`Clone`, non-`Copy`** `buf` has no local
-workaround in v0.13.0 (`[buf]` in the inner moves and forces the outer `once`). RFC-0122
-lifts the rejection with an NLL local-reborrow check.
+The sweep also **excludes** programs relying on the not-yet-enforced `[&var x]`
+borrow-freeze (Resolved Question 1) — those are ill-formed by this RFC and are valid only
+as `expected-error` fixtures once RFC-0122 lands. The grep recipe, measured corpus counts,
+and the always-on vs `--move-check` decision are in **ADR-0052**.
 
-**The corpus sweep must exclude programs that rely on the not-yet-enforced borrow-freeze
-(Resolved Question 1).** RFC-0122 is not part of v0.13.0, so the interpreter will *run*
-`[&var x]` closures without checking the borrow-duration rule. A fixture that exercises
-what the rule forbids — two live `[&var x]` closures over the same binding, a write to `x`
-while a `[&var x]` closure is live, a bare `&x` alongside one — is **ill-formed by this
-RFC** even though the interpreter accepts it, and must not be added as an
-expected-behavior fixture: doing so would bake a wrong "accepted" result into the corpus
-that RFC-0122 then has to break. Such programs are only valid to add as
-`expected-error` fixtures once RFC-0122 lands.
+## Implementation Guidance
 
-**"One hard change" is one implementation PR.** RFC-0134, RFC-0152, **RFC-0050, and
-RFC-0153 are all `2-accepted`** (RFC-0050 / RFC-0153 accepted 2026-09-01); RFC-0157 stays
-`1-under-review` but its D5 is decided (2026-09-01, language owner — the closure-capture
-default is `move`). The cross-RFC preconditions are met; the single implementation PR
-delivers `Type::Fun`'s three multiplicity fields, the capture-list grammar, the
-`once`/`mut` qualifiers, the §1a write-back, the removal of RFC-0006's per-call re-clone,
-the `spec/functions.md` + RFC-0006 body sync, and the corpus sweep, together.
-
----
-
-## Implementation Guidance: Build Captures as Aggregates, Not a Closure-Specific Mechanism
-
-*Added 2026-07-07.* Structural records and brand types are both expected in later stages (see
-`reports/substructural-types/` and `reports/strategy/integrated-language-overview-2026-07-07.md`).
-Neither is a dependency of this RFC, but the implementation should be shaped so that neither
-forces a rewrite of closure capture when they land:
-
-- **Representation.** Store a closure's captured bindings as a plain closed, named-field
-  aggregate — the same shape as struct field storage — not a bespoke closure-environment type.
-  Structural records, when they land, are closed field-lists of the same shape; if the
-  representation already matches, records can describe or subsume it without a runtime rewrite.
-  Exhaustiveness (see Semantics) is what makes this more than aspirational: when a closure has a
-  capture list, that list *is* the complete field list of the aggregate, with each field's
-  capture kind (`&var`/`&`/clone) known statically from the specifier. Without exhaustiveness,
-  some fields would exist in the runtime environment without appearing anywhere in the syntax,
-  which is exactly the kind of implicit state that would need discovering and reconciling by hand
-  when records or brand-based escape checking arrive.
-- **Escape checking.** Whatever the split model uses to check that an allocator/lifetime-tagged
-  value doesn't escape its scope should be written as a generic check over an aggregate's field
-  types, not as bespoke closure logic. A `[&var count]` closure is then covered automatically
-  because its captured environment *is* an aggregate, with nothing closure-specific to revisit if
-  brand-kind unification later generalizes escape checking.
-  - **RFC-0153 §1a does not change this.** A `mutating` closure's environment is held as
-    *one mutable owned cell* rather than re-cloned per call, but that cell **is this same
-    aggregate** — the identical named-field list, with the same per-field types — held
-    owned-and-mutable, not a wrapper struct around it and not a new representation. Escape
-    and brand checking walk the same fields whether the closure is `reading` or
-    `mutating`; the write-back is a mutation of the aggregate in place, not a change to
-    its shape. Anything that inspected the capture aggregate's field types before RFC-0153
-    inspects the same thing after it.
-- **If ownership-transfer capture is added later**, keep it on this same footing: a moved-in
-  field is an ordinary owned field of the capture aggregate, and any "does calling this closure
-  consume a capture" question (RFC-0134's `call_multiplicity`) should be the same move-tracking
-  the checker already runs on any body, applied to the capture aggregate as its place — one
-  mechanism on two syntactic forms, not a bespoke `linear fun` type. This RFC does not
-  implement that; it only asks the aggregate representation not to foreclose it.
-
----
+One constraint on the representation, so later structural-record / brand-escape work does
+not force a rewrite: **store a closure's captures as a plain closed named-field aggregate**
+— the same shape as struct field storage, not a bespoke closure-environment type. The
+capture list *is* the field list; each field's kind (`&var` / `&` / owned) is fixed by its
+specifier. Escape / brand checking is then a generic check over an aggregate's field types,
+with nothing closure-specific. RFC-0153 §1a's move-once mutable environment is this same
+aggregate, held owned-and-mutable rather than re-cloned. Full runtime shape, the
+`Type::Fun` match-site set, error codes, and `capture_clone` removal are in **ADR-0052**.
 
 ## References
 
@@ -767,7 +486,7 @@ forces a rewrite of closure capture when they land:
 - RFC-0067a: Reference Types (`4-implemented`, split from RFC-0067 2026-07-07) — supersedes
   RFC-0043's `*mut T`/`*T` with `&var T`/`&T`; the only prerequisite for this RFC.
 - RFC-0067: Lifetime Anchors (`1-under-review`) — adds
-  `&r var T`/`&r T` on top of RFC-0067a; see Timing Recommendation above for sequencing.
+  `&r var T`/`&r T` on top of RFC-0067a — a residual, not a blocker.
 - `reports/implementation/roadmap-2026-07-07.md` — phased sequencing this RFC fits into.
 - C++ lambda capture lists — prior art for syntax and semantics
 
@@ -775,12 +494,14 @@ forces a rewrite of closure capture when they land:
 
 ## Decision
 
-**Outcome: Accepted 2026-09-01**, co-accepted with RFC-0153, as the closure-capture half
-of the v0.13.0 closure cluster. Capture semantics are settled: move-by-default (RFC-0157
-D5), a capture list required the moment a non-`Copy` move or an `&`/`&var` capture occurs,
-bare `[s]` = move for non-`Copy`, `[s.clone()]` for an explicit copy, `[&var x]` ⇒
-`mutating` (`mut` written). Six adversarial-review passes applied; all seven Resolved
-Questions closed. `[]` syntax carries RQ4's recorded RFC-0159 contention (fallback:
-`capture(...)` / `|caps|`) — not a blocker, RFC-0159 defers to this RFC. Interim
-borrow-rule enforcement and the pre-RFC-0122 window are catalogued in RFC-0122 §2e/§2f.
-**Target:** v0.13.0 (#803) — one implementation PR with RFC-0134 / RFC-0152 / RFC-0153.
+**Accepted 2026-09-01**, co-accepted with RFC-0153, as the closure-capture half of the
+v0.13.0 closure cluster. Capture semantics are settled: move-by-default (RFC-0157 D5), a
+capture list required the moment a non-`Copy` move or an `&`/`&var` capture occurs, bare
+`[s]` = move for non-`Copy`, `[s.clone()]` for an explicit copy, `[&var x]` ⇒ `mutating`
+(`mut` written). All seven Resolved Questions closed. `[]` syntax carries RQ4's recorded
+RFC-0159 contention (fallback: `capture(...)` / `|caps|`) — not a blocker; RFC-0159 defers
+to this RFC. Interim borrow-rule enforcement and the pre-RFC-0122 window are catalogued in
+RFC-0122 §2e/§2f.
+
+**Target:** v0.13.0 (#803) — one implementation PR with RFC-0134 / RFC-0152 / RFC-0153 /
+RFC-0157; shape per ADR-0052.
