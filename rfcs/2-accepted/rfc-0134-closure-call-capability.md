@@ -4,7 +4,7 @@ title: "Closure Call Capability"
 date: '2026-08-13'
 status: accepted
 target: v0.13.0
-updated: '2026-08-31'
+updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 ---
 
@@ -98,6 +98,20 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 > now and three later. §4 and §5 below are updated to point at it; where §4 says "the
 > count is two, not one," read that as the argument for why §1's `use_multiplicity` is a
 > field at all, which is unchanged.
+
+> **Adversarial-review fixes, 2026-09-01** (cross-RFC review of the v0.13.0 cluster):
+> - **§1** now states the capture forms' `Copy`-ness explicitly — `&T` is `Copy`, `&var T`
+>   is not — so `[&var x]` closures are non-`Copy` through §1 with no special case, and
+>   RFC-0153 needs no separate "mutating ⇒ not Copy" rule (that rule is withdrawn there).
+> - **§2** now says the `many` default applies **only in the absence of an expected type**;
+>   a literal checked against an ascribed / return / field function type is checked against
+>   *that* type's qualifiers. `let f: once () -> T := () -> T { … }` is not a
+>   default-`many`-then-fail.
+> - **§3** flags the stdlib `once`-annotation sweep as a required delivery item on #269,
+>   not something the default silently "covers."
+> - Cross-RFC: all 2×2×2 `(call, use, mutation)` combinations are well-formed (no cross-axis
+>   constraint); diagnostic order is capture-classification (RFC-0050) → multiplicity /
+>   mutation verification.
 
 ## Summary
 
@@ -267,6 +281,18 @@ case keeps working. This alone fixes `call(f); call(f)`: a closure capturing a n
 value stops being freely reusable as a *value*, and ordinary move checking (already
 sound for every other non-`Copy` type) takes over without any new mechanism.
 
+**Capture `Copy`-ness of the capture forms.** A bare by-value capture is `Copy` iff the
+captured type is. A `&`-reference capture is `Copy` (`&T` is `Copy`, per RFC-0067a,
+mirroring Rust's `&`). A `&var`-reference capture is **not** `Copy` (`&var T` is not
+`Copy`, mirroring `&mut`), so any `[&var x]` closure is non-`Copy` through this rule with
+no special case. `[x.clone()]` (RFC-0050) captures an owned value, `Copy` iff that type
+is. This means the mutation axis (RFC-0153) needs no separate "a `mutating` closure is not
+`Copy`" rule — a closure that mutates outer state holds a `&var` capture and is non-`Copy`
+here; a closure that mutates an owned non-`Copy` capture is non-`Copy` here; a closure
+that mutates an owned `Copy` capture (`[n] mut { n += 1 }`, `n: i64`) *is* `Copy`, and
+soundly so (each copy gets its own counter). RFC-0153 §3's earlier "not `Copy`" rule is
+withdrawn accordingly.
+
 **Why no existing mechanism can express this rule — checked, not assumed.** RFC-0061
 (`4-implemented`) §2 allows `std::core` to write conditional blanket impls against
 structural constructors, and §7.2 uses exactly that to grant bare function pointers
@@ -315,6 +341,17 @@ accordingly** — see there.
 > multiplicity from its body. It now *verifies* it: the default is `many`, `once` is
 > written, and the analysis below runs to reject a `many`/unqualified closure whose body
 > consumes a non-`Copy` capture. The predicate and diagnostic shape are unchanged.
+>
+> **Amended 2026-09-01 (adversarial review).** "Omitting the qualifier means `many`"
+> applies **only when there is no expected type**. When a closure literal is checked
+> against an expected function type — a `let`/parameter ascription, a return position, a
+> struct-field initializer — the expected type's `call_multiplicity` (and `call_mutation`,
+> RFC-0153) is what the literal is checked against, exactly as the expected type already
+> supplies the parameter and return types. So `let f: once () -> String := [s] () -> String
+> { s };` is checked as `once` and accepted; the bare literal does **not** default to
+> `many` and then fail. `many` is the default only for a literal with no expected type
+> (its own inferred type). RFC-0152 widening then applies to the *value* on top of this,
+> for the cases where the literal's type and the slot's type still differ.
 
 For a closure whose captures are already established as non-`Copy` (via §1), the checker
 needs to know whether invoking it can move one of those captures out. Proposed: **infer
@@ -457,6 +494,18 @@ way, and shouldn't be assumed to until that dependency is resolved.
 > a promise not a re-derivation (still true), the qualifier's grammar and placement, and
 > its checking via RFC-0152's first-order directional matching. Read the inference
 > passages as historical context for why the default is `many` rather than `once`.
+>
+> **Amended 2026-09-01 (adversarial review) — stdlib audit is a delivery item, not
+> "covered."** Under the `many` default, every unqualified closure-typed stdlib parameter
+> becomes `many`-required. For combinators that call their callback in a loop
+> (`List::map`/`filter`/`fold`/`find`, `for_each`) that is correct. For combinators that
+> call it **at most once** it *over-constrains* callers relative to the old inferred
+> behavior — they would reject a legitimate call-once closure. Those must be annotated
+> `f: once (T) -> U` as part of landing this RFC: at minimum `Perhaps::map` /
+> `Result::map` / `Perhaps::and_then` / `Result::and_then` / `Perhaps::unwrap_or_else` /
+> `Result::unwrap_or_else` / `Perhaps::filter` / `Perhaps::map_or` and their siblings. The
+> sweep is mechanical (grep `core.mtl` for closure-typed parameters, classify by call
+> shape) but it is a required step, tracked on #269.
 
 §2 infers a closure *literal's* own multiplicity from what its body does to its own
 captures. A separate question surfaced while working through what was Open Question 3 in

@@ -4,7 +4,7 @@ title: "Closure Mutation Axis"
 date: '2026-08-30'
 status: under-review
 target: v0.13.0
-updated: '2026-08-31'
+updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 ---
 
@@ -52,6 +52,19 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 > i.e. Rust's `FnMut`.
 
 > **Status — under review (2026-08-30).** Deferred from RFC-0134 §4/§5: the reserved third Type::Fun axis -- whether a call needs exclusive (&var) access to a capture, i.e. FnMut.
+
+> **Adversarial-review fixes, 2026-09-01.** From a cross-RFC review of the v0.13.0 closure
+> cluster:
+> - **§3's "a `mutating` closure is not `Copy`" is withdrawn** — it contradicted RFC-0134
+>   §1 and was too strong. `use_multiplicity` stays exactly RFC-0134 §1 (Copy iff every
+>   capture is Copy); `call_mutation` is fully independent. All 2×2×2 field combinations
+>   are well-formed (§4). `&T` is `Copy`, `&var T` is not.
+> - **§3's "`&var self`" is now a place rule**, not a metaphor: a `mutating` call
+>   consumes-and-rebinds the closure binding, reusing RFC-0134 §2's `once`-call machinery.
+> - **§1a gains a storage model** (one environment cell owned by the closure value, moves
+>   with it) and an **early-exit rule** (in-place, non-transactional; panic/`?`/`Signal`
+>   leaves partial mutation visible, closure not poisoned).
+> - `.clone()` on a closure is a non-goal (closures are outside the aspect system).
 
 ## Summary
 
@@ -119,18 +132,35 @@ This RFC fixes that:
 
 - **`reading` closure:** unchanged — per-call clone of the captured environment, nothing
   written back. Since the body does not mutate, this is unobservable.
-- **`mutating` closure:** its by-value captures are **written back** into the closure's
-  stored environment at the end of each call, so mutation *persists across calls*. The
-  closure now holds private mutable state — a returnable counter / accumulator / memoizer,
-  Rust's `move ||` + `FnMut`. Captures held by `&var` reference already persist (through
-  the outer cell); this only adds persistence for the *owned* captures.
+- **`mutating` closure:** its owned (by-value) captures live in **one mutable environment
+  cell held by the closure value itself** — not re-snapshotted per call. Each call
+  operates on that cell in place, so mutation *persists across calls*. The closure holds
+  private mutable state: a returnable counter / accumulator / memoizer, Rust's `move ||` +
+  `FnMut`. Captures held by `&var` reference already persist (through the outer cell);
+  this makes the *owned* captures behave the same way.
+  - **Storage and movement.** The environment cell is part of the closure value and moves
+    with it — assigning the closure to a new binding, passing it by value, or returning it
+    (`make_counter`) transfers ownership of the cell; the write-back target travels with
+    the closure and stays valid. It is not shared: there is at most one live owner (§3).
+    Copying the closure value (only possible when its `use_multiplicity` is `many` — see
+    §3) copies the cell, and the copies then diverge, exactly as copying any struct with a
+    counter field would.
+  - **Early exit.** Write-back is **in place, not transactional.** If a call exits
+    normally the cell holds the body's final state. If a call exits via `panic`, a
+    propagated error (`?`), or any non-normal `Signal`, the mutations that ran are visible
+    in the cell and the closure is **not poisoned** — it remains callable, in a
+    valid-but-partial state, exactly as a `&var self` method that panicked mid-mutation
+    leaves its receiver. Callers that need atomicity guard it themselves; this RFC does
+    not add rollback.
 - This is a change to RFC-0006 (`4-implemented`), edition-gated exactly like RFC-0157's
-  D5 change to the capture default. Behind the old edition, a `mut` closure is a
-  parse/type error; behind the new one it has the write-back semantics above.
+  D5 change to the capture default. Behind the old edition, `mut` is not a keyword in
+  function-type position and a mutating body under an implicit by-value capture is the
+  existing "cannot mutate a copy" error; behind the new edition it has the semantics
+  above.
 
-The exclusive-access rule in §3 is what keeps the write-back sound: a `mutating` call
-takes `&var self` on the closure, so no two calls (including reentrant ones) can be
-mid-write-back at once.
+§3's exclusive-access rule is what keeps this sound: a `mutating` call holds the closure
+exclusively for its duration, so no two calls — including reentrant ones — are ever
+mid-mutation on the same cell at once.
 
 ### 2. Qualifier
 
@@ -150,14 +180,36 @@ Spelling is Open Question 1 — `mut` reuses Metel's mutation vocabulary (`&var`
 
 ### 3. Call-site soundness
 
-- A `mutating` closure's call needs exclusive access to the closure value for the
-  duration of the call — modeled as the call taking `&var self` on the closure,
-  so two calls cannot overlap and a `&` to the closure cannot be live across one.
-- A `mutating` closure is **not `Copy`** (`use_multiplicity` cannot be `many`):
-  copying it would let two copies mutate captures independently. This is the same
-  implication RFC-0134 notes for `call = once`, on the same grounds.
-- Passing a `mutating` closure where a `reading` one is required is rejected;
-  the reverse (a `reading` closure into a `mutating` slot) is allowed by RFC-0152.
+- **Exclusive access during a call — stated as a place rule, not a metaphor.** A
+  `mutating` call **consumes-and-rebinds the closure binding at the call expression**:
+  the same callee-place consumption RFC-0134 §2 specifies for a `once` call, except the
+  closure is immediately rebound with its updated environment instead of ending. This
+  holds for *any* `use_multiplicity`. Consequences: two `mutating` calls on the same
+  closure cannot overlap; a reentrant call reached from within the first call's dynamic
+  extent is rejected as use of a consumed place (the same rule and diagnostic as
+  RFC-0134's reentrant `once` call); no `&` to the closure may be live across a call; and
+  a `mutating` closure held only behind a shared `&` cannot be called at all.
+  - **On `self`.** Metel closures have no written `self`, so "`&var self`" was only ever
+    shorthand. The mechanism is the place-consumption above, which the move checker
+    already implements for `once` — this RFC reuses it, it does not add a receiver-kind
+    concept for callables.
+- **`use_multiplicity` is unchanged by this axis.** A closure's `Copy`-ness is exactly
+  RFC-0134 §1 — `many` iff every capture is `Copy` — and `call_mutation` does **not**
+  override it. The earlier "a `mutating` closure is not `Copy`" rule is **withdrawn**: it
+  was too strong. A `[n] mut () -> i64 { n := n + 1; n }` closure with `n: i64` captures
+  only a `Copy` value, so it is `Copy`, and that is sound — each copy carries its own
+  independent counter cell, which is what `Copy` means. The soundness concern the old
+  rule was reaching for (two owners mutating *the same* backing) only arises for a
+  non-`Copy` capture, and such a closure is already non-`Copy` by §1. `&var T` and `&T`:
+  `&T` is `Copy`, `&var T` is **not** (mirroring `&`/`&mut`), so a `[&var x]` capture
+  makes the closure non-`Copy` through §1 with no special case — see RFC-0134 §1's note.
+- **Widening `reading` → `mutating` slot (RFC-0152) is type-level only.** A `reading`
+  value passed to a `mut (T) -> U` parameter keeps its actual runtime behavior; the slot
+  type only bounds how the callee may use it. Widening happens only at first-order
+  by-value / owned positions (argument, return, ascription, struct-field init), so the
+  callee always has the value by value or `&var` and can call it under the same
+  place-consumption rule with no penalty and no latent capability tracking. The reverse —
+  a `mutating` value into a `reading` slot — is rejected.
 
 ### 4. Relationship to the 2×2 (×2)
 
@@ -172,6 +224,13 @@ RFC-0134 §4 makes the case for axes over a hierarchy: the four states are all
 meaningful and independently reachable, so `mutation` is a separate binary field,
 not a third point on the `call` axis.
 
+**No cross-axis well-formedness constraint.** `call_multiplicity`, `use_multiplicity`
+(RFC-0134 §1), and `call_mutation` are fully independent — every one of the eight
+combinations (2×2×2) is a well-formed `Type::Fun`. In particular a `Copy` (`use = many`)
+closure may be `mutating`, and a `mutating` closure may be `many` or `once` on the call
+axis. Each field is computed from the closure at its creation site by the rule for that
+axis; none gates another.
+
 The `many` × `mutating` cell is the one the rest of the closure model cannot express
 without this RFC (see RFC-0134 §5). Worked:
 
@@ -184,10 +243,15 @@ fun make_counter() -> mut () -> i64 {
 fun main() {
     let mut c := make_counter();
     assert(c() == 1);
-    assert(c() == 2);   // state lives inside `c`
-    // `c` is `many mut` — not `Copy` (§3); no two calls overlap
+    assert(c() == 2);   // state lives inside `c`'s environment cell
+    // `c` is `many mut`. Here `n: i64` is Copy, so `c` is also Copy (§3, RFC-0134 §1):
+    // `let mut d := c;` gives an independent counter. Calls still can't overlap.
 }
 ```
+
+A closure that captures a *non-`Copy`* value by value (`[buf] mut (e) -> () { buf.push(e); }`)
+is non-`Copy` by RFC-0134 §1 — so there is exactly one owner and the "two owners mutate
+the same backing" case cannot arise.
 
 ## Alternatives considered
 
@@ -271,6 +335,14 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 - `Drop`-for-closures / unconsumed-closure cleanup — RFC-0134 §5 rules it out and
   this RFC does not reopen it.
 - Multiplicity for ordinary types — RFC-0135.
+- **`.clone()` / `.share()` on a closure value** — closures are outside the aspect system
+  (RFC-0134's Open-Questions finding: `InferType::Fun` implements nothing; RFC-0158 does
+  not change that), so a closure has no `Clone` or `Share` impl and `c.clone()` does not
+  type-check. The only way to duplicate a `Copy` (`use = many`) closure is ordinary
+  by-value copy, which copies the environment cell (§1a). A non-`Copy` closure — every
+  `mutating` closure over a non-`Copy` capture — cannot be duplicated at all, which is
+  the property the withdrawn "not `Copy`" rule was reaching for, now obtained from
+  RFC-0134 §1 instead.
 
 ## Open Questions
 

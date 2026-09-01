@@ -4,7 +4,7 @@ title: "Closure Capture Lists"
 date: '2026-06-03'
 status: under-review
 target: v0.13.0
-updated: '2026-08-31'
+updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 ---
 
@@ -36,6 +36,14 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 >   Milestoned **v0.13.0** (#803) alongside RFC-0134 (#269) and RFC-0152 (#901) — closure
 >   capture lists and closure call capability are one feature area. Still `1-under-review`;
 >   needs to reach `accepted` to match the rest of that milestone.
+
+> **Adversarial-review fixes, 2026-09-01** (cross-RFC review of the v0.13.0 cluster). New
+> in "When the list is required": bare `[s]` for non-`Copy` `s` often forces `once`;
+> unknown-`Copy`-ness of a generic `T` is treated as non-`Copy` conservatively (capture
+> kind fixed at the definition site, no per-monomorphisation change); a closure literal
+> cannot reference its own `let` binding. New "Nested closures" rule (an inner `[s]` of an
+> enclosing capture makes the *outer* closure `once`) and a "Checking order" subsection
+> (capture classification before multiplicity/mutation verification).
 
 > **Correction pass, 2026-08-31.** Two changes: the `move` specifier is **dropped**
 > from this RFC, and stale syntax is refreshed.
@@ -244,6 +252,26 @@ deep-clone unreachable for non-`Copy` values — nothing is cloned into a closur
 (A non-`Copy`, non-`Clone` binding can now enter a closure: `[s]` moves it in. That is the
 change from the pre-amendment text, where such a binding could not be captured at all.)
 
+**Bare `[s]` for a non-`Copy` `s` often forces `once`.** `[s]` is a by-value *move* into
+the environment; if the body then moves `s` out — returns it, passes it by value to
+something that takes ownership — that is a body that consumes a by-value capture, so
+RFC-0134 §2 makes the closure `once` and (post the `many`-default amendment) the literal
+must be written `[s] once (…) -> … { … }` or be a definition-site error. A body that only
+*reads* `[s]` stays `many`. This is intended, but callers of this RFC should know that the
+most obvious `[s]` closure — `[s] () -> String { s }` — needs the `once` qualifier.
+
+**Unknown `Copy`-ness in a generic body.** Inside `fun make<T>(x: T) -> …`, a free
+variable of type parameter `T` is treated as **non-`Copy` unless `T: Copy` is in scope**
+— conservative, so the list is required and `[x]` is a move. The capture kind is fixed at
+the generic definition site, not re-decided per monomorphisation, so instantiating `T`
+with a `Copy` type does not silently change capture semantics; it only means the move is
+a copy at that instantiation.
+
+**A closure literal cannot reference its own `let` binding.** `let f := () -> i64 { f() };`
+is an unresolved-name error — `f` is not in scope inside its own initializer, so it is
+neither a free variable nor a capture. Recursive closures need a named `fun` (which has
+runtime knot-tying) or an explicit fixpoint helper; this RFC adds no self-capture form.
+
 If a closure *does* have a capture list, that list must be exhaustive: every free variable the closure body references must appear in it, with the specifier matching how it's used. "Free variable" means an outer-scope **local binding** — a `let` binding or function/closure parameter visible in the lexical scope enclosing the closure. It does not include references to module-level functions, constants, types, or aspects: those are resolved by ordinary name resolution regardless of any capture list, and never need to appear in it, since nothing about them is being captured from a stack frame. A closure mixing a mutable-reference capture with a by-value capture now looks like:
 
 ```metel
@@ -262,6 +290,36 @@ fun main() {
 ```
 
 Referencing a free local binding that is not in the list — of any kind, including ones that would only need clone capture — is a compile error once the closure has a capture list at all. References to module-level items are unaffected.
+
+**Nested closures.** A capture-list item may name a binding that is itself a capture of an
+*enclosing* closure — from the inner closure's point of view it is still an outer-scope
+local. Its capture kind participates in the **enclosing** closure's multiplicity: if the
+inner closure captures `[s]` (by value) an enclosing-closure capture `s`, calling the
+outer closure moves `s` out of the outer closure's own environment into the inner one, so
+the outer closure is `once` by RFC-0134 §2 — the same "body moves a by-value capture"
+rule, where the "body" is the outer closure and the "move" is the inner closure's
+capture. `[&s]` / `[&var s]` of an enclosing capture does not affect the outer closure's
+multiplicity.
+
+### Checking order
+
+A closure literal is resolved in a fixed order; the first stage that fails is the reported
+error, and later stages are suppressed for that closure:
+
+1. **Capture classification** — which free variables the body references, whether each is
+   `Copy`, whether a list is required, and (if a list is present) exhaustiveness and
+   specifier-matches-use. The "add a capture list" / "not in the list" errors are here.
+2. **`use_multiplicity`** — derived from the capture set (RFC-0134 §1).
+3. **`call_multiplicity` verification** — the body vs. the declared/default/expected
+   `many` (RFC-0134 §2). The "unqualified closure consumes a capture; add `once`" error is
+   here.
+4. **`call_mutation` verification** — the body vs. the declared/default/expected `reading`
+   (RFC-0153). The "unqualified closure mutates a capture; add `mut`" error is here.
+
+Because stages 3–4 reason about *classified* captures, a capture-classification failure
+(stage 1) is always reported before a multiplicity or mutation failure. Stages 3 and 4 are
+independent; if a body both consumes and mutates a capture without the qualifiers, both
+errors are reported.
 
 ### Semantics
 
@@ -454,6 +512,26 @@ takes no keyword, which is why bare `[ident]` suffices.
 
 **Suggested order:** land RFC-0157 D5 + this RFC together for v0.13.0, sequenced with
 RFC-0134 (#269) — capture lists and call capability are one review.
+
+### Edition behavior (added 2026-09-01)
+
+The whole closure cluster — this RFC's required-list rule and bare-`[s]`-is-move, RFC-0153
+§1a's write-back, RFC-0134's `once`/`many` verification, and RFC-0157's D5 capture default
+— is a **single edition boundary**. The rule for each is the same:
+
+- **Old edition:** unchanged. Closures capture by deep clone (RFC-0006); a closure call is
+  not move-checked; the capture-list grammar (`[…]`), the `once` / `many` / `mut`
+  qualifiers, and `[x.clone()]` are **parse errors** — they are new syntax, not
+  old-semantics no-ops. Existing v0.12 code compiles exactly as before.
+- **New edition:** the cluster's rules as specified across the four RFCs.
+
+There is **no mixed mode** (new syntax with old semantics, or vice versa) — a file is one
+edition. Migration from old to new is tool-assisted and, for a closure that captured a
+non-`Copy` value it then returns, is the multi-step change the review noted (`() -> String
+{ s }` → *add a capture list* → `[s]` is a move → the body consumes it → *add `once`*).
+That is one-time migration friction, handled by the edition fixer, not a silent behavior
+change to existing code. The fixer's exact rewrites are a `--edition` tooling deliverable,
+not specified here.
 
 ---
 
