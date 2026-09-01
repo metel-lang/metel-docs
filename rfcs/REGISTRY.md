@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**160 RFCs total.** 30 draft, 36 under review, 12 accepted, 3 integrated (81 live), 52 implemented, 13 superseded, 14 refused (79 settled).
+**161 RFCs total.** 30 draft, 36 under review, 13 accepted, 3 integrated (82 live), 52 implemented, 13 superseded, 14 refused (79 settled).
 
 ## Draft (30)
 
@@ -81,13 +81,13 @@ the curated thematic map.
 - **RFC-0150** — Nested Row Narrowing (`1-under-review` ; rfcs/1-under-review/rfc-0150-nested-row-narrowing.md ; date 2026-08-29 ; updated 2026-08-29)
 - **RFC-0154** — Pipe Notation for Closures and Function Types (`1-under-review` ; rfcs/1-under-review/rfc-0154-pipe-notation-for-closures-and-function-types.md ; date 2026-08-30 ; updated 2026-08-30)
 - **RFC-0155** — Higher-Order Function-Type Multiplicity Variance (`1-under-review` ; rfcs/1-under-review/rfc-0155-higher-order-function-type-multiplicity-variance.md ; date 2026-08-30 ; updated 2026-08-30)
-- **RFC-0157** — Copy and Clone Model Re-analysis (`1-under-review` ; rfcs/1-under-review/rfc-0157-copy-and-clone-model-re-analysis.md ; date 2026-08-31 ; updated 2026-09-01)
 - **RFC-0158** — Share and Clone: Separating Aliasing from Duplication (`1-under-review` ; rfcs/1-under-review/rfc-0158-share-and-clone-separating-aliasing-from-duplication.md ; date 2026-08-31 ; updated 2026-08-31)
 - **RFC-0159** — Abstract Regions and a Dedicated Identity Channel (`1-under-review` ; rfcs/1-under-review/rfc-0159-abstract-regions-and-a-dedicated-identity-channel.md ; date 2026-09-01 ; updated 2026-09-01)
 - **RFC-0160** — Type Aliases (`1-under-review` ; rfcs/1-under-review/rfc-0160-type-aliases.md ; date 2026-09-01 ; updated 2026-09-01)
 - **RFC-0161** — Callable Object Contract (dyn Callable) (`1-under-review` ; rfcs/1-under-review/rfc-0161-callable-object-contract-dyn-callable.md ; date 2026-09-01 ; updated 2026-09-01)
+- **RFC-0162** — Copy and Clone Model — Regular-Value Design Space (`1-under-review` ; rfcs/1-under-review/rfc-0162-copy-and-clone-model-regular-value-design-space.md ; date 2026-09-01 ; updated 2026-09-01)
 
-## Accepted (12)
+## Accepted (13)
 
 - **RFC-0050** — Closure Capture Lists (`2-accepted` ; rfcs/2-accepted/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-09-01)
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
@@ -101,6 +101,7 @@ the curated thematic map.
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 - **RFC-0152** — Function-Type Multiplicity Widening (`2-accepted` ; rfcs/2-accepted/rfc-0152-function-type-multiplicity-widening.md ; date 2026-08-30 ; updated 2026-09-01)
 - **RFC-0153** — Closure Mutation Axis (`2-accepted` ; rfcs/2-accepted/rfc-0153-closure-mutation-axis.md ; date 2026-08-30 ; updated 2026-09-01)
+- **RFC-0157** — Closure Capture Default (Move) (`2-accepted` ; rfcs/2-accepted/rfc-0157-copy-and-clone-model-re-analysis.md ; date 2026-08-31 ; updated 2026-09-01)
 
 ## Integrated (3)
 

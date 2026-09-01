@@ -739,13 +739,13 @@ forces a rewrite of closure capture when they land:
 - Closure capture tests: `tests/evaluator/sources/closures/72_closure_internal_ptr_no_outer_effect.mtl`, `73_closure_direct_assign_no_outer_effect.mtl`, `74_closure_external_ptr_affects_outer.mtl`
 - RFC-0006: Closure Capture Semantics and Cross-Closure Reference Sharing (`4-implemented`) —
   defines the current clone-by-default capture behavior this RFC's bare `ident` specifier
-  spells explicitly. Whether that default should change (so a non-`Copy` value moves rather
-  than clones, or fails) is **RFC-0157**'s question, not this RFC's.
-- RFC-0157: Copy and Clone Model Re-analysis (`1-under-review`, opened 2026-08-31, #918) — the RFC this
-  one defers ownership-transfer capture to. Analyzes whether closure capture by value should
-  mean move (consistent with `let y := x`) or clone (RFC-0006 today); its recommendation is
-  the former, as a hard change (Metel has no public users; no edition gate), which settles
-  this RFC's out-of-scope note as "no specifier needed."
+  spells explicitly. That default **is** changed — a non-`Copy` value *moves* — by
+  **RFC-0157**'s D5, now `2-accepted`.
+- RFC-0157: Closure Capture Default (Move) (`2-accepted`, #918) — the RFC this one defers
+  ownership-transfer capture to. Its D5 decision (closure capture by value = move,
+  `let y := x`) settles this RFC's out-of-scope note as "no specifier needed"; it lands as
+  one hard change (Metel has no public users; no edition gate). The regular-value
+  `Copy`/`Clone` model analysis it originally carried is **RFC-0162** (`1-under-review`).
 - RFC-0046: Linear Closure Capture — **refused** (`6-refused/`); specified a `move` capture in
   `linear fun` / exactly-once terms against the old unified `Region` model. Not the framing to
   inherit. Listed only to note that this RFC's dropped `move` specifier is *not* a revival of it.
