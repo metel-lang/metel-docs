@@ -295,11 +295,33 @@ other — which is evidence for the decomposition thesis rather than an extra ru
    aspect rather than a concrete type — with any in-scope implementor satisfying it? That is
    what the allocator use case actually wants, and it makes §3's "satisfies that type" a
    bound-satisfaction query rather than a type match. Cheap to state, not cheap to specify.
-4. **Interaction with closures.** Does a closure capture the context in scope where it is
-   *defined* or where it is *called*? Definition-site is the only answer consistent with
-   §3's static resolution, but `BumpAlloc::scoped((@a) -> { .. })` in RFC-0065 is precisely
-   a closure that introduces one, so this needs to be checked against that pattern rather
-   than assumed.
+4. **Interaction with closures and function types.** *(Expanded 2026-09-01 alongside
+   RFC-0160 Type Aliases §"Context parameters".)* Two regimes, both wanted:
+
+   - **Default — definition-site capture.** A `context c: C` in scope where a closure
+     literal is written is an ordinary free binding the closure closes over at creation,
+     the same as any other outer binding. The closure's type stays plain (`(T) -> U`) and
+     carries no context requirement. This is the only regime consistent with §3's static
+     resolution, and it is what `BumpAlloc::scoped((@a) -> { .. })` (RFC-0065) relies on.
+   - **Deferral — a context function type.** `context(c: C) (T) -> U` is a closure type
+     whose *caller* must supply `c` from scope at each call. This is Scala 3's context
+     functions (`(using T) ?=> R`). It is genuine type information — an alias carries it,
+     a struct field can hold it, RFC-0152 widening applies to it.
+
+   Consequences to specify:
+   - **Capture-list carve-out (RFC-0050).** In a deferred-context closure, `c` is used in
+     the body but is **not** listed in the capture list — it is threaded per call, not
+     captured. RFC-0050's "free variable" exemption (currently module-level
+     functions/constants/types/aspects) gains context parameters as a third category, for
+     the same reason: they are resolved, not closed over. Exhaustiveness stays honest.
+   - **Where it lives on the type.** The `context(...)` clause is a **row** of `(role,
+     type)` requirements — orthogonal to the `once` / `mut` multiplicity axes (RFC-0134 /
+     RFC-0153), following the row shape RFC-0140 already uses for its handler channel and
+     RFC-0121 supplies. Whether it becomes a fourth `Type::Fun` field or contexts are
+     capture-only (no deferral, so never reaching the type) is this RFC's call.
+   - **Propagation (UQ2) recurs here:** a deferred-context closure value passed through an
+     intermediate frame carries its requirement in its type, so it need not be re-declared
+     — the value-side answer to the same question.
 5. **Does this subsume RFC-0065 §1b, or coexist with it?** §4 asserts it should subsume it.
    The migration is not specified here, and RFC-0065 is `2-accepted`, so this is a real
    cross-RFC amendment to sequence, not a footnote.
@@ -323,6 +345,10 @@ other — which is evidence for the decomposition thesis rather than an extra ru
   follows, and its own supersession of nameless context receivers.
 - Odin's implicit `context` struct, and Zig's explicit-allocator convention — the two
   alternatives weighed in §6.
+- **RFC-0160 (Type Aliases), `0-draft`** — its §"Context parameters" and §"Function and
+  closure types" mirror Unresolved Question 4; the two are kept in sync. Also the RFC that
+  would let `context(theme: Theme) mut (Widget) -> Html` be named once instead of repeated.
+- Scala 3 context functions (`(using T) ?=> R`) — the deferral regime in UQ4.
 
 ---
 
