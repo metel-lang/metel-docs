@@ -167,9 +167,9 @@ lives there for the closure's lifetime. On that base:
     at the end of the scope that consumed it, per ordinary move rules; if the body moved
     *some* captures out and left others, only the still-owned fields are dropped (ordinary
     partial-move drop). Actually *running* destructors waits on RFC-0071 destructor
-    invocation (metel-core#292); until then a non-trivial captured `Drop` value behaves as
+    invocation (metel-core#261); until then a non-trivial captured `Drop` value behaves as
     everywhere else in the language (empty `drop` bodies only). The **rule** — what gets
-    dropped and in what order — is fixed here and does not wait on #292.
+    dropped and in what order — is fixed here and does not wait on #261.
   - **Early exit.** Write-back is **in place, not transactional.** One cleanup path,
     running as the closure's call frame returns, handles all of: ending the §3 exclusive
     borrow, clearing the §3 in-call flag, and running/marking the partial-move `Drop`
@@ -690,7 +690,7 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 - **RFC-0158 (Share and Clone)** — `Rc` is `Share`, not `Copy`, so an `[rc]` capture
   makes the closure non-`Copy`; the §4 worked example of a captured `Share` handle.
 - **RFC-0071 (Destructors)** — the field-order drop rule §1a's "Captured `Drop`"
-  reuses; its invocation is metel-core#292, which gates *execution* not the rule.
+  reuses; its invocation is metel-core#261, which gates *execution* not the rule.
 - **RFC-0080 (Stdlib Aspects — …, `Send`/`Sync`)** — owns the `&T` / `&var T` reference
   `Send`/`Sync` rules §3 defers closure `Send`/`Sync` to; this RFC restates none of them.
 - **RFC-0122 (Borrow Checker)** — §3's `&var self` receiver rule is enforced there;
