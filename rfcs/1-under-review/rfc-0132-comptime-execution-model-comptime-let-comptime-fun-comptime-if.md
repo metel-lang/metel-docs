@@ -245,6 +245,35 @@ RFC rather than for RFC-0092's half** — see Open Questions 1 and 2. This is th
 cost of the split: `type`-as-value and reflection could wait on derive, but recursion
 and comptime storage cannot wait on anything, because §1 cannot ship without them.
 
+### 4.1 Closures and first-class function values at comptime
+
+*(Design intent relocated here from RFC-0153's Non-Goals, 2026-09-01. The v0.13.0 closure
+cluster — RFC-0134 / RFC-0152 / RFC-0153 — specifies closures for the runtime language
+only; how they behave under comptime evaluation is this RFC's concern and is not
+spec-integrated until this RFC is.)*
+
+A closure literal evaluated inside a `comptime fun`, or in a `comptime let` initializer, is
+an ordinary comptime value. The comptime evaluator is the same interpreter, so a closure
+created at compile time behaves exactly as one created at runtime; the three `Type::Fun`
+axes the closure cluster adds all carry over unchanged:
+
+- **`once` consumption** — calling a `once` closure at comptime consumes it at the call
+  expression; a second comptime call is the ordinary moved-value error.
+- **`mut` write-back** — a `comptime` `[n] mut () -> i64` counter advances between comptime
+  calls, its environment mutated in place, exactly as at runtime (RFC-0153 §1a).
+- **the reentrancy guard** — a `mutating` call reached from inside a still-live one
+  (RFC-0153 §3a) is rejected. At comptime it surfaces as a compile-time evaluation
+  diagnostic with a source span — the comptime analogue of the runtime abort, not an
+  evaluator panic and not unguarded recursion — and composes with the recursion-depth
+  limit (Open Question 1) rather than replacing it.
+
+There is no separate `const` / comptime closure model and no relaxation of RFC-0153 §3's
+exclusive-place rule. A closure that escapes comptime into a runtime value — returned from
+a `comptime fun` invoked at a runtime call site, or bound by a non-`comptime` `let` — is
+subject to the ordinary runtime rules from that point on. Closures capturing runtime
+allocators or performing I/O remain barred by §4's inherited restrictions regardless of
+their axes.
+
 ## 5. `comptime if`
 
 *(Moved from RFC-0092 §0.)*
@@ -447,6 +476,9 @@ Consequences for this RFC:
   issue (#539) was closed unimplemented pending exactly this mechanism.
 - **RFC-0061 (Structural Aspect Bounds), `4-implemented`** — §3.3's bound-checking
   discipline; also relevant to Open Question 5.
+- **RFC-0134 / RFC-0152 / RFC-0153 (v0.13.0 closure cluster), `3-integrated`** — specify
+  closures for the runtime language; §4.1 here owns their comptime-evaluation behaviour,
+  relocated from RFC-0153's Non-Goals.
 - **RFC-0093 (Derive Registration) / RFC-0094 (Comptime Metaprogramming)** — depend on
   RFC-0092's half, not on this one directly.
 - `metel-core#263` — the hardcoded `[T; N]: Copy` arm this RFC's §3 exists to retire.

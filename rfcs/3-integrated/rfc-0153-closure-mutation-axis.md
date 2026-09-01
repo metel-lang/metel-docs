@@ -574,14 +574,11 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
   `Type::Fun` *types* (used by the unifier) is a type relation and says nothing about
   value equality; two closures of the same type with different captures are simply not
   comparable. No closure-identity or by-address comparison is introduced.
-- **`comptime` / `const` closures.** `comptime` is a separate, not-yet-implemented effort
-  (RFC-0092, RFC-0132); this RFC does not specify its semantics. The design intent, for
-  when it lands: the comptime evaluator is the same interpreter, so `mut` write-back
-  (§1a), `once` consumption, and the §3 in-call flag carry over unchanged on the same code
-  path, with no separate const-closure model and no relaxation of §3's exclusive-place
-  rule. A `comptime` reentrant `mutating` call would surface as a compile-time evaluation
-  diagnostic rather than a runtime abort. Nothing here is spec-integrated until `comptime`
-  itself is.
+- **`comptime` / `const` closures.** Out of scope. `comptime` is a separate,
+  not-yet-implemented effort; how closures and their `once` / `mut` axes behave under
+  comptime evaluation is specified in **RFC-0132 §4.1** ("Closures and first-class function
+  values at comptime"), not here, and is not spec-integrated until RFC-0132 is. The short
+  version: same evaluator, axes carry over unchanged, no separate const-closure model.
 - Multiplicity for ordinary types — RFC-0135.
 - **`.clone()` / `.share()` on a closure value** — closures are outside the aspect system
   (RFC-0134's Open-Questions finding: `InferType::Fun` implements nothing; RFC-0158 does
