@@ -579,7 +579,7 @@ above it are.
 - **RFC-0094** — Comptime Metaprogramming — generalized `emit`, comptime-callable
   parsing, diagnostics, body-reflection scoping. Depends on RFC-0092 only; independent
   of RFC-0093.
-- **RFC-0095** — Attributes and Metadata — `@` syntax, attributes as comptime-visible
+- **RFC-0095** *(under-review 2026-09-01, #934)* — Attributes and Metadata — `@` syntax, attributes as comptime-visible
   metadata. Mostly independent; only §2 depends on RFC-0092.
 - **RFC-0062** — Ord/Eq Comparison Aspects — `Eq`/`Ord`/`Ordering` in `std::core`.
   RFC-0093's Derivable Aspects table assumes these exist; not cross-checked against
@@ -1207,7 +1207,7 @@ implementation).
 - **RFC-0027** — C FFI.
 - **RFC-0033** — Field-Level Mutability — additive `let` field annotation.
 - **RFC-0038** — `impl Aspect` in Struct Fields / Existential Types.
-- **RFC-0131** *(draft, opened 2026-08-09)* — Hoist `let`/`var` Bindings to the Top of
+- **RFC-0131** *(under-review 2026-09-01, #933; opened 2026-08-09)* — Hoist `let`/`var` Bindings to the Top of
   Their Containing Block — `fun` declarations are already hoisted (visible regardless of
   declaration order); `let`/`var` are explicitly sequential-only, an asymmetry that
   became a real constraint fixing metel-core#656/#658 (a nested `fun`'s eager,

@@ -2,8 +2,10 @@
 id: rfc-0095
 title: "Attributes and Metadata"
 date: '2026-07-09'
-status: draft
+status: under-review
 target:
+updated: '2026-09-01'
+tracking: 'https://github.com/metel-lang/metel-core/issues/934'
 ---
 
 > **New RFC, split out 2026-07-09** from RFC-0012 (Attributes, Metadata, Macros, and
@@ -36,6 +38,8 @@ target:
 > rule at all yet) than the one other already-implemented RFCs cite as a boundary
 > marker. `#` was chosen over `~`, `^`, backtick, `$`, and a keyword-based alternative
 > (`attr ...`) — see Alternatives Considered.
+
+> **Status — under review (2026-09-01).** Split from RFC-0012; the compiler-hint attribute surface is independent of the comptime cluster and ready for review.
 
 ## Summary
 

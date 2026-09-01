@@ -2,9 +2,13 @@
 id: rfc-0131
 title: "Hoist let/var Bindings to the Top of Their Containing Block"
 date: '2026-08-09'
-status: draft
+status: under-review
 target:
+updated: '2026-09-01'
+tracking: 'https://github.com/metel-lang/metel-core/issues/933'
 ---
+
+> **Status — under review (2026-09-01).** Self-contained scope-visibility change surfaced by metel-core#656; ready for review.
 
 ## Summary
 
