@@ -12,7 +12,7 @@ coverage:
   "3": { spec: "spec.functions.closures.legality-22" }
   "4": { spec: "spec.functions.closures.legality-19" }
   "5": { spec: "spec.functions.closures.legality-13" }
-impl_tracking: 'https://github.com/metel-lang/metel-core/issues/925'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/926'
 impl_status: not-started
 ---
 

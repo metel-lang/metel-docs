@@ -13,7 +13,7 @@ coverage:
   "3": { spec: "spec.functions.closures.legality-10" }
   "3a": { spec: "spec.functions.closures.dynamics-9" }
   "4": { spec: "spec.functions.closures.dynamics-8" }
-impl_tracking: 'https://github.com/metel-lang/metel-core/issues/925'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/929'
 impl_status: not-started
 ---
 
@@ -28,7 +28,7 @@ phrase). It records whether calling a closure needs *exclusive* (`&var`) access 
 capture — Rust's `FnMut`.
 
 
-> **Status — integrated (2026-09-01).** Closure cluster spec-integrated (Legality 8/10/24/25, Dynamics 7/8/9/13); coverage.spec frontmatter added; fixtures blocked on metel-core#925. Shape: ADR-0052.
+> **Status — integrated (2026-09-01).** Closure cluster spec-integrated (Legality 10/24/25, Dynamics 7/8/9/13); coverage.spec frontmatter added; fixtures blocked on metel-core#925. Shape: ADR-0052.
 
 ## Summary
 

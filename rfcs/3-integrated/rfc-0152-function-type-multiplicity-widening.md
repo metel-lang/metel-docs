@@ -11,7 +11,7 @@ coverage:
   "2": { spec: "spec.functions.closures.legality-15" }
   "3": { spec: "spec.functions.closures.legality-16" }
   "4": { kind: untestable, reason: "Scope-boundary section (not a general Type::Fun subtype lattice; higher-order/contravariant -> RFC-0155). The first-order widening rule it does carry is spec-anchored at legality-9/15/16." }
-impl_tracking: 'https://github.com/metel-lang/metel-core/issues/925'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/928'
 impl_status: not-started
 ---
 

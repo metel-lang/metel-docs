@@ -13,7 +13,7 @@ coverage:
   "3a": { kind: untestable, reason: "Base function-type spelling — deferred to RFC-0154; no rule of its own here." }
   "4": { kind: untestable, reason: "Internal type representation — Type::Fun gains three multiplicity fields — not user-observable syntax or behaviour. The field semantics are spec-anchored at legality-8/9 and dynamics-6..10." }
   "5": { spec: "spec.functions.closures.dynamics-10" }
-impl_tracking: 'https://github.com/metel-lang/metel-core/issues/925'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/927'
 impl_status: not-started
 ---
 
