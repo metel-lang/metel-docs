@@ -54,17 +54,26 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 
 > **Status — under review (2026-08-30).** Deferred from RFC-0134 §4/§5: the reserved third Type::Fun axis -- whether a call needs exclusive (&var) access to a capture, i.e. FnMut.
 
-> **Adversarial-review fixes, 2026-09-01.** From a cross-RFC review of the v0.13.0 closure
-> cluster:
+> **Adversarial-review fixes, 2026-09-01** (two passes, cross-RFC review of the v0.13.0
+> cluster):
 > - **§3's "a `mutating` closure is not `Copy`" is withdrawn** — it contradicted RFC-0134
 >   §1 and was too strong. `use_multiplicity` stays exactly RFC-0134 §1 (Copy iff every
 >   capture is Copy); `call_mutation` is fully independent. All 2×2×2 field combinations
 >   are well-formed (§4). `&T` is `Copy`, `&var T` is not.
-> - **§3's "`&var self`" is now a place rule**, not a metaphor: a `mutating` call
->   consumes-and-rebinds the closure binding, reusing RFC-0134 §2's `once`-call machinery.
-> - **§1a gains a storage model** (one environment cell owned by the closure value, moves
->   with it) and an **early-exit rule** (in-place, non-transactional; panic/`?`/`Signal`
->   leaves partial mutation visible, closure not poisoned).
+> - **§3 is now a precise place rule** (pass 2 corrected pass 1's over-reach): a `mutating`
+>   call is an **exclusive borrow of the callee place for the call's duration**, `&var
+>   self`-shaped — it does **not** consume the closure. The callee must be an lvalue place
+>   (binding or a projection off one via exclusive access); a temporary (`make_counter()()`)
+>   or a shared-`&` callee is a compile error. `once mut` composes the axes independently —
+>   the `once` axis consumes at the call expression, the `mut` borrow is then moot.
+> - **§1a's early-exit rule** split by axis: plain `mut` + panic → callable, partial
+>   mutation visible; `once`/`once mut` + panic → moved value (RFC-0134 §2), no
+>   "still callable" question.
+> - **§1a storage model** unchanged: one environment cell owned by the closure value,
+>   moves with it, copied for a `Copy` closure.
+> - **§3 gains an interim `Send`/`Sync` rule** (`mutating` ⇒ not `Sync`; `Send` follows
+>   captures) and a **`dyn` erasure default** (bare `dyn Callable` = most-restrictive;
+>   `+ CallMany`/`+ CallShared`/`+ Copy` widen).
 > - `.clone()` on a closure is a non-goal (closures are outside the aspect system).
 
 ## Summary
@@ -146,21 +155,30 @@ This RFC fixes that:
     Copying the closure value (only possible when its `use_multiplicity` is `many` — see
     §3) copies the cell, and the copies then diverge, exactly as copying any struct with a
     counter field would.
-  - **Early exit.** Write-back is **in place, not transactional.** If a call exits
-    normally the cell holds the body's final state. If a call exits via `panic`, a
-    propagated error (`?`), or any non-normal `Signal`, the mutations that ran are visible
-    in the cell and the closure is **not poisoned** — it remains callable, in a
-    valid-but-partial state, exactly as a `&var self` method that panicked mid-mutation
-    leaves its receiver. Callers that need atomicity guard it themselves; this RFC does
-    not add rollback.
+  - **Early exit.** Write-back is **in place, not transactional.** The distinction is
+    which axis governs:
+    - **Plain `mut` (not `once`):** the call does not consume the closure (§3). If the
+      body exits via `panic` / a propagated error (`?`) / any non-normal `Signal`, the
+      mutations that ran are visible in the cell, the exclusive borrow ends with the
+      unwind, and the closure remains **callable in a valid-but-partial state** — exactly
+      as a `&var self` method that panicked mid-mutation leaves its receiver. No rollback.
+    - **`once` or `once mut`:** the `once` axis consumed the callee place *at the call
+      expression*, before the body ran (RFC-0134 §2). So the closure is a moved value
+      whether the body returned normally or panicked, and a later use is the ordinary
+      moved-value error. There is no "still callable after panic" question — `once`
+      already answered it. The environment cell may hold a partial or moved-out state;
+      that is unobservable precisely because the closure cannot be called again. (If the
+      panic is caught, the moved-out *outer* bindings the `once` call consumed are
+      handled by RFC-0134 §2's existing rules, unchanged.)
 - This is a change to RFC-0006 (`4-implemented`), landing with RFC-0157's D5 change to the
   capture default as **one hard change** at v0.13.0 — **no edition gate**: Metel has no
   public users, so the `mut` keyword, the write-back semantics, and the fixture corpus all
   move together (see RFC-0050's "Migration (no edition gate)").
 
-§3's exclusive-access rule is what keeps this sound: a `mutating` call holds the closure
-exclusively for its duration, so no two calls — including reentrant ones — are ever
-mid-mutation on the same cell at once.
+§3's exclusive-borrow rule is what keeps the write-back sound: for a plain `mut` closure
+the place is exclusively borrowed for each call's duration, so no two calls — reentrant
+included — are ever mid-mutation on the same cell at once; for `once mut` the `once`
+consumption makes a second call impossible outright.
 
 ### 2. Qualifier
 
@@ -180,19 +198,36 @@ Spelling is Open Question 1 — `mut` reuses Metel's mutation vocabulary (`&var`
 
 ### 3. Call-site soundness
 
-- **Exclusive access during a call — stated as a place rule, not a metaphor.** A
-  `mutating` call **consumes-and-rebinds the closure binding at the call expression**:
-  the same callee-place consumption RFC-0134 §2 specifies for a `once` call, except the
-  closure is immediately rebound with its updated environment instead of ending. This
-  holds for *any* `use_multiplicity`. Consequences: two `mutating` calls on the same
-  closure cannot overlap; a reentrant call reached from within the first call's dynamic
-  extent is rejected as use of a consumed place (the same rule and diagnostic as
-  RFC-0134's reentrant `once` call); no `&` to the closure may be live across a call; and
-  a `mutating` closure held only behind a shared `&` cannot be called at all.
-  - **On `self`.** Metel closures have no written `self`, so "`&var self`" was only ever
-    shorthand. The mechanism is the place-consumption above, which the move checker
-    already implements for `once` — this RFC reuses it, it does not add a receiver-kind
-    concept for callables.
+- **A `mutating` call is an exclusive borrow of the callee place for the call's
+  duration.** Stated precisely (this replaces the earlier "consumes-and-rebinds"
+  wording, which over-reached):
+
+  1. **The callee must be an lvalue place** — a binding, or a projection off one
+     (`b.handler`, `arr[i]`, `*p`) — whose base is reached through exclusive (`&var` /
+     owning) access all the way down. Calling a `mutating` closure that is a **temporary**
+     (`make_counter()()`, a call result, a literal) is a compile error: *"a `mut` closure
+     must be called through a place — bind it (`let mut c := …; c()`)."* Calling one
+     through a shared `&` — a `&Self` receiver, `(&b).handler()`, an `&`-captured closure
+     — is a compile error for the same reason.
+  2. **For the call's dynamic extent the place is exclusively borrowed**, exactly as a
+     `&var self` method borrows its receiver. So: two `mutating` calls on the same place
+     cannot overlap; a reentrant `mutating` call reached from inside the first call is
+     rejected (`T0003`-shaped "already exclusively borrowed"); no other read or write of
+     the place, and no `&`/`&var` to it, may be live across the call.
+  3. **The call does not consume the place** (unlike a `once` call). After it returns the
+     closure is still bound, still callable, with its environment in whatever state §1a's
+     write-back left it. `mut` is `&var self`-shaped, not `self`-shaped.
+
+  - **`once mut` composes the two axes independently.** The `once` axis consumes the
+    callee place *at the call expression, before the body runs* (RFC-0134 §2). The `mut`
+    axis's exclusive borrow is then moot — there is no valid second call for it to guard.
+    So a `once mut` call: place consumed at the call expression → any later use of the
+    closure is a moved-value error, regardless of what the body did or whether it
+    panicked (see §1a "Early exit").
+  - **On `self`.** Metel closures have no written `self`; "`&var self`" is the borrow
+    shape, not literal syntax. Point 1's place/exclusivity check is a small addition to
+    the move checker (it already tracks exclusive borrows for `&var self` methods), not a
+    new receiver-kind concept for callables.
 - **`use_multiplicity` is unchanged by this axis.** A closure's `Copy`-ness is exactly
   RFC-0134 §1 — `many` iff every capture is `Copy` — and `call_mutation` does **not**
   override it. The earlier "a `mutating` closure is not `Copy`" rule is **withdrawn**: it
@@ -208,8 +243,31 @@ Spelling is Open Question 1 — `mut` reuses Metel's mutation vocabulary (`&var`
   type only bounds how the callee may use it. Widening happens only at first-order
   by-value / owned positions (argument, return, ascription, struct-field init), so the
   callee always has the value by value or `&var` and can call it under the same
-  place-consumption rule with no penalty and no latent capability tracking. The reverse —
+  exclusive-borrow rule with no penalty and no latent capability tracking. The reverse —
   a `mutating` value into a `reading` slot — is rejected.
+
+- **`Send` / `Sync` — an interim rule, not just a punt to RFC-0096.** With RFC-0003
+  (concurrency) under review, a closure escaping to a fiber needs a rule now:
+  - A **`mutating` closure value is not `Sync`.** Two fibers sharing `&` to it would each
+    need the exclusive per-call borrow of §3 at once — the race the axis exists to
+    prevent. (A `reading` closure over `Sync` captures is `Sync`.)
+  - A closure is **`Send` iff every capture is `Send`** — the ordinary aggregate rule.
+    For a `mutating` closure this means `Send` transfers sole ownership of the environment
+    cell to the receiving fiber, which is sound (there is one owner, §1a). A `Copy`
+    `mutating` closure sent by copy gives the receiver an independent cell, also sound.
+  RFC-0096 may restate these through the general marker-aspect machinery later; until then
+  these two lines are the rule.
+
+- **Type erasure (`dyn`).** The flat 3-field `Type::Fun` degrades to `dyn
+  Callable<Args, Ret>` (RFC-0061 §7.1 / metel-core#893) by carrying each field as an
+  auto-marker bound — `CallMany` (call axis `many`), `CallShared` (mutation axis
+  `reading`), and `Copy`. A bare `dyn Callable<A, R>` with **no** marker bounds is the
+  most-restrictive form: call-once, exclusive-access, non-`Copy`. `+ CallMany` /
+  `+ CallShared` / `+ Copy` widen it, per RFC-0152's superset direction. So `store(f: dyn
+  Callable<(), i64>)` given a `once` `f` gets a value it may call **once**; to call it
+  repeatedly `store` must take `dyn Callable<(), i64> + CallMany`. This is the default so
+  the erased case is not undefined; the full `dyn Callable` design is metel-core#893's and
+  is a non-goal here (see Alternatives).
 
 ### 4. Relationship to the 2×2 (×2)
 

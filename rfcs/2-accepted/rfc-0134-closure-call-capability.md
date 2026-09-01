@@ -99,19 +99,28 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 > count is two, not one," read that as the argument for why §1's `use_multiplicity` is a
 > field at all, which is unchanged.
 
-> **Adversarial-review fixes, 2026-09-01** (cross-RFC review of the v0.13.0 cluster):
+> **Adversarial-review fixes, 2026-09-01** (two passes, cross-RFC review of the v0.13.0
+> cluster):
 > - **§1** now states the capture forms' `Copy`-ness explicitly — `&T` is `Copy`, `&var T`
 >   is not — so `[&var x]` closures are non-`Copy` through §1 with no special case, and
 >   RFC-0153 needs no separate "mutating ⇒ not Copy" rule (that rule is withdrawn there).
-> - **§2** now says the `many` default applies **only in the absence of an expected type**;
->   a literal checked against an ascribed / return / field function type is checked against
->   *that* type's qualifiers. `let f: once () -> T := () -> T { … }` is not a
->   default-`many`-then-fail.
-> - **§3** flags the stdlib `once`-annotation sweep as a required delivery item on #269,
->   not something the default silently "covers."
+> - **§2** now says the `many` default applies **only when no expected type fixes the
+>   multiplicity**; an ascribed / return / field slot — including a **block tail
+>   expression** in a typed position — supplies the qualifier to an unqualified literal.
+>   When the expected type is a type variable or a bare generic `F`, the literal takes the
+>   default and inference + RFC-0152 resolve the rest; a conditional/`match` type is the
+>   least-permissive arm, each arm widening to it.
+> - **§2** predicate: generic captures are classified at the **definition site** by the
+>   bounds in scope, not per-monomorphisation — a body that moves an unbounded-`T` capture
+>   is `once` for every instantiation, `T = i64` included.
+> - **§3** flags the stdlib `once`-annotation sweep as a required delivery item on #269;
+>   and the three pre-amendment "Present / Absent / bodyless" bullets are explicitly
+>   marked **non-normative** (they described the withdrawn infer-the-requirement model).
 > - Cross-RFC: all 2×2×2 `(call, use, mutation)` combinations are well-formed (no cross-axis
 >   constraint); diagnostic order is capture-classification (RFC-0050) → multiplicity /
->   mutation verification.
+>   mutation verification; a `mutating` call is an **exclusive borrow of an lvalue place**
+>   (RFC-0153 §3, corrected pass 2 — not a consume), and does not compose with `once` by
+>   "rebinding".
 
 ## Summary
 
@@ -342,16 +351,33 @@ accordingly** — see there.
 > written, and the analysis below runs to reject a `many`/unqualified closure whose body
 > consumes a non-`Copy` capture. The predicate and diagnostic shape are unchanged.
 >
-> **Amended 2026-09-01 (adversarial review).** "Omitting the qualifier means `many`"
-> applies **only when there is no expected type**. When a closure literal is checked
-> against an expected function type — a `let`/parameter ascription, a return position, a
-> struct-field initializer — the expected type's `call_multiplicity` (and `call_mutation`,
-> RFC-0153) is what the literal is checked against, exactly as the expected type already
-> supplies the parameter and return types. So `let f: once () -> String := [s] () -> String
-> { s };` is checked as `once` and accepted; the bare literal does **not** default to
-> `many` and then fail. `many` is the default only for a literal with no expected type
-> (its own inferred type). RFC-0152 widening then applies to the *value* on top of this,
-> for the cases where the literal's type and the slot's type still differ.
+> **Amended 2026-09-01 (adversarial review, two passes).** "Omitting the qualifier means
+> `many`" applies **only when no expected type fixes the multiplicity**.
+>
+> - **An expected function type supplies the qualifier to an unqualified literal**, the
+>   same way it already supplies the parameter and return types. The expected type comes
+>   from a `let` / parameter ascription, a struct-field initializer, **or a block's tail
+>   expression when that block is in a typed position** — a `fun` body with a declared
+>   return type, a `let` with an ascription, an `if`/`match` arm whose result type is
+>   known. So both of these are checked as `once` and accepted:
+>   ```metel
+>   let f: once () -> String := [s] () -> String { s };
+>   fun make(s: String) -> once () -> String { [s] () -> String { s } }   // tail expr
+>   ```
+>   The bare literal does **not** default to `many` and then fail.
+> - **When the expected type does not fix the multiplicity** — it is an unresolved type
+>   variable, or a bare generic parameter `F` with no written function type
+>   (`fun run<F>(f: F)`) — the literal takes the default (`many` / `reading`, RFC-0153).
+>   Ordinary inference/unification plus RFC-0152 widening then resolve any remaining gap
+>   at the eventual concrete site.
+> - **A conditional / `match` expression's type is the greatest lower bound (least
+>   permissive) of its arms** under the widening order, and each arm widens to it. So
+>   `if c { once_g } else { [s] () -> String { s } }` has type `once () -> String`: the
+>   `else` literal is `many` by default and widens `many → once` into the join. A join
+>   that would require *narrowing* an arm (e.g. one arm genuinely `once`, a slot wanting
+>   `many`) is the ordinary rejection.
+> - RFC-0152 widening applies to the resulting *value* wherever its type and a slot's
+>   type still differ.
 
 For a closure whose captures are already established as non-`Copy` (via §1), the checker
 needs to know whether invoking it can move one of those captures out. Proposed: **infer
@@ -387,6 +413,17 @@ conservatively-reachable path consumes `c`, the closure is `once`; it is `many` 
 *every* such path leaves *every* non-`Copy` capture un-consumed. This is deliberately
 the same conservative-reachability standard the move checker uses for `T0019` today, so
 the two analyses cannot disagree about whether a given place is moved.
+
+**Generic captures — definition-site, not per-monomorphisation** *(added 2026-09-01,
+adversarial review)*. Whether a capture `c: T` (for a type parameter `T`) is `Copy` is
+decided by the bounds in scope at the closure's definition, not re-decided at each
+instantiation. So a capture of an unbounded `T` is non-`Copy`; a body that moves it out
+makes the closure `once` **for every instantiation of that definition, including `T =
+i64`** — the closure's type is fixed where it is written. A definition that wants the
+`many` behaviour when `T` is copyable adds `T: Copy` (then moving `[x]` is a copy and the
+body consumes nothing), or restructures to read rather than move. This matches how the
+move checker already treats a generic `let y := x` — conservative on the bound, not
+clairvoyant about instantiations.
 
 **Operational rule at the call site.** Calling a `once` closure **consumes the callee
 place at the call expression itself**, before the call's arguments and body are checked
@@ -606,24 +643,29 @@ the same grammatical position Metel's existing reference qualifiers already occu
 real syntax, and it is deliberately an *addition* to the default above, not a
 replacement for it:
 
-- **Present:** the written qualifier *is* the required multiplicity — part of the
-  function's declared signature, checked by the same first-order directional matching
-  (RFC-0152) the inferred case uses, but never re-derived from the body. `public fun
-  map<U>(&self, f: many (T) -> U) -> List<U>` keeps meaning "callable any number of
-  times" even if a future refactor of `map`'s own implementation happened to only need
-  one call — exactly matching Rust's `F: Fn` staying `F: Fn` regardless of what the
-  current body does.
-- **Absent, body present:** falls back to the inference above, unchanged from the first
-  draft of this section — the common case stays annotation-free.
-- **Absent, no body to infer from at all** — a `native(...)` declaration, or an aspect
-  method signature with no implementation — inference has nothing to walk, so the
-  qualifier is *required*, not optional; omitting it is a compile error. This matches
-  the precedent T0002 already sets for closure parameters generally ("closure parameter
-  needs a type annotation" — no silent default there either), and resolves what an
-  earlier draft of this RFC left as an open mechanics question for exactly this reason:
-  even if inferring `map`'s own required multiplicity from its generic body turns out
-  hard to make work through the symbolic-instantiation machinery discussed below, a
-  stdlib author always has the explicit form as a direct, unambiguous fallback.
+> **⚠ The three bullets below are pre-amendment and NOT normative.** They describe the
+> withdrawn "infer the required multiplicity, use the qualifier only as a fallback" model.
+> Under the 2026-08-31 amendment (see the marker at the top of §3): a function-typed
+> parameter / return / field is **`many`-required by default**, `once` only when written;
+> there is no inference of required multiplicity, no generic-body pass, and no
+> "qualifier required for a bodyless decl" — the `many` default covers a `native` / aspect
+> method signature too (write `once` there if it genuinely accepts call-once callbacks).
+> The bullets are kept for the *reasons* an explicit `once`/`many` is a stable promise
+> rather than a re-derivation, which are still the argument for defaulting to `many`.
+>
+> - **Present:** the written qualifier *is* the required multiplicity — part of the
+>   function's declared signature, checked by the same first-order directional matching
+>   (RFC-0152) the inferred case uses, but never re-derived from the body. `public fun
+>   map<U>(&self, f: many (T) -> U) -> List<U>` keeps meaning "callable any number of
+>   times" even if a future refactor of `map`'s own implementation happened to only need
+>   one call — exactly matching Rust's `F: Fn` staying `F: Fn` regardless of what the
+>   current body does.
+> - **Absent, body present:** ~~falls back to the inference above~~ → **the `many`
+>   default** (2026-08-31 amendment). The common case stays annotation-free.
+> - **Absent, no body to infer from at all** — a `native(...)` declaration, or an aspect
+>   method signature with no implementation — ~~the qualifier is *required*~~ → **the
+>   `many` default applies here too** (2026-08-31 amendment). Write `once` if the
+>   declaration's contract genuinely permits call-once callbacks.
 
 The qualifier is a type-level annotation, not a parameter-specific one — it applies
 anywhere a function type is written (a parameter, a return type, a `let` ascription, a

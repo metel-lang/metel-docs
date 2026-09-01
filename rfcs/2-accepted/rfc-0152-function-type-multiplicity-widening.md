@@ -8,11 +8,14 @@ updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/901'
 ---
 
-> **Adversarial-review fixes, 2026-09-01** (cross-RFC review of the v0.13.0 closure
-> cluster): §1 gains a **`mutation` axis** row (`reading` widens to a `mutating` slot,
-> RFC-0153) with an explicit "type-level only, no callability penalty" clause; §3 notes
-> how widening composes with RFC-0134's `many`-default / expected-type-supplies-the-
-> qualifier amendment. No change to the accepted first-order relation.
+> **Adversarial-review fixes, 2026-09-01** (two passes, cross-RFC review of the v0.13.0
+> closure cluster): §1 gains a **`mutation` axis** row (`reading` widens to a `mutating`
+> slot, RFC-0153) with a "type-level only, no callability penalty" clause; §2 spells out
+> that ascription / field-init / return widening is a **one-way precision loss** into the
+> declared (invariant) type — a `reading` closure in a `mut` field is thereafter observed
+> `mut`; §3 adds the `if`/`match` **join rule** (least-permissive arm, each arm widens to
+> it) and that a typed block's tail expression supplies the qualifier. No change to the
+> accepted first-order relation.
 
 > **Status — accepted 2026-08-30, as a co-requirement of RFC-0134.** RFC-0134
 > originally proposed **exact-match** multiplicity unification and named this
@@ -108,11 +111,20 @@ tracking. The callee never observes that the value was "really" `reading`.
 
 - **Argument position** — the value flows into the slot: widen as above.
 - **`let` / field ascription, struct field init** — same as argument position:
-  the value flows into the annotated type.
+  the value flows into the annotated type. **This is a coercion into the field's declared
+  (invariant) type, not a relaxation of the field's variance** — the two statements below
+  are consistent. It is a deliberate, one-way **precision loss**: a `reading` closure
+  stored into a `mut`-typed field is thereafter *observed* as `mut`, so every later read
+  of that field yields a `mut` value that callers must invoke under exclusive access even
+  though the underlying closure never mutates. Sound, but the author chose the field's
+  type; there is no automatic re-narrowing.
 - **Return position** — the callee produces the value the caller named a type
   for; a callee that returns a *more* permissive function than promised is fine,
-  so the direction is unchanged (`many` return satisfies a `once` return slot).
-- **Struct fields** stay invariant, like every other field type.
+  so the direction is unchanged (`many` return satisfies a `once` return slot). Same
+  precision-loss caveat: a `fun … -> mut () -> U` that returns a `reading` closure hands
+  the caller a `mut` value.
+- **Struct fields** stay invariant, like every other field type — see the ascription
+  bullet for how init nonetheless coerces into that invariant type.
 - **A function type nested inside another function type** — *out of scope here.*
   Widening applies only at the top level of the slot being checked; a
   multiplicity mismatch on a function type that is itself an argument or return of
@@ -131,10 +143,21 @@ slot, because it genuinely is not callable twice; that rejection is preserved.
 *Amended 2026-09-01, following RFC-0134's `many`-default amendment:* a closure literal's
 own type is `many` / `reading` by default, or whatever a written qualifier or an
 **expected type** supplies (RFC-0134 §2's 2026-09-01 amendment — an ascribed / return /
-field slot supplies the qualifier, the literal is not default-`many`-then-failed). Widening
-then applies to that resulting *value* type wherever it and the slot still differ. So the
-two mechanisms compose: expected-type checking first fixes the literal's type; widening
-covers any remaining permissiveness gap.
+field slot, *including a typed block's tail expression*, supplies the qualifier; the
+literal is not default-`many`-then-failed). Widening then applies to that resulting
+*value* type wherever it and the slot still differ. So the two mechanisms compose:
+expected-type checking first fixes the literal's type; widening covers any remaining
+permissiveness gap.
+
+**`if` / `match` join.** A conditional's type is the **least-permissive** of its arm
+types under this RFC's order (`once` ≤ `many` on the call axis; `mutating` ≤ `reading` on
+the mutation axis; non-`Copy` ≤ `Copy`), with each arm widened to it. `if c { g } else {
+[s] () -> T { s } }` where `g: once () -> T` has type `once () -> T` — the `else` literal
+is `many` by default and widens `many → once` into the join. A join that would need to
+*narrow* an arm (one arm genuinely `once`, the context wanting `many`) is the ordinary
+rejection. When neither arm's multiplicity is fixed (both default), the join keeps the
+default. This is the same greatest-lower-bound rule the type checker already uses for
+ordinary types in a conditional.
 
 ### 4. Not a general subtype lattice
 
