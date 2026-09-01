@@ -131,7 +131,11 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 >   is the entire rule; no generic-body probe is involved.
 > - **`dyn Callable` erasure moved out of the cluster** — RFC-0153 §3's interim erasure
 >   default is withdrawn into **RFC-0161 (Callable Object Contract)**, target v0.13.1.
->   v0.13.0 ships the flat `Type::Fun` model monomorphic.
+>   v0.13.0 ships the flat `Type::Fun` model **monomorphic**: the `Callable<A, B>` aspect
+>   was never built (RFC-0061 §7.1, now annotated), so there is no `where F: Callable`
+>   bound in v0.13.0 — a higher-order function takes a concrete function type (`f: (T) ->
+>   U`, which is how the stdlib combinators already work). `dyn Callable<…>` does not
+>   parse. Pass 4 (2026-09-01) confirmed this.
 > - **RFC-0157's D5 is decided (2026-09-01, language owner) — the closure-capture default
 >   is `move`.** The historical notes below that call it a *recommendation* predate this.
 >   D5 also removes RFC-0006's per-call `call_env = captured.clone()` re-clone (§4's

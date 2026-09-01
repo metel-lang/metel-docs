@@ -526,7 +526,7 @@ case, and a trustworthy field list wherever a capture list exists.
 
 1. **Lifetime and exclusivity of a `&`/`&var` capture. ✓ Resolved; the *rule* is stated now, enforcement lands with RFC-0122.** *(Sharpened 2026-09-01, adversarial review — the earlier "no restriction is imposed now" was too loose to be a spec.)* A `[&var x]` / `[&x]` capture takes the borrow at closure creation and **holds it for the closure value's whole lifetime** — from creation to the closure's last use / drop. For that whole span the outer binding `x` is borrowed exactly as `let r := &var x;` / `let r := &x;` would borrow it: while a `[&var x]` closure is live, any other read or write of `x` — `x += 10` between creating the closure and calling it, another `[&var x]` / `[&x]` closure, a bare `&x` — is a borrow-conflict error; while a `[&x]` closure is live, `x` may be read but not written or `&var`-borrowed. This is not a new rule, only the ordinary reference-borrow rule applied to the capture. The **interpreter does not enforce it yet** (heap-backed storage means no memory unsoundness in the meantime); enforcement arrives with the borrow checker (RFC-0122), and until then a program that violates it is accepted but ill-formed by this rule. **RFC-0122 §2e catalogues this as one of the interim rules it subsumes** — including the fixture-corpus constraint below.
 
-2. **Interaction with concurrency. ✓ Resolved** — `&var T` and `&T` (RFC-0067a) are not `Send` (RFC-0003's `Send` marker aspect; the original citation of RFC-0028 no longer applies — that RFC is refused). A closure is `Send` only if all its captured values are `Send`. Any `[&var x]` or `[&x]` closure is therefore automatically non-`Send` — no new rule needed; falls out of the existing model. Once RFC-0067 lands and adds lifetime anchors (`&r var T`/`&r T`), this should be restated in terms of whatever `Send` rule RFC-0067/RFC-0074 give anchored references — not yet specified, tracked as a residual, not a blocker.
+2. **Interaction with concurrency. ✓ Resolved (refined 2026-09-01, pass 4)** — a closure's `Send`/`Sync` is the **ordinary aggregate rule over its captures**, and a `&T` / `&var T` capture follows **RFC-0080**'s reference rules (`&T: Send if T: Sync`; `&var T: Send if T: Send`; likewise `Sync`). This RFC does not restate or strengthen those — the earlier flat "any `[&var x]` / `[&x]` closure is non-`Send`" was too strong (a `[&n]` capture of `n: i64` is `&i64: Send`, so that closure *is* `Send`). RFC-0153 carries the one closure-specific fact — a `mutating` closure is `!Sync` — as an interim statement pending RFC-0096. Once RFC-0067 adds lifetime anchors (`&r var T` / `&r T`), the reference `Send` rules gain an anchor dimension (RFC-0067/RFC-0074) — a residual, not a blocker.
 
 3. **Multiple closures capturing the same binding. ✓ Resolved** — folds into Resolved Question 1: two live `[&var x]` closures are two live `&var x` borrows, which conflict; `[&x]` closures may coexist with each other but not with a `[&var x]` closure or a write to `x`. The interpreter accepts aliased `[&var x]` today (single-threaded, sequential calls — no memory unsoundness); RFC-0122 enforces the rule.
 
@@ -621,6 +621,21 @@ the same change. Where a fixture captured a non-`Copy` value it then returns, th
 multi-step rewrite the review noted (`() -> String { s }` → add `[s]` → the body consumes
 it → add `once`), applied by hand to the corpus, not shipped as a user tool. Nothing about
 `--edition` is a deliverable here.
+
+**Two behaviour-change classes the sweep must find** (both legal under RFC-0006, both
+change meaning under D5):
+
+1. **Capture-then-still-use** — `let f := () -> Int { len(s) }; let n := s.len();` was fine
+   (`f` held a clone). Now `[s]` moves `s`, so the later `s.len()` is a use-after-move;
+   the fix is `[s.clone()]` or reordering. This is the common case.
+2. **Mutate a private per-call clone** — under RFC-0006 a closure body could write to a
+   capture because it was writing to that call's throwaway clone:
+   `let bump := () -> Int { x := x + 1; x };` — each call returned `1` and outer `x` never
+   moved. Under D5 + RFC-0153 this is `[x] mut () -> Int { x := x + 1; x }` (or an error
+   demanding `mut`), and the write-back makes it a **stateful counter** — `bump()` returns
+   `1`, `2`, `3`. The behaviour is different, not just the syntax; any fixture relying on
+   the old "resets every call" reading has to be rewritten to capture `[x.clone()]` per
+   call if that was actually the intent, or accept the counter semantics.
 
 **The corpus sweep must exclude programs that rely on the not-yet-enforced borrow-freeze
 (Resolved Question 1).** RFC-0122 is not part of v0.13.0, so the interpreter will *run*
