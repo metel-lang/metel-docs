@@ -16,6 +16,12 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/901'
 > `mut`; §3 adds the `if`/`match` **join rule** (least-permissive arm, each arm widens to
 > it) and that a typed block's tail expression supplies the qualifier. No change to the
 > accepted first-order relation.
+>
+> **Third pass, 2026-09-01:** §3's join rule now covers three edge cases — an arm whose
+> multiplicity is an unresolved inference variable (recorded as a constraint, not
+> forced), a nested `if`/`match` tail (inner join first; expected type flows inward), and
+> a diverging (`!`) arm (does not contribute to the GLB). Still no change to the
+> first-order relation.
 
 > **Status — accepted 2026-08-30, as a co-requirement of RFC-0134.** RFC-0134
 > originally proposed **exact-match** multiplicity unification and named this
@@ -158,6 +164,25 @@ is `many` by default and widens `many → once` into the join. A join that would
 rejection. When neither arm's multiplicity is fixed (both default), the join keeps the
 default. This is the same greatest-lower-bound rule the type checker already uses for
 ordinary types in a conditional.
+
+Three edge cases:
+
+- **An arm whose multiplicity is still an unresolved inference variable at join time.**
+  The join does not force it. The GLB is recorded as a *constraint* on that variable
+  (`m_arm ≤ m_join`, discharged when the variable resolves — the same
+  constraint-alongside-unification machinery RFC-0134 §3 describes for a function-typed
+  parameter whose side is an `InferType::Var`). If it never resolves, ordinary
+  ambiguity-error rules apply; the join adds nothing new.
+- **A nested tail.** When an arm is itself an `if` / `match`, its type is that inner
+  conditional's own join, computed first; the outer join then treats it as one arm type.
+  An expected type on the outer conditional flows inward to each arm, including through
+  the nested one, before the join — so `let f: once () -> T := if a { g } else if b { h }
+  else { || … }` fixes every leaf literal at `once` by expected type, and the joins are
+  then trivial.
+- **A diverging arm** (`panic()`, `return`, any `!`-typed expression). It does **not**
+  contribute to the GLB: `!` coerces to any type, so a diverging arm imposes no
+  multiplicity floor. `if c { g } else { panic("x") }` has exactly `g`'s type, qualifier
+  included. Only if *every* arm diverges is the conditional itself `!`.
 
 ### 4. Not a general subtype lattice
 

@@ -56,6 +56,24 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 >   lifetime; the outer binding is borrow-frozen accordingly; interpreter enforcement
 >   lands with RFC-0122).
 
+> **Adversarial-review fixes, 2026-09-01 (third pass):**
+> - **Capturing `self` in a method** — new subsection under "When the list is required":
+>   `self` is an ordinary receiver binding, so it is a free variable for a nested closure;
+>   `&Self` is `Copy` (listless capture copies the handle), `&var Self` is not (list
+>   required); the captured receiver borrow cannot outlive the method call, so a closure
+>   escaping the method while holding it is rejected by the same escape check as any other
+>   captured reference until lifetime anchors (RFC-0067/0159) exist.
+> - **Closure equality** — Resolved Question added: closure values satisfy no aspects
+>   (RFC-0134), so `==` / `<` on them does not type-check.
+> - **Prefix order** — clarified that the fixed `[captures] once? mut?` order is the
+>   *literal* grammar; the qualifiers are order-insensitive only as a *type* spelling
+>   (RFC-0134 §5, RFC-0153 §2).
+> - **Migration** — the v0.13.0 fixture corpus must exclude programs that rely on the
+>   not-yet-enforced `[&var x]` borrow-freeze (Resolved Q1), so no wrong accepted
+>   behavior is baked in before RFC-0122.
+> - **Implementation Guidance** — the RFC-0153 §1a mutable env cell *is* the capture
+>   aggregate, not a wrapper; escape / brand checking sees the same field types.
+
 > **Correction pass, 2026-08-31.** Two changes: the `move` specifier is **dropped**
 > from this RFC, and stale syntax is refreshed.
 >
@@ -214,10 +232,16 @@ spelling**:
 
 e.g. `[s, &cfg] once mut (req: Request) -> Response { … }`. The capture list is
 outermost because it describes the *environment*, which is conceptually prior to the
-callable's signature; `once` / `mut` (RFC-0134 / RFC-0153, order-insensitive with each
-other) qualify the signature; the pipe/paren params come last. RFC-0154 settles only the
-`(params)` ↔ `|params|` half; the `[captures] qualifiers …` prefix composes ahead of
-whichever it picks.
+callable's signature; `once` / `mut` (RFC-0134 / RFC-0153) qualify the signature; the
+pipe/paren params come last. RFC-0154 settles only the `(params)` ↔ `|params|` half; the
+`[captures] qualifiers …` prefix composes ahead of whichever it picks.
+
+**Literal order is fixed; type-spelling order is not.** In a closure *literal* the two
+qualifiers appear in exactly the order `once? mut?` — `[c] mut once () -> T { … }` is a
+parse error. Order-insensitivity of `once` / `mut` (RFC-0134 §5, RFC-0153 §2) is a
+property of the *function type* spelling only: `once mut (T) -> U` and `mut once (T) -> U`
+denote the identical `Type::Fun`. This RFC is the normative source for the literal
+grammar; RFC-0153 §2's `mut once fun(T) -> U` line is a type, not a literal prefix.
 
 `&var ident` captures a binding by mutable reference. `&ident` captures a binding by
 read-only reference — no copy, and the closure may not write through it. **Bare `ident`
@@ -293,6 +317,27 @@ a copy at that instantiation.
 is an unresolved-name error — `f` is not in scope inside its own initializer, so it is
 neither a free variable nor a capture. Recursive closures need a named `fun` (which has
 runtime knot-tying) or an explicit fixpoint helper; this RFC adds no self-capture form.
+
+**Capturing `self` inside a method.** In `extend Foo { fun m(&self) -> … { … } }` the
+receiver `self` is an ordinary binding in `m`'s scope, so a closure written inside `m`
+that names `self` (or `self.x`) has `self` as a **free variable** and the ordinary rules
+apply — there is no special "receiver capture" form:
+
+- `self` is typically `&Self` or `&var Self`. `&Self` is `Copy` (RFC-0134 §1 / RFC-0153
+  §3), so `|| self.x` may omit the list and captures the `&Self` handle by copy. `&var
+  Self` is **not** `Copy`, so a closure using it needs a list — `[self]` moves the `&var
+  Self` handle into the closure (the receiver borrow itself; not `&&Self` — there is no
+  double reference), and `[&self]` / `[&var self]` are rejected as "cannot take a
+  reference to a reference binding here."
+- A by-value `self` receiver (RFC-0044) is captured exactly like any other owned local:
+  `[self]` moves it in, forcing `once` if the body then moves it out.
+- **Lifetime.** The captured receiver borrow is a `&`/`&var` capture, so Resolved
+  Question 1 applies: it is held for the closure's whole lifetime, and the closure
+  therefore **cannot outlive `m`'s call**. Returning such a closure from `m` — `fun m(&self)
+  -> (() -> i64) { || self.x }` — is the ordinary "captured reference escapes its
+  scope" error (Implementation Guidance's escape check), not a new rule. It becomes
+  expressible only when lifetime anchors (RFC-0067 / RFC-0159) let `m` tie the closure's
+  region to `self`'s; until then it is rejected.
 
 If a closure *does* have a capture list, that list must be exhaustive: every free variable the closure body references must appear in it, with the specifier matching how it's used. "Free variable" means an outer-scope **local binding** — a `let` binding or function/closure parameter visible in the lexical scope enclosing the closure. It does not include references to module-level functions, constants, types, or aspects: those are resolved by ordinary name resolution regardless of any capture list, and never need to appear in it, since nothing about them is being captured from a stack frame. A closure mixing a mutable-reference capture with a by-value capture now looks like:
 
@@ -511,6 +556,16 @@ case, and a trustworthy field list wherever a capture list exists.
    name resolution and are never subject to the capture list or its exhaustiveness rule — nothing
    about them is being captured from a stack frame, so there is nothing for the list to enumerate.
 
+7. **Closure equality and ordering. ✓ Resolved (2026-09-01, adversarial review).** Two
+   closure values are **not comparable**. `Type::Fun` satisfies no aspects at all
+   (RFC-0134's Open-Questions finding: `InferType::Fun` implements nothing), `Eq` / `Ord`
+   included, so `a == b` / `a < b` on closures is an aspect-not-satisfied type error — the
+   same as `==` on any non-`Eq` struct. The unifier's structural comparison of two
+   `Type::Fun` *types* is a type-identity relation and implies nothing about value
+   equality; two closures of the same type with different captures simply cannot be
+   compared. No closure identity, hash, or by-address comparison is introduced by this
+   RFC. (RFC-0153 records the same fact for its Non-Goals.)
+
 ---
 
 ## Timing Recommendation
@@ -558,6 +613,16 @@ multi-step rewrite the review noted (`() -> String { s }` → add `[s]` → the 
 it → add `once`), applied by hand to the corpus, not shipped as a user tool. Nothing about
 `--edition` is a deliverable here.
 
+**The corpus sweep must exclude programs that rely on the not-yet-enforced borrow-freeze
+(Resolved Question 1).** RFC-0122 is not part of v0.13.0, so the interpreter will *run*
+`[&var x]` closures without checking the borrow-duration rule. A fixture that exercises
+what the rule forbids — two live `[&var x]` closures over the same binding, a write to `x`
+while a `[&var x]` closure is live, a bare `&x` alongside one — is **ill-formed by this
+RFC** even though the interpreter accepts it, and must not be added as an
+expected-behavior fixture: doing so would bake a wrong "accepted" result into the corpus
+that RFC-0122 then has to break. Such programs are only valid to add as
+`expected-error` fixtures once RFC-0122 lands.
+
 **"One hard change" is one implementation PR, but not one RFC stage yet.** RFC-0134 and
 RFC-0152 are `2-accepted`; RFC-0050, RFC-0153, and RFC-0157 are `1-under-review` and
 RFC-0157's D5 is a recommendation, not a decision. The single implementation PR is
@@ -590,6 +655,14 @@ forces a rewrite of closure capture when they land:
   types, not as bespoke closure logic. A `[&var count]` closure is then covered automatically
   because its captured environment *is* an aggregate, with nothing closure-specific to revisit if
   brand-kind unification later generalizes escape checking.
+  - **RFC-0153 §1a does not change this.** A `mutating` closure's environment is held as
+    *one mutable owned cell* rather than re-cloned per call, but that cell **is this same
+    aggregate** — the identical named-field list, with the same per-field types — held
+    owned-and-mutable, not a wrapper struct around it and not a new representation. Escape
+    and brand checking walk the same fields whether the closure is `reading` or
+    `mutating`; the write-back is a mutation of the aggregate in place, not a change to
+    its shape. Anything that inspected the capture aggregate's field types before RFC-0153
+    inspects the same thing after it.
 - **If ownership-transfer capture is added later**, keep it on this same footing: a moved-in
   field is an ordinary owned field of the capture aggregate, and any "does calling this closure
   consume a capture" question (RFC-0134's `call_multiplicity`) should be the same move-tracking
