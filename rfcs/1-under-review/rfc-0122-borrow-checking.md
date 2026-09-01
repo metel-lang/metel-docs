@@ -4,7 +4,7 @@ title: "Borrow Checking"
 date: '2026-07-24'
 status: under-review
 target: v0.16.0
-updated: '2026-08-23'
+updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/847'
 ---
 
@@ -59,6 +59,13 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/847'
 
 > **Status — under review (2026-08-02).** Acceptance 2026-08-01 was premature. An adversarial pass the same day found six gaps, three blocking: the outlives rule is named but unspecified; reference-typed struct fields defeat the anchors-are-a-dependent claim; and the lexical rule as written rejects sequential &var method calls. Third accepted-to-under-review reversion in the corpus (Trigger 14).
 
+> **Amendment 2026-09-01 — interim-rule catalogue (§2e).** The closure cluster (RFC-0050,
+> RFC-0153) and RFC-0071 §9 each shipped or specified a narrow, sound, mostly-unenforced
+> borrow-shaped rule as a stopgap "until RFC-0122." **§2e now catalogues all of them** —
+> what each permits today, its enforcement status, the fixtures it constrains, and what
+> this RFC's implementation must delete or widen when `--borrow-check` lands. No change to
+> the rules in §2/§2b; this is a consolidation so the teardown is one checklist.
+
 > ## Targeted at v0.16.0
 >
 > *Corrected 2026-08-27 after the open/variadic and cleanup milestones shifted the
@@ -70,7 +77,9 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/847'
 > **What must close first**, all in §2b: the outlives rule specified (§2b.2), the
 > stored-reference restriction implemented (§2b.3 / metel-core#274), closures (§2b.4),
 > reborrowing (§2b.5), and the `T[]` `Copy`-view interaction (§2b.6). §2b.1 is already
-> dissolved by §2.2's move to NLL.
+> dissolved by §2.2's move to NLL. **On implementation, §2e's three interim rules
+> (RFC-0071 §9 Q5, RFC-0050 RQ1/RQ3, RFC-0153 §3) are torn down and their deferred
+> fixtures added.**
 >
 > **Tracking and implementation ownership:** metel-core#847 carries design settlement
 > and the opt-in implementation checklist. Reaching acceptance/integration remains a
@@ -589,6 +598,75 @@ relaxing an error. Treat §2b.2 and this section as a pair.
 
 ---
 
+## 2e. Interim rules elsewhere in the corpus, pending this RFC
+
+*Added 2026-09-01. Several RFCs shipped or specified a narrow borrow-shaped rule as a
+deliberate stopgap "until RFC-0122." Each is catalogued here so the implementation of
+this RFC has **one checklist** of what to delete, what to widen, and which fixtures to
+revisit — instead of each stopgap being discoverable only from the RFC that introduced
+it. This section is normative about the teardown: landing `--borrow-check` **must** remove
+each stopgap's own front-end check and let the general rule take over.*
+
+**Common shape.** Every entry is (a) **sound** — it rejects a subset of what
+shared-XOR-exclusive rejects, never a superset; (b) **mostly unenforced at runtime**,
+because the evaluator still deep-clones (§2 question 4), so a violating program today is
+"accepted but ill-formed" rather than a crash; (c) written so this RFC's rules **subsume**
+it — nothing accepted under the stopgap is rejected once the real checker runs.
+
+### 1. `&var T` reborrow-in-argument-position — RFC-0071 §9 question 5 *(shipped v0.12.0)*
+
+> Passing a `&var T` value to a `&var T` parameter **reborrows** it (the binding is usable
+> after the call); every other use — `let q := p;`, returning it, storing it in a struct,
+> capturing it in a closure — **moves** it.
+
+Introduced because `&var T: !Copy` (#578) plus move checking (#579) otherwise made every
+exclusive reference single-use. It tracks no reborrow *duration* — that is §2b.5.
+**On landing:** §2b.5's reborrow rule replaces it; the "every other use moves" half
+remains true as a consequence of `!Copy`, not as a special case. RFC-0071 is
+`3-integrated`; the rule already states it is "a strict subset of what RFC-0122 will
+specify, so it is subsumed rather than contradicted."
+
+### 2. `[&var x]` / `[&x]` capture borrow-freeze — RFC-0050 Resolved Questions 1 & 3 *(v0.13.0)*
+
+RFC-0050's rule: a `[&var x]` / `[&x]` capture takes the borrow at closure creation and
+**holds it for the closure value's whole lifetime**. While a `[&var x]` closure is live,
+any other read or write of `x`, another `[&var x]` / `[&x]` capture of it, or a bare `&x`,
+is a conflict; while a `[&x]` closure is live, `x` may be read but not written or
+`&var`-borrowed. This is shared-XOR-exclusive applied to the capture aggregate — nothing
+closure-specific (§2b.4 is where this RFC specifies capture-as-borrow).
+
+**Enforcement in v0.13.0: none.** RFC-0050's heap-backed capture storage means a
+`[&var x]` closure outliving `x` is not memory-unsafe, so the interpreter runs these
+programs; a violation is **accepted but ill-formed**.
+
+**Fixture-corpus constraint** (RFC-0050 "Migration", normative): the v0.13.0 corpus must
+**not** add, as expected-behaviour fixtures, programs that rely on the unenforced freeze —
+two live `[&var x]` closures over one binding, a write to `x` while a `[&var x]` closure
+is live, a bare `&x` alongside one. Those are valid only as `expected-error` fixtures once
+this RFC lands. **On landing:** the checker enforces the rule; such programs become
+`T0020`; the corpus additions deferred here are made then.
+
+### 3. `mutating`-closure-callee eligibility — RFC-0153 §3 *(v0.13.0)*
+
+A `mutating` closure's synthesized `call` takes `&var self`; full callee eligibility is
+this RFC's `&var self` receiver rule. **Interim rule for v0.13.0:** the front-end rejects
+only a **shared-`&` callee** (`&Self` receiver, `(&b).handler()`, an `&`-captured
+closure); an owned binding, an owned temporary (`make_counter()()`), an exclusive
+projection off one, and a `&var` parameter all pass. **Reentrancy is not caught** in this
+window — a `mutating` call reached from inside another call on the same closure is
+ill-formed by RFC-0153 §3, but the interpreter (single-threaded, sequential) runs it; same
+fixture-corpus caution as item 2. **On landing:** the interim check is deleted; the
+`&var self` receiver rule covers callee eligibility, overlap, and reentrancy uniformly —
+strictly more precise, so nothing the interim rule accepted is newly rejected.
+
+### Not on this list
+
+**§2d's reference-typed-struct-field ban** is a scaffold *this RFC imposes*, waiting on
+**RFC-0067** (Lifetime Anchors), not on itself. Shipping `--borrow-check` does not lift
+it; implementing anchors does. See §2d.
+
+---
+
 ## 2c. Polonius, and why it is not the starting point
 
 *Added 2026-08-01, when the operator asked whether a Polonius-style checker could be
@@ -695,6 +773,12 @@ blocking an unrelated release.
   drop order, #262 partial moves) are queued for v0.13.0.)*
 - RFC-0086 (Outlives-of-Bindings Sugar), `6-refused` — the only prior "borrow"-titled RFC;
   refused, and its refusal is not evidence against this one
+- RFC-0050 (Closure Capture Lists), `1-under-review` (v0.13.0) — its Resolved Questions
+  1 & 3 state the `[&var x]` / `[&x]` capture borrow-freeze rule and defer enforcement
+  here; catalogued in §2e
+- RFC-0153 (Closure Mutation Axis), `1-under-review` (v0.13.0) — its §3 defers
+  `mutating`-callee eligibility to this RFC's `&var self` receiver rule and carries an
+  interim check for the v0.13.0 window; catalogued in §2e
 - `reports/strategy/OBJECTIVES.md` — Trigger 19, and §1's diagnostics claim
 - `reports/substructural-types/allocators-as-emergent-synthesis.md` — the decomposition
   that makes this load-bearing for Priority 4
