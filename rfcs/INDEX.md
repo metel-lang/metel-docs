@@ -992,8 +992,10 @@ implementation).
   capture is an error at the definition site), and §3's inference-of-required-multiplicity
   machinery — including the unresolved generic-body path and the bodyless-decl special
   case — is **dropped** (the default covers them). Net simplification; RFC-0152
-  co-requirement and v0.13.0 target unchanged. Pairs with RFC-0050's v0.13.0 amendment.
-  Target v0.13.0 (metel-core#269).
+  co-requirement and v0.13.0 target unchanged. Pairs with RFC-0050's v0.13.0 amendment,
+  and **RFC-0153 (mutation axis) now co-lands in v0.13.0** — `Type::Fun` ships with all
+  three multiplicity fields (`call_multiplicity`, `use_multiplicity`, `call_mutation`) at
+  once. Target v0.13.0 (metel-core#269).
 - **RFC-0135** *(under review 2026-08-29, opened 2026-08-13)* — Multiplicity for Ordinary Types — companion
   to RFC-0134, not a dependency of it. Reframes `Copy` as `many` applied to a type's
   by-value-use operation rather than a closure's call operation — same axis RFC-0134
@@ -1055,7 +1057,7 @@ implementation).
   + `CallMany` / `CallShared`, from RFC-0153's Alternatives) as the third option, under
   which the area dissolves into aspect-bound subsetting. Not urgent: RFC-0152's cap is
   sound, so nothing is unsound while this is open. Tracker metel-core#904 (v0.17.0).
-- **RFC-0153** *(under review, opened 2026-08-30; widened 2026-08-31; #902, milestone v0.17.0 — amendment recommends pulling to **v0.13.1**)* —
+- **RFC-0153** *(under review, opened 2026-08-30; widened + pulled to **v0.13.0** 2026-08-31; #902, milestone moved from v0.17.0)* —
   Closure Mutation Axis — the third `Type::Fun` field RFC-0134 §4 reserves and §5
   constrains (compose with `once`/`many` as an independent prefix). Records whether
   invoking a closure needs *exclusive* (`&var`) access to a capture — Rust's `FnMut`.
@@ -1065,10 +1067,12 @@ implementation).
   environment re-clone for `mutating` closures — their by-value captures are **written
   back** so mutation persists across calls (the returnable counter / `move ||` + `FnMut`
   case, which the closure model otherwise cannot express — RFC-0134 §5). Edition-gated
-  like RFC-0157's D5; sequenced after RFC-0134/RFC-0152. Field is *not* reserved in
-  v0.13.0 — RFC-0134 §4 makes adding it later cheap. Open: qualifier spelling (`mut` vs
-  `var fun`), `Send`/`Sync` ownership, `&var`-capture-without-write precision, v0.13.1
-  vs v0.14.0. Carries an Alternatives section:
+  like RFC-0157's D5; sequenced after RFC-0134/RFC-0152. **Co-lands with RFC-0134 in
+  v0.13.0** — `call_mutation` ships in `Type::Fun` alongside RFC-0134's two fields, so the
+  type carries all three multiplicity axes at once. To hold v0.13.0 it needs review →
+  accepted and Open Question 1 (qualifier spelling — `mut` vs `var fun`) closed; other
+  open points: `Send`/`Sync` ownership, `&var`-capture-without-write precision. Carries
+  an Alternatives section:
   the two axes as **independent marker aspects** (`Callable<A,R>` + orthogonal
   `CallMany` / `CallShared`, auto-impl per RFC-0096) on a per-closure anonymous type —
   under which RFC-0152's widening dissolves into bound-subsetting; recommended as the

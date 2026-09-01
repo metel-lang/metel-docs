@@ -3,7 +3,7 @@ id: rfc-0153
 title: "Closure Mutation Axis"
 date: '2026-08-30'
 status: under-review
-target: v0.13.1
+target: v0.13.0
 updated: '2026-08-31'
 tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 ---
@@ -30,15 +30,16 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 >   `--edition` gate as RFC-0157's D5; a `reading` closure keeps today's clone semantics
 >   (nothing mutates, so the difference is unobservable). Scoped this way, `mutating` stops
 >   being a type-level fact with no runtime effect.
-> - **Timing.** This amendment **recommends pulling the RFC forward to v0.13.1** (from its
->   current v0.17.0 milestone, #902), landing whole — the `call_mutation` field, the `mut`
->   qualifier, the §3 exclusive-access rule, and §1a's write-back — right after RFC-0134,
->   RFC-0152, and the RFC-0006/D5 edition change, so the closure model ships complete
->   rather than with a known `FnMut`-shaped hole for four minor versions. RFC-0134 §4
->   already frames adding the field as a cheap, anticipated change, so it is *not*
->   reserved in v0.13.0 — v0.13.0's `Type::Fun` stays at two fields and every function
->   type is `reading` implicitly until this lands. The milestone move itself is a
->   release-planning call; `target:` here reflects the recommendation.
+> - **Timing — v0.13.0** (#902, milestone moved from v0.17.0 on 2026-08-31 at the language
+>   owner's direction). The whole RFC lands with the rest of the closure-model cluster —
+>   the `call_mutation` field, the `mut` qualifier, the §3 exclusive-access rule, and
+>   §1a's write-back — so the closure model ships **complete**, with no known
+>   `FnMut`-shaped hole. `call_mutation` co-lands with RFC-0134's two fields, giving
+>   `Type::Fun` its three multiplicity fields in one go rather than a v0.13.0→later
+>   representational change. Sequenced after RFC-0134 / RFC-0152 and on the same
+>   `--edition` gate as RFC-0157's D5 (the RFC-0006 capture-model change). **Still
+>   `1-under-review`:** for v0.13.0 it needs review → accepted, and Open Question 1
+>   (qualifier spelling) has to close.
 
 > **Deferred from RFC-0134 §4/§5.** RFC-0134 models a closure's capability as
 > independent per-operation multiplicity axes on `Type::Fun` — `call_multiplicity`
@@ -265,8 +266,8 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
   unchanged. *How* a capture gets into the closure is still RFC-0050/RFC-0157's concern,
   not this RFC's — this RFC governs only what a `mutating` *call* does to an
   already-captured value and whether that survives the call.
-- Capture-list syntax (`&var` / bare specifiers) — RFC-0050, sequenced together for
-  v0.13.0 (field) / v0.13.1 (`mut` + persistence) but a separate document.
+- Capture-list syntax (`&var` / bare specifiers) — RFC-0050, a separate document, but
+  sequenced into the same v0.13.0 closure-model cluster.
 - `Drop`-for-closures / unconsumed-closure cleanup — RFC-0134 §5 rules it out and
   this RFC does not reopen it.
 - Multiplicity for ordinary types — RFC-0135.
@@ -286,12 +287,10 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 4. **`&var`-capture without mutation.** A body that takes `&var` of a capture but
    never writes through it — `mutating` (conservative, matches the borrow) or
    `reading` (precise, matches the effect)? Leaning conservative.
-5. **Timing.** The 2026-08-31 amendment recommends landing the whole RFC together at
-   **v0.13.1**, after RFC-0134, RFC-0152, and the RFC-0006/D5 edition change — a
-   pull-forward from the current v0.17.0 milestone (#902), so the closure model ships
-   without a known `FnMut`-shaped hole. Not reserved in v0.13.0 (RFC-0134 §4 makes adding
-   the field cheap later). **Open:** whether release planning takes the v0.17.0 → v0.13.1
-   move, or v0.14.0 with the rest of the edition machinery.
+5. **Timing. ✓ v0.13.0** (2026-08-31, #902 moved from v0.17.0). Whole RFC lands with
+   RFC-0134 / RFC-0152 and the closure-model cluster; `call_mutation` co-lands with
+   RFC-0134's two `Type::Fun` fields. On the same `--edition` gate as RFC-0157's D5.
+   What this needs to hold v0.13.0: review → accepted, and Open Question 1 closed.
 
 ## References
 
@@ -328,8 +327,8 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 
 **Outcome:** *(pending — `1-under-review`, opened 2026-08-30, deferred from RFC-0134
 §4/§5, widened 2026-08-31 to cover encapsulated persistent state (§1a) — the case that
-makes the axis worth having. Targets v0.13.1 (#902), whole RFC together, after RFC-0134
-and the RFC-0006/D5 edition change. Open points: qualifier spelling (`mut` vs `var fun`),
-whether to own the `Send`/`Sync` consequence, `&var`-capture-without-write precision, and
-confirming the v0.13.1 milestone vs. v0.14.0.)*
-**Target:** v0.13.1 (#902).
+makes the axis worth having. Milestone moved to v0.13.0 (#902) so the closure model ships
+complete; lands whole, with RFC-0134 / RFC-0152. Needs review → accepted and Open
+Question 1 (qualifier spelling) closed to hold v0.13.0. Other open points: `Send`/`Sync`
+ownership, `&var`-capture-without-write precision.)*
+**Target:** v0.13.0 (#902).
