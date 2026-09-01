@@ -1113,7 +1113,7 @@ re-examining, because the trade-off it was made against will have changed.
   RFC-0049 is otherwise about questions (unconsumed-closure `Drop`, linear subtyping)
   this RFC treats as out of scope under an affine rather than linear discipline. May
   need its own re-scoping once this RFC's outcome is known — not resolved here.
-- **RFC-0050 (Closure Capture Lists), `1-under-review`** — actively maintained against the
+- **RFC-0050 (Closure Capture Lists), `2-accepted`** — actively maintained against the
   current model. It formerly carried a `move` capture specifier that "needs a split-model
   successor to RFC-0046"; this RFC was written to be that successor for the capability
   question. RFC-0050 has since **dropped the `move` specifier** (2026-08-31) and deferred
@@ -1166,7 +1166,7 @@ re-examining, because the trade-off it was made against will have changed.
 - **RFC-0155 (Higher-Order Function-Type Multiplicity Variance), `1-under-review`** — the
   contravariant-nesting and subtype-lattice questions split out of RFC-0152 the same
   day; not needed by this RFC.
-- **RFC-0153 (Closure Mutation Axis), `1-under-review` (v0.13.0, #902)** — §4's third
+- **RFC-0153 (Closure Mutation Axis), `2-accepted` (v0.13.0, #902)** — §4's third
   `Type::Fun` field (`call_mutation`) and the `mut` qualifier that composes with
   `once`/`many`. Widened 2026-08-31 to also change RFC-0006's runtime so a `mutating`
   closure's by-value captures persist across calls (the `FnMut` / private-state case).

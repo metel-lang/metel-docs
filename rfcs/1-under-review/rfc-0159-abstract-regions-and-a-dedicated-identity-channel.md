@@ -228,7 +228,7 @@ RFC-0050's Resolved Question 4 is updated in parallel to record this contention.
   branded nominal identity plus a structural row. A separate index channel makes that
   product visible instead of two adjacent generic arguments; it is also the key
   readability test for the ordering of the two channels.
-- **RFC-0050 (Closure Capture Lists, `1-under-review`, v0.13.0)** — holds `[]`. This RFC
+- **RFC-0050 (Closure Capture Lists, `2-accepted`, v0.13.0)** — holds `[]`. This RFC
   does not contest it; RFC-0050 RQ4 is updated to note this exploration exists and that
   the identity channel will take a delimiter other than `[]` (or prove contextual reuse).
 
@@ -350,7 +350,7 @@ inside it.
 - **RFC-0121 (Open Rows), `1-under-review`** / **RFC-0137 (Nominal Types as Branded Rows),
   `3-integrated`** — rows stay in `<>`; RFC-0137 is the mixed structural + identity
   readability test.
-- **RFC-0050 (Closure Capture Lists), `1-under-review`** — holds `[]`; RQ4 updated in
+- **RFC-0050 (Closure Capture Lists), `2-accepted`** — holds `[]`; RQ4 updated in
   parallel.
 
 ---
