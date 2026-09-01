@@ -7,7 +7,7 @@ target: v0.13.0
 updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 coverage:
-  "1": { spec: "spec.functions.closures.legality-8" }
+  "1": { spec: "spec.functions.closures.legality-25" }
   "1a": { spec: "spec.functions.closures.dynamics-7" }
   "2": { spec: "spec.functions.closures.legality-24" }
   "3": { spec: "spec.functions.closures.legality-10" }
