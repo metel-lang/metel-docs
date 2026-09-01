@@ -671,6 +671,24 @@ number, a backwards RFC-0067a split direction).
   has never had, a bare `mut` in prose, two retired `:` separators, and a self-staleness
   note that was itself obsolete. See `OBJECTIVES.md` Trigger 29 (staleness in place —
   distinct from Trigger 14's premature acceptance).
+- **RFC-0159** *(under review, opened 2026-09-01; #920)* — Abstract Regions and a
+  Dedicated Identity Channel — the tracked form of the internal exploration
+  `abstract-regions-and-identity-channel.md`. **Direction-setting, not syntax.** Proposes:
+  (1) replace RFC-0067's binding-specific lifetime anchors with **abstract lifetime
+  regions** chosen at the call site; (2) recognise lifetimes, brands (RFC-0076), and
+  storage identities (RFC-0143) as **roles over one `RegionIndex` substrate** — shared
+  machinery, distinct capability/relation algebras (lifetime: flexible, shortenable,
+  ordered; brand: rigid, generative; storage: rigid + validity extent); (3) give the
+  substrate a **dedicated non-`<>` parameter channel** (`<>` = "what type/shape?"; new
+  channel = "which identity/validity region?"). Explicitly does **not** reserve `[]`
+  (collides with RFC-0050 capture lists and `T[]` arrays) — candidates are `<T; r>`, a
+  `where identity r` clause, a new delimiter, or contextual `[]`. Carries the 12 §9
+  acceptance **Gates** and 10 open questions; §10 mandates a cross-RFC prototype (neutral
+  `RegionIndex` model, run the Gates) **before** any normative RFC — RFC-0067 above all —
+  is rewritten. Contradicts RFC-0067's premise (RFC-0067a's implemented core untouched);
+  gives RFC-0076's brand-kind question a candidate answer (narrows
+  `brand-kind-unification.md`); lets RFC-0143 drop `<storage s>`; RFC-0137 is the mixed
+  structural-row + identity readability test. RFC-0050 RQ4 updated in parallel.
 - **RFC-0067a** *(implemented 2026-07-11)* — Reference Types — plain `&T`/`&var T`,
   auto-deref. No allocator/borrow-checker dependency; already sequenced into Cluster A.
   Integrated into `reference/spec/types.md` and `expressions.md`; gained a new
