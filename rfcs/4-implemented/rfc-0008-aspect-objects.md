@@ -87,9 +87,16 @@ An aspect object type is written `dyn Aspect`:
 
 ```metel
 dyn Display
-dyn Callable<i64, i64>
+dyn Callable<i64, i64>   // see note — Callable is not implemented; deferred to RFC-0161
 dyn Region
 ```
+
+> **`dyn Callable` / the `Callable<A, B>` aspect are not implemented (2026-09-01).**
+> Specified here and in RFC-0061 §7.1, never built. Deferred in full to **RFC-0161
+> (Callable Object Contract), v0.13.1**, which also owns its object-safety story (the
+> line in "Standard library object-safety" below is a reservation, not a shipped fact).
+> In v0.13.0, `dyn Callable<…>` does not parse. Every other `dyn Aspect` in this RFC is
+> unaffected.
 
 `dyn Aspect` is an unsized type — it has no compile-time size. It must appear behind
 a pointer. The forms available today:
@@ -173,7 +180,7 @@ error: aspect Clone is not object-safe
 
 Standard library object-safety:
 - `Display` — object-safe (`to_string` takes `&Self`, returns `String`)
-- `Callable<A, B>` — object-safe
+- `Callable<A, B>` — *(reserved; not implemented — RFC-0161)* would be object-safe
 - `Drop` — object-safe (`drop` takes `self: &var Self`, RFC-0071). The
   vtable's drop function pointer (§2/§5) is separate per-type metadata every
   `dyn Aspect` vtable carries, unrelated to object safety.

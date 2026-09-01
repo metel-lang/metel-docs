@@ -34,9 +34,17 @@ RFC-0153 §3 carried an interim "`dyn` erasure default" (bare `dyn Callable` = m
 restrictive; `+ CallMany` / `+ CallShared` / `+ Copy` widen). The third adversarial review
 of the closure cluster (2026-09-01) flagged that as a normative rule resting on unbuilt
 machinery — a forward reference the cluster cannot satisfy at v0.13.0. This RFC is where
-that default is designed properly, targeting **v0.13.1**. Until it lands, **`dyn
-Callable` is out of scope**: at v0.13.0 a closure is only ever used monomorphically
-(a concrete `Type::Fun`, or a generic `extends Callable` parameter that monomorphizes).
+that default is designed properly, targeting **v0.13.1**.
+
+**The `Callable` aspect itself is deferred here — not just `dyn Callable`.** The fourth
+adversarial review (2026-09-01) confirmed `Callable<A, B>` and its auto-impl for function
+types were never built (RFC-0061 §7.1 and RFC-0008 now carry "not implemented"
+annotations pointing here). So at **v0.13.0 there is no `Callable` aspect at all**: a
+closure is only ever a concrete `Type::Fun`, a generic parameter cannot be bounded `where
+F: Callable<…>` (a higher-order function takes a concrete function type — how the stdlib
+combinators already work), and `dyn Callable<…>` / `&dyn Callable<…>` / `Box<dyn
+Callable<…>>` do not parse. This RFC owns the aspect, its auto-impl, the object form, and
+the marker refinements, in full, from v0.13.1.
 
 ## Motivation
 
