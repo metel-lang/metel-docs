@@ -988,7 +988,7 @@ implementation).
 
 - **RFC-0049** *(draft)* — `linear fun` Type System — unconsumed-scope-exit, `Drop`
   interaction, subtyping vs. plain `fun`.
-- **RFC-0050** *(**accepted 2026-09-01**; v0.13.0, #803)* —
+- **RFC-0050** *(**integrated 2026-09-01**; v0.13.0, #803; impl metel-core#925)* —
   Closure Capture Lists — `[&var count, &config, buf, prefix.clone()]` prefix on a closure
   literal. Specifiers: `&var`/`&` by reference; **bare `ident` = by-value** (copy for
   `Copy`, **affine move** for non-`Copy` — `let y := x` semantics); `[ident.clone()]` for
@@ -1003,7 +1003,7 @@ implementation).
   with RFC-0153, as one v0.13.0 feature area with RFC-0134 (#269) / RFC-0152 (#901); six
   adversarial-review passes applied, all seven Resolved Questions closed. `[...]` composes ahead of
   RFC-0154's base literal spelling.
-- **RFC-0134** *(accepted 2026-08-30, opened 2026-08-13)* — Closure Call
+- **RFC-0134** *(**integrated 2026-09-01**; v0.13.0, #269; impl metel-core#925)* — Closure Call
   Capability — the type-level
   distinction `metel-core#269` needs (does calling a closure consume a non-`Copy`
   capture) to make move checking sound for closures, blocking `metel-core#267`
@@ -1048,7 +1048,7 @@ implementation).
   recommends the `Copy` → `many` rename not proceed** (throws away the most transferable
   Rust term for an internal-consistency gain); RFC-0135's disposition — refuse, narrow to
   de-cruft, or fold into RFC-0158 — is a call for its own review.
-- **RFC-0157** *(**accepted 2026-09-01**; v0.13.0, #918)* — Closure Capture Default (Move)
+- **RFC-0157** *(**integrated 2026-09-01**; v0.13.0, #918; impl metel-core#925)* — Closure Capture Default (Move)
   — **D5 DECIDED (2026-09-01, language owner): the closure-capture default is `move`.**
   Everywhere else in Metel a non-`Copy` value used by value is moved (RFC-0071); RFC-0006
   made closure capture the one clone exception. D5 removes it: by-value capture follows
@@ -1082,7 +1082,7 @@ implementation).
   cutover — `Rc` is `0-draft`). No rename, no implicit-copy change, no `#derive` change.
   Amends RFC-0080 §1; RFC-0074/0076 `Rc`/`Arc` implement `Share`. Mirrors Rust's
   `Claim`/`Share` direction; one of the two value-side changes RFC-0157 endorses.
-- **RFC-0152** *(accepted 2026-08-30 with RFC-0134; opened 2026-08-30)* —
+- **RFC-0152** *(**integrated 2026-09-01** with RFC-0134; v0.13.0, #901; impl metel-core#925)* —
   Function-Type Multiplicity Widening — a one-directional coercion: a function value is
   usable where a *less* permissive multiplicity is expected (`many` call → `once` call
   slot; `Copy` → non-`Copy`), never the reverse, at **first-order sites** (argument /
@@ -1103,7 +1103,7 @@ implementation).
   + `CallMany` / `CallShared`, from RFC-0153's Alternatives) as the third option, under
   which the area dissolves into aspect-bound subsetting. Not urgent: RFC-0152's cap is
   sound, so nothing is unsound while this is open. Tracker metel-core#904 (v0.17.0).
-- **RFC-0153** *(**accepted 2026-09-01**; v0.13.0, #902; widened + pulled from v0.17.0 on 2026-08-31)* —
+- **RFC-0153** *(**integrated 2026-09-01**; v0.13.0, #902; impl metel-core#925)* —
   Closure Mutation Axis — the third `Type::Fun` field RFC-0134 §4 reserves and §5
   constrains (compose with `once`/`many` as an independent prefix). Records whether
   invoking a closure needs *exclusive* (`&var`) access to a capture — Rust's `FnMut`.

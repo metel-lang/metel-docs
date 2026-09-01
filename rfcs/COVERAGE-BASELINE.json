@@ -1,14 +1,60 @@
 {
   "rfc": {
+    "rfc-0050": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+    ],
     "rfc-0117": [
       "1"
+    ],
+    "rfc-0134": [
+      "2",
+      "3",
+      "5"
     ],
     "rfc-0137": [
       "1",
       "2",
       "5",
       "6"
+    ],
+    "rfc-0152": [
+      "1",
+      "2",
+      "3"
+    ],
+    "rfc-0153": [
+      "1",
+      "1a",
+      "3",
+      "3a",
+      "4"
+    ],
+    "rfc-0157": [
+      "1"
     ]
   },
-  "spec": []
+  "spec": [
+    "spec.functions.closures.dynamics-10",
+    "spec.functions.closures.dynamics-11",
+    "spec.functions.closures.dynamics-5",
+    "spec.functions.closures.dynamics-7",
+    "spec.functions.closures.dynamics-8",
+    "spec.functions.closures.dynamics-9",
+    "spec.functions.closures.legality-10",
+    "spec.functions.closures.legality-11",
+    "spec.functions.closures.legality-12",
+    "spec.functions.closures.legality-13",
+    "spec.functions.closures.legality-14",
+    "spec.functions.closures.legality-15",
+    "spec.functions.closures.legality-16",
+    "spec.functions.closures.legality-5",
+    "spec.functions.closures.legality-6",
+    "spec.functions.closures.legality-7",
+    "spec.functions.closures.legality-8",
+    "spec.functions.closures.legality-9"
+  ]
 }
