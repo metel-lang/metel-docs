@@ -587,7 +587,19 @@ above it are.
 - **RFC-0011** — Operator Overloading Aspects — operator desugaring. RFC-0093 notes
   derived `Eq`/`Ord` depend on this.
 - **RFC-0039** — `aspect` Alias Syntax — vehicle for RFC-0089's `Affine` alias
-  (`!Copy + !Linear`). Small, standalone.
+  (`!Copy + !Linear`). Small, standalone. Names compound *bounds* — disjoint from
+  **RFC-0160**, which names *types*.
+- **RFC-0160** *(draft, opened 2026-09-01)* — Type Aliases — module-level `public? type
+  Name = T;`, optionally parameterised, **transparent** (structural synonym, no nominal
+  identity, RFC-0152 widening flows through). Fills a real gap: `type Name = T` today
+  exists only as an associated type in aspect scope (RFC-0082); RFC-0039 aliases bounds,
+  not types. Motivated by the closure cluster's amendments making `once mut (Request,
+  &Config) -> Response` the noisiest signature form, soon `context(theme: Theme) mut
+  (Widget) -> Html` with RFC-0113. **Does not carry a closure's capture list** — that is
+  per-literal, not type info; it only carries what reaches the type (`once`/`mut`, later
+  `context(...)`). Non-blocking future ergonomics; `0-draft`. Cross-refs RFC-0082 (assoc
+  types — position disambiguates), RFC-0113 (context function types — kept in sync),
+  RFC-0134/0153/0152/0154.
 
 ## Region / Allocator / Lifetime cluster (accepted 2026-07-10 — ratified, Phase 3's dependency now clear)
 
