@@ -2,8 +2,10 @@
 id: rfc-0160
 title: "Type Aliases"
 date: '2026-09-01'
-status: draft
+status: under-review
 target:
+updated: '2026-09-01'
+tracking: 'https://github.com/metel-lang/metel-core/issues/921'
 ---
 
 > **Opened 2026-09-01 as a future-ergonomics RFC.** Metel has no way to name a type. `type
@@ -13,6 +15,8 @@ target:
 > RFC-0152 / RFC-0050 / RFC-0153) or anything else in v0.13.0 — it is recorded now because
 > the closure amendments made function-type signatures the noisiest in the language, and
 > because RFC-0113 (context parameters) will make them noisier still.
+
+> **Status — under review (2026-09-01).** type-alias gap confirmed (no existing RFC); ready for review as non-blocking ergonomics
 
 ## Summary
 
@@ -208,5 +212,5 @@ summary, for aliases:
 
 ## Decision
 
-**Outcome:** *(pending — `0-draft`, opened 2026-09-01 as non-blocking future ergonomics)*
+**Outcome:** *(pending — `1-under-review` (#921), opened 2026-09-01 as non-blocking future ergonomics)*
 **Target:** *(set when accepted)*

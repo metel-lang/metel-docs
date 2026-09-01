@@ -345,7 +345,7 @@ other — which is evidence for the decomposition thesis rather than an extra ru
   follows, and its own supersession of nameless context receivers.
 - Odin's implicit `context` struct, and Zig's explicit-allocator convention — the two
   alternatives weighed in §6.
-- **RFC-0160 (Type Aliases), `0-draft`** — its §"Context parameters" and §"Function and
+- **RFC-0160 (Type Aliases), `1-under-review`** — its §"Context parameters" and §"Function and
   closure types" mirror Unresolved Question 4; the two are kept in sync. Also the RFC that
   would let `context(theme: Theme) mut (Widget) -> Html` be named once instead of repeated.
 - Scala 3 context functions (`(using T) ?=> R`) — the deferral regime in UQ4.
