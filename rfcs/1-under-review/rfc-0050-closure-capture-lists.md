@@ -389,12 +389,23 @@ case, and a trustworthy field list wherever a capture list exists.
 
 3. **Multiple closures capturing the same binding. ✓ Resolved** — Two closures with `[&var x]` both hold a mutable reference to `x`. This is safe in the single-threaded interpreter (sequential calls; aliased mutation is not concurrent). Under the borrow checker, at most one live mutable reference at a time (or many live `&x` read-only references, exclusive of any `&var x`) will be enforced. Document now; restrict later.
 
-4. **Syntax. ✓ Re-resolved** — `[&var x]` was confirmed jointly with RFC-0046. RFC-0063's
-   pre-split "Region Handles" draft briefly introduced `[region]` in the same position,
-   creating a conflict (see the Historical section above), but the split-model rewrite of
-   RFC-0063/0065 dropped bracket syntax for allocator parameters (`@[r]` → `@`) before this
-   RFC reached implementation. `[...]` is unambiguously capture-list syntax; no grammar
-   change is needed.
+4. **Syntax. ⚠ Re-resolved, with one live contention.** `[&var x]` was confirmed jointly
+   with RFC-0046. RFC-0063's pre-split "Region Handles" draft briefly introduced
+   `[region]` in the same position (see the Historical section above), but the split-model
+   rewrite of RFC-0063/0065 dropped bracket syntax for allocator parameters (`@[r]` → `@`)
+   before this RFC reached implementation, and `reports/memory-model/lifetimes-vs-regions-2026-07-02.md`
+   §7 explicitly freed `[]` for capture lists.
+
+   **The contention: RFC-0159 (Abstract Regions and a Dedicated Identity Channel,
+   `1-under-review`)** revisits whether lifetimes, brands, and storage identities want a
+   dedicated non-`<>` parameter channel, for which `[]` is the historically natural glyph.
+   RFC-0159 **does not claim `[]`** — it lists `[]` as unavailable *because of this RFC*
+   and names `<T; r>` / a `where identity r` clause / a new delimiter as its candidates.
+   So there is no conflict today, and RFC-0159 defers to this RFC. If RFC-0159's prototype
+   nonetheless concludes `[]` is the right identity channel, this RFC yields it: capture
+   lists fall back to a `capture(...)` keyword form, or a `|caps|` prefix composing with
+   RFC-0154's proposed `|params|` literal. Recorded here so the v0.13.0 implementation
+   does not treat `[...]` as permanently settled.
 
 5. **Read-only reference captures. ✓ Resolved (2026-07-07)** — Originally deferred on the
    grounds that clone capture "already handles the immutable case adequately." Adopted instead:
