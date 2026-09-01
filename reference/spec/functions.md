@@ -420,7 +420,7 @@ compile error naming the offending capture and the fix (add `once`, or stop movi
 capture).
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/3-integrated/rfc-0134-closure-call-capability.md), [rfc-0153](../../rfcs/3-integrated/rfc-0153-closure-mutation-axis.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/3-integrated/rfc-0134-closure-call-capability.md)_</span>
 <!-- rfc.py:origins:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-25}
@@ -431,6 +431,10 @@ of one, or calls a `&var self` method on one — and always a closure that captu
 binding `[&var …]`, regardless of what the body does through it — written without `mut`,
 is a compile error naming the offending capture and the fix (add `mut`, stop the mutation,
 or capture `[&x]` instead).
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/3-integrated/rfc-0153-closure-mutation-axis.md)_</span>
+<!-- rfc.py:origins:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-9}
 
