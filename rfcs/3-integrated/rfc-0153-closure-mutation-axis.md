@@ -38,7 +38,7 @@ it? A closure whose body assigns to, or takes `&var` of, a by-value capture is
 *call-mutating*; one that only reads its captures is *call-reading*.
 
 Like RFC-0134's other axes, **`reading` is a fixed default and `mutating` is written**
-(`mut`); the body analysis *verifies* the declared value rather than sourcing it. It is
+(`var`); the body analysis *verifies* the declared value rather than sourcing it. It is
 orthogonal to `call_multiplicity`: `many` × mutating is `FnMut`, `once` × mutating is a
 closure that mutates then consumes, `many` × reading is the plain `Fn` case, `once` ×
 reading consumes without mutating first.
@@ -82,8 +82,8 @@ by the same pass RFC-0134 §2 uses — as a *verification* of the declared/defau
 
 - A body that assigns to a by-value capture, takes `&var` of one, or calls a
   `&var self` / `&var`-parameter method or function on one **is `mutating`**; if the
-  closure was not written `mut` (or defaulted `reading`), that is a compile error, with
-  the fix being to add `mut` or to stop mutating.
+  closure was not written `var` (or defaulted `reading`), that is a compile error, with
+  the fix being to add `var` or to stop mutating.
 - **A `[&var x]` (exclusive-reference) capture makes the closure `mutating` regardless of
   what the body does through it** — decided 2026-09-01 (was Open Question 4). The capture
   *acquires exclusive capability* over `x` for the closure value's whole lifetime
@@ -92,10 +92,10 @@ by the same pass RFC-0134 §2 uses — as a *verification* of the declared/defau
   particular body only reads `x`. Classifying on the *effect* instead would need
   whole-body write-through analysis (including across calls) — exactly the inference this
   cluster rejects (RFC-0134 verify-not-infer).
-  - **`mut` is still written.** Because `mutating` is always the written value (never
-    inferred), a `[&var x]` closure literal must carry `mut`: `[&var x] mut () -> i64 {
+  - **`var` is still written.** Because `mutating` is always the written value (never
+    inferred), a `[&var x]` closure literal must carry `var`: `[&var x] var () -> i64 {
     x }`. Omitting it — `[&var x] () -> i64 { x }` — is a compile error, *"a `&var`
-    capture makes this closure `mut`; write `[&var x] mut (…)`, or capture `[&x]` if the
+    capture makes this closure `var`; write `[&var x] var (…)`, or capture `[&x]` if the
     body only reads `x`."* The `[&var x]` capture is not itself the "written" signal; the
     keyword is.
   - **If a read-only reference capture is what you want, capture `[&x]` (shared)** — that
@@ -144,7 +144,7 @@ lives there for the closure's lifetime. On that base:
     `use_multiplicity` is `many` — every capture `Copy`, RFC-0134 §1 — in which case the
     inline aggregate is **bit-copied** with the rest of the closure value and the copies
     then diverge, exactly as copying a struct with a counter field would. This is a
-    *trivial* copy (no allocation, no indirection); a `[n] mut` closure with `n: i64` is
+    *trivial* copy (no allocation, no indirection); a `[n] var` closure with `n: i64` is
     `Copy` and `var d := c;` gives `d` an independent counter. Any representation that
     would require non-trivial copy (a heap cell, an `Rc`) is by construction non-`Copy` —
     it necessarily captured a non-`Copy` value — so the "two `Copy` owners aliasing one
@@ -153,9 +153,9 @@ lives there for the closure's lifetime. On that base:
     the environment aggregate, not inside it) and is present **only on closure values
     whose `call_mutation` is `mutating`** — a `reading` closure value carries no `in_call`
     field, which is why §3's call dispatch branches on the value's `call_mutation` and a
-    widened `reading`-in-a-`mut`-slot value is never asked for a flag it doesn't have. It
+    widened `reading`-in-a-`var`-slot value is never asked for a flag it doesn't have. It
     is **not** part of `use_multiplicity` / `Copy` reasoning — a `bool` is trivially
-    copyable, so a `[n: i64] mut` closure stays `Copy`. A copy is only reachable when the
+    copyable, so a `[n: i64] var` closure stays `Copy`. A copy is only reachable when the
     source is not mid-call (the source is exclusively borrowed for the whole of its own
     `mutating` call), so the flag is always `false` at the moment of copy and the copy
     starts idle. No "copied a set flag" observable exists.
@@ -185,13 +185,13 @@ lives there for the closure's lifetime. On that base:
     closure's post-exit state could be inspected — "still callable afterward" is not a
     reachable question. The distinction that remains is which axis governs an observable
     early exit:
-    - **Plain `mut` (not `once`):** the call does not consume the closure (§3). When the
+    - **Plain `var` (not `once`):** the call does not consume the closure (§3). When the
       body exits early via `?` / `return`, the mutations that already ran are visible in
       the environment cell, the exclusive borrow and the in-call flag are released as the
       frame returns, and the closure stays **callable in a valid-but-partial state** —
       exactly as a `&var self` method that returned early mid-mutation leaves its
       receiver. No rollback.
-    - **`once` or `once mut`:** the `once` axis consumed the callee place *at the call
+    - **`once` or `once var`:** the `once` axis consumed the callee place *at the call
       expression*, before the body ran (RFC-0134 §2). So the closure is a moved value
       however the body returned — normally or early — and a later use is the ordinary
       moved-value error. There is no "still callable" question; `once` already answered
@@ -202,12 +202,12 @@ lives there for the closure's lifetime. On that base:
       drops only the fields that were not moved out).
 - This is a change to RFC-0006 (`4-implemented`), landing with RFC-0157's D5 change to the
   capture default as **one hard change** at v0.13.0 — **no edition gate**: Metel has no
-  public users, so the `mut` keyword, the write-back semantics, and the fixture corpus all
+  public users, so the `var` keyword, the write-back semantics, and the fixture corpus all
   move together (see RFC-0050's "Migration (no edition gate)").
 
-§3's `&var self` receiver is what keeps the write-back sound: for a plain `mut` closure
+§3's `&var self` receiver is what keeps the write-back sound: for a plain `var` closure
 the closure value is exclusively borrowed for each call's duration, so no two calls —
-reentrant included — are ever mid-mutation on the same aggregate at once; for `once mut`
+reentrant included — are ever mid-mutation on the same aggregate at once; for `once var`
 the `once` consumption makes a second call impossible outright.
 
 ### 2. Qualifier
@@ -218,26 +218,33 @@ its current body), composing with `once`/`many` as an independent prefix per
 RFC-0134 §5's constraint:
 
 ```
-mut fun(T) -> U            // reading is the default; `mut` marks mutating
-once mut fun(T) -> U       // consumes and mutates
-mut once fun(T) -> U       // the same TYPE — the two qualifiers are order-insensitive
+var fun(T) -> U            // reading is the default; `var` marks mutating
+once var fun(T) -> U       // consumes and mutates
+var once fun(T) -> U       // the same TYPE — the two qualifiers are order-insensitive
                            //   as type spelling (RFC-0134 §5)
 ```
 
 **Type spelling vs. literal prefix.** The qualifiers are order-insensitive *as a type
-spelling* — `once mut fun(T) -> U` and `mut once fun(T) -> U` denote the identical
+spelling* — `once var fun(T) -> U` and `var once fun(T) -> U` denote the identical
 `Type::Fun` — matching RFC-0134 §5's "independent, order-insensitive prefix" constraint.
 A **closure literal**, by contrast, has a single fixed prefix order, set by RFC-0050:
-`[captures] once? mut? (params) -> ret block`. So `[c] mut once () -> T { … }` is a
-*parse* error even though `mut once fun(T) -> U` is a valid type; write `[c] once mut
+`[captures] once? var? (params) -> ret block`. So `[c] var once () -> T { … }` is a
+*parse* error even though `var once fun(T) -> U` is a valid type; write `[c] once var
 () -> T { … }`. RFC-0050 is the normative source for the literal grammar; this RFC's
 examples use that order.
 
-**The qualifier keyword is `mut`** (Open Question 1 — closed 2026-09-01 with acceptance).
-It reuses Metel's existing mutation vocabulary (`&var`, `var` bindings); `var fun` was
-considered and set aside — every RFC in the cluster and RFC-0050's grammar already spell
-it `mut`, and a second mutation keyword earns nothing. Both the type spelling and the
-literal prefix use `mut`.
+**The qualifier keyword is `var`** (Open Question 1). It is Metel's single mutation
+keyword — the same one that marks a mutable binding (`var x := …`) and an exclusive
+reference (`&var T`, `&var self`). Metel has no `mut`: `mut` / `&mut` are rejected legacy
+spellings (RFC-0098). A `var` closure over a `&var` capture then reads consistently —
+`[&var count] var () -> () { count += 1; }` — mutability spelled one way throughout. Both
+the type spelling (`var () -> U`, order-insensitive with `once`) and the closure-literal
+prefix (`[captures] once? var? (params)`, fixed order — RFC-0050) use `var`.
+
+> Earlier drafts of this cluster spelled the qualifier `mut`, and OQ1 was recorded
+> "closed (`mut`)" during the 2026-09-01 accept transition. That was a steward call
+> carried over from the draft text, not a language decision; it is reversed here for
+> consistency with `var` / `&var` everywhere else in the surface language.
 
 ### 3. Call-site soundness
 
@@ -269,7 +276,7 @@ dynamic extent:
   eligible;
 - a **shared-`&` callee** — a `&Self`/`&self` receiver, `(&b).handler()`, an `&`-captured
   closure, any place reached through a `&` step — **not eligible**, compile error
-  *"a `mut` closure cannot be called through a shared reference; it needs exclusive
+  *"a `var` closure cannot be called through a shared reference; it needs exclusive
   access"*.
 
 For the call's dynamic extent the place is exclusively borrowed exactly as `&var self`
@@ -307,12 +314,12 @@ the aliased case; RFC-0122 enforces both.
 
 **The call does not consume the closure** (unlike a `once` call). After it returns the
 closure is still bound and still callable, its environment in whatever state §1a left it.
-`mut` is `&var self`-shaped, not `self`-shaped.
+`var` is `&var self`-shaped, not `self`-shaped.
 
-**`once mut`** composes the two axes independently: the `once` axis consumes the callee
+**`once var`** composes the two axes independently: the `once` axis consumes the callee
 *at the call expression, before the body runs* (RFC-0134 §2), so any later use is a
-moved-value error regardless of the body; the `mut` exclusive borrow is then moot — there
-is no valid second call for it to guard. A `once mut` body can only reach its own closure
+moved-value error regardless of the body; the `var` exclusive borrow is then moot — there
+is no valid second call for it to guard. A `once var` body can only reach its own closure
 value through an aliasing binding (a closure cannot name its own `let` binding), and any
 such alias is itself an ill-formed borrow of a moved-then-borrowed value (RFC-0134 §2 +
 §3); the interpreter reports whichever it detects first — the moved-value error or the
@@ -343,7 +350,7 @@ alongside the other interim borrow-shaped stopgaps.
 - **`use_multiplicity` is unchanged by this axis.** A closure's `Copy`-ness is exactly
   RFC-0134 §1 — `many` iff every capture is `Copy` — and `call_mutation` does **not**
   override it. The earlier "a `mutating` closure is not `Copy`" rule is **withdrawn**: it
-  was too strong. A `[n] mut () -> i64 { n := n + 1; n }` closure with `n: i64` captures
+  was too strong. A `[n] var () -> i64 { n := n + 1; n }` closure with `n: i64` captures
   only a `Copy` value, so it is `Copy`, and that is sound — each copy carries its own
   independent counter cell, which is what `Copy` means. The soundness concern the old
   rule was reaching for (two owners mutating *the same* backing) only arises for a
@@ -351,19 +358,19 @@ alongside the other interim borrow-shaped stopgaps.
   `&T` is `Copy`, `&var T` is **not** (mirroring `&`/`&mut`), so a `[&var x]` capture
   makes the closure non-`Copy` through §1 with no special case — see RFC-0134 §1's note.
 - **Widening `reading` → `mutating` slot (RFC-0152) is type-level only, and call dispatch
-  is on the *value*, not the slot.** A `reading` value passed to a `mut (T) -> U`
+  is on the *value*, not the slot.** A `reading` value passed to a `var (T) -> U`
   parameter keeps its actual runtime behavior. **Call lowering branches on the closure
   value's own `call_mutation`** (carried on every runtime closure value, from `Type::Fun`
   — RFC-0134 §1), **not on the static slot type**:
   - a value whose `call_mutation` is `mutating` → the exclusive-borrow path + the in-call
     flag set/check (this section, above);
   - a value whose `call_mutation` is `reading` → the plain call path, **no flag touched,
-    no exclusive borrow** — even when the *slot* it arrived through is typed `mut (…)`.
+    no exclusive borrow** — even when the *slot* it arrived through is typed `var (…)`.
     (A `reading` closure genuinely cannot alias-mutate, so nothing is lost by not
     guarding it; and it carries no `in_call` field to read — see §1a "the flag is only on
     `mutating` closure values".)
 
-  So a widened `reading` value in a `mut` slot is called exactly as it would be through a
+  So a widened `reading` value in a `var` slot is called exactly as it would be through a
   `reading` slot; the slot type only bounds what the callee is *allowed to assume* (it may
   treat `f` as needing `&var self`), not what actually happens. Widening happens only at
   first-order by-value / owned positions (argument, return, ascription, struct-field
@@ -377,7 +384,7 @@ alongside the other interim borrow-shaped stopgaps.
   T` captures follow **RFC-0080** (`&T: Send if T: Sync`; `&var T: Send if T: Send`; the
   `Sync` rules likewise) — this RFC does **not** restate or override those, and the
   earlier "`[&var n]` / `[&n]` closures are never `Send`" claim is **withdrawn** as an
-  unowned exception to RFC-0080. A `[n] mut` closure over an owned `n` is `Send` iff `n`
+  unowned exception to RFC-0080. A `[n] var` closure over an owned `n` is `Send` iff `n`
   is, transferring sole ownership of the aggregate (sound — one owner, §1a; if `n: Drop`
   the sending fiber has moved it, so no double drop). A `Copy` `mutating` closure sent by
   copy gives the receiver an independent aggregate, also sound.
@@ -399,7 +406,7 @@ alongside the other interim borrow-shaped stopgaps.
   - A closure is only ever a **concrete `Type::Fun`**. **There is no predeclared /
     stdlib `Callable` aspect** — so a generic parameter cannot be bounded `where F:
     Callable<…>` against a standard aspect, and a higher-order function takes a **concrete
-    function type** (`f: (T) -> U`, with the `once` / `mut` qualifiers as needed) — which
+    function type** (`f: (T) -> U`, with the `once` / `var` qualifiers as needed) — which
     is how `List::map` and every other stdlib combinator already work (RFC-0134 §3; checked
     against `core.mtl`). Abstracting over "any callable representation" is not expressible
     in v0.13.0; RFC-0161 is where it returns.
@@ -436,16 +443,16 @@ The `many` × `mutating` cell is the one the rest of the closure model cannot ex
 without this RFC (see RFC-0134 §5). Worked:
 
 ```metel
-fun make_counter() -> mut () -> i64 {
+fun make_counter() -> var () -> i64 {
     let n := 0;
-    [n] mut () -> i64 { n := n + 1; n }   // `n` moved in; writes persist (§1a); closure returnable
+    [n] var () -> i64 { n := n + 1; n }   // `n` moved in; writes persist (§1a); closure returnable
 }
 
 fun main() {
     var c := make_counter();   // `var`: each `c()` is a `&var self`-shaped borrow of `c` (§3)
     assert(c() == 1);
     assert(c() == 2);   // state lives inside `c`'s environment cell
-    // `c` is `many mut`. Here `n: i64` is Copy, so `c` is also Copy (§3, RFC-0134 §1):
+    // `c` is `many var`. Here `n: i64` is Copy, so `c` is also Copy (§3, RFC-0134 §1):
     // `var d := c;` gives an independent counter. Calls still can't overlap.
 }
 ```
@@ -454,10 +461,10 @@ fun main() {
 sending it to two fibers (`spawn(c); spawn(c);`) — gives each site its **own** environment
 aggregate and its **own** idle in-call flag; the counters advance independently. This is
 *not* shared mutation and needs no `Sync` (`c` is `Send` by copy). It is the same
-"`Copy` means an independent value" the language has everywhere, but the `mut` keyword can
+"`Copy` means an independent value" the language has everywhere, but the `var` keyword can
 prime a "shared state" expectation, so it is a documented test-and-doc item (#902).
 
-A closure that captures a *non-`Copy`* value by value (`[buf] mut (e) -> () { buf.push(e); }`)
+A closure that captures a *non-`Copy`* value by value (`[buf] var (e) -> () { buf.push(e); }`)
 is non-`Copy` by RFC-0134 §1 — so there is exactly one owner and the "two owners mutate
 the same backing" case cannot arise. To *share* mutable state across fibers, capture
 `[&var shared]` (or an `Rc`-like handle) — the closure is then non-`Copy` and `!Sync`, and
@@ -471,15 +478,15 @@ worth recording ahead of them: this RFC's write-back rule (§1a) needs no specia
 a handle-type capture. `[rc]` moves whatever `rc` is *by value*, the same as any other
 by-value capture; if `rc`'s type is non-`Copy` (a handle type under RFC-0158 would be —
 `Share`, not `Copy`), the capture list is required and the closure is non-`Copy`, by the
-ordinary rules already stated. A `mut` body reassigning its captured `rc` (to a fresh
+ordinary rules already stated. A `var` body reassigning its captured `rc` (to a fresh
 handle, however that's spelled once RFC-0158 lands) persists the reassignment in the
-environment aggregate exactly as any other `mut` reassignment — no closure-specific
+environment aggregate exactly as any other `var` reassignment — no closure-specific
 handle-aliasing behavior is introduced. Illustrative sketch only, not a code sample to run:
 
 ```
 // once Rc / RFC-0158 land:
 let rc := Rc::new(Node { … });
-var bump := [rc] mut () -> Rc<Node> { rc := rc.share(); rc };
+var bump := [rc] var () -> Rc<Node> { rc := rc.share(); rc };
 ```
 
 This is unrelated to the "`.share()` **on a closure value**" non-goal below — that
@@ -585,7 +592,7 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
   value equality; two closures of the same type with different captures are simply not
   comparable. No closure-identity or by-address comparison is introduced.
 - **`comptime` / `const` closures.** Out of scope. `comptime` is a separate,
-  not-yet-implemented effort; how closures and their `once` / `mut` axes behave under
+  not-yet-implemented effort; how closures and their `once` / `var` axes behave under
   comptime evaluation is specified in **RFC-0132 §4.1** ("Closures and first-class function
   values at comptime"), not here, and is not spec-integrated until RFC-0132 is. The short
   version: same evaluator, axes carry over unchanged, no separate const-closure model.
@@ -601,11 +608,12 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
 
 ## Open Questions
 
-1. **Qualifier spelling** (§2). **✓ Resolved 2026-09-01 (with acceptance): the keyword is
-   `mut`.** `var fun` was set aside — the whole cluster and RFC-0050's grammar already
-   spell it `mut`, and a second mutation keyword earns nothing. Order-insensitivity of
-   `once` / `mut` as a *type* spelling is confirmed (RFC-0134 §5); the *literal* prefix is
-   the fixed `[captures] once? mut?` order (RFC-0050), which the implementation enforces.
+1. **Qualifier spelling** (§2). **✓ Resolved: the keyword is `var`** — Metel's single
+   mutation keyword (`var` bindings, `&var` references), not the legacy `mut` (RFC-0098).
+   An earlier draft spelled it `mut` and OQ1 was first recorded "closed (`mut`)" at the
+   2026-09-01 accept transition; reversed to `var` for surface consistency. Order-
+   insensitivity of `once` / `var` as a *type* spelling is confirmed (RFC-0134 §5); the
+   *literal* prefix is the fixed `[captures] once? var?` order (RFC-0050).
 2. **Interaction with higher-order variance — not blocking.** A function type carrying a
    `mutation` field inside another function type's argument compounds the
    contravariant-nesting question, which is **RFC-0155** (split out of RFC-0152
@@ -629,7 +637,7 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
    RFC-0134 / RFC-0152 and the closure-model cluster; `call_mutation` co-lands with
    RFC-0134's two `Type::Fun` fields. Lands with RFC-0157's D5 as one hard change — no
    edition gate (Metel has no public users; RFC-0050's "Migration (no edition gate)").
-   **✓ Accepted 2026-09-01, with RFC-0050; Open Question 1 closed (`mut`).**
+   **✓ Accepted 2026-09-01, with RFC-0050; Open Question 1 closed (`var`).**
 
 ## References
 
@@ -691,9 +699,9 @@ carry it — the one constraint the design places on the representation is that 
 
 **Accepted 2026-09-01**, co-accepted with RFC-0050, as the mutation-axis half of the
 v0.13.0 closure cluster. `call_mutation` is the third `Type::Fun` field. `reading` default
-/ `mut` written; a `mutating` call is a `&var self`-shaped exclusive borrow of the callee
+/ `var` written; a `mutating` call is a `&var self`-shaped exclusive borrow of the callee
 place; `[&var x]` ⇒ `mutating`; a move-once environment aggregate with write-back that
-persists across calls. The qualifier keyword is **`mut`**. Non-blocking residuals:
+persists across calls. The qualifier keyword is **`var`**. Non-blocking residuals:
 higher-order variance (RFC-0155), and the `mutating` ⇒ `!Sync` fact migrating to RFC-0096
 when it models closure mutation.
 

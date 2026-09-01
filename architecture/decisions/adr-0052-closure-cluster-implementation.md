@@ -32,7 +32,7 @@ The cluster's accepted rules, for reference:
 - **A `mutating` call is a `&var self`-shaped exclusive borrow of the callee place**
   (RFC-0153 §3), with a runtime "in-call" flag guarding same-value reentrancy in the
   pre-RFC-0122 window.
-- **Widened `reading` → `mut` call dispatch is on the closure value's own
+- **Widened `reading` → `var` call dispatch is on the closure value's own
   `call_mutation`, not the slot type** (RFC-0153 §3, RFC-0152).
 
 ## Decision
@@ -42,8 +42,8 @@ The cluster's accepted rules, for reference:
 RFC-0134 §2's consumption check and RFC-0153 §1's mutation check are conceptually part of
 the move checker (`move_check/`), which today is opt-in behind `--move-check`
 (metel-core#267, #579). **For v0.13.0 the closure-cluster checks run unconditionally** —
-the capture-list grammar, the `mut` keyword, "add a capture list", "add `mut`", the
-`mut`-closure-through-shared-`&` rejection, `once` requirement for a consuming body, and
+the capture-list grammar, the `var` keyword, "add a capture list", "add `var`", the
+`var`-closure-through-shared-`&` rejection, `once` requirement for a consuming body, and
 the runtime in-call flag are all always-on, regardless of `--move-check`.
 
 This is a deliberate, accepted inconsistency for this phase: the rest of move checking
@@ -78,7 +78,7 @@ Target shape:
   closure mutates it in place; the writes persist on the closure value across calls
   (RFC-0153 §1a write-back).
 - **`Rc<ClosureValue>` sharing must not alias a `Copy` `mutating` closure's state.**
-  `let mut d := c;` on a `Copy` closure (`[n: i64] mut`) must give `d` an *independent*
+  `let var d := c;` on a `Copy` closure (`[n: i64] var`) must give `d` an *independent*
   counter. Either drop the `Rc` for closure values whose `use_multiplicity` is `many` and
   bit-copy the value (aggregate included), or keep `Rc` only for non-`Copy` closures
   (where there is exactly one owner anyway). The observable contract is: copying a `Copy`
@@ -121,7 +121,7 @@ UseMult, CallMutation)` and the parallel `InferType::Fun` change touch, at minim
   not unified), the `infer_type_satisfies_aspect` `Fun => false` arm (unchanged in
   behaviour, but `use_multiplicity` now has a value to cross-check), inference-var
   lowering `InferType` → `Type`.
-- Type-syntax lowering (parser → `Type`) for the `once? mut? (params) -> ret` qualifier
+- Type-syntax lowering (parser → `Type`) for the `once? var? (params) -> ret` qualifier
   prefix, and RFC-0152's widening / `if`-`match` join sites.
 - `move_check/` — the classification and verification passes (§1 above), the place
   abstraction is reused not changed.
@@ -147,8 +147,8 @@ be used here.
 | non-`Copy` free variable referenced with no capture list | `T0021` | *"closure captures non-`Copy` `s`; add a capture list — `[s]` to move it in, `[&s]` / `[&var s]` to borrow, `[s.clone()]` to copy"* |
 | capture list present but not exhaustive / specifier mismatch | `T0021` | *"`s` is captured but not listed"* / *"`s` is listed `[&s]` but the body writes it"* |
 | body consumes a by-value capture, closure not written `once` | `T0022` | *"this closure moves captured `s` out; write `[s] once (…)`"* |
-| body mutates a capture / `[&var x]` capture, closure not written `mut` | `T0023` | *"a `&var` capture makes this closure `mut`; write `[…] mut (…)`, or capture `[&x]` if the body only reads it"* |
-| `mutating` closure called through a shared `&` | `T0024` | *"a `mut` closure cannot be called through a shared reference; it needs exclusive access"* |
+| body mutates a capture / `[&var x]` capture, closure not written `var` | `T0023` | *"a `&var` capture makes this closure `var`; write `[…] var (…)`, or capture `[&x]` if the body only reads it"* |
+| `mutating` closure called through a shared `&` | `T0024` | *"a `var` closure cannot be called through a shared reference; it needs exclusive access"* |
 | inner closure borrows an enclosing closure's by-value capture | `T0025` | *"cannot borrow into an enclosing closure's environment yet; bind a copy, or wait for the borrow checker (RFC-0122)"* |
 | re-entrant call to a `mutating` closure (runtime) | `R0007` | *"re-entrant call to a mutating closure"* — a runtime error / diagnostic, not a static one; the comptime evaluator surfaces it as a compile-time diagnostic with a source span (RFC-0153 Non-Goals) |
 
@@ -169,7 +169,7 @@ for the one PR:
 - **Class 2 — mutate-a-per-call-clone.** `grep -rn` for closure bodies with an assignment
   to a free local (`ident := ` / `ident +=` / `ident.field :=` where `ident` is not a
   closure parameter). Under RFC-0006 these mutated a discardable clone; now they need
-  `[ident] mut` and the write persists. Each is a semantic change to review by hand.
+  `[ident] var` and the write persists. Each is a semantic change to review by hand.
 - **Class 3 — `&var` capture used read-only.** Once `[&var x]` syntax lands: any
   `[&var x]` closure whose body has no write / `&var`-use of `x` → change to `[&x]`.
   Measured 2026-09-01: ~6 reader closures in the pointer-sharing fixtures
