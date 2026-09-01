@@ -961,7 +961,7 @@ genuinely out of scope here.
   representation, and if RFC-0135 is refused, §1's second field stays and simply keeps
   the name `Copy` rather than gaining the unified vocabulary.
 
-  **Update (2026-08-31):** **RFC-0157 (Copy and Clone Model Re-analysis, `1-under-review`)**
+  **Update (2026-08-31):** **RFC-0157 (Closure Capture Default (Move), `2-accepted`; regular-value analysis split to RFC-0162)**
   recommends exactly that outcome — `Copy` keeps its name on ordinary types, no
   `Copy → many` rename; `once`/`many` stays internal vocabulary plus §3's function-type
   qualifier. Under that recommendation `use_multiplicity` is read as an internal
@@ -1148,7 +1148,7 @@ re-examining, because the trade-off it was made against will have changed.
   by-value use, applied to closures). Not a hard dependency — see §5. **RFC-0157
   recommends RFC-0135's `Copy → many` rename not proceed**; that does not affect this
   RFC (see §5's 2026-08-31 update).
-- **RFC-0157 (Copy and Clone Model Re-analysis), `1-under-review`** — the trade-off study
+- **RFC-0157 (Closure Capture Default (Move)), `2-accepted`** — the trade-off study
   for the regular-value `Copy`/`Clone` model. Recommends no divergence there (keep `Copy`
   as Rust has it, no rename) and spending divergence budget on closures — of which this
   RFC is the main existing example. Its "D5" would change RFC-0006's capture default

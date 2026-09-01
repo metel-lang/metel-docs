@@ -1048,23 +1048,27 @@ implementation).
   recommends the `Copy` → `many` rename not proceed** (throws away the most transferable
   Rust term for an internal-consistency gain); RFC-0135's disposition — refuse, narrow to
   de-cruft, or fold into RFC-0158 — is a call for its own review.
-- **RFC-0157** *(under review, opened 2026-08-31; #918)* — Copy and Clone Model Re-analysis — the
-  trade-off study never written for `Copy`/`Clone`. Frames drawbacks D1 (implicit copy's
-  use-site invisibility + API-stability hazard), D2 (two-aspect split), D3 (`Copy`/`Drop`
-  exclusion, RFC-0071 §4), D4 (six-mechanism non-uniformity), D5 (RFC-0006 clone-by-default
-  capture vs. RFC-0071 move semantics); design space P0 → P1 (closed implicit set) → P2
-  (no implicit copy) → P3 (unify on `once`/`many`), with a Rust/C++/Swift/C#/Hylo prior-art
-  survey. **Recommendation:** the two halves aren't equally worth diverging on — Rust's
-  regular-value `Copy`/`Clone` is settled and the strongest transferable intuition, so
-  keep it (no rename, no P1/P2/P3, accept D1); the *only* value-side changes are the
-  `Clone`/`Share` split (RFC-0158) and relaxing the `Copy`+`Drop` ban (D3). Rust's closure
-  story is unfinished, so the divergence budget goes there. **D5 DECIDED (2026-09-01,
-  language owner): the closure-capture default is `move`** — by-value capture follows the
-  `let y := x` rule (settles RFC-0050's deferred question as "no keyword"), a capture list
-  is required the moment a move would occur (OQ4), and RFC-0006's per-call environment
-  re-clone is removed with it (env moved in once, read/mutated in place). D5's mechanism
-  is RFC-0050 (#803) + the RFC-0134 amendment (#269), v0.13.0. The rest of the RFC (Axes
-  A/B, P1–P3, D1–D4) stays analysis/direction, still under review.
+- **RFC-0157** *(**accepted 2026-09-01**; v0.13.0, #918)* — Closure Capture Default (Move)
+  — **D5 DECIDED (2026-09-01, language owner): the closure-capture default is `move`.**
+  Everywhere else in Metel a non-`Copy` value used by value is moved (RFC-0071); RFC-0006
+  made closure capture the one clone exception. D5 removes it: by-value capture follows
+  `let y := x` (settles RFC-0050's deferred question as "no keyword"), a capture list is
+  required the moment a move would occur (OQ4), and RFC-0006's per-call environment
+  re-clone is removed with it (env moved in once, read/mutated in place — RFC-0153 §1a).
+  Mechanism: RFC-0050 (#803) + the RFC-0134 amendment (#269), one hard change at v0.13.0.
+  RFC-0006 → `spec_status: pending`, `amended_by`. Accepted as part of the v0.13.0 closure
+  cluster. *Originally "Copy and Clone Model Re-analysis"; the regular-value `Copy`/`Clone`
+  model critique (D1–D4, P0–P3, prior art) was extracted to **RFC-0162** on 2026-09-01.*
+- **RFC-0162** *(under review, opened 2026-09-01; #924)* — Copy and Clone Model —
+  Regular-Value Design Space — the longer-horizon half split from RFC-0157. Drawbacks D1
+  (implicit-copy use-site invisibility + API-stability hazard), D2 (two-aspect split), D3
+  (`Copy`/`Drop` exclusion, RFC-0071 §4), D4 (six-mechanism non-uniformity); design space
+  P0 → P1 (closed implicit set) → P2 (no implicit copy) → P3 (unify on `once`/`many`);
+  Rust/C++/Swift/C#/Hylo prior-art survey. **Recommendation:** keep Rust's regular-value
+  model — no rename (not `many`, not `Dup`), no P1/P2/P3, accept D1; the only endorsed
+  value-side changes are RFC-0158 (`Clone`/`Share` split) and relaxing the `Copy`+`Drop`
+  ban *if* a soundness argument holds. Not milestoned — no v0.13.0 consumer. Three open
+  questions carry reopening conditions (D1 severity, D3 soundness, RFC-0135 disposition).
 - **RFC-0158** *(under review, opened 2026-08-31; #919)* — Share and Clone: Separating Aliasing from
   Duplication — split out of RFC-0157's "Axis B, second cut," then narrowed to **purely
   additive**. `.clone()` is specified two ways: RFC-0080 §1.1 ("independent owned value")

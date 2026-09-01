@@ -794,7 +794,7 @@ all — the auto-impl route above sidesteps this but ties the markers to RFC-009
   2026-08-31: capture list required for non-`Copy`/by-ref captures, bare `[n]` = by-value
   move. §1a's write-back applies to exactly those bare by-value captures. Sequenced with
   this RFC.
-- **RFC-0157 (Copy and Clone Model Re-analysis), `1-under-review`** — its D5 (change to
+- **RFC-0157 (Closure Capture Default (Move)), `2-accepted`** — its D5 (change to
   RFC-0006's capture default) lands together with §1a's write-back as one hard change; no
   edition gate.
 - **RFC-0096 (Auto-Impl Aspects)** — `Send`/`Sync`/`Linear`; Open Question 3, and

@@ -142,7 +142,7 @@ use sites; `Drop` rules; `Send`/`Sync` (`Rc: !Send` so `Rc::share` stays thread-
 
 ## Relationship to existing RFCs
 
-- **RFC-0157 (Copy and Clone Model Re-analysis, `1-under-review`)** — parent. RFC-0157's
+- **RFC-0157 (Closure Capture Default (Move), `2-accepted`; regular-value analysis split to RFC-0162)** — parent. RFC-0157's
   recommendation is "no divergence on the regular-value model"; this RFC is one of the two
   artifact removals it does endorse (the other being relaxing the `Copy`+`Drop` ban).
   Orthogonal to RFC-0157's P0/P1/P2/P3 and to RFC-0135.
