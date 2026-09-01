@@ -100,14 +100,14 @@ the curated thematic map.
 
 ## Integrated (8)
 
-- **RFC-0050** — Closure Capture Lists (`3-integrated` ; rfcs/3-integrated/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-09-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/925)
+- **RFC-0050** — Closure Capture Lists (`3-integrated` ; rfcs/3-integrated/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-09-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/926)
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 - **RFC-0117** — Row Narrowing (`3-integrated` ; rfcs/3-integrated/rfc-0117-row-narrowing.md ; date 2026-07-24 ; updated 2026-08-29 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/789)
-- **RFC-0134** — Closure Call Capability (`3-integrated` ; rfcs/3-integrated/rfc-0134-closure-call-capability.md ; date 2026-08-13 ; updated 2026-09-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/925)
+- **RFC-0134** — Closure Call Capability (`3-integrated` ; rfcs/3-integrated/rfc-0134-closure-call-capability.md ; date 2026-08-13 ; updated 2026-09-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/927)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/836)
-- **RFC-0152** — Function-Type Multiplicity Widening (`3-integrated` ; rfcs/3-integrated/rfc-0152-function-type-multiplicity-widening.md ; date 2026-08-30 ; updated 2026-09-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/925)
-- **RFC-0153** — Closure Mutation Axis (`3-integrated` ; rfcs/3-integrated/rfc-0153-closure-mutation-axis.md ; date 2026-08-30 ; updated 2026-09-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/925)
-- **RFC-0157** — Closure Capture Default (Move) (`3-integrated` ; rfcs/3-integrated/rfc-0157-copy-and-clone-model-re-analysis.md ; date 2026-08-31 ; updated 2026-09-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/925)
+- **RFC-0152** — Function-Type Multiplicity Widening (`3-integrated` ; rfcs/3-integrated/rfc-0152-function-type-multiplicity-widening.md ; date 2026-08-30 ; updated 2026-09-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/928)
+- **RFC-0153** — Closure Mutation Axis (`3-integrated` ; rfcs/3-integrated/rfc-0153-closure-mutation-axis.md ; date 2026-08-30 ; updated 2026-09-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/929)
+- **RFC-0157** — Closure Capture Default (Move) (`3-integrated` ; rfcs/3-integrated/rfc-0157-copy-and-clone-model-re-analysis.md ; date 2026-08-31 ; updated 2026-09-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/930)
 
 ## Implemented (52)
 
