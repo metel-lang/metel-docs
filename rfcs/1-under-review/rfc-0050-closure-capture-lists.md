@@ -13,6 +13,12 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 > ownership-transfer capture to RFC-0157. RFC-0157's D5 has since been settled in the
 > direction this RFC needs, so the deferral is lifted and folded in here:
 >
+> **D5 decided 2026-09-01 (language owner): the closure-capture default is `move`.** What
+> was "settled in the direction this RFC needs" is now a decision. It also removes
+> RFC-0006's per-call environment re-clone — the captured environment is moved in once and
+> read (or, for a `mutating` closure, mutated — RFC-0153 §1a) in place. Precondition (1)
+> in "Migration" below is met; only RFC-0050/RFC-0153 reaching `accepted` remains.
+>
 > - **A capture list is semantically required** whenever a closure captures a free
 >   non-`Copy` local binding, or captures anything by `&` / `&var`. It stays *omissible*
 >   only when the closure captures nothing, or captures only `Copy` bindings by value
@@ -590,9 +596,11 @@ and RFC-0152 (#901).*
 (`4-implemented`) and are implementable immediately.
 
 **Bare `ident` by-value capture of a non-`Copy` binding** (the move case) is the change to
-RFC-0006's implicit deep-clone default — RFC-0157's D5. RFC-0157 is `1-under-review`
-(#918); its D5 recommendation is settled in this direction, and this RFC's grammar and
-Semantics assume it. RFC-0046 (`6-refused/`), which specified the old `move` in `linear
+RFC-0006's implicit deep-clone default — RFC-0157's D5, **decided 2026-09-01 (language
+owner): the closure-capture default is `move`.** This RFC's grammar and Semantics carry
+it. The decision also removes RFC-0006's per-call `call_env = captured.clone()` re-clone:
+the environment is moved in once and read (or, for a `mutating` closure, mutated —
+RFC-0153 §1a) in place. RFC-0046 (`6-refused/`), which specified the old `move` in `linear
 fun` / exactly-once terms, is not the framing inherited — an affine move takes no keyword,
 which is why bare `[ident]` suffices.
 
@@ -604,8 +612,9 @@ RFC-0134 (#269) — capture lists and call capability are one review.
 *Amended 2026-09-01: the earlier "edition boundary" framing is dropped.* **Metel has no
 public users and no `--edition` tooling.** The whole closure cluster — this RFC's
 required-list rule and bare-`[s]`-is-move, RFC-0153 §1a's write-back, RFC-0134's
-`once`/`many` verification, RFC-0157's D5 capture default — lands as **one hard change** at
-v0.13.0. There is no old/new edition, no fixer, no mixed mode.
+`once`/`many` verification, RFC-0157's D5 capture default (**decided 2026-09-01: `move`**),
+and the removal of RFC-0006's per-call environment re-clone — lands as **one hard change**
+at v0.13.0. There is no old/new edition, no fixer, no mixed mode.
 
 Migration is entirely internal: the interpreter's own `.mtl` fixture corpus is updated in
 the same change. Where a fixture captured a non-`Copy` value it then returns, that is the
@@ -624,12 +633,13 @@ that RFC-0122 then has to break. Such programs are only valid to add as
 `expected-error` fixtures once RFC-0122 lands.
 
 **"One hard change" is one implementation PR, but not one RFC stage yet.** RFC-0134 and
-RFC-0152 are `2-accepted`; RFC-0050, RFC-0153, and RFC-0157 are `1-under-review` and
-RFC-0157's D5 is a recommendation, not a decision. The single implementation PR is
-contingent on: (1) RFC-0157's D5 being decided; (2) RFC-0050 and RFC-0153 reaching
-`accepted`; then (3) `Type::Fun` gains all three multiplicity fields, the capture-list
-grammar, the `once`/`mut` qualifiers, the §1a write-back, and the corpus sweep, together.
-Until (1)–(2), "one hard change" is the *plan*, not a settled cross-RFC fact.
+RFC-0152 are `2-accepted`; RFC-0050, RFC-0153, and RFC-0157 are `1-under-review`.
+**RFC-0157's D5 is now decided** (2026-09-01, language owner — the closure-capture default
+is `move`), so precondition (1) is met. The single implementation PR is now contingent
+only on: (2) RFC-0050 and RFC-0153 reaching `accepted`; then (3) `Type::Fun` gains all
+three multiplicity fields, the capture-list grammar, the `once`/`mut` qualifiers, the §1a
+write-back, the removal of RFC-0006's per-call re-clone, and the corpus sweep, together.
+Until (2), "one hard change" is the *plan*, not a settled cross-RFC fact.
 
 ---
 
