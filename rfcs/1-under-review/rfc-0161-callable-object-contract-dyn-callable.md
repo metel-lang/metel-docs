@@ -142,6 +142,15 @@ structural. Two candidate mechanics, **open question 2**:
 The move-out-of-box mechanic is preferred (keeps the guarantee static), at the cost of
 `once` erased callables always being heap-allocated.
 
+**The `mutating` axis has the same shape of problem.** A concrete `mutating` closure gets
+its exclusive-per-call access from RFC-0153 §3's `&var self` receiver, checked statically
+(RFC-0122). Once erased to `dyn Callable` (no `CallShared`) and stored in a shared
+structure, that static check is no longer available at the call site. The erased
+`mutating` call therefore needs the **dynamic** form RFC-0153 §3 records as its
+alternative: a runtime "borrowed" flag on the closure value, set-and-checked per call,
+overlap/reentrancy a panic. This RFC adopts that for erased `mutating` callables (it is
+the erased-case analogue of the poison flag in §4). **Open question 6.**
+
 ### 5. Relationship to the v0.13.0 cluster
 
 - **RFC-0134 / RFC-0153** — the field values on `Type::Fun` decide which markers the
@@ -179,6 +188,10 @@ The move-out-of-box mechanic is preferred (keeps the guarantee static), at the c
    compose with RFC-0141's placement syntax?
 5. **`Args` row plumbing** — RFC-0151's numeric-label row applied to `call`'s parameter
    list; confirm the erasure preserves arity and per-parameter reference qualifiers.
+6. **Erased `mutating`-call exclusivity** (§4) — the runtime "borrowed" flag is the
+   proposed mechanic (the static `&var self` check of RFC-0153 §3 is unavailable after
+   erasure). Confirm the flag lives in the `dyn` value, its overhead, and its interaction
+   with `Send`/`Sync` (an erased `mutating` callable stays `!Sync`).
 
 ## References
 
