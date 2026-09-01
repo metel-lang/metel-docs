@@ -1,10 +1,14 @@
 ---
-status: draft
+status: under-review
 id: rfc-0039
 title: "aspect Alias Syntax"
 date: '2026-06-01'
 deferred_from: rfc-0002 (Q7), referenced in rfc-0035 (Q4)
+updated: '2026-09-01'
+tracking: 'https://github.com/metel-lang/metel-core/issues/922'
 ---
+
+> **Status — under review (2026-09-01).** small standalone design; five OQs each with a recommended answer; ready for review
 
 ## Summary
 

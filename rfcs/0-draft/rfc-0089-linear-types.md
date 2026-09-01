@@ -175,7 +175,7 @@ structurally-plain row to be linear "by fiat" undermines the premise that a reco
 
 **`Affine` needs no aspect of its own.** It's definitionally "not `Copy` and not
 `Linear`" — `T: !Copy + !Linear` (RFC-0072's already-accepted mixed positive/negative
-bound form) already says it. RFC-0039 (`aspect` Alias Syntax, draft) is the vehicle to
+bound form) already says it. RFC-0039 (`aspect` Alias Syntax, `1-under-review`) is the vehicle to
 name it without writing the compound bound at every call site:
 
 ```metel
@@ -424,7 +424,7 @@ and its open aliasing question remain explicitly not required for the deadline.
   rather than each auto-impl aspect (`Send`/`Sync`/`Linear`) restating it
 - RFC-0081 (Negative Impls) — `extend X: !Linear;` opt-out
 - RFC-0072 (Negative Bounds) — `T: !Copy + !Linear` compound bound form (§2.1)
-- RFC-0039 (`aspect` Alias Syntax, draft) — vehicle for the `Affine` alias (§2.1)
+- RFC-0039 (`aspect` Alias Syntax, `1-under-review`) — vehicle for the `Affine` alias (§2.1)
 - RFC-0049 (Linear Function Type System, draft) — documents the generic-`drop`-discharges-
   linearity hazard this RFC's `drop<T: !Linear>` avoids
 - RFC-0063 (Allocator Handles, accepted) — §9 item 5's deadline this RFC's §3

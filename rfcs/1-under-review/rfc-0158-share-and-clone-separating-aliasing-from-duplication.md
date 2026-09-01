@@ -152,7 +152,7 @@ use sites; `Drop` rules; `Send`/`Sync` (`Rc: !Send` so `Rc::share` stays thread-
 - **RFC-0074 (Shared Pointers — Rc and Arc, `0-draft`) / RFC-0076 (Rc Brands,
   `1-under-review`)** — `Rc`/`Arc` implement `Share`. RFC-0076's brand-preserving-`clone`
   clause becomes the definition of `Rc::share`; the brand machinery itself is unchanged.
-- **RFC-0039 (aspect Alias Syntax, `0-draft`)** — *not* related despite the name;
+- **RFC-0039 (aspect Alias Syntax, `1-under-review`)** — *not* related despite the name;
   RFC-0039 names compound aspect *bounds*. Noted to prevent a mix-up.
 - **RFC-0135 (Multiplicity for Ordinary Types, `1-under-review`)** — independent. If
   RFC-0135's `Copy`→`many` rename does not proceed (RFC-0157's recommendation), `Share` is
