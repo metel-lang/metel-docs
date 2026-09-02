@@ -13,9 +13,11 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/903'
 > RFC-0157). This RFC now follows as the one corpus-wide syntax migration from the
 > parenthesized implementation that shipped in that cluster. Its four grammar questions
 > were resolved together on 2026-09-02; it remains `1-under-review` pending acceptance
-> review and implementation planning. An adversarial review on 2026-09-02 found that
-> the initial pipe grammar had omitted capture lists and a parenthesized-type production;
-> this revision restores both. RFC-0160 (Type Aliases) co-lands alongside it.
+> review and implementation planning. An adversarial review on 2026-09-02 found the
+> initial pipe grammar had omitted capture lists; this revision restores them. RFC-0160
+> (Type Aliases) co-lands alongside it. A second acceptance-review pass the same day
+> trimmed §5's nested-type rule to advisory (formatter/lint, not a parse error) and
+> dropped the conditional `copy` pre-declaration (RFC-0163 owns that word).
 >
 > **Scope (2026-09-02): the first iteration is the spelling migration and nothing more.**
 > `->` and the return type are written wherever a function *type* is written — there is no
@@ -82,7 +84,7 @@ literal. This RFC keeps RFC-0041's lightness and fixes the collision it left.
 
 ```
 fun_type = { fun_type_qualifier* ~ "|" ~ type_list? ~ "|" ~ "->" ~ type_expr }
-fun_type_qualifier = { once_kw | var_kw | copy_kw }
+fun_type_qualifier = { once_kw | var_kw }
 ```
 
 `|A, B| -> C`. A nullary function type is `|| -> C`. The `->` and the return type are
@@ -90,14 +92,10 @@ always written: `|A|` with no `-> C` is a parse error, and there is **no** infer
 form for a written type — a type annotation has no body to recover the return type from.
 This is deliberately stricter than the closure literal (§2), which keeps RFC-0041's
 body-inference; loosening it, if ever, waits on evidence from real signatures.
-`once`, `var`, and — when RFC-0163 is accepted — `copy`, are order-insensitive
-type qualifiers. `copy` is a type-only qualifier: it is never written on a
-closure literal because capture classification derives the concrete capability.
-
-The qualifier family is reserved in v0.13.0: `once`, `var`, and, when
-RFC-0163 is accepted, `copy` are not ordinary identifiers. Making the family
-contextual is a possible future compatibility and lexer/parser improvement,
-but is outside this RFC and must apply to all three words together.
+`once` and `var` are order-insensitive type qualifiers (from RFC-0134 / RFC-0153); they are
+reserved words in v0.13.0, not ordinary identifiers. Making them contextual is a possible
+future lexer/parser improvement, outside this RFC. RFC-0163, if accepted, adds a
+type-only `copy` qualifier to this same `fun_type_qualifier` position — see Interactions.
 
 ### 2. Closure literal
 
@@ -132,58 +130,47 @@ once |i64| -> String
 once var |i64| -> String        // RFC-0153; order-insensitive per RFC-0134 §5
 ```
 
-The contextual-identifier rule applies equally to these two qualifiers and to
-RFC-0163's conditional `copy` qualifier. It is deliberately one shared lexical
-rule rather than a compatibility exception for `copy`.
+The reserved-word rule applies equally to both qualifiers.
 
 Reference qualifiers wrap the whole thing: `&|i64| -> String`,
 `&var |i64| -> String` — a shared/exclusive reference *to* a function value.
 
-### 5. Nested function types are parenthesized
+### 5. Nested function types — right-associative; parenthesize by convention
 
-A function type that appears as **another function type's return type or parameter
-type** must be wrapped in `(...)`:
-
-```
-|Request| -> (|Response| -> Result)     // a function that returns a function
-|(|i64| -> i64)| -> String              // a function that takes a function
-```
-
-Unparenthesized, `|A| -> |B| -> C` relies entirely on `->` right-associativity and on
-the reader tracking where each `|...|` opens; the closure cluster's interleaved `once` /
-`var` prefixes (`var |Request| -> once |Response| -> Result`) make the chain unreadable.
-The parentheses give the nesting an unambiguous visual bracket, and a formatter inserts
-them.
-
-They are a real type-grammar construct, not tuple syntax reused informally:
+`->` is **right-associative**, so a function type nested as another's return or parameter
+type parses unambiguously with no extra rule:
 
 ```
-group_type = { "(" ~ type_expr ~ ")" }
-type_expr = { fun_type | group_type | ... }
+|A| -> |B| -> C                          // == |A| -> (|B| -> C)
+var |Request| -> once |Response| -> Result   // == var |Request| -> (once |Response| -> Result)
 ```
 
-`group_type` lowers to its inner type and has no runtime or type-level identity. It is
-distinct from `tuple_type`, which requires a comma. A formatter emits it when a function
-type occurs as another function type's parameter or return type, and may remove redundant
-grouping elsewhere.
+Both spellings — with the parentheses and without — are legal and denote the same type.
 
-The rule is specifically *function-type-in-function-type*. A **named** function's own
-signature is not nested, so it needs no parentheses:
+The bare form *reads* badly once the closure cluster's `once` / `var` prefixes are
+interleaved. That is a **formatting / lint concern, not a grammar one**: a formatter adds
+the parentheses around a function type nested in another's return or parameter position,
+and a lint may flag the bare form. This RFC does **not** make the bare form a parse error
+in v0.13.0 — if the advisory tooling proves insufficient once the notation is in real use,
+a hard rule can be added then.
+
+Parentheses around a type are ordinary grouping — the same `(e)` that groups an
+expression, here in type position — accepted anywhere a type is expected. They carry no
+runtime or type-level identity, and a comma-free `( T )` is never a tuple (a tuple type
+requires a comma). Reference-qualified function types read as a unit, so a nested one is
+grouped the same way: `|A| -> (&|B| -> C)`. A qualifier prefix binds tighter than the
+enclosing `->`, so `|A| -> once |B| -> C` is `|A| -> (once |B| -> C)`.
+
+A **named** function's own signature is not a nested function type — nothing to
+parenthesize:
 
 ```
-fun make_counter() -> var || -> i64          // fine — `var || -> i64` is the fn's return, not nested in a fn type
-fun compose(f: |A| -> B, g: |B| -> C) -> (|A| -> C)   // the return IS nested -> parenthesized
+fun make_counter() -> var || -> i64                    // `var || -> i64` is the return, not nested in a fn type
+fun compose(f: |A| -> B, g: |B| -> C) -> |A| -> C      // legal bare; a formatter writes the return as (|A| -> C)
 ```
 
-For anything deeper than one level, name it with a type alias (RFC-0160):
-`type Curried = |A| -> (|B| -> C);`.
-
-Grammar: in `fun_type = fun_type_qualifier* ~ "|" ~ type_list? ~ "|" ~ "->" ~ type_expr`, a `type_expr` in the
-`->` position (or inside `type_list`) that is itself a `fun_type` is only accepted
-parenthesized. Reference-qualified function types (`&|A| -> B`) already read as a unit and
-are subject to the same rule when nested: `|A| -> (&|B| -> C)`, not `|A| -> &|B| -> C`.
-A qualifier prefix (`once`, `var`, or RFC-0163's `copy`) is part of the `fun_type` it
-precedes, so `|A| -> (once |B| -> C)` is the form, not `|A| -> once (|B| -> C)`.
+For anything deeper than one level, name it with a type alias (RFC-0160): `type Curried =
+|A| -> (|B| -> C);` — the nesting then never appears at a use site.
 
 ## Grammar: the `|` wrinkle
 
@@ -206,19 +193,17 @@ Type position has no such conflict — `|` is not an operator there.
 
 Hard switch, one-pass corpus sweep, no dual-accept — the same call RFC-0134 §3a
 made, for the same reasons. The closure cluster has already supplied the qualifier
-grammar; this is its v0.13.0 syntax-migration follow-up. Three mechanical rewrites:
+grammar; this is its v0.13.0 syntax-migration follow-up. Two mechanical rewrites:
 
 - Type position: `(T…) -> U` → `|T…| -> U`. Find by `) ->` in a type context.
 - Expression position: `(params) -> Ret? { body }` → `|params| -> Ret? { body }`.
   Preserve the closure prefix: `[captures] once? var? (params)` becomes
   `[captures] once? var? |params|`. Find by `closure_expr` nodes in the parsed
   tree, not text.
-- Nested function types (§5): wrap a `fun_type` that is another `fun_type`'s return or
-  parameter in `(...)`. Find by a `fun_type` node whose `->` child (or a `type_list`
-  member) is itself a `fun_type`.
-- RFC-0163 integration: if `copy` is accepted for v0.13.0, migrate its type-only
-  qualifier into this grammar and add the combined `copy once var |...| -> ...`
-  spelling to the parser and formatter sweep.
+
+Nested function types (§5) need no rewrite — the bare form stays legal; the formatter
+pass adds the advisory parentheses around a `fun_type` nested in another's return or
+parameter position. If RFC-0163 is later accepted, it carries its own `copy` sweep.
 
 No runtime effect; nothing leaves the compiler.
 
@@ -230,11 +215,14 @@ No runtime effect; nothing leaves the compiler.
 - **RFC-0134 (Closure Call Capability)** — its §3a is removed and folded here;
   its `once`/`many` qualifier prefixes `|...|` (§4).
 - **RFC-0153 (Closure Mutation Axis)** — its `var` qualifier likewise (§4).
-- **RFC-0163 (Function-Type Use-Multiplicity Surface, `1-under-review`)** — supplies
-  the type-only `copy` qualifier if accepted; this RFC supplies its pipe notation.
+- **RFC-0163 (Function-Type Use-Multiplicity Surface, `1-under-review`)** — owns the
+  type-only `copy` qualifier. This RFC deliberately does **not** pre-declare `copy` in its
+  grammar: if RFC-0163 is accepted it adds `copy` to `fun_type_qualifier` and runs its own
+  corpus sweep, prefixing whatever spelling this RFC lands. No dependency in the other
+  direction.
 - **RFC-0160 (Type Aliases, `1-under-review`)** — co-lands in v0.13.0. Aliases are the
-  recommended tool for anything deeper than the one level §5 parenthesizes; RFC-0160's
-  RHS uses this RFC's `|...|` form.
+  recommended tool for anything deeper than the one level §5's advisory parentheses
+  cover; RFC-0160's RHS uses this RFC's `|...|` form.
 - **RFC-0151 (Tuples as Numeric-Label Rows)** — the reason `(A, B) -> C` must
   stop being a function type; this RFC is what frees `(...)` for it.
 - **RFC-0125 (Variadic Generics)** — `|...Ts| -> R` folds a pack into the
@@ -282,12 +270,12 @@ The implementation must cover, at minimum:
   `[&var x] var ||`, `[x] once var |x|`), including the rejected `var once` literal;
 - nullary closure and function types at expression/type start, and ordinary `a || b`;
 - closure literals after `=`, `(`, `,`, and `return`;
-- grouped nested function types in parameters and returns, including a nested
+- nested function types in parameters and returns, **both** unparenthesized (`|A| -> |B|
+  -> C`) and grouped (`|A| -> (|B| -> C)`), parsing to the same type, including a nested
   reference-qualified function type;
 - tuple types beside grouped function types, proving `(A, B)` remains a tuple while
   `(|A| -> B)` is grouping; and
-- every accepted `once` / `var` / RFC-0163 `copy` qualifier combination in function
-  types, plus the fact that `copy` is rejected on a literal.
+- every accepted `once` / `var` qualifier combination and order in function types.
 
 ## References
 
@@ -297,7 +285,8 @@ The implementation must cover, at minimum:
   qualifier this composes with.
 - **RFC-0153 (Closure Mutation Axis)** — the `var` qualifier.
 - **RFC-0160 (Type Aliases), `1-under-review`** — co-lands in v0.13.0; names deep /
-  qualified function types so §5's parentheses appear once, in the alias, not at every use.
+  qualified function types so a nested `|A| -> (|B| -> C)` appears once, in the alias,
+  not at every use.
 - **RFC-0151 (Tuples as Numeric-Label Rows)** — frees `(...)` for tuples/records,
   which is what makes the current function-type spelling ambiguous.
 - **RFC-0125 (Variadic Generics)** — `|...Ts| -> R`.
@@ -309,9 +298,10 @@ The implementation must cover, at minimum:
 ## Decision
 
 **Outcome:** *(proposal complete — `1-under-review` (#903), split from RFC-0134 §3a.
-All four grammar questions were resolved 2026-09-02. Acceptance review must verify the
-capture-prefix grammar, grouped-type grammar, position rule, RFC-0163 composition, and
-the corpus migration.)*
+All four grammar questions were resolved 2026-09-02; the acceptance-review follow-ups
+(2026-09-02) trimmed §5 to an advisory formatter/lint rule and removed the conditional
+`copy` pre-declaration. Acceptance review must verify the capture-prefix grammar, the
+`|` / `||` position rule, and the corpus migration.)*
 **Target:** **v0.13.0** — follows the merged closure cluster as its syntax-migration
 work, alongside RFC-0160 (Type Aliases). The migration is intentionally limited to
 pipe notation; bare-expression bodies, and any return-type-omission convenience beyond
