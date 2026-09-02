@@ -2,7 +2,7 @@
 id: rfc-0160
 title: "Type Aliases"
 date: '2026-09-01'
-status: under-review
+status: accepted
 target: v0.13.0
 updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/921'
@@ -25,20 +25,22 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/921'
 > **Status — under review (2026-09-01).** type-alias gap confirmed (no existing RFC);
 > brought into v0.13.0 2026-09-02 to co-land with RFC-0154 + the closure cluster.
 
+> **Status — accepted (2026-09-02).** 5 OQs resolved (#88); acceptance review moved the separator to := and added the Alternatives section
+
 ## Summary
 
 A **type alias** is a module-level, transparent name for an existing type:
 
 ```metel
-type Bytes = List<u8>;
-type Handler = once var |Request, &Config| -> Response;       // closure qualifiers included
-type Renderer<W> = context(theme: Theme) var |W| -> Html;    // parameterised; context requirement included
+type Bytes := List<u8>;
+type Handler := once var |Request, &Config| -> Response;       // closure qualifiers included
+type Renderer<W> := context(theme: Theme) var |W| -> Html;    // parameterised; context requirement included
 ```
 
 - **Transparent (structural), not nominal.** `Handler` *is* `once var |Request, &Config|
   -> Response` — same type, interchangeable everywhere, no coercion, no distinct identity.
   RFC-0152 widening flows straight through it.
-- **May be parameterised.** `type X<A, B> = …` with the same generic-parameter and
+- **May be parameterised.** `type X<A, B> := …` with the same generic-parameter and
   bound rules as any declaration.
 - **Names any type**, including function/closure types with their `once` / `var`
   qualifiers (RFC-0134 / RFC-0153), the nested function types RFC-0154 §5 recommends
@@ -59,7 +61,7 @@ closure's capture list (see §"Function and closure types").
   exactly the kind of type an alias is best at: long, structural, repeated.
 - RFC-0154 §5 recommends parenthesizing a function type nested in another (`|A| -> (|B| ->
   C)`, `|(|i64| -> i64)| -> String`). An alias writes that parenthesis once and hands out a
-  plain name: `type Curried = |A| -> (|B| -> C);`.
+  plain name: `type Curried := |A| -> (|B| -> C);`.
 - RFC-0113 context parameters will add a `context(...)` clause to function types for the
   deferral case (§"Context parameters"). Without aliases, `context(theme: Theme) var
   |Widget| -> Html` is the worst case.
@@ -74,8 +76,13 @@ closure's capture list (see §"Function and closure types").
 ### 1. Declaration
 
 ```
-type_alias = "public"? "type" IDENT type_params? "=" type ";"
+type_alias = "public"? "type" IDENT type_params? ":=" type ";"
 ```
+
+**The separator is `:=`.** An alias name is a *kept* binding — referenceable throughout its
+scope — so RFC-0136's invariant puts it on `:=`, not `=`. This also matches
+`assoc_type_def` (`type Item := T;`, RFC-0082), which §4 notes shares the `type` keyword:
+the two `type … := …` sites now differ only by position, never by token.
 
 Allowed at **module scope or inside a function / block body** (Open Question 1). `public`
 is module-scope only. A module-level `public type` participates in the module's public
@@ -99,9 +106,9 @@ reasoning. Consequences:
 ### 3. Parameters
 
 ```metel
-type Pair<A, B> = (A, B);
-type Cache<K, V> = Map<K, List<V>>;
-type Predicate<T> = |T| -> bool;
+type Pair<A, B> := (A, B);
+type Cache<K, V> := Map<K, List<V>>;
+type Predicate<T> := |T| -> bool;
 ```
 
 Generic parameters and their bounds follow the ordinary declaration rules. Turbofish
@@ -111,7 +118,7 @@ family of aliases uniform).
 
 ### 4. Disambiguation from associated types (RFC-0082)
 
-`type Name = T;` inside an `aspect` or `extend` block is an associated-type definition
+`type Name := T;` inside an `aspect` or `extend` block is an associated-type definition
 (RFC-0082) and is unchanged. Anywhere else — module scope or a function / block body — it
 is a type alias. The two never collide — position decides — and this RFC adds no new
 keyword.
@@ -127,10 +134,10 @@ call_multiplicity, use_multiplicity, call_mutation)` — the qualifiers `once` /
 *part of the type*, so an alias captures them:
 
 ```metel
-type Reducer<T> = |T, T| -> T;              // many reading
-type Sink<T>    = var |T| -> ();            // FnMut-shaped
-type Consumer<T> = once |T| -> ();          // FnOnce-shaped
-type Middleware = |Handler| -> (|Request| -> Response);   // returns a function -> §5 parens
+type Reducer<T> := |T, T| -> T;              // many reading
+type Sink<T>    := var |T| -> ();            // FnMut-shaped
+type Consumer<T> := once |T| -> ();          // FnOnce-shaped
+type Middleware := |Handler| -> (|Request| -> Response);   // returns a function -> §5 parens
 ```
 
 **What the alias does not carry: the capture list.** `[&var count, buf]` is on the
@@ -155,8 +162,8 @@ fun counting_sink(var seen: List<Event>) -> var |Event| -> () {
 qualifiers:
 
 ```metel
-type Handler = once var |Request| -> Response;
-let h: Handler = [&cfg] |req| -> Response { … };   // `once var` come from `Handler`
+type Handler := once var |Request| -> Response;
+let h: Handler := [&cfg] |req| -> Response { … };   // `once var` come from `Handler`
 ```
 
 ---
@@ -171,7 +178,7 @@ summary, for aliases:
   type is plain (`|T| -> U`) and an alias of it needs no `context` clause.
 - **Deferral — a context function type.** `context(c: C) |T| -> U` defers `c` to the
   closure's call site (Scala 3's context functions). This *is* type information, so an
-  alias carries it: `type Renderer<W> = context(theme: Theme) var |W| -> Html;`.
+  alias carries it: `type Renderer<W> := context(theme: Theme) var |W| -> Html;`.
 - The `context(...)` clause is a **row** of `(role, type)` requirements — orthogonal to
   the `once` / `mut` multiplicity axes, following the row shape RFC-0140 already uses for
   its handler channel. Whether it becomes a fourth `Type::Fun` field or stays a
@@ -183,10 +190,10 @@ summary, for aliases:
 ## Relationship to existing RFCs
 
 - **RFC-0039 (aspect Alias Syntax, `1-under-review`)** — complementary and disjoint: RFC-0039
-  names compound *bounds* (`aspect X = A + B`), this names *types* (`type X = T`).
+  names compound *bounds* (`aspect X = A + B`), this names *types* (`type X := T`).
   RFC-0039 Q1 Option C briefly floated `type Alias = A & B & C` as a bound-alias *syntax*;
   that is not this feature. Diagnostics-name-the-alias (RFC-0039 Q5) is adopted here too.
-- **RFC-0082 (Associated Types, `4-implemented`)** — `type Name = T;` in aspect / `extend`
+- **RFC-0082 (Associated Types, `4-implemented`)** — `type Name := T;` in aspect / `extend`
   scope is associated types, unchanged. Position disambiguates; no keyword clash.
 - **RFC-0134 (Closure Call Capability) / RFC-0153 (Closure Mutation Axis)** — supply the
   `once` / `var` qualifiers an alias captures. Co-land in v0.13.0.
@@ -203,13 +210,40 @@ summary, for aliases:
 
 ---
 
+## Alternatives considered
+
+### A nominal alias (newtype)
+
+`type Handle := i64;` that is a *distinct* type — assignable from `i64` only explicitly,
+with its own impl surface. Useful, but a separate feature: it needs a coercion story, an
+orphan/coherence answer, and a conversion syntax. Metel has one structural function type
+by design, so the transparent synonym is the version that carries zero semantic weight and
+composes with everything already. A newtype can be added later without changing this.
+
+### A distinct keyword (`using` / `typedef` / `alias`)
+
+Avoids overloading `type`. Rejected: `type … := …` already exists (RFC-0082 associated
+types) and §4 shows position alone disambiguates the two, so a second keyword would be
+pure noise. Reusing `type` also means an alias reads like every other type-introducing
+declaration (`struct`, `enum`).
+
+### Fold into RFC-0039's bound aliases
+
+RFC-0039 Q1 Option C floated `type Alias = A & B & C` for *bound* aliases. Rejected there
+and here: a bound (`A + B`, used in `where` / generic-param position) and a type (`List<u8>`,
+used anywhere a type is) are different grammar positions with different well-formedness
+rules. One keyword for both would need a mode switch the reader can't see. The two RFCs
+stay disjoint (RFC-0039 §Relationship).
+
+---
+
 ## Open Questions
 
 *All resolved 2026-09-02.*
 
-1. **Function-body-local aliases.** **✓ Resolved — allowed.** `type X = T;` may appear as
+1. **Function-body-local aliases.** **✓ Resolved — allowed.** `type X := T;` may appear as
    a block statement, scoped to that block, as well as at module scope. A local alias may
-   reference enclosing generic parameters (`fun f<T>() { type Pair = (T, T); … }` — a
+   reference enclosing generic parameters (`fun f<T>() { type Pair := (T, T); … }` — a
    reason to have it: a module alias would need its own `<T>`). It cannot carry `public`
    (nothing local is exported). Shadowing and visibility follow block-local `fun`: an
    inner `type` shadows an outer alias / type of the same name within its block, and it is
@@ -222,7 +256,7 @@ summary, for aliases:
    function-local alias is never exported (OQ1).
 3. **Alias in `extend` target position.** **✓ Resolved — forbidden for v0.13.0.**
    `extend MyAlias: Aspect { … }` is a compile error; write `extend <the real type>:
-   Aspect`. It only matters for aliases of *nominal* types (`type Bytes = List<u8>; extend
+   Aspect`. It only matters for aliases of *nominal* types (`type Bytes := List<u8>; extend
    Bytes`), which reopens the orphan-rule / coherence surface for no clear gain in a first
    cut and hides impls from where a reader looks for them. A pure restriction — liftable
    later (coherence check running on the expansion) if demand appears.
@@ -233,7 +267,7 @@ summary, for aliases:
    in every language with transparent aliases.
 5. **Turbofish for partially-applied aliases.** **✓ Resolved — no special rule.**
    `M::<i64>` binds the alias's own type parameters positionally, then expands:
-   `type M<V> = Map<String, V>` makes `M::<i64>` the type `Map<String, i64>`. The alias is
+   `type M<V> := Map<String, V>` makes `M::<i64>` the type `Map<String, i64>`. The alias is
    another generic name; RFC-0023's ascription-vs-turbofish placement rule applies to it
    unchanged.
 
@@ -241,10 +275,16 @@ summary, for aliases:
 
 ## Decision
 
-**Outcome:** *(pending — `1-under-review` (#921), opened 2026-09-01. **All five Open
-Questions resolved 2026-09-02** (local aliases allowed, no alias-specific visibility,
-`extend`-on-alias forbidden for now, cycles rejected, turbofish through expansion) —
-acceptance-ready.)*
+**Outcome:** **Accepted 2026-09-02** (`2-accepted`, #921), opened 2026-09-01. All five
+Open Questions resolved 2026-09-02 (local aliases allowed, no alias-specific visibility,
+`extend`-on-alias forbidden for now, cycles rejected, turbofish through expansion). The
+acceptance review moved the declaration separator from `=` to `:=` (RFC-0136's
+kept-binding invariant; matches `assoc_type_def`) and added the Alternatives section
+(nominal newtype, a distinct keyword, folding into RFC-0039 — all rejected). `3-integrated`
+adds a `spec.declarations.type-aliases` block and worked examples covering transparency,
+alias-of-alias, cycle rejection, the function-type-with-qualifiers case, and the
+capture-list non-interaction; `4-implemented` is grammar (`type … := …` at module/block
+scope) + name resolution + eager expansion in the frontend.
 **Target:** **v0.13.0** — set 2026-09-02 to co-land with RFC-0154 (`|...|` spelling) and
 the closure cluster's `once` / `var` qualifier grammar, so the function-type spelling and
 the tool for naming its results ship in one migration.

@@ -277,7 +277,7 @@ No runtime effect; nothing leaves the compiler.
   grammar: if RFC-0163 is accepted it adds `copy` to `fun_type_qualifier` and runs its own
   corpus sweep, prefixing whatever spelling this RFC lands. No dependency in the other
   direction.
-- **RFC-0160 (Type Aliases, `1-under-review`)** — co-lands in v0.13.0. Aliases are the
+- **RFC-0160 (Type Aliases, `2-accepted`)** — co-lands in v0.13.0. Aliases are the
   recommended tool for anything deeper than the one level §5's recommended parentheses
   cover; RFC-0160's RHS uses this RFC's `|...|` form.
 - **RFC-0151 (Tuples as Numeric-Label Rows, `0-draft`, unscheduled)** — the *anticipated*
@@ -354,7 +354,7 @@ The implementation must cover, at minimum:
 - **RFC-0134 (Closure Call Capability)** — §3a split from here; the `once`/`many`
   qualifier this composes with.
 - **RFC-0153 (Closure Mutation Axis)** — the `var` qualifier.
-- **RFC-0160 (Type Aliases), `1-under-review`** — co-lands in v0.13.0; names deep /
+- **RFC-0160 (Type Aliases), `2-accepted`** — co-lands in v0.13.0; names deep /
   qualified function types so a nested `|A| -> (|B| -> C)` appears once, in the alias,
   not at every use.
 - **RFC-0151 (Tuples as Numeric-Label Rows), `0-draft`** — the anticipated collision that
