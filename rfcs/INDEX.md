@@ -346,6 +346,17 @@ above it are.
   and RFC-0125's pack-into-tuple calculus dissolve. Open: `()` vs `Unit`, whether
   mixed integer/identifier-label rows are allowed, migration staging. Sequence before
   RFC-0125 (v0.14.0).
+- **RFC-0165** *(draft, opened 2026-09-02)* — Structural Union Types — an anonymous
+  sum-type former `A | B | C`, the coproduct dual of RFC-0116 records and RFC-0151 tuples
+  (today Metel has structural products without a name but only nominal sums, `enum`).
+  Opened from RFC-0154's adversarial review (F11): RFC-0154 makes `|` a delimiter in type
+  position, so a future union spelling has to be reconciled with it or `|` is spent. The
+  reconciliation (§1) is close to settled — infix only, no leading bar, union looser than
+  `->`, function-type members parenthesised, disambiguated by the same operand-vs-operator
+  rule that separates `|| expr` from `a || b`. The open decision (OQ1) is **tagged
+  structural coproduct** (the lean — monomorphisation-friendly, no RTTI, `A \| A` collapses)
+  vs **untagged set-union with type tests** (TypeScript's model). No target; depends on
+  RFC-0154 landing and on OQ1 to be more than a sketch.
 - **RFC-0118** *(implemented in v0.12.0, was #577)* — Row Bounds — `<record T: { x: f64, .. }>` and `!{ token }`,
   replacing the `HasField`/`Lacks` family that never parsed. The trailing `..` is an
   anonymous row variable and is what makes a bound *open*; without it the bound is closed,
