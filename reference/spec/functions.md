@@ -91,23 +91,26 @@ parameter is an associated function and is called through its target type with `
 
 [Functions are first-class values and can be assigned, passed, and returned](#spec.functions.first-class-functions.legality-2):
 
+<!-- doc-example: skip reason="RFC-0154 pipe notation — the parser lands with metel-core#903; remove the skip when develop-latest parses `|…|`" -->
 ```metel
 fun add(a: i64, b: i64) -> i64 {
     return a + b;
 }
 
-fun apply(f: (i64) -> i64, x: i64) -> i64 {
+fun apply(f: |i64| -> i64, x: i64) -> i64 {
     return f(x);
 }
 
 fun main() -> i64 {
     let f := add;
-    let inc := (x: i64) -> i64 { return x + 1; };
+    let inc := |x: i64| -> i64 { return x + 1; };
     return f(1, 2) + apply(inc, 4);
 }
 ```
 
-The type of a function or closure is written as `(ParamTypes) -> ReturnType`.
+The type of a function or closure is written as `|ParamTypes| -> ReturnType` (RFC-0154;
+`(ParamTypes) -> ReturnType` before v0.13.0). `->` and the return type are always present
+in a written function type.
 
 A named function declared with its own `<T>` generics (`fun identity<T>(x: T) -> T
 { ... }`) may always be called directly (`identity(3)`, `identity::<i64>(3)`).
@@ -117,7 +120,7 @@ A named function declared with its own `<T>` generics (`fun identity<T>(x: T) ->
 > later uses may each instantiate it differently — `let alias = identity;
 > alias(3); alias("x");`), or passed as a higher-order argument whose receiving
 > parameter position is itself concrete (`apply(identity, 3)`, where `apply`'s own
-> parameter is `(i64) -> i64`, not itself generic).
+> parameter is `|i64| -> i64`, not itself generic).
 
 Referencing it in a position where nothing pins down a concrete instantiation —
 a parameter position that is itself still generic in the callee (rank-2), or an
@@ -131,8 +134,9 @@ type error — see [Turbofish](#spec.functions.turbofish.legality-3).
 
 ##### Legality Rule {#spec.functions.first-class-functions.legality-1}
 
-Function and closure types use `(ParameterTypes) -> ReturnType`; the former
-`fun(ParameterTypes) -> ReturnType` spelling is not a function-type syntax.
+Function and closure types use `|ParameterTypes| -> ReturnType` (RFC-0154); `->` and the
+return type are always written. Neither `(ParameterTypes) -> ReturnType` (the spelling
+before v0.13.0) nor `fun(ParameterTypes) -> ReturnType` is a function-type syntax.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md)_</span>
@@ -170,11 +174,12 @@ the callee — is `T0003`.
 
 ## Closures
 
-Anonymous functions are [written with the `[captures]? once? var? (params) -> ret? { body }` form](#spec.functions.closures.legality-1):
+Anonymous functions are [written with the `[captures]? once? var? |params| (-> ret)? { body }` form](#spec.functions.closures.legality-1):
 
+<!-- doc-example: skip reason="RFC-0154 pipe notation — the parser lands with metel-core#903; remove the skip when develop-latest parses `|…|`" -->
 ```metel
 fun main() -> i64 {
-    let double := (x: i64) -> i64 { return x * 2; };
+    let double := |x: i64| -> i64 { return x * 2; };
     return double(5);
 }
 ```
@@ -191,7 +196,7 @@ fun main() {
     let cfg := Config::load();          // non-Copy, read-only in the closure
     let name := "log";                  // non-Copy, moved in
 
-    let handler := [&var count, &cfg, name] var (req: Request) -> Response {
+    let handler := [&var count, &cfg, name] var |req: Request| -> Response {
         count += 1;
         route(req, cfg, name)
     };
@@ -274,10 +279,11 @@ process, so no post-exit state is observable.
 the outer binding; a `Copy` binding is copied; the captured environment is built once and
 not re-cloned per call](#spec.functions.closures.dynamics-5).
 
+<!-- doc-example: skip reason="RFC-0154 pipe notation — the parser lands with metel-core#903; remove the skip when develop-latest parses `|…|`" -->
 ```metel
-fun make_counter() -> var () -> i64 {
+fun make_counter() -> var || -> i64 {
     let n := 0;
-    [n] var () -> i64 { n += 1; n }   // `n` moved in; writes persist
+    [n] var || -> i64 { n += 1; n }   // `n` moved in; writes persist
 }
 
 fun main() -> i64 {
@@ -307,8 +313,10 @@ captures](#spec.functions.closures.legality-14); a `mutating` closure is not `Sy
 ##### Legality Rule {#spec.functions.closures.legality-1}
 
 An anonymous function is written as an optional capture list `[…]`, optional `once` and/or
-`var` qualifiers, a parenthesized parameter list, `->`, an optional return type
-annotation, and a body block. It may appear wherever an expression is accepted.
+`var` qualifiers, a pipe-delimited parameter list `|…|`, an optional `-> ReturnType`
+annotation, and a body block. It may appear wherever an expression is accepted. (RFC-0154:
+before v0.13.0 the parameter list was parenthesized and `->` was written before every
+body; `|…|` self-disambiguates, so `->` now appears only with a return type.)
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md)_</span>
@@ -320,8 +328,9 @@ annotation, and a body block. It may appear wherever an expression is accepted.
 
 ##### Legality Rule {#spec.functions.closures.legality-2}
 
-After a parenthesized expression or parameter list, `->` begins a closure. Without `->`,
-the parenthesized construct is not a closure; `(parameters) { body }` is rejected.
+A closure literal is introduced by its `|…|` parameter list; the `->` is written only when
+a return type is (RFC-0154, superseding RFC-0041's rule that `->` precede every body). A
+bare block `{ … }` with no preceding `|…|` is a block expression, not a closure.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md)_</span>
@@ -333,8 +342,8 @@ the parenthesized construct is not a closure; `(parameters) { body }` is rejecte
 
 ##### Legality Rule {#spec.functions.closures.legality-3}
 
-A zero-argument closure is written `() -> { body }`; a bare block is not an anonymous
-function.
+A zero-argument closure is written `|| { body }` (RFC-0154; `() -> { body }` before
+v0.13.0). A bare block `{ … }` is not an anonymous function.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md)_</span>
@@ -386,7 +395,7 @@ function *type* spelling is order-insensitive ([legality-24](#spec.functions.clo
 ##### Legality Rule {#spec.functions.closures.legality-24}
 
 As a function *type* spelling the `once` and `var` qualifiers are order-insensitive:
-`once var (T) -> U` and `var once (T) -> U` denote the identical `Type::Fun`. The
+`once var |T| -> U` and `var once |T| -> U` denote the identical `Type::Fun`. The
 fixed order of [legality-23](#spec.functions.closures.legality-23) is a grammar rule for
 closure *literals* only.
 
