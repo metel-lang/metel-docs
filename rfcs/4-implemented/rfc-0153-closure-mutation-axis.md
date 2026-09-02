@@ -2,9 +2,9 @@
 id: rfc-0153
 title: "Closure Mutation Axis"
 date: '2026-08-30'
-status: integrated
+status: implemented
 target: v0.13.0
-updated: '2026-09-01'
+updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 coverage:
   "1": { spec: "spec.functions.closures.legality-25" }
@@ -14,7 +14,7 @@ coverage:
   "3a": { spec: "spec.functions.closures.dynamics-9" }
   "4": { spec: "spec.functions.closures.dynamics-8" }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/929'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — accepted 2026-09-01**, co-accepted with RFC-0050 as the mutation-axis half
@@ -29,6 +29,8 @@ capture — Rust's `FnMut`.
 
 
 > **Status — integrated (2026-09-01).** Closure cluster spec-integrated (Legality 10/24/25, Dynamics 7/8/9/13); coverage.spec frontmatter added; fixtures blocked on metel-core#925. Shape: ADR-0052.
+
+> **Status — implemented (2026-09-02).**
 
 ## Summary
 

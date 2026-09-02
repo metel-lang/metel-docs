@@ -179,13 +179,6 @@ fun main() -> i64 {
 }
 ```
 
-> **Planned for v0.13.0 (RFC-0050 / RFC-0134 / RFC-0152 / RFC-0153 / RFC-0157).** The
-> capture list, the `once` / `var` qualifiers, move-by-default capture, the per-call
-> re-clone removal, and the mutation axis are specified here but not yet in the
-> interpreter. Until they land, closures capture by value (deep clone), no capture list is
-> required, and there is no `once` / `var` verification. The `coverage` entries for the
-> new rules are `blocked` on that implementation.
-
 ### Capture lists
 
 A closure that reads an outer binding *captures* it. A **capture list** `[…]` before the
@@ -372,8 +365,12 @@ order is [legality-23](#spec.functions.closures.legality-23); the function-type 
 order rules are [legality-24](#spec.functions.closures.legality-24).
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/3-integrated/rfc-0050-closure-capture-lists.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/4-implemented/rfc-0050-closure-capture-lists.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_capture_list_grammar_all_specifiers.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_capture_list_grammar_all_specifiers.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-23}
 
@@ -381,6 +378,10 @@ In a closure *literal* the prefixes appear in one fixed order: capture list, the
 then `var`, then the parameter list. `var once`, a qualifier before the capture list, and
 a capture list placed after a qualifier are parse errors — even though the corresponding
 function *type* spelling is order-insensitive ([legality-24](#spec.functions.closures.legality-24)).
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_literal_prefix_order.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_literal_prefix_order.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-24}
 
@@ -390,8 +391,12 @@ fixed order of [legality-23](#spec.functions.closures.legality-23) is a grammar 
 closure *literals* only.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/3-integrated/rfc-0153-closure-mutation-axis.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_qualifier_order_insensitive_in_type.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_qualifier_order_insensitive_in_type.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-6}
 
@@ -401,8 +406,12 @@ with no capture list is a compile error. A closure whose only free variables are
 bindings used by value, or which has no free variables, may omit the list.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/3-integrated/rfc-0050-closure-capture-lists.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/4-implemented/rfc-0050-closure-capture-lists.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_capture_list_required.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_capture_list_required.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-7}
 
@@ -411,6 +420,10 @@ appear in the list, with a specifier consistent with how the body uses it. A ref
 free local absent from a non-empty list is a compile error. Module-level functions,
 constants, types, and aspects are resolved by ordinary name resolution and are never
 capture items.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_capture_list_not_exhaustive.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_capture_list_not_exhaustive.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-8}
 
@@ -421,8 +434,12 @@ compile error naming the offending capture and the fix (add `once`, or stop movi
 capture).
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/3-integrated/rfc-0134-closure-call-capability.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/4-implemented/rfc-0134-closure-call-capability.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_once_required_for_consuming_body.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_once_required_for_consuming_body.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-25}
 
@@ -434,8 +451,12 @@ is a compile error naming the offending capture and the fix (add `var`, stop the
 or capture `[&x]` instead).
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/3-integrated/rfc-0153-closure-mutation-axis.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_var_required_for_mutating_body.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_var_required_for_mutating_body.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-9}
 
@@ -446,8 +467,12 @@ permissive as `c'` (`Copy` ≥ non-`Copy`). The reverse — a less permissive va
 more permissive slot — is rejected.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/3-integrated/rfc-0134-closure-call-capability.md), [rfc-0152](../../rfcs/3-integrated/rfc-0152-function-type-multiplicity-widening.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/4-implemented/rfc-0134-closure-call-capability.md), [rfc-0152](../../rfcs/4-implemented/rfc-0152-function-type-multiplicity-widening.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_many_widens_to_once_slot.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_many_widens_to_once_slot.mtl), [v0_13_0_neg_once_does_not_widen_to_many.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_once_does_not_widen_to_many.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-15}
 
@@ -457,8 +482,12 @@ initializer, and a return. Below the first level of function-type nesting an exa
 required.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0152](../../rfcs/3-integrated/rfc-0152-function-type-multiplicity-widening.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0152](../../rfcs/4-implemented/rfc-0152-function-type-multiplicity-widening.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_widening_not_below_first_nesting.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_widening_not_below_first_nesting.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-16}
 
@@ -468,8 +497,12 @@ diverging (`!`-typed) arm does not contribute. A join that would require *narrow
 arm is the ordinary type mismatch.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0152](../../rfcs/3-integrated/rfc-0152-function-type-multiplicity-widening.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0152](../../rfcs/4-implemented/rfc-0152-function-type-multiplicity-widening.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_conditional_join_least_permissive.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_conditional_join_least_permissive.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-10}
 
@@ -485,8 +518,12 @@ shared-`&` callee — a `&Self` / `&self` receiver, a place reached through a `&
 an `&`-captured closure — is a compile error.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/3-integrated/rfc-0153-closure-mutation-axis.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_var_call_through_shared_ref.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_var_call_through_shared_ref.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-11}
 
@@ -494,6 +531,10 @@ An inner closure may not capture, by `&` or `&var`, a binding that is a by-value
 of an enclosing closure. It may capture such a binding by value (`[s]`, which moves it out
 of the enclosing closure's environment). This restriction is lifted when the borrow
 checker lands.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_nested_borrow_into_enclosing_env.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_nested_borrow_into_enclosing_env.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-12}
 
@@ -508,6 +549,10 @@ is the ordinary by-value copy available when it is `Copy`
 > `1-under-review`); once they do, a closure has no `Share` impl either, by the same
 > aspect-exemption rule — but that is RFC-0158's claim to spec-integrate, not this one's.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_closure_no_aspects.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_closure_no_aspects.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Legality Rule {#spec.functions.closures.legality-13}
 
 A `[&var ident]` capture requires `ident` to be a `var` binding; capturing a non-`var`
@@ -515,14 +560,22 @@ binding by `&var` is a compile error. A closure literal cannot reference its own
 binding — the name is not in scope inside its own initializer.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/3-integrated/rfc-0050-closure-capture-lists.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/4-implemented/rfc-0050-closure-capture-lists.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_refvar_capture_needs_var_binding.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_refvar_capture_needs_var_binding.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-14}
 
 A closure value is `Send` (respectively `Sync`) when every one of its captures is `Send`
 (respectively `Sync`), applying the reference rules for `&T` / `&var T` captures. A
 `mutating` closure value is additionally not `Sync`.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_mutating_closure_not_sync.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_mutating_closure_not_sync.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-17}
 
@@ -533,6 +586,10 @@ closure `once` for *every* instantiation of the enclosing generic, `T = i64` inc
 definition wanting the copyable behaviour adds `T: Copy`, after which `[t]` is a copy and
 consumes nothing.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_generic_capture_once_even_for_copy_instantiation.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_generic_capture_once_even_for_copy_instantiation.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Legality Rule {#spec.functions.closures.legality-18}
 
 An unqualified closure literal in a position with an expected function type — a `let` or
@@ -542,6 +599,10 @@ the *many* / *reading* default and then failing. When the expected type does not
 qualifier (an unresolved inference variable, or a bare generic parameter), the literal
 takes the default and [legality-9](#spec.functions.closures.legality-9) widening resolves
 any remaining gap at the concrete site.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_expected_type_supplies_once.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_expected_type_supplies_once.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-19}
 
@@ -556,8 +617,12 @@ independent — a body that both consumes and mutates without the qualifiers is 
 against both, each with its own fix.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/3-integrated/rfc-0050-closure-capture-lists.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/4-implemented/rfc-0050-closure-capture-lists.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_checking_order_capture_before_var.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_checking_order_capture_before_var.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-20}
 
@@ -568,8 +633,12 @@ reference is not `Copy`) make the closure non-`Copy`. A `Copy` closure is necess
 *many* — it holds nothing non-`Copy` for a call to consume.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/3-integrated/rfc-0134-closure-call-capability.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/4-implemented/rfc-0134-closure-call-capability.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_copy_closure_when_all_captures_copy.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_copy_closure_when_all_captures_copy.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-21}
 
@@ -578,6 +647,10 @@ takes `&var x`, or calls a `&var self` method on it is a compile error *at the c
 the closure is not silently reclassified `mutating`. The fix is to capture `[&var x]`,
 which requires `x` to be a `var` binding ([legality-13](#spec.functions.closures.legality-13))
 and makes the closure `mutating` ([legality-25](#spec.functions.closures.legality-25)).
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_shared_ref_capture_write_rejected.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_shared_ref_capture_write_rejected.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.closures.legality-22}
 
@@ -593,8 +666,12 @@ multiplicity but is subject to [legality-11](#spec.functions.closures.legality-1
 interim borrow restriction.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/3-integrated/rfc-0050-closure-capture-lists.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/4-implemented/rfc-0050-closure-capture-lists.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_nested_move_makes_enclosing_once.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_nested_move_makes_enclosing_once.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-1}
 
@@ -664,8 +741,12 @@ captured environment is constructed once, when the closure value is created; a c
 not re-clone it — each call operates on the same environment held by the closure value.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0157](../../rfcs/3-integrated/rfc-0157-copy-and-clone-model-re-analysis.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0157](../../rfcs/4-implemented/rfc-0157-copy-and-clone-model-re-analysis.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_move_capture_by_value.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_move_capture_by_value.mtl), [v0_13_0_neg_use_after_move_capture.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_use_after_move_capture.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-7}
 
@@ -674,8 +755,12 @@ environment and are visible to subsequent calls of the same closure value — th
 holds private mutable state.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/3-integrated/rfc-0153-closure-mutation-axis.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_var_write_back_persists.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_var_write_back_persists.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-8}
 
@@ -683,8 +768,12 @@ Copying a closure value whose captures are all `Copy` copies its environment. Th
 have independent environment state: a `mutating` call on one does not affect the other.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/3-integrated/rfc-0153-closure-mutation-axis.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_copy_var_closure_diverges.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_copy_var_closure_diverges.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-9}
 
@@ -694,8 +783,12 @@ or through a structure the body can reach — is rejected: before the borrow che
 as a runtime error; after, as a static borrow conflict.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/3-integrated/rfc-0153-closure-mutation-axis.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_mutating_reentrancy_rejected.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_mutating_reentrancy_rejected.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-10}
 
@@ -704,14 +797,24 @@ use of that closure value is a moved-value error, whether the body returned norm
 exited early.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/3-integrated/rfc-0134-closure-call-capability.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/4-implemented/rfc-0134-closure-call-capability.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_neg_once_consumed_at_call.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_once_consumed_at_call.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-11}
 
 When a closure value is dropped, its environment is dropped: each owned capture is dropped
 in capture-list order, as a struct's fields are. A `once`-consumed or partially-moved
 environment drops only its still-owned captures.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Destructor invocation and observable drop order are scheduled separately. Non-empty drop bodies are rejected until #261 lands, so a fixture cannot observe closure-environment field destruction or its order." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#261: Destructor invocation and observable drop order are scheduled separately. Non-empty drop bodies are rejected until #261 lands, so a fixture cannot observe closure-environment field destruction or its order._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-12}
 
@@ -721,6 +824,10 @@ value widened into a `var`-typed slot is still invoked by the plain, non-exclusi
 path and consults no in-call flag, because call lowering branches on the closure value's
 own mutation axis, not on the slot type. A `many` value in a `once` slot is likewise not
 consumed by the call.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_widened_reading_keeps_plain_dispatch.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_widened_reading_keeps_plain_dispatch.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-13}
 
@@ -738,6 +845,10 @@ method that returned early mid-mutation leaves its receiver. There is no rollbac
 body exited; its environment's still-owned fields are still dropped when the value goes out
 of scope.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_var_early_return_leaves_partial_state.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_var_early_return_leaves_partial_state.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-14}
 
 Storing a `reading` closure into a `var`-typed field, or returning it where a `var`
@@ -746,6 +857,10 @@ that field or result is a `var` value that callers must invoke under exclusive a
 ([legality-10](#spec.functions.closures.legality-10)), even though the underlying closure
 never mutates. The coercion is one-way — there is no automatic re-narrowing back to
 `reading`.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_reading_stored_as_var_observed_var.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_reading_stored_as_var_observed_var.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 

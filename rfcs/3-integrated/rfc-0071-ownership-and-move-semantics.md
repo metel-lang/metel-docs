@@ -613,7 +613,7 @@ RFC correctly says nothing about it. Only §1's scope sentence needed widening, 
    "*cloned* into the closure environment", which is accurate for the current
    everything-clones interpreter and wrong once this RFC is enforced. Now "copied", with a
    `Planned for v0.12.0` marker stating the move rule for non-`Copy` captures.
-   RFC-0050 (Closure Capture Lists, `3-integrated` as of 2026-09-01) may later add explicit
+   RFC-0050 (Closure Capture Lists, `4-implemented` as of 2026-09-02) may later add explicit
    capture modes; it is not needed for the default, which follows from by-value capture plus
    affine ownership.
 
