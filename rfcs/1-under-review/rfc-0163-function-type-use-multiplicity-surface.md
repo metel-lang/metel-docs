@@ -99,14 +99,11 @@ order-insensitive. A closure literal still has its independently specified
 `[captures] once? var? |params|` prefix; `copy` is never written on a literal,
 because its concrete capability is derived from its captures.
 
-**All three closure qualifiers are contextual identifiers.** `copy`, `once`,
-and `var` have qualifier meaning only when the parser is reading the prefix of
-a function type or a closure literal. They remain ordinary identifiers in
-bindings, paths, fields, and every other grammar position. In particular, this
-RFC must not reserve `copy` globally merely because it joins the existing
-closure qualifier family. The parser determines the interpretation from the
-delimiters that follow the qualifier prefix (`|` for the type/literal syntax
-settled by RFC-0154); it does not change identifier tokenization.
+`copy` joins `once` and `var` as a reserved keyword in v0.13.0. The qualifier
+family therefore cannot be used as ordinary identifiers, including in a
+binding, path segment, or field name. A future RFC may consider making the
+whole family contextual, but it must do so as a compatibility and lexer/parser
+change for all three words together; this RFC does not make that change.
 
 There is intentionally no source `move` qualifier in this proposal. A caller
 that merely accepts, stores, returns, or consumes a callable needs no stronger

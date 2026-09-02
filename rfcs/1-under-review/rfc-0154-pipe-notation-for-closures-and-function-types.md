@@ -83,12 +83,10 @@ fun_type_qualifier = { once_kw | var_kw | copy_kw }
 type qualifiers. `copy` is a type-only qualifier: it is never written on a
 closure literal because capture classification derives the concrete capability.
 
-All of these are **contextual identifiers**, not globally reserved keywords.
-`once`, `var`, and `copy` acquire qualifier meaning only in the prefix directly
-before a closure literal's opening `|` or a function type's opening `|`; they
-remain valid binding, path, and field names everywhere else. The parser uses
-that delimited prefix position to classify them and must not alter general
-identifier tokenization.
+The qualifier family is reserved in v0.13.0: `once`, `var`, and, when
+RFC-0163 is accepted, `copy` are not ordinary identifiers. Making the family
+contextual is a possible future compatibility and lexer/parser improvement,
+but is outside this RFC and must apply to all three words together.
 
 ### 2. Closure literal
 
