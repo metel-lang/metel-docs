@@ -836,10 +836,12 @@ can observe: a `?`-propagated `Err` or an early `return` in the body, travelling
 ordinary signal through normal call-frame returns. A `panic` is not one of these — it is
 hard, uncatchable, and terminates the process ([runtime.md](runtime.md#spec.runtime.panics.dynamics-1)),
 so no later program point can observe the closure's post-exit state. On an observable early
-exit from a plain `var` (not `once`) call, the mutations that already ran are visible in
-the environment, the exclusive borrow and the in-call flag are released as the frame
-returns, and the closure stays callable in a valid-but-partial state — as a `&var self`
-method that returned early mid-mutation leaves its receiver. There is no rollback. A `once`
+exit from a plain `var` (not `once`) call, the mutations that already ran stay in the
+environment, the exclusive borrow and the in-call flag are released as the frame returns,
+and the closure is an ordinary value whose captured state has been mutated — as a `&var
+self` method that returned early mid-mutation leaves its receiver. There is no rollback,
+and a later call runs the body from the top over that state; it does not resume from the
+exit point. A `once`
 / `once var` closure was already consumed at the call expression
 ([dynamics-10](#spec.functions.closures.dynamics-10)), so it is a moved value however the
 body exited; its environment's still-owned fields are still dropped when the value goes out
