@@ -23,6 +23,23 @@ title: "Metel Language Changelog"
 - `->` is right-associative, so a nested function type (`|A| -> |B| -> C`) parses
   unambiguously; parenthesizing it is a style recommendation, not a rule.
 
+**Type aliases (RFC-0160):**
+- `public? type Name := T;` gives an existing type a name — `type Bytes := List<u8>;`,
+  `type Handler := once var |Request, &Config| -> Response;`. The `:=` separator is
+  RFC-0136's kept-binding form, matching an associated-type definition.
+- An alias is **transparent**: erased to its right-hand side before name resolution and
+  type checking, with no nominal identity. `Pair<i64, boolean>` and `(i64, boolean)` are
+  the same type, accepted in the same positions and satisfying the same bounds. An alias
+  defines no impl, so there is no coherence concern.
+- May be parameterised (`type Pair<A, B> := (A, B);`) and may reference another alias. An
+  alias use must supply exactly the declared number of type arguments — a mismatch is
+  `T0004`. A recursive alias, direct or chained, is `T0003`: a transparent alias must
+  expand to a finite type; use a `struct` / `enum` for a genuinely recursive shape.
+- `type` inside an `aspect` / `extend` block is still an associated-type definition —
+  position, not a keyword, tells the two apart; `type` adds no new reserved word.
+- v1 is module-level, single-module. Function/block-local aliases and cross-module
+  aliased names are follow-on slices (`metel-core#921`).
+
 **Struct pattern matching:**
 - A named struct can now be matched with a struct pattern (`Point { x, y }`,
   `Token { kind, span, .. }`) — RFC-0032 §4/§5 and RFC-0034 §5's own worked examples used
