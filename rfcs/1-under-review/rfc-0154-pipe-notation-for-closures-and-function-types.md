@@ -3,10 +3,17 @@ id: rfc-0154
 title: "Pipe Notation for Closures and Function Types"
 date: '2026-08-30'
 status: under-review
-target:
-updated: '2026-08-30'
+target: v0.13.0
+updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/903'
 ---
+
+> **Brought into v0.13.0 (2026-09-02).** The `once` / `var` qualifier grammar this RFC
+> hosts (§4) lands with the closure cluster (RFC-0050 / RFC-0134 / RFC-0152 / RFC-0153 /
+> RFC-0157). Shipping v0.13.0 on the `(...)` spelling and switching to `|...|` afterward
+> would migrate every closure signature in the corpus twice, so this co-lands rather than
+> follows. Still `1-under-review` — Open Question 1 (`|` disambiguation) must be nailed
+> before acceptance. RFC-0160 (Type Aliases) co-lands alongside it.
 
 > **Split from RFC-0134 §3a on 2026-08-30.** RFC-0134's acceptance review flagged
 > that bundling a corpus-wide function-type grammar change into a closure-soundness
@@ -93,15 +100,48 @@ call syntax `f(a, b)` are the only users of `(...)` after this. `fun_type` and
 
 ### 4. Qualifier composition
 
-RFC-0134's `once` / `many` and RFC-0153's mutation qualifier prefix the `|`:
+RFC-0134's `once` / `many` and RFC-0153's mutation qualifier (`var`) prefix the `|`:
 
 ```
 once |i64| -> String
-once mut |i64| -> String        // RFC-0153; order-insensitive per RFC-0134 §5
+once var |i64| -> String        // RFC-0153; order-insensitive per RFC-0134 §5
 ```
 
 Reference qualifiers wrap the whole thing: `&|i64| -> String`,
 `&var |i64| -> String` — a shared/exclusive reference *to* a function value.
+
+### 5. Nested function types are parenthesized
+
+A function type that appears as **another function type's return type or parameter
+type** must be wrapped in `(...)`:
+
+```
+|Request| -> (|Response| -> Result)     // a function that returns a function
+|(|i64| -> i64)| -> String              // a function that takes a function
+```
+
+Unparenthesized, `|A| -> |B| -> C` relies entirely on `->` right-associativity and on
+the reader tracking where each `|...|` opens; the closure cluster's interleaved `once` /
+`var` prefixes (`var |Request| -> once |Response| -> Result`) make the chain unreadable.
+The parentheses give the nesting an unambiguous visual bracket, and a formatter inserts
+them.
+
+The rule is specifically *function-type-in-function-type*. A **named** function's own
+signature is not nested, so it needs no parentheses:
+
+```
+fun make_counter() -> var || -> i64          // fine — `var || -> i64` is the fn's return, not nested in a fn type
+fun compose(f: |A| -> B, g: |B| -> C) -> (|A| -> C)   // the return IS nested -> parenthesized
+```
+
+For anything deeper than one level, name it with a type alias (RFC-0160):
+`type Curried = |A| -> (|B| -> C);`.
+
+Grammar: in `fun_type = "|" ~ type_list? ~ "|" ~ "->" ~ type_expr`, a `type_expr` in the
+`->` position (or inside `type_list`) that is itself a `fun_type` is only accepted
+parenthesized. Reference-qualified function types (`&|A| -> B`) already read as a unit and
+are unaffected; a bare qualifier prefix (`once`, `var`) is part of the `fun_type` it
+precedes, so `|A| -> (once |B| -> C)` is the form, not `|A| -> once (|B| -> C)`.
 
 ## Grammar: the `|` wrinkle
 
@@ -120,11 +160,16 @@ Type position has no such conflict — `|` is not an operator there.
 ## Migration
 
 Hard switch, one-pass corpus sweep, no dual-accept — the same call RFC-0134 §3a
-made, for the same reasons. Two mechanical rewrites:
+made, for the same reasons. **Sequenced into v0.13.0 with the closure cluster** so the
+qualifier grammar and its base spelling land in one migration, not two. Three mechanical
+rewrites:
 
 - Type position: `(T…) -> U` → `|T…| -> U`. Find by `) ->` in a type context.
 - Expression position: `(params) -> Ret? { body }` → `|params| -> Ret? { body }`.
   Find by `closure_expr` nodes in the parsed tree, not text.
+- Nested function types (§5): wrap a `fun_type` that is another `fun_type`'s return or
+  parameter in `(...)`. Find by a `fun_type` node whose `->` child (or a `type_list`
+  member) is itself a `fun_type`.
 
 No runtime effect; nothing leaves the compiler.
 
@@ -134,7 +179,10 @@ No runtime effect; nothing leaves the compiler.
   choice), not its semantics. RFC-0041 gets a dated correction note.
 - **RFC-0134 (Closure Call Capability)** — its §3a is removed and folded here;
   its `once`/`many` qualifier prefixes `|...|` (§4).
-- **RFC-0153 (Closure Mutation Axis)** — its `mut` qualifier likewise (§4).
+- **RFC-0153 (Closure Mutation Axis)** — its `var` qualifier likewise (§4).
+- **RFC-0160 (Type Aliases, `1-under-review`)** — co-lands in v0.13.0. Aliases are the
+  recommended tool for anything deeper than the one level §5 parenthesizes; RFC-0160's
+  RHS uses this RFC's `|...|` form.
 - **RFC-0151 (Tuples as Numeric-Label Rows)** — the reason `(A, B) -> C` must
   stop being a function type; this RFC is what frees `(...)` for it.
 - **RFC-0125 (Variadic Generics)** — `|...Ts| -> R` folds a pack into the
@@ -182,7 +230,9 @@ different thing — an erased, dispatched form. Not the bare function type.
   RFC that dropped `fun` and chose `(...)`; this amends that surface choice.
 - **RFC-0134 (Closure Call Capability)** — §3a split from here; the `once`/`many`
   qualifier this composes with.
-- **RFC-0153 (Closure Mutation Axis)** — the `mut` qualifier.
+- **RFC-0153 (Closure Mutation Axis)** — the `var` qualifier.
+- **RFC-0160 (Type Aliases), `1-under-review`** — co-lands in v0.13.0; names deep /
+  qualified function types so §5's parentheses appear once, in the alias, not at every use.
 - **RFC-0151 (Tuples as Numeric-Label Rows)** — frees `(...)` for tuples/records,
   which is what makes the current function-type spelling ambiguous.
 - **RFC-0125 (Variadic Generics)** — `|...Ts| -> R`.
@@ -193,8 +243,12 @@ different thing — an erased, dispatched form. Not the bare function type.
 
 ## Decision
 
-**Outcome:** *(pending — draft, opened 2026-08-30, split from RFC-0134 §3a. The
+**Outcome:** *(pending — `1-under-review` (#903), split from RFC-0134 §3a. The
 grammar is straightforward once the `|` disambiguation rule (Open Question 1) is
 fixed; migration is mechanical. Sequence with or before RFC-0151 and RFC-0125,
 both of which need `(...)` back.)*
-**Target:** *(set when accepted.)*
+**Target:** **v0.13.0** — set 2026-09-02 to co-land with the closure cluster's `once` /
+`var` qualifier grammar (§4) and with RFC-0160 (Type Aliases), so the base function-type
+spelling migrates once rather than twice. Targeting precedes acceptance here for the same
+reason RFC-0132 is v0.13.0-targeted while under review: real planned engagement, recorded
+so sequencing decisions can be made against it.
