@@ -16,6 +16,13 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/903'
 > review and implementation planning. An adversarial review on 2026-09-02 found that
 > the initial pipe grammar had omitted capture lists and a parenthesized-type production;
 > this revision restores both. RFC-0160 (Type Aliases) co-lands alongside it.
+>
+> **Scope (2026-09-02): the first iteration is the spelling migration and nothing more.**
+> `->` and the return type are written wherever a function *type* is written — there is no
+> infer-the-return form for a written type — and the closure *literal* keeps exactly
+> RFC-0041's rule (return type inferred from the body when omitted). Bare-expression bodies
+> and every other inference / omission convenience are deferred; real usage after v0.13.0
+> decides which, if any, are worth adding.
 
 > **Split from RFC-0134 §3a on 2026-08-30.** RFC-0134's acceptance review flagged
 > that bundling a corpus-wide function-type grammar change into a closure-soundness
@@ -78,7 +85,11 @@ fun_type = { fun_type_qualifier* ~ "|" ~ type_list? ~ "|" ~ "->" ~ type_expr }
 fun_type_qualifier = { once_kw | var_kw | copy_kw }
 ```
 
-`|A, B| -> C`. A nullary function type is `|| -> C`. The `->` is required.
+`|A, B| -> C`. A nullary function type is `|| -> C`. The `->` and the return type are
+always written: `|A|` with no `-> C` is a parse error, and there is **no** infer-the-return
+form for a written type — a type annotation has no body to recover the return type from.
+This is deliberately stricter than the closure literal (§2), which keeps RFC-0041's
+body-inference; loosening it, if ever, waits on evidence from real signatures.
 `once`, `var`, and — when RFC-0163 is accepted — `copy`, are order-insensitive
 type qualifiers. `copy` is a type-only qualifier: it is never written on a
 closure literal because capture classification derives the concrete capability.
@@ -98,7 +109,10 @@ closure_expr = { capture_list? ~ once_kw? ~ var_kw? ~ "|" ~ param_list? ~ "|" ~ 
   `[state] once var |x: i64| -> String { ... }`. `var once` remains invalid on
   a literal even though type qualifiers are order-insensitive.
 - Parameters: `|x|`, `|x, y|`, with optional per-parameter types `|x: i64, y: String|`.
-- Optional return type: `|x| -> String { ... }`.
+- Return type: `|x| -> String { ... }`, or omitted — `|x| { ... }` — and inferred from the
+  body, **exactly as RFC-0041 already does**. This RFC does not change that rule. The
+  asymmetry with a written type (§1, where `->` and the return type are mandatory) is
+  intentional: the literal has a body to infer from, a bare type annotation does not.
 - Body: a block `|x| { ...; last }`. RFC-0041's block-only body rule is retained;
   a bare-expression form is deliberately out of scope for this migration.
 - Nullary: `|| { ... }`.
@@ -211,7 +225,8 @@ No runtime effect; nothing leaves the compiler.
 ## Interactions
 
 - **RFC-0041 (`4-implemented`)** — this amends its surface syntax (the `(...)`
-  choice), not its semantics. RFC-0041 gets a dated correction note.
+  choice), not its semantics; its return-type inference on closure literals is left
+  exactly as-is. RFC-0041 gets a dated correction note.
 - **RFC-0134 (Closure Call Capability)** — its §3a is removed and folded here;
   its `once`/`many` qualifier prefixes `|...|` (§4).
 - **RFC-0153 (Closure Mutation Axis)** — its `var` qualifier likewise (§4).
@@ -250,7 +265,11 @@ different thing — an erased, dispatched form. Not the bare function type.
 
 1. **`|` / `||` disambiguation:** position-based parsing, as specified in
    [Grammar: the `|` wrinkle](#grammar-the--wrinkle); no lexer hack or token splitting.
-2. **Function-type arrow:** `->` is mandatory in `|A| -> B`.
+2. **Function-type arrow:** `->` and the return type are mandatory in a written function
+   type (`|A| -> B`); `|A|` alone is an error. The closure *literal* is unchanged from
+   RFC-0041 — return type inferred from the body when omitted. An infer-the-return form for
+   the *type*, and any other omission convenience, is out of scope for this migration and
+   revisited only if real usage shows the annotation cost is high.
 3. **Closure body:** retain RFC-0041's block-only form. Bare-expression closures are
    out of scope and may be proposed separately after this migration.
 4. **Nullary spelling:** `|| { ... }`, resolved by the same position rule as logical-or.
@@ -295,4 +314,6 @@ capture-prefix grammar, grouped-type grammar, position rule, RFC-0163 compositio
 the corpus migration.)*
 **Target:** **v0.13.0** — follows the merged closure cluster as its syntax-migration
 work, alongside RFC-0160 (Type Aliases). The migration is intentionally limited to
-pipe notation; bare-expression closure bodies are not part of this release.
+pipe notation; bare-expression bodies, and any return-type-omission convenience beyond
+RFC-0041's existing literal inference, are not part of this release — usage after v0.13.0
+decides which, if any, are worth adding.
