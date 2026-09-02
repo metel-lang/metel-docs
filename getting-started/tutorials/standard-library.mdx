@@ -34,7 +34,7 @@ fun main() {
 
 `map` may change the element type, and the transforms chain:
 
-<!-- doc-example: skip reason="RFC-0154 pipe notation — pending develop-latest with the |...| parser (metel-core#903)" -->
+{/* doc-example: skip reason="RFC-0154 pipe notation — pending develop-latest with the |...| parser (metel-core#903)" */}
 ```metel
 let total: i64 := List::from([1, 2, 3, 4])
     .filter(|x: i64| -> boolean { x % 2 == 1 })
@@ -68,7 +68,7 @@ fun main() {
 `Result` works the same way, with `is_ok`/`is_err` and `map`/`and_then` carrying
 the `Err` through untouched:
 
-<!-- doc-example: skip reason="RFC-0154 pipe notation — pending develop-latest with the |...| parser (metel-core#903)" -->
+{/* doc-example: skip reason="RFC-0154 pipe notation — pending develop-latest with the |...| parser (metel-core#903)" */}
 ```metel
 let r: Result<i64, String> := Ok { value = 10 };
 let n := r.map(|x: i64| -> i64 { x + 5 }).unwrap_or(0);  // 15
