@@ -1076,15 +1076,24 @@ implementation).
 - **RFC-0162** *(under review, opened 2026-09-01; **v0.17.0**, #924)* — Copy and Clone
   Model — Regular-Value Design Space — the longer-horizon half split from RFC-0157.
   Drawbacks D1 (implicit-copy use-site invisibility + API-stability hazard), D2 (two-aspect
-  split), D3 (`Copy`/`Drop` exclusion, RFC-0071 §4), D4 (six-mechanism non-uniformity);
+  split), D3 (`Copy`/`Drop` exclusion, RFC-0071 §4), D4 (six-mechanism non-uniformity),
+  **D6** (2026-09-02 — affine semantics is switched off by an *ordinary aspect impl*, and
+  would be switched off by a metaprogramming annotation once `#derive` exists: RFC-0093
+  makes a `Copy` deriver an unremarkable registration, and nothing forbids one);
   design space P0 → P1 (closed implicit set) → P2 (no implicit copy) → P3 (unify on
-  `once`/`many`); Rust/C++/Swift/C#/Hylo prior-art survey. **Recommendation:** keep Rust's
+  `once`/`many`), plus **Axis C** (where the grant lives: aspect / declaration keyword /
+  attribute) and **P4** (keep the model and the name, move the grant to `copy struct Foo`,
+  reusing the keyword RFC-0163 already reserves — a direct competitor to RFC-0135's
+  declaration qualifier, without the rename); Rust/C++/Swift/C#/Hylo prior-art survey,
+  which on Axis C finds Rust the sole outlier (everyone else decides copyability at the
+  declaration and puts it out of reach of macros). **Recommendation:** keep Rust's
   regular-value model — no rename (not `many`, not `Dup`), no P1/P2/P3, accept D1; the only
   endorsed value-side changes are RFC-0158 (`Clone`/`Share` split) and relaxing the
-  `Copy`+`Drop` ban *if* a soundness argument holds. **Milestoned v0.17.0** — the "coherent
+  `Copy`+`Drop` ban *if* a soundness argument holds — **it does not dispose of P4**, whose
+  familiarity cost is zero. **Milestoned v0.17.0** — the "coherent
   Copy and closure capabilities" release, alongside RFC-0135 / RFC-0155; nothing here
-  blocks v0.13.0. Three open questions carry reopening conditions (D1 severity, D3
-  soundness, RFC-0135 disposition).
+  blocks v0.13.0. Five open questions carry reopening conditions (D1 severity, D3
+  soundness, RFC-0135 disposition, P4/keyword-vs-aspect, may `Copy` ever be derived).
 - **RFC-0158** *(under review, opened 2026-08-31; #919)* — Share and Clone: Separating Aliasing from
   Duplication — split out of RFC-0157's "Axis B, second cut," then narrowed to **purely
   additive**. `.clone()` is specified two ways: RFC-0080 §1.1 ("independent owned value")

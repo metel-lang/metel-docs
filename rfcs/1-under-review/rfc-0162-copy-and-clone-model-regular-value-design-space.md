@@ -4,7 +4,7 @@ title: "Copy and Clone Model — Regular-Value Design Space"
 date: '2026-09-01'
 status: under-review
 target: v0.17.0
-updated: '2026-09-01'
+updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/924'
 ---
 
@@ -14,6 +14,21 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/924'
 > and open questions that D5 did not touch, so they remain trackable.
 
 > **Status — under review (2026-09-01).** Extracted from RFC-0157 on 2026-09-01: the regular-value Copy/Clone model critique, P0-P3 design space, prior-art survey, and open questions D5 did not touch. **Milestoned v0.17.0** — the "coherent Copy and closure capabilities" release, alongside RFC-0135 and RFC-0155.
+
+> **Update (2026-09-02) — a further drawback (D6) and a fourth position (P4), raised in
+> review.** D1–D4 all argue about *what* the model grants. D6 argues about **where the
+> grant lives**: affine move semantics — the language's central ownership rule — is
+> switched off, per type, by an ordinary aspect impl (`extend Foo: Copy;`), spelled
+> exactly like `extend Foo: Display`; and once RFC-0093's derive mechanism exists,
+> nothing on the current path stops it being switched off by a metaprogramming
+> annotation (`#derive(Copy)`), as it routinely is in Rust. That critique is orthogonal
+> to D1–D4 and to Axis A/B, so it opens **Axis C** (aspect / declaration keyword /
+> attribute) and **P4** — keep Rust's model, both aspects, and the name, but move the
+> *grant* onto the type's own declaration as the `copy` keyword **RFC-0163 already
+> reserves** for function types. P4 is the one new position the Recommended direction's
+> own familiarity argument does not rule out — it renames nothing — so the
+> recommendation is left standing but no longer covers the whole space; P4's disposition
+> is **OQ4**, and whether `Copy` should be derivable at all is **OQ5**.
 
 ## Summary
 
@@ -34,14 +49,22 @@ Copy and closure capabilities" release, alongside **RFC-0135** (`Copy → many`)
 **RFC-0155** — a reviewer opening that release's Copy-model work sees the analysis and
 the proposals together. Its actionable outcomes map onto that milestone: the D3
 relaxation (amends RFC-0071 §4, if OQ2's soundness argument holds), the RFC-0135
-disposition (OQ5 — RFC-0135's own v0.17.0 review), and D4 (structural-types Copy
+disposition (OQ3 — RFC-0135's own v0.17.0 review), and D4 (structural-types Copy
 cleanup, #702/#263, already v0.17.0).
+
+**Added in review (2026-09-02):** **D6** — the grant that switches off affine semantics
+is an ordinary aspect impl, and would be a metaprogramming annotation once `#derive`
+exists — with **Axis C** (where the grant lives) and **P4** (`copy` as a declaration
+keyword, reusing RFC-0163's already-reserved word). D6 is orthogonal to D1–D4: it is
+about the *mechanism* of the grant, not its content.
 
 **Recommendation (carried from RFC-0157):** on regular values, *keep Rust's model* — no
 rename (not to `many`, not to `Dup`), no P1/P2/P3, accept D1 as Rust has it. The only
 endorsed value-side changes are **RFC-0158** (the `Clone`/`Share` split) and relaxing the
 `Copy` + `Drop` ban (D3) *if* a soundness argument holds. This is a recommendation for
-review to push on, not a decision.
+review to push on, not a decision. **It does not dispose of P4**, which was raised after
+it was written and which its central argument — familiarity cost — does not reach, since
+P4 renames nothing (OQ4).
 
 ---
 
@@ -110,6 +133,53 @@ slices are unconditionally `Copy` (RFC-0126); `[T; N]` has a hardcoded `Copy` ar
 (`metel-core#263`); closures compute `Copy`-ness per literal from captures (RFC-0134 §1).
 That is six mechanisms, three of them missing. A re-analysis is the natural place to ask
 whether a single coherent rule is reachable, or whether the fragmentation is inherent.
+
+**D6 — A load-bearing language rule is gated behind an ordinary, and prospectively
+derivable, aspect.** *(D5 is RFC-0157's closure-capture default, decided there; the
+numbering is continued rather than reused.)* Added 2026-09-02 from review. Affine
+by-value semantics (RFC-0071) is not a library facility — it is the rule that decides
+what every by-value expression in the language *means*. Metel switches it off per type
+through the ordinary aspect system:
+
+```metel
+extend Point: Copy;                                  // changes what every by-value
+                                                     // use of Point *means*
+extend Point: Display {                              // adds a method
+    fun display(self) -> String { return "…"; }
+}
+```
+
+Both are the same syntactic act — a user-written impl of a stdlib aspect on a local
+type, resolved through the same registration path (`bare_impl_bounds`) — and the shorter,
+less conspicuous one is the language-semantics switch. Three consequences, stated separately because they have different
+weights:
+
+1. **The grant does not look like what it does.** Nothing at an `extend … : Copy;` site
+   marks it as changing the ownership discipline for a type, and the site need not be
+   near the type: `extend` is a free-standing item, so a type's copyability can be
+   granted in a different file from its declaration, while the behavior it governs shows
+   up at every use site of the type. This is D1's invisibility problem seen from the
+   *declaration* end rather than the use end, and it is the half a keyword can actually
+   fix — D1's use-site half survives any Axis-C choice.
+2. **Derive would make it worse, and Metel has not yet taken this on.** In Rust the
+   grant is most often `#[derive(Copy)]`: an annotation whose ordinary job is generating
+   method bodies, sitting in a list beside `Debug` and `PartialEq`, one entry of which
+   silently changes the type's ownership behavior. Metel does not have this today —
+   `Copy` has no deriver, and `#derive` itself is unimplemented (RFC-0093,
+   `1-under-review`; RFC-0080 §1.3 specifies a derive for `Clone` only). But nothing on
+   the current path forbids it: RFC-0093's mechanism registers an arbitrary comptime
+   function as an aspect's deriver, and a deriver for a marker aspect is trivially
+   writable — it emits the bare impl and nothing else. So Metel is one unremarkable
+   registration away from Rust's situation, and the decision to allow or forbid it has
+   never been made deliberately. **This is a live choice, not a settled inheritance.**
+3. **The stop rule is the hard part, and this RFC should not pretend otherwise.** "A
+   rule that changes the meaning of code that does not mention it should not be an
+   ordinary impl" also reaches `Drop` (end-of-scope behavior, unmentioned at the scope),
+   and arguably `Send`/`Sync` (what may cross a thread boundary). `Copy` is the extreme
+   case — it changes the meaning of *every* by-value use, in every function, for every
+   value of the type — but a proposal that moves only `Copy` to a keyword buys honesty
+   for one aspect at the cost of making the aspect system itself less uniform. Axis C
+   below is where that trade is stated; OQ4 is where it is decided.
 
 ---
 
@@ -183,6 +253,34 @@ It is therefore tracked separately as **RFC-0158 (Share and Clone: Separating Al
 from Duplication)**, split out of this section 2026-08-31. It is not a prerequisite for,
 or of, anything here.
 
+### Axis C — Where does the copyability grant live? (D6, added 2026-09-02)
+
+Axes A and B ask what implicit duplication *is* and how many concepts express it. Axis C
+asks, given that some types are implicitly duplicated, **what syntactic act makes a type
+one of them**. It is orthogonal to both: every A/B combination has to answer it, and
+today's answer (C1) was inherited without being chosen.
+
+- **C1. An ordinary aspect impl (today).** `extend Foo: Copy;`, resolved like any other
+  bare impl, subject to `check_copy_impl_eligibility`. Uniform with the rest of the
+  aspect system; D6 is the cost.
+- **C2. A declaration-site keyword.** The grant is a qualifier on the type's own
+  declaration — `copy struct Foo { … }` (P4) or `many struct Foo { … }` (RFC-0135) — and
+  is not writable as an impl at all. `Copy` may survive as a *bound* (`T: Copy`) that
+  only the compiler can grant, in the manner of RFC-0096's auto-impl aspects. The
+  language rule is spelled with a language keyword, adjacent to the fields whose
+  eligibility it depends on; a derive for it cannot be written, because there is no impl
+  to emit.
+- **C3. An attribute.** `#copy struct Foo { … }` — RFC-0095's mechanism rather than a
+  keyword. Costs no keyword and reads as metadata, which is precisely the objection D6
+  raises against `#derive(Copy)`: attributes are the part of the surface that is
+  *supposed* to be removable without changing meaning. Listed for completeness; the
+  weakest of the three.
+
+C2 has one property C1 cannot have: it makes the grant unforgeable by metaprogramming.
+Everything else it buys (locality, a keyword that looks like a language rule) is a matter
+of degree. C1 has one property C2 cannot have: uniformity with `Drop`, `Send`, `Sync`,
+and every other capability the language expresses as an aspect. That is the whole trade.
+
 ### Combined positions worth naming
 
 - **P0 — Status quo + RFC-0135 rename.** A1 + B1, with `Copy` spelled `many` on the
@@ -199,6 +297,13 @@ or of, anything here.
   duplication is a call, every by-value use is a move. Removes D1 entirely. Cost: the
   largest ergonomic regression (`x.dup()` on integers) unless softened; likely too far
   for a systems-adjacent language, listed for completeness and as the honest endpoint.
+- **P4 — Keep the model, move the grant to a keyword.** A1 + B1 + C2, with the keyword
+  spelled `copy` (not `many`). Nothing about implicit duplication, the two-aspect split,
+  or the use-site experience changes; `extend Foo: Copy;` becomes `copy struct Foo { … }`
+  and `Copy` becomes a compiler-granted bound. Addresses D6 only, and the declaration
+  half of D1; leaves D2 and the use-site half of D1 exactly as they are. **The only
+  position here that changes no vocabulary** — which is why the Recommended direction's
+  argument against P1/P2/P3 (familiarity cost) does not reach it. Detailed below.
 - **P3 — Unify on multiplicity and go past RFC-0135.** B3 + an Axis-A decision. Requires
   RFC-0134 / RFC-0135 / RFC-0152 landed and mutually coherent first, then extends
   RFC-0135 from "rename `Copy` to `many`" to "one multiplicity mechanism for every
@@ -297,6 +402,102 @@ mileage, and its concrete user-visible payoff (P3b) is the same as P1's with mor
 machinery behind it. The Recommended direction treats P1 as the target and P3 as "the
 shape to keep P1 compatible with," not a thing to build now.
 
+### P4 in detail — `copy` as a declaration keyword
+
+> Added 2026-09-02 with D6. Not covered either way by the Recommended direction below,
+> which was written against P1/P2/P3; see OQ4.
+
+**The spelling already exists.** RFC-0163 (`2-accepted`, v0.13.0) adds `copy` as a
+function-type qualifier — `copy |i64| -> i64` is "a callable that may be duplicated by
+value" — and **reserves `copy` as a keyword** alongside `once` and `var`. P4 spends no
+new lexical budget: it uses the reserved word in a second position.
+
+```metel
+copy struct Point { x: i64, y: i64 }          // replaces `extend Point: Copy;`
+copy enum Direction { North, South }
+fun scale<T: Copy>(p: T, k: i64) -> T { … }   // bound spelling unchanged
+```
+
+**Mechanism.** `Copy` stays in the type system exactly as it is — a bound, the
+`Copy ⇒ Clone` blanket (RFC-0080 §1.2), the `is_copy` predicate, `use_multiplicity` on
+`Type::Fun` (RFC-0134 §4). What changes is only who may establish it for a named type:
+
+1. `copy` on a `struct`/`enum` declaration registers the same bare impl bound that
+   `extend Foo: Copy;` registers today, so nothing downstream of registration moves.
+2. `extend Foo: Copy;` becomes a parse-or-coherence error with a fix-it pointing at the
+   declaration. `Copy` joins the compiler-granted set — the same category as RFC-0096's
+   auto-impl aspects, though granted by an explicit keyword rather than structurally.
+3. `check_copy_impl_eligibility` (`typechecker/inference.rs`) runs unchanged, at the
+   declaration instead of at the `extend`. Its diagnostic improves: "field `name:
+   String` is not `Copy`" points at a field a few lines above, not at an item elsewhere
+   in the program.
+4. Structural and compiler-provided cases are untouched: `T[]` (RFC-0126), fn-pointers
+   (RFC-0061 §7.2), `[T; N]` (`metel-core#263`), closures (RFC-0134 §1). P4 does not
+   fix D4; it removes one of D4's six mechanisms from the *user-writable* surface, which
+   makes the remaining fragmentation easier to describe (everything left is a compiler
+   grant) without unifying it.
+
+**What P4 answers, precisely.**
+
+- **D6.1 (the grant doesn't look like what it does):** answered. A keyword in the type's
+  own header is a language-rule spelling in the one place a reader looks for the type's
+  shape.
+- **D6.2 (derive):** answered *by construction*, which is the strongest form. There is no
+  impl for a deriver to emit, so `#derive(Copy)` cannot be written and does not have to
+  be forbidden by a rule someone has to remember. This is the argument's real payoff:
+  the hazard is closed by the mechanism instead of by policy.
+- **D6.3 (the stop rule):** **not** answered. P4 moves `Copy` and leaves `Drop`,
+  `Send`, and `Sync` as aspects; a reviewer who thinks the D6 argument generalizes should
+  say what the principled boundary is, or accept that `Copy` is being special-cased on
+  the strength of being the extreme case rather than a different kind of case.
+- **D1:** half. The declaration end becomes visible and local; the use site is unchanged,
+  and removing `copy` from a declaration still flips every by-value use across the
+  program. Anyone who wants D1 solved wants P1, not P4.
+- **D2, D3:** untouched. (D3 is independently actionable via OQ2 under any position.)
+
+**Open sub-questions P4 inherits or creates.**
+
+1. **Conditional copyability.** `extend<T: Copy> Foo<T>: Copy` has no obvious keyword
+   form. Candidates: `copy struct Foo<T> where T: Copy { … }`, or RFC-0135's
+   `many<T: many> struct Foo<T>` shape. RFC-0135 §Open Questions raises exactly this for
+   its own qualifier and does not settle it; P4 inherits the question verbatim, and it
+   is the most likely reason to keep an `extend`-shaped escape hatch for the conditional
+   case only — which would partially reopen D6.2.
+2. **One word, two grammatical roles.** On a function *type*, `copy` is a requirement
+   placed on a value whose capability was derived from its captures; on a *declaration*
+   it is a grant checked against fields. RFC-0163 makes `copy` in closure-*literal*
+   prefix position a parse error for exactly this reason ("a literal's concrete
+   capability is derived from its captures, never asserted"). P4 must state the rule
+   crisply: **`copy` in declaration position asserts and is checked; `copy` in type
+   position requires and is matched.** A struct declaration is an assertion site because
+   Metel has no structural auto-derivation for named types (Background above); a closure
+   literal is not, because it does.
+3. **RFC-0163's disjointness claim needs amending, not contradicting.** RFC-0163 says
+   its use-multiplicity `copy` "is disjoint from RFC-0162's regular-value `Copy`/`Clone`
+   model — it names the `use_multiplicity` field RFC-0134 already carries on `Type::Fun`,
+   not a value-level aspect." That sentence is a scoping disclaimer written to keep an
+   accepted v0.13.0 RFC out of an unsettled v0.17.0 argument, and P4 is the case where
+   the two stop being disjoint: they become one keyword naming one property of values,
+   with the field/aspect difference an implementation detail of where it is stored.
+   Adopting P4 means amending that paragraph; it does not invalidate anything RFC-0163
+   decided, and RFC-0163 needs no change unless P4 is adopted.
+4. **Retroactive grants.** `extend Foo: Copy;` for a *foreign* `Foo` is already barred by
+   coherence (RFC-0060), so C2 removes no capability that exists today. Worth confirming
+   against `coherence.rs` before adoption rather than asserting from the RFC.
+5. **Migration.** Mechanical: every `extend … : Copy;` in stdlib, fixtures, and docs
+   becomes a declaration qualifier. Smaller than RFC-0135's migration (which changes the
+   same sites *and* the word) and much smaller than P1's (which changes call sites).
+
+**Relationship to RFC-0135.** P4 is RFC-0135's mechanism-location move without its
+rename: both take the grant off `extend` and put it on the declaration; RFC-0135 spells
+it `many` and retires `Copy`, P4 spells it `copy` and keeps `Copy` as the bound. The
+Recommended direction's case against RFC-0135 (§3) is entirely about the rename — "the
+rename throws away the most valuable transferable term" — and does not touch the
+mechanism-location half. **P4 is therefore a concrete candidate answer to OQ3's
+"narrowed to a de-cruft-only cleanup" option**: RFC-0135 narrowed to its declaration-site
+qualifier, with the word left alone. Anyone reviewing RFC-0135 should weigh P4 against
+it directly, since choosing both is not possible.
+
 ---
 
 ## Recommended direction (regular values)
@@ -324,6 +525,26 @@ recommendation is *not* to diverge.
    surface aspect. Any genuine de-cruft in RFC-0135 (e.g. the `#derive` coupling) can fold
    into RFC-0158 or a small cleanup RFC.
 
+4. **P4 is open, not recommended against (added 2026-09-02).** Items 1–3 were written
+   against Axes A and B, where the argument is "Rust's regular-value vocabulary and
+   use-site feel are worth more than the internal-consistency gain from changing them."
+   P4 (Axis C — `copy` as a declaration keyword) makes no vocabulary change: the word
+   `Copy` survives as the bound, the use-site feel is bit-for-bit identical, and the
+   keyword is one RFC-0163 already reserves. The familiarity argument therefore does not
+   apply to it, and neither endorsing nor refusing P4 follows from anything above. What
+   it needs from review is an answer to D6.3 — whether "language rules should not be
+   ordinary impls" is a principle Metel adopts (and then owes `Drop`/`Send`/`Sync` an
+   answer too), or an observation about `Copy` alone that is not worth a special case.
+   **OQ4** carries it. A reviewer who takes P4 should also read OQ3: P4 and RFC-0135 are
+   competing answers to the same question, and only one can be adopted.
+5. **Decide whether `Copy` is derivable, separately and sooner (added 2026-09-02).**
+   Independent of P4's fate: `#derive(Copy)` does not exist today and the derive
+   mechanism it would need (RFC-0093) is not accepted, so the cheap move is to record
+   now that `Copy` has **no registered deriver** and that adding one is a language
+   decision requiring its own RFC — rather than letting it arrive as an unremarkable
+   registration once RFC-0093 lands. This costs nothing if P4 is adopted (the hazard
+   closes by construction) and is the whole of D6.2's mitigation if it is not. **OQ5.**
+
 The closure-side items (D5, and "keep investing in the closure-capability cluster") are in
 **RFC-0157**.
 
@@ -339,6 +560,28 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
   questions the model and concludes the rename should **not** proceed — it spends the
   regular-value familiarity budget for an internal-consistency gain (Recommended direction
   §3). If a reviewer disagrees, P3 (§P3 in detail) is where the full rename leads.
+  **Added 2026-09-02:** RFC-0135 is *two* proposals bundled — a mechanism-location move
+  (grant onto the declaration) and a rename (`Copy` → `many`). P4 takes the first without
+  the second, and is a direct competitor to RFC-0135 rather than a variant of it (OQ3,
+  OQ4).
+- **RFC-0163 (Function-Type Use-Multiplicity Surface, `2-accepted`, v0.13.0, #936)** —
+  supplies P4's keyword. It adds `copy` as a function-type qualifier, reserves `copy`
+  beside `once`/`var`, and explicitly scopes itself as *disjoint* from this RFC's
+  value-level model. Nothing here changes RFC-0163 or asks it to change; but P4 is the
+  position under which the two `copy`s become one concept, and adopting P4 means amending
+  that disjointness paragraph (P4 in detail, sub-question 3). RFC-0163's rule that `copy`
+  is a parse error in closure-literal prefix position is the precedent P4's
+  assert-vs-require distinction has to be stated against.
+- **RFC-0093 (Derive Registration, `1-under-review`, #799)** — the mechanism D6.2 is
+  about. Its `#derive(Aspect)` registration would make a `Copy` deriver writable with no
+  special effort; whether one may exist is OQ5, and is a question for this RFC, not for
+  RFC-0093's general mechanism.
+- **RFC-0096 (Auto-Impl Aspects, `0-draft`)** — the existing category of
+  compiler-granted, not-user-writable aspects (`Send`, `Sync`, `Linear`). Under P4,
+  `Copy` joins that category by keyword rather than by structural rule; reconcile the
+  two framings if P4 advances.
+- **RFC-0095 (Attributes and Metadata, `1-under-review`)** — supplies Axis C's C3
+  (`#copy`), listed and not recommended.
 - **RFC-0080 (Stdlib Aspects — Clone…, `1-under-review`)** — owns the `Clone` aspect.
   RFC-0158 amends its §1 (tighten `Clone` to independent-duplication-only; add `Share`).
   This RFC's recommended direction leaves `Clone` otherwise untouched.
@@ -471,6 +714,35 @@ Hylo absorbs much of that through its borrow/`sink` conventions. Evidence that P
   observable; there is no `Copy`/`Clone` concept to design. Noted only to place the
   problem: it is specific to the mutable-value-semantics design point Metel has chosen.
 
+### Where the grant lives — the Axis C cut (added 2026-09-02)
+
+The survey above asks what each language *does*; D6 asks what syntactic act *decides* it.
+Re-read across the same languages, the answers line up unusually cleanly:
+
+| Language | Copyability decided by | Ordinary user-written impl? | Reachable by metaprogramming? |
+| --- | --- | --- | --- |
+| **Rust** | `impl Copy` / `#[derive(Copy)]` | yes | **yes** — the common case |
+| **C++** | the class's own special members (`= delete`, user-declared) | no — only the class's own members | no |
+| **Swift** | default-on; suppressed at the declaration (`~Copyable`, SE-0390) | no — `Copyable` is compiler-known | no |
+| **C#** | `struct` vs `class` — a declaration keyword | no | no |
+| **Go** | `struct` — a declaration keyword | no | no |
+| **Hylo** | nothing: there is no implicit copy to grant | n/a | n/a |
+
+**Rust is alone in the "yes" column, and alone again in the derive column.** Every other
+language that has implicit copying puts the decision in the type's own declaration —
+usually as a keyword — and none of them let an annotation or macro flip it. That is not
+an argument that Rust is wrong (C# and Go pay for their keyword with *no* opt-out at all,
+which is worse in a different way), but it is the observation D6 rests on: the mechanism
+Metel inherited is the outlier, and it was inherited without being compared.
+
+**Hylo's row is the sharpest one.** Hylo has a `Copyable`-style trait and an explicit
+`.copy()`, and nobody objects — because there, the trait grants a *method*, not a change
+to what by-value use means. **D6's force is proportional to how much implicit behavior
+the grant controls.** Under P2 (and mostly under P1) the objection dissolves without a
+keyword, because there is no implicit behavior left to gate. So D6 is not only an
+argument for P4: it argues for P1/P2 as well, from a direction D1–D4 do not cover — a
+trait that gates nothing implicit is an unobjectionable trait.
+
 ### What the survey suggests for Metel
 
 1. **The fully-open, fully-implicit end (C++, Go) is uniformly regretted.** The
@@ -493,6 +765,13 @@ Hylo absorbs much of that through its borrow/`sink` conventions. Evidence that P
 4. **Capture *lists* are common and un-regretted** (C++, Swift, Rust's direction).
    RFC-0050's list survives the comparison cleanly; only the `move` specifier *inside*
    it lacked prior-art support.
+5. **On Axis C, Rust is the outlier and Metel copied the outlier** (added 2026-09-02).
+   Everyone else with implicit copying decides it at the declaration and puts it out of
+   reach of metaprogramming. This is the clearest prior-art signal in the survey — much
+   clearer than anything Axes A and B produced — and it costs almost nothing to follow
+   (P4), because the keyword is already reserved and the word `Copy` is kept. Weigh it
+   against the uniformity loss in the aspect system (D6.3), which is the real objection,
+   not familiarity.
 
 ### Sources
 
@@ -532,6 +811,32 @@ Hylo absorbs much of that through its borrow/`sink` conventions. Evidence that P
    `#derive` coupling, generic-`Copy` tidy), or folded into RFC-0158? A call for
    RFC-0135's own review, informed by this one.
 
+4. **Should the copyability grant be a keyword rather than an aspect (Axis C / P4)?**
+   Added 2026-09-02 with D6. The narrow question is whether `extend Foo: Copy;` should
+   become `copy struct Foo { … }`, reusing RFC-0163's reserved word, with `Copy` demoted
+   to a compiler-granted bound. The question review actually has to answer first is
+   **D6.3**: is "a rule that changes the meaning of code that does not mention it should
+   not be an ordinary impl" a principle Metel adopts — in which case `Drop` (and
+   arguably `Send`/`Sync`) need an answer in the same breath — or is `Copy` a
+   special case justified by degree alone? P4's cost is small and its migration is
+   mechanical; its risk is a one-off exception to the aspect system that later looks
+   arbitrary. *Advancing condition:* a stated stop rule that either confines the change
+   to `Copy` on principle or names the other aspects that follow it. *Refusing
+   condition:* review judging the aspect system's uniformity worth more than the grant's
+   honesty — in which case OQ5 becomes the whole of D6's mitigation.
+   **Coupled to OQ3:** P4 and RFC-0135 are competing answers; adopting P4 means
+   RFC-0135 is narrowed away entirely, and adopting RFC-0135 forecloses P4's spelling.
+5. **May `Copy` ever be derived?** Added 2026-09-02 with D6.2. Today the question is
+   moot — `#derive` is unimplemented (RFC-0093) and `Copy` has no deriver — which makes
+   this the cheapest decision in the RFC and the one with a deadline: it stops being
+   cheap the moment RFC-0093 lands and a `Copy` deriver becomes an ordinary
+   registration nobody has to justify. Under P4 it answers itself (no impl to emit).
+   Under P0 it needs a written rule: `Copy` has no registered deriver, and adding one is
+   a language change requiring its own RFC. *Advancing condition:* none needed — this
+   can be recorded now, independently of every other question here. *Reopening
+   condition:* a concrete case where hand-writing the grant is genuinely onerous, which
+   for a marker aspect with a one-line spelling is hard to construct.
+
 *(Prior art beyond Rust — addressed, see the survey above. The aliasing-vs-duplication
 split — RFC-0158. The closure-capture default — RFC-0157, decided.)*
 
@@ -541,8 +846,9 @@ split — RFC-0158. The closure-capture default — RFC-0157, decided.)*
 
 **Outcome:** *(pending — analysis / direction-setting, `1-under-review`. Extracted from
 RFC-0157 on 2026-09-01 so the regular-value questions stay trackable after RFC-0157's D5
-was decided and accepted. The three Open Questions above carry reopening/advancing
+was decided and accepted. The five Open Questions above carry reopening/advancing
 conditions. The recommendation — no regular-value model change — is for review to endorse
-or contest.)*
+or contest, and it does not dispose of P4 (OQ4) or of the derive question (OQ5), both
+added 2026-09-02.)*
 **Target:** v0.17.0 (metel-core#924) — the "coherent Copy and closure capabilities"
 release, alongside RFC-0135 / RFC-0155. Nothing here blocks v0.13.0.
