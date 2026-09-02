@@ -2,13 +2,19 @@
 id: rfc-0163
 title: "Function-Type Use-Multiplicity Surface"
 date: '2026-09-02'
-status: under-review
+status: accepted
 target: v0.13.0
 updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/936'
 ---
 
-> **Status — under review (2026-09-02).**
+> **Status — accepted (2026-09-02).** Design settled: bare function types erase
+> use-multiplicity, `copy` is the positive assertion. Alternatives A–D weighed; an
+> adversarial pass the same day added the literal-`copy` diagnostic, RFC-0162
+> disjointness, the Migration section, and the nested-`copy` integration example.
+> RFC-0155 (higher-order variance, unscheduled) is scoped out and unweakened.
+
+> **Status — accepted (2026-09-02).** design settled (bare=Erased, copy assertion, A-D weighed); adversarial pass folded in; RFC-0155 scoped out
 
 ## Summary
 
@@ -96,14 +102,18 @@ copy once var |T| -> U
 
 As with `once` and `var`, the type spelling's qualifier order is
 order-insensitive. A closure literal still has its independently specified
-`[captures] once? var? |params|` prefix; `copy` is never written on a literal,
-because its concrete capability is derived from its captures.
+`[captures] once? var? |params|` prefix; **`copy` in literal-prefix position is a
+parse error** (`[x] copy |y| { … }` does not parse) — a literal's concrete
+capability is derived from its captures, never asserted.
 
 `copy` joins `once` and `var` as a reserved keyword in v0.13.0. The qualifier
 family therefore cannot be used as ordinary identifiers, including in a
 binding, path segment, or field name. A future RFC may consider making the
 whole family contextual, but it must do so as a compatibility and lexer/parser
-change for all three words together; this RFC does not make that change.
+change for all three words together; this RFC does not make that change. Its
+use-multiplicity `copy` is disjoint from RFC-0162's regular-value `Copy` / `Clone`
+model — it names the `use_multiplicity` field RFC-0134 already carries on
+`Type::Fun`, not a value-level aspect.
 
 There is intentionally no source `move` qualifier in this proposal. A caller
 that merely accepts, stores, returns, or consumes a callable needs no stronger
@@ -214,6 +224,24 @@ A bare type would require a move-only callable, with a separate spelling for
 `Copy`. This is conservative for ownership but makes ordinary named functions
 need a special reconciliation rule or annotation, which is the current gap.
 
+## Migration
+
+Adding `copy` and switching bare types to `Erased` is a breaking change in two
+narrow places — hard switch, one sweep (Metel has no public users):
+
+- **`copy` as an identifier.** `once` and `var` are already reserved; `copy` is
+  not. A handful of fixtures use it as a binding name (`let copy := …`). Rename
+  them in the same change.
+- **Bare callback params that copy the callback.** A signature `f: |T| -> U`
+  whose body copies `f` (`let a := f; let b := f;`) previously relied on the
+  frontend normalising a written function type to concrete `Copy`. Under this RFC
+  such a body is a use-after-move error; the fix is to write `f: copy |T| -> U`.
+  Signatures that only call, store, move, or return `f` need no change. Located
+  by the frontend's move checker over the swept corpus, not by text.
+
+The normalisation this replaces is `typeinference`'s synthetic Copy-to-Move
+mismatch handling (see §"Type model and matching"); it is deleted, not gated.
+
 ## Required integration examples
 
 The accepted proposal must work through, at minimum:
@@ -225,18 +253,35 @@ fun add_one(x: i64) -> i64 { x + 1 }
 let mapped := map([1, 2], add_one);
 ```
 
-and a move-only capturing closure passed through the same API, a rejected
-attempt to copy a bare callback, an accepted `copy` callback duplication, a
-function type nested under a parameter with mismatched `once`/`var`, a field
-storing the callback, and a type alias. The examples must distinguish
-surface-axis erasure from RFC-0152 widening.
+and: a move-only capturing closure passed through the same API; a rejected
+attempt to copy a bare callback; an accepted `copy` callback duplication; a
+function type nested under a parameter with mismatched `once`/`var`; **a nested
+`copy` mismatch both ways** — `Erased` rejected against an expected `copy |B| ->
+C` in return position, and a concrete `copy` callable accepted into a bare
+nested slot with its `Copy`-ness lost; a field storing the callback; and a type
+alias. The examples must distinguish surface-axis erasure from RFC-0152
+widening — erasure touches only the omitted use axis and never relaxes the exact
+`once` / `var` match RFC-0152 requires below the first function-type level.
 
 
 ---
 
 ## Decision
 
-**Outcome:** *(proposed — bare function types erase use multiplicity; `copy`
-requires it concretely. Pending review.)*
-**Target:** *(set when accepted; no implementation is authorized while this RFC
-remains draft)*
+**Outcome:** **Accepted 2026-09-02** (`2-accepted`, #936). Bare function types erase
+use-multiplicity to `Erased` (usable move-only); `copy` is a positive assertion of a
+`Copy` callable and joins `once` / `var` as a reserved order-insensitive type qualifier,
+never on a literal. Alternatives A–D weighed; the axis-agnostic-erasure + positive-`copy`
+combination (B plus the `copy` spelling) is the choice. An adversarial pass 2026-09-02
+added the literal-`copy` diagnostic, the RFC-0162 disjointness note, the Migration section
+(`copy`-as-identifier rename + `copy` on bare params that copy the callback), and the
+nested-`copy` two-way integration example. RFC-0155 (higher-order variance) is scoped out
+and unweakened — erasure never relaxes RFC-0152's exact nested `once` / `var` match.
+**Target: v0.13.0** — the missing third `Type::Fun` surface, needed to stop the frontend
+guessing (see Motivation).
+
+`3-integrated` adds a `spec.functions.first-class-functions` block for `Erased` and the
+directional use-axis matching relation, plus the §"Required integration examples" worked
+through. `4-implemented` is: `copy` reserved word + `fun_type_qualifier` slot, the
+`Erased` `use_multiplicity` state, the matching relation replacing `typeinference`'s
+Copy-to-Move mismatch handling, and the corpus migration.

@@ -1117,13 +1117,16 @@ implementation).
   + `CallMany` / `CallShared`, from RFC-0153's Alternatives) as the third option, under
   which the area dissolves into aspect-bound subsetting. Not urgent: RFC-0152's cap is
   sound, so nothing is unsound while this is open. Tracker metel-core#904 (v0.17.0).
-- **RFC-0163** *(draft, opened 2026-09-02)* — Function-Type Use-Multiplicity Surface —
-  resolves the missing source-level representation of `Type::Fun`'s `Copy` versus
-  move-only use-multiplicity axis. It is adjacent to RFC-0152 but distinct from
-  higher-order variance: the immediate question is what an omitted axis in a written
-  callback type means, so generic APIs can accept concrete callables without treating
-  that representation gap as nested capability widening. No release target or
-  implementation work is assigned until the design is reviewed.
+- **RFC-0163** *(**accepted 2026-09-02**; #936; **v0.13.0**)* — Function-Type
+  Use-Multiplicity Surface — the missing source spelling for `Type::Fun`'s `Copy`-versus-
+  move-only axis. A bare written function type **erases** that axis (`Erased`, usable
+  move-only); `copy |T| -> U` is the positive assertion of a copyable callable, joining
+  `once` / `var` as a reserved order-insensitive type qualifier, never on a literal.
+  Erasure is not RFC-0152 widening — it touches only the omitted axis and never relaxes
+  the exact nested `once` / `var` match. Replaces the frontend's Copy-to-Move
+  normalisation hack. Alternatives A–D weighed; adversarial pass folded in (literal-`copy`
+  diagnostic, RFC-0162 disjointness, migration, nested-`copy` example). RFC-0155
+  (higher-order variance, unscheduled) scoped out.
 - **RFC-0153** *(**integrated 2026-09-01**; v0.13.0, #902; impl metel-core#925)* —
   Closure Mutation Axis — the third `Type::Fun` field RFC-0134 §4 reserves and §5
   constrains (compose with `once`/`many` as an independent prefix). Records whether
