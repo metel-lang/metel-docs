@@ -84,7 +84,7 @@ the curated thematic map.
 - **RFC-0158** — Share and Clone: Separating Aliasing from Duplication (`1-under-review` ; rfcs/1-under-review/rfc-0158-share-and-clone-separating-aliasing-from-duplication.md ; date 2026-08-31 ; updated 2026-08-31)
 - **RFC-0159** — Abstract Regions and a Dedicated Identity Channel (`1-under-review` ; rfcs/1-under-review/rfc-0159-abstract-regions-and-a-dedicated-identity-channel.md ; date 2026-09-01 ; updated 2026-09-01)
 - **RFC-0161** — Callable Object Contract (dyn Callable) (`1-under-review` ; rfcs/1-under-review/rfc-0161-callable-object-contract-dyn-callable.md ; date 2026-09-01 ; updated 2026-09-01)
-- **RFC-0162** — Copy and Clone Model — Regular-Value Design Space (`1-under-review` ; rfcs/1-under-review/rfc-0162-copy-and-clone-model-regular-value-design-space.md ; date 2026-09-01 ; updated 2026-09-01)
+- **RFC-0162** — Copy and Clone Model — Regular-Value Design Space (`1-under-review` ; rfcs/1-under-review/rfc-0162-copy-and-clone-model-regular-value-design-space.md ; date 2026-09-01 ; updated 2026-09-02)
 - **RFC-0165** — Structural Union Types (`1-under-review` ; rfcs/1-under-review/rfc-0165-structural-union-types.md ; date 2026-09-02 ; updated 2026-09-02)
 
 ## Accepted (9)
