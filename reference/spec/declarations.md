@@ -886,6 +886,53 @@ fun main() -> i64 {
 
 ---
 
+## Type Aliases
+
+> **Availability:** Since v0.13.0 (RFC-0160).
+
+A **type alias** gives an existing type a name:
+
+<!-- doc-example: skip reason="RFC-0160 type-alias syntax, pending a develop-latest that parses it (metel-core#921)" -->
+```metel
+type Bytes := List<u8>;
+type Handler := once var |Request, &Config| -> Response;
+type Pair<A, B> := (A, B);
+```
+
+An alias is **transparent** — erased to its right-hand side before type checking, with no
+nominal identity of its own. `Pair<i64, boolean>` and `(i64, boolean)` are the same type,
+accepted in the same positions, satisfying the same bounds. An alias defines no impl, so
+there is no coherence concern. It may be parameterised and may reference another alias;
+`type` inside an `aspect` / `extend` block remains an [associated-type
+definition](#spec.declarations.aspects.associated-types.legality-1) — position, not a
+keyword, tells the two apart.
+
+##### Legality Rule {#spec.declarations.type-aliases.legality-1}
+
+A type alias is written `public? type Name generic_params? := Type ;` at module scope or
+in a function / block body. It introduces `Name` as a transparent synonym for `Type`:
+every use of `Name` (with type arguments substituted for its generic parameters) is
+replaced by `Type` before name resolution and type checking. An alias use must supply
+exactly the alias's declared number of type arguments.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0160](../../rfcs/4-implemented/rfc-0160-type-aliases.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [01_basic_and_parameterised.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/01_basic_and_parameterised.mtl), [02_struct_field_and_return.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/02_struct_field_and_return.mtl), [neg_02_arity.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/neg_02_arity.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.type-aliases.legality-2}
+
+A type alias may not be recursive — neither directly nor through a chain of aliases. A
+transparent alias has no finite expansion for a cycle; a genuinely recursive shape uses a
+`struct` or `enum` indirection point.
+
+
+
+---
+
 ## Aspects
 
 > **Availability:** Since v0.4.0.
@@ -906,6 +953,10 @@ fun main() -> i64 {
 
 <details>
 <summary>Formal rules</summary>
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_01_recursive.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/neg_01_recursive.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.aspects.legality-1}
 

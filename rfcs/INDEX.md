@@ -604,7 +604,7 @@ above it are.
   Vehicle for RFC-0089's `Affine` alias (`!Copy + !Linear`). Small, standalone. Names
   compound *bounds* — disjoint from **RFC-0160**, which names *types*. Five OQs, each with
   a recommended answer in the RFC.
-- **RFC-0160** *(**accepted 2026-09-02**; #921; **v0.13.0**)* — Type Aliases — `public? type
+- **RFC-0160** *(**implemented 2026-09-02**; #921; **v0.13.0**)* — Type Aliases — `public? type
   Name = T;` at **module scope or a function/block body**, optionally parameterised,
   **transparent** (structural synonym, no nominal identity, RFC-0152 widening flows
   through). Fills a real gap: `type Name = T` today exists only as an associated type in

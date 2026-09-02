@@ -2,10 +2,17 @@
 id: rfc-0160
 title: "Type Aliases"
 date: '2026-09-01'
-status: accepted
+status: implemented
 target: v0.13.0
 updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/921'
+coverage:
+  "1": { spec: "spec.declarations.type-aliases.legality-1" }
+  "2": { spec: "spec.declarations.type-aliases.legality-1" }
+  "3": { spec: "spec.declarations.type-aliases.legality-1" }
+  "4": { spec: "spec.declarations.type-aliases.legality-1" }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/921'
+impl_status: implemented
 ---
 
 > **Opened 2026-09-01 as a future-ergonomics RFC.** Metel has no way to name a type. `type
@@ -26,6 +33,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/921'
 > brought into v0.13.0 2026-09-02 to co-land with RFC-0154 + the closure cluster.
 
 > **Status — accepted (2026-09-02).** 5 OQs resolved (#88); acceptance review moved the separator to := and added the Alternatives section
+
+> **Status — integrated (2026-09-02).** grammar + desugar pass in metel-core feat/921; spec.declarations.type-aliases blocks added
+
+> **Status — implemented (2026-09-02).** module-level transparent aliases: grammar + desugar pass + fixtures in metel-core feat/921 (Tier 3 green)
 
 ## Summary
 
