@@ -287,7 +287,7 @@ of `many` itself.
   *per-declaration* (a nominal fact). P3 unifies the *concept* and the *spelling*, not
   the representation — it is one idea with two storage forms, and the RFC should say so
   rather than overclaim.
-- **Sequencing.** P3 cannot be evaluated until RFC-0134 (integrated), RFC-0135, and
+- **Sequencing.** P3 cannot be evaluated until RFC-0134 (implemented), RFC-0135, and
   RFC-0152 are landed and known to compose; it is the latest-horizon option here.
 
 **Why P3 is listed but not recommended.** It is the most coherent destination if the
@@ -546,4 +546,3 @@ conditions. The recommendation — no regular-value model change — is for revi
 or contest.)*
 **Target:** v0.17.0 (metel-core#924) — the "coherent Copy and closure capabilities"
 release, alongside RFC-0135 / RFC-0155. Nothing here blocks v0.13.0.
-

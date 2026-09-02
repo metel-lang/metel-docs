@@ -2,9 +2,9 @@
 id: rfc-0050
 title: "Closure Capture Lists"
 date: '2026-06-03'
-status: integrated
+status: implemented
 target: v0.13.0
-updated: '2026-09-01'
+updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 coverage:
   "1": { spec: "spec.functions.closures.legality-5" }
@@ -13,7 +13,7 @@ coverage:
   "4": { spec: "spec.functions.closures.legality-19" }
   "5": { spec: "spec.functions.closures.legality-13" }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/926'
-impl_status: not-started
+impl_status: implemented
 ---
 
 
@@ -23,6 +23,8 @@ impl_status: not-started
 > pre-RFC-0122 interim window is catalogued there. Implementation shape: **ADR-0052**.
 
 > **Status — integrated (2026-09-01).** Closure cluster spec-integrated (Legality 5/6/13/19/22, with 11/17/21/23 as sub-rules); coverage.spec frontmatter added; fixtures blocked on metel-core#925. Shape: ADR-0052.
+
+> **Status — implemented (2026-09-02).**
 
 ## Summary
 

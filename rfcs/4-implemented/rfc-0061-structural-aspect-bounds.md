@@ -399,7 +399,7 @@ aspect impls are specified in RFC-0050.
 
 - RFC-0036 (Conditional Impl Blocks) — the conditional impl syntax used for
   structural blanket impls.
-- RFC-0050 (Closure Capture Lists, `3-integrated` as of 2026-09-01) — closure types and
+- RFC-0050 (Closure Capture Lists, `4-implemented` as of 2026-09-02) — closure types and
   their aspect impls; distinct from function pointer types.
 - RFC-0060 (Aspect Impl Coherence) — orphan rule; structural constructors owned by
   `std::core`; overlap detection.
@@ -418,6 +418,6 @@ aspect impls are specified in RFC-0050.
 - RFC-0126 (`T[]` as a Copy Borrowed View, `4-implemented`) — replaced §1.1's owning-buffer
   array model with a non-owning view that is `Copy` unconditionally; see the 2026-08-14
   partial-supersession note above.
-- RFC-0134 (Closure Call Capability, integrated) — the RFC whose §4 investigation found
+- RFC-0134 (Closure Call Capability, implemented) — the RFC whose §4 investigation found
   §7.4's "distinct anonymous types" claim below doesn't match the implementation; see
   the 2026-08-14 correction note above.

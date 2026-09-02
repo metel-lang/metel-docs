@@ -54,11 +54,13 @@ and must be renamed.
 
 The flat `Type::Fun` model is fast and static, but it cannot express "some callable of
 this shape, chosen at runtime" — a heterogeneous `List<dyn Callable<(), ()>>` of
-callbacks, a struct field holding one of several handlers, a plugin boundary. Rust
-solves this with `dyn Fn` / `dyn FnMut` / `dyn FnOnce` as an opt-in on top of concrete
-closure types with `Fn*` impls. Metel wants the same split (RFC-0153's "recommended
-synthesis"): keep `Type::Fun` flat as the default, expose an aspect view for the erased
-case.
+callbacks, a struct field holding one of several handlers, a plugin boundary. Nor can a
+library name and reuse a stateful callable object, decorate one, or retain its concrete
+`Copy` capability through a generic API. Rust solves these cases with `Fn` / `FnMut` /
+`FnOnce` implementations on concrete closure types, generic bounds over those traits,
+and `dyn Fn*` as an opt-in erased form. Metel wants the same split (RFC-0153's
+"recommended synthesis"): keep `Type::Fun` flat as the default, expose an aspect view
+for generic and erased cases.
 
 The design cannot be hand-waved because erasure has to preserve the three axes
 soundly:
@@ -81,11 +83,59 @@ aspect Callable<Args, Ret> {
 ```
 
 `Args` is a numeric-label row (RFC-0151); `call`'s parameter list is `Args` applied.
-Every closure literal gets a synthesized `extend … : Callable<Args, Ret>` whose `call`
-body is the closure body — the same body analysis RFC-0134 §2 / RFC-0153 §1 already run,
-emitting an impl instead of setting `Type::Fun` fields. `Callable` is a closed,
-compiler-synthesized aspect: users never write `extend T : Callable` by hand, so it
-stays out of the coherence / orphan machinery (same profile as `Send` / `Sync`).
+
+#### Closure environments are callable objects
+
+Every closure literal has a distinct, compiler-generated environment aggregate. Its
+owned captures are fields in capture-list order; a shared or exclusive capture is a
+reference field; and a mutating closure has its `in_call` guard in that aggregate. The
+compiler synthesizes a `Callable<Args, Ret>` implementation whose `call` body is the
+closure body. Consequently, the closure's concrete `Copy` capability follows from the
+environment fields and dropping the closure drops the owned capture fields in their
+declared order.
+
+This is a **semantic lowering model**, not a commitment to expose an anonymous generated
+type or to change the v0.13.0 inline closure-value representation. A program cannot name
+the generated environment type, depend on its field names, or use capture-list order as
+a public layout API. Those remain closure implementation details, so changing a closure's
+capture list does not become a source-compatibility break.
+
+#### User-authored callable objects
+
+`Callable` is an open standard aspect from v0.13.1. A program may implement it for a
+nominal type it may legally extend, subject to the ordinary coherence and orphan rules.
+The type then participates in call syntax and in generic callable bounds just as a
+compiler-generated closure environment does:
+
+```metel
+struct Offset {
+    amount: i64,
+}
+
+extend Offset: Callable<i64, i64> {
+    fun call(&self, x: i64) -> i64 {
+        x + self.amount
+    }
+}
+
+fun apply_twice<F>(f: F, x: i64) -> i64
+where F: Callable<i64, i64> + Copy {
+    f(f(x))
+}
+```
+
+This provides named stateful callbacks, factories returning a concrete callable type,
+and wrappers such as logging, retry, caching, validation, or tracing decorators. The
+generic `F` preserves the callable's actual type and capabilities; it is deliberately
+different from a bare function type or `dyn Callable`, both of which erase information.
+For example, a `Logged<F>` struct can store `inner: F`, implement `Callable` by
+delegation, and retain `F: Copy` when its own fields permit it.
+
+The compiler derives the callable-axis markers for a closure from RFC-0134/RFC-0153 body
+analysis. A user-written implementation instead declares its receiver (`&self`, `&var
+self`, or by-value `self`); the exact mapping from that receiver and any declared marker
+refinements to `CallMany` / `CallShared` is specified in §2–§3. A user implementation
+may not claim a marker inconsistent with its `call` receiver.
 
 ### 2. Receiver kind is selected by the axes
 
@@ -183,8 +233,14 @@ the erased-case analogue of the poison flag in §4). **Open question 6.**
 - **Any change to the flat `Type::Fun` model or the v0.13.0 cluster.** This RFC is
   purely additive and strictly later.
 - **Higher-order variance for erased callables** — RFC-0155's scope, unchanged.
-- **User-written `extend T : Callable`** — `Callable` stays compiler-synthesized.
+- **Direct access to a compiler-generated closure environment type.** User-authored
+  callable structs are public nominal types; anonymous closure environments remain
+  opaque.
 - **`dyn Callable` at v0.13.0** — explicitly deferred; the cluster ships monomorphic.
+- **Automatically solving recursive closures, heterogeneous collections without `dyn`,
+  or borrow/lifetime safety.** Recursive callable objects still need finite indirection;
+  heterogeneous collections need an enum or `dyn Callable`; reference captures remain
+  governed by RFC-0122 and the ownership rules.
 
 ## Open Questions
 
@@ -204,6 +260,10 @@ the erased-case analogue of the poison flag in §4). **Open question 6.**
    proposed mechanic (the static `&var self` check of RFC-0153 §3 is unavailable after
    erasure). Confirm the flag lives in the `dyn` value, its overhead, and its interaction
    with `Send`/`Sync` (an erased `mutating` callable stays `!Sync`).
+7. **User-authored marker derivation** (§1) — settle whether the `call` receiver alone
+   derives `CallMany` / `CallShared`, or whether an implementation writes constrained
+   marker refinements; in either form, prevent a user implementation from claiming a
+   capability its receiver cannot honor.
 
 ## References
 
@@ -220,6 +280,9 @@ the erased-case analogue of the poison flag in §4). **Open question 6.**
 - **RFC-0061 §7.1 / metel-core#893** — the original `Callable<A, B>` reservation.
 - **RFC-0151 (Numeric-Label Rows)** — `Args`.
 - **RFC-0141 (Aspect Objects: Explicit Allocator Placement)** — open question 4.
+- **RFC-0163 (Function-Type Use-Multiplicity Surface)** — bare function types erase a
+  callable's concrete use multiplicity; generic `F: Callable<…> + Copy` is the later
+  capability-preserving alternative.
 
 ---
 
@@ -228,6 +291,6 @@ the erased-case analogue of the poison flag in §4). **Open question 6.**
 **Outcome:** *(pending — `1-under-review`, opened 2026-09-01. Extracted from the v0.13.0
 closure cluster during the third adversarial review so that `dyn Callable` is not a
 normative forward reference resting on unbuilt machinery. Targets v0.13.1, sequenced
-after RFC-0096. Two design open questions (by-value `self` object-safety; erased
-single-call mechanics) must close before acceptance.)*
+after RFC-0096. Three design open questions (by-value `self` object-safety; erased
+single-call mechanics; user-authored marker derivation) must close before acceptance.)*
 **Target:** v0.13.1 (#923).

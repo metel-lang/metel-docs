@@ -3,7 +3,7 @@ id: rfc-0006
 title: "Closure Capture Semantics and Cross-Closure Reference Sharing"
 date: '2026-05-21'
 status: implemented
-spec_status: pending
+spec_status: done
 amended_by: rfc-0157, rfc-0050, rfc-0153
 coverage:
   "1": { spec: "spec.functions.closures.dynamics-1" }
@@ -36,11 +36,9 @@ Define how closures capture values from their enclosing scope and what mechanism
 >
 > **Authority.** As of this amendment the normative source for closure capture is
 > **RFC-0157 D5 + RFC-0050 + RFC-0153** (frontmatter `amended_by`). This RFC's Proposal
-> and Resolved Decisions below are historical. `spec_status` is set to `pending`: the
-> reference `spec/functions.md` "Closures" section and the four coverage anchors are
-> rewritten **in the cluster's implementation PR**, not before — nothing is implemented
-> against the stale text, so there is no ambiguity about which document wins, only a
-> scheduled mechanical sync.
+> and Resolved Decisions below are historical. The reference `spec/functions.md`
+> "Closures" section and the four coverage anchors have been rewritten by the cluster
+> implementation, so `spec_status` is `done`.
 >
 > **Disposition of the four `spec.functions.closures.dynamics-*` anchors** (for that PR):
 > - **dynamics-1** (capture "by value") — reworded: by-value capture of a non-`Copy`

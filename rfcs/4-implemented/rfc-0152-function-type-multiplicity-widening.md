@@ -2,9 +2,9 @@
 id: rfc-0152
 title: "Function-Type Multiplicity Widening"
 date: '2026-08-30'
-status: integrated
+status: implemented
 target: v0.13.0
-updated: '2026-09-01'
+updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/901'
 coverage:
   "1": { spec: "spec.functions.closures.legality-9" }
@@ -12,7 +12,7 @@ coverage:
   "3": { spec: "spec.functions.closures.legality-16" }
   "4": { kind: untestable, reason: "Scope-boundary section (not a general Type::Fun subtype lattice; higher-order/contravariant -> RFC-0155). The first-order widening rule it does carry is spec-anchored at legality-9/15/16." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/928'
-impl_status: not-started
+impl_status: implemented
 ---
 
 
@@ -29,6 +29,8 @@ impl_status: not-started
 
 
 > **Status — integrated (2026-09-01).** Closure cluster spec-integrated (Legality 9/15/16; §2's precision-loss and §3's expected-type interaction also anchor at Dynamics 12/14 and Legality 18); coverage.spec frontmatter added; fixtures blocked on metel-core#925. Shape: ADR-0052.
+
+> **Status — implemented (2026-09-02).**
 
 ## Summary
 

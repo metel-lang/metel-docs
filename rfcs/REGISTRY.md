@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**162 RFCs total.** 28 draft, 39 under review, 8 accepted, 8 integrated (83 live), 52 implemented, 13 superseded, 14 refused (79 settled).
+**162 RFCs total.** 28 draft, 39 under review, 8 accepted, 3 integrated (78 live), 57 implemented, 13 superseded, 14 refused (84 settled).
 
 ## Draft (28)
 
@@ -99,18 +99,13 @@ the curated thematic map.
 - **RFC-0120** — Named Records (`2-accepted` ; rfcs/2-accepted/rfc-0120-named-records.md ; date 2026-07-24 ; updated 2026-08-30)
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 
-## Integrated (8)
+## Integrated (3)
 
-- **RFC-0050** — Closure Capture Lists (`3-integrated` ; rfcs/3-integrated/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-09-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/926)
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 - **RFC-0117** — Row Narrowing (`3-integrated` ; rfcs/3-integrated/rfc-0117-row-narrowing.md ; date 2026-07-24 ; updated 2026-08-29 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/789)
-- **RFC-0134** — Closure Call Capability (`3-integrated` ; rfcs/3-integrated/rfc-0134-closure-call-capability.md ; date 2026-08-13 ; updated 2026-09-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/927)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/836)
-- **RFC-0152** — Function-Type Multiplicity Widening (`3-integrated` ; rfcs/3-integrated/rfc-0152-function-type-multiplicity-widening.md ; date 2026-08-30 ; updated 2026-09-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/928)
-- **RFC-0153** — Closure Mutation Axis (`3-integrated` ; rfcs/3-integrated/rfc-0153-closure-mutation-axis.md ; date 2026-08-30 ; updated 2026-09-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/929)
-- **RFC-0157** — Closure Capture Default (Move) (`3-integrated` ; rfcs/3-integrated/rfc-0157-copy-and-clone-model-re-analysis.md ; date 2026-08-31 ; updated 2026-09-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/930)
 
-## Implemented (52)
+## Implemented (57)
 
 - **RFC-0006** — Closure Capture Semantics and Cross-Closure Reference Sharing (`4-implemented` ; rfcs/4-implemented/rfc-0006-closure-capture-semantics.md ; date 2026-05-21)
 - **RFC-0007** — Compiler-Compatible Primitive Type System (`4-implemented` ; rfcs/4-implemented/rfc-0007-uint-type.md ; date 2026-05-21)
@@ -134,6 +129,7 @@ the curated thematic map.
 - **RFC-0042** — let mut for Mutable Bindings (`4-implemented` ; rfcs/4-implemented/rfc-0042-let-mut-bindings.md ; date 2026-06-02)
 - **RFC-0044** — Explicit Receiver Semantics (`4-implemented` ; rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md ; date 2026-06-02)
 - **RFC-0045** — Mutable Address-Of for Lvalue Paths (`4-implemented` ; rfcs/4-implemented/rfc-0045-mut-address-of-lvalue-paths.md ; date 2026-06-02)
+- **RFC-0050** — Closure Capture Lists (`4-implemented` ; rfcs/4-implemented/rfc-0050-closure-capture-lists.md ; date 2026-06-03 ; updated 2026-09-02 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/926)
 - **RFC-0053** — Fixed-Size Array Type [T;N] (`4-implemented` ; rfcs/4-implemented/rfc-0053-fixed-size-arrays.md ; date 2026-06-05)
 - **RFC-0054** — Standard List<T> Type (`4-implemented` ; rfcs/4-implemented/rfc-0054-list-type.md ; date 2026-06-05)
 - **RFC-0057** — Standard Library Layering and Host Module Boundary (`4-implemented` ; rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md ; date 2026-06-06)
@@ -161,9 +157,13 @@ the curated thematic map.
 - **RFC-0126** — T[] as a Copy Borrowed View (`4-implemented` ; rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md ; date 2026-07-27 ; updated 2026-08-03 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/593)
 - **RFC-0129** — Aspect Method Generic Constraint Conformance (`4-implemented` ; rfcs/4-implemented/rfc-0129-aspect-method-generic-constraint-conformance.md ; date 2026-08-05 ; updated 2026-08-29 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/617)
 - **RFC-0130** — extends Aspect: Renaming impl Aspect for Consistency with extend (`4-implemented` ; rfcs/4-implemented/rfc-0130-extends-aspect-renaming-impl-aspect-for-consistency-with-extend.md ; date 2026-08-06 ; updated 2026-08-30 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/801)
+- **RFC-0134** — Closure Call Capability (`4-implemented` ; rfcs/4-implemented/rfc-0134-closure-call-capability.md ; date 2026-08-13 ; updated 2026-09-02 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/927)
 - **RFC-0136** — Walrus for Kept Bindings (`4-implemented` ; rfcs/4-implemented/rfc-0136-walrus-for-kept-bindings.md ; date 2026-08-23 ; updated 2026-08-31 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/804)
 - **RFC-0138** — Generic Functions as First-Class Values (`4-implemented` ; rfcs/4-implemented/rfc-0138-generic-functions-as-first-class-values.md ; date 2026-08-24 ; updated 2026-08-27 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/736)
+- **RFC-0152** — Function-Type Multiplicity Widening (`4-implemented` ; rfcs/4-implemented/rfc-0152-function-type-multiplicity-widening.md ; date 2026-08-30 ; updated 2026-09-02 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/928)
+- **RFC-0153** — Closure Mutation Axis (`4-implemented` ; rfcs/4-implemented/rfc-0153-closure-mutation-axis.md ; date 2026-08-30 ; updated 2026-09-02 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/929)
 - **RFC-0156** — Parenthesize match Scrutinee (`4-implemented` ; rfcs/4-implemented/rfc-0156-parenthesize-match-scrutinee.md ; date 2026-08-31 ; updated 2026-08-31 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/701)
+- **RFC-0157** — Closure Capture Default (Move) (`4-implemented` ; rfcs/4-implemented/rfc-0157-copy-and-clone-model-re-analysis.md ; date 2026-08-31 ; updated 2026-09-02 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/930)
 
 ## Superseded (13)
 

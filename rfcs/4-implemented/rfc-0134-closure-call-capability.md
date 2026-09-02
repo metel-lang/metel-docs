@@ -2,9 +2,9 @@
 id: rfc-0134
 title: "Closure Call Capability"
 date: '2026-08-13'
-status: integrated
+status: implemented
 target: v0.13.0
-updated: '2026-09-01'
+updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/269'
 coverage:
   "1": { spec: "spec.functions.closures.legality-20" }
@@ -14,7 +14,7 @@ coverage:
   "4": { kind: untestable, reason: "Internal type representation — Type::Fun gains three multiplicity fields — not user-observable syntax or behaviour. The field semantics are spec-anchored at legality-8/9 and dynamics-6..10." }
   "5": { spec: "spec.functions.closures.dynamics-10" }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/927'
-impl_status: not-started
+impl_status: implemented
 ---
 
 
@@ -36,6 +36,8 @@ body moves a non-`Copy` capture out is a compile error at the definition site. `
 satisfies a `once` slot by first-order directional matching, delivered by RFC-0152.
 
 > **Status — integrated (2026-09-01).** Closure cluster spec-integrated: reference/spec/functions.md Closures section rewritten as Legality Rules 1-25 / Dynamic Semantics 1-15; this RFC's sections anchor at Legality 8/9/20 and Dynamics 10; coverage.spec frontmatter added; fixtures blocked on implementation (metel-core#925). Shape: ADR-0052.
+
+> **Status — implemented (2026-09-02).**
 
 ## Summary
 
