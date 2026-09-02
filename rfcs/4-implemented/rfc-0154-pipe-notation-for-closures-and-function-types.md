@@ -272,7 +272,7 @@ No runtime effect; nothing leaves the compiler.
 - **RFC-0134 (Closure Call Capability)** — its §3a is removed and folded here;
   its `once`/`many` qualifier prefixes `|...|` (§4).
 - **RFC-0153 (Closure Mutation Axis)** — its `var` qualifier likewise (§4).
-- **RFC-0163 (Function-Type Use-Multiplicity Surface, `1-under-review`)** — owns the
+- **RFC-0163 (Function-Type Use-Multiplicity Surface, `2-accepted`)** — owns the
   type-only `copy` qualifier. This RFC deliberately does **not** pre-declare `copy` in its
   grammar: if RFC-0163 is accepted it adds `copy` to `fun_type_qualifier` and runs its own
   corpus sweep, prefixing whatever spelling this RFC lands. No dependency in the other
