@@ -188,11 +188,15 @@ lives there for the closure's lifetime. On that base:
     reachable question. The distinction that remains is which axis governs an observable
     early exit:
     - **Plain `var` (not `once`):** the call does not consume the closure (§3). When the
-      body exits early via `?` / `return`, the mutations that already ran are visible in
-      the environment cell, the exclusive borrow and the in-call flag are released as the
-      frame returns, and the closure stays **callable in a valid-but-partial state** —
-      exactly as a `&var self` method that returned early mid-mutation leaves its
-      receiver. No rollback.
+      body exits early via `?` / `return`, the mutations that already ran stay in the
+      environment cell, the exclusive borrow and the in-call flag are released as the
+      frame returns, and the closure is left as an ordinary value whose captured state has
+      been mutated — exactly as a `&var self` method that returned early mid-mutation
+      leaves its receiver. There is no rollback, and **no resume**: a subsequent call is
+      an ordinary fresh call that runs the body from the top over that state, not a
+      continuation from the `?` / `return` site. Whether that state is meaningful to call
+      over again is the author's concern, the same as for any partially-updated `&var
+      self` receiver.
     - **`once` or `once var`:** the `once` axis consumed the callee place *at the call
       expression*, before the body ran (RFC-0134 §2). So the closure is a moved value
       however the body returned — normally or early — and a later use is the ordinary
