@@ -171,9 +171,9 @@ function type.
 
 ## Interactions
 
-- **RFC-0154 (Pipe Notation), `1-under-review`** — the trigger. This RFC's rule 1 is the
-  reconciliation RFC-0154 §"the `|` wrinkle" defers. If RFC-0154 does not land, `A | B`
-  competes with nothing and rules 2–4 are the only content.
+- **RFC-0154 (Pipe Notation), `2-accepted` (v0.13.0)** — the trigger. This RFC's rule 1
+  is the reconciliation RFC-0154 §"the `|` wrinkle" defers. If RFC-0154 does not land,
+  `A | B` competes with nothing and rules 2–4 are the only content.
 - **RFC-0116 (Anonymous Record Types)** — the product this is the coproduct of; identity
   and coercion rules should mirror RFC-0116's structural treatment where they can.
 - **RFC-0151 (Tuples as Numeric-Label Rows), `0-draft`** — same family; `(A, B) | C` and

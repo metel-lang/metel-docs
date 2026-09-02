@@ -2,7 +2,7 @@
 id: rfc-0154
 title: "Pipe Notation for Closures and Function Types"
 date: '2026-08-30'
-status: under-review
+status: accepted
 target: v0.13.0
 updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/903'
@@ -40,6 +40,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/903'
 > qualifier, which prefixes whatever spelling lands here.
 
 > **Status — under review (2026-08-30).** Split from RFC-0134 §3a: the base function-type spelling is a corpus-wide grammar question. Proposes |T| -> U for the type and |x| body for the literal, freeing (...) for grouping and RFC-0151 tuples/records.
+
+> **Status — accepted (2026-09-02).** spelling migration settled; §5 advisory, copy deferred to RFC-0163, RFC-0041 legality-1/2/3 supersession explicit; F1-F11 addressed
 
 ## Summary
 
@@ -354,15 +356,16 @@ The implementation must cover, at minimum:
 
 ## Decision
 
-**Outcome:** *(proposal complete — `1-under-review` (#903), split from RFC-0134 §3a. All
+**Outcome:** **Accepted 2026-09-02** (`2-accepted`, #903), split from RFC-0134 §3a. All
 four grammar questions were resolved 2026-09-02; two follow-up passes the same day trimmed
 §5 to a non-enforced style recommendation, removed the conditional `copy` pre-declaration,
 and — from an adversarial pass — made the supersession of RFC-0041's mandatory `->`
 explicit (§2, Migration), flagged the grammar productions as illustrative, resolved the
 `&` / `&var` / `once` / `var` prefix ordering, and marked the RFC-0151 / RFC-0125
-interactions anticipatory. Acceptance review must verify the capture-prefix grammar, the
-`|` / `||` operand-position rule, and the corpus migration — including the
-`first-class-functions.legality-1` / `closures.legality-1`–`3` spec re-anchoring.)*
+interactions anticipatory. **Carried into `3-integrated`** (umbrella checklist on #903):
+reword `first-class-functions.legality-1` and `closures.legality-1`–`3` to the `|...|`
+forms, re-anchor their citing fixtures, and add worked examples hunting for soundness gaps
+at the intersections with the closure cluster.
 **Target:** **v0.13.0** — follows the merged closure cluster as its syntax-migration
 work, alongside RFC-0160 (Type Aliases). The migration is intentionally limited to
 pipe notation; bare-expression bodies, and any return-type-omission convenience beyond
