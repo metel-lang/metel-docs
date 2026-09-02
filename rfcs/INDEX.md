@@ -1174,21 +1174,22 @@ implementation).
   status quo, runtime poison, transactional rollback. 4 OQs (reachability standard,
   nested-closure `?`, `[&var x]` scope, diagnostic). Opened as RFC-0163; renumbered to
   0164 (0163 taken by Function-Type Use-Multiplicity Surface).
-- **RFC-0154** *(under review, opened 2026-08-30; **v0.13.0** since 2026-09-02)* — Pipe Notation for Closures and
-  Function Types — split from RFC-0134 §3a. Replaces `(...)` for both the closure literal
-  and the function type with `|...|`: `|x, y| body` (block or bare expression, optional
-  param/return types) and `|A, B| -> C`. RFC-0041 (`4-implemented`) was right to drop the
-  `fun` keyword but chose `(...)`, which collides with grouping, calls, and — once
-  RFC-0151 makes `(A, B)` a record type — genuinely ambiguously with tuple/record types.
-  `|...|` keeps RFC-0041's lightness, frees `(...)`, and makes the literal and its
-  annotation share a shape. `once`/`many` (RFC-0134) and `var` (RFC-0153) prefix the `|`.
-  **§5 (added 2026-09-02): a function type nested as another's return or parameter must be
-  parenthesized** — `|A| -> (|B| -> C)` — the fix for closures-returning-closures reading
-  badly; aliases (RFC-0160) name anything deeper. **Co-lands in v0.13.0 with the closure
-  cluster** so the base spelling migrates once, not twice.
-  Open: the `|` disambiguation rule (`|| expr` vs `a || b`), whether `->` is mandatory in
-  the type, bare-expression bodies. RFC-0041 gets a correction note. Tracker
-  metel-core#903; rejects RFC-0134 §3a's `fun(T) -> U` as a revert of RFC-0041.
+- **RFC-0154** *(**accepted 2026-09-02**; **v0.13.0**; #903)* — Pipe Notation for Closures
+  and Function Types — split from RFC-0134 §3a. Replaces `(...)` for both the closure
+  literal and the function type with `|...|`: `|x, y| { body }` (block only; return type
+  inferred when omitted) and `|A, B| -> C` (`->` and return type mandatory in a written
+  type). RFC-0041 (`4-implemented`) was right to drop `fun` but chose `(...)`, which
+  collides with grouping, calls, and — anticipating RFC-0151's `(A, B)` record type —
+  ambiguously with tuple/record types. `once` (RFC-0134) and `var` (RFC-0153) prefix the
+  `|`; `&` / `&var` wrap outside those. **Supersedes RFC-0041 `closures.legality-1`–`3`**:
+  the mandatory `->`-before-body was RFC-0041's disambiguator, and `|...|` carries that
+  itself. §5 (nested function types) is a **non-enforced style recommendation**, not a
+  parse rule — `->` is right-associative so `|A| -> |B| -> C` is unambiguous. `copy` is
+  **not** pre-declared — RFC-0163 owns it. Grammar questions resolved 2026-09-02; F1–F11
+  adversarial pass applied. **Carried into `3-integrated`**: reword
+  `first-class-functions.legality-1` / `closures.legality-1`–`3` to `|...|` and re-anchor
+  their fixtures (umbrella checklist on #903). Co-lands in v0.13.0 with RFC-0160; rejects
+  RFC-0134 §3a's `fun(T) -> U` as a revert of RFC-0041.
 - **RFC-0003** *(under review, corrected 2026-08-24; scheduled 2026-08-27)* — Concurrency Model — fiber handles,
   channels, `select`, `Send`/`Sync`, aspect-based desugaring (`Spawnable`/`Sendable`/
   `Receivable`/`Selectable`), and a crate-wide pluggable-runtime mechanism (swap the

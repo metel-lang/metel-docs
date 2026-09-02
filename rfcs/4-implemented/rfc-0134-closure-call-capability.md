@@ -849,9 +849,9 @@ re-examining, because the trade-off it was made against will have changed.
   splits an aliasing `Share` aspect out of `Clone` for `Rc`/`Arc`. Orthogonal to closure
   multiplicity; listed because it, RFC-0135, and §4/§5 all touch the `Copy`/`Clone`/
   multiplicity area.
-- **RFC-0154 (Pipe Notation for Closures and Function Types), `1-under-review`** — owns
+- **RFC-0154 (Pipe Notation for Closures and Function Types), `2-accepted`** — owns
   the base function-type spelling. §3a was split into it 2026-08-30; this RFC's
-  `once`/`many` qualifier prefixes whatever RFC-0154 settles (`|T| -> U` as proposed).
+  `once`/`many` qualifier prefixes RFC-0154's `|T| -> U`.
 - **RFC-0152 (Function-Type Multiplicity Widening), `2-accepted`** — the directional
   "`many` satisfies `once`" rule §3 needs to be coherent. Accepted 2026-08-30 as a
   co-requirement of this RFC.

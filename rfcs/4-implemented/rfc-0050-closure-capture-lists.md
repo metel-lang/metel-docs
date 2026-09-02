@@ -467,7 +467,7 @@ aggregate, held owned-and-mutable rather than re-cloned. Full runtime shape, the
 
 - Language spec: `docs/public/spec.md`
 - RFC-0041: Lambda Syntax for Anonymous Functions — the base closure-literal spelling
-- RFC-0154: Pipe Notation for Closures and Function Types (`1-under-review`) — proposes
+- RFC-0154: Pipe Notation for Closures and Function Types (`2-accepted`) — proposes
   `|x| body` for the literal; the `[captures]` prefix composes ahead of whichever base
   spelling settles
 - RFC-0043: Regular Pointers and Mutable Pointers — **superseded by RFC-0067a**

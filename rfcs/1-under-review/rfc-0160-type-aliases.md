@@ -17,8 +17,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/921'
 > co-land with **RFC-0154** (the `|...|` function-type spelling) and the closure cluster
 > (RFC-0050 / RFC-0134 / RFC-0152 / RFC-0153 / RFC-0157): the qualifier grammar (`once` /
 > `var`), its base spelling, and the tool for naming the results all ship in one
-> migration. RFC-0154 §5 requires a nested function type (`|A| -> (|B| -> C)`) to be
-> parenthesized; an alias is how you write that parenthesis once. Examples below use
+> migration. RFC-0154 §5 recommends parenthesizing a nested function type (`|A| -> (|B| ->
+> C)`); an alias is how you write that parenthesis once. Examples below use
 > RFC-0154's `|...|` form and the `var` qualifier accordingly. **All five Open Questions
 > resolved 2026-09-02 — acceptance-ready.**
 
@@ -41,8 +41,8 @@ type Renderer<W> = context(theme: Theme) var |W| -> Html;    // parameterised; c
 - **May be parameterised.** `type X<A, B> = …` with the same generic-parameter and
   bound rules as any declaration.
 - **Names any type**, including function/closure types with their `once` / `var`
-  qualifiers (RFC-0134 / RFC-0153), nested function types RFC-0154 §5 requires
-  parenthesized, and, once RFC-0113 lands, their `context(...)` requirement.
+  qualifiers (RFC-0134 / RFC-0153), the nested function types RFC-0154 §5 recommends
+  parenthesizing, and, once RFC-0113 lands, their `context(...)` requirement.
 
 It does **not** introduce a newtype, does not add nominal identity, and does not carry a
 closure's capture list (see §"Function and closure types").
@@ -57,9 +57,9 @@ closure's capture list (see §"Function and closure types").
   RFC-0154's `|...|` base spelling. `once var |Request, &Config| -> Response` written in
   every route table, struct field, and higher-order parameter is real noise, and it is
   exactly the kind of type an alias is best at: long, structural, repeated.
-- RFC-0154 §5 requires a function type nested in another (`|A| -> (|B| -> C)`,
-  `|(|i64| -> i64)| -> String`) to be parenthesized. An alias writes that parenthesis
-  once and hands out a plain name: `type Curried = |A| -> (|B| -> C);`.
+- RFC-0154 §5 recommends parenthesizing a function type nested in another (`|A| -> (|B| ->
+  C)`, `|(|i64| -> i64)| -> String`). An alias writes that parenthesis once and hands out a
+  plain name: `type Curried = |A| -> (|B| -> C);`.
 - RFC-0113 context parameters will add a `context(...)` clause to function types for the
   deferral case (§"Context parameters"). Without aliases, `context(theme: Theme) var
   |Widget| -> Html` is the worst case.
@@ -195,9 +195,9 @@ summary, for aliases:
   parameter aliased to `once var |…|`).
 - **RFC-0113 (Context Parameters, `1-under-review`, v0.13.1)** — see §"Context
   parameters"; amended in parallel.
-- **RFC-0154 (Pipe Notation, `1-under-review`)** — **co-lands in v0.13.0**. The alias RHS
-  uses its `|...|` form; RFC-0154 §5's requirement that a nested function type be
-  parenthesized is what makes aliases the practical tool for the returns-a-function case.
+- **RFC-0154 (Pipe Notation, `2-accepted`)** — **co-lands in v0.13.0**. The alias RHS
+  uses its `|...|` form; RFC-0154 §5's recommendation to parenthesize a nested function
+  type is what makes aliases the practical tool for the returns-a-function case.
 - **RFC-0121 (Open Rows) / RFC-0140 (Algebraic Effects)** — the row shape the
   `context(...)` clause reuses.
 
