@@ -10,7 +10,6 @@ Closures are anonymous functions that can be stored in variables, passed to othe
 
 Closures use the `(...) -> ... { ... }` form:
 
-{/* doc-example: skip reason="RFC-0154 pipe notation — pending develop-latest with the |...| parser (metel-core#903)" */}
 ```metel
 fun main() {
     let double := |x: i64| -> i64 { return x * 2; };
@@ -30,7 +29,6 @@ If a parameter expects `(i64) -> i64`, you can pass either a named function or a
 
 Closures and named functions can be used through the same function type:
 
-{/* doc-example: skip reason="RFC-0154 pipe notation — pending develop-latest with the |...| parser (metel-core#903)" */}
 ```metel
 fun apply_twice(f: |i64| -> i64, x: i64) -> i64 {
     return f(f(x));
@@ -50,7 +48,6 @@ A useful mental model is: a closure is a function value that may carry some capt
 
 A closure can use bindings from the surrounding scope:
 
-{/* doc-example: skip reason="RFC-0154 pipe notation — pending develop-latest with the |...| parser (metel-core#903)" */}
 ```metel
 fun main() {
     let suffix := "!";
@@ -74,7 +71,6 @@ If the closure body mentions a binding declared outside the closure, that bindin
 
 Closures capture by value. If you want shared mutable state across closures, make that sharing explicit with a mutable reference:
 
-{/* doc-example: skip reason="RFC-0154 pipe notation — pending develop-latest with the |...| parser (metel-core#903)" */}
 ```metel
 fun main() {
     var count := 0;
@@ -106,7 +102,6 @@ If multiple closures need to mutate the same value, introduce a mutable referenc
 
 Closures can be returned like any other value:
 
-{/* doc-example: skip reason="RFC-0154 pipe notation — pending develop-latest with the |...| parser (metel-core#903)" */}
 ```metel
 fun make_adder(base: i64) -> |i64| -> i64 {
     return |x: i64| -> i64 {
@@ -128,7 +123,6 @@ Returning a closure lets you build small configurable behaviours without introdu
 
 Here a closure tracks how many items matched a filter:
 
-{/* doc-example: skip reason="RFC-0154 pipe notation — pending develop-latest with the |...| parser (metel-core#903)" */}
 ```metel
 fun main() {
     let values := [1, 2, 3, 4, 5, 6];

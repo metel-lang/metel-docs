@@ -1174,7 +1174,7 @@ implementation).
   status quo, runtime poison, transactional rollback. 4 OQs (reachability standard,
   nested-closure `?`, `[&var x]` scope, diagnostic). Opened as RFC-0163; renumbered to
   0164 (0163 taken by Function-Type Use-Multiplicity Surface).
-- **RFC-0154** *(**integrated 2026-09-02**; **v0.13.0**; #903; impl metel-core#903)* — Pipe Notation for Closures
+- **RFC-0154** *(**implemented 2026-09-02**; **v0.13.0**; #903; impl metel-core#903)* — Pipe Notation for Closures
   and Function Types — split from RFC-0134 §3a. Replaces `(...)` for both the closure
   literal and the function type with `|...|`: `|x, y| { body }` (block only; return type
   inferred when omitted) and `|A, B| -> C` (`->` and return type mandatory in a written

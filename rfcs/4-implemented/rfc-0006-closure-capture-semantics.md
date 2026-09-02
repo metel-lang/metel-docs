@@ -67,8 +67,8 @@ The PoC evaluator captures all free variables by cloning them at closure definit
 // Intended: inc and get both operate on the same counter.
 // Under clone capture: each holds its own copy — inc's mutations are invisible to get.
 var counter := 0;
-let inc := () -> () { counter += 1; };
-let get := () -> Int { counter };
+let inc := || -> () { counter += 1; };
+let get := || -> Int { counter };
 ```
 
 **Mutation visible to the enclosing scope:**
@@ -76,7 +76,7 @@ let get := () -> Int { counter };
 // Intended: calling double() updates the original.
 // Under clone capture: double works on a copy.
 var x := 5;
-let double := () -> () { x *= 2; };
+let double := || -> () { x *= 2; };
 double();
 // x is still 5 here
 ```
@@ -106,7 +106,7 @@ Two axes define the problem:
 ```metel
 var counter := 0;
 let p := &var counter;
-let inc := () -> () { *p += 1; };
+let inc := || -> () { *p += 1; };
 ```
 Aliasing is visible at the capture site. The loop variable problem cannot occur silently.
 
@@ -176,10 +176,10 @@ If a closure leaves the lexical scope of a non-linear local that it can still re
 Example:
 
 ```metel
-fun make_counter() -> () -> Int {
+fun make_counter() -> || -> Int {
     var n := 0;
     let p := &var n;
-    return () -> Int {
+    return || -> Int {
         *p += 1;
         return *p;
     };

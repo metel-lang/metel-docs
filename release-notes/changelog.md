@@ -8,6 +8,21 @@ title: "Metel Language Changelog"
 
 *In progress on `develop` — not yet released.*
 
+**Pipe notation for closures and function types (RFC-0154):**
+- A closure literal and a function type are now written with a pipe-delimited parameter
+  list: `|x, y| { … }` and `|A, B| -> C`, replacing `(x, y) -> { … }` and `(A, B) -> C`.
+  `(...)` is freed for grouping and (RFC-0151) tuples/records. It is a hard switch —
+  the parenthesized spelling is a parse error.
+- On a closure **literal** the `->` is written only when a return type is: `|x| -> i64 {
+  … }` annotated, `|x| { … }` inferred, `|| { … }` nullary. This supersedes RFC-0041's
+  rule that `->` precede every body — the `|...|` delimiters do that disambiguation now.
+  Return-type inference from the body is unchanged.
+- In a written function **type** the `->` and return type stay mandatory: `|i64| ->
+  String`, nullary `|| -> String`. `once` / `var` qualifiers and `&` / `&var` prefix it
+  as before (`&var once var |T| -> U`).
+- `->` is right-associative, so a nested function type (`|A| -> |B| -> C`) parses
+  unambiguously; parenthesizing it is a style recommendation, not a rule.
+
 **Struct pattern matching:**
 - A named struct can now be matched with a struct pattern (`Point { x, y }`,
   `Token { kind, span, .. }`) — RFC-0032 §4/§5 and RFC-0034 §5's own worked examples used
