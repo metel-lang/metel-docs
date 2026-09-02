@@ -16,8 +16,9 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/903'
 > review and implementation planning. An adversarial review on 2026-09-02 found the
 > initial pipe grammar had omitted capture lists; this revision restores them. RFC-0160
 > (Type Aliases) co-lands alongside it. A second acceptance-review pass the same day
-> trimmed §5's nested-type rule to advisory (formatter/lint, not a parse error) and
-> dropped the conditional `copy` pre-declaration (RFC-0163 owns that word).
+> trimmed §5's nested-type rule to a style recommendation (not a parse error; no tooling
+> to enforce it yet) and dropped the conditional `copy` pre-declaration (RFC-0163 owns
+> that word).
 >
 > **Scope (2026-09-02): the first iteration is the spelling migration and nothing more.**
 > `->` and the return type are written wherever a function *type* is written — there is no
@@ -135,7 +136,7 @@ The reserved-word rule applies equally to both qualifiers.
 Reference qualifiers wrap the whole thing: `&|i64| -> String`,
 `&var |i64| -> String` — a shared/exclusive reference *to* a function value.
 
-### 5. Nested function types — right-associative; parenthesize by convention
+### 5. Nested function types — right-associative; parentheses are a style recommendation
 
 `->` is **right-associative**, so a function type nested as another's return or parameter
 type parses unambiguously with no extra rule:
@@ -148,11 +149,13 @@ var |Request| -> once |Response| -> Result   // == var |Request| -> (once |Respo
 Both spellings — with the parentheses and without — are legal and denote the same type.
 
 The bare form *reads* badly once the closure cluster's `once` / `var` prefixes are
-interleaved. That is a **formatting / lint concern, not a grammar one**: a formatter adds
-the parentheses around a function type nested in another's return or parameter position,
-and a lint may flag the bare form. This RFC does **not** make the bare form a parse error
-in v0.13.0 — if the advisory tooling proves insufficient once the notation is in real use,
-a hard rule can be added then.
+interleaved, so **the recommended style is to write the parentheses** around a function
+type nested in another's return or parameter position: `|Request| -> (|Response| ->
+Result)`. This is guidance for whoever writes the code — Metel has no formatter or linter
+today, so nothing enforces it — and it is deliberately *not* a parse error in v0.13.0.
+A formatter or lint could adopt the convention if either is built later, and a hard
+grammar rule stays on the table if the bare form proves to read badly enough in real use
+to warrant it.
 
 Parentheses around a type are ordinary grouping — the same `(e)` that groups an
 expression, here in type position — accepted anywhere a type is expected. They carry no
@@ -166,7 +169,7 @@ parenthesize:
 
 ```
 fun make_counter() -> var || -> i64                    // `var || -> i64` is the return, not nested in a fn type
-fun compose(f: |A| -> B, g: |B| -> C) -> |A| -> C      // legal bare; a formatter writes the return as (|A| -> C)
+fun compose(f: |A| -> B, g: |B| -> C) -> |A| -> C      // legal; the recommended style writes the return as (|A| -> C)
 ```
 
 For anything deeper than one level, name it with a type alias (RFC-0160): `type Curried =
@@ -201,9 +204,11 @@ grammar; this is its v0.13.0 syntax-migration follow-up. Two mechanical rewrites
   `[captures] once? var? |params|`. Find by `closure_expr` nodes in the parsed
   tree, not text.
 
-Nested function types (§5) need no rewrite — the bare form stays legal; the formatter
-pass adds the advisory parentheses around a `fun_type` nested in another's return or
-parameter position. If RFC-0163 is later accepted, it carries its own `copy` sweep.
+Nested function types (§5) need no rewrite — the bare form stays legal. The recommended
+style writes the parentheses around a `fun_type` nested in another's return or parameter
+position, but nothing enforces that (Metel has no formatter or linter), so the sweep may
+apply it as a readability pass or skip it. If RFC-0163 is later accepted, it carries its
+own `copy` sweep.
 
 No runtime effect; nothing leaves the compiler.
 
@@ -221,7 +226,7 @@ No runtime effect; nothing leaves the compiler.
   corpus sweep, prefixing whatever spelling this RFC lands. No dependency in the other
   direction.
 - **RFC-0160 (Type Aliases, `1-under-review`)** — co-lands in v0.13.0. Aliases are the
-  recommended tool for anything deeper than the one level §5's advisory parentheses
+  recommended tool for anything deeper than the one level §5's recommended parentheses
   cover; RFC-0160's RHS uses this RFC's `|...|` form.
 - **RFC-0151 (Tuples as Numeric-Label Rows)** — the reason `(A, B) -> C` must
   stop being a function type; this RFC is what frees `(...)` for it.
@@ -299,8 +304,9 @@ The implementation must cover, at minimum:
 
 **Outcome:** *(proposal complete — `1-under-review` (#903), split from RFC-0134 §3a.
 All four grammar questions were resolved 2026-09-02; the acceptance-review follow-ups
-(2026-09-02) trimmed §5 to an advisory formatter/lint rule and removed the conditional
-`copy` pre-declaration. Acceptance review must verify the capture-prefix grammar, the
+(2026-09-02) trimmed §5 to a non-enforced style recommendation and removed the
+conditional `copy` pre-declaration. Acceptance review must verify the capture-prefix
+grammar, the
 `|` / `||` position rule, and the corpus migration.)*
 **Target:** **v0.13.0** — follows the merged closure cluster as its syntax-migration
 work, alongside RFC-0160 (Type Aliases). The migration is intentionally limited to
