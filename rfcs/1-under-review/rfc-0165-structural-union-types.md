@@ -2,16 +2,21 @@
 id: rfc-0165
 title: "Structural Union Types"
 date: '2026-09-02'
-status: draft
+status: under-review
 target:
+updated: '2026-09-02'
+tracking: 'https://github.com/metel-lang/metel-core/issues/937'
 ---
 
 > **Opened 2026-09-02 from RFC-0154's adversarial review (F11).** RFC-0154 makes `|` a
 > delimiter in type position (`|A| -> B`). Its "Grammar: the `|` wrinkle" section reserves
 > the question of a future `A | B` union spelling and says a later RFC "must reconcile
-> them." This is that RFC. It is a **design sketch** — `0-draft`, no target, no tracking
-> issue — recording the spelling reconciliation and the semantic options, not a settled
-> proposal.
+> them." This is that RFC. It records the spelling reconciliation (§1, close to settled)
+> and the semantic design space; the load-bearing question — tagged vs untagged (Open
+> Question 1) — is unresolved, which is why this is `1-under-review` and **not scheduled**
+> (no milestone). Tracking: metel-core#937.
+
+> **Status — under review (2026-09-02).** spelling reconciliation with RFC-0154 recorded; OQ1 (tagged vs untagged) is the open decision
 
 ## Summary
 
@@ -243,8 +248,10 @@ benefit, another special form. Rejected.
 
 ## Decision
 
-**Outcome:** *(pending — `0-draft`, opened 2026-09-02 from RFC-0154's F11. Records the
-`|` spelling reconciliation (§1) as close to settled and the tagged-vs-untagged semantics
-(Open Question 1) as the open decision. No design work has happened beyond this sketch.)*
-**Target:** *(none — not scheduled; depends on RFC-0154 landing for the spelling
-reconciliation to matter, and on a decision on Open Question 1 to be more than a stub.)*
+**Outcome:** *(pending — `1-under-review` (metel-core#937), opened 2026-09-02 from
+RFC-0154's F11. The `|` spelling reconciliation (§1) is close to settled; the
+tagged-vs-untagged semantics (Open Question 1) is the open decision that blocks
+acceptance, and seven further open questions flex around it.)*
+**Target:** *(none — not scheduled; the spelling reconciliation only matters once RFC-0154
+lands, and Open Question 1 needs a decision before this is more than a sketch. The
+tracking issue is deliberately unmilestoned.)*

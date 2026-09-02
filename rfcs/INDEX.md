@@ -346,7 +346,7 @@ above it are.
   and RFC-0125's pack-into-tuple calculus dissolve. Open: `()` vs `Unit`, whether
   mixed integer/identifier-label rows are allowed, migration staging. Sequence before
   RFC-0125 (v0.14.0).
-- **RFC-0165** *(draft, opened 2026-09-02)* — Structural Union Types — an anonymous
+- **RFC-0165** *(under review, opened 2026-09-02; metel-core#937; **unscheduled**)* — Structural Union Types — an anonymous
   sum-type former `A | B | C`, the coproduct dual of RFC-0116 records and RFC-0151 tuples
   (today Metel has structural products without a name but only nominal sums, `enum`).
   Opened from RFC-0154's adversarial review (F11): RFC-0154 makes `|` a delimiter in type
