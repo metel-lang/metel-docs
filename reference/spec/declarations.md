@@ -1609,7 +1609,7 @@ and structural targets remain subject to their ordinary orphan-rule locality rul
 
 ### Structural Aspect Bounds
 
-Arrays (`T[]`), tuples (`(A, B)`, …), and function types (`(A) -> B`) are
+Arrays (`T[]`), tuples (`(A, B)`, …), and function types (`|A| -> B`) are
 **structural types** — built into the language rather than declared by a user, with no
 name that can serve as an impl target the ordinary way. For the orphan rule (above),
 structural type constructors are treated as belonging to `std::core`: a user module
@@ -1658,7 +1658,7 @@ for arrays or otherwise.
 
 **Tuples** are deferred pending a decision on per-arity boilerplate vs. variadic generics — until then, tuples fail aspect bounds the same way arrays do without a matching impl (`(i64, String)` does not implement `Display`, with a hint to use a named struct instead).
 
-**Function types.** A plain function and a closure share one type, `(A) -> B` (see [Functions — First-Class Functions](functions.md#first-class-functions)) — there is no separate `fun(A) -> B` function-pointer type or syntax; `fun(A) -> B` is a parse error. `Callable<A, B>` does not exist in `std::core` yet — despite being referenced elsewhere as the aspect a function type would formally satisfy, writing a bound or `extends Callable<A, B>` against it is a compile error (`T0003`, unknown aspect) today. A `(A) -> B` value behaves like `Copy` under `--move-check` (reusing one after copying it into another binding is accepted), but there is no working `Clone`: `.clone()` on a `(A) -> B` receiver fails to typecheck (`T0002`, cannot infer receiver type) regardless of annotation. `Display`, `Eq`, `Ord`, `Hash`, `Send`, `Sync`, and `Drop` are not implemented for function types either — there is no canonical string form, function equality is undecidable in general, `Send`/`Sync` aren't implemented for any type yet (RFC-0080, still `1-under-review`), and there is no state to drop.
+**Function types.** A plain function and a closure share one type, `|A| -> B` (see [Functions — First-Class Functions](functions.md#first-class-functions)) — there is no separate `fun(A) -> B` function-pointer type or syntax; `fun(A) -> B` is a parse error. `Callable<A, B>` does not exist in `std::core` yet — despite being referenced elsewhere as the aspect a function type would formally satisfy, writing a bound or `extends Callable<A, B>` against it is a compile error (`T0003`, unknown aspect) today. A `|A| -> B` value behaves like `Copy` under `--move-check` (reusing one after copying it into another binding is accepted), but there is no working `Clone`: `.clone()` on a `|A| -> B` receiver fails to typecheck (`T0002`, cannot infer receiver type) regardless of annotation. `Display`, `Eq`, `Ord`, `Hash`, `Send`, `Sync`, and `Drop` are not implemented for function types either — there is no canonical string form, function equality is undecidable in general, `Send`/`Sync` aren't implemented for any type yet (RFC-0080, still `1-under-review`), and there is no state to drop.
 
 **Array auto-impl propagation.** `T[]: Send`, `T[]: Sync`, and `T[]: Drop` are not
 provided in this language version.
@@ -1745,7 +1745,7 @@ bounds unless a separately specified implementation applies.
 
 ##### Legality Rule {#spec.declarations.structural-aspect-bounds.legality-7}
 
-Function values have the ordinary function type `(A) -> B`; there is no separate
+Function values have the ordinary function type `|A| -> B`; there is no separate
 function-pointer type.
 
 <!-- rfc.py:origins:start -->

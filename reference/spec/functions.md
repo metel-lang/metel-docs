@@ -139,7 +139,7 @@ return type are always written. Neither `(ParameterTypes) -> ReturnType` (the sp
 before v0.13.0) nor `fun(ParameterTypes) -> ReturnType` is a function-type syntax.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/3-integrated/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -319,7 +319,7 @@ before v0.13.0 the parameter list was parenthesized and `->` was written before 
 body; `|…|` self-disambiguates, so `->` now appears only with a return type.)
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/3-integrated/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -333,7 +333,7 @@ a return type is (RFC-0154, superseding RFC-0041's rule that `->` precede every 
 bare block `{ … }` with no preceding `|…|` is a block expression, not a closure.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/3-integrated/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -400,7 +400,7 @@ fixed order of [legality-23](#spec.functions.closures.legality-23) is a grammar 
 closure *literals* only.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md), [rfc-0154](../../rfcs/3-integrated/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

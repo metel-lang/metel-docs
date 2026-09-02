@@ -195,7 +195,7 @@ summary, for aliases:
   parameter aliased to `once var |…|`).
 - **RFC-0113 (Context Parameters, `1-under-review`, v0.13.1)** — see §"Context
   parameters"; amended in parallel.
-- **RFC-0154 (Pipe Notation, `2-accepted`)** — **co-lands in v0.13.0**. The alias RHS
+- **RFC-0154 (Pipe Notation, `3-integrated`)** — **co-lands in v0.13.0**. The alias RHS
   uses its `|...|` form; RFC-0154 §5's recommendation to parenthesize a nested function
   type is what makes aliases the practical tool for the returns-a-function case.
 - **RFC-0121 (Open Rows) / RFC-0140 (Algebraic Effects)** — the row shape the
