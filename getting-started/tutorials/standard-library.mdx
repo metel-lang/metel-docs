@@ -18,10 +18,13 @@ with `map`, `filter`, and `fold`:
 ```metel
 fun main() {
     let nums := List::from([1, 2, 3, 4, 5]);
+    fun double(x: i64) -> i64 { x * 2 }
+    fun is_even(x: i64) -> boolean { x % 2 == 0 }
+    fun add(acc: i64, x: i64) -> i64 { acc + x }
 
-    let doubled := nums.map((x: i64) -> i64 { x * 2 });
-    let evens   := nums.filter((x: i64) -> boolean { x % 2 == 0 });
-    let sum     := nums.fold(0i64, (acc: i64, x: i64) -> i64 { acc + x });
+    let doubled := nums.map(double);
+    let evens   := nums.filter(is_even);
+    let sum     := nums.fold(0i64, add);
 
     println(sum);            // 15
     println(evens.len());    // 2
@@ -50,9 +53,10 @@ use their combinators:
 ```metel
 fun main() {
     let maybe := Perhaps::Some { value = 21 };
+    fun double(x: i64) -> i64 { x * 2 }
 
     // Transform inside the Perhaps, then supply a fallback.
-    let doubled := maybe.map((x: i64) -> i64 { x * 2 }).unwrap_or(0); // 42
+    let doubled := maybe.map(double).unwrap_or(0); // 42
 
     let nothing: Perhaps<i64> := None;
     println(nothing.is_none());            // true
