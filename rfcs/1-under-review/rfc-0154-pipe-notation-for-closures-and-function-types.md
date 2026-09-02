@@ -13,7 +13,9 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/903'
 > RFC-0157). This RFC now follows as the one corpus-wide syntax migration from the
 > parenthesized implementation that shipped in that cluster. Its four grammar questions
 > were resolved together on 2026-09-02; it remains `1-under-review` pending acceptance
-> review and implementation planning. RFC-0160 (Type Aliases) co-lands alongside it.
+> review and implementation planning. An adversarial review on 2026-09-02 found that
+> the initial pipe grammar had omitted capture lists and a parenthesized-type production;
+> this revision restores both. RFC-0160 (Type Aliases) co-lands alongside it.
 
 > **Split from RFC-0134 §3a on 2026-08-30.** RFC-0134's acceptance review flagged
 > that bundling a corpus-wide function-type grammar change into a closure-soundness
@@ -72,17 +74,24 @@ literal. This RFC keeps RFC-0041's lightness and fixes the collision it left.
 ### 1. Function type
 
 ```
-fun_type = { "|" ~ type_list? ~ "|" ~ "->" ~ type_expr }
+fun_type = { fun_type_qualifier* ~ "|" ~ type_list? ~ "|" ~ "->" ~ type_expr }
+fun_type_qualifier = { once_kw | var_kw | copy_kw }
 ```
 
 `|A, B| -> C`. A nullary function type is `|| -> C`. The `->` is required.
+`once`, `var`, and — when RFC-0163 is accepted — `copy`, are order-insensitive
+type qualifiers. `copy` is a type-only qualifier: it is never written on a
+closure literal because capture classification derives the concrete capability.
 
 ### 2. Closure literal
 
 ```
-closure_expr = { "|" ~ param_list? ~ "|" ~ ("->" ~ type_expr)? ~ block }
+closure_expr = { capture_list? ~ once_kw? ~ var_kw? ~ "|" ~ param_list? ~ "|" ~ ("->" ~ type_expr)? ~ block }
 ```
 
+- The prefix order is fixed: `[captures]? once? var? |params|`. For example,
+  `[state] once var |x: i64| -> String { ... }`. `var once` remains invalid on
+  a literal even though type qualifiers are order-insensitive.
 - Parameters: `|x|`, `|x, y|`, with optional per-parameter types `|x: i64, y: String|`.
 - Optional return type: `|x| -> String { ... }`.
 - Body: a block `|x| { ...; last }`. RFC-0041's block-only body rule is retained;
@@ -123,6 +132,18 @@ the reader tracking where each `|...|` opens; the closure cluster's interleaved 
 The parentheses give the nesting an unambiguous visual bracket, and a formatter inserts
 them.
 
+They are a real type-grammar construct, not tuple syntax reused informally:
+
+```
+group_type = { "(" ~ type_expr ~ ")" }
+type_expr = { fun_type | group_type | ... }
+```
+
+`group_type` lowers to its inner type and has no runtime or type-level identity. It is
+distinct from `tuple_type`, which requires a comma. A formatter emits it when a function
+type occurs as another function type's parameter or return type, and may remove redundant
+grouping elsewhere.
+
 The rule is specifically *function-type-in-function-type*. A **named** function's own
 signature is not nested, so it needs no parentheses:
 
@@ -134,23 +155,27 @@ fun compose(f: |A| -> B, g: |B| -> C) -> (|A| -> C)   // the return IS nested ->
 For anything deeper than one level, name it with a type alias (RFC-0160):
 `type Curried = |A| -> (|B| -> C);`.
 
-Grammar: in `fun_type = "|" ~ type_list? ~ "|" ~ "->" ~ type_expr`, a `type_expr` in the
+Grammar: in `fun_type = fun_type_qualifier* ~ "|" ~ type_list? ~ "|" ~ "->" ~ type_expr`, a `type_expr` in the
 `->` position (or inside `type_list`) that is itself a `fun_type` is only accepted
 parenthesized. Reference-qualified function types (`&|A| -> B`) already read as a unit and
-are unaffected; a bare qualifier prefix (`once`, `var`) is part of the `fun_type` it
+are subject to the same rule when nested: `|A| -> (&|B| -> C)`, not `|A| -> &|B| -> C`.
+A qualifier prefix (`once`, `var`, or RFC-0163's `copy`) is part of the `fun_type` it
 precedes, so `|A| -> (once |B| -> C)` is the form, not `|A| -> once (|B| -> C)`.
 
 ## Grammar: the `|` wrinkle
 
-`|` is bitwise-or and `||` is logical-or. The parser resolves both by expression
-position; neither token is split or given a lexer-only special case:
+`||` is logical-or. The parser recognises `|| { ... }` as a closure only through
+the ordinary expression-start / primary-expression production; it does not split
+tokens or inspect a previous token in the lexer:
 
 - **Nullary `||`.** `|| { ... }` is a nullary closure only at expression start
   (after `=`, `(`, `,`, `return`, `->`, and analogous expression-introducing
   positions). `a || b` has a completed left operand and is always logical-or.
 - **`|x|` inside an expression.** `a | b | c` (two bitwise-ors) versus a closure
-  `|b| { c }` used as an argument. A closure is only recognised in expression-start
-  position, never as the right operand of `|`.
+  `|b| { c }` used as an argument. Metel does not currently have a bitwise-OR
+  operator, so this is not a current-language ambiguity or example. If one is
+  added later, its precedence grammar must treat a pipe closure as an ordinary
+  primary expression; this RFC reserves no special "not a right operand" rule.
 
 Type position has no such conflict — `|` is not an operator there.
 
@@ -162,10 +187,15 @@ grammar; this is its v0.13.0 syntax-migration follow-up. Three mechanical rewrit
 
 - Type position: `(T…) -> U` → `|T…| -> U`. Find by `) ->` in a type context.
 - Expression position: `(params) -> Ret? { body }` → `|params| -> Ret? { body }`.
-  Find by `closure_expr` nodes in the parsed tree, not text.
+  Preserve the closure prefix: `[captures] once? var? (params)` becomes
+  `[captures] once? var? |params|`. Find by `closure_expr` nodes in the parsed
+  tree, not text.
 - Nested function types (§5): wrap a `fun_type` that is another `fun_type`'s return or
   parameter in `(...)`. Find by a `fun_type` node whose `->` child (or a `type_list`
   member) is itself a `fun_type`.
+- RFC-0163 integration: if `copy` is accepted for v0.13.0, migrate its type-only
+  qualifier into this grammar and add the combined `copy once var |...| -> ...`
+  spelling to the parser and formatter sweep.
 
 No runtime effect; nothing leaves the compiler.
 
@@ -176,6 +206,8 @@ No runtime effect; nothing leaves the compiler.
 - **RFC-0134 (Closure Call Capability)** — its §3a is removed and folded here;
   its `once`/`many` qualifier prefixes `|...|` (§4).
 - **RFC-0153 (Closure Mutation Axis)** — its `var` qualifier likewise (§4).
+- **RFC-0163 (Function-Type Use-Multiplicity Surface, `1-under-review`)** — supplies
+  the type-only `copy` qualifier if accepted; this RFC supplies its pipe notation.
 - **RFC-0160 (Type Aliases, `1-under-review`)** — co-lands in v0.13.0. Aliases are the
   recommended tool for anything deeper than the one level §5 parenthesizes; RFC-0160's
   RHS uses this RFC's `|...|` form.
@@ -214,6 +246,21 @@ different thing — an erased, dispatched form. Not the bare function type.
    out of scope and may be proposed separately after this migration.
 4. **Nullary spelling:** `|| { ... }`, resolved by the same position rule as logical-or.
 
+## Acceptance tests
+
+The implementation must cover, at minimum:
+
+- capture-list literals in every prefix combination (`[x] |x|`, `[x] once |x|`,
+  `[&var x] var ||`, `[x] once var |x|`), including the rejected `var once` literal;
+- nullary closure and function types at expression/type start, and ordinary `a || b`;
+- closure literals after `=`, `(`, `,`, and `return`;
+- grouped nested function types in parameters and returns, including a nested
+  reference-qualified function type;
+- tuple types beside grouped function types, proving `(A, B)` remains a tuple while
+  `(|A| -> B)` is grouping; and
+- every accepted `once` / `var` / RFC-0163 `copy` qualifier combination in function
+  types, plus the fact that `copy` is rejected on a literal.
+
 ## References
 
 - **RFC-0041 (Lambda Syntax for Anonymous Functions), `4-implemented`** — the
@@ -235,7 +282,8 @@ different thing — an erased, dispatched form. Not the bare function type.
 
 **Outcome:** *(proposal complete — `1-under-review` (#903), split from RFC-0134 §3a.
 All four grammar questions were resolved 2026-09-02. Acceptance review must verify the
-position rule and the corpus migration.)*
+capture-prefix grammar, grouped-type grammar, position rule, RFC-0163 composition, and
+the corpus migration.)*
 **Target:** **v0.13.0** — follows the merged closure cluster as its syntax-migration
 work, alongside RFC-0160 (Type Aliases). The migration is intentionally limited to
 pipe notation; bare-expression closure bodies are not part of this release.
