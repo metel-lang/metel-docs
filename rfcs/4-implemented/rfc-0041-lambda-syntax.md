@@ -17,14 +17,16 @@ coverage:
 
 Replace the `fun(...) -> { }` syntax for anonymous functions (closures) with a lighter `(...) -> { }` form, dropping the `fun` keyword. The `fun` keyword remains required for named function declarations. The corresponding closure type annotation changes from `fun(T) -> U` to `(T) -> U`.
 
-> **Correction 2026-08-30 — the `(...)` surface choice is being revised, not the goal.**
-> Dropping `fun` was right, but `(...)` collides with grouping, call syntax, and — once
-> RFC-0151 makes `(A, B)` a record type — genuinely ambiguously with tuple/record types
-> (`(A, B) -> C` cannot say two-args-versus-one-record). **RFC-0154 (Pipe Notation for
-> Closures and Function Types)** moves the closure literal and the function type to
-> `|...|` (`|x, y| body`, `|A, B| -> C`), keeping this RFC's lightness while freeing
-> `(...)`. This RFC's semantics — anonymous functions, capture, the `fun`-only-for-named
-> rule — are unchanged.
+> **Correction 2026-08-30 — the `(...)` surface choice was revised, not the goal.
+> Superseded by RFC-0154 in v0.13.0 (`3-integrated` 2026-09-02).** Dropping `fun` was
+> right, but `(...)` collides with grouping, call syntax, and — once RFC-0151 makes
+> `(A, B)` a record type — ambiguously with tuple/record types (`(A, B) -> C` cannot say
+> two-args-versus-one-record). **RFC-0154 (Pipe Notation for Closures and Function
+> Types)** moved the closure literal and the function type to `|...|` (`|x, y| body`,
+> `|A, B| -> C`) and dropped the mandatory `->`-before-every-body this RFC required
+> (`|x| { … }`, `|| { … }`). The examples below are shown in the `|...|` form; this RFC's
+> *semantics* — anonymous functions, capture, the `fun`-only-for-named rule,
+> return-type inference from the body — are unchanged.
 
 ---
 
@@ -88,7 +90,7 @@ let f: (Int) -> Int = (x: Int) -> Int { x };
 Function parameters and return types that accept closures also use the new form:
 
 ```metel
-fun apply(f: (Int) -> Int, x: Int) -> Int { f(x) }
+fun apply(f: |Int| -> Int, x: Int) -> Int { f(x) }
 ```
 
 ### Named function declarations are unchanged
@@ -119,7 +121,7 @@ Bare `{ ... }` remains a block expression, not a closure shorthand. Zero-argumen
 Return-type omission does not remove the arrow. The canonical inferred-return form is:
 
 ```metel
-let double := (x: Int) -> { x * 2 };
+let double := |x: Int| { x * 2 };
 ```
 
 `(params) { body }` is not introduced as closure syntax.

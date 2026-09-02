@@ -91,7 +91,6 @@ parameter is an associated function and is called through its target type with `
 
 [Functions are first-class values and can be assigned, passed, and returned](#spec.functions.first-class-functions.legality-2):
 
-<!-- doc-example: skip reason="RFC-0154 pipe notation — the parser lands with metel-core#903; remove the skip when develop-latest parses `|…|`" -->
 ```metel
 fun add(a: i64, b: i64) -> i64 {
     return a + b;
@@ -139,7 +138,7 @@ return type are always written. Neither `(ParameterTypes) -> ReturnType` (the sp
 before v0.13.0) nor `fun(ParameterTypes) -> ReturnType` is a function-type syntax.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/3-integrated/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/4-implemented/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -176,7 +175,6 @@ the callee — is `T0003`.
 
 Anonymous functions are [written with the `[captures]? once? var? |params| (-> ret)? { body }` form](#spec.functions.closures.legality-1):
 
-<!-- doc-example: skip reason="RFC-0154 pipe notation — the parser lands with metel-core#903; remove the skip when develop-latest parses `|…|`" -->
 ```metel
 fun main() -> i64 {
     let double := |x: i64| -> i64 { return x * 2; };
@@ -279,7 +277,6 @@ process, so no post-exit state is observable.
 the outer binding; a `Copy` binding is copied; the captured environment is built once and
 not re-cloned per call](#spec.functions.closures.dynamics-5).
 
-<!-- doc-example: skip reason="RFC-0154 pipe notation — the parser lands with metel-core#903; remove the skip when develop-latest parses `|…|`" -->
 ```metel
 fun make_counter() -> var || -> i64 {
     let n := 0;
@@ -319,7 +316,7 @@ before v0.13.0 the parameter list was parenthesized and `->` was written before 
 body; `|…|` self-disambiguates, so `->` now appears only with a return type.)
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/3-integrated/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/4-implemented/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -333,7 +330,7 @@ a return type is (RFC-0154, superseding RFC-0041's rule that `->` precede every 
 bare block `{ … }` with no preceding `|…|` is a block expression, not a closure.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/3-integrated/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/4-implemented/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -400,7 +397,7 @@ fixed order of [legality-23](#spec.functions.closures.legality-23) is a grammar 
 closure *literals* only.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md), [rfc-0154](../../rfcs/3-integrated/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md), [rfc-0154](../../rfcs/4-implemented/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

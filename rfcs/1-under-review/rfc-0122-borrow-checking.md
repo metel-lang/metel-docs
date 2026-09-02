@@ -505,7 +505,7 @@ Accepted today:
 ```metel
 var c := C { v = 0 };
 let r := &var c;
-let f := () -> i64 { c.v };   // captures c while r borrows it exclusively
+let f := || -> i64 { c.v };   // captures c while r borrows it exclusively
 ```
 
 **5. Reborrowing is listed in scope and specified nowhere.** §1 names it ("already

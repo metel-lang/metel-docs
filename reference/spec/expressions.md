@@ -1059,7 +1059,6 @@ fun main() -> i64 {
 
 Function references (`&|| -> T` and `&var || -> T`) are callable directly, the same way:
 
-<!-- doc-example: skip reason="RFC-0154 pipe notation — pending develop-latest with the |...| parser (metel-core#903)" -->
 ```metel
 fun main() -> i64 {
     let f := || { return 42; };
@@ -1070,7 +1069,6 @@ fun main() -> i64 {
 
 This applies uniformly: a closure or named function stored behind a reference can be called as if it were the function value itself. A common use is passing arrays of function references:
 
-<!-- doc-example: skip reason="RFC-0154 pipe notation — pending develop-latest with the |...| parser (metel-core#903)" -->
 ```metel
 fun apply_all(fns: Array<&|| -> ()>) {
     for (let f in fns) {
