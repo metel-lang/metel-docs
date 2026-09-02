@@ -19,7 +19,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/921'
 > `var`), its base spelling, and the tool for naming the results all ship in one
 > migration. RFC-0154 §5 requires a nested function type (`|A| -> (|B| -> C)`) to be
 > parenthesized; an alias is how you write that parenthesis once. Examples below use
-> RFC-0154's `|...|` form and the `var` qualifier accordingly. Still `1-under-review`.
+> RFC-0154's `|...|` form and the `var` qualifier accordingly. **All five Open Questions
+> resolved 2026-09-02 — acceptance-ready.**
 
 > **Status — under review (2026-09-01).** type-alias gap confirmed (no existing RFC);
 > brought into v0.13.0 2026-09-02 to co-land with RFC-0154 + the closure cluster.
@@ -76,9 +77,12 @@ closure's capture list (see §"Function and closure types").
 type_alias = "public"? "type" IDENT type_params? "=" type ";"
 ```
 
-Module-level only (not inside a function body, for now — see Open Questions). `public
-type` participates in the module's public surface exactly like a `struct` / `enum` / `fun`
-declaration.
+Allowed at **module scope or inside a function / block body** (Open Question 1). `public`
+is module-scope only. A module-level `public type` participates in the module's public
+surface exactly like a `struct` / `enum` / `fun` declaration; a **function-local alias is
+never exported**, may reference the enclosing function's generic parameters, and follows
+block-local `fun`'s scoping and shadowing rules — visible throughout its block regardless
+of textual position (RFC-0131).
 
 ### 2. Transparency
 
@@ -108,8 +112,9 @@ family of aliases uniform).
 ### 4. Disambiguation from associated types (RFC-0082)
 
 `type Name = T;` inside an `aspect` or `extend` block is an associated-type definition
-(RFC-0082) and is unchanged. At module scope it is a type alias. The two never collide —
-position decides — and this RFC adds no new keyword.
+(RFC-0082) and is unchanged. Anywhere else — module scope or a function / block body — it
+is a type alias. The two never collide — position decides — and this RFC adds no new
+keyword.
 
 ---
 
@@ -200,28 +205,46 @@ summary, for aliases:
 
 ## Open Questions
 
-1. **Function-body-local aliases.** Allow `type` inside a `fun` body, or module scope
-   only? Module-only is simpler and covers the motivating cases; local aliases are a
-   later relaxation.
-2. **Visibility granularity.** Is `public type` the whole story, or is a
-   `pub(module)`-style intermediate ever wanted? Follow whatever the module system settles
-   generally.
-3. **Alias in `extend` target position.** `extend MyAlias: Aspect { … }` — allowed
-   (transparent, so it means `extend <expansion>: Aspect`), or forbidden to keep impls
-   visibly attached to a named type? Leaning: allowed, with the coherence check running on
-   the expansion.
-4. **Recursive aliases.** `type Json = Map<String, Json>;` — rejected as a cycle (RFC-0039
-   Q3 rule), or permitted for genuinely recursive shapes the way a `struct` can be
-   self-referential through indirection? Leaning: reject direct cycles; a recursive type
-   needs a `struct`/`enum`.
-5. **Turbofish ergonomics** for partially-applied aliases — `type M<V> = Map<String, V>;`
-   then `M::<i64>` — confirm this composes with RFC-0023's ascription-vs-turbofish rules.
+*All resolved 2026-09-02.*
+
+1. **Function-body-local aliases.** **✓ Resolved — allowed.** `type X = T;` may appear as
+   a block statement, scoped to that block, as well as at module scope. A local alias may
+   reference enclosing generic parameters (`fun f<T>() { type Pair = (T, T); … }` — a
+   reason to have it: a module alias would need its own `<T>`). It cannot carry `public`
+   (nothing local is exported). Shadowing and visibility follow block-local `fun`: an
+   inner `type` shadows an outer alias / type of the same name within its block, and it is
+   visible throughout its block regardless of textual position (types have no
+   initialisation-order hazard — the same reason RFC-0131 hoists `fun`). The motivating
+   case is the complex one-off closure type used only inside one function.
+2. **Visibility granularity.** **✓ Resolved — no alias-specific design.** A module-level
+   `public type` participates in the public surface exactly like `public struct` / `fun` /
+   `enum`; whatever finer visibility the module system grows, aliases inherit. A
+   function-local alias is never exported (OQ1).
+3. **Alias in `extend` target position.** **✓ Resolved — forbidden for v0.13.0.**
+   `extend MyAlias: Aspect { … }` is a compile error; write `extend <the real type>:
+   Aspect`. It only matters for aliases of *nominal* types (`type Bytes = List<u8>; extend
+   Bytes`), which reopens the orphan-rule / coherence surface for no clear gain in a first
+   cut and hides impls from where a reader looks for them. A pure restriction — liftable
+   later (coherence check running on the expansion) if demand appears.
+4. **Recursive aliases.** **✓ Resolved — rejected, direct and mutual.** `type Json =
+   Map<String, Json>;` and any cycle through a chain of aliases is a compile error (same
+   rule as RFC-0039 Q3). A transparent alias expands eagerly and a cycle has no finite
+   expansion; a genuinely recursive type needs a `struct` / `enum` indirection point, as
+   in every language with transparent aliases.
+5. **Turbofish for partially-applied aliases.** **✓ Resolved — no special rule.**
+   `M::<i64>` binds the alias's own type parameters positionally, then expands:
+   `type M<V> = Map<String, V>` makes `M::<i64>` the type `Map<String, i64>`. The alias is
+   another generic name; RFC-0023's ascription-vs-turbofish placement rule applies to it
+   unchanged.
 
 ---
 
 ## Decision
 
-**Outcome:** *(pending — `1-under-review` (#921), opened 2026-09-01)*
+**Outcome:** *(pending — `1-under-review` (#921), opened 2026-09-01. **All five Open
+Questions resolved 2026-09-02** (local aliases allowed, no alias-specific visibility,
+`extend`-on-alias forbidden for now, cycles rejected, turbofish through expansion) —
+acceptance-ready.)*
 **Target:** **v0.13.0** — set 2026-09-02 to co-land with RFC-0154 (`|...|` spelling) and
 the closure cluster's `once` / `var` qualifier grammar, so the function-type spelling and
 the tool for naming its results ship in one migration.

@@ -593,18 +593,20 @@ above it are.
   Vehicle for RFC-0089's `Affine` alias (`!Copy + !Linear`). Small, standalone. Names
   compound *bounds* — disjoint from **RFC-0160**, which names *types*. Five OQs, each with
   a recommended answer in the RFC.
-- **RFC-0160** *(under review, opened 2026-09-01; #921; **v0.13.0** since 2026-09-02)* — Type Aliases — module-level `public? type
-  Name = T;`, optionally parameterised, **transparent** (structural synonym, no nominal
-  identity, RFC-0152 widening flows through). Fills a real gap: `type Name = T` today
-  exists only as an associated type in aspect scope (RFC-0082); RFC-0039 aliases bounds,
-  not types. Motivated by the closure cluster's amendments making `once var |Request,
-  &Config| -> Response` the noisiest signature form (and RFC-0154 §5 requiring nested
-  function types be parenthesized — aliases write that paren once). **Co-lands with
-  RFC-0154 + the closure cluster in v0.13.0. Does not carry a closure's capture list** — that is
-  per-literal, not type info; it only carries what reaches the type (`once`/`mut`, later
-  `context(...)`). Non-blocking future ergonomics; `0-draft`. Cross-refs RFC-0082 (assoc
-  types — position disambiguates), RFC-0113 (context function types — kept in sync),
-  RFC-0134/0153/0152/0154.
+- **RFC-0160** *(under review, opened 2026-09-01; #921; **v0.13.0** since 2026-09-02; **5 OQs resolved 2026-09-02, acceptance-ready**)* — Type Aliases — `public? type
+  Name = T;` at **module scope or a function/block body**, optionally parameterised,
+  **transparent** (structural synonym, no nominal identity, RFC-0152 widening flows
+  through). Fills a real gap: `type Name = T` today exists only as an associated type in
+  aspect scope (RFC-0082); RFC-0039 aliases bounds, not types. Motivated by the closure
+  cluster making `once var |Request, &Config| -> Response` the noisiest signature form
+  (and RFC-0154 §5 requiring nested function types be parenthesized — aliases write that
+  paren once). Local aliases are the home for complex one-off closure types. **Co-lands
+  with RFC-0154 + the closure cluster in v0.13.0. Does not carry a closure's capture
+  list** — that is per-literal, not type info; it only carries what reaches the type
+  (`once`/`var`, later `context(...)`). OQs settled: local aliases yes, no alias-specific
+  visibility, `extend`-on-alias forbidden for now, cycles rejected, turbofish through
+  expansion. Cross-refs RFC-0082 (assoc types — position disambiguates), RFC-0113 (context
+  function types — kept in sync), RFC-0131 (local-alias hoisting), RFC-0134/0153/0152/0154.
 
 ## Region / Allocator / Lifetime cluster (accepted 2026-07-10 — ratified, Phase 3's dependency now clear)
 
