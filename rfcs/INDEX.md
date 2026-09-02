@@ -1147,6 +1147,20 @@ implementation).
   `Copy` markers with **subset-widening** (present = more permissive), and erased
   single-call state (move-out-of-box vs runtime poison flag). Two design OQs gate
   acceptance. Depends on RFC-0096 (hence v0.13.1). Tracker metel-core#923.
+- **RFC-0164** *(draft, opened 2026-09-02; v0.13.1)* — Mutating Closures with a
+  Propagating `?` Are Call-Once — follow-up to RFC-0153. A `var` (mutating) closure whose
+  body can propagate an error out via `?` is classified `once`: an implicitly-chosen
+  mid-mutation exit (any `?` in the body, position determined by runtime error, not the
+  author) should not leave a live value a caller can invoke again over an incidental
+  partial state. Explicit `return` is unaffected — that exit point is designed. Rides
+  RFC-0134 §2's existing CFG analysis; `once` consumes at the call expression so the
+  "what partial state is it in" question never arises. This is **Option B** from
+  RFC-0153's early-exit review; v0.13.0 shipped the reword-only alternative (a
+  `?`-propagating `var` closure stays callable, described as an ordinary mutated value not
+  a resumable one), and this records the tightening for v0.13.1. Alternatives weighed:
+  status quo, runtime poison, transactional rollback. 4 OQs (reachability standard,
+  nested-closure `?`, `[&var x]` scope, diagnostic). Opened as RFC-0163; renumbered to
+  0164 (0163 taken by Function-Type Use-Multiplicity Surface).
 - **RFC-0154** *(under review, opened 2026-08-30; **v0.13.0** since 2026-09-02)* — Pipe Notation for Closures and
   Function Types — split from RFC-0134 §3a. Replaces `(...)` for both the closure literal
   and the function type with `|...|`: `|x, y| body` (block or bare expression, optional
