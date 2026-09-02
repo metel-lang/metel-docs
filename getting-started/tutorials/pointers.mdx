@@ -54,16 +54,17 @@ That matters in patterns like:
 
 References are useful when multiple parts of a program need to talk about the same value explicitly. That includes shared mutable state between closures:
 
+<!-- doc-example: skip reason="RFC-0154 pipe notation — pending develop-latest with the |...| parser (metel-core#903)" -->
 ```metel
 fun main() {
     var total := 0;
     var cell: &var i64 := &var total;
 
-    var add_one := [&var cell] var () -> {
+    var add_one := [&var cell] var || {
         *cell += 1;
     };
 
-    var add_ten := [&var cell] var () -> {
+    var add_ten := [&var cell] var || {
         *cell += 10;
     };
 
@@ -151,10 +152,11 @@ Auto-deref chains through multiple reference layers, so a `&&var Counter` can st
 
 References to closures or functions can be called directly:
 
+<!-- doc-example: skip reason="RFC-0154 pipe notation — pending develop-latest with the |...| parser (metel-core#903)" -->
 ```metel
 fun main() {
-    let f := () -> i64 { return 42; };
-    let r: &() -> i64 := &f;
+    let f := || -> i64 { return 42; };
+    let r: &|| -> i64 := &f;
     println(r());   // 42
 }
 ```

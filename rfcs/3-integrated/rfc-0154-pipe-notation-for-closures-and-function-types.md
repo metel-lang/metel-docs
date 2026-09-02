@@ -2,10 +2,18 @@
 id: rfc-0154
 title: "Pipe Notation for Closures and Function Types"
 date: '2026-08-30'
-status: accepted
+status: integrated
 target: v0.13.0
 updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/903'
+coverage:
+  "1": { spec: "spec.functions.first-class-functions.legality-1" }
+  "2": { spec: "spec.functions.closures.legality-1" }
+  "3": { spec: "spec.functions.closures.legality-2" }
+  "4": { spec: "spec.functions.closures.legality-24" }
+  "5": { kind: untestable, reason: "Advisory only: parenthesizing a nested function type is a style recommendation, not a parse rule (Metel has no formatter/linter). `->` is right-associative, so `|A| -> |B| -> C` and `|A| -> (|B| -> C)` parse to the identical type — the grammar fact is covered by section 1's anchor." }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/903'
+impl_status: not-started
 ---
 
 > **Brought into v0.13.0 (2026-09-02).** The `once` / `var` qualifier grammar this RFC
@@ -42,6 +50,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/903'
 > **Status — under review (2026-08-30).** Split from RFC-0134 §3a: the base function-type spelling is a corpus-wide grammar question. Proposes |T| -> U for the type and |x| body for the literal, freeing (...) for grouping and RFC-0151 tuples/records.
 
 > **Status — accepted (2026-09-02).** spelling migration settled; §5 advisory, copy deferred to RFC-0163, RFC-0041 legality-1/2/3 supersession explicit; F1-F11 addressed
+
+> **Status — integrated (2026-09-02).** pipe notation: grammar + corpus migrated in metel-core feat/903; spec swept (functions.md #97, declarations/expressions + tutorials here)
 
 ## Summary
 
