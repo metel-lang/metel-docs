@@ -18,14 +18,19 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/903'
 > (Type Aliases) co-lands alongside it. A second acceptance-review pass the same day
 > trimmed §5's nested-type rule to a style recommendation (not a parse error; no tooling
 > to enforce it yet) and dropped the conditional `copy` pre-declaration (RFC-0163 owns
-> that word).
+> that word). An adversarial pass the same day made explicit that this RFC **supersedes**
+> RFC-0041's rule that `->` precede every closure body (spec `closures.legality-1`/`-2`/
+> `-3`) — `|…|` self-disambiguates, so the arrow is written only with a return type — and
+> flagged the grammar productions as illustrative and the RFC-0151 / RFC-0125 interactions
+> as anticipatory (both unscheduled).
 >
 > **Scope (2026-09-02): the first iteration is the spelling migration and nothing more.**
 > `->` and the return type are written wherever a function *type* is written — there is no
-> infer-the-return form for a written type — and the closure *literal* keeps exactly
-> RFC-0041's rule (return type inferred from the body when omitted). Bare-expression bodies
-> and every other inference / omission convenience are deferred; real usage after v0.13.0
-> decides which, if any, are worth adding.
+> infer-the-return form for a written type. The closure *literal* keeps RFC-0041's
+> return-type inference (inferred from the body when omitted); the `->` RFC-0041 required
+> before *every* body is dropped for that case (§2), with `|…|` doing the disambiguation
+> the arrow used to. Bare-expression bodies and every other inference / omission
+> convenience are deferred; real usage after v0.13.0 decides which, if any, are worth adding.
 
 > **Split from RFC-0134 §3a on 2026-08-30.** RFC-0134's acceptance review flagged
 > that bundling a corpus-wide function-type grammar change into a closure-soundness
@@ -66,20 +71,28 @@ be. But it landed on `(...)`, and that spelling now collides in three ways:
   type_expr`, and `tuple_type` is `"(" ~ type_expr ~ ("," ~ type_expr)+ ~ ")"`.
   They share the `(` prefix; `fun_type` must be PEG-ordered ahead of
   `tuple_type` and disambiguated by backtracking past the `)`.
-- **RFC-0151 makes that last one a true ambiguity, not just fragility.** Once
-  `(A, B)` is the record type `{ 0: A, 1: B }`, `(A, B) -> C` cannot say whether
-  it means a function of *two* arguments or a function of *one record* argument.
+- **RFC-0151 *would* make that last one a true ambiguity, not just fragility.** RFC-0151
+  (`0-draft`, unscheduled) makes `(A, B)` the record type `{ 0: A, 1: B }`; then
+  `(A, B) -> C` cannot say whether it is a function of *two* arguments or of *one record*
+  argument. That collision is anticipatory — the first two are live today and are reason
+  enough to move.
 
-`|A, B| -> C` and `|(A, B)| -> C` say it. `|...|` for the literal and the type
-means `let f: |i64| -> String = |n| { n.to_string() };` reads with the annotation
-and the value in the same shape — today they diverge (`(i64) -> String` vs
-`(n) -> String { ... }`).
+`|A, B| -> C` says two arguments unambiguously; `|(A, B)| -> C` says one record argument
+once `(A, B)` type syntax exists (RFC-0151). `|...|` for the literal and the type also
+means `let f: |i64| -> String = |n| { n.to_string() };` reads with the annotation and the
+value in the same shape — today they diverge (`(i64) -> String` vs `(n) -> String { ... }`).
 
 RFC-0134 §3a proposed `fun(T) -> U` for the type. That is a revert of RFC-0041's
 change in the type-annotation half and reads heavier, without unifying the
 literal. This RFC keeps RFC-0041's lightness and fixes the collision it left.
 
 ## Proposal
+
+The productions below are **illustrative**. Metel's spec states closure grammar as prose
+(`spec.functions.closures.legality-1`), not a maintained EBNF; `type_list`, `param_list`,
+`capture_list`, and `block` are the existing nonterminals from RFC-0041 and RFC-0050. This
+RFC changes two things: the delimiter (`(...)` → `|...|`), and — for the closure *literal*
+only — the arrow's optionality (§2).
 
 ### 1. Function type
 
@@ -108,12 +121,19 @@ closure_expr = { capture_list? ~ once_kw? ~ var_kw? ~ "|" ~ param_list? ~ "|" ~ 
   `[state] once var |x: i64| -> String { ... }`. `var once` remains invalid on
   a literal even though type qualifiers are order-insensitive.
 - Parameters: `|x|`, `|x, y|`, with optional per-parameter types `|x: i64, y: String|`.
-- Return type: `|x| -> String { ... }`, or omitted — `|x| { ... }` — and inferred from the
-  body, **exactly as RFC-0041 already does**. This RFC does not change that rule. The
-  asymmetry with a written type (§1, where `->` and the return type are mandatory) is
-  intentional: the literal has a body to infer from, a bare type annotation does not.
-- Body: a block `|x| { ...; last }`. RFC-0041's block-only body rule is retained;
-  a bare-expression form is deliberately out of scope for this migration.
+- Return type: `|x| -> String { ... }` when written, or omitted — `|x| { ... }` — and
+  inferred from the body. **This supersedes RFC-0041** (spec
+  `spec.functions.closures.legality-1`/`-2`/`-3`), which required `->` before *every*
+  closure body (`(x) -> { x * 2 }`, `() -> { ... }`). That mandatory arrow was RFC-0041's
+  disambiguator between `(x)` grouping and `(x) -> {}` a closure; `|...|` carries that
+  itself, so the arrow now appears **exactly when a return type is written**. Return-type
+  *inference* from the body is unchanged. The result is an intentional asymmetry with a
+  written *type* (§1, `->` and the return type mandatory): a literal has a body to infer
+  from, a bare type annotation does not.
+- Body: a block `|x| { ...; last }`. RFC-0041's block-only body rule is retained; a
+  bare-expression form is out of scope for this migration. A bare `{ ... }` with no
+  preceding `|...|` is still a block expression — RFC-0041's `() -> { ... }` becomes
+  `|| { ... }`, not `{ ... }`.
 - Nullary: `|| { ... }`.
 
 ### 3. `(...)` is freed
@@ -124,7 +144,8 @@ call syntax `f(a, b)` are the only users of `(...)` after this. `fun_type` and
 
 ### 4. Qualifier composition
 
-RFC-0134's `once` / `many` and RFC-0153's mutation qualifier (`var`) prefix the `|`:
+RFC-0134's `once` (its `many` counterpart is the unwritten default and never appears in a
+type spelling) and RFC-0153's mutation qualifier (`var`) prefix the `|`:
 
 ```
 once |i64| -> String
@@ -133,8 +154,12 @@ once var |i64| -> String        // RFC-0153; order-insensitive per RFC-0134 §5
 
 The reserved-word rule applies equally to both qualifiers.
 
-Reference qualifiers wrap the whole thing: `&|i64| -> String`,
-`&var |i64| -> String` — a shared/exclusive reference *to* a function value.
+Reference qualifiers wrap the whole thing, **outermost**: `&` / `&var`, then `once` /
+`var`, then `|...|`. `&var once var |T| -> U` is `&var (once var |T| -> U)` — an exclusive
+reference *to* a `once`-`var` function value. A reference qualifier placed *after* a type
+qualifier (`once &var |T| -> U`) is a parse error. The mutation qualifier `var` is not
+repeatable: `var var |T| -> U` is an error — the only other `var` a function type can
+carry is the one attached to `&` (`&var`), which is a reference, not a second prefix.
 
 ### 5. Nested function types — right-associative; parentheses are a style recommendation
 
@@ -177,32 +202,43 @@ For anything deeper than one level, name it with a type alias (RFC-0160): `type 
 
 ## Grammar: the `|` wrinkle
 
-`||` is logical-or. The parser recognises `|| { ... }` as a closure only through
-the ordinary expression-start / primary-expression production; it does not split
-tokens or inspect a previous token in the lexer:
+`||` is logical-or. The parser recognises `|| ...` as a closure through the ordinary
+operand-position production; it does not split tokens or inspect a previous token in the
+lexer:
 
-- **Nullary `||`.** `|| { ... }` is a nullary closure only at expression start
-  (after `=`, `(`, `,`, `return`, `->`, and analogous expression-introducing
-  positions). `a || b` has a completed left operand and is always logical-or.
-- **`|x|` inside an expression.** `a | b | c` (two bitwise-ors) versus a closure
-  `|b| { c }` used as an argument. Metel does not currently have a bitwise-OR
-  operator, so this is not a current-language ambiguity or example. If one is
-  added later, its precedence grammar must treat a pipe closure as an ordinary
-  primary expression; this RFC reserves no special "not a right operand" rule.
+- **Nullary `||`.** `||` opens a nullary closure (or, in type position, a nullary
+  function type) **wherever the parser expects an operand rather than an operator** — the
+  head of an expression, or any type position. With a completed left operand in hand
+  (`a || b`), `||` is logical-or. This is exactly Rust's rule, minus the bitwise-`|` case
+  Rust also has to handle.
+- **`|x|` inside an expression.** `a | b | c` (bitwise-or) versus a closure `|b| { c }`
+  used as an argument. Metel has no bitwise-`|` operator, so this is not a current
+  ambiguity. If one is added later, its precedence grammar must treat a pipe closure as an
+  ordinary primary expression; this RFC reserves no special "not a right operand" rule.
 
-Type position has no such conflict — `|` is not an operator there.
+Type position has no such conflict *today* — `|` is not an operator there. If Metel later
+adds an `A | B` union / sum-type spelling it would collide with `|...|` in type position
+the same way a bitwise-`|` would in expression position; the RFC that introduces one must
+reconcile them (require the union inside the pipes, or pick a different union spelling).
 
 ## Migration
 
-Hard switch, one-pass corpus sweep, no dual-accept — the same call RFC-0134 §3a
-made, for the same reasons. The closure cluster has already supplied the qualifier
-grammar; this is its v0.13.0 syntax-migration follow-up. Two mechanical rewrites:
+Hard switch, one-pass corpus sweep, no dual-accept — the same discipline the closure
+cluster and RFC-0115 used. Metel has no public users, so a single sweep beats a
+dual-accept window. Everything below is located by parsed-tree node, **never by text**:
 
-- Type position: `(T…) -> U` → `|T…| -> U`. Find by `) ->` in a type context.
-- Expression position: `(params) -> Ret? { body }` → `|params| -> Ret? { body }`.
-  Preserve the closure prefix: `[captures] once? var? (params)` becomes
-  `[captures] once? var? |params|`. Find by `closure_expr` nodes in the parsed
-  tree, not text.
+- **Type position:** `(T…) -> U` → `|T…| -> U`. Find by `fun_type` nodes — *not* by `) ->`
+  text, which also matches every named `fun f(x: T) -> U` declaration (those keep
+  `(...)`). Any `fun(T…) -> U` still left in RFC or spec prose migrates too (the stray one
+  in `closures.legality-24` is corrected separately).
+- **Expression position:** `(params) -> Ret { body }` → `|params| -> Ret { body }`, and
+  `(params) -> { body }` → `|params| { body }` — the inferred-return form loses its arrow
+  (§2). Preserve the prefix: `[captures] once? var? (params)` → `[captures] once? var?
+  |params|`. Find by `closure_expr` nodes.
+- **Spec anchors:** `spec.functions.first-class-functions.legality-1` (the `(T) -> U` type
+  form) and `spec.functions.closures.legality-1`/`-2`/`-3` (the `(params) -> ret? { body
+  }` literal form and the "arrow before every body" rule this RFC supersedes) are reworded
+  to the `|...|` forms and their citing fixtures re-anchored, in the same change.
 
 Nested function types (§5) need no rewrite — the bare form stays legal. The recommended
 style writes the parentheses around a `fun_type` nested in another's return or parameter
@@ -214,9 +250,11 @@ No runtime effect; nothing leaves the compiler.
 
 ## Interactions
 
-- **RFC-0041 (`4-implemented`)** — this amends its surface syntax (the `(...)`
-  choice), not its semantics; its return-type inference on closure literals is left
-  exactly as-is. RFC-0041 gets a dated correction note.
+- **RFC-0041 (`4-implemented`)** — this amends its surface syntax and **supersedes** its
+  rule that `->` precede every closure body (spec `closures.legality-1`/`-2`/`-3`): with
+  `|...|` self-disambiguating, the arrow is written only with a return type. Closure
+  semantics — capture, `fun`-only-for-named, return-type *inference* from the body — are
+  unchanged. RFC-0041 and its spec anchors get dated correction notes.
 - **RFC-0134 (Closure Call Capability)** — its §3a is removed and folded here;
   its `once`/`many` qualifier prefixes `|...|` (§4).
 - **RFC-0153 (Closure Mutation Axis)** — its `var` qualifier likewise (§4).
@@ -228,12 +266,17 @@ No runtime effect; nothing leaves the compiler.
 - **RFC-0160 (Type Aliases, `1-under-review`)** — co-lands in v0.13.0. Aliases are the
   recommended tool for anything deeper than the one level §5's recommended parentheses
   cover; RFC-0160's RHS uses this RFC's `|...|` form.
-- **RFC-0151 (Tuples as Numeric-Label Rows)** — the reason `(A, B) -> C` must
-  stop being a function type; this RFC is what frees `(...)` for it.
-- **RFC-0125 (Variadic Generics)** — `|...Ts| -> R` folds a pack into the
-  parameter list; no extra rule beyond §1.
-- **RFC-0061 §7.4** — currently writes function-pointer types as `fun(A) -> B` in
-  prose (never implemented). It adopts `|A| -> B` here, with a correction note.
+- **RFC-0151 (Tuples as Numeric-Label Rows, `0-draft`, unscheduled)** — the *anticipated*
+  reason `(A, B) -> C` must stop being a function type. This RFC frees `(...)` ahead of
+  it; the `|(A, B)| -> C` one-record-parameter form becomes writable only once `(A, B)`
+  type syntax lands.
+- **RFC-0125 (Variadic Generics, `1-under-review`, unscheduled)** — when it lands,
+  `|...Ts| -> R` folds a pack into the parameter list with no extra rule beyond §1.
+- **RFC-0061** — its `fun(A) -> B` function-pointer prose is *already* superseded in the
+  spec (`declarations.md`: "no separate function-pointer type … `fun(A) -> B` is a parse
+  error"; plain functions and closures share one `(A) -> B` type). This RFC only carries
+  that spelling forward to `|A| -> B`; RFC-0061's own prose still needs the sweep, with a
+  correction note.
 
 ## Alternatives considered
 
@@ -259,13 +302,17 @@ different thing — an erased, dispatched form. Not the bare function type.
 1. **`|` / `||` disambiguation:** position-based parsing, as specified in
    [Grammar: the `|` wrinkle](#grammar-the--wrinkle); no lexer hack or token splitting.
 2. **Function-type arrow:** `->` and the return type are mandatory in a written function
-   type (`|A| -> B`); `|A|` alone is an error. The closure *literal* is unchanged from
-   RFC-0041 — return type inferred from the body when omitted. An infer-the-return form for
-   the *type*, and any other omission convenience, is out of scope for this migration and
-   revisited only if real usage shows the annotation cost is high.
-3. **Closure body:** retain RFC-0041's block-only form. Bare-expression closures are
-   out of scope and may be proposed separately after this migration.
-4. **Nullary spelling:** `|| { ... }`, resolved by the same position rule as logical-or.
+   *type* (`|A| -> B`); `|A|` alone is an error, and there is no infer-the-return form for
+   a written type. The closure *literal* keeps RFC-0041's return-type *inference* (from the
+   body when omitted) but drops the `->` RFC-0041 required before *every* body — see §2.
+   An infer-the-return form for the type, and any other omission convenience, is out of
+   scope for this migration and revisited only if real usage shows the annotation cost is
+   high.
+3. **Closure body:** retain RFC-0041's block-only form. Bare-expression closures are out of
+   scope. The `->` RFC-0041 placed before every body is not replaced by anything — the
+   `|...|` delimiters do that disambiguation (§2).
+4. **Nullary spelling:** `|| { ... }`, resolved by the operand-position rule that also
+   settles logical-or.
 
 ## Acceptance tests
 
@@ -273,13 +320,17 @@ The implementation must cover, at minimum:
 
 - capture-list literals in every prefix combination (`[x] |x|`, `[x] once |x|`,
   `[&var x] var ||`, `[x] once var |x|`), including the rejected `var once` literal;
+- a closure literal with **no** `->` (`|x| { ... }`, `|| { ... }`) and with `-> T { ... }`
+  — both parse; a bare `{ ... }` with no `|...|` is a block, not a nullary closure;
 - nullary closure and function types at expression/type start, and ordinary `a || b`;
 - closure literals after `=`, `(`, `,`, and `return`;
+- the `&` / `&var` / `once` / `var` prefix order on a function type, including the rejected
+  `once &var |T| -> U` and `var var |T| -> U`;
 - nested function types in parameters and returns, **both** unparenthesized (`|A| -> |B|
   -> C`) and grouped (`|A| -> (|B| -> C)`), parsing to the same type, including a nested
   reference-qualified function type;
-- tuple types beside grouped function types, proving `(A, B)` remains a tuple while
-  `(|A| -> B)` is grouping; and
+- (once `(A, B)` type syntax exists — RFC-0151) tuple types beside grouped function types,
+  proving `(A, B)` is a tuple while `(|A| -> B)` is grouping; and
 - every accepted `once` / `var` qualifier combination and order in function types.
 
 ## References
@@ -292,22 +343,26 @@ The implementation must cover, at minimum:
 - **RFC-0160 (Type Aliases), `1-under-review`** — co-lands in v0.13.0; names deep /
   qualified function types so a nested `|A| -> (|B| -> C)` appears once, in the alias,
   not at every use.
-- **RFC-0151 (Tuples as Numeric-Label Rows)** — frees `(...)` for tuples/records,
-  which is what makes the current function-type spelling ambiguous.
-- **RFC-0125 (Variadic Generics)** — `|...Ts| -> R`.
-- **RFC-0061 §7.4** — its unbuilt `fun(A) -> B` prose adopts `|A| -> B` here.
+- **RFC-0151 (Tuples as Numeric-Label Rows), `0-draft`** — the anticipated collision that
+  makes the current function-type spelling ambiguous; unscheduled.
+- **RFC-0125 (Variadic Generics), `1-under-review`** — `|...Ts| -> R`; unscheduled.
+- **RFC-0061** — its `fun(A) -> B` function-pointer prose (already a spec parse error)
+  adopts `|A| -> B` here.
 - **RFC-0006 (Closure Capture Semantics)** — unchanged; this is spelling only.
 
 ---
 
 ## Decision
 
-**Outcome:** *(proposal complete — `1-under-review` (#903), split from RFC-0134 §3a.
-All four grammar questions were resolved 2026-09-02; the acceptance-review follow-ups
-(2026-09-02) trimmed §5 to a non-enforced style recommendation and removed the
-conditional `copy` pre-declaration. Acceptance review must verify the capture-prefix
-grammar, the
-`|` / `||` position rule, and the corpus migration.)*
+**Outcome:** *(proposal complete — `1-under-review` (#903), split from RFC-0134 §3a. All
+four grammar questions were resolved 2026-09-02; two follow-up passes the same day trimmed
+§5 to a non-enforced style recommendation, removed the conditional `copy` pre-declaration,
+and — from an adversarial pass — made the supersession of RFC-0041's mandatory `->`
+explicit (§2, Migration), flagged the grammar productions as illustrative, resolved the
+`&` / `&var` / `once` / `var` prefix ordering, and marked the RFC-0151 / RFC-0125
+interactions anticipatory. Acceptance review must verify the capture-prefix grammar, the
+`|` / `||` operand-position rule, and the corpus migration — including the
+`first-class-functions.legality-1` / `closures.legality-1`–`3` spec re-anchoring.)*
 **Target:** **v0.13.0** — follows the merged closure cluster as its syntax-migration
 work, alongside RFC-0160 (Type Aliases). The migration is intentionally limited to
 pipe notation; bare-expression bodies, and any return-type-omission convenience beyond
