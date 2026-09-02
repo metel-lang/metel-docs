@@ -593,18 +593,20 @@ above it are.
   Vehicle for RFC-0089's `Affine` alias (`!Copy + !Linear`). Small, standalone. Names
   compound *bounds* — disjoint from **RFC-0160**, which names *types*. Five OQs, each with
   a recommended answer in the RFC.
-- **RFC-0160** *(under review, opened 2026-09-01; #921; **v0.13.0** since 2026-09-02)* — Type Aliases — module-level `public? type
-  Name = T;`, optionally parameterised, **transparent** (structural synonym, no nominal
-  identity, RFC-0152 widening flows through). Fills a real gap: `type Name = T` today
-  exists only as an associated type in aspect scope (RFC-0082); RFC-0039 aliases bounds,
-  not types. Motivated by the closure cluster's amendments making `once var |Request,
-  &Config| -> Response` the noisiest signature form (and RFC-0154 §5 requiring nested
-  function types be parenthesized — aliases write that paren once). **Co-lands with
-  RFC-0154 + the closure cluster in v0.13.0. Does not carry a closure's capture list** — that is
-  per-literal, not type info; it only carries what reaches the type (`once`/`mut`, later
-  `context(...)`). Non-blocking future ergonomics; `0-draft`. Cross-refs RFC-0082 (assoc
-  types — position disambiguates), RFC-0113 (context function types — kept in sync),
-  RFC-0134/0153/0152/0154.
+- **RFC-0160** *(under review, opened 2026-09-01; #921; **v0.13.0** since 2026-09-02; **5 OQs resolved 2026-09-02, acceptance-ready**)* — Type Aliases — `public? type
+  Name = T;` at **module scope or a function/block body**, optionally parameterised,
+  **transparent** (structural synonym, no nominal identity, RFC-0152 widening flows
+  through). Fills a real gap: `type Name = T` today exists only as an associated type in
+  aspect scope (RFC-0082); RFC-0039 aliases bounds, not types. Motivated by the closure
+  cluster making `once var |Request, &Config| -> Response` the noisiest signature form
+  (and RFC-0154 §5 requiring nested function types be parenthesized — aliases write that
+  paren once). Local aliases are the home for complex one-off closure types. **Co-lands
+  with RFC-0154 + the closure cluster in v0.13.0. Does not carry a closure's capture
+  list** — that is per-literal, not type info; it only carries what reaches the type
+  (`once`/`var`, later `context(...)`). OQs settled: local aliases yes, no alias-specific
+  visibility, `extend`-on-alias forbidden for now, cycles rejected, turbofish through
+  expansion. Cross-refs RFC-0082 (assoc types — position disambiguates), RFC-0113 (context
+  function types — kept in sync), RFC-0131 (local-alias hoisting), RFC-0134/0153/0152/0154.
 
 ## Region / Allocator / Lifetime cluster (accepted 2026-07-10 — ratified, Phase 3's dependency now clear)
 
@@ -1140,7 +1142,7 @@ implementation).
   `Copy` markers with **subset-widening** (present = more permissive), and erased
   single-call state (move-out-of-box vs runtime poison flag). Two design OQs gate
   acceptance. Depends on RFC-0096 (hence v0.13.1). Tracker metel-core#923.
-- **RFC-0154** *(under review, opened 2026-08-30; **v0.13.0** since 2026-09-02)* — Pipe Notation for Closures and
+- **RFC-0154** *(under review, opened 2026-08-30; **v0.13.0** since 2026-09-02; **4 OQs resolved 2026-09-02, acceptance-ready**)* — Pipe Notation for Closures and
   Function Types — split from RFC-0134 §3a. Replaces `(...)` for both the closure literal
   and the function type with `|...|`: `|x, y| body` (block or bare expression, optional
   param/return types) and `|A, B| -> C`. RFC-0041 (`4-implemented`) was right to drop the
@@ -1152,8 +1154,9 @@ implementation).
   parenthesized** — `|A| -> (|B| -> C)` — the fix for closures-returning-closures reading
   badly; aliases (RFC-0160) name anything deeper. **Co-lands in v0.13.0 with the closure
   cluster** so the base spelling migrates once, not twice.
-  Open: the `|` disambiguation rule (`|| expr` vs `a || b`), whether `->` is mandatory in
-  the type, bare-expression bodies. RFC-0041 gets a correction note. Tracker
+  OQs settled 2026-09-02: `|` disambiguation is position-based (Rust's rule, no lexer
+  split), `->` mandatory in the type, bare-expression bodies allowed (extend maximally),
+  `||` nullary by position. RFC-0041 gets a correction note. Tracker
   metel-core#903; rejects RFC-0134 §3a's `fun(T) -> U` as a revert of RFC-0041.
 - **RFC-0003** *(under review, corrected 2026-08-24; scheduled 2026-08-27)* — Concurrency Model — fiber handles,
   channels, `select`, `Send`/`Sync`, aspect-based desugaring (`Spawnable`/`Sendable`/

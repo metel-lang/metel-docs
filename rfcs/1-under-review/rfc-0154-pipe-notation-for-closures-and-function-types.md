@@ -12,8 +12,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/903'
 > hosts (§4) lands with the closure cluster (RFC-0050 / RFC-0134 / RFC-0152 / RFC-0153 /
 > RFC-0157). Shipping v0.13.0 on the `(...)` spelling and switching to `|...|` afterward
 > would migrate every closure signature in the corpus twice, so this co-lands rather than
-> follows. Still `1-under-review` — Open Question 1 (`|` disambiguation) must be nailed
-> before acceptance. RFC-0160 (Type Aliases) co-lands alongside it.
+> follows. **All four Open Questions resolved 2026-09-02** and §5 (nested-paren rule)
+> added — acceptance-ready. RFC-0160 (Type Aliases) co-lands alongside it.
 
 > **Split from RFC-0134 §3a on 2026-08-30.** RFC-0134's acceptance review flagged
 > that bundling a corpus-wide function-type grammar change into a closure-soundness
@@ -89,7 +89,10 @@ closure_body = { block | expr }
 - Optional return type: `|x| -> String { ... }`.
 - Body: a block `|x| { ...; last }` **or** a bare expression `|x| x * 2` (new —
   RFC-0041's grammar required a block). A bare-expression body has the
-  expression's type; no `->` needed.
+  expression's type; no `->` needed. It extends to the widest expression the
+  surrounding precedence allows — a `,`, `)`, `]`, `}`, or a lower-precedence
+  operator ends it, so `f(|x| x + 1, y)` is `f((|x| x + 1), y)` and
+  `|x| x + 1 * 2` is `|x| (x + (1 * 2))` — Rust's rule.
 - Nullary: `|| expr` / `|| { ... }`.
 
 ### 3. `(...)` is freed
@@ -143,19 +146,18 @@ parenthesized. Reference-qualified function types (`&|A| -> B`) already read as 
 are unaffected; a bare qualifier prefix (`once`, `var`) is part of the `fun_type` it
 precedes, so `|A| -> (once |B| -> C)` is the form, not `|A| -> once (|B| -> C)`.
 
-## Grammar: the `|` wrinkle
+## Grammar: the `|` disambiguation rule
 
-`|` is bitwise-or and `||` is logical-or. Two cases need a rule:
+`|` is bitwise-or, `||` is logical-or. **Normative rule (Open Question 1, resolved):** a
+closure literal — `|params| …` or `|| …` — is recognised **only in expression-start
+position**: the beginning of an expression, or immediately after `=`, `:=`, `(`, `[`, `{`,
+`,`, `return`, `->`, or a binary operator — any position where an operand is expected. In
+any other position, `|` and `||` are the bitwise / logical-or operators. This resolves
+both `|| expr` vs `a || b` and `|x| c` vs `a | b | c` with **no lexer split of `||`** —
+the PEG's ordered choice plus the position rule is enough. It is Rust's rule.
 
-- **Nullary `||`.** `|| expr` (a nullary closure) versus `a || b` (logical-or).
-  A closure literal only starts an expression or follows `=`, `(`, `,`, `return`,
-  `->`, etc.; `a || b` has a left operand. Resolvable by position, as Rust does;
-  the RFC should state the rule rather than leave it to the parser.
-- **`|x|` inside an expression.** `a | b | c` (two bitwise-ors) versus a closure
-  `|b| c` used as an argument. Same resolution: a closure is only recognised in
-  expression-start position, never as the right operand of `|`.
-
-Type position has no such conflict — `|` is not an operator there.
+In **type position** `|` is not an operator, so `|A| -> B` and `|| -> B` are unambiguous
+with no rule needed.
 
 ## Migration
 
@@ -211,18 +213,21 @@ different thing — an erased, dispatched form. Not the bare function type.
 
 ## Open Questions
 
-1. **The `|` disambiguation rule** (§Grammar) — position-based, as sketched, or is
-   an explicit lexer hack (`||` as one token that splits) needed? Nail it before
-   acceptance.
-2. **Is `->` mandatory in the type?** `|A| -> B` versus a shorter `|A| B`. The
-   arrow keeps parsing simple and reads clearly; dropping it saves two
-   characters. Leaning: keep `->`.
-3. **Bare-expression closure body** (§2) — add it, or keep RFC-0041's
-   block-only rule and require `|x| { x * 2 }`? Bare expressions are the common
-   `map`/`filter` case and match every other language with this notation.
-4. **`||` nullary spelling.** `|| expr` reads oddly next to logical-or. Is there
-   appetite for `| | expr` (space-separated) or a different nullary form? Most
-   languages accept `||` and rely on position.
+*All resolved 2026-09-02.*
+
+1. **The `|` disambiguation rule** (§Grammar). **✓ Resolved — position-based, normative.**
+   A closure literal opens only in expression-start position; `|` / `||` anywhere else is
+   the bitwise / logical-or operator. No lexer split of `||`. Stated in §Grammar. (This
+   also settles OQ4.)
+2. **Is `->` mandatory in the type?** **✓ Resolved — yes.** `|A| -> B`, `|| -> C`.
+   Dropping the arrow saves two characters, reads ambiguously beside generics, and loses
+   the "returns" signal the literal's optional `-> Ret` shares.
+3. **Bare-expression closure body** (§2). **✓ Resolved — allowed.** `closure_body = block
+   | expr`; `|x| x * 2` is legal, has the expression's type, needs no `->`, and extends to
+   the widest expression the surrounding precedence permits (a comma, `)`, `]`, `}`, or a
+   lower-precedence operator ends it) — Rust's rule. Blocks are unchanged.
+4. **`||` nullary spelling.** **✓ Resolved — `||`, by position (OQ1).** Not `| |`; a
+   whitespace-significant form is a typo magnet and buys nothing.
 
 ## References
 
@@ -243,10 +248,11 @@ different thing — an erased, dispatched form. Not the bare function type.
 
 ## Decision
 
-**Outcome:** *(pending — `1-under-review` (#903), split from RFC-0134 §3a. The
-grammar is straightforward once the `|` disambiguation rule (Open Question 1) is
-fixed; migration is mechanical. Sequence with or before RFC-0151 and RFC-0125,
-both of which need `(...)` back.)*
+**Outcome:** *(pending — `1-under-review` (#903), split from RFC-0134 §3a. **All four
+Open Questions resolved 2026-09-02** (position-based `|` rule, `->` mandatory,
+bare-expression bodies, `||` nullary); §5 nested-paren rule added. Grammar and migration
+are both settled — acceptance-ready. Sequence with or before RFC-0151 and RFC-0125, both
+of which need `(...)` back.)*
 **Target:** **v0.13.0** — set 2026-09-02 to co-land with the closure cluster's `once` /
 `var` qualifier grammar (§4) and with RFC-0160 (Type Aliases), so the base function-type
 spelling migrates once rather than twice. Targeting precedes acceptance here for the same
