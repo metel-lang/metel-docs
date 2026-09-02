@@ -9,11 +9,11 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/903'
 ---
 
 > **Brought into v0.13.0 (2026-09-02).** The `once` / `var` qualifier grammar this RFC
-> hosts (§4) lands with the closure cluster (RFC-0050 / RFC-0134 / RFC-0152 / RFC-0153 /
-> RFC-0157). Shipping v0.13.0 on the `(...)` spelling and switching to `|...|` afterward
-> would migrate every closure signature in the corpus twice, so this co-lands rather than
-> follows. Still `1-under-review` — Open Question 1 (`|` disambiguation) must be nailed
-> before acceptance. RFC-0160 (Type Aliases) co-lands alongside it.
+> uses has landed with the closure cluster (RFC-0050 / RFC-0134 / RFC-0152 / RFC-0153 /
+> RFC-0157). This RFC now follows as the one corpus-wide syntax migration from the
+> parenthesized implementation that shipped in that cluster. Its four grammar questions
+> were resolved together on 2026-09-02; it remains `1-under-review` pending acceptance
+> review and implementation planning. RFC-0160 (Type Aliases) co-lands alongside it.
 
 > **Split from RFC-0134 §3a on 2026-08-30.** RFC-0134's acceptance review flagged
 > that bundling a corpus-wide function-type grammar change into a closure-soundness
@@ -32,7 +32,7 @@ form:
 | Today (RFC-0041) | Proposed |
 |---|---|
 | `(x: i64) -> String { x.to_string() }` | `\|x: i64\| -> String { x.to_string() }` |
-| `(x) -> x * 2` *(n/a — needs block)* → `(x) -> i64 { x * 2 }` | `\|x\| x * 2` |
+| `(x) -> i64 { x * 2 }` | `\|x\| { x * 2 }` |
 | `() -> { print(x); }` | `\|\| { print(x); }` |
 | `(i64, String) -> boolean` *(the type)* | `\|i64, String\| -> boolean` |
 | `fun apply(f: (i64) -> i64)` | `fun apply(f: \|i64\| -> i64)` |
@@ -59,8 +59,8 @@ be. But it landed on `(...)`, and that spelling now collides in three ways:
   it means a function of *two* arguments or a function of *one record* argument.
 
 `|A, B| -> C` and `|(A, B)| -> C` say it. `|...|` for the literal and the type
-means `let f: |i64| -> String = |n| n.to_string();` reads with the annotation and
-the value in the same shape — today they diverge (`(i64) -> String` vs
+means `let f: |i64| -> String = |n| { n.to_string() };` reads with the annotation
+and the value in the same shape — today they diverge (`(i64) -> String` vs
 `(n) -> String { ... }`).
 
 RFC-0134 §3a proposed `fun(T) -> U` for the type. That is a revert of RFC-0041's
@@ -75,22 +75,19 @@ literal. This RFC keeps RFC-0041's lightness and fixes the collision it left.
 fun_type = { "|" ~ type_list? ~ "|" ~ "->" ~ type_expr }
 ```
 
-`|A, B| -> C`. A nullary function type is `|| -> C`. The `->` is required (Open
-Question 2).
+`|A, B| -> C`. A nullary function type is `|| -> C`. The `->` is required.
 
 ### 2. Closure literal
 
 ```
-closure_expr = { "|" ~ param_list? ~ "|" ~ ("->" ~ type_expr)? ~ closure_body }
-closure_body = { block | expr }
+closure_expr = { "|" ~ param_list? ~ "|" ~ ("->" ~ type_expr)? ~ block }
 ```
 
 - Parameters: `|x|`, `|x, y|`, with optional per-parameter types `|x: i64, y: String|`.
 - Optional return type: `|x| -> String { ... }`.
-- Body: a block `|x| { ...; last }` **or** a bare expression `|x| x * 2` (new —
-  RFC-0041's grammar required a block). A bare-expression body has the
-  expression's type; no `->` needed.
-- Nullary: `|| expr` / `|| { ... }`.
+- Body: a block `|x| { ...; last }`. RFC-0041's block-only body rule is retained;
+  a bare-expression form is deliberately out of scope for this migration.
+- Nullary: `|| { ... }`.
 
 ### 3. `(...)` is freed
 
@@ -145,24 +142,23 @@ precedes, so `|A| -> (once |B| -> C)` is the form, not `|A| -> once (|B| -> C)`.
 
 ## Grammar: the `|` wrinkle
 
-`|` is bitwise-or and `||` is logical-or. Two cases need a rule:
+`|` is bitwise-or and `||` is logical-or. The parser resolves both by expression
+position; neither token is split or given a lexer-only special case:
 
-- **Nullary `||`.** `|| expr` (a nullary closure) versus `a || b` (logical-or).
-  A closure literal only starts an expression or follows `=`, `(`, `,`, `return`,
-  `->`, etc.; `a || b` has a left operand. Resolvable by position, as Rust does;
-  the RFC should state the rule rather than leave it to the parser.
+- **Nullary `||`.** `|| { ... }` is a nullary closure only at expression start
+  (after `=`, `(`, `,`, `return`, `->`, and analogous expression-introducing
+  positions). `a || b` has a completed left operand and is always logical-or.
 - **`|x|` inside an expression.** `a | b | c` (two bitwise-ors) versus a closure
-  `|b| c` used as an argument. Same resolution: a closure is only recognised in
-  expression-start position, never as the right operand of `|`.
+  `|b| { c }` used as an argument. A closure is only recognised in expression-start
+  position, never as the right operand of `|`.
 
 Type position has no such conflict — `|` is not an operator there.
 
 ## Migration
 
 Hard switch, one-pass corpus sweep, no dual-accept — the same call RFC-0134 §3a
-made, for the same reasons. **Sequenced into v0.13.0 with the closure cluster** so the
-qualifier grammar and its base spelling land in one migration, not two. Three mechanical
-rewrites:
+made, for the same reasons. The closure cluster has already supplied the qualifier
+grammar; this is its v0.13.0 syntax-migration follow-up. Three mechanical rewrites:
 
 - Type position: `(T…) -> U` → `|T…| -> U`. Find by `) ->` in a type context.
 - Expression position: `(params) -> Ret? { body }` → `|params| -> Ret? { body }`.
@@ -209,20 +205,14 @@ RFC-0151's two-arg-vs-one-record distinction at all. Rejected.
 That spelling is the `Callable` *aspect* (RFC-0061 §7.1 / metel-core#893), a
 different thing — an erased, dispatched form. Not the bare function type.
 
-## Open Questions
+## Resolved questions (2026-09-02)
 
-1. **The `|` disambiguation rule** (§Grammar) — position-based, as sketched, or is
-   an explicit lexer hack (`||` as one token that splits) needed? Nail it before
-   acceptance.
-2. **Is `->` mandatory in the type?** `|A| -> B` versus a shorter `|A| B`. The
-   arrow keeps parsing simple and reads clearly; dropping it saves two
-   characters. Leaning: keep `->`.
-3. **Bare-expression closure body** (§2) — add it, or keep RFC-0041's
-   block-only rule and require `|x| { x * 2 }`? Bare expressions are the common
-   `map`/`filter` case and match every other language with this notation.
-4. **`||` nullary spelling.** `|| expr` reads oddly next to logical-or. Is there
-   appetite for `| | expr` (space-separated) or a different nullary form? Most
-   languages accept `||` and rely on position.
+1. **`|` / `||` disambiguation:** position-based parsing, as specified in
+   [Grammar: the `|` wrinkle](#grammar-the--wrinkle); no lexer hack or token splitting.
+2. **Function-type arrow:** `->` is mandatory in `|A| -> B`.
+3. **Closure body:** retain RFC-0041's block-only form. Bare-expression closures are
+   out of scope and may be proposed separately after this migration.
+4. **Nullary spelling:** `|| { ... }`, resolved by the same position rule as logical-or.
 
 ## References
 
@@ -243,12 +233,9 @@ different thing — an erased, dispatched form. Not the bare function type.
 
 ## Decision
 
-**Outcome:** *(pending — `1-under-review` (#903), split from RFC-0134 §3a. The
-grammar is straightforward once the `|` disambiguation rule (Open Question 1) is
-fixed; migration is mechanical. Sequence with or before RFC-0151 and RFC-0125,
-both of which need `(...)` back.)*
-**Target:** **v0.13.0** — set 2026-09-02 to co-land with the closure cluster's `once` /
-`var` qualifier grammar (§4) and with RFC-0160 (Type Aliases), so the base function-type
-spelling migrates once rather than twice. Targeting precedes acceptance here for the same
-reason RFC-0132 is v0.13.0-targeted while under review: real planned engagement, recorded
-so sequencing decisions can be made against it.
+**Outcome:** *(proposal complete — `1-under-review` (#903), split from RFC-0134 §3a.
+All four grammar questions were resolved 2026-09-02. Acceptance review must verify the
+position rule and the corpus migration.)*
+**Target:** **v0.13.0** — follows the merged closure cluster as its syntax-migration
+work, alongside RFC-0160 (Type Aliases). The migration is intentionally limited to
+pipe notation; bare-expression closure bodies are not part of this release.
