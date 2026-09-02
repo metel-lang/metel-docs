@@ -386,7 +386,7 @@ function *type* spelling is order-insensitive ([legality-24](#spec.functions.clo
 ##### Legality Rule {#spec.functions.closures.legality-24}
 
 As a function *type* spelling the `once` and `var` qualifiers are order-insensitive:
-`once var fun(T) -> U` and `var once fun(T) -> U` denote the identical `Type::Fun`. The
+`once var (T) -> U` and `var once (T) -> U` denote the identical `Type::Fun`. The
 fixed order of [legality-23](#spec.functions.closures.legality-23) is a grammar rule for
 closure *literals* only.
 
