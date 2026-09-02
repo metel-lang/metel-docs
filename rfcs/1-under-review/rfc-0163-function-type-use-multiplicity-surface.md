@@ -18,10 +18,10 @@ capability widening only at first-order sites and requires exact capability
 matching below the first nested function level.
 
 Written function types can spell `once` and `var`, but cannot spell the
-use-multiplicity axis. Consequently `(T) -> U` is ambiguous: it may be a
+use-multiplicity axis. Consequently `|T| -> U` is ambiguous: it may be a
 requirement for a `Copy` callable, a requirement for a move-only callable, or
 an axis-agnostic callable type. The ambiguity becomes observable in generic
-higher-order APIs such as `map(f: (T) -> U)`: a concrete `Copy` named function
+higher-order APIs such as `map(f: |T| -> U)`: a concrete `Copy` named function
 and a function-type annotation must be reconciled without silently turning the
 RFC-0152 first-order limit into a general nested widening rule.
 
@@ -72,7 +72,7 @@ ownership contract incomplete precisely where higher-order functions need it.
 A bare function type erases its use multiplicity:
 
 ```metel
-fun map<T, U>(xs: List<T>, f: (T) -> U) -> List<U> { /* ... */ }
+fun map<T, U>(xs: List<T>, f: |T| -> U) -> List<U> { /* ... */ }
 ```
 
 It accepts either a `Copy` or a move-only function value. It does **not** give
@@ -83,21 +83,30 @@ This RFC adds `copy` as a function-type qualifier for an API that requires a
 copyable callable:
 
 ```metel
-fun duplicate_callback(f: copy (i64) -> i64) -> () { /* may copy `f` */ }
+fun duplicate_callback(f: copy |i64| -> i64) -> () { /* may copy `f` */ }
 ```
 
 `copy` composes with the existing qualifiers in the same prefix position:
 
 ```metel
-copy once (T) -> U
-copy var (T) -> U
-copy once var (T) -> U
+copy once |T| -> U
+copy var |T| -> U
+copy once var |T| -> U
 ```
 
 As with `once` and `var`, the type spelling's qualifier order is
 order-insensitive. A closure literal still has its independently specified
-`[captures] once? var? (params)` prefix; `copy` is never written on a literal,
+`[captures] once? var? |params|` prefix; `copy` is never written on a literal,
 because its concrete capability is derived from its captures.
+
+**All three closure qualifiers are contextual identifiers.** `copy`, `once`,
+and `var` have qualifier meaning only when the parser is reading the prefix of
+a function type or a closure literal. They remain ordinary identifiers in
+bindings, paths, fields, and every other grammar position. In particular, this
+RFC must not reserve `copy` globally merely because it joins the existing
+closure qualifier family. The parser determines the interpretation from the
+delimiters that follow the qualifier prefix (`|` for the type/literal syntax
+settled by RFC-0154); it does not change identifier tokenization.
 
 There is intentionally no source `move` qualifier in this proposal. A caller
 that merely accepts, stores, returns, or consumes a callable needs no stronger
@@ -143,12 +152,12 @@ It may not be copied merely because the runtime value happened to be `Copy`.
 For example:
 
 ```metel
-fun consume(f: (i64) -> i64) -> () {
+fun consume(f: |i64| -> i64) -> () {
     let saved := f;       // move: permitted
     saved(1);
 }
 
-fun duplicate(f: copy (i64) -> i64) -> () {
+fun duplicate(f: copy |i64| -> i64) -> () {
     let a := f;           // copy: permitted
     let b := f;
     a(1);
@@ -167,12 +176,12 @@ The ordinary higher-order signature remains useful for both categories of
 callable:
 
 ```metel
-fun map<T, U>(xs: List<T>, f: (T) -> U) -> List<U> { /* call `f` for each item */ }
+fun map<T, U>(xs: List<T>, f: |T| -> U) -> List<U> { /* call `f` for each item */ }
 fun add_one(x: i64) -> i64 { x + 1 }
 
 let mapped := map([1, 2], add_one);
 let offset := 10;
-let shifted := map([1, 2], [offset] (x: i64) -> i64 { x + offset });
+let shifted := map([1, 2], [offset] |x: i64| -> i64 { x + offset });
 ```
 
 If an implementation copies a callback rather than merely calling or moving
@@ -213,7 +222,7 @@ need a special reconciliation rule or annotation, which is the current gap.
 The accepted proposal must work through, at minimum:
 
 ```metel
-fun map<T, U>(xs: List<T>, f: (T) -> U) -> List<U> { /* ... */ }
+fun map<T, U>(xs: List<T>, f: |T| -> U) -> List<U> { /* ... */ }
 fun add_one(x: i64) -> i64 { x + 1 }
 
 let mapped := map([1, 2], add_one);
