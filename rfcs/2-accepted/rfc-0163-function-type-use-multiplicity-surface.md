@@ -4,7 +4,7 @@ title: "Function-Type Use-Multiplicity Surface"
 date: '2026-09-02'
 status: accepted
 target: v0.13.0
-updated: '2026-09-02'
+updated: '2026-09-03'
 tracking: 'https://github.com/metel-lang/metel-core/issues/936'
 ---
 
@@ -13,6 +13,82 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/936'
 > adversarial pass the same day added the literal-`copy` diagnostic, RFC-0162
 > disjointness, the Migration section, and the nested-`copy` integration example.
 > RFC-0155 (higher-order variance, unscheduled) is scoped out and unweakened.
+
+> **Status — accepted, spec-review pass (2026-09-03).** A second adversarial pass
+> (F1–F12) hardened the proposal without reopening the outcome:
+> - **Erasure is first-order only.** Below the first function-type level the use
+>   axis joins `once` / `var` as an *exactly*-matched axis — no erasure, no
+>   `copy`↔bare in either direction. This removes any conflict with RFC-0152 and
+>   leaves RFC-0155's variance question untouched (F1, F5).
+> - **`Erased` is defined against `Move`** as the precision-loss top of the use
+>   lattice — callable and movable, never copyable, never provably move-only — and
+>   MUST NOT be collapsed into `Move` (F4). The directional table is made total
+>   over `Erased`, including joins and generic instantiation (F3, F6).
+> - **`copy` names the `use_multiplicity` field, not a new axis** (F2); RFC-0162
+>   is untouched. *(The second pass briefly tied `copy` to an `F: Copy` bound; the
+>   fourth pass retracts that — see below.)*
+> - Generics section added (F7); Migration hardened (F8); literal-`copy`
+>   diagnostic given a class and message (F9); `copy` reservation fallout
+>   enumerated with a `native_path` carve-out (F10); integration examples
+>   rewritten as a per-row fixture checklist (F11); a single-directional-relation
+>   implementation constraint added (F12).
+>
+> **Third pass (2026-09-03, G1–G8) reframed the trigger and closed the gaps the
+> second pass opened:**
+> - **Erasure is a *coercion into a written bare function type*, not a syntactic
+>   position.** A generic type variable, an unannotated `let`, an unannotated
+>   aggregate literal, and a closure capture write no function type and so do not
+>   erase — the concrete `Copy` / `Move` from RFC-0134 is preserved (G3, G4, G5).
+> - **Inferred joins take the information-lattice LUB** — `Copy ⊔ Copy = Copy`,
+>   `Move ⊔ Move = Move`, mixed/`Erased` `= Erased` — so a homogeneous move-only
+>   join keeps its future exact-`move` proof (G1). A join reaching a *written*
+>   type is a coercion instead.
+> - **Classification is after full alias expansion** (G8); the nested-exact rule
+>   now names its acknowledged higher-order limitation and its first-order
+>   erasing-adapter bridge (G2).
+> - **`Erased ≠ Move` is a representation invariant**, source-unobservable in
+>   v0.13.0; `4-implemented` backs it with an implementation-level assertion, or
+>   defers the normative distinction until exact `move` (G6).
+> - **Migration uses the move checker's CFG-aware consumed-place analysis**, not a
+>   textual "used twice" count, and calls out post-elaboration copies as a
+>   separate obligation (G7). The erased-non-copy guarantee is stated **under move
+>   checking**; every fixture sets `move_check = true` (Part C).
+>
+> **Fourth pass (2026-09-03, H1–H8) closed the last core-semantics gaps:**
+> - **`copy` is a requirement on the function type, not an aspect bound.** Per
+>   RFC-0134 a function value satisfies no value aspects — there is no `F: Copy`
+>   route to a duplicable callback, and a generic body cannot ascribe an
+>   unconstrained `F` to a function type. All `F: Copy` claims are removed (H1, H6).
+> - **"Written" is a `WrittenFunctionBoundary` provenance marker** over the
+>   expected-type AST, surviving alias expansion and associated-type resolution —
+>   not inferred from the final `Type::Fun`. The marked positions are enumerated,
+>   including assignment into an annotated `var` and declared vs inferred returns
+>   (H2, H3).
+> - **Joins are strictly two-stage**: LUB finalizes an un-annotated join at its
+>   own boundary before any downstream annotation can coerce the result; the
+>   annotation never flows back into the arms (H4).
+> - **The nested-limitation bridge is a first-order boundary *before* the call**
+>   (`let adapter: |i64| -> i64 := …; g(adapter)`); passing a fresh literal into
+>   the nested slot is itself rejected (H5).
+> - **`Erased ≠ Move`** is backed by a *mandatory* typed-AST unit test; the only
+>   alternative is a fully-specified `Move`-only model that still forbids `Copy`
+>   recovery (H8).
+> - **Move checking stays opt-in in v0.13.0**; erased non-copyability is a
+>   checked-mode guarantee. No "mandatory for function types only" mode (H7).
+>
+> **Fifth pass (2026-09-03, I1–I6) pinned the frontend mechanism:** provenance is
+> carried on an **`ExpectedType`** value (`Written` / `AliasOrigin` /
+> `Substituted` / `Inferred`) threaded from inference into construction, with
+> RFC-0160 alias expansion / associated-type resolution / generic substitution
+> each carrying it forward — never reconstructed from `Type` (I1). Join
+> classification is **expected-context propagation, then LUB** — a boundary-bearing
+> `ExpectedType` reaching the join (a written-return tail, `return if`, `?`, an
+> annotated RHS) coerces the arms; a join with none takes the LUB, and the
+> checking order is pinned (I2). A **declared generic parameter is rigid** in its
+> own body; Migration sweeps for the ascription pattern and reconsiders the rule
+> if it is not vanishingly rare (I3). "Store a callback and call it repeatedly"
+> is unaffected (I4); the erased-non-copy rule is a checked-mode error, not
+> unconditional (I5).
 
 > **Status — accepted (2026-09-02).** design settled (bare=Erased, copy assertion, A-D weighed); adversarial pass folded in; RFC-0155 scoped out
 
@@ -61,15 +137,22 @@ ownership contract incomplete precisely where higher-order functions need it.
 
 ## Scope and constraints
 
-- Preserve RFC-0152's first-order-only rule for actual capability widening.
+- Preserve RFC-0152's first-order-only rule for actual capability widening, and
+  its exact match for every axis below the first function-type level.
 - Preserve RFC-0134's fact that a closure's concrete `Copy`-ness is derived
   from its captures, not inferred from call sites.
 - Keep a generic callback signature usable with ordinary named functions and
   capture-free closures.
-- Decide whether the chosen spelling is an assertion, an upper/lower bound, or
-  an axis-agnostic abstraction; construction and diagnostics must agree.
-- Reconcile the result with RFC-0155, which owns variance and subtyping for
-  genuinely nested function types.
+- The chosen spelling is a **positive assertion** (`copy`) over an otherwise
+  **axis-agnostic abstraction** (bare / `Erased`); construction, the move
+  checker, and diagnostics must agree, and must do so from one resolved fact
+  rather than three independent comparisons.
+- Do not touch RFC-0155: variance and subtyping for genuinely nested function
+  types stay entirely its problem. Erasure is a coercion into a written bare
+  function type at a first-order site; nested use-axis matching is left exact.
+- Preserve RFC-0134's concrete `Copy` / `Move` wherever no function type is
+  written — a generic type parameter, an unannotated binding or aggregate, a
+  closure capture. Only a written bare function type erases.
 
 ## Proposal
 
@@ -101,19 +184,39 @@ copy once var |T| -> U
 ```
 
 As with `once` and `var`, the type spelling's qualifier order is
-order-insensitive. A closure literal still has its independently specified
-`[captures] once? var? |params|` prefix; **`copy` in literal-prefix position is a
-parse error** (`[x] copy |y| { … }` does not parse) — a literal's concrete
-capability is derived from its captures, never asserted.
+order-insensitive.
 
-`copy` joins `once` and `var` as a reserved keyword in v0.13.0. The qualifier
-family therefore cannot be used as ordinary identifiers, including in a
-binding, path segment, or field name. A future RFC may consider making the
-whole family contextual, but it must do so as a compatibility and lexer/parser
-change for all three words together; this RFC does not make that change. Its
-use-multiplicity `copy` is disjoint from RFC-0162's regular-value `Copy` / `Clone`
-model — it names the `use_multiplicity` field RFC-0134 already carries on
-`Type::Fun`, not a value-level aspect.
+**`copy` is rejected in closure-literal-prefix position.** A closure literal has
+its independently specified `[captures] once? var? |params|` prefix and does not
+take `copy`. The grammar admits a `copy` token there only so the compiler can
+emit a precise diagnostic instead of a bare "expected expression" — lowering
+then rejects it with `T00xx` (final code assigned at `4-implemented`):
+
+> `copy` is a function-type qualifier only; a closure literal's copyability is
+> derived from its captures, not asserted.
+
+This fires for every prefix permutation (`[x] copy |y| { … }`, `copy [x] |y| {
+… }`, `copy once |y| { … }`, `once copy |y| { … }`, bare `copy |y| { … }`).
+
+`copy` joins `once` and `var` as a reserved keyword in v0.13.0. The reservation
+removes `copy` from **every identifier-bearing position** — a `let` / `var`
+binding, function / method / associated-function name, parameter, generic
+parameter, type-alias name, `import … as` alias, struct field, enum variant,
+`for` / `match` pattern binding, and generated identifiers. The one carve-out is
+a `native(@…)` path: `native_path` segments are host identifiers in an FFI
+namespace and already admit keywords, so `@std.core.copy` stays legal. A future
+RFC may make the whole `once` / `var` / `copy` family contextual, but only as one
+combined lexer / parser / compatibility change for all three words.
+
+**`copy` is a requirement on the written function type, not an aspect bound.** It
+names the `use_multiplicity` field RFC-0134 already carries on `Type::Fun` — a
+requirement that the supplied callable be one RFC-0134 proved copyable from its
+captures. Per RFC-0134 a function value satisfies **no value aspects**, `Copy`
+included; `use_multiplicity` is the move checker's fact, not aspect membership.
+So `copy` does **not** make a callable satisfy a `Copy` / `Clone` bound and does
+not interact with RFC-0162's regular-value model at all. Duplicating a callback
+is expressed by writing `copy |T| -> U` — the function type itself — never by an
+`F: Copy` constraint on a type parameter.
 
 There is intentionally no source `move` qualifier in this proposal. A caller
 that merely accepts, stores, returns, or consumes a callable needs no stronger
@@ -124,32 +227,230 @@ types in the meantime.
 
 ### Type model and matching
 
-`Type::Fun` gains an internal third use-multiplicity state, here called
-`Erased`, beside its concrete `Copy` and `Move` states. `Erased` is produced by
-lowering a source function type whose `copy` qualifier is absent. It is not
-inferred for a function value: named functions, capture-free closures, and
-closures whose captures are all `Copy` have concrete `Copy`; a closure with a
-non-`Copy` capture has concrete `Move`.
+`Type::Fun`'s `use_multiplicity` field gains a third state, `Erased`, beside its
+concrete `Copy` and `Move` states:
 
-The use-axis matching relation is directional:
+- **`Copy`** — a function value proven copyable: a named function, a capture-free
+  closure, or a closure whose captures are all `Copy`.
+- **`Move`** — a function value proven *not* copyable: a closure with a non-`Copy`
+  capture.
+- **`Erased`** — the concrete capability is unknown. Produced **only** by lowering
+  a written function type that has no `copy` qualifier, and by coercing a value
+  into such a type (below). Never *inferred* for a constructed value, and never
+  produced by a position that has no written function type.
 
-| Actual value | Expected type | Allowed | Resulting static capability |
+`Erased` is the top of the use lattice — least information. An `Erased` value can
+be **called** (subject to its `once` / `var`) and **moved**; it can never be
+**copied**, and it can never satisfy a hypothetical future exact-`move`
+assertion either, because "unknown" cannot prove move-only any more than it can
+prove `Copy`. Two `Erased` function types are equal iff their parameters, return,
+`once` / `many`, and `var` / reading match.
+
+#### Erasure is a coercion, not a syntactic position
+
+Erasure happens when a value is **coerced into an explicitly written function
+type** whose use axis is bare. There is one coercion relation, directional on
+the use axis:
+
+| Actual `use_multiplicity` | Written expected axis | Allowed | Result at the coercion |
 | --- | --- | --- | --- |
-| `Copy` | bare / `Erased` | yes | erased |
-| `Move` | bare / `Erased` | yes | erased |
+| `Copy` | bare | yes | `Erased` |
+| `Move` | bare | yes | `Erased` |
+| `Erased` | bare | yes | `Erased` |
 | `Copy` | `copy` | yes | `Copy` |
-| `Move` or `Erased` | `copy` | no | — |
+| `Move` | `copy` | no | — |
+| `Erased` | `copy` | no | — |
 
-Erasure may occur at a parameter, ascription, field initialization, return,
-or alias expansion, including under a nested function type. This is not
-RFC-0152 widening: it affects only an omitted use axis. The written
-`once`/`many` and `var`/reading axes remain exact below the first function-type
-level, exactly as RFC-0152 requires. `Erased` must therefore not become a
-general exception for nested `once` or `var` mismatches.
+The two "no" rows are a **type error** unconditionally (they are a pure
+type-check failure, independent of the move checker). The *other* half of the
+guarantee — that an `Erased`-typed binding cannot be duplicated — is a
+**checked-mode error**: the move checker raises it, and with move checking off
+the default evaluator still deep-clones (see §"Ownership through an erased type"
+→ "Enforcement mode").
 
-The existing implementation's normalization of a parsed move placeholder to a
-concrete `Copy` callable is replaced by this relation. It must not retain a
-Copy-to-Move special case after `Erased` exists.
+**"Written" is a provenance judgment**, not a property of the final `Type::Fun` —
+after normalization a transparent alias, an associated-type projection, and a
+genuinely inferred type can all be the same `Type::Fun`. The erasing boundary is
+therefore carried on a **provenance-annotated expected type**, not reconstructed
+from `Type`.
+
+##### The `WrittenFunctionBoundary` carrier
+
+The expected type threaded through checking is not `Option<&Type>` but a small
+`ExpectedType` with a provenance discriminant — at minimum `Written(&TypeExpr)`
+(the source spelled a function type here), `AliasOrigin` (reached through a
+transparent alias / associated type whose *definition* spelled one),
+`Substituted` (a `Written`/`AliasOrigin` type carried into a generic
+instantiation), and `Inferred` (no user-written type). This value is produced in
+inference and **passed unchanged into construction**; construction never
+re-derives provenance from a bare `Type`.
+
+- **RFC-0160** expands transparent aliases before typechecking: `type_alias`
+  expansion must copy the alias definition's `WrittenFunctionBoundary` onto the
+  expanded `TypeExpr`, so `type Cb := |i64| -> i64; let x: Cb := add_one` still
+  erases and `type W<T> := (T,); let y: W<|i64| -> i64> := (add_one,)` erases the
+  element (the function type is written at the *generic argument*).
+- **Associated-type projection** resolution attaches the marker when the
+  projection resolves to a definition that spelled a function type.
+- **Generic substitution** carries the marker on the substituted `TypeExpr`;
+  binding a `Written` function type to `F` and using `F` at a value site is a
+  `Substituted` boundary and erases; binding an inferred one does not.
+
+Erasure fires only at a `Written` / `AliasOrigin` / `Substituted` boundary. The
+boundary-bearing positions:
+
+- a **written parameter type**;
+- the initializer of a `let` / `var` with a **written annotation**, and the RHS
+  of an **assignment** into such a binding;
+- an **ascription** (`expr : Type`);
+- a **declared** function or method return type (an *inferred* return is not a
+  boundary);
+- a **written struct-field type**, at each construction and field write;
+- a **written aggregate element type**;
+- a `?` value against a **declared** function-return slot.
+
+An **inferred** return, `let`, aggregate, or join is not a boundary: it computes
+its own result (or LUB, below), and a later coercion of *that result* is what
+erases. Methods follow the function rule, including a builder returning `self` —
+declared function-typed result coerces, inferred does not.
+
+`4-implemented` builds the `ExpectedType` carrier; it is a hard prerequisite,
+called out in the Decision.
+
+Erasure is **idempotent and absorbing**: once a value's type is `Erased` it
+stays `Erased` through every later binding, conditional, alias, re-export, and
+instantiation. Concrete `Copy` is never re-derived downstream; it is available
+only at the value's own definition.
+
+#### Positions with no written function type do not erase
+
+Where nothing writes a function type, the concrete `use_multiplicity` from
+RFC-0134 is **preserved**, not erased:
+
+- **An unannotated `let` / `var`** (`let g := add_one;`) keeps `add_one`'s
+  `Copy`.
+- **An unannotated aggregate literal** (`let p := (add_one,);`, `[add_one]` as a
+  list) keeps each element's concrete axis; the tuple/list type carries `Copy`
+  through.
+- **A generic type parameter** is not a written function type. `fun
+  identity<F>(f: F) -> F` binds `F` to the argument's *resolved* type verbatim —
+  a `Copy` callable in, a `Copy` callable out; a bare/`Erased` value in, an
+  `Erased` value out. An `F`-typed value only erases if it is later coerced
+  across a written bare boundary. `identity(add_one)` therefore does **not**
+  erase.
+- **A closure capture of a function value** follows RFC-0134: `[add_one] |x:
+  i64| -> i64 { add_one(x) }` is `Copy` because its one capture is `Copy`. A
+  capture is not a coercion site (there is no written capture-storage type in the
+  surface language to be bare).
+
+#### Joins: expected-context propagation, then LUB
+
+A join (`if` / `match` arms, a `||` / `&&` result, a loop-`break` set) is
+resolved against **the `ExpectedType` that expected-context propagation delivers
+to the join expression** — the same propagation the checker already does for any
+tail block:
+
+- **A boundary-bearing `ExpectedType` reaches the join** — it is the tail of a
+  written-return function or method, the RHS of an annotated binding, an
+  argument at a written parameter, an ascribed expression, a `return`
+  sub-expression under a declared return, or a `?` under a declared return.
+  Then each arm is checked against that expected type and coerced per the table:
+  a written bare context yields `Erased`; a written `copy` context requires every
+  arm to already be `Copy`. So `fun f(c: boolean) -> |i64| -> i64 { if (c) {
+  add_one } else { add_one } }` erases both arms — the declared return propagates
+  into the `if`.
+- **No boundary-bearing `ExpectedType` reaches the join** (an un-annotated `let
+  h := if …`, a bare statement position) — the join is finalized by the
+  information-lattice LUB of its arms' use axes:
+
+  `Copy ⊔ Copy = Copy`  ·  `Move ⊔ Move = Move`  ·  everything else `= Erased`
+
+  A homogeneous move-only join stays `Move` — no future exact-`move` proof is
+  discarded. A *later* coercion applies to this **completed** result, never back
+  to the arms: `let h := if (c) { m } else { m }; let e: |i64| -> i64 := h;`
+  LUB-finalizes `h` as `Move`, then erases `e` — `m` is untouched.
+
+The checking order this pins: expected-context propagation runs before a join's
+own inference; an arm with a boundary-bearing expected type is checked against
+it; a join with none takes the LUB and is not retro-checked against a downstream
+annotation.
+
+#### `Erased` is distinct from `Move` — a representation invariant
+
+In v0.13.0, with no exact-`move` spelling, `Erased` and `Move` impose identical
+*source-observable* use behavior: call + move, never copy, never accepted into
+`copy`. No `.mtl` fixture can distinguish them. They must nevertheless remain
+distinct type states, so that (a) construction never re-derives `Copy` for a
+value that passed through a bare written type, and (b) a future `move` qualifier
+can accept a proven-`Move` value while rejecting an `Erased` one.
+
+Because the distinction is source-unobservable now, `4-implemented` **must** back
+it with a **mandatory** implementation-level unit test over the typed AST: a
+`Copy` value coerced across a marked bare function-type boundary is recorded
+`Erased`, not `Move`. (Inspecting the typed AST directly is enough — no
+serialization facility is required.)
+
+The **only** alternative, if the `Erased` state itself is dropped for v0.13.0, is
+this fully-specified temporary model — not a vague "defer": a bare coercion
+lowers to `Move`; there is **no `Erased` state and no exact-`move` claim** in the
+language; construction is **still forbidden** from recovering `Copy` for any
+value that crossed a bare boundary (the deleted normalization stays deleted);
+and a later `move` RFC introduces both `Erased` and its own distinction from
+scratch. "Keep `Move` but leave `Copy` recovery unspecified" is not permitted.
+
+#### Nested matching is exact
+
+Below the first function-type level — a function type that is itself a
+parameter, return, element, or field *of another function type*, decided after
+alias expansion — the use axis is matched **exactly**, exactly as `once` / `var`
+are: bare ↔ bare, `copy` ↔ `copy`, and nothing else. No erasure and no
+`copy`↔bare relaxation at a nested position, in either direction. Given
+contravariant parameter position, `|copy |B| -> C| -> ()` and `||B| -> C| -> ()`
+do not match either way; a mismatch is a type error.
+
+This keeps every axis below the first nesting literally exact (`once`, `var`, and
+now the use axis), so the RFC touches nothing in RFC-0152 or RFC-0155: the
+first-order coercion above is the only new latitude, and there is no recursive
+`copy`-vs-bare relation for RFC-0155's future variance rules to accommodate.
+
+**Acknowledged limitation.** Exactness at nested positions rejects a direct value
+flow that is not itself unsound. In
+
+```metel
+fun apply(g: ||i64| -> i64| -> i64) -> i64 { g(add_one) }
+```
+
+`g`'s parameter is a nested bare `|i64| -> i64`; `add_one` is concrete `Copy`;
+`Copy` ≠ bare *at a nested position* is a type error — even though a callee
+holding a bare callback cannot copy it. This is RFC-0155's under-approximation,
+taken deliberately rather than pre-deciding variance.
+
+Passing a fresh closure literal directly (`g(|x: i64| { add_one(x) })`) does
+**not** help — the literal is still concrete `Copy` (capture-free) flowing into
+the nested bare slot. The working bridge is a **first-order erasure boundary
+first**: bind the adapter through a written bare annotation, so it is already
+`Erased` before it reaches `g`, and the nested match is then bare ↔ bare exact:
+
+```metel
+let adapter: |i64| -> i64 := |x: i64| { add_one(x) };  // first-order coercion → Erased
+g(adapter);                                            // nested bare ↔ bare: exact match
+```
+
+An expression ascription `g((|x: i64| { add_one(x) }) : |i64| -> i64)` does the
+same. `3-integrated` carries `g(add_one)` and `g(|x| { add_one(x) })` as
+**negative** fixtures and the `adapter` form as the **positive** one.
+
+#### One resolved fact, not three comparisons
+
+There is exactly one directional use-axis relation, evaluated in inference. The
+resolved axis is part of the `Type::Fun` written onto every typed node, and it
+flows through substitution, generic instantiation, alias expansion, and join
+inference like any other component of a type. The elaborator, the move checker,
+and construction **read that field**; they never recompute the axis from
+captures except at a value's own definition, and never re-run capability
+matching. The current frontend's Copy-to-Move handling — the named
+move-placeholder normalization *and* every adjacent special case in `unify_seq`,
+nested matching, and generic construction — is deleted, not gated.
 
 ### Ownership through an erased type
 
@@ -174,8 +475,19 @@ fun duplicate(f: copy |i64| -> i64) -> () {
 
 A return type, field, or alias containing a bare function type similarly
 forgets a concrete callable's copyability. This conservative loss is
-observable and intentional; an API that promises or needs copyability writes
-`copy`.
+intentional; an API that promises or needs copyability writes `copy`.
+
+**Enforcement mode.** The "may not be copied" guarantee is a *static* property
+checked by the move checker. The default evaluator still deep-clones a by-value
+use, so a program that copies an erased callable runs today with move checking
+off. v0.13.0 **keeps move checking opt-in**; erased non-copyability is specified
+as a **checked-mode guarantee** — it holds for a program run with the move
+checker on, and every RFC-0163 integration fixture sets `move_check = true`.
+Whether the move checker becomes mandatory language-wide is a separate question
+this RFC does not decide, and a "mandatory only for function-typed places" mode
+is explicitly **not** proposed — the checker analyses whole places, aggregates,
+captures, and control flow, and a function value can be moved by being stored
+inside a non-function value.
 
 ### Generic callbacks
 
@@ -194,6 +506,55 @@ let shifted := map([1, 2], [offset] |x: i64| -> i64 { x + offset });
 If an implementation copies a callback rather than merely calling or moving
 it, its signature must require `copy`. This makes the ownership contract
 visible without introducing `Callable` bounds before RFC-0161.
+
+### Generics and `copy`
+
+A **written function type** is a coercion boundary; a **bare type parameter** is
+not. The two shapes an API chooses between:
+
+```metel
+// 1. Type parameter, no bound. `F` binds to the argument's resolved type
+//    verbatim — `Copy` in, `Copy` out; `Erased` in, `Erased` out. Nothing is
+//    erased because no function type is written. `F` cannot be *called* without
+//    a callable bound (RFC-0161), so this shape is for pass-through / storage.
+fun identity<F>(f: F) -> F { f }
+
+// 2. Written function type. Bare erases (`relabel` returns `Erased` even for a
+//    `Copy` input); `copy` requires a copyable callable and may duplicate it.
+fun relabel(f: |i64| -> i64) -> |i64| -> i64 { f }
+fun fork(f: copy |i64| -> i64) -> (copy |i64| -> i64, copy |i64| -> i64) { (f, f) }
+```
+
+**There is no `F: Copy` route to a duplicable callback.** RFC-0134 gives a
+function value no value aspects, so `F: Copy` cannot be satisfied by one and
+`fun dup<F: Copy>(f: F)` does not accept a callable. Copying a callback requires
+the `copy` function type. Making function values satisfy the value `Copy` aspect
+is a separate change owned by RFC-0161 / RFC-0162 and is out of scope here.
+
+**A generic body cannot ascribe its way past the missing bound.**
+
+```metel
+fun adapt<F>(f: F) -> |i64| -> i64 { f : |i64| -> i64 }   // rejected
+```
+
+A **declared generic parameter is rigid** inside its own body: an ascription
+`f : |i64| -> i64` does not unify `F` with the ascribed shape, so it cannot
+establish that `f` is a function value. Until RFC-0161 supplies a callable /
+function-shape constraint, an adapter takes a written function parameter (`f:
+|i64| -> i64`), not `F`.
+
+This rigidity may be a **behavior change**: if today's inference unifies a
+generic variable with an ascribed concrete type, some such bodies compile now
+and would be rejected under this rule. The Migration sweep audits the corpus for
+`<generic> : <function type>` body ascriptions (an unusual pattern — the
+expected count is ~0) and rewrites any to a written function parameter; if the
+sweep finds a non-trivial number, the rigidity rule is revisited before
+`3-integrated`.
+
+The diagnostic when an **unconstrained** `F` is used by value twice — `fun
+bad<F>(f: F) -> (F, F) { (f, f) }` — is a use-after-move on the second `f`,
+pointing at it and noting that no bound makes `F` duplicable; the fix is a
+concrete `copy` function-typed parameter.
 
 ## Alternatives considered
 
@@ -226,42 +587,149 @@ need a special reconciliation rule or annotation, which is the current gap.
 
 ## Migration
 
-Adding `copy` and switching bare types to `Erased` is a breaking change in two
-narrow places — hard switch, one sweep (Metel has no public users):
+Adding `copy` and switching bare types to `Erased` is a breaking change in three
+narrow places — hard switch, one sweep (Metel has no public users). It runs
+**after** the RFC-0050 / RFC-0153 closure-cluster corpus sweeps (they change
+closure *spelling*; this changes function-type *semantics*).
 
 - **`copy` as an identifier.** `once` and `var` are already reserved; `copy` is
-  not. A handful of fixtures use it as a binding name (`let copy := …`). Rename
-  them in the same change.
+  not. The sweep audits every identifier-bearing production for a `copy`, not
+  just `let copy := …`: bindings, function / method / associated-function names,
+  parameters, generic parameters, type-alias names, `import … as` aliases, struct
+  fields, enum variants, and pattern bindings, across the corpus, the stdlib, and
+  the docs / tutorial examples. `native(@…)` path segments are exempt (host FFI
+  identifiers, already keyword-permissive) and are left alone.
 - **Bare callback params that copy the callback.** A signature `f: |T| -> U`
-  whose body copies `f` (`let a := f; let b := f;`) previously relied on the
-  frontend normalising a written function type to concrete `Copy`. Under this RFC
-  such a body is a use-after-move error; the fix is to write `f: copy |T| -> U`.
-  Signatures that only call, store, move, or return `f` need no change. Located
-  by the frontend's move checker over the swept corpus, not by text.
+  whose body duplicates `f` previously relied on the frontend normalising a
+  written function type to concrete `Copy`. Under this RFC that body is a
+  use-after-move error; the fix is `f: copy |T| -> U`. Signatures that only call,
+  store, move, or return `f` once need no change.
+
+  The audit **runs the move checker over the whole corpus explicitly** — not
+  opportunistically, since normal evaluation still deep-clones and an offending
+  body runs fine with move checking off. The signal is the move checker's own
+  **CFG-aware consumed-place analysis**: a place whose type is a bare (non-`Copy`)
+  function type is used again *after* it was consumed on the same control-flow
+  path. This is not a textual "used more than once" count — `if (c) { g(f) }
+  else { g(f) }` uses `f` twice syntactically but consumes it at most once per
+  path and is fine. The shapes it must flag beyond `let a := f; let b := f;`:
+  - the parameter placed into a tuple / record / array literal after another
+    by-value use of it on the same path;
+  - an `if` / `match` arm that moves `f` where a sibling arm's result requires a
+    still-live `f`;
+  - `return`ing the parameter in two positions of one aggregate;
+  - field-shorthand construction from an already-consumed binding.
+
+  Copies introduced *after* move checking — by elaboration / desugaring that
+  reads a value twice — are out of the move checker's reach at that stage.
+  `4-implemented` must either forbid elaboration from duplicating a value or add
+  a post-elaboration ownership-preservation check; the RFC does not treat the
+  pre-elaboration sweep as sufficient on its own.
+
+  Each fixed site gets a fixture; each shape above gets at least one negative
+  fixture proving it is now rejected without `copy` (with `move_check = true`).
+- **Rigid generic ascription (from I3).** Audit the corpus for a `<generic
+  param> : <function type>` ascription inside its own generic body — a pattern
+  §"Generics and `copy`" now rejects (a declared generic parameter does not
+  unify with an ascribed shape). Expected count ~0; rewrite any hit to a written
+  function parameter. If the sweep finds a non-trivial number, the rigidity rule
+  is reconsidered before `3-integrated` rather than shipped as a silent break.
 
 The normalisation this replaces is `typeinference`'s synthetic Copy-to-Move
-mismatch handling (see §"Type model and matching"); it is deleted, not gated.
+mismatch handling *and its siblings* in `unify_seq`, nested matching, and generic
+construction (see §"Type model and matching" → "One resolved fact"); the whole
+set is deleted, not gated.
 
 ## Required integration examples
 
-The accepted proposal must work through, at minimum:
+`3-integrated` must land a named fixture for every row of the coercion table and
+every nested / join / generic context. **Every fixture runs with `move_check =
+true`** (see §"Ownership through an erased type" → "Enforcement mode"). Minimum
+set:
 
-```metel
-fun map<T, U>(xs: List<T>, f: |T| -> U) -> List<U> { /* ... */ }
-fun add_one(x: i64) -> i64 { x + 1 }
+**First-order, accepted**
 
-let mapped := map([1, 2], add_one);
-```
+- `Copy → bare` — a named `add_one` into `map(xs, f: |i64| -> i64)`; result binds,
+  the callback's `Copy`-ness is dropped (observably: cannot be copied downstream).
+- `Move → bare` — a closure capturing an owned non-`Copy` value into the same
+  `map`; accepted, runs.
+- `Erased → bare` — the `Erased` result of one `map`-shaped call fed straight
+  into another bare slot; stays `Erased` (round-trip; alias in between).
+- `Copy → copy` — `fork(f: copy |i64| -> i64)` duplicating `f` and calling both
+  copies.
 
-and: a move-only capturing closure passed through the same API; a rejected
-attempt to copy a bare callback; an accepted `copy` callback duplication; a
-function type nested under a parameter with mismatched `once`/`var`; **a nested
-`copy` mismatch both ways** — `Erased` rejected against an expected `copy |B| ->
-C` in return position, and a concrete `copy` callable accepted into a bare
-nested slot with its `Copy`-ness lost; a field storing the callback; and a type
-alias. The examples must distinguish surface-axis erasure from RFC-0152
-widening — erasure touches only the omitted use axis and never relaxes the exact
-`once` / `var` match RFC-0152 requires below the first function-type level.
+**First-order, rejected**
+
+- `Move → copy` — a capturing closure passed where `copy` is required.
+- `Erased → copy` — an `Erased` value (from a bare return, a bare-typed field, or
+  a bare alias expansion) passed into a `copy` parameter *and* returned as a
+  `copy` type.
+
+**Nested (exact — no erasure, no `copy`↔bare)**
+
+- `copy` param vs bare param, contravariant: `sink(cb: ||B| -> C| -> ())` given a
+  value of type `|copy |B| -> C| -> ()` — rejected.
+- bare param vs `copy` param, the other direction — also rejected.
+- nested `once` / `var` mismatch still rejected exactly as before — erasure did
+  not touch it.
+- **The acknowledged limitation and its bridge**: `fun apply(g: ||i64| -> i64|
+  -> i64) { g(add_one) }` and `g(|x: i64| { add_one(x) })` are both **negative**
+  (concrete `Copy` into a nested bare slot); `let adapter: |i64| -> i64 := |x:
+  i64| { add_one(x) }; g(adapter);` and the equivalent ascription are the
+  **positive** cases (first-order erasure, then a bare↔bare nested match).
+- **Alias at the boundary**: `type Cb := |i64| -> i64; fun h(g: |Cb| -> ())` —
+  after expansion `Cb` sits *nested* under `g`, so it matches exactly, not by
+  erasure. And `type Direct := |i64| -> i64; fun p(f: Direct)` — where `Direct`
+  expands to a *first-order* boundary — still erases. `WrittenFunctionBoundary`
+  provenance survives both expansions.
+
+**Join / aggregate (no written type → LUB; written type → coercion)**
+
+- `if`-join of two `Copy` arms into an **unannotated** `let` → `Copy` (LUB).
+- **`if`-join of two arms of the same move-only closure type → `Move`** (LUB;
+  the future exact-`move` proof is kept).
+- `if`-join of a `Copy` arm and a `Move` arm into an unannotated `let` → `Erased`
+  (LUB); then coercing that into a `copy` slot → rejected.
+- `if`-join of two `Copy` arms into a **written bare** slot → `Erased`
+  (coercion); into a **written `copy`** slot → accepted.
+- an **unannotated** tuple / `List` literal from `Copy` values → elements keep
+  `Copy`; the same literal against a **written** bare element type → `Erased`.
+
+**Generic**
+
+- `identity<F>(f: F) -> F` preserves `Copy` (result copyable) and preserves
+  `Move` / `Erased` verbatim; `relabel(f: |i64| -> i64) -> |i64| -> i64` erases
+  (result `Erased`). `identity(add_one)` does **not** erase.
+- `fun dup<F: Copy>(f: F)` does **not** accept `add_one` — a function value
+  satisfies no value aspect (RFC-0134) — a negative fixture.
+- `fun adapt<F>(f: F) -> |i64| -> i64 { f : |i64| -> i64 }` — rejected (no
+  function-shape bound on `F`); a negative fixture.
+- unconstrained `fun bad<F>(f: F) -> (F, F) { (f, f) }` — use-after-move on the
+  second `f`.
+- a closure capturing a `Copy` function value — `[add_one] |x: i64| { add_one(x)
+  }` — is `Copy` and duplicable (RFC-0134, not erased by capture).
+
+**Reassignment / inferred vs declared return** — `var f: |i64| -> i64 :=
+add_one; f = add_one;` erases each RHS at the declared binding type; `fun
+inferred() { add_one }` (inferred return) does not erase, `fun declared() ->
+|i64| -> i64 { add_one }` does.
+
+**Two-stage join** — `let h := if (c) { m } else { m }; let e: |i64| -> i64 :=
+h;` keeps `h` at `Move` (LUB) then erases `e`; `let e: |i64| -> i64 := if (c) {
+m } else { m };` erases each arm. A fixture pair proving the annotation does not
+flow back into the un-annotated join's arms.
+
+**Literal-`copy` diagnostic** — one negative fixture per prefix permutation from
+§"Surface syntax".
+
+**Representation invariant** — a mandatory implementation-level unit test over
+the typed AST (not an `.mtl` fixture): a `Copy` value coerced across a marked
+bare function-type boundary is recorded `Erased`, not `Move`.
+
+Every example keeps surface-axis erasure distinct from RFC-0152 widening:
+erasure is a first-order coercion of an *omitted* use axis into a written bare
+type, and never relaxes the exact `once` / `var` / use match RFC-0152 requires
+below the first function-type level.
 
 
 ---
@@ -269,19 +737,69 @@ widening — erasure touches only the omitted use axis and never relaxes the exa
 ## Decision
 
 **Outcome:** **Accepted 2026-09-02** (`2-accepted`, #936). Bare function types erase
-use-multiplicity to `Erased` (usable move-only); `copy` is a positive assertion of a
-`Copy` callable and joins `once` / `var` as a reserved order-insensitive type qualifier,
-never on a literal. Alternatives A–D weighed; the axis-agnostic-erasure + positive-`copy`
-combination (B plus the `copy` spelling) is the choice. An adversarial pass 2026-09-02
-added the literal-`copy` diagnostic, the RFC-0162 disjointness note, the Migration section
-(`copy`-as-identifier rename + `copy` on bare params that copy the callback), and the
-nested-`copy` two-way integration example. RFC-0155 (higher-order variance) is scoped out
-and unweakened — erasure never relaxes RFC-0152's exact nested `once` / `var` match.
-**Target: v0.13.0** — the missing third `Type::Fun` surface, needed to stop the frontend
-guessing (see Motivation).
+use-multiplicity to `Erased` (callable + movable, never copyable); `copy` is a positive
+assertion of a `Copy` callable — surface syntax for RFC-0134's capture-derived
+function-value `Copy` capability, not a new axis — and joins `once` / `var` as a reserved
+order-insensitive type qualifier, never on a literal. Alternatives A–D weighed; the
+axis-agnostic-erasure + positive-`copy` combination (B plus the `copy` spelling) is the
+choice.
 
-`3-integrated` adds a `spec.functions.first-class-functions` block for `Erased` and the
-directional use-axis matching relation, plus the §"Required integration examples" worked
-through. `4-implemented` is: `copy` reserved word + `fun_type_qualifier` slot, the
-`Erased` `use_multiplicity` state, the matching relation replacing `typeinference`'s
-Copy-to-Move mismatch handling, and the corpus migration.
+Five adversarial passes (2026-09-02, then 2026-09-03 ×4) hardened it without reopening the
+outcome. The settled shape:
+
+- **Erasure is a coercion into a written bare function type**, not a syntactic slot.
+  "Written" is provenance carried on an **`ExpectedType`** value (`Written` / `AliasOrigin`
+  / `Substituted` / `Inferred`) threaded from inference into construction — never read off
+  the final `Type::Fun`. RFC-0160 alias expansion, associated-type resolution, and generic
+  substitution each carry the marker forward. A generic type variable, an unannotated
+  `let` / aggregate / return / join, and a closure capture carry no marker and preserve
+  RFC-0134's concrete `Copy` / `Move` (F3/F5, G3/G4/G5/G8, H2/H3, I1). The `ExpectedType`
+  carrier is a hard `4-implemented` prerequisite.
+- **Nested use-axis matching is exact**, like `once` / `var` — no recursive `copy`-vs-bare
+  relation, nothing for RFC-0155 to accommodate. The rejected direct-flow case is named;
+  the working bridge is a **first-order** erasure boundary (an annotated `let` or an
+  ascription) *before* the nested call — passing a fresh literal to the nested slot does
+  not help (F1, G2, H5).
+- **Joins run expected-context propagation, then LUB.** A boundary-bearing `ExpectedType`
+  reaching the join (a written-return tail, an annotated binding RHS, a written parameter,
+  an ascription, `return if`, `?`) coerces each arm; a join with none is finalized by the
+  information-lattice LUB (`Move ⊔ Move = Move`) and a later coercion applies only to the
+  completed result. The checking order is pinned (G1, H4, I2).
+- **`Erased ≠ Move` is a representation invariant** — source-unobservable in v0.13.0 —
+  backed by a **mandatory** typed-AST unit test, or, only if `Erased` is dropped entirely
+  for v0.13.0, a fully-specified `Move`-only temporary model that still forbids `Copy`
+  recovery (F4, G6, H8).
+- **`copy` is a requirement on the written function type, not an aspect bound.** Per
+  RFC-0134 a function value satisfies no value aspects, so there is no `F: Copy` route to a
+  duplicable callback and `copy` does not touch RFC-0162's model. A declared generic
+  parameter is **rigid** in its own body — an ascription cannot make an unconstrained `F`
+  function-shaped; Migration sweeps for that pattern and reconsiders the rule if it is not
+  vanishingly rare (F2, F7, H1, H6, I3). ("Store a callback and call it repeatedly" —
+  `fun later(f: |i64| -> i64) -> i64 { f(1) + f(2) }` — still works; only *retaining
+  independent copies* needs `copy`, I4.)
+- **One directional relation in inference**; the resolved axis is part of the `Type::Fun`
+  on every typed node and flows through substitution / instantiation / joins; the
+  elaborator, move checker, and construction read it and never re-decide (F12).
+- **Migration** uses the move checker's CFG-aware consumed-place analysis, flags
+  post-elaboration copies as a separate `4-implemented` obligation, and runs under
+  `move_check = true` (F8, G7, H7, Part C). v0.13.0 keeps move checking opt-in; erased
+  non-copyability is a checked-mode guarantee, and no partial mandatory mode is proposed.
+  `copy` reservation fallout is enumerated with a `native_path` carve-out (F10); the
+  literal-`copy` diagnostic has a class and message (F9).
+
+RFC-0155 (higher-order variance) is scoped out and unweakened. **Target: v0.13.0** — the
+missing third `Type::Fun` surface, needed to stop the frontend guessing (see Motivation).
+
+`3-integrated` adds a `spec.functions.first-class-functions` block for the `Erased` state,
+the coercion relation and `ExpectedType` provenance model, the join expected-context /
+LUB order, the "nested is exact" rule with its acknowledged limitation, and the "one
+resolved fact" constraint — plus every fixture in §"Required integration examples"
+(including the re-exported-alias, associated-projection, generic-argument-function-type,
+tail-`if`/`match`, and `return if` adversarial cases), the representation-invariant
+assertion, and the rigid-generic-ascription corpus sweep result. `4-implemented` is: the
+`ExpectedType` provenance carrier through inference and construction (a hard prerequisite);
+`copy` reserved word + `fun_type_qualifier` grammar slot + literal-prefix rejection
+diagnostic; the `Erased` `use_multiplicity` state on `Type::Fun`; the single directional
+relation replacing `typeinference`'s Copy-to-Move handling and its siblings (deleted, not
+gated); the move-checker CFG analysis + post-elaboration ownership check; and the corpus /
+stdlib / docs migration.
