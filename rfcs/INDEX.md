@@ -1126,16 +1126,27 @@ implementation).
   + `CallMany` / `CallShared`, from RFC-0153's Alternatives) as the third option, under
   which the area dissolves into aspect-bound subsetting. Not urgent: RFC-0152's cap is
   sound, so nothing is unsound while this is open. Tracker metel-core#904 (v0.17.0).
-- **RFC-0163** *(**accepted 2026-09-02**; #936; **v0.13.0**)* — Function-Type
-  Use-Multiplicity Surface — the missing source spelling for `Type::Fun`'s `Copy`-versus-
-  move-only axis. A bare written function type **erases** that axis (`Erased`, usable
-  move-only); `copy |T| -> U` is the positive assertion of a copyable callable, joining
-  `once` / `var` as a reserved order-insensitive type qualifier, never on a literal.
-  Erasure is not RFC-0152 widening — it touches only the omitted axis and never relaxes
-  the exact nested `once` / `var` match. Replaces the frontend's Copy-to-Move
-  normalisation hack. Alternatives A–D weighed; adversarial pass folded in (literal-`copy`
-  diagnostic, RFC-0162 disjointness, migration, nested-`copy` example). RFC-0155
-  (higher-order variance, unscheduled) scoped out.
+- **RFC-0166** *(draft, opened 2026-09-03; **v0.13.0**)* — Written Function Types Lower to
+  Move-Only — the conservative v0.13.0 slice split out of RFC-0163. A written function type
+  has concrete **`Move`** use-multiplicity; a `Copy` function value is accepted where
+  `Move` is required by moving (the ownership lattice, not a special rule); `Copy`-ness is
+  forgotten at the boundary and not re-derived; nested function types match the use axis
+  exactly. **Deletes** `typeinference`'s Copy-to-Move guess exposed by the closure cluster.
+  **No `copy` qualifier, no `Erased` state, no keyword reserved** — those are RFC-0163.
+  Sound under every RFC-0162 Axis-A position (P0/P1/P4) and harmless under P2. Forward-
+  compatible: `Move` refines to `Erased` under RFC-0163 with no source break.
+- **RFC-0163** *(**accepted 2026-09-02**; #936; **rescheduled v0.17.0**, split → RFC-0166)*
+  — Function-Type Use-Multiplicity Surface — the missing source spelling for `Type::Fun`'s
+  `Copy`-versus-move-only axis. A bare written function type **erases** that axis
+  (`Erased`, usable move-only); `copy |T| -> U` is the positive assertion of a copyable
+  callable, joining `once` / `var` as a reserved order-insensitive type qualifier, never on
+  a literal. Erasure is not RFC-0152 widening — it touches only the omitted axis and never
+  relaxes the exact nested `once` / `var` match. Six adversarial passes (F/G/H/I/J);
+  reframed as a coercion into a `written` bare node (per-node flag), first-order-only,
+  nested-exact, one directional relation. **Rescheduled to v0.17.0 (2026-09-03):** the
+  `Erased` machinery is downstream of RFC-0162's Axis-A decision (does the language keep
+  implicit `Copy`), and RFC-0162 P4 unifies the two `copy`s into one keyword; the v0.13.0
+  slice is RFC-0166. RFC-0155 (higher-order variance) scoped out.
 - **RFC-0153** *(**integrated 2026-09-01**; v0.13.0, #902; impl metel-core#925)* —
   Closure Mutation Axis — the third `Type::Fun` field RFC-0134 §4 reserves and §5
   constrains (compose with `once`/`many` as an independent prefix). Records whether

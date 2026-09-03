@@ -3,10 +3,29 @@ id: rfc-0163
 title: "Function-Type Use-Multiplicity Surface"
 date: '2026-09-02'
 status: accepted
-target: v0.13.0
+target: v0.17.0
 updated: '2026-09-03'
 tracking: 'https://github.com/metel-lang/metel-core/issues/936'
 ---
+
+> **Status — rescheduled to v0.17.0, split (2026-09-03).** The urgent,
+> design-agnostic part of this RFC — a written function type lowers to
+> concrete `Move`, a `Copy` value coerces in by moving, nested function types
+> match the use axis exactly — ships in v0.13.0 as **RFC-0166**, which deletes
+> the `typeinference` Copy-to-Move guess the closure cluster exposed.
+>
+> This RFC — the `Erased` third state, the `copy` qualifier (and its keyword
+> reservation), the per-node `written` provenance model, the coercion table, the
+> join expected-context rule — is **rescheduled to v0.17.0** to co-design with
+> **RFC-0162** (Copy-model design space): whether regular values keep implicit
+> `Copy` at all (Axis A) is the decision the `Erased` machinery is downstream of,
+> and RFC-0162 P4 is the position that unifies the value-side and function-type
+> `copy` into one keyword. `#J1–J5` (mechanism precision — the `ExpectedType`
+> carrier, generic-substitution timing, the architecture-neutral join rule,
+> generic-rigidity scoping) are resolved in that window. The design outcome
+> below (bare = `Erased`, `copy` = positive assertion, first-order-only,
+> nested-exact) is unchanged and still `2-accepted`; `copy`-keyword details are
+> subject to the RFC-0162 P4 co-design.
 
 > **Status — accepted (2026-09-02).** Design settled: bare function types erase
 > use-multiplicity, `copy` is the positive assertion. Alternatives A–D weighed; an
