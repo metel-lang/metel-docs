@@ -76,19 +76,30 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/936'
 > - **Move checking stays opt-in in v0.13.0**; erased non-copyability is a
 >   checked-mode guarantee. No "mandatory for function types only" mode (H7).
 >
-> **Fifth pass (2026-09-03, I1–I6) pinned the frontend mechanism:** provenance is
-> carried on an **`ExpectedType`** value (`Written` / `AliasOrigin` /
-> `Substituted` / `Inferred`) threaded from inference into construction, with
-> RFC-0160 alias expansion / associated-type resolution / generic substitution
-> each carrying it forward — never reconstructed from `Type` (I1). Join
-> classification is **expected-context propagation, then LUB** — a boundary-bearing
-> `ExpectedType` reaching the join (a written-return tail, `return if`, `?`, an
-> annotated RHS) coerces the arms; a join with none takes the LUB, and the
-> checking order is pinned (I2). A **declared generic parameter is rigid** in its
-> own body; Migration sweeps for the ascription pattern and reconsiders the rule
-> if it is not vanishingly rare (I3). "Store a callback and call it repeatedly"
-> is unaffected (I4); the erased-non-copy rule is a checked-mode error, not
-> unconditional (I5).
+> **Fifth pass (2026-09-03, I1–I6):** provenance moved off `Option<&Type>` onto a
+> threaded expected-type value; join classification framed as expected-context +
+> LUB; declared generic parameters made rigid against a body ascription; the
+> erased-non-copy rule marked a checked-mode error (I5); "store a callback and
+> call it repeatedly" confirmed unaffected (I4).
+>
+> **Sixth pass (2026-09-03, J1–J5) made the mechanism precise:**
+> - **`written` is a per-node boolean** on every `Type::Fun` node of an expected
+>   type — composable, set once by the source, copied verbatim through alias
+>   expansion, associated-type resolution, and substitution *into aggregate
+>   fragments*. The four-way discriminant is dropped (it overlapped). Only the
+>   first-order node erases; a nested node matches exactly whatever its `written`
+>   (J1, J5, Part C).
+> - **Generic-substitution timing pinned**: a value crossing a `written` boundary
+>   erases *once, there*; an unannotated read of an `F`-typed value is not a fresh
+>   boundary (J2).
+> - **The join rule is stated as a required outcome**, architecture-neutral:
+>   first-order `written` node ⇒ that node's axis; else the LUB; an outside
+>   expected type never re-opens the join. Expected-type push and LUB-then-coerce
+>   both satisfy it (J3).
+> - **Generic rigidity is scoped**: `F` is rigid against a function-type
+>   ascription *unless* a declared `where` / assoc-type-equality / RFC-0036
+>   obligation proves the shape — impossible pre-RFC-0161, so always rejected
+>   today, but the rule needs no amendment when callable bounds arrive (J4).
 
 > **Status — accepted (2026-09-02).** design settled (bare=Erased, copy assertion, A-D weighed); adversarial pass folded in; RFC-0155 scoped out
 
@@ -268,36 +279,46 @@ guarantee — that an `Erased`-typed binding cannot be duplicated — is a
 the default evaluator still deep-clones (see §"Ownership through an erased type"
 → "Enforcement mode").
 
-**"Written" is a provenance judgment**, not a property of the final `Type::Fun` —
-after normalization a transparent alias, an associated-type projection, and a
-genuinely inferred type can all be the same `Type::Fun`. The erasing boundary is
-therefore carried on a **provenance-annotated expected type**, not reconstructed
-from `Type`.
+**"Written" is provenance**, not a property of the final `Type::Fun` — after
+normalization a transparent alias, an associated-type projection, and a
+genuinely inferred type can all be the same `Type::Fun`. It is carried
+**per type-tree node**, not on a root discriminant.
 
-##### The `WrittenFunctionBoundary` carrier
+##### The `written` flag: per-node, composable, monotone
 
-The expected type threaded through checking is not `Option<&Type>` but a small
-`ExpectedType` with a provenance discriminant — at minimum `Written(&TypeExpr)`
-(the source spelled a function type here), `AliasOrigin` (reached through a
-transparent alias / associated type whose *definition* spelled one),
-`Substituted` (a `Written`/`AliasOrigin` type carried into a generic
-instantiation), and `Inferred` (no user-written type). This value is produced in
-inference and **passed unchanged into construction**; construction never
-re-derives provenance from a bare `Type`.
+Every `Type::Fun` node in an **expected type** carries a boolean `written`:
+"the source literally spelled a function type at *this node's* position." It is:
 
-- **RFC-0160** expands transparent aliases before typechecking: `type_alias`
-  expansion must copy the alias definition's `WrittenFunctionBoundary` onto the
-  expanded `TypeExpr`, so `type Cb := |i64| -> i64; let x: Cb := add_one` still
-  erases and `type W<T> := (T,); let y: W<|i64| -> i64> := (add_one,)` erases the
-  element (the function type is written at the *generic argument*).
-- **Associated-type projection** resolution attaches the marker when the
-  projection resolves to a definition that spelled a function type.
-- **Generic substitution** carries the marker on the substituted `TypeExpr`;
-  binding a `Written` function type to `F` and using `F` at a value site is a
-  `Substituted` boundary and erases; binding an inferred one does not.
+- **Per node.** In `|copy |B| -> C| -> ()`, the outer node and the inner
+  parameter node each carry their own `written`. Only the node that is *the whole
+  expected type at a value-flow site* (the first-order node) can erase; a
+  `Type::Fun` node nested inside another matches exactly regardless of its
+  `written` (nesting is positional — §"Nested matching is exact"). `written` on a
+  nested node records authorship, not permission.
+- **Composable, not a tag.** The old four-way `Written` / `AliasOrigin` /
+  `Substituted` / `Inferred` discriminant is dropped: it overlaps (an
+  alias-expanded generic argument is *both* alias-derived and substituted) and
+  would need an arbitrary precedence. There is nothing to disambiguate — a node's
+  `written` is set once by the source and never recomputed.
+- **Monotone through normalization.** Transparent-alias expansion (RFC-0160),
+  associated-type resolution, and generic substitution copy each node's `written`
+  **verbatim** into wherever the fragment lands, including fragments spliced into
+  an aggregate. `type W<T> := (T,); let y: W<|i64| -> i64> := (add_one,)` — after
+  expansion the tuple's element node is a `written` `Type::Fun` (the source spelled
+  it at the generic argument), and the element is the whole expected type for
+  `add_one`'s flow, so it erases. A field typed `W<F>` carries the flag on its
+  own inner node and each construction derives the field's expected type from the
+  declared type with the flag intact. `type Cb := |i64| -> i64` — the `written`
+  node from `Cb`'s definition travels to every use of `Cb`.
 
-Erasure fires only at a `Written` / `AliasOrigin` / `Substituted` boundary. The
-boundary-bearing positions:
+The expected type threaded through checking is this node-annotated tree, produced
+in inference and **passed unchanged into construction** — construction never
+reconstructs `written` from a bare `Type`.
+
+##### Boundary positions
+
+Erasure fires when a value flows to a site whose first-order expected node is
+`written` and bare. Those sites:
 
 - a **written parameter type**;
 - the initializer of a `let` / `var` with a **written annotation**, and the RHS
@@ -309,12 +330,12 @@ boundary-bearing positions:
 - a **written aggregate element type**;
 - a `?` value against a **declared** function-return slot.
 
-An **inferred** return, `let`, aggregate, or join is not a boundary: it computes
-its own result (or LUB, below), and a later coercion of *that result* is what
-erases. Methods follow the function rule, including a builder returning `self` —
-declared function-typed result coerces, inferred does not.
+An **inferred** return, `let`, aggregate, or join carries no `written` node: it
+computes its own result (or LUB, below), and a later coercion of *that result*
+is what erases. Methods follow the function rule, including a builder returning
+`self` — declared function-typed result coerces, inferred does not.
 
-`4-implemented` builds the `ExpectedType` carrier; it is a hard prerequisite,
+The node-annotated expected-type tree is a hard `4-implemented` prerequisite,
 called out in the Decision.
 
 Erasure is **idempotent and absorbing**: once a value's type is `Erased` it
@@ -332,48 +353,50 @@ RFC-0134 is **preserved**, not erased:
 - **An unannotated aggregate literal** (`let p := (add_one,);`, `[add_one]` as a
   list) keeps each element's concrete axis; the tuple/list type carries `Copy`
   through.
-- **A generic type parameter** is not a written function type. `fun
-  identity<F>(f: F) -> F` binds `F` to the argument's *resolved* type verbatim —
-  a `Copy` callable in, a `Copy` callable out; a bare/`Erased` value in, an
-  `Erased` value out. An `F`-typed value only erases if it is later coerced
-  across a written bare boundary. `identity(add_one)` therefore does **not**
-  erase.
+- **A generic type parameter** is not a `Type::Fun` node and carries no `written`
+  flag. `fun identity<F>(f: F) -> F` binds `F` to the argument value's *resolved*
+  type verbatim — `Copy` in → `Copy` out, `Erased` in → `Erased` out. No coercion
+  happens at a type-variable parameter (there is no `written` node to coerce
+  against), so `identity(add_one)` does **not** erase. Erasure of an `F`-typed
+  value happens **once**, if and when the body coerces it across a `written` bare
+  boundary (`let x: |i64| -> i64 := f;`) — not on every read. `let x := f;`
+  inside the body is unannotated, so `x` simply takes `f`'s type (already
+  `Erased` if `f` was, by absorption; still `Copy` if it was).
 - **A closure capture of a function value** follows RFC-0134: `[add_one] |x:
   i64| -> i64 { add_one(x) }` is `Copy` because its one capture is `Copy`. A
   capture is not a coercion site (there is no written capture-storage type in the
   surface language to be bare).
 
-#### Joins: expected-context propagation, then LUB
+#### Joins: an observable outcome, not a checker architecture
 
-A join (`if` / `match` arms, a `||` / `&&` result, a loop-`break` set) is
-resolved against **the `ExpectedType` that expected-context propagation delivers
-to the join expression** — the same propagation the checker already does for any
-tail block:
+A join (`if` / `match` arms, a `||` / `&&` result, a loop-`break` set) has one
+**required outcome** on the use axis, stated without reference to any particular
+checking strategy:
 
-- **A boundary-bearing `ExpectedType` reaches the join** — it is the tail of a
-  written-return function or method, the RHS of an annotated binding, an
-  argument at a written parameter, an ascribed expression, a `return`
-  sub-expression under a declared return, or a `?` under a declared return.
-  Then each arm is checked against that expected type and coerced per the table:
-  a written bare context yields `Erased`; a written `copy` context requires every
-  arm to already be `Copy`. So `fun f(c: boolean) -> |i64| -> i64 { if (c) {
-  add_one } else { add_one } }` erases both arms — the declared return propagates
-  into the `if`.
-- **No boundary-bearing `ExpectedType` reaches the join** (an un-annotated `let
-  h := if …`, a bare statement position) — the join is finalized by the
-  information-lattice LUB of its arms' use axes:
+1. **If the join expression's own first-order expected node is `written`** — the
+   join stands where a declared function/method return, an annotated binding RHS,
+   a written parameter, an ascription, a `return`-subexpression under a declared
+   return, or a `?` under a declared return demands that type — the join's result
+   axis is that node's: a `written` bare node ⇒ `Erased`; a `written` `copy` node
+   ⇒ every arm must independently be `Copy`. `fun f(c) -> |i64| -> i64 { if (c) {
+   add_one } else { add_one } }` ⇒ `Erased`.
+2. **Otherwise** the join's result axis is the information-lattice LUB of its
+   arms: `Copy ⊔ Copy = Copy` · `Move ⊔ Move = Move` · everything else `= Erased`.
+   A homogeneous move-only join stays `Move`, keeping a future exact-`move`
+   proof.
+3. **No retro-flow.** An expected type that first appears *outside* the join —
+   `let h := if (c) { m } else { m }; let e: |i64| -> i64 := h;` — does not
+   re-open case 1. It coerces `h`'s already-completed type (`Move`) at `let e`;
+   the arms and `m` are untouched.
 
-  `Copy ⊔ Copy = Copy`  ·  `Move ⊔ Move = Move`  ·  everything else `= Erased`
-
-  A homogeneous move-only join stays `Move` — no future exact-`move` proof is
-  discarded. A *later* coercion applies to this **completed** result, never back
-  to the arms: `let h := if (c) { m } else { m }; let e: |i64| -> i64 := h;`
-  LUB-finalizes `h` as `Move`, then erases `e` — `m` is untouched.
-
-The checking order this pins: expected-context propagation runs before a join's
-own inference; an arm with a boundary-bearing expected type is checked against
-it; a join with none takes the LUB and is not retro-checked against a downstream
-annotation.
+These outcomes do not require a bidirectional checker. A checker that pushes the
+expected type into the arms and one that infers each arm, LUBs, then coerces the
+result at the enclosing site produce **the same axis** at every site: coercing
+`{Copy, Copy}`'s LUB into a `written` bare node gives `Erased`, exactly as
+coercing each arm does; a mixed `{Copy, Move}` LUB (`Erased`) into a `written`
+`copy` node fails, exactly as the non-`Copy` arm fails when checked directly. The
+only place the two strategies must agree by rule is case 3's no-retro-flow, which
+both can honor by finalizing an un-expected join before any later coercion.
 
 #### `Erased` is distinct from `Move` — a representation invariant
 
@@ -537,19 +560,22 @@ is a separate change owned by RFC-0161 / RFC-0162 and is out of scope here.
 fun adapt<F>(f: F) -> |i64| -> i64 { f : |i64| -> i64 }   // rejected
 ```
 
-A **declared generic parameter is rigid** inside its own body: an ascription
-`f : |i64| -> i64` does not unify `F` with the ascribed shape, so it cannot
-establish that `f` is a function value. Until RFC-0161 supplies a callable /
-function-shape constraint, an adapter takes a written function parameter (`f:
-|i64| -> i64`), not `F`.
+Inside its own body a declared generic parameter `F` is **rigid against a
+function-type ascription** *unless the function's own declared constraints on `F`
+prove the shape* — a `where F: Bound`, a `where F::Assoc = X` equality, or an
+RFC-0036 conditional-impl obligation that establishes `F` is that function type.
+An ascription alone never unifies `F`. In v0.13.0 there is **no** function-shape
+or callable bound to write (that is RFC-0161), so `fun adapt<F>(f: F) -> |i64| ->
+i64 { f : |i64| -> i64 }` is always rejected and an adapter takes a written
+function parameter (`f: |i64| -> i64`), not `F`. Once RFC-0161 lands, `where F:
+Callable<i64, i64>` would make the ascription legal — the rule is scoped so that
+addition needs no amendment here.
 
-This rigidity may be a **behavior change**: if today's inference unifies a
-generic variable with an ascribed concrete type, some such bodies compile now
-and would be rejected under this rule. The Migration sweep audits the corpus for
-`<generic> : <function type>` body ascriptions (an unusual pattern — the
-expected count is ~0) and rewrites any to a written function parameter; if the
-sweep finds a non-trivial number, the rigidity rule is revisited before
-`3-integrated`.
+This may be a **behavior change** if today's inference unifies an unconstrained
+generic variable with an ascribed concrete type. The Migration sweep audits the
+corpus for `<generic> : <function type>` body ascriptions (an unusual pattern —
+the expected count is ~0) and rewrites any to a written function parameter; a
+non-trivial count sends the rule back for review before `3-integrated`.
 
 The diagnostic when an **unconstrained** `F` is used by value twice — `fun
 bad<F>(f: F) -> (F, F) { (f, f) }` — is a use-after-move on the second `f`,
@@ -677,11 +703,14 @@ set:
   (concrete `Copy` into a nested bare slot); `let adapter: |i64| -> i64 := |x:
   i64| { add_one(x) }; g(adapter);` and the equivalent ascription are the
   **positive** cases (first-order erasure, then a bare↔bare nested match).
-- **Alias at the boundary**: `type Cb := |i64| -> i64; fun h(g: |Cb| -> ())` —
-  after expansion `Cb` sits *nested* under `g`, so it matches exactly, not by
-  erasure. And `type Direct := |i64| -> i64; fun p(f: Direct)` — where `Direct`
-  expands to a *first-order* boundary — still erases. `WrittenFunctionBoundary`
-  provenance survives both expansions.
+- **Alias / projection / substitution at the boundary**: `type Cb := |i64| ->
+  i64; fun h(g: |Cb| -> ())` — after expansion the `Cb` node sits *nested* under
+  `g`, so it matches exactly, not by erasure. `type Direct := |i64| -> i64; fun
+  p(f: Direct)` — a *first-order* node — still erases. `type W<T> := (T,); let y:
+  W<|i64| -> i64> := (add_one,);` — the substituted tuple-element node is
+  `written` and first-order → erases. A `struct S { cb: W<|i64| -> i64> }` field
+  write and a resolved associated-type projection that lands on a written
+  function type each carry the per-node `written` flag through.
 
 **Join / aggregate (no written type → LUB; written type → coercion)**
 
@@ -744,27 +773,31 @@ order-insensitive type qualifier, never on a literal. Alternatives A–D weighed
 axis-agnostic-erasure + positive-`copy` combination (B plus the `copy` spelling) is the
 choice.
 
-Five adversarial passes (2026-09-02, then 2026-09-03 ×4) hardened it without reopening the
+Six adversarial passes (2026-09-02, then 2026-09-03 ×5) hardened it without reopening the
 outcome. The settled shape:
 
-- **Erasure is a coercion into a written bare function type**, not a syntactic slot.
-  "Written" is provenance carried on an **`ExpectedType`** value (`Written` / `AliasOrigin`
-  / `Substituted` / `Inferred`) threaded from inference into construction — never read off
-  the final `Type::Fun`. RFC-0160 alias expansion, associated-type resolution, and generic
-  substitution each carry the marker forward. A generic type variable, an unannotated
-  `let` / aggregate / return / join, and a closure capture carry no marker and preserve
-  RFC-0134's concrete `Copy` / `Move` (F3/F5, G3/G4/G5/G8, H2/H3, I1). The `ExpectedType`
-  carrier is a hard `4-implemented` prerequisite.
+- **Erasure is a coercion into a `written` bare function-type node**, not a syntactic slot.
+  `written` is a **per-node** boolean on every `Type::Fun` node of an *expected type* — set
+  once by the source, copied verbatim through RFC-0160 alias expansion, associated-type
+  resolution, and generic substitution (including into aggregate fragments), and never
+  reconstructed from `Type`. It is composable, not a discriminant. Only the first-order
+  node (the whole expected type at a value-flow site) can erase; a nested `Type::Fun` node
+  matches exactly whatever its `written`. A generic type variable, an unannotated `let` /
+  aggregate / return / join, and a closure capture carry no `written` node and preserve
+  RFC-0134's concrete `Copy` / `Move` (F3/F5, G3/G4/G5/G8, H2/H3, I1, J1/J5). Erasure of an
+  `F`-typed value happens once at a `written` boundary, not per read (J2). The
+  node-annotated expected-type tree is a hard `4-implemented` prerequisite.
 - **Nested use-axis matching is exact**, like `once` / `var` — no recursive `copy`-vs-bare
   relation, nothing for RFC-0155 to accommodate. The rejected direct-flow case is named;
   the working bridge is a **first-order** erasure boundary (an annotated `let` or an
   ascription) *before* the nested call — passing a fresh literal to the nested slot does
   not help (F1, G2, H5).
-- **Joins run expected-context propagation, then LUB.** A boundary-bearing `ExpectedType`
-  reaching the join (a written-return tail, an annotated binding RHS, a written parameter,
-  an ascription, `return if`, `?`) coerces each arm; a join with none is finalized by the
-  information-lattice LUB (`Move ⊔ Move = Move`) and a later coercion applies only to the
-  completed result. The checking order is pinned (G1, H4, I2).
+- **A join has one required outcome, stated architecture-neutrally** (G1, H4, I2, J3): if
+  the join's own first-order expected node is `written`, the result axis is that node's
+  (bare ⇒ `Erased`; `copy` ⇒ every arm independently `Copy`); otherwise it is the
+  information-lattice LUB of the arms (`Move ⊔ Move = Move`); an expected type appearing
+  *outside* the join never re-opens it. Expected-type push and LUB-then-coerce both satisfy
+  this.
 - **`Erased ≠ Move` is a representation invariant** — source-unobservable in v0.13.0 —
   backed by a **mandatory** typed-AST unit test, or, only if `Erased` is dropped entirely
   for v0.13.0, a fully-specified `Move`-only temporary model that still forbids `Copy`
@@ -772,11 +805,12 @@ outcome. The settled shape:
 - **`copy` is a requirement on the written function type, not an aspect bound.** Per
   RFC-0134 a function value satisfies no value aspects, so there is no `F: Copy` route to a
   duplicable callback and `copy` does not touch RFC-0162's model. A declared generic
-  parameter is **rigid** in its own body — an ascription cannot make an unconstrained `F`
-  function-shaped; Migration sweeps for that pattern and reconsiders the rule if it is not
-  vanishingly rare (F2, F7, H1, H6, I3). ("Store a callback and call it repeatedly" —
-  `fun later(f: |i64| -> i64) -> i64 { f(1) + f(2) }` — still works; only *retaining
-  independent copies* needs `copy`, I4.)
+  parameter is **rigid against a function-type ascription** unless its own declared
+  constraints (`where F: Bound`, an assoc-type equality, an RFC-0036 obligation) prove the
+  shape — impossible in v0.13.0 without RFC-0161, so `fun adapt<F>(f: F) -> |…| { f : |…| }`
+  is always rejected; Migration sweeps for the pattern (F2, F7, H1, H6, I3, J4). ("Store a
+  callback and call it repeatedly" — `fun later(f: |i64| -> i64) -> i64 { f(1) + f(2) }` —
+  still works; only *retaining independent copies* needs `copy`, I4.)
 - **One directional relation in inference**; the resolved axis is part of the `Type::Fun`
   on every typed node and flows through substitution / instantiation / joins; the
   elaborator, move checker, and construction read it and never re-decide (F12).
@@ -791,15 +825,15 @@ RFC-0155 (higher-order variance) is scoped out and unweakened. **Target: v0.13.0
 missing third `Type::Fun` surface, needed to stop the frontend guessing (see Motivation).
 
 `3-integrated` adds a `spec.functions.first-class-functions` block for the `Erased` state,
-the coercion relation and `ExpectedType` provenance model, the join expected-context /
-LUB order, the "nested is exact" rule with its acknowledged limitation, and the "one
+the coercion relation and the per-node `written` model, the architecture-neutral join
+outcome, the "nested is exact" rule with its acknowledged limitation, and the "one
 resolved fact" constraint — plus every fixture in §"Required integration examples"
-(including the re-exported-alias, associated-projection, generic-argument-function-type,
-tail-`if`/`match`, and `return if` adversarial cases), the representation-invariant
-assertion, and the rigid-generic-ascription corpus sweep result. `4-implemented` is: the
-`ExpectedType` provenance carrier through inference and construction (a hard prerequisite);
-`copy` reserved word + `fun_type_qualifier` grammar slot + literal-prefix rejection
-diagnostic; the `Erased` `use_multiplicity` state on `Type::Fun`; the single directional
-relation replacing `typeinference`'s Copy-to-Move handling and its siblings (deleted, not
-gated); the move-checker CFG analysis + post-elaboration ownership check; and the corpus /
-stdlib / docs migration.
+(including re-exported-alias, associated-projection, generic-argument-function-type,
+substitution-into-aggregate, tail-`if`/`match`, and `return if` cases), the
+representation-invariant assertion, and the rigid-generic-ascription corpus sweep result.
+`4-implemented` is: the node-annotated expected-type tree threaded through inference and
+construction (a hard prerequisite); `copy` reserved word + `fun_type_qualifier` grammar
+slot + literal-prefix rejection diagnostic; the `Erased` `use_multiplicity` state on
+`Type::Fun`; the single directional relation replacing `typeinference`'s Copy-to-Move
+handling and its siblings (deleted, not gated); the move-checker CFG analysis +
+post-elaboration ownership check; and the corpus / stdlib / docs migration.
