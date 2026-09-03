@@ -79,8 +79,10 @@ title: "Metel Language Changelog"
   compiler-internal move-tracking state (RFC-0137 slice 1, metel-core#857, added the
   residual type and branded projection; this slice makes a partial move produce one). The
   residual an explicit projection `h.{ fd }` yields and the one a partial move yields are
-  the same type, interchangeable at a `Self.{ fd }` parameter. An anonymous `record` value
-  does **not** narrow — it has no brand — and stays on per-field move tracking.
+  the same type, interchangeable at a `Self.{ fd }` parameter. This slice covers **structs
+  only** — anonymous-record narrowing is RFC-0117's (`impl_status: not-started`,
+  metel-core#789), so a record value's whole-value use after a partial move stays a
+  `--move-check` finding for now.
 - Using a narrowed value where the whole brand (or a wider row of it) is required is a
   plain type error at inference time now, not only a `--move-check` finding: `T0001` "a
   partially-moved `Handle` (now `Handle.{ fd }`) cannot be used where the whole `Handle` is

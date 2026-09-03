@@ -343,6 +343,12 @@ whole afterward is rejected as a use of a partially moved value. Moving a field 
 change the record's static type — there is no narrower record type for the residual
 value, only per-field move tracking.
 
+> **Superseded in design by [narrowing.legality-1](#spec.ownership.narrowing.legality-1)
+> once RFC-0117 lands (`impl_status: not-started`, metel-core#789):** an anonymous
+> record's row will then narrow the same way a struct's does. Until then, the
+> whole-value-use rejection above is a `--move-check` finding only, and the record's
+> static type is unchanged.
+
 <!-- rfc.py:fixtures:start -->
 <span class="rigor-backlink">_Tested by: [71_record_field_moved_independently.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/71_record_field_moved_independently.mtl), [72_record_used_as_whole_after_field_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/72_record_used_as_whole_after_field_move.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
@@ -386,17 +392,24 @@ struct type instead of staying a distinct residual — `h.{ fd, name }` here is 
 > type-check time, not only a `--move-check` finding.
 
 The residual is an ordinary value: it can be bound, passed, returned, dropped, and
-narrowed again. For a struct over *N* fields, the space of residual shapes is the subset
+narrowed again. For a value over *N* fields, the space of residual shapes is the subset
 lattice, bounded by 2^*N* — there is no row variable and no unification involved in
-computing it. **An anonymous `record` value does not narrow** — it keeps its whole static
-type and stays on per-field move tracking
-([which-constructs-support-partial-moves.legality-2](#spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-2)); a
-residual needs a brand and an anonymous record has none. A record-typed **field** of a
-struct is moved as a **unit** — a residual's row never carries a *narrower* type for a
-field it still holds; narrowing a field of a field in place is
+computing it. The rule applies uniformly to a **nominal struct's** row (residual of the
+same brand, `Handle.{ fd }`) and to an **anonymous `record`'s** row (the record type with
+the moved label removed, `{ fd: i64 }` — no brand clause). A record-typed **field** is
+moved as a **unit** — a residual's row never carries a *narrower* type for a field it
+still holds; narrowing a field of a field in place is
 [RFC-0150](../../rfcs/1-under-review/rfc-0150-nested-row-narrowing.md)'s. A bare generic
 type parameter, or a field whose type is not yet resolved, does not narrow the base
 value — narrowing waits until the field's type is known non-`Copy`.
+
+> **Implementation status.** The **struct** case ships in v0.13.0 (RFC-0137 slice 2,
+> metel-core#858): a partial move narrows the binding to a branded residual, and using it
+> where the whole brand is required is a plain type error. The **anonymous-record** case
+> (RFC-0117, `impl_status: not-started`, metel-core#789) is not yet implemented — an
+> anonymous record value keeps its whole static type, and a whole-value use after a
+> partial move is caught only by `--move-check`, per
+> [which-constructs-support-partial-moves.legality-2](#spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-2).
 
 Narrowing is **path-sensitive**: the residual type at a program point reflects the fields
 moved on every path reaching it, exactly as move tracking already computes — a field
@@ -419,19 +432,22 @@ unambiguously, that struct — not a same-shaped anonymous record, and not a
 
 ##### Legality Rule {#spec.ownership.narrowing.legality-1}
 
-Moving a field out of a **struct** value narrows that value's type to a row with the moved
-field removed, at the same brand. An anonymous `record` value is not narrowed — it keeps
-its whole static type ([which-constructs-support-partial-moves.legality-2](#spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-2)).
-A record-typed field of a struct is moved as a whole — the residual never holds a field
-at a narrower type. A field whose type is a bare generic parameter or is not yet resolved
-does not trigger narrowing. Narrowing is path-sensitive: the residual type at a program
-point reflects the fields moved on every path reaching it, joined conservatively at merge
-points, exactly as move tracking computes; a move made inside a loop body narrows the
-value after the loop.
+Moving a field out of a value narrows that value's type to a row with the moved field
+removed: for a nominal struct, a residual of the same brand (`Handle.{ fd }`); for an
+anonymous `record`, the record type with that label gone (`{ fd: i64 }`). A record-typed
+field is moved as a whole — the residual never holds a field at a narrower type. A field
+whose type is a bare generic parameter or is not yet resolved does not trigger narrowing.
+Narrowing is path-sensitive: the residual type at a program point reflects the fields
+moved on every path reaching it, joined conservatively at merge points and through loop
+fixpoints, exactly as move tracking computes.
 
-> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).** A loop-carried *use* invalid only
-> on a later iteration is still surfaced by `--move-check` rather than as a narrowing type
-> error.
+> **Implementation status.** The struct case ships in v0.13.0 (RFC-0137 slice 2,
+> metel-core#858) — a whole-value use after a partial move is a plain type error at
+> type-check time; a loop-carried *use* invalid only on a later iteration is still a
+> `--move-check` diagnostic. The anonymous-record case (RFC-0117, `impl_status:
+> not-started`, metel-core#789) is not implemented — an anonymous record keeps its whole
+> static type and such a use is caught only by `--move-check`
+> ([which-constructs-support-partial-moves.legality-2](#spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-2)).
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0117](../../rfcs/3-integrated/rfc-0117-row-narrowing.md), [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
@@ -467,10 +483,12 @@ strict, non-empty subset of the brand's declared row.
 
 ##### Legality Rule {#spec.ownership.narrowing.legality-4}
 
-Using a narrowed value where a wider row of the same brand, or the whole brand, is
-required is a type error at type-check time — reported against the narrowed binding, not
-deferred to `--move-check`. Every still-present field of the residual stays readable and
-its methods callable.
+Using a narrowed **struct** value where a wider row of the same brand, or the whole brand,
+is required is a type error at type-check time — reported against the narrowed binding,
+not deferred to `--move-check`. Every still-present field of the residual stays readable
+and its methods callable. (The anonymous-record equivalent is
+[narrowing.legality-1](#spec.ownership.narrowing.legality-1)'s not-yet-implemented half —
+a `--move-check` finding for now.)
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
