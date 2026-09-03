@@ -410,7 +410,7 @@ aspect impls are specified in RFC-0050.
   pointers are `Copy`.
 - RFC-0080 (Stdlib Aspects) — `Clone`, `Send`, `Sync` formal definitions; `Copy`
   implies `Clone` blanket; function pointer `Send`/`Sync` follows from §3.2/§4.2.
-- RFC-0096 (Auto-Impl Aspects, draft) — owns array propagation of `Send`/`Sync`/`Drop`
+- RFC-0096 (Auto-Impl Aspects, under review) — owns array propagation of `Send`/`Sync`/`Drop`
   that an earlier draft of this RFC had carried as §5.
 - RFC-0008 (Aspect Objects) — `Callable<A, B>` object safety; `dyn Callable<A, B>`.
 - RFC-0054 — `List<T>` as a nominal struct; `List<T>` impls are separate from array

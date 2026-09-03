@@ -381,7 +381,7 @@ by-reference mode (§2).*
   invariant-bypass risk
 - RFC-0093 (Derive Registration) — the comptime mechanism OQ1 depends on
 - RFC-0076 (Brand Types) — **not a dependency of this RFC**; see §5
-- `public/rfcs/0-draft/rfc-0089-linear-types.md` §2.1, §3.1 — fiat-linearity and the
+- `public/rfcs/1-under-review/rfc-0089-linear-types.md` §2.1, §3.1 — fiat-linearity and the
   brand exception, deferred until records are implemented
 - `rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md` (RFC-0109, `1-under-review`)
   — deferred; works around §3's no-implicit-coercion rule for method receivers specifically

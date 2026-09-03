@@ -153,7 +153,7 @@ same acceptance as bodyless aspect declarations.
   broader version of RFC-0103.
 - RFC-0060 (Aspect Impl Coherence) — likely host for the obligation check.
 - RFC-0081 (Negative Impls) — negative-polarity semantics reused directly.
-- RFC-0096 (Auto-Impl Aspects, draft) — interaction point for auto-impl obligations.
+- RFC-0096 (Auto-Impl Aspects, under review) — interaction point for auto-impl obligations.
 - RFC-0104 (Multi-Aspect Extend Blocks with Shared Bodies, draft) — a satisfying
   positive obligation could be discharged by a multi-aspect `extend` block if that RFC
   lands.

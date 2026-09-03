@@ -348,7 +348,7 @@ does not depend on RFC-0003 and may be accepted independently.
 
 - RFC-0060 (Aspect Impl Coherence) — closed-world coherence required for `Send`/`Sync`
   auto-impl rules.
-- RFC-0096 (Auto-Impl Aspects, draft) — the general recognition rule and shared
+- RFC-0096 (Auto-Impl Aspects, under review) — the general recognition rule and shared
   structural-composition algorithm §3.2/§4.2 are instances of.
 - RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls, implemented) — §1.2's `Clone`
   blanket is the motivating example for its orphan-rule formalization.

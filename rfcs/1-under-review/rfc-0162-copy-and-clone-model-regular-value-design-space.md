@@ -576,7 +576,7 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
   about. Its `#derive(Aspect)` registration would make a `Copy` deriver writable with no
   special effort; whether one may exist is OQ5, and is a question for this RFC, not for
   RFC-0093's general mechanism.
-- **RFC-0096 (Auto-Impl Aspects, `0-draft`)** — the existing category of
+- **RFC-0096 (Auto-Impl Aspects, `1-under-review`)** — the existing category of
   compiler-granted, not-user-writable aspects (`Send`, `Sync`, `Linear`). Under P4,
   `Copy` joins that category by keyword rather than by structural rule; reconcile the
   two framings if P4 advances.

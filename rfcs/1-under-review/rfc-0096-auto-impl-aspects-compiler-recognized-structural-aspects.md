@@ -2,8 +2,10 @@
 id: rfc-0096
 title: "Auto-Impl Aspects — Compiler-Recognized Structural Aspects"
 date: '2026-07-11'
-status: draft
-target:
+status: under-review
+target: v0.13.1
+updated: '2026-09-03'
+tracking: 'https://github.com/metel-lang/metel-core/issues/952'
 ---
 
 > **New RFC.** Created despite `rfc.py new`'s overlap warning against RFC-0080, 0061,
@@ -23,6 +25,8 @@ target:
 > pass because RFC-0090 sits in a different INDEX.md cluster than RFC-0080/0089/0061.
 > §1, §6, References, and Unresolved Question 5 corrected; new §7 explains why
 > `HasField`/`Lacks` is related but not simply a fourth instance of §2's algorithm.
+
+> **Status — under review (2026-09-03).** Promoted 2026-09-03: was 0-draft and untracked despite already being a silent dependency of RFC-0161 and RFC-0080, both v0.13.1 -- RFC-0161's own text says 'Depends on RFC-0096 (hence v0.13.1).' Milestoned v0.13.1 to match, ahead of the linear-types cluster (RFC-0089/0091, v0.18.0) that also needs this mechanism. metel-core#952.
 
 ## Summary
 

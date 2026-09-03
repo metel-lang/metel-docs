@@ -2,9 +2,10 @@
 id: rfc-0091
 title: "Linear Records"
 date: '2026-07-09'
-status: draft
-target:
-updated: '2026-07-24'
+status: under-review
+target: v0.18.0
+updated: '2026-09-03'
+tracking: 'https://github.com/metel-lang/metel-core/issues/954'
 ---
 
 > **New RFC, split out 2026-07-09** from `reports/substructural-types/linear-types.md`
@@ -99,6 +100,8 @@ updated: '2026-07-24'
 > **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `{ … }` type-former plus bare-row bounds -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 
 > **Status — draft (2026-07-24).** Deferred 2026-07-24: per-field multiplicity waits until records are implemented. The RFC-0090 coupling was introduced by accident (RFC-0089's 2026-07-09 same-day revision rewrote its floor from Option B to ToRecord), which is why Trigger 6 could observe that neither RFC states the conflict. Returned to draft so the records cluster is not gated on it and the review backlog reflects what is actually reviewable.
+
+> **Status — under review (2026-09-03).** Re-promoted 2026-09-03 alongside RFC-0089 (companion issue): the 2026-07-24 records deferral is substantially met. Milestoned v0.18.0, same design-settlement lane as RFC-0089. Still needs its worked examples re-checked against RFC-0119's actual accepted shape (not the superseded RFC-0090 draft this RFC was written against) before acceptance. metel-core#954.
 
 ## Summary
 

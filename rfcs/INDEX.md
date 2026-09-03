@@ -90,6 +90,22 @@ was found and reconciled, and where this session did most of its work.
 > independently. **RFC-0089, RFC-0091 and RFC-0109 return to `0-draft`**, deferred until
 > records ship. No feature was dropped and no design decision was reversed; this is a
 > re-partition.
+
+> **Re-promoted, 2026-09-03 — the deferral condition is substantially met.** RFC-0116/
+> RFC-0117/RFC-0118 are implemented/integrated and RFC-0120 is accepted; RFC-0119 (the
+> `ToRecord` floor RFC-0089 §3 actually depends on) is still `1-under-review` but
+> milestoned v0.13.1, ahead of where linear types are going. **RFC-0089 and RFC-0091**
+> move back to `1-under-review`, **milestoned v0.18.0** — a third design-settlement lane
+> alongside RFC-0140/RFC-0003 (implementation deferred until acceptance), not folded into
+> v0.17.0's already-large, in-flight substrate milestone. Tracking: metel-core#953
+> (RFC-0089), metel-core#954 (RFC-0091). Detail moved out of the "Deferred" list below
+> into **Linear closures / concurrency**, where RFC-0049 and RFC-0096 also live.
+>
+> **RFC-0096 (Auto-Impl Aspects) promoted the same day, separately.** Not part of the
+> records deferral at all — it was simply never scheduled, despite RFC-0161 and
+> RFC-0080 (both v0.13.1) already depending on it (RFC-0161's own text: "Depends on
+> RFC-0096 (hence v0.13.1)"). Milestoned **v0.13.1**, sooner than the linear-types
+> cluster that also needs it. Tracking: metel-core#952.
 >
 > **The largest single consequence, after two corrections:** the records cluster has **no
 > dependency on RFC-0076 (Brand Types, `1-under-review`)**. That claim was first made when
@@ -393,13 +409,11 @@ above it are.
   width-subtyping-versus-ownership problem. **The expensive half**, and the only piece
   introducing a row kind or row unification. Depends on RFC-0118, RFC-0120.
 
-**Deferred until records are implemented** — returned to `0-draft` 2026-07-24:
+**RFC-0090's own fate** — superseded 2026-07-24, its dependents re-homed elsewhere:
+RFC-0089/RFC-0091 (re-promoted 2026-09-03, see the note above — now under **Linear
+closures / concurrency**, below) and RFC-0109 (under review, listed here since it's
+part of the same records/views substrate review):
 
-- **RFC-0089** — Linear Types — multiplicity lattice, `Linear` auto-impl aspect. Depends
-  on RFC-0071 (integrated). Its §3 floor was rewritten on 2026-07-09 to route partial
-  consumption through `ToRecord`; **that coupling was accidental** and is what Trigger 6
-  was tracking. `Linear`'s auto-impl categorization depends on RFC-0096 for the shared
-  mechanism it's an instance of.
 - **RFC-0090** *(superseded 2026-07-24 by RFC-0116–0121)* — Structural Records — Rows and Tiers — bare-row bounds (`HasField`/
   `Lacks` retired 2026-07-23, replaced by `T: { x: f64 }` / `T: !{ tag: _ }`), `record`
   type-former, three-tier capability model. No dependency on comptime. §1 calls the
@@ -415,8 +429,6 @@ above it are.
   document's own central, still-exploratory thesis (every struct, not just tier-3,
   carrying `(brand, row)`), which stays a separate track so it doesn't gate this
   cluster's review.
-- **RFC-0091** — Linear Records — per-field multiplicity, automatic-downgrade partial
-  consumption, the `uses(fd)` Drop mechanism. Depends on RFC-0089 + RFC-0090.
 - **RFC-0109** *(under review 2026-08-27, opened 2026-07-18, reconciled against RFC-0137 2026-08-27)* —
   Self-View Narrowing — closes the gap found comparing the records cluster against
   Rust's (unshipped) view-types proposal: a named **view** —
@@ -998,10 +1010,59 @@ implementation).
   the RFC-0083 fold note above. `modules.md`'s `pub let` section reverted to
   pre-integration wording. Codeberg issue #539 (tracking) closed unimplemented.
 
-## Linear closures / concurrency
+## Linear types / closures / concurrency
 
-- **RFC-0049** *(draft)* — `linear fun` Type System — unconsumed-scope-exit, `Drop`
-  interaction, subtyping vs. plain `fun`.
+- **RFC-0096** *(under review 2026-09-03, opened 2026-07-11; **v0.13.1**, #952)* —
+  Auto-Impl Aspects — Compiler-Recognized Structural Aspects — formalizes the
+  compiler-intrinsic recognition list (`Send`/`Sync`/`Linear`), the shared structural-
+  composition algorithm RFC-0080 §3.2/§4.2 and RFC-0089 §2 each independently assumed
+  without ever stating, generic-type handling via an implicit RFC-0036 conditional
+  impl, why `Drop` is *not* a fourth instance despite RFC-0061 §5's heading, and how
+  `HasField`/`Lacks` (RFC-0090) is related but distinct (a family with existential
+  satisfaction, not a fourth fixed marker). Was `0-draft` and untracked despite already
+  being a real dependency of scheduled work — **RFC-0161's own text: "Depends on
+  RFC-0096 (hence v0.13.1)"** — and RFC-0080's `Send`/`Sync` (also v0.13.1). Milestoned
+  to match, ahead of the linear-types cluster below that also needs it. Seven open
+  questions, none look acceptance-blocking on their face; UQ3 (no stated reference
+  rule for `Linear`) is explicitly flagged as RFC-0089's to close, not this RFC's.
+- **RFC-0089** *(under review 2026-09-03, opened 2026-07-09; **v0.18.0**, #953)* —
+  Linear Types — the four-point multiplicity lattice (`0`/`1`/`affine`/`ω`, extending
+  RFC-0071's affine default rather than assuming Rust's three-point ω-default
+  background); `Linear` as a marker aspect via RFC-0096's auto-impl mechanism;
+  `Copy`+`Drop` mutual exclusion falls out as a **derived consequence** of `ω`
+  permitting contraction, not a separately-stated rule (cross-link: RFC-0162 Open
+  Question 2 wants exactly this kind of soundness argument for relaxing it). §2.1
+  proposes `linear struct Foo { ... }` sugar for `extend Foo: Linear {}`, and a
+  matching `affine struct` desugaring to the negative pair `!Copy + !Linear` — worth
+  reviewing alongside **RFC-0162's P4** (`copy struct Foo { ... }`, under review for
+  v0.17.0), the same declaration-keyword-for-a-lattice-position idea from the other
+  end. Re-promoted from `0-draft` 2026-09-03: the 2026-07-24 records deferral is
+  substantially met (RFC-0116/0117/0118 implemented/integrated, RFC-0120 accepted;
+  RFC-0119, the actual `ToRecord` floor §3 depends on, is `1-under-review` but
+  milestoned v0.13.1, ahead of this RFC). Milestoned v0.18.0 as a third
+  design-settlement lane alongside RFC-0140/RFC-0003 (implementation deferred until
+  acceptance), not folded into v0.17.0's already-large in-flight substrate milestone.
+  §3's partial-consumption design needs a real pass against RFC-0119's actual (not
+  assumed) shape before this RFC can be accepted, not just reviewed.
+- **RFC-0091** *(under review 2026-09-03, opened 2026-07-09; **v0.18.0**, #954)* —
+  Linear Records — per-field multiplicity via **Option C: automatic downgrade** — a
+  mixed-multiplicity struct's binding type changes at the point of partial consumption
+  through record recomposition, no explicit `.to_record()` call needed, the "fuller
+  vision" layered on top of RFC-0089 alone (which already satisfies RFC-0063 §9 item
+  5's deadline without this RFC). The long-standing borrow-before-downgrade blocker is
+  resolved via strong-update-on-the-brand in the RFC's own text, not left open — still
+  needs re-checking against RFC-0119's actual accepted shape rather than the
+  superseded RFC-0090 draft this RFC was originally written against. Re-promoted
+  alongside RFC-0089 (companion issue), same v0.18.0 lane, same reasoning.
+- **RFC-0049** *(draft — needs a full rewrite before it can be re-reviewed)* —
+  `linear fun` Type System — unconsumed-scope-exit, `Drop` interaction, subtyping vs.
+  plain `fun`. Sits on **RFC-0046, which is `6-refused`** (its `move`-capture idea was
+  carried by RFC-0050 for a while, then dropped there 2026-08-31 — not a live
+  successor); predates the `status`/`target`/`tracking` frontmatter fields entirely.
+  Not milestoned: its foundation needs reconciling against the closure model that has
+  since shipped (RFC-0050's capture lists, RFC-0134's call capability, RFC-0153's
+  mutation axis) before a design-settlement review is even meaningful. Flagged
+  2026-09-03 as needing this rewrite rather than left silently stale.
 - **RFC-0050** *(**integrated 2026-09-01**; v0.13.0, #803; impl metel-core#925)* —
   Closure Capture Lists — `[&var count, &config, buf, prefix.clone()]` prefix on a closure
   literal. Specifiers: `&var`/`&` by reference; **bare `ident` = by-value** (copy for
@@ -1494,7 +1555,7 @@ implementation).
   RFC-0060) rather than a new stage, since that pass already collects every
   `Decl::Impl` across every loaded module before checking orphan/overlap rules —
   confirmed directly against the actual implementation, not assumed; and a real
-  interaction with RFC-0096 (Auto-Impl Aspects, draft) was found and fixed by placing
+  interaction with RFC-0096 (Auto-Impl Aspects, under review) was found and fixed by placing
   a requirement on RFC-0096's own implementation instead of special-casing it here —
   `Send`/`Sync`/`Linear` must be injected into the same aspect-implementation
   registry an ordinary `extend` block populates (RFC-0096 §5 already half-commits to
