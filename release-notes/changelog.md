@@ -94,13 +94,12 @@ title: "Metel Language Changelog"
 - Reassigning a moved-out field of an **owned** binding (`var h; …; h.name := "y";`) widens
   the type back to the whole brand. Widening does not re-check any constructor invariant —
   ordinary field reassignment already bypasses one, independent of this feature.
-- Narrowing follows straight-line control flow. Path-sensitive narrowing across `if` /
-  `match` arms — each arm forking from the pre-construct state, the arms joining after —
-  is the intended model but not yet implemented in the typechecker (metel-core#958): a
-  later arm currently sees an earlier arm's partial move, and a one-arm move narrows the
-  binding for all code after the construct. Over-rejection only; `--move-check` does its
-  own fork/join and is unaffected. A loop-carried *use* that only becomes invalid on a
-  later iteration is surfaced by `--move-check` rather than as a narrowing type error.
+- Narrowing is path-sensitive across `if` / `match` arms (metel-core#958): each arm forks
+  from the state before the construct, and the arms join afterward — a later arm never
+  sees an earlier arm's partial move, and a move on any arm narrows the binding for the
+  code after the construct (the join is the union of the arms' moves). A loop-carried
+  *use* that only becomes invalid on a later iteration is still surfaced by `--move-check`
+  rather than as a narrowing type error.
 - `--move-check` is narrowing-aware (metel-core#950): a whole-value use of a binding **at
   its narrowed type** — moving it, binding it, passing it where its row matches — is no
   longer flagged as a partial-move violation.
