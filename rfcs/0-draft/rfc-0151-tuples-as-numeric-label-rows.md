@@ -207,7 +207,7 @@ ad-hoc returns and argument lists.
 
 - RFC-0116 (Anonymous Record Types, `4-implemented`) — the row former tuples
   become an instance of
-- RFC-0117 (Row Narrowing, `3-integrated`) — the narrowing rule tuples inherit
+- RFC-0117 (Row Narrowing, `4-implemented`) — the narrowing rule tuples inherit
 - RFC-0150 (Nested Row Narrowing) — its §3 tuple-residual open question is
   resolved by this RFC
 - RFC-0118 (Row Bounds, `4-implemented`) — bound targets; Open Question 3

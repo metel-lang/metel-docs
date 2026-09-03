@@ -73,16 +73,18 @@ title: "Metel Language Changelog"
   and a distinct "capability unknown" state, are deferred to RFC-0163 (v0.17.0), which
   refines this move-only state rather than replacing it. No keyword is reserved.
 
-**Move-triggered row narrowing and widening (RFC-0137 slice 2):**
+**Move-triggered row narrowing and widening (RFC-0137 slice 2, RFC-0117):**
 - Moving a non-`Copy` field out of a **struct** value now narrows that value's *type* to a
   residual of the same brand — `let n := h.name;` makes `h` a `Handle.{ fd }` — not just
   compiler-internal move-tracking state (RFC-0137 slice 1, metel-core#857, added the
   residual type and branded projection; this slice makes a partial move produce one). The
   residual an explicit projection `h.{ fd }` yields and the one a partial move yields are
-  the same type, interchangeable at a `Self.{ fd }` parameter. This slice covers **structs
-  only** — anonymous-record narrowing is RFC-0117's (`impl_status: not-started`,
-  metel-core#789), so a record value's whole-value use after a partial move stays a
-  `--move-check` finding for now.
+  the same type, interchangeable at a `Self.{ fd }` parameter.
+- **Anonymous records narrow too (RFC-0117, metel-core#789):** `let x := r.left;` for
+  `r := { left = …, right = … }` makes `r : { right: i64 }`. A whole-value use afterward is
+  a plain `T0001` at type-check time — the ordinary record-shape mismatch, since a narrowed
+  record has no distinct type marker the way a struct residual's brand gives one. A `Copy`
+  field read by value does not narrow.
 - Using a narrowed value where the whole brand (or a wider row of it) is required is a
   plain type error at inference time now, not only a `--move-check` finding: `T0001` "a
   partially-moved `Handle` (now `Handle.{ fd }`) cannot be used where the whole `Handle` is
