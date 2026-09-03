@@ -73,6 +73,27 @@ title: "Metel Language Changelog"
   and a distinct "capability unknown" state, are deferred to RFC-0163 (v0.17.0), which
   refines this move-only state rather than replacing it. No keyword is reserved.
 
+**Move-triggered row narrowing and widening (RFC-0137 slice 2):**
+- Moving a non-`Copy` field out of a struct or `record` value now narrows that value's
+  *type* to a residual of the same brand — `let n := h.name;` makes `h` a `Handle.{ fd }`
+  — not just compiler-internal move-tracking state (RFC-0137 slice 1, metel-core#857, added
+  the residual type and branded projection; this slice makes a partial move produce one).
+  The residual an explicit projection `h.{ fd }` yields and the one a partial move yields
+  are the same type, interchangeable at a `Self.{ fd }` parameter.
+- Using a narrowed value where the whole brand is required is a plain type error at
+  inference time now, not only a `--move-check` finding: `T0001` "a partially-moved
+  `Handle` (now `Handle.{ fd }`) cannot be used where the whole `Handle` is required".
+  Every still-present field stays readable; re-projecting a residual for a field it still
+  holds works.
+- Reassigning a moved-out field of an **owned** binding (`var h; …; h.name := "y";`) widens
+  the type back to the whole brand. Widening does not re-check any constructor invariant —
+  ordinary field reassignment already bypasses one, independent of this feature.
+- Narrowing is path-sensitive, joined across `if` / `match` arms. A loop-carried *use*
+  that only becomes invalid on a later iteration is still surfaced by `--move-check` rather
+  than as a narrowing type error. `Drop`-dispatch against a narrowed residual (RFC-0137 §5)
+  is a separate v0.14.0 slice — it needs a narrowed `drop` receiver (RFC-0109 / RFC-0147),
+  and until then a `Drop` type still cannot be partially moved at all.
+
 **Struct pattern matching:**
 - A named struct can now be matched with a struct pattern (`Point { x, y }`,
   `Token { kind, span, .. }`) — RFC-0032 §4/§5 and RFC-0034 §5's own worked examples used

@@ -408,15 +408,18 @@ holds a field at a narrower type. Narrowing is path-sensitive: the residual type
 program point reflects the fields moved on every path reaching it, joined conservatively
 at merge points and through loop fixpoints, exactly as move tracking computes.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Move-triggered narrowing is not implemented -- a partial move today changes only compiler-internal move-tracking state, never the value's static type. Verified directly: `let h = Handle {...}; let n = h.name;` leaves `h`'s inferred type unchanged. Projection-triggered narrowing (`h.{ fd }`) is implemented -- see legality-2 -- this rule is specifically about the move-triggered form, RFC-0137 slice 2 (metel-core#858)." -->
+> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).** The post-move residual
+> type is a plain type error where the whole brand is required. A loop-carried
+> *use* invalid only on a later iteration is still surfaced by `--move-check`
+> rather than as a narrowing type error.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0117](../../rfcs/3-integrated/rfc-0117-row-narrowing.md), [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Move-triggered narrowing is not implemented -- a partial move today changes only compiler-internal move-tracking state, never the value's static type. Verified directly: `let h = Handle {...}; let n = h.name;` leaves `h`'s inferred type unchanged. Projection-triggered narrowing (`h.{ fd }`) is implemented -- see legality-2 -- this rule is specifically about the move-triggered form, RFC-0137 slice 2 (metel-core#858)._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [02_partial_move_used_as_whole.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/02_partial_move_used_as_whole.mtl), [73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl), [104_narrowing_move_matches_projection.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/104_narrowing_move_matches_projection.mtl), [neg_46_whole_use_after_partial_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_46_whole_use_after_partial_move.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.ownership.narrowing.legality-2}
 
@@ -436,11 +439,11 @@ declaration, determines eligibility, regardless of how narrow or wide the curren
 A struct's own field projection expression produces exactly the same residual type as the
 equivalent partial move.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="The projection half is implemented (see legality-2); the partial-move half is not (see legality-1), so the equivalence this rule states cannot yet be exercised -- there is no move-produced residual to compare against." -->
+> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: The projection half is implemented (see legality-2); the partial-move half is not (see legality-1), so the equivalence this rule states cannot yet be exercised -- there is no move-produced residual to compare against._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [104_narrowing_move_matches_projection.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/104_narrowing_move_matches_projection.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -590,7 +593,7 @@ status today](#spec.ownership.partial-moves.legality-3), for every struct regard
 `Drop` — this is existing, unconditional `--move-check` behavior, not itself part of
 RFC-0137.
 
-> **Planned for v0.13.0 (RFC-0137, metel-core#858): once narrowing gives the residual a
+> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858): once narrowing gives the residual a
 > named type (above), reassigning a moved-out field also widens that type back
 > automatically** —
 > `Handle.{ fd }` becomes `Handle` again once `name` is reassigned. This is not a new
@@ -610,15 +613,15 @@ RFC-0137.
 Assigning a value to a field missing from a residual's current row widens the residual's
 type to include that field, at the same brand.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Residual types themselves exist now (RFC-0137 slice 1, metel-core#857) but only as produced by a struct's own field projection (h.{ fd }); move-triggered narrowing does not yet exist to produce one from a partial move, and automatic widening on reassignment is not implemented either. Verified directly: reassigning a field after a projection-produced residual has no effect on that residual binding's own type, since the projection is a value computed once, not a live view of the original binding." -->
+> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).** For an owned binding.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Residual types themselves exist now (RFC-0137 slice 1, metel-core#857) but only as produced by a struct's own field projection (h.{ fd }); move-triggered narrowing does not yet exist to produce one from a partial move, and automatic widening on reassignment is not implemented either. Verified directly: reassigning a field after a projection-produced residual has no effect on that residual binding's own type, since the projection is a value computed once, not a live view of the original binding._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [105_widening_reassign_restores_full.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/105_widening_reassign_restores_full.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
