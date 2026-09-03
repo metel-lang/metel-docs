@@ -74,17 +74,19 @@ title: "Metel Language Changelog"
   refines this move-only state rather than replacing it. No keyword is reserved.
 
 **Move-triggered row narrowing and widening (RFC-0137 slice 2):**
-- Moving a non-`Copy` field out of a struct or `record` value now narrows that value's
-  *type* to a residual of the same brand — `let n := h.name;` makes `h` a `Handle.{ fd }`
-  — not just compiler-internal move-tracking state (RFC-0137 slice 1, metel-core#857, added
-  the residual type and branded projection; this slice makes a partial move produce one).
-  The residual an explicit projection `h.{ fd }` yields and the one a partial move yields
-  are the same type, interchangeable at a `Self.{ fd }` parameter.
-- Using a narrowed value where the whole brand is required is a plain type error at
-  inference time now, not only a `--move-check` finding: `T0001` "a partially-moved
-  `Handle` (now `Handle.{ fd }`) cannot be used where the whole `Handle` is required".
-  Every still-present field stays readable; re-projecting a residual for a field it still
-  holds works.
+- Moving a non-`Copy` field out of a **struct** value now narrows that value's *type* to a
+  residual of the same brand — `let n := h.name;` makes `h` a `Handle.{ fd }` — not just
+  compiler-internal move-tracking state (RFC-0137 slice 1, metel-core#857, added the
+  residual type and branded projection; this slice makes a partial move produce one). The
+  residual an explicit projection `h.{ fd }` yields and the one a partial move yields are
+  the same type, interchangeable at a `Self.{ fd }` parameter. An anonymous `record` value
+  does **not** narrow — it has no brand — and stays on per-field move tracking.
+- Using a narrowed value where the whole brand (or a wider row of it) is required is a
+  plain type error at inference time now, not only a `--move-check` finding: `T0001` "a
+  partially-moved `Handle` (now `Handle.{ fd }`) cannot be used where the whole `Handle` is
+  required". Every still-present field stays readable; re-projecting a residual for a field
+  it still holds works, and a full-width projection normalizes back to the plain struct
+  type.
 - Reassigning a moved-out field of an **owned** binding (`var h; …; h.name := "y";`) widens
   the type back to the whole brand. Widening does not re-check any constructor invariant —
   ordinary field reassignment already bypasses one, independent of this feature.

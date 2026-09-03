@@ -286,6 +286,17 @@ some of several moved-out fields is not enough.
 <span class="rigor-backlink">_Tested by: [51_field_reassignment_after_partial_move_is_valid.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/51_field_reassignment_after_partial_move_is_valid.mtl), [73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
+##### Legality Rule {#spec.ownership.partial-moves.legality-4}
+
+Destructuring a struct or tuple with a pattern that binds a subset of its fields (a struct
+pattern with `..`, a tuple pattern, a bound field of a matched variant's payload) moves
+exactly those fields, leaving the scrutinee partially moved under the same rules as an
+explicit field move — including the `Drop`-type ban ([legality-2](#spec.ownership.partial-moves.legality-2)).
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [16_match_drop_field_partial_move_is_banned.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/16_match_drop_field_partial_move_is_banned.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 </details>
 
 > **Availability:** Since v0.12.0 (RFC-0071), behind `--move-check`. A `Drop` type may
@@ -366,27 +377,34 @@ A projection naming *every* field the struct declares normalizes back to the pla
 struct type instead of staying a distinct residual — `h.{ fd, name }` here is just
 `Handle`, still rejected by a row bound the same way a bare `Handle` value already is.
 
-> **Planned for v0.13.0 (RFC-0137, metel-core#858): moving a field out of a struct will
-> also narrow the value's *type*** to a row with that field removed, at the same brand
-> — not just a change in what the compiler internally tracks about it, the way a partial
-> move works today (see [Partial moves](#partial-moves) above). `h.name` (partial move)
-> will then produce exactly the residual type `h.{ fd }` (projection) already produces
-> today — the two becoming the same mechanism, reached two ways.
+> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858): moving a field out of a struct also
+> narrows the value's *type*** to a row with that field removed, at the same brand — not
+> just a change in what the compiler internally tracks about it (see
+> [Partial moves](#partial-moves) above). `h.name` (partial move) produces exactly the
+> residual type `h.{ fd }` (projection) produces — the same mechanism, reached two ways —
+> and using the narrowed value where the whole brand is required is a plain type error at
+> type-check time, not only a `--move-check` finding.
 
 The residual is an ordinary value: it can be bound, passed, returned, dropped, and
 narrowed again. For a struct over *N* fields, the space of residual shapes is the subset
 lattice, bounded by 2^*N* — there is no row variable and no unification involved in
-computing it. The same rule applies to an anonymous `record`'s row: moving a field out
-yields the record type with that label removed (there is no brand clause for an anonymous
-record). A record-typed field is moved as a **unit** — a residual's row never carries a
-*narrower* type for a field it still holds; narrowing a field of a field in place is
-[RFC-0150](../../rfcs/1-under-review/rfc-0150-nested-row-narrowing.md)'s.
+computing it. **An anonymous `record` value does not narrow** — it keeps its whole static
+type and stays on per-field move tracking
+([which-constructs-support-partial-moves.legality-2](#spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-2)); a
+residual needs a brand and an anonymous record has none. A record-typed **field** of a
+struct is moved as a **unit** — a residual's row never carries a *narrower* type for a
+field it still holds; narrowing a field of a field in place is
+[RFC-0150](../../rfcs/1-under-review/rfc-0150-nested-row-narrowing.md)'s. A bare generic
+type parameter, or a field whose type is not yet resolved, does not narrow the base
+value — narrowing waits until the field's type is known non-`Copy`.
 
 Narrowing is **path-sensitive**: the residual type at a program point reflects the fields
 moved on every path reaching it, exactly as move tracking already computes — a field
-moved on one arm of an `if` is conservatively moved after the join, and a loop-carried
-move participates in the same fixpoint. Narrowing adds no control-flow analysis of its
-own; it is the type-level reading of the move state.
+moved on one arm of an `if` is conservatively moved after the join. A move made inside a
+loop body narrows the value after the loop. A use *within* the body that only becomes
+invalid on a later iteration is still surfaced by `--move-check` rather than as a
+narrowing type error. Narrowing adds no control-flow analysis of its own; it is the
+type-level reading of the move state.
 
 **A residual's row is never visible to structural matching, regardless of its width.**
 This is unchanged from today's rule that only a `record` (not a `struct`) satisfies a
@@ -401,24 +419,26 @@ unambiguously, that struct — not a same-shaped anonymous record, and not a
 
 ##### Legality Rule {#spec.ownership.narrowing.legality-1}
 
-Moving a field out of a struct value narrows that value's type to a row with the moved
-field removed, at the same brand; for an anonymous `record` value, to the record type
-with that label removed. A record-typed field is moved as a whole — the residual never
-holds a field at a narrower type. Narrowing is path-sensitive: the residual type at a
-program point reflects the fields moved on every path reaching it, joined conservatively
-at merge points and through loop fixpoints, exactly as move tracking computes.
+Moving a field out of a **struct** value narrows that value's type to a row with the moved
+field removed, at the same brand. An anonymous `record` value is not narrowed — it keeps
+its whole static type ([which-constructs-support-partial-moves.legality-2](#spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-2)).
+A record-typed field of a struct is moved as a whole — the residual never holds a field
+at a narrower type. A field whose type is a bare generic parameter or is not yet resolved
+does not trigger narrowing. Narrowing is path-sensitive: the residual type at a program
+point reflects the fields moved on every path reaching it, joined conservatively at merge
+points, exactly as move tracking computes; a move made inside a loop body narrows the
+value after the loop.
 
-> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).** The post-move residual
-> type is a plain type error where the whole brand is required. A loop-carried
-> *use* invalid only on a later iteration is still surfaced by `--move-check`
-> rather than as a narrowing type error.
+> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).** A loop-carried *use* invalid only
+> on a later iteration is still surfaced by `--move-check` rather than as a narrowing type
+> error.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0117](../../rfcs/3-integrated/rfc-0117-row-narrowing.md), [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [02_partial_move_used_as_whole.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/02_partial_move_used_as_whole.mtl), [73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl), [104_narrowing_move_matches_projection.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/104_narrowing_move_matches_projection.mtl), [neg_46_whole_use_after_partial_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_46_whole_use_after_partial_move.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl), [104_narrowing_move_matches_projection.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/104_narrowing_move_matches_projection.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.ownership.narrowing.legality-2}
@@ -432,6 +452,41 @@ declaration, determines eligibility, regardless of how narrow or wide the curren
 
 <!-- rfc.py:fixtures:start -->
 <span class="rigor-backlink">_Tested by: [neg_43_bare_record_rejected_by_branded_projection_param.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_43_bare_record_rejected_by_branded_projection_param.mtl), [neg_45_residual_never_satisfies_row_bound.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_45_residual_never_satisfies_row_bound.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.ownership.narrowing.legality-3}
+
+A projection or a residual naming **every** field the struct declares is not a distinct
+residual type — it normalizes back to the plain struct type, and is rejected by a row
+bound exactly as a bare struct value already is. A residual's row is therefore always a
+strict, non-empty subset of the brand's declared row.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_44_full_width_projection_still_rejected_by_row_bound.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_44_full_width_projection_still_rejected_by_row_bound.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.ownership.narrowing.legality-4}
+
+Using a narrowed value where a wider row of the same brand, or the whole brand, is
+required is a type error at type-check time — reported against the narrowed binding, not
+deferred to `--move-check`. Every still-present field of the residual stays readable and
+its methods callable.
+
+> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [02_partial_move_used_as_whole.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/02_partial_move_used_as_whole.mtl), [neg_46_whole_use_after_partial_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_46_whole_use_after_partial_move.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.ownership.narrowing.legality-5}
+
+A residual may itself be projected (`h.{ fd }` on an already-narrowed `h`) for a field
+still in its row; naming a field already moved out of it is rejected.
+
+> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [104_narrowing_move_matches_projection.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/104_narrowing_move_matches_projection.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.ownership.narrowing.dynamics-1}
@@ -608,10 +663,29 @@ RFC-0137.
 <details>
 <summary>Formal rules</summary>
 
+##### Legality Rule {#spec.ownership.widening.legality-1}
+
+A field assignment on a narrowed residual (`h.name := …`) is legal even though `name` is
+absent from the residual's current row — the assigned field is resolved against the
+brand's full declared row, and the write reintroduces it. Widening applies only to an
+**owned** binding; a non-`Copy` field cannot be moved out of — and so cannot be
+reassigned back into — a value reached through a reference
+([references-and-moves.legality-1](#spec.ownership.references-and-moves.legality-1)).
+Widening performs no constructor-invariant check; that is RFC-0114's, and ordinary field
+reassignment bypasses such an invariant today regardless of this feature.
+
+> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [105_widening_reassign_restores_full.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/105_widening_reassign_restores_full.mtl), [neg_47_no_narrowing_through_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_47_no_narrowing_through_reference.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 ##### Dynamic Semantics {#spec.ownership.widening.dynamics-1}
 
 Assigning a value to a field missing from a residual's current row widens the residual's
-type to include that field, at the same brand.
+type to include that field, at the same brand; once every moved-out field has been
+reassigned the type is the plain struct again and the value may be used as a whole
+([partial-moves.legality-3](#spec.ownership.partial-moves.legality-3)).
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).** For an owned binding.
 
@@ -670,7 +744,7 @@ reborrow to an `&var` parameter.
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [10_mut_ref_non_reborrow_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/10_mut_ref_non_reborrow_move.mtl), [48_move_through_explicit_deref_is_banned_on_first_use.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/48_move_through_explicit_deref_is_banned_on_first_use.mtl), [65_general_assignment_out_of_an_explicit_deref_is_rejected.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/65_general_assignment_out_of_an_explicit_deref_is_rejected.mtl), [66_by_value_argument_passing_out_of_an_explicit_deref_is_rejected.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/66_by_value_argument_passing_out_of_an_explicit_deref_is_rejected.mtl), [70_shared_reference_is_copy.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/70_shared_reference_is_copy.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [10_mut_ref_non_reborrow_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/10_mut_ref_non_reborrow_move.mtl), [48_move_through_explicit_deref_is_banned_on_first_use.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/48_move_through_explicit_deref_is_banned_on_first_use.mtl), [65_general_assignment_out_of_an_explicit_deref_is_rejected.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/65_general_assignment_out_of_an_explicit_deref_is_rejected.mtl), [66_by_value_argument_passing_out_of_an_explicit_deref_is_rejected.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/66_by_value_argument_passing_out_of_an_explicit_deref_is_rejected.mtl), [70_shared_reference_is_copy.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/70_shared_reference_is_copy.mtl), [neg_47_no_narrowing_through_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_47_no_narrowing_through_reference.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 </details>
