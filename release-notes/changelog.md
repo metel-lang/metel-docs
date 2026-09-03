@@ -41,13 +41,15 @@ title: "Metel Language Changelog"
   never exported, may name the enclosing function's generic parameters, and shadows an
   outer alias of the same name for the rest of its block.
 - A module-level `public` alias **crosses module boundaries** — imported by name, under a
-  rename, or through a glob, and referenced with a qualified path (`geometry::Vec2`);
-  every spelling resolves to the same erased type. Naming a non-`public` alias from another
-  module is `T0009`, the same as any other private item.
+  rename, through a glob, or re-exported by an intermediate module (`export shapes::{Vec2};`,
+  one hop), and referenced with a qualified path (`geometry::Vec2`); every spelling
+  resolves to the same erased type. Naming a non-`public` alias from another module is
+  `T0009`, the same as any other private item.
 - Expansion reaches every type position, including annotations nested inside expressions —
-  a closure parameter annotation, a cast, an ascription, a turbofish.
-- Not yet covered (`metel-core#921`): an alias re-exported through `export`, and using an
-  alias name as a value path.
+  a closure parameter annotation, a cast, an ascription, a turbofish — and an alias for a
+  plain named type also stands in for that name in **value and pattern position**: a
+  struct literal (`P { … }`), a record projection (`P.{ … }`), an enum-variant path
+  (`D::Variant`), a `match` pattern.
 
 **Struct pattern matching:**
 - A named struct can now be matched with a struct pattern (`Point { x, y }`,
