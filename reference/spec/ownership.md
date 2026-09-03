@@ -339,18 +339,13 @@ array elements may not be moved out; and a non-`Copy` closure capture moves its 
 
 Record fields may be moved independently, at field granularity like struct fields; a
 moved field's siblings remain individually accessible, but using the record value as a
-whole afterward is rejected as a use of a partially moved value. Moving a field does not
-change the record's static type — there is no narrower record type for the residual
-value, only per-field move tracking.
-
-> **Superseded in design by [narrowing.legality-1](#spec.ownership.narrowing.legality-1)
-> once RFC-0117 lands (`impl_status: not-started`, metel-core#789):** an anonymous
-> record's row will then narrow the same way a struct's does. Until then, the
-> whole-value-use rejection above is a `--move-check` finding only, and the record's
-> static type is unchanged.
+whole afterward is rejected as a use of a partially moved value. Moving a field
+**narrows the record's static type** to the fields that remain
+([narrowing.legality-1](#spec.ownership.narrowing.legality-1), RFC-0117) — the same
+mechanism struct narrowing uses, minus the brand.
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [71_record_field_moved_independently.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/71_record_field_moved_independently.mtl), [72_record_used_as_whole_after_field_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/72_record_used_as_whole_after_field_move.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [71_record_field_moved_independently.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/71_record_field_moved_independently.mtl), [106_record_row_narrowing.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/106_record_row_narrowing.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 </details>
@@ -383,13 +378,14 @@ A projection naming *every* field the struct declares normalizes back to the pla
 struct type instead of staying a distinct residual — `h.{ fd, name }` here is just
 `Handle`, still rejected by a row bound the same way a bare `Handle` value already is.
 
-> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858): moving a field out of a struct also
-> narrows the value's *type*** to a row with that field removed, at the same brand — not
-> just a change in what the compiler internally tracks about it (see
-> [Partial moves](#partial-moves) above). `h.name` (partial move) produces exactly the
-> residual type `h.{ fd }` (projection) produces — the same mechanism, reached two ways —
-> and using the narrowed value where the whole brand is required is a plain type error at
-> type-check time, not only a `--move-check` finding.
+> **Since v0.13.0: moving a field out of a value also narrows its *type*** — not just a
+> change in what the compiler internally tracks about it (see
+> [Partial moves](#partial-moves) above). For a **struct** (RFC-0137 slice 2,
+> metel-core#858) `h.name` produces exactly the branded residual type `h.{ fd }`
+> (projection) produces — the same mechanism, reached two ways. For an **anonymous
+> `record`** (RFC-0117, metel-core#789) `r.left` moved out leaves `r : { right: i64 }`.
+> Using the narrowed value where the whole type (or a wider row) is required is a plain
+> type error at type-check time, not only a `--move-check` finding.
 
 The residual is an ordinary value: it can be bound, passed, returned, dropped, and
 narrowed again. For a value over *N* fields, the space of residual shapes is the subset
@@ -399,17 +395,18 @@ same brand, `Handle.{ fd }`) and to an **anonymous `record`'s** row (the record 
 the moved label removed, `{ fd: i64 }` — no brand clause). A record-typed **field** is
 moved as a **unit** — a residual's row never carries a *narrower* type for a field it
 still holds; narrowing a field of a field in place is
-[RFC-0150](../../rfcs/1-under-review/rfc-0150-nested-row-narrowing.md)'s. A bare generic
-type parameter, or a field whose type is not yet resolved, does not narrow the base
-value — narrowing waits until the field's type is known non-`Copy`.
+[RFC-0150](../../rfcs/1-under-review/rfc-0150-nested-row-narrowing.md)'s. A field read by
+value whose type is `Copy` is a copy, not a move, and does not narrow; a field whose type
+is a bare generic parameter or is not yet resolved is held (not dropped from the row)
+until its type is known.
 
-> **Implementation status.** The **struct** case ships in v0.13.0 (RFC-0137 slice 2,
-> metel-core#858): a partial move narrows the binding to a branded residual, and using it
-> where the whole brand is required is a plain type error. The **anonymous-record** case
-> (RFC-0117, `impl_status: not-started`, metel-core#789) is not yet implemented — an
-> anonymous record value keeps its whole static type, and a whole-value use after a
-> partial move is caught only by `--move-check`, per
-> [which-constructs-support-partial-moves.legality-2](#spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-2).
+> **Difference between the two.** A struct residual is a distinct type (`Type::Residual`,
+> a brand plus a strict subset row), so a whole-value use after a partial move reports
+> against the binding by name — "a partially-moved `Handle` …". An anonymous record
+> residual is just a `Record` with fewer fields, structurally identical to any other
+> narrower record, so the same mistake reports as an ordinary record-shape mismatch
+> ("cannot unify `{ right }` with `{ left, right }`"). Both are type errors at
+> type-check time.
 
 Narrowing is **path-sensitive**: the residual type at a program point reflects the fields
 moved on every path reaching it, exactly as move tracking already computes — a field
@@ -433,28 +430,27 @@ unambiguously, that struct — not a same-shaped anonymous record, and not a
 ##### Legality Rule {#spec.ownership.narrowing.legality-1}
 
 Moving a field out of a value narrows that value's type to a row with the moved field
-removed: for a nominal struct, a residual of the same brand (`Handle.{ fd }`); for an
-anonymous `record`, the record type with that label gone (`{ fd: i64 }`). A record-typed
-field is moved as a whole — the residual never holds a field at a narrower type. A field
-whose type is a bare generic parameter or is not yet resolved does not trigger narrowing.
-Narrowing is path-sensitive: the residual type at a program point reflects the fields
-moved on every path reaching it, joined conservatively at merge points and through loop
-fixpoints, exactly as move tracking computes.
+removed: for a nominal struct, a residual of the same brand (`Handle.{ fd }`, RFC-0137);
+for an anonymous `record`, the record type with that label gone (`{ fd: i64 }`, RFC-0117).
+A record-typed field is moved as a whole — the residual never holds a field at a narrower
+type. A field read by value whose type is `Copy` is a copy, not a move, and does not
+narrow; a field whose type is a bare generic parameter or is not yet resolved is held in
+the row until its type is known. Narrowing is path-sensitive: the residual type at a
+program point reflects the fields moved on every path reaching it, joined conservatively
+at merge points and through loop fixpoints, exactly as move tracking computes.
 
-> **Implementation status.** The struct case ships in v0.13.0 (RFC-0137 slice 2,
-> metel-core#858) — a whole-value use after a partial move is a plain type error at
-> type-check time; a loop-carried *use* invalid only on a later iteration is still a
-> `--move-check` diagnostic. The anonymous-record case (RFC-0117, `impl_status:
-> not-started`, metel-core#789) is not implemented — an anonymous record keeps its whole
-> static type and such a use is caught only by `--move-check`
-> ([which-constructs-support-partial-moves.legality-2](#spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-2)).
+> **Since v0.13.0.** Struct narrowing is RFC-0137 slice 2 (metel-core#858); anonymous-record
+> narrowing is RFC-0117 (metel-core#789). A whole-value use after a partial move is a
+> plain type error at type-check time for both — reported against the binding for a struct
+> residual, as an ordinary record-shape mismatch for a record. A loop-carried *use*
+> invalid only on a later iteration is still a `--move-check` diagnostic.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0117](../../rfcs/3-integrated/rfc-0117-row-narrowing.md), [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0117](../../rfcs/4-implemented/rfc-0117-row-narrowing.md), [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl), [104_narrowing_move_matches_projection.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/104_narrowing_move_matches_projection.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [72_record_used_as_whole_after_field_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/72_record_used_as_whole_after_field_move.mtl), [73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl), [104_narrowing_move_matches_projection.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/104_narrowing_move_matches_projection.mtl), [106_record_row_narrowing.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/106_record_row_narrowing.mtl), [neg_48_record_whole_use_after_partial_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_48_record_whole_use_after_partial_move.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.ownership.narrowing.legality-2}
@@ -463,7 +459,7 @@ A residual's row is never visible to structural matching; only its brand, fixed 
 declaration, determines eligibility, regardless of how narrow or wide the current row is.
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0117](../../rfcs/3-integrated/rfc-0117-row-narrowing.md), [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0117](../../rfcs/4-implemented/rfc-0117-row-narrowing.md), [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -483,17 +479,18 @@ strict, non-empty subset of the brand's declared row.
 
 ##### Legality Rule {#spec.ownership.narrowing.legality-4}
 
-Using a narrowed **struct** value where a wider row of the same brand, or the whole brand,
-is required is a type error at type-check time — reported against the narrowed binding,
-not deferred to `--move-check`. Every still-present field of the residual stays readable
-and its methods callable. (The anonymous-record equivalent is
-[narrowing.legality-1](#spec.ownership.narrowing.legality-1)'s not-yet-implemented half —
-a `--move-check` finding for now.)
+Using a narrowed value where a wider row, or the whole type, is required is a type error
+at type-check time — not deferred to `--move-check`. Every still-present field of the
+residual stays readable and its methods callable. For a **struct** residual the error
+names the binding ("a partially-moved `Handle` …"); for an **anonymous record** it is an
+ordinary record-shape mismatch (a narrowed `{ right }` does not unify with `{ left, right
+}`).
 
-> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
+> **Since v0.13.0.** Struct: RFC-0137 slice 2 (metel-core#858). Anonymous record:
+> RFC-0117 (metel-core#789).
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [02_partial_move_used_as_whole.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/02_partial_move_used_as_whole.mtl), [neg_46_whole_use_after_partial_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_46_whole_use_after_partial_move.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [02_partial_move_used_as_whole.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/02_partial_move_used_as_whole.mtl), [neg_46_whole_use_after_partial_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_46_whole_use_after_partial_move.mtl), [neg_48_record_whole_use_after_partial_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_48_record_whole_use_after_partial_move.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.ownership.narrowing.legality-5}
@@ -597,14 +594,14 @@ A `Drop` impl's required field set is the residual row its `drop` method's recei
 declared with; a `drop` method with a bare `&var self` receiver requires the struct's
 whole declared row.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Row-bounded Drop dispatch is not implemented (RFC-0137 slice 2); RFC-0071's unconditional partial-move-with-Drop ban is still enforced today (behind --move-check, off by default)." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#949" reason="Row-bounded Drop dispatch is not implemented (RFC-0137 §5, metel-core#949); RFC-0071's unconditional partial-move-with-Drop ban is still enforced today (behind --move-check, off by default)." -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Row-bounded Drop dispatch is not implemented (RFC-0137 slice 2); RFC-0071's unconditional partial-move-with-Drop ban is still enforced today (behind --move-check, off by default)._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#949: Row-bounded Drop dispatch is not implemented (RFC-0137 §5, metel-core#949); RFC-0071's unconditional partial-move-with-Drop ban is still enforced today (behind --move-check, off by default)._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Dynamic Semantics {#spec.ownership.drop-dispatch-against-a-narrowed-residual.dynamics-1}
@@ -612,10 +609,10 @@ whole declared row.
 A `Drop` impl's destructor fires against any residual of the correct brand whose current
 row is a superset of the impl's required field set.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Depends on the legality rule above; not implemented." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#949" reason="Depends on the legality rule above; not implemented." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Depends on the legality rule above; not implemented._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#949: Depends on the legality rule above; not implemented._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-2}
@@ -623,10 +620,10 @@ row is a superset of the impl's required field set.
 Coercing a value of a `Drop`-implementing type to `dyn Aspect` is rejected when the
 value's current row does not satisfy that type's `Drop` impl's required field set.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Depends on row-bounded Drop dispatch (above, RFC-0137 slice 2, metel-core#858). dyn Aspect itself is fully implemented now (RFC-0008, metel-core#865/#863/#864, closed 2026-08-28) -- syntax, object safety, and coercion of a value to one -- so the erasure side of this checkpoint is real; what is still missing is the narrowed residual to run it against, which is metel-core#858's job. Do not attempt this checkpoint until #858 lands." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#949" reason="Depends on row-bounded Drop dispatch (above, RFC-0137 slice 2, metel-core#858). dyn Aspect itself is fully implemented now (RFC-0008, metel-core#865/#863/#864, closed 2026-08-28) -- syntax, object safety, and coercion of a value to one -- so the erasure side of this checkpoint is real; what is still missing is the narrowed residual to run it against, which is metel-core#949's job. Do not attempt this checkpoint until #949 lands." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Depends on row-bounded Drop dispatch (above, RFC-0137 slice 2, metel-core#858). dyn Aspect itself is fully implemented now (RFC-0008, metel-core#865/#863/#864, closed 2026-08-28) -- syntax, object safety, and coercion of a value to one -- so the erasure side of this checkpoint is real; what is still missing is the narrowed residual to run it against, which is metel-core#858's job. Do not attempt this checkpoint until #858 lands._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#949: Depends on row-bounded Drop dispatch (above, RFC-0137 slice 2, metel-core#858). dyn Aspect itself is fully implemented now (RFC-0008, metel-core#865/#863/#864, closed 2026-08-28) -- syntax, object safety, and coercion of a value to one -- so the erasure side of this checkpoint is real; what is still missing is the narrowed residual to run it against, which is metel-core#949's job. Do not attempt this checkpoint until #949 lands._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-3}
@@ -637,10 +634,10 @@ by an open lower bound (`fun drop<row R>(&var self: Self.R) where R: { a, b, .. 
 fields named by that declaration are the impl's required field set (legality-1). A bare
 `&var self` names every field.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Row-bounded Drop dispatch is not implemented (RFC-0137 slice 2, metel-core#858); the narrowed drop-receiver forms additionally depend on their own not-yet-integrated syntax (RFC-0109 named views for the fixed projection form, RFC-0147; RFC-0146 for the row-parameter form, RFC-0148). Until then a drop receiver is always the whole value and the required set is always the whole row." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#949" reason="Row-bounded Drop dispatch is not implemented (RFC-0137 §5, metel-core#949); the narrowed drop-receiver forms additionally depend on their own not-yet-integrated syntax (RFC-0109 named views for the fixed projection form, RFC-0147; RFC-0146 for the row-parameter form, RFC-0148). Until then a drop receiver is always the whole value and the required set is always the whole row." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Row-bounded Drop dispatch is not implemented (RFC-0137 slice 2, metel-core#858); the narrowed drop-receiver forms additionally depend on their own not-yet-integrated syntax (RFC-0109 named views for the fixed projection form, RFC-0147; RFC-0146 for the row-parameter form, RFC-0148). Until then a drop receiver is always the whole value and the required set is always the whole row._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#949: Row-bounded Drop dispatch is not implemented (RFC-0137 §5, metel-core#949); the narrowed drop-receiver forms additionally depend on their own not-yet-integrated syntax (RFC-0109 named views for the fixed projection form, RFC-0147; RFC-0146 for the row-parameter form, RFC-0148). Until then a drop receiver is always the whole value and the required set is always the whole row._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-4}
@@ -651,10 +648,10 @@ destructor body may read or write only fields in that declared row, and may call
 `drop` receiver's declared row. Each is a local check at the access or call site; no
 whole-body or call-graph analysis derives the required field set.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#858" reason="Row-bounded Drop dispatch is not implemented (RFC-0137 slice 2, metel-core#858); with no narrowed drop-receiver form yet, there is no declared row for a body to be checked against. The reject_inert_destructor gate (metel-core#292) additionally rejects any non-empty drop body until destructor invocation (metel-core#261) lands." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#949" reason="Row-bounded Drop dispatch is not implemented (RFC-0137 §5, metel-core#949); with no narrowed drop-receiver form yet, there is no declared row for a body to be checked against. The reject_inert_destructor gate (metel-core#292) additionally rejects any non-empty drop body until destructor invocation (metel-core#261) lands." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#858: Row-bounded Drop dispatch is not implemented (RFC-0137 slice 2, metel-core#858); with no narrowed drop-receiver form yet, there is no declared row for a body to be checked against. The reject_inert_destructor gate (metel-core#292) additionally rejects any non-empty drop body until destructor invocation (metel-core#261) lands._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#949: Row-bounded Drop dispatch is not implemented (RFC-0137 §5, metel-core#949); with no narrowed drop-receiver form yet, there is no declared row for a body to be checked against. The reject_inert_destructor gate (metel-core#292) additionally rejects any non-empty drop body until destructor invocation (metel-core#261) lands._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>

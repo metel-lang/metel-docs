@@ -226,7 +226,7 @@ section was written, deliberately not folded in so this RFC could be accepted on
 terms.
 
 **Updated 2026-08-30: that thesis is now RFC-0137 (`3-integrated`).** Every `struct`
-carries `(brand, row)`, and the row narrows on partial move (RFC-0117, also integrated).
+carries `(brand, row)`, and the row narrows on partial move (RFC-0117, implemented).
 This does **not** collapse §1's tiers — RFC-0137's row is never visible to structural
 matching (that is exactly its §1 restriction), so a plain `struct` stays impl-ineligible.
 What `record` still adds on top of RFC-0137 is precisely §1's tier-3 cell: the row is
@@ -383,7 +383,7 @@ parameterized row.
   every struct, and its §2/§3/§5 resolve Open Questions 5, 1, and the premise of 3; §1's
   table above is restated against it. `record` still adds tier-3's row-visibility and
   impl-eligibility on top (§4)
-- RFC-0117 (Row Narrowing, `3-integrated`) — the narrowing rule a `record` residual
+- RFC-0117 (Row Narrowing, `4-implemented`) — the narrowing rule a `record` residual
   follows; carried the identical `Drop`-dispatch question (its OQ1) closed the same way
 - RFC-0076 (RC Brands, `1-under-review`) — related but **not a dependency**; OQ4's
   "same identity kind" concern is now RFC-0137's, not this RFC's

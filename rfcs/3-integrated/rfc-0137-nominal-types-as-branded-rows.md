@@ -37,7 +37,7 @@ impl_status: in-progress
 > `rfc.py new`'s overlap check flagged RFC-0120, RFC-0116, RFC-0089, RFC-0117, RFC-0090 —
 > checked each: RFC-0116 (Anonymous Record Types, implemented) owns the record
 > *type-former* this RFC narrows nominal values into, and is a dependency, not an
-> overlap. RFC-0117 (Row Narrowing, integrated) specifies narrowing for records and
+> overlap. RFC-0117 (Row Narrowing, implemented) specifies narrowing for records and
 > explicitly defers narrowing a *nominal* type as out of its own scope (§3: "depends on
 > nominal types carrying rows at all") — this RFC is that missing dependency, not a
 > restatement. RFC-0120 (Named Records, accepted) proposes an **opt-in** third declaration
@@ -84,7 +84,7 @@ impl_status: in-progress
 
 > **Slice 1 implemented (metel-core#857, v0.13.0).** §1-4: the `(brand, row)` representation, branded field projection, full-width normalization to the plain struct type, and passing a projection-produced residual to a function. `spec.ownership.narrowing.legality-2`, `spec.ownership.passing-a-residual-to-a-function.legality-1`.
 >
-> **Slice 2 implemented (metel-core#858, v0.13.0).** §2 move-triggered narrowing for a **struct** value (a partial move narrows the binding to a branded residual, in both the inference and construction passes, path-sensitive across `if`/`match`; the anonymous-`record` half of `narrowing.legality-1` is RFC-0117's, `impl_status: not-started` / metel-core#789, so a record value stays on per-field `--move-check` tracking until then), §6 widening (reassigning a moved-out field of an owned binding widens the type back), §2's projection ≡ partial-move equivalence, full-width-projection normalization, and re-projection of a residual. `spec.ownership.narrowing.legality-1` … `legality-5`, `spec.ownership.narrowing.dynamics-1`, `spec.ownership.widening.legality-1`, `spec.ownership.widening.dynamics-1`, `spec.ownership.partial-moves.legality-4`. A loop-carried *use* invalid only on a later iteration stays a `--move-check` diagnostic rather than a narrowing type error.
+> **Slice 2 implemented (metel-core#858, v0.13.0).** §2 move-triggered narrowing for a **struct** value (a partial move narrows the binding to a branded residual, in both the inference and construction passes, path-sensitive across `if`/`match`; anonymous-`record` narrowing is RFC-0117's (metel-core#789, now implemented)), §6 widening (reassigning a moved-out field of an owned binding widens the type back), §2's projection ≡ partial-move equivalence, full-width-projection normalization, and re-projection of a residual. `spec.ownership.narrowing.legality-1` … `legality-5`, `spec.ownership.narrowing.dynamics-1`, `spec.ownership.widening.legality-1`, `spec.ownership.widening.dynamics-1`, `spec.ownership.partial-moves.legality-4`. A loop-carried *use* invalid only on a later iteration stays a `--move-check` diagnostic rather than a narrowing type error.
 >
 > **Deferred to v0.14.0.** §5 row-bounded `Drop` dispatch against a narrowed residual and the `dyn Aspect` coercion checkpoint — both need a narrowed `drop` receiver (RFC-0147 → RFC-0109, or RFC-0148 → RFC-0146 → RFC-0121), none of which is built. Until then RFC-0071 §7's unconditional partial-move-with-`Drop` ban stands. `spec.ownership.drop-dispatch-against-a-narrowed-residual.*` stay `blocked`-exempt on metel-core#858.
 
@@ -837,7 +837,7 @@ this corpus's append-only convention for exactly this situation.*
 - RFC-0116 (Anonymous Record Types, implemented) — the record type-former narrowing
   produces values of; §4 there is the projection expression this RFC's narrowing
   matches exactly
-- RFC-0117 (Row Narrowing, integrated) — specifies narrowing for records; this RFC
+- RFC-0117 (Row Narrowing, implemented) — specifies narrowing for records; this RFC
   supplies the nominal-type dependency §3 there used to defer, folded in 2026-08-27
 - RFC-0118 (Row Bounds, implemented) — `<record T: { … }>`; already establishes that a
   nominal struct does not satisfy a row bound, the same principle §3 here extends to a

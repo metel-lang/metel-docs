@@ -2,16 +2,16 @@
 id: rfc-0117
 title: "Row Narrowing"
 date: '2026-07-24'
-status: integrated
+status: implemented
 tracking: 'https://github.com/metel-lang/metel-core/issues/789'
 target: v0.13.0
-updated: '2026-08-29'
+updated: '2026-09-03'
 coverage:
   "1": { spec: "spec.ownership.narrowing.legality-1" }
   "2": { spec: "spec.ownership.narrowing.legality-2" }
   "3": { kind: untestable, reason: "Scope-boundary section: enumerates capabilities owned by other RFCs (widening -> RFC-0114, nested narrowing -> RFC-0150, borrowed narrowing -> RFC-0119/0109, per-field multiplicity -> RFC-0089/0091). No rule of its own to test." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/789'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Extracted from RFC-0090 on 2026-07-24** (superseded; see RFC-0116's header for why the
@@ -42,6 +42,10 @@ impl_status: not-started
 > **Status — accepted (2026-08-29).** Flat row narrowing: moving a field out narrows the value's type to the 2^N subset lattice, no row variables; path-sensitive via RFC-0071's existing move tracking. All three open questions resolved (OQ1/OQ2 via RFC-0137 §5, OQ3 by scoping to flat -- nested narrowing is RFC-0150). Pre-acceptance Codex review clean for the flat case.
 
 > **Status — integrated (2026-08-29).** Flat row narrowing integrated into reference/spec/ownership.md#narrowing (legality-1/legality-2, co-origin with RFC-0137), blocked-exempt on metel-core#858 pending move-triggered narrowing. Nested narrowing is RFC-0150.
+
+> **Status — implemented (2026-09-03), metel-core#789.** Anonymous-record row narrowing lands in v0.13.0, in both the inference and construction passes, reusing the `crate::flow_state::FlowState` machinery RFC-0137 slice 2 (#858) threaded through both for the struct case. A partial move of a non-`Copy` record field narrows the binding to the record type with that label gone; a whole-value use afterward is a plain `T0001` at type-check time (the ordinary record-shape mismatch — an anonymous record has no distinct residual-type marker the way a struct's brand gives one). A `Copy` field read by value does not narrow; an unresolved field type is held in the row until known (the field's `Copy`-ness is re-tested at each read, since a record literal's field types are inference variables until solved). `spec.ownership.narrowing.legality-1` / `legality-4`, `spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-2` (rewritten — records now narrow). Nested narrowing is still RFC-0150; the residual-type ⇄ `--move-check` gap (`--move-check` does not yet know a narrowed binding's whole-value use is legal) is shared with #858 and tracked at metel-core#950.
+
+> **Status — implemented (2026-09-03).**
 
 ## Summary
 
