@@ -82,6 +82,12 @@ impl_status: in-progress
 
 > **Status — integrated (2026-08-27).** Merged into reference/spec/ownership.md (Narrowing, Passing a residual to a function, Drop dispatch against a narrowed residual, Widening subsections) and reference/spec/types.md (What satisfies which bound reframe). Everything marked Planned for v0.13.0 with blocked fixture-coverage exemptions -- nothing in RFC-0137 is implemented yet. Cross-checked against RFC-0071 (3-integrated), RFC-0116/RFC-0118 (implemented), and RFC-0008 (implemented, the dyn Aspect coercion checkpoint) -- no new soundness gap found beyond what RFC-0137's own text already identifies.
 
+> **Slice 1 implemented (metel-core#857, v0.13.0).** §1-4: the `(brand, row)` representation, branded field projection, full-width normalization to the plain struct type, and passing a projection-produced residual to a function. `spec.ownership.narrowing.legality-2`, `spec.ownership.passing-a-residual-to-a-function.legality-1`.
+>
+> **Slice 2 implemented (metel-core#858, v0.13.0).** §2 move-triggered narrowing (a partial move narrows the binding to a residual, in both the inference and construction passes, path-sensitive across `if`/`match`), §6 widening (reassigning a moved-out field of an owned binding widens the type back), and §2's projection ≡ partial-move equivalence. `spec.ownership.narrowing.legality-1`, `spec.ownership.narrowing.dynamics-1`, `spec.ownership.widening.dynamics-1`. A loop-carried *use* invalid only on a later iteration stays a `--move-check` diagnostic rather than a narrowing type error.
+>
+> **Deferred to v0.14.0.** §5 row-bounded `Drop` dispatch against a narrowed residual and the `dyn Aspect` coercion checkpoint — both need a narrowed `drop` receiver (RFC-0147 → RFC-0109, or RFC-0148 → RFC-0146 → RFC-0121), none of which is built. Until then RFC-0071 §7's unconditional partial-move-with-`Drop` ban stands. `spec.ownership.drop-dispatch-against-a-narrowed-residual.*` stay `blocked`-exempt on metel-core#858.
+
 ## Summary
 
 Every `struct` — not only an opt-in declaration kind — is represented internally as
