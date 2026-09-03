@@ -4,9 +4,20 @@ title: "Named Records"
 date: '2026-07-24'
 status: accepted
 tracking: 'https://github.com/metel-lang/metel-core/issues/791'
-target: v0.13.0
-updated: '2026-08-30'
+target: v0.14.0
+updated: '2026-09-03'
 ---
+
+> **Retargeted to v0.14.0, 2026-09-03.** RFC-0120's Summary capability is *"the declared
+> row satisfies row bounds (RFC-0118) **and** is matched by row-conditional impl
+> resolution (RFC-0121)."* RFC-0118 is `implemented`, but RFC-0121 (Open Rows —
+> row-conditional impls, which §1 and Motivation call tier 3's whole reason to exist) is
+> `under-review` and milestoned v0.14.0 (metel-core#792). A v0.13.0 RFC-0120 could deliver
+> only the `record` keyword + row-bound satisfaction — half the stated capability — so it
+> moves to v0.14.0 to land with RFC-0121, and the records chain (RFC-0117 → RFC-0119 →
+> RFC-0120 → RFC-0121) stays coherent. No design change; the open questions below remain
+> resolved. Narrowing and `Drop` for a `record` already ride RFC-0137's struct code paths
+> (RFC-0117, `4-implemented`; RFC-0137 §5 Drop dispatch is metel-core#949, also v0.14.0).
 
 > **Extracted from RFC-0090 §8 (tier 3) and §9 on 2026-07-24** (superseded; see RFC-0116's
 > header for the split rationale). Depends on RFC-0116 (Anonymous Record Types).
@@ -294,6 +305,12 @@ parameterized row.
    (spec `…legality-1`), so the destructor is never reached with a field it reads already
    gone.
 
+   **Reference update, 2026-09-03:** RFC-0137 slice 2 (metel-core#858, move-triggered
+   narrowing + widening) has shipped and is closed; the row-bounded `Drop`-dispatch half —
+   RFC-0137 §5, which this resolution and its v0.13 restriction sit behind — is now
+   tracked at **metel-core#949**, milestoned v0.14.0, and still gated on the narrowed
+   `drop`-receiver spelling (RFC-0109/0147/0148).
+
    **v0.13 scope, not an open design question.** The spec's own `…legality-3` records that
    the *narrowed* `drop`-receiver spelling this relies on — `&var self: Self.{ a, b }` or
    a row-parameter receiver — depends on RFC-0109/0147/0148, none of which is integrated;
@@ -314,7 +331,9 @@ parameterized row.
    match there short-circuits it rather than conflicting with it under RFC-0060 §2. For
    tier 3 specifically: a `record` with its own nominal impl of an aspect dispatches to
    that impl over any row-conditional impl its row also satisfies. Owning implementation
-   issue: metel-core#833.
+   issue: metel-core#833 (v0.14.0). Moot until RFC-0121 lands — no row-conditional impls
+   exist for a brand-keyed impl to win against before then; RFC-0120 and RFC-0121 now
+   share the v0.14.0 milestone and land together.
 3. **Does RFC-0116 §3's allocator-type restriction transfer to tier 3?** That restriction
    assumed structural interchangeability, which a fixed brand arguably removes — a named
    record has per-instance identity in a way an anonymous one does not. ~~Unresolved.~~
@@ -404,4 +423,10 @@ additive over tier 1; none is an interchangeable way to do another's job. The on
 left is the spec-rule pass (coverage frontmatter + Legality Rule blocks for declaration
 grammar, structural-visibility eligibility, row-bound/impl dispatch, upgrade behaviour)
 done at the `3-integrated` transition, as for RFC-0117 and RFC-0129.
-**Target:** v0.13.0, via metel-core#791.
+
+**Retargeted v0.13.0 → v0.14.0, 2026-09-03** (see the dated note under the header): the
+Summary capability needs RFC-0121's row-conditional impl resolution, which is v0.14.0
+(metel-core#792). RFC-0120 lands with RFC-0121 so `record` ships with its full stated
+capability rather than a row-bound-only half. No design change.
+
+**Target:** v0.14.0, via metel-core#791.
