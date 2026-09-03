@@ -450,7 +450,7 @@ at merge points and through loop fixpoints, exactly as move tracking computes.
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [72_record_used_as_whole_after_field_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/72_record_used_as_whole_after_field_move.mtl), [73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl), [104_narrowing_move_matches_projection.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/104_narrowing_move_matches_projection.mtl), [106_record_row_narrowing.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/106_record_row_narrowing.mtl), [neg_48_record_whole_use_after_partial_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_48_record_whole_use_after_partial_move.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [72_record_used_as_whole_after_field_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/72_record_used_as_whole_after_field_move.mtl), [73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/73_reassigning_only_one_of_two_moved_fields_stays_partial.mtl), [104_narrowing_move_matches_projection.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/104_narrowing_move_matches_projection.mtl), [106_record_row_narrowing.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/106_record_row_narrowing.mtl), [107_move_check_narrowed_whole_use.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/107_move_check_narrowed_whole_use.mtl), [neg_48_record_whole_use_after_partial_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_48_record_whole_use_after_partial_move.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.ownership.narrowing.legality-2}
@@ -486,11 +486,16 @@ names the binding ("a partially-moved `Handle` …"); for an **anonymous record*
 ordinary record-shape mismatch (a narrowed `{ right }` does not unify with `{ left, right
 }`).
 
+Conversely, a whole-value use of the binding **at its narrowed type** — moving it,
+binding it, passing it to a parameter whose row it matches — is legal, and `--move-check`
+does not flag it (metel-core#950): narrowing removed exactly the moved fields, so no live
+use touches one.
+
 > **Since v0.13.0.** Struct: RFC-0137 slice 2 (metel-core#858). Anonymous record:
-> RFC-0117 (metel-core#789).
+> RFC-0117 (metel-core#789). `--move-check` agreement: metel-core#950.
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [02_partial_move_used_as_whole.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/02_partial_move_used_as_whole.mtl), [neg_46_whole_use_after_partial_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_46_whole_use_after_partial_move.mtl), [neg_48_record_whole_use_after_partial_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_48_record_whole_use_after_partial_move.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [02_partial_move_used_as_whole.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/move_check/02_partial_move_used_as_whole.mtl), [107_move_check_narrowed_whole_use.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/structs/107_move_check_narrowed_whole_use.mtl), [neg_46_whole_use_after_partial_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_46_whole_use_after_partial_move.mtl), [neg_48_record_whole_use_after_partial_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/structs/neg_48_record_whole_use_after_partial_move.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.ownership.narrowing.legality-5}

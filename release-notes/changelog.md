@@ -96,9 +96,13 @@ title: "Metel Language Changelog"
   ordinary field reassignment already bypasses one, independent of this feature.
 - Narrowing is path-sensitive, joined across `if` / `match` arms. A loop-carried *use*
   that only becomes invalid on a later iteration is still surfaced by `--move-check` rather
-  than as a narrowing type error. `Drop`-dispatch against a narrowed residual (RFC-0137 §5)
-  is a separate v0.14.0 slice — it needs a narrowed `drop` receiver (RFC-0109 / RFC-0147),
-  and until then a `Drop` type still cannot be partially moved at all.
+  than as a narrowing type error.
+- `--move-check` is narrowing-aware (metel-core#950): a whole-value use of a binding **at
+  its narrowed type** — moving it, binding it, passing it where its row matches — is no
+  longer flagged as a partial-move violation.
+- `Drop`-dispatch against a narrowed residual (RFC-0137 §5) is a separate v0.14.0 slice —
+  it needs a narrowed `drop` receiver (RFC-0109 / RFC-0147), and until then a `Drop` type
+  still cannot be partially moved at all.
 
 **Struct pattern matching:**
 - A named struct can now be matched with a struct pattern (`Point { x, y }`,
