@@ -249,8 +249,8 @@ accepts is a genuinely different capability and belongs to RFC-0121.
   record-typed field in place. Depends on this RFC and on RFC-0147/0148's narrowed
   `drop` receiver forms; carries the residual-type-grammar, tuple-residual, and
   control-flow-join questions this RFC leaves out (Open Question 3, §3)
-- `public/rfcs/0-draft/rfc-0089-linear-types.md`,
-  `public/rfcs/0-draft/rfc-0091-linear-records.md` — per-field multiplicity, deliberately
+- `public/rfcs/1-under-review/rfc-0089-linear-types.md`,
+  `public/rfcs/1-under-review/rfc-0091-linear-records.md` — per-field multiplicity, deliberately
   deferred until records are implemented
 
 ---

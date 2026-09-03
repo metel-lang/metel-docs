@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**165 RFCs total.** 28 draft, 38 under review, 9 accepted, 2 integrated (77 live), 61 implemented, 13 superseded, 14 refused (88 settled).
+**165 RFCs total.** 25 draft, 41 under review, 9 accepted, 2 integrated (77 live), 61 implemented, 13 superseded, 14 refused (88 settled).
 
-## Draft (28)
+## Draft (25)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -31,10 +31,7 @@ the curated thematic map.
 - **RFC-0062** — Ord / Eq Comparison Aspects (`0-draft` ; rfcs/0-draft/rfc-0062-ord-comparison-aspect.md ; date 2026-06-11 ; updated 2026-07-21)
 - **RFC-0074** — Shared Pointers — Rc and Arc (`0-draft` ; rfcs/0-draft/rfc-0074-shared-ownership.md ; date 2026-06-30)
 - **RFC-0075** — Region Inference — Local AutoRegion (`0-draft` ; rfcs/0-draft/rfc-0075-region-inference.md ; date 2026-07-01)
-- **RFC-0089** — Linear Types (`0-draft` ; rfcs/0-draft/rfc-0089-linear-types.md ; date 2026-07-09 ; updated 2026-07-24)
-- **RFC-0091** — Linear Records (`0-draft` ; rfcs/0-draft/rfc-0091-linear-records.md ; date 2026-07-09 ; updated 2026-07-24)
 - **RFC-0094** — Comptime Metaprogramming — Generalized Emit, Comptime-Callable Parsing, Diagnostics (`0-draft` ; rfcs/0-draft/rfc-0094-comptime-metaprogramming.md ; date 2026-07-09)
-- **RFC-0096** — Auto-Impl Aspects — Compiler-Recognized Structural Aspects (`0-draft` ; rfcs/0-draft/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md ; date 2026-07-11)
 - **RFC-0101** — Grammar-Enforced Naming Case Conventions (`0-draft` ; rfcs/0-draft/rfc-0101-grammar-enforced-naming-case-conventions.md ; date 2026-07-14 ; updated 2026-07-17)
 - **RFC-0104** — Multi-Aspect Extend Blocks with Shared Bodies (`0-draft` ; rfcs/0-draft/rfc-0104-multi-aspect-extend-blocks-with-shared-bodies.md ; date 2026-07-14)
 - **RFC-0105** — Struct-Embedded Aspect Lists (`0-draft` ; rfcs/0-draft/rfc-0105-struct-embedded-aspect-lists.md ; date 2026-07-14 ; updated 2026-07-14)
@@ -46,16 +43,19 @@ the curated thematic map.
 - **RFC-0151** — Tuples as Numeric-Label Rows (`0-draft` ; rfcs/0-draft/rfc-0151-tuples-as-numeric-label-rows.md ; date 2026-08-29)
 - **RFC-0164** — Mutating Closures with a Propagating ? Are Call-Once (`0-draft` ; rfcs/0-draft/rfc-0164-mutating-closures-with-a-propagating-are-call-once.md ; date 2026-09-02 ; updated 2026-09-02)
 
-## Under Review (38)
+## Under Review (41)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
 - **RFC-0067** — Lifetime Anchors (`1-under-review` ; rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-08-23)
 - **RFC-0076** — Brand Types (`1-under-review` ; rfcs/1-under-review/rfc-0076-rc-brands.md ; date 2026-06-29 ; updated 2026-08-27)
 - **RFC-0080** — Standard Library Aspects — Clone, Deref, Send, Sync (`1-under-review` ; rfcs/1-under-review/rfc-0080-stdlib-aspects.md ; date 2026-07-01 ; updated 2026-08-23)
+- **RFC-0089** — Linear Types (`1-under-review` ; rfcs/1-under-review/rfc-0089-linear-types.md ; date 2026-07-09 ; updated 2026-09-03)
+- **RFC-0091** — Linear Records (`1-under-review` ; rfcs/1-under-review/rfc-0091-linear-records.md ; date 2026-07-09 ; updated 2026-09-03)
 - **RFC-0092** — Comptime Core — Type-as-Value, Reflection, and Emit (`1-under-review` ; rfcs/1-under-review/rfc-0092-comptime-core.md ; date 2026-07-09 ; updated 2026-08-23)
 - **RFC-0093** — Derive Registration — #derive(Aspect) as Request and Registration (`1-under-review` ; rfcs/1-under-review/rfc-0093-derive-registration.md ; date 2026-07-09 ; updated 2026-08-23)
 - **RFC-0095** — Attributes and Metadata (`1-under-review` ; rfcs/1-under-review/rfc-0095-attributes-and-metadata.md ; date 2026-07-09 ; updated 2026-09-01)
+- **RFC-0096** — Auto-Impl Aspects — Compiler-Recognized Structural Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md ; date 2026-07-11 ; updated 2026-09-03)
 - **RFC-0099** — Dot-Separated Module Paths (`1-under-review` ; rfcs/1-under-review/rfc-0099-dot-separated-module-paths.md ; date 2026-07-13 ; updated 2026-08-23)
 - **RFC-0100** — Constructor-Call Construction (`1-under-review` ; rfcs/1-under-review/rfc-0100-constructor-call-construction.md ; date 2026-07-13 ; updated 2026-08-23)
 - **RFC-0109** — Self-View Narrowing (`1-under-review` ; rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md ; date 2026-07-18 ; updated 2026-08-27)

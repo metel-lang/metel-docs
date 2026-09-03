@@ -521,7 +521,7 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
 - `public/rfcs/4-implemented/rfc-0082-associated-types.md` §9 — the declined general
   default-associated-type mechanism, cited precisely in Open Question 3 rather than
   assumed to transfer to `Construct`'s narrower case
-- `public/rfcs/0-draft/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md`
+- `public/rfcs/1-under-review/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md`
   — the auto-impl pattern `Construct`'s default derivation resembles but does not reuse
   directly (§1, §3)
 - `public/rfcs/1-under-review/rfc-0100-constructor-call-construction.md` — call-shaped

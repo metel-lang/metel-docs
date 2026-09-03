@@ -2,9 +2,10 @@
 id: rfc-0089
 title: "Linear Types"
 date: '2026-07-09'
-status: draft
-target:
-updated: '2026-07-24'
+status: under-review
+target: v0.18.0
+updated: '2026-09-03'
+tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 ---
 
 > **New RFC, split out 2026-07-09** from `reports/substructural-types/linear-types.md`
@@ -60,6 +61,8 @@ updated: '2026-07-24'
 > **Status — under review (2026-07-21).** Reviewing the records/views substrate cluster together, per OBJECTIVES.md Priority 1 (reordered 2026-07-22). The cluster's first deliverable is the record/row semantics themselves -- RFC-0090 SS3 step 1's closed `{ … }` type-former plus `HasField` -- not the `ToRecord`/`FromRecord` conversions the blog names, which are tier 2 of RFC-0090 SS8 and convert into a type-former that must exist first. Thorough draft with a substantiated primary proposal; open questions remain, chiefly the RFC-0089/RFC-0090 dependency direction that Trigger 6 tracks.
 
 > **Status — draft (2026-07-24).** Deferred 2026-07-24: per-field multiplicity waits until records are implemented. The RFC-0090 coupling was introduced by accident (RFC-0089's 2026-07-09 same-day revision rewrote its floor from Option B to ToRecord), which is why Trigger 6 could observe that neither RFC states the conflict. Returned to draft so the records cluster is not gated on it and the review backlog reflects what is actually reviewable.
+
+> **Status — under review (2026-09-03).** Re-promoted 2026-09-03: the 2026-07-24 deferral condition (wait until records ship) is substantially met -- RFC-0116/0117/0118 implemented/integrated, RFC-0120 accepted; RFC-0119 (the ToRecord floor sec3 depends on) still under review but milestoned v0.13.1, ahead of this RFC's own v0.18.0 target. Milestoned v0.18.0 as a third design-settlement lane alongside RFC-0140/RFC-0003, not folded into v0.17.0's in-flight substrate milestone. metel-core#953.
 
 ## Summary
 
@@ -420,7 +423,7 @@ and its open aliasing question remain explicitly not required for the deadline.
   affine-by-default foundation this RFC builds on
 - RFC-0080 (Standard Library Aspects) — the auto-impl pattern `Linear` reuses (§2),
   substituting `Linear` for `Send`
-- RFC-0096 (Auto-Impl Aspects, draft) — formalizes that pattern once, generically,
+- RFC-0096 (Auto-Impl Aspects, under review) — formalizes that pattern once, generically,
   rather than each auto-impl aspect (`Send`/`Sync`/`Linear`) restating it
 - RFC-0081 (Negative Impls) — `extend X: !Linear;` opt-out
 - RFC-0072 (Negative Bounds) — `T: !Copy + !Linear` compound bound form (§2.1)

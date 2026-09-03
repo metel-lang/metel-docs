@@ -228,7 +228,7 @@ with no bare-parameter-specific handling needed.
   concrete motivating example.
 - RFC-0061 (Structural Aspect Bounds, implemented) — §1's "structural constructors are
   owned by `std::core`" fix, the closest existing precedent, contrasted in §2.
-- RFC-0096 (Auto-Impl Aspects, draft) — opened the same review pass; the auto-impl
+- RFC-0096 (Auto-Impl Aspects, under review) — opened the same review pass; the auto-impl
   recognition gap that prompted checking blanket impls' own orphan-rule treatment.
 
 ---

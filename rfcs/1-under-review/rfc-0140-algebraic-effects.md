@@ -394,7 +394,7 @@ else in this design is an existing rule applied to one new value type, not a new
   exclusivity and O(1) brand-directed dispatch against an earlier form of this design; not
   yet reconciled with this RFC's own evidence-passing discussion (§10) in either direction
   — Open Question 3.
-- **RFC-0091 (Linear Records, `0-draft`)** and `linear-types.md` (report, not yet an RFC)
+- **RFC-0091 (Linear Records, `1-under-review`)** and `linear-types.md` (report, not yet an RFC)
   — §9 depends on the `Linear` multiplicity model these define; the linear-value-at-
   effect-site check (§9, Open Question 2) is real work belonging to both documents and is
   specified in neither yet.
@@ -503,7 +503,7 @@ review might reasonably decide don't block acceptance.*
 - RFC-0010 (String Interpolation, `4-implemented`) — §12's undeclared-effect-site finding
 - RFC-0113 (Context Parameters, `1-under-review`) — §11's labeling discipline
 - RFC-0076 (RC Brands, `1-under-review`) — Open Question 3's `HandlerToken<'b, E>` sketch
-- RFC-0091 (Linear Records, `0-draft`) — §9's dependency, alongside `linear-types.md`
+- RFC-0091 (Linear Records, `1-under-review`) — §9's dependency, alongside `linear-types.md`
 - RFC-0003 (Concurrency Model, `1-under-review`) — §8's `spawn`/`Chan<T>` boundary
 - RFC-0064 (Fork-Join Parallelism, `6-refused`) — superseded by the model RFC-0003 and
   `structured-concurrency.md` now specify; §8 no longer depends on it
