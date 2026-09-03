@@ -907,15 +907,14 @@ there is no coherence concern. It may be parameterised and may reference another
 definition](#spec.declarations.aspects.associated-types.legality-1) — position, not a
 keyword, tells the two apart.
 
-A **module-level `public` alias** joins the module's public surface exactly like a
-`struct` / `enum` / `fun` — it is imported (by name, under a rename, through a glob),
-re-exported by an intermediate module, and referenced with a qualified path in every
-position a type is written, and each spelling resolves to the same erased type. An alias
-for a plain named type also stands in for that name in **value and pattern position** — a
-struct literal, a record projection, an enum-variant path, a `match` pattern. A
-**function- or block-local alias** is never exported; it may name the enclosing
-function's generic parameters and it shadows an outer alias of the same name for the
-remainder of its block.
+Because it is transparent, an alias is usable everywhere its expansion is: [across module
+boundaries](#spec.declarations.type-aliases.legality-3) when `public`, [in value and
+pattern position](#spec.declarations.type-aliases.legality-4) when it names a plain type,
+and [lexically scoped](#spec.declarations.type-aliases.legality-5) when declared inside a
+body.
+
+<details>
+<summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.declarations.type-aliases.legality-1}
 
@@ -932,7 +931,7 @@ other private item.
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [01_basic_and_parameterised.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/01_basic_and_parameterised.mtl), [02_struct_field_and_return.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/02_struct_field_and_return.mtl), [03_block_local.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/03_block_local.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/04_cross_module/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/05_reexport/main.mtl), [06_value_path.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/06_value_path.mtl), [neg_02_arity.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/neg_02_arity.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/neg_03_private_cross_module/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/neg_04_reexport_private/main.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [01_basic_and_parameterised.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/01_basic_and_parameterised.mtl), [02_struct_field_and_return.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/02_struct_field_and_return.mtl), [neg_02_arity.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/neg_02_arity.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.type-aliases.legality-2}
@@ -941,7 +940,50 @@ A type alias may not be recursive — neither directly nor through a chain of al
 transparent alias has no finite expansion for a cycle; a genuinely recursive shape uses a
 `struct` or `enum` indirection point.
 
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [neg_01_recursive.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/neg_01_recursive.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
 
+##### Legality Rule {#spec.declarations.type-aliases.legality-3}
+
+A `public` module-level alias is part of its module's public surface exactly like a
+`struct` / `enum` / `fun` declaration. Another module brings it into scope by every
+mechanism an item supports — a named import (`import m::{A};`), a renamed import
+(`import m::A as B;`), a glob (`import m::*;`), and one `export` re-export hop through an
+intermediate module (`export m::{A};`) — and may also write it as a qualified path
+(`m::A`). Every such spelling denotes the identical erased type. Naming a non-`public`
+alias from outside its declaring module, whether directly or through an `export`, is a
+visibility error, the same as any other private item.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/04_cross_module/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/05_reexport/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/neg_03_private_cross_module/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/neg_04_reexport_private/main.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.type-aliases.legality-4}
+
+When an alias's expansion is a plain named type, the alias name may be written wherever
+that type's own name is legal in an expression or a pattern: a struct literal
+(`P { … }`), a record projection (`P.{ … }`), an enum-variant path (`D::Variant`), and a
+`match` pattern (`P { … }`, `D::Variant`). An alias whose expansion is not a plain named
+type — a tuple, a function type, a reference — or one that is still parameterised has no
+meaning in value position and is not rewritten there.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [06_value_path.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/06_value_path.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.type-aliases.legality-5}
+
+An alias declared inside a function or block body is visible throughout that body
+regardless of textual position, is never exported, and may name the enclosing function's
+generic parameters. It shadows an alias of the same name from an enclosing scope for the
+remainder of its block; the outer alias is unaffected outside it.
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [03_block_local.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/03_block_local.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
+</details>
 
 ---
 
@@ -965,10 +1007,6 @@ fun main() -> i64 {
 
 <details>
 <summary>Formal rules</summary>
-
-<!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [neg_01_recursive.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/neg_01_recursive.mtl)_</span>
-<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.aspects.legality-1}
 
