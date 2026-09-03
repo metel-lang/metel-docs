@@ -51,6 +51,28 @@ title: "Metel Language Changelog"
   struct literal (`P { … }`), a record projection (`P.{ … }`), an enum-variant path
   (`D::Variant`), a `match` pattern.
 
+**Written function types are move-only (RFC-0166):**
+- Every syntactically written `|T| -> U` type node — in a parameter, a `let` / `var`
+  annotation, an ascription, a declared return, a struct / enum field, a written aggregate
+  element, a generic argument, an alias body, an aspect method signature — now has concrete
+  **move-only** by-value use-multiplicity (RFC-0134's third axis, which the surface still
+  cannot spell). A value of a written function type may be called (subject to its `once` /
+  `var`) and moved, never duplicated by value.
+- A function value the compiler proved copyable — a named function, a capture-free closure,
+  a closure whose captures are all `Copy` — is **accepted into a written function-type slot
+  by moving** (`map(add_one)` still type-checks). Its copyability is not carried by the
+  written type and is not re-derived downstream: a parameter, or a value returned through a
+  written function return type, is move-only for the receiver regardless of what flowed in.
+- Below the first function-type level the by-value use axis now matches **exactly**, as
+  `once` / `var` already do — the one `nested_fun_axes_match` exception that let a written
+  nested function type reconcile with an inferred `Copy` one is removed.
+- This is a **checked-mode** change: a body that used a bare-typed callback by value more
+  than once (`let a := f; let b := f;` for `f: |T| -> U`) is now a use-after-move under
+  `--move-check`. The default evaluator still deep-clones, so such a body keeps running
+  until move-checking is on. There is no `copy |T| -> U` spelling to opt back out — that,
+  and a distinct "capability unknown" state, are deferred to RFC-0163 (v0.17.0), which
+  refines this move-only state rather than replacing it. No keyword is reserved.
+
 **Struct pattern matching:**
 - A named struct can now be matched with a struct pattern (`Point { x, y }`,
   `Token { kind, span, .. }`) — RFC-0032 §4/§5 and RFC-0034 §5's own worked examples used

@@ -2,10 +2,15 @@
 id: rfc-0166
 title: "Written Function Types Lower to Move-Only"
 date: '2026-09-03'
-status: under-review
+status: implemented
 target: v0.13.0
 updated: '2026-09-03'
 tracking: 'https://github.com/metel-lang/metel-core/issues/946'
+coverage:
+  "1": { spec: "spec.functions.first-class-functions.legality-3" }
+  "2": { spec: "spec.functions.first-class-functions.legality-3" }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/946'
+impl_status: implemented
 ---
 
 > **Status — draft (2026-09-03).** Split from RFC-0163 (`2-accepted`) so the
@@ -17,6 +22,12 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/946'
 > **Status — under review (2026-09-03).** Split from RFC-0163 the same day;
 > tracking metel-core#946, milestoned v0.13.0. Content is RFC-0163's own
 > alternative D, stated minimally — nothing here is new design.
+
+> **Status — accepted (2026-09-03).** adversarial review folded in (F1-F10); frontend delta is one deleted nested_fun_axes_match exception plus specifying existing behaviour
+
+> **Status — integrated (2026-09-03).**
+
+> **Status — implemented (2026-09-03).**
 
 ## Summary
 
@@ -66,7 +77,7 @@ decision.
 
 ## Proposal
 
-### What "written function type" means
+### 1. Lowering
 
 Lowering is defined recursively over the **written type expression**, not the
 resolved `Type`:
@@ -92,7 +103,7 @@ resolved `Type`:
   happens *at the boundary*, when the value flows into the slot — the value's own
   type is unchanged.
 
-### Compatibility
+### 2. Compatibility
 
 There is one compatibility rule, directional and first-order:
 
@@ -122,7 +133,22 @@ Concretely, against `metel-frontend/src/typeinference/mod.rs`:
   `nested_fun_axes_match`. That is the one line permitting a written (`Move`)
   nested function type to reconcile with an inferred `Copy` one *below* the first
   nesting — precisely the accidental nested latitude RFC-0152 forbids for the
-  other two axes. After this, nested use-axis matching is `au == bu` only.
+  other two axes. After this, nested use-axis matching is `au == bu` only, with
+  the first-order `(Move, Copy)` acceptance retained by a depth parameter
+  (`nested_fun_axes_match_at`, depth `0` for a direct param / return / element of
+  the first-order match, exact at depth `≥ 1`). Structural recursion through a
+  tuple / record / array does **not** count as a function level — a `Copy`
+  callback inside a tuple that is a first-order argument is still first-order.
+- **Restamp at the declared-type boundary:** the move checker reads a binding's
+  type from its constructed RHS expression (`TypedLetDecl::value.ty()`), so a
+  `let` / `var` (and `for`-init) binding annotated with a function type must take
+  the written (`Move`) type, not the value's own — otherwise `let f: |T| -> U :=
+  named_fn; let a := f; let b := f;` would keep `f` `Copy`. Construction now runs
+  a `maybe_fn_move_coerce` step in the same chain as `maybe_read_copy` /
+  `maybe_singleton_coerce` / `maybe_dyn_coerce`, and inference's
+  `constrain_with_read_copy` returns the declared function type for the same
+  reason. Parameters and declared returns already carried the written type, so
+  they needed no change.
 - **Note as debt, do not touch for v0.13.0:** the symmetric `use_ok` in
   generic-scheme construction (`use1 == use2 || use1 == Copy || use2 == Copy`,
   guarded by `!generic_axes`). It is monomorphization-deferred scaffolding — the

@@ -1126,8 +1126,8 @@ implementation).
   + `CallMany` / `CallShared`, from RFC-0153's Alternatives) as the third option, under
   which the area dissolves into aspect-bound subsetting. Not urgent: RFC-0152's cap is
   sound, so nothing is unsound while this is open. Tracker metel-core#904 (v0.17.0).
-- **RFC-0166** *(draft, opened 2026-09-03; **v0.13.0**)* — Written Function Types Lower to
-  Move-Only — the conservative v0.13.0 slice split out of RFC-0163. A written function type
+- **RFC-0166** *(**implemented 2026-09-03**; metel-core#946; **v0.13.0**)* — Written Function
+  Types Lower to Move-Only — the conservative v0.13.0 slice split out of RFC-0163. A written function type
   has concrete **`Move`** use-multiplicity; a `Copy` function value is accepted where
   `Move` is required by moving (the ownership lattice, not a special rule); `Copy`-ness is
   forgotten at the boundary and not re-derived; nested function types match the use axis
