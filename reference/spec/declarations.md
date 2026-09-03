@@ -908,11 +908,14 @@ definition](#spec.declarations.aspects.associated-types.legality-1) — position
 keyword, tells the two apart.
 
 A **module-level `public` alias** joins the module's public surface exactly like a
-`struct` / `enum` / `fun` — it is imported (by name, under a rename, through a glob) and
-referenced with a qualified path in every position a type is written, and each spelling
-resolves to the same erased type. A **function- or block-local alias** is never exported;
-it may name the enclosing function's generic parameters and it shadows an outer alias of
-the same name for the remainder of its block.
+`struct` / `enum` / `fun` — it is imported (by name, under a rename, through a glob),
+re-exported by an intermediate module, and referenced with a qualified path in every
+position a type is written, and each spelling resolves to the same erased type. An alias
+for a plain named type also stands in for that name in **value and pattern position** — a
+struct literal, a record projection, an enum-variant path, a `match` pattern. A
+**function- or block-local alias** is never exported; it may name the enclosing
+function's generic parameters and it shadows an outer alias of the same name for the
+remainder of its block.
 
 ##### Legality Rule {#spec.declarations.type-aliases.legality-1}
 
@@ -929,7 +932,7 @@ other private item.
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<span class="rigor-backlink">_Tested by: [01_basic_and_parameterised.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/01_basic_and_parameterised.mtl), [02_struct_field_and_return.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/02_struct_field_and_return.mtl), [03_block_local.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/03_block_local.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/04_cross_module/main.mtl), [neg_02_arity.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/neg_02_arity.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/neg_03_private_cross_module/main.mtl)_</span>
+<span class="rigor-backlink">_Tested by: [01_basic_and_parameterised.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/01_basic_and_parameterised.mtl), [02_struct_field_and_return.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/02_struct_field_and_return.mtl), [03_block_local.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/03_block_local.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/04_cross_module/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/05_reexport/main.mtl), [06_value_path.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/06_value_path.mtl), [neg_02_arity.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/neg_02_arity.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/neg_03_private_cross_module/main.mtl), [main.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/type_aliases/neg_04_reexport_private/main.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.type-aliases.legality-2}
