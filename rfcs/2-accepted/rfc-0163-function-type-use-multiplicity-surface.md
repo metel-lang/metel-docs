@@ -229,6 +229,21 @@ not interact with RFC-0162's regular-value model at all. Duplicating a callback
 is expressed by writing `copy |T| -> U` — the function type itself — never by an
 `F: Copy` constraint on a type parameter.
 
+> **Relationship to RFC-0162 (`1-under-review`, v0.17.0).** This disjointness is a
+> *scoping* choice for a v0.13.0 RFC, not a claim that the two concepts are
+> permanently separate. RFC-0162's **P4 / Axis C / OQ4** is the position under
+> which the value-side `copy` (a declaration keyword, `copy struct Foo`) and this
+> RFC's function-type `copy` become **one keyword naming one property of
+> values**, with the aspect-vs-`use_multiplicity`-field split an implementation
+> detail of where the fact is stored. Under P4 a `copy |T| -> U` value would
+> then satisfy a regular-value `F: Copy` bound — restoring the `dup<F: Copy>`
+> shape this RFC's adversarial review removed as unavailable today. RFC-0163
+> **neither blocks nor depends on** that outcome: if P4 is adopted, the
+> unification is a one-paragraph amendment to this section with no change to the
+> `Erased` state, the coercion table, or the per-node `written` model — those
+> exist because a closure's capability is capture-derived and a written function
+> type cannot carry it, which no Axis-C choice affects.
+
 There is intentionally no source `move` qualifier in this proposal. A caller
 that merely accepts, stores, returns, or consumes a callable needs no stronger
 promise than a bare erased type gives it. `copy` is needed because copying is
