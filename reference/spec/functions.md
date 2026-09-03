@@ -169,6 +169,44 @@ the callee — is `T0003`.
 <span class="rigor-backlink">_Tested by: [101_generic_fn_bare_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/generics/101_generic_fn_bare_reference.mtl), [102_generic_fn_reference_reused_at_multiple_types.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/generics/102_generic_fn_reference_reused_at_multiple_types.mtl), [103_generic_fn_higher_order_argument.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/generics/103_generic_fn_higher_order_argument.mtl), [104_generic_fn_nested_bare_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/generics/104_generic_fn_nested_bare_reference.mtl), [03_functions_and_closures.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/parsing/03_functions_and_closures.mtl), [stage10_10_generic_function_bare_reference.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage10_10_generic_function_bare_reference.mtl), [stage10_11_generic_function_higher_order_argument.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage10_11_generic_function_higher_order_argument.mtl), [stage10_neg_06_generic_function_rank2_still_call_only.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/generics/stage10_neg_06_generic_function_rank2_still_call_only.mtl)_</span>
 <!-- rfc.py:fixtures:end -->
 
+##### Legality Rule {#spec.functions.first-class-functions.legality-3}
+
+> **Since v0.13.0 (RFC-0166).**
+
+A **written function type has move-only by-value use-multiplicity**. Every `|T| ->
+U` type node — anywhere a type is written, and every function-type node nested
+inside another — is move-only: a value of it may be called (subject to its
+`once` / `var`) and moved, never duplicated by value; `let a := f; let b := f;`
+for a `f: |T| -> U` binding is a use-after-move. A bare generic parameter is not a
+written function type and keeps the resolved value's own capability.
+
+A function value the compiler proved copyable — a named function, a capture-free
+closure, or a closure whose captures are all `Copy` ([Closures](#spec.functions.closures.legality-20))
+— is **accepted into a written function-type slot by moving**. This is a
+first-order acceptance: it applies when the value flows directly into a `let` /
+`var` binding, an ascription, a direct argument, or a return slot whose written
+type is a function type — including when that slot's written type *is itself* a
+function type (`map(add_one)`). Its copyability is not carried by the written
+type and is not recovered downstream: a function that returns such a parameter
+through a written function return type yields a move-only value to its caller.
+
+Below the first function-type level — a function type nested as a parameter,
+return, element, or field *of another function type* — the by-value use axis
+matches **exactly**, as `once` / `var` do: a written (move-only) nested function
+type does not reconcile with a copyable one.
+
+The full surface — a `copy |T| -> U` qualifier that asserts a copyable callable,
+and a distinct "capability unknown" state — is deferred to RFC-0163 (v0.17.0),
+which refines this move-only state rather than replacing it.
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0166](../../rfcs/4-implemented/rfc-0166-written-function-types-lower-to-move-only.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<span class="rigor-backlink">_Tested by: [v0_13_0_written_fn_type_move_only.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/evaluator/functions/v0_13_0_written_fn_type_move_only.mtl), [v0_13_0_neg_written_fn_param_use_after_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/functions/v0_13_0_neg_written_fn_param_use_after_move.mtl), [v0_13_0_neg_written_fn_type_use_after_move.mtl](https://github.com/metel-lang/metel-core/blob/main/metel-interpreter/tests/integration/sources/typechecking/functions/v0_13_0_neg_written_fn_type_use_after_move.mtl)_</span>
+<!-- rfc.py:fixtures:end -->
+
 </details>
 
 ## Closures

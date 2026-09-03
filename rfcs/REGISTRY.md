@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**165 RFCs total.** 28 draft, 39 under review, 9 accepted, 3 integrated (79 live), 59 implemented, 13 superseded, 14 refused (86 settled).
+**165 RFCs total.** 28 draft, 38 under review, 9 accepted, 3 integrated (78 live), 60 implemented, 13 superseded, 14 refused (87 settled).
 
 ## Draft (28)
 
@@ -46,7 +46,7 @@ the curated thematic map.
 - **RFC-0151** — Tuples as Numeric-Label Rows (`0-draft` ; rfcs/0-draft/rfc-0151-tuples-as-numeric-label-rows.md ; date 2026-08-29)
 - **RFC-0164** — Mutating Closures with a Propagating ? Are Call-Once (`0-draft` ; rfcs/0-draft/rfc-0164-mutating-closures-with-a-propagating-are-call-once.md ; date 2026-09-02 ; updated 2026-09-02)
 
-## Under Review (39)
+## Under Review (38)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -86,7 +86,6 @@ the curated thematic map.
 - **RFC-0161** — Callable Object Contract (dyn Callable) (`1-under-review` ; rfcs/1-under-review/rfc-0161-callable-object-contract-dyn-callable.md ; date 2026-09-01 ; updated 2026-09-01)
 - **RFC-0162** — Copy and Clone Model — Regular-Value Design Space (`1-under-review` ; rfcs/1-under-review/rfc-0162-copy-and-clone-model-regular-value-design-space.md ; date 2026-09-01 ; updated 2026-09-02)
 - **RFC-0165** — Structural Union Types (`1-under-review` ; rfcs/1-under-review/rfc-0165-structural-union-types.md ; date 2026-09-02 ; updated 2026-09-02)
-- **RFC-0166** — Written Function Types Lower to Move-Only (`1-under-review` ; rfcs/1-under-review/rfc-0166-written-function-types-lower-to-move-only.md ; date 2026-09-03 ; updated 2026-09-03)
 
 ## Accepted (9)
 
@@ -106,7 +105,7 @@ the curated thematic map.
 - **RFC-0117** — Row Narrowing (`3-integrated` ; rfcs/3-integrated/rfc-0117-row-narrowing.md ; date 2026-07-24 ; updated 2026-08-29 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/789)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/836)
 
-## Implemented (59)
+## Implemented (60)
 
 - **RFC-0006** — Closure Capture Semantics and Cross-Closure Reference Sharing (`4-implemented` ; rfcs/4-implemented/rfc-0006-closure-capture-semantics.md ; date 2026-05-21)
 - **RFC-0007** — Compiler-Compatible Primitive Type System (`4-implemented` ; rfcs/4-implemented/rfc-0007-uint-type.md ; date 2026-05-21)
@@ -167,6 +166,7 @@ the curated thematic map.
 - **RFC-0156** — Parenthesize match Scrutinee (`4-implemented` ; rfcs/4-implemented/rfc-0156-parenthesize-match-scrutinee.md ; date 2026-08-31 ; updated 2026-08-31 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/701)
 - **RFC-0157** — Closure Capture Default (Move) (`4-implemented` ; rfcs/4-implemented/rfc-0157-copy-and-clone-model-re-analysis.md ; date 2026-08-31 ; updated 2026-09-02 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/930)
 - **RFC-0160** — Type Aliases (`4-implemented` ; rfcs/4-implemented/rfc-0160-type-aliases.md ; date 2026-09-01 ; updated 2026-09-02 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/921)
+- **RFC-0166** — Written Function Types Lower to Move-Only (`4-implemented` ; rfcs/4-implemented/rfc-0166-written-function-types-lower-to-move-only.md ; date 2026-09-03 ; updated 2026-09-03 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/946)
 
 ## Superseded (13)
 
