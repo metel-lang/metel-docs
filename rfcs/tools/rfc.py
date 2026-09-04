@@ -604,6 +604,27 @@ PATH_REF_RE = re.compile(r"rfcs/[0-6]-[a-z-]+/rfc-[\w.-]+\.md")
 SPEC_DIR = REPO_ROOT / "reference" / "spec"
 VALID_IMPL_STATUS = {"not-started", "in-progress", "implemented"}
 
+# metel-core#981: error-codes.md gets the same rigor-block treatment as a
+# Legality Rule / Dynamic Semantics block -- a real, spec-cited fixture
+# rendered as an inline viewer instead of a hand-typed, unverified terminal
+# snippet. It lives outside SPEC_DIR and its headings carry no explicit
+# `{#id}` the way a rigor-block heading does -- the code is already the
+# heading's own first token, so it's the id, extracted directly rather than
+# minted.
+ERROR_CODES_PATH = REPO_ROOT / "reference" / "error-codes.md"
+ERROR_CODE_HEADING_RE = re.compile(r"^### (?P<code>[A-Z]\d{4}) — .+$")
+# A fixture's *display* citation -- deliberately a separate sidecar key from
+# `spec = […]`, not a widened COVERAGE_SPEC_ID_RE alternative folded into that
+# same list. "Evidence for a language rule" and "evidence for a diagnostic"
+# are different axes even when the same fixture happens to serve both, and a
+# dedicated key is what lets a future error-code <-> Legality-Rule cross-link
+# (metel-core#977) read a fixture's *intentional* documented connection
+# instead of inferring one from every incidental [expect].code match.
+COVERAGE_ERROR_LIST_RE = re.compile(r"^\s*error\s*=\s*\[(.*?)\]\s*$", re.MULTILINE)
+COVERAGE_ERROR_CODE_RE = re.compile(r"[A-Z]\d{4}")
+EXPECT_CODE_RE = re.compile(r'^\s*code\s*=\s*"([^"]*)"\s*$', re.MULTILINE)
+EXPECT_SECTION_RE = re.compile(r"\[expect\](.*?)(?=\n\[|\Z)", re.S)
+
 # ADR-0050 §3a: a rigor block's generated backlink to the RFC(s) that
 # established it, delimited so `index --write-spec-origins` can rewrite
 # exactly its own slot without touching anything hand-authored around it.
@@ -1180,6 +1201,121 @@ def spec_origins_drift_problems():
                 f"run `rfc.py index --write-spec-origins`"
             )
     return problems
+
+
+def regenerate_error_code_fixtures_in_text(text, fixtures_by_code, core_root):
+    """error-codes.md's equivalent of regenerate_backlinks_in_text -- same
+    idempotent remove-and-reappend shape, simplified: no origins slot (an
+    error code has no RFC-origins backlink the way a rigor block does), just
+    the fixtures marker and the exemption trigger/render pair. A code's
+    section ends at the next `### CODE` heading or a `## ` section header
+    (error-codes.md has no `<details>` wrapper to also break on).
+
+    The fixtures marker (metel-core#981) always regenerates as the *last*
+    thing in a code's section, after any hand-authored prose (including a
+    trailing "**Fix:**" line) -- matching where a rigor block's own fixtures
+    slot sits relative to its body, not narrative ordering.
+
+    fixtures_by_code is None when metel-interpreter/tests isn't reachable: an
+    existing fixtures slot is carried over exactly as it already reads, the
+    same ADR-0049 §6 degrade path regenerate_backlinks_in_text uses."""
+    lines = text.split("\n")
+    out = []
+    i, n = 0, len(lines)
+    while i < n:
+        line = lines[i]
+        out.append(line)
+        m = ERROR_CODE_HEADING_RE.match(line)
+        if not m:
+            i += 1
+            continue
+        code = m.group("code")
+        i += 1
+        body = []
+        existing_fixtures_content = None
+        exemption_trigger = None
+        while i < n:
+            nxt = lines[i]
+            if ERROR_CODE_HEADING_RE.match(nxt) or nxt.strip().startswith("## "):
+                break
+            if nxt.strip() == FIXTURES_MARKER_START:
+                i += 1
+                slot = []
+                while i < n and lines[i].strip() != FIXTURES_MARKER_END:
+                    slot.append(lines[i])
+                    i += 1
+                i += 1  # consume the end marker itself
+                existing_fixtures_content = "\n".join(slot).strip()
+                continue
+            if nxt.strip() == SPEC_EXEMPTION_RENDERED_START:
+                i += 1
+                while i < n and lines[i].strip() != SPEC_EXEMPTION_RENDERED_END:
+                    i += 1
+                i += 1  # consume the end marker itself
+                continue
+            tm = SPEC_EXEMPTION_TRIGGER_RE.match(nxt.strip())
+            if tm:
+                attrs = dict(SPEC_EXEMPTION_ATTR_RE.findall(tm.group("attrs")))
+                exemption_trigger = (attrs.get("kind", ""), attrs.get("ref", ""), attrs.get("reason", ""))
+            body.append(nxt)  # hand-authored -- kept, never rewritten
+            i += 1
+        while body and body[-1].strip() == "":
+            body.pop()
+        out.extend(body)
+
+        if exemption_trigger is not None:
+            out.append("")
+            out.append(SPEC_EXEMPTION_RENDERED_START)
+            out.append(exemption_block_text(*exemption_trigger))
+            out.append(SPEC_EXEMPTION_RENDERED_END)
+
+        if fixtures_by_code is None:
+            fixtures_content = existing_fixtures_content
+        else:
+            fixtures_content = fixtures_block_text(fixtures_by_code.get(code, []), core_root)
+        if fixtures_content:
+            out.append("")
+            out.append(FIXTURES_MARKER_START)
+            out.append(fixtures_content)
+            out.append(FIXTURES_MARKER_END)
+
+        out.append("")
+    return "\n".join(out)
+
+
+def write_error_code_fixtures():
+    """rfc.py index --write-spec-origins's error-codes.md half (metel-core#981).
+    Regenerates every code's fixtures backlink when metel-interpreter/tests is
+    reachable; a no-op (file unchanged) otherwise. Returns True if the file
+    changed."""
+    if not ERROR_CODES_PATH.exists():
+        return False
+    tests_dir = metel_core_tests_dir()
+    fixtures_by_code = scan_error_code_citations(tests_dir) if tests_dir is not None else None
+    core_root = tests_dir.parent.parent if tests_dir is not None else None
+    text = ERROR_CODES_PATH.read_text()
+    new_text = regenerate_error_code_fixtures_in_text(text, fixtures_by_code, core_root)
+    if new_text != text:
+        ERROR_CODES_PATH.write_text(new_text)
+        return True
+    return False
+
+
+def error_code_fixtures_drift_problems():
+    """--check-drift's error-codes.md half: whether its fixtures slots still
+    match what write_error_code_fixtures() would produce."""
+    if not ERROR_CODES_PATH.exists():
+        return []
+    tests_dir = metel_core_tests_dir()
+    fixtures_by_code = scan_error_code_citations(tests_dir) if tests_dir is not None else None
+    core_root = tests_dir.parent.parent if tests_dir is not None else None
+    text = ERROR_CODES_PATH.read_text()
+    if regenerate_error_code_fixtures_in_text(text, fixtures_by_code, core_root) != text:
+        return [
+            f"{ERROR_CODES_PATH.relative_to(REPO_ROOT)}: fixtures backlinks are stale -- "
+            f"run `rfc.py index --write-spec-origins`"
+        ]
+    return []
 
 
 def collect_rfc_records():
@@ -1767,6 +1903,97 @@ def scan_spec_citations(tests_dir):
     return out
 
 
+def scan_error_code_citations(tests_dir):
+    """{code: [toml_path, ...]} -- metel-core#981's *display* set: which
+    fixture(s) a sidecar's `error = […]` key explicitly, intentionally cites
+    as documentation for that code. Mirrors scan_spec_citations exactly, one
+    key over."""
+    out = {}
+    for toml_path in tests_dir.rglob("*.toml"):
+        try:
+            text = toml_path.read_text()
+        except OSError:
+            continue
+        m = COVERAGE_ERROR_LIST_RE.search(text)
+        if not m:
+            continue
+        for item in re.findall(r'"([^"]+)"', m.group(1)):
+            item = item.strip()
+            if COVERAGE_ERROR_CODE_RE.fullmatch(item):
+                out.setdefault(item, []).append(toml_path)
+    return out
+
+
+def scan_error_code_expectations(tests_dir):
+    """{code: [toml_path, ...]} -- metel-core#981's *coverage* set: every
+    fixture whose own `[expect].code` names a code, scanned directly with no
+    citation required. Free, zero-authoring-cost proof that a code fires
+    somewhere in the corpus -- a superset of scan_error_code_citations'
+    curated/display set; a code can be in this set without a citing entry
+    yet (proven, but nothing chosen to show a reader), which is the visible
+    gap `check` reports."""
+    out = {}
+    for toml_path in tests_dir.rglob("*.toml"):
+        try:
+            text = toml_path.read_text()
+        except OSError:
+            continue
+        em = EXPECT_SECTION_RE.search(text)
+        if not em:
+            continue
+        cm = EXPECT_CODE_RE.search(em.group(1))
+        if cm and cm.group(1):
+            out.setdefault(cm.group(1), []).append(toml_path)
+    return out
+
+
+def all_error_codes():
+    """Every code documented in error-codes.md, in file order -- the error-
+    codes equivalent of all_spec_block_ids()."""
+    if not ERROR_CODES_PATH.exists():
+        return []
+    codes = []
+    for line in ERROR_CODES_PATH.read_text().split("\n"):
+        m = ERROR_CODE_HEADING_RE.match(line)
+        if m:
+            codes.append(m.group("code"))
+    return codes
+
+
+def scan_error_code_exemptions():
+    """{code: (kind, ref, reason, path, lineno)} -- error-codes.md's own
+    hand-authored exemption triggers, same shape and same
+    <!-- rfc.py:exemption ... --> syntax as scan_spec_exemptions(), one file
+    instead of a directory of them."""
+    exemptions = {}
+    if not ERROR_CODES_PATH.exists():
+        return exemptions
+    lines = ERROR_CODES_PATH.read_text().split("\n")
+    for idx, line in enumerate(lines):
+        m = ERROR_CODE_HEADING_RE.match(line)
+        if not m:
+            continue
+        code = m.group("code")
+        j = idx + 1
+        while j < len(lines):
+            nxt = lines[j]
+            if ERROR_CODE_HEADING_RE.match(nxt) or nxt.strip().startswith("## "):
+                break
+            tm = SPEC_EXEMPTION_TRIGGER_RE.match(nxt.strip())
+            if tm:
+                attrs = dict(SPEC_EXEMPTION_ATTR_RE.findall(tm.group("attrs")))
+                exemptions[code] = (
+                    attrs.get("kind", ""),
+                    attrs.get("ref", ""),
+                    attrs.get("reason", ""),
+                    ERROR_CODES_PATH.relative_to(REPO_ROOT),
+                    j + 1,
+                )
+                break
+            j += 1
+    return exemptions
+
+
 def _sidecar_mtl_path(toml_path):
     return (
         toml_path.parent / "main.mtl"
@@ -2238,6 +2465,52 @@ def coverage_check_problems():
                 "`rfc.py index --write-coverage-baseline`"
             )
 
+    # metel-core#981: error-codes.md gets the same coverage visibility a
+    # rigor block gets, split into two counts -- curated (a fixture someone
+    # chose via `error = […]`, and so is actually shown on the page) and
+    # auto-discovered (some fixture's own [expect].code proves the trigger
+    # is real, whether or not anyone's picked it to display yet). The gap
+    # between them is itself informative: a code proven but not yet curated
+    # is a smaller, different task than a code nobody has proven at all.
+    all_codes = all_error_codes()
+    if all_codes:
+        tests_dir = metel_core_tests_dir()
+        if tests_dir is not None:
+            error_citations = scan_error_code_citations(tests_dir)
+            error_expectations = scan_error_code_expectations(tests_dir)
+            error_exemptions = scan_error_code_exemptions()
+            cited_n = sum(1 for c in all_codes if error_citations.get(c))
+            proven_n = sum(1 for c in all_codes if error_expectations.get(c))
+            uncited = sorted(
+                c for c in all_codes
+                if not error_citations.get(c) and c not in error_exemptions
+            )
+            unproven = sorted(
+                c for c in all_codes
+                if not error_expectations.get(c) and c not in error_exemptions
+            )
+            info.append(
+                f"error codes with a citing fixture: {cited_n}/{len(all_codes)}"
+                + (f" -- uncited: {', '.join(uncited)}" if uncited else "")
+            )
+            info.append(
+                f"error codes proven by some fixture (auto-discovered via [expect].code): "
+                f"{proven_n}/{len(all_codes)}"
+                + (f" -- unproven: {', '.join(unproven)}" if unproven else "")
+            )
+            exempt_codes = sorted(c for c in error_exemptions if c in all_codes)
+            if exempt_codes:
+                kind_counts = Counter(error_exemptions[c][0] for c in exempt_codes)
+                breakdown = ", ".join(f"{n} {k}" for k, n in sorted(kind_counts.items()))
+                detail = "; ".join(
+                    f"{c} ({error_exemptions[c][0]}: {error_exemptions[c][2]})"
+                    for c in exempt_codes
+                )
+                info.append(
+                    f"error codes exempt from fixture coverage: {len(exempt_codes)} "
+                    f"({breakdown}) -- {detail}"
+                )
+
     return problems, info
 
 
@@ -2424,6 +2697,7 @@ def cmd_index(args):
             )
 
         problems.extend(spec_origins_drift_problems())
+        problems.extend(error_code_fixtures_drift_problems())
 
         if problems:
             print("index drift found:")
@@ -2514,6 +2788,10 @@ def cmd_index(args):
             )
         else:
             print("Spec origins backlinks already current -- nothing to write.")
+        if write_error_code_fixtures():
+            print(f"Wrote fixtures backlinks in {ERROR_CODES_PATH.relative_to(REPO_ROOT)}.")
+        else:
+            print("error-codes.md fixtures backlinks already current -- nothing to write.")
         return
 
     error(
