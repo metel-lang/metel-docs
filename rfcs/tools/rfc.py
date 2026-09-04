@@ -868,7 +868,7 @@ def spec_exemption_problems():
 # inlined snapshot exactly the way it already catches a stale link.
 
 _EXPECT_KEY_RE = re.compile(
-    r'^\s*(?P<k>status|code|contains)\s*=\s*(?P<v>.+?)\s*$', re.MULTILINE
+    r'^\s*(?P<k>status|code|contains|line|col)\s*=\s*(?P<v>.+?)\s*$', re.MULTILINE
 )
 _SPEC_TITLE_RE = re.compile(
     r'^\s*spec_title\s*=\s*(?P<v>.+?)\s*$', re.MULTILINE
@@ -885,10 +885,13 @@ def _toml_scalar(raw):
 
 
 def _sidecar_expect(toml_text):
-    """`{status, code, contains}` from the sidecar's `[expect]` table (any of
-    them possibly None). Scanned only within the `[expect]` section so an
+    """`{status, code, contains, line, col}` from the sidecar's `[expect]`
+    table (any of them possibly None). `line`/`col` pinpoint the expected
+    diagnostic's position in the fixture's own source, so the viewer can show
+    a reader exactly what the fixture checks, not just that it checks
+    something. Scanned only within the `[expect]` section so an
     `[options]`-level key of the same name can't leak in."""
-    out = {"status": None, "code": None, "contains": None}
+    out = {"status": None, "code": None, "contains": None, "line": None, "col": None}
     in_expect = False
     for line in toml_text.split("\n"):
         s = line.strip()
