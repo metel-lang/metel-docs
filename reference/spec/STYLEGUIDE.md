@@ -1,15 +1,19 @@
 # Spec Styleguide
 
-A practical reference for writing or editing anything in `public/reference/spec/` (and,
-where noted, `public/reference/error-codes.md`). Covers general spec prose, code
-examples, and the Legality Rule / Dynamic Semantics rigor-block mechanism specifically.
+A practical reference for writing or editing anything in `reference/spec/` (and,
+where noted, `reference/error-codes.md`). Covers general spec prose, code examples, and
+the Legality Rule / Dynamic Semantics rigor-block mechanism, plus error-codes.md's
+parallel fixture-citation mechanism (ADR-0050 §9 / metel-core#981).
 
-This directory is published: it's mirrored out of this repo's `public/` into the public
-`metel-docs` repo and from there into the language website. Nothing outside `public/`
-(this repo's `architecture/`, `internal/`, `reports/`) makes that trip — don't link to
-those from anything in here, the link will be dead on the real site even though it
-resolves fine in this repo. Reference an ADR or an internal report by name/number in
-plain text instead of a markdown link.
+This directory is published: it's mirrored out of this (`metel-docs`) repo into the
+language website via a git submodule (ADR-0051 retired the earlier
+`metel-docs-internal` → `metel-docs` two-repo split — this repo is the single source
+now, no `public/` prefix). Content elsewhere in this repo (`architecture/`, `rfcs/`)
+does *not* make that trip and isn't reachable from the published site — don't link to it
+from anything in here, or from anything in `metel-core` that ends up rendered (a fixture
+sidecar's `reason=` text, e.g.). Reference an ADR or a metel-core-only doc (like
+`metel-interpreter/docs/testing.md`) by name/number in plain text instead of a markdown
+link.
 
 ## General principles
 
@@ -141,6 +145,13 @@ A shorthand field `ident` in a struct literal evaluates identically to `ident = 
 
 </details>
 
+The example above shows one citing fixture, rendered as a plain `<p>Tested by</p>` label.
+A rule with several citations wraps them instead (metel-core#979), graded by count so the
+common case stays unobtrusive: 2-3 fixtures render inside an `open`-by-default `<details
+class="rigor-fixtures-toggle"><summary>Tested by (N)</summary>`, closeable but visible;
+4+ renders the same wrapper collapsed by default. This is generated the same as the
+single-fixture case — never hand-write the wrapper or its `open` attribute.
+
 ### Methods
 ```
 
@@ -238,16 +249,60 @@ the real gap. It does *not* get rewritten to say "arguments aren't currently uni
 Weakening a claim to match a known bug is the same failure fabricating a fixture would
 be — just committed against prose instead of tests.
 
+## Error codes (error-codes.md)
+
+`reference/error-codes.md` gets the same fixture-citation and rendering mechanism as
+Legality Rule / Dynamic Semantics blocks (above), reused rather than duplicated, with
+three deliberate differences (ADR-0050 §9 / metel-core#981):
+
+- **Id comes from the heading, not a minted `{#...}` anchor.** A code's section is
+  `### T0003 — Undefined name`; `rfc.py` derives the citable id `T0003` straight from
+  that heading text (`^### (?P<code>[A-Z]\d{4}) — .+$`). No ID grammar to hand-author,
+  and no way for the id and the heading to drift apart.
+- **No origins slot.** A rigor block's `Referenced by: [rfc-NNNN]` backlink comes from an
+  RFC's `coverage:` frontmatter pointing *at* the block; an error code has no equivalent
+  upstream citer, so only the fixtures marker and an optional exemption trigger ever
+  appear under a code's heading — never an origins block.
+- **Coverage and display are two separate counts, not one.** *Coverage* is automatic and
+  free: every fixture's own `[expect].code` in the whole corpus counts as proof that code
+  is real, whether or not anyone ever cites it. *Display* is curated: only a fixture whose
+  sidecar explicitly names the code via `error = ["T0003"]` gets rendered as this code's
+  inline viewer. A code can be covered with nothing displayed (real, just not curated
+  yet) — that's a named gap for `rfc.py check` to report, not silently "untested." Split
+  from `spec =` on purpose: `error =` and `spec =` are different citation *axes* (evidence
+  for a diagnostic vs. evidence for a language rule) even when the same fixture earns
+  both, keeping the door open for #977's later error-code ↔ Legality-Rule cross-linking to
+  be a real reverse index of author intent rather than an inferred guess.
+
+Everything else is identical to the rigor-block mechanism: one `<details
+class="spec-fixture">` viewer per citing fixture, the same `<!-- rfc.py:fixtures:start
+/end -->` markers, the same graded Tested-by wrapping by citation count, and the same
+`blocked` / `untestable` / `elsewhere` exemption vocabulary and trigger-line syntax for a
+code with no fixture (a phantom or long-superseded code gets `untestable` with the
+reason spelled out — see T0026-T0030's split history for a worked example of splitting a
+bundled heading once mixed status came to light, same principle as "Granularity: split,
+don't bundle" above).
+
+**A new `error = [...]`-style sidecar key needs a matching change in metel-core's
+`harness/fixture.rs`, not just here.** `rfc.py` and the Rust integration-test harness are
+two independent parsers of the same fixture sidecar TOML — the harness rejects any
+`[options]` key it doesn't recognize, so a citation key that only rfc.py knows about
+passes `rfc.py check` cleanly and then panics every fixture using it in `cargo test`. See
+`metel-interpreter/docs/testing.md` (metel-core) for the sidecar key reference and this
+gotcha in full.
+
 ## Verifying before you ship
 
-- `rfc.py check` (`public/rfcs/tools/rfc.py`) — structural checks (id grammar, drift,
-  exemption well-formedness, the live issue-ref check) always run. Fixture-coverage
-  counting additionally needs `metel-interpreter/tests` reachable
-  (`METEL_CORE_ROOT=/path/to/metel-core`, or run from inside a metel-core checkout).
+- `rfc.py check` (`rfcs/tools/rfc.py`) — structural checks (id grammar, drift, exemption
+  well-formedness, the live issue-ref check) always run, for both spec rigor blocks and
+  error-codes.md. Fixture-coverage counting additionally needs `metel-interpreter/tests`
+  reachable (`METEL_CORE_ROOT=/path/to/metel-core`, or run from inside a metel-core
+  checkout) — it reports spec-block and error-code coverage as two separate counts.
 - `rfc.py index --write-spec-origins` after touching a block's text, its citing RFC's
-  `coverage:` frontmatter, or its exemption trigger.
-- `rfc.py index --check-drift` — confirms every generated slot matches what regeneration
-  would produce.
+  `coverage:` frontmatter, or its exemption trigger — or an error code's citing fixture or
+  exemption trigger in error-codes.md, same command, same flag.
+- `rfc.py index --check-drift` — confirms every generated slot in both reference/spec/
+  and error-codes.md matches what regeneration would produce.
 - A real `docusaurus build` (`tools/mdx-check-site/`, see its own README) — confirms an
   anchor or cross-reference actually renders and resolves, not just that the markdown
   parses. Catches a dead link before a reader does.
