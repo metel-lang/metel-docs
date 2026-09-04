@@ -412,7 +412,7 @@ same brand, `Handle.{ fd }`) and to an **anonymous `record`'s** row (the record 
 the moved label removed, `{ fd: i64 }` — no brand clause). A record-typed **field** is
 moved as a **unit** — a residual's row never carries a *narrower* type for a field it
 still holds; narrowing a field of a field in place is
-[RFC-0150](../../rfcs/1-under-review/rfc-0150-nested-row-narrowing.md)'s. A field read by
+RFC-0150's. A field read by
 value whose type is `Copy` is a copy, not a move, and does not narrow; a field whose type
 is a bare generic parameter or is not yet resolved is held (not dropped from the row)
 until its type is known.
