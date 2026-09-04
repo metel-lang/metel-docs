@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-09-03'
+generated_on: '2026-09-04'
 ---
 
 # RFC Registry
@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**165 RFCs total.** 25 draft, 41 under review, 9 accepted, 2 integrated (77 live), 61 implemented, 13 superseded, 14 refused (88 settled).
+**166 RFCs total.** 25 draft, 42 under review, 9 accepted, 2 integrated (78 live), 61 implemented, 13 superseded, 14 refused (88 settled).
 
 ## Draft (25)
 
@@ -43,7 +43,7 @@ the curated thematic map.
 - **RFC-0151** — Tuples as Numeric-Label Rows (`0-draft` ; rfcs/0-draft/rfc-0151-tuples-as-numeric-label-rows.md ; date 2026-08-29)
 - **RFC-0164** — Mutating Closures with a Propagating ? Are Call-Once (`0-draft` ; rfcs/0-draft/rfc-0164-mutating-closures-with-a-propagating-are-call-once.md ; date 2026-09-02 ; updated 2026-09-02)
 
-## Under Review (41)
+## Under Review (42)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -86,6 +86,7 @@ the curated thematic map.
 - **RFC-0161** — Callable Object Contract (dyn Callable) (`1-under-review` ; rfcs/1-under-review/rfc-0161-callable-object-contract-dyn-callable.md ; date 2026-09-01 ; updated 2026-09-01)
 - **RFC-0162** — Copy and Clone Model — Regular-Value Design Space (`1-under-review` ; rfcs/1-under-review/rfc-0162-copy-and-clone-model-regular-value-design-space.md ; date 2026-09-01 ; updated 2026-09-02)
 - **RFC-0165** — Structural Union Types (`1-under-review` ; rfcs/1-under-review/rfc-0165-structural-union-types.md ; date 2026-09-02 ; updated 2026-09-02)
+- **RFC-0167** — Reclassify unsoundness-only runtime errors as internal errors; split R0002 (`1-under-review` ; rfcs/1-under-review/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md ; date 2026-09-04 ; updated 2026-09-04)
 
 ## Accepted (9)
 

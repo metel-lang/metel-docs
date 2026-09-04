@@ -1609,6 +1609,21 @@ implementation).
   + mechanical corpus sweep (pest-pair + source-span rewriter, 93 fixtures + stdlib +
   spec/tutorials) + `neg_16` hard-switch guard + `match_scrutinee_parenthesized`.
   v0.13.0.
+- **RFC-0167** *(under review, opened 2026-09-04, milestoned v0.14.0 —
+  metel-core#991)* — Reclassify
+  unsoundness-only runtime errors as internal errors; split R0002. Six documented
+  `R00NN` runtime errors (R0003/R0006/R0008-R0011) should never fire for a
+  well-typed program if the type checker is sound — their firing means the
+  compiler is wrong, not the user's program, which is what `I00NN` (internal
+  error) already means for I0001/I0002. `R0001`/R0002's `main`-entry-point checks
+  (does `main` exist, is it a function) are purely static and currently deferred
+  to evaluator startup for no reason — become a Legality Rule instead. R0002
+  separately turns out to be overloaded across three unrelated failure modes
+  (found while investigating metel-core#986/#987), split three ways. Surfaced by
+  metel-core#986's runtime-error reachability audit, which tried and failed to
+  construct a legitimate repro for any of the six across two rounds, and found a
+  real related bug (metel-core#989, aspect dispatch resolution keyed by bare
+  name) instead of one.
 
 ---
 
