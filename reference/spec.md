@@ -42,5 +42,6 @@ The language's core design principles are:
 | [Expressions](spec/expressions.md) | Pattern matching, control flow |
 | [Runtime](spec/runtime.md) | Panics, built-in functions |
 | [Grammar](spec/grammar.md) | Formal grammar |
+| [Error Codes](error-codes.md) | Every diagnostic the interpreter can report, with a real example |
 
 See [Changelog](../release-notes/changelog.md) for version history.
