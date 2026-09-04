@@ -761,10 +761,10 @@ A variable name is not found in the current environment. This can occur when a v
 [R0003] runtime error in main.mtl at 10..15: undefined variable `x`
 ```
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#733" reason="Confirmed live raise sites (lvalue.rs, mod.rs), but no repro found in the time spent. #712's precedent (an analogous nested-fun forward-reference gap) suggests a real gap plausibly still exists in hoisting/scoping, just not located yet." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Confirmed live raise sites (lvalue.rs, mod.rs). #986's follow-up round tried #712's exact precedent (nested-fun forward reference) across 5 more statement positions -- var initializer, if-branch, call-argument, match-arm, struct-literal-field, while-condition -- all resolved correctly, meaning #712's original let-initializer fix was thorough, not narrow. Still no repro found across either investigation round, and still not confirmed unreachable either." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#733: Confirmed live raise sites (lvalue.rs, mod.rs), but no repro found in the time spent. #712's precedent (an analogous nested-fun forward-reference gap) suggests a real gap plausibly still exists in hoisting/scoping, just not located yet._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise sites (lvalue.rs, mod.rs). #986's follow-up round tried #712's exact precedent (nested-fun forward reference) across 5 more statement positions -- var initializer, if-branch, call-argument, match-arm, struct-literal-field, while-condition -- all resolved correctly, meaning #712's original let-initializer fix was thorough, not narrow. Still no repro found across either investigation round, and still not confirmed unreachable either._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### R0004 — Index out of bounds
@@ -807,10 +807,10 @@ A `match` expression reached its end without any arm matching. This indicates a 
 [R0006] runtime error in main.mtl at 2..30: match: no arm matched scrutinee
 ```
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#733" reason="A known limitation (the type checker approving a match as exhaustive when it is not) -- no attempt made to construct a real typechecker exhaustiveness gap." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="A known limitation (the type checker approving a match as exhaustive when it is not). #986's follow-up round read check_match_exhaustiveness end to end (typechecker/construction/patterns.rs) -- the Boolean/Named-enum/Never/SizedArray cases, is_variant_uninhabited's RFC-0078 uninhabited-payload check, and pattern_covers_variant's enum+variant name matching all look sound on inspection. No construction attempted this round (unlike R0003/R0009) since no plausible gap surfaced worth testing against." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#733: A known limitation (the type checker approving a match as exhaustive when it is not) -- no attempt made to construct a real typechecker exhaustiveness gap._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: A known limitation (the type checker approving a match as exhaustive when it is not). #986's follow-up round read check_match_exhaustiveness end to end (typechecker/construction/patterns.rs) -- the Boolean/Named-enum/Never/SizedArray cases, is_variant_uninhabited's RFC-0078 uninhabited-payload check, and pattern_covers_variant's enum+variant name matching all look sound on inspection. No construction attempted this round (unlike R0003/R0009) since no plausible gap surfaced worth testing against._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### R0007 — Arithmetic error
@@ -839,10 +839,10 @@ A struct or enum value does not have the accessed field.
 
 **Fix:** check the field name against the type definition.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#733" reason="Confirmed live raise site, but every attempted repro (a generic function reading an unconstrained field) was caught statically as T0002 instead. A real repro likely needs a generic/dynamic-dispatch angle not yet tried." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Confirmed live raise site, but every attempted repro (a generic function reading an unconstrained field) was caught statically as T0002 instead. #986's follow-up round: field access resolves directly against the accessed value's own concrete fields (lvalue.rs's TypedPlace::Field), not through a bare-name-keyed lookup table the way aspect methods do -- so R0009's newly-found collision bug (metel-core#989) doesn't obviously carry over here. No new construction attempted this round." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#733: Confirmed live raise site, but every attempted repro (a generic function reading an unconstrained field) was caught statically as T0002 instead. A real repro likely needs a generic/dynamic-dispatch angle not yet tried._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise site, but every attempted repro (a generic function reading an unconstrained field) was caught statically as T0002 instead. #986's follow-up round: field access resolves directly against the accessed value's own concrete fields (lvalue.rs's TypedPlace::Field), not through a bare-name-keyed lookup table the way aspect methods do -- so R0009's newly-found collision bug (metel-core#989) doesn't obviously carry over here. No new construction attempted this round._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### R0009 — Method not found
@@ -855,10 +855,10 @@ A method call cannot be resolved for the receiver type.
 
 **Fix:** define the method in an `extend` block for the type.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#733" reason="Same investigation and same open question as R0008 -- struct fields and named-type methods appear to always resolve statically for concrete types." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#989" reason="Confirmed live raise site. #986's follow-up round found a real root-cause bug in this exact dispatch machinery: metel-core#989, two same-named aspects in different modules corrupt each other's dispatch resolution (TypeRegistry::aspect_decl_modules is keyed by bare aspect name, not a qualified path). In the variant tried (colliding aspects with differently-named methods) this surfaced as a false *static* T0003 rejection, not a runtime R0009 -- construction-time method lookup apparently consults the same corrupted map before dispatch is ever elaborated. A same-method-name variant (also tried) resolved correctly in both import orderings tried, so this mechanism isn't yet confirmed to reach R0009 specifically -- revisit once #989 is fixed." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#733: Same investigation and same open question as R0008 -- struct fields and named-type methods appear to always resolve statically for concrete types._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#989: Confirmed live raise site. #986's follow-up round found a real root-cause bug in this exact dispatch machinery: metel-core#989, two same-named aspects in different modules corrupt each other's dispatch resolution (TypeRegistry::aspect_decl_modules is keyed by bare aspect name, not a qualified path). In the variant tried (colliding aspects with differently-named methods) this surfaced as a false *static* T0003 rejection, not a runtime R0009 -- construction-time method lookup apparently consults the same corrupted map before dispatch is ever elaborated. A same-method-name variant (also tried) resolved correctly in both import orderings tried, so this mechanism isn't yet confirmed to reach R0009 specifically -- revisit once #989 is fixed._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### R0010 — Call on non-callable value
@@ -869,10 +869,10 @@ A call expression (`f(...)`) is applied to a value that is not a function or clo
 [R0010] runtime error in main.mtl at 3..8: call: expected a closure or builtin
 ```
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#733" reason="Confirmed live raise site, but calling a plain i64 variable was caught statically as T0001. Same open question as R0008/R0009." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Confirmed live raise site, but calling a plain i64 variable was caught statically as T0001. #986's follow-up round: calling a value generically/dynamically has no route to try at all in v0.13.0 -- RFC-0161's dyn Callable / Callable aspect (the mechanism that would make a call target's callability depend on a runtime value rather than a static function type) is deferred in full to a later milestone, so there is currently no dynamic-dispatch angle to test against this code." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#733: Confirmed live raise site, but calling a plain i64 variable was caught statically as T0001. Same open question as R0008/R0009._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise site, but calling a plain i64 variable was caught statically as T0001. #986's follow-up round: calling a value generically/dynamically has no route to try at all in v0.13.0 -- RFC-0161's dyn Callable / Callable aspect (the mechanism that would make a call target's callability depend on a runtime value rather than a static function type) is deferred in full to a later milestone, so there is currently no dynamic-dispatch angle to test against this code._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### R0011 — Invalid for-in iterator
@@ -887,10 +887,10 @@ implementing `Iterable`.
 **Fix:** ensure the iterable is an array literal, a range (`a..b`), a value of those types,
 or a type with its own `Iterable` implementation (see `expressions.md`, "for-in").
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#981" reason="Confirmed live raise sites (evaluator/mod.rs), but a plain non-iterable typed value (e.g. for (x in n) where n: i64) is caught statically as T0001 before reaching this runtime path. A real repro likely needs a generic/dynamic-typed angle, not found in this session." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Confirmed live raise sites (evaluator/mod.rs), but a plain non-iterable typed value (e.g. for (x in n) where n: i64) is caught statically as T0001 before reaching this runtime path. #986's follow-up round: the user-defined-Iterable dispatch this code guards resolves through the receiver value's own runtime type id (resolve_value_type_id + get_regular_method), not a bare-name-keyed table -- unlike R0009's aspect-method path (metel-core#989), this one isn't obviously vulnerable to the same class of collision bug. No construction attempted this round on that basis." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#981: Confirmed live raise sites (evaluator/mod.rs), but a plain non-iterable typed value (e.g. for (x in n) where n: i64) is caught statically as T0001 before reaching this runtime path. A real repro likely needs a generic/dynamic-typed angle, not found in this session._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise sites (evaluator/mod.rs), but a plain non-iterable typed value (e.g. for (x in n) where n: i64) is caught statically as T0001 before reaching this runtime path. #986's follow-up round: the user-defined-Iterable dispatch this code guards resolves through the receiver value's own runtime type id (resolve_value_type_id + get_regular_method), not a bare-name-keyed table -- unlike R0009's aspect-method path (metel-core#989), this one isn't obviously vulnerable to the same class of collision bug. No construction attempted this round on that basis._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### R0012 — Error propagation on non-Result value
