@@ -271,8 +271,19 @@ three deliberate differences (ADR-0050 §9 / metel-core#981):
   yet) — that's a named gap for `rfc.py check` to report, not silently "untested." Split
   from `spec =` on purpose: `error =` and `spec =` are different citation *axes* (evidence
   for a diagnostic vs. evidence for a language rule) even when the same fixture earns
-  both, keeping the door open for #977's later error-code ↔ Legality-Rule cross-linking to
-  be a real reverse index of author intent rather than an inferred guess.
+  both.
+
+**A fixture's viewer, rendered on error-codes.md, links back to the formal rule it also
+demonstrates.** When a citing fixture's sidecar carries its own `spec = [...]` (ADR-0050)
+alongside the `error =` that got it here, `rfc.py` embeds that as a `specLinks` field in
+the same payload — the metel-website side (`SpecFixtureView.tsx`) renders it as an
+always-visible "Also demonstrates: …" line back to the Legality Rule / Dynamic Semantics
+block. Per-fixture, not a comprehensive code-to-rule index — a code with 20 citing
+fixtures where only 3 happen to also cite a spec block shows the backlink on those 3
+only. Never rendered on a spec page's own fixture viewer (the fixture is already sitting
+under that exact rule there — the backlink would be circular). #977's own code ↔ prose
+linking (the reverse direction: a bare code mention in spec prose, or a fixture's
+`expect` chip, linking *to* error-codes.md) is separate and already shipped.
 
 Everything else is identical to the rigor-block mechanism: one `<details
 class="spec-fixture">` viewer per citing fixture, the same `<!-- rfc.py:fixtures:start
