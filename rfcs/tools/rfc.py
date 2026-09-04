@@ -886,11 +886,22 @@ def _toml_scalar(raw):
 
 def _sidecar_expect(toml_text):
     """`{status, code, contains, line, col}` from the sidecar's `[expect]`
-    table (any of them possibly None). `line`/`col` pinpoint the expected
-    diagnostic's position in the fixture's own source, so the viewer can show
-    a reader exactly what the fixture checks, not just that it checks
-    something. Scanned only within the `[expect]` section so an
-    `[options]`-level key of the same name can't leak in."""
+    table (any of them possibly None, except `status`). `line`/`col` pinpoint
+    the expected diagnostic's position in the fixture's own source, so the
+    viewer can show a reader exactly what the fixture checks, not just that it
+    checks something. Scanned only within the `[expect]` section so an
+    `[options]`-level key of the same name can't leak in.
+
+    `status` defaults to `"success"` when absent -- not left `None` -- because
+    that's the harness's own default (`Expectation::success()` in
+    `merge_config`, metel-core's `fixture.rs`): a fixture with no `[expect]`
+    table at all, which is most of them (an unannotated positive fixture is
+    the common case), still has a real, defined expectation. Leaving `status`
+    unset here made `_spec_fixture_marker`'s `any(expect.values())` guard
+    false for every such fixture, so the vast majority of fixtures silently
+    got no `expect` payload and the viewer showed no footer at all --
+    reported as a bug (metel-core#973 follow-up, 2026-09-04) before this was
+    traced to its actual cause."""
     out = {"status": None, "code": None, "contains": None, "line": None, "col": None}
     in_expect = False
     for line in toml_text.split("\n"):
@@ -903,6 +914,8 @@ def _sidecar_expect(toml_text):
         m = _EXPECT_KEY_RE.match(line)
         if m:
             out[m.group("k")] = _toml_scalar(m.group("v"))
+    if out["status"] is None:
+        out["status"] = "success"
     return out
 
 
@@ -969,9 +982,10 @@ def _spec_fixture_marker(toml_path, core_root):
     title = _sidecar_spec_title(toml_text)
     if title:
         payload["title"] = title
-    expect = _sidecar_expect(toml_text)
-    if any(expect.values()):
-        payload["expect"] = expect
+    # _sidecar_expect always resolves a status (defaulting to "success" per
+    # the harness), so a fixture's expectation is never actually absent --
+    # every marker carries `expect`.
+    payload["expect"] = _sidecar_expect(toml_text)
     raw = base64.b64encode(
         json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).decode("ascii")
