@@ -1947,6 +1947,36 @@ def scan_error_code_expectations(tests_dir):
     return out
 
 
+def uncited_own_error_code_fixtures(tests_dir):
+    """[(toml_path, code), ...] -- every fixture whose own `[expect].code`
+    names a code but whose own sidecar doesn't cite that same code via
+    `error = […]` (the key absent entirely, or present without this code in
+    it). Tighter than the coverage/display gap `coverage_check_problems`
+    already reports (a code proven somewhere in the corpus with nothing
+    curated yet, ADR-0050-style): this is a hard, per-fixture invariant --
+    every fixture that demonstrates a specific diagnostic self-documents
+    which one, not just some fixture somewhere. A `check` failure, not an
+    info line, unlike the aggregate coverage/display counts above it."""
+    gaps = []
+    for toml_path in tests_dir.rglob("*.toml"):
+        try:
+            text = toml_path.read_text()
+        except OSError:
+            continue
+        em = EXPECT_SECTION_RE.search(text)
+        if not em:
+            continue
+        cm = EXPECT_CODE_RE.search(em.group(1))
+        if not (cm and cm.group(1)):
+            continue
+        code = cm.group(1)
+        lm = COVERAGE_ERROR_LIST_RE.search(text)
+        cited = {item.strip() for item in re.findall(r'"([^"]+)"', lm.group(1))} if lm else set()
+        if code not in cited:
+            gaps.append((toml_path, code))
+    return gaps
+
+
 def all_error_codes():
     """Every code documented in error-codes.md, in file order -- the error-
     codes equivalent of all_spec_block_ids()."""
@@ -2476,6 +2506,16 @@ def coverage_check_problems():
     if all_codes:
         tests_dir = metel_core_tests_dir()
         if tests_dir is not None:
+            for toml_path, code in uncited_own_error_code_fixtures(tests_dir):
+                rel = (
+                    toml_path.relative_to(REPO_ROOT.parent)
+                    if REPO_ROOT.parent in toml_path.parents
+                    else toml_path
+                )
+                problems.append(
+                    f"{rel}: [expect].code = \"{code}\", but its own sidecar doesn't "
+                    f'cite it -- add `error = ["{code}"]` to [options]'
+                )
             error_citations = scan_error_code_citations(tests_dir)
             error_expectations = scan_error_code_expectations(tests_dir)
             error_exemptions = scan_error_code_exemptions()
