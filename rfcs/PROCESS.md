@@ -543,6 +543,16 @@ state to normalize.** Either the implementation is fixed to match the spec, or t
 is corrected deliberately in the same work. The public spec must not drift into
 describing a half-remembered or aspirational language.
 
+**A citing fixture that starts failing is a strong signal about the rule it backs, not
+just about the fixture.** The default move is not to patch the fixture (or, worse,
+unlink it) until it passes again — a fixture cited by `spec = […]` exists specifically
+to keep a Legality Rule or Dynamic Semantics block honest, so its failure means that
+rule may now be stale. Re-examine and, if needed, correct the rule block first. Then
+follow STYLEGUIDE.md's "link prose to the rule it restates" convention backward: every
+other spec sentence elsewhere that links into that rule's id is likely restating the
+same claim the rule just needed correcting, and needs the same look before the failure
+is considered resolved.
+
 **The spec entry point must match the section files.** `reference/spec.md`
 cannot describe an older language model than the detailed sections it links to. When a
 cluster materially changes the language model, the top-level overview needs the same
