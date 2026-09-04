@@ -940,6 +940,38 @@ def _sidecar_expect(toml_text):
     return out
 
 
+def _sidecar_spec_ids(toml_text):
+    """This fixture's own `spec = […]` citations, well-formed ids only --
+    reuses ADR-0050 §5's own grammar/list regexes (scan_spec_citations'
+    single-file equivalent, not corpus-wide)."""
+    m = COVERAGE_TOML_SPEC_LIST_RE.search(toml_text)
+    if not m:
+        return []
+    return [
+        item.strip()
+        for item in re.findall(r'"([^"]+)"', m.group(1))
+        if COVERAGE_SPEC_ID_RE.fullmatch(item.strip())
+    ]
+
+
+def _spec_id_label(spec_id):
+    """(display label, spec file stem) for a `spec.<file>.<section...>.
+    <kind>-<n>` id -- `L<n>`/`D<n>` prefixed with a short titleised last
+    section segment, mirroring spec-xref-sigils.mjs's own cross-page
+    convention in metel-website (same shorthand, independently derived here
+    since this rides inside a fixture's JSON payload, never markdown prose a
+    remark plugin would ever see)."""
+    parts = spec_id.split(".")
+    file = parts[1]
+    km = re.match(r"(legality|dynamics)-(\d+[a-z]*)$", parts[-1])
+    tag = f"L{km.group(2)}" if km.group(1) == "legality" else f"D{km.group(2)}"
+    last = parts[-2].replace("-", " ")
+    title = (last[:1].upper() + last[1:]) if last else ""
+    if len(title) > 32:
+        title = title[:31].rstrip() + "…"
+    return f"{title} {tag}".strip(), file
+
+
 def _sidecar_spec_title(toml_text):
     """`spec_title` from `[options]` (metel-core#974), or None. Whitespace-only
     is treated as unset, matching the harness."""
@@ -981,9 +1013,17 @@ def _fixture_files(toml_path):
     return [(mtl.name, mtl.read_text())] if mtl.is_file() else []
 
 
-def _spec_fixture_marker(toml_path, core_root):
+def _spec_fixture_marker(toml_path, core_root, include_spec_links=False):
     """One `<details class="spec-fixture" ...>` line for `toml_path`, or None
-    when its `.mtl` isn't there / isn't under `core_root`."""
+    when its `.mtl` isn't there / isn't under `core_root`.
+
+    `include_spec_links`: embed this fixture's own `spec = […]` citations
+    (as `specLinks`, resolved to a spec-page anchor+label) into the payload.
+    Only the error-codes.md caller passes this -- the fixture's own spec
+    citation is exactly the rule it's already sitting under when rendered on
+    a spec page, so showing it there would be circular; on error-codes.md
+    there's no equivalent context, and metel-core#... asked for exactly this
+    link back to the formal rule a code's fixture also demonstrates."""
     files = _fixture_files(toml_path)
     if not files:
         return None
@@ -1007,13 +1047,20 @@ def _spec_fixture_marker(toml_path, core_root):
     # the harness), so a fixture's expectation is never actually absent --
     # every marker carries `expect`.
     payload["expect"] = _sidecar_expect(toml_text)
+    if include_spec_links:
+        links = []
+        for spec_id in _sidecar_spec_ids(toml_text):
+            label, file = _spec_id_label(spec_id)
+            links.append({"id": spec_id, "label": label, "href": f"spec/{file}.md#{spec_id}"})
+        if links:
+            payload["specLinks"] = links
     raw = base64.b64encode(
         json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).decode("ascii")
     return f'<details class="spec-fixture" data-fixture="{raw}"></details>'
 
 
-def fixtures_block_text(toml_paths, core_root):
+def fixtures_block_text(toml_paths, core_root, include_spec_links=False):
     """The exact content between the fixtures markers for one rigor block, or
     "" if no fixture cites it yet -- as valid a state as an RFC with no
     fixture yet (ADR-0050's own Context section names this as real),
@@ -1042,7 +1089,7 @@ def fixtures_block_text(toml_paths, core_root):
         return ""
     markers = []
     for p in sorted(set(toml_paths), key=lambda x: (x.name, str(x))):
-        marker = _spec_fixture_marker(p, core_root)
+        marker = _spec_fixture_marker(p, core_root, include_spec_links=include_spec_links)
         if marker:
             markers.append(marker)
     n = len(markers)
@@ -1272,7 +1319,9 @@ def regenerate_error_code_fixtures_in_text(text, fixtures_by_code, core_root):
         if fixtures_by_code is None:
             fixtures_content = existing_fixtures_content
         else:
-            fixtures_content = fixtures_block_text(fixtures_by_code.get(code, []), core_root)
+            fixtures_content = fixtures_block_text(
+                fixtures_by_code.get(code, []), core_root, include_spec_links=True
+            )
         if fixtures_content:
             out.append("")
             out.append(FIXTURES_MARKER_START)
