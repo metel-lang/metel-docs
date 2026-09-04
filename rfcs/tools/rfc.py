@@ -922,19 +922,24 @@ def _sidecar_spec_title(toml_text):
 
 
 def _fixture_files(toml_path):
-    """`[(name, source), ...]` -- the file(s) a reader wants to see. A directory
-    fixture (`test.toml`) is `main.mtl` first, then its sibling `*.mtl` in name
-    order, then `test.toml` itself (it carries `[expect]` / `[options]`).
-    Otherwise the single sibling `.mtl`."""
+    """`[(name, source), ...]` -- the Metel file(s) a reader wants to see. A
+    directory fixture (`test.toml`) is every `.mtl` under the fixture dir,
+    recursively (nested module folders included), `main.mtl` first and the rest
+    by relative path; the `name` for a nested file is its path relative to the
+    fixture dir (`parser/facade.mtl`) so the viewer can render it as a tree.
+    `test.toml` is deliberately excluded -- its `[expect]` is surfaced
+    separately and its `[options]` are test plumbing, not source. Otherwise the
+    single sibling `.mtl`."""
     if toml_path.name == "test.toml":
         d = toml_path.parent
         mtls = sorted(
-            (p for p in d.iterdir() if p.is_file() and p.suffix == ".mtl"),
-            key=lambda p: (p.name != "main.mtl", p.name),
+            (p for p in d.rglob("*.mtl") if p.is_file()),
+            key=lambda p: (
+                p.relative_to(d).as_posix() != "main.mtl",
+                p.relative_to(d).as_posix(),
+            ),
         )
-        files = [(p.name, p.read_text()) for p in mtls]
-        files.append(("test.toml", toml_path.read_text()))
-        return files
+        return [(p.relative_to(d).as_posix(), p.read_text()) for p in mtls]
     mtl = toml_path.with_suffix(".mtl")
     return [(mtl.name, mtl.read_text())] if mtl.is_file() else []
 
