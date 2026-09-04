@@ -999,7 +999,24 @@ def fixtures_block_text(toml_paths, core_root):
     rendered as no slot at all rather than a fabricated "untested"
     placeholder. One `<details class="spec-fixture">` per citing fixture (the
     site renders each as an inline viewer over the fixture's own .mtl -- the
-    actual Metel source a reader wants -- not its .toml sidecar)."""
+    actual Metel source a reader wants -- not its .toml sidecar).
+
+    metel-core#979: a rule citing several fixtures showed that many collapsed
+    toggle-bar *rows* by default, with nothing to collapse them as a group --
+    one rule cited 26. A flat "always collapsed" wrapper would have forced an
+    extra click on the far more common 2-3-fixture case for no real benefit
+    (measured against the actual corpus: 247 rules cite exactly 1, 80 cite 2
+    or 3, only 24 cite 4+), so the wrapper's presence *and* its default
+    open/closed state are graded by the citing count instead of a single
+    fixed rule:
+      - 1 fixture:  unwrapped, exactly as before -- the plain <p> label.
+      - 2-3:        wrapped, `open` by default -- same rows visible as
+                    before, but now a closeable "Tested by (N)" toggle.
+      - 4+:         wrapped, collapsed by default -- the actual fix.
+    The wrapper carries no special class, so it dispatches through the
+    website's existing generic Details disclosure (src/theme/Details), not
+    SpecFixtureView -- nested <details> already works today (a fixture
+    viewer already lives inside the outer "Formal rules" one)."""
     if not toml_paths:
         return ""
     markers = []
@@ -1007,9 +1024,20 @@ def fixtures_block_text(toml_paths, core_root):
         marker = _spec_fixture_marker(p, core_root)
         if marker:
             markers.append(marker)
-    if not markers:
+    n = len(markers)
+    if n == 0:
         return ""
-    return "\n".join(['<p class="rigor-backlink"><em>Tested by</em></p>', *markers])
+    if n == 1:
+        return "\n".join(['<p class="rigor-backlink"><em>Tested by</em></p>', *markers])
+    open_attr = " open" if n < 4 else ""
+    return "\n".join(
+        [
+            f'<details class="rigor-fixtures-toggle"{open_attr}>',
+            f"<summary>Tested by ({n})</summary>",
+            *markers,
+            "</details>",
+        ]
+    )
 
 
 def regenerate_backlinks_in_text(text, spec_path, origins_by_id, fixtures_by_id, core_root):
