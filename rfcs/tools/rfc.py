@@ -81,6 +81,7 @@ No dependencies beyond the Python 3 standard library.
 """
 
 import argparse
+import base64
 import datetime
 import json
 import math
@@ -623,7 +624,16 @@ ORIGINS_MARKER_END = "<!-- rfc.py:origins:end -->"
 # correct-forever but points at dead history.
 FIXTURES_MARKER_START = "<!-- rfc.py:fixtures:start -->"
 FIXTURES_MARKER_END = "<!-- rfc.py:fixtures:end -->"
-METEL_CORE_GITHUB_BLOB = "https://github.com/metel-lang/metel-core/blob/main"
+
+# metel-core#944: the fixture backlink renders as an inline collapsible viewer
+# on the site (`<details class="spec-fixture" data-fixture="<base64 JSON>">`,
+# hydrated by src/theme/Details), not a bare link. The `href` and the inlined
+# source snapshot are pinned to the *release tag*, not `main`: the spec is a
+# versioned document, and `/cut-release` bumps this constant and re-runs
+# `--write-spec-origins` so the pinned ref and the snapshot move together, once
+# per release. Between releases the committed spec carries the previous tag.
+SPEC_FIXTURE_REF = "v0.13.0"
+METEL_CORE_GITHUB_BLOB = f"https://github.com/metel-lang/metel-core/blob/{SPEC_FIXTURE_REF}"
 
 # A rigor block's fixture-coverage exemption (ADR-0050 §6, extended to the
 # spec-id surface -- same three kinds ADR-0049 §3 already validates for RFC
@@ -846,32 +856,138 @@ def spec_exemption_problems():
     return problems
 
 
+# --- fixture viewer payloads (metel-core#944) ---------------------------------
+#
+# The rendered "Tested by" slot is one `<details class="spec-fixture"
+# data-fixture="<base64>">` per citing fixture; `src/theme/Details` in
+# metel-website decodes the base64 JSON and renders an inline collapsible
+# viewer. The payload rides in the attribute (not a fenced code block) so it
+# survives CommonMark's raw-HTML handling and stays invisible to
+# check-examples / check-mdx. The JSON is emitted with sorted keys and compact
+# separators so the base64 is byte-stable -- `--check-drift` catches a stale
+# inlined snapshot exactly the way it already catches a stale link.
+
+_EXPECT_KEY_RE = re.compile(
+    r'^\s*(?P<k>status|code|contains)\s*=\s*(?P<v>.+?)\s*$', re.MULTILINE
+)
+_SPEC_TITLE_RE = re.compile(
+    r'^\s*spec_title\s*=\s*(?P<v>.+?)\s*$', re.MULTILINE
+)
+
+
+def _toml_scalar(raw):
+    """Unquote a sidecar scalar (`"x"` / `'x'` / bare) -- the harness's own
+    parse_scalar, kept minimal."""
+    raw = raw.strip()
+    if len(raw) >= 2 and raw[0] == raw[-1] and raw[0] in "\"'":
+        return raw[1:-1]
+    return raw
+
+
+def _sidecar_expect(toml_text):
+    """`{status, code, contains}` from the sidecar's `[expect]` table (any of
+    them possibly None). Scanned only within the `[expect]` section so an
+    `[options]`-level key of the same name can't leak in."""
+    out = {"status": None, "code": None, "contains": None}
+    in_expect = False
+    for line in toml_text.split("\n"):
+        s = line.strip()
+        if s.startswith("[") and s.endswith("]"):
+            in_expect = s == "[expect]"
+            continue
+        if not in_expect:
+            continue
+        m = _EXPECT_KEY_RE.match(line)
+        if m:
+            out[m.group("k")] = _toml_scalar(m.group("v"))
+    return out
+
+
+def _sidecar_spec_title(toml_text):
+    """`spec_title` from `[options]` (metel-core#974), or None. Whitespace-only
+    is treated as unset, matching the harness."""
+    in_options = False
+    for line in toml_text.split("\n"):
+        s = line.strip()
+        if s.startswith("[") and s.endswith("]"):
+            in_options = s == "[options]"
+            continue
+        if not in_options:
+            continue
+        m = _SPEC_TITLE_RE.match(line)
+        if m:
+            v = _toml_scalar(m.group("v")).strip()
+            return v or None
+    return None
+
+
+def _fixture_files(toml_path):
+    """`[(name, source), ...]` -- the file(s) a reader wants to see. A directory
+    fixture (`test.toml`) is `main.mtl` first, then its sibling `*.mtl` in name
+    order, then `test.toml` itself (it carries `[expect]` / `[options]`).
+    Otherwise the single sibling `.mtl`."""
+    if toml_path.name == "test.toml":
+        d = toml_path.parent
+        mtls = sorted(
+            (p for p in d.iterdir() if p.is_file() and p.suffix == ".mtl"),
+            key=lambda p: (p.name != "main.mtl", p.name),
+        )
+        files = [(p.name, p.read_text()) for p in mtls]
+        files.append(("test.toml", toml_path.read_text()))
+        return files
+    mtl = toml_path.with_suffix(".mtl")
+    return [(mtl.name, mtl.read_text())] if mtl.is_file() else []
+
+
+def _spec_fixture_marker(toml_path, core_root):
+    """One `<details class="spec-fixture" ...>` line for `toml_path`, or None
+    when its `.mtl` isn't there / isn't under `core_root`."""
+    files = _fixture_files(toml_path)
+    if not files:
+        return None
+    primary = _sidecar_mtl_path(toml_path)  # main.mtl for a dir, else the .mtl
+    try:
+        rel = primary.resolve().relative_to(core_root.resolve())
+    except ValueError:
+        return None
+    is_dir_fixture = toml_path.name == "test.toml"
+    href_target = rel.parent.as_posix() if is_dir_fixture else rel.as_posix()
+    toml_text = toml_path.read_text()
+    payload = {
+        "name": toml_path.parent.name if is_dir_fixture else primary.name,
+        "href": f"{METEL_CORE_GITHUB_BLOB}/{href_target}",
+        "files": [{"name": n, "source": s} for n, s in files],
+    }
+    title = _sidecar_spec_title(toml_text)
+    if title:
+        payload["title"] = title
+    expect = _sidecar_expect(toml_text)
+    if any(expect.values()):
+        payload["expect"] = expect
+    raw = base64.b64encode(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).decode("ascii")
+    return f'<details class="spec-fixture" data-fixture="{raw}"></details>'
+
+
 def fixtures_block_text(toml_paths, core_root):
     """The exact content between the fixtures markers for one rigor block, or
     "" if no fixture cites it yet -- as valid a state as an RFC with no
     fixture yet (ADR-0050's own Context section names this as real),
     rendered as no slot at all rather than a fabricated "untested"
-    placeholder. Links to each fixture's .mtl (the actual Metel source a
-    reader would want to read), not its .toml sidecar (the `spec =`
-    citation lives there, but that's metadata about the test, not the test
-    itself)."""
+    placeholder. One `<details class="spec-fixture">` per citing fixture (the
+    site renders each as an inline viewer over the fixture's own .mtl -- the
+    actual Metel source a reader wants -- not its .toml sidecar)."""
     if not toml_paths:
         return ""
-    links = []
-    for p in sorted(set(toml_paths)):
-        mtl_path = _sidecar_mtl_path(p)
-        if not mtl_path.is_file():
-            continue
-        try:
-            rel = mtl_path.resolve().relative_to(core_root.resolve())
-        except ValueError:
-            continue
-        links.append(f"[{mtl_path.name}]({METEL_CORE_GITHUB_BLOB}/{rel.as_posix()})")
-    if not links:
+    markers = []
+    for p in sorted(set(toml_paths), key=lambda x: (x.name, str(x))):
+        marker = _spec_fixture_marker(p, core_root)
+        if marker:
+            markers.append(marker)
+    if not markers:
         return ""
-    # See origins_block_text's comment: inline <span>, not a block tag, so
-    # the [name](url) links above still parse as markdown inside it.
-    return f'<span class="rigor-backlink">_Tested by: {", ".join(links)}_</span>'
+    return "\n".join(['<p class="rigor-backlink"><em>Tested by</em></p>', *markers])
 
 
 def regenerate_backlinks_in_text(text, spec_path, origins_by_id, fixtures_by_id, core_root):
