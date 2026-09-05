@@ -53,15 +53,26 @@ drove it:
 > **Changed in v0.11.0 (RFC-0111): `None` and `Some` are ordinary variants of `Perhaps<T>`, not literals.**
 ```
 
-A `Changed in` callout is a historical record, not a permanent fixture. Once its "before"
-side is no longer reconstructable from the section's *current* prose — the old behavior
-isn't described or implied anywhere nearby anymore — the callout has stopped doing its
-job: cut it, or fold whatever's left worth keeping into an ordinary `> **Since...**`
-provenance note. Don't let it linger as trivia once nothing nearby still needs the
-contrast. The exception is a callout that's the only thing marking a `develop`-only
-behavior change a reader on an older release might still hit — `check_doc_examples.py`
-has no version awareness yet (metel-core#696), so that's a real gap this kind of note can
-be legitimately covering, not narration to prune on sight.
+Both are historical records, not permanent fixtures, and both get pruned the same way once
+they stop doing their job:
+
+- A `Changed in` callout stops earning its keep once its "before" side is no longer
+  reconstructable from the section's *current* prose — the old behavior isn't described or
+  implied anywhere nearby anymore.
+- A `Since` / `Availability` callout stops earning its keep once it's doing nothing but
+  re-timestamping a fact the surrounding prose already states in full, with no RFC to trace
+  and no reader-facing "does my installed version have this" question left to answer — the
+  legitimate use above (top of a section, marking that the *whole feature* wasn't always
+  there) is unaffected; it's the mid-paragraph restatement, bare version number only, that's
+  narration.
+
+Either way: cut the callout outright once it fits the description above. Don't downgrade a
+pruned `Changed in` into a bare `Since` just to keep *something* — a callout with nothing
+left to say is nothing left to say, in either spelling. Don't let either linger as trivia
+once nothing nearby still needs it. The one exception is a callout that's the only thing
+marking a `develop`-only behavior change a reader on an older release might still hit —
+`check_doc_examples.py` has no version awareness yet (metel-core#696), so that's a real gap
+this kind of note can be legitimately covering, not narration to prune on sight.
 
 **Planned**, for a real, accepted-but-unbuilt future feature — the honest way to describe
 something that doesn't exist yet. Never blend this into ordinary descriptive prose as if

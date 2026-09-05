@@ -1195,8 +1195,6 @@ has a default body, and no additional methods are permitted. Put a type-specific
 that is not part of the aspect in an inherent `extend Type { ... }` block; [inherent and
 aspect implementations may coexist for the same type](#spec.declarations.aspects.implementing-an-aspect.legality-1).
 
-> **Since v0.12.1.**
-
 **Aspect implementation method signatures.** Each implementation method must
 conform to the aspect's declaration of that method. The aspect signature is first
 [specialized](#spec.declarations.aspects.implementing-an-aspect.legality-12) with
