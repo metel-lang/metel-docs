@@ -169,19 +169,15 @@ before v0.13.0) nor `fun(ParameterTypes) -> ReturnType` is a function-type synta
 
 ##### Legality Rule {#spec.functions.first-class-functions.legality-2}
 
+> **Since v0.13.0 (RFC-0138).**
+
 A non-generic named function and a closure are values of their function type and may be
 bound, passed as arguments, and returned as results. A generic named function (declared
-with its own `<T>` generics) may be called directly.
-
-> **Changed in v0.13.0 (RFC-0138):** also legal — bound with a bare, unannotated
-> `let` (staying polymorphic across that binding's own later uses, the same as an
-> unannotated closure literal), or passed as a higher-order argument whose
-> receiving parameter position is itself concrete (one instantiation, at that one
-> call site).
-
-Referencing it in any other position where nothing pins down a concrete
-instantiation — including a parameter position that is itself still generic in
-the callee — is `T0003`.
+with its own `<T>` generics) may be called directly, bound with a bare unannotated `let`
+(staying polymorphic across that binding's own later uses), or passed as a higher-order
+argument whose receiving parameter position is itself concrete. Referencing it anywhere
+else that doesn't pin down a concrete instantiation — including a parameter position
+that is itself still generic in the callee — is `T0003`.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0138](../../rfcs/4-implemented/rfc-0138-generic-functions-as-first-class-values.md)_</span>
@@ -845,12 +841,10 @@ lands; unenforced before then).
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-5}
 
-Capturing a non-`Copy` binding by value (`[x]`) moves it: the outer binding is consumed at
-closure creation and using it afterward is a moved-value error. A `Copy` binding captured
-by value is copied and the outer binding stays usable. `[x.clone()]` produces an
-independent copy and leaves the outer binding usable regardless of `Copy`-ness. The
-captured environment is constructed once, when the closure value is created; a call does
-not re-clone it — each call operates on the same environment held by the closure value.
+Capturing a non-`Copy` binding by value (`[x]`) moves it, consuming the outer binding; a
+`Copy` binding captured by value is copied; `[x.clone()]` produces an independent copy
+regardless of `Copy`-ness. The captured environment is constructed once, at closure
+creation, and is not re-cloned per call.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0157](../../rfcs/4-implemented/rfc-0157-copy-and-clone-model-re-analysis.md)_</span>
