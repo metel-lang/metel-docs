@@ -53,6 +53,16 @@ drove it:
 > **Changed in v0.11.0 (RFC-0111): `None` and `Some` are ordinary variants of `Perhaps<T>`, not literals.**
 ```
 
+A `Changed in` callout is a historical record, not a permanent fixture. Once its "before"
+side is no longer reconstructable from the section's *current* prose — the old behavior
+isn't described or implied anywhere nearby anymore — the callout has stopped doing its
+job: cut it, or fold whatever's left worth keeping into an ordinary `> **Since...**`
+provenance note. Don't let it linger as trivia once nothing nearby still needs the
+contrast. The exception is a callout that's the only thing marking a `develop`-only
+behavior change a reader on an older release might still hit — `check_doc_examples.py`
+has no version awareness yet (metel-core#696), so that's a real gap this kind of note can
+be legitimately covering, not narration to prune on sight.
+
 **Planned**, for a real, accepted-but-unbuilt future feature — the honest way to describe
 something that doesn't exist yet. Never blend this into ordinary descriptive prose as if
 it already works:
@@ -187,6 +197,34 @@ Worked example: `spec.functions.turbofish.legality-1` split into `legality-1` (p
 bound-checking, already fixture-tested) and `legality-2` (argument unification against
 the pinned type) once it became clear the merged id was hiding that only half its claim
 was actually true.
+
+### Terseness
+
+A Legality Rule or Dynamic Semantics block states a bare testable claim; it doesn't
+explain it. Rationale, motivating examples, and prose walkthroughs belong in the
+section's discursive prose above the `<details>` — link the rule's id into that prose
+("Link prose to the rule it restates", below) instead of re-explaining the claim inside
+the block. A block that mostly restates its own section's prose, just in more words, is a
+sign the prose already carries the claim and the block should shrink to what's left: the
+part that's actually checkable.
+
+Two things belong in the callout above a block, never folded into its own prose:
+
+- **Version and RFC provenance** — the `> **Since...**` / `Changed in` / `Planned for`
+  conventions above. A block's own paragraph should read as true today, unconditionally;
+  historical framing ("as of v0.13.0, X now means...") is the callout's job, not the
+  claim's.
+- **A cross-reference to a related rule** — link its id (`[legality-9](#...)`) rather than
+  restating what that rule says.
+
+There's no fixed word budget: a rule specifying an exact algorithm (a structural-equality
+normalization, a fixed resolution stage order) legitimately needs the words that name
+each step, and padding that out to hit a number would make it worse, not better. What
+actually marks a block worth trimming is restating content its own section's prose
+already carries, motivating *why* the rule exists rather than just stating it, or walking
+through an example instead of pointing at one in the prose above. If trimming reveals the
+block was bundling more than one independently-wrong-able claim, split it (above) rather
+than leaving the bundle merely shorter.
 
 ### Link prose to the rule it restates
 
