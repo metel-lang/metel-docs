@@ -1010,13 +1010,11 @@ body.
 
 ##### Legality Rule {#spec.declarations.type-aliases.legality-1}
 
-A type alias is written `public? type Name generic_params? := Type ;` at module scope or
+A type alias is written `public? type Name generic_params? := Type;` at module scope or
 in a function / block body. It introduces `Name` as a transparent synonym for `Type`:
 every use of `Name` (with type arguments substituted for its generic parameters) is
-replaced by `Type` before name resolution and type checking. An alias use must supply
-exactly the alias's declared number of type arguments. `public` is module-scope only, and
-naming a non-`public` alias from another module is a visibility error, the same as any
-other private item.
+replaced by `Type` before name resolution and type checking, and must supply exactly the
+alias's declared number of type arguments.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0160](../../rfcs/4-implemented/rfc-0160-type-aliases.md)_</span>
@@ -1045,13 +1043,12 @@ transparent alias has no finite expansion for a cycle; a genuinely recursive sha
 ##### Legality Rule {#spec.declarations.type-aliases.legality-3}
 
 A `public` module-level alias is part of its module's public surface exactly like a
-`struct` / `enum` / `fun` declaration. Another module brings it into scope by every
-mechanism an item supports — a named import (`import m::{A};`), a renamed import
-(`import m::A as B;`), a glob (`import m::*;`), and one `export` re-export hop through an
-intermediate module (`export m::{A};`) — and may also write it as a qualified path
-(`m::A`). Every such spelling denotes the identical erased type. Naming a non-`public`
-alias from outside its declaring module, whether directly or through an `export`, is a
-visibility error, the same as any other private item.
+`struct` / `enum` / `fun` declaration: another module brings it into scope by a named
+import (`import m::{A};`), a renamed import (`import m::A as B;`), a glob
+(`import m::*;`), one `export` re-export hop (`export m::{A};`), or a qualified path
+(`m::A`) — every spelling denotes the identical erased type. Naming a non-`public` alias
+from outside its declaring module, directly or through an `export`, is a visibility
+error.
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1066,11 +1063,10 @@ visibility error, the same as any other private item.
 ##### Legality Rule {#spec.declarations.type-aliases.legality-4}
 
 When an alias's expansion is a plain named type, the alias name may be written wherever
-that type's own name is legal in an expression or a pattern: a struct literal
-(`P { … }`), a record projection (`P.{ … }`), an enum-variant path (`D::Variant`), and a
-`match` pattern (`P { … }`, `D::Variant`). An alias whose expansion is not a plain named
-type — a tuple, a function type, a reference — or one that is still parameterised has no
-meaning in value position and is not rewritten there.
+that type's own name is legal in an expression or pattern: a struct literal (`P { … }`),
+a record projection (`P.{ … }`), an enum-variant path (`D::Variant`), or a `match`
+pattern. An alias whose expansion is not a plain named type — a tuple, a function type, a
+reference — or is still parameterised has no meaning in value position.
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1198,8 +1194,6 @@ exactly the methods declared by `Aspect`: every declared method must be present 
 has a default body, and no additional methods are permitted. Put a type-specific method
 that is not part of the aspect in an inherent `extend Type { ... }` block; [inherent and
 aspect implementations may coexist for the same type](#spec.declarations.aspects.implementing-an-aspect.legality-1).
-
-> **Changed in v0.12.1.** An undeclared method in an aspect implementation is rejected.
 
 **Aspect implementation method signatures.** Each implementation method must
 conform to the aspect's declaration of that method. The aspect signature is first
@@ -1583,14 +1577,10 @@ rejected with `T0012` when it does not.
 
 A *heterogeneous* array literal — different concrete element types coerced
 to `dyn Aspect` within one `[...]` expression — is accepted at a `let`/`var`
-binding: each element is checked against the declared element type
-independently, not against each other. `List<dyn Aspect>` (see
-[Heterogeneous Collections](#heterogeneous-collections) below) remains the
-way to build a heterogeneous collection incrementally, one `push` at a
-time; a literal is the equivalent all-at-once form. (A heterogeneous
-literal used directly as a function argument or struct field, with no
-annotated binding in between, isn't covered by this — bind it to a
-`let`/`var` first.)
+binding, each element checked against the declared element type
+independently. A heterogeneous literal used directly as an argument or
+field, with no annotated binding in between, isn't covered — bind it to a
+`let`/`var` first.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0008](../../rfcs/4-implemented/rfc-0008-aspect-objects.md)_</span>

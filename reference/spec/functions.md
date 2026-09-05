@@ -132,6 +132,20 @@ expression position with no expected type and no enclosing `let` — is still
 `identity::<i64>` not immediately followed by a call is a parse error, not a
 type error — see [Turbofish](#spec.functions.turbofish.legality-3).
 
+A written function type (`|T| -> U`) is [move-only for its by-value use](#spec.functions.first-class-functions.legality-3),
+at every nesting depth: a function value may be called through it any number of
+times, but using it by value twice — `let a := f; let b := f;` — is a
+use-after-move, even when the underlying value (a named function, or a closure
+whose captures are all `Copy`) is itself copyable ([Closures](#spec.functions.closures.legality-20)).
+Copyability doesn't survive the written type: it's [erased the moment such a value
+flows into a slot whose written type is a function type](#spec.functions.first-class-functions.legality-4) —
+a `let` / `var` binding, an ascription, an argument, or a return — and isn't
+recovered further downstream. A bare generic type parameter is not a written
+function type and keeps the resolved value's own capability. The full surface —
+a `copy |T| -> U` qualifier for an explicitly-copyable callable, and a distinct
+"capability unknown" state — is deferred to RFC-0163 (v0.17.0), which refines
+this move-only state rather than replacing it.
+
 <details>
 <summary>Formal rules</summary>
 
@@ -191,31 +205,10 @@ the callee — is `T0003`.
 
 > **Since v0.13.0 (RFC-0166).**
 
-A **written function type has move-only by-value use-multiplicity**. Every `|T| ->
-U` type node — anywhere a type is written, and every function-type node nested
-inside another — is move-only: a value of it may be called (subject to its
-`once` / `var`) and moved, never duplicated by value; `let a := f; let b := f;`
-for a `f: |T| -> U` binding is a use-after-move. A bare generic parameter is not a
-written function type and keeps the resolved value's own capability.
-
-A function value the compiler proved copyable — a named function, a capture-free
-closure, or a closure whose captures are all `Copy` ([Closures](#spec.functions.closures.legality-20))
-— is **accepted into a written function-type slot by moving**. This is a
-first-order acceptance: it applies when the value flows directly into a `let` /
-`var` binding, an ascription, a direct argument, or a return slot whose written
-type is a function type — including when that slot's written type *is itself* a
-function type (`map(add_one)`). Its copyability is not carried by the written
-type and is not recovered downstream: a function that returns such a parameter
-through a written function return type yields a move-only value to its caller.
-
-Below the first function-type level — a function type nested as a parameter,
-return, element, or field *of another function type* — the by-value use axis
-matches **exactly**, as `once` / `var` do: a written (move-only) nested function
-type does not reconcile with a copyable one.
-
-The full surface — a `copy |T| -> U` qualifier that asserts a copyable callable,
-and a distinct "capability unknown" state — is deferred to RFC-0163 (v0.17.0),
-which refines this move-only state rather than replacing it.
+A written function type (`|T| -> U`) has move-only by-value use-multiplicity at
+every nesting depth, matching exactly against a copyable one: a value of it may
+be called (subject to `once` / `var`) and moved, but not duplicated by value. A
+bare generic parameter is not a written function type.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0166](../../rfcs/4-implemented/rfc-0166-written-function-types-lower-to-move-only.md)_</span>
@@ -230,6 +223,22 @@ which refines this move-only state rather than replacing it.
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDE5IiwiY29sIjpudWxsLCJjb250YWlucyI6Im1vdmVkIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoidjBfMTNfMF9uZWdfd3JpdHRlbl9mbl90eXBlX3VzZV9hZnRlcl9tb3ZlLm10bCIsInNvdXJjZSI6Ii8vIHYwLjEzLjAgKFJGQy0wMTY2KTogYSBiaW5kaW5nIHdob3NlICp3cml0dGVuKiB0eXBlIGlzIGEgZnVuY3Rpb24gdHlwZSBgfGk2NHxcbi8vIC0+IGk2NGAgaXMgbW92ZS1vbmx5LCByZWdhcmRsZXNzIG9mIHdoYXQgd2FzIGFzc2lnbmVkIHRvIGl0LiBgYWRkX29uZWAgaXMgYVxuLy8gY29weWFibGUgbmFtZWQgZnVuY3Rpb24sIGJ1dCB0aGUgYW5ub3RhdGlvbiBlcmFzZXMgdGhhdDogYGZgIG1heSBiZSBtb3ZlZFxuLy8gb25jZSwgYW5kIHRoZSBzZWNvbmQgYGxldGAgaXMgYW4gb3JkaW5hcnkgdXNlLWFmdGVyLW1vdmUgKFJGQy0wMDcxIC8gVDAwMTkpLlxuLy9cbi8vIE5lZWRzIG1vdmVfY2hlY2sgPSB0cnVlIC0tIHRoaXMgaXMgdGhlIGdlbmVyYWwgYWZmaW5lLW1vdmUgY2hlY2ssIG5vdCBhXG4vLyBjbG9zdXJlLXNwZWNpZmljIGFsd2F5cy1vbiBydWxlLlxuXG5mdW4gYWRkX29uZSh4OiBpNjQpIC0+IGk2NCB7IHggKyAxIH1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGY6IHxpNjR8IC0+IGk2NCA6PSBhZGRfb25lO1xuICAgIGxldCBhIDo9IGY7ICAgICAgICAgIC8vIG1vdmVzIGBmYFxuICAgIGxldCBiIDo9IGY7ICAgICAgICAgIC8vIG1vdmVkLXZhbHVlIGVycm9yIC0tIGBmYCBpcyBtb3ZlLW9ubHkgdW5kZXIgUkZDLTAxNjZcbiAgICBwcmludGxuKGEoMSkgKyBiKDIpKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2Z1bmN0aW9ucy92MF8xM18wX25lZ193cml0dGVuX2ZuX3R5cGVfdXNlX2FmdGVyX21vdmUubXRsIiwibmFtZSI6InYwXzEzXzBfbmVnX3dyaXR0ZW5fZm5fdHlwZV91c2VfYWZ0ZXJfbW92ZS5tdGwifQ=="></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InYwXzEzXzBfd3JpdHRlbl9mbl90eXBlX21vdmVfb25seS5tdGwiLCJzb3VyY2UiOiIvLyB2MC4xMy4wIChSRkMtMDE2Nik6IGEgKndyaXR0ZW4qIGZ1bmN0aW9uIHR5cGUgYHxUfCAtPiBVYCBpcyBtb3ZlLW9ubHkuIEFcbi8vIGZ1bmN0aW9uIHZhbHVlIHRoZSBjb21waWxlciBwcm92ZWQgY29weWFibGUgLS0gYSBuYW1lZCBmdW5jdGlvbiBoZXJlIC0tIGlzXG4vLyBhY2NlcHRlZCBpbnRvIHN1Y2ggYSBzbG90IGJ5IG1vdmluZy4gVGhlIHdyaXR0ZW4gdHlwZSBkb2VzIG5vdCBjYXJyeSB0aGVcbi8vIGNvcHlhYmlsaXR5IGZvcndhcmQ6IGBwaWNrYCByZXR1cm5zIGl0cyBhcmd1bWVudCB0aHJvdWdoIGEgd3JpdHRlbiBmdW5jdGlvblxuLy8gcmV0dXJuIHR5cGUsIHNvIHRoZSByZXN1bHQgdGhlIGNhbGxlciBnZXRzIGJhY2sgaXMgYSBwbGFpbiBtb3ZlLW9ubHkgdmFsdWUuXG4vL1xuLy8gQSBgbWFueWAgYHJlYWRpbmdgIGNhbGwgaXMgYSBzaGFyZWQgYm9ycm93LCBub3QgYSBjb25zdW1lLCBzbyBjYWxsaW5nIGFcbi8vIHdyaXR0ZW4tZm4tdHlwZWQgcGFyYW1ldGVyIGFueSBudW1iZXIgb2YgdGltZXMgaXMgZmluZSAtLSBvbmx5IGEgcmVwZWF0ZWRcbi8vICpieS12YWx1ZSogdXNlIGlzIHRoZSB1c2UtYWZ0ZXItbW92ZS4gVGhlIGNvbXBhbmlvbiBuZWdhdGl2ZXNcbi8vIGB0eXBlY2hlY2tpbmcvZnVuY3Rpb25zL3YwXzEzXzBfbmVnX3dyaXR0ZW5fZm5fdHlwZV91c2VfYWZ0ZXJfbW92ZS5tdGxgIGFuZFxuLy8gYC4uLl9uZWdfd3JpdHRlbl9mbl9wYXJhbV91c2VfYWZ0ZXJfbW92ZS5tdGxgIGNvdmVyIHRoYXQgZGlyZWN0aW9uLlxuXG5mdW4gYWRkX29uZSh4OiBpNjQpIC0+IGk2NCB7IHggKyAxIH1cblxuLy8gZmlyc3Qtb3JkZXI6IGEgbmFtZWQgKENvcHkpIGZ1bmN0aW9uIGludG8gYSB3cml0dGVuIGB8aTY0fCAtPiBpNjRgIHBhcmFtZXRlcixcbi8vIGNhbGxlZCB0d2ljZSAtLSByZXBlYXRlZCBjYWxscyBkbyBub3QgbW92ZS5cbmZ1biBhcHBseV90d2ljZShmOiB8aTY0fCAtPiBpNjQsIHg6IGk2NCkgLT4gaTY0IHsgZih4KSArIGYoeCArIDEpIH1cblxuLy8gd3JpdHRlbiBmdW5jdGlvbiAqcmV0dXJuKiB0eXBlIC0tIHRoZSB2YWx1ZSBoYW5kZWQgYmFjayBpcyBtb3ZlLW9ubHkuXG5mdW4gcGljayhmOiB8aTY0fCAtPiBpNjQpIC0+IHxpNjR8IC0+IGk2NCB7IGYgfVxuXG5mdW4gbWFpbigpIHtcbiAgICBhc3NlcnQoYXBwbHlfdHdpY2UoYWRkX29uZSwgMTApID09IDIzKTsgLy8gKDEwKzEpICsgKDExKzEpXG5cbiAgICBsZXQgY2hvc2VuIDo9IHBpY2soYWRkX29uZSk7XG4gICAgYXNzZXJ0KGNob3Nlbig5KSA9PSAxMCk7XG5cbiAgICAvLyBhIGNhcHR1cmUtZnJlZSBjbG9zdXJlIGxpdGVyYWwgaXMgY29weWFibGUgdG9vIGFuZCBpcyBhY2NlcHRlZCB0aGUgc2FtZSB3YXkuXG4gICAgYXNzZXJ0KGFwcGx5X3R3aWNlKHxuOiBpNjR8IHsgbiAqIDIgfSwgMTApID09IDQyKTsgLy8gMjAgKyAyMlxuXG4gICAgcHJpbnRsbihcIm9rXCIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvZnVuY3Rpb25zL3YwXzEzXzBfd3JpdHRlbl9mbl90eXBlX21vdmVfb25seS5tdGwiLCJuYW1lIjoidjBfMTNfMF93cml0dGVuX2ZuX3R5cGVfbW92ZV9vbmx5Lm10bCJ9"></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InYwXzEzXzBfeF9tdXRhdGluZ19jbG9zdXJlX3ZpYV93cml0dGVuX3Zhcl9mbl9wYXJhbS5tdGwiLCJzb3VyY2UiOiIvLyB2MC4xMy4wIGNyb3NzLWZlYXR1cmUgKGludGVncmF0aW9uIHNlc3Npb24sIG1ldGVsLWNvcmUjOTU2KTogdGhlIGNsb3N1cmVcbi8vIG11dGF0aW9uIGF4aXMgKFJGQy0wMTUzKSwgcGlwZSBub3RhdGlvbiAoUkZDLTAxNTQpLCBhbmQgd3JpdHRlbiBmdW5jdGlvblxuLy8gdHlwZXMgbG93ZXJpbmcgdG8gbW92ZS1vbmx5IChSRkMtMDE2NikgdG9nZXRoZXIuIEEgYFsmdmFyIGFjY10gdmFyYCBjbG9zdXJlXG4vLyBpcyBtb3ZlZCAtLSBvbmNlLCBtb3ZlLW9ubHkgLS0gaW50byBhIGB2YXIgfGk2NHwgLT4gaTY0YCBwYXJhbWV0ZXIgYW5kIGNhbGxlZFxuLy8gdHdpY2UgaW5zaWRlIHRoZSBjYWxsZWU7IGNhbGwgbG93ZXJpbmcgZGlzcGF0Y2hlcyBvbiB0aGUgdmFsdWUncyBvd24gbXV0YXRpb25cbi8vIGF4aXMsIGFuZCB0aGUgYCZ2YXJgIGNhcHR1cmUgd3JpdGVzIHRocm91Z2ggdG8gdGhlIGNhbGxlcidzIGBhY2NgLlxuZnVuIHJ1bl90d2ljZShmOiB2YXIgfGk2NHwgLT4gaTY0LCB4OiBpNjQpIC0+IGk2NCB7XG4gICAgbGV0IGEgOj0gZih4KTtcbiAgICBmKGEpXG59XG5cbmZ1biBtYWluKCkge1xuICAgIHZhciBhY2MgOj0gMDtcbiAgICBsZXQgc3RlcCA6PSBbJnZhciBhY2NdIHZhciB8ZDogaTY0fCAtPiBpNjQgeyBhY2MgOj0gYWNjICsgZDsgYWNjIH07XG4gICAgbGV0IHIgOj0gcnVuX3R3aWNlKHN0ZXAsIDMpOyAgICAgICAgICAgIC8vIGYoMyk6IGFjYyAwLT4zIHJldCAzIDsgZigzKTogYWNjIDMtPjYgcmV0IDZcbiAgICBhc3NlcnQociA9PSA2KTtcbiAgICBhc3NlcnQoYWNjID09IDYpO1xuICAgIHByaW50bG4oXCJva1wiKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2Nsb3N1cmVzL3YwXzEzXzBfeF9tdXRhdGluZ19jbG9zdXJlX3ZpYV93cml0dGVuX3Zhcl9mbl9wYXJhbS5tdGwiLCJuYW1lIjoidjBfMTNfMF94X211dGF0aW5nX2Nsb3N1cmVfdmlhX3dyaXR0ZW5fdmFyX2ZuX3BhcmFtLm10bCJ9"></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.functions.first-class-functions.legality-4}
+
+> **Since v0.13.0 (RFC-0166).**
+
+A function value the compiler proved copyable is accepted into a written
+function-type slot by moving; the slot's copyability is not carried by the
+written type and is not recoverable downstream.
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDE5IiwiY29sIjpudWxsLCJjb250YWlucyI6Im1vdmVkIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoidjBfMTNfMF9uZWdfd3JpdHRlbl9mbl90eXBlX3VzZV9hZnRlcl9tb3ZlLm10bCIsInNvdXJjZSI6Ii8vIHYwLjEzLjAgKFJGQy0wMTY2KTogYSBiaW5kaW5nIHdob3NlICp3cml0dGVuKiB0eXBlIGlzIGEgZnVuY3Rpb24gdHlwZSBgfGk2NHxcbi8vIC0+IGk2NGAgaXMgbW92ZS1vbmx5LCByZWdhcmRsZXNzIG9mIHdoYXQgd2FzIGFzc2lnbmVkIHRvIGl0LiBgYWRkX29uZWAgaXMgYVxuLy8gY29weWFibGUgbmFtZWQgZnVuY3Rpb24sIGJ1dCB0aGUgYW5ub3RhdGlvbiBlcmFzZXMgdGhhdDogYGZgIG1heSBiZSBtb3ZlZFxuLy8gb25jZSwgYW5kIHRoZSBzZWNvbmQgYGxldGAgaXMgYW4gb3JkaW5hcnkgdXNlLWFmdGVyLW1vdmUgKFJGQy0wMDcxIC8gVDAwMTkpLlxuLy9cbi8vIE5lZWRzIG1vdmVfY2hlY2sgPSB0cnVlIC0tIHRoaXMgaXMgdGhlIGdlbmVyYWwgYWZmaW5lLW1vdmUgY2hlY2ssIG5vdCBhXG4vLyBjbG9zdXJlLXNwZWNpZmljIGFsd2F5cy1vbiBydWxlLlxuXG5mdW4gYWRkX29uZSh4OiBpNjQpIC0+IGk2NCB7IHggKyAxIH1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGY6IHxpNjR8IC0+IGk2NCA6PSBhZGRfb25lO1xuICAgIGxldCBhIDo9IGY7ICAgICAgICAgIC8vIG1vdmVzIGBmYFxuICAgIGxldCBiIDo9IGY7ICAgICAgICAgIC8vIG1vdmVkLXZhbHVlIGVycm9yIC0tIGBmYCBpcyBtb3ZlLW9ubHkgdW5kZXIgUkZDLTAxNjZcbiAgICBwcmludGxuKGEoMSkgKyBiKDIpKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2Z1bmN0aW9ucy92MF8xM18wX25lZ193cml0dGVuX2ZuX3R5cGVfdXNlX2FmdGVyX21vdmUubXRsIiwibmFtZSI6InYwXzEzXzBfbmVnX3dyaXR0ZW5fZm5fdHlwZV91c2VfYWZ0ZXJfbW92ZS5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InYwXzEzXzBfd3JpdHRlbl9mbl90eXBlX21vdmVfb25seS5tdGwiLCJzb3VyY2UiOiIvLyB2MC4xMy4wIChSRkMtMDE2Nik6IGEgKndyaXR0ZW4qIGZ1bmN0aW9uIHR5cGUgYHxUfCAtPiBVYCBpcyBtb3ZlLW9ubHkuIEFcbi8vIGZ1bmN0aW9uIHZhbHVlIHRoZSBjb21waWxlciBwcm92ZWQgY29weWFibGUgLS0gYSBuYW1lZCBmdW5jdGlvbiBoZXJlIC0tIGlzXG4vLyBhY2NlcHRlZCBpbnRvIHN1Y2ggYSBzbG90IGJ5IG1vdmluZy4gVGhlIHdyaXR0ZW4gdHlwZSBkb2VzIG5vdCBjYXJyeSB0aGVcbi8vIGNvcHlhYmlsaXR5IGZvcndhcmQ6IGBwaWNrYCByZXR1cm5zIGl0cyBhcmd1bWVudCB0aHJvdWdoIGEgd3JpdHRlbiBmdW5jdGlvblxuLy8gcmV0dXJuIHR5cGUsIHNvIHRoZSByZXN1bHQgdGhlIGNhbGxlciBnZXRzIGJhY2sgaXMgYSBwbGFpbiBtb3ZlLW9ubHkgdmFsdWUuXG4vL1xuLy8gQSBgbWFueWAgYHJlYWRpbmdgIGNhbGwgaXMgYSBzaGFyZWQgYm9ycm93LCBub3QgYSBjb25zdW1lLCBzbyBjYWxsaW5nIGFcbi8vIHdyaXR0ZW4tZm4tdHlwZWQgcGFyYW1ldGVyIGFueSBudW1iZXIgb2YgdGltZXMgaXMgZmluZSAtLSBvbmx5IGEgcmVwZWF0ZWRcbi8vICpieS12YWx1ZSogdXNlIGlzIHRoZSB1c2UtYWZ0ZXItbW92ZS4gVGhlIGNvbXBhbmlvbiBuZWdhdGl2ZXNcbi8vIGB0eXBlY2hlY2tpbmcvZnVuY3Rpb25zL3YwXzEzXzBfbmVnX3dyaXR0ZW5fZm5fdHlwZV91c2VfYWZ0ZXJfbW92ZS5tdGxgIGFuZFxuLy8gYC4uLl9uZWdfd3JpdHRlbl9mbl9wYXJhbV91c2VfYWZ0ZXJfbW92ZS5tdGxgIGNvdmVyIHRoYXQgZGlyZWN0aW9uLlxuXG5mdW4gYWRkX29uZSh4OiBpNjQpIC0+IGk2NCB7IHggKyAxIH1cblxuLy8gZmlyc3Qtb3JkZXI6IGEgbmFtZWQgKENvcHkpIGZ1bmN0aW9uIGludG8gYSB3cml0dGVuIGB8aTY0fCAtPiBpNjRgIHBhcmFtZXRlcixcbi8vIGNhbGxlZCB0d2ljZSAtLSByZXBlYXRlZCBjYWxscyBkbyBub3QgbW92ZS5cbmZ1biBhcHBseV90d2ljZShmOiB8aTY0fCAtPiBpNjQsIHg6IGk2NCkgLT4gaTY0IHsgZih4KSArIGYoeCArIDEpIH1cblxuLy8gd3JpdHRlbiBmdW5jdGlvbiAqcmV0dXJuKiB0eXBlIC0tIHRoZSB2YWx1ZSBoYW5kZWQgYmFjayBpcyBtb3ZlLW9ubHkuXG5mdW4gcGljayhmOiB8aTY0fCAtPiBpNjQpIC0+IHxpNjR8IC0+IGk2NCB7IGYgfVxuXG5mdW4gbWFpbigpIHtcbiAgICBhc3NlcnQoYXBwbHlfdHdpY2UoYWRkX29uZSwgMTApID09IDIzKTsgLy8gKDEwKzEpICsgKDExKzEpXG5cbiAgICBsZXQgY2hvc2VuIDo9IHBpY2soYWRkX29uZSk7XG4gICAgYXNzZXJ0KGNob3Nlbig5KSA9PSAxMCk7XG5cbiAgICAvLyBhIGNhcHR1cmUtZnJlZSBjbG9zdXJlIGxpdGVyYWwgaXMgY29weWFibGUgdG9vIGFuZCBpcyBhY2NlcHRlZCB0aGUgc2FtZSB3YXkuXG4gICAgYXNzZXJ0KGFwcGx5X3R3aWNlKHxuOiBpNjR8IHsgbiAqIDIgfSwgMTApID09IDQyKTsgLy8gMjAgKyAyMlxuXG4gICAgcHJpbnRsbihcIm9rXCIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvZnVuY3Rpb25zL3YwXzEzXzBfd3JpdHRlbl9mbl90eXBlX21vdmVfb25seS5tdGwiLCJuYW1lIjoidjBfMTNfMF93cml0dGVuX2ZuX3R5cGVfbW92ZV9vbmx5Lm10bCJ9"></details>
 </details>
 <!-- rfc.py:fixtures:end -->
 
@@ -364,9 +373,10 @@ for the closure value's whole lifetime. [Captured owned values are dropped when 
 closure value is dropped](#spec.functions.closures.dynamics-11), in capture-list order.
 
 Closures [satisfy no aspects](#spec.functions.closures.legality-12): `==`, `<`, `.clone()`,
-and other aspect-gated operations on closure values do not type-check. [A
-closure's `Send` / `Sync` follows the aggregate rule over its
-captures](#spec.functions.closures.legality-14); a `mutating` closure is not `Sync`.
+and other aspect-gated operations on closure values do not type-check — including `Share`
+once RFC-0158 (`1-under-review`) adds it. [A closure's `Send` / `Sync` follows the
+aggregate rule over its captures](#spec.functions.closures.legality-14); a `mutating`
+closure is not `Sync`.
 
 <details>
 <summary>Formal rules</summary>
@@ -600,15 +610,12 @@ arm is the ordinary type mismatch.
 ##### Legality Rule {#spec.functions.closures.legality-10}
 
 A `mutating` call `e(args)` requires `e` to denote a place the caller can exclusively
-borrow for the call's duration — the ordinary `&var self` receiver rule: an owned `var`
-binding, an owned temporary, an exclusive (`&var` / owning) projection off one, or a
-`&var` parameter. An owned but non-`var` (`let`) binding is **not** eligible, exactly as a
-`&var self` struct method may not be called on a `let` binding. This holds for every
-`mutating` closure — one that mutates its own by-value captures, and one that only drives
-mutation through a captured `&var`: `var` at the binding site is the marker that calling
-the value can cause a mutation, the same marker `var x` gives before `&var x` is taken. A
-shared-`&` callee — a `&Self` / `&self` receiver, a place reached through a `&` step, or
-an `&`-captured closure — is a compile error.
+borrow for the call's duration: an owned `var` binding, an owned temporary, an exclusive
+(`&var` / owning) projection off one, or a `&var` parameter — the ordinary `&var self`
+receiver rule. An owned but non-`var` (`let`) binding, or any shared-`&` callee (a `&Self`
+/ `&self` receiver, a place reached through a `&` step, or an `&`-captured closure), is a
+compile error. This holds for every `mutating` closure, whether it mutates its own
+by-value captures or only drives mutation through a captured `&var`.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
@@ -633,16 +640,11 @@ checker lands.
 
 ##### Legality Rule {#spec.functions.closures.legality-12}
 
-A closure value satisfies no aspects. `==`, `<`, and other aspect-gated operations applied
-to a closure value are a compile error (aspect not satisfied). `c.clone()` likewise does
-not type-check — a closure has no `Clone` impl; the only way to duplicate a closure value
-is the ordinary by-value copy available when it is `Copy`
-([legality-20](#spec.functions.closures.legality-20)). Structural equality of two function
-*types* is a type relation and does not make their values comparable.
-
-> A `Share` aspect and `.share()` method don't exist in the language yet (RFC-0158,
-> `1-under-review`); once they do, a closure has no `Share` impl either, by the same
-> aspect-exemption rule — but that is RFC-0158's claim to spec-integrate, not this one's.
+A closure value satisfies no aspects: `==`, `<`, `.clone()`, and other aspect-gated
+operations on a closure value are a compile error. The only way to duplicate a closure
+value is the by-value copy available when it is
+`Copy` ([legality-20](#spec.functions.closures.legality-20)). Structural equality of two
+function *types* is a type relation and does not make their values comparable.
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -706,15 +708,14 @@ any remaining gap at the concrete site.
 
 ##### Legality Rule {#spec.functions.closures.legality-19}
 
-A closure literal is resolved in a fixed stage order: (1) capture classification — which
-free variables the body references, each one's `Copy`-ness, whether a list is required,
-and, when a list is present, exhaustiveness and specifier-matches-use; (2)
+A closure literal is resolved in a fixed stage order: (1) capture classification
+(referenced free variables, each one's `Copy`-ness, whether a list is required, and —
+when present — its exhaustiveness and specifier-match); (2)
 `use_multiplicity` ([legality-20](#spec.functions.closures.legality-20)); (3) `once`
 verification ([legality-8](#spec.functions.closures.legality-8)); (4) `var` verification
-([legality-25](#spec.functions.closures.legality-25)). The first failing stage is the
-reported error; later stages are suppressed for that closure. Stages 3 and 4 are
-independent — a body that both consumes and mutates without the qualifiers is reported
-against both, each with its own fix.
+([legality-25](#spec.functions.closures.legality-25)). The first failing stage is
+reported; later stages are suppressed. Stages 3 and 4 are independent: a body that both
+consumes and mutates without the qualifiers is reported against both.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/4-implemented/rfc-0050-closure-capture-lists.md)_</span>
@@ -758,15 +759,14 @@ and makes the closure `mutating` ([legality-25](#spec.functions.closures.legalit
 ##### Legality Rule {#spec.functions.closures.legality-22}
 
 When an inner closure captures a binding `s` that is itself a capture of an *enclosing*
-closure: the enclosing closure must list `s` in its own capture list (it is a free
-variable of the enclosing body); an inner `[s]` requires the enclosing closure to hold `s`
-by value, and an inner `[s]` naming an enclosing `[&s]` / `[&var s]` capture is a `move
-out of borrowed content` error; and because evaluating the inner literal performs the
-capture, an inner `[s]` that moves an enclosing-held `s` makes the *enclosing* closure
-`once` ([legality-8](#spec.functions.closures.legality-8)) even if the inner closure is
+closure: the enclosing closure must list `s` in its own capture list; an inner `[s]`
+requires the enclosing closure to hold `s` by value (naming an enclosing `[&s]` /
+`[&var s]` capture is a `move out of borrowed content` error); and an inner `[s]` that
+moves an enclosing-held `s` makes the *enclosing* closure
+`once` ([legality-8](#spec.functions.closures.legality-8)), even if the inner closure is
 never called. An inner `[&s]` / `[&var s]` does not change the enclosing closure's
-multiplicity but is subject to [legality-11](#spec.functions.closures.legality-11)'s
-interim borrow restriction.
+multiplicity, but is subject to
+[legality-11](#spec.functions.closures.legality-11)'s interim borrow restriction.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/4-implemented/rfc-0050-closure-capture-lists.md)_</span>
@@ -956,21 +956,15 @@ consumed by the call.
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-13}
 
-"Early exit" from a `mutating` call means the mid-call exits the language has and a caller
-can observe: a `?`-propagated `Err` or an early `return` in the body, travelling up as an
-ordinary signal through normal call-frame returns. A `panic` is not one of these — it is
-hard, uncatchable, and terminates the process ([runtime.md](runtime.md#spec.runtime.panics.dynamics-1)),
-so no later program point can observe the closure's post-exit state. On an observable early
-exit from a plain `var` (not `once`) call, the mutations that already ran stay in the
-environment, the exclusive borrow and the in-call flag are released as the frame returns,
-and the closure is an ordinary value whose captured state has been mutated — as a `&var
-self` method that returned early mid-mutation leaves its receiver. There is no rollback,
-and a later call runs the body from the top over that state; it does not resume from the
-exit point. A `once`
-/ `once var` closure was already consumed at the call expression
-([dynamics-10](#spec.functions.closures.dynamics-10)), so it is a moved value however the
-body exited; its environment's still-owned fields are still dropped when the value goes out
-of scope.
+An early exit from a `mutating` call is a `?`-propagated `Err` or an early `return`, not a
+`panic` — a panic is uncatchable and leaves no observable post-exit state
+([runtime.md](runtime.md#spec.runtime.panics.dynamics-1)). On such an exit from a `var`
+(non-`once`) call, mutations already made stay in the environment, the exclusive borrow
+and the in-call flag release as the frame returns, and the closure remains an ordinary,
+callable value; there is no rollback, and the next call runs the body from the top over
+that state. A `once` / `once var` closure was already consumed at the call expression
+([dynamics-10](#spec.functions.closures.dynamics-10)) regardless of how the body exited;
+its still-owned fields are dropped when the value goes out of scope.
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>

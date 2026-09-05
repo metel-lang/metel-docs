@@ -454,21 +454,15 @@ unambiguously, that struct — not a same-shaped anonymous record, and not a
 
 ##### Legality Rule {#spec.ownership.narrowing.legality-1}
 
-Moving a field out of a value narrows that value's type to a row with the moved field
-removed: for a nominal struct, a residual of the same brand (`Handle.{ fd }`, RFC-0137);
-for an anonymous `record`, the record type with that label gone (`{ fd: i64 }`, RFC-0117).
-A record-typed field is moved as a whole — the residual never holds a field at a narrower
-type. A field read by value whose type is `Copy` is a copy, not a move, and does not
-narrow; a field whose type is a bare generic parameter or is not yet resolved is held in
-the row until its type is known. Narrowing is path-sensitive: the residual type at a
-program point reflects the fields moved on every path reaching it, joined conservatively
-at merge points and through loop fixpoints, exactly as move tracking computes.
-
 > **Since v0.13.0.** Struct narrowing is RFC-0137 slice 2 (metel-core#858); anonymous-record
-> narrowing is RFC-0117 (metel-core#789). A whole-value use after a partial move is a
-> plain type error at type-check time for both — reported against the binding for a struct
-> residual, as an ordinary record-shape mismatch for a record. A loop-carried *use*
-> invalid only on a later iteration is still a `--move-check` diagnostic.
+> narrowing is RFC-0117 (metel-core#789).
+
+Moving a field out of a value narrows its type to a row with that field removed: a
+same-brand residual for a struct, the record type minus that label for an anonymous
+record. A `Copy` field read by value is a copy, not a move, and does not narrow; a field
+of unresolved or generic type is held until its type is known. Narrowing is
+path-sensitive, joined conservatively at merge points and loop fixpoints, matching move
+tracking.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0117](../../rfcs/4-implemented/rfc-0117-row-narrowing.md), [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
@@ -521,20 +515,14 @@ strict, non-empty subset of the brand's declared row.
 
 ##### Legality Rule {#spec.ownership.narrowing.legality-4}
 
-Using a narrowed value where a wider row, or the whole type, is required is a type error
-at type-check time — not deferred to `--move-check`. Every still-present field of the
-residual stays readable and its methods callable. For a **struct** residual the error
-names the binding ("a partially-moved `Handle` …"); for an **anonymous record** it is an
-ordinary record-shape mismatch (a narrowed `{ right }` does not unify with `{ left, right
-}`).
-
-Conversely, a whole-value use of the binding **at its narrowed type** — moving it,
-binding it, passing it to a parameter whose row it matches — is legal, and `--move-check`
-does not flag it (metel-core#950): narrowing removed exactly the moved fields, so no live
-use touches one.
-
 > **Since v0.13.0.** Struct: RFC-0137 slice 2 (metel-core#858). Anonymous record:
 > RFC-0117 (metel-core#789). `--move-check` agreement: metel-core#950.
+
+Using a narrowed value where a wider row, or the whole type, is required is a type error
+at type-check time, not deferred to `--move-check`; every still-present field stays
+readable and its methods callable. A whole-value use *at* the narrowed type — moving it,
+binding it, passing it to a matching-row parameter — is legal, and `--move-check` does not
+flag it.
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -749,13 +737,11 @@ RFC-0137.
 ##### Legality Rule {#spec.ownership.widening.legality-1}
 
 A field assignment on a narrowed residual (`h.name := …`) is legal even though `name` is
-absent from the residual's current row — the assigned field is resolved against the
+absent from the residual's current row: the assigned field is resolved against the
 brand's full declared row, and the write reintroduces it. Widening applies only to an
 **owned** binding; a non-`Copy` field cannot be moved out of — and so cannot be
 reassigned back into — a value reached through a reference
 ([references-and-moves.legality-1](#spec.ownership.references-and-moves.legality-1)).
-Widening performs no constructor-invariant check; that is RFC-0114's, and ordinary field
-reassignment bypasses such an invariant today regardless of this feature.
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
