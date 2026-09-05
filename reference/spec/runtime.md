@@ -33,12 +33,12 @@ These are available in every module without any `import` declaration (provided b
 
 | Name              | Signature                            | Description                              |
 |-------------------|--------------------------------------|------------------------------------------|
-| `print`           | `<T>(v: T)`                          | Print to stdout, no newline              |
-| `println`         | `<T>(v: T)`                          | Print to stdout with newline             |
+| `print`           | `<T>(x: T)`                          | Print to stdout, no newline              |
+| `println`         | `<T>(x: T)`                          | Print to stdout with newline             |
 | `clock`           | `() -> i64`                          | Unix timestamp in milliseconds          |
 | `assert`          | `(cond: boolean)`                    | Panic with `"assertion failed"` if `cond` is `false` |
 | `assert`          | `(cond: boolean, msg: String)`       | Overload: panic with `msg` if `cond` is `false` |
-| `dbg`             | `<T>(v: T) -> T`                     | Print `[dbg] <value>` to stderr and return the value unchanged |
+| `dbg`             | `<T>(x: T) -> T`                     | Print `[dbg] <value>` to stderr and return the value unchanged |
 | `panic`           | `(msg: String) -> !`                 | Panic unconditionally with `msg` (RFC-0078) |
 
 `assert` is overloaded — [the two-argument form carries the panic message](#spec.runtime.built-in-functions.dynamics-2).
