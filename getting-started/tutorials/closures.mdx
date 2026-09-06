@@ -1,0 +1,97 @@
+---
+sidebar_position: 9
+---
+
+# 7. Behaviour you pass around
+
+The report needs a per-user total. Build it with a **closure** — an anonymous
+function that carries the accumulator with it.
+
+## Pipe notation
+
+A closure is `|params| { body }`; the `->` and return type appear only when you
+write them:
+
+```metel
+fun main() {
+    let double := |x: i64| -> i64 { x * 2 };
+    let bump   := |x: i64| { x + 1 };        // return type inferred
+    println(double(21));   // 42
+    println(bump(10));     // 11
+}
+```
+
+Its type is written `|i64| -> i64`. A named function and a closure of the same type
+are interchangeable as arguments.
+
+## Capture lists
+
+If a closure uses a binding from outside, it **captures** it — and for a non-`Copy`
+binding, or one taken by reference, you list the capture explicitly:
+
+```metel
+fun main() {
+    let prefix := "> ";
+    let quote := [prefix.clone()] |line: String| -> String { prefix + line };
+    println(quote("hello"));   // > hello
+}
+```
+
+`[x]` moves `x` in (or copies it if `Copy`); `[x.clone()]` takes an independent
+copy; `[&x]` / `[&var x]` capture a reference. The list is what makes "this closure
+holds onto `prefix`" a thing you can see, not infer.
+
+## The aggregator
+
+The tally closure captures a `var List` by exclusive reference and updates it on
+every call. `var` on the closure marks it as mutating; `[&var totals]` says which
+binding it mutates through.
+
+```metel
+struct Tally { user: i64, total: i64 }
+
+fun main() {
+    var totals: List<Tally> := List::new();
+
+    let tally := [&var totals] var |user: i64, weight: i64| -> () {
+        var i := 0;
+        var found := false;
+        while (i < totals.len()) {
+            let row := totals.get(i).yolo();
+            if (row.user == user) {
+                totals.set(i, Tally { user = user, total = row.total + weight });
+                found := true;
+            }
+            i := i + 1;
+        }
+        if (!found) { totals.push(Tally { user = user, total = weight }); }
+    };
+
+    tally(7, 42);
+    tally(3, 1);
+    tally(7, 8);
+
+    for (t in totals.as_slice()) {
+        println("user ${t.user}: ${t.total}");
+    }
+}
+```
+
+```
+user 7: 50
+user 3: 1
+```
+
+`totals` is not shared by magic — it flows through the `[&var totals]` capture, and
+the closure is the only thing mutating it for as long as it lives. A `reading`
+(non-`var`) closure could still *read* `totals`; it just couldn't call `.push` or
+`.set` on it.
+
+There's no `Fn` / `FnMut` / `FnOnce` to reverse-engineer here: the capture list and
+the `var` keyword say what the closure does with what it holds.
+
+## By the end you'll have
+
+`tally` — a closure that maintains the per-user histogram as events stream past.
+
+**Next:** [Pluggable output](aspects) — print the report three ways without touching the pipeline.

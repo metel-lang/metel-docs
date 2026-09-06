@@ -1,0 +1,85 @@
+---
+sidebar_position: 6
+---
+
+# 4. Validate and normalize
+
+`split_event` gives three strings. This stage turns them into a checked event and
+settles on **one shape** for everything downstream — a `click` and a `buy` leave
+here looking the same.
+
+## One enriched shape
+
+```metel
+struct ParseError { line: i64, reason: String }
+
+fun parse_int(s: String, line: i64) -> Result<i64, ParseError> {
+    if (s.is_empty()) { return Err { error = ParseError { line = line, reason = "empty" } }; }
+    var acc := 0;
+    for (c in s.chars()) {
+        let digit := (c as u32) - ('0' as u32);
+        if (digit > 9u32) { return Err { error = ParseError { line = line, reason = "not a digit" } }; }
+        acc := acc * 10 + (digit as i64);
+    }
+    return Ok { value = acc };
+}
+
+// Every event leaves as { user, kind, weight, line }. `weight` is the buy amount,
+// or 1 for a click.
+fun normalize(raw: { user: String, kind: String, arg: String }, line: i64)
+    -> Result<{ user: i64, kind: String, weight: i64, line: i64 }, ParseError>
+{
+    let user := parse_int(raw.user, line)?;
+
+    if (raw.kind == "click") {
+        return Ok { value = { user = user, kind = "click", weight = 1, line = line } };
+    }
+    if (raw.kind == "buy") {
+        let amount := parse_int(raw.arg, line)?;
+        return Ok { value = { user = user, kind = "buy", weight = amount, line = line } };
+    }
+    return Err { error = ParseError { line = line, reason = "unknown kind: " + raw.kind } };
+}
+
+fun main() {
+    let click := { user = "7", kind = "click", arg = "/home" };
+    let buy   := { user = "7", kind = "buy",   arg = "42" };
+    let junk  := { user = "7", kind = "wave",  arg = "hi" };
+
+    println(normalize(click, 1).yolo().weight);   // 1
+    println(normalize(buy, 2).yolo().weight);     // 42
+
+    match (normalize(junk, 3)) {
+        Ok { value }  => println(value.weight),
+        Err { error }  => println("line ${error.line}: ${error.reason}"),
+    }
+}
+```
+
+```
+1
+42
+line 3: unknown kind: wave
+```
+
+Two `?` calls here: `parse_int(raw.user, line)?` and, for a buy,
+`parse_int(raw.arg, line)?`. Either failing returns the `Err` straight out of
+`normalize` with the line number intact.
+
+`if (raw.kind == "click")` — `==` and `match` both work on `String`. This could be a
+`match` on `raw.kind`; the `if` chain reads fine for three cases.
+
+## Why not an `enum`?
+
+A `click` and a `buy` really are different — you could model them as
+`enum Event { Click { … }, Buy { … } }`. But every stage after this only cares about
+`user` and `weight`, and a uniform record lets those stages ask for *just those
+fields* regardless of kind. That's the next page. (Enums are covered in the
+[control-flow reference](control-flow-reference#enums); this pipeline keeps one shape.)
+
+## By the end you'll have
+
+`normalize`: a validated `{ user: i64, kind: String, weight: i64, line: i64 }` for
+every accepted line.
+
+**Next:** [Ask for less than the whole record](row-bounds) — functions that need only a slice.

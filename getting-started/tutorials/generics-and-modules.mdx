@@ -1,0 +1,110 @@
+---
+sidebar_position: 11
+---
+
+# 9. Reusable, and split into files
+
+Two last steps: make a helper generic so it survives the event shape changing
+again, and break `metrics` into modules.
+
+## A generic reducer over a row bound
+
+You've already used row bounds on single events ([page 5](row-bounds)). The same
+bound makes a reducer that doesn't care what else an event carries:
+
+```metel
+fun total_weight<record T: { user: i64, weight: i64, .. }>(events: T[]) -> i64 {
+    var sum := 0;
+    for (e in events) { sum := sum + e.weight; }
+    return sum;
+}
+
+fun main() {
+    let a := [
+        { user = 7, weight = 42 },
+        { user = 3, weight = 1 },
+    ];
+    let b := [
+        { user = 7, weight = 8, kind = "buy", line = 4 },   // wider — extra fields
+        { user = 3, weight = 1, kind = "click", line = 5 },
+    ];
+
+    println(total_weight(a));   // 43
+    println(total_weight(b));   // 9 — same function, richer records
+}
+```
+
+```
+43
+9
+```
+
+`total_weight` never mentions `kind` or `line`; `{ user, weight, .. }` already
+covered "and whatever else". Add a `bucket` field next month and it still compiles.
+
+## Modules
+
+Each `.mtl` file is a module. `import` brings names in; `public` is what a module
+exposes. `::` in a path maps to `/` on disk.
+
+`metrics/parse.mtl`:
+
+```metel
+public struct ParseError { public line: i64, public reason: String }
+
+public fun parse_int(s: String, line: i64) -> Result<i64, ParseError> {
+    // ...as written on page 3
+    return Ok { value = 0 };
+}
+```
+
+`metrics/report.mtl`:
+
+```metel
+public fun total_weight<record T: { user: i64, weight: i64, .. }>(events: T[]) -> i64 {
+    var sum := 0;
+    for (e in events) { sum := sum + e.weight; }
+    return sum;
+}
+```
+
+`metrics/main.mtl`:
+
+{/* doc-example: skip reason="multi-file — the modules above are illustrative snippets, not on disk here" */}
+```metel
+import parse::{parse_int, ParseError};
+import report::total_weight;
+
+fun main() {
+    let events := [{ user = 7, weight = 42 }, { user = 3, weight = 1 }];
+    println("total ${total_weight(events)}");
+}
+```
+
+Run the entrypoint:
+
+```bash
+cargo run -- metrics/main.mtl
+```
+
+Struct **fields** are private by default even when the struct is `public` — hence
+`public line` / `public reason` on `ParseError` so `main` can read `error.line`.
+
+:::note
+Don't name a module `std`
+
+The top-level name `std` is the standard library. A file `std.mtl` at your project
+root is a compile error; any other name is fine.
+:::
+
+## What you built
+
+`metrics` parses raw event lines, validates them into one enriched shape, routes and
+tallies them through a capturing closure, and renders the result through a `dyn`
+aspect — and at every stage a function asks for exactly the fields it reads. That's
+the throughline: the data's shape is precise and it's allowed to change, and the
+type system follows along.
+
+From here: the [reference pages](numbers-chars-and-collections) for the parts of the
+language this tour skimmed, and the [language specification](../../reference/spec)
+for the normative detail.

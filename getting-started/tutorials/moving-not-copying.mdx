@@ -1,0 +1,104 @@
+---
+sidebar_position: 8
+---
+
+# 6. Move a slice, don't copy it
+
+A `String` is not copied when you pass it — it's **moved**. Move one field out of a
+value and its *type* changes to reflect what's left.
+
+## Partial moves narrow the type
+
+```metel
+fun store(s: String) -> i64 { s.len() }
+
+fun main() {
+    let fields := { user = "7", kind = "click", arg = "/home" };
+
+    let k := store(fields.kind);   // `kind` moved out; fields : { user, arg }
+    let a := store(fields.arg);    // disjoint — `arg` moved out; fields : { user }
+
+    println("${k} ${a} user ${fields.user}");   // `user` was never touched
+}
+```
+
+```
+5 5 user 7
+```
+
+`store(fields.kind)` moves `kind` out. From that point `fields` has type
+`{ user: String, arg: String }` — reading `fields.kind` again is a compile error
+(`no field kind on { user, arg }`), not a runtime surprise. The two moves are of
+different fields, so the checker allows both. `Copy` types (`i64`, `boolean`, `Char`,
+…) are copied on use and never move.
+
+:::note
+Turn on the checker
+
+Move tracking runs under `--move-check` (`cargo run -- --move-check metrics.mtl`).
+It's opt-in while the older example corpus migrates; new code should run with it.
+:::
+
+## Structs: hand two disjoint projections to two functions
+
+A `struct` supports a **projection type** `T.{ field }` — a view of just those
+fields. Passing `d.{ title }` moves that field out, so two disjoint projections go
+to two functions cleanly:
+
+```metel
+struct Doc { title: String, body: String, sig: String }
+
+fun headline(part: Doc.{ title }) -> i64 { part.title.len() }
+fun render(part: Doc.{ body }) -> i64    { part.body.len() }
+
+fun main() {
+    let d := Doc { title = "Metel", body = "the spec", sig = "v0.13" };
+
+    let a := headline(d.{ title });   // moves `title`
+    let b := render(d.{ body });      // disjoint — moves `body`
+
+    println("${a} ${b} ${d.sig}");    // `sig` untouched
+}
+```
+
+```
+5 8 v0.13
+```
+
+`headline` can't reach `body` or `sig` — it asked for `Doc.{ title }` and that's all
+it gets. A second `d.{ title }` after the move is `T0003`. (Anonymous records narrow
+the same way when a field moves out, but the `.{ … }` projection *syntax* is
+struct-only.)
+
+## Widening back — structs
+
+Reassign a moved-out field of a `struct` and its type widens back to whole:
+
+```metel
+struct Cart { user: i64, note: String }
+
+fun peek(s: String) -> i64 { s.len() }
+
+fun main() {
+    var cart := Cart { user = 7, note = "cart abandoned" };
+
+    let n := peek(cart.note);        // `note` moved; cart : Cart.{ user }
+    cart.note := "cart restored";    // reassigned — cart : Cart again
+
+    println("${cart.note} for user ${cart.user} (was ${n} chars)");
+}
+```
+
+```
+cart restored for user 7 (was 14 chars)
+```
+
+Widening is a struct feature: a nominal type can lose a field and get it back. An
+anonymous record narrows but does not widen back this way.
+
+## By the end you'll have
+
+Comfort with the fact that moving a field changes the type it moved out of, and —
+for a struct — that reassigning it puts the type back.
+
+**Next:** [Behaviour you pass around](closures) — a running total that travels with its state.

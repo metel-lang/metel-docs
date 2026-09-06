@@ -1,0 +1,61 @@
+---
+sidebar_position: 3
+---
+
+# 1. Run something real
+
+Over this tutorial you build **`metrics`**: a tiny pipeline that reads a batch of
+raw event lines, parses and validates each one, and prints a per-user report. Every
+page adds one stage, and the interesting part is that the data's *shape* changes as
+it moves through — which is where Metel's records, row bounds, and ownership rules
+earn their place.
+
+This page: get the interpreter running and walk the batch.
+
+## The entry point
+
+Every program starts in `main`. Put this in `metrics.mtl`:
+
+```metel
+fun main() {
+    let raw := [
+        "7 click /home",
+        "7 buy 42",
+        "3 click /docs",
+    ];
+
+    var line := 0;
+    for (text in raw) {
+        line := line + 1;
+        println("${line}: ${text}");
+    }
+}
+```
+
+Run it:
+
+```bash
+cargo run -- metrics.mtl
+```
+
+```
+1: 7 click /home
+2: 7 buy 42
+3: 3 click /docs
+```
+
+A few things this already shows:
+
+- `let` binds a value; `var` binds one you can reassign (`line := line + 1`). A
+  plain `let` binding cannot be reassigned.
+- `[ … ]` is an array literal. `for (text in raw)` walks it.
+- `${…}` interpolates any value with a `.to_string()` — every built-in scalar has one.
+
+Each raw line is `"<user> <kind> <arg>"`: a `click` carries a path, a `buy` carries
+an amount.
+
+## By the end you'll have
+
+A program that iterates the event batch and prints each line with its number.
+
+**Next:** [Give the data a shape](shaping-data) — turn each line into something with named fields, without declaring a type for it.

@@ -1,10 +1,10 @@
 ---
-sidebar_position: 11
+sidebar_position: 22
 ---
 
-# Tutorial: Control Flow and Error Handling
+# Reference: Control Flow, Options, and Errors
 
-This tutorial covers loops, conditional expressions, optional values (`Perhaps<T>`), and error propagation (`Result<T, E>`). These are the tools you will reach for whenever a program needs to make decisions, repeat work, or handle failure.
+Reference material. `Result` and `?` are introduced in the arc on [Parse into fields, fail loudly](parsing-and-results); this page is the full picture — `if`/`match`/`loop`/`while`/`for`, `Perhaps<T>`, and error propagation.
 
 ## If, while, for-in, and loop
 
@@ -375,5 +375,3 @@ ok: Ada, age 30
 - `Result<T, E>` represents a recoverable error; `?` propagates errors automatically.
 - `From<E>` lets `?` coerce between error types without explicit conversions.
 - `match` guards (`if cond`) add extra conditions to individual arms; tuples destructure by position.
-
-Next: [Modules](modules) — splitting a program across files, imports, and visibility.
