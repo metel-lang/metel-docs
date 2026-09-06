@@ -6,7 +6,24 @@ title: "Metel Language Changelog"
 
 ## v0.13.0
 
-*In progress on `develop` — not yet released.*
+**Released 2026-09-06.** The closure cluster lands — pipe notation, capture lists, the
+`once` / `var` qualifiers, and capture-by-move as the default — alongside move-only
+written function types, move-triggered row narrowing and widening, `dyn Aspect`
+existentials, transparent type aliases, struct pattern matching, and the `:=` walrus for
+kept bindings. The `Since v0.13.0` / `Changed in v0.13.0` markers throughout the spec
+date to this release.
+
+**`:=` for kept bindings (RFC-0136):**
+- A `let` / `var` binding, an associated-type definition, and a plain assignment now use
+  `:=` in place of `=` — `let x := 1;`, `var n := 0;`, `n := n + 1;`. The bare `=` in
+  those positions is a `P0001` parse error: a hard switch, no transition alias. `:` still
+  introduces a type annotation (`let x: i64 := 1`); `=` is kept for struct-field init
+  (`P { x = 1 }`), keyword arguments, associated-type bindings in a bound
+  (`Deref<Target = Node>`), the compound operators (`+= -= *= /= %=`), and `==`.
+- The whole corpus migrated in the same change via an AST-driven rewriter that splices
+  `:=` at each target `=` token's byte span in the parse tree — never a text
+  substitution: every `.mtl` fixture, `stdlib/core.mtl`, and the inline-Metel test
+  strings (`metel-core#804`).
 
 **Pipe notation for closures and function types (RFC-0154):**
 - A closure literal and a function type are now written with a pipe-delimited parameter
@@ -176,6 +193,14 @@ title: "Metel Language Changelog"
   unit literal (`match () { … }`). Every `match` in the spec, tutorials, stdlib, and
   fixture corpus was migrated in the same change with an AST-driven rewriter; only the
   bare form was touched.
+
+**`extends Aspect` (RFC-0130):**
+- The anonymous aspect-bound spelling in the two positions that permit it — a function
+  parameter (RFC-0035) and a function return (RFC-0037) — is now `extends Aspect`, not
+  `impl Aspect`: `fun draw(s: extends Shape)`, `fun make() -> extends Shape`. A pure
+  lexical rename with zero semantic change; it finishes the one spot the RFC-0098 keyword
+  sweep missed, the sweep that also gave `impl` → `extend`, `pub` → `public`, and
+  `mut` → `var` (`metel-core#801`).
 
 **Fixes:**
 - `Self::AssocType` and `Self.{ field }` now resolve inside an `extend` block's own
