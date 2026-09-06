@@ -22,7 +22,7 @@ out-of-bounds array access, and integer division by zero trigger a panic.
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlIwMDE1IiwiY29sIjpudWxsLCJjb250YWlucyI6ImJvb20iLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJydW50aW1lX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibmVnX3BhbmljLm10bCIsInNvdXJjZSI6Ii8vIFJVTlRJTUVfRVJST1JbYm9vbV1cbi8vIFJGQy0wMDc4OiBwYW5pYyhtc2cpIGFsd2F5cyBwYW5pY3MgKFIwMDE1KSB3aXRoIHRoZSBnaXZlbiBtZXNzYWdlLlxuZnVuIG1haW4oKSB7XG4gICAgcGFuaWMoXCJib29tXCIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvbmV2ZXIvbmVnX3BhbmljLm10bCIsIm5hbWUiOiJuZWdfcGFuaWMubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlIwMDE0IiwiY29sIjpudWxsLCJjb250YWlucyI6ImJvb20iLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJydW50aW1lX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibmVnX3BhbmljLm10bCIsInNvdXJjZSI6Ii8vIFJVTlRJTUVfRVJST1JbYm9vbV1cbi8vIFJGQy0wMDc4OiBwYW5pYyhtc2cpIGFsd2F5cyBwYW5pY3MgKFIwMDE0KSB3aXRoIHRoZSBnaXZlbiBtZXNzYWdlLlxuZnVuIG1haW4oKSB7XG4gICAgcGFuaWMoXCJib29tXCIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvbmV2ZXIvbmVnX3BhbmljLm10bCIsIm5hbWUiOiJuZWdfcGFuaWMubXRsIn0="></details>
 <!-- rfc.py:fixtures:end -->
 
 </details>
@@ -83,7 +83,7 @@ writes the same result followed by a newline.
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlIwMDEzIiwiY29sIjpudWxsLCJjb250YWlucyI6ImN1c3RvbSBhc3NlcnRpb24gZmFpbHVyZSIsImxpbmUiOm51bGwsInN0YXR1cyI6InJ1bnRpbWVfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiI4MF9hc3NlcnRfcGFuaWNfbWVzc2FnZXMubXRsIiwic291cmNlIjoiZnVuIG1haW4oKSB7XG4gICAgYXNzZXJ0KGZhbHNlLCBcImN1c3RvbSBhc3NlcnRpb24gZmFpbHVyZVwiKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2J1aWx0aW5zLzgwX2Fzc2VydF9wYW5pY19tZXNzYWdlcy5tdGwiLCJuYW1lIjoiODBfYXNzZXJ0X3BhbmljX21lc3NhZ2VzLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlIwMDEyIiwiY29sIjpudWxsLCJjb250YWlucyI6ImN1c3RvbSBhc3NlcnRpb24gZmFpbHVyZSIsImxpbmUiOm51bGwsInN0YXR1cyI6InJ1bnRpbWVfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiI4MF9hc3NlcnRfcGFuaWNfbWVzc2FnZXMubXRsIiwic291cmNlIjoiZnVuIG1haW4oKSB7XG4gICAgYXNzZXJ0KGZhbHNlLCBcImN1c3RvbSBhc3NlcnRpb24gZmFpbHVyZVwiKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2J1aWx0aW5zLzgwX2Fzc2VydF9wYW5pY19tZXNzYWdlcy5tdGwiLCJuYW1lIjoiODBfYXNzZXJ0X3BhbmljX21lc3NhZ2VzLm10bCJ9"></details>
 <!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.runtime.built-in-functions.dynamics-3}
@@ -310,7 +310,7 @@ in pipelines without explicit `match`:
 | `.and_then(f)`       | `<U>((T) -> Perhaps<U>) -> Perhaps<U>` | Chain a `Perhaps`-returning function     |
 | `.unwrap_or(d)`      | `(T) -> T`                         | The value, or `d` when `None`                |
 | `.unwrap_or_else(f)` | `(() -> T) -> T`                   | The value, or `f()` when `None`              |
-| `.yolo()`            | `() -> T`                          | The value, or panics (`R0014`) when `None`   |
+| `.yolo()`            | `() -> T`                          | The value, or panics (`R0013`) when `None`   |
 | `.ok_or(error)`      | `<E>(E) -> Result<T, E>`           | `Some` becomes `Ok`; `None` becomes `Err(error)` |
 
 `Result<T, E>` — `Ok { value: T }` or `Err { error: E }`:
@@ -323,7 +323,7 @@ in pipelines without explicit `match`:
 | `.and_then(f)`       | `<U>((T) -> Result<U, E>) -> Result<U, E>` | Chain a `Result`-returning function |
 | `.unwrap_or(d)`      | `(T) -> T`                         | The success value, or `d` when `Err`         |
 | `.unwrap_or_else(f)` | `(() -> T) -> T`                   | The success value, or `f()` when `Err`       |
-| `.yolo()`            | `() -> T`                          | The success value, or panics (`R0014`) when `Err`, including the error's debug representation |
+| `.yolo()`            | `() -> T`                          | The success value, or panics (`R0013`) when `Err`, including the error's debug representation |
 | `.map_err(f)`        | `<F>((E) -> F) -> Result<T, F>`    | Transform the error value, passing `Ok` through |
 | `.ok()`              | `() -> Perhaps<T>`                 | `Ok` becomes `Some`; `Err` becomes `None`, discarding the error |
 
