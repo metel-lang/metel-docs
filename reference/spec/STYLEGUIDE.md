@@ -79,8 +79,13 @@ something that doesn't exist yet. Never blend this into ordinary descriptive pro
 it already works:
 
 ```markdown
-> **Planned for v0.13.0 (RFC-0122): shared XOR exclusive — a place may have any number of `&T` borrows, or exactly one `&var T`, never both.**
+> **Planned for v0.16.0 (RFC-0122): shared XOR exclusive — a place may have any number of `&T` borrows, or exactly one `&var T`, never both.**
 ```
+
+`rfc.py check` flags a `Planned for` callout as stale when its version is older than the
+one in progress on `develop`, or (for an error code, or a spec section with fixture-cited
+Legality/Dynamic Semantics blocks) when there's fixture evidence the feature already works
+— name the *real* target version, not the current one by reflex (metel-core#985).
 
 **Cross-references** between spec files: plain relative markdown links —
 `[Modules — Visibility](modules.md#visibility)`.

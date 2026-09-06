@@ -877,6 +877,135 @@ def spec_exemption_problems():
     return problems
 
 
+# metel-core#985: the STYLEGUIDE `> **Planned for vX.Y.Z ...` convention (Prose
+# conventions), NOT `Changed in vX.Y` narration -- that's #772's surface, a
+# different callout with a different failure mode.
+PLANNED_MARKER_RE = re.compile(r"^>\s*\*\*Planned for v(?P<ver>\d+\.\d+\.\d+)\b")
+
+
+def _semver(s):
+    return tuple(int(x) for x in s.split("."))
+
+
+def current_dev_version():
+    """The version currently in progress on `develop` -- the topmost `## vX.Y.Z`
+    heading in the changelog (newest first). `None` if the changelog can't be read,
+    which downgrades the version-based check to a skip rather than a failure."""
+    changelog = REPO_ROOT / "release-notes" / "changelog.md"
+    try:
+        text = changelog.read_text()
+    except OSError:
+        return None
+    m = re.search(r"^## v(\d+\.\d+\.\d+)\s*$", text, re.MULTILINE)
+    return m.group(1) if m else None
+
+
+def planned_marker_problems():
+    """metel-core#985: flag stale `Planned for vX.Y.Z` callouts before someone
+    trips over one by hand (T0026-T0030 and R0016 were both stale by the time a
+    #981 fixture-citation pass happened to touch them).
+
+    Three checks against the STYLEGUIDE `Planned for` convention:
+
+    - version (no corpus needed): a `Planned for vX.Y.Z` naming a version older
+      than the one in progress on `develop` is stale outright -- it shipped, or
+      the marker's version is wrong.
+    - proof, error codes: a `### CODE` entry marked `Planned for` whose code
+      already fires somewhere in the fixture corpus (`[expect].code`) is provably
+      working, so the marker is wrong.
+    - proof, spec (lower confidence): a `Planned for` callout inside a section
+      that also holds a fixture-cited Legality Rule / Dynamic Semantics block,
+      for a version at or before the in-progress one -- the feature may already
+      have shipped. Section-scoped because a prose callout has no block-id to
+      bind to.
+
+    STYLEGUIDE.md is skipped -- it carries the convention's own worked example.
+    """
+    problems = []
+    dev = current_dev_version()
+    dev_v = _semver(dev) if dev else None
+
+    spec_files = [p for p in sorted(SPEC_DIR.glob("*.md")) if p.name != "STYLEGUIDE.md"]
+
+    # --- version check: applies to every Planned-for marker, spec + error codes.
+    if dev_v:
+        for path in spec_files + [ERROR_CODES_PATH]:
+            try:
+                lines = path.read_text().splitlines()
+            except OSError:
+                continue
+            rel = path.relative_to(REPO_ROOT)
+            for i, line in enumerate(lines, 1):
+                m = PLANNED_MARKER_RE.match(line)
+                if m and _semver(m.group("ver")) < dev_v:
+                    problems.append(
+                        f"{rel}:{i}: `Planned for v{m.group('ver')}` names a version "
+                        f"older than the in-progress v{dev} -- it shipped, or the "
+                        f"version is wrong: {line.strip()}"
+                    )
+
+    tests_dir = metel_core_tests_dir()
+    if not tests_dir:
+        return problems
+
+    proven_codes = scan_error_code_expectations(tests_dir)
+    cited_spec_ids = set(scan_spec_citations(tests_dir))
+
+    # --- proof check, error codes: a Planned-for entry for a code that fires.
+    try:
+        ec_lines = ERROR_CODES_PATH.read_text().splitlines()
+    except OSError:
+        ec_lines = []
+    cur_code = None
+    for i, line in enumerate(ec_lines, 1):
+        hm = ERROR_CODE_HEADING_RE.match(line)
+        if hm:
+            cur_code = hm.group("code")
+            continue
+        if line.startswith("## "):
+            cur_code = None
+            continue
+        if cur_code and PLANNED_MARKER_RE.match(line) and cur_code in proven_codes:
+            n = len(proven_codes[cur_code])
+            problems.append(
+                f"reference/error-codes.md:{i}: {cur_code} is marked `Planned for` "
+                f"but already fires in {n} fixture(s) (via [expect].code) -- the "
+                f"marker is stale: {line.strip()}"
+            )
+
+    # --- proof check, spec: section-scoped, for versions <= the in-progress one.
+    for path in spec_files:
+        try:
+            lines = path.read_text().splitlines()
+        except OSError:
+            continue
+        rel = path.relative_to(REPO_ROOT)
+        section = {"pending": [], "has_cited_block": False}
+
+        def flush():
+            if section["has_cited_block"]:
+                for ln, txt in section["pending"]:
+                    problems.append(
+                        f"{rel}:{ln}: `Planned for` callout in a section whose Legality "
+                        f"Rule / Dynamic Semantics blocks already have fixture citations "
+                        f"-- verify the feature hasn't already shipped: {txt}"
+                    )
+
+        for i, line in enumerate(lines, 1):
+            if re.match(r"^#{2,4}\s", line):  # a section boundary (not ##### blocks)
+                flush()
+                section = {"pending": [], "has_cited_block": False}
+            bm = SPEC_BLOCK_HEADING_RE.match(line)
+            if bm and bm.group("id") in cited_spec_ids:
+                section["has_cited_block"] = True
+            pm = PLANNED_MARKER_RE.match(line)
+            if pm and dev_v and _semver(pm.group("ver")) <= dev_v:
+                section["pending"].append((i, line.strip()))
+        flush()
+
+    return problems
+
+
 # --- fixture viewer payloads (metel-core#944) ---------------------------------
 #
 # The rendered "Tested by" slot is one `<details class="spec-fixture"
@@ -2741,6 +2870,10 @@ def cmd_check(args=None):
     # Runs unconditionally, unlike coverage_check_problems() below -- exemption
     # validity needs no fixture corpus, so it isn't gated behind METEL_CORE_ROOT.
     problems.extend(spec_exemption_problems())
+
+    # metel-core#985: the version half needs no corpus; the proof halves self-gate
+    # on metel_core_tests_dir() reachability the same way.
+    problems.extend(planned_marker_problems())
 
     coverage_problems, coverage_info = coverage_check_problems()
     problems.extend(coverage_problems)
