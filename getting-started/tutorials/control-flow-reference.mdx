@@ -51,6 +51,38 @@ fun main() {
 }
 ```
 
+## Enums
+
+An `enum` is a fixed set of named alternatives. A variant may carry named fields:
+
+```metel
+enum Shape {
+    Circle { radius: f64 },
+    Rect { w: f64, h: f64 },
+    Unit,
+}
+
+fun area(s: Shape) -> f64 {
+    match (s) {
+        Circle { radius } => 3.14159 * radius * radius,
+        Rect { w, h }     => w * h,
+        Unit              => 1.0,
+    }
+}
+
+fun main() {
+    println(area(Rect { w = 2.0, h = 3.0 }));   // 6
+}
+```
+
+`match` on an enum must cover every variant (or end in `_`). A bare variant name in
+a pattern binds its fields (`Circle { radius }`); a no-field variant is written
+`Unit`. The qualified form `Shape::Circle { … }` is accepted anywhere and is
+required in an expression when the expected type doesn't pin the enum down.
+
+`Perhaps<T>` and `Result<T, E>` (below) are ordinary enums — `None` / `Some { value }`
+and `Err { error }` / `Ok { value }` are just their variants.
+
 ## Perhaps\<T\>: optional values
 
 `Perhaps<T>` represents a value that may or may not be present. It has two variants:
