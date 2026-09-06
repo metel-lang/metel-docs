@@ -83,12 +83,35 @@ user 3: 1
 ```
 
 `totals` is not shared by magic — it flows through the `[&var totals]` capture, and
-the closure is the only thing mutating it for as long as it lives. A `reading`
-(non-`var`) closure could still *read* `totals`; it just couldn't call `.push` or
-`.set` on it.
+the closure is the only thing mutating it for as long as it lives.
 
-There's no `Fn` / `FnMut` / `FnOnce` to reverse-engineer here: the capture list and
-the `var` keyword say what the closure does with what it holds.
+## Qualifiers
+
+`var` is one of three ways a closure declares how it uses its captures:
+
+- **`var`** — mutates a capture (assigns to a by-value one, takes `&var` of one, or
+  calls a `&var self` method). `tally` above.
+- **`once`** — *consumes* a capture (moves it out — returns it, or passes it by
+  value to something that takes ownership). A `once` closure may be called only
+  once.
+- **unqualified** — reusable, reads its captures, mutates nothing.
+
+```metel
+fun main() {
+    let name := "sum";
+    var running := 40;
+
+    let add := [&var running] var |n: i64| -> () { running := running + n; };
+    add(2);
+
+    let report := [name, running] once || -> String { name + " = " + running.to_string() };
+    println(report());   // sum = 42
+    // report();         // second call is a use-after-move
+}
+```
+
+There's no `Fn` / `FnMut` / `FnOnce` to reverse-engineer: the capture list and the
+qualifier say what the closure does with what it holds.
 
 ## By the end you'll have
 
