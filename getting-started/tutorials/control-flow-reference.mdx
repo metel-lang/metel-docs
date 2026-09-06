@@ -1,10 +1,10 @@
 ---
-sidebar_position: 11
+sidebar_position: 22
 ---
 
-# Tutorial: Control Flow and Error Handling
+# Reference: Control Flow, Options, and Errors
 
-This tutorial covers loops, conditional expressions, optional values (`Perhaps<T>`), and error propagation (`Result<T, E>`). These are the tools you will reach for whenever a program needs to make decisions, repeat work, or handle failure.
+Reference material. `Result` and `?` are introduced in the arc on [Parse into fields, fail loudly](parsing-and-results); this page is the full picture — `if`/`match`/`loop`/`while`/`for`, `Perhaps<T>`, and error propagation.
 
 ## If, while, for-in, and loop
 
@@ -50,6 +50,38 @@ fun main() {
     }
 }
 ```
+
+## Enums
+
+An `enum` is a fixed set of named alternatives. A variant may carry named fields:
+
+```metel
+enum Shape {
+    Circle { radius: f64 },
+    Rect { w: f64, h: f64 },
+    Unit,
+}
+
+fun area(s: Shape) -> f64 {
+    match (s) {
+        Circle { radius } => 3.14159 * radius * radius,
+        Rect { w, h }     => w * h,
+        Unit              => 1.0,
+    }
+}
+
+fun main() {
+    println(area(Rect { w = 2.0, h = 3.0 }));   // 6
+}
+```
+
+`match` on an enum must cover every variant (or end in `_`). A bare variant name in
+a pattern binds its fields (`Circle { radius }`); a no-field variant is written
+`Unit`. The qualified form `Shape::Circle { … }` is accepted anywhere and is
+required in an expression when the expected type doesn't pin the enum down.
+
+`Perhaps<T>` and `Result<T, E>` (below) are ordinary enums — `None` / `Some { value }`
+and `Err { error }` / `Ok { value }` are just their variants.
 
 ## Perhaps\<T\>: optional values
 
@@ -375,5 +407,3 @@ ok: Ada, age 30
 - `Result<T, E>` represents a recoverable error; `?` propagates errors automatically.
 - `From<E>` lets `?` coerce between error types without explicit conversions.
 - `match` guards (`if cond`) add extra conditions to individual arms; tuples destructure by position.
-
-Next: [Modules](modules) — splitting a program across files, imports, and visibility.

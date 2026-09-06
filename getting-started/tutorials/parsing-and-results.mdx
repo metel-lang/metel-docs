@@ -1,0 +1,97 @@
+---
+sidebar_position: 5
+---
+
+# 3. Parse into fields, fail loudly
+
+Now pull the three fields out of the text. A malformed line should produce a value
+that says so — not a crash, and not a silent skip.
+
+## `Result` and `?`
+
+`Result<T, E>` is either `Ok { value: T }` or `Err { error: E }`. A function that
+can fail returns one:
+
+```metel
+struct ParseError { line: i64, reason: String }
+
+fun split_event(text: String, line: i64)
+    -> Result<{ user: String, kind: String, arg: String }, ParseError>
+{
+    let parts := text.split(" ");
+    if (parts.len() != 3) {
+        return Err { error = ParseError { line = line, reason = "want <user> <kind> <arg>" } };
+    }
+    return Ok { value = { user = parts[0u64], kind = parts[1u64], arg = parts[2u64] } };
+}
+
+fun main() {
+    match (split_event("7 click /home", 1)) {
+        Ok { value }  => println("user ${value.user}, kind ${value.kind}"),
+        Err { error }  => println("line ${error.line}: ${error.reason}"),
+    }
+    match (split_event("bad line", 2)) {
+        Ok { value }  => println("user ${value.user}"),
+        Err { error }  => println("line ${error.line}: ${error.reason}"),
+    }
+}
+```
+
+```
+user 7, kind click
+line 2: want <user> <kind> <arg>
+```
+
+`match` must be exhaustive; the scrutinee is parenthesized. `String.split` returns an
+array; array indices are `u64` (`parts[0u64]`).
+
+## Write your own `parse_int`
+
+The batch has `"7"` and `"42"` as text, and there is no `String -> i64` builtin. So
+write one — this is where `?` starts to pay off. `?` on an `Err` returns it from the
+enclosing function immediately; on an `Ok` it unwraps the value.
+
+```metel
+struct ParseError { line: i64, reason: String }
+
+fun parse_int(s: String, line: i64) -> Result<i64, ParseError> {
+    if (s.is_empty()) {
+        return Err { error = ParseError { line = line, reason = "empty number" } };
+    }
+    var acc := 0;
+    for (c in s.chars()) {
+        let digit := (c as u32) - ('0' as u32);
+        if (digit > 9u32) {
+            return Err { error = ParseError { line = line, reason = "not a digit: " + c.to_string() } };
+        }
+        acc := acc * 10 + (digit as i64);
+    }
+    return Ok { value = acc };
+}
+
+fun main() {
+    println(parse_int("742", 1).yolo());   // 742
+
+    match (parse_int("7x2", 2)) {
+        Ok { value }  => println(value),
+        Err { error }  => println("line ${error.line}: ${error.reason}"),
+    }
+}
+```
+
+```
+742
+line 2: not a digit: x
+```
+
+`s.chars()` is an array of `Char`. `c as u32` is the Unicode code point; subtracting
+`'0'` gives the digit's numeric value, and `> 9u32` catches anything that isn't a
+digit. `.yolo()` unwraps a `Result`/`Perhaps` and panics if it isn't `Ok`/`Some` —
+fine here because the literal is known good; never reach for it on real input.
+
+## By the end you'll have
+
+`split_event` and `parse_int`, both returning `Result`, both failing with a line
+number and a reason.
+
+**Next:** [Validate and normalize](validating) — one enriched event shape, whatever the kind.

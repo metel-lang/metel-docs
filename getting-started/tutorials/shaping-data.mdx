@@ -1,0 +1,65 @@
+---
+sidebar_position: 4
+---
+
+# 2. Give the data a shape
+
+Right now each event is a bare string. Before parsing it, give it named fields —
+without declaring a type.
+
+## Anonymous records
+
+A record is a set of labelled fields written in braces, with no keyword and no
+declaration site:
+
+```metel
+fun main() {
+    let ev := { user = "7", kind = "click", arg = "/home", line = 1 };
+    println("line ${ev.line}: user ${ev.user} did ${ev.kind}");
+}
+```
+
+```
+line 1: user 7 did click
+```
+
+`{ user: String, kind: String, arg: String, line: i64 }` is the *type*;
+`{ user = "7", … }` is a value of it. There is no `struct Event` anywhere — the
+shape **is** the type. Two pieces of code that both write `{ user: String, line: i64 }`
+are talking about the same type without agreeing on it in advance.
+
+Records are:
+
+- **structural** — `{ x: i64, y: i64 }` and `{ y: i64, x: i64 }` are the same type;
+- **exact** — a `{ user, kind, arg, line }` value is *not* a `{ user, kind }` value.
+  Records are never silently widened or narrowed (a struct's fields can be, later);
+- **order-free** — `{ user = "7", line = 1 }` and `{ line = 1, user = "7" }` are the
+  same value.
+
+Field access is `.name`. When a local already has the field's name you can drop the
+`= value`: `{ user, kind }` is shorthand for `{ user = user, kind = kind }`.
+
+## Wire it into the loop
+
+{/* doc-example: skip reason="fragment — the growing metrics program, not standalone" */}
+```metel
+fun main() {
+    let raw := ["7 click /home", "7 buy 42", "3 click /docs"];
+
+    var line := 0;
+    for (text in raw) {
+        line := line + 1;
+        let ev := { text = text, line = line };
+        println("line ${ev.line}: ${ev.text}");
+    }
+}
+```
+
+Each event now carries a line number for error messages — and you didn't declare a
+type to get it.
+
+## By the end you'll have
+
+Each raw line paired with structured context in an anonymous record.
+
+**Next:** [Parse into fields, fail loudly](parsing-and-results) — split the text, and return a `Result` when a line is malformed.

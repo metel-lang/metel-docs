@@ -2,25 +2,27 @@
 sidebar_position: 1
 ---
 
-# Welcome to the Metel Wiki
+# Getting started with Metel
 
-This wiki is the public-facing home for Metel. It collects the current language reference, release notes, and guided getting-started material in one place while the interpreter and RFCs keep moving.
+**Metel is a clean-slate language for compile-time safety** — a research language with
+no backward-compatibility obligations, where the ideas behind static safety get
+redesigned rather than patched around. In practice that means precise data shapes
+(records and structs whose types change as fields move in and out), row-polymorphic
+bounds, an explicit closure-capture model, and positive *and* negative capability
+bounds. The interpreter and the RFCs are still moving; this section is the practical
+on-ramp.
 
-## What belongs here
+## Pick a path
 
-- The language spec and explanatory guides
-- Release notes and version milestones
-- A quickstart for the shortest path to a running program
-- Tutorials that walk through core language features
+- **[Quickstart](quickstart)** — the shortest route from a blank file to a running
+  program.
+- **[The tutorial](tutorials/first-run)** — a nine-step build. You write one small
+  project, `metrics`, and each step adds a stage. This is where the distinctive
+  parts of the language show up in context rather than as a feature list.
+- **[Reference pages](tutorials/numbers-chars-and-collections)** at the end of the
+  tutorial section — numerics, the standard library, control-flow detail — to dip
+  into as needed.
 
-## What to use it for
-
-If you are trying to understand Metel, start here:
-
-1. Read the [language specification](../reference/spec.md) and its sections in order.
-2. Start with the [quickstart](quickstart) if you want the shortest path to a running program.
-3. Work through the [tutorials](tutorials/hello-world) in order if you want a guided tour of the language.
-4. Check the [current release notes](../release-notes/changelog.md) for what changed recently.
-5. Review the [error catalog](../reference/error-codes.md) if you want the public failure modes at a glance.
-
-The wiki is intentionally practical. It should help you try the language quickly, not tell the story of how the project was built.
+For the normative detail, the [language specification](../reference/spec) is the
+source of truth, and the [error catalog](../reference/error-codes) lists every
+diagnostic the compiler and runtime can produce.

@@ -1,0 +1,66 @@
+---
+sidebar_position: 7
+---
+
+# 5. Ask for less than the whole record
+
+The reporting functions coming up only read one or two fields. Metel lets a generic
+function say exactly that.
+
+## Row bounds
+
+`<record T: { user: i64, .. }>` is a bound: `T` is any record that **at least** has a
+`user: i64` field. The `..` quantifies over whatever else it carries.
+
+```metel
+fun user_of<record T: { user: i64, .. }>(e: T) -> i64 { e.user }
+fun is_heavy<record T: { weight: i64, .. }>(e: T) -> boolean { e.weight >= 10 }
+
+fun main() {
+    let ev    := { user = 7, kind = "buy", weight = 42, line = 2 };
+    let other := { user = 3, weight = 1 };   // different shape, same `user`/`weight` bounds
+
+    println(user_of(ev));       // 7
+    println(is_heavy(ev));      // true
+    println(user_of(other));    // 3
+    println(is_heavy(other));   // false
+}
+```
+
+```
+7
+true
+3
+false
+```
+
+`user_of` accepts both records — it never mentions the fields they don't share. When
+you enrich the event again later (adding a `bucket` field, say), `user_of` and
+`is_heavy` keep working with no change: the bound already allowed "and more".
+
+## Records only
+
+A row bound is satisfied by a **record**, not by a nominal `struct`:
+
+{/* doc-example: expect-fail reason="a nominal struct does not satisfy a row bound (v0.13.0) — T0012" */}
+```metel
+struct Point { x: i64, y: i64 }
+
+fun x_of<record T: { x: i64, .. }>(v: T) -> i64 { v.x }
+
+fun main() {
+    let p := Point { x = 1, y = 2 };
+    let n := x_of(p);   // rejected: Point is a struct, not a record
+}
+```
+
+A struct passed to a row-bounded parameter is a type error. (Named records that
+*would* satisfy a bound are planned; they don't exist yet.) This is the mirror of the
+rule that a `struct`'s row is invisible to structural matching — its identity is its
+name.
+
+## By the end you'll have
+
+`user_of` and `is_heavy`, each reading a slice of any event that has the field.
+
+**Next:** [Move a slice, don't copy it](moving-not-copying) — hand disjoint parts of one event to two consumers.

@@ -1,190 +1,135 @@
 ---
-sidebar_position: 7
+sidebar_position: 10
 ---
 
-# Tutorial: Aspects
+# 8. Pluggable output
 
-An aspect is a named set of methods a type can promise to provide. If you know interfaces or traits from other languages, an aspect plays the same role: it lets you write code against a capability ("this type can be printed", "this type can be compared") instead of against one specific type. Aspects are also what makes a constrained type parameter like `<T: Printable>` — introduced in the previous tutorial — mean anything at all.
+The pipeline produces report lines. This page makes *where they go* swappable
+without touching anything upstream.
 
-## Declaring an aspect
+## An aspect
 
-```metel
-aspect Printable {
-    fun print(self);
-}
-```
-
-This declares a method signature with no body. Any type can implement `Printable` by providing that method.
-
-## Implementing an aspect with `extend`
-
-`extend Type: Aspect` attaches an implementation of the aspect to a type:
+An `aspect` declares a capability — a set of methods a type can provide. `extend`
+attaches it to a type:
 
 ```metel
-struct Point {
-    x: f64,
-    y: f64,
+aspect Sink {
+    fun emit(&self, line: String);
 }
 
-aspect Printable {
-    fun print(self);
+struct Console { }
+extend Console: Sink {
+    fun emit(&self, line: String) { println(line); }
 }
 
-extend Point: Printable {
-    fun print(self) {
-        println("(${self.x}, ${self.y})");
-    }
+struct Prefixed { tag: String }
+extend Prefixed: Sink {
+    fun emit(&self, line: String) { println("[" + self.tag + "] " + line); }
 }
 
 fun main() {
-    let p := Point { x = 1.0, y = 2.0 };
-    p.print();   // (1, 2)
+    let a := Console { };
+    let b := Prefixed { tag = "metrics" };
+    a.emit("user 7: 51");
+    b.emit("user 7: 51");
 }
 ```
 
-This is the same `extend` keyword the structs-and-methods tutorial used for inherent methods — `extend Type { ... }` attaches methods with no aspect involved; `extend Type: Aspect { ... }` attaches methods that also satisfy an aspect's contract. A type can have any number of inherent `extend` blocks and any number of aspect implementations.
+```
+user 7: 51
+[metrics] user 7: 51
+```
 
-:::note
-Every Method Named In The Aspect Must Appear
+## Generic over any sink
 
-`extend Point: Printable` must implement every method `Printable` declares (unless the aspect supplies a default body — see below). Leaving one out is a compile error, not a runtime surprise.
-:::
+A function that only needs "something that can `emit`" takes a bounded type
+parameter:
 
-## Why this matters: aspect bounds
-
-A generic function with an unconstrained type parameter can only move values of that type around — it cannot call any method on them, because the compiler has no idea what `T` will be. Writing `T: Printable` tells the compiler exactly which methods are guaranteed to exist:
-
-{/* doc-example: skip reason="uses Point/Printable from the earlier block in this section" */}
 ```metel
-fun print_all<T: Printable>(items: T[]) {
-    for (let item in items) {
-        item.print();
-    }
+aspect Sink { fun emit(&self, line: String); }
+struct Console { }
+extend Console: Sink { fun emit(&self, line: String) { println(line); } }
+
+fun report<S: Sink>(sink: &S, lines: List<String>) {
+    for (l in lines.as_slice()) { sink.emit(l); }
 }
 
 fun main() {
-    let points := [Point { x = 0.0, y = 0.0 }, Point { x = 3.0, y = 4.0 }];
-    print_all(points);
+    var lines: List<String> := List::new();
+    lines.push("user 7: 51");
+    lines.push("user 3: 2");
+
+    let out := Console { };
+    report(&out, lines);
 }
 ```
 
-Try to call `print_all` with a type that has no `Printable` implementation and you get a compile error at the call site, not a missing-method error buried at runtime.
-
-Multiple bounds combine with `+`, inline or in a `where` clause — both forms are equivalent:
-
-```metel
-aspect Loud {
-    fun shout(self);
-}
-
-fun announce<T: Printable + Loud>(value: T) {
-    value.print();
-    value.shout();
-}
-
-// equivalent, where-clause form
-fun announce2<T>(value: T) where T: Printable + Loud {
-    value.print();
-    value.shout();
-}
+```
+user 7: 51
+user 3: 2
 ```
 
-For a type parameter that appears once and isn't referenced elsewhere, `extends Aspect` is a shorthand that skips naming the parameter at all:
+## A collection of different sinks
+
+`dyn Sink` is a single type that any `Sink` implementer coerces to — so a
+`List<dyn Sink>` can hold a `Console` and a `Prefixed` at once, and you call `emit`
+on each without knowing which is which:
 
 ```metel
-fun print_all(items: extends Printable[]) { ... }
-// equivalent to: fun print_all<T: Printable>(items: T[]) { ... }
-```
-
-## Default methods
-
-An aspect method can supply a body. An implementing type may then omit that method entirely and inherit the default:
-
-```metel
-aspect Greet {
-    fun name(self) -> String;
-
-    fun greet(self) -> String {
-        return "Hello, " + self.name();
-    }
-}
-
-struct Person {
-    name: String,
-}
-
-extend Person: Greet {
-    fun name(self) -> String {
-        return self.name;
-    }
-    // greet() is inherited — no need to write it
-}
+aspect Sink { fun emit(&self, line: String); }
+struct Console { }
+extend Console: Sink { fun emit(&self, line: String) { println(line); } }
+struct Prefixed { tag: String }
+extend Prefixed: Sink { fun emit(&self, line: String) { println("[" + self.tag + "] " + line); } }
 
 fun main() {
-    let p := Person { name = "Ada" };
-    println(p.greet());   // Hello, Ada
-}
-```
+    var sinks: List<dyn Sink> := List::new();
+    sinks.push(Console { });
+    sinks.push(Prefixed { tag = "metrics" });
 
-Only `name` has no default, so only `name` is required from every implementor.
-
-## `Self` inside an aspect
-
-`Self` refers to whichever concrete type is implementing the aspect at the call site — useful for a method that takes or returns "another value of my own type":
-
-```metel
-aspect Comparable {
-    fun compare(self, other: Self) -> i64;
-}
-
-struct Money { cents: i64 }
-
-extend Money: Comparable {
-    fun compare(self, other: Self) -> i64 {
-        return self.cents - other.cents;
+    for (s in sinks.as_slice()) {
+        s.emit("(report complete)");
     }
 }
 ```
 
-`Comparable`'s signature says "compare against another value of the same type as me" without naming that type — `Money::compare` only ever accepts another `Money`, and a different type implementing `Comparable` would only ever accept its own type in that position.
+```
+(report complete)
+[metrics] (report complete)
+```
 
-## A worked example: unifying error types with `From`
+## Ruling a capability out
 
-`From` is a `std::core` aspect, not special syntax — you already saw it used to coerce error types with `?` in an earlier tutorial. Seeing its declaration now that you know what an aspect is should make that trick unsurprising:
+A bound can be *negative*. Suppose a blanket rule makes every `Wrapper<T>`
+`Loggable`. `extend<T> Secret<T>: !Loggable` says a `Secret<T>` is **never**
+`Loggable` — the absence is a claim the type makes on purpose, and it wins over the
+blanket:
 
 ```metel
-aspect From<T> {
-    fun from(value: T) -> Self;
-}
+aspect Loggable;
 
-struct IoError { msg: String }
-struct AppError { msg: String }
+struct Wrapper<T> { value: T }
+extend<T> Wrapper<T>: Loggable;      // blanket: every Wrapper is Loggable
 
-extend AppError: From<IoError> {
-    fun from(value: IoError) -> AppError {
-        return AppError { msg = "io: ${value.msg}" };
-    }
-}
+struct Secret<T> { value: T }
+extend<T> Secret<T>: !Loggable;      // ...except Secret, which opts out
+
+fun log_it<T: Loggable>(x: T) { }
 
 fun main() {
-    let err := AppError::from(IoError { msg = "disk full" });
-    println(err.msg);   // io: disk full
+    log_it(Wrapper { value = 42 });      // Wrapper is Loggable — fine
+    // log_it(Secret { value = 42 });    // rejected: Secret is !Loggable
+    println("ok");
 }
 ```
 
-`?` on a `Result<_, IoError>` inside a function returning `Result<_, AppError>` calls exactly this `from` conversion automatically, because `extend AppError: From<IoError>` exists.
+```
+ok
+```
 
-## What's next in the aspect system
+## By the end you'll have
 
-This tutorial covers the everyday 80%: declaring an aspect, implementing it, bounding generics with it, default methods, and `Self`. The aspect system goes considerably further — associated types (an aspect can declare a type-level output alongside its methods), negative bounds and negative impls (`T: !Aspect`, asserting a type definitely does *not* implement something), coherence rules that keep two implementations of the same aspect for the same type from conflicting, and aspect implementations conditional on a generic type's own parameters. None of that is needed to read or write everyday Metel code — reach for the [Aspects reference](../../reference/spec/declarations#aspects) when you hit a case this tutorial didn't cover.
+A `Sink` aspect with two implementations, a generic `report`, and a `List<dyn Sink>`
+that fans one line out to several destinations.
 
-## What you learned
-
-- `aspect Name { ... }` declares a set of method signatures a type can implement.
-- `extend Type: Aspect { ... }` implements an aspect for a type; every non-default method must be provided.
-- `<T: Aspect>` bounds a generic type parameter, making the aspect's methods callable inside the function body.
-- `impl Aspect` is shorthand for a type parameter used once and not referenced elsewhere.
-- An aspect method with a body is a default — implementors may omit it.
-- `Self` refers to the concrete implementing type at the call site.
-
-Next: [Records and Row Bounds](records) — the other product type, structural typing, and constraining a generic parameter by the fields it carries instead of by an aspect.
+**Next:** [Reusable, and split into files](generics-and-modules) — make the aggregator generic and break the project up.
