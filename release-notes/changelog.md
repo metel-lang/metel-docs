@@ -23,6 +23,26 @@ title: "Metel Language Changelog"
 - `->` is right-associative, so a nested function type (`|A| -> |B| -> C`) parses
   unambiguously; parenthesizing it is a style recommendation, not a rule.
 
+**Closure capture lists and qualifiers (RFC-0050, RFC-0134, RFC-0153, RFC-0157):**
+- A closure that uses an outer binding **captures** it; a non-`Copy` capture, or one
+  taken by reference, must be named in an explicit **capture list** before the pipes:
+  `[total] |n: i64| { … }`, `[&cfg] || { … }`, `[&var acc] var |x| { … }`. A bare `Copy`
+  binding needs no entry; the list is required the moment a move would otherwise occur
+  (RFC-0050, `metel-core#926`).
+- `[x]` moves `x` in (or copies it if `Copy`), `[x.clone()]` takes an independent copy,
+  `[&x]` / `[&var x]` capture a reference. Capture defaults to **by move** for a bare
+  non-`Copy` binding (RFC-0157 D5); RFC-0006's per-call environment re-clone is gone —
+  the environment is moved in once and read or mutated in place.
+- An optional qualifier before the pipes states how the closure uses its captures:
+  **`var`** mutates one (assigns a by-value capture, takes `&var` of one, or calls a
+  `&var self` method), **`once`** consumes one and may then be called only once,
+  unqualified reads only. `[&var x]` implies `var`. There is no `Fn` / `FnMut` /
+  `FnOnce` to reverse-engineer — the list and the qualifier are the contract
+  (RFC-0134 / RFC-0153, `metel-core#927` / `#929`).
+- Re-entering a `var` closure through the *same value* while a call on it is in progress
+  is a runtime error (`R0015`). `dyn Callable` and a `Callable` bound are **not** in this
+  release — deferred in full to RFC-0161 (v0.13.1).
+
 **Type aliases (RFC-0160):**
 - `public? type Name := T;` gives an existing type a name — `type Bytes := List<u8>;`,
   `type Handler := once var |Request, &Config| -> Response;`. The `:=` separator is
@@ -127,6 +147,26 @@ title: "Metel Language Changelog"
   for a closed bound it's optional sugar, but the pattern must still name every field the
   bound lists without it. Naming a field the bound doesn't list is still rejected,
   `..` or not.
+
+**Aspect objects — `dyn Aspect` (RFC-0008):**
+- `dyn Aspect` is an existential: some concrete type that implements `Aspect`, with the
+  type erased. Written in type position (`let s: dyn Shape`), behind a reference
+  (`&dyn Shape` / `&var dyn Shape`), and as a type argument (`List<dyn Shape>`). Method
+  calls dispatch dynamically at runtime (`metel-core#865` / `#866`).
+- Any value whose type implements `Aspect` **coerces** to `dyn Aspect` at an expected
+  `dyn` position — an argument, a `let` with a `dyn` annotation, an array or `List`
+  element. Coercion requires the aspect to be **object-safe**: no open associated type,
+  no `Self`-by-value receiver or `Self` return, no generic method (`metel-core#870`).
+- A `List<dyn Aspect>` / `dyn Aspect[]` holds values of different concrete types at once;
+  a heterogeneous array literal infers each element against the declared `dyn` element
+  type rather than against the other elements (`metel-core#864` / `#872`).
+
+**Error codes (breaking):**
+- `R0012` was a phantom — the `?`-on-non-`Result` case it named is caught at compile time
+  as `T0001`, so it could never be raised. It is removed and the runtime codes above it
+  shift down one: `R0013`–`R0016` become `R0012`–`R0015` (assertion failed; `yolo` on
+  `None` / `Err`; `panic`; re-entrant `var` closure). Code or fixtures citing the old
+  numbers must be updated (`metel-core#983` / `#1000`).
 
 **Syntax (breaking):**
 - A `match` expression's scrutinee must now be parenthesized — `match (x) { … }` — the
