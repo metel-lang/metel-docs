@@ -893,32 +893,7 @@ or a type with its own `Iterable` implementation (see `expressions.md`, "for-in"
 <span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise sites (evaluator/mod.rs), but a plain non-iterable typed value (e.g. for (x in n) where n: i64) is caught statically as T0001 before reaching this runtime path. #986's follow-up round: the user-defined-Iterable dispatch this code guards resolves through the receiver value's own runtime type id (resolve_value_type_id + get_regular_method), not a bare-name-keyed table -- unlike R0009's aspect-method path (metel-core#989), this one isn't obviously vulnerable to the same class of collision bug. No construction attempted this round on that basis._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
-### R0012 — Error propagation on non-Result value
-
-The `?` operator is applied to a value that is not a `Result`.
-
-```
-[R0012] runtime error in main.mtl at 5..10: ?: expected a Result value
-```
-
-**Fix:** only use `?` on expressions whose type is `Result[T, E]`.
-
-<!-- rfc.py:exemption kind="untestable" ref="metel-core#733" reason="Confirmed absent from the RuntimeErrorCode enum entirely (verified directly in metel-frontend/src/error/mod.rs -- the enum jumps from R0011 to R0013). This entry documents a code that does not exist in the current implementation; needs a follow-up decision (implement it, or remove/renumber the entry) outside this issue's scope." -->
-
-> **Note:** this misuse is actually caught statically. `?` constrains its operand's
-> type to `Result<T, E>` during type inference (`infer_propagate_error`), so a
-> non-`Result` operand is rejected as a `T0001` type mismatch before the program
-> ever runs. `R0012` does not appear in the interpreter's `RuntimeErrorCode` enum
-> today and is unreachable in practice — kept here for the code number, not because
-> the described runtime error can currently occur. (Found while investigating
-> issue #536; not fixed as part of it, since removing a documented code is a
-> separate decision from the yolo/conversion-method work that issue tracked.)
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — untestable: Confirmed absent from the RuntimeErrorCode enum entirely (verified directly in metel-frontend/src/error/mod.rs -- the enum jumps from R0011 to R0013). This entry documents a code that does not exist in the current implementation; needs a follow-up decision (implement it, or remove/renumber the entry) outside this issue's scope._</span>
-<!-- rfc.py:exemption:rendered:end -->
-
-### R0013 — Assertion failed
+### R0012 — Assertion failed
 
 `assert(cond)` or `assert(cond, msg)` is called with `cond` evaluating to
 `false`. The panic message is the fixed string `"assertion failed"` for the
@@ -929,10 +904,10 @@ was actually false at runtime. Fix the condition, or the code that led to it.
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlIwMDEzIiwiY29sIjpudWxsLCJjb250YWlucyI6ImN1c3RvbSBhc3NlcnRpb24gZmFpbHVyZSIsImxpbmUiOm51bGwsInN0YXR1cyI6InJ1bnRpbWVfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiI4MF9hc3NlcnRfcGFuaWNfbWVzc2FnZXMubXRsIiwic291cmNlIjoiZnVuIG1haW4oKSB7XG4gICAgYXNzZXJ0KGZhbHNlLCBcImN1c3RvbSBhc3NlcnRpb24gZmFpbHVyZVwiKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2J1aWx0aW5zLzgwX2Fzc2VydF9wYW5pY19tZXNzYWdlcy5tdGwiLCJuYW1lIjoiODBfYXNzZXJ0X3BhbmljX21lc3NhZ2VzLm10bCIsInNwZWNMaW5rcyI6W3siaHJlZiI6InNwZWMvcnVudGltZS5tZCNzcGVjLnJ1bnRpbWUuYnVpbHQtaW4tZnVuY3Rpb25zLmR5bmFtaWNzLTIiLCJpZCI6InNwZWMucnVudGltZS5idWlsdC1pbi1mdW5jdGlvbnMuZHluYW1pY3MtMiIsImxhYmVsIjoiQnVpbHQgaW4gZnVuY3Rpb25zIEQyIn1dfQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlIwMDEyIiwiY29sIjpudWxsLCJjb250YWlucyI6ImN1c3RvbSBhc3NlcnRpb24gZmFpbHVyZSIsImxpbmUiOm51bGwsInN0YXR1cyI6InJ1bnRpbWVfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiI4MF9hc3NlcnRfcGFuaWNfbWVzc2FnZXMubXRsIiwic291cmNlIjoiZnVuIG1haW4oKSB7XG4gICAgYXNzZXJ0KGZhbHNlLCBcImN1c3RvbSBhc3NlcnRpb24gZmFpbHVyZVwiKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2J1aWx0aW5zLzgwX2Fzc2VydF9wYW5pY19tZXNzYWdlcy5tdGwiLCJuYW1lIjoiODBfYXNzZXJ0X3BhbmljX21lc3NhZ2VzLm10bCIsInNwZWNMaW5rcyI6W3siaHJlZiI6InNwZWMvcnVudGltZS5tZCNzcGVjLnJ1bnRpbWUuYnVpbHQtaW4tZnVuY3Rpb25zLmR5bmFtaWNzLTIiLCJpZCI6InNwZWMucnVudGltZS5idWlsdC1pbi1mdW5jdGlvbnMuZHluYW1pY3MtMiIsImxhYmVsIjoiQnVpbHQgaW4gZnVuY3Rpb25zIEQyIn1dfQ=="></details>
 <!-- rfc.py:fixtures:end -->
 
-### R0014 — Unwrap on `None`/`Err`
+### R0013 — Unwrap on `None`/`Err`
 
 `.yolo()` is called on a `Perhaps<T>` that is `None`, or a `Result<T, E>` that is
 `Err`. For `Result`, the panic message includes the `Err` value's debug
@@ -945,10 +920,10 @@ handle the expected case instead.
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlIwMDE0IiwiY29sIjpudWxsLCJjb250YWlucyI6InlvbG8iLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJydW50aW1lX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibmVnX3lvbG9fbm9uZS5tdGwiLCJzb3VyY2UiOiIvLyBSVU5USU1FX0VSUk9SW1IwMDE0XVxuLy8gaXNzdWUgIzIzMjogLnlvbG8oKSBvbiBOb25lIHBhbmljcyB3aXRoIFIwMDE0LlxuZnVuIG1haW4oKSB7XG4gICAgbGV0IG5vbmU6IFBlcmhhcHM8aTY0PiA6PSBQZXJoYXBzOjpOb25lO1xuICAgIGxldCBfIDo9IG5vbmUueW9sbygpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvcGVyaGFwc19yZXN1bHQvbmVnX3lvbG9fbm9uZS5tdGwiLCJuYW1lIjoibmVnX3lvbG9fbm9uZS5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlIwMDEzIiwiY29sIjpudWxsLCJjb250YWlucyI6InlvbG8iLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJydW50aW1lX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibmVnX3lvbG9fbm9uZS5tdGwiLCJzb3VyY2UiOiIvLyBSVU5USU1FX0VSUk9SW1IwMDEzXVxuLy8gaXNzdWUgIzIzMjogLnlvbG8oKSBvbiBOb25lIHBhbmljcyB3aXRoIFIwMDEzLlxuZnVuIG1haW4oKSB7XG4gICAgbGV0IG5vbmU6IFBlcmhhcHM8aTY0PiA6PSBQZXJoYXBzOjpOb25lO1xuICAgIGxldCBfIDo9IG5vbmUueW9sbygpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvcGVyaGFwc19yZXN1bHQvbmVnX3lvbG9fbm9uZS5tdGwiLCJuYW1lIjoibmVnX3lvbG9fbm9uZS5tdGwifQ=="></details>
 <!-- rfc.py:fixtures:end -->
 
-### R0015 — Explicit panic
+### R0014 — Explicit panic
 
 `panic(msg)` (RFC-0078) is called. Always panics unconditionally with `msg`.
 
@@ -958,10 +933,10 @@ ordinary control flow instead of reaching the `panic` call.
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlIwMDE1IiwiY29sIjpudWxsLCJjb250YWlucyI6ImJvb20iLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJydW50aW1lX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibmVnX3BhbmljLm10bCIsInNvdXJjZSI6Ii8vIFJVTlRJTUVfRVJST1JbYm9vbV1cbi8vIFJGQy0wMDc4OiBwYW5pYyhtc2cpIGFsd2F5cyBwYW5pY3MgKFIwMDE1KSB3aXRoIHRoZSBnaXZlbiBtZXNzYWdlLlxuZnVuIG1haW4oKSB7XG4gICAgcGFuaWMoXCJib29tXCIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvbmV2ZXIvbmVnX3BhbmljLm10bCIsIm5hbWUiOiJuZWdfcGFuaWMubXRsIiwic3BlY0xpbmtzIjpbeyJocmVmIjoic3BlYy90eXBlcy5tZCNzcGVjLnR5cGVzLm5ldmVyLXR5cGUuZHluYW1pY3MtMSIsImlkIjoic3BlYy50eXBlcy5uZXZlci10eXBlLmR5bmFtaWNzLTEiLCJsYWJlbCI6Ik5ldmVyIHR5cGUgRDEifSx7ImhyZWYiOiJzcGVjL3J1bnRpbWUubWQjc3BlYy5ydW50aW1lLnBhbmljcy5keW5hbWljcy0xIiwiaWQiOiJzcGVjLnJ1bnRpbWUucGFuaWNzLmR5bmFtaWNzLTEiLCJsYWJlbCI6IlBhbmljcyBEMSJ9XX0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlIwMDE0IiwiY29sIjpudWxsLCJjb250YWlucyI6ImJvb20iLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJydW50aW1lX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibmVnX3BhbmljLm10bCIsInNvdXJjZSI6Ii8vIFJVTlRJTUVfRVJST1JbYm9vbV1cbi8vIFJGQy0wMDc4OiBwYW5pYyhtc2cpIGFsd2F5cyBwYW5pY3MgKFIwMDE0KSB3aXRoIHRoZSBnaXZlbiBtZXNzYWdlLlxuZnVuIG1haW4oKSB7XG4gICAgcGFuaWMoXCJib29tXCIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvbmV2ZXIvbmVnX3BhbmljLm10bCIsIm5hbWUiOiJuZWdfcGFuaWMubXRsIiwic3BlY0xpbmtzIjpbeyJocmVmIjoic3BlYy90eXBlcy5tZCNzcGVjLnR5cGVzLm5ldmVyLXR5cGUuZHluYW1pY3MtMSIsImlkIjoic3BlYy50eXBlcy5uZXZlci10eXBlLmR5bmFtaWNzLTEiLCJsYWJlbCI6Ik5ldmVyIHR5cGUgRDEifSx7ImhyZWYiOiJzcGVjL3J1bnRpbWUubWQjc3BlYy5ydW50aW1lLnBhbmljcy5keW5hbWljcy0xIiwiaWQiOiJzcGVjLnJ1bnRpbWUucGFuaWNzLmR5bmFtaWNzLTEiLCJsYWJlbCI6IlBhbmljcyBEMSJ9XX0="></details>
 <!-- rfc.py:fixtures:end -->
 
-### R0016 — Re-entrant mutating closure call
+### R0015 — Re-entrant mutating closure call
 
 > **Availability:** Since v0.13.0.
 
@@ -974,7 +949,7 @@ finished. This is an uncatchable assertion-class runtime error.
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlIwMDE2IiwiY29sIjpudWxsLCJjb250YWlucyI6InJlLWVudHJhbnQiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJydW50aW1lX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoidjBfMTNfMF9uZWdfbXV0YXRpbmdfcmVlbnRyYW5jeV9yZWplY3RlZC5tdGwiLCJzb3VyY2UiOiIvLyB2MC4xMy4wIGNsb3N1cmUgY2x1c3RlciAoUkZDIDAxNTMgZHluYW1pY3MtOSk6IGZvciB0aGUgZXh0ZW50IG9mIGFcbi8vIGBtdXRhdGluZ2AgY2FsbCB0aGUgY2FsbGVlIGlzIGV4Y2x1c2l2ZWx5IGJvcnJvd2VkLiBBIHNlY29uZCBgbXV0YXRpbmdgXG4vLyBjYWxsIG9uIHRoZSBzYW1lIGNsb3N1cmUgdmFsdWUgcmVhY2hlZCBmcm9tIGluc2lkZSB0aGUgZmlyc3QgaXMgcmVqZWN0ZWQgLS1cbi8vIGJlZm9yZSB0aGUgYm9ycm93IGNoZWNrZXIgbGFuZHMsIGFzIGEgcnVudGltZSBlcnJvciAoUjAwMDcpLlxuLy9cbnN0cnVjdCBDZWxsIHtcbiAgICBnbzogdmFyIHx8IC0+IGk2NCxcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgdmFyIGMgOj0gQ2VsbCB7IGdvID0gfHwgeyAwIH0gfTtcbiAgICBjLmdvIDo9IFsmdmFyIGNdIHZhciB8fCB7XG4gICAgICAgIChjLmdvKSgpICsgMSAvLyByZS1lbnRlcnMgdGhlIHNhbWUgYHZhcmAgY2xvc3VyZSB3aGlsZSBpdHMgZmlyc3QgY2FsbCBpcyBsaXZlXG4gICAgfTtcbiAgICAoYy5nbykoKTsgLy8gcnVudGltZSBlcnJvciBSMDAwNyAtLSByZS1lbnRyYW50IGNhbGwgdG8gYSBtdXRhdGluZyBjbG9zdXJlXG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9jbG9zdXJlcy92MF8xM18wX25lZ19tdXRhdGluZ19yZWVudHJhbmN5X3JlamVjdGVkLm10bCIsIm5hbWUiOiJ2MF8xM18wX25lZ19tdXRhdGluZ19yZWVudHJhbmN5X3JlamVjdGVkLm10bCIsInNwZWNMaW5rcyI6W3siaHJlZiI6InNwZWMvZnVuY3Rpb25zLm1kI3NwZWMuZnVuY3Rpb25zLmNsb3N1cmVzLmR5bmFtaWNzLTkiLCJpZCI6InNwZWMuZnVuY3Rpb25zLmNsb3N1cmVzLmR5bmFtaWNzLTkiLCJsYWJlbCI6IkNsb3N1cmVzIEQ5In1dfQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlIwMDE1IiwiY29sIjpudWxsLCJjb250YWlucyI6InJlLWVudHJhbnQiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJydW50aW1lX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoidjBfMTNfMF9uZWdfbXV0YXRpbmdfcmVlbnRyYW5jeV9yZWplY3RlZC5tdGwiLCJzb3VyY2UiOiIvLyB2MC4xMy4wIGNsb3N1cmUgY2x1c3RlciAoUkZDIDAxNTMgZHluYW1pY3MtOSk6IGZvciB0aGUgZXh0ZW50IG9mIGFcbi8vIGBtdXRhdGluZ2AgY2FsbCB0aGUgY2FsbGVlIGlzIGV4Y2x1c2l2ZWx5IGJvcnJvd2VkLiBBIHNlY29uZCBgbXV0YXRpbmdgXG4vLyBjYWxsIG9uIHRoZSBzYW1lIGNsb3N1cmUgdmFsdWUgcmVhY2hlZCBmcm9tIGluc2lkZSB0aGUgZmlyc3QgaXMgcmVqZWN0ZWQgLS1cbi8vIGJlZm9yZSB0aGUgYm9ycm93IGNoZWNrZXIgbGFuZHMsIGFzIGEgcnVudGltZSBlcnJvciAoUjAwMTUpLlxuLy9cbnN0cnVjdCBDZWxsIHtcbiAgICBnbzogdmFyIHx8IC0+IGk2NCxcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgdmFyIGMgOj0gQ2VsbCB7IGdvID0gfHwgeyAwIH0gfTtcbiAgICBjLmdvIDo9IFsmdmFyIGNdIHZhciB8fCB7XG4gICAgICAgIChjLmdvKSgpICsgMSAvLyByZS1lbnRlcnMgdGhlIHNhbWUgYHZhcmAgY2xvc3VyZSB3aGlsZSBpdHMgZmlyc3QgY2FsbCBpcyBsaXZlXG4gICAgfTtcbiAgICAoYy5nbykoKTsgLy8gcnVudGltZSBlcnJvciBSMDAxNSAtLSByZS1lbnRyYW50IGNhbGwgdG8gYSBtdXRhdGluZyBjbG9zdXJlXG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9jbG9zdXJlcy92MF8xM18wX25lZ19tdXRhdGluZ19yZWVudHJhbmN5X3JlamVjdGVkLm10bCIsIm5hbWUiOiJ2MF8xM18wX25lZ19tdXRhdGluZ19yZWVudHJhbmN5X3JlamVjdGVkLm10bCIsInNwZWNMaW5rcyI6W3siaHJlZiI6InNwZWMvZnVuY3Rpb25zLm1kI3NwZWMuZnVuY3Rpb25zLmNsb3N1cmVzLmR5bmFtaWNzLTkiLCJpZCI6InNwZWMuZnVuY3Rpb25zLmNsb3N1cmVzLmR5bmFtaWNzLTkiLCJsYWJlbCI6IkNsb3N1cmVzIEQ5In1dfQ=="></details>
 <!-- rfc.py:fixtures:end -->
 
 ## Internal errors (I)
@@ -1005,8 +980,13 @@ The program uses a language feature that is not yet supported in this version of
 
 **What to do:** check the [changelog](../release-notes/changelog.md) for the current supported feature set and the release plan for the planned implementation milestone.
 
-<!-- rfc.py:exemption kind="untestable" ref="metel-core#733" reason="Same reasoning as I0001 -- deliberately forcing an unimplemented-feature panic isn't meaningfully the same kind of check as an ordinary trigger (not attempted)." -->
+> **Note:** `I0002` and its `not_implemented()` constructor are kept as scaffolding —
+> the intended way to report a *recognized* but not-yet-built construct while a
+> feature is under development. There is no live raise site today. metel-core#992
+> tracks removing the variant and constructor if they stay unused.
+
+<!-- rfc.py:exemption kind="untestable" ref="metel-core#992" reason="Kept as scaffolding for reporting a recognized-but-unimplemented construct during feature development; there is no live raise site today, so nothing to trigger. metel-core#992 tracks removal if it stays unused." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — untestable: Same reasoning as I0001 -- deliberately forcing an unimplemented-feature panic isn't meaningfully the same kind of check as an ordinary trigger (not attempted)._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — untestable: Kept as scaffolding for reporting a recognized-but-unimplemented construct during feature development; there is no live raise site today, so nothing to trigger. metel-core#992 tracks removal if it stays unused._</span>
 <!-- rfc.py:exemption:rendered:end -->

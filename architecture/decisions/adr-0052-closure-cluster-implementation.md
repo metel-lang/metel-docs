@@ -150,7 +150,7 @@ be used here.
 | body mutates a capture / `[&var x]` capture, closure not written `var` | `T0028` | *"a `&var` capture makes this closure `var`; write `[…] var (…)`, or capture `[&x]` if the body only reads it"* |
 | `mutating` closure called through a shared `&` | `T0029` | *"a `var` closure cannot be called through a shared reference; it needs exclusive access"* |
 | inner closure borrows an enclosing closure's by-value capture | `T0030` | *"cannot borrow into an enclosing closure's environment yet; bind a copy, or wait for the borrow checker (RFC-0122)"* |
-| re-entrant call to a `mutating` closure (runtime) | `R0016` | *"re-entrant call to a mutating closure"* — a runtime error / diagnostic, not a static one; the comptime evaluator surfaces it as a compile-time diagnostic with a source span (RFC-0153 Non-Goals) |
+| re-entrant call to a `mutating` closure (runtime) | `R0015` | *"re-entrant call to a mutating closure"* — a runtime error / diagnostic, not a static one; the comptime evaluator surfaces it as a compile-time diagnostic with a source span (RFC-0153 Non-Goals) |
 
 Exact numbers are a delivery detail; the constraint is a **contiguous block, distinct
 from `T0019`/`T0020`**, registered in `public/reference/error-codes.md` at integration

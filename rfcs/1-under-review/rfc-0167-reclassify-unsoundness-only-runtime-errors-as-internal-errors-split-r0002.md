@@ -234,7 +234,7 @@ different code.
   and basic shape* gets checked. Neither blocks the other.
 - **RFC-0014** (`Panic Recovery`, `0-draft`) asks whether panics should become
   recoverable. Orthogonal — this RFC does not touch panic semantics (R0007,
-  R0013-R0016 are untouched; they remain genuinely dynamic, catchable-or-not per
+  R0012-R0015 are untouched; they remain genuinely dynamic, catchable-or-not per
   whatever RFC-0014 eventually decides, same as today).
 - **RFC-0161** (`dyn Callable`, deferred in full) is the mechanism that would, if
   and when it lands, give R0010's successor code a genuine reason to depend on a
