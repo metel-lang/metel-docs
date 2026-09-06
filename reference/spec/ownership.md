@@ -228,11 +228,10 @@ After `drop(x)` consumes a non-`Copy` binding, that binding may not be used agai
 
 ## Partial moves
 
-> **Planned for v0.13.0 (RFC-0137): the residual gets a named type, not just internal
-> bookkeeping — `Handle` becomes `Handle.{ fd }`.** See "Narrowing" below.
-
 Moving a field out of a struct leaves the containing value **partially moved**. The remaining
-fields stay accessible; the value as a whole does not.
+fields stay accessible; the value as a whole does not. Since v0.13.0 (RFC-0137) the residual
+also gets a named type — `Handle` becomes `Handle.{ fd }`, not just internal bookkeeping;
+see [Narrowing](#narrowing) below.
 
 <!-- doc-example: skip reason="uses Buffer from the earlier block in this doc" -->
 ```metel

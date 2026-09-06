@@ -114,5 +114,91 @@ class ImplementedCoverageGateTests(unittest.TestCase):
             )
 
 
+class PlannedMarkerTests(unittest.TestCase):
+    """metel-core#985: stale `Planned for vX.Y.Z` callouts."""
+
+    def test_regex_matches_only_the_planned_callout(self):
+        self.assertEqual(
+            rfc.PLANNED_MARKER_RE.match(
+                "> **Planned for v0.16.0 (RFC-0122): shared XOR exclusive.**"
+            ).group("ver"),
+            "0.16.0",
+        )
+        self.assertIsNone(
+            rfc.PLANNED_MARKER_RE.match("> **Changed in v0.13.0 (RFC-0111): ...**")
+        )
+        self.assertIsNone(
+            rfc.PLANNED_MARKER_RE.match("> **Availability:** Since v0.13.0.")
+        )
+
+    def test_semver_orders_numerically(self):
+        self.assertLess(rfc._semver("0.9.0"), rfc._semver("0.13.0"))
+        self.assertLess(rfc._semver("0.13.0"), rfc._semver("0.16.0"))
+
+    def _patch(self, tmp, dev="0.13.0", tests_dir=None):
+        root = Path(tmp)
+        (root / "reference" / "spec").mkdir(parents=True, exist_ok=True)
+        self._orig = (rfc.REPO_ROOT, rfc.SPEC_DIR, rfc.ERROR_CODES_PATH,
+                      rfc.current_dev_version, rfc.metel_core_tests_dir)
+        rfc.REPO_ROOT = root
+        rfc.SPEC_DIR = root / "reference" / "spec"
+        rfc.ERROR_CODES_PATH = root / "reference" / "error-codes.md"
+        rfc.current_dev_version = lambda: dev
+        rfc.metel_core_tests_dir = lambda: tests_dir
+        self.addCleanup(self._restore)
+
+    def _restore(self):
+        (rfc.REPO_ROOT, rfc.SPEC_DIR, rfc.ERROR_CODES_PATH,
+         rfc.current_dev_version, rfc.metel_core_tests_dir) = self._orig
+
+    def test_version_older_than_dev_is_flagged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._patch(tmp)
+            (Path(tmp) / "reference" / "spec" / "types.md").write_text(
+                "## References\n\n"
+                "> **Planned for v0.11.0 (RFC-9999): a bygone feature.**\n"
+            )
+            (Path(tmp) / "reference" / "error-codes.md").write_text("# Errors\n")
+            problems = rfc.planned_marker_problems()
+            self.assertEqual(len(problems), 1)
+            self.assertIn("v0.11.0", problems[0])
+            self.assertIn("older than the in-progress v0.13.0", problems[0])
+
+    def test_current_and_future_versions_not_flagged_by_version_check(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._patch(tmp)
+            (Path(tmp) / "reference" / "spec" / "types.md").write_text(
+                "## A\n\n> **Planned for v0.13.0 (RFC-9999): landing now.**\n"
+                "## B\n\n> **Planned for v0.16.0 (RFC-9999): later.**\n"
+            )
+            (Path(tmp) / "reference" / "error-codes.md").write_text("# Errors\n")
+            self.assertEqual(rfc.planned_marker_problems(), [])
+
+    def test_error_code_proof_flags_a_firing_code(self):
+        with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as tests:
+            self._patch(tmp, tests_dir=Path(tests))
+            (Path(tmp) / "reference" / "spec" / "x.md").write_text("## X\n")
+            (Path(tmp) / "reference" / "error-codes.md").write_text(
+                "# Errors\n\n"
+                "### T9999 — Example\n\n"
+                "> **Planned for v0.99.0 (RFC-9999): not really.**\n\n"
+                "Body.\n"
+            )
+            (Path(tests) / "f.toml").write_text('[expect]\ncode = "T9999"\n')
+            problems = rfc.planned_marker_problems()
+            self.assertTrue(
+                any("T9999 is marked `Planned for`" in p for p in problems), problems
+            )
+
+    def test_styleguide_is_exempt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._patch(tmp)
+            (Path(tmp) / "reference" / "spec" / "STYLEGUIDE.md").write_text(
+                "## Planned\n\n> **Planned for v0.9.0 (RFC-9999): the example.**\n"
+            )
+            (Path(tmp) / "reference" / "error-codes.md").write_text("# Errors\n")
+            self.assertEqual(rfc.planned_marker_problems(), [])
+
+
 if __name__ == "__main__":
     unittest.main()
