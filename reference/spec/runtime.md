@@ -353,10 +353,11 @@ is present.
 
 `List<T>` is the growable collection type in `std::core`, available unqualified.
 
-> **Since v0.12.0: `.set(i, value)`.** Added alongside RFC-0126 — `T[]` becoming an
-> immutable borrowed view meant index-assignment through a slice stopped working, and
-> `List<T>` had no way to overwrite an element in place at all, so an in-place algorithm
-> (a bubble sort, for instance) had no expression until this existed.
+> **Since v0.12.0:** `List<T>.set(i, value)` overwrites an element in place.
+
+`.set(i, value)` was added alongside RFC-0126 because index assignment through an immutable
+`T[]` no longer works. It gives in-place algorithms, such as bubble sort, an operation for
+replacing an element in a `List<T>`.
 
 | Method / function    | Signature                          | Description                                  |
 |----------------------|------------------------------------|----------------------------------------------|

@@ -337,8 +337,8 @@ cannot be a block.
 ### Where records may be used
 
 Records are ordinary values: they may appear as parameters, returns, `let` bindings, and
-struct or enum fields; they may be pattern-matched, used as generic arguments, and tagged or
-borrowed (`@a { x: f64 }`, `&r { x: f64 }`) exactly as a struct is. `Send` and `Sync` extend
+struct or enum fields; they may be pattern-matched, used as generic arguments, and borrowed
+(`&{ x: f64 }`) exactly as a struct is. `Send` and `Sync` extend
 to them by the same field-composition rule used for structs.
 
 Three things a record cannot do, all for the same underlying reason — it has no nominal
@@ -352,10 +352,9 @@ owner:
 - **No custom `Drop`.** `Drop` is a standard-library aspect and never local to ordinary
   user code, so teardown logic belongs to nominal types only.
 
-> **Not available in v0.12.0: implementing a local aspect for a record.** `extend { w: i64 }:
-> MyAspect { … }` does not work. This is not specific to records — `extend` on a tuple
-> target fails the same way; implementations for these two structural types are not built
-> yet. **Arrays are the exception:** `extend<T> T[]: MyAspect { … }` is supported, per the
+> **Planned for v0.14.0 (RFC-0061, metel-core#239):** implementing a local aspect for a
+> record or tuple target. Until then, `extend { w: i64 }: MyAspect { … }` does not work.
+> **Arrays are the exception:** `extend<T> T[]: MyAspect { … }` is supported, per the
 > orphan-rule carve-out for structural type constructors — see
 > [Declarations — Structural Aspect Bounds](declarations.md#structural-aspect-bounds).
 > Until a record or tuple target is supported, **a record satisfies no aspect that requires
@@ -473,13 +472,14 @@ fun main() -> i64 {
 
 Arrays are usable in `for-in` loops.
 
-> **Since v0.12.0 (RFC-0126): `T[]` is a borrowed view, not an owning buffer.**
-> `T[]` will be a non-owning, immutable, unconditionally-`Copy` view over a contiguous run —
-> a pointer and a length, produced only by borrowing a `List<T>`, a `[T; N]`, or another
-> slice. `a[0] = 9` through a `T[]` will stop compiling; mutation moves to `List<T>` or a
-> `[T; N]`. Array literals produce `[T; N]` (below), not `T[]` — `let nums: i64[] = [1, 2,
-> 3];` above will keep working via `[T; N]`'s existing implicit coercion to `T[]` (RFC-0053),
-> not because the literal itself is a `T[]`.
+> **Changed in v0.12.0 (RFC-0126):** `T[]` is no longer an owning, mutable buffer.
+
+`T[]` is a non-owning, immutable, unconditionally-`Copy` view over a contiguous run — a
+pointer and a length — produced only by borrowing a `List<T>`, a `[T; N]`, or another slice.
+Assignment through a slice, such as `a[0] = 9`, does not compile; mutation belongs to
+`List<T>` or `[T; N]`. Array literals produce `[T; N]` (below), not `T[]`; `let nums:
+i64[] = [1, 2, 3];` continues to work through `[T; N]`'s implicit coercion to `T[]`
+(RFC-0053), not because the literal itself is a `T[]`.
 
 The three-way split between `T[]`, `[T; N]`, and `List<T>` below reflects the current
 design. The exact boundary between them — in particular, how a growable list's storage is
@@ -524,6 +524,8 @@ An array index expression must have type `u64`.
 
 ## Fixed-size arrays
 
+> **Since:** Fixed-size arrays in v0.8.0.
+
 `[T; N]` is an array type whose length `N` is a non-negative integer literal known at compile time.
 `[T; N]` coerces to `T[]` (not the reverse). `N` must be a non-negative integer literal; variables are not permitted.
 
@@ -551,15 +553,14 @@ fun sum(xs: [i64; 3]) -> i64 {
 }
 ```
 
-> **Availability:** Since v0.8.0.
+> **Changed in v0.12.0 (RFC-0126):** unannotated array literals now have `[T; N]`, not `T[]`.
 
-> **Since v0.12.0 (RFC-0126): array literals produce `[T; N]`, not `T[]`.** `[1, 2,
-> 3]` will have type `[i64; 3]`; a literal has a statically known length and owns its
-> elements, which is what `[T; N]` already is. Slices arise only from borrowing, never from
-> a literal. The `[T; N]` → `T[]` coercion above already applies wherever `T[]` is expected —
-> a `let`/`var` target, a function argument, a generic instantiation — so this does not by
-> itself require touching call sites that already pass a `[T; N]`-typed or explicitly
-> `T[]`-annotated value; it only changes what an *unannotated* literal's own type is.
+An unannotated literal such as `[1, 2, 3]` has type `[i64; 3]`: its length is statically
+known and it owns its elements. Slices arise only from borrowing, never from a literal. The
+`[T; N]` → `T[]` coercion above applies wherever `T[]` is expected — a `let`/`var` target, a
+function argument, or a generic instantiation — so existing call sites need not change when
+they already accept a `[T; N]`-typed or explicitly `T[]`-annotated value. Only an
+unannotated literal's own type changed.
 
 See the note under "Arrays" above — this split is not considered final.
 
@@ -918,12 +919,12 @@ fun main() {
 
 `List<T>` does not implicitly coerce to `T[]`. Call `.as_slice()` to get a read-only view.
 
-> **Since v0.12.0 (RFC-0126): `as_slice` is what its signature already says.**
-> Today `as_slice` returns the same underlying storage, but the result is deep-copied at
-> whatever binding or return receives it, so "no copy" describes only the call itself, not
-> the value's subsequent lifetime. Once `T[]` is a genuine borrowed view, the returned slice
-> stays a live view for as long as it is used — still bounded by `self`'s lifetime, not
-> copied away from it.
+> **Changed in v0.12.0 (RFC-0126):** `as_slice` returns a live borrowed view rather than a
+> copied result.
+
+`as_slice` returns the same underlying storage, and the result remains a view for as long as
+it is used, bounded by `self`'s lifetime. "No copy" therefore describes the value's full
+lifetime, not only the call itself.
 
 <details>
 <summary>Formal rules</summary>
@@ -1342,14 +1343,15 @@ Both bound kinds are opted into; they differ only in *granularity*. An **aspect*
 opted into per aspect, by writing an implementation. A **row** bound is opted into per type,
 by choosing the `record` kind. Nothing is implicit in either direction.
 
-> **Available now (RFC-0137, metel-core#857): a `struct`'s "no" below is a visibility
-> gate, not the absence of a row.** Every struct is represented internally as
-> `(brand, row)` (see [Ownership — Narrowing](ownership.md#narrowing)); what the table's
-> "no" states is that a plain struct's row is never *visible* to row-bound satisfaction,
-> regardless of narrowing or projection — including at full width, where the row's
-> content is identical to a same-shaped record's — the same observable outcome as
-> before, now restated on the branded-row mechanism itself rather than merely predicted
-> of it.
+> **Since v0.13.0 (RFC-0137, metel-core#857):** a plain `struct`'s row is not visible to
+> row-bound satisfaction.
+
+Every struct is represented internally as `(brand, row)` (see [Ownership —
+Narrowing](ownership.md#narrowing)). The table's "no" is a visibility gate, not the absence
+of a row: a plain struct's row is never *visible* to row-bound satisfaction, regardless of
+narrowing or projection — including at full width, where its content is identical to a
+same-shaped record's. This preserves the same observable outcome as before, expressed on the
+branded-row mechanism itself.
 
 | | non-local aspect (`Display`) | local aspect | row bound |
 |---|---|---|---|

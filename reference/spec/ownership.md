@@ -7,14 +7,13 @@ title: "Ownership and Move Semantics"
 > **Availability:** Since v0.12.0 (RFC-0071), behind the `--move-check` flag — not the
 > default typechecking path.
 
-Every rule on this page is enforced, and every rule below with a fixture citation is
-genuinely checked against the real interpreter — but only when `--move-check` is passed.
-Without it, using a value after it's moved is not rejected: the interpreter behaves as
-if every value were `Copy` (verified directly — a binding reused after being moved into
-another still resolves, and mutating the new binding does not affect the old one). This
-is an off-by-default opt-in, not a description of a future model: the existing corpus is
-written in a style affine ownership rejects, so the flag stays off by default until a
-separate, tracked migration addresses that.
+This page describes the implemented ownership model behind the opt-in `--move-check` flag.
+Every rule here, including rules with fixture citations, is checked against the real
+interpreter when the flag is passed. Without it, using a value after it is moved is not
+rejected: the interpreter behaves as if every value were `Copy` (a binding reused after a
+move still resolves, and mutating the new binding does not affect the old one). The flag is
+off by default while the existing corpus is migrated to the ownership rules, so this page
+documents an available opt-in mode rather than the default typechecking behavior.
 
 ## Values move by default
 
@@ -95,6 +94,10 @@ A declared `Copy` implementation is legal only when every struct field or enum p
 
 ## `Drop`
 
+> **Planned for v0.14.0 (RFC-0071, metel-core#261):** executing destructors when values
+> leave scope. `Drop` declarations already participate in the implemented ownership checks;
+> only their runtime destructor behavior is planned.
+
 `Drop` gives a type destructor logic that runs when a value goes out of scope:
 
 ```metel
@@ -159,15 +162,14 @@ implementations are rejected only when an instantiation would receive both aspec
 
 ## Drop order
 
+> **Planned for v0.14.0 (RFC-0071, metel-core#261):** scope-exit destruction and its
+> ordering rules.
+
 Within a scope, values are [dropped in **reverse declaration order**](#spec.ownership.drop-order.dynamics-1). A value that has been
 moved out is not dropped where it was declared — the new owner drops it.
 
 For a type with a `Drop` implementation, [`drop(self)` runs first, then its fields are dropped
 recursively](#spec.ownership.drop-order.dynamics-2).
-
-For a struct that owns an allocator (`struct Parser(@a: BumpAlloc)`), the struct's fields are
-dropped before the owned arena is freed, so any `@a T` pointers held as fields are reclaimed
-while their backing memory is still valid.
 
 <details>
 <summary>Formal rules</summary>
@@ -186,17 +188,19 @@ moved to another owner is dropped by that owner instead.
 ##### Dynamic Semantics {#spec.ownership.drop-order.dynamics-2}
 
 Dropping a value with a `Drop` implementation invokes `drop(self)` before recursively dropping
-its fields; a struct's fields are dropped before an allocator it owns is freed.
+its fields.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Same root gap as drop-order.dynamics-1: destructor invocation is not implemented, so drop(self)-before-fields ordering cannot be observed. #261 also separately tracks the allocator-ordering half." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Same root gap as drop-order.dynamics-1: destructor invocation is not implemented, so drop(self)-before-fields ordering cannot be observed." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#261: Same root gap as drop-order.dynamics-1: destructor invocation is not implemented, so drop(self)-before-fields ordering cannot be observed. #261 also separately tracks the allocator-ordering half._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#261: Same root gap as drop-order.dynamics-1: destructor invocation is not implemented, so drop(self)-before-fields ordering cannot be observed._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>
 
 ## Explicit drop
+
+> **Planned for v0.14.0 (RFC-0071, metel-core#261):** the built-in `drop(x)` operation.
 
 [`drop(x)` consumes `x`, runs its destructor if it has one, and marks the binding moved](#spec.ownership.explicit-drop.dynamics-1). Using
 `x` afterwards is [an error, exactly as after any other move](#spec.ownership.explicit-drop.legality-1).
@@ -313,8 +317,10 @@ explicit field move — including the `Drop`-type ban ([legality-2](#spec.owners
 
 </details>
 
-> **Availability:** Since v0.12.0 (RFC-0071), behind `--move-check`. A `Drop` type may
-> still be partially *borrowed*; only moving out is restricted.
+> **Changed in v0.12.0 (RFC-0071), behind `--move-check`:** moving a field out of a `Drop`
+> type is now rejected.
+
+A `Drop` type may still be partially *borrowed*; only moving out is restricted.
 
 > **Planned for v0.14.0 (RFC-0137 §5): legality-2's ban is superseded in design by
 > row-bounded `Drop` dispatch — see "Drop dispatch against a narrowed residual" below.
@@ -380,9 +386,11 @@ Every `struct` is represented, for type-checking purposes, as a fixed nominal id
 (its **brand**, minted once at declaration) paired with its current **row** — the set of
 fields still present.
 
-**Available now (RFC-0137, metel-core#857): a struct's own field projection is
-branded.** `h.{ fd }` — reading fields out on a copy of the reference, not consuming the
-original — produces a residual of `h`'s own brand, not a same-shaped anonymous record:
+> **Since v0.13.0 (RFC-0137, metel-core#857):** a struct's own field projection preserves
+> its nominal brand.
+
+`h.{ fd }` reads fields from a copy of the reference without consuming the original. It
+produces a residual of `h`'s own brand, not a same-shaped anonymous record:
 
 ```metel
 struct Handle { fd: i64, name: String }
@@ -402,14 +410,13 @@ A projection naming *every* field the struct declares normalizes back to the pla
 struct type instead of staying a distinct residual — `h.{ fd, name }` here is just
 `Handle`, still rejected by a row bound the same way a bare `Handle` value already is.
 
-> **Since v0.13.0: moving a field out of a value also narrows its *type*** — not just a
-> change in what the compiler internally tracks about it (see
-> [Partial moves](#partial-moves) above). For a **struct** (RFC-0137 slice 2,
-> metel-core#858) `h.name` produces exactly the branded residual type `h.{ fd }`
-> (projection) produces — the same mechanism, reached two ways. For an **anonymous
-> `record`** (RFC-0117, metel-core#789) `r.left` moved out leaves `r : { right: i64 }`.
-> Using the narrowed value where the whole type (or a wider row) is required is a plain
-> type error at type-check time, not only a `--move-check` finding.
+> **Since v0.13.0:** moving a field out of a value narrows its type.
+
+For a **struct** (RFC-0137 slice 2, metel-core#858), `h.name` produces the same branded
+residual type, `h.{ fd }`, as a projection does. For an **anonymous `record`** (RFC-0117,
+metel-core#789), moving `r.left` out leaves `r : { right: i64 }`. Using the narrowed value
+where the whole type or a wider row is required is a type error at type-check time, not only
+a `--move-check` finding.
 
 The residual is an ordinary value: it can be bound, passed, returned, dropped, and
 narrowed again. For a value over *N* fields, the space of residual shapes is the subset
@@ -570,9 +577,11 @@ equivalent partial move.
 
 ### Passing a residual to a function
 
-> **Available now (RFC-0137, metel-core#857), for a projection-produced residual.**
-> Once move-triggered narrowing lands (metel-core#858), a residual reached that way is
-> passed exactly the same way — nothing here is specific to how the residual arose.
+> **Since v0.13.0 (RFC-0137, metel-core#857):** projection-produced residuals match
+> compatible projected parameters.
+
+Once move-triggered narrowing lands (metel-core#858), a residual reached that way is passed
+exactly the same way; nothing here is specific to how the residual arose.
 
 A parameter naming a struct's own projected type (`Handle.{ fd }`, or `Self.{ fd }`
 inside `Handle`'s own `extend` block) is ordinary type-matching, available to every
@@ -718,17 +727,15 @@ status today](#spec.ownership.partial-moves.legality-3), for every struct regard
 `Drop` — this is existing, unconditional `--move-check` behavior, not itself part of
 RFC-0137.
 
-> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858): once narrowing gives the residual a
-> named type (above), reassigning a moved-out field also widens that type back
-> automatically** —
-> `Handle.{ fd }` becomes `Handle` again once `name` is reassigned. This is not a new
-> capability requiring any other RFC first: it is the residual-type formalization
-> naming what reassignment's existing whole-value-restoring behavior already produces.
-> Widening does not check the reassembled value against any constructor invariant — an
-> invariant a struct's constructor enforces can be bypassed through ordinary field
-> reassignment today, independent of narrowing or widening; RFC-0114 (Constructor
-> Aspect and Canonical Construction, still `0-draft`) is the proposed fix for that,
-> unrelated to whether this section is implemented.
+> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858):** reassigning a moved-out field
+> widens a residual back to its whole type.
+
+`Handle.{ fd }` becomes `Handle` again once `name` is reassigned. This formalizes the
+whole-value-restoring behavior reassignment already has; it does not require another RFC.
+Widening does not check the reassembled value against constructor invariants. Ordinary field
+reassignment can already bypass such an invariant independently of narrowing or widening;
+RFC-0114 (Constructor Aspect and Canonical Construction, still `0-draft`) proposes a
+separate solution.
 
 <details>
 <summary>Formal rules</summary>
@@ -779,9 +786,10 @@ reassigned the type is the plain struct again and the value may be used as a who
 `&var T` is **not** `Copy` — an exclusive reference must stay unique to be exclusive. It is
 therefore moved on use, with one exception:
 
-> **Availability:** Since v0.12.0 (RFC-0071), behind `--move-check`. Passing a `&var T`
-> as an argument to a parameter of type `&var T` reborrows it rather than moving it —
-> the original binding remains usable after the call. Every other use moves.
+> **Since v0.12.0 (RFC-0071), behind `--move-check`:** `&var T` arguments reborrow.
+
+Passing a `&var T` to an `&var T` parameter reborrows it rather than moving it, so the
+original binding remains usable after the call. Every other use moves.
 
 ```metel
 struct Counter { n: i64 }

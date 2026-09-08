@@ -942,15 +942,15 @@ Rules:
 
 Addressable places for both `&` and `&var` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), a dereference (`*p` — so `&*p` is a reborrow that shares the referent's storage), and chains thereof (`nested.outer.field`, `t.1.0`).
 
-> **Since v0.12.0: `&<rvalue>` / `&var <rvalue>` — temporary lifetime extension.**
-> Neither `&expr` nor `&var expr` requires `expr` to be an addressable place anymore: a
-> literal, a call result, a struct or enum construction, or any other non-addressable
-> expression is materialized into a fresh, independent cell and referenced directly
-> (matching Rust and C++: `foo(&Vec::new())`, `foo(&var Vec::new())` — both need no
-> intermediate binding). Sound for both forms — nothing outside the expression can ever
-> alias the cell, so a mutable reference to it can never conflict with anything else.
->
-> ```metel
+> **Since v0.12.0:** `&` and `&var` may borrow a temporary expression.
+
+Neither `&expr` nor `&var expr` requires `expr` to be an addressable place. A literal, call
+result, struct or enum construction, or other non-addressable expression is materialized
+into a fresh, independent cell and referenced directly — as in `foo(&Vec::new())` or
+`foo(&var Vec::new())`, with no intermediate binding. This is sound for both forms because
+nothing outside the expression can alias that cell.
+
+```metel
 > fun takes_ref(l: &List<i64>) -> i64 { l.len() }
 > fun bump(x: &var i64) -> i64 { *x := *x + 1; *x }
 > fun main() -> i64 {
@@ -958,7 +958,7 @@ Addressable places for both `&` and `&var` include named bindings (`x`), struct 
 >     let b := bump(&var 41);                        // &var works on a temporary too
 >     return a + b;
 > }
-> ```
+```
 
 `&var` requires the operand to be a `var` binding — applying it to a plain `let` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)). `&var` on a lvalue path ([a struct field](#spec.expressions.references.dynamics-1), [tuple element](#spec.expressions.references.dynamics-2), [array element](#spec.expressions.references.dynamics-3), or [chain of projections](#spec.expressions.references.dynamics-4)) produces a true exclusive reference with write-back semantics, matching `&var` on a named binding exactly — writes through it propagate to the original storage location (RFC-0045, already implemented; this section previously described `&var struct.field` as a non-propagating snapshot, which was the *pre*-RFC-0045 behavior and had never been updated to match). `&` on a field or element also aliases the original storage through the same path machinery, so later writes to the binding remain visible through the shared reference; it is still read-only, so writing through `&T` remains rejected. Reborrowing preserves this: `&*r` shares whatever storage `r` names, and reborrowing a `&var T` as `&T` downgrades to shared. The reverse is rejected — `&var *r` where `r: &T` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)), since a shared reference never grants write access.
 

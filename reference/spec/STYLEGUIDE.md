@@ -46,12 +46,33 @@ unrelated issue this way).
 > **Availability:** Matching-error `?` since v0.1.0. `From`-based error coercion since v0.4.0.
 ```
 
+Place a section-level `Since` / `Availability` marker immediately after its heading, before
+any prose, examples, or formal rules. It scopes to that heading; name the feature in the
+marker when the section covers more than one capability. Place an inline `Since` or
+`Changed in` marker immediately before the sentence, rule, table, or example it qualifies
+— never at the end of a preceding block where its scope is ambiguous.
+
 **Changed**, when a later release altered established behavior — cite the RFC if one
 drove it:
 
 ```markdown
 > **Changed in v0.11.0 (RFC-0111): `None` and `Some` are ordinary variants of `Perhaps<T>`, not literals.**
 ```
+
+An inline `Since` or `Changed in` row is provenance, not a secondary container for the
+specification. Keep it to a short availability or before/after summary — normally one
+sentence — then put the complete current rule, explanation, examples, and caveats in
+ordinary prose immediately after it. This keeps the current specification legible even when
+a section has a long history. If several releases changed the same section, mark only the
+individual claims whose history matters; put broader history in a brief end-of-section
+history note or the linked RFCs, rather than turning most of the section into muted callouts.
+
+**Decision rule.** Use `Since` / `Availability` only when the marked syntax, rule, or
+capability did not exist in an earlier release. Use `Changed in` only when an already
+specified language surface has different syntax or semantics now. A `Changed in` marker
+must make that distinction legible by naming the old and new behavior; do not label a
+revision `Since` merely because it introduced a new spelling. Do not put both markers on
+the same claim — split an addition from a revision when they are independently useful.
 
 Both are historical records, not permanent fixtures, and both get pruned the same way once
 they stop doing their job:

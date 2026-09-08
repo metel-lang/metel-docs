@@ -118,12 +118,14 @@ in a written function type.
 A named function declared with its own `<T>` generics (`fun identity<T>(x: T) -> T
 { ... }`) may always be called directly (`identity(3)`, `identity::<i64>(3)`).
 
-> **Changed in v0.13.0 (RFC-0138):** a generic named function may also be bound
-> with a bare, unannotated `let` (the binding itself stays polymorphic, so its own
-> later uses may each instantiate it differently — `let alias = identity;
-> alias(3); alias("x");`), or passed as a higher-order argument whose receiving
-> parameter position is itself concrete (`apply(identity, 3)`, where `apply`'s own
-> parameter is `|i64| -> i64`, not itself generic).
+> **Changed in v0.13.0 (RFC-0138):** generic named functions are no longer limited to direct
+> calls or explicitly typed contexts.
+
+A generic named function may be bound with a bare, unannotated `let`; the binding stays
+polymorphic, so its later uses may each instantiate it differently (`let alias = identity;
+alias(3); alias("x");`). It may also be passed as a higher-order argument when the receiving
+parameter position is concrete — for example, `apply(identity, 3)` when `apply`'s parameter
+is `|i64| -> i64`, not itself generic.
 
 Referencing it in a position where nothing pins down a concrete instantiation —
 a parameter position that is itself still generic in the callee (rank-2), or an
@@ -920,6 +922,9 @@ exited early.
 <!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-11}
+
+> **Planned for v0.14.0 (RFC-0071, metel-core#261):** closure-environment destruction
+> follows the language's general destructor-execution work.
 
 When a closure value is dropped, its environment is dropped: each owned capture is dropped
 in capture-list order, as a struct's fields are. A `once`-consumed or partially-moved

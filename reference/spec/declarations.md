@@ -1374,10 +1374,8 @@ written `extend Type: Aspect { ... }`, and both forms may coexist for the same t
 
 ### `dyn Aspect`
 
-> **Available now (RFC-0008, metel-core#865, metel-core#863, metel-core#864):
-> syntax, type representation, object safety, coercion (including behind
-> `&`/`&var`, at every position below), dispatch, and `List<dyn Aspect>`
-> heterogeneous collections.**
+> **Since v0.13.0 (RFC-0008, metel-core#865, metel-core#863, metel-core#864):** `dyn Aspect`
+> objects, their coercions, and heterogeneous `List<dyn Aspect>` collections are supported.
 
 `dyn Aspect` is an aspect object: a value whose concrete type is erased, with
 dispatch happening through a vtable at runtime. It complements `extends Aspect`
@@ -1930,13 +1928,13 @@ impls. `Ord` (RFC-0062, still `0-draft`) and `Hash` (not yet proposed) array imp
 not provided in this language version — neither aspect exists in `std::core` at all yet,
 for arrays or otherwise.
 
-> **Since v0.12.0 (RFC-0126): `T[]`'s `Clone` impl is replaced, not just
-> reconditioned.** Once `T[]` owns nothing, "element-wise clone into new backing storage" is
-> not just unconditional on the element type — it is impossible to implement as `T[]: Clone`
-> at all: `Clone::clone(&self) -> Self` must produce a `T[]`, and a `T[]` can only ever borrow
-> from something that already exists and outlives it, never from a buffer the impl just
-> allocated for itself. `Display` and `Eq` are unaffected — they return `String`/`boolean`,
-> not `Self`.
+> **Changed in v0.12.0 (RFC-0126):** `T[]`'s `Clone` implementation is now a view copy, not
+> an element-wise clone.
+
+Once `T[]` owns nothing, an element-wise clone into new backing storage is impossible:
+`Clone::clone(&self) -> Self` must produce a `T[]`, which can borrow only from storage that
+already exists and outlives it, not from a buffer the implementation just allocated.
+`Display` and `Eq` are unaffected because they return `String` and `boolean`, not `Self`.
 
 **Tuples** are deferred pending a decision on per-arity boilerplate vs. variadic generics — until then, tuples fail aspect bounds the same way arrays do without a matching impl (`(i64, String)` does not implement `Display`, with a hint to use a named struct instead).
 
@@ -2830,7 +2828,7 @@ reads as `T: (!Drop) + Clone` — and positive and negative bounds may mix freel
 or in a `where` clause, on the same terms as ordinary bounds above.
 
 ```metel
-fun move_out<T: !Drop, A: Alloc>(@a: A, ptr: @a T) -> T { ... }
+fun move_out<T: !Drop>(value: T) -> T { ... }
 ```
 
 **Satisfaction.** For a concrete type, `T: !Aspect` is satisfied exactly when no
