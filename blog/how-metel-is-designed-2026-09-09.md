@@ -135,6 +135,10 @@ implementation does. If an interaction cannot be expressed in the specification
 or tested by a fixture, that is a design question to resolve, not paperwork to
 defer.
 
+The fixture corpus also runs in automated CI. That makes these checks part of
+the ordinary cost of changing the language, rather than a manual audit someone
+has to remember to perform before a release.
+
 This is why Metel has formal rules and fixtures alongside explanatory prose. The
 prose makes the language teachable; the rules make important claims precise; the
 fixtures make those claims executable. None is a complete definition alone.
