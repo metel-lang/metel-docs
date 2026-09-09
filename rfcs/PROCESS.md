@@ -580,12 +580,17 @@ and then silently disagreeing in four places.
   **not** carry a `target:` frontmatter field. `rfc.py check` rejects that retired
   field, and `rfc.py new` no longer creates it.
 - A tracking issue's GitHub milestone is the RFC's current schedule. No milestone
-  means the RFC remains active design work without a release commitment.
+  means the RFC remains active design work without a release commitment. Work owned by
+  another Metel repository follows the same rule in that repository: for example, the
+  v0.13.1 Core tooling work enables the [metel-lsp v0.1.0 milestone](https://github.com/metel-lang/metel-lsp/milestone/2)
+  and [its MVP umbrella](https://github.com/metel-lang/metel-lsp/issues/1), with
+  `metel-core`'s matching milestone linking to that cross-repository delivery.
 - Milestone descriptions define the release's purpose and exit criteria. Issues
   provide the execution detail. An issue may carry `needs-design` when a milestone
   commits design settlement rather than implementation.
 - A future roadmap page may present the same information, but it reads open
-  milestones from GitHub at runtime. Shipped releases remain static release notes.
+  milestones from the relevant Metel GitHub repositories at runtime. Shipped releases
+  remain static release notes.
 
 When a scheduling decision changes, update the issue's milestone and its milestone
 description if the release scope changed. Do not add a second target field to the

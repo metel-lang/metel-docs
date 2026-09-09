@@ -607,6 +607,12 @@ part of the same records/views substrate review):
 - **RFC-0062** — Ord/Eq Comparison Aspects — `Eq`/`Ord`/`Ordering` in `std::core`.
   RFC-0093's Derivable Aspects table assumes these exist; not cross-checked against
   RFC-0062's actual signatures.
+- **RFC-0168** *(draft, opened 2026-09-09)* — Equality Model and Super-Aspects — splits
+  equality into operation-bearing `PartialEq` and reflexivity-marker `Eq: PartialEq`,
+  introduces nominal transitive super-aspect refinement, and lowers `==`/`!=` through
+  `PartialEq`. Floats are `PartialEq` but not `Eq`; references compare referents rather
+  than identity. Reconciles RFC-0062's equality half with RFC-0011 while leaving ordering
+  and general operator overloading to their respective RFCs.
 - **RFC-0011** — Operator Overloading Aspects — operator desugaring. RFC-0093 notes
   derived `Eq`/`Ord` depend on this.
 - **RFC-0039** *(under review, opened 2026-06-01; #922)* — `aspect` Alias Syntax —
