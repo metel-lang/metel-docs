@@ -3,7 +3,6 @@ id: rfc-0136
 title: "Walrus for Kept Bindings"
 date: '2026-08-23'
 status: implemented
-target: v0.13.0
 updated: '2026-08-31'
 tracking: 'https://github.com/metel-lang/metel-core/issues/804'
 coverage:

@@ -3,7 +3,6 @@ id: rfc-0165
 title: "Structural Union Types"
 date: '2026-09-02'
 status: under-review
-target:
 updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/937'
 ---

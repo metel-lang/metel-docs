@@ -3,7 +3,6 @@ id: rfc-0094
 title: "Comptime Metaprogramming — Generalized Emit, Comptime-Callable Parsing, Diagnostics"
 date: '2026-07-09'
 status: draft
-target:
 ---
 
 > **New RFC, split out 2026-07-09** from RFC-0012 (Attributes, Metadata, Macros, and

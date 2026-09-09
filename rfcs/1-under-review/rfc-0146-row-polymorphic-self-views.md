@@ -3,7 +3,6 @@ id: rfc-0146
 title: "Row-Polymorphic Self-Views"
 date: '2026-08-28'
 status: under-review
-target:
 updated: '2026-08-28'
 tracking: 'https://github.com/metel-lang/metel-core/issues/886'
 ---

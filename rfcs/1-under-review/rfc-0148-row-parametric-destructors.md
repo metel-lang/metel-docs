@@ -3,7 +3,6 @@ id: rfc-0148
 title: "Row-Parametric Destructors"
 date: '2026-08-28'
 status: under-review
-target:
 updated: '2026-08-28'
 tracking: 'https://github.com/metel-lang/metel-core/issues/888'
 ---

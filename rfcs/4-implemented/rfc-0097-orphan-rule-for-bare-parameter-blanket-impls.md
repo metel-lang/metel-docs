@@ -8,7 +8,6 @@ coverage:
   "2": { spec: "spec.declarations.aspects.aspect-implementation-coherence.legality-2" }
   "3": { spec: "spec.declarations.aspects.aspect-implementation-coherence.legality-3" }
   "4": { spec: "spec.declarations.aspects.aspect-implementation-coherence.legality-4" }
-target:
 updated: '2026-07-14'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/555'
 impl_status: implemented

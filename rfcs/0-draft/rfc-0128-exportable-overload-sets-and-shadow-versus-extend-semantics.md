@@ -3,7 +3,6 @@ id: rfc-0128
 title: "Exportable overload sets and shadow-versus-extend semantics"
 date: '2026-08-04'
 status: draft
-target:
 ---
 
 ## Summary

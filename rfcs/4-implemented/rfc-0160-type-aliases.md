@@ -3,7 +3,6 @@ id: rfc-0160
 title: "Type Aliases"
 date: '2026-09-01'
 status: implemented
-target: v0.13.0
 updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/921'
 coverage:

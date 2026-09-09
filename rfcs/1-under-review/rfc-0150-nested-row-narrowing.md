@@ -3,7 +3,6 @@ id: rfc-0150
 title: "Nested Row Narrowing"
 date: '2026-08-29'
 status: under-review
-target:
 updated: '2026-08-29'
 tracking: 'https://github.com/metel-lang/metel-core/issues/900'
 ---

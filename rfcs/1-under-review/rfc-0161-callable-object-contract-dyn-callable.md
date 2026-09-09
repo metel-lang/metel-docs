@@ -3,7 +3,6 @@ id: rfc-0161
 title: "Callable Object Contract (dyn Callable)"
 date: '2026-09-01'
 status: under-review
-target: v0.13.1
 tracking: 'https://github.com/metel-lang/metel-core/issues/923'
 updated: '2026-09-01'
 ---

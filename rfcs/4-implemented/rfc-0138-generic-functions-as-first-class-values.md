@@ -3,7 +3,6 @@ id: rfc-0138
 title: "Generic Functions as First-Class Values"
 date: '2026-08-24'
 status: implemented
-target:
 updated: '2026-08-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/736'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/736'

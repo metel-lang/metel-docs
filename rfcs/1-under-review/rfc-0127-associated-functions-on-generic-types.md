@@ -3,7 +3,6 @@ id: rfc-0127
 title: "Associated Functions on Generic Types"
 date: '2026-08-01'
 status: under-review
-target:
 updated: '2026-08-23'
 tracking: 'https://github.com/metel-lang/metel-core/issues/802'
 ---

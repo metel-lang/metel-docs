@@ -3,7 +3,6 @@ id: rfc-0105
 title: "Struct-Embedded Aspect Lists"
 date: '2026-07-14'
 status: draft
-target:
 updated: '2026-07-14'
 ---
 

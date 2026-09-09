@@ -3,7 +3,6 @@ id: rfc-0153
 title: "Closure Mutation Axis"
 date: '2026-08-30'
 status: implemented
-target: v0.13.0
 updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/902'
 coverage:

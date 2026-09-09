@@ -3,7 +3,6 @@ id: rfc-0158
 title: "Share and Clone: Separating Aliasing from Duplication"
 date: '2026-08-31'
 status: under-review
-target:
 updated: '2026-08-31'
 tracking: 'https://github.com/metel-lang/metel-core/issues/919'
 ---

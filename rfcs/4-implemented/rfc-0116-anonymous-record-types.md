@@ -3,7 +3,6 @@ id: rfc-0116
 title: "Anonymous Record Types"
 date: '2026-07-24'
 status: implemented
-target:
 updated: '2026-07-25'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/576'
 impl_status: implemented

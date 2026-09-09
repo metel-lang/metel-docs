@@ -3,7 +3,6 @@ id: rfc-0114
 title: "Constructor Aspect and Canonical Construction"
 date: '2026-07-23'
 status: draft
-target:
 updated: '2026-07-24'
 ---
 

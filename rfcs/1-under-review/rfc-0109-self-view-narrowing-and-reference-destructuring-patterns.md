@@ -3,7 +3,6 @@ id: rfc-0109
 title: "Self-View Narrowing"
 date: '2026-07-18'
 status: under-review
-target:
 updated: '2026-08-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/842'
 ---

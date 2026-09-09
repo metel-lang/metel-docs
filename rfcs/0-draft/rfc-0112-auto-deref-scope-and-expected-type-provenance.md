@@ -3,7 +3,6 @@ id: rfc-0112
 title: "Auto-Deref Scope and Expected-Type Provenance"
 date: '2026-07-21'
 status: draft
-target:
 ---
 
 ## Summary

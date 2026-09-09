@@ -3,7 +3,6 @@ id: rfc-0151
 title: "Tuples as Numeric-Label Rows"
 date: '2026-08-29'
 status: draft
-target:
 ---
 
 > **Consolidation RFC.** Anonymous record types (RFC-0116) landed a general

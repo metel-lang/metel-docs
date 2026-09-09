@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-09-04'
+generated_on: '2026-09-09'
 ---
 
 # RFC Registry
@@ -47,7 +47,7 @@ the curated thematic map.
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
-- **RFC-0067** — Lifetime Anchors (`1-under-review` ; rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-08-23)
+- **RFC-0067** — Lifetime Anchors (`1-under-review` ; rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-09-09)
 - **RFC-0076** — Brand Types (`1-under-review` ; rfcs/1-under-review/rfc-0076-rc-brands.md ; date 2026-06-29 ; updated 2026-08-27)
 - **RFC-0080** — Standard Library Aspects — Clone, Deref, Send, Sync (`1-under-review` ; rfcs/1-under-review/rfc-0080-stdlib-aspects.md ; date 2026-07-01 ; updated 2026-08-23)
 - **RFC-0089** — Linear Types (`1-under-review` ; rfcs/1-under-review/rfc-0089-linear-types.md ; date 2026-07-09 ; updated 2026-09-03)

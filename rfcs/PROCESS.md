@@ -2,7 +2,7 @@
 id: rfc-process
 title: "RFC Process"
 type: process
-last_updated: '2026-07-10'
+last_updated: '2026-09-09'
 ---
 
 # RFC Process
@@ -569,6 +569,29 @@ update pass, not a deferred "later" cleanup.
    follow-up — an unreconciled overlap discovered later costs more than a few extra
    minutes checking now.
 
+## Roadmap and scheduling
+
+*Added 2026-09-09.* The RFC corpus records design state; **GitHub milestones are
+the single source of truth for future release scheduling.** This keeps a proposed
+date from being copied into frontmatter, RFC prose, a registry, and an issue tracker
+and then silently disagreeing in four places.
+
+- An RFC records its lifecycle `status` and links its `tracking:` issue. It does
+  **not** carry a `target:` frontmatter field. `rfc.py check` rejects that retired
+  field, and `rfc.py new` no longer creates it.
+- A tracking issue's GitHub milestone is the RFC's current schedule. No milestone
+  means the RFC remains active design work without a release commitment.
+- Milestone descriptions define the release's purpose and exit criteria. Issues
+  provide the execution detail. An issue may carry `needs-design` when a milestone
+  commits design settlement rather than implementation.
+- A future roadmap page may present the same information, but it reads open
+  milestones from GitHub at runtime. Shipped releases remain static release notes.
+
+When a scheduling decision changes, update the issue's milestone and its milestone
+description if the release scope changed. Do not add a second target field to the
+RFC. Existing dated target statements in RFC history describe the decision at the
+time they were written; GitHub is authoritative for the present plan.
+
 ## Tooling
 
 `rfcs/tools/rfc.py` (stdlib-only Python, no dependencies) mechanizes the parts
@@ -654,6 +677,10 @@ of this process that don't need judgment:
   `INDEX.md` cluster section's combined text; suggests where it belongs rather than
   deciding it. Verified against three existing placements (RFC-0091, RFC-0074, RFC-0003)
   and agreed with the manual choice in all three.
+- `rfc.py milestones` — prints a Markdown report of the currently open GitHub
+  milestones: each milestone's purpose, progress, and its explicitly titled RFC
+  tracking issues. It writes no roadmap file; the report is a live view of the
+  scheduling authority described above.
 - `rfc.py index --write-coverage-baseline` (added 2026-08-19) — regenerates
   `COVERAGE-BASELINE.json` from the current per-RFC coverage state. Run this after
   deliberately widening a gap (a new typed exemption, a fixture intentionally retired) so

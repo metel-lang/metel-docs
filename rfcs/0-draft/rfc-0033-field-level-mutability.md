@@ -3,7 +3,6 @@ id: rfc-0033
 title: "Field-Level Mutability"
 date: '2026-05-30'
 status: draft
-target:
 ---
 
 ## Summary

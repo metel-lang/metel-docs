@@ -2,7 +2,6 @@
 id: rfc-0156
 title: "Parenthesize match Scrutinee"
 date: '2026-08-31'
-target: v0.13.0
 status: implemented
 updated: '2026-08-31'
 tracking: 'https://github.com/metel-lang/metel-core/issues/701'

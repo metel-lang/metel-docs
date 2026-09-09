@@ -3,7 +3,6 @@ id: rfc-0050
 title: "Closure Capture Lists"
 date: '2026-06-03'
 status: implemented
-target: v0.13.0
 updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/803'
 coverage:

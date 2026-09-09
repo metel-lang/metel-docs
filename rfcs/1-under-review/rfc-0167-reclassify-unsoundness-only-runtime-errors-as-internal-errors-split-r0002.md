@@ -3,7 +3,6 @@ id: rfc-0167
 title: "Reclassify unsoundness-only runtime errors as internal errors; split R0002"
 date: '2026-09-04'
 status: under-review
-target: v0.14.0
 updated: '2026-09-04'
 tracking: 'https://github.com/metel-lang/metel-core/issues/991'
 ---

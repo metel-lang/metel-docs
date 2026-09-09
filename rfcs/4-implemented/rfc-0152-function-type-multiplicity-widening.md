@@ -3,7 +3,6 @@ id: rfc-0152
 title: "Function-Type Multiplicity Widening"
 date: '2026-08-30'
 status: implemented
-target: v0.13.0
 updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/901'
 coverage:

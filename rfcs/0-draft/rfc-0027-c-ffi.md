@@ -3,7 +3,6 @@ id: rfc-0027
 title: "C FFI"
 date: '2026-05-24'
 status: draft
-target:
 ---
 
 ## Summary

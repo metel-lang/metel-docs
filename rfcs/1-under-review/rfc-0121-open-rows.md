@@ -4,7 +4,6 @@ title: "Open Rows"
 date: '2026-07-24'
 status: under-review
 tracking: 'https://github.com/metel-lang/metel-core/issues/792'
-target:
 updated: '2026-08-25'
 ---
 

@@ -3,7 +3,6 @@ id: rfc-0140
 title: "Algebraic Effects"
 date: '2026-08-25'
 status: under-review
-target: v0.18.0
 updated: '2026-08-25'
 tracking: 'https://github.com/metel-lang/metel-core/issues/834'
 ---

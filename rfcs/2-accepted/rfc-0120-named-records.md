@@ -4,7 +4,6 @@ title: "Named Records"
 date: '2026-07-24'
 status: accepted
 tracking: 'https://github.com/metel-lang/metel-core/issues/791'
-target: v0.14.0
 updated: '2026-09-03'
 ---
 

@@ -3,7 +3,6 @@ id: rfc-0162
 title: "Copy and Clone Model — Regular-Value Design Space"
 date: '2026-09-01'
 status: under-review
-target: v0.17.0
 updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/924'
 ---

@@ -3,7 +3,6 @@ id: rfc-0096
 title: "Auto-Impl Aspects — Compiler-Recognized Structural Aspects"
 date: '2026-07-11'
 status: under-review
-target: v0.13.1
 updated: '2026-09-03'
 tracking: 'https://github.com/metel-lang/metel-core/issues/952'
 ---

@@ -51,6 +51,41 @@ class ScheduledDraftTests(unittest.TestCase):
         )
 
 
+class MilestoneReportTests(unittest.TestCase):
+    def test_report_orders_releases_and_marks_design_settlement(self):
+        milestones = [
+            {
+                "title": "v0.17.0",
+                "description": "Ownership completion.",
+                "open_issues": 3,
+                "closed_issues": 1,
+                "html_url": "https://example.test/milestones/17",
+            },
+            {
+                "title": "v0.14.0",
+                "description": "Record finalization.",
+                "open_issues": 2,
+                "closed_issues": 2,
+                "html_url": "https://example.test/milestones/14",
+            },
+        ]
+        trackers = [{
+            "rfc_id": "rfc-0122",
+            "number": 847,
+            "title": "RFC-0122: Borrow Checking — review",
+            "milestone": "v0.17.0",
+            "url": "https://example.test/issues/847",
+            "labels": ["needs-design", "rfc-tracking"],
+        }]
+
+        report = rfc.build_milestone_report(milestones, trackers)
+
+        self.assertLess(report.index("## v0.14.0"), report.index("## v0.17.0"))
+        self.assertIn("Progress: 2/4 closed", report)
+        self.assertIn("RFC-0122 #847", report)
+        self.assertIn("design settlement", report)
+
+
 class ImplementedCoverageGateTests(unittest.TestCase):
     """`--to implemented` must accept spec-anchored coverage (ADR-0050 §5), not
     only `options.rfc` / prose citations (ADR-0049 §1)."""

@@ -71,6 +71,8 @@ Subcommands:
                                        RFC frontmatter and the spec files --
                                        no fixture corpus needed, unlike
                                        --write-coverage-baseline.
+  milestones                           Print a Markdown report of open GitHub
+                                       milestones and their RFC tracking work.
 
 `cycle-prep` moved out of this tool (ADR-0051, step 2) — its inputs were all
 public but its output (a private planning snapshot) belonged with
@@ -365,7 +367,6 @@ id: {new_id}
 title: "{args.title}"
 date: '{today()}'
 status: draft
-target:
 ---
 
 ## Summary
@@ -383,7 +384,6 @@ target:
 ## Decision
 
 **Outcome:** *(pending)*
-**Target:** *(set when accepted)*
 '''
     path.write_text(template)
     rebuild_registry()
@@ -1735,12 +1735,102 @@ def fetch_open_milestoned_rfc_trackers(owner="metel-lang", repo="metel-core"):
                 "title": issue.get("title", ""),
                 "milestone": issue["milestone"].get("title", ""),
                 "url": issue.get("html_url", ""),
+                "labels": [label.get("name", "") for label in issue.get("labels", [])],
             })
 
         if len(issues) < 100:
             break
         page += 1
     return trackers, None
+
+
+def fetch_open_milestones(owner="metel-lang", repo="metel-core"):
+    """Return open repository milestones from GitHub's public REST API."""
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    headers = {"Accept": "application/vnd.github+json", "User-Agent": "rfc.py-milestones"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    milestones = []
+    page = 1
+    while True:
+        url = (
+            f"https://api.github.com/repos/{owner}/{repo}/milestones"
+            f"?state=open&per_page=100&page={page}"
+        )
+        req = urllib.request.Request(url, headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                batch = json.loads(resp.read())
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError) as e:
+            return None, f"GitHub API request failed ({e})"
+        if not isinstance(batch, list):
+            return None, "GitHub API response was not a milestone list"
+        milestones.extend(batch)
+        if len(batch) < 100:
+            break
+        page += 1
+    return milestones, None
+
+
+def milestone_sort_key(milestone):
+    """Put semantic-version milestones first, in release order."""
+    match = re.fullmatch(r"v(\d+)\.(\d+)\.(\d+)", milestone.get("title", ""))
+    if match:
+        return (0, *(int(part) for part in match.groups()))
+    return (1, milestone.get("title", "").lower())
+
+
+def build_milestone_report(milestones, trackers):
+    """Render the live roadmap data as Markdown without persisting a second copy."""
+    trackers_by_milestone = {}
+    for tracker in trackers:
+        trackers_by_milestone.setdefault(tracker["milestone"], []).append(tracker)
+
+    lines = [
+        "# Active Milestones",
+        "",
+        "Generated from GitHub milestones; GitHub is the source of truth for future scheduling.",
+        "",
+    ]
+    active = [milestone for milestone in milestones if milestone.get("open_issues", 0) > 0]
+    for milestone in sorted(active, key=milestone_sort_key):
+        title = milestone.get("title", "(untitled milestone)")
+        open_issues = milestone.get("open_issues", 0)
+        closed_issues = milestone.get("closed_issues", 0)
+        total = open_issues + closed_issues
+        progress = f"{closed_issues}/{total}" if total else "0/0"
+        lines.extend([f"## {title}", ""])
+        if milestone.get("description"):
+            lines.extend([milestone["description"].strip(), ""])
+        lines.extend([
+            f"Progress: {progress} closed · [View milestone]({milestone.get('html_url', '')})",
+            "",
+        ])
+        scheduled = sorted(
+            trackers_by_milestone.get(title, []), key=lambda tracker: rfc_sort_key(tracker["rfc_id"])
+        )
+        if scheduled:
+            lines.append("RFC tracking work:")
+            lines.append("")
+            for tracker in scheduled:
+                kind = "design settlement" if "needs-design" in tracker.get("labels", []) else "tracked work"
+                lines.append(
+                    f"- [{tracker['rfc_id'].upper()} #{tracker['number']}]({tracker['url']}) — "
+                    f"{kind}: {tracker['title']}"
+                )
+            lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def cmd_milestones(_args):
+    milestones, milestone_error = fetch_open_milestones()
+    if milestone_error:
+        error(f"cannot generate milestone report: {milestone_error}")
+    trackers, tracker_error = fetch_open_milestoned_rfc_trackers()
+    if tracker_error:
+        error(f"cannot generate milestone report: {tracker_error}")
+    print(build_milestone_report(milestones, trackers), end="")
 
 
 def scheduled_draft_problems(id_to_stage, trackers):
@@ -2762,6 +2852,11 @@ def cmd_check(args=None):
                 f"{rel}: frontmatter status '{fm_status}' doesn't match directory "
                 f"'{stage_dir}' (expected '{expected_status}')"
             )
+        if "target" in fm:
+            problems.append(
+                f"{rel}: retired `target` frontmatter field — GitHub milestones are "
+                "the source of truth for future scheduling (PROCESS.md)"
+            )
 
         impl_status = fm.get("impl_status")
         impl_tracking = fm.get("impl_tracking")
@@ -3090,6 +3185,11 @@ def main():
     p_index.add_argument("--write-coverage-baseline", action="store_true")
     p_index.add_argument("--write-spec-origins", action="store_true")
     p_index.set_defaults(func=cmd_index)
+
+    p_milestones = sub.add_parser(
+        "milestones", help="Print a Markdown report of open GitHub milestones"
+    )
+    p_milestones.set_defaults(func=cmd_milestones)
 
     args = parser.parse_args()
     result = args.func(args)

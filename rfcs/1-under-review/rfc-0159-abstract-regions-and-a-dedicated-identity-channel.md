@@ -3,7 +3,6 @@ id: rfc-0159
 title: "Abstract Regions and a Dedicated Identity Channel"
 date: '2026-09-01'
 status: under-review
-target:
 updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/920'
 ---

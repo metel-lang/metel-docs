@@ -3,7 +3,6 @@ id: rfc-0129
 title: "Aspect Method Generic Constraint Conformance"
 date: '2026-08-05'
 status: implemented
-target:
 updated: '2026-08-29'
 tracking: 'https://github.com/metel-lang/metel-core/issues/617'
 coverage:

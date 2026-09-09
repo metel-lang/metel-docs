@@ -3,7 +3,6 @@ id: rfc-0154
 title: "Pipe Notation for Closures and Function Types"
 date: '2026-08-30'
 status: implemented
-target: v0.13.0
 updated: '2026-09-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/903'
 coverage:

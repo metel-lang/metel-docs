@@ -3,7 +3,6 @@ id: rfc-0111
 title: "Unqualified Enum Variants in Expression Position"
 date: '2026-07-21'
 status: implemented
-target:
 updated: '2026-07-21'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/572'
 impl_status: implemented

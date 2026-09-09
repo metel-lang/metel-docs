@@ -3,7 +3,6 @@ id: rfc-0090
 title: "Structural Records — Rows and Tiers"
 date: '2026-07-09'
 status: superseded
-target:
 updated: '2026-07-24'
 superseded_by: rfc-0116, rfc-0117, rfc-0118, rfc-0119, rfc-0120, rfc-0121
 ---

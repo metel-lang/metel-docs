@@ -3,7 +3,6 @@ id: rfc-0099
 title: "Dot-Separated Module Paths"
 date: '2026-07-13'
 status: under-review
-target:
 updated: '2026-08-23'
 tracking: 'https://github.com/metel-lang/metel-core/issues/806'
 ---

@@ -3,7 +3,6 @@ id: rfc-0137
 title: "Nominal Types as Branded Rows"
 date: '2026-08-24'
 status: integrated
-target:
 updated: '2026-08-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/827'
 coverage:

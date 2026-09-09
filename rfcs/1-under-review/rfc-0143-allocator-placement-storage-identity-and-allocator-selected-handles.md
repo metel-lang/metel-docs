@@ -3,7 +3,6 @@ id: rfc-0143
 title: "Allocator Placement, Storage Identity, and Allocator-Selected Handles"
 date: '2026-08-26'
 status: under-review
-target: v0.19.0
 tracking: 'https://github.com/metel-lang/metel-core/issues/850'
 updated: '2026-08-27'
 ---

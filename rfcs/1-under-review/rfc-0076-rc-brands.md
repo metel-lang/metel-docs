@@ -3,7 +3,6 @@ id: rfc-0076
 title: "Brand Types"
 date: '2026-06-29'
 status: under-review
-target: v0.17.0
 tracking: 'https://github.com/metel-lang/metel-core/issues/849'
 updated: '2026-08-27'
 ---

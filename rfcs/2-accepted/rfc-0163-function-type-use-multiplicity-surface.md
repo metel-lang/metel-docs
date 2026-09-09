@@ -3,7 +3,6 @@ id: rfc-0163
 title: "Function-Type Use-Multiplicity Surface"
 date: '2026-09-02'
 status: accepted
-target: v0.17.0
 updated: '2026-09-03'
 tracking: 'https://github.com/metel-lang/metel-core/issues/936'
 ---

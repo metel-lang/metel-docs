@@ -3,7 +3,6 @@ id: rfc-0095
 title: "Attributes and Metadata"
 date: '2026-07-09'
 status: under-review
-target:
 updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/934'
 ---

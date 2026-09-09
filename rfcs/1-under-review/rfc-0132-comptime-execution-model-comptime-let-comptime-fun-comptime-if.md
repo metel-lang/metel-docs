@@ -4,7 +4,6 @@ title: "Comptime Execution Model — comptime let, comptime fun, comptime if"
 date: '2026-08-13'
 status: under-review
 tracking: 'https://github.com/metel-lang/metel-core/issues/726'
-target:
 updated: '2026-08-31'
 ---
 

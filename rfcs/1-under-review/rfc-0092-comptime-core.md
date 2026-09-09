@@ -3,7 +3,6 @@ id: rfc-0092
 title: "Comptime Core — Type-as-Value, Reflection, and Emit"
 date: '2026-07-09'
 status: under-review
-target:
 updated: '2026-08-23'
 tracking: 'https://github.com/metel-lang/metel-core/issues/800'
 ---

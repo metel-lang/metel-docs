@@ -3,7 +3,6 @@ id: rfc-0135
 title: "Multiplicity for Ordinary Types"
 date: '2026-08-13'
 status: under-review
-target:
 updated: '2026-08-29'
 tracking: 'https://github.com/metel-lang/metel-core/issues/892'
 ---

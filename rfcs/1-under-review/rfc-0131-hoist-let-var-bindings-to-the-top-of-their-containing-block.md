@@ -3,7 +3,6 @@ id: rfc-0131
 title: "Hoist let/var Bindings to the Top of Their Containing Block"
 date: '2026-08-09'
 status: under-review
-target:
 updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/933'
 ---

@@ -3,7 +3,6 @@ id: rfc-0164
 title: "Mutating Closures with a Propagating ? Are Call-Once"
 date: '2026-09-02'
 status: draft
-target: v0.13.1
 updated: '2026-09-02'
 ---
 

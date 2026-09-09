@@ -3,7 +3,6 @@ id: rfc-0089
 title: "Linear Types"
 date: '2026-07-09'
 status: under-review
-target: v0.18.0
 updated: '2026-09-03'
 tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 ---

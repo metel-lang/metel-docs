@@ -3,7 +3,6 @@ id: rfc-0101
 title: "Grammar-Enforced Naming Case Conventions"
 date: '2026-07-14'
 status: draft
-target:
 updated: '2026-07-17'
 ---
 

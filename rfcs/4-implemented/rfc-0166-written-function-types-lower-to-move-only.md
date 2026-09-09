@@ -3,7 +3,6 @@ id: rfc-0166
 title: "Written Function Types Lower to Move-Only"
 date: '2026-09-03'
 status: implemented
-target: v0.13.0
 updated: '2026-09-03'
 tracking: 'https://github.com/metel-lang/metel-core/issues/946'
 coverage:

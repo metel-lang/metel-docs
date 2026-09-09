@@ -3,7 +3,6 @@ id: rfc-0104
 title: "Multi-Aspect Extend Blocks with Shared Bodies"
 date: '2026-07-14'
 status: draft
-target:
 ---
 
 ## Summary

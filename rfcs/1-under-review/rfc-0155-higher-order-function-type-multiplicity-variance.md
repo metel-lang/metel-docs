@@ -3,7 +3,6 @@ id: rfc-0155
 title: "Higher-Order Function-Type Multiplicity Variance"
 date: '2026-08-30'
 status: under-review
-target:
 updated: '2026-08-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/904'
 ---

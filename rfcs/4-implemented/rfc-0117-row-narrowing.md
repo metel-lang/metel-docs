@@ -4,7 +4,6 @@ title: "Row Narrowing"
 date: '2026-07-24'
 status: implemented
 tracking: 'https://github.com/metel-lang/metel-core/issues/789'
-target: v0.13.0
 updated: '2026-09-03'
 coverage:
   "1": { spec: "spec.ownership.narrowing.legality-1" }

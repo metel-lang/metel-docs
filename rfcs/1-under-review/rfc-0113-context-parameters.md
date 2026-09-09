@@ -3,7 +3,6 @@ id: rfc-0113
 title: "Context Parameters"
 date: '2026-07-21'
 status: under-review
-target: v0.13.1
 updated: '2026-08-23'
 tracking: 'https://github.com/metel-lang/metel-core/issues/808'
 ---

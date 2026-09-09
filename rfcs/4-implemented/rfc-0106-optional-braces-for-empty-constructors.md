@@ -3,7 +3,6 @@ id: rfc-0106
 title: "Optional Braces for Empty Constructors"
 date: '2026-07-14'
 status: implemented
-target:
 updated: '2026-07-14'
 impl_status: implemented
 coverage:

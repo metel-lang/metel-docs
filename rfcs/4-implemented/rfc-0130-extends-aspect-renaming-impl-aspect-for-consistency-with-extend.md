@@ -3,7 +3,6 @@ id: rfc-0130
 title: "extends Aspect: Renaming impl Aspect for Consistency with extend"
 date: '2026-08-06'
 status: implemented
-target: v0.13.0
 updated: '2026-08-30'
 coverage:
   "1": { spec: "spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-1" }

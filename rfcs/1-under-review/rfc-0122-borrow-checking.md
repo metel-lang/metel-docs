@@ -3,7 +3,6 @@ id: rfc-0122
 title: "Borrow Checking"
 date: '2026-07-24'
 status: under-review
-target: v0.16.0
 updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/847'
 ---

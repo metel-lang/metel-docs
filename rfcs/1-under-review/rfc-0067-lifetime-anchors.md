@@ -4,7 +4,6 @@ title: "Lifetime Anchors"
 date: '2026-06-28'
 updated: '2026-09-09'
 status: under-review
-target: v0.17.0
 tracking: 'https://github.com/metel-lang/metel-core/issues/848'
 ---
 

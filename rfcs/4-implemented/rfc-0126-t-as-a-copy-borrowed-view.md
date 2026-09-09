@@ -3,7 +3,6 @@ id: rfc-0126
 title: "T[] as a Copy Borrowed View"
 date: '2026-07-27'
 status: implemented
-target: v0.12.0
 updated: '2026-08-03'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/593'
 impl_status: implemented

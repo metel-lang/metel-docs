@@ -3,7 +3,6 @@ id: rfc-0133
 title: "From-Metel List: the Runtime-Sized Buffer Gap"
 date: '2026-08-13'
 status: draft
-target:
 ---
 
 > **Split out of RFC-0124 Open Question 6, 2026-08-13.** RFC-0124 bundled two questions

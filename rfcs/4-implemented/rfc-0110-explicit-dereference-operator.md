@@ -3,7 +3,6 @@ id: rfc-0110
 title: "Explicit Dereference Operator"
 date: '2026-07-20'
 status: implemented
-target:
 updated: '2026-07-21'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/559'
 impl_status: implemented

@@ -3,7 +3,6 @@ id: rfc-0108
 title: "Reference-Transparent Match Scrutinees"
 date: '2026-07-17'
 status: implemented
-target:
 updated: '2026-07-21'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/559'
 impl_status: implemented

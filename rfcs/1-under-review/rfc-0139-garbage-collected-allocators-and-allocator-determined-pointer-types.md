@@ -3,7 +3,6 @@ id: rfc-0139
 title: "Garbage-Collected Allocators and Allocator-Determined Pointer Types"
 date: '2026-08-24'
 status: under-review
-target: v0.20.0
 tracking: 'https://github.com/metel-lang/metel-core/issues/831'
 updated: '2026-08-27'
 ---

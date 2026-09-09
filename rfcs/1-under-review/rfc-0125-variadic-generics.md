@@ -4,7 +4,6 @@ title: "Variadic Generics"
 date: '2026-07-25'
 status: under-review
 tracking: 'https://github.com/metel-lang/metel-core/issues/794'
-target:
 updated: '2026-08-23'
 ---
 

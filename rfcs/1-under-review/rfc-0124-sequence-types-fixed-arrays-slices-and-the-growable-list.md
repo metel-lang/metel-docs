@@ -3,7 +3,6 @@ id: rfc-0124
 title: "Sequence Types: Fixed Arrays, Slices, and the Growable List"
 date: '2026-07-25'
 status: under-review
-target:
 updated: '2026-09-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/932'
 ---
