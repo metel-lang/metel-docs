@@ -109,6 +109,36 @@ and known interactions — instead of requiring someone to reconstruct the
 language's overall behaviour after every edit. That record does not make change
 free, but it makes the consequences of change visible before they become bugs.
 
+## One Chain From Design To Evidence
+
+For Metel, the documents and tests are not a trail of loosely related artefacts.
+They are one body of evidence about what the language means:
+
+```text
+RFC design → specification → formal rules → executable fixtures
+```
+
+An RFC records the problem, the alternatives, and the decision. The specification
+turns that decision into the current public account of the language; it is the
+place a reader should go to learn what is true now, rather than reconstructing it
+from a sequence of historical proposals. Formal legality and dynamic-semantics
+rules make the parts of that account that need precision explicit and stable
+enough to cite. Fixtures then run real programs that demonstrate the stated
+behaviour, including rejected programs and feature interactions.
+
+The links run in both directions. A fixture can point to the exact formal rule it
+exercises; an integrated RFC can point to the specification rules it establishes;
+and a reader of the specification can follow a rule to executable examples. If a
+rule changes, its fixtures are not merely regression tests that happen to fail:
+they are part of the evidence that the changed rule still says what the
+implementation does. If an interaction cannot be expressed in the specification
+or tested by a fixture, that is a design question to resolve, not paperwork to
+defer.
+
+This is why Metel has formal rules and fixtures alongside explanatory prose. The
+prose makes the language teachable; the rules make important claims precise; the
+fixtures make those claims executable. None is a complete definition alone.
+
 ## Keep The Public Story True
 
 Process also reaches beyond implementation. A language is partly made of the
@@ -126,6 +156,28 @@ drift apart creates work for everyone who comes next.
 This is unglamorous work. It is also the work that makes future changes possible.
 An accurate map of the system lets a change begin with understanding instead of
 archaeology.
+
+## Why Start With A Detailed Specification
+
+Not every language has a specification this detailed, and producing one is a
+large, ongoing investment. Rust is a useful reminder of that. Rust 1.0 shipped
+in 2015, and the [Rust Reference](https://doc.rust-lang.org/reference/) has long
+been its primary technical reference, but Rust's own documentation distinguishes
+the Reference from a formal specification. The effort to create an official
+specification began with an [RFC submitted in 2022 and accepted in
+2023](https://rustfoundation.org/media/ferrous-systems-donates-ferrocene-language-specification-to-rust-project/);
+in 2025, the Rust Project [adopted the existing Ferrocene Language
+Specification](https://blog.rust-lang.org/2025/03/26/adopting-the-fls/) as part
+of that work. It is an important, ongoing formalization effort, not a claim that
+Rust lacked careful documentation before it.
+
+Metel is choosing to build its detailed specification early. That is not because
+the project is already large enough to require institutional ceremony. It is
+because I have a full-time job and other projects, so I cannot rely on continuous
+context or on remembering every conclusion for years. The specification, its
+formal rules, and the fixture corpus are durable working memory. They let me
+return to a design, make a change deliberately, and verify the result without
+reconstructing the entire language each time.
 
 ## Structure Creates Room For Judgment
 
