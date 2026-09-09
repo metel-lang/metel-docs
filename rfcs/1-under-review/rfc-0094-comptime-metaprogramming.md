@@ -2,7 +2,9 @@
 id: rfc-0094
 title: "Comptime Metaprogramming — Generalized Emit, Comptime-Callable Parsing, Diagnostics"
 date: '2026-07-09'
-status: draft
+status: under-review
+updated: '2026-09-09'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1043'
 ---
 
 > **New RFC, split out 2026-07-09** from RFC-0012 (Attributes, Metadata, Macros, and
@@ -12,6 +14,8 @@ status: draft
 > Registration): derive itself never needs multi-declaration or expression-position
 > `emit`, so this RFC and RFC-0093 can be accepted, implemented, or deferred on separate
 > schedules.
+
+> **Status — under review (2026-09-09).** Scheduled for v0.18.1 after ownership enforcement, alongside the comptime and derive foundation.
 
 ## Summary
 
