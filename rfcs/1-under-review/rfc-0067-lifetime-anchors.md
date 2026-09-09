@@ -2,7 +2,7 @@
 id: rfc-0067
 title: "Lifetime Anchors"
 date: '2026-06-28'
-updated: '2026-08-23'
+updated: '2026-09-09'
 status: under-review
 target: v0.17.0
 tracking: 'https://github.com/metel-lang/metel-core/issues/848'
@@ -45,7 +45,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/848'
 >    is `1-under-review` with three blocking gaps of its own (§2b) — the outlives rule is unspecified, and this RFC's
 >    §1 was designed before any checker existed. Anchors *name* a validity scope; until
 >    RFC-0122 fixes what a validity scope is, question 1 below cannot be answered.
-> 2. **This RFC's five open questions resolve**, chiefly whether §1's lexical framing
+> 2. **This RFC's six open questions resolve**, chiefly whether §1's lexical framing
 >    ("valid for exactly as long as `r` is in scope") survives RFC-0122 §2.2's NLL
 >    last-use liveness. That is a real design question, not editing.
 > 3. **`2-accepted` → `3-integrated`**, after which metel-core#848's implementation
@@ -120,6 +120,16 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/848'
 
 > **Status — under review (2026-08-02).** Accepted 2026-06-28 before any borrow checker was specified; its own header records that the anchor model was 'designed against an absence' and should be re-examined against RFC-0122's rules before implementation. RFC-0122 now specifies NLL liveness, per-field granularity, T0020 diagnostics, and a stored-reference ban whose removal this RFC triggers (#274) — none checked against SS1. 'Unresolved questions: None' replaced with five real ones.
 
+> **Design amendment under evaluation (2026-09-09): origins rather than
+> binding-scoped lifetimes.** RFC-0122 now describes borrowing in terms of loans of
+> places and their liveness. Before this RFC settles its anchor notation, it must
+> evaluate whether an anchor should be a semantic primitive at all, or whether it is
+> better understood as surface syntax for an **origin variable**: an abstract set of
+> loans. This is deliberately an amendment to RFC-0067, not a new borrowed-view
+> feature. RFC-0109, RFC-0137, RFC-0144, and RFC-0146 already cover structural views;
+> the open question is how references retain and communicate the provenance of the
+> loans that make those views valid.
+
 ## Summary
 
 Specify **lifetime anchors** — the compile-time names that bound a borrow's validity scope —
@@ -130,6 +140,92 @@ particular borrow of it is valid.
 
 This RFC also specifies how allocator pointers (`@a T`, RFC-0063) participate in auto-deref and
 coerce to plain references, and how move-out from `@a T` is expressed.
+
+---
+
+## Design amendment: origins over loans
+
+*Under evaluation; this records a design direction, not accepted syntax or a replacement
+for the rules in §1.*
+
+RFC-0122's local checker already works with the facts that matter for exclusivity: a loan
+has a mode (shared or exclusive), a place, an issuing point, and a liveness range. The
+proposed reinterpretation is that a reference also has an **origin** — the set of loans
+from which it may have been produced — rather than fundamentally having only a duration
+named by a binding.
+
+```text
+Loan      = shared(Place) | exclusive(Place)
+Origin    = set of Loan
+Reference = { mode, origin, referent type }
+```
+
+The ordinary local rules do not change: while a live reference's origin contains a loan
+of `x.a`, an incompatible borrow, move, or mutation of `x.a` conflicts; a disjoint place
+such as `x.b` need not. NLL still determines *when* a live loan matters. An origin
+describes *which* loans can matter, including where a reference can originate on different
+control-flow paths.
+
+For example, a conditional reference can have an origin that is the union of its
+alternatives:
+
+```text
+let r := if condition { &x.a } else { &x.b };
+// origin(r) = { shared(x.a), shared(x.b) }
+```
+
+While `r` is live, exclusive access to either `x.a` or `x.b` conflicts, while access to
+a disjoint `x.c` remains available. Treating `r` as merely anchored to the whole binding
+`x` loses that distinction; treating it as anchored to one chosen place cannot describe
+both paths.
+
+### Cross-function relationships
+
+For local code, the checker can infer origins from the loans it issues. Function signatures
+and stored references need a way to name relationships that inference cannot keep local.
+Under this amendment, the existing `r` in a type such as `&r T` is a candidate spelling for
+an **origin variable**, not necessarily the name of a binding whose lexical scope is the
+reference's lifetime.
+
+The signature language would need to express at least these relationships:
+
+- an identity-like result originates from a supplied reference;
+- a result chosen from alternatives has the union of their possible origins; and
+- a stored reference's origin is constrained by the origin of the value that stores it,
+  so the checker can reject an escaping referent.
+
+Whether these appear as subset/union constraints, inferred relations with limited
+annotation, or a revised anchor syntax is intentionally open. The current `<&r>` and
+`&t: &s` forms must be judged against these cases rather than preserved by default.
+
+### Relationship to rows, views, and interior references
+
+Branded residual rows already express which **owned** fields of a nominal value remain
+usable: after a partial move, `Handle.{ fd }` records the residual shape. Views and
+row-polymorphic receivers express which fields a borrowed operation may require. Origins
+would supply the complementary fact for references: which **borrowed places** support a
+reference's validity.
+
+This does not make self-referential or interior references automatically sound. A field
+conceptually borrowing `self.text` still needs a representation rule: moving the enclosing
+value must not invalidate the reference. Pinning, stable allocation, or a relocatable-
+reference representation are separate design questions. The origin model only supplies the
+borrow/provenance side of that problem.
+
+### Decision boundary
+
+RFC-0067 must compare four models before acceptance:
+
+1. retain binding-scoped anchors and specify their NLL and field behavior;
+2. generalize anchors so they may name places;
+3. retain anchors as surface notation, but give them origin/loan-set semantics; or
+4. replace anchors with an explicit origin-variable and constraint surface.
+
+The comparison must cover returned borrows, stored references, conditional borrows of
+disjoint fields, row-polymorphic self views, reborrowing, closures, and interior
+references. A separate RFC is warranted only if origins become a general, independently
+useful type-system feature after this evaluation, rather than the semantic repair of
+lifetime anchors.
 
 ---
 
@@ -310,6 +406,15 @@ notations should be checked for agreement before either ships.
 RFC-0122 specifies shared-XOR-exclusive and an outlives rule, but §2b.2 records that the
 outlives rule is *itself* unspecified. An ordering bound between two anchors is strictly
 more than either. Nothing in the corpus currently computes it.
+
+**6. Are anchors semantic primitives, or names for origins?** The 2026-09-09 design
+amendment above observes that RFC-0122 already issues and tracks loans of places. A
+binding-scoped anchor cannot precisely describe a reference selected from `x.a` or `x.b`,
+and projected-place anchors only address some such cases. Before retaining, generalizing,
+or replacing `<&r>`, this RFC must compare the four models in “Decision boundary” against
+stored references, returned references, views, closures, reborrowing, and interior
+references. This is not an implementation choice: it determines what `r` means in every
+cross-function reference relationship.
 
 ---
 

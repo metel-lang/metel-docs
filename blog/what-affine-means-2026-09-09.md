@@ -96,6 +96,33 @@ start from a related question — how should a program account for a resource? �
 but impose a stronger answer. That distinction will matter when Metel considers
 linear types later.
 
+## What Affinity Alone Leaves Hard
+
+Affine ownership is a powerful baseline, not a complete language for describing
+resources. At-most-once use cannot express an obligation to use a value exactly
+once; that is the extra guarantee linear typing is intended to provide.
+
+It also does not settle how precisely ownership should follow the parts of a
+value. Rust already has useful field-sensitive behaviour: fields can be borrowed
+separately, and a field of a local value can sometimes be moved out. But that is
+not a general way to describe a value's remaining usable shape. In particular,
+a field cannot be moved out of a type with `Drop`, because its destructor must
+still receive the complete value. Rust documents this boundary in
+[error E0509](https://doc.rust-lang.org/error_codes/E0509.html).
+
+That restriction is coherent — destruction is a whole-value operation — but it
+also illustrates an important design space. A program may want an operation to
+consume one part of a nominal value while exposing a well-defined residual view
+of the rest. Rust's current ownership surface has no general interface-level
+way to state that contract. [View types](https://smallcultfollowing.com/babysteps/blog/2021/11/05/view-types/)
+are one exploration of this broader problem.
+
+Metel is exploring explicit record views and field-sensitive ownership in that
+space. The aim is not to discard Rust's safety model, nor to claim that every
+restriction has a universal escape hatch; it is to make more of a value's usable
+shape explicit when that improves the program. Those ideas are still being
+designed, and affine move checking remains the foundation they have to fit.
+
 ## What This Does Not Explain
 
 Ownership and moves answer a question about **who may consume a value**. They do
@@ -118,6 +145,33 @@ clone or for a finished ownership system. Its move checker enforces the first
 slice: non-`Copy` values move, `Copy` values may be reused, and `Drop` marks a
 destruction obligation. This is affine move checking, not linear typing and not
 yet borrow checking.
+
+Today, Metel uses `Copy` as the marker for that affine distinction, borrowing
+Rust's familiar trait-shaped model wholesale: `extend Point: Copy;` changes every
+by-value use of `Point` from a move into a duplication. It works, but it makes a
+fundamental property of the type sit in a separate implementation declaration.
+In Rust, the same fact is often hidden behind a `derive` annotation. That can be
+counterintuitive: one apparently small trait implementation changes whether a
+value may be assigned, passed, returned, or captured and then used again across
+the whole program.
+
+[RFC-0135](/docs/rfcs/1-under-review/rfc-0135-multiplicity-for-ordinary-types)
+is exploring a different surface: a declaration-site multiplicity qualifier.
+An ordinary declaration remains affine by default, while a reusable type would
+say so where it is declared:
+
+```text
+struct Handle { fd: i64 }            // affine: by-value use consumes it
+copy struct Point { x: i64, y: i64 } // replaces `extend Point: Copy;`
+```
+
+This is not a change to `Copy`'s current behaviour; it is a proposed way to make
+the type's affinity visible in the type declaration itself. It also establishes
+one place for a richer multiplicity vocabulary. A future `linear` qualifier
+could live in the same position, rather than turning a second trait-like marker
+into another non-local switch on a type's behaviour. The exact spelling,
+migration path, and relationship to the existing `Copy` name are still under
+review; RFC-0135 currently explores the same axis with `once`/`many` terminology.
 
 The implementation is deliberately opt-in while the model is being pressure
 tested. The [Metel ownership specification](/docs/reference/spec/ownership)
