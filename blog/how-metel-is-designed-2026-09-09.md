@@ -43,6 +43,28 @@ reference, a closure, or a record can quietly constrain every feature that comes
 after it. The code may still be small when that happens. The cost of changing the
 idea is not.
 
+## A Note On AI Authorship
+
+I want to address something I know many people care about: almost all of
+Metel's code is written by AI agents. I am aware that this work is far from
+perfect; in some places, it may sit at the opposite end of the quality spectrum.
+That is a real limitation, not a disclaimer that makes it disappear.
+
+I also know that, for some people, AI-heavy authorship means the project does
+not deserve their attention. That is a reasonable conclusion to reach. Many
+programming communities would not permit me to post about Metel on those terms,
+and I had to move the project away from Codeberg because its AI policy did not
+allow it there. I do not regard that as a grievance against those communities or
+their policies. They get to set the kind of work they want to host.
+
+The point of saying this plainly is not to ask for an exemption from scrutiny.
+It is to make the conditions of the project visible. AI can produce a great deal
+of code quickly, including code that looks convincing while being wrong,
+incoherent, or poorly understood. That makes the design, review, documentation,
+and verification work described below more important, not less. They are the
+means by which I try to make the project inspectable and correctable; they are
+not a guarantee that every part of it is good.
+
 ## The Process Is Part Of The Design
 
 Metel uses RFCs to give a design decision a life beyond the moment it was
@@ -138,6 +160,16 @@ defer.
 The fixture corpus also runs in automated CI. That makes these checks part of
 the ordinary cost of changing the language, rather than a manual audit someone
 has to remember to perform before a release.
+
+Formal rules are especially useful in an AI-heavy project. An agent can produce
+implementation and explanatory prose that sound mutually consistent while
+quietly leaving an ambiguity, an unhandled case, or a contradiction between the
+two. A compact rule makes the intended claim easier to inspect: it identifies
+the premises, the conclusion, and the cases that need to be accounted for.
+Fixtures can then exercise that claim against the implementation. This does not
+turn formal notation into a proof that the whole language is correct, but it
+makes both the specification and the language's observed behaviour substantially
+easier to verify.
 
 This is why Metel has formal rules and fixtures alongside explanatory prose. The
 prose makes the language teachable; the rules make important claims precise; the
