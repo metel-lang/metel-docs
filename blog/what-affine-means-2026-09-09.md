@@ -56,6 +56,57 @@ The [Rust Book's ownership chapter](https://doc.rust-lang.org/book/ch04-01-what-
 has the full account of this model. The useful mental model is simpler: an
 owned value has one current owner, and a move changes who that owner is.
 
+## Why Give Variables These Rules?
+
+The rules can initially feel like an unusually fussy way to treat an ordinary
+assignment. Their purpose becomes clearer when compared with the alternatives
+at the same level of abstraction: who manages an allocation, and who is allowed
+to access it?
+
+In C, that responsibility is primarily manual. A program allocates storage,
+passes pointers around, and must arrange for exactly the right `free` at exactly
+the right time. C++ provides valuable higher-level tools — especially RAII,
+smart pointers, and containers — but it still permits raw pointers, manual
+allocation, and references whose validity depends on conventions between parts
+of a program. Neither language makes every ownership and access relationship a
+property the compiler can prove.
+
+That leaves familiar failure modes: freeing an allocation twice, failing to
+free it at all, reading through a pointer after its object has been destroyed,
+or reading and writing outside an allocation's bounds. The best outcome may be
+a reproducible crash. The harder cases depend on allocator layout, timing, or a
+rare input, so they appear far from the code that made the original lifetime
+mistake — and some are exploitable security vulnerabilities.
+
+This is not a marginal concern in systems software. Google reported that memory
+safety errors made up more than 70% of Chrome's severe security bugs in 2021.
+Its Android team later reported memory-safety issues in 76% of Android
+vulnerabilities in 2019, falling to 24% in 2024 as more new code used
+memory-safe languages. Those figures describe specific large codebases, not a
+universal rate for all C or C++ programs, but they show why this category has
+received so much attention. [Chrome's security team](https://security.googleblog.com/2021/09/an-update-on-memory-safety-in-chrome.html)
+and the [Android team's later update](https://security.googleblog.com/2024/09/eliminating-memory-safety-vulnerabilities-Android.html)
+give the methodology and context.
+
+Rust changes the default responsibility. Rather than asking every programmer to
+follow a collection of lifetime-management best practices, it expresses a
+small set of ownership facts as type-checkable constraints. Affine semantics
+give a resource one usable owner at a time: after a move, the previous binding
+is unavailable, which prevents two owners from independently cleaning up the
+same allocation. Borrow checking then represents temporary access as loans over
+places: any number of shared borrows may read, or one exclusive borrow may
+write. The compiler also proves that a borrow cannot remain usable after the
+owner or borrowed place is invalidated.
+
+These rules do not prove that a program's algorithm is correct, and safe Rust
+can still panic or contain ordinary bugs. They do turn a large class of
+memory-management mistakes — double frees, use after free, and unsound
+aliasing through safe references — from things a team must reliably notice in
+review and testing into contradictions the compiler can reject. Lifetimes are
+the part of that proof that records the required relationship between a borrow
+and the value it borrows: a reference is valid only while its referent remains
+valid.
+
 ## `Copy` Is The Deliberate Exception
 
 Some values do not represent a resource that needs a single cleanup authority.
