@@ -5,7 +5,23 @@ date: '2026-09-09'
 status: accepted
 relates: adr-0041, adr-0042, adr-0048
 implements: metel-core#1047
+updated: '2026-09-10'
 ---
+
+> **Amended 2026-09-10** — before implementation began. Three clarifications, all
+> aimed at keeping a future incremental-compilation layer *additive* rather than a
+> rewrite, at near-zero cost now:
+>
+> 1. Identity allocation is **structural, not positional** — an ID is a function
+>    of what a binding *is* (its owner and lexical path), never of a traversal
+>    counter or byte offset. Inserting unrelated text must not renumber anything.
+> 2. No field of the durable resolved artifact is keyed by `Span`. Position
+>    lookup is a separate **volatile index**, rebuilt per snapshot.
+> 3. The frozen IR is **in-memory only** for this delivery; on-disk persistence
+>    and cross-process interner stability are explicitly out of scope.
+>
+> These are folded into the sections below. The invariant, domains, freeze
+> boundary, and generics plan are unchanged.
 
 ## Context
 
@@ -55,9 +71,22 @@ enum BindingId {
     Local(LocalId),
 }
 
+/// The durable resolved artifact. Every key is an identity or an identity-keyed
+/// structure; no field is keyed by `Span` or by `String`.
 struct ResolutionMap {
     definitions: HashMap<BindingId, DefinitionInfo>,
-    references: HashMap<Span, BindingId>,
+    /// A reference site is named by its own identity (`RefId` = owner
+    /// `BindingId` + lexical path to the use), not by where it currently sits
+    /// in the file. `DefinitionInfo` and each reference record still *carry* a
+    /// `Span` as metadata for diagnostics and rendering.
+    references: HashMap<RefId, BindingId>,
+}
+
+/// Rebuilt cheaply from one parsed snapshot; never persisted, never a semantic
+/// input. This is the only structure allowed to be keyed by source position,
+/// and it exists solely to answer editor "what is at byte N" queries.
+struct PositionIndex {
+    // span-sorted spine over the snapshot's definitions and reference sites
 }
 ```
 
@@ -79,11 +108,46 @@ struct ResolutionMap {
   needs a `ModuleId` location rather than coercing modules into the value model.
 - Interned spelling (`NameId`/`LabelId`) may survive parsing and inference as
   source metadata or as input to an ID-keyed constraint. It is never a textual
-  map key after parsing.
+  map key after parsing. The interner is owned by the resolver, handed to the
+  frozen artifact by value, and treated as immutable thereafter.
+- `RefId` names a reference site: its owner `BindingId` plus the lexical path to
+  the use within that owner's body. It is the durable key for the reference
+  table, so that resolved facts survive edits elsewhere in the file.
 
-`LocalId` and `SymbolId` are deterministic and stable for one resolved module
-graph. This decision makes no promise that arbitrary edits preserve IDs across
-incremental analyses; that is a later incremental-compilation decision.
+### Allocation is structural, not positional
+
+Every ID is a deterministic function of *what the entity is*, never of where its
+text sits or the order a traversal reached it:
+
+- `SymbolId` — `(canonical module path, declared name, overload disambiguator)`.
+  The overload disambiguator is the declaration's ordinal *among declarations
+  sharing that name in that module*, not a file offset or a global counter.
+- `LocalId` — `(owner BindingId, lexical path)`, where the lexical path is the
+  chain of structural positions from the owning body to the binding
+  (`param 0`, `block 2 / let "x" / pattern field "y"`). Shadowing produces
+  distinct paths and therefore distinct IDs without a counter.
+- `FieldId` / `VariantId` — `(owning SymbolId, declared member name)`.
+- `LabelId` / `NameId` — interned spelling; equal spellings intern equal.
+- `InstanceKey` — as defined below; its `TypeId`s are themselves interned
+  structurally.
+
+Consequences that later phases and tests may rely on:
+
+- Inserting, deleting, or reformatting text that does not change the structural
+  position of a binding leaves its ID unchanged.
+- Editing one function body cannot change any ID outside it.
+- Two runs over the same resolved module graph produce identical IDs regardless
+  of file iteration order or parallelism.
+
+`LocalId` and `SymbolId` are therefore deterministic and stable for one resolved
+module graph. This decision still makes no promise that *structural* edits
+(renaming a binding, moving a declaration between modules, reordering overloads)
+preserve IDs; and it does not build the query/invalidation engine, cross-run
+interner persistence, or on-disk artifact format that full incremental
+compilation needs. Those remain a later decision. Structural allocation and the
+`Span`-free durable artifact are the parts that are cheap now and expensive to
+retrofit, so they are settled here; the rest is deliberately deferred and, given
+these two, becomes an additive layer.
 
 ### Resolution freeze
 
@@ -116,6 +180,12 @@ Source spellings remain available for diagnostics, source rendering,
 documentation, and reflection metadata. An explicitly specified user-facing
 dynamic reflection API may look up metadata by name, but it is not an evaluator
 or compiler-resolution escape hatch.
+
+The frozen IR is an in-memory artifact produced fresh by each analysis run. This
+delivery does not define a serialized on-disk form, a schema version, or an
+interner that is stable across processes. A later incremental-compilation layer
+adds those; nothing here should encode assumptions that block it, but neither is
+it built now.
 
 ### Generics and monomorphization preparation
 
@@ -170,8 +240,12 @@ specified reflection.
 This is one delivery under metel-core#1047. The commits may be staged, but the
 issue is not complete until all steps and the invariant are delivered.
 
-1. Define the ID newtypes, the complete `ResolutionMap`, source metadata, and
-   deterministic allocation rules. Add adversarial resolver fixtures first.
+1. Define the ID newtypes, the complete `ResolutionMap`, the separate
+   `PositionIndex`, source metadata, and the structural allocation rules above.
+   Add adversarial resolver fixtures first, including one that inserts blank
+   lines and reformats whitespace around a declaration and asserts every ID is
+   unchanged, and one that edits a function body and asserts no ID outside it
+   moves.
 2. Extend lexical resolution to allocate `LocalId`s and explicitly classify all
    value references as global, local, or unresolved. Preserve qualified-path
    global identities.
@@ -189,8 +263,11 @@ issue is not complete until all steps and the invariant are delivered.
 8. Add frozen generic instances and `InstanceKey` caching, replacing runtime
    generic-body reconstruction. Hand the representation to issue #288 for
    frontend-wide monomorphization.
-9. Seal resolver-only name-keyed APIs, delete transitional compatibility paths,
-   and add CI architecture checks against new post-freeze semantic name lookups.
+9. Seal resolver-only name-keyed APIs and delete transitional compatibility
+   paths. Prefer a structural guarantee — the frozen IR's public types simply do
+   not carry `String` or `Span` in key position — with a CI architecture check
+   as the backstop against new post-freeze semantic name lookups, not the
+   primary defence.
 
 ## Acceptance criteria
 
@@ -198,6 +275,12 @@ issue is not complete until all steps and the invariant are delivered.
   mean both local and unresolved.
 - No post-freeze compiler, analysis, or evaluator registry performs semantic
   lookup by `String` or source spelling.
+- No field of the durable `ResolutionMap` or the frozen IR is keyed by `Span`;
+  the only position-keyed structure is the rebuilt-per-snapshot `PositionIndex`.
+- IDs are allocated structurally: a fixture inserting blank lines and
+  reformatting whitespace around a declaration leaves every `SymbolId`,
+  `LocalId`, `RefId`, `FieldId`, and `VariantId` unchanged, and a fixture
+  editing one function body changes no ID outside that body.
 - The frozen IR retains IDs for global/local values, type-dependent member
   selections, qualified paths, nominal members, and structural labels.
 - Runtime behavior is preserved for shadowing, nested closures, mutable
@@ -222,3 +305,8 @@ issue is not complete until all steps and the invariant are delivered.
 - Full frontend monomorphization remains separately tracked by metel-core#288,
   but its prerequisite representation and evaluator correctness boundary land
   here.
+- Incremental compilation stays a later decision, but structural allocation and
+  the `Span`-free durable artifact — the parts that are cheap to settle now and
+  costly to retrofit once fixtures and IDs proliferate — are fixed here, so that
+  a future query/invalidation/persistence layer is additive rather than a
+  re-issue of this migration.
