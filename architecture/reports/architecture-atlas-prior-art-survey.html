@@ -1,0 +1,755 @@
+<title>Field Notes for a Compiler's Atlas</title>
+<style>
+  :root {
+    --ink: #17242e;
+    --ink-soft: #3c4c58;
+    --paper: #eef1f2;
+    --paper-raised: #ffffff;
+    --paper-line: #c9d2d3;
+    --accent: #1f6f78;
+    --accent-soft: #d9ecec;
+    --mono-tint: #dfe6e2;
+    --implemented: #2f6b47;
+    --implemented-bg: #e3efe4;
+    --partial: #9a6b1e;
+    --partial-bg: #f4ead2;
+    --planned: #52606b;
+    --planned-bg: #e6e9eb;
+    --superseded: #7a4a37;
+    --superseded-bg: #efe1da;
+    --gap: #a13a35;
+    --gap-bg: #f3dedb;
+    --shadow: 0 1px 2px rgba(23,36,46,0.06), 0 6px 20px rgba(23,36,46,0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e7edee;
+      --ink-soft: #b6c4c8;
+      --paper: #131c22;
+      --paper-raised: #1a262d;
+      --paper-line: #2d3d44;
+      --accent: #6fc7cd;
+      --accent-soft: #1d3538;
+      --mono-tint: #223037;
+      --implemented: #8fcf9e;
+      --implemented-bg: #1c2f22;
+      --partial: #e0b158;
+      --partial-bg: #332813;
+      --planned: #a7b3ba;
+      --planned-bg: #232f35;
+      --superseded: #d3a68e;
+      --superseded-bg: #2e241e;
+      --gap: #e08b84;
+      --gap-bg: #33201e;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e7edee;
+    --ink-soft: #b6c4c8;
+    --paper: #131c22;
+    --paper-raised: #1a262d;
+    --paper-line: #2d3d44;
+    --accent: #6fc7cd;
+    --accent-soft: #1d3538;
+    --mono-tint: #223037;
+    --implemented: #8fcf9e;
+    --implemented-bg: #1c2f22;
+    --partial: #e0b158;
+    --partial-bg: #332813;
+    --planned: #a7b3ba;
+    --planned-bg: #232f35;
+    --superseded: #d3a68e;
+    --superseded-bg: #2e241e;
+    --gap: #e08b84;
+    --gap-bg: #33201e;
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+  }
+
+  @font-face { font-display: swap; }
+  * { box-sizing: border-box; }
+  html { color-scheme: light dark; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Spectral", Georgia, "Iowan Old Style", serif;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--accent-soft); }
+
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { text-decoration-thickness: 2px; }
+
+  h1, h2, h3, h4 {
+    font-family: "Inter", -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink);
+    text-wrap: balance;
+    line-height: 1.25;
+  }
+
+  code, .mono, .id-tag, .figure, th, td.num {
+    font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+
+  .skip { position: absolute; left: -9999px; }
+
+  /* ---------- Masthead ---------- */
+  .masthead {
+    border-bottom: 1px solid var(--paper-line);
+    padding: 2.6rem max(16px, calc(50% - 380px)) 2rem;
+  }
+  .masthead .kicker {
+    font-family: "Inter", sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.9rem;
+  }
+  .masthead .kicker::before {
+    content: "";
+    width: 22px; height: 1px;
+    background: var(--accent);
+    display: inline-block;
+  }
+  .masthead h1 {
+    font-family: "Spectral", serif;
+    font-weight: 600;
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
+    margin: 0 0 0.7rem;
+    max-width: 20ch;
+  }
+  .masthead .dek {
+    font-size: 1.05rem;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0 0 1.1rem;
+  }
+  .masthead .meta {
+    font-family: "Inter", sans-serif;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.4rem;
+  }
+  .masthead .meta b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- Page shell ---------- */
+  .shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 2.4rem max(16px, calc(50% - 590px)) 5rem;
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 3rem;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .shell { grid-template-columns: 1fr; gap: 1.6rem; }
+  }
+
+  /* ---------- Legend / nav rail ---------- */
+  .rail {
+    position: sticky;
+    top: 1.6rem;
+    font-family: "Inter", sans-serif;
+    font-size: 0.85rem;
+  }
+  @media (max-width: 860px) { .rail { position: static; } }
+  .rail h2 {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 0.7rem;
+  }
+  .rail nav ul { list-style: none; margin: 0 0 1.6rem; padding: 0; }
+  .rail nav li a {
+    display: block;
+    padding: 0.28rem 0;
+    color: var(--ink-soft);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    padding-left: 0.7rem;
+    margin-left: -0.72rem;
+  }
+  .rail nav li a:hover { color: var(--ink); border-left-color: var(--paper-line); }
+
+  .legend-box {
+    background: var(--paper-raised);
+    border: 1px solid var(--paper-line);
+    border-radius: 3px;
+    padding: 0.9rem 1rem;
+    box-shadow: var(--shadow);
+  }
+  .legend-box h2 { margin-top: 0; }
+  .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.22rem 0;
+    color: var(--ink-soft);
+  }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+  .sw-implemented { background: var(--implemented); }
+  .sw-partial { background: var(--partial); }
+  .sw-planned { background: var(--planned); }
+  .sw-superseded { background: var(--superseded); }
+  .sw-gap { background: var(--gap); }
+
+  /* ---------- Main column ---------- */
+  main > section { margin-bottom: 3.2rem; }
+  main h2 {
+    font-size: 1.5rem;
+    margin: 0 0 0.4rem;
+    padding-top: 0.2rem;
+    border-top: 1px solid var(--paper-line);
+    padding-top: 1.4rem;
+  }
+  main section:first-of-type h2 { border-top: none; padding-top: 0; }
+  .section-note {
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+    max-width: 68ch;
+    margin: 0 0 1.4rem;
+  }
+  main p { max-width: 68ch; }
+  main ul, main ol { max-width: 66ch; padding-left: 1.3rem; }
+  main li { margin-bottom: 0.35rem; }
+
+  /* ---------- Precedent cards ---------- */
+  .precedent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+  .precedent {
+    background: var(--paper-raised);
+    border: 1px solid var(--paper-line);
+    border-radius: 4px;
+    padding: 1rem 1.15rem 1.1rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .precedent .name {
+    font-family: "Inter", sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--ink);
+  }
+  .precedent .origin {
+    font-family: "Inter", sans-serif;
+    font-size: 0.74rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+  }
+  .precedent p {
+    margin: 0;
+    font-size: 0.94rem;
+    max-width: none;
+  }
+  .precedent .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.2rem;
+  }
+  .tag {
+    font-family: "Inter", sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.02em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 99px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .precedent a.src {
+    font-family: "Inter", sans-serif;
+    font-size: 0.78rem;
+    margin-top: auto;
+  }
+
+  /* ---------- Requirement specimen ---------- */
+  .specimen {
+    border: 1px dashed var(--paper-line);
+    border-radius: 4px;
+    padding: 1rem 1.2rem;
+    background: var(--paper-raised);
+    font-size: 0.92rem;
+    max-width: 68ch;
+    box-shadow: var(--shadow);
+  }
+  .specimen .req-id { color: var(--accent); font-weight: 600; }
+  .specimen dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.15rem 0.8rem; margin: 0.6rem 0 0; }
+  .specimen dt { font-family: "Inter", sans-serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); padding-top: 0.15rem; }
+  .specimen dd { margin: 0; padding-top: 0.15rem; }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    font-family: "Inter", sans-serif; font-size: 0.74rem; font-weight: 600;
+    padding: 0.1rem 0.55rem; border-radius: 99px;
+  }
+  .status-pill.implemented { background: var(--implemented-bg); color: var(--implemented); }
+
+  /* ---------- Recommendation table ---------- */
+  .rec-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  .rec-table th {
+    font-family: "Inter", sans-serif;
+    font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-soft); text-align: left;
+    padding: 0.5rem 0.8rem 0.5rem 0;
+    border-bottom: 1px solid var(--paper-line);
+  }
+  .rec-table td {
+    padding: 0.7rem 0.8rem 0.7rem 0;
+    border-bottom: 1px solid var(--paper-line);
+    vertical-align: top;
+  }
+  .rec-table tr:last-child td { border-bottom: none; }
+  .rec-table .view-name { font-family: "Inter", sans-serif; font-weight: 600; white-space: nowrap; }
+  .table-scroll { overflow-x: auto; margin: 0 -0.2rem; padding: 0 0.2rem; }
+
+  /* ---------- Buy vs build callout ---------- */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 1rem 1.3rem;
+    border-radius: 0 4px 4px 0;
+    max-width: 68ch;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout .label {
+    font-family: "Inter", sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+
+  /* ---------- Open questions ---------- */
+  .questions { display: grid; gap: 0.7rem; max-width: 68ch; }
+  .question {
+    display: grid;
+    grid-template-columns: 1.6rem 1fr;
+    gap: 0.7rem;
+    padding: 0.15rem 0;
+  }
+  .question .qmark {
+    font-family: "Spectral", serif;
+    font-style: italic;
+    color: var(--accent);
+    font-size: 1.2rem;
+    line-height: 1.4;
+  }
+
+  /* ---------- Sources ---------- */
+  .sources { columns: 2 220px; column-gap: 2rem; font-size: 0.85rem; }
+  .sources li { break-inside: avoid; margin-bottom: 0.5rem; }
+  .sources .src-name { display: block; color: var(--ink); }
+  .sources .src-url { color: var(--ink-soft); font-size: 0.78rem; word-break: break-all; }
+
+  footer {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 1.6rem max(16px, calc(50% - 590px)) 3rem;
+    font-family: "Inter", sans-serif;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--paper-line);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    main section { animation: rise 0.5s ease both; }
+    main section:nth-of-type(1) { animation-delay: 0s; }
+    main section:nth-of-type(2) { animation-delay: 0.03s; }
+  }
+  @keyframes rise { from { opacity: 0.001; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="kicker">Prior-art &amp; literature survey</div>
+  <h1>Field notes for a compiler's atlas</h1>
+  <p class="dek">
+    Metel-core issues <a href="https://github.com/metel-lang/metel-core/issues/1159">#1159</a>
+    (Atlas design), <a href="https://github.com/metel-lang/metel-core/issues/1154">#1154</a>
+    (shared spec-with-traceability framework), and
+    <a href="https://github.com/metel-lang/metel-core/issues/1156">#1156</a>
+    (Architecture Atlas) call for a public, generated map from a stable
+    requirement ID (<code>ARCH-RESOLUTION-001</code>) through owning code,
+    verifying tests, and prior decisions — and back. This surveys who has
+    solved pieces of that problem before, and what each piece is worth
+    borrowing before any pixel is drawn.
+  </p>
+  <div class="meta">
+    <span><b>For</b> #1159 · #1154 · #1156 · #1157</span>
+    <span><b>Scope</b> prior art + literature, no mockups yet</span>
+    <span><b>Read next</b> the recommendation table, §5</span>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="rail">
+    <h2>On this page</h2>
+    <nav>
+      <ul>
+        <li><a href="#docs-as-code">1 · Documentation-as-code</a></li>
+        <li><a href="#traceability">2 · Traceability &amp; governance</a></li>
+        <li><a href="#intelligence">3 · Code intelligence</a></li>
+        <li><a href="#rendering">4 · Rendering &amp; interaction</a></li>
+        <li><a href="#recommendations">5 · Recommendations</a></li>
+        <li><a href="#buy-build">6 · Buy vs. build</a></li>
+        <li><a href="#open-questions">7 · Open questions</a></li>
+        <li><a href="#sources">Sources</a></li>
+      </ul>
+    </nav>
+    <div class="legend-box">
+      <h2>Status key</h2>
+      <div class="legend-row"><span class="swatch sw-implemented"></span> implemented</div>
+      <div class="legend-row"><span class="swatch sw-partial"></span> partial</div>
+      <div class="legend-row"><span class="swatch sw-planned"></span> planned</div>
+      <div class="legend-row"><span class="swatch sw-superseded"></span> superseded</div>
+      <div class="legend-row"><span class="swatch sw-gap"></span> gap / no evidence</div>
+    </div>
+  </aside>
+
+  <main id="main">
+
+    <section id="docs-as-code">
+      <h2>1 · Documentation-as-code &amp; the pipeline view</h2>
+      <p class="section-note">
+        Three projects treat architecture description the way Metel already
+        treats RFCs: a plain-text, versioned artifact that sits beside the
+        code it describes, at a zoom level chosen for the reader rather than
+        for the author.
+      </p>
+      <div class="precedent-grid">
+        <article class="precedent">
+          <div class="name">C4 model</div>
+          <div class="origin">Simon Brown, 2006–2011 · c4model.com</div>
+          <p>Four fixed zoom levels — Context, Container, Component, Code —
+          so "the pipeline view" and "stage details" are the same model
+          read at two levels, not two separate diagrams to keep in sync.</p>
+          <div class="tags"><span class="tag">pipeline view</span><span class="tag">stage details</span></div>
+          <a class="src" href="https://c4model.com/">c4model.com →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">Structurizr</div>
+          <div class="origin">Simon Brown · reference C4 tooling</div>
+          <p>A DSL, not a drawing tool: one text model renders every C4 view.
+          Diagrams are a build artifact of the model, so they can't drift
+          from it the way a hand-drawn PNG does.</p>
+          <div class="tags"><span class="tag">diagrams-as-code</span><span class="tag">freshness</span></div>
+          <a class="src" href="https://docs.structurizr.com/dsl">docs.structurizr.com →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">arc42</div>
+          <div class="origin">Starke &amp; Hruschka, 2005 · arc42.org</div>
+          <p>Twelve fixed sections (context, building blocks, runtime,
+          deployment, decisions…), plain Markdown/AsciiDoc, reviewed through
+          the same pull-request flow as code. A template for the writing
+          discipline, not the rendering.</p>
+          <div class="tags"><span class="tag">structure</span><span class="tag">stage details</span></div>
+          <a class="src" href="https://arc42.org/">arc42.org →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">rustc-dev-guide</div>
+          <div class="origin">rust-lang · living guide</div>
+          <p>The closest in-kind precedent: a real compiler's own pipeline,
+          written for contributors, with a chapter per stage (parsing, HIR,
+          the query system, MIR) and a dedicated page on how queries memoize
+          and depend on one another — the exact shape of Metel's own
+          pipeline/stage-boundary story.</p>
+          <div class="tags"><span class="tag">pipeline view</span><span class="tag">precedent-in-kind</span></div>
+          <a class="src" href="https://rustc-dev-guide.rust-lang.org/overview.html">rustc-dev-guide.rust-lang.org →</a>
+        </article>
+      </div>
+    </section>
+
+    <section id="traceability">
+      <h2>2 · Traceability &amp; governance</h2>
+      <p class="section-note">
+        The <code>ARCH-*</code>/<code>PROC-*</code> ID scheme — status,
+        owner, implementing paths, verification evidence, forward and
+        reverse links — is not a new invention. It's the requirements-
+        traceability matrix from safety-critical engineering, worn down to
+        a size a compiler project can actually maintain.
+      </p>
+      <div class="precedent-grid">
+        <article class="precedent">
+          <div class="name">DO-178C traceability</div>
+          <div class="origin">RTCA · airborne software certification</div>
+          <p>Defines the bar precisely: forward traceability proves every
+          requirement is implemented <em>and</em> tested; backward
+          traceability proves every line of code and every test is
+          justified by a requirement. #1154's "forward and reverse
+          traceability" is this, scaled down.</p>
+          <div class="tags"><span class="tag">traceability view</span><span class="tag">the strict definition</span></div>
+          <a class="src" href="https://www.parasoft.com/learning-center/do-178c/requirements-traceability/">parasoft.com →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">MADR / log4brains</div>
+          <div class="origin">adr.github.io · docs-as-code ADRs</div>
+          <p>ADRs as small Markdown files with a status field, built into a
+          static site by a CLI (<code>log4brains build</code>). Directly
+          reusable shape for #1158's ADR triage and for how an
+          <code>ARCH-*</code> requirement file itself should look.</p>
+          <div class="tags"><span class="tag">ADR lifecycle</span><span class="tag">ID scheme</span></div>
+          <a class="src" href="https://adr.github.io/adr-tooling/">adr.github.io →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">Fitness functions</div>
+          <div class="origin"><em>Building Evolutionary Architectures</em>, Ford/Parsons/Kua, 2017 · ArchUnit</div>
+          <p>An architecture rule becomes a CI-run assertion, not a paragraph
+          someone might read. "Health" in that world literally means: how
+          many fitness functions are currently green. Directly names what
+          #1154's checker and #1156's health view should compute.</p>
+          <div class="tags"><span class="tag">health view</span><span class="tag">checker design</span></div>
+          <a class="src" href="https://mikaelvesavuori.se/blog/2023-08-20_The-Up-and-Running-Guide-to-Architectural-Fitness-Function">mikaelvesavuori.se →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">Backstage Soundcheck</div>
+          <div class="origin">Spotify · scorecard plugin</div>
+          <p>Consolidates scattered health signals — checks, standards,
+          ownership — into one scorecard per component, drillable to the
+          specific failing check. The closest working analogue to "which
+          <code>ARCH-*</code> requirements are implemented / partial / lack
+          evidence" as a single glanceable view.</p>
+          <div class="tags"><span class="tag">health view</span><span class="tag">dashboard pattern</span></div>
+          <a class="src" href="https://backstage.spotify.com/discover/blog/how-soundcheck-improves-tech-health-and-developer-productivity-at-spotify">backstage.spotify.com →</a>
+        </article>
+      </div>
+
+      <p style="margin-top:1.6rem; font-family:'Inter',sans-serif; font-size:0.8rem; letter-spacing:0.03em; text-transform:uppercase; color:var(--ink-soft);">Specimen — a requirement record in this shape</p>
+      <div class="specimen">
+        <span class="req-id">ARCH-RESOLUTION-001</span> — Resolved identity is the semantic boundary
+        <span class="status-pill implemented"><span class="swatch sw-implemented" style="width:6px;height:6px;"></span>implemented</span>
+        <dl>
+          <dt>Owner</dt><dd>frontend / resolution</dd>
+          <dt>Implements</dt><dd class="mono">metel-frontend/src/resolution/**</dd>
+          <dt>Verified by</dt><dd class="mono">resolution_identity_contract, tools/check_no_semantic_name_lookup.py</dd>
+          <dt>Related</dt><dd>ADR-0054 · #1047</dd>
+        </dl>
+      </div>
+    </section>
+
+    <section id="intelligence">
+      <h2>3 · Code intelligence &amp; the data-model view</h2>
+      <p class="section-note">
+        A data-model view needs to answer "who produces this table, who
+        reads it, under what invariant" for structures like
+        <code>TypedModuleGraph</code> or <code>ResolutionMap</code>. That's
+        a fact-database problem before it's a diagram problem.
+      </p>
+      <div class="precedent-grid">
+        <article class="precedent">
+          <div class="name">Glean</div>
+          <div class="origin">Meta, open-sourced 2024</div>
+          <p>Stores typed, schema-defined facts about code — definitions,
+          references, call graphs, type hierarchies — queried with a
+          Datalog-style language (Angle). The right mental model for what
+          #1154's checker output actually <em>is</em>: a fact table, not a
+          folder of Markdown.</p>
+          <div class="tags"><span class="tag">data-model view</span><span class="tag">checker design</span></div>
+          <a class="src" href="https://engineering.fb.com/2024/12/19/developer-tools/glean-open-source-code-indexing/">engineering.fb.com →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">CodeSee maps</div>
+          <div class="origin">codesee.io</div>
+          <p>Auto-generated, self-updating dependency maps that show both
+          upstream and downstream neighbors of a file or service — the
+          "click a node, see what feeds it and what it feeds" interaction
+          the pipeline view needs at its own scale.</p>
+          <div class="tags"><span class="tag">pipeline view</span><span class="tag">interaction</span></div>
+          <a class="src" href="https://www.codesee.io/codebase-maps">codesee.io →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">cargo-modules / cargo-depgraph</div>
+          <div class="origin">crates.io</div>
+          <p>Already extract a Rust crate's module tree and inter-module
+          dependency graph as Graphviz/JSON, today, with no bespoke parser
+          to write. See §6 — this is a real build-vs-buy fork, not
+          background reading.</p>
+          <div class="tags"><span class="tag">data-model view</span><span class="tag">reuse candidate</span></div>
+          <a class="src" href="https://github.com/regexident/cargo-modules">github.com/regexident/cargo-modules →</a>
+        </article>
+      </div>
+    </section>
+
+    <section id="rendering">
+      <h2>4 · Rendering &amp; interaction patterns</h2>
+      <p class="section-note">
+        None of the above dictate how a page actually looks. These four are
+        where the click-through feel and the diagram-freshness guarantee
+        come from.
+      </p>
+      <div class="precedent-grid">
+        <article class="precedent">
+          <div class="name">Redoc</div>
+          <div class="origin">Redocly · OpenAPI docs</div>
+          <p>Three-panel layout — nav, prose, live example — that stays
+          legible with deeply nested schemas. A working answer to
+          "traceability view" as a UI, not just a graph.</p>
+          <div class="tags"><span class="tag">traceability view</span><span class="tag">layout</span></div>
+          <a class="src" href="https://redocly.com/docs/redoc">redocly.com →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">Mermaid / D2</div>
+          <div class="origin">text-to-diagram</div>
+          <p>Diagrams as a diffable text file, rendered at build time — the
+          same "docs-as-code" discipline arc42 asks for, applied to the
+          pictures instead of just the prose.</p>
+          <div class="tags"><span class="tag">pipeline view</span><span class="tag">freshness</span></div>
+          <a class="src" href="https://github.com/mermaid-js/mermaid">github.com/mermaid-js/mermaid →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">Backstage TechDocs</div>
+          <div class="origin">Spotify, open-sourced</div>
+          <p>Markdown beside the code it describes, built into a static
+          site, discoverable from the same catalog entry as the service
+          itself — validates keeping the Atlas inside the existing
+          Docusaurus site rather than a separate app.</p>
+          <div class="tags"><span class="tag">overall approach</span></div>
+          <a class="src" href="https://backstage.io/docs/features/techdocs/">backstage.io →</a>
+        </article>
+      </div>
+
+      <p style="margin-top:1.6rem; font-family:'Inter',sans-serif; font-size:0.8rem; letter-spacing:0.03em; text-transform:uppercase; color:var(--ink-soft);">From the literature</p>
+      <div class="precedent-grid">
+        <article class="precedent">
+          <div class="name">Living Documentation</div>
+          <div class="origin">Cyrille Martraire, 2019</div>
+          <p>Names the discipline this whole umbrella is: documentation
+          generated from the same source of truth as the running system, so
+          it cannot silently drift the way prose written once and forgotten
+          always does. The philosophical case for #1141's whole premise.</p>
+          <div class="tags"><span class="tag">overall approach</span></div>
+        </article>
+        <article class="precedent">
+          <div class="name">Building Evolutionary Architectures</div>
+          <div class="origin">Ford, Parsons &amp; Kua, 2017</div>
+          <p>Introduces fitness functions as the unit of architectural
+          governance — an assertion an architecture must keep satisfying as
+          the code changes, checked the same way a unit test is.</p>
+          <div class="tags"><span class="tag">health view</span><span class="tag">checker design</span></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="recommendations">
+      <h2>5 · Recommendations, by Atlas view</h2>
+      <p class="section-note">
+        What each of #1156's five views should borrow, stated as a decision
+        rather than a survey — this is what #1159's mockups should start
+        from.
+      </p>
+      <div class="table-scroll">
+        <table class="rec-table">
+          <thead>
+            <tr><th>View</th><th>Borrow from</th><th>Concrete recommendation</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="view-name">Pipeline</td>
+              <td>C4 (zoom levels) + rustc-dev-guide (per-stage chapters) + Mermaid/D2</td>
+              <td>Two fixed zoom levels only — the whole pipeline (Container-equivalent) and one stage drilled in (Component-equivalent) — generated from a text model, not hand-placed boxes, so a new stage or renamed representation can't leave the diagram stale.</td>
+            </tr>
+            <tr>
+              <td class="view-name">Data-model / identity</td>
+              <td>Glean (fact schema) + CodeSee (up/downstream)</td>
+              <td>Treat each table/ID (e.g. <code>ResolutionMap</code>) as a fact record — producer, owner, consumers, mutation rule, invariants — and render it as a card with explicit up/down neighbor links, not a free-form graph the reader has to parse cold.</td>
+            </tr>
+            <tr>
+              <td class="view-name">Traceability</td>
+              <td>DO-178C (the strict definition) + Redoc (three-panel layout)</td>
+              <td>Nav (requirement list) → prose (the requirement) → evidence panel (implementing paths, verifying tests, related ADRs/RFCs), with the same panel reachable by clicking <em>from</em> a code path back to its requirement — genuinely bidirectional, not a one-way index.</td>
+            </tr>
+            <tr>
+              <td class="view-name">Stage details</td>
+              <td>arc42 (fixed section template) + C4 Component level</td>
+              <td>One fixed template per stage — API, owned data, allowed dependencies, contract tests, open debt — so every stage page is scannable the same way regardless of who wrote it.</td>
+            </tr>
+            <tr>
+              <td class="view-name">Health</td>
+              <td>Soundcheck (scorecard) + fitness functions (what "health" counts)</td>
+              <td>One scorecard: counts of implemented / partial / planned / missing-evidence, drillable straight to the offending requirement — not a prose summary of the same numbers.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="buy-build">
+      <h2>6 · Buy vs. build: don't write a Rust parser first</h2>
+      <div class="callout">
+        <span class="label">Concrete, not just informational</span>
+        <p>
+          <code>cargo-modules</code> already emits a crate's module tree and
+          internal dependency graph; <code>cargo-depgraph</code> already
+          emits inter-crate dependencies via <code>cargo metadata</code> —
+          both as structured output, both maintained, both free. #1154's
+          checker and #1156's pipeline/data-model views need exactly this
+          kind of graph as an input.
+        </p>
+        <p>
+          Before #1154 writes a bespoke source-scanner for the module graph
+          half of its job, it should confirm whether wrapping one of these
+          (or feeding their output into the marker/traceability layer) gets
+          most of the way there. The <code>ARCH-*</code> marker discovery
+          and evidence-checking logic is genuinely novel and has to be
+          built regardless — the raw dependency graph underneath it may
+          not.
+        </p>
+      </div>
+    </section>
+
+    <section id="open-questions">
+      <h2>7 · Carried into the mockups</h2>
+      <p class="section-note">Not answered here — #1159's design pass should settle these before implementation, per its own scope note on reuse.</p>
+      <div class="questions">
+        <div class="question"><span class="qmark">?</span><span>Do the Architecture Atlas and the future Process Atlas share one visual language for a "requirement card," or does <code>PROC-*</code> get its own treatment once #1142 is scoped? #1159 flagged this but didn't resolve it.</span></div>
+        <div class="question"><span class="qmark">?</span><span>Is the pipeline-view diagram rendered at build time as static SVG (Mermaid/D2 in CI, matching the site's no-backend principle) or client-side from JSON (closer to CodeSee's live-feeling interaction)? The two imply different libraries and different bundle costs.</span></div>
+        <div class="question"><span class="qmark">?</span><span>Does the health view need per-requirement history (a fitness function that regressed last week), or is a current-state snapshot enough for v1? Soundcheck and ArchUnit both default to snapshot; history is a real second phase, not a v1 requirement.</span></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer id="sources">
+  <p style="font-family:'Inter',sans-serif; font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink);margin-bottom:0.9rem;">Sources</p>
+  <ul class="sources" style="list-style:none; padding:0;">
+    <li><span class="src-name">C4 model</span><span class="src-url">c4model.com</span></li>
+    <li><span class="src-name">Structurizr DSL</span><span class="src-url">docs.structurizr.com/dsl</span></li>
+    <li><span class="src-name">arc42</span><span class="src-url">arc42.org</span></li>
+    <li><span class="src-name">rustc-dev-guide</span><span class="src-url">rustc-dev-guide.rust-lang.org</span></li>
+    <li><span class="src-name">DO-178C traceability</span><span class="src-url">parasoft.com/learning-center/do-178c</span></li>
+    <li><span class="src-name">ADR tooling (MADR, log4brains)</span><span class="src-url">adr.github.io/adr-tooling</span></li>
+    <li><span class="src-name">Architectural fitness functions</span><span class="src-url">mikaelvesavuori.se</span></li>
+    <li><span class="src-name">Backstage Soundcheck</span><span class="src-url">backstage.spotify.com</span></li>
+    <li><span class="src-name">Backstage TechDocs</span><span class="src-url">backstage.io/docs/features/techdocs</span></li>
+    <li><span class="src-name">Glean (Meta)</span><span class="src-url">engineering.fb.com/2024/12/19</span></li>
+    <li><span class="src-name">CodeSee Codebase Maps</span><span class="src-url">codesee.io/codebase-maps</span></li>
+    <li><span class="src-name">cargo-modules</span><span class="src-url">github.com/regexident/cargo-modules</span></li>
+    <li><span class="src-name">cargo-depgraph</span><span class="src-url">github.com/jplatte/cargo-depgraph</span></li>
+    <li><span class="src-name">Redoc</span><span class="src-url">redocly.com/docs/redoc</span></li>
+    <li><span class="src-name">Mermaid</span><span class="src-url">github.com/mermaid-js/mermaid</span></li>
+    <li><span class="src-name">Living Documentation, Martraire (2019)</span><span class="src-url">O'Reilly / Leanpub</span></li>
+    <li><span class="src-name">Building Evolutionary Architectures, Ford/Parsons/Kua (2017)</span><span class="src-url">evolutionaryarchitecture.com</span></li>
+  </ul>
+  <p style="margin-top:1.4rem;">Compiled for metel-core #1159 · 2026-09-14</p>
+</footer>
