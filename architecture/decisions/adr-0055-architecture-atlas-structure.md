@@ -268,7 +268,90 @@ Architecture Spec IDs` field, the identical pattern this ADR uses for
 ADR↔ARCH (§2, §4), reused rather than reinvented for a third pair of
 domains.
 
+### 8. Drift detection, in both directions
+
+The fixture `spec = [...]`/`arch = [...]` mechanism (§2) catches one shape
+of drift: evidence that used to exist and stopped. It does not catch the
+two directions that actually matter for a living spec — the prose claiming
+something the code no longer does, and the code doing something the prose
+never mentions. Five further mechanisms, each grounded in something already
+real in the corpus rather than proposed cold:
+
+**Prose claims something the code no longer does:**
+
+- **ADR status propagation to every citer.** `ADR-0027`→`ADR-0039` (§2's
+  own motivating example) was found by manual audit, not by a mechanism —
+  which is the argument for building one. ADRs already carry real,
+  structured `status`/`supersedes` frontmatter. A purely structural
+  checker — no semantic understanding required — walks every real citation
+  of an ADR ID (an `ARCH-*` `related` field, a code marker, a Decisions
+  entry's `Relates to`) and flags any whose cited ADR's *current* status is
+  `superseded`. This is `#1158`'s missing other half: triage assigns
+  status; this is what makes the assignment's consequences visible
+  everywhere the ADR is cited, without another manual audit like this
+  one's.
+- **Signature/shape staleness, not just path existence.** `#1154`'s
+  checker validates that an `Implements` path *exists*; nothing validates
+  that the content at that path still matches what the requirement's prose
+  claims (a field list, a signature). This atlas's own mockup is a live
+  instance of the risk it names: every transcription in the Structure tab
+  is a hand-authored snapshot with no step re-checking it against current
+  `HEAD`. The precedent to extend is real and already running —
+  `metel-docs-internal`'s `check-examples.yml`/`check_doc_examples.py`
+  already validates doc *examples* against real behavior; the same
+  approach (re-extract the cited signature via `syn` or `cargo doc
+  --output-format json` at generation time, fail on a mismatch) applies
+  directly to architecture transcriptions.
+
+**Code does something the prose never mentions:**
+
+- **Unmapped-code discovery for Architecture, matching what Operations
+  already commits to.** `#1142`'s own acceptance criteria require that
+  every discovered operational asset be "mapped or explicitly classified
+  ... with a rationale." `#1154`/`#1155` specify forward validation
+  (marker → real requirement exists) but not this reverse check for the
+  Architecture family. Closing that asymmetry means every `pub` boundary in
+  a marked source tree either carries a `//! Architecture:` marker or an
+  explicit exemption — reusing the exact `// arch-exempt: <reason>`
+  convention already proposed in the `#1157` citation-layering entry,
+  rather than inventing a second one.
+- **A staleness signal that doesn't require semantic understanding.**
+  Neither mechanism above catches a test that still exists and still
+  passes but no longer tests what the prose claims — a real limit, not a
+  gap to engineer around. The cheap, honest fallback: track, per
+  requirement, the commit it was last confirmed against (`ADR-0054`'s own
+  dated amendments are exactly this pattern, just not machine-read yet).
+  If the implementing path's git history has commits after that date with
+  no corresponding spec touch, surface a new Health category — `stale`,
+  distinct from `missing evidence` — not a hard CI failure (too noisy for
+  pure refactors that change nothing a requirement claims), a visible
+  prompt for re-confirmation instead.
+
+**A refinement to the mechanism already proposed:**
+
+- **Cross-check a fixture's own embedded comment against its sidecar.** A
+  `.mtl` fixture's real inline comment (`// RFC-0136: ...`) and its
+  `.toml` sidecar's `spec`/`arch` arrays are two independent statements of
+  the same fact, written by hand at different times. A cheap lint diffing
+  them catches the copy-paste case — comment cites one rule, sidecar cites
+  another — for free, in every fixture that already has both.
+
+Priority, not sequencing by section order: ADR-status propagation is the
+highest value for the cost — purely structural, needs nothing beyond data
+that's already real and typed, and directly closes a gap this ADR's own
+research found by hand. Signature staleness is the mechanism that most
+directly answers "documentation drift" in the usual sense, but it's real
+engineering (a source-level extractor), not a lint, and should be scoped
+as its own follow-up rather than bundled into `#1154`'s first pass.
+
 ## Alternatives Considered
+
+**Rely on periodic manual audit for drift, no automated mechanism.**
+Rejected — §8's own motivating case (`ADR-0027`→`ADR-0039`) is a real
+instance of exactly this failing silently until this ADR's own research
+happened to catch it by hand. A mechanism that runs on every change is the
+point; an audit that runs when someone remembers to is what's already
+failing.
 
 **Attach `PROC-*` requirements directly to Architecture Atlas components
 instead of a separate Process Atlas.** Considered directly, prompted by a
@@ -321,6 +404,15 @@ once.
 - Decisions' scope (§4) needs real, ongoing curation as `#1155` adds more
   `ARCH-*` content — it is not a set-once list, and will need re-auditing
   each time a new requirement cites an ADR not yet in the register.
+- `#1154`'s checker gains two further real scope additions from §8, beyond
+  the fixture-sidecar/citation-lint pair already noted above:
+  ADR-status-propagation and Architecture-side unmapped-code discovery
+  (matching the reverse check `#1142` already commits to). The Health view
+  (`#1156`) gains a fifth category, `stale`, alongside `implemented`/
+  `partial`/`planned`/`missing evidence` — a signal, not a build failure.
+  Signature/shape staleness checking (§8) is real engineering, not a lint,
+  and should be scoped as its own follow-up issue rather than assumed as
+  part of `#1154`'s first pass.
 - `#1142` (the Process Atlas) is unaffected in scope by this ADR — it
   keeps its own six planned views, per §7 — but should build on the same
   `#1154`/`#1156` shared plumbing this atlas does, not a parallel copy of
