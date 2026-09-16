@@ -780,6 +780,30 @@
           <a class="src" href="https://strictdoc.readthedocs.io/en/stable/stable/docs/strictdoc_01_user_guide-TRACE.html">strictdoc →</a>
         </article>
         <article class="precedent">
+          <div class="name">Frictionless Data Package</div>
+          <div class="origin">open-source declarative tabular data validation</div>
+          <p>A close fit for the registry's baseline relational integrity:
+          checked-in tables can declare primary keys, foreign keys, enums,
+          and required fields, then validate through a CLI and produce an ER
+          diagram. It can reject dangling <code>ARCH-*</code>,
+          <code>DATA-*</code>, <code>DEBT-*</code>, ADR, and evidence links
+          without a bespoke validator.</p>
+          <div class="tags"><span class="tag">adopt / evaluate</span><span class="tag">referential integrity</span></div>
+          <a class="src" href="https://framework.frictionlessdata.io/docs/console/overview">framework.frictionlessdata.io →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">Soufflé Datalog</div>
+          <div class="origin">open-source declarative relation-analysis engine</div>
+          <p>The candidate rule engine once validation goes beyond foreign
+          keys: reverse traceability, missing evidence, successor paths,
+          and debt reconciliation are naturally expressed as relations and
+          rules, not Python control flow. Soufflé reads facts from flat files
+          or SQLite and emits derived relations such as the Health and
+          reconciliation queues.</p>
+          <div class="tags"><span class="tag">adopt / evaluate</span><span class="tag">declarative policy</span></div>
+          <a class="src" href="https://souffle-lang.github.io/tutorial">souffle-lang.github.io →</a>
+        </article>
+        <article class="precedent">
           <div class="name">OpenFastTrace</div>
           <div class="origin">GPL-3.0 · Markdown-to-source tracing suite</div>
           <p>Close to the proposed marker/checker path: it traces tagged
@@ -818,9 +842,14 @@
         <span class="label">Recommended composition</span>
         <p>Keep the Architecture Spec plus <code>ARCH-*</code>,
         <code>DATA-*</code>, and <code>DEBT-*</code> registries as the
-        versioned source of truth. Generate Atlas JSON through a Docusaurus
-        plugin, reuse cargo tooling and possibly SCIP for code facts, and run
-        a short LikeC4 spike for topology rendering. Treat CALM, StrictDoc,
+        versioned source of truth. Normalize their cross-record data into a
+        declarative package: entities, typed links, code bindings, evidence,
+        debt resolutions, and issue snapshots. Use a relational schema and
+        foreign-key validation for baseline integrity; use Datalog only for
+        derived policies such as reverse traceability, Health, and debt
+        reconciliation. Generate Atlas JSON through a Docusaurus plugin,
+        reuse cargo tooling and possibly SCIP for code facts, and run a short
+        LikeC4 spike for topology rendering. Treat CALM, StrictDoc,
         Sphinx-Needs, and OpenFastTrace as interoperability or checker
         evaluations rather than migrations by default.</p>
       </div>
@@ -861,6 +890,8 @@
     <li><span class="src-name">FINOS CALM</span><span class="src-url">calm.finos.org · github.com/finos/architecture-as-code</span></li>
     <li><span class="src-name">StrictDoc traceability</span><span class="src-url">strictdoc.readthedocs.io</span></li>
     <li><span class="src-name">Sphinx-Needs</span><span class="src-url">sphinx-needs.readthedocs.io</span></li>
+    <li><span class="src-name">Frictionless Data Package</span><span class="src-url">framework.frictionlessdata.io</span></li>
+    <li><span class="src-name">Soufflé Datalog</span><span class="src-url">souffle-lang.github.io</span></li>
     <li><span class="src-name">OpenFastTrace</span><span class="src-url">github.com/itsallcode/openfasttrace</span></li>
     <li><span class="src-name">SCIP</span><span class="src-url">scip-code.org</span></li>
     <li><span class="src-name">Backstage Software Catalog</span><span class="src-url">backstage.io/docs/software-catalog</span></li>
