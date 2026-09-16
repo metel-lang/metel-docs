@@ -401,8 +401,8 @@
   </p>
   <div class="meta">
     <span><b>For</b> #1159 · #1154 · #1156 · #1157</span>
-    <span><b>Scope</b> prior art + literature, no mockups yet</span>
-    <span><b>Read next</b> the recommendation table, §5</span>
+    <span><b>Scope</b> prior art, literature, and reuse candidates</span>
+    <span><b>Read next</b> the reuse shortlist, §7</span>
   </div>
 </header>
 
@@ -417,7 +417,8 @@
         <li><a href="#rendering">4 · Rendering &amp; interaction</a></li>
         <li><a href="#recommendations">5 · Recommendations</a></li>
         <li><a href="#buy-build">6 · Buy vs. build</a></li>
-        <li><a href="#open-questions">7 · Open questions</a></li>
+        <li><a href="#reuse-candidates">7 · Reuse candidates</a></li>
+        <li><a href="#open-questions">8 · Open questions</a></li>
         <li><a href="#sources">Sources</a></li>
       </ul>
     </nav>
@@ -657,9 +658,9 @@
     <section id="recommendations">
       <h2>5 · Recommendations, by Atlas view</h2>
       <p class="section-note">
-        What each of #1156's five views should borrow, stated as a decision
-        rather than a survey — this is what #1159's mockups should start
-        from.
+        What each Atlas view should borrow, stated as a decision rather than
+        a survey. The first pass named five views; the evolved model adds
+        full Decisions and Debt registers while keeping Health cross-cutting.
       </p>
       <div class="table-scroll">
         <table class="rec-table">
@@ -675,7 +676,7 @@
             <tr>
               <td class="view-name">Data-model / identity</td>
               <td>Glean (fact schema) + CodeSee (up/downstream)</td>
-              <td>Treat each table/ID (e.g. <code>ResolutionMap</code>) as a fact record — producer, owner, consumers, mutation rule, invariants — and render it as a card with explicit up/down neighbor links, not a free-form graph the reader has to parse cold.</td>
+              <td>Keep each durable model concept as a persistent <code>DATA-*</code> fact record — producer, owner, consumers, mutation rule, invariants, code bindings, and explicit up/down neighbors. Generated code facts validate and enrich the record; they do not replace its stable identity or prose.</td>
             </tr>
             <tr>
               <td class="view-name">Traceability</td>
@@ -691,6 +692,16 @@
               <td class="view-name">Health</td>
               <td>Soundcheck (scorecard) + fitness functions (what "health" counts)</td>
               <td>One scorecard: counts of implemented / partial / planned / missing-evidence, drillable straight to the offending requirement — not a prose summary of the same numbers.</td>
+            </tr>
+            <tr>
+              <td class="view-name">Decisions</td>
+              <td>MADR/log4brains (statused docs) + the RFC viewer (record-browser interaction)</td>
+              <td>Render the complete ADR collection, not a cited-only subset: search, status facets, stable deep links, related/successor links, source metadata, and “cited by in this Atlas” reverse indexes. Reuse the RFC viewer’s interaction model while preserving ADR-specific lifecycle vocabulary.</td>
+            </tr>
+            <tr>
+              <td class="view-name">Debt</td>
+              <td>Soundcheck (actionable health) + requirements traceability</td>
+              <td>Give <code>DEBT-*</code> records a dedicated viewer with lifecycle, ownership, acceptance, issue/successor-<code>ARCH-*</code> links, verification evidence, and a reconciliation queue. Health links into this work queue; it does not replace the debt register.</td>
             </tr>
           </tbody>
         </table>
@@ -721,8 +732,102 @@
       </div>
     </section>
 
+    <section id="reuse-candidates">
+      <h2>7 · Reuse survey: build the domain layer, reuse the machinery</h2>
+      <p class="section-note">
+        The Atlas now has an authoritative Architecture Spec, persistent
+        <code>DATA-*</code> facts, full ADR and debt registers, and generated
+        code facts. No single open-source project supplies all of that.
+        The practical boundary is to own Metel's domain semantics and reuse
+        diagram, indexing, traceability, and site machinery where it is a
+        genuinely better fit than bespoke code.
+      </p>
+      <div class="precedent-grid">
+        <article class="precedent">
+          <div class="name">LikeC4</div>
+          <div class="origin">MIT · architecture-as-code DSL and model API</div>
+          <p>A strong candidate for Context/Container/Component rendering:
+          one source model, arbitrary nested levels, generated interactive
+          views, a CLI, and a programmatic model API. Use it as a generated
+          diagram target from the authoritative Atlas model, not as a second
+          source of truth for <code>ARCH-*</code>, <code>DATA-*</code>, or
+          <code>DEBT-*</code>.</p>
+          <div class="tags"><span class="tag">adopt / spike</span><span class="tag">diagram renderer</span></div>
+          <a class="src" href="https://likec4.dev/tooling/model-api/">likec4.dev →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">FINOS CALM</div>
+          <div class="origin">Apache-2.0 · Common Architecture Language Model</div>
+          <p>A machine-readable, version-controlled architecture-model
+          specification with CLI, visualization, and validation work. It is
+          worth evaluating as an interchange or export target for topology
+          and controls, not yet as the Atlas's primary representation: it
+          does not model Metel's language rules, requirement evidence, or
+          debt reconciliation.</p>
+          <div class="tags"><span class="tag">evaluate</span><span class="tag">interoperability</span></div>
+          <a class="src" href="https://calm.finos.org/">calm.finos.org →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">StrictDoc / Sphinx-Needs</div>
+          <div class="origin">open-source requirements and traceability tooling</div>
+          <p>Both model linked, statused engineering objects and generate
+          traceability views. StrictDoc additionally offers custom fields,
+          source traceability, and static exports; Sphinx-Needs provides a
+          generic linked-object/reporting model. They are high-value checker
+          and schema precedents, but adopting either wholesale would add a
+          parallel documentation stack beside MDX/Docusaurus.</p>
+          <div class="tags"><span class="tag">borrow semantics</span><span class="tag">time-boxed spike</span></div>
+          <a class="src" href="https://strictdoc.readthedocs.io/en/stable/stable/docs/strictdoc_01_user_guide-TRACE.html">strictdoc →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">OpenFastTrace</div>
+          <div class="origin">GPL-3.0 · Markdown-to-source tracing suite</div>
+          <p>Close to the proposed marker/checker path: it traces tagged
+          Markdown specification items into source and reports coverage in
+          CI. It may be useful as a standalone checker comparison or spike;
+          its Java runtime, GPL license, and separate report UI make it a
+          poor replacement for the Atlas viewer without a deliberate license
+          review.</p>
+          <div class="tags"><span class="tag">evaluate carefully</span><span class="tag">checker</span></div>
+          <a class="src" href="https://github.com/itsallcode/openfasttrace">github.com/itsallcode/openfasttrace →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">SCIP / Glean</div>
+          <div class="origin">open code-intelligence index formats and fact store</div>
+          <p>Suitable for the generated code-fact layer: symbol locations,
+          references, call relationships, and type relationships can power
+          navigation and validate <code>DATA-*</code> bindings. Glean and
+          Kythe are operationally substantial; SCIP is the lighter
+          interoperability seam to assess before building a custom index.</p>
+          <div class="tags"><span class="tag">reuse / evaluate</span><span class="tag">code facts</span></div>
+          <a class="src" href="https://scip-code.org/">scip-code.org →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">Backstage catalog</div>
+          <div class="origin">open-source entity catalog and relationship graph</div>
+          <p>A useful model for stable entities, typed relations, ownership,
+          filters, and graph traversal. Do not adopt the full developer
+          portal for this scope: its catalog is designed to integrate and
+          cache external sources, while the Architecture Spec and registries
+          must remain the Atlas's versioned authority.</p>
+          <div class="tags"><span class="tag">borrow interaction</span><span class="tag">do not adopt whole</span></div>
+          <a class="src" href="https://backstage.io/docs/software-catalog/generated-index/">backstage.io →</a>
+        </article>
+      </div>
+      <div class="callout">
+        <span class="label">Recommended composition</span>
+        <p>Keep the Architecture Spec plus <code>ARCH-*</code>,
+        <code>DATA-*</code>, and <code>DEBT-*</code> registries as the
+        versioned source of truth. Generate Atlas JSON through a Docusaurus
+        plugin, reuse cargo tooling and possibly SCIP for code facts, and run
+        a short LikeC4 spike for topology rendering. Treat CALM, StrictDoc,
+        Sphinx-Needs, and OpenFastTrace as interoperability or checker
+        evaluations rather than migrations by default.</p>
+      </div>
+    </section>
+
     <section id="open-questions">
-      <h2>7 · Carried into the mockups</h2>
+      <h2>8 · Carried into the mockups</h2>
       <p class="section-note">Not answered here — #1159's design pass should settle these before implementation, per its own scope note on reuse.</p>
       <div class="questions">
         <div class="question"><span class="qmark">?</span><span>Do the Architecture Atlas and the future Process Atlas share one visual language for a "requirement card," or does <code>PROC-*</code> get its own treatment once #1142 is scoped? #1159 flagged this but didn't resolve it.</span></div>
@@ -752,8 +857,16 @@
     <li><span class="src-name">cargo-depgraph</span><span class="src-url">github.com/jplatte/cargo-depgraph</span></li>
     <li><span class="src-name">Redoc</span><span class="src-url">redocly.com/docs/redoc</span></li>
     <li><span class="src-name">Mermaid</span><span class="src-url">github.com/mermaid-js/mermaid</span></li>
+    <li><span class="src-name">LikeC4</span><span class="src-url">likec4.dev · github.com/likec4/likec4</span></li>
+    <li><span class="src-name">FINOS CALM</span><span class="src-url">calm.finos.org · github.com/finos/architecture-as-code</span></li>
+    <li><span class="src-name">StrictDoc traceability</span><span class="src-url">strictdoc.readthedocs.io</span></li>
+    <li><span class="src-name">Sphinx-Needs</span><span class="src-url">sphinx-needs.readthedocs.io</span></li>
+    <li><span class="src-name">OpenFastTrace</span><span class="src-url">github.com/itsallcode/openfasttrace</span></li>
+    <li><span class="src-name">SCIP</span><span class="src-url">scip-code.org</span></li>
+    <li><span class="src-name">Backstage Software Catalog</span><span class="src-url">backstage.io/docs/software-catalog</span></li>
+    <li><span class="src-name">Docusaurus plugin architecture</span><span class="src-url">docusaurus.io/docs/advanced/plugins</span></li>
     <li><span class="src-name">Living Documentation, Martraire (2019)</span><span class="src-url">O'Reilly / Leanpub</span></li>
     <li><span class="src-name">Building Evolutionary Architectures, Ford/Parsons/Kua (2017)</span><span class="src-url">evolutionaryarchitecture.com</span></li>
   </ul>
-  <p style="margin-top:1.4rem;">Compiled for metel-core #1159 · 2026-09-14</p>
+  <p style="margin-top:1.4rem;">Compiled for metel-core #1159 · 2026-09-14 · reuse survey extended 2026-09-16</p>
 </footer>
