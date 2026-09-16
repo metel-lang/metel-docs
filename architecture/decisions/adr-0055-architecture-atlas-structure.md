@@ -73,7 +73,7 @@ and then had to undo (see §5):
 | Formal Rule | `spec.<area>.<rule>.legality-N` / `dynamics-N` | canonical once published; amended, not statused | `spec.declarations.variables.immutable-bindings.legality-1` |
 | ADR | `ADR-NNNN` | `proposed / accepted / active / superseded / rejected` (`#1158` triage) | `ADR-0031` |
 | RFC | `RFC-NNNN` | 7-stage (`0-draft` … `3-integrated`) | `RFC-0136` |
-| Data-model fact | a type name, keyed | producer/owner/consumers/mutation-rule/invariants, no independent status — it's as current as the code | `TypedModuleGraph` |
+| Architecture data-model fact | `DATA-<AREA>-NNN` | `active / superseded / retired`; amended and versioned while active | `DATA-TYPING-001` |
 | Fixture | a `.mtl` + `.toml` sidecar pair | pass/fail, checked in CI | `neg_14_legacy_equals_binding_separator.mtl` |
 
 The Architecture Spec is the authoritative current description of the
@@ -119,11 +119,19 @@ literal `metel-frontend/src/name_resolver.rs` alongside the cross-link),
 `verified by` (named tests/checks, or — see §2 — embedded fixtures),
 `specified by` (one Architecture Spec anchor), and `related` (ADRs/RFCs).
 An Architecture Spec section carries its prose plus its `ARCH-*` links;
-those are source links, not copies of requirement prose. A Data-model fact's
-fields: `producer`, `owner`, `consumers`, `mutation rule`, `invariants`, and
-`upstream`/`downstream` neighbor links to adjacent facts in the same pipeline
-(added to the mockup's `TypedModuleGraph` card specifically because the
-survey's own recommendation named it and the mockup didn't have it yet).
+those are source links, not copies of requirement prose.
+
+An Architecture data-model fact is likewise a persistent, authored concept,
+not an extracted Rust type. It has a stable `DATA-*` identity, a defining
+Architecture Spec section, a human name, `owner`, `producer`, `consumers`,
+`mutation rule`, `invariants`, and `upstream`/`downstream` neighbors. It
+also records one or more current `implemented by` code bindings — a type,
+module, field set, or transformation — and related `ARCH-*` requirements,
+ADRs, and evidence. `DATA-TYPING-001` may remain the same fact if
+`TypedModuleGraph` is renamed, moved, or split across several Rust types;
+conversely, one implementation type may realize several architectural facts.
+The record models the durable architecture concept, not a snapshot of one
+implementation spelling.
 
 ### 2. Traceability: code cites the atomic unit, not the rationale
 
@@ -174,7 +182,7 @@ authoritative sources, entity IDs, or lifecycle vocabularies.
 | Tier | Views | What they show |
 |---|---|---|
 | Ecosystem | Context, Container | Metel as a whole system and its deployable pieces — unchanged from `#1159`'s original brief. |
-| Compiler | Component, Data model | Component: the eight-stage pipeline, always visible, with one stage's full code expanding in place on selection (not a separate Code view — see §5). Data model: one fact record per structure, Glean-shaped, with real up/down neighbor links. |
+| Compiler | Component, Data model | Component: the eight-stage pipeline, always visible, with one stage's full code expanding in place on selection (not a separate Code view — see §5). Data model: the persistent `DATA-*` registry, rendered as fact records with code bindings and real up/down neighbor links. |
 | Register | Traceability, Decisions, Debt | Three cross-cutting registers, not C4 levels. Traceability: `ARCH-*` requirements and their evidence, DO-178C-shaped. Decisions: the full ADR collection (§4). Debt: `DEBT-*` records, their resolution links, and reconciliation state (§9). Health is a cross-cutting rollup over Traceability and Debt, not a fourth register. |
 
 This is seven views against `#1159`'s originally-scoped five. §5 states why
@@ -260,10 +268,12 @@ rule differs by view because the thing being selected differs:
   information already lives in Structure (`decl_pub_name`) — different
   from eliding a body, since the node itself adds nothing the graph's shape
   needs.
-- **Data model**: a type gets its own card only if it's a pipeline-boundary
-  representation or has real cross-module reference fan-in — not every
-  internal struct (`GlobTier` doesn't have one; it's internal to one
-  file's own logic, not a boundary type).
+- **Data model**: every persistent `DATA-*` record is available in the
+  registry; the overview graph and a stage's contextual cards show only
+  facts that are pipeline-boundary representations or have real cross-module
+  reference fan-in. Extracted internal types such as `GlobTier` are not
+  facts merely because they exist in code; they remain discovery candidates
+  unless an author maps them to an architectural concept with a rationale.
 - **Decisions**: the ADR viewer contains the full collection (§4), including
   superseded history. Contextual cards and reverse indexes show only the
   related subset. A citation still does not imply a requirement should be
@@ -380,12 +390,22 @@ real in the corpus rather than proposed cold:
   explicit exemption — reusing the exact `// arch-exempt: <reason>`
   convention already proposed in the `#1157` citation-layering entry,
   rather than inventing a second one.
+- **Data-model binding validation and discovery.** The `implemented by`
+  bindings on each `DATA-*` record are checked against current code: a bound
+  type, module, field set, or transformation must still exist and match its
+  declared shape. Extraction also reports candidate pipeline-boundary types
+  and cross-module representations that have no `DATA-*` mapping, or a
+  declared binding that is now shared by a different conceptual model. These
+  are discovery and drift findings, not generated model records; an author
+  either maps the candidate to a persistent fact or records an exemption
+  with a rationale.
 - **A staleness signal that doesn't require semantic understanding.**
   Neither mechanism above catches a test that still exists and still
   passes but no longer tests what the prose claims — a real limit, not a
   gap to engineer around. The cheap, honest fallback: track, per
-  requirement, the commit it was last confirmed against (`ADR-0054`'s own
-  dated amendments are exactly this pattern, just not machine-read yet).
+  requirement or data-model fact, the commit it was last confirmed against
+  (`ADR-0054`'s own dated amendments are exactly this pattern, just not
+  machine-read yet).
   If the implementing path's git history has commits after that date with
   no corresponding Architecture Spec or requirement touch, surface a new
   Health category — `stale`,
@@ -522,6 +542,14 @@ card and that prose would recreate the drift this work exists to prevent.
 The Architecture Spec remains authoritative; the Atlas renders it together
 with requirements, code, fixtures, and decisions.
 
+**Extract the Data Model view directly from code, with no persistent model
+records.** Rejected — extraction can discover current types and references,
+but cannot authoritatively distinguish an incidental implementation struct
+from a durable pipeline concept, explain its invariant, or preserve its
+identity through a rename or split. It makes the diagram a code snapshot
+rather than a versioned part of the Architecture Spec. `DATA-*` records are
+the authority; extraction validates their bindings and discovers candidates.
+
 **Represent debt only as a requirement status or a free-form stage-card
 note.** Rejected — `partial` and `planned` cannot say whether a deviation
 was deliberately accepted or independently discovered, who is accountable,
@@ -564,7 +592,10 @@ once.
 - `#1155` owns the authoritative, versioned Architecture Spec sections and
   their stable anchors. It must link each normative architectural claim to
   its `ARCH-*` requirements, while each requirement records its defining
-  section. `#1156` consumes that source rather than recreating its prose.
+  section. It also owns the persistent `DATA-*` registry and its stable code
+  bindings; a Rust type name alone is not an architecture-model record.
+  `#1156` consumes those sources rather than recreating their prose or
+  extracting model facts as authority.
 - `#1156` needs routes for Architecture Spec sections plus nav slots and
   full record viewers for Decisions and Debt in addition to the original
   five (for example,
@@ -595,15 +626,16 @@ once.
   `#1156` must keep their source discovery and status metadata current; its
   contextual filters and reverse indexes update as `#1155` adds Spec,
   `ARCH-*`, and `DEBT-*` links.
-- `#1154`'s checker gains two further real scope additions from §8, beyond
+- `#1154`'s checker gains three further real scope additions from §8, beyond
   the fixture-sidecar/citation-lint pair already noted above:
-  ADR-status-propagation and Architecture-side unmapped-code discovery
-  (matching the reverse check `#1142` already commits to). The Health view
-  (`#1156`) gains a fifth category, `stale`, alongside `implemented`/
-  `partial`/`planned`/`missing evidence` — a signal, not a build failure.
-  Signature/shape staleness checking (§8) is real engineering, not a lint,
-  and should be scoped as its own follow-up issue rather than assumed as
-  part of `#1154`'s first pass.
+  ADR-status-propagation, Architecture-side unmapped-code discovery, and
+  `DATA-*` binding validation/discovery. The latter validates declared code
+  bindings and reports unmapped candidate boundary representations; it does
+  not generate persistent facts. The Health view (`#1156`) gains a fifth
+  category, `stale`, alongside `implemented`/`partial`/`planned`/`missing
+  evidence` — a signal, not a build failure. Signature/shape staleness
+  checking (§8) is real engineering, not a lint, and should be scoped as its
+  own follow-up issue rather than assumed as part of `#1154`'s first pass.
 - `#1154` and `#1156` also gain the debt flow in §9: checkers and audits
   emit Health findings; human triage creates or updates `DEBT-*` records;
   the generic checker validates their identifiers, required provenance,
