@@ -28,13 +28,14 @@ RFC ──defines language change──► Language Spec ──implemented by─
                               code + contract tests
 ```
 
-— names the shape but not the mechanics: what an `ARCH-*` requirement
-actually contains, how code cites it, what a fixture proves and how that
-proof is checked, how the six spec families' worth of facts (pipeline
-stages, data tables, requirements, decisions, code, tests) render as
-something a reader can navigate, and which of those facts this atlas
-chooses to show at all rather than drowning a reader in every internal
-type and every historical decision.
+— names the shape but not the mechanics: what the authoritative
+Architecture Spec contains, which of its claims need an `ARCH-*`
+requirement, how code cites that requirement, what a fixture proves and how
+that proof is checked, how the resulting facts (spec prose, pipeline stages,
+data tables, requirements, decisions, code, tests) render as something a
+reader can navigate, and which of those facts this atlas chooses to show at
+all rather than drowning a reader in every internal type and every
+historical decision.
 
 `#1159` scoped a static mockup — no live checker, no generated diagrams,
 one stage (`name_resolver.rs`) worked all the way to real depth as the
@@ -58,20 +59,28 @@ it cites which issue.
 
 ## Decision
 
-### 1. The entity model
+### 1. The entity model and authority boundary
 
-Six kinds of fact, each with a stable identity and its own lifecycle —
+Seven kinds of fact, each with a stable identity and its own lifecycle —
 conflating any two of these into one shape is a mistake this session made
 and then had to undo (see §5):
 
 | Entity | ID shape | Lifecycle | Real example |
 |---|---|---|---|
+| Architecture Spec section | stable spec path and section anchor | canonical current prose; amended and versioned, not statused | `architecture.pipeline.name-resolution` |
 | Architecture requirement | `ARCH-<AREA>-NNN` | `implemented / partial / planned / superseded / retired` | `ARCH-RESOLUTION-001` |
 | Formal Rule | `spec.<area>.<rule>.legality-N` / `dynamics-N` | canonical once published; amended, not statused | `spec.declarations.variables.immutable-bindings.legality-1` |
 | ADR | `ADR-NNNN` | `accepted / active / superseded / rejected` (`#1158` triage) | `ADR-0031` |
 | RFC | `RFC-NNNN` | 7-stage (`0-draft` … `3-integrated`) | `RFC-0136` |
 | Data-model fact | a type name, keyed | producer/owner/consumers/mutation-rule/invariants, no independent status — it's as current as the code | `TypedModuleGraph` |
 | Fixture | a `.mtl` + `.toml` sidecar pair | pass/fail, checked in CI | `neg_14_legacy_equals_binding_separator.mtl` |
+
+The Architecture Spec is the authoritative current description of the
+compiler's architecture. Its sections state the stage boundaries, ownership,
+data flow, invariants, and implementation mappings in prose, under stable
+paths and anchors. An Atlas page is a generated rendering of that source and
+its linked evidence; it is not a second, hand-maintained architecture
+document and cannot become the authority by accumulating more UI detail.
 
 An `ARCH-*` requirement and a Formal Rule play the same *role* (the atomic,
 individually addressable, checkable claim) for two different *domains* —
@@ -82,27 +91,50 @@ enough (a compiler's internal shape vs. what a Metel program means) that
 forcing one ID space onto both would blur exactly the distinction that
 makes each checkable.
 
+The relationship within each domain is correspondingly parallel:
+
+```
+Language Spec section ──defines──► Formal Rule ──verified by──► fixture/code
+Architecture Spec section ──defines──► ARCH-* ──verified by──► fixture/code
+                                         │
+                                         └──related to──► ADR/RFC
+```
+
+An `ARCH-*` requirement is therefore not a replacement for the prose that
+explains an architectural boundary. It is the stable, individually testable
+fact that backs a specific Architecture Spec claim. Every requirement has a
+`specified by` link to its defining Architecture Spec section; the section
+links to the requirements that make its normative claims checkable. Code and
+fixtures cite the requirement, not the broad section, so evidence remains
+atomic. A reader normally enters through the Architecture Spec section for
+the current architectural story, then follows a requirement to inspect its
+implementation and evidence.
+
 An `ARCH-*` requirement's real fields, per `#1155`'s own scope and the
 survey's specimen, verified against what the mockup actually needed to
 express: `status`, `owner`, `implements` (a real, checkable path — not
 necessarily a UI link; see §5's `ARCH-RESOLUTION-001` fix, which added the
 literal `metel-frontend/src/name_resolver.rs` alongside the cross-link),
-`verified by` (named tests/checks, or — see §2 — embedded fixtures), and
-`related` (ADRs/RFCs). A Data-model fact's fields: `producer`, `owner`,
-`consumers`, `mutation rule`, `invariants`, and `upstream`/`downstream`
-neighbor links to adjacent facts in the same pipeline (added to the
-mockup's `TypedModuleGraph` card specifically because the survey's own
-recommendation named it and the mockup didn't have it yet).
+`verified by` (named tests/checks, or — see §2 — embedded fixtures),
+`specified by` (one Architecture Spec anchor), and `related` (ADRs/RFCs).
+An Architecture Spec section carries its prose plus its `ARCH-*` links;
+those are source links, not copies of requirement prose. A Data-model fact's
+fields: `producer`, `owner`, `consumers`, `mutation rule`, `invariants`, and
+`upstream`/`downstream` neighbor links to adjacent facts in the same pipeline
+(added to the mockup's `TypedModuleGraph` card specifically because the
+survey's own recommendation named it and the mockup didn't have it yet).
 
 ### 2. Traceability: code cites the atomic unit, not the rationale
 
 Code, fixtures, and generated output cite the nearest atomic unit
 (`ARCH-*` or Formal Rule) when one exists for the claim being made, not the
-ADR/RFC that produced it. The atomic unit itself cites the ADR/RFC. This
-chain — `code → ARCH-*/Formal Rule → ADR/RFC` — is walkable in both
-directions and is never skipped except by a stated exception (no atomic
-unit is warranted; one doesn't exist yet because its RFC is accepted but
-not integrated).
+Architecture Spec section's broad prose or the ADR/RFC that produced it.
+The atomic unit links back to its defining spec section and to its ADR/RFC
+rationale. The resulting walk — `code → ARCH-*/Formal Rule ←
+Architecture/Language Spec section`, with the atomic unit also linking to
+its ADR/RFC — is navigable in both directions and is never skipped except by
+a stated exception (no atomic unit is warranted; one doesn't exist yet
+because its RFC is accepted but not integrated).
 
 This is proposed in full, with rationale, real corpus examples (including
 a real gap it found — `ADR-0027` cited directly in `resolve_module()`'s
@@ -124,6 +156,13 @@ proving a Formal Rule can be evidence for an architecture requirement.
 
 ### 3. Six views, three tiers
 
+The six views are projections over the authoritative Architecture Spec,
+requirement registry, code/fixture evidence, and ADR/RFC registers. They do
+not define architecture independently. A stage, data-model, or requirement
+card must retain a link back to the Architecture Spec section that is its
+current narrative source; the Atlas adds navigation and joined evidence, not
+a competing prose source.
+
 | Tier | Views | What they show |
 |---|---|---|
 | Ecosystem | Context, Container | Metel as a whole system and its deployable pieces — unchanged from `#1159`'s original brief. |
@@ -141,8 +180,10 @@ reverse index: every requirement that actually depends on it. This is what
 `#1141`'s own line — "ADRs are decision history supporting the current
 spec; they are not the sole current description of architecture" — means
 in practice: an ADR is real, citable, and has a lifecycle of its own, but
-it is not where a reader normally lands; a reader lands on the requirement,
-and reaches the ADR one hop further only when they want why.
+it is not where a reader normally lands. A reader lands on an Architecture
+Spec section for the current description, follows a requirement for its
+atomic evidence, and reaches the ADR one hop further only when they want
+why.
 
 Decisions is scoped to the ADRs actually cited by content already in this
 atlas (eight, currently — `ADR-0026/0027/0031/0038/0039/0041/0048/0054`),
@@ -322,7 +363,8 @@ real in the corpus rather than proposed cold:
   requirement, the commit it was last confirmed against (`ADR-0054`'s own
   dated amendments are exactly this pattern, just not machine-read yet).
   If the implementing path's git history has commits after that date with
-  no corresponding spec touch, surface a new Health category — `stale`,
+  no corresponding Architecture Spec or requirement touch, surface a new
+  Health category — `stale`,
   distinct from `missing evidence` — not a hard CI failure (too noisy for
   pure refactors that change nothing a requirement claims), a visible
   prompt for re-confirmation instead.
@@ -352,6 +394,15 @@ instance of exactly this failing silently until this ADR's own research
 happened to catch it by hand. A mechanism that runs on every change is the
 point; an audit that runs when someone remembers to is what's already
 failing.
+
+**Make the Atlas itself the authoritative architecture documentation.**
+Rejected — an interactive projection is useful for joins, filtering, and
+evidence traversal, but it is not a stable home for the current narrative
+description of a stage or invariant. It would duplicate the prose that
+`#1155` is scoped to write, and any divergence between a hand-authored Atlas
+card and that prose would recreate the drift this work exists to prevent.
+The Architecture Spec remains authoritative; the Atlas renders it together
+with requirements, code, fixtures, and decisions.
 
 **Attach `PROC-*` requirements directly to Architecture Atlas components
 instead of a separate Process Atlas.** Considered directly, prompted by a
@@ -385,12 +436,20 @@ once.
 
 ## Consequences
 
-- `#1156` needs a route and nav slot for Decisions in addition to the
-  original five (`/architecture/decisions/ADR-0054`, alongside the
-  suggested `/architecture/requirements/ARCH-RESOLUTION-001`), and needs to
-  implement Component/Code as one view with a state transition, not two
-  views — building straight from the survey's table without this ADR would
-  plausibly reproduce the exact navigation bug §5 describes.
+- `#1155` owns the authoritative, versioned Architecture Spec sections and
+  their stable anchors. It must link each normative architectural claim to
+  its `ARCH-*` requirements, while each requirement records its defining
+  section. `#1156` consumes that source rather than recreating its prose.
+- `#1156` needs routes for Architecture Spec sections and a route and nav
+  slot for Decisions in addition to the original five (for example,
+  `/architecture/spec/pipeline/name-resolution`,
+  `/architecture/requirements/ARCH-RESOLUTION-001`, and
+  `/architecture/decisions/ADR-0054`). Every Atlas card derived from a
+  requirement or stage needs a return link to the source spec section. It
+  also needs to implement Component/Code as one view with a state
+  transition, not two views — building straight from the survey's table
+  without this ADR would plausibly reproduce the exact navigation bug §5
+  describes.
 - `#1154`'s generic checker gains one real scope addition once the
   `#1157` standard (referenced, not restated, in §2) is accepted: the
   `arch = [...]` fixture-sidecar field and the citation lint. Both are
@@ -398,9 +457,11 @@ once.
   fork of it.
 - `#1155`, writing the real Architecture Spec content, should treat this
   ADR's entity-field list (§1) and content-selection tests (§6) as the
-  schema and the inclusion criteria respectively — they were derived by
-  actually building one stage to real depth against them, not proposed
-  cold.
+  schema and the inclusion criteria respectively. The prose-and-atomic-rule
+  relationship is intentional: a section remains readable without opening
+  every requirement, while every normative claim that needs machine-checked
+  evidence has a stable `ARCH-*` link. These criteria were derived by
+  actually building one stage to real depth against them, not proposed cold.
 - Decisions' scope (§4) needs real, ongoing curation as `#1155` adds more
   `ARCH-*` content — it is not a set-once list, and will need re-auditing
   each time a new requirement cites an ADR not yet in the register.
