@@ -61,7 +61,7 @@ it cites which issue.
 
 ### 1. The entity model and authority boundary
 
-Seven kinds of fact, each with a stable identity and its own lifecycle —
+Eight kinds of fact, each with a stable identity and its own lifecycle —
 conflating any two of these into one shape is a mistake this session made
 and then had to undo (see §5):
 
@@ -69,6 +69,7 @@ and then had to undo (see §5):
 |---|---|---|---|
 | Architecture Spec section | stable spec path and section anchor | canonical current prose; amended and versioned, not statused | `architecture.pipeline.name-resolution` |
 | Architecture requirement | `ARCH-<AREA>-NNN` | `implemented / partial / planned / superseded / retired` | `ARCH-RESOLUTION-001` |
+| Architecture debt record | `DEBT-<AREA>-NNN` | `open / managed / awaiting-verification / closed / superseded` | `DEBT-RESOLUTION-001` |
 | Formal Rule | `spec.<area>.<rule>.legality-N` / `dynamics-N` | canonical once published; amended, not statused | `spec.declarations.variables.immutable-bindings.legality-1` |
 | ADR | `ADR-NNNN` | `accepted / active / superseded / rejected` (`#1158` triage) | `ADR-0031` |
 | RFC | `RFC-NNNN` | 7-stage (`0-draft` … `3-integrated`) | `RFC-0136` |
@@ -157,17 +158,17 @@ proving a Formal Rule can be evidence for an architecture requirement.
 ### 3. Six views, three tiers
 
 The six views are projections over the authoritative Architecture Spec,
-requirement registry, code/fixture evidence, and ADR/RFC registers. They do
-not define architecture independently. A stage, data-model, or requirement
-card must retain a link back to the Architecture Spec section that is its
-current narrative source; the Atlas adds navigation and joined evidence, not
-a competing prose source.
+requirement and debt registries, code/fixture evidence, and ADR/RFC
+registers. They do not define architecture independently. A stage,
+data-model, or requirement card must retain a link back to the Architecture
+Spec section that is its current narrative source; the Atlas adds navigation
+and joined evidence, not a competing prose source.
 
 | Tier | Views | What they show |
 |---|---|---|
 | Ecosystem | Context, Container | Metel as a whole system and its deployable pieces — unchanged from `#1159`'s original brief. |
 | Compiler | Component, Data model | Component: the eight-stage pipeline, always visible, with one stage's full code expanding in place on selection (not a separate Code view — see §5). Data model: one fact record per structure, Glean-shaped, with real up/down neighbor links. |
-| Register | Traceability, Decisions | Two cross-cutting join tables, not C4 levels. Traceability: `ARCH-*` requirements, DO-178C-shaped. Decisions: ADRs, added in this pass (§4) — not part of `#1159`'s original five-view brief. |
+| Register | Traceability, Decisions | Two cross-cutting join tables, not C4 levels. Traceability: `ARCH-*` requirements, their evidence, and the Health/debt rollup, DO-178C-shaped. Decisions: ADRs, added in this pass (§4) — not part of `#1159`'s original five-view brief. |
 
 This is six views against `#1159`'s originally-scoped five. §5 states why.
 
@@ -253,6 +254,12 @@ rule differs by view because the thing being selected differs:
   particular, because a Cargo workspace boundary isn't the kind of durable,
   cross-stage invariant `#1157`'s own existing line reserves an `ARCH-*`
   id for.
+- **Debt**: every open Architecture debt record appears in Traceability's
+  Health/debt rollup and on each affected stage or requirement; resolved
+  records remain reachable from that history but do not occupy the active
+  rollup. A debt is included because it has a live owner and remediation or
+  acceptance state, not merely because a temporary implementation detail
+  exists.
 - **Stage detail**: one stage (`name_resolver`) is built to full real
   depth; the other seven are visible only as pipeline nodes with no detail
   page. This is the sharpest of the deliberate omissions and the one most
@@ -386,6 +393,94 @@ directly answers "documentation drift" in the usual sense, but it's real
 engineering (a source-level extractor), not a lint, and should be scoped
 as its own follow-up rather than bundled into `#1154`'s first pass.
 
+### 9. Architecture debt is a first-class, reconcilable exception record
+
+Requirement status and Health are not a debt register. `partial` says how
+much of a requirement currently holds; `missing evidence`, `stale`, and
+unmapped-code findings say what the checker or audit can see. None records
+whether a shortfall was deliberately accepted, who owns it, which work is
+meant to remove it, or whether that work has actually closed the condition.
+An Architecture debt record supplies that missing durable fact without
+weakening the requirement it affects.
+
+A debt record has the stable identity `DEBT-<AREA>-NNN`. It keeps three
+independent dimensions, rather than overloading one status field:
+
+| Dimension | Values | Meaning |
+|---|---|---|
+| Origin | `accepted-temporary` / `discovered` | Was the deviation consciously accepted before it was fixed, or found by a checker, audit, incident, or reader afterwards? |
+| Lifecycle | `open / managed / awaiting-verification / closed / superseded` | Does the condition still exist, is there a resolution plan, and has its exit condition been verified? |
+| Acceptance | `unaccepted / accepted-temporary / waived` | May the current deviation remain while open? A waiver requires an explicit ADR or issue and is not a silent expiry of temporary acceptance. |
+
+An `accepted-temporary` record requires its accepting ADR or issue,
+rationale, owner, and a mandatory review-by date. A `discovered` record
+requires its discoverer (check, audit, incident, or reader), observation
+date, and an owner after triage. A Health finding from §8 is a candidate, not
+an automatic debt record: triage either creates a `discovered` record,
+resolves the finding, or records a justified exemption. This keeps checker
+noise from becoming permanent project inventory.
+
+Every record carries a `scope` (one Architecture Spec section), a precise,
+testable `condition`, `affects` (zero or more `ARCH-*` requirements plus the
+relevant code, stage, or data-model facts), and an `exit condition` with its
+verification evidence. `affects` may be empty for an unmapped-code finding:
+the record still has a Spec-section scope so discovery can precede minting a
+new requirement.
+
+Resolution is a set of typed links, not free-form remediation prose. Each
+link names its target, role, and whether it is required for closure:
+
+| Target | Roles | Terminal signal |
+|---|---|---|
+| Issue | `tracks` / `implements` | issue is closed |
+| Architecture requirement | `successor-contract` / `implements` | requirement is `implemented` (or another explicitly named terminal status) |
+| Fixture or check | `verifies` | named evidence passes |
+| ADR | `accepts` / `waives` | explicit decision, never closure evidence by itself |
+
+The record also declares `closure policy: all-required | any-required`.
+`all-required` is the normal case: an independent issue may implement the
+work, a following `ARCH-*` entry may state the durable successor contract,
+and a fixture or check proves the debt's exit condition. A record may use an
+issue alone or a successor requirement alone when that is genuinely its full
+resolution path, but it must still name verification evidence; closing a
+tracker is not proof that the condition disappeared.
+
+Lifecycle is deliberately asymmetric with tracker status:
+
+```
+open → managed → awaiting-verification → closed
+  ↑          │              │
+  └──────────┴──────────────┘  tracker reopens, regresses, or verification fails
+                    │
+                    └────────→ superseded (a successor debt explicitly replaces it)
+```
+
+When all required issue and successor-`ARCH-*` links reach their terminal
+signals, reconciliation marks the record *ready for verification* and raises
+a finding unless its lifecycle is `awaiting-verification`; it does not close
+it. Closure requires the record's own exit-condition evidence. If a linked
+issue reopens, a successor requirement regresses, or evidence fails,
+reconciliation marks the record divergent and preserves the event in its
+history. A human confirms lifecycle transitions, so the checker never
+silently rewrites an accountability record; it records observed tracker state
+and makes disagreement between the declared lifecycle and linked work
+actionable.
+
+Debt does not become a third Register view. Traceability's Health area is
+the active debt ledger and reconciliation queue: it shows open and managed
+records, debt awaiting verification, and divergent records such as “issue
+closed, debt unverified” or “closed debt, successor requirement regressed.”
+It supports facets for `tracked by issue`, `resolved by ARCH-*`, origin,
+acceptance, owner, and overdue review. Stage and requirement cards show
+their affected open debt; issues and `ARCH-*` entries expose backlinks to all
+debt they track or resolve. Resolved and superseded records remain reachable
+as history but do not occupy the active rollup.
+
+Code and fixtures continue to cite `ARCH-*` or Formal Rules, never a
+`DEBT-*` record. Debt records govern remediation and accountability; they
+are not semantic or architectural contracts and cannot be used as evidence
+that a requirement holds.
+
 ## Alternatives Considered
 
 **Rely on periodic manual audit for drift, no automated mechanism.**
@@ -403,6 +498,13 @@ description of a stage or invariant. It would duplicate the prose that
 card and that prose would recreate the drift this work exists to prevent.
 The Architecture Spec remains authoritative; the Atlas renders it together
 with requirements, code, fixtures, and decisions.
+
+**Represent debt only as a requirement status or a free-form stage-card
+note.** Rejected — `partial` and `planned` cannot say whether a deviation
+was deliberately accepted or independently discovered, who is accountable,
+or when it expires. A hand-authored “open debt” note is neither enumerable
+nor enforceable, and therefore cannot support the Health view or a review
+workflow.
 
 **Attach `PROC-*` requirements directly to Architecture Atlas components
 instead of a separate Process Atlas.** Considered directly, prompted by a
@@ -474,6 +576,20 @@ once.
   Signature/shape staleness checking (§8) is real engineering, not a lint,
   and should be scoped as its own follow-up issue rather than assumed as
   part of `#1154`'s first pass.
+- `#1154` and `#1156` also gain the debt flow in §9: checkers and audits
+  emit Health findings; human triage creates or updates `DEBT-*` records;
+  the generic checker validates their identifiers, required provenance,
+  links, closure policy, and overdue `review by` dates. It reconciles issue
+  state, successor-`ARCH-*` status, and verification evidence against the
+  declared debt lifecycle, producing a finding rather than silently closing
+  a record. Overdue debt is a visible Health signal, not an automatic status
+  transition or a hard claim that the underlying requirement no longer
+  holds.
+- `#1156` renders open, managed, awaiting-verification, and divergent debt
+  as Traceability/Health ledger facets, with backlinks from affected stages,
+  requirements, and tracking issues. It does not add a seventh Atlas view or
+  treat the mockup's free-form “Open debt” text as canonical data; the
+  Architecture Spec and debt registry remain the source.
 - `#1142` (the Process Atlas) is unaffected in scope by this ADR — it
   keeps its own six planned views, per §7 — but should build on the same
   `#1154`/`#1156` shared plumbing this atlas does, not a parallel copy of
