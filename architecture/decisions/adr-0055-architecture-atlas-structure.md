@@ -71,7 +71,7 @@ and then had to undo (see §5):
 | Architecture requirement | `ARCH-<AREA>-NNN` | `implemented / partial / planned / superseded / retired` | `ARCH-RESOLUTION-001` |
 | Architecture debt record | `DEBT-<AREA>-NNN` | `open / managed / awaiting-verification / closed / superseded` | `DEBT-RESOLUTION-001` |
 | Formal Rule | `spec.<area>.<rule>.legality-N` / `dynamics-N` | canonical once published; amended, not statused | `spec.declarations.variables.immutable-bindings.legality-1` |
-| ADR | `ADR-NNNN` | `accepted / active / superseded / rejected` (`#1158` triage) | `ADR-0031` |
+| ADR | `ADR-NNNN` | `proposed / accepted / active / superseded / rejected` (`#1158` triage) | `ADR-0031` |
 | RFC | `RFC-NNNN` | 7-stage (`0-draft` … `3-integrated`) | `RFC-0136` |
 | Data-model fact | a type name, keyed | producer/owner/consumers/mutation-rule/invariants, no independent status — it's as current as the code | `TypedModuleGraph` |
 | Fixture | a `.mtl` + `.toml` sidecar pair | pass/fail, checked in CI | `neg_14_legacy_equals_binding_separator.mtl` |
@@ -155,41 +155,58 @@ to embed them on `ARCH-*` requirement pages too — is this ADR's answer to
 separate mechanism. One fixture can carry both arrays; the same source
 proving a Formal Rule can be evidence for an architecture requirement.
 
-### 3. Six views, three tiers
+### 3. Seven views, three tiers
 
-The six views are projections over the authoritative Architecture Spec,
+The seven views are projections over the authoritative Architecture Spec,
 requirement and debt registries, code/fixture evidence, and ADR/RFC
 registers. They do not define architecture independently. A stage,
 data-model, or requirement card must retain a link back to the Architecture
 Spec section that is its current narrative source; the Atlas adds navigation
 and joined evidence, not a competing prose source.
 
+“Atlas” is the shared navigation, record-viewer, traceability, and evidence
+framework across spec families. The existing Language Spec/RFC viewer is the
+Language subsection of that framework; this ADR defines the Architecture
+subsection; the Operations/Process Atlas remains its future peer (§7). They
+share presentation and traversal primitives without merging their
+authoritative sources, entity IDs, or lifecycle vocabularies.
+
 | Tier | Views | What they show |
 |---|---|---|
 | Ecosystem | Context, Container | Metel as a whole system and its deployable pieces — unchanged from `#1159`'s original brief. |
 | Compiler | Component, Data model | Component: the eight-stage pipeline, always visible, with one stage's full code expanding in place on selection (not a separate Code view — see §5). Data model: one fact record per structure, Glean-shaped, with real up/down neighbor links. |
-| Register | Traceability, Decisions | Two cross-cutting join tables, not C4 levels. Traceability: `ARCH-*` requirements, their evidence, and the Health/debt rollup, DO-178C-shaped. Decisions: ADRs, added in this pass (§4) — not part of `#1159`'s original five-view brief. |
+| Register | Traceability, Decisions, Debt | Three cross-cutting registers, not C4 levels. Traceability: `ARCH-*` requirements and their evidence, DO-178C-shaped. Decisions: the full ADR collection (§4). Debt: `DEBT-*` records, their resolution links, and reconciliation state (§9). Health is a cross-cutting rollup over Traceability and Debt, not a fourth register. |
 
-This is six views against `#1159`'s originally-scoped five. §5 states why.
+This is seven views against `#1159`'s originally-scoped five. §5 states why
+Component absorbed Code; §§4 and 9 state why Decisions and Debt are each
+their own register.
 
-### 4. Decisions is a real register, not a citation
+### 4. Decisions is a full ADR viewer, not a citation subset
 
-An ADR gets a real entry in the Decisions view — its own row, its own
-status badge, a `Relates to` list of other ADRs, and (demonstrated on the
-one fully-built example, `ADR-0054`) a **"Cited by, in this atlas"**
-reverse index: every requirement that actually depends on it. This is what
-`#1141`'s own line — "ADRs are decision history supporting the current
-spec; they are not the sole current description of architecture" — means
-in practice: an ADR is real, citable, and has a lifecycle of its own, but
-it is not where a reader normally lands. A reader lands on an Architecture
-Spec section for the current description, follows a requirement for its
-atomic evidence, and reaches the ADR one hop further only when they want
-why.
+Every ADR gets a real entry in the Decisions viewer — the full collection,
+not a hand-curated citation subset. The viewer shares the RFC viewer's
+visual and functional model: search, lifecycle/status facets, sorting,
+stable deep links, list/detail navigation, source metadata, and
+predecessor/successor and related-record links. It renders rather than
+normalizes the two domains' vocabularies: RFCs retain their seven-stage
+lifecycle; ADRs retain their proposed/accepted/active/superseded/rejected
+status and successor links.
 
-Decisions is scoped to the ADRs actually cited by content already in this
-atlas (eight, currently — `ADR-0026/0027/0031/0038/0039/0041/0048/0054`),
-not a mirror of the full collection (54 real entries, per `#1158`). This is
-the same discipline as §6, applied to a new entity kind.
+An ADR detail also has a **"Cited by, in this atlas"** reverse index:
+requirements, Spec sections, debt records, and other Atlas content that
+actually depends on it. This is what `#1141`'s own line — "ADRs are decision
+history supporting the current spec; they are not the sole current
+description of architecture" — means in practice: an ADR is real, citable,
+and has a lifecycle of its own, but it is not where a reader normally lands.
+A reader lands on an Architecture Spec section for the current description,
+follows a requirement for its atomic evidence, and reaches the ADR one hop
+further only when they want why.
+
+Contextual Atlas surfaces remain deliberately focused, but as filters over
+the full viewer rather than inclusion boundaries: `cited by this Spec
+section`, `cited by active ARCH-* requirements`, `superseded but still
+cited`, or `has open debt`. This preserves the focused reading path without
+hiding any architecture decision from the register.
 
 ### 5. Why Component absorbed Code
 
@@ -247,19 +264,19 @@ rule differs by view because the thing being selected differs:
   representation or has real cross-module reference fan-in — not every
   internal struct (`GlobTier` doesn't have one; it's internal to one
   file's own logic, not a boundary type).
-- **Decisions**: an ADR is included only if something already shown in the
-  atlas cites it (§4) — and, per the `#1157` standard (§2), a citation
-  doesn't imply a requirement should be minted: `ADR-0048` (the frontend/
-  interpreter crate split) stays a direct citation from nowhere in
-  particular, because a Cargo workspace boundary isn't the kind of durable,
-  cross-stage invariant `#1157`'s own existing line reserves an `ARCH-*`
-  id for.
-- **Debt**: every open Architecture debt record appears in Traceability's
-  Health/debt rollup and on each affected stage or requirement; resolved
-  records remain reachable from that history but do not occupy the active
-  rollup. A debt is included because it has a live owner and remediation or
-  acceptance state, not merely because a temporary implementation detail
-  exists.
+- **Decisions**: the ADR viewer contains the full collection (§4), including
+  superseded history. Contextual cards and reverse indexes show only the
+  related subset. A citation still does not imply a requirement should be
+  minted: `ADR-0048` (the frontend/interpreter crate split) can remain a
+  direct decision link because a Cargo workspace boundary is not necessarily
+  the kind of durable, cross-stage invariant `#1157` reserves an `ARCH-*`
+  ID for.
+- **Debt**: the Debt viewer contains every durable `DEBT-*` record (§9),
+  including resolved and superseded history. Active views and contextual
+  cards select only open, managed, awaiting-verification, or affected
+  records. A debt is recorded because it has a live owner, reconciliation,
+  or acceptance history — not merely because a temporary implementation
+  detail exists.
 - **Stage detail**: one stage (`name_resolver`) is built to full real
   depth; the other seven are visible only as pipeline nodes with no detail
   page. This is the sharpest of the deliberate omissions and the one most
@@ -466,15 +483,21 @@ silently rewrites an accountability record; it records observed tracker state
 and makes disagreement between the declared lifecycle and linked work
 actionable.
 
-Debt does not become a third Register view. Traceability's Health area is
-the active debt ledger and reconciliation queue: it shows open and managed
-records, debt awaiting verification, and divergent records such as “issue
-closed, debt unverified” or “closed debt, successor requirement regressed.”
-It supports facets for `tracked by issue`, `resolved by ARCH-*`, origin,
-acceptance, owner, and overdue review. Stage and requirement cards show
-their affected open debt; issues and `ARCH-*` entries expose backlinks to all
-debt they track or resolve. Resolved and superseded records remain reachable
-as history but do not occupy the active rollup.
+Debt is a dedicated third Register view, using the same record-viewer
+foundation as RFCs and ADRs while retaining debt-specific detail and
+facets. It contains the full debt collection, with search, lifecycle,
+origin, acceptance, owner, Spec-section scope, overdue-review, `tracked by
+issue`, and `resolved by ARCH-*` filters. Its detail page shows the
+condition, exit condition, closure policy, linked work and its reconciled
+state, evidence, and history. Stage and requirement cards show their
+affected open debt; issues and `ARCH-*` entries expose backlinks to all debt
+they track or resolve. Resolved and superseded records remain visible as
+history.
+
+Health is instead the cross-cutting active rollup and reconciliation queue:
+it links to filtered Debt results for open and managed records, debt awaiting
+verification, and divergence such as “issue closed, debt unverified” or
+“closed debt, successor requirement regressed.”
 
 Code and fixtures continue to cite `ARCH-*` or Formal Rules, never a
 `DEBT-*` record. Debt records govern remediation and accountability; they
@@ -542,16 +565,20 @@ once.
   their stable anchors. It must link each normative architectural claim to
   its `ARCH-*` requirements, while each requirement records its defining
   section. `#1156` consumes that source rather than recreating its prose.
-- `#1156` needs routes for Architecture Spec sections and a route and nav
-  slot for Decisions in addition to the original five (for example,
+- `#1156` needs routes for Architecture Spec sections plus nav slots and
+  full record viewers for Decisions and Debt in addition to the original
+  five (for example,
   `/architecture/spec/pipeline/name-resolution`,
   `/architecture/requirements/ARCH-RESOLUTION-001`, and
-  `/architecture/decisions/ADR-0054`). Every Atlas card derived from a
+  `/architecture/decisions/ADR-0054`,
+  `/architecture/debt/DEBT-RESOLUTION-001`). Decisions must be visually and
+  functionally consistent with the RFC viewer while rendering ADR-specific
+  lifecycle data; Debt shares that record-viewer foundation with debt-specific
+  lifecycle and reconciliation facets. Every Atlas card derived from a
   requirement or stage needs a return link to the source spec section. It
-  also needs to implement Component/Code as one view with a state
-  transition, not two views — building straight from the survey's table
-  without this ADR would plausibly reproduce the exact navigation bug §5
-  describes.
+  also needs to implement Component/Code as one view with a state transition,
+  not two views — building straight from the survey's table without this ADR
+  would plausibly reproduce the exact navigation bug §5 describes.
 - `#1154`'s generic checker gains one real scope addition once the
   `#1157` standard (referenced, not restated, in §2) is accepted: the
   `arch = [...]` fixture-sidecar field and the citation lint. Both are
@@ -564,9 +591,10 @@ once.
   every requirement, while every normative claim that needs machine-checked
   evidence has a stable `ARCH-*` link. These criteria were derived by
   actually building one stage to real depth against them, not proposed cold.
-- Decisions' scope (§4) needs real, ongoing curation as `#1155` adds more
-  `ARCH-*` content — it is not a set-once list, and will need re-auditing
-  each time a new requirement cites an ADR not yet in the register.
+- The ADR and Debt viewers are full registries, not set-once curated lists.
+  `#1156` must keep their source discovery and status metadata current; its
+  contextual filters and reverse indexes update as `#1155` adds Spec,
+  `ARCH-*`, and `DEBT-*` links.
 - `#1154`'s checker gains two further real scope additions from §8, beyond
   the fixture-sidecar/citation-lint pair already noted above:
   ADR-status-propagation and Architecture-side unmapped-code discovery
@@ -585,11 +613,11 @@ once.
   a record. Overdue debt is a visible Health signal, not an automatic status
   transition or a hard claim that the underlying requirement no longer
   holds.
-- `#1156` renders open, managed, awaiting-verification, and divergent debt
-  as Traceability/Health ledger facets, with backlinks from affected stages,
-  requirements, and tracking issues. It does not add a seventh Atlas view or
-  treat the mockup's free-form “Open debt” text as canonical data; the
-  Architecture Spec and debt registry remain the source.
+- `#1156` renders Health as a cross-cutting rollup with filtered links into
+  Traceability and Debt, and exposes debt backlinks from affected stages,
+  requirements, and tracking issues. It adds the seventh Atlas view rather
+  than treating the mockup's free-form “Open debt” text as canonical data;
+  the Architecture Spec and debt registry remain the source.
 - `#1142` (the Process Atlas) is unaffected in scope by this ADR — it
   keeps its own six planned views, per §7 — but should build on the same
   `#1154`/`#1156` shared plumbing this atlas does, not a parallel copy of
