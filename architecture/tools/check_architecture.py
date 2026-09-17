@@ -14,6 +14,14 @@ and by what) -- `LIMIT-*`'s `discovered_by` is deliberately exempt from this
 one check, since citing the ADR that originally documented a now-resolved
 limitation is expected even after that ADR is itself superseded.
 
+Also validates `architecture/decisions/*.md`'s own frontmatter structure
+directly: every ADR has real YAML frontmatter (not a plain `**Status:**`
+header) with non-empty `id`/`title`/`date`/`status`, `id` matching its own
+filename exactly, and `status` either a known value or a well-formed
+"superseded by ADR-NNNN" -- the structural backbone `#1172`'s hand-done
+backfill depends on staying true, not just a one-time state to have
+reached.
+
 This generalizes `rfcs/tools/rfc.py`'s existing anchor/backlink/coverage
 machinery rather than introducing new tooling -- per ADR-0055's explicit
 deferral of a relational-schema-plus-Datalog composition (the prior-art
@@ -70,6 +78,10 @@ ADR_REF_RE = re.compile(r"\bADR-(\d{4})\b", re.IGNORECASE)
 YAML_SUPERSEDED_BY_RE = re.compile(r"^status:\s*superseded by\s+(?:ADR-|adr-)?(\d{4})", re.MULTILINE | re.IGNORECASE)
 YAML_SUPERSEDES_RE = re.compile(r"^supersedes:\s*(?:ADR-|adr-)?(\d{4})", re.MULTILINE | re.IGNORECASE)
 PLAIN_SUPERSEDED_BY_RE = re.compile(r"^\*\*Status:\*\*\s*Superseded by\s+ADR-(\d{4})", re.MULTILINE | re.IGNORECASE)
+
+ADR_FILENAME_ID_RE = re.compile(r"^(adr-\d{4})-")
+ADR_STATUS_VALUES = {"accepted", "active", "implemented", "proposed", "historical", "retired"}
+ADR_SUPERSEDED_STATUS_RE = re.compile(r"^superseded by (?:ADR-|adr-)\d{4}$", re.IGNORECASE)
 
 
 class Finding:
@@ -167,6 +179,54 @@ def load_adr_supersessions(decisions_dir: Path) -> dict:
     return superseded
 
 
+def check_adr_frontmatter(decisions_dir: Path, repo_root: Path) -> list:
+    """Every architecture/decisions/adr-*.md has real YAML frontmatter with
+    non-empty id/title/date/status, id matching its own filename exactly
+    (catches e.g. an uppercase ADR-0025 id on a lowercase-filed file, or a
+    legacy id: decision-N left over from before this convention), and a
+    status that's either one of ADR_STATUS_VALUES or a well-formed
+    "superseded by ADR-NNNN" -- not a general "did this get backfilled"
+    survey but a real, CI-enforced structural check (#1172 did the backfill
+    by hand; this is what stops it from silently rotting)."""
+    findings: list = []
+    if not decisions_dir.is_dir():
+        return findings
+
+    for path in sorted(decisions_dir.glob("adr-*.md")):
+        rel = path.relative_to(repo_root)
+        text = path.read_text()
+
+        if not text.lstrip().startswith("---"):
+            findings.append(Finding(str(rel), "no YAML frontmatter (file does not start with `---`)"))
+            continue
+
+        fm, _ = frontmatter_and_body(text)
+
+        for required_field in ("id", "title", "date", "status"):
+            if not fm.get(required_field):
+                findings.append(Finding(str(rel), f"frontmatter missing or empty `{required_field}`"))
+
+        expected_id_match = ADR_FILENAME_ID_RE.match(path.name)
+        expected_id = expected_id_match.group(1) if expected_id_match else None
+        fm_id = fm.get("id", "")
+        if expected_id and fm_id and fm_id != expected_id:
+            findings.append(
+                Finding(str(rel), f"frontmatter `id: {fm_id}` does not match filename (expected `{expected_id}`)")
+            )
+
+        status = fm.get("status", "")
+        if status and status not in ADR_STATUS_VALUES and not ADR_SUPERSEDED_STATUS_RE.match(status):
+            findings.append(
+                Finding(
+                    str(rel),
+                    f"status `{status}` is not one of {sorted(ADR_STATUS_VALUES)} or a well-formed "
+                    f"\"superseded by ADR-NNNN\"",
+                )
+            )
+
+    return findings
+
+
 def resolve_scope_anchor(scope: str, all_section_ids_by_file: dict, repo_root: Path) -> bool:
     if "#" not in scope:
         return False
@@ -188,6 +248,7 @@ def run_checks(
     decisions_dir = decisions_dir or (repo_root / "architecture" / "decisions")
     findings: list[Finding] = []
     superseded_adrs = load_adr_supersessions(decisions_dir)
+    findings.extend(check_adr_frontmatter(decisions_dir, repo_root))
 
     if not spec_dir.is_dir():
         findings.append(Finding(str(spec_dir), "directory does not exist"))
