@@ -79,7 +79,7 @@ Status legend: **C** current, **S→X** superseded by X, **H** historical, **—
 | adr-0010 | Generic Monomorphization via Runtime Re-Construction | C | evaluation / type-construction (already cited — `LIMIT-EVALUATION-001`) |
 | adr-0011 | Let-Polymorphism via `mono_env` Absence | C | type-inference |
 | adr-0012 | Generic Struct Split-Env in Construction Pass | C | type-construction |
-| adr-0013 | Aspect Impl Flat Env and Method Keys | C | evaluation (`RuntimeRegistry.pattern_methods`) |
+| adr-0013 | Aspect Impl Flat Env and Method Keys | H — its flat string-keyed environment was replaced by `RuntimeRegistry`'s identity-keyed entries; retained as rationale for the transition | evaluation |
 | adr-0014 | Mut-Self Writeback for Iterators | H — likely resolved (its "known limitation" is absent from `evaluator.md`'s *current* Known Limitations list, checked directly this session; not confirmed by an ADR-side amendment, so marked historical rather than formally superseded) | evaluation |
 | adr-0015 | Grammar Rule Ordering for Keyword-Prefix Identifiers | C | parsing |
 | adr-0016 | Dedicated `Perhaps`/`Result` Value Variants | **S→adr-0028** | evaluation |
@@ -131,10 +131,10 @@ Status legend: **C** current, **S→X** superseded by X, **H** historical, **—
   each still using a plain `**Status:**` header instead of YAML frontmatter).
   That's real, bounded, mechanical work — 20-some individual file edits — left
   for a follow-up rather than done speculatively here.
-- `adr-0013`, `adr-0028`, `adr-0036`, `adr-0044`, `adr-0046`, `adr-0047` are
-  marked current and section-mapped but not yet cited in that section's
-  `related` field — real content, not yet folded in; a reasonable next
-  increment, not done in this pass to keep this one bounded.
+- The current, section-mapped ADRs are reviewed and represented by the
+  requirements in `architecture/spec/`; ADR-0013 was corrected to historical
+  during that review because current source no longer has its flat
+  string-keyed method environment.
 - Nine ADRs (adr-0004/0048/0055/0056 foundational; adr-0003 language-feature
   scope; adr-0040 test infra; adr-0049/0050/0051 docs tooling) intentionally
   have no spec section — they're current and real, just outside what the
