@@ -190,6 +190,48 @@ class CheckArchitectureTests(unittest.TestCase):
         findings = [str(f) for f in self.run_checks()]
         self.assertFalse(any("is superseded" in f for f in findings), findings)
 
+    def test_adr_with_no_frontmatter_is_a_finding(self):
+        self.write_adr("adr-0001-old-style.md", "# ADR-0001: Old Style\n\n**Status:** Accepted\n")
+        self.write_corpus()
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("no YAML frontmatter" in f for f in findings), findings)
+
+    def test_adr_id_not_matching_filename_is_a_finding(self):
+        self.write_adr(
+            "adr-0002-mismatch.md",
+            "---\nid: ADR-0099\ntitle: \"X\"\ndate: '2026-01-01'\nstatus: accepted\n---\n\nBody.\n",
+        )
+        self.write_corpus()
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("does not match filename" in f for f in findings), findings)
+
+    def test_adr_missing_required_field_is_a_finding(self):
+        self.write_adr(
+            "adr-0003-no-date.md",
+            "---\nid: adr-0003\ntitle: \"X\"\nstatus: accepted\n---\n\nBody.\n",
+        )
+        self.write_corpus()
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("missing or empty `date`" in f for f in findings), findings)
+
+    def test_adr_unrecognized_status_is_a_finding(self):
+        self.write_adr(
+            "adr-0003-bad-status.md",
+            "---\nid: adr-0003\ntitle: \"X\"\ndate: '2026-01-01'\nstatus: banana\n---\n\nBody.\n",
+        )
+        self.write_corpus()
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("is not one of" in f and "banana" in f for f in findings), findings)
+
+    def test_adr_well_formed_superseded_status_is_not_a_finding(self):
+        self.write_adr(
+            "adr-0004-good.md",
+            "---\nid: adr-0004\ntitle: \"X\"\ndate: '2026-01-01'\nstatus: superseded by ADR-0005\n---\n\nBody.\n",
+        )
+        self.write_corpus()
+        findings = [str(f) for f in self.run_checks()]
+        self.assertFalse(any("adr-0004-good.md" in f for f in findings), findings)
+
     def test_limit_discovered_by_citing_a_superseded_adr_is_exempt(self):
         # LIMIT-*'s discovered_by is historical (who originally found/documented
         # the limitation) -- citing an ADR that's since been superseded there is
