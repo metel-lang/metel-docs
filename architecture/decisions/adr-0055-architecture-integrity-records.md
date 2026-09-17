@@ -289,59 +289,30 @@ fragment the Architecture Spec's own prose with no reassembly mechanism to
 undo that, the same cost that pattern would impose on the Language Spec if
 applied there.
 
-**Give a future language-limitation concept the same `LIMIT-*` prefix
-unmodified, distinguished only by `AREA`.** Rejected — see §5.
-`LIMIT-RESOLUTION-001` would be ambiguous between a compiler limitation
-and a language-semantics one for the same subsystem name; a distinct word
-for the language domain (`GAP-*`) avoids that for free and matches how
-`arch-*`/`PROC-*` already stay sibling prefixes rather than one shared one.
+**Keep `arch-*`'s original flat, uppercase form (`ARCH-<AREA>-<NNN>`, e.g.
+`ARCH-RESOLUTION-001`, `#1154`'s original schema).** Rejected — see §2.
+That form was shaped for file-per-record storage, where a short unique
+label was enough and case carried no meaning. Once a record is
+inline-anchored inside a hierarchical document instead, an ID that doesn't
+mirror that hierarchy is a real mismatch between how a record is named and
+how it's actually found, not a cosmetic difference from Formal Rules'
+dotted-path convention — and the same logic extends to case: `spec.*`'s
+lowercase signals that inline-anchored role directly, so `arch.*` matches
+it rather than keeping the flat form's uppercase for no remaining reason.
 
-**Leave the architecture-domain prefix bare (`LIMIT-*`) and give only the
-language domain a letter (`LLIMIT-*`).** Rejected — see §4 and §5. This is
-what an earlier revision of this ADR did. Disambiguation only requires the
-two forms to differ, and a bare-plus-prefixed pair achieves that, but it
-also reads as architecture being the default domain and language the
-exception, which isn't true — neither domain owns the concept more than
-the other.
-
-**Use a shared base word with a domain letter on each side
-(`ALIMIT-*`/`LLIMIT-*`).** This was this ADR's next decision after the
-entry directly above, then itself reversed — see §5. It fixed the
-bare-vs-lettered asymmetry, but a shared word still had to describe two
-not-quite-identical concepts (architecture's boundaries and compromises vs.
-language's specification gaps), and `ALIMIT`/`LLIMIT` read less naturally
-than either domain's own word for its own concept. `LIMIT-*`/`GAP-*` — a
-distinct, individually accurate word per domain — fits both better and
-needs no domain-letter mechanism, or an aside explaining that `LLIMIT`'s
-doubled `L` isn't a typo, to stay unambiguous: the two words already don't
-collide on their own.
-
-**Keep the `DEBT-*` name now that the record covers more than technical
-debt.** Rejected — see §4. The record already included a performance
-boundary, an operational constraint, and a deliberate architectural
-compromise alongside cases that are debt in the strict sense; `debt`
-implies a shortcut taken now with intent to repay, which doesn't describe
-a boundary accepted indefinitely with no repayment plan. `limitation` is
-the term this ADR's own prose already used throughout to describe the
-concept. The reserved sibling (`LDEBT-*`) was renamed in step at the time,
-though it ultimately settled on a different word (`GAP-*`, §5) rather than
-sharing this one.
-
-**Keep `ARCH-<AREA>-<NNN>` (`#1154`'s original flat schema) now that
-storage is inline.** Rejected — see §2. The flat form was shaped around
-file-per-record, where a short unique label was enough; once a record is
-addressed by an anchor inside a hierarchical document instead, an ID that
-doesn't mirror that hierarchy is a real mismatch between how a record is
-named and how it's actually found, not a cosmetic difference from Formal
-Rules' dotted-path convention.
-
-**Keep `ARCH` uppercase after adopting the dotted path.** An earlier
-revision of this ADR made exactly this call, reasoning that only the
-punctuation and hierarchy were in scope. Reversed — see §2. The dotted
-form's whole point is that the ID mirrors how the record is addressed, the
-same way `spec.*` does; keeping the prefix's case different from `spec`
-after matching everything else about its shape would be an arbitrary
-holdout, not a meaningful distinction.
+**Any `LIMIT-*`/`GAP-*` alternative other than the final naming in §4 and
+§5.** Considered and rejected along the way: keeping the original
+`DEBT-*` name (the record covers more than technical debt — a boundary
+accepted indefinitely with no repayment plan was never debt to begin
+with); reusing one prefix unmodified for both domains, e.g.
+`LIMIT-RESOLUTION-001` for both a compiler limitation and a
+language-semantics one (ambiguous for the same subsystem name); and a
+shared base word with a domain letter on each side, `ALIMIT-*`/`LLIMIT-*`
+(disambiguating, but forcing one word to describe two not-quite-identical
+concepts, and reading less naturally than either domain's own accurate
+word). `LIMIT-*`/`GAP-*` — two distinct words, each fitted to its own
+domain's actual content — resolves all three at once: no ambiguity, no
+shared-word compromise, no domain-letter mechanism to explain.
 
 ## Consequences
 
