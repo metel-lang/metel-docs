@@ -4,6 +4,24 @@ The largest single area in the codebase (~12,500 lines): a reusable Hindley-Miln
 
 The pass that consumes this section's output to build the typed IR (`typechecker::construction`) is a separate section — see `#type-construction`.
 
+## Model
+
+Inference describes programs in terms of variables, constraints, and schemes, then
+solves those constraints into types. Let-polymorphism is central: generalization records
+which variables are abstract, and each use receives fresh variables rather than sharing
+one accidental concrete choice ([core inference](#arch.type-inference.requirement-1)).
+The registry supplies the nominal facts that structural unification cannot infer on its
+own ([type definitions](#arch.type-inference.requirement-2)).
+
+This pass owns semantic decisions that require unsolved information, including `?`
+coercion and opaque-return validation. Construction consumes the result; it does not
+silently infer it again ([pass boundary](#arch.type-inference.requirement-4)). A
+let-polymorphic closure remains in the scheme environment precisely so calls continue
+to instantiate it ([polymorphic closures](#arch.type-inference.requirement-5)).
+
+<details>
+<summary>Verifiable architecture claims</summary>
+
 ##### Requirement {#arch.type-inference.requirement-1}
 
 Type inference is Hindley-Milner with let-polymorphism. `unify` performs structural unification over `InferType` with an occurs check (rejecting an infinite type rather than looping or silently accepting one). `generalize` quantifies a type over every free type variable that does not also appear free in the surrounding environment (so a variable still being solved elsewhere is never wrongly captured); `instantiate` gives each use of a generalized (`let`-polymorphic) binding fresh type variables.
@@ -68,6 +86,8 @@ Let-bound polymorphic closures are represented in the polymorphic scheme environ
 | `implements` | `metel-frontend/src/typechecker/inference.rs` (`mono_env`, `poly_env`); `metel-frontend/src/typechecker/mod.rs` (`build_module_scheme_env`); `metel-frontend/src/typechecker/construction/declarations.rs` |
 | `verified by` | general integration-suite coverage of generic let-bound closures; no dedicated regression test naming the environment-absence invariant was found |
 | `related` | ADR-0011, ADR-0010 |
+
+</details>
 
 ## Known limitations
 

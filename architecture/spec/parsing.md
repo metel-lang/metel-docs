@@ -2,6 +2,25 @@
 
 The pipeline's front door: a root source file becomes a per-file-parsed, dependency-ordered `ModuleGraph` before any resolution or type checking begins. Owning crate: `metel-frontend`. Defined in `module_loader.rs` (graph loading), `module_paths.rs` (path-root resolution), `parser/` + `grammar.pest` (per-file parsing), and `ast/` (the untyped AST the parser produces).
 
+## Model
+
+Loading first establishes the program boundary: modules are discovered from a root,
+their dependencies are ordered, and cycles are rejected before a later stage can see a
+partial program ([module graph](#arch.parsing.requirement-1)). Source providers make
+that same model work for files, embedded standard-library modules, and in-memory test
+programs ([source provisioning](#arch.parsing.requirement-2)).
+
+Parsing then produces one ordinary AST vocabulary for the rest of the pipeline. Control
+flow is expression-shaped whether used as a block tail or statement
+([control-flow expressions](#arch.parsing.requirement-4)); grammar ordering protects
+surface disambiguations such as `None` and keyword-prefix identifiers
+([disambiguation](#arch.parsing.requirement-5)); and interpolation lowers immediately
+to ordinary expressions ([interpolation](#arch.parsing.requirement-6)). No downstream
+stage needs a parser-only semantic special case.
+
+<details>
+<summary>Verifiable architecture claims</summary>
+
 ##### Requirement {#arch.parsing.requirement-1}
 
 Loading a root file produces a `ModuleGraph` whose `modules: Vec<LoadedModule>` is in dependency order — each module appears only after every module it imports or re-exports (`export path::Name;`, #660), because `Loader::load_module` recurses into a module's imports and exports before pushing the module itself onto the graph. A circular import chain is rejected with the full cycle traced through the loader's DFS stack, not merely detected.
@@ -79,6 +98,8 @@ String interpolation is lowered while parsing into ordinary expression nodes: ea
 | `implements` | `metel-frontend/src/parser/mod.rs` (`parse_string_interpolation`); `metel-frontend/src/ast/mod.rs` (`Expr::MethodCall`, `Expr::Binary`) |
 | `verified by` | general integration-suite coverage of interpolation; no dedicated parser unit test naming the lowering shape was found |
 | `related` | ADR-0033 |
+
+</details>
 
 ## Known limitations
 

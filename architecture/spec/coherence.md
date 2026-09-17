@@ -2,6 +2,22 @@
 
 A standalone validation pass between path normalization and type checking: it resolves aspect-impl type/aspect *names* to their declaring module using only `ResolvedNames` (no inferred types needed) and rejects two categories of illegal impl. Owning crate: `metel-frontend`. Defined in `coherence.rs`.
 
+## Model
+
+Coherence answers a deliberately narrow question before inference adds any
+implementation-specific facts: may these aspect implementations coexist at all?
+An implementation is allowed only when the module owns one side of the relation;
+otherwise downstream type checking would make independently-authored modules change
+each other's meaning. That ownership boundary is the [orphan rule](#arch.coherence.requirement-1).
+
+Within the implementations that are allowed to exist, the pass rejects pairs that
+could apply to the same type. It reasons about declared bounds and canonical type
+parameters, rather than inferred types, so the [overlap rule](#arch.coherence.requirement-2)
+is stable regardless of which call sites happen to be checked.
+
+<details>
+<summary>Verifiable architecture claims</summary>
+
 ##### Requirement {#arch.coherence.requirement-1}
 
 The orphan rule (`T0014`): an aspect implementation must be local to either the aspect's declaring module or the implementing type's declaring module. An impl for a foreign aspect on a foreign type — including a negative (`!Aspect`) impl or a blanket/conditional generic impl with no concrete local anchor — is rejected.
@@ -27,6 +43,8 @@ Overlap detection (`T0015`): two impls whose type/aspect coverage overlaps confl
 | `implements` | `metel-frontend/src/coherence.rs` (`check`, `provably_disjoint`) |
 | `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/typechecking/aspects/blanket_vs_concrete_impl_conflict`, `conditional_vs_unconditional_impl_conflict`, `conditional_impl_different_letters_overlap`, `conditional_impl_non_disjoint_rejected`, `conflicting_impl_same_target` |
 | `related` | RFC-0060 §3.1/§3.2, `#238`, ADR-0042 |
+
+</details>
 
 ## Known limitations
 

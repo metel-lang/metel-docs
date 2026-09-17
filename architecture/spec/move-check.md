@@ -2,6 +2,22 @@
 
 An opt-in validation pass over the typed module graph, rejecting use-after-move. Verified directly against `pipeline.rs` and the CLI's `clap` argument (not assumed from prior documentation): `RunOptions`/`main.rs`'s `move_check: bool` derive/default to `false`, and every one of `pipeline.rs`'s three call sites gates the pass behind `if options.move_check`. Owning crate: `metel-frontend`. Defined in `move_check/` and `place.rs` (the addressable lvalue-path representation move check shares with the typechecker).
 
+## Model
+
+Move checking is a consumer of typed structure, not a second type checker. When
+enabled, it follows values through [places](#arch.move-check.requirement-2)—a root
+binding plus projections—and records the state transitions that make a later use
+illegal. This makes partial moves explainable: consuming one field is different from
+consuming the whole value, and `Drop` or reference rules can constrain either form.
+
+The general pass is still opt-in, but closure capture safety is language behaviour
+today. Its capture-list and multiplicity checks run unconditionally during
+construction ([closure captures](#arch.move-check.requirement-3)), so a program cannot
+evade a closure ownership error merely by omitting `--move-check`.
+
+<details>
+<summary>Verifiable architecture claims</summary>
+
 ##### Requirement {#arch.move-check.requirement-1}
 
 Move checking is off by default and runs only when explicitly requested (the `--move-check` CLI flag / `RunOptions::move_check`). When it runs, `check_graph` walks a `TypedModuleGraph` and rejects seven categories of violation — `UseAfterMove`, `PartialMoveUsedAsWhole`, `PartialMoveOfDropType`, `ArrayElementMove`, `BorrowedArrayElementMove`, `MovedMutReferenceWithoutReborrow`, `MoveOutOfReference` — reporting the first as `T0019`. A generic body whose bound-satisfaction can't be checked is not silently accepted; it's collected as `unchecked_generic_bodies` in the report.
@@ -40,6 +56,8 @@ Closure capture legality is enforced even while the general move-check gate rema
 | `implements` | `metel-frontend/src/typechecker/construction/expressions.rs` (`verify_closure_capture_list`); `metel-frontend/src/typechecker/construction/calls.rs`; `metel-frontend/src/move_check/mod.rs` |
 | `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_copy_closure_when_all_captures_copy`, `v0_13_0_copy_var_closure_diverges`, `v0_13_0_neg_mutating_closure_not_sync`, `v0_13_0_x_mutating_closure_via_written_var_fn_param` |
 | `related` | ADR-0052, RFC-0050, RFC-0134, RFC-0153 |
+
+</details>
 
 ## Known limitations
 
