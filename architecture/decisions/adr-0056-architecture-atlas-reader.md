@@ -12,7 +12,7 @@ implements: metel-core#1156, metel-core#1159
 An Architecture Atlas can make the Architecture Spec and its evidence easier
 to browse. The prototype explored Context, Container, Component, Data model,
 Architecture entries, Health, Decisions, and Debt views (named for what
-ADR-0055 §4 has since renamed `LIMIT-*`). That work exposed useful
+ADR-0055 §4 has since renamed `ALIMIT-*`). That work exposed useful
 questions about hierarchy and scope, but it also demonstrated that a
 reader designed before sufficient records exist is speculative.
 
@@ -24,7 +24,7 @@ data-model taxonomy, or navigation model on them.
 ## Decision
 
 The Atlas reader is deferred until ADR-0055 has produced a useful body of
-Architecture Spec sections, `arch-*` records, `LIMIT-*` records, fixture
+Architecture Spec sections, `arch-*` records, `ALIMIT-*` records, fixture
 evidence, and integrity-check output.
 
 When scoped, the first reader increment will render the authoritative

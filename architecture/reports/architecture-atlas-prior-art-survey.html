@@ -703,7 +703,7 @@
             <tr>
               <td class="view-name">Limitations</td>
               <td>Soundcheck (actionable health) + requirements traceability</td>
-              <td>Give <code>LIMIT-*</code> records a dedicated viewer with lifecycle, ownership, acceptance, issue/successor-<code>arch-*</code> links, verification evidence, and a reconciliation queue. Health links into this work queue; it does not replace the limitations register.</td>
+              <td>Give <code>ALIMIT-*</code> records a dedicated viewer with lifecycle, ownership, acceptance, issue/successor-<code>arch-*</code> links, verification evidence, and a reconciliation queue. Health links into this work queue; it does not replace the limitations register.</td>
             </tr>
           </tbody>
         </table>
@@ -753,7 +753,7 @@
           views, a CLI, and a programmatic model API. Use it as a generated
           diagram target from the authoritative Atlas model, not as a second
           source of truth for <code>arch-*</code>, <code>DATA-*</code>, or
-          <code>LIMIT-*</code>.</p>
+          <code>ALIMIT-*</code>.</p>
           <div class="tags"><span class="tag">adopt / spike</span><span class="tag">diagram renderer</span></div>
           <a class="src" href="https://likec4.dev/tooling/model-api/">likec4.dev →</a>
         </article>
@@ -788,7 +788,7 @@
           checked-in tables can declare primary keys, foreign keys, enums,
           and required fields, then validate through a CLI and produce an ER
           diagram. It can reject dangling <code>arch-*</code>,
-          <code>DATA-*</code>, <code>LIMIT-*</code>, ADR, and evidence links
+          <code>DATA-*</code>, <code>ALIMIT-*</code>, ADR, and evidence links
           without a bespoke validator.</p>
           <div class="tags"><span class="tag">adopt / evaluate</span><span class="tag">referential integrity</span></div>
           <a class="src" href="https://framework.frictionlessdata.io/docs/console/overview">framework.frictionlessdata.io →</a>
@@ -843,7 +843,7 @@
       <div class="callout">
         <span class="label">Recommended composition</span>
         <p>Keep the Architecture Spec plus <code>arch-*</code>,
-        <code>DATA-*</code>, and <code>LIMIT-*</code> registries as the
+        <code>DATA-*</code>, and <code>ALIMIT-*</code> registries as the
         versioned source of truth. Normalize their cross-record data into a
         declarative package: entities, typed links, code bindings, evidence,
         limitation resolutions, and issue snapshots. Use a relational schema and
