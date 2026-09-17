@@ -37,7 +37,26 @@ they do not replace or duplicate it.
 ### 2. `ARCH-*` records make architectural claims checkable
 
 Each checkable architecture claim has a stable ID of the form
-`ARCH-<AREA>-<NNN>`. An `ARCH-*` record contains at least:
+`ARCH.<dotted-section-path>.requirement-<N>` — `ARCH` naming a domain, a
+dotted path mirroring the defining Architecture Spec section's own heading
+hierarchy, and a local sequential number under that path, e.g. (once
+`#1155` writes the real section) `ARCH.resolution.requirement-1`. This
+matches Formal Rules' own convention exactly in shape —
+`spec.declarations.variables.immutable-bindings.legality-1` — rather than
+the flat `ARCH-<AREA>-<NNN>` `#1154` originally specified: now that an
+`ARCH-*` record is inline-anchored (below), a flat area-plus-number no
+longer describes where the record actually lives the way a dotted path
+does, and a mismatch between ID shape and storage shape is a real cost, not
+a cosmetic one — the ID is what a citation or a checker's backlink actually
+carries. `ARCH` stays uppercase, unlike `spec`'s lowercase, deliberately:
+the one already-established, already-cited-widely prefix from `#1154`
+carried over unchanged, so only the punctuation and structure — the part
+this reconciliation is actually about — changes, not spelling that has no
+bearing on it. `PROC-*` (`#1142`) keeps the flat scheme: an Operations
+requirement isn't always anchored at one point in one hierarchical
+document — `PROC-RELEASE-001` spans two repositories — so it has no section
+path to mirror, and a dotted convention here would only look aligned, not
+be aligned. An `ARCH-*` record contains at least:
 
 | Field | Purpose |
 |---|---|
@@ -47,6 +66,11 @@ Each checkable architecture claim has a stable ID of the form
 | `implements` | code path or other concrete implementation binding |
 | `verified by` | fixture, test, or check that proves the claim |
 | `related` | relevant ADRs or RFCs |
+
+`specified by` stays an explicit field even though the ID's own path
+already names the section — the path is for addressing; `specified by` is
+what the checker reads without re-parsing an ID string, the same reason a
+Formal Rule's backlink data isn't inferred from its ID alone either.
 
 An `ARCH-*` record is stored inline: a stable anchor at the point in its
 defining Architecture Spec section where the claim is made, not a separate
@@ -72,12 +96,13 @@ Architecture Spec section ──defines──► ARCH-* ──verified by──�
                                           └──related to──► ADR/RFC
 ```
 
-`ARCH-*` records and Formal Rules now share both a role and a storage shape
-— the atomic, inline-anchored, checkable claim — across two domains. They
-remain separate ID spaces (architecture records govern internal system
-constraints; Formal Rules govern language semantics), and the tooling that
-reads them (§6) treats the two prefixes as distinct namespaces over one
-shared anchor-and-backlink mechanism, not two unrelated systems.
+`ARCH-*` records and Formal Rules now share a role, a storage shape, and an
+ID shape — the atomic, inline-anchored, path-addressed, checkable claim —
+across two domains. They remain separate ID spaces (architecture records
+govern internal system constraints; Formal Rules govern language
+semantics), and the tooling that reads them (§6) treats the two prefixes as
+distinct namespaces over one shared anchor-and-backlink mechanism, not two
+unrelated systems.
 
 ### 3. Fixtures provide architecture evidence
 
@@ -216,6 +241,14 @@ the same subsystem name; a distinguishing prefix (`LDEBT-*`) avoids that
 for free and matches how `ARCH-*`/`PROC-*` already stay sibling prefixes
 rather than one shared one.
 
+**Keep `ARCH-<AREA>-<NNN>` (`#1154`'s original flat schema) now that
+storage is inline.** Rejected — see §2. The flat form was shaped around
+file-per-record, where a short unique label was enough; once a record is
+addressed by an anchor inside a hierarchical document instead, an ID that
+doesn't mirror that hierarchy is a real mismatch between how a record is
+named and how it's actually found, not a cosmetic difference from Formal
+Rules' dotted-path convention.
+
 ## Consequences
 
 - `#1155` authors stable Architecture Spec sections and the initial
@@ -233,3 +266,8 @@ rather than one shared one.
 - `LDEBT-*` is reserved (§5) but not chartered — a future language-debt ADR
   inherits the name and the record-shape rationale, and doesn't need to
   solve either from scratch.
+- `#1154`'s own generic schema note (`<PREFIX>-<AREA>-<NNN>`, e.g.
+  `ARCH-RESOLUTION-001`) is amended for the `ARCH-*` case by §2 — `PROC-*`
+  keeps the original flat form for the reason stated there. `#1154` should
+  cite this ADR for the `ARCH-*` ID shape rather than restate its own,
+  now-superseded example.
