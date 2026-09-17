@@ -1,5 +1,5 @@
 ---
-id: decision-5
+id: adr-0005
 title: "if-Statement vs if-Expression - Grammar and AST Unification"
 date: '2026-05-10'
 status: accepted

@@ -1,8 +1,8 @@
-# ADR-0009 — Type Ascription Erased at Construction (No TypedExpr::Ascribe)
-
-**Date:** 2026-05-23
-**Status:** Accepted
-
+---
+id: adr-0009
+title: "Type Ascription Erased at Construction (No TypedExpr::Ascribe)"
+date: '2026-05-23'
+status: accepted
 ---
 
 ## Context

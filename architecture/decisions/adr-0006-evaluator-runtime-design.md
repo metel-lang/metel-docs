@@ -1,9 +1,24 @@
 ---
-id: decision-6
+id: adr-0006
 title: "Evaluator Runtime Design"
 date: '2026-05-17'
-status: proposed
+status: historical
 ---
+
+> **Marked historical, 2026-09-17 (`#1172`, ADR lifecycle triage).** The
+> `status: proposed` this file carried was stale -- the evaluator obviously
+> exists -- but `accepted` would overstate it too: Question 3's `Vec<HashMap<String,
+> Value>>`, name-keyed scope-stack recommendation is contradicted by the
+> real, current `Environment` (`LocalId`-keyed, ADR-0054/`#1052` series,
+> `architecture/spec/evaluation.md#arch.evaluation.requirement-1`), and
+> Question 4's snapshot-at-creation closure capture is contradicted by the
+> v0.13.0 closure cluster (RFC-0050/RFC-0134/RFC-0153, move-by-default with
+> an explicit capture list, not a snapshot). Questions 1 and 2 (owned/cloned
+> values, `ControlFlow` for non-local control flow) may still describe real
+> current behavior -- not independently re-verified here, since that's
+> content work (`#1173`), not the metadata backfill this pass does. Kept as
+> real historical context for why those choices were made, not as a
+> current architectural constraint.
 
 ## Context
 

@@ -1,10 +1,14 @@
-# ADR-0037 — Elaboration boundary: post-inference pass with SymbolId-keyed dispatch
-
-**Status:** Accepted
-**Sprint:** 20 (v0.8.1)
-**Tasks:** METEL-123, METEL-151, METEL-152, METEL-154
-
 ---
+id: adr-0037
+title: "Elaboration boundary: post-inference pass with SymbolId-keyed dispatch"
+date: '2026-08-23'
+status: accepted
+implements: "METEL-123, METEL-151, METEL-152, METEL-154"
+---
+
+> Sprint 20 (v0.8.1). `date:` above is this file's earliest commit in the
+> current repo history, not necessarily original authorship — see
+> `adr-0016`'s note for why.
 
 ## Context
 

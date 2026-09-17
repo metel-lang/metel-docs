@@ -1,5 +1,5 @@
 ---
-id: decision-14
+id: adr-0014
 title: "Mut-Self Writeback for Iterator Advancement in For-In"
 date: '2026-05-25'
 status: accepted

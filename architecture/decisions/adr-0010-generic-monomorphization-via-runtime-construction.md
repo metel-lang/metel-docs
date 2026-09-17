@@ -1,9 +1,9 @@
-# ADR-0010: Generic Monomorphization via Runtime Re-Construction
-
-**Status:** Accepted
-**Date:** 2026-05-25
-**Issues:** #282, #284, #288
-
+---
+id: adr-0010
+title: "Generic Monomorphization via Runtime Re-Construction"
+date: '2026-05-25'
+status: accepted
+implements: "metel-core#282, #284, #288"
 ---
 
 ## Context

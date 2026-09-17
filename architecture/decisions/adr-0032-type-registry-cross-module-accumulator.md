@@ -1,7 +1,9 @@
-# ADR-0032 — TypeDefinitionRegistry as the cross-module type accumulator
-
-**Date:** 2026-05-30
-**Status:** Accepted
+---
+id: adr-0032
+title: "TypeDefinitionRegistry as the cross-module type accumulator"
+date: '2026-05-30'
+status: accepted
+---
 
 ## Context
 

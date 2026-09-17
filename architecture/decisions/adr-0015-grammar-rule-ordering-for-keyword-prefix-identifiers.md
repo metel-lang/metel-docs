@@ -1,7 +1,8 @@
 ---
-id: decision-15
+id: adr-0015
 title: "Grammar Rule Ordering to Allow Keyword-Prefix Identifiers"
 date: '2026-05-25'
+status: accepted
 ---
 
 ## Context

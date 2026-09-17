@@ -1,5 +1,5 @@
 ---
-id: ADR-0026
+id: adr-0026
 title: Glob import tier model for priority-based std::core resolution
 status: accepted
 date: 2026-05-29

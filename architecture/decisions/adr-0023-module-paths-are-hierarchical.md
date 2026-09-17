@@ -1,10 +1,12 @@
-# ADR-0023: Module Paths Are Hierarchical (Absolute from Root)
-
-**Status:** Accepted
-**Date:** 2026-05-28
-**Updated:** 2026-05-28 (v0.6.0 — extended to cover all PathRoot variants)
-
 ---
+id: adr-0023
+title: "Module Paths Are Hierarchical (Absolute from Root)"
+date: '2026-05-28'
+status: accepted
+updated: '2026-05-28'
+---
+
+> Updated 2026-05-28 (v0.6.0 — extended to cover all `PathRoot` variants).
 
 ## Context
 

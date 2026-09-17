@@ -1,5 +1,5 @@
 ---
-id: decision-2
+id: adr-0002
 title: "Inference Pass Structure"
 date: '2026-05-07'
 status: accepted

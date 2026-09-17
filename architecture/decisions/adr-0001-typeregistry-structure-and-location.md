@@ -1,5 +1,5 @@
 ---
-id: decision-1
+id: adr-0001
 title: "TypeRegistry Structure and Location"
 date: '2026-05-07'
 status: accepted

@@ -1,9 +1,9 @@
-# ADR-0021: Path Normalization as a Dedicated Pre-Pass
-
-**Status:** Accepted
-**Date:** 2026-05-28
-**Tracking issue:** #494
-
+---
+id: adr-0021
+title: "Path Normalization as a Dedicated Pre-Pass"
+date: '2026-05-28'
+status: accepted
+implements: "metel-core#494"
 ---
 
 ## Context
