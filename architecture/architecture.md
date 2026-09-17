@@ -10,7 +10,8 @@
 > sections with inline-anchored `arch-*` requirements, each naming its
 > implementation and verifying evidence. Sections so far:
 > [Resolution](spec/resolution.md) (`metel-core#1155`, identity),
-> [Module Loading & Parsing](spec/parsing.md) (`metel-core#1164`).
+> [Module Loading & Parsing](spec/parsing.md) (`metel-core#1164`),
+> [Name & Reference Resolution](spec/name-resolution.md) (`metel-core#1165`).
 
 ## Pipeline
 
