@@ -232,6 +232,27 @@ An `arch-*` record may describe the data boundary necessary to state its
 claim. A standalone data-model record is deferred until repeated, independent
 invariants demonstrate that it needs its own lifecycle.
 
+The checks above split into two different kinds of work: baseline
+referential integrity (do cited IDs and typed links resolve, are required
+fields populated, does a fixture sidecar's `arch` array agree with its
+inline citation) and conditional policy over relationships (a temporarily
+accepted limitation needs a rationale and review date; a resolved one
+needs exit evidence that reconciles with the linked work). The prior-art
+survey's own recommended composition (`architecture-atlas-prior-art-survey.html`
+§7) argues for relational-schema-plus-foreign-key validation for the first
+kind and a declarative rule engine such as Soufflé Datalog for the second,
+naming reconciliation logic like this section's last two checks directly
+as a poor fit for "Python control flow." That composition is not adopted
+here. `rfc.py`'s anchor/backlink/coverage machinery (§2) already covers
+the referential-integrity shape of the first four checks at a proven
+~350-rule scale, and the two conditional checks are, right now, a pair of
+field-presence rules — not yet numerous or interdependent enough to need a
+rule engine's own runtime and schema. Introducing Datalog and a separate
+relational-validation layer ahead of that need would be the same
+premature-machinery mistake this section already avoids for `DATA-*`:
+real reconciliation-rule volume and complexity, not this ADR's own
+preference, should decide when a declarative rule engine earns its keep.
+
 ## Alternatives Considered
 
 **Build the complete Atlas first.** Rejected. A reader is a projection over
@@ -245,6 +266,16 @@ impact, ownership, and disposition.
 **Use Architecture Spec prose as the evidence unit.** Rejected. Prose is
 needed for explanation, but its sections are too broad to serve as stable,
 individually testable code and fixture citations.
+
+**Adopt the prior-art survey's recommended relational-schema-plus-Datalog
+composition for the checker now.** Deferred — see §6. The survey itself
+frames this as the target composition once the Atlas has real content;
+right now `arch-*`/`LIMIT-*` records don't exist yet (`#1155` hasn't
+written the first Architecture Spec section), so there is no reconciliation-
+rule volume to justify a declarative rule engine over generalizing
+`rfc.py`, which already does the referential-integrity half of the job at
+a proven scale. Revisit once the two conditional checks in §6 have grown
+into something a human can no longer track as a short, fixed list.
 
 **Introduce a generic data-model registry now.** Deferred. It would begin a
 second authoring effort before actual architecture records demonstrate which
@@ -340,3 +371,10 @@ holdout, not a meaningful distinction.
   keeps the original flat form for the reason stated there. `#1154` should
   cite this ADR for the `arch-*` ID shape rather than restate its own,
   now-superseded example.
+- The prior-art survey's relational-schema-plus-Datalog checker composition
+  (§7 of `architecture-atlas-prior-art-survey.html`) is knowingly not
+  adopted yet — see §6 and Alternatives Considered. `#1154`/`#1157`
+  implement the `rfc.py`-generalization checker described here; whoever
+  revisits it once reconciliation rules grow past a short fixed list
+  should start from the survey's Soufflé/Frictionless recommendation
+  rather than re-deriving it.
