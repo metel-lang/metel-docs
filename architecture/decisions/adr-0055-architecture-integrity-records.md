@@ -15,15 +15,16 @@ fixtures prove an architectural claim, which claims are knowingly incomplete,
 or whether a source, test, or cited decision has gone stale.
 
 The prior Atlas proposal combined that problem with a large reader: C4-style
-views, stage drill-ins, a data-model registry, Decisions, Debt, and Health.
-Those are useful possible projections, but they are not prerequisites for
-authoring and verifying the architecture. Requiring the reader first blocks
-the design work and risks committing to a UI before real records establish
-what maintainers need to navigate.
+views, stage drill-ins, a data-model registry, Decisions, Limitations, and
+Health. Those are useful possible projections, but they are not
+prerequisites for authoring and verifying the architecture. Requiring the
+reader first blocks the design work and risks committing to a UI before
+real records establish what maintainers need to navigate.
 
 This ADR establishes the first, durable slice: the Architecture Spec,
-atomic architecture requirements, debt records, fixture evidence, and the
-tooling that verifies their integrity. A separate ADR defers the reader.
+atomic architecture requirements, limitation records, fixture evidence,
+and the tooling that verifies their integrity. A separate ADR defers the
+reader.
 
 ## Decision
 
@@ -119,30 +120,38 @@ sidecar.
 Evidence is not inferred merely from a passing test. An `arch-*` record
 names the fixture or check and explains the aspect of the claim it verifies.
 
-### 4. `DEBT-*` records persist known system limitations
+### 4. `LIMIT-*` records persist known system limitations
 
 A requirement status and a failing Health finding cannot preserve a known
 system limitation: what does not work, where its boundary lies, who owns the
 knowledge, and whether it is being accepted, mitigated, or resolved.
-`DEBT-<AREA>-<NNN>` records are the durable inventory of those limitations.
+`LIMIT-<AREA>-<NNN>` records are the durable inventory of those
+limitations — renamed from an earlier `DEBT-*`. The record described below
+already covered a performance or scalability boundary, an operational
+constraint, and a deliberate architectural compromise alongside an
+unsupported case or incomplete capability, and only the latter two are
+debt in the strict sense of a shortcut taken now with intent to pay it
+down. A boundary accepted indefinitely, with no repayment plan, was never
+debt to begin with; `limitation` names what the whole set actually shares
+without implying a repayment story that doesn't hold for most of it.
 
-Unlike `arch-*` (§2), a debt record is its own file, one per record —
+Unlike `arch-*` (§2), a limitation record is its own file, one per record —
 matching the ADR/RFC convention rather than the inline, Formal-Rule one.
-The reason is the record's own shape, not its domain: a debt record carries
-a standalone lifecycle (discovery, disposition, ownership, review,
+The reason is the record's own shape, not its domain: a limitation record
+carries a standalone lifecycle (discovery, disposition, ownership, review,
 resolution) closer to a decision than to a terse rule clause, and that
 shape is what earns it a file — not that it happens to describe
 architecture. §6 depends on keeping that distinction shape-based rather
 than domain-based.
 
-A debt record may describe a known unsupported case, an incomplete capability,
-a performance or scalability boundary, an operational constraint, or a
-deliberate architectural compromise. It does not need to be an exception to
-an existing `arch-*` requirement. A related requirement is recorded when one
-exists; the absence of one is useful information, not a reason to omit the
-limitation.
+A limitation record may describe a known unsupported case, an incomplete
+capability, a performance or scalability boundary, an operational
+constraint, or a deliberate architectural compromise. It does not need to
+be an exception to an existing `arch-*` requirement. A related requirement
+is recorded when one exists; the absence of one is useful information, not
+a reason to omit the limitation.
 
-Each debt record contains:
+Each limitation record contains:
 
 | Field | Purpose |
 |---|---|
@@ -162,13 +171,13 @@ resolution plan; recording it accurately is still valuable. When a record
 does claim resolution, it names the exit condition and verifying evidence. A
 closed issue is never sufficient resolution evidence by itself.
 
-Code and fixtures cite `arch-*` records or Formal Rules, never debt records.
-Debt records document limitations and their disposition; they are not a
-contract that the implementation satisfies.
+Code and fixtures cite `arch-*` records or Formal Rules, never limitation
+records. Limitation records document limitations and their disposition;
+they are not a contract that the implementation satisfies.
 
-### 5. Reserved for later: a language-level debt sibling
+### 5. Reserved for later: a language-level limitation sibling
 
-`DEBT-*` as specified here is scoped to architecture — a known limitation
+`LIMIT-*` as specified here is scoped to architecture — a known limitation
 in how the compiler implements something. A parallel concept for the
 language itself (a known, accepted gap in what the Language Spec currently
 specifies or guarantees, not in one implementation's fidelity to it) is a
@@ -176,35 +185,38 @@ real future need, not an architecture concern, and chartering it is out of
 scope here.
 
 If and when it is chartered, it takes a separate sibling prefix,
-`LDEBT-<AREA>-<NNN>`, reserved now to avoid a collision: reusing `DEBT-*`
-for both domains would make an entry like `DEBT-RESOLUTION-001` ambiguous
-between a compiler limitation and a language-semantics one for the same
-subsystem name, the same way `arch-*` and `PROC-*` stay sibling prefixes
-rather than one shared one. The record-shape argument in §4 — separate
-file, standalone lifecycle — carries over as a starting point, not a
-decision to re-litigate; it was never about architecture specifically.
-Nothing here charters the work or its schema in full; this only reserves
-the name so a future ADR solves its own actual scope instead of also
-solving a naming collision this one could prevent for free.
+`LLIMIT-<AREA>-<NNN>` — the doubled `L` is mechanical, not a typo: it is
+the same "language-level" letter this section already reserved for
+`DEBT-*` as `LDEBT-*`, carried over unchanged onto the renamed base word.
+It is reserved now to avoid a collision: reusing `LIMIT-*` for both
+domains would make an entry like `LIMIT-RESOLUTION-001` ambiguous between
+a compiler limitation and a language-semantics one for the same subsystem
+name, the same way `arch-*` and `PROC-*` stay sibling prefixes rather than
+one shared one. The record-shape argument in §4 — separate file,
+standalone lifecycle — carries over as a starting point, not a decision to
+re-litigate; it was never about architecture specifically. Nothing here
+charters the work or its schema in full; this only reserves the name so a
+future ADR solves its own actual scope instead of also solving a naming
+collision this one could prevent for free.
 
 ### 6. Integrity tooling verifies references and reconciliation
 
 The initial checker validates:
 
-- Architecture Spec anchors, `arch-*` and `DEBT-*` IDs, and all typed links;
+- Architecture Spec anchors, `arch-*` and `LIMIT-*` IDs, and all typed links;
 - every `arch-*` record's owner, defining Spec section, implementation
   binding, and evidence reference;
 - fixture-sidecar `arch` references and inline/sidecar agreement;
-- every debt record's scope, limitation, impact, owner, disposition, and
-  typed links;
+- every limitation record's scope, limitation, impact, owner, disposition,
+  and typed links;
 - an acceptance rationale and review date when a limitation is temporarily
   accepted;
 - exit evidence and reconciliation with linked work only when a record claims
   resolution.
 
-It reports findings rather than silently changing a debt disposition. A human
-triages a finding, records a limitation, or updates the relevant requirement
-or debt record.
+It reports findings rather than silently changing a limitation's
+disposition. A human triages a finding, records a limitation, or updates
+the relevant requirement or limitation record.
 
 The first implementation does not establish a general `DATA-*` registry,
 data-model extraction, signature-shape matching, or unmapped-code discovery.
@@ -218,9 +230,9 @@ invariants demonstrate that it needs its own lifecycle.
 records; it should not determine their schema or block authoring, fixtures,
 and verification.
 
-**Represent debt only through requirement status or issue labels.** Rejected.
-Neither persistently records a known system limitation, its impact, ownership,
-and disposition.
+**Represent a limitation only through requirement status or issue labels.**
+Rejected. Neither persistently records a known system limitation, its
+impact, ownership, and disposition.
 
 **Use Architecture Spec prose as the evidence unit.** Rejected. Prose is
 needed for explanation, but its sections are too broad to serve as stable,
@@ -238,12 +250,22 @@ fragment the Architecture Spec's own prose with no reassembly mechanism to
 undo that, the same cost that pattern would impose on the Language Spec if
 applied there.
 
-**Give a future language-debt concept the bare `DEBT-*` prefix, distinguished
-only by `AREA`.** Rejected — see §5. `DEBT-RESOLUTION-001` would be
-ambiguous between a compiler limitation and a language-semantics one for
-the same subsystem name; a distinguishing prefix (`LDEBT-*`) avoids that
-for free and matches how `arch-*`/`PROC-*` already stay sibling prefixes
-rather than one shared one.
+**Give a future language-limitation concept the bare `LIMIT-*` prefix,
+distinguished only by `AREA`.** Rejected — see §5. `LIMIT-RESOLUTION-001`
+would be ambiguous between a compiler limitation and a language-semantics
+one for the same subsystem name; a distinguishing prefix (`LLIMIT-*`)
+avoids that for free and matches how `arch-*`/`PROC-*` already stay
+sibling prefixes rather than one shared one.
+
+**Keep the `DEBT-*` name now that the record covers more than technical
+debt.** Rejected — see §4. The record already included a performance
+boundary, an operational constraint, and a deliberate architectural
+compromise alongside cases that are debt in the strict sense; `debt`
+implies a shortcut taken now with intent to repay, which doesn't describe
+a boundary accepted indefinitely with no repayment plan. `limitation` is
+the term this ADR's own prose already used throughout to describe the
+concept; the ID prefix and the reserved sibling (`LDEBT-*` → `LLIMIT-*`)
+now match it.
 
 **Keep `ARCH-<AREA>-<NNN>` (`#1154`'s original flat schema) now that
 storage is inline.** Rejected — see §2. The flat form was shaped around
@@ -264,20 +286,23 @@ holdout, not a meaningful distinction.
 ## Consequences
 
 - `#1155` authors stable Architecture Spec sections and the initial
-  `arch-*` and `DEBT-*` records.
+  `arch-*` and `LIMIT-*` records.
 - `#1154` and `#1157` provide the marker, fixture-sidecar, and integrity
   checking support described here, generalizing `rfc.py`'s existing
   anchor/backlink/coverage pattern rather than building a parallel
   file-per-record system for `arch-*`.
 - The initial review surface is the Spec (with its inline `arch-*`
-  anchors), individual debt-record files, fixtures, and checker output. It
-  is sufficient to trace a claim to evidence and keep known system
-  limitations visible without a full Atlas UI.
+  anchors), individual limitation-record files, fixtures, and checker
+  output. It is sufficient to trace a claim to evidence and keep known
+  system limitations visible without a full Atlas UI.
 - A future data-model registry or reader must consume these records as its
   source. It cannot become a second architecture authority.
-- `LDEBT-*` is reserved (§5) but not chartered — a future language-debt ADR
-  inherits the name and the record-shape rationale, and doesn't need to
-  solve either from scratch.
+- `LLIMIT-*` is reserved (§5) but not chartered — a future
+  language-limitation ADR inherits the name and the record-shape
+  rationale, and doesn't need to solve either from scratch.
+- `DEBT-*`/`LDEBT-*` (this ADR's own earlier names) are retired in favor of
+  `LIMIT-*`/`LLIMIT-*`; ADR-0056 and the prior-art survey cited the old
+  names and are updated alongside this ADR in the same change.
 - `#1154`'s own generic schema note (`<PREFIX>-<AREA>-<NNN>`, e.g.
   `ARCH-RESOLUTION-001`) is amended for the `arch-*` case by §2 — `PROC-*`
   keeps the original flat form for the reason stated there. `#1154` should

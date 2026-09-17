@@ -11,8 +11,9 @@ implements: metel-core#1156, metel-core#1159
 
 An Architecture Atlas can make the Architecture Spec and its evidence easier
 to browse. The prototype explored Context, Container, Component, Data model,
-Architecture entries, Health, Decisions, and Debt views. That work exposed
-useful questions about hierarchy and scope, but it also demonstrated that a
+Architecture entries, Health, Decisions, and Debt views (named for what
+ADR-0055 §4 has since renamed `LIMIT-*`). That work exposed useful
+questions about hierarchy and scope, but it also demonstrated that a
 reader designed before sufficient records exist is speculative.
 
 The immediate need is trustworthy architecture content and verification,
@@ -23,21 +24,21 @@ data-model taxonomy, or navigation model on them.
 ## Decision
 
 The Atlas reader is deferred until ADR-0055 has produced a useful body of
-Architecture Spec sections, `ARCH-*` records, `DEBT-*` records, fixture
+Architecture Spec sections, `arch-*` records, `LIMIT-*` records, fixture
 evidence, and integrity-check output.
 
 When scoped, the first reader increment will render the authoritative
-Architecture Spec and provide navigation from an `ARCH-*` record to its
+Architecture Spec and provide navigation from an `arch-*` record to its
 defining section, implementation binding, evidence, related decision, and
-open debt. Health is a derived view over records and checker findings, not a
-second record system.
+open limitations. Health is a derived view over records and checker
+findings, not a second record system.
 
 The reader is a projection only. It cannot own architecture prose, infer
 records from code as authority, or require a generic data-model registry.
-Container, Component, data-model, ADR, and Debt views remain candidates to
-evaluate against actual maintainer tasks after the integrity system is in
-use. Their final hierarchy, filters, and drill-ins are deliberately not
-decided here.
+Container, Component, data-model, ADR, and Limitations views remain
+candidates to evaluate against actual maintainer tasks after the integrity
+system is in use. Their final hierarchy, filters, and drill-ins are
+deliberately not decided here.
 
 The existing static prototype remains a research artifact. It may inform a
 future design, but does not set a committed information architecture or

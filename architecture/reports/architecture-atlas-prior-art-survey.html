@@ -661,7 +661,8 @@
       <p class="section-note">
         What each Atlas view should borrow, stated as a decision rather than
         a survey. The first pass named five views; the evolved model adds
-        full Decisions and Debt registers while keeping Health cross-cutting.
+        full Decisions and Limitations registers while keeping Health
+        cross-cutting.
       </p>
       <div class="table-scroll">
         <table class="rec-table">
@@ -687,7 +688,7 @@
             <tr>
               <td class="view-name">Stage details</td>
               <td>arc42 (fixed section template) + C4 Component level</td>
-              <td>One fixed template per stage — API, owned data, allowed dependencies, contract tests, open debt — so every stage page is scannable the same way regardless of who wrote it.</td>
+              <td>One fixed template per stage — API, owned data, allowed dependencies, contract tests, open limitations — so every stage page is scannable the same way regardless of who wrote it.</td>
             </tr>
             <tr>
               <td class="view-name">Health</td>
@@ -700,9 +701,9 @@
               <td>Render the complete ADR collection, not a cited-only subset: search, status facets, stable deep links, related/successor links, source metadata, and “cited by in this Atlas” reverse indexes. Reuse the RFC viewer’s interaction model while preserving ADR-specific lifecycle vocabulary.</td>
             </tr>
             <tr>
-              <td class="view-name">Debt</td>
+              <td class="view-name">Limitations</td>
               <td>Soundcheck (actionable health) + requirements traceability</td>
-              <td>Give <code>DEBT-*</code> records a dedicated viewer with lifecycle, ownership, acceptance, issue/successor-<code>arch-*</code> links, verification evidence, and a reconciliation queue. Health links into this work queue; it does not replace the debt register.</td>
+              <td>Give <code>LIMIT-*</code> records a dedicated viewer with lifecycle, ownership, acceptance, issue/successor-<code>arch-*</code> links, verification evidence, and a reconciliation queue. Health links into this work queue; it does not replace the limitations register.</td>
             </tr>
           </tbody>
         </table>
@@ -737,7 +738,7 @@
       <h2>7 · Reuse survey: build the domain layer, reuse the machinery</h2>
       <p class="section-note">
         The Atlas now has an authoritative Architecture Spec, persistent
-        <code>DATA-*</code> facts, full ADR and debt registers, and generated
+        <code>DATA-*</code> facts, full ADR and limitation registers, and generated
         code facts. No single open-source project supplies all of that.
         The practical boundary is to own Metel's domain semantics and reuse
         diagram, indexing, traceability, and site machinery where it is a
@@ -752,7 +753,7 @@
           views, a CLI, and a programmatic model API. Use it as a generated
           diagram target from the authoritative Atlas model, not as a second
           source of truth for <code>arch-*</code>, <code>DATA-*</code>, or
-          <code>DEBT-*</code>.</p>
+          <code>LIMIT-*</code>.</p>
           <div class="tags"><span class="tag">adopt / spike</span><span class="tag">diagram renderer</span></div>
           <a class="src" href="https://likec4.dev/tooling/model-api/">likec4.dev →</a>
         </article>
@@ -764,7 +765,7 @@
           worth evaluating as an interchange or export target for topology
           and controls, not yet as the Atlas's primary representation: it
           does not model Metel's language rules, requirement evidence, or
-          debt reconciliation.</p>
+          limitation reconciliation.</p>
           <div class="tags"><span class="tag">evaluate</span><span class="tag">interoperability</span></div>
           <a class="src" href="https://calm.finos.org/">calm.finos.org →</a>
         </article>
@@ -787,7 +788,7 @@
           checked-in tables can declare primary keys, foreign keys, enums,
           and required fields, then validate through a CLI and produce an ER
           diagram. It can reject dangling <code>arch-*</code>,
-          <code>DATA-*</code>, <code>DEBT-*</code>, ADR, and evidence links
+          <code>DATA-*</code>, <code>LIMIT-*</code>, ADR, and evidence links
           without a bespoke validator.</p>
           <div class="tags"><span class="tag">adopt / evaluate</span><span class="tag">referential integrity</span></div>
           <a class="src" href="https://framework.frictionlessdata.io/docs/console/overview">framework.frictionlessdata.io →</a>
@@ -797,7 +798,7 @@
           <div class="origin">open-source declarative relation-analysis engine</div>
           <p>The candidate rule engine once validation goes beyond foreign
           keys: reverse traceability, missing evidence, successor paths,
-          and debt reconciliation are naturally expressed as relations and
+          and limitation reconciliation are naturally expressed as relations and
           rules, not Python control flow. Soufflé reads facts from flat files
           or SQLite and emits derived relations such as the Health and
           reconciliation queues.</p>
@@ -842,12 +843,12 @@
       <div class="callout">
         <span class="label">Recommended composition</span>
         <p>Keep the Architecture Spec plus <code>arch-*</code>,
-        <code>DATA-*</code>, and <code>DEBT-*</code> registries as the
+        <code>DATA-*</code>, and <code>LIMIT-*</code> registries as the
         versioned source of truth. Normalize their cross-record data into a
         declarative package: entities, typed links, code bindings, evidence,
-        debt resolutions, and issue snapshots. Use a relational schema and
+        limitation resolutions, and issue snapshots. Use a relational schema and
         foreign-key validation for baseline integrity; use Datalog only for
-        derived policies such as reverse traceability, Health, and debt
+        derived policies such as reverse traceability, Health, and limitation
         reconciliation. Generate Atlas JSON through a Docusaurus plugin,
         reuse cargo tooling and possibly SCIP for code facts, and run a short
         LikeC4 spike for topology rendering. Treat CALM, StrictDoc,
