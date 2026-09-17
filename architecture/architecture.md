@@ -5,6 +5,12 @@
 > metel-website build; still public and readable directly on GitHub in `metel-docs`,
 > where relative links like the one above resolve fine on their own)
 
+> This page is the informal overview. [ADR-0055](decisions/adr-0055-architecture-integrity-records.md)
+> establishes `spec/` as the versioned, checkable Architecture Spec — stable
+> sections with inline-anchored `arch-*` requirements, each naming its
+> implementation and verifying evidence. First section:
+> [Resolution](spec/resolution.md) (`metel-core#1155`).
+
 ## Pipeline
 
 ```
