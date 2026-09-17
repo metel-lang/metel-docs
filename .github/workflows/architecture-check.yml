@@ -1,0 +1,36 @@
+name: Architecture check
+
+# architecture/tools/check_architecture.py (ADR-0055 §6, metel-core#1162)
+# validates arch-*/LIMIT-* record well-formedness, cross-reference
+# resolution, required fields, and LIMIT-* disposition rules, the same
+# "policy checker in CI" slot rfc-check.yml and tools/clippy_allow_ratchet.py
+# already occupy for their own domains.
+#
+# Fixture-sidecar arch=[...] cross-checking degrades to an informational
+# skip here for the same reason rfc-check.yml already documents for RFC
+# fixture coverage: the fixture corpus lives in metel-interpreter/tests, in
+# metel-core, one level up from this repo when embedded as a submodule -- a
+# bare metel-docs checkout structurally can't reach it. Not a gap in this
+# job; the same split ADR-0049 §6 already designed and documents for RFCs.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  architecture-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Architecture checker regression tests
+        run: python3 -m unittest architecture/tools/test_check_architecture.py
+
+      - name: check_architecture.py --check
+        run: python3 architecture/tools/check_architecture.py --check

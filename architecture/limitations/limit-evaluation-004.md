@@ -4,7 +4,7 @@ title: "The evaluator is a deliberate PoC, not the target implementation shape"
 scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
 discovered_by: "this session's architecture-spec inventory (direct source reading), 2026-09-17"
-disposition: accepted
+disposition: known
 review: null
 ---
 
