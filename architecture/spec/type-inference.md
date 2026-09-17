@@ -43,6 +43,32 @@ Type inference is Hindley-Milner with let-polymorphism. `unify` performs structu
 | `verified by` | integration fixture `metel-interpreter/tests/integration/sources/typechecking/error_handling/stage6_neg_06_error_propagation_mismatched_types`; no dedicated unit test found naming this check directly |
 | `related` | ADR-0030 (`?` desugared in `path_normalizer` pre-pass), `#13` (full coercion for arbitrary type pairs, still open) |
 
+##### Requirement {#arch.type-inference.requirement-4}
+
+Typechecking keeps inference and construction as separate passes. Inference solves constraints and produces substitutions and schemes; construction rebuilds typed IR from those solved facts and does not run unification, occurs checking, or fresh-variable allocation as a second inference engine.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-frontend` |
+| `specified by` | `#type-inference` |
+| `implements` | `metel-frontend/src/typechecker/mod.rs` (module check orchestration); `metel-frontend/src/typechecker/inference.rs`; `metel-frontend/src/typechecker/construction.rs` |
+| `verified by` | full integration-suite coverage of checked programs; no dedicated unit test asserting the pass boundary was found |
+| `related` | ADR-0002, `arch.type-construction.requirement-1` |
+
+##### Requirement {#arch.type-inference.requirement-5}
+
+Let-bound polymorphic closures are represented in the polymorphic scheme environment rather than retained as a monomorphic fallback binding. Call sites instantiate the scheme; preserving an ordinary monomorphic environment entry would silently bypass that instantiation path.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-frontend` |
+| `specified by` | `#type-inference` |
+| `implements` | `metel-frontend/src/typechecker/inference.rs` (`mono_env`, `poly_env`); `metel-frontend/src/typechecker/mod.rs` (`build_module_scheme_env`); `metel-frontend/src/typechecker/construction/declarations.rs` |
+| `verified by` | general integration-suite coverage of generic let-bound closures; no dedicated regression test naming the environment-absence invariant was found |
+| `related` | ADR-0011, ADR-0010 |
+
 ## Known limitations
 
 - [`LIMIT-TYPE-INFERENCE-001`](../limitations/limit-type-inference-001.md) — `?` error coercion requires an explicit `From` impl; only `Int`/`Float` are built in. (Filed as `LIMIT-TYPE-CONSTRUCTION-003` originally, before checking which pass actually performs the check — renamed during `#1158`'s triage.)

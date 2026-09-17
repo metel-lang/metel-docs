@@ -67,6 +67,97 @@ Until destructor invocation exists, a `std::core::Drop` impl may declare only an
 | `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/typechecking/structs/stage5_neg_39_drop_body_cannot_run_yet`, `stage5_40_empty_drop_body_still_declares_drop`, `metel-interpreter/tests/integration/sources/typechecking/aspects/stage13_11_user_declared_drop_aspect_is_unaffected` |
 | `related` | ADR-0047, RFC-0071 §9c, `#261` |
 
+##### Requirement {#arch.type-construction.requirement-6}
+
+Type ascriptions constrain inference and construction but are erased from typed IR: construction builds the inner expression using the resolved annotation as context instead of emitting a runtime no-op `TypedExpr::Ascribe` node.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-frontend` |
+| `specified by` | `#type-construction` |
+| `implements` | `metel-frontend/src/typechecker/inference/expressions.rs`; `metel-frontend/src/typechecker/construction/expressions.rs`; `metel-frontend/src/typed_ast/mod.rs` |
+| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch`, `stage8_neg_03_ascribe_bool_as_int`, `stage8_neg_04_ascribe_wrong_struct` |
+| `related` | ADR-0009 |
+
+##### Requirement {#arch.type-construction.requirement-7}
+
+Operand legality is checked after operand types are resolved: arithmetic and unary negation accept numeric or `Never` operands, while ordering comparisons additionally accept `Str`. The construction pass reports the language's operand-type diagnostic (`T0005`) rather than leaving invalid operator shapes for evaluation.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-frontend` |
+| `specified by` | `#type-construction` |
+| `implements` | `metel-frontend/src/typechecker/construction.rs` (`construct_binop`, `construct_unaryop`) |
+| `verified by` | general integration-suite coverage of operator type errors; no dedicated unit test naming the pass-2 placement was found |
+| `related` | ADR-0017, `T0005` |
+
+##### Requirement {#arch.type-construction.requirement-8}
+
+Import visibility is diagnosed while building import schemes, where the full module graph and exports are available. Name resolution records import bindings without prematurely collapsing a private-item error into a missing-item error; construction/typechecking then distinguishes `T0009` visibility from `T0003` absence.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-frontend` |
+| `specified by` | `#type-construction` |
+| `implements` | `metel-frontend/src/name_resolver.rs`; `metel-frontend/src/typechecker/mod.rs` (`build_import_schemes`) |
+| `verified by` | general integration-suite coverage of imports and visibility; no dedicated test naming this ownership boundary was found |
+| `related` | ADR-0024, `T0003`, `T0009` |
+
+##### Requirement {#arch.type-construction.requirement-9}
+
+Aspect default methods are materialized as typed methods before evaluation. Inference collects inherited defaults for an impl and construction emits a concrete typed body for each applicable default, while negative impls deliberately do not acquire default bodies; runtime dispatch therefore never evaluates untyped default-method syntax.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-frontend` |
+| `specified by` | `#type-construction` |
+| `implements` | `metel-frontend/src/typechecker/inference/declarations.rs`; `metel-frontend/src/typechecker/construction/declarations.rs` |
+| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods`, `stage12_02_override_replaces_default`, `stage12_03_multiple_defaults` |
+| `related` | ADR-0034 |
+
+##### Requirement {#arch.type-construction.requirement-10}
+
+Free-function overload selection is exact-match and construction stamps the selected callable's stable `SymbolId` on the typed call. The runtime dispatches that identity through its symbol-value registry; overloaded sets remain module-local and do not become an ambiguous name lookup at evaluation time.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-frontend` |
+| `specified by` | `#type-construction` |
+| `implements` | `metel-frontend/src/typechecker/overload.rs` (`build_overload_table`, selection); `metel-frontend/src/typechecker/construction/calls.rs`; `metel-interpreter/src/evaluator/mod.rs` (`RuntimeRegistry::symbol_values`) |
+| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/typechecking/overload_duplicate`, `overload_no_match` |
+| `related` | ADR-0038, `arch.evaluation.requirement-2`, `LIMIT-TYPE-CONSTRUCTION-002` |
+
+##### Requirement {#arch.type-construction.requirement-11}
+
+Construction keeps generic struct field templates separate from concrete struct field scopes. At a generic struct literal or field access, it instantiates the declared raw field template with the receiver's resolved type arguments; it does not cache one concrete field type under the generic declaration's surface name.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-frontend` |
+| `specified by` | `#type-construction` |
+| `implements` | `metel-frontend/src/typechecker/construction.rs` (`ConstructCtx`, concrete struct scopes and generic method/type environments); `metel-frontend/src/typechecker/construction/expressions.rs` |
+| `verified by` | general integration-suite coverage of generic struct literals and field access; no dedicated unit test naming the split-environment invariant was found |
+| `related` | ADR-0012 |
+
+##### Requirement {#arch.type-construction.requirement-12}
+
+Generic runtime reconstruction recovers nominal type arguments from a struct or enum's typed field values against the declared field templates when the runtime value itself carries no complete argument list. The recovery is intentionally best-effort for values whose fields reveal no parameter, rather than changing every `Value::Struct`/`Value::Enum` representation to store duplicated generic metadata.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-frontend`, `metel-interpreter` |
+| `specified by` | `#type-construction` |
+| `implements` | `metel-frontend/src/typechecker/mod.rs` (`infer_named_type_args`); `metel-interpreter/src/evaluator/type_of.rs` (`value_to_type`); `metel-interpreter/src/evaluator/call.rs` |
+| `verified by` | general integration-suite coverage of generic method/runtime reconstruction; no focused fixture naming field-based recovery was found |
+| `related` | ADR-0043 |
+
 ## Known limitations
 
 - [`LIMIT-TYPE-CONSTRUCTION-001`](../limitations/limit-type-construction-001.md) — `Call::callee_id` falls back to name dispatch for first-class function values (a live exception to the resolution-freeze invariant).
