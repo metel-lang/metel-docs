@@ -26,7 +26,7 @@ Places (the syntactic locations a program can name — a binding root plus a pat
 | `specified by` | `#move-check` |
 | `implements` | `metel-frontend/src/place.rs` (`Place`, `Projection`, `from_expr`, `from_typed_place`) |
 | `verified by` | exercised transitively by every move-check unit test and fixture above (no dedicated `place.rs`-only test suite exists; its own module doc comment states the design rationale directly) |
-| `related` | RFC-0071 §9b, ADR-0045 |
+| `related` | RFC-0071 §9b, ADR-0035 (`TypedPlace` for assignment targets), ADR-0045 |
 
 ## Known limitations
 
