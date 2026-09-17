@@ -2,9 +2,10 @@
 id: adr-0056
 title: "Architecture Atlas Reader Is a Deferred Projection"
 date: '2026-09-16'
-status: proposed
+status: accepted
 relates: adr-0055
 implements: metel-core#1156, metel-core#1159
+updated: '2026-09-17'
 ---
 
 ## Context

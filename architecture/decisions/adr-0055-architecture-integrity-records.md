@@ -2,9 +2,10 @@
 id: adr-0055
 title: "Architecture Integrity Records and Verification"
 date: '2026-09-15'
-status: proposed
+status: accepted
 relates: adr-0054
 implements: metel-core#1141, metel-core#1154, metel-core#1155, metel-core#1157
+updated: '2026-09-17'
 ---
 
 ## Context
