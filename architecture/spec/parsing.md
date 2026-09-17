@@ -13,11 +13,11 @@ Loading a root file produces a `ModuleGraph` whose `modules: Vec<LoadedModule>` 
 | `specified by` | `#parsing` |
 | `implements` | `metel-frontend/src/module_loader.rs` (`Loader::load_module`, `ModuleGraph`) |
 | `verified by` | `metel-frontend/src/module_loader.rs` unit tests (`std_namespace_is_reserved_for_user_modules`, `source_provider_overlay_supplies_in_memory_source`, `multi_file_source_provider_resolves_an_import`, `virtual_root_loads_without_an_on_disk_root`); integration fixtures `metel-interpreter/tests/integration/sources/module_loading/rejects_circular_module_graph`, `multi_file_program_runs_after_module_loading`, `transitive_dependency_loaded_via_facade` |
-| `related` | RFC-0058, ADR-0031 (diamond-dependency path aliasing), `#1147` |
+| `related` | RFC-0058, ADR-0023 (hierarchical module paths), ADR-0031 (diamond-dependency path aliasing), `#1147` |
 
 ##### Requirement {#arch.parsing.requirement-2}
 
-Module source is read through a `SourceProvider` abstraction rather than a hardcoded filesystem call — the default (`EmbeddedStdlibProvider`) serves `std::…` modules from a binary-embedded source and everything else from disk, but an `InMemorySourceProvider` / `MultiFileSourceProvider` can substitute a virtual root (and its imports) without touching disk, and `load_virtual_root_with` skips filesystem canonicalization entirely for that case. This is what lets an LSP overlay shadow a stdlib module or serve unsaved buffers through the same loading path production use takes, rather than a parallel one.
+Module source is read through a `SourceProvider` abstraction rather than a hardcoded filesystem call — the default (`EmbeddedStdlibProvider`) serves `std::…` modules from a binary-embedded source and everything else from disk, but an `InMemorySourceProvider` / `MultiFileSourceProvider` can substitute a virtual root (and its imports) without touching disk, and `load_virtual_root_with` skips filesystem canonicalization entirely for that case. This is what lets an LSP overlay shadow a stdlib module or serve unsaved buffers through the same loading path production use takes, rather than a parallel one. The embedded source itself is real, physical `.mtl` files (`metel-frontend/stdlib/*.mtl`) compiled in at build time (ADR-0039, superseding ADR-0027's virtual, no-physical-file injection list).
 
 | Field | Value |
 |---|---|
@@ -26,7 +26,7 @@ Module source is read through a `SourceProvider` abstraction rather than a hardc
 | `specified by` | `#parsing` |
 | `implements` | `metel-frontend/src/module_loader.rs` (`SourceProvider`, `EmbeddedStdlibProvider`, `InMemorySourceProvider`, `MultiFileSourceProvider`, `load_virtual_root_with`) |
 | `verified by` | `metel-frontend/src/module_loader.rs::source_provider_overlay_supplies_in_memory_source`, `::multi_file_source_provider_resolves_an_import`, `::multi_file_source_provider_reports_a_missing_sibling`, `::virtual_root_loads_without_an_on_disk_root` |
-| `related` | RFC-0058 |
+| `related` | RFC-0058, ADR-0039 |
 
 ##### Requirement {#arch.parsing.requirement-3}
 

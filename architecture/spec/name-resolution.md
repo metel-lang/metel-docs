@@ -28,7 +28,7 @@ A module's import scope resolves with explicit precedence: an explicit `import` 
 | `specified by` | `#name-resolution` |
 | `implements` | `metel-frontend/src/name_resolver.rs` (`GlobTier`, `ModuleScope`, `resolve`) |
 | `verified by` | `metel-frontend/src/name_resolver.rs::resolves_explicit_item_import`, `::resolves_glob_import`, `::rejects_duplicate_explicit_import`; integration fixtures `metel-interpreter/tests/integration/sources/module_semantics/two_glob_imports_same_name_is_t0011`, `two_explicit_imports_same_local_name_is_t0011` |
-| `related` | `T0011` |
+| `related` | `T0011`, ADR-0026 |
 
 ##### Requirement {#arch.name-resolution.requirement-3}
 
@@ -54,8 +54,8 @@ Multi-segment qualified paths (`Expr::Path`, e.g. `math::sin`, `self::Foo`) rewr
 | `specified by` | `#name-resolution` |
 | `implements` | `metel-frontend/src/path_normalizer.rs` (`NormalizedModuleGraph`, `normalize`) |
 | `verified by` | `metel-frontend/src/path_normalizer.rs::glob_imported_qualified_call_carries_a_symbol_id`, `::explicitly_imported_qualified_call_carries_the_same_symbol_id`, `::self_qualified_call_carries_a_symbol_id` |
-| `related` | ADR-0031 |
+| `related` | ADR-0021, ADR-0031 |
 
 ## Known limitations
 
-None recorded yet for this section — `#1161` (extracting `LIMIT-*` records from the existing ADR corpus) runs next in this chain and will file any that apply here.
+None currently open. [`LIMIT-NAME-RESOLUTION-001`](../limitations/limit-name-resolution-001.md) — `std::core` lacking a physical module file — is recorded as `resolved` (by ADR-0039), not deleted, so the historical fact and its resolution stay traceable.
