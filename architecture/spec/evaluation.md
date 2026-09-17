@@ -15,6 +15,32 @@ The tree-walk over `ElaboratedModuleGraph` to program output. Owning crate: `met
 | `verified by` | `metel-interpreter/src/evaluator/mod.rs::define_binding_is_readable_by_local_id`, `::a_binding_with_no_id_is_simply_not_stored`, `::distinct_local_ids_do_not_alias`, `::capture_clone_starts_with_an_empty_frame`, `::capture_closure_installs_captures_in_the_frame_by_enclosing_id`, `::capture_closure_copy_installs_a_clone_capture_by_id`, `::mut_ref_capture_shares_one_cell_with_the_source`, `::ident_rc_resolves_by_identity_only`, `::lvalue_field_cell_resolves_a_nested_receiver_root_by_id_without_the_name_map`, `::set_local_mutates_the_shared_cell_in_place` |
 | `related` | `arch.resolution.requirement-1`, `arch.resolution.requirement-2`, ADR-0029, ADR-0054, `#1052a`/`#1052b` series |
 
+##### Requirement {#arch.evaluation.requirement-3}
+
+`Perhaps` and `Result` have the same runtime representation as every user-defined enum: `Value::Enum { name, variant, fields, .. }`. Evaluation of propagation, iteration, pattern matching, and callable error signals uses the ordinary enum variant and field-map paths; name-specific handling is restricted to presentation in `display.rs`. The earlier flat string-keyed aspect-method environment in ADR-0013 is not current architecture: nominal methods are now held in `RuntimeRegistry` entries keyed by stable `SymbolId` (requirement 2).
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-interpreter` |
+| `specified by` | `#evaluation` |
+| `implements` | `metel-interpreter/src/evaluator/mod.rs` (`Value::Enum`, `eval_expr`); `metel-interpreter/src/evaluator/call.rs`; `metel-interpreter/src/evaluator/pattern.rs`; `metel-interpreter/src/evaluator/display.rs` |
+| `verified by` | general integration-suite coverage of `Perhaps`, `Result`, pattern matching, and `?`; no dedicated representation-invariant test was found |
+| `related` | ADR-0028, `arch.evaluation.requirement-2` |
+
+##### Requirement {#arch.evaluation.requirement-4}
+
+Method dispatch preserves the receiver mode carried by the typed AST. Value receivers use the ordinary call path; `&self` receives a read-only view; and `&mut self` shares the caller's receiver cell into the method frame so mutations, including nested-field mutation, are immediately visible without an ad-hoc writeback convention. This is tree-walk evaluator behavior, not a compiled-backend representation commitment.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-interpreter` |
+| `specified by` | `#evaluation` |
+| `implements` | `metel-interpreter/src/evaluator/mod.rs` (receiver dispatch); `metel-interpreter/src/evaluator/call.rs` |
+| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/evaluator/structs/67_receiver_references`, `68_receiver_all_forms`, `69_nested_field_mut_receiver`, `100_value_receiver_keeps_value_semantics`, `metel-interpreter/tests/integration/sources/evaluator/aspects/93_dyn_aspect_mutable_receiver_dispatch` |
+| `related` | ADR-0036, RFC-0044 |
+
 ##### Requirement {#arch.evaluation.requirement-2}
 
 `RuntimeRegistry` dispatches struct/enum type entries and overloaded/top-level function values (`symbol_values`) by stable `SymbolId`, not by re-deriving a name lookup at call time — the runtime-side counterpart of `arch.resolution.requirement-1`'s frozen-identity invariant. Two parts remain genuinely name-keyed by design: `type_ids` (the single surface-name→`SymbolId` translation point for sites that only have a name, e.g. `List::new`, and never had an id threaded to them) and `pattern_methods` (structural, pattern-dispatched method names for receivers like arrays that carry no `type_id`). This is not full coverage of the no-semantic-lookup invariant — `tools/check_no_semantic_name_lookup.py`'s own docstring names `RuntimeRegistry` as "a separate, adjacent concern with its own nuances... not yet brought under this check," i.e. the checker itself documents the gap rather than silently missing it.
