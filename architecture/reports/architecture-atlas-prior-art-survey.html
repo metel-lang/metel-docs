@@ -394,7 +394,7 @@
     (shared spec-with-traceability framework), and
     <a href="https://github.com/metel-lang/metel-core/issues/1156">#1156</a>
     (Architecture Atlas) call for a public, generated map from a stable
-    requirement ID (<code>ARCH.resolution.requirement-1</code>) through owning code,
+    requirement ID (<code>arch.resolution.requirement-1</code>) through owning code,
     verifying tests, and prior decisions — and back. This surveys who has
     solved pieces of that problem before, and what each piece is worth
     borrowing before any pixel is drawn.
@@ -488,7 +488,7 @@
     <section id="traceability">
       <h2>2 · Traceability &amp; governance</h2>
       <p class="section-note">
-        The <code>ARCH-*</code>/<code>PROC-*</code> ID scheme — status,
+        The <code>arch-*</code>/<code>PROC-*</code> ID scheme — status,
         owner, implementing paths, verification evidence, forward and
         reverse links — is not a new invention. It's the requirements-
         traceability matrix from safety-critical engineering, worn down to
@@ -512,7 +512,7 @@
           <p>ADRs as small Markdown files with a status field, built into a
           static site by a CLI (<code>log4brains build</code>). Directly
           reusable shape for #1158's ADR triage and for how an
-          <code>ARCH-*</code> requirement file itself should look.</p>
+          <code>arch-*</code> requirement file itself should look.</p>
           <div class="tags"><span class="tag">ADR lifecycle</span><span class="tag">ID scheme</span></div>
           <a class="src" href="https://adr.github.io/adr-tooling/">adr.github.io →</a>
         </article>
@@ -532,7 +532,7 @@
           <p>Consolidates scattered health signals — checks, standards,
           ownership — into one scorecard per component, drillable to the
           specific failing check. The closest working analogue to "which
-          <code>ARCH-*</code> requirements are implemented / partial / lack
+          <code>arch-*</code> requirements are implemented / partial / lack
           evidence" as a single glanceable view.</p>
           <div class="tags"><span class="tag">health view</span><span class="tag">dashboard pattern</span></div>
           <a class="src" href="https://backstage.spotify.com/discover/blog/how-soundcheck-improves-tech-health-and-developer-productivity-at-spotify">backstage.spotify.com →</a>
@@ -541,7 +541,7 @@
 
       <p style="margin-top:1.6rem; font-family:'Inter',sans-serif; font-size:0.8rem; letter-spacing:0.03em; text-transform:uppercase; color:var(--ink-soft);">Specimen — a requirement record in this shape</p>
       <div class="specimen">
-        <span class="req-id">ARCH.resolution.requirement-1</span> — Resolved identity is the semantic boundary
+        <span class="req-id">arch.resolution.requirement-1</span> — Resolved identity is the semantic boundary
         <span class="status-pill implemented"><span class="swatch sw-implemented" style="width:6px;height:6px;"></span>implemented</span>
         <dl>
           <dt>Owner</dt><dd>frontend / resolution</dd>
@@ -550,7 +550,7 @@
           <dt>Related</dt><dd>ADR-0054 · #1047</dd>
         </dl>
       </div>
-      <p style="margin-top:0.6rem; font-family:'Inter',sans-serif; font-size:0.78rem; color:var(--ink-soft);">ID shape updated to mirror the Language Spec's own Formal Rule convention (<code>spec.declarations.variables.immutable-bindings.legality-1</code>) rather than a flat <code>ARCH-AREA-NNN</code> — see ADR-0055 §2. The path segment after <code>ARCH.</code> is illustrative; its real depth follows #1155's actual Architecture Spec section structure, not fixed here.</p>
+      <p style="margin-top:0.6rem; font-family:'Inter',sans-serif; font-size:0.78rem; color:var(--ink-soft);">ID shape and case updated to mirror the Language Spec's own Formal Rule convention (<code>spec.declarations.variables.immutable-bindings.legality-1</code>) rather than a flat, uppercase <code>ARCH-AREA-NNN</code> — see ADR-0055 §2. The path segment after <code>arch.</code> is illustrative; its real depth follows #1155's actual Architecture Spec section structure, not fixed here.</p>
     </section>
 
     <section id="intelligence">
@@ -702,7 +702,7 @@
             <tr>
               <td class="view-name">Debt</td>
               <td>Soundcheck (actionable health) + requirements traceability</td>
-              <td>Give <code>DEBT-*</code> records a dedicated viewer with lifecycle, ownership, acceptance, issue/successor-<code>ARCH-*</code> links, verification evidence, and a reconciliation queue. Health links into this work queue; it does not replace the debt register.</td>
+              <td>Give <code>DEBT-*</code> records a dedicated viewer with lifecycle, ownership, acceptance, issue/successor-<code>arch-*</code> links, verification evidence, and a reconciliation queue. Health links into this work queue; it does not replace the debt register.</td>
             </tr>
           </tbody>
         </table>
@@ -725,7 +725,7 @@
           Before #1154 writes a bespoke source-scanner for the module graph
           half of its job, it should confirm whether wrapping one of these
           (or feeding their output into the marker/traceability layer) gets
-          most of the way there. The <code>ARCH-*</code> marker discovery
+          most of the way there. The <code>arch-*</code> marker discovery
           and evidence-checking logic is genuinely novel and has to be
           built regardless — the raw dependency graph underneath it may
           not.
@@ -751,7 +751,7 @@
           one source model, arbitrary nested levels, generated interactive
           views, a CLI, and a programmatic model API. Use it as a generated
           diagram target from the authoritative Atlas model, not as a second
-          source of truth for <code>ARCH-*</code>, <code>DATA-*</code>, or
+          source of truth for <code>arch-*</code>, <code>DATA-*</code>, or
           <code>DEBT-*</code>.</p>
           <div class="tags"><span class="tag">adopt / spike</span><span class="tag">diagram renderer</span></div>
           <a class="src" href="https://likec4.dev/tooling/model-api/">likec4.dev →</a>
@@ -786,7 +786,7 @@
           <p>A close fit for the registry's baseline relational integrity:
           checked-in tables can declare primary keys, foreign keys, enums,
           and required fields, then validate through a CLI and produce an ER
-          diagram. It can reject dangling <code>ARCH-*</code>,
+          diagram. It can reject dangling <code>arch-*</code>,
           <code>DATA-*</code>, <code>DEBT-*</code>, ADR, and evidence links
           without a bespoke validator.</p>
           <div class="tags"><span class="tag">adopt / evaluate</span><span class="tag">referential integrity</span></div>
@@ -841,7 +841,7 @@
       </div>
       <div class="callout">
         <span class="label">Recommended composition</span>
-        <p>Keep the Architecture Spec plus <code>ARCH-*</code>,
+        <p>Keep the Architecture Spec plus <code>arch-*</code>,
         <code>DATA-*</code>, and <code>DEBT-*</code> registries as the
         versioned source of truth. Normalize their cross-record data into a
         declarative package: entities, typed links, code bindings, evidence,

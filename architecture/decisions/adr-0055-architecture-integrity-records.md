@@ -34,29 +34,33 @@ Its stable sections and anchors describe boundaries, ownership, invariants,
 and implementation mappings in prose. The records below link to that prose;
 they do not replace or duplicate it.
 
-### 2. `ARCH-*` records make architectural claims checkable
+### 2. `arch-*` records make architectural claims checkable
 
 Each checkable architecture claim has a stable ID of the form
-`ARCH.<dotted-section-path>.requirement-<N>` — `ARCH` naming a domain, a
+`arch.<dotted-section-path>.requirement-<N>` — `arch` naming a domain, a
 dotted path mirroring the defining Architecture Spec section's own heading
 hierarchy, and a local sequential number under that path, e.g. (once
-`#1155` writes the real section) `ARCH.resolution.requirement-1`. This
+`#1155` writes the real section) `arch.resolution.requirement-1`. This
 matches Formal Rules' own convention exactly in shape —
 `spec.declarations.variables.immutable-bindings.legality-1` — rather than
 the flat `ARCH-<AREA>-<NNN>` `#1154` originally specified: now that an
-`ARCH-*` record is inline-anchored (below), a flat area-plus-number no
+`arch-*` record is inline-anchored (below), a flat area-plus-number no
 longer describes where the record actually lives the way a dotted path
 does, and a mismatch between ID shape and storage shape is a real cost, not
 a cosmetic one — the ID is what a citation or a checker's backlink actually
-carries. `ARCH` stays uppercase, unlike `spec`'s lowercase, deliberately:
-the one already-established, already-cited-widely prefix from `#1154`
-carried over unchanged, so only the punctuation and structure — the part
-this reconciliation is actually about — changes, not spelling that has no
-bearing on it. `PROC-*` (`#1142`) keeps the flat scheme: an Operations
-requirement isn't always anchored at one point in one hierarchical
-document — `PROC-RELEASE-001` spans two repositories — so it has no section
-path to mirror, and a dotted convention here would only look aligned, not
-be aligned. An `ARCH-*` record contains at least:
+carries. The prefix goes lowercase too, matching `spec`: an earlier
+revision of this section kept `ARCH` uppercase deliberately, reasoning that
+only punctuation and structure were in scope — but the prefix's role is
+addressing a location in the Architecture Spec the same way `spec.*`
+addresses one in the Language Spec, and a differently-cased prefix signals
+a difference in kind that doesn't exist. `PROC-*` (`#1142`) keeps its
+original uppercase, flat scheme untouched: it isn't inline-anchored and
+mirrors no section path, so nothing here pulls it toward the Formal Rules
+convention — an Operations requirement isn't always anchored at one point
+in one hierarchical document — `PROC-RELEASE-001` spans two repositories —
+so it has no section path to mirror, and a dotted, lowercase form here
+would only look aligned, not be aligned. An `arch-*` record contains at
+least:
 
 | Field | Purpose |
 |---|---|
@@ -72,31 +76,31 @@ already names the section — the path is for addressing; `specified by` is
 what the checker reads without re-parsing an ID string, the same reason a
 Formal Rule's backlink data isn't inferred from its ID alone either.
 
-An `ARCH-*` record is stored inline: a stable anchor at the point in its
+An `arch-*` record is stored inline: a stable anchor at the point in its
 defining Architecture Spec section where the claim is made, not a separate
 file. This follows the Language Spec's own proven pattern for Formal Rules
 — stable `{#id}` anchors inside shared prose, not one file per rule — rather
 than the ADR/RFC convention of a standalone file per record. The reasons
 carry over directly: a claim is meant to be read in the context of the
 prose explaining it, not as an isolated file, and the Language Spec's
-~350 Formal Rules already demonstrate the pattern holds at a scale `ARCH-*`
+~350 Formal Rules already demonstrate the pattern holds at a scale `arch-*`
 is unlikely to approach for a long time. `rfc.py`'s existing anchor/backlink/
 coverage machinery (`metel-docs/rfcs/tools/rfc.py`) is the template to
 generalize for this checker, not a system to discard and reinvent as
 file-per-record.
 
-An Architecture Spec section links to its `ARCH-*` records, and each record
+An Architecture Spec section links to its `arch-*` records, and each record
 links back to exactly one defining section. Code and fixtures cite the
 atomic record rather than broad Spec prose or an ADR. This makes the normal
 path explicit:
 
 ```
-Architecture Spec section ──defines──► ARCH-* ──verified by──► fixture/code
+Architecture Spec section ──defines──► arch-* ──verified by──► fixture/code
                                           │
                                           └──related to──► ADR/RFC
 ```
 
-`ARCH-*` records and Formal Rules now share a role, a storage shape, and an
+`arch-*` records and Formal Rules now share a role, a storage shape, and an
 ID shape — the atomic, inline-anchored, path-addressed, checkable claim —
 across two domains. They remain separate ID spaces (architecture records
 govern internal system constraints; Formal Rules govern language
@@ -112,7 +116,7 @@ architecture requirement. The checker validates that every cited ID exists
 and that the fixture's inline citation, when present, agrees with its
 sidecar.
 
-Evidence is not inferred merely from a passing test. An `ARCH-*` record
+Evidence is not inferred merely from a passing test. An `arch-*` record
 names the fixture or check and explains the aspect of the claim it verifies.
 
 ### 4. `DEBT-*` records persist known system limitations
@@ -122,7 +126,7 @@ system limitation: what does not work, where its boundary lies, who owns the
 knowledge, and whether it is being accepted, mitigated, or resolved.
 `DEBT-<AREA>-<NNN>` records are the durable inventory of those limitations.
 
-Unlike `ARCH-*` (§2), a debt record is its own file, one per record —
+Unlike `arch-*` (§2), a debt record is its own file, one per record —
 matching the ADR/RFC convention rather than the inline, Formal-Rule one.
 The reason is the record's own shape, not its domain: a debt record carries
 a standalone lifecycle (discovery, disposition, ownership, review,
@@ -134,7 +138,7 @@ than domain-based.
 A debt record may describe a known unsupported case, an incomplete capability,
 a performance or scalability boundary, an operational constraint, or a
 deliberate architectural compromise. It does not need to be an exception to
-an existing `ARCH-*` requirement. A related requirement is recorded when one
+an existing `arch-*` requirement. A related requirement is recorded when one
 exists; the absence of one is useful information, not a reason to omit the
 limitation.
 
@@ -145,7 +149,7 @@ Each debt record contains:
 | `scope` | affected Architecture Spec section |
 | `limitation` | precise description of the known boundary or shortfall |
 | `impact` | affected behavior, users, maintainers, or system area |
-| `affects` | zero or more related `ARCH-*` records and relevant code paths |
+| `affects` | zero or more related `arch-*` records and relevant code paths |
 | `owner` | person or area responsible for maintaining the record and its disposition |
 | `discovered by` | check, audit, incident, issue, or reader observation when known |
 | `disposition` | `known`, `accepted`, `mitigated`, `planned`, `resolved`, or `superseded` |
@@ -158,7 +162,7 @@ resolution plan; recording it accurately is still valuable. When a record
 does claim resolution, it names the exit condition and verifying evidence. A
 closed issue is never sufficient resolution evidence by itself.
 
-Code and fixtures cite `ARCH-*` records or Formal Rules, never debt records.
+Code and fixtures cite `arch-*` records or Formal Rules, never debt records.
 Debt records document limitations and their disposition; they are not a
 contract that the implementation satisfies.
 
@@ -175,7 +179,7 @@ If and when it is chartered, it takes a separate sibling prefix,
 `LDEBT-<AREA>-<NNN>`, reserved now to avoid a collision: reusing `DEBT-*`
 for both domains would make an entry like `DEBT-RESOLUTION-001` ambiguous
 between a compiler limitation and a language-semantics one for the same
-subsystem name, the same way `ARCH-*` and `PROC-*` stay sibling prefixes
+subsystem name, the same way `arch-*` and `PROC-*` stay sibling prefixes
 rather than one shared one. The record-shape argument in §4 — separate
 file, standalone lifecycle — carries over as a starting point, not a
 decision to re-litigate; it was never about architecture specifically.
@@ -187,8 +191,8 @@ solving a naming collision this one could prevent for free.
 
 The initial checker validates:
 
-- Architecture Spec anchors, `ARCH-*` and `DEBT-*` IDs, and all typed links;
-- every `ARCH-*` record's owner, defining Spec section, implementation
+- Architecture Spec anchors, `arch-*` and `DEBT-*` IDs, and all typed links;
+- every `arch-*` record's owner, defining Spec section, implementation
   binding, and evidence reference;
 - fixture-sidecar `arch` references and inline/sidecar agreement;
 - every debt record's scope, limitation, impact, owner, disposition, and
@@ -204,7 +208,7 @@ or debt record.
 
 The first implementation does not establish a general `DATA-*` registry,
 data-model extraction, signature-shape matching, or unmapped-code discovery.
-An `ARCH-*` record may describe the data boundary necessary to state its
+An `arch-*` record may describe the data boundary necessary to state its
 claim. A standalone data-model record is deferred until repeated, independent
 invariants demonstrate that it needs its own lifecycle.
 
@@ -226,9 +230,9 @@ individually testable code and fixture citations.
 second authoring effort before actual architecture records demonstrate which
 data concepts need independent identity and lifecycle.
 
-**Store `ARCH-*` records as separate files, matching ADR/RFC.** Considered
+**Store `arch-*` records as separate files, matching ADR/RFC.** Considered
 in an earlier draft of this ADR, then reversed — see §2. `rfc.py` already
-proves the inline-anchor pattern at ~350 Formal Rules, a scale `ARCH-*` is
+proves the inline-anchor pattern at ~350 Formal Rules, a scale `arch-*` is
 unlikely to reach for a long time, and a separate-file convention would
 fragment the Architecture Spec's own prose with no reassembly mechanism to
 undo that, the same cost that pattern would impose on the Language Spec if
@@ -238,7 +242,7 @@ applied there.
 only by `AREA`.** Rejected — see §5. `DEBT-RESOLUTION-001` would be
 ambiguous between a compiler limitation and a language-semantics one for
 the same subsystem name; a distinguishing prefix (`LDEBT-*`) avoids that
-for free and matches how `ARCH-*`/`PROC-*` already stay sibling prefixes
+for free and matches how `arch-*`/`PROC-*` already stay sibling prefixes
 rather than one shared one.
 
 **Keep `ARCH-<AREA>-<NNN>` (`#1154`'s original flat schema) now that
@@ -249,15 +253,23 @@ doesn't mirror that hierarchy is a real mismatch between how a record is
 named and how it's actually found, not a cosmetic difference from Formal
 Rules' dotted-path convention.
 
+**Keep `ARCH` uppercase after adopting the dotted path.** An earlier
+revision of this ADR made exactly this call, reasoning that only the
+punctuation and hierarchy were in scope. Reversed — see §2. The dotted
+form's whole point is that the ID mirrors how the record is addressed, the
+same way `spec.*` does; keeping the prefix's case different from `spec`
+after matching everything else about its shape would be an arbitrary
+holdout, not a meaningful distinction.
+
 ## Consequences
 
 - `#1155` authors stable Architecture Spec sections and the initial
-  `ARCH-*` and `DEBT-*` records.
+  `arch-*` and `DEBT-*` records.
 - `#1154` and `#1157` provide the marker, fixture-sidecar, and integrity
   checking support described here, generalizing `rfc.py`'s existing
   anchor/backlink/coverage pattern rather than building a parallel
-  file-per-record system for `ARCH-*`.
-- The initial review surface is the Spec (with its inline `ARCH-*`
+  file-per-record system for `arch-*`.
+- The initial review surface is the Spec (with its inline `arch-*`
   anchors), individual debt-record files, fixtures, and checker output. It
   is sufficient to trace a claim to evidence and keep known system
   limitations visible without a full Atlas UI.
@@ -267,7 +279,7 @@ Rules' dotted-path convention.
   inherits the name and the record-shape rationale, and doesn't need to
   solve either from scratch.
 - `#1154`'s own generic schema note (`<PREFIX>-<AREA>-<NNN>`, e.g.
-  `ARCH-RESOLUTION-001`) is amended for the `ARCH-*` case by §2 — `PROC-*`
+  `ARCH-RESOLUTION-001`) is amended for the `arch-*` case by §2 — `PROC-*`
   keeps the original flat form for the reason stated there. `#1154` should
-  cite this ADR for the `ARCH-*` ID shape rather than restate its own,
+  cite this ADR for the `arch-*` ID shape rather than restate its own,
   now-superseded example.
