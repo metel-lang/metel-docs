@@ -54,14 +54,9 @@ revision of this section kept `ARCH` uppercase deliberately, reasoning that
 only punctuation and structure were in scope — but the prefix's role is
 addressing a location in the Architecture Spec the same way `spec.*`
 addresses one in the Language Spec, and a differently-cased prefix signals
-a difference in kind that doesn't exist. `PROC-*` (`#1142`) keeps its
-original uppercase, flat scheme untouched: it isn't inline-anchored and
-mirrors no section path, so nothing here pulls it toward the Formal Rules
-convention — an Operations requirement isn't always anchored at one point
-in one hierarchical document — `PROC-RELEASE-001` spans two repositories —
-so it has no section path to mirror, and a dotted, lowercase form here
-would only look aligned, not be aligned. An `arch-*` record contains at
-least:
+a difference in kind that doesn't exist. `PROC-*` (`#1142`) is unaffected:
+its own ID scheme is Operations' decision, not this one's, and this ADR
+takes no position on it. An `arch-*` record contains at least:
 
 | Field | Purpose |
 |---|---|
@@ -338,10 +333,10 @@ shared-word compromise, no domain-letter mechanism to explain.
   `ALIMIT-*`/`LLIMIT-*` names and are updated alongside this ADR in the
   same change.
 - `#1154`'s own generic schema note (`<PREFIX>-<AREA>-<NNN>`, e.g.
-  `ARCH-RESOLUTION-001`) is amended for the `arch-*` case by §2 — `PROC-*`
-  keeps the original flat form for the reason stated there. `#1154` should
-  cite this ADR for the `arch-*` ID shape rather than restate its own,
-  now-superseded example.
+  `ARCH-RESOLUTION-001`) is amended for the `arch-*` case only, by §2.
+  `#1154` should cite this ADR for the `arch-*` ID shape rather than
+  restate its own, now-superseded example. `PROC-*`'s own schema is
+  unaffected and out of scope here.
 - The prior-art survey's relational-schema-plus-Datalog checker composition
   (§7 of `architecture-atlas-prior-art-survey.html`) is knowingly not
   adopted yet — see §6 and Alternatives Considered. `#1154`/`#1157`
