@@ -120,12 +120,12 @@ sidecar.
 Evidence is not inferred merely from a passing test. An `arch-*` record
 names the fixture or check and explains the aspect of the claim it verifies.
 
-### 4. `ALIMIT-*` records persist known system limitations
+### 4. `LIMIT-*` records persist known system limitations
 
 A requirement status and a failing Health finding cannot preserve a known
 system limitation: what does not work, where its boundary lies, who owns the
 knowledge, and whether it is being accepted, mitigated, or resolved.
-`ALIMIT-<AREA>-<NNN>` records are the durable inventory of those
+`LIMIT-<AREA>-<NNN>` records are the durable inventory of those
 limitations — renamed from an earlier `DEBT-*`. The record described below
 already covered a performance or scalability boundary, an operational
 constraint, and a deliberate architectural compromise alongside an
@@ -134,10 +134,8 @@ debt in the strict sense of a shortcut taken now with intent to pay it
 down. A boundary accepted indefinitely, with no repayment plan, was never
 debt to begin with; `limitation` names what the whole set actually shares
 without implying a repayment story that doesn't hold for most of it. The
-prefix itself carries an explicit domain letter, `A` for architecture,
-rather than staying bare — see §5, which reserves the language-domain
-counterpart `LLIMIT-*` and needs the two to read as siblings rather than
-one plain form plus one prefixed exception.
+language-domain counterpart reserved in §5 uses a different word entirely
+rather than a letter-prefixed variant of this one — see there for why.
 
 Unlike `arch-*` (§2), a limitation record is its own file, one per record —
 matching the ADR/RFC convention rather than the inline, Formal-Rule one.
@@ -179,43 +177,41 @@ Code and fixtures cite `arch-*` records or Formal Rules, never limitation
 records. Limitation records document limitations and their disposition;
 they are not a contract that the implementation satisfies.
 
-### 5. Reserved for later: a language-level limitation sibling
+### 5. Reserved for later: a language-level gap sibling
 
-`ALIMIT-*` as specified here is scoped to architecture — a known limitation
+`LIMIT-*` as specified here is scoped to architecture — a known limitation
 in how the compiler implements something. A parallel concept for the
 language itself (a known, accepted gap in what the Language Spec currently
 specifies or guarantees, not in one implementation's fidelity to it) is a
 real future need, not an architecture concern, and chartering it is out of
 scope here.
 
-If and when it is chartered, it takes a separate sibling prefix,
-`LLIMIT-<AREA>-<NNN>`: a single domain letter — `A` for architecture, `L`
-for language — prepended to the shared base word `LIMIT`, the same way
-`ALIMIT-*` itself is formed. The apparent doubled `L` in `LLIMIT` is
-coincidental, not a special rule: `LIMIT` happens to start with `L`, so
-the language-domain letter and the base word's own first letter collide;
-it is still just one prefix letter, formed the same mechanical way as
-`ALIMIT-*`. It is reserved now to avoid a collision: leaving the
-architecture form bare and unprefixed while giving language a letter would
-also have worked to disambiguate the two, but it would read as
-architecture being the default and language the exception, when neither
-domain is more entitled to the plain form than the other. Explicit letters
-on both sides say what's actually true instead. Reusing a single `LIMIT-*`
-for both domains would otherwise make an entry like `LIMIT-RESOLUTION-001`
-ambiguous between a compiler limitation and a language-semantics one for
-the same subsystem name, the same way `arch-*` and `PROC-*` stay sibling
-prefixes rather than one shared one. The record-shape argument in §4 —
-separate file, standalone lifecycle — carries over as a starting point,
-not a decision to re-litigate; it was never about architecture
-specifically. Nothing here charters the work or its schema in full; this
-only reserves the name so a future ADR solves its own actual scope instead
-of also solving a naming collision this one could prevent for free.
+If and when it is chartered, it takes a separate prefix, `GAP-<AREA>-<NNN>`
+— a distinct word, not a letter-prefixed variant of `LIMIT-*`. An earlier
+revision of this ADR used `ALIMIT-*`/`LLIMIT-*`, a shared base word with a
+domain letter (`A`/`L`) attached to keep the two forms unambiguous; that
+was reversed. `GAP` fits the language-domain concept precisely — the
+paragraph above already describes it as "a known, accepted gap" without
+needing an invented word for it — while `LIMIT` fits architecture's
+broader set (a boundary, a constraint, a deliberate compromise, not only
+something missing). Forcing one shared word to cover both was a
+readability cost (`ALIMIT`/`LLIMIT` read less naturally than either plain
+word) for no real gain: once each domain has the word that actually fits
+it, the two prefixes already don't collide, so no domain-letter mechanism
+is needed to keep `GAP-RESOLUTION-001` from being read as an architecture
+record the way a bare, reused `LIMIT-RESOLUTION-001` might have been for
+both. The record-shape argument in §4 — separate file, standalone
+lifecycle — carries over as a starting point, not a decision to
+re-litigate; it was never about architecture specifically. Nothing here
+charters the work or its schema in full; this only reserves the name so a
+future ADR solves its own actual scope instead of also solving a naming
+collision this one could prevent for free.
 
 ### 6. Integrity tooling verifies references and reconciliation
 
 The initial checker validates:
 
-- Architecture Spec anchors, `arch-*` and `ALIMIT-*` IDs, and all typed links;
+- Architecture Spec anchors, `arch-*` and `LIMIT-*` IDs, and all typed links;
 - every `arch-*` record's owner, defining Spec section, implementation
   binding, and evidence reference;
 - fixture-sidecar `arch` references and inline/sidecar agreement;
@@ -262,12 +258,12 @@ fragment the Architecture Spec's own prose with no reassembly mechanism to
 undo that, the same cost that pattern would impose on the Language Spec if
 applied there.
 
-**Give a future language-limitation concept the same `ALIMIT-*` prefix
+**Give a future language-limitation concept the same `LIMIT-*` prefix
 unmodified, distinguished only by `AREA`.** Rejected — see §5.
-`ALIMIT-RESOLUTION-001` would be ambiguous between a compiler limitation
-and a language-semantics one for the same subsystem name; a distinguishing
-prefix (`LLIMIT-*`) avoids that for free and matches how `arch-*`/`PROC-*`
-already stay sibling prefixes rather than one shared one.
+`LIMIT-RESOLUTION-001` would be ambiguous between a compiler limitation
+and a language-semantics one for the same subsystem name; a distinct word
+for the language domain (`GAP-*`) avoids that for free and matches how
+`arch-*`/`PROC-*` already stay sibling prefixes rather than one shared one.
 
 **Leave the architecture-domain prefix bare (`LIMIT-*`) and give only the
 language domain a letter (`LLIMIT-*`).** Rejected — see §4 and §5. This is
@@ -275,9 +271,19 @@ what an earlier revision of this ADR did. Disambiguation only requires the
 two forms to differ, and a bare-plus-prefixed pair achieves that, but it
 also reads as architecture being the default domain and language the
 exception, which isn't true — neither domain owns the concept more than
-the other. `ALIMIT-*`/`LLIMIT-*` says so directly: the same single-letter
-scheme applied to both sides, not one side spelled out and one left
-implicit.
+the other.
+
+**Use a shared base word with a domain letter on each side
+(`ALIMIT-*`/`LLIMIT-*`).** This was this ADR's next decision after the
+entry directly above, then itself reversed — see §5. It fixed the
+bare-vs-lettered asymmetry, but a shared word still had to describe two
+not-quite-identical concepts (architecture's boundaries and compromises vs.
+language's specification gaps), and `ALIMIT`/`LLIMIT` read less naturally
+than either domain's own word for its own concept. `LIMIT-*`/`GAP-*` — a
+distinct, individually accurate word per domain — fits both better and
+needs no domain-letter mechanism, or an aside explaining that `LLIMIT`'s
+doubled `L` isn't a typo, to stay unambiguous: the two words already don't
+collide on their own.
 
 **Keep the `DEBT-*` name now that the record covers more than technical
 debt.** Rejected — see §4. The record already included a performance
@@ -286,8 +292,9 @@ compromise alongside cases that are debt in the strict sense; `debt`
 implies a shortcut taken now with intent to repay, which doesn't describe
 a boundary accepted indefinitely with no repayment plan. `limitation` is
 the term this ADR's own prose already used throughout to describe the
-concept; the ID prefix and the reserved sibling (`LDEBT-*` → `LLIMIT-*`)
-now match it.
+concept. The reserved sibling (`LDEBT-*`) was renamed in step at the time,
+though it ultimately settled on a different word (`GAP-*`, §5) rather than
+sharing this one.
 
 **Keep `ARCH-<AREA>-<NNN>` (`#1154`'s original flat schema) now that
 storage is inline.** Rejected — see §2. The flat form was shaped around
@@ -308,7 +315,7 @@ holdout, not a meaningful distinction.
 ## Consequences
 
 - `#1155` authors stable Architecture Spec sections and the initial
-  `arch-*` and `ALIMIT-*` records.
+  `arch-*` and `LIMIT-*` records.
 - `#1154` and `#1157` provide the marker, fixture-sidecar, and integrity
   checking support described here, generalizing `rfc.py`'s existing
   anchor/backlink/coverage pattern rather than building a parallel
@@ -319,12 +326,15 @@ holdout, not a meaningful distinction.
   system limitations visible without a full Atlas UI.
 - A future data-model registry or reader must consume these records as its
   source. It cannot become a second architecture authority.
-- `LLIMIT-*` is reserved (§5) but not chartered — a future
-  language-limitation ADR inherits the name and the record-shape
-  rationale, and doesn't need to solve either from scratch.
+- `GAP-*` is reserved (§5) but not chartered — a future language-gap ADR
+  inherits the record-shape rationale (separate file, standalone
+  lifecycle), not the name, which was chosen to fit its own domain rather
+  than to match `LIMIT-*`.
 - `DEBT-*`/`LDEBT-*` (this ADR's own earlier names) are retired in favor of
-  `ALIMIT-*`/`LLIMIT-*`; ADR-0056 and the prior-art survey cited the old
-  names and are updated alongside this ADR in the same change.
+  `LIMIT-*` (architecture) and `GAP-*` (the reserved language sibling).
+  ADR-0056 and the prior-art survey cited the intermediate
+  `ALIMIT-*`/`LLIMIT-*` names and are updated alongside this ADR in the
+  same change.
 - `#1154`'s own generic schema note (`<PREFIX>-<AREA>-<NNN>`, e.g.
   `ARCH-RESOLUTION-001`) is amended for the `arch-*` case by §2 — `PROC-*`
   keeps the original flat form for the reason stated there. `#1154` should
