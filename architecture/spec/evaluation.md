@@ -2,6 +2,27 @@
 
 The tree-walk over `ElaboratedModuleGraph` to program output. Owning crate: `metel-interpreter`. Defined in `evaluator/` (`mod.rs`, `call.rs`, `display.rs`, `lvalue.rs`, `pattern.rs`, `type_of.rs`, `builtins.rs`) and `pipeline.rs` (stage orchestration).
 
+## Model
+
+Evaluation executes the elaborated graph with identity-keyed lexical frames. A local
+binding, closure capture, and module-level value share cells only when the earlier
+pipeline deliberately established that relationship; spelling is not a fallback
+semantic key ([environment](#arch.evaluation.requirement-1)). The runtime registry
+extends the same principle to callable and nominal dispatch
+([registry](#arch.evaluation.requirement-2)).
+
+Values retain language-level behaviour rather than exposing evaluator shortcuts:
+built-in sum types use the common enum representation
+([enum values](#arch.evaluation.requirement-3)); receiver modes determine mutation
+visibility ([receivers](#arch.evaluation.requirement-4)); and arrays copy at binding
+boundaries ([array values](#arch.evaluation.requirement-5)). Runtime reconstruction,
+dynamic aspects, and error call stacks are explicit mechanisms, not hidden evaluator
+fallbacks ([generic calls](#arch.evaluation.requirement-7), [dynamic aspects](#arch.evaluation.requirement-8),
+[call stacks](#arch.evaluation.requirement-6)).
+
+<details>
+<summary>Verifiable architecture claims</summary>
+
 ##### Requirement {#arch.evaluation.requirement-1}
 
 `Environment`, the lexical activation-frame model, is keyed entirely by `LocalId`, not by name: a binding is defined and read back by its `LocalId`, two distinct `LocalId`s never alias even for the same source spelling, and no scopes name-map exists as a fallback lookup path. Each module runs in its own isolated `Environment` (ADR-0029, superseding ADR-0019's flat-merge approach), seeded from already-evaluated dependency environments.
@@ -105,6 +126,8 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 | `implements` | `metel-interpreter/src/evaluator/mod.rs` (`RuntimeRegistry`) |
 | `verified by` | general integration-suite coverage (every fixture dispatching a method or calling an overloaded/top-level function exercises this); no unit test directly names the `SymbolId`-keyed dispatch invariant, and `tools/check_no_semantic_name_lookup.py` explicitly excludes `RuntimeRegistry` from its scan |
 | `related` | `arch.resolution.requirement-1`, `tools/check_no_semantic_name_lookup.py` |
+
+</details>
 
 ## Known limitations
 

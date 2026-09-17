@@ -4,6 +4,23 @@ The pipeline stage after module loading (`#parsing`): every top-level declaratio
 
 This is adjacent to, but distinct from, [Resolution](resolution.md) (`arch.resolution.*`, ADR-0054's identity-freeze model in `identity.rs`/`identity/`). That section covers structural `LocalId`/`RefId`/`FieldId`/`VariantId` allocation for lexical bindings and member declarations. This section covers an earlier, different concern: binding a top-level *declaration* to a `SymbolId`, and classifying which *references* point at one. A reader should not conflate the two symbol/identity systems just because both produce stable ids.
 
+## Model
+
+Resolution begins by giving every declaration one canonical `SymbolId`; imports and
+aliases then point back to that declaration rather than minting local replacements
+([declaration identity](#arch.name-resolution.requirement-1)). Import precedence is
+settled before reference classification, so explicit imports and globs behave
+predictably ([import scopes](#arch.name-resolution.requirement-2)).
+
+Reference collection records the identity selected at each use site, while path
+normalization rewrites qualified source paths into forms that type checking can consume
+without redoing import lookup ([references](#arch.name-resolution.requirement-3),
+[normalized paths](#arch.name-resolution.requirement-4)). This is intentionally earlier
+than the structural identity freeze described in the Resolution section.
+
+<details>
+<summary>Verifiable architecture claims</summary>
+
 ##### Requirement {#arch.name-resolution.requirement-1}
 
 Every top-level declaration is assigned a `SymbolId` from one canonical table (`SymbolTable`), not a private per-call counter. Builtin `std::core` types and aspects are pre-seeded at fixed, well-known `SYM_TYPE_*`/`SYM_ASPECT_*` constants (so runtime impl-seeding can register builtin behavior under those same ids); user declarations are allocated starting at `USER_SYM_START`; a separately-reserved range (`OVERLOAD_SYM_START`) exists for overload-synthesized symbols. The same declaration always maps to the same `SymbolId` regardless of which module imports it, what local alias it's imported under, or the order modules were resolved in.
@@ -55,6 +72,8 @@ Multi-segment qualified paths (`Expr::Path`, e.g. `math::sin`, `self::Foo`) rewr
 | `implements` | `metel-frontend/src/path_normalizer.rs` (`NormalizedModuleGraph`, `normalize`) |
 | `verified by` | `metel-frontend/src/path_normalizer.rs::glob_imported_qualified_call_carries_a_symbol_id`, `::explicitly_imported_qualified_call_carries_the_same_symbol_id`, `::self_qualified_call_carries_a_symbol_id` |
 | `related` | ADR-0021, ADR-0031 |
+
+</details>
 
 ## Known limitations
 

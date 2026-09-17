@@ -4,6 +4,23 @@ This section is the Architecture Spec's first content, per [ADR-0055](../decisio
 
 Owning crate: `metel-frontend`. The model is defined in `identity.rs` and `identity/` (`allocate.rs`, `lexical_path.rs`, `member.rs`, `position.rs`), and consumed by `name_resolver.rs`, `reference_resolver.rs`, `typed_ast/`, and every later pipeline stage.
 
+## Model
+
+The resolution freeze separates source spelling from durable semantic identity. Every
+reference is total—local or global—and later stages consume that result rather than
+looking the spelling up again ([frozen references](#arch.resolution.requirement-1)).
+Lexical bindings and uses receive structural identities that survive unrelated edits
+([lexical identity](#arch.resolution.requirement-2)); fields and variants receive the
+same treatment at the declaration level ([member identity](#arch.resolution.requirement-3)).
+
+Editor lookup is intentionally different. A position index maps an ephemeral parsed
+snapshot back to these identities, but position never becomes a semantic key
+([position isolation](#arch.resolution.requirement-4)). This distinction lets tools be
+responsive without making formatting alter program meaning.
+
+<details>
+<summary>Verifiable architecture claims</summary>
+
 ##### Requirement {#arch.resolution.requirement-1}
 
 After inference has solved a body and the frontend has frozen its resolution, no later phase performs semantic lookup keyed by source spelling — every meaning (expression, type, member, field, method, or runtime binding) is instead looked up by a stable identity the frontend already assigned. Every value reference in a resolved body has a *total* `Resolution` (`Global(SymbolId)` or `Local(LocalId)`); there is no silent third case for "unresolved."
@@ -55,6 +72,8 @@ Source-position lookup (`PositionIndex`) is the one structure permitted to be ke
 | `implements` | `metel-frontend/src/identity/position.rs` (`PositionIndex`) |
 | `verified by` | `tools/check_no_semantic_name_lookup.py` (deliberately exempts `identity::position` as the sanctioned exception, rather than silently missing it) |
 | `related` | ADR-0054 (2026-09-10 amendment) |
+
+</details>
 
 ## Known limitations
 

@@ -2,6 +2,25 @@
 
 The pass that builds the typed IR from `#type-inference`'s results: `typechecker::construction` (~8,050 lines across `typechecker/construction.rs` and `typechecker/construction/{declarations,expressions,calls,patterns,narrowing}.rs`), `typed_ast/` (748 lines, the typed IR itself), and the typechecker's shared support consumed by construction — `registry.rs`, `projections.rs`, `overload.rs`, `conversions.rs`, `object_safety.rs`, `handoff.rs` (~3,500 lines). ~12,300 lines total. Owning crate: `metel-frontend`. This section consumes `#type-inference`'s output; it does not re-derive it.
 
+## Model
+
+Construction turns solved facts into the typed program consumed by move checking,
+elaboration, and evaluation. It processes modules in dependency order and carries
+their exported schemes forward ([module handoff](#arch.type-construction.requirement-1)).
+Where earlier stages resolved an identity, construction preserves it on typed nodes
+instead of replacing it with another name lookup ([identity stamping](#arch.type-construction.requirement-2)).
+
+It is also the last place to enforce rules whose operands must already be concrete:
+ascriptions disappear after guiding construction ([ascriptions](#arch.type-construction.requirement-6)),
+operator and import diagnostics retain their distinct meanings
+([operators](#arch.type-construction.requirement-7), [visibility](#arch.type-construction.requirement-8)),
+and defaults, overload selections, and generic shape recovery become explicit typed
+facts ([defaults](#arch.type-construction.requirement-9), [overloads](#arch.type-construction.requirement-10),
+[generic reconstruction](#arch.type-construction.requirement-12)).
+
+<details>
+<summary>Verifiable architecture claims</summary>
+
 ##### Requirement {#arch.type-construction.requirement-1}
 
 `check_graph` typechecks a normalized module graph in topological order — dependencies before dependents — running both passes (inference, then construction) per module, and accumulates each module's exported type schemes into a `GlobalExports` structure so a later module can import an earlier module's inferred types without re-inferring them.
@@ -157,6 +176,8 @@ Generic runtime reconstruction recovers nominal type arguments from a struct or 
 | `implements` | `metel-frontend/src/typechecker/mod.rs` (`infer_named_type_args`); `metel-interpreter/src/evaluator/type_of.rs` (`value_to_type`); `metel-interpreter/src/evaluator/call.rs` |
 | `verified by` | general integration-suite coverage of generic method/runtime reconstruction; no focused fixture naming field-based recovery was found |
 | `related` | ADR-0043 |
+
+</details>
 
 ## Known limitations
 
