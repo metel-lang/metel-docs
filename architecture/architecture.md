@@ -11,7 +11,16 @@
 > implementation and verifying evidence. Sections so far:
 > [Resolution](spec/resolution.md) (`metel-core#1155`, identity),
 > [Module Loading & Parsing](spec/parsing.md) (`metel-core#1164`),
-> [Name & Reference Resolution](spec/name-resolution.md) (`metel-core#1165`).
+> [Name & Reference Resolution](spec/name-resolution.md) (`metel-core#1165`),
+> [Coherence](spec/coherence.md) (`metel-core#1166`),
+> [Move Check](spec/move-check.md) (`metel-core#1167`),
+> [Elaboration](spec/elaboration.md) (`metel-core#1168`),
+> [Evaluation](spec/evaluation.md) (`metel-core#1169`),
+> [Type Inference](spec/type-inference.md) (`metel-core#1170`),
+> [Type Construction](spec/type-construction.md) (`metel-core#1171`).
+> Every one of `#1155`'s eight children (`#1164`–`#1171`) now has a
+> published section, closing that parent tracking issue. Next in the
+> chain: `#1161` (extracting `LIMIT-*` records from the ADR corpus).
 
 ## Pipeline
 
