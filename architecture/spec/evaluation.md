@@ -41,6 +41,58 @@ Method dispatch preserves the receiver mode carried by the typed AST. Value rece
 | `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/evaluator/structs/67_receiver_references`, `68_receiver_all_forms`, `69_nested_field_mut_receiver`, `100_value_receiver_keeps_value_semantics`, `metel-interpreter/tests/integration/sources/evaluator/aspects/93_dyn_aspect_mutable_receiver_dispatch` |
 | `related` | ADR-0036, RFC-0044 |
 
+##### Requirement {#arch.evaluation.requirement-5}
+
+Array values use value semantics at evaluator binding and assignment boundaries: `Environment::define` and `Environment::set` deep-clone their stored value, recursively cloning arrays and nested aggregate contents rather than allowing an ordinary assignment to create a mutable array alias.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-interpreter` |
+| `specified by` | `#evaluation` |
+| `implements` | `metel-interpreter/src/evaluator/mod.rs` (`deep_clone_value`, `Environment::define`, `Environment::set`) |
+| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/evaluator/types/10_array`, `metel-interpreter/tests/integration/sources/evaluator/closures/73_closure_direct_assign_no_outer_effect` |
+| `related` | ADR-0007 |
+
+##### Requirement {#arch.evaluation.requirement-6}
+
+The evaluator maintains call frames in thread-local storage. Call entry pushes its function name and source call-site, normal and error exits pop it, and diagnostic construction reads the resulting stack without adding a stack parameter through every evaluation helper.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-interpreter` |
+| `specified by` | `#evaluation` |
+| `implements` | `metel-interpreter/src/evaluator/mod.rs` (`CALL_STACK`, `push_call_frame`, `pop_call_frame`, `call_stack`) |
+| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/evaluator/functions/neg_14_stack_single_frame`, `neg_15_stack_outer_frame`, `neg_16_stack_deep_chain`, `neg_17_stack_recursive`, `neg_18_stack_closure_frame` |
+| `related` | ADR-0008 |
+
+##### Requirement {#arch.evaluation.requirement-7}
+
+Generic functions and let-polymorphic closures retain an untyped body plus typechecking context at runtime. A call reconstructs the body with the call-site types before evaluation, rather than storing one incorrectly monomorphic typed body for all instantiations.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-interpreter`, `metel-frontend` |
+| `specified by` | `#evaluation` |
+| `implements` | `metel-interpreter/src/evaluator/mod.rs` (`ClosureBody::Untyped`, `ClosureValue`); `metel-interpreter/src/evaluator/call.rs`; `metel-frontend/src/typechecker/construction.rs` |
+| `verified by` | general integration-suite coverage of generic functions and closures; no focused runtime-reconstruction unit test was found |
+| `related` | ADR-0010, ADR-0011, `LIMIT-EVALUATION-001` |
+
+##### Requirement {#arch.evaluation.requirement-8}
+
+`dyn Aspect` evaluation uses an explicit `Value::DynAspect` wrapper containing the erased value and the already-resolved concrete type and principal-aspect identities. Typed `DynCoerce` nodes introduce the wrapper at coercion sites; runtime method dispatch reuses the type-keyed registry while `value_to_type` rebuilds the dynamic type from wrapper metadata without exposing the contained concrete value.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-interpreter`, `metel-frontend` |
+| `specified by` | `#evaluation` |
+| `implements` | `metel-interpreter/src/evaluator/mod.rs` (`Value::DynAspect`, `TypedExpr::DynCoerce`, `RuntimeRegistry`); `metel-interpreter/src/evaluator/type_of.rs`; `metel-frontend/src/typechecker/object_safety.rs` |
+| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/evaluator/aspects/90_dyn_aspect_owned_coercion_and_dispatch`, `92_dyn_aspect_multiple_concrete_types_dispatch_independently`, `93_dyn_aspect_mutable_receiver_dispatch`, `96_dyn_aspect_list_heterogeneous_collection` |
+| `related` | ADR-0053, RFC-0008 |
+
 ##### Requirement {#arch.evaluation.requirement-2}
 
 `RuntimeRegistry` dispatches struct/enum type entries and overloaded/top-level function values (`symbol_values`) by stable `SymbolId`, not by re-deriving a name lookup at call time — the runtime-side counterpart of `arch.resolution.requirement-1`'s frozen-identity invariant. Two parts remain genuinely name-keyed by design: `type_ids` (the single surface-name→`SymbolId` translation point for sites that only have a name, e.g. `List::new`, and never had an id threaded to them) and `pattern_methods` (structural, pattern-dispatched method names for receivers like arrays that carry no `type_id`). This is not full coverage of the no-semantic-lookup invariant — `tools/check_no_semantic_name_lookup.py`'s own docstring names `RuntimeRegistry` as "a separate, adjacent concern with its own nuances... not yet brought under this check," i.e. the checker itself documents the gap rather than silently missing it.

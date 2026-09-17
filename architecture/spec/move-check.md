@@ -28,6 +28,19 @@ Places (the syntactic locations a program can name — a binding root plus a pat
 | `verified by` | exercised transitively by every move-check unit test and fixture above (no dedicated `place.rs`-only test suite exists; its own module doc comment states the design rationale directly) |
 | `related` | RFC-0071 §9b, ADR-0035 (`TypedPlace` for assignment targets), ADR-0045 |
 
+##### Requirement {#arch.move-check.requirement-3}
+
+Closure capture legality is enforced even while the general move-check gate remains opt-in: construction validates capture lists and closure multiplicity/mutation qualifiers, rejecting unlisted non-`Copy` captures (`T0026`), consuming captures without `once` (`T0027`), mutating captures without `var` (`T0028`), and calls to mutating closures through shared access (`T0029`). The ordinary move checker reuses the same closure and place concepts when its wider gate is enabled.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-frontend`, `metel-interpreter` |
+| `specified by` | `#move-check` |
+| `implements` | `metel-frontend/src/typechecker/construction/expressions.rs` (`verify_closure_capture_list`); `metel-frontend/src/typechecker/construction/calls.rs`; `metel-frontend/src/move_check/mod.rs` |
+| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_copy_closure_when_all_captures_copy`, `v0_13_0_copy_var_closure_diverges`, `v0_13_0_neg_mutating_closure_not_sync`, `v0_13_0_x_mutating_closure_via_written_var_fn_param` |
+| `related` | ADR-0052, RFC-0050, RFC-0134, RFC-0153 |
+
 ## Known limitations
 
 - [`LIMIT-MOVE-CHECK-001`](../limitations/limit-move-check-001.md) — closure move-check is always-on while general move-check stays opt-in (a documented temporary asymmetry).

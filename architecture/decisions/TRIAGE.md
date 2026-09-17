@@ -86,7 +86,7 @@ Status legend: **C** current, **S→X** superseded by X, **H** historical, **—
 | adr-0017 | Operand Type Validation (T0005) in Pass 2 | C | type-construction |
 | adr-0018 | `None` Literal Not a Keyword | C | parsing |
 | adr-0019 | Flat Module Merge for Typechecker | **S→adr-0029** | evaluation |
-| adr-0020 | Qualified Path Last-Segment Fallback | C | name-resolution |
+| adr-0020 | Qualified Path Last-Segment Fallback | H — its flat-merge fallback rationale is replaced by resolved-name/path-normalization identity flow | name-resolution |
 | adr-0021 | Path Normalization Pre-Pass | C | name-resolution (now cited — `arch.name-resolution.requirement-4`) |
 | adr-0022 | `check_graph` `GlobalExports` Accumulator | C | type-construction (already cited) |
 | adr-0023 | Module Paths Are Hierarchical | C | parsing (now cited — `arch.parsing.requirement-1`) |
@@ -131,10 +131,11 @@ Status legend: **C** current, **S→X** superseded by X, **H** historical, **—
   each still using a plain `**Status:**` header instead of YAML frontmatter).
   That's real, bounded, mechanical work — 20-some individual file edits — left
   for a follow-up rather than done speculatively here.
-- The current, section-mapped ADRs are reviewed and represented by the
-  requirements in `architecture/spec/`; ADR-0013 was corrected to historical
-  during that review because current source no longer has its flat
-  string-keyed method environment.
+- Every current, section-mapped ADR has been re-read against its section and
+  is represented by `architecture/spec/` requirements. Two stale rows were
+  corrected during that review: ADR-0013's flat string-keyed method
+  environment and ADR-0020's flat-merge last-segment fallback have both been
+  replaced by the current resolved-identity flow.
 - Nine ADRs (adr-0004/0048/0055/0056 foundational; adr-0003 language-feature
   scope; adr-0040 test infra; adr-0049/0050/0051 docs tooling) intentionally
   have no spec section — they're current and real, just outside what the
