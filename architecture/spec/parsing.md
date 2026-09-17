@@ -41,6 +41,45 @@ A single file parses through one PEG grammar (`grammar.pest`, driven by `pest`/`
 | `verified by` | `metel-frontend/src/parser/mod.rs::multi_segment_path_carries_one_span_per_segment`, `::keyword_root_path_spans_cover_the_root_segment`, `::two_segment_path_in_call_position_keeps_segment_spans` (span-tracking specifically); general grammar correctness is a precondition of the full integration suite (1,183 `.mtl` fixtures under `metel-interpreter/tests/integration/sources/`, every one of which must parse before its actual assertion runs) rather than a dedicated parser-correctness suite of its own |
 | `related` | `#229` |
 
+##### Requirement {#arch.parsing.requirement-4}
+
+Control flow has one expression-shaped representation through the parser and AST: `if`, `match`, and `loop` can be a block tail or an expression statement, with statement position discarding the expression value rather than introducing parallel statement-only AST forms. An `if` without `else` is `Unit`-typed, and an `else if` is represented as a nested `if` in a block rather than a separate chain node.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-frontend` |
+| `specified by` | `#parsing` |
+| `implements` | `metel-frontend/src/grammar.pest` (`block_item`, `block_expr_stmt`, expression rules); `metel-frontend/src/parser/mod.rs` (`parse_if_expr`, `parse_block`); `metel-frontend/src/ast/mod.rs` (`Expr::If`, `Expr::Match`, `Expr::Loop`) |
+| `verified by` | general integration-suite coverage of control-flow expressions; no dedicated current parser unit test naming the statement-versus-tail representation was found |
+| `related` | ADR-0005 |
+
+##### Requirement {#arch.parsing.requirement-5}
+
+Grammar ordering preserves identifier-prefix and `None`-literal disambiguation: a literal token is bounded so `Perhaps::None` and a user variant named `None` remain paths, while standalone `None` parses as the literal; keyword-prefix identifiers are not consumed by a keyword alternative. These are grammar-order invariants, not typechecker rewrites.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-frontend` |
+| `specified by` | `#parsing` |
+| `implements` | `metel-frontend/src/grammar.pest` (`none_lit`, `primary_expr`, `pattern`, keyword/identifier alternatives) |
+| `verified by` | general integration-suite coverage of enum paths, literals, and identifiers; no dedicated current parser unit test naming each ordering invariant was found |
+| `related` | ADR-0015, ADR-0018 |
+
+##### Requirement {#arch.parsing.requirement-6}
+
+String interpolation is lowered while parsing into ordinary expression nodes: each hole is parsed as an expression and converted to a `to_string` method call, and literal segments are joined with `BinOp::Plus`. Downstream passes therefore see no interpolation-specific AST variant or dispatch path.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | `metel-frontend` |
+| `specified by` | `#parsing` |
+| `implements` | `metel-frontend/src/parser/mod.rs` (`parse_string_interpolation`); `metel-frontend/src/ast/mod.rs` (`Expr::MethodCall`, `Expr::Binary`) |
+| `verified by` | general integration-suite coverage of interpolation; no dedicated parser unit test naming the lowering shape was found |
+| `related` | ADR-0033 |
+
 ## Known limitations
 
 None recorded yet for this section — `#1161` (extracting `LIMIT-*` records from the existing ADR corpus) runs next in this chain and will file any that apply here.
