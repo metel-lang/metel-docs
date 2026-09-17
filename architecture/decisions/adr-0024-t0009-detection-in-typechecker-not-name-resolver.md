@@ -1,9 +1,9 @@
-# ADR-0024: T0009 Visibility Enforcement Lives in the Typechecker, Not the Name Resolver
-
-**Status:** Accepted
-**Date:** 2026-05-28
-**Tracking issues:** #483, #500
-
+---
+id: adr-0024
+title: "T0009 Visibility Enforcement Lives in the Typechecker, Not the Name Resolver"
+date: '2026-05-28'
+status: accepted
+implements: "metel-core#483, #500"
 ---
 
 ## Context

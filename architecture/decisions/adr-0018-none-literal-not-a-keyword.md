@@ -1,10 +1,14 @@
-# ADR-0018: `None` is not in the keyword list
-
-**Status:** Accepted
-**Sprint:** 8 (`sprint/8`)
-**Issue:** #462
-
 ---
+id: adr-0018
+title: "`None` is not in the keyword list"
+date: '2026-08-23'
+status: accepted
+implements: "metel-core#462"
+---
+
+> Sprint 8 (`sprint/8`). `date:` above is this file's earliest commit in
+> the current repo history, not necessarily original authorship — see
+> `adr-0016`'s note for why.
 
 ## Context
 

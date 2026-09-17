@@ -15,7 +15,7 @@ below), and every ADR cited in this triage as feeding a specific spec-section
 `related` field was cross-checked against that section's current text. This is
 not a line-by-line re-read of all 56 ADRs' full bodies — treat "current" as
 "nothing found that contradicts it," not as "independently re-verified against
-source the way `arch-*`/`LIMIT-*` records are." Two real, load-bearing
+source the way `arch-*`/`LIMIT-*` records are." Three real, load-bearing
 corrections *did* come out of this pass (below) — the method isn't just
 mechanical box-ticking.
 
@@ -43,6 +43,17 @@ concern. Renamed to `LIMIT-TYPE-INFERENCE-001` and moved to `#type-inference`
 (new `arch.type-inference.requirement-3`) rather than left misfiled under
 `#type-construction` for consistency with a citation it happened to share.
 
+**`adr-0006`** (Evaluator Runtime Design) carried `status: proposed` --
+clearly stale, the evaluator exists -- but flipping it to `accepted`
+while doing the frontmatter backfill (`#1172`) would have overstated it:
+reading the file's actual content while touching it found that its
+Question 3 (environment structure) and Question 4 (closure capture)
+recommendations are contradicted by real, later work (the `LocalId`-keyed
+`Environment`, ADR-0054/`#1052`; the v0.13.0 closure cluster). Marked
+`status: historical` instead, with an in-place amendment explaining which
+parts, not a blind status-field edit. `TRIAGE.md`'s own row for `adr-0006`
+is updated to match.
+
 ## Supersession chains (verified by corpus-wide grep, not assumed)
 
 - `adr-0016` → superseded by `adr-0028`
@@ -61,7 +72,7 @@ Status legend: **C** current, **S→X** superseded by X, **H** historical, **—
 | adr-0003 | v0.1 Feature Set Scope | H | — (language feature scope, not architecture) |
 | adr-0004 | Interpreter Architecture | C | — (foundational; already `architecture.md`'s own cited rationale) |
 | adr-0005 | if-Expression Grammar and AST Unification | C | parsing |
-| adr-0006 | Evaluator Runtime Design | C, but frontmatter status is stale (`proposed` — the evaluator obviously exists; not corrected in this pass, flagged for whoever next touches this file) | evaluation |
+| adr-0006 | Evaluator Runtime Design | H — `status: historical` (was stale `proposed`; two of its four recommendations are contradicted by real later work, see corrections above) | evaluation |
 | adr-0007 | Array Value Semantics via Deep-Clone at Bind Sites | C | evaluation |
 | adr-0008 | Thread-Local Call Stack for Runtime Error Traces | C | evaluation |
 | adr-0009 | Type Ascription Erased at Construction | C | type-construction |

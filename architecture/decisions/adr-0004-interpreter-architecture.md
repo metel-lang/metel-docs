@@ -1,5 +1,5 @@
 ---
-id: decision-4
+id: adr-0004
 title: "Interpreter Architecture"
 date: '2026-04-04'
 status: accepted

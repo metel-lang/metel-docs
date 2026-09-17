@@ -1,5 +1,5 @@
 ---
-id: decision-3
+id: adr-0003
 title: "v0.1 Feature Set Scope"
 date: '2026-04-04'
 status: accepted

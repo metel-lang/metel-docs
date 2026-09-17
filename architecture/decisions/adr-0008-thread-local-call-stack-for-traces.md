@@ -1,8 +1,8 @@
-# ADR-0008 — Thread-Local Call Stack for Runtime Error Traces
-
-**Date:** 2026-05-23
-**Status:** Accepted
-
+---
+id: adr-0008
+title: "Thread-Local Call Stack for Runtime Error Traces"
+date: '2026-05-23'
+status: accepted
 ---
 
 ## Context

@@ -1,9 +1,9 @@
-# ADR-0011: Let-Polymorphism via mono_env Absence
-
-**Status:** Accepted
-**Date:** 2026-05-25
-**Issue:** #290
-
+---
+id: adr-0011
+title: "Let-Polymorphism via mono_env Absence"
+date: '2026-05-25'
+status: accepted
+implements: "metel-core#290"
 ---
 
 ## Context

@@ -1,10 +1,16 @@
-# ADR-0016: Dedicated Value::Perhaps and Value::Result Variants
-
-**Status:** Superseded by ADR-0028
-**Sprint:** 7 (v0.4.1)
-**Issue:** #429
-
 ---
+id: adr-0016
+title: "Dedicated Value::Perhaps and Value::Result Variants"
+date: '2026-08-23'
+status: superseded by ADR-0028
+implements: "metel-core#429"
+---
+
+> Sprint 7 (v0.4.1). `date:` above is this file's earliest commit in the
+> current repo history (`git log --diff-filter=A --follow`), not
+> necessarily original authorship -- pre-frontmatter ADRs in this range
+> only stated a sprint, not a calendar date, and no more precise one is
+> verifiable.
 
 ## Context
 

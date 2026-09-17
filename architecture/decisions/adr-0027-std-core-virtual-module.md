@@ -1,5 +1,5 @@
 ---
-id: ADR-0027
+id: adr-0027
 title: std::core as a virtual in-memory module seeded from StdPrelude
 status: superseded by adr-0039
 date: 2026-05-29

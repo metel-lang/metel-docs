@@ -1,8 +1,8 @@
-# ADR-0007 — Array Value Semantics via Deep-Clone at Bind Sites
-
-**Date:** 2026-05-23
-**Status:** Accepted
-
+---
+id: adr-0007
+title: "Array Value Semantics via Deep-Clone at Bind Sites"
+date: '2026-05-23'
+status: accepted
 ---
 
 ## Context

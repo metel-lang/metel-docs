@@ -1,5 +1,5 @@
 ---
-id: decision-13
+id: adr-0013
 title: "Aspect Impl Storage in Flat Environment with Structured String Keys"
 date: '2026-05-25'
 status: accepted

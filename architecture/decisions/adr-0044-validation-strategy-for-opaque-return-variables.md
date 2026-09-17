@@ -1,4 +1,13 @@
-# ADR-0044: Validation Strategy for Opaque Return Variables
+---
+id: adr-0044
+title: "Validation Strategy for Opaque Return Variables"
+date: '2026-08-23'
+status: accepted
+---
+
+> `date:` above is this file's earliest commit in the current repo
+> history, not necessarily original authorship — no sprint/date was
+> ever stated in the file itself, unlike `adr-0016`–`adr-0018`/`adr-0037`.
 
 ## Status
 

@@ -1,9 +1,9 @@
-# ADR-0012: Generic Struct Split-Env in Construction Pass
-
-**Status:** Accepted
-**Date:** 2026-05-25
-**Issue:** #286
-
+---
+id: adr-0012
+title: "Generic Struct Split-Env in Construction Pass"
+date: '2026-05-25'
+status: accepted
+implements: "metel-core#286"
 ---
 
 ## Context

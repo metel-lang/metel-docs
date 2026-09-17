@@ -1,5 +1,5 @@
 ---
-id: ADR-0025
+id: adr-0025
 title: Unified TypeDefinitionRegistry shared across inference and construction passes
 status: accepted
 date: 2026-05-29

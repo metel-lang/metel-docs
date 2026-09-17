@@ -1,10 +1,14 @@
-# ADR-0017: Operand Type Validation (T0005) in Pass 2, Not Pass 1
-
-**Status:** Accepted
-**Sprint:** 7 (v0.4.1)
-**Issue:** #423
-
 ---
+id: adr-0017
+title: "Operand Type Validation (T0005) in Pass 2, Not Pass 1"
+date: '2026-08-23'
+status: accepted
+implements: "metel-core#423"
+---
+
+> Sprint 7 (v0.4.1). `date:` above is this file's earliest commit in the
+> current repo history, not necessarily original authorship — see
+> `adr-0016`'s note for why.
 
 ## Context
 

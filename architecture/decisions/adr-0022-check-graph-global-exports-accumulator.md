@@ -1,9 +1,9 @@
-# ADR-0022: `check_graph` Uses a `GlobalExports` Accumulator
-
-**Status:** Accepted
-**Date:** 2026-05-28
-**Tracking issues:** #481, #492
-
+---
+id: adr-0022
+title: "check_graph Uses a GlobalExports Accumulator"
+date: '2026-05-28'
+status: accepted
+implements: "metel-core#481, #492"
 ---
 
 ## Context
