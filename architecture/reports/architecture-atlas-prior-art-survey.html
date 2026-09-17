@@ -394,15 +394,15 @@
     (shared spec-with-traceability framework), and
     <a href="https://github.com/metel-lang/metel-core/issues/1156">#1156</a>
     (Architecture Atlas) call for a public, generated map from a stable
-    requirement ID (<code>ARCH-RESOLUTION-001</code>) through owning code,
+    requirement ID (<code>arch.resolution.requirement-1</code>) through owning code,
     verifying tests, and prior decisions — and back. This surveys who has
     solved pieces of that problem before, and what each piece is worth
     borrowing before any pixel is drawn.
   </p>
   <div class="meta">
     <span><b>For</b> #1159 · #1154 · #1156 · #1157</span>
-    <span><b>Scope</b> prior art + literature, no mockups yet</span>
-    <span><b>Read next</b> the recommendation table, §5</span>
+    <span><b>Scope</b> prior art, literature, and reuse candidates</span>
+    <span><b>Read next</b> the reuse shortlist, §7</span>
   </div>
 </header>
 
@@ -417,7 +417,8 @@
         <li><a href="#rendering">4 · Rendering &amp; interaction</a></li>
         <li><a href="#recommendations">5 · Recommendations</a></li>
         <li><a href="#buy-build">6 · Buy vs. build</a></li>
-        <li><a href="#open-questions">7 · Open questions</a></li>
+        <li><a href="#reuse-candidates">7 · Reuse candidates</a></li>
+        <li><a href="#open-questions">8 · Open questions</a></li>
         <li><a href="#sources">Sources</a></li>
       </ul>
     </nav>
@@ -487,7 +488,7 @@
     <section id="traceability">
       <h2>2 · Traceability &amp; governance</h2>
       <p class="section-note">
-        The <code>ARCH-*</code>/<code>PROC-*</code> ID scheme — status,
+        The <code>arch-*</code>/<code>PROC-*</code> ID scheme — status,
         owner, implementing paths, verification evidence, forward and
         reverse links — is not a new invention. It's the requirements-
         traceability matrix from safety-critical engineering, worn down to
@@ -511,7 +512,7 @@
           <p>ADRs as small Markdown files with a status field, built into a
           static site by a CLI (<code>log4brains build</code>). Directly
           reusable shape for #1158's ADR triage and for how an
-          <code>ARCH-*</code> requirement file itself should look.</p>
+          <code>arch-*</code> requirement file itself should look.</p>
           <div class="tags"><span class="tag">ADR lifecycle</span><span class="tag">ID scheme</span></div>
           <a class="src" href="https://adr.github.io/adr-tooling/">adr.github.io →</a>
         </article>
@@ -531,7 +532,7 @@
           <p>Consolidates scattered health signals — checks, standards,
           ownership — into one scorecard per component, drillable to the
           specific failing check. The closest working analogue to "which
-          <code>ARCH-*</code> requirements are implemented / partial / lack
+          <code>arch-*</code> requirements are implemented / partial / lack
           evidence" as a single glanceable view.</p>
           <div class="tags"><span class="tag">health view</span><span class="tag">dashboard pattern</span></div>
           <a class="src" href="https://backstage.spotify.com/discover/blog/how-soundcheck-improves-tech-health-and-developer-productivity-at-spotify">backstage.spotify.com →</a>
@@ -540,7 +541,7 @@
 
       <p style="margin-top:1.6rem; font-family:'Inter',sans-serif; font-size:0.8rem; letter-spacing:0.03em; text-transform:uppercase; color:var(--ink-soft);">Specimen — a requirement record in this shape</p>
       <div class="specimen">
-        <span class="req-id">ARCH-RESOLUTION-001</span> — Resolved identity is the semantic boundary
+        <span class="req-id">arch.resolution.requirement-1</span> — Resolved identity is the semantic boundary
         <span class="status-pill implemented"><span class="swatch sw-implemented" style="width:6px;height:6px;"></span>implemented</span>
         <dl>
           <dt>Owner</dt><dd>frontend / resolution</dd>
@@ -549,6 +550,7 @@
           <dt>Related</dt><dd>ADR-0054 · #1047</dd>
         </dl>
       </div>
+      <p style="margin-top:0.6rem; font-family:'Inter',sans-serif; font-size:0.78rem; color:var(--ink-soft);">ID shape and case updated to mirror the Language Spec's own Formal Rule convention (<code>spec.declarations.variables.immutable-bindings.legality-1</code>) rather than a flat, uppercase <code>ARCH-AREA-NNN</code> — see ADR-0055 §2. The path segment after <code>arch.</code> is illustrative; its real depth follows #1155's actual Architecture Spec section structure, not fixed here.</p>
     </section>
 
     <section id="intelligence">
@@ -657,9 +659,10 @@
     <section id="recommendations">
       <h2>5 · Recommendations, by Atlas view</h2>
       <p class="section-note">
-        What each of #1156's five views should borrow, stated as a decision
-        rather than a survey — this is what #1159's mockups should start
-        from.
+        What each Atlas view should borrow, stated as a decision rather than
+        a survey. The first pass named five views; the evolved model adds
+        full Decisions and Limitations registers while keeping Health
+        cross-cutting.
       </p>
       <div class="table-scroll">
         <table class="rec-table">
@@ -675,7 +678,7 @@
             <tr>
               <td class="view-name">Data-model / identity</td>
               <td>Glean (fact schema) + CodeSee (up/downstream)</td>
-              <td>Treat each table/ID (e.g. <code>ResolutionMap</code>) as a fact record — producer, owner, consumers, mutation rule, invariants — and render it as a card with explicit up/down neighbor links, not a free-form graph the reader has to parse cold.</td>
+              <td>Keep each durable model concept as a persistent <code>DATA-*</code> fact record — producer, owner, consumers, mutation rule, invariants, code bindings, and explicit up/down neighbors. Generated code facts validate and enrich the record; they do not replace its stable identity or prose.</td>
             </tr>
             <tr>
               <td class="view-name">Traceability</td>
@@ -685,12 +688,22 @@
             <tr>
               <td class="view-name">Stage details</td>
               <td>arc42 (fixed section template) + C4 Component level</td>
-              <td>One fixed template per stage — API, owned data, allowed dependencies, contract tests, open debt — so every stage page is scannable the same way regardless of who wrote it.</td>
+              <td>One fixed template per stage — API, owned data, allowed dependencies, contract tests, open limitations — so every stage page is scannable the same way regardless of who wrote it.</td>
             </tr>
             <tr>
               <td class="view-name">Health</td>
               <td>Soundcheck (scorecard) + fitness functions (what "health" counts)</td>
               <td>One scorecard: counts of implemented / partial / planned / missing-evidence, drillable straight to the offending requirement — not a prose summary of the same numbers.</td>
+            </tr>
+            <tr>
+              <td class="view-name">Decisions</td>
+              <td>MADR/log4brains (statused docs) + the RFC viewer (record-browser interaction)</td>
+              <td>Render the complete ADR collection, not a cited-only subset: search, status facets, stable deep links, related/successor links, source metadata, and “cited by in this Atlas” reverse indexes. Reuse the RFC viewer’s interaction model while preserving ADR-specific lifecycle vocabulary.</td>
+            </tr>
+            <tr>
+              <td class="view-name">Limitations</td>
+              <td>Soundcheck (actionable health) + requirements traceability</td>
+              <td>Give <code>LIMIT-*</code> records a dedicated viewer with lifecycle, ownership, acceptance, issue/successor-<code>arch-*</code> links, verification evidence, and a reconciliation queue. Health links into this work queue; it does not replace the limitations register.</td>
             </tr>
           </tbody>
         </table>
@@ -713,7 +726,7 @@
           Before #1154 writes a bespoke source-scanner for the module graph
           half of its job, it should confirm whether wrapping one of these
           (or feeding their output into the marker/traceability layer) gets
-          most of the way there. The <code>ARCH-*</code> marker discovery
+          most of the way there. The <code>arch-*</code> marker discovery
           and evidence-checking logic is genuinely novel and has to be
           built regardless — the raw dependency graph underneath it may
           not.
@@ -721,8 +734,131 @@
       </div>
     </section>
 
+    <section id="reuse-candidates">
+      <h2>7 · Reuse survey: build the domain layer, reuse the machinery</h2>
+      <p class="section-note">
+        The Atlas now has an authoritative Architecture Spec, persistent
+        <code>DATA-*</code> facts, full ADR and limitation registers, and generated
+        code facts. No single open-source project supplies all of that.
+        The practical boundary is to own Metel's domain semantics and reuse
+        diagram, indexing, traceability, and site machinery where it is a
+        genuinely better fit than bespoke code.
+      </p>
+      <div class="precedent-grid">
+        <article class="precedent">
+          <div class="name">LikeC4</div>
+          <div class="origin">MIT · architecture-as-code DSL and model API</div>
+          <p>A strong candidate for Context/Container/Component rendering:
+          one source model, arbitrary nested levels, generated interactive
+          views, a CLI, and a programmatic model API. Use it as a generated
+          diagram target from the authoritative Atlas model, not as a second
+          source of truth for <code>arch-*</code>, <code>DATA-*</code>, or
+          <code>LIMIT-*</code>.</p>
+          <div class="tags"><span class="tag">adopt / spike</span><span class="tag">diagram renderer</span></div>
+          <a class="src" href="https://likec4.dev/tooling/model-api/">likec4.dev →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">FINOS CALM</div>
+          <div class="origin">Apache-2.0 · Common Architecture Language Model</div>
+          <p>A machine-readable, version-controlled architecture-model
+          specification with CLI, visualization, and validation work. It is
+          worth evaluating as an interchange or export target for topology
+          and controls, not yet as the Atlas's primary representation: it
+          does not model Metel's language rules, requirement evidence, or
+          limitation reconciliation.</p>
+          <div class="tags"><span class="tag">evaluate</span><span class="tag">interoperability</span></div>
+          <a class="src" href="https://calm.finos.org/">calm.finos.org →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">StrictDoc / Sphinx-Needs</div>
+          <div class="origin">open-source requirements and traceability tooling</div>
+          <p>Both model linked, statused engineering objects and generate
+          traceability views. StrictDoc additionally offers custom fields,
+          source traceability, and static exports; Sphinx-Needs provides a
+          generic linked-object/reporting model. They are high-value checker
+          and schema precedents, but adopting either wholesale would add a
+          parallel documentation stack beside MDX/Docusaurus.</p>
+          <div class="tags"><span class="tag">borrow semantics</span><span class="tag">time-boxed spike</span></div>
+          <a class="src" href="https://strictdoc.readthedocs.io/en/stable/stable/docs/strictdoc_01_user_guide-TRACE.html">strictdoc →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">Frictionless Data Package</div>
+          <div class="origin">open-source declarative tabular data validation</div>
+          <p>A close fit for the registry's baseline relational integrity:
+          checked-in tables can declare primary keys, foreign keys, enums,
+          and required fields, then validate through a CLI and produce an ER
+          diagram. It can reject dangling <code>arch-*</code>,
+          <code>DATA-*</code>, <code>LIMIT-*</code>, ADR, and evidence links
+          without a bespoke validator.</p>
+          <div class="tags"><span class="tag">adopt / evaluate</span><span class="tag">referential integrity</span></div>
+          <a class="src" href="https://framework.frictionlessdata.io/docs/console/overview">framework.frictionlessdata.io →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">Soufflé Datalog</div>
+          <div class="origin">open-source declarative relation-analysis engine</div>
+          <p>The candidate rule engine once validation goes beyond foreign
+          keys: reverse traceability, missing evidence, successor paths,
+          and limitation reconciliation are naturally expressed as relations and
+          rules, not Python control flow. Soufflé reads facts from flat files
+          or SQLite and emits derived relations such as the Health and
+          reconciliation queues.</p>
+          <div class="tags"><span class="tag">adopt / evaluate</span><span class="tag">declarative policy</span></div>
+          <a class="src" href="https://souffle-lang.github.io/tutorial">souffle-lang.github.io →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">OpenFastTrace</div>
+          <div class="origin">GPL-3.0 · Markdown-to-source tracing suite</div>
+          <p>Close to the proposed marker/checker path: it traces tagged
+          Markdown specification items into source and reports coverage in
+          CI. It may be useful as a standalone checker comparison or spike;
+          its Java runtime, GPL license, and separate report UI make it a
+          poor replacement for the Atlas viewer without a deliberate license
+          review.</p>
+          <div class="tags"><span class="tag">evaluate carefully</span><span class="tag">checker</span></div>
+          <a class="src" href="https://github.com/itsallcode/openfasttrace">github.com/itsallcode/openfasttrace →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">SCIP / Glean</div>
+          <div class="origin">open code-intelligence index formats and fact store</div>
+          <p>Suitable for the generated code-fact layer: symbol locations,
+          references, call relationships, and type relationships can power
+          navigation and validate <code>DATA-*</code> bindings. Glean and
+          Kythe are operationally substantial; SCIP is the lighter
+          interoperability seam to assess before building a custom index.</p>
+          <div class="tags"><span class="tag">reuse / evaluate</span><span class="tag">code facts</span></div>
+          <a class="src" href="https://scip-code.org/">scip-code.org →</a>
+        </article>
+        <article class="precedent">
+          <div class="name">Backstage catalog</div>
+          <div class="origin">open-source entity catalog and relationship graph</div>
+          <p>A useful model for stable entities, typed relations, ownership,
+          filters, and graph traversal. Do not adopt the full developer
+          portal for this scope: its catalog is designed to integrate and
+          cache external sources, while the Architecture Spec and registries
+          must remain the Atlas's versioned authority.</p>
+          <div class="tags"><span class="tag">borrow interaction</span><span class="tag">do not adopt whole</span></div>
+          <a class="src" href="https://backstage.io/docs/software-catalog/generated-index/">backstage.io →</a>
+        </article>
+      </div>
+      <div class="callout">
+        <span class="label">Recommended composition</span>
+        <p>Keep the Architecture Spec plus <code>arch-*</code>,
+        <code>DATA-*</code>, and <code>LIMIT-*</code> registries as the
+        versioned source of truth. Normalize their cross-record data into a
+        declarative package: entities, typed links, code bindings, evidence,
+        limitation resolutions, and issue snapshots. Use a relational schema and
+        foreign-key validation for baseline integrity; use Datalog only for
+        derived policies such as reverse traceability, Health, and limitation
+        reconciliation. Generate Atlas JSON through a Docusaurus plugin,
+        reuse cargo tooling and possibly SCIP for code facts, and run a short
+        LikeC4 spike for topology rendering. Treat CALM, StrictDoc,
+        Sphinx-Needs, and OpenFastTrace as interoperability or checker
+        evaluations rather than migrations by default.</p>
+      </div>
+    </section>
+
     <section id="open-questions">
-      <h2>7 · Carried into the mockups</h2>
+      <h2>8 · Carried into the mockups</h2>
       <p class="section-note">Not answered here — #1159's design pass should settle these before implementation, per its own scope note on reuse.</p>
       <div class="questions">
         <div class="question"><span class="qmark">?</span><span>Do the Architecture Atlas and the future Process Atlas share one visual language for a "requirement card," or does <code>PROC-*</code> get its own treatment once #1142 is scoped? #1159 flagged this but didn't resolve it.</span></div>
@@ -752,8 +888,18 @@
     <li><span class="src-name">cargo-depgraph</span><span class="src-url">github.com/jplatte/cargo-depgraph</span></li>
     <li><span class="src-name">Redoc</span><span class="src-url">redocly.com/docs/redoc</span></li>
     <li><span class="src-name">Mermaid</span><span class="src-url">github.com/mermaid-js/mermaid</span></li>
+    <li><span class="src-name">LikeC4</span><span class="src-url">likec4.dev · github.com/likec4/likec4</span></li>
+    <li><span class="src-name">FINOS CALM</span><span class="src-url">calm.finos.org · github.com/finos/architecture-as-code</span></li>
+    <li><span class="src-name">StrictDoc traceability</span><span class="src-url">strictdoc.readthedocs.io</span></li>
+    <li><span class="src-name">Sphinx-Needs</span><span class="src-url">sphinx-needs.readthedocs.io</span></li>
+    <li><span class="src-name">Frictionless Data Package</span><span class="src-url">framework.frictionlessdata.io</span></li>
+    <li><span class="src-name">Soufflé Datalog</span><span class="src-url">souffle-lang.github.io</span></li>
+    <li><span class="src-name">OpenFastTrace</span><span class="src-url">github.com/itsallcode/openfasttrace</span></li>
+    <li><span class="src-name">SCIP</span><span class="src-url">scip-code.org</span></li>
+    <li><span class="src-name">Backstage Software Catalog</span><span class="src-url">backstage.io/docs/software-catalog</span></li>
+    <li><span class="src-name">Docusaurus plugin architecture</span><span class="src-url">docusaurus.io/docs/advanced/plugins</span></li>
     <li><span class="src-name">Living Documentation, Martraire (2019)</span><span class="src-url">O'Reilly / Leanpub</span></li>
     <li><span class="src-name">Building Evolutionary Architectures, Ford/Parsons/Kua (2017)</span><span class="src-url">evolutionaryarchitecture.com</span></li>
   </ul>
-  <p style="margin-top:1.4rem;">Compiled for metel-core #1159 · 2026-09-14</p>
+  <p style="margin-top:1.4rem;">Compiled for metel-core #1159 · 2026-09-14 · reuse survey extended 2026-09-16</p>
 </footer>
