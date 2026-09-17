@@ -8,8 +8,9 @@
 > This page is the informal overview. [ADR-0055](decisions/adr-0055-architecture-integrity-records.md)
 > establishes `spec/` as the versioned, checkable Architecture Spec — stable
 > sections with inline-anchored `arch-*` requirements, each naming its
-> implementation and verifying evidence. First section:
-> [Resolution](spec/resolution.md) (`metel-core#1155`).
+> implementation and verifying evidence. Sections so far:
+> [Resolution](spec/resolution.md) (`metel-core#1155`, identity),
+> [Module Loading & Parsing](spec/parsing.md) (`metel-core#1164`).
 
 ## Pipeline
 
