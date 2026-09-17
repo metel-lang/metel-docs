@@ -4,9 +4,15 @@
 Validates `arch-*` records in `architecture/spec/*.md` and `LIMIT-*` records
 in `architecture/limitations/*.md`: ID well-formedness and uniqueness,
 cross-reference resolution (`specified by` / `scope` anchors, `affects`
-targets), required-field presence, and the disposition rules ADR-0055 §4
+targets), required-field presence, the disposition rules ADR-0055 §4
 states in prose (an `accepted` limitation needs a review date; a `resolved`
-one needs real exit evidence, not a placeholder).
+one needs real exit evidence, not a placeholder), and that an `arch-*`
+requirement's `related` field never cites a since-superseded ADR (reads
+`architecture/decisions/*.md`'s own `status:`/`supersedes:` fields, both
+live frontmatter shapes in the corpus, to know which ADRs are superseded
+and by what) -- `LIMIT-*`'s `discovered_by` is deliberately exempt from this
+one check, since citing the ADR that originally documented a now-resolved
+limitation is expected even after that ADR is itself superseded.
 
 This generalizes `rfcs/tools/rfc.py`'s existing anchor/backlink/coverage
 machinery rather than introducing new tooling -- per ADR-0055's explicit
@@ -38,6 +44,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SPEC_DIR = REPO_ROOT / "architecture" / "spec"
 LIMITATIONS_DIR = REPO_ROOT / "architecture" / "limitations"
+DECISIONS_DIR = REPO_ROOT / "architecture" / "decisions"
 
 ARCH_ID_RE = re.compile(r"^arch\.[a-z0-9][a-z0-9.\-]*\.requirement-\d+$")
 LIMIT_ID_RE = re.compile(r"^LIMIT-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d{3}$")
@@ -56,6 +63,13 @@ FRONTMATTER_KEY_RE = re.compile(
     r'^([a-z_]+):\s*(?:"((?:[^"\\]|\\.)*)"|(\S.*?)|)\s*$', re.MULTILINE
 )
 AFFECTS_ITEM_RE = re.compile(r"^-\s+`([A-Za-z0-9.\-]+)`", re.MULTILINE)
+
+ADR_REF_RE = re.compile(r"\bADR-(\d{4})\b", re.IGNORECASE)
+# Two live formats in the corpus: YAML `status: superseded by ADR-0029` /
+# `supersedes: adr-0019`, and pre-frontmatter `**Status:** Superseded by ADR-0028`.
+YAML_SUPERSEDED_BY_RE = re.compile(r"^status:\s*superseded by\s+(?:ADR-|adr-)?(\d{4})", re.MULTILINE | re.IGNORECASE)
+YAML_SUPERSEDES_RE = re.compile(r"^supersedes:\s*(?:ADR-|adr-)?(\d{4})", re.MULTILINE | re.IGNORECASE)
+PLAIN_SUPERSEDED_BY_RE = re.compile(r"^\*\*Status:\*\*\s*Superseded by\s+ADR-(\d{4})", re.MULTILINE | re.IGNORECASE)
 
 
 class Finding:
@@ -125,6 +139,34 @@ def parse_limitation_file(path: Path):
     return fm, affects, resolution_text
 
 
+def load_adr_supersessions(decisions_dir: Path) -> dict:
+    """{'0027': '0039', ...} -- normalized 4-digit ADR number -> the ADR that
+    supersedes it, if known (empty string if superseded but no replacement
+    was stated). Reads both live frontmatter shapes in the corpus (YAML
+    `status:`/`supersedes:`, and pre-frontmatter `**Status:**`), and cross-fills
+    from whichever side states the relationship -- a superseded ADR does not
+    always say so about itself (see architecture/decisions/TRIAGE.md)."""
+    superseded: dict = {}
+    if not decisions_dir.is_dir():
+        return superseded
+
+    for path in sorted(decisions_dir.glob("adr-*.md")):
+        m = re.match(r"adr-(\d{4})", path.name)
+        if not m:
+            continue
+        own_number = m.group(1)
+        text = path.read_text()
+
+        by_match = YAML_SUPERSEDED_BY_RE.search(text) or PLAIN_SUPERSEDED_BY_RE.search(text)
+        if by_match:
+            superseded.setdefault(own_number, by_match.group(1))
+
+        for m2 in YAML_SUPERSEDES_RE.finditer(text):
+            superseded.setdefault(m2.group(1), own_number)
+
+    return superseded
+
+
 def resolve_scope_anchor(scope: str, all_section_ids_by_file: dict, repo_root: Path) -> bool:
     if "#" not in scope:
         return False
@@ -135,10 +177,17 @@ def resolve_scope_anchor(scope: str, all_section_ids_by_file: dict, repo_root: P
     return anchor in all_section_ids_by_file.get(candidate.resolve(), set())
 
 
-def run_checks(repo_root: Path = REPO_ROOT, spec_dir: Path = None, limitations_dir: Path = None) -> list[Finding]:
+def run_checks(
+    repo_root: Path = REPO_ROOT,
+    spec_dir: Path = None,
+    limitations_dir: Path = None,
+    decisions_dir: Path = None,
+) -> list[Finding]:
     spec_dir = spec_dir or (repo_root / "architecture" / "spec")
     limitations_dir = limitations_dir or (repo_root / "architecture" / "limitations")
+    decisions_dir = decisions_dir or (repo_root / "architecture" / "decisions")
     findings: list[Finding] = []
+    superseded_adrs = load_adr_supersessions(decisions_dir)
 
     if not spec_dir.is_dir():
         findings.append(Finding(str(spec_dir), "directory does not exist"))
@@ -190,6 +239,19 @@ def run_checks(repo_root: Path = REPO_ROOT, spec_dir: Path = None, limitations_d
                         Finding(
                             str(rel),
                             f"`{req_id}`: `specified by` anchor `{specified_by}` does not resolve within this file",
+                        )
+                    )
+
+            related = fields.get("related", "")
+            for adr_match in ADR_REF_RE.finditer(related):
+                number = adr_match.group(1)
+                if number in superseded_adrs:
+                    replacement = superseded_adrs[number]
+                    by_text = f" by ADR-{replacement}" if replacement else ""
+                    findings.append(
+                        Finding(
+                            str(rel),
+                            f"`{req_id}`: `related` cites ADR-{number}, which is superseded{by_text}",
                         )
                     )
 

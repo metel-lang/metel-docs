@@ -73,8 +73,10 @@ class CheckArchitectureTests(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         self.spec_dir = self.tmp / "architecture" / "spec"
         self.limitations_dir = self.tmp / "architecture" / "limitations"
+        self.decisions_dir = self.tmp / "architecture" / "decisions"
         self.spec_dir.mkdir(parents=True)
         self.limitations_dir.mkdir(parents=True)
+        self.decisions_dir.mkdir(parents=True)
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
@@ -84,8 +86,16 @@ class CheckArchitectureTests(unittest.TestCase):
         if limitation_text is not None:
             (self.limitations_dir / "limit-resolution-001.md").write_text(limitation_text)
 
+    def write_adr(self, filename: str, text: str):
+        (self.decisions_dir / filename).write_text(text)
+
     def run_checks(self):
-        return ca.run_checks(repo_root=self.tmp, spec_dir=self.spec_dir, limitations_dir=self.limitations_dir)
+        return ca.run_checks(
+            repo_root=self.tmp,
+            spec_dir=self.spec_dir,
+            limitations_dir=self.limitations_dir,
+            decisions_dir=self.decisions_dir,
+        )
 
     def test_valid_corpus_has_no_findings(self):
         self.write_corpus()
@@ -149,6 +159,49 @@ class CheckArchitectureTests(unittest.TestCase):
         findings = self.run_checks()
         self.assertEqual(1, len(findings))
         self.assertIn("does not exist", str(findings[0]))
+
+    def test_related_citing_a_yaml_superseded_adr_is_a_finding(self):
+        self.write_adr(
+            "adr-0019-old.md",
+            "---\nid: adr-0019\nstatus: superseded by ADR-0029\n---\n\nOld.\n",
+        )
+        self.write_adr(
+            "adr-0029-new.md",
+            "---\nid: adr-0029\nsupersedes: adr-0019\n---\n\nNew.\n",
+        )
+        broken = VALID_SPEC.replace("| `related` | ADR-0054 |", "| `related` | ADR-0019 |")
+        self.write_corpus(spec_text=broken)
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("cites ADR-0019, which is superseded by ADR-0029" in f for f in findings), findings)
+
+    def test_related_citing_a_plain_status_superseded_adr_is_a_finding(self):
+        self.write_adr(
+            "adr-0016-old.md",
+            "# ADR-0016: Old Thing\n\n**Status:** Superseded by ADR-0028\n\nOld.\n",
+        )
+        broken = VALID_SPEC.replace("| `related` | ADR-0054 |", "| `related` | ADR-0016 |")
+        self.write_corpus(spec_text=broken)
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("cites ADR-0016, which is superseded by ADR-0028" in f for f in findings), findings)
+
+    def test_related_citing_a_current_adr_is_not_a_finding(self):
+        self.write_adr("adr-0054-current.md", "---\nid: adr-0054\nstatus: accepted\n---\n\nCurrent.\n")
+        self.write_corpus()
+        findings = [str(f) for f in self.run_checks()]
+        self.assertFalse(any("is superseded" in f for f in findings), findings)
+
+    def test_limit_discovered_by_citing_a_superseded_adr_is_exempt(self):
+        # LIMIT-*'s discovered_by is historical (who originally found/documented
+        # the limitation) -- citing an ADR that's since been superseded there is
+        # expected, not a bug, unlike an arch-* requirement's `related` field.
+        self.write_adr(
+            "adr-0027-old.md",
+            "---\nid: adr-0027\nstatus: superseded by adr-0039\n---\n\nOld.\n",
+        )
+        broken = VALID_LIMITATION.replace('discovered_by: "a test"', 'discovered_by: "ADR-0027"')
+        self.write_corpus(limitation_text=broken)
+        findings = [str(f) for f in self.run_checks()]
+        self.assertFalse(any("is superseded" in f for f in findings), findings)
 
 
 if __name__ == "__main__":

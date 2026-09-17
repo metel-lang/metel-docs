@@ -4,7 +4,7 @@ The tree-walk over `ElaboratedModuleGraph` to program output. Owning crate: `met
 
 ##### Requirement {#arch.evaluation.requirement-1}
 
-`Environment`, the lexical activation-frame model, is keyed entirely by `LocalId`, not by name: a binding is defined and read back by its `LocalId`, two distinct `LocalId`s never alias even for the same source spelling, and no scopes name-map exists as a fallback lookup path.
+`Environment`, the lexical activation-frame model, is keyed entirely by `LocalId`, not by name: a binding is defined and read back by its `LocalId`, two distinct `LocalId`s never alias even for the same source spelling, and no scopes name-map exists as a fallback lookup path. Each module runs in its own isolated `Environment` (ADR-0029, superseding ADR-0019's flat-merge approach), seeded from already-evaluated dependency environments.
 
 | Field | Value |
 |---|---|
@@ -13,7 +13,7 @@ The tree-walk over `ElaboratedModuleGraph` to program output. Owning crate: `met
 | `specified by` | `#evaluation` |
 | `implements` | `metel-interpreter/src/evaluator/mod.rs` (`Environment`) |
 | `verified by` | `metel-interpreter/src/evaluator/mod.rs::define_binding_is_readable_by_local_id`, `::a_binding_with_no_id_is_simply_not_stored`, `::distinct_local_ids_do_not_alias`, `::capture_clone_starts_with_an_empty_frame`, `::capture_closure_installs_captures_in_the_frame_by_enclosing_id`, `::capture_closure_copy_installs_a_clone_capture_by_id`, `::mut_ref_capture_shares_one_cell_with_the_source`, `::ident_rc_resolves_by_identity_only`, `::lvalue_field_cell_resolves_a_nested_receiver_root_by_id_without_the_name_map`, `::set_local_mutates_the_shared_cell_in_place` |
-| `related` | `arch.resolution.requirement-1`, `arch.resolution.requirement-2`, ADR-0029 (per-module isolation, supersedes ADR-0019), ADR-0054, `#1052a`/`#1052b` series |
+| `related` | `arch.resolution.requirement-1`, `arch.resolution.requirement-2`, ADR-0029, ADR-0054, `#1052a`/`#1052b` series |
 
 ##### Requirement {#arch.evaluation.requirement-2}
 
