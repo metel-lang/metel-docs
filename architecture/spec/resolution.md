@@ -58,4 +58,4 @@ Source-position lookup (`PositionIndex`) is the one structure permitted to be ke
 
 ## Known limitations
 
-None recorded yet for this section — `#1161` (extracting `LIMIT-*` records from the existing ADR corpus) runs next in this chain and will file any that apply here.
+- [`LIMIT-RESOLUTION-001`](../limitations/limit-resolution-001.md) — the resolved-identity model is in-memory only; no on-disk persistence or cross-process interner stability.

@@ -58,4 +58,4 @@ Multi-segment qualified paths (`Expr::Path`, e.g. `math::sin`, `self::Foo`) rewr
 
 ## Known limitations
 
-None recorded yet for this section — `#1161` (extracting `LIMIT-*` records from the existing ADR corpus) runs next in this chain and will file any that apply here.
+- [`LIMIT-NAME-RESOLUTION-001`](../limitations/limit-name-resolution-001.md) — `std::core` has no physical module file, so it can't be listed or enumerated.

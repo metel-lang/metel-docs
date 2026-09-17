@@ -17,4 +17,4 @@ Every `TypedExpr::MethodCall`'s `dispatch` field starts as `MethodDispatch::Dyna
 
 ## Known limitations
 
-`ElaboratedModuleGraph(pub TypedModuleGraph)`'s field is fully `pub`, unlike `NormalizedModuleGraph`'s `pub(crate)` field (`#name-resolution`, `arch.name-resolution.requirement-4`) — nothing stops code outside `metel-frontend` from constructing an `ElaboratedModuleGraph` without having actually run `elaborate`, an asymmetry the two wrapper types' otherwise-identical "proof this pass ran" design doesn't explain. Worth `#1161` filing as a `LIMIT-*` record rather than silently carrying the inconsistency forward.
+- [`LIMIT-ELABORATION-001`](../limitations/limit-elaboration-001.md) — `ElaboratedModuleGraph`'s field is fully `pub`, unlike `NormalizedModuleGraph`'s `pub(crate)`; the two "proof this pass ran" wrapper types aren't actually symmetric in what they enforce.

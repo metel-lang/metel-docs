@@ -30,7 +30,7 @@ The tree-walk over `ElaboratedModuleGraph` to program output. Owning crate: `met
 
 ## Known limitations
 
-Two real, source-documented findings for `#1161` to file as `LIMIT-*` records, not asserted here as `arch-*` claims since neither is a checkable "this works correctly" statement:
-
-- `evaluator/mod.rs`'s own first two lines: *"PoC evaluator — this implementation will almost certainly be rewritten. Implement the simplest correct thing; do not over-engineer."* A verbatim, currently-real architectural posture, not this section's editorializing.
-- `arch.evaluation.requirement-2`'s `partial` status: `RuntimeRegistry`'s `type_ids`/`pattern_methods` name-keying, and `tools/check_no_semantic_name_lookup.py`'s explicit exclusion of `RuntimeRegistry` from its scan.
+- [`LIMIT-EVALUATION-001`](../limitations/limit-evaluation-001.md) — generic function dispatch re-constructs on every call rather than monomorphizing once.
+- [`LIMIT-EVALUATION-002`](../limitations/limit-evaluation-002.md) — one specific cross-module mutual-recursion shape is unsupported (`#189`).
+- [`LIMIT-EVALUATION-003`](../limitations/limit-evaluation-003.md) — `RuntimeRegistry`'s `type_ids`/`pattern_methods` remain name-keyed and are explicitly outside `tools/check_no_semantic_name_lookup.py`'s scan.
+- [`LIMIT-EVALUATION-004`](../limitations/limit-evaluation-004.md) — the evaluator is a deliberate PoC ("will almost certainly be rewritten"), not a stable target shape.

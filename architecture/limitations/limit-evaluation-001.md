@@ -1,0 +1,37 @@
+---
+id: LIMIT-EVALUATION-001
+title: "Generic function dispatch re-constructs on every call"
+scope: "architecture/spec/evaluation.md#evaluation"
+owner: metel-interpreter
+discovered_by: "ADR-0010; metel-interpreter/docs/evaluator.md, \"Known Limitations\""
+disposition: accepted
+review: "revisit if performance becomes a concern — a call-site cache keyed on the concrete type tuple is the documented mitigation path (ADR-0010's own \"Future work\" note)"
+---
+
+## Limitation
+
+Generic functions and let-polymorphic closures re-run the construction pass
+at every call site rather than monomorphizing once per instantiation. This
+is correct, not optimal — `evaluator.md` states it is "acceptable for the
+tree-walk interpreter," and `architecture.md` already cites ADR-0010's
+requirement that a *future compiler backend* must pre-monomorphize instead
+of reusing this path. This is a real, currently-live performance
+characteristic of the interpreter, not a hypothetical one.
+
+## Impact
+
+A hot generic function pays repeated construction cost on every call. A
+future compiled backend cannot reuse the evaluator's runtime
+reconstruction approach and must pre-monomorphize instead — already stated
+as a hard requirement elsewhere (ADR-0004's compiler path, ADR-0010).
+
+## Affects
+
+- `arch.type-construction.requirement-2`
+- `arch.evaluation.requirement-1`
+
+## Resolution
+
+None yet. ADR-0010's own "Future work" note: if performance becomes a
+concern, a call-site cache keyed on the concrete type tuple can be added
+without changing the interface.

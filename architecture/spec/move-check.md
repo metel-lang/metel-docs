@@ -30,4 +30,4 @@ Places (the syntactic locations a program can name — a binding root plus a pat
 
 ## Known limitations
 
-None recorded yet for this section — `#1161` (extracting `LIMIT-*` records from the existing ADR corpus) runs next in this chain and will file any that apply here.
+- [`LIMIT-MOVE-CHECK-001`](../limitations/limit-move-check-001.md) — closure move-check is always-on while general move-check stays opt-in (a documented temporary asymmetry).

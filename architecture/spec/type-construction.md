@@ -30,4 +30,6 @@ Construction stamps the typed IR with resolved identities wherever the frontend 
 
 ## Known limitations
 
-None recorded yet for this section — `#1161` (extracting `LIMIT-*` records from the existing ADR corpus) runs next in this chain and will file any that apply here.
+- [`LIMIT-TYPE-CONSTRUCTION-001`](../limitations/limit-type-construction-001.md) — `Call::callee_id` falls back to name dispatch for first-class function values (a live exception to the resolution-freeze invariant).
+- [`LIMIT-TYPE-CONSTRUCTION-002`](../limitations/limit-type-construction-002.md) — overload sets are not yet exportable across modules (METEL-188).
+- [`LIMIT-TYPE-CONSTRUCTION-003`](../limitations/limit-type-construction-003.md) — `?` error coercion requires an explicit `From` impl; only `Int`/`Float` are built in.
