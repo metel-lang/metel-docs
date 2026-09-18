@@ -34,6 +34,7 @@ Some claim.
 | `implements` | `metel-frontend/src/identity.rs` |
 | `verified by` | `metel-frontend/src/identity/tests.rs::some_test` |
 | `related` | ADR-0054 |
+| `last_reviewed` | 0123456789ab |
 
 ## Known limitations
 
@@ -185,6 +186,18 @@ class CheckArchitectureTests(unittest.TestCase):
         self.write_corpus(limitation_text=resolved)
         findings = [str(f) for f in self.run_checks()]
         self.assertTrue(any("Active records link" in f and "resolved" in f for f in findings), findings)
+
+    def test_missing_last_reviewed_is_a_finding(self):
+        broken = VALID_SPEC.replace("| `last_reviewed` | 0123456789ab |\n", "")
+        self.write_corpus(spec_text=broken)
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("missing or empty `last_reviewed`" in f for f in findings), findings)
+
+    def test_malformed_last_reviewed_is_a_finding(self):
+        broken = VALID_SPEC.replace("| `last_reviewed` | 0123456789ab |", "| `last_reviewed` | not-a-sha |")
+        self.write_corpus(spec_text=broken)
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("is not a 7-40 character hex commit SHA" in f for f in findings), findings)
 
     def test_missing_spec_dir_reports_one_finding_not_a_crash(self):
         shutil.rmtree(self.spec_dir)

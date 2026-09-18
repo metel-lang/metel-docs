@@ -4,8 +4,11 @@
 Validates `arch-*` records in `architecture/spec/*.md` and `LIMIT-*` records
 in `architecture/limitations/*.md`: ID well-formedness and uniqueness,
 cross-reference resolution (`specified by` / `scope` anchors, `affects`
-targets), required-field presence, the disposition rules ADR-0055 §4
-states in prose (an `accepted` limitation needs a review date; a `resolved`
+targets), required-field presence (including `last_reviewed`, metel-core#1191
+-- shape only here; whether the cited code actually moved on since that
+commit needs metel-core's git history, checked by
+`generate_architecture_evidence.py` instead), the disposition rules ADR-0055
+§4 states in prose (an `accepted` limitation needs a review date; a `resolved`
 one needs real exit evidence, not a placeholder), and that an `arch-*`
 requirement's `related` field never cites a since-superseded ADR (reads
 `architecture/decisions/*.md`'s own `status:`/`supersedes:` fields, both
@@ -69,7 +72,8 @@ REQUIREMENT_RE = re.compile(
     r"^#####\s+Requirement\s+\{#([a-z0-9.\-]+)\}\s*\n(.*?)(?=^#####\s+Requirement|\Z)",
     re.MULTILINE | re.DOTALL,
 )
-FIELD_ROW_RE = re.compile(r"^\|\s*`([a-z ]+)`\s*\|\s*(.+?)\s*\|\s*$", re.MULTILINE)
+FIELD_ROW_RE = re.compile(r"^\|\s*`([a-z_ ]+)`\s*\|\s*(.+?)\s*\|\s*$", re.MULTILINE)
+LAST_REVIEWED_SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
 KNOWN_LIMITATIONS_LINK_RE = re.compile(r"\[`(LIMIT-[A-Z0-9\-]+)`\]\(([^)]+)\)")
 KNOWN_LIMITATIONS_INTRO = (
     "`LIMIT-*` records are the authoritative inventory of known boundaries for this\n"
@@ -348,9 +352,22 @@ def run_checks(
             if not ARCH_ID_RE.match(req_id):
                 findings.append(Finding(str(rel), f"`{req_id}` does not match the arch.<path>.requirement-<N> shape"))
 
-            for required_field in ("status", "owner", "specified by", "implements", "verified by", "related"):
+            for required_field in ("status", "owner", "specified by", "implements", "verified by", "related", "last_reviewed"):
                 if not fields.get(required_field):
                     findings.append(Finding(str(rel), f"`{req_id}`: missing or empty `{required_field}` field"))
+
+            # metel-core#1191: this only checks the field's *shape* -- whether
+            # the code it points at has actually moved on since that commit
+            # needs real git history (the metel-core checkout), which a bare
+            # metel-docs checkout structurally can't reach; that half of the
+            # check lives in generate_architecture_evidence.py instead, the
+            # same split this file already documents for fixture-sidecar
+            # `arch = [...]` cross-checking.
+            last_reviewed = fields.get("last_reviewed", "")
+            if last_reviewed and not LAST_REVIEWED_SHA_RE.match(last_reviewed.strip("`")):
+                findings.append(
+                    Finding(str(rel), f"`{req_id}`: `last_reviewed` (`{last_reviewed}`) is not a 7-40 character hex commit SHA")
+                )
 
             status = fields.get("status", "").strip("`")
             if status and status not in STATUS_VALUES:

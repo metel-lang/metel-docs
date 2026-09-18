@@ -37,6 +37,7 @@ After inference has solved a body and the frontend has frozen its resolution, no
 | `specified by` | `#resolution` |
 | `implements` | [`metel-frontend/src/identity.rs::as_global`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/identity.rs#L156) |
 | `verified by` | [`metel-frontend/src/identity/tests.rs::reference_table_is_total_and_unknown_names_are_explicit`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/identity/tests.rs#L298) |
+| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | ADR-0054, ADR-0041, ADR-0042 |
 
 ##### Requirement {#arch.resolution.requirement-2}
@@ -50,6 +51,7 @@ Lexical bindings and value references are allocated structural identities (`Loca
 | `specified by` | `#resolution` |
 | `implements` | [`metel-frontend/src/identity/allocate.rs::prefix_module_path`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/identity/allocate.rs#L70) |
 | `verified by` | [`metel-frontend/src/identity/tests.rs::blank_lines_and_reformatting_change_no_identity`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/identity/tests.rs#L118) |
+| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 
 ##### Requirement {#arch.resolution.requirement-3}
@@ -63,6 +65,7 @@ Struct and enum member declarations (fields and enum variants) are interned to s
 | `specified by` | `#resolution` |
 | `implements` | [`metel-frontend/src/identity/member.rs::new`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/identity/member.rs#L59) |
 | `verified by` | [`metel-frontend/src/identity/member.rs::struct_fields_get_distinct_ids_owned_by_the_struct`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/identity/member.rs#L260) |
+| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | ADR-0054 step 3, `#1051` |
 
 ##### Requirement {#arch.resolution.requirement-4}
@@ -76,6 +79,7 @@ Source-position lookup (`PositionIndex`) is the one structure permitted to be ke
 | `specified by` | `#resolution` |
 | `implements` | [`metel-frontend/src/identity/position.rs::from_entries`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/identity/position.rs#L42) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/type_aliases/06_value_path.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/evaluator/type_aliases/06_value_path.toml#L1) |
+| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 
 </details>

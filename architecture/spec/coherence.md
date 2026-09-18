@@ -29,6 +29,7 @@ The orphan rule (`T0014`): an aspect implementation must be local to either the 
 | `specified by` | `#coherence` |
 | `implements` | [`metel-frontend/src/coherence.rs::check`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/coherence.rs#L660) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/orphan_impl_cross_module_violation/test.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/typechecking/aspects/orphan_impl_cross_module_violation/test.toml#L1) |
+| `last_reviewed` | 55dff632839ded1d889f2f38ccf8bb563846e3b1 |
 | `related` | RFC-0060, `#238`, ADR-0042, RFC-0036 |
 
 ##### Requirement {#arch.coherence.requirement-2}
@@ -42,6 +43,7 @@ Overlap detection (`T0015`): two impls whose type/aspect coverage overlaps confl
 | `specified by` | `#coherence` |
 | `implements` | [`metel-frontend/src/coherence.rs::provably_disjoint`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/coherence.rs#L364) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/neg_26_bare_parameter_blanket_overlap.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_26_bare_parameter_blanket_overlap.toml#L1) |
+| `last_reviewed` | 55dff632839ded1d889f2f38ccf8bb563846e3b1 |
 | `related` | RFC-0060 §3.1/§3.2, `#238`, ADR-0042 |
 
 </details>
