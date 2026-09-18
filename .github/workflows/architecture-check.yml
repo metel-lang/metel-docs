@@ -32,5 +32,19 @@ jobs:
       - name: Architecture checker regression tests
         run: python3 -m unittest architecture/tools/test_check_architecture.py
 
+      - name: Architecture evidence generator regression tests
+        run: python3 -m unittest architecture/tools/test_generate_architecture_evidence.py
+
+      # Docs PRs validate against metel-core's current default branch. The
+      # paired, exact revision is checked again from metel-core's own CI.
+      - uses: actions/checkout@v4
+        with:
+          repository: metel-lang/metel-core
+          ref: main
+          path: metel-core
+
+      - name: generated Architecture evidence is current
+        run: python3 architecture/tools/generate_architecture_evidence.py --core metel-core --check
+
       - name: check_architecture.py --check
         run: python3 architecture/tools/check_architecture.py --check

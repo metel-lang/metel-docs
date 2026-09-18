@@ -164,6 +164,14 @@ class CheckArchitectureTests(unittest.TestCase):
         findings = [str(f) for f in self.run_checks()]
         self.assertTrue(any("does not exist" in f for f in findings), findings)
 
+    def test_stale_process_narration_is_a_finding(self):
+        self.write_corpus()
+        (self.tmp / "architecture" / "architecture.md").write_text(
+            "# Architecture\n\nThe limitation inventory runs next in the chain.\n"
+        )
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("stale process narration" in f for f in findings), findings)
+
     def test_nonstandard_known_limitations_structure_is_a_finding(self):
         broken = VALID_SPEC.replace("### Active records", "### Open limitations")
         self.write_corpus(spec_text=broken)

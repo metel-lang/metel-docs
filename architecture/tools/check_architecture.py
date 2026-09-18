@@ -30,6 +30,11 @@ until real reconciliation-rule volume justifies it. It reports findings; it
 never silently mutates a disposition or any other field -- a human triages
 every finding.
 
+The published Architecture Spec is durable system documentation, not a task
+log. Its overview and section prose may cite an issue or ADR where that adds
+architectural context, but must not narrate a completed milestone, a next
+step, or an unaudited session as if it were current behavior.
+
 Fixture-sidecar `arch = [...]` cross-checking is a documented no-op here for
 the same reason `rfc-check.yml` already documents for RFC-section fixture
 coverage: the fixture corpus lives in `metel-interpreter/tests`, in
@@ -92,6 +97,11 @@ PLAIN_SUPERSEDED_BY_RE = re.compile(r"^\*\*Status:\*\*\s*Superseded by\s+ADR-(\d
 ADR_FILENAME_ID_RE = re.compile(r"^(adr-\d{4})-")
 ADR_STATUS_VALUES = {"accepted", "active", "implemented", "proposed", "historical", "retired"}
 ADR_SUPERSEDED_STATUS_RE = re.compile(r"^superseded by (?:ADR-|adr-)\d{4}$", re.IGNORECASE)
+STALE_PROCESS_PROSE_RE = re.compile(
+    r"\b(?:runs next|next in the chain|not audited this session|landed since|"
+    r"closing that parent tracking issue)\b",
+    re.IGNORECASE,
+)
 
 
 class Finding:
@@ -249,6 +259,29 @@ def check_adr_frontmatter(decisions_dir: Path, repo_root: Path) -> list:
     return findings
 
 
+def check_stale_process_prose(spec_files: list[Path], repo_root: Path) -> list:
+    """Reject task-log language in published Architecture Spec prose.
+
+    Issue and ADR references remain valid evidence and context. This narrowly
+    targets the time-sensitive phrases found in the #1181 audit, leaving
+    durable descriptions of current boundaries and tracked limitations alone.
+    """
+    findings: list = []
+    overview = repo_root / "architecture" / "architecture.md"
+    paths = [*spec_files, overview] if overview.exists() else spec_files
+    for path in paths:
+        text = path.read_text()
+        match = STALE_PROCESS_PROSE_RE.search(text)
+        if match:
+            findings.append(
+                Finding(
+                    str(path.relative_to(repo_root)),
+                    f"stale process narration `{match.group(0)}` belongs in issue history, not published Architecture Spec prose",
+                )
+            )
+    return findings
+
+
 def resolve_scope_anchor(scope: str, all_section_ids_by_file: dict, repo_root: Path) -> bool:
     if "#" not in scope:
         return False
@@ -278,6 +311,7 @@ def run_checks(
 
     spec_files = sorted(spec_dir.glob("*.md"))
     limitation_files = sorted(limitations_dir.glob("*.md")) if limitations_dir.is_dir() else []
+    findings.extend(check_stale_process_prose(spec_files, repo_root))
 
     all_section_ids_by_file: dict = {}
     all_arch_ids: dict = {}
