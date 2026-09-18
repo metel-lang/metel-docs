@@ -48,5 +48,15 @@ Overlap detection (`T0015`): two impls whose type/aspect coverage overlaps confl
 
 ## Known limitations
 
-No active `LIMIT-*` record is currently associated with this section. This is
-an inventory statement, not a claim of complete coverage.
+`LIMIT-*` records are the authoritative inventory of known boundaries for this
+section. They carry the impact, owner, disposition, and review point; the
+Atlas limitations view projects the same records rather than duplicating them.
+
+### Active records
+
+No active `LIMIT-*` records are currently recorded for this section. This is
+a current inventory, not a claim of complete coverage.
+
+### Resolved records
+
+No resolved `LIMIT-*` records are currently recorded for this section.

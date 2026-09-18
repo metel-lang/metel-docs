@@ -37,7 +37,17 @@ Some claim.
 
 ## Known limitations
 
+`LIMIT-*` records are the authoritative inventory of known boundaries for this
+section. They carry the impact, owner, disposition, and review point; the
+Atlas limitations view projects the same records rather than duplicating them.
+
+### Active records
+
 - [`LIMIT-RESOLUTION-001`](../limitations/limit-resolution-001.md) — an example limitation.
+
+### Resolved records
+
+No resolved `LIMIT-*` records are currently recorded for this section.
 """
 
 VALID_LIMITATION = """---
@@ -161,6 +171,20 @@ class CheckArchitectureTests(unittest.TestCase):
         )
         findings = [str(f) for f in self.run_checks()]
         self.assertTrue(any("stale process narration" in f for f in findings), findings)
+
+    def test_nonstandard_known_limitations_structure_is_a_finding(self):
+        broken = VALID_SPEC.replace("### Active records", "### Open limitations")
+        self.write_corpus(spec_text=broken)
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("must use the standard inventory" in f for f in findings), findings)
+
+    def test_resolved_record_in_active_group_is_a_finding(self):
+        resolved = VALID_LIMITATION.replace("disposition: known", "disposition: resolved").replace(
+            "None yet.", "Fixed by #999, verified by some_test."
+        )
+        self.write_corpus(limitation_text=resolved)
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("Active records link" in f and "resolved" in f for f in findings), findings)
 
     def test_missing_spec_dir_reports_one_finding_not_a_crash(self):
         shutil.rmtree(self.spec_dir)
