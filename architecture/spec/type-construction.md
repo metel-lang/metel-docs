@@ -122,7 +122,7 @@ Import visibility is diagnosed while building import schemes, where the full mod
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/name_resolver.rs::canonical_path`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/name_resolver.rs#L101) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/orphan_impl_cross_module_violation/test.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/typechecking/aspects/orphan_impl_cross_module_violation/test.toml#L1) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/module_semantics/importing_private_item_is_t0009/test.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/module_semantics/importing_private_item_is_t0009/test.toml#L1) |
 | `related` | ADR-0024, `T0003`, `T0009` |
 
 ##### Requirement {#arch.type-construction.requirement-9}
