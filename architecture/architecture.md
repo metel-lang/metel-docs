@@ -1,18 +1,5 @@
 # Interpreter Architecture
 
-> Rationale for the tree-walk approach: [ADR-0004](decisions/adr-0004-interpreter-architecture.md)
-
-> This page is the informal overview. [ADR-0055](decisions/adr-0055-architecture-integrity-records.md)
-> establishes `spec/` as the versioned, checkable Architecture Spec — stable
-> sections with inline-anchored `arch-*` requirements, each naming its
-> implementation and verifying evidence. Its sections cover
-> [Resolution](spec/resolution.md), [Module Loading & Parsing](spec/parsing.md),
-> [Name & Reference Resolution](spec/name-resolution.md),
-> [Coherence](spec/coherence.md), [Move Check](spec/move-check.md),
-> [Elaboration](spec/elaboration.md), [Evaluation](spec/evaluation.md),
-> [Type Inference](spec/type-inference.md), and
-> [Type Construction](spec/type-construction.md).
-
 ## Pipeline
 
 ```
