@@ -29,8 +29,8 @@ Every top-level declaration is assigned a `SymbolId` from one canonical table (`
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#name-resolution` |
-| `implements` | [`metel-frontend/src/symbols.rs::default`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/symbols.rs#L73) |
-| `verified by` | [`metel-frontend/src/name_resolver.rs::same_declaration_gets_same_symbol_id_regardless_of_importer`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/name_resolver.rs#L1295) |
+| `implements` | [`metel-frontend/src/symbols.rs::default`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/symbols.rs#L73) |
+| `verified by` | [`metel-frontend/src/name_resolver.rs::same_declaration_gets_same_symbol_id_regardless_of_importer`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/name_resolver.rs#L1295) |
 | `related` | METEL-185, ADR-0041 |
 
 ##### Requirement {#arch.name-resolution.requirement-2}
@@ -42,8 +42,8 @@ A module's import scope resolves with explicit precedence: an explicit `import` 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#name-resolution` |
-| `implements` | [`metel-frontend/src/name_resolver.rs::canonical_path`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/name_resolver.rs#L100) |
-| `verified by` | [`metel-frontend/src/name_resolver.rs::resolves_explicit_item_import`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/name_resolver.rs#L815) |
+| `implements` | [`metel-frontend/src/name_resolver.rs::canonical_path`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/name_resolver.rs#L100) |
+| `verified by` | [`metel-frontend/src/name_resolver.rs::resolves_explicit_item_import`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/name_resolver.rs#L815) |
 | `related` | `T0011`, ADR-0026 |
 
 ##### Requirement {#arch.name-resolution.requirement-3}
@@ -55,8 +55,8 @@ Every expression-level bare-identifier reference is classified as either `Res::D
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#name-resolution` |
-| `implements` | [`metel-frontend/src/reference_resolver.rs::collect_references`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/reference_resolver.rs#L70) |
-| `verified by` | [`metel-frontend/src/reference_resolver.rs::resolves_top_level_call_to_its_symbol_id`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/reference_resolver.rs#L472) |
+| `implements` | [`metel-frontend/src/reference_resolver.rs::collect_references`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/reference_resolver.rs#L70) |
+| `verified by` | [`metel-frontend/src/reference_resolver.rs::resolves_top_level_call_to_its_symbol_id`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/reference_resolver.rs#L472) |
 | `related` | METEL-187, ADR-0041 |
 
 </details>

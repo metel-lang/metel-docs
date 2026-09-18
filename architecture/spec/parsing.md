@@ -30,8 +30,8 @@ Loading a root file produces a `ModuleGraph` whose `modules: Vec<LoadedModule>` 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | [`metel-frontend/src/module_loader.rs::load_module`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/module_loader.rs#L506) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/module_loading/rejects_circular_module_graph/test.toml`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-interpreter/tests/integration/sources/module_loading/rejects_circular_module_graph/test.toml#L1) |
+| `implements` | [`metel-frontend/src/module_loader.rs::load_module`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/module_loader.rs#L506) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/module_loading/rejects_circular_module_graph/test.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/module_loading/rejects_circular_module_graph/test.toml#L1) |
 | `related` | RFC-0058, ADR-0023 (hierarchical module paths), ADR-0031 (diamond-dependency path aliasing), `#1147` |
 
 ##### Requirement {#arch.parsing.requirement-2}
@@ -43,8 +43,8 @@ Module source is read through a `SourceProvider` abstraction rather than a hardc
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | [`metel-frontend/src/module_loader.rs::hash_source`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/module_loader.rs#L22) |
-| `verified by` | [`metel-frontend/src/module_loader.rs::source_provider_overlay_supplies_in_memory_source`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/module_loader.rs#L999) |
+| `implements` | [`metel-frontend/src/module_loader.rs::hash_source`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/module_loader.rs#L22) |
+| `verified by` | [`metel-frontend/src/module_loader.rs::source_provider_overlay_supplies_in_memory_source`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/module_loader.rs#L999) |
 | `related` | RFC-0058, ADR-0039 |
 
 ##### Requirement {#arch.parsing.requirement-3}
@@ -56,8 +56,8 @@ A single file parses through one PEG grammar (`grammar.pest`, driven by `pest`/`
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | [`metel-frontend/src/parser/mod.rs::parse`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/parser/mod.rs#L27) |
-| `verified by` | [`metel-frontend/src/parser/mod.rs::multi_segment_path_carries_one_span_per_segment`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/parser/mod.rs#L3508) |
+| `implements` | [`metel-frontend/src/parser/mod.rs::parse`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/parser/mod.rs#L27) |
+| `verified by` | [`metel-frontend/src/parser/mod.rs::multi_segment_path_carries_one_span_per_segment`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/parser/mod.rs#L3508) |
 | `related` | `#229` |
 
 ##### Requirement {#arch.parsing.requirement-4}
@@ -69,8 +69,8 @@ Control flow has one expression-shaped representation through the parser and AST
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | [`metel-frontend/src/parser/mod.rs::parse_if_expr`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/parser/mod.rs#L1822) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/control_flow/88_braceless_if_no_else_in_expression_position.toml`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-interpreter/tests/integration/sources/evaluator/control_flow/88_braceless_if_no_else_in_expression_position.toml#L1) |
+| `implements` | [`metel-frontend/src/parser/mod.rs::parse_if_expr`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/parser/mod.rs#L1822) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/control_flow/88_braceless_if_no_else_in_expression_position.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/evaluator/control_flow/88_braceless_if_no_else_in_expression_position.toml#L1) |
 | `related` | ADR-0005 |
 
 ##### Requirement {#arch.parsing.requirement-5}
@@ -84,7 +84,7 @@ Grammar ordering preserves identifier-prefix and `None`-literal disambiguation: 
 | `specified by` | `#parsing` |
 | `implements` | _Exempt; see exemption below._ |
 | `implements exemption` | rationale: enforced entirely by grammar.pest's declarative `ident = @{ !keyword ~ ... }` rule (identifier-prefix exclusion) and ordinary PEG choice ordering (standalone `None` vs a `Perhaps::None`/user-variant path) -- no Rust function performs this disambiguation, so the arch-implements scanner, which only scans *.rs files, has nothing to cite; owner: metel-frontend; review: 2027-03-18 |
-| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/enums/39_perhaps.toml`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-interpreter/tests/integration/sources/evaluator/enums/39_perhaps.toml#L1) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/enums/39_perhaps.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/evaluator/enums/39_perhaps.toml#L1) |
 | `related` | ADR-0015, ADR-0018 |
 
 ##### Requirement {#arch.parsing.requirement-6}
@@ -96,8 +96,8 @@ String interpolation is lowered while parsing into ordinary expression nodes: ea
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | [`metel-frontend/src/parser/mod.rs::parse_string_literal_expr`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/parser/mod.rs#L1171) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/builtins/86_interpolation_evaluation_order.toml`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-interpreter/tests/integration/sources/evaluator/builtins/86_interpolation_evaluation_order.toml#L1) |
+| `implements` | [`metel-frontend/src/parser/mod.rs::parse_string_literal_expr`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/parser/mod.rs#L1171) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/builtins/86_interpolation_evaluation_order.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/evaluator/builtins/86_interpolation_evaluation_order.toml#L1) |
 | `related` | ADR-0033 |
 
 </details>
