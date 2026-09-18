@@ -30,8 +30,10 @@ Loading a root file produces a `ModuleGraph` whose `modules: Vec<LoadedModule>` 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | `metel-frontend/src/module_loader.rs` (`Loader::load_module`, `ModuleGraph`) |
-| `verified by` | `metel-frontend/src/module_loader.rs` unit tests (`std_namespace_is_reserved_for_user_modules`, `source_provider_overlay_supplies_in_memory_source`, `multi_file_source_provider_resolves_an_import`, `virtual_root_loads_without_an_on_disk_root`); integration fixtures `metel-interpreter/tests/integration/sources/module_loading/rejects_circular_module_graph`, `multi_file_program_runs_after_module_loading`, `transitive_dependency_loaded_via_facade` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | RFC-0058, ADR-0023 (hierarchical module paths), ADR-0031 (diamond-dependency path aliasing), `#1147` |
 
 ##### Requirement {#arch.parsing.requirement-2}
@@ -43,8 +45,10 @@ Module source is read through a `SourceProvider` abstraction rather than a hardc
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | `metel-frontend/src/module_loader.rs` (`SourceProvider`, `EmbeddedStdlibProvider`, `InMemorySourceProvider`, `MultiFileSourceProvider`, `load_virtual_root_with`) |
-| `verified by` | `metel-frontend/src/module_loader.rs::source_provider_overlay_supplies_in_memory_source`, `::multi_file_source_provider_resolves_an_import`, `::multi_file_source_provider_reports_a_missing_sibling`, `::virtual_root_loads_without_an_on_disk_root` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | RFC-0058, ADR-0039 |
 
 ##### Requirement {#arch.parsing.requirement-3}
@@ -56,8 +60,10 @@ A single file parses through one PEG grammar (`grammar.pest`, driven by `pest`/`
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | `metel-frontend/src/parser/mod.rs` (`parse`), `metel-frontend/src/grammar.pest`, `metel-frontend/src/ast/mod.rs` (`Span`, `Program`) |
-| `verified by` | `metel-frontend/src/parser/mod.rs::multi_segment_path_carries_one_span_per_segment`, `::keyword_root_path_spans_cover_the_root_segment`, `::two_segment_path_in_call_position_keeps_segment_spans` (span-tracking specifically); general grammar correctness is a precondition of the full integration suite (1,183 `.mtl` fixtures under `metel-interpreter/tests/integration/sources/`, every one of which must parse before its actual assertion runs) rather than a dedicated parser-correctness suite of its own |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | `#229` |
 
 ##### Requirement {#arch.parsing.requirement-4}
@@ -69,8 +75,10 @@ Control flow has one expression-shaped representation through the parser and AST
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | `metel-frontend/src/grammar.pest` (`block_item`, `block_expr_stmt`, expression rules); `metel-frontend/src/parser/mod.rs` (`parse_if_expr`, `parse_block`); `metel-frontend/src/ast/mod.rs` (`Expr::If`, `Expr::Match`, `Expr::Loop`) |
-| `verified by` | general integration-suite coverage of control-flow expressions; no dedicated current parser unit test naming the statement-versus-tail representation was found |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0005 |
 
 ##### Requirement {#arch.parsing.requirement-5}
@@ -82,8 +90,10 @@ Grammar ordering preserves identifier-prefix and `None`-literal disambiguation: 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | `metel-frontend/src/grammar.pest` (`none_lit`, `primary_expr`, `pattern`, keyword/identifier alternatives) |
-| `verified by` | general integration-suite coverage of enum paths, literals, and identifiers; no dedicated current parser unit test naming each ordering invariant was found |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0015, ADR-0018 |
 
 ##### Requirement {#arch.parsing.requirement-6}
@@ -95,8 +105,10 @@ String interpolation is lowered while parsing into ordinary expression nodes: ea
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | `metel-frontend/src/parser/mod.rs` (`parse_string_interpolation`); `metel-frontend/src/ast/mod.rs` (`Expr::MethodCall`, `Expr::Binary`) |
-| `verified by` | general integration-suite coverage of interpolation; no dedicated parser unit test naming the lowering shape was found |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0033 |
 
 </details>

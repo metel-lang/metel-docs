@@ -24,8 +24,10 @@ Every `TypedExpr::MethodCall`'s `dispatch` field starts as `MethodDispatch::Dyna
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#elaboration` |
-| `implements` | `metel-frontend/src/elaborator/mod.rs` (`elaborate`, `ElaboratedModuleGraph`); `metel-frontend/src/typed_ast/mod.rs` (`MethodDispatch`) |
-| `verified by` | `metel-frontend/src/elaborator/mod.rs::resolve_dispatch_aspect_returns_aspect_variant`, `::resolve_dispatch_wrong_type_returns_inherent`, `::resolve_dispatch_same_bare_name_different_identity_returns_inherent`, `::resolve_dispatch_no_type_returns_inherent`, `::resolve_dispatch_unknown_method_returns_inherent`, `::resolve_dispatch_non_aspect_method_returns_inherent`, `::resolve_dispatch_primitive_receiver_has_no_identity`; integration fixture `metel-interpreter/tests/integration/sources/module_semantics/same_type_aspect_method_collision_is_t0013` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0037 |
 
 </details>

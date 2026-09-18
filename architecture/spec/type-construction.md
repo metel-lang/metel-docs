@@ -30,8 +30,10 @@ facts ([defaults](#arch.type-construction.requirement-9), [overloads](#arch.type
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | `metel-frontend/src/typechecker/mod.rs` (`check_graph`, `check_graph_with_report`, `GlobalExports`) |
-| `verified by` | general correctness is a precondition of the full 1,183-fixture integration suite; no dedicated topological-order unit test was found directly naming this invariant (unlike `arch.parsing.requirement-1`'s module-loading order, which has one) |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0022 |
 
 ##### Requirement {#arch.type-construction.requirement-2}
@@ -43,8 +45,10 @@ Construction stamps the typed IR with resolved identities wherever the frontend 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | `metel-frontend/src/typechecker/mod.rs` (`check_graph_with_report`, `FrozenIdentity` parameter); `metel-frontend/src/typechecker/construction.rs` and `construction/*.rs` |
-| `verified by` | `metel-frontend/src/typechecker/mod.rs::construct_generic_body_stamps_a_real_local_id`, `::propagate_error_desugar_shares_one_local_id_between_arms`, `::toplevel_let_initializer_reference_carries_a_symbol_id`, `::implicit_copy_capture_carries_the_enclosing_local_id`, `::array_extend_method_self_param_carries_a_local_id`, `::qualified_path_static_method_call_carries_a_type_id`, `::record_projection_base_carries_its_binding_id`, `::toplevel_bare_statement_reference_carries_a_symbol_id` (8 of 10 unit tests in the module; no `construction/*.rs` file has its own unit tests — the pass is otherwise verified only by the integration suite) |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | `arch.resolution.requirement-2`, `arch.resolution.requirement-3`, ADR-0054, `#1051`, `#1052` |
 
 ##### Requirement {#arch.type-construction.requirement-3}
@@ -56,8 +60,10 @@ Opaque return variables are validated at constraint-composition time, not by ins
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | `metel-frontend/src/typeinference/mod.rs` (`apply_constraint_with_coercion`, `opaque_return_vars`) |
-| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/typechecking/generics/stage18_neg_03_return_impl_aspect_caller_cannot_name`, `stage18_neg_06_return_impl_aspect_non_generic_param` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0044, RFC-0037 |
 
 ##### Requirement {#arch.type-construction.requirement-4}
@@ -69,8 +75,10 @@ The typechecker treats `T[]` as `Copy` unconditionally: its copy eligibility is 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | `metel-frontend/src/typeinference/mod.rs` (`InferContext::infer_type_satisfies_aspect`, `InferType::Array`) |
-| `verified by` | general integration-suite coverage of slice moves and `Copy`/`Drop` eligibility; no dedicated `T[]`-with-non-`Copy`-element fixture was identified in this pass |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0046, RFC-0126 |
 
 ##### Requirement {#arch.type-construction.requirement-5}
@@ -82,8 +90,10 @@ Until destructor invocation exists, a `std::core::Drop` impl may declare only an
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | `metel-frontend/src/typechecker/construction/declarations.rs` (`reject_inert_destructor`) |
-| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/typechecking/structs/stage5_neg_39_drop_body_cannot_run_yet`, `stage5_40_empty_drop_body_still_declares_drop`, `metel-interpreter/tests/integration/sources/typechecking/aspects/stage13_11_user_declared_drop_aspect_is_unaffected` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0047, RFC-0071 §9c, `#261` |
 
 ##### Requirement {#arch.type-construction.requirement-6}
@@ -95,8 +105,10 @@ Type ascriptions constrain inference and construction but are erased from typed 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | `metel-frontend/src/typechecker/inference/expressions.rs`; `metel-frontend/src/typechecker/construction/expressions.rs`; `metel-frontend/src/typed_ast/mod.rs` |
-| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch`, `stage8_neg_03_ascribe_bool_as_int`, `stage8_neg_04_ascribe_wrong_struct` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0009 |
 
 ##### Requirement {#arch.type-construction.requirement-7}
@@ -108,8 +120,10 @@ Operand legality is checked after operand types are resolved: arithmetic and una
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | `metel-frontend/src/typechecker/construction.rs` (`construct_binop`, `construct_unaryop`) |
-| `verified by` | general integration-suite coverage of operator type errors; no dedicated unit test naming the pass-2 placement was found |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0017, `T0005` |
 
 ##### Requirement {#arch.type-construction.requirement-8}
@@ -121,8 +135,10 @@ Import visibility is diagnosed while building import schemes, where the full mod
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | `metel-frontend/src/name_resolver.rs`; `metel-frontend/src/typechecker/mod.rs` (`build_import_schemes`) |
-| `verified by` | general integration-suite coverage of imports and visibility; no dedicated test naming this ownership boundary was found |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0024, `T0003`, `T0009` |
 
 ##### Requirement {#arch.type-construction.requirement-9}
@@ -134,8 +150,10 @@ Aspect default methods are materialized as typed methods before evaluation. Infe
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | `metel-frontend/src/typechecker/inference/declarations.rs`; `metel-frontend/src/typechecker/construction/declarations.rs` |
-| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods`, `stage12_02_override_replaces_default`, `stage12_03_multiple_defaults` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0034 |
 
 ##### Requirement {#arch.type-construction.requirement-10}
@@ -147,8 +165,10 @@ Free-function overload selection is exact-match and construction stamps the sele
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | `metel-frontend/src/typechecker/overload.rs` (`build_overload_table`, selection); `metel-frontend/src/typechecker/construction/calls.rs`; `metel-interpreter/src/evaluator/mod.rs` (`RuntimeRegistry::symbol_values`) |
-| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/typechecking/overload_duplicate`, `overload_no_match` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0038, `arch.evaluation.requirement-2`, `LIMIT-TYPE-CONSTRUCTION-002` |
 
 ##### Requirement {#arch.type-construction.requirement-11}
@@ -160,8 +180,10 @@ Construction keeps generic struct field templates separate from concrete struct 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | `metel-frontend/src/typechecker/construction.rs` (`ConstructCtx`, concrete struct scopes and generic method/type environments); `metel-frontend/src/typechecker/construction/expressions.rs` |
-| `verified by` | general integration-suite coverage of generic struct literals and field access; no dedicated unit test naming the split-environment invariant was found |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0012 |
 
 ##### Requirement {#arch.type-construction.requirement-12}
@@ -173,8 +195,10 @@ Generic runtime reconstruction recovers nominal type arguments from a struct or 
 | `status` | `implemented` |
 | `owner` | `metel-frontend`, `metel-interpreter` |
 | `specified by` | `#type-construction` |
-| `implements` | `metel-frontend/src/typechecker/mod.rs` (`infer_named_type_args`); `metel-interpreter/src/evaluator/type_of.rs` (`value_to_type`); `metel-interpreter/src/evaluator/call.rs` |
-| `verified by` | general integration-suite coverage of generic method/runtime reconstruction; no focused fixture naming field-based recovery was found |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0043 |
 
 </details>

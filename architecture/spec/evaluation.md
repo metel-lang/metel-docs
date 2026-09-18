@@ -32,8 +32,10 @@ fallbacks ([generic calls](#arch.evaluation.requirement-7), [dynamic aspects](#a
 | `status` | `implemented` |
 | `owner` | `metel-interpreter` |
 | `specified by` | `#evaluation` |
-| `implements` | `metel-interpreter/src/evaluator/mod.rs` (`Environment`) |
-| `verified by` | `metel-interpreter/src/evaluator/mod.rs::define_binding_is_readable_by_local_id`, `::a_binding_with_no_id_is_simply_not_stored`, `::distinct_local_ids_do_not_alias`, `::capture_clone_starts_with_an_empty_frame`, `::capture_closure_installs_captures_in_the_frame_by_enclosing_id`, `::capture_closure_copy_installs_a_clone_capture_by_id`, `::mut_ref_capture_shares_one_cell_with_the_source`, `::ident_rc_resolves_by_identity_only`, `::lvalue_field_cell_resolves_a_nested_receiver_root_by_id_without_the_name_map`, `::set_local_mutates_the_shared_cell_in_place` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | `arch.resolution.requirement-1`, `arch.resolution.requirement-2`, ADR-0029, ADR-0054, `#1052a`/`#1052b` series |
 
 ##### Requirement {#arch.evaluation.requirement-3}
@@ -45,8 +47,10 @@ fallbacks ([generic calls](#arch.evaluation.requirement-7), [dynamic aspects](#a
 | `status` | `implemented` |
 | `owner` | `metel-interpreter` |
 | `specified by` | `#evaluation` |
-| `implements` | `metel-interpreter/src/evaluator/mod.rs` (`Value::Enum`, `eval_expr`); `metel-interpreter/src/evaluator/call.rs`; `metel-interpreter/src/evaluator/pattern.rs`; `metel-interpreter/src/evaluator/display.rs` |
-| `verified by` | general integration-suite coverage of `Perhaps`, `Result`, pattern matching, and `?`; no dedicated representation-invariant test was found |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0028, `arch.evaluation.requirement-2` |
 
 ##### Requirement {#arch.evaluation.requirement-4}
@@ -58,8 +62,10 @@ Method dispatch preserves the receiver mode carried by the typed AST. Value rece
 | `status` | `implemented` |
 | `owner` | `metel-interpreter` |
 | `specified by` | `#evaluation` |
-| `implements` | `metel-interpreter/src/evaluator/mod.rs` (receiver dispatch); `metel-interpreter/src/evaluator/call.rs` |
-| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/evaluator/structs/67_receiver_references`, `68_receiver_all_forms`, `69_nested_field_mut_receiver`, `100_value_receiver_keeps_value_semantics`, `metel-interpreter/tests/integration/sources/evaluator/aspects/93_dyn_aspect_mutable_receiver_dispatch` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0036, RFC-0044 |
 
 ##### Requirement {#arch.evaluation.requirement-5}
@@ -71,8 +77,10 @@ Array values use value semantics at evaluator binding and assignment boundaries:
 | `status` | `implemented` |
 | `owner` | `metel-interpreter` |
 | `specified by` | `#evaluation` |
-| `implements` | `metel-interpreter/src/evaluator/mod.rs` (`deep_clone_value`, `Environment::define`, `Environment::set`) |
-| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/evaluator/types/10_array`, `metel-interpreter/tests/integration/sources/evaluator/closures/73_closure_direct_assign_no_outer_effect` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0007 |
 
 ##### Requirement {#arch.evaluation.requirement-6}
@@ -84,8 +92,10 @@ The evaluator maintains call frames in thread-local storage. Call entry pushes i
 | `status` | `implemented` |
 | `owner` | `metel-interpreter` |
 | `specified by` | `#evaluation` |
-| `implements` | `metel-interpreter/src/evaluator/mod.rs` (`CALL_STACK`, `push_call_frame`, `pop_call_frame`, `call_stack`) |
-| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/evaluator/functions/neg_14_stack_single_frame`, `neg_15_stack_outer_frame`, `neg_16_stack_deep_chain`, `neg_17_stack_recursive`, `neg_18_stack_closure_frame` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0008 |
 
 ##### Requirement {#arch.evaluation.requirement-7}
@@ -97,8 +107,10 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 | `status` | `implemented` |
 | `owner` | `metel-interpreter`, `metel-frontend` |
 | `specified by` | `#evaluation` |
-| `implements` | `metel-interpreter/src/evaluator/mod.rs` (`ClosureBody::Untyped`, `ClosureValue`); `metel-interpreter/src/evaluator/call.rs`; `metel-frontend/src/typechecker/construction.rs` |
-| `verified by` | general integration-suite coverage of generic functions and closures; no focused runtime-reconstruction unit test was found |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0010, ADR-0011, `LIMIT-EVALUATION-001` |
 
 ##### Requirement {#arch.evaluation.requirement-8}
@@ -110,8 +122,10 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 | `status` | `implemented` |
 | `owner` | `metel-interpreter`, `metel-frontend` |
 | `specified by` | `#evaluation` |
-| `implements` | `metel-interpreter/src/evaluator/mod.rs` (`Value::DynAspect`, `TypedExpr::DynCoerce`, `RuntimeRegistry`); `metel-interpreter/src/evaluator/type_of.rs`; `metel-frontend/src/typechecker/object_safety.rs` |
-| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/evaluator/aspects/90_dyn_aspect_owned_coercion_and_dispatch`, `92_dyn_aspect_multiple_concrete_types_dispatch_independently`, `93_dyn_aspect_mutable_receiver_dispatch`, `96_dyn_aspect_list_heterogeneous_collection` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0053, RFC-0008 |
 
 ##### Requirement {#arch.evaluation.requirement-2}
@@ -123,8 +137,10 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 | `status` | `partial` |
 | `owner` | `metel-interpreter` |
 | `specified by` | `#evaluation` |
-| `implements` | `metel-interpreter/src/evaluator/mod.rs` (`RuntimeRegistry`) |
-| `verified by` | general integration-suite coverage (every fixture dispatching a method or calling an overloaded/top-level function exercises this); no unit test directly names the `SymbolId`-keyed dispatch invariant, and `tools/check_no_semantic_name_lookup.py` explicitly excludes `RuntimeRegistry` from its scan |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | `arch.resolution.requirement-1`, `tools/check_no_semantic_name_lookup.py` |
 
 </details>

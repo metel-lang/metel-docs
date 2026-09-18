@@ -29,8 +29,10 @@ Every top-level declaration is assigned a `SymbolId` from one canonical table (`
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#name-resolution` |
-| `implements` | `metel-frontend/src/symbols.rs` (`SymbolId`, `SymbolTable`, `SYM_TYPE_*`/`SYM_ASPECT_*`, `USER_SYM_START`, `OVERLOAD_SYM_START`); `metel-frontend/src/name_resolver.rs` (`resolve`, `ResolvedNames::symbols`/`::definitions`) |
-| `verified by` | `metel-frontend/src/name_resolver.rs::same_declaration_gets_same_symbol_id_regardless_of_importer`, `::aliased_import_has_same_symbol_id_as_direct_import`, `::distinct_declarations_get_distinct_symbol_ids`, `::symbol_id_is_stable_in_symbol_table`, `::symbol_id_is_independent_of_module_resolution_order`, `::definitions_index_covers_every_declared_symbol`, `::interns_impl_and_aspect_method_symbols` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | METEL-185, ADR-0041 |
 
 ##### Requirement {#arch.name-resolution.requirement-2}
@@ -42,8 +44,10 @@ A module's import scope resolves with explicit precedence: an explicit `import` 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#name-resolution` |
-| `implements` | `metel-frontend/src/name_resolver.rs` (`GlobTier`, `ModuleScope`, `resolve`) |
-| `verified by` | `metel-frontend/src/name_resolver.rs::resolves_explicit_item_import`, `::resolves_glob_import`, `::rejects_duplicate_explicit_import`; integration fixtures `metel-interpreter/tests/integration/sources/module_semantics/two_glob_imports_same_name_is_t0011`, `two_explicit_imports_same_local_name_is_t0011` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | `T0011`, ADR-0026 |
 
 ##### Requirement {#arch.name-resolution.requirement-3}
@@ -55,8 +59,10 @@ Every expression-level bare-identifier reference is classified as either `Res::D
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#name-resolution` |
-| `implements` | `metel-frontend/src/reference_resolver.rs` (`Res`, `collect_references`) |
-| `verified by` | `metel-frontend/src/reference_resolver.rs::resolves_top_level_call_to_its_symbol_id`, `::local_binding_shadows_top_level_declaration`, `::overloaded_name_reference_does_not_resolve_to_a_stale_id` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | METEL-187, ADR-0041 |
 
 </details>

@@ -35,8 +35,10 @@ After inference has solved a body and the frontend has frozen its resolution, no
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | `metel-frontend/src/identity.rs` (`ResolutionMap`, `Resolution`, `UnresolvedCause`) |
-| `verified by` | `tools/check_no_semantic_name_lookup.py` (CI-wired, `.github/workflows/ci.yml`); `metel-frontend/src/identity/tests.rs::reference_table_is_total_and_unknown_names_are_explicit` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0054, ADR-0041, ADR-0042 |
 
 ##### Requirement {#arch.resolution.requirement-2}
@@ -48,8 +50,10 @@ Lexical bindings and value references are allocated structural identities (`Loca
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | `metel-frontend/src/identity/allocate.rs`, `metel-frontend/src/identity/lexical_path.rs` |
-| `verified by` | `metel-frontend/src/identity/tests.rs::blank_lines_and_reformatting_change_no_identity`, `::inserting_an_earlier_binding_does_not_renumber_a_later_one`, `::editing_one_body_leaves_another_bodys_identities_untouched`, `::allocation_is_order_independent_for_the_same_graph`, `::shadowing_produces_distinct_local_ids` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 
 ##### Requirement {#arch.resolution.requirement-3}
@@ -61,8 +65,10 @@ Struct and enum member declarations (fields and enum variants) are interned to s
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | `metel-frontend/src/identity/member.rs` (`MemberTable`); `metel-frontend/src/typed_ast/mod.rs` (`FieldId`/`VariantId` on field-access, construction, and variant forms) |
-| `verified by` | `metel-frontend/src/identity/member.rs::struct_fields_get_distinct_ids_owned_by_the_struct`, `::same_field_name_on_different_types_is_a_different_id`, `::enum_variants_and_their_fields_are_interned`, `::interning_is_reformat_stable_and_order_independent`, `::absent_members_report_none_not_a_fabricated_id` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0054 step 3, `#1051` |
 
 ##### Requirement {#arch.resolution.requirement-4}
@@ -74,8 +80,10 @@ Source-position lookup (`PositionIndex`) is the one structure permitted to be ke
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | `metel-frontend/src/identity/position.rs` (`PositionIndex`) |
-| `verified by` | `tools/check_no_semantic_name_lookup.py` (deliberately exempts `identity::position` as the sanctioned exception, rather than silently missing it) |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 
 </details>

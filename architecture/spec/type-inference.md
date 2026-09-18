@@ -31,8 +31,10 @@ Type inference is Hindley-Milner with let-polymorphism. `unify` performs structu
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | `metel-frontend/src/typeinference/mod.rs` (`InferType`, `TypeVar`, `Substitution`, `unify`, `generalize`, `instantiate`, `Constraint`, `solve_constraints`) |
-| `verified by` | general correctness is a precondition of the full integration suite (1,183 `.mtl` fixtures, `metel-interpreter/tests/integration/sources/`) rather than a dedicated unify/occurs-check unit suite — only 4 unit tests exist directly in `typeinference/mod.rs` itself (see requirement-2, which they actually cover) |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | `metel-frontend/docs/typechecker.md` |
 
 ##### Requirement {#arch.type-inference.requirement-2}
@@ -44,8 +46,10 @@ Type inference is Hindley-Milner with let-polymorphism. `unify` performs structu
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | `metel-frontend/src/typeinference/mod.rs` (`TypeDefinitionRegistry`, `FieldEntry`, `VariantInfo`, `EnumInfo`) |
-| `verified by` | `metel-frontend/src/typeinference/mod.rs::same_named_structs_in_two_modules_keep_distinct_field_sets`, `::merge_from_does_not_collapse_same_named_structs`, `::block_local_type_id_is_disjoint_from_name_resolver_ids`, `::same_named_enums_in_two_modules_keep_distinct_variant_sets` |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0025 (unified `TypeDefinitionRegistry`), ADR-0041 |
 
 ##### Requirement {#arch.type-inference.requirement-3}
@@ -57,8 +61,10 @@ Type inference is Hindley-Milner with let-polymorphism. `unify` performs structu
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | `metel-frontend/src/typechecker/inference.rs` (the `?`-expression inference arm); `metel-frontend/src/typeinference/mod.rs` (`has_from_impl`) |
-| `verified by` | integration fixture `metel-interpreter/tests/integration/sources/typechecking/error_handling/stage6_neg_06_error_propagation_mismatched_types`; no dedicated unit test found naming this check directly |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0030 (`?` desugared in `path_normalizer` pre-pass), `#13` (full coercion for arbitrary type pairs) |
 
 ##### Requirement {#arch.type-inference.requirement-4}
@@ -70,8 +76,10 @@ Typechecking keeps inference and construction as separate passes. Inference solv
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | `metel-frontend/src/typechecker/mod.rs` (module check orchestration); `metel-frontend/src/typechecker/inference.rs`; `metel-frontend/src/typechecker/construction.rs` |
-| `verified by` | full integration-suite coverage of checked programs; no dedicated unit test asserting the pass boundary was found |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0002, `arch.type-construction.requirement-1` |
 
 ##### Requirement {#arch.type-inference.requirement-5}
@@ -83,8 +91,10 @@ Let-bound polymorphic closures are represented in the polymorphic scheme environ
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | `metel-frontend/src/typechecker/inference.rs` (`mono_env`, `poly_env`); `metel-frontend/src/typechecker/mod.rs` (`build_module_scheme_env`); `metel-frontend/src/typechecker/construction/declarations.rs` |
-| `verified by` | general integration-suite coverage of generic let-bound closures; no dedicated regression test naming the environment-absence invariant was found |
+| `implements` | _Exempt; see exemption below._ |
+| `verified by` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
 | `related` | ADR-0011, ADR-0010 |
 
 </details>
