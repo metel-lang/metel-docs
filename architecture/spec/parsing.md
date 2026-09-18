@@ -30,10 +30,8 @@ Loading a root file produces a `ModuleGraph` whose `modules: Vec<LoadedModule>` 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | _Exempt; see exemption below._ |
-| `verified by` | _Exempt; see exemption below._ |
-| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
-| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `implements` | [`metel-frontend/src/module_loader.rs::load_module`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/module_loader.rs#L506) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/module_loading/rejects_circular_module_graph/test.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/module_loading/rejects_circular_module_graph/test.toml#L1) |
 | `related` | RFC-0058, ADR-0023 (hierarchical module paths), ADR-0031 (diamond-dependency path aliasing), `#1147` |
 
 ##### Requirement {#arch.parsing.requirement-2}
@@ -45,10 +43,8 @@ Module source is read through a `SourceProvider` abstraction rather than a hardc
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | _Exempt; see exemption below._ |
-| `verified by` | _Exempt; see exemption below._ |
-| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
-| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `implements` | [`metel-frontend/src/module_loader.rs::hash_source`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/module_loader.rs#L22) |
+| `verified by` | [`metel-frontend/src/module_loader.rs::source_provider_overlay_supplies_in_memory_source`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/module_loader.rs#L999) |
 | `related` | RFC-0058, ADR-0039 |
 
 ##### Requirement {#arch.parsing.requirement-3}
@@ -60,10 +56,8 @@ A single file parses through one PEG grammar (`grammar.pest`, driven by `pest`/`
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | _Exempt; see exemption below._ |
-| `verified by` | _Exempt; see exemption below._ |
-| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
-| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `implements` | [`metel-frontend/src/parser/mod.rs::parse`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/parser/mod.rs#L27) |
+| `verified by` | [`metel-frontend/src/parser/mod.rs::multi_segment_path_carries_one_span_per_segment`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/parser/mod.rs#L3509) |
 | `related` | `#229` |
 
 ##### Requirement {#arch.parsing.requirement-4}
@@ -75,10 +69,8 @@ Control flow has one expression-shaped representation through the parser and AST
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | _Exempt; see exemption below._ |
-| `verified by` | _Exempt; see exemption below._ |
-| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
-| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `implements` | [`metel-frontend/src/parser/mod.rs::parse`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/parser/mod.rs#L28) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/control_flow/88_braceless_if_no_else_in_expression_position.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/evaluator/control_flow/88_braceless_if_no_else_in_expression_position.toml#L1) |
 | `related` | ADR-0005 |
 
 ##### Requirement {#arch.parsing.requirement-5}
@@ -90,10 +82,8 @@ Grammar ordering preserves identifier-prefix and `None`-literal disambiguation: 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | _Exempt; see exemption below._ |
-| `verified by` | _Exempt; see exemption below._ |
-| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
-| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `implements` | [`metel-frontend/src/parser/mod.rs::parse`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/parser/mod.rs#L30) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/enums/39_perhaps.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/evaluator/enums/39_perhaps.toml#L1) |
 | `related` | ADR-0015, ADR-0018 |
 
 ##### Requirement {#arch.parsing.requirement-6}
@@ -105,10 +95,8 @@ String interpolation is lowered while parsing into ordinary expression nodes: ea
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | _Exempt; see exemption below._ |
-| `verified by` | _Exempt; see exemption below._ |
-| `implements exemption` | rationale: backward implementation citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
-| `verification exemption` | rationale: backward verification citation migration is pending; owner: Architecture maintainers; review: 2026-12-18 |
+| `implements` | [`metel-frontend/src/parser/mod.rs::parse`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/parser/mod.rs#L29) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/builtins/86_interpolation_evaluation_order.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/evaluator/builtins/86_interpolation_evaluation_order.toml#L1) |
 | `related` | ADR-0033 |
 
 </details>
