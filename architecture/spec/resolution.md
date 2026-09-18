@@ -77,4 +77,14 @@ Source-position lookup (`PositionIndex`) is the one structure permitted to be ke
 
 ## Known limitations
 
+`LIMIT-*` records are the authoritative inventory of known boundaries for this
+section. They carry the impact, owner, disposition, and review point; the
+Atlas limitations view projects the same records rather than duplicating them.
+
+### Active records
+
 - [`LIMIT-RESOLUTION-001`](../limitations/limit-resolution-001.md) — the resolved-identity model is in-memory only; no on-disk persistence or cross-process interner stability.
+
+### Resolved records
+
+No resolved `LIMIT-*` records are currently recorded for this section.

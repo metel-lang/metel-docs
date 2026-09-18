@@ -91,6 +91,14 @@ Let-bound polymorphic closures are represented in the polymorphic scheme environ
 
 ## Known limitations
 
+`LIMIT-*` records are the authoritative inventory of known boundaries for this
+section. They carry the impact, owner, disposition, and review point; the
+Atlas limitations view projects the same records rather than duplicating them.
+
+### Active records
+
 - [`LIMIT-TYPE-INFERENCE-001`](../limitations/limit-type-inference-001.md) — `?` error coercion requires an explicit `From` impl; only `Int`/`Float` are built in. (Filed as `LIMIT-TYPE-CONSTRUCTION-003` originally, before checking which pass actually performs the check — renamed during `#1158`'s triage.)
 
-Not audited this session: the memory that `ctx.solve()` (the recursive substitution/constraint-solving walk) is stack-depth-sensitive — a prior real stack-overflow incident whose fix addressed a symptom, not `solve_constraints`'s recursive structure itself — was not re-verified against current source here. If it's still true, it belongs in `#1161`'s extraction as a `LIMIT-*` record (a known, accepted boundary — not something this section can respond to as an `arch-*` requirement, since it's a limitation, not a checkable claim of current correct behavior).
+### Resolved records
+
+No resolved `LIMIT-*` records are currently recorded for this section.

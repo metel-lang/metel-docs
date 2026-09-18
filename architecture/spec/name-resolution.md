@@ -77,4 +77,15 @@ Multi-segment qualified paths (`Expr::Path`, e.g. `math::sin`, `self::Foo`) rewr
 
 ## Known limitations
 
-None currently open. [`LIMIT-NAME-RESOLUTION-001`](../limitations/limit-name-resolution-001.md) — `std::core` lacking a physical module file — is recorded as `resolved` (by ADR-0039), not deleted, so the historical fact and its resolution stay traceable.
+`LIMIT-*` records are the authoritative inventory of known boundaries for this
+section. They carry the impact, owner, disposition, and review point; the
+Atlas limitations view projects the same records rather than duplicating them.
+
+### Active records
+
+No active `LIMIT-*` records are currently recorded for this section. This is
+a current inventory, not a claim of complete coverage.
+
+### Resolved records
+
+- [`LIMIT-NAME-RESOLUTION-001`](../limitations/limit-name-resolution-001.md) — `std::core` lacking a physical module file, resolved by ADR-0039.
