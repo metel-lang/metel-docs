@@ -183,5 +183,3 @@ Generic runtime reconstruction recovers nominal type arguments from a struct or 
 
 - [`LIMIT-TYPE-CONSTRUCTION-001`](../limitations/limit-type-construction-001.md) — `Call::callee_id` falls back to name dispatch for first-class function values (a live exception to the resolution-freeze invariant).
 - [`LIMIT-TYPE-CONSTRUCTION-002`](../limitations/limit-type-construction-002.md) — overload sets are not yet exportable across modules (METEL-188).
-
-`?` error coercion (originally filed here as `LIMIT-TYPE-CONSTRUCTION-003`) moved to [`#type-inference`'s Known limitations](type-inference.md#known-limitations) as `LIMIT-TYPE-INFERENCE-001` — the actual `From`-impl check runs during inference, not construction; this section only carries the desugared node's identity stamping (`arch.type-construction.requirement-2`).

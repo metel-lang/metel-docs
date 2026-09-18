@@ -1,6 +1,11 @@
 # Resolution {#resolution}
 
-This section is the Architecture Spec's first content, per [ADR-0055](../decisions/adr-0055-architecture-integrity-records.md) — the current, versioned description of how the frontend resolves source spellings to stable identities, and the boundary that binds the rest of the pipeline (typechecking, elaboration, evaluation) to those identities instead of re-deriving meaning from names. It documents [ADR-0054](../decisions/adr-0054-resolved-identity-freeze-and-generic-instance-preparation.md)'s resolved-identity model as implemented, not as originally proposed — some of ADR-0054's plan (generic instance preparation; rekeying `struct_env`/`variant_env` off `String`) is `#1051`'s "freeze proper" milestone, landed since; this section states current reality, and the `arch-*` requirements below are its checkable claims.
+This section is the Architecture Spec's versioned description of how the
+frontend resolves source spellings to stable identities, and the boundary that
+binds typechecking, elaboration, and evaluation to those identities instead of
+re-deriving meaning from names. It documents the implemented resolved-identity
+model described by [ADR-0054](../decisions/adr-0054-resolved-identity-freeze-and-generic-instance-preparation.md);
+the `arch-*` requirements below are its checkable claims.
 
 Owning crate: `metel-frontend`. The model is defined in `identity.rs` and `identity/` (`allocate.rs`, `lexical_path.rs`, `member.rs`, `position.rs`), and consumed by `name_resolver.rs`, `reference_resolver.rs`, `typed_ast/`, and every later pipeline stage.
 

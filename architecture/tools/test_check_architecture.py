@@ -154,6 +154,14 @@ class CheckArchitectureTests(unittest.TestCase):
         findings = [str(f) for f in self.run_checks()]
         self.assertTrue(any("does not exist" in f for f in findings), findings)
 
+    def test_stale_process_narration_is_a_finding(self):
+        self.write_corpus()
+        (self.tmp / "architecture" / "architecture.md").write_text(
+            "# Architecture\n\nThe limitation inventory runs next in the chain.\n"
+        )
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("stale process narration" in f for f in findings), findings)
+
     def test_missing_spec_dir_reports_one_finding_not_a_crash(self):
         shutil.rmtree(self.spec_dir)
         findings = self.run_checks()

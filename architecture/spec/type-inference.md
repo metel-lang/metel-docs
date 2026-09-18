@@ -59,7 +59,7 @@ Type inference is Hindley-Milner with let-polymorphism. `unify` performs structu
 | `specified by` | `#type-inference` |
 | `implements` | `metel-frontend/src/typechecker/inference.rs` (the `?`-expression inference arm); `metel-frontend/src/typeinference/mod.rs` (`has_from_impl`) |
 | `verified by` | integration fixture `metel-interpreter/tests/integration/sources/typechecking/error_handling/stage6_neg_06_error_propagation_mismatched_types`; no dedicated unit test found naming this check directly |
-| `related` | ADR-0030 (`?` desugared in `path_normalizer` pre-pass), `#13` (full coercion for arbitrary type pairs, still open) |
+| `related` | ADR-0030 (`?` desugared in `path_normalizer` pre-pass), `#13` (full coercion for arbitrary type pairs) |
 
 ##### Requirement {#arch.type-inference.requirement-4}
 
@@ -91,6 +91,4 @@ Let-bound polymorphic closures are represented in the polymorphic scheme environ
 
 ## Known limitations
 
-- [`LIMIT-TYPE-INFERENCE-001`](../limitations/limit-type-inference-001.md) — `?` error coercion requires an explicit `From` impl; only `Int`/`Float` are built in. (Filed as `LIMIT-TYPE-CONSTRUCTION-003` originally, before checking which pass actually performs the check — renamed during `#1158`'s triage.)
-
-Not audited this session: the memory that `ctx.solve()` (the recursive substitution/constraint-solving walk) is stack-depth-sensitive — a prior real stack-overflow incident whose fix addressed a symptom, not `solve_constraints`'s recursive structure itself — was not re-verified against current source here. If it's still true, it belongs in `#1161`'s extraction as a `LIMIT-*` record (a known, accepted boundary — not something this section can respond to as an `arch-*` requirement, since it's a limitation, not a checkable claim of current correct behavior).
+- [`LIMIT-TYPE-INFERENCE-001`](../limitations/limit-type-inference-001.md) — `?` error coercion requires an explicit `From` impl; only `Int`/`Float` are built in.

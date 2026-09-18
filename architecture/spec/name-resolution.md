@@ -77,4 +77,7 @@ Multi-segment qualified paths (`Expr::Path`, e.g. `math::sin`, `self::Foo`) rewr
 
 ## Known limitations
 
-None currently open. [`LIMIT-NAME-RESOLUTION-001`](../limitations/limit-name-resolution-001.md) — `std::core` lacking a physical module file — is recorded as `resolved` (by ADR-0039), not deleted, so the historical fact and its resolution stay traceable.
+No active `LIMIT-*` record is currently associated with this section. The
+resolved [`LIMIT-NAME-RESOLUTION-001`](../limitations/limit-name-resolution-001.md)
+preserves the former `std::core` physical-module boundary and its resolution by
+ADR-0039.

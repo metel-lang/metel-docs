@@ -1,26 +1,17 @@
 # Interpreter Architecture
 
 > Rationale for the tree-walk approach: [ADR-0004](decisions/adr-0004-interpreter-architecture.md)
-> (ADR-0051, amended again — this whole file and `decisions/` are excluded from the
-> metel-website build; still public and readable directly on GitHub in `metel-docs`,
-> where relative links like the one above resolve fine on their own)
 
 > This page is the informal overview. [ADR-0055](decisions/adr-0055-architecture-integrity-records.md)
 > establishes `spec/` as the versioned, checkable Architecture Spec — stable
 > sections with inline-anchored `arch-*` requirements, each naming its
-> implementation and verifying evidence. Sections so far:
-> [Resolution](spec/resolution.md) (`metel-core#1155`, identity),
-> [Module Loading & Parsing](spec/parsing.md) (`metel-core#1164`),
-> [Name & Reference Resolution](spec/name-resolution.md) (`metel-core#1165`),
-> [Coherence](spec/coherence.md) (`metel-core#1166`),
-> [Move Check](spec/move-check.md) (`metel-core#1167`),
-> [Elaboration](spec/elaboration.md) (`metel-core#1168`),
-> [Evaluation](spec/evaluation.md) (`metel-core#1169`),
-> [Type Inference](spec/type-inference.md) (`metel-core#1170`),
-> [Type Construction](spec/type-construction.md) (`metel-core#1171`).
-> Every one of `#1155`'s eight children (`#1164`–`#1171`) now has a
-> published section, closing that parent tracking issue. Next in the
-> chain: `#1161` (extracting `LIMIT-*` records from the ADR corpus).
+> implementation and verifying evidence. Its sections cover
+> [Resolution](spec/resolution.md), [Module Loading & Parsing](spec/parsing.md),
+> [Name & Reference Resolution](spec/name-resolution.md),
+> [Coherence](spec/coherence.md), [Move Check](spec/move-check.md),
+> [Elaboration](spec/elaboration.md), [Evaluation](spec/evaluation.md),
+> [Type Inference](spec/type-inference.md), and
+> [Type Construction](spec/type-construction.md).
 
 ## Pipeline
 
@@ -58,8 +49,8 @@
        │  typed_ast::TypedModuleGraph
        ▼
   ┌─────────────┐
-  │ Move Check  │  optional (--move-check flag): rejects use-after-move (RFC-0071, #579);
-  │ (optional)  │  validation only — off by default in v0.12.0, see the changelog
+  │ Move Check  │  optional (--move-check flag): rejects use-after-move (RFC-0071);
+  │ (optional)  │  validation only — off by default
   └─────────────┘
        │  typed_ast::TypedModuleGraph (unchanged; validation gate only)
        ▼

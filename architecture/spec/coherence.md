@@ -48,4 +48,5 @@ Overlap detection (`T0015`): two impls whose type/aspect coverage overlaps confl
 
 ## Known limitations
 
-None recorded yet for this section — `#1161` (extracting `LIMIT-*` records from the existing ADR corpus) runs next in this chain and will file any that apply here.
+No active `LIMIT-*` record is currently associated with this section. This is
+an inventory statement, not a claim of complete coverage.
