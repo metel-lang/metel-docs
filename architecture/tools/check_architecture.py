@@ -66,6 +66,16 @@ REQUIREMENT_RE = re.compile(
 )
 FIELD_ROW_RE = re.compile(r"^\|\s*`([a-z ]+)`\s*\|\s*(.+?)\s*\|\s*$", re.MULTILINE)
 KNOWN_LIMITATIONS_LINK_RE = re.compile(r"\[`(LIMIT-[A-Z0-9\-]+)`\]\(([^)]+)\)")
+KNOWN_LIMITATIONS_INTRO = (
+    "`LIMIT-*` records are the authoritative inventory of known boundaries for this\n"
+    "section. They carry the impact, owner, disposition, and review point; the\n"
+    "Atlas limitations view projects the same records rather than duplicating them."
+)
+ACTIVE_LIMITATIONS_EMPTY = (
+    "No active `LIMIT-*` records are currently recorded for this section. This is\n"
+    "a current inventory, not a claim of complete coverage."
+)
+RESOLVED_LIMITATIONS_EMPTY = "No resolved `LIMIT-*` records are currently recorded for this section."
 
 FRONTMATTER_KEY_RE = re.compile(
     r'^([a-z_]+):\s*(?:"((?:[^"\\]|\\.)*)"|(\S.*?)|)\s*$', re.MULTILINE
@@ -117,6 +127,22 @@ def frontmatter_and_body(text: str) -> tuple[dict, str]:
     return fm, body
 
 
+def parse_known_limitations(text: str) -> tuple[str, list, list] | None:
+    """Return the raw block and its active/resolved links, or None when the
+    required section is absent. The presentation convention is deliberately
+    checked here: it is the prose-facing projection over durable LIMIT records,
+    not an informal list that can drift from record disposition."""
+    match = re.search(
+        r"^## Known limitations\n\n" + re.escape(KNOWN_LIMITATIONS_INTRO) +
+        r"\n\n### Active records\n\n(.*?)\n\n### Resolved records\n\n(.*?)(?=^## |\Z)",
+        text,
+        re.MULTILINE | re.DOTALL,
+    )
+    if not match:
+        return None
+    return match.group(0), KNOWN_LIMITATIONS_LINK_RE.findall(match.group(1)), KNOWN_LIMITATIONS_LINK_RE.findall(match.group(2))
+
+
 def parse_spec_file(path: Path):
     text = path.read_text()
     section_ids = set(SECTION_ANCHOR_RE.findall(text))
@@ -128,11 +154,7 @@ def parse_spec_file(path: Path):
         for fm_field in FIELD_ROW_RE.finditer(block):
             fields[fm_field.group(1).strip()] = fm_field.group(2).strip()
         requirements.append((req_id, fields))
-    kl_links = []
-    kl_idx = text.find("## Known limitations")
-    if kl_idx != -1:
-        kl_links = KNOWN_LIMITATIONS_LINK_RE.findall(text[kl_idx:])
-    return section_ids, requirements, kl_links
+    return section_ids, requirements, parse_known_limitations(text)
 
 
 def parse_limitation_file(path: Path):
@@ -259,16 +281,24 @@ def run_checks(
 
     all_section_ids_by_file: dict = {}
     all_arch_ids: dict = {}
-    kl_links_by_file: dict = {}
+    known_limitations_by_file: dict = {}
 
     for path in spec_files:
-        section_ids, requirements, kl_links = parse_spec_file(path)
+        section_ids, requirements, known_limitations = parse_spec_file(path)
         all_section_ids_by_file[path.resolve()] = section_ids
-        kl_links_by_file[path] = kl_links
+        known_limitations_by_file[path] = known_limitations
 
         rel = path.relative_to(repo_root)
         if not section_ids:
             findings.append(Finding(str(rel), "no top-level `{#section-id}` heading anchor found"))
+
+        if known_limitations is None:
+            findings.append(
+                Finding(
+                    str(rel),
+                    "Known limitations must use the standard inventory, Active records, and Resolved records structure",
+                )
+            )
 
         for req_id, fields in requirements:
             if req_id in all_arch_ids:
@@ -367,22 +397,42 @@ def run_checks(
         if not affects:
             findings.append(Finding(str(rel), "`## Affects` lists no targets"))
 
-    # Cross-file: every `affects` entry, and every "Known limitations" link,
-    # must resolve to a real id that actually exists somewhere in the corpus.
+    # Cross-file: every `affects` entry, and every standardized
+    # "Known limitations" link, must resolve to a real id that actually exists
+    # somewhere in the corpus. The groups must agree with record disposition.
     for path, fm, affects, _ in limitation_records:
         rel = path.relative_to(repo_root)
         for target in affects:
             if target not in all_arch_ids and target not in all_limit_ids:
                 findings.append(Finding(str(rel), f"`affects` target `{target}` does not exist"))
 
-    for path, kl_links in kl_links_by_file.items():
+    for path, known_limitations in known_limitations_by_file.items():
+        if known_limitations is None:
+            continue
         rel = path.relative_to(repo_root)
-        for limit_id, link_path in kl_links:
-            if limit_id not in all_limit_ids:
-                findings.append(Finding(str(rel), f"Known-limitations link `{limit_id}` does not exist"))
-            target = (path.parent / link_path).resolve()
-            if not target.exists():
-                findings.append(Finding(str(rel), f"Known-limitations link target `{link_path}` does not exist on disk"))
+        block, active_links, resolved_links = known_limitations
+        active_text = re.search(r"^### Active records\n\n(.*?)\n\n### Resolved records", block, re.MULTILINE | re.DOTALL).group(1)
+        resolved_text = re.search(r"^### Resolved records\n\n(.*)$", block, re.MULTILINE | re.DOTALL).group(1)
+
+        if active_text == ACTIVE_LIMITATIONS_EMPTY and active_links:
+            findings.append(Finding(str(rel), "Active records empty state must not contain LIMIT-* links"))
+        if resolved_text == RESOLVED_LIMITATIONS_EMPTY and resolved_links:
+            findings.append(Finding(str(rel), "Resolved records empty state must not contain LIMIT-* links"))
+
+        for group, links in (("Active", active_links), ("Resolved", resolved_links)):
+            for limit_id, link_path in links:
+                if limit_id not in all_limit_ids:
+                    findings.append(Finding(str(rel), f"Known-limitations link `{limit_id}` does not exist"))
+                else:
+                    disposition = next(fm.get("disposition") for _, fm, _, _ in limitation_records if fm.get("id") == limit_id)
+                    if group == "Active" and disposition in {"resolved", "superseded"}:
+                        findings.append(Finding(str(rel), f"Active records link `{limit_id}` has `{disposition}` disposition"))
+                    if group == "Resolved" and disposition != "resolved":
+                        findings.append(Finding(str(rel), f"Resolved records link `{limit_id}` does not have `resolved` disposition"))
+                if limit_id in all_limit_ids:
+                    target = (path.parent / link_path).resolve()
+                    if not target.exists():
+                        findings.append(Finding(str(rel), f"Known-limitations link target `{link_path}` does not exist on disk"))
 
     return findings
 

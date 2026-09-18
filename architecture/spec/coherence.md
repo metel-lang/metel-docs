@@ -48,4 +48,15 @@ Overlap detection (`T0015`): two impls whose type/aspect coverage overlaps confl
 
 ## Known limitations
 
-None recorded yet for this section — `#1161` (extracting `LIMIT-*` records from the existing ADR corpus) runs next in this chain and will file any that apply here.
+`LIMIT-*` records are the authoritative inventory of known boundaries for this
+section. They carry the impact, owner, disposition, and review point; the
+Atlas limitations view projects the same records rather than duplicating them.
+
+### Active records
+
+No active `LIMIT-*` records are currently recorded for this section. This is
+a current inventory, not a claim of complete coverage.
+
+### Resolved records
+
+No resolved `LIMIT-*` records are currently recorded for this section.
