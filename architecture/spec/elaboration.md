@@ -24,8 +24,8 @@ Every `TypedExpr::MethodCall`'s `dispatch` field starts as `MethodDispatch::Dyna
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#elaboration` |
-| `implements` | [`metel-frontend/src/elaborator/mod.rs::elaborate`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/elaborator/mod.rs#L44) |
-| `verified by` | [`metel-frontend/src/elaborator/mod.rs::resolve_dispatch_aspect_returns_aspect_variant`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/elaborator/mod.rs#L557) |
+| `implements` | [`metel-frontend/src/elaborator/mod.rs::elaborate`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/elaborator/mod.rs#L44) |
+| `verified by` | [`metel-frontend/src/elaborator/mod.rs::resolve_dispatch_aspect_returns_aspect_variant`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/elaborator/mod.rs#L557) |
 | `related` | ADR-0037 |
 
 </details>

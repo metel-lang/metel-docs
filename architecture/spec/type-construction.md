@@ -30,8 +30,8 @@ facts ([defaults](#arch.type-construction.requirement-9), [overloads](#arch.type
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/typechecker/mod.rs::empty`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/typechecker/mod.rs#L134) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.toml#L1) |
+| `implements` | [`metel-frontend/src/typechecker/mod.rs::check_graph`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/typechecker/mod.rs#L348) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.toml`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.toml#L1) |
 | `related` | ADR-0022 |
 
 ##### Requirement {#arch.type-construction.requirement-2}
@@ -43,8 +43,8 @@ Construction stamps the typed IR with resolved identities wherever the frontend 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/typechecker/mod.rs::empty`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/typechecker/mod.rs#L135) |
-| `verified by` | [`metel-frontend/src/typechecker/mod.rs::construct_generic_body_stamps_a_real_local_id`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/typechecker/mod.rs#L1513) |
+| `implements` | [`metel-frontend/src/typechecker/mod.rs::check_graph_with_report`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/typechecker/mod.rs#L365) |
+| `verified by` | [`metel-frontend/src/typechecker/mod.rs::construct_generic_body_stamps_a_real_local_id`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/typechecker/mod.rs#L1512) |
 | `related` | `arch.resolution.requirement-2`, `arch.resolution.requirement-3`, ADR-0054, `#1051`, `#1052` |
 
 ##### Requirement {#arch.type-construction.requirement-3}
@@ -56,8 +56,8 @@ Opaque return variables are validated at constraint-composition time, not by ins
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/typeinference/mod.rs::fmt`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/typeinference/mod.rs#L25) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/types/stage3_04_sized_arrays.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/typechecking/types/stage3_04_sized_arrays.toml#L1) |
+| `implements` | [`metel-frontend/src/typeinference/mod.rs::apply_constraint_with_coercion`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/typeinference/mod.rs#L1256) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/types/stage3_04_sized_arrays.toml`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-interpreter/tests/integration/sources/typechecking/types/stage3_04_sized_arrays.toml#L1) |
 | `related` | ADR-0044, RFC-0037 |
 
 ##### Requirement {#arch.type-construction.requirement-4}
@@ -69,8 +69,8 @@ The typechecker treats `T[]` as `Copy` unconditionally: its copy eligibility is 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/typeinference/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/typeinference/mod.rs#L3148) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_02_override_replaces_default.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_02_override_replaces_default.toml#L1) |
+| `implements` | [`metel-frontend/src/typeinference/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/typeinference/mod.rs#L3149) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_02_override_replaces_default.toml`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_02_override_replaces_default.toml#L1) |
 | `related` | ADR-0046, RFC-0126 |
 
 ##### Requirement {#arch.type-construction.requirement-5}
@@ -82,8 +82,8 @@ Until destructor invocation exists, a `std::core::Drop` impl may declare only an
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/typechecker/construction/declarations.rs::method_fun_decl`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/typechecker/construction/declarations.rs#L12) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_02_override_replaces_default.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_02_override_replaces_default.toml#L1) |
+| `implements` | [`metel-frontend/src/typechecker/construction/declarations.rs::method_fun_decl`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/typechecker/construction/declarations.rs#L12) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_02_override_replaces_default.toml`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_02_override_replaces_default.toml#L1) |
 | `related` | ADR-0047, RFC-0071 §9c, `#261` |
 
 ##### Requirement {#arch.type-construction.requirement-6}
@@ -95,8 +95,8 @@ Type ascriptions constrain inference and construction but are erased from typed 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/typechecker/inference/expressions.rs::infer_stmt`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/typechecker/inference/expressions.rs#L17) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.toml#L1) |
+| `implements` | [`metel-frontend/src/typechecker/inference/expressions.rs::infer_stmt`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/typechecker/inference/expressions.rs#L17) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.toml`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.toml#L1) |
 | `related` | ADR-0009 |
 
 ##### Requirement {#arch.type-construction.requirement-7}
@@ -108,8 +108,8 @@ Operand legality is checked after operand types are resolved: arithmetic and una
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/typechecker/construction.rs::build_concrete_struct_env`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/typechecker/construction.rs#L39) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/literals/neg_05_generic_field_literal_add_string.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/typechecking/literals/neg_05_generic_field_literal_add_string.toml#L1) |
+| `implements` | [`metel-frontend/src/typechecker/construction.rs::build_concrete_struct_env`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/typechecker/construction.rs#L39) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/literals/neg_05_generic_field_literal_add_string.toml`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-interpreter/tests/integration/sources/typechecking/literals/neg_05_generic_field_literal_add_string.toml#L1) |
 | `related` | ADR-0017, `T0005` |
 
 ##### Requirement {#arch.type-construction.requirement-8}
@@ -121,8 +121,8 @@ Import visibility is diagnosed while building import schemes, where the full mod
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/name_resolver.rs::canonical_path`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/name_resolver.rs#L101) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/module_semantics/importing_private_item_is_t0009/test.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/module_semantics/importing_private_item_is_t0009/test.toml#L1) |
+| `implements` | [`metel-frontend/src/name_resolver.rs::canonical_path`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/name_resolver.rs#L101) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/module_semantics/importing_private_item_is_t0009/test.toml`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-interpreter/tests/integration/sources/module_semantics/importing_private_item_is_t0009/test.toml#L1) |
 | `related` | ADR-0024, `T0003`, `T0009` |
 
 ##### Requirement {#arch.type-construction.requirement-9}
@@ -134,8 +134,8 @@ Aspect default methods are materialized as typed methods before evaluation. Infe
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/typechecker/inference/declarations.rs::infer_decl`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/typechecker/inference/declarations.rs#L18) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.toml#L1) |
+| `implements` | [`metel-frontend/src/typechecker/inference/declarations.rs::infer_decl`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/typechecker/inference/declarations.rs#L18) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.toml`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.toml#L1) |
 | `related` | ADR-0034 |
 
 ##### Requirement {#arch.type-construction.requirement-10}
@@ -147,8 +147,8 @@ Free-function overload selection is exact-match and construction stamps the sele
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/typechecker/overload.rs::next_overload_symbol`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/typechecker/overload.rs#L35) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/functions/toplevel_let_mut_bound_function_dispatch.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/evaluator/functions/toplevel_let_mut_bound_function_dispatch.toml#L1) |
+| `implements` | [`metel-frontend/src/typechecker/overload.rs::next_overload_symbol`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/typechecker/overload.rs#L35) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/functions/toplevel_let_mut_bound_function_dispatch.toml`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-interpreter/tests/integration/sources/evaluator/functions/toplevel_let_mut_bound_function_dispatch.toml#L1) |
 | `related` | ADR-0038, `arch.evaluation.requirement-2`, `LIMIT-TYPE-CONSTRUCTION-002` |
 
 ##### Requirement {#arch.type-construction.requirement-11}
@@ -160,8 +160,8 @@ Construction keeps generic struct field templates separate from concrete struct 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/typechecker/construction.rs::build_concrete_struct_env`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/typechecker/construction.rs#L40) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/structs/stage5_neg_36_copy_generic_field_type_not_copy.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/typechecking/structs/stage5_neg_36_copy_generic_field_type_not_copy.toml#L1) |
+| `implements` | [`metel-frontend/src/typechecker/construction.rs::build_concrete_struct_env`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/typechecker/construction.rs#L40) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/structs/stage5_neg_36_copy_generic_field_type_not_copy.toml`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-interpreter/tests/integration/sources/typechecking/structs/stage5_neg_36_copy_generic_field_type_not_copy.toml#L1) |
 | `related` | ADR-0012 |
 
 ##### Requirement {#arch.type-construction.requirement-12}
@@ -173,8 +173,8 @@ Generic runtime reconstruction recovers nominal type arguments from a struct or 
 | `status` | `implemented` |
 | `owner` | `metel-frontend`, `metel-interpreter` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/typechecker/mod.rs::empty`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-frontend/src/typechecker/mod.rs#L136) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/generics/51_generic_nested_types.toml`](https://github.com/metel-lang/metel-core/blob/a66d52c5851de9647d18d858e0829b6a8477a2a2/metel-interpreter/tests/integration/sources/evaluator/generics/51_generic_nested_types.toml#L1) |
+| `implements` | [`metel-frontend/src/typechecker/mod.rs::infer_named_type_args`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-frontend/src/typechecker/mod.rs#L1148) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/generics/51_generic_nested_types.toml`](https://github.com/metel-lang/metel-core/blob/55dff632839ded1d889f2f38ccf8bb563846e3b1/metel-interpreter/tests/integration/sources/evaluator/generics/51_generic_nested_types.toml#L1) |
 | `related` | ADR-0043 |
 
 </details>
