@@ -36,7 +36,14 @@ class Citation:
 
 
 def git_ref(core: Path) -> str:
-    return subprocess.check_output(["git", "-C", str(core), "rev-parse", "HEAD"], text=True).strip()
+    # The evidence reference is the most recent commit that changed a Rust
+    # citation, rather than the checkout's incidental HEAD. This breaks the
+    # otherwise circular docs-submodule pairing: updating core CI must not
+    # rewrite an Atlas link when it did not change the cited source.
+    ref = subprocess.check_output(
+        ["git", "-C", str(core), "log", "-1", "--format=%H", "-Sarch-", "--", "*.rs"], text=True
+    ).strip()
+    return ref or subprocess.check_output(["git", "-C", str(core), "rev-parse", "HEAD"], text=True).strip()
 
 
 def following_item(text: str, start: int, test_only: bool, path: Path, line: int) -> str:
