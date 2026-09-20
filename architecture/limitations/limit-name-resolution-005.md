@@ -4,7 +4,7 @@ title: "Symbol identity is a (module, name-string) key, so distinct declarations
 summary: "`ResolvedNames.symbols` keys ids by module path and a name string: every declaration kind shares that key space, and a method's key drops its impl's type arguments, so different impls collide."
 scope: "architecture/spec/name-resolution.md#name-resolution"
 owner: metel-frontend
-discovered_by: "maintainer review of metel-frontend/src/symbols.rs and `ResolvedNames.symbols`; reproduced as metel-core#1228"
+discovered_by: "maintainer review of metel-frontend/src/symbols.rs and `ResolvedNames.symbols`; reproduced as metel-core#1228 and #1229"
 disposition: known
 review: null
 ---
@@ -30,14 +30,26 @@ gets the same `SymbolId`, and `intern_all_symbols` does not check for a clash:
    both produce `W::Tag::t`, so both methods receive one `SymbolId` and the
    id-keyed method registry keeps whichever was registered last.
 
+3. **Methods are not overloaded, so a repeated name collides even inside one
+   impl.** Two methods called `m` in one `extend S` block, whatever their
+   parameter types, share `S::m` and one id; the later definition replaces the
+   earlier. Free functions are different: each overloaded *definition* gets its
+   own id from the overload allocator (`LIMIT-NAME-RESOLUTION-002`), and only the
+   bare *name* shares one table entry.
+
 ## Impact
 
-Case 2 is a silent wrong result, reproduced against current `develop`: with the
-two impls above, `W { v = 1 }.t()` and `W { v = "s" }.t()` both return the
-*last* impl's value, and swapping the blocks swaps the answer (also for
-inherent `extend` blocks and through a generic bound). Coherence accepts the
-program. Tracked as `metel-core#1228`. Case 1 has no observed runtime effect
-today but is the same weakness: identity is a string key, not the declaration.
+Cases 2 and 3 are silent wrong results, reproduced against current `develop`.
+Case 2: with the two impls above, `W { v = 1 }.t()` and `W { v = "s" }.t()` both
+return the *last* impl's value, and swapping the blocks swaps the answer (also
+for inherent `extend` blocks and through a generic bound); coherence accepts the
+program (`metel-core#1228`). Case 3: `extend S { fun m(&self, x: i64) …; fun
+m(&self, x: String) … }` is accepted and only the `String` method exists
+(`s.m(5)` then fails to typecheck), and two `m()` methods with identical
+signatures are accepted with no duplicate error, the second running (free
+functions get `T0011` for the same mistake; `metel-core#1229`). Case 1 has no
+observed runtime effect today but is the same weakness: identity is a string
+key, not the declaration.
 
 ## Affects
 
@@ -48,7 +60,7 @@ today but is the same weakness: identity is a string key, not the declaration.
 
 ## Resolution
 
-None yet; the bug is `metel-core#1228`. The fix is to key a method by its
+None yet; the bugs are `metel-core#1228` and `metel-core#1229`. The fix is to key a method by its
 declaration (for example the impl's position or a canonical form of its target
 type including arguments) and to make `intern_all_symbols` reject or
 disambiguate two declarations that map to one key.
