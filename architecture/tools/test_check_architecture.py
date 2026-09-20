@@ -378,10 +378,22 @@ class GapRecordTests(ArchitectureCorpusCase):
     def write_gap_corpus(self, gap_text=VALID_GAP, gap_name="gap-types-001.md", limitation_text=None):
         self.write_corpus(limitation_text=limitation_text if limitation_text is not None else VALID_LIMITATION)
         (self.tmp / "reference" / "spec").mkdir(parents=True, exist_ok=True)
-        (self.tmp / "reference" / "spec" / "types.md").write_text(LANGUAGE_SPEC)
+        (self.tmp / "reference" / "spec" / "types.md").write_text(LANGUAGE_SPEC + self.known_gaps_for(gap_text))
         gaps = self.tmp / "architecture" / "gaps"
         gaps.mkdir(parents=True, exist_ok=True)
         (gaps / gap_name).write_text(gap_text)
+
+    @staticmethod
+    def known_gaps_for(gap_text):
+        """The `## Known gaps` chapter section a correct author would write
+        for the given TYPES record (empty statement when it is not active)."""
+        import re
+        disposition = re.search(r"^disposition: (\S+)", gap_text, re.M).group(1)
+        rid = re.search(r"^id: (\S+)", gap_text, re.M).group(1)
+        title = re.search(r'^title: "(.*)"', gap_text, re.M).group(1)
+        if disposition in ca.GAP_ACTIVE_DISPOSITIONS and rid.startswith("GAP-TYPES-"):
+            return f"\n## Known gaps\n\nIntro.\n\n- `{rid}` — {title}. A reader sentence.\n"
+        return "\n## Known gaps\n\n" + ca.KNOWN_GAPS_EMPTY + "\n"
 
     def write_rfc(self, stage, number="0122"):
         d = self.tmp / "rfcs" / stage
@@ -484,6 +496,48 @@ class GapRecordTests(ArchitectureCorpusCase):
         (self.tmp / "architecture" / "gaps" / "gap-types-002.md").write_text(VALID_GAP)
         f = self.findings()
         self.assertTrue(any("duplicate GAP-* id" in x for x in f), f)
+
+    def _types_md(self, section):
+        (self.tmp / "reference" / "spec" / "types.md").write_text(LANGUAGE_SPEC + section)
+
+    def test_missing_known_gaps_section_is_a_finding(self):
+        self.write_gap_corpus()
+        self._types_md("")
+        self.assertTrue(any("missing `## Known gaps` section" in f for f in self.findings()))
+
+    def test_known_gaps_must_list_every_active_record(self):
+        self.write_gap_corpus()
+        self._types_md("\n## Known gaps\n\n" + ca.KNOWN_GAPS_EMPTY + "\n")
+        self.assertTrue(any("does not list active record `GAP-TYPES-001`" in f for f in self.findings()))
+
+    def test_known_gaps_must_not_list_an_unknown_or_inactive_record(self):
+        self.write_gap_corpus()
+        self._types_md("\n## Known gaps\n\n- `GAP-TYPES-001` — Function parameters are monotypes. x\n- `GAP-TYPES-009` — Ghost. x\n")
+        self.assertTrue(any("lists `GAP-TYPES-009`, which is not an active" in f for f in self.findings()))
+
+    def test_known_gaps_entry_must_begin_with_the_record_title(self):
+        self.write_gap_corpus()
+        self._types_md("\n## Known gaps\n\n- `GAP-TYPES-001` — A drifted title. x\n")
+        self.assertTrue(any("must begin with the record's title" in f for f in self.findings()))
+
+    def test_known_gaps_must_not_link_into_unpublished_material(self):
+        self.write_gap_corpus()
+        self._types_md("\n## Known gaps\n\n- `GAP-TYPES-001` — Function parameters are monotypes. See [x](../../architecture/gaps/gap-types-001.md).\n")
+        self.assertTrue(any("must not link into `architecture/` or `rfcs/`" in f for f in self.findings()))
+
+    def test_empty_known_gaps_needs_the_standard_statement(self):
+        self.write_gap_corpus(gap_text=VALID_GAP.replace("disposition: known", "disposition: superseded"))
+        self._types_md("\n## Known gaps\n\nNothing here.\n")
+        self.assertTrue(any("standard empty statement" in f for f in self.findings()))
+
+    def test_empty_statement_alongside_records_is_a_finding(self):
+        self.write_gap_corpus()
+        self._types_md("\n## Known gaps\n\n- `GAP-TYPES-001` — Function parameters are monotypes. x\n\n" + ca.KNOWN_GAPS_EMPTY + "\n")
+        self.assertTrue(any("also carries the empty statement" in f for f in self.findings()))
+
+    def test_superseded_record_drops_out_of_known_gaps(self):
+        self.write_gap_corpus(gap_text=VALID_GAP.replace("disposition: known", "disposition: superseded"))
+        self.assertEqual([], self.findings())
 
 
 if __name__ == "__main__":

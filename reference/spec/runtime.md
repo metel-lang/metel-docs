@@ -538,3 +538,8 @@ returns `Err(OsError)`.
 <!-- rfc.py:fixtures:end -->
 
 </details>
+
+## Known gaps
+
+No known gaps are currently recorded for this chapter. This is a current
+inventory, not a claim of complete coverage.
