@@ -1,6 +1,7 @@
 ---
 id: LIMIT-NAME-RESOLUTION-001
 title: "std::core had no physical module file (resolved by ADR-0039)"
+summary: "`std::core` had no physical module file; resolved by ADR-0039."
 scope: "architecture/spec/name-resolution.md#name-resolution"
 owner: metel-frontend
 discovered_by: "ADR-0027; found stale and resolved during ADR lifecycle triage, 2026-09-17"

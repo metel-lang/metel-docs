@@ -720,6 +720,4 @@ re-export use `import` and `export`.
 
 ## Known gaps
 
-Places where this chapter deliberately does not provide something a reader might expect. Each is tracked as a `GAP-*` record.
-
-- `GAP-MODULES-001` — Module graphs may not be cyclic, so modules cannot be mutually dependent. A circular import is a compile error, so two modules cannot depend on each other; move shared definitions into a third module ([Circular Imports](#circular-imports)).
+<!-- records:gaps -->

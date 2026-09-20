@@ -1,6 +1,7 @@
 ---
 id: LIMIT-TYPE-CONSTRUCTION-001
 title: "Call::callee_id falls back to name dispatch for first-class functions"
+summary: "`callee_id` is empty for methods, nested functions and first-class function calls, which fall back to name dispatch."
 scope: "architecture/spec/type-construction.md#type-construction"
 owner: metel-frontend
 discovered_by: "ADR-0041, ADR-0042 (corroborated independently in both)"

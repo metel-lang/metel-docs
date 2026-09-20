@@ -38,22 +38,13 @@ Some claim.
 
 ## Known limitations
 
-`LIMIT-*` records are the authoritative inventory of known boundaries for this
-section. They carry the impact, owner, disposition, and review point; the
-Atlas limitations view projects the same records rather than duplicating them.
-
-### Active records
-
-- [`LIMIT-RESOLUTION-001`](../limitations/limit-resolution-001.md) — an example limitation.
-
-### Resolved records
-
-No resolved `LIMIT-*` records are currently recorded for this section.
+<!-- records:limitations -->
 """
 
 VALID_LIMITATION = """---
 id: LIMIT-RESOLUTION-001
 title: "Example limitation"
+summary: "An example limitation."
 scope: "architecture/spec/resolution.md#resolution"
 owner: metel-frontend
 discovered_by: "a test"
@@ -164,12 +155,6 @@ class CheckArchitectureTests(ArchitectureCorpusCase):
         findings = [str(f) for f in self.run_checks()]
         self.assertTrue(any("does not match the LIMIT-<AREA>-<NNN> shape" in f for f in findings), findings)
 
-    def test_known_limitations_link_to_nonexistent_id_is_a_finding(self):
-        broken = VALID_SPEC.replace("LIMIT-RESOLUTION-001", "LIMIT-DOES-NOT-EXIST-001")
-        self.write_corpus(spec_text=broken)
-        findings = [str(f) for f in self.run_checks()]
-        self.assertTrue(any("does not exist" in f for f in findings), findings)
-
     def test_stale_process_narration_is_a_finding(self):
         self.write_corpus()
         (self.tmp / "architecture" / "architecture.md").write_text(
@@ -178,19 +163,28 @@ class CheckArchitectureTests(ArchitectureCorpusCase):
         findings = [str(f) for f in self.run_checks()]
         self.assertTrue(any("stale process narration" in f for f in findings), findings)
 
-    def test_nonstandard_known_limitations_structure_is_a_finding(self):
-        broken = VALID_SPEC.replace("### Active records", "### Open limitations")
+    def test_known_limitations_must_hold_only_the_marker(self):
+        broken = VALID_SPEC.replace("<!-- records:limitations -->", "- a hand-written list item")
         self.write_corpus(spec_text=broken)
         findings = [str(f) for f in self.run_checks()]
-        self.assertTrue(any("must use the standard inventory" in f for f in findings), findings)
+        self.assertTrue(any("must hold only the `<!-- records:limitations -->` marker" in f for f in findings), findings)
 
-    def test_resolved_record_in_active_group_is_a_finding(self):
-        resolved = VALID_LIMITATION.replace("disposition: known", "disposition: resolved").replace(
-            "None yet.", "Fixed by #999, verified by some_test."
-        )
-        self.write_corpus(limitation_text=resolved)
+    def test_record_summary_is_required(self):
+        self.write_corpus(limitation_text=VALID_LIMITATION.replace('summary: "An example limitation."\n', ""))
         findings = [str(f) for f in self.run_checks()]
-        self.assertTrue(any("Active records link" in f and "resolved" in f for f in findings), findings)
+        self.assertTrue(any("missing or empty frontmatter field `summary`" in f for f in findings), findings)
+
+    def test_overlong_summary_is_a_finding(self):
+        long = VALID_LIMITATION.replace("An example limitation.", "x" * (ca.SUMMARY_MAX_LENGTH + 1))
+        self.write_corpus(limitation_text=long)
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("keep it to one line" in f for f in findings), findings)
+
+    def test_record_whose_scope_page_lacks_the_marker_is_a_finding(self):
+        page = VALID_SPEC[: VALID_SPEC.index("## Known limitations")]
+        self.write_corpus(spec_text=page)
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("never renders" in f for f in findings), findings)
 
     def test_missing_last_reviewed_is_a_finding(self):
         broken = VALID_SPEC.replace("| `last_reviewed` | 0123456789ab |\n", "")
@@ -346,6 +340,7 @@ A rule.
 VALID_GAP = """---
 id: GAP-TYPES-001
 title: "Function parameters are monotypes"
+summary: "A one-line summary."
 scope: "reference/spec/types.md#spec.types.generics.legality-1"
 owner: language
 discovered_by: "a test"
@@ -385,15 +380,8 @@ class GapRecordTests(ArchitectureCorpusCase):
 
     @staticmethod
     def known_gaps_for(gap_text):
-        """The `## Known gaps` chapter section a correct author would write
-        for the given TYPES record (empty statement when it is not active)."""
-        import re
-        disposition = re.search(r"^disposition: (\S+)", gap_text, re.M).group(1)
-        rid = re.search(r"^id: (\S+)", gap_text, re.M).group(1)
-        title = re.search(r'^title: "(.*)"', gap_text, re.M).group(1)
-        if disposition in ca.GAP_ACTIVE_DISPOSITIONS and rid.startswith("GAP-TYPES-"):
-            return f"\n## Known gaps\n\nIntro.\n\n- `{rid}` — {title}. A reader sentence.\n"
-        return "\n## Known gaps\n\n" + ca.KNOWN_GAPS_EMPTY + "\n"
+        """The chapter's `## Known gaps` section: only the records marker."""
+        return "\n## Known gaps\n\n" + ca.GAPS_MARKER + "\n"
 
     def write_rfc(self, stage, number="0122"):
         d = self.tmp / "rfcs" / stage
@@ -505,37 +493,12 @@ class GapRecordTests(ArchitectureCorpusCase):
         self._types_md("")
         self.assertTrue(any("missing `## Known gaps` section" in f for f in self.findings()))
 
-    def test_known_gaps_must_list_every_active_record(self):
+    def test_known_gaps_must_hold_only_the_marker(self):
         self.write_gap_corpus()
-        self._types_md("\n## Known gaps\n\n" + ca.KNOWN_GAPS_EMPTY + "\n")
-        self.assertTrue(any("does not list active record `GAP-TYPES-001`" in f for f in self.findings()))
+        self._types_md("\n## Known gaps\n\n- `GAP-TYPES-001` — a hand-written entry\n")
+        self.assertTrue(any("must hold only the `<!-- records:gaps -->` marker" in f for f in self.findings()))
 
-    def test_known_gaps_must_not_list_an_unknown_or_inactive_record(self):
-        self.write_gap_corpus()
-        self._types_md("\n## Known gaps\n\n- `GAP-TYPES-001` — Function parameters are monotypes. x\n- `GAP-TYPES-009` — Ghost. x\n")
-        self.assertTrue(any("lists `GAP-TYPES-009`, which is not an active" in f for f in self.findings()))
-
-    def test_known_gaps_entry_must_begin_with_the_record_title(self):
-        self.write_gap_corpus()
-        self._types_md("\n## Known gaps\n\n- `GAP-TYPES-001` — A drifted title. x\n")
-        self.assertTrue(any("must begin with the record's title" in f for f in self.findings()))
-
-    def test_known_gaps_must_not_link_into_unpublished_material(self):
-        self.write_gap_corpus()
-        self._types_md("\n## Known gaps\n\n- `GAP-TYPES-001` — Function parameters are monotypes. See [x](../../architecture/gaps/gap-types-001.md).\n")
-        self.assertTrue(any("must not link into `architecture/` or `rfcs/`" in f for f in self.findings()))
-
-    def test_empty_known_gaps_needs_the_standard_statement(self):
-        self.write_gap_corpus(gap_text=VALID_GAP.replace("disposition: known", "disposition: superseded"))
-        self._types_md("\n## Known gaps\n\nNothing here.\n")
-        self.assertTrue(any("standard empty statement" in f for f in self.findings()))
-
-    def test_empty_statement_alongside_records_is_a_finding(self):
-        self.write_gap_corpus()
-        self._types_md("\n## Known gaps\n\n- `GAP-TYPES-001` — Function parameters are monotypes. x\n\n" + ca.KNOWN_GAPS_EMPTY + "\n")
-        self.assertTrue(any("also carries the empty statement" in f for f in self.findings()))
-
-    def test_superseded_record_drops_out_of_known_gaps(self):
+    def test_known_gaps_marker_alone_passes_even_with_no_active_records(self):
         self.write_gap_corpus(gap_text=VALID_GAP.replace("disposition: known", "disposition: superseded"))
         self.assertEqual([], self.findings())
 

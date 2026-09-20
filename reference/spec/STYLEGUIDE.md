@@ -398,10 +398,9 @@ gotcha in full.
 
 ## Known gaps section
 
-Every chapter ends with a `## Known gaps` section listing the chapter's active
-`GAP-*` records (ADR-0057). Each entry is `` - `GAP-AREA-NNN` — <record title>. <one
-reader-facing sentence> ``: the ID is plain text and the title matches the record
-exactly. A chapter with no active gaps carries the standard empty statement. The
-section never links into `architecture/` or `rfcs/`. `check_architecture.py`
-enforces all of this; edit the section when a record is added, resolved or
-superseded.
+Every chapter ends with a `## Known gaps` heading whose only content is the marker
+`<!-- records:gaps -->`. The website renders the chapter's active `GAP-*` records
+there from the records themselves (ADR-0057), each linking to its own page, so do
+not write entries by hand. Record content (title, one-line `summary`, disposition)
+lives in `architecture/gaps/`. `check_architecture.py` enforces the heading and
+marker.

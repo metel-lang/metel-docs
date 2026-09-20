@@ -1,6 +1,7 @@
 ---
 id: LIMIT-RESOLUTION-002
 title: "Inference-time type lookup falls back to a name-approximate, cross-module search"
+summary: "Inference falls back to a name-based, cross-module type lookup where the declaration id is missing, which can confuse same-named types."
 scope: "architecture/spec/resolution.md#resolution"
 owner: metel-frontend
 discovered_by: "metel-core#1216 limitation analysis; `typeinference/mod.rs` `resolve_type_key_broad`"

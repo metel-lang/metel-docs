@@ -1,6 +1,7 @@
 ---
 id: GAP-DECLARATIONS-002
 title: "Aspect implementations may not safely widen a method's generic constraints"
+summary: "An implementation's generic constraints must match the aspect method's exactly, even where a looser signature would be safe."
 scope: "reference/spec/declarations.md#spec.declarations.aspects.implementing-an-aspect.legality-13"
 owner: language
 discovered_by: "metel-core#1217 limitation analysis; fixtures `typechecking/aspects/stage21_neg_08` and `stage21_neg_09`"

@@ -139,17 +139,4 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 
 ## Known limitations
 
-`LIMIT-*` records are the authoritative inventory of known boundaries for this
-section. They carry the impact, owner, disposition, and review point; the
-Atlas limitations view projects the same records rather than duplicating them.
-
-### Active records
-
-- [`LIMIT-EVALUATION-001`](../limitations/limit-evaluation-001.md) — generic function dispatch re-constructs on every call rather than monomorphizing once.
-- [`LIMIT-EVALUATION-003`](../limitations/limit-evaluation-003.md) — `RuntimeRegistry`'s `type_ids`/`pattern_methods` remain name-keyed and are explicitly outside `tools/check_no_semantic_name_lookup.py`'s scan.
-- [`LIMIT-EVALUATION-004`](../limitations/limit-evaluation-004.md) — the evaluator is a deliberate PoC ("will almost certainly be rewritten"), not a stable target shape.
-- [`LIMIT-EVALUATION-005`](../limitations/limit-evaluation-005.md) — destructor invocation is not implemented; only empty `drop` bodies are accepted (`#261`).
-
-### Resolved records
-
-No resolved `LIMIT-*` records are currently recorded for this section.
+<!-- records:limitations -->
