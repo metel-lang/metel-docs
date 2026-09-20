@@ -173,7 +173,11 @@ Code and fixtures cite `arch-*` records or Formal Rules, never limitation
 records. Limitation records document limitations and their disposition;
 they are not a contract that the implementation satisfies.
 
-### 5. Reserved for later: a language-level gap sibling
+### 5. Language-level gap sibling (chartered by ADR-0057)
+
+> Chartered by [ADR-0057](adr-0057-language-gap-records.md). The text below records
+> why the prefix is `GAP-*`; the charter (definition, sorting test, shape,
+> location) is in ADR-0057.
 
 `LIMIT-*` as specified here is scoped to architecture — a known limitation
 in how the compiler implements something. A parallel concept for the

@@ -123,6 +123,7 @@ Status legend: **C** current, **S→X** superseded by X, **H** historical, **—
 | adr-0054 | Resolved Identity Freeze and Generic Instance Preparation | C | resolution (already the primary source) |
 | adr-0055 | Architecture Integrity Records and Verification | C | — (the framework itself) |
 | adr-0056 | Architecture Atlas Reader Is a Deferred Projection | C | — (the framework itself) |
+| adr-0057 | GAP-* Records for Language-Level Gaps | C | — (the framework itself) |
 
 ## Not done in this pass
 
