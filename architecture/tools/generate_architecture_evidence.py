@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Render Architecture Spec evidence from citations owned by metel-core.
 
-``arch-implements`` belongs immediately before the Rust item that implements a
-claim. ``arch-verifies`` belongs immediately before a unit test; integration
-fixture sidecars use ``[options] arch_verifies``. The generated fields below
-are deliberately the only implementation and verification inventories in the
-Atlas: editing a rendered cell is overwritten, and ``--check`` rejects it.
+``arch-implements`` belongs immediately before the Rust item (or, in a
+``.pest`` file, the grammar rule) that implements a claim. ``arch-verifies``
+belongs immediately before a unit test; integration fixture sidecars use
+``[options] arch_verifies``. A ``#[ignore]``d test or a fixture with
+``skip = ...`` never runs, so citing one is an error, not evidence. The
+generated fields below are deliberately the only implementation and
+verification inventories in the Atlas: editing a rendered cell is
+overwritten, and ``--check`` rejects it.
 
 ``last_reviewed`` (metel-core#1191) is the opposite of those fields: a
 requirement's evidence table also carries a hand-typed commit SHA, and this
@@ -17,10 +20,20 @@ auto-regenerated diff takes no more attention than resolving a merge
 conflict. ``last_reviewed`` only does its job if a person writes it by hand
 after rereading the claim; the check's only role is to notice when the code
 moved on since the last time someone did.
+
+A claim with no evidence for one side carries an ``implements exemption`` /
+``verification exemption`` row instead (metel-core#1193), in rfc.py's ``kind``
+vocabulary: ``kind: untestable; reason: ...; owner: ...`` (permanent),
+``kind: elsewhere; ref: <path or claim id>; reason: ...; owner: ...``, or
+``kind: blocked; ref: <RFC id or repo#N>; reason: ...; owner: ...; review:
+YYYY-MM-DD`` (temporary: CI fails once the review date passes or the ref
+resolves). Evidence and an exemption on the same side are mutually exclusive.
 """
 from __future__ import annotations
 
 import argparse
+import datetime
+import importlib.util
 import re
 import subprocess
 import sys
@@ -34,6 +47,7 @@ ID = r"arch\.[a-z0-9.-]+\.requirement-\d+"
 CITE = re.compile(r"^\s*//\s*arch-(implements|verifies):\s*\[([^]]*)\]\s*$", re.M)
 IDS = re.compile(rf'"({ID})"')
 ITEM = re.compile(r"\b(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?fn\s+([A-Za-z_][A-Za-z0-9_]*)")
+PEST_RULE = re.compile(r"^[ \t]*([A-Za-z_][A-Za-z0-9_]*)[ \t]*=[ \t]*[@_$!]?\{", re.M)
 REQ = re.compile(rf"^(##### Requirement \{{#({ID})\}}\n.*?)(?=^##### Requirement|\Z)", re.M | re.S)
 ROW = re.compile(r"^\| `(?P<field>implements|verified by)` \|.*?\|$", re.M)
 EXEMPTION = re.compile(r"^\| `(?P<field>implements exemption|verification exemption)` \| (?P<value>.*?) \|$", re.M)
@@ -60,7 +74,7 @@ def git_ref(core: Path) -> str:
     # otherwise circular docs-submodule pairing: updating core CI must not
     # rewrite an Atlas link when it did not change the cited source.
     ref = subprocess.check_output(
-        ["git", "-C", str(core), "log", "-1", "--format=%H", "-Sarch-", "--", "*.rs"], text=True
+        ["git", "-C", str(core), "log", "-1", "--format=%H", "-Sarch-", "--", "*.rs", "*.pest"], text=True
     ).strip()
     return ref or subprocess.check_output(["git", "-C", str(core), "rev-parse", "HEAD"], text=True).strip()
 
@@ -78,7 +92,24 @@ def following_item(text: str, start: int, test_only: bool, path: Path, line: int
     between = remainder[:item.start()]
     if test_only and "#[test]" not in between:
         raise ValueError(f"{path}:{line}: arch-verifies must precede a #[test] function")
+    if test_only and re.search(r"#\[ignore\b", between):
+        raise ValueError(
+            f"{path}:{line}: arch-verifies cites an #[ignore]d test; an ignored test never runs "
+            f"and cannot verify a claim"
+        )
     return item.group(1), start + item.start()
+
+
+def following_rule(text: str, start: int, path: Path, line: int) -> tuple[str, int]:
+    """The `.pest` counterpart of `following_item`: a marker must sit
+    directly above a grammar rule (only blank/comment lines in between)."""
+    rule = PEST_RULE.search(text, start)
+    if not rule:
+        raise ValueError(f"{path}:{line}: citation has no following grammar rule")
+    for between in text[start:rule.start()].splitlines():
+        if between.strip() and not between.strip().startswith("//"):
+            raise ValueError(f"{path}:{line}: arch-implements must directly precede a grammar rule")
+    return rule.group(1), rule.start(1)
 
 
 def _skip_string_or_comment(text: str, i: int) -> int | None:
@@ -146,7 +177,8 @@ def function_extent(text: str, fn_start: int) -> tuple[int, int]:
 
 def citations(core: Path):
     found = defaultdict(lambda: {"implements": [], "verifies": []})
-    for path in core.rglob("*.rs"):
+    sources = [p for pattern in ("*.rs", "*.pest") for p in core.rglob(pattern)]
+    for path in sources:
         if any(part in {"target", ".git"} for part in path.parts):
             continue
         text = path.read_text(errors="ignore")
@@ -156,7 +188,12 @@ def citations(core: Path):
             claim_ids = IDS.findall(match.group(2))
             if not claim_ids:
                 raise ValueError(f"{path}:{line}: citation contains no well-formed arch claim")
-            item, item_start = following_item(text, match.end(), kind == "verifies", path, line)
+            if path.suffix == ".pest":
+                if kind != "implements":
+                    raise ValueError(f"{path}:{line}: only arch-implements can cite a grammar rule")
+                item, item_start = following_rule(text, match.end(), path, line)
+            else:
+                item, item_start = following_item(text, match.end(), kind == "verifies", path, line)
             _, end_line = function_extent(text, item_start)
             rel = path.relative_to(core)
             citation = Citation(rel, item, line, end_line)
@@ -169,7 +206,13 @@ def citations(core: Path):
             data = tomllib.loads(path.read_text())
         except tomllib.TOMLDecodeError:
             continue
-        values = data.get("options", {}).get("arch_verifies", [])
+        options = data.get("options", {})
+        values = options.get("arch_verifies", [])
+        if values and options.get("skip"):
+            raise ValueError(
+                f"{path}: arch_verifies cites a skipped fixture (`skip = ...`); a skipped fixture "
+                f"never runs and cannot verify a claim"
+            )
         for claim in values:
             if re.fullmatch(ID, claim):
                 found[claim]["verifies"].append(Citation(path.relative_to(core), None, 1, None))
@@ -237,9 +280,91 @@ def render(values, core_ref):
     return "; ".join(result)
 
 
-def valid_exemption(value):
-    return bool(re.search(r"\brationale:\s*\S", value) and re.search(r"\bowner:\s*\S", value)
-                and re.search(r"\breview:\s*\d{4}-\d{2}-\d{2}\b", value))
+EXEMPTION_KEYS = ("kind", "ref", "reason", "owner", "review")
+EXEMPTION_SPLIT = re.compile(r";\s*(?=(?:" + "|".join(EXEMPTION_KEYS) + r"):)")
+ISSUE_REF = re.compile(r"^(?P<repo>[a-zA-Z0-9_.-]+)#(?P<num>\d+)$")
+RFC_REF = re.compile(r"^rfc-\d{4}$", re.IGNORECASE)
+_RFC_TOOL = None
+
+
+def _rfc_tool():
+    """rfc.py owns the exemption vocabulary (`COVERAGE_VALID_KINDS`) and the
+    live blocker checks (`fetch_issue_state`, RFC stage lookup); import it
+    rather than reimplementing either (metel-core#1193). Loaded from this
+    repo's own copy, independent of the DOCS override tests use."""
+    global _RFC_TOOL
+    if _RFC_TOOL is None:
+        path = Path(__file__).resolve().parents[2] / "rfcs/tools/rfc.py"
+        spec = importlib.util.spec_from_file_location("rfc_tool", path)
+        _RFC_TOOL = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = _RFC_TOOL
+        spec.loader.exec_module(_RFC_TOOL)
+    return _RFC_TOOL
+
+
+def issue_state(repo: str, number: str):
+    """(state, error) for a metel-lang issue; best-effort, never raises."""
+    return _rfc_tool().fetch_issue_state("metel-lang", repo, number)
+
+
+def rfc_stages() -> dict:
+    return _rfc_tool().scan_rfc_metadata()[4]
+
+
+def today() -> datetime.date:
+    return datetime.date.today()
+
+
+def parse_exemption(value: str) -> dict:
+    fields = {}
+    for part in EXEMPTION_SPLIT.split(value.strip()):
+        key, sep, rest = part.partition(":")
+        fields[key.strip()] = rest.strip() if sep else ""
+    return fields
+
+
+def exemption_problems(value: str) -> list[str]:
+    """Problems with one `implements exemption` / `verification exemption`
+    cell, using rfc.py's kind vocabulary (untestable / blocked / elsewhere)
+    with an *enforceable* lifetime for the temporary kind: a `blocked`
+    exemption fails CI once its review date passes or its `ref` resolves
+    (an unreachable GitHub API degrades to skipping that live check, never
+    to a failure -- same rule as rfc.py's own `blocked` check)."""
+    fields = parse_exemption(value)
+    problems = [f"unrecognized exemption key `{k}`" for k in fields if k not in EXEMPTION_KEYS]
+    kind = fields.get("kind", "")
+    if kind not in _rfc_tool().COVERAGE_VALID_KINDS:
+        problems.append(f"`kind` must be one of {sorted(_rfc_tool().COVERAGE_VALID_KINDS)}, not {kind!r}")
+        return problems
+    for required in ("reason", "owner"):
+        if not fields.get(required):
+            problems.append(f"missing `{required}`")
+    ref = fields.get("ref", "")
+    if kind in ("blocked", "elsewhere") and not ref:
+        problems.append(f"kind `{kind}` needs a `ref`")
+    if kind != "blocked":
+        return problems
+    review = fields.get("review", "")
+    try:
+        due = datetime.date.fromisoformat(review)
+    except ValueError:
+        problems.append("kind `blocked` needs a `review` date (YYYY-MM-DD)")
+        due = None
+    if due is not None and due < today():
+        problems.append(f"`review` date {review} has passed; re-confirm the blocker or cite real evidence")
+    closed = "cite real evidence for this claim and delete this exemption row"
+    if RFC_REF.match(ref):
+        stage = rfc_stages().get(ref.lower())
+        if stage is None:
+            problems.append(f"blocked on `{ref}`, which does not exist")
+        elif stage == "implemented":
+            problems.append(f"blocked on `{ref}`, which is now implemented -- {closed}")
+    elif ISSUE_REF.match(ref):
+        m = ISSUE_REF.match(ref)
+        state, error = issue_state(m.group("repo"), m.group("num"))
+        if error is None and state == "closed":
+            problems.append(f"blocked on `{ref}`, which is now closed -- {closed}")
+    return problems
 
 
 def review_staleness(core: Path, path: Path, claim: str, block: str, values) -> str | None:
@@ -285,8 +410,11 @@ def regenerate(spec_dir: Path, core: Path, evidence, check: bool, core_ref: str)
             for kind, field in (("implements", "implements exemption"), ("verifies", "verification exemption")):
                 if values[kind] and field in exemptions:
                     stale.append(f"{path.relative_to(DOCS)}: `{claim}` has evidence and `{field}`")
-                elif not values[kind] and not valid_exemption(exemptions.get(field, "")):
+                elif not values[kind] and field not in exemptions:
                     stale.append(f"{path.relative_to(DOCS)}: `{claim}` lacks arch-{kind} evidence or valid `{field}`")
+                elif not values[kind]:
+                    for problem in exemption_problems(exemptions[field]):
+                        stale.append(f"{path.relative_to(DOCS)}: `{claim}` `{field}`: {problem}")
             finding = review_staleness(core, path, claim, block, values)
             if finding:
                 stale.append(finding)

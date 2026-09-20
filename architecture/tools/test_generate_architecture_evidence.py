@@ -140,8 +140,8 @@ class ArchitectureEvidenceTests(unittest.TestCase):
 
     def test_fully_exempt_requirement_never_touches_git(self):
         exemption = (
-            "| `implements exemption` | rationale: none; owner: test; review: 2030-01-01 |\n"
-            "| `verification exemption` | rationale: none; owner: test; review: 2030-01-01 |\n"
+            "| `implements exemption` | kind: untestable; reason: none; owner: test |\n"
+            "| `verification exemption` | kind: untestable; reason: none; owner: test |\n"
         )
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -152,6 +152,122 @@ class ArchitectureEvidenceTests(unittest.TestCase):
             findings = self.regenerate(spec, core, False)
             self.assertFalse(any("was touched by" in f for f in findings), findings)
             self.assertFalse(any("is not a commit reachable" in f for f in findings), findings)
+
+    def test_pest_rule_can_carry_an_implements_marker(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, "pub fn unrelated() {}\n", git=False)
+            (core / "src/grammar.pest").write_text(
+                '// arch-implements: ["arch.example.requirement-1"]\n'
+                'ident = @{\n    !keyword ~ ("a" | "{")\n}\n\nother = { "x" }\n'
+            )
+            found = evidence.citations(core)["arch.example.requirement-1"]["implements"]
+            self.assertEqual(1, len(found))
+            self.assertEqual(("src/grammar.pest", "ident", 1, 4), (str(found[0].path), found[0].item, found[0].line, found[0].end_line))
+
+    def test_pest_marker_must_directly_precede_a_rule(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core = self.make_core(Path(directory), "pub fn x() {}\n", git=False)
+            (core / "src/grammar.pest").write_text(
+                '// arch-implements: ["arch.example.requirement-1"]\nstray text\nident = { "a" }\n'
+            )
+            with self.assertRaisesRegex(ValueError, "directly precede a grammar rule"):
+                evidence.citations(core)
+
+    def test_pest_rule_cannot_be_verification(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core = self.make_core(Path(directory), "pub fn x() {}\n", git=False)
+            (core / "src/grammar.pest").write_text(
+                '// arch-verifies: ["arch.example.requirement-1"]\nident = { "a" }\n'
+            )
+            with self.assertRaisesRegex(ValueError, "only arch-implements"):
+                evidence.citations(core)
+
+    def test_ignored_test_is_not_verification(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core = self.make_core(
+                Path(directory),
+                '// arch-verifies: ["arch.example.requirement-1"]\n#[test]\n#[ignore]\nfn t() {}\n',
+                git=False,
+            )
+            with self.assertRaisesRegex(ValueError, "ignored test never runs"):
+                evidence.citations(core)
+
+    def test_skipped_fixture_is_not_verification(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core = self.make_core(
+                Path(directory),
+                "pub fn x() {}\n",
+                '[options]\narch_verifies = ["arch.example.requirement-1"]\nskip = "not yet"\n',
+                git=False,
+            )
+            with self.assertRaisesRegex(ValueError, "skipped fixture"):
+                evidence.citations(core)
+
+    def with_stubs(self, state=("open", None), stages=None, on=None):
+        saved = (evidence.issue_state, evidence.rfc_stages, evidence.today)
+        evidence.issue_state = lambda repo, num: state
+        evidence.rfc_stages = lambda: stages or {}
+        evidence.today = lambda: on or evidence.datetime.date(2026, 9, 20)
+        self.addCleanup(lambda: (setattr(evidence, "issue_state", saved[0]),
+                                 setattr(evidence, "rfc_stages", saved[1]),
+                                 setattr(evidence, "today", saved[2])))
+
+    def test_untestable_exemption_needs_reason_and_owner_only(self):
+        self.with_stubs()
+        self.assertEqual([], evidence.exemption_problems("kind: untestable; reason: r; owner: o"))
+        self.assertEqual(["missing `owner`"], evidence.exemption_problems("kind: untestable; reason: r"))
+
+    def test_legacy_rationale_key_and_missing_kind_are_rejected(self):
+        self.with_stubs()
+        problems = evidence.exemption_problems("rationale: r; owner: o; review: 2030-01-01")
+        self.assertTrue(any("must be one of" in p for p in problems), problems)
+
+    def test_elsewhere_needs_a_ref(self):
+        self.with_stubs()
+        self.assertIn("kind `elsewhere` needs a `ref`", evidence.exemption_problems("kind: elsewhere; reason: r; owner: o"))
+
+    def test_blocked_needs_ref_owner_and_review(self):
+        self.with_stubs()
+        problems = evidence.exemption_problems("kind: blocked; reason: r")
+        self.assertIn("missing `owner`", problems)
+        self.assertIn("kind `blocked` needs a `ref`", problems)
+        self.assertTrue(any("needs a `review` date" in p for p in problems), problems)
+
+    def test_blocked_exemption_expires(self):
+        self.with_stubs()
+        problems = evidence.exemption_problems("kind: blocked; ref: metel-core#9; reason: r; owner: o; review: 2026-09-19")
+        self.assertTrue(any("has passed" in p for p in problems), problems)
+        self.assertEqual([], evidence.exemption_problems("kind: blocked; ref: metel-core#9; reason: r; owner: o; review: 2026-09-20"))
+
+    def test_blocked_on_a_closed_issue_prompts_adding_evidence(self):
+        self.with_stubs(state=("closed", None))
+        problems = evidence.exemption_problems("kind: blocked; ref: metel-core#9; reason: r; owner: o; review: 2030-01-01")
+        self.assertTrue(any("now closed" in p and "delete this exemption row" in p for p in problems), problems)
+
+    def test_unreachable_issue_api_never_fails(self):
+        self.with_stubs(state=(None, "GitHub API request failed"))
+        self.assertEqual([], evidence.exemption_problems("kind: blocked; ref: metel-core#9; reason: r; owner: o; review: 2030-01-01"))
+
+    def test_blocked_on_an_implemented_rfc_prompts_adding_evidence(self):
+        self.with_stubs(stages={"rfc-0001": "implemented"})
+        problems = evidence.exemption_problems("kind: blocked; ref: RFC-0001; reason: r; owner: o; review: 2030-01-01")
+        self.assertTrue(any("now implemented" in p for p in problems), problems)
+
+    def test_expired_blocked_exemption_is_a_finding_on_both_sides(self):
+        self.with_stubs()
+        exemption = "kind: blocked; ref: metel-core#9; reason: r; owner: o; review: 2020-01-01"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, "pub fn unrelated() {}\n", git=False)
+            spec = self.make_spec(
+                root,
+                extra=f"| `implements exemption` | {exemption} |\n| `verification exemption` | {exemption} |\n",
+                last_reviewed="0000000",
+            )
+            findings = self.regenerate(spec, core, False)
+            for field in ("implements exemption", "verification exemption"):
+                self.assertTrue(any(f"`{field}`" in f and "has passed" in f for f in findings), findings)
 
 
 if __name__ == "__main__":
