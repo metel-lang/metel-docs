@@ -51,10 +51,15 @@ a range by hand, and getting it wrong yields aliased variables and a hang in
 `Substitution::apply` rather than an error. Variable numbers also appear in
 diagnostics (`?t1`), so they are part of observable output.
 
-Not tested: whether a program that allocates more than 10,000 registry variables
-in one module (roughly, more than 10,000 generic parameters) reaches the prelude
-range. A run of that size did not finish under a debug build, so it neither
-confirms nor rules that out.
+Probed, not proved: to see whether a module with more than 10,000 registry
+variables reaches the prelude range, I ran a release build over modules of `n`
+generic functions (`fun idN<T>(x: T) -> T { x }`, one type parameter each, so
+about `n` registry variables), calling the first and the last one. `n = 9,000` and
+`n = 10,500` both finished with correct results, so crossing 10,000 produced no
+wrong answer, hang or error. That does not show the ranges cannot collide (an
+aliasing needs the particular variables to interact), only that this shape does
+not. The runs also showed that checking time grows quadratically with the number
+of functions (`LIMIT-TYPE-INFERENCE-007`).
 
 ## Affects
 
