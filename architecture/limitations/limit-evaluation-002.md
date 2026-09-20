@@ -4,7 +4,7 @@ title: "Cross-module mutual recursion is not supported"
 scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
 discovered_by: "metel-interpreter/docs/evaluator.md, \"Known Limitations\", #189"
-disposition: known
+disposition: superseded
 review: null
 ---
 
@@ -27,7 +27,13 @@ That one specific circular multi-module dependency shape is unsupported.
 ## Affects
 
 - `arch.evaluation.requirement-1`
+- `GAP-MODULES-001`
 
 ## Resolution
 
-None yet — tracked as `#189`.
+Superseded by `GAP-MODULES-001` (ADR-0057 §5). The scenario this record
+describes needs A and B to call each other, which requires a circular
+import; the Language Spec makes that a compile error
+(`spec.modules.module-graph-loading.legality-2`, fixture
+`module_loading/rejects_circular_module_graph`), so the evaluator's pass
+ordering is never exercised by it. The cited `#189` is closed (v0.6.3).
