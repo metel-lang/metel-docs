@@ -35,8 +35,8 @@ After inference has solved a body and the frontend has frozen its resolution, no
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | [`metel-frontend/src/identity.rs::as_global`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-frontend/src/identity.rs#L156) |
-| `verified by` | [`metel-frontend/src/identity/tests.rs::reference_table_is_total_and_unknown_names_are_explicit`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-frontend/src/identity/tests.rs#L298) |
+| `implements` | [`metel-frontend/src/identity.rs::as_global`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/identity.rs#L156) |
+| `verified by` | [`metel-frontend/src/identity/tests.rs::reference_table_is_total_and_unknown_names_are_explicit`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/identity/tests.rs#L298) |
 | `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | ADR-0054, ADR-0041, ADR-0042 |
 
@@ -49,8 +49,8 @@ Lexical bindings and value references are allocated structural identities (`Loca
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | [`metel-frontend/src/identity/allocate.rs::prefix_module_path`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-frontend/src/identity/allocate.rs#L70) |
-| `verified by` | [`metel-frontend/src/identity/tests.rs::blank_lines_and_reformatting_change_no_identity`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-frontend/src/identity/tests.rs#L118) |
+| `implements` | [`metel-frontend/src/identity/allocate.rs::prefix_module_path`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/identity/allocate.rs#L70) |
+| `verified by` | [`metel-frontend/src/identity/tests.rs::blank_lines_and_reformatting_change_no_identity`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/identity/tests.rs#L118) |
 | `last_reviewed` | 4871047944e6893a2cf1a3144bb49c66e7493e12 |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 
@@ -63,8 +63,8 @@ Struct and enum member declarations (fields and enum variants) are interned to s
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | [`metel-frontend/src/identity/member.rs::new`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-frontend/src/identity/member.rs#L59) |
-| `verified by` | [`metel-frontend/src/identity/member.rs::struct_fields_get_distinct_ids_owned_by_the_struct`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-frontend/src/identity/member.rs#L260) |
+| `implements` | [`metel-frontend/src/identity/member.rs::new`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/identity/member.rs#L59) |
+| `verified by` | [`metel-frontend/src/identity/member.rs::struct_fields_get_distinct_ids_owned_by_the_struct`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/identity/member.rs#L260) |
 | `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | ADR-0054 step 3, `#1051` |
 
@@ -77,8 +77,8 @@ Source-position lookup (`PositionIndex`) is the one structure permitted to be ke
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | [`metel-frontend/src/identity/position.rs::from_entries`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-frontend/src/identity/position.rs#L42) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/type_aliases/06_value_path.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/evaluator/type_aliases/06_value_path.toml#L1) |
+| `implements` | [`metel-frontend/src/identity/position.rs::from_entries`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/identity/position.rs#L42) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/type_aliases/06_value_path.toml`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-interpreter/tests/integration/sources/evaluator/type_aliases/06_value_path.toml#L1) |
 | `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 

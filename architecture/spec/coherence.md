@@ -27,8 +27,8 @@ The orphan rule (`T0014`): an aspect implementation must be local to either the 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#coherence` |
-| `implements` | [`metel-frontend/src/coherence.rs::check`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-frontend/src/coherence.rs#L660) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/orphan_impl_cross_module_violation/test.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/typechecking/aspects/orphan_impl_cross_module_violation/test.toml#L1) |
+| `implements` | [`metel-frontend/src/coherence.rs::check`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/coherence.rs#L660) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/orphan_impl_cross_module_violation/test.toml`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-interpreter/tests/integration/sources/typechecking/aspects/orphan_impl_cross_module_violation/test.toml#L1) |
 | `last_reviewed` | 4871047944e6893a2cf1a3144bb49c66e7493e12 |
 | `related` | RFC-0060, `#238`, ADR-0042, RFC-0036 |
 
@@ -41,8 +41,8 @@ Overlap detection (`T0015`): two impls whose type/aspect coverage overlaps confl
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#coherence` |
-| `implements` | [`metel-frontend/src/coherence.rs::provably_disjoint`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-frontend/src/coherence.rs#L364) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/neg_26_bare_parameter_blanket_overlap.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_26_bare_parameter_blanket_overlap.toml#L1) |
+| `implements` | [`metel-frontend/src/coherence.rs::provably_disjoint`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/coherence.rs#L364) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/neg_26_bare_parameter_blanket_overlap.toml`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-interpreter/tests/integration/sources/typechecking/aspects/neg_26_bare_parameter_blanket_overlap.toml#L1) |
 | `last_reviewed` | 55dff632839ded1d889f2f38ccf8bb563846e3b1 |
 | `related` | RFC-0060 §3.1/§3.2, `#238`, ADR-0042 |
 
