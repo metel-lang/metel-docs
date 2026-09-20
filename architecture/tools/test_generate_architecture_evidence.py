@@ -163,7 +163,10 @@ class ArchitectureEvidenceTests(unittest.TestCase):
             )
             found = evidence.citations(core)["arch.example.requirement-1"]["implements"]
             self.assertEqual(1, len(found))
-            self.assertEqual(("src/grammar.pest", "ident", 1, 4), (str(found[0].path), found[0].item, found[0].line, found[0].end_line))
+            self.assertEqual(
+                ("src/grammar.pest", "ident", 1, 2, 4),
+                (str(found[0].path), found[0].item, found[0].line, found[0].start_line, found[0].end_line),
+            )
 
     def test_pest_marker_must_directly_precede_a_rule(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -290,6 +293,19 @@ class ArchitectureEvidenceTests(unittest.TestCase):
             )
             found = evidence.citations(core)["arch.example.requirement-1"]["implements"]
             self.assertEqual("run", found[0].item)
+
+    def test_editing_a_sibling_marker_does_not_flag_the_claim(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            body = "fn run() {\n    1\n}\n"
+            marker = '// arch-implements: ["arch.example.requirement-%d"]\n'
+            core = self.make_core(root, marker % 1 + marker % 2 + body)
+            reviewed = self.head(core)
+            (core / "src/lib.rs").write_text(marker % 1 + '// arch-implements: ["arch.example.requirement-2"] \n' + body)
+            self.commit(core, "touch only the sibling marker")
+            spec = self.make_spec(root, last_reviewed=reviewed)
+            findings = self.regenerate(spec, core, False)
+            self.assertFalse(any("was touched by" in f for f in findings), findings)
 
 
 if __name__ == "__main__":

@@ -104,7 +104,7 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 | `specified by` | `#evaluation` |
 | `implements` | [`metel-interpreter/src/evaluator/call.rs::call_runtime_callable`](https://github.com/metel-lang/metel-core/blob/22f1104b6b7e8cc50978fd429537ecfd4267c336/metel-interpreter/src/evaluator/call.rs#L55) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/types/fixed_array_nested.toml`](https://github.com/metel-lang/metel-core/blob/22f1104b6b7e8cc50978fd429537ecfd4267c336/metel-interpreter/tests/integration/sources/evaluator/types/fixed_array_nested.toml#L1) |
-| `last_reviewed` | 55dff632839ded1d889f2f38ccf8bb563846e3b1 |
+| `last_reviewed` | 4871047944e6893a2cf1a3144bb49c66e7493e12 |
 | `related` | ADR-0010, ADR-0011, `LIMIT-EVALUATION-001` |
 
 ##### Requirement {#arch.evaluation.requirement-8}
