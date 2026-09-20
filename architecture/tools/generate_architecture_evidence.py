@@ -47,6 +47,8 @@ ID = r"arch\.[a-z0-9.-]+\.requirement-\d+"
 CITE = re.compile(r"^\s*//\s*arch-(implements|verifies):\s*\[([^]]*)\]\s*$", re.M)
 IDS = re.compile(rf'"({ID})"')
 ITEM = re.compile(r"\b(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?fn\s+([A-Za-z_][A-Za-z0-9_]*)")
+ATTRIBUTE = re.compile(r"#!?\[.*?\]", re.S)
+COMMENT = re.compile(r"//[^\n]*|/\*.*?\*/", re.S)
 PEST_RULE = re.compile(r"^[ \t]*([A-Za-z_][A-Za-z0-9_]*)[ \t]*=[ \t]*[@_$!]?\{", re.M)
 REQ = re.compile(rf"^(##### Requirement \{{#({ID})\}}\n.*?)(?=^##### Requirement|\Z)", re.M | re.S)
 ROW = re.compile(r"^\| `(?P<field>implements|verified by)` \|.*?\|$", re.M)
@@ -90,6 +92,15 @@ def following_item(text: str, start: int, test_only: bool, path: Path, line: int
     if not item:
         raise ValueError(f"{path}:{line}: citation has no following Rust item")
     between = remainder[:item.start()]
+    # Only comments and attributes may sit between the marker and its item;
+    # anything else means the marker is attached to something it does not
+    # precede (a struct, an impl header, a stray statement) and would
+    # otherwise silently latch onto whatever `fn` happens to come next.
+    leftover = ATTRIBUTE.sub("", COMMENT.sub("", between)).strip()
+    if leftover:
+        raise ValueError(
+            f"{path}:{line}: citation must directly precede its item; found `{leftover.splitlines()[0]}` in between"
+        )
     if test_only and "#[test]" not in between:
         raise ValueError(f"{path}:{line}: arch-verifies must precede a #[test] function")
     if test_only and re.search(r"#\[ignore\b", between):
