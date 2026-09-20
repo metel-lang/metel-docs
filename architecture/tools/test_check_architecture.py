@@ -371,6 +371,19 @@ None yet.
 """
 
 
+class HealthPageTests(ArchitectureCorpusCase):
+    def test_health_page_needs_its_marker(self):
+        self.write_corpus()
+        (self.tmp / "architecture" / "health.md").write_text("# Architecture Health\n")
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("health:architecture" in f for f in findings), findings)
+
+    def test_health_page_with_its_marker_passes(self):
+        self.write_corpus()
+        (self.tmp / "architecture" / "health.md").write_text("# Architecture Health\n\n<!-- health:architecture -->\n")
+        self.assertEqual([], [str(f) for f in self.run_checks()])
+
+
 class GapRecordTests(ArchitectureCorpusCase):
     """ADR-0057 `GAP-*` records (architecture/gaps/), validated by the same
     checker as `LIMIT-*` with Language-Spec-specific rules."""
