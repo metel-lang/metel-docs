@@ -35,13 +35,18 @@ jobs:
       - name: Architecture evidence generator regression tests
         run: python3 -m unittest architecture/tools/test_generate_architecture_evidence.py
 
-      # Docs PRs validate against metel-core's current default branch. The
-      # paired, exact revision is checked again from metel-core's own CI.
+      # Docs PRs validate against metel-core's integration branch, `develop`
+      # (`main` only syncs at releases, so it carries none of the current
+      # arch-implements/arch-verifies markers). The paired, exact revision is
+      # checked again from metel-core's own CI. fetch-depth: 0 is required:
+      # the generator resolves its evidence ref and each claim's last-touch
+      # commit from git history, which a shallow checkout cannot answer.
       - uses: actions/checkout@v4
         with:
           repository: metel-lang/metel-core
-          ref: main
+          ref: develop
           path: metel-core
+          fetch-depth: 0
 
       - name: generated Architecture evidence is current
         run: python3 architecture/tools/generate_architecture_evidence.py --core metel-core --check
