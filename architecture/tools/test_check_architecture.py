@@ -199,6 +199,46 @@ class CheckArchitectureTests(unittest.TestCase):
         findings = [str(f) for f in self.run_checks()]
         self.assertTrue(any("is not a 7-40 character hex commit SHA" in f for f in findings), findings)
 
+    def write_page(self, name: str, text: str):
+        (self.tmp / "architecture" / name).write_text(text)
+
+    def test_link_to_a_missing_file_is_a_finding(self):
+        self.write_corpus()
+        self.write_page("overview.md", "See [the index](spec/index.md).\n")
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("points at a file that does not exist" in f and "spec/index.md" in f for f in findings), findings)
+
+    def test_link_to_a_missing_anchor_is_a_finding(self):
+        self.write_corpus()
+        self.write_page("overview.md", "See [x](spec/resolution.md#no-such-anchor).\n")
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("points at an anchor that does not exist" in f for f in findings), findings)
+
+    def test_valid_links_are_not_findings(self):
+        self.write_corpus()
+        self.write_page(
+            "overview.md",
+            "# Overview {#overview}\n\nSee [claim](spec/resolution.md#arch.resolution.requirement-1), "
+            "[section](spec/resolution.md#resolution), [heading](spec/resolution.md#known-limitations), "
+            "[here](#overview), [ext](https://example.com/x#y), and ```[fenced](nope.md)```.\n",
+        )
+        findings = [str(f) for f in self.run_checks()]
+        self.assertFalse(any("does not exist" in f and "overview" in f for f in findings), findings)
+
+    def test_published_page_linking_an_unpublished_adr_is_a_finding(self):
+        self.write_corpus()
+        self.write_adr("adr-0054-x.md", "---\nid: adr-0054\ntitle: \"X\"\ndate: '2026-01-01'\nstatus: accepted\n---\n\nBody.\n")
+        self.write_page("overview.md", "See [the ADR](decisions/adr-0054-x.md).\n")
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("targets an unpublished source" in f for f in findings), findings)
+
+    def test_an_unpublished_page_may_link_other_unpublished_pages(self):
+        self.write_corpus()
+        self.write_adr("adr-0001-a.md", "---\nid: adr-0001\ntitle: \"A\"\ndate: '2026-01-01'\nstatus: accepted\n---\n\nSee [b](adr-0002-b.md).\n")
+        self.write_adr("adr-0002-b.md", "---\nid: adr-0002\ntitle: \"B\"\ndate: '2026-01-01'\nstatus: accepted\n---\n\nBody.\n")
+        findings = [str(f) for f in self.run_checks()]
+        self.assertFalse(any("unpublished" in f for f in findings), findings)
+
     def test_missing_spec_dir_reports_one_finding_not_a_crash(self):
         shutil.rmtree(self.spec_dir)
         findings = self.run_checks()
