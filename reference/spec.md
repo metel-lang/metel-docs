@@ -26,7 +26,7 @@ The language's core design principles are:
 - **Explicit error handling** — errors are values, represented as `Result<T, E>`
 - **Safe memory by default** — affine ownership: a value has one owner, and moves rather
   than being implicitly copied
-  > **Planned for v0.12.0 (RFC-0071): this replaces the reference-counting model; until then the interpreter copies every value and no ownership rule is enforced.**
+  > **Since v0.12.0 (RFC-0071), behind `--move-check`:** ownership is enforced only when the flag is passed; without it the interpreter behaves as if every value were `Copy`. See [Ownership and Move Semantics](spec/ownership.md).
 
 
 ## Contents
