@@ -4,8 +4,11 @@
 Validates `arch-*` records in `architecture/spec/*.md` and `LIMIT-*` records
 in `architecture/limitations/*.md`: ID well-formedness and uniqueness,
 cross-reference resolution (`specified by` / `scope` anchors, `affects`
-targets), required-field presence, the disposition rules ADR-0055 §4
-states in prose (an `accepted` limitation needs a review date; a `resolved`
+targets), required-field presence (including `last_reviewed`, metel-core#1191
+-- shape only here; whether the cited code actually moved on since that
+commit needs metel-core's git history, checked by
+`generate_architecture_evidence.py` instead), the disposition rules ADR-0055
+§4 states in prose (an `accepted` limitation needs a review date; a `resolved`
 one needs real exit evidence, not a placeholder), and that an `arch-*`
 requirement's `related` field never cites a since-superseded ADR (reads
 `architecture/decisions/*.md`'s own `status:`/`supersedes:` fields, both
@@ -29,6 +32,11 @@ survey's own recommendation, `architecture-atlas-prior-art-survey.html` §7)
 until real reconciliation-rule volume justifies it. It reports findings; it
 never silently mutates a disposition or any other field -- a human triages
 every finding.
+
+The published Architecture Spec is durable system documentation, not a task
+log. Its overview and section prose may cite an issue or ADR where that adds
+architectural context, but must not narrate a completed milestone, a next
+step, or an unaudited session as if it were current behavior.
 
 Fixture-sidecar `arch = [...]` cross-checking is a documented no-op here for
 the same reason `rfc-check.yml` already documents for RFC-section fixture
@@ -64,8 +72,19 @@ REQUIREMENT_RE = re.compile(
     r"^#####\s+Requirement\s+\{#([a-z0-9.\-]+)\}\s*\n(.*?)(?=^#####\s+Requirement|\Z)",
     re.MULTILINE | re.DOTALL,
 )
-FIELD_ROW_RE = re.compile(r"^\|\s*`([a-z ]+)`\s*\|\s*(.+?)\s*\|\s*$", re.MULTILINE)
+FIELD_ROW_RE = re.compile(r"^\|\s*`([a-z_ ]+)`\s*\|\s*(.+?)\s*\|\s*$", re.MULTILINE)
+LAST_REVIEWED_SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
 KNOWN_LIMITATIONS_LINK_RE = re.compile(r"\[`(LIMIT-[A-Z0-9\-]+)`\]\(([^)]+)\)")
+KNOWN_LIMITATIONS_INTRO = (
+    "`LIMIT-*` records are the authoritative inventory of known boundaries for this\n"
+    "section. They carry the impact, owner, disposition, and review point; the\n"
+    "Atlas limitations view projects the same records rather than duplicating them."
+)
+ACTIVE_LIMITATIONS_EMPTY = (
+    "No active `LIMIT-*` records are currently recorded for this section. This is\n"
+    "a current inventory, not a claim of complete coverage."
+)
+RESOLVED_LIMITATIONS_EMPTY = "No resolved `LIMIT-*` records are currently recorded for this section."
 
 FRONTMATTER_KEY_RE = re.compile(
     r'^([a-z_]+):\s*(?:"((?:[^"\\]|\\.)*)"|(\S.*?)|)\s*$', re.MULTILINE
@@ -82,6 +101,11 @@ PLAIN_SUPERSEDED_BY_RE = re.compile(r"^\*\*Status:\*\*\s*Superseded by\s+ADR-(\d
 ADR_FILENAME_ID_RE = re.compile(r"^(adr-\d{4})-")
 ADR_STATUS_VALUES = {"accepted", "active", "implemented", "proposed", "historical", "retired"}
 ADR_SUPERSEDED_STATUS_RE = re.compile(r"^superseded by (?:ADR-|adr-)\d{4}$", re.IGNORECASE)
+STALE_PROCESS_PROSE_RE = re.compile(
+    r"\b(?:runs next|next in the chain|not audited this session|landed since|"
+    r"closing that parent tracking issue)\b",
+    re.IGNORECASE,
+)
 
 
 class Finding:
@@ -117,6 +141,22 @@ def frontmatter_and_body(text: str) -> tuple[dict, str]:
     return fm, body
 
 
+def parse_known_limitations(text: str) -> tuple[str, list, list] | None:
+    """Return the raw block and its active/resolved links, or None when the
+    required section is absent. The presentation convention is deliberately
+    checked here: it is the prose-facing projection over durable LIMIT records,
+    not an informal list that can drift from record disposition."""
+    match = re.search(
+        r"^## Known limitations\n\n" + re.escape(KNOWN_LIMITATIONS_INTRO) +
+        r"\n\n### Active records\n\n(.*?)\n\n### Resolved records\n\n(.*?)(?=^## |\Z)",
+        text,
+        re.MULTILINE | re.DOTALL,
+    )
+    if not match:
+        return None
+    return match.group(0), KNOWN_LIMITATIONS_LINK_RE.findall(match.group(1)), KNOWN_LIMITATIONS_LINK_RE.findall(match.group(2))
+
+
 def parse_spec_file(path: Path):
     text = path.read_text()
     section_ids = set(SECTION_ANCHOR_RE.findall(text))
@@ -128,11 +168,7 @@ def parse_spec_file(path: Path):
         for fm_field in FIELD_ROW_RE.finditer(block):
             fields[fm_field.group(1).strip()] = fm_field.group(2).strip()
         requirements.append((req_id, fields))
-    kl_links = []
-    kl_idx = text.find("## Known limitations")
-    if kl_idx != -1:
-        kl_links = KNOWN_LIMITATIONS_LINK_RE.findall(text[kl_idx:])
-    return section_ids, requirements, kl_links
+    return section_ids, requirements, parse_known_limitations(text)
 
 
 def parse_limitation_file(path: Path):
@@ -227,6 +263,29 @@ def check_adr_frontmatter(decisions_dir: Path, repo_root: Path) -> list:
     return findings
 
 
+def check_stale_process_prose(spec_files: list[Path], repo_root: Path) -> list:
+    """Reject task-log language in published Architecture Spec prose.
+
+    Issue and ADR references remain valid evidence and context. This narrowly
+    targets the time-sensitive phrases found in the #1181 audit, leaving
+    durable descriptions of current boundaries and tracked limitations alone.
+    """
+    findings: list = []
+    overview = repo_root / "architecture" / "architecture.md"
+    paths = [*spec_files, overview] if overview.exists() else spec_files
+    for path in paths:
+        text = path.read_text()
+        match = STALE_PROCESS_PROSE_RE.search(text)
+        if match:
+            findings.append(
+                Finding(
+                    str(path.relative_to(repo_root)),
+                    f"stale process narration `{match.group(0)}` belongs in issue history, not published Architecture Spec prose",
+                )
+            )
+    return findings
+
+
 def resolve_scope_anchor(scope: str, all_section_ids_by_file: dict, repo_root: Path) -> bool:
     if "#" not in scope:
         return False
@@ -256,19 +315,28 @@ def run_checks(
 
     spec_files = sorted(spec_dir.glob("*.md"))
     limitation_files = sorted(limitations_dir.glob("*.md")) if limitations_dir.is_dir() else []
+    findings.extend(check_stale_process_prose(spec_files, repo_root))
 
     all_section_ids_by_file: dict = {}
     all_arch_ids: dict = {}
-    kl_links_by_file: dict = {}
+    known_limitations_by_file: dict = {}
 
     for path in spec_files:
-        section_ids, requirements, kl_links = parse_spec_file(path)
+        section_ids, requirements, known_limitations = parse_spec_file(path)
         all_section_ids_by_file[path.resolve()] = section_ids
-        kl_links_by_file[path] = kl_links
+        known_limitations_by_file[path] = known_limitations
 
         rel = path.relative_to(repo_root)
         if not section_ids:
             findings.append(Finding(str(rel), "no top-level `{#section-id}` heading anchor found"))
+
+        if known_limitations is None:
+            findings.append(
+                Finding(
+                    str(rel),
+                    "Known limitations must use the standard inventory, Active records, and Resolved records structure",
+                )
+            )
 
         for req_id, fields in requirements:
             if req_id in all_arch_ids:
@@ -284,9 +352,22 @@ def run_checks(
             if not ARCH_ID_RE.match(req_id):
                 findings.append(Finding(str(rel), f"`{req_id}` does not match the arch.<path>.requirement-<N> shape"))
 
-            for required_field in ("status", "owner", "specified by", "implements", "verified by", "related"):
+            for required_field in ("status", "owner", "specified by", "implements", "verified by", "related", "last_reviewed"):
                 if not fields.get(required_field):
                     findings.append(Finding(str(rel), f"`{req_id}`: missing or empty `{required_field}` field"))
+
+            # metel-core#1191: this only checks the field's *shape* -- whether
+            # the code it points at has actually moved on since that commit
+            # needs real git history (the metel-core checkout), which a bare
+            # metel-docs checkout structurally can't reach; that half of the
+            # check lives in generate_architecture_evidence.py instead, the
+            # same split this file already documents for fixture-sidecar
+            # `arch = [...]` cross-checking.
+            last_reviewed = fields.get("last_reviewed", "")
+            if last_reviewed and not LAST_REVIEWED_SHA_RE.match(last_reviewed.strip("`")):
+                findings.append(
+                    Finding(str(rel), f"`{req_id}`: `last_reviewed` (`{last_reviewed}`) is not a 7-40 character hex commit SHA")
+                )
 
             status = fields.get("status", "").strip("`")
             if status and status not in STATUS_VALUES:
@@ -367,22 +448,42 @@ def run_checks(
         if not affects:
             findings.append(Finding(str(rel), "`## Affects` lists no targets"))
 
-    # Cross-file: every `affects` entry, and every "Known limitations" link,
-    # must resolve to a real id that actually exists somewhere in the corpus.
+    # Cross-file: every `affects` entry, and every standardized
+    # "Known limitations" link, must resolve to a real id that actually exists
+    # somewhere in the corpus. The groups must agree with record disposition.
     for path, fm, affects, _ in limitation_records:
         rel = path.relative_to(repo_root)
         for target in affects:
             if target not in all_arch_ids and target not in all_limit_ids:
                 findings.append(Finding(str(rel), f"`affects` target `{target}` does not exist"))
 
-    for path, kl_links in kl_links_by_file.items():
+    for path, known_limitations in known_limitations_by_file.items():
+        if known_limitations is None:
+            continue
         rel = path.relative_to(repo_root)
-        for limit_id, link_path in kl_links:
-            if limit_id not in all_limit_ids:
-                findings.append(Finding(str(rel), f"Known-limitations link `{limit_id}` does not exist"))
-            target = (path.parent / link_path).resolve()
-            if not target.exists():
-                findings.append(Finding(str(rel), f"Known-limitations link target `{link_path}` does not exist on disk"))
+        block, active_links, resolved_links = known_limitations
+        active_text = re.search(r"^### Active records\n\n(.*?)\n\n### Resolved records", block, re.MULTILINE | re.DOTALL).group(1)
+        resolved_text = re.search(r"^### Resolved records\n\n(.*)$", block, re.MULTILINE | re.DOTALL).group(1)
+
+        if active_text == ACTIVE_LIMITATIONS_EMPTY and active_links:
+            findings.append(Finding(str(rel), "Active records empty state must not contain LIMIT-* links"))
+        if resolved_text == RESOLVED_LIMITATIONS_EMPTY and resolved_links:
+            findings.append(Finding(str(rel), "Resolved records empty state must not contain LIMIT-* links"))
+
+        for group, links in (("Active", active_links), ("Resolved", resolved_links)):
+            for limit_id, link_path in links:
+                if limit_id not in all_limit_ids:
+                    findings.append(Finding(str(rel), f"Known-limitations link `{limit_id}` does not exist"))
+                else:
+                    disposition = next(fm.get("disposition") for _, fm, _, _ in limitation_records if fm.get("id") == limit_id)
+                    if group == "Active" and disposition in {"resolved", "superseded"}:
+                        findings.append(Finding(str(rel), f"Active records link `{limit_id}` has `{disposition}` disposition"))
+                    if group == "Resolved" and disposition != "resolved":
+                        findings.append(Finding(str(rel), f"Resolved records link `{limit_id}` does not have `resolved` disposition"))
+                if limit_id in all_limit_ids:
+                    target = (path.parent / link_path).resolve()
+                    if not target.exists():
+                        findings.append(Finding(str(rel), f"Known-limitations link target `{link_path}` does not exist on disk"))
 
     return findings
 

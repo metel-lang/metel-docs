@@ -12,7 +12,7 @@ review: null
 
 `ElaboratedModuleGraph(pub TypedModuleGraph)`'s inner field is fully `pub`,
 so code outside `metel-frontend` can construct one directly without having
-run `elaborate` — unlike `NormalizedModuleGraph` (`arch.name-resolution.requirement-4`),
+run `elaborate` — unlike `NormalizedModuleGraph` (`arch.path-normalization.requirement-1`),
 whose `pub(crate)` field blocks exactly that from outside the crate. The two
 "proof this pass has run" wrapper types are not actually symmetric in what
 they enforce, despite both existing for the same stated purpose.
@@ -28,7 +28,7 @@ on `metel-frontend` — from synthesizing an `ElaboratedModuleGraph` whose
 ## Affects
 
 - `arch.elaboration.requirement-1`
-- `arch.name-resolution.requirement-4`
+- `arch.path-normalization.requirement-1`
 
 ## Resolution
 

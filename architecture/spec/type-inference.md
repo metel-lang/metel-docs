@@ -31,8 +31,9 @@ Type inference is Hindley-Milner with let-polymorphism. `unify` performs structu
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | `metel-frontend/src/typeinference/mod.rs` (`InferType`, `TypeVar`, `Substitution`, `unify`, `generalize`, `instantiate`, `Constraint`, `solve_constraints`) |
-| `verified by` | general correctness is a precondition of the full integration suite (1,183 `.mtl` fixtures, `metel-interpreter/tests/integration/sources/`) rather than a dedicated unify/occurs-check unit suite — only 4 unit tests exist directly in `typeinference/mod.rs` itself (see requirement-2, which they actually cover) |
+| `implements` | [`metel-frontend/src/typeinference/mod.rs::generalize`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/typeinference/mod.rs#L1693); [`metel-frontend/src/typeinference/mod.rs::instantiate`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/typeinference/mod.rs#L1730); [`metel-frontend/src/typeinference/mod.rs::unify`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/typeinference/mod.rs#L831) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/functions/06_let_polymorphism.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/typechecking/functions/06_let_polymorphism.toml#L1) |
+| `last_reviewed` | 55dff632839ded1d889f2f38ccf8bb563846e3b1 |
 | `related` | `metel-frontend/docs/typechecker.md` |
 
 ##### Requirement {#arch.type-inference.requirement-2}
@@ -44,8 +45,9 @@ Type inference is Hindley-Milner with let-polymorphism. `unify` performs structu
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | `metel-frontend/src/typeinference/mod.rs` (`TypeDefinitionRegistry`, `FieldEntry`, `VariantInfo`, `EnumInfo`) |
-| `verified by` | `metel-frontend/src/typeinference/mod.rs::same_named_structs_in_two_modules_keep_distinct_field_sets`, `::merge_from_does_not_collapse_same_named_structs`, `::block_local_type_id_is_disjoint_from_name_resolver_ids`, `::same_named_enums_in_two_modules_keep_distinct_variant_sets` |
+| `implements` | [`metel-frontend/src/typeinference/mod.rs::merge_from`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/typeinference/mod.rs#L3977) |
+| `verified by` | [`metel-frontend/src/typeinference/mod.rs::same_named_structs_in_two_modules_keep_distinct_field_sets`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/typeinference/mod.rs#L5455) |
+| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | ADR-0025 (unified `TypeDefinitionRegistry`), ADR-0041 |
 
 ##### Requirement {#arch.type-inference.requirement-3}
@@ -57,9 +59,10 @@ Type inference is Hindley-Milner with let-polymorphism. `unify` performs structu
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | `metel-frontend/src/typechecker/inference.rs` (the `?`-expression inference arm); `metel-frontend/src/typeinference/mod.rs` (`has_from_impl`) |
-| `verified by` | integration fixture `metel-interpreter/tests/integration/sources/typechecking/error_handling/stage6_neg_06_error_propagation_mismatched_types`; no dedicated unit test found naming this check directly |
-| `related` | ADR-0030 (`?` desugared in `path_normalizer` pre-pass), `#13` (full coercion for arbitrary type pairs, still open) |
+| `implements` | [`metel-frontend/src/typechecker/inference.rs::type_expr_to_infer_with_ctx`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/typechecker/inference.rs#L21) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/error_handling/stage6_neg_06_error_propagation_mismatched_types.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/typechecking/error_handling/stage6_neg_06_error_propagation_mismatched_types.toml#L1) |
+| `last_reviewed` | 8b844c9117d5c6a730882aeaf521184c3055eb2f |
+| `related` | ADR-0030 (`?` desugared in `path_normalizer` pre-pass), `#13` (full coercion for arbitrary type pairs) |
 
 ##### Requirement {#arch.type-inference.requirement-4}
 
@@ -70,8 +73,9 @@ Typechecking keeps inference and construction as separate passes. Inference solv
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | `metel-frontend/src/typechecker/mod.rs` (module check orchestration); `metel-frontend/src/typechecker/inference.rs`; `metel-frontend/src/typechecker/construction.rs` |
-| `verified by` | full integration-suite coverage of checked programs; no dedicated unit test asserting the pass boundary was found |
+| `implements` | [`metel-frontend/src/typechecker/construction.rs::construct_program`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/typechecker/construction.rs#L1062) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/functions/stage7_01_return_type_propagation.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/typechecking/functions/stage7_01_return_type_propagation.toml#L1) |
+| `last_reviewed` | 55dff632839ded1d889f2f38ccf8bb563846e3b1 |
 | `related` | ADR-0002, `arch.type-construction.requirement-1` |
 
 ##### Requirement {#arch.type-inference.requirement-5}
@@ -83,14 +87,23 @@ Let-bound polymorphic closures are represented in the polymorphic scheme environ
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | `metel-frontend/src/typechecker/inference.rs` (`mono_env`, `poly_env`); `metel-frontend/src/typechecker/mod.rs` (`build_module_scheme_env`); `metel-frontend/src/typechecker/construction/declarations.rs` |
-| `verified by` | general integration-suite coverage of generic let-bound closures; no dedicated regression test naming the environment-absence invariant was found |
+| `implements` | [`metel-frontend/src/typechecker/inference.rs::type_expr_to_infer_with_ctx`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/typechecker/inference.rs#L22) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/stage21_12_aspect_impl_generic_constraint_in_where_clause.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/typechecking/aspects/stage21_12_aspect_impl_generic_constraint_in_where_clause.toml#L1) |
+| `last_reviewed` | 8b844c9117d5c6a730882aeaf521184c3055eb2f |
 | `related` | ADR-0011, ADR-0010 |
 
 </details>
 
 ## Known limitations
 
-- [`LIMIT-TYPE-INFERENCE-001`](../limitations/limit-type-inference-001.md) — `?` error coercion requires an explicit `From` impl; only `Int`/`Float` are built in. (Filed as `LIMIT-TYPE-CONSTRUCTION-003` originally, before checking which pass actually performs the check — renamed during `#1158`'s triage.)
+`LIMIT-*` records are the authoritative inventory of known boundaries for this
+section. They carry the impact, owner, disposition, and review point; the
+Atlas limitations view projects the same records rather than duplicating them.
 
-Not audited this session: the memory that `ctx.solve()` (the recursive substitution/constraint-solving walk) is stack-depth-sensitive — a prior real stack-overflow incident whose fix addressed a symptom, not `solve_constraints`'s recursive structure itself — was not re-verified against current source here. If it's still true, it belongs in `#1161`'s extraction as a `LIMIT-*` record (a known, accepted boundary — not something this section can respond to as an `arch-*` requirement, since it's a limitation, not a checkable claim of current correct behavior).
+### Active records
+
+- [`LIMIT-TYPE-INFERENCE-001`](../limitations/limit-type-inference-001.md) — `?` error coercion requires an explicit `From` impl; only `Int`/`Float` are built in.
+
+### Resolved records
+
+No resolved `LIMIT-*` records are currently recorded for this section.

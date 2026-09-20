@@ -27,8 +27,9 @@ Move checking is off by default and runs only when explicitly requested (the `--
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#move-check` |
-| `implements` | `metel-frontend/src/move_check/mod.rs` (`check_graph`, `collect_graph_violations`, `MoveViolationKind`); `metel-interpreter/src/pipeline.rs` (opt-in gating) |
-| `verified by` | `metel-frontend/src/move_check/mod.rs::assignment_move_then_use_is_reported`, `::argument_move_then_use_is_reported`, `::return_move_then_use_is_reported`, `::copy_type_can_be_used_twice`, `::using_moved_field_again_is_a_typecheck_error`, `::sibling_field_stays_accessible_after_partial_move`, `::whole_value_use_after_partial_move_is_a_typecheck_error`, `::partial_move_of_drop_type_is_reported`, `::unchecked_generic_body_is_reported_to_compiler_callers` (9 of 81 unit tests in the module; ~90 integration fixtures under `metel-interpreter/tests/integration/sources/evaluator/move_check`) |
+| `implements` | [`metel-frontend/src/move_check/mod.rs::whole_use_of_narrowed_value_is_intact`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/move_check/mod.rs#L56) |
+| `verified by` | [`metel-frontend/src/move_check/mod.rs::assignment_move_then_use_is_reported`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/move_check/mod.rs#L3082) |
+| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | RFC-0071, `#579` |
 
 ##### Requirement {#arch.move-check.requirement-2}
@@ -40,8 +41,9 @@ Places (the syntactic locations a program can name — a binding root plus a pat
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#move-check` |
-| `implements` | `metel-frontend/src/place.rs` (`Place`, `Projection`, `from_expr`, `from_typed_place`) |
-| `verified by` | exercised transitively by every move-check unit test and fixture above (no dedicated `place.rs`-only test suite exists; its own module doc comment states the design rationale directly) |
+| `implements` | [`metel-frontend/src/place.rs::field`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/place.rs#L49) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/move_check/02_partial_move_used_as_whole.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/evaluator/move_check/02_partial_move_used_as_whole.toml#L1) |
+| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | RFC-0071 §9b, ADR-0035 (`TypedPlace` for assignment targets), ADR-0045 |
 
 ##### Requirement {#arch.move-check.requirement-3}
@@ -53,12 +55,23 @@ Closure capture legality is enforced even while the general move-check gate rema
 | `status` | `implemented` |
 | `owner` | `metel-frontend`, `metel-interpreter` |
 | `specified by` | `#move-check` |
-| `implements` | `metel-frontend/src/typechecker/construction/expressions.rs` (`verify_closure_capture_list`); `metel-frontend/src/typechecker/construction/calls.rs`; `metel-frontend/src/move_check/mod.rs` |
-| `verified by` | integration fixtures `metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_copy_closure_when_all_captures_copy`, `v0_13_0_copy_var_closure_diverges`, `v0_13_0_neg_mutating_closure_not_sync`, `v0_13_0_x_mutating_closure_via_written_var_fn_param` |
+| `implements` | [`metel-frontend/src/typechecker/construction/expressions.rs::capture_name`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/typechecker/construction/expressions.rs#L18) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/move_check/06_array_element_move_is_banned.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/evaluator/move_check/06_array_element_move_is_banned.toml#L1) |
+| `last_reviewed` | 8b844c9117d5c6a730882aeaf521184c3055eb2f |
 | `related` | ADR-0052, RFC-0050, RFC-0134, RFC-0153 |
 
 </details>
 
 ## Known limitations
 
+`LIMIT-*` records are the authoritative inventory of known boundaries for this
+section. They carry the impact, owner, disposition, and review point; the
+Atlas limitations view projects the same records rather than duplicating them.
+
+### Active records
+
 - [`LIMIT-MOVE-CHECK-001`](../limitations/limit-move-check-001.md) — closure move-check is always-on while general move-check stays opt-in (a documented temporary asymmetry).
+
+### Resolved records
+
+No resolved `LIMIT-*` records are currently recorded for this section.

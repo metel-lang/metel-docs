@@ -34,10 +34,21 @@ Some claim.
 | `implements` | `metel-frontend/src/identity.rs` |
 | `verified by` | `metel-frontend/src/identity/tests.rs::some_test` |
 | `related` | ADR-0054 |
+| `last_reviewed` | 0123456789ab |
 
 ## Known limitations
 
+`LIMIT-*` records are the authoritative inventory of known boundaries for this
+section. They carry the impact, owner, disposition, and review point; the
+Atlas limitations view projects the same records rather than duplicating them.
+
+### Active records
+
 - [`LIMIT-RESOLUTION-001`](../limitations/limit-resolution-001.md) — an example limitation.
+
+### Resolved records
+
+No resolved `LIMIT-*` records are currently recorded for this section.
 """
 
 VALID_LIMITATION = """---
@@ -153,6 +164,40 @@ class CheckArchitectureTests(unittest.TestCase):
         self.write_corpus(spec_text=broken)
         findings = [str(f) for f in self.run_checks()]
         self.assertTrue(any("does not exist" in f for f in findings), findings)
+
+    def test_stale_process_narration_is_a_finding(self):
+        self.write_corpus()
+        (self.tmp / "architecture" / "architecture.md").write_text(
+            "# Architecture\n\nThe limitation inventory runs next in the chain.\n"
+        )
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("stale process narration" in f for f in findings), findings)
+
+    def test_nonstandard_known_limitations_structure_is_a_finding(self):
+        broken = VALID_SPEC.replace("### Active records", "### Open limitations")
+        self.write_corpus(spec_text=broken)
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("must use the standard inventory" in f for f in findings), findings)
+
+    def test_resolved_record_in_active_group_is_a_finding(self):
+        resolved = VALID_LIMITATION.replace("disposition: known", "disposition: resolved").replace(
+            "None yet.", "Fixed by #999, verified by some_test."
+        )
+        self.write_corpus(limitation_text=resolved)
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("Active records link" in f and "resolved" in f for f in findings), findings)
+
+    def test_missing_last_reviewed_is_a_finding(self):
+        broken = VALID_SPEC.replace("| `last_reviewed` | 0123456789ab |\n", "")
+        self.write_corpus(spec_text=broken)
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("missing or empty `last_reviewed`" in f for f in findings), findings)
+
+    def test_malformed_last_reviewed_is_a_finding(self):
+        broken = VALID_SPEC.replace("| `last_reviewed` | 0123456789ab |", "| `last_reviewed` | not-a-sha |")
+        self.write_corpus(spec_text=broken)
+        findings = [str(f) for f in self.run_checks()]
+        self.assertTrue(any("is not a 7-40 character hex commit SHA" in f for f in findings), findings)
 
     def test_missing_spec_dir_reports_one_finding_not_a_crash(self):
         shutil.rmtree(self.spec_dir)

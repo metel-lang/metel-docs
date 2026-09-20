@@ -30,8 +30,9 @@ Loading a root file produces a `ModuleGraph` whose `modules: Vec<LoadedModule>` 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | `metel-frontend/src/module_loader.rs` (`Loader::load_module`, `ModuleGraph`) |
-| `verified by` | `metel-frontend/src/module_loader.rs` unit tests (`std_namespace_is_reserved_for_user_modules`, `source_provider_overlay_supplies_in_memory_source`, `multi_file_source_provider_resolves_an_import`, `virtual_root_loads_without_an_on_disk_root`); integration fixtures `metel-interpreter/tests/integration/sources/module_loading/rejects_circular_module_graph`, `multi_file_program_runs_after_module_loading`, `transitive_dependency_loaded_via_facade` |
+| `implements` | [`metel-frontend/src/module_loader.rs::load_module`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/module_loader.rs#L506) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/module_loading/rejects_circular_module_graph/test.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/module_loading/rejects_circular_module_graph/test.toml#L1) |
+| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | RFC-0058, ADR-0023 (hierarchical module paths), ADR-0031 (diamond-dependency path aliasing), `#1147` |
 
 ##### Requirement {#arch.parsing.requirement-2}
@@ -43,8 +44,9 @@ Module source is read through a `SourceProvider` abstraction rather than a hardc
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | `metel-frontend/src/module_loader.rs` (`SourceProvider`, `EmbeddedStdlibProvider`, `InMemorySourceProvider`, `MultiFileSourceProvider`, `load_virtual_root_with`) |
-| `verified by` | `metel-frontend/src/module_loader.rs::source_provider_overlay_supplies_in_memory_source`, `::multi_file_source_provider_resolves_an_import`, `::multi_file_source_provider_reports_a_missing_sibling`, `::virtual_root_loads_without_an_on_disk_root` |
+| `implements` | [`metel-frontend/src/module_loader.rs::hash_source`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/module_loader.rs#L22) |
+| `verified by` | [`metel-frontend/src/module_loader.rs::source_provider_overlay_supplies_in_memory_source`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/module_loader.rs#L999) |
+| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | RFC-0058, ADR-0039 |
 
 ##### Requirement {#arch.parsing.requirement-3}
@@ -56,8 +58,9 @@ A single file parses through one PEG grammar (`grammar.pest`, driven by `pest`/`
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | `metel-frontend/src/parser/mod.rs` (`parse`), `metel-frontend/src/grammar.pest`, `metel-frontend/src/ast/mod.rs` (`Span`, `Program`) |
-| `verified by` | `metel-frontend/src/parser/mod.rs::multi_segment_path_carries_one_span_per_segment`, `::keyword_root_path_spans_cover_the_root_segment`, `::two_segment_path_in_call_position_keeps_segment_spans` (span-tracking specifically); general grammar correctness is a precondition of the full integration suite (1,183 `.mtl` fixtures under `metel-interpreter/tests/integration/sources/`, every one of which must parse before its actual assertion runs) rather than a dedicated parser-correctness suite of its own |
+| `implements` | [`metel-frontend/src/parser/mod.rs::parse`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/parser/mod.rs#L27) |
+| `verified by` | [`metel-frontend/src/parser/mod.rs::multi_segment_path_carries_one_span_per_segment`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/parser/mod.rs#L3508) |
+| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | `#229` |
 
 ##### Requirement {#arch.parsing.requirement-4}
@@ -69,8 +72,9 @@ Control flow has one expression-shaped representation through the parser and AST
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | `metel-frontend/src/grammar.pest` (`block_item`, `block_expr_stmt`, expression rules); `metel-frontend/src/parser/mod.rs` (`parse_if_expr`, `parse_block`); `metel-frontend/src/ast/mod.rs` (`Expr::If`, `Expr::Match`, `Expr::Loop`) |
-| `verified by` | general integration-suite coverage of control-flow expressions; no dedicated current parser unit test naming the statement-versus-tail representation was found |
+| `implements` | [`metel-frontend/src/parser/mod.rs::parse_if_expr`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/parser/mod.rs#L1822) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/control_flow/88_braceless_if_no_else_in_expression_position.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/evaluator/control_flow/88_braceless_if_no_else_in_expression_position.toml#L1) |
+| `last_reviewed` | 55dff632839ded1d889f2f38ccf8bb563846e3b1 |
 | `related` | ADR-0005 |
 
 ##### Requirement {#arch.parsing.requirement-5}
@@ -82,8 +86,10 @@ Grammar ordering preserves identifier-prefix and `None`-literal disambiguation: 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | `metel-frontend/src/grammar.pest` (`none_lit`, `primary_expr`, `pattern`, keyword/identifier alternatives) |
-| `verified by` | general integration-suite coverage of enum paths, literals, and identifiers; no dedicated current parser unit test naming each ordering invariant was found |
+| `implements` | _Exempt; see exemption below._ |
+| `implements exemption` | rationale: enforced entirely by grammar.pest's declarative `ident = @{ !keyword ~ ... }` rule (identifier-prefix exclusion) and ordinary PEG choice ordering (standalone `None` vs a `Perhaps::None`/user-variant path) -- no Rust function performs this disambiguation, so the arch-implements scanner, which only scans *.rs files, has nothing to cite; owner: metel-frontend; review: 2027-03-18 |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/enums/39_perhaps.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/evaluator/enums/39_perhaps.toml#L1) |
+| `last_reviewed` | 8b844c9117d5c6a730882aeaf521184c3055eb2f |
 | `related` | ADR-0015, ADR-0018 |
 
 ##### Requirement {#arch.parsing.requirement-6}
@@ -95,12 +101,24 @@ String interpolation is lowered while parsing into ordinary expression nodes: ea
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | `metel-frontend/src/parser/mod.rs` (`parse_string_interpolation`); `metel-frontend/src/ast/mod.rs` (`Expr::MethodCall`, `Expr::Binary`) |
-| `verified by` | general integration-suite coverage of interpolation; no dedicated parser unit test naming the lowering shape was found |
+| `implements` | [`metel-frontend/src/parser/mod.rs::parse_string_literal_expr`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/parser/mod.rs#L1171) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/builtins/86_interpolation_evaluation_order.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/evaluator/builtins/86_interpolation_evaluation_order.toml#L1) |
+| `last_reviewed` | 55dff632839ded1d889f2f38ccf8bb563846e3b1 |
 | `related` | ADR-0033 |
 
 </details>
 
 ## Known limitations
 
-None recorded yet for this section — `#1161` (extracting `LIMIT-*` records from the existing ADR corpus) runs next in this chain and will file any that apply here.
+`LIMIT-*` records are the authoritative inventory of known boundaries for this
+section. They carry the impact, owner, disposition, and review point; the
+Atlas limitations view projects the same records rather than duplicating them.
+
+### Active records
+
+No active `LIMIT-*` records are currently recorded for this section. This is
+a current inventory, not a claim of complete coverage.
+
+### Resolved records
+
+No resolved `LIMIT-*` records are currently recorded for this section.

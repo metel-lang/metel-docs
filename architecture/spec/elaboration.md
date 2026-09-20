@@ -24,12 +24,23 @@ Every `TypedExpr::MethodCall`'s `dispatch` field starts as `MethodDispatch::Dyna
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#elaboration` |
-| `implements` | `metel-frontend/src/elaborator/mod.rs` (`elaborate`, `ElaboratedModuleGraph`); `metel-frontend/src/typed_ast/mod.rs` (`MethodDispatch`) |
-| `verified by` | `metel-frontend/src/elaborator/mod.rs::resolve_dispatch_aspect_returns_aspect_variant`, `::resolve_dispatch_wrong_type_returns_inherent`, `::resolve_dispatch_same_bare_name_different_identity_returns_inherent`, `::resolve_dispatch_no_type_returns_inherent`, `::resolve_dispatch_unknown_method_returns_inherent`, `::resolve_dispatch_non_aspect_method_returns_inherent`, `::resolve_dispatch_primitive_receiver_has_no_identity`; integration fixture `metel-interpreter/tests/integration/sources/module_semantics/same_type_aspect_method_collision_is_t0013` |
+| `implements` | [`metel-frontend/src/elaborator/mod.rs::elaborate`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/elaborator/mod.rs#L44) |
+| `verified by` | [`metel-frontend/src/elaborator/mod.rs::resolve_dispatch_aspect_returns_aspect_variant`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/elaborator/mod.rs#L557) |
+| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | ADR-0037 |
 
 </details>
 
 ## Known limitations
 
+`LIMIT-*` records are the authoritative inventory of known boundaries for this
+section. They carry the impact, owner, disposition, and review point; the
+Atlas limitations view projects the same records rather than duplicating them.
+
+### Active records
+
 - [`LIMIT-ELABORATION-001`](../limitations/limit-elaboration-001.md) — `ElaboratedModuleGraph`'s field is fully `pub`, unlike `NormalizedModuleGraph`'s `pub(crate)`; the two "proof this pass ran" wrapper types aren't actually symmetric in what they enforce.
+
+### Resolved records
+
+No resolved `LIMIT-*` records are currently recorded for this section.
