@@ -1,6 +1,11 @@
 # Resolution {#resolution}
 
-This section is the Architecture Spec's first content, per [ADR-0055](../decisions/adr-0055-architecture-integrity-records.md) — the current, versioned description of how the frontend resolves source spellings to stable identities, and the boundary that binds the rest of the pipeline (typechecking, elaboration, evaluation) to those identities instead of re-deriving meaning from names. It documents [ADR-0054](../decisions/adr-0054-resolved-identity-freeze-and-generic-instance-preparation.md)'s resolved-identity model as implemented, not as originally proposed — some of ADR-0054's plan (generic instance preparation; rekeying `struct_env`/`variant_env` off `String`) is `#1051`'s "freeze proper" milestone, landed since; this section states current reality, and the `arch-*` requirements below are its checkable claims.
+This section is the Architecture Spec's versioned description of how the
+frontend resolves source spellings to stable identities, and the boundary that
+binds typechecking, elaboration, and evaluation to those identities instead of
+re-deriving meaning from names. It documents the implemented resolved-identity
+model described by [ADR-0054](../decisions/adr-0054-resolved-identity-freeze-and-generic-instance-preparation.md);
+the `arch-*` requirements below are its checkable claims.
 
 Owning crate: `metel-frontend`. The model is defined in `identity.rs` and `identity/` (`allocate.rs`, `lexical_path.rs`, `member.rs`, `position.rs`), and consumed by `name_resolver.rs`, `reference_resolver.rs`, `typed_ast/`, and every later pipeline stage.
 
@@ -30,8 +35,9 @@ After inference has solved a body and the frontend has frozen its resolution, no
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | `metel-frontend/src/identity.rs` (`ResolutionMap`, `Resolution`, `UnresolvedCause`) |
-| `verified by` | `tools/check_no_semantic_name_lookup.py` (CI-wired, `.github/workflows/ci.yml`); `metel-frontend/src/identity/tests.rs::reference_table_is_total_and_unknown_names_are_explicit` |
+| `implements` | [`metel-frontend/src/identity.rs::as_global`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/identity.rs#L156) |
+| `verified by` | [`metel-frontend/src/identity/tests.rs::reference_table_is_total_and_unknown_names_are_explicit`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/identity/tests.rs#L298) |
+| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | ADR-0054, ADR-0041, ADR-0042 |
 
 ##### Requirement {#arch.resolution.requirement-2}
@@ -43,8 +49,9 @@ Lexical bindings and value references are allocated structural identities (`Loca
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | `metel-frontend/src/identity/allocate.rs`, `metel-frontend/src/identity/lexical_path.rs` |
-| `verified by` | `metel-frontend/src/identity/tests.rs::blank_lines_and_reformatting_change_no_identity`, `::inserting_an_earlier_binding_does_not_renumber_a_later_one`, `::editing_one_body_leaves_another_bodys_identities_untouched`, `::allocation_is_order_independent_for_the_same_graph`, `::shadowing_produces_distinct_local_ids` |
+| `implements` | [`metel-frontend/src/identity/allocate.rs::prefix_module_path`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/identity/allocate.rs#L70) |
+| `verified by` | [`metel-frontend/src/identity/tests.rs::blank_lines_and_reformatting_change_no_identity`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/identity/tests.rs#L118) |
+| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 
 ##### Requirement {#arch.resolution.requirement-3}
@@ -56,8 +63,9 @@ Struct and enum member declarations (fields and enum variants) are interned to s
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | `metel-frontend/src/identity/member.rs` (`MemberTable`); `metel-frontend/src/typed_ast/mod.rs` (`FieldId`/`VariantId` on field-access, construction, and variant forms) |
-| `verified by` | `metel-frontend/src/identity/member.rs::struct_fields_get_distinct_ids_owned_by_the_struct`, `::same_field_name_on_different_types_is_a_different_id`, `::enum_variants_and_their_fields_are_interned`, `::interning_is_reformat_stable_and_order_independent`, `::absent_members_report_none_not_a_fabricated_id` |
+| `implements` | [`metel-frontend/src/identity/member.rs::new`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/identity/member.rs#L59) |
+| `verified by` | [`metel-frontend/src/identity/member.rs::struct_fields_get_distinct_ids_owned_by_the_struct`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/identity/member.rs#L260) |
+| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | ADR-0054 step 3, `#1051` |
 
 ##### Requirement {#arch.resolution.requirement-4}
@@ -69,8 +77,9 @@ Source-position lookup (`PositionIndex`) is the one structure permitted to be ke
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | `metel-frontend/src/identity/position.rs` (`PositionIndex`) |
-| `verified by` | `tools/check_no_semantic_name_lookup.py` (deliberately exempts `identity::position` as the sanctioned exception, rather than silently missing it) |
+| `implements` | [`metel-frontend/src/identity/position.rs::from_entries`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-frontend/src/identity/position.rs#L42) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/type_aliases/06_value_path.toml`](https://github.com/metel-lang/metel-core/blob/6d4adf0bc28d985d7aece6ad7a3f6693309949a6/metel-interpreter/tests/integration/sources/evaluator/type_aliases/06_value_path.toml#L1) |
+| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 
 </details>
