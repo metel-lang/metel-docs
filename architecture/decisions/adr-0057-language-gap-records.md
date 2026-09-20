@@ -109,8 +109,12 @@ these:
 
 The Language Spec's own tooling is unchanged (`rfc.py` reads
 `reference/spec/*.md` non-recursively and never sees `architecture/gaps/`).
-The chapters' `## Known gaps` sections, and a check that each lists exactly
-its active records, follow as a second phase (metel-core#1220).
+Each Language Spec chapter carries a `## Known gaps` section, and the checker
+verifies that it lists exactly the chapter's active records (`known`,
+`accepted`, `mitigated`, `planned`), each entry led by the record's own title
+and naming the ID as plain text; a chapter with none carries the standard
+empty statement, and the section may not link into `architecture/` or
+`rfcs/`. (metel-core#1220, phase 2.)
 
 ### 5. Relationship to existing records
 
@@ -139,6 +143,6 @@ are what §4 says make a limitation durable. Prose remains the place a gap is
   written.
 - The Atlas limitations section (metel-core#1179) shows `LIMIT-*` records and
   links `GAP-*` records rather than duplicating them.
-- The record checker ships first; the published `## Known gaps` chapter
-  sections, their consistency check and a first batch of `GAP-*` records are
-  follow-up work (metel-core#1220).
+- The record checker and the published `## Known gaps` chapter sections ship
+  (metel-core#1220); further `GAP-*` records are added by the per-stage
+  analysis.

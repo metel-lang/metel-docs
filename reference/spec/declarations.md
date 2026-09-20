@@ -3330,3 +3330,10 @@ dot call is ambiguous and is rejected with `T0013`.
 <!-- rfc.py:fixtures:end -->
 
 </details>
+
+## Known gaps
+
+Places where this chapter deliberately does not provide something a reader might expect. Each is tracked as a `GAP-*` record.
+
+- `GAP-DECLARATIONS-001` — Tuples and anonymous records cannot implement an aspect. `extend (i64, i64): MyAspect { … }` and `extend { w: i64 }: MyAspect { … }` are rejected; use a named struct. Planned for v0.14.0.
+- `GAP-DECLARATIONS-002` — Aspect implementations may not safely widen a method's generic constraints. An implementation's generic constraints must match the aspect method's exactly; a safe widening is still rejected (`T0012`).

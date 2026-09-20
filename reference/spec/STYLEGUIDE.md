@@ -395,3 +395,13 @@ gotcha in full.
 - If a claim touches real interpreter behavior, run it: build `metel-core` and try the
   program the claim describes. Don't cite a fixture, or write a claim, you haven't
   watched pass yourself.
+
+## Known gaps section
+
+Every chapter ends with a `## Known gaps` section listing the chapter's active
+`GAP-*` records (ADR-0057). Each entry is `` - `GAP-AREA-NNN` — <record title>. <one
+reader-facing sentence> ``: the ID is plain text and the title matches the record
+exactly. A chapter with no active gaps carries the standard empty statement. The
+section never links into `architecture/` or `rfcs/`. `check_architecture.py`
+enforces all of this; edit the section when a record is added, resolved or
+superseded.

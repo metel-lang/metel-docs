@@ -854,3 +854,9 @@ Ownership answers *how many owners a value has*, and `Copy` answers *whether a v
 duplicated*. Neither answers *what is borrowed at a given point* — that is the borrow
 checker's job, and it is not part of this release. In particular, nothing here prevents two
 `&var T` references to the same place; see the References section of the Type System page.
+
+## Known gaps
+
+Places where this chapter deliberately does not provide something a reader might expect. Each is tracked as a `GAP-*` record.
+
+- `GAP-OWNERSHIP-001` — No borrow checking: reference exclusivity and duration are not enforced. Nothing stops a shared and an exclusive reference to the same place from coexisting, or tracks how long a reborrow lasts; see [What ownership does not cover](#what-ownership-does-not-cover).

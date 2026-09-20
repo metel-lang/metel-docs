@@ -83,6 +83,16 @@ GAP_ID_RE = re.compile(r"^GAP-(" + "|".join(GAP_AREAS) + r")-\d{3}$")
 SPEC_RULE_ID_RE = re.compile(r"^spec\.[a-z0-9][a-z0-9.\-]*$")
 RFC_REF_RE = re.compile(r"^(?:RFC|rfc)-(\d{4})$")
 RFC_LANDED_STAGES = {"3-integrated", "4-implemented"}
+# The published per-chapter projection of the active GAP records (ADR-0057 §3).
+KNOWN_GAPS_HEADING_RE = re.compile(r"^## Known gaps\s*$", re.MULTILINE)
+KNOWN_GAPS_ENTRY_RE = re.compile(r"^- `(GAP-[A-Z0-9\-]+)` — (.+?)\s*$", re.MULTILINE)
+KNOWN_GAPS_EMPTY = (
+    "No known gaps are currently recorded for this chapter. This is a current\n"
+    "inventory, not a claim of complete coverage."
+)
+# A published chapter may not link into material that is not published.
+UNPUBLISHED_LINK_RE = re.compile(r"\]\([^)]*(?:architecture/|rfcs/)[^)]*\)")
+GAP_ACTIVE_DISPOSITIONS = {"known", "accepted", "mitigated", "planned"}
 STATUS_VALUES = {"implemented", "partial", "planned", "superseded", "retired"}
 DISPOSITION_VALUES = {"known", "accepted", "mitigated", "planned", "resolved", "superseded"}
 
@@ -456,6 +466,54 @@ def rfc_stage(rfcs_dir: Path, number: str):
     return None
 
 
+def known_gaps_section(text: str):
+    """The body of a chapter's `## Known gaps` section, or None if absent."""
+    m = KNOWN_GAPS_HEADING_RE.search(text)
+    if not m:
+        return None
+    rest = text[m.end():]
+    nxt = re.search(r"^## ", rest, re.MULTILINE)
+    return (rest[: nxt.start()] if nxt else rest).strip()
+
+
+def check_known_gaps_sections(language_spec_dir: Path, gaps: list, repo_root: Path) -> list:
+    """Each Language Spec chapter carries a `## Known gaps` section that lists
+    exactly its active `GAP-*` records, each led by the record's own title, as
+    plain-text IDs (ADR-0057 §3). It never links into unpublished material."""
+    findings: list = []
+    active_by_area: dict = {area: {} for area in GAP_AREAS}
+    for _, fm, _, _ in gaps:
+        m = GAP_ID_RE.match(fm.get("id", ""))
+        if m and fm.get("disposition") in GAP_ACTIVE_DISPOSITIONS:
+            active_by_area[m.group(1)][fm["id"]] = fm.get("title", "")
+
+    for area in GAP_AREAS:
+        chapter = language_spec_dir / f"{area.lower()}.md"
+        if not chapter.is_file():
+            continue
+        rel = chapter.relative_to(repo_root)
+        section = known_gaps_section(chapter.read_text())
+        if section is None:
+            findings.append(Finding(str(rel), "missing `## Known gaps` section (ADR-0057 §3)"))
+            continue
+        listed = dict((gid, text) for gid, text in KNOWN_GAPS_ENTRY_RE.findall(section))
+        expected = active_by_area[area]
+        for gid in sorted(set(expected) - set(listed)):
+            findings.append(Finding(str(rel), f"`## Known gaps` does not list active record `{gid}`"))
+        for gid in sorted(set(listed) - set(expected)):
+            findings.append(Finding(str(rel), f"`## Known gaps` lists `{gid}`, which is not an active `GAP-{area}-*` record"))
+        for gid in sorted(set(listed) & set(expected)):
+            if not listed[gid].startswith(expected[gid]):
+                findings.append(Finding(str(rel), f"`## Known gaps` entry `{gid}` must begin with the record's title `{expected[gid]}`"))
+        if not expected and KNOWN_GAPS_EMPTY not in section:
+            findings.append(Finding(str(rel), "`## Known gaps` with no active records must use the standard empty statement"))
+        if expected and KNOWN_GAPS_EMPTY in section:
+            findings.append(Finding(str(rel), "`## Known gaps` lists records but also carries the empty statement"))
+        if UNPUBLISHED_LINK_RE.search(section):
+            findings.append(Finding(str(rel), "`## Known gaps` must not link into `architecture/` or `rfcs/` (unpublished; name IDs as plain text)"))
+    return findings
+
+
 def check_gap_records(
     gap_files: list,
     limit_records: list,
@@ -544,6 +602,7 @@ def check_gap_records(
                     findings.append(
                         Finding(str(lpath.relative_to(repo_root)), f"`{target}` does not link back to `{limit_id}` in its `## Affects`")
                     )
+    findings.extend(check_known_gaps_sections(language_spec_dir, gaps, repo_root))
     return findings, {fm.get("id"): (p, fm, a) for p, fm, a, _ in gaps}
 
 
