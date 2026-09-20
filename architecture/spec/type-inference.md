@@ -126,17 +126,4 @@ Let-bound polymorphic closures are represented in the polymorphic scheme environ
 
 ## Known limitations
 
-`LIMIT-*` records are the authoritative inventory of known boundaries for this
-section. They carry the impact, owner, disposition, and review point; the
-Atlas limitations view projects the same records rather than duplicating them.
-
-### Active records
-
-- [`LIMIT-TYPE-INFERENCE-001`](../limitations/limit-type-inference-001.md) — `?` error coercion requires an explicit `From` impl; only `Int`/`Float` are built in.
-- [`LIMIT-TYPE-INFERENCE-002`](../limitations/limit-type-inference-002.md) — field access needs a concrete receiver type at the access site (eager partial solve).
-- [`LIMIT-TYPE-INFERENCE-003`](../limitations/limit-type-inference-003.md) — `..` is not supported in an anonymous record pattern.
-- [`LIMIT-TYPE-INFERENCE-004`](../limitations/limit-type-inference-004.md) — `List<T>` does not implement `Iterable<T>`.
-
-### Resolved records
-
-No resolved `LIMIT-*` records are currently recorded for this section.
+<!-- records:limitations -->

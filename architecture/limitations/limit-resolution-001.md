@@ -1,6 +1,7 @@
 ---
 id: LIMIT-RESOLUTION-001
 title: "Resolved-identity model is in-memory only"
+summary: "Resolved identities exist only in memory; nothing persists them across processes."
 scope: "architecture/spec/resolution.md#resolution"
 owner: metel-frontend
 discovered_by: "ADR-0054 (2026-09-10 amendment)"

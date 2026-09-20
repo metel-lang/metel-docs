@@ -1,6 +1,7 @@
 ---
 id: LIMIT-EVALUATION-003
 title: "RuntimeRegistry is not fully covered by the resolution-freeze checker"
+summary: "Two runtime registry maps are name-keyed by design and sit outside the check that forbids name lookups after resolution."
 scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
 discovered_by: "this session's architecture-spec inventory (direct source + tools/check_no_semantic_name_lookup.py reading), 2026-09-17"

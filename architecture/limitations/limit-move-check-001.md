@@ -1,6 +1,7 @@
 ---
 id: LIMIT-MOVE-CHECK-001
 title: "Closure move-check is always-on while general move-check stays opt-in"
+summary: "Closure move checks always run, while the general move checker stays behind `--move-check`."
 scope: "architecture/spec/move-check.md#move-check"
 owner: metel-frontend
 discovered_by: "ADR-0052 §1"

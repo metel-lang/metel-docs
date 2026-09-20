@@ -1,6 +1,7 @@
 ---
 id: LIMIT-MOVE-CHECK-002
 title: "Move-check skips generic bodies whose placeholder lacks a row bound or bound methods"
+summary: "Under `--move-check`, a generic body that reads a row-bound field or uses some bound methods is skipped with a warning, so a use-after-move there passes."
 scope: "architecture/spec/move-check.md#move-check"
 owner: metel-frontend
 discovered_by: "metel-core#1212 limitation analysis; `move-check-count` corpus totals (21 user and 30 embedded-std skipped generic bodies)"

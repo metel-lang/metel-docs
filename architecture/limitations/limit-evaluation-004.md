@@ -1,6 +1,7 @@
 ---
 id: LIMIT-EVALUATION-004
 title: "The evaluator is a deliberate PoC, not the target implementation shape"
+summary: "The tree-walking evaluator is a proof of concept expected to be replaced, not a stable target shape."
 scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
 discovered_by: "this session's architecture-spec inventory (direct source reading), 2026-09-17"

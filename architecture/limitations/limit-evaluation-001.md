@@ -1,6 +1,7 @@
 ---
 id: LIMIT-EVALUATION-001
 title: "Generic function dispatch re-constructs on every call"
+summary: "A generic function's body is re-constructed at every call instead of once per instantiation."
 scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
 discovered_by: "ADR-0010; metel-interpreter/docs/evaluator.md, \"Known Limitations\""

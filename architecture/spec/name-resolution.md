@@ -66,15 +66,4 @@ Every expression-level bare-identifier reference is classified as either `Res::D
 
 ## Known limitations
 
-`LIMIT-*` records are the authoritative inventory of known boundaries for this
-section. They carry the impact, owner, disposition, and review point; the
-Atlas limitations view projects the same records rather than duplicating them.
-
-### Active records
-
-No active `LIMIT-*` records are currently recorded for this section. This is
-a current inventory, not a claim of complete coverage.
-
-### Resolved records
-
-- [`LIMIT-NAME-RESOLUTION-001`](../limitations/limit-name-resolution-001.md) — `std::core` lacking a physical module file, resolved by ADR-0039.
+<!-- records:limitations -->

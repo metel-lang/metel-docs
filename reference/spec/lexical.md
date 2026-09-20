@@ -297,5 +297,4 @@ A character literal has type `Char`.
 
 ## Known gaps
 
-No known gaps are currently recorded for this chapter. This is a current
-inventory, not a claim of complete coverage.
+<!-- records:gaps -->

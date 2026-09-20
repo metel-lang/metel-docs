@@ -1,6 +1,7 @@
 ---
 id: GAP-OWNERSHIP-001
 title: "No borrow checking: reference exclusivity and duration are not enforced"
+summary: "Nothing prevents a shared and an exclusive reference to the same place from coexisting."
 scope: "reference/spec/ownership.md#what-ownership-does-not-cover"
 owner: language
 discovered_by: "metel-core#1212 limitation analysis; `reference/spec/ownership.md` (References and Moves); `typed_ast` `RefTemp` note"

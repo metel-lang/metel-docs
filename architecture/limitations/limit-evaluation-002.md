@@ -1,6 +1,7 @@
 ---
 id: LIMIT-EVALUATION-002
 title: "Cross-module mutual recursion is not supported"
+summary: "Superseded by GAP-MODULES-001: the scenario needs a circular import, which the spec forbids."
 scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
 discovered_by: "metel-interpreter/docs/evaluator.md, \"Known Limitations\", #189"

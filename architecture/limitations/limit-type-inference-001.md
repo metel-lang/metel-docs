@@ -1,6 +1,7 @@
 ---
 id: LIMIT-TYPE-INFERENCE-001
 title: "`?` error coercion requires an explicit From impl"
+summary: "`?` needs an explicit `From` impl to convert between error types; only `Int` and `Float` are built in."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "metel-interpreter/docs/evaluator.md, \"Known Limitations\" (updated v0.7.0 / METEL-80); re-scoped during ADR lifecycle triage (#1158) after checking which pass actually performs the check"
