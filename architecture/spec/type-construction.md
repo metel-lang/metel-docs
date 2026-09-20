@@ -72,7 +72,7 @@ The typechecker treats `T[]` as `Copy` unconditionally: its copy eligibility is 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/typeinference/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/typeinference/mod.rs#L3149) |
+| `implements` | [`metel-frontend/src/typeinference/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/typeinference/mod.rs#L3150) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/types/dynamic_array_is_copy_unconditionally.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/typechecking/types/dynamic_array_is_copy_unconditionally.toml#L1) |
 | `last_reviewed` | 8717cc6088e4dcf55f6f5580e60ad936d9bf69cf |
 | `related` | ADR-0046, RFC-0126 |
@@ -114,9 +114,9 @@ Operand legality is checked after operand types are resolved: arithmetic and una
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/typechecker/construction.rs::construct_binop`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/typechecker/construction.rs#L1300); [`metel-frontend/src/typechecker/construction.rs::construct_unaryop`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/typechecker/construction.rs#L1614) |
+| `implements` | [`metel-frontend/src/typechecker/construction.rs::construct_binop`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/typechecker/construction.rs#L1300); [`metel-frontend/src/typechecker/construction.rs::construct_unaryop`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/typechecker/construction.rs#L1615) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/literals/neg_05_generic_field_literal_add_string.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/typechecking/literals/neg_05_generic_field_literal_add_string.toml#L1) |
-| `last_reviewed` | 8717cc6088e4dcf55f6f5580e60ad936d9bf69cf |
+| `last_reviewed` | 307eb632c452a6988be9b2bbb6ccac2cb96869b2 |
 | `related` | ADR-0017, `T0005` |
 
 ##### Requirement {#arch.type-construction.requirement-8}
