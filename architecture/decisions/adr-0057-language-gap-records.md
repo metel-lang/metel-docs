@@ -74,18 +74,43 @@ lifecycle) with these differences:
 | `disposition` | the same values as `LIMIT-*` |
 | `resolution` | normally an RFC (draft, under review or accepted) or an issue; a gap closes when the spec text changes and its rules gain evidence |
 
-Records live in `reference/spec/gaps/gap-<area>-<nnn>.md`, next to the spec
-they qualify. Unlike `LIMIT-*`, they are part of the published Language Spec
-material, because the reader they serve is a Metel programmer.
+Records live in `architecture/gaps/gap-<area>-<nnn>.md`, beside `LIMIT-*`
+and unpublished like them. They do **not** live under `reference/spec/`: that
+tree is published, and a record there would collide with Docusaurus's own
+`id:` frontmatter key (which sets the page's doc id), be subject to the
+website's strict broken-link check, and be barred from linking the
+unpublished `architecture/` and `rfcs/` material its `affects` naturally
+names (`reference/spec/STYLEGUIDE.md`).
+
+The published surface is a `## Known gaps` section in each Language Spec
+chapter, following the Architecture Spec's "Known limitations" pattern. It
+states each gap to the reader and names the active record IDs as plain text,
+never as links.
 
 ### 4. Tooling
 
-`check_architecture.py` validates `GAP-*` records with the same rules as
-`LIMIT-*`: ID shape and uniqueness, required fields, disposition rules, typed
-links, and review dates for accepted gaps. Additionally, a `GAP-*` that lists
-a related `LIMIT-*` must be linked back from that record. The Language Spec's
-own tooling is unchanged. Implementation is tracked separately; this ADR only
-charters the record kind.
+`check_architecture.py` validates `GAP-*` records with the checks shared with
+`LIMIT-*` (required fields, filename and ID agreement, ID shape and
+uniqueness, disposition rules, scope anchor, non-empty `## Affects`), plus
+these:
+
+- the ID's area is one of the eight chapters and matches the chapter its
+  `scope` points into; `scope` must resolve to an explicit anchor in
+  `reference/spec/*.md`;
+- `affects` names at least one Language Spec rule (`spec.*`, validated
+  against the chapters' explicit anchors) or RFC (validated against
+  `rfcs/*/rfc-NNNN-*.md`);
+- `resolved` needs an `affects` RFC at stage `3-integrated` or
+  `4-implemented`; `planned` needs an RFC in `affects` or an issue in
+  `## Resolution`; `accepted` needs a review date and an accepting ADR, RFC
+  or issue in `## Resolution`. A closed issue alone never resolves a gap;
+- a `GAP-*` and a `LIMIT-*` that cite each other must do so in both
+  directions.
+
+The Language Spec's own tooling is unchanged (`rfc.py` reads
+`reference/spec/*.md` non-recursively and never sees `architecture/gaps/`).
+The chapters' `## Known gaps` sections, and a check that each lists exactly
+its active records, follow as a second phase (metel-core#1220).
 
 ### 5. Relationship to existing records
 
@@ -114,4 +139,6 @@ are what §4 says make a limitation durable. Prose remains the place a gap is
   written.
 - The Atlas limitations section (metel-core#1179) shows `LIMIT-*` records and
   links `GAP-*` records rather than duplicating them.
-- A checker extension and a first batch of `GAP-*` records are follow-up work.
+- The record checker ships first; the published `## Known gaps` chapter
+  sections, their consistency check and a first batch of `GAP-*` records are
+  follow-up work (metel-core#1220).

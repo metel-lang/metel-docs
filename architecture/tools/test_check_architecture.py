@@ -79,7 +79,7 @@ None yet.
 """
 
 
-class CheckArchitectureTests(unittest.TestCase):
+class ArchitectureCorpusCase(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
         self.spec_dir = self.tmp / "architecture" / "spec"
@@ -106,8 +106,13 @@ class CheckArchitectureTests(unittest.TestCase):
             spec_dir=self.spec_dir,
             limitations_dir=self.limitations_dir,
             decisions_dir=self.decisions_dir,
+            gaps_dir=self.tmp / "architecture" / "gaps",
+            language_spec_dir=self.tmp / "reference" / "spec",
+            rfcs_dir=self.tmp / "rfcs",
         )
 
+
+class CheckArchitectureTests(ArchitectureCorpusCase):
     def test_valid_corpus_has_no_findings(self):
         self.write_corpus()
         findings = self.run_checks()
@@ -329,6 +334,156 @@ class CheckArchitectureTests(unittest.TestCase):
         self.write_corpus(limitation_text=broken)
         findings = [str(f) for f in self.run_checks()]
         self.assertFalse(any("is superseded" in f for f in findings), findings)
+
+
+LANGUAGE_SPEC = """# Types
+
+##### Legality Rule {#spec.types.generics.legality-1}
+
+A rule.
+"""
+
+VALID_GAP = """---
+id: GAP-TYPES-001
+title: "Function parameters are monotypes"
+scope: "reference/spec/types.md#spec.types.generics.legality-1"
+owner: language
+discovered_by: "a test"
+disposition: known
+review: null
+---
+
+## Gap
+
+Some gap.
+
+## Impact
+
+Some impact.
+
+## Affects
+
+- `spec.types.generics.legality-1`
+
+## Resolution
+
+None yet.
+"""
+
+
+class GapRecordTests(ArchitectureCorpusCase):
+    """ADR-0057 `GAP-*` records (architecture/gaps/), validated by the same
+    checker as `LIMIT-*` with Language-Spec-specific rules."""
+
+    def write_gap_corpus(self, gap_text=VALID_GAP, gap_name="gap-types-001.md", limitation_text=None):
+        self.write_corpus(limitation_text=limitation_text if limitation_text is not None else VALID_LIMITATION)
+        (self.tmp / "reference" / "spec").mkdir(parents=True, exist_ok=True)
+        (self.tmp / "reference" / "spec" / "types.md").write_text(LANGUAGE_SPEC)
+        gaps = self.tmp / "architecture" / "gaps"
+        gaps.mkdir(parents=True, exist_ok=True)
+        (gaps / gap_name).write_text(gap_text)
+
+    def write_rfc(self, stage, number="0122"):
+        d = self.tmp / "rfcs" / stage
+        d.mkdir(parents=True, exist_ok=True)
+        (d / f"rfc-{number}-x.md").write_text("# rfc\n")
+
+    def findings(self):
+        return [str(f) for f in self.run_checks()]
+
+    def test_valid_gap_has_no_findings(self):
+        self.write_gap_corpus()
+        self.assertEqual([], self.findings())
+
+    def test_unknown_area_is_a_finding(self):
+        text = VALID_GAP.replace("GAP-TYPES-001", "GAP-WIDGETS-001")
+        self.write_gap_corpus(gap_text=text, gap_name="gap-widgets-001.md")
+        self.assertTrue(any("does not match the GAP-<AREA>-<NNN> shape" in f for f in self.findings()))
+
+    def test_scope_outside_language_spec_is_a_finding(self):
+        text = VALID_GAP.replace("reference/spec/types.md#spec.types.generics.legality-1", "architecture/spec/resolution.md#resolution")
+        self.write_gap_corpus(gap_text=text)
+        self.assertTrue(any("must point into `reference/spec/`" in f for f in self.findings()))
+
+    def test_area_must_match_scope_chapter(self):
+        text = VALID_GAP.replace("GAP-TYPES-001", "GAP-FUNCTIONS-001")
+        self.write_gap_corpus(gap_text=text, gap_name="gap-functions-001.md")
+        self.assertTrue(any("does not match the chapter" in f for f in self.findings()))
+
+    def test_dangling_scope_anchor_is_a_finding(self):
+        text = VALID_GAP.replace("legality-1\"", "legality-9\"")
+        self.write_gap_corpus(gap_text=text)
+        self.assertTrue(any("does not resolve to a real file+anchor" in f for f in self.findings()))
+
+    def test_affects_unknown_spec_rule_is_a_finding(self):
+        text = VALID_GAP.replace("- `spec.types.generics.legality-1`", "- `spec.types.generics.legality-9`")
+        self.write_gap_corpus(gap_text=text)
+        self.assertTrue(any("spec rule `spec.types.generics.legality-9` does not exist" in f for f in self.findings()))
+
+    def test_affects_needs_a_spec_rule_or_rfc(self):
+        text = VALID_GAP.replace("- `spec.types.generics.legality-1`", "- `arch.resolution.requirement-1`")
+        self.write_gap_corpus(gap_text=text)
+        self.assertTrue(any("at least one Language Spec rule" in f for f in self.findings()))
+
+    def test_affects_missing_rfc_is_a_finding(self):
+        text = VALID_GAP.replace("- `spec.types.generics.legality-1`", "- `spec.types.generics.legality-1`\n- `RFC-0122`")
+        self.write_gap_corpus(gap_text=text)
+        self.assertTrue(any("RFC `RFC-0122` does not exist" in f for f in self.findings()))
+
+    def test_resolved_needs_a_landed_rfc(self):
+        text = VALID_GAP.replace("disposition: known", "disposition: resolved").replace(
+            "- `spec.types.generics.legality-1`", "- `spec.types.generics.legality-1`\n- `RFC-0122`"
+        ).replace("None yet.", "Landed via the RFC.")
+        self.write_rfc("1-under-review")
+        self.write_gap_corpus(gap_text=text)
+        self.assertTrue(any("requires an `affects` RFC at stage 3-integrated or 4-implemented" in f for f in self.findings()))
+
+    def test_resolved_with_landed_rfc_passes(self):
+        text = VALID_GAP.replace("disposition: known", "disposition: resolved").replace(
+            "- `spec.types.generics.legality-1`", "- `spec.types.generics.legality-1`\n- `RFC-0122`"
+        ).replace("None yet.", "Landed via the RFC.")
+        self.write_rfc("3-integrated")
+        self.write_gap_corpus(gap_text=text)
+        self.assertEqual([], self.findings())
+
+    def test_planned_needs_an_rfc_or_issue(self):
+        text = VALID_GAP.replace("disposition: known", "disposition: planned")
+        self.write_gap_corpus(gap_text=text)
+        self.assertTrue(any("`planned` requires an RFC" in f for f in self.findings()))
+        ok = text.replace("None yet.", "Tracked as #239.")
+        self.write_gap_corpus(gap_text=ok)
+        self.assertEqual([], self.findings())
+
+    def test_accepted_needs_an_accepting_reference(self):
+        text = VALID_GAP.replace("disposition: known", "disposition: accepted").replace("review: null", "review: 2027-01-01")
+        self.write_gap_corpus(gap_text=text)
+        self.assertTrue(any("requires an accepting ADR, RFC or issue" in f for f in self.findings()))
+        ok = text.replace("None yet.", "Accepted per ADR-0057.")
+        self.write_gap_corpus(gap_text=ok)
+        self.assertEqual([], self.findings())
+
+    def _linked_gap(self):
+        return VALID_GAP.replace("- `spec.types.generics.legality-1`", "- `spec.types.generics.legality-1`\n- `LIMIT-RESOLUTION-001`")
+
+    def test_gap_limit_link_must_be_reciprocal(self):
+        self.write_gap_corpus(gap_text=self._linked_gap())
+        self.assertTrue(any("`LIMIT-RESOLUTION-001` does not link back to `GAP-TYPES-001`" in f for f in self.findings()))
+
+    def test_limit_gap_link_must_be_reciprocal(self):
+        limit = VALID_LIMITATION.replace("- `arch.resolution.requirement-1`", "- `arch.resolution.requirement-1`\n- `GAP-TYPES-001`")
+        self.write_gap_corpus(limitation_text=limit)
+        self.assertTrue(any("`GAP-TYPES-001` does not link back to `LIMIT-RESOLUTION-001`" in f for f in self.findings()))
+
+    def test_reciprocal_gap_limit_link_passes(self):
+        limit = VALID_LIMITATION.replace("- `arch.resolution.requirement-1`", "- `arch.resolution.requirement-1`\n- `GAP-TYPES-001`")
+        self.write_gap_corpus(gap_text=self._linked_gap(), limitation_text=limit)
+        self.assertEqual([], self.findings())
+
+    def test_duplicate_gap_id_is_a_finding(self):
+        self.write_gap_corpus()
+        (self.tmp / "architecture" / "gaps" / "gap-types-002.md").write_text(VALID_GAP)
+        f = self.findings()
+        self.assertTrue(any("duplicate GAP-* id" in x for x in f), f)
 
 
 if __name__ == "__main__":
