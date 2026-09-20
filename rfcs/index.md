@@ -13,7 +13,7 @@ judgment about why certain RFCs matter together.
 
 It is **not** the authoritative source for mutable state such as counts, stage totals,
 paths, or "what changed most recently." Those facts live in the generated
-[`REGISTRY.md`](REGISTRY.md), rebuilt by `rfcs/tools/rfc.py`.
+`REGISTRY.md`, rebuilt by `rfcs/tools/rfc.py`.
 
 Use the two files differently:
 
