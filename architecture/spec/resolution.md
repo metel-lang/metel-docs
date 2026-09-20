@@ -93,6 +93,7 @@ Atlas limitations view projects the same records rather than duplicating them.
 ### Active records
 
 - [`LIMIT-RESOLUTION-001`](../limitations/limit-resolution-001.md) — the resolved-identity model is in-memory only; no on-disk persistence or cross-process interner stability.
+- [`LIMIT-RESOLUTION-002`](../limitations/limit-resolution-002.md) — inference-time type lookup falls back to a name-approximate, cross-module search (`#1222`).
 
 ### Resolved records
 
