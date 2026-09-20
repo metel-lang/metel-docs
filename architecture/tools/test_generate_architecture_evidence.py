@@ -269,6 +269,28 @@ class ArchitectureEvidenceTests(unittest.TestCase):
             for field in ("implements exemption", "verification exemption"):
                 self.assertTrue(any(f"`{field}`" in f and "has passed" in f for f in findings), findings)
 
+    def test_marker_above_a_non_fn_item_does_not_latch_onto_a_later_fn(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core = self.make_core(
+                Path(directory),
+                '// arch-implements: ["arch.example.requirement-1"]\nstruct Env {}\n\nfn later() {}\n',
+                git=False,
+            )
+            with self.assertRaisesRegex(ValueError, "directly precede its item"):
+                evidence.citations(core)
+
+    def test_comments_and_multiline_attributes_may_sit_between_marker_and_item(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core = self.make_core(
+                Path(directory),
+                '// arch-implements: ["arch.example.requirement-1"]\n'
+                '// an explanatory comment\n#[allow(\n    clippy::too_many_lines\n)]\n'
+                '/// docs\npub(crate) fn run() {}\n',
+                git=False,
+            )
+            found = evidence.citations(core)["arch.example.requirement-1"]["implements"]
+            self.assertEqual("run", found[0].item)
+
 
 if __name__ == "__main__":
     unittest.main()
