@@ -2,6 +2,11 @@
 
 ## Pipeline
 
+Each stage is a separate Rust module. Module loading through elaboration are owned by
+`metel-frontend`; `pipeline.rs` in `metel-interpreter` orchestrates those stages and
+then invokes the evaluator. No stage is skipped, though Move Check only runs when
+`--move-check` is passed — see `pipeline.rs::run_file`.
+
 ```
 .mln root source file
        │
@@ -51,10 +56,9 @@
   └─────────────┘
 ```
 
-Each stage is a separate Rust module. Module loading through elaboration are owned by
-`metel-frontend`; `pipeline.rs` in `metel-interpreter` orchestrates those stages and
-then invokes the evaluator. No stage is skipped, though Move Check only runs when
-`--move-check` is passed — see `pipeline.rs::run_file`.
+For the current state of this spec — which requirements are implemented, partial or
+planned, whether each has verifying evidence, and which limitations are still open —
+see [Architecture Health](health.md).
 
 ---
 

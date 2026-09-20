@@ -483,6 +483,25 @@ def check_known_gaps_sections(language_spec_dir: Path, repo_root: Path) -> list:
     return findings
 
 
+HEALTH_PAGES = (
+    ("architecture/health.md", "<!-- health:architecture -->"),
+    ("reference/spec-health.md", "<!-- health:language -->"),
+)
+
+
+def check_health_pages(repo_root: Path) -> list:
+    """The two Health pages hold a marker the website replaces with a report
+    computed from the specs and records (metel-core#1182 follow-up)."""
+    findings: list = []
+    for rel, marker in HEALTH_PAGES:
+        path = repo_root / rel
+        if not path.is_file():
+            continue
+        if path.read_text().count(marker) != 1:
+            findings.append(Finding(rel, f"must contain the `{marker}` marker exactly once"))
+    return findings
+
+
 def check_gap_records(
     gap_files: list,
     limit_records: list,
@@ -602,6 +621,7 @@ def run_checks(
     limitation_files = sorted(limitations_dir.glob("*.md")) if limitations_dir.is_dir() else []
     findings.extend(check_stale_process_prose(spec_files, repo_root))
     findings.extend(check_links(repo_root))
+    findings.extend(check_health_pages(repo_root))
 
     all_section_ids_by_file: dict = {}
     all_arch_ids: dict = {}
