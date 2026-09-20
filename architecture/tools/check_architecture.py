@@ -2,7 +2,10 @@
 """Architecture integrity checker (ADR-0055 §6, metel-core#1162).
 
 Validates `arch-*` records in `architecture/spec/*.md` and `LIMIT-*` records
-in `architecture/limitations/*.md`: ID well-formedness and uniqueness,
+in `architecture/limitations/*.md` (and, ADR-0057, `GAP-*` records in
+`architecture/gaps/*.md`, which describe gaps in the Language Spec and carry
+extra rules: area/scope agreement, `spec.*`/RFC `affects`, RFC-backed
+`resolved`/`planned`, and reciprocal `LIMIT-*` links): ID well-formedness and uniqueness,
 cross-reference resolution (`specified by` / `scope` anchors, `affects`
 targets), required-field presence (including `last_reviewed`, metel-core#1191
 -- shape only here; whether the cited code actually moved on since that
@@ -67,9 +70,19 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SPEC_DIR = REPO_ROOT / "architecture" / "spec"
 LIMITATIONS_DIR = REPO_ROOT / "architecture" / "limitations"
 DECISIONS_DIR = REPO_ROOT / "architecture" / "decisions"
+GAPS_DIR = REPO_ROOT / "architecture" / "gaps"
+LANGUAGE_SPEC_DIR = REPO_ROOT / "reference" / "spec"
+RFCS_DIR = REPO_ROOT / "rfcs"
 
 ARCH_ID_RE = re.compile(r"^arch\.[a-z0-9][a-z0-9.\-]*\.requirement-\d+$")
 LIMIT_ID_RE = re.compile(r"^LIMIT-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d{3}$")
+# ADR-0057: `GAP-*` records describe a gap in what the Language Spec says; the
+# area is the Language Spec chapter (its file stem, uppercased).
+GAP_AREAS = ("TYPES", "EXPRESSIONS", "FUNCTIONS", "DECLARATIONS", "MODULES", "OWNERSHIP", "RUNTIME", "LEXICAL")
+GAP_ID_RE = re.compile(r"^GAP-(" + "|".join(GAP_AREAS) + r")-\d{3}$")
+SPEC_RULE_ID_RE = re.compile(r"^spec\.[a-z0-9][a-z0-9.\-]*$")
+RFC_REF_RE = re.compile(r"^(?:RFC|rfc)-(\d{4})$")
+RFC_LANDED_STAGES = {"3-integrated", "4-implemented"}
 STATUS_VALUES = {"implemented", "partial", "planned", "superseded", "retired"}
 DISPOSITION_VALUES = {"known", "accepted", "mitigated", "planned", "resolved", "superseded"}
 
@@ -373,15 +386,182 @@ def resolve_scope_anchor(scope: str, all_section_ids_by_file: dict, repo_root: P
     return anchor in all_section_ids_by_file.get(candidate.resolve(), set())
 
 
+def validate_record(
+    path: Path,
+    rel: Path,
+    fm: dict,
+    affects: list,
+    resolution_text: str,
+    prefix: str,
+    id_re,
+    seen_ids: dict,
+    section_ids_by_file: dict,
+    repo_root: Path,
+) -> list:
+    """Checks shared by every durable limitation-style record (`LIMIT-*`,
+    `GAP-*`): required fields, filename/ID agreement, ID shape and
+    uniqueness, disposition rules, scope anchor, and a non-empty `## Affects`.
+    Kind-specific rules live with their own kind."""
+    findings: list = []
+    for required_field in ("id", "title", "scope", "owner", "discovered_by", "disposition"):
+        if not fm.get(required_field):
+            findings.append(Finding(str(rel), f"missing or empty frontmatter field `{required_field}`"))
+
+    record_id = fm.get("id", "")
+    expected_slug = record_id.lower() + ".md"
+    if record_id and path.name != expected_slug:
+        findings.append(Finding(str(rel), f"filename does not match `id: {record_id}` (expected `{expected_slug}`)"))
+
+    if record_id:
+        if not id_re.match(record_id):
+            findings.append(Finding(str(rel), f"`{record_id}` does not match the {prefix}-<AREA>-<NNN> shape"))
+        if record_id in seen_ids:
+            findings.append(
+                Finding(str(rel), f"duplicate {prefix}-* id `{record_id}` (also in {seen_ids[record_id]})")
+            )
+        else:
+            seen_ids[record_id] = str(rel)
+
+    disposition = fm.get("disposition", "")
+    if disposition and disposition not in DISPOSITION_VALUES:
+        findings.append(
+            Finding(str(rel), f"disposition `{disposition}` is not one of {sorted(DISPOSITION_VALUES)}")
+        )
+
+    if disposition == "accepted" and not fm.get("review"):
+        findings.append(
+            Finding(str(rel), "disposition `accepted` requires a `review` date (ADR-0055 §4: an accepted temporary limitation requires a review-by date)")
+        )
+
+    if disposition == "resolved":
+        if not resolution_text or resolution_text.lower().startswith("none yet"):
+            findings.append(
+                Finding(str(rel), "disposition `resolved` requires real exit evidence in `## Resolution`, not a placeholder")
+            )
+
+    scope = fm.get("scope", "")
+    if scope and not resolve_scope_anchor(scope, section_ids_by_file, repo_root):
+        findings.append(Finding(str(rel), f"`scope: {scope}` does not resolve to a real file+anchor"))
+
+    if not affects:
+        findings.append(Finding(str(rel), "`## Affects` lists no targets"))
+    return findings
+
+
+def rfc_stage(rfcs_dir: Path, number: str):
+    """The lifecycle stage directory (`3-integrated`, ...) of RFC `number`, or
+    None if no such RFC file exists."""
+    for path in rfcs_dir.glob(f"*/rfc-{number}-*.md"):
+        return path.parent.name
+    return None
+
+
+def check_gap_records(
+    gap_files: list,
+    limit_records: list,
+    all_arch_ids: dict,
+    repo_root: Path,
+    rfcs_dir: Path,
+    language_spec_dir: Path,
+) -> tuple:
+    """`GAP-*` records (ADR-0057): a known, accepted gap in what the Language
+    Spec specifies. Returns (findings, {gap id: (path, fm, affects)})."""
+    findings: list = []
+    gap_ids: dict = {}
+    gaps: list = []
+
+    spec_files = sorted(language_spec_dir.glob("*.md")) if language_spec_dir.is_dir() else []
+    anchors_by_file = {p.resolve(): markdown_anchors(p) for p in spec_files}
+    all_spec_ids = set().union(*anchors_by_file.values()) if anchors_by_file else set()
+
+    for path in gap_files:
+        rel = path.relative_to(repo_root)
+        fm, affects, resolution_text = parse_limitation_file(path)
+        findings.extend(
+            validate_record(path, rel, fm, affects, resolution_text, "GAP", GAP_ID_RE, gap_ids, anchors_by_file, repo_root)
+        )
+        gaps.append((path, fm, affects, resolution_text))
+
+        record_id = fm.get("id", "")
+        area = record_id.split("-")[1] if GAP_ID_RE.match(record_id) else None
+        scope = fm.get("scope", "")
+        if scope and not scope.startswith("reference/spec/"):
+            findings.append(Finding(str(rel), f"`scope: {scope}` must point into `reference/spec/` (a GAP describes the Language Spec)"))
+        elif area and scope and Path(scope.split("#", 1)[0]).stem.upper() != area:
+            findings.append(Finding(str(rel), f"`{record_id}` area `{area}` does not match the chapter its `scope` points into"))
+
+        rfc_targets = [t for t in affects if RFC_REF_RE.match(t)]
+        rule_targets = [t for t in affects if SPEC_RULE_ID_RE.match(t)]
+        if affects and not rfc_targets and not rule_targets:
+            findings.append(Finding(str(rel), "`## Affects` must name at least one Language Spec rule (`spec.*`) or RFC"))
+
+        disposition = fm.get("disposition", "")
+        stages = {}
+        for target in affects:
+            m = RFC_REF_RE.match(target)
+            if m:
+                stage = rfc_stage(rfcs_dir, m.group(1))
+                if stage is None:
+                    findings.append(Finding(str(rel), f"`affects` RFC `{target}` does not exist under rfcs/"))
+                stages[target] = stage
+        if disposition == "resolved" and not any(st in RFC_LANDED_STAGES for st in stages.values()):
+            findings.append(
+                Finding(str(rel), "disposition `resolved` requires an `affects` RFC at stage 3-integrated or 4-implemented (a closed issue is not enough, ADR-0055 §4)")
+            )
+        if disposition == "planned" and not stages and not re.search(r"#\d+", resolution_text):
+            findings.append(Finding(str(rel), "disposition `planned` requires an RFC in `affects` or an issue reference in `## Resolution`"))
+        if disposition == "accepted" and not re.search(r"\b(?:ADR|RFC)-\d{4}\b|#\d+", resolution_text, re.IGNORECASE):
+            findings.append(Finding(str(rel), "disposition `accepted` requires an accepting ADR, RFC or issue named in `## Resolution`"))
+
+        for target in affects:
+            if SPEC_RULE_ID_RE.match(target):
+                if target not in all_spec_ids:
+                    findings.append(Finding(str(rel), f"`affects` spec rule `{target}` does not exist in reference/spec/"))
+            elif RFC_REF_RE.match(target) or LIMIT_ID_RE.match(target):
+                continue
+            elif target not in all_arch_ids and target not in gap_ids:
+                findings.append(Finding(str(rel), f"`affects` target `{target}` does not exist"))
+
+    # A GAP and a LIMIT that cite each other must do so in both directions.
+    limit_affects = {fm.get("id"): (path, affects) for path, fm, affects, _ in limit_records}
+    for path, fm, affects, _ in gaps:
+        rel = path.relative_to(repo_root)
+        gap_id = fm.get("id", "")
+        for target in affects:
+            if not LIMIT_ID_RE.match(target):
+                continue
+            if target not in limit_affects:
+                findings.append(Finding(str(rel), f"`affects` LIMIT record `{target}` does not exist"))
+            elif gap_id not in limit_affects[target][1]:
+                findings.append(Finding(str(rel), f"`{target}` does not link back to `{gap_id}` in its `## Affects`"))
+    for limit_id, (lpath, affects) in limit_affects.items():
+        for target in affects:
+            if GAP_ID_RE.match(target):
+                gap = next((g for g in gaps if g[1].get("id") == target), None)
+                if gap is None:
+                    continue  # reported by the generic affects-target check
+                if limit_id not in gap[2]:
+                    findings.append(
+                        Finding(str(lpath.relative_to(repo_root)), f"`{target}` does not link back to `{limit_id}` in its `## Affects`")
+                    )
+    return findings, {fm.get("id"): (p, fm, a) for p, fm, a, _ in gaps}
+
+
 def run_checks(
     repo_root: Path = REPO_ROOT,
     spec_dir: Path = None,
     limitations_dir: Path = None,
     decisions_dir: Path = None,
+    gaps_dir: Path = None,
+    language_spec_dir: Path = None,
+    rfcs_dir: Path = None,
 ) -> list[Finding]:
     spec_dir = spec_dir or (repo_root / "architecture" / "spec")
     limitations_dir = limitations_dir or (repo_root / "architecture" / "limitations")
     decisions_dir = decisions_dir or (repo_root / "architecture" / "decisions")
+    gaps_dir = gaps_dir or (repo_root / "architecture" / "gaps")
+    language_spec_dir = language_spec_dir or (repo_root / "reference" / "spec")
+    rfcs_dir = rfcs_dir or (repo_root / "rfcs")
     findings: list[Finding] = []
     superseded_adrs = load_adr_supersessions(decisions_dir)
     findings.extend(check_adr_frontmatter(decisions_dir, repo_root))
@@ -482,49 +662,18 @@ def run_checks(
         rel = path.relative_to(repo_root)
         fm, affects, resolution_text = parse_limitation_file(path)
         limitation_records.append((path, fm, affects, resolution_text))
-
-        for required_field in ("id", "title", "scope", "owner", "discovered_by", "disposition"):
-            if not fm.get(required_field):
-                findings.append(Finding(str(rel), f"missing or empty frontmatter field `{required_field}`"))
-
-        record_id = fm.get("id", "")
-        expected_slug = record_id.lower() + ".md"
-        if record_id and path.name != expected_slug:
-            findings.append(Finding(str(rel), f"filename does not match `id: {record_id}` (expected `{expected_slug}`)"))
-
-        if record_id:
-            if not LIMIT_ID_RE.match(record_id):
-                findings.append(Finding(str(rel), f"`{record_id}` does not match the LIMIT-<AREA>-<NNN> shape"))
-            if record_id in all_limit_ids:
-                findings.append(
-                    Finding(str(rel), f"duplicate LIMIT-* id `{record_id}` (also in {all_limit_ids[record_id]})")
-                )
-            else:
-                all_limit_ids[record_id] = str(rel)
-
-        disposition = fm.get("disposition", "")
-        if disposition and disposition not in DISPOSITION_VALUES:
-            findings.append(
-                Finding(str(rel), f"disposition `{disposition}` is not one of {sorted(DISPOSITION_VALUES)}")
+        findings.extend(
+            validate_record(
+                path, rel, fm, affects, resolution_text, "LIMIT", LIMIT_ID_RE, all_limit_ids,
+                all_section_ids_by_file, repo_root,
             )
+        )
 
-        if disposition == "accepted" and not fm.get("review"):
-            findings.append(
-                Finding(str(rel), "disposition `accepted` requires a `review` date (ADR-0055 §4: an accepted temporary limitation requires a review-by date)")
-            )
-
-        if disposition == "resolved":
-            if not resolution_text or resolution_text.lower().startswith("none yet"):
-                findings.append(
-                    Finding(str(rel), "disposition `resolved` requires real exit evidence in `## Resolution`, not a placeholder")
-                )
-
-        scope = fm.get("scope", "")
-        if scope and not resolve_scope_anchor(scope, all_section_ids_by_file, repo_root):
-            findings.append(Finding(str(rel), f"`scope: {scope}` does not resolve to a real file+anchor"))
-
-        if not affects:
-            findings.append(Finding(str(rel), "`## Affects` lists no targets"))
+    gap_files = sorted(gaps_dir.glob("*.md")) if gaps_dir.is_dir() else []
+    gap_findings, gap_records = check_gap_records(
+        gap_files, limitation_records, all_arch_ids, repo_root, rfcs_dir, language_spec_dir
+    )
+    findings.extend(gap_findings)
 
     # Cross-file: every `affects` entry, and every standardized
     # "Known limitations" link, must resolve to a real id that actually exists
@@ -532,7 +681,7 @@ def run_checks(
     for path, fm, affects, _ in limitation_records:
         rel = path.relative_to(repo_root)
         for target in affects:
-            if target not in all_arch_ids and target not in all_limit_ids:
+            if target not in all_arch_ids and target not in all_limit_ids and target not in gap_records:
                 findings.append(Finding(str(rel), f"`affects` target `{target}` does not exist"))
 
     for path, known_limitations in known_limitations_by_file.items():
@@ -575,7 +724,8 @@ def main() -> int:
 
     spec_count = len(list(SPEC_DIR.glob("*.md"))) if SPEC_DIR.is_dir() else 0
     limit_count = len(list(LIMITATIONS_DIR.glob("*.md"))) if LIMITATIONS_DIR.is_dir() else 0
-    print(f"Checked {spec_count} spec file(s), {limit_count} limitation record(s).")
+    gap_count = len(list(GAPS_DIR.glob("*.md"))) if GAPS_DIR.is_dir() else 0
+    print(f"Checked {spec_count} spec file(s), {limit_count} limitation record(s), {gap_count} gap record(s).")
     print("Fixture-sidecar arch=[...] cross-checking: skipped (fixture corpus lives in metel-core, not reachable from a bare metel-docs checkout -- same degrade rfc-check.yml already documents for RFC coverage).")
 
     if not findings:
