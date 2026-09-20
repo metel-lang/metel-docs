@@ -22,8 +22,8 @@ graph from another crate.
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#path-normalization` |
-| `implements` | [`metel-frontend/src/path_normalizer.rs::normalize`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/path_normalizer.rs#L36) |
-| `verified by` | [`metel-frontend/src/path_normalizer.rs::explicitly_imported_qualified_call_carries_the_same_symbol_id`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/path_normalizer.rs#L635); [`metel-frontend/src/path_normalizer.rs::glob_imported_qualified_call_carries_a_symbol_id`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/path_normalizer.rs#L615); [`metel-frontend/src/path_normalizer.rs::self_qualified_call_carries_a_symbol_id`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/path_normalizer.rs#L669) |
+| `implements` | [`metel-frontend/src/path_normalizer.rs::normalize`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/path_normalizer.rs#L36) |
+| `verified by` | [`metel-frontend/src/path_normalizer.rs::explicitly_imported_qualified_call_carries_the_same_symbol_id`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/path_normalizer.rs#L635); [`metel-frontend/src/path_normalizer.rs::glob_imported_qualified_call_carries_a_symbol_id`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/path_normalizer.rs#L615); [`metel-frontend/src/path_normalizer.rs::self_qualified_call_carries_a_symbol_id`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/path_normalizer.rs#L669) |
 | `last_reviewed` | 61b7338f18e07e5916b01894aab15db6686ed997 |
 | `related` | ADR-0021, ADR-0031 |
 

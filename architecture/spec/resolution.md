@@ -35,9 +35,9 @@ After inference has solved a body and the frontend has frozen its resolution, no
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | [`metel-frontend/src/identity.rs::as_global`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/identity.rs#L156) |
-| `verified by` | [`metel-frontend/src/identity/tests.rs::reference_table_is_total_and_unknown_names_are_explicit`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/identity/tests.rs#L298) |
-| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
+| `implements` | [`metel-frontend/src/identity/allocate.rs::allocate_module`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/allocate.rs#L170) |
+| `verified by` | [`metel-frontend/src/identity/tests.rs::a_body_with_only_bound_names_has_no_unresolved_references`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/tests.rs#L312); [`metel-frontend/src/identity/tests.rs::a_use_of_a_global_declaration_is_classified_as_global`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/tests.rs#L325); [`metel-frontend/src/identity/tests.rs::reference_table_is_total_and_unknown_names_are_explicit`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/tests.rs#L300) |
+| `last_reviewed` | 282f563360390f6648e81bc9d3974bcb8070c496 |
 | `related` | ADR-0054, ADR-0041, ADR-0042 |
 
 ##### Requirement {#arch.resolution.requirement-2}
@@ -49,9 +49,9 @@ Lexical bindings and value references are allocated structural identities (`Loca
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | [`metel-frontend/src/identity/allocate.rs::prefix_module_path`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/identity/allocate.rs#L70) |
-| `verified by` | [`metel-frontend/src/identity/tests.rs::blank_lines_and_reformatting_change_no_identity`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/identity/tests.rs#L118) |
-| `last_reviewed` | 4871047944e6893a2cf1a3144bb49c66e7493e12 |
+| `implements` | [`metel-frontend/src/identity/allocate.rs::allocate_module`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/allocate.rs#L171) |
+| `verified by` | [`metel-frontend/src/identity/tests.rs::blank_lines_and_reformatting_change_no_identity`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/tests.rs#L118); [`metel-frontend/src/identity/tests.rs::editing_one_body_leaves_another_bodys_identities_untouched`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/tests.rs#L152); [`metel-frontend/src/identity/tests.rs::inserting_an_earlier_binding_does_not_renumber_a_later_one`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/tests.rs#L139) |
+| `last_reviewed` | 282f563360390f6648e81bc9d3974bcb8070c496 |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 
 ##### Requirement {#arch.resolution.requirement-3}
@@ -63,23 +63,23 @@ Struct and enum member declarations (fields and enum variants) are interned to s
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | [`metel-frontend/src/identity/member.rs::new`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/identity/member.rs#L59) |
-| `verified by` | [`metel-frontend/src/identity/member.rs::struct_fields_get_distinct_ids_owned_by_the_struct`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/identity/member.rs#L260) |
-| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
+| `implements` | [`metel-frontend/src/identity/member.rs::collect_members`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/member.rs#L156) |
+| `verified by` | [`metel-frontend/src/identity/member.rs::absent_members_report_none_not_a_fabricated_id`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/member.rs#L322); [`metel-frontend/src/identity/member.rs::enum_variants_and_their_fields_are_interned`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/member.rs#L285); [`metel-frontend/src/identity/member.rs::interning_is_reformat_stable_and_order_independent`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/member.rs#L302); [`metel-frontend/src/identity/member.rs::same_field_name_on_different_types_is_a_different_id`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/member.rs#L272); [`metel-frontend/src/identity/member.rs::struct_fields_get_distinct_ids_owned_by_the_struct`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/member.rs#L260); [`metel-frontend/src/typechecker/mod.rs::typed_ir_threads_member_ids_rather_than_rederiving_them`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/typechecker/mod.rs#L1481) |
+| `last_reviewed` | 282f563360390f6648e81bc9d3974bcb8070c496 |
 | `related` | ADR-0054 step 3, `#1051` |
 
 ##### Requirement {#arch.resolution.requirement-4}
 
-Source-position lookup (`PositionIndex`) is the one structure permitted to be keyed by byte position. It is rebuilt from a parsed snapshot, never persisted, and never a semantic input — it exists only to answer an editor's "what identity is at byte N" question. Every durable resolved artifact (`ResolutionMap`, the frozen IR) is keyed by identity, never by position.
+Source-position lookup (`PositionIndex`) is the one lookup structure keyed by byte position. It is rebuilt from a parsed snapshot, never persisted, and never a semantic input — it exists only to answer an editor's "what identity is at byte N" question. The one other span-keyed table, `BindingSpans`, is a transient construction-time bridge: the typed-AST pass reads it to stamp each node's `BindingId` and discards it. Every durable resolved artifact (`ResolutionMap`, the frozen IR) is keyed by identity, never by position.
 
 | Field | Value |
 |---|---|
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | [`metel-frontend/src/identity/position.rs::from_entries`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/identity/position.rs#L42) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/type_aliases/06_value_path.toml`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-interpreter/tests/integration/sources/evaluator/type_aliases/06_value_path.toml#L1) |
-| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
+| `implements` | [`metel-frontend/src/identity/position.rs::from_entries`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/position.rs#L42) |
+| `verified by` | [`metel-frontend/src/identity/tests.rs::module_segment_hit_is_position_stable_under_reformatting`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/tests.rs#L694); [`metel-frontend/src/identity/tests.rs::position_index_finds_a_use_and_misses_whitespace`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/tests.rs#L758); [`metel-frontend/src/identity/tests.rs::the_durable_resolution_map_is_keyed_by_identity_not_position`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/tests.rs#L780) |
+| `last_reviewed` | 282f563360390f6648e81bc9d3974bcb8070c496 |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 
 </details>
