@@ -33,6 +33,11 @@ call is stable within one compilation only. It compounds `LIMIT-RESOLUTION-001`:
 these ids could not be persisted or compared across runs even if the rest of
 the identity model could.
 
+ADR-0054 states that two runs over the same resolved module graph "produce
+identical IDs regardless of file iteration order or parallelism"; overload ids
+do not meet that, because the counter is process-wide. (`LocalId`s and the
+resolver's own `SymbolId`s do.)
+
 This is read from the code; it is not observable from a Metel program, so there
 is no reproducing fixture.
 
