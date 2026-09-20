@@ -51,7 +51,7 @@ Lexical bindings and value references are allocated structural identities (`Loca
 | `specified by` | `#resolution` |
 | `implements` | [`metel-frontend/src/identity/allocate.rs::prefix_module_path`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-frontend/src/identity/allocate.rs#L70) |
 | `verified by` | [`metel-frontend/src/identity/tests.rs::blank_lines_and_reformatting_change_no_identity`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-frontend/src/identity/tests.rs#L118) |
-| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
+| `last_reviewed` | 4871047944e6893a2cf1a3144bb49c66e7493e12 |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 
 ##### Requirement {#arch.resolution.requirement-3}

@@ -61,12 +61,15 @@ class Citation:
     path: Path
     item: str | None
     line: int
-    # Last line of the cited Rust item's own body (equal to `line` for a
-    # decl-only signature), or None for a whole-file citation (a fixture
-    # .toml's `arch_verifies`, which has no meaningful sub-range). Used to
-    # scope the metel-core#1191 review-staleness check to exactly the text a
-    # human would have read when the citation was placed -- not the whole
-    # file, which would fire on every unrelated edit anywhere in it.
+    # The cited item's own extent: `start_line` is its `fn`/rule line (not the
+    # marker's, which is `line`) and `end_line` its last line (equal to
+    # `start_line` for a decl-only signature). Both are None for a whole-file
+    # citation (a fixture .toml's `arch_verifies`, which has no meaningful
+    # sub-range). Used to scope the metel-core#1191 review-staleness check to
+    # exactly the item a human read -- not the whole file, which would fire on
+    # every unrelated edit, and not the marker lines above the item, where
+    # touching a *sibling* claim's marker would otherwise flag this claim.
+    start_line: int | None
     end_line: int | None
 
 
@@ -205,9 +208,9 @@ def citations(core: Path):
                 item, item_start = following_rule(text, match.end(), path, line)
             else:
                 item, item_start = following_item(text, match.end(), kind == "verifies", path, line)
-            _, end_line = function_extent(text, item_start)
+            start_line, end_line = function_extent(text, item_start)
             rel = path.relative_to(core)
-            citation = Citation(rel, item, line, end_line)
+            citation = Citation(rel, item, line, start_line, end_line)
             for claim in claim_ids:
                 found[claim][kind].append(citation)
     for path in core.rglob("*.toml"):
@@ -226,7 +229,7 @@ def citations(core: Path):
             )
         for claim in values:
             if re.fullmatch(ID, claim):
-                found[claim]["verifies"].append(Citation(path.relative_to(core), None, 1, None))
+                found[claim]["verifies"].append(Citation(path.relative_to(core), None, 1, None, None))
     return found
 
 
@@ -236,10 +239,10 @@ def last_touch_commit(core: Path, citation: Citation) -> str:
     fixture .toml citation (which has no meaningful sub-range to scope to).
     Requires full history (`git log`'s default shallow-unfriendly walk) --
     see the fetch-depth: 0 note on the CI job that runs this."""
-    if citation.end_line is None:
+    if citation.start_line is None:
         scope = ["--", str(citation.path)]
     else:
-        scope = ["-L", f"{citation.line},{citation.end_line}:{citation.path}"]
+        scope = ["-L", f"{citation.start_line},{citation.end_line}:{citation.path}"]
     out = subprocess.check_output(
         ["git", "-C", str(core), "log", "-1", "--format=%H", *scope], text=True
     )

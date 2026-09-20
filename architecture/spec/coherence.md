@@ -29,7 +29,7 @@ The orphan rule (`T0014`): an aspect implementation must be local to either the 
 | `specified by` | `#coherence` |
 | `implements` | [`metel-frontend/src/coherence.rs::check`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-frontend/src/coherence.rs#L660) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/orphan_impl_cross_module_violation/test.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/typechecking/aspects/orphan_impl_cross_module_violation/test.toml#L1) |
-| `last_reviewed` | 55dff632839ded1d889f2f38ccf8bb563846e3b1 |
+| `last_reviewed` | 4871047944e6893a2cf1a3144bb49c66e7493e12 |
 | `related` | RFC-0060, `#238`, ADR-0042, RFC-0036 |
 
 ##### Requirement {#arch.coherence.requirement-2}

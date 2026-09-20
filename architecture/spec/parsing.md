@@ -32,7 +32,7 @@ Loading a root file produces a `ModuleGraph` whose `modules: Vec<LoadedModule>` 
 | `specified by` | `#parsing` |
 | `implements` | [`metel-frontend/src/module_loader.rs::load_module`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-frontend/src/module_loader.rs#L506) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/module_loading/rejects_circular_module_graph/test.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/module_loading/rejects_circular_module_graph/test.toml#L1) |
-| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
+| `last_reviewed` | 4871047944e6893a2cf1a3144bb49c66e7493e12 |
 | `related` | RFC-0058, ADR-0023 (hierarchical module paths), ADR-0031 (diamond-dependency path aliasing), `#1147` |
 
 ##### Requirement {#arch.parsing.requirement-2}
