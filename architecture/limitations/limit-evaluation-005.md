@@ -1,6 +1,7 @@
 ---
 id: LIMIT-EVALUATION-005
 title: "Destructor invocation is not implemented; only empty `drop` bodies are accepted"
+summary: "`Drop` bodies never run, so only an empty `drop` body is accepted."
 scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
 discovered_by: "metel-core#1211 limitation analysis; skipped fixture `evaluator/closures/v0_13_0_captured_drop_order.toml`"

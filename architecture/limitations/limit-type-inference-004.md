@@ -1,6 +1,7 @@
 ---
 id: LIMIT-TYPE-INFERENCE-004
 title: "`List<T>` does not implement `Iterable<T>`"
+summary: "`for (x in list)` does not typecheck for `List<T>`; iterate `list.as_slice()`."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "metel-core#871; confirmed in the metel-core#1217/#1218 limitation analysis"

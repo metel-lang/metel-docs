@@ -64,15 +64,4 @@ Closure capture legality is enforced even while the general move-check gate rema
 
 ## Known limitations
 
-`LIMIT-*` records are the authoritative inventory of known boundaries for this
-section. They carry the impact, owner, disposition, and review point; the
-Atlas limitations view projects the same records rather than duplicating them.
-
-### Active records
-
-- [`LIMIT-MOVE-CHECK-001`](../limitations/limit-move-check-001.md) — closure move-check is always-on while general move-check stays opt-in (a documented temporary asymmetry).
-- [`LIMIT-MOVE-CHECK-002`](../limitations/limit-move-check-002.md) — move-check skips generic bodies that read a row-bound field or use some bound methods, so a use-after-move there passes with only a warning (`#1226`).
-
-### Resolved records
-
-No resolved `LIMIT-*` records are currently recorded for this section.
+<!-- records:limitations -->

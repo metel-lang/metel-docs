@@ -1,6 +1,7 @@
 ---
 id: LIMIT-TYPE-CONSTRUCTION-003
 title: "`==` and `!=` reject non-primitive operands instead of dispatching through `Eq`"
+summary: "`==` and `!=` reject operands that are not numbers, booleans, strings or chars; call `.eq(..)` instead."
 scope: "architecture/spec/type-construction.md#type-construction"
 owner: metel-frontend
 discovered_by: "metel-core#1217 limitation analysis; `typechecker/construction.rs`"

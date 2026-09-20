@@ -1910,6 +1910,4 @@ panicking on `Err`.
 
 ## Known gaps
 
-Places where this chapter deliberately does not provide something a reader might expect. Each is tracked as a `GAP-*` record.
-
-- `GAP-TYPES-001` — No higher-rank polymorphism. A function parameter is a monotype, so one parameter cannot be applied at two different types in a body, and a generic function cannot be passed where the receiving parameter is itself generic ([First-Class Functions](functions.md#spec.functions.first-class-functions.legality-2)).
+<!-- records:gaps -->

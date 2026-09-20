@@ -1,6 +1,7 @@
 ---
 id: LIMIT-TYPE-INFERENCE-002
 title: "Field access needs a concrete receiver type at the access site"
+summary: "A field access on an unannotated parameter is rejected; add a type annotation."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "metel-core#1218 limitation analysis; fixture `typechecking/generics/limit_03_field_access_needs_annotation.mtl`"

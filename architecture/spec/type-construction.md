@@ -193,16 +193,4 @@ Generic runtime reconstruction recovers nominal type arguments from a struct or 
 
 ## Known limitations
 
-`LIMIT-*` records are the authoritative inventory of known boundaries for this
-section. They carry the impact, owner, disposition, and review point; the
-Atlas limitations view projects the same records rather than duplicating them.
-
-### Active records
-
-- [`LIMIT-TYPE-CONSTRUCTION-001`](../limitations/limit-type-construction-001.md) — `Call::callee_id` falls back to name dispatch for first-class function values (a live exception to the resolution-freeze invariant).
-- [`LIMIT-TYPE-CONSTRUCTION-002`](../limitations/limit-type-construction-002.md) — overload sets are not yet exportable across modules (METEL-188).
-- [`LIMIT-TYPE-CONSTRUCTION-003`](../limitations/limit-type-construction-003.md) — `==`/`!=` reject non-primitive operands instead of dispatching through `Eq`.
-
-### Resolved records
-
-No resolved `LIMIT-*` records are currently recorded for this section.
+<!-- records:limitations -->

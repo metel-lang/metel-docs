@@ -74,18 +74,20 @@ lifecycle) with these differences:
 | `disposition` | the same values as `LIMIT-*` |
 | `resolution` | normally an RFC (draft, under review or accepted) or an issue; a gap closes when the spec text changes and its rules gain evidence |
 
-Records live in `architecture/gaps/gap-<area>-<nnn>.md`, beside `LIMIT-*`
-and unpublished like them. They do **not** live under `reference/spec/`: that
-tree is published, and a record there would collide with Docusaurus's own
-`id:` frontmatter key (which sets the page's doc id), be subject to the
-website's strict broken-link check, and be barred from linking the
-unpublished `architecture/` and `rfcs/` material its `affects` naturally
-names (`reference/spec/STYLEGUIDE.md`).
+Records live in `architecture/gaps/gap-<area>-<nnn>.md`, beside `LIMIT-*`.
+The website builds `architecture/limitations/**` and `architecture/gaps/**` as
+unlisted pages (no sidebar entry; only `decisions/`, `reports/` and `tools/`
+are excluded from the docs build), so each record has a stable page of its own
+that a chapter or a spec section can link to. They do not live under
+`reference/spec/`: that tree is the sidebar-listed Language Spec, and a record
+there would be listed alongside the rules it qualifies.
 
-The published surface is a `## Known gaps` section in each Language Spec
-chapter, following the Architecture Spec's "Known limitations" pattern. It
-states each gap to the reader and names the active record IDs as plain text,
-never as links.
+Each record carries a required one-line `summary` in its frontmatter (the row
+shown in a list). A chapter's `## Known gaps` section, and an Architecture Spec
+page's `## Known limitations` section, hold only a records marker
+(`<!-- records:gaps -->`, `<!-- records:limitations -->`); the website renders
+the list from the records (metel-core#1182), so the markdown never carries a
+generated or hand-written list that could drift from the records.
 
 ### 4. Tooling
 
@@ -109,12 +111,11 @@ these:
 
 The Language Spec's own tooling is unchanged (`rfc.py` reads
 `reference/spec/*.md` non-recursively and never sees `architecture/gaps/`).
-Each Language Spec chapter carries a `## Known gaps` section, and the checker
-verifies that it lists exactly the chapter's active records (`known`,
-`accepted`, `mitigated`, `planned`), each entry led by the record's own title
-and naming the ID as plain text; a chapter with none carries the standard
-empty statement, and the section may not link into `architecture/` or
-`rfcs/`. (metel-core#1220, phase 2.)
+Each Language Spec chapter carries a `## Known gaps` section holding only the
+records marker, and the checker verifies that (and that each record has a
+`summary`, and that a record's `scope` page carries its marker). The Language
+Spec's own tooling is unchanged (`rfc.py` reads `reference/spec/*.md`
+non-recursively and never sees `architecture/gaps/`).
 
 ### 5. Relationship to existing records
 

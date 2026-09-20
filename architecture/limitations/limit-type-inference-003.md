@@ -1,6 +1,7 @@
 ---
 id: LIMIT-TYPE-INFERENCE-003
 title: "`..` is not supported in an anonymous record pattern"
+summary: "A pattern ending in `..` is rejected for a concrete anonymous record; name every field."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "metel-core#1218 limitation analysis; `typechecker/inference/patterns.rs`"

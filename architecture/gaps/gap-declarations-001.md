@@ -1,6 +1,7 @@
 ---
 id: GAP-DECLARATIONS-001
 title: "Tuples and anonymous records cannot implement an aspect"
+summary: "A tuple or anonymous record cannot implement an aspect; use a named struct."
 scope: "reference/spec/declarations.md#spec.declarations.structural-aspect-bounds.legality-6"
 owner: language
 discovered_by: "metel-core#1217 limitation analysis; `reference/spec/types.md` (Planned for v0.14.0 note)"

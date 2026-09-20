@@ -83,15 +83,13 @@ GAP_ID_RE = re.compile(r"^GAP-(" + "|".join(GAP_AREAS) + r")-\d{3}$")
 SPEC_RULE_ID_RE = re.compile(r"^spec\.[a-z0-9][a-z0-9.\-]*$")
 RFC_REF_RE = re.compile(r"^(?:RFC|rfc)-(\d{4})$")
 RFC_LANDED_STAGES = {"3-integrated", "4-implemented"}
-# The published per-chapter projection of the active GAP records (ADR-0057 §3).
+# The `## Known limitations` / `## Known gaps` sections are rendered by the website
+# from the records themselves; the page holds only the heading and this marker
+# (metel-core#1182). The list is never written into the markdown.
+LIMITATIONS_MARKER = "<!-- records:limitations -->"
+GAPS_MARKER = "<!-- records:gaps -->"
 KNOWN_GAPS_HEADING_RE = re.compile(r"^## Known gaps\s*$", re.MULTILINE)
-KNOWN_GAPS_ENTRY_RE = re.compile(r"^- `(GAP-[A-Z0-9\-]+)` — (.+?)\s*$", re.MULTILINE)
-KNOWN_GAPS_EMPTY = (
-    "No known gaps are currently recorded for this chapter. This is a current\n"
-    "inventory, not a claim of complete coverage."
-)
-# A published chapter may not link into material that is not published.
-UNPUBLISHED_LINK_RE = re.compile(r"\]\([^)]*(?:architecture/|rfcs/)[^)]*\)")
+SUMMARY_MAX_LENGTH = 240
 GAP_ACTIVE_DISPOSITIONS = {"known", "accepted", "mitigated", "planned"}
 STATUS_VALUES = {"implemented", "partial", "planned", "superseded", "retired"}
 DISPOSITION_VALUES = {"known", "accepted", "mitigated", "planned", "resolved", "superseded"}
@@ -103,17 +101,6 @@ REQUIREMENT_RE = re.compile(
 )
 FIELD_ROW_RE = re.compile(r"^\|\s*`([a-z_ ]+)`\s*\|\s*(.+?)\s*\|\s*$", re.MULTILINE)
 LAST_REVIEWED_SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
-KNOWN_LIMITATIONS_LINK_RE = re.compile(r"\[`(LIMIT-[A-Z0-9\-]+)`\]\(([^)]+)\)")
-KNOWN_LIMITATIONS_INTRO = (
-    "`LIMIT-*` records are the authoritative inventory of known boundaries for this\n"
-    "section. They carry the impact, owner, disposition, and review point; the\n"
-    "Atlas limitations view projects the same records rather than duplicating them."
-)
-ACTIVE_LIMITATIONS_EMPTY = (
-    "No active `LIMIT-*` records are currently recorded for this section. This is\n"
-    "a current inventory, not a claim of complete coverage."
-)
-RESOLVED_LIMITATIONS_EMPTY = "No resolved `LIMIT-*` records are currently recorded for this section."
 
 FRONTMATTER_KEY_RE = re.compile(
     r'^([a-z_]+):\s*(?:"((?:[^"\\]|\\.)*)"|(\S.*?)|)\s*$', re.MULTILINE
@@ -170,20 +157,16 @@ def frontmatter_and_body(text: str) -> tuple[dict, str]:
     return fm, body
 
 
-def parse_known_limitations(text: str) -> tuple[str, list, list] | None:
-    """Return the raw block and its active/resolved links, or None when the
-    required section is absent. The presentation convention is deliberately
-    checked here: it is the prose-facing projection over durable LIMIT records,
-    not an informal list that can drift from record disposition."""
+def parse_known_limitations(text: str):
+    """The section's marker line when the page carries the required
+    `## Known limitations` heading followed only by the records marker, else
+    None. The list itself is rendered from the LIMIT records."""
     match = re.search(
-        r"^## Known limitations\n\n" + re.escape(KNOWN_LIMITATIONS_INTRO) +
-        r"\n\n### Active records\n\n(.*?)\n\n### Resolved records\n\n(.*?)(?=^## |\Z)",
+        r"^## Known limitations\n\n" + re.escape(LIMITATIONS_MARKER) + r"\n(?=\n*(?:^## |\Z))",
         text,
-        re.MULTILINE | re.DOTALL,
+        re.MULTILINE,
     )
-    if not match:
-        return None
-    return match.group(0), KNOWN_LIMITATIONS_LINK_RE.findall(match.group(1)), KNOWN_LIMITATIONS_LINK_RE.findall(match.group(2))
+    return match.group(0) if match else None
 
 
 def parse_spec_file(path: Path):
@@ -417,6 +400,12 @@ def validate_record(
         if not fm.get(required_field):
             findings.append(Finding(str(rel), f"missing or empty frontmatter field `{required_field}`"))
 
+    summary = fm.get("summary", "")
+    if not summary:
+        findings.append(Finding(str(rel), "missing or empty frontmatter field `summary` (the one-line row shown in the section list)"))
+    elif len(summary) > SUMMARY_MAX_LENGTH:
+        findings.append(Finding(str(rel), f"`summary` is {len(summary)} characters; keep it to one line of at most {SUMMARY_MAX_LENGTH}"))
+
     record_id = fm.get("id", "")
     expected_slug = record_id.lower() + ".md"
     if record_id and path.name != expected_slug:
@@ -476,17 +465,11 @@ def known_gaps_section(text: str):
     return (rest[: nxt.start()] if nxt else rest).strip()
 
 
-def check_known_gaps_sections(language_spec_dir: Path, gaps: list, repo_root: Path) -> list:
-    """Each Language Spec chapter carries a `## Known gaps` section that lists
-    exactly its active `GAP-*` records, each led by the record's own title, as
-    plain-text IDs (ADR-0057 §3). It never links into unpublished material."""
+def check_known_gaps_sections(language_spec_dir: Path, repo_root: Path) -> list:
+    """Each Language Spec chapter ends with a `## Known gaps` heading whose only
+    content is the records marker; the website renders the list from the
+    `GAP-*` records (ADR-0057 §3, metel-core#1182)."""
     findings: list = []
-    active_by_area: dict = {area: {} for area in GAP_AREAS}
-    for _, fm, _, _ in gaps:
-        m = GAP_ID_RE.match(fm.get("id", ""))
-        if m and fm.get("disposition") in GAP_ACTIVE_DISPOSITIONS:
-            active_by_area[m.group(1)][fm["id"]] = fm.get("title", "")
-
     for area in GAP_AREAS:
         chapter = language_spec_dir / f"{area.lower()}.md"
         if not chapter.is_file():
@@ -495,22 +478,8 @@ def check_known_gaps_sections(language_spec_dir: Path, gaps: list, repo_root: Pa
         section = known_gaps_section(chapter.read_text())
         if section is None:
             findings.append(Finding(str(rel), "missing `## Known gaps` section (ADR-0057 §3)"))
-            continue
-        listed = dict((gid, text) for gid, text in KNOWN_GAPS_ENTRY_RE.findall(section))
-        expected = active_by_area[area]
-        for gid in sorted(set(expected) - set(listed)):
-            findings.append(Finding(str(rel), f"`## Known gaps` does not list active record `{gid}`"))
-        for gid in sorted(set(listed) - set(expected)):
-            findings.append(Finding(str(rel), f"`## Known gaps` lists `{gid}`, which is not an active `GAP-{area}-*` record"))
-        for gid in sorted(set(listed) & set(expected)):
-            if not listed[gid].startswith(expected[gid]):
-                findings.append(Finding(str(rel), f"`## Known gaps` entry `{gid}` must begin with the record's title `{expected[gid]}`"))
-        if not expected and KNOWN_GAPS_EMPTY not in section:
-            findings.append(Finding(str(rel), "`## Known gaps` with no active records must use the standard empty statement"))
-        if expected and KNOWN_GAPS_EMPTY in section:
-            findings.append(Finding(str(rel), "`## Known gaps` lists records but also carries the empty statement"))
-        if UNPUBLISHED_LINK_RE.search(section):
-            findings.append(Finding(str(rel), "`## Known gaps` must not link into `architecture/` or `rfcs/` (unpublished; name IDs as plain text)"))
+        elif section != GAPS_MARKER:
+            findings.append(Finding(str(rel), f"`## Known gaps` must hold only the `{GAPS_MARKER}` marker; the list is rendered from the GAP records"))
     return findings
 
 
@@ -602,7 +571,7 @@ def check_gap_records(
                     findings.append(
                         Finding(str(lpath.relative_to(repo_root)), f"`{target}` does not link back to `{limit_id}` in its `## Affects`")
                     )
-    findings.extend(check_known_gaps_sections(language_spec_dir, gaps, repo_root))
+    findings.extend(check_known_gaps_sections(language_spec_dir, repo_root))
     return findings, {fm.get("id"): (p, fm, a) for p, fm, a, _ in gaps}
 
 
@@ -651,7 +620,7 @@ def run_checks(
             findings.append(
                 Finding(
                     str(rel),
-                    "Known limitations must use the standard inventory, Active records, and Resolved records structure",
+                    f"`## Known limitations` must hold only the `{LIMITATIONS_MARKER}` marker; the list is rendered from the LIMIT records",
                 )
             )
 
@@ -743,33 +712,13 @@ def run_checks(
             if target not in all_arch_ids and target not in all_limit_ids and target not in gap_records:
                 findings.append(Finding(str(rel), f"`affects` target `{target}` does not exist"))
 
-    for path, known_limitations in known_limitations_by_file.items():
-        if known_limitations is None:
-            continue
-        rel = path.relative_to(repo_root)
-        block, active_links, resolved_links = known_limitations
-        active_text = re.search(r"^### Active records\n\n(.*?)\n\n### Resolved records", block, re.MULTILINE | re.DOTALL).group(1)
-        resolved_text = re.search(r"^### Resolved records\n\n(.*)$", block, re.MULTILINE | re.DOTALL).group(1)
-
-        if active_text == ACTIVE_LIMITATIONS_EMPTY and active_links:
-            findings.append(Finding(str(rel), "Active records empty state must not contain LIMIT-* links"))
-        if resolved_text == RESOLVED_LIMITATIONS_EMPTY and resolved_links:
-            findings.append(Finding(str(rel), "Resolved records empty state must not contain LIMIT-* links"))
-
-        for group, links in (("Active", active_links), ("Resolved", resolved_links)):
-            for limit_id, link_path in links:
-                if limit_id not in all_limit_ids:
-                    findings.append(Finding(str(rel), f"Known-limitations link `{limit_id}` does not exist"))
-                else:
-                    disposition = next(fm.get("disposition") for _, fm, _, _ in limitation_records if fm.get("id") == limit_id)
-                    if group == "Active" and disposition in {"resolved", "superseded"}:
-                        findings.append(Finding(str(rel), f"Active records link `{limit_id}` has `{disposition}` disposition"))
-                    if group == "Resolved" and disposition != "resolved":
-                        findings.append(Finding(str(rel), f"Resolved records link `{limit_id}` does not have `resolved` disposition"))
-                if limit_id in all_limit_ids:
-                    target = (path.parent / link_path).resolve()
-                    if not target.exists():
-                        findings.append(Finding(str(rel), f"Known-limitations link target `{link_path}` does not exist on disk"))
+    # A record only renders in the section of the page its `scope` names, so that
+    # page must carry the marker.
+    without_marker = {path.resolve() for path, marker in known_limitations_by_file.items() if marker is None}
+    for path, fm, _, _ in limitation_records:
+        scope_page = (repo_root / fm.get("scope", "").split("#", 1)[0]).resolve()
+        if scope_page in without_marker:
+            findings.append(Finding(str(path.relative_to(repo_root)), f"`scope` page has no `## Known limitations` marker, so this record never renders"))
 
     return findings
 

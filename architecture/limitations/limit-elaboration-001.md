@@ -1,6 +1,7 @@
 ---
 id: LIMIT-ELABORATION-001
 title: "ElaboratedModuleGraph's field is fully public, unlike NormalizedModuleGraph's"
+summary: "`ElaboratedModuleGraph`'s field is public, so code outside the frontend can build one without running elaboration, unlike `NormalizedModuleGraph`."
 scope: "architecture/spec/elaboration.md#elaboration"
 owner: metel-frontend
 discovered_by: "this session's architecture-spec inventory (direct source reading), 2026-09-17"

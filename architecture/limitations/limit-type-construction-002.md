@@ -1,6 +1,7 @@
 ---
 id: LIMIT-TYPE-CONSTRUCTION-002
 title: "Overload sets are not exportable across modules"
+summary: "Overload sets are seeded by two different mechanisms; exporting them across modules (METEL-188) is future work."
 scope: "architecture/spec/type-construction.md#type-construction"
 owner: metel-frontend
 discovered_by: "ADR-0038"
