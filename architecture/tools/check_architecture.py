@@ -33,6 +33,11 @@ until real reconciliation-rule volume justifies it. It reports findings; it
 never silently mutates a disposition or any other field -- a human triages
 every finding.
 
+Every relative Markdown link under `architecture/` must resolve to a real file
+and, when it carries a `#fragment`, a real anchor in that file
+(metel-core#1180): a broken cross-section link is otherwise only a warning in
+the website build.
+
 The published Architecture Spec is durable system documentation, not a task
 log. Its overview and section prose may cite an issue or ADR where that adds
 architectural context, but must not narrate a completed milestone, a next
@@ -53,6 +58,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
 from pathlib import Path
@@ -286,6 +292,77 @@ def check_stale_process_prose(spec_files: list[Path], repo_root: Path) -> list:
     return findings
 
 
+# Mirrors metel-website's docusaurus.config.ts docs `exclude` list for
+# architecture/: these sources are not published, so a relative link into them
+# from a published page resolves in the repo but 404s on the site.
+UNPUBLISHED_DIRS = ("decisions", "reports", "tools")
+MD_LINK_RE = re.compile(r"(?<!!)\[([^\]]*)\]\(([^)\s]+)\)")
+FENCE_RE = re.compile(r"```.*?```", re.DOTALL)
+HEADING_RE = re.compile(r"^#{1,6}[ \t]+(.*?)[ \t]*$", re.MULTILINE)
+EXPLICIT_ANCHOR_RE = re.compile(r"\{#([^}\s]+)\}")
+
+
+def markdown_anchors(path: Path) -> set:
+    """Every anchor a link into `path` can target: explicit `{#id}` anchors
+    and the slug of each heading (lowercased, punctuation dropped, spaces to
+    hyphens -- the github-slugger shape Docusaurus uses)."""
+    text = path.read_text()
+    anchors = set(EXPLICIT_ANCHOR_RE.findall(text))
+    for heading in HEADING_RE.findall(FENCE_RE.sub("", text)):
+        heading = EXPLICIT_ANCHOR_RE.sub("", heading)
+        slug = re.sub(r"[^\w\s-]", "", re.sub(r"[`*_]", "", heading).lower()).strip()
+        anchors.add(re.sub(r"\s+", "-", slug))
+    return anchors
+
+
+def _under_unpublished(path: Path, root: Path) -> bool:
+    try:
+        return path.resolve().relative_to(root.resolve()).parts[0] in UNPUBLISHED_DIRS
+    except (ValueError, IndexError):
+        return False
+
+
+def check_links(repo_root: Path) -> list:
+    """Every relative Markdown link under `architecture/` must resolve to a
+    real file, and a `#fragment` must resolve to a real anchor in it
+    (metel-core#1180). Cross-section navigation is part of the reader
+    contract; a link into a page that does not exist (or an anchor that was
+    renamed) is otherwise only a build-time warning on the website.
+    External URLs are out of scope, as are code fences."""
+    findings: list = []
+    root = repo_root / "architecture"
+    if not root.is_dir():
+        return findings
+    anchor_cache: dict = {}
+    for path in sorted(root.rglob("*.md")):
+        rel = path.relative_to(repo_root)
+        text = FENCE_RE.sub("", path.read_text())
+        for match in MD_LINK_RE.finditer(text):
+            url = match.group(2)
+            if url.startswith(("http://", "https://", "mailto:")):
+                continue
+            target_part, _, fragment = url.partition("#")
+            target = path if not target_part else Path(os.path.normpath(path.parent / target_part))
+            if not target.exists():
+                findings.append(Finding(str(rel), f"link `{url}` points at a file that does not exist"))
+                continue
+            if _under_unpublished(target, root) and not _under_unpublished(path, root):
+                findings.append(
+                    Finding(
+                        str(rel),
+                        f"link `{url}` targets an unpublished source (the website excludes "
+                        f"architecture/{'|'.join(UNPUBLISHED_DIRS)}/**); link its repository URL instead",
+                    )
+                )
+                continue
+            if fragment and target.suffix == ".md":
+                if target not in anchor_cache:
+                    anchor_cache[target] = markdown_anchors(target)
+                if fragment not in anchor_cache[target]:
+                    findings.append(Finding(str(rel), f"link `{url}` points at an anchor that does not exist"))
+    return findings
+
+
 def resolve_scope_anchor(scope: str, all_section_ids_by_file: dict, repo_root: Path) -> bool:
     if "#" not in scope:
         return False
@@ -316,6 +393,7 @@ def run_checks(
     spec_files = sorted(spec_dir.glob("*.md"))
     limitation_files = sorted(limitations_dir.glob("*.md")) if limitations_dir.is_dir() else []
     findings.extend(check_stale_process_prose(spec_files, repo_root))
+    findings.extend(check_links(repo_root))
 
     all_section_ids_by_file: dict = {}
     all_arch_ids: dict = {}

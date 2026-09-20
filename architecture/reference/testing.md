@@ -10,4 +10,4 @@ claim. Both citation kinds are required unless the claim records the correspondi
 reviewable exemption. This keeps test and implementation evidence close to the
 code that owns it, while readers see it where the claim is explained.
 
-The [Architecture Spec](../spec/index.md) is the canonical claim index.
+The [Architecture Spec pages](../architecture.md) hold the canonical claims; this page only explains where their evidence comes from.
