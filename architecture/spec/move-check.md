@@ -27,8 +27,8 @@ Move checking is off by default and runs only when explicitly requested (the `--
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#move-check` |
-| `implements` | [`metel-frontend/src/move_check/mod.rs::whole_use_of_narrowed_value_is_intact`](https://github.com/metel-lang/metel-core/blob/22f1104b6b7e8cc50978fd429537ecfd4267c336/metel-frontend/src/move_check/mod.rs#L56) |
-| `verified by` | [`metel-frontend/src/move_check/mod.rs::assignment_move_then_use_is_reported`](https://github.com/metel-lang/metel-core/blob/22f1104b6b7e8cc50978fd429537ecfd4267c336/metel-frontend/src/move_check/mod.rs#L3082) |
+| `implements` | [`metel-frontend/src/move_check/mod.rs::whole_use_of_narrowed_value_is_intact`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-frontend/src/move_check/mod.rs#L56) |
+| `verified by` | [`metel-frontend/src/move_check/mod.rs::assignment_move_then_use_is_reported`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-frontend/src/move_check/mod.rs#L3082) |
 | `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | RFC-0071, `#579` |
 
@@ -41,8 +41,8 @@ Places (the syntactic locations a program can name — a binding root plus a pat
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#move-check` |
-| `implements` | [`metel-frontend/src/place.rs::field`](https://github.com/metel-lang/metel-core/blob/22f1104b6b7e8cc50978fd429537ecfd4267c336/metel-frontend/src/place.rs#L49) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/move_check/02_partial_move_used_as_whole.toml`](https://github.com/metel-lang/metel-core/blob/22f1104b6b7e8cc50978fd429537ecfd4267c336/metel-interpreter/tests/integration/sources/evaluator/move_check/02_partial_move_used_as_whole.toml#L1) |
+| `implements` | [`metel-frontend/src/place.rs::field`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-frontend/src/place.rs#L49) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/move_check/02_partial_move_used_as_whole.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/evaluator/move_check/02_partial_move_used_as_whole.toml#L1) |
 | `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
 | `related` | RFC-0071 §9b, ADR-0035 (`TypedPlace` for assignment targets), ADR-0045 |
 
@@ -55,8 +55,8 @@ Closure capture legality is enforced even while the general move-check gate rema
 | `status` | `implemented` |
 | `owner` | `metel-frontend`, `metel-interpreter` |
 | `specified by` | `#move-check` |
-| `implements` | [`metel-frontend/src/typechecker/construction/expressions.rs::capture_name`](https://github.com/metel-lang/metel-core/blob/22f1104b6b7e8cc50978fd429537ecfd4267c336/metel-frontend/src/typechecker/construction/expressions.rs#L18) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/move_check/06_array_element_move_is_banned.toml`](https://github.com/metel-lang/metel-core/blob/22f1104b6b7e8cc50978fd429537ecfd4267c336/metel-interpreter/tests/integration/sources/evaluator/move_check/06_array_element_move_is_banned.toml#L1) |
+| `implements` | [`metel-frontend/src/typechecker/construction/expressions.rs::capture_name`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-frontend/src/typechecker/construction/expressions.rs#L18) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/move_check/06_array_element_move_is_banned.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/evaluator/move_check/06_array_element_move_is_banned.toml#L1) |
 | `last_reviewed` | 8b844c9117d5c6a730882aeaf521184c3055eb2f |
 | `related` | ADR-0052, RFC-0050, RFC-0134, RFC-0153 |
 
