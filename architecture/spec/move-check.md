@@ -27,9 +27,9 @@ Move checking is off by default and runs only when explicitly requested (the `--
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#move-check` |
-| `implements` | [`metel-frontend/src/move_check/mod.rs::whole_use_of_narrowed_value_is_intact`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/move_check/mod.rs#L56) |
-| `verified by` | [`metel-frontend/src/move_check/mod.rs::assignment_move_then_use_is_reported`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/move_check/mod.rs#L3082) |
-| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
+| `implements` | [`metel-frontend/src/move_check/mod.rs::check_graph`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/move_check/mod.rs#L158) |
+| `verified by` | [`metel-frontend/src/move_check/mod.rs::a_by_value_method_through_a_shared_reference_is_rejected_at_the_first_call`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/move_check/mod.rs#L4214); [`metel-frontend/src/move_check/mod.rs::array_element_move_is_reported`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/move_check/mod.rs#L3409); [`metel-frontend/src/move_check/mod.rs::assignment_move_then_use_is_reported`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/move_check/mod.rs#L3083); [`metel-frontend/src/move_check/mod.rs::borrowed_array_for_in_cannot_move_a_noncopy_element`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/move_check/mod.rs#L3640); [`metel-frontend/src/move_check/mod.rs::partial_move_of_drop_type_is_reported`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/move_check/mod.rs#L3221); [`metel-frontend/src/move_check/mod.rs::plain_binding_of_mut_ref_then_use_is_reported`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/move_check/mod.rs#L3521); [`metel-frontend/src/move_check/mod.rs::unchecked_generic_body_is_reported_to_compiler_callers`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/move_check/mod.rs#L2979); [`metel-frontend/src/move_check/mod.rs::whole_value_use_after_partial_move_is_a_typecheck_error`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/move_check/mod.rs#L3194); [`metel-interpreter/src/pipeline.rs::move_checking_is_off_unless_requested`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/src/pipeline.rs#L326); [`metel-interpreter/tests/integration/sources/evaluator/move_check/01_move_then_use.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/evaluator/move_check/01_move_then_use.toml#L1) |
+| `last_reviewed` | 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 |
 | `related` | RFC-0071, `#579` |
 
 ##### Requirement {#arch.move-check.requirement-2}
@@ -41,9 +41,9 @@ Places (the syntactic locations a program can name — a binding root plus a pat
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#move-check` |
-| `implements` | [`metel-frontend/src/place.rs::field`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/place.rs#L49) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/move_check/02_partial_move_used_as_whole.toml`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-interpreter/tests/integration/sources/evaluator/move_check/02_partial_move_used_as_whole.toml#L1) |
-| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
+| `implements` | [`metel-frontend/src/place.rs::from_expr`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/place.rs#L194) |
+| `verified by` | [`metel-frontend/src/place.rs::place_representation_carries_no_move_analysis_state`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/place.rs#L321) |
+| `last_reviewed` | 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 |
 | `related` | RFC-0071 §9b, ADR-0035 (`TypedPlace` for assignment targets), ADR-0045 |
 
 ##### Requirement {#arch.move-check.requirement-3}
@@ -55,9 +55,9 @@ Closure capture legality is enforced even while the general move-check gate rema
 | `status` | `implemented` |
 | `owner` | `metel-frontend`, `metel-interpreter` |
 | `specified by` | `#move-check` |
-| `implements` | [`metel-frontend/src/typechecker/construction/expressions.rs::capture_name`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/typechecker/construction/expressions.rs#L18) |
-| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/move_check/06_array_element_move_is_banned.toml`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-interpreter/tests/integration/sources/evaluator/move_check/06_array_element_move_is_banned.toml#L1) |
-| `last_reviewed` | 8b844c9117d5c6a730882aeaf521184c3055eb2f |
+| `implements` | [`metel-frontend/src/typechecker/construction/calls.rs::construct_call`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/typechecker/construction/calls.rs#L30); [`metel-frontend/src/typechecker/construction/expressions.rs::verify_capture_specs`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/typechecker/construction/expressions.rs#L454); [`metel-frontend/src/typechecker/construction/expressions.rs::verify_closure_capture_list`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/typechecker/construction/expressions.rs#L328) |
+| `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_capture_list_required.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_capture_list_required.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_once_required_for_consuming_body.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_once_required_for_consuming_body.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_var_call_through_shared_ref.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_var_call_through_shared_ref.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_var_required_for_mutating_body.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_var_required_for_mutating_body.toml#L1) |
+| `last_reviewed` | 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 |
 | `related` | ADR-0052, RFC-0050, RFC-0134, RFC-0153 |
 
 </details>

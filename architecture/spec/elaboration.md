@@ -17,16 +17,16 @@ the [dispatch requirement](#arch.elaboration.requirement-1).
 
 ##### Requirement {#arch.elaboration.requirement-1}
 
-Every `TypedExpr::MethodCall`'s `dispatch` field starts as `MethodDispatch::Dynamic` and is upgraded during elaboration to `Inherent` (a direct call on the concrete receiver type) or `Aspect { aspect_id }` (dispatched through a named aspect, by its stable `SymbolId`) wherever the target is statically determinable from the type registry. Two different aspects providing the same method name for the same type is rejected as ambiguous (`T0013`) rather than silently picking one. Only genuinely indeterminate sites (e.g. calls on `fn`/tuple types with no aspect-method registration) remain `Dynamic`; the evaluator reads a resolved site's dispatch decision rather than re-deriving it.
+Every `TypedExpr::MethodCall`'s `dispatch` field starts as `MethodDispatch::Dynamic` and is resolved during elaboration to `Aspect { aspect_id }` (dispatched through a named aspect, by its stable `SymbolId`) when the receiver's type registers the method through an aspect, and to `Inherent` (a plain call on the concrete receiver type) otherwise. Two different aspects providing the same method name for the same type is rejected as ambiguous (`T0013`) rather than silently picking one. No site is left `Dynamic`: a receiver with no nameable type (a `fn` or tuple, say) resolves to `Inherent`, which the evaluator treats identically to a residual `Dynamic`. The evaluator reads a resolved site's dispatch decision rather than re-deriving it.
 
 | Field | Value |
 |---|---|
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#elaboration` |
-| `implements` | [`metel-frontend/src/elaborator/mod.rs::elaborate`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/elaborator/mod.rs#L44) |
-| `verified by` | [`metel-frontend/src/elaborator/mod.rs::resolve_dispatch_aspect_returns_aspect_variant`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/elaborator/mod.rs#L557) |
-| `last_reviewed` | 2ae8fae97336bfe87d459103ad85d8fecbbab4ca |
+| `implements` | [`metel-frontend/src/elaborator/mod.rs::elaborate`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/elaborator/mod.rs#L45) |
+| `verified by` | [`metel-frontend/src/elaborator/mod.rs::resolve_dispatch_aspect_returns_aspect_variant`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/elaborator/mod.rs#L558); [`metel-frontend/src/elaborator/mod.rs::resolve_dispatch_no_type_returns_inherent`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/elaborator/mod.rs#L597); [`metel-frontend/src/elaborator/mod.rs::resolve_dispatch_non_aspect_method_returns_inherent`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/elaborator/mod.rs#L617); [`metel-frontend/src/elaborator/mod.rs::resolve_dispatch_same_bare_name_different_identity_returns_inherent`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/elaborator/mod.rs#L586); [`metel-frontend/src/elaborator/mod.rs::resolve_dispatch_wrong_type_returns_inherent`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/elaborator/mod.rs#L571); [`metel-interpreter/tests/integration/sources/module_semantics/same_type_aspect_method_collision_is_t0013/test.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/module_semantics/same_type_aspect_method_collision_is_t0013/test.toml#L1) |
+| `last_reviewed` | 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 |
 | `related` | ADR-0037 |
 
 </details>
