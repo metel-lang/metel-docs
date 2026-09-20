@@ -133,6 +133,9 @@ Atlas limitations view projects the same records rather than duplicating them.
 ### Active records
 
 - [`LIMIT-TYPE-INFERENCE-001`](../limitations/limit-type-inference-001.md) — `?` error coercion requires an explicit `From` impl; only `Int`/`Float` are built in.
+- [`LIMIT-TYPE-INFERENCE-002`](../limitations/limit-type-inference-002.md) — field access needs a concrete receiver type at the access site (eager partial solve).
+- [`LIMIT-TYPE-INFERENCE-003`](../limitations/limit-type-inference-003.md) — `..` is not supported in an anonymous record pattern.
+- [`LIMIT-TYPE-INFERENCE-004`](../limitations/limit-type-inference-004.md) — `List<T>` does not implement `Iterable<T>`.
 
 ### Resolved records
 
