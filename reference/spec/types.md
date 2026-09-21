@@ -847,10 +847,8 @@ fun main() -> i64 {
 }
 ```
 
-**Until affine ownership (`Copy`/`Drop`, not yet integrated) lands, this applies to
-every type** — the interpreter has no move semantics today (everything is deep-cloned on
-bind), so there is no non-`Copy` type yet to exclude. Once ownership is integrated, a
-non-`Copy` `T` cannot be produced this way.
+A non-`Copy` `T` cannot be produced this way: a value moves, it is not copied out of a
+reference (see [Ownership](ownership.md)).
 
 <details>
 <summary>Formal rules</summary>
