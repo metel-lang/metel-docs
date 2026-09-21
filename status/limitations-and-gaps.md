@@ -12,7 +12,7 @@ records when the site is built; nothing here is written by hand.
 A *limitation* is where the implementation behaves differently from what the
 current Language Spec says; a *gap* is where the spec itself is silent, ambiguous
 or unfinished ([ADR-0057](https://github.com/metel-lang/metel-docs/blob/main/architecture/decisions/adr-0057-language-gap-records.md)). For the
-counts and the requirements behind them, see [Architecture Health](health.md) and
-[Language Spec Health](../reference/spec-health.md).
+counts and the requirements behind them, see [Architecture Health](architecture-health.md) and
+[Language Spec Health](language-health.md).
 
 <!-- records:index -->

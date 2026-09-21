@@ -43,7 +43,7 @@ The language's core design principles are:
 | [Runtime](spec/runtime.md) | Panics, built-in functions |
 | [Grammar](spec/grammar.md) | Formal grammar |
 | [Error Codes](error-codes.md) | Every diagnostic the interpreter can report, with a real example |
-| [Language Spec Health](spec-health.md) | How many Formal Rules are tested, which are exempt and why, and which gaps remain |
-| [Limitations and Gaps](../architecture/records.md) | Every known implementation limitation and specification gap, with its status |
+| [Language Spec Health](../status/language-health.md) | How many Formal Rules are tested, which are exempt and why, and which gaps remain |
+| [Limitations and Gaps](../status/limitations-and-gaps.md) | Every known implementation limitation and specification gap, with its status |
 
 See [Changelog](../release-notes/changelog.md) for version history.

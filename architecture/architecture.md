@@ -58,8 +58,8 @@ then invokes the evaluator. No stage is skipped, though Move Check only runs whe
 
 For the current state of this spec — which requirements are implemented, partial or
 planned, whether each has verifying evidence, and which limitations are still open —
-see [Architecture Health](health.md); every limitation and gap is listed on
-[Limitations and Gaps](records.md).
+see [Architecture Health](../status/architecture-health.md); every limitation and gap is listed on
+[Limitations and Gaps](../status/limitations-and-gaps.md).
 
 ---
 
