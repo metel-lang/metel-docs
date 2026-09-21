@@ -113,6 +113,7 @@ and `rfc` fields. Write the marker where the limit applies: under the rule or he
 qualifies. `check_architecture.py` requires each marker to cite an existing, active
 record of the kind its label names, and every active `GAP-*` to be cited in the chapter
 its `scope` names. If no record exists yet, write one; do not describe the limit in prose.
+A warn-only lint in the same checker flags limit phrasing ("not yet", "deferred to", "not supported", "planned, not implemented") outside a marker; it never fails the check.
 Version-provenance callouts (`Since`, `Changed in`) stay as above; only what is *missing*
 uses a marker.
 
