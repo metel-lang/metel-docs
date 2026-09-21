@@ -145,10 +145,10 @@ Copyability doesn't survive the written type: it's [erased the moment such a val
 flows into a slot whose written type is a function type](#spec.functions.first-class-functions.legality-4) —
 a `let` / `var` binding, an ascription, an argument, or a return — and isn't
 recovered further downstream. A bare generic type parameter is not a written
-function type and keeps the resolved value's own capability. The full surface —
-a `copy |T| -> U` qualifier for an explicitly-copyable callable, and a distinct
-"capability unknown" state — is deferred to RFC-0163 (v0.17.0), which refines
-this move-only state rather than replacing it.
+function type and keeps the resolved value's own capability. 
+> **Gap** GAP-FUNCTIONS-003
+
+> **Gap** GAP-FUNCTIONS-002
 
 <details>
 <summary>Formal rules</summary>
