@@ -171,6 +171,8 @@ Unicode scalar value.
 
 ## Type Inference
 
+> **Gap** GAP-TYPES-001
+
 Types are inferred using the Hindley-Milner algorithm with let-polymorphism. Annotations are optional for all bindings, including function parameters and return types. They may be written explicitly for documentation or to restrict a binding to a less general type.
 
 Annotations are required only where there is no expression to infer from:
@@ -352,14 +354,12 @@ owner:
 - **No custom `Drop`.** `Drop` is a standard-library aspect and never local to ordinary
   user code, so teardown logic belongs to nominal types only.
 
-> **Planned for v0.14.0 (RFC-0061, metel-core#239):** implementing a local aspect for a
-> record or tuple target. Until then, `extend { w: i64 }: MyAspect { … }` does not work.
-> **Arrays are the exception:** `extend<T> T[]: MyAspect { … }` is supported, per the
-> orphan-rule carve-out for structural type constructors — see
-> [Declarations — Structural Aspect Bounds](declarations.md#structural-aspect-bounds).
-> Until a record or tuple target is supported, **a record satisfies no aspect that requires
-> an implementation**, so a record cannot be printed, compared, or passed where any such
-> bound is required. Auto-derived aspects are unaffected.
+> **Gap** GAP-DECLARATIONS-001
+
+Arrays are the exception: `extend<T> T[]: MyAspect { … }` is supported, per the
+orphan-rule carve-out for structural type constructors — see
+[Declarations — Structural Aspect Bounds](declarations.md#structural-aspect-bounds).
+Auto-derived aspects are unaffected.
 
 ### Projection
 
@@ -746,11 +746,10 @@ Metel has two reference types:
 - `&T` — shared immutable reference to `T`
 - `&var T` — exclusive mutable reference to `T`
 
-> **Planned for v0.16.0 (RFC-0122): shared XOR exclusive — a place may have any number of `&T` borrows, or exactly one `&var T`, never both.**
+> **Gap** GAP-OWNERSHIP-001
 
-"Exclusive" means exactly that rule. It is **not yet enforced**: the current interpreter has
-no borrow checker, so a program may hold two `&var T` to the same place and will not be
-rejected.
+"Exclusive" means shared XOR exclusive: a place may have any number of `&T` borrows, or
+exactly one `&var T`, never both.
 
 `&var T` coerces to `&T`. The reverse coercion does not exist. Both are non-owning
 aliases — a reference never owns the value it points to.

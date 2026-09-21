@@ -92,6 +92,8 @@ class ArchitectureCorpusCase(unittest.TestCase):
         (self.decisions_dir / filename).write_text(text)
 
     def run_checks(self, **kwargs):
+        # The synthetic corpora do not cite their gaps; the citation rule has its own tests.
+        kwargs.setdefault("require_gap_citations", False)
         return ca.run_checks(
             repo_root=self.tmp,
             spec_dir=self.spec_dir,
@@ -566,10 +568,12 @@ class SpecLimitMarkerTests(GapRecordTests):
         self.chapter_with("> **Gap** GAP-TYPES-001")
         self.assertTrue(any("only active records are cited" in f for f in self.marker_findings()))
 
-    def test_gap_must_be_cited_from_its_own_chapter(self):
+    def test_gap_may_be_cited_from_another_chapter_but_must_be_cited_in_its_own(self):
         self.write_gap_corpus()
         (self.tmp / "reference" / "spec" / "functions.md").write_text(LANGUAGE_SPEC + "\n> **Gap** GAP-TYPES-001\n")
-        self.assertTrue(any("cite a gap from its own chapter" in f for f in self.marker_findings()))
+        findings = self.marker_findings(require_gap_citations=True)
+        self.assertFalse(any("does not exist" in f or "own chapter" in f for f in findings), findings)
+        self.assertTrue(any("is not cited by" in f for f in findings), findings)
 
     def test_uncited_active_gap_is_flagged_only_when_required(self):
         self.write_gap_corpus()

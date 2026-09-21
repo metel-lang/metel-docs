@@ -232,6 +232,8 @@ type must be equal; method generic-parameter names compare alpha-equivalently.
 
 ##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-13}
 
+> **Gap** GAP-DECLARATIONS-002
+
 After specialization (legality-12) and after normalizing away alpha-renaming,
 conjunctive-bound order, duplicate bounds, inline-versus-`where` placement, and
 generic-binder-versus-`where` record-kind placement, an implementation method's
@@ -1936,7 +1938,9 @@ Once `T[]` owns nothing, an element-wise clone into new backing storage is impos
 already exists and outlives it, not from a buffer the implementation just allocated.
 `Display` and `Eq` are unaffected because they return `String` and `boolean`, not `Self`.
 
-**Tuples** are deferred pending a decision on per-arity boilerplate vs. variadic generics — until then, tuples fail aspect bounds the same way arrays do without a matching impl (`(i64, String)` does not implement `Display`, with a hint to use a named struct instead).
+> **Gap** GAP-DECLARATIONS-001
+
+A tuple fails an aspect bound the same way an array does without a matching impl: `(i64, String)` does not implement `Display`, and the diagnostic hints at a named struct.
 
 **Function types.** A plain function and a closure share one type, `|A| -> B` (see [Functions — First-Class Functions](functions.md#first-class-functions)) — there is no separate `fun(A) -> B` function-pointer type or syntax; `fun(A) -> B` is a parse error. `Callable<A, B>` does not exist in `std::core` yet — despite being referenced elsewhere as the aspect a function type would formally satisfy, writing a bound or `extends Callable<A, B>` against it is a compile error (`T0003`, unknown aspect) today. A `|A| -> B` value behaves like `Copy` under `--move-check` (reusing one after copying it into another binding is accepted), but there is no working `Clone`: `.clone()` on a `|A| -> B` receiver fails to typecheck (`T0002`, cannot infer receiver type) regardless of annotation. `Display`, `Eq`, `Ord`, `Hash`, `Send`, `Sync`, and `Drop` are not implemented for function types either — there is no canonical string form, function equality is undecidable in general, `Send`/`Sync` aren't implemented for any type yet (RFC-0080, still `1-under-review`), and there is no state to drop.
 
@@ -2032,6 +2036,8 @@ Array marker-aspect propagation is not part of structural implementation lookup.
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.structural-aspect-bounds.legality-6}
+
+> **Gap** GAP-DECLARATIONS-001
 
 Tuple types have no standard blanket aspect implementations and therefore fail aspect
 bounds unless a separately specified implementation applies.

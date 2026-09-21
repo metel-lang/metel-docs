@@ -28,8 +28,8 @@ not evidence it's still correct.
 
 **State the accepted design, never a present-day bug or limitation, in ordinary prose.**
 If a described behavior isn't actually true of the current interpreter, that's not a
-detail to work into the sentence — it's a sign the claim needs a `> **Planned for...**`
-callout (a real future feature, honestly labeled) or, inside a rigor block, a typed
+detail to work into the sentence — it's a sign the claim needs a `> **Gap**` / `> **Limitation**`
+marker citing the record that tracks it (see below) or, inside a rigor block, a typed
 exemption (see below). Never narrow or hedge a claim to quietly match a known bug.
 
 **When citing an issue, RFC, or PR by number, read it.** An old paraphrase, or a
@@ -95,18 +95,26 @@ marking a `develop`-only behavior change a reader on an older release might stil
 `check_doc_examples.py` has no version awareness yet (metel-core#696), so that's a real gap
 this kind of note can be legitimately covering, not narration to prune on sight.
 
-**Planned**, for a real, accepted-but-unbuilt future feature — the honest way to describe
-something that doesn't exist yet. Never blend this into ordinary descriptive prose as if
-it already works:
+**Gap** and **Limitation**, for something the spec cannot promise yet — an accepted but
+unbuilt feature, a behavior the implementation lacks, a boundary the spec excludes. A
+limit is never described in ordinary prose and never carries its own version, RFC or
+issue: it is one marker line that cites the record tracking it (`architecture/gaps/` for a
+spec gap, `architecture/limitations/` for an implementation shortfall against the spec,
+ADR-0057):
 
 ```markdown
-> **Planned for v0.16.0 (RFC-0122): shared XOR exclusive — a place may have any number of `&T` borrows, or exactly one `&var T`, never both.**
+> **Gap** GAP-OWNERSHIP-001
+> **Limitation** LIMIT-EVALUATION-005: closure environments are not destroyed until destructors run.
 ```
 
-`rfc.py check` flags a `Planned for` callout as stale when its version is older than the
-one in progress on `develop`, or (for an error code, or a spec section with fixture-cited
-Legality/Dynamic Semantics blocks) when there's fixture evidence the feature already works
-— name the *real* target version, not the current one by reflex (metel-core#985).
+The site renders the record's one-line `summary` (or the sentence written after the ID,
+when a rule needs its own wording), a link to the record, and chips from its `planned_for`
+and `rfc` fields. Write the marker where the limit applies: under the rule or heading it
+qualifies. `check_architecture.py` requires each marker to cite an existing, active
+record of the kind its label names, and every active `GAP-*` to be cited in the chapter
+its `scope` names. If no record exists yet, write one; do not describe the limit in prose.
+Version-provenance callouts (`Since`, `Changed in`) stay as above; only what is *missing*
+uses a marker.
 
 **Cross-references** between spec files: plain relative markdown links —
 `[Modules — Visibility](modules.md#visibility)`.
@@ -247,8 +255,8 @@ part that's actually checkable.
 
 Two things belong in the callout above a block, never folded into its own prose:
 
-- **Version and RFC provenance** — the `> **Since...**` / `Changed in` / `Planned for`
-  conventions above. A block's own paragraph should read as true today, unconditionally;
+- **Version and RFC provenance** — the `> **Since...**` / `Changed in`
+  conventions above (a limit uses a `Gap` / `Limitation` marker instead). A block's own paragraph should read as true today, unconditionally;
   historical framing ("as of v0.13.0, X now means...") is the callout's job, not the
   claim's.
 - **A cross-reference to a related rule** — link its id (`[legality-9](#...)`) rather than

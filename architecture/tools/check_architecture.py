@@ -109,7 +109,7 @@ MARKER_LABEL_FOR_PREFIX = {"GAP": "Gap", "LIMIT": "Limitation"}
 PLANNED_FOR_RE = re.compile(r"^v\d+\.\d+\.\d+$")
 # Flipped on by the chapter conversion (metel-core#1235 step 3): until every active GAP
 # is cited from its chapter, requiring it would fail the corpus.
-REQUIRE_GAP_CITATIONS = False
+REQUIRE_GAP_CITATIONS = True
 GAP_ACTIVE_DISPOSITIONS = {"known", "accepted", "mitigated", "planned"}
 STATUS_VALUES = {"implemented", "partial", "planned", "superseded", "retired"}
 DISPOSITION_VALUES = {"known", "accepted", "mitigated", "planned", "resolved", "superseded"}
@@ -657,8 +657,10 @@ def check_spec_limit_markers(
 ) -> list:
     """The `> **Gap** ID` / `> **Limitation** ID` markers in the Language Spec chapters
     (metel-core#1235): each cites an existing, active record of the kind its label
-    names; a gap is cited from the chapter its own `scope` names; and (once
-    `require_gap_citations` is on) every active `GAP-*` is cited there at least once."""
+    names (a chapter may cite a gap that belongs to another chapter, as the type
+    system's note on tuple aspects cites a declarations gap); and (once
+    `require_gap_citations` is on) every active `GAP-*` is cited at least once in the
+    chapter its own `scope` names."""
     findings: list = []
     active = GAP_ACTIVE_DISPOSITIONS
     gaps = {rid: fm for rid, (_, fm, _) in gap_records.items()}
@@ -683,15 +685,11 @@ def check_spec_limit_markers(
                 findings.append(Finding(str(rel), f"marker cites `{record_id}`, which is `{fm.get('disposition')}`; remove the marker (only active records are cited)"))
                 continue
             if prefix == "GAP":
-                scope_chapter = Path(fm.get("scope", "").split("#", 1)[0]).name
-                if scope_chapter and scope_chapter != path.name:
-                    findings.append(Finding(str(rel), f"marker cites `{record_id}`, whose `scope` is `{scope_chapter}`; cite a gap from its own chapter"))
-                    continue
                 cited.setdefault(record_id, set()).add(path.name)
     if require_gap_citations:
         for record_id, fm in gaps.items():
-            if fm.get("disposition") in active and record_id not in cited:
-                chapter = Path(fm.get("scope", "").split("#", 1)[0])
+            chapter = Path(fm.get("scope", "").split("#", 1)[0])
+            if fm.get("disposition") in active and chapter.name not in cited.get(record_id, set()):
                 findings.append(Finding(str(chapter), f"active `{record_id}` is not cited by a `> **Gap** {record_id}` marker in this chapter"))
     return findings
 

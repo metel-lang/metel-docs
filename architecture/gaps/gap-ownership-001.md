@@ -6,6 +6,8 @@ scope: "reference/spec/ownership.md#what-ownership-does-not-cover"
 owner: language
 discovered_by: "metel-core#1212 limitation analysis; `reference/spec/ownership.md` (References and Moves); `typed_ast` `RefTemp` note"
 disposition: known
+planned_for: v0.16.0
+rfc: RFC-0122
 review: null
 ---
 
