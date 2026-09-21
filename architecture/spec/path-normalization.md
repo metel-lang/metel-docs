@@ -10,12 +10,7 @@ stages, producing the boundary type that proves the rewrite has run. Owning crat
 
 ##### Requirement {#arch.path-normalization.requirement-1}
 
-Multi-segment qualified paths (`Expr::Path`, including `math::sin` and `self::Foo`)
-rewrite to `Expr::ResolvedPath` carrying the resolved `SymbolId`, producing a
-`NormalizedModuleGraph`. Its inner field is crate-private (`pub(crate)`), so code
-outside `metel-frontend` cannot construct one except through
-`path_normalizer::normalize`; later stages therefore cannot receive an un-normalized
-graph from another crate.
+Multi-segment qualified paths (`Expr::Path`, e.g. `math::sin`) rewrite to `Expr::ResolvedPath` carrying the resolved `SymbolId`, producing a `NormalizedModuleGraph` whose inner field is `pub(crate)`, so only `path_normalizer::normalize` can construct one.
 
 | Field | Value |
 |---|---|
