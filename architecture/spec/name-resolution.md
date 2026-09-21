@@ -22,7 +22,7 @@ in the Resolution section.
 
 ##### Requirement {#arch.name-resolution.requirement-1}
 
-Every top-level declaration is assigned a `SymbolId` from one canonical table (`SymbolTable`), not a private per-call counter. Builtin `std::core` types and aspects are pre-seeded at fixed, well-known `SYM_TYPE_*`/`SYM_ASPECT_*` constants (so runtime impl-seeding can register builtin behavior under those same ids); user declarations are allocated starting at `USER_SYM_START`; a separately-reserved range (`OVERLOAD_SYM_START`) exists for overload-synthesized symbols. The same declaration always maps to the same `SymbolId` regardless of which module imports it, what local alias it's imported under, or the order modules were resolved in.
+Every top-level declaration gets a `SymbolId` from one canonical `SymbolTable`: builtin `std::core` items at fixed `SYM_*` ids, user declarations from `USER_SYM_START`, and a separate range for overloads. The same declaration keeps one id under any importer, alias or resolution order.
 
 | Field | Value |
 |---|---|
@@ -36,7 +36,7 @@ Every top-level declaration is assigned a `SymbolId` from one canonical table (`
 
 ##### Requirement {#arch.name-resolution.requirement-2}
 
-A module's import scope resolves with explicit precedence: an explicit `import` binding always wins over a glob-imported (`import path::*`) name, and two explicit imports of the same local name are rejected outright (a compile error) rather than one silently shadowing the other. Among globs, priority is tiered — an auto-inserted std glob (`GlobTier::Std`) loses silently to a user glob (`GlobTier::User`) of the same name; `T0011` (ambiguous glob import) fires only when two globs of the *same* tier export the same name.
+An explicit `import` wins over a glob, and two explicit imports of one local name are an error. Globs are tiered: a user glob silently beats the auto-inserted std glob, and `T0011` fires only when two globs of the same tier export the same name.
 
 | Field | Value |
 |---|---|
@@ -50,7 +50,7 @@ A module's import scope resolves with explicit precedence: an explicit `import` 
 
 ##### Requirement {#arch.name-resolution.requirement-3}
 
-Every expression-level bare-identifier reference is classified as either `Res::Def` (a reference to a top-level declaration, carrying its `SymbolId`) or `Res::Local` (a true local: a function/closure parameter, a block-local `let`/`mut`, a `for`/`for-in` binding, or a match-pattern binding). Only `Def` references are recorded, in a side table keyed by the reference's `Span`; a local shadowing a top-level declaration of the same name resolves to the local, not the shadowed global. This classification feeds `arch.resolution.requirement-1`'s totality claim (every reference has a definite `Resolution`) but is a separate pass, run before that freeze.
+Each bare-identifier reference is `Res::Def` (a top-level declaration, with its `SymbolId`) or `Res::Local` (parameter, `let`/`mut`, `for` or match binding); a local shadows a same-named global. Only `Def` references are recorded, keyed by `Span`, before the resolution freeze.
 
 | Field | Value |
 |---|---|
