@@ -694,6 +694,41 @@ def check_spec_limit_markers(
     return findings
 
 
+# Phrasing that states a limit in prose. A limit belongs in a `> **Gap**` / `> **Limitation**`
+# marker citing a record, so new prose like this is a prompt to write the record.
+LIMIT_PHRASE_RE = re.compile(
+    r"\bnot yet\b|\bdeferred (?:to|pending|until)\b|\bnot supported\b|\bplanned, not implemented\b"
+    r"|\b(?:is|are) (?:only )?planned\b|\bnot (?:yet )?implemented\b|\bfuture release\b"
+    r"|\bnot part of this release\b|\bdoes not (?:yet )?exist\b",
+    re.IGNORECASE,
+)
+# Lines that carry such words for another reason: generated fixture/exemption markup,
+# doc-example directives, HTML, headings, and the markers themselves.
+LIMIT_LINT_SKIP_RE = re.compile(
+    r"^\s*(?:<|#|>\s*\*\*(?:Gap|Limitation|Since|Changed in)\b|\|)|rigor-backlink|data-fixture|doc-example|rfc\.py:"
+)
+
+
+def lint_limit_phrasing(language_spec_dir: Path, repo_root: Path) -> list[Finding]:
+    """Warn-only (metel-core#1235): limit phrasing in Language Spec prose outside a marker.
+    Never fails the check; the reader decides whether it is a limit that needs a record."""
+    warnings: list[Finding] = []
+    for path in sorted(language_spec_dir.glob("*.md")) if language_spec_dir.is_dir() else []:
+        if path.name.upper() == "STYLEGUIDE.MD":
+            continue
+        in_fence = False
+        for number, line in enumerate(path.read_text().splitlines(), 1):
+            if line.lstrip().startswith("```"):
+                in_fence = not in_fence
+                continue
+            if in_fence or LIMIT_LINT_SKIP_RE.search(line):
+                continue
+            m = LIMIT_PHRASE_RE.search(line)
+            if m:
+                warnings.append(Finding(f"{path.relative_to(repo_root)}:{number}", f"limit phrasing `{m.group(0)}` outside a Gap/Limitation marker; if this states a limit, cite or write its record"))
+    return warnings
+
+
 def run_checks(
     repo_root: Path = REPO_ROOT,
     spec_dir: Path = None,
@@ -878,6 +913,15 @@ def main() -> int:
     gap_count = len(list(GAPS_DIR.glob("*.md"))) if GAPS_DIR.is_dir() else 0
     print(f"Checked {spec_count} spec file(s), {limit_count} limitation record(s), {gap_count} gap record(s).")
     print("Fixture-sidecar arch=[...] cross-checking: skipped (fixture corpus lives in metel-core, not reachable from a bare metel-docs checkout -- same degrade rfc-check.yml already documents for RFC coverage).")
+
+    warnings = lint_limit_phrasing(LANGUAGE_SPEC_DIR, REPO_ROOT)
+    if warnings:
+        print(f"\n{len(warnings)} warning(s) (do not fail the check):")
+        for w in warnings:
+            print(f"  - {w}")
+            if os.environ.get("GITHUB_ACTIONS"):
+                file, _, line = w.source.partition(":")
+                print(f"::warning file={file},line={line}::{w.message}")
 
     if not findings:
         print("No findings.")
