@@ -52,6 +52,9 @@ one-line marker, `> **Gap** GAP-X-001` or `> **Limitation** LIMIT-X-001`, that c
 existing active record, and the site renders the record's summary and these fields
 into it (metel-core#1235). Only the checks are here; the chapters convert in a later step.
 
+A requirement's claim is one or two sentences (at most about 300 characters); a longer
+one is flagged warn-only, and its rationale belongs in the ADR it cites (metel-core#1234).
+
 Fixture-sidecar `arch = [...]` cross-checking is a documented no-op here for
 the same reason `rfc-check.yml` already documents for RFC-section fixture
 coverage: the fixture corpus lives in `metel-interpreter/tests`, in
@@ -725,6 +728,25 @@ LIMIT_LINT_SKIP_RE = re.compile(
 )
 
 
+# A requirement's claim is one or two sentences; rationale and history belong in the ADR it
+# cites (metel-core#1234). Longer claims are flagged, warn-only.
+CLAIM_SOFT_MAX = 300
+CLAIM_RE = re.compile(r"^#####\s+Requirement\s+\{#([a-z0-9.\-]+)\}\s*\n+(.*?)\n\s*\n\|", re.MULTILINE | re.DOTALL)
+
+
+def lint_claim_length(spec_dir: Path, repo_root: Path) -> list[Finding]:
+    """Warn-only (metel-core#1234): a requirement claim longer than CLAIM_SOFT_MAX characters."""
+    warnings: list[Finding] = []
+    for path in sorted(spec_dir.glob("*.md")) if spec_dir.is_dir() else []:
+        text = path.read_text()
+        for m in CLAIM_RE.finditer(text):
+            length = len(re.sub(r"\s+", " ", m.group(2)).strip())
+            if length > CLAIM_SOFT_MAX:
+                line = text[: m.start()].count("\n") + 1
+                warnings.append(Finding(f"{path.relative_to(repo_root)}:{line}", f"`{m.group(1)}` claim is {length} characters (guideline {CLAIM_SOFT_MAX}); state it in one or two sentences and move rationale to the ADR it cites"))
+    return warnings
+
+
 def lint_limit_phrasing(language_spec_dir: Path, repo_root: Path) -> list[Finding]:
     """Warn-only (metel-core#1235): limit phrasing in Language Spec prose outside a marker.
     Never fails the check; the reader decides whether it is a limit that needs a record."""
@@ -930,7 +952,7 @@ def main() -> int:
     print(f"Checked {spec_count} spec file(s), {limit_count} limitation record(s), {gap_count} gap record(s).")
     print("Fixture-sidecar arch=[...] cross-checking: skipped (fixture corpus lives in metel-core, not reachable from a bare metel-docs checkout -- same degrade rfc-check.yml already documents for RFC coverage).")
 
-    warnings = lint_limit_phrasing(LANGUAGE_SPEC_DIR, REPO_ROOT)
+    warnings = lint_limit_phrasing(LANGUAGE_SPEC_DIR, REPO_ROOT) + lint_claim_length(SPEC_DIR, REPO_ROOT)
     if warnings:
         print(f"\n{len(warnings)} warning(s) (do not fail the check):")
         for w in warnings:

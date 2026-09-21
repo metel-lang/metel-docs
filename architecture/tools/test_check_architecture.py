@@ -654,3 +654,29 @@ class FrontmatterQuotingTests(GapRecordTests):
         ok = VALID_GAP.replace('summary: "A one-line summary."', 'summary: "A \\"quoted\\" word."')
         self.write_gap_corpus(gap_text=ok)
         self.assertEqual([], self.findings())
+
+
+class ClaimLengthLintTests(unittest.TestCase):
+    """Warn-only lint for long requirement claims (metel-core#1234)."""
+
+    def lint(self, claim):
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root, True)
+        spec = root / "architecture" / "spec"
+        spec.mkdir(parents=True)
+        (spec / "x.md").write_text(
+            "# X {#x}\n\n##### Requirement {#arch.x.requirement-1}\n\n" + claim + "\n\n| Field | Value |\n|---|---|\n| `status` | `implemented` |\n"
+        )
+        return [str(w) for w in ca.lint_claim_length(spec, root)]
+
+    def test_short_claim_is_not_flagged(self):
+        self.assertEqual([], self.lint("A short claim."))
+
+    def test_long_claim_is_flagged_with_its_length(self):
+        warnings = self.lint("word " * 80)
+        self.assertEqual(1, len(warnings))
+        self.assertIn("arch.x.requirement-1", warnings[0])
+        self.assertIn("x.md:3", warnings[0])
+
+    def test_claim_length_never_fails_the_check(self):
+        self.assertNotIn("lint_claim_length", ca.run_checks.__code__.co_names)
