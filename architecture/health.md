@@ -10,4 +10,6 @@ which limitations are still open. Every figure on this page is computed from the
 requirement tables and the `LIMIT-*` records when the site is built; nothing
 here is written by hand, so it cannot drift from them.
 
+Every limitation and gap, with its status, is listed on [Limitations and Gaps](records.md).
+
 <!-- health:architecture -->

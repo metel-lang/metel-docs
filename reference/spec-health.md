@@ -10,4 +10,6 @@ has. Every figure on this page is computed from the spec chapters and the
 `GAP-*` records when the site is built; nothing here is written by hand, so it
 cannot drift from them.
 
+Every limitation and gap, with its status, is listed on [Limitations and Gaps](../architecture/records.md).
+
 <!-- health:language -->
