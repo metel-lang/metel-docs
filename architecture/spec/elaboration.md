@@ -17,7 +17,7 @@ the [dispatch requirement](#arch.elaboration.requirement-1).
 
 ##### Requirement {#arch.elaboration.requirement-1}
 
-Every `TypedExpr::MethodCall`'s `dispatch` field starts as `MethodDispatch::Dynamic` and is resolved during elaboration to `Aspect { aspect_id }` (dispatched through a named aspect, by its stable `SymbolId`) when the receiver's type registers the method through an aspect, and to `Inherent` (a plain call on the concrete receiver type) otherwise. Two different aspects providing the same method name for the same type is rejected as ambiguous (`T0013`) rather than silently picking one. No site is left `Dynamic`: a receiver with no nameable type (a `fn` or tuple, say) resolves to `Inherent`, which the evaluator treats identically to a residual `Dynamic`. The evaluator reads a resolved site's dispatch decision rather than re-deriving it.
+Elaboration resolves each method call's `dispatch` from `Dynamic` to `Aspect { aspect_id }` when the receiver's type gets the method through that aspect (by `SymbolId`), else to `Inherent`, including for a receiver with no nameable type; a method shared by two aspects is ambiguous (`T0013`).
 
 | Field | Value |
 |---|---|

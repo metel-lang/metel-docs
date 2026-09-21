@@ -20,7 +20,7 @@ is stable regardless of which call sites happen to be checked.
 
 ##### Requirement {#arch.coherence.requirement-1}
 
-The orphan rule (`T0014`): an aspect implementation must be local to either the aspect's declaring module or the implementing type's declaring module. An impl for a foreign aspect on a foreign type — including a negative (`!Aspect`) impl or a blanket/conditional generic impl with no concrete local anchor — is rejected.
+The orphan rule (`T0014`): an aspect impl must be local to the aspect's declaring module or the implementing type's; an impl of a foreign aspect on a foreign type, including a negative or blanket/conditional impl with no local anchor, is rejected.
 
 | Field | Value |
 |---|---|
@@ -34,7 +34,7 @@ The orphan rule (`T0014`): an aspect implementation must be local to either the 
 
 ##### Requirement {#arch.coherence.requirement-2}
 
-Overlap detection (`T0015`): two impls whose type/aspect coverage overlaps conflict unless provably disjoint. Disjointness is decided via `scoped_type_param_bounds` — negation disjointness (RFC-0060 §3.1) and unconditional-vs-conditional conflict (§3.2) — using `CanonicalType::TypeParam` to represent impl-scoped type variables, not inferred types.
+Overlap detection (`T0015`): two impls whose coverage overlaps conflict unless provably disjoint, decided by `scoped_type_param_bounds` (negation disjointness, RFC-0060 §3.1; unconditional-vs-conditional, §3.2) over impl-scoped `CanonicalType::TypeParam`s.
 
 | Field | Value |
 |---|---|
