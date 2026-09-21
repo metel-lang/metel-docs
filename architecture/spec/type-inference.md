@@ -26,7 +26,7 @@ to instantiate it ([polymorphic closures](#arch.type-inference.requirement-5)).
 
 ##### Requirement {#arch.type-inference.requirement-1}
 
-Type inference is Hindley-Milner with let-polymorphism: `instantiate` gives each use of a generalized (`let`-polymorphic) binding fresh type variables, so the same binding can be used at different types without the uses interfering. Generalization (`arch.type-inference.requirement-7`) and unification's occurs check (`arch.type-inference.requirement-6`) are separate claims.
+Type inference is Hindley-Milner with let-polymorphism: `instantiate` gives each use of a generalized binding fresh type variables, so one binding can be used at different types without the uses interfering.
 
 | Field | Value |
 |---|---|
@@ -40,7 +40,7 @@ Type inference is Hindley-Milner with let-polymorphism: `instantiate` gives each
 
 ##### Requirement {#arch.type-inference.requirement-2}
 
-`TypeDefinitionRegistry` keeps struct/enum definitions namespaced per declaring module: two modules may declare same-named structs or enums without their field or variant sets colliding, and a `merge_from` combination of registries does not collapse same-named-but-distinct declarations into one. Block-local type ids are a disjoint space from name-resolver `SymbolId`s.
+`TypeDefinitionRegistry` namespaces struct and enum definitions per declaring module, so same-named types in two modules keep distinct field and variant sets, including across `merge_from`. Block-local type ids are disjoint from name-resolver `SymbolId`s.
 
 | Field | Value |
 |---|---|
@@ -54,7 +54,7 @@ Type inference is Hindley-Milner with let-polymorphism: `instantiate` gives each
 
 ##### Requirement {#arch.type-inference.requirement-3}
 
-`?`'s error-type compatibility is decided during inference, not construction: `infer_propagate_error` solves the inner and target error types and, if they differ, calls `ctx.has_from_impl(target, source)`; a missing `impl From<source> for target` is rejected as `T0007`. Construction never looks up `From` impls.
+`?`'s error-type compatibility is decided in inference, not construction: `infer_propagate_error` calls `ctx.has_from_impl(target, source)` when the error types differ and rejects a missing `From` impl as `T0007`.
 
 | Field | Value |
 |---|---|
@@ -68,7 +68,7 @@ Type inference is Hindley-Milner with let-polymorphism: `instantiate` gives each
 
 ##### Requirement {#arch.type-inference.requirement-4}
 
-Typechecking keeps inference and construction as separate passes. Inference solves constraints and hands construction a substitution, frozen resolution facts, and the schemes; construction rebuilds typed IR from those and never runs the constraint solver (`InferContext`, `solve`). Its unification is limited to best-effort matching when re-typing a generic body at call time (`construct_generic_body`), and it allocates fresh type variables only from the generator inference hands off, to instantiate a callee's scheme at a call site.
+Inference and construction are separate passes: inference solves constraints and hands construction a substitution, frozen resolution facts and schemes; construction rebuilds typed IR from them and never runs the constraint solver, only best-effort matching when re-typing a generic body at a call.
 
 | Field | Value |
 |---|---|
