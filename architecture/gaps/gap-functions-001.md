@@ -38,6 +38,7 @@ is also unspecified; the implementation does not support it (`metel-core#1229`).
 
 - `spec.functions.first-class-functions.legality-2`
 - `RFC-0128`
+- `LIMIT-TYPE-CONSTRUCTION-002`
 
 ## Resolution
 

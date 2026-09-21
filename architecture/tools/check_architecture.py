@@ -447,6 +447,16 @@ def validate_record(
     return findings
 
 
+def language_spec_ids(language_spec_dir: Path) -> set:
+    """Every explicit or heading anchor in the Language Spec chapters."""
+    if not language_spec_dir.is_dir():
+        return set()
+    ids: set = set()
+    for path in sorted(language_spec_dir.glob("*.md")):
+        ids |= markdown_anchors(path)
+    return ids
+
+
 def rfc_stage(rfcs_dir: Path, number: str):
     """The lifecycle stage directory (`3-integrated`, ...) of RFC `number`, or
     None if no such RFC file exists."""
@@ -729,6 +739,12 @@ def run_checks(
     for path, fm, affects, _ in limitation_records:
         rel = path.relative_to(repo_root)
         for target in affects:
+            if SPEC_RULE_ID_RE.match(target):
+                # A limitation may cite the Language Spec rule that specifies its
+                # behaviour (for example when it turns out not to be a limitation).
+                if target not in language_spec_ids(language_spec_dir):
+                    findings.append(Finding(str(rel), f"`affects` spec rule `{target}` does not exist in reference/spec/"))
+                continue
             if target not in all_arch_ids and target not in all_limit_ids and target not in gap_records:
                 findings.append(Finding(str(rel), f"`affects` target `{target}` does not exist"))
 
