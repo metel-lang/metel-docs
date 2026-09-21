@@ -1224,10 +1224,7 @@ extend Holder: AnyValue {
 }
 ```
 
-> Letting an implementation *weaken* a constraint — admissible-domain inclusion,
-> e.g. accepting `<record T>` in the aspect against a plain `<T>` implementation —
-> is a later addition, RFC-0149. Until it lands, a widening is rejected here as a
-> conservative wrong-no.
+> **Gap** GAP-DECLARATIONS-002: a widening, such as a plain `<T>` implementing an aspect's `<record T>`, is rejected as a conservative wrong-no.
 
 **Conditional extend blocks.** An aspect implementation for a
 generic type may be conditional on its own type parameters satisfying additional
