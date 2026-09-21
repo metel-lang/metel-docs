@@ -487,6 +487,16 @@ class GapRecordTests(ArchitectureCorpusCase):
         self.write_gap_corpus(limitation_text=limit)
         self.assertTrue(any("`GAP-TYPES-001` does not link back to `LIMIT-RESOLUTION-001`" in f for f in self.findings()))
 
+    def test_limitation_may_cite_a_language_spec_rule(self):
+        limit = VALID_LIMITATION.replace("- `arch.resolution.requirement-1`", "- `arch.resolution.requirement-1`\n- `spec.types.generics.legality-1`")
+        self.write_gap_corpus(limitation_text=limit)
+        self.assertEqual([], self.findings())
+
+    def test_limitation_citing_a_missing_spec_rule_is_a_finding(self):
+        limit = VALID_LIMITATION.replace("- `arch.resolution.requirement-1`", "- `arch.resolution.requirement-1`\n- `spec.types.generics.legality-9`")
+        self.write_gap_corpus(limitation_text=limit)
+        self.assertTrue(any("spec rule `spec.types.generics.legality-9` does not exist" in f for f in self.findings()))
+
     def test_reciprocal_gap_limit_link_passes(self):
         limit = VALID_LIMITATION.replace("- `arch.resolution.requirement-1`", "- `arch.resolution.requirement-1`\n- `GAP-TYPES-001`")
         self.write_gap_corpus(gap_text=self._linked_gap(), limitation_text=limit)

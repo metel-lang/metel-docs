@@ -1,11 +1,11 @@
 ---
 id: LIMIT-TYPE-INFERENCE-001
 title: "`?` error coercion requires an explicit From impl"
-summary: "`?` needs an explicit `From` impl to convert between error types; only `Int` and `Float` are built in."
+summary: "Superseded: the spec itself requires an explicit `From` impl for `?` to convert between error types, so this is specified behaviour, not a limitation."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "metel-interpreter/docs/evaluator.md, \"Known Limitations\" (updated v0.7.0 / METEL-80); re-scoped during ADR lifecycle triage (#1158) after checking which pass actually performs the check"
-disposition: known
+disposition: superseded
 review: null
 ---
 
@@ -32,9 +32,16 @@ path for arbitrary error types.
 ## Affects
 
 - `arch.type-inference.requirement-3`
+- `spec.functions.the-operator.legality-2`
 
 ## Resolution
 
-Partial. The `?`/`From` coercion mechanism itself is fully wired (METEL-80,
-shipped v0.7.0) — the open part is only "full coercion for arbitrary type
-pairs," tracked as `#13`.
+Superseded, not fixed: this is not a limitation of the implementation. The
+Language Spec specifies exactly this behaviour: `spec.functions.the-operator.legality-2`
+says the operand error type `E1` "must equal `E2` or satisfy `E2: From<E1>`", and the
+`?` prose says `From::from` is called on the error when they differ. A correct
+implementation of the current spec therefore also requires an explicit `From` impl
+(ADR-0057's sorting test), and the only built-in impls are the `i64`/`f64` ones the
+spec lists (`runtime.md`, built-in aspects). The follow-up this record cited, `#13`,
+is closed. If automatic or derived error conversion is ever wanted, that is a new
+language change, not the closing of this record.

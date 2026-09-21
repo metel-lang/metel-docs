@@ -29,6 +29,7 @@ into it by `SymbolId`.
 - `arch.type-construction.requirement-1` (`GlobalExports`)
 - `arch.name-resolution.requirement-1` (`SymbolId` assignment for
   overloaded declarations)
+- `GAP-FUNCTIONS-001` (overloading is not specified in the Language Spec)
 
 ## Resolution
 
