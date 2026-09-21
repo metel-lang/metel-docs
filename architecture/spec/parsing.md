@@ -23,7 +23,7 @@ stage needs a parser-only semantic special case.
 
 ##### Requirement {#arch.parsing.requirement-1}
 
-Loading a root file produces a `ModuleGraph` whose `modules: Vec<LoadedModule>` is in dependency order — each module appears only after every module it imports or re-exports (`export path::Name;`, #660), because `Loader::load_module` recurses into a module's imports and exports before pushing the module itself onto the graph. A circular import chain is rejected with the full cycle traced through the loader's DFS stack, not merely detected.
+Loading a root file yields a `ModuleGraph` in dependency order: a module appears only after every module it imports or re-exports, because `Loader::load_module` recurses into them first. A circular import is rejected with the full cycle traced through the DFS stack.
 
 | Field | Value |
 |---|---|
@@ -37,7 +37,7 @@ Loading a root file produces a `ModuleGraph` whose `modules: Vec<LoadedModule>` 
 
 ##### Requirement {#arch.parsing.requirement-2}
 
-Module source is read through a `SourceProvider` abstraction rather than a hardcoded filesystem call — the default (`EmbeddedStdlibProvider`) serves `std::…` modules from a binary-embedded source and everything else from disk, but an `InMemorySourceProvider` / `MultiFileSourceProvider` can substitute a virtual root (and its imports) without touching disk, and `load_virtual_root_with` skips filesystem canonicalization entirely for that case. This is what lets an LSP overlay shadow a stdlib module or serve unsaved buffers through the same loading path production use takes, rather than a parallel one. The embedded source itself is real, physical `.mtl` files (`metel-frontend/stdlib/*.mtl`) compiled in at build time (ADR-0039, superseding ADR-0027's virtual, no-physical-file injection list).
+Module source is read through a `SourceProvider` (embedded stdlib plus disk by default), and `InMemorySourceProvider` / `MultiFileSourceProvider` can substitute a virtual root without touching disk, so an LSP overlay uses the same loading path as production.
 
 | Field | Value |
 |---|---|
@@ -51,7 +51,7 @@ Module source is read through a `SourceProvider` abstraction rather than a hardc
 
 ##### Requirement {#arch.parsing.requirement-3}
 
-A single file parses through one PEG grammar (`grammar.pest`, driven by `pest`/`pest_derive`) via the sole entry point `parser::parse(source, filename) -> Result<Program, MetelError>`. Every AST node's `Span` carries byte offsets plus resolved line/col, and derives `Eq`/`Hash` so it can key the reference-resolution side table later in the pipeline — a span is diagnostic-and-lookup infrastructure, not decoration. The grammar's own ordering invariants (e.g. `stmt` tried before binding declarations so `let_x = 5;` parses as assignment, not declaration; `return`/`break`/`continue` as expressions per `#229`) are documented inline in `grammar.pest` itself, not only in this section.
+A file parses through one PEG grammar (`grammar.pest`) via the sole entry point `parser::parse(source, filename)`. Every AST node's `Span` carries byte offsets and resolved line/col and derives `Eq`/`Hash`, so it can key the reference-resolution side table.
 
 | Field | Value |
 |---|---|
@@ -65,7 +65,7 @@ A single file parses through one PEG grammar (`grammar.pest`, driven by `pest`/`
 
 ##### Requirement {#arch.parsing.requirement-4}
 
-Control flow has one expression-shaped representation through the parser and AST: `if`, `match`, and `loop` can be a block tail or an expression statement, with statement position discarding the expression value rather than introducing parallel statement-only AST forms. An `if` without `else` is `Unit`-typed, and an `else if` is represented as a nested `if` in a block rather than a separate chain node.
+Control flow has one expression-shaped representation: `if`, `match` and `loop` may be a block tail or an expression statement, with statement position discarding the value. An `if` without `else` is `Unit`-typed, and `else if` is a nested `if` in the else block.
 
 | Field | Value |
 |---|---|
@@ -79,7 +79,7 @@ Control flow has one expression-shaped representation through the parser and AST
 
 ##### Requirement {#arch.parsing.requirement-5}
 
-Keyword-prefix disambiguation is a grammar-level invariant, not a typechecker rewrite: the `keyword` rule matches a whole word only (it ends in a word-boundary lookahead) and `ident` is `!keyword` followed by identifier characters, so a name that merely begins with a keyword (`letter`, `iffy`, `returned`) is an ordinary identifier while a whole keyword is never one. The grammar does not special-case `None`: standalone `None`, `Perhaps::None`, and a user variant named `None` are all ordinary identifiers or paths, given meaning by later stages.
+Keyword disambiguation is a grammar invariant: `keyword` matches a whole word only and `ident` is `!keyword` plus identifier characters, so `letter` or `iffy` is an identifier and a whole keyword never is. `None` is not special-cased by the grammar.
 
 | Field | Value |
 |---|---|
@@ -93,7 +93,7 @@ Keyword-prefix disambiguation is a grammar-level invariant, not a typechecker re
 
 ##### Requirement {#arch.parsing.requirement-6}
 
-String interpolation is lowered while parsing into ordinary expression nodes: each hole is parsed as an expression and converted to a `to_string` method call, and the segments are joined with `BinOp::Add` in a balanced tree (so a long interpolation does not become a deeply left-nested chain that overflows downstream recursion). Downstream passes therefore see no interpolation-specific AST variant or dispatch path.
+String interpolation is lowered while parsing: each hole becomes a `to_string` method call and the segments are joined with `BinOp::Add` in a balanced tree, so downstream passes see no interpolation node and no deeply left-nested chain.
 
 | Field | Value |
 |---|---|
