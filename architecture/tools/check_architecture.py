@@ -399,6 +399,22 @@ def resolve_scope_anchor(scope: str, all_section_ids_by_file: dict, repo_root: P
     return anchor in all_section_ids_by_file.get(candidate.resolve(), set())
 
 
+QUOTED_FRONTMATTER_LINE_RE = re.compile(r'^[A-Za-z_]+:\s+"(?:[^"\\]|\\.)*"\s*$')
+
+
+def check_frontmatter_quoting(path: Path, rel: Path) -> list:
+    """A double-quoted frontmatter value must be one well-formed YAML string. The checker
+    reads frontmatter with a regex, so an unescaped inner quote passes here and then
+    breaks the website build ("can not read a block mapping entry")."""
+    lines = path.read_text().splitlines()
+    end = next((i for i in range(1, len(lines)) if lines[i].strip() == "---"), len(lines))
+    return [
+        Finding(f"{rel}:{i + 1}", "double-quoted frontmatter value has an unescaped `\"` inside it; escape it (`\\\"`) or rephrase (invalid YAML breaks the website build)")
+        for i, line in enumerate(lines[1:end], 1)
+        if re.match(r'^[A-Za-z_]+:\s+"', line) and not QUOTED_FRONTMATTER_LINE_RE.match(line)
+    ]
+
+
 def validate_record(
     path: Path,
     rel: Path,
@@ -415,7 +431,7 @@ def validate_record(
     `GAP-*`): required fields, filename/ID agreement, ID shape and
     uniqueness, disposition rules, scope anchor, and a non-empty `## Affects`.
     Kind-specific rules live with their own kind."""
-    findings: list = []
+    findings: list = check_frontmatter_quoting(path, rel)
     for required_field in ("id", "title", "scope", "owner", "discovered_by", "disposition"):
         if not fm.get(required_field):
             findings.append(Finding(str(rel), f"missing or empty frontmatter field `{required_field}`"))

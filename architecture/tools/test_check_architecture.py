@@ -642,3 +642,15 @@ class LimitPhrasingLintTests(unittest.TestCase):
     def test_lint_never_fails_the_check(self):
         # Warnings are separate from findings: run_checks does not include them.
         self.assertFalse(hasattr(ca, "lint_limit_phrasing") and "lint_limit_phrasing" in ca.run_checks.__code__.co_names)
+
+
+class FrontmatterQuotingTests(GapRecordTests):
+    def test_unescaped_inner_quote_is_a_finding(self):
+        bad = VALID_GAP.replace('summary: "A one-line summary."', 'summary: "A \"quoted\" word, unescaped: "capability" here."')
+        self.write_gap_corpus(gap_text=bad)
+        self.assertTrue(any("unescaped" in f for f in self.findings()), self.findings())
+
+    def test_escaped_inner_quote_passes(self):
+        ok = VALID_GAP.replace('summary: "A one-line summary."', 'summary: "A \\"quoted\\" word."')
+        self.write_gap_corpus(gap_text=ok)
+        self.assertEqual([], self.findings())

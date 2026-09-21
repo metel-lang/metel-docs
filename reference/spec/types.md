@@ -1373,11 +1373,14 @@ extend<row R> { ..R }: MyAspect { … }                         // every row
 
 The first form is the one this design intends to land first — exactly one structural type,
 permitted once the aspect is local; the equivalent one-concrete-target form for arrays
-(`extend<T> T[]: Aspect`) is already supported. The second and third additionally require row variables, which don't
-exist at all yet. The second also needs overlap checking between row bounds — two
-shape-conditional implementations can be *incomparable* rather than one being more specific,
-so they must be disjoint. The third additionally needs a way to require an aspect of every
-field in the row, which does not yet exist either.
+(`extend<T> T[]: Aspect`) is already supported.
+
+The second and third forms additionally require row variables. The second also needs overlap
+checking between row bounds — two shape-conditional implementations can be *incomparable*
+rather than one being more specific, so they must be disjoint. The third additionally needs a
+way to require an aspect of every field in the row.
+
+> **Gap** GAP-TYPES-004
 
 <details>
 <summary>Formal rules</summary>

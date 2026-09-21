@@ -5,7 +5,9 @@ summary: "An implementation's generic constraints must match the aspect method's
 scope: "reference/spec/declarations.md#spec.declarations.aspects.implementing-an-aspect.legality-13"
 owner: language
 discovered_by: "metel-core#1217 limitation analysis; fixtures `typechecking/aspects/stage21_neg_08` and `stage21_neg_09`"
-disposition: known
+disposition: planned
+planned_for: v0.15.0
+rfc: RFC-0149
 review: null
 ---
 
@@ -27,9 +29,10 @@ constraints exactly.
 
 - `spec.declarations.aspects.implementing-an-aspect.legality-13`
 - `RFC-0129`
+- `RFC-0149`
 
 ## Resolution
 
-None scheduled. The two negative fixtures pin the behaviour and are marked to
-flip to positive fixtures if admissible-domain-inclusion conformance is ever
-adopted.
+Planned for v0.15.0: RFC-0149 (aspect method constraint domain inclusion, letting an
+implementation weaken a constraint) is under review, tracked as metel-core#895. The two
+negative fixtures pin the current behaviour and flip to positive fixtures when it lands.
