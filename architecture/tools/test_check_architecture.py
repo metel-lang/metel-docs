@@ -369,13 +369,15 @@ None yet.
 class HealthPageTests(ArchitectureCorpusCase):
     def test_health_page_needs_its_marker(self):
         self.write_corpus()
-        (self.tmp / "architecture" / "health.md").write_text("# Architecture Health\n")
+        (self.tmp / "status").mkdir(exist_ok=True)
+        (self.tmp / "status" / "architecture-health.md").write_text("# Architecture Health\n")
         findings = [str(f) for f in self.run_checks()]
         self.assertTrue(any("health:architecture" in f for f in findings), findings)
 
     def test_health_page_with_its_marker_passes(self):
         self.write_corpus()
-        (self.tmp / "architecture" / "health.md").write_text("# Architecture Health\n\n<!-- health:architecture -->\n")
+        (self.tmp / "status").mkdir(exist_ok=True)
+        (self.tmp / "status" / "architecture-health.md").write_text("# Architecture Health\n\n<!-- health:architecture -->\n")
         self.assertEqual([], [str(f) for f in self.run_checks()])
 
 

@@ -494,8 +494,8 @@ def check_known_gaps_sections(language_spec_dir: Path, repo_root: Path) -> list:
 
 
 HEALTH_PAGES = (
-    ("architecture/health.md", "<!-- health:architecture -->"),
-    ("reference/spec-health.md", "<!-- health:language -->"),
+    ("status/architecture-health.md", "<!-- health:architecture -->"),
+    ("status/language-health.md", "<!-- health:language -->"),
 )
 
 
