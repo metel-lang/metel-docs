@@ -1,7 +1,7 @@
 ---
 id: GAP-FUNCTIONS-003
 title: "Written function types are move-only, with no `copy` qualifier or `Erased` state yet"
-summary: "A written function type is always move-only; the `copy |T| -> U` qualifier and the `Erased` "capability unknown" state are not available."
+summary: "A written function type is always move-only; the `copy |T| -> U` qualifier and the `Erased` (capability unknown) state are not available."
 scope: "reference/spec/functions.md#first-class-functions"
 owner: language
 discovered_by: "metel-core#1235 records pass over the limit-phrasing lint of `reference/spec/functions.md`"
