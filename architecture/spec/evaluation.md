@@ -25,7 +25,7 @@ fallbacks ([generic calls](#arch.evaluation.requirement-7), [dynamic aspects](#a
 
 ##### Requirement {#arch.evaluation.requirement-1}
 
-`Environment`, the lexical activation-frame model, is keyed entirely by `LocalId`, not by name: a binding is defined and read back by its `LocalId`, two distinct `LocalId`s never alias even for the same source spelling, and no scopes name-map exists as a fallback lookup path. Each module runs in its own isolated `Environment` (ADR-0029, superseding ADR-0019's flat-merge approach), seeded from already-evaluated dependency environments.
+`Environment` is keyed entirely by `LocalId`, not name: two distinct `LocalId`s never alias, and no name-map fallback exists. Each module evaluates in its own isolated `Environment`, seeded from its already-evaluated dependencies' environments.
 
 | Field | Value |
 |---|---|
@@ -39,7 +39,7 @@ fallbacks ([generic calls](#arch.evaluation.requirement-7), [dynamic aspects](#a
 
 ##### Requirement {#arch.evaluation.requirement-3}
 
-`Perhaps` and `Result` have the same runtime representation as every user-defined enum: `Value::Enum { name, variant, fields, .. }` -- `Value` has no dedicated variants for them. Propagation, pattern matching, and callable error signals use the ordinary enum variant and field-map paths. Name-specific handling is confined to presentation (`display.rs`), the built-in constructors that build these values (`builtins.rs`), and the `for`-loop protocol's end-of-iteration check on `Perhaps::None`. The earlier flat string-keyed aspect-method environment in ADR-0013 is not current architecture: nominal methods are now held in `RuntimeRegistry` entries keyed by stable `SymbolId` (requirement 2).
+`Perhaps` and `Result` are ordinary `Value::Enum { name, variant, fields, .. }` values with no dedicated `Value` variants; name-specific handling is confined to `display.rs`, the built-in constructors, and the `for`-loop's end check on `Perhaps::None`.
 
 | Field | Value |
 |---|---|
@@ -53,7 +53,7 @@ fallbacks ([generic calls](#arch.evaluation.requirement-7), [dynamic aspects](#a
 
 ##### Requirement {#arch.evaluation.requirement-4}
 
-Method dispatch preserves the receiver mode carried by the typed AST. Value receivers use the ordinary call path; `&self` receives a read-only view; and `&mut self` shares the caller's receiver cell into the method frame so mutations, including nested-field mutation, are immediately visible without an ad-hoc writeback convention. This is tree-walk evaluator behavior, not a compiled-backend representation commitment.
+Method dispatch preserves the typed AST's receiver mode: value receivers use the ordinary call path, `&self` a read-only view, and `&mut self` shares the caller's receiver cell into the method frame, so mutations, including nested-field ones, are immediately visible.
 
 | Field | Value |
 |---|---|
@@ -109,7 +109,7 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 
 ##### Requirement {#arch.evaluation.requirement-8}
 
-`dyn Aspect` evaluation uses an explicit `Value::DynAspect` wrapper containing the erased value and the already-resolved concrete type and principal-aspect identities. Typed `DynCoerce` nodes introduce the wrapper at coercion sites; runtime method dispatch reuses the type-keyed registry while `value_to_type` rebuilds the dynamic type from wrapper metadata without exposing the contained concrete value.
+`dyn Aspect` values are an explicit `Value::DynAspect` wrapper holding the erased value and its resolved concrete type and principal-aspect identities, introduced by typed `DynCoerce` nodes; `value_to_type` rebuilds the dyn type from that metadata without exposing the concrete value.
 
 | Field | Value |
 |---|---|
@@ -123,7 +123,7 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 
 ##### Requirement {#arch.evaluation.requirement-2}
 
-`RuntimeRegistry` dispatches struct/enum type entries and overloaded/top-level function values (`symbol_values`) by stable `SymbolId`, not by re-deriving a name lookup at call time — the runtime-side counterpart of `arch.resolution.requirement-1`'s frozen-identity invariant. Two parts remain genuinely name-keyed by design: `type_ids` (the single surface-name→`SymbolId` translation point for sites that only have a name, e.g. `List::new`, and never had an id threaded to them) and `pattern_methods` (structural, pattern-dispatched method names for receivers like arrays that carry no `type_id`). This is not full coverage of the no-semantic-lookup invariant — `tools/check_no_semantic_name_lookup.py`'s own docstring names `RuntimeRegistry` as "a separate, adjacent concern with its own nuances... not yet brought under this check," i.e. the checker itself documents the gap rather than silently missing it.
+`RuntimeRegistry` dispatches struct/enum entries and function values by stable `SymbolId`, not by name at call time. Only `type_ids` (name to `SymbolId`) and `pattern_methods` (receivers with no `type_id`) stay name-keyed by design; the no-semantic-lookup check does not yet cover the registry.
 
 | Field | Value |
 |---|---|
