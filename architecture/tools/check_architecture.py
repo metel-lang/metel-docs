@@ -46,6 +46,12 @@ log. Its overview and section prose may cite an issue or ADR where that adds
 architectural context, but must not narrate a completed milestone, a next
 step, or an unaudited session as if it were current behavior.
 
+A `LIMIT-*` / `GAP-*` record may carry `planned_for: vX.Y.Z` and `rfc: RFC-NNNN[, ...]`,
+the release and RFC(s) for pending work; a Language Spec chapter states a limit as a
+one-line marker, `> **Gap** GAP-X-001` or `> **Limitation** LIMIT-X-001`, that cites an
+existing active record, and the site renders the record's summary and these fields
+into it (metel-core#1235). Only the checks are here; the chapters convert in a later step.
+
 Fixture-sidecar `arch = [...]` cross-checking is a documented no-op here for
 the same reason `rfc-check.yml` already documents for RFC-section fixture
 coverage: the fixture corpus lives in `metel-interpreter/tests`, in
@@ -90,6 +96,20 @@ LIMITATIONS_MARKER = "<!-- records:limitations -->"
 GAPS_MARKER = "<!-- records:gaps -->"
 KNOWN_GAPS_HEADING_RE = re.compile(r"^## Known gaps\s*$", re.MULTILINE)
 SUMMARY_MAX_LENGTH = 240
+# A Language Spec chapter states a limit as a one-line pointer to the record that
+# tracks it (metel-core#1235): `> **Gap** GAP-X-001` or `> **Limitation** LIMIT-X-001`.
+# The label says which kind of record it cites; the text and the version/RFC chips are
+# taken from the record when the site is built, so the chapter never copies them.
+SPEC_LIMIT_MARKER_RE = re.compile(
+    r"^>\s*\*\*(Gap|Limitation)\*\*\s+((?:GAP|LIMIT)-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d{3})\b", re.MULTILINE
+)
+MARKER_LABEL_FOR_PREFIX = {"GAP": "Gap", "LIMIT": "Limitation"}
+# Optional scheduling fields on an active record: the release it is planned for and the
+# RFC(s) that specify the change. The chapter marker renders them from here.
+PLANNED_FOR_RE = re.compile(r"^v\d+\.\d+\.\d+$")
+# Flipped on by the chapter conversion (metel-core#1235 step 3): until every active GAP
+# is cited from its chapter, requiring it would fail the corpus.
+REQUIRE_GAP_CITATIONS = False
 GAP_ACTIVE_DISPOSITIONS = {"known", "accepted", "mitigated", "planned"}
 STATUS_VALUES = {"implemented", "partial", "planned", "superseded", "retired"}
 DISPOSITION_VALUES = {"known", "accepted", "mitigated", "planned", "resolved", "superseded"}
@@ -604,6 +624,78 @@ def check_gap_records(
     return findings, {fm.get("id"): (p, fm, a) for p, fm, a, _ in gaps}
 
 
+def check_schedule_fields(records: list, repo_root: Path, rfcs_dir: Path) -> list:
+    """`planned_for` (a `vX.Y.Z` release) and `rfc` (`RFC-NNNN`, comma-separated for
+    several) are optional on an active record, and meaningless on a finished one."""
+    findings: list = []
+    for path, fm in records:
+        rel = path.relative_to(repo_root)
+        planned_for = fm.get("planned_for")
+        rfc = fm.get("rfc")
+        if not planned_for and not rfc:
+            continue
+        if fm.get("disposition") in ("resolved", "superseded"):
+            findings.append(Finding(str(rel), "`planned_for` / `rfc` describe pending work; remove them from a resolved or superseded record"))
+            continue
+        if planned_for and not PLANNED_FOR_RE.match(planned_for):
+            findings.append(Finding(str(rel), f"`planned_for: {planned_for}` must be a release like `v0.14.0`"))
+        for ref in [r.strip() for r in (rfc or "").split(",") if r.strip()]:
+            m = RFC_REF_RE.match(ref)
+            if not m or not ref.startswith("RFC-"):
+                findings.append(Finding(str(rel), f"`rfc` entry `{ref}` must look like `RFC-0071`"))
+            elif rfc_stage(rfcs_dir, m.group(1)) is None:
+                findings.append(Finding(str(rel), f"`rfc` entry `{ref}` does not exist under rfcs/"))
+    return findings
+
+
+def check_spec_limit_markers(
+    language_spec_dir: Path,
+    gap_records: dict,
+    limit_records: list,
+    repo_root: Path,
+    require_gap_citations: bool,
+) -> list:
+    """The `> **Gap** ID` / `> **Limitation** ID` markers in the Language Spec chapters
+    (metel-core#1235): each cites an existing, active record of the kind its label
+    names; a gap is cited from the chapter its own `scope` names; and (once
+    `require_gap_citations` is on) every active `GAP-*` is cited there at least once."""
+    findings: list = []
+    active = GAP_ACTIVE_DISPOSITIONS
+    gaps = {rid: fm for rid, (_, fm, _) in gap_records.items()}
+    limits = {fm.get("id"): fm for _, fm, _, _ in limit_records}
+    cited: dict = {}
+    for path in sorted(language_spec_dir.glob("*.md")) if language_spec_dir.is_dir() else []:
+        if path.name.upper() == "STYLEGUIDE.MD":
+            continue
+        rel = path.relative_to(repo_root)
+        text = FENCE_RE.sub("", path.read_text())
+        for m in SPEC_LIMIT_MARKER_RE.finditer(text):
+            label, record_id = m.group(1), m.group(2)
+            prefix = record_id.split("-")[0]
+            if MARKER_LABEL_FOR_PREFIX[prefix] != label:
+                findings.append(Finding(str(rel), f"marker `{label}` cites `{record_id}`; use `{MARKER_LABEL_FOR_PREFIX[prefix]}` for a {prefix}-* record"))
+                continue
+            fm = (gaps if prefix == "GAP" else limits).get(record_id)
+            if fm is None:
+                findings.append(Finding(str(rel), f"marker cites `{record_id}`, which does not exist"))
+                continue
+            if fm.get("disposition") not in active:
+                findings.append(Finding(str(rel), f"marker cites `{record_id}`, which is `{fm.get('disposition')}`; remove the marker (only active records are cited)"))
+                continue
+            if prefix == "GAP":
+                scope_chapter = Path(fm.get("scope", "").split("#", 1)[0]).name
+                if scope_chapter and scope_chapter != path.name:
+                    findings.append(Finding(str(rel), f"marker cites `{record_id}`, whose `scope` is `{scope_chapter}`; cite a gap from its own chapter"))
+                    continue
+                cited.setdefault(record_id, set()).add(path.name)
+    if require_gap_citations:
+        for record_id, fm in gaps.items():
+            if fm.get("disposition") in active and record_id not in cited:
+                chapter = Path(fm.get("scope", "").split("#", 1)[0])
+                findings.append(Finding(str(chapter), f"active `{record_id}` is not cited by a `> **Gap** {record_id}` marker in this chapter"))
+    return findings
+
+
 def run_checks(
     repo_root: Path = REPO_ROOT,
     spec_dir: Path = None,
@@ -612,6 +704,7 @@ def run_checks(
     gaps_dir: Path = None,
     language_spec_dir: Path = None,
     rfcs_dir: Path = None,
+    require_gap_citations: bool = None,
 ) -> list[Finding]:
     spec_dir = spec_dir or (repo_root / "architecture" / "spec")
     limitations_dir = limitations_dir or (repo_root / "architecture" / "limitations")
@@ -732,6 +825,22 @@ def run_checks(
         gap_files, limitation_records, all_arch_ids, repo_root, rfcs_dir, language_spec_dir
     )
     findings.extend(gap_findings)
+    findings.extend(
+        check_schedule_fields(
+            [(p, fm) for p, fm, _, _ in limitation_records] + [(p, fm) for p, fm, _ in gap_records.values()],
+            repo_root,
+            rfcs_dir,
+        )
+    )
+    findings.extend(
+        check_spec_limit_markers(
+            language_spec_dir,
+            gap_records,
+            limitation_records,
+            repo_root,
+            REQUIRE_GAP_CITATIONS if require_gap_citations is None else require_gap_citations,
+        )
+    )
 
     # Cross-file: every `affects` entry, and every standardized
     # "Known limitations" link, must resolve to a real id that actually exists
