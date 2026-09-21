@@ -2177,7 +2177,7 @@ parameter instead, which is also how disambiguation works (below).
 
 **Disambiguation.** When `T` is bound to two or more aspects that each declare an
 associated type of the same name, the bare projection is ambiguous — a hard error,
-matching the existing method-name-collision rule (Static Dispatch Only, below):
+matching the existing method-name-collision rule (Static Dispatch, below):
 
 ```metel
 aspect Deref { type Target; fun deref(self: &Self) -> &Target; }
@@ -2213,7 +2213,7 @@ would be the wrong model for `Deref` specifically — one type has one dereferen
 not several.
 
 **Object safety.** An aspect with associated types is object-safe only if no method
-signature references the associated type directly (see Static Dispatch Only, below, and
+signature references the associated type directly (see Static Dispatch, below, and
 [`dyn Aspect`](#dyn-aspect)). `Deref` above is *not* object-safe — `deref`
 returns `&Target`, which varies per implementor, and a vtable entry cannot encode a
 type that differs per implementation.
@@ -3296,27 +3296,22 @@ no re-declaration needed.
 
 ---
 
-### Static Dispatch Only
+### Static Dispatch
 
-All aspect dispatch in Metel is [**static** (monomorphised at compile time)](#spec.declarations.aspects.static-dispatch-only.dynamics-1). There are no vtables, no heap allocation, and no runtime type erasure for aspects.
+Aspect dispatch through a generic type parameter or `extends Aspect` is [**static** (resolved at compile time for the concrete type arguments)](#spec.declarations.aspects.static-dispatch-only.dynamics-1): no vtable, no heap allocation, no runtime type erasure. The exception is [`dyn Aspect`](#dyn-aspect), an aspect object, whose calls dispatch through a vtable at runtime by design.
 
 Method resolution must also be **unambiguous** at compile time. If the same receiver
 type implements two different aspects that both define the same method name, a call
 like `value.method()` is [rejected with `T0013`](#spec.declarations.aspects.static-dispatch-only.legality-1) rather than resolved by declaration order.
-
-`dyn Aspect` (runtime-dispatched existential types with vtable-based dispatch) is not
-part of this language version. All polymorphism goes through generic type parameters
-with aspect bounds.
-
-Aspect objects (`dyn Aspect`) are not part of the language. All polymorphism is via generics (static dispatch).
 
 <details>
 <summary>Formal rules</summary>
 
 ##### Dynamic Semantics {#spec.declarations.aspects.static-dispatch-only.dynamics-1}
 
-Aspect method calls are resolved statically for their concrete type arguments; aspect
-values use neither runtime type erasure nor vtable dispatch.
+Aspect method calls through a generic type parameter or `extends Aspect` are resolved
+statically for their concrete type arguments, with neither runtime type erasure nor vtable
+dispatch. A call on a `dyn Aspect` value is dispatched through its vtable.
 
 <!-- rfc.py:exemption kind="untestable" reason="Whether the compiler uses monomorphisation rather than vtables is a compilation-strategy property, not behavior an .mtl fixture can observe." -->
 
