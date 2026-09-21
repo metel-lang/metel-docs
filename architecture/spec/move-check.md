@@ -20,7 +20,7 @@ evade a closure ownership error merely by omitting `--move-check`.
 
 ##### Requirement {#arch.move-check.requirement-1}
 
-Move checking is off by default and runs only when explicitly requested (the `--move-check` CLI flag / `RunOptions::move_check`). When it runs, `check_graph` walks a `TypedModuleGraph` and rejects seven categories of violation — `UseAfterMove`, `PartialMoveUsedAsWhole`, `PartialMoveOfDropType`, `ArrayElementMove`, `BorrowedArrayElementMove`, `MovedMutReferenceWithoutReborrow`, `MoveOutOfReference` — reporting the first as `T0019`. A generic body whose bound-satisfaction can't be checked is not silently accepted; it's collected as `unchecked_generic_bodies` in the report.
+Move checking is off unless requested (`--move-check` / `RunOptions::move_check`). `check_graph` then rejects seven categories of move violation, reporting the first as `T0019`, and reports generic bodies it cannot check as `unchecked_generic_bodies`, not silently accepted.
 
 | Field | Value |
 |---|---|
@@ -34,7 +34,7 @@ Move checking is off by default and runs only when explicitly requested (the `--
 
 ##### Requirement {#arch.move-check.requirement-2}
 
-Places (the syntactic locations a program can name — a binding root plus a path of projections) are analysis-neutral: `place.rs` carries no move-specific state and makes no move-specific assumption. It lives at the crate root, not inside `move_check`, specifically so a future borrow-check pass can run a second analysis over the *same* places without rebuilding them and without the two analyses disagreeing about partial moves — policy lives with each analysis, not with the place representation itself.
+Places (a binding root plus a path of projections) carry no move-specific state: `place.rs` lives at the crate root, outside `move_check`, so a future borrow-check pass can analyse the same places without the two analyses disagreeing about partial moves.
 
 | Field | Value |
 |---|---|
@@ -48,7 +48,7 @@ Places (the syntactic locations a program can name — a binding root plus a pat
 
 ##### Requirement {#arch.move-check.requirement-3}
 
-Closure capture legality is enforced even while the general move-check gate remains opt-in: construction validates capture lists and closure multiplicity/mutation qualifiers, rejecting unlisted non-`Copy` captures (`T0026`), consuming captures without `once` (`T0027`), mutating captures without `var` (`T0028`), and calls to mutating closures through shared access (`T0029`). The ordinary move checker reuses the same closure and place concepts when its wider gate is enabled.
+Closure capture legality is enforced even with move checking off: construction rejects unlisted non-`Copy` captures (`T0026`), consuming captures without `once` (`T0027`), mutating captures without `var` (`T0028`), and mutating closures called through shared access (`T0029`).
 
 | Field | Value |
 |---|---|
