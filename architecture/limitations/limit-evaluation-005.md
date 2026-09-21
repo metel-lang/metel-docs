@@ -6,6 +6,8 @@ scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
 discovered_by: "metel-core#1211 limitation analysis; skipped fixture `evaluator/closures/v0_13_0_captured_drop_order.toml`"
 disposition: planned
+planned_for: v0.15.0
+rfc: RFC-0071
 review: null
 ---
 

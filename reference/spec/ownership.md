@@ -94,9 +94,7 @@ A declared `Copy` implementation is legal only when every struct field or enum p
 
 ## `Drop`
 
-> **Planned for v0.14.0 (RFC-0071, metel-core#261):** executing destructors when values
-> leave scope. `Drop` declarations already participate in the implemented ownership checks;
-> only their runtime destructor behavior is planned.
+> **Limitation** LIMIT-EVALUATION-005
 
 `Drop` gives a type destructor logic that runs when a value goes out of scope:
 
@@ -162,8 +160,7 @@ implementations are rejected only when an instantiation would receive both aspec
 
 ## Drop order
 
-> **Planned for v0.14.0 (RFC-0071, metel-core#261):** scope-exit destruction and its
-> ordering rules.
+> **Limitation** LIMIT-EVALUATION-005
 
 Within a scope, values are [dropped in **reverse declaration order**](#spec.ownership.drop-order.dynamics-1). A value that has been
 moved out is not dropped where it was declared — the new owner drops it.
@@ -200,7 +197,7 @@ its fields.
 
 ## Explicit drop
 
-> **Planned for v0.14.0 (RFC-0071, metel-core#261):** the built-in `drop(x)` operation.
+> **Limitation** LIMIT-EVALUATION-005
 
 [`drop(x)` consumes `x`, runs its destructor if it has one, and marks the binding moved](#spec.ownership.explicit-drop.dynamics-1). Using
 `x` afterwards is [an error, exactly as after any other move](#spec.ownership.explicit-drop.legality-1).
@@ -322,9 +319,7 @@ explicit field move — including the `Drop`-type ban ([legality-2](#spec.owners
 
 A `Drop` type may still be partially *borrowed*; only moving out is restricted.
 
-> **Planned for v0.14.0 (RFC-0137 §5): legality-2's ban is superseded in design by
-> row-bounded `Drop` dispatch — see "Drop dispatch against a narrowed residual" below.
-> Until that mechanism is built, this ban is enforced exactly as stated, unconditionally.**
+> **Gap** GAP-OWNERSHIP-003: legality-2's ban is enforced unconditionally; see [Drop dispatch against a narrowed residual](#drop-dispatch-against-a-narrowed-residual).
 
 ### Which constructs support partial moves
 
@@ -459,6 +454,8 @@ unambiguously, that struct — not a same-shaped anonymous record, and not a
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.ownership.narrowing.legality-1}
+
+> **Gap** GAP-OWNERSHIP-002
 
 > **Since v0.13.0.** Struct narrowing is RFC-0137 slice 2 (metel-core#858); anonymous-record
 > narrowing is RFC-0117 (metel-core#789).
@@ -628,9 +625,7 @@ match that row exactly, with no implicit narrowing at the call site.
 
 ### Drop dispatch against a narrowed residual
 
-> **Planned for v0.14.0 (RFC-0137 §5, metel-core#858).** Needs the narrowed `drop`
-> receiver (RFC-0109); supersedes the `Drop`-type partial-move ban above *in design*,
-> and until implemented that ban is enforced exactly as stated.
+> **Gap** GAP-OWNERSHIP-003
 
 A struct implementing `Drop` whose destructor needs a field that has since been narrowed
 away must not silently skip the destructor's work. Dispatch is **row-bounded**: a `Drop`
@@ -851,9 +846,10 @@ referent is untouched.
 ## What ownership does not cover
 
 Ownership answers *how many owners a value has*, and `Copy` answers *whether a value may be
-duplicated*. Neither answers *what is borrowed at a given point* — that is the borrow
-checker's job, and it is not part of this release. In particular, nothing here prevents two
-`&var T` references to the same place; see the References section of the Type System page.
+duplicated*. Neither answers *what is borrowed at a given point*, which is a borrow checker's job; see the
+References section of the Type System page.
+
+> **Gap** GAP-OWNERSHIP-001
 
 ## Known gaps
 

@@ -42,6 +42,8 @@ src/
 
 ##### Legality Rule {#spec.modules.file-to-module-mapping.legality-1}
 
+> **Gap** GAP-MODULES-002
+
 Each non-prelude module path maps directly to its `.mtl` file path. A facade file and
 the same-named directory are distinct paths; `name/mod.mtl` has no special meaning.
 
@@ -653,6 +655,8 @@ error rather than an import that contributes an empty scope.
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.modules.module-graph-loading.legality-2}
+
+> **Gap** GAP-MODULES-001
 
 Imports and re-exports both contribute module-graph edges. Missing modules and circular
 dependencies are load errors, and a bare re-export loads its target module.

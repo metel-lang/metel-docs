@@ -6,6 +6,8 @@ scope: "reference/spec/declarations.md#spec.declarations.structural-aspect-bound
 owner: language
 discovered_by: "metel-core#1217 limitation analysis; `reference/spec/types.md` (Planned for v0.14.0 note)"
 disposition: planned
+planned_for: v0.14.0
+rfc: RFC-0061
 review: null
 ---
 

@@ -93,6 +93,8 @@ parameter is an associated function and is called through its target type with `
 
 ## First-Class Functions
 
+> **Gap** GAP-FUNCTIONS-001
+
 [Functions are first-class values and can be assigned, passed, and returned](#spec.functions.first-class-functions.legality-2):
 
 ```metel
@@ -923,8 +925,7 @@ exited early.
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-11}
 
-> **Planned for v0.14.0 (RFC-0071, metel-core#261):** closure-environment destruction
-> follows the language's general destructor-execution work.
+> **Limitation** LIMIT-EVALUATION-005: closure environments are not destroyed until destructors run.
 
 When a closure value is dropped, its environment is dropped: each owned capture is dropped
 in capture-list order, as a struct's fields are. A `once`-consumed or partially-moved
