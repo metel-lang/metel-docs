@@ -481,9 +481,9 @@ Assignment through a slice, such as `a[0] = 9`, does not compile; mutation belon
 i64[] = [1, 2, 3];` continues to work through `[T; N]`'s implicit coercion to `T[]`
 (RFC-0053), not because the literal itself is a `T[]`.
 
-The three-way split between `T[]`, `[T; N]`, and `List<T>` below reflects the current
-design. The exact boundary between them — in particular, how a growable list's storage is
-allocated and grown — is not yet fully specified and may change in a future release.
+The three-way split between `T[]`, `[T; N]`, and `List<T>` below reflects the current design.
+
+> **Gap** GAP-TYPES-002
 
 <details>
 <summary>Formal rules</summary>
@@ -829,10 +829,9 @@ fun bump(p: &var i64) -> i64 {
 
 It never fires silently at a plain call site; `fun f(v: i64)` called as `f(r)` where
 `r: &i64` is a type error, not an implicit copy. Argument position has no declared type
-of its own for the rule to compare against, the same reason type-directed extraction of
-an allocated value never fires implicitly at a plain-parameter call site either
-(`public/rfcs/2-accepted/rfc-0066-allocated-value-extraction.md` §3a — not yet
-integrated, cited here only for the parallel).
+of its own for the rule to compare against, the same reason RFC-0066's type-directed
+extraction of an allocated value (§3a, accepted) does not fire implicitly at a plain-parameter
+call site either; cited here only for the parallel.
 
 Chains through multiple reference layers the same way auto-deref does — reaching the
 declared type may require copying out of more than one layer:
@@ -1309,11 +1308,9 @@ squared_magnitude({ x = 3.0, y = 4.0 });   // a record — satisfies the bound
 squared_magnitude(some_point);             // a struct — does not
 ```
 
-Nominal structs do not satisfy row bounds. **Named records are planned, not implemented**;
-they would provide a nominal record kind. See `public/rfcs/2-accepted/rfc-0120-named-records.md`
-(RFC-0120: Named Records) — a plain path mention rather than a link while `rfcs/` is
-excluded from the website (see metel-website's `docusaurus.config.ts`), so this doesn't
-become a broken link once RFCs sync through.
+Nominal structs do not satisfy row bounds.
+
+> **Gap** GAP-TYPES-003
 
 ### Why row capability is opt-in
 
@@ -1372,13 +1369,11 @@ extend<row R: { x: f64, .. }> { ..R }: MyAspect { … }         // every row of 
 extend<row R> { ..R }: MyAspect { … }                         // every row
 ```
 
-**None of the three are available in v0.12.0** — this contradicted the "Not available in
-v0.12.0" callout above until corrected here; confirmed directly, `extend { x: f64, y: f64 }:
-MyAspect { … }` still fails with the same "cannot `extend` an anonymous record type" rejection
-tuples and records both hit. The first form is the one this design intends to land first —
-exactly one structural type, permitted once the aspect is local — but it is not implemented
-yet, unlike the equivalent one-concrete-target form for arrays (`extend<T> T[]: Aspect`,
-already supported). The second and third additionally require row variables, which don't
+> **Gap** GAP-DECLARATIONS-001
+
+The first form is the one this design intends to land first — exactly one structural type,
+permitted once the aspect is local; the equivalent one-concrete-target form for arrays
+(`extend<T> T[]: Aspect`) is already supported. The second and third additionally require row variables, which don't
 exist at all yet. The second also needs overlap checking between row bounds — two
 shape-conditional implementations can be *incomparable* rather than one being more specific,
 so they must be disjoint. The third additionally needs a way to require an aspect of every

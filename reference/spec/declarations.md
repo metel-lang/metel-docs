@@ -1926,9 +1926,9 @@ arrays, each conditional on the element type satisfying the same bound (element-
 `to_string`/join, element-wise clone into new backing storage, and element-wise
 equality respectively). These cannot be overridden by user code (orphan rule).
 `List<T>` is a separate nominal struct; its impls coexist independently of the array
-impls. `Ord` (RFC-0062, still `0-draft`) and `Hash` (not yet proposed) array impls are
-not provided in this language version — neither aspect exists in `std::core` at all yet,
-for arrays or otherwise.
+impls.
+
+> **Gap** GAP-DECLARATIONS-003
 
 > **Changed in v0.12.0 (RFC-0126):** `T[]`'s `Clone` implementation is now a view copy, not
 > an element-wise clone.
@@ -1942,7 +1942,9 @@ already exists and outlives it, not from a buffer the implementation just alloca
 
 A tuple fails an aspect bound the same way an array does without a matching impl: `(i64, String)` does not implement `Display`, and the diagnostic hints at a named struct.
 
-**Function types.** A plain function and a closure share one type, `|A| -> B` (see [Functions — First-Class Functions](functions.md#first-class-functions)) — there is no separate `fun(A) -> B` function-pointer type or syntax; `fun(A) -> B` is a parse error. `Callable<A, B>` does not exist in `std::core` yet — despite being referenced elsewhere as the aspect a function type would formally satisfy, writing a bound or `extends Callable<A, B>` against it is a compile error (`T0003`, unknown aspect) today. A `|A| -> B` value behaves like `Copy` under `--move-check` (reusing one after copying it into another binding is accepted), but there is no working `Clone`: `.clone()` on a `|A| -> B` receiver fails to typecheck (`T0002`, cannot infer receiver type) regardless of annotation. `Display`, `Eq`, `Ord`, `Hash`, `Send`, `Sync`, and `Drop` are not implemented for function types either — there is no canonical string form, function equality is undecidable in general, `Send`/`Sync` aren't implemented for any type yet (RFC-0080, still `1-under-review`), and there is no state to drop.
+**Function types.** A plain function and a closure share one type, `|A| -> B` (see [Functions — First-Class Functions](functions.md#first-class-functions)) — there is no separate `fun(A) -> B` function-pointer type or syntax; `fun(A) -> B` is a parse error. There is no `Callable<A, B>` aspect to bound a function type by. A `|A| -> B` value behaves like `Copy` under `--move-check` (reusing one after copying it into another binding is accepted), but there is no working `Clone`: `.clone()` on a `|A| -> B` receiver fails to typecheck (`T0002`, cannot infer receiver type) regardless of annotation. `Display`, `Eq`, `Ord`, `Hash`, `Send`, `Sync`, and `Drop` are not implemented for function types either — there is no canonical string form, function equality is undecidable in general, `Send`/`Sync` aren't implemented for any type yet (RFC-0080, still `1-under-review`), and there is no state to drop.
+
+> **Gap** GAP-FUNCTIONS-002
 
 **Array auto-impl propagation.** `T[]: Send`, `T[]: Sync`, and `T[]: Drop` are not
 provided in this language version.
@@ -2215,7 +2217,7 @@ not several.
 
 **Object safety.** An aspect with associated types is object-safe only if no method
 signature references the associated type directly (see Static Dispatch Only, below, and
-`dyn Aspect`, deferred to a future release). `Deref` above is *not* object-safe — `deref`
+[`dyn Aspect`](#dyn-aspect)). `Deref` above is *not* object-safe — `deref`
 returns `&Target`, which varies per implementor, and a vtable entry cannot encode a
 type that differs per implementation.
 
