@@ -27,9 +27,17 @@ typechecks and runs. Soundness arguments that rest on exclusivity, such as for
 temporaries materialized behind a reference, hold only because nothing can
 alias them, not because a checker proves it.
 
+The one place exclusivity is enforced today is dynamic and narrow: a second
+`mutating` call on the same closure value while the first is still running is a
+runtime error (`R0015`), which `spec.functions.closures.dynamics-9` states as the
+interim rule until the borrow checker lands. It follows one closure value's own
+in-call flag, so it does not catch two different closure values that capture the
+same place by `&var` (the aliased-capture case left open by RFC-0050).
+
 ## Affects
 
 - `spec.ownership.references-and-moves.legality-1`
+- `spec.functions.closures.dynamics-9`
 - `RFC-0122`
 
 ## Resolution
