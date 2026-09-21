@@ -28,7 +28,7 @@ responsive without making formatting alter program meaning.
 
 ##### Requirement {#arch.resolution.requirement-1}
 
-After inference has solved a body and the frontend has frozen its resolution, no later phase performs semantic lookup keyed by source spelling — every meaning (expression, type, member, field, method, or runtime binding) is instead looked up by a stable identity the frontend already assigned. Every value reference in a resolved body has a *total* `Resolution` (`Global(SymbolId)` or `Local(LocalId)`); there is no silent third case for "unresolved."
+Once inference has solved a body and the frontend has frozen its resolution, no later phase looks anything up by source spelling: every meaning is found by a stable identity, and every value reference has a total `Resolution` (`Global(SymbolId)` or `Local(LocalId)`), with no silent unresolved case.
 
 | Field | Value |
 |---|---|
@@ -42,7 +42,7 @@ After inference has solved a body and the frontend has frozen its resolution, no
 
 ##### Requirement {#arch.resolution.requirement-2}
 
-Lexical bindings and value references are allocated structural identities (`LocalId`, `RefId`) by a parse-driven walk keyed on `LexicalPath` — the chain of structural positions from an owning body to a binding or use, carrying interned spellings and block/parameter ordinals rather than byte offsets or traversal counters. An unrelated text edit (reformatting, an earlier sibling binding, an edit to a different body) does not change an existing identity.
+Bindings and value references get structural identities (`LocalId`, `RefId`) from a parse-driven walk keyed on `LexicalPath`, not on byte offsets or traversal counters, so reformatting, an earlier sibling binding, or an edit to another body does not change an existing identity.
 
 | Field | Value |
 |---|---|
@@ -56,7 +56,7 @@ Lexical bindings and value references are allocated structural identities (`Loca
 
 ##### Requirement {#arch.resolution.requirement-3}
 
-Struct and enum member declarations (fields and enum variants) are interned to stable `FieldId` / `VariantId`, keyed structurally by `(owning type SymbolId, declared member name)`, built from parsed type declarations before inference. These ids are threaded onto the typed IR (`TypedExpr`'s field/variant-access and construction forms carry `Option<FieldId>` / `Option<VariantId>`) rather than re-derived by a later phase from a string.
+Struct fields and enum variants are interned to stable `FieldId` / `VariantId`, keyed by `(owning type SymbolId, member name)` before inference, and threaded onto the typed IR as `Option<FieldId>` / `Option<VariantId>` rather than re-derived from a string.
 
 | Field | Value |
 |---|---|
@@ -70,7 +70,7 @@ Struct and enum member declarations (fields and enum variants) are interned to s
 
 ##### Requirement {#arch.resolution.requirement-4}
 
-Source-position lookup (`PositionIndex`) is the one lookup structure keyed by byte position. It is rebuilt from a parsed snapshot, never persisted, and never a semantic input — it exists only to answer an editor's "what identity is at byte N" question. The one other span-keyed table, `BindingSpans`, is a transient construction-time bridge: the typed-AST pass reads it to stamp each node's `BindingId` and discards it. Every durable resolved artifact (`ResolutionMap`, the frozen IR) is keyed by identity, never by position.
+`PositionIndex` is the one byte-position-keyed lookup: rebuilt from a parsed snapshot, never persisted, never a semantic input. `BindingSpans` is a transient construction-time bridge; every durable resolved artifact (`ResolutionMap`, the frozen IR) is keyed by identity, not position.
 
 | Field | Value |
 |---|---|
