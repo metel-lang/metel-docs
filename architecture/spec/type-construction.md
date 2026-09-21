@@ -23,7 +23,7 @@ facts ([defaults](#arch.type-construction.requirement-9), [overloads](#arch.type
 
 ##### Requirement {#arch.type-construction.requirement-1}
 
-`check_graph` typechecks a normalized module graph in topological order — dependencies before dependents — running both passes (inference, then construction) per module, and accumulates each module's exported type schemes into a `GlobalExports` structure so a later module can import an earlier module's inferred types without re-inferring them.
+`check_graph` typechecks a normalized module graph in topological order, running inference then construction per module, and accumulates each module's exported schemes in `GlobalExports` so later modules import them without re-inferring.
 
 | Field | Value |
 |---|---|
@@ -37,7 +37,7 @@ facts ([defaults](#arch.type-construction.requirement-9), [overloads](#arch.type
 
 ##### Requirement {#arch.type-construction.requirement-2}
 
-Construction stamps the typed IR with resolved identities wherever the frontend has already produced one, rather than re-deriving them: a `FrozenIdentity` bundle threads the member table (`#1051`, field-access and enum-variant-literal `FieldId`/`VariantId`, `#1062`) and the span→`BindingId` bridge (`#1052`) through `check_graph_with_report`, so e.g. `TypedExpr::Ident` carries its resolved binding. The move-check and diagnostic-tool entry points pass `None` for this bundle and get every id as `None` — construction degrades gracefully rather than requiring the full identity system for every caller.
+Construction stamps the typed IR with the identities the frontend already produced (`FieldId`/`VariantId` member ids, the span-to-`BindingId` bridge) through a `FrozenIdentity` bundle in `check_graph_with_report`; callers that pass `None` get every id as `None`, so construction degrades gracefully.
 
 | Field | Value |
 |---|---|
@@ -51,7 +51,7 @@ Construction stamps the typed IR with resolved identities wherever the frontend 
 
 ##### Requirement {#arch.type-construction.requirement-3}
 
-Opaque return variables are validated at constraint-composition time, not by inspecting only the final solved substitution. When an opaque-return marker resolves directly to a concrete type, inference reports `T0018` at that constraint; it may remain a type variable while it is threaded through another generic or opaque interface. Construction consumes that solved result and must not reintroduce the concrete identity.
+Opaque return variables are validated at constraint-composition time, not only against the final substitution: when an opaque-return marker resolves directly to a concrete type, inference reports `T0018`, and construction must not reintroduce the concrete identity.
 
 | Field | Value |
 |---|---|
@@ -65,7 +65,7 @@ Opaque return variables are validated at constraint-composition time, not by ins
 
 ##### Requirement {#arch.type-construction.requirement-4}
 
-The typechecker treats `T[]` as `Copy` unconditionally: its copy eligibility is a deliberate `InferType::Array` special case and does not inspect the element type. Other array-aspect eligibility remains conditional on the element and ordinary stdlib impl/bound machinery; this is not a temporary stdlib-lookup gap.
+The typechecker treats `T[]` as `Copy` unconditionally, as a deliberate `InferType::Array` special case that does not inspect the element type; other array-aspect eligibility stays conditional on the element through ordinary stdlib impl and bound machinery.
 
 | Field | Value |
 |---|---|
@@ -79,7 +79,7 @@ The typechecker treats `T[]` as `Copy` unconditionally: its copy eligibility is 
 
 ##### Requirement {#arch.type-construction.requirement-5}
 
-Until destructor invocation exists, a `std::core::Drop` impl may declare only an empty `drop` method body. Construction identifies the standard aspect by declaring module, leaving a user-defined same-named aspect alone, and rejects a non-empty body with `T0001` rather than accepting cleanup code that the evaluator would silently never run.
+Until destructors run, a `std::core::Drop` impl may declare only an empty `drop` body: construction identifies the standard aspect by declaring module (a same-named user aspect is unaffected) and rejects a non-empty body with `T0001`.
 
 | Field | Value |
 |---|---|
@@ -107,7 +107,7 @@ Type ascriptions constrain inference and construction but are erased from typed 
 
 ##### Requirement {#arch.type-construction.requirement-7}
 
-Operand legality is checked after operand types are resolved: arithmetic and unary negation accept numeric or `Never` operands, while ordering comparisons additionally accept `Str`. The construction pass reports the language's operand-type diagnostic (`T0005`) rather than leaving invalid operator shapes for evaluation.
+Operand legality is checked once operand types are resolved: arithmetic and unary negation accept numeric or `Never` operands, ordering comparisons also accept `Str`, and construction reports `T0005` rather than leaving invalid operator shapes for evaluation.
 
 | Field | Value |
 |---|---|
@@ -121,7 +121,7 @@ Operand legality is checked after operand types are resolved: arithmetic and una
 
 ##### Requirement {#arch.type-construction.requirement-8}
 
-Import visibility is diagnosed while building import schemes, where the full module graph and exports are available. Name resolution records import bindings without prematurely collapsing a private-item error into a missing-item error; construction/typechecking then distinguishes `T0009` visibility from `T0003` absence.
+Import visibility is diagnosed while building import schemes, where the full module graph is known: name resolution records import bindings without collapsing a private-item error into a missing-item one, so construction reports `T0009` (visibility) apart from `T0003` (absence).
 
 | Field | Value |
 |---|---|
@@ -135,7 +135,7 @@ Import visibility is diagnosed while building import schemes, where the full mod
 
 ##### Requirement {#arch.type-construction.requirement-9}
 
-Aspect default methods are materialized as typed methods before evaluation. Inference collects inherited defaults for an impl and construction emits a concrete typed body for each applicable default, while negative impls deliberately do not acquire default bodies; runtime dispatch therefore never evaluates untyped default-method syntax.
+Aspect default methods are materialized as typed methods before evaluation: inference collects an impl's inherited defaults and construction emits a typed body for each, except that negative impls acquire none, so runtime dispatch never evaluates untyped default-method syntax.
 
 | Field | Value |
 |---|---|
@@ -149,7 +149,7 @@ Aspect default methods are materialized as typed methods before evaluation. Infe
 
 ##### Requirement {#arch.type-construction.requirement-10}
 
-Free-function overload selection is exact-match and construction stamps the selected callable's stable `SymbolId` on the typed call. The runtime dispatches that identity through its symbol-value registry; overloaded sets remain module-local and do not become an ambiguous name lookup at evaluation time.
+Free-function overload selection is exact-match, and construction stamps the selected callable's stable `SymbolId` on the typed call; the runtime dispatches that identity through its symbol-value registry, and overload sets stay module-local.
 
 | Field | Value |
 |---|---|
@@ -163,7 +163,7 @@ Free-function overload selection is exact-match and construction stamps the sele
 
 ##### Requirement {#arch.type-construction.requirement-11}
 
-Construction keeps generic struct field templates separate from concrete struct field scopes. At a generic struct literal or field access, it instantiates the declared raw field template with the receiver's resolved type arguments; it does not cache one concrete field type under the generic declaration's surface name.
+At a generic struct literal or field access, construction instantiates the declared raw field template with the receiver's resolved type arguments; it does not cache one concrete field type under the generic declaration's surface name.
 
 | Field | Value |
 |---|---|
@@ -177,7 +177,7 @@ Construction keeps generic struct field templates separate from concrete struct 
 
 ##### Requirement {#arch.type-construction.requirement-12}
 
-Generic runtime reconstruction recovers nominal type arguments from a struct or enum's typed field values against the declared field templates when the runtime value itself carries no complete argument list. The recovery is intentionally best-effort for values whose fields reveal no parameter, rather than changing every `Value::Struct`/`Value::Enum` representation to store duplicated generic metadata.
+Generic runtime reconstruction recovers a struct or enum's type arguments from its typed field values against the declared field templates when the value carries no argument list; this is best-effort for values whose fields reveal no parameter, rather than storing generic metadata on every value.
 
 | Field | Value |
 |---|---|
