@@ -91,7 +91,7 @@ class ArchitectureCorpusCase(unittest.TestCase):
     def write_adr(self, filename: str, text: str):
         (self.decisions_dir / filename).write_text(text)
 
-    def run_checks(self):
+    def run_checks(self, **kwargs):
         return ca.run_checks(
             repo_root=self.tmp,
             spec_dir=self.spec_dir,
@@ -100,6 +100,7 @@ class ArchitectureCorpusCase(unittest.TestCase):
             gaps_dir=self.tmp / "architecture" / "gaps",
             language_spec_dir=self.tmp / "reference" / "spec",
             rfcs_dir=self.tmp / "rfcs",
+            **kwargs,
         )
 
 
@@ -530,3 +531,78 @@ class GapRecordTests(ArchitectureCorpusCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SpecLimitMarkerTests(GapRecordTests):
+    """`> **Gap** ID` / `> **Limitation** ID` markers in Language Spec chapters, and the
+    optional `planned_for` / `rfc` scheduling fields on records (metel-core#1235)."""
+
+    def chapter_with(self, marker_line):
+        (self.tmp / "reference" / "spec" / "types.md").write_text(
+            LANGUAGE_SPEC + "\n" + marker_line + "\n" + self.known_gaps_for(VALID_GAP)
+        )
+
+    def marker_findings(self, **kwargs):
+        return [str(f) for f in self.run_checks(**kwargs)]
+
+    def test_marker_for_an_active_gap_passes(self):
+        self.write_gap_corpus()
+        self.chapter_with("> **Gap** GAP-TYPES-001: a one-line boundary.")
+        self.assertEqual([], self.marker_findings(require_gap_citations=True))
+
+    def test_marker_for_missing_record_is_a_finding(self):
+        self.write_gap_corpus()
+        self.chapter_with("> **Gap** GAP-TYPES-009")
+        self.assertTrue(any("GAP-TYPES-009" in f and "does not exist" in f for f in self.marker_findings()))
+
+    def test_marker_label_must_match_the_record_kind(self):
+        self.write_gap_corpus()
+        self.chapter_with("> **Limitation** GAP-TYPES-001")
+        self.assertTrue(any("use `Gap`" in f for f in self.marker_findings()))
+
+    def test_marker_for_resolved_record_is_a_finding(self):
+        resolved = VALID_GAP.replace("disposition: known", "disposition: superseded")
+        self.write_gap_corpus(gap_text=resolved)
+        self.chapter_with("> **Gap** GAP-TYPES-001")
+        self.assertTrue(any("only active records are cited" in f for f in self.marker_findings()))
+
+    def test_gap_must_be_cited_from_its_own_chapter(self):
+        self.write_gap_corpus()
+        (self.tmp / "reference" / "spec" / "functions.md").write_text(LANGUAGE_SPEC + "\n> **Gap** GAP-TYPES-001\n")
+        self.assertTrue(any("cite a gap from its own chapter" in f for f in self.marker_findings()))
+
+    def test_uncited_active_gap_is_flagged_only_when_required(self):
+        self.write_gap_corpus()
+        self.assertEqual([], self.marker_findings(require_gap_citations=False))
+        self.assertTrue(any("is not cited by" in f for f in self.marker_findings(require_gap_citations=True)))
+
+    def test_limitation_marker_cites_an_active_limit_record(self):
+        self.write_gap_corpus()
+        self.chapter_with("> **Gap** GAP-TYPES-001\n\n> **Limitation** LIMIT-RESOLUTION-001")
+        self.assertEqual([], self.marker_findings(require_gap_citations=True))
+
+    def test_marker_inside_a_code_fence_is_ignored(self):
+        self.write_gap_corpus()
+        self.chapter_with("```\n> **Gap** GAP-TYPES-009\n```")
+        self.assertEqual([], self.marker_findings(require_gap_citations=False))
+
+    def test_planned_for_must_be_a_release(self):
+        text = VALID_GAP.replace("review: null", "planned_for: soon\nreview: null")
+        self.write_gap_corpus(gap_text=text)
+        self.assertTrue(any("must be a release" in f for f in self.marker_findings()))
+
+    def test_valid_schedule_fields_pass(self):
+        self.write_rfc("2-accepted", "0122")
+        text = VALID_GAP.replace("review: null", "planned_for: v0.16.0\nrfc: RFC-0122\nreview: null")
+        self.write_gap_corpus(gap_text=text)
+        self.assertEqual([], self.marker_findings())
+
+    def test_rfc_field_must_exist(self):
+        text = VALID_GAP.replace("review: null", "rfc: RFC-0999\nreview: null")
+        self.write_gap_corpus(gap_text=text)
+        self.assertTrue(any("RFC-0999" in f and "does not exist" in f for f in self.marker_findings()))
+
+    def test_schedule_fields_are_rejected_on_a_finished_record(self):
+        text = VALID_GAP.replace("disposition: known", "disposition: superseded").replace("review: null", "planned_for: v0.16.0\nreview: null")
+        self.write_gap_corpus(gap_text=text)
+        self.assertTrue(any("remove them from a resolved or superseded record" in f for f in self.marker_findings()))
