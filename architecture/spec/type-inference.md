@@ -2,7 +2,7 @@
 
 The largest single area in the codebase (~12,500 lines): a reusable Hindley-Milner engine (`typeinference/`, 5,582 lines — type variables, substitution, unification, type schemes) driven by an AST-walking inference pass (`typechecker::inference`, ~6,900 lines across `typechecker/inference.rs` and `typechecker/inference/{declarations,expressions,lowering,narrowing,patterns}.rs`). The engine/pass boundary is real, not incidental: `typeinference` is `pub mod` at the crate root (usable by `move_check` and `typechecker::construction` too, both of which import from it directly), while `typechecker::inference` is a private submodule (`mod inference;` in `typechecker/mod.rs`) — only the driving pass is typechecker-internal, not the machinery it's built on. Owning crate: `metel-frontend`.
 
-The pass that consumes this section's output to build the typed IR (`typechecker::construction`) is a separate section — see `#type-construction`.
+The pass that consumes this section's output to build the typed IR (`typechecker::construction`) is a separate section — see [Type Construction](type-construction.md).
 
 ## Model
 
