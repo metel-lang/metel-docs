@@ -2532,7 +2532,7 @@ fun transform(x: extends Display) -> extends Display {
 }
 ```
 
-The caller may call any method the declared aspect provides, store the value, and pass it to anything accepting the same opaque type or aspect bound — but may not name the concrete type, cast it, or call methods outside the aspect even if the concrete type has them. Ownership (ownership/`Copy`/`Drop`, not yet integrated — RFC-0071) applies to the concrete type normally; the caller cannot observe which impls it has beyond the declared aspect bound.
+The caller may call any method the declared aspect provides, store the value, and pass it to anything accepting the same opaque type or aspect bound — but may not name the concrete type, cast it, or call methods outside the aspect even if the concrete type has them. Ownership (see [Ownership](ownership.md)) applies to the concrete type normally; the caller cannot observe which impls it has beyond the declared aspect bound.
 
 **Worked example — interaction with associated types.** A function may return `extends Aspect` where `Aspect` declares an associated type; the caller can still use the aspect's own methods to produce values of that associated type, and those values type-check normally, even though the caller cannot name the opaque type itself:
 
@@ -2844,7 +2844,7 @@ a function requiring `T: !Drop` must declare it, since the type parameter could 
 instantiated with a `Drop`-implementing type otherwise.
 
 **`Copy` implies `!Drop`.** Since `Copy` and `Drop` are mutually exclusive (see
-Ownership, not yet integrated — RFC-0071), any type satisfying `T: Copy` automatically
+[Ownership](ownership.md#spec.ownership.copy-and-drop-are-mutually-exclusive.legality-1)), any type satisfying `T: Copy` automatically
 satisfies `T: !Drop`, derived without an explicit declaration.
 
 **Compound types.** `T: !Drop` is a claim about `T` itself, not its fields — a struct
