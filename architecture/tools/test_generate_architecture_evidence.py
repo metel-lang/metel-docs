@@ -429,5 +429,226 @@ class RecordAffectsCodeLinkTests(unittest.TestCase):
             self.assertEqual([], findings)
 
 
+class RecordMarkerTests(unittest.TestCase):
+    """`// limit: [...]` code-side markers (metel-core#1236 level 3, ADR-0055 amendment
+    #1247): the delimited subsection of `## Affects`, and the drift check."""
+
+    def init_git(self, core: Path) -> None:
+        subprocess.run(["git", "-C", str(core), "init", "-q"], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(core), "config", "user.email", "test@example.com"], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(core), "config", "user.name", "test"], check=True, capture_output=True)
+
+    def commit(self, core: Path, message: str = "commit") -> None:
+        subprocess.run(["git", "-C", str(core), "add", "-A"], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(core), "commit", "-q", "-m", message], check=True, capture_output=True)
+
+    def make_core(self, root: Path, rust: str, git: bool = False) -> Path:
+        core = root / "core"
+        (core / "src").mkdir(parents=True)
+        (core / "src/lib.rs").write_text(rust)
+        if git:
+            self.init_git(core)
+            self.commit(core, "initial")
+        return core
+
+    def write_record(self, root: Path, record_id: str, affects: str = "", disposition: str = "known") -> Path:
+        records = root / "docs" / "architecture" / "limitations"
+        records.mkdir(parents=True, exist_ok=True)
+        path = records / (record_id.lower() + ".md")
+        path.write_text(
+            f"---\nid: {record_id}\ndisposition: {disposition}\n---\n\n## Limitation\n\nSome limitation.\n\n"
+            f"## Affects\n\n{affects}\n\n## Resolution\n\nNone yet.\n"
+        )
+        return records
+
+    def regenerate(self, records: Path, core: Path, check: bool, ref: str = "a" * 40):
+        previous = evidence.DOCS
+        evidence.DOCS = records.parent.parent.parent
+        try:
+            return evidence.regenerate_record_markers(records, core, ref, check)
+        finally:
+            evidence.DOCS = previous
+
+    def test_marker_inserts_a_new_delimited_block(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, '// limit: ["LIMIT-X-001"]\npub fn target_fn() {}\n')
+            records = self.write_record(root, "LIMIT-X-001")
+            findings = self.regenerate(records, core, False)
+            self.assertEqual([], findings)
+            text = (records / "limit-x-001.md").read_text()
+            self.assertIn(evidence.LIMIT_MARKERS_START, text)
+            self.assertIn(f"[`src/lib.rs::target_fn`](https://github.com/metel-lang/metel-core/blob/{'a'*40}/src/lib.rs#L1)", text)
+            self.assertIn(evidence.LIMIT_MARKERS_END, text)
+            # a blank line separates the block from the next section
+            self.assertIn(f"{evidence.LIMIT_MARKERS_END}\n\n## Resolution", text)
+
+    def test_resolves_static_struct_and_pest_rule(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, '// limit: ["LIMIT-X-001"]\nstatic COUNTER: u32 = 0;\n')
+            (core / "src/grammar.pest").write_text('// limit: ["LIMIT-X-001"]\nident = { ASCII_ALPHA+ }\n')
+            (core / "src/shapes.rs").write_text('// limit: ["LIMIT-X-001"]\npub struct Thing { x: i64 }\n')
+            records = self.write_record(root, "LIMIT-X-001")
+            findings = self.regenerate(records, core, False)
+            self.assertEqual([], findings)
+            text = (records / "limit-x-001.md").read_text()
+            self.assertIn("COUNTER", text)
+            self.assertIn("src/grammar.pest#L1", text)
+            self.assertIn("Thing", text)
+
+    def test_no_markers_is_a_true_no_op(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, "pub fn f() {}\n")
+            records = self.write_record(root, "LIMIT-X-001", affects="- `arch.resolution.requirement-1`")
+            before = (records / "limit-x-001.md").read_text()
+            findings = self.regenerate(records, core, False)
+            self.assertEqual([], findings)
+            self.assertEqual(before, (records / "limit-x-001.md").read_text())
+
+    def test_hand_written_bullets_are_untouched(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, '// limit: ["LIMIT-X-001"]\npub fn target_fn() {}\n')
+            records = self.write_record(
+                root, "LIMIT-X-001",
+                affects="- `arch.resolution.requirement-1`\n- `RFC-0161`\n- `src/other.rs::hand_typed`",
+            )
+            self.regenerate(records, core, False)
+            text = (records / "limit-x-001.md").read_text()
+            self.assertIn("- `arch.resolution.requirement-1`", text)
+            self.assertIn("- `RFC-0161`", text)
+            self.assertIn("- `src/other.rs::hand_typed`", text)
+
+    def test_block_removed_when_no_longer_marked(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, '// limit: ["LIMIT-X-001"]\npub fn target_fn() {}\n')
+            records = self.write_record(root, "LIMIT-X-001")
+            self.regenerate(records, core, False)
+            self.assertIn(evidence.LIMIT_MARKERS_START, (records / "limit-x-001.md").read_text())
+            (core / "src/lib.rs").write_text("pub fn target_fn() {}\n")  # marker removed
+            findings = self.regenerate(records, core, False)
+            self.assertEqual([], findings)  # no git history here -- nothing to flag as drift
+            self.assertNotIn(evidence.LIMIT_MARKERS_START, (records / "limit-x-001.md").read_text())
+
+    def test_marker_citing_a_missing_record_is_a_finding(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, '// limit: ["LIMIT-X-999"]\npub fn f() {}\n')
+            records = self.write_record(root, "LIMIT-X-001")
+            findings = self.regenerate(records, core, False)
+            self.assertTrue(any("LIMIT-X-999" in f and "does not exist" in f for f in findings), findings)
+
+    def test_marker_citing_an_inactive_record_is_a_finding(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, '// limit: ["LIMIT-X-001"]\npub fn f() {}\n')
+            records = self.write_record(root, "LIMIT-X-001", disposition="resolved")
+            findings = self.regenerate(records, core, False)
+            self.assertTrue(any("resolved" in f and "LIMIT-X-001" in f for f in findings), findings)
+
+    def test_check_mode_reports_stale_without_writing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, '// limit: ["LIMIT-X-001"]\npub fn target_fn() {}\n')
+            records = self.write_record(root, "LIMIT-X-001")
+            before = (records / "limit-x-001.md").read_text()
+            findings = self.regenerate(records, core, True)
+            self.assertTrue(any("stale" in f for f in findings), findings)
+            self.assertEqual(before, (records / "limit-x-001.md").read_text())
+
+    def test_rerun_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, '// limit: ["LIMIT-X-001"]\npub fn target_fn() {}\n')
+            records = self.write_record(root, "LIMIT-X-001")
+            self.regenerate(records, core, False)
+            once = (records / "limit-x-001.md").read_text()
+            findings = self.regenerate(records, core, True)
+            self.assertEqual([], findings)
+            self.assertEqual(once, (records / "limit-x-001.md").read_text())
+
+    def test_drift_flags_a_record_whose_marker_vanished_from_history(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, '// limit: ["LIMIT-X-001"]\npub fn target_fn() {}\n', git=True)
+            (core / "src/lib.rs").write_text("pub fn target_fn() {}\n")
+            self.commit(core, "remove the marker")
+            records = self.write_record(root, "LIMIT-X-001")
+            findings = self.regenerate(records, core, False)
+            self.assertTrue(
+                any("LIMIT-X-001" in f and "no longer is by any current" in f for f in findings), findings
+            )
+
+    def test_no_drift_finding_while_the_marker_is_still_current(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, '// limit: ["LIMIT-X-001"]\npub fn target_fn() {}\n', git=True)
+            records = self.write_record(root, "LIMIT-X-001")
+            findings = self.regenerate(records, core, False)
+            self.assertFalse(any("no longer is by any current" in f for f in findings), findings)
+
+    def test_missing_records_directory_is_a_no_op(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, "pub fn f() {}\n")
+            findings = evidence.regenerate_record_markers(root / "docs/architecture/limitations", core, "a" * 40, False)
+            self.assertEqual([], findings)
+
+
+class Level2Level3BoundaryTests(unittest.TestCase):
+    """The cross-function bug found and fixed while building level 3: level 2's own
+    Affects rewriting must never see or touch level 3's delimited block, even though
+    both produce an identically-shaped link-wrapped `path::symbol` bullet."""
+
+    def make_core(self, root: Path, rust: str) -> Path:
+        core = root / "core"
+        (core / "src").mkdir(parents=True)
+        (core / "src/lib.rs").write_text(rust)
+        return core
+
+    def write_record(self, root: Path, affects: str) -> Path:
+        records = root / "docs" / "architecture" / "limitations"
+        records.mkdir(parents=True, exist_ok=True)
+        path = records / "limit-x-001.md"
+        path.write_text(
+            f"---\nid: LIMIT-X-001\ndisposition: known\n---\n\n## Limitation\n\nSome limitation.\n\n"
+            f"## Affects\n\n{affects}\n\n## Resolution\n\nNone yet.\n"
+        )
+        return records
+
+    def regenerate_both(self, records: Path, core: Path, check: bool, ref: str = "a" * 40):
+        previous = evidence.DOCS
+        evidence.DOCS = records.parent.parent.parent
+        try:
+            f1 = evidence.regenerate_record_affects(records, core, ref, check)
+            f2 = evidence.regenerate_record_markers(records, core, ref, check)
+            return f1, f2
+        finally:
+            evidence.DOCS = previous
+
+    def test_level2_and_level3_coexist_and_stay_idempotent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(
+                root,
+                'pub fn hand_named() {}\n\n// limit: ["LIMIT-X-001"]\npub fn marked_fn() {}\n',
+            )
+            records = self.write_record(root, "- `src/lib.rs::hand_named`")
+            f1, f2 = self.regenerate_both(records, core, False)
+            self.assertEqual([], f1 + f2)
+            text = (records / "limit-x-001.md").read_text()
+            self.assertIn("hand_named", text)
+            self.assertIn("marked_fn", text)
+            # a second full pass changes nothing (level 2 does not perturb level 3's
+            # block, and vice versa)
+            once = text
+            f1, f2 = self.regenerate_both(records, core, True)
+            self.assertEqual([], f1 + f2)
+            self.assertEqual(once, (records / "limit-x-001.md").read_text())
+
+
 if __name__ == "__main__":
     unittest.main()
