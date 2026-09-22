@@ -680,3 +680,81 @@ class ClaimLengthLintTests(unittest.TestCase):
 
     def test_claim_length_never_fails_the_check(self):
         self.assertNotIn("lint_claim_length", ca.run_checks.__code__.co_names)
+
+
+class FixtureCitationTests(unittest.TestCase):
+    """Skipped-fixture LIMIT-* citations (metel-core#1219), against a fake core checkout."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.sources = self.tmp / "metel-interpreter" / "tests" / "integration" / "sources"
+        self.sources.mkdir(parents=True)
+
+    def write_fixture(self, name, skip, nested=True):
+        text = f'[options]\nskip = "{skip}"\n' if nested else f'skip = "{skip}"\n'
+        (self.sources / name).write_text(text)
+
+    def limit(self, id_="LIMIT-RESOLUTION-001", disposition="known", discovered_by="a test", resolution="None yet."):
+        return (
+            Path(f"architecture/limitations/{id_.lower()}.md"),
+            {"id": id_, "disposition": disposition, "discovered_by": discovered_by},
+            [],
+            resolution,
+        )
+
+    def check(self, records):
+        return ca.check_skip_fixture_citations(self.tmp, records, self.tmp)
+
+    def test_finds_top_level_and_nested_skip(self):
+        self.write_fixture("a.toml", "LIMIT-RESOLUTION-001", nested=False)
+        self.write_fixture("b.toml", "LIMIT-RESOLUTION-001", nested=True)
+        found = ca.find_skipped_fixtures(self.tmp)
+        self.assertEqual(2, len(found))
+
+    def test_citing_an_active_record_is_clean_and_marks_it_evidenced(self):
+        self.write_fixture("a.toml", "LIMIT-RESOLUTION-001 -- reproduces the gap")
+        findings, warnings = self.check([self.limit()])
+        self.assertEqual([], [str(f) for f in findings])
+        self.assertEqual([], [str(w) for w in warnings])
+
+    def test_citing_a_missing_record_is_a_finding(self):
+        self.write_fixture("a.toml", "LIMIT-RESOLUTION-009 -- typo")
+        findings, _ = self.check([self.limit()])
+        self.assertTrue(any("does not exist" in str(f) for f in findings))
+
+    def test_citing_an_inactive_record_is_a_finding(self):
+        self.write_fixture("a.toml", "LIMIT-RESOLUTION-001 -- stale")
+        findings, _ = self.check([self.limit(disposition="resolved")])
+        self.assertTrue(any("resolved" in str(f) for f in findings))
+
+    def test_no_limit_id_and_not_exempt_is_a_finding(self):
+        self.write_fixture("a.toml", "metel-core#261 -- destructor invocation is not implemented")
+        findings, _ = self.check([])
+        self.assertTrue(any("cites no LIMIT-* record and is not marked exempt" in str(f) for f in findings))
+
+    def test_exempt_with_no_limit_id_passes(self):
+        self.write_fixture("a.toml", "exempt: RFC-0134 accepted, not yet implemented, metel-core#926")
+        findings, _ = self.check([])
+        self.assertEqual([], [str(f) for f in findings])
+
+    def test_active_record_with_no_evidence_is_a_warning(self):
+        findings, warnings = self.check([self.limit()])
+        self.assertEqual([], [str(f) for f in findings])
+        self.assertTrue(any("unevidenced" in str(w) for w in warnings))
+
+    def test_active_record_with_a_named_reproduction_is_not_a_warning(self):
+        _, warnings = self.check([self.limit(discovered_by="metel-core#1212 limitation analysis")])
+        self.assertEqual([], [str(w) for w in warnings])
+
+    def test_inactive_record_with_no_evidence_is_not_a_warning(self):
+        _, warnings = self.check([self.limit(disposition="resolved", discovered_by="a test")])
+        self.assertEqual([], [str(w) for w in warnings])
+
+    def test_malformed_toml_is_skipped_not_a_crash(self):
+        (self.sources / "bad.toml").write_text("not [ valid toml")
+        findings, warnings = self.check([self.limit()])
+        self.assertTrue(any("unevidenced" in str(w) for w in warnings))
+
+    def test_missing_core_root_returns_no_fixtures(self):
+        self.assertEqual([], ca.find_skipped_fixtures(self.tmp / "nonexistent"))
