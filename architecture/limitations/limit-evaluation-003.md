@@ -31,6 +31,10 @@ semantic name lookup here would not be caught by the existing CI backstop.
 - `arch.evaluation.requirement-2`
 - `arch.resolution.requirement-1`
 
+<!-- limit.py:markers:start -->
+- [`metel-interpreter/src/evaluator/mod.rs::RuntimeRegistry`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-interpreter/src/evaluator/mod.rs#L428)
+<!-- limit.py:markers:end -->
+
 ## Resolution
 
 None yet. `tools/check_no_semantic_name_lookup.py`'s own "Deliberately NOT

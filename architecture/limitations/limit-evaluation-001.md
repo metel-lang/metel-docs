@@ -31,6 +31,10 @@ as a hard requirement elsewhere (ADR-0004's compiler path, ADR-0010).
 - `arch.type-construction.requirement-2`
 - `arch.evaluation.requirement-1`
 
+<!-- limit.py:markers:start -->
+- [`metel-frontend/src/typechecker/construction.rs::construct_generic_body`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typechecker/construction.rs#L907)
+<!-- limit.py:markers:end -->
+
 ## Resolution
 
 None yet. ADR-0010's own "Future work" note: if performance becomes a

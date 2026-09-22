@@ -32,6 +32,10 @@ the spec gives no such exception. The workaround is an explicit `import`.
 - `spec.modules.paths.legality-1`
 - `metel-frontend/src/path_normalizer.rs`
 
+<!-- limit.py:markers:start -->
+- [`metel-frontend/src/path_normalizer.rs::try_resolve_path`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/path_normalizer.rs#L404)
+<!-- limit.py:markers:end -->
+
 ## Resolution
 
 None yet; tracked as `metel-core#1221`.

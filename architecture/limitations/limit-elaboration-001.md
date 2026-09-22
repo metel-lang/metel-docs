@@ -31,6 +31,10 @@ on `metel-frontend` — from synthesizing an `ElaboratedModuleGraph` whose
 - `arch.elaboration.requirement-1`
 - `arch.path-normalization.requirement-1`
 
+<!-- limit.py:markers:start -->
+- [`metel-frontend/src/elaborator/mod.rs::ElaboratedModuleGraph`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/elaborator/mod.rs#L35)
+<!-- limit.py:markers:end -->
+
 ## Resolution
 
 None yet. The straightforward fix (narrow the field to `pub(crate)`,

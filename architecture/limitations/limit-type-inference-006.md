@@ -51,6 +51,11 @@ attempt at parallel checking was made.
 - `metel-frontend/src/typechecker/mod.rs` (`check_graph`, `export_gen`)
 - `metel-frontend/src/typeinference/mod.rs` (`InferContext`, `TypeVarGenerator`)
 
+<!-- limit.py:markers:start -->
+- [`metel-frontend/src/typechecker/mod.rs::check_graph`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typechecker/mod.rs#L349)
+- [`metel-frontend/src/typeinference/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typeinference/mod.rs#L46)
+<!-- limit.py:markers:end -->
+
 ## Resolution
 
 None yet. There is no plan or issue for parallel type checking.
