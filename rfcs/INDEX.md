@@ -1239,17 +1239,20 @@ implementation).
   (`Callable<A,R>` + orthogonal `CallMany` / `CallShared`, auto-impl per RFC-0096) on a
   per-closure anonymous type — under which RFC-0152's widening dissolves into
   bound-subsetting; that is now RFC-0161's design space. Tracker metel-core#902 (v0.13.0).
-- **RFC-0161** *(under review, opened 2026-09-01; #923)* — Callable Object Contract
-  (`dyn Callable`) — extracted from the v0.13.0 closure cluster during the third
-  adversarial review. The flat 3-field `Type::Fun` model ships at v0.13.0 monomorphic;
-  type-erased `dyn Callable<Args, Ret>` is deferred here to **v0.13.1** rather than
-  shipping a normative default resting on unbuilt machinery (RFC-0096 auto-impl aspects,
-  RFC-0061 §7.1's never-built `Callable`, RFC-0008 object-safety of a by-value `self`
-  receiver). Designs: the `Callable` aspect (compiler-synthesized), receiver kind
-  selected per axis (`&self` / `&var self` / by-value `self`), `CallMany` / `CallShared` /
-  `Copy` markers with **subset-widening** (present = more permissive), and erased
-  single-call state (move-out-of-box vs runtime poison flag). Two design OQs gate
-  acceptance. Depends on RFC-0096 (hence v0.13.1). Tracker metel-core#923.
+- **RFC-0161** *(under review, opened 2026-09-01, revised 2026-09-22; #923)* —
+  Callable Object Contract (`dyn Callable`) — extracted from the v0.13.0 closure cluster
+  during the third adversarial review. The flat 3-field `Type::Fun` model ships at
+  v0.13.0 monomorphic; type-erased `dyn Callable<Args, Ret>` is deferred here rather than
+  shipping a normative default resting on unbuilt machinery. Designs: the `Callable`
+  aspect (compiler-synthesized and user-authored impls), receiver kind selected per axis
+  (`&self` / `&var self` / `self` / `var self`, the last via RFC-0169), `CallMany` /
+  `CallShared` / `Copy` markers with **subset-widening** (present = more permissive), and
+  erased single-call state (a consuming call on the owned `dyn`, via an RFC-0008
+  amendment §5 proposes — no `Box`, no poison flag). **Revised 2026-09-22:** the
+  by-value receiver split is now exact (RFC-0169 dependency), RFC-0096 is no longer a
+  hard dependency, one open question dissolved (RFC-0008 §9 already permits multi-marker
+  `dyn` bounds), delivery phased into Phase A (the aspect, no unbuilt dependency) and
+  Phase B (`dyn Callable`, gated on the RFC-0008 amendment). Tracker metel-core#923.
 - **RFC-0164** *(draft, opened 2026-09-02; v0.13.1)* — Mutating Closures with a
   Propagating `?` Are Call-Once — follow-up to RFC-0153. A `var` (mutating) closure whose
   body can propagate an error out via `?` is classified `once`: an implicitly-chosen
