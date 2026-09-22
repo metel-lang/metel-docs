@@ -42,6 +42,10 @@ There is no observable symptom, so no reproducing fixture.
 - `metel-frontend/src/symbols.rs` (`SymbolTable`, `USER_SYM_START`, `OVERLOAD_SYM_START`)
 - `metel-frontend/src/typeinference/mod.rs` (`fresh_local_type_id`)
 
+<!-- limit.py:markers:start -->
+- [`metel-frontend/src/typeinference/mod.rs::fresh_local_type_id`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typeinference/mod.rs#L2402)
+<!-- limit.py:markers:end -->
+
 ## Resolution
 
 None yet. Typed allocators (one owner for the whole space, with range checks

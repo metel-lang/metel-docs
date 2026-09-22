@@ -43,6 +43,10 @@ reason and should be enabled when the limitation is lifted.
 - `arch.evaluation.requirement-1`
 - `arch.type-construction.requirement-5`
 
+<!-- limit.py:markers:start -->
+- [`metel-frontend/src/typechecker/construction/declarations.rs::reject_inert_destructor`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typechecker/construction/declarations.rs#L391)
+<!-- limit.py:markers:end -->
+
 ## Resolution
 
 Planned: tracked as metel-core#261 (RFC-0071 3/4: drop order and explicit

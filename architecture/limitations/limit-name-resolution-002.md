@@ -45,7 +45,11 @@ is no reproducing fixture.
 
 - `arch.name-resolution.requirement-1`
 - `arch.type-construction.requirement-10`
-- [`metel-frontend/src/typechecker/overload.rs::NEXT_OVERLOAD_SYM`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/typechecker/overload.rs#L34)
+- [`metel-frontend/src/typechecker/overload.rs::NEXT_OVERLOAD_SYM`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typechecker/overload.rs#L35)
+
+<!-- limit.py:markers:start -->
+- [`metel-frontend/src/typechecker/overload.rs::NEXT_OVERLOAD_SYM`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typechecker/overload.rs#L34)
+<!-- limit.py:markers:end -->
 
 ## Resolution
 

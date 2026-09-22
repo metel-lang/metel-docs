@@ -43,6 +43,10 @@ there is no reproducing fixture.
 - `arch.name-resolution.requirement-1`
 - `metel-frontend/src/symbols.rs` (`SymbolTable::new`, the `SYM_*` constants)
 
+<!-- limit.py:markers:start -->
+- [`metel-frontend/src/symbols.rs::new`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/symbols.rs#L81)
+<!-- limit.py:markers:end -->
+
 ## Resolution
 
 None yet. Generating the fixed ids from the `std::core` declarations, or

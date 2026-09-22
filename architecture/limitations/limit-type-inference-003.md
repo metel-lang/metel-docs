@@ -44,6 +44,10 @@ recorded as an implementation limitation.
 - `arch.type-inference.requirement-1`
 - `metel-frontend/src/typechecker/inference/patterns.rs`
 
+<!-- limit.py:markers:start -->
+- [`metel-frontend/src/typechecker/inference/patterns.rs::infer_pattern`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typechecker/inference/patterns.rs#L82)
+<!-- limit.py:markers:end -->
+
 ## Resolution
 
 None yet. If the spec decides `..` is not allowed there, this record is
