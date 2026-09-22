@@ -55,7 +55,9 @@ key, not the declaration.
 
 - `arch.name-resolution.requirement-1`
 - `arch.resolution.requirement-1`
-- `metel-frontend/src/name_resolver.rs` (`intern_all_symbols`, `decl_any_name`, `method_symbol_name`)
+- [`metel-frontend/src/name_resolver.rs::intern_all_symbols`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/name_resolver.rs#L328)
+- [`metel-frontend/src/name_resolver.rs::decl_any_name`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/name_resolver.rs#L412)
+- [`metel-frontend/src/name_resolver.rs::method_symbol_name`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/name_resolver.rs#L248)
 - `metel-frontend/src/identity/allocate.rs` (method-symbol lookup)
 
 ## Resolution

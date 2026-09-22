@@ -37,7 +37,7 @@ fallback lives in the inference-time registry, before that freeze.
 ## Affects
 
 - `arch.resolution.requirement-1`
-- `metel-frontend/src/typeinference/mod.rs` (`resolve_type_key_broad`)
+- [`metel-frontend/src/typeinference/mod.rs::resolve_type_key_broad`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/typeinference/mod.rs#L2383)
 
 ## Resolution
 
