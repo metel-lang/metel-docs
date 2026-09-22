@@ -157,45 +157,91 @@ an ADR-level decision (Standard 9), not a quiet one.
 in `src/` must never branch on being under test (`cfg!(test)`, not `#[cfg(test)]`) and
 must never expose a `pub`/`pub(crate)` item that exists *only* to be reachable from a
 test rather than from a real caller. This standard does **not** forbid `#[cfg(test)] mod
-tests { ... }` colocated with the module it tests.
+tests` colocated with the module it tests — but a `#[cfg(test)]` unit-test module is
+always declared as `mod tests;` pointing at a sibling `tests.rs` (or, for a directory
+module, `<module>/tests.rs`), never with its body written inline in the same file as the
+code it tests.
 
-**Why the narrower reading, stated honestly.** The issue that requested this document
-phrased the rule as "no `#[cfg(test)]` modules, fixtures, test-only branches, or
-test-only escape hatches in application `src/`," bundling four different things
-together. Taken completely literally, the first of those four would flag **28 files**
-across `metel-frontend/src` and `metel-interpreter/src` — colocated `#[cfg(test)] mod
-tests` is this codebase's normal, working, everywhere-established convention, not an
-exception to it. Writing a standard that contradicts 28 files of existing practice on
-day one would make this document wrong the moment it's published, not aspirational.
-Audited directly for the other three (`cfg!(test)` runtime branches, test-only `pub`
-escape hatches, baked-in fixture data): **none found** anywhere in `metel-frontend/src`
-or `metel-interpreter/src`. So the honest state of this standard today is: the codebase
-already conforms to its real spirit, and the literal "no `#[cfg(test)]` modules" reading
-is narrowed here to what's actually true and actually worth holding the line on.
+**Why the narrower reading of the first clause, stated honestly.** The issue that
+requested this document phrased the mixing rule as "no `#[cfg(test)]` modules, fixtures,
+test-only branches, or test-only escape hatches in application `src/`," bundling four
+different things together. Taken completely literally, the first of those four would
+flag **28 files** across `metel-frontend/src` and `metel-interpreter/src` — colocated
+`#[cfg(test)] mod tests` is this codebase's normal, working, everywhere-established
+convention, not an exception to it, and it's also the idiomatic Rust convention more
+broadly (the Rust Book's own "Test Organization" chapter, `cargo new --lib`'s default
+scaffold): a nested test module sees its parent's private items under ordinary Rust
+visibility rules with no extra exposure, and `#[cfg(test)]` excludes it from every
+non-test build at zero runtime cost — a fundamentally different mechanism from the
+runtime `cfg!(test)` macro this standard actually targets, despite the similar name.
+Writing a standard that banned it outright would contradict 28 files of existing,
+idiomatic practice on day one. Audited directly for the other three (`cfg!(test)`
+runtime branches, test-only `pub` escape hatches, baked-in fixture data): **none found**
+anywhere in `metel-frontend/src` or `metel-interpreter/src`.
 
-**Rationale.** A runtime branch on "am I under test" is a second, untested code path
-hiding behind the real one — the exact shape of bug a fixture can never catch, because
-the fixture itself triggers the *other* branch.
+**The file-separation clause, added 2026-09-22 at the project's request, and the honest
+state of the codebase against it.** Of the same 28 files, only **one**
+(`metel-frontend/src/identity.rs`, via `#[cfg(test)] mod tests;` pointing at
+`identity/tests.rs`) already uses the separate-file form this clause requires; the other
+**27** write the test module's body inline. This is not the "already true" case Standard
+3 is — it is closer to Standard 5's original first clause before that audit, a
+genuinely new requirement with almost the whole codebase currently on the wrong side of
+it. Stated plainly rather than smoothed over, the same way Standard 2's and Standard 8's
+open violations are: adopting this clause is a real, sizable migration, not a
+formality, and this document does not itself perform that migration — see Exception
+process below for how the gap is carried in the meantime. The separate-file form is not
+invented for this rule: `identity/tests.rs` already demonstrates it, and Rust's own
+community guidance names splitting a test module into its own file (over moving it to
+`tests/`) as the standard answer to a colocated test module growing large enough to hurt
+incremental-compile time — this clause just makes that the rule for every file, not only
+the one that happened to grow large enough to need it.
 
-**Examples / counterexamples.** Conforming: every one of the 28 `#[cfg(test)] mod tests`
-blocks audited — each is unit tests colocated with its module, compiled out of any
-non-test build, never a runtime branch. A violation would be `if cfg!(test) { .. } else
-{ .. }` inside real dispatch logic, or a `pub fn` whose only real caller is a test module
-in a different file.
+**Rationale.** The runtime-branch/escape-hatch clause: a branch on "am I under test" is a
+second, untested code path hiding behind the real one — the exact shape of bug a fixture
+can never catch, because the fixture itself triggers the *other* branch. The
+file-separation clause: an implementation file that also contains its own test bodies is
+harder to scan as pure production code (in a diff, in a file listing, in a reviewer's
+first read), and inline test bodies grow without the natural size pressure a separate
+file provides; splitting costs nothing semantically (`use super::*` still reaches the
+parent module's items identically from a sibling file) and is already this codebase's own
+proven shape in the one file that already needed it.
 
-**Enforcement.** None yet — this is the "new enforcement surface" the source issue itself
-says is a follow-up, not required by this document. The intended shape, when built: a
-checker in `clippy_allow_ratchet.py`'s own grandfathered-baseline pattern (a JSON
-baseline recording today's exemption count per file, new bare occurrences fail CI,
-existing ones are not retroactively broken).
+**Examples / counterexamples.** Conforming (runtime-branch clause): every one of the 28
+`#[cfg(test)] mod tests` blocks audited — each is unit tests colocated with its module,
+compiled out of any non-test build, never a runtime branch. Conforming (file-separation
+clause): `identity.rs`'s `#[cfg(test)] mod tests;` + `identity/tests.rs`, the only current
+instance. Violating (runtime-branch clause): `if cfg!(test) { .. } else { .. }` inside
+real dispatch logic, or a `pub fn` whose only real caller is a test module in a different
+file — neither found in an audit of this codebase. Violating (file-separation clause): the
+other 27 files' `#[cfg(test)] mod tests { .. }` with the body written in place — found
+throughout this codebase today, not hypothetical.
+
+**Enforcement.** None yet for either clause — this is the "new enforcement surface" the
+source issue itself says is a follow-up, not required by this document. The intended
+shape, when built, is the same for both: a checker in `clippy_allow_ratchet.py`'s own
+grandfathered-baseline pattern (a JSON baseline recording today's count per file — for
+the file-separation clause, the 27 files above — new bare occurrences fail CI, existing
+ones are not retroactively broken). The file-separation clause's check is purely
+syntactic (does `#[cfg(test)]` precede `mod tests { ... }` or `mod tests;`?), simpler to
+build correctly than the runtime-branch clause's, which needs to tell a legitimate
+`cfg!(test)` use in test-support code from a real production branch.
 
 **Exception process.** A deliberate, reasoned `cfg!(test)` branch or test-only escape
 hatch gets an inline `// test-support: <reason>` comment — same shape as
-`clippy-allow:`/`resolution-freeze-allow:` — once the checker exists to look for it.
-Until then, review is the only enforcement, so a reviewer flags the pattern by eye.
+`clippy-allow:`/`resolution-freeze-allow:` — once the checker exists to look for it. The
+27 files not yet split are grandfathered by the same baseline the eventual checker will
+carry, exactly like `clippy-allow-baseline.json` already grandfathers pre-existing Clippy
+suppressions — not a standing exception to request per file, just the starting count a
+ratchet checker would need. Migrating one of the 27 (moving its inline test body into a
+sibling `tests.rs`, mechanically) is welcome opportunistically wherever a PR is already
+touching that file's tests, but is not itself this document's job to schedule. Until a
+checker exists, review is the only enforcement for both clauses, so a reviewer flags
+either pattern by eye.
 
 **Expiry.** Revisit once the checker is actually built and has a real baseline to compare
-against; until then this standard is statement-only.
+against; until then this standard is statement-only for both clauses, and the
+file-separation clause additionally awaits a decision on whether/how to schedule the
+27-file migration.
 
 ## 6. Contract-focused tests at pipeline boundaries
 
