@@ -313,11 +313,13 @@ receiver-rule design.
 
 Scheduling for each phase is the tracking issue's milestone, not this document (per
 `rfcs/PROCESS.md`, "Roadmap and scheduling" — GitHub milestones are the single source
-of truth). metel-core#923 currently carries **no milestone**: a strategic call
-(2026-09-22) to keep the v0.13.1–v0.17.0 line on ownership-finalization and
-row-polymorphism, not general aspect/closure completeness (see `GAP-FUNCTIONS-002`).
-This RFC's design work continues regardless; a milestone, split per phase, is set once
-a release adopts it.
+of truth). metel-core#923 currently targets **v0.18.1**: a strategic call (2026-09-22)
+to keep the v0.13.1–v0.17.0 line on ownership-finalization and row-polymorphism, not
+general aspect/closure completeness (see `GAP-FUNCTIONS-002`), matching the project's
+existing convention — v0.18.1 already carries other design settlement (comptime,
+derive, record conversions) deferred the same way. This RFC's design work continues
+regardless of that date; splitting #923 into per-phase tracking, each with its own
+milestone, follows once Phase A's design settles.
 
 ## Non-Goals
 
