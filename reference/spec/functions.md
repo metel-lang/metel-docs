@@ -894,6 +894,8 @@ have independent environment state: a `mutating` call on one does not affect the
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-9}
 
+> **Gap** GAP-OWNERSHIP-001
+
 For the dynamic extent of a `mutating` call the callee place is exclusively borrowed. A
 second `mutating` call on the same closure value reached from inside the first — directly
 or through a structure the body can reach — is rejected: before the borrow checker lands,
