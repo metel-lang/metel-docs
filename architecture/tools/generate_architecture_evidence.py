@@ -74,12 +74,26 @@ class Citation:
 
 
 def git_ref(core: Path) -> str:
-    # The evidence reference is the most recent commit that changed a Rust
-    # citation, rather than the checkout's incidental HEAD. This breaks the
-    # otherwise circular docs-submodule pairing: updating core CI must not
-    # rewrite an Atlas link when it did not change the cited source.
+    # The evidence reference is the most recent commit that changed a citation
+    # marker (arch-implements/arch-verifies or, since metel-core#1247, limit:),
+    # rather than the checkout's incidental HEAD. This breaks the otherwise
+    # circular docs-submodule pairing: updating core CI must not rewrite an
+    # Atlas link when it did not change the cited source.
+    #
+    # This is a proxy, not a guarantee: it catches a commit that changed a
+    # marker's own occurrence count, not one that shifted a cited item's line
+    # number some other way (inserting an unrelated line above it, including
+    # one kind of marker while pickaxing for the other). The two calls this
+    # function's caller makes both scan *current* file content for line
+    # numbers, so a ref this heuristic gets wrong is a wrong line number, not
+    # a missing citation -- `--check` catches that the next time this runs
+    # against an unchanged core, the same way any other staleness is caught.
     ref = subprocess.check_output(
-        ["git", "-C", str(core), "log", "-1", "--format=%H", "-Sarch-", "--", "*.rs", "*.pest"], text=True
+        [
+            "git", "-C", str(core), "log", "-1", "--format=%H", "--pickaxe-regex", "-S", "arch-|limit:",
+            "--", "*.rs", "*.pest",
+        ],
+        text=True,
     ).strip()
     return ref or subprocess.check_output(["git", "-C", str(core), "rev-parse", "HEAD"], text=True).strip()
 
