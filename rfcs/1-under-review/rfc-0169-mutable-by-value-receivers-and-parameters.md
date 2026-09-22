@@ -2,7 +2,9 @@
 id: rfc-0169
 title: "Mutable-By-Value Receivers and Parameters"
 date: '2026-09-22'
-status: draft
+status: under-review
+updated: '2026-09-22'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1245'
 ---
 
 > **Opened 2026-09-22, as a dependency of RFC-0161 (Callable Object Contract).**
@@ -12,6 +14,8 @@ status: draft
 > RFC-0044 already gives `&self` / `&var self` for reference receivers, but never
 > extended to the by-value case. Split out as a general surface feature rather
 > than folded into RFC-0161, because nothing about it is specific to `Callable`.
+
+> **Status — under review (2026-09-22).** Split from RFC-0161 design discussion; scoped, has a substantiated primary proposal and a tracking issue
 
 ## Summary
 
