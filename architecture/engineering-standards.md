@@ -362,6 +362,61 @@ way `load_root_with`'s own doc comment already explains why it canonicalizes and
 
 **Expiry.** Durable — this is a standing discipline, not a time-bound rule.
 
+## 11. Do not use a magic number or range as the sole enforcement of a distinction
+
+**Rule.** When two things must never collide or overlap (two allocators' output, two
+enum-like states, two identity spaces), the property that keeps them apart is a checked
+construction, a real assertion, or a type the compiler enforces — never just a
+hand-picked numeric constant or range that nothing verifies stays correct as the code
+around it changes.
+
+**Rationale.** A magic number encodes an invariant only in the mind of whoever chose it.
+It has no mechanism to notice when a second, unrelated choice reuses the same number, when
+one range's real usage grows past where the next one starts, or when someone adds a new
+case without knowing the convention exists at all. The property degrades silently —
+nothing fails until two things actually collide, at which point the failure looks like an
+unrelated bug (aliasing, wrong dispatch, a "shouldn't happen" panic somewhere downstream),
+not like what it actually is.
+
+**Examples / counterexamples — the violations are real and already tracked, not
+hypothetical.** `SymbolId`'s space (Standard 2's own example) is exactly this mistake:
+builtins occupy 1-99, the resolver's ids start at 1000, the overload allocator's at
+`0x4000_0000` — three ranges kept apart by comment and convention alone. `LIMIT-NAME-
+RESOLUTION-003` states the consequence directly: "nothing checks that the resolver's
+range stays below `OVERLOAD_SYM_START` or that the two ascending allocators stay clear of
+the descending one." `TypeVarGenerator`'s hard-coded starting offsets are the same
+mistake at a larger scale — 10,000, 1,000,000, 2,000,000, 3,000,000, 4,000,000, 5,000,000,
+scattered across six files, with **the 2,000,000 start already shared by two unrelated
+users** (`LIMIT-TYPE-INFERENCE-005`'s own finding, not a hypothetical risk). Both records
+note the same thing this standard is built to prevent: "nothing enforces the widths."
+
+The conforming shape already exists in the same codebase, right next to one of the
+violations: `identity::allocate::CollisionGuard` turns a `LocalId`/`RefId`
+structural-hash collision into a loud `assert!`-driven panic instead of a silently merged
+identity, with a doc comment that states the philosophy this standard generalizes
+verbatim — "this exists so that 'unlikely' is enforced, not assumed." That is the
+difference: `CollisionGuard` doesn't just pick a hash width it hopes is wide enough and
+stop there; it actively checks, every time, and fails loudly the moment the assumption
+would have been wrong.
+
+**Enforcement.** None automated (no scanner for bare numeric-literal range boundaries —
+a real one would need to tell a load-bearing constant from an ordinary one, which isn't
+a pattern-match). Caught by review today; the honest state matches Standard 2's own
+open violations, since this is the mechanism-level version of that standard's
+organizational point.
+
+**Exception process.** A range or constant that genuinely cannot be checked (an FFI
+boundary, a wire format's fixed layout) documents why in a comment beside it, the same
+way an exemption anywhere else in this document does. A range inside this codebase's own
+control that merely hasn't been made checked yet is not an exception — it's the debt
+this standard exists to name, tracked the normal way (a `LIMIT-*` record, as the two
+examples above already are).
+
+**Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-002/003/004/005` and
+`LIMIT-TYPE-INFERENCE-005` close — the same expiry condition Standards 2 and 8 already
+carry, since this standard, those two, and those five records are all facets of the same
+underlying identity-allocation redesign.
+
 ## Where this fits
 
 This document is the engineering-standards counterpart to
