@@ -190,10 +190,10 @@ def function_extent(text: str, fn_start: int) -> tuple[int, int]:
 
 
 # A `LIMIT-*`/`GAP-*` record's `## Affects` may cite code directly, by name, with no
-# marker in metel-core (metel-core#1236 level 2 -- level 3, a code-side `// limit:`
-# marker, is a separate, not-yet-decided ADR-0055 amendment): `path::symbol`. Resolved
-# the same way a `.pest` rule or a Rust item is elsewhere in this file, just by
-# searching for the name instead of following a marker.
+# marker in metel-core (metel-core#1236 level 2 -- level 3, below, is a code-side
+# `// limit:` marker instead): `path::symbol`. Resolved the same way a `.pest` rule or
+# a Rust item is elsewhere in this file, just by searching for the name instead of
+# following a marker.
 ITEM_KEYWORDS = ("fn", "static", "const", "struct", "enum", "trait")
 AFFECTS_SECTION = re.compile(r"(^## Affects\n)(.*?)(?=^## |\Z)", re.M | re.S)
 AFFECTS_BULLET = re.compile(r"^-\s+(?:\[)?`([^`]+)`(?:\]\([^)]*\))?.*$", re.M)
@@ -202,6 +202,27 @@ AFFECTS_BULLET = re.compile(r"^-\s+(?:\[)?`([^`]+)`(?:\]\([^)]*\))?.*$", re.M)
 # knows how to search: Rust and `.pest`. Anything else -- a `.toml` fixture, a doc
 # path -- is not a code citation this function resolves.
 CODE_SYMBOL_RE = re.compile(r"^([\w.\-]+(?:/[\w.\-]+)+\.(?:rs|pest))::([A-Za-z_][A-Za-z0-9_]*)$")
+
+
+NAMED_ITEM = re.compile(rf"\b(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?(?:{'|'.join(ITEM_KEYWORDS)})\s+([A-Za-z_][A-Za-z0-9_]*)")
+
+
+def following_named_item(text: str, start: int, path: Path, line: int) -> tuple[str, int]:
+    """The `fn`/`static`/`const`/`struct`/`enum`/`trait` counterpart of `following_item`
+    (which is deliberately `fn`-only, `arch-implements`'s own original scope): the next
+    item of any of those kinds after `start`, with the same "only comments/attributes in
+    between" rule, so a `// limit:` marker cannot silently latch onto the wrong item."""
+    remainder = text[start:]
+    item = NAMED_ITEM.search(remainder)
+    if not item:
+        raise ValueError(f"{path}:{line}: citation has no following item (fn/static/const/struct/enum/trait)")
+    between = remainder[: item.start()]
+    leftover = ATTRIBUTE.sub("", COMMENT.sub("", between)).strip()
+    if leftover:
+        raise ValueError(
+            f"{path}:{line}: citation must directly precede its item; found `{leftover.splitlines()[0]}` in between"
+        )
+    return item.group(1), start + item.start()
 
 
 def find_named_item(text: str, name: str) -> int | None:
@@ -252,7 +273,15 @@ def regenerate_record_affects(records_dir: Path, core: Path, core_ref: str, chec
             continue
         body = section.group(2)
         new_body = body
+        # Level 3's delimited subsection (metel-core#1247), if present, is off limits --
+        # its bullets are machine-owned by `regenerate_record_markers`, not this
+        # function, even though they're shaped identically (a link-wrapped `path::symbol`
+        # bullet). Skip any match whose span falls inside it.
+        owned_span = LIMIT_MARKERS_BLOCK.search(body)
+        owned = (owned_span.start(), owned_span.end()) if owned_span else None
         for bullet in list(AFFECTS_BULLET.finditer(body)):
+            if owned and owned[0] <= bullet.start() < owned[1]:
+                continue
             token = bullet.group(1)
             code = CODE_SYMBOL_RE.match(token)
             if not code:
@@ -272,6 +301,135 @@ def regenerate_record_affects(records_dir: Path, core: Path, core_ref: str, chec
                 stale.append(f"{path.relative_to(DOCS)}: generated Affects code links are stale")
             else:
                 path.write_text(new_text)
+    return stale
+
+
+# Level 3 (metel-core#1236, ADR-0055 amendment #1247): `// limit: ["LIMIT-X-001"]` in
+# metel-core, mirroring `arch-implements`'s placement rule and discovery mechanism. The
+# marker is a coordinate, not a contract -- it never states the limitation is handled,
+# only where it currently lives, and it is checked *against* the record, never trusted
+# as a citation on its own. It is written only into a delimited, fully machine-owned
+# subsection of `## Affects`; nothing hand-written can appear inside it, and this code
+# never touches anything outside it (a bare path, a `path::symbol` line, any other
+# citation -- all level 2 or hand-authored, untouched here).
+LIMIT_CITE = re.compile(r"^\s*//\s*limit:\s*\[([^]]*)\]\s*$", re.M)
+LIMIT_ID = r"LIMIT-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d{3}"
+LIMIT_IDS = re.compile(rf'"({LIMIT_ID})"')
+RECORD_ID = re.compile(rf"^id:\s*({LIMIT_ID})\s*$", re.M)
+RECORD_DISPOSITION = re.compile(r"^disposition:\s*(\S+)\s*$", re.M)
+LIMIT_MARKERS_START = "<!-- limit.py:markers:start -->"
+LIMIT_MARKERS_END = "<!-- limit.py:markers:end -->"
+LIMIT_MARKERS_BLOCK = re.compile(re.escape(LIMIT_MARKERS_START) + r"\n.*?" + re.escape(LIMIT_MARKERS_END) + r"\n?", re.S)
+LIMIT_ACTIVE_DISPOSITIONS = {"known", "accepted", "mitigated", "planned"}
+
+
+def limit_citations(core: Path):
+    """`{LIMIT-* id: [Citation, ...]}` for every `// limit: [...]` marker in metel-core,
+    resolved the same way `citations()` resolves `arch-implements`: `following_item`/
+    `following_rule` finds what the marker precedes, `function_extent` its extent."""
+    found = defaultdict(list)
+    sources = [p for pattern in ("*.rs", "*.pest") for p in core.rglob(pattern)]
+    for path in sources:
+        if any(part in {"target", ".git"} for part in path.parts):
+            continue
+        text = path.read_text(errors="ignore")
+        for match in LIMIT_CITE.finditer(text):
+            line = text.count("\n", 0, match.start()) + 1
+            ids = LIMIT_IDS.findall(match.group(1))
+            if not ids:
+                raise ValueError(f"{path}:{line}: limit citation contains no well-formed LIMIT-* id")
+            if path.suffix == ".pest":
+                item, item_start = following_rule(text, match.end(), path, line)
+            else:
+                item, item_start = following_named_item(text, match.end(), path, line)
+            start_line, end_line = function_extent(text, item_start)
+            rel = path.relative_to(core)
+            citation = Citation(rel, item, line, start_line, end_line)
+            for record_id in ids:
+                found[record_id].append(citation)
+    return found
+
+
+def limit_ids_ever_marked(core: Path) -> set[str]:
+    """Every LIMIT-* id that has ever appeared in a `// limit:` marker anywhere in
+    metel-core's checked-out history, added or removed -- one `git log -G` pickaxe
+    scoped to Rust/`.pest` sources (needs full history, `fetch-depth: 0`, same as
+    `git_ref` above), not a per-record walk. Used only to flag a record whose marker
+    has since disappeared; never to decide what a marker currently says."""
+    out = subprocess.run(
+        ["git", "-C", str(core), "log", "-p", "-G", "limit:", "--", "*.rs", "*.pest"],
+        capture_output=True, text=True,
+    )
+    if out.returncode != 0:
+        return set()
+    ids: set[str] = set()
+    for line in out.stdout.splitlines():
+        if line[:1] in ("+", "-") and "limit:" in line:
+            ids.update(re.findall(LIMIT_ID, line))
+    return ids
+
+
+def regenerate_record_markers(records_dir: Path, core: Path, core_ref: str, check: bool) -> list[str]:
+    """The delimited subsection of a `LIMIT-*` record's `## Affects` driven by
+    `// limit:` markers: fully regenerated each run from every current marker citing
+    that record's id, the same full-replace treatment `implements`/`verified by` cells
+    get -- not the line-level patch `regenerate_record_affects` (level 2) does for a
+    human's own `path::symbol` bullet. A record with no current marker has no block at
+    all (most limitation records cite no code, and an empty block on every one of them
+    would be pure noise); a record whose block would become empty has it removed
+    entirely, not left as empty delimiters."""
+    stale = []
+    if not records_dir.is_dir():
+        return stale
+    markers = limit_citations(core)
+    ever_marked = limit_ids_ever_marked(core)
+    known_ids: set[str] = set()
+    for path in sorted(records_dir.glob("*.md")):
+        text = path.read_text()
+        id_match = RECORD_ID.search(text)
+        if not id_match:
+            continue
+        record_id = id_match.group(1)
+        known_ids.add(record_id)
+        disposition_match = RECORD_DISPOSITION.search(text)
+        disposition = disposition_match.group(1) if disposition_match else None
+        citations = sorted(set(markers.get(record_id, [])), key=lambda c: (str(c.path), c.item or "", c.line))
+        if citations and disposition not in LIMIT_ACTIVE_DISPOSITIONS:
+            stale.append(
+                f"{path.relative_to(DOCS)}: `{record_id}` is `{disposition}` but a `// limit:` marker "
+                f"still cites it; remove the marker or reactivate the record"
+            )
+        section = AFFECTS_SECTION.search(text)
+        if not section:
+            if citations:
+                stale.append(f"{path.relative_to(DOCS)}: `{record_id}` has a live `// limit:` marker but no `## Affects` section")
+            continue
+        body = section.group(2)
+        if not citations and not LIMIT_MARKERS_BLOCK.search(body):
+            continue  # nothing to add, nothing to remove -- leave the section exactly as it is
+        without_block = LIMIT_MARKERS_BLOCK.sub("", body).rstrip("\n")
+        if citations:
+            block = LIMIT_MARKERS_START + "\n" + "".join(
+                f"- [`{c.path}::{c.item}`]"
+                f"(https://github.com/metel-lang/metel-core/blob/{core_ref}/{c.path}#L{c.line})\n"
+                for c in citations
+            ) + LIMIT_MARKERS_END
+            new_body = (without_block + "\n\n" + block + "\n\n") if without_block else (block + "\n\n")
+        else:
+            new_body = without_block + "\n\n" if without_block else ""
+        if new_body != body:
+            if check:
+                stale.append(f"{path.relative_to(DOCS)}: generated `// limit:` marker citations for `{record_id}` are stale")
+            else:
+                path.write_text(text[: section.start(2)] + new_body + text[section.end(2) :])
+    for record_id in sorted(set(markers) - known_ids):
+        rel = markers[record_id][0].path
+        stale.append(f"{rel}: `// limit:` marker cites `{record_id}`, which does not exist")
+    for record_id in sorted(ever_marked - set(markers)):
+        stale.append(
+            f"{record_id}: was cited by a `// limit:` marker in metel-core history and no longer is by any "
+            f"current one; confirm the limitation is resolved (and update its disposition) or restore the marker"
+        )
     return stale
 
 
@@ -547,6 +705,10 @@ def main():
         findings = regenerate(DOCS / "architecture/spec", args.core, citations(args.core), args.check, core_ref)
         findings += regenerate_record_affects(DOCS / "architecture/limitations", args.core, core_ref, args.check)
         findings += regenerate_record_affects(DOCS / "architecture/gaps", args.core, core_ref, args.check)
+        # Level 3 (metel-core#1247) is LIMIT-* only -- GAP-* is chartered by ADR-0057 as
+        # a Language Spec concept, not architecture, and metel-core's Rust source has
+        # nothing to mark for a gap in what the spec itself says.
+        findings += regenerate_record_markers(DOCS / "architecture/limitations", args.core, core_ref, args.check)
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         findings = [str(error)]
     if findings:

@@ -5,8 +5,37 @@ date: '2026-09-15'
 status: accepted
 relates: adr-0054
 implements: metel-core#1141, metel-core#1154, metel-core#1155, metel-core#1157
-updated: '2026-09-17'
+updated: '2026-09-22'
 ---
+
+> **Amended 2026-09-22, chartered by metel-core#1247.** §4's "never limitation
+> records" is narrowed: metel-core may carry `// limit: ["LIMIT-X-001"]`, mirroring
+> `arch-implements`'s placement rule and discovery mechanism (directly above the item;
+> resolved by the same generator, `generate_architecture_evidence.py`). The marker is a
+> coordinate, not a contract — it never states or implies the limitation is handled,
+> only that this is where it currently lives, which is why it does not reopen this
+> section's "not a contract that the implementation satisfies": that guarantee was
+> about code asserting *success*, and a `// limit:` marker asserts the opposite, in a
+> visibly distinct vocabulary.
+>
+> A marked citation is written into the record's `## Affects` only inside a delimited,
+> fully machine-owned subsection (`<!-- limit.py:markers:start -->` /
+> `<!-- limit.py:markers:end -->`), regenerated from scratch each run the same way
+> `implements`/`verified by` cells already are — nothing hand-written can appear
+> there, and the tool never touches anything outside it. A record may still separately
+> cite code by hand, with or without a resolved `path::symbol` (metel-core#1236 level
+> 2, unaffected by this amendment) — the two are independent, and neither requires the
+> other.
+>
+> Disposition, ownership, review date, and resolution stay entirely hand-authored in
+> the record and are never inferred from a marker's presence or absence. A record whose
+> id has ever appeared in a `// limit:` marker in metel-core's history, and no longer
+> appears in any current one, is flagged — never silently dropped from the record,
+> since whether that means the limitation is resolved or the marker merely moved is a
+> human judgment this tooling does not make. Proximity is the actual point: whoever is
+> already touching the marked code is best placed to notice the limitation needs a
+> second look, and a marker that disappears without the record being revisited is
+> exactly the drift this amendment exists to catch, not to allow.
 
 ## Context
 
