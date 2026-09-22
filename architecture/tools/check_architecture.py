@@ -62,6 +62,13 @@ metel-core, one level up from this repo when it's embedded as a submodule --
 a bare metel-docs checkout structurally can't reach it. It degrades to an
 informational skip, not a failure.
 
+With `--core <metel-core checkout>` (metel-core#1219), also checks that a skipped
+integration fixture's `skip` reason cites the `LIMIT-*` record it reproduces (or is
+marked plainly exempt, for a fixture ahead of an accepted-but-unbuilt RFC, which has
+no current-spec divergence to track). The reverse, an active limitation record with
+no citing skip and no named `metel-core#` reproduction, is reported too, warn-only --
+run without `--core` from a bare metel-docs checkout, this check does not run either.
+
 Usage:
   architecture/tools/check_architecture.py            # print a report
   architecture/tools/check_architecture.py --check     # CI gate: exit 1 on any finding
@@ -74,6 +81,7 @@ import os
 import re
 import sys
 from pathlib import Path
+import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SPEC_DIR = REPO_ROOT / "architecture" / "spec"
@@ -747,6 +755,76 @@ def lint_claim_length(spec_dir: Path, repo_root: Path) -> list[Finding]:
     return warnings
 
 
+# A skipped integration fixture marks a known-unsupported case (metel-core#1219): its
+# `skip` string must name the LIMIT-* record tracking that gap, or say plainly that it is
+# exempt (a case the Atlas deliberately does not track -- rare; grep for "exempt" in a
+# finding to find one). The fixture corpus lives in metel-core (`metel-interpreter/tests`),
+# one level up from a `docs/` submodule checkout -- unreachable from a bare metel-docs
+# checkout, same structural gap `arch=[...]` cross-checking already documents; this only
+# runs with `--core`.
+FIXTURE_LIMIT_RE = re.compile(r"\bLIMIT-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d{3}\b")
+EXEMPT_RE = re.compile(r"\bexempt\b", re.IGNORECASE)
+
+
+def find_skipped_fixtures(core_root: Path) -> list[tuple[Path, str]]:
+    """(path, skip reason) for every `skip = "..."` fixture under core_root's integration
+    corpus, whether the key sits at the fixture's top level or under `[options]`."""
+    sources = core_root / "metel-interpreter" / "tests" / "integration" / "sources"
+    if not sources.is_dir():
+        return []
+    out = []
+    for path in sorted(sources.rglob("*.toml")):
+        try:
+            data = tomllib.loads(path.read_text())
+        except tomllib.TOMLDecodeError:
+            continue
+        reason = data.get("skip") or data.get("options", {}).get("skip")
+        if reason:
+            out.append((path, reason))
+    return out
+
+
+def check_skip_fixture_citations(
+    core_root: Path, limit_records: list, repo_root: Path
+) -> tuple[list[Finding], list[Finding]]:
+    """Findings: a skipped fixture cites a missing or inactive LIMIT-*, or cites neither a
+    LIMIT-* nor "exempt". Warnings (not findings): an active LIMIT-* with no citing skip
+    and no `metel-core#` reproduction named in its own `discovered_by`/Resolution text --
+    unevidenced, not necessarily wrong, since a limitation can show up as a wrong answer
+    rather than a skip."""
+    findings: list = []
+    limits = {fm.get("id"): (fm, resolution_text) for _, fm, _, resolution_text in limit_records}
+    cited: set = set()
+
+    for path, reason in find_skipped_fixtures(core_root):
+        rel = path.relative_to(core_root)
+        ids = FIXTURE_LIMIT_RE.findall(reason)
+        if not ids:
+            if not EXEMPT_RE.search(reason):
+                findings.append(
+                    Finding(str(rel), f"`skip` cites no LIMIT-* record and is not marked exempt: {reason!r}")
+                )
+            continue
+        for record_id in ids:
+            entry = limits.get(record_id)
+            if entry is None:
+                findings.append(Finding(str(rel), f"`skip` cites `{record_id}`, which does not exist"))
+            elif entry[0].get("disposition") not in GAP_ACTIVE_DISPOSITIONS:
+                findings.append(Finding(str(rel), f"`skip` cites `{record_id}`, which is `{entry[0].get('disposition')}`; an inactive record no longer explains a live skip"))
+            else:
+                cited.add(record_id)
+
+    warnings: list = []
+    for record_id, (fm, resolution_text) in limits.items():
+        if fm.get("disposition") not in GAP_ACTIVE_DISPOSITIONS or record_id in cited:
+            continue
+        text = f"{fm.get('discovered_by', '')} {resolution_text}"
+        if re.search(r"metel-core#\d+", text):
+            continue
+        warnings.append(Finding(record_id, "active limitation has no citing skipped fixture and names no metel-core# reproduction; unevidenced"))
+    return findings, warnings
+
+
 def lint_limit_phrasing(language_spec_dir: Path, repo_root: Path) -> list[Finding]:
     """Warn-only (metel-core#1235): limit phrasing in Language Spec prose outside a marker.
     Never fails the check; the reader decides whether it is a limit that needs a record."""
@@ -942,17 +1020,32 @@ def run_checks(
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--check", action="store_true", help="CI gate: exit 1 on any finding")
+    p.add_argument("--core", type=Path, help="a metel-core checkout, to also check skipped-fixture LIMIT-* citations (metel-core#1219)")
     args = p.parse_args()
 
     findings = run_checks()
+
+    limitation_records_for_fixtures = [
+        (path, *parse_limitation_file(path)) for path in sorted(LIMITATIONS_DIR.glob("*.md"))
+    ] if LIMITATIONS_DIR.is_dir() else []
+    fixture_warnings: list = []
+    if args.core:
+        fixture_findings, fixture_warnings = check_skip_fixture_citations(
+            args.core, limitation_records_for_fixtures, REPO_ROOT
+        )
+        findings.extend(fixture_findings)
 
     spec_count = len(list(SPEC_DIR.glob("*.md"))) if SPEC_DIR.is_dir() else 0
     limit_count = len(list(LIMITATIONS_DIR.glob("*.md"))) if LIMITATIONS_DIR.is_dir() else 0
     gap_count = len(list(GAPS_DIR.glob("*.md"))) if GAPS_DIR.is_dir() else 0
     print(f"Checked {spec_count} spec file(s), {limit_count} limitation record(s), {gap_count} gap record(s).")
     print("Fixture-sidecar arch=[...] cross-checking: skipped (fixture corpus lives in metel-core, not reachable from a bare metel-docs checkout -- same degrade rfc-check.yml already documents for RFC coverage).")
+    if args.core:
+        print(f"Skipped-fixture LIMIT-* citations: checked against {args.core}.")
+    else:
+        print("Skipped-fixture LIMIT-* citations: skipped (needs --core; same structural gap as the arch=[...] cross-check above).")
 
-    warnings = lint_limit_phrasing(LANGUAGE_SPEC_DIR, REPO_ROOT) + lint_claim_length(SPEC_DIR, REPO_ROOT)
+    warnings = lint_limit_phrasing(LANGUAGE_SPEC_DIR, REPO_ROOT) + lint_claim_length(SPEC_DIR, REPO_ROOT) + fixture_warnings
     if warnings:
         print(f"\n{len(warnings)} warning(s) (do not fail the check):")
         for w in warnings:
