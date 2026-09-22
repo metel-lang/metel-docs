@@ -38,7 +38,7 @@ not parse at all): here the `extend` uses the ordinary, already-supported
 
 The `extend` declares an impl that silently has no effect; the program
 compiles and then fails at the call site with a diagnostic that does not name
-the real cause (also `LIMIT-TYPE-INFERENCE-008`).
+the real cause.
 
 ## Affects
 

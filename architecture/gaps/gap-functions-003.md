@@ -22,7 +22,6 @@ A closure that could be copied loses that once it passes through a slot with a w
 ## Affects
 
 - `RFC-0163`
-- `LIMIT-TYPE-INFERENCE-008`
 
 ## Resolution
 

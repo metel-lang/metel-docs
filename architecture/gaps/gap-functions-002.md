@@ -22,7 +22,6 @@ No aspect bound can require "any callable", and `dyn Callable` cannot be written
 ## Affects
 
 - `RFC-0161`
-- `LIMIT-TYPE-INFERENCE-008`
 
 ## Resolution
 
