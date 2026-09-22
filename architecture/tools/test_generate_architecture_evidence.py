@@ -308,5 +308,126 @@ class ArchitectureEvidenceTests(unittest.TestCase):
             self.assertFalse(any("was touched by" in f for f in findings), findings)
 
 
+class RecordAffectsCodeLinkTests(unittest.TestCase):
+    """`## Affects` `path::symbol` citations (metel-core#1236 level 2)."""
+
+    def make_core(self, root: Path, rust: str, filename: str = "src/lib.rs") -> Path:
+        core = root / "core"
+        target = core / filename
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(rust)
+        return core
+
+    def write_record(self, root: Path, affects_line: str, dirname: str = "limitations") -> Path:
+        records = root / "docs" / "architecture" / dirname
+        records.mkdir(parents=True, exist_ok=True)
+        path = records / "example.md"
+        path.write_text(
+            "---\nid: LIMIT-X-001\n---\n\n## Limitation\n\nSome limitation.\n\n"
+            f"## Affects\n\n{affects_line}\n\n## Resolution\n\nNone yet.\n"
+        )
+        return records
+
+    def regenerate(self, records: Path, core: Path, check: bool, ref: str = "a" * 40):
+        previous = evidence.DOCS
+        evidence.DOCS = records.parent.parent.parent
+        try:
+            return evidence.regenerate_record_affects(records, core, ref, check)
+        finally:
+            evidence.DOCS = previous
+
+    def test_resolves_a_function_and_rewrites_the_bullet(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, "fn one() {}\n\npub fn target_fn() -> i64 {\n    1\n}\n")
+            records = self.write_record(root, "- `src/lib.rs::target_fn`")
+            findings = self.regenerate(records, core, False)
+            self.assertEqual([], findings)
+            text = (records / "example.md").read_text()
+            self.assertIn(f"[`src/lib.rs::target_fn`](https://github.com/metel-lang/metel-core/blob/{'a'*40}/src/lib.rs#L3)", text)
+
+    def test_resolves_a_static_a_struct_and_a_pest_rule(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, "static COUNTER: u32 = 0;\n\npub struct Thing {\n    x: i64,\n}\n")
+            self.make_core(root, "ident = { ASCII_ALPHA+ }\n", filename="src/grammar.pest")
+            records = self.write_record(
+                root,
+                "- `src/lib.rs::COUNTER`\n- `src/lib.rs::Thing`\n- `src/grammar.pest::ident`",
+            )
+            findings = self.regenerate(records, core, False)
+            self.assertEqual([], findings)
+            text = (records / "example.md").read_text()
+            self.assertIn("src/lib.rs#L1", text)
+            self.assertIn("src/lib.rs#L3", text)
+            self.assertIn("src/grammar.pest#L1", text)
+
+    def test_bare_path_with_no_symbol_is_untouched(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, "pub fn target_fn() {}\n")
+            records = self.write_record(root, "- `src/lib.rs` (`target_fn`)")
+            findings = self.regenerate(records, core, False)
+            self.assertEqual([], findings)
+            text = (records / "example.md").read_text()
+            self.assertIn("- `src/lib.rs` (`target_fn`)", text)
+            self.assertNotIn("](https://", text)
+
+    def test_missing_symbol_is_a_finding_not_a_silent_link(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, "pub fn real_fn() {}\n")
+            records = self.write_record(root, "- `src/lib.rs::not_real`")
+            findings = self.regenerate(records, core, False)
+            self.assertTrue(any("no fn/static/const/struct/enum/trait named" in f for f in findings), findings)
+            text = (records / "example.md").read_text()
+            self.assertIn("- `src/lib.rs::not_real`", text)  # left as-is, not silently linked
+
+    def test_missing_file_is_a_finding(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, "pub fn f() {}\n")
+            records = self.write_record(root, "- `src/does_not_exist.rs::f`")
+            findings = self.regenerate(records, core, False)
+            self.assertTrue(any("no such file" in f for f in findings), findings)
+
+    def test_check_mode_reports_stale_without_writing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, "pub fn target_fn() {}\n")
+            records = self.write_record(root, "- `src/lib.rs::target_fn`")
+            before = (records / "example.md").read_text()
+            findings = self.regenerate(records, core, True)
+            self.assertTrue(any("stale" in f for f in findings), findings)
+            self.assertEqual(before, (records / "example.md").read_text())
+
+    def test_rerun_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, "pub fn target_fn() {}\n")
+            records = self.write_record(root, "- `src/lib.rs::target_fn`")
+            self.regenerate(records, core, False)
+            once = (records / "example.md").read_text()
+            findings = self.regenerate(records, core, True)
+            self.assertEqual([], findings)
+            self.assertEqual(once, (records / "example.md").read_text())
+
+    def test_gaps_directory_is_also_checked(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, "pub fn target_fn() {}\n")
+            records = self.write_record(root, "- `src/lib.rs::target_fn`", dirname="gaps")
+            findings = self.regenerate(records, core, False)
+            self.assertEqual([], findings)
+            self.assertIn("target_fn", (records / "example.md").read_text())
+
+    def test_missing_records_directory_is_a_no_op(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, "pub fn f() {}\n")
+            findings = evidence.regenerate_record_affects(root / "docs/architecture/limitations", core, "a" * 40, False)
+            self.assertEqual([], findings)
+
+
 if __name__ == "__main__":
     unittest.main()

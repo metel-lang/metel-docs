@@ -45,7 +45,7 @@ is no reproducing fixture.
 
 - `arch.name-resolution.requirement-1`
 - `arch.type-construction.requirement-10`
-- `metel-frontend/src/typechecker/overload.rs` (`NEXT_OVERLOAD_SYM`)
+- [`metel-frontend/src/typechecker/overload.rs::NEXT_OVERLOAD_SYM`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/typechecker/overload.rs#L34)
 
 ## Resolution
 

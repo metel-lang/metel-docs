@@ -64,7 +64,8 @@ of functions (`LIMIT-TYPE-INFERENCE-007`).
 ## Affects
 
 - `arch.type-inference.requirement-1`
-- `metel-frontend/src/typeinference/mod.rs` (`TypeVarGenerator`, `split_gen`)
+- [`metel-frontend/src/typeinference/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/typeinference/mod.rs#L46)
+- [`metel-frontend/src/typeinference/mod.rs::split_gen`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-frontend/src/typeinference/mod.rs#L4909)
 - `metel-frontend/src/typechecker/mod.rs`, `typechecker/construction.rs`, `move_check/mod.rs` (the offsets)
 
 ## Resolution

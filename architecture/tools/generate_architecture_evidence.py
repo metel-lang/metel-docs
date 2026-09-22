@@ -189,6 +189,92 @@ def function_extent(text: str, fn_start: int) -> tuple[int, int]:
     raise ValueError(f"unterminated item starting at line {start_line}")
 
 
+# A `LIMIT-*`/`GAP-*` record's `## Affects` may cite code directly, by name, with no
+# marker in metel-core (metel-core#1236 level 2 -- level 3, a code-side `// limit:`
+# marker, is a separate, not-yet-decided ADR-0055 amendment): `path::symbol`. Resolved
+# the same way a `.pest` rule or a Rust item is elsewhere in this file, just by
+# searching for the name instead of following a marker.
+ITEM_KEYWORDS = ("fn", "static", "const", "struct", "enum", "trait")
+AFFECTS_SECTION = re.compile(r"(^## Affects\n)(.*?)(?=^## |\Z)", re.M | re.S)
+AFFECTS_BULLET = re.compile(r"^-\s+(?:\[)?`([^`]+)`(?:\]\([^)]*\))?.*$", re.M)
+# A bare path (existing, file-level-only behaviour, left to the website's own
+# fallback link) or `path::symbol`, restricted to the languages this file already
+# knows how to search: Rust and `.pest`. Anything else -- a `.toml` fixture, a doc
+# path -- is not a code citation this function resolves.
+CODE_SYMBOL_RE = re.compile(r"^([\w.\-]+(?:/[\w.\-]+)+\.(?:rs|pest))::([A-Za-z_][A-Za-z0-9_]*)$")
+
+
+def find_named_item(text: str, name: str) -> int | None:
+    """Byte offset of the keyword introducing the first `fn`/`static`/`const`/
+    `struct`/`enum`/`trait` named `name`, in file order -- not a real parser (a
+    match inside a string or comment is not excluded), sufficient for a name that
+    is not itself shadowed or overloaded in the file, which is what a `## Affects`
+    citation names in practice."""
+    pattern = re.compile(rf"\b(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?(?:{'|'.join(ITEM_KEYWORDS)})\s+{re.escape(name)}\b")
+    m = pattern.search(text)
+    return m.start() if m else None
+
+
+def resolve_named_citation(core: Path, rel_path: str, symbol: str) -> Citation:
+    """A `path::symbol` `## Affects` entry, resolved the way a marker citation is:
+    the item's own start line (for the link) and its full extent (for the
+    metel-core#1191 staleness check, folded in should limitations ever join it)."""
+    full = core / rel_path
+    if not full.is_file():
+        raise ValueError(f"{rel_path}::{symbol}: no such file")
+    text = full.read_text(errors="ignore")
+    if rel_path.endswith(".pest"):
+        rule = re.search(rf"^[ \t]*{re.escape(symbol)}[ \t]*=[ \t]*[@_$!]?\{{", text, re.M)
+        if not rule:
+            raise ValueError(f"{rel_path}::{symbol}: no such grammar rule")
+        line = text.count("\n", 0, rule.start()) + 1
+        return Citation(Path(rel_path), symbol, line, line, line)
+    start = find_named_item(text, symbol)
+    if start is None:
+        raise ValueError(f"{rel_path}::{symbol}: no fn/static/const/struct/enum/trait named `{symbol}`")
+    start_line, end_line = function_extent(text, start)
+    return Citation(Path(rel_path), symbol, start_line, start_line, end_line)
+
+
+def regenerate_record_affects(records_dir: Path, core: Path, core_ref: str, check: bool) -> list[str]:
+    """Rewrite every resolvable `path::symbol` bullet in a `LIMIT-*`/`GAP-*`
+    record's `## Affects` into a commit-pinned, line-accurate link -- the same
+    check/write duality as `regenerate` above, just sourced from record markdown
+    instead of Architecture Spec requirement tables. A bare path (no `::symbol`)
+    is untouched; the website's own file-level fallback link still applies to it."""
+    stale = []
+    if not records_dir.is_dir():
+        return stale
+    for path in sorted(records_dir.glob("*.md")):
+        text = path.read_text()
+        section = AFFECTS_SECTION.search(text)
+        if not section:
+            continue
+        body = section.group(2)
+        new_body = body
+        for bullet in list(AFFECTS_BULLET.finditer(body)):
+            token = bullet.group(1)
+            code = CODE_SYMBOL_RE.match(token)
+            if not code:
+                continue
+            rel_path, symbol = code.groups()
+            try:
+                citation = resolve_named_citation(core, rel_path, symbol)
+            except ValueError as error:
+                stale.append(f"{path.relative_to(DOCS)}: {error}")
+                continue
+            link = f"https://github.com/metel-lang/metel-core/blob/{core_ref}/{citation.path}#L{citation.line}"
+            new_line = f"- [`{token}`]({link})"
+            new_body = new_body.replace(bullet.group(0), new_line, 1)
+        if new_body != body:
+            new_text = text[: section.start(2)] + new_body + text[section.end(2) :]
+            if check:
+                stale.append(f"{path.relative_to(DOCS)}: generated Affects code links are stale")
+            else:
+                path.write_text(new_text)
+    return stale
+
+
 def citations(core: Path):
     found = defaultdict(lambda: {"implements": [], "verifies": []})
     sources = [p for pattern in ("*.rs", "*.pest") for p in core.rglob(pattern)]
@@ -457,9 +543,10 @@ def main():
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     try:
-        findings = regenerate(
-            DOCS / "architecture/spec", args.core, citations(args.core), args.check, args.core_ref or git_ref(args.core)
-        )
+        core_ref = args.core_ref or git_ref(args.core)
+        findings = regenerate(DOCS / "architecture/spec", args.core, citations(args.core), args.check, core_ref)
+        findings += regenerate_record_affects(DOCS / "architecture/limitations", args.core, core_ref, args.check)
+        findings += regenerate_record_affects(DOCS / "architecture/gaps", args.core, core_ref, args.check)
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         findings = [str(error)]
     if findings:
