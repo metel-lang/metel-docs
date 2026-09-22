@@ -308,6 +308,51 @@ class ArchitectureEvidenceTests(unittest.TestCase):
             self.assertFalse(any("was touched by" in f for f in findings), findings)
 
 
+class GitRefTests(unittest.TestCase):
+    """`git_ref`'s pickaxe search must track every citation-marker kind, not
+    just `arch-`, since metel-core#1247 added a second one (`limit:`) --
+    otherwise a commit that only changes a `// limit:` marker's occurrence
+    count resolves to a stale ref, pairing a line number read from *current*
+    file content with a commit whose file predates the shift."""
+
+    def init_git(self, core: Path) -> None:
+        subprocess.run(["git", "-C", str(core), "init", "-q"], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "-C", str(core), "config", "user.email", "test@example.com"], check=True, capture_output=True
+        )
+        subprocess.run(["git", "-C", str(core), "config", "user.name", "test"], check=True, capture_output=True)
+
+    def commit(self, core: Path, message: str = "commit") -> str:
+        subprocess.run(["git", "-C", str(core), "add", "-A"], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(core), "commit", "-q", "-m", message], check=True, capture_output=True)
+        return subprocess.check_output(["git", "-C", str(core), "rev-parse", "HEAD"], text=True).strip()
+
+    def test_a_later_commit_that_only_touches_a_limit_marker_is_the_resolved_ref(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core = Path(directory) / "core"
+            core.mkdir()
+            self.init_git(core)
+            (core / "lib.rs").write_text('// arch-implements: ["arch.example.requirement-1"]\npub fn run() {}\n')
+            self.commit(core, "add an arch-implements marker")
+            (core / "lib.rs").write_text(
+                '// arch-implements: ["arch.example.requirement-1"]\npub fn run() {}\n\n'
+                '// limit: ["LIMIT-EXAMPLE-001"]\npub fn other() {}\n'
+            )
+            second = self.commit(core, "add a limit marker; no arch- occurrence change")
+            self.assertEqual(second, evidence.git_ref(core))
+
+    def test_a_commit_that_touches_neither_marker_kind_is_not_the_resolved_ref(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core = Path(directory) / "core"
+            core.mkdir()
+            self.init_git(core)
+            (core / "lib.rs").write_text('// limit: ["LIMIT-EXAMPLE-001"]\npub fn run() {}\n')
+            marked = self.commit(core, "add a limit marker")
+            (core / "README.md").write_text("unrelated\n")
+            self.commit(core, "touch a file with no citation marker at all")
+            self.assertEqual(marked, evidence.git_ref(core))
+
+
 class RecordAffectsCodeLinkTests(unittest.TestCase):
     """`## Affects` `path::symbol` citations (metel-core#1236 level 2)."""
 
