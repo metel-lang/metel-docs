@@ -294,6 +294,75 @@ record.
 **Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-002/003/004/005` and
 `LIMIT-TYPE-INFERENCE-005` close.
 
+## Post-refactor module structure (metel-core#1231)
+
+The target this document's standards apply against once `#1231` (frontend
+reorganization by pipeline stage) lands. Verified against real `use crate::...` edges,
+not against the pipeline diagram alone — `ResolvedNames` (name resolution's own output)
+is read directly by coherence, type checking, and elaboration, not only by its immediate
+successor; `typeinference` is read directly by type checking's both passes and by move
+check. The tree below accounts for that instead of assuming a stricter single-hop
+handoff than the codebase actually has.
+
+```
+metel-frontend/src/
+  pipeline/
+    parsing/            module_loader.rs, parser/, type_alias.rs
+    name_resolution/    name_resolver.rs, reference_resolver.rs
+    path_normalization/ path_normalizer.rs
+    coherence/          coherence.rs
+    type_checking/      inference/, construction/, mod.rs, overload.rs, registry.rs,
+                         conversions.rs, handoff.rs, object_safety.rs, projections.rs
+    move_check/
+    elaboration/
+
+  ast/, typed_ast/, types/, error/     data definitions
+  symbols.rs, identity/                identity backbone
+  typeinference/                       HM substrate: type_checking's both passes, move_check
+  place.rs, flow_state.rs              narrowing: type_checking, move_check
+  stdlib.rs, native_keys.rs            parsing, type_checking, evaluator
+  module_paths.rs                      parsing, name_resolution
+
+  analysis.rs, query.rs                tooling API, not a pipeline stage
+
+metel-interpreter/src/
+  evaluator/       stage 08, stays in this crate
+  orchestrator.rs  renamed from pipeline.rs (name collision with the frontend's new
+                    pipeline/ directory otherwise)
+```
+
+**`type_checking/` holds two sub-passes, not two pipeline stages.** `typechecker/inference/*.rs`
+and `typechecker/construction/*.rs` are already the two passes `AGENTS.md`'s Type-system
+invariants section describes ("Inference emits constraints... Construction reads solved
+results and builds typed AST"). They stay siblings under one stage directory, matching
+that existing description, rather than becoming two top-level pipeline stages.
+
+**A module joins the shared-substrate group only when a real cross-stage import
+justifies it**, not by assumption — each entry above is backed by a direct `use crate::`
+edge from a stage other than the one that "owns" the file. `symbols` and `identity` are
+read from name resolution through the evaluator; `typeinference` from type checking and
+move check; `place`/`flow_state` from type checking and move check; `stdlib`/
+`native_keys` from parsing, type checking, and the evaluator; `module_paths` from parsing
+and name resolution. `analysis`/`query` import each other and nothing pipeline-shaped
+consumes either — a self-contained tooling surface, not a stage and not shared substrate.
+
+**Resolved, from `#1231`'s own "Things to settle":**
+- `type_alias.rs` is a sub-module of `pipeline/parsing/`, not its own stage — its only
+  current caller is `module_loader`, and nothing here promotes it past that.
+- The interpreter's orchestrator is renamed (`orchestrator.rs` or equivalent), not left
+  colliding in name with the frontend's `pipeline/` directory.
+- The move lands as one mechanical, move-only PR (`git mv` plus path fixes, reviewed as
+  a rename check) followed by fix-ups — no re-export shims from the old paths. Standard
+  10's discipline applies directly: a compatibility shim here would itself be the kind
+  of thing that standard exists to keep out.
+
+**Costs `#1231` itself already names, not repeated in full here:** the Atlas evidence
+(`arch-implements`/`arch-verifies` markers, generated links, `last_reviewed`) is
+path-keyed and needs a deliberate re-review pass after the move, not an assumption that
+the audit will quietly follow renames; `tools/check_no_semantic_name_lookup.py`'s
+`SCAN_FILES`, CI path filters, and any doc naming a file by path need updating in the
+same change.
+
 ## Where this fits
 
 Counterpart to [`PROCESS.md`](PROCESS.md) (the Architecture/Spec Atlas's own generation
