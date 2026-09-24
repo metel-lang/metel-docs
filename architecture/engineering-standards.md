@@ -294,15 +294,97 @@ record.
 **Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-002/003/004/005` and
 `LIMIT-TYPE-INFERENCE-005` close.
 
+## 12. Repeated ambient parameters are a named context type, not re-threaded by hand
+
+**Rule.** When the same subset of parameters is repeated verbatim across sibling
+functions or a recursive walker's own calls, that subset is ambient state and gets
+bundled into one named context/params type, not re-threaded by hand at every call site.
+A function whose parameters are each genuinely distinct per call site is not a violation
+of this standard merely for having many of them — see Standard 4 for what may cross a
+*stage* boundary; this is about redundant repetition within one, not about crossing one.
+
+**Rationale.** A parameter list that repeats across several functions hides which values
+are shared state and which vary per call; a caller has to read every call site to tell
+the two apart. `#[allow(clippy::too_many_arguments)]` flags the symptom (argument count)
+without distinguishing the two causes, so the lint alone under- and over-fires: it misses
+cases below its threshold that still repeat the same subset, and it can push toward
+bundling genuinely distinct per-call data into an artificial struct just to quiet it.
+
+**Examples / counterexamples.** Conforming direction: `ConstructCtx`/`InferContext`
+already do this for their own stages. Violating, currently live: `name_resolver.rs`'s
+`process_export_tree`/`process_tree` (own comments: "threading full resolution
+context"); `typechecker/mod.rs`'s `check_one_module`/`check_impl`/
+`check_impl_with_report`; `typechecker/construction/calls.rs`'s
+`check_type_satisfies_bounds`/`check_type_does_not_satisfy_bound` ("mirrors [the
+other]'s parameter list"); `typechecker/projections.rs`'s `decl`/`ty_at`;
+`evaluator/mod.rs`'s `env`/`runtime` pair, repeated across 13 functions, only 2 of which
+are also flagged by the lint. Not a violation: `construction/calls.rs`'s
+`try_generic_method_scheme`/`resolve_generic_method_call`, whose remaining parameters
+are real per-call-site data once `ctx: &mut ConstructCtx` already carries the ambient
+part; `evaluator/mod.rs`'s `register_aspect_method`, whose 7 parameters are distinct
+fields of one registration record, not shared state — a data-bundle struct, not a
+context type, is the fix there, and a different fix from this standard's.
+
+**Enforcement.** None automated beyond `clippy::too_many_arguments` itself, which only
+approximates this. Caught by review: a bare suppression is the signal to check which
+side of the distinction the function is actually on before accepting it.
+
+**Exception process.** A suppression for a function whose arguments are genuinely
+per-call-site data is justified normally (`// clippy-allow: <reason>`,
+`clippy_allow_ratchet.py`'s existing convention) — this standard doesn't forbid
+`too_many_arguments`, only leaving a *repeated* subset unbundled.
+
+**Expiry.** Durable.
+
 ## Post-refactor module structure (metel-core#1231)
 
 The target this document's standards apply against once `#1231` (frontend
-reorganization by pipeline stage) lands. Verified against real `use crate::...` edges,
-not against the pipeline diagram alone — `ResolvedNames` (name resolution's own output)
-is read directly by coherence, type checking, and elaboration, not only by its immediate
-successor; `typeinference` is read directly by type checking's both passes and by move
-check. The tree below accounts for that instead of assuming a stricter single-hop
-handoff than the codebase actually has.
+reorganization by pipeline stage) lands. Standard 4's "each stage sees only its
+immediate predecessor's typed output" is a hard requirement here, not a description of
+the current code — where the codebase doesn't already follow it, the codebase is what
+moves, not the standard.
+
+**`ResolvedNames` is a deliberate, checked exception to the single-hop rule, not a
+loosening of it.** It's read directly by coherence, type checking, and elaboration
+today — several stages past its origin in name resolution — and stays that way after the
+refactor, because it costs nothing to: every real call site already takes it as
+`&ResolvedNames`, a shared borrow, never cloned, for the run's whole lifetime. It is safe
+to read from any later stage for the same reason `symbols`/`identity` already are —
+nothing downstream constructs a second one or mutates it (Standard 3 already guarantees
+no name-based re-derivation), so "read anywhere" carries none of the hazard the rule
+exists to prevent. It is explicitly not part of any stage's own typed output value —
+`NormalizedModuleGraph`, `TypedModuleGraph`, and `ElaboratedModuleGraph` do not embed
+it — it is threaded alongside the pipeline baton as its own named parameter at every
+boundary that needs it, the same way it already is.
+
+**`typeinference` is not the same case, and does not get the same treatment.** Standard
+4's rule is about typed *values* flowing forward; `typeinference` is where new inference
+state gets *constructed* (`TypeVarGenerator` minting a `TypeVar`, building a
+`Substitution`, running unification) — read-anywhere-safe reasoning does not apply to a
+constructor. `move_check` importing it directly today (`InferType`, `Substitution`,
+`TypeVar`, `TypeVarGenerator`, `TypeCtx`, `TypeDefinitionRegistry`, `TypeScheme` — the
+engine itself, not one value produced by it) to build its own symbolic instantiation for
+generic-body analysis is the architecture smell Standard 2's "one authoritative owner"
+already names, applied to inference state instead of identity allocation. It moves fully
+inside `pipeline/type_checking/` below, and `move_check`'s use of it does not move with
+it as an import — the real fix is `type_checking` exposing a narrow, purpose-built
+function move_check *calls* (in the shape of today's `generic_sample_args`, but owned
+and defined inside `type_checking`, not built from raw parts inside `move_check`), which
+is a logic change, not a file move. `#1231` itself is scoped as "a pure reorganisation:
+no behaviour change" — closing this specific gap is real work `#1231`'s move does not
+by itself perform, and should be tracked as its own follow-up (a `LIMIT-*` record is the
+natural way to keep it from being silently dropped once the directories are renamed and
+the smell is easier to overlook).
+
+**`place`/`flow_state` are read by both `type_checking`'s narrowing code and
+`move_check` today too, and that has not been given the same scrutiny as
+`typeinference` — flagged here as open, not resolved either way.** They may be
+foundational vocabulary (a `Place`/`FlowState` value, constructed independently by two
+genuinely different analyses that both need to interpret "what does this expression
+refer to," the same way many stages construct a `Type` from a `TypeExpr` without that
+being a violation) or they may be the same construction-sharing smell `typeinference` is
+— that determination needs the same "who actually constructs a new value versus who
+only reads one" check `typeinference` got, not an assumption either way.
 
 ```
 metel-frontend/src/
@@ -312,14 +394,14 @@ metel-frontend/src/
     path_normalization/ path_normalizer.rs
     coherence/          coherence.rs
     type_checking/      inference/, construction/, mod.rs, overload.rs, registry.rs,
-                         conversions.rs, handoff.rs, object_safety.rs, projections.rs
+                         conversions.rs, handoff.rs, object_safety.rs, projections.rs,
+                         typeinference/ (HM substrate — internal, not shared; see below)
     move_check/
     elaboration/
 
   ast/, typed_ast/, types/, error/     data definitions
   symbols.rs, identity/                identity backbone
-  typeinference/                       HM substrate: type_checking's both passes, move_check
-  place.rs, flow_state.rs              narrowing: type_checking, move_check
+  place.rs, flow_state.rs              narrowing: type_checking, move_check (status open, see below)
   stdlib.rs, native_keys.rs            parsing, type_checking, evaluator
   module_paths.rs                      parsing, name_resolution
 
@@ -331,20 +413,25 @@ metel-interpreter/src/
                     pipeline/ directory otherwise)
 ```
 
-**`type_checking/` holds two sub-passes, not two pipeline stages.** `typechecker/inference/*.rs`
-and `typechecker/construction/*.rs` are already the two passes `AGENTS.md`'s Type-system
+**`type_checking/` holds two sub-passes and its own inference substrate, not two
+pipeline stages and a shared one.** `typechecker/inference/*.rs` and
+`typechecker/construction/*.rs` are already the two passes `AGENTS.md`'s Type-system
 invariants section describes ("Inference emits constraints... Construction reads solved
-results and builds typed AST"). They stay siblings under one stage directory, matching
+results and builds typed AST"); they stay siblings under one stage directory, matching
 that existing description, rather than becoming two top-level pipeline stages.
+`typeinference/` moves inside the same directory as those two passes' own substrate —
+internal to `type_checking`, not a peer of it and not read by any other stage once
+`move_check`'s direct import is fixed (see above).
 
-**A module joins the shared-substrate group only when a real cross-stage import
-justifies it**, not by assumption — each entry above is backed by a direct `use crate::`
-edge from a stage other than the one that "owns" the file. `symbols` and `identity` are
-read from name resolution through the evaluator; `typeinference` from type checking and
-move check; `place`/`flow_state` from type checking and move check; `stdlib`/
-`native_keys` from parsing, type checking, and the evaluator; `module_paths` from parsing
-and name resolution. `analysis`/`query` import each other and nothing pipeline-shaped
-consumes either — a self-contained tooling surface, not a stage and not shared substrate.
+**A module joins the identity-backbone or tooling group only when a real cross-stage
+import of *already-constructed, read-only* data justifies it** — construction, not mere
+reference, is the line (see above). `symbols` and `identity` are read from name
+resolution through the evaluator, and nothing downstream mints a second `SymbolId`
+allocator from them (that would itself be a Standard 2 violation, tracked separately);
+`stdlib`/`native_keys` are read from parsing, type checking, and the evaluator the same
+way. `module_paths` is a small, pure function shared by parsing and name resolution, not
+a data table. `analysis`/`query` import each other and nothing pipeline-shaped consumes
+either — a self-contained tooling surface, not a stage.
 
 **Resolved, from `#1231`'s own "Things to settle":**
 - `type_alias.rs` is a sub-module of `pipeline/parsing/`, not its own stage — its only
@@ -362,6 +449,18 @@ path-keyed and needs a deliberate re-review pass after the move, not an assumpti
 the audit will quietly follow renames; `tools/check_no_semantic_name_lookup.py`'s
 `SCAN_FILES`, CI path filters, and any doc naming a file by path need updating in the
 same change.
+
+**Not resolvable by a file move, and not `#1231`'s own scope to perform — real logic
+work this section's target structure depends on, worth its own tracking rather than
+being silently expected once the directories look right:**
+- `move_check` no longer importing `typeinference`'s constructors directly — `type_checking`
+  exposing the narrow function it needs instead (above).
+- `place`/`flow_state`'s open status — determining whether either or both sides construct,
+  not just read, and resolving accordingly.
+- Standard 12's site list (`name_resolver.rs`'s two recursive walkers,
+  `typechecker/mod.rs`'s three, `construction/calls.rs`'s bound-check pair,
+  `projections.rs`'s two, `evaluator/mod.rs`'s `env`/`runtime` pair across 13
+  functions) — bundling ambient parameters into named context types, file by file.
 
 ## Where this fits
 
