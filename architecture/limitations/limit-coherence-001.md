@@ -43,7 +43,7 @@ the real cause.
 ## Affects
 
 - `spec.declarations.aspects.aspect-implementation-coherence.legality-1`
-- `metel-frontend/src/coherence.rs`
+- `metel-frontend/src/pipeline/coherence/mod.rs`
 
 ## Resolution
 

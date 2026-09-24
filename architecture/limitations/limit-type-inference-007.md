@@ -44,10 +44,10 @@ enough (`LIMIT-TYPE-INFERENCE-006`).
 
 - `arch.type-inference.requirement-1`
 - `arch.type-inference.requirement-7`
-- `metel-frontend/src/typeinference/mod.rs` (`generalize`, `env_free_vars`)
+- `metel-frontend/src/pipeline/type_checking/typeinference/mod.rs` (`generalize`, `env_free_vars`)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/typeinference/mod.rs::generalize`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typeinference/mod.rs#L1695)
+- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::generalize`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L1703)
 <!-- limit.py:markers:end -->
 
 ## Resolution

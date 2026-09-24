@@ -30,10 +30,10 @@ the spec gives no such exception. The workaround is an explicit `import`.
 ## Affects
 
 - `spec.modules.paths.legality-1`
-- `metel-frontend/src/path_normalizer.rs`
+- `metel-frontend/src/pipeline/path_normalization/mod.rs`
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/path_normalizer.rs::try_resolve_path`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/path_normalizer.rs#L415)
+- [`metel-frontend/src/pipeline/path_normalization/mod.rs::try_resolve_path`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/path_normalization/mod.rs#L416)
 <!-- limit.py:markers:end -->
 
 ## Resolution

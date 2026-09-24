@@ -4,7 +4,7 @@ title: "Overload SymbolIds come from a process-global counter that is never rese
 summary: "Free-function overload ids are allocated from a static counter shared by every compilation in the process, so their values depend on what was compiled before."
 scope: "architecture/spec/name-resolution.md#name-resolution"
 owner: metel-frontend
-discovered_by: "maintainer review of metel-frontend/src/symbols.rs"
+discovered_by: "maintainer review of metel-frontend/src/identity/symbols.rs"
 disposition: known
 review: null
 ---
@@ -45,10 +45,10 @@ is no reproducing fixture.
 
 - `arch.name-resolution.requirement-1`
 - `arch.type-construction.requirement-10`
-- [`metel-frontend/src/typechecker/overload.rs::NEXT_OVERLOAD_SYM`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typechecker/overload.rs#L35)
+- [`metel-frontend/src/pipeline/type_checking/overload.rs::NEXT_OVERLOAD_SYM`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/overload.rs#L37)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/typechecker/overload.rs::NEXT_OVERLOAD_SYM`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typechecker/overload.rs#L34)
+- [`metel-frontend/src/pipeline/type_checking/overload.rs::NEXT_OVERLOAD_SYM`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/overload.rs#L36)
 <!-- limit.py:markers:end -->
 
 ## Resolution

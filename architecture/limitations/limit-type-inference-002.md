@@ -38,7 +38,7 @@ restriction.
 ## Affects
 
 - `arch.type-inference.requirement-1`
-- `metel-frontend/src/typechecker/inference.rs` (eager partial solve)
+- `metel-frontend/src/pipeline/type_checking/inference.rs` (eager partial solve)
 
 ## Resolution
 

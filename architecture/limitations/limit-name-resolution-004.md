@@ -4,7 +4,7 @@ title: "Builtin SymbolIds are a hard-coded list of 21 names; other std declarati
 summary: "Only 18 builtin types and 3 aspects have fixed ids, kept in Rust beside the `std::core` module file; every other std declaration gets an id from a per-program sorted pass."
 scope: "architecture/spec/name-resolution.md#name-resolution"
 owner: metel-frontend
-discovered_by: "maintainer review of metel-frontend/src/symbols.rs"
+discovered_by: "maintainer review of metel-frontend/src/identity/symbols.rs"
 disposition: known
 review: null
 ---
@@ -41,10 +41,10 @@ there is no reproducing fixture.
 ## Affects
 
 - `arch.name-resolution.requirement-1`
-- `metel-frontend/src/symbols.rs` (`SymbolTable::new`, the `SYM_*` constants)
+- `metel-frontend/src/identity/symbols.rs` (`SymbolTable::new`, the `SYM_*` constants)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/symbols.rs::new`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/symbols.rs#L81)
+- [`metel-frontend/src/identity/symbols.rs::new`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/identity/symbols.rs#L81)
 <!-- limit.py:markers:end -->
 
 ## Resolution

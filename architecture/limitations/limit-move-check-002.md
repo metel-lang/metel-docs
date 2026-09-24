@@ -46,11 +46,11 @@ use it. The symptom is tracked as `metel-core#1226`.
 ## Affects
 
 - `arch.move-check.requirement-1`
-- `metel-frontend/src/move_check/mod.rs` (`generic_sample_args`, `record_skipped_generic_body`)
+- `metel-frontend/src/pipeline/move_check/mod.rs` (`generic_sample_args`, `record_skipped_generic_body`)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/move_check/mod.rs::generic_sample_args`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/move_check/mod.rs#L505)
-- [`metel-frontend/src/move_check/mod.rs::record_skipped_generic_body`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/move_check/mod.rs#L1639)
+- [`metel-frontend/src/pipeline/move_check/mod.rs::generic_sample_args`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/move_check/mod.rs#L509)
+- [`metel-frontend/src/pipeline/move_check/mod.rs::record_skipped_generic_body`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/move_check/mod.rs#L1643)
 <!-- limit.py:markers:end -->
 
 ## Resolution

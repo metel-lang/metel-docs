@@ -36,7 +36,7 @@ Visible to Metel programmers: `.as_slice()` is required to iterate a list.
 ## Affects
 
 - `arch.type-inference.requirement-1`
-- `metel-frontend/src/typechecker/inference/expressions.rs` (`for`-`in` `Iterable` check)
+- `metel-frontend/src/pipeline/type_checking/inference/expressions.rs` (`for`-`in` `Iterable` check)
 - `metel-frontend/stdlib/core.mtl` (`List` methods)
 
 ## Resolution
