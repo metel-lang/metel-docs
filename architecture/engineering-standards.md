@@ -462,6 +462,19 @@ being silently expected once the directories look right:**
   `projections.rs`'s two, `evaluator/mod.rs`'s `env`/`runtime` pair across 13
   functions) — bundling ambient parameters into named context types, file by file.
 
+**Monomorphization is not part of this pipeline.** ADR-0010 (still accepted) chose
+runtime re-construction over ahead-of-time monomorphization for the evaluator
+specifically — "acceptable for the tree-walk interpreter; a future compiler backend
+must pre-monomorphize" — and that's a decision staying, not a gap this refactor closes;
+`LIMIT-EVALUATION-001` tracks the resulting cost as accepted, not pending. Real
+monomorphization is `metel-core#288` ("Frontend monomorphization for compiler-facing
+typed IR"), paired with `#859` ("Compiler foundation: typed IR and first end-to-end
+code generation"), both milestoned v0.21.0 — a separate, not-yet-created compiler
+crate/pipeline, downstream of elaboration, consuming `ElaboratedModuleGraph` the same
+way the evaluator does today. Neither `metel-frontend/pipeline/` nor
+`metel-interpreter/evaluator/` above gains a monomorphization stage; nothing here should
+be read as reserving one.
+
 ## Where this fits
 
 Counterpart to [`PROCESS.md`](PROCESS.md) (the Architecture/Spec Atlas's own generation
