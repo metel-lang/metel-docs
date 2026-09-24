@@ -157,7 +157,7 @@ machine-owned subsection** of the record's `## Affects`:
 
 ```markdown
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/typechecker/overload.rs::NEXT_OVERLOAD_SYM`](https://github.com/.../overload.rs#L34)
+- [`metel-frontend/src/pipeline/type_checking/overload.rs::NEXT_OVERLOAD_SYM`](https://github.com/.../overload.rs#L34)
 <!-- limit.py:markers:end -->
 ```
 

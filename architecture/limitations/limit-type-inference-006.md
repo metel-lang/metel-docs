@@ -4,7 +4,7 @@ title: "Type checking is sequential by construction: one shared generator, one e
 summary: "Inference threads one `&mut` generator through every pass and one export generator through every module, and its context uses `Rc`, so modules cannot be checked in parallel."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
-discovered_by: "maintainer note on the type var generator; reviewed in metel-frontend/src/typechecker/mod.rs and typeinference/mod.rs"
+discovered_by: "maintainer note on the type var generator; reviewed in metel-frontend/src/pipeline/type_checking/mod.rs and typeinference/mod.rs"
 disposition: known
 review: null
 ---
@@ -48,12 +48,12 @@ attempt at parallel checking was made.
 
 - `arch.type-inference.requirement-1`
 - `LIMIT-TYPE-INFERENCE-005`
-- `metel-frontend/src/typechecker/mod.rs` (`check_graph`, `export_gen`)
-- `metel-frontend/src/typeinference/mod.rs` (`InferContext`, `TypeVarGenerator`)
+- `metel-frontend/src/pipeline/type_checking/mod.rs` (`check_graph`, `export_gen`)
+- `metel-frontend/src/pipeline/type_checking/typeinference/mod.rs` (`InferContext`, `TypeVarGenerator`)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/typechecker/mod.rs::check_graph`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typechecker/mod.rs#L349)
-- [`metel-frontend/src/typeinference/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typeinference/mod.rs#L46)
+- [`metel-frontend/src/pipeline/type_checking/mod.rs::check_graph`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/mod.rs#L353)
+- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L50)
 <!-- limit.py:markers:end -->
 
 ## Resolution

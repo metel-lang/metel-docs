@@ -44,7 +44,7 @@ reason and should be enabled when the limitation is lifted.
 - `arch.type-construction.requirement-5`
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/typechecker/construction/declarations.rs::reject_inert_destructor`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typechecker/construction/declarations.rs#L391)
+- [`metel-frontend/src/pipeline/type_checking/construction/declarations.rs::reject_inert_destructor`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/construction/declarations.rs#L393)
 <!-- limit.py:markers:end -->
 
 ## Resolution

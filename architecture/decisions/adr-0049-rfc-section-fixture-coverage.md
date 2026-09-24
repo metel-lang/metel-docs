@@ -139,7 +139,7 @@ title: "Structural Aspect Bounds"
 date: '2026-07-01'
 status: implemented
 coverage:
-  "3": { kind: elsewhere, reason: "coherence overlap check", ref: "metel-frontend/src/coherence.rs::impls_actually_overlap tests" }
+  "3": { kind: elsewhere, reason: "coherence overlap check", ref: "metel-frontend/src/pipeline/coherence/mod.rs::impls_actually_overlap tests" }
   "4b": { kind: blocked, reason: "no mutation-qualifier syntax exists yet", ref: "rfc-0134" }
   "7.3": { kind: untestable, reason: "claim is about compiler-internal representation" }
 ---

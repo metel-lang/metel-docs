@@ -4,7 +4,7 @@ title: "TypeVar identity is a global number, and generator ranges are kept apart
 summary: "A `TypeVar` is just a `u32`, so every generator in a run must start past the others; the frontend does that with unguarded constants (10,000, 1M-5M) scattered over six files."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
-discovered_by: "maintainer note on the type var generator; reviewed in metel-frontend/src/typeinference/mod.rs"
+discovered_by: "maintainer note on the type var generator; reviewed in metel-frontend/src/pipeline/type_checking/typeinference/mod.rs"
 disposition: known
 review: null
 ---
@@ -64,14 +64,14 @@ of functions (`LIMIT-TYPE-INFERENCE-007`).
 ## Affects
 
 - `arch.type-inference.requirement-1`
-- [`metel-frontend/src/typeinference/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typeinference/mod.rs#L47)
-- [`metel-frontend/src/typeinference/mod.rs::split_gen`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typeinference/mod.rs#L4914)
-- `metel-frontend/src/typechecker/mod.rs`, `typechecker/construction.rs`, `move_check/mod.rs` (the offsets)
+- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L51)
+- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::split_gen`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L4938)
+- `metel-frontend/src/pipeline/type_checking/mod.rs`, `typechecker/construction.rs`, `move_check/mod.rs` (the offsets)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/typechecker/construction.rs::construct_generic_body`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typechecker/construction.rs#L1059)
-- [`metel-frontend/src/typeinference/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typeinference/mod.rs#L46)
-- [`metel-frontend/src/typeinference/mod.rs::split_gen`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typeinference/mod.rs#L4913)
+- [`metel-frontend/src/pipeline/type_checking/construction.rs::construct_generic_body`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/construction.rs#L1059)
+- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L50)
+- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::split_gen`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L4937)
 <!-- limit.py:markers:end -->
 
 ## Resolution

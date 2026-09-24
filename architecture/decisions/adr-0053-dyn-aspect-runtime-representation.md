@@ -75,7 +75,7 @@ others (metel-core#864 / #872).
 
 ### 5. Object safety stays a frontend, compile-time check
 
-`metel-frontend/src/typechecker/object_safety.rs` (RFC-0008 §3 / §3a / §3b): an aspect
+`metel-frontend/src/pipeline/type_checking/object_safety.rs` (RFC-0008 §3 / §3a / §3b): an aspect
 with a `Self`-by-value receiver, a `Self` return, a generic method, or an associated type
 in a method signature is rejected at the coercion site. `Drop::drop` (`&var self`,
 RFC-0071) is object-safe. None of this touches the runtime — a value only reaches

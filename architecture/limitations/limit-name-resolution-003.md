@@ -4,7 +4,7 @@ title: "The SymbolId space is split between three allocators by convention, with
 summary: "User, overload and block-local ids share one `u32` split into ranges by convention; nothing guards the boundaries or overflow, and the table's map is public."
 scope: "architecture/spec/name-resolution.md#name-resolution"
 owner: metel-frontend
-discovered_by: "maintainer review of metel-frontend/src/symbols.rs"
+discovered_by: "maintainer review of metel-frontend/src/identity/symbols.rs"
 disposition: known
 review: null
 ---
@@ -39,11 +39,11 @@ There is no observable symptom, so no reproducing fixture.
 ## Affects
 
 - `arch.name-resolution.requirement-1`
-- `metel-frontend/src/symbols.rs` (`SymbolTable`, `USER_SYM_START`, `OVERLOAD_SYM_START`)
-- `metel-frontend/src/typeinference/mod.rs` (`fresh_local_type_id`)
+- `metel-frontend/src/identity/symbols.rs` (`SymbolTable`, `USER_SYM_START`, `OVERLOAD_SYM_START`)
+- `metel-frontend/src/pipeline/type_checking/typeinference/mod.rs` (`fresh_local_type_id`)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/typeinference/mod.rs::fresh_local_type_id`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typeinference/mod.rs#L2402)
+- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::fresh_local_type_id`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L2413)
 <!-- limit.py:markers:end -->
 
 ## Resolution

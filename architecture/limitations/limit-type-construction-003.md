@@ -42,10 +42,10 @@ issue needs to be found or filed.
 ## Affects
 
 - `arch.type-construction.requirement-7`
-- `metel-frontend/src/typechecker/construction.rs` (equality guard)
+- `metel-frontend/src/pipeline/type_checking/construction.rs` (equality guard)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/typechecker/construction.rs::construct_binop`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typechecker/construction.rs#L1455)
+- [`metel-frontend/src/pipeline/type_checking/construction.rs::construct_binop`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/construction.rs#L1457)
 <!-- limit.py:markers:end -->
 
 ## Resolution
