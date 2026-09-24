@@ -397,7 +397,7 @@ metel-frontend/src/
                          conversions.rs, handoff.rs, object_safety.rs, projections.rs,
                          typeinference/ (HM substrate — internal, not shared; see below)
     move_check/
-    elaboration/
+    elaboration/        stage 07, the frontend's last shared stage
 
   ast/, typed_ast/, types/, error/     data definitions
   symbols.rs, identity/                identity backbone
@@ -411,6 +411,10 @@ metel-interpreter/src/
   evaluator/       stage 08, stays in this crate
   orchestrator.rs  renamed from pipeline.rs (name collision with the frontend's new
                     pipeline/ directory otherwise)
+
+# Reserved, stage 09 — not built yet, see below for why the slot is claimed now anyway
+<compiler-crate>/src/
+  monomorphize/     downstream of elaboration, ahead of codegen — metel-core#288, v0.21.0
 ```
 
 **`type_checking/` holds two sub-passes and its own inference substrate, not two
@@ -462,18 +466,28 @@ being silently expected once the directories look right:**
   `projections.rs`'s two, `evaluator/mod.rs`'s `env`/`runtime` pair across 13
   functions) — bundling ambient parameters into named context types, file by file.
 
-**Monomorphization is not part of this pipeline.** ADR-0010 (still accepted) chose
-runtime re-construction over ahead-of-time monomorphization for the evaluator
-specifically — "acceptable for the tree-walk interpreter; a future compiler backend
-must pre-monomorphize" — and that's a decision staying, not a gap this refactor closes;
-`LIMIT-EVALUATION-001` tracks the resulting cost as accepted, not pending. Real
-monomorphization is `metel-core#288` ("Frontend monomorphization for compiler-facing
-typed IR"), paired with `#859` ("Compiler foundation: typed IR and first end-to-end
-code generation"), both milestoned v0.21.0 — a separate, not-yet-created compiler
-crate/pipeline, downstream of elaboration, consuming `ElaboratedModuleGraph` the same
-way the evaluator does today. Neither `metel-frontend/pipeline/` nor
-`metel-interpreter/evaluator/` above gains a monomorphization stage; nothing here should
-be read as reserving one.
+**Monomorphization is a real, necessary stage of the eventual whole pipeline — its slot
+is reserved above (stage 09), even though nothing builds it yet.** `metel-core#288`
+("Frontend monomorphization for compiler-facing typed IR"), paired with `#859`
+("Compiler foundation: typed IR and first end-to-end code generation"), both milestoned
+v0.21.0, name it as required, not optional, once a compiler backend exists: ADR-0010's
+own text is explicit that the evaluator's runtime re-construction is a choice "acceptable
+for the tree-walk interpreter," not a substitute for it — "a future compiler backend
+must pre-monomorphize." Its position is settled now because it follows directly from
+what already exists: it consumes `ElaboratedModuleGraph`, the frontend's own last shared
+output, the same input the evaluator already takes — so it sits immediately after
+elaboration and ahead of codegen, in whatever crate the compiler backend lands in, which
+doesn't exist yet and isn't `metel-frontend` or `metel-interpreter`. Naming the slot here
+means `#1231`'s own reorganization doesn't need revisiting to make room for it later; it
+already has its place.
+
+**What does *not* change today**, and this is the part ADR-0010 already settled rather
+than something this section is newly deciding: the evaluator keeps runtime
+re-construction, not monomorphization, for as long as it stays the tree-walk
+interpreter — `LIMIT-EVALUATION-001` tracks that cost as accepted, not as work pending
+on this refactor. `#1231` does not build stage 09 or touch the evaluator's own strategy;
+it only makes sure the target structure has a settled place for stage 09 to land in when
+`#288`/`#859` actually start.
 
 ## Where this fits
 
