@@ -235,5 +235,116 @@ class PlannedMarkerTests(unittest.TestCase):
             self.assertEqual(rfc.planned_marker_problems(), [])
 
 
+class SpecBlockBodiesTests(unittest.TestCase):
+    """metel-core#1192: spec_block_bodies() isolates each rigor block's body
+    span -- the region a hand-typed `last_reviewed` comment lives in, and the
+    same span regenerate_backlinks_in_text carries through untouched."""
+
+    def test_body_stops_at_origins_marker(self):
+        text = (
+            "##### Legality Rule {#spec.x.y.legality-1}\n\n"
+            "Some prose about the rule.\n\n"
+            "<!-- rfc.py:origins:start -->\n"
+            "backlink\n"
+            "<!-- rfc.py:origins:end -->\n"
+        )
+        blocks = rfc.spec_block_bodies(text)
+        self.assertEqual(len(blocks), 1)
+        spec_id, body = blocks[0]
+        self.assertEqual(spec_id, "spec.x.y.legality-1")
+        self.assertIn("Some prose about the rule.", body)
+        self.assertNotIn("origins:start", body)
+        self.assertNotIn("backlink", body)
+
+    def test_body_stops_at_fixtures_marker_with_no_origins(self):
+        text = (
+            "##### Dynamic Semantics {#spec.x.y.dynamics-1}\n\n"
+            "Prose only, no origins backlink for this one.\n\n"
+            "<!-- rfc.py:fixtures:start -->\nfixture\n<!-- rfc.py:fixtures:end -->\n"
+        )
+        _spec_id, body = rfc.spec_block_bodies(text)[0]
+        self.assertIn("Prose only, no origins backlink for this one.", body)
+        self.assertNotIn("fixture", body)
+
+    def test_hand_typed_last_reviewed_comment_stays_in_body(self):
+        text = (
+            "##### Legality Rule {#spec.x.y.legality-1}\n\n"
+            "Prose.\n\n"
+            "<!-- rfc.py:last_reviewed: 1234567890abcdef1234567890abcdef12345678 -->\n\n"
+            "<!-- rfc.py:origins:start -->\nbacklink\n<!-- rfc.py:origins:end -->\n"
+        )
+        _spec_id, body = rfc.spec_block_bodies(text)[0]
+        m = rfc.SPEC_LAST_REVIEWED_RE.search(body)
+        self.assertIsNotNone(m)
+        self.assertEqual(m.group("sha"), "1234567890abcdef1234567890abcdef12345678")
+
+    def test_two_blocks_in_one_file_are_isolated(self):
+        text = (
+            "##### Legality Rule {#spec.x.y.legality-1}\n\n"
+            "First rule prose.\n\n"
+            "<!-- rfc.py:origins:start -->\nA\n<!-- rfc.py:origins:end -->\n\n"
+            "##### Dynamic Semantics {#spec.x.y.dynamics-1}\n\n"
+            "Second rule prose.\n\n"
+            "<!-- rfc.py:fixtures:start -->\nB\n<!-- rfc.py:fixtures:end -->\n"
+        )
+        blocks = rfc.spec_block_bodies(text)
+        self.assertEqual([b[0] for b in blocks], ["spec.x.y.legality-1", "spec.x.y.dynamics-1"])
+        self.assertIn("First rule prose.", blocks[0][1])
+        self.assertNotIn("Second rule prose.", blocks[0][1])
+        self.assertIn("Second rule prose.", blocks[1][1])
+        self.assertNotIn("First rule prose.", blocks[1][1])
+
+    def test_exemption_trigger_line_stays_in_body_but_rendered_block_does_not(self):
+        text = (
+            "##### Legality Rule {#spec.x.y.legality-1}\n\n"
+            "Prose.\n\n"
+            '<span class="spec-exemption-trigger" kind="blocked" ref="metel-core#1" '
+            'reason="not yet"></span>\n'
+            "<!-- rfc.py:exemption:rendered:start -->\nrendered\n"
+            "<!-- rfc.py:exemption:rendered:end -->\n"
+        )
+        _spec_id, body = rfc.spec_block_bodies(text)[0]
+        self.assertIn("spec-exemption-trigger", body)
+        self.assertNotIn("rendered", body)
+
+
+class GitHistoryHelperTests(unittest.TestCase):
+    """metel-core#1192's git-history helpers, exercised against this repo's
+    own real history rather than a fixture repo -- ancestry/ordering is what
+    matters here, not any specific commit's content."""
+
+    def setUp(self):
+        self.repo_root = Path(__file__).resolve().parents[2]
+
+    def test_resolve_commit_accepts_head_and_rejects_garbage(self):
+        sha = rfc.git_resolve_commit(self.repo_root, "HEAD")
+        self.assertIsNotNone(sha)
+        self.assertEqual(len(sha), 40)
+        self.assertIsNone(rfc.git_resolve_commit(self.repo_root, "not-a-real-ref"))
+
+    def test_is_ancestor_of_head_and_of_itself(self):
+        head = rfc.git_resolve_commit(self.repo_root, "HEAD")
+        self.assertTrue(rfc.git_is_ancestor(self.repo_root, head, head))
+        parent = rfc.git_resolve_commit(self.repo_root, "HEAD~1")
+        if parent:
+            self.assertTrue(rfc.git_is_ancestor(self.repo_root, parent, head))
+            self.assertFalse(rfc.git_is_ancestor(self.repo_root, head, parent))
+
+    def test_most_recent_commit_of_one_is_itself(self):
+        head = rfc.git_resolve_commit(self.repo_root, "HEAD")
+        self.assertEqual(rfc.git_most_recent_commit(self.repo_root, [head]), head)
+
+    def test_most_recent_commit_picks_the_descendant(self):
+        head = rfc.git_resolve_commit(self.repo_root, "HEAD")
+        parent = rfc.git_resolve_commit(self.repo_root, "HEAD~1")
+        if parent:
+            self.assertEqual(
+                rfc.git_most_recent_commit(self.repo_root, [parent, head]), head
+            )
+            self.assertEqual(
+                rfc.git_most_recent_commit(self.repo_root, [head, parent]), head
+            )
+
+
 if __name__ == "__main__":
     unittest.main()

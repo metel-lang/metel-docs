@@ -177,6 +177,8 @@ Shorthand and explicit fields may be mixed freely within one literal.
 
 A struct-literal field initializer is `ident`, optionally followed by `= expr`. ...
 
+<!-- rfc.py:last_reviewed: fce48e67a936036a3864d3b1204ea7498f105f79 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -189,6 +191,8 @@ A struct-literal field initializer is `ident`, optionally followed by `= expr`. 
 ##### Dynamic Semantics {#spec.declarations.structs.instantiation-and-field-access.dynamics-1}
 
 A shorthand field `ident` in a struct literal evaluates identically to `ident = ident`. ...
+
+<!-- rfc.py:last_reviewed: fce48e67a936036a3864d3b1204ea7498f105f79 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_</span>

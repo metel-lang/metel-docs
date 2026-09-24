@@ -20,6 +20,8 @@ A panic prints its message, terminates the process with a non-zero status, and c
 caught. Calling `panic`, a failing `assert`, `.yolo()` on an absent or error variant,
 out-of-bounds array access, and integer division by zero trigger a panic.
 
+<!-- rfc.py:last_reviewed: 60cdfd504635a2a8c5e6f2d2edf2f9d5eea3f49b -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlIwMDE0IiwiY29sIjpudWxsLCJjb250YWlucyI6ImJvb20iLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJydW50aW1lX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibmVnX3BhbmljLm10bCIsInNvdXJjZSI6Ii8vIFJVTlRJTUVfRVJST1JbYm9vbV1cbi8vIFJGQy0wMDc4OiBwYW5pYyhtc2cpIGFsd2F5cyBwYW5pY3MgKFIwMDE0KSB3aXRoIHRoZSBnaXZlbiBtZXNzYWdlLlxuZnVuIG1haW4oKSB7XG4gICAgcGFuaWMoXCJib29tXCIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvbmV2ZXIvbmVnX3BhbmljLm10bCIsIm5hbWUiOiJuZWdfcGFuaWMubXRsIn0="></details>
@@ -62,6 +64,8 @@ the `+` operator.
 
 `print` and `println` accept only values whose type implements `Display`.
 
+<!-- rfc.py:last_reviewed: a7b8151cc37f56e7485b2fc48062ed4ba2925b14 -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDEyIiwiY29sIjpudWxsLCJjb250YWlucyI6ImRvZXMgbm90IGltcGxlbWVudCBgRGlzcGxheWAiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJzdGFnZThfbmVnXzAyX3ByaW50bG5fcmVxdWlyZXNfZGlzcGxheS5tdGwiLCJzb3VyY2UiOiIvLyBwcmludGxuL3ByaW50IHJlcXVpcmUgRGlzcGxheSAoTUVURUwtMTgxKTogcGFzc2luZyBhIHR5cGUgd2l0aCBub1xuLy8gRGlzcGxheSBpbXBsIGlzIGEgY29tcGlsZS10aW1lIGVycm9yLCBub3QgYSBydW50aW1lIHBhbmljLlxuXG5zdHJ1Y3QgVGVzdCB7XG4gICAgYXR0cjogaTgsXG59XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCB4IDo9IFRlc3QgeyBhdHRyID0gMWk4IH07XG4gICAgcHJpbnRsbih4KTsgLy8gRVJST1JbVDAwMTJdXG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9idWlsdGlucy9zdGFnZThfbmVnXzAyX3ByaW50bG5fcmVxdWlyZXNfZGlzcGxheS5tdGwiLCJuYW1lIjoic3RhZ2U4X25lZ18wMl9wcmludGxuX3JlcXVpcmVzX2Rpc3BsYXkubXRsIn0="></details>
@@ -72,6 +76,8 @@ the `+` operator.
 `print` writes a `Display` value's `to_string` result to stdout without a newline; `println`
 writes the same result followed by a newline.
 
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Ijc3X3ByaW50bG5fdXNlcl9kaXNwbGF5Lm10bCIsInNvdXJjZSI6Ii8vIHByaW50L3ByaW50bG4gbXVzdCBkaXNwYXRjaCBhIHVzZXItZGVmaW5lZCBgRGlzcGxheWAgaW1wbCwgbm90IG9ubHkgZm9ybWF0XG4vLyBwcmltaXRpdmVzLiBCZWZvcmUgTUVURUwtMTkyIHRoZXNlIGNhbGxzIHR5cGVjaGVja2VkIGJ1dCBwYW5pY2tlZCBhdCBydW50aW1lXG4vLyB3aXRoIFIwMDA5IGJlY2F1c2UgdGhlIGhvc3QgZm9ybWF0dGVyIG9ubHkgaGFuZGxlZCBwcmltaXRpdmUgdmFsdWVzLiBUaGVcbi8vIHB1YmxpYyBwcmludC9wcmludGxuIG5vdyBsb3dlciB0byBgeC50b19zdHJpbmcoKWAgaW4tbGFuZ3VhZ2UsIHNvIGFueVxuLy8gYERpc3BsYXlgIHZhbHVlIChzdHJ1Y3QsIGVudW0sIHByaW1pdGl2ZSkgcHJpbnRzIHZpYSBpdHMgb3duIGltcGwuXG5cbnN0cnVjdCBQb2ludCB7IHg6IGk2NCwgeTogaTY0IH1cblxuZXh0ZW5kIFBvaW50OiBEaXNwbGF5IHtcblx0ZnVuIHRvX3N0cmluZygmc2VsZikgLT4gU3RyaW5nIHtcblx0XHRcIigke3NlbGYueH0sICR7c2VsZi55fSlcIlxuXHR9XG59XG5cbmVudW0gQ29sb3IgeyBSZWQsIEdyZWVuIH1cblxuZXh0ZW5kIENvbG9yOiBEaXNwbGF5IHtcblx0ZnVuIHRvX3N0cmluZygmc2VsZikgLT4gU3RyaW5nIHtcblx0XHRtYXRjaCAoc2VsZikge1xuXHRcdFx0Q29sb3I6OlJlZCA9PiBcInJlZFwiLFxuXHRcdFx0Q29sb3I6OkdyZWVuID0+IFwiZ3JlZW5cIixcblx0XHR9XG5cdH1cbn1cblxuZnVuIG1haW4oKSB7XG5cdC8vIHN0cnVjdCB3aXRoIGEgdXNlciBEaXNwbGF5IGltcGxcblx0cHJpbnRsbihQb2ludCB7IHggPSAxLCB5ID0gMiB9KTtcblx0Ly8gZW51bSB3aXRoIGEgdXNlciBEaXNwbGF5IGltcGxcblx0cHJpbnQoQ29sb3I6OlJlZCk7XG5cdHByaW50bG4oQ29sb3I6OkdyZWVuKTtcblx0Ly8gcHJpbWl0aXZlcyBtdXN0IHN0aWxsIHByaW50IHVuY2hhbmdlZFxuXHRwcmludGxuKDQyKTtcblx0cHJpbnRsbihcImRvbmVcIik7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9mdW5jdGlvbnMvNzdfcHJpbnRsbl91c2VyX2Rpc3BsYXkubXRsIiwibmFtZSI6Ijc3X3ByaW50bG5fdXNlcl9kaXNwbGF5Lm10bCJ9"></details>
@@ -80,6 +86,8 @@ writes the same result followed by a newline.
 ##### Dynamic Semantics {#spec.runtime.built-in-functions.dynamics-2}
 
 `assert(false)` panics with `"assertion failed"`; `assert(false, msg)` panics with `msg`.
+
+<!-- rfc.py:last_reviewed: 60cdfd504635a2a8c5e6f2d2edf2f9d5eea3f49b -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -90,6 +98,8 @@ writes the same result followed by a newline.
 
 `dbg(v)` writes its debug rendering to stderr and evaluates to `v` unchanged.
 
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImRiZ19idWlsdGluLm10bCIsInNvdXJjZSI6Ii8vIGRiZyh4KSBcdTIwMTQgcHJpbnQtYW5kLXJldHVybjogcHJpbnRzIHRvIHN0ZGVyciwgcmV0dXJucyB2YWx1ZSB1bmNoYW5nZWQuXG5cbmZ1biBtYWluKCkge1xuICAgIC8vIFNjYWxhciB0eXBlcyBwYXNzIHRocm91Z2ggdW5jaGFuZ2VkLlxuICAgIGxldCB4OiBpNjQgOj0gZGJnKDQyKTtcbiAgICBhc3NlcnQoeCA9PSA0Mik7XG5cbiAgICBsZXQgYjogYm9vbGVhbiA6PSBkYmcodHJ1ZSk7XG4gICAgYXNzZXJ0KGIgPT0gdHJ1ZSk7XG5cbiAgICBsZXQgczogU3RyaW5nIDo9IGRiZyhcImhlbGxvXCIpO1xuICAgIGFzc2VydChzID09IFwiaGVsbG9cIik7XG5cbiAgICAvLyBBcml0aG1ldGljIGV4cHJlc3Npb24gcGFzc2VkIHRocm91Z2guXG4gICAgbGV0IHk6IGk2NCA6PSBkYmcoMiArIDMpO1xuICAgIGFzc2VydCh5ID09IDUpO1xuXG4gICAgLy8gSW5saW5lOiBkYmcoeCkgaW5zaWRlIGEgbGFyZ2VyIGV4cHJlc3Npb24uXG4gICAgbGV0IHo6IGk2NCA6PSBkYmcoMTApICogMjtcbiAgICBhc3NlcnQoeiA9PSAyMCk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9idWlsdGlucy9kYmdfYnVpbHRpbi5tdGwiLCJuYW1lIjoiZGJnX2J1aWx0aW4ubXRsIn0="></details>
@@ -98,6 +108,8 @@ writes the same result followed by a newline.
 ##### Dynamic Semantics {#spec.runtime.built-in-functions.dynamics-4}
 
 `clock()` returns the current Unix timestamp in milliseconds.
+
+<!-- rfc.py:last_reviewed: bcb923c94347470c02ab6b0d6b1dac44f923fad4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -128,6 +140,8 @@ aspect Display {
 `i64`, `f64`, `boolean`, `String`, and `Char` have built-in `Display` implementations whose
 `to_string` methods return their canonical string representations.
 
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
 <summary>Tested by (2)</summary>
@@ -156,6 +170,8 @@ aspect Iterable<T> {
 Arrays and ranges implement `Iterable<T>`; a user-defined type is usable in `for-in` only
 when it implements that aspect.
 
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjU5X2l0ZXJhYmxlX2FzcGVjdC5tdGwiLCJzb3VyY2UiOiIvLyBVc2VyLWRlZmluZWQgSXRlcmFibGUgdmlhIGFzcGVjdCBcdTIwMTQgZm9yLWluIGRpc3BhdGNoZXMgdGhyb3VnaCBuZXh0KCkuXG5cbmFzcGVjdCBJdGVyYWJsZTxUPiB7XG4gICAgZnVuIG5leHQoJnZhciBzZWxmKSAtPiBQZXJoYXBzPFQ+O1xufVxuXG5zdHJ1Y3QgQ291bnRlciB7XG4gICAgY3VycmVudDogaTY0LFxuICAgIGxpbWl0OiAgIGk2NCxcbn1cblxuZXh0ZW5kIENvdW50ZXIge1xuICAgIGZ1biBuZXcobGltaXQ6IGk2NCkgLT4gQ291bnRlciB7XG4gICAgICAgIHJldHVybiBDb3VudGVyIHsgY3VycmVudCA9IDAsIGxpbWl0ID0gbGltaXQgfTtcbiAgICB9XG59XG5cbmV4dGVuZCBDb3VudGVyOiBJdGVyYWJsZTxpNjQ+IHtcbiAgICBmdW4gbmV4dCgmdmFyIHNlbGYpIC0+IFBlcmhhcHM8aTY0PiB7XG4gICAgICAgIGlmIChzZWxmLmN1cnJlbnQgPCBzZWxmLmxpbWl0KSB7XG4gICAgICAgICAgICBsZXQgdmFsIDo9IHNlbGYuY3VycmVudDtcbiAgICAgICAgICAgIHNlbGYuY3VycmVudCA6PSBzZWxmLmN1cnJlbnQgKyAxO1xuICAgICAgICAgICAgcmV0dXJuIFBlcmhhcHM6OlNvbWUgeyB2YWx1ZSA9IHZhbCB9O1xuICAgICAgICB9XG4gICAgICAgIHJldHVybiBOb25lO1xuICAgIH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgdmFyIHN1bSA6PSAwO1xuICAgIGxldCBjIDo9IENvdW50ZXI6Om5ldyg1KTtcbiAgICBmb3IgKHggaW4gYykge1xuICAgICAgICBzdW0gKz0geDtcbiAgICB9XG4gICAgYXNzZXJ0KHN1bSA9PSAxMCk7IC8vIDArMSsyKzMrNFxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvYXNwZWN0cy81OV9pdGVyYWJsZV9hc3BlY3QubXRsIiwibmFtZSI6IjU5X2l0ZXJhYmxlX2FzcGVjdC5tdGwifQ=="></details>
@@ -180,6 +196,8 @@ aspect From<S> {
 
 `i64` implements `From<f64>` and `f64` implements `From<i64>`; user-defined `From<S>`
 implementations make their target type available for `as` casts and `?` error coercion.
+
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -232,6 +250,8 @@ String utility methods operate on Unicode scalar values; index-based operations 
 clamping a slice boundary and returning `None` for an absent character or search result
 rather than panicking.
 
+<!-- rfc.py:last_reviewed: 7e90e2bceeac84063568a8f0acfc5e6f594af53a -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -259,6 +279,8 @@ rather than panicking.
 
 Calling `.len()` on either `T[]` or `[T; N]` returns its number of elements.
 
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjEzX3NpemVkX2FycmF5X2V4dGVuZGVkLm10bCIsInNvdXJjZSI6ImZ1biBtYWluKCkge1xuICAgIC8vIEVtcHR5IHNpemVkIGFycmF5IFtUOyAwXSBcdTIwMTQgbGVuKCkgcmV0dXJucyAwLlxuICAgIGxldCBlbXB0eTogW2k2NDsgMF0gOj0gWzA7IDBdO1xuICAgIGFzc2VydChlbXB0eS5sZW4oKSA9PSAwKTtcblxuICAgIC8vIFNpbmdsZS1lbGVtZW50IHNpemVkIGFycmF5LlxuICAgIGxldCBzaW5nbGU6IFtpNjQ7IDFdIDo9IFs0Ml07XG4gICAgYXNzZXJ0KHNpbmdsZVswXSA9PSA0Mik7XG5cbiAgICAvLyBSZXBlYXQgd2l0aCBhIG5vbi10cml2aWFsIGV4cHJlc3Npb24uXG4gICAgbGV0IGNvbXB1dGVkOiBbaTY0OyAzXSA6PSBbMiArIDM7IDNdO1xuICAgIGFzc2VydChjb21wdXRlZFswXSA9PSA1KTtcbiAgICBhc3NlcnQoY29tcHV0ZWRbMV0gPT0gNSk7XG4gICAgYXNzZXJ0KGNvbXB1dGVkWzJdID09IDUpO1xuXG4gICAgLy8gTXV0YXRpb24gb2YgYSBzaXplZCBhcnJheSBlbGVtZW50LlxuICAgIHZhciBhcnI6IFtpNjQ7IDNdIDo9IFsxLCAyLCAzXTtcbiAgICBhcnJbMV0gOj0gOTk7XG4gICAgYXNzZXJ0KGFyclswXSA9PSAxKTtcbiAgICBhc3NlcnQoYXJyWzFdID09IDk5KTtcbiAgICBhc3NlcnQoYXJyWzJdID09IDMpO1xuXG4gICAgLy8gQ29lcmNpb246IFtUOyBOXSBpdGVyYXRlcyB2aWEgZm9yLWluIChzYW1lIGFzIFRbXSkuXG4gICAgbGV0IHNpemVkOiBbaTY0OyA0XSA6PSBbMTAsIDIwLCAzMCwgNDBdO1xuICAgIHZhciBkeW5fc3VtIDo9IDA7XG4gICAgZm9yICh4IGluIHNpemVkKSB7XG4gICAgICAgIGR5bl9zdW0gKz0geDtcbiAgICB9XG4gICAgYXNzZXJ0KGR5bl9zdW0gPT0gMTAwKTtcblxuICAgIC8vIFBhdHRlcm46IC4ucmVzdCBpcyBlbXB0eSB3aGVuIG9ubHkgb25lIGVsZW1lbnQgaW4gdGhlIHNpemVkIGFycmF5LlxuICAgIGxldCBhcnIxOiBbaTY0OyAxXSA6PSBbNDJdO1xuICAgIGxldCByZXN0X2VtcHR5IDo9IG1hdGNoIChhcnIxKSB7XG4gICAgICAgIFtoZWFkLCAuLnJlc3RdID0+IHtcbiAgICAgICAgICAgIHZhciBjbnQgOj0gMDtcbiAgICAgICAgICAgIGZvciAoXyBpbiByZXN0KSB7IGNudCArPSAxOyB9XG4gICAgICAgICAgICBoZWFkICsgY250XG4gICAgICAgIH0sXG4gICAgfTtcbiAgICBhc3NlcnQocmVzdF9lbXB0eSA9PSA0Mik7XG5cbiAgICAvLyBQYXR0ZXJuOiAuLnJlc3QgY29sbGVjdHMgcmVtYWluaW5nIGVsZW1lbnRzLlxuICAgIGxldCBhcnIyOiBbaTY0OyA0XSA6PSBbMSwgMiwgMywgNF07XG4gICAgbGV0IHJlc3Rfc3VtIDo9IG1hdGNoIChhcnIyKSB7XG4gICAgICAgIFtfYSwgX2IsIC4ucmVzdF0gPT4gcmVzdFswXSArIHJlc3RbMV0sXG4gICAgfTtcbiAgICBhc3NlcnQocmVzdF9zdW0gPT0gNyk7XG5cbiAgICAvLyBFeGFjdC1jb3VudCBwYXR0ZXJuOiBlbGVtZW50IGJpbmRpbmdzIGFyZSBjb3JyZWN0LlxuICAgIGxldCBjb29yZHM6IFtpNjQ7IDNdIDo9IFszLCA0LCAwXTtcbiAgICBsZXQgZGlzdF9zcSA6PSBtYXRjaCAoY29vcmRzKSB7XG4gICAgICAgIFt4LCB5LCBfel0gPT4geCAqIHggKyB5ICogeSxcbiAgICB9O1xuICAgIGFzc2VydChkaXN0X3NxID09IDI1KTtcblxuICAgIC8vIGZvci1pbiBvdmVyIGEgcmVwZWF0LWNvbnN0cnVjdGVkIHNpemVkIGFycmF5LlxuICAgIHZhciB0b3RhbCA6PSAwO1xuICAgIGZvciAodiBpbiBbNzsgNV0pIHtcbiAgICAgICAgdG90YWwgKz0gdjtcbiAgICB9XG4gICAgYXNzZXJ0KHRvdGFsID09IDM1KTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL3R5cGVzLzEzX3NpemVkX2FycmF5X2V4dGVuZGVkLm10bCIsIm5hbWUiOiIxM19zaXplZF9hcnJheV9leHRlbmRlZC5tdGwifQ=="></details>
@@ -284,6 +306,8 @@ Calling `.len()` on either `T[]` or `[T; N]` returns its number of elements.
 `u32::from(c)` returns `c`'s Unicode scalar value, and `Char::from(n)` returns the matching
 character or raises a runtime error when `n` is not a valid Unicode scalar value. A character's
 `to_string()` result is its one-character string.
+
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -336,6 +360,8 @@ The listed `Perhaps<T>` and `Result<T, E>` combinators operate on their correspo
 variants: transforms preserve the non-selected variant, and predicates report which variant
 is present.
 
+<!-- rfc.py:last_reviewed: 8b844c9117d5c6a730882aeaf521184c3055eb2f -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -383,6 +409,8 @@ replacing an element in a `List<T>`.
 `List<T>` collection and iteration methods are methods of `List<T>` in `std::core`, not
 free functions in separate collection or iteration modules.
 
+<!-- rfc.py:last_reviewed: 7e90e2bceeac84063568a8f0acfc5e6f594af53a -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -396,6 +424,8 @@ free functions in separate collection or iteration modules.
 
 `List::from(source)` copies the elements of `source`, so mutating the resulting list
 does not mutate that source.
+
+<!-- rfc.py:last_reviewed: 90ce03190abb6a5e7304b51d513a85e2bbb3265e -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0054](../../rfcs/4-implemented/rfc-0054-list-type.md)_</span>
@@ -427,6 +457,8 @@ implements `Display`.
 
 Host-backed fallible APIs use `OsError`, rather than `String`, as their error type; `OsError`
 is available from `std::core` and implements `Display`.
+
+<!-- rfc.py:last_reviewed: 7e90e2bceeac84063568a8f0acfc5e6f594af53a -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
@@ -461,6 +493,8 @@ Read-only process environment inspection.
 
 `std::env` exposes read-only process-environment inspection through `get` and `vars`; it is
 an explicitly imported host-backed module, not part of the automatic prelude.
+
+<!-- rfc.py:last_reviewed: 7e90e2bceeac84063568a8f0acfc5e6f594af53a -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
@@ -498,6 +532,8 @@ Text-oriented file operations. Fallible operations return `Result<_, OsError>`.
 `std::fs` is an explicitly imported host-backed module whose text-oriented file operations
 have the signatures listed above and report fallible outcomes as `Result<_, OsError>`.
 
+<!-- rfc.py:last_reviewed: 7e90e2bceeac84063568a8f0acfc5e6f594af53a -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -531,6 +567,8 @@ an error; only a failure to launch the command is an `Err`. The result type is
 `std::process::run` launches `command` directly with `args`, without shell parsing. A launched
 program returns `Ok(ProcessOutput)` even for a non-zero exit status; only failure to launch
 returns `Err(OsError)`.
+
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>

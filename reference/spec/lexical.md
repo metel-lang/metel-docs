@@ -192,6 +192,8 @@ let full := "hello" + ", " + "world";   // "hello, world"
 A string literal may contain `${expr}` placeholders; each placeholder's expression is
 rendered to text and the result is a `String`.
 
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0010](../../rfcs/4-implemented/rfc-0010-string-interpolation.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -204,6 +206,8 @@ rendered to text and the result is a `String`.
 ##### Dynamic Semantics {#spec.lexical.literals.dynamics-2}
 
 Placeholder expressions are evaluated once each, in source order.
+
+<!-- rfc.py:last_reviewed: 7de56e3de9a7841d926b5c185ff95b6c7bf03b22 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0010](../../rfcs/4-implemented/rfc-0010-string-interpolation.md)_</span>
@@ -219,6 +223,8 @@ Placeholder expressions are evaluated once each, in source order.
 Interpolation combines literal fragments and rendered placeholder values using ordinary
 string-concatenation semantics.
 
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0010](../../rfcs/4-implemented/rfc-0010-string-interpolation.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -231,6 +237,8 @@ string-concatenation semantics.
 ##### Dynamic Semantics {#spec.lexical.literals.dynamics-4}
 
 Within a string literal, `\${` produces the literal characters `${`.
+
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0010](../../rfcs/4-implemented/rfc-0010-string-interpolation.md)_</span>
@@ -246,6 +254,8 @@ Within a string literal, `\${` produces the literal characters `${`.
 An integer literal with an integer suffix has the suffix's sized integer type; a float
 literal with a float suffix has the suffix's sized float type.
 
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
 <summary>Tested by (2)</summary>
@@ -259,6 +269,8 @@ literal with a float suffix has the suffix's sized float type.
 An integer literal and a float literal do not implicitly coerce between integer and float
 types.
 
+<!-- rfc.py:last_reviewed: cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6ImNhbm5vdCB1bmlmeSBpNjQgd2l0aCBmNjQiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJzdGFnZTNfbmVnXzEyX3N1ZmZpeGVkX2ludGVnZXJfbm90X2Zsb2F0Lm10bCIsInNvdXJjZSI6ImZ1biBtYWluKCkge1xuICAgIC8vIEFuIHVuc3VmZml4ZWQgYDVgIGNvdWxkIGFkb3B0IGY2NCBoZXJlOyB0aGUgaTY0IHN1ZmZpeCBtYWtlcyB0aGlzIGxpdGVyYWwgY29uY3JldGUuXG4gICAgbGV0IF92YWx1ZTogZjY0IDo9IDVpNjQ7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy90eXBlcy9zdGFnZTNfbmVnXzEyX3N1ZmZpeGVkX2ludGVnZXJfbm90X2Zsb2F0Lm10bCIsIm5hbWUiOiJzdGFnZTNfbmVnXzEyX3N1ZmZpeGVkX2ludGVnZXJfbm90X2Zsb2F0Lm10bCJ9"></details>
@@ -267,6 +279,8 @@ types.
 ##### Legality Rule {#spec.lexical.literals.legality-5}
 
 A character literal has type `Char`.
+
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
