@@ -343,49 +343,49 @@ per-call-site data is justified normally (`// clippy-allow: <reason>`,
 
 The target once the frontend is reorganized by pipeline stage. Standard 4's single-hop
 rule is a hard requirement here, not a description of the current code — where the
-codebase doesn't already follow it, the codebase moves, not the standard.
+codebase doesn't already follow it, the codebase moves, not the standard. Two real
+violations below are prerequisites of the move, not follow-ups: nesting a module inside
+a stage's directory asserts, structurally, that the stage owns it — moving a still-shared
+module into that position would make the tree assert something false the moment it
+lands, not merely leave a known gap in place. The move itself stays mechanical and
+reviewable as a rename check; it just doesn't start until these two are already true.
 
-`ResolvedNames` is not a sanctioned exception to the single-hop rule — it is a real,
-currently-live violation, on the architectural axis rather than the runtime-safety one.
-Coherence, type checking, and elaboration each take it directly as a side parameter
-today, reaching past their own immediate predecessor's typed output back to name
-resolution's raw internal table. Two of those stages already derive their own computed
-structure from it independently: `coherence::declaring_modules` and
-`elaborator::build_aspect_id_map` both iterate `names.symbols` (name resolution's raw
-`(module, name) → SymbolId` map) to build a lookup keyed the way their own stage needs —
-the same kind of duplicated derivation Standard 2 exists to prevent, not only a Standard
-4 boundary issue. That every call site already takes it as a cheap, never-cloned
-`&ResolvedNames` reference answers whether reading it is *safe*, not whether the
-dependency *belongs* — Standard 4's own rule is about a later stage depending on an
-earlier one's internal detail instead of its immediate predecessor's stated contract,
-and this is exactly that.
+**Prerequisite: `ResolvedNames` threaded explicitly through each stage's own typed
+output.** It is currently a real violation of the single-hop rule, on the architectural
+axis rather than the runtime-safety one. Coherence, type checking, and elaboration each
+take it directly as a side parameter today, reaching past their own immediate
+predecessor's typed output back to name resolution's raw internal table. Two of those
+stages already derive their own computed structure from it independently:
+`coherence::declaring_modules` and `elaborator::build_aspect_id_map` both iterate
+`names.symbols` (name resolution's raw `(module, name) → SymbolId` map) to build a
+lookup keyed the way their own stage needs — the same kind of duplicated derivation
+Standard 2 exists to prevent, not only a Standard 4 boundary issue. That every call site
+already takes it as a cheap, never-cloned `&ResolvedNames` reference answers whether
+reading it is *safe*, not whether the dependency *belongs* — Standard 4's rule is about a
+later stage depending on an earlier one's internal detail instead of its immediate
+predecessor's stated contract, and this is exactly that. The fix: carried forward by
+`NormalizedModuleGraph`, then `TypedModuleGraph`, then `ElaboratedModuleGraph`, so it
+always arrives as part of the immediate predecessor's typed value, never as a side
+parameter reaching back to name resolution directly. An `Rc<ResolvedNames>` field is the
+natural shape (the table is read-only after construction and several `HashMap`s deep, so
+a per-stage clone would be real cost; a shared, reference-counted handle costs one
+refcount bump per hop) — the exact mechanism is still a real implementation decision, not
+settled here.
 
-The fix: `ResolvedNames` is threaded forward explicitly as part of each stage's own
-typed output — carried by `NormalizedModuleGraph`, then `TypedModuleGraph`, then
-`ElaboratedModuleGraph` — so it always arrives as part of the immediate predecessor's
-typed value, never as a side parameter reaching back to name resolution directly. An
-`Rc<ResolvedNames>` field is the natural shape (the table is read-only after
-construction and several `HashMap`s deep, so a per-stage clone would be real cost; a
-shared, reference-counted handle carried forward costs one refcount bump per hop) — the
-exact mechanism is still a real implementation decision for whoever does this, not
-settled here. Real logic work, the same class as the `typeinference`/`move_check`
-decoupling below, not a file-move concern — tracked the same way.
-
-`typeinference` gets the opposite treatment. Standard 4 is about typed values flowing
-forward; `typeinference` is where new inference state gets constructed
+**Prerequisite: `move_check` no longer imports `typeinference`'s constructors
+directly.** `typeinference` is where new inference state gets constructed
 (`TypeVarGenerator` minting a `TypeVar`, building a `Substitution`, running unification),
-and read-anywhere-safe reasoning doesn't apply to a constructor. `move_check` importing
-it directly today (`InferType`, `Substitution`, `TypeVar`, `TypeVarGenerator`, `TypeCtx`,
-`TypeDefinitionRegistry`, `TypeScheme` — the engine itself, not one value produced by it)
-to build its own symbolic instantiation for generic-body analysis is Standard 2's "one
-authoritative owner" violation, applied to inference state instead of identity
-allocation. It moves fully inside `pipeline/type_checking/` below; `move_check`'s use of
-it does not move with it as an import. The fix is `type_checking` exposing a narrow,
-purpose-built function `move_check` calls (in the shape of today's
+and read-anywhere-safe reasoning doesn't apply to a constructor the way it does to a
+value. `move_check` importing it directly today (`InferType`, `Substitution`, `TypeVar`,
+`TypeVarGenerator`, `TypeCtx`, `TypeDefinitionRegistry`, `TypeScheme` — the engine
+itself, not one value produced by it) to build its own symbolic instantiation for
+generic-body analysis is Standard 2's "one authoritative owner" violation, applied to
+inference state instead of identity allocation. The fix: `type_checking` exposes a
+narrow, purpose-built function `move_check` calls (in the shape of today's
 `generic_sample_args`, owned and defined inside `type_checking`, not built from raw
-parts inside `move_check`) — a logic change, not a file move, and its own tracked
-follow-up: a `LIMIT-*` record is the natural way to carry it so it isn't silently
-dropped once the directories are renamed and the smell is easier to overlook.
+parts inside `move_check`). Only once this lands does `typeinference/` move inside
+`pipeline/type_checking/` in the tree below — nesting it there first, with the import
+still standing, is exactly the false claim this prerequisite exists to avoid making.
 
 `place`/`flow_state` get the same construct-vs-read scrutiny and resolve the other way:
 legitimate shared vocabulary, not the same smell. `place.rs`'s own module doc states the
@@ -411,7 +411,8 @@ metel-frontend/src/
     coherence/          coherence.rs
     type_checking/      inference/, construction/, mod.rs, overload.rs, registry.rs,
                          conversions.rs, handoff.rs, object_safety.rs, projections.rs,
-                         typeinference/ (HM substrate — internal, not shared; see below)
+                         typeinference/ (HM substrate; nests here once the move_check
+                         decoupling prerequisite is done, not before)
     move_check/
     elaboration/        stage 07, the frontend's last shared stage
 
@@ -471,9 +472,11 @@ small query methods directly on its own enums (`Bound::aspect_name`, `Bound::row
 Settled: `type_alias.rs` is a sub-module of `pipeline/parsing/`, not its own stage — its
 only current caller is `module_loader`. The interpreter's orchestrator is renamed
 (`orchestrator.rs` or equivalent), not left colliding in name with the frontend's
-`pipeline/` directory. The move lands as one mechanical, move-only PR (`git mv` plus path
-fixes, reviewed as a rename check) followed by fix-ups — no re-export shims from the old
-paths (Standard 10).
+`pipeline/` directory. Once the two prerequisites above land, the directory move itself
+is still one mechanical, move-only PR (`git mv` plus path fixes, reviewed as a rename
+check) followed by fix-ups — no re-export shims from the old paths (Standard 10). The
+prerequisites are real logic changes and land as their own reviewed work, not folded
+into that PR; what "mechanical" describes is the move, not the whole reorganization.
 
 Costs of the move itself, not repeated in full here: the Atlas evidence
 (`arch-implements`/`arch-verifies` markers, generated links, `last_reviewed`) is
@@ -482,15 +485,11 @@ the audit will quietly follow renames; `tools/check_no_semantic_name_lookup.py`'
 `SCAN_FILES`, CI path filters, and any doc naming a file by path need updating in the
 same change.
 
-Not resolvable by a file move, and not this reorganization's own scope to perform — real
-logic work worth its own tracking rather than being silently expected once the
-directories look right: `ResolvedNames` threaded explicitly through each stage's own
-typed output instead of reaching coherence, type checking, and elaboration directly
-(above); `move_check` no longer importing `typeinference`'s constructors directly, with
-`type_checking` exposing the narrow function it needs instead (above); Standard 12's
-site list (`name_resolver.rs`'s two recursive walkers, `typechecker/mod.rs`'s three,
-`construction/calls.rs`'s bound-check pair, `projections.rs`'s two,
-`evaluator/mod.rs`'s `env`/`runtime` pair across 13 functions).
+Real logic work that is *not* a prerequisite, because nothing about the move itself
+asserts anything false while it's outstanding — legitimate, non-blocking follow-ups:
+Standard 12's site list (`name_resolver.rs`'s two recursive walkers,
+`typechecker/mod.rs`'s three, `construction/calls.rs`'s bound-check pair,
+`projections.rs`'s two, `evaluator/mod.rs`'s `env`/`runtime` pair across 13 functions).
 
 Monomorphization is a real, necessary stage of the eventual whole pipeline — its slot is
 reserved above (stage 09), even though nothing builds it yet. ADR-0010's own text is
