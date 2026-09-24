@@ -69,7 +69,7 @@ of functions (`LIMIT-TYPE-INFERENCE-007`).
 - `metel-frontend/src/typechecker/mod.rs`, `typechecker/construction.rs`, `move_check/mod.rs` (the offsets)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/typechecker/construction.rs::construct_generic_body`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typechecker/construction.rs#L907)
+- [`metel-frontend/src/typechecker/construction.rs::construct_generic_body`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typechecker/construction.rs#L1059)
 - [`metel-frontend/src/typeinference/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typeinference/mod.rs#L46)
 - [`metel-frontend/src/typeinference/mod.rs::split_gen`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/typeinference/mod.rs#L4913)
 <!-- limit.py:markers:end -->

@@ -55,15 +55,15 @@ key, not the declaration.
 
 - `arch.name-resolution.requirement-1`
 - `arch.resolution.requirement-1`
-- [`metel-frontend/src/name_resolver.rs::intern_all_symbols`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/name_resolver.rs#L330)
-- [`metel-frontend/src/name_resolver.rs::decl_any_name`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/name_resolver.rs#L415)
-- [`metel-frontend/src/name_resolver.rs::method_symbol_name`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/name_resolver.rs#L249)
+- [`metel-frontend/src/name_resolver.rs::intern_all_symbols`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/name_resolver.rs#L337)
+- [`metel-frontend/src/name_resolver.rs::decl_any_name`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/name_resolver.rs#L422)
+- [`metel-frontend/src/name_resolver.rs::method_symbol_name`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/name_resolver.rs#L256)
 - `metel-frontend/src/identity/allocate.rs` (method-symbol lookup)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/name_resolver.rs::decl_any_name`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/name_resolver.rs#L414)
-- [`metel-frontend/src/name_resolver.rs::intern_all_symbols`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/name_resolver.rs#L329)
-- [`metel-frontend/src/name_resolver.rs::method_symbol_name`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/name_resolver.rs#L248)
+- [`metel-frontend/src/name_resolver.rs::decl_any_name`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/name_resolver.rs#L421)
+- [`metel-frontend/src/name_resolver.rs::intern_all_symbols`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/name_resolver.rs#L336)
+- [`metel-frontend/src/name_resolver.rs::method_symbol_name`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/name_resolver.rs#L255)
 <!-- limit.py:markers:end -->
 
 ## Resolution
