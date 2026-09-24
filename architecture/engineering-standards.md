@@ -377,14 +377,24 @@ natural way to keep it from being silently dropped once the directories are rena
 the smell is easier to overlook).
 
 **`place`/`flow_state` are read by both `type_checking`'s narrowing code and
-`move_check` today too, and that has not been given the same scrutiny as
-`typeinference` — flagged here as open, not resolved either way.** They may be
-foundational vocabulary (a `Place`/`FlowState` value, constructed independently by two
-genuinely different analyses that both need to interpret "what does this expression
-refer to," the same way many stages construct a `Type` from a `TypeExpr` without that
-being a violation) or they may be the same construction-sharing smell `typeinference` is
-— that determination needs the same "who actually constructs a new value versus who
-only reads one" check `typeinference` got, not an assumption either way.
+`move_check` today too — given the same construct-vs-read scrutiny `typeinference` got,
+and resolved the *other* way: legitimate shared vocabulary, not the same smell.**
+`place.rs`'s own module doc states the design directly: "deliberately analysis-neutral,
+per RFC-0071 §9b... so that borrow checking can later run a second analysis over the
+*same* places without rebuilding them and without the two analyses disagreeing," and "it
+lives at the crate root, not inside `move_check`, for that reason (adr-0045)" — a third
+consumer (borrow checking, RFC-0122) is already anticipated by the same design. The test
+that separated this from `typeinference` holds: `Place`/`Projection` (`pub`) are pure,
+stateless derivation — `from_expr`/`from_typed_place` return the same value for the same
+input every time, no counter, no collision risk, nothing to allocate; unlike minting a
+`TypeVar`, calling them twice from two stages is not a hazard. `FlowState`/`MoveRecord`
+(`pub(crate)`) are, by the module's own doc, built and interpreted independently by
+design — "each consumer decides what a moved/reassigned/joined/widened place *means* for
+its own purposes: `move_check` turns it into `MoveViolation`s... construction turns it
+into `Type::Residual` narrowing." That is deliberate parallel computation over shared
+vocabulary with an ADR written to justify it, not accidental sharing of a stateful
+allocator nobody designed to be shared — the inverse of `typeinference`'s problem, not a
+milder version of it. Stays outside `pipeline/`, unmoved, no follow-up needed.
 
 ```
 metel-frontend/src/
@@ -401,7 +411,7 @@ metel-frontend/src/
 
   ast/, typed_ast/, types/, error/     data definitions
   symbols.rs, identity/                identity backbone
-  place.rs, flow_state.rs              narrowing: type_checking, move_check (status open, see below)
+  place.rs, flow_state.rs              narrowing: type_checking, move_check (shared by design, see below)
   stdlib.rs, native_keys.rs            parsing, type_checking, evaluator
   module_paths.rs                      parsing, name_resolution
 
@@ -459,8 +469,6 @@ work this section's target structure depends on, worth its own tracking rather t
 being silently expected once the directories look right:**
 - `move_check` no longer importing `typeinference`'s constructors directly — `type_checking`
   exposing the narrow function it needs instead (above).
-- `place`/`flow_state`'s open status — determining whether either or both sides construct,
-  not just read, and resolving accordingly.
 - Standard 12's site list (`name_resolver.rs`'s two recursive walkers,
   `typechecker/mod.rs`'s three, `construction/calls.rs`'s bound-check pair,
   `projections.rs`'s two, `evaluator/mod.rs`'s `env`/`runtime` pair across 13
