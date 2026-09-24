@@ -1,6 +1,6 @@
 # Engineering Standards
 
-metel-core#1157. Standards this codebase holds itself to — not what the system *is*
+Standards this codebase holds itself to — not what the system *is*
 (`architecture/spec/*.md`), but what a change to it is expected to respect.
 
 Each entry: **Rule**, **Rationale**, **Examples / Counterexamples** (grounded in this
@@ -48,8 +48,8 @@ deliberately excluded.
 live: `SymbolId`'s space is split across three independent allocators (`SymbolTable`'s
 own counter, the overload table's process-global `AtomicU32`, `typeinference`'s
 descending block-local counter) — `LIMIT-NAME-RESOLUTION-002/003/004/005`, with two
-concrete bugs already caused (`metel-core#1228`, `#1229`: two impls or two overloaded
-methods silently sharing one `SymbolId`).
+concrete bugs already caused: two impls, and separately two overloaded methods, each
+pair silently sharing one `SymbolId`.
 
 **Enforcement.** None; caught by review recognizing the shape. A structural checker akin
 to Standard 3's is a natural follow-up once the `SymbolId` unification those records call
@@ -139,10 +139,9 @@ distinguish legitimate test-support `cfg!(test)` from a real production branch.
 inline `// test-support: <reason>` comment once the checker exists. The 27 unsplit files
 are grandfathered by the eventual checker's baseline, not a per-file exception to
 request; migrating one opportunistically alongside other work on that file is fine.
-Scheduled as part of `metel-core#1231` (frontend pipeline reorganization).
+Scheduled as part of the frontend pipeline reorganization.
 
-**Expiry.** Revisit once the checker exists and has a real baseline; the file-separation
-clause also tracks `#1231`.
+**Expiry.** Revisit once the checker exists and has a real baseline.
 
 ## 6. Contract-focused tests at pipeline boundaries
 
@@ -242,17 +241,21 @@ never whether one should have been written.
 fallback path, or a stale distinction the change itself made unnecessary. Deleting a
 real, still-load-bearing boundary because it merely resembles a shim is its own mistake.
 
-**Rationale.** `metel-core#1054` deleted the frontend's `scopes` name-map outright once
-every consumer was id-keyed. `metel-core#1147`/`#1149`: `module_loader.rs`'s
-`canonicalize_existing` resembled the provider-bypassing shortcut `#1147` targeted; the
-fix deleted only the one genuinely redundant call (a duplicate post-resolution
-canonicalize in `Loader::load_module`) and kept the other three call sites, which back
-`load_root_with`'s real on-disk-root requirement, distinct from `load_virtual_root_with`'s
-deliberate non-canonicalization.
+**Rationale.** The frontend's `scopes` name-map was deleted outright once every consumer
+was id-keyed, with nothing left depending on the name-keyed path — the clean case.
+`module_loader.rs`'s `canonicalize_existing` (a real, hardcoded `.canonicalize()`
+filesystem call) is the harder one: it resembled a provider-bypassing shortcut worth
+removing entirely, but the actual fix deleted only the one genuinely redundant call (a
+duplicate post-resolution canonicalize in `Loader::load_module`) and kept the other
+three call sites, which back `load_root_with`'s real on-disk-root requirement, distinct
+from `load_virtual_root_with`'s deliberate non-canonicalization. Removing
+`canonicalize_existing` everywhere on the assumption that "it looks like the same bug"
+would have broken a real, deliberate distinction.
 
-**Examples / counterexamples.** `#1054`: delete outright, nothing left depending on the
-old path. `#1147`/`#1149`: delete only the redundant call; keep the call sites backing a
-real, documented, still-necessary distinction.
+**Examples / counterexamples.** The `scopes` removal: delete outright, nothing left
+depending on the old path. The `canonicalize_existing` fix: delete only the genuinely
+redundant call; keep the call sites backing a real, documented, still-necessary
+distinction.
 
 **Enforcement.** None automated — a review-time judgment.
 
@@ -304,11 +307,11 @@ of this standard merely for having many of them — see Standard 4 for what may 
 *stage* boundary; this is about redundant repetition within one, not about crossing one.
 
 **Rationale.** A parameter list that repeats across several functions hides which values
-are shared state and which vary per call; a caller has to read every call site to tell
-the two apart. `#[allow(clippy::too_many_arguments)]` flags the symptom (argument count)
-without distinguishing the two causes, so the lint alone under- and over-fires: it misses
-cases below its threshold that still repeat the same subset, and it can push toward
-bundling genuinely distinct per-call data into an artificial struct just to quiet it.
+are shared state and which vary per call. `#[allow(clippy::too_many_arguments)]` flags
+the symptom (argument count), not the cause, so the lint alone under- and over-fires: it
+misses cases below its threshold that still repeat the same subset, and it can push
+toward bundling genuinely distinct per-call data into an artificial struct just to quiet
+it.
 
 **Examples / counterexamples.** Conforming direction: `ConstructCtx`/`InferContext`
 already do this for their own stages. Violating, currently live: `name_resolver.rs`'s
@@ -323,7 +326,7 @@ are also flagged by the lint. Not a violation: `construction/calls.rs`'s
 are real per-call-site data once `ctx: &mut ConstructCtx` already carries the ambient
 part; `evaluator/mod.rs`'s `register_aspect_method`, whose 7 parameters are distinct
 fields of one registration record, not shared state — a data-bundle struct, not a
-context type, is the fix there, and a different fix from this standard's.
+context type, is the fix there.
 
 **Enforcement.** None automated beyond `clippy::too_many_arguments` itself, which only
 approximates this. Caught by review: a bare suppression is the signal to check which
@@ -336,65 +339,52 @@ per-call-site data is justified normally (`// clippy-allow: <reason>`,
 
 **Expiry.** Durable.
 
-## Post-refactor module structure (metel-core#1231)
+## Post-refactor module structure
 
-The target this document's standards apply against once `#1231` (frontend
-reorganization by pipeline stage) lands. Standard 4's "each stage sees only its
-immediate predecessor's typed output" is a hard requirement here, not a description of
-the current code — where the codebase doesn't already follow it, the codebase is what
-moves, not the standard.
+The target once the frontend is reorganized by pipeline stage. Standard 4's single-hop
+rule is a hard requirement here, not a description of the current code — where the
+codebase doesn't already follow it, the codebase moves, not the standard.
 
-**`ResolvedNames` is a deliberate, checked exception to the single-hop rule, not a
-loosening of it.** It's read directly by coherence, type checking, and elaboration
-today — several stages past its origin in name resolution — and stays that way after the
-refactor, because it costs nothing to: every real call site already takes it as
-`&ResolvedNames`, a shared borrow, never cloned, for the run's whole lifetime. It is safe
-to read from any later stage for the same reason `symbols`/`identity` already are —
-nothing downstream constructs a second one or mutates it (Standard 3 already guarantees
-no name-based re-derivation), so "read anywhere" carries none of the hazard the rule
-exists to prevent. It is explicitly not part of any stage's own typed output value —
-`NormalizedModuleGraph`, `TypedModuleGraph`, and `ElaboratedModuleGraph` do not embed
-it — it is threaded alongside the pipeline baton as its own named parameter at every
-boundary that needs it, the same way it already is.
+`ResolvedNames` is a deliberate exception to the single-hop rule, not a loosening of it.
+It's read directly by coherence, type checking, and elaboration today, several stages
+past its origin in name resolution, and stays that way: every real call site already
+takes it as `&ResolvedNames`, a shared borrow, never cloned, for the run's whole
+lifetime. Safe to read from any later stage for the same reason `symbols`/`identity`
+already are — nothing downstream constructs a second one or mutates it (Standard 3
+guarantees no name-based re-derivation). It is not part of any stage's own typed output
+value — `NormalizedModuleGraph`, `TypedModuleGraph`, `ElaboratedModuleGraph` don't embed
+it — it is threaded alongside the pipeline baton as its own named parameter.
 
-**`typeinference` is not the same case, and does not get the same treatment.** Standard
-4's rule is about typed *values* flowing forward; `typeinference` is where new inference
-state gets *constructed* (`TypeVarGenerator` minting a `TypeVar`, building a
-`Substitution`, running unification) — read-anywhere-safe reasoning does not apply to a
-constructor. `move_check` importing it directly today (`InferType`, `Substitution`,
-`TypeVar`, `TypeVarGenerator`, `TypeCtx`, `TypeDefinitionRegistry`, `TypeScheme` — the
-engine itself, not one value produced by it) to build its own symbolic instantiation for
-generic-body analysis is the architecture smell Standard 2's "one authoritative owner"
-already names, applied to inference state instead of identity allocation. It moves fully
-inside `pipeline/type_checking/` below, and `move_check`'s use of it does not move with
-it as an import — the real fix is `type_checking` exposing a narrow, purpose-built
-function move_check *calls* (in the shape of today's `generic_sample_args`, but owned
-and defined inside `type_checking`, not built from raw parts inside `move_check`), which
-is a logic change, not a file move. `#1231` itself is scoped as "a pure reorganisation:
-no behaviour change" — closing this specific gap is real work `#1231`'s move does not
-by itself perform, and should be tracked as its own follow-up (a `LIMIT-*` record is the
-natural way to keep it from being silently dropped once the directories are renamed and
-the smell is easier to overlook).
+`typeinference` gets the opposite treatment. Standard 4 is about typed values flowing
+forward; `typeinference` is where new inference state gets constructed
+(`TypeVarGenerator` minting a `TypeVar`, building a `Substitution`, running unification),
+and read-anywhere-safe reasoning doesn't apply to a constructor. `move_check` importing
+it directly today (`InferType`, `Substitution`, `TypeVar`, `TypeVarGenerator`, `TypeCtx`,
+`TypeDefinitionRegistry`, `TypeScheme` — the engine itself, not one value produced by it)
+to build its own symbolic instantiation for generic-body analysis is Standard 2's "one
+authoritative owner" violation, applied to inference state instead of identity
+allocation. It moves fully inside `pipeline/type_checking/` below; `move_check`'s use of
+it does not move with it as an import. The fix is `type_checking` exposing a narrow,
+purpose-built function `move_check` calls (in the shape of today's
+`generic_sample_args`, owned and defined inside `type_checking`, not built from raw
+parts inside `move_check`) — a logic change, not a file move, and its own tracked
+follow-up: a `LIMIT-*` record is the natural way to carry it so it isn't silently
+dropped once the directories are renamed and the smell is easier to overlook.
 
-**`place`/`flow_state` are read by both `type_checking`'s narrowing code and
-`move_check` today too — given the same construct-vs-read scrutiny `typeinference` got,
-and resolved the *other* way: legitimate shared vocabulary, not the same smell.**
-`place.rs`'s own module doc states the design directly: "deliberately analysis-neutral,
-per RFC-0071 §9b... so that borrow checking can later run a second analysis over the
-*same* places without rebuilding them and without the two analyses disagreeing," and "it
-lives at the crate root, not inside `move_check`, for that reason (adr-0045)" — a third
-consumer (borrow checking, RFC-0122) is already anticipated by the same design. The test
-that separated this from `typeinference` holds: `Place`/`Projection` (`pub`) are pure,
-stateless derivation — `from_expr`/`from_typed_place` return the same value for the same
-input every time, no counter, no collision risk, nothing to allocate; unlike minting a
-`TypeVar`, calling them twice from two stages is not a hazard. `FlowState`/`MoveRecord`
-(`pub(crate)`) are, by the module's own doc, built and interpreted independently by
-design — "each consumer decides what a moved/reassigned/joined/widened place *means* for
-its own purposes: `move_check` turns it into `MoveViolation`s... construction turns it
-into `Type::Residual` narrowing." That is deliberate parallel computation over shared
-vocabulary with an ADR written to justify it, not accidental sharing of a stateful
-allocator nobody designed to be shared — the inverse of `typeinference`'s problem, not a
-milder version of it. Stays outside `pipeline/`, unmoved, no follow-up needed.
+`place`/`flow_state` get the same construct-vs-read scrutiny and resolve the other way:
+legitimate shared vocabulary, not the same smell. `place.rs`'s own module doc states the
+design directly: "deliberately analysis-neutral, per RFC-0071 §9b... so that borrow
+checking can later run a second analysis over the *same* places without rebuilding them
+and without the two analyses disagreeing," and "it lives at the crate root, not inside
+`move_check`, for that reason (adr-0045)" — a third consumer (borrow checking) is
+already anticipated there. `Place`/`Projection` (`pub`) are pure, stateless derivation —
+`from_expr`/`from_typed_place` return the same value for the same input every time, no
+counter, no collision risk; calling them from two stages is not the hazard minting a
+`TypeVar` is. `FlowState`/`MoveRecord` (`pub(crate)`) are, by the same doc, built and
+interpreted independently by design — "each consumer decides what a
+moved/reassigned/joined/widened place means for its own purposes: `move_check` turns it
+into `MoveViolation`s... construction turns it into `Type::Residual` narrowing." Stays
+outside `pipeline/`, unmoved.
 
 ```
 metel-frontend/src/
@@ -414,9 +404,9 @@ metel-frontend/src/
                    as PathRoot::resolve, below — no file of its own)
   identity/        symbols.rs (folded in) + this directory's existing contents —
                    the identity backbone, one directory for the older (SymbolId,
-                   name-resolution-era) and newer (post-#1052 resolved-identity)
+                   name-resolution-era) and newer (post-resolved-identity-rework)
                    systems together
-  ownership/       place.rs, flow_state.rs — shared by design, not by stage (below)
+  ownership/       place.rs, flow_state.rs — shared by design, not by stage (above)
   stdlib/          stdlib.rs, native_keys.rs
   tooling/         analysis.rs, query.rs — not a pipeline stage
 
@@ -427,99 +417,77 @@ metel-interpreter/src/
 
 # Reserved, stage 09 — not built yet, see below for why the slot is claimed now anyway
 <compiler-crate>/src/
-  monomorphize/     downstream of elaboration, ahead of codegen — metel-core#288, v0.21.0
+  monomorphize/     downstream of elaboration, ahead of codegen
 ```
 
-**`type_checking/` holds two sub-passes and its own inference substrate, not two
-pipeline stages and a shared one.** `typechecker/inference/*.rs` and
-`typechecker/construction/*.rs` are already the two passes `AGENTS.md`'s Type-system
-invariants section describes ("Inference emits constraints... Construction reads solved
-results and builds typed AST"); they stay siblings under one stage directory, matching
-that existing description, rather than becoming two top-level pipeline stages.
-`typeinference/` moves inside the same directory as those two passes' own substrate —
-internal to `type_checking`, not a peer of it and not read by any other stage once
-`move_check`'s direct import is fixed (see above).
+`type_checking/` holds two sub-passes and its own inference substrate, not two pipeline
+stages and a shared one. `typechecker/inference/*.rs` and `typechecker/construction/*.rs`
+are already the two passes `AGENTS.md`'s Type-system invariants section describes
+("Inference emits constraints... Construction reads solved results and builds typed
+AST"); they stay siblings under one stage directory, matching that existing description,
+rather than becoming two top-level pipeline stages. `typeinference/` moves inside the
+same directory as those two passes' own substrate — internal to `type_checking`, not a
+peer of it and not read by any other stage once `move_check`'s direct import is fixed.
 
-**A module joins one of these five groups only when a real cross-stage import of
-*already-constructed, read-only* data justifies it** — construction, not mere reference,
-is the line (see above). `identity` (with `symbols` folded in) is read from name
-resolution through the evaluator, and nothing downstream mints a second `SymbolId`
-allocator from it (that would itself be a Standard 2 violation, tracked separately);
-`stdlib` (with `native_keys` folded in) is read from parsing, type checking, and the
-evaluator the same way. `data` and `ownership` are grouped by subject matter, not by
-who imports them, since each is a small set of already-established, mutually-referencing
-files — `data`: the ast → typed_ast progression sharing `types`' vocabulary and `error`'s
-diagnostics, all pure definitions with no stage-owned behavior; `ownership`: `flow_state`
-is layered directly on `place`, per its own doc comment — rather than one having grown
-into a genuine tooling-style shared surface the way `identity`/`stdlib` have.
-`ownership` also isn't a fresh name invented here — `#1231`'s own issue body already
-sketches `ownership/` for the same kind of content, in the later, bigger frontend
-reorganization it deliberately holds back (its "target module shape" section). Reusing
-it now keeps that plan and this one pointing at the same word instead of drifting apart.
-`tooling` keeps its own name for the same reason it always had one: `analysis`/`query`
-import each other and nothing pipeline-shaped consumes either — a self-contained surface,
-not a stage.
+A module joins one of these five groups only when a real cross-stage import of
+already-constructed, read-only data justifies it — construction, not mere reference, is
+the line. `identity` (with `symbols` folded in) is read from name resolution through the
+evaluator, and nothing downstream mints a second `SymbolId` allocator from it (that
+would itself be a Standard 2 violation, tracked separately); `stdlib` (with
+`native_keys` folded in) is read from parsing, type checking, and the evaluator the same
+way. `data` and `ownership` are grouped by subject matter, not by who imports them: `data`
+is the ast → typed_ast progression sharing `types`' vocabulary and `error`'s
+diagnostics, all pure definitions with no stage-owned behavior; `ownership` is
+`flow_state` layered directly on `place`, per its own doc comment — matching the name
+that same content already carries in the later, bigger frontend reorganization this one
+deliberately holds back. `tooling` is `analysis`/`query`, importing each other and
+nothing pipeline-shaped consuming either — a self-contained surface, not a stage.
 
-**`module_paths.rs` is not a sixth group — it disappears as a file.** Its one function,
+`module_paths.rs` is not a sixth group — it disappears as a file. Its one function,
 `resolve_path_root(root: &PathRoot, current: &[String]) -> Vec<String>`, does nothing
 `PathRoot` itself doesn't already own the shape of — `ast.rs` already carries several
 small query methods directly on its own enums (`Bound::aspect_name`, `Bound::row_bound`,
-`WhereClause::constraint_for`, `Expr::span`, `BinOp::symbol`), so `PathRoot::resolve(&self,
-current: &[String]) -> Vec<String>` is the same pattern, not a new one. Its three call
-sites (`name_resolver.rs`, `type_alias.rs`, `module_loader.rs`) change from
-`module_paths::resolve_path_root(root, current)` to `root.resolve(current)` — mechanical,
-behavior-identical, and small enough to be part of `#1231`'s own move-commit fix-ups, not
-a separate follow-up the way the `typeinference`/`move_check` decoupling is.
+`WhereClause::constraint_for`, `Expr::span`, `BinOp::symbol`). Becomes
+`PathRoot::resolve(&self, current: &[String]) -> Vec<String>`; its three call sites
+(`name_resolver.rs`, `type_alias.rs`, `module_loader.rs`) change mechanically from
+`module_paths::resolve_path_root(root, current)` to `root.resolve(current)`.
 
-**Resolved, from `#1231`'s own "Things to settle":**
-- `type_alias.rs` is a sub-module of `pipeline/parsing/`, not its own stage — its only
-  current caller is `module_loader`, and nothing here promotes it past that.
-- The interpreter's orchestrator is renamed (`orchestrator.rs` or equivalent), not left
-  colliding in name with the frontend's `pipeline/` directory.
-- The move lands as one mechanical, move-only PR (`git mv` plus path fixes, reviewed as
-  a rename check) followed by fix-ups — no re-export shims from the old paths. Standard
-  10's discipline applies directly: a compatibility shim here would itself be the kind
-  of thing that standard exists to keep out.
+Settled: `type_alias.rs` is a sub-module of `pipeline/parsing/`, not its own stage — its
+only current caller is `module_loader`. The interpreter's orchestrator is renamed
+(`orchestrator.rs` or equivalent), not left colliding in name with the frontend's
+`pipeline/` directory. The move lands as one mechanical, move-only PR (`git mv` plus path
+fixes, reviewed as a rename check) followed by fix-ups — no re-export shims from the old
+paths (Standard 10).
 
-**Costs `#1231` itself already names, not repeated in full here:** the Atlas evidence
+Costs of the move itself, not repeated in full here: the Atlas evidence
 (`arch-implements`/`arch-verifies` markers, generated links, `last_reviewed`) is
 path-keyed and needs a deliberate re-review pass after the move, not an assumption that
 the audit will quietly follow renames; `tools/check_no_semantic_name_lookup.py`'s
 `SCAN_FILES`, CI path filters, and any doc naming a file by path need updating in the
 same change.
 
-**Not resolvable by a file move, and not `#1231`'s own scope to perform — real logic
-work this section's target structure depends on, worth its own tracking rather than
-being silently expected once the directories look right:**
-- `move_check` no longer importing `typeinference`'s constructors directly — `type_checking`
-  exposing the narrow function it needs instead (above).
-- Standard 12's site list (`name_resolver.rs`'s two recursive walkers,
-  `typechecker/mod.rs`'s three, `construction/calls.rs`'s bound-check pair,
-  `projections.rs`'s two, `evaluator/mod.rs`'s `env`/`runtime` pair across 13
-  functions) — bundling ambient parameters into named context types, file by file.
+Not resolvable by a file move, and not this reorganization's own scope to perform — real
+logic work worth its own tracking rather than being silently expected once the
+directories look right: `move_check` no longer importing `typeinference`'s constructors
+directly, with `type_checking` exposing the narrow function it needs instead (above);
+Standard 12's site list (`name_resolver.rs`'s two recursive walkers,
+`typechecker/mod.rs`'s three, `construction/calls.rs`'s bound-check pair,
+`projections.rs`'s two, `evaluator/mod.rs`'s `env`/`runtime` pair across 13 functions).
 
-**Monomorphization is a real, necessary stage of the eventual whole pipeline — its slot
-is reserved above (stage 09), even though nothing builds it yet.** `metel-core#288`
-("Frontend monomorphization for compiler-facing typed IR"), paired with `#859`
-("Compiler foundation: typed IR and first end-to-end code generation"), both milestoned
-v0.21.0, name it as required, not optional, once a compiler backend exists: ADR-0010's
-own text is explicit that the evaluator's runtime re-construction is a choice "acceptable
-for the tree-walk interpreter," not a substitute for it — "a future compiler backend
-must pre-monomorphize." Its position is settled now because it follows directly from
-what already exists: it consumes `ElaboratedModuleGraph`, the frontend's own last shared
-output, the same input the evaluator already takes — so it sits immediately after
-elaboration and ahead of codegen, in whatever crate the compiler backend lands in, which
-doesn't exist yet and isn't `metel-frontend` or `metel-interpreter`. Naming the slot here
-means `#1231`'s own reorganization doesn't need revisiting to make room for it later; it
-already has its place.
+Monomorphization is a real, necessary stage of the eventual whole pipeline — its slot is
+reserved above (stage 09), even though nothing builds it yet. ADR-0010's own text is
+explicit that the evaluator's runtime re-construction is a choice "acceptable for the
+tree-walk interpreter," not a substitute for it — "a future compiler backend must
+pre-monomorphize." Its position is settled now because it follows from what already
+exists: it consumes `ElaboratedModuleGraph`, the frontend's own last shared output, the
+same input the evaluator already takes, so it sits immediately after elaboration and
+ahead of codegen, in whatever crate the compiler backend lands in — not `metel-frontend`
+or `metel-interpreter`.
 
-**What does *not* change today**, and this is the part ADR-0010 already settled rather
-than something this section is newly deciding: the evaluator keeps runtime
-re-construction, not monomorphization, for as long as it stays the tree-walk
-interpreter — `LIMIT-EVALUATION-001` tracks that cost as accepted, not as work pending
-on this refactor. `#1231` does not build stage 09 or touch the evaluator's own strategy;
-it only makes sure the target structure has a settled place for stage 09 to land in when
-`#288`/`#859` actually start.
+What does not change today, settled by ADR-0010 rather than newly decided here: the
+evaluator keeps runtime re-construction, not monomorphization, for as long as it stays
+the tree-walk interpreter — `LIMIT-EVALUATION-001` tracks that cost as accepted, not as
+work pending on this reorganization.
 
 ## Where this fits
 
