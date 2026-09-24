@@ -345,15 +345,31 @@ The target once the frontend is reorganized by pipeline stage. Standard 4's sing
 rule is a hard requirement here, not a description of the current code — where the
 codebase doesn't already follow it, the codebase moves, not the standard.
 
-`ResolvedNames` is a deliberate exception to the single-hop rule, not a loosening of it.
-It's read directly by coherence, type checking, and elaboration today, several stages
-past its origin in name resolution, and stays that way: every real call site already
-takes it as `&ResolvedNames`, a shared borrow, never cloned, for the run's whole
-lifetime. Safe to read from any later stage for the same reason `symbols`/`identity`
-already are — nothing downstream constructs a second one or mutates it (Standard 3
-guarantees no name-based re-derivation). It is not part of any stage's own typed output
-value — `NormalizedModuleGraph`, `TypedModuleGraph`, `ElaboratedModuleGraph` don't embed
-it — it is threaded alongside the pipeline baton as its own named parameter.
+`ResolvedNames` is not a sanctioned exception to the single-hop rule — it is a real,
+currently-live violation, on the architectural axis rather than the runtime-safety one.
+Coherence, type checking, and elaboration each take it directly as a side parameter
+today, reaching past their own immediate predecessor's typed output back to name
+resolution's raw internal table. Two of those stages already derive their own computed
+structure from it independently: `coherence::declaring_modules` and
+`elaborator::build_aspect_id_map` both iterate `names.symbols` (name resolution's raw
+`(module, name) → SymbolId` map) to build a lookup keyed the way their own stage needs —
+the same kind of duplicated derivation Standard 2 exists to prevent, not only a Standard
+4 boundary issue. That every call site already takes it as a cheap, never-cloned
+`&ResolvedNames` reference answers whether reading it is *safe*, not whether the
+dependency *belongs* — Standard 4's own rule is about a later stage depending on an
+earlier one's internal detail instead of its immediate predecessor's stated contract,
+and this is exactly that.
+
+The fix: `ResolvedNames` is threaded forward explicitly as part of each stage's own
+typed output — carried by `NormalizedModuleGraph`, then `TypedModuleGraph`, then
+`ElaboratedModuleGraph` — so it always arrives as part of the immediate predecessor's
+typed value, never as a side parameter reaching back to name resolution directly. An
+`Rc<ResolvedNames>` field is the natural shape (the table is read-only after
+construction and several `HashMap`s deep, so a per-stage clone would be real cost; a
+shared, reference-counted handle carried forward costs one refcount bump per hop) — the
+exact mechanism is still a real implementation decision for whoever does this, not
+settled here. Real logic work, the same class as the `typeinference`/`move_check`
+decoupling below, not a file-move concern — tracked the same way.
 
 `typeinference` gets the opposite treatment. Standard 4 is about typed values flowing
 forward; `typeinference` is where new inference state gets constructed
@@ -468,11 +484,13 @@ same change.
 
 Not resolvable by a file move, and not this reorganization's own scope to perform — real
 logic work worth its own tracking rather than being silently expected once the
-directories look right: `move_check` no longer importing `typeinference`'s constructors
-directly, with `type_checking` exposing the narrow function it needs instead (above);
-Standard 12's site list (`name_resolver.rs`'s two recursive walkers,
-`typechecker/mod.rs`'s three, `construction/calls.rs`'s bound-check pair,
-`projections.rs`'s two, `evaluator/mod.rs`'s `env`/`runtime` pair across 13 functions).
+directories look right: `ResolvedNames` threaded explicitly through each stage's own
+typed output instead of reaching coherence, type checking, and elaboration directly
+(above); `move_check` no longer importing `typeinference`'s constructors directly, with
+`type_checking` exposing the narrow function it needs instead (above); Standard 12's
+site list (`name_resolver.rs`'s two recursive walkers, `typechecker/mod.rs`'s three,
+`construction/calls.rs`'s bound-check pair, `projections.rs`'s two,
+`evaluator/mod.rs`'s `env`/`runtime` pair across 13 functions).
 
 Monomorphization is a real, necessary stage of the eventual whole pipeline — its slot is
 reserved above (stage 09), even though nothing builds it yet. ADR-0010's own text is
