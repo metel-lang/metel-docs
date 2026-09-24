@@ -409,13 +409,16 @@ metel-frontend/src/
     move_check/
     elaboration/        stage 07, the frontend's last shared stage
 
-  ast/, typed_ast/, types/, error/     data definitions
-  symbols.rs, identity/                identity backbone
-  place.rs, flow_state.rs              narrowing: type_checking, move_check (shared by design, see below)
-  stdlib.rs, native_keys.rs            parsing, type_checking, evaluator
-  module_paths.rs                      parsing, name_resolution
-
-  analysis.rs, query.rs                tooling API, not a pipeline stage
+  data/            ast.rs, typed_ast.rs, types.rs, error.rs — pure data definitions,
+                   no stage owns any of them (module_paths.rs's one function folds in
+                   as PathRoot::resolve, below — no file of its own)
+  identity/        symbols.rs (folded in) + this directory's existing contents —
+                   the identity backbone, one directory for the older (SymbolId,
+                   name-resolution-era) and newer (post-#1052 resolved-identity)
+                   systems together
+  ownership/       place.rs, flow_state.rs — shared by design, not by stage (below)
+  stdlib/          stdlib.rs, native_keys.rs
+  tooling/         analysis.rs, query.rs — not a pipeline stage
 
 metel-interpreter/src/
   evaluator/       stage 08, stays in this crate
@@ -437,15 +440,36 @@ that existing description, rather than becoming two top-level pipeline stages.
 internal to `type_checking`, not a peer of it and not read by any other stage once
 `move_check`'s direct import is fixed (see above).
 
-**A module joins the identity-backbone or tooling group only when a real cross-stage
-import of *already-constructed, read-only* data justifies it** — construction, not mere
-reference, is the line (see above). `symbols` and `identity` are read from name
+**A module joins one of these five groups only when a real cross-stage import of
+*already-constructed, read-only* data justifies it** — construction, not mere reference,
+is the line (see above). `identity` (with `symbols` folded in) is read from name
 resolution through the evaluator, and nothing downstream mints a second `SymbolId`
-allocator from them (that would itself be a Standard 2 violation, tracked separately);
-`stdlib`/`native_keys` are read from parsing, type checking, and the evaluator the same
-way. `module_paths` is a small, pure function shared by parsing and name resolution, not
-a data table. `analysis`/`query` import each other and nothing pipeline-shaped consumes
-either — a self-contained tooling surface, not a stage.
+allocator from it (that would itself be a Standard 2 violation, tracked separately);
+`stdlib` (with `native_keys` folded in) is read from parsing, type checking, and the
+evaluator the same way. `data` and `ownership` are grouped by subject matter, not by
+who imports them, since each is a small set of already-established, mutually-referencing
+files — `data`: the ast → typed_ast progression sharing `types`' vocabulary and `error`'s
+diagnostics, all pure definitions with no stage-owned behavior; `ownership`: `flow_state`
+is layered directly on `place`, per its own doc comment — rather than one having grown
+into a genuine tooling-style shared surface the way `identity`/`stdlib` have.
+`ownership` also isn't a fresh name invented here — `#1231`'s own issue body already
+sketches `ownership/` for the same kind of content, in the later, bigger frontend
+reorganization it deliberately holds back (its "target module shape" section). Reusing
+it now keeps that plan and this one pointing at the same word instead of drifting apart.
+`tooling` keeps its own name for the same reason it always had one: `analysis`/`query`
+import each other and nothing pipeline-shaped consumes either — a self-contained surface,
+not a stage.
+
+**`module_paths.rs` is not a sixth group — it disappears as a file.** Its one function,
+`resolve_path_root(root: &PathRoot, current: &[String]) -> Vec<String>`, does nothing
+`PathRoot` itself doesn't already own the shape of — `ast.rs` already carries several
+small query methods directly on its own enums (`Bound::aspect_name`, `Bound::row_bound`,
+`WhereClause::constraint_for`, `Expr::span`, `BinOp::symbol`), so `PathRoot::resolve(&self,
+current: &[String]) -> Vec<String>` is the same pattern, not a new one. Its three call
+sites (`name_resolver.rs`, `type_alias.rs`, `module_loader.rs`) change from
+`module_paths::resolve_path_root(root, current)` to `root.resolve(current)` — mechanical,
+behavior-identical, and small enough to be part of `#1231`'s own move-commit fix-ups, not
+a separate follow-up the way the `typeinference`/`move_check` decoupling is.
 
 **Resolved, from `#1231`'s own "Things to settle":**
 - `type_alias.rs` is a sub-module of `pipeline/parsing/`, not its own stage — its only
