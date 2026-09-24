@@ -22,6 +22,8 @@ fun main() -> i64 {
 Named function declarations begin with `fun`; `fun` is not an anonymous-function
 expression introducer.
 
+<!-- rfc.py:last_reviewed: 5138c9789e1e7146027a81a7918c12351c3a3b41 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -36,6 +38,8 @@ expression introducer.
 Function parameter and return-type annotations may be omitted when their types can be
 inferred from context.
 
+<!-- rfc.py:last_reviewed: bcb923c94347470c02ab6b0d6b1dac44f923fad4 -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjgwX25hbWVkX2Z1bmN0aW9uX2luZmVycmVkX3NpZ25hdHVyZS5tdGwiLCJzb3VyY2UiOiJmdW4gZG91YmxlKHZhbHVlKSB7XG4gICAgdmFsdWUgKyB2YWx1ZVxufVxuXG5mdW4gbWFpbigpIHtcbiAgICBhc3NlcnQoZG91YmxlKDIxKSA9PSA0Mik7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9mdW5jdGlvbnMvODBfbmFtZWRfZnVuY3Rpb25faW5mZXJyZWRfc2lnbmF0dXJlLm10bCIsIm5hbWUiOiI4MF9uYW1lZF9mdW5jdGlvbl9pbmZlcnJlZF9zaWduYXR1cmUubXRsIn0="></details>
@@ -44,6 +48,8 @@ inferred from context.
 ##### Dynamic Semantics {#spec.functions.named-function-declarations.dynamics-1}
 
 A function with no return annotation and no `return expr;` returns `()`.
+
+<!-- rfc.py:last_reviewed: c5619cae663b522b9c41aaa04f5a82788394dbbe -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -83,6 +89,8 @@ fun main() -> i64 {
 
 A function declared in an `extend` block without a `self`, `&self`, or `&var self`
 parameter is an associated function and is called through its target type with `::`.
+
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -159,6 +167,8 @@ Function and closure types use `|ParameterTypes| -> ReturnType` (RFC-0154); `->`
 return type are always written. Neither `(ParameterTypes) -> ReturnType` (the spelling
 before v0.13.0) nor `fun(ParameterTypes) -> ReturnType` is a function-type syntax.
 
+<!-- rfc.py:last_reviewed: 5138c9789e1e7146027a81a7918c12351c3a3b41 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/4-implemented/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -182,6 +192,8 @@ with its own `<T>` generics) may be called directly, bound with a bare unannotat
 argument whose receiving parameter position is itself concrete. Referencing it anywhere
 else that doesn't pin down a concrete instantiation — including a parameter position
 that is itself still generic in the callee — is `T0003`.
+
+<!-- rfc.py:last_reviewed: cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0138](../../rfcs/4-implemented/rfc-0138-generic-functions-as-first-class-values.md)_</span>
@@ -210,6 +222,8 @@ every nesting depth, matching exactly against a copyable one: a value of it may
 be called (subject to `once` / `var`) and moved, but not duplicated by value. A
 bare generic parameter is not a written function type.
 
+<!-- rfc.py:last_reviewed: 0f4973466a31348e95cf0bc600ea88d4e8bc849a -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0166](../../rfcs/4-implemented/rfc-0166-written-function-types-lower-to-move-only.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -233,6 +247,8 @@ bare generic parameter is not a written function type.
 A function value the compiler proved copyable is accepted into a written
 function-type slot by moving; the slot's copyability is not carried by the
 written type and is not recoverable downstream.
+
+<!-- rfc.py:last_reviewed: 0f4973466a31348e95cf0bc600ea88d4e8bc849a -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -389,6 +405,8 @@ annotation, and a body block. It may appear wherever an expression is accepted. 
 before v0.13.0 the parameter list was parenthesized and `->` was written before every
 body; `|…|` self-disambiguates, so `->` now appears only with a return type.)
 
+<!-- rfc.py:last_reviewed: 5138c9789e1e7146027a81a7918c12351c3a3b41 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/4-implemented/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -407,6 +425,8 @@ A closure literal is introduced by its `|…|` parameter list; the `->` is writt
 a return type is (RFC-0154, superseding RFC-0041's rule that `->` precede every body). A
 bare block `{ … }` with no preceding `|…|` is a block expression, not a closure.
 
+<!-- rfc.py:last_reviewed: 5138c9789e1e7146027a81a7918c12351c3a3b41 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/4-implemented/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -421,6 +441,8 @@ bare block `{ … }` with no preceding `|…|` is a block expression, not a clos
 A zero-argument closure is written `|| { body }` (RFC-0154; `() -> { body }` before
 v0.13.0). A bare block `{ … }` is not an anonymous function.
 
+<!-- rfc.py:last_reviewed: 5138c9789e1e7146027a81a7918c12351c3a3b41 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -433,6 +455,8 @@ v0.13.0). A bare block `{ … }` is not an anonymous function.
 ##### Legality Rule {#spec.functions.closures.legality-4}
 
 The former anonymous `fun(parameters) -> return_type { body }` spelling is rejected.
+
+<!-- rfc.py:last_reviewed: cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md)_</span>
@@ -451,6 +475,8 @@ appear more than once in the list, under any combination of specifiers. The lite
 order is [legality-23](#spec.functions.closures.legality-23); the function-type spelling's
 order rules are [legality-24](#spec.functions.closures.legality-24).
 
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/4-implemented/rfc-0050-closure-capture-lists.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -467,6 +493,8 @@ then `var`, then the parameter list. `var once`, a qualifier before the capture 
 a capture list placed after a qualifier are parse errors — even though the corresponding
 function *type* spelling is order-insensitive ([legality-24](#spec.functions.closures.legality-24)).
 
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6InZhciIsImxpbmUiOm51bGwsInN0YXR1cyI6InBhcnNlX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoidjBfMTNfMF9uZWdfbGl0ZXJhbF9wcmVmaXhfb3JkZXIubXRsIiwic291cmNlIjoiLy8gdjAuMTMuMCBjbG9zdXJlIGNsdXN0ZXIgKFJGQyAwMDUwIGxlZ2FsaXR5LTIzKTogdGhlIGNsb3N1cmUgKmxpdGVyYWwqXG4vLyBwcmVmaXggb3JkZXIgaXMgZml4ZWQgLS0gY2FwdHVyZSBsaXN0LCB0aGVuIGBvbmNlYCwgdGhlbiBgdmFyYCwgdGhlbiB0aGVcbi8vIHBhcmFtZXRlciBsaXN0LiBgdmFyIG9uY2VgIChhbmQgYSBxdWFsaWZpZXIgYmVmb3JlIHRoZSBjYXB0dXJlIGxpc3QpIGlzIGFcbi8vIHBhcnNlIGVycm9yLCBldmVuIHRob3VnaCB0aGUgZnVuY3Rpb24gKnR5cGUqIHNwZWxsaW5nIGlzIG9yZGVyLWluc2Vuc2l0aXZlXG4vLyAobGVnYWxpdHktMjQpLlxuLy9cbmZ1biBtYWluKCkge1xuICAgIGxldCBjIDo9IDE7XG4gICAgbGV0IGYgOj0gW2NdIHZhciBvbmNlIHx8IC0+IGk2NCB7IGMgfTsgLy8gd3Jvbmcgb3JkZXIgLS0gbXVzdCBiZSBgb25jZSB2YXJgXG4gICAgZigpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvY2xvc3VyZXMvdjBfMTNfMF9uZWdfbGl0ZXJhbF9wcmVmaXhfb3JkZXIubXRsIiwibmFtZSI6InYwXzEzXzBfbmVnX2xpdGVyYWxfcHJlZml4X29yZGVyLm10bCJ9"></details>
@@ -478,6 +506,8 @@ As a function *type* spelling the `once` and `var` qualifiers are order-insensit
 `once var |T| -> U` and `var once |T| -> U` denote the identical `Type::Fun`. The
 fixed order of [legality-23](#spec.functions.closures.legality-23) is a grammar rule for
 closure *literals* only.
+
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md), [rfc-0154](../../rfcs/4-implemented/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
@@ -494,6 +524,8 @@ A closure must carry a capture list if its body references a free non-`Copy` loc
 binding, or captures any binding by `&` or `&var`. Referencing a free non-`Copy` local
 with no capture list is a compile error. A closure whose only free variables are `Copy`
 bindings used by value, or which has no free variables, may omit the list.
+
+<!-- rfc.py:last_reviewed: 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/4-implemented/rfc-0050-closure-capture-lists.md)_</span>
@@ -512,6 +544,8 @@ free local absent from a non-empty list is a compile error. Module-level functio
 constants, types, and aspects are resolved by ordinary name resolution and are never
 capture items.
 
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6ImNhcHR1cmUiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJ2MF8xM18wX25lZ19jYXB0dXJlX2xpc3Rfbm90X2V4aGF1c3RpdmUubXRsIiwic291cmNlIjoiLy8gdjAuMTMuMCBjbG9zdXJlIGNsdXN0ZXIgKFJGQyAwMDUwIGxlZ2FsaXR5LTcpOiBvbmNlIGEgY2FwdHVyZSBsaXN0IGlzXG4vLyBwcmVzZW50IGl0IG11c3QgYmUgZXhoYXVzdGl2ZSAtLSBldmVyeSBmcmVlIGxvY2FsIHRoZSBib2R5IHJlZmVyZW5jZXMgbXVzdFxuLy8gYXBwZWFyLCBldmVuIGBDb3B5YCBvbmVzLiBNb2R1bGUtbGV2ZWwgaXRlbXMgYXJlIG5ldmVyIGNhcHR1cmUgaXRlbXMuXG4vL1xuZnVuIG1haW4oKSB7XG4gICAgbGV0IGEgOj0gMTtcbiAgICBsZXQgYiA6PSAyO1xuICAgIGxldCBmIDo9IFthXSB8fCB7IGEgKyBiIH07IC8vIGBiYCByZWZlcmVuY2VkIGJ1dCBtaXNzaW5nIGZyb20gdGhlIGxpc3RcbiAgICBmKCk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9jbG9zdXJlcy92MF8xM18wX25lZ19jYXB0dXJlX2xpc3Rfbm90X2V4aGF1c3RpdmUubXRsIiwibmFtZSI6InYwXzEzXzBfbmVnX2NhcHR1cmVfbGlzdF9ub3RfZXhoYXVzdGl2ZS5tdGwifQ=="></details>
@@ -524,6 +558,8 @@ the default is *many*. A closure whose body moves a non-`Copy` capture out — r
 or passes it by value to something that takes ownership — written without `once`, is a
 compile error naming the offending capture and the fix (add `once`, or stop moving the
 capture).
+
+<!-- rfc.py:last_reviewed: 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/4-implemented/rfc-0134-closure-call-capability.md)_</span>
@@ -542,6 +578,8 @@ of one, or calls a `&var self` method on one — and always a closure that captu
 binding `[&var …]`, regardless of what the body does through it — written without `var`,
 is a compile error naming the offending capture and the fix (add `var`, stop the mutation,
 or capture `[&x]` instead).
+
+<!-- rfc.py:last_reviewed: 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
@@ -563,6 +601,8 @@ slot requiring `m'`, `u'`, `c'` when `m` is at least as permissive as `m'` (*man
 permissive as `c'` (`Copy` ≥ non-`Copy`). The reverse — a less permissive value into a
 more permissive slot — is rejected.
 
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/4-implemented/rfc-0134-closure-call-capability.md), [rfc-0152](../../rfcs/4-implemented/rfc-0152-function-type-multiplicity-widening.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -582,6 +622,8 @@ argument passed to a function-typed parameter, a `let` / field ascription, a str
 initializer, and a return. Below the first level of function-type nesting an exact match is
 required.
 
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0152](../../rfcs/4-implemented/rfc-0152-function-type-multiplicity-widening.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -597,6 +639,8 @@ A conditional or `match` expression whose arms are function-typed has, as its ty
 least-permissive arm type under legality-9's order, and each arm is widened to it. A
 diverging (`!`-typed) arm does not contribute. A join that would require *narrowing* an
 arm is the ordinary type mismatch.
+
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0152](../../rfcs/4-implemented/rfc-0152-function-type-multiplicity-widening.md)_</span>
@@ -617,6 +661,8 @@ receiver rule. An owned but non-`var` (`let`) binding, or any shared-`&` callee 
 compile error. This holds for every `mutating` closure, whether it mutates its own
 by-value captures or only drives mutation through a captured `&var`.
 
+<!-- rfc.py:last_reviewed: 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -633,6 +679,8 @@ of an enclosing closure. It may capture such a binding by value (`[s]`, which mo
 of the enclosing closure's environment). This restriction is lifted when the borrow
 checker lands.
 
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6ImJvcnJvdyIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6InYwXzEzXzBfbmVnX25lc3RlZF9ib3Jyb3dfaW50b19lbmNsb3NpbmdfZW52Lm10bCIsInNvdXJjZSI6Ii8vIHYwLjEzLjAgY2xvc3VyZSBjbHVzdGVyIChSRkMgMDA1MCBsZWdhbGl0eS0xMSk6IGFuIGlubmVyIGNsb3N1cmUgbWF5IG5vdFxuLy8gY2FwdHVyZSwgYnkgYCZgIG9yIGAmdmFyYCwgYSBiaW5kaW5nIHRoYXQgaXMgYSBieS12YWx1ZSBjYXB0dXJlIG9mIGFuXG4vLyBlbmNsb3NpbmcgY2xvc3VyZS4gSW50ZXJpbSByZWplY3Rpb24gLS0gbGlmdGVkIHdoZW4gdGhlIGJvcnJvdyBjaGVja2VyXG4vLyAoUkZDIDAxMjIpIGxhbmRzLlxuLy9cbmZ1biBtYWluKCkge1xuICAgIGxldCBzIDo9IFwiZGF0YVwiO1xuICAgIGxldCBvdXRlciA6PSBbc10gfHwge1xuICAgICAgICBsZXQgaW5uZXIgOj0gWyZzXSB8fCB7IHMgPT0gXCJkYXRhXCIgfTsgLy8gYCZgIGludG8gdGhlIGVuY2xvc2luZyBjbG9zdXJlJ3MgZW52XG4gICAgICAgIGlubmVyKClcbiAgICB9O1xuICAgIG91dGVyKCk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9jbG9zdXJlcy92MF8xM18wX25lZ19uZXN0ZWRfYm9ycm93X2ludG9fZW5jbG9zaW5nX2Vudi5tdGwiLCJuYW1lIjoidjBfMTNfMF9uZWdfbmVzdGVkX2JvcnJvd19pbnRvX2VuY2xvc2luZ19lbnYubXRsIn0="></details>
@@ -646,6 +694,8 @@ value is the by-value copy available when it is
 `Copy` ([legality-20](#spec.functions.closures.legality-20)). Structural equality of two
 function *types* is a type relation and does not make their values comparable.
 
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoidjBfMTNfMF9uZWdfY2xvc3VyZV9ub19hc3BlY3RzLm10bCIsInNvdXJjZSI6Ii8vIHYwLjEzLjAgY2xvc3VyZSBjbHVzdGVyIChSRkMgMDEzNCBsZWdhbGl0eS0xMik6IGEgY2xvc3VyZSB2YWx1ZSBzYXRpc2ZpZXNcbi8vIG5vIGFzcGVjdHMuIGA9PWAsIGA8YCwgYC5jbG9uZSgpYCBhbmQgb3RoZXIgYXNwZWN0LWdhdGVkIG9wZXJhdGlvbnMgb24gYVxuLy8gY2xvc3VyZSB2YWx1ZSBkbyBub3QgdHlwZS1jaGVjay5cbi8vXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgYSA6PSB8fCB7IDEgfTtcbiAgICBsZXQgYiA6PSB8fCB7IDEgfTtcbiAgICBhc3NlcnQoYSA9PSBiKTsgLy8gZXJyb3I6IGNsb3N1cmVzIGRvIG5vdCBzYXRpc2Z5IGBFcWBcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2Nsb3N1cmVzL3YwXzEzXzBfbmVnX2Nsb3N1cmVfbm9fYXNwZWN0cy5tdGwiLCJuYW1lIjoidjBfMTNfMF9uZWdfY2xvc3VyZV9ub19hc3BlY3RzLm10bCJ9"></details>
@@ -656,6 +706,8 @@ function *types* is a type relation and does not make their values comparable.
 A `[&var ident]` capture requires `ident` to be a `var` binding; capturing a non-`var`
 binding by `&var` is a compile error. A closure literal cannot reference its own `let`
 binding — the name is not in scope inside its own initializer.
+
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/4-implemented/rfc-0050-closure-capture-lists.md)_</span>
@@ -672,6 +724,8 @@ A closure value is `Send` (respectively `Sync`) when every one of its captures i
 (respectively `Sync`), applying the reference rules for `&T` / `&var T` captures. A
 `mutating` closure value is additionally not `Sync`.
 
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6IlN5bmMiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJ2MF8xM18wX25lZ19tdXRhdGluZ19jbG9zdXJlX25vdF9zeW5jLm10bCIsInNvdXJjZSI6Ii8vIHYwLjEzLjAgY2xvc3VyZSBjbHVzdGVyIChSRkMgMDE1MyBsZWdhbGl0eS0xNCk6IGEgY2xvc3VyZSdzIFNlbmQvU3luYyBpc1xuLy8gdGhlIGFnZ3JlZ2F0ZSBydWxlIG92ZXIgaXRzIGNhcHR1cmVzLCBwbHVzIG9uZSBjbG9zdXJlLXNwZWNpZmljIGZhY3QgLS0gYVxuLy8gYG11dGF0aW5nYCBjbG9zdXJlIHZhbHVlIGlzIG5vdCBgU3luY2AuXG4vL1xuLy8gQWxzbyBkZXBlbmRzIG9uIFN5bmMtYm91bmQgY2hlY2tpbmcgKFJGQyAwMDgwIC8gUkZDIDAwOTYpLCBzbyBkb3VibGUtZ2F0ZWQuXG5mdW4gbmVlZHNfc3luYzxUOiBTeW5jPih4OiBUKSAtPiAoKSB7XG59XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBuIDo9IDA7XG4gICAgbGV0IG0gOj0gW25dIHZhciB8fCB7IG4gOj0gbiArIDE7IG4gfTtcbiAgICBuZWVkc19zeW5jKG0pOyAvLyBlcnJvcjogYSBgbXV0YXRpbmdgIGNsb3N1cmUgaXMgbm90IGBTeW5jYFxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvY2xvc3VyZXMvdjBfMTNfMF9uZWdfbXV0YXRpbmdfY2xvc3VyZV9ub3Rfc3luYy5tdGwiLCJuYW1lIjoidjBfMTNfMF9uZWdfbXV0YXRpbmdfY2xvc3VyZV9ub3Rfc3luYy5tdGwifQ=="></details>
@@ -685,6 +739,8 @@ of an unbounded `T` is non-`Copy`: `[t]` moves it, and a body that moves it out 
 closure `once` for *every* instantiation of the enclosing generic, `T = i64` included. A
 definition wanting the copyable behaviour adds `T: Copy`, after which `[t]` is a copy and
 consumes nothing.
+
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -701,6 +757,8 @@ qualifier (an unresolved inference variable, or a bare generic parameter), the l
 takes the default and [legality-9](#spec.functions.closures.legality-9) widening resolves
 any remaining gap at the concrete site.
 
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InYwXzEzXzBfZXhwZWN0ZWRfdHlwZV9zdXBwbGllc19vbmNlLm10bCIsInNvdXJjZSI6Ii8vIHYwLjEzLjAgY2xvc3VyZSBjbHVzdGVyIChSRkMgMDEzNCBsZWdhbGl0eS0xOCk6IGFuIHVucXVhbGlmaWVkIGNsb3N1cmVcbi8vIGxpdGVyYWwgaW4gYSB0eXBlZCBwb3NpdGlvbiB0YWtlcyBpdHMgYG9uY2VgIC8gYHZhcmAgZnJvbSB0aGUgZXhwZWN0ZWRcbi8vIHR5cGUgcmF0aGVyIHRoYW4gZGVmYXVsdGluZyB0byBgbWFueWAgLyBgcmVhZGluZ2AgYW5kIHRoZW4gZmFpbGluZy5cbi8vXG5mdW4gbWFrZShzOiBTdHJpbmcpIC0+IG9uY2UgfHwgLT4gU3RyaW5nIHtcbiAgICBbc10gfHwgeyBzIH0gLy8gbm8gYG9uY2VgIHdyaXR0ZW47IHRoZSByZXR1cm4gdHlwZSBzdXBwbGllcyBpdFxufVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgZiA6PSBtYWtlKFwiaGlcIik7XG4gICAgYXNzZXJ0KGYoKSA9PSBcImhpXCIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvY2xvc3VyZXMvdjBfMTNfMF9leHBlY3RlZF90eXBlX3N1cHBsaWVzX29uY2UubXRsIiwibmFtZSI6InYwXzEzXzBfZXhwZWN0ZWRfdHlwZV9zdXBwbGllc19vbmNlLm10bCJ9"></details>
@@ -716,6 +774,8 @@ verification ([legality-8](#spec.functions.closures.legality-8)); (4) `var` veri
 ([legality-25](#spec.functions.closures.legality-25)). The first failing stage is
 reported; later stages are suppressed. Stages 3 and 4 are independent: a body that both
 consumes and mutates without the qualifiers is reported against both.
+
+<!-- rfc.py:last_reviewed: cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/4-implemented/rfc-0050-closure-capture-lists.md)_</span>
@@ -734,6 +794,8 @@ non-`Copy` binding, `[x.clone()]` of a non-`Copy` type, and `[&var x]` (an exclu
 reference is not `Copy`) make the closure non-`Copy`. A `Copy` closure is necessarily
 *many* — it holds nothing non-`Copy` for a call to consume.
 
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/4-implemented/rfc-0134-closure-call-capability.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -750,6 +812,8 @@ takes `&var x`, or calls a `&var self` method on it is a compile error *at the c
 the closure is not silently reclassified `mutating`. The fix is to capture `[&var x]`,
 which requires `x` to be a `var` binding ([legality-13](#spec.functions.closures.legality-13))
 and makes the closure `mutating` ([legality-25](#spec.functions.closures.legality-25)).
+
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -768,6 +832,8 @@ never called. An inner `[&s]` / `[&var s]` does not change the enclosing closure
 multiplicity, but is subject to
 [legality-11](#spec.functions.closures.legality-11)'s interim borrow restriction.
 
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/4-implemented/rfc-0050-closure-capture-lists.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -784,6 +850,8 @@ listless closure, each free `Copy` variable) is placed into the closure's enviro
 according to its specifier: `[x]` moves a non-`Copy` value / copies a `Copy` value,
 `[x.clone()]` stores an independent copy, `[&x]` / `[&var x]` store a reference.
 
+<!-- rfc.py:last_reviewed: 386c97d59451e22b000a0fa7ccaf637fb17dddfd -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -799,6 +867,8 @@ A `reading` closure does not modify its environment; a `mutating` closure modifi
 place. In neither case does a write inside the closure body affect an *outer* binding that
 was captured by value — the closure operates on its own environment copy.
 
+<!-- rfc.py:last_reviewed: 386c97d59451e22b000a0fa7ccaf637fb17dddfd -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -813,6 +883,8 @@ was captured by value — the closure operates on its own environment copy.
 Closures that capture the same binding by `[&x]` / `[&var x]`, or that capture the same
 reference value, observe the same referent; a write through an exclusive reference by one
 closure is visible through the others.
+
+<!-- rfc.py:last_reviewed: 386c97d59451e22b000a0fa7ccaf637fb17dddfd -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
@@ -834,6 +906,8 @@ that value alive; the environment travels with the closure value. A closure hold
 captured *reference* cannot outlive the referent (checked by the borrow checker when it
 lands; unenforced before then).
 
+<!-- rfc.py:last_reviewed: 386c97d59451e22b000a0fa7ccaf637fb17dddfd -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -849,6 +923,8 @@ Capturing a non-`Copy` binding by value (`[x]`) moves it, consuming the outer bi
 `Copy` binding captured by value is copied; `[x.clone()]` produces an independent copy
 regardless of `Copy`-ness. The captured environment is constructed once, at closure
 creation, and is not re-cloned per call.
+
+<!-- rfc.py:last_reviewed: a7b8151cc37f56e7485b2fc48062ed4ba2925b14 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0157](../../rfcs/4-implemented/rfc-0157-copy-and-clone-model-re-analysis.md)_</span>
@@ -869,6 +945,8 @@ A `mutating` closure's assignments to its by-value captures are retained in its
 environment and are visible to subsequent calls of the same closure value — the closure
 holds private mutable state.
 
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -882,6 +960,8 @@ holds private mutable state.
 
 Copying a closure value whose captures are all `Copy` copies its environment. The copies
 have independent environment state: a `mutating` call on one does not affect the other.
+
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
@@ -901,6 +981,8 @@ second `mutating` call on the same closure value reached from inside the first �
 or through a structure the body can reach — is rejected: before the borrow checker lands,
 as a runtime error; after, as a static borrow conflict.
 
+<!-- rfc.py:last_reviewed: 60cdfd504635a2a8c5e6f2d2edf2f9d5eea3f49b -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -915,6 +997,8 @@ as a runtime error; after, as a static borrow conflict.
 A `once` call consumes the callee at the call expression, before the body runs. Any later
 use of that closure value is a moved-value error, whether the body returned normally or
 exited early.
+
+<!-- rfc.py:last_reviewed: cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/4-implemented/rfc-0134-closure-call-capability.md)_</span>
@@ -948,6 +1032,8 @@ path and consults no in-call flag, because call lowering branches on the closure
 own mutation axis, not on the slot type. A `many` value in a `once` slot is likewise not
 consumed by the call.
 
+<!-- rfc.py:last_reviewed: a770445761323bbb96448619152def8053da27ae -->
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
 <summary>Tested by (2)</summary>
@@ -968,6 +1054,8 @@ that state. A `once` / `once var` closure was already consumed at the call expre
 ([dynamics-10](#spec.functions.closures.dynamics-10)) regardless of how the body exited;
 its still-owned fields are dropped when the value goes out of scope.
 
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InYwXzEzXzBfdmFyX2Vhcmx5X3JldHVybl9sZWF2ZXNfcGFydGlhbF9zdGF0ZS5tdGwiLCJzb3VyY2UiOiIvLyB2MC4xMy4wIGNsb3N1cmUgY2x1c3RlciAoUkZDIDAxNTMgZHluYW1pY3MtMTMpOiBpZiBhIHBsYWluIGB2YXJgIChub3Rcbi8vIGBvbmNlYCkgY2xvc3VyZSdzIGJvZHkgZXhpdHMgZWFybHkgdmlhIGA/YCBvciBgcmV0dXJuYCwgdGhlIG11dGF0aW9ucyB0aGF0XG4vLyBhbHJlYWR5IHJhbiBzdGF5IHZpc2libGUgYW5kIHRoZSBjbG9zdXJlIHJlbWFpbnMgY2FsbGFibGUgaW4gYVxuLy8gdmFsaWQtYnV0LXBhcnRpYWwgc3RhdGUuIChBIGBwYW5pY2AgaXMgdW5jYXRjaGFibGUgYW5kIGVuZHMgdGhlIHByb2Nlc3MgLS1cbi8vIG91dCBvZiBzY29wZSBoZXJlLilcbi8vXG5mdW4gbWFpbigpIHtcbiAgICB2YXIgbG9nIDo9IDA7XG4gICAgdmFyIHN0ZXAgOj0gWyZ2YXIgbG9nXSB2YXIgfHN0b3A6IGJvb2xlYW58IHtcbiAgICAgICAgbG9nICs9IDE7XG4gICAgICAgIGlmIChzdG9wKSB7XG4gICAgICAgICAgICByZXR1cm4gbG9nOyAvLyBlYXJseSByZXR1cm4sIG1pZC1tdXRhdGlvblxuICAgICAgICB9XG4gICAgICAgIGxvZyArPSAxMDtcbiAgICAgICAgbG9nXG4gICAgfTtcbiAgICBhc3NlcnQoc3RlcCh0cnVlKSA9PSAxKTsgICAvLyByZXR1cm5lZCBhZnRlciB0aGUgZmlyc3QgbXV0YXRpb24gb25seVxuICAgIGFzc2VydChsb2cgPT0gMSk7ICAgICAgICAgIC8vIHBhcnRpYWwgbXV0YXRpb24gaXMgdmlzaWJsZVxuICAgIGFzc2VydChzdGVwKGZhbHNlKSA9PSAxMik7IC8vIGNsb3N1cmUgc3RpbGwgY2FsbGFibGU7IHJlc3VtZXMgZnJvbSBsb2cgPT0gMVxuICAgIGFzc2VydChsb2cgPT0gMTIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvY2xvc3VyZXMvdjBfMTNfMF92YXJfZWFybHlfcmV0dXJuX2xlYXZlc19wYXJ0aWFsX3N0YXRlLm10bCIsIm5hbWUiOiJ2MF8xM18wX3Zhcl9lYXJseV9yZXR1cm5fbGVhdmVzX3BhcnRpYWxfc3RhdGUubXRsIn0="></details>
@@ -981,6 +1069,8 @@ that field or result is a `var` value that callers must invoke under exclusive a
 ([legality-10](#spec.functions.closures.legality-10)), even though the underlying closure
 never mutates. The coercion is one-way — there is no automatic re-narrowing back to
 `reading`.
+
+<!-- rfc.py:last_reviewed: aeeeb62b91c0037bc42e292ed2d124389abd7c0c -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1030,6 +1120,8 @@ A generic call may supply explicit type arguments with `name::<T, U>(arguments)`
 each named parameter to the given type. A pinned type must satisfy that parameter's own
 bounds (e.g. `T: Display`).
 
+<!-- rfc.py:last_reviewed: 386c97d59451e22b000a0fa7ccaf637fb17dddfd -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -1043,6 +1135,8 @@ bounds (e.g. `T: Display`).
 
 The call's arguments must unify with their pinned types exactly as they would with an
 inferred one.
+
+<!-- rfc.py:last_reviewed: cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_</span>
@@ -1062,6 +1156,8 @@ inferred one.
 Turbofish is a call-postfix production, fused to the immediately following call's
 parentheses. There is no standalone instantiation-without-calling value form:
 `name::<T>` not immediately followed by `(arguments)` is a parse error.
+
+<!-- rfc.py:last_reviewed: a25af1bdda80082ad2767c90b4e04a0a731944d5 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1118,6 +1214,8 @@ value is a type error (`T0001`) rather than an early `None` return.
 The `?` operator requires a `Result<T, E>` operand; applying it to `Perhaps<T>` or any
 other type is a type error.
 
+<!-- rfc.py:last_reviewed: cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6ImNhbm5vdCB1bmlmeSBhbiBpbnRlZ2VyIGxpdGVyYWwgd2l0aCIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6InN0YWdlNl9uZWdfMDVfZXJyb3JfcHJvcGFnYXRpb25fbm9uX3Jlc3VsdC5tdGwiLCJzb3VyY2UiOiIvLyA/IG9uIGEgbm9uLVJlc3VsdCB0eXBlIHNob3VsZCBmYWlsLlxuZnVuIG1pZ2h0X2ZhaWwoKSAtPiBpNjQge1xuICAgIDQyPyAvLyBFUlJPUltUMDAwMV1cbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2Vycm9yX2hhbmRsaW5nL3N0YWdlNl9uZWdfMDVfZXJyb3JfcHJvcGFnYXRpb25fbm9uX3Jlc3VsdC5tdGwiLCJuYW1lIjoic3RhZ2U2X25lZ18wNV9lcnJvcl9wcm9wYWdhdGlvbl9ub25fcmVzdWx0Lm10bCJ9"></details>
@@ -1127,6 +1225,8 @@ other type is a type error.
 
 The enclosing function's return type must be `Result<U, E2>`, and the operand error
 type `E1` must equal `E2` or satisfy `E2: From<E1>`.
+
+<!-- rfc.py:last_reviewed: 8b844c9117d5c6a730882aeaf521184c3055eb2f -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1138,6 +1238,8 @@ type `E1` must equal `E2` or satisfy `E2: From<E1>`.
 Evaluating `Ok { value }?` produces `value` and evaluation continues in the enclosing
 function.
 
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjM0X3Byb3BhZ2F0ZV9lcnJvci5tdGwiLCJzb3VyY2UiOiIvLyA/IG9uIE9rIHVud3JhcHMgdGhlIHZhbHVlOyA/IG9uIEVyciBwcm9wYWdhdGVzIG91dCBvZiB0aGUgY2FsbGluZyBmdW5jdGlvbi5cbmZ1biBzYWZlX2RpdihhOiBpNjQsIGI6IGk2NCkgLT4gUmVzdWx0PGk2NCwgaTY0PiB7XG4gICAgaWYgKGIgPT0gMCkge1xuICAgICAgICBSZXN1bHQ6OkVyciB7IGVycm9yID0gLTEgfVxuICAgIH0gZWxzZSB7XG4gICAgICAgIFJlc3VsdDo6T2sgeyB2YWx1ZSA9IGEgLyBiIH1cbiAgICB9XG59XG4vLyBVc2VzID8gaW50ZXJuYWxseSBcdTIwMTQgaWYgc2FmZV9kaXYgcmV0dXJucyBPayhxKSwgY29udGludWVzIHdpdGggT2socSsxKS5cbi8vIElmIHNhZmVfZGl2IHJldHVybnMgRXJyKGUpLCA/IHByb3BhZ2F0ZXMgc28gdHJ5X2RpdiByZXR1cm5zIEVycihlKS5cbmZ1biB0cnlfZGl2KGE6IGk2NCwgYjogaTY0KSAtPiBSZXN1bHQ8aTY0LCBpNjQ+IHtcbiAgICBsZXQgcSA6PSBzYWZlX2RpdihhLCBiKT87XG4gICAgUmVzdWx0OjpPayB7IHZhbHVlID0gcSArIDEgfVxufVxuZnVuIG1haW4oKSB7XG4gICAgLy8gPyBvbiBPazogdW53cmFwcywgY29udGludWVzLCByZXR1cm5zIE9rKDYpLlxuICAgIGxldCByMSA6PSB0cnlfZGl2KDEwLCAyKTtcbiAgICBtYXRjaCAocjEpIHtcbiAgICAgICAgUmVzdWx0OjpPayAgeyB2YWx1ZSB9ID0+IGFzc2VydCh2YWx1ZSA9PSA2KSxcbiAgICAgICAgUmVzdWx0OjpFcnIgeyBlcnJvciB9ID0+IGFzc2VydChmYWxzZSwgXCJleHBlY3RlZCBPa1wiKSxcbiAgICB9O1xuICAgIC8vID8gb24gRXJyOiBwcm9wYWdhdGVzLCB0cnlfZGl2IHJldHVybnMgRXJyKC0xKS5cbiAgICBsZXQgcjIgOj0gdHJ5X2RpdigxMCwgMCk7XG4gICAgbWF0Y2ggKHIyKSB7XG4gICAgICAgIFJlc3VsdDo6T2sgIHsgdmFsdWUgfSA9PiBhc3NlcnQoZmFsc2UsIFwiZXhwZWN0ZWQgRXJyXCIpLFxuICAgICAgICBSZXN1bHQ6OkVyciB7IGVycm9yIH0gPT4gYXNzZXJ0KGVycm9yID09IC0xKSxcbiAgICB9O1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvZXJyb3JfaGFuZGxpbmcvMzRfcHJvcGFnYXRlX2Vycm9yLm10bCIsIm5hbWUiOiIzNF9wcm9wYWdhdGVfZXJyb3IubXRsIn0="></details>
@@ -1147,6 +1249,8 @@ function.
 
 Evaluating `Err { error }?` immediately returns `Err { error }` from the enclosing
 function; when the error types differ, the returned error is `E2::from(error)`.
+
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1196,6 +1300,8 @@ type means the function returns `()`.
 Only a declaration in the `std` namespace may use the `native` modifier; a `native`
 declaration in a user module is rejected.
 
+<!-- rfc.py:last_reviewed: cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAzIiwiY29sIjpudWxsLCJjb250YWlucyI6Im5hdGl2ZSIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6Im5hdGl2ZV9vdXRzaWRlX3N0ZC5tdGwiLCJzb3VyY2UiOiIvLyBgbmF0aXZlYCBpcyBhIHN0ZGxpYi1vbmx5IGNvbnN0cnVjdDsgZGVjbGFyaW5nIG9uZSBpbiBhIHVzZXIgbW9kdWxlIChhbnlcbi8vIG1vZHVsZSB3aG9zZSBwYXRoIGRvZXMgbm90IGJlZ2luIHdpdGggYHN0ZGApIGlzIHJlamVjdGVkLlxubmF0aXZlKEBzdGQuY29yZS5wcmludGxuKSBmdW4gc2hvdXQoeDogU3RyaW5nKTsgLy8gRVJST1JbVDAwMDNdXG5cbmZ1biBtYWluKCkge31cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL25hdGl2ZV9vdXRzaWRlX3N0ZC5tdGwiLCJuYW1lIjoibmF0aXZlX291dHNpZGVfc3RkLm10bCJ9"></details>
@@ -1206,6 +1312,8 @@ declaration in a user module is rejected.
 A native declaration has a dotted `@` host-binding key and no Metel body: it ends with
 `;`.
 
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5hdGl2ZV9kZWNsLm10bCIsInNvdXJjZSI6Ii8vIFRoZSBgbmF0aXZlKEBcdTIwMjYpYCBob3N0LWJpbmRpbmcgc3ludGF4IHBhcnNlczogYSBib2R5bGVzcyBmdW5jdGlvbiB3aXRoIGFcbi8vIGRvdHRlZCBob3N0IGtleS4gKFN0ZGxpYi1vbmx5IGVuZm9yY2VtZW50IGhhcHBlbnMgYXQgdHlwZS1jaGVjaywgbm90IHBhcnNlLilcbm5hdGl2ZShAc3RkLmNvcmUucHJpbnQpIGZ1biBwcmludF9vbmUoeDogU3RyaW5nKTtcbm5hdGl2ZShAc3RkLmNvcmUuY2xvY2spIGZ1biBub3coKSAtPiBpNjQ7XG5cbmZ1biBtYWluKCkge31cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvcGFyc2luZy9uYXRpdmVfZGVjbC5tdGwiLCJuYW1lIjoibmF0aXZlX2RlY2wubXRsIn0="></details>
@@ -1215,6 +1323,8 @@ A native declaration has a dotted `@` host-binding key and no Metel body: it end
 
 Every native-function parameter has an explicit type annotation. An omitted return type
 denotes `()`.
+
+<!-- rfc.py:last_reviewed: de95f8a18ed0ec19509be179013604e7c1964a76 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>

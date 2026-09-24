@@ -71,6 +71,17 @@ Subcommands:
                                        RFC frontmatter and the spec files --
                                        no fixture corpus needed, unlike
                                        --write-coverage-baseline.
+  index --write-last-reviewed          Seed a `last_reviewed` comment
+                                       (metel-core#1192) for every citing
+                                       Legality/Dynamics rule that doesn't
+                                       already have one, valued at its own
+                                       citing fixture(s)' current commit.
+                                       Never overwrites an existing one --
+                                       only a human bumps those, the same
+                                       as `check`'s own `last_reviewed`
+                                       staleness finding. Needs
+                                       metel-interpreter/tests reachable
+                                       (ADR-0049 §6).
   milestones                           Print a Markdown report of open GitHub
                                        milestones and their RFC tracking work.
 
@@ -645,6 +656,19 @@ ORIGINS_MARKER_END = "<!-- rfc.py:origins:end -->"
 # correct-forever but points at dead history.
 FIXTURES_MARKER_START = "<!-- rfc.py:fixtures:start -->"
 FIXTURES_MARKER_END = "<!-- rfc.py:fixtures:end -->"
+
+# metel-core#1192: a rigor block's own review-staleness marker, the Formal
+# Rules twin of metel-core#1191's `last_reviewed` field
+# (architecture/tools/generate_architecture_evidence.py). Deliberately a
+# plain hand-typed comment, not a marker pair `index --write-spec-origins`
+# regenerates -- a field the tool refreshes for you gives no forcing
+# function, the same reason #1191's field is never auto-written either. It
+# must sit outside the origins/fixtures marker pairs those *do* rewrite on
+# every run, so `spec_block_bodies()` below stops collecting a block's body
+# at exactly the same boundaries `regenerate_backlinks_in_text` does.
+SPEC_LAST_REVIEWED_RE = re.compile(
+    r"<!--\s*rfc\.py:last_reviewed:\s*(?P<sha>[0-9a-f]{7,40})\s*-->"
+)
 
 # metel-core#944: the fixture backlink renders as an inline collapsible viewer
 # on the site (`<details class="spec-fixture" data-fixture="<base64 JSON>">`,
@@ -1329,6 +1353,190 @@ def regenerate_backlinks_in_text(text, spec_path, origins_by_id, fixtures_by_id,
 
         out.append("")
     return "\n".join(out)
+
+
+def spec_block_bodies(text):
+    """(spec_id, body_text) for every Legality/Dynamics rigor block in one
+    spec file's raw text -- the same body span regenerate_backlinks_in_text
+    carries through untouched (everything up to the first origins/fixtures/
+    rendered-exemption marker, or the next heading). metel-core#1192's
+    `<!-- rfc.py:last_reviewed: SHA -->` comment lives in that span. Kept
+    independent of regenerate_backlinks_in_text's own walk, rather than
+    factored out from it, so this read-only check can never be perturbed by
+    a change to the (much more involved) rewriting path -- the two are only
+    required to agree on where a block's body ends, not to share code."""
+    lines = text.split("\n")
+    out = []
+    i, n = 0, len(lines)
+    while i < n:
+        m = SPEC_BLOCK_HEADING_RE.match(lines[i])
+        if not m:
+            i += 1
+            continue
+        spec_id = m.group("id")
+        i += 1
+        body = []
+        while i < n:
+            stripped = lines[i].strip()
+            if SPEC_BLOCK_HEADING_RE.match(lines[i]) or stripped in (
+                "</details>",
+                ORIGINS_MARKER_START,
+                FIXTURES_MARKER_START,
+                SPEC_EXEMPTION_RENDERED_START,
+            ):
+                break
+            body.append(lines[i])
+            i += 1
+        out.append((spec_id, "\n".join(body)))
+    return out
+
+
+def git_resolve_commit(core_root, ref):
+    result = subprocess.run(
+        ["git", "-C", str(core_root), "rev-parse", "--verify", f"{ref}^{{commit}}"],
+        capture_output=True, text=True,
+    )
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def git_is_ancestor(core_root, maybe_ancestor, descendant):
+    result = subprocess.run(
+        ["git", "-C", str(core_root), "merge-base", "--is-ancestor", maybe_ancestor, descendant],
+        capture_output=True,
+    )
+    if result.returncode in (0, 1):
+        return result.returncode == 0
+    raise ValueError(
+        f"git merge-base --is-ancestor {maybe_ancestor} {descendant} failed: "
+        f"{result.stderr.decode(errors='replace').strip()}"
+    )
+
+
+def git_most_recent_commit(core_root, shas):
+    """Reduce several commits to the single most recent, by pairwise
+    ancestry -- valid because metel-core's history is linear per branch, so
+    any two of these are always comparable (same assumption
+    generate_architecture_evidence.py's most_recent_commit makes for
+    metel-core#1191)."""
+    newest = shas[0]
+    for candidate in shas[1:]:
+        if git_is_ancestor(core_root, newest, candidate):
+            newest = candidate
+    return newest
+
+
+def fixture_last_touch_commit(core_root, toml_path):
+    """The most recent commit that changed a citing fixture's .toml sidecar
+    -- whole-file, not a line range: a Legality/Dynamics rule cites the
+    fixture file itself, never one function inside it, so there's no
+    sub-range to scope to the way a Rust item citation has in #1191's
+    version of this (metel-core#1192)."""
+    out = subprocess.check_output(
+        ["git", "-C", str(core_root), "log", "-1", "--format=%H", "--", str(toml_path)],
+        text=True,
+    )
+    sha = out.split("\n", 1)[0].strip()
+    if not sha:
+        raise ValueError(f"{toml_path}: no commit history found for this fixture")
+    return sha
+
+
+def spec_rule_review_staleness_problems(core_root, spec_citations):
+    """metel-core#1192: flag a Legality/Dynamics rule whose citing fixture(s)
+    changed since a human last reviewed it -- the Formal Rules twin of
+    metel-core#1191's `last_reviewed` staleness check. A rule with no citing
+    fixture yet is skipped here, not flagged: that's coverage_check_problems'
+    own "untested spec block" concern (ADR-0050 §5), a different check --
+    this one only has something to compare against once a citation exists."""
+    problems = []
+    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+        text = spec_path.read_text()
+        for spec_id, body in spec_block_bodies(text):
+            toml_paths = spec_citations.get(spec_id, [])
+            if not toml_paths:
+                continue
+            reviewed = SPEC_LAST_REVIEWED_RE.search(body)
+            if not reviewed:
+                problems.append(
+                    f"{spec_path.relative_to(REPO_ROOT)}: `{spec_id}` cites "
+                    f"{len(toml_paths)} fixture(s) but has no "
+                    f"`<!-- rfc.py:last_reviewed: SHA -->` comment (metel-core#1192; "
+                    f"run `rfc.py index --write-last-reviewed` to seed it)"
+                )
+                continue
+            reviewed_sha = git_resolve_commit(core_root, reviewed.group("sha"))
+            if reviewed_sha is None:
+                problems.append(
+                    f"{spec_path.relative_to(REPO_ROOT)}: `{spec_id}`'s last_reviewed "
+                    f"(`{reviewed.group('sha')}`) is not a commit reachable in metel-core"
+                )
+                continue
+            touch = git_most_recent_commit(
+                core_root, [fixture_last_touch_commit(core_root, p) for p in toml_paths]
+            )
+            if not git_is_ancestor(core_root, touch, reviewed_sha):
+                problems.append(
+                    f"{spec_path.relative_to(REPO_ROOT)}: `{spec_id}`'s citing fixture(s) "
+                    f"touched by {touch[:12]} after last_reviewed ({reviewed_sha[:12]}) -- "
+                    f"confirm the rule's prose still holds and bump last_reviewed"
+                )
+    return problems
+
+
+def write_spec_last_reviewed(core_root, spec_citations):
+    """rfc.py index --write-last-reviewed (metel-core#1192): seed a
+    `<!-- rfc.py:last_reviewed: SHA -->` comment for every citing rule that
+    doesn't already have one, valued at its own citing fixture(s)' current
+    last-touch commit -- so a freshly-seeded rule starts non-stale by
+    construction, the same approach #1191's own one-time migration used.
+    Never overwrites an existing comment: once a human has set one, only a
+    human bumps it, the entire point of the field (see SPEC_LAST_REVIEWED_RE's
+    comment). A rule with no citing fixture yet is left alone -- nothing to
+    seed a review commit from."""
+    changed = []
+    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+        text = spec_path.read_text()
+        lines = text.split("\n")
+        out = []
+        i, n = 0, len(lines)
+        touched = False
+        while i < n:
+            out.append(lines[i])
+            m = SPEC_BLOCK_HEADING_RE.match(lines[i])
+            if not m:
+                i += 1
+                continue
+            spec_id = m.group("id")
+            i += 1
+            body_start = i
+            while i < n:
+                stripped = lines[i].strip()
+                if SPEC_BLOCK_HEADING_RE.match(lines[i]) or stripped in (
+                    "</details>",
+                    ORIGINS_MARKER_START,
+                    FIXTURES_MARKER_START,
+                    SPEC_EXEMPTION_RENDERED_START,
+                ):
+                    break
+                i += 1
+            body_lines = lines[body_start:i]
+            out_body_start = len(out)  # never pop back past here (this block's own body)
+            out.extend(body_lines)
+            toml_paths = spec_citations.get(spec_id, [])
+            body_text = "\n".join(body_lines)
+            if toml_paths and not SPEC_LAST_REVIEWED_RE.search(body_text):
+                while len(out) > out_body_start and out[-1].strip() == "":
+                    out.pop()
+                sha = git_most_recent_commit(
+                    core_root, [fixture_last_touch_commit(core_root, p) for p in toml_paths]
+                )
+                out.append("")
+                out.append(f"<!-- rfc.py:last_reviewed: {sha} -->")
+                touched = True
+        if touched:
+            spec_path.write_text("\n".join(out))
+            changed.append(spec_path)
+    return changed
 
 
 def write_spec_origins():
@@ -2473,7 +2681,13 @@ def build_coverage_baseline_json(coverage_by_rfc, spec_ids_without_fixture=()):
 def coverage_check_problems():
     """ADR-0049. Returns (problems, info_lines) -- problems are check
     failures; info_lines is either the single skip note or the per-RFC
-    coverage summary, always printed, never counted as a failure itself."""
+    coverage summary, always printed, never counted as a failure itself.
+
+    Also runs metel-core#1192's Formal Rules review-staleness check as a
+    sibling here (not a separately-gated check): it needs the exact same
+    metel-interpreter/tests reachability `scan_coverage_corpus()` already
+    gates on, plus the `spec_citations` map that scan already produces --
+    a second, independent reachability gate would just duplicate this one."""
     scanned = scan_coverage_corpus()
     if scanned is None:
         return [], [
@@ -2819,6 +3033,12 @@ def coverage_check_problems():
                     f"({breakdown}) -- {detail}"
                 )
 
+    # 5. metel-core#1192: Formal Rules review staleness, the spec-citations
+    #    map this same scan already produced.
+    tests_dir = metel_core_tests_dir()
+    core_root = tests_dir.parent.parent
+    problems.extend(spec_rule_review_staleness_problems(core_root, spec_citations))
+
     return problems, info
 
 
@@ -3111,9 +3331,30 @@ def cmd_index(args):
             print("error-codes.md fixtures backlinks already current -- nothing to write.")
         return
 
+    if args.write_last_reviewed:
+        tests_dir = metel_core_tests_dir()
+        if tests_dir is None:
+            error(
+                "cannot write last_reviewed: metel-interpreter/tests is not "
+                "reachable from here (see ADR-0049 §6). Run this from a metel-core "
+                "checkout with docs/ embedded as its submodule, or set "
+                "METEL_CORE_ROOT to point at one."
+            )
+        core_root = tests_dir.parent.parent
+        spec_citations = scan_spec_citations(tests_dir)
+        changed = write_spec_last_reviewed(core_root, spec_citations)
+        if changed:
+            print(
+                f"Seeded last_reviewed in {len(changed)} spec file(s): "
+                + ", ".join(str(p.relative_to(REPO_ROOT)) for p in changed)
+            )
+        else:
+            print("Every citing Formal Rule already has a last_reviewed -- nothing to write.")
+        return
+
     error(
         "index requires --check-drift, --rebuild-registry, --suggest-placement RFC-ID, "
-        "--write-coverage-baseline, or --write-spec-origins"
+        "--write-coverage-baseline, --write-spec-origins, or --write-last-reviewed"
     )
 
 
@@ -3184,6 +3425,7 @@ def main():
     p_index.add_argument("--suggest-placement", metavar="RFC_ID")
     p_index.add_argument("--write-coverage-baseline", action="store_true")
     p_index.add_argument("--write-spec-origins", action="store_true")
+    p_index.add_argument("--write-last-reviewed", action="store_true")
     p_index.set_defaults(func=cmd_index)
 
     p_milestones = sub.add_parser(
