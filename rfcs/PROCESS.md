@@ -673,6 +673,21 @@ of this process that don't need judgment:
   citations stay `rfc =`; a `3-integrated` RFC's existing citations move to `spec =` as a
   condition of that transition) without needing a separate report — same coverage-summary
   output `check` already prints, extended rather than duplicated.
+
+  **Added 2026-09-25 (metel-core#1192):** `check` also flags a cited Formal Rule
+  (Legality Rule / Dynamic Semantics block) whose citing fixture(s) moved on since a
+  human last reviewed them against the rule's own prose — the same shape as
+  metel-core#1191's `last_reviewed` staleness check for the Architecture Spec, applied
+  per rule instead of per requirement. A rule with a citing fixture carries a
+  `<!-- rfc.py:last_reviewed <sha> -->` comment right after its prose (never inside the
+  `rfc.py:origins`/`rfc.py:fixtures` marker pairs those regenerate wholesale on every
+  run); `check` compares that SHA against the most recent commit to touch the citing
+  fixture's `.toml`/`.mtl` file(s) and fails if the fixture moved after the recorded
+  review. Like #1191's field, this is hand-typed and never auto-written — the tool only
+  ever audits it. Scoped to rules that actually have a citing fixture: an uncited rule
+  has nothing to review yet, and that gap is already the "untested" list `check` prints
+  separately. Migrated once, corpus-wide (350 cited rules at the time), seeding each
+  with its fixture's own current last-touch commit.
 - `rfc.py index --rebuild-registry` — regenerates `REGISTRY.md` from the current RFC
   corpus. This is the exact state inventory, meant to be machine-trustworthy.
 - `rfc.py index --check-drift` — checks whether generated `REGISTRY.md` still matches the
