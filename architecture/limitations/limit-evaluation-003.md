@@ -32,7 +32,7 @@ semantic name lookup here would not be caught by the existing CI backstop.
 - `arch.resolution.requirement-1`
 
 <!-- limit.py:markers:start -->
-- [`metel-interpreter/src/evaluator/mod.rs::RuntimeRegistry`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-interpreter/src/evaluator/mod.rs#L428)
+- [`metel-interpreter/src/evaluator/mod.rs::RuntimeRegistry`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-interpreter/src/evaluator/mod.rs#L428)
 <!-- limit.py:markers:end -->
 
 ## Resolution
