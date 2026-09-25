@@ -45,10 +45,10 @@ is no reproducing fixture.
 
 - `arch.name-resolution.requirement-1`
 - `arch.type-construction.requirement-10`
-- [`metel-frontend/src/pipeline/type_checking/overload.rs::NEXT_OVERLOAD_SYM`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/overload.rs#L37)
+- [`metel-frontend/src/pipeline/type_checking/overload.rs::NEXT_OVERLOAD_SYM`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/type_checking/overload.rs#L37)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/type_checking/overload.rs::NEXT_OVERLOAD_SYM`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/overload.rs#L36)
+- [`metel-frontend/src/pipeline/type_checking/overload.rs::NEXT_OVERLOAD_SYM`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/type_checking/overload.rs#L36)
 <!-- limit.py:markers:end -->
 
 ## Resolution

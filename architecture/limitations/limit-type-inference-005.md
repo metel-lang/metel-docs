@@ -64,14 +64,14 @@ of functions (`LIMIT-TYPE-INFERENCE-007`).
 ## Affects
 
 - `arch.type-inference.requirement-1`
-- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L51)
-- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::split_gen`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L4938)
+- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L51)
+- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::split_gen`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L4985)
 - `metel-frontend/src/pipeline/type_checking/mod.rs`, `typechecker/construction.rs`, `move_check/mod.rs` (the offsets)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/type_checking/construction.rs::construct_generic_body`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/construction.rs#L1059)
-- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L50)
-- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::split_gen`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L4937)
+- [`metel-frontend/src/pipeline/type_checking/construction.rs::construct_generic_body`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/type_checking/construction.rs#L1059)
+- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L50)
+- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::split_gen`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L4984)
 <!-- limit.py:markers:end -->
 
 ## Resolution

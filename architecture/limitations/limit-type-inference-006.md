@@ -52,8 +52,8 @@ attempt at parallel checking was made.
 - `metel-frontend/src/pipeline/type_checking/typeinference/mod.rs` (`InferContext`, `TypeVarGenerator`)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/type_checking/mod.rs::check_graph`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/mod.rs#L353)
-- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L50)
+- [`metel-frontend/src/pipeline/type_checking/mod.rs::check_graph`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/type_checking/mod.rs#L354)
+- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L50)
 <!-- limit.py:markers:end -->
 
 ## Resolution

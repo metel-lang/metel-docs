@@ -45,7 +45,7 @@ issue needs to be found or filed.
 - `metel-frontend/src/pipeline/type_checking/construction.rs` (equality guard)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/type_checking/construction.rs::construct_binop`](https://github.com/metel-lang/metel-core/blob/4155d94ccbc5b1657799f3537515610f3bb139c3/metel-frontend/src/pipeline/type_checking/construction.rs#L1457)
+- [`metel-frontend/src/pipeline/type_checking/construction.rs::construct_binop`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/type_checking/construction.rs#L1457)
 <!-- limit.py:markers:end -->
 
 ## Resolution
