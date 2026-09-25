@@ -55,15 +55,15 @@ key, not the declaration.
 
 - `arch.name-resolution.requirement-1`
 - `arch.resolution.requirement-1`
-- [`metel-frontend/src/pipeline/name_resolution/name_resolver.rs::intern_all_symbols`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/name_resolution/name_resolver.rs#L336)
-- [`metel-frontend/src/pipeline/name_resolution/name_resolver.rs::decl_any_name`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/name_resolution/name_resolver.rs#L421)
-- [`metel-frontend/src/pipeline/name_resolution/name_resolver.rs::method_symbol_name`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/name_resolution/name_resolver.rs#L255)
+- [`metel-frontend/src/pipeline/name_resolution/name_resolver.rs::intern_all_symbols`](https://github.com/metel-lang/metel-core/blob/26ffffc1aabe3e17d10726af0d719a8ab79a7869/metel-frontend/src/pipeline/name_resolution/name_resolver.rs#L336)
+- [`metel-frontend/src/pipeline/name_resolution/name_resolver.rs::decl_any_name`](https://github.com/metel-lang/metel-core/blob/26ffffc1aabe3e17d10726af0d719a8ab79a7869/metel-frontend/src/pipeline/name_resolution/name_resolver.rs#L421)
+- [`metel-frontend/src/pipeline/name_resolution/name_resolver.rs::method_symbol_name`](https://github.com/metel-lang/metel-core/blob/26ffffc1aabe3e17d10726af0d719a8ab79a7869/metel-frontend/src/pipeline/name_resolution/name_resolver.rs#L255)
 - `metel-frontend/src/identity/allocate.rs` (method-symbol lookup)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/name_resolution/name_resolver.rs::decl_any_name`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/name_resolution/name_resolver.rs#L420)
-- [`metel-frontend/src/pipeline/name_resolution/name_resolver.rs::intern_all_symbols`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/name_resolution/name_resolver.rs#L335)
-- [`metel-frontend/src/pipeline/name_resolution/name_resolver.rs::method_symbol_name`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/name_resolution/name_resolver.rs#L254)
+- [`metel-frontend/src/pipeline/name_resolution/name_resolver.rs::decl_any_name`](https://github.com/metel-lang/metel-core/blob/26ffffc1aabe3e17d10726af0d719a8ab79a7869/metel-frontend/src/pipeline/name_resolution/name_resolver.rs#L420)
+- [`metel-frontend/src/pipeline/name_resolution/name_resolver.rs::intern_all_symbols`](https://github.com/metel-lang/metel-core/blob/26ffffc1aabe3e17d10726af0d719a8ab79a7869/metel-frontend/src/pipeline/name_resolution/name_resolver.rs#L335)
+- [`metel-frontend/src/pipeline/name_resolution/name_resolver.rs::method_symbol_name`](https://github.com/metel-lang/metel-core/blob/26ffffc1aabe3e17d10726af0d719a8ab79a7869/metel-frontend/src/pipeline/name_resolution/name_resolver.rs#L254)
 <!-- limit.py:markers:end -->
 
 ## Resolution

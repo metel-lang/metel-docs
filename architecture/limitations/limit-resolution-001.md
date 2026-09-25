@@ -28,7 +28,7 @@ today; every process re-derives identities from scratch on load.
 - `arch.resolution.requirement-2`
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/identity.rs::ResolutionMap`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/identity.rs#L237)
+- [`metel-frontend/src/identity.rs::ResolutionMap`](https://github.com/metel-lang/metel-core/blob/26ffffc1aabe3e17d10726af0d719a8ab79a7869/metel-frontend/src/identity.rs#L237)
 <!-- limit.py:markers:end -->
 
 ## Resolution
