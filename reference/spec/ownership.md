@@ -45,6 +45,8 @@ Primitive types and any type implementing `Copy` are exempt — they are duplica
 Using a non-`Copy` value in assignment, argument, or return position moves it; a later use
 of the source binding is rejected.
 
+<!-- rfc.py:last_reviewed 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -80,6 +82,8 @@ so it is moved or reborrowed rather than duplicated.
 
 A declared `Copy` implementation is legal only when every struct field or enum payload is
 `Copy`; conditional implementations are considered under their declared bounds.
+
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
@@ -119,6 +123,8 @@ its fields.
 An `extend Type: Drop` declaration gives its type `Drop` status even when its `drop` body is
 empty; that status participates in ownership restrictions.
 
+<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -142,6 +148,8 @@ point at which a destructor should run.
 
 No concrete type instantiation may implement both `Copy` and `Drop`; overlapping conditional
 implementations are rejected only when an instantiation would receive both aspects.
+
+<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
@@ -267,6 +275,8 @@ reassigned too.
 After a field of a non-`Drop` struct is moved, the remaining fields may be accessed but the
 containing value may not be used as a whole.
 
+<!-- rfc.py:last_reviewed 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -280,6 +290,8 @@ containing value may not be used as a whole.
 
 A field of a `Drop` type may not be moved out.
 
+<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDE5IiwiY29sIjpudWxsLCJjb250YWlucyI6ImJlbG9uZ3MgdG8gYSBgRHJvcGAgdHlwZSIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6IjAzX3BhcnRpYWxfbW92ZV9vZl9kcm9wX3R5cGUubXRsIiwic291cmNlIjoic3RydWN0IEhhbmRsZSB7XG4gICAgbmFtZTogU3RyaW5nLFxuICAgIGZkOiBpNjQsXG59XG5cbmV4dGVuZCBIYW5kbGU6IERyb3Age1xuICAgIGZ1biBkcm9wKCZ2YXIgc2VsZikgeyB9XG59XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBoYW5kbGUgOj0gSGFuZGxlIHsgbmFtZSA9IFwieFwiLCBmZCA9IDEgfTtcbiAgICBsZXQgbmFtZSA6PSBoYW5kbGUubmFtZTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL21vdmVfY2hlY2svMDNfcGFydGlhbF9tb3ZlX29mX2Ryb3BfdHlwZS5tdGwiLCJuYW1lIjoiMDNfcGFydGlhbF9tb3ZlX29mX2Ryb3BfdHlwZS5tdGwifQ=="></details>
@@ -291,6 +303,8 @@ Assigning a value to a field that was moved out restores that field's own access
 Once every field ever moved out of a value has been reassigned this way, the value's
 whole-value status is restored too, and it may be used as a whole again; reassigning only
 some of several moved-out fields is not enough.
+
+<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -306,6 +320,8 @@ Destructuring a struct or tuple with a pattern that binds a subset of its fields
 pattern with `..`, a tuple pattern, a bound field of a matched variant's payload) moves
 exactly those fields, leaving the scrutinee partially moved under the same rules as an
 explicit field move — including the `Drop`-type ban ([legality-2](#spec.ownership.partial-moves.legality-2)).
+
+<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -342,6 +358,8 @@ element left is not a static fact.
 Tuple elements may be moved independently; moving an enum payload consumes its enum wholly;
 array elements may not be moved out; and a non-`Copy` closure capture moves its enclosing binding.
 
+<!-- rfc.py:last_reviewed 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -364,6 +382,8 @@ whole afterward is rejected as a use of a partially moved value. Moving a field
 **narrows the record's static type** to the fields that remain
 ([narrowing.legality-1](#spec.ownership.narrowing.legality-1), RFC-0117) — the same
 mechanism struct narrowing uses, minus the brand.
+
+<!-- rfc.py:last_reviewed 21aa4cd466b110a738a198b3ac9e2d6c6e555bc3 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -467,6 +487,8 @@ of unresolved or generic type is held until its type is known. Narrowing is
 path-sensitive, joined conservatively at merge points and loop fixpoints, matching move
 tracking.
 
+<!-- rfc.py:last_reviewed 17d5dadfd0dfe9ff1ad066cb15fa247db5f4eb2a -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0117](../../rfcs/4-implemented/rfc-0117-row-narrowing.md), [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -492,6 +514,8 @@ tracking.
 A residual's row is never visible to structural matching; only its brand, fixed at
 declaration, determines eligibility, regardless of how narrow or wide the current row is.
 
+<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0117](../../rfcs/4-implemented/rfc-0117-row-narrowing.md), [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -511,6 +535,8 @@ residual type — it normalizes back to the plain struct type, and is rejected b
 bound exactly as a bare struct value already is. A residual's row is therefore always a
 strict, non-empty subset of the brand's declared row.
 
+<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDEyIiwiY29sIjpudWxsLCJjb250YWlucyI6InN0cnVjdCBuZXZlciBzYXRpc2ZpZXMgYSByb3cgYm91bmQiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJuZWdfNDRfZnVsbF93aWR0aF9wcm9qZWN0aW9uX3N0aWxsX3JlamVjdGVkX2J5X3Jvd19ib3VuZC5tdGwiLCJzb3VyY2UiOiIvLyBSZWdyZXNzaW9uIChtZXRlbC1jb3JlIzg1NywgUkZDLTAxMzcgc2xpY2UgMSdzIG93biBub3JtYWxpemF0aW9uIHJ1bGUsIGFuZFxuLy8gUkZDLTAxMzcgc2VjMydzIHdvcmtlZCBleGFtcGxlKTogYSBwcm9qZWN0aW9uIG5hbWluZyBldmVyeSBmaWVsZCBhIHN0cnVjdFxuLy8gZGVjbGFyZXMgbm9ybWFsaXplcyBiYWNrIHRvIHRoZSBwbGFpbiBzdHJ1Y3QgdHlwZSByYXRoZXIgdGhhbiBzdGF5aW5nIGFcbi8vIGRpc3RpbmN0IGJyYW5kZWQgcmVzaWR1YWwuIENvbmZpcm1zIHRoZSBub3JtYWxpemF0aW9uIGRvZXNuJ3QgYWNjaWRlbnRhbGx5XG4vLyBlYXJuIHJvdy1ib3VuZCBlbGlnaWJpbGl0eSAtLSBoLnsgZmQsIG5hbWUgfSwgZnVsbCB3aWR0aCwgaXMgcmVqZWN0ZWQgYnkgYSByb3dcbi8vIGJvdW5kIHRoZSBleGFjdCBzYW1lIHdheSBhIGJhcmUgYEhhbmRsZWAgdmFsdWUgYWxyZWFkeSBpcy5cblxuc3RydWN0IEhhbmRsZSB7IGZkOiBpNjQsIG5hbWU6IFN0cmluZyB9XG5cbmZ1biB3YW50c19hX3JlY29yZDxyZWNvcmQgVDogeyBmZDogaTY0LCBuYW1lOiBTdHJpbmcsIC4uIH0+KHQ6IFQpIC0+IGk2NCB7IHQuZmQgfVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgaCA6PSBIYW5kbGUgeyBmZCA9IDMsIG5hbWUgPSBcInhcIiB9O1xuICAgIGxldCBfIDo9IHdhbnRzX2FfcmVjb3JkKGgueyBmZCwgbmFtZSB9KTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL3N0cnVjdHMvbmVnXzQ0X2Z1bGxfd2lkdGhfcHJvamVjdGlvbl9zdGlsbF9yZWplY3RlZF9ieV9yb3dfYm91bmQubXRsIiwibmFtZSI6Im5lZ180NF9mdWxsX3dpZHRoX3Byb2plY3Rpb25fc3RpbGxfcmVqZWN0ZWRfYnlfcm93X2JvdW5kLm10bCJ9"></details>
@@ -526,6 +552,8 @@ at type-check time, not deferred to `--move-check`; every still-present field st
 readable and its methods callable. A whole-value use *at* the narrowed type — moving it,
 binding it, passing it to a matching-row parameter — is legal, and `--move-check` does not
 flag it.
+
+<!-- rfc.py:last_reviewed 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -547,6 +575,8 @@ still in its row; naming a field already moved out of it is rejected.
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
+<!-- rfc.py:last_reviewed a770445761323bbb96448619152def8053da27ae -->
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
 <summary>Tested by (2)</summary>
@@ -561,6 +591,8 @@ A struct's own field projection expression produces exactly the same residual ty
 equivalent partial move.
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
+
+<!-- rfc.py:last_reviewed a770445761323bbb96448619152def8053da27ae -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -608,6 +640,8 @@ the caller to narrow itself first; the call never silently discards `name`.
 
 A function parameter may name a struct's own projected type; a caller's argument must
 match that row exactly, with no implicit narrowing at the call site.
+
+<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
@@ -746,6 +780,8 @@ reassigned back into — a value reached through a reference
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
+<!-- rfc.py:last_reviewed 17d5dadfd0dfe9ff1ad066cb15fa247db5f4eb2a -->
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
 <summary>Tested by (2)</summary>
@@ -762,6 +798,8 @@ reassigned the type is the plain struct again and the value may be used as a who
 ([partial-moves.legality-3](#spec.ownership.partial-moves.legality-3)).
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).** For an owned binding.
+
+<!-- rfc.py:last_reviewed 20b6585c85c82c6546f5a96ae0a66aa585b75ff9 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
@@ -814,6 +852,8 @@ one.
 A non-`Copy` value may not be moved out through either kind of reference; a shared reference
 itself is `Copy`, while an exclusive reference is moved except for an argument-position
 reborrow to an `&var` parameter.
+
+<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>

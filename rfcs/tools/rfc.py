@@ -646,6 +646,21 @@ ORIGINS_MARKER_END = "<!-- rfc.py:origins:end -->"
 FIXTURES_MARKER_START = "<!-- rfc.py:fixtures:start -->"
 FIXTURES_MARKER_END = "<!-- rfc.py:fixtures:end -->"
 
+# metel-core#1192: a rule's own review checkpoint, same shape as
+# metel-core#1191's `last_reviewed` field on an Architecture Spec requirement
+# -- a hand-typed commit SHA, never auto-written here, confirming a human
+# re-read the rule's citing fixture(s) against its prose as of that commit.
+# Deliberately a plain HTML comment (Formal Rules blocks have no
+# `| Field | Value |` table to add a row to) and deliberately OUTSIDE the
+# origins/fixtures marker pairs above, which regenerate_backlinks_in_text()
+# rewrites wholesale on every run -- a field the tool refreshes for you gives
+# no forcing function, since accepting its diff takes no more attention than
+# a merge conflict. Lives in the rule's hand-authored body text, right after
+# its prose paragraph by convention, so it survives that rewrite untouched.
+SPEC_LAST_REVIEWED_RE = re.compile(
+    r"^<!--\s*rfc\.py:last_reviewed\s+(?P<sha>[0-9a-f]{7,40})\s*-->\s*$", re.M
+)
+
 # metel-core#944: the fixture backlink renders as an inline collapsible viewer
 # on the site (`<details class="spec-fixture" data-fixture="<base64 JSON>">`,
 # hydrated by src/theme/Details), not a bare link. The `href` and the inlined
@@ -715,6 +730,32 @@ def all_spec_block_ids():
             if m:
                 ids.add(m.group("id"))
     return sorted(ids)
+
+
+def spec_block_bodies():
+    """{spec_id: (spec_path, block_text)} -- every rigor block's own text,
+    from right after its heading up to the next heading or `</details>`, the
+    same boundary regenerate_backlinks_in_text() uses. Includes the
+    hand-authored prose plus whatever generated marker regions currently
+    sit in it; metel-core#1192's `last_reviewed` comment lives in the prose
+    part, but callers only ever regex-search this for that one specific
+    marker, so no further split is needed here."""
+    blocks = {}
+    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+        lines = spec_path.read_text().split("\n")
+        i, n = 0, len(lines)
+        while i < n:
+            m = SPEC_BLOCK_HEADING_RE.match(lines[i])
+            if not m:
+                i += 1
+                continue
+            spec_id = m.group("id")
+            i += 1
+            start = i
+            while i < n and not SPEC_BLOCK_HEADING_RE.match(lines[i]) and lines[i].strip() != "</details>":
+                i += 1
+            blocks[spec_id] = (spec_path, "\n".join(lines[start:i]))
+    return blocks
 
 
 def compute_spec_origins_from_rfcs():
@@ -2300,6 +2341,99 @@ def _sidecar_mtl_path(toml_path):
     )
 
 
+def _fixture_all_paths(toml_path):
+    """`toml_path` plus every `.mtl` file it covers -- a rule's citing
+    fixture can change either half independently (behavior in the `.mtl`,
+    `[expect]`/`[options]` in the sidecar), and metel-core#1192's staleness
+    check needs to catch either. Mirrors `_fixture_files`' directory-fixture
+    walk but returns `Path`s instead of `(name, source)` pairs."""
+    if toml_path.name == "test.toml":
+        d = toml_path.parent
+        return [toml_path, *sorted(p for p in d.rglob("*.mtl") if p.is_file())]
+    mtl = toml_path.with_suffix(".mtl")
+    return [toml_path, mtl] if mtl.is_file() else [toml_path]
+
+
+def last_touch_commit_for_paths(core, paths):
+    """The most recent commit that changed any of `paths` (given relative to
+    `core`) -- metel-core#1192's whole-file analogue of
+    generate_architecture_evidence.py's `last_touch_commit`, simpler because
+    a Formal Rule's citation is always a whole fixture file, never a line
+    range: `git log -1` already finds the single newest commit across
+    several pathspecs in one call, so there's no per-citation reduction to
+    do the way a line-range citation would need."""
+    rels = [str(p.relative_to(core)) for p in paths]
+    out = subprocess.check_output(
+        ["git", "-C", str(core), "log", "-1", "--format=%H", "--", *rels], text=True
+    )
+    sha = out.split("\n", 1)[0].strip()
+    if not sha:
+        raise ValueError(f"no commit history found for {rels}")
+    return sha
+
+
+def is_ancestor(core, maybe_ancestor, descendant):
+    result = subprocess.run(
+        ["git", "-C", str(core), "merge-base", "--is-ancestor", maybe_ancestor, descendant],
+        capture_output=True,
+    )
+    if result.returncode in (0, 1):
+        return result.returncode == 0
+    raise ValueError(
+        f"git merge-base --is-ancestor {maybe_ancestor} {descendant} failed: "
+        f"{result.stderr.decode(errors='replace').strip()}"
+    )
+
+
+def resolve_commit(core, ref):
+    result = subprocess.run(
+        ["git", "-C", str(core), "rev-parse", "--verify", f"{ref}^{{commit}}"],
+        capture_output=True, text=True,
+    )
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def spec_review_staleness(core, spec_id, spec_path, block_text, citing_toml_paths):
+    """metel-core#1192: flag a Formal Rule whose citing fixture(s) moved on
+    since a human last reviewed them against the rule's prose. Same model as
+    metel-core#1191's `review_staleness` for the Architecture Spec, adapted
+    to this corpus's citation shape (fixtures, not Rust symbols) and field
+    placement (a `<!-- rfc.py:last_reviewed SHA -->` comment in the block's
+    own body text, not a table row).
+
+    Deliberately scoped to rules with at least one citing fixture --
+    `last_reviewed` records that a fixture was re-checked against the rule,
+    so a rule with none has nothing to review yet; that gap is already
+    tracked separately (`coverage_check_problems()`'s "untested" list), and
+    requiring the field there too would just duplicate the same finding
+    under a different name. Returns None (no citing fixture, or reviewed and
+    current) or a problem string."""
+    if not citing_toml_paths:
+        return None
+    reviewed = SPEC_LAST_REVIEWED_RE.search(block_text)
+    if not reviewed:
+        return (
+            f"{spec_path.relative_to(REPO_ROOT)}: `{spec_id}` has a citing fixture but no "
+            f"`last_reviewed` marker (metel-core#1192) -- add "
+            f"`<!-- rfc.py:last_reviewed <sha> -->` after its prose"
+        )
+    reviewed_sha = resolve_commit(core, reviewed.group("sha"))
+    if reviewed_sha is None:
+        return (
+            f"{spec_path.relative_to(REPO_ROOT)}: `{spec_id}`'s `last_reviewed` "
+            f"(`{reviewed.group('sha')}`) is not a commit reachable in metel-core"
+        )
+    all_paths = [p for toml in citing_toml_paths for p in _fixture_all_paths(toml)]
+    code_touch = last_touch_commit_for_paths(core, all_paths)
+    if not is_ancestor(core, code_touch, reviewed_sha):
+        return (
+            f"{spec_path.relative_to(REPO_ROOT)}: `{spec_id}`'s citing fixture(s) were "
+            f"touched by {code_touch[:12]} after `last_reviewed` ({reviewed_sha[:12]}) -- "
+            f"confirm the rule's prose still matches and bump `last_reviewed`"
+        )
+    return None
+
+
 def uncovered_sections_for_implemented(rid, tests_dir, rfc_path):
     """The `--to implemented` fixture-coverage gate (ADR-0049 §5/§6): normative
     sections of `rid` covered by *nothing*. A section counts as covered by any
@@ -2761,6 +2895,31 @@ def coverage_check_problems():
                 + ". Cite one (`spec = [...]` sidecar key); if the gap is deliberate and "
                 "already tracked elsewhere, update the baseline instead: "
                 "`rfc.py index --write-coverage-baseline`"
+            )
+
+    # 6b. metel-core#1192: a cited spec block's own review checkpoint --
+    # same shape as metel-core#1191's `last_reviewed` staleness check for
+    # the Architecture Spec, applied per rule instead of per requirement.
+    # Scoped to blocks that actually have a citing fixture (spec_citations
+    # from this same scan, already gathered above); an uncited block has
+    # nothing to review yet, and that gap is already the "untested" list
+    # just above -- this only tightens blocks that *do* have evidence.
+    tests_dir = metel_core_tests_dir()
+    if tests_dir is not None:
+        core = tests_dir.parent.parent
+        stale_n = 0
+        for spec_id, (spec_path, block_text) in spec_block_bodies().items():
+            problem = spec_review_staleness(
+                core, spec_id, spec_path, block_text, spec_citations.get(spec_id, [])
+            )
+            if problem:
+                problems.append(problem)
+                stale_n += 1
+        cited_with_review_n = sum(1 for sid in all_ids if spec_citations.get(sid))
+        if cited_with_review_n:
+            info.append(
+                f"spec blocks due for re-review (metel-core#1192): {stale_n}/{cited_with_review_n} "
+                "cited blocks"
             )
 
     # metel-core#981: error-codes.md gets the same coverage visibility a

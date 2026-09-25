@@ -79,6 +79,8 @@ fun main() -> i64 {
 A match arm body may be either a single expression or a block, and both forms may appear in
 the same `match` expression.
 
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -93,6 +95,8 @@ the same `match` expression.
 A block arm evaluates its statements and then its tail expression, if any; that tail is the
 arm's result, while a block with no tail produces `()`.
 
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -105,6 +109,8 @@ arm's result, while a block with no tail produces `()`.
 ##### Legality Rule {#spec.expressions.pattern-matching.legality-2}
 
 Bindings introduced by an arm's pattern are in scope throughout that arm's block body.
+
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_</span>
@@ -120,6 +126,8 @@ Bindings introduced by an arm's pattern are in scope throughout that arm's block
 A `match` expression's scrutinee must be enclosed in parentheses — `match (x) { … }`.
 The bare form `match x { … }` is a parse error. A tuple scrutinee's own parentheses
 satisfy this (`match (a, b) { … }`), as does the unit literal (`match () { … }`).
+
+<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0156](../../rfcs/4-implemented/rfc-0156-parenthesize-match-scrutinee.md)_</span>
@@ -243,6 +251,8 @@ rather than degrading to T0003.
 A bare no-field or fieldful enum variant is valid in expression position when the
 expected type determines its enum and no binding or declaration of that name is in scope.
 
+<!-- rfc.py:last_reviewed 512e55f4512665d9745d6aefdc357e1b23b1f8b4 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -260,6 +270,8 @@ expected type determines its enum and no binding or declaration of that name is 
 An in-scope binding of the same name takes precedence over a bare enum variant in
 expression position.
 
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -273,6 +285,8 @@ expression position.
 
 Expected types from an annotation, return type, monomorphic call parameter, or
 struct-literal field may direct bare-variant resolution.
+
+<!-- rfc.py:last_reviewed 512e55f4512665d9745d6aefdc357e1b23b1f8b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
@@ -290,6 +304,8 @@ struct-literal field may direct bare-variant resolution.
 
 Without an expected enum type, a bare variant does not resolve by searching other enums;
 the program must qualify or ascribe it.
+
+<!-- rfc.py:last_reviewed a7b8151cc37f56e7485b2fc48062ed4ba2925b14 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
@@ -392,6 +408,8 @@ covers it.
 A struct pattern with no trailing `..` must name every field of the struct; one that
 ends in `..` may name any subset, including none.
 
+<!-- rfc.py:last_reviewed 17d5dadfd0dfe9ff1ad066cb15fa247db5f4eb2a -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -451,6 +469,8 @@ fun name(c: &Colour) -> String {
 A no-field enum variant may be written as a bare match pattern when it is a variant of
 the scrutinee's known enum type.
 
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -467,6 +487,8 @@ the scrutinee's known enum type.
 
 A fieldful enum variant may likewise omit its enum prefix in a match pattern.
 
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -480,6 +502,8 @@ A fieldful enum variant may likewise omit its enum prefix in a match pattern.
 
 Bare-variant pattern resolution is directed only by the scrutinee's concrete enum type;
 when that type is not a known enum, the identifier remains an ordinary binding.
+
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
@@ -495,6 +519,8 @@ when that type is not a known enum, the identifier remains an ordinary binding.
 A bare variant tag is not a catch-all binding and therefore does not satisfy match
 exhaustiveness for the enum's other variants.
 
+<!-- rfc.py:last_reviewed a7b8151cc37f56e7485b2fc48062ed4ba2925b14 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -508,6 +534,8 @@ exhaustiveness for the enum's other variants.
 
 When a bare identifier exactly names a no-field variant of the scrutinee enum, it is the
 variant rather than a fresh binding; `_` or another name is required for a catch-all.
+
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
@@ -523,6 +551,8 @@ variant rather than a fresh binding; `_` or another name is required for a catch
 The fully qualified enum-variant pattern remains valid wherever its bare spelling is
 valid.
 
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjQwX3VucXVhbGlmaWVkX3ZhcmlhbnRfcGF0dGVybnMubXRsIiwic291cmNlIjoiLy8gUkZDLTAxMDdcdTAwYTcxLCBSRkMtMDEwN1x1MDBhNzEuMSwgUkZDLTAxMDdcdTAwYTcxLjIsIFJGQy0wMTA3XHUwMGE3MS4zLCBSRkMtMDEwN1x1MDBhNzMsIGFuZCBSRkMtMDEwN1x1MDBhNzQ6XG4vLyBhIGJhcmUgdmFyaWFudCBuYW1lIGluIGEgbWF0Y2ggYXJtIHJlc29sdmVzIHR5cGUtZGlyZWN0ZWQgYWdhaW5zdCB0aGVcbi8vIHNjcnV0aW5lZSdzIG93biBlbnVtLiBDb3ZlcnMgbm8tZmllbGQgdmFyaWFudHMgKHBhcnNlZCBhcyBhIGJpbmRpbmcsIHJld3JpdHRlbiB0b1xuLy8gYW4gRW51bVZhcmlhbnQpLCBmaWVsZGZ1bCB2YXJpYW50cyAodGhlIG5ldyBiYXJlIGBWYXJpYW50IHsgZmllbGRzIH1gIGdyYW1tYXIpLCB0aGVcbi8vIHN0aWxsLXZhbGlkIHF1YWxpZmllZCBmb3JtLCBhbmQgYmFyZSBgTm9uZWAgXHUyMDE0IHdoaWNoIG5vIGxvbmdlciBoYXMgYSBkZWRpY2F0ZWRcbi8vIFBhdHRlcm46Ok5vbmUgbm9kZSBhbmQgaW5zdGVhZCBnb2VzIHRocm91Z2ggdGhpcyBzYW1lIGdlbmVyYWwgbWVjaGFuaXNtLlxuXG5lbnVtIENvbG91ciB7IFJlZCwgR3JlZW4sIEJsdWUgfVxuXG5mdW4gbmFtZShjOiBDb2xvdXIpIC0+IFN0cmluZyB7XG4gICAgbWF0Y2ggKGMpIHtcbiAgICAgICAgUmVkICAgPT4gXCJyZWRcIixcbiAgICAgICAgR3JlZW4gPT4gXCJncmVlblwiLFxuICAgICAgICBCbHVlICA9PiBcImJsdWVcIixcbiAgICB9XG59XG5cbmZ1biB1bndyYXBfb3IodjogUGVyaGFwczxpNjQ+LCBkOiBpNjQpIC0+IGk2NCB7XG4gICAgbWF0Y2ggKHYpIHtcbiAgICAgICAgU29tZSB7IHZhbHVlIH0gPT4gdmFsdWUsXG4gICAgICAgIE5vbmUgICAgICAgICAgID0+IGQsXG4gICAgfVxufVxuXG5mdW4gcXVhbGlmaWVkX3N0aWxsX3dvcmtzKHY6IFBlcmhhcHM8aTY0PikgLT4gaTY0IHtcbiAgICBtYXRjaCAodikge1xuICAgICAgICBQZXJoYXBzOjpTb21lIHsgdmFsdWUgfSA9PiB2YWx1ZSxcbiAgICAgICAgUGVyaGFwczo6Tm9uZSA9PiAtMSxcbiAgICB9XG59XG5cbi8vIEEgYmFyZSBpZGVudGlmaWVyIHRoYXQgbmFtZXMgbm8gdmFyaWFudCBvZiB0aGUgc2NydXRpbmVlJ3MgZW51bSBzdGF5cyBhbiBvcmRpbmFyeVxuLy8gYmluZGluZywgZXhhY3RseSBhcyBiZWZvcmUuXG5mdW4gYmluZGluZ19mYWxsYmFjayhjOiBDb2xvdXIpIC0+IFN0cmluZyB7XG4gICAgbWF0Y2ggKGMpIHtcbiAgICAgICAgUmVkID0+IFwicmVkXCIsXG4gICAgICAgIG90aGVyID0+IG5hbWUob3RoZXIpLFxuICAgIH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgYXNzZXJ0KG5hbWUoQ29sb3VyOjpSZWQpID09IFwicmVkXCIpO1xuICAgIGFzc2VydChuYW1lKENvbG91cjo6R3JlZW4pID09IFwiZ3JlZW5cIik7XG4gICAgYXNzZXJ0KG5hbWUoQ29sb3VyOjpCbHVlKSA9PSBcImJsdWVcIik7XG5cbiAgICBhc3NlcnQodW53cmFwX29yKFBlcmhhcHM6OlNvbWUgeyB2YWx1ZSA9IDUgfSwgMCkgPT0gNSk7XG4gICAgYXNzZXJ0KHVud3JhcF9vcihQZXJoYXBzOjpOb25lLCA5KSA9PSA5KTtcblxuICAgIGFzc2VydChxdWFsaWZpZWRfc3RpbGxfd29ya3MoUGVyaGFwczo6U29tZSB7IHZhbHVlID0gMyB9KSA9PSAzKTtcbiAgICBhc3NlcnQocXVhbGlmaWVkX3N0aWxsX3dvcmtzKFBlcmhhcHM6Ok5vbmUpID09IC0xKTtcblxuICAgIGFzc2VydChiaW5kaW5nX2ZhbGxiYWNrKENvbG91cjo6UmVkKSA9PSBcInJlZFwiKTtcbiAgICBhc3NlcnQoYmluZGluZ19mYWxsYmFjayhDb2xvdXI6OkJsdWUpID09IFwiYmx1ZVwiKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2VudW1zLzQwX3VucXVhbGlmaWVkX3ZhcmlhbnRfcGF0dGVybnMubXRsIiwibmFtZSI6IjQwX3VucXVhbGlmaWVkX3ZhcmlhbnRfcGF0dGVybnMubXRsIn0="></details>
@@ -532,6 +562,8 @@ valid.
 
 `None` in pattern position is resolved by the ordinary unqualified-variant rule for a
 `Perhaps<T>` scrutinee.
+
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
@@ -547,6 +579,8 @@ valid.
 A `&T`, `&var T`, or nested-reference scrutinee is accepted against the ordinary
 patterns of its referent type `T`.
 
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -561,6 +595,8 @@ patterns of its referent type `T`.
 Type checking a match uses the reference-peeled scrutinee type when checking its
 patterns.
 
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -573,6 +609,8 @@ patterns.
 ##### Legality Rule {#spec.expressions.pattern-matching.matching-through-a-reference.legality-3}
 
 Exhaustiveness checking a match uses the reference-peeled scrutinee type.
+
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
@@ -588,6 +626,8 @@ Exhaustiveness checking a match uses the reference-peeled scrutinee type.
 At runtime, matching through a reference compares the patterns with the fully dereferenced
 scrutinee value.
 
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -601,6 +641,8 @@ scrutinee value.
 
 Bindings introduced while matching through a reference copy values from the peeled
 referent under the ordinary type-directed copy rule.
+
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
@@ -616,6 +658,8 @@ referent under the ordinary type-directed copy rule.
 For a reference scrutinee, `match reference` and `match *reference` compare patterns
 against the same referent value.
 
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0110](../../rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -630,6 +674,8 @@ against the same referent value.
 Reference peeling happens before unqualified-variant resolution, so a bare variant is
 resolved against the referent's enum type.
 
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -643,6 +689,8 @@ resolved against the referent's enum type.
 
 Reference transparency is limited to the match-scrutinee position and does not change
 the types required in call arguments or other non-match contexts.
+
+<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
@@ -731,6 +779,8 @@ The braceless form desugars to a single-expression block. Three restrictions app
 
 An `if` branch may be a single braceless expression.
 
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0022](../../rfcs/4-implemented/rfc-0022-braceless-if-body-syntax.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -745,6 +795,8 @@ An `if` branch may be a single braceless expression.
 A braceless `if` without `else` has type `Unit` and may occur wherever a `Unit`-typed
 expression is accepted.
 
+<!-- rfc.py:last_reviewed 8b844c9117d5c6a730882aeaf521184c3055eb2f -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0022](../../rfcs/4-implemented/rfc-0022-braceless-if-body-syntax.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -757,6 +809,8 @@ expression is accepted.
 ##### Legality Rule {#spec.expressions.control-flow.if-else.legality-3}
 
 A braceless `if`-`else` is an expression when its two branches have the same type.
+
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0022](../../rfcs/4-implemented/rfc-0022-braceless-if-body-syntax.md)_</span>
@@ -772,6 +826,8 @@ A braceless `if`-`else` is an expression when its two branches have the same typ
 A braceless outer branch cannot contain an inner `if`-`else`; braces are required to
 avoid dangling-`else` ambiguity.
 
+<!-- rfc.py:last_reviewed 90ce03190abb6a5e7304b51d513a85e2bbb3265e -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0022](../../rfcs/4-implemented/rfc-0022-braceless-if-body-syntax.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -785,6 +841,8 @@ avoid dangling-`else` ambiguity.
 
 The `then` and `else` branches of an `if`-`else` must use the same body style: both
 braced or both braceless.
+
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0022](../../rfcs/4-implemented/rfc-0022-braceless-if-body-syntax.md)_</span>
@@ -830,6 +888,8 @@ fun main() -> i64 {
 
 A C-style `for` initializer may declare a mutable loop-local binding with `var`; that
 binding may be reassigned by the loop body or step expression.
+
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
@@ -887,6 +947,8 @@ fun main() -> i64 {
 A `for-in` binding may be declared with `var`, making that iteration's loop-local binding
 mutable.
 
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -900,6 +962,8 @@ mutable.
 
 Reassigning a `var` `for-in` binding changes only that iteration's loop-local binding and
 does not write the replacement value back into the iterated source.
+
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
@@ -975,6 +1039,8 @@ shared `&` grants no write access ([T0006](../error-codes.md#t0006--assignment-t
 Evaluating `&var value.field` creates an exclusive reference to that field. A write through
 the reference updates the corresponding field in `value`.
 
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0045](../../rfcs/4-implemented/rfc-0045-mut-address-of-lvalue-paths.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -988,6 +1054,8 @@ the reference updates the corresponding field in `value`.
 
 Evaluating `&var value.n` creates an exclusive reference to tuple element `n`. A write
 through the reference updates that element and leaves the other tuple elements unchanged.
+
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0045](../../rfcs/4-implemented/rfc-0045-mut-address-of-lvalue-paths.md)_</span>
@@ -1003,6 +1071,8 @@ through the reference updates that element and leaves the other tuple elements u
 Evaluating `&var values[index]` creates an exclusive reference to the selected array
 element. A write through the reference is observable through subsequent indexing.
 
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0045](../../rfcs/4-implemented/rfc-0045-mut-address-of-lvalue-paths.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -1016,6 +1086,8 @@ element. A write through the reference is observable through subsequent indexing
 
 Evaluating `&var` over a chain of addressable projections creates an exclusive reference
 to the chain's leaf storage. A write through the reference updates that original leaf.
+
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0045](../../rfcs/4-implemented/rfc-0045-mut-address-of-lvalue-paths.md)_</span>
@@ -1162,6 +1234,8 @@ Evaluating `&place` or `&var place` produces, respectively, a shared or exclusiv
 reference to the addressed storage; an exclusive reference can write through to that
 same storage.
 
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0067a](../../rfcs/4-implemented/rfc-0067a-reference-types.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -1178,6 +1252,8 @@ same storage.
 
 Field access, field assignment, method dispatch, and calls through a reference
 auto-dereference through every reference layer necessary to reach their receiver.
+
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0067a](../../rfcs/4-implemented/rfc-0067a-reference-types.md)_</span>
@@ -1196,6 +1272,8 @@ auto-dereference through every reference layer necessary to reach their receiver
 The unary `*` operator requires a shared or exclusive reference operand. Applying it to a
 non-reference is a `T0002` type error.
 
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0110](../../rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -1209,6 +1287,8 @@ non-reference is a `T0002` type error.
 
 Writing through `*place` requires an `&var T` reference; a shared `&T` never grants
 write access.
+
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0110](../../rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md)_</span>
@@ -1228,6 +1308,8 @@ write access.
 Evaluating `*reference` reads its referent. Explicit dereference is available in every
 expression position, while selector operations retain their ordinary auto-dereference.
 
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0110](../../rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -1245,6 +1327,8 @@ expression position, while selector operations retain their ordinary auto-derefe
 Each leading `*` reads or writes through exactly one reference layer. A bare assignment
 to a reference-typed binding instead rebinds that binding when it is mutable.
 
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0110](../../rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -1261,6 +1345,8 @@ to a reference-typed binding instead rebinds that binding when it is mutable.
 
 An assignment through a dereference writes the referenced storage; after a mutable
 reference binding is rebound, a later dereference writes the new referent.
+
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0110](../../rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md)_</span>
@@ -1280,6 +1366,8 @@ Field and index assignment through a reference remains implicit because those ta
 are unambiguous selectors; `*(object.field) = value` and `object.field = value` have the
 same write effect.
 
+<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0110](../../rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -1296,6 +1384,8 @@ same write effect.
 
 Taking `&*reference` or `&var *reference` reborrows the storage named by the dereference;
 an exclusive reborrow may write that same storage.
+
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0110](../../rfcs/4-implemented/rfc-0110-explicit-dereference-operator.md)_</span>
@@ -1396,6 +1486,8 @@ fun main() -> i64 {
 `break` transfers control out of the innermost enclosing loop. In a value-producing
 `loop`, `break expr` supplies that loop's result and bare `break` supplies `()`.
 
+<!-- rfc.py:last_reviewed c5619cae663b522b9c41aaa04f5a82788394dbbe -->
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
 <summary>Tested by (3)</summary>
@@ -1410,6 +1502,8 @@ fun main() -> i64 {
 `continue` abandons the current iteration of the innermost enclosing loop and begins its
 next iteration.
 
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
 <summary>Tested by (2)</summary>
@@ -1422,6 +1516,8 @@ next iteration.
 
 `return expr` transfers control out of the enclosing function with `expr` as its result;
 bare `return` returns `()`.
+
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
