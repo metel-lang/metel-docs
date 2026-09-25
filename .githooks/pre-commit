@@ -1,0 +1,20 @@
+#!/bin/sh
+# metel-core#1268: fast, non-negotiable checks only -- the local unit-test
+# suites for this repo's own tooling. No network, no metel-core-adjacency
+# requirement, sub-two-seconds. Nothing here should ever be slow enough to
+# tempt --no-verify.
+#
+# Git sets GIT_DIR/GIT_WORK_TREE/GIT_INDEX_FILE/GIT_PREFIX when invoking a
+# hook, and they leak into anything this script shells out to. The unit
+# tests below spawn their own nested `git -C <tmpdir>` calls to build
+# throwaway fixture repos -- with GIT_DIR inherited, `-C` is overridden and
+# those calls silently operate on *this* repo's real gitdir instead,
+# corrupting it (hit exactly this once: it set core.bare=true and
+# user.name/email to the test fixture's values). Unset them so every
+# subprocess below does its own normal repo discovery.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES
+
+set -e
+
+echo "pre-commit: rfc.py / architecture tooling unit tests"
+python3 -m unittest rfcs.tools.test_rfc architecture.tools.test_generate_architecture_evidence architecture.tools.test_check_architecture

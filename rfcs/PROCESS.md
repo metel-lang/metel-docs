@@ -599,6 +599,19 @@ time they were written; GitHub is authoritative for the present plan.
 
 ## Tooling
 
+**Local git hooks (metel-core#1268), one-time per clone:**
+
+```bash
+git config core.hooksPath .githooks
+```
+
+`commit-msg` rejects Claude/Anthropic attribution; `pre-commit` runs this repo's own
+tooling unit tests (`rfcs.tools.test_rfc`, `architecture.tools.test_generate_architecture_evidence`,
+`architecture.tools.test_check_architecture` — fast, no network, no metel-core adjacency
+needed); `pre-push` runs `rfc.py check` (which already degrades gracefully to an
+informational skip when `metel-interpreter/tests` isn't reachable, per ADR-0049 §6). Not a
+CI replacement — catches the same classes of mistake earlier, for whoever has it enabled.
+
 `rfcs/tools/rfc.py` (stdlib-only Python, no dependencies) mechanizes the parts
 of this process that don't need judgment:
 
