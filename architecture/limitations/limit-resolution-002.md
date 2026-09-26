@@ -37,10 +37,10 @@ fallback lives in the inference-time registry, before that freeze.
 ## Affects
 
 - `arch.resolution.requirement-1`
-- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::resolve_type_key_broad`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L2430)
+- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::resolve_type_key_broad`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L2430)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::resolve_type_key_broad`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L2429)
+- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::resolve_type_key_broad`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L2429)
 <!-- limit.py:markers:end -->
 
 ## Resolution
