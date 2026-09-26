@@ -113,7 +113,9 @@ entry point that silently skips stages"; a boundary change gets architecture-doc
 `#[cfg(test)]`) and never exposes a `pub`/`pub(crate)` item that exists only to be
 reachable from a test. `#[cfg(test)] mod tests` colocated with the module it tests is not
 itself a violation — but its body always lives in a sibling `tests.rs`, declared via `mod
-tests;`, never written inline.
+tests;`, never written inline. When that sibling `tests.rs` exists, the module's own
+implementation lives in the same folder too (`foo/mod.rs` next to `foo/tests.rs`), never
+as a `foo.rs` file sitting outside a same-named folder that only tests.rs occupies.
 
 **Rationale.** A runtime branch on "am I under test" is a second, untested code path a
 fixture can never catch, since the fixture triggers the other branch. `#[cfg(test)]`
@@ -122,24 +124,32 @@ lets it see its parent's private items under ordinary visibility rules — a fun
 different mechanism from the runtime `cfg!(test)` macro this rule targets. An
 implementation file that also carries its own test bodies is harder to read as pure
 production code, and an inline test module grows without the size pressure a separate
-file provides.
+file provides. The mod.rs placement clause exists because Rust's module resolution nests
+a file's children in a same-named folder regardless of whether the parent is `foo.rs` or
+`foo/mod.rs` — so a bare `foo.rs` next to a `foo/` that holds only `tests.rs` doubles up
+the parent directory's listing (both `foo.rs` and `foo/` appear side by side) for no
+benefit; moving `foo.rs` into `foo/mod.rs` collapses that to the one `foo/` entry, with
+`tests.rs`'s own location unaffected either way.
 
 **Examples / counterexamples.** Runtime-branch clause: no `cfg!(test)` branches or
 test-only `pub` escape hatches found anywhere in `metel-frontend/src` or
-`metel-interpreter/src`. File-separation clause: `identity.rs` → `identity/tests.rs` is
-the only file using the required form; the other 27 files with `#[cfg(test)] mod tests`
-write the body inline.
+`metel-interpreter/src`. File-separation clause: every `#[cfg(test)] mod tests` in both
+crates now declares `mod tests;` with the body in a sibling `tests.rs` (metel-core#1272).
+Mod.rs placement clause: not yet applied — the 18 modules #1272 gave a `tests.rs` mostly
+still keep their own implementation as a `foo.rs` sibling to `foo/` rather than inside it
+as `foo/mod.rs` (`move_check`, `path_normalization`, `elaboration` and `stdlib` are
+already `mod.rs`-shaped and already comply).
 
-**Enforcement.** None yet for either clause. Intended shape: a `clippy_allow_ratchet.py`-
-style checker with a grandfathered baseline (the 27 files, for the file-separation
-clause); that check is purely syntactic, while the runtime-branch check needs to
-distinguish legitimate test-support `cfg!(test)` from a real production branch.
+**Enforcement.** None yet for any clause. Intended shape: a `clippy_allow_ratchet.py`-
+style checker; the file-separation and mod.rs-placement clauses are both purely
+syntactic, while the runtime-branch check needs to distinguish legitimate test-support
+`cfg!(test)` from a real production branch.
 
 **Exception process.** A deliberate `cfg!(test)` branch or test-only escape hatch gets an
-inline `// test-support: <reason>` comment once the checker exists. The 27 unsplit files
-are grandfathered by the eventual checker's baseline, not a per-file exception to
-request; migrating one opportunistically alongside other work on that file is fine.
-Scheduled as part of the frontend pipeline reorganization.
+inline `// test-support: <reason>` comment once the checker exists. The as-yet-unmigrated
+mod.rs placements are grandfathered by the eventual checker's baseline, not a per-file
+exception to request; migrating one opportunistically alongside other work on that file
+is fine.
 
 **Expiry.** Revisit once the checker exists and has a real baseline.
 
