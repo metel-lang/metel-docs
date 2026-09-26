@@ -44,7 +44,7 @@ there is no reproducing fixture.
 - `metel-frontend/src/identity/symbols.rs` (`SymbolTable::new`, the `SYM_*` constants)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/identity/symbols.rs::new`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/identity/symbols.rs#L81)
+- [`metel-frontend/src/identity/symbols.rs::new`](https://github.com/metel-lang/metel-core/blob/2509ef305686205e937c2aabd4ea3edd3577629e/metel-frontend/src/identity/symbols.rs#L81)
 <!-- limit.py:markers:end -->
 
 ## Resolution

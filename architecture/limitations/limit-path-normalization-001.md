@@ -33,7 +33,7 @@ the spec gives no such exception. The workaround is an explicit `import`.
 - `metel-frontend/src/pipeline/path_normalization/mod.rs`
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/path_normalization/mod.rs::try_resolve_path`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/path_normalization/mod.rs#L416)
+- [`metel-frontend/src/pipeline/path_normalization/mod.rs::try_resolve_path`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/path_normalization/mod.rs#L416)
 <!-- limit.py:markers:end -->
 
 ## Resolution

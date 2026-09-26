@@ -40,6 +40,7 @@ import sys
 import tomllib
 from collections import defaultdict
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
 DOCS = Path(__file__).resolve().parents[2]
@@ -71,31 +72,6 @@ class Citation:
     # touching a *sibling* claim's marker would otherwise flag this claim.
     start_line: int | None
     end_line: int | None
-
-
-def git_ref(core: Path) -> str:
-    # The evidence reference is the most recent commit that changed a citation
-    # marker (arch-implements/arch-verifies or, since metel-core#1247, limit:),
-    # rather than the checkout's incidental HEAD. This breaks the otherwise
-    # circular docs-submodule pairing: updating core CI must not rewrite an
-    # Atlas link when it did not change the cited source.
-    #
-    # This is a proxy, not a guarantee: it catches a commit that changed a
-    # marker's own occurrence count, not one that shifted a cited item's line
-    # number some other way (inserting an unrelated line above it, including
-    # one kind of marker while pickaxing for the other). The two calls this
-    # function's caller makes both scan *current* file content for line
-    # numbers, so a ref this heuristic gets wrong is a wrong line number, not
-    # a missing citation -- `--check` catches that the next time this runs
-    # against an unchanged core, the same way any other staleness is caught.
-    ref = subprocess.check_output(
-        [
-            "git", "-C", str(core), "log", "-1", "--format=%H", "--pickaxe-regex", "-S", "arch-|limit:",
-            "--", "*.rs", "*.pest",
-        ],
-        text=True,
-    ).strip()
-    return ref or subprocess.check_output(["git", "-C", str(core), "rev-parse", "HEAD"], text=True).strip()
 
 
 def following_item(text: str, start: int, test_only: bool, path: Path, line: int) -> tuple[str, int]:
@@ -271,7 +247,7 @@ def resolve_named_citation(core: Path, rel_path: str, symbol: str) -> Citation:
     return Citation(Path(rel_path), symbol, start_line, start_line, end_line)
 
 
-def regenerate_record_affects(records_dir: Path, core: Path, core_ref: str, check: bool) -> list[str]:
+def regenerate_record_affects(records_dir: Path, core: Path, core_ref: str | None, check: bool) -> list[str]:
     """Rewrite every resolvable `path::symbol` bullet in a `LIMIT-*`/`GAP-*`
     record's `## Affects` into a commit-pinned, line-accurate link -- the same
     check/write duality as `regenerate` above, just sourced from record markdown
@@ -306,7 +282,8 @@ def regenerate_record_affects(records_dir: Path, core: Path, core_ref: str, chec
             except ValueError as error:
                 stale.append(f"{path.relative_to(DOCS)}: {error}")
                 continue
-            link = f"https://github.com/metel-lang/metel-core/blob/{core_ref}/{citation.path}#L{citation.line}"
+            ref = citation_ref(core, citation, core_ref)
+            link = f"https://github.com/metel-lang/metel-core/blob/{ref}/{citation.path}#L{citation.line}"
             new_line = f"- [`{token}`]({link})"
             new_body = new_body.replace(bullet.group(0), new_line, 1)
         if new_body != body:
@@ -368,8 +345,8 @@ def limit_ids_ever_marked(core: Path) -> set[str]:
     """Every LIMIT-* id that has ever appeared in a `// limit:` marker anywhere in
     metel-core's checked-out history, added or removed -- one `git log -G` pickaxe
     scoped to Rust/`.pest` sources (needs full history, `fetch-depth: 0`, same as
-    `git_ref` above), not a per-record walk. Used only to flag a record whose marker
-    has since disappeared; never to decide what a marker currently says."""
+    `last_touch_commit` below), not a per-record walk. Used only to flag a record
+    whose marker has since disappeared; never to decide what a marker currently says."""
     out = subprocess.run(
         ["git", "-C", str(core), "log", "-p", "-G", "limit:", "--", "*.rs", "*.pest"],
         capture_output=True, text=True,
@@ -383,7 +360,7 @@ def limit_ids_ever_marked(core: Path) -> set[str]:
     return ids
 
 
-def regenerate_record_markers(records_dir: Path, core: Path, core_ref: str, check: bool) -> list[str]:
+def regenerate_record_markers(records_dir: Path, core: Path, core_ref: str | None, check: bool) -> list[str]:
     """The delimited subsection of a `LIMIT-*` record's `## Affects` driven by
     `// limit:` markers: fully regenerated each run from every current marker citing
     that record's id, the same full-replace treatment `implements`/`verified by` cells
@@ -425,7 +402,7 @@ def regenerate_record_markers(records_dir: Path, core: Path, core_ref: str, chec
         if citations:
             block = LIMIT_MARKERS_START + "\n" + "".join(
                 f"- [`{c.path}::{c.item}`]"
-                f"(https://github.com/metel-lang/metel-core/blob/{core_ref}/{c.path}#L{c.line})\n"
+                f"(https://github.com/metel-lang/metel-core/blob/{citation_ref(core, c, core_ref)}/{c.path}#L{c.line})\n"
                 for c in citations
             ) + LIMIT_MARKERS_END
             new_body = (without_block + "\n\n" + block + "\n\n") if without_block else (block + "\n\n")
@@ -491,12 +468,19 @@ def citations(core: Path):
     return found
 
 
+@lru_cache(maxsize=None)
 def last_touch_commit(core: Path, citation: Citation) -> str:
     """The most recent commit that changed the text a citation actually
     points at: a line range for a Rust item, or the whole file for a
     fixture .toml citation (which has no meaningful sub-range to scope to).
     Requires full history (`git log`'s default shallow-unfriendly walk) --
-    see the fetch-depth: 0 note on the CI job that runs this."""
+    see the fetch-depth: 0 note on the CI job that runs this.
+
+    Memoized: this is also each citation's own link ref (`render`,
+    `regenerate_record_affects`, `regenerate_record_markers` below), so the
+    same citation would otherwise pay for this `git log -L` twice per run --
+    once for `review_staleness`, once for its rendered link -- and a claim
+    citing the same test as another claim would pay for it again for each."""
     if citation.start_line is None:
         scope = ["--", str(citation.path)]
     else:
@@ -543,11 +527,26 @@ def resolve_commit(core: Path, ref: str) -> str | None:
     return result.stdout.strip() if result.returncode == 0 else None
 
 
-def render(values, core_ref):
+def citation_ref(core: Path, citation: Citation, core_ref: str | None) -> str:
+    """The commit a citation's own link should pin to: an explicit
+    `--core-ref` override applies uniformly (a deliberate, whole-corpus pin,
+    e.g. for a past release), but by default this is `last_touch_commit`
+    for that one citation alone -- not the whole repo's most recent commit
+    touching *any* marker (metel-core#1272's `git_ref`, now unused). A
+    shared repo-wide ref meant every citation's rendered link changed on
+    every commit that touched any marker anywhere, including ones whose own
+    cited line never moved, so `--check` failed on unrelated code across
+    the whole corpus for any change near any marker at all. Per-citation,
+    a citation's rendered text is stable unless its own cited line moved."""
+    return core_ref if core_ref is not None else last_touch_commit(core, citation)
+
+
+def render(values, core: Path, core_ref: str | None):
     result = []
     for value in sorted(set(values), key=lambda v: (str(v.path), v.item or "", v.line)):
         label = f"`{value.path}" + (f"::{value.item}`" if value.item else "`")
-        target = f"https://github.com/metel-lang/metel-core/blob/{core_ref}/{value.path}#L{value.line}"
+        ref = citation_ref(core, value, core_ref)
+        target = f"https://github.com/metel-lang/metel-core/blob/{ref}/{value.path}#L{value.line}"
         result.append(f"[{label}]({target})")
     return "; ".join(result)
 
@@ -669,7 +668,7 @@ def review_staleness(core: Path, path: Path, claim: str, block: str, values) -> 
     return None
 
 
-def regenerate(spec_dir: Path, core: Path, evidence, check: bool, core_ref: str):
+def regenerate(spec_dir: Path, core: Path, evidence, check: bool, core_ref: str | None):
     stale, known = [], set()
     for path in spec_dir.glob("*.md"):
         text = path.read_text()
@@ -693,7 +692,7 @@ def regenerate(spec_dir: Path, core: Path, evidence, check: bool, core_ref: str)
             def replace(row):
                 field = row.group("field")
                 key = "implements" if field == "implements" else "verifies"
-                value = render(values[key], core_ref) if values[key] else "_Exempt; see exemption below._"
+                value = render(values[key], core, core_ref) if values[key] else "_Exempt; see exemption below._"
                 return f"| `{field}` | {value} |"
             new_block = ROW.sub(replace, block)
             if new_block != block:
@@ -711,11 +710,15 @@ def regenerate(spec_dir: Path, core: Path, evidence, check: bool, core_ref: str)
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--core", type=Path, required=True)
-    parser.add_argument("--core-ref", help="immutable metel-core commit used in generated web links")
+    parser.add_argument(
+        "--core-ref",
+        help="pin every generated web link to this one commit, overriding the default "
+        "of each citation's own last-touched commit (e.g. for a past release's evidence)",
+    )
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     try:
-        core_ref = args.core_ref or git_ref(args.core)
+        core_ref = args.core_ref
         findings = regenerate(DOCS / "architecture/spec", args.core, citations(args.core), args.check, core_ref)
         findings += regenerate_record_affects(DOCS / "architecture/limitations", args.core, core_ref, args.check)
         findings += regenerate_record_affects(DOCS / "architecture/gaps", args.core, core_ref, args.check)
