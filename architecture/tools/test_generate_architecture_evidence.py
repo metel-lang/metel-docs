@@ -308,12 +308,16 @@ class ArchitectureEvidenceTests(unittest.TestCase):
             self.assertFalse(any("was touched by" in f for f in findings), findings)
 
 
-class GitRefTests(unittest.TestCase):
-    """`git_ref`'s pickaxe search must track every citation-marker kind, not
-    just `arch-`, since metel-core#1247 added a second one (`limit:`) --
-    otherwise a commit that only changes a `// limit:` marker's occurrence
-    count resolves to a stale ref, pairing a line number read from *current*
-    file content with a commit whose file predates the shift."""
+class CitationRefStabilityTests(unittest.TestCase):
+    """metel-core#1272 found `git_ref`'s repo-wide ref (the most recent commit
+    to touch *any* citation marker anywhere) baked into every citation's
+    rendered link uniformly: a commit that only moved code near *one*
+    citation changed the embedded ref for *all* of them, so `--check` failed
+    across the whole corpus for a change relevant to none of it but that one
+    citation. `citation_ref`/`render` replaced the shared ref with each
+    citation's own `last_touch_commit`, so an unrelated commit -- even one
+    that moves a *different* citation -- never changes a citation whose own
+    line didn't move."""
 
     def init_git(self, core: Path) -> None:
         subprocess.run(["git", "-C", str(core), "init", "-q"], check=True, capture_output=True)
@@ -327,30 +331,59 @@ class GitRefTests(unittest.TestCase):
         subprocess.run(["git", "-C", str(core), "commit", "-q", "-m", message], check=True, capture_output=True)
         return subprocess.check_output(["git", "-C", str(core), "rev-parse", "HEAD"], text=True).strip()
 
-    def test_a_later_commit_that_only_touches_a_limit_marker_is_the_resolved_ref(self):
+    def test_shifting_one_citations_line_does_not_change_either_citations_ref(self):
+        """`git log -L` tracks a cited item's own content through history, not
+        its raw line number -- inserting an unrelated line above `a` (moving
+        its line number, exactly what a dedup/reorg commit like metel-core#1281
+        does to every citation below the code it removes) does not change
+        `a`'s last-touch commit, since `a`'s own text never changed. Confirms
+        the fix's benefit is broader than "an unrelated file changed": a
+        citation surviving unrelated churn *in its own file* also keeps its
+        ref, unlike the old repo-wide `git_ref`, which changed for both."""
         with tempfile.TemporaryDirectory() as directory:
             core = Path(directory) / "core"
             core.mkdir()
             self.init_git(core)
-            (core / "lib.rs").write_text('// arch-implements: ["arch.example.requirement-1"]\npub fn run() {}\n')
-            self.commit(core, "add an arch-implements marker")
-            (core / "lib.rs").write_text(
-                '// arch-implements: ["arch.example.requirement-1"]\npub fn run() {}\n\n'
-                '// limit: ["LIMIT-EXAMPLE-001"]\npub fn other() {}\n'
+            (core / "a.rs").write_text('// arch-implements: ["arch.example.requirement-1"]\npub fn a() {}\n')
+            (core / "b.rs").write_text('// arch-implements: ["arch.example.requirement-2"]\npub fn b() {}\n')
+            first = self.commit(core, "add both citations")
+            # Insert an unrelated blank line above `a`'s citation, shifting its
+            # line number down by one -- `a`'s own text is otherwise untouched.
+            (core / "a.rs").write_text(
+                '\n// arch-implements: ["arch.example.requirement-1"]\npub fn a() {}\n'
             )
-            second = self.commit(core, "add a limit marker; no arch- occurrence change")
-            self.assertEqual(second, evidence.git_ref(core))
+            self.commit(core, "shift a's citation down; a's own text and b's file untouched")
+            evidence.last_touch_commit.cache_clear()
+            citation_a = evidence.Citation(Path("a.rs"), "a", 2, 3, 3)
+            citation_b = evidence.Citation(Path("b.rs"), "b", 1, 1, 1)
+            self.assertEqual(evidence.citation_ref(core, citation_a, None), first)
+            self.assertEqual(evidence.citation_ref(core, citation_b, None), first)
 
-    def test_a_commit_that_touches_neither_marker_kind_is_not_the_resolved_ref(self):
+    def test_explicit_core_ref_overrides_last_touch_commit_uniformly(self):
         with tempfile.TemporaryDirectory() as directory:
             core = Path(directory) / "core"
             core.mkdir()
             self.init_git(core)
-            (core / "lib.rs").write_text('// limit: ["LIMIT-EXAMPLE-001"]\npub fn run() {}\n')
-            marked = self.commit(core, "add a limit marker")
-            (core / "README.md").write_text("unrelated\n")
-            self.commit(core, "touch a file with no citation marker at all")
-            self.assertEqual(marked, evidence.git_ref(core))
+            (core / "a.rs").write_text('// arch-implements: ["arch.example.requirement-1"]\npub fn a() {}\n')
+            self.commit(core, "add a citation")
+            evidence.last_touch_commit.cache_clear()
+            citation_a = evidence.Citation(Path("a.rs"), "a", 1, 1, 1)
+            self.assertEqual(evidence.citation_ref(core, citation_a, "pinned-ref"), "pinned-ref")
+
+    def test_last_touch_commit_is_memoized_per_citation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core = Path(directory) / "core"
+            core.mkdir()
+            self.init_git(core)
+            (core / "a.rs").write_text('// arch-implements: ["arch.example.requirement-1"]\npub fn a() {}\n')
+            self.commit(core, "add a citation")
+            evidence.last_touch_commit.cache_clear()
+            citation_a = evidence.Citation(Path("a.rs"), "a", 1, 1, 1)
+            first_call = evidence.last_touch_commit(core, citation_a)
+            info = evidence.last_touch_commit.cache_info()
+            second_call = evidence.last_touch_commit(core, citation_a)
+            self.assertEqual(first_call, second_call)
+            self.assertEqual(evidence.last_touch_commit.cache_info().hits, info.hits + 1)
 
 
 class RecordAffectsCodeLinkTests(unittest.TestCase):
