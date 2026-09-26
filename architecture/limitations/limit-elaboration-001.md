@@ -32,7 +32,7 @@ on `metel-frontend` — from synthesizing an `ElaboratedModuleGraph` whose
 - `arch.path-normalization.requirement-1`
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/elaboration/mod.rs::ElaboratedModuleGraph`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/elaboration/mod.rs#L35)
+- [`metel-frontend/src/pipeline/elaboration/mod.rs::ElaboratedModuleGraph`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/elaboration/mod.rs#L35)
 <!-- limit.py:markers:end -->
 
 ## Resolution
