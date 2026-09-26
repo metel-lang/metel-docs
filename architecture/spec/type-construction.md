@@ -45,8 +45,8 @@ Construction stamps the typed IR with the identities the frontend already produc
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/mod.rs::check_graph_with_report`](https://github.com/metel-lang/metel-core/blob/2c95c6d9c5f131d86fa08889153355b451e12c9e/metel-frontend/src/pipeline/type_checking/mod.rs#L370) |
-| `verified by` | [`metel-frontend/src/pipeline/type_checking/construction/tests.rs::construct_generic_body_stamps_a_real_local_id`](https://github.com/metel-lang/metel-core/blob/c6932074a86151f5faa1d265d6a761d574ded021/metel-frontend/src/pipeline/type_checking/construction/tests.rs#L60) |
-| `last_reviewed` | c6932074a86151f5faa1d265d6a761d574ded021 |
+| `verified by` | [`metel-frontend/src/pipeline/type_checking/construction/tests.rs::construct_generic_body_stamps_a_real_local_id`](https://github.com/metel-lang/metel-core/blob/490403e0002f313329eda1a50889994f0cb4e9ea/metel-frontend/src/pipeline/type_checking/construction/tests.rs#L107) |
+| `last_reviewed` | 490403e0002f313329eda1a50889994f0cb4e9ea |
 | `related` | `arch.resolution.requirement-2`, `arch.resolution.requirement-3`, ADR-0054, `#1051`, `#1052` |
 
 ##### Requirement {#arch.type-construction.requirement-3}
