@@ -114,7 +114,7 @@ Operand legality is checked once operand types are resolved: arithmetic and unar
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/construction.rs::construct_binop`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/type_checking/construction.rs#L1458); [`metel-frontend/src/pipeline/type_checking/construction.rs::construct_unaryop`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/type_checking/construction.rs#L1774) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::construct_binop`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L1458); [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::construct_unaryop`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L1774) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/literals/neg_05_generic_field_literal_add_string.toml`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-interpreter/tests/integration/sources/typechecking/literals/neg_05_generic_field_literal_add_string.toml#L1) |
 | `last_reviewed` | de72649a95a5c947ac985069b692008b76a82f7e |
 | `related` | ADR-0017, `T0005` |
@@ -170,7 +170,7 @@ At a generic struct literal or field access, construction instantiates the decla
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/construction.rs::build_concrete_struct_env`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/type_checking/construction.rs#L39) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::build_concrete_struct_env`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L39) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/generics/53_generic_struct.toml`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-interpreter/tests/integration/sources/evaluator/generics/53_generic_struct.toml#L1) |
 | `last_reviewed` | 8717cc6088e4dcf55f6f5580e60ad936d9bf69cf |
 | `related` | ADR-0012 |

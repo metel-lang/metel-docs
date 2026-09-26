@@ -30,7 +30,7 @@ Loading a root file yields a `ModuleGraph` in dependency order: a module appears
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | [`metel-frontend/src/pipeline/parsing/module_loader.rs::load_module`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/parsing/module_loader.rs#L505) |
+| `implements` | [`metel-frontend/src/pipeline/parsing/module_loader/mod.rs::load_module`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/parsing/module_loader/mod.rs#L505) |
 | `verified by` | [`metel-frontend/src/pipeline/parsing/module_loader/tests.rs::a_cycle_is_reported_with_its_full_chain`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/parsing/module_loader/tests.rs#L102); [`metel-frontend/src/pipeline/parsing/module_loader/tests.rs::modules_load_in_dependency_order`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/parsing/module_loader/tests.rs#L72); [`metel-interpreter/tests/integration/sources/module_loading/rejects_circular_module_graph/test.toml`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-interpreter/tests/integration/sources/module_loading/rejects_circular_module_graph/test.toml#L1) |
 | `last_reviewed` | 006a9aafdcb4bc9c7328ad882c08d32737058a51 |
 | `related` | RFC-0058, ADR-0023 (hierarchical module paths), ADR-0031 (diamond-dependency path aliasing), `#1147` |
@@ -44,7 +44,7 @@ Module source is read through a `SourceProvider` (embedded stdlib plus disk by d
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | [`metel-frontend/src/pipeline/parsing/module_loader.rs::load_virtual_root_with`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/parsing/module_loader.rs#L296) |
+| `implements` | [`metel-frontend/src/pipeline/parsing/module_loader/mod.rs::load_virtual_root_with`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/parsing/module_loader/mod.rs#L296) |
 | `verified by` | [`metel-frontend/src/pipeline/parsing/module_loader/tests.rs::multi_file_source_provider_reports_a_missing_sibling`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/parsing/module_loader/tests.rs#L118); [`metel-frontend/src/pipeline/parsing/module_loader/tests.rs::multi_file_source_provider_resolves_an_import`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/parsing/module_loader/tests.rs#L44); [`metel-frontend/src/pipeline/parsing/module_loader/tests.rs::source_provider_overlay_supplies_in_memory_source`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/parsing/module_loader/tests.rs#L25); [`metel-frontend/src/pipeline/parsing/module_loader/tests.rs::virtual_root_loads_without_an_on_disk_root`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/parsing/module_loader/tests.rs#L134) |
 | `last_reviewed` | 006a9aafdcb4bc9c7328ad882c08d32737058a51 |
 | `related` | RFC-0058, ADR-0039 |

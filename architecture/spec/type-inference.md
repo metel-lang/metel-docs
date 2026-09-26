@@ -75,7 +75,7 @@ Inference and construction are separate passes: inference solves constraints and
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/construction.rs::construct_program`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/type_checking/construction.rs#L1216) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::construct_program`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L1216) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/construction/tests.rs::construction_never_runs_the_constraint_solver`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/type_checking/construction/tests.rs#L40); [`metel-interpreter/tests/integration/sources/typechecking/functions/stage7_01_return_type_propagation.toml`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-interpreter/tests/integration/sources/typechecking/functions/stage7_01_return_type_propagation.toml#L1) |
 | `last_reviewed` | c6932074a86151f5faa1d265d6a761d574ded021 |
 | `related` | ADR-0002, `arch.type-construction.requirement-1` |
