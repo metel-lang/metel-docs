@@ -31,8 +31,8 @@ updated: '2026-09-27'
 >    so `{ extra: i64, ..R }` and `where R = { token, ..Rest }` cannot be expressed with a
 >    bounded type variable. `drain_field`, which RFC-0109 cites as the thing records give
 >    that Rust's view types cannot, needs decomposition.
-> 3. **The width-subtyping rule is unstatable without it** (open question 1, now partly
->    RFC-0123).
+> 3. **The width-subtyping rule is unstatable without it** (open question 1, resolved
+>    2026-09-27; the bound to *check* the concrete case's rule against remains RFC-0123).
 >
 > **Which reframes RFC-0118 honestly: it buys nothing in expressiveness, only implementation
 > cost.** A row bound is a subset check against a concrete row; `..R` needs row unification.
@@ -40,10 +40,17 @@ updated: '2026-09-27'
 > first — but it means bounds are the cheap path to a fraction of this RFC, not a peer
 > feature.
 
-> **Status — under review (2026-08-25).** Committed to v0.14.0, tracking issue #792 filed
+> **Status — under review (2026-09-27).** Committed to v0.14.0, tracking issue #792 filed
 > 2026-08-22. §3 gained a new normative rule 2026-08-25 (brand-keyed impls take priority
 > over row-conditional ones), resolving the corpus-wide brand-vs-row coherence question
-> carried since RFC-0090 OQ6.
+> carried since RFC-0090 OQ6. **All seven open questions are now closed** (resolved or
+> explicitly descoped as non-blocking) as of 2026-09-27 — OQ1 (width subtyping, §4), OQ2
+> (row-vs-row coherence, §3), OQ4 (phantom-vs-row-conditional typestate, §3) and OQ5
+> (grammar, §5) are ratified rules; OQ3 (diagnostics) and OQ6 (label polymorphism) are
+> descoped as non-blocking implementation follow-up and out-of-scope respectively; OQ7 was
+> resolved 2026-08-25. Per `PROCESS.md`'s `2-accepted` bar ("no more open questions block
+> it, alternatives have been weighed and one chosen"), this RFC now reads as
+> acceptance-ready — transition is a separate, deliberate step, not implied by this note.
 
 ## Summary
 
@@ -137,7 +144,7 @@ extend<row R, row Rest> Session<..R> where R = { token: Token, ..Rest } {
     fun authenticate(self) -> Session<..Rest> { ... }
 }
 
-extend<row R: !{ token: _ }> Session<..R> {
+extend<row R: !{ token }> Session<..R> {
     fun send_data(&self, bytes: Bytes) { ... }
 }
 ```
@@ -151,11 +158,25 @@ or removes a marker field and the available API tracks it exactly; and builders 
 direction, where `.with_timeout()` requiring `R: !{ timeout: _ }` prevents setting the same
 field twice at compile time.
 
-**This is one of two competing typestate encodings and which is canonical is undecided.**
-`brand-types.md` does typestate with a phantom type parameter — `File<'b, Open>` — which is
-simpler and well-precedented. Making the row-conditional form canonical pulls open-row
-generics, row-conditional coherence and §4's width-subtyping rule onto the critical path,
-which is a point in the phantom form's favour, though not treated as decisive.
+**Phantom-parameter versus row-conditional typestate, resolved 2026-09-27 — both stay,
+neither is canonical.** `brand-types.md` does typestate with a phantom type parameter —
+`File<'b, Open>` — which is simpler and well-precedented. This RFC does not need to settle
+which one wins, because they are not actually competing for the same job: nothing here
+requires deprecating or subsuming the phantom form, and this RFC does not gain anything by
+forcing exclusivity. The two differ in what they can express and what they cost, and that
+difference is the selection rule:
+- **Phantom-parameter typestate** stays the default — it's cheaper (no row kind, no row
+  unification) and covers every case where the state is a closed, enumerable tag (`Open` /
+  `Closed`) unrelated to the value's actual field shape.
+- **Row-conditional typestate** (this RFC) is for the strictly narrower case where the
+  state *is* the row shape itself — a field's presence or absence is both the state marker
+  and a real structural fact about the value (RFC-0121's `Session` example: `token` isn't a
+  phantom tag standing in for "authenticated," the field is literally present or absent).
+  `drain_field`-style decomposition (§2) has no phantom-parameter equivalent at all, so
+  for that one case row-conditional typestate isn't a stylistic choice, it's the only
+  mechanism that can express it.
+
+Nothing in this RFC's acceptance depends on ruling the other one out.
 
 **Priority against brand-keyed impls, resolved 2026-08-25.** The moment this RFC lets an
 impl be written against a row (`extend<row R: { x: f64, y: f64, .. }> T: Display`), it
@@ -183,16 +204,39 @@ row-conditional impl of the same aspect, for a value whose brand has the former 
 RFC-0060 §2's ordinary concrete-vs-concrete and blanket-vs-blanket overlap detection
 untouched.
 
-**What this does not resolve.** Two row-conditional impls that can both match the same
-under-constrained row variable — one gated on presence, one on absence — are a different
-problem this rule says nothing about (Open Question 2 below): "more specific wins" has no
-obvious reading between two row conditions unless one is provably a subset of the other's
-satisfying set, which is not assumed here and stays open.
+**What the brand-priority rule does not resolve, and row-vs-row coherence, resolved
+2026-09-27.** Two row-conditional impls of the same aspect are a separate question from
+brand-vs-row priority above: whether they can both match the same row, and if so, whether
+that's an error. **Rows are open** — extensible with arbitrarily many fields the impl's
+condition never names — so satisfiability of two row conditions depends only on the field
+names both conditions actually mention; nothing else can correlate them. That collapses
+the check to a direct generalization of RFC-0060 §2's existing rule:
+
+- Two row-conditional impls of the same aspect **do not conflict** if, for some field name
+  both conditions mention, one requires it present and the other requires it absent, or
+  both require it present with statically non-unifiable field types. Either way no concrete
+  row can satisfy both — a field name maps to at most one type in any given row — so the
+  pair is provably disjoint, exactly like `authenticate`/`send_data` above (`{ token, ..
+  }` versus `!{ token }`, the same field, opposite polarity).
+- **Otherwise they overlap**, and RFC-0060 §2 applies completely unmodified: reject as
+  `T0015`, the same outcome two ordinary impls would get. Nothing about row-conditioning
+  earns an exception here — only a direct presence/absence (or type) contradiction on a
+  *shared* field name does.
+
+This also answers the under-constrained-row-variable half directly: a generic body over an
+unconstrained `<row R>` has no bound entailing either impl's condition, so **neither**
+row-conditional method is visible inside it. That is not a new rule — it is RFC-0036's
+existing conditional-impl visibility, which already denies a method when the caller's
+bound doesn't entail the impl's condition, applied to a row-shaped condition instead of a
+type-shaped one.
 
 **Owning implementation issue:** metel-core#833, filed 2026-08-25 ahead of this RFC's own
 acceptance so the decision has a tracked home rather than living only as RFC text. Gated on
 this RFC reaching `2-accepted` (tracked by #792) — there is nothing to prioritize against
-until row-conditional impls exist.
+until row-conditional impls exist. #833's own scope note explicitly carved out row-vs-row
+coherence as "Open Question 2, unresolved" — that carve-out is closed by this resolution;
+#833 should be revisited to fold the field-name-disjointness check into its own scope
+rather than treating it as still-open.
 
 ## 4. Costs, stated as costs
 
@@ -232,6 +276,63 @@ until row-conditional impls exist.
   interface-with-methods polymorphism; an OCaml-object-style structural mechanism for the
   same job would be redundant.
 
+## 5. Grammar, resolved 2026-09-27
+
+Diffed against the actual generated grammar (`reference/spec/grammar.md`, current as of
+this RFC's review — not the illustrative pest sketch OQ5 originally quoted from RFC-0090,
+which predates and doesn't match the real production names below).
+
+**Binder — `GenericParam` gains a `row` alternative,** parallel to the existing `record`
+kind marker, carrying the same optional `BoundList` §1's `<row R: !{ token }>` needs:
+
+```
+GenericParam → "record"? IDENTIFIER ( ":" BoundList )?
+             | "row" IDENTIFIER ( ":" BoundList )?
+```
+
+**Use site — a new `TypeArg` alternative carries `..R` (or anonymous `..`) into generic
+argument position** (`Session<..R>`), replacing `TypeArgs`'s current `Type`-only list:
+
+```
+TypeArgs → TypeArg ( "," TypeArg )*
+TypeArg  → Type
+         | RowArg
+RowArg   → ".." IDENTIFIER?
+```
+
+**Row body — `RecordType` and `RecordProjectionType` both gain a tail**, distinct from
+`RowBound` (bound position, RFC-0118, already implemented and unchanged): this is *type*
+position, e.g. `{ x: f64, ..R }` or `Handle.{ ..R }`.
+
+```
+RecordType           → "{" ( RecordTypeField ( "," RecordTypeField )*
+                              ( "," RowTail )? | RowTail )? "}"
+RecordProjectionType → TypePath ".{" ( IDENTIFIER ( "," IDENTIFIER )*
+                              ( "," RowTail )? | RowTail ) "}"
+RowTail              → ".." IDENTIFIER?
+```
+
+**`where` — `WhereConstraint` gains the `RowEquation` alternative** §2's decomposition
+needs (`where R = { token: Token, ..Rest }`); `=` rather than `:=`, matching RFC-0136's
+invariant (a one-shot type equation, not a kept binding — see PROCESS.md's acceptance-review
+check on this point):
+
+```
+WhereConstraint → RowEquation
+                | "record"? IDENTIFIER ":" BoundList
+RowEquation     → IDENTIFIER "=" Type
+```
+
+**`..`/`..=` collision, checked against the real grammar, not just asserted.**
+`RangeExpression → TermExpression ( ( "..=" | ".." ) TermExpression )?` requires a left
+`TermExpression` before either range operator can appear — there is no prefix-`..` form in
+expression position anywhere in the grammar — so `RowArg`/`RowTail`'s prefix `..` (type
+position only) cannot collide with range syntax (expression position only) regardless of
+context. Clean.
+
+These are additive productions only; nothing existing changes shape, so no other RFC's
+grammar citations need updating.
+
 ---
 
 ## Open Questions
@@ -256,28 +357,56 @@ until row-conditional impls exist.
    by-value narrowing of a concrete row can typecheck under this RFC alone; by-value
    narrowing of an abstract row stays rejected (unification has no fact to consult) until
    RFC-0123 lands and can be written as a bound on the binder.
-2. **Row-conditional impl coherence.** Extending RFC-0036/RFC-0060's conditional-impl
+2. ~~**Row-conditional impl coherence.** Extending RFC-0036/RFC-0060's conditional-impl
    checking to row-shape conditions — ensuring two impls, one gated on presence and one on
    absence, cannot both apply to an under-constrained row variable — is asserted tractable
-   and not worked out. *(From RFC-0090 OQ4.)*
-3. **Diagnostics.** "Method does not exist" is a much worse error than "method requires the
-   row to contain `token`, but this session's row is `{ tcp_connected }`". The legible
-   version is not automatic just because the mechanism works. *(From RFC-0090 §4.)*
-4. **Phantom-parameter versus row-conditional typestate — which is canonical, or do both
-   stay, and for which cases?** Too early to decide. *(From RFC-0090 OQ5.)*
-5. **Grammar work, none of it written.** `<..R>` must be accepted as a generic *argument*
+   and not worked out. *(From RFC-0090 OQ4.)*~~
+   **Resolved 2026-09-27 — see "What the brand-priority rule does not resolve, and
+   row-vs-row coherence" in §3 above.** Two row-conditional impls of the same aspect
+   conflict under RFC-0060 §2's existing rule unless some field name they both mention is
+   required present by one and absent (or incompatibly typed) by the other, which proves
+   them disjoint — rows being open means no other correlation is possible. An
+   under-constrained `<row R>` simply has neither method visible, under RFC-0036's existing
+   conditional-visibility rule, not a new one. Owning implementation issue metel-core#833
+   should have its "Open Question 2, unresolved" carve-out updated to reflect this.
+3. **Diagnostics — descoped from acceptance, not resolved.** "Method does not exist" is a
+   much worse error than "method requires the row to contain `token`, but this session's
+   row is `{ tcp_connected }`". The legible version is not automatic just because the
+   mechanism works. *(From RFC-0090 §4.)* This is implementation quality, not a soundness
+   or expressiveness question — nothing about the type system's design depends on the
+   wording of a diagnostic — so it does not block `2-accepted`. Tracked as a follow-up
+   implementation-quality item once row-conditional impls exist to generate diagnostics
+   for.
+4. ~~**Phantom-parameter versus row-conditional typestate — which is canonical, or do both
+   stay, and for which cases?** Too early to decide. *(From RFC-0090 OQ5.)*~~
+   **Resolved 2026-09-27 — see "Phantom-parameter versus row-conditional typestate" in
+   §3 above.** Neither is canonical; both stay. Phantom-parameter typestate remains the
+   default for closed, enumerable state tags; row-conditional typestate (this RFC) is for
+   the narrower case where the state *is* the row shape, which is also the only mechanism
+   that can express `drain_field`-style decomposition at all. This RFC's acceptance does
+   not require deprecating or subsuming the phantom form.
+5. ~~**Grammar work, none of it written.** `<..R>` must be accepted as a generic *argument*
    while `<row R>` remains the *parameter* form; a row body needs a `..`/`..R` tail
    alternative; `where_constraint` needs the `row_equation` alternative §2 requires
    (`where_constraint = { row_equation | ident ~ ":" ~ bound_list }`,
    `row_equation = { ident ~ "=" ~ type_expr }`). The `range_op = { "..=" | ".." }`
    collision was checked and is clean — `range_expr` requires a left operand, so no prefix
    `..` exists in expression position. Grammar reading, not a prototype. *(From RFC-0090
-   OQ12.)*
-6. **Label polymorphism is not in scope here and may be wanted.** Being generic over *which
-   label*, not just over the rest — `drain_field<row R, name, T>` — needs a label kind, a
-   label literal, an index-by-label form, and rules for all three. §2's decomposition
-   retires the need for a label *literal*, not for label *polymorphism*. Tracked against
-   the deferred RFC-0091, where the one construct needing it lives.
+   OQ12.)*~~
+   **Resolved 2026-09-27 — see §5 above.** Written against the actual generated grammar
+   (`reference/spec/grammar.md`), not the illustrative pest-style sketch this open
+   question originally quoted: `GenericParam` gains a `row` alternative, `TypeArgs` gains
+   a `RowArg` alternative for `..R`/`..` at generic-argument position, `RecordType` and
+   `RecordProjectionType` both gain a `RowTail`, and `WhereConstraint` gains a
+   `RowEquation` alternative. The `..`/`..=` collision is confirmed clean against the real
+   `RangeExpression` production, not just asserted.
+6. **Label polymorphism — descoped, not blocking.** Being generic over *which label*, not
+   just over the rest — `drain_field<row R, name, T>` — needs a label kind, a label
+   literal, an index-by-label form, and rules for all three. §2's decomposition retires
+   the need for a label *literal*, not for label *polymorphism*. Already out of scope for
+   this RFC and tracked against the deferred RFC-0091, where the one construct needing it
+   lives — restated here only to make explicit that this does not block `2-accepted`,
+   since "not in scope" and "blocking" read the same at a glance otherwise.
 7. ~~**Brand-versus-row impl coherence priority.** An ordinary `extend Point: Display` is
    brand-keyed; a row-conditional impl (§3) is row-keyed. If a value matches both, which
    wins? *(From RFC-0090 OQ6/§9; RFC-0118 OQ4 and RFC-0137 OQ4 are the same question seen
