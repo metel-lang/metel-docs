@@ -668,7 +668,7 @@ SPEC_LAST_REVIEWED_RE = re.compile(
 # versioned document, and `/cut-release` bumps this constant and re-runs
 # `--write-spec-origins` so the pinned ref and the snapshot move together, once
 # per release. Between releases the committed spec carries the previous tag.
-SPEC_FIXTURE_REF = "v0.13.0"
+SPEC_FIXTURE_REF = "v0.13.1"
 METEL_CORE_GITHUB_BLOB = f"https://github.com/metel-lang/metel-core/blob/{SPEC_FIXTURE_REF}"
 
 # A rigor block's fixture-coverage exemption (ADR-0050 §6, extended to the
