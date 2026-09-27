@@ -244,7 +244,8 @@ different code.
   recoverable. Orthogonal — this RFC does not touch panic semantics (R0007,
   R0012-R0015 are untouched; they remain genuinely dynamic, catchable-or-not per
   whatever RFC-0014 eventually decides, same as today).
-- **RFC-0161** (`dyn Callable`, deferred in full) is the mechanism that would, if
+- **RFC-0161** (`dyn Callable`, `1-under-review` — stale as "deferred in full" here
+  since 2026-09-04; corrected 2026-09-27) is the mechanism that would, if
   and when it lands, give R0010's successor code a genuine reason to depend on a
   runtime value again (a dynamically-dispatched call target whose callability
   isn't statically decidable). If RFC-0161 ships, this RFC's classification of
