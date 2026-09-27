@@ -6,7 +6,7 @@ title: "Metel Language Changelog"
 
 ## v0.13.1
 
-**In progress on `develop` — not yet released.** No language syntax changes. This
+**Released 2026-09-27.** No language syntax changes. This
 release closes a class of cross-module identity-collision bugs and ships the
 frontend tooling APIs `metel-lsp` v0.1.0 is built on.
 
