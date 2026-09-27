@@ -4,7 +4,7 @@ title: "Comptime Execution Model — comptime let, comptime fun, comptime if"
 date: '2026-08-13'
 status: under-review
 tracking: 'https://github.com/metel-lang/metel-core/issues/726'
-updated: '2026-08-31'
+updated: '2026-09-27'
 ---
 
 > **Updated 2026-08-31 — `comptime let` / `pub comptime let` and `var` in examples now
@@ -57,6 +57,20 @@ updated: '2026-08-31'
 > real GitHub issue is **#539**, fixed at the same time this document moved paths.
 
 > **Status — under review (2026-08-23).** Design-settlement issue #726 has targeted v0.13.0 since 2026-08-13 -- real planned engagement predating this rule, applied retroactively
+>
+> **§3 settled for #726's narrow slice, 2026-09-27 — this is not the whole RFC reaching
+> `2-accepted`.** `#726` scopes to "the smallest RFC-0132 slice needed for comptime-known
+> non-type parameters and fixed-size array types," explicitly excluding "general user
+> comptime allocation... and generalized metaprogramming" — i.e. §3 and its relation to
+> `#1291`/`#263`, not §1/§2/§4/§5's full execution model. Within that scope: §3.1
+> (spelling), §3.3 (bound-checking placement) and §3.4 (no computed arities) are ratified
+> as originally proposed; §3.2 (admissible instantiation set) is **narrowed** — `N` may be
+> a literal or a `comptime let` constant, but *not* a `comptime fun` call, for now (see §3
+> below). That narrowing is what lets OQ1/OQ2 (recursion, allocation — both about
+> `comptime fun`) stay genuinely open without blocking this slice: a `comptime let`
+> constant of `u64` type is pure constant-folding and needs neither. OQ1/OQ2/OQ3 remain
+> open for §1/§2/§4/§5's broader scope, which this pass does not settle and does not
+> claim to. See Open Questions below for the full account, including OQ5 and OQ6.
 
 ## Summary
 
@@ -154,12 +168,15 @@ fun accept(current: u64) -> boolean { current < MAX_CONNECTIONS }
 
 ## 3. Comptime-known non-type generic parameters — RFC-0053's deferred const generics
 
-> **Status: proposed, not decided (marked 2026-08-13) — see Open Question 7.** Everything
-> below is a first-draft proposal, written while splitting this RFC out of RFC-0092, not
-> a settled design. Unlike §1/§2/§4/§5, no prior RFC discussion produced it, and nobody
-> other than this document's own drafting has weighed it against alternatives. Treat the
-> spelling (§3.1), the admissible-instantiation rule (§3.2), and the bound-checking
-> placement (§3.3) as this RFC's opening position for review, not as conclusions.
+> **Status: ratified for #726's narrow slice, 2026-09-27 — see Open Question 7.** Reviewed
+> against alternatives for the first time since the 2026-08-13 split. §3.1 (spelling),
+> §3.3 (bound-checking placement) and §3.4 (deferral boundary) survive unchanged from the
+> original proposal, each with the reasoning that was previously missing now written out.
+> §3.2 (admissible-instantiation rule) is narrowed, not ratified as originally written —
+> see §3.2 below. This settles §3 for the purpose `#726` actually needs (comptime-known
+> array sizes for `#1291`/`#263`); it is not a claim that RFC-0132 as a whole is ready for
+> `2-accepted`, since §1/§2/§4/§5 and Open Questions 1–3 remain outside this review's
+> scope.
 
 **New in this RFC.** RFC-0092 §1 argues that Metel's `<T>` generics are sugar over
 comptime type parameters: `fun first<T>(arr: T[])` is
@@ -176,7 +193,7 @@ fun reverse<T, comptime N: u64>(arr: [T; N]) -> [T; N] { ... }
 extend<T: Copy, comptime N: u64> [T; N]: Copy;
 ```
 
-### 3.1 Spelling
+### 3.1 Spelling, ratified 2026-09-27
 
 `comptime N: u64` inside the existing generic parameter list, not a separate `<const N>`
 channel. RFC-0053 wrote its deferral as `<const N: u64>` (Rust's spelling); this RFC uses
@@ -187,21 +204,70 @@ RFC-0053's own guessed spelling**, not an oversight — flagged here rather than
 changed, per `PROCESS.md`'s rule that new syntax must not silently weaken or reinterpret
 what is already written down.
 
-### 3.2 What `N` may be instantiated with
+**Weighed against the alternative OQ7 asked for.** A separate `<const N: u64>` channel
+(Rust's own spelling, and RFC-0053's guess) would read clearly at a call site too — the
+question is whether Metel wants a second compile-time-qualifier vocabulary alongside
+`comptime let`/`comptime fun`/`comptime if`, all three already fixed by §1/§4/§5. It
+doesn't: every other staged construct in this RFC uses `comptime`, so a lone `const` for
+generic parameters would be the one place a reader has to remember a different word means
+the same thing. No alternative surfaced that beats "reuse the vocabulary the rest of the
+RFC already commits to." Ratified as proposed.
 
-A `u64`-typed comptime-known value: an integer literal (what parses today), a
-`comptime let` constant (§1), or a `comptime fun` call (§4). This is the same admissible
-set as any other comptime value — §3 introduces no separate notion of "const
-expression," which is precisely the circularity RFC-0083 and RFC-0092 fell into and
-RFC-0092 §0a resolved.
+### 3.2 What `N` may be instantiated with, narrowed 2026-09-27
 
-### 3.3 Bound checking stays where RFC-0061 put it
+**For `#726`'s slice: a `u64`-typed integer literal (what parses today), or a
+`comptime let` constant (§1).** `comptime fun` calls (§4) are **excluded** from this
+slice's admissible set — the original proposal included them, treating `N`'s admissible
+set as identical to any other comptime value's, on the grounds that §3 introduces no
+separate notion of "const expression." That reasoning still holds for *whether* a
+`comptime fun` result should eventually be admissible; it says nothing about *when*, and
+admitting it now would mean this slice inherits Open Questions 1 (recursion) and 2
+(allocation) — both genuinely unresolved, both scoped to `comptime fun` specifically, and
+both explicitly excluded from `#726`'s own acceptance criteria ("general user comptime
+allocation... generalized metaprogramming").
+
+**Why the narrower set is sufficient and doesn't need those questions answered.** A
+`comptime let N: u64 := EXPR;` where `EXPR` is arithmetic over `u64` literals and other
+`comptime let` constants is pure constant-folding — no recursion (there is no function
+call), no allocation (a `u64` is a fixed-width scalar). Neither blocking question is
+reachable through this path. Every actual driver — `#263`'s `[T; N]: Copy`, `#1291`'s
+`T[N]` syntax — needs `N` to be a compile-time constant, and nothing in either issue
+needs that constant to be the result of an arbitrary computation.
+
+**Not a permanent restriction — strictly wideneable later.** Admitting `comptime fun`
+calls as an `N`-source is additive: it accepts more programs than the literal/`comptime
+let` set does, so extending it once OQ1/OQ2 are answered (as part of §4's own broader
+settlement) cannot invalidate anything accepted under this narrower rule. Nothing here
+needs to be written twice.
+
+### 3.3 Bound checking stays where RFC-0061 put it, ratified 2026-09-27
 
 RFC-0092 §1's recommendation applies unchanged: bounds are checked at the generic
 function's own definition against `typeinfo(T)`/impl lookup, **not** deferred to whichever
 call site instantiates it — Zig's use-site duck typing is explicitly not adopted. For a
 `comptime N: u64` parameter there is no aspect bound to check, so this is simpler than
 the type-parameter case: `N`'s only constraint is that it is comptime-known and `u64`.
+
+**The worked example OQ7 asked for, showing what breaks under the alternative.**
+
+```metel
+fun reverse<T, comptime N: u64>(arr: [T; N]) -> [T; N] {
+    var out: [T; N] = arr;
+    var i: u64 := 0;
+    while (i < N) { out[i] = arr[N - 1 - i]; i += 1; }
+    out
+}
+```
+
+Typechecking `reverse`'s own body needs to know, at the definition site, that `N` is a
+`u64` — not any particular value of it — to accept `arr[N - 1 - i]` as a well-typed index
+expression at all. Under use-site duck typing, the body would not be checked until a call
+site supplied a concrete `N`, which means `reverse` itself has no checked type until
+someone calls it — exactly the property definition-site checking exists to guarantee for
+ordinary `<T>` generics (a generic function is checked once, not once per call site), and
+losing it for `comptime N` while keeping it for `T` would make the two parameter kinds
+behave inconsistently within the same parameter list. Definition-site checking is the only
+choice that keeps `comptime N` and `T` uniform.
 
 ### 3.4 What this does not include
 
@@ -213,6 +279,13 @@ genuinely hard in every language that has it, and none of the three blocked item
 needs it. Deferred explicitly — and, per this RFC's own §Open Questions, deferred *to a
 named question here*, not to "a future RFC," which is the pattern that produced this
 situation in the first place.
+
+**Confirmed 2026-09-27.** Checked against both drivers this slice exists for: `#263`'s
+blanket `Copy` impl (`extend<T: Copy, comptime N: u64> [T; N]: Copy;`) and `#1291`'s `T[N]`
+syntax amendment both need only a bare `comptime N` parameter, never a computed arity in a
+type. The boundary drawn here doesn't need to move for either. Stays open (Open Question
+4) rather than resolved, exactly as originally scoped — this confirms the line is drawn in
+the right place, not that the question behind it is answered.
 
 ---
 
@@ -351,13 +424,20 @@ Consequences for this RFC:
 ## Open Questions
 
 1. **Recursion and termination for `comptime fun`** *(inherited from RFC-0092 OQ6 /
-   RFC-0055 OQ1 — now blocking, where it previously was not).* Recursive comptime
-   functions with a compiler-enforced depth limit (Zig's approach), or forbid comptime
+   RFC-0055 OQ1 — now blocking, where it previously was not).*
+   **Out of scope for `#726`'s slice, 2026-09-27 — still genuinely open for §1/§4's
+   broader scope.** §3.2's narrowing (above) excludes `comptime fun` calls as an
+   `N`-source specifically so this question doesn't have to be answered before `#726`'s
+   slice can settle; it remains a real blocker for shipping §4 itself, unchanged. Recursive
+   comptime functions with a compiler-enforced depth limit (Zig's approach), or forbid comptime
    recursion entirely? **This must be answered to ship §4**, and therefore §1. It was
    answerable-later while it sat inside RFC-0092 alongside reflection; it is not
    answerable-later here.
 2. **Comptime and allocation** *(inherited from RFC-0092 OQ7 / RFC-0055 OQ2 — also now
-   blocking).* Can comptime functions allocate? RFC-0092 §0 asserted comptime needs "its
+   blocking).* **Out of scope for `#726`'s slice, 2026-09-27, for the same reason as OQ1**
+   — a `comptime let` constant needs no allocation; only `comptime fun` does, and that's
+   excluded from this slice's admissible set. Still open for §1/§4's broader scope. Can
+   comptime functions allocate? RFC-0092 §0 asserted comptime needs "its
    own scratch storage, distinct from `@a T`'s runtime allocators" without specifying what
    that storage is or how it is bounded. A `comptime let SIN_TABLE: [f64; 256]` in §1
    already constructs a 256-element array at compile time, so "no allocation at all" is
@@ -391,7 +471,12 @@ Consequences for this RFC:
    `reports/substructural-types/algebraic-effects.md` Open Question 7, which rules that
    restriction out from the other direction (0 of 80 corpus interpolation sites are
    comptime-known) while surfacing this case as the genuinely useful additive version.
-3. **Comptime error messages** *(inherited from RFC-0092 OQ8 / RFC-0055 OQ5).* A failing
+3. **Comptime error messages** *(inherited from RFC-0092 OQ8 / RFC-0055 OQ5).*
+   **Non-blocking for `#726`'s slice, formalized 2026-09-27** — already stated as less
+   blocking than OQ1/OQ2 below, and doubly so once those are out of scope here: a
+   `comptime let` constant-folding failure is a much simpler diagnostic surface than a
+   failing arbitrary `comptime fun` call. Still worth a good answer eventually, tracked as
+   follow-up, not part of what `#726` needs settled. A failing
    comptime computation must report the original call site, not the internals of whatever
    comptime function was evaluating. Less blocking than 1 and 2 — a merely-poor diagnostic
    does not make the feature unshippable — but it is the thing most likely to make
@@ -426,12 +511,29 @@ Consequences for this RFC:
    that was itself stale") and the same class `metel-core#725` proposes tooling for. Any
    `#NNN` in a pre-migration document should be treated as a Codeberg number until
    verified.
+
+   **Sufficient for design purposes, 2026-09-27.** The evidence above (RFC-0061's own
+   measured table, #263's independent measurement of `[T; 2]: Copy` working with a literal
+   arity) is enough to settle the *design* question this open question actually asks —
+   whether §3's mechanism is the right shape to unblock #263's array half. The remaining
+   "confirm against the built interpreter" step is empirical validation at implementation
+   time, not a design decision left open; it belongs to whoever implements §3, not to this
+   review pass.
 6. **Sequencing against RFC-0124.** RFC-0124 (Sequence Types, `1-under-review`) may change
    what `[T; N]` and `T[]` *are*. Its OQ3 is answered by §3, but if RFC-0124 revisits
    `[T; N]`'s role more broadly, §3's parameter mechanism should follow that decision
    rather than precede it — the same warning #263 already gives ("any array work here
    should follow that decision rather than precede it, or it will be written twice").
-7. **Is §3 as designed even the right design, or just the first one written down?**
+
+   **Checked 2026-09-27, no conflict currently visible.** RFC-0124's own comparison table
+   already cites this RFC's §3 as the answer to its OQ3, and its two still-open questions
+   (mutable slices; the RFC-0067 lifetime-anchor dependency) are both about `T[]`, not
+   `[T; N]` — nothing in RFC-0124's current text is contesting `[T; N]`'s basic role.
+   **Not a full resolution:** `#1292` (the T[N]/T[]/List<T> storage-contract umbrella,
+   still `needs-design` and not yet reviewed this session) is the thing actually
+   positioned to reopen this, since coordinating RFC-0053/0124/0126/0133 is its explicit
+   job. This narrowing stands until `#1292` says otherwise, not permanently.
+7. ~~**Is §3 as designed even the right design, or just the first one written down?**
    *(Added 2026-08-13, on direct pushback that this RFC's own scheduling was committing
    to unreviewed design.)* §3 answers a real need (RFC-0053's deferred const generics),
    but its specific answers have not been tested against alternatives by anyone but this
@@ -450,24 +552,46 @@ Consequences for this RFC:
      concrete case nobody has tried to write yet.
 
    None of these is flagged because it's suspected wrong — they may all survive review
-   unchanged. They're flagged because **this RFC is still `0-draft`, and §3 has had zero
+   unchanged. They're flagged because **this RFC is still `0-draft`** (stale — this RFC
+   moved to `1-under-review` 2026-08-23; corrected here 2026-09-27), **and §3 has had zero
    readers other than its own author.** This question does not resolve by more solo
    drafting; it resolves when RFC-0132 goes through actual review and §3 either survives
    scrutiny or changes. Implementation should not be scheduled against §3 until then —
    see the header correction and `metel-core#727`/`#728` (closed 2026-08-13, re-filed
-   only once this RFC reaches `2-accepted`).
+   only once this RFC reaches `2-accepted`).~~
+
+   **Resolved for `#726`'s narrow slice, 2026-09-27 — not for RFC-0132 as a whole.** §3
+   went through the actual review this question asked for, weighed against alternatives
+   point by point:
+   - §3.1's spelling — ratified as proposed (§3.1: reusing `comptime` beats a second
+     `const` vocabulary; no alternative surfaced that read more clearly).
+   - §3.2's admissible-instantiation set — **narrowed**, not ratified as originally
+     written: literal or `comptime let` constant, excluding `comptime fun` calls for now
+     (§3.2). This is the one place review actually changed the proposal.
+   - §3.3's bound-checking placement — ratified, with the previously-missing worked
+     example now written out (§3.3): deferring to use-site would make `comptime N` and
+     `T` behave inconsistently within one parameter list.
+   - §3.4's deferral boundary — confirmed against both of this slice's actual drivers
+     (§3.4): neither `#263` nor `#1291` needs a computed arity, so the line doesn't move.
+
+   **What this does not resolve.** RFC-0132's §1/§2/§4/§5 and Open Questions 1–3 are
+   untouched by this pass — §3 answers `#726`'s narrow need, it does not make the whole
+   RFC `2-accepted`-ready. `metel-core#727`/`#728` stay closed until RFC-0132 in full
+   reaches that bar, exactly as this question originally specified.
 
 ---
 
 ## References
 
-- **RFC-0092 (Comptime Core), `0-draft`** — this RFC is split from its §0/§0a; RFC-0092
+- **RFC-0092 (Comptime Core), `1-under-review`** (stale as `0-draft` here since
+  2026-08-13; corrected 2026-09-27) — this RFC is split from its §0/§0a; RFC-0092
   retains `type`-as-value, `typeinfo`, and `emit`, and depends on this RFC. Its Open
   Question 9 (added 2026-08-12) is what identified §3's connection.
 - **RFC-0053 (Fixed-Size Array Type), `4-implemented`** — deferred `N`-as-parameter to "a
   future RFC once a `const` declaration form exists"; §3 is that mechanism, spelled
   `comptime N: u64` rather than RFC-0053's guessed `<const N: u64>` (§3.1).
-- **RFC-0124 (Sequence Types), `0-draft`** — its Open Question 3 is answered by §3; see
+- **RFC-0124 (Sequence Types), `1-under-review`** (stale as `0-draft` here since
+  2026-08-13; corrected 2026-09-27) — its Open Question 3 is answered by §3; see
   Open Question 6 for the sequencing dependency in the other direction.
 - **RFC-0055 (Comptime), `5-superseded`** — original source of §1/§4/§5's execution model
   and Open Questions 1-3, via RFC-0092.
