@@ -4,6 +4,54 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.13.1
+
+**In progress on `develop` — not yet released.** No language syntax changes. This
+release closes a class of cross-module identity-collision bugs and ships the
+frontend tooling APIs `metel-lsp` v0.1.0 is built on.
+
+**Cross-module name-collision fixes:**
+- Field access on a struct value whose type shares a name with another module's
+  struct no longer resolves against the wrong module's field set (`metel-core#1222`).
+- `--move-check` no longer silently skips a generic function body that accesses a
+  row-bound field or calls certain bound methods — a real use-after-move in such a
+  body is now reported instead of passing (`metel-core#1226`).
+- Two `impl` blocks for different instantiations of the same generic type no longer
+  share one method identity, where the last `impl` processed silently won for every
+  instantiation (`metel-core#1228`).
+- A batch of narrower same-name collisions found by adversarial review of the
+  underlying identity work, all sharing the same root cause and closed structurally
+  rather than patched individually: a generic function body reconstructed at a call
+  site dispatching a same-named static method from the wrong module
+  (`metel-core#1120`); a structural `extend<T> T[]: Aspect` and a literal
+  `extend Array: Aspect` colliding under one synthetic identity key
+  (`metel-core#1121`); enum-variant pattern matching comparing bare source-spelled
+  strings instead of the variant's own identity (`metel-core#1128`); generic call
+  bound-checking silently accepting a same-named type from the wrong module
+  (`metel-core#1129`); cross-module aspect-method-ambiguity checking rejecting valid
+  programs over a shared method name (`metel-core#1136`); an opaque
+  `extends Aspect` return type losing its identity in early inference
+  (`metel-core#1137`); and an `(as Target)` cast dispatching its `From` impl by bare
+  name instead of identity (`metel-core#1145`).
+
+These are the closing slice of `metel-core#1047`, the binding-identity /
+resolved-IR unification: every compiler phase now carries a binding's, type's, or
+member's own resolved identity forward instead of re-deriving it by name after
+inference, which is what made this whole bug class possible in the first place.
+
+**Performance:**
+- Type-checking time no longer grows quadratically with the number of functions in
+  a module (`metel-core#1232`).
+
+**Tooling API (`metel-frontend`):**
+- New in-memory `SourceProvider` and `pipeline::run_source` entry point for running
+  a program from a string, not just a file path (`metel-core#1005`).
+- New non-evaluating analysis API producing a typed module graph without running
+  the program, editor-diagnostic collection that doesn't abandon analysis at the
+  first error, and position queries for hover / go-to-definition
+  (`metel-core#1044`, `metel-core#1045`, `metel-core#1046`) — the frontend surface
+  `metel-lsp` v0.1.0 is built on.
+
 ## v0.13.0
 
 **Released 2026-09-06.** The closure cluster lands — pipe notation, capture lists, the
