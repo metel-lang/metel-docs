@@ -4,7 +4,7 @@ title: "Type checking is sequential by construction: one shared generator, one e
 summary: "Inference threads one `&mut` generator through every pass and one export generator through every module, and its context uses `Rc`, so modules cannot be checked in parallel."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
-discovered_by: "maintainer note on the type var generator; reviewed in metel-frontend/src/pipeline/type_checking/mod.rs and typeinference/mod.rs"
+discovered_by: "maintainer note on the type var generator; reviewed in metel-frontend/src/pipeline/type_checking/mod.rs and type_engine/mod.rs"
 disposition: known
 review: null
 ---
@@ -49,11 +49,11 @@ attempt at parallel checking was made.
 - `arch.type-inference.requirement-1`
 - `LIMIT-TYPE-INFERENCE-005`
 - `metel-frontend/src/pipeline/type_checking/mod.rs` (`check_graph`, `export_gen`)
-- `metel-frontend/src/pipeline/type_checking/typeinference/mod.rs` (`InferContext`, `TypeVarGenerator`)
+- `metel-frontend/src/pipeline/type_checking/type_engine/mod.rs` (`InferContext`, `TypeVarGenerator`)
 
 <!-- limit.py:markers:start -->
 - [`metel-frontend/src/pipeline/type_checking/mod.rs::check_graph`](https://github.com/metel-lang/metel-core/blob/2c95c6d9c5f131d86fa08889153355b451e12c9e/metel-frontend/src/pipeline/type_checking/mod.rs#L354)
-- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/8ad4aaa823d79572b507dc8cf89e4f7a2d296845/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L50)
+- [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/8ad4aaa823d79572b507dc8cf89e4f7a2d296845/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L50)
 <!-- limit.py:markers:end -->
 
 ## Resolution

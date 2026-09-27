@@ -4,7 +4,7 @@ title: "Inference-time type lookup falls back to a name-approximate, cross-modul
 summary: "Inference falls back to a name-based, cross-module type lookup where the declaration id is missing, which can confuse same-named types."
 scope: "architecture/spec/resolution.md#resolution"
 owner: metel-frontend
-discovered_by: "metel-core#1216 limitation analysis; `typeinference/mod.rs` `resolve_type_key_broad`"
+discovered_by: "metel-core#1216 limitation analysis; `type_engine/mod.rs` `resolve_type_key_broad`"
 disposition: known
 review: null
 ---
@@ -37,10 +37,10 @@ fallback lives in the inference-time registry, before that freeze.
 ## Affects
 
 - `arch.resolution.requirement-1`
-- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::resolve_type_key_broad`](https://github.com/metel-lang/metel-core/blob/c6ec0b2359501dc4cf81a2dcc33793e0b173b7e6/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L2430)
+- [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::resolve_type_key_broad`](https://github.com/metel-lang/metel-core/blob/c6ec0b2359501dc4cf81a2dcc33793e0b173b7e6/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L2430)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::resolve_type_key_broad`](https://github.com/metel-lang/metel-core/blob/c6ec0b2359501dc4cf81a2dcc33793e0b173b7e6/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L2429)
+- [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::resolve_type_key_broad`](https://github.com/metel-lang/metel-core/blob/c6ec0b2359501dc4cf81a2dcc33793e0b173b7e6/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L2429)
 <!-- limit.py:markers:end -->
 
 ## Resolution

@@ -7,7 +7,7 @@ re-deriving meaning from names. It documents the implemented resolved-identity
 model described by [ADR-0054](https://github.com/metel-lang/metel-docs/blob/main/architecture/decisions/adr-0054-resolved-identity-freeze-and-generic-instance-preparation.md);
 the `arch-*` requirements below are its checkable claims.
 
-Owning crate: `metel-frontend`. The model is defined in `identity.rs` and `identity/` (`allocate.rs`, `lexical_path.rs`, `member.rs`, `position.rs`), and consumed by `name_resolver.rs`, `reference_resolver.rs`, `typed_ast/`, and every later pipeline stage.
+Owning crate: `metel-frontend`. The model is defined in `identity/` (`mod.rs`, `allocate.rs`, `lexical_path.rs`, `member.rs`, `position.rs`), and consumed by `name_resolver.rs`, `reference_resolver.rs`, `typed_ast/`, and every later pipeline stage.
 
 ## Model
 

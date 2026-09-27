@@ -14,7 +14,7 @@ review: null
 `SymbolId` is a `u32` newtype whose range is partitioned by comment
 (`symbols.rs`): builtins occupy 1-99, `1000 +` is the name resolver's, and
 `0x4000_0000 +` is the overload allocator's. A third allocator, in
-`typeinference`, hands block-local struct/enum ids from the *top* of the `u32`
+`type_engine`, hands block-local struct/enum ids from the *top* of the `u32`
 space counting down (`fresh_local_type_id`, `saturating_sub`). The three are
 independent, and only a unit test asserts one boundary (`second.0 <
 OVERLOAD_SYM_START`). At runtime:
@@ -40,10 +40,10 @@ There is no observable symptom, so no reproducing fixture.
 
 - `arch.name-resolution.requirement-1`
 - `metel-frontend/src/identity/symbols.rs` (`SymbolTable`, `USER_SYM_START`, `OVERLOAD_SYM_START`)
-- `metel-frontend/src/pipeline/type_checking/typeinference/mod.rs` (`fresh_local_type_id`)
+- `metel-frontend/src/pipeline/type_checking/type_engine/mod.rs` (`fresh_local_type_id`)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/type_checking/typeinference/mod.rs::fresh_local_type_id`](https://github.com/metel-lang/metel-core/blob/c6ec0b2359501dc4cf81a2dcc33793e0b173b7e6/metel-frontend/src/pipeline/type_checking/typeinference/mod.rs#L2446)
+- [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::fresh_local_type_id`](https://github.com/metel-lang/metel-core/blob/c6ec0b2359501dc4cf81a2dcc33793e0b173b7e6/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L2446)
 <!-- limit.py:markers:end -->
 
 ## Resolution
