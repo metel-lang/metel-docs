@@ -561,7 +561,7 @@ part of the same records/views substrate review):
   unnamed future RFC. **Cross-ref added 2026-08-29:** §3's `comptime N` axis and
   type-parameter instantiation are one problem — `metel-core#288`'s frontend
   monomorphization pass (v0.20.1) should collect both; co-design, not a dependency.
-- **RFC-0171** *(draft, opened 2026-09-27)* — Prefix Array Type Syntax `[T]` / `[T; N]`
+- **RFC-0171** *(accepted 2026-09-27)* — Prefix Array Type Syntax `[T]` / `[T; N]`
   — the dynamic array type moves from postfix `T[]` to prefix `[T]`, matching `[T; N]`'s
   existing convention (`[T; N]` itself is untouched). Same bracket-mismatch tension as
   RFC-0084 (`6-refused`), opposite resolution — RFC-0084 considered moving `[T; N]` to

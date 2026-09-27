@@ -2,7 +2,9 @@
 id: rfc-0171
 title: "Prefix array type syntax: [T] and [T; N]"
 date: '2026-09-27'
-status: draft
+status: accepted
+updated: '2026-09-27'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1291'
 ---
 
 > **Same underlying tension as RFC-0084 (refused, 2026-07-10), opposite resolution.**
@@ -27,6 +29,10 @@ status: draft
 > (sweep-count staleness) were already framed as non-blocking implementation detail in
 > the original draft and are confirmed as such. This RFC now reads as ready for review
 > toward `1-under-review`; that transition itself is a separate step from this pass.
+
+> **Status — under review (2026-09-27).** All three open questions resolved 2026-09-27; real engagement (RFC-0084 reversal analysis, grammar work, alternatives comparison) already behind this draft.
+
+> **Status — accepted (2026-09-27).** All three open questions closed 2026-09-27: OQ1 (lifting ArrayType's base-type restriction) ratified safe -- already required for the fixed-array case; OQ2/OQ3 confirmed non-blocking. Weighed against two real alternatives (postfix T[]/T[N], Zig's []T/[N]T) before settling on [T]/[T;N].
 
 ## Summary
 
