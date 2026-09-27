@@ -2,7 +2,7 @@
 id: rfc-0119
 title: "Record Conversions"
 date: '2026-07-24'
-status: under-review
+status: accepted
 tracking: 'https://github.com/metel-lang/metel-core/issues/790'
 updated: '2026-09-27'
 ---
@@ -41,6 +41,8 @@ updated: '2026-09-27'
 > applies to their siblings (see the corrected numbering note before OQ6); OQ7, OQ8, OQ9
 > were already dissolved. This RFC now reads as acceptance-ready under `PROCESS.md`'s
 > `2-accepted` bar.
+
+> **Status — accepted (2026-09-27).** All ten open questions closed 2026-09-27, reviewed once more before this transition (two stale RFC-stage citations found and fixed). Design settled per PROCESS.md's 2-accepted bar.
 
 ## Summary
 
@@ -165,7 +167,7 @@ expected. `.to_record()` has to appear in the source. Allowing implicit structur
 here would quietly grant every deriving struct the capability RFC-0120 exists to gate,
 without its author asking.
 
-This is the rule RFC-0109 (self-view narrowing, deferred) exists to work *around* for the
+This is the rule RFC-0109 (self-view narrowing, `1-under-review`) exists to work *around* for the
 specific case of method receivers — deliberately, and by a mechanism that does not weaken it
 generally.
 
@@ -475,7 +477,9 @@ by-reference mode (§2).*
 - RFC-0120 (Named Records) — tier 3, the capability §4 says deriving does not buy
 - RFC-0114 (Constructor Aspect and Canonical Construction) — the general answer to §1's
   invariant-bypass risk
-- RFC-0093 (Derive Registration) — the comptime mechanism OQ1 depends on
+- RFC-0093 (Derive Registration) — the comptime mechanism the optional `#derive(…)`
+  convenience uses; OQ1 (resolved) confirms this RFC's actual capability doesn't depend
+  on it
 - RFC-0076 (Brand Types) — **not a dependency of this RFC**; see §5
 - `public/rfcs/1-under-review/rfc-0089-linear-types.md` §2.1, §3.1 — fiat-linearity and the
   brand exception, deferred until records are implemented

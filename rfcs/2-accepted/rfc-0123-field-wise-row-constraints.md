@@ -2,7 +2,7 @@
 id: rfc-0123
 title: "Field-Wise Row Constraints"
 date: '2026-07-24'
-status: under-review
+status: accepted
 tracking: 'https://github.com/metel-lang/metel-core/issues/793'
 updated: '2026-09-27'
 ---
@@ -26,6 +26,8 @@ updated: '2026-09-27'
 > (primitive vs. reified mechanism) ratified, OQ3 (heterogeneous fields), OQ4 (nested-record
 > termination) and OQ5 (orphan-rule wording) resolved by inspection. See §1, §4, and Open
 > Questions below.
+
+> **Status — accepted (2026-09-27).** All five open questions closed 2026-09-27, reviewed once more before this transition with no issues found. Design settled per PROCESS.md's 2-accepted bar.
 
 ## Summary
 

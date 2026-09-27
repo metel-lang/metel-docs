@@ -2,12 +2,23 @@
 id: rfc-0167
 title: "Reclassify unsoundness-only runtime errors as internal errors; split R0002"
 date: '2026-09-04'
-status: under-review
-updated: '2026-09-04'
+status: accepted
+updated: '2026-09-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/991'
 ---
 
 > **Status — under review (2026-09-04).** Milestoned v0.14.0 -- real engagement per PROCESS.md's milestoning trigger
+>
+> **All three open questions closed 2026-09-27, unchanged in substance.** Reviewed the
+> full proposal (§1–§4) for anything left genuinely undecided beyond the three already
+> listed and found nothing — the reclassification scheme, the `main`-entry Legality Rule,
+> and R0002's three-way split are all stated as definitive rules, not options. The three
+> open questions were each already framed, in the RFC's own original text, as explicitly
+> non-blocking (integration-time bookkeeping, an unobservable implementation choice, and a
+> separable UX decision) — this pass formalizes that framing rather than deciding anything
+> new. See Open Questions below.
+
+> **Status — accepted (2026-09-27).** All three open questions confirmed non-blocking 2026-09-27, reviewed once more before this transition (one stale RFC-stage citation found and fixed). Design settled per PROCESS.md's 2-accepted bar.
 
 ## Summary
 
@@ -235,7 +246,8 @@ different code.
   recoverable. Orthogonal — this RFC does not touch panic semantics (R0007,
   R0012-R0015 are untouched; they remain genuinely dynamic, catchable-or-not per
   whatever RFC-0014 eventually decides, same as today).
-- **RFC-0161** (`dyn Callable`, deferred in full) is the mechanism that would, if
+- **RFC-0161** (`dyn Callable`, `1-under-review` — stale as "deferred in full" here
+  since 2026-09-04; corrected 2026-09-27) is the mechanism that would, if
   and when it lands, give R0010's successor code a genuine reason to depend on a
   runtime value again (a dynamically-dispatched call target whose callability
   isn't statically decidable). If RFC-0161 ships, this RFC's classification of
@@ -245,15 +257,23 @@ different code.
 
 ## Open Questions
 
-- Exact new code numbers (§ Migration) — resolved at integration time.
-- Whether the whole-program `main`-declaration check (§2) belongs in the ordinary
-  per-module typecheck pass or a separate "program assembly" stage that runs after
-  the module graph is fully typed — an implementation detail with no observable
-  difference to a program author, left to whoever implements this.
-- Whether `I00NN` diagnostics should carry a distinct exit-code/reporting
-  convention from `R00NN` ones (e.g. always print a "please file a bug" pointer to
-  the issue tracker) — a good idea, but a UX decision separable from the
-  classification question this RFC is actually about.
+None block `2-accepted` — formalized 2026-09-27, all three already non-blocking by the
+RFC's own original framing:
+
+1. **Exact new code numbers (§ Migration).** Not a design question — deliberately deferred
+   to integration time, checked against the live `error-codes.md` corpus and the actual
+   Rust enums directly rather than guessed here and risked colliding with something
+   assigned in the meantime. This RFC fixes the *scheme* (which codes move where, and
+   why), not the digits.
+2. **Where the whole-program `main`-declaration check (§2) runs** — the ordinary
+   per-module typecheck pass, or a separate "program assembly" stage after the module
+   graph is fully typed. No observable difference to a program author either way; left to
+   whoever implements this, same as any other pipeline-staging choice with no
+   language-visible consequence.
+3. **Whether `I00NN` diagnostics get a distinct exit-code/reporting convention** from
+   `R00NN` (e.g. always printing a "please file a bug" pointer). A good idea, but a UX
+   decision fully separable from the classification question this RFC is actually about —
+   nothing here depends on how it's answered.
 
 ---
 

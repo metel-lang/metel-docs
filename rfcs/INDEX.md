@@ -223,7 +223,7 @@ above it are.
   Its OQ1 asks the question nothing else does: whether a from-Metel `List` is actually
   *wanted*.
 
-- **RFC-0123** *(draft, opened 2026-07-24)* — Field-Wise Row Constraints — a constraint
+- **RFC-0123** *(accepted 2026-09-27 — stale as draft here since 2026-07-24)* — Field-Wise Row Constraints — a constraint
   applying an aspect to **every field of a row** rather than to the row's type
   (`extend<row R> { ..R }: Display where all R: Display`). Opened after noticing that two
   questions the corpus tracked separately are one missing construct: RFC-0121's
@@ -387,7 +387,7 @@ above it are.
   a reading that previously could not be written at all. Explains why implicit structural
   satisfaction is safe here specifically (a bound grants no capability over the type
   itself). Depends on RFC-0116.
-- **RFC-0119** *(under review)* — Record Conversions — tier 2 `ToRecord`/`FromRecord`, kept as
+- **RFC-0119** *(accepted 2026-09-27)* — Record Conversions — tier 2 `ToRecord`/`FromRecord`, kept as
   separate aspects for the serde reason. **By value only**: RFC-0090 §8's
   `to_record_mut`/`from_record_mut` are dropped as superseded by RFC-0109's named views
   (added 2026-07-08 to "resolve tier 2's borrow gap", ten days before RFC-0109 built that
@@ -1656,7 +1656,7 @@ implementation).
   + mechanical corpus sweep (pest-pair + source-span rewriter, 93 fixtures + stdlib +
   spec/tutorials) + `neg_16` hard-switch guard + `match_scrutinee_parenthesized`.
   v0.13.0.
-- **RFC-0167** *(under review, opened 2026-09-04, milestoned v0.14.0 —
+- **RFC-0167** *(accepted 2026-09-27, opened 2026-09-04, milestoned v0.14.0 —
   metel-core#991)* — Reclassify
   unsoundness-only runtime errors as internal errors; split R0002. Six documented
   `R00NN` runtime errors (R0003/R0006/R0008-R0011) should never fire for a

@@ -846,7 +846,7 @@ this corpus's append-only convention for exactly this situation.*
 - RFC-0118 (Row Bounds, implemented) — `<record T: { … }>`; already establishes that a
   nominal struct does not satisfy a row bound, the same principle §3 here extends to a
   struct's own projected type
-- RFC-0119 (Record Conversions, under review) — tier 2, `#derive(ToRecord, FromRecord)`; §3
+- RFC-0119 (Record Conversions, accepted) — tier 2, `#derive(ToRecord, FromRecord)`; §3
   above confirms this RFC leaves that tier's brand-stripping behavior unchanged; needs a
   small clarifying addition per Open Questions #3 / "Relationship to existing RFCs"
 - RFC-0120 (Named Records, accepted) — tier 3, the opt-in `record` kind this RFC's §3
