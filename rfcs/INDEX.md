@@ -404,10 +404,11 @@ above it are.
   scoped, lossy, brand-stripping bridge, incapable of a row-conditional impl on the
   nominal type. Spec-rule pass (coverage frontmatter + Legality blocks) deferred to the
   `3-integrated` transition. Tracker metel-core#791 (v0.13.0).
-- **RFC-0121** *(under review)* — Open Rows — `<row R>` / `..R`, row algebra (extension is a
-  literal, removal is a where-clause decomposition), row-conditional typestate, and the
-  width-subtyping-versus-ownership problem. **The expensive half**, and the only piece
-  introducing a row kind or row unification. Depends on RFC-0118, RFC-0120.
+- **RFC-0121** *(accepted 2026-09-27)* — Open Rows — `<row R>` / `..R`, row algebra
+  (extension is a literal, removal is a where-clause decomposition), row-conditional
+  typestate, and the width-subtyping-versus-ownership problem. **The expensive half**, and
+  the only piece introducing a row kind or row unification. Depends on RFC-0118, RFC-0120
+  (both satisfied).
 
 **RFC-0090's own fate** — superseded 2026-07-24, its dependents re-homed elsewhere:
 RFC-0089/RFC-0091 (re-promoted 2026-09-03, see the note above — now under **Linear

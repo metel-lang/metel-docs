@@ -152,7 +152,7 @@ is inherited unresolved, exactly as in RFC-0147 §3.
   sibling; its §2 rules and rationale apply here verbatim
 - RFC-0146 (Row-Polymorphic Self-Views, `1-under-review`, `metel-core#886`) — the
   `<row R>` receiver mechanism this RFC specializes to `drop`; **hard dependency**
-- RFC-0121 (Open Rows, `1-under-review`, `metel-core#792`) — the `row` kind, reached
+- RFC-0121 (Open Rows, `2-accepted`, `metel-core#792`) — the `row` kind, reached
   through RFC-0146
 - RFC-0137 (Nominal Types as Branded Rows, `3-integrated`) — §5 dispatch rule (amended
   2026-08-28), §7 generic structs, Open Question 6

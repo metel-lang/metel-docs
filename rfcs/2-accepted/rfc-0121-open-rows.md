@@ -2,7 +2,7 @@
 id: rfc-0121
 title: "Open Rows"
 date: '2026-07-24'
-status: under-review
+status: accepted
 tracking: 'https://github.com/metel-lang/metel-core/issues/792'
 updated: '2026-09-27'
 ---
@@ -51,6 +51,8 @@ updated: '2026-09-27'
 > resolved 2026-08-25. Per `PROCESS.md`'s `2-accepted` bar ("no more open questions block
 > it, alternatives have been weighed and one chosen"), this RFC now reads as
 > acceptance-ready — transition is a separate, deliberate step, not implied by this note.
+
+> **Status — accepted (2026-09-27).** All seven open questions closed 2026-09-27 (OQ1/OQ2/OQ4/OQ5 ratified, OQ3/OQ6 descoped non-blocking, OQ7 resolved 2026-08-25); design settled per PROCESS.md's 2-accepted bar.
 
 ## Summary
 
