@@ -36,7 +36,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/843'
 > prerequisite by-value pattern work at all as a result — it builds directly on what's
 > already shipped, plus one new pattern kind (§3).
 
-> **Status — under review (2026-08-27).** Committed to v0.14.0 (issue #843, milestoned 2026-08-27), same milestone as sibling RFC-0109 (metel-core#842).
+> **Status — under review (2026-09-27).** Retargeted from v0.14.0 to v0.15.0 (issue #843), alongside sibling RFC-0109. Reference destructuring is only sound as a normal-language feature once RFC-0071's field-sensitive ownership checking is the default path.
 
 ## Summary
 

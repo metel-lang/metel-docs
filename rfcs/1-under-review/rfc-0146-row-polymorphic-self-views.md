@@ -46,7 +46,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/886'
 >   against a narrowed residual"). Cited as normative spec, with RFC-0137 as design
 >   history.
 
-> **Status — under review (2026-08-28).** Substantiated primary proposal (concrete syntax, static semantics, worked examples) with explicit blocking open questions; design engagement underway, on a concrete downstream path (RFC-0148, Row-Parametric Destructors). Committed to **v0.14.1** (issue #886) — a dedicated "row-polymorphism consumers" point release that follows the v0.14.0 open-rows foundation (RFC-0121, RFC-0123, RFC-0109) explicitly, so this RFC depends on *full* RFC-0121 and the Open Question 1 carve-out is optional rather than a scheduling prerequisite. RFC-0148 shares this milestone. Tracking: metel-core#886.
+> **Status — under review (2026-09-27).** Retargeted from v0.14.1 to **v0.15.0** (issue #886). This is an ownership-dependent consumer of RFC-0109, so it ships with default-on move checking rather than as an opt-in reference feature. It still follows the v0.14.0 open-row foundation (RFC-0121 and RFC-0123); RFC-0148 remains its downstream `Drop`-specific consumer. Tracking: metel-core#886.
 
 ## Summary
 
