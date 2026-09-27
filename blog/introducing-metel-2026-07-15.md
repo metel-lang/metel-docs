@@ -8,7 +8,7 @@ tags: [language-design, metel, roadmap]
 
 # Introducing Metel
 
-Metel is a research language exploring new paths to compile-time safety. It brings
+Metel is an experimental language exploring different paths to compile-time safety. It brings
 together ideas from across modern language design — ownership, capabilities,
 effects, explicit allocation, and structural types — to ask how they can work
 together in a system that is both explicit and practical to use.
