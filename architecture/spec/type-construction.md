@@ -156,7 +156,7 @@ Free-function overload selection is exact-match, and construction stamps the sel
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/overload.rs::next_overload_symbol`](https://github.com/metel-lang/metel-core/blob/ffe01bfb2cb20358c8811a7022ba3c3746bbe909/metel-frontend/src/pipeline/type_checking/overload.rs#L38) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/overload/mod.rs::next_overload_symbol`](https://github.com/metel-lang/metel-core/blob/ffe01bfb2cb20358c8811a7022ba3c3746bbe909/metel-frontend/src/pipeline/type_checking/overload/mod.rs#L38) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/functions/toplevel_let_mut_bound_function_dispatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/functions/toplevel_let_mut_bound_function_dispatch.toml#L1) |
 | `last_reviewed` | 8b844c9117d5c6a730882aeaf521184c3055eb2f |
 | `related` | ADR-0038, `arch.evaluation.requirement-2`, `LIMIT-TYPE-CONSTRUCTION-002` |
