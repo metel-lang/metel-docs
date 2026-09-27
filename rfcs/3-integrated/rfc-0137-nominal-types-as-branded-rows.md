@@ -723,13 +723,18 @@ this corpus's append-only convention for exactly this situation.*
    impl its current row would otherwise also satisfy, regardless of narrowing —
    consistent with §3's own rule that brand eligibility for structural matching
    never varies with row content. See RFC-0121 §3 for the full rule and its scope.
-   Owning implementation issue: metel-core#833. **Caveat, noted 2026-08-25 on
+   Owning implementation issue: metel-core#833. ~~**Caveat, noted 2026-08-25 on
    reversion:** this resolution's own soundness rests on RFC-0121 §3's text, and
    RFC-0121 itself is `1-under-review`, not accepted — if RFC-0121 §3 changes before
    RFC-0121 lands, this resolution goes stale silently. No tracking link currently
    forces a re-check; left as-is rather than opening a fifth question for a
    dependency-staleness risk this RFC shares with most of the corpus (see OQ1's own
-   precedent), but worth naming plainly.
+   precedent), but worth naming plainly.~~ **Caveat closed 2026-09-27.** RFC-0121
+   reached `2-accepted` this date with §3's brand-priority rule unchanged from the
+   text this resolution was checked against — the staleness risk named above never
+   materialized. RFC-0121's own review pass additionally settled its row-vs-row
+   coherence question (its own Open Question 2) and reconfirmed this RFC's read of
+   §3 in doing so.
 
 5. ~~§6's widening semantics are operationally unspecified. Blocks re-acceptance,
    2026-08-25.~~ §6 says narrowing (the read side) ships on its own and that widening
@@ -846,7 +851,7 @@ this corpus's append-only convention for exactly this situation.*
   small clarifying addition per Open Questions #3 / "Relationship to existing RFCs"
 - RFC-0120 (Named Records, accepted) — tier 3, the opt-in `record` kind this RFC's §3
   reconciles with rather than replaces
-- RFC-0121 (Open Rows, under review) §3 — resolves Open Question 4 (2026-08-25):
+- RFC-0121 (Open Rows, accepted) §3 — resolves Open Question 4 (2026-08-25):
   brand-keyed impls take priority over row-conditional ones; that resolution's own
   soundness is contingent on RFC-0121 itself being accepted (see Open Question 4's
   caveat, added 2026-08-25)
