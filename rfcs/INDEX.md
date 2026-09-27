@@ -561,6 +561,21 @@ part of the same records/views substrate review):
   unnamed future RFC. **Cross-ref added 2026-08-29:** §3's `comptime N` axis and
   type-parameter instantiation are one problem — `metel-core#288`'s frontend
   monomorphization pass (v0.20.1) should collect both; co-design, not a dependency.
+- **RFC-0171** *(draft, opened 2026-09-27)* — Postfix Fixed-Size Array Type `T[N]` —
+  amends RFC-0053: `[T; N]` → postfix `T[N]`, matching `T[]`'s existing postfix
+  convention (`T[]` itself is untouched). Reopens RFC-0084's 2026-07-10 refusal of the
+  same change on new grounds — `metel-core#1292`'s `T[N]`/`T[]`/`List<T>` storage-
+  contract framing gives postfix consistency functional weight beyond the aesthetic
+  argument RFC-0084 weighed and set aside, and RFC-0132 §3 (above) now fixes what
+  `T[N]`'s generic-parameter spelling needs to look like. Two other spellings weighed and
+  set aside, both changing `T[]` as well: `[T]`/`[T; N]` (stronger symmetry with Metel's
+  own prefix-bracket value syntax, weaker precedent — Rust's `[T]` is always unsized,
+  behind `&`) and Zig's exact `[]T`/`[N]T` (strongest real precedent, notably consistent
+  with RFC-0132 §3's own Zig-derived `comptime` choice, but touches both existing
+  spellings rather than one). Migration is real and flag-day, not soft-deprecated,
+  matching RFC-0115's own precedent (see `PROCESS.md`) — 74 interpreter-fixture sites
+  plus 232 doc-corpus sites at time of writing. Open question on nested arrays
+  (`T[N][M]`) and `ArrayBaseType`'s grammar scope, not yet resolved.
 - **RFC-0145** *(draft, opened 2026-08-27)* — Static Storage Duration — `static X: T
   = expr;`, the `static` half of issue #840's title that RFC-0132 doesn't cover:
   a real, single, process-lifetime *address*, not a compile-time-substituted
