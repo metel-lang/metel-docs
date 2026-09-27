@@ -43,7 +43,7 @@ the curated thematic map.
 - **RFC-0164** — Mutating Closures with a Propagating ? Are Call-Once (`0-draft` ; rfcs/0-draft/rfc-0164-mutating-closures-with-a-propagating-are-call-once.md ; date 2026-09-02 ; updated 2026-09-02)
 - **RFC-0168** — Equality Model and Super-Aspects (`0-draft` ; rfcs/0-draft/rfc-0168-equality-model-and-super-aspects.md ; date 2026-09-09)
 - **RFC-0170** — Literal Types and Discriminated Structural Unions (`0-draft` ; rfcs/0-draft/rfc-0170-literal-types-and-discriminated-structural-unions.md ; date 2026-09-27)
-- **RFC-0171** — Postfix fixed-size array type T[N] (`0-draft` ; rfcs/0-draft/rfc-0171-postfix-fixed-size-array-type-t-n.md ; date 2026-09-27)
+- **RFC-0171** — Prefix array type syntax: [T] and [T; N] (`0-draft` ; rfcs/0-draft/rfc-0171-prefix-array-type-syntax-t-and-t-n.md ; date 2026-09-27)
 
 ## Under Review (43)
 
