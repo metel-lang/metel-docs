@@ -4,7 +4,7 @@ title: "Open Rows"
 date: '2026-07-24'
 status: under-review
 tracking: 'https://github.com/metel-lang/metel-core/issues/792'
-updated: '2026-08-25'
+updated: '2026-09-27'
 ---
 
 > **Extracted from RFC-0090 §2 (open half), §4 and §7 on 2026-07-24** (superseded; see
@@ -199,13 +199,31 @@ until row-conditional impls exist.
 - **Row-kinded variables and row unification** are a genuinely new piece of the
   elaborator/inference system, not a small patch. This RFC is the only place in the cluster
   that needs them.
-- **Width subtyping versus ownership — the genuinely novel problem.** Row polymorphism's
-  defining move (silently using a wider record where a narrower is expected, forgetting the
-  extra fields) is harmless in garbage-collected OCaml, Elm and PureScript. None of them
-  have affine or linear ownership, so none had to ask what happens when a forgotten field
-  is not garbage. **Proposed rule:** width subtyping is sound only when every
-  silently-dropped field is `Copy`; anything with a drop obligation forces explicit
-  handling. Not decided — this is the piece with no precedent to lean on at all.
+- **Width subtyping versus ownership — the genuinely novel problem, resolved 2026-09-27.**
+  Row polymorphism's defining move (silently using a wider record where a narrower is
+  expected, forgetting the extra fields) is harmless in garbage-collected OCaml, Elm and
+  PureScript. None of them have affine or linear ownership, so none had to ask what
+  happens when a forgotten field is not garbage. **The rule splits on whether the
+  narrowing takes ownership:**
+  - **Borrow position never has a drop obligation to violate.** `&{ x: f64, ..R }` (or
+    `&mut`) over a wider record does not move the value — the extra fields stay owned
+    exactly where they always were, `Copy` or not. Width subtyping through a reference is
+    therefore always sound and needs no `Copy` restriction; this is the same reasoning
+    RFC-0109 already applies to self-view narrowing, generalized from a fixed set of
+    fields to an open row.
+  - **By-value width subtyping is where the risk actually lives**, and here the RFC's
+    original proposed rule is ratified as stated: sound only when every field silently
+    widened away is `Copy`. A moved value with a non-`Copy` remainder has no owner left
+    once the narrow-typed value is what's live — that field's drop obligation (or, for a
+    linear field, its use-once obligation) would go unmet. A remainder with any non-`Copy`
+    field is rejected outright and requires an explicit `where R = { .., ..Rest }`
+    decomposition instead, which keeps `Rest` visible and owned.
+  - Precedent: none directly on point (stated as a cost above, and still true — no
+    row-polymorphic language in the corpus's survey combines this with affine/linear
+    ownership), but the split itself is not novel in kind — it is the same borrow/move
+    distinction RFC-0071 already draws everywhere else a value could be viewed instead of
+    consumed. What is decided here is that width subtyping does not get an exemption from
+    that distinction.
 - **Monomorphization versus erasure.** Storage-transparent constructs elsewhere in this
   cluster monomorphize and erase at runtime. PureScript's row polymorphism typically
   compiles to runtime dictionary passing. A zero-cost row-polymorphic Metel would be its
@@ -218,16 +236,26 @@ until row-conditional impls exist.
 
 ## Open Questions
 
-1. **The width-subtyping-requires-`Copy` rule is proposed with no precedent to verify it
-   against, and not ratified.** Until it is, open records whose non-empty remainder is
-   silently discarded should be rejected outright. *(From RFC-0090 OQ3.)*
+1. ~~**The width-subtyping-requires-`Copy` rule is proposed with no precedent to verify
+   it against, and not ratified.** Until it is, open records whose non-empty remainder is
+   silently discarded should be rejected outright. *(From RFC-0090 OQ3.)*~~
+   **Resolved 2026-09-27 — see "Width subtyping versus ownership" in §4 above.** The rule
+   splits on borrow versus by-value: narrowing through a reference is always sound (no
+   ownership transfer, nothing to drop); by-value narrowing is sound only when every
+   silently-widened-away field is `Copy`, exactly as originally proposed, and is rejected
+   outright otherwise in favor of an explicit `where R = { .., ..Rest }` decomposition.
    **The half of this that was "no bound expressing 'every field in row `R` is `Copy`' is
-   defined anywhere" is now RFC-0123 (Field-Wise Row Constraints), opened 2026-07-24.**
-   That construct turned out to be needed identically by RFC-0116 — an anonymous record
-   cannot satisfy *any* stdlib aspect, including `Display`, without it — so the two were
-   being tracked as unrelated problems in different documents when they are one missing
-   feature. What remains here is the rule itself: *whether* `Copy` is the right predicate
-   for sound width subtyping, which stays open independently of being able to write it.
+   defined anywhere" is still RFC-0123 (Field-Wise Row Constraints)**, needed identically
+   by RFC-0116 for `Display`. This does not block *this* RFC's acceptance for the
+   **concrete** case — when the narrowed value's row is fully known at the narrowing site,
+   the checker can walk its fields and test each one structurally, no quantifier needed.
+   It does still gate the **generic** case: a function generic over `<row R>` that
+   narrows a `..R`-typed value by value, where `R` is abstract inside the body, has
+   nothing to check the remainder's fields against without a bound at the binder —
+   that bound is RFC-0123's `all R: Copy`-shaped quantifier, not yet accepted. Concretely:
+   by-value narrowing of a concrete row can typecheck under this RFC alone; by-value
+   narrowing of an abstract row stays rejected (unification has no fact to consult) until
+   RFC-0123 lands and can be written as a bound on the binder.
 2. **Row-conditional impl coherence.** Extending RFC-0036/RFC-0060's conditional-impl
    checking to row-shape conditions — ensuring two impls, one gated on presence and one on
    absence, cannot both apply to an under-constrained row variable — is asserted tractable
