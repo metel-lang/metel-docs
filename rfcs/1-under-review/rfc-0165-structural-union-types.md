@@ -185,6 +185,10 @@ function type.
   patterns, not variant paths.
 - **RFC-0109 (Self-View Narrowing)** — Open Question 4: does narrowing eliminate a union,
   or only `match`?
+- **RFC-0170 (Literal Types and Discriminated Structural Unions, `0-draft`)** — supplies
+  finite literal types and proposes the TypeScript-style, field-discriminated use case.
+  Its §4 proposes resolving this RFC's tagged-vs-untagged Open Question 1 in favour of
+  untagged unions; neither RFC may be accepted while the two documents disagree.
 - **RFC-0034 (struct / enum Aspect bounds)** — a union satisfies an aspect bound iff
   *every* member does (à la an intersection of the members' impls); needs its own rule.
 - **RFC-0080 (Send / Sync), `1-under-review`** — a union is `Send` / `Sync` iff every

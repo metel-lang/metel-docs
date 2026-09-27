@@ -373,6 +373,14 @@ above it are.
   structural coproduct** (the lean — monomorphisation-friendly, no RTTI, `A \| A` collapses)
   vs **untagged set-union with type tests** (TypeScript's model). No target; depends on
   RFC-0154 landing and on OQ1 to be more than a sketch.
+- **RFC-0170** *(draft, opened 2026-09-27)* — Literal Types and Discriminated Structural
+  Unions — finite singleton literal types (`"ok"`, `404u16`, `true`) refine primitive base
+  types and distinguish exact record-union members by a value field. Record subpatterns
+  and direct `value.field == literal` tests narrow the union, and discriminator cases are
+  exhaustive. It preserves ordinary primitive-literal inference, excludes floats and
+  arbitrary comptime expressions, and proposes RFC-0165 choose **untagged** unions: the
+  declared literal field, not a wrapper tag, identifies the value. Its sole acceptance
+  blocker is RFC-0165's representation decision; it has no schedule or tracker.
 - **RFC-0118** *(implemented in v0.12.0, was #577)* — Row Bounds — `<record T: { x: f64, .. }>` and `!{ token }`,
   replacing the `HasField`/`Lacks` family that never parsed. The trailing `..` is an
   anonymous row variable and is what makes a bound *open*; without it the bound is closed,
