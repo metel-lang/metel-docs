@@ -2,7 +2,7 @@
 id: rfc-0119
 title: "Record Conversions"
 date: '2026-07-24'
-status: under-review
+status: accepted
 tracking: 'https://github.com/metel-lang/metel-core/issues/790'
 updated: '2026-09-27'
 ---
@@ -41,6 +41,8 @@ updated: '2026-09-27'
 > applies to their siblings (see the corrected numbering note before OQ6); OQ7, OQ8, OQ9
 > were already dissolved. This RFC now reads as acceptance-ready under `PROCESS.md`'s
 > `2-accepted` bar.
+
+> **Status — accepted (2026-09-27).** All ten open questions closed 2026-09-27, reviewed once more before this transition (two stale RFC-stage citations found and fixed). Design settled per PROCESS.md's 2-accepted bar.
 
 ## Summary
 

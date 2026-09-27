@@ -2,7 +2,7 @@
 id: rfc-0167
 title: "Reclassify unsoundness-only runtime errors as internal errors; split R0002"
 date: '2026-09-04'
-status: under-review
+status: accepted
 updated: '2026-09-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/991'
 ---
@@ -17,6 +17,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/991'
 > non-blocking (integration-time bookkeeping, an unobservable implementation choice, and a
 > separable UX decision) — this pass formalizes that framing rather than deciding anything
 > new. See Open Questions below.
+
+> **Status — accepted (2026-09-27).** All three open questions confirmed non-blocking 2026-09-27, reviewed once more before this transition (one stale RFC-stage citation found and fixed). Design settled per PROCESS.md's 2-accepted bar.
 
 ## Summary
 
