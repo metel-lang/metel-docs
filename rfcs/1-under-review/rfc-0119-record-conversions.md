@@ -4,7 +4,7 @@ title: "Record Conversions"
 date: '2026-07-24'
 status: under-review
 tracking: 'https://github.com/metel-lang/metel-core/issues/790'
-updated: '2026-08-23'
+updated: '2026-09-27'
 ---
 
 > **Extracted from RFC-0090 §8 (tier 2) on 2026-07-24** (superseded; see RFC-0116's header
@@ -18,20 +18,29 @@ updated: '2026-08-23'
 > named views (§2).
 >
 > Between them these leave this RFC with **no dependency on RFC-0076 (Brand Types,
-> `0-draft`)** — and, after §2, for a structural reason rather than by omission: tier 2
-> never handles a borrow, so it never needs to establish which object one came from.
+> `1-under-review` — stale as `0-draft` here since 2026-07-24; corrected 2026-09-27)** —
+> and, after §2, for a structural reason rather than by omission: tier 2 never handles a
+> borrow, so it never needs to establish which object one came from.
 
-> **Status — under review (2026-08-23).** Tracking issue #790 filed 2026-08-22.
+> **Status — under review (2026-09-27).** Tracking issue #790 filed 2026-08-22.
 > **Moved out of v0.13.0 the next day**, once RFC-0120 was found not to actually depend
 > on this RFC (RFC-0120's own header carried a stale dependency inherited from the
 > original split's ordering, not a real requirement — see RFC-0120's 2026-08-23
-> correction). Unplaced rather than pushed to a later milestone number: this RFC's real
-> blocker is RFC-0093 (comptime derive, `1-under-review` as of 2026-08-23, `#799`, no
-> target) — the same "don't force it
-> into a milestone it doesn't fit" treatment RFC-0124 already got for its own RFC-0067
-> dependency. OQ1 still holds: the hand-writable form needs no derive at all, so nothing
-> here is refused, just not scheduled while its practical value (the `#derive(...)`
-> convenience every example in this RFC actually uses) is on an open-ended wait.
+> correction). Unplaced at the time rather than pushed to a later milestone number: this
+> RFC's real blocker was RFC-0093 (comptime derive) — the same "don't force it into a
+> milestone it doesn't fit" treatment RFC-0124 already got for its own RFC-0067
+> dependency. **Back in `v0.14.0` as of this review** (metel-core#790's own milestone
+> field, checked directly against GitHub rather than against this paragraph's own stale
+> claim). OQ1's point still holds independent of scheduling: the hand-writable form needs
+> no derive at all, so nothing here was ever blocked on RFC-0093, only on where the
+> `#derive(...)` convenience specifically would land.
+>
+> **All ten open questions closed 2026-09-27.** OQ2 (§1) and OQ4 (new §6) ratified with
+> real rules; OQ1, OQ3 formalized from the RFC's own already-stated position; OQ5
+> confirmed by verification; OQ6 and OQ10 extend the deferral the RFC's own text already
+> applies to their siblings (see the corrected numbering note before OQ6); OQ7, OQ8, OQ9
+> were already dissolved. This RFC now reads as acceptance-ready under `PROCESS.md`'s
+> `2-accepted` bar.
 
 ## Summary
 
@@ -93,6 +102,18 @@ profiles. A bundled `Record` shorthand was considered and declined on the same g
 `from_record` sugar for `Self::construct(row)` — so the invariant is enforced once, in one
 place, rather than by each conversion remembering to. This RFC does not depend on RFC-0114;
 if it lands, the two reconcile as noted there.
+
+**OQ2, resolved 2026-09-27 — recommended, not required.** RFC-0114 is `0-draft`, well
+short of ready, and this RFC's header already declines a dependency on it for the reason
+stated throughout: forcing acceptance to wait on an unready sibling is exactly the
+critical-path risk this cluster keeps splitting RFCs apart to avoid. This RFC's actual
+position, formalized rather than left undecided: `from_record` carries **no built-in
+guard** against bypassing a constructor invariant today — the convention above (don't
+derive it on an invariant-bearing type; hand-write the check if you need both the derive
+and the guard) is the whole of the current rule, not a placeholder for a future one.
+RFC-0114's `construct`-based reconciliation is the recommended path once it lands, and is
+already described in this section — this resolution changes nothing about *what* happens
+then, only confirms that nothing here is gated on it happening first.
 
 ## 2. By-value only: `to_record_mut`/`from_record_mut` are dropped
 
@@ -203,25 +224,65 @@ fiat-linearity — at the point per-field multiplicity is taken up again.
 > simplified the design, and it is worth showing that the evidence only became sound after
 > a second, independent decision.
 
+## 6. Field visibility of `to_record()`, resolved 2026-09-27 (OQ4)
+
+**The rule: `to_record()` and `from_record()` require ordinary RFC-0032 field-visibility
+to hold for every field of `Self`, checked at the call site — the same check as if the
+caller had written the full field list out by hand.** Calling `.to_record()` from
+somewhere that cannot see one of `Self`'s fields directly is exactly as illegal as reading
+that field directly would be from the same site; calling it from where every field is
+visible (inside the declaring module, or from wherever RFC-0032's existing visibility
+rules already grant access to the whole struct) succeeds and produces the complete row.
+
+**Why this one of the three candidates in the original open question.** It needs no new
+mechanism — RFC-0032's per-field visibility check already exists and already answers "can
+this call site see this field," so `to_record()`/`from_record()` need no capability of
+their own beyond deferring to it at each field. It is also the only candidate that keeps
+the round trip lossless: a public-projection reading (candidate two) drops private fields
+from the record, so `from_record` could never reconstruct the original `Self` from what
+`to_record` gave out, breaking the exact "same bits, new static type" property the
+Summary states as this RFC's whole premise. Banning the derive outright whenever *any*
+field is private (candidate three) is strictly worse for no soundness gain — it would
+deny the capability even to code with full visibility into every field, for a property
+(does `Self` happen to declare a private field) that has nothing to do with whether *this*
+caller may see it.
+
+**Consequence, stated because it's easy to miss:** the *type* of `to_record()`'s return
+value does not vary with the caller — `Self`'s full row is always what gets named. What
+varies by call site is only whether the call is *legal at all*. A module with only
+public-field visibility into `Handle` simply cannot call `h.to_record()`, full stop, the
+same way it cannot write `h.fd` today if `fd` is private; it is not offered a smaller
+row instead.
+
 ---
 
 ## Open Questions
 
-1. **Is `#derive` available?** Whether these conversions are auto-*derivable* (versus always
-   hand-written) depends on RFC-0093's comptime derive mechanism, which is `0-draft`. This
-   RFC requires only that `ToRecord`/`FromRecord` exist as ordinary, hand-writable aspects
-   with these signatures; the `#derive(…)` convenience is additive.
-2. **Does `from_record` need a guard against bypassing constructor invariants?** §1 states
+1. ~~**Is `#derive` available?** Whether these conversions are auto-*derivable* (versus
+   always hand-written) depends on RFC-0093's comptime derive mechanism, which is
+   `0-draft`. This RFC requires only that `ToRecord`/`FromRecord` exist as ordinary,
+   hand-writable aspects with these signatures; the `#derive(…)` convenience is
+   additive.~~
+   **Resolved — formalized 2026-09-27, no new decision.** The RFC's own answer, already
+   stated: `#derive` is additive, never required. (RFC-0093 is `1-under-review` now, not
+   `0-draft` — stale since this entry was written; corrected here in passing.)
+2. ~~**Does `from_record` need a guard against bypassing constructor invariants?** §1 states
    the risk and the convention (don't derive it on such a type). RFC-0114 proposes a real
    mechanism. Whether this RFC should require RFC-0114, recommend it, or stay silent is
-   undecided. *(From RFC-0090 OQ10.)*
-3. **Omitted-field defaulting.** If a struct declares a field as `Perhaps<T>`, `from_record`
+   undecided. *(From RFC-0090 OQ10.)*~~
+   **Resolved 2026-09-27 — see §1 above.** Recommended, not required: RFC-0114 is
+   `0-draft`, and this RFC's own position (the convention already stated) is the whole
+   current rule, not a placeholder.
+3. ~~**Omitted-field defaulting.** If a struct declares a field as `Perhaps<T>`, `from_record`
    could accept an input record lacking that label entirely and default it to
    `Perhaps::none()` — value-level and dynamic, a different axis from row-level absence. It
    earns its keep for generic code that reconstructs *any* `FromRecord` type from a partial
    record. Specified in RFC-0090 §8 as a rider; carried here unresolved, since it is
-   separable from the core conversion and nothing depends on it.
-4. **New, 2026-07-24, inherited from RFC-0118. What does `to_record()` produce for a
+   separable from the core conversion and nothing depends on it.~~
+   **Descoped 2026-09-27 — non-blocking, formalized from the RFC's own framing.** Already
+   separable and nothing depends on it; stays a candidate future addition to
+   `from_record`, not a gap in what this RFC specifies.
+4. ~~**New, 2026-07-24, inherited from RFC-0118. What does `to_record()` produce for a
    struct with *private* fields, and who may call it?** RFC-0032 makes fields
    module-private by default. `to_record()` turns a struct into a record, and a record's
    fields are plainly readable — so a conversion callable from outside the declaring module
@@ -238,37 +299,68 @@ fiat-linearity — at the point per-field multiplicity is taken up again.
 
    Candidate answers, none adopted: `to_record()` is callable only where every field is
    visible; or it yields only the public projection and `from_record` is correspondingly
-   partial; or private fields make a struct ineligible for the derive at all.
-5. **What exactly does `to_record()` return for a generic struct?** `Pair<T>`'s row is not
+   partial; or private fields make a struct ineligible for the derive at all.~~
+   **Resolved 2026-09-27 — see §6 above.** First candidate ratified: `to_record()`/
+   `from_record()` require ordinary RFC-0032 visibility on every field of `Self` at the
+   call site — the only one of the three that needs no new mechanism and keeps the round
+   trip lossless.
+5. ~~**What exactly does `to_record()` return for a generic struct?** `Pair<T>`'s row is not
    fully known until `T` is concrete. Believed to need no deferral to monomorphization time
-   — the row is computed from the declaration — but unverified. *(Shared with RFC-0114 OQ4.)*
+   — the row is computed from the declaration — but unverified. *(Shared with RFC-0114 OQ4.)*~~
+   **Confirmed 2026-09-27, not merely believed.** A generic struct's row *shape* (its
+   field names) comes entirely from the declaration and never depends on the type
+   parameter; only field *types* do, through ordinary substitution — the same mechanism
+   any other generic method's return type already goes through
+   (`instantiate_scheme_for_call`: fresh variables, substitution, unification, composed
+   substitution, extraction). `to_record()`'s return type needs nothing beyond that
+   existing machinery, and in particular no deferral to monomorphization — monomorphization
+   is a backend code-generation concern, unrelated to what the typechecker already resolves
+   at the call site.
 
 *Questions 5–9 were opened together on 2026-07-24, from a design conversation about
 `FromRecord`'s relationship to `Construct`. They are listed in the order the reasoning ran,
 because each one exposed the next. Questions 6–8 were dissolved the same day by dropping the
 by-reference mode (§2).*
 
-> **Questions 5 and 9 are deferred, 2026-07-24.** Both are genuine improvements and neither
-> is refused — but working through them showed both are **more entangled than they looked**,
-> and in each case the entanglement is with something that is not settled:
+> **Numbering correction, 2026-09-27.** The note above, and the deferral below, predate a
+> later renumbering of this list and were never updated to match it — read literally
+> today, "Questions 6–8 dissolved" doesn't match the list (7, 8, and 9 are struck through;
+> 6 is not), and "OQ5 needs `Handle(r)`'s meaning settled" / "OQ9 needs struct
+> destructuring" don't match *today's* local items 5 (generic struct row, resolved above)
+> or 9 (reassembly provenance, already dissolved) — they match **today's items 6 and 10**
+> by content instead. Left as historical record below rather than rewritten; read "OQ5" as
+> today's item 6 and "OQ9" as today's item 10 throughout the deferral note that follows.
+
+> **Questions 6 and 10 (cited below by their original numbers, 5 and 9) are deferred,
+> 2026-07-24.** Both are genuine improvements and neither is refused — but working through
+> them showed both are **more entangled than they looked**, and in each case the
+> entanglement is with something that is not settled:
 >
-> - **OQ5** needs RFC-0100's positional-construction form settled before `Handle(r)` can be
->   given a meaning, and RFC-0100 is `1-under-review` and has been reopened once. Its
->   overridability sub-question also has to be answered *before* the syntax, not after,
->   since an overridable `FromRecord` reopens the invariant hole RFC-0114 §1.1 closes.
-> - **OQ9** needs a struct-destructuring pattern that does not exist in the grammar at all,
->   and its natural home is RFC-0109, which is now `0-draft` and deferred until records are
->   implemented.
+> - **[Today's item 6]** needs RFC-0100's positional-construction form settled before
+>   `Handle(r)` can be given a meaning, and RFC-0100 is `1-under-review` and has been
+>   reopened once. Its overridability sub-question also has to be answered *before* the
+>   syntax, not after, since an overridable `FromRecord` reopens the invariant hole
+>   RFC-0114 §1.1 closes.
+> - **[Today's item 10]** needs a struct-destructuring pattern that does not exist in the
+>   grammar at all, and its natural home is RFC-0109 (`1-under-review` as of 2026-08-27 —
+>   stale as `0-draft` here since this note was written; corrected 2026-09-27).
 >
 > Neither is a prerequisite for this RFC. `ToRecord`/`FromRecord` as specified above are
 > complete and reviewable without them; these would change the *spelling* and the
 > *derivation default*, not the capability. **They are candidate refinements to revisit once
 > records are implemented and RFC-0100 has resolved** — at which point there will also be
 > real usage to judge them against, which neither has today.
+>
+> **Extended 2026-09-27 to cover both explicitly.** This deferral already applied to items
+> 6 and 10 by content, just under stale labels — formalizing that now rather than treating
+> either as a fresh open question needing its own resolution. Neither blocks this RFC's
+> `2-accepted` bar: the base capability (named-method `ToRecord`/`FromRecord`, as specified
+> in the Summary and §1–§4) stands complete without either refinement.
 
 6. **Should `FromRecord` be spelled as a constructor call and default to `construct`'s
    logic?** *(Rewritten 2026-07-24 — the first version of this entry recorded a different
-   and weaker proposal; see the correction at the end.)*
+   and weaker proposal; see the correction at the end.)* **Deferred, not blocking — see the
+   numbering correction and extended deferral note above.**
 
    The proposal: `FromRecord` **stays its own opt-in aspect**, but two things change.
    - **Surface syntax becomes the constructor call form** — `Handle({ fd = 3, alloc = buf })`
@@ -366,6 +458,11 @@ by-reference mode (§2).*
    **What needs answering:** destructuring binds fields to names, while `to_record()`
    yields a record *value* that can be passed onward — strictly more general. A marker-only
    `ToRecord` needs an account of how the value form is still obtained.
+
+   **Deferred, not blocking — see the numbering correction and extended deferral note
+   before item 6.** Depends on a struct-destructuring pattern that doesn't exist in the
+   grammar yet and on RFC-0109; the base capability this RFC specifies (named-method
+   `ToRecord`) stands complete without deciding this.
 
 ---
 
