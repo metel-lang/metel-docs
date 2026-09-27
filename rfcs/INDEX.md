@@ -561,6 +561,24 @@ part of the same records/views substrate review):
   unnamed future RFC. **Cross-ref added 2026-08-29:** §3's `comptime N` axis and
   type-parameter instantiation are one problem — `metel-core#288`'s frontend
   monomorphization pass (v0.20.1) should collect both; co-design, not a dependency.
+- **RFC-0171** *(accepted 2026-09-27)* — Prefix Array Type Syntax `[T]` / `[T; N]`
+  — the dynamic array type moves from postfix `T[]` to prefix `[T]`, matching `[T; N]`'s
+  existing convention (`[T; N]` itself is untouched). Same bracket-mismatch tension as
+  RFC-0084 (`6-refused`), opposite resolution — RFC-0084 considered moving `[T; N]` to
+  match `T[]`'s postfix convention and refused it; this RFC moves the other spelling
+  instead, for reasons RFC-0084 never weighed (`metel-core#1292`'s storage-contract
+  framing; RFC-0132 §3, unchanged by this direction; and a nested-array grammar
+  asymmetry only found by working through it — `[T]` inherits `Type`'s existing
+  recursion for free, `T[N]` would have needed a new postfix-chaining mechanism the
+  `Type` grammar doesn't have). Two alternatives weighed and set aside: postfix
+  `T[]`/`T[N]` (this RFC's own first draft — smaller migration, ~74 fixture sites
+  instead of ~460, but the nested-array gap and weak precedent decided against it) and
+  Zig's exact `[]T`/`[N]T` (strongest real precedent, consistent with RFC-0132 §3's own
+  Zig-derived choice, but touches both existing spellings and breaks symmetry with
+  Metel's own value-level array syntax). Migration is real and flag-day, matching
+  RFC-0115's precedent — ~460 interpreter-fixture sites, ~395 doc-corpus sites at time
+  of writing. Open question on whether lifting `ArrayType`'s old base-type restriction
+  (now permitting `[&T]`, `[|_| -> T]`) needs a guard.
 - **RFC-0145** *(draft, opened 2026-08-27)* — Static Storage Duration — `static X: T
   = expr;`, the `static` half of issue #840's title that RFC-0132 doesn't cover:
   a real, single, process-lifetime *address*, not a compile-time-substituted
