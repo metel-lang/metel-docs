@@ -19,6 +19,14 @@ status: draft
 > rather than building on it. The deciding factor: nested arrays (`T[N][M]`) need new
 > postfix-chaining grammar machinery the `Type` production doesn't have today, while
 > `[T]`/`[T; N]` gets nesting for free from recursion `Type` already has. See §2.
+>
+> **All three open questions closed 2026-09-27.** OQ1 (does lifting `ArrayType`'s old
+> base-type restriction need a guard) is ratified as safe — full generality was already
+> required for the fixed-array case, so this RFC extends an existing commitment rather
+> than creating a new one; see Open Questions below. OQ2 (diagnostic wording) and OQ3
+> (sweep-count staleness) were already framed as non-blocking implementation detail in
+> the original draft and are confirmed as such. This RFC now reads as ready for review
+> toward `1-under-review`; that transition itself is a separate step from this pass.
 
 ## Summary
 
@@ -109,8 +117,8 @@ one line disappears instead of two remaining. `ArrayType`'s old base-type list e
 Unifying onto `SizedArrayType`'s shape means the dynamic case gains the same generality
 the fixed case already had, closing an asymmetry that likely existed only because
 `ArrayType` was never revisited, rather than for a principled reason anyone can point to
-— `[&T; N]` and `[|_| -> T; N]`-shaped fixed arrays are already legal today, per the
-grammar as written, whether or not any fixture happens to exercise them; `[&T]`/`[|_|
+— `[&T; N]` and `[|i64| -> T; N]`-shaped fixed arrays are already legal today, per the
+grammar as written, whether or not any fixture happens to exercise them; `[&T]`/`[|i64|
 -> T]` dynamic arrays becoming legal too is this RFC's one genuine semantic widening,
 flagged honestly as Open Question 1 rather than assumed harmless.
 
@@ -205,18 +213,37 @@ it settled the other one.
 
 ## Open Questions
 
-1. **Does lifting `ArrayType`'s old base-type restriction (§2) want a guard, or is
-   full generality actually correct?** `[&T]` and `[|_| -> T]` become legal dynamic-array
-   element types under the unified production, matching what `[T; N]` already permits.
+1. ~~**Does lifting `ArrayType`'s old base-type restriction (§2) want a guard, or is
+   full generality actually correct?** `[&T]` and `[|i64| -> T]` become legal
+   dynamic-array element types under the unified production, matching what `[T; N]`
+   already permits.
    No one has identified a reason the old restriction existed beyond `ArrayType` never
    being revisited since RFC-0053 — but "no reason found" isn't the same as "confirmed
    there is none." Worth a deliberate look before integration rather than inheriting the
-   widening silently.
-2. **Diagnostic wording for the retired postfix `T[]`.** A parse error pointing at `[T]`
-   is wanted; exact text is an implementation-time decision.
-3. **Sweep completeness at integration time.** The ~460/~395 counts are a snapshot from
-   this drafting session; re-count against the corpus as it stands at integration, not
-   against this document.
+   widening silently.~~
+   **Resolved 2026-09-27 — no guard, full generality is correct, and it isn't actually
+   new.** `[&T; N]` is already grammatically legal *today*, for the fixed-array case,
+   completely independent of this RFC — `SizedArrayType`'s inner slot was never
+   restricted. Whatever the runtime representation and move-/borrow-checking treatment
+   of "an array holding references" needs to be, the language is already committed to
+   having an answer for it, because the fixed-array case already demands one. This RFC
+   doesn't introduce that question; it only extends where the *same* already-required
+   answer applies, from fixed arrays to dynamic ones — §1's "same runtime
+   representation... same everything except the spelling" already says the two share
+   machinery, so there's no separate soundness surface for the dynamic case to open.
+   **What this does not confirm:** whether `[&T; N]` is *fully verified* to typecheck
+   and move-check correctly today (no fixture in the corpus exercises it either way) —
+   that's a pre-existing gap this RFC neither creates nor worsens, tracked on its own
+   merits if it isn't already, not a reason to hold this RFC's `T[]`-spelling question
+   hostage to an unrelated, already-existing verification gap.
+2. **Diagnostic wording for the retired postfix `T[]`.** Non-blocking, confirmed
+   2026-09-27 — implementation-quality, not a design question; a parse error pointing at
+   `[T]` is wanted, exact text is an implementation-time decision, doesn't gate
+   `2-accepted`.
+3. **Sweep completeness at integration time.** Non-blocking, confirmed 2026-09-27 — the
+   ~460/~395 counts are a snapshot from this drafting session, explicitly stated as such;
+   re-counting against the corpus as it stands at integration is a mechanical step for
+   whoever integrates this, not an open design question.
 
 ---
 
