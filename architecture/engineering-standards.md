@@ -70,7 +70,7 @@ identity, with no name-based fallback.
 durable shape as the rest of this document.
 
 **Examples / counterexamples.** `tools/check_no_semantic_name_lookup.py` scans the
-frozen-IR files (`identity.rs`, `typed_ast/mod.rs`, `place.rs`, `query.rs`) for a
+frozen-IR files (`identity/mod.rs`, `typed_ast/mod.rs`, `place.rs`, `query.rs`) for a
 `HashMap`/`BTreeMap` field keyed by `String`/`Span`. `identity::position`
 (`PositionIndex`) is the one sanctioned exception (rebuilt per snapshot, per ADR-0054).
 The evaluator's `RuntimeRegistry` is a currently uncovered gap (`LIMIT-EVALUATION-003`) —

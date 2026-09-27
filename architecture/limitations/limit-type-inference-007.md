@@ -72,7 +72,7 @@ also a reason parallelising the checker would not by itself be enough
 - `arch.type-inference.requirement-1`
 - `arch.type-inference.requirement-7`
 - `metel-frontend/src/data/ast.rs` (`Span::of`, `with_line_index`)
-- `metel-frontend/src/pipeline/type_checking/typeinference/mod.rs`
+- `metel-frontend/src/pipeline/type_checking/type_engine/mod.rs`
   (`InferContext::default_literal_vars`, `DefaultedSubstitution`)
 - `metel-frontend/src/pipeline/type_checking/inference/declarations.rs`
   (`infer_fun_decl`, where the remaining residual most likely lives)

@@ -117,8 +117,8 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 | `owner` | `metel-interpreter`, `metel-frontend` |
 | `specified by` | `#evaluation` |
 | `implements` | [`metel-interpreter/src/evaluator/type_of.rs::value_to_type`](https://github.com/metel-lang/metel-core/blob/57cd28bc83936d7f2cc73a8e5fc9b2f2b3d122c0/metel-interpreter/src/evaluator/type_of.rs#L23) |
-| `verified by` | [`metel-interpreter/src/evaluator/mod.rs::dyn_aspect_value_rebuilds_its_dyn_type_without_exposing_the_concrete_value`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-interpreter/src/evaluator/mod.rs#L4461); [`metel-interpreter/tests/integration/sources/evaluator/aspects/91_dyn_aspect_borrowed_reference_dispatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/aspects/91_dyn_aspect_borrowed_reference_dispatch.toml#L1) |
-| `last_reviewed` | 57cd28bc83936d7f2cc73a8e5fc9b2f2b3d122c0 |
+| `verified by` | [`metel-interpreter/src/evaluator/mod.rs::dyn_aspect_value_rebuilds_its_dyn_type_without_exposing_the_concrete_value`](https://github.com/metel-lang/metel-core/blob/41b0f74be0c6e648506cce4821b4d76b2f41e6f8/metel-interpreter/src/evaluator/mod.rs#L4461); [`metel-interpreter/tests/integration/sources/evaluator/aspects/91_dyn_aspect_borrowed_reference_dispatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/aspects/91_dyn_aspect_borrowed_reference_dispatch.toml#L1) |
+| `last_reviewed` | 41b0f74be0c6e648506cce4821b4d76b2f41e6f8 |
 | `related` | ADR-0053, RFC-0008 |
 
 ##### Requirement {#arch.evaluation.requirement-2}
