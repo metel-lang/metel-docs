@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-09-27'
+generated_on: '2026-09-28'
 ---
 
 # RFC Registry
@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**170 RFCs total.** 26 draft, 40 under review, 14 accepted, 2 integrated (82 live), 61 implemented, 13 superseded, 14 refused (88 settled).
+**170 RFCs total.** 26 draft, 40 under review, 13 accepted, 3 integrated (82 live), 61 implemented, 13 superseded, 14 refused (88 settled).
 
 ## Draft (26)
 
@@ -87,7 +87,7 @@ the curated thematic map.
 - **RFC-0165** — Structural Union Types (`1-under-review` ; rfcs/1-under-review/rfc-0165-structural-union-types.md ; date 2026-09-02 ; updated 2026-09-02)
 - **RFC-0169** — Mutable-By-Value Receivers and Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0169-mutable-by-value-receivers-and-parameters.md ; date 2026-09-22 ; updated 2026-09-22)
 
-## Accepted (14)
+## Accepted (13)
 
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
 - **RFC-0065** — Allocator and Lifetime Ergonomics (`2-accepted` ; rfcs/2-accepted/rfc-0065-allocator-ergonomics.md ; date 2026-06-27 ; updated 2026-07-20)
@@ -101,13 +101,13 @@ the curated thematic map.
 - **RFC-0123** — Field-Wise Row Constraints (`2-accepted` ; rfcs/2-accepted/rfc-0123-field-wise-row-constraints.md ; date 2026-07-24 ; updated 2026-09-27)
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
-- **RFC-0167** — Reclassify unsoundness-only runtime errors as internal errors; split R0002 (`2-accepted` ; rfcs/2-accepted/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md ; date 2026-09-04 ; updated 2026-09-27)
 - **RFC-0171** — Prefix array type syntax: [T] and [T; N] (`2-accepted` ; rfcs/2-accepted/rfc-0171-prefix-array-type-syntax-t-and-t-n.md ; date 2026-09-27 ; updated 2026-09-27)
 
-## Integrated (2)
+## Integrated (3)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/836)
+- **RFC-0167** — Reclassify unsoundness-only runtime errors as internal errors; split R0002 (`3-integrated` ; rfcs/3-integrated/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md ; date 2026-09-04 ; updated 2026-09-28 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/991)
 
 ## Implemented (61)
 
