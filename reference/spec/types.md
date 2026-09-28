@@ -474,7 +474,13 @@ non-local aspect implementation, and as the target of a custom `Drop` implementa
 
 ## Arrays
 
-`Array<T>` is the built-in ordered sequence type. The shorthand `T[]` is preferred.
+`Array<T>` is the built-in ordered sequence type. The shorthand `[T]` is preferred.
+
+> **Changed in v0.14.0 (RFC-0171):** the shorthand moves from postfix `T[]` to prefix `[T]`.
+
+`T[]` is retired, but the parser has not migrated yet — see `LIMIT-PARSING-001` below — so
+this page's code examples still use the only spelling that compiles today, `T[]`, until the
+migration lands.
 
 ```metel
 fun main() -> i64 {
@@ -498,30 +504,38 @@ Arrays are usable in `for-in` loops.
 
 > **Changed in v0.12.0 (RFC-0126):** `T[]` is no longer an owning, mutable buffer.
 
-`T[]` is a non-owning, immutable, unconditionally-`Copy` view over a contiguous run — a
+`[T]` is a non-owning, immutable, unconditionally-`Copy` view over a contiguous run — a
 pointer and a length — produced only by borrowing a `List<T>`, a `[T; N]`, or another slice.
 Assignment through a slice, such as `a[0] = 9`, does not compile; mutation belongs to
-`List<T>` or `[T; N]`. Array literals produce `[T; N]` (below), not `T[]`; `let nums:
-i64[] = [1, 2, 3];` continues to work through `[T; N]`'s implicit coercion to `T[]`
-(RFC-0053), not because the literal itself is a `T[]`.
+`List<T>` or `[T; N]`. Array literals produce `[T; N]` (below), not `[T]`; `let nums:
+[i64] = [1, 2, 3];` continues to work through `[T; N]`'s implicit coercion to `[T]`
+(RFC-0053), not because the literal itself is a `[T]`.
 
-The three-way split between `T[]`, `[T; N]`, and `List<T>` below reflects the current design.
+The three-way split between `[T]`, `[T; N]`, and `List<T>` below reflects the current design.
 
 > **Gap** GAP-TYPES-002
+
+> **Limitation** LIMIT-PARSING-001
 
 <details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.types.arrays.legality-1}
 
-`T[]` is an unconditionally-`Copy`, non-owning borrowed view. It has no `Drop`; using a
+`[T]` is an unconditionally-`Copy`, non-owning borrowed view. It has no `Drop`; using a
 view does not move the underlying elements out of the view.
 
 <!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1291" reason="RFC-0171's [T] spelling does not parse yet -- only the pre-RFC-0171 postfix T[] spelling does. The Copy/non-owning/no-Drop semantics below are unaffected by RFC-0171 and remain demonstrated by the fixtures beneath, under that still-current T[] spelling; they are not evidence for [T] itself parsing." -->
+
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md), [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md), [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md), [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md), [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md), [rfc-0171](../../rfcs/3-integrated/rfc-0171-prefix-array-type-syntax-t-and-t-n.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1291: RFC-0171's [T] spelling does not parse yet -- only the pre-RFC-0171 postfix T[] spelling does. The Copy/non-owning/no-Drop semantics below are unaffected by RFC-0171 and remain demonstrated by the fixtures beneath, under that still-current T[] spelling; they are not evidence for [T] itself parsing._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -554,8 +568,12 @@ An array index expression must have type `u64`.
 
 > **Since:** Fixed-size arrays in v0.8.0.
 
+> **Limitation** LIMIT-PARSING-001
+
 `[T; N]` is an array type whose length `N` is a non-negative integer literal known at compile time.
-`[T; N]` coerces to `T[]` (not the reverse). `N` must be a non-negative integer literal; variables are not permitted.
+`[T; N]` coerces to `[T]` (not the reverse) — spelled `T[]` until the RFC-0171 migration
+lands; see the note under "Arrays" above. `N` must be a non-negative integer literal;
+variables are not permitted.
 
 ```metel
 fun main() {
@@ -571,7 +589,7 @@ fun main() {
 }
 ```
 
-Indexing and `for-in` work identically to `T[]`. Array patterns match sized arrays:
+Indexing and `for-in` work identically to `[T]`. Array patterns match sized arrays:
 
 ```metel
 fun sum(xs: [i64; 3]) -> i64 {
@@ -581,13 +599,13 @@ fun sum(xs: [i64; 3]) -> i64 {
 }
 ```
 
-> **Changed in v0.12.0 (RFC-0126):** unannotated array literals now have `[T; N]`, not `T[]`.
+> **Changed in v0.12.0 (RFC-0126):** unannotated array literals now have `[T; N]`, not `[T]`.
 
 An unannotated literal such as `[1, 2, 3]` has type `[i64; 3]`: its length is statically
 known and it owns its elements. Slices arise only from borrowing, never from a literal. The
-`[T; N]` → `T[]` coercion above applies wherever `T[]` is expected — a `let`/`var` target, a
+`[T; N]` → `[T]` coercion above applies wherever `[T]` is expected — a `let`/`var` target, a
 function argument, or a generic instantiation — so existing call sites need not change when
-they already accept a `[T; N]`-typed or explicitly `T[]`-annotated value. Only an
+they already accept a `[T; N]`-typed or explicitly `[T]`-annotated value. Only an
 unannotated literal's own type changed.
 
 See the note under "Arrays" above — this split is not considered final.
@@ -597,14 +615,20 @@ See the note under "Arrays" above — this split is not considered final.
 
 ##### Legality Rule {#spec.types.fixed-size-arrays.legality-1}
 
-An array literal has fixed-size-array type `[T; N]`, not `T[]`, where `N` is its literal
+An array literal has fixed-size-array type `[T; N]`, not `[T]`, where `N` is its literal
 element count.
 
 <!-- rfc.py:last_reviewed 8717cc6088e4dcf55f6f5580e60ad936d9bf69cf -->
 
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1291" reason="RFC-0171's [T] spelling does not parse yet -- only the pre-RFC-0171 postfix T[] spelling does. The fixture below demonstrates that an array literal has type [T; N], not the dynamic-array type, under that still-current T[] spelling; it is not evidence for [T] itself parsing." -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1291: RFC-0171's [T] spelling does not parse yet -- only the pre-RFC-0171 postfix T[] spelling does. The fixture below demonstrates that an array literal has type [T; N], not the dynamic-array type, under that still-current T[] spelling; it is not evidence for [T] itself parsing._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -613,14 +637,20 @@ element count.
 
 ##### Legality Rule {#spec.types.fixed-size-arrays.legality-2}
 
-`[T; N]` implicitly coerces to `T[]` wherever `T[]` is expected. The reverse coercion
+`[T; N]` implicitly coerces to `[T]` wherever `[T]` is expected. The reverse coercion
 is not permitted.
 
 <!-- rfc.py:last_reviewed 8717cc6088e4dcf55f6f5580e60ad936d9bf69cf -->
 
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1291" reason="RFC-0171's [T] spelling does not parse yet -- only the pre-RFC-0171 postfix T[] spelling does. The fixtures below demonstrate this coercion's direction under that still-current T[] spelling; they are not evidence for [T] itself parsing." -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md), [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1291: RFC-0171's [T] spelling does not parse yet -- only the pre-RFC-0171 postfix T[] spelling does. The fixtures below demonstrate this coercion's direction under that still-current T[] spelling; they are not evidence for [T] itself parsing._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
