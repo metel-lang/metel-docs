@@ -735,72 +735,50 @@ An inner closure borrows an enclosing closure's by-value capture.
 
 The root module does not declare exactly one function named `main`, non-generic,
 callable with zero arguments, with a body the type checker can type
-([RFC-0167](../rfcs/3-integrated/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
+([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
 Replaces retired `R0001`/`R0002`'s `main`-entry cases — see those entries below.
 
 **Fix:** add `fun main() { ... }` (or fix its shape) to your program's root module.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#991" reason="Not implemented -- this check still runs lazily at evaluator startup as R0001/R0002 (see those entries below), not during typechecking as T0031. RFC-0167 has not been built yet." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#991: Not implemented -- this check still runs lazily at evaluator startup as R0001/R0002 (see those entries below), not during typechecking as T0031. RFC-0167 has not been built yet._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle">
+<summary>Tested by (4)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDMxIiwiY29sIjpudWxsLCJjb250YWlucyI6Im5vIG1haW4iLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJuZWdfMDdfbm9fbWFpbi5tdGwiLCJzb3VyY2UiOiIvLyBSVU5USU1FX0VSUk9SW25vIG1haW5dXG5sZXQgeCA6PSAxO1xuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvZnVuY3Rpb25zL25lZ18wN19ub19tYWluLm10bCIsIm5hbWUiOiJuZWdfMDdfbm9fbWFpbi5tdGwiLCJzcGVjTGlua3MiOlt7ImhyZWYiOiJzcGVjL2Z1bmN0aW9ucy5tZCNzcGVjLmZ1bmN0aW9ucy5wcm9ncmFtLWVudHJ5LXBvaW50LmxlZ2FsaXR5LTEiLCJpZCI6InNwZWMuZnVuY3Rpb25zLnByb2dyYW0tZW50cnktcG9pbnQubGVnYWxpdHktMSIsImxhYmVsIjoiUHJvZ3JhbSBlbnRyeSBwb2ludCBMMSJ9XX0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDMxIiwiY29sIjpudWxsLCJjb250YWlucyI6Im5vdCBhIGZ1bmN0aW9uIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibmVnXzA4X21haW5fbm90X2FfZnVuY3Rpb24ubXRsIiwic291cmNlIjoiLy8gYG1haW5gIGV4aXN0cyBidXQgaXMgYSBiaW5kaW5nLCBub3QgYSBmdW5jdGlvbiAtLSBSMDAwMidzIG90aGVyIGRvY3VtZW50ZWRcbi8vIHRyaWdnZXIgKHRoZSBzaWJsaW5nIGNhc2UgaXMgYSBnZW5lcmljIG1haW4sIHNlZSBlcnJvci1jb2Rlcy5tZCkuXG5sZXQgbWFpbiA6PSA1O1xuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvZnVuY3Rpb25zL25lZ18wOF9tYWluX25vdF9hX2Z1bmN0aW9uLm10bCIsIm5hbWUiOiJuZWdfMDhfbWFpbl9ub3RfYV9mdW5jdGlvbi5tdGwiLCJzcGVjTGlua3MiOlt7ImhyZWYiOiJzcGVjL2Z1bmN0aW9ucy5tZCNzcGVjLmZ1bmN0aW9ucy5wcm9ncmFtLWVudHJ5LXBvaW50LmxlZ2FsaXR5LTEiLCJpZCI6InNwZWMuZnVuY3Rpb25zLnByb2dyYW0tZW50cnktcG9pbnQubGVnYWxpdHktMSIsImxhYmVsIjoiUHJvZ3JhbSBlbnRyeSBwb2ludCBMMSJ9XX0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDMxIiwiY29sIjpudWxsLCJjb250YWlucyI6ImdlbmVyaWMiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJuZWdfMDlfbWFpbl9pc19nZW5lcmljLm10bCIsInNvdXJjZSI6Ii8vIGBtYWluYCBleGlzdHMgYW5kIGlzIGEgZnVuY3Rpb24sIGJ1dCBpcyBpdHNlbGYgZ2VuZXJpYyAtLSBSRkMtMDE2NydzIG90aGVyXG4vLyBkb2N1bWVudGVkIGBtYWluYC1zaGFwZSB2aW9sYXRpb24gKHRoZSBzaWJsaW5nIGNhc2UgaXMgYG5lZ18wOGAncyBcIm5vdCBhXG4vLyBmdW5jdGlvblwiIG9uZSkuIFRoZSBwcm9ncmFtIGVudHJ5IHBvaW50IG11c3QgYmUgbm9uLWdlbmVyaWMuXG5mdW4gbWFpbjxUPigpIHt9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9mdW5jdGlvbnMvbmVnXzA5X21haW5faXNfZ2VuZXJpYy5tdGwiLCJuYW1lIjoibmVnXzA5X21haW5faXNfZ2VuZXJpYy5tdGwiLCJzcGVjTGlua3MiOlt7ImhyZWYiOiJzcGVjL2Z1bmN0aW9ucy5tZCNzcGVjLmZ1bmN0aW9ucy5wcm9ncmFtLWVudHJ5LXBvaW50LmxlZ2FsaXR5LTEiLCJpZCI6InNwZWMuZnVuY3Rpb25zLnByb2dyYW0tZW50cnktcG9pbnQubGVnYWxpdHktMSIsImxhYmVsIjoiUHJvZ3JhbSBlbnRyeSBwb2ludCBMMSJ9XX0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDMxIiwiY29sIjpudWxsLCJjb250YWlucyI6Inplcm8gYXJndW1lbnRzIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibmVnXzEwX21haW5faGFzX3BhcmFtcy5tdGwiLCJzb3VyY2UiOiIvLyBgbWFpbmAgZXhpc3RzLCBpcyBhIGZ1bmN0aW9uLCBhbmQgaXMgbm9uLWdlbmVyaWMsIGJ1dCB0YWtlcyBhbiBhcmd1bWVudCAtLVxuLy8gc3BlYy5mdW5jdGlvbnMucHJvZ3JhbS1lbnRyeS1wb2ludC5sZWdhbGl0eS0xIHJlcXVpcmVzIGl0IGJlIGNhbGxhYmxlIHdpdGhcbi8vIHplcm8gYXJndW1lbnRzLlxuZnVuIG1haW4oeDogaTY0KSB7XG4gICAgbGV0IF8gOj0geDtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4xL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2Z1bmN0aW9ucy9uZWdfMTBfbWFpbl9oYXNfcGFyYW1zLm10bCIsIm5hbWUiOiJuZWdfMTBfbWFpbl9oYXNfcGFyYW1zLm10bCIsInNwZWNMaW5rcyI6W3siaHJlZiI6InNwZWMvZnVuY3Rpb25zLm1kI3NwZWMuZnVuY3Rpb25zLnByb2dyYW0tZW50cnktcG9pbnQubGVnYWxpdHktMSIsImlkIjoic3BlYy5mdW5jdGlvbnMucHJvZ3JhbS1lbnRyeS1wb2ludC5sZWdhbGl0eS0xIiwibGFiZWwiOiJQcm9ncmFtIGVudHJ5IHBvaW50IEwxIn1dfQ=="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
 
 ## Runtime errors (R)
 
 ### R0001 — No `main` function defined
 
-> **Retired, replaced by `T0031` (RFC-0167).** Still the actual behavior today — the
-> `main`-existence check has not yet moved to typechecking. Entry kept describing
-> current behavior until RFC-0167 is implemented; see `T0031` above.
+> **Retired, replaced by `T0031` (RFC-0167).** The `main`-existence check now runs
+> during typechecking, not lazily at evaluator startup; this code no longer fires.
+> Kept documented, never reused, per this project's rigor-block-id convention
+> (`STYLEGUIDE.md`) — see `T0031` above.
 
-Execution requires a `main` function but none was found.
-
-**Fix:** add `fun main() { ... }` to your program.
-
-<!-- rfc.py:fixtures:start -->
-<p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlIwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6Im5vIG1haW4iLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJydW50aW1lX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibmVnXzA3X25vX21haW4ubXRsIiwic291cmNlIjoiLy8gUlVOVElNRV9FUlJPUltubyBtYWluXVxubGV0IHggOj0gMTtcbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4xL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2Z1bmN0aW9ucy9uZWdfMDdfbm9fbWFpbi5tdGwiLCJuYW1lIjoibmVnXzA3X25vX21haW4ubXRsIn0="></details>
-<!-- rfc.py:fixtures:end -->
+Formerly: execution required a `main` function but none was found.
 
 ### R0002 — `main` is not a valid entry point
 
-> **Retired, split three ways by RFC-0167.** Still the actual behavior today — none of
-> the three replacements below are implemented yet. This code covers three unrelated
-> failures under one number: `main` exists but has the wrong shape (→ `T0031` above,
-> once implemented); an ordinary (non-`main`) call on a non-callable value (→ `I0007`
-> below, merging into what `R0010` becomes); and a generic closure/method with no
-> call-site type context (→ `I0009` below, its own new code, unrelated to `main`).
+> **Retired, split three ways by RFC-0167.** This code no longer fires: `main`
+> exists but has the wrong shape is now `T0031` above; an ordinary (non-`main`) call
+> on a non-callable value is now `I0007` below (merged with what `R0010` became);
+> a generic closure/method with no call-site type context is now `I0009` below, its
+> own code, unrelated to `main`. Kept documented, never reused, per this project's
+> rigor-block-id convention (`STYLEGUIDE.md`).
 
-`main` exists but is generic or is not a function.
-
-**Fix:** `main` must be a concrete, non-generic function with no parameters.
-
-> **Note:** also raised for a generic closure invoked with no call-site type context,
-> with a different message — this entry covers the `main` case only.
-
-<!-- rfc.py:fixtures:start -->
-<p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlIwMDAyIiwiY29sIjpudWxsLCJjb250YWlucyI6Im5vdCBhIGZ1bmN0aW9uIiwibGluZSI6bnVsbCwic3RhdHVzIjoicnVudGltZV9lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6Im5lZ18wOF9tYWluX25vdF9hX2Z1bmN0aW9uLm10bCIsInNvdXJjZSI6Ii8vIGBtYWluYCBleGlzdHMgYnV0IGlzIGEgYmluZGluZywgbm90IGEgZnVuY3Rpb24gLS0gUjAwMDIncyBvdGhlciBkb2N1bWVudGVkXG4vLyB0cmlnZ2VyICh0aGUgc2libGluZyBjYXNlIGlzIGEgZ2VuZXJpYyBtYWluLCBzZWUgZXJyb3ItY29kZXMubWQpLlxubGV0IG1haW4gOj0gNTtcbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4xL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2Z1bmN0aW9ucy9uZWdfMDhfbWFpbl9ub3RfYV9mdW5jdGlvbi5tdGwiLCJuYW1lIjoibmVnXzA4X21haW5fbm90X2FfZnVuY3Rpb24ubXRsIn0="></details>
-<!-- rfc.py:fixtures:end -->
+Formerly: `main` existed but was generic or was not a function.
 
 ### R0003 — Undefined variable at runtime
 
-> **Retired, replaced by `I0003` (RFC-0167).** Still the actual behavior today —
-> reclassification not implemented. A well-typed program is never supposed to trigger
-> this (RFC-0167's premise); see `I0003` below.
+> **Retired, replaced by `I0003` (RFC-0167).** This code no longer fires. Kept
+> documented, never reused, per this project's rigor-block-id convention
+> (`STYLEGUIDE.md`) — see `I0003` below.
 
-A variable name is not found in the current environment. This can occur when a variable is used before it is defined in a branch that the type-checker did not flag.
-
-```
-[R0003] runtime error in main.mtl at 10..15: undefined variable `x`
-```
-
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Confirmed live raise sites (lvalue.rs, mod.rs). #986's follow-up round tried #712's exact precedent (nested-fun forward reference) across 5 more statement positions -- var initializer, if-branch, call-argument, match-arm, struct-literal-field, while-condition -- all resolved correctly, meaning #712's original let-initializer fix was thorough, not narrow. Still no repro found across either investigation round, and still not confirmed unreachable either." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise sites (lvalue.rs, mod.rs). #986's follow-up round tried #712's exact precedent (nested-fun forward reference) across 5 more statement positions -- var initializer, if-branch, call-argument, match-arm, struct-literal-field, while-condition -- all resolved correctly, meaning #712's original let-initializer fix was thorough, not narrow. Still no repro found across either investigation round, and still not confirmed unreachable either._</span>
-<!-- rfc.py:exemption:rendered:end -->
+Formerly: a variable name was not found in the current environment.
 
 ### R0004 — Index out of bounds
 
@@ -836,21 +814,11 @@ A tuple element is accessed by an index that does not exist.
 
 ### R0006 — Non-exhaustive match at runtime
 
-> **Retired, replaced by `I0004` (RFC-0167).** Still the actual behavior today —
-> reclassification not implemented. A well-typed program is never supposed to trigger
-> this (RFC-0167's premise); see `I0004` below.
+> **Retired, replaced by `I0004` (RFC-0167).** This code no longer fires. Kept
+> documented, never reused, per this project's rigor-block-id convention
+> (`STYLEGUIDE.md`) — see `I0004` below.
 
-A `match` expression reached its end without any arm matching. This indicates a pattern that the type checker approved as exhaustive but that is not, which is a known limitation.
-
-```
-[R0006] runtime error in main.mtl at 2..30: match: no arm matched scrutinee
-```
-
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="A known limitation (the type checker approving a match as exhaustive when it is not). #986's follow-up round read check_match_exhaustiveness end to end (typechecker/construction/patterns.rs) -- the Boolean/Named-enum/Never/SizedArray cases, is_variant_uninhabited's RFC-0078 uninhabited-payload check, and pattern_covers_variant's enum+variant name matching all look sound on inspection. No construction attempted this round (unlike R0003/R0009) since no plausible gap surfaced worth testing against." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: A known limitation (the type checker approving a match as exhaustive when it is not). #986's follow-up round read check_match_exhaustiveness end to end (typechecker/construction/patterns.rs) -- the Boolean/Named-enum/Never/SizedArray cases, is_variant_uninhabited's RFC-0078 uninhabited-payload check, and pattern_covers_variant's enum+variant name matching all look sound on inspection. No construction attempted this round (unlike R0003/R0009) since no plausible gap surfaced worth testing against._</span>
-<!-- rfc.py:exemption:rendered:end -->
+Formerly: a `match` expression reached its end without any arm matching.
 
 ### R0007 — Arithmetic error
 
@@ -870,84 +838,38 @@ before an operation that could overflow.
 
 ### R0008 — Field not found
 
-> **Retired, replaced by `I0005` (RFC-0167).** Still the actual behavior today —
-> reclassification not implemented. A well-typed program is never supposed to trigger
-> this (RFC-0167's premise); see `I0005` below.
+> **Retired, replaced by `I0005` (RFC-0167).** This code no longer fires. Kept
+> documented, never reused, per this project's rigor-block-id convention
+> (`STYLEGUIDE.md`) — see `I0005` below.
 
-A struct or enum value does not have the accessed field.
-
-```
-[R0008] runtime error in main.mtl at 5..12: no field `colour` on value
-```
-
-**Fix:** check the field name against the type definition.
-
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Confirmed live raise site, but every attempted repro (a generic function reading an unconstrained field) was caught statically as T0002 instead. #986's follow-up round: field access resolves directly against the accessed value's own concrete fields (lvalue.rs's TypedPlace::Field), not through a bare-name-keyed lookup table the way aspect methods do -- so R0009's newly-found collision bug (metel-core#989) doesn't obviously carry over here. No new construction attempted this round." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise site, but every attempted repro (a generic function reading an unconstrained field) was caught statically as T0002 instead. #986's follow-up round: field access resolves directly against the accessed value's own concrete fields (lvalue.rs's TypedPlace::Field), not through a bare-name-keyed lookup table the way aspect methods do -- so R0009's newly-found collision bug (metel-core#989) doesn't obviously carry over here. No new construction attempted this round._</span>
-<!-- rfc.py:exemption:rendered:end -->
+Formerly: a struct or enum value did not have the accessed field.
 
 ### R0009 — Method not found
 
-> **Retired, replaced by `I0006` (RFC-0167).** Still the actual behavior today —
-> reclassification not implemented. A well-typed program is never supposed to trigger
-> this (RFC-0167's premise); see `I0006` below.
+> **Retired, replaced by `I0006` (RFC-0167).** This code no longer fires. Kept
+> documented, never reused, per this project's rigor-block-id convention
+> (`STYLEGUIDE.md`) — see `I0006` below.
 
-A method call cannot be resolved for the receiver type.
-
-```
-[R0009] runtime error in main.mtl at 5..20: no method `draw` on `Circle`
-```
-
-**Fix:** define the method in an `extend` block for the type.
-
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#989" reason="Confirmed live raise site. #986's follow-up round found a real root-cause bug in this exact dispatch machinery: metel-core#989, two same-named aspects in different modules corrupt each other's dispatch resolution (TypeRegistry::aspect_decl_modules is keyed by bare aspect name, not a qualified path). In the variant tried (colliding aspects with differently-named methods) this surfaced as a false *static* T0003 rejection, not a runtime R0009 -- construction-time method lookup apparently consults the same corrupted map before dispatch is ever elaborated. A same-method-name variant (also tried) resolved correctly in both import orderings tried, so this mechanism isn't yet confirmed to reach R0009 specifically -- revisit once #989 is fixed." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#989: Confirmed live raise site. #986's follow-up round found a real root-cause bug in this exact dispatch machinery: metel-core#989, two same-named aspects in different modules corrupt each other's dispatch resolution (TypeRegistry::aspect_decl_modules is keyed by bare aspect name, not a qualified path). In the variant tried (colliding aspects with differently-named methods) this surfaced as a false *static* T0003 rejection, not a runtime R0009 -- construction-time method lookup apparently consults the same corrupted map before dispatch is ever elaborated. A same-method-name variant (also tried) resolved correctly in both import orderings tried, so this mechanism isn't yet confirmed to reach R0009 specifically -- revisit once #989 is fixed._</span>
-<!-- rfc.py:exemption:rendered:end -->
+Formerly: a method call could not be resolved for the receiver type.
 
 ### R0010 — Call on non-callable value
 
-> **Retired, replaced by `I0007` (RFC-0167).** Still the actual behavior today —
-> reclassification not implemented. A well-typed program is never supposed to trigger
-> this (RFC-0167's premise); merges with `R0002`'s ordinary (non-`main`) call-target
-> case — see `I0007` below.
+> **Retired, replaced by `I0007` (RFC-0167).** This code no longer fires, and merges
+> with `R0002`'s ordinary (non-`main`) call-target case. Kept documented, never
+> reused, per this project's rigor-block-id convention (`STYLEGUIDE.md`) — see
+> `I0007` below.
 
-A call expression (`f(...)`) is applied to a value that is not a function or closure.
-
-```
-[R0010] runtime error in main.mtl at 3..8: call: expected a closure or builtin
-```
-
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Confirmed live raise site, but calling a plain i64 variable was caught statically as T0001. #986's follow-up round: calling a value generically/dynamically has no route to try at all in v0.13.0 -- RFC-0161's dyn Callable / Callable aspect (the mechanism that would make a call target's callability depend on a runtime value rather than a static function type) is deferred in full to a later milestone, so there is currently no dynamic-dispatch angle to test against this code." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise site, but calling a plain i64 variable was caught statically as T0001. #986's follow-up round: calling a value generically/dynamically has no route to try at all in v0.13.0 -- RFC-0161's dyn Callable / Callable aspect (the mechanism that would make a call target's callability depend on a runtime value rather than a static function type) is deferred in full to a later milestone, so there is currently no dynamic-dispatch angle to test against this code._</span>
-<!-- rfc.py:exemption:rendered:end -->
+Formerly: a call expression (`f(...)`) was applied to a value that is not a function
+or closure.
 
 ### R0011 — Invalid for-in iterator
 
-> **Retired, replaced by `I0008` (RFC-0167).** Still the actual behavior today —
-> reclassification not implemented. A well-typed program is never supposed to trigger
-> this (RFC-0167's premise); see `I0008` below.
+> **Retired, replaced by `I0008` (RFC-0167).** This code no longer fires. Kept
+> documented, never reused, per this project's rigor-block-id convention
+> (`STYLEGUIDE.md`) — see `I0008` below.
 
-A `for x in expr` loop where `expr` does not evaluate to an `Array`, a `Range`, or a type
-implementing `Iterable`.
-
-```
-[R0011] runtime error in main.mtl at 1..20: for-in: expected Array or Range
-```
-
-**Fix:** ensure the iterable is an array literal, a range (`a..b`), a value of those types,
-or a type with its own `Iterable` implementation (see `expressions.md`, "for-in").
-
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Confirmed live raise sites (evaluator/mod.rs), but a plain non-iterable typed value (e.g. for (x in n) where n: i64) is caught statically as T0001 before reaching this runtime path. #986's follow-up round: the user-defined-Iterable dispatch this code guards resolves through the receiver value's own runtime type id (resolve_value_type_id + get_regular_method), not a bare-name-keyed table -- unlike R0009's aspect-method path (metel-core#989), this one isn't obviously vulnerable to the same class of collision bug. No construction attempted this round on that basis." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise sites (evaluator/mod.rs), but a plain non-iterable typed value (e.g. for (x in n) where n: i64) is caught statically as T0001 before reaching this runtime path. #986's follow-up round: the user-defined-Iterable dispatch this code guards resolves through the receiver value's own runtime type id (resolve_value_type_id + get_regular_method), not a bare-name-keyed table -- unlike R0009's aspect-method path (metel-core#989), this one isn't obviously vulnerable to the same class of collision bug. No construction attempted this round on that basis._</span>
-<!-- rfc.py:exemption:rendered:end -->
+Formerly: a `for x in expr` loop where `expr` did not evaluate to an `Array`, a
+`Range`, or a type implementing `Iterable`.
 
 ### R0012 — Assertion failed
 
@@ -1050,70 +972,70 @@ The program uses a language feature that is not yet supported in this version of
 ### I0003 — Scoping/hoisting invariant violated
 
 A variable name was not found in the current environment at runtime
-([RFC-0167](../rfcs/3-integrated/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
+([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
 Whether a name resolves is a purely static scoping fact; if this fires, the type
 checker approved a program it should not have. Replaces retired `R0003` (see above).
 
 **What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#991" reason="Not implemented -- this raise site still reports R0003 (see that entry above), not I0003. RFC-0167's reclassification has not been built yet. The underlying reachability question is #986's, carried over unchanged: confirmed live raise sites (lvalue.rs, mod.rs), but no repro found across two investigation rounds and not confirmed unreachable either." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Confirmed live raise sites (lvalue.rs, mod.rs), carried over unchanged from retired R0003's own finding. #986's follow-up round tried #712's exact precedent (nested-fun forward reference) across 5 more statement positions -- var initializer, if-branch, call-argument, match-arm, struct-literal-field, while-condition -- all resolved correctly, meaning #712's original let-initializer fix was thorough, not narrow. Still no repro found across either investigation round, and still not confirmed unreachable either." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#991: Not implemented -- this raise site still reports R0003 (see that entry above), not I0003. RFC-0167's reclassification has not been built yet. The underlying reachability question is #986's, carried over unchanged: confirmed live raise sites (lvalue.rs, mod.rs), but no repro found across two investigation rounds and not confirmed unreachable either._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise sites (lvalue.rs, mod.rs), carried over unchanged from retired R0003's own finding. #986's follow-up round tried #712's exact precedent (nested-fun forward reference) across 5 more statement positions -- var initializer, if-branch, call-argument, match-arm, struct-literal-field, while-condition -- all resolved correctly, meaning #712's original let-initializer fix was thorough, not narrow. Still no repro found across either investigation round, and still not confirmed unreachable either._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### I0004 — Exhaustiveness-checker invariant violated
 
 A `match` expression reached its end without any arm matching
-([RFC-0167](../rfcs/3-integrated/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
+([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
 Whether a `match`'s arms are exhaustive is a purely static property of the pattern set
 against the scrutinee type; if this fires, `check_match_exhaustiveness` approved a
 `match` it should not have. Replaces retired `R0006` (see above).
 
 **What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#991" reason="Not implemented -- this raise site still reports R0006 (see that entry above), not I0004. RFC-0167's reclassification has not been built yet. The underlying reachability question is #986's, carried over unchanged: a known limitation (the type checker approving a match as exhaustive when it is not); #986's follow-up round read check_match_exhaustiveness end to end and found it sound on inspection, with no plausible gap surfaced worth testing against." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="A known limitation (the type checker approving a match as exhaustive when it is not), carried over unchanged from retired R0006's own finding. #986's follow-up round read check_match_exhaustiveness end to end (typechecker/construction/patterns.rs) -- the Boolean/Named-enum/Never/SizedArray cases, is_variant_uninhabited's RFC-0078 uninhabited-payload check, and pattern_covers_variant's enum+variant name matching all look sound on inspection. No construction attempted this round (unlike R0003/R0009) since no plausible gap surfaced worth testing against." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#991: Not implemented -- this raise site still reports R0006 (see that entry above), not I0004. RFC-0167's reclassification has not been built yet. The underlying reachability question is #986's, carried over unchanged: a known limitation (the type checker approving a match as exhaustive when it is not); #986's follow-up round read check_match_exhaustiveness end to end and found it sound on inspection, with no plausible gap surfaced worth testing against._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: A known limitation (the type checker approving a match as exhaustive when it is not), carried over unchanged from retired R0006's own finding. #986's follow-up round read check_match_exhaustiveness end to end (typechecker/construction/patterns.rs) -- the Boolean/Named-enum/Never/SizedArray cases, is_variant_uninhabited's RFC-0078 uninhabited-payload check, and pattern_covers_variant's enum+variant name matching all look sound on inspection. No construction attempted this round (unlike R0003/R0009) since no plausible gap surfaced worth testing against._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### I0005 — Field-resolution invariant violated
 
 A struct or enum value does not have the accessed field
-([RFC-0167](../rfcs/3-integrated/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
+([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
 Whether a type has a given field is a structural fact, checked at the point of the
 `struct`/`enum` declaration; if this fires, that check was wrong. Replaces retired
 `R0008` (see above).
 
 **What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#991" reason="Not implemented -- this raise site still reports R0008 (see that entry above), not I0005. RFC-0167's reclassification has not been built yet. The underlying reachability question is #986's, carried over unchanged: confirmed live raise site, but every attempted repro (a generic function reading an unconstrained field) was caught statically as T0002 instead; field access resolves directly against the accessed value's own concrete fields, not through a bare-name-keyed lookup table, so R0009's collision bug (metel-core#989) doesn't obviously carry over here." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Confirmed live raise site, carried over unchanged from retired R0008's own finding, but every attempted repro (a generic function reading an unconstrained field) was caught statically as T0002 instead. #986's follow-up round: field access resolves directly against the accessed value's own concrete fields (lvalue.rs's TypedPlace::Field), not through a bare-name-keyed lookup table the way aspect methods do -- so R0009's collision bug (metel-core#989) doesn't obviously carry over here. No new construction attempted this round." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#991: Not implemented -- this raise site still reports R0008 (see that entry above), not I0005. RFC-0167's reclassification has not been built yet. The underlying reachability question is #986's, carried over unchanged: confirmed live raise site, but every attempted repro (a generic function reading an unconstrained field) was caught statically as T0002 instead; field access resolves directly against the accessed value's own concrete fields, not through a bare-name-keyed lookup table, so R0009's collision bug (metel-core#989) doesn't obviously carry over here._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise site, carried over unchanged from retired R0008's own finding, but every attempted repro (a generic function reading an unconstrained field) was caught statically as T0002 instead. #986's follow-up round: field access resolves directly against the accessed value's own concrete fields (lvalue.rs's TypedPlace::Field), not through a bare-name-keyed lookup table the way aspect methods do -- so R0009's collision bug (metel-core#989) doesn't obviously carry over here. No new construction attempted this round._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### I0006 — Method-dispatch invariant violated
 
 A method call cannot be resolved for the receiver type
-([RFC-0167](../rfcs/3-integrated/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
+([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
 Whether a type has a given method is a structural fact, checked at the point of the
 relevant `extend` block; if this fires, that check was wrong. Replaces retired `R0009`
 (see above).
 
 **What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#991" reason="Not implemented -- this raise site still reports R0009 (see that entry above), not I0006. RFC-0167's reclassification has not been built yet. The underlying reachability question is #989's, carried over unchanged: confirmed live raise site, and #986's follow-up round found a real root-cause bug in this exact dispatch machinery (metel-core#989, two same-named aspects in different modules corrupt each other's dispatch resolution) -- revisit once #989 is fixed." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#989" reason="Confirmed live raise site, carried over unchanged from retired R0009's own finding. #986's follow-up round found a real root-cause bug in this exact dispatch machinery: metel-core#989, two same-named aspects in different modules corrupt each other's dispatch resolution (TypeRegistry::aspect_decl_modules is keyed by bare aspect name, not a qualified path). In the variant tried (colliding aspects with differently-named methods) this surfaced as a false *static* T0003 rejection, not this raise site -- construction-time method lookup apparently consults the same corrupted map before dispatch is ever elaborated. A same-method-name variant (also tried) resolved correctly in both import orderings tried, so this mechanism isn't yet confirmed to reach this code specifically -- revisit once #989 is fixed." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#991: Not implemented -- this raise site still reports R0009 (see that entry above), not I0006. RFC-0167's reclassification has not been built yet. The underlying reachability question is #989's, carried over unchanged: confirmed live raise site, and #986's follow-up round found a real root-cause bug in this exact dispatch machinery (metel-core#989, two same-named aspects in different modules corrupt each other's dispatch resolution) -- revisit once #989 is fixed._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#989: Confirmed live raise site, carried over unchanged from retired R0009's own finding. #986's follow-up round found a real root-cause bug in this exact dispatch machinery: metel-core#989, two same-named aspects in different modules corrupt each other's dispatch resolution (TypeRegistry::aspect_decl_modules is keyed by bare aspect name, not a qualified path). In the variant tried (colliding aspects with differently-named methods) this surfaced as a false *static* T0003 rejection, not this raise site -- construction-time method lookup apparently consults the same corrupted map before dispatch is ever elaborated. A same-method-name variant (also tried) resolved correctly in both import orderings tried, so this mechanism isn't yet confirmed to reach this code specifically -- revisit once #989 is fixed._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### I0007 — Callability invariant violated
 
 A call expression (`f(...)`) is applied to a value that is not a function or closure
-([RFC-0167](../rfcs/3-integrated/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
+([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
 Whether a value is callable is a static type fact; in v0.13.0 there is not even a
 dynamic-dispatch mechanism (`dyn Callable`, RFC-0161) that could make it otherwise. If
 this fires, the type checker approved a call it should not have. Replaces retired
@@ -1126,42 +1048,42 @@ above) — both raise sites make the exact same claim, just from different call 
 
 **What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#991" reason="Not implemented -- these raise sites still report R0010 and (for the non-main call.rs:150 case) R0002 (see both entries above), not I0007. RFC-0167's reclassification has not been built yet. The underlying reachability question is #986's, carried over unchanged: confirmed live raise site, but calling a plain i64 variable was caught statically as T0001; calling a value generically/dynamically has no route to try at all in v0.13.0 (RFC-0161's dyn Callable is deferred), so there is no dynamic-dispatch angle to test against this code." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Confirmed live raise sites (merged from retired R0010's own finding and R0002's non-main call-target case), but calling a plain i64 variable was caught statically as T0001. #986's follow-up round: calling a value generically/dynamically has no route to try at all in v0.13.0 -- RFC-0161's dyn Callable / Callable aspect (the mechanism that would make a call target's callability depend on a runtime value rather than a static function type) is deferred in full to a later milestone, so there is currently no dynamic-dispatch angle to test against this code." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#991: Not implemented -- these raise sites still report R0010 and (for the non-main call.rs:150 case) R0002 (see both entries above), not I0007. RFC-0167's reclassification has not been built yet. The underlying reachability question is #986's, carried over unchanged: confirmed live raise site, but calling a plain i64 variable was caught statically as T0001; calling a value generically/dynamically has no route to try at all in v0.13.0 (RFC-0161's dyn Callable is deferred), so there is no dynamic-dispatch angle to test against this code._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise sites (merged from retired R0010's own finding and R0002's non-main call-target case), but calling a plain i64 variable was caught statically as T0001. #986's follow-up round: calling a value generically/dynamically has no route to try at all in v0.13.0 -- RFC-0161's dyn Callable / Callable aspect (the mechanism that would make a call target's callability depend on a runtime value rather than a static function type) is deferred in full to a later milestone, so there is currently no dynamic-dispatch angle to test against this code._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### I0008 — Iterator-dispatch invariant violated
 
 A `for x in expr` loop where `expr` does not evaluate to an `Array`, a `Range`, or a
 type implementing `Iterable`
-([RFC-0167](../rfcs/3-integrated/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
+([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
 Whether a type implements `Iterable` is a static bound fact, checked wherever the
 iteration is typed; if this fires, that check was wrong. Replaces retired `R0011`
 (see above).
 
 **What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#991" reason="Not implemented -- this raise site still reports R0011 (see that entry above), not I0008. RFC-0167's reclassification has not been built yet. The underlying reachability question is #986's, carried over unchanged: confirmed live raise sites (evaluator/mod.rs), but a plain non-iterable typed value is caught statically as T0001 before reaching this runtime path; the user-defined-Iterable dispatch resolves through the receiver value's own runtime type id, not a bare-name-keyed table, so it isn't obviously vulnerable to R0009's collision bug (metel-core#989)." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Confirmed live raise sites (evaluator/mod.rs), carried over unchanged from retired R0011's own finding, but a plain non-iterable typed value (e.g. for (x in n) where n: i64) is caught statically as T0001 before reaching this runtime path. #986's follow-up round: the user-defined-Iterable dispatch this code guards resolves through the receiver value's own runtime type id (resolve_value_type_id + get_regular_method), not a bare-name-keyed table -- unlike R0009's aspect-method path (metel-core#989), this one isn't obviously vulnerable to the same class of collision bug. No construction attempted this round on that basis." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#991: Not implemented -- this raise site still reports R0011 (see that entry above), not I0008. RFC-0167's reclassification has not been built yet. The underlying reachability question is #986's, carried over unchanged: confirmed live raise sites (evaluator/mod.rs), but a plain non-iterable typed value is caught statically as T0001 before reaching this runtime path; the user-defined-Iterable dispatch resolves through the receiver value's own runtime type id, not a bare-name-keyed table, so it isn't obviously vulnerable to R0009's collision bug (metel-core#989)._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise sites (evaluator/mod.rs), carried over unchanged from retired R0011's own finding, but a plain non-iterable typed value (e.g. for (x in n) where n: i64) is caught statically as T0001 before reaching this runtime path. #986's follow-up round: the user-defined-Iterable dispatch this code guards resolves through the receiver value's own runtime type id (resolve_value_type_id + get_regular_method), not a bare-name-keyed table -- unlike R0009's aspect-method path (metel-core#989), this one isn't obviously vulnerable to the same class of collision bug. No construction attempted this round on that basis._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### I0009 — Generic construction-at-call-time invariant violated
 
 A generic closure or method's construction-at-call-time machinery (`metel-core#286`)
 was invoked with no call-site type context available
-([RFC-0167](../rfcs/3-integrated/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
+([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
 Unrelated to call-target shape or `main` entirely — a construction-machinery plumbing
 failure, not a callability question. Replaces retired `R0002`'s other orphan use (see
 above); this is a wholly new code, not a merge into any existing one.
 
 **What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#991" reason="Not implemented -- this raise site (call.rs:104 and call.rs:272) still reports R0002 (see that entry above), not I0009. RFC-0167's reclassification has not been built yet; this code did not exist before RFC-0167 assigned it, so there is no prior reachability finding to carry over." -->
+<!-- rfc.py:exemption kind="untestable" ref="metel-core#991" reason="This code is new with RFC-0167 -- no prior R0002-era reachability finding to carry over. Its two raise sites (call.rs) fire only when a generic closure/method's own captured type_ctx is None, which every construction path that builds a ClosureBody::Untyped value populates unconditionally (Pass 1b and hoist_nested_funs both always pass env.type_ctx.clone()); no construction was found that reaches ClosureBody::Untyped with type_ctx already None." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#991: Not implemented -- this raise site (call.rs:104 and call.rs:272) still reports R0002 (see that entry above), not I0009. RFC-0167's reclassification has not been built yet; this code did not exist before RFC-0167 assigned it, so there is no prior reachability finding to carry over._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — untestable: This code is new with RFC-0167 -- no prior R0002-era reachability finding to carry over. Its two raise sites (call.rs) fire only when a generic closure/method's own captured type_ctx is None, which every construction path that builds a ClosureBody::Untyped value populates unconditionally (Pass 1b and hoist_nested_funs both always pass env.type_ctx.clone()); no construction was found that reaches ClosureBody::Untyped with type_ctx already None._</span>
 <!-- rfc.py:exemption:rendered:end -->

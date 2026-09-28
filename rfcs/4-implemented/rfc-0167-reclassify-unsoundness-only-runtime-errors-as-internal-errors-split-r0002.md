@@ -2,16 +2,16 @@
 id: rfc-0167
 title: "Reclassify unsoundness-only runtime errors as internal errors; split R0002"
 date: '2026-09-04'
-status: integrated
+status: implemented
 updated: '2026-09-28'
 tracking: 'https://github.com/metel-lang/metel-core/issues/991'
 coverage:
-  "1": { kind: blocked, reason: "Six codes moving from R00NN to I00NN (R0003->I0003, R0006->I0004, R0008->I0005, R0009->I0006, R0010->I0007, R0011->I0008) is a Rust-enum renumbering with no reference/spec/*.md Legality Rule/Dynamic Semantics anchor of its own -- the claim lives in error-codes.md's own I0003-I0008 entries, each independently exempted there pending implementation.", ref: "metel-core#991" }
-  "2": { kind: blocked, reason: "spec.functions.program-entry-point.legality-1 is a wholly new rule with no citing fixture yet -- the main-entry check still runs lazily at evaluator startup as R0001/R0002 (see error-codes.md), not during typechecking as this rule/T0031 describe.", ref: "metel-core#991" }
-  "3": { kind: blocked, reason: "R0002's two non-main raise sites (ordinary call-target case merging into I0007; generic-closure construction-machinery case becoming new I0009) are error-codes.md catalog entries with no reference/spec/*.md anchor of their own -- independently exempted in error-codes.md's I0007/I0009 entries pending implementation.", ref: "metel-core#991" }
+  "1": { kind: blocked, reason: "Six codes moving from R00NN to I00NN (R0003->I0003, R0006->I0004, R0008->I0005, R0009->I0006, R0010->I0007, R0011->I0008) is a Rust-enum renumbering with no reference/spec/*.md Legality Rule/Dynamic Semantics anchor of its own -- the claim lives in error-codes.md's own I0003-I0008 entries, each independently exempted there for its own (pre-existing, carried-over-from-the-retired-R-code) reachability reason, not this RFC's implementation status.", ref: "metel-core#991" }
+  "2": { kind: blocked, reason: "spec.functions.program-entry-point.legality-1 is anchored and now has real citing fixtures (see reference/spec/functions.md), but this RFC section's own number has no direct `options.rfc` sidecar citation of its own -- the claim is demonstrated at the spec-rule level, not via a fixture citing this RFC section directly.", ref: "metel-core#991" }
+  "3": { kind: blocked, reason: "R0002's two non-main raise sites (ordinary call-target case merging into I0007; generic-closure construction-machinery case becoming new I0009) are error-codes.md catalog entries with no reference/spec/*.md anchor of their own -- independently exempted in error-codes.md's I0007/I0009 entries for their own reachability reasons, not this RFC's implementation status.", ref: "metel-core#991" }
   "4": { kind: untestable, reason: "A durable classification rule for future diagnostic codes -- process guidance for RFC authors, not a testable language claim; the RFC's own text defers adding it to STYLEGUIDE.md as separate follow-up work, not part of this RFC's scope." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/991'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-09-04).** Milestoned v0.14.0 -- real engagement per PROCESS.md's milestoning trigger
@@ -28,6 +28,8 @@ impl_status: not-started
 > **Status — accepted (2026-09-27).** All three open questions confirmed non-blocking 2026-09-27, reviewed once more before this transition (one stale RFC-stage citation found and fixed). Design settled per PROCESS.md's 2-accepted bar.
 
 > **Status — integrated (2026-09-28).**
+
+> **Status — implemented (2026-09-28).**
 
 ## Summary
 

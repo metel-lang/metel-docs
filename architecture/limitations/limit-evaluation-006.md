@@ -5,9 +5,7 @@ summary: "Six R00NN codes still fire instead of their I00NN replacements; the ma
 scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
 discovered_by: "RFC-0167 integration pass (reference/spec/functions.md, reference/error-codes.md 3-integrated cross-check), 2026-09-28"
-disposition: planned
-planned_for: v0.14.0
-rfc: RFC-0167
+disposition: resolved
 review: null
 ---
 
@@ -45,12 +43,22 @@ still accurately describe today's actual behavior.
 
 ## Resolution
 
-Planned: tracked as metel-core#991 (RFC-0167, milestone v0.14.0). Implementation:
-add `I0003`-`I0009` and retire `R0001`-`R0002` (main cases)/`R0003`/`R0006`/`R0008`/
-`R0009`/`R0010`/`R0011` in the Rust enums; move the `main`-declaration check from
-`evaluator/mod.rs` into the typechecking (or program-assembly) pipeline as `T0031`;
-update every fixture citing a retired code to its replacement (`rfc.py check`'s
-per-fixture citation-consistency check catches anything missed). Once implemented,
-remove this record's exemptions from the affected `error-codes.md` entries and
-`spec.functions.program-entry-point.legality-1`, re-point their fixture citations at
-the real new-code fixtures, and run `rfc.py transition rfc-0167 --to implemented`.
+Implemented 2026-09-28, tracked by metel-core#991 (RFC-0167, milestone v0.14.0).
+`metel-frontend/src/data/error/mod.rs`'s `RuntimeErrorCode` no longer has R0001-R0003/
+R0006/R0008-R0011; `InternalErrorCode` gained `I0003`-`I0009`; `TypeErrorCode` gained
+`T0031`. `evaluator/mod.rs::evaluate_graph_with_options` now runs a new
+`check_program_entry_point` static check against the root module's already-typed
+declarations *before* any module's passes run (not lazily inside `run_main` as
+`env.get("main")` used to), raising `T0031` for a missing/non-function/generic/
+non-zero-arity `main`; `run_main` itself no longer raises R0001/R0002 at all --
+every remaining arm there is a "should be unreachable after T0031" internal-error
+defensive fallback. All eight retired R-codes' raise sites in `call.rs`/`lvalue.rs`/
+`builtins.rs`/`evaluator/mod.rs` now raise their `I00NN`/`T0031` replacements
+instead. Fixtures `neg_07_no_main`/`neg_08_main_not_a_function` were updated to
+expect `T0031`/`typecheck_error`; two new fixtures (`neg_09_main_is_generic`,
+`neg_10_main_has_params`) were added since no fixture previously exercised those
+cases. `error-codes.md`'s and `spec.functions.program-entry-point.legality-1`'s
+`blocked`-on-#991 exemptions are removed now that real fixtures cover them; the
+per-code `blocked`-on-#986/#989 reachability exemptions on `I0003`-`I0008` carry
+over unchanged from their retired R-code predecessors (the underlying reachability
+question, not the RFC-0167 timing question, which is now moot).

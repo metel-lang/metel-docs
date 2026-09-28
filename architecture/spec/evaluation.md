@@ -102,9 +102,9 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 | `status` | `implemented` |
 | `owner` | `metel-interpreter`, `metel-frontend` |
 | `specified by` | `#evaluation` |
-| `implements` | [`metel-interpreter/src/evaluator/call.rs::call_runtime_callable`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-interpreter/src/evaluator/call.rs#L55) |
+| `implements` | [`metel-interpreter/src/evaluator/call.rs::call_runtime_callable`](https://github.com/metel-lang/metel-core/blob/4b7cdfbce41631b5c474a96ef9ceee8b4f81ef7a/metel-interpreter/src/evaluator/call.rs#L55) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/aspects/79_generic_body_empty_collection_args.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/evaluator/aspects/79_generic_body_empty_collection_args.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/generics/80_generic_construction_at_calltime.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/evaluator/generics/80_generic_construction_at_calltime.toml#L1) |
-| `last_reviewed` | de72649a95a5c947ac985069b692008b76a82f7e |
+| `last_reviewed` | 4b7cdfbce41631b5c474a96ef9ceee8b4f81ef7a |
 | `related` | ADR-0010, ADR-0011, `LIMIT-EVALUATION-001` |
 
 ##### Requirement {#arch.evaluation.requirement-8}
