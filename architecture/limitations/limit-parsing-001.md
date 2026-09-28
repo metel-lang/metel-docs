@@ -2,7 +2,7 @@
 id: LIMIT-PARSING-001
 title: "The dynamic array type's RFC-0171 spelling (`[T]`) does not parse yet"
 summary: "RFC-0171 moves the dynamic array type from postfix `T[]` to prefix `[T]`; the grammar has not migrated, so only `T[]` parses."
-scope: "reference/spec/types.md#arrays"
+scope: "architecture/spec/parsing.md#parsing"
 owner: metel-frontend
 discovered_by: "RFC-0171 integration pass (reference/spec/types.md 3-integrated cross-check), 2026-09-28"
 disposition: planned
@@ -45,7 +45,6 @@ per RFC-0171's own Migration section, not piecemeal ahead of it.
 - `spec.types.arrays.legality-1`
 - `spec.types.fixed-size-arrays.legality-1`
 - `spec.types.fixed-size-arrays.legality-2`
-- `RFC-0171`
 
 ## Resolution
 
