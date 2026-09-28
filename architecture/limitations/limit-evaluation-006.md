@@ -2,7 +2,7 @@
 id: LIMIT-EVALUATION-006
 title: "RFC-0167's error-code reclassification and main-entry Legality Rule are not implemented"
 summary: "Six R00NN codes still fire instead of their I00NN replacements; the main-entry check still runs at evaluator startup instead of typechecking, under retired R0001/R0002."
-scope: "reference/spec/functions.md#program-entry-point"
+scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
 discovered_by: "RFC-0167 integration pass (reference/spec/functions.md, reference/error-codes.md 3-integrated cross-check), 2026-09-28"
 disposition: planned
@@ -42,7 +42,6 @@ still accurately describe today's actual behavior.
 ## Affects
 
 - `spec.functions.program-entry-point.legality-1`
-- `RFC-0167`
 
 ## Resolution
 
