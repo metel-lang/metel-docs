@@ -58,6 +58,35 @@ A function with no return annotation and no `return expr;` returns `()`.
 
 </details>
 
+## Program Entry Point
+
+> **Changed in v0.14.0 (RFC-0167):** the program's `main` function is checked during
+> typechecking, not lazily at evaluator startup.
+
+The root module must declare exactly one function named `main`, callable with zero
+arguments, with a body the type checker can type. This is a purely static, declarative
+fact — answerable from the declaration table alone, with no dependency on program
+execution — and a violation is a compile-time error, not a runtime one.
+
+> **Limitation** LIMIT-EVALUATION-006
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.functions.program-entry-point.legality-1}
+
+The root module declares exactly one function named `main`, non-generic, callable with
+zero arguments, with a body the type checker can type. Violating this is a compile-time
+error, not a runtime one.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#991" reason="This check still runs lazily at evaluator startup today (env.get('main') in evaluator/mod.rs), not during typechecking -- RFC-0167's reclassification is not implemented. The corpus's real no-main/non-function-main/generic-main fixtures currently demonstrate this rule's substance via the pre-RFC-0167 runtime codes R0001/R0002 (see error-codes.md), not via a typecheck-time error; they are not evidence this rule's own timing or diagnostic code is implemented." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#991: This check still runs lazily at evaluator startup today (env.get('main') in evaluator/mod.rs), not during typechecking -- RFC-0167's reclassification is not implemented. The corpus's real no-main/non-function-main/generic-main fixtures currently demonstrate this rule's substance via the pre-RFC-0167 runtime codes R0001/R0002 (see error-codes.md), not via a typecheck-time error; they are not evidence this rule's own timing or diagnostic code is implemented._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+</details>
+
 ## Associated Functions
 
 `extend` blocks may contain functions with no `self` parameter. [These are called on
