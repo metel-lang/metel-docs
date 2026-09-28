@@ -53,7 +53,7 @@ attempt at parallel checking was made.
 
 <!-- limit.py:markers:start -->
 - [`metel-frontend/src/pipeline/type_checking/mod.rs::check_graph`](https://github.com/metel-lang/metel-core/blob/2c95c6d9c5f131d86fa08889153355b451e12c9e/metel-frontend/src/pipeline/type_checking/mod.rs#L354)
-- [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/8ad4aaa823d79572b507dc8cf89e4f7a2d296845/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L50)
+- [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::TypeVarGenerator`](https://github.com/metel-lang/metel-core/blob/411506f538a8b6cb0010c712c61d7a29e0ddfcd9/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L50)
 <!-- limit.py:markers:end -->
 
 ## Resolution

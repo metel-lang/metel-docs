@@ -50,7 +50,7 @@ use it. The symptom is tracked as `metel-core#1226`.
 
 <!-- limit.py:markers:start -->
 - [`metel-frontend/src/pipeline/move_check/mod.rs::generic_sample_args`](https://github.com/metel-lang/metel-core/blob/cec16f179fb472751dc353c5a203e0af89a82790/metel-frontend/src/pipeline/move_check/mod.rs#L521)
-- [`metel-frontend/src/pipeline/move_check/mod.rs::record_skipped_generic_body`](https://github.com/metel-lang/metel-core/blob/45648266c670df9b04d1c66f0f6af573b65f7afa/metel-frontend/src/pipeline/move_check/mod.rs#L1676)
+- [`metel-frontend/src/pipeline/move_check/mod.rs::record_skipped_generic_body`](https://github.com/metel-lang/metel-core/blob/411506f538a8b6cb0010c712c61d7a29e0ddfcd9/metel-frontend/src/pipeline/move_check/mod.rs#L1676)
 <!-- limit.py:markers:end -->
 
 ## Resolution

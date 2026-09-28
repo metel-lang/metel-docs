@@ -45,7 +45,7 @@ recorded as an implementation limitation.
 - `metel-frontend/src/pipeline/type_checking/inference/patterns.rs`
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/type_checking/inference/patterns.rs::infer_pattern`](https://github.com/metel-lang/metel-core/blob/844757f85778cbf02bdfa44005ff19151dda0756/metel-frontend/src/pipeline/type_checking/inference/patterns.rs#L82)
+- [`metel-frontend/src/pipeline/type_checking/inference/patterns.rs::infer_pattern`](https://github.com/metel-lang/metel-core/blob/411506f538a8b6cb0010c712c61d7a29e0ddfcd9/metel-frontend/src/pipeline/type_checking/inference/patterns.rs#L82)
 <!-- limit.py:markers:end -->
 
 ## Resolution
