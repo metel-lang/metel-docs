@@ -274,6 +274,68 @@ existing policy of not re-litigating the pre-existing accepted backlog (below) a
 once. It started applying in full the same day, once RFC-0067a/0072/0078/0081/0082/0083
 became the first RFCs to actually reach `3-integrated` under this definition.
 
+**Additional exit criterion, added 2026-09-28 — a bare "Planned for" callout undersells
+what a formal, rule-bearing integration actually needs; use ADR-0057's `LIMIT-*` record
+instead whenever the RFC's content becomes a real Legality Rule or Dynamic Semantics
+block.** The "Inline markers... required, not optional" guidance above, written
+2026-07-10, predates ADR-0057 (2026-09-20) and describes only the lighter of two real
+cases — found while integrating RFC-0171 (array type syntax), the first RFC to reach
+this stage after ADR-0057 landed, with no accepted-but-unimplemented precedent to copy
+except RFC-0071's destructor work, which had solved this already without anyone writing
+down that it was the general answer.
+
+**The two cases, and which marker each one takes:**
+
+- **No formal rule exists yet for the touched behavior** (a wholly new section, nothing
+  to attach a fixture exemption to). The one-line `> **Planned for vX.Y.Z (RFC-NNNN).**
+  ...` callout above is still correct and sufficient — there is no rigor block for
+  `rfc.py index --write-spec-origins` or `check_architecture.py` to validate against, so
+  a heavier record has nothing to attach to.
+- **A Legality Rule or Dynamic Semantics block states the accepted design** (this is the
+  normal case for integrating any RFC with formal rules, not an edge case). **State the
+  design as current fact in the rule text itself — never hedge it to match what the
+  interpreter does today** (`STYLEGUIDE.md`'s "state the design, not the bug", the same
+  principle a typed exemption already applies to a rule blocked on a dependency). Pair it
+  with:
+  - A hand-authored `<!-- rfc.py:exemption kind="blocked" ref="metel-core#NNN"
+    reason="..." -->` trigger line directly under the rule, `ref` pointing at this RFC's
+    own `impl_tracking` issue. Never hand-write the rendered span underneath it —
+    `rfc.py index --write-spec-origins` generates that, same as an origins backlink.
+  - A `LIMIT-<AREA>-<NNN>` record (`architecture/limitations/`, ADR-0057 §4's shared
+    shape with `GAP-*`) with `disposition: planned`, `planned_for` this RFC's target
+    release, `rfc:` this RFC's id, and `## Resolution` naming the same tracking issue.
+    Use `LIMIT-*`, never `GAP-*`, for this case — ADR-0057 §2's sorting test is exactly
+    "the spec promises (or an accepted RFC will promise) something the implementation
+    does not yet deliver," which is what every RFC between `3-integrated` and
+    `4-implemented` is, by definition. `GAP-*` is for the different case where the spec
+    itself, correctly implemented in full, still wouldn't cover something — no accepted
+    RFC closes a `GAP-*` merely by existing; the gap closes only once its record's
+    `resolution` names the RFC and the spec text actually changes.
+  - A section-level `> **Limitation** LIMIT-<AREA>-<NNN>` callout, rendering the record's
+    summary at the point a reader would otherwise expect the old-style "Planned for"
+    line. Both markers may appear in the same section — the rule-level exemption and the
+    section-level callout answer different questions ("why no fixture" versus "what's
+    the whole-feature status").
+
+  The worked model already in the corpus, found rather than invented: RFC-0071's drop
+  order (`spec.ownership.drop-order.dynamics-1`/`-2`, `LIMIT-EVALUATION-005`,
+  `metel-core#261`). Copy its shape exactly rather than improvising a new one per RFC.
+
+**A syntax-changing RFC integrates its rule text, not its examples — those stay on the
+old spelling.** The 2026-07-31 criterion above governs sweeping prose examples to a new
+spelling "in the same change as the code migration" — at `3-integrated`, no code migration
+has happened yet, so existing ` ```metel ` examples must keep compiling against today's
+actual parser and therefore keep the pre-RFC spelling, even while the Legality Rule two
+paragraphs above now states the post-RFC spelling as the accepted design. This looks like
+a contradiction on the page and is not one: it is the same "spec versus interpreter" gap
+every `LIMIT-*` marks, just visible in two adjacent blocks instead of one. A bridging
+sentence should say so explicitly rather than leaving a reader to notice the seam
+unaided. If a worked example of the *new* spelling earns its place before the migration
+lands, write it as a real ` ```metel ` fence and mark it
+`<!-- doc-example: skip reason="..." -->` (`STYLEGUIDE.md`'s Code examples section) —
+never let an uncompilable example run through `check_doc_examples.py` unmarked, and never
+invent pseudo-code that looks like a fenced example but isn't one.
+
 **4-implemented.** Built against the integrated spec, not against the accepted RFC text
 directly — by the time something reaches this stage, "the spec" and "the RFC" should
 agree, because §3-integrated is what makes them agree.
