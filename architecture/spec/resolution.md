@@ -37,7 +37,7 @@ Once inference has solved a body and the frontend has frozen its resolution, no 
 | `specified by` | `#resolution` |
 | `implements` | [`metel-frontend/src/identity/allocate.rs::allocate_module`](https://github.com/metel-lang/metel-core/blob/0e6df565c942628bfa3241ef3b4e451d0561d0e0/metel-frontend/src/identity/allocate.rs#L170) |
 | `verified by` | [`metel-frontend/src/identity/tests.rs::a_body_with_only_bound_names_has_no_unresolved_references`](https://github.com/metel-lang/metel-core/blob/534002297dfd1dfc78547baf852ab5cb93d4634f/metel-frontend/src/identity/tests.rs#L313); [`metel-frontend/src/identity/tests.rs::a_use_of_a_global_declaration_is_classified_as_global`](https://github.com/metel-lang/metel-core/blob/c7bd72760c5672a1ad48f27a66ac31d93a024f6b/metel-frontend/src/identity/tests.rs#L326); [`metel-frontend/src/identity/tests.rs::reference_table_is_total_and_unknown_names_are_explicit`](https://github.com/metel-lang/metel-core/blob/534002297dfd1dfc78547baf852ab5cb93d4634f/metel-frontend/src/identity/tests.rs#L301) |
-| `last_reviewed` | 282f563360390f6648e81bc9d3974bcb8070c496 |
+| `last_reviewed` | 411506f538a8b6cb0010c712c61d7a29e0ddfcd9 |
 | `related` | ADR-0054, ADR-0041, ADR-0042 |
 
 ##### Requirement {#arch.resolution.requirement-2}
@@ -51,7 +51,7 @@ Bindings and value references get structural identities (`LocalId`, `RefId`) fro
 | `specified by` | `#resolution` |
 | `implements` | [`metel-frontend/src/identity/allocate.rs::allocate_module`](https://github.com/metel-lang/metel-core/blob/0e6df565c942628bfa3241ef3b4e451d0561d0e0/metel-frontend/src/identity/allocate.rs#L171) |
 | `verified by` | [`metel-frontend/src/identity/tests.rs::blank_lines_and_reformatting_change_no_identity`](https://github.com/metel-lang/metel-core/blob/534002297dfd1dfc78547baf852ab5cb93d4634f/metel-frontend/src/identity/tests.rs#L118); [`metel-frontend/src/identity/tests.rs::editing_one_body_leaves_another_bodys_identities_untouched`](https://github.com/metel-lang/metel-core/blob/534002297dfd1dfc78547baf852ab5cb93d4634f/metel-frontend/src/identity/tests.rs#L152); [`metel-frontend/src/identity/tests.rs::inserting_an_earlier_binding_does_not_renumber_a_later_one`](https://github.com/metel-lang/metel-core/blob/534002297dfd1dfc78547baf852ab5cb93d4634f/metel-frontend/src/identity/tests.rs#L139) |
-| `last_reviewed` | 282f563360390f6648e81bc9d3974bcb8070c496 |
+| `last_reviewed` | 411506f538a8b6cb0010c712c61d7a29e0ddfcd9 |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 
 ##### Requirement {#arch.resolution.requirement-3}
