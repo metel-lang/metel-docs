@@ -57,6 +57,18 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/932'
 
 > **Status — under review (2026-09-01).** Slice half only after the OQ6/RFC-0133 and RFC-0126 splits; path to acceptance is now RFC-0067 (OQ2) then the mutable-slice spelling (OQ1).
 
+> **Scope assessed as low strategic priority, 2026-09-28.** This RFC's full remaining chain
+> — RFC-0067 lifetime anchors, RFC-0122 borrow checking, and (per Open Question 7 below) a
+> `Sized`/unsized kind distinction, generalized unsizing coercions, and allocator-backed
+> dynamic-sized allocation for a `Box<[T]>`-equivalent — was reviewed end to end and judged
+> to carry too many prerequisites, spanning multiple RFCs and milestones out to v0.17.0+, to
+> be a near-term focus: `T[]` matching Rust's reference/unsized-kind model in full is not a
+> Metel-defining feature under current strategic objectives. This is a priority call, not a
+> design reversal — nothing above resolves differently because of it, and it does not affect
+> **`metel-core#1296`** (unannotated array literals incorrectly inferring `T[]` instead of
+> `[T; N]`), which is a plain implementation bug against the already-`4-implemented`
+> RFC-0126, unrelated to this RFC's own open questions.
+
 ## Summary
 
 Metel has three sequence types — `[T; N]`, `T[]`, and `List<T>`. RFC-0126 settled the role
@@ -71,6 +83,8 @@ as `[T; N]`). What that RFC left open, and what this one is now scoped to:
 | `Value::Array`'s evaluator representation | open — §Open Questions 4 |
 | Release sequencing against #579 and #267 | open — §Open Questions 5 |
 | Can `List<T>` ever be built from `[T; N]`/`T[]` alone, or is native backing structurally permanent? | **moved to RFC-0133, 2026-08-13** — no longer this RFC's |
+| Does `T[]` need a sigil, or gain lifetime-checking while staying bare? | **added 2026-09-28** — open, sub-question of §Open Questions 2 |
+| What would `@a [T]` (Metel's `Box<[T]>` analogue) additionally require? | **added 2026-09-28** — open — §Open Questions 7, deliberately not a near-term priority |
 
 ---
 
@@ -126,6 +140,39 @@ allocation, never the batch/geometric-growth allocation this table shows every c
    RFC's own acceptance, independent of RFC-0126, which does not require it (a `Copy` view's
    validity story can be as simple as "elaborated code never outlives the loop that borrowed
    it" until this question is answered).
+
+   **Sub-question, added 2026-09-28 — does `T[]` need a sigil, or does it stay bare and gain
+   lifetime-checking implicitly?** There are two distinct ways to attach an anchor to `T[]`,
+   not one:
+
+   **(a) Sigil requirement, Rust-exact.** Introduce an unsized `[T]` payload type — cannot be
+   a bare field, local, or return type on its own — and require every use site to spell the
+   borrow explicitly, `&[T]` / `&var [T]`, through the existing `Reference`/`MutReference`
+   machinery RFC-0067a already established. This reopens RFC-0171's freshly `2-accepted`
+   spelling (`[T]` / `[T; N]`, no sigil) before it integrates, or lands as a second syntax
+   break on top of it later.
+
+   **(b) Implicit reference semantics, no spelling change.** `T[]` (or `[T]`, per RFC-0171)
+   stays bare, but is defined in the type system as inherently carrying a region/lifetime the
+   same way `&T` will once anchors exist — checked identically, without a written sigil. This
+   is the direction this question already points toward as written above (an anchor attaching
+   to the existing spelling), and it costs nothing against RFC-0171.
+
+   What decides between them for Rust — needing `[T]` to compose with more than one pointer
+   kind, especially `Box<[T]>` for an owned-but-non-growable heap buffer — may not apply the
+   same way here, since `List<T>` already fills "owned, heap, growable" without a separate
+   unsized-payload type underneath it. See Open Question 7 for what `(a)`'s `Box<[T]>`
+   analogue would additionally require regardless of which way this resolves.
+
+   Concretely demonstrated open today, independent of which way this resolves: a `T[]`
+   borrowed from a function-local can be stored in a struct field and returned from the
+   function that borrowed it, typechecking and running cleanly with or without
+   `--move-check` — the same hole plain `&T`/`&var T` has. `GAP-OWNERSHIP-001` (extended
+   2026-09-28) carries a reproduced example for both. `metel-core#274` already bans
+   reference-typed (`&T`/`&var T`) struct/enum fields as an interim measure pending this
+   RFC-0067 dependency; its ban text is scoped to `&`/`&var` spellings and does not currently
+   mention `T[]` — worth checking, whichever of `(a)`/`(b)` above is chosen, that `#274`'s
+   restriction (or its replacement) actually covers `T[]`-typed fields too when implemented.
 3. **Does `[T; N]` need const-generic `N`?** Today only literal arities parse — measured
    2026-07-25, `extend<T: Copy> [T; 2]: Copy;` works and `[T; N]` does not. Without const
    generics, "fixed arrays are `Copy` when their elements are" cannot be written in stdlib
@@ -177,6 +224,40 @@ allocation, never the batch/geometric-growth allocation this table shows every c
    is structurally incapable of it too, since RFC-0126 made it an unconditionally `Copy`,
    non-owning view. Neither existing array type can back a growable list, which is why
    RFC-0133 needs a new primitive rather than a new combination of existing ones.
+7. **Added 2026-09-28 — what would composability with a pointer/allocator type need,
+   the way Rust's `[T]` composes under `&[T]`, `Box<[T]>`, `Rc<[T]>`, and `Arc<[T]>`?**
+   Metel has no `Box<T>` generic; the nearest analogue is `@a T` (RFC-0063), a built-in
+   allocator-tagged pointer type, so the concrete target would be `@a [T]` rather than a
+   literal `Box<[T]>`. Checked directly (2026-09-28): no `Sized`/`?Sized`-equivalent kind
+   distinction exists anywhere in `metel-frontend`'s type checker, and no `Box` stdlib type
+   exists. Beyond Open Question 2's anchor dependency, `@a [T]` would additionally need:
+
+   - **A `Sized`/unsized kind distinction**, entirely absent today. Without it there is no
+     way to express "`[T]` may appear as `@a [T]`'s payload but not as a bare field/local" —
+     this is the foundational piece, prior to anything else in this list.
+   - **A generalized unsizing coercion.** Today's only instance is the one hardcoded check
+     for `[T; N] → T[]` (RFC-0053/RFC-0126,
+     `reject_dynamic_array_where_sized_expected` in
+     `metel-frontend/src/pipeline/type_checking/construction/mod.rs`), not a mechanism that
+     composes *through* a wrapper type — coercing `@a [T; N] → @a [T]` means synthesizing the
+     fat pointer's length at the coercion site, under the pointer, which nothing today does.
+   - **Dynamic-layout allocation**, sized by a runtime length rather than a compile-time
+     `size_of::<T>()`. This is the identical primitive RFC-0133 already found missing for
+     `List<T>`'s own growth (its two prerequisites "have no owning RFC at all" — Open
+     Question 6 above) — the same gap, reachable from a different angle.
+   - **`Drop` running with that length available at deallocation time**, to free the right
+     byte count and run the right number of element destructors. Blocked on
+     `LIMIT-EVALUATION-005` (destructor invocation is not implemented at all yet, planned
+     v0.15.0) independent of arrays entirely.
+
+   One asymmetry favors Metel over a from-scratch Rust-style design: `@a T` is already a
+   built-in pointer-shaped type constructor, not an ordinary generic struct wearing an
+   opt-in `?Sized` bound the way `Box<T>` is — the "does the type system know this wrapper is
+   a pointer" half of the problem Rust solves with a trait bound is already true by
+   construction for `@a T`.
+
+   See the RFC-level scope note above: this whole composability question is deliberately not
+   being pursued as a near-term priority.
 
 ---
 
@@ -192,8 +273,18 @@ allocation, never the batch/geometric-growth allocation this table shows every c
   value.
 - RFC-0071 (Ownership and Move Semantics), `3-integrated` — §2's `Copy` rules are what
   RFC-0126 unblocks.
-- RFC-0122 (Borrow Checking), `1-under-review`, target v0.14.0 — shares the
-  cloning-evaluator problem; Open Question 2 here is its likely resolution path.
+- RFC-0122 (Borrow Checking), `1-under-review`, target v0.16.0 (corrected 2026-09-28 —
+  this line previously cited v0.14.0, stale since `metel-core#847`'s 2026-08-27
+  renumbering) — shares the cloning-evaluator problem; Open Question 2 here is its likely
+  resolution path. `#847`'s own scope explicitly lists "escape and outlives checking for
+  locals, parameters, returns, reborrows and closures," directly reaching Open Question 2's
+  escaping-`T[]` example.
+- `GAP-OWNERSHIP-001`, extended 2026-09-28 — documents the escaping-reference/escaping-`T[]`
+  hole (Open Question 2) as a known, tracked gap resolving against RFC-0122.
+- `metel-core#274` — the interim ban on reference-typed struct/enum fields, cited in Open
+  Question 2, pending the same RFC-0067 dependency this RFC has.
+- `LIMIT-EVALUATION-005` — destructor invocation not implemented, cited in Open Question 7
+  as a prerequisite for `@a [T]`'s `Drop` handling, independent of arrays.
 - RFC-0067 (Lifetime Anchors), `1-under-review` (reverted from `2-accepted` 2026-08-02;
   corrected here 2026-08-03 — this line and RFC-0126's own References both cited the
   stale status) — the likely dependency for slice validity (Open Question 2) and, more
