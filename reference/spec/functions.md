@@ -68,8 +68,6 @@ arguments, with a body the type checker can type. This is a purely static, decla
 fact — answerable from the declaration table alone, with no dependency on program
 execution — and a violation is a compile-time error, not a runtime one.
 
-> **Limitation** LIMIT-EVALUATION-006
-
 <details>
 <summary>Formal rules</summary>
 
@@ -79,11 +77,15 @@ The root module declares exactly one function named `main`, non-generic, callabl
 zero arguments, with a body the type checker can type. Violating this is a compile-time
 error, not a runtime one.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#991" reason="This check still runs lazily at evaluator startup today (env.get('main') in evaluator/mod.rs), not during typechecking -- RFC-0167's reclassification is not implemented. The corpus's real no-main/non-function-main/generic-main fixtures currently demonstrate this rule's substance via the pre-RFC-0167 runtime codes R0001/R0002 (see error-codes.md), not via a typecheck-time error; they are not evidence this rule's own timing or diagnostic code is implemented." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#991: This check still runs lazily at evaluator startup today (env.get('main') in evaluator/mod.rs), not during typechecking -- RFC-0167's reclassification is not implemented. The corpus's real no-main/non-function-main/generic-main fixtures currently demonstrate this rule's substance via the pre-RFC-0167 runtime codes R0001/R0002 (see error-codes.md), not via a typecheck-time error; they are not evidence this rule's own timing or diagnostic code is implemented._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle">
+<summary>Tested by (4)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDMxIiwiY29sIjpudWxsLCJjb250YWlucyI6Im5vIG1haW4iLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJuZWdfMDdfbm9fbWFpbi5tdGwiLCJzb3VyY2UiOiIvLyBSVU5USU1FX0VSUk9SW25vIG1haW5dXG5sZXQgeCA6PSAxO1xuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvZnVuY3Rpb25zL25lZ18wN19ub19tYWluLm10bCIsIm5hbWUiOiJuZWdfMDdfbm9fbWFpbi5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDMxIiwiY29sIjpudWxsLCJjb250YWlucyI6Im5vdCBhIGZ1bmN0aW9uIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibmVnXzA4X21haW5fbm90X2FfZnVuY3Rpb24ubXRsIiwic291cmNlIjoiLy8gYG1haW5gIGV4aXN0cyBidXQgaXMgYSBiaW5kaW5nLCBub3QgYSBmdW5jdGlvbiAtLSBSMDAwMidzIG90aGVyIGRvY3VtZW50ZWRcbi8vIHRyaWdnZXIgKHRoZSBzaWJsaW5nIGNhc2UgaXMgYSBnZW5lcmljIG1haW4sIHNlZSBlcnJvci1jb2Rlcy5tZCkuXG5sZXQgbWFpbiA6PSA1O1xuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvZnVuY3Rpb25zL25lZ18wOF9tYWluX25vdF9hX2Z1bmN0aW9uLm10bCIsIm5hbWUiOiJuZWdfMDhfbWFpbl9ub3RfYV9mdW5jdGlvbi5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDMxIiwiY29sIjpudWxsLCJjb250YWlucyI6ImdlbmVyaWMiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJuZWdfMDlfbWFpbl9pc19nZW5lcmljLm10bCIsInNvdXJjZSI6Ii8vIGBtYWluYCBleGlzdHMgYW5kIGlzIGEgZnVuY3Rpb24sIGJ1dCBpcyBpdHNlbGYgZ2VuZXJpYyAtLSBSRkMtMDE2NydzIG90aGVyXG4vLyBkb2N1bWVudGVkIGBtYWluYC1zaGFwZSB2aW9sYXRpb24gKHRoZSBzaWJsaW5nIGNhc2UgaXMgYG5lZ18wOGAncyBcIm5vdCBhXG4vLyBmdW5jdGlvblwiIG9uZSkuIFRoZSBwcm9ncmFtIGVudHJ5IHBvaW50IG11c3QgYmUgbm9uLWdlbmVyaWMuXG5mdW4gbWFpbjxUPigpIHt9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9mdW5jdGlvbnMvbmVnXzA5X21haW5faXNfZ2VuZXJpYy5tdGwiLCJuYW1lIjoibmVnXzA5X21haW5faXNfZ2VuZXJpYy5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDMxIiwiY29sIjpudWxsLCJjb250YWlucyI6Inplcm8gYXJndW1lbnRzIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibmVnXzEwX21haW5faGFzX3BhcmFtcy5tdGwiLCJzb3VyY2UiOiIvLyBgbWFpbmAgZXhpc3RzLCBpcyBhIGZ1bmN0aW9uLCBhbmQgaXMgbm9uLWdlbmVyaWMsIGJ1dCB0YWtlcyBhbiBhcmd1bWVudCAtLVxuLy8gc3BlYy5mdW5jdGlvbnMucHJvZ3JhbS1lbnRyeS1wb2ludC5sZWdhbGl0eS0xIHJlcXVpcmVzIGl0IGJlIGNhbGxhYmxlIHdpdGhcbi8vIHplcm8gYXJndW1lbnRzLlxuZnVuIG1haW4oeDogaTY0KSB7XG4gICAgbGV0IF8gOj0geDtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4xL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2Z1bmN0aW9ucy9uZWdfMTBfbWFpbl9oYXNfcGFyYW1zLm10bCIsIm5hbWUiOiJuZWdfMTBfbWFpbl9oYXNfcGFyYW1zLm10bCJ9"></details>
+</details>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
