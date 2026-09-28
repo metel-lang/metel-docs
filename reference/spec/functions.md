@@ -77,6 +77,8 @@ The root module declares exactly one function named `main`, non-generic, callabl
 zero arguments, with a body the type checker can type. Violating this is a compile-time
 error, not a runtime one.
 
+<!-- rfc.py:last_reviewed 4b7cdfbce41631b5c474a96ef9ceee8b4f81ef7a -->
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
 <summary>Tested by (4)</summary>
