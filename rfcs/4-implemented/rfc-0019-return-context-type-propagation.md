@@ -18,7 +18,7 @@ Fix a bug in typechecker Pass 2 where `return` and `break` statements do not pro
 The spec states that `nope`'s type must be "determinable from context" and shows `return Result::Err { ... }` as valid code in a function annotated `-> Result<Float, String>`. Both currently fail with E0002 at the typechecker's Pass 2 stage.
 
 ```metel
-fun find(arr: Int[], target: Int) -> Perhaps<Int> {
+fun find(arr: [Int], target: Int) -> Perhaps<Int> {
     return nope;            // E0002 — cannot infer type of `nope`
 }
 

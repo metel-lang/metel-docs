@@ -13,7 +13,7 @@ You've already used row bounds on single events ([page 5](row-bounds)). The same
 bound makes a reducer that doesn't care what else an event carries:
 
 ```metel
-fun total_weight<record T: { user: i64, weight: i64, .. }>(events: T[]) -> i64 {
+fun total_weight<record T: { user: i64, weight: i64, .. }>(events: [T]) -> i64 {
     var sum := 0;
     for (e in events) { sum := sum + e.weight; }
     return sum;
@@ -61,7 +61,7 @@ public fun parse_int(s: String, line: i64) -> Result<i64, ParseError> {
 `metrics/report.mtl`:
 
 ```metel
-public fun total_weight<record T: { user: i64, weight: i64, .. }>(events: T[]) -> i64 {
+public fun total_weight<record T: { user: i64, weight: i64, .. }>(events: [T]) -> i64 {
     var sum := 0;
     for (e in events) { sum := sum + e.weight; }
     return sum;

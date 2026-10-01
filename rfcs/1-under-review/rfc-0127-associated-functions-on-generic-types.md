@@ -52,7 +52,7 @@ existed.
 ```metel
 extend List<T> {
     native(@std.core.list_new)   fun new() -> List<T>;
-    native(@std.core.list_from)  fun from(src: T[]) -> List<T>;
+    native(@std.core.list_from)  fun from(src: [T]) -> List<T>;
 }
 ```
 

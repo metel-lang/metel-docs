@@ -246,7 +246,7 @@ implemented as a constraint verified against `typeinfo(T)` and aspect-impl looku
 comptime evaluation of the body. Concretely:
 
 ```metel
-fun first<T: Clone>(arr: T[]) -> Perhaps<T> {
+fun first<T: Clone>(arr: [T]) -> Perhaps<T> {
     // comptime T: type, with `T: Clone` checked against typeinfo(T)/impl lookup
     // at this definition, exactly as RFC-0061's bound checker already does today —
     // not deferred to whichever call site happens to instantiate T

@@ -26,7 +26,7 @@ cast_expr = { unary_expr ~ ("as" ~ type_expr)* }
 This was implemented with only numeric casts in mind (`Int as Float`). It fails on any other use:
 
 ```metel
-let n := [] as String[];  // T0007: only Int as Float and identity casts are supported
+let n := [] as [String];  // T0007: only Int as Float and identity casts are supported
 ```
 
 The current implementation conflates two distinct concepts that warrant separate syntax:
@@ -42,13 +42,13 @@ The practical gap: without expression-level ascription, there is no way to write
 
 ```metel
 // This works — annotation is on the binding
-let n: String[] := [];
+let n: [String] := [];
 
 // This should also work — annotation is on the expression
-let n := [] : String[];
+let n := [] : [String];
 
 // Needed when passing an empty literal directly as an argument
-foo([] : String[]);
+foo([] : [String]);
 ```
 
 The second and third forms are impossible without expression-level type ascription.
@@ -86,10 +86,10 @@ Type ascription is **not** a runtime operation. It is a compile-time annotation 
 It is a type error if the inferred type of the sub-expression cannot be unified with the ascribed type.
 
 ```metel
-let n := [] : String[];     // ok — element type resolved to String
+let n := [] : [String];     // ok — element type resolved to String
 let x := 1 : Int;           // ok — identity ascription
 let y := 1 : String;        // type error — Int is not String
-foo([] : String[]);         // ok — ascription in argument position
+foo([] : [String]);         // ok — ascription in argument position
 ```
 
 Ascription is **not** a conversion. `1 : Float` is a type error, not a conversion of the integer `1` to a float. Numeric conversions, if needed, are a separate language feature.
@@ -130,7 +130,7 @@ The two operators are now cleanly distinct:
 | `as T` | explicit conversion | yes | a conversion from the value's type to T is defined |
 
 ```metel
-let n := [] : String[];     // ascription — no conversion, inference hint only
+let n := [] : [String];     // ascription — no conversion, inference hint only
 let x := 1 as Float;       // conversion — produces a Float at runtime
 let y := 3.14 as Int;      // conversion — truncates
 let z := 1 : Float;        // type error — Int is not Float; use `as` to convert

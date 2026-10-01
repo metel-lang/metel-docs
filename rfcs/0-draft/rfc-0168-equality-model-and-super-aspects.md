@@ -213,8 +213,8 @@ meet the corresponding bound. For example, array equality is split from the
 existing blanket implementation into the conceptual pair:
 
 ```metel
-extend<T: PartialEq> T[]: PartialEq { /* element-wise equality */ }
-extend<T: Eq> T[]: Eq;
+extend<T: PartialEq> [T]: PartialEq { /* element-wise equality */ }
+extend<T: Eq> [T]: Eq;
 ```
 
 Exact syntax for generic extensions follows the implementation grammar; the

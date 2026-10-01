@@ -181,8 +181,7 @@ LiteralPattern   → SUFFIXED_FLOAT
 Type                 → FunType
                      | MutReferenceType
                      | ReferenceType
-                     | SizedArrayType
-                     | ArrayType
+                     | BracketArrayType
                      | "()"
                      | TupleType
                      | RecordProjectionType
@@ -202,8 +201,7 @@ FunTypeQualifier     → "once"
                      | "var"
 ReferenceType        → "&" Type
 MutReferenceType     → "&" "var" Type
-SizedArrayType       → "[" Type ";" INT "]"
-ArrayType            → ( "()" | TupleType | RecordProjectionType | RecordType | ExtendsType | DynType | NamedType ) "[]"
+BracketArrayType     → "[" Type ( ";" INT )? "]"
 NamedType            → TypePath ( "<" TypeArgs ">" )?
 TypeArgs             → Type ( "," Type )*
 TypeList             → Type ( "," Type )*
