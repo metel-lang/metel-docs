@@ -8,8 +8,13 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/847'
 ---
 
 > **Tracking corrected 2026-08-27.** metel-core#847 now owns this RFC's design and
-> opt-in implementation. metel-core#274 owns only the temporary stored-reference
-> restriction and its removal after RFC-0067; it is not the borrow-checker umbrella.
+> opt-in implementation. metel-core#274 owns only stored-reference static checking after
+> RFC-0067; it is not the borrow-checker umbrella.
+>
+> **§2d revised 2026-09-29 — the stored-reference restriction it described is dropped,
+> not deferred.** Reference-typed struct/enum fields are not rejected while this RFC and
+> RFC-0067 are unimplemented; they are legal today, unchecked, tracked as part of
+> `GAP-OWNERSHIP-001`. See §2d below for why.
 
 > **Opened 2026-07-24** against `OBJECTIVES.md` Trigger 19, which has tracked the borrow
 > checker as "carrying more architectural weight than any other undocumented thing in the
@@ -521,32 +526,25 @@ that concerns already-implemented, already-shipped behaviour rather than future 
 
 ---
 
-## 2d. The reference-typed struct field restriction — temporary, and what lifts it
+## 2d. Reference-typed struct fields: legal and unchecked, not banned
 
-*Added 2026-08-01, expanding §2b.3's one-line operator decision into a real
-justification with a tracked exit.*
+*Added 2026-08-01 as a planned restriction; reversed 2026-09-29 before ever being
+implemented. Kept as a section, not deleted, because the reasoning for **not** imposing
+it is exactly as load-bearing as the reasoning that once argued for it, and a future
+reader asking "why does a struct holding a reference typecheck with no static duration
+check at all" deserves the answer in the same place the restriction used to be proposed.*
 
-> **This is a temporary scaffold, not a language design position.** Metel does not
-> intend to forbid structs that hold references. The restriction exists for exactly one
-> reason — to let borrow checking be built and shipped without first designing and
-> implementing lifetime anchors — and **it is lifted the moment RFC-0067 (Lifetime
-> Anchors) is implemented.** Nothing else needs to happen for it to go.
+> **No restriction exists, and this RFC does not add one.** An earlier draft of this
+> section proposed rejecting reference-typed struct/enum fields until RFC-0067 (Lifetime
+> Anchors) shipped. That was never implemented — verified 2026-09-29:
+> `struct Holder { r: &i64 }` typechecks and runs today, with or without
+> `--move-check`. The plan to add the rejection is dropped, not merely deferred: the gap
+> it would have been standing in for is `GAP-OWNERSHIP-001`, tracked openly instead of
+> hidden behind a rejected program.
 
-### The rule
+### Why the restriction was proposed
 
-A `struct` or `enum` field may not have a reference type (`&T`, `&var T`), directly or
-nested inside a generic argument. Rejected at typechecking, not at borrow checking, so
-the restriction applies whether or not `--borrow-check` is on.
-
-```metel
-struct Holder { r: &P }        // rejected while this restriction stands
-struct Pair   { xs: List<&P> } // likewise — nesting does not evade it
-```
-
-### Why it exists
-
-**Because the alternative is that RFC-0122 cannot be built without RFC-0067 first.** The
-chain is short and each link is forced:
+**Because RFC-0122 looked like it could not be built without RFC-0067 first.** The chain:
 
 1. §2b.3 showed a stored reference can outlive its referent today, silently
    (`fun make() -> Holder { let local = …; return Holder { r = &local }; }` is accepted
@@ -555,50 +553,63 @@ chain is short and each link is forced:
    referent's. No scope-based rule can do it: there is no enclosing scope that contains
    both, which is precisely why local borrows are checkable without anchors and stored
    ones are not.
-3. Relating two independent lifetimes is what an anchor *is*. So admitting stored
-   references makes RFC-0067 a hard dependency of the outlives rule.
-4. RFC-0067 is `2-accepted`, unimplemented, and carries pre-RFC-0098 syntax. Making it a
-   dependency means **no borrow checking of any kind ships until anchors are designed
-   through, implemented, and stabilised** — trading the ~90% of value that local borrow
-   checking delivers for a much larger, later deliverable.
+3. Relating two independent lifetimes is what an anchor *is*. So *statically verifying*
+   stored references makes RFC-0067 a hard dependency of the outlives rule.
+4. RFC-0067 is `1-under-review`, unimplemented, and (per its own header note) has five
+   open design questions of its own. Making it a dependency of RFC-0122 landing at all
+   would mean no borrow checking of any kind ships until anchors are designed through,
+   implemented, and stabilised.
 
-The restriction buys that ~90% now. It is the same trade RFC-0067's own text already
-implies when it says anchors "appear only when the relationship is ambiguous" — the
-ambiguous cases are the ones being deferred, not the common ones.
+That reasoning is still correct about *checking*: shared-XOR-exclusive and reborrow
+duration for **local** borrows do not need anchors, and RFC-0122 delivers them without
+waiting on RFC-0067. Point 3 is where the earlier draft took a wrong turn — it treated
+"cannot statically verify yet" as a reason to **reject the program**, rather than a
+reason to leave it **unchecked**, and those are different decisions with a decision
+procedure of their own (see next).
 
-### What it costs
+### Why rejecting was the wrong response
 
-**Zero migration cost, verified rather than assumed** *(2026-08-01)*: an exhaustive scan
-of every `struct`/`enum` declaration body across `tests/integration/sources/**` and
-`stdlib/**` found **no** reference-typed field, in any shape — no direct `&T`, no
-`&var T`, none nested in a generic argument. Nothing in the corpus or the standard
-library has to change to adopt this.
+**Rejecting would have bought no safety the runtime doesn't already provide.** `&T`/`&var T` are not
+raw pointers in this interpreter — `Value::Reference`/`MutReference` are
+`Rc<RefCell<Value>>` (`metel-interpreter/src/evaluator/mod.rs`), the same representation
+every heap-shaped `Value` uses. A struct field of type `&P` holds a clone of that `Rc`,
+so the referent's storage stays alive for as long as the struct does, regardless of
+what the type system can prove about scoping. Rejecting `struct Holder { r: &P }` would
+not have prevented a memory-safety problem — there isn't one to prevent, today. It would
+only have blocked writing the field at all: borrowed wrappers, view structs,
+reference-holding iterators, and anything shaped like Rust's `struct Iter<'a>` — which
+**RFC-0109** (Self-View Narrowing) and **RFC-0119**'s by-reference conversion mode both
+want and are separately deferred for.
 
-**Real expressive cost, deferred not denied.** Borrowed wrappers, view structs,
-reference-holding iterators, and anything shaped like Rust's `struct Iter<'a>` are
-unwritable while this stands. Two RFCs already want them and are already deferred for
-adjacent reasons — **RFC-0109** (Self-View Narrowing, `0-draft`) and **RFC-0119**'s
-dropped by-reference conversion mode. Neither is blocked *further* by this restriction,
-but both are downstream of the same missing capability, and whoever lifts it should check
-both.
+**A rejected program is a worse interim state than an unchecked one, for a gap that is
+already tracked.** `GAP-OWNERSHIP-001` already carries this exact hole for `T[]` and for
+local `&T`/`&var T` — nothing distinguishes stored struct-field references as needing a
+harder backstop than those. Banning only the field case would have been inconsistent
+(narrower coverage than the gap it was standing in for) without buying back any safety
+the gap record doesn't already disclose.
 
-### What lifts it
+**The safety net this leans on is not permanent, and the record says so.**
+`GAP-OWNERSHIP-001` is explicit that the `Rc`-backed guarantee is an artifact of the
+current tree-walking evaluator ([LIMIT-EVALUATION-004](../../architecture/limitations/limit-evaluation-004.md))
+and will not hold once the Compiled Profile (metel-core#1293) stops being GC-backed.
+That is the actual argument for eventually finishing RFC-0067 — not "so the field can be
+written" (it already can), but so the same guarantee holds once the runtime stops
+providing it for free.
 
-> **The restriction is removed when RFC-0067 (Lifetime Anchors) is implemented.** That is
-> the whole condition. It is not "when someone asks for it," not "when the borrow checker
-> is mature," and not subject to re-litigation on other grounds: anchors supply exactly
-> the missing capability (naming a validity scope so two independent lifetimes can be
-> related), and once they exist the justification above evaporates in full.
+### What still needs RFC-0067
 
-**Tracked as metel-core#274**, which owns both halves — imposing the restriction and
-removing it — so the exit cannot be lost if the two land in different releases.
-RFC-0067's own text carries the reciprocal pointer, so that implementing anchors surfaces
-this obligation rather than depending on someone remembering it.
+Nothing here removes the need for anchors — it removes only the plan to gate legality on
+them. Static verification that a stored reference does not outlive its referent still
+needs RFC-0067, exactly as §2b.2's outlives rule (scope-based, specified assuming no
+stored references exist) still needs revisiting once anchors land — that pairing is
+unchanged from the earlier draft of this section. What changes is the object being
+checked: RFC-0067 adds a check to an already-legal program shape, not a relaxation of a
+rejection.
 
-**A caution for whoever lifts it.** Deleting the check is the easy half. The real work is
-that the outlives rule (§2b.2) was *specified* scope-based on the assumption stored
-references do not exist; admitting them means revisiting that specification, not merely
-relaxing an error. Treat §2b.2 and this section as a pair.
+**Tracked as metel-core#274**, now scoped to adding that static check, not to imposing
+and later lifting a restriction. `GAP-OWNERSHIP-001`'s own Resolution section records
+that it needs both RFC-0122 (local borrows) and RFC-0067 (stored references) to close in
+full.
 
 ---
 
