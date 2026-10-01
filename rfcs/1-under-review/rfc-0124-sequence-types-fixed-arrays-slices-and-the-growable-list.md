@@ -142,6 +142,30 @@ allocation, never the batch/geometric-growth allocation this table shows every c
    dereference are the neighbouring decisions. RFC-0126 makes `T[]` immutable outright; this
    question is only about whether a *separate* mutable-view type is worth adding, not about
    reopening that immutability.
+
+   **Rust precedent, added 2026-10-01.** Rust's `&mut [T]` is the direct analogue: a fat
+   pointer (pointer + length) with exclusive, non-`Copy` borrow semantics, distinct from
+   `&[T]`'s shared, `Copy` one — the same split Metel already draws for `&T`/`&var T`, so
+   `&var [T]` is the natural spelling by that existing convention, not a new one. Two
+   properties of Rust's version carry over directly:
+
+   - **Exclusivity is enforced at the type level, not just spelled.** Only one `&mut [T]`
+     (and no concurrent `&[T]`) may alias the same backing storage at a time. For `&var [T]`
+     to be a real guarantee rather than a second unchecked spelling sitting next to today's
+     bare `T[]`, it needs the same anchor-checking Open Question 2 above already requires
+     for `[T]` itself — a mutable slice gets no separate path to soundness.
+   - **Length stays fixed at borrow time.** `&mut [T]` cannot grow or shrink its referent,
+     matching this RFC's existing split: element mutation goes through the view,
+     growth/reallocation stays `List<T>`'s job. Mutability of elements does not move that
+     boundary.
+
+   One pattern worth carrying forward once `&var [T]` exists, not deciding now:
+   `split_at_mut`, which splits one exclusive slice into two disjoint exclusive sub-slices
+   without violating exclusivity, since the two halves are provably non-overlapping.
+   Disjoint partial mutation of one list (e.g. divide-and-conquer over its two halves) is
+   common enough that whole-slice exclusivity alone won't serve it; Metel would want an
+   equivalent eventually, but it is downstream of `&var [T]` existing at all, not a blocker
+   for this question.
 2. **What is the relationship to RFC-0067's lifetime anchors?** A slice is the first type
    whose validity is scoped to another value's lifetime. This RFC probably *depends* on
    RFC-0067 rather than merely touching it — confirming that is a precondition for this
