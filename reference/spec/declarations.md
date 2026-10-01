@@ -931,6 +931,8 @@ parameter list (including a `row` type parameter, RFC-0121), the same constructi
 syntax (including shorthand field init and the zero-field forms), and the same field
 projection syntax as a `struct`'s own row.
 
+<!-- rfc.py:last_reviewed 00ea5182206865bc4268d46281bafb2767b73cad -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/3-integrated/rfc-0120-named-records.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -949,6 +951,8 @@ for a plain `struct`'s own (invisible) row. A plain `struct`'s row is never visi
 either mechanism, regardless of width — projecting every field a `struct` declares does
 not earn it `record`'s eligibility, only an explicit `record` declaration does (RFC-0137
 §3's worked example).
+
+<!-- rfc.py:last_reviewed 00ea5182206865bc4268d46281bafb2767b73cad -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/3-integrated/rfc-0120-named-records.md)_</span>
@@ -973,6 +977,8 @@ newly makes the type satisfy row bounds and row-conditional impls it did not bef
 naming the type's fields stops typechecking, with no way to find every such caller from
 the declaration site alone, since satisfaction is structural rather than declared.
 
+<!-- rfc.py:last_reviewed 00ea5182206865bc4268d46281bafb2767b73cad -->
+
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/3-integrated/rfc-0120-named-records.md)_</span>
 <!-- rfc.py:origins:end -->
@@ -987,6 +993,8 @@ the declaration site alone, since satisfaction is structural rather than declare
 Every field of a `record` declaration is public. A visibility modifier on a `record`
 field (an explicit `private`, or a bare field where the module default is private) is a
 compile error.
+
+<!-- rfc.py:last_reviewed 00ea5182206865bc4268d46281bafb2767b73cad -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/3-integrated/rfc-0120-named-records.md)_</span>

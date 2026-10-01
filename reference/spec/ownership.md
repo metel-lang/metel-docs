@@ -515,7 +515,7 @@ tracking.
 A residual's row is never visible to structural matching; only its brand, fixed at
 declaration, determines eligibility, regardless of how narrow or wide the current row is.
 
-<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+<!-- rfc.py:last_reviewed 00ea5182206865bc4268d46281bafb2767b73cad -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0117](../../rfcs/4-implemented/rfc-0117-row-narrowing.md), [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
