@@ -72,7 +72,7 @@ The typechecker treats `T[]` as `Copy` unconditionally, as a deliberate `InferTy
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/4871047944e6893a2cf1a3144bb49c66e7493e12/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L3243) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/4871047944e6893a2cf1a3144bb49c66e7493e12/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L3256) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/types/dynamic_array_is_copy_unconditionally.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/typechecking/types/dynamic_array_is_copy_unconditionally.toml#L1) |
 | `last_reviewed` | 8717cc6088e4dcf55f6f5580e60ad936d9bf69cf |
 | `related` | ADR-0046, RFC-0126 |
@@ -184,7 +184,7 @@ Generic runtime reconstruction recovers a struct or enum's type arguments from i
 | `status` | `implemented` |
 | `owner` | `metel-frontend`, `metel-interpreter` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/mod.rs::infer_named_type_args`](https://github.com/metel-lang/metel-core/blob/41b0f74be0c6e648506cce4821b4d76b2f41e6f8/metel-frontend/src/pipeline/type_checking/mod.rs#L1192) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/mod.rs::infer_named_type_args`](https://github.com/metel-lang/metel-core/blob/41b0f74be0c6e648506cce4821b4d76b2f41e6f8/metel-frontend/src/pipeline/type_checking/mod.rs#L1203) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/generics/51_generic_nested_types.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/generics/51_generic_nested_types.toml#L1) |
 | `last_reviewed` | 41b0f74be0c6e648506cce4821b4d76b2f41e6f8 |
 | `related` | ADR-0043 |
