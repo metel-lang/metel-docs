@@ -445,5 +445,15 @@ grammar citations need updating.
 
 ## Decision
 
-**Outcome:** *(pending)*
-**Target:** *(set when accepted)*
+**Outcome:** **Ready for acceptance, 2026-09-27.** No blocking open question remains: OQ1
+(width subtyping, §4), OQ2 (row-vs-row coherence, §3), OQ4 (phantom-vs-row-conditional
+typestate, §3), OQ5 (grammar, §5) and OQ7 (brand-vs-row priority, §3) are ratified rules;
+OQ3 (diagnostics) and OQ6 (label polymorphism) are descoped as non-blocking
+implementation follow-up and explicitly out-of-scope respectively. §5's grammar is
+diffed against the real generated grammar, not an illustrative sketch. The only work left
+is the spec-rule pass (coverage frontmatter + Legality Rule blocks for the `row` binder,
+`..R` use sites, row decomposition, row-conditional impl resolution, and the
+width-subtyping rule) done at the `3-integrated` transition, as for RFC-0117 and
+RFC-0129.
+
+**Target:** v0.14.0, via metel-core#792.

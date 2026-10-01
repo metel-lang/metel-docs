@@ -294,5 +294,12 @@ typestate coexist rather than forcing one to subsume the other.
 
 ## Decision
 
-**Outcome:** *(pending)*
-**Target:** *(set when accepted)*
+**Outcome:** **Ready for acceptance, 2026-09-27.** No blocking open question remains: OQ1
+(surface syntax, §1) and OQ2 (primitive vs. reified mechanism, §4) are ratified; OQ3
+(heterogeneous fields), OQ4 (nested-record termination) and OQ5 (orphan-rule wording) are
+resolved by inspection and need no design change. The sole prerequisite, RFC-0121, is
+itself `2-accepted`. The only work left is the spec-rule pass (coverage frontmatter +
+Legality Rule blocks for the `all R: Aspect` constraint form and its field-wise checking
+rule) done at the `3-integrated` transition, as for RFC-0117 and RFC-0129.
+
+**Target:** v0.14.0, via metel-core#793.
