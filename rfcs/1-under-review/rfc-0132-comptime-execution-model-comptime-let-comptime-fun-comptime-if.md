@@ -4,8 +4,21 @@ title: "Comptime Execution Model — comptime let, comptime fun, comptime if"
 date: '2026-08-13'
 status: under-review
 tracking: 'https://github.com/metel-lang/metel-core/issues/726'
-updated: '2026-09-27'
+updated: '2026-10-01'
 ---
+
+> **§1.1 and §3.5 added, 2026-10-01 — a general "comptime value" rule, and three gaps
+> closed in the already-ratified §3.1–§3.4.** Checked directly against the built
+> interpreter: §3's own flagship worked example (`fun reverse<T, comptime N: u64>(arr:
+> [T; N])`) does not parse under the current grammar, and neither the resolved `Type`
+> enum nor the inference-phase `InferType` enum has ever had anywhere for an unresolved
+> array size to live. §1.1 names the general "comptime-known expression" rule §3.2 was
+> always an unstated restriction of. §3.5 fixes the grammar and representation (symmetric
+> with how `T` itself already works — a unification variable, not new machinery) and
+> settles `#726`'s "allowed type positions" acceptance criterion by confirming `comptime
+> N` on `struct`/`enum` declarations, not only `fun`/`extend`. None of this reopens
+> anything §3.1–§3.4 already ratified 2026-09-27; it fills in what ratifying the spelling
+> never checked could be written.
 
 > **Updated 2026-08-31 — `comptime let` / `pub comptime let` and `var` in examples now
 > use `:=`.** RFC-0136 (Walrus for Kept Bindings, `4-implemented`) makes `:=` the separator
@@ -142,6 +155,55 @@ is fully computed before any generated code runs.
 `comptime let` has **no mutable form**. There is no `comptime var`, at any visibility —
 comptime bindings are not mutable regardless of whether they are exported.
 
+### 1.1 What counts as a comptime value
+
+*(New, 2026-10-01 — closes a gap used implicitly throughout §1/§3/§5 but never defined.
+"Comptime-known" is used as if it already names a closed, checkable set — in this
+section's own opening sentence, in §3's "comptime-known non-type generic parameters,"
+in §5's "a conditional whose condition is a comptime-known value" — and nowhere does it.
+Only a comptime value may initialize a comptime binding; this is the rule that makes
+that true.)*
+
+An expression is **comptime-known** exactly when it is one of:
+
+1. A literal (`i64`/`u64`/…, `f32`/`f64`, `String`, `boolean`, `Char`).
+2. A reference to an in-scope `comptime let` or `pub comptime let` binding (§1, §2).
+3. A reference to an in-scope `comptime N: u64`-style generic parameter (§3), within the
+   body of the `fun`/`struct`/`enum`/`extend` that declares it — comptime-known even
+   though its concrete value is not fixed until that declaration is instantiated.
+4. An operator, field-access, or index expression, all of whose operands are
+   comptime-known.
+5. *(Full RFC scope, not `#726`'s slice — see below.)* A `comptime fun` call (§4), all of
+   whose arguments are comptime-known.
+
+And explicitly **not** comptime-known:
+
+- A reference to an ordinary (non-`comptime`) `let`/`var` binding — **regardless of
+  whether its own initializer happens to be a literal or otherwise statically
+  computable.** Comptime-ness is a property of the binding's declared kind, checked by
+  its keyword, not inferred by constant-propagation over arbitrary runtime code. This is
+  the same "no separate notion of const expression" principle §3.2 already relies on for
+  its own narrower rule — stated here once, generally, instead of re-derived per
+  position.
+- A reference to an ordinary (non-`comptime`) function parameter, even inside a function
+  that also has `comptime` parameters — consistent with §3.3's definition-site checking:
+  the body is checked once, independent of what any call site happens to supply.
+
+**`comptime let`'s initializer (§1, above) must be comptime-known.** `comptime if`'s
+condition (§5) is the same requirement under a different name.
+
+**For `#726`'s narrow slice specifically** (§1/§2/§3 only — not §4), rule 5 is inert: no
+`comptime fun` exists yet to supply it. The practically available comptime-known
+expressions for this slice are rules 1–4 — literals, `comptime let` references, in-scope
+`comptime N` references, and arithmetic/field/index expressions built from those. Rule 5
+is stated for completeness, and because §4's own example
+(`comptime let PAGE_SIZE: i64 := pow2(12);`) already assumes it; writing the full rule
+and noting which part isn't reachable yet costs this slice nothing, where a slice-local
+rule would need restating once §4 ships.
+
+**§3.2 is a restriction stated against this rule, not an independent one** — see the note
+added there.
+
 ## 2. `pub comptime let`: public value exports
 
 *(Moved from RFC-0092 §0a, which resolved RFC-0083's circular dependency.)*
@@ -215,6 +277,15 @@ RFC already commits to." Ratified as proposed.
 
 ### 3.2 What `N` may be instantiated with, narrowed 2026-09-27
 
+> **Connected to a general rule, 2026-10-01.** §1.1 (new) names the general
+> "comptime-known expression" definition this section was always a restriction of,
+> without saying so. Re-read against it: this section admits §1.1's rules 1–2 (literal,
+> `comptime let` reference) and rule 4 (arithmetic/field/index over those), withholding
+> only rule 5 (`comptime fun` calls) — for exactly the reason given below. Nothing in
+> this section's own ratified content changes; §1.1 just gives the restriction a general
+> rule to be a restriction *of*, instead of re-deriving "no separate notion of const
+> expression" from scratch here.
+
 **For `#726`'s slice: a `u64`-typed integer literal (what parses today), or a
 `comptime let` constant (§1).** `comptime fun` calls (§4) are **excluded** from this
 slice's admissible set — the original proposal included them, treating `N`'s admissible
@@ -286,6 +357,132 @@ syntax amendment both need only a bare `comptime N` parameter, never a computed 
 type. The boundary drawn here doesn't need to move for either. Stays open (Open Question
 4) rather than resolved, exactly as originally scoped — this confirms the line is drawn in
 the right place, not that the question behind it is answered.
+
+> **Stale cross-reference, caught 2026-10-01.** This section (written 2026-08-13) and the
+> paragraph above both describe `#1291` as a "`T[N]` syntax amendment" — its original
+> framing, moving the *fixed*-size array to postfix. `#1291` actually shipped as
+> RFC-0171, which supersedes that direction: the **dynamic** array moves prefix (`T[]` →
+> `[T]`), and `[T; N]` is untouched, exactly as this paragraph's own "none of the three
+> blocked items above needs \[a computed arity\]" conclusion already assumed. The
+> conclusion stands; only the syntax-amendment description was stale. RFC-0171 itself
+> (`4-implemented`, 2026-10-01) is the authoritative account.
+
+### 3.5 Grammar, representation, and declaration scope
+
+*(New, 2026-10-01 — closes gaps found checking §3 against the actual grammar and type
+representation, and against `#726`'s own "allowed type positions" acceptance criterion.
+All three gaps sit inside the already-ratified §3.1–§3.4; none of them reopens anything
+ratified 2026-09-27.)*
+
+#### 3.5a Grammar: the array-size slot must admit an identifier, not only a literal
+
+**Checked directly, 2026-10-01, against `metel-frontend/src/grammar.pest` (post-RFC-0171).**
+`bracket_array_type = { "[" ~ type_expr ~ (";" ~ decimal_int)? ~ "]" }` — the slot after
+`;` accepts only `decimal_int`, a literal. **§3's own flagship worked example (§3.3,
+`reverse`) does not parse today:** `N` is an identifier there, not a `decimal_int`. This
+was true before RFC-0171 too — the old `sized_array_type` production had the identical
+restriction. §3.1–§3.4 were ratified without anyone checking that the spelling they
+ratified is writable.
+
+**Fix:** a new production for the array-size slot, admitting a bare identifier alongside
+the literal:
+
+```
+array_size = { decimal_int | ident }
+bracket_array_type = { "[" ~ type_expr ~ (";" ~ array_size)? ~ "]" }
+```
+
+An identifier here is resolved at typecheck time against in-scope `comptime N: u64`
+parameters — never evaluated as a general expression. This is deliberately narrower than
+"any comptime-known expression" (§1.1): `[T; N + 1]` stays out of scope, unchanged from
+§3.4's own deferral above. The grammar now *parses* a name in that slot; typechecking
+still rejects anything there besides a literal or a bare reference to an in-scope
+`comptime N` parameter.
+
+#### 3.5b Representation: `N` is resolved the same way `T` is — a unification variable, not a type-level slot
+
+**Checked directly against `metel-frontend/src/data/types/mod.rs` and
+`.../pipeline/type_checking/type_engine/mod.rs`, 2026-10-01.** Neither the resolved
+`Type` enum nor the inference-phase `InferType` enum has ever had a slot for
+"unresolved" anything. `T`'s own unresolved occurrence is not a permanent tag on a type —
+it is `InferType::Var(TypeVar)`, a transient **unification variable** (`TypeVar` is a bare
+`struct TypeVar(pub u32)`), resolved by unifying against the concrete call-site argument.
+`Type::SizedArray(Box<Type>, u64)` and `InferType::SizedArray(Box<InferType>, u64)` are
+*both* a bare `u64` today, because arrays could only ever be written with literal
+arities — there has never been anywhere, at any layer, for an unresolved size to live.
+
+**The fix mirrors `TypeVar` exactly, at the same layer `T` is resolved at.** A `ConstVar`
+(identical shape — a fresh opaque id per unresolved `comptime` value, resolved by
+unification against the concrete call-site value), used only in `InferType`:
+
+```rust
+enum ArraySize {
+    Literal(u64),
+    Var(ConstVar),
+}
+// InferType::SizedArray(Box<InferType>, ArraySize)   -- was: (Box<InferType>, u64)
+```
+
+**`Type::SizedArray` is untouched.** By the time anything becomes a resolved `Type`,
+every generic parameter — `T` and `N` alike — is already substituted via the existing
+per-call-site reconstruction (`metel-frontend/src/pipeline/type_checking/construction/
+mod.rs`'s generic-body construction); a resolved `Type::SizedArray` has always been able
+to assume a concrete arity and keeps being able to. This is smaller and more consistent
+than baking an `ArraySize` variant into `Type` itself would be — that would give `N` more
+permanent machinery than `T` has ever needed.
+
+**What this settles about `N`'s own nature.** `comptime N: u64` is a genuine generic
+parameter, in the same sense `T` is and via the identical mechanism — a fresh unification
+variable, declared in the same `generic_params` list, resolved per call/construction
+site, checked at definition site per §3.3 — not a comptime value admitted into a type
+position as a special-cased exception. What *is* deliberately restricted is the **syntax
+position** it may appear in: `T` is legal almost anywhere `type_expr` is, while `N`, for
+`#726`'s slice, is legal only in `[T; N]`'s size slot (§3.5a), and only as a bare
+reference there (§3.4) — a scope boundary, not a difference in mechanism.
+
+#### 3.5c Declaration scope: `comptime N` on `struct`/`enum`, not only `fun`/`extend`
+
+**Checked directly against `metel-frontend/src/grammar.pest`, 2026-10-01.**
+`generic_params` is one shared production across `fun_decl`, `struct_decl`, `enum_decl`,
+`extend_impl_block`, `aspect_decl`, and `type_alias`. Once `comptime N: u64` is added as a
+`generic_param` alternative (§3.1), it becomes available **everywhere** `<...>` appears —
+struct and enum declarations included — whether or not this RFC says anything about it;
+the production is shared, not per-declaration-kind. `#726`'s own acceptance criteria name
+"allowed type positions" (plural); this is the part of that criterion §3.1–§3.4 left
+unaddressed.
+
+**In scope, confirmed against `#726`'s own boundary.** The obvious case:
+
+```metel
+struct FixedBuffer<comptime N: u64> {
+    data: [u8; N],
+}
+
+extend<comptime N: u64> FixedBuffer<N> {
+    fun len(&self) -> u64 { N }
+}
+```
+
+— is squarely inside §3.4's existing deferral boundary: a bare `N` in the field's
+array-size slot, no arithmetic. Definition-site bound checking (§3.3) generalizes without
+change: "is `N` comptime-known and `u64`" doesn't depend on whether the enclosing
+declaration is a `fun`, a `struct`, or an `enum`. No new rule is needed beyond stating
+explicitly that struct/enum declarations are included — the grammar already includes them
+for free, and nothing about §3.2's instantiation rule or §3.3's checking discipline is
+`fun`-specific.
+
+**Not addressed here: a struct/enum's own field types computing a new arity from `N`.**
+`struct Matrix<comptime Rows: u64, comptime Cols: u64> { data: [f64; Rows * Cols] }` needs
+arithmetic in type position (`Rows * Cols`), which stays out of scope per §3.4 unchanged —
+this section extends *where* a bare `comptime N` may be declared and referenced, not
+*what* may be computed from it.
+
+**Validation note, same posture as Open Question 5.** §3.5a/b's grammar and
+representation sketches, and §3.5c's struct/enum scope, are sufficient for design
+purposes — confirming they compile and integrate cleanly with the existing
+`construct_generic_body`/unification machinery is empirical validation at implementation
+time, not a design decision left open, exactly as Open Question 5 already treats the
+equivalent step for §3 as a whole.
 
 ---
 
