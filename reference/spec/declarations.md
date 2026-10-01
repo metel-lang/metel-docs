@@ -902,15 +902,17 @@ fun main() -> i64 {
 
 ## Records
 
-> **Limitation** LIMIT-DECLARATIONS-001
-
 ```metel
 record Handle {
-    fd: i64,
-    name: String,
+    public fd: i64,
+    public name: String,
+}
+
+fun main() {
+    let h := Handle { fd = 3, name = "x".to_string() };
+    assert(h.fd == 3);
 }
 ```
-<!-- doc-example: skip reason="RFC-0120, not implemented yet: `record` does not parse (LIMIT-DECLARATIONS-001)" -->
 
 A third declaration kind alongside `struct`, `enum` and `aspect`. `record X { ... }` is
 accepted everywhere `struct X { ... }` is — same declaration grammar, same construction
@@ -934,7 +936,7 @@ projection syntax as a `struct`'s own row.
 <!-- rfc.py:last_reviewed 00ea5182206865bc4268d46281bafb2767b73cad -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/3-integrated/rfc-0120-named-records.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -955,7 +957,7 @@ not earn it `record`'s eligibility, only an explicit `record` declaration does (
 <!-- rfc.py:last_reviewed 00ea5182206865bc4268d46281bafb2767b73cad -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/3-integrated/rfc-0120-named-records.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -980,7 +982,7 @@ the declaration site alone, since satisfaction is structural rather than declare
 <!-- rfc.py:last_reviewed 00ea5182206865bc4268d46281bafb2767b73cad -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/3-integrated/rfc-0120-named-records.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -997,7 +999,7 @@ compile error.
 <!-- rfc.py:last_reviewed 00ea5182206865bc4268d46281bafb2767b73cad -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/3-integrated/rfc-0120-named-records.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

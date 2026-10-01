@@ -2,7 +2,7 @@
 id: rfc-0120
 title: "Named Records"
 date: '2026-07-24'
-status: integrated
+status: implemented
 tracking: 'https://github.com/metel-lang/metel-core/issues/791'
 updated: '2026-10-01'
 coverage:
@@ -12,8 +12,8 @@ coverage:
   "4": { kind: untestable, reason: "Scope note on what this RFC does not claim (the strong 'every struct is (brand, row)' thesis), already the subject of RFC-0137's own spec text -- no independent rule of this RFC's own to test." }
   "5": { spec: "spec.declarations.records.legality-4" }
   "6": { spec: "spec.declarations.records.legality-1" }
-impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1300'
-impl_status: not-started
+impl_tracking: metel-core#1300
+impl_status: implemented
 ---
 
 > **Retargeted to v0.14.0, 2026-09-03.** RFC-0120's Summary capability is *"the declared
@@ -70,6 +70,8 @@ impl_status: not-started
 > **Status — integrated (2026-10-01).** Merged into `reference/spec/declarations.md#records`: declaration grammar, structural-visibility eligibility against a residual's *current* row (RFC-0137 §3), the upgrade path's caller-visible consequences, and field visibility. All four Legality Rules `blocked`-exempt on metel-core#1300 (not implemented) — row-conditional impl resolution specifically also depends on RFC-0121 (Open Rows), itself not yet `3-integrated`. `LIMIT-DECLARATIONS-001` records the grammar gap. Cross-checked against RFC-0137 (`3-integrated`, satisfied) and RFC-0121/RFC-0123 (siblings in the same cluster, per PROCESS.md's RFC-0063 precedent — both reached `3-integrated` the same day) — no contradiction found; RFC-0120's own claims about row-conditional dispatch are written as a forward reference to RFC-0121 by name, not a spec anchor, since RFC-0121 had none at the time this RFC's own content was drafted.
 
 > **Status — integrated (2026-10-01).** Spec-rule pass: declaration grammar, structural-visibility eligibility, upgrade path, field visibility. Blocked-exempt on metel-core#1300 (record keyword not implemented); row-conditional impl dispatch additionally depends on RFC-0121.
+
+> **Status — implemented (2026-10-01).** Named records implemented in metel-core#1303 (merge commit 3797758d6dc2fa068939f9ca8877c144555fe2cc); row-conditional impl resolution still gated on RFC-0121.
 
 ## Summary
 
