@@ -223,6 +223,18 @@ above it are.
   Its OQ1 asks the question nothing else does: whether a from-Metel `List` is actually
   *wanted*.
 
+- **RFC-0172** *(draft, opened 2026-10-01, split out of RFC-0124 OQ7)* — Sized and Unsized
+  Kinds, and a Generalized Unsizing Coercion. No `Sized`/`?Sized`-equivalent kind
+  distinction exists anywhere in the type checker today (confirmed absent 2026-09-28); this
+  proposes one, scoped to exactly `[T]` as the one built-in unsized payload type, plus a
+  single coercion rule replacing today's bolted-on `reject_dynamic_array_where_sized_expected`
+  guard so `[T; N] → [T]` composes through a wrapper (`@a [T; N] → @a [T]`) instead of only
+  working bare. Framed in OQ7 as a prerequisite for `@a [T]` composability alone
+  (deprioritized there), but it is *also* a hard prerequisite for RFC-0124 OQ2's option (a)
+  — making `[T]` itself a sigil-spelled, anchor-checked unsized type once RFC-0067 lands —
+  which option (b) does not need at all. **Deliberately unmilestoned**, same posture as
+  RFC-0133: whether this is needed at all waits on OQ2 picking (a) over (b).
+
 - **RFC-0123** *(accepted 2026-09-27 — stale as draft here since 2026-07-24)* — Field-Wise Row Constraints — a constraint
   applying an aspect to **every field of a row** rather than to the row's type
   (`extend<row R> { ..R }: Display where all R: Display`). Opened after noticing that two
