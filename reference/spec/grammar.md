@@ -35,7 +35,7 @@ Declaration          → FunDeclaration
 TypeAliasDeclaration → "public"? "type" IDENTIFIER GenericParams? ":=" Type ";"
 LetDeclaration       → "let" !"var" IDENTIFIER ( ":" Type )? ":=" Expression ";"
 VarDeclaration       → ( "let" "var" | "var" ) IDENTIFIER ( ":" Type )? ":=" Expression ";"
-FunDeclaration       → NativeBinding? "public"? "fun" IDENTIFIER GenericParams? "(" Params? ")" ( "->" Type )? WhereClause? ( Block | ";" )
+FunDeclaration       → NativeBinding? "public"? "fun" IDENTIFIER GenericParams? "(" FunDeclParamList? ")" ( "->" Type )? WhereClause? ( Block | ";" )
 NativeBinding        → "native" "(" "@" NATIVE_PATH ")"
 StructDeclaration    → "public"? "struct" IDENTIFIER GenericParams? WhereClause? "{" StructFields "}"
 StructFields         → ( StructField "," )* StructField?
@@ -51,23 +51,27 @@ AspectDeclaration    → "public"? "aspect" IDENTIFIER GenericParams? ( ";" | "{
 AspectMethod         → "fun" IDENTIFIER GenericParams? "(" Params? ")" ( "->" Type )? ( Block | ";" )
 AssocTypeDecl        → "type" IDENTIFIER ( ":" BoundList )? ";"
 
-Params          → Param ( "," Param )* ","?
-Param           → "&" "var"? "self"
-                | "self"
-                | IDENTIFIER ( ":" Type )?
-GenericParams   → "<" GenericParam ( "," GenericParam )* ">"
-GenericParam    → "record"? IDENTIFIER ( ":" BoundList )?
-BoundList       → Bound ( "+" Bound )*
-Bound           → "!"? BoundHead
-BoundHead       → RowBound
-                | TypePath ( "<" BoundArg ( "," BoundArg )* ","? ">" )?
-RowBound        → "{" ( RowField ( "," RowField )* )? ( "," ".." )? ","? "}"
-RowField        → IDENTIFIER ( ":" Type )?
-BoundArg        → AssocBinding
-                | Type
-AssocBinding    → IDENTIFIER "=" Type
-WhereClause     → "where" WhereConstraint ( "," WhereConstraint )*
-WhereConstraint → "record"? IDENTIFIER ":" BoundList
+Params           → Param ( "," Param )* ","?
+Param            → "&" "var"? "self"
+                 | "self"
+                 | IDENTIFIER ( ":" Type )?
+FunDeclParamList → FunDeclParam ( "," FunDeclParam )* ","?
+FunDeclParam     → "&" "var"? "self"
+                 | "self"
+                 | IDENTIFIER ( ":" ( OpenRecordType | Type ) )?
+GenericParams    → "<" GenericParam ( "," GenericParam )* ">"
+GenericParam     → ( "record" | "row" )? IDENTIFIER ( ":" BoundList )?
+BoundList        → Bound ( "+" Bound )*
+Bound            → "!"? BoundHead
+BoundHead        → RowBound
+                 | TypePath ( "<" BoundArg ( "," BoundArg )* ","? ">" )?
+RowBound         → "{" ( RowField ( "," RowField )* )? ( "," ".." )? ","? "}"
+RowField         → IDENTIFIER ( ":" Type )?
+BoundArg         → AssocBinding
+                 | Type
+AssocBinding     → IDENTIFIER "=" Type
+WhereClause      → "where" WhereConstraint ( "," WhereConstraint )*
+WhereConstraint  → "record"? IDENTIFIER ":" BoundList
 
 Statement           → WhileStatement
                     | ForStatement
@@ -197,6 +201,9 @@ DynType              → "dyn" NamedType
 TupleType            → "(" Type ( "," Type )+ ")"
 RecordType           → "{" ( RecordTypeField ( "," RecordTypeField )* ","? )? "}"
 RecordTypeField      → IDENTIFIER ":" Type
+OpenRecordType       → "{" RecordTypeField ( "," RecordTypeField )* "," RowTail ","? "}"
+                     | "{" RowTail ","? "}"
+RowTail              → ".." IDENTIFIER?
 RecordProjectionType → TypePath ".{" IDENTIFIER ( "," IDENTIFIER )* ","? "}"
 FunType              → FunTypeQualifier* "|" TypeList? "|" "->" Type
 FunTypeQualifier     → "once"
