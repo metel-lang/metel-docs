@@ -235,7 +235,7 @@ above it are.
   which option (b) does not need at all. **Deliberately unmilestoned**, same posture as
   RFC-0133: whether this is needed at all waits on OQ2 picking (a) over (b).
 
-- **RFC-0123** *(accepted 2026-09-27 — stale as draft here since 2026-07-24)* — Field-Wise Row Constraints — a constraint
+- **RFC-0123** *(integrated 2026-10-01)* — Field-Wise Row Constraints — a constraint
   applying an aspect to **every field of a row** rather than to the row's type
   (`extend<row R> { ..R }: Display where all R: Display`). Opened after noticing that two
   questions the corpus tracked separately are one missing construct: RFC-0121's

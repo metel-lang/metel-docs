@@ -1477,6 +1477,10 @@ type variables are therefore never ambiguous with each other.
 
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters are not implemented (LIMIT-TYPES-001); `row` is not a grammar alternative for a generic parameter, and `..R` does not parse in any type position." -->
 
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/3-integrated/rfc-0121-open-rows.md)_</span>
+<!-- rfc.py:origins:end -->
+
 <!-- rfc.py:exemption:rendered:start -->
 <span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters are not implemented (LIMIT-TYPES-001); `row` is not a grammar alternative for a generic parameter, and `..R` does not parse in any type position._</span>
 <!-- rfc.py:exemption:rendered:end -->
@@ -1489,6 +1493,10 @@ variable `R` into one named field and a remainder `Rest`, and simultaneously bou
 to carry at least that field (equivalent to `R: { label: Type, .. }`).
 
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters are not implemented (LIMIT-TYPES-001); there is no row-equation form in `where` clauses." -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/3-integrated/rfc-0121-open-rows.md)_</span>
+<!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
 <span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters are not implemented (LIMIT-TYPES-001); there is no row-equation form in `where` clauses._</span>
@@ -1508,12 +1516,58 @@ walking them directly. When `R` is itself abstract (a `<row R>` parameter, narro
 by value inside a generic body with no further information), there is nothing to check
 the remainder's fields against without a bound naming the requirement — by-value
 narrowing of an abstract row is rejected unconditionally until that bound exists
-(`all R: Copy`, RFC-0123, not yet integrated).
+(`all R: Copy`, [Field-wise row constraints](#field-wise-row-constraints) below).
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters are not implemented (LIMIT-TYPES-001); there is no width subtyping (by-value or by-reference) to exercise. The abstract-row case additionally depends on RFC-0123's `all R: Copy` quantifier, itself not yet integrated." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters are not implemented (LIMIT-TYPES-001); there is no width subtyping (by-value or by-reference) to exercise. The abstract-row case additionally depends on `all R: Copy` (metel-core#1302), itself also not implemented." -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/3-integrated/rfc-0121-open-rows.md)_</span>
+<!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters are not implemented (LIMIT-TYPES-001); there is no width subtyping (by-value or by-reference) to exercise. The abstract-row case additionally depends on RFC-0123's `all R: Copy` quantifier, itself not yet integrated._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters are not implemented (LIMIT-TYPES-001); there is no width subtyping (by-value or by-reference) to exercise. The abstract-row case additionally depends on `all R: Copy` (metel-core#1302), itself also not implemented._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+</details>
+
+### Field-wise row constraints
+
+> **Limitation** LIMIT-TYPES-002
+
+A constraint applies an aspect bound to **every field** of a row, rather than to the
+row's own type as a whole — distinct from a row *bound* (`R: { x: f64, .. }`), which
+constrains the row's shape (which labels it has), not its contents (what the field
+types can do):
+
+```metel
+extend<row R> { ..R }: Display where all R: Display { … }
+fun consume<row R>(r: { ..R })  where all R: Copy     { … }
+```
+
+`all R: A` holds when every field type in `R` satisfies `A`; it holds vacuously on an
+empty row. A per-field exception composes through ordinary row decomposition (`where R
+= { x: T, ..Rest } where T: SomeOtherBound, all Rest: A`) rather than needing a
+heterogeneous form of its own.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.generics.field-wise-row-constraints.legality-1}
+
+`where all R: Aspect` is a `WhereConstraint` alternative, sibling to an ordinary bound
+(`ident : BoundList`) and a row equation (`ident = Type`, [Open rows](#open-rows)
+above): it holds exactly when every field type in row `R` satisfies `Aspect`,
+vacuously on an empty row. It constrains `R`'s field *contents*; it does not by itself
+constrain which labels `R` has (that is an ordinary row bound, composed separately).
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1302" reason="`all R: Aspect` is not implemented (LIMIT-TYPES-002); `where` has no such alternative, and it additionally depends on RFC-0121's row-kinded generic parameters (LIMIT-TYPES-001), also not implemented." -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0123](../../rfcs/3-integrated/rfc-0123-field-wise-row-constraints.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1302: `all R: Aspect` is not implemented (LIMIT-TYPES-002); `where` has no such alternative, and it additionally depends on RFC-0121's row-kinded generic parameters (LIMIT-TYPES-001), also not implemented._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>
@@ -1534,14 +1588,13 @@ The first form is the one this design intends to land first — exactly one stru
 permitted once the aspect is local; the equivalent one-concrete-target form for arrays
 (`extend<T> T[]: Aspect`) is already supported.
 
-The second and third forms additionally require row variables (now specified, [Open
-rows](#open-rows) above — `LIMIT-TYPES-001`, not yet implemented). The second also needs
-overlap checking between row bounds — two shape-conditional implementations can be
-*incomparable* rather than one being more specific, so they must be disjoint, which is
-now specified below. The third additionally needs a way to require an aspect of every
-field in the row (RFC-0123's `all R: Aspect`, not yet integrated).
-
-> **Gap** GAP-TYPES-004
+The second and third forms additionally require row variables ([Open rows](#open-rows)
+above). The second also needs overlap checking between row bounds — two
+shape-conditional implementations can be *incomparable* rather than one being more
+specific, so they must be disjoint, which is specified below. The third additionally
+needs a way to require an aspect of every field in the row ([Field-wise row
+constraints](#field-wise-row-constraints) above, `all R: Aspect`). Both are now
+specified; neither is implemented yet (`LIMIT-TYPES-001`, `LIMIT-TYPES-002`).
 
 <details>
 <summary>Formal rules</summary>
@@ -1556,6 +1609,10 @@ current-row behavior [Named Records](declarations.md#records) states for `record
 row-bound satisfaction.
 
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters, and therefore row-conditional impls, are not implemented (LIMIT-TYPES-001)." -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/3-integrated/rfc-0121-open-rows.md)_</span>
+<!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
 <span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters, and therefore row-conditional impls, are not implemented (LIMIT-TYPES-001)._</span>

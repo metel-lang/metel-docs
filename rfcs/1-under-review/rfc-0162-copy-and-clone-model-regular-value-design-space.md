@@ -592,7 +592,7 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
 - **RFC-0074 / RFC-0076 (Rc / Arc, Rc Brands)** — the handle types and brand machinery
   that already distinguish "aliases the same cell" from "independent" in the types;
   RFC-0158 gives that a surface verb.
-- **RFC-0123 (Field-Wise Row Constraints, `2-accepted`)** — the named fix path for
+- **RFC-0123 (Field-Wise Row Constraints, `3-integrated`)** — the named fix path for
   "records can never be `Copy`"; reconcile any structural-type conclusion with it.
 - **RFC-0126 (`T[]` Copy view, `4-implemented`)**, **metel-core#263** (`[T; N]`),
   **RFC-0061 §6/§7.2** (tuples / fn-pointers) — the concrete structural cases D4

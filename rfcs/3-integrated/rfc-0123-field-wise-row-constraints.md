@@ -2,9 +2,16 @@
 id: rfc-0123
 title: "Field-Wise Row Constraints"
 date: '2026-07-24'
-status: accepted
+status: integrated
 tracking: 'https://github.com/metel-lang/metel-core/issues/793'
-updated: '2026-09-27'
+updated: '2026-10-01'
+coverage:
+  "1": { spec: "spec.types.generics.field-wise-row-constraints.legality-1" }
+  "2": { kind: untestable, reason: "Rationale for a primitive quantifier over comptime-derive-per-shape as an alternative; not an independent testable claim beyond legality-1's own rule." }
+  "3": { kind: untestable, reason: "Prior-art survey (PureScript RowToList, Haskell row-types), not a testable claim of this RFC's own design." }
+  "4": { spec: "spec.types.generics.field-wise-row-constraints.legality-1" }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1302'
+impl_status: not-started
 ---
 
 > **Opened 2026-07-24, unifying three questions the corpus was carrying separately without
@@ -28,6 +35,10 @@ updated: '2026-09-27'
 > Questions below.
 
 > **Status — accepted (2026-09-27).** All five open questions closed 2026-09-27, reviewed once more before this transition with no issues found. Design settled per PROCESS.md's 2-accepted bar.
+
+> **Status — integrated (2026-10-01).** Merged into `reference/spec/types.md#field-wise-row-constraints`: `where all R: Aspect` as a `WhereConstraint` alternative, holding when every field type in `R` satisfies `Aspect`. Not implemented yet (`LIMIT-TYPES-002`, `blocked`-exempt on metel-core#1302); additionally depends on RFC-0121's row-kinded generic parameters (`LIMIT-TYPES-001`), landing the same day. Closes `GAP-TYPES-004` (a blanket row-conditional impl's body needing a per-field aspect bound) together with RFC-0121. Cross-checked against RFC-0121 (satisfied — this RFC's `all R: Copy` is exactly what RFC-0121 §4/OQ1 names as the missing piece for abstract-row width subtyping) and RFC-0116/RFC-0120 (satisfied — the motivating `Display`/`Copy`-for-records use cases) — no contradiction found.
+
+> **Status — integrated (2026-10-01).** Spec-rule pass: where all R: Aspect as a WhereConstraint alternative. Blocked-exempt on metel-core#1302 (not implemented); depends on RFC-0121's row-kinded generics. Closes GAP-TYPES-004 together with RFC-0121.
 
 ## Summary
 
