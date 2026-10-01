@@ -2,16 +2,16 @@
 id: rfc-0171
 title: "Prefix array type syntax: [T] and [T; N]"
 date: '2026-09-27'
-status: integrated
-updated: '2026-09-28'
+status: implemented
+updated: '2026-10-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1291'
 coverage:
   "1": { spec: "spec.types.arrays.legality-1" }
-  "2": { kind: blocked, reason: "The grammar production merge (BracketArrayType retiring SizedArrayType/ArrayType) is not implemented; metel-frontend/src/grammar.pest is unchanged, and reference/spec/grammar.md is generated from it, so there is nothing to anchor a spec id to until the parser migrates.", ref: "metel-core#1291" }
+  "2": { kind: untestable, reason: "Implemented 2026-10-01: metel-frontend/src/grammar.pest merges SizedArrayType/ArrayType/array_atom into one bracket_array_type production, and reference/spec/grammar.md is regenerated from it. The production shape itself is a grammar-implementation fact, not an independently citable spec legality rule beyond spec.types.arrays.legality-1 (coverage 1); the one genuine semantic widening it enables (RFC-0171 Open Question 1 -- [&T]/[|i64| -> T] dynamic arrays now parse) has no dedicated fixture yet." }
   "3": { kind: untestable, reason: "States that RFC-0132 section 3's comptime N: u64 spelling needs no change under this RFC's direction -- a compatibility note, not an independent testable claim; RFC-0132 (still 1-under-review) owns any actual comptime-generic-array rule." }
   "4": { kind: untestable, reason: "States that #263's fixed-array Copy spelling needs no change under this RFC's direction -- a compatibility note, not an independent testable claim; RFC-0132 section 3 and #263 own that rule's own coverage." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1291'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Same underlying tension as RFC-0084 (refused, 2026-07-10), opposite resolution.**
@@ -42,6 +42,8 @@ impl_status: not-started
 > **Status — accepted (2026-09-27).** All three open questions closed 2026-09-27: OQ1 (lifting ArrayType's base-type restriction) ratified safe -- already required for the fixed-array case; OQ2/OQ3 confirmed non-blocking. Weighed against two real alternatives (postfix T[]/T[N], Zig's []T/[N]T) before settling on [T]/[T;N].
 
 > **Status — integrated (2026-09-28).**
+
+> **Status — implemented (2026-10-01).**
 
 ## Summary
 

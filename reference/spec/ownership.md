@@ -22,7 +22,7 @@ as an argument, or returning it **moves** it: ownership transfers, and the sourc
 becomes invalid.
 
 ```metel
-struct Buffer { data: i64[] }
+struct Buffer { data: [i64] }
 
 fun consume(b: Buffer) -> i64 { b.data.len() }
 

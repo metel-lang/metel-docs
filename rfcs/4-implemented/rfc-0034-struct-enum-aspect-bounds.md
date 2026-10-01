@@ -28,7 +28,7 @@ RFC-0002 shipped single-bound enforcement for function type parameters (`fun foo
 ```metel
 // Cannot currently express: T must implement Comparable to be stored in SortedList
 struct SortedList<T> {
-    items: T[],
+    items: [T],
 }
 ```
 
@@ -109,7 +109,7 @@ Inside the struct's own method bodies and `impl` blocks, the typechecker treats 
 `impl` blocks for a bounded struct inherit the struct's bounds without re-declaration:
 
 ```metel
-struct SortedList<T: Comparable> { items: T[] }
+struct SortedList<T: Comparable> { items: [T] }
 
 extend SortedList<T> {
     fun insert(self, item: T) {
@@ -125,7 +125,7 @@ Re-declaring the bound in the `impl` header is not required and is not an error,
 The same rule applies to aspect implementation blocks:
 
 ```metel
-struct SortedList<T: Comparable> { items: T[] }
+struct SortedList<T: Comparable> { items: [T] }
 
 extend SortedList<T>: Printable {
     fun print(self) {

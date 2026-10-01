@@ -130,7 +130,7 @@ fun describe_triplet(xs: [i64; 3]) -> String {
 When a function expects a normal array (`T[]`), a fixed-size array coerces automatically:
 
 ```metel
-fun first(xs: i64[]) -> i64 {
+fun first(xs: [i64]) -> i64 {
     xs[0u64]
 }
 
@@ -189,7 +189,7 @@ fun main() {
 If another function expects an immutable array view, call `.as_slice()`:
 
 ```metel
-fun total(xs: i64[]) -> i64 {
+fun total(xs: [i64]) -> i64 {
     var sum := 0;
     for (let x in xs) {
         sum += x;

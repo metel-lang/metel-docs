@@ -185,14 +185,14 @@ unrelated to anything this RFC changes:
 ```metel
 // (a) the annotated let-binding — the corpus's dominant style
 fun main() {
-    let nums: i64[] := [1, 2, 3];   // literal coerces at the binding itself
+    let nums: [i64] := [1, 2, 3];   // literal coerces at the binding itself
     assert(nums.len() == 3);
 }
 ```
 
 ```metel
 // (b) an unannotated value passed where T[] is expected — the generic-call-argument case
-fun sum<T>(arr: T[]) -> i64 {
+fun sum<T>(arr: [T]) -> i64 {
     var total := 0;
     for (x in arr) { total += 1; }
     total
@@ -253,7 +253,7 @@ found while writing this RFC's spec-integration worked examples (`declarations.m
 "Standard array impls").** Today it is:
 
 ```metel
-extend<T: Clone> T[]: Clone {
+extend<T: Clone> [T]: Clone {
     fun clone(&self) -> Self {
         var out: List<T> := List::new();
         for (item in self) { out.push(item.clone()); }
@@ -290,7 +290,7 @@ type-level argument that `T[]` cannot be a view — it does not itself make the 
 A `Drop`-implementing struct with a `T[]` field, read twice:
 
 ```metel
-struct Wrapper { data: i64[], tag: String }
+struct Wrapper { data: [i64], tag: String }
 extend Wrapper: Drop { fun drop(self) {} }
 
 fun main() {

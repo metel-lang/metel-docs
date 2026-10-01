@@ -29,7 +29,7 @@ fun main() {
 `loop` runs indefinitely; `break expr` exits it and produces a value, which is what makes `loop` useful for a search that needs to bail out early with a result:
 
 ```metel
-fun first_over(threshold: i64, values: i64[]) -> Perhaps<i64> {
+fun first_over(threshold: i64, values: [i64]) -> Perhaps<i64> {
     var i: u64 := 0;
     loop {
         if ((i as i64) >= values.len()) {
@@ -93,7 +93,7 @@ and `Err { error }` / `Ok { value }` are just their variants.
 Use it whenever a function can legitimately return nothing (a search that finds no result, a field that is not set):
 
 ```metel
-fun find(haystack: String[], needle: String) -> Perhaps<i64> {
+fun find(haystack: [String], needle: String) -> Perhaps<i64> {
     var i := 0;
     for (let s in haystack) {
         if (s == needle) {

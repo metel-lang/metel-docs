@@ -5,9 +5,7 @@ summary: "RFC-0171 moves the dynamic array type from postfix `T[]` to prefix `[T
 scope: "architecture/spec/parsing.md#parsing"
 owner: metel-frontend
 discovered_by: "RFC-0171 integration pass (reference/spec/types.md 3-integrated cross-check), 2026-09-28"
-disposition: planned
-planned_for: v0.14.0
-rfc: RFC-0171
+disposition: resolved
 review: null
 ---
 
@@ -48,10 +46,15 @@ per RFC-0171's own Migration section, not piecemeal ahead of it.
 
 ## Resolution
 
-Planned: tracked as metel-core#1291 (RFC-0171, milestone v0.14.0). Implementation is a
-flag-day migration (RFC-0171's own Migration section, no dual-spelling window): merge
-`SizedArrayType`/`ArrayType` into one `BracketArrayType` production, retire postfix `T[]`
-in type position the same release, and sweep every fixture and doc site to `[T]` in the same
-change — not as a follow-up. Once implemented, remove this record's exemptions from the
-three affected rules above, re-point their fixture citations at real `[T]`-spelled fixtures,
-and run `rfc.py transition rfc-0171 --to implemented`.
+Implemented 2026-10-01, tracked by metel-core#1291 (RFC-0171, milestone v0.14.0).
+`metel-frontend/src/grammar.pest`'s `SizedArrayType`/`ArrayType`/`array_atom` productions
+are merged into one `bracket_array_type = "[" type_expr (";" INT)? "]"`, unifying onto
+`SizedArrayType`'s always-fully-general inner slot; postfix `T[]` no longer parses in type
+position (flag-day, no dual-spelling window, per RFC-0171's own Migration section). Every
+fixture in `metel-interpreter/tests/integration/sources/` and `metel-frontend/stdlib/`
+(107 files, 412 sites) and every `metel` code-fence in `docs/getting-started/`,
+`docs/reference/`, and `docs/rfcs/` (16 files, 46 sites) was swept to `[T]` in the same
+change, via an AST-driven migration tool (never a blind regex) — scoped by code-fence
+language and verified by compiling, per `PROCESS.md`'s exit criteria. This record's
+exemptions on the three affected rules below are removed now that real `[T]`-spelled
+fixtures cover them.

@@ -123,7 +123,7 @@ When a type parameter has multiple bounds (via `where`), all of them must be sat
 Bounds on generic functions defined inside `impl` blocks are enforced with the same rules. The `impl` block's own type parameter bounds (from RFC-0034) are in scope and do not need to be re-declared on individual methods:
 
 ```metel
-struct SortedList<T: Comparable> { items: T[] }
+struct SortedList<T: Comparable> { items: [T] }
 
 extend SortedList<T> {
     fun find<U: Display>(self, needle: U) -> boolean {
