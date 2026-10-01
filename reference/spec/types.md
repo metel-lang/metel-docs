@@ -1172,9 +1172,9 @@ fun first_or_default(items: [i64], fallback: Perhaps<i64>) -> i64 {
 
 fun main() -> i64 {
     let total := zip_lengths([], ["a", "b"]);
-    let row := make_row(true, [1, 2, 3]);
+    let built := make_row(true, [1, 2, 3]);
     let first := first_or_default([1, 2, 3], None);
-    return total + row.len() + first;
+    return total + built.len() + first;
 }
 ```
 

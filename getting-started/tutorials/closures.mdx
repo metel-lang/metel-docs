@@ -57,9 +57,9 @@ fun main() {
         var i := 0;
         var found := false;
         while (i < totals.len()) {
-            let row := totals.get(i).yolo();
-            if (row.user == user) {
-                totals.set(i, Tally { user = user, total = row.total + weight });
+            let entry := totals.get(i).yolo();
+            if (entry.user == user) {
+                totals.set(i, Tally { user = user, total = entry.total + weight });
                 found := true;
             }
             i := i + 1;
