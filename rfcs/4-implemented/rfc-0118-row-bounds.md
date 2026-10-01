@@ -517,7 +517,7 @@ position admits both readings.
 
 - `public/rfcs/5-superseded/rfc-0090-structural-records.md` §1, §2, §7 — the source
 - RFC-0116 (Anonymous Record Types) — the row syntax reused in bound position
-- RFC-0121 (Open Rows, `2-accepted`) — `..R`, the named form of §1's anonymous `..`;
+- RFC-0121 (Open Rows, `3-integrated`) — `..R`, the named form of §1's anonymous `..`;
   §3 there resolves this RFC's own Open Question 4 (2026-08-25)
 - RFC-0096 (Auto-Impl Aspects) §7 — works out precisely how row-membership differs from
   the `Send`/`Sync`/`Linear` auto-impl algorithm, and flags the same coherence gap

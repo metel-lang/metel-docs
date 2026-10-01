@@ -2,9 +2,17 @@
 id: rfc-0121
 title: "Open Rows"
 date: '2026-07-24'
-status: accepted
+status: integrated
 tracking: 'https://github.com/metel-lang/metel-core/issues/792'
-updated: '2026-09-27'
+updated: '2026-10-01'
+coverage:
+  "1": { spec: "spec.types.generics.open-rows.legality-1" }
+  "2": { spec: "spec.types.generics.open-rows.legality-2" }
+  "3": { spec: "spec.types.generics.row-conditional-impls.legality-1" }
+  "4": { spec: "spec.types.generics.open-rows.legality-3" }
+  "5": { kind: untestable, reason: "Grammar restated against the real generated grammar -- already stated as part of legality-1/legality-2's own rule text above, not an independent testable claim of its own." }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1301'
+impl_status: not-started
 ---
 
 > **Extracted from RFC-0090 §2 (open half), §4 and §7 on 2026-07-24** (superseded; see
@@ -53,6 +61,10 @@ updated: '2026-09-27'
 > acceptance-ready — transition is a separate, deliberate step, not implied by this note.
 
 > **Status — accepted (2026-09-27).** All seven open questions closed 2026-09-27 (OQ1/OQ2/OQ4/OQ5 ratified, OQ3/OQ6 descoped non-blocking, OQ7 resolved 2026-08-25); design settled per PROCESS.md's 2-accepted bar.
+
+> **Status — integrated (2026-10-01).** Merged into `reference/spec/types.md#open-rows` (row binder, `..R` use sites, row decomposition, width subtyping) and `#implementing-an-aspect-for-a-record` (row-conditional impl resolution against a value's *current* row, brand-vs-row priority, row-vs-row coherence). All five Legality Rules `blocked`-exempt on metel-core#1301 — `LIMIT-TYPES-001` records the grammar/elaborator gap. The abstract-row case of width subtyping stays additionally gated on RFC-0123's `all R: Copy` even once this RFC itself ships. `GAP-TYPES-004` (blanket row-conditional impl body needing a per-field aspect bound) narrowed to cite only RFC-0123 now, since this RFC's own row-variable gap is resolved design-wise. Cross-checked against RFC-0120 (`3-integrated`, satisfied — its row-bound-satisfaction claim is exactly what §"row-conditional-impls.legality-1" states) and RFC-0123 (sibling, still `2-accepted`, same cluster) — no contradiction found.
+
+> **Status — integrated (2026-10-01).** Spec-rule pass: row binder, ..R use sites, row decomposition, row-conditional impl resolution against a value's current row, brand-vs-row priority, row-vs-row coherence, width-subtyping rule. Blocked-exempt on metel-core#1301 (row kind not implemented).
 
 ## Summary
 

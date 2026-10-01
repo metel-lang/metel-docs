@@ -1432,6 +1432,92 @@ which means no anonymous record is `Display` and `println("${r}")` does not work
 Auto-derived aspects are unaffected — `Send` and `Sync` are computed from field composition
 rather than declared.
 
+### Open rows
+
+> **Limitation** LIMIT-TYPES-001
+
+A `row`-kinded generic parameter abstracts over "the rest of a row" rather than a
+concrete shape. The binder is `row R`; every *use* of the variable is written `..R`,
+distinguishing it from a bare type variable in every position a row can appear —
+a record type's tail (`{ x: f64, ..R }`), a struct's own residual projection
+(`Handle.{ ..R }`), and a generic argument (`Session<..R>`):
+
+```metel
+fun get_x<row R>(p: { x: f64, ..R }) -> f64 { p.x }
+```
+
+**Extension needs no operator** — the new label goes directly in the row literal:
+
+```metel
+RequestBuilder<{ ..R, auth: String }>
+```
+
+**Removal has no literal form.** A `where` equation names both halves and states how
+they compose, which simultaneously subsumes a row bound (`R = { token, ..Rest }`
+already implies `R: { token, .. }`) and names the remainder:
+
+```metel
+extend<row R, row Rest> Session<..R>
+where R = { token: Token, ..Rest }
+{
+    fun authenticate(self) -> Session<..Rest> { ... }
+}
+```
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.generics.open-rows.legality-1}
+
+A generic parameter may be declared `row R` (parallel to `record T`); every use of a
+row variable outside its own binder is written `..R` (or anonymous `..`) — in a record
+type's tail, a struct's own residual-projection tail, or generic-argument position. A
+bare identifier in any of these type positions is a type variable, never a row; row and
+type variables are therefore never ambiguous with each other.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters are not implemented (LIMIT-TYPES-001); `row` is not a grammar alternative for a generic parameter, and `..R` does not parse in any type position." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters are not implemented (LIMIT-TYPES-001); `row` is not a grammar alternative for a generic parameter, and `..R` does not parse in any type position._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.types.generics.open-rows.legality-2}
+
+A row literal's trailing `..R` (or anonymous `..`) extends that row with whatever
+fields `R` carries. A `where R = { label: Type, ..Rest }` equation decomposes a row
+variable `R` into one named field and a remainder `Rest`, and simultaneously bounds `R`
+to carry at least that field (equivalent to `R: { label: Type, .. }`).
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters are not implemented (LIMIT-TYPES-001); there is no row-equation form in `where` clauses." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters are not implemented (LIMIT-TYPES-001); there is no row-equation form in `where` clauses._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.types.generics.open-rows.legality-3}
+
+Narrowing a `{ x: Type, ..R }`-typed value **by value** to just its named fields,
+silently discarding whatever `R` carries, is sound only when every field `R` carries is
+`Copy` — exactly the same borrow-versus-move distinction [Ownership](ownership.md)
+already draws everywhere else a value could be viewed instead of consumed. Narrowing
+through a reference (`&{ x: Type, ..R }` or `&mut`/`&var`) never moves the value, so it
+carries no such restriction regardless of `R`'s contents.
+
+When `R`'s own fields are concretely known at the narrowing site, this is checked by
+walking them directly. When `R` is itself abstract (a `<row R>` parameter, narrowed
+by value inside a generic body with no further information), there is nothing to check
+the remainder's fields against without a bound naming the requirement — by-value
+narrowing of an abstract row is rejected unconditionally until that bound exists
+(`all R: Copy`, RFC-0123, not yet integrated).
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters are not implemented (LIMIT-TYPES-001); there is no width subtyping (by-value or by-reference) to exercise. The abstract-row case additionally depends on RFC-0123's `all R: Copy` quantifier, itself not yet integrated." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters are not implemented (LIMIT-TYPES-001); there is no width subtyping (by-value or by-reference) to exercise. The abstract-row case additionally depends on RFC-0123's `all R: Copy` quantifier, itself not yet integrated._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+</details>
+
 ### Implementing an aspect for a record
 
 Three forms, with different rules:
@@ -1448,15 +1534,63 @@ The first form is the one this design intends to land first — exactly one stru
 permitted once the aspect is local; the equivalent one-concrete-target form for arrays
 (`extend<T> T[]: Aspect`) is already supported.
 
-The second and third forms additionally require row variables. The second also needs overlap
-checking between row bounds — two shape-conditional implementations can be *incomparable*
-rather than one being more specific, so they must be disjoint. The third additionally needs a
-way to require an aspect of every field in the row.
+The second and third forms additionally require row variables (now specified, [Open
+rows](#open-rows) above — `LIMIT-TYPES-001`, not yet implemented). The second also needs
+overlap checking between row bounds — two shape-conditional implementations can be
+*incomparable* rather than one being more specific, so they must be disjoint, which is
+now specified below. The third additionally needs a way to require an aspect of every
+field in the row (RFC-0123's `all R: Aspect`, not yet integrated).
 
 > **Gap** GAP-TYPES-004
 
 <details>
 <summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.generics.row-conditional-impls.legality-1}
+
+A row-conditional impl (`extend<row R: { ... }> { ..R }: Aspect` or `extend<row R>
+{ ..R }: Aspect`) resolves against a value's **current** row, not only its widest
+possible one — for a struct, that is the row of its current residual (narrower after a
+partial move, wider again after the moved field is restored), exactly the same
+current-row behavior [Named Records](declarations.md#records) states for `record`'s own
+row-bound satisfaction.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters, and therefore row-conditional impls, are not implemented (LIMIT-TYPES-001)." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters, and therefore row-conditional impls, are not implemented (LIMIT-TYPES-001)._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.types.generics.row-conditional-impls.legality-2}
+
+When a value's brand has an ordinary (brand-keyed) impl of an aspect and its row also
+satisfies a row-conditional impl of the same aspect, the brand-keyed impl is selected:
+brand-exact dispatch is checked first, and a match there short-circuits row-conditional
+resolution entirely rather than conflicting with it.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters, and therefore row-conditional impls (and this priority rule between them), are not implemented (LIMIT-TYPES-001)." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters, and therefore row-conditional impls (and this priority rule between them), are not implemented (LIMIT-TYPES-001)._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.types.generics.row-conditional-impls.legality-3}
+
+Two row-conditional impls of the same aspect do not conflict when some field name both
+conditions mention is required present by one and absent (or incompatibly typed) by the
+other — rows being open means no other fact can correlate two row conditions, so this
+is the only way two of them can be proven disjoint. Any other pair of row-conditional
+impls of the same aspect overlaps, and is rejected exactly as two overlapping ordinary
+impls are. Inside a generic body over an unconstrained `<row R>`, a row-conditional
+method is not visible unless `R`'s own bound entails the impl's condition.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters, and therefore row-conditional impls (and coherence checking between them), are not implemented (LIMIT-TYPES-001)." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters, and therefore row-conditional impls (and coherence checking between them), are not implemented (LIMIT-TYPES-001)._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+</details>
 
 ##### Legality Rule {#spec.types.generics.row-bounds.legality-1}
 

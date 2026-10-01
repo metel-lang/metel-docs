@@ -852,7 +852,7 @@ this corpus's append-only convention for exactly this situation.*
   small clarifying addition per Open Questions #3 / "Relationship to existing RFCs"
 - RFC-0120 (Named Records, `3-integrated`) — tier 3, the opt-in `record` kind this RFC's §3
   reconciles with rather than replaces
-- RFC-0121 (Open Rows, accepted) §3 — resolves Open Question 4 (2026-08-25):
+- RFC-0121 (Open Rows, `3-integrated`) §3 — resolves Open Question 4 (2026-08-25):
   brand-keyed impls take priority over row-conditional ones; that resolution's own
   soundness is contingent on RFC-0121 itself being accepted (see Open Question 4's
   caveat, added 2026-08-25)
