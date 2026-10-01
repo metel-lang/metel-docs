@@ -14,7 +14,7 @@ coverage:
   "6": { spec: "spec.ownership.widening.dynamics-1" }
   "7": { kind: untestable, reason: "Generic-struct consequence of §1/§2's brand-preservation claims (already spec-anchored there), not an independent testable claim of its own." }
   "8": { kind: untestable, reason: "Cost/performance argument, not fixture-observable behavior -- same treatment as spec.declarations.aspects.static-dispatch-only.dynamics-1." }
-impl_tracking: 'https://github.com/metel-lang/metel-core/issues/836'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/949'
 impl_status: in-progress
 ---
 
@@ -85,7 +85,7 @@ impl_status: in-progress
 >
 > **Slice 2 implemented (metel-core#858, v0.13.0).** §2 move-triggered narrowing for a **struct** value (a partial move narrows the binding to a branded residual, in both the inference and construction passes, path-sensitive across `if`/`match`; anonymous-`record` narrowing is RFC-0117's (metel-core#789, now implemented)), §6 widening (reassigning a moved-out field of an owned binding widens the type back), §2's projection ≡ partial-move equivalence, full-width-projection normalization, and re-projection of a residual. `spec.ownership.narrowing.legality-1` … `legality-5`, `spec.ownership.narrowing.dynamics-1`, `spec.ownership.widening.legality-1`, `spec.ownership.widening.dynamics-1`, `spec.ownership.partial-moves.legality-4`. A loop-carried *use* invalid only on a later iteration stays a `--move-check` diagnostic rather than a narrowing type error.
 >
-> **Deferred to v0.14.0.** §5 row-bounded `Drop` dispatch against a narrowed residual and the `dyn Aspect` coercion checkpoint — both need a narrowed `drop` receiver (RFC-0147 → RFC-0109, or RFC-0148 → RFC-0146 → RFC-0121), none of which is built. Until then RFC-0071 §7's unconditional partial-move-with-`Drop` ban stands. `spec.ownership.drop-dispatch-against-a-narrowed-residual.*` stay `blocked`-exempt on metel-core#858.
+> **Deferred to v0.15.0 (metel-core#949, split from #858 on 2026-09-03).** §5 row-bounded `Drop` dispatch against a narrowed residual and the `dyn Aspect` coercion checkpoint — both need a narrowed `drop` receiver (RFC-0147 → RFC-0109, or RFC-0148 → RFC-0146 → RFC-0121), none of which is built. Until then RFC-0071 §7's unconditional partial-move-with-`Drop` ban stands. `spec.ownership.drop-dispatch-against-a-narrowed-residual.*` stay `blocked`-exempt on metel-core#949.
 
 ## Summary
 
@@ -298,7 +298,8 @@ that gate.
 > `dyn Aspect` coercion checkpoint below already needs. Matches RFC-0071's own stance
 > that `Copy` is declared, not derived. Rationale and the fixed form: RFC-0147; the
 > parametric form: RFC-0148. Tracked on `metel-core#827`, implementation on
-> `metel-core#858`.
+> `metel-core#949` (split from `#858` on 2026-09-03, once #858's own narrowing/widening
+> scope shipped without it).
 
 A struct implementing `Drop` whose destructor needs a field that has since been narrowed
 away must not silently skip the destructor's work. Dispatch is **row-bounded**: a `Drop`
