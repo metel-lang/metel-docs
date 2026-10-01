@@ -438,7 +438,7 @@ grammar citations need updating.
   effect rows and field rows are the same open-row shape
 - `public/rfcs/5-superseded/rfc-0090-structural-records.md` OQ6/§9, RFC-0118 (Row Bounds,
   `4-implemented`) OQ4, RFC-0120 (Named Records) OQ2, RFC-0137 (Nominal Types as Branded
-  Rows, `2-accepted`) OQ4 — the corpus-wide open item resolved in §3 above; each updated
+  Rows, `3-integrated`) OQ4 — the corpus-wide open item resolved in §3 above; each updated
   2026-08-25 to point back here
 
 ---

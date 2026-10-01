@@ -262,6 +262,8 @@ struct; path-sensitive via RFC-0071's existing move tracking. All three open que
 resolved — OQ1/OQ2 via RFC-0137 §5's row-bounded `Drop` dispatch, OQ3 by scoping this RFC
 to flat narrowing (nested/recursive narrowing is RFC-0150). Integrated into
 `reference/spec/ownership.md#narrowing` (`spec.ownership.narrowing.legality-1`/`legality-2`,
-co-origin with RFC-0137), blocked-exempt on metel-core#858 pending move-triggered
-narrowing.
+co-origin with RFC-0137).
+**Shipped v0.13.0, metel-core#789 (2026-09-03)** — move-triggered narrowing (metel-core#858)
+landed the same v0.13.0 release, so these rules carry no exemption; see the "Status —
+implemented" callout above.
 **Target:** v0.13.0, via metel-core#789.

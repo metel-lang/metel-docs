@@ -610,8 +610,9 @@ equivalent partial move.
 > **Since v0.13.0 (RFC-0137, metel-core#857):** projection-produced residuals match
 > compatible projected parameters.
 
-Once move-triggered narrowing lands (metel-core#858), a residual reached that way is passed
-exactly the same way; nothing here is specific to how the residual arose.
+Since v0.13.0 (RFC-0137 slice 2, metel-core#858), a residual reached via move-triggered
+narrowing is passed exactly the same way; nothing here is specific to how the residual
+arose.
 
 A parameter naming a struct's own projected type (`Handle.{ fd }`, or `Self.{ fd }`
 inside `Handle`'s own `extend` block) is ordinary type-matching, available to every
