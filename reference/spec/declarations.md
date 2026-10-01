@@ -902,15 +902,17 @@ fun main() -> i64 {
 
 ## Records
 
-> **Limitation** LIMIT-DECLARATIONS-001
-
 ```metel
 record Handle {
-    fd: i64,
-    name: String,
+    public fd: i64,
+    public name: String,
+}
+
+fun main() {
+    let h := Handle { fd = 3, name = "x".to_string() };
+    assert(h.fd == 3);
 }
 ```
-<!-- doc-example: skip reason="RFC-0120, not implemented yet: `record` does not parse (LIMIT-DECLARATIONS-001)" -->
 
 A third declaration kind alongside `struct`, `enum` and `aspect`. `record X { ... }` is
 accepted everywhere `struct X { ... }` is — same declaration grammar, same construction
@@ -931,15 +933,16 @@ parameter list (including a `row` type parameter, RFC-0121), the same constructi
 syntax (including shorthand field init and the zero-field forms), and the same field
 projection syntax as a `struct`'s own row.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1300" reason="The `record` keyword is not implemented (LIMIT-DECLARATIONS-001); the parser's `decl` production has no alternative for it yet." -->
+<!-- rfc.py:last_reviewed 00ea5182206865bc4268d46281bafb2767b73cad -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/3-integrated/rfc-0120-named-records.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
 <!-- rfc.py:origins:end -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1300: The `record` keyword is not implemented (LIMIT-DECLARATIONS-001); the parser's `decl` production has no alternative for it yet._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjExMl9yZWNvcmRfZGVjbGFyYXRpb25fYW5kX2ZpZWxkX2FjY2Vzcy5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDEyMCAobWV0ZWwtY29yZSMxMzAwKTogYHJlY29yZCBYIHsgLi4uIH1gIGlzIGxlZ2FsIGV2ZXJ5d2hlcmVcbi8vIGBzdHJ1Y3QgWCB7IC4uLiB9YCBpcyAtLSBpZGVudGljYWwgZGVjbGFyYXRpb24gZ3JhbW1hciAoZ2VuZXJpY3MsIHplcm8tZmllbGRcbi8vIGZvcm1zKSwgY29uc3RydWN0aW9uIHN5bnRheCAoc2hvcnRoYW5kIGZpZWxkIGluaXQgaW5jbHVkZWQpLCBhbmQgZmllbGRcbi8vIGFjY2Vzcy4gRXZlcnkgZmllbGQgb2YgYSByZWNvcmQgbXVzdCBiZSBgcHVibGljYCAoY2hlY2tlZCBzZXBhcmF0ZWx5LFxuLy8gMTEzX3JlY29yZF9wcml2YXRlX2ZpZWxkX2lzX3BhcnNlX2Vycm9yKS5cblxucmVjb3JkIEhhbmRsZSB7XG4gICAgcHVibGljIGZkOiBpNjQsXG4gICAgcHVibGljIG5hbWU6IFN0cmluZyxcbn1cblxucmVjb3JkIEVtcHR5IHt9XG5cbnJlY29yZCBQYWlyPEEsIEI+IHtcbiAgICBwdWJsaWMgZmlyc3Q6IEEsXG4gICAgcHVibGljIHNlY29uZDogQixcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGggOj0gSGFuZGxlIHsgZmQgPSAzLCBuYW1lID0gXCJ4XCIgfTtcbiAgICBhc3NlcnQoaC5mZCA9PSAzKTtcbiAgICBhc3NlcnQoaC5uYW1lID09IFwieFwiKTtcblxuICAgIGxldCBlIDo9IEVtcHR5O1xuICAgIGxldCBlMiA6PSBFbXB0eSB7fTtcblxuICAgIGxldCBmZCA6PSA1O1xuICAgIGxldCBuYW1lIDo9IFwic2hvcnRoYW5kXCIudG9fc3RyaW5nKCk7XG4gICAgbGV0IGgyIDo9IEhhbmRsZSB7IGZkLCBuYW1lIH07ICAgICAgIC8vIHNob3J0aGFuZCBmaWVsZCBpbml0XG4gICAgYXNzZXJ0KGgyLmZkID09IDUpO1xuXG4gICAgbGV0IHAgOj0gUGFpciB7IGZpcnN0ID0gMSwgc2Vjb25kID0gdHJ1ZSB9O1xuICAgIGFzc2VydChwLmZpcnN0ID09IDEpO1xuICAgIGFzc2VydChwLnNlY29uZCk7XG5cbiAgICBwcmludGxuKGgubmFtZSk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9zdHJ1Y3RzLzExMl9yZWNvcmRfZGVjbGFyYXRpb25fYW5kX2ZpZWxkX2FjY2Vzcy5tdGwiLCJuYW1lIjoiMTEyX3JlY29yZF9kZWNsYXJhdGlvbl9hbmRfZmllbGRfYWNjZXNzLm10bCJ9"></details>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.records.legality-2}
 
@@ -951,15 +954,19 @@ either mechanism, regardless of width — projecting every field a `struct` decl
 not earn it `record`'s eligibility, only an explicit `record` declaration does (RFC-0137
 §3's worked example).
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1300" reason="The `record` keyword is not implemented (LIMIT-DECLARATIONS-001). Row-conditional impl resolution additionally depends on RFC-0121 (Open Rows), also not implemented; direct row-bound satisfaction depends only on `record` existing, since RFC-0118's row bounds are themselves implemented." -->
+<!-- rfc.py:last_reviewed 00ea5182206865bc4268d46281bafb2767b73cad -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/3-integrated/rfc-0120-named-records.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
 <!-- rfc.py:origins:end -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1300: The `record` keyword is not implemented (LIMIT-DECLARATIONS-001). Row-conditional impl resolution additionally depends on RFC-0121 (Open Rows), also not implemented; direct row-bound satisfaction depends only on `record` existing, since RFC-0118's row bounds are themselves implemented._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjExM19yZWNvcmRfcm93X2JvdW5kX3RyYWNrc19jdXJyZW50X3Jvdy5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDEyMCAobWV0ZWwtY29yZSMxMzAwKSBzZWMtZGVjbGFyYXRpb25zLXJlY29yZHMtbGVnYWxpdHktMjogYSByZWNvcmQncyByb3dcbi8vIGJvdW5kIHNhdGlzZmFjdGlvbiBpcyBjaGVja2VkIGFnYWluc3QgaXRzICpjdXJyZW50KiByb3csIG5vdCBqdXN0IGl0cyBmdWxsXG4vLyBkZWNsYXJlZCBvbmUgLS0gdGhlIHJvdyBuYXJyb3dzIGV4YWN0bHkgYXMgaXQgZG9lcyBmb3IgYSBwbGFpbiBzdHJ1Y3Rcbi8vIChSRkMtMDEzNyksIGFuZCBhIHJlc2lkdWFsIG9mIGEgcmVjb3JkJ3MgYnJhbmQgc3RheXMgZWxpZ2libGUuXG5cbnJlY29yZCBIYW5kbGUge1xuICAgIHB1YmxpYyBmZDogaTY0LFxuICAgIHB1YmxpYyBuYW1lOiBTdHJpbmcsXG59XG5cbmZ1biBuZWVkc19mZDxyZWNvcmQgVDogeyBmZDogaTY0LCAuLiB9Pih0OiBUKSAtPiBpNjQge1xuICAgIHQuZmRcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGggOj0gSGFuZGxlIHsgZmQgPSAzLCBuYW1lID0gXCJ4XCIgfTtcbiAgICBsZXQgdGFrZW4gOj0gaC5uYW1lOyAgICAgICAgICAvLyBoIDogSGFuZGxlLnsgZmQgfSBmcm9tIGhlcmUgb24gLS0gYSByZXNpZHVhbFxuICAgIGFzc2VydChuZWVkc19mZChoKSA9PSAzKTsgICAgIC8vIHRoZSBuYXJyb3dlZCByZXNpZHVhbCBzdGlsbCBzYXRpc2ZpZXMgdGhlIGJvdW5kXG4gICAgcHJpbnRsbih0YWtlbik7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9zdHJ1Y3RzLzExM19yZWNvcmRfcm93X2JvdW5kX3RyYWNrc19jdXJyZW50X3Jvdy5tdGwiLCJuYW1lIjoiMTEzX3JlY29yZF9yb3dfYm91bmRfdHJhY2tzX2N1cnJlbnRfcm93Lm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDEyIiwiY29sIjpudWxsLCJjb250YWlucyI6InN0cnVjdCBuZXZlciBzYXRpc2ZpZXMgYSByb3cgYm91bmQiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJuZWdfNDVfcmVzaWR1YWxfbmV2ZXJfc2F0aXNmaWVzX3Jvd19ib3VuZC5tdGwiLCJzb3VyY2UiOiIvLyBSZWdyZXNzaW9uIChtZXRlbC1jb3JlIzg1NywgUkZDLTAxMzcgc2xpY2UgMSk6IGEgZ2VudWluZSAobm9uLWZ1bGwtd2lkdGgpIGJyYW5kZWRcbi8vIHJlc2lkdWFsIG9mIGEgcGxhaW4gYHN0cnVjdGAgbmV2ZXIgc2F0aXNmaWVzIGEgcm93IGJvdW5kIGVpdGhlciAtLSBlbGlnaWJpbGl0eVxuLy8gZm9yIHN0cnVjdHVyYWwgbWF0Y2hpbmcgaXMgc2NvcGVkIHRvIHRoZSBicmFuZCBhbG9uZSAoUkZDLTAxMzcgc2VjMyksIGFuZCBhXG4vLyBgc3RydWN0YCdzIGJyYW5kIGlzIG5ldmVyIHZpc2libGUgdG8gbWF0Y2hpbmcgcmVnYXJkbGVzcyBvZiBob3cgbmFycm93IGl0c1xuLy8gY3VycmVudCByb3cgaXMuIEEgYHJlY29yZGAncyByZXNpZHVhbCBpcyBlbGlnaWJsZSAoUkZDLTAxMjAgc2VjMy9zZWMtZGVjbGFyYXRpb25zLVxuLy8gcmVjb3Jkcy1sZWdhbGl0eS0yKSAtLSB0aGF0IGlzIHRlc3RlZCBzZXBhcmF0ZWx5LCBub3QgYSBjb250cmFkaWN0aW9uIG9mIHRoaXMgb25lLlxuXG5zdHJ1Y3QgSGFuZGxlIHsgZmQ6IGk2NCwgbmFtZTogU3RyaW5nLCBleHRyYTogaTY0IH1cblxuZnVuIHdhbnRzX2FfcmVjb3JkPHJlY29yZCBUOiB7IGZkOiBpNjQsIC4uIH0+KHQ6IFQpIC0+IGk2NCB7IHQuZmQgfVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgaCA6PSBIYW5kbGUgeyBmZCA9IDMsIG5hbWUgPSBcInhcIiwgZXh0cmEgPSA5IH07XG4gICAgbGV0IF8gOj0gd2FudHNfYV9yZWNvcmQoaC57IGZkIH0pO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvc3RydWN0cy9uZWdfNDVfcmVzaWR1YWxfbmV2ZXJfc2F0aXNmaWVzX3Jvd19ib3VuZC5tdGwiLCJuYW1lIjoibmVnXzQ1X3Jlc2lkdWFsX25ldmVyX3NhdGlzZmllc19yb3dfYm91bmQubXRsIn0="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.records.legality-3}
 
@@ -972,15 +979,16 @@ newly makes the type satisfy row bounds and row-conditional impls it did not bef
 naming the type's fields stops typechecking, with no way to find every such caller from
 the declaration site alone, since satisfaction is structural rather than declared.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1300" reason="The `record` keyword is not implemented (LIMIT-DECLARATIONS-001); there is no declaration to convert to or from yet." -->
+<!-- rfc.py:last_reviewed 00ea5182206865bc4268d46281bafb2767b73cad -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/3-integrated/rfc-0120-named-records.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
 <!-- rfc.py:origins:end -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1300: The `record` keyword is not implemented (LIMIT-DECLARATIONS-001); there is no declaration to convert to or from yet._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjExNF9yZWNvcmRfdXBncmFkZV9wYXRoX3dob2xlX3ZhbHVlX3VuY2hhbmdlZC5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDEyMCBzZWMyL3NlYy1kZWNsYXJhdGlvbnMtcmVjb3Jkcy1sZWdhbGl0eS0zOiBgc3RydWN0YCAtPiBgcmVjb3JkYCBjaGFuZ2VzXG4vLyBvbmx5IHJvdy12aXNpYmlsaXR5LCBub3RoaW5nIGFib3V0IHdob2xlLXZhbHVlIHVzZS4gQ29uc3RydWN0aW9uLCBmaWVsZCBhY2Nlc3MsXG4vLyBhbmQgYW4gb3JkaW5hcnkgKG5vbi1yb3ctYm91bmRlZCkgbm9taW5hbC10eXBlIHBhcmFtZXRlciBhbGwgdHlwZWNoZWNrIGFuZFxuLy8gZXZhbHVhdGUgaWRlbnRpY2FsbHkgcmVnYXJkbGVzcyBvZiB3aGljaCBrZXl3b3JkIGRlY2xhcmVkIHRoZSB0eXBlLlxuXG5zdHJ1Y3QgU3RydWN0UG9pbnQge1xuICAgIHg6IGY2NCxcbiAgICB5OiBmNjQsXG59XG5cbnJlY29yZCBSZWNvcmRQb2ludCB7XG4gICAgcHVibGljIHg6IGY2NCxcbiAgICBwdWJsaWMgeTogZjY0LFxufVxuXG5leHRlbmQgU3RydWN0UG9pbnQge1xuICAgIGZ1biBtYWduaXR1ZGUoc2VsZikgLT4gZjY0IHsgc2VsZi54ICogc2VsZi54ICsgc2VsZi55ICogc2VsZi55IH1cbn1cblxuZXh0ZW5kIFJlY29yZFBvaW50IHtcbiAgICBmdW4gbWFnbml0dWRlKHNlbGYpIC0+IGY2NCB7IHNlbGYueCAqIHNlbGYueCArIHNlbGYueSAqIHNlbGYueSB9XG59XG5cbmZ1biB3aG9sZV92YWx1ZV9zdHJ1Y3QocDogU3RydWN0UG9pbnQpIC0+IGY2NCB7IHAubWFnbml0dWRlKCkgfVxuZnVuIHdob2xlX3ZhbHVlX3JlY29yZChwOiBSZWNvcmRQb2ludCkgLT4gZjY0IHsgcC5tYWduaXR1ZGUoKSB9XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBzcCA6PSBTdHJ1Y3RQb2ludCB7IHggPSAzLjAsIHkgPSA0LjAgfTtcbiAgICBsZXQgcnAgOj0gUmVjb3JkUG9pbnQgeyB4ID0gMy4wLCB5ID0gNC4wIH07XG4gICAgYXNzZXJ0KHdob2xlX3ZhbHVlX3N0cnVjdChzcCkgPT0gMjUuMCk7XG4gICAgYXNzZXJ0KHdob2xlX3ZhbHVlX3JlY29yZChycCkgPT0gMjUuMCk7XG4gICAgYXNzZXJ0KHNwLm1hZ25pdHVkZSgpID09IHJwLm1hZ25pdHVkZSgpKTtcbiAgICBwcmludGxuKFwib2tcIik7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9zdHJ1Y3RzLzExNF9yZWNvcmRfdXBncmFkZV9wYXRoX3dob2xlX3ZhbHVlX3VuY2hhbmdlZC5tdGwiLCJuYW1lIjoiMTE0X3JlY29yZF91cGdyYWRlX3BhdGhfd2hvbGVfdmFsdWVfdW5jaGFuZ2VkLm10bCJ9"></details>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.records.legality-4}
 
@@ -988,15 +996,19 @@ Every field of a `record` declaration is public. A visibility modifier on a `rec
 field (an explicit `private`, or a bare field where the module default is private) is a
 compile error.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1300" reason="The `record` keyword is not implemented (LIMIT-DECLARATIONS-001); there is no record field-visibility check to exercise." -->
+<!-- rfc.py:last_reviewed 00ea5182206865bc4268d46281bafb2767b73cad -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/3-integrated/rfc-0120-named-records.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
 <!-- rfc.py:origins:end -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1300: The `record` keyword is not implemented (LIMIT-DECLARATIONS-001); there is no record field-visibility check to exercise._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjExMl9yZWNvcmRfZGVjbGFyYXRpb25fYW5kX2ZpZWxkX2FjY2Vzcy5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDEyMCAobWV0ZWwtY29yZSMxMzAwKTogYHJlY29yZCBYIHsgLi4uIH1gIGlzIGxlZ2FsIGV2ZXJ5d2hlcmVcbi8vIGBzdHJ1Y3QgWCB7IC4uLiB9YCBpcyAtLSBpZGVudGljYWwgZGVjbGFyYXRpb24gZ3JhbW1hciAoZ2VuZXJpY3MsIHplcm8tZmllbGRcbi8vIGZvcm1zKSwgY29uc3RydWN0aW9uIHN5bnRheCAoc2hvcnRoYW5kIGZpZWxkIGluaXQgaW5jbHVkZWQpLCBhbmQgZmllbGRcbi8vIGFjY2Vzcy4gRXZlcnkgZmllbGQgb2YgYSByZWNvcmQgbXVzdCBiZSBgcHVibGljYCAoY2hlY2tlZCBzZXBhcmF0ZWx5LFxuLy8gMTEzX3JlY29yZF9wcml2YXRlX2ZpZWxkX2lzX3BhcnNlX2Vycm9yKS5cblxucmVjb3JkIEhhbmRsZSB7XG4gICAgcHVibGljIGZkOiBpNjQsXG4gICAgcHVibGljIG5hbWU6IFN0cmluZyxcbn1cblxucmVjb3JkIEVtcHR5IHt9XG5cbnJlY29yZCBQYWlyPEEsIEI+IHtcbiAgICBwdWJsaWMgZmlyc3Q6IEEsXG4gICAgcHVibGljIHNlY29uZDogQixcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGggOj0gSGFuZGxlIHsgZmQgPSAzLCBuYW1lID0gXCJ4XCIgfTtcbiAgICBhc3NlcnQoaC5mZCA9PSAzKTtcbiAgICBhc3NlcnQoaC5uYW1lID09IFwieFwiKTtcblxuICAgIGxldCBlIDo9IEVtcHR5O1xuICAgIGxldCBlMiA6PSBFbXB0eSB7fTtcblxuICAgIGxldCBmZCA6PSA1O1xuICAgIGxldCBuYW1lIDo9IFwic2hvcnRoYW5kXCIudG9fc3RyaW5nKCk7XG4gICAgbGV0IGgyIDo9IEhhbmRsZSB7IGZkLCBuYW1lIH07ICAgICAgIC8vIHNob3J0aGFuZCBmaWVsZCBpbml0XG4gICAgYXNzZXJ0KGgyLmZkID09IDUpO1xuXG4gICAgbGV0IHAgOj0gUGFpciB7IGZpcnN0ID0gMSwgc2Vjb25kID0gdHJ1ZSB9O1xuICAgIGFzc2VydChwLmZpcnN0ID09IDEpO1xuICAgIGFzc2VydChwLnNlY29uZCk7XG5cbiAgICBwcmludGxuKGgubmFtZSk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9zdHJ1Y3RzLzExMl9yZWNvcmRfZGVjbGFyYXRpb25fYW5kX2ZpZWxkX2FjY2Vzcy5tdGwiLCJuYW1lIjoiMTEyX3JlY29yZF9kZWNsYXJhdGlvbl9hbmRfZmllbGRfYWNjZXNzLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlAwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6Im11c3QgYmUgYHB1YmAiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJwYXJzZV9lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6Im5lZ2F0aXZlX3JlY29yZF9wcml2YXRlX2ZpZWxkX2lzX3BhcnNlX2Vycm9yLm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMTIwIFx1MDBhNzUgKG1ldGVsLWNvcmUjMTMwMCk6IGV2ZXJ5IGZpZWxkIG9mIGEgYHJlY29yZGAgbXVzdCBiZSBgcHVibGljYCAtLVxuLy8gYSByZWNvcmQncyBkZWNsYXJlZCByb3cgaXMgaXRzIHB1YmxpYyBpbnRlcmZhY2UsIHNvIGEgcHJpdmF0ZSBmaWVsZCB3b3VsZFxuLy8gbWFrZSBhIHJvdyBib3VuZCBlaXRoZXIgYSBwcml2YWN5IG9yYWNsZSBvciB1bnNhdGlzZmlhYmxlIGJ5IHRoZSBjYWxsZXIuXG4vLyBBIGBzdHJ1Y3RgIGhhcyBubyBzdWNoIHJlc3RyaWN0aW9uOyB0aGlzIGlzIHJlY29yZC1vbmx5LlxuXG5yZWNvcmQgSGFuZGxlIHtcbiAgICBwdWJsaWMgZmQ6IGk2NCxcbiAgICBuYW1lOiBTdHJpbmcsXG59XG5cbmZ1biBtYWluKCkge31cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4xL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvcGFyc2luZy9uZWdhdGl2ZV9yZWNvcmRfcHJpdmF0ZV9maWVsZF9pc19wYXJzZV9lcnJvci5tdGwiLCJuYW1lIjoibmVnYXRpdmVfcmVjb3JkX3ByaXZhdGVfZmllbGRfaXNfcGFyc2VfZXJyb3IubXRsIn0="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 

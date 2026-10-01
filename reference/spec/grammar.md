@@ -24,6 +24,7 @@ ImportItem → IDENTIFIER ( "as" IDENTIFIER )?
 
 Declaration          → FunDeclaration
                      | StructDeclaration
+                     | RecordDeclaration
                      | EnumDeclaration
                      | TypeAliasDeclaration
                      | ExtendBlock
@@ -39,6 +40,7 @@ NativeBinding        → "native" "(" "@" NATIVE_PATH ")"
 StructDeclaration    → "public"? "struct" IDENTIFIER GenericParams? WhereClause? "{" StructFields "}"
 StructFields         → ( StructField "," )* StructField?
 StructField          → "public"? IDENTIFIER ":" Type
+RecordDeclaration    → "public"? "record" IDENTIFIER GenericParams? WhereClause? "{" StructFields "}"
 EnumDeclaration      → "public"? "enum" IDENTIFIER GenericParams? WhereClause? "{" EnumVariants "}"
 EnumVariants         → ( EnumVariant "," )* EnumVariant?
 EnumVariant          → IDENTIFIER ( "{" StructFields "}" )?

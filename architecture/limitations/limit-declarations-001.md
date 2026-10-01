@@ -5,9 +5,7 @@ summary: "The `record` declaration kind (RFC-0120) does not parse; only `struct`
 scope: "architecture/spec/parsing.md#parsing"
 owner: metel-frontend
 discovered_by: "RFC-0120 entering 3-integrated with no implementation yet"
-disposition: planned
-planned_for: v0.14.0
-rfc: RFC-0120
+disposition: resolved
 review: null
 ---
 
@@ -47,5 +45,21 @@ not implemented either (see `LIMIT-TYPES-*` once RFC-0121 integrates).
 
 ## Resolution
 
-Planned: tracked as metel-core#1300 (RFC-0120 implementation tracking, milestone
-v0.14.0, lands alongside RFC-0121).
+Implemented 2026-10-01, tracked by metel-core#1300, landed in metel-core#1303
+(merge commit `3797758d6dc2fa068939f9ca8877c144555fe2cc`). `metel-frontend/src/
+grammar.pest` gained a `record_decl` production (`decl`'s alternatives now include
+`record_decl`); `Decl::Struct` carries a `StructKind::{Struct, Record}` discriminant,
+and the parser rejects a non-`public` field inside a `record` as `P0001`. A new
+`TypeDefinitionRegistry::record_structs: HashSet<SymbolId>` tracks which struct ids
+were declared `record`, and `visible_type_kind` resolves `VisibleTypeKind::Record`
+for them (by brand name, uniformly for `Type::Named` and `Type::Residual`, per
+RFC-0137 §3) — a `record`'s row is now structurally visible to row bounds exactly as
+this record's "Impact" section described it should be. Row-conditional impl
+resolution itself remains gated on RFC-0121 (Open Rows, not yet implemented; see
+`LIMIT-TYPES-001`). Verified directly: `record Handle { public fd: i64 }` now parses
+and typechecks, `record Handle { fd: i64 }` (missing `public`) is rejected as `P0001`,
+and a function generic over `<record T: { fd: i64, .. }>` accepts `Handle` and its
+narrowed residuals but rejects an equivalent `struct`. This record's exemptions on
+the four affected rules below are removed now that real fixtures cover them
+(`metel-interpreter/tests/integration/sources/evaluator/structs/112-114_*`,
+`parsing/negative_record_private_field_is_parse_error`).

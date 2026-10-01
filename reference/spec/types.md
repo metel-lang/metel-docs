@@ -1383,8 +1383,6 @@ squared_magnitude(some_point);             // a struct — does not
 
 Nominal structs do not satisfy row bounds.
 
-> **Gap** GAP-TYPES-003
-
 ### Why row capability is opt-in
 
 A nominal type's API is what it **declares**. An anonymous record's API is what it

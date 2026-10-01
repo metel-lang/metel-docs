@@ -39,7 +39,7 @@ impl_status: in-progress
 > overlap. RFC-0117 (Row Narrowing, implemented) specifies narrowing for records and
 > explicitly defers narrowing a *nominal* type as out of its own scope (§3: "depends on
 > nominal types carrying rows at all") — this RFC is that missing dependency, not a
-> restatement. RFC-0120 (Named Records, `3-integrated`) proposes an **opt-in** third declaration
+> restatement. RFC-0120 (Named Records, `4-implemented`) provides an **opt-in** third declaration
 > kind, `record X { … }`, that carries `(row, brand)`; this RFC's central claim is that
 > *every* struct already does, unconditionally — narrower in one sense (structs only,
 > no new declaration keyword) and broader in another (no opt-in). §"Relationship to
@@ -850,7 +850,7 @@ this corpus's append-only convention for exactly this situation.*
 - RFC-0119 (Record Conversions, accepted) — tier 2, `#derive(ToRecord, FromRecord)`; §3
   above confirms this RFC leaves that tier's brand-stripping behavior unchanged; needs a
   small clarifying addition per Open Questions #3 / "Relationship to existing RFCs"
-- RFC-0120 (Named Records, `3-integrated`) — tier 3, the opt-in `record` kind this RFC's §3
+- RFC-0120 (Named Records, `4-implemented`) — tier 3, the opt-in `record` kind this RFC's §3
   reconciles with rather than replaces
 - RFC-0121 (Open Rows, `3-integrated`) §3 — resolves Open Question 4 (2026-08-25):
   brand-keyed impls take priority over row-conditional ones; that resolution's own
