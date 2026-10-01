@@ -106,7 +106,7 @@ the curated thematic map.
 ## Integrated (2)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
-- **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/836)
+- **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/949)
 
 ## Implemented (63)
 
