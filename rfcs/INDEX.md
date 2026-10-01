@@ -408,7 +408,7 @@ above it are.
   handles a borrow, so it never needs to establish which object one came from — and put
   the tier boundary on a clean line: *by-value conversion is bare; borrowed access is
   branded because it must be.* Depends on RFC-0116, RFC-0117.
-- **RFC-0120** *(accepted 2026-08-30)* — Named Records — tier 3 `record X { }`. **One
+- **RFC-0120** *(integrated 2026-10-01)* — Named Records — tier 3 `record X { }`. **One
   capability, post-RFC-0137:** `record X` is `struct X` in every respect except that its
   declaration brand is *structurally visible*, so its declared row satisfies row bounds
   (RFC-0118) and is matched by row-conditional impl resolution (RFC-0121) — which a plain

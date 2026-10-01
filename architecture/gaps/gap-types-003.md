@@ -13,7 +13,7 @@ review: null
 
 ## Gap
 
-Nominal structs do not satisfy row bounds, and the only record type is the anonymous record. RFC-0120 (`2-accepted`) would provide a nominal record kind.
+Nominal structs do not satisfy row bounds, and the only record type is the anonymous record. RFC-0120 (`3-integrated`) would provide a nominal record kind.
 
 ## Impact
 
