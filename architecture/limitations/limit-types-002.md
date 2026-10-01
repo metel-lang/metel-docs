@@ -43,9 +43,6 @@ independent of `LIMIT-TYPES-001`.
 
 - `spec.types.generics.field-wise-row-constraints.legality-1`
 
-<!-- limit.py:markers:start -->
-<!-- limit.py:markers:end -->
-
 ## Resolution
 
 Planned: tracked as metel-core#1302 (RFC-0123 implementation tracking, milestone

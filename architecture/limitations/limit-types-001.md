@@ -49,9 +49,6 @@ aspect implementation over every record shape (`Display`, `Copy`) cannot be writ
 - `spec.types.generics.row-conditional-impls.legality-2`
 - `spec.types.generics.row-conditional-impls.legality-3`
 
-<!-- limit.py:markers:start -->
-<!-- limit.py:markers:end -->
-
 ## Resolution
 
 Planned: tracked as metel-core#1301 (RFC-0121 implementation tracking, milestone

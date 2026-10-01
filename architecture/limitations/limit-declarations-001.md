@@ -45,9 +45,6 @@ not implemented either (see `LIMIT-TYPES-*` once RFC-0121 integrates).
 - `spec.declarations.records.legality-3`
 - `spec.declarations.records.legality-4`
 
-<!-- limit.py:markers:start -->
-<!-- limit.py:markers:end -->
-
 ## Resolution
 
 Planned: tracked as metel-core#1300 (RFC-0120 implementation tracking, milestone
