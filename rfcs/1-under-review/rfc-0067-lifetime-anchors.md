@@ -8,27 +8,36 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/848'
 ---
 
 > **Tracking corrected 2026-08-27.** metel-core#848 owns this RFC's reconciliation and
-> implementation. metel-core#274 remains the concrete restriction/exit issue and closes
-> only after anchors safely admit stored references.
+> implementation. metel-core#274 remains the concrete stored-reference-checking issue and
+> closes only after anchors safely admit stored references.
 
-> ## ⚠ Implementing this RFC carries an inherited obligation
+> ## Implementing this RFC adds a check — it does not lift a ban
 >
-> *Added 2026-08-01, from RFC-0122 §2d.*
+> *Added 2026-08-01, from RFC-0122 §2d. Revised 2026-09-29: the ban this note described
+> was never implemented and the plan to add it is dropped — see RFC-0122 §2d's current
+> text.*
 >
-> **A temporary language restriction exists solely because this RFC is unimplemented,
-> and implementing it is the event that removes the restriction.** Reference-typed
-> struct and enum fields (`struct Holder { r: &P }`) are rejected, because rejecting a
-> stored reference that outlives its referent requires relating **two independent
-> lifetimes**, and no scope-based rule can do that — an anchor is exactly the capability
-> that can. Rather than block all borrow checking on this RFC, RFC-0122 bans stored
-> references and checks local borrows without them.
+> Reference-typed struct and enum fields (`struct Holder { r: &P }`) are legal today,
+> unchecked: `&T`/`&var T` are `Rc<RefCell<Value>>` at runtime, the same as every other
+> heap-shaped `Value`, so a stored reference cannot dangle in the memory-safety sense —
+> it keeps its referent's storage alive regardless of what the type system can prove
+> about scoping. That is tracked as `GAP-OWNERSHIP-001`, alongside the identical hole for
+> `T[]` and for any `&T`/`&var T` stored past its originating local.
 >
-> **So implementing anchors must also lift that ban**, and lifting it is more than
-> deleting a check: RFC-0122 §2b.2's outlives rule was *specified* scope-based on the
-> assumption stored references do not exist, and admitting them means revisiting that
-> specification. Both halves are tracked as **metel-core#274**. See RFC-0122 §2d for the
-> full reasoning; this pointer exists so the obligation surfaces here rather than
-> depending on someone remembering it.
+> **What this RFC still needs to deliver:** proving, statically, that a stored reference
+> does not outlive its referent requires relating **two independent lifetimes** — the
+> struct's and its referent's — and no scope-based rule can do that; an anchor is exactly
+> the capability that can. Landing anchors is what lets RFC-0122 extend its outlives rule
+> (currently scope-based, specified assuming no stored references exist — see RFC-0122
+> §2b.2) to cover them. Both halves are tracked as **metel-core#274**: this RFC supplies
+> the naming capability, RFC-0122 supplies the rule that consumes it. See RFC-0122 §2d for
+> the full reasoning.
+>
+> **This also matters beyond the type checker.** The `Rc`-backed safety net above is an
+> artifact of the current tree-walking evaluator
+> ([LIMIT-EVALUATION-004](../../architecture/limitations/limit-evaluation-004.md)) and
+> will not hold once the Compiled Profile (metel-core#1293) stops being GC-backed — at
+> that point this RFC's static check stops being merely nice to have.
 
 > ## Targeted at v0.17.0 — and what has to happen first
 >
@@ -49,12 +58,13 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/848'
 >    last-use liveness. That is a real design question, not editing.
 > 3. **`2-accepted` → `3-integrated`**, after which metel-core#848's implementation
 >    checklist becomes actionable rather than design planning.
-> 4. **Implementation, in v0.17.0**, which also discharges **metel-core#274** — the
->    temporary reference-typed-struct-field ban, milestoned to v0.17.0 alongside this,
->    exists solely because this RFC is unimplemented and is lifted by implementing it.
+> 4. **Implementation, in v0.17.0**, which also discharges **metel-core#274** — adding
+>    the static check that proves a stored reference does not outlive its referent,
+>    milestoned to v0.17.0 alongside this. No ban exists to lift; #274 is scoped to the
+>    check alone (revised 2026-09-29, see the callout below).
 >
-> **Tracking is split deliberately:** #848 owns this RFC; #274 owns the temporary ban
-> and its removal. If v0.17.0 arrives with either still open, the chain has stalled.
+> **Tracking is split deliberately:** #848 owns this RFC; #274 owns the stored-reference
+> check it enables. If v0.17.0 arrives with either still open, the chain has stalled.
 
 > **Status — under review.** Rewritten 2026-07-05 for the split model. Split again
 > 2026-07-07: the plain `&T` / `&var T` rename and auto-deref (the original RFC-0067's
@@ -388,12 +398,14 @@ as per-field for statically-named fields and whole-value through a dynamic index
 silent — `&r T` names a binding, not a place. Whether `&r p.x` and `&r p.y` are one anchor
 or two is unspecified and matters for exactly the disjoint-field borrows RFC-0109 wants.
 
-**3. Do anchors have anything to say at all, given the stored-reference ban?** RFC-0122
-§2d bans reference-typed struct fields **specifically because** relating two independent
-lifetimes needs anchors, and marks implementing this RFC as the event that lifts the ban
-(metel-core#274). So this RFC's most concrete consumer is a restriction that does not yet
-exist. §1 was written with no such consumer in view, and should be re-read asking whether
-its `<&r>` declaration form is what #274's lifting actually needs.
+**3. Do anchors have anything to say at all, given there is no stored-reference ban?**
+*(Revised 2026-09-29 — RFC-0122 §2d dropped the ban it would have imposed; see that
+section's current text.)* Reference-typed struct/enum fields are legal and unchecked
+today, tracked as `GAP-OWNERSHIP-001`. Relating two independent lifetimes — the struct's
+and its referent's — still needs anchors regardless, so this RFC's most concrete consumer
+is now adding a check to an already-legal program shape (metel-core#274), not lifting a
+restriction. §1 was written with no such consumer in view, and should be re-read asking
+whether its `<&r>` declaration form is what #274's check actually needs.
 
 **4. Is `<&r>` still the right declaration surface?** It does not parse today
 (`[P0001] expected generic_param`, verified 2026-08-02) so nothing constrains it yet. But

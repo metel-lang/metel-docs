@@ -69,6 +69,14 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/932'
 > `[T; N]`), which is a plain implementation bug against the already-`4-implemented`
 > RFC-0126, unrelated to this RFC's own open questions.
 
+> **Interim model adopted, 2026-09-29.** The low-priority call above does not mean `T[]`'s
+> lifetime story stays an undocumented gap in the meantime. Open Question 2's sub-question
+> now states explicitly: `T[]` ships and stays Zig-model (bare, `Copy`, no compile-time
+> lifetime enforcement, safe today only because `Value::Array` is reference-counted) as
+> the deliberate interim design, with Rust's anchor-checked model named as the explicit
+> target for whenever RFC-0067 lands — not a silent shortfall discoverable only by reading
+> `GAP-OWNERSHIP-001`. See Open Question 2 below.
+
 ## Summary
 
 Metel has three sequence types — `[T; N]`, `T[]`, and `List<T>`. RFC-0126 settled the role
@@ -83,7 +91,7 @@ as `[T; N]`). What that RFC left open, and what this one is now scoped to:
 | `Value::Array`'s evaluator representation | open — §Open Questions 4 |
 | Release sequencing against #579 and #267 | open — §Open Questions 5 |
 | Can `List<T>` ever be built from `[T; N]`/`T[]` alone, or is native backing structurally permanent? | **moved to RFC-0133, 2026-08-13** — no longer this RFC's |
-| Does `T[]` need a sigil, or gain lifetime-checking while staying bare? | **added 2026-09-28** — open, sub-question of §Open Questions 2 |
+| Does `T[]` need a sigil, or gain lifetime-checking while staying bare? | **added 2026-09-28; staged 2026-09-29** — interim (now) answered: bare, Zig-model, unchecked; final choice (later, Rust-model) still open — sub-question of §Open Questions 2 |
 | What would `@a [T]` (Metel's `Box<[T]>` analogue) additionally require? | **added 2026-09-28** — open — §Open Questions 7, deliberately not a near-term priority |
 
 ---
@@ -141,22 +149,42 @@ allocation, never the batch/geometric-growth allocation this table shows every c
    validity story can be as simple as "elaborated code never outlives the loop that borrowed
    it" until this question is answered).
 
-   **Sub-question, added 2026-09-28 — does `T[]` need a sigil, or does it stay bare and gain
-   lifetime-checking implicitly?** There are two distinct ways to attach an anchor to `T[]`,
-   not one:
+   **Sub-question, added 2026-09-28, staged answer added 2026-09-29 — does `T[]` need a
+   sigil, or does it stay bare and gain lifetime-checking implicitly?** There are two
+   distinct ways to attach an anchor to `T[]`, not one, and this RFC now adopts them in
+   sequence rather than picking once:
 
-   **(a) Sigil requirement, Rust-exact.** Introduce an unsized `[T]` payload type — cannot be
-   a bare field, local, or return type on its own — and require every use site to spell the
-   borrow explicitly, `&[T]` / `&var [T]`, through the existing `Reference`/`MutReference`
-   machinery RFC-0067a already established. This reopens RFC-0171's freshly `2-accepted`
-   spelling (`[T]` / `[T; N]`, no sigil) before it integrates, or lands as a second syntax
-   break on top of it later.
+   **Now — Zig's model, adopted deliberately.** `T[]` (`[T]` per RFC-0171) stays bare: a
+   fat-pointer view with **no compile-time lifetime enforcement**, exactly like Zig's
+   `[]T`. This is not a placeholder standing in for "not implemented yet" — it is the
+   stated interim design, matching what the interpreter already does: `Value::Array` is
+   `Rc<RefCell<Vec<Value>>>`, so a `T[]` view keeps its backing storage alive by reference
+   counting regardless of what the type system can prove about scoping, the same way
+   Zig's slices rely on the programmer (or, here, the runtime) rather than a compile-time
+   check. `GAP-OWNERSHIP-001` tracks this explicitly, with a reproduced example of a
+   `T[]` borrowed from a function-local, stored in a struct field, and returned from the
+   function that borrowed it — typechecks and runs cleanly, with or without
+   `--move-check`, today. **No sigil, no ban: `T[]`-typed struct fields are legal now**,
+   same as `&T`/`&var T` ones (RFC-0122 §2d dropped the plan to reject those, 2026-09-29,
+   for the identical reason — the `Rc` backing already makes the stored case memory-safe,
+   just not yet lifetime-checked).
 
-   **(b) Implicit reference semantics, no spelling change.** `T[]` (or `[T]`, per RFC-0171)
-   stays bare, but is defined in the type system as inherently carrying a region/lifetime the
-   same way `&T` will once anchors exist — checked identically, without a written sigil. This
-   is the direction this question already points toward as written above (an anchor attaching
-   to the existing spelling), and it costs nothing against RFC-0171.
+   **Later — Rust's model, the explicitly planned target, not a silent gap.** Once
+   RFC-0067 (Lifetime Anchors) exists, `(a)` and `(b)` below are the two ways to attach
+   real static checking on top of the still-bare spelling above:
+
+   **(a) Sigil requirement, Rust-exact.** Introduce an unsized `[T]` payload type — cannot
+   be a bare field, local, or return type on its own — and require every use site to spell
+   the borrow explicitly, `&[T]` / `&var [T]`, through the existing
+   `Reference`/`MutReference` machinery RFC-0067a already established. This reopens
+   RFC-0171's freshly `2-accepted` spelling (`[T]` / `[T; N]`, no sigil) before it
+   integrates, or lands as a second syntax break on top of it later.
+
+   **(b) Implicit reference semantics, no spelling change.** `T[]` stays bare, but is
+   defined in the type system as inherently carrying a region/lifetime the same way `&T`
+   will once anchors exist — checked identically, without a written sigil. This matches
+   the "now" posture's spelling exactly, so it is the lower-migration-cost option if (a)'s
+   `Box<[T]>`-composability motivation (below) does not apply here.
 
    What decides between them for Rust — needing `[T]` to compose with more than one pointer
    kind, especially `Box<[T]>` for an owned-but-non-growable heap buffer — may not apply the
@@ -164,15 +192,11 @@ allocation, never the batch/geometric-growth allocation this table shows every c
    unsized-payload type underneath it. See Open Question 7 for what `(a)`'s `Box<[T]>`
    analogue would additionally require regardless of which way this resolves.
 
-   Concretely demonstrated open today, independent of which way this resolves: a `T[]`
-   borrowed from a function-local can be stored in a struct field and returned from the
-   function that borrowed it, typechecking and running cleanly with or without
-   `--move-check` — the same hole plain `&T`/`&var T` has. `GAP-OWNERSHIP-001` (extended
-   2026-09-28) carries a reproduced example for both. `metel-core#274` already bans
-   reference-typed (`&T`/`&var T`) struct/enum fields as an interim measure pending this
-   RFC-0067 dependency; its ban text is scoped to `&`/`&var` spellings and does not currently
-   mention `T[]` — worth checking, whichever of `(a)`/`(b)` above is chosen, that `#274`'s
-   restriction (or its replacement) actually covers `T[]`-typed fields too when implemented.
+   This question is genuinely deferred, not resolved: choosing (a) vs. (b) still needs
+   RFC-0067 to exist first, and nothing above picks between them. What is no longer open
+   is whether the interim state is acceptable to ship — it already has shipped, and this
+   section now says so plainly instead of leaving it an implicit gap discoverable only by
+   trying to write the rejection and finding none exists.
 3. **Does `[T; N]` need const-generic `N`?** Today only literal arities parse — measured
    2026-07-25, `extend<T: Copy> [T; 2]: Copy;` works and `[T; N]` does not. Without const
    generics, "fixed arrays are `Copy` when their elements are" cannot be written in stdlib
@@ -279,10 +303,14 @@ allocation, never the batch/geometric-growth allocation this table shows every c
   resolution path. `#847`'s own scope explicitly lists "escape and outlives checking for
   locals, parameters, returns, reborrows and closures," directly reaching Open Question 2's
   escaping-`T[]` example.
-- `GAP-OWNERSHIP-001`, extended 2026-09-28 — documents the escaping-reference/escaping-`T[]`
-  hole (Open Question 2) as a known, tracked gap resolving against RFC-0122.
-- `metel-core#274` — the interim ban on reference-typed struct/enum fields, cited in Open
-  Question 2, pending the same RFC-0067 dependency this RFC has.
+- `GAP-OWNERSHIP-001`, extended 2026-09-28 and again 2026-09-29 — documents the
+  escaping-reference/escaping-`T[]` hole (Open Question 2) as a known, tracked gap,
+  explicitly resolving against both RFC-0122 (local borrows) and RFC-0067 (stored
+  references, including `T[]` and reference-typed struct/enum fields).
+- `metel-core#274` — now scoped to adding static stored-reference checking once RFC-0067
+  exists (revised 2026-09-29; previously an interim ban on reference-typed struct/enum
+  fields that was never implemented — see RFC-0122 §2d), cited in Open Question 2,
+  pending the same RFC-0067 dependency this RFC has.
 - `LIMIT-EVALUATION-005` — destructor invocation not implemented, cited in Open Question 7
   as a prerequisite for `@a [T]`'s `Drop` handling, independent of arrays.
 - RFC-0067 (Lifetime Anchors), `1-under-review` (reverted from `2-accepted` 2026-08-02;
