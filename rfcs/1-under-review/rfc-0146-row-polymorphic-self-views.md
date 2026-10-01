@@ -17,13 +17,13 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/886'
 > covers the *fixed* projected `drop` receiver and depends on RFC-0109, not on this RFC.)
 >
 > **Overlap check (`rfc.py new` similarity + `INDEX.md` records cluster + `REGISTRY.md`):**
-> - **RFC-0121 (Open Rows, `2-accepted`, `metel-core#792`)** owns the `row` kind,
+> - **RFC-0121 (Open Rows, `3-integrated`, `metel-core#792`)** owns the `row` kind,
 >   `..R`, row algebra (extension/removal), row unification, and row-conditional
 >   typestate. This RFC is a *consumer and a strict scoping* of that mechanism: receiver
 >   position only, lower-bounded only, no algebra, no row-conditional impls. Not a
 >   competing proposal — see §6 and Open Question 1 (wait for RFC-0121, or carve out the
 >   minimal lower-bounded-row-variable slice and hand the rest back).
-> - **RFC-0123 (Field-Wise Row Constraints, `2-accepted`, `metel-core#793`)** also
+> - **RFC-0123 (Field-Wise Row Constraints, `3-integrated`, `metel-core#793`)** also
 >   quantifies over `<row R>` but applies an *aspect* bound to every field of a row
 >   (`where all R: Display`). Different constraint kind — presence of fields vs. a
 >   capability of each field's type — and independent of this RFC; both are consumers of
@@ -313,9 +313,9 @@ RFC-0121's own status blockquote when it happens.
   normative rules this RFC's receiver types and use-site checks build on
 - RFC-0137 (Nominal Types as Branded Rows, `3-integrated`) — design history for the
   above; §7 (generic structs), §8 (cost)
-- RFC-0121 (Open Rows, `2-accepted`, `metel-core#792`) — owns `<row R>`, `..R`, row
+- RFC-0121 (Open Rows, `3-integrated`, `metel-core#792`) — owns `<row R>`, `..R`, row
   algebra and unification; this RFC is a scoped consumer (see §6, Open Question 1)
-- RFC-0123 (Field-Wise Row Constraints, `2-accepted`, `metel-core#793`) — the other
+- RFC-0123 (Field-Wise Row Constraints, `3-integrated`, `metel-core#793`) — the other
   `<row R>` consumer; per-field aspect bounds, orthogonal to this RFC
 - RFC-0109 (Self-View Narrowing, `1-under-review`, `metel-core#842`) — fixed named
   residual receivers (`view V for S { a }`, `self: &V` = `self: &S.{ a }`); this RFC

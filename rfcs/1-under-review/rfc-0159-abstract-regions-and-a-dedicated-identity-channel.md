@@ -219,7 +219,7 @@ RFC-0050's Resolved Question 4 is updated in parallel to record this contention.
   allocator-specific. This is a reduction *only if* the region system already exists for
   lifetimes and brands; RFC-0143 stays a concrete acceptance test, not a dependant of an
   unconstrained universal identity theory.
-- **RFC-0121 (Open Rows, `2-accepted`) / RFC-0118** — rows stay structural shape
+- **RFC-0121 (Open Rows, `3-integrated`) / RFC-0118** — rows stay structural shape
   parameters in `<>`; `record T` / `row R` are not region indices. Moving identity out of
   `<>` keeps the real record/row distinction while removing three identity-like categories
   from its list.

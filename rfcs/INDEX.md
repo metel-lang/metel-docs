@@ -235,7 +235,7 @@ above it are.
   which option (b) does not need at all. **Deliberately unmilestoned**, same posture as
   RFC-0133: whether this is needed at all waits on OQ2 picking (a) over (b).
 
-- **RFC-0123** *(accepted 2026-09-27 — stale as draft here since 2026-07-24)* — Field-Wise Row Constraints — a constraint
+- **RFC-0123** *(integrated 2026-10-01)* — Field-Wise Row Constraints — a constraint
   applying an aspect to **every field of a row** rather than to the row's type
   (`extend<row R> { ..R }: Display where all R: Display`). Opened after noticing that two
   questions the corpus tracked separately are one missing construct: RFC-0121's
@@ -408,7 +408,7 @@ above it are.
   handles a borrow, so it never needs to establish which object one came from — and put
   the tier boundary on a clean line: *by-value conversion is bare; borrowed access is
   branded because it must be.* Depends on RFC-0116, RFC-0117.
-- **RFC-0120** *(accepted 2026-08-30)* — Named Records — tier 3 `record X { }`. **One
+- **RFC-0120** *(integrated 2026-10-01)* — Named Records — tier 3 `record X { }`. **One
   capability, post-RFC-0137:** `record X` is `struct X` in every respect except that its
   declaration brand is *structurally visible*, so its declared row satisfies row bounds
   (RFC-0118) and is matched by row-conditional impl resolution (RFC-0121) — which a plain
@@ -424,7 +424,7 @@ above it are.
   scoped, lossy, brand-stripping bridge, incapable of a row-conditional impl on the
   nominal type. Spec-rule pass (coverage frontmatter + Legality blocks) deferred to the
   `3-integrated` transition. Tracker metel-core#791 (v0.13.0).
-- **RFC-0121** *(accepted 2026-09-27)* — Open Rows — `<row R>` / `..R`, row algebra
+- **RFC-0121** *(integrated 2026-10-01)* — Open Rows — `<row R>` / `..R`, row algebra
   (extension is a literal, removal is a where-clause decomposition), row-conditional
   typestate, and the width-subtyping-versus-ownership problem. **The expensive half**, and
   the only piece introducing a row kind or row unification. Depends on RFC-0118, RFC-0120

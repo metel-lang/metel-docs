@@ -1,37 +1,41 @@
 ---
 id: GAP-TYPES-004
-title: "An aspect cannot be implemented over a row: no row variables, overlap checking or per-field constraints"
-summary: "`extend<row R: { x: f64, .. }> { ..R }: A` and `extend<row R> { ..R }: A` do not parse: the language has no row variables."
+title: "A blanket row-conditional aspect impl's body cannot require an aspect of every field"
+summary: "RESOLVED: `where all R: Aspect` (RFC-0123) now specifies the per-field quantifier a blanket row-conditional impl's body needs."
 scope: "reference/spec/types.md#implementing-an-aspect-for-a-record"
 owner: language
-discovered_by: "metel-core#1235 stale-passage check of `reference/spec/types.md`; both forms rejected with `P0001` (expected `record_kw`) on the v0.13.0 interpreter"
-disposition: known
-rfc: RFC-0121, RFC-0123
+discovered_by: "metel-core#1235 stale-passage check of `reference/spec/types.md`; narrowed 2026-10-01 once RFC-0121 specified row variables and row-conditional impl resolution, then closed the same day once RFC-0123 specified `all R: Aspect`"
+disposition: resolved
 review: null
 ---
 
 ## Gap
 
-The spec sketches three ways to implement an aspect for a record: one concrete row
-(`extend { x: f64, y: f64 }: A`, see `GAP-DECLARATIONS-001`), every row of a given shape
-(`extend<row R: { x: f64, .. }> { ..R }: A`) and every row (`extend<row R> { ..R }: A`).
-The second and third need row variables, which the language does not have: a row is bounded
-through a `record T: { .. }` type parameter, and `{ ..R }` does not parse. The second also
-needs overlap checking between row bounds (two shape-conditional impls can be incomparable,
-so they must be disjoint), and the third a way to require an aspect of every field in the
-row. Open rows and field-wise constraints are proposed in RFC-0121 and RFC-0123, both
-`1-under-review`.
+**Resolved.** The spec sketched three ways to implement an aspect for a record: one
+concrete row (`GAP-DECLARATIONS-001`, separately tracked), every row of a given shape,
+and every row. The second and third needed row variables (now specified, RFC-0121,
+`3-integrated` — `spec.types.generics.open-rows.*`) and, for a body to actually use a
+field generically, a way to require an aspect of every field in the row (now specified,
+RFC-0123, `3-integrated` — `spec.types.generics.field-wise-row-constraints.legality-1`,
+`where all R: Aspect`). A fully correct implementation of the current Language Spec
+would now deliver both forms; what remains is a pure implementation shortfall
+(`LIMIT-TYPES-001`, `LIMIT-TYPES-002`), not a spec gap.
 
 ## Impact
 
-An aspect cannot be given one implementation covering every record of a shape; each concrete
-record type needs its own, and anonymous records cannot implement an aspect at all today.
+None remaining at the spec level — closed by the two RFCs above.
 
 ## Affects
 
+- `spec.types.generics.row-conditional-impls.legality-1`
+- `spec.types.generics.field-wise-row-constraints.legality-1`
 - `RFC-0121`
 - `RFC-0123`
 
 ## Resolution
 
-Not scheduled: the RFCs are under review.
+Resolved 2026-10-01: RFC-0121 (row variables, row-conditional impl resolution) and
+RFC-0123 (`all R: Aspect`) both reached `3-integrated` the same day, and the spec text
+at `reference/spec/types.md#implementing-an-aspect-for-a-record` now states both forms
+as the accepted design. Neither is implemented yet — see `LIMIT-TYPES-001` and
+`LIMIT-TYPES-002`.

@@ -900,6 +900,108 @@ fun main() -> i64 {
 
 ---
 
+## Records
+
+> **Limitation** LIMIT-DECLARATIONS-001
+
+```metel
+record Handle {
+    fd: i64,
+    name: String,
+}
+```
+<!-- doc-example: skip reason="RFC-0120, not implemented yet: `record` does not parse (LIMIT-DECLARATIONS-001)" -->
+
+A third declaration kind alongside `struct`, `enum` and `aspect`. `record X { ... }` is
+accepted everywhere `struct X { ... }` is — same declaration grammar, same construction
+syntax, same field access, same generic-parameter list, same aspect-impl coherence rules
+— with exactly one difference: a `record`'s declared row is *structurally visible*, so
+it satisfies row bounds ([Generics — Row bounds](types.md#row-bounds)) and
+row-conditional impl resolution (`<row R>`, planned for v0.14.0, RFC-0121) the way a
+plain `struct`'s row never does.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.records.legality-1}
+
+`record X { field: Type, ... }` is legal everywhere `struct X { field: Type, ... }` is,
+with an identical declaration body grammar: the same field list, the same generic
+parameter list (including a `row` type parameter, RFC-0121), the same construction
+syntax (including shorthand field init and the zero-field forms), and the same field
+projection syntax as a `struct`'s own row.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1300" reason="The `record` keyword is not implemented (LIMIT-DECLARATIONS-001); the parser's `decl` production has no alternative for it yet." -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/3-integrated/rfc-0120-named-records.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1300: The `record` keyword is not implemented (LIMIT-DECLARATIONS-001); the parser's `decl` production has no alternative for it yet._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.records.legality-2}
+
+A `record`'s declared row is visible to structural matching: it satisfies a row bound
+(`<record T: { ... }>`) and is matched by row-conditional impl resolution against its
+*current* row — the row narrows as fields are moved out (RFC-0137), exactly as it does
+for a plain `struct`'s own (invisible) row. A plain `struct`'s row is never visible to
+either mechanism, regardless of width — projecting every field a `struct` declares does
+not earn it `record`'s eligibility, only an explicit `record` declaration does (RFC-0137
+§3's worked example).
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1300" reason="The `record` keyword is not implemented (LIMIT-DECLARATIONS-001). Row-conditional impl resolution additionally depends on RFC-0121 (Open Rows), also not implemented; direct row-bound satisfaction depends only on `record` existing, since RFC-0118's row bounds are themselves implemented." -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/3-integrated/rfc-0120-named-records.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1300: The `record` keyword is not implemented (LIMIT-DECLARATIONS-001). Row-conditional impl resolution additionally depends on RFC-0121 (Open Rows), also not implemented; direct row-bound satisfaction depends only on `record` existing, since RFC-0118's row bounds are themselves implemented._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.records.legality-3}
+
+Changing a `struct` declaration to `record` (or vice versa) preserves the type's name,
+brand, generic parameters and aspect impls unchanged; only the row's visibility to
+structural matching changes. A whole-value call site typechecks identically before and
+after the change in either direction. `struct` → `record` is additive for callers: it
+newly makes the type satisfy row bounds and row-conditional impls it did not before.
+`record` → `struct` is not: any caller holding a row bound or row-conditional impl
+naming the type's fields stops typechecking, with no way to find every such caller from
+the declaration site alone, since satisfaction is structural rather than declared.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1300" reason="The `record` keyword is not implemented (LIMIT-DECLARATIONS-001); there is no declaration to convert to or from yet." -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/3-integrated/rfc-0120-named-records.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1300: The `record` keyword is not implemented (LIMIT-DECLARATIONS-001); there is no declaration to convert to or from yet._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.records.legality-4}
+
+Every field of a `record` declaration is public. A visibility modifier on a `record`
+field (an explicit `private`, or a bare field where the module default is private) is a
+compile error.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1300" reason="The `record` keyword is not implemented (LIMIT-DECLARATIONS-001); there is no record field-visibility check to exercise." -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/3-integrated/rfc-0120-named-records.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1300: The `record` keyword is not implemented (LIMIT-DECLARATIONS-001); there is no record field-visibility check to exercise._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+</details>
+
+---
+
 ## Enums
 
 ```metel
