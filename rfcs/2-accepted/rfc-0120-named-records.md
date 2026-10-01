@@ -319,7 +319,7 @@ parameterized row.
    rule for every `Drop` type. The narrowed case — a destructor that reads only a subset,
    run against a residual — is fully specified in the design and becomes reachable for
    `record` the moment the receiver syntax lands, with no further decision needed here.
-   Implementation is gated on metel-core#858 (row-bounded Drop dispatch), the same gate
+   Implementation is gated on metel-core#949 (row-bounded Drop dispatch), the same gate
    RFC-0117's rule sits behind.
 2. ~~**Brand-versus-row coherence priority.** An ordinary `extend Point: Display` is
    brand-keyed; a row-conditional impl is row-keyed. If a value matches both, which wins?
