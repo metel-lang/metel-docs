@@ -58,7 +58,7 @@ Param            → "&" "var"? "self"
 FunDeclParamList → FunDeclParam ( "," FunDeclParam )* ","?
 FunDeclParam     → "&" "var"? "self"
                  | "self"
-                 | IDENTIFIER ( ":" ( OpenRecordType | Type ) )?
+                 | IDENTIFIER ( ":" ( OpenRecordType | OpenRecordProjectionType | Type ) )?
 GenericParams    → "<" GenericParam ( "," GenericParam )* ">"
 GenericParam     → ( "record" | "row" )? IDENTIFIER ( ":" BoundList )?
 BoundList        → Bound ( "+" Bound )*
@@ -184,34 +184,36 @@ LiteralPattern   → SUFFIXED_FLOAT
                  | "true"
                  | "false"
 
-Type                 → FunType
-                     | MutReferenceType
-                     | ReferenceType
-                     | BracketArrayType
-                     | "()"
-                     | TupleType
-                     | RecordProjectionType
-                     | RecordType
-                     | ExtendsType
-                     | DynType
-                     | "!"
-                     | NamedType
-ExtendsType          → "extends" NamedType
-DynType              → "dyn" NamedType
-TupleType            → "(" Type ( "," Type )+ ")"
-RecordType           → "{" ( RecordTypeField ( "," RecordTypeField )* ","? )? "}"
-RecordTypeField      → IDENTIFIER ":" Type
-OpenRecordType       → "{" RecordTypeField ( "," RecordTypeField )* "," RowTail ","? "}"
-                     | "{" RowTail ","? "}"
-RowTail              → ".." IDENTIFIER?
-RecordProjectionType → TypePath ".{" IDENTIFIER ( "," IDENTIFIER )* ","? "}"
-FunType              → FunTypeQualifier* "|" TypeList? "|" "->" Type
-FunTypeQualifier     → "once"
-                     | "var"
-ReferenceType        → "&" Type
-MutReferenceType     → "&" "var" Type
-BracketArrayType     → "[" Type ( ";" INT )? "]"
-NamedType            → TypePath ( "<" TypeArgs ">" )?
-TypeArgs             → Type ( "," Type )*
-TypeList             → Type ( "," Type )*
+Type                     → FunType
+                         | MutReferenceType
+                         | ReferenceType
+                         | BracketArrayType
+                         | "()"
+                         | TupleType
+                         | RecordProjectionType
+                         | RecordType
+                         | ExtendsType
+                         | DynType
+                         | "!"
+                         | NamedType
+ExtendsType              → "extends" NamedType
+DynType                  → "dyn" NamedType
+TupleType                → "(" Type ( "," Type )+ ")"
+RecordType               → "{" ( RecordTypeField ( "," RecordTypeField )* ","? )? "}"
+RecordTypeField          → IDENTIFIER ":" Type
+OpenRecordType           → "{" RecordTypeField ( "," RecordTypeField )* "," RowTail ","? "}"
+                         | "{" RowTail ","? "}"
+RowTail                  → ".." IDENTIFIER?
+RecordProjectionType     → TypePath ".{" IDENTIFIER ( "," IDENTIFIER )* ","? "}"
+OpenRecordProjectionType → TypePath ".{" IDENTIFIER ( "," IDENTIFIER )* "," RowTail ","? "}"
+                         | TypePath ".{" RowTail ","? "}"
+FunType                  → FunTypeQualifier* "|" TypeList? "|" "->" Type
+FunTypeQualifier         → "once"
+                         | "var"
+ReferenceType            → "&" Type
+MutReferenceType         → "&" "var" Type
+BracketArrayType         → "[" Type ( ";" INT )? "]"
+NamedType                → TypePath ( "<" TypeArgs ">" )?
+TypeArgs                 → Type ( "," Type )*
+TypeList                 → Type ( "," Type )*
 ```
