@@ -365,15 +365,14 @@ owner:
 - **No inherent methods.** Two unrelated modules could otherwise write conflicting methods
   for the same shape with no principled way to choose between them.
 - **No implementations of a non-local aspect**, by the other direction of that rule. An
-  aspect local to the current module may be implemented for a record — but see the note
-  below: that is not available yet.
+  aspect local to the current module may be implemented for a record: for one concrete
+  row, or for every row of a given shape ([Implementing an aspect for a
+  record](#implementing-an-aspect-for-a-record)).
 - **No custom `Drop`.** `Drop` is a standard-library aspect and never local to ordinary
   user code, so teardown logic belongs to nominal types only.
 
-> **Gap** GAP-DECLARATIONS-001
-
-Arrays are the exception: `extend<T> T[]: MyAspect { … }` is supported, per the
-orphan-rule carve-out for structural type constructors — see
+Arrays are the other structural target: `extend<T> T[]: MyAspect { … }` is supported, per
+the orphan-rule carve-out for structural type constructors — see
 [Declarations — Structural Aspect Bounds](declarations.md#structural-aspect-bounds).
 Auto-derived aspects are unaffected.
 
@@ -416,8 +415,10 @@ the same type regardless of declaration-free spelling order.
 
 ##### Legality Rule {#spec.types.anonymous-records.legality-1}
 
-An anonymous record cannot satisfy an impl-based aspect bound, because no implementation
-for a record target is available.
+An anonymous record satisfies an impl-based aspect bound only through an `extend` on a
+record target whose row it has ([Implementing an aspect for a
+record](#implementing-an-aspect-for-a-record)); with no such implementation the bound is
+rejected with `T0012`.
 
 <!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
@@ -427,7 +428,7 @@ for a record target is available.
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDEyIiwiY29sIjpudWxsLCJjb250YWlucyI6ImFueXRoaW5nIGltcGwtYmFzZWQgbmVlZHMgYSBub21pbmFsIHR5cGUiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJzdGFnZTVfbmVnXzE5X3JlY29yZF9kb2VzX25vdF9zYXRpc2Z5X2FzcGVjdF9ib3VuZC5tdGwiLCJzb3VyY2UiOiIvLyBOZWdhdGl2ZSAoUkZDLTAxMTYgXHUwMGE3Myk6IGFuIGFub255bW91cyByZWNvcmQgaGFzIG5vIG5vbWluYWwgb3duZXIsIHNvIGl0IHNhdGlzZmllcyBub1xuLy8gaW1wbC1iYXNlZCBhc3BlY3QuIEl0IG11c3QgYmUgcmVqZWN0ZWQgYXQgdGhlIGNhbGwgc2l0ZSwgbGlrZSBhIHR1cGxlIG9yIGEgc3RydWN0XG4vLyB3aXRob3V0IHRoZSBpbXBsIFx1MjAxNCBub3QgYWNjZXB0ZWQgYW5kIHRoZW4gYmxvd24gdXAgYXQgcnVuIHRpbWUuXG5mdW4gc2hvdzxUOiBEaXNwbGF5Pih4OiBUKSAtPiBTdHJpbmcgeyB4LnRvX3N0cmluZygpIH1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IHIgOj0geyB4ID0gMSB9O1xuICAgIGxldCBzIDo9IHNob3cocik7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9zdHJ1Y3RzL3N0YWdlNV9uZWdfMTlfcmVjb3JkX2RvZXNfbm90X3NhdGlzZnlfYXNwZWN0X2JvdW5kLm10bCIsIm5hbWUiOiJzdGFnZTVfbmVnXzE5X3JlY29yZF9kb2VzX25vdF9zYXRpc2Z5X2FzcGVjdF9ib3VuZC5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDEyIiwiY29sIjpudWxsLCJjb250YWlucyI6ImFuIGFzcGVjdCBvbmx5IHRocm91Z2ggYW4gYGV4dGVuZGAgb24gYSByZWNvcmQgdGFyZ2V0IiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoic3RhZ2U1X25lZ18xOV9yZWNvcmRfZG9lc19ub3Rfc2F0aXNmeV9hc3BlY3RfYm91bmQubXRsIiwic291cmNlIjoiLy8gTmVnYXRpdmUgKFJGQy0wMTE2IFx1MDBhNzMpOiBhbiBhbm9ueW1vdXMgcmVjb3JkIGhhcyBubyBub21pbmFsIG93bmVyLCBzbyBpdCBzYXRpc2ZpZXMgbm9cbi8vIGltcGwtYmFzZWQgYXNwZWN0LiBJdCBtdXN0IGJlIHJlamVjdGVkIGF0IHRoZSBjYWxsIHNpdGUsIGxpa2UgYSB0dXBsZSBvciBhIHN0cnVjdFxuLy8gd2l0aG91dCB0aGUgaW1wbCBcdTIwMTQgbm90IGFjY2VwdGVkIGFuZCB0aGVuIGJsb3duIHVwIGF0IHJ1biB0aW1lLlxuZnVuIHNob3c8VDogRGlzcGxheT4oeDogVCkgLT4gU3RyaW5nIHsgeC50b19zdHJpbmcoKSB9XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCByIDo9IHsgeCA9IDEgfTtcbiAgICBsZXQgcyA6PSBzaG93KHIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvc3RydWN0cy9zdGFnZTVfbmVnXzE5X3JlY29yZF9kb2VzX25vdF9zYXRpc2Z5X2FzcGVjdF9ib3VuZC5tdGwiLCJuYW1lIjoic3RhZ2U1X25lZ18xOV9yZWNvcmRfZG9lc19ub3Rfc2F0aXNmeV9hc3BlY3RfYm91bmQubXRsIn0="></details>
 <!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.types.anonymous-records.dynamics-2}
@@ -1580,21 +1581,23 @@ extend<row R: { x: f64, .. }> { ..R }: MyAspect { … }         // every row of 
 extend<row R> { ..R }: MyAspect { … }                         // every row
 ```
 
-> **Gap** GAP-DECLARATIONS-001
+All three are permitted once the aspect is local to the implementing module: the first is
+exactly one structural type, the others a *row condition* on the receiver. The receiver
+matches an impl when its row meets the condition, whether it is an anonymous record or a
+nominal [`record`](declarations.md#records). Methods are checked per call against the
+concrete receiver, as for every structural target, and the aspect's default methods are
+inherited as for any impl. The field types a target writes must be spelled out: one that
+names an impl type parameter (`extend<T> { w: T }: A`) is rejected, since no receiver's
+field type could equal it.
 
-The first form is the one this design intends to land first — exactly one structural type,
-permitted once the aspect is local; the equivalent one-concrete-target form for arrays
-(`extend<T> T[]: Aspect`) is already supported.
-
-The second and third forms additionally require row variables ([Open rows](#open-rows)
-above). The second also needs overlap checking between row bounds — two
-shape-conditional implementations can be *incomparable* rather than one being more
-specific, so they must be disjoint, which is specified below. The third additionally
-needs a way to require an aspect of every field in the row ([Field-wise row
-constraints](#field-wise-row-constraints) above, `all R: Aspect`). Both are now
-specified. The second is implemented for an impl on a nominal target
-(`extend<row R: { .. }> Session<..R>`), not yet for the structural `{ ..R }` target form the
-rules are written against (`LIMIT-TYPES-001`); the third is implemented as a function constraint but not yet on an impl (`LIMIT-TYPES-002`).
+The second also needs overlap checking between row bounds — two shape-conditional
+implementations can be *incomparable* rather than one being more specific, so they must
+be disjoint, which is specified below. The third is most useful with a way to require an
+aspect of every field in the row ([Field-wise row
+constraints](#field-wise-row-constraints) above, `all R: Aspect`), which a record-target
+impl accepts as `where all R: Aspect`. The standard library does not yet provide the
+blanket impls this makes writable (`Display`, `Copy` for every record of conforming
+fields).
 
 <details>
 <summary>Formal rules</summary>
@@ -1608,14 +1611,14 @@ partial move, wider again after the moved field is restored), exactly the same
 current-row behavior [Named Records](declarations.md#records) states for `record`'s own
 row-bound satisfaction.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-conditional impls on a nominal target (`extend<row R: { .. }> Session<..R>`) resolve against the receiver's row, for inherent and aspect impls (metel-core#833, metel-core#1306 item 5). The structural target form `extend<row R: { .. }> { ..R }: Aspect` does not parse, and resolution against a struct's current residual row after a partial move has not been checked." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-conditional impls resolve against the receiver's row for a nominal target (`extend<row R: { .. }> Session<..R>`) and for a record target (`extend<row R: { .. }> { ..R }: Aspect`, anonymous and nominal records), for inherent and aspect impls (metel-core#833, metel-core#1306 items 5 and 8). Resolution against a struct's current residual row after a partial move has not been checked." -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/3-integrated/rfc-0121-open-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-conditional impls on a nominal target (`extend<row R: { .. }> Session<..R>`) resolve against the receiver's row, for inherent and aspect impls (metel-core#833, metel-core#1306 item 5). The structural target form `extend<row R: { .. }> { ..R }: Aspect` does not parse, and resolution against a struct's current residual row after a partial move has not been checked._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-conditional impls resolve against the receiver's row for a nominal target (`extend<row R: { .. }> Session<..R>`) and for a record target (`extend<row R: { .. }> { ..R }: Aspect`, anonymous and nominal records), for inherent and aspect impls (metel-core#833, metel-core#1306 items 5 and 8). Resolution against a struct's current residual row after a partial move has not been checked._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.types.generics.row-conditional-impls.legality-2}
@@ -1625,11 +1628,15 @@ satisfies a row-conditional impl of the same aspect, the brand-keyed impl is sel
 brand-exact dispatch is checked first, and a match there short-circuits row-conditional
 resolution entirely rather than conflicting with it.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Brand-versus-row priority is implemented for a nominal target: an impl for one specific instantiation (`extend Session<{ token: String }>: Describe`) is selected over a row-conditional impl its row also satisfies, with no T0015 (metel-core#833). The structural target form the rule is written for (`extend Point: Display` against `extend<row R: { .. }> { ..R }: Display`) does not parse, so the rule as stated cannot be exercised." -->
+<!-- rfc.py:last_reviewed c89d029f0cf2f237d52e1ff4482c2d04cc747cb4 -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Brand-versus-row priority is implemented for a nominal target: an impl for one specific instantiation (`extend Session<{ token: String }>: Describe`) is selected over a row-conditional impl its row also satisfies, with no T0015 (metel-core#833). The structural target form the rule is written for (`extend Point: Display` against `extend<row R: { .. }> { ..R }: Display`) does not parse, so the rule as stated cannot be exercised._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InJlY29yZF90YXJnZXRfYnJhbmRfd2lucy5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDEyMSBzZWMzIC8gYHNwZWMudHlwZXMuZ2VuZXJpY3Mucm93LWNvbmRpdGlvbmFsLWltcGxzLmxlZ2FsaXR5LTJgOiB3aGVuIGFcbi8vIG5vbWluYWwgcmVjb3JkIGhhcyBpdHMgb3duIChicmFuZC1rZXllZCkgaW1wbCBvZiBhbiBhc3BlY3QgYW5kIGl0cyByb3cgYWxzbyBzYXRpc2ZpZXNcbi8vIGEgcmVjb3JkLXRhcmdldCBpbXBsIG9mIHRoZSBzYW1lIGFzcGVjdCwgdGhlIGJyYW5kLWtleWVkIGltcGwgaXMgc2VsZWN0ZWQgLS0gYWxzb1xuLy8gdGhyb3VnaCBhbiBhc3BlY3QgYm91bmQuXG5cbmFzcGVjdCBEZXNjcmliZSB7IGZ1biBkZXNjcmliZSgmc2VsZikgLT4gU3RyaW5nOyB9XG5cbnJlY29yZCBUYWdnZWQgeyBwdWJsaWMgdzogaTY0IH1cbnJlY29yZCBQbGFpbiB7IHB1YmxpYyB3OiBpNjQsIHB1YmxpYyB6OiBpNjQgfVxuXG5leHRlbmQgVGFnZ2VkOiBEZXNjcmliZSB7XG4gICAgZnVuIGRlc2NyaWJlKCZzZWxmKSAtPiBTdHJpbmcgeyBcImJyYW5kXCIudG9fc3RyaW5nKCkgfVxufVxuXG5leHRlbmQ8cm93IFI6IHsgdzogaTY0LCAuLiB9PiB7IC4uUiB9OiBEZXNjcmliZSB7XG4gICAgZnVuIGRlc2NyaWJlKCZzZWxmKSAtPiBTdHJpbmcgeyBcInJvd1wiLnRvX3N0cmluZygpIH1cbn1cblxuZnVuIHNob3c8VDogRGVzY3JpYmU+KHg6ICZUKSAtPiBTdHJpbmcgeyB4LmRlc2NyaWJlKCkgfVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgdGFnZ2VkIDo9IFRhZ2dlZCB7IHcgPSAxIH07XG4gICAgbGV0IHBsYWluIDo9IFBsYWluIHsgdyA9IDEsIHogPSAyIH07XG4gICAgbGV0IGFub24gOj0geyB3ID0gMSB9O1xuICAgIGFzc2VydCh0YWdnZWQuZGVzY3JpYmUoKSA9PSBcImJyYW5kXCIpO1xuICAgIGFzc2VydChwbGFpbi5kZXNjcmliZSgpID09IFwicm93XCIpO1xuICAgIGFzc2VydChhbm9uLmRlc2NyaWJlKCkgPT0gXCJyb3dcIik7XG4gICAgYXNzZXJ0KHNob3coJnRhZ2dlZCkgPT0gXCJicmFuZFwiKTtcbiAgICBhc3NlcnQoc2hvdygmcGxhaW4pID09IFwicm93XCIpO1xuICAgIGFzc2VydChzaG93KCZhbm9uKSA9PSBcInJvd1wiKTtcbiAgICBwcmludGxuKFwib2tcIik7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9hc3BlY3RzL3JlY29yZF90YXJnZXRfYnJhbmRfd2lucy5tdGwiLCJuYW1lIjoicmVjb3JkX3RhcmdldF9icmFuZF93aW5zLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InJvd19jb25kaXRpb25hbF9pbXBsX3ByaW9yaXR5Lm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMTIxIGl0ZW0gNSAobWV0ZWwtY29yZSM4MzMsIGxlZ2FsaXR5LTIpOiBhbiBpbXBsIGZvciBvbmUgc3BlY2lmaWNcbi8vIGluc3RhbnRpYXRpb24gaXMgbm90IGluIGNvbmZsaWN0IHdpdGggYSByb3ctY29uZGl0aW9uYWwgaW1wbCBpdHMgcm93IGFsc29cbi8vIHNhdGlzZmllcywgYW5kIGl0IGlzIHRoZSBvbmUgc2VsZWN0ZWQuXG5cbmFzcGVjdCBEZXNjcmliZSB7IGZ1biBkZXNjcmliZShzZWxmKSAtPiBpNjQ7IH1cblxucmVjb3JkIFNlc3Npb248cm93IFI+IHsgcHVibGljIGlkOiBpNjQsIHB1YmxpYyBkYXRhOiB7IC4uUiB9IH1cblxuZXh0ZW5kIFNlc3Npb248eyB0b2tlbjogU3RyaW5nIH0+OiBEZXNjcmliZSB7XG4gICAgZnVuIGRlc2NyaWJlKHNlbGYpIC0+IGk2NCB7IDEgfVxufVxuXG5leHRlbmQ8cm93IFI6IHsgdG9rZW46IFN0cmluZywgLi4gfT4gU2Vzc2lvbjwuLlI+OiBEZXNjcmliZSB7XG4gICAgZnVuIGRlc2NyaWJlKHNlbGYpIC0+IGk2NCB7IDIgfVxufVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgZXhhY3Q6IFNlc3Npb248eyB0b2tlbjogU3RyaW5nIH0+IDo9XG4gICAgICAgIFNlc3Npb24geyBpZCA9IDEsIGRhdGEgPSB7IHRva2VuID0gXCJ0XCIgfSB9O1xuICAgIGxldCB3aWRlcjogU2Vzc2lvbjx7IHRva2VuOiBTdHJpbmcsIGV4dHJhOiBpNjQgfT4gOj1cbiAgICAgICAgU2Vzc2lvbiB7IGlkID0gMiwgZGF0YSA9IHsgdG9rZW4gPSBcInRcIiwgZXh0cmEgPSAxIH0gfTtcbiAgICBhc3NlcnQoZXhhY3QuZGVzY3JpYmUoKSA9PSAxKTtcbiAgICBhc3NlcnQod2lkZXIuZGVzY3JpYmUoKSA9PSAyKTtcbiAgICBwcmludGxuKFwib2tcIik7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9hc3BlY3RzL3Jvd19jb25kaXRpb25hbF9pbXBsX3ByaW9yaXR5Lm10bCIsIm5hbWUiOiJyb3dfY29uZGl0aW9uYWxfaW1wbF9wcmlvcml0eS5tdGwifQ=="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.types.generics.row-conditional-impls.legality-3}
 
@@ -1641,10 +1648,10 @@ impls of the same aspect overlaps, and is rejected exactly as two overlapping or
 impls are. Inside a generic body over an unconstrained `<row R>`, a row-conditional
 method is not visible unless `R`'s own bound entails the impl's condition.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-versus-row coherence is implemented for impls on a nominal target: two impls of one aspect are disjoint when a shared label is required present by one and absent by the other, or required present by both at different primitive types, and any other pair is T0015 (metel-core#833). The rule's last sentence, that a row-conditional method is not visible inside a generic body over an unconstrained `<row R>`, is not enforced (metel-core#1323)." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-versus-row coherence is implemented for impls on a nominal target and on a record target: two impls of one aspect are disjoint when a shared label is required present by one and absent by the other, or required present by both at different primitive types, and any other pair is T0015 (metel-core#833, metel-core#1306 item 8). The rule's last sentence, that a row-conditional method is not visible inside a generic body over an unconstrained `<row R>`, is not enforced (metel-core#1323)." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-versus-row coherence is implemented for impls on a nominal target: two impls of one aspect are disjoint when a shared label is required present by one and absent by the other, or required present by both at different primitive types, and any other pair is T0015 (metel-core#833). The rule's last sentence, that a row-conditional method is not visible inside a generic body over an unconstrained `<row R>`, is not enforced (metel-core#1323)._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-versus-row coherence is implemented for impls on a nominal target and on a record target: two impls of one aspect are disjoint when a shared label is required present by one and absent by the other, or required present by both at different primitive types, and any other pair is T0015 (metel-core#833, metel-core#1306 item 8). The rule's last sentence, that a row-conditional method is not visible inside a generic body over an unconstrained `<row R>`, is not enforced (metel-core#1323)._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>

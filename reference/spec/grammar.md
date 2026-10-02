@@ -44,7 +44,7 @@ RecordDeclaration    → "public"? "record" IDENTIFIER GenericParams? WhereClaus
 EnumDeclaration      → "public"? "enum" IDENTIFIER GenericParams? WhereClause? "{" EnumVariants "}"
 EnumVariants         → ( EnumVariant "," )* EnumVariant?
 EnumVariant          → IDENTIFIER ( "{" StructFields "}" )?
-ExtendBlock          → "extend" GenericParams? Type ( ":" ExtendAspect ( "," ExtendAspect )* WhereClause? ";" | ( ":" ExtendAspect )? WhereClause? "{" ( AssocTypeDef | FunDeclaration )* "}" )
+ExtendBlock          → "extend" GenericParams? ( OpenRecordType | Type ) ( ":" ExtendAspect ( "," ExtendAspect )* WhereClause? ";" | ( ":" ExtendAspect )? WhereClause? "{" ( AssocTypeDef | FunDeclaration )* "}" )
 ExtendAspect         → "!"? NamedType
 AssocTypeDef         → "type" IDENTIFIER ":=" Type ";"
 AspectDeclaration    → "public"? "aspect" IDENTIFIER GenericParams? ( ";" | "{" ( AssocTypeDecl | AspectMethod )* "}" )
