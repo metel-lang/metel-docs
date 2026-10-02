@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**172 RFCs total.** 28 draft, 40 under review, 9 accepted, 4 integrated (81 live), 64 implemented, 13 superseded, 14 refused (91 settled).
+**172 RFCs total.** 27 draft, 41 under review, 9 accepted, 4 integrated (81 live), 64 implemented, 13 superseded, 14 refused (91 settled).
 
-## Draft (28)
+## Draft (27)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -44,9 +44,8 @@ the curated thematic map.
 - **RFC-0168** — Equality Model and Super-Aspects (`0-draft` ; rfcs/0-draft/rfc-0168-equality-model-and-super-aspects.md ; date 2026-09-09)
 - **RFC-0170** — Literal Types and Discriminated Structural Unions (`0-draft` ; rfcs/0-draft/rfc-0170-literal-types-and-discriminated-structural-unions.md ; date 2026-09-27)
 - **RFC-0172** — Sized and Unsized Kinds, and a Generalized Unsizing Coercion (`0-draft` ; rfcs/0-draft/rfc-0172-sized-and-unsized-kinds-and-a-generalized-unsizing-coercion.md ; date 2026-10-01)
-- **RFC-0173** — Generic bodies are checked against their declared bounds (`0-draft` ; rfcs/0-draft/rfc-0173-generic-bodies-are-checked-against-their-declared-bounds.md ; date 2026-10-02)
 
-## Under Review (40)
+## Under Review (41)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -88,6 +87,7 @@ the curated thematic map.
 - **RFC-0162** — Copy and Clone Model — Regular-Value Design Space (`1-under-review` ; rfcs/1-under-review/rfc-0162-copy-and-clone-model-regular-value-design-space.md ; date 2026-09-01 ; updated 2026-09-02)
 - **RFC-0165** — Structural Union Types (`1-under-review` ; rfcs/1-under-review/rfc-0165-structural-union-types.md ; date 2026-09-02 ; updated 2026-09-02)
 - **RFC-0169** — Mutable-By-Value Receivers and Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0169-mutable-by-value-receivers-and-parameters.md ; date 2026-09-22 ; updated 2026-09-22)
+- **RFC-0173** — Generic bodies are checked against their declared bounds (`1-under-review` ; rfcs/1-under-review/rfc-0173-generic-bodies-are-checked-against-their-declared-bounds.md ; date 2026-10-02 ; updated 2026-10-02)
 
 ## Accepted (9)
 

@@ -2,8 +2,12 @@
 id: rfc-0173
 title: "Generic bodies are checked against their declared bounds"
 date: '2026-10-02'
-status: draft
+status: under-review
+updated: '2026-10-02'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1334'
 ---
+
+> **Status — under review (2026-10-02).** Committed to v0.14.0 via metel-core#1334; design settlement tracked there
 
 ## Summary
 
