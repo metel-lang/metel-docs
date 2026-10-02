@@ -1558,14 +1558,14 @@ above): it holds exactly when every field type in row `R` satisfies `Aspect`,
 vacuously on an empty row. It constrains `R`'s field *contents*; it does not by itself
 constrain which labels `R` has (that is an ordinary row bound, composed separately).
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1302" reason="`all R: Aspect` is not implemented (LIMIT-TYPES-002); `where` has no such alternative, and it additionally depends on RFC-0121's row-kinded generic parameters (LIMIT-TYPES-001), also not implemented." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1302" reason="`where all R: Aspect` is implemented for an open-row parameter's tail (a call is rejected with T0012 naming the first field that fails the aspect), but not on an `extend` block (needs the structural impl target, metel-core#1306 item 8), not on a row generic that is not a parameter tail, and not as an assumption inside a generic body (LIMIT-TYPES-002)." -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0123](../../rfcs/3-integrated/rfc-0123-field-wise-row-constraints.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1302: `all R: Aspect` is not implemented (LIMIT-TYPES-002); `where` has no such alternative, and it additionally depends on RFC-0121's row-kinded generic parameters (LIMIT-TYPES-001), also not implemented._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1302: `where all R: Aspect` is implemented for an open-row parameter's tail (a call is rejected with T0012 naming the first field that fails the aspect), but not on an `extend` block (needs the structural impl target, metel-core#1306 item 8), not on a row generic that is not a parameter tail, and not as an assumption inside a generic body (LIMIT-TYPES-002)._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>
@@ -1594,7 +1594,7 @@ needs a way to require an aspect of every field in the row ([Field-wise row
 constraints](#field-wise-row-constraints) above, `all R: Aspect`). Both are now
 specified. The second is implemented for an impl on a nominal target
 (`extend<row R: { .. }> Session<..R>`), not yet for the structural `{ ..R }` target form the
-rules are written against (`LIMIT-TYPES-001`); the third is not (`LIMIT-TYPES-002`).
+rules are written against (`LIMIT-TYPES-001`); the third is implemented as a function constraint but not yet on an impl (`LIMIT-TYPES-002`).
 
 <details>
 <summary>Formal rules</summary>

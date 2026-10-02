@@ -49,7 +49,7 @@ use it. The symptom is tracked as `metel-core#1226`.
 - `metel-frontend/src/pipeline/move_check/mod.rs` (`generic_sample_args`, `record_skipped_generic_body`)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/move_check/mod.rs::generic_sample_args`](https://github.com/metel-lang/metel-core/blob/cec16f179fb472751dc353c5a203e0af89a82790/metel-frontend/src/pipeline/move_check/mod.rs#L521)
+- [`metel-frontend/src/pipeline/move_check/mod.rs::generic_sample_args`](https://github.com/metel-lang/metel-core/blob/80b2feb7286a8b68160dd6c4b00a7e2917d88d5d/metel-frontend/src/pipeline/move_check/mod.rs#L521)
 - [`metel-frontend/src/pipeline/move_check/mod.rs::record_skipped_generic_body`](https://github.com/metel-lang/metel-core/blob/45648266c670df9b04d1c66f0f6af573b65f7afa/metel-frontend/src/pipeline/move_check/mod.rs#L1676)
 <!-- limit.py:markers:end -->
 

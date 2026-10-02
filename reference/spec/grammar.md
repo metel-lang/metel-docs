@@ -51,29 +51,31 @@ AspectDeclaration    → "public"? "aspect" IDENTIFIER GenericParams? ( ";" | "{
 AspectMethod         → "fun" IDENTIFIER GenericParams? "(" Params? ")" ( "->" Type )? ( Block | ";" )
 AssocTypeDecl        → "type" IDENTIFIER ( ":" BoundList )? ";"
 
-Params           → Param ( "," Param )* ","?
-Param            → "&" "var"? "self"
-                 | "self"
-                 | IDENTIFIER ( ":" Type )?
-FunDeclParamList → FunDeclParam ( "," FunDeclParam )* ","?
-FunDeclParam     → "&" "var"? "self"
-                 | "self"
-                 | IDENTIFIER ( ":" ( OpenRecordType | OpenRecordProjectionType | Type ) )?
-GenericParams    → "<" GenericParam ( "," GenericParam )* ">"
-GenericParam     → ( "record" | "row" )? IDENTIFIER ( ":" BoundList )?
-BoundList        → Bound ( "+" Bound )*
-Bound            → "!"? BoundHead
-BoundHead        → RowBound
-                 | TypePath ( "<" BoundArg ( "," BoundArg )* ","? ">" )?
-RowBound         → "{" ( RowField ( "," RowField )* )? ( "," ".." )? ","? "}"
-RowField         → IDENTIFIER ( ":" Type )?
-BoundArg         → AssocBinding
-                 | Type
-AssocBinding     → IDENTIFIER "=" Type
-WhereClause      → "where" WhereConstraint ( "," WhereConstraint )*
-WhereConstraint  → RowEquation
-                 | "record"? IDENTIFIER ":" BoundList
-RowEquation      → IDENTIFIER "=" ( OpenRecordType | Type )
+Params              → Param ( "," Param )* ","?
+Param               → "&" "var"? "self"
+                    | "self"
+                    | IDENTIFIER ( ":" Type )?
+FunDeclParamList    → FunDeclParam ( "," FunDeclParam )* ","?
+FunDeclParam        → "&" "var"? "self"
+                    | "self"
+                    | IDENTIFIER ( ":" ( OpenRecordType | OpenRecordProjectionType | Type ) )?
+GenericParams       → "<" GenericParam ( "," GenericParam )* ">"
+GenericParam        → ( "record" | "row" )? IDENTIFIER ( ":" BoundList )?
+BoundList           → Bound ( "+" Bound )*
+Bound               → "!"? BoundHead
+BoundHead           → RowBound
+                    | TypePath ( "<" BoundArg ( "," BoundArg )* ","? ">" )?
+RowBound            → "{" ( RowField ( "," RowField )* )? ( "," ".." )? ","? "}"
+RowField            → IDENTIFIER ( ":" Type )?
+BoundArg            → AssocBinding
+                    | Type
+AssocBinding        → IDENTIFIER "=" Type
+WhereClause         → "where" WhereConstraint ( "," WhereConstraint )*
+WhereConstraint     → RowEquation
+                    | FieldWiseConstraint
+                    | "record"? IDENTIFIER ":" BoundList
+RowEquation         → IDENTIFIER "=" ( OpenRecordType | Type )
+FieldWiseConstraint → "all" IDENTIFIER ":" BoundList
 
 Statement           → WhileStatement
                     | ForStatement
