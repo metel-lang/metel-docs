@@ -43,7 +43,7 @@ There is no observable symptom, so no reproducing fixture.
 - `metel-frontend/src/pipeline/type_checking/type_engine/mod.rs` (`fresh_local_type_id`)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::fresh_local_type_id`](https://github.com/metel-lang/metel-core/blob/c6ec0b2359501dc4cf81a2dcc33793e0b173b7e6/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L2496)
+- [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::fresh_local_type_id`](https://github.com/metel-lang/metel-core/blob/c6ec0b2359501dc4cf81a2dcc33793e0b173b7e6/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L2519)
 <!-- limit.py:markers:end -->
 
 ## Resolution
