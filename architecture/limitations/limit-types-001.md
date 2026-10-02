@@ -1,7 +1,7 @@
 ---
 id: LIMIT-TYPES-001
-title: "Row-kinded generic parameters (`<row R>`, `..R`) are not implemented"
-summary: "`row` is not a generic-parameter kind and `..R` does not parse; no row-conditional impls, row decomposition, or row-aware width subtyping."
+title: "RFC-0121 open rows are only partly implemented"
+summary: "Row kinds, `..R`, decomposition, concrete width subtyping and nominal-target row-conditional impls work; the structural `{ ..R }` impl target, row extension, anonymous `..` arguments and abstract-row width subtyping do not."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "RFC-0121 entering 3-integrated with no implementation yet"
@@ -13,32 +13,55 @@ review: null
 
 ## Limitation
 
-The grammar has no `row` generic-parameter kind and `..R` does not parse in any type
-position. Reproduced against current `develop`:
+RFC-0121 is implemented in installments (metel-core#1306), and what is left is the part
+the Language Spec still states as design.
+
+Implemented: the `row` generic-parameter kind; `..R` in a record type's tail, a struct's
+residual-projection tail and generic-argument position; a `where R = { label: Type,
+..Rest }` decomposition, which bounds `R` and derives `Rest` at each call; by-value width
+subtyping when the row's fields are concretely known at the narrowing site; and
+row-conditional impls (`extend<row R: { .. }> Session<..R>`, inherent and aspect) on a
+nominal target, with row-versus-row coherence and runtime dispatch.
+
+Not implemented, each reproduced against the current implementation:
 
 ```metel
-fun get_x<row R>(p: { x: f64, ..R }) -> f64 { p.x }
+// the spec's structural impl target
+extend<row R: { id: i64, .. }> { ..R }: Describe { fun describe(self) -> i64 { 1 } }
 ```
 
 ```
-[P0001] parse error: expected a generic parameter (`record`? `ident`), found `row`
+[P0001] parse error: expected ident
 ```
 
-The Language Spec specifies row variables, row decomposition, row-conditional impl
-resolution and the width-subtyping rule (`spec.types.generics.open-rows.*`,
-`spec.types.generics.row-conditional-impls.*`), so this is an implementation
-shortfall against the spec, not a spec gap.
+```metel
+// an anonymous row as a generic argument
+fun f(b: Builder<..>) -> i64 { 0 }
+```
+
+```
+[T0032] an anonymous row (`..`) in this position is not yet implemented
+```
+
+- Row extension, a row literal's trailing `..R` with named fields outside a function
+  parameter (`record Wrap<row R> { data: { x: i64, ..R } }`): this currently panics
+  rather than reporting a diagnostic (metel-core#1324).
+- Abstract-row width subtyping: by-value narrowing of an unconstrained `<row R>` inside a
+  generic body is not rejected, because it needs `all R: Copy` (`LIMIT-TYPES-002`,
+  metel-core#1302).
+- A row-conditional method is not hidden inside a generic body over an unconstrained
+  `<row R>` (metel-core#1323).
+- A `native` function cannot take an open-row-tailed parameter.
 
 ## Impact
 
-Visible to Metel programmers: no generic function or impl can abstract over "the rest
-of a row." Every one of the records cluster's row-shaped capabilities that need it stays
-unreachable — `drain_field`-style decomposition has no substitute at all (RFC-0118's
-row bounds cannot express it), row-conditional typestate does not exist, and a blanket
-aspect implementation over every record shape (`Display`, `Copy`) cannot be written
-(`GAP-TYPES-004`, which additionally needs RFC-0123's `all R: Aspect` once this lands).
+Visible to Metel programmers: row-polymorphic code over a nominal type works, including
+typestate (`authenticate` / `send_data` as separate impls), but a blanket aspect
+implementation over every record shape (`Display`, `Copy`) still cannot be written
+(`GAP-TYPES-004`, which additionally needs RFC-0123's `all R: Aspect`), and a function that
+extends a row rather than only narrowing or decomposing it is unavailable.
 `record`'s own row-conditional impl eligibility (`spec.declarations.records.legality-2`,
-`LIMIT-DECLARATIONS-001`) is blocked on this too.
+`LIMIT-DECLARATIONS-001`) was blocked on this work and has not been re-checked against it.
 
 ## Affects
 
@@ -52,6 +75,4 @@ aspect implementation over every record shape (`Display`, `Copy`) cannot be writ
 ## Resolution
 
 Planned: tracked as metel-core#1301 (RFC-0121 implementation tracking, milestone
-v0.14.0, the expensive half of the records cluster per the RFC's own cost accounting
-— genuinely new row-kinded variables and row unification in the elaborator/inference
-system).
+v0.14.0), with the remaining pieces itemized on metel-core#1306 and metel-core#1310.
