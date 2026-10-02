@@ -1,7 +1,7 @@
 ---
 id: LIMIT-TYPES-001
 title: "RFC-0121 open rows are only partly implemented"
-summary: "Row-kinded generics, `..R` use sites, decomposition, concrete width subtyping and row-conditional impls on a nominal target work; the structural `{ ..R }` impl target, row extension, an anonymous `..` argument and abstract-row width subtyping do not."
+summary: "Row kinds, `..R`, decomposition, concrete width subtyping and nominal-target row-conditional impls work; the structural `{ ..R }` impl target, row extension, anonymous `..` arguments and abstract-row width subtyping do not."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "RFC-0121 entering 3-integrated with no implementation yet"

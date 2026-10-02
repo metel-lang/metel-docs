@@ -34,7 +34,7 @@ The orphan rule (`T0014`): an aspect impl must be local to the aspect's declarin
 
 ##### Requirement {#arch.coherence.requirement-2}
 
-Overlap detection (`T0015`): two impls whose coverage overlaps conflict unless provably disjoint, decided by `scoped_type_param_bounds` (negation disjointness, RFC-0060 §3.1; unconditional-vs-conditional, §3.2; and, for row bounds, a presence/absence or type contradiction on a shared label, RFC-0121 §3) over impl-scoped `CanonicalType::TypeParam`s.
+Overlap detection (`T0015`): two impls whose coverage overlaps conflict unless provably disjoint, decided over impl-scoped `CanonicalType::TypeParam`s by `scoped_type_param_bounds` (negation, RFC-0060 §3.1; unconditional-vs-conditional, §3.2; row presence/absence or type contradiction, RFC-0121 §3).
 
 | Field | Value |
 |---|---|
