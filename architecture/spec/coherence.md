@@ -27,9 +27,9 @@ The orphan rule (`T0014`): an aspect impl must be local to the aspect's declarin
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#coherence` |
-| `implements` | [`metel-frontend/src/pipeline/coherence/mod.rs::check`](https://github.com/metel-lang/metel-core/blob/2c95c6d9c5f131d86fa08889153355b451e12c9e/metel-frontend/src/pipeline/coherence/mod.rs#L770) |
+| `implements` | [`metel-frontend/src/pipeline/coherence/mod.rs::check`](https://github.com/metel-lang/metel-core/blob/88cc93739bc5bf6edf42e804fca330aa5190e86c/metel-frontend/src/pipeline/coherence/mod.rs#L872) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/bare_parameter_blanket_foreign_aspect_is_orphan/test.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/typechecking/aspects/bare_parameter_blanket_foreign_aspect_is_orphan/test.toml#L1); [`metel-interpreter/tests/integration/sources/typechecking/aspects/conditional_impl_orphan_violation/test.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/typechecking/aspects/conditional_impl_orphan_violation/test.toml#L1); [`metel-interpreter/tests/integration/sources/typechecking/aspects/negative_impl_orphan_violation/test.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/typechecking/aspects/negative_impl_orphan_violation/test.toml#L1); [`metel-interpreter/tests/integration/sources/typechecking/aspects/orphan_impl_cross_module_violation/test.toml`](https://github.com/metel-lang/metel-core/blob/fee29158f82d543baecf5b42642ccebeff2cfde8/metel-interpreter/tests/integration/sources/typechecking/aspects/orphan_impl_cross_module_violation/test.toml#L1) |
-| `last_reviewed` | 2c95c6d9c5f131d86fa08889153355b451e12c9e |
+| `last_reviewed` | f3110eaf3b27ae3d3fed2360d1e0f2a0c733340e |
 | `related` | RFC-0060, `#238`, ADR-0042, RFC-0036 |
 
 ##### Requirement {#arch.coherence.requirement-2}

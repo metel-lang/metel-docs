@@ -72,7 +72,7 @@ The typechecker treats `T[]` as `Copy` unconditionally, as a deliberate `InferTy
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/4871047944e6893a2cf1a3144bb49c66e7493e12/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L3438) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/4871047944e6893a2cf1a3144bb49c66e7493e12/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L3466) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/types/dynamic_array_is_copy_unconditionally.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/typechecking/types/dynamic_array_is_copy_unconditionally.toml#L1) |
 | `last_reviewed` | 8717cc6088e4dcf55f6f5580e60ad936d9bf69cf |
 | `related` | ADR-0046, RFC-0126 |
@@ -100,9 +100,9 @@ Type ascriptions constrain inference and construction but are erased from typed 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/construction/expressions.rs::construct_expr`](https://github.com/metel-lang/metel-core/blob/08bf42d86ac718c93991aece6206e343257f4385/metel-frontend/src/pipeline/type_checking/construction/expressions.rs#L703) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/construction/expressions.rs::construct_expr`](https://github.com/metel-lang/metel-core/blob/4b67328d7e9243b4d89d1f85404d80eca31ae746/metel-frontend/src/pipeline/type_checking/construction/expressions.rs#L703) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/tests.rs::typed_ir_has_no_ascription_node`](https://github.com/metel-lang/metel-core/blob/26ffffc1aabe3e17d10726af0d719a8ab79a7869/metel-frontend/src/pipeline/type_checking/tests.rs#L17); [`metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.toml#L1) |
-| `last_reviewed` | 26ffffc1aabe3e17d10726af0d719a8ab79a7869 |
+| `last_reviewed` | f3110eaf3b27ae3d3fed2360d1e0f2a0c733340e |
 | `related` | ADR-0009 |
 
 ##### Requirement {#arch.type-construction.requirement-7}
