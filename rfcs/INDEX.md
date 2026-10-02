@@ -235,6 +235,15 @@ above it are.
   which option (b) does not need at all. **Deliberately unmilestoned**, same posture as
   RFC-0133: whether this is needed at all waits on OQ2 picking (a) over (b).
 
+- **RFC-0173** *(under-review 2026-10-02 — metel-core#1334, v0.14.0; from #1320/#1323)* — Generic bodies are
+  checked against their declared bounds. A declared generic parameter is opaque in its own
+  body: it unifies only with itself and supports only what its bounds entail. Extends
+  RFC-0040 §3 (bounds as the contract inside a body, already enforced for methods and field
+  access) to unification and operators, makes RFC-0036's conditional-impl visibility rule
+  true, and states that per-call re-checking (ADR-0010) is an implementation device, not
+  semantics. No carve-out for a bare `F` called as a function. Open: operators, closures,
+  the `radius<T>` pattern. Milestoned v0.14.0.
+
 - **RFC-0123** *(integrated 2026-10-01)* — Field-Wise Row Constraints — a constraint
   applying an aspect to **every field of a row** rather than to the row's type
   (`extend<row R> { ..R }: Display where all R: Display`). Opened after noticing that two
