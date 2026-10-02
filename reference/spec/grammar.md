@@ -71,7 +71,9 @@ BoundArg         → AssocBinding
                  | Type
 AssocBinding     → IDENTIFIER "=" Type
 WhereClause      → "where" WhereConstraint ( "," WhereConstraint )*
-WhereConstraint  → "record"? IDENTIFIER ":" BoundList
+WhereConstraint  → RowEquation
+                 | "record"? IDENTIFIER ":" BoundList
+RowEquation      → IDENTIFIER "=" ( OpenRecordType | Type )
 
 Statement           → WhileStatement
                     | ForStatement
