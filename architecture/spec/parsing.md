@@ -59,7 +59,7 @@ A file parses through one PEG grammar (`grammar.pest`) via the sole entry point 
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
 | `implements` | [`metel-frontend/src/pipeline/parsing/parser/mod.rs::parse`](https://github.com/metel-lang/metel-core/blob/482a47de2a50db592c02804b14155c2310a76bb5/metel-frontend/src/pipeline/parsing/parser/mod.rs#L28) |
-| `verified by` | [`metel-frontend/src/pipeline/parsing/parser/mod.rs::multi_segment_path_carries_one_span_per_segment`](https://github.com/metel-lang/metel-core/blob/7dc8cacb9c55b154beb1664101a743371c364cd9/metel-frontend/src/pipeline/parsing/parser/mod.rs#L3736); [`metel-frontend/src/pipeline/parsing/parser/mod.rs::span_is_eq_hash_and_carries_resolved_line_and_column`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/pipeline/parsing/parser/mod.rs#L3801) |
+| `verified by` | [`metel-frontend/src/pipeline/parsing/parser/mod.rs::multi_segment_path_carries_one_span_per_segment`](https://github.com/metel-lang/metel-core/blob/7dc8cacb9c55b154beb1664101a743371c364cd9/metel-frontend/src/pipeline/parsing/parser/mod.rs#L3784); [`metel-frontend/src/pipeline/parsing/parser/mod.rs::span_is_eq_hash_and_carries_resolved_line_and_column`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/pipeline/parsing/parser/mod.rs#L3849) |
 | `last_reviewed` | 482a47de2a50db592c02804b14155c2310a76bb5 |
 | `related` | `#229` |
 
@@ -73,7 +73,7 @@ Control flow has one expression-shaped representation: `if`, `match` and `loop` 
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
 | `implements` | [`metel-frontend/src/pipeline/parsing/parser/mod.rs::parse_if_expr`](https://github.com/metel-lang/metel-core/blob/2509ef305686205e937c2aabd4ea3edd3577629e/metel-frontend/src/pipeline/parsing/parser/mod.rs#L1932) |
-| `verified by` | [`metel-frontend/src/pipeline/parsing/parser/mod.rs::control_flow_is_an_expression_in_tail_and_statement_position`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/pipeline/parsing/parser/mod.rs#L3852); [`metel-frontend/src/pipeline/parsing/parser/mod.rs::else_if_is_a_nested_if_in_the_else_block_and_a_bare_if_has_no_else`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/pipeline/parsing/parser/mod.rs#L3817); [`metel-interpreter/tests/integration/sources/evaluator/control_flow/88_braceless_if_no_else_in_expression_position.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/control_flow/88_braceless_if_no_else_in_expression_position.toml#L1) |
+| `verified by` | [`metel-frontend/src/pipeline/parsing/parser/mod.rs::control_flow_is_an_expression_in_tail_and_statement_position`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/pipeline/parsing/parser/mod.rs#L3900); [`metel-frontend/src/pipeline/parsing/parser/mod.rs::else_if_is_a_nested_if_in_the_else_block_and_a_bare_if_has_no_else`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/pipeline/parsing/parser/mod.rs#L3865); [`metel-interpreter/tests/integration/sources/evaluator/control_flow/88_braceless_if_no_else_in_expression_position.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/control_flow/88_braceless_if_no_else_in_expression_position.toml#L1) |
 | `last_reviewed` | 7de56e3de9a7841d926b5c185ff95b6c7bf03b22 |
 | `related` | ADR-0005 |
 
@@ -86,7 +86,7 @@ Keyword disambiguation is a grammar invariant: `keyword` matches a whole word on
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | [`metel-frontend/src/grammar.pest::ident`](https://github.com/metel-lang/metel-core/blob/6304269efb5b1fde0bb9913b8b34041b52b7128f/metel-frontend/src/grammar.pest#L455); [`metel-frontend/src/grammar.pest::keyword`](https://github.com/metel-lang/metel-core/blob/46f1f6a74b6a2dec071dd6511c82bd1bc668fd03/metel-frontend/src/grammar.pest#L460) |
+| `implements` | [`metel-frontend/src/grammar.pest::ident`](https://github.com/metel-lang/metel-core/blob/6304269efb5b1fde0bb9913b8b34041b52b7128f/metel-frontend/src/grammar.pest#L463); [`metel-frontend/src/grammar.pest::keyword`](https://github.com/metel-lang/metel-core/blob/46f1f6a74b6a2dec071dd6511c82bd1bc668fd03/metel-frontend/src/grammar.pest#L468) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/parsing/keyword_prefixed_identifiers.toml`](https://github.com/metel-lang/metel-core/blob/e351096dc3e82c3715c0709f274081691673946e/metel-interpreter/tests/integration/sources/parsing/keyword_prefixed_identifiers.toml#L1); [`metel-interpreter/tests/integration/sources/parsing/neg_keyword_as_identifier.toml`](https://github.com/metel-lang/metel-core/blob/e351096dc3e82c3715c0709f274081691673946e/metel-interpreter/tests/integration/sources/parsing/neg_keyword_as_identifier.toml#L1) |
 | `last_reviewed` | 46f1f6a74b6a2dec071dd6511c82bd1bc668fd03 |
 | `related` | ADR-0015, ADR-0018 |
@@ -101,7 +101,7 @@ String interpolation is lowered while parsing: each hole becomes a `to_string` m
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
 | `implements` | [`metel-frontend/src/pipeline/parsing/parser/mod.rs::parse_string_literal_expr`](https://github.com/metel-lang/metel-core/blob/188ea25800be897904bca45526c196cb6d98be78/metel-frontend/src/pipeline/parsing/parser/mod.rs#L1281) |
-| `verified by` | [`metel-frontend/src/pipeline/parsing/parser/mod.rs::interpolation_lowers_to_add_of_to_string_calls`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/pipeline/parsing/parser/mod.rs#L3876); [`metel-frontend/src/pipeline/parsing/parser/mod.rs::the_ast_has_no_interpolation_node`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/parsing/parser/mod.rs#L3895) |
+| `verified by` | [`metel-frontend/src/pipeline/parsing/parser/mod.rs::interpolation_lowers_to_add_of_to_string_calls`](https://github.com/metel-lang/metel-core/blob/7de56e3de9a7841d926b5c185ff95b6c7bf03b22/metel-frontend/src/pipeline/parsing/parser/mod.rs#L3924); [`metel-frontend/src/pipeline/parsing/parser/mod.rs::the_ast_has_no_interpolation_node`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/parsing/parser/mod.rs#L3943) |
 | `last_reviewed` | de72649a95a5c947ac985069b692008b76a82f7e |
 | `related` | ADR-0033 |
 
