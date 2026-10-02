@@ -44,8 +44,8 @@ fun f(b: Builder<..>) -> i64 { 0 }
 ```
 
 - Row extension, a row literal's trailing `..R` with named fields outside a function
-  parameter (`record Wrap<row R> { data: { x: i64, ..R } }`): this currently panics
-  rather than reporting a diagnostic (metel-core#1324).
+  parameter (`record Wrap<row R> { data: { x: i64, ..R } }`): rejected with T0032 (it
+  used to panic, metel-core#1324).
 - Abstract-row width subtyping: by-value narrowing of an unconstrained `<row R>` inside a
   generic body is not rejected, because it needs `all R: Copy` (`LIMIT-TYPES-002`,
   metel-core#1302).
