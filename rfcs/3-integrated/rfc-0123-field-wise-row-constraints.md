@@ -11,7 +11,7 @@ coverage:
   "3": { kind: untestable, reason: "Prior-art survey (PureScript RowToList, Haskell row-types), not a testable claim of this RFC's own design." }
   "4": { spec: "spec.types.generics.field-wise-row-constraints.legality-1" }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1302'
-impl_status: not-started
+impl_status: in-progress
 ---
 
 > **Opened 2026-07-24, unifying three questions the corpus was carrying separately without
