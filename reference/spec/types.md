@@ -1596,7 +1596,8 @@ be disjoint, which is specified below. The third is most useful with a way to re
 aspect of every field in the row ([Field-wise row
 constraints](#field-wise-row-constraints) above, `all R: Aspect`), which a record-target
 impl accepts as `where all R: Aspect`. The standard library implements `Display` for every record of `Display` fields this way
-(its body is a built-in, `LIMIT-TYPES-003`); `Copy` for records is not yet provided.
+(its body is a built-in, `LIMIT-TYPES-003`) and `Copy` for every record of `Copy` fields (a
+bodyless impl): such a record is copied, not moved.
 
 <details>
 <summary>Formal rules</summary>

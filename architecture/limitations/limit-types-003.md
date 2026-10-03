@@ -32,7 +32,8 @@ The condition is checked statically (`where all R: Display`; a field without `Di
   different blanket impl, or the same impl for another aspect.
 - **No other aspect gets this for free.** `Eq`, `Hash`, `Clone` and `Default` for records,
   and any user aspect (a serializer, a schema generator), cannot walk a record's fields.
-  `Copy` needs no body and is tracked separately (metel-core#1337).
+  `Copy` needs no body: `std::core` provides it as an ordinary bodyless impl, so it is not
+  affected by this limitation (metel-core#1337).
 - **A nominal `record`'s own `Display` still wins**, by brand-first dispatch
   (`spec.types.generics.row-conditional-impls.legality-2`).
 
