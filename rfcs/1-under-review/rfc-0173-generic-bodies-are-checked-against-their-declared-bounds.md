@@ -32,7 +32,7 @@ struct P { public x: i64 }
 fun gx<T>(a: T) -> i64 { a.x }         // rejected: T has no fields
 ```
 
-Both are rejected on `develop` (with `T0002`, "cannot infer receiver/struct type", rather than the `T0013` RFC-0040 names; see Open Question 5).
+Both are rejected on `develop` (with `T0002`, "cannot infer receiver/struct type", rather than the `T0013` RFC-0040 names; see Error codes below).
 
 But the same body is accepted when it constrains the parameter by *unification* or uses an *operator*:
 
@@ -60,16 +60,27 @@ Generic bodies are re-constructed at every call with concrete types substituted 
 
 ### D1: Declared parameters are rigid in their own definition
 
-Inside a generic function or method, each declared type parameter (including `row` parameters and the parameters of the enclosing `extend`) is an opaque type. It unifies only with itself. Unifying it with a concrete type, or with another declared parameter, is a type error **at the definition**, reported against the offending expression.
+Inside a generic function or method, each declared type parameter (including `row` parameters and the parameters of the enclosing `extend`) is an opaque type. It unifies only with itself, **or with a type that the definition's declared bounds Γ state is equal to it**. Unifying it with a concrete type, or with another declared parameter, in any other way is a type error **at the definition**, reported against the offending expression.
 
 ```metel
 fun pick<T>(a: T) -> i64 { a }   // error: expected i64, found T
 fun id2<T, U>(a: T) -> U { a }   // error: expected U, found T
 ```
 
+Γ states equalities in exactly two places, and the set is closed (a future `where T = U` would need its own RFC):
+
+1. **Row equations.** `where R = { token: String, ..Rest }` says `R` has `token: String`, that `Rest` is *derived*, namely `R` without `token`, and that `Rest` lacks `token`. `Rest` is not an independent parameter; the caller does not choose it, and it is computed at each call. So the body may treat `R` and `{ token: String, ..Rest }` as equal, and `R` can never equal `Rest`: unifying them is an occurs-check failure, which is how returning the wrong row is rejected at the definition.
+2. **Associated-type bindings.** `T: Iterable<Item = X>` makes `T::Item` equal to `X`.
+
+A closure or nested generic function inside a generic body sees the enclosing parameters as rigid. A recursive or mutually recursive generic call instantiates the callee's parameters afresh, so it checks against the callee's declared bounds like any other call.
+
+Equalities are symmetric but applied on demand: the checker rewrites `R` to its decomposition only when unification needs it, and diagnostics keep printing `R`. They propagate through generic arguments in the usual argument-wise way, so `Session<..R>` equals `Session<..{ token: String, ..Rest }>`.
+
 ### D2: A body may use only what its bounds entail
 
 A body may call a method, use an operator, or rely on a conditional impl only if the parameter's declared bounds (inline, `where`, and the enclosing impl's) entail it. This is RFC-0040 §3 extended from methods to every use, and it makes RFC-0036's conditional-impl visibility rule true: `b.f()` over `Box<U>` needs `U: Tag`.
+
+Matching a value of a bare parameter against a concrete enum or struct pattern is a type mismatch (`T0001`): the parameter is opaque. The spelling is a bound, or a concrete type in the signature. The `radius<T>` fixture below is an accident of template checking and is rejected.
 
 ### D3: No special case for a parameter in call position
 
@@ -77,11 +88,43 @@ A bare parameter `F` is not callable. `fun apply<F, T>(f: F, x: T) -> T { f(x) }
 
 ### D4: The per-call re-check is not semantics
 
-A well-formed generic definition (D1-D3) is accepted or rejected independently of any call. Re-checking a body with concrete types may remain as an implementation device (until #288), but it must never accept something D1-D3 reject, and it must not be the source of the first error. Any future monomorphization phase instantiates a body already checked; it does not re-check it.
+A well-formed generic definition (D1-D3) is accepted or rejected independently of any call. The per-call reconstruction is recorded as `LIMIT-EVALUATION-001`, with its removal owned by metel-core#1352. Re-checking a body with concrete types may remain as an implementation device (until #288), but it must never accept something D1-D3 reject, and it must not be the source of the first error.
 
-### D5: Operators on a parameter need a bound
+The other direction is also fixed. If the re-check rejects a body that the definition check accepted, the two checks disagree, and the definition check is wrong. That is an **internal error** with its own `I`-code (not an existing one: its cause differs from `I0009`), following RFC-0167's rule that a state reachable only through a checker bug is an internal error. Its message names the definition and says the checks disagree; it never blames the call site.
 
-`a + b` over `T` requires a bound that grants `+`. Whether the language has such aspects is not settled here (Open Question 2), so until it does, D2 would reject the `add<T>` above and give users no spelling for it.
+The rule applies **per construct, from the point that construct's definition check is enforced** (free functions, then impl methods, closures, nested generics, as the measurement extends). Until a construct is enforced, the re-check may still reject what the definition check lets through, and that rejection stays an ordinary diagnostic.
+
+How agreement between the two checks is verified is an implementation matter, specified in the accompanying ADR.
+
+The I-code and the re-check both go away when run-time generic reconstruction is removed (metel-core#1352, v0.17.0, with frontend monomorphization #288). Any monomorphization phase instantiates a body already checked; it does not re-check it.
+
+### D5: Operators on a parameter are rejected until operator aspects exist
+
+`a + b` over a bare `T` is rejected at the definition, like any other use the bounds do not grant. The language has no aspects that grant arithmetic or ordering operators yet, so for now there is no spelling for a generic `add<T>`. That is a **temporary, recorded limit**, not a design position: it lasts until operator desugaring to aspects is specified and implemented (Open Question 2), at which point `T: Add` grants `+` by D2 with no change to this RFC. Implementation adds a limit entry that names the operator-desugaring work as its owner. Equality is not affected: `Eq` already grants `==` through its `eq` method.
+
+### D6: Entailment
+
+D2 and D5 rest on one judgment: given the declared bounds Γ of a definition, is a use of a rigid parameter `T` entailed? Γ is the parameter's bounds from inline `T: A`, `where` clauses, and the enclosing `extend`'s bounds. Entailment is **membership in Γ, forwarded by the uses below, with no search and no inference**:
+
+1. **Method call.** `x.m()` is entailed iff some `A ∈ Γ(T)` declares `m`.
+2. **Forwarding to a callee's bound.** Passing `x` where a callee requires `U: A` is entailed iff `A ∈ Γ(T)`.
+3. **Conditional-impl visibility.** A method of `extend<T: Tag> Box<T>` is visible on `Box<U>` iff `Tag ∈ Γ(U)` (metel-core#1323).
+4. **Row field access.** `x.label` on a row-bounded parameter is entailed iff some row bound in Γ names `label`; its type is the type that bound declares, not a fresh variable.
+5. **`where all R: A`** grants `A` for the fields of `R`, not for `R` itself. It is forwarded only to another `where all R: A` bound.
+6. **Associated types.** `T::Assoc` is an opaque projection of `T`, equal only to itself or to what an associated-type equality in Γ declares (RFC-0082 §4), and supports only the bounds the aspect declares on it.
+7. **Impl resolution assumes Γ.** An impl applies to a type built from `T` (for example `extend<U: Clone> List<U>: Clone` on `List<T>`) iff its own conditions are entailed by Γ. This is what keeps D2 consistent with RFC-0036.
+
+There is no transitive closure: aspects have no supertrait syntax, so `T: A` grants `A` and nothing else. If supertraits are added, they extend this rule. A `where` equality in Γ is also an entailment fact; its handling is stated under D1.
+
+### Error codes
+
+- **Rigid-parameter mismatch** (D1): `T0001`, with a note that the type is a declared parameter and opaque in its definition. A rigid parameter is an opaque type, so this is an ordinary mismatch.
+- **Use not granted by the declared bounds** (D2, D6 cases 1, 3 and 4: a method call, a conditional-impl method, or a field access): a new `T0035`. The message names the parameter and the bound that would grant the use. This replaces today's `T0002`, which is misleading here. RFC-0040 §3's citation of `T0013` for a missing bound is superseded; `T0013` stays "ambiguous resolution".
+- **Forwarding to a callee's bound** (D6 case 2): the existing `T0012` (aspect bound not satisfied), the same code the call gets with a concrete type.
+- **Operator on a bare parameter** (D5, while operator aspects do not exist): the existing `T0005`. When operator aspects exist, the same use is `T0035` or `T0012` as appropriate, and the limit entry says so.
+- **Definition and re-check disagree** (D4): a new `I0010`, "Generic definition and construction disagree". It is not `I0009`, whose cause is a missing type context.
+
+The `error-codes.md` entries are added when the checks are implemented, so no documented code lacks a raise site.
 
 ---
 
@@ -96,7 +139,11 @@ A throwaway prototype of D1 for free functions (each declared parameter must res
 | 1 (enum-variant identity fixture) | `fun radius<T>(v: T) { match v { Shape::Circle { r } => r, .. } }` | relies on template checking; needs a bound or a concrete type |
 | 1 (`stage10_neg_02`) | `fun always_int<T>(_x: T) -> T { 42 }` | the old behaviour enshrined as a test; the error moves from the call to the definition |
 
-Not measured: impl methods, closures, nested generic functions, operators (D5). The measurement must be extended to those before this RFC leaves draft.
+Not measured: impl methods, closures, nested generic functions, operators (D5). Enforcement of each construct is gated on extending the measurement to it (D4); acceptance of this RFC does not wait for that.
+
+### Migration
+
+No warning period. The language is pre-1.0 with no known external users, and the only in-repo programs affected are the three fixtures listed under Implementation Notes.
 
 ---
 
@@ -110,20 +157,16 @@ Not measured: impl methods, closures, nested generic functions, operators (D5). 
 
 ## Open Questions
 
-1. **The `radius<T>` pattern.** Is matching a generic value against a concrete enum something the language wants to support (it would need a bound or an explicit coercion), or is it an accident of template checking?
-2. **Operators.** What grants `+`, `==`, `<` on a parameter: built-in marker aspects, the equality model of RFC-0168, or something else? D5 cannot ship before there is an answer.
-3. **Closures and nested generics.** Does a closure inside a generic body see the enclosing parameters as rigid? Expected yes; unmeasured.
-4. **Associated-type projections.** `T::Assoc` inside a body must stay a projection of the opaque `T`; check the interaction with the opaque `impl Aspect` returns of RFC-0037.
-5. **Error codes.** RFC-0040 §3 names `T0013` for a missing bound, which is now "ambiguous resolution"; the checker currently reports `T0002`. D2 should state one code for "not granted by the declared bounds".
-6. **Migration.** Whether any programs outside this repository use an unbounded `F` in call position or rely on collapsing; and whether a warning period is wanted.
+1. **Operators.** What grants `+`, `<` on a parameter: operator desugaring to aspects, the equality model of RFC-0168, or something else? D5 records the interim limit; this question is owned by the operator-desugaring work, not this RFC.
+2. **Associated-type projections and opaque returns.** D6 case 6 states the rule for `T::Assoc`. How it interacts with the opaque `impl Aspect` returns of RFC-0037 is not settled; it does not block acceptance.
 
 ---
 
 ## Implementation Notes (an ADR accompanies, once the RFC is accepted)
 
-1. Fix the aspect-method instantiation artifact first, so a call does not merge the caller's parameter with the method's.
+1. Fix the aspect-method instantiation artifact first, so a call does not merge the caller's parameter with the method's. Row equations are derived at the call today (metel-core#1313, #1321); D1 needs the checker to hold the decomposition as a typed fact inside the body, which is new work and probably the hardest part for row parameters.
 2. Then enforce D1 for free functions, then impl methods and closures, behind the measured fixtures.
-3. Fixtures to change: `stage10_neg_06`, `stage10_neg_02`, the enum-variant fixture.
+3. Fixtures to change: `stage10_neg_06`, `stage10_neg_02`, the enum-variant fixture (`radius<T>`, now a rejection). Fixtures to add: a closure inside a generic body sees the enclosing parameters as rigid; a generic function that calls itself, and one that calls another generic function, still checks.
 4. Depends on: RFC-0040, RFC-0036, RFC-0121 §3; related: RFC-0138, RFC-0161, RFC-0168. Unblocks metel-core#1320 and #1323. No dependency on #288, but the monomorphization design must honour D4.
 
 ---
