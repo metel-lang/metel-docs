@@ -2,12 +2,14 @@
 id: rfc-0173
 title: "Generic bodies are checked against their declared bounds"
 date: '2026-10-02'
-status: under-review
-updated: '2026-10-02'
+status: integrated
+updated: '2026-10-03'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1334'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1364'
+impl_status: not-started
 ---
 
-> **Status — under review (2026-10-02).** Committed to v0.14.0 via metel-core#1334; design settlement tracked there
+> **Status — integrated (2026-10-03).** Spec integrated: spec.types.generics.rigid-type-parameters; limits LIMIT-TYPES-004, GAP-TYPES-005; implementation tracked in #1364
 
 ## Summary
 
@@ -144,6 +146,39 @@ Not measured: impl methods, closures, nested generic functions, operators (D5). 
 ### Migration
 
 No warning period. The language is pre-1.0 with no known external users, and the only in-repo programs affected are the three fixtures listed under Implementation Notes.
+
+---
+
+## Worked examples (integration review)
+
+Each combines this RFC with an already-integrated feature, looking for a soundness gap at the intersection. The outcomes are what the rules above require; none is implemented yet (metel-core#1364).
+
+**1. With RFC-0121 row equations and RFC-0123 `where all`.**
+
+```metel
+fun authenticate<row R, row Rest>(s: Session<..R>) -> Session<..Rest>
+where R = { token: String, ..Rest } { s.drop_token() }   // body returns Session<..R>
+```
+
+`Rest` lacks `token` and `R` has it, so `Session<..R>` is not `Session<..Rest>`: rejected at the definition (`T0001`). Today this is accepted because `Rest` collapses into `R`.
+
+**2. With RFC-0137 by-value narrowing.**
+
+```metel
+fun first<row R>(r: { x: i64, ..R }) -> { x: i64 } { r }   // forgets the fields of R
+```
+
+Narrowing by value forgets `R`'s fields, so it needs `where all R: Copy`; without it the body is rejected at the definition (`T0033`). This closes the definition-time half of `LIMIT-TYPES-002` that waited on this RFC. With `where all R: Copy` it is accepted, and `all R: Copy` is not granted to `R` itself (D6 case 5).
+
+**3. With RFC-0036 conditional impls and the aspect-method instantiation artifact.**
+
+```metel
+fun f<T: GenericSink, U>(value: T, other: U) { value.sink(other) }
+```
+
+`sink<U>` has its own generic parameter. The call instantiates it afresh and does not unify it with the caller's `U`, so `f` stays generic in `U`. This is the artifact the prototype measurement found, and it is a precondition of enforcing D1, not a consequence of it.
+
+**Gap found.** None in the rules. One implementation precondition (example 3) and one new piece of checker work (a typed row decomposition inside the body, example 1) are recorded under Implementation Notes.
 
 ---
 

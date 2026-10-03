@@ -235,7 +235,7 @@ above it are.
   which option (b) does not need at all. **Deliberately unmilestoned**, same posture as
   RFC-0133: whether this is needed at all waits on OQ2 picking (a) over (b).
 
-- **RFC-0173** *(under-review 2026-10-02 — metel-core#1334, v0.14.0; from #1320/#1323)* — Generic bodies are
+- **RFC-0173** *(integrated 2026-10-03 — metel-core#1364, v0.14.0; settled in #1334; from #1320/#1323)* — Generic bodies are
   checked against their declared bounds. A declared generic parameter is opaque in its own
   body: it unifies only with itself and supports only what its bounds entail. Extends
   RFC-0040 §3 (bounds as the contract inside a body, already enforced for methods and field

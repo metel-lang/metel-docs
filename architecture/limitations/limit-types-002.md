@@ -58,5 +58,5 @@ instantiates it, inside the body, instead of at its own definition.
 
 ## Resolution
 
-Planned: the definition-time half is part of RFC-0173 (`1-under-review`, metel-core#1334),
+Planned: the definition-time half is part of RFC-0173 (`3-integrated`, implementation metel-core#1364),
 which this record's own implementation tracking (metel-core#1302) waits on.
