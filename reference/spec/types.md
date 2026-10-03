@@ -1307,10 +1307,10 @@ and lacks the named labels, so `R` never equals `Rest`) and an associated-type b
 function inside the body sees the enclosing parameters as rigid; a recursive generic call
 instantiates the callee's parameters afresh.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1364" reason="RFC-0173 is not implemented yet: a declared parameter is not rigid in its own definition (metel-core#1320). LIMIT-TYPES-004." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1364" reason="Rigidity is enforced for a free function's and a method's own declared parameters (a collapse into a concrete type or another parameter is T0001, reported at the definition rather than at the offending expression). Not yet: the struct's and impl's parameters, closures and nested generic functions, and row equations and associated-type bindings held as typed facts in the body (metel-core#1364, metel-core#1320). LIMIT-TYPES-004." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1364: RFC-0173 is not implemented yet: a declared parameter is not rigid in its own definition (metel-core#1320). LIMIT-TYPES-004._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1364: Rigidity is enforced for a free function's and a method's own declared parameters (a collapse into a concrete type or another parameter is T0001, reported at the definition rather than at the offending expression). Not yet: the struct's and impl's parameters, closures and nested generic functions, and row equations and associated-type bindings held as typed facts in the body (metel-core#1364, metel-core#1320). LIMIT-TYPES-004._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.types.generics.rigid-type-parameters.legality-2}
@@ -1326,10 +1326,10 @@ and is forwarded only to another `where all R: A` bound. `T::Assoc` is an opaque
 projection equal only to itself or to what an associated-type binding in `Γ` declares. A
 bare parameter is not callable. Impl resolution for a type built from `T` assumes `Γ`.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1364" reason="RFC-0173 is not implemented yet: a use the bounds do not grant is accepted, or reported at a call (metel-core#1323), and the code is T0002, not T0035. LIMIT-TYPES-004." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1364" reason="A method call or field access on a declared parameter that its bounds do not grant is T0035. Not yet: a conditional-impl method visible inside a generic body over a parameter that does not satisfy the impl's condition (metel-core#1323), bound forwarding and `where all R: A` forwarding as stated, and a bare parameter in call position is reported as T0001 rather than as a use not granted (metel-core#1364). LIMIT-TYPES-004." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1364: RFC-0173 is not implemented yet: a use the bounds do not grant is accepted, or reported at a call (metel-core#1323), and the code is T0002, not T0035. LIMIT-TYPES-004._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1364: A method call or field access on a declared parameter that its bounds do not grant is T0035. Not yet: a conditional-impl method visible inside a generic body over a parameter that does not satisfy the impl's condition (metel-core#1323), bound forwarding and `where all R: A` forwarding as stated, and a bare parameter in call position is reported as T0001 rather than as a use not granted (metel-core#1364). LIMIT-TYPES-004._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.types.generics.rigid-type-parameters.legality-3}
@@ -1338,10 +1338,10 @@ An operator on a bare type parameter (`a + b` over `T`) is rejected (`T0005`): n
 grants it, because no aspect grants an operator yet. `T: Eq` grants `==` through its `eq`
 method.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1364" reason="RFC-0173 is not implemented yet: an operator on a bare parameter is accepted today. GAP-TYPES-005, LIMIT-TYPES-004." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1364" reason="An arithmetic or ordering operator whose operand is a bare declared parameter is T0005 (the operand is checked directly, not through a later unification). Not yet: an operand that reaches the parameter only through a `let` chain or a call result. GAP-TYPES-005, LIMIT-TYPES-004." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1364: RFC-0173 is not implemented yet: an operator on a bare parameter is accepted today. GAP-TYPES-005, LIMIT-TYPES-004._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1364: An arithmetic or ordering operator whose operand is a bare declared parameter is T0005 (the operand is checked directly, not through a later unification). Not yet: an operand that reaches the parameter only through a `let` chain or a call result. GAP-TYPES-005, LIMIT-TYPES-004._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Dynamic Semantics {#spec.types.generics.rigid-type-parameters.dynamics-1}
@@ -1352,10 +1352,10 @@ accepts a definition the rules above reject, and a body the definition check acc
 cannot be rejected by it: if it is, the two checks disagree, which is the internal error
 `I0010`, never a diagnostic about the call site.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1364" reason="RFC-0173 is not implemented yet: a disagreement is reported as an ordinary type error at a call site, and `I0010` does not exist. LIMIT-TYPES-004." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1364" reason="RFC-0173 is not fully implemented: the per-call re-check can still reject a body the definition check accepted, and a disagreement is reported as an ordinary type error at a call site; `I0010` does not exist yet (metel-core#1364). LIMIT-TYPES-004." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1364: RFC-0173 is not implemented yet: a disagreement is reported as an ordinary type error at a call site, and `I0010` does not exist. LIMIT-TYPES-004._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1364: RFC-0173 is not fully implemented: the per-call re-check can still reject a body the definition check accepted, and a disagreement is reported as an ordinary type error at a call site; `I0010` does not exist yet (metel-core#1364). LIMIT-TYPES-004._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>

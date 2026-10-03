@@ -14,27 +14,31 @@ review: null
 ## Limitation
 
 RFC-0173 makes the definition-time check the contract for a generic body: each declared
-parameter is rigid, and a use is allowed only if the declared bounds entail it. The
-checker does not enforce that yet. A generic body is also re-checked at every call with
-concrete types substituted (`LIMIT-EVALUATION-001`), and that re-check is where several
-definitions that should be rejected are accepted or fail late:
+parameter is rigid, and a use is allowed only if the declared bounds entail it. Installments
+of it are implemented (metel-core#1364): a free function's and a method's own declared
+parameters are rigid after the body is solved (`T0001` at the definition), a method or field
+a parameter's bounds do not grant is `T0035`, and an arithmetic or ordering operator on a
+bare parameter is `T0005`. What is still missing:
 
 ```metel
-fun pick<T>(a: T) -> i64 { a }          // accepted: T collapses into i64
-fun id2<T, U>(a: T) -> U { a }          // accepted: T and U collapse into one variable
-fun add<T>(a: T, b: T) -> T { a + b }   // accepted: no bound grants `+`
 fun g<U>(b: Box<U>) { b.f() }           // `f` needs `U: Tag`; checked per call, reported inside `g`
 ```
 
-- A parameter used where its bounds do not grant the use is reported at a call, or not at
-  all, instead of at the definition (metel-core#1320, #1323).
-- A method, field or conditional-impl method the bounds do not grant is reported as
-  `T0002` where the spec says `T0035`.
-- The per-call re-check can accept something the definition check would reject, and a
-  disagreement the other way is reported as an ordinary type error at a call site, not as
-  the internal error `I0010`.
-
-Operators on a bare parameter are a separate, language-level gap: `GAP-TYPES-005`.
+- A conditional-impl method is visible inside a generic body whose parameter does not
+  satisfy the impl's condition; the condition is checked at the call (metel-core#1323).
+- The struct's and impl's own parameters are not rigid yet, nor are closures and nested
+  generic functions.
+- Row equations (`where R = { label, ..Rest }`) and associated-type bindings are not held
+  as typed facts inside the body, so a wrong row returned from a body is caught only where
+  `Rest` collapses into `R` after solving.
+- The error for a collapse is reported at the function, not at the offending expression,
+  because the check runs on the solved substitution.
+- A bare parameter in call position is rejected as `T0001`, not as a use the bounds do not
+  grant, and bound forwarding (`g(x)` against a callee's bound) is checked per call.
+- The per-call re-check (`LIMIT-EVALUATION-001`) can still reject a body the definition
+  check accepted, as an ordinary type error at a call site rather than as the internal
+  error `I0010`.
+- Operators on a bare parameter are a separate, language-level gap: `GAP-TYPES-005`.
 
 ## Impact
 
