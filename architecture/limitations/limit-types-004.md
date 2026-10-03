@@ -15,10 +15,10 @@ review: null
 
 RFC-0173 makes the definition-time check the contract for a generic body: each declared
 parameter is rigid, and a use is allowed only if the declared bounds entail it. Installments
-of it are implemented (metel-core#1364): a free function's and a method's own declared
-parameters are rigid after the body is solved (`T0001` at the definition), a method or field
-a parameter's bounds do not grant is `T0035`, and an arithmetic or ordering operator on a
-bare parameter is `T0005`. What is still missing:
+of it are implemented (metel-core#1364): declared parameters of free functions, methods, and
+their enclosing structs and impls are rigid after the body is solved (`T0001` at the definition),
+a method or field a parameter's bounds do not grant is `T0035`, and an arithmetic or ordering
+operator on a bare parameter is `T0005`. What is still missing:
 
 ```metel
 fun g<U>(b: Box<U>) { b.f() }           // `f` needs `U: Tag`; checked per call, reported inside `g`
@@ -26,8 +26,7 @@ fun g<U>(b: Box<U>) { b.f() }           // `f` needs `U: Tag`; checked per call,
 
 - A conditional-impl method is visible inside a generic body whose parameter does not
   satisfy the impl's condition; the condition is checked at the call (metel-core#1323).
-- The struct's and impl's own parameters are not rigid yet, nor are closures and nested
-  generic functions.
+- Closures and nested generic functions do not yet treat enclosing parameters as rigid.
 - Row equations (`where R = { label, ..Rest }`) and associated-type bindings are not held
   as typed facts inside the body, so a wrong row returned from a body is caught only where
   `Rest` collapses into `R` after solving.
