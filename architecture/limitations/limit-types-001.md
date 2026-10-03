@@ -1,7 +1,7 @@
 ---
 id: LIMIT-TYPES-001
 title: "RFC-0121 open rows are only partly implemented"
-summary: "Row kinds, `..R`, decomposition, concrete width subtyping and row-conditional impls (nominal and record targets) work; row extension, anonymous `..` arguments, abstract-row width subtyping and generic-body visibility do not."
+summary: "Row kinds, `..R`, decomposition, width subtyping and row-conditional impls (nominal and record targets) work; row extension, anonymous `..` outside a free function parameter, abstract-row width subtyping and generic-body visibility do not."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "RFC-0121 entering 3-integrated with no implementation yet"
@@ -28,12 +28,13 @@ and runtime dispatch.
 Not implemented, each reproduced against the current implementation:
 
 ```metel
-// an anonymous row as a generic argument
-fun f(b: Builder<..>) -> i64 { 0 }
+// an anonymous row as a generic argument outside a free function's parameter type
+fun f() -> Builder<..> { ... }
 ```
 
 ```
-[T0032] an anonymous row (`..`) in this position is not yet implemented
+[T0032] an anonymous row (`..`) is only supported as a generic argument in a free function's
+parameter type (`b: Builder<..>`); here, name a `row`-kinded generic parameter (`..R`)
 ```
 
 - Row extension, a row literal's trailing `..R` with named fields outside a function

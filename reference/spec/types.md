@@ -1474,14 +1474,14 @@ type's tail, a struct's own residual-projection tail, or generic-argument positi
 bare identifier in any of these type positions is a type variable, never a row; row and
 type variables are therefore never ambiguous with each other.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters and `..R` are implemented in a record type's tail (metel-core#1305), a struct's residual-projection tail (metel-core#1309) and generic-argument position (metel-core#1319), but the rule is not covered whole: an anonymous `..` in generic-argument position (`Builder<..>`) is still rejected (T0032, metel-core#1310)." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters and `..R` are implemented in a record type's tail (metel-core#1305), a struct's residual-projection tail (metel-core#1309) and generic-argument position (metel-core#1319), but the rule is not covered whole: an anonymous `..` in generic-argument position (`Builder<..>`) is accepted in a free function's parameter type (a fresh nameless type variable each, metel-core#1310) and still rejected elsewhere (T0032)." -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/3-integrated/rfc-0121-open-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters and `..R` are implemented in a record type's tail (metel-core#1305), a struct's residual-projection tail (metel-core#1309) and generic-argument position (metel-core#1319), but the rule is not covered whole: an anonymous `..` in generic-argument position (`Builder<..>`) is still rejected (T0032, metel-core#1310)._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters and `..R` are implemented in a record type's tail (metel-core#1305), a struct's residual-projection tail (metel-core#1309) and generic-argument position (metel-core#1319), but the rule is not covered whole: an anonymous `..` in generic-argument position (`Builder<..>`) is accepted in a free function's parameter type (a fresh nameless type variable each, metel-core#1310) and still rejected elsewhere (T0032)._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.types.generics.open-rows.legality-2}
