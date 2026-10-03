@@ -1307,10 +1307,10 @@ and lacks the named labels, so `R` never equals `Rest`) and an associated-type b
 function inside the body sees the enclosing parameters as rigid; a recursive generic call
 instantiates the callee's parameters afresh.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1364" reason="Rigidity is enforced for declared parameters of free functions, methods, and their enclosing structs and impls (a collapse into a concrete type or another parameter is T0001, reported at the definition rather than at the offending expression). Not yet: closures and nested generic functions, and row equations and associated-type bindings held as typed facts in the body (metel-core#1364, metel-core#1320). LIMIT-TYPES-004." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1364" reason="Rigidity is enforced for declared parameters of free functions, methods, enclosing structs and impls, closures, and nested generic functions (a collapse into a concrete type or another parameter is T0001, reported at the definition rather than at the offending expression). Not yet: row equations and associated-type bindings held as typed facts in the body (metel-core#1364, metel-core#1320). LIMIT-TYPES-004." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1364: Rigidity is enforced for declared parameters of free functions, methods, and their enclosing structs and impls (a collapse into a concrete type or another parameter is T0001, reported at the definition rather than at the offending expression). Not yet: closures and nested generic functions, and row equations and associated-type bindings held as typed facts in the body (metel-core#1364, metel-core#1320). LIMIT-TYPES-004._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1364: Rigidity is enforced for declared parameters of free functions, methods, enclosing structs and impls, closures, and nested generic functions (a collapse into a concrete type or another parameter is T0001, reported at the definition rather than at the offending expression). Not yet: row equations and associated-type bindings held as typed facts in the body (metel-core#1364, metel-core#1320). LIMIT-TYPES-004._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.types.generics.rigid-type-parameters.legality-2}
