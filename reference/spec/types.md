@@ -420,7 +420,7 @@ record target whose row it has ([Implementing an aspect for a
 record](#implementing-an-aspect-for-a-record)); with no such implementation the bound is
 rejected with `T0012`.
 
-<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+<!-- rfc.py:last_reviewed 16a59959934c05474c6953f52536b2b1d4c4aa5f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0116](../../rfcs/4-implemented/rfc-0116-anonymous-record-types.md)_</span>
@@ -1628,7 +1628,7 @@ satisfies a row-conditional impl of the same aspect, the brand-keyed impl is sel
 brand-exact dispatch is checked first, and a match there short-circuits row-conditional
 resolution entirely rather than conflicting with it.
 
-<!-- rfc.py:last_reviewed c89d029f0cf2f237d52e1ff4482c2d04cc747cb4 -->
+<!-- rfc.py:last_reviewed 16a59959934c05474c6953f52536b2b1d4c4aa5f -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
