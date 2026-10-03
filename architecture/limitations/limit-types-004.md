@@ -26,7 +26,6 @@ fun g<U>(b: Box<U>) { b.f() }           // `f` needs `U: Tag`; checked per call,
 
 - A conditional-impl method is visible inside a generic body whose parameter does not
   satisfy the impl's condition; the condition is checked at the call (metel-core#1323).
-- Closures and nested generic functions do not yet treat enclosing parameters as rigid.
 - Row equations (`where R = { label, ..Rest }`) and associated-type bindings are not held
   as typed facts inside the body, so a wrong row returned from a body is caught only where
   `Rest` collapses into `R` after solving.
