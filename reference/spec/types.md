@@ -420,7 +420,7 @@ record target whose row it has ([Implementing an aspect for a
 record](#implementing-an-aspect-for-a-record)); with no such implementation the bound is
 rejected with `T0012`.
 
-<!-- rfc.py:last_reviewed 16a59959934c05474c6953f52536b2b1d4c4aa5f -->
+<!-- rfc.py:last_reviewed cb6e01cd8aff28da4c3f2a860dbcb18969b4f2f1 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0116](../../rfcs/4-implemented/rfc-0116-anonymous-record-types.md)_</span>
@@ -428,7 +428,7 @@ rejected with `T0012`.
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDEyIiwiY29sIjpudWxsLCJjb250YWlucyI6ImFuIGFzcGVjdCBvbmx5IHRocm91Z2ggYW4gYGV4dGVuZGAgb24gYSByZWNvcmQgdGFyZ2V0IiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoic3RhZ2U1X25lZ18xOV9yZWNvcmRfZG9lc19ub3Rfc2F0aXNmeV9hc3BlY3RfYm91bmQubXRsIiwic291cmNlIjoiLy8gTmVnYXRpdmUgKFJGQy0wMTE2IFx1MDBhNzMpOiBhbiBhbm9ueW1vdXMgcmVjb3JkIGhhcyBubyBub21pbmFsIG93bmVyLCBzbyBpdCBzYXRpc2ZpZXMgbm9cbi8vIGltcGwtYmFzZWQgYXNwZWN0LiBJdCBtdXN0IGJlIHJlamVjdGVkIGF0IHRoZSBjYWxsIHNpdGUsIGxpa2UgYSB0dXBsZSBvciBhIHN0cnVjdFxuLy8gd2l0aG91dCB0aGUgaW1wbCBcdTIwMTQgbm90IGFjY2VwdGVkIGFuZCB0aGVuIGJsb3duIHVwIGF0IHJ1biB0aW1lLlxuZnVuIHNob3c8VDogRGlzcGxheT4oeDogVCkgLT4gU3RyaW5nIHsgeC50b19zdHJpbmcoKSB9XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCByIDo9IHsgeCA9IDEgfTtcbiAgICBsZXQgcyA6PSBzaG93KHIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvc3RydWN0cy9zdGFnZTVfbmVnXzE5X3JlY29yZF9kb2VzX25vdF9zYXRpc2Z5X2FzcGVjdF9ib3VuZC5tdGwiLCJuYW1lIjoic3RhZ2U1X25lZ18xOV9yZWNvcmRfZG9lc19ub3Rfc2F0aXNmeV9hc3BlY3RfYm91bmQubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDEyIiwiY29sIjpudWxsLCJjb250YWlucyI6ImRvZXMgbm90IGltcGxlbWVudCBgRGlzcGxheWAiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJzdGFnZTVfbmVnXzE5X3JlY29yZF9kb2VzX25vdF9zYXRpc2Z5X2FzcGVjdF9ib3VuZC5tdGwiLCJzb3VyY2UiOiIvLyBOZWdhdGl2ZSAoUkZDLTAxMTYgXHUwMGE3Myk6IGFuIGFub255bW91cyByZWNvcmQgc2F0aXNmaWVzIGFuIGltcGwtYmFzZWQgYXNwZWN0IG9ubHkgdGhyb3VnaCBhblxuLy8gYGV4dGVuZGAgb24gYSByZWNvcmQgdGFyZ2V0IChgc3RkOjpjb3JlYCdzIGBEaXNwbGF5YCBmb3IgYSByZWNvcmQgbmVlZHMgZXZlcnkgZmllbGQgdG8gYmVcbi8vIGBEaXNwbGF5YCkuIEEgcmVjb3JkIHdpdGggYSBmaWVsZCB0aGF0IGhhcyBubyBgRGlzcGxheWAgaXMgcmVqZWN0ZWQgYXQgdGhlIGNhbGwgc2l0ZSwgbGlrZSBhXG4vLyB0dXBsZSBvciBhIHN0cnVjdCB3aXRob3V0IHRoZSBpbXBsIC0tIG5vdCBhY2NlcHRlZCBhbmQgdGhlbiBibG93biB1cCBhdCBydW4gdGltZS5cbnN0cnVjdCBPcGFxdWUgeyB2OiBpNjQgfVxuXG5mdW4gc2hvdzxUOiBEaXNwbGF5Pih4OiBUKSAtPiBTdHJpbmcgeyB4LnRvX3N0cmluZygpIH1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IHIgOj0geyB4ID0gT3BhcXVlIHsgdiA9IDEgfSB9O1xuICAgIGxldCBzIDo9IHNob3cocik7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9zdHJ1Y3RzL3N0YWdlNV9uZWdfMTlfcmVjb3JkX2RvZXNfbm90X3NhdGlzZnlfYXNwZWN0X2JvdW5kLm10bCIsIm5hbWUiOiJzdGFnZTVfbmVnXzE5X3JlY29yZF9kb2VzX25vdF9zYXRpc2Z5X2FzcGVjdF9ib3VuZC5tdGwifQ=="></details>
 <!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.types.anonymous-records.dynamics-2}
@@ -1595,9 +1595,9 @@ implementations can be *incomparable* rather than one being more specific, so th
 be disjoint, which is specified below. The third is most useful with a way to require an
 aspect of every field in the row ([Field-wise row
 constraints](#field-wise-row-constraints) above, `all R: Aspect`), which a record-target
-impl accepts as `where all R: Aspect`. The standard library does not yet provide the
-blanket impls this makes writable (`Display`, `Copy` for every record of conforming
-fields).
+impl accepts as `where all R: Aspect`. The standard library implements `Display` for every record of `Display` fields this way
+(its body is a built-in, `LIMIT-TYPES-003`) and `Copy` for every record of `Copy` fields (a
+bodyless impl): such a record is copied, not moved.
 
 <details>
 <summary>Formal rules</summary>

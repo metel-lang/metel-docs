@@ -54,8 +54,8 @@ fun f(b: Builder<..>) -> i64 { 0 }
 
 Visible to Metel programmers: row-polymorphic code over a nominal type works, including
 typestate (`authenticate` / `send_data` as separate impls), and a local aspect can be
-implemented for every record of a given shape. The standard library does not yet provide
-the blanket impls this makes writable (`Display`, `Copy` for every record), and a function
+implemented for every record of a given shape. The standard library provides
+the blanket `Display` and `Copy` impls for records, and a function
 that extends a row rather than only narrowing or decomposing it is unavailable.
 `record`'s own row-conditional impl eligibility (`spec.declarations.records.legality-2`,
 `LIMIT-DECLARATIONS-001`) has not been re-checked against this work.

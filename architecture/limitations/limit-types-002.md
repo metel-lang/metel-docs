@@ -43,7 +43,8 @@ implementation shortfall against the spec, not a spec gap.
 Visible to Metel programmers: no blanket aspect implementation can be written over
 every row of a given shape for an aspect whose methods need something from each field
 (`Display`, `Copy`, `Eq`) in the standard library: the constraint is available to user
-code on a local aspect, but `std::core` does not yet declare such impls. A function can
+code on a local aspect. `std::core` declares `Display` for records this way (its body is a
+built-in, `LIMIT-TYPES-003`) and `Copy` (a bodyless impl). A function can
 state the requirement of its own parameter, which is checked at each call.
 
 ## Affects
