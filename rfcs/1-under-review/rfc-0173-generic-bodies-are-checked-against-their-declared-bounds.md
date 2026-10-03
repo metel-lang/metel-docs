@@ -32,7 +32,7 @@ struct P { public x: i64 }
 fun gx<T>(a: T) -> i64 { a.x }         // rejected: T has no fields
 ```
 
-Both are rejected on `develop` (with `T0002`, "cannot infer receiver/struct type", rather than the `T0013` RFC-0040 names; see Open Question 5).
+Both are rejected on `develop` (with `T0002`, "cannot infer receiver/struct type", rather than the `T0013` RFC-0040 names; see Error codes below).
 
 But the same body is accepted when it constrains the parameter by *unification* or uses an *operator*:
 
@@ -112,6 +112,16 @@ D2 and D5 rest on one judgment: given the declared bounds Γ of a definition, is
 
 There is no transitive closure: aspects have no supertrait syntax, so `T: A` grants `A` and nothing else. If supertraits are added, they extend this rule. A `where` equality in Γ is also an entailment fact; its handling is stated under D1.
 
+### Error codes
+
+- **Rigid-parameter mismatch** (D1): `T0001`, with a note that the type is a declared parameter and opaque in its definition. A rigid parameter is an opaque type, so this is an ordinary mismatch.
+- **Use not granted by the declared bounds** (D2, D6 cases 1, 3 and 4: a method call, a conditional-impl method, or a field access): a new `T0035`. The message names the parameter and the bound that would grant the use. This replaces today's `T0002`, which is misleading here. RFC-0040 §3's citation of `T0013` for a missing bound is superseded; `T0013` stays "ambiguous resolution".
+- **Forwarding to a callee's bound** (D6 case 2): the existing `T0012` (aspect bound not satisfied), the same code the call gets with a concrete type.
+- **Operator on a bare parameter** (D5, while operator aspects do not exist): the existing `T0005`. When operator aspects exist, the same use is `T0035` or `T0012` as appropriate, and the limit entry says so.
+- **Definition and re-check disagree** (D4): a new `I0010`, "Generic definition and construction disagree". It is not `I0009`, whose cause is a missing type context.
+
+The `error-codes.md` entries are added when the checks are implemented, so no documented code lacks a raise site.
+
 ---
 
 ## Measurement (prototype, discarded)
@@ -143,8 +153,7 @@ Not measured: impl methods, closures, nested generic functions, operators (D5). 
 2. **Operators.** What grants `+`, `<` on a parameter: operator desugaring to aspects, the equality model of RFC-0168, or something else? D5 records the interim limit; this question is owned by the operator-desugaring work, not this RFC.
 3. **Closures and nested generics.** Does a closure inside a generic body see the enclosing parameters as rigid? Expected yes; unmeasured.
 4. **Associated-type projections.** `T::Assoc` inside a body must stay a projection of the opaque `T`; check the interaction with the opaque `impl Aspect` returns of RFC-0037.
-5. **Error codes.** RFC-0040 §3 names `T0013` for a missing bound, which is now "ambiguous resolution"; the checker currently reports `T0002`. D2 should state one code for "not granted by the declared bounds".
-6. **Migration.** Whether any programs outside this repository use an unbounded `F` in call position or rely on collapsing; and whether a warning period is wanted.
+5. **Migration.** Whether any programs outside this repository use an unbounded `F` in call position or rely on collapsing; and whether a warning period is wanted.
 
 ---
 
