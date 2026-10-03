@@ -105,8 +105,8 @@ the curated thematic map.
 ## Integrated (4)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
-- **RFC-0121** — Open Rows (`3-integrated` ; rfcs/3-integrated/rfc-0121-open-rows.md ; date 2026-07-24 ; updated 2026-10-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1301)
-- **RFC-0123** — Field-Wise Row Constraints (`3-integrated` ; rfcs/3-integrated/rfc-0123-field-wise-row-constraints.md ; date 2026-07-24 ; updated 2026-10-01 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1302)
+- **RFC-0121** — Open Rows (`3-integrated` ; rfcs/3-integrated/rfc-0121-open-rows.md ; date 2026-07-24 ; updated 2026-10-01 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1301)
+- **RFC-0123** — Field-Wise Row Constraints (`3-integrated` ; rfcs/3-integrated/rfc-0123-field-wise-row-constraints.md ; date 2026-07-24 ; updated 2026-10-01 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1302)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/949)
 
 ## Implemented (64)

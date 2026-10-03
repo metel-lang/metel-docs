@@ -12,7 +12,7 @@ coverage:
   "4": { spec: "spec.types.generics.open-rows.legality-3" }
   "5": { kind: untestable, reason: "Grammar restated against the real generated grammar -- already stated as part of legality-1/legality-2's own rule text above, not an independent testable claim of its own." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1301'
-impl_status: not-started
+impl_status: in-progress
 ---
 
 > **Extracted from RFC-0090 §2 (open half), §4 and §7 on 2026-07-24** (superseded; see
