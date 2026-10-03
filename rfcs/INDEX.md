@@ -244,6 +244,16 @@ above it are.
   semantics. No carve-out for a bare `F` called as a function. Open: operators, closures,
   the `radius<T>` pattern. Milestoned v0.14.0.
 
+- **RFC-0174** *(under-review 2026-10-03 — metel-core#1340, unmilestoned)* — Compile-time
+  iteration over a row's fields. A `comptime for` loop over `fields(R)`, unrolled per
+  instantiation, with computed field access `self.[field.name]` and a checking rule that
+  checks the body once against a symbolic field assuming only what `where all R: A` grants
+  (so it composes with RFC-0173). Fills the gap RFC-0123 left (the *condition* `all R: A`
+  exists, the *body* cannot walk a row), is the same construct RFC-0125's stage 2 needs for a
+  parameter pack, and covers a tuple if RFC-0151 makes it a numeric-label row. Does not gate
+  #1337/#1338, whose near-term path is compiler-derived impls (RFC-0096). Open: loop and
+  access spelling, field order, row construction (`Clone`/`Default`), moves out of `self`.
+
 - **RFC-0123** *(integrated 2026-10-01)* — Field-Wise Row Constraints — a constraint
   applying an aspect to **every field of a row** rather than to the row's type
   (`extend<row R> { ..R }: Display where all R: Display`). Opened after noticing that two
