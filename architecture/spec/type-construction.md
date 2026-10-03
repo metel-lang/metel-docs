@@ -184,7 +184,7 @@ Generic runtime reconstruction recovers a struct or enum's type arguments from i
 | `status` | `implemented` |
 | `owner` | `metel-frontend`, `metel-interpreter` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/mod.rs::infer_named_type_args`](https://github.com/metel-lang/metel-core/blob/41b0f74be0c6e648506cce4821b4d76b2f41e6f8/metel-frontend/src/pipeline/type_checking/mod.rs#L1319) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/mod.rs::infer_named_type_args`](https://github.com/metel-lang/metel-core/blob/41b0f74be0c6e648506cce4821b4d76b2f41e6f8/metel-frontend/src/pipeline/type_checking/mod.rs#L1337) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/generics/51_generic_nested_types.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/generics/51_generic_nested_types.toml#L1) |
 | `last_reviewed` | 41b0f74be0c6e648506cce4821b4d76b2f41e6f8 |
 | `related` | ADR-0043 |
