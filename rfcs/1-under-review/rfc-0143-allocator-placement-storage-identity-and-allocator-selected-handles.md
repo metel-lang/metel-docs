@@ -27,7 +27,7 @@ updated: '2026-08-27'
 > This RFC may advance with the abstract handle-family mechanism, but it must not make
 > standard-GC or subset-collection guarantees until RFC-0139 resolves those blockers.
 
-> **Status — under review (2026-08-27).** Scheduled for v0.19.0 allocator-foundation design settlement under metel-core#850
+> **Status — under review (2026-08-27).** Scheduled for v0.21.0 allocator-foundation design settlement under metel-core#850
 
 ## Summary
 

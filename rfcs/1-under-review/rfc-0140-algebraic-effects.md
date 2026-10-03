@@ -18,7 +18,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/834'
 > the mechanism behind those reversions. Carried forward into this RFC's own Open
 > Questions section unchanged.
 
-> **Status — under review (2026-08-25).** Design settlement scheduled: metel-core#834 opened, milestoned v0.18.0 (new milestone, created for this RFC). Formalizes an already-substantive, actively-maintained exploration report (algebraic-effects.md) with 15 sections and worked examples -- real engagement, not an option list.
+> **Status — under review (2026-08-25).** Design settlement scheduled: metel-core#834 opened, milestoned v0.21.1 (new milestone, created for this RFC). Formalizes an already-substantive, actively-maintained exploration report (algebraic-effects.md) with 15 sections and worked examples -- real engagement, not an option list.
 
 ## Summary
 

@@ -22,7 +22,7 @@ updated: '2026-08-27'
 > Unresolved Question on binding-site brands, raised while asking whether `&T` could become
 > `Ref<T, 'b>`.
 
-> **Status — under review (2026-08-27).** Scheduled for v0.17.0 identity-substrate work under metel-core#849
+> **Status — under review (2026-08-27).** Scheduled for v0.20.0 identity-substrate work under metel-core#849
 
 ## Summary
 

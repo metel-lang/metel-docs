@@ -598,8 +598,8 @@ comptime-staging sugar, which makes this one mechanism, not two.
 mechanism: a frontend pass that collects concrete generic instantiations across the whole
 program (a worklist over concrete call sites) and produces concrete typed specializations
 with stable identities, replacing the interpreter's current runtime generic-body
-reconstruction. It is milestoned v0.20.1, one point release ahead of the compiler
-foundation (metel-core#859) it feeds.
+reconstruction. It is milestoned v0.17.0 (the compiler-ready freeze), ahead of the compiler
+expansion (metel-core#859, v0.24.0) it feeds.
 
 Consequences for this RFC:
 
@@ -802,7 +802,7 @@ Consequences for this RFC:
 - **RFC-0093 (Derive Registration) / RFC-0094 (Comptime Metaprogramming)** — depend on
   RFC-0092's half, not on this one directly.
 - `metel-core#263` — the hardcoded `[T; N]: Copy` arm this RFC's §3 exists to retire.
-- `metel-core#288` (Frontend monomorphization, v0.20.1) — the instantiation-collection
+- `metel-core#288` (Frontend monomorphization, v0.17.0) — the instantiation-collection
   pass §3's `comptime N` axis shares with type-parameter monomorphization; see
   "Relationship to frontend monomorphization" above. Co-design, not a dependency edge.
 - `reports/strategy/OBJECTIVES.md` Trigger 30 — the strategy-level record of why this

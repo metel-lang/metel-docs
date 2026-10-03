@@ -12,7 +12,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/924'
 > longer-horizon regular-value `Copy`/`Clone` model critique, design space, prior-art survey,
 > and open questions that D5 did not touch, so they remain trackable.
 
-> **Status — under review (2026-09-01).** Extracted from RFC-0157 on 2026-09-01: the regular-value Copy/Clone model critique, P0-P3 design space, prior-art survey, and open questions D5 did not touch. **Milestoned v0.17.0** — the "coherent Copy and closure capabilities" release, alongside RFC-0135 and RFC-0155.
+> **Status — under review (2026-09-01).** Extracted from RFC-0157 on 2026-09-01: the regular-value Copy/Clone model critique, P0-P3 design space, prior-art survey, and open questions D5 did not touch. **Milestoned v0.14.0** — the "decisions" release that gates the ownership core, alongside RFC-0135 (RFC-0155 follows in v0.18.1).
 
 > **Update (2026-09-02) — a further drawback (D6) and a fourth position (P4), raised in
 > review.** D1–D4 all argue about *what* the model grants. D6 argues about **where the
@@ -43,13 +43,12 @@ Re-analysis" covering both the regular-value model *and* the closure-capture def
 record of that decision, `3-integrated` as part of the v0.13.0 closure cluster. The
 regular-value questions D5 did not touch — D1–D4, the P0–P3 design space, and the open
 questions about whether Rust's model is the right one for Metel — have no v0.13.0
-consumer and live here so they stay trackable. **Milestoned v0.17.0**, the "coherent
-Copy and closure capabilities" release, alongside **RFC-0135** (`Copy → many`) and
+consumer and live here so they stay trackable. **Milestoned v0.14.0**, the "decisions" release that gates the ownership core, alongside **RFC-0135** (`Copy → many`) and
 **RFC-0155** — a reviewer opening that release's Copy-model work sees the analysis and
 the proposals together. Its actionable outcomes map onto that milestone: the D3
 relaxation (amends RFC-0071 §4, if OQ2's soundness argument holds), the RFC-0135
-disposition (OQ3 — RFC-0135's own v0.17.0 review), and D4 (structural-types Copy
-cleanup, #702/#263, already v0.17.0).
+disposition (OQ3 — RFC-0135's own v0.14.0 review), and D4 (structural-types Copy
+cleanup, #702, v0.16.0; #263, v0.15.0).
 
 **Added in review (2026-09-02):** **D6** — the grant that switches off affine semantics
 is an ordinary aspect impl, and would be a metaprogramming annotation once `#derive`
@@ -284,7 +283,7 @@ and every other capability the language expresses as an aspect. That is the whol
 
 - **P0 — Status quo + RFC-0135 rename.** A1 + B1, with `Copy` spelled `many` on the
   declaration. No drawback in §Motivation is addressed; D2/D4 are re-labeled. This is the
-  currently-milestoned path (RFC-0135, v0.17.0).
+  currently-milestoned path (RFC-0135, v0.14.0).
 - **P1 — Closed implicit set, keep explicit duplication as one operation.** A2 + B2.
   `i64`-and-friends copy implicitly; everything else moves and is duplicated with a
   visible `.dup()`; no `Copy` aspect, `Clone` folded in. Removes D1 (down to the keyword),
@@ -475,7 +474,7 @@ fun scale<T: Copy>(p: T, k: i64) -> T { … }   // bound spelling unchanged
    its use-multiplicity `copy` "is disjoint from RFC-0162's regular-value `Copy`/`Clone`
    model — it names the `use_multiplicity` field RFC-0134 already carries on `Type::Fun`,
    not a value-level aspect." That sentence is a scoping disclaimer written to keep an
-   accepted v0.13.0 RFC out of an unsettled v0.17.0 argument, and P4 is the case where
+   accepted v0.13.0 RFC out of an unsettled v0.14.0 argument, and P4 is the case where
    the two stop being disjoint: they become one keyword naming one property of values,
    with the field/aspect difference an implementation detail of where it is stored.
    Adopting P4 means amending that paragraph; it does not invalidate anything RFC-0163
@@ -849,5 +848,5 @@ was decided and accepted. The five Open Questions above carry reopening/advancin
 conditions. The recommendation — no regular-value model change — is for review to endorse
 or contest, and it does not dispose of P4 (OQ4) or of the derive question (OQ5), both
 added 2026-09-02.)*
-**Target:** v0.17.0 (metel-core#924) — the "coherent Copy and closure capabilities"
-release, alongside RFC-0135 / RFC-0155. Nothing here blocks v0.13.0.
+**Target:** v0.14.0 (metel-core#924) — the "decisions" release that gates the ownership core,
+alongside RFC-0135 (RFC-0155 follows in v0.18.1). Nothing here blocks v0.13.0.

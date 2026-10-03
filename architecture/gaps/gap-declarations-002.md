@@ -6,7 +6,7 @@ scope: "reference/spec/declarations.md#spec.declarations.aspects.implementing-an
 owner: language
 discovered_by: "metel-core#1217 limitation analysis; fixtures `typechecking/aspects/stage21_neg_08` and `stage21_neg_09`"
 disposition: planned
-planned_for: v0.15.0
+planned_for: v0.21.1
 rfc: RFC-0149
 review: null
 ---
@@ -33,6 +33,6 @@ constraints exactly.
 
 ## Resolution
 
-Planned for v0.15.0: RFC-0149 (aspect method constraint domain inclusion, letting an
+Planned for v0.21.1: RFC-0149 (aspect method constraint domain inclusion, letting an
 implementation weaken a constraint) is under review, tracked as metel-core#895. The two
 negative fixtures pin the current behaviour and flip to positive fixtures when it lands.

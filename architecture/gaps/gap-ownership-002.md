@@ -54,6 +54,6 @@ the always-on narrowing does not cover nested paths.
 ## Resolution
 
 Planned: RFC-0150 (Nested Row Narrowing, `1-under-review`) is tracked as
-metel-core#900, milestone v0.14.1. When it is accepted and implemented, a move
+metel-core#900, milestone v0.18.1. When it is accepted and implemented, a move
 of `root.a.b` narrows the row of `a` inside `root`'s residual, and this gap
 closes against that RFC.

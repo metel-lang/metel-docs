@@ -6,14 +6,14 @@ scope: "reference/spec/functions.md#first-class-functions"
 owner: language
 discovered_by: "metel-core#1235 records pass over the limit-phrasing lint of `reference/spec/functions.md`"
 disposition: planned
-planned_for: v0.17.0
+planned_for: v0.18.1
 rfc: RFC-0163
 review: null
 ---
 
 ## Gap
 
-RFC-0166 (v0.13.0) makes a written function type lower to a concrete move-only type and erases copyability where a value flows into such a slot. The full surface (a `copy |T| -> U` qualifier for an explicitly copyable callable, and a distinct "capability unknown" state) is RFC-0163, rescheduled to v0.17.0, which refines the move-only state rather than replacing it.
+RFC-0166 (v0.13.0) makes a written function type lower to a concrete move-only type and erases copyability where a value flows into such a slot. The full surface (a `copy |T| -> U` qualifier for an explicitly copyable callable, and a distinct "capability unknown" state) is RFC-0163, rescheduled to v0.18.1, which refines the move-only state rather than replacing it.
 
 ## Impact
 
@@ -25,4 +25,4 @@ A closure that could be copied loses that once it passes through a slot with a w
 
 ## Resolution
 
-Planned for v0.17.0, tracked as metel-core#936 (RFC-0163).
+Planned for v0.18.1, tracked as metel-core#936 (RFC-0163).

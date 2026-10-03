@@ -29,7 +29,7 @@ updated: '2026-09-27'
 > correction). Unplaced at the time rather than pushed to a later milestone number: this
 > RFC's real blocker was RFC-0093 (comptime derive) — the same "don't force it into a
 > milestone it doesn't fit" treatment RFC-0124 already got for its own RFC-0067
-> dependency. **Back in `v0.14.0` as of this review** (metel-core#790's own milestone
+> dependency. **Now `v0.21.1`** (metel-core#790's own milestone
 > field, checked directly against GitHub rather than against this paragraph's own stale
 > claim). OQ1's point still holds independent of scheduling: the hand-writable form needs
 > no derive at all, so nothing here was ever blocked on RFC-0093, only on where the

@@ -100,7 +100,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/954'
 
 > **Status — draft (2026-07-24).** Deferred 2026-07-24: per-field multiplicity waits until records are implemented. The RFC-0090 coupling was introduced by accident (RFC-0089's 2026-07-09 same-day revision rewrote its floor from Option B to ToRecord), which is why Trigger 6 could observe that neither RFC states the conflict. Returned to draft so the records cluster is not gated on it and the review backlog reflects what is actually reviewable.
 
-> **Status — under review (2026-09-03).** Re-promoted 2026-09-03 alongside RFC-0089 (companion issue): the 2026-07-24 records deferral is substantially met. Milestoned v0.18.0, same design-settlement lane as RFC-0089. Still needs its worked examples re-checked against RFC-0119's actual accepted shape (not the superseded RFC-0090 draft this RFC was written against) before acceptance. metel-core#954.
+> **Status — under review (2026-09-03).** Re-promoted 2026-09-03 alongside RFC-0089 (companion issue): the 2026-07-24 records deferral is substantially met. Milestoned v0.21.1, same design-settlement lane as RFC-0089. Still needs its worked examples re-checked against RFC-0119's actual accepted shape (not the superseded RFC-0090 draft this RFC was written against) before acceptance. metel-core#954.
 
 ## Summary
 

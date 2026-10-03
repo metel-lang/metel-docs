@@ -46,7 +46,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/886'
 >   against a narrowed residual"). Cited as normative spec, with RFC-0137 as design
 >   history.
 
-> **Status — under review (2026-08-28).** Substantiated primary proposal (concrete syntax, static semantics, worked examples) with explicit blocking open questions; design engagement underway, on a concrete downstream path (RFC-0148, Row-Parametric Destructors). Committed to **v0.14.1** (issue #886) — a dedicated "row-polymorphism consumers" point release that follows the v0.14.0 open-rows foundation (RFC-0121, RFC-0123, RFC-0109) explicitly, so this RFC depends on *full* RFC-0121 and the Open Question 1 carve-out is optional rather than a scheduling prerequisite. RFC-0148 shares this milestone. Tracking: metel-core#886.
+> **Status — under review (2026-08-28).** Substantiated primary proposal (concrete syntax, static semantics, worked examples) with explicit blocking open questions; design engagement underway, on a concrete downstream path (RFC-0148, Row-Parametric Destructors). Committed to **v0.18.1** (issue #886) — a dedicated "row-polymorphism consumers" point release that follows the v0.14.0 open-rows foundation (RFC-0121, RFC-0123, RFC-0109) explicitly, so this RFC depends on *full* RFC-0121 and the Open Question 1 carve-out is optional rather than a scheduling prerequisite. RFC-0148 shares this milestone. Tracking: metel-core#886.
 
 ## Summary
 
@@ -284,7 +284,7 @@ RFC-0121's own status blockquote when it happens.
    the `row` kind and lower-bounded row unification. RFC-0121 owns both but also carries
    the expensive algebra and is not accepted. Decide whether RFC-0146 extracts the
    minimal slice (and RFC-0121 is revised to depend on it) or is scheduled strictly
-   after RFC-0121's acceptance. **The v0.14.1 milestone (issue #886) puts this in a
+   after RFC-0121's acceptance. **The v0.18.1 milestone (issue #886) puts this in a
    point release after RFC-0121's v0.14.0**, so the default is "wait for full RFC-0121"
    and the carve-out becomes an optimisation to pull RFC-0146 forward, not a requirement.
 2. **Parse boundary.** RFC-0121 §1 chose `row R`; this RFC follows it (`<row R>`).

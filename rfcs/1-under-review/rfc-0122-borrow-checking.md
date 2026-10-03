@@ -74,11 +74,11 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/847'
 > §2/§2b; §2f is a consolidation so the closure cluster does not delegate to unwritten
 > spec.
 
-> ## Targeted at v0.16.0
+> ## Targeted at v0.19.0
 >
 > *Corrected 2026-08-27 after the open/variadic and cleanup milestones shifted the
-> sequence.* v0.16.0 contains this RFC alone as a language feature: borrow checking
-> ships opt-in before **v0.17.0 (ownership completion and RFC-0067 Lifetime Anchors)**.
+> sequence.* v0.19.0 contains this RFC alone as a language feature: borrow checking
+> ships opt-in before **v0.19.1 (RFC-0067 Lifetime Anchors)**.
 > The ordering is forced: anchors cannot settle what they bound until this RFC defines
 > validity and outlives, while local borrowing does not require stored-reference anchors.
 >
@@ -96,8 +96,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/847'
 >
 > **§3's rollout constraint still binds and interacts with the schedule:** borrow checking
 > ships opt-in behind `--borrow-check` and must **not** go default-on in the same release
-> as #267 (enable move checking by default, currently v0.17.0). With this RFC at v0.16.0
-> and #267 at v0.17.0 those are in different releases, which satisfies the
+> as #267 (enable move checking by default, currently v0.16.0). With this RFC at v0.19.0
+> and #267 at v0.16.0 those are in different releases, which satisfies the
 > constraint — worth stating so a later reshuffle does not silently break it.
 
 ## Summary
