@@ -6,7 +6,7 @@ scope: "reference/spec/ownership.md#spec.ownership.partial-moves.legality-2"
 owner: language
 discovered_by: "metel-core#1235 conversion of the `Planned for` notes in `reference/spec/ownership.md` (RFC-0137 §5)"
 disposition: planned
-planned_for: v0.14.0
+planned_for: v0.16.0
 rfc: RFC-0137
 review: null
 ---
@@ -36,4 +36,4 @@ dropped later must restructure, for example by moving the whole value.
 
 ## Resolution
 
-Planned for v0.14.0, tracked as metel-core#949 (RFC-0137 §5).
+Planned for v0.16.0, tracked as metel-core#949 (RFC-0137 §5).

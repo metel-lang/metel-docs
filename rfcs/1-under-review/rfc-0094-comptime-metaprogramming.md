@@ -15,7 +15,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1043'
 > `emit`, so this RFC and RFC-0093 can be accepted, implemented, or deferred on separate
 > schedules.
 
-> **Status — under review (2026-09-09).** Scheduled for v0.18.1 after ownership enforcement, alongside the comptime and derive foundation.
+> **Status — under review (2026-09-09).** Scheduled for v0.21.1 after ownership enforcement, alongside the comptime and derive foundation.
 
 ## Summary
 

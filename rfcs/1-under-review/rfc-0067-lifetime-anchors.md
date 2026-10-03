@@ -39,7 +39,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/848'
 > will not hold once the Compiled Profile (metel-core#1293) stops being GC-backed — at
 > that point this RFC's static check stops being merely nice to have.
 
-> ## Targeted at v0.17.0 — and what has to happen first
+> ## Targeted at v0.19.1 — and what has to happen first
 >
 > *Renumbered 2026-08-27 after two intervening milestones were inserted. Recorded here
 > with its critical path because a
@@ -48,8 +48,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/848'
 >
 > **The chain, each link genuinely blocking the next:**
 >
-> 1. **RFC-0122 (Borrow Checking) must settle first — it is targeted at v0.16.0**, the
->    release immediately before this one, which is what makes v0.17.0 reachable at all. It
+> 1. **RFC-0122 (Borrow Checking) must settle first — it is targeted at v0.19.0**, the
+>    release immediately before this one, which is what makes v0.19.1 reachable at all. It
 >    is `1-under-review` with three blocking gaps of its own (§2b) — the outlives rule is unspecified, and this RFC's
 >    §1 was designed before any checker existed. Anchors *name* a validity scope; until
 >    RFC-0122 fixes what a validity scope is, question 1 below cannot be answered.
@@ -58,13 +58,13 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/848'
 >    last-use liveness. That is a real design question, not editing.
 > 3. **`2-accepted` → `3-integrated`**, after which metel-core#848's implementation
 >    checklist becomes actionable rather than design planning.
-> 4. **Implementation, in v0.17.0**, which also discharges **metel-core#274** — adding
->    the static check that proves a stored reference does not outlive its referent,
->    milestoned to v0.17.0 alongside this. No ban exists to lift; #274 is scoped to the
->    check alone (revised 2026-09-29, see the callout below).
+> 4. **Implementation, in v0.19.1**, which also discharges the lifting of the temporary
+>    stored-reference ban (metel-core#274, v0.16.0; the ban is a B0 rule that this RFC's
+>    anchors replace by a static check that a stored reference does not outlive its
+>    referent).
 >
 > **Tracking is split deliberately:** #848 owns this RFC; #274 owns the stored-reference
-> check it enables. If v0.17.0 arrives with either still open, the chain has stalled.
+> check it enables. If v0.19.1 arrives with either still open, the chain has stalled.
 
 > **Status — under review.** Rewritten 2026-07-05 for the split model. Split again
 > 2026-07-07: the plain `&T` / `&var T` rename and auto-deref (the original RFC-0067's

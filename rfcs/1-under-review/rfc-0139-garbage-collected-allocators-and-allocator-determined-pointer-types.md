@@ -16,7 +16,7 @@ updated: '2026-08-27'
 > a precise root set and that tag disjointness alone permits subset collection are
 > withdrawn below.
 
-> **Status — under review (2026-08-27).** Scheduled for v0.20.0 local-GC design settlement under metel-core#831
+> **Status — under review (2026-08-27).** Scheduled for v0.23.0 local-GC design settlement under metel-core#831
 
 ## Summary
 

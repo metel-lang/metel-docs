@@ -30,7 +30,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/832'
 > before drafting a new one — it did, in a form simpler than what was being proposed,
 > which is folded in below (§ Runtime and primitive layers) rather than duplicated.
 
-> **Status — under review (2026-08-27).** Scheduled for v0.18.0 design settlement under metel-core#832
+> **Status — under review (2026-08-27).** Scheduled for v0.21.1 design settlement under metel-core#832
 
 ## Summary
 

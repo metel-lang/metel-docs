@@ -7,7 +7,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/794'
 updated: '2026-08-23'
 ---
 
-> **Status — under review (2026-08-23).** Committed to v0.14.0, tracking issue #794 filed 2026-08-22
+> **Status — under review (2026-08-23).** Committed to v0.21.1, tracking issue #794 filed 2026-08-22
 
 ## Summary
 

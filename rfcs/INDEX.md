@@ -95,9 +95,9 @@ was found and reconciled, and where this session did most of its work.
 > RFC-0117/RFC-0118 are implemented/integrated and RFC-0120 is accepted; RFC-0119 (the
 > `ToRecord` floor RFC-0089 §3 actually depends on) is still `1-under-review` but
 > milestoned v0.13.1, ahead of where linear types are going. **RFC-0089 and RFC-0091**
-> move back to `1-under-review`, **milestoned v0.18.0** — a third design-settlement lane
+> move back to `1-under-review`, **milestoned v0.21.1** — a third design-settlement lane
 > alongside RFC-0140/RFC-0003 (implementation deferred until acceptance), not folded into
-> v0.17.0's already-large, in-flight substrate milestone. Tracking: metel-core#953
+> v0.20.0's already-large, in-flight substrate milestone. Tracking: metel-core#953
 > (RFC-0089), metel-core#954 (RFC-0091). Detail moved out of the "Deferred" list below
 > into **Linear closures / concurrency**, where RFC-0049 and RFC-0096 also live.
 >
@@ -204,7 +204,7 @@ above it are.
   need const generics) is **answered by citation** to RFC-0128 §3; OQ4 (`Value::Array`'s
   representation) is being decided in `metel-core#277`, which owns the change; OQ6 (can
   `List<T>` be written in Metel source) moved to **RFC-0133**. What is left has a *known*
-  unblock point — RFC-0067 settling in v0.17.0 — where before it had none, which is the
+  unblock point — RFC-0067 settling in v0.19.1 — where before it had none, which is the
   whole point of the split. Title's "and the Growable List" retained as history.
 
 - **RFC-0133** *(draft, opened 2026-08-13, split from RFC-0124 OQ6)* — From-Metel List: the
@@ -302,8 +302,8 @@ above it are.
   CFG (`move_check` is the precedent). NLL also dissolves the lexical blocker outright.
   §2c records Polonius as a named future option gated on Metel acquiring a CFG/MIR.
   **Current scheduling, 2026-08-27:** dedicated tracker metel-core#847 owns review and
-  opt-in implementation in v0.16.0. The temporary stored-reference restriction remains
-  metel-core#274; RFC-0067 and its removal are downstream in v0.17.0 under
+  opt-in implementation in v0.19.0. The temporary stored-reference restriction remains
+  metel-core#274; RFC-0067 and its removal are downstream in v0.19.1 under
   metel-core#848.
 
 - **RFC-0116** *(implemented in v0.12.0, was #576)* — Anonymous Record Types — the closed `{ x: f64 }` type-former,
@@ -360,8 +360,8 @@ above it are.
   field set is *declared on the `drop` receiver type*, not inferred from the body — Open
   Question 2's 2026-08-25 fixed-point resolution is superseded as moot. Dispatch rule and
   `dyn Aspect` checkpoint unchanged. Fixed projected receiver form + rationale: RFC-0147
-  (via RFC-0109, v0.14.0 — one release after this RFC's own representation); row-parametric
-  form: RFC-0148 (via RFC-0146 → RFC-0121; RFC-0146 + RFC-0148 share v0.14.1, after RFC-0121's v0.14.0).
+  (via RFC-0109, v0.18.1 — after this RFC's own representation); row-parametric
+  form: RFC-0148 (via RFC-0146 → RFC-0121; RFC-0146 + RFC-0148 share v0.18.1, after RFC-0121's v0.14.0).
 - **RFC-0117** *(integrated 2026-08-29 — merged into reference/spec/ownership.md#narrowing,
   co-origin with RFC-0137; blocked-exempt on metel-core#858 pending move-triggered
   narrowing)* — Row Narrowing — moving a field out narrows the record's type — or a
@@ -382,7 +382,7 @@ above it are.
   elements like struct fields), **recursive `Drop` receiver shapes** rather than a flat
   required-field set, and control-flow-join rules for path-dependent nested residuals.
   Depends on RFC-0117, RFC-0137 (`3-integrated`), and **RFC-0147/0148**'s narrowed
-  `drop`-receiver syntax, so it is scheduled after them (provisionally v0.14.1,
+  `drop`-receiver syntax, so it is scheduled after them (provisionally v0.18.1,
   metel-core#900).
 - **RFC-0151** *(draft, opened 2026-08-29)* — Tuples as Numeric-Label Rows — make
   `(A, B)` sugar for the anonymous record `{ 0: A, 1: B }` (a closed row with integer
@@ -392,7 +392,7 @@ above it are.
   apply to tuples with no second column — and RFC-0150's tuple-residual open question
   and RFC-0125's pack-into-tuple calculus dissolve. Open: `()` vs `Unit`, whether
   mixed integer/identifier-label rows are allowed, migration staging. Sequence before
-  RFC-0125 (v0.14.0).
+  RFC-0125 (v0.21.1).
 - **RFC-0165** *(under review, opened 2026-09-02; metel-core#937; **unscheduled**)* — Structural Union Types — an anonymous
   sum-type former `A | B | C`, the coproduct dual of RFC-0116 records and RFC-0151 tuples
   (today Metel has structural products without a name but only nominal sums, `enum`).
@@ -534,7 +534,7 @@ part of the same records/views substrate review):
   `self: &S.{ a }`) to a *parametric* one. Depends on RFC-0137's integrated
   representation, RFC-0109's residual-typed-receiver form, and either RFC-0121's
   acceptance or a carved-out minimal lower-bounded-row-variable slice (Open Question 1).
-  **v0.14.1** (issue #886) — a dedicated "row-polymorphism consumers" point release
+  **v0.18.1** (issue #886) — a dedicated "row-polymorphism consumers" point release
   after the v0.14.0 open-rows foundation, modeled on v0.13.1; shared with RFC-0148. Being
   a release after RFC-0121 means it depends on full RFC-0121 and the carve-out is an
   option, not a requirement. Sibling `<row R>` consumer to RFC-0123
@@ -552,14 +552,14 @@ part of the same records/views substrate review):
   point over `self`-method calls, resolved 2026-08-25, now superseded) — it is declared:
   `fun drop(&var self)` (whole row), or `fun drop(&var self: Self.{ fd })` (this RFC,
   receiver via RFC-0109). **Depends on RFC-0109** (Self-View Narrowing, `metel-core#842`,
-  **v0.14.0**) — the minimum for §5 to do anything beyond RFC-0071 §7's blanket ban. One
+  **v0.18.1**) — the minimum for §5 to do anything beyond RFC-0071 §7's blanket ban. One
   unchanged dispatch rule (`residual row ⊇ required set`) and unchanged `dyn Aspect`
   checkpoint. Rationale: a computed set makes a field read anywhere in a destructor or
   its helpers silently change which partial moves are legal elsewhere; a declared set is
   a stable contract, and is exactly what the coercion checkpoint needs
-  (`Copy`-is-declared-not-derived, applied to teardown). On **v0.14.0** with RFC-0109
+  (`Copy`-is-declared-not-derived, applied to teardown). On **v0.18.1** with RFC-0109
   (RFC-0137's branded-rows representation is v0.13.0; §5's narrowed forms slip to
-  v0.14.0); `metel-core#858` implements this form. Split 2026-08-28 from
+  v0.18.1); `metel-core#858` implements this form. Split 2026-08-28 from
   what was one RFC covering both receiver forms.
 - **RFC-0148** *(under review, opened 2026-08-28)* — Row-Parametric Destructors — the
   **row-parametric** `drop` receiver form (`fun drop<row R>(&var self: Self.R) where R: {
@@ -568,9 +568,9 @@ part of the same records/views substrate review):
   RFC-0147 so it depends only on what it needs: **RFC-0146** (Row-Polymorphic Self-Views)
   → **RFC-0121** (Open Rows), not RFC-0109. Shares RFC-0147's §2 rules (required set, body
   check, move-check, `dyn Aspect` checkpoint) verbatim — it changes only how the required
-  set is *spelled*. **v0.14.1** (issue #888), shared with RFC-0146 in the
+  set is *spelled*. **v0.18.1** (issue #888), shared with RFC-0146 in the
   "row-polymorphism consumers" point release; RFC-0147's fixed form covers
-  `metel-core#858`'s Drop narrowed-receiver need in v0.14.0. Open question
+  `metel-core#858`'s Drop narrowed-receiver need in v0.18.1. Open question
   shared with RFC-0146/RFC-0147:
   whether the fixed and parametric spellings coexist permanently or the fixed one becomes
   sugar once this lands.
@@ -591,7 +591,7 @@ part of the same records/views substrate review):
   excludes computed arities (`[T; N + 1]`) as a *named* deferral rather than another
   unnamed future RFC. **Cross-ref added 2026-08-29:** §3's `comptime N` axis and
   type-parameter instantiation are one problem — `metel-core#288`'s frontend
-  monomorphization pass (v0.20.1) should collect both; co-design, not a dependency.
+  monomorphization pass (v0.17.0) should collect both; co-design, not a dependency.
 - **RFC-0171** *(integrated 2026-09-28)* — Prefix Array Type Syntax `[T]` / `[T; N]`
   — the dynamic array type moves from postfix `T[]` to prefix `[T]`, matching `[T; N]`'s
   existing convention (`[T; N]` itself is untouched). Same bracket-mismatch tension as
@@ -729,8 +729,8 @@ number, a backwards RFC-0067a split direction).
   requiring allocate/grow/shrink/release block operations, with their user-authorable
   unsafe spelling blocked on RFC-0026. The older accepted RFCs remain unchanged and
   authoritative unless this draft is eventually accepted and supersedes them. Tracked
-  by metel-core#850 in v0.19.0; metel-core#851 owns the generic associated handle-family
-  prerequisite. Tracing GC is downstream in v0.20.0 rather than part of the allocator
+  by metel-core#850 in v0.21.0; metel-core#851 owns the generic associated handle-family
+  prerequisite. Tracing GC is downstream in v0.23.0 rather than part of the allocator
   foundation milestone.
 - **RFC-0063** *(accepted)* — Allocator Handles — the allocator half of the old "region
   handles" premise. Central to the whole cluster.
@@ -828,7 +828,7 @@ number, a backwards RFC-0067a split direction).
   complete root-location discovery beyond borrow liveness, cross-arena-edge handling
   for subset collection, affine-content/finalization rules, and a concurrency contract
   before `GlobalGc` can be `Send`/`Sync`. Tracked by
-  metel-core#831, now a design-settlement issue in v0.20.0 after RFC-0143's v0.19.0
+  metel-core#831, now a design-settlement issue in v0.23.0 after RFC-0143's v0.21.0
   allocator foundation. Its first implementation target is local, non-moving and
   non-sendable; `GlobalGc` remains downstream of the concurrency contract.
 - **RFC-0074** *(draft)* — Shared Pointers (Rc/Arc) — blocked on RFC-0076 (brand
@@ -881,7 +881,7 @@ implementation).
   run at aspect declaration vs. per specialized `extend`, so `Self`- and
   associated-type-dependent conflicts fail at the `extend`, not too coarsely at the
   aspect. Absorbs the whole of metel-core#895, whose tracker is rescoped to this RFC.
-  Scheduled for **v0.15.0**. Depends in spirit on RFC-0080 blanket impls (v0.13.1) and
+  Scheduled for **v0.21.1**. Depends in spirit on RFC-0080 blanket impls (v0.13.1) and
   RFC-0121 open rows (v0.14.0).
 
 - **RFC-0130** *(implemented 2026-08-30, integrated 2026-08-30, accepted 2026-08-23, opened 2026-08-06)* —
@@ -1089,7 +1089,7 @@ implementation).
   to match, ahead of the linear-types cluster below that also needs it. Seven open
   questions, none look acceptance-blocking on their face; UQ3 (no stated reference
   rule for `Linear`) is explicitly flagged as RFC-0089's to close, not this RFC's.
-- **RFC-0089** *(under review 2026-09-03, opened 2026-07-09; **v0.18.0**, #953)* —
+- **RFC-0089** *(under review 2026-09-03, opened 2026-07-09; **v0.21.1**, #953)* —
   Linear Types — the four-point multiplicity lattice (`0`/`1`/`affine`/`ω`, extending
   RFC-0071's affine default rather than assuming Rust's three-point ω-default
   background); `Linear` as a marker aspect via RFC-0096's auto-impl mechanism;
@@ -1099,16 +1099,16 @@ implementation).
   proposes `linear struct Foo { ... }` sugar for `extend Foo: Linear {}`, and a
   matching `affine struct` desugaring to the negative pair `!Copy + !Linear` — worth
   reviewing alongside **RFC-0162's P4** (`copy struct Foo { ... }`, under review for
-  v0.17.0), the same declaration-keyword-for-a-lattice-position idea from the other
+  v0.14.0), the same declaration-keyword-for-a-lattice-position idea from the other
   end. Re-promoted from `0-draft` 2026-09-03: the 2026-07-24 records deferral is
   substantially met (RFC-0116/0117/0118 implemented/integrated, RFC-0120 accepted;
   RFC-0119, the actual `ToRecord` floor §3 depends on, is `1-under-review` but
-  milestoned v0.13.1, ahead of this RFC). Milestoned v0.18.0 as a third
+  milestoned v0.13.1, ahead of this RFC). Milestoned v0.21.1 as a third
   design-settlement lane alongside RFC-0140/RFC-0003 (implementation deferred until
-  acceptance), not folded into v0.17.0's already-large in-flight substrate milestone.
+  acceptance), not folded into v0.20.0's already-large in-flight substrate milestone.
   §3's partial-consumption design needs a real pass against RFC-0119's actual (not
   assumed) shape before this RFC can be accepted, not just reviewed.
-- **RFC-0091** *(under review 2026-09-03, opened 2026-07-09; **v0.18.0**, #954)* —
+- **RFC-0091** *(under review 2026-09-03, opened 2026-07-09; **v0.21.1**, #954)* —
   Linear Records — per-field multiplicity via **Option C: automatic downgrade** — a
   mixed-multiplicity struct's binding type changes at the point of partial consumption
   through record recomposition, no explicit `.to_record()` call needed, the "fuller
@@ -1117,7 +1117,7 @@ implementation).
   resolved via strong-update-on-the-brand in the RFC's own text, not left open — still
   needs re-checking against RFC-0119's actual accepted shape rather than the
   superseded RFC-0090 draft this RFC was originally written against. Re-promoted
-  alongside RFC-0089 (companion issue), same v0.18.0 lane, same reasoning.
+  alongside RFC-0089 (companion issue), same v0.21.1 lane, same reasoning.
 - **RFC-0049** *(draft — needs a full rewrite before it can be re-reviewed)* —
   `linear fun` Type System — unconsumed-scope-exit, `Drop` interaction, subtyping vs.
   plain `fun`. Sits on **RFC-0046, which is `6-refused`** (its `move`-capture idea was
@@ -1180,8 +1180,8 @@ implementation).
   `Copy` today (RFC-0071/RFC-0123), tuples have no impls at all (RFC-0061 §6), and only
   function pointers have a working one (RFC-0061 §7.2). Interacts with **RFC-0071**
   (Ownership and Move Semantics, affine-by-default foundation — see Aspect system core,
-  below) more than with RFC-0134 itself. **Milestoned v0.17.0** (metel-core#892) —
-  alongside "coherent Copy and closure capabilities" and #702/#263's structural-types
+  below) more than with RFC-0134 itself. **Milestoned v0.14.0** (metel-core#892) —
+  alongside #702 (v0.16.0) and #263 (v0.15.0)'s structural-types
   Copy cleanup, which §3 describes but does not fix. Acceptance blocker: Open Question 3
   (migration — breaking rename vs. permanent alias vs. deprecation window). **RFC-0157
   recommends the `Copy` → `many` rename not proceed** (throws away the most transferable
@@ -1198,7 +1198,7 @@ implementation).
   RFC-0006 → `spec_status: pending`, `amended_by`. Accepted as part of the v0.13.0 closure
   cluster. *Originally "Copy and Clone Model Re-analysis"; the regular-value `Copy`/`Clone`
   model critique (D1–D4, P0–P3, prior art) was extracted to **RFC-0162** on 2026-09-01.*
-- **RFC-0162** *(under review, opened 2026-09-01; **v0.17.0**, #924)* — Copy and Clone
+- **RFC-0162** *(under review, opened 2026-09-01; **v0.14.0**, #924)* — Copy and Clone
   Model — Regular-Value Design Space — the longer-horizon half split from RFC-0157.
   Drawbacks D1 (implicit-copy use-site invisibility + API-stability hazard), D2 (two-aspect
   split), D3 (`Copy`/`Drop` exclusion, RFC-0071 §4), D4 (six-mechanism non-uniformity),
@@ -1215,8 +1215,8 @@ implementation).
   regular-value model — no rename (not `many`, not `Dup`), no P1/P2/P3, accept D1; the only
   endorsed value-side changes are RFC-0158 (`Clone`/`Share` split) and relaxing the
   `Copy`+`Drop` ban *if* a soundness argument holds — **it does not dispose of P4**, whose
-  familiarity cost is zero. **Milestoned v0.17.0** — the "coherent
-  Copy and closure capabilities" release, alongside RFC-0135 / RFC-0155; nothing here
+  familiarity cost is zero. **Milestoned v0.14.0** — the "decisions"
+  release that gates the ownership core, alongside RFC-0135 (RFC-0155 follows in v0.18.1); nothing here
   blocks v0.13.0. Five open questions carry reopening conditions (D1 severity, D3
   soundness, RFC-0135 disposition, P4/keyword-vs-aspect, may `Copy` ever be derived).
 - **RFC-0158** *(under review, opened 2026-08-31; #919)* — Share and Clone: Separating Aliasing from
@@ -1250,7 +1250,7 @@ implementation).
   annotations, bounded quantification) — with the **marker-aspect model** (`Callable<A,R>`
   + `CallMany` / `CallShared`, from RFC-0153's Alternatives) as the third option, under
   which the area dissolves into aspect-bound subsetting. Not urgent: RFC-0152's cap is
-  sound, so nothing is unsound while this is open. Tracker metel-core#904 (v0.17.0).
+  sound, so nothing is unsound while this is open. Tracker metel-core#904 (v0.18.1).
 - **RFC-0166** *(**implemented 2026-09-03**; metel-core#946; **v0.13.0**)* — Written Function
   Types Lower to Move-Only — the conservative v0.13.0 slice split out of RFC-0163. A written function type
   has concrete **`Move`** use-multiplicity; a `Copy` function value is accepted where
@@ -1260,7 +1260,7 @@ implementation).
   **No `copy` qualifier, no `Erased` state, no keyword reserved** — those are RFC-0163.
   Sound under every RFC-0162 Axis-A position (P0/P1/P4) and harmless under P2. Forward-
   compatible: `Move` refines to `Erased` under RFC-0163 with no source break.
-- **RFC-0163** *(**accepted 2026-09-02**; #936; **rescheduled v0.17.0**, split → RFC-0166)*
+- **RFC-0163** *(**accepted 2026-09-02**; #936; **rescheduled v0.18.1**, split → RFC-0166)*
   — Function-Type Use-Multiplicity Surface — the missing source spelling for `Type::Fun`'s
   `Copy`-versus-move-only axis. A bare written function type **erases** that axis
   (`Erased`, usable move-only); `copy |T| -> U` is the positive assertion of a copyable
@@ -1268,7 +1268,7 @@ implementation).
   a literal. Erasure is not RFC-0152 widening — it touches only the omitted axis and never
   relaxes the exact nested `once` / `var` match. Six adversarial passes (F/G/H/I/J);
   reframed as a coercion into a `written` bare node (per-node flag), first-order-only,
-  nested-exact, one directional relation. **Rescheduled to v0.17.0 (2026-09-03):** the
+  nested-exact, one directional relation. **Rescheduled to v0.18.1 (2026-09-03):** the
   `Erased` machinery is downstream of RFC-0162's Axis-A decision (does the language keep
   implicit `Copy`), and RFC-0162 P4 unifies the two `copy`s into one keyword; the v0.13.0
   slice is RFC-0166. RFC-0155 (higher-order variance) scoped out.
@@ -1365,7 +1365,7 @@ implementation).
   instead of independently re-deriving it. See `reports/substructural-types/
   structured-concurrency.md` (metel-docs-internal) for the actively-maintained
   continuation of this RFC's open questions (the join-guarantee mechanism specifically).
-  Tracked by metel-core#832 in v0.18.0 for design settlement after the v0.17.0
+  Tracked by metel-core#832 in v0.21.1 for design settlement after the v0.20.0
   ownership/lifetime substrate. `GlobalGc` is downstream; local non-sendable GC does
   not wait for the concurrency RFC.
 - **RFC-0140** *(under review, opened 2026-08-25)* — Algebraic Effects — `effect`
@@ -1382,7 +1382,7 @@ implementation).
   effect-performance site. Carries two pre-registered `2-accepted` blockers from the
   source report's own header: Koka's `fun`/`ctl`/`final ctl` split (this design currently
   allocates a continuation for every operation uniformly) and the interpolation question
-  above. Tracked by metel-core#834, milestoned v0.18.0 (new milestone, created
+  above. Tracked by metel-core#834, milestoned v0.21.1 (new milestone, created
   specifically for this RFC — the furthest-out existing milestone was v0.17.0).
 
 ## Small, mostly standalone syntax/ergonomics items

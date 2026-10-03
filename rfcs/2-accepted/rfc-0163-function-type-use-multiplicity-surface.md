@@ -7,7 +7,7 @@ updated: '2026-09-03'
 tracking: 'https://github.com/metel-lang/metel-core/issues/936'
 ---
 
-> **Status — rescheduled to v0.17.0, split (2026-09-03).** The urgent,
+> **Status — rescheduled to v0.18.1, split (2026-09-03).** The urgent,
 > design-agnostic part of this RFC — a written function type lowers to
 > concrete `Move`, a `Copy` value coerces in by moving, nested function types
 > match the use axis exactly — ships in v0.13.0 as **RFC-0166**, which deletes
@@ -15,7 +15,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/936'
 >
 > This RFC — the `Erased` third state, the `copy` qualifier (and its keyword
 > reservation), the per-node `written` provenance model, the coercion table, the
-> join expected-context rule — is **rescheduled to v0.17.0** to co-design with
+> join expected-context rule — is **rescheduled to v0.18.1** to co-design with
 > **RFC-0162** (Copy-model design space): whether regular values keep implicit
 > `Copy` at all (Axis A) is the decision the `Erased` machinery is downstream of,
 > and RFC-0162 P4 is the position that unifies the value-side and function-type
@@ -247,7 +247,7 @@ not interact with RFC-0162's regular-value model at all. Duplicating a callback
 is expressed by writing `copy |T| -> U` — the function type itself — never by an
 `F: Copy` constraint on a type parameter.
 
-> **Relationship to RFC-0162 (`1-under-review`, v0.17.0).** This disjointness is a
+> **Relationship to RFC-0162 (`1-under-review`, v0.18.1).** This disjointness is a
 > *scoping* choice for a v0.13.0 RFC, not a claim that the two concepts are
 > permanently separate. RFC-0162's **P4 / Axis C / OQ4** is the position under
 > which the value-side `copy` (a declaration keyword, `copy struct Foo`) and this

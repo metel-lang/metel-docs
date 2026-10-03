@@ -488,5 +488,5 @@ table, empty-domain rejection, associated-type equality implication, and the
 phase-ordering rule. RFC-0129 ships structural equality in v0.13.0 without any of
 this. Needs a review pass on §3's negative-impl-priority soundness argument and
 §7's phase split before acceptance.)*
-**Target:** *(set when accepted; scheduled for v0.15.0 via the rescoped
+**Target:** *(set when accepted; scheduled for v0.21.1 via the rescoped
 metel-core#895 tracker.)*

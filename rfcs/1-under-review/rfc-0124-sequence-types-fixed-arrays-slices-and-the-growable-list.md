@@ -11,7 +11,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/932'
 > RFC.** This document bundled two questions with fundamentally different tractability.
 > OQ1/OQ2/OQ4/OQ5 (mutable-slice spelling, the RFC-0067 dependency, `Value::Array`'s
 > representation, sequencing) all become actionable at a **known point** — when RFC-0067
-> settles, targeted ~v0.15.0. OQ6 (can `List<T>` be written in Metel source) has **no
+> settles, targeted ~v0.19.1. OQ6 (can `List<T>` be written in Metel source) has **no
 > known path**: two of its five prerequisites have no owning RFC at all. Carrying both
 > meant this RFC could neither be accepted — OQ2 is a stated precondition for its own
 > acceptance — nor scheduled, since OQ6 had no schedulable content. It sat `0-draft` and
@@ -321,9 +321,7 @@ allocation, never the batch/geometric-growth allocation this table shows every c
   value.
 - RFC-0071 (Ownership and Move Semantics), `3-integrated` — §2's `Copy` rules are what
   RFC-0126 unblocks.
-- RFC-0122 (Borrow Checking), `1-under-review`, target v0.16.0 (corrected 2026-09-28 —
-  this line previously cited v0.14.0, stale since `metel-core#847`'s 2026-08-27
-  renumbering) — shares the cloning-evaluator problem; Open Question 2 here is its likely
+- RFC-0122 (Borrow Checking), `1-under-review`, target v0.19.0 — shares the cloning-evaluator problem; Open Question 2 here is its likely
   resolution path. `#847`'s own scope explicitly lists "escape and outlives checking for
   locals, parameters, returns, reborrows and closures," directly reaching Open Question 2's
   escaping-`T[]` example.
@@ -341,7 +339,7 @@ allocation, never the batch/geometric-growth allocation this table shows every c
   corrected here 2026-08-03 — this line and RFC-0126's own References both cited the
   stale status) — the likely dependency for slice validity (Open Question 2) and, more
   deeply, for Open Question 6(e). Now blocked on RFC-0122 settling first; implementation
-  targeted v0.15.0, not before.
+  targeted v0.19.1, not before.
 - RFC-0063 (Allocator Handles), `2-accepted` — **not, on inspection, where a `List<T>`'s
   buffer comes from** (corrected 2026-08-03: RFC-0063 never mentions `List`, and its
   specified surface is single-value allocation only; its own §9 items 3-4 call the

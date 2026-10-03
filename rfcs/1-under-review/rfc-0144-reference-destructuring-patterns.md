@@ -36,7 +36,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/843'
 > prerequisite by-value pattern work at all as a result — it builds directly on what's
 > already shipped, plus one new pattern kind (§3).
 
-> **Status — under review (2026-08-27).** Committed to v0.14.0 (issue #843, milestoned 2026-08-27), same milestone as sibling RFC-0109 (metel-core#842).
+> **Status — under review (2026-08-27).** Committed to v0.18.1 (issue #843, milestoned 2026-08-27), same milestone as sibling RFC-0109 (metel-core#842).
 
 ## Summary
 
