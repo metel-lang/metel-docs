@@ -1,7 +1,7 @@
 ---
 id: LIMIT-TYPES-001
 title: "RFC-0121 open rows are only partly implemented"
-summary: "Row kinds, `..R`, decomposition, concrete width subtyping and nominal-target row-conditional impls work; the structural `{ ..R }` impl target, row extension, anonymous `..` arguments and abstract-row width subtyping do not."
+summary: "Row kinds, `..R`, decomposition, concrete width subtyping and row-conditional impls (nominal and record targets) work; row extension, anonymous `..` arguments, abstract-row width subtyping and generic-body visibility do not."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "RFC-0121 entering 3-integrated with no implementation yet"
@@ -21,18 +21,11 @@ residual-projection tail and generic-argument position; a `where R = { label: Ty
 ..Rest }` decomposition, which bounds `R` and derives `Rest` at each call; by-value width
 subtyping when the row's fields are concretely known at the narrowing site; and
 row-conditional impls (`extend<row R: { .. }> Session<..R>`, inherent and aspect) on a
-nominal target, with row-versus-row coherence and runtime dispatch.
+nominal target, and aspect impls on a record target (`extend<row R: { .. }> { ..R }: A`,
+`extend { x: f64 }: A`; anonymous and nominal records), with row-versus-row coherence
+and runtime dispatch.
 
 Not implemented, each reproduced against the current implementation:
-
-```metel
-// the spec's structural impl target
-extend<row R: { id: i64, .. }> { ..R }: Describe { fun describe(self) -> i64 { 1 } }
-```
-
-```
-[P0001] parse error: expected ident
-```
 
 ```metel
 // an anonymous row as a generic argument
@@ -51,17 +44,21 @@ fun f(b: Builder<..>) -> i64 { 0 }
   metel-core#1302).
 - A row-conditional method is not hidden inside a generic body over an unconstrained
   `<row R>` (metel-core#1323).
+- An impl on a record target is matched against a nominal record's declared fields; its
+  row after a partial move (a struct residual) has not been checked, and an aspect that
+  takes type parameters, implemented more than once for one record target, resolves as
+  it does for a nominal type.
 - A `native` function cannot take an open-row-tailed parameter.
 
 ## Impact
 
 Visible to Metel programmers: row-polymorphic code over a nominal type works, including
-typestate (`authenticate` / `send_data` as separate impls), but a blanket aspect
-implementation over every record shape (`Display`, `Copy`) still cannot be written
-(`GAP-TYPES-004`, which additionally needs RFC-0123's `all R: Aspect`), and a function that
-extends a row rather than only narrowing or decomposing it is unavailable.
+typestate (`authenticate` / `send_data` as separate impls), and a local aspect can be
+implemented for every record of a given shape. The standard library does not yet provide
+the blanket impls this makes writable (`Display`, `Copy` for every record), and a function
+that extends a row rather than only narrowing or decomposing it is unavailable.
 `record`'s own row-conditional impl eligibility (`spec.declarations.records.legality-2`,
-`LIMIT-DECLARATIONS-001`) was blocked on this work and has not been re-checked against it.
+`LIMIT-DECLARATIONS-001`) has not been re-checked against this work.
 
 ## Affects
 
