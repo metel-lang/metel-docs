@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-10-03'
+generated_on: '2026-10-04'
 ---
 
 # RFC Registry
@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**173 RFCs total.** 27 draft, 41 under review, 9 accepted, 5 integrated (82 live), 64 implemented, 13 superseded, 14 refused (91 settled).
+**173 RFCs total.** 27 draft, 41 under review, 9 accepted, 4 integrated (81 live), 65 implemented, 13 superseded, 14 refused (92 settled).
 
 ## Draft (27)
 
@@ -101,15 +101,14 @@ the curated thematic map.
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
 
-## Integrated (5)
+## Integrated (4)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 - **RFC-0121** — Open Rows (`3-integrated` ; rfcs/3-integrated/rfc-0121-open-rows.md ; date 2026-07-24 ; updated 2026-10-01 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1301)
 - **RFC-0123** — Field-Wise Row Constraints (`3-integrated` ; rfcs/3-integrated/rfc-0123-field-wise-row-constraints.md ; date 2026-07-24 ; updated 2026-10-01 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1302)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/949)
-- **RFC-0173** — Generic bodies are checked against their declared bounds (`3-integrated` ; rfcs/3-integrated/rfc-0173-generic-bodies-are-checked-against-their-declared-bounds.md ; date 2026-10-02 ; updated 2026-10-03 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1364)
 
-## Implemented (64)
+## Implemented (65)
 
 - **RFC-0006** — Closure Capture Semantics and Cross-Closure Reference Sharing (`4-implemented` ; rfcs/4-implemented/rfc-0006-closure-capture-semantics.md ; date 2026-05-21)
 - **RFC-0007** — Compiler-Compatible Primitive Type System (`4-implemented` ; rfcs/4-implemented/rfc-0007-uint-type.md ; date 2026-05-21)
@@ -175,6 +174,7 @@ the curated thematic map.
 - **RFC-0166** — Written Function Types Lower to Move-Only (`4-implemented` ; rfcs/4-implemented/rfc-0166-written-function-types-lower-to-move-only.md ; date 2026-09-03 ; updated 2026-09-03 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/946)
 - **RFC-0167** — Reclassify unsoundness-only runtime errors as internal errors; split R0002 (`4-implemented` ; rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md ; date 2026-09-04 ; updated 2026-09-28 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/991)
 - **RFC-0171** — Prefix array type syntax: [T] and [T; N] (`4-implemented` ; rfcs/4-implemented/rfc-0171-prefix-array-type-syntax-t-and-t-n.md ; date 2026-09-27 ; updated 2026-10-01 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1291)
+- **RFC-0173** — Generic bodies are checked against their declared bounds (`4-implemented` ; rfcs/4-implemented/rfc-0173-generic-bodies-are-checked-against-their-declared-bounds.md ; date 2026-10-02 ; updated 2026-10-04 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1364)
 
 ## Superseded (13)
 

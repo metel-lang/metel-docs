@@ -882,7 +882,7 @@ no longer overlap.
 ### T0035 — Use not granted by the declared bounds
 
 A generic definition used its type parameter in a way its declared bounds do not grant
-([RFC-0173](../rfcs/3-integrated/rfc-0173-generic-bodies-are-checked-against-their-declared-bounds.md)):
+([RFC-0173](../rfcs/4-implemented/rfc-0173-generic-bodies-are-checked-against-their-declared-bounds.md)):
 a method call on a parameter that has no bounds, or whose bounds do not declare the method,
 or a field access on a parameter with no row bound that names the field. The message names
 the parameter and, for a method, the bounds it has.
@@ -1260,7 +1260,7 @@ above); this is a wholly new code, not a merge into any existing one.
 ### I0010 — Generic definition and construction disagree
 
 The checker accepted a generic definition, but reconstructing that generic body for a
-concrete call rejected it ([RFC-0173](../rfcs/3-integrated/rfc-0173-generic-bodies-are-checked-against-their-declared-bounds.md)).
+concrete call rejected it ([RFC-0173](../rfcs/4-implemented/rfc-0173-generic-bodies-are-checked-against-their-declared-bounds.md)).
 The definition-time check is the contract, so this signals an implementation invariant
 violation rather than an error at the call site.
 

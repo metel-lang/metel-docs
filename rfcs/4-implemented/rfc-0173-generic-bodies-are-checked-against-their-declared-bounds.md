@@ -2,14 +2,16 @@
 id: rfc-0173
 title: "Generic bodies are checked against their declared bounds"
 date: '2026-10-02'
-status: integrated
-updated: '2026-10-03'
+status: implemented
+updated: '2026-10-04'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1334'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1364'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — integrated (2026-10-03).** Spec integrated: spec.types.generics.rigid-type-parameters; limits LIMIT-TYPES-004, GAP-TYPES-005; implementation tracked in #1364
+
+> **Status — implemented (2026-10-04).**
 
 ## Summary
 

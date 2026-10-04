@@ -1325,7 +1325,7 @@ and is forwarded only to another `where all R: A` bound. `T::Assoc` is an opaque
 projection equal only to itself or to what an associated-type binding in `Γ` declares. A
 bare parameter is not callable. Impl resolution for a type built from `T` assumes `Γ`.
 
-<!-- rfc.py:last_reviewed b709fee2babd7b8e859dee816eab60a6056c8bd5 -->
+<!-- rfc.py:last_reviewed cc58bbdfb8be21616880c9cbad8e33aace08a33d -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
