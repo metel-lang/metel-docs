@@ -18,14 +18,10 @@ parameter is rigid, and a use is allowed only if the declared bounds entail it. 
 of it are implemented (metel-core#1364): declared parameters of free functions, methods, and
 their enclosing structs and impls are rigid after the body is solved (`T0001` at the definition),
 a method or field a parameter's bounds do not grant is `T0035`, and an arithmetic or ordering
-operator on a bare parameter is `T0005`. What is still missing:
+operator on a bare parameter is `T0005`. Conditional-impl methods are visible only when their
+conditions are entailed by the generic body's declared bounds (metel-core#1323). What is still
+missing:
 
-```metel
-fun g<U>(b: Box<U>) { b.f() }           // `f` needs `U: Tag`; checked per call, reported inside `g`
-```
-
-- A conditional-impl method is visible inside a generic body whose parameter does not
-  satisfy the impl's condition; the condition is checked at the call (metel-core#1323).
 - Row equations (`where R = { label, ..Rest }`) are not fully held as typed facts inside
   the body. `Rest` is known to lack the equation's named labels, but the equation's full
   row equality is still deferred to call-time derivation, so a wrong row returned from a
