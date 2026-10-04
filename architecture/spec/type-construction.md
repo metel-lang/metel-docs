@@ -72,7 +72,7 @@ The typechecker treats `T[]` as `Copy` unconditionally, as a deliberate `InferTy
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/cb6e01cd8aff28da4c3f2a860dbcb18969b4f2f1/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L3540) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/cb6e01cd8aff28da4c3f2a860dbcb18969b4f2f1/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L3571) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/types/dynamic_array_is_copy_unconditionally.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/typechecking/types/dynamic_array_is_copy_unconditionally.toml#L1) |
 | `last_reviewed` | cb6e01cd8aff28da4c3f2a860dbcb18969b4f2f1 |
 | `related` | ADR-0046, RFC-0126 |
