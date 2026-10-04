@@ -1,48 +1,31 @@
 ---
 id: LIMIT-TYPES-004
-title: "RFC-0173 generic-body checking remains incomplete"
-summary: "Declared type parameters are rigid and their direct bound uses are checked, but row equations, all-fields forwarding, and expression-level diagnostics remain incomplete."
+title: "RFC-0173 generic-body checking was incomplete"
+summary: "Resolved: generic bodies retain declared bounds and row facts, and report rigidity failures at the causal expression."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "RFC-0173 entering 3-integrated with no implementation yet; metel-core#1320, #1323"
-disposition: planned
-planned_for: v0.14.0
-rfc: RFC-0173
+disposition: resolved
 review: null
 ---
 
 ## Limitation
 
 RFC-0173 makes the definition-time check the contract for a generic body: each declared
-parameter is rigid, and a use is allowed only if the declared bounds entail it. Installments
-of it are implemented (metel-core#1364): declared parameters of free functions, methods, and
-their enclosing structs and impls are rigid after the body is solved (`T0001` at the definition),
-a method or field a parameter's bounds do not grant is `T0035`, and an arithmetic or ordering
-operator on a bare parameter is `T0005`. Conditional-impl methods are visible only when their
-conditions are entailed by the generic body's declared bounds (metel-core#1323). What is still
-missing:
-
-- Row equations (`where R = { label, ..Rest }`) are not fully held as typed facts inside
-  the body. `Rest` is known to lack the equation's named labels, but the equation's full
-  row equality is still deferred to call-time derivation, so a wrong row returned from a
-  body is caught only where `Rest` collapses into `R` after solving.
-- The error for a collapse is reported at the function, not at the offending expression,
-  because the check runs on the solved substitution.
-- A bare parameter in call position is rejected as `T0001`, not as a use the bounds do not
-  grant. Direct bound forwarding (`g(x)` against a callee's bound) is checked at the
-  definition; forwarding `where all R: A` remains unimplemented.
-- The per-call re-check (`LIMIT-EVALUATION-001`) can still reject a body the definition
-  check accepted. That disagreement is reported as the internal error `I0010`; the
-  differential check that establishes the invariant is still missing.
-- Operators on a bare parameter are a separate, language-level gap: `GAP-TYPES-005`.
+parameter is rigid, and a use is allowed only if the declared bounds entail it. The completed
+implementation (metel-core#1364) keeps row decompositions as symbolic facts through generic
+calls and generalized schemes; checks direct and `where all` bound forwarding; makes
+conditional-impl visibility depend on declared entailment; and records solver provenance so a
+rigidity mismatch (`T0001`) points at the causal expression. A construction disagreement is
+`I0010`, never a call-site type error. Operators on bare parameters remain the separate
+language-level gap `GAP-TYPES-005`.
 
 ## Impact
 
-Visible to Metel programmers: a generic function that over-constrains its parameters, or
-uses something its bounds never granted, is accepted and then fails at some caller (or at
-none). Row-polymorphic code is affected most, because `Rest` collapsing into `R` is
-accepted. Contributors: the row guarantees of RFC-0121 are not fully enforced until this
-lands.
+At the time, a generic function could over-constrain its parameters or use an entitlement
+that only a concrete caller supplied. Row-polymorphic code was affected most because a
+remainder could collapse into its source row. The completed implementation enforces the
+RFC-0173 contract at the definition.
 
 ## Affects
 
@@ -52,6 +35,6 @@ lands.
 
 ## Resolution
 
-Planned: implemented in installments under metel-core#1364, which closes #1320 and #1323.
-`LIMIT-EVALUATION-001` (the per-call reconstruction) is removed separately, with
-frontend monomorphization (metel-core#1352, #288).
+Resolved by metel-core#1364 and ADR-0058. `LIMIT-EVALUATION-001` (the per-call
+reconstruction) remains a separate implementation boundary; its failure mode is guarded by
+`I0010` and the differential fixture sweep specified in ADR-0058.

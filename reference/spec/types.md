@@ -1273,8 +1273,6 @@ fun main() -> i64 {
 
 ### Rigid type parameters
 
-> **Limitation** LIMIT-TYPES-004
-
 > **Gap** GAP-TYPES-005
 
 A declared type parameter is **opaque inside its own definition**: it is equal only to
@@ -1307,11 +1305,12 @@ and lacks the named labels, so `R` never equals `Rest`) and an associated-type b
 function inside the body sees the enclosing parameters as rigid; a recursive generic call
 instantiates the callee's parameters afresh.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1364" reason="Rigidity is enforced for declared parameters of free functions, methods, enclosing structs and impls, closures, nested generic functions, and associated-type bindings (a collapse into a concrete type or another parameter is T0001, reported at the definition rather than at the offending expression). Not yet: row equations held as typed facts in the body (metel-core#1364, metel-core#1320). LIMIT-TYPES-004." -->
+<!-- rfc.py:last_reviewed dc13d83e78b04bd7fe3b524e0bae0ba754a65c39 -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1364: Rigidity is enforced for declared parameters of free functions, methods, enclosing structs and impls, closures, nested generic functions, and associated-type bindings (a collapse into a concrete type or another parameter is T0001, reported at the definition rather than at the offending expression). Not yet: row equations held as typed facts in the body (metel-core#1364, metel-core#1320). LIMIT-TYPES-004._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6IjgiLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJyaWdpZF9hc3NvY19iaW5kaW5nX2NoZWNrZWRfaW5fYm9keS5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDE3MyBEMTogYW4gYXNzb2NpYXRlZC10eXBlIGJpbmRpbmcgaXMgYSBmYWN0IHdoaWxlIHRoZSBib2R5IGlzIGNoZWNrZWQuXG5hc3BlY3QgQ29udGFpbmVyIHsgdHlwZSBJdGVtOyBmdW4gZ2V0KHNlbGYpIC0+IEl0ZW07IH1cblxuc3RydWN0IEludEJveCB7IHZhbHVlOiBpNjQgfVxuZXh0ZW5kIEludEJveDogQ29udGFpbmVyIHsgdHlwZSBJdGVtIDo9IGk2NDsgZnVuIGdldChzZWxmKSAtPiBpNjQgeyBzZWxmLnZhbHVlIH0gfVxuXG5mdW4gd3Jvbmc8VDogQ29udGFpbmVyPEl0ZW0gPSBpNjQ+Pih2YWx1ZTogVCkgLT4gU3RyaW5nIHtcbiAgICB2YWx1ZS5nZXQoKSAvLyBFUlJPUltUMDAwMV1cbn1cblxuZnVuIG1haW4oKSB7IHdyb25nKEludEJveCB7IHZhbHVlID0gMSB9KTsgfVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvZ2VuZXJpY3MvcmlnaWRfYXNzb2NfYmluZGluZ19jaGVja2VkX2luX2JvZHkubXRsIiwibmFtZSI6InJpZ2lkX2Fzc29jX2JpbmRpbmdfY2hlY2tlZF9pbl9ib2R5Lm10bCJ9"></details>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.types.generics.rigid-type-parameters.legality-2}
 
@@ -1326,13 +1325,7 @@ and is forwarded only to another `where all R: A` bound. `T::Assoc` is an opaque
 projection equal only to itself or to what an associated-type binding in `Γ` declares. A
 bare parameter is not callable. Impl resolution for a type built from `T` assumes `Γ`.
 
-<!-- rfc.py:last_reviewed 41698dcf4262aaf8c6cdb7ac2514985b7ebdb173 -->
-
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1364" reason="A method call or field access on a declared parameter that its bounds do not grant is T0035, a conditional-impl method is visible only when its conditions are entailed by the declared bounds, and direct bound forwarding is T0012 when not entailed. Not yet: `where all R: A` forwarding as stated, and a bare parameter in call position is reported as T0001 rather than as a use not granted (metel-core#1364). LIMIT-TYPES-004." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1364: A method call or field access on a declared parameter that its bounds do not grant is T0035, a conditional-impl method is visible only when its conditions are entailed by the declared bounds, and direct bound forwarding is T0012 when not entailed. Not yet: `where all R: A` forwarding as stated, and a bare parameter in call position is reported as T0001 rather than as a use not granted (metel-core#1364). LIMIT-TYPES-004._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:last_reviewed b709fee2babd7b8e859dee816eab60a6056c8bd5 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1352,10 +1345,10 @@ An operator on a bare type parameter (`a + b` over `T`) is rejected (`T0005`): n
 grants it, because no aspect grants an operator yet. `T: Eq` grants `==` through its `eq`
 method.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1364" reason="An arithmetic or ordering operator whose operand is a bare declared parameter is T0005 (the operand is checked directly, not through a later unification). Not yet: an operand that reaches the parameter only through a `let` chain or a call result. GAP-TYPES-005, LIMIT-TYPES-004." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1364" reason="An arithmetic or ordering operator whose operand is a bare declared parameter is T0005 (the operand is checked directly, not through a later unification). Not yet: an operand that reaches the parameter only through a `let` chain or a call result. GAP-TYPES-005." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1364: An arithmetic or ordering operator whose operand is a bare declared parameter is T0005 (the operand is checked directly, not through a later unification). Not yet: an operand that reaches the parameter only through a `let` chain or a call result. GAP-TYPES-005, LIMIT-TYPES-004._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1364: An arithmetic or ordering operator whose operand is a bare declared parameter is T0005 (the operand is checked directly, not through a later unification). Not yet: an operand that reaches the parameter only through a `let` chain or a call result. GAP-TYPES-005._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Dynamic Semantics {#spec.types.generics.rigid-type-parameters.dynamics-1}
@@ -1366,11 +1359,12 @@ accepts a definition the rules above reject, and a body the definition check acc
 cannot be rejected by it: if it is, the two checks disagree, which is the internal error
 `I0010`, never a diagnostic about the call site.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1364" reason="RFC-0173 is not fully implemented: the per-call re-check can still reject a body the definition check accepted. Such a disagreement is now reported as I0010, but the differential check that establishes the invariant is not implemented (metel-core#1364). LIMIT-TYPES-004." -->
+<!-- rfc.py:last_reviewed b709fee2babd7b8e859dee816eab60a6056c8bd5 -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1364: RFC-0173 is not fully implemented: the per-call re-check can still reject a body the definition check accepted. Such a disagreement is now reported as I0010, but the differential check that establishes the invariant is not implemented (metel-core#1364). LIMIT-TYPES-004._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjgwX2dlbmVyaWNfY29uc3RydWN0aW9uX2F0X2NhbGx0aW1lLm10bCIsInNvdXJjZSI6Ii8vIFBhcml0eSB0ZXN0IGZvciBNRVRFTC0xMjE6IGdlbmVyaWMgZnVuY3Rpb24gYm9kaWVzIHRoYXQgcHJldmlvdXNseSB1c2VkIHRoZVxuLy8gdW50eXBlZCBldmFsdWF0b3IgcGF0aCBub3cgZ28gdGhyb3VnaCBjb25zdHJ1Y3Rpb24tYXQtY2FsbC10aW1lLlxuLy8gRXhlcmNpc2VzIG11bHRpcGxlIGdlbmVyaWMgcGF0dGVybnMgdGhhdCBib3RoIHBpcGVsaW5lcyBtdXN0IGhhbmRsZSBpZGVudGljYWxseS5cblxuZnVuIGlkZW50aXR5PFQ+KHg6IFQpIC0+IFQgeyB4IH1cblxuZnVuIGZpcnN0PEEsIEI+KGE6IEEsIF9iOiBCKSAtPiBBIHsgYSB9XG5cbmZ1biBzd2FwX2FwcGx5PFQsIFU+KHg6IFQsIGY6IHxUfCAtPiBVKSAtPiBVIHsgZih4KSB9XG5cbmZ1biBhZGRfYWxsPFQ+KGE6IFQsIGI6IFQsIGM6IFQsIGNvbWJpbmU6IHxULCBUfCAtPiBUKSAtPiBUIHtcbiAgICBjb21iaW5lKGNvbWJpbmUoYSwgYiksIGMpXG59XG5cbmZ1biBtYWluKCkge1xuICAgIC8vIGlkZW50aXR5IHRocm91Z2ggdmFyaW91cyB0eXBlc1xuICAgIGFzc2VydChpZGVudGl0eSg0MikgPT0gNDIpO1xuICAgIGFzc2VydChpZGVudGl0eSh0cnVlKSA9PSB0cnVlKTtcbiAgICBhc3NlcnQoaWRlbnRpdHkoXCJoZWxsb1wiKSA9PSBcImhlbGxvXCIpO1xuXG4gICAgLy8gZmlyc3Qvc2Vjb25kIHNlbGVjdGlvblxuICAgIGFzc2VydChmaXJzdCgxLCAyKSA9PSAxKTtcbiAgICBhc3NlcnQoZmlyc3QoXCJhXCIsIDk5KSA9PSBcImFcIik7XG5cbiAgICAvLyBoaWdoZXItb3JkZXIgZ2VuZXJpYyB3aXRoIGk2NFxuICAgIGxldCBkb3VibGVkIDo9IHN3YXBfYXBwbHkoNSwgfHg6IGk2NHwgLT4gaTY0IHsgeCAqIDIgfSk7XG4gICAgYXNzZXJ0KGRvdWJsZWQgPT0gMTApO1xuXG4gICAgbGV0IG5lZ2F0ZWQgOj0gc3dhcF9hcHBseSg3LCB8eDogaTY0fCAtPiBpNjQgeyB4ICogLTEgfSk7XG4gICAgYXNzZXJ0KG5lZ2F0ZWQgPT0gLTcpO1xuXG4gICAgLy8gbXVsdGktYXJnIGdlbmVyaWNcbiAgICBsZXQgc3VtIDo9IGFkZF9hbGwoMSwgMiwgMywgfGE6IGk2NCwgYjogaTY0fCAtPiBpNjQgeyBhICsgYiB9KTtcbiAgICBhc3NlcnQoc3VtID09IDYpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvZ2VuZXJpY3MvODBfZ2VuZXJpY19jb25zdHJ1Y3Rpb25fYXRfY2FsbHRpbWUubXRsIiwibmFtZSI6IjgwX2dlbmVyaWNfY29uc3RydWN0aW9uX2F0X2NhbGx0aW1lLm10bCJ9"></details>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
