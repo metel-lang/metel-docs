@@ -1305,7 +1305,7 @@ and lacks the named labels, so `R` never equals `Rest`) and an associated-type b
 function inside the body sees the enclosing parameters as rigid; a recursive generic call
 instantiates the callee's parameters afresh.
 
-<!-- rfc.py:last_reviewed b709fee2babd7b8e859dee816eab60a6056c8bd5 -->
+<!-- rfc.py:last_reviewed dc13d83e78b04bd7fe3b524e0bae0ba754a65c39 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
