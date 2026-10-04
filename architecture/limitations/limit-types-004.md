@@ -1,7 +1,7 @@
 ---
 id: LIMIT-TYPES-004
-title: "RFC-0173 generic bodies are not yet checked against their declared bounds"
-summary: "A declared type parameter is not rigid in its own definition: a body can collapse it into a concrete type or another parameter, and a use the bounds do not grant is accepted or reported at a call."
+title: "RFC-0173 generic-body checking remains incomplete"
+summary: "Declared type parameters are rigid and their direct bound uses are checked, but row equations, all-fields forwarding, and expression-level diagnostics remain incomplete."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "RFC-0173 entering 3-integrated with no implementation yet; metel-core#1320, #1323"
@@ -29,10 +29,11 @@ missing:
 - The error for a collapse is reported at the function, not at the offending expression,
   because the check runs on the solved substitution.
 - A bare parameter in call position is rejected as `T0001`, not as a use the bounds do not
-  grant, and bound forwarding (`g(x)` against a callee's bound) is checked per call.
+  grant. Direct bound forwarding (`g(x)` against a callee's bound) is checked at the
+  definition; forwarding `where all R: A` remains unimplemented.
 - The per-call re-check (`LIMIT-EVALUATION-001`) can still reject a body the definition
-  check accepted, as an ordinary type error at a call site rather than as the internal
-  error `I0010`.
+  check accepted. That disagreement is reported as the internal error `I0010`; the
+  differential check that establishes the invariant is still missing.
 - Operators on a bare parameter are a separate, language-level gap: `GAP-TYPES-005`.
 
 ## Impact
