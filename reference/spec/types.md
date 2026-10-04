@@ -1305,7 +1305,7 @@ and lacks the named labels, so `R` never equals `Rest`) and an associated-type b
 function inside the body sees the enclosing parameters as rigid; a recursive generic call
 instantiates the callee's parameters afresh.
 
-<!-- rfc.py:last_reviewed e0b50dc749f52e32e7353870a34ff94d1e10bc6a -->
+<!-- rfc.py:last_reviewed b709fee2babd7b8e859dee816eab60a6056c8bd5 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1325,7 +1325,7 @@ and is forwarded only to another `where all R: A` bound. `T::Assoc` is an opaque
 projection equal only to itself or to what an associated-type binding in `Γ` declares. A
 bare parameter is not callable. Impl resolution for a type built from `T` assumes `Γ`.
 
-<!-- rfc.py:last_reviewed e0b50dc749f52e32e7353870a34ff94d1e10bc6a -->
+<!-- rfc.py:last_reviewed b709fee2babd7b8e859dee816eab60a6056c8bd5 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1359,7 +1359,7 @@ accepts a definition the rules above reject, and a body the definition check acc
 cannot be rejected by it: if it is, the two checks disagree, which is the internal error
 `I0010`, never a diagnostic about the call site.
 
-<!-- rfc.py:last_reviewed e0b50dc749f52e32e7353870a34ff94d1e10bc6a -->
+<!-- rfc.py:last_reviewed b709fee2babd7b8e859dee816eab60a6056c8bd5 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
