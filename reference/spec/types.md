@@ -1574,6 +1574,12 @@ type's tail, a struct's own residual-projection tail, or generic-argument positi
 bare identifier in any of these type positions is a type variable, never a row; row and
 type variables are therefore never ambiguous with each other.
 
+An open record type may be a parameter of a free function, including a `native`
+function; its row requirements are checked at each call just as they are for an
+ordinary generic function.
+
+<!-- rfc.py:last_reviewed f1dabc97b56b57da5af5cf14beba0e57ad9ea873 -->
+
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters and `..R` are implemented in a record type's tail (metel-core#1305), a struct's residual-projection tail (metel-core#1309) and generic-argument position (metel-core#1319), but the rule is not covered whole: an anonymous `..` in generic-argument position (`Builder<..>`) is accepted in a free function's parameter type (a fresh nameless type variable each, metel-core#1310) and still rejected elsewhere (T0032)." -->
 
 <!-- rfc.py:origins:start -->
@@ -1583,6 +1589,11 @@ type variables are therefore never ambiguous with each other.
 <!-- rfc.py:exemption:rendered:start -->
 <span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters and `..R` are implemented in a record type's tail (metel-core#1305), a struct's residual-projection tail (metel-core#1309) and generic-argument position (metel-core#1319), but the rule is not covered whole: an anonymous `..` in generic-argument position (`Builder<..>`) is accepted in a free function's parameter type (a fresh nameless type variable each, metel-core#1310) and still rejected elsewhere (T0032)._</span>
 <!-- rfc.py:exemption:rendered:end -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InJvd190YWlsX3BhcmFtX29uX25hdGl2ZV9mdW5jdGlvbi5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDEyMSBpdGVtIDY6IG5hdGl2ZSBmdW5jdGlvbnMgY2Fycnkgb3Blbi1yb3cgcGFyYW1ldGVyIGJvdW5kcyBvbiB0aGVpclxuLy8gc2NoZW1lcywganVzdCBhcyBvcmRpbmFyeSBmcmVlIGZ1bmN0aW9ucyBkby5cblxubmF0aXZlKEBzdGQuY29yZS5wcmludGxuKSBmdW4gc2hvdXQ8cm93IFI+KHg6IHsgYTogaTY0LCAuLlIgfSk7XG5cbmZ1biBtYWluKCkge31cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4xL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvcGFyc2luZy9yb3dfdGFpbF9wYXJhbV9vbl9uYXRpdmVfZnVuY3Rpb24ubXRsIiwibmFtZSI6InJvd190YWlsX3BhcmFtX29uX25hdGl2ZV9mdW5jdGlvbi5tdGwifQ=="></details>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.types.generics.open-rows.legality-2}
 
