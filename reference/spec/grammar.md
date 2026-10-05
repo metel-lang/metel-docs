@@ -195,6 +195,7 @@ Type                     → FunType
                          | "()"
                          | TupleType
                          | RecordProjectionType
+                         | OpenRecordType
                          | RecordType
                          | ExtendsType
                          | DynType
